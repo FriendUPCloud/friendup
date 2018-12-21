@@ -1188,8 +1188,7 @@ body.WindowMenu #Screens .View:before
 	top: 30px; left: 0; width: 100%; height: calc(100% - 3px);
 	background: rgba(0,0,0,0.5);
 }
-body.WindowMenu .Widget, body.WindowMenu #Statusbar,
-body.WindowMenu .Desklet, body.WindowMenu .Screen .ScreenContent .Scroller:before
+body.WindowMenu .Widget, body.WindowMenu #Statusbar
 {
 	opacity: 0;
 	pointer-events: none;
@@ -4165,7 +4164,7 @@ body:not([tablet]) .View:not(.Active)[mobile=mobile][maximized=true] > .Content
 }
 body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
 {
-	left: 40px;
+	left: 10px;
 	width: calc(100% - 105px);
 }
 body:not([tablet])[mobile=mobile] #Screens .View
@@ -4316,23 +4315,6 @@ body[mobile=mobile].AppsShowing #DoorsScreen .Scroller:before
 
 body[mobile=mobile] .Desklet.Open.Opened
 {
-	height: calc(100% - 57px) !important;
+	height: calc(100% - 97px) !important;
 }
-
-body .Desklet.Open:before
-{
-	top: calc(100%);
-}
-
-body[mobile=mobile] #DoorsScreen > .ScreenContent > .Scroller:before 
-{
-    font-size: 20px;
-    width: 50px;
-    height: 50px;
-    line-height: 50px;
-    color: #ffffff;
-    border-radius: 100%;
-}
-
-
 

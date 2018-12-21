@@ -26,6 +26,40 @@ body.Inside > img
 	height: 0;
 }
 
+body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar,
+body.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar
+{
+	padding-left: 0;
+	height: 40px;
+	background-color: #303030;
+}
+
+#Screens > div.Screen > .TitleBar:after
+{
+	display: none;
+}
+
+body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left,
+body.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar > .Left
+{
+	height: 40px;
+	left: 10px;
+	line-height: 42px;
+	font-size: 1em;
+}
+
+body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info
+{
+	margin-left: 10px;
+	color: white;
+}
+
+body #Screens > div.Screen > .TitleBar > .Right
+{
+	display: none;
+}
+
+
 #Screens .Screen .ScreenContent
 {
 	background-size: cover !important;
@@ -136,10 +170,11 @@ body.WidgetSlideDown .Calendar .Navigation
 
 /* Top navigation for mobile */
 
-html .Screen .MobileTopNavigation
+html body .Screen .MobileTopNavigation
 {
+	opacity: 1;
 	position: absolute;
-	top: 0;
+	bottom: 0;
 	left: 0;
 	width: 40px;
 	height: 40px;
@@ -149,6 +184,34 @@ html .Screen .MobileTopNavigation
 	z-index: 2147483647;
 	background-repeat: no-repeat;
 }
+
+html body .Screen .MobileAppMenu
+{
+	opacity: 1;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	width: 40px;
+	height: 40px;
+	z-index: 2147483647;
+	background-repeat: no-repeat;
+}
+
+html body.AppsShowing .Screen .MobileAppMenu:after
+{
+	content: "\f107";
+}
+
+html body .Screen .MobileAppMenu:after
+{
+	display: block;
+	content: "\f00a";
+	font-size: 16px;
+	font-family: fontawesome;
+	text-align: center;
+	line-height: 40px;
+}
+
 
 /* Mobile menu -------------------------------------------------------------- */
 
@@ -240,6 +303,11 @@ html #WorkspaceMenu .Menu
 [mobile] #DoorsScreen .ScreenContent
 {
 	transition: transform 0.3s;
+}
+
+.ViewMaximized[mobile] #DoorsScreen > .ScreenContent > .Scroller
+{
+	display: none;
 }
 
 [mobile].WorkspaceMenuOpen #DoorsScreen .ScreenContent
@@ -465,35 +533,6 @@ body[mobile=mobile] .Desklet.Open.Opened
 	overflow: hidden;
 }
 
-.Desklet:before
-{
-	content:"\f00a";
-	font-family: fontawesome;
-	font-size: 40px;
-	display: block;
-	width: 56px;
-	height: 56px;
-	line-height: 56px;
-	background: rgba(0,0,0,0.5);
-	margin: 12px 0 15px 15px;
-	color: #ffffff;
-	border-radius: 4px;
-	position: absolute;
-	top: -80px;
-	left: -9px;
-	text-align: center;
-	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
-}
-
-.Apps .Desklet:before
-{
-	content:"\f062";
-}
-.ViewMaximized .Desklet:before
-{
-	display: none;
-}
-
 .Desklet
 {
 	position: absolute;
@@ -560,19 +599,6 @@ html .Desklet .Launcher
 	margin: 20px 0 20px 0 !important;
 }
 
-/* make it loook like a close button now.... */
-.Desklet.Open:before
-{
-	position: fixed;
-    top: 100%;
-    left: auto;
-    height: 56px;
-    right: 0px;
-    background: rgba(0,0,0,0.5);
-    bottom: auto;
-    content: "\f00d";
-}
-
 .AppsShowing .View
 {
 	display: none;
@@ -591,23 +617,10 @@ body[mobile=mobile] .File .Title
 
 /* Partition icons */
 
-#DoorsScreen > .ScreenContent > .Scroller:before
+html body[mobile=mobile] #DoorsScreen > .ScreenContent, 
+html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
-	content:"\f07c";
-	font-family: fontawesome;
-	font-size: 40px;
-	display: block;
-	width: 56px;
-	height: 56px;
-	line-height: 56px;
-	background: rgba(0,0,0,0.5);
-	margin: 0;
-	color: #ffffff;
-	border-radius: 4px;
-	position: fixed;
-	bottom: 12px;
-	left: 12px;
-	text-align: center;
+	height: calc(100% - 80px) !important;
 }
 
 #DoorsScreen > .ScreenContent > .Scroller
@@ -629,37 +642,6 @@ body[mobile=mobile] .File .Title
 	z-index: 9999999;
 	background: rgba(0,0,0,0.8);
 	padding: 10px 4px;
-}
-
-#DoorsScreen > .ScreenContent > .Scroller.Open:before
-{
-	position: absolute;
-	top: -58px !important;
-	left:0;
-	height: 56px;
-	bottom: auto !important;
-	background: rgba(0,0,0,0.8);
-}
-#DoorsScreen > .ScreenContent > .Scroller.Open:after
-{
-	position: absolute;
-	top: -58px !important;
-	right:0;
-	bottom: auto !important;
-	content: "\f00d";
-	font-family: fontawesome;
-	font-size: 40px;
-	display: block;
-	width: 56px;
-	height: 56px;
-	line-height: 56px;
-	background: rgba(0,0,0,0.8);
-	margin: 0;
-	color: #ffffff;
-	border-radius: 4px;
-	position: absolute;
-	text-align: center;	
-	
 }
 
 /* Login */
