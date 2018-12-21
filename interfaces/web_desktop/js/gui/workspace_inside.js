@@ -5509,9 +5509,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		});
 	},
+	// Pick the prev window
 	handleBackButton: function()
 	{
-		Notify({'title':'Back button pressed.','text':'Handle this in workspace_inside line 4660.'});
+		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		{
+			if( a > 0 && currentMovable == Friend.GUI.view.viewHistory[a] )
+			{
+				_ActivateWindow( Friend.GUI.view.viewHistory[ a - 1 ] );
+				return;
+			}
+		}
+		_DeactivateWindows();
 	},
 	// Get a list of all applications ------------------------------------------
 	listApplications: function()
