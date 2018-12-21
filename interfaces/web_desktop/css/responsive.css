@@ -170,6 +170,19 @@ body.WidgetSlideDown .Calendar .Navigation
 
 /* Top navigation for mobile */
 
+html body #DoorsScreen:after
+{
+	content: " ";
+	display: block;
+	height: 40px;
+	position: absolute;
+	bottom: 0px;
+	left: 0;
+	width: 100%;
+	background-color: #444444;
+	z-index: 2147483646;
+}
+
 html body .Screen .MobileTopNavigation
 {
 	opacity: 1;
@@ -178,11 +191,25 @@ html body .Screen .MobileTopNavigation
 	left: 0;
 	width: 40px;
 	height: 40px;
-	background-image: url(/webclient/gfx/system/startmenu.png);
-	background-position: center;
-	background-size: 60%;
 	z-index: 2147483647;
-	background-repeat: no-repeat;
+	background-color: rgba(255,255,255,0);
+	transition: background-color 0.25s;
+	border-radius: 10px;
+}
+
+html body .Screen .MobileTopNavigation:active
+{
+	background-color: rgba(255,255,255,0.5);
+}
+
+html body .Screen .MobileTopNavigation:after
+{
+	display: block;
+	content: "\f096";
+	font-size: 16px;
+	font-family: fontawesome;
+	text-align: center;
+	line-height: 40px;
 }
 
 html body .Screen .MobileAppMenu
