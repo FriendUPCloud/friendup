@@ -3655,6 +3655,9 @@ var View = function( args )
 	// Close a view window
 	this.close = function ( force )
 	{
+		if( isMobile )
+			Workspace.exitMobileMenu();
+		
 		var c = this._window;
 		if( c && c.content )
 			c = c.content;
