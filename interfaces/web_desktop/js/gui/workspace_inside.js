@@ -718,7 +718,6 @@ var WorkspaceInside = {
 								{
 									if( !messageRead )
 									{
-										//Notify( { title: 'Trashing push callback (not seen)', text: msg.notificationData.id } );
 										var trash = getWrapperCallback( amsg.callback );
 										delete trash;
 									}
@@ -772,7 +771,6 @@ var WorkspaceInside = {
 								}
 							}, 1000 );
 						}
-						console.log( 'Executing the application: ' + msg.notificationData.application );
 						ExecuteApplication( msg.notificationData.application, '', appMessage )
 					}
 				}
@@ -8227,13 +8225,15 @@ document.addEventListener( 'paste', function( evt )
 	Workspace.handlePasteEvent( evt );
 });
 
-// Push notification integration
+// Push notification integration -----------------------------------------------
 if( window.friendApp )
 {
 	friendApp.pushListener = function()
 	{
 		this.get_notification( function( msg )
 		{
+			Notify( { title: 'get_notification', text: msg } );
+			
 			try
 			{
 				var data = JSON.parse( msg );
@@ -8241,6 +8241,16 @@ if( window.friendApp )
 				{
 					if( Workspace.applications[a].applicationName == data.category )
 					{
+						Notify( { title: 'We received push', text: msg } );
+						
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: data.id, 
+							action: 1
+						} );
+						
 						var app = Workspace.applications[a];
 						app.postMessage( { command: 'push_notification', data: data }, '*' );
 					}
