@@ -1117,7 +1117,7 @@ function CloseAllWindows()
 function _WindowToFront( div, flags )
 {
 	// Blocker
-	if( div.content.blocker )
+	if( div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
