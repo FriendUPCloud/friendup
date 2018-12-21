@@ -1068,6 +1068,7 @@ var WorkspaceInside = {
 					wid.autosize();
 			}
 			// For mobiles, we have a Friend icon at the top of the screen
+			// Also add the app menu
 			else if( !Workspace.topNavigation )
 			{
 				var topNavigation = document.createElement( 'div' );
@@ -1085,6 +1086,23 @@ var WorkspaceInside = {
 						Workspace.widget.slideUp();
 					Workspace.mainDock.closeDesklet();
 					DefaultToWorkspaceScreen();
+				}
+				
+				// App menu toggle
+				var appMenu = document.createElement( 'div' );
+				appMenu.className = 'MobileAppMenu';
+				Workspace.appMenu = appMenu;
+				Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
+				appMenu.onclick = function()
+				{
+					if( document.body.classList.contains( 'AppsShowing' ) )
+					{
+						Workspace.mainDock.closeDesklet();
+					}
+					else
+					{
+						Workspace.mainDock.openDesklet();
+					}
 				}
 			}
 		}
