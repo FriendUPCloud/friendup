@@ -4307,6 +4307,24 @@ body[mobile=mobile] .Desklet:not(.Open):before
 	left: -2px;
 }
 
+html body.Charcoal #DoorScreen:after,
+body.Charcoal:not(.ViewMaximized) #Screens > div.Screen > .TitleBar, 
+body.Charcoal.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar,
+body.Charcoal[mobile] #WorkspaceMenu,
+html body.Charcoal #DoorsScreen:after
+{
+	background-color: #303030;
+}
+
+html body.Dark #DoorScreen:after,
+body.Dark:not(.ViewMaximized) #Screens > div.Screen > .TitleBar, 
+body.Dark.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar,
+body.Dark[mobile] #WorkspaceMenu,
+html body.Dark #DoorsScreen:after
+{
+	background-color: #435260;
+}
+
 body[mobile=mobile].AppsShowing #DoorsScreen .Scroller:before
 {
 	opacity: 0;
