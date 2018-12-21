@@ -499,6 +499,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 							nm->nm_Notifications = next;
 							if( next != NULL )
 							{
+								DEBUG("Write to: %p\n", next );
 								next->node.mln_Pred = NULL;
 							}
 						}
