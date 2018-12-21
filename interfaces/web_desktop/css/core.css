@@ -2359,6 +2359,7 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	margin: 5px auto;
 	text-align: center;
 	position: relative;
+	pointer-events: none;
 }
 .Desklet .Launcher.Minimized .ElementCount > span
 {

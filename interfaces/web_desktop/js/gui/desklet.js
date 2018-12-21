@@ -890,8 +890,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
 			
-				// If not a single instance app, execute
-				if( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
+				// If not a single instance app, execute (or mobile)
+				if( isMobile || ( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 ) )
 				{
 					ExecuteApplication( executable, args );
 				}
@@ -947,12 +947,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			else 
 			{
 				div[ evt ] = function( e )
-				{				
+				{			
 					if( window.isMobile && !this.touchTime )
 						return;
 					
 					var t = e.target ? e.target : e.srcElement;
-					if( t != div ) return;
+					if( t && t != div ) return;
 					if( window.isMobile && !dk.open ) return;
 					clickFunc( e );
 					if( div.helpBubble ) div.helpBubble.close();
