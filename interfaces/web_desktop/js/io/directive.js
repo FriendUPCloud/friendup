@@ -47,9 +47,27 @@ function ExecuteApplication( app, args, callback )
 		Friend.singleInstanceApps[ app ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
 		for( var a in Friend.singleInstanceApps[ app ].windows )
 		{
-			_WindowToFront( Friend.singleInstanceApps[ app ].windows[ a ].content );
+			_ActivateWindow( Friend.singleInstanceApps[ app ].windows[ a ]._window.parentNode );
+			_WindowToFront( Friend.singleInstanceApps[ app ].windows[ a ]._window.parentNode );
+			return;
 		}
 		return;
+	}
+	else if( isMobile )
+	{
+		for( var a in Workspace.applications )
+		{
+			if( Workspace.applications[ a ].applicationName == app )
+			{
+				var app = Workspace.applications[ a ];
+				for( var z in app.windows )
+				{
+					_ActivateWindow( app.windows[ z ]._window.parentNode );
+					_WindowToFront( app.windows[ z ]._window.parentNode );
+					return;
+				}
+			}
+		}
 	}
 
 	// Common ones
