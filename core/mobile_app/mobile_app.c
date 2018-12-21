@@ -253,7 +253,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 			//by our internal sturcts and within hashmap structs
 
 			//PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
-			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
 				//add the new connections struct to global users' connections map
 				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
@@ -261,11 +261,11 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 					DEBUG("Could not add new struct of user <%s> to global map\n", username);
 
 					FFree(userConnections);
-					//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+					FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 					return 1;//MobileAppReplyError( wsi, user_data, MOBILE_APP_ERR_INTERNAL );
 				}
 				
-				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
 		}
 	}
@@ -817,6 +817,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		if( user != NULL )
 		{
 			UserDelete( user );
+			user = NULL;
 		}
 		return MobileAppReplyError( wsi, userdata, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS );
 	}
@@ -826,6 +827,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		if( user != NULL )
 		{
 			UserDelete( user );
+			user = NULL;
 		}
 		
 		MobileAppConnection *newConnection = MobileAppConnectionNew( wsi, umaID );
@@ -986,12 +988,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// go through all mobile connections
 	//
 	
-	unsigned int jsonMessageLength = strlen( jsonMessage + LWS_PRE);
+	//unsigned int jsonMessageLength = strlen( jsonMessage + LWS_PRE);
 	// if message was already sent
 	// this means that user got msg on Workspace
 	if( userConnections != NULL )
 	{
-		DEBUG("Send: <%s>\n", jsonMessage + LWS_PRE);
+		DEBUG("Send: <%s>\n", jsonMessage );
 		// register only works when there was no active desktop WS connection
 		// and action is register
 		if( wsMessageSent == FALSE )

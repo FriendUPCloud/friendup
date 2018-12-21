@@ -43,6 +43,9 @@ typedef struct DataQWSIM{
 	FBOOL				d_Authenticated;
 }DataQWSIM;
 
+int globalServerEntriesNr = 0;
+char **globalServerEntries = NULL;
+
 /**
  * Write message to websocket
  *
@@ -88,6 +91,10 @@ static void NotificationsSinkInit( void )
 	DEBUG("Initializing mobile app module\n");
 
 	globalSocketAuthMap = HashmapNew();
+	
+	//"ServiceKeys"
+	//globalServerEntriesNr = iniparser_getsecnkeys(dictionary * d, char * s)
+	//globalServerEntries = iniparser_getseckeys(dictionary * d, char * s);	// memory must be released
 }
 
 /*
@@ -361,6 +368,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
 #endif
 				FFree( authKey );
+				FFree( authName );
 				
 				return 0;
 			}

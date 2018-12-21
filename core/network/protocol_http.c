@@ -1696,6 +1696,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 															FFree( runFile );
 														}
 													}
+													FFree( allArgsNew );
 												}
 												
 												if( phpResp == NULL )
