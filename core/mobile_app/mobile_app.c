@@ -385,7 +385,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			
 		case LWS_CALLBACK_CLOSED: //|| reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 		{
-			INFO("\t\t\t\t\t\t\tREMOVE APP CONNECTION\n\n\n");
+			Log( FLOG_DEBUG, "\t\t\t\t\t\t\tREMOVE APP CONNECTION %d - conptr %p\n", appConnection->mac_UserConnectionIndex, appConnection );
 			
 			if( appConnection == NULL )
 			{
