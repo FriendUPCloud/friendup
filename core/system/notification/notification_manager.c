@@ -479,6 +479,8 @@ void NotificationManagerTimeoutThread( FThread *data )
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 			{
+				Notification *notifRoot = NULL;
+				Notification *notifLast = NULL;
 				
 				Notification *notif = nm->nm_Notifications;
 				//Notification *nroot = NULL;
@@ -494,6 +496,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
 						
+						/*
 						if( nm->nm_Notifications == notif )
 						{
 							nm->nm_Notifications = next;
@@ -512,6 +515,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 								next->node.mln_Pred = (MinNode *)prev;
 							}
 						}
+						*/
 						
 						DEBUG("Remove notification for user: %s\n", notif->n_UserName );
 						toDel++;
@@ -541,14 +545,24 @@ void NotificationManagerTimeoutThread( FThread *data )
 					else
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will stay %lu\n", notif->n_ID );
-						//notif->node.mln_Succ = (MinNode *)nroot;
-						//nroot = notif;
+						
+						if( notifRoot == NULL )
+						{
+							notifRoot = notif;
+							notifLast = notif;
+						}
+						else
+						{
+							notifLast->node.mln_Succ = (MinNode *)notif;
+							notifLast = notif;
+						}
 					}
 					
 					notif = (Notification *)next;
 					//notif = (Notification *)notif->node.mln_Succ;
 				}
-				//nm->nm_Notifications = nroot;
+				
+				nm->nm_Notifications = notifRoot;
 				
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 			}
