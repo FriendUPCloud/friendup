@@ -63,6 +63,7 @@ typedef struct UserMobileAppConnections
 	FULONG					umac_UserID;
 	MobileAppConnection		*umac_Connection[ MAX_CONNECTIONS_PER_USER ];
 	MinNode					node;
+	int						umac_InUse;
 }UserMobileAppConnections;
 
 //

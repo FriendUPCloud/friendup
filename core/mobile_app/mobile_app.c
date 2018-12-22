@@ -175,6 +175,13 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 	{
 		return;
 	}
+
+	// do not remove entry if its in usage
+	while( connections->umac_InUse != 0 )
+	{
+		usleep( 1000 );
+	}
+	
 	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
 	
 	connections->umac_Connection[connectionIndex]->mac_CloseConnection = TRUE;
@@ -267,7 +274,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 			}
 		}
 	}
-
+	
 	//add this struct to user connections struct
 	int connectionToReplaceIndex = -1;
 	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
@@ -311,10 +318,6 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 	newConnection->mac_UserData = userData;
 	newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
 	newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
-
-	//char *websocketHash = MobileAppGetWebsocketHash( wsi );
-
-	//PutConnectionByWSI( globalWebsocketToUserConnections, wsi, newConnection );
 
 	return 0;
 }
@@ -879,12 +882,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 {
 	SystemBase *sb = (SystemBase *)lsb;
 	UserMobileAppConnections *userConnections = NULL;
-	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-	{
-		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
-		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
-		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	}
 	MobileManager *mm = sb->sl_MobileManager;
 	Notification *notif = NULL;
 	FBOOL wsMessageSent = FALSE;
@@ -997,6 +994,17 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// go through all mobile connections
 	//
 	
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		if( userConnections != NULL )
+		{
+			userConnections->umac_InUse=1;
+		}
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
+	
 	//unsigned int jsonMessageLength = strlen( jsonMessage + LWS_PRE);
 	// if message was already sent
 	// this means that user got msg on Workspace
@@ -1102,6 +1110,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			}
 		}
 		// wsMessageSent == FALSE
+		
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		{
+			userConnections->umac_InUse=0;
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+		}
 	}
 	else
 	{
@@ -1183,14 +1197,6 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 {
 	SystemBase *sb = (SystemBase *)lsb;
 	UserMobileAppConnections *userConnections = NULL;
-	
-	//FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex );
-	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-	{
-		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
-		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
-		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	}
 	NotificationSent *notifSent = NULL;
 	
 	// get message length
@@ -1252,6 +1258,17 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	//
 	// go through all mobile devices
 	//
+	
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		if( userConnections != NULL )
+		{
+			userConnections->umac_InUse=1;
+		}
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 
 	// if message was already sent
 	// this means that user got msg on Workspace
@@ -1424,6 +1441,12 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				break;
 				default: FERROR("**************** UNIMPLEMENTED %d\n", notif->n_NotificationType );
 			}
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		{
+			userConnections->umac_InUse=0;
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 		}
 	}
 	else
