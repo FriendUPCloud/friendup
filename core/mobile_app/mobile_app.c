@@ -185,7 +185,7 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
 	
 	connections->umac_Connection[connectionIndex]->mac_CloseConnection = TRUE;
-	lws_callback_on_writable( connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
+	//lws_callback_on_writable( connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
 	connections->umac_Connection[connectionIndex] = NULL;
 }
 
