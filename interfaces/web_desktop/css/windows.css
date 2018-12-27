@@ -232,6 +232,17 @@ html .View[viewsnap] .Title > div > div
 {
 	transform: translateX(100%) !important;
 }
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active .Thumbnail
+{
+	background-color: transparent;
+	transition: background 0.3s;
+}
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active.Opening .Thumbnail,
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active.Opened .Thumbnail
+{
+	background-image: none !important;
+	background-color: #202020;
+}
 [mobile=mobile]:not([sharedapp]) #Screens .View.Active[maximized=true].Opened
 {
 	will-transform: auto;
