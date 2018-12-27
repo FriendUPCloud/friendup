@@ -4251,6 +4251,23 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	var gridY = startY;
 	for( var a in movableWindows )
 	{
+		// Next row
+		if( gridX + boxWidth >= pageX2 )
+		{
+			gridX = pageX1 + marginX;
+			gridY += iconHeight;
+			
+			// Next horizontal page
+			if( gridY + boxHeight >= pageH )
+			{
+				gridY = startY;
+				pageX1 += pageW;
+				pageX2 += pageW;
+				gridX = pageX1 + marginX;
+				page++;
+			}
+		}
+		
 		var v = movableWindows[ a ];
 		var c = v.parentNode; // ViewContainer
 		if( c.classList.contains( 'Active' ) )
@@ -4278,23 +4295,6 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		
 		// Next column
 		gridX += boxWidth + marginX;
-		
-		// Next row
-		if( gridX + boxWidth >= pageX2 )
-		{
-			gridX = pageX1 + marginX;
-			gridY += iconHeight;
-			
-			// Next horizontal page
-			if( gridY + boxHeight >= pageH )
-			{
-				gridY = startY;
-				pageX1 += pageW;
-				pageX2 += pageW;
-				gridX = pageX1 + marginX;
-				page++;
-			}
-		}
 	}
 	// Store how many pages we are counting..
 	Friend.GUI.responsiveViewPageCount = page;
