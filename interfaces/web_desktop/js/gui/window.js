@@ -4210,10 +4210,13 @@ var View = function( args )
 // Reorganize view window positions on responsive browser
 Friend.GUI.reorganizeResponsiveMinimized = function()
 {
+	if( !isMobile ) return;
 	if( !Workspace.screen || !Workspace.screen.contentDiv ) return;
-	/*if( document.body.classList.contains( 'ViewMaximized' ) )
+	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
-		for( var a in movableWindows )
+		// Here is the first screen
+		Workspace.screen.contentDiv.style.left = '0px';
+		/*for( var a in movableWindows )
 		{
 			// These views are handled by css...
 			var c = movableWindows[a].parentNode;
@@ -4221,9 +4224,9 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 			c.style.left = '0';
 			c.style.width = '100%';
 			c.style.height = '100%';
-		}
+		}*/
 		return;
-	}*/
+	}
 	
 	var boxWidth = 96;  // Window width when minimized
 	var boxHeight = 80; // Window height when minimized
@@ -4303,8 +4306,8 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	if( Friend.GUI.responsiveViewPage > page )
 	{
 		Friend.GUI.responsiveViewPage = page;
-		Workspace.screen.contentDiv.style.left = pageW * ( -page ) + 'px';
 	}
+	Workspace.screen.contentDiv.style.left = pageW * ( -Friend.GUI.responsiveViewPage ) + 'px';
 }
 
 // Intermediate anchor for code that uses new Window()
