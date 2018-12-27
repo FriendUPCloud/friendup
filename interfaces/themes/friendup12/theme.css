@@ -344,7 +344,7 @@ html #Screens > div
 
 html body.Charcoal #Screens > div
 {
-	background: #444444;
+	background: #303030;
 }
 
 html #DoorsScreen > .ScreenContent,
@@ -1629,6 +1629,11 @@ html body.Dark .Screen > .TitleBar .ScreenList
 /* End dark theme */
 
 /* Charcoal theme */
+
+html body.Charcoal .Screen > .ScreenContent
+{
+	background: #303030;
+}
 
 html body.Charcoal a, html body a.Charcoal:visited
 {
