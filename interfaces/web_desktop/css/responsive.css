@@ -65,6 +65,11 @@ body #Screens > div.Screen > .TitleBar > .Right
 	background-size: cover !important;
 }
 
+body #Screens > #DoorsScreen.Screen > .ScreenContent
+{
+	transition: left 0.3s;
+}
+
 #Screens > div.Screen + div.Screen > .TitleBar,
 #Screens > div.Screen[moved=moved] > .TitleBar
 {

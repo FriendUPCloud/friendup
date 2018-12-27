@@ -2258,6 +2258,8 @@ function CheckScreenTitle( screen )
 	var testObject = screen ? screen : window.currentScreen;
 	if( !testObject ) return;
 	
+	Friend.GUI.reorganizeResponsiveMinimized();
+	
 	// Tell system we are maximized
 	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
 	{
