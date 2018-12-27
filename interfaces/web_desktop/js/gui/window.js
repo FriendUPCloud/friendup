@@ -2042,7 +2042,10 @@ var View = function( args )
 
 		div.ontouchstart = function( e )
 		{
-			this.setAttribute( 'moving', 'moving' );
+			if( !isMobile )
+			{
+				this.setAttribute( 'moving', 'moving' );
+			}
 		}
 		
 		// Transparency
@@ -2890,7 +2893,7 @@ var View = function( args )
 				touchResizeWindow(evt);
 			});
 
-			resize.addEventListener('touchend', function(evt)
+			resize.addEventListener( 'touchend', function( evt )
 			{
 				cancelBubble( evt );
 			});
@@ -2911,7 +2914,7 @@ var View = function( args )
 				touchResizeWindow(evt);
 			});
 
-			bottombar.addEventListener('touchend', function(evt) {
+			bottombar.addEventListener( 'touchend', function(evt) {
 				cancelBubble( evt );
 			});
 
@@ -4215,7 +4218,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
 		// Here is the first screen
-		Workspace.screen.contentDiv.style.left = '0px';
+		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
 		/*for( var a in movableWindows )
 		{
 			// These views are handled by css...
@@ -4307,7 +4310,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		Friend.GUI.responsiveViewPage = page;
 	}
-	Workspace.screen.contentDiv.style.left = pageW * ( -Friend.GUI.responsiveViewPage ) + 'px';
+	Workspace.screen.contentDiv.style.transform = 'translateX(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px)';
 }
 
 // Intermediate anchor for code that uses new Window()

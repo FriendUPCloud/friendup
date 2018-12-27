@@ -67,7 +67,7 @@ body #Screens > div.Screen > .TitleBar > .Right
 
 body #Screens > #DoorsScreen.Screen > .ScreenContent
 {
-	transition: left 0.3s;
+	transition: transform 0.3s;
 }
 
 #Screens > div.Screen + div.Screen > .TitleBar,
@@ -479,6 +479,14 @@ body:not([tablet]) .DirectoryToolbar > .ToggleGroup
 html body .View > .Title > div > span
 {
 	height: 40px;
+}
+
+html body[mobile] .View:not(.Active) > .BottomBar,
+html body[mobile] .View:not(.Active) > .RightBar,
+html body[mobile] .View:not(.Active) > .LeftBar,
+html body[mobile] .View:not(.Active) > .Resize
+{
+	display: none;
 }
 
 body.WindowMenu #Screens .View
