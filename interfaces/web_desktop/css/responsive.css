@@ -48,6 +48,21 @@ body.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar > .Left
 	font-size: 1em;
 }
 
+body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info:before
+{
+	display: inline-block;
+	content: " ";
+	width: 16px;
+	height: 16px;
+	position: relative;
+	top: 2px;
+	margin: 0 8px 0 0;
+	background-image: url(/webclient/gfx/system/startmenu_32.png);
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+}
+
 body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info
 {
 	margin-left: 10px;
