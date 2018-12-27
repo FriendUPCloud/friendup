@@ -585,6 +585,7 @@ body[mobile=mobile] .Desklet.Open.Opened
 	top: 100%;
 	height: auto;
 	margin:0px;
+	transform: translateY(0%);
 	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
 
 }
@@ -608,7 +609,8 @@ html .Desklet .Launcher
 	z-index: 9999999;
 	position: fixed;
 	background: rgba(0,0,0,0.5);
-	transition: top 0.25s !important;
+	transform: translateY(0%);
+	transition: top,transform 0.25s !important;
 }
 
 .Desklet .Launcher span
@@ -631,7 +633,7 @@ html .Desklet .Launcher
 
 .Desklet.Open.Opened
 {
-	top: 45px !important;
+	transform: translateY(calc(-100% - 49px));
 }
 
 .Desklet.Open .Launcher
