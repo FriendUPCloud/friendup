@@ -1683,7 +1683,7 @@ movableListener = function( e, data )
 		}
 		
 		// Moving a window..
-		if ( window.mouseDown == 1 )
+		if( !isMobile && window.mouseDown == 1 )
 		{
 			if( ( !lockX && !lockY ) && currentMovable.snap && currentMovable.unsnap && currentMovable.shiftKey )
 				currentMovable.unsnap();
