@@ -23,6 +23,8 @@ Friend.GUI      = Friend.GUI    || {};    // GUI namespace
 Friend.GUI.view = {};                     // View window namespace
 
 // Lets remember values
+Friend.GUI.responsiveViewPage       = 0;  // Current view page mobile
+Friend.GUI.responsiveViewPageCount  = 0;  // View page count mobile
 Friend.GUI.view.windowStorage       = [];
 Friend.GUI.view.viewHistory         = []; // History of opened views
 Friend.GUI.view.windowStorageLoaded = false;
@@ -2373,6 +2375,11 @@ var View = function( args )
 					}
 				}
 			}
+			// Reorganize minimized view windows
+			else
+			{
+				Friend.GUI.reorganizeResponsiveMinimized();
+			}
 		}
 
 		// Mobile has extra close button
@@ -4198,6 +4205,109 @@ var View = function( args )
 	CheckScreenTitle();
 
 	// Done setting up view ---------------------------------------------------<
+}
+
+// Reorganize view window positions on responsive browser
+Friend.GUI.reorganizeResponsiveMinimized = function()
+{
+	if( !isMobile ) return;
+	if( !Workspace.screen || !Workspace.screen.contentDiv ) return;
+	if( document.body.classList.contains( 'ViewMaximized' ) )
+	{
+		// Here is the first screen
+		Workspace.screen.contentDiv.style.left = '0px';
+		/*for( var a in movableWindows )
+		{
+			// These views are handled by css...
+			var c = movableWindows[a].parentNode;
+			c.style.top = '0';
+			c.style.left = '0';
+			c.style.width = '100%';
+			c.style.height = '100%';
+		}*/
+		return;
+	}
+	
+	var boxWidth = 96;  // Window width when minimized
+	var boxHeight = 80; // Window height when minimized
+	
+	var marginX = 12; // Minimum margin
+	var marginY = 42;
+	
+	var pageW  = Workspace.screen.contentDiv.parentNode.offsetWidth;
+	var pageH  = Workspace.screen.contentDiv.offsetHeight;
+	
+	// Maximum widths in page
+	var maxCount = Math.floor( pageW / ( boxWidth + marginX ) );
+	// Calculate optimum horiz margin (adds right margin with +1)
+	marginX = ( pageW - ( boxWidth * maxCount ) ) / ( maxCount + 1 );
+	
+	var startY = 12;
+	var page = 0;
+	var pageX2 = pageW;
+	var iconHeight = false;
+	var pageX1 = 0;
+	var gridX = marginX;
+	var gridY = startY;
+	for( var a in movableWindows )
+	{
+		var v = movableWindows[ a ];
+		var c = v.parentNode; // ViewContainer
+		if( c.classList.contains( 'Active' ) )
+		{
+			// These views are handled by css...
+			c.style.top = '0';
+			c.style.left = '0';
+			c.style.width = '100%';
+			c.style.height = '100%';
+			continue;
+		}
+		
+		if( !iconHeight )
+		{
+			iconHeight = boxHeight + marginY;
+		}
+		
+		// Position and size
+		c.style.top = gridY + 'px';
+		c.style.left = gridX + 'px';
+		c.style.width = boxWidth + 'px';
+		c.style.height = boxHeight + 'px';
+		c.style.minWidth = boxWidth + 'px';
+		c.style.minHeight = boxHeight + 'px';
+		
+		// Next column
+		gridX += boxWidth + marginX;
+		
+		// Next row
+		if( gridX + boxWidth >= pageX2 )
+		{
+			gridX = pageX1 + marginX;
+			gridY += iconHeight;
+			
+			// Next horizontal page
+			if( gridY + boxHeight >= pageH )
+			{
+				gridY = startY;
+				pageX1 += pageW;
+				pageX2 += pageW;
+				gridX = pageX1 + marginX;
+				page++;
+			}
+		}
+	}
+	// Store how many pages we are counting..
+	Friend.GUI.responsiveViewPageCount = page;
+	
+	// Resize screen content
+	Workspace.screen.contentDiv.style.width = ( pageW * ( page + 1 ) ) + 'px';
+	
+	// Reposition content div
+	if( Friend.GUI.responsiveViewPage > page )
+	{
+		Friend.GUI.responsiveViewPage = page;
+	}
+	Workspace.screen.contentDiv.style.left = pageW * ( -Friend.GUI.responsiveViewPage ) + 'px';
 }
 
 // Intermediate anchor for code that uses new Window()
