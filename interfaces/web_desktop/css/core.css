@@ -28,6 +28,7 @@ html
 	padding: 0;
 	user-select: none;
 	-webkit-user-select: none;
+	overflow: hidden;
 }
 
 body

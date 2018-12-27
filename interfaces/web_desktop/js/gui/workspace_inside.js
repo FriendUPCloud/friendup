@@ -1086,6 +1086,7 @@ var WorkspaceInside = {
 						Workspace.widget.slideUp();
 					Workspace.mainDock.closeDesklet();
 					DefaultToWorkspaceScreen();
+					Friend.GUI.reorganizeResponsiveMinimized();
 				}
 				
 				// App menu toggle
@@ -1098,6 +1099,7 @@ var WorkspaceInside = {
 					if( document.body.classList.contains( 'AppsShowing' ) )
 					{
 						Workspace.mainDock.closeDesklet();
+						Friend.GUI.reorganizeResponsiveMinimized();
 					}
 					else
 					{

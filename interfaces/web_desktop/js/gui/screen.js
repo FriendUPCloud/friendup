@@ -545,6 +545,34 @@ Screen = function ( flags, initObject )
 			scrn.touchCycled = true;
 			scrn.screenCycle();
 		}
+		else if( isMobile && diffx < -100 && !scrn.moving )
+		{
+			if( Friend.GUI.responsiveViewPage < Friend.GUI.responsiveViewPageCount )
+			{
+				scrn.moving = true;
+				setTimeout( function()
+				{
+					scrn.moving = false;
+				}, 500 );
+				Friend.GUI.responsiveViewPage++;
+				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
+				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+			}
+		}
+		else if( isMobile && diffx > 100 && !scrn.moving )
+		{
+			if( Friend.GUI.responsiveViewPage > 0 )
+			{
+				scrn.moving = true;
+				setTimeout( function()
+				{
+					scrn.moving = false;
+				}, 500 );
+				Friend.GUI.responsiveViewPage--;
+				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
+				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+			}
+		}
 		// Show the dock!
 		else if( diffy < 0 && parseInt( ct ) == 0 )
 		{

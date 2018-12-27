@@ -297,6 +297,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					n.style.zIndex = 10;
 					winobj.parentNode.appendChild( n );
 					
+					winobj.parentNode.classList.add( 'Redrawing' );
+					
 					// Refresh and animate
 					winobj.refresh( function()
 					{
@@ -304,6 +306,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						setTimeout( function()
 						{
 							n.parentNode.removeChild( n );
+							winobj.parentNode.classList.remove( 'Redrawing' );
 						}, 400 );
 					} );
 				}
@@ -3638,6 +3641,7 @@ FileIcon.prototype.Init = function( fileInfo )
 				n.scrollTop = obj.directoryView.windowObject.scrollTop;
 				n.style.zIndex = 10;
 				obj.directoryView.windowObject.parentNode.appendChild( n );
+				obj.directoryView.windowObject.parentNode.classList.add( 'Redrawing' );
 				
 				// Refresh and add animation
 				we.refresh( function()
@@ -3645,6 +3649,7 @@ FileIcon.prototype.Init = function( fileInfo )
 					n.style.transform = 'translateX(-100%)';
 					setTimeout( function()
 					{
+						n.parentNode.classList.remove( 'Redrawing' );
 						n.parentNode.removeChild( n );
 					}, 400 );
 				} );

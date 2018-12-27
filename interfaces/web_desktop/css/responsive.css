@@ -48,6 +48,21 @@ body.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar > .Left
 	font-size: 1em;
 }
 
+body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info:before
+{
+	display: inline-block;
+	content: " ";
+	width: 16px;
+	height: 16px;
+	position: relative;
+	top: 2px;
+	margin: 0 8px 0 0;
+	background-image: url(/webclient/gfx/system/startmenu_32.png);
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+}
+
 body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info
 {
 	margin-left: 10px;
@@ -63,6 +78,11 @@ body #Screens > div.Screen > .TitleBar > .Right
 #Screens .Screen .ScreenContent
 {
 	background-size: cover !important;
+}
+
+body #Screens > #DoorsScreen.Screen > .ScreenContent
+{
+	transition: transform 0.3s;
 }
 
 #Screens > div.Screen + div.Screen > .TitleBar,
@@ -247,16 +267,17 @@ html body .Screen .MobileAppMenu:after
 [mobile] #WorkspaceMenu
 {
 	position: absolute;
-	right: 0;
+	right: auto;
 	top: 0;
-	left: auto;
+	left: 100%;
 	background-color: #34495e;
 	width: 40px;
 	height: 40px;
 	overflow: hidden;
 	opacity: 1;
 	pointer-events: all;
-	transition: opacity,width 0.25s;
+	transform: translateX(-40px);
+	transition: opacity,transform 0.25s;
 }
 
 [mobile] #WorkspaceMenu:not(.Open) > div
@@ -268,10 +289,11 @@ html body .Screen .MobileAppMenu:after
 {
 	height: calc(100% + 5px);
 	width: 80%;
+	transform: translateX(-100%);
 	overflow: auto;
 	box-sizing: border-box;
 	padding-top: 40px;
-	box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+	box-shadow: 0px 0px 5px rgba(0,0,0,0.4);
 }
 
 html [mobile] #WorkspaceMenu.Open ul
@@ -281,15 +303,16 @@ html [mobile] #WorkspaceMenu.Open ul
 	display: block !important;
 	color: white;
 	position: fixed;
-	left: 100%;
+	left: 0;
+	transform: translateX(100%);
 	top: 40px;
-	width: 80%;
+	width: 100%;
 	height: calc(100% - 40px);
 	z-index: 10;
 	padding: 0;
 	margin: 0;
 	border-left: 1px solid rgba(0,0,0,0.5);
-	transition: left 0.25s;
+	transition: transform 0.25s;
 	box-shadow: none;
 }
 
@@ -321,7 +344,7 @@ html [mobile] #WorkspaceMenu > div.MenuBack:after
 
 html [mobile] #WorkspaceMenu.Open .Menu.Open > ul
 {
-	left: 20%;
+	transform: translateX(0%);
 	border-left: 0;
 }
 
@@ -361,8 +384,8 @@ html #WorkspaceMenu .Menu
 	display: block;
 	content: " ";
 	position: fixed;
-	left: 0;
-	width: 20%;
+	left: -25%;
+	width: 25%;
 	height: 100%;
 	top: 0;
 }
@@ -372,13 +395,18 @@ html #WorkspaceMenu .Menu
 	font-family: fontawesome;
 	content: "\f142";
 	text-align: center;
-	position: absolute;
+	position: fixed;
 	display: block;
 	width: 40px;
 	height: 40px;
 	line-height: 40px;
 	top: 0;
 	right: 0;
+}
+
+[mobile] #WorkspaceMenu.Open:before
+{
+	content: "\f00d";
 }
 
 /*[mobile]:not(.ViewMaximized) #WorkspaceMenu
@@ -474,6 +502,14 @@ body:not([tablet]) .DirectoryToolbar > .ToggleGroup
 html body .View > .Title > div > span
 {
 	height: 40px;
+}
+
+html body[mobile] .View:not(.Active) > .BottomBar,
+html body[mobile] .View:not(.Active) > .RightBar,
+html body[mobile] .View:not(.Active) > .LeftBar,
+html body[mobile] .View:not(.Active) > .Resize
+{
+	display: none;
 }
 
 body.WindowMenu #Screens .View
@@ -572,6 +608,7 @@ body[mobile=mobile] .Desklet.Open.Opened
 	top: 100%;
 	height: auto;
 	margin:0px;
+	transform: translateY(0%);
 	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
 
 }
@@ -595,7 +632,8 @@ html .Desklet .Launcher
 	z-index: 9999999;
 	position: fixed;
 	background: rgba(0,0,0,0.5);
-	transition: top 0.25s !important;
+	transform: translateY(0%);
+	transition: top,transform 0.25s !important;
 }
 
 .Desklet .Launcher span
@@ -618,7 +656,7 @@ html .Desklet .Launcher
 
 .Desklet.Open.Opened
 {
-	top: 45px !important;
+	transform: translateY(calc(-100% - 49px));
 }
 
 .Desklet.Open .Launcher

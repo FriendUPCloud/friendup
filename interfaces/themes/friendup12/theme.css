@@ -344,7 +344,7 @@ html #Screens > div
 
 html body.Charcoal #Screens > div
 {
-	background: #444444;
+	background: #303030;
 }
 
 html #DoorsScreen > .ScreenContent,
@@ -377,12 +377,8 @@ html body .Screen > .TitleBar.Busy:after
 
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
 {
-	margin: 15px 0 25px 12px;
-	height: 80px !important;
-	width: calc(33% - 15px);
-	float: left;
+	position: absolute;
 	clear: none;
-	position: relative;
 	border-radius: 8px;
 	transition: box-shadow;
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
@@ -1633,6 +1629,11 @@ html body.Dark .Screen > .TitleBar .ScreenList
 /* End dark theme */
 
 /* Charcoal theme */
+
+html body.Charcoal .Screen > .ScreenContent
+{
+	background: #303030;
+}
 
 html body.Charcoal a, html body a.Charcoal:visited
 {
