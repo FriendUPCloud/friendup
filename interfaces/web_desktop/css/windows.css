@@ -187,12 +187,12 @@ html .View[viewsnap] .Title > div > div
 }
 [mobile=mobile]:not([sharedapp]) #Screens .View.Active[maximized=true].Opening
 {
-	transform: translate3d(100%,0,0) !important;
+	transform: translateX(100%) !important;
 }
 [mobile=mobile]:not([sharedapp]) #Screens .View.Active[maximized=true].Opened
 {
 	will-transform: auto;
-	transform: translate3d(0,0,0) !important;
+	transform: translateX(0) !important;
 }
 [mobile=mobile] #Screens .View:not(.Active)
 {
@@ -921,10 +921,12 @@ body[mobile=mobile] > .MobileMenu
 {
 	display: block;
 	position: fixed;
-    top: 100%;
+    top: 0;
     left: 0;
     width: 100%;
     bottom: 0;
+    transform: translateY(100%);
+    transition: transform 0.25s;
 }
 
 body[mobile=mobile] > .MobileMenu.Visible
@@ -937,7 +939,7 @@ body[mobile=mobile] > .MobileMenu.Visible
     bottom: 0;
     background: rgba(255,255,255,0.9);
     padding: 20px;
-    top: 50px;
+    transform: translateY(50px);
 }
 
 body[mobile=mobile] > .MobileMenu > div
