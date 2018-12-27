@@ -1809,6 +1809,12 @@ var View = function( args )
 			setTimeout( function()
 			{
 				div.classList.remove( 'Opened' );
+				// Give last call to port
+				div.classList.add( 'Finalized' );
+				setTimeout( function()
+				{
+					div.classList.remove( 'Finalized' );
+				}, 250 );
 			}, 250 );
 		}, 250 );
 
