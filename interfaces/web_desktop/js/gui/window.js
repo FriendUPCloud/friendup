@@ -1810,10 +1810,10 @@ var View = function( args )
 			{
 				div.classList.remove( 'Opened' );
 				// Give last call to port
-				div.classList.add( 'Finalized' );
+				div.classList.add( 'Redrawing' );
 				setTimeout( function()
 				{
-					div.classList.remove( 'Finalized' );
+					div.classList.remove( 'Redrawing' );
 				}, 250 );
 			}, 250 );
 		}, 250 );

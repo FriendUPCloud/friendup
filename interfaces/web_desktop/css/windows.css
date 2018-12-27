@@ -238,7 +238,8 @@ html .View[viewsnap] .Title > div > div
 	transition: background 0.3s;
 }
 [mobile=mobile]:not([sharedapp]) #Screens .View.Active.Opening .Thumbnail,
-[mobile=mobile]:not([sharedapp]) #Screens .View.Active.Opened .Thumbnail
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active.Opened .Thumbnail,
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active.Redrawing .Thumbnail
 {
 	background-image: none !important;
 	background-color: #202020;
