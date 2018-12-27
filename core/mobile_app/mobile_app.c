@@ -1201,7 +1201,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	
 	// get message length
 	
-	unsigned int reqLengith = 0;
+	unsigned int reqLengith = LWS_PRE + 512;
 	
 	DEBUG("[MobileAppNotifyUserUpdate] start\n");
 	
@@ -1232,7 +1232,20 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	
 	if( notif != NULL )
 	{
-		reqLengith = strlen( notif->n_Channel ) + strlen( notif->n_Content ) + strlen( notif->n_Title ) + LWS_PRE + 512/*some slack*/;
+		if( notif->n_Channel != NULL )
+		{
+			reqLengith += strlen( notif->n_Channel );
+		}
+		
+		if( notif->n_Content != NULL )
+		{
+			reqLengith += strlen( notif->n_Content );
+		}
+		
+		if( notif->n_Title != NULL )
+		{
+			reqLengith += strlen( notif->n_Title );
+		}
 		
 		if( notif->n_Application != NULL )
 		{
