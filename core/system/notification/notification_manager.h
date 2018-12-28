@@ -61,6 +61,8 @@ Notification *NotificationManagerGetDB( NotificationManager *nm, FULONG id );
 
 int NotificationManagerAddNotificationDB( NotificationManager *nm, Notification *n );
 
+int NotificationManagerAddToList( NotificationManager *nm, Notification *n );
+
 int NotificationManagerAddNotificationSentDB( NotificationManager *nm, NotificationSent *ns );
 
 Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm,  FULONG notifSentId );

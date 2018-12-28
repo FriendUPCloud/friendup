@@ -287,6 +287,24 @@ int NotificationManagerAddNotificationDB( NotificationManager *nm, Notification 
 		nm->nm_SQLLib->Save( nm->nm_SQLLib, NotificationDesc, n );
 	
 		DEBUG("[NotificationManagerAddNotificationDB] added to list: %lu\n", n->n_ID );
+
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+	return 0;
+}
+
+/**
+ * Add notification to list
+ *
+ * @param nm pointer to MobileManager
+ * @param n pointer to Notification structure which will be stored
+ * @return 0 when success, otherwise error number
+ */
+int NotificationManagerAddToList( NotificationManager *nm, Notification *n )
+{
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
+	{
+		DEBUG("[NotificationManagerAddToList] added to list: %lu\n", n->n_ID );
 		n->node.mln_Succ = (MinNode *) nm->nm_Notifications;
 		if( nm->nm_Notifications != NULL )
 		{
@@ -295,7 +313,6 @@ int NotificationManagerAddNotificationDB( NotificationManager *nm, Notification 
 		nm->nm_Notifications = n;
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 	}
-	
 	return 0;
 }
 

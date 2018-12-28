@@ -992,6 +992,13 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		usr = (User *)usr->node.mln_Succ;
 	}	// usr != NULL
 	
+	// if message was sent via Websockets
+	// then Notification must be added to list, which will be checked before
+	if( wsMessageSent == TRUE )
+	{
+		NotificationManagerAddToList( sb->sl_NotificationManager, notif );
+	}
+	
 	//
 	// go through all mobile connections
 	//
@@ -1184,6 +1191,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		FERROR("Message was sent through websockets or APNS is not enabled!\n");
 	}
 	FFree( jsonMessage );
+	
+	// message was not sent via Websockets, there is no need to put it into queue
+	if( wsMessageSent == FALSE )
+	{
+		return -1;
+	}
 
 	return 0;
 }
