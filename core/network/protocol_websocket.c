@@ -821,52 +821,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						//'{"type":"msg","data":{"type":"error","requestid":"fconn-req-hx3yz407-eoux1pdy-ba1nblco"\", }}'
 						// we do want to find requestid in data
 						
-						/*
-						char *reqid = NULL;
-						reqid = strstr( in, "\"requestid\"" );
-						if( reqid != NULL )
-						{
-							reqid += 13;
-							// we want to remove last "
-							char *rem = strstr( reqid, "\"" );
-							if( rem != NULL )
-							{
-								*rem = 0;
-							}
-						}
-						
-						FERROR("Failed to parse JSON: %d\n", r);
-						unsigned char buf[ 256 ];
-						char locmsg[ 256 ];
-						int locmsgsize = snprintf( locmsg, sizeof(locmsg), "{\"type\":\"msg\",\"data\":{\"type\":\"error\",\"data\":{\"requestid\":\"%s\"}}}", reqid );
-						
-						strcpy( (char *)(buf), locmsg );
-						
-						if( fcd->fcd_WSClient != NULL && fcd->fcd_WSClient->wc_UserSession != NULL ) //ORDER IS IMPORTANT
-						{
-							WebsocketWriteInline( fcd->fcd_WSClient, buf, locmsgsize, LWS_WRITE_TEXT );
-						}
-						
-						FRIEND_MUTEX_LOCK( &WSThreadMutex );
-						WSThreadNum--;
-						FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
-						FFree( t );
-						
-						WebsocketClient *wscl = fcd->fcd_WSClient;
-						FRIEND_MUTEX_LOCK( &(wscl->wc_Mutex) );
-						wscl->wc_InUseCounter--;
-						DEBUG("\t\t\t\t\t->%d\n", wscl->wc_InUseCounter );
-						FRIEND_MUTEX_UNLOCK( &(wscl->wc_Mutex) );
-						
-						FLUSH_QUEUE();
-						
-						if( in != NULL )
-						{
-							FFree( in );
-						}
-						
-						return 0;
-						*/
 						if( fcd != NULL && fcd->fcd_Buffer != NULL && fcd->fcd_Buffer->bs_Size > 0 )
 						{
 							// if first part of request was found then its a sign that buffer must be erased
