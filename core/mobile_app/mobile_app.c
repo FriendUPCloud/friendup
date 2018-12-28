@@ -1129,7 +1129,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	char *jsonMessageIOS = NULL;
 	int jsonMessageIosLength = reqLengith+512;
-	if( wsMessageSent == FALSE )//&& sb->l_APNSConnection != NULL && sb->l_APNSConnection->wapns_Connection != NULL )
+	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )//&& sb->l_APNSConnection != NULL && sb->l_APNSConnection->wapns_Connection != NULL )
 	{
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
@@ -1480,6 +1480,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	char *jsonMessageIOS;
 	int jsonMessageIosLength = reqLengith+512;
 	//if( sb->l_APNSConnection != NULL )&& sb->l_APNSConnection->wapns_Connection != NULL )
+	if( sb->sl_NotificationManager->nm_APNSCert != NULL )
 	{
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
@@ -1544,12 +1545,10 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 			FFree( jsonMessageIOS );
 		}
 	}
-	/*
 	else
 	{
 		INFO("No connection to APNS server!\n");
 	}
-	*/
 	
 	FFree( jsonMessage );
 	

@@ -1657,24 +1657,25 @@ int SystemInitExternal( SystemBase *l )
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
 	
+	/*
 	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
 	if( l->l_APNSConnection != NULL )
 	{
-		/*
-		if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
-		{
-			DEBUG("APNS server connected\n");
-		}
-		else
-		{
-			DEBUG("APNS server not connected\n");
-		}
-		*/
+		
+		//if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
+		//{
+		//	DEBUG("APNS server connected\n");
+		//}
+		//else
+		//{
+		//	DEBUG("APNS server not connected\n");
+		//}
 	}
 	else
 	{
 		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
 	}
+	*/
 	
 	return 0;
 }
