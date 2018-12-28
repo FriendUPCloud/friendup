@@ -235,7 +235,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 			{
 				char *qery = FMalloc( 1048 );
 				qery[ 1024 ] = 0;
-				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT UserID FROM FUser WHERE `Name`=\"%s\"", username );
+				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT ID FROM FUser WHERE `Name`=\"%s\"", username );
 				void *res = sqllib->Query( sqllib, qery );
 				if( res != NULL )
 				{
