@@ -1129,7 +1129,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	char *jsonMessageIOS = NULL;
 	int jsonMessageIosLength = reqLengith+512;
-	if( wsMessageSent == FALSE && sb->l_APNSConnection != NULL && sb->l_APNSConnection->wapns_Connection != NULL )
+	if( wsMessageSent == FALSE )//&& sb->l_APNSConnection != NULL && sb->l_APNSConnection->wapns_Connection != NULL )
 	{
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
@@ -1147,10 +1147,13 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 				
+				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
+				/*
 				DEBUG("Send message to device %s\n", lma->uma_Platform );
 				int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
 			
 				WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, jsonMessageIOS, msgsize );
+				*/
 				
 				//NotificationSentDelete( lns );
 				// add NotificationSent to Notification
@@ -1476,7 +1479,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	
 	char *jsonMessageIOS;
 	int jsonMessageIosLength = reqLengith+512;
-	if( sb->l_APNSConnection != NULL && sb->l_APNSConnection->wapns_Connection != NULL )
+	//if( sb->l_APNSConnection != NULL )&& sb->l_APNSConnection->wapns_Connection != NULL )
 	{
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
@@ -1495,10 +1498,13 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
 					DEBUG("Send message to device %s\n", lma->uma_Platform );
+					
+					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
+					/*
 					int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
 			
 					WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, jsonMessageIOS, msgsize );
-					
+					*/
 					NotificationSentDelete( lns );
 
 					lma = (UserMobileApp *)lma->node.mln_Succ;
@@ -1519,9 +1525,13 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
 					DEBUG("Send message to device %s\n", lma->uma_Platform );
+					
+					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
+					/*
 					int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
 			
 					WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, jsonMessageIOS, msgsize );
+					*/
 					
 					NotificationSentDelete( lns );
 
@@ -1530,24 +1540,16 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 			} // notifSentID == 0
 			
 			UserMobileAppDeleteAll( lmaroot );
-		/*
-		MobileListEntry *mle = MobleManagerGetByUserNameDBPlatform( mm, user_connections->userID, (char *)username, MOBILE_APP_TYPE_IOS );
-		//MobileListEntry *mle = MobleManagerGetByUserIDDBPlatform( mm, user_connections->userID, MOBILE_APP_TYPE_IOS );
-		while( mle != NULL )
-		{
-			snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", sb->l_AppleKeyAPI, escaped_message, mle->mm_UMApp->uma_AppToken );
-			
-			WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, json_message_ios, json_message_ios_size );
-			mle = (MobileListEntry *) mle->node.mln_Succ;
-		}
-		*/
+
 			FFree( jsonMessageIOS );
 		}
 	}
+	/*
 	else
 	{
 		INFO("No connection to APNS server!\n");
 	}
+	*/
 	
 	FFree( jsonMessage );
 	

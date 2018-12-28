@@ -27,6 +27,15 @@
 #include <system/user/user_mobile_app.h>
 #include "notification.h"
 
+#define APNS_SANDBOX_HOST "gateway.sandbox.push.apple.com"
+#define APNS_SANDBOX_PORT 2195
+
+#define APNS_HOST "gateway.push.apple.com"
+#define APNS_PORT 2195
+
+#define DEVICE_BINARY_SIZE 32
+#define MAXPAYLOAD_SIZE 256
+
 //
 // Notification Manager structure
 //
@@ -38,6 +47,9 @@ typedef struct NotificationManager
 	FThread					*nm_TimeoutThread;
 	Notification			*nm_Notifications;
 	pthread_mutex_t			nm_Mutex;
+	char					*nm_APNSCert;
+	time_t					nm_APNSNotificationTimeout;
+	FBOOL					nm_APNSSandBox;
 }NotificationManager;
 
 
@@ -68,6 +80,8 @@ int NotificationManagerNotificationSentSetStatusDB( NotificationManager *nm, FUL
 int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm );
 
 void NotificationManagerTimeoutThread( FThread *data );
+
+int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *content, const char *sound, int badge, char *userData, char *tokens );
 
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__
 
