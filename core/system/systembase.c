@@ -2756,7 +2756,7 @@ void RemoveOldLogs( SystemBase *l )
 					for( i = 0 ; i < numberOfFiles ; i++ )
 					{
 						
-						DEBUG1("maxbytes %d will survive %d MB %d\n", bytes, maxLogsBytes, (bytes/(1024*1000)) );
+						DEBUG1("maxbytes %lu will survive %d MB %lu\n", bytes, maxLogsBytes, (FULONG)(bytes/(1024*1000)) );
 						if( bytes > maxLogsBytes )
 						{
 							DEBUG1("Delete file %s modification date %lu\n", filesPtr[ i ]->lf_Name, filesPtr[ i ]->lf_ModDate );

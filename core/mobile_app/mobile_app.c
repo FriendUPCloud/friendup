@@ -899,6 +899,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	char *escapedMessage = json_escape_string(message);
 	char *escapedApp = NULL;
 	char *escapedExtraString = NULL;
+	FULONG userID = 0;
 	
 	if( app )
 	{
@@ -937,6 +938,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	User *usr = UMGetUserByName( sb->sl_UM, username );
 	if( usr != NULL )
 	{
+		userID = usr->u_ID;
 		time_t timestamp = time( NULL );
 		//
 		
@@ -1135,7 +1137,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		{
 			// on the end, list for the user should be taken from DB instead of going through all connections
 			
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, username, MOBILE_APP_TYPE_IOS );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS );
 			UserMobileApp *lma = lmaroot;
 			
 			while( lma != NULL )
@@ -1482,9 +1484,17 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	//if( sb->l_APNSConnection != NULL )&& sb->l_APNSConnection->wapns_Connection != NULL )
 	if( sb->sl_NotificationManager->nm_APNSCert != NULL )
 	{
+		FULONG userID = 0;
+		User *usr = UMGetUserByName( sb->sl_UM, username );
+		if( usr != NULL )
+		{
+			userID = usr->u_ID;
+			UserDelete( usr );
+		}
+		
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, username, MOBILE_APP_TYPE_IOS );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS );
 			UserMobileApp *lma = lmaroot;
 			
 			if( action == NOTIFY_ACTION_READ )

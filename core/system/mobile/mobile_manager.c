@@ -772,11 +772,11 @@ int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
  * Get User Mobile Connections from database by user name and platform
  *
  * @param mmgr pointer to MobileManager
- * @param username name of user to which mobile apps belong
+ * @param userID ID of user to which mobile apps belong
  * @param type type of mobile apps
  * @return pointer to new created list of MobileListEntry
  */
-UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, const char *username, int type )
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type )
 {
 	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
 	{
@@ -792,7 +792,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, c
 	if( lsqllib != NULL )
 	{
 		char where[ 512 ];
-		snprintf( where, sizeof(where), "UserID='%s' AND Platform='%s'", username, mobileType );
+		snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s'", userID, mobileType );
 
 		int entries;
 		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
