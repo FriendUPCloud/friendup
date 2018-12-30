@@ -504,10 +504,7 @@ html body .View > .Title > div > span
 	height: 40px;
 }
 
-html body[mobile] .View:not(.Active) > .BottomBar,
-html body[mobile] .View:not(.Active) > .RightBar,
-html body[mobile] .View:not(.Active) > .LeftBar,
-html body[mobile] .View:not(.Active) > .Resize
+html body[mobile] .View:not(.Active) > div:not(.Title)
 {
 	display: none;
 }
