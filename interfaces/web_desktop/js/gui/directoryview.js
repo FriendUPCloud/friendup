@@ -4119,114 +4119,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
-		var rr = iconObject;
-
-		var win = new View ( {
-			title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
-			width    : 650,
-			height   : 512,
-			memorize : true,
-			fullscreenenabled : true
-		} );
-
-		var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
-
-		var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
-		/*console.log( '[7] you are here ... directoryview.js ||| ' + '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '\'); background-position: center; background-size: contain; background-repeat: no-repeat; background-color: black"></div>' );*/
-		var owin = win;
-		if( iconObject.extension.toLowerCase() == 'pdf' )
-		{
-			GetURLFromPath( fileInfo.Path, function( imageUrl )
-			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
-				
-				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
-			} );
-		}
-		else
-		{
-			GetURLFromPath( fileInfo.Path, function( imageUrl )
-			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
-				
-				owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-			} );
-		}
-		win._window.addEventListener( 'mousedown', function( e )
-		{
-			var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
-			var dir = 0;
-			if( factor <= 0.2 )
-			{
-				dir = -1;
-			}
-			else if( factor >= 0.8 )
-			{
-				dir = 1;
-			}
-			if( dir != 0 )
-			{
-				var d = new Door().get( fileInfo.Path );
-				if( !d || !d.getIcons )
-				{
-					return;
-				}
-				var path = fileInfo.Path.substr( 0, fileInfo.Path.length - fileInfo.Filename.length );
-				var f = {}; for( var a in fileInfo ) f[a] = fileInfo[a];
-				f.Path = path;
-				
-				d.getIcons( f, function( data )
-				{
-					var prev = '';
-					var curr = '';
-					var prevPath = currPath = '';
-					for( var a = 0; a < data.length; a++ )
-					{
-						// Skip directories
-						if( data[ a ].Type == 'Directory' ) continue;
-						
-						// Skip non-image files
-						var last = data[a].Filename.split( '.' );
-						var ext = last[ last.length - 1 ].toLowerCase();
-						if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
-							continue;
-							
-						prev = curr;
-						prevPath = currPath;
-						curr = data[a].Filename;
-						currPath = data[a].Path;
-						
-						// Load the image if it lays on a Dormant door
-						if( prev && dir == -1 && prev != curr && curr == fileInfo.Filename )
-						{							
-							fileInfo.Filename = prev;
-							fileInfo.Path = prevPath;
-							GetURLFromPath( prevPath, function( imageUrl )
-							{
-								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-								owin.setFlag( 'title', prev );
-							} );
-							return;
-						}
-						if( curr && dir == 1 && curr != prev && prev == fileInfo.Filename )
-						{
-							fileInfo.Filename = curr;
-							fileInfo.Path = currPath;
-							GetURLFromPath( currPath, function( imageUrl )
-							{
-								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-								owin.setFlag( 'title', curr );
-							} );
-							return;
-						}
-					}
-				} );
-			}
-		} );
-		function doImage( path, title )
-		{
-		}
-		win = null;
+		Friend.startImageViewer( iconObject );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -4788,6 +4681,206 @@ if( typeof noEvent == 'undefined' )
 	}
 }
 
+// The Friend image viewer! ----------------------------------------------------
+Friend.startImageViewer = function( iconObject )
+{
+	var win = new View ( {
+		title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
+		width    : 650,
+		height   : 512,
+		memorize : true,
+		fullscreenenabled : true
+	} );
+
+	var zoomLevel = 1;
+	var zoomImage = null;
+
+	var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
+
+	function renderToolbar( eparent )
+	{
+		if( eparent.toolbar ) return;
+		var d = document.createElement( 'div' );
+		d.className = 'ImageViewerToolbar';
+		d.innerHTML = '\
+			<div class="ArrowLeft MousePointer"><span class="IconSmall fa-angle-left"></span></div>\
+			<div class="Fullscreen MousePointer"><span class="IconSmall fa-arrows-alt"></span></div>\
+			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
+			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
+			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
+		';
+		eparent.appendChild( d );
+		eparent.style.overflow = 'hidden';
+		var eles = d.getElementsByTagName( 'div' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			if( eles[a].classList.contains( 'Fullscreen' ) )
+			{
+				eles[a].onclick = function()
+				{
+					Workspace.fullscreen( eparent.content );
+				}
+			}
+			else if( eles[a].classList.contains( 'ArrowLeft' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					goDirection( -1, e );
+				}
+			}
+			else if( eles[a].classList.contains( 'ArrowRight' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					goDirection( 1, e );
+				}
+			}
+			else if( eles[a].classList.contains( 'ZoomIn' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					if( zoomImage )
+					{
+						zoomLevel += 0.25;
+						if( zoomLevel > 3 )
+							zoomLevel = 3;
+						zoomImage.style.maxWidth = 'auto';
+						zoomImage.style.maxHeight = 'auto';
+						zoomImage.style.zoom = zoomLevel;
+					}
+				}
+			}
+			else if( eles[a].classList.contains( 'ZoomOut' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					zoomLevel -= 0.25;
+					if( zoomLevel == 0 ) zoomLevel = 0.25;
+					if( zoomImage )
+					{
+						zoomImage.style.zoom = zoomLevel;
+					}
+				}
+			}
+		}
+	}
+
+	var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
+	var owin = win;
+	
+	if( iconObject.extension.toLowerCase() == 'pdf' )
+	{
+		// Remove toolbar..
+		if( win._window.parentNode.toolbar )
+		{
+			win._window.parentNode.removeChild( win._window.parentNode.toolbar );
+			win._window.parentNode.toolbar = null;
+		}
+		
+		GetURLFromPath( iconObject.Path, function( imageUrl )
+		{
+			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			
+			owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+		} );
+	}
+	else
+	{
+		// Set the toolbar on the window
+		renderToolbar( win._window.parentNode );
+	
+		GetURLFromPath( iconObject.Path, function( imageUrl )
+		{
+			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			
+			owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+			zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+		} );
+	}
+	win._window.addEventListener( 'mousedown', function( e )
+	{
+		var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
+		var dir = 0;
+		if( factor <= 0.2 )
+		{
+			dir = -1;
+		}
+		else if( factor >= 0.8 )
+		{
+			dir = 1;
+		}
+		goDirection( dir, e );
+	} );
+	function goDirection( dir, e )
+	{
+		if( dir != 0 )
+		{
+			var d = new Door().get( iconObject.Path );
+			if( !d || !d.getIcons )
+			{
+				return;
+			}
+			var path = iconObject.Path.substr( 0, iconObject.Path.length - iconObject.Filename.length );
+			var f = {}; for( var a in iconObject ) f[a] = iconObject[a];
+			f.Path = path;
+			d.getIcons( f, function( data )
+			{
+				var prev = '';
+				var curr = '';
+				var prevPath = currPath = '';
+				for( var a = 0; a < data.length; a++ )
+				{
+					// Skip directories
+					if( data[ a ].Type == 'Directory' ) continue;
+					
+					// Skip non-image files
+					var last = data[a].Filename.split( '.' );
+					var ext = last[ last.length - 1 ].toLowerCase();
+					if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
+						continue;
+						
+					prev = curr;
+					prevPath = currPath;
+					curr = data[a].Filename;
+					currPath = data[a].Path;
+					zoomLevel = 1;
+					
+					// Load the image if it lays on a Dormant door
+					if( prev && dir == -1 && prev != curr && curr == iconObject.Filename )
+					{							
+						iconObject.Filename = prev;
+						iconObject.Path = prevPath;
+						GetURLFromPath( prevPath, function( imageUrl )
+						{
+							owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
+							owin.setFlag( 'title', prev );
+							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+						} );
+						return;
+					}
+					if( curr && dir == 1 && curr != prev && prev == iconObject.Filename )
+					{
+						iconObject.Filename = curr;
+						iconObject.Path = currPath;
+						GetURLFromPath( currPath, function( imageUrl )
+						{
+							owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
+							owin.setFlag( 'title', curr );
+							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+						} );
+						return;
+					}
+				}
+			} );
+		}
+	};
+	function doImage( path, title )
+	{
+	}
+	win = null;
+};
+
+// End Friend Image Viewer! ----------------------------------------------------
 
 
 // -----------------------------------------------------------------------------

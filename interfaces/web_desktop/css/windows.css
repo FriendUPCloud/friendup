@@ -45,6 +45,49 @@
 	display: none;
 }
 
+.View > .ImageViewerToolbar
+{
+	position: absolute;
+	bottom: 20px;
+	left: calc(50% - 200px);
+	width: 400px;
+	height: 40px;
+	border-radius: 20px;
+	background: rgba(0,0,0,0.5);
+	text-align: center;
+	z-index: 100;
+}
+
+.View > .ImageViewerToolbar > div
+{
+	display: inline-block;
+	width: 40px;
+	height: 30px;
+	margin: 5px 15px 0 0;
+	border-radius: 5px;
+	line-height: 30px;
+	background: transparent;
+	transition: background 0.25s;
+}
+
+body:not([mobile]) .View > .ImageViewerToolbar > div:hover
+{
+	background: rgba(0,0,0,0.5);
+}
+
+.View > .ImageViewerToolbar > div > span
+{
+	display: block;
+	margin: auto;
+}
+
+
+.View > .ImageViewerToolbar > div:last-child
+{
+	margin: 5px 0 0 0;
+}
+
+
 /* Snapping */
 
 html .View[viewsnap] .Title > div > div
