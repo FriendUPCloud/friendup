@@ -2050,6 +2050,7 @@ var View = function( args )
 		// Tablets and mobile
 		div.ontouchstart = function( e )
 		{
+			var self = this;
 			if( !isMobile )
 			{
 				this.setAttribute( 'moving', 'moving' );
@@ -2061,8 +2062,20 @@ var View = function( args )
 					y: e.touches[0].clientY,
 					time: ( new Date() ).getTime()
 				};
-				this.viewIcon.classList.add( 'Dragging' );
 			}
+			// Only removable after 300 ms
+			this.touchInterval = setInterval( function()
+			{
+				var t = ( new Date() ).getTime();
+				if( t - self.clickOffset.time > 300 )
+				{
+					// Update time
+					self.clickOffset.removable = true;
+					self.viewIcon.classList.add( 'Dragging' );
+					clearInterval( self.touchInterval );
+					self.touchInterval = null;
+				}
+			}, 150 );
 		}
 		
 		// Remove window on drag
@@ -2075,19 +2088,37 @@ var View = function( args )
 				var diffx = e.touches[0].clientX - this.clickOffset.x;
 				if( diffx > 20 )
 					return;
-				
 				var diffy = e.touches[0].clientY - this.clickOffset.y;
-				var difft = ( new Date() ).getTime() - this.clickOffset.time;
 			
 				// Drag 100 px under 0.15ms
-				if( diffy > 100 && difft < 150 )
+				if( this.viewIcon.classList.contains( 'Dragging' ) )
 				{
-					div.close.click();
+					if( diffy > 100 )
+					{
+						this.viewIcon.classList.add( 'Remove' );
+					}
+					else
+					{
+						this.viewIcon.classList.remove( 'Remove' );
+					}
 				}
 			}
 			div.ontouchend = function( e )
 			{
-				this.viewIcon.classList.remove( 'Dragging' );
+				if( this.viewIcon.classList.contains( 'Dragging' ) )
+				{
+					this.viewIcon.classList.remove( 'Dragging' );
+				}
+				if( this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					this.viewIcon.classList.remove( 'Remove' );
+					this.close.click();
+				}
+				if( this.touchInterval )
+				{
+					clearInterval( this.touchInterval );
+					this.touchInterval = null;
+				}
 			}
 		}
 		
