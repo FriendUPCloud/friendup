@@ -504,6 +504,11 @@ html body .View > .Title > div > span
 	height: 40px;
 }
 
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Dragging
+{
+	background-color: rgba(255,255,255,0.4);
+}
+
 html body[mobile] .View:not(.Active) > div:not(.Title)
 {
 	display: none;
