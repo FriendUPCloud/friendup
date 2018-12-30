@@ -1096,6 +1096,11 @@ var WorkspaceInside = {
 				Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
 				appMenu.onclick = function()
 				{
+					if( ge( 'WorkspaceMenu' ) )
+					{
+						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+						document.body.classList.remove( 'WorkspaceMenuOpen' );
+					}
 					if( document.body.classList.contains( 'AppsShowing' ) )
 					{
 						Workspace.mainDock.closeDesklet();

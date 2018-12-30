@@ -135,6 +135,11 @@ var WorkspaceMenu =
 					
 					this.classList.add( 'Open' );
 					document.body.classList.add( 'WorkspaceMenuOpen' );
+					
+					// Toggle docks and stuff
+					if( Workspace.mainDock )
+						Workspace.mainDock.closeDesklet();
+					Friend.GUI.reorganizeResponsiveMinimized();
 				}
 			}
 		}

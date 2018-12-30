@@ -47,6 +47,10 @@
 
 .View > .ImageViewerToolbar
 {
+<<<<<<< HEAD
+=======
+	overflow: hidden;
+>>>>>>> dev
 	position: absolute;
 	bottom: 20px;
 	left: calc(50% - 200px);
@@ -58,6 +62,23 @@
 	z-index: 100;
 }
 
+<<<<<<< HEAD
+=======
+.View > .ImageViewerContent
+{
+	overflow: hidden;
+}
+
+@media (max-width: 380px)
+{
+	.View > .ImageViewerToolbar
+	{
+		width: calc(100% - 40px);
+		left: 20px;
+	}
+}
+
+>>>>>>> dev
 .View > .ImageViewerToolbar > div
 {
 	display: inline-block;
