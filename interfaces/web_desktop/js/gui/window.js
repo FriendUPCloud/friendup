@@ -145,6 +145,8 @@ function FindWindow( titleStr )
 // Return object with remembered window dimensions
 function RememberWindowDimensions( div )
 {
+	if( isMobile ) return;
+	
 	var wp = GetWindowStorage( div.uniqueId );
 	if ( wp )
 	{
@@ -542,12 +544,15 @@ function CascadeWindowPosition( obj )
 {
 	if( !Workspace.screen ) return;
 	
-	obj.dom.style.top = _cascadeValue + obj.y + 'px';
-	obj.dom.style.left = _cascadeValue + obj.x + 'px';
+	if( !isMobile )
+	{
+		obj.dom.style.top = _cascadeValue + obj.y + 'px';
+		obj.dom.style.left = _cascadeValue + obj.x + 'px';
 	
-	_cascadeValue += 20;
-	if( _cascadeValue + obj.x + obj.w > obj.maxw || _cascadeValue + obj.y + obj.h > obj.maxh )
-		_cascadeValue = 0;
+		_cascadeValue += 20;
+		if( _cascadeValue + obj.x + obj.w > obj.maxw || _cascadeValue + obj.y + obj.h > obj.maxh )
+			_cascadeValue = 0;
+	}
 }
 
 // Returns the display margins, taking into consideration the screen, dock etc
@@ -903,6 +908,15 @@ function _ActivateWindowOnly( div )
 
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
+			
+			// Extra force!
+			if( isMobile )
+			{
+				m.viewContainer.style.top    = '0px';
+				m.viewContainer.style.left   = '0px';
+				m.viewContainer.style.width  = '100%';
+				m.viewContainer.style.height = '100%';
+			}
 
 			if( div.windowObject && !div.notifyActivated )
 			{
@@ -1316,6 +1330,9 @@ function CloseView( win )
 		if( window.currentMovable == win )
 			window.currentMovable = null;
 			
+		// Add to view container
+		win.parentNode.parentNode.classList.add( 'Closing' );
+			
 		var count = 0;
 
 		var isGroupMember = false;
@@ -1491,7 +1508,6 @@ function CloseView( win )
 	if( win && win.nativeWindow ) win.nativeWindow.close();
 	else if( win && win.windowObject && win.windowObject.nativeWindow )
 		win.windowObject.nativeWindow.close();
-
 }
 // Obsolete!!!
 CloseWindow = CloseView;
@@ -2074,6 +2090,9 @@ var View = function( args )
 					self.viewIcon.classList.add( 'Dragging' );
 					clearInterval( self.touchInterval );
 					self.touchInterval = null;
+					
+					Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
+					Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
 				}
 			}, 150 );
 		}
@@ -2105,6 +2124,11 @@ var View = function( args )
 			}
 			div.ontouchend = function( e )
 			{
+				if( Workspace.screen.bufferedTitle )
+				{
+					Workspace.screen.setFlag( 'title', Workspace.screen.bufferedTitle );
+					Workspace.screen.bufferedTitle = null;
+				}
 				if( this.viewIcon.classList.contains( 'Dragging' ) )
 				{
 					this.viewIcon.classList.remove( 'Dragging' );
@@ -2776,29 +2800,32 @@ var View = function( args )
 			}
 		}
 		
-		if( !leftSet && self.flags.left )
+		if( !isMobile )
 		{
-			leftSet = true;
-			if( self.flags.left == 'center' )
+			if( !leftSet && self.flags.left )
 			{
-				div.style.left = ( mvh >> 1 - ( height >> 1 ) ) + 'px';
+				leftSet = true;
+				if( self.flags.left == 'center' )
+				{
+					div.style.left = ( mvh >> 1 - ( height >> 1 ) ) + 'px';
+				}
+				else
+				{
+					div.style.left = self.flags.left + 'px';
+				}
 			}
-			else
-			{
-				div.style.left = self.flags.left + 'px';
-			}
-		}
 		
-		if( !topSet && self.flags.top )
-		{
-			topSet = true;
-			if( self.flags.top == 'center' )
+			if( !topSet && self.flags.top )
 			{
-				div.style.left = ( mvw >> 1 - ( width >> 1 ) ) + 'px';
-			}
-			else
-			{
-				div.style.top = self.flags.top + 'px';
+				topSet = true;
+				if( self.flags.top == 'center' )
+				{
+					div.style.left = ( mvw >> 1 - ( width >> 1 ) ) + 'px';
+				}
+				else
+				{
+					div.style.top = self.flags.top + 'px';
+				}
 			}
 		}
 
@@ -3114,6 +3141,7 @@ var View = function( args )
 	// Send window to different workspace
 	this.sendToWorkspace = function( wsnum )
 	{
+		if( isMobile ) return;
 		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
 			return;
 		var wn = this._window.parentNode;
@@ -3872,7 +3900,10 @@ var View = function( args )
 				{
 					value += '';
 					value = value.split( 'px' ).join( '' );
-					viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					if( !isMobile )
+					{
+						viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					}
 				}
 				break;
 			case 'top':
@@ -3881,7 +3912,10 @@ var View = function( args )
 				{
 					value += '';
 					value = value.split( 'px' ).join( '' );
-					viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					if( !isMobile )
+					{
+						viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					}
 				}
 				break;
 			case 'max-width':
@@ -4332,6 +4366,18 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	var gridY = startY;
 	for( var a in movableWindows )
 	{
+		var v = movableWindows[ a ];
+		var c = v.parentNode; // ViewContainer
+		if( c.classList.contains( 'Active' ) )
+		{
+			// These views are handled by css...
+			c.style.top = '0';
+			c.style.left = '0';
+			c.style.width = '100%';
+			c.style.height = '100%';
+			continue;
+		}
+		
 		// Next row
 		if( gridX + boxWidth >= pageX2 )
 		{
@@ -4347,18 +4393,6 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 				gridX = pageX1 + marginX;
 				page++;
 			}
-		}
-		
-		var v = movableWindows[ a ];
-		var c = v.parentNode; // ViewContainer
-		if( c.classList.contains( 'Active' ) )
-		{
-			// These views are handled by css...
-			c.style.top = '0';
-			c.style.left = '0';
-			c.style.width = '100%';
-			c.style.height = '100%';
-			continue;
 		}
 		
 		if( !iconHeight )

@@ -224,6 +224,7 @@ i18n_upload_completed                   : Upload completed.
 i18n_upload_failed                      : Upload failed.
 i18n_upload_completed_description       : The upload process completed successfully.
 i18n_upload_failed_description          : Could not upload your file.
+i18n_select_local_files                 : Select local files
 
 i18n_unzip_completed                    : Uncompressing completed.
 i18n_unzip_comdesc                      : Uncompressing a file(s) completed successfully
@@ -263,6 +264,8 @@ menu_show_as_list                       : List
 menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
 menu_fullscreen                         : Toggle fullscreen
+
+i18n_swipe_down_to_close                : Swipe down to close
 
 menu_buildwebapp                        : Build web application
 menu_icons                              : File

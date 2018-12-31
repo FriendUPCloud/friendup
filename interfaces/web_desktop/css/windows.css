@@ -50,8 +50,8 @@
 	overflow: hidden;
 	position: absolute;
 	bottom: 20px;
-	left: calc(50% - 200px);
-	width: 400px;
+	left: 10%;
+	width: 80%;
 	height: 40px;
 	border-radius: 20px;
 	background: rgba(0,0,0,0.5);
@@ -59,13 +59,26 @@
 	z-index: 100;
 }
 
-.View > .ImageViewerContent
+.View > .Content > .ImageViewerContent
 {
 	overflow: hidden;
 }
 
+.View > .Content > .ImageViewerContent > img
+{
+	position: absolute;
+	transform: rotateZ(0deg);
+	transition: top,left,width,height 0.25s,0.25s,0.25s,0.25s;
+	z-index: 99;
+}
+
 @media (max-width: 380px)
 {
+	.View > .ImageViewerToolbar
+	{
+		left: calc(50% - 200px);
+		width: 400px;
+	}
 	.View > .ImageViewerToolbar
 	{
 		width: calc(100% - 40px);
@@ -364,7 +377,7 @@ html .View[viewsnap] .Title > div > div
 /* Always on top */
 .View[sticky=sticky], body[mobile=mobile] #Screens .View.Active[maximized=true]
 {
-	z-index: 2147483647 !important;
+	z-index: 2147483646 !important;
 }
 
 /* Don't animate moving of windows! */

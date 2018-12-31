@@ -15,6 +15,7 @@ menu_vr_features                  : Toggle VR features
 
 #Style editor
 i18n_edit_styles                  : Edit styles
+i18n_styles                       : Edit styles
 i18n_apply                        : Apply
 
 i18n_status_loading               : Loading...

@@ -5440,6 +5440,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var fu = ge( 'fileUpload' );
 				if( fu )
 				{
+					if( arr == 'Mountlist:' || !arr )
+					{
+						arr = 'Home:';
+					}
 					fu.path.value = arr;
 				}
 				Workspace.fupdialog = false;
@@ -7112,7 +7116,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		var el = ele ? ele : ( document.documentElement ? document.documentElement : document.body );
-		var toggle = el.fullscreenEnabled;
+		var toggle = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
 		if( !toggle )
 		{
 			if( el.requestFullscreen )
@@ -7980,6 +7984,14 @@ function InitWorkspaceEvents()
 	}
 	else
 	{
+		// Track fullscreen
+		window.addEventListener( 'fullscreenchange', function( e )
+		{
+			// Add class when needed
+			if( document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement )
+				document.body.classList.add( 'Fullscreen' );
+			else document.body.classList.remove( 'Fullscreen' );
+		}, false );
 		window.addEventListener( 'mouseout', DoorsOutListener, false );
 		window.addEventListener( 'mouseleave', DoorsLeaveListener, false );
 		window.addEventListener( 'resize', WindowResizeFunc );
