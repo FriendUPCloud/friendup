@@ -263,6 +263,18 @@ For now, we don't use this, we don't have enough tools...
     overflow: auto;
 }
 
+[mobile] #MobileMenu.Open:after
+{
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 20%;
+	height: 100%;
+	background: rgba(0,0,0,0);
+	content: " ";
+	display: block;
+}
+
 [mobile] #MobileMenu.Open:before
 {
 	content: "\f00d";
@@ -270,27 +282,20 @@ For now, we don't use this, we don't have enough tools...
 	clear: both;
 }
 
-[mobile] #MobileMenu .ToolMenuElement
+[mobile] #MobileMenu select
 {
-	display: block;
-	clear: both;
-	text-align: left;
+	margin-bottom: 8px;
 }
 
-[mobile] #MobileMenu .ToolMenuElement span
+[mobile] #MobileMenu label, [mobile] #MobileMenu select, [mobile] #MobileMenu div
 {
-	width: 50%;
-	display: inline-block;
+	display: block;
 	text-overflow: ellipsis;
 	overflow: hidden;
 	position: relative;
 	white-space: nowrap;
-}
-[mobile] #MobileMenu .ToolMenuElement span + *
-{
-	width: 50%;
-	position: relative;
-	display: inline-block;
+	clear: both;
+	text-align: left;
 }
 
 [mobile] #MobileMenu .ToolDivider

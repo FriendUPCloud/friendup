@@ -15,6 +15,7 @@ menu_vr_features                  : Gjem/skjul VR funksjoner
 
 #Style editor
 i18n_edit_styles                  : Endre stiler
+i18n_styles                       : Endre stiler
 i18n_apply                        : Utfør
 
 i18n_status_loading               : Laster...
