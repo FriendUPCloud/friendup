@@ -4771,6 +4771,10 @@ Friend.startImageViewer = function( iconObject )
 				eles[a].onclick = function()
 				{
 					Workspace.fullscreen( eparent.content );
+					setTimeout( function()
+					{
+						repositionElement( owin );
+					}, 100 );
 				}
 			}
 			else if( eles[a].classList.contains( 'ArrowLeft' ) )
