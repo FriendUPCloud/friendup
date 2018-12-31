@@ -769,7 +769,8 @@ body[mobile=mobile] .View .Title > div > .MobileClose
 	display: none;
 }
 
-body[mobile=mobile] .View:not(.Active) .Title > div > .Close
+body[mobile=mobile] .ViewIcon.Dragging.Remove + .View .Title > div > .Close,
+body[mobile=mobile] .ViewIcon.Dragging.Remove + .View .Title > div > .MobileClose
 {
 	display: block;
 }
