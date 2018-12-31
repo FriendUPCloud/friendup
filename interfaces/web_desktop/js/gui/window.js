@@ -2074,6 +2074,9 @@ var View = function( args )
 					self.viewIcon.classList.add( 'Dragging' );
 					clearInterval( self.touchInterval );
 					self.touchInterval = null;
+					
+					Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
+					Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
 				}
 			}, 150 );
 		}
@@ -2105,6 +2108,11 @@ var View = function( args )
 			}
 			div.ontouchend = function( e )
 			{
+				if( Workspace.screen.bufferedTitle )
+				{
+					Workspace.screen.setFlag( 'title', Workspace.screen.bufferedTitle );
+					Workspace.screen.bufferedTitle = null;
+				}
 				if( this.viewIcon.classList.contains( 'Dragging' ) )
 				{
 					this.viewIcon.classList.remove( 'Dragging' );
