@@ -478,6 +478,59 @@ Application.initializeToolbar = function()
 				ge( 'zoom' ).style.display = 'none';
 				ge( 'zoomd' ).style.display = 'none';
 			}
+			if( isMobile )
+			{
+				var menuContents = ge( 'MobileMenu' ).getElementsByClassName( 'MenuContents' )[0];
+				ge( 'MobileMenu' ).classList.add( 'ScrollBarSmall', 'Button', 'ImageButton', 'IconSmall', 'fa-navicon' );
+				ge( 'MobileMenu' ).onclick = function()
+				{
+					if( this.classList.contains( 'Open' ) )
+					{
+						this.classList.remove( 'Open' );
+					}
+					else
+					{
+						this.classList.add( 'Open' );
+					}
+				}
+				
+				function _gtn( p, tags )
+				{
+					var eles = [];
+					for( var a = 0; a < tags.length; a++ )
+					{
+						var els = p.getElementsByTagName( tags[a] );
+						if( els.length )
+						{
+							var makeAr = [];
+							for( var b = 0; b < els.length; b++ )
+								makeAr.push( els[b] );
+							eles = eles.concat( makeAr );
+						}
+					}
+					return eles;
+				}
+				
+				var eles = _gtn( ge( 'MobileMenu' ), [ 'div', 'input', 'select' ] );
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( eles[a].title && eles[a].title.length )
+					{	
+						if( eles[a].style.display == 'none' ) continue;
+						var span = document.createElement( 'label' );
+						if( !eles[a].id )
+							eles[a].id = 'test_' + Math.floor( Math.random() * 100000 );
+						span.for = eles[a].id;
+						span.classList.add( 'PaddingSmall', 'MarginTop', 'PaddingTop' );
+						span.innerHTML = eles[a].title + ':';
+						span.ontouchstart = function( e )
+						{
+							return cancelBubble( e );
+						}
+						eles[a].parentNode.insertBefore( span, eles[a] );
+					}
+				}
+			}
 		}
 		f.i18n();
 		f.load();

@@ -13,6 +13,11 @@ menu_insert_image                 : Sett inn bilde
 menu_convert_images_inline        : Til innline bilder
 menu_vr_features                  : Gjem/skjul VR funksjoner
 
+#Style editor
+i18n_edit_styles                  : Endre stiler
+i18n_styles                       : Endre stiler
+i18n_apply                        : Utfør
+
 i18n_status_loading               : Laster...
 i18n_status_saving                : Lagrer...
 
