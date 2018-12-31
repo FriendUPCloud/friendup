@@ -67,6 +67,7 @@
 .View > .Content > .ImageViewerContent > img
 {
 	position: absolute;
+	transform: rotateZ(0deg);
 	transition: top,left,width,height 0.25s,0.25s,0.25s,0.25s;
 	z-index: 99;
 }
