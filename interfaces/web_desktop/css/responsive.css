@@ -577,6 +577,8 @@ body.WindowMenu #Screens .View
 	height: 20px;
 	border-radius: 0;
 	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
 }
 
 #Screens .View.Active .BottomBar
