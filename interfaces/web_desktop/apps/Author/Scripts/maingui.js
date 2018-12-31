@@ -478,6 +478,49 @@ Application.initializeToolbar = function()
 				ge( 'zoom' ).style.display = 'none';
 				ge( 'zoomd' ).style.display = 'none';
 			}
+			if( isMobile )
+			{
+				var menuContents = ge( 'MobileMenu' ).getElementsByClassName( 'MenuContents' )[0];
+				ge( 'MobileMenu' ).classList.add( 'Button', 'ImageButton', 'IconSmall', 'fa-navicon' );
+				ge( 'MobileMenu' ).onclick = function()
+				{
+					if( this.classList.contains( 'Open' ) )
+					{
+						this.classList.remove( 'Open' );
+					}
+					else
+					{
+						this.classList.add( 'Open' );
+					}
+				}
+				var eles = ge( 'MobileMenu' ).getElementsByTagName( 'div', 'input', 'select' );
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( eles[a].parentNode != menuContents )
+						continue;
+						
+					if( eles[a].title && eles[a].title.length )
+					{	
+						var o = document.createElement( 'div' );
+						o.className = 'ToolMenuElement Padding';
+						
+						var span = document.createElement( 'span' );
+						span.innerHTML = eles[a].title;
+						
+						var p = eles[a].parentNode;
+						
+						o.appendChild( span );
+						o.appendChild( eles[a] );
+						
+						menuContents.appendChild( o );	
+					}
+					else
+					{
+						menuContents.removeChild( eles[ a ] );
+					}
+					continue;
+				}
+			}
 		}
 		f.i18n();
 		f.load();

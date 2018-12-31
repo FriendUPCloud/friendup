@@ -186,25 +186,12 @@ a.cke_path_item, span.cke_path_empty
 {
 	#AuthorToolbar
 	{
-		height: 140px;
+		height: 55px;
 		overflow: hidden;
 	}
 	#cke_1_contents
 	{
-		top: 140px;
-	}
-}
-
-@media (max-width: 320px)
-{
-	#AuthorToolbar
-	{
-		height: 185px;
-		overflow: hidden;
-	}
-	#cke_1_contents
-	{
-		top: 186px;
+		top: 55px;
 	}
 }
 
@@ -240,5 +227,74 @@ For now, we don't use this, we don't have enough tools...
 .cke_wysiwyg_frame, .cke_wysiwyg_div
 {
 	background: #444444;
+}
+
+/* Mobile */
+
+[mobile] .ToolbarInner > div > *:first-child
+{
+	margin-left: 0;
+}
+
+[mobile] .ToolbarInner
+{
+	padding: 0 10px;
+}
+
+[mobile] #MobileMenu
+{
+	width: 32px;
+	height: 32px;
+	overflow: hidden;
+	float: right;
+	transition: width 0.25s;
+}
+
+[mobile] #MobileMenu.Open 
+{
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 80%;
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: 0px 0px 5px rgba(0,0,0,0.4);
+    overflow: auto;
+}
+
+[mobile] #MobileMenu.Open:before
+{
+	content: "\f00d";
+	float: right;
+	clear: both;
+}
+
+[mobile] #MobileMenu .ToolMenuElement
+{
+	display: block;
+	clear: both;
+	text-align: left;
+}
+
+[mobile] #MobileMenu .ToolMenuElement span
+{
+	width: 50%;
+	display: inline-block;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	position: relative;
+	white-space: nowrap;
+}
+[mobile] #MobileMenu .ToolMenuElement span + *
+{
+	width: 50%;
+	position: relative;
+	display: inline-block;
+}
+
+[mobile] #MobileMenu .ToolDivider
+{
+	display: none;
 }
 
