@@ -4730,17 +4730,19 @@ Friend.startImageViewer = function( iconObject )
 		{
 			if( image.offsetWidth > image.offsetHeight )
 			{
-				image.style.width = '100%';
-				image.style.height = 'auto';
-				image.style.top = ( document.body.offsetHeight >> 1 ) - Math.round( image.offsetHeight >> 1 ) + 'px';
+				var h = Math.round( image.originalDims.h / image.originalDims.w * window.innerWidth );
+				image.style.height = h + 'px';
+				image.style.width = window.innerWidth + 'px';
+				image.style.top = ( document.body.offsetHeight >> 1 ) - Math.round( h >> 1 ) + 'px';
 				image.style.left = 0;
 			}
 			else
 			{
-				image.style.width = 'auto';
-				image.style.height = '100%';
+				var w = Math.round( image.originalDims.w / image.originalDims.h * window.innerHeight );
+				image.style.width = w + 'px';
+				image.style.height = window.innerHeight + 'px';
 				image.style.top = 0;
-				image.style.left = ( document.body.offsetWidth >> 1 ) - Math.round( image.offsetWidth >> 1 ) + 'px';
+				image.style.left = ( document.body.offsetWidth >> 1 ) - Math.round( w >> 1 ) + 'px';
 			}
 			return;
 		}
