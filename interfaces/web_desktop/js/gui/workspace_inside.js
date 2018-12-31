@@ -7116,8 +7116,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		var el = ele ? ele : ( document.documentElement ? document.documentElement : document.body );
-		var toggle = el.fullscreenEnabled;
-		if( !toggle && !document.body.classList.contains( 'Fullscreen' ) )
+		var toggle = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
+		if( !toggle )
 		{
 			if( el.requestFullscreen )
 				el.requestFullscreen();
@@ -7133,7 +7133,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		else
 		{
-			document.body.classList.remove( 'Fullscreen' );
 			if( document.exitFullScreen )
 				document.exitFullScreen();
 			else if( document.webkitCancelFullscreen )
