@@ -4685,11 +4685,11 @@ if( typeof noEvent == 'undefined' )
 Friend.startImageViewer = function( iconObject )
 {
 	var win = new View ( {
-		title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
-		width    : 650,
-		height   : 512,
-		memorize : true,
-		fullscreenenabled : true
+		title            : iconObject.Title ? iconObject.Title : iconObject.Filename,
+		width            : 650,
+		height           : 512,
+		memorize         : true,
+		fullscreenenabled: true
 	} );
 	
 	var owin = win;
@@ -4723,6 +4723,26 @@ Friend.startImageViewer = function( iconObject )
 					h: image.height
 				};
 			}
+		}
+		
+		// Fullscreen mode
+		if( document.body.classList.contains( 'Fullscreen' ) )
+		{
+			if( image.offsetWidth > image.offsetHeight )
+			{
+				image.style.width = '100%';
+				image.style.height = 'auto';
+				image.style.top = ( document.body.offsetHeight >> 1 ) - Math.round( image.offsetHeight >> 1 ) + 'px';
+				image.style.left = 0;
+			}
+			else
+			{
+				image.style.width = 'auto';
+				image.style.height = '100%';
+				image.style.top = 0;
+				image.style.left = ( document.body.offsetWidth >> 1 ) - Math.round( image.offsetWidth >> 1 ) + 'px';
+			}
+			return;
 		}
 
 		if( !pos ) pos = position;
@@ -4774,7 +4794,7 @@ Friend.startImageViewer = function( iconObject )
 					setTimeout( function()
 					{
 						repositionElement( owin );
-					}, 100 );
+					}, 250 );
 				}
 			}
 			else if( eles[a].classList.contains( 'ArrowLeft' ) )

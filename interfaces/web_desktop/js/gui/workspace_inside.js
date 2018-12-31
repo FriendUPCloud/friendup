@@ -7117,7 +7117,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		var el = ele ? ele : ( document.documentElement ? document.documentElement : document.body );
 		var toggle = el.fullscreenEnabled;
-		if( !toggle )
+		if( !toggle && !document.body.classList.contains( 'Fullscreen' ) )
 		{
 			if( el.requestFullscreen )
 				el.requestFullscreen();
@@ -7133,6 +7133,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		else
 		{
+			document.body.classList.remove( 'Fullscreen' );
 			if( document.exitFullScreen )
 				document.exitFullScreen();
 			else if( document.webkitCancelFullscreen )
@@ -7984,6 +7985,14 @@ function InitWorkspaceEvents()
 	}
 	else
 	{
+		// Track fullscreen
+		window.addEventListener( 'fullscreenchange', function( e )
+		{
+			// Add class when needed
+			if( document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement )
+				document.body.classList.add( 'Fullscreen' );
+			else document.body.classList.remove( 'Fullscreen' );
+		}, false );
 		window.addEventListener( 'mouseout', DoorsOutListener, false );
 		window.addEventListener( 'mouseleave', DoorsLeaveListener, false );
 		window.addEventListener( 'resize', WindowResizeFunc );
