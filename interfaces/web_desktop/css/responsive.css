@@ -857,4 +857,12 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	font-weight: bold;
 }
 
+/* File uploads ------------------------------------------------------------- */
+
+[mobile] button.FloatRight.IconSmall.fa-upload 
+{
+	margin: auto;
+	float: none;
+	display: block;
+}
 
