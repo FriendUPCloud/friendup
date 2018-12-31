@@ -364,7 +364,7 @@ html .View[viewsnap] .Title > div > div
 /* Always on top */
 .View[sticky=sticky], body[mobile=mobile] #Screens .View.Active[maximized=true]
 {
-	z-index: 2147483647 !important;
+	z-index: 2147483646 !important;
 }
 
 /* Don't animate moving of windows! */

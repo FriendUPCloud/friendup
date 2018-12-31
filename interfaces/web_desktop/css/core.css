@@ -49,6 +49,14 @@ body
 	overflow: hidden;
 }
 
+/* Preload images */
+body > img
+{
+	visibility: hidden;
+	position: absolute;
+	pointer-events: none;
+}
+
 iframe.hidden
 {
 	position:absolute;
@@ -4124,6 +4132,37 @@ div.Orange, button.Orange
     text-align: justify;
     font-size: 10px;
     overflow: hidden;
+}
+
+/* File upload adjustments */
+
+#fileUpload .FileUpload
+{
+	position: relative;
+}
+
+.FileUpload > input
+{
+	opacity: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.FileUpload .UploadButton 
+{
+	width: 100%;
+	height: 32px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+}
+
+.FileUpload .UploadButton > .Button
+{
+	pointer-events: none;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 /* Responsive page layout */

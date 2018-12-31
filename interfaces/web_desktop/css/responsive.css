@@ -566,6 +566,19 @@ body.WindowMenu #Screens .View
 	z-index: 99999999 !important;
 }
 
+.ViewContainer.Active .ViewIcon 
+{
+	z-index: 2147483647 !important;
+	position: absolute;
+	display: block;
+	top: -30px;
+	left: 10px;
+	width: 20px;
+	height: 20px;
+	border-radius: 0;
+	background-size: contain;
+}
+
 #Screens .View.Active .BottomBar
 {
 	display: block;
@@ -857,4 +870,12 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	font-weight: bold;
 }
 
+/* File uploads ------------------------------------------------------------- */
+
+[mobile] button.FloatRight.IconSmall.fa-upload 
+{
+	margin: auto;
+	float: none;
+	display: block;
+}
 

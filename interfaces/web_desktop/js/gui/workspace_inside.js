@@ -5440,6 +5440,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var fu = ge( 'fileUpload' );
 				if( fu )
 				{
+					if( arr == 'Mountlist:' || !arr )
+					{
+						arr = 'Home:';
+					}
 					fu.path.value = arr;
 				}
 				Workspace.fupdialog = false;
