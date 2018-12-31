@@ -1686,6 +1686,7 @@ var View = function( args )
 
 		// Where to add div..
 		var divParent = false;
+		var iconSpan;
 
 		if( id )
 		{
@@ -1708,7 +1709,7 @@ var View = function( args )
 						if( Workspace.applications[a].icon )
 						{
 							var ic = Workspace.applications[a].icon;
-							var iconSpan = document.createElement( 'span' );
+							iconSpan = document.createElement( 'span' );
 							iconSpan.classList.add( 'ViewIcon' );
 							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
 							viewContainer.appendChild( iconSpan );
@@ -1718,7 +1719,7 @@ var View = function( args )
 			}
 			else
 			{
-				var iconSpan = document.createElement( 'span' );
+				iconSpan = document.createElement( 'span' );
 				iconSpan.classList.add( 'ViewIcon' );
 				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
 				viewContainer.appendChild( iconSpan );
@@ -2046,11 +2047,78 @@ var View = function( args )
 			}
 		}
 
+		// Tablets and mobile
 		div.ontouchstart = function( e )
 		{
+			var self = this;
 			if( !isMobile )
 			{
 				this.setAttribute( 'moving', 'moving' );
+			}
+			else if( e && !div.classList.contains( 'Active' ) )
+			{
+				this.clickOffset = {
+					x: e.touches[0].clientX,
+					y: e.touches[0].clientY,
+					time: ( new Date() ).getTime()
+				};
+			}
+			// Only removable after 300 ms
+			this.touchInterval = setInterval( function()
+			{
+				var t = ( new Date() ).getTime();
+				if( t - self.clickOffset.time > 300 )
+				{
+					// Update time
+					self.clickOffset.removable = true;
+					self.viewIcon.classList.add( 'Dragging' );
+					clearInterval( self.touchInterval );
+					self.touchInterval = null;
+				}
+			}, 150 );
+		}
+		
+		// Remove window on drag
+		if( isMobile )
+		{
+			div.ontouchmove = function( e )
+			{
+				if( !this.clickOffset )
+					return;
+				var diffx = e.touches[0].clientX - this.clickOffset.x;
+				if( diffx > 20 )
+					return;
+				var diffy = e.touches[0].clientY - this.clickOffset.y;
+			
+				// Drag 100 px under 0.15ms
+				if( this.viewIcon.classList.contains( 'Dragging' ) )
+				{
+					if( diffy > 100 )
+					{
+						this.viewIcon.classList.add( 'Remove' );
+					}
+					else
+					{
+						this.viewIcon.classList.remove( 'Remove' );
+					}
+				}
+			}
+			div.ontouchend = function( e )
+			{
+				if( this.viewIcon.classList.contains( 'Dragging' ) )
+				{
+					this.viewIcon.classList.remove( 'Dragging' );
+				}
+				if( this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					this.viewIcon.classList.remove( 'Remove' );
+					this.close.click();
+				}
+				if( this.touchInterval )
+				{
+					clearInterval( this.touchInterval );
+					this.touchInterval = null;
+				}
 			}
 		}
 		
@@ -2487,6 +2555,10 @@ var View = function( args )
 		div.leftbar   = leftbar;
 		div.rightbar  = rightbar;
 		div.minimize  = minimize;
+		
+		// For mobile
+		if( iconSpan )
+			div.viewIcon = iconSpan;
 
 		div.appendChild( title );
 		div.titleDiv = title;

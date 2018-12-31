@@ -4710,7 +4710,6 @@ Friend.startImageViewer = function( iconObject )
 			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
 		';
 		eparent.appendChild( d );
-		eparent.style.overflow = 'hidden';
 		var eles = d.getElementsByTagName( 'div' );
 		for( var a = 0; a < eles.length; a++ )
 		{
@@ -4780,8 +4779,7 @@ Friend.startImageViewer = function( iconObject )
 		GetURLFromPath( iconObject.Path, function( imageUrl )
 		{
 			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
-			
-			owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+			owin.setContent( '<iframe class="ImageViewerContent" src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 		} );
 	}
 	else
@@ -4793,7 +4791,7 @@ Friend.startImageViewer = function( iconObject )
 		{
 			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
 			
-			owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
 			zoomImage = owin._window.getElementsByTagName( 'img' )[0];
 		} );
 	}
@@ -4852,7 +4850,7 @@ Friend.startImageViewer = function( iconObject )
 						iconObject.Path = prevPath;
 						GetURLFromPath( prevPath, function( imageUrl )
 						{
-							owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
+							owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
 							owin.setFlag( 'title', prev );
 							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
 						} );
@@ -4864,7 +4862,7 @@ Friend.startImageViewer = function( iconObject )
 						iconObject.Path = currPath;
 						GetURLFromPath( currPath, function( imageUrl )
 						{
-							owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
+							owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
 							owin.setFlag( 'title', curr );
 							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
 						} );

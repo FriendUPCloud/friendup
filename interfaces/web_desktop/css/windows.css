@@ -47,6 +47,7 @@
 
 .View > .ImageViewerToolbar
 {
+	overflow: hidden;
 	position: absolute;
 	bottom: 20px;
 	left: calc(50% - 200px);
@@ -56,6 +57,20 @@
 	background: rgba(0,0,0,0.5);
 	text-align: center;
 	z-index: 100;
+}
+
+.View > .ImageViewerContent
+{
+	overflow: hidden;
+}
+
+@media (max-width: 380px)
+{
+	.View > .ImageViewerToolbar
+	{
+		width: calc(100% - 40px);
+		left: 20px;
+	}
 }
 
 .View > .ImageViewerToolbar > div
@@ -349,7 +364,7 @@ html .View[viewsnap] .Title > div > div
 /* Always on top */
 .View[sticky=sticky], body[mobile=mobile] #Screens .View.Active[maximized=true]
 {
-	z-index: 2147483647 !important;
+	z-index: 2147483646 !important;
 }
 
 /* Don't animate moving of windows! */

@@ -1071,9 +1071,9 @@ body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
 {
 	position: absolute;
 	margin: 0;
-	top: 3px;
-	width: 33px;
-	height: 33px;
+	top: 0px;
+	width: 40px;
+	height: 40px;
 	background-image: url(/iconthemes/friendup15/close.svg);
 	background-repeat: no-repeat;
 	background-size: 35%;
@@ -4165,7 +4165,7 @@ body:not([tablet]) .View:not(.Active)[mobile=mobile][maximized=true] > .Content
 }
 body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
 {
-	left: 10px;
+	left: 40px;
 	width: calc(100% - 105px);
 }
 body:not([tablet])[mobile=mobile] #Screens .View

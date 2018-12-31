@@ -57,7 +57,7 @@ body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info:befor
 	position: relative;
 	top: 2px;
 	margin: 0 8px 0 0;
-	background-image: url(/webclient/gfx/system/startmenu_32.png);
+	background-image: url(/iconthemes/friendup15/ScreenLogo.svg);
 	background-repeat: no-repeat;
 	background-size: contain;
 	background-position: center;
@@ -290,7 +290,7 @@ html body .Screen .MobileAppMenu:after
 	height: calc(100% + 5px);
 	width: 80%;
 	transform: translateX(-100%);
-	overflow: auto;
+	overflow: visible;
 	box-sizing: border-box;
 	padding-top: 40px;
 	box-shadow: 0px 0px 5px rgba(0,0,0,0.4);
@@ -504,10 +504,31 @@ html body .View > .Title > div > span
 	height: 40px;
 }
 
-html body[mobile] .View:not(.Active) > .BottomBar,
-html body[mobile] .View:not(.Active) > .RightBar,
-html body[mobile] .View:not(.Active) > .LeftBar,
-html body[mobile] .View:not(.Active) > .Resize
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Dragging
+{
+	background-color: rgba(255,255,255,0.4);
+}
+
+@keyframes jiggle
+{
+	0% { transform: rotateZ(5deg); }
+	50% { transform: rotateZ(-5deg); }
+	100% { transform: rotateZ(5deg); }
+}
+@-webkit-keyframes jiggle
+{
+	0% { transform: rotateZ(5deg); }
+	50% { transform: rotateZ(-5deg); }
+	100% { transform: rotateZ(5deg); }
+}
+
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove
+{
+	animation: jiggle 0.2s infinite;
+}
+
+html body[mobile] .View:not(.Active) > div:not(.Title)
 {
 	display: none;
 }
@@ -543,6 +564,21 @@ body.WindowMenu #Screens .View
 	height: 100% !important;
 	min-height: 100% !important;
 	z-index: 99999999 !important;
+}
+
+.ViewContainer.Active .ViewIcon 
+{
+	z-index: 2147483647 !important;
+	position: absolute;
+	display: block;
+	top: -30px;
+	left: 10px;
+	width: 20px;
+	height: 20px;
+	border-radius: 0;
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
 }
 
 #Screens .View.Active .BottomBar
@@ -836,4 +872,12 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	font-weight: bold;
 }
 
+/* File uploads ------------------------------------------------------------- */
+
+[mobile] button.FloatRight.IconSmall.fa-upload 
+{
+	margin: auto;
+	float: none;
+	display: block;
+}
 

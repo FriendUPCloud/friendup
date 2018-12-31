@@ -1096,6 +1096,11 @@ var WorkspaceInside = {
 				Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
 				appMenu.onclick = function()
 				{
+					if( ge( 'WorkspaceMenu' ) )
+					{
+						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+						document.body.classList.remove( 'WorkspaceMenuOpen' );
+					}
 					if( document.body.classList.contains( 'AppsShowing' ) )
 					{
 						Workspace.mainDock.closeDesklet();
@@ -5435,6 +5440,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var fu = ge( 'fileUpload' );
 				if( fu )
 				{
+					if( arr == 'Mountlist:' || !arr )
+					{
+						arr = 'Home:';
+					}
 					fu.path.value = arr;
 				}
 				Workspace.fupdialog = false;
