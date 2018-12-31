@@ -49,6 +49,14 @@ body
 	overflow: hidden;
 }
 
+/* Preload images */
+body > img
+{
+	visibility: hidden;
+	position: absolute;
+	pointer-events: none;
+}
+
 iframe.hidden
 {
 	position:absolute;
