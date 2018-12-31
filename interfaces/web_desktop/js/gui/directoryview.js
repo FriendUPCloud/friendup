@@ -4691,11 +4691,64 @@ Friend.startImageViewer = function( iconObject )
 		memorize : true,
 		fullscreenenabled : true
 	} );
+	
+	var owin = win;
 
 	var zoomLevel = 1;
 	var zoomImage = null;
+	var position = 'centered';
 
 	var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
+
+	function repositionElement( win, pos, extra )
+	{		
+		var image = win._window.getElementsByTagName( 'img' );
+		if( !image.length )
+			return;
+		
+		image = image[0];
+		if( !image.originalDims || extra )
+		{
+			if( extra )
+			{
+				image.originalDims = {
+					w: extra.w,
+					h: extra.h
+				};
+			}
+			else
+			{
+				image.originalDims = {
+					w: image.width,
+					h: image.height
+				};
+			}
+		}
+
+		if( !pos ) pos = position;
+		
+		var container = image.parentNode;		
+		
+		if( pos == 'centered' || pos == 'default' )
+		{
+			var width = image.originalDims.w * zoomLevel;
+			var height = image.originalDims.h * zoomLevel;
+						
+			var ileft = ( container.offsetWidth >> 1 ) - ( width >> 1 ) + 'px';
+			var itop  = ( container.offsetHeight >> 1 ) - ( height >> 1 ) + 'px';
+			image.style.top = itop;
+			image.style.left = ileft;
+			image.style.width = width + 'px';
+			image.style.height = height + 'px';
+			position = pos;
+		}
+	}
+	
+	owin.addEvent( 'resize', function()
+	{
+		repositionElement( owin, position );
+	} );
+	
 
 	function renderToolbar( eparent )
 	{
@@ -4738,34 +4791,26 @@ Friend.startImageViewer = function( iconObject )
 			{
 				eles[a].onclick = function( e )
 				{
-					if( zoomImage )
-					{
-						zoomLevel += 0.25;
-						if( zoomLevel > 3 )
-							zoomLevel = 3;
-						zoomImage.style.maxWidth = 'auto';
-						zoomImage.style.maxHeight = 'auto';
-						zoomImage.style.zoom = zoomLevel;
-					}
+					zoomLevel *= 2;
+					if( zoomLevel > 10 )
+						zoomLevel = 10;
+					repositionElement( owin );
 				}
 			}
 			else if( eles[a].classList.contains( 'ZoomOut' ) )
 			{
 				eles[a].onclick = function( e )
 				{
-					zoomLevel -= 0.25;
-					if( zoomLevel == 0 ) zoomLevel = 0.25;
-					if( zoomImage )
-					{
-						zoomImage.style.zoom = zoomLevel;
-					}
+					zoomLevel /= 2;
+					if( zoomLevel < 0.1 )
+						zoomLevel = 0.1;
+					repositionElement( owin );
 				}
 			}
 		}
 	}
 
 	var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
-	var owin = win;
 	
 	if( iconObject.extension.toLowerCase() == 'pdf' )
 	{
@@ -4792,7 +4837,14 @@ Friend.startImageViewer = function( iconObject )
 		{
 			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
 			
-			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; z-index: 1;">' + checkers + '</div>' );
+			var i = new Image();
+			i.src = imageUrl;
+			owin._window.getElementsByClassName( 'ImageViewerContent' )[0].appendChild( i );
+			i.onload = function()
+			{
+				repositionElement( owin, 'default' );
+			}
 			zoomImage = owin._window.getElementsByTagName( 'img' )[0];
 		} );
 	}
@@ -4851,9 +4903,21 @@ Friend.startImageViewer = function( iconObject )
 						iconObject.Path = prevPath;
 						GetURLFromPath( prevPath, function( imageUrl )
 						{
-							owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
-							owin.setFlag( 'title', prev );
-							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+							var imgElement = owin._window.getElementsByTagName( 'img' )[0];
+							var i = new Image();
+							i.src = imageUrl;
+							i.onload = function()
+							{ 
+								var extra = {
+									w: i.width,
+									h: i.height
+								};
+								imgElement.src = i.src; 
+								imgElement.width = this.width; imgElement.height = this.height; 
+								repositionElement( owin, 'default', extra ); 
+							}
+							owin.setFlag( 'title', curr );
+							zoomImage = imgElement;
 						} );
 						return;
 					}
@@ -4863,9 +4927,21 @@ Friend.startImageViewer = function( iconObject )
 						iconObject.Path = currPath;
 						GetURLFromPath( currPath, function( imageUrl )
 						{
-							owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
+							var imgElement = owin._window.getElementsByTagName( 'img' )[0];
+							var i = new Image();
+							i.src = imageUrl;
+							i.onload = function()
+							{ 
+								var extra = {
+									w: i.width,
+									h: i.height
+								};
+								imgElement.src = i.src; 
+								imgElement.width = this.width; imgElement.height = this.height; 
+								repositionElement( owin, 'default', extra ); 
+							}
 							owin.setFlag( 'title', curr );
-							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+							zoomImage = imgElement;
 						} );
 						return;
 					}
