@@ -126,14 +126,17 @@ static inline int WriteMessageMA( MobileAppConnection *mac, unsigned char *msg, 
 	
 			if( FRIEND_MUTEX_LOCK( &mac->mac_Mutex ) == 0 )
 			{
-				mac->mac_Used++;
-				FQPushFIFO( &(mac->mac_Queue), en );
-				
-				if( mac->mac_WebsocketPtr != NULL )
+				if( mac->mac_CloseConnection != TRUE )
 				{
-					lws_callback_on_writable( mac->mac_WebsocketPtr );
+					mac->mac_Used++;
+					FQPushFIFO( &(mac->mac_Queue), en );
+				
+					if( mac->mac_WebsocketPtr != NULL )
+					{
+						lws_callback_on_writable( mac->mac_WebsocketPtr );
+					}
+					mac->mac_Used--;
 				}
-				mac->mac_Used--;
 				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
 			}
 		}
