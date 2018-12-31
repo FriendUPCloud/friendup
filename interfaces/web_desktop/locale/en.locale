@@ -265,6 +265,8 @@ menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
 menu_fullscreen                         : Toggle fullscreen
 
+i18n_swipe_down_to_close                : Swipe down to close
+
 menu_buildwebapp                        : Build web application
 menu_icons                              : File
 menu_new_directory                      : Make directory
