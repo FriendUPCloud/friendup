@@ -1,0 +1,13 @@
+
+.ProjectType
+{
+	width: 180px;
+	height: 180px;
+	float: left;
+}
+
+.ProjectTypeLabel
+{
+	font-weight: bold;
+}
+
