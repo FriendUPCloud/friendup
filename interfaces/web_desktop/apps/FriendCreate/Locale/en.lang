@@ -126,6 +126,7 @@ i18n_desc                           : Description
 i18n_pick_screenshot                : Pick a screenshot to add
 i18n_cancel                         : Cancel
 
+i18n_project_wizard                 : Create a new project
 
 i18n_sure_remove                     : Are you sure?
 i18n_sure_remove_desc                : Are you sure you want to remove this screenshot from the list?
@@ -236,3 +237,14 @@ i18n_waNeedAFolder						: You cannot build a project on the root of a drive.
 i18n_waBlankAuthor						: Your name
 i18n_waBlankEmail						: yourmail@yourserver.com
 i18n_waBlankDescription					: A description of this application
+
+i18n_select_where_to_create_folder      : Select path for project folder
+
+# Project types
+i18n_game                               : New game
+i18n_game_desc                          : A simple game project for entertainment.
+i18n_gui_application                    : New GUI application
+i18n_gui_application_desc               : Create your own GUI driven application.
+i18n_shell_application                  : New shell application
+i18n_shell_application_desc             : Create your own program for Friend DOS.
+
