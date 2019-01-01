@@ -961,6 +961,42 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			
+			div.onmouseover = function( e )
+			{
+				if( this.clickDown )
+					this.clickDown = null;
+			}
+			
+			div.onmousedown = function( e )
+			{
+				this.clickDown = {
+					x: e.clientX,
+					y: e.clientY
+				};
+			}
+			
+			div.onmousemove = function( e )
+			{
+				if( this.clickDown && o.exe )
+				{
+					var diffx = this.clickDown.x - e.clientX;
+					var diffy = this.clickDown.y - e.clientY;
+					if( diffx > 10 || diffy > 10 || diffx < -10 || diffy < -10 )
+					{
+						var m = new Module( 'dock' );
+						m.execute( 'removefromdock', { name: o.exe } );
+						this.drop = function()
+						{
+							
+						}
+						this.removeChild( this.getElementsByTagName( 'span' )[0] );
+						mousePointer.pickup( this );
+						this.fileInfo = {};
+					}
+				}
+			}
+			
+			
 			var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
 			
 			if( bubbletext )
