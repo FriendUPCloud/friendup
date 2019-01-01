@@ -120,6 +120,10 @@ Application.redrawMenu = function()
 					command: 'about_exotica'
 				},
 				{
+					name: i18n( 'i18n_add_songs' ),
+					command: 'add_songs'
+				},
+				{
 					name: i18n( 'i18n_quit' ),
 					command: 'quit'
 				}
@@ -282,6 +286,42 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'add_songs':
+			new Filedialog( {
+				type: 'load',
+				path: 'Mountlist:',
+				title: i18n( 'i18n_add_songs' ),
+				triggerFunction: function( files )
+				{
+					if( files )
+					{
+						if( files.length )
+						{
+							for( var a = 0; a < files.length; a++ )
+							{
+								Application.playlist.push( {
+									Filename: files[a].Filename,
+									Path: files[a].Path
+								} );
+							}
+						}
+						else
+						{
+							var pth = files;
+							var fn = files.split( ':' )[1];
+							if( fn.indexOf( '/' ) > 0 )
+								fn = fn.split( '/' ).pop();
+							Application.playlist.push( {
+								Filename: fn,
+								Path: pth
+							} );
+						}
+						Application.receiveMessage( { command: 'playsong' } );
+					}
+				}
+			} );
+			break;
+			
 		case 'add_source':
 			if( this.playlistWindow )
 				this.playlistWindow.sendMessage( msg );

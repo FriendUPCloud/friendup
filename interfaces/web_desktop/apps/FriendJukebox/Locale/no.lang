@@ -1,5 +1,6 @@
 
 i18n_file                        : Fil
+i18n_add_songs                   : Legg til sanger
 i18n_add_to_playlist             : Legg til spilleliste
 i18n_load_playlist               : Last inn spilleliste
 i18n_save_playlist               : Lagre spilleliste
