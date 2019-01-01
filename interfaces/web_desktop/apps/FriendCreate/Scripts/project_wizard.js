@@ -91,7 +91,7 @@ function createProject( type )
 			p = 'Home:';
 		Application.sendMessage( {
 			command: 'project_create',
-			type: type,
+			projecttype: type,
 			path: p
 		} );
 	}

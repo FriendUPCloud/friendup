@@ -564,8 +564,6 @@ Application.syncFilesList = function( callback )
 // Receive a message! ----------------------------------------------------------
 Application.receiveMessage = function( msg )
 {
-	console.log( 'Receiving command: ', msg );
-	
 	switch( msg.command )
 	{
 		case 'help':
@@ -901,7 +899,7 @@ Application.receiveMessage = function( msg )
 			}
 			break;
 		case 'project_create':
-			console.log( 'Creating project: ', msg );
+			createProject( msg );
 			break;
 		case 'project_package':
 			if( !this.projectFilename )
@@ -2153,4 +2151,9 @@ function projectWizard()
 		projectWin.setContent( data );
 	}
 	f.load();
+}
+
+function createProject( data )
+{
+	console.log( 'Want to create the project: ', data );
 }
