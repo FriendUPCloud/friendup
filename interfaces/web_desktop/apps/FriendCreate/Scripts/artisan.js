@@ -2153,7 +2153,13 @@ function projectWizard()
 	f.load();
 }
 
+// Creates the project based on data.type!
 function createProject( data )
 {
-	console.log( 'Want to create the project: ', data );
+	console.log( 'Creating project directory.' );
+	var dos = new Shell();
+	dos.execute( 'makedir ' + data.path + 'NewProject', function( e )
+	{
+		console.log( 'The project directory was made: ', e );
+	} );
 }
