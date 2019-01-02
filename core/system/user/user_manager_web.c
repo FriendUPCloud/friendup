@@ -1076,6 +1076,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				while( logusr != NULL )
 				{
+					DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
 					if( logusr->u_Name != NULL && strcmp( logusr->u_Name, usrname ) == 0 )
 					{
 						BufString *bs = BufStringNew();
