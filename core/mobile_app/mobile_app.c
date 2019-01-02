@@ -857,6 +857,8 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		MobileAppNotif *n = (MobileAppNotif *)userdata;
 		n->man_Data = newConnection;
 		
+		DEBUG("New connection added, ret: %d umaID: %lu\n", ret, umaID );
+		
 		if( umaID > 0 )
 		{
 			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
