@@ -185,7 +185,7 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 		usleep( 1000 );
 	}
 	
-	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
+	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : Websocketpointer %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
 	
 	connections->umac_Connection[connectionIndex]->mac_CloseConnection = TRUE;
 	//lws_callback_on_writable( connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
@@ -391,7 +391,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			
 		case LWS_CALLBACK_CLOSED: //|| reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 		{
-			Log( FLOG_DEBUG, "Closing connection: %p\n", appConnection );
+			Log( FLOG_DEBUG, "Closing connection: appConnection %p\n", appConnection );
 			
 			if( appConnection == NULL )
 			{
@@ -403,14 +403,15 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			
 			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
+				
 				//remove connection from user connnection struct
 				UserMobileAppConnections *userConnections = appConnection->mac_UserConnections;
 				unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
 				if( userConnections != NULL )
 				{
-					//DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
+					DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
+					MobileAppRemoveAppConnection( userConnections, connectionIndex );
 				}
-				MobileAppRemoveAppConnection( userConnections, connectionIndex );
 				
 				// do not close connection if its used
 				while( TRUE )
