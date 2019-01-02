@@ -1513,7 +1513,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 		if( usr != NULL )
 		{
 			userID = usr->u_ID;
-			UserDelete( usr );
+			//UserDelete( usr );	// user cannot be deleted from list!
 		}
 		
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
