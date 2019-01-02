@@ -518,8 +518,9 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				return 0;
 			}
 
-			data[ 38 ] = 0;
-			DEBUG("Mobile app data: <%*s>, len: %d\n", (unsigned int)len, data, len );
+			data[ len ] = 0;
+			//DEBUG("Mobile app data: <%*s>, len: %d\n", (unsigned int)len, data, len );
+			DEBUG("Mobile app data: <%s>, len: %d\n", data, len );
 
 			jsmn_parser parser;
 			jsmn_init(&parser);
