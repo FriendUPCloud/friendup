@@ -871,7 +871,7 @@ function SetScreenByWindowElement( div )
 function _ActivateWindowOnly( div )
 {
 	// Blocker
-	if( div.content.blocker )
+	if( div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
