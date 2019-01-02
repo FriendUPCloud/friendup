@@ -1044,7 +1044,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
+						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
+						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
@@ -1089,7 +1090,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
+						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
+						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
@@ -1161,6 +1163,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			{
 				NotificationSent *lns = NotificationSentNew();
 				lns->ns_NotificationID = notif->n_ID;
+				lns->ns_UserMobileAppID = lma->uma_ID;
 				lns->ns_RequestID = lma->uma_ID;
 				lns->ns_Target = MOBILE_APP_TYPE_IOS;
 				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
@@ -1403,6 +1406,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
+						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
 						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
@@ -1456,6 +1460,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
+						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
 						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
@@ -1535,7 +1540,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				{
 					NotificationSent *lns = NotificationSentNew();
 					lns->ns_NotificationID = notif->n_ID;
-					lns->ns_RequestID = lma->uma_ID;
+					lns->ns_UserMobileAppID = lma->uma_ID;
+					lns->ns_RequestID = (FULONG)lma;
 					lns->ns_Target = MOBILE_APP_TYPE_IOS;
 					lns->ns_Status = NOTIFICATION_SENT_STATUS_READ;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
@@ -1562,7 +1568,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				{
 					NotificationSent *lns = NotificationSentNew();
 					lns->ns_NotificationID = notif->n_ID;
-					lns->ns_RequestID = lma->uma_ID;
+					lns->ns_UserMobileAppID = lma->uma_ID;
+					lns->ns_RequestID = (FULONG)lma;
 					lns->ns_Target = MOBILE_APP_TYPE_IOS;
 					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
