@@ -1,5 +1,6 @@
 
 i18n_file                        : File
+i18n_add_songs                   : Add songs
 i18n_add_to_playlist             : Add to playlist
 i18n_load_playlist               : Load playlist
 i18n_save_playlist               : Save playlist

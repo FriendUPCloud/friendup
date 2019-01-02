@@ -259,6 +259,8 @@ menu_show_as_columns                    : Kolonner
 menu_close_window                       : Lukk
 menu_fullscreen                         : Fullskjerm
 
+i18n_swipe_down_to_close                : Skyv ned for å lukke
+
 i18n_create_web_link                    : Create a new web link
 i18n_link                               : Lenke
 i18n_broken_link                        : Ødelagt lenke
