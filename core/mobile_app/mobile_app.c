@@ -549,177 +549,171 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				{
 					MobileAppHandleLogin( wsi, user, &json );
 				}
-		else
-		{
-			if (appConnection == NULL)
-			{
-				DEBUG("Session not found for this connection\n");
-				return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_SESSION);
-			}
-
-			appConnection->mac_LastCommunicationTimestamp = time(NULL);
-
-			switch (first_type_letter)
-			{
-
-			case 'p': 
-				do
-				{ //pause
-					DEBUG("App is paused\n");
-					appConnection->mac_AppStatus = MOBILE_APP_STATUS_PAUSED;
-					appConnection->mac_MostRecentPauseTimestamp = time(NULL);
-					
-					char response[LWS_PRE+64];
-					strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
-					DEBUG("Response: %s\n", response+LWS_PRE);
-					
-#ifndef WEBSOCKET_SINK_SEND_QUEUE
-					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
-					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
-#else
-					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-					if( en != NULL )
-					{
-						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
-						en->fq_Size = LWS_PRE+64;
-						
-						DEBUG("[websocket_app_callback] Msg to send: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
-			
-						if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
-						{
-							FQPushFIFO( &(appConnection->mac_Queue), en );
-							FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
-						}
-						lws_callback_on_writable( wsi );
-					}
-#endif
-				}
-				while (0);
-			break;
-
-			case 'r': 
-				do
-				{ //resume
-					DEBUG("App is resumed\n");
-					appConnection->mac_AppStatus = MOBILE_APP_STATUS_RESUMED;
-					appConnection->mac_MostRecentResumeTimestamp = time(NULL);
-					
-					char response[LWS_PRE+64];
-					strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
-					DEBUG("Response: %s\n", response+LWS_PRE);
-#ifndef WEBSOCKET_SINK_SEND_QUEUE
-					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
-					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
-#else
-					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-					if( en != NULL )
-					{
-						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"resume\",\"status\":1}", 25 );
-						en->fq_Size = LWS_PRE+64;
-						
-						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
-			
-						if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
-						{
-							FQPushFIFO( &(appConnection->mac_Queue), en );
-							FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
-						}
-						lws_callback_on_writable( wsi );
-					}
-#endif
-				}
-				while (0);
-			break;
-			
-			// get information from mobile device about notification status
-			/*
-			JSONObject notifyReply = new JSONObject();
-                notifyReply.put("t", "notify");
-                notifyReply.put("status", "received");
-                notifyReply.put("id", id);
-			 */
-			case 'n':
+				else
 				{
-					DEBUG("Notification information received\n");
-					
-					char *statusString = json_get_element_string( &json, "status" );
-					char *idString = json_get_element_string( &json, "id" );
-					
-					if( statusString != NULL && idString != NULL )
+					if (appConnection == NULL)
 					{
-						DEBUG("NotificationSent will change status: %s\n", statusString );
-						
-						FULONG id = 0;
-						int status = 0;
-						char *end;
-						
-						id = strtol( idString, &end, 0 );
-						status = atoi( statusString );
-						
-						NotificationManagerNotificationSentSetStatusDB( SLIB->sl_NotificationManager, id, status );
+						DEBUG("Session not found for this connection\n");
+						return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_SESSION);
 					}
-				}
-				break;
 
-			// get ping and response via pong
-			/*
-			JSONObject pingRequest = new JSONObject();
-                pingRequest.put("t", "echo");
-                pingRequest.put("time", System.currentTimeMillis());
-			 */
-			case 'e': //echo
-				{
-					char *timeString = json_get_element_string( &json, "time" );
+					appConnection->mac_LastCommunicationTimestamp = time(NULL);
+
+					switch (first_type_letter)
+					{
+						case 'p': 
+							do
+							{ //pause
+								DEBUG("App is paused\n");
+								appConnection->mac_AppStatus = MOBILE_APP_STATUS_PAUSED;
+								appConnection->mac_MostRecentPauseTimestamp = time(NULL);
 					
-					char response[LWS_PRE+64];
-					snprintf( response+LWS_PRE, 64, "{\"t\":\"pong\",\"time\":\"%s\"}", timeString );
-					DEBUG("Response: %s\n", response+LWS_PRE);
+								char response[LWS_PRE+64];
+								strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
+								DEBUG("Response: %s\n", response+LWS_PRE);
+					
 #ifndef WEBSOCKET_SINK_SEND_QUEUE
-					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
-					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
+								FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
+								lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+								FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
 #else
-					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-					if( en != NULL )
-					{
-						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-						int msgsize = snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"time\":\"%s\"}", timeString );
-						en->fq_Size = msgsize;
+								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+								if( en != NULL )
+								{
+									en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+									memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
+									en->fq_Size = LWS_PRE+64;
 						
-						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+									DEBUG("[websocket_app_callback] Msg to send: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 			
-						if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
-						{
-							FQPushFIFO( &(appConnection->mac_Queue), en );
-							FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
-						}
-						lws_callback_on_writable( wsi );
-					}
+									if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
+									{
+										FQPushFIFO( &(appConnection->mac_Queue), en );
+										FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
+									}
+									lws_callback_on_writable( wsi );
+								}
 #endif
+							}
+							while (0);
+						break;
+
+						case 'r': 
+							do
+							{ //resume
+								DEBUG("App is resumed\n");
+								appConnection->mac_AppStatus = MOBILE_APP_STATUS_RESUMED;
+								appConnection->mac_MostRecentResumeTimestamp = time(NULL);
+					
+								char response[LWS_PRE+64];
+								strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
+								DEBUG("Response: %s\n", response+LWS_PRE);
+#ifndef WEBSOCKET_SINK_SEND_QUEUE
+								FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
+								lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+								FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
+#else
+								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+								if( en != NULL )
+								{
+									en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+									memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"resume\",\"status\":1}", 25 );
+									en->fq_Size = LWS_PRE+64;
+						
+									DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+			
+									if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
+									{
+										FQPushFIFO( &(appConnection->mac_Queue), en );
+										FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
+									}
+									lws_callback_on_writable( wsi );
+								}
+#endif
+							}
+							while (0);
+						break;
+			
+						// get information from mobile device about notification status
+						/*
+						JSONObject notifyReply = new JSONObject();
+							notifyReply.put("t", "notify");
+							notifyReply.put("status", "received");
+							notifyReply.put("id", id);
+						*/
+						case 'n':
+							{
+								char *statusString = json_get_element_string( &json, "status" );
+								char *idString = json_get_element_string( &json, "id" );
+					
+								DEBUG("Notification information received. Status: %s id: %s\n", statusString, idString );
+					
+								if( statusString != NULL && idString != NULL )
+								{
+									DEBUG("NotificationSent will change status: %s\n", statusString );
+						
+									FULONG id = 0;
+									int status = 0;
+									char *end;
+						
+									id = strtol( idString, &end, 0 );
+									status = atoi( statusString );
+						
+									NotificationManagerNotificationSentSetStatusDB( SLIB->sl_NotificationManager, id, status );
+								}
+							}
+						break;
+
+						// get ping and response via pong
+						/*
+						JSONObject pingRequest = new JSONObject();
+							pingRequest.put("t", "echo");
+							pingRequest.put("time", System.currentTimeMillis());
+						*/
+						case 'e': //echo
+							{
+								char *timeString = json_get_element_string( &json, "time" );
+					
+								char response[LWS_PRE+64];
+								snprintf( response+LWS_PRE, 64, "{\"t\":\"pong\",\"time\":\"%s\"}", timeString );
+								DEBUG("Response: %s\n", response+LWS_PRE);
+#ifndef WEBSOCKET_SINK_SEND_QUEUE
+								FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
+								lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+								FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
+#else
+								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+								if( en != NULL )
+								{
+									en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+									int msgsize = snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"time\":\"%s\"}", timeString );
+									en->fq_Size = msgsize;
+						
+									DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+			
+									if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
+									{
+										FQPushFIFO( &(appConnection->mac_Queue), en );
+										FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
+									}
+									lws_callback_on_writable( wsi );
+								}
+#endif
+							}
+						break;
+
+						default:
+							return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_WRONG_TYPE);
+					}
 				}
-				break;
-
-			default:
-				return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_WRONG_TYPE);
 			}
-
+			else
+			{
+				return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_TYPE);
+			}
 		}
+		break;
 	}
-	else
-	{
-		return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_TYPE);
-	}
-		
-	}
-	break;
-}
-	
-	
-
 	return 0; //should be unreachable
 }
 
