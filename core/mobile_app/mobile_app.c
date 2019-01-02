@@ -793,7 +793,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 	char *tokenString = json_get_element_string(json, "apptoken");
 
 	//step 3 - check if the username and password is correct
-	DEBUG("Login attempt <%s> <%s>\n", usernameString, passwordString );
+	DEBUG("Login attempt <%s> <%s> tokenString: %s\n", usernameString, passwordString, tokenString );
 
 	unsigned long block_time = 0;
 	User *user = NULL;
@@ -818,7 +818,14 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		user = UMGetUserByNameDBCon( SLIB->sl_UM, sqlLib, usernameString );
 	
-		umaID = MobileManagerGetUMAIDByToken( SLIB->sl_MobileManager, sqlLib, tokenString );
+		if( tokenString != NULL )
+		{
+			umaID = MobileManagerGetUMAIDByToken( SLIB->sl_MobileManager, sqlLib, tokenString );
+		}
+		else
+		{
+			FERROR("TokenApp is NULL!\n");
+		}
 
 		SLIB->LibrarySQLDrop( SLIB, sqlLib );
 	}
