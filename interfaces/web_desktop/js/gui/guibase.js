@@ -236,27 +236,10 @@ var mousePointer =
 			if( this.mover.rollOver )
 				this.mover.rollOver( this.elements );
 		}
-		else if( this.candidate )
+		// We have a candidate for dragging / etc
+		else if( this.candidate && this.candidate.condition )
 		{
-			var dc = this.candidate;
-			if( dc.type )
-			{
-				if( dc.type == 'drag' )
-				{
-					var dx = windowMouseX;
-					var dy = windowMouseY;
-					var px = dc.clickX;
-					var py = dc.clickY;
-					var dfx = dx - px;
-					var dfy = dy - py;
-					var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
-					if( dist > dc.distance )
-					{
-						this.candidate = null;
-						dc.action();
-					}
-				}
-			}
+			this.candidate.condition( e );
 		}
 	},
 	'stopMove': function ( e )

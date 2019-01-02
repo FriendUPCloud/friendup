@@ -973,32 +973,39 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				if( mousePointer.candidate ) return;
 				// Add candidate and rules
 				var self = this;
+				var px = e.clientX;
+				var py = e.clientY;
 				mousePointer.candidate = {
-					clickX: e.clientX,
-					clickY: e.clientY,
-					distance: 30,
-					type: 'drag',
-					action: function()
+					condition: function( e )
 					{
-						self.removeChild( self.getElementsByTagName( 'span' )[0] );
-						self.ondrop = function( target )
+						var dx = windowMouseX;
+						var dy = windowMouseY;
+						var dfx = dx - px;
+						var dfy = dy - py;
+						var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
+						if( dist > 30 )
 						{
-							if( target && target.classList )
+							mousePointer.candidate = null;
+							self.removeChild( self.getElementsByTagName( 'span' )[0] );
+							self.ondrop = function( target )
 							{
-								if( target.classList.contains( 'ScreenContent' ) )
+								if( target && target.classList )
 								{
-									var m = new Module( 'dock' );
-									m.onExecuted = function()
+									if( target.classList.contains( 'ScreenContent' ) )
 									{
-										Workspace.reloadDocks();
+										var m = new Module( 'dock' );
+										m.onExecuted = function()
+										{
+											Workspace.reloadDocks();
+										}
+										m.execute( 'removefromdock', { name: o.exe } );
+										return;
 									}
-									m.execute( 'removefromdock', { name: o.exe } );
-									return;
 								}
+								Workspace.reloadDocks();
 							}
-							Workspace.reloadDocks();
+							mousePointer.pickup( self );
 						}
-						mousePointer.pickup( self );
 					}
 				};
 			}
