@@ -513,8 +513,8 @@ void NotificationManagerTimeoutThread( FThread *data )
 		counter++;
 		if( counter > 15 )	// do checking every 15 seconds
 		{
-			DelListEntry *rootList = NULL;
-			DelListEntry *lastListEntry = NULL;
+			DelListEntry *rootDeleteList = NULL;
+			DelListEntry *lastDeleteListEntry = NULL;
 			
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
@@ -523,15 +523,15 @@ void NotificationManagerTimeoutThread( FThread *data )
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 			{
-				Notification *notifRoot = NULL;
-				Notification *notifLast = NULL;
+				Notification *notifStayRoot = NULL;
+				Notification *notifStayLast = NULL;
 				
 				Notification *notif = nm->nm_Notifications;
-				//Notification *nroot = NULL;
-			
+
 				INFO( "[NotificationManagerTimeoutThread] checking\n");
 				while( notif != NULL )
 				{
+					DEBUG("Notification ID: %lu\n", notif->n_ID );
 					Notification *next = (Notification *)notif->node.mln_Succ;
 					allEntries++;
 					
@@ -540,73 +540,50 @@ void NotificationManagerTimeoutThread( FThread *data )
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
 						
-						/*
-						if( nm->nm_Notifications == notif )
-						{
-							nm->nm_Notifications = next;
-							if( next != NULL )
-							{
-								DEBUG("Write to: %p\n", next );
-								next->node.mln_Pred = NULL;
-							}
-						}
-						else
-						{			// prev   -> notif  <- next
-							Notification *prev = (Notification *)notif->node.mln_Pred;
-							prev->node.mln_Succ = notif->node.mln_Succ;
-							if( next != NULL )
-							{
-								next->node.mln_Pred = (MinNode *)prev;
-							}
-						}
-						*/
-						
 						DEBUG("Remove notification for user: %s\n", notif->n_UserName );
 						toDel++;
 						
 						// add entries to list, entries will be updated and deleted
 						DelListEntry *le = FCalloc( 1, sizeof(DelListEntry) );
-						le->dle_NotificationPtr = notif;
-						
-						if( rootList == NULL )
+						if( le != NULL )
 						{
-							rootList = le;
-							lastListEntry = le;
-						}
-						else
-						{
-							lastListEntry->node.mln_Succ = (MinNode *)le;
-							lastListEntry = le;
-						}
-						//le->node.mln_Succ = (MinNode *)rootList;
-						//rootList = le;
+							le->dle_NotificationPtr = notif;
 						
-						//FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
-						//MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
-						//FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) );
-						//NotificationDelete( notif );
+							if( rootDeleteList == NULL )
+							{
+								rootDeleteList = le;
+								lastDeleteListEntry = le;
+							}
+							else
+							{
+								lastDeleteListEntry->node.mln_Succ = (MinNode *)le;
+								lastDeleteListEntry = le;
+							}
+						}
 					}
 					else
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will stay %lu\n", notif->n_ID );
+						notif->node.mln_Succ = NULL;	// to be sure it is not connected to anything
+						notif->node.mln_Pred = NULL;
 						
-						if( notifRoot == NULL )
+						// we create new list which will overwrite old one
+						if( notifStayRoot == NULL )
 						{
-							notifRoot = notif;
-							notifLast = notif;
+							notifStayRoot = notif;
+							notifStayLast = notif;
 						}
 						else
 						{
-							notifLast->node.mln_Succ = (MinNode *)notif;
-							notifLast = notif;
+							notifStayLast->node.mln_Succ = (MinNode *)notif;
+							notifStayLast = notif;
 						}
 					}
 					
 					notif = (Notification *)next;
-					//notif = (Notification *)notif->node.mln_Succ;
 				}
 				
-				nm->nm_Notifications = notifRoot;
+				nm->nm_Notifications = notifStayRoot;
 				
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 			}
@@ -614,24 +591,25 @@ void NotificationManagerTimeoutThread( FThread *data )
 			// update and remove list of entries
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries: %d all entries %d\n", toDel, allEntries );
 			
-			DelListEntry *le = rootList;
+			DelListEntry *le = rootDeleteList;
 			while( le != NULL )
 			{
-				DelListEntry *ne = (DelListEntry *)le->node.mln_Succ;
+				DelListEntry *nextentry = (DelListEntry *)le->node.mln_Succ;
+				
 				Notification *dnotif = le->dle_NotificationPtr;
 				
 				if( dnotif != NULL )
 				{
-					DEBUG1("\n\nMsg will be sent! %s\n", dnotif->n_Content );
+					DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
 				
 					MobileAppNotifyUserUpdate( nm->nm_SB, dnotif->n_UserName, dnotif, 0, NOTIFY_ACTION_TIMEOUT );
 					NotificationDelete( dnotif );
+					le->dle_NotificationPtr = NULL;
 				}
-				le->dle_NotificationPtr = NULL;
 				
 				FFree( le );
 				
-				le = ne;
+				le = nextentry;
 			}
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries END\n" );
 			
