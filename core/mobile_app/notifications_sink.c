@@ -21,7 +21,7 @@ extern SystemBase *SLIB;
 static Hashmap *globalSocketAuthMap; //maps websockets to boolean values that are true then the websocket is authenticated
 //static char *_auth_key;
 
-//#define WEBSOCKET_SEND_QUEUE
+#define WEBSOCKET_SEND_QUEUE
 
 static void NotificationsSinkInit(void);
 static void WebsocketRemove(struct lws *wsi);

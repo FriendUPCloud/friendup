@@ -830,6 +830,10 @@ FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name )
  */
 User *UMGetUserByName( UserManager *um, const char *name )
 {
+	if( name == NULL )
+	{
+		return NULL;
+	}
 	User *tuser = um->um_Users;
 	while( tuser != NULL )
 	{

@@ -649,6 +649,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					
 					if( statusString != NULL && idString != NULL )
 					{
+						DEBUG("NotificationSent will change status: %s\n", statusString );
+						
 						FULONG id = 0;
 						int status = 0;
 						char *end;
@@ -1212,10 +1214,15 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
  * @param notif pointer to Notfication structure
  * @param notifSentID id of NotificationSent from information is coming
  * @param action id of action
- * @return true when message was send
+ * @return 0 when message was send, otherwise error number
  */
 int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, FULONG notifSentID, int action )
 {
+	if( username == NULL )
+	{
+		Log( FLOG_ERROR, "MobileAppNotifyUserUpdate: Username is NULL!\n");
+		return 1;
+	}
 	SystemBase *sb = (SystemBase *)lsb;
 	UserMobileAppConnections *userConnections = NULL;
 	NotificationSent *notifSent = NULL;
