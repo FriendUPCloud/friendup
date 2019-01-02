@@ -571,6 +571,11 @@ body.WindowMenu #Screens .View
 	z-index: 99999999 !important;
 }
 
+.ViewContainer .ViewIcon 
+{
+	transform: rotateZ(0deg);
+}
+
 .ViewContainer.Active .ViewIcon 
 {
 	z-index: 2147483647 !important;
