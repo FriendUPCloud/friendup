@@ -2191,6 +2191,7 @@ if( isset( $args->command ) )
 			$s = new stdClass();
 
 			// The first login test!
+			// NB: This is run on every user login
 			include( 'modules/system/include/firstlogin.php' );
 
 			// Theme information

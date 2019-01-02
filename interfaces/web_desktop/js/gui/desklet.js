@@ -166,6 +166,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 		}, false );
 	}
+	
 	this.dom.onmouseup = function ( e )
 	{
 		if ( !e ) e = window.event;
@@ -969,34 +970,46 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 			div.onmousedown = function( e )
 			{
-				this.clickDown = {
-					x: e.clientX,
-					y: e.clientY
+				if( mousePointer.candidate ) return;
+				// Add candidate and rules
+				var self = this;
+				var px = e.clientX;
+				var py = e.clientY;
+				mousePointer.candidate = {
+					condition: function( e )
+					{
+						var dx = windowMouseX;
+						var dy = windowMouseY;
+						var dfx = dx - px;
+						var dfy = dy - py;
+						var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
+						if( dist > 30 )
+						{
+							mousePointer.candidate = null;
+							self.removeChild( self.getElementsByTagName( 'span' )[0] );
+							self.ondrop = function( target )
+							{
+								if( target && target.classList )
+								{
+									if( target.classList.contains( 'ScreenContent' ) )
+									{
+										var m = new Module( 'dock' );
+										m.onExecuted = function()
+										{
+											Workspace.reloadDocks();
+										}
+										m.execute( 'removefromdock', { name: o.exe } );
+										return;
+									}
+								}
+								Workspace.reloadDocks();
+							}
+							mousePointer.pickup( self );
+						}
+					}
 				};
 			}
-			
-			div.onmousemove = function( e )
-			{
-				if( this.clickDown && o.exe )
-				{
-					var diffx = this.clickDown.x - e.clientX;
-					var diffy = this.clickDown.y - e.clientY;
-					if( diffx > 10 || diffy > 10 || diffx < -10 || diffy < -10 )
-					{
-						var m = new Module( 'dock' );
-						m.execute( 'removefromdock', { name: o.exe } );
-						this.drop = function()
-						{
-							
-						}
-						this.removeChild( this.getElementsByTagName( 'span' )[0] );
-						mousePointer.pickup( this );
-						this.fileInfo = {};
-					}
-				}
-			}
-			
-			
+
 			var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
 			
 			if( bubbletext )

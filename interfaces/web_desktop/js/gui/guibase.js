@@ -236,6 +236,11 @@ var mousePointer =
 			if( this.mover.rollOver )
 				this.mover.rollOver( this.elements );
 		}
+		// We have a candidate for dragging / etc
+		else if( this.candidate && this.candidate.condition )
+		{
+			this.candidate.condition( e );
+		}
 	},
 	'stopMove': function ( e )
 	{
@@ -259,42 +264,41 @@ var mousePointer =
 			var dropper = false;
 			
 			// Check drop on tray icon
-			if( !dropper )
+			var titems = ge( 'Tray' ).childNodes;
+			for( var a = 0; a < titems.length; a++ )
 			{
-				var titems = ge( 'Tray' ).childNodes;
-				for( var a = 0; a < titems.length; a++ )
+				var tr = titems[a];
+				var l = GetElementLeft( tr ); // left
+				var t = GetElementTop( tr ); // bottom
+				var r = l + tr.offsetWidth; // right
+				var b = t + tr.offsetHeight; // bottom
+				if( windowMouseX >= l && windowMouseX < r && windowMouseY >= t && windowMouseY < b )
 				{
-					var tr = titems[a];
-					var l = GetElementLeft( tr ); // left
-					var t = GetElementTop( tr ); // bottom
-					var r = l + tr.offsetWidth; // right
-					var b = t + tr.offsetHeight; // bottom
-					if( windowMouseX >= l && windowMouseX < r && windowMouseY >= t && windowMouseY < b )
+					dropper = tr;
+					var objs = [];
+					for( var k = 0; k < this.elements.length; k++ )
 					{
-						dropper = tr;
-						var objs = [];
-						for( var k = 0; k < this.elements.length; k++ )
+						var e = this.elements[k];
+						if ( e.fileInfo.getDropInfo ) {
+							var info = e.fileInfo.getDropInfo();
+							objs.push( info );
+						} 
+						else 
 						{
-							var e = this.elements[k];
-							if ( e.fileInfo.getDropInfo ) {
-								var info = e.fileInfo.getDropInfo();
-								objs.push( info );
-							} 
-							else 
-							{
-								objs.push( {
-									Path: e.fileInfo.Path,
-									Type: e.fileInfo.Type,
-									Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
-									Filesize: e.fileInfo.fileSize,
-									Icon: e.fileInfo.Icon
-								} );
-							}
+							objs.push( {
+								Path: e.fileInfo.Path,
+								Type: e.fileInfo.Type,
+								Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
+								Filesize: e.fileInfo.fileSize,
+								Icon: e.fileInfo.Icon
+							} );
 						}
-						if( dropper.ondrop )
-							dropper.ondrop( objs );
-						break;
 					}
+					if( dropper.ondrop )
+					{
+						dropper.ondrop( objs );
+					}
+					break;
 				}
 			}
 
@@ -322,7 +326,7 @@ var mousePointer =
 			var skipDropCheck = false;
 			
 			// Check drop on view
-			if ( !dropper )
+			if( !dropper )
 			{
 				var z = 0;
 				for ( var a in ars )
@@ -475,20 +479,23 @@ var mousePointer =
 					for( var k = 0; k < this.elements.length; k++ )
 					{
 						var e = this.elements[k];
-						if( e.fileInfo.getDropInfo )
+						if( e.fileInfo )
 						{
-							var info = e.fileInfo.getDropInfo();
-							objs.push( info );
-						}
-						else
-						{
-							objs.push( {
-								Path: e.fileInfo.Path,
-								Type: e.fileInfo.Type,
-								Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
-								Filesize: e.fileInfo.fileSize,
-								Icon: e.fileInfo.Icon
-							});
+							if( e.fileInfo.getDropInfo )
+							{
+								var info = e.fileInfo.getDropInfo();
+								objs.push( info );
+							}
+							else
+							{
+								objs.push( {
+									Path: e.fileInfo.Path,
+									Type: e.fileInfo.Type,
+									Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
+									Filesize: e.fileInfo.fileSize,
+									Icon: e.fileInfo.Icon
+								});
+							}
 						}
 					}
 					if( dropper.windowObject )
@@ -515,6 +522,8 @@ var mousePointer =
 			{
 				for( var a = 0; a < this.elements.length; a++ )
 				{
+					if( this.elements[a].ondrop )
+						this.elements[a].ondrop( dropper );
 					if( this.elements[a].oldParent )
 					{
 						var ea = this.elements[a];
@@ -532,6 +541,8 @@ var mousePointer =
 			{
 				for( var a = 0; a < this.elements.length; a++ )
 				{
+					if( this.elements[a].ondrop )
+						this.elements[a].ondrop( dropper );
 					this.dom.removeChild( this.elements[a] );
 				}
 			}
@@ -2162,6 +2173,7 @@ movableMouseUp = function( e )
 	window.mouseDown = false;
 	if( window.currentMovable ) currentMovable.snapping = false;
 	window.mouseMoveFunc = false;
+	mousePointer.candidate = null;
 	document.body.style.cursor = '';
 	
 	// Execute the release function

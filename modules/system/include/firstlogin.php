@@ -69,6 +69,16 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 				$s->Save();
 			}
 		}
+		
+		// Check post login for this workgroup
+		if( file_exists( 'cfg/postlogin_' . $wkey . '.php' ) )
+		{
+			// Variables used for post login
+			$postLogin = new stdClass();
+			$postLogin->Workgroup = str_replace( ' ', '_', $wgroup->Name );
+			$postLogin->FriendUser = $User->Name;
+			require( 'cfg/postlogin_' . $wkey . '.php' );
+		}
 	}
 }
 
