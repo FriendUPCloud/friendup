@@ -186,9 +186,10 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 		usleep( 1000 );
 	}
 	
-	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : Websocketpointer %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
+	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : Websocketpointer: %p Position: %d\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr, connectionIndex );
 	
 	connections->umac_Connection[connectionIndex]->mac_CloseConnection = TRUE;
+	connections->umac_Connection[connectionIndex]->mac_WebsocketPtr = NULL;
 	//lws_callback_on_writable( connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
 	connections->umac_Connection[connectionIndex] = NULL;
 }
@@ -402,7 +403,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			}
 			Log( FLOG_DEBUG, "\t\t\t\t\t\t\tREMOVE APP CONNECTION %d - conptr %p\n", appConnection->mac_UserConnectionIndex, appConnection );
 			
-			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
 				
 				//remove connection from user connnection struct
@@ -413,22 +414,25 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->umac_Username );
 					MobileAppRemoveAppConnection( userConnections, connectionIndex );
 				}
-				
-				// do not close connection if its used
-				while( TRUE )
+			
+				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+			}
+			
+			// do not close connection if its used
+			while( TRUE )
+			{
+				if( appConnection->mac_Used <= 0 )
 				{
-					if( appConnection->mac_Used <= 0 )
-					{
-						break;
-					}
-					sleep( 1 );
+					break;
 				}
+				sleep( 1 );
+			}
 
-				MobileAppConnectionDelete( appConnection );
-				//TODO
+			MobileAppConnectionDelete( appConnection );
+			//TODO
 
 				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-			}
+			//}
 			MobileAppNotif *n = (MobileAppNotif *)user;
 			n->man_Data = NULL;
 			//FFree( websocketHash );
@@ -548,6 +552,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				if( first_type_letter == 'l'/*login*/)
 				{
 					MobileAppHandleLogin( wsi, user, &json );
+					
+					Log( FLOG_DEBUG, "\t\t\t\t\t\t\tADD APP CONNECTION Websocket pointer: %p\n", wsi );
 				}
 				else
 				{

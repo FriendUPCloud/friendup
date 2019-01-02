@@ -64,10 +64,11 @@ static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 		if( en != NULL )
 		{
 			DEBUG("Message added to queue: '%s'\n", msg );
-			en->fq_Data = FMalloc( len+32+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+			en->fq_Data = FMalloc( len+64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
+			
 			en->fq_Size = len;
-			FERROR("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, len );
+			FERROR("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", msg, len );
 	
 			//FQPushFIFO( &(man->man_Queue), en );
 			//lws_callback_on_writable( mac->websocket_ptr );
