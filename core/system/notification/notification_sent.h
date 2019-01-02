@@ -90,7 +90,7 @@ static FULONG NotificationSentDesc[] = { SQLT_TABNAME, (FULONG)"FNotificationSen
 	SQLT_INT, (FULONG)"NotificationID", offsetof( NotificationSent, ns_NotificationID ),
 	SQLT_INT, (FULONG)"RequestID", offsetof( NotificationSent, ns_RequestID ),
 	SQLT_INT, (FULONG)"UserMobileAppID", offsetof( NotificationSent, ns_UserMobileAppID ),
-	SQLT_INT, (FULONG)"Target", offsetof( NotificationSent, ns_UserMobileAppID ),
+	SQLT_INT, (FULONG)"Target", offsetof( NotificationSent, ns_Target ),
 	SQLT_INT, (FULONG)"Status", offsetof( NotificationSent, ns_Status ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&NotificationSentInit,
 	SQLT_END };
