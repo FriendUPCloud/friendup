@@ -1068,6 +1068,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		if( usrname != NULL )
 		{
+			DEBUG(" username: %s\n", usrname );
 			char *temp = FCalloc( 2048, 1 );
 			int numberOfSessions = 0;
 			
@@ -1075,7 +1076,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				while( logusr != NULL )
 				{
-					if( strcmp( logusr->u_Name, usrname ) == 0 )
+					if( logusr->u_Name != NULL && strcmp( logusr->u_Name, usrname ) == 0 )
 					{
 						BufString *bs = BufStringNew();
 						
