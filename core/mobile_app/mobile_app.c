@@ -409,7 +409,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
 				if( userConnections != NULL )
 				{
-					DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
+					DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->umac_Username );
 					MobileAppRemoveAppConnection( userConnections, connectionIndex );
 				}
 				
