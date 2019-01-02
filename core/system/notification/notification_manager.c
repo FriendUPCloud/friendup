@@ -597,12 +597,17 @@ void NotificationManagerTimeoutThread( FThread *data )
 			while( le != NULL )
 			{
 				DelListEntry *ne = (DelListEntry *)le->node.mln_Succ;
-				Notification *notif = le->dle_NotificationPtr;
+				Notification *dnotif = le->dle_NotificationPtr;
 				
-				DEBUG1("\n\nMsg will be sent! %s\n", notif->n_Content );
+				if( dnotif != NULL )
+				{
+					DEBUG1("\n\nMsg will be sent! %s\n", dnotif->n_Content );
 				
-				MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
-				NotificationDelete( notif );
+					MobileAppNotifyUserUpdate( nm->nm_SB, dnotif->n_UserName, dnotif, 0, NOTIFY_ACTION_TIMEOUT );
+					NotificationDelete( dnotif );
+				}
+				le->dle_NotificationPtr = NULL;
+				
 				FFree( le );
 				
 				le = ne;
