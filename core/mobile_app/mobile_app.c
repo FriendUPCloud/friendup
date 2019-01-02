@@ -131,13 +131,14 @@ static inline int WriteMessageMA( MobileAppConnection *mac, unsigned char *msg, 
 					mac->mac_Used++;
 					FQPushFIFO( &(mac->mac_Queue), en );
 				
-					if( mac->mac_WebsocketPtr != NULL )
-					{
-						lws_callback_on_writable( mac->mac_WebsocketPtr );
-					}
 					mac->mac_Used--;
 				}
 				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
+				
+				if( mac->mac_WebsocketPtr != NULL )
+				{
+					lws_callback_on_writable( mac->mac_WebsocketPtr );
+				}
 			}
 		}
 	}
@@ -464,12 +465,9 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				//FQueue *q = &(man->man_Queue);
 				FQueue *q = &(appConnection->mac_Queue);
 			
-				DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
+				DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p pointer to WS: %p\n", q, wsi );
 			
 				e = FQPop( q );
-			
-				//FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
-			//}
 			
 				if( e != NULL )
 				{
@@ -497,13 +495,14 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					DEBUG("[websocket_app_callback] No message in queue\n");
 				}
 			
-				if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
-				{
-					DEBUG("We have message to send, calling writable\n");
-					lws_callback_on_writable( wsi );
-				}
 				// test
 				FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
+			}
+			
+			if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
+			{
+				DEBUG("We have message to send, calling writable\n");
+				lws_callback_on_writable( wsi );
 			}
 #endif
 		}
