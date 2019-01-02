@@ -3,6 +3,11 @@ html, body
 	position: relative;
 }
 
+body *
+{
+	-webkit-tap-highlight-color: transparent;
+}
+
 /* Preload images */
 body.Inside > img
 {
