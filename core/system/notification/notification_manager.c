@@ -358,6 +358,27 @@ int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid
 }
 
 /**
+ * Delete NotificationSent connected to it from DB
+ * 
+ * @param nm pointer to NotificationManager
+ * @param nid id of NotificationSent which will be deleted
+ * @return 0 when success, otherwise error number
+ */
+int NotificationManagerDeleteNotificationSentDB( NotificationManager *nm, FULONG nid )
+{
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		char temp[ 1024 ];
+
+		snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `ID`=%lu", nid );
+	
+		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+	return 0;
+}
+
+/**
  * Update NotificationSent status in DB
  * 
  * @param nm pointer to NotificationManager

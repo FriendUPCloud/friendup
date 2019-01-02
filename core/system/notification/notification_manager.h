@@ -75,6 +75,8 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( Not
 
 int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid );
 
+int NotificationManagerDeleteNotificationSentDB( NotificationManager *nm, FULONG nid );
+
 Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FULONG nsid );
 
 int NotificationManagerNotificationSentSetStatusDB( NotificationManager *nm, FULONG nid, int status );
