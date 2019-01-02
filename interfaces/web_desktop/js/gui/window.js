@@ -1965,92 +1965,96 @@ var View = function( args )
 		title.ondragstart = function( e ) { return cancelBubble ( e ); }
 		title.onselectstart = function( e ) { return cancelBubble ( e ); }
 
-		title.onmousedown = function( e, mode )
+		if( !isMobile )
 		{
-			if ( !e ) e = window.event;
-
-			// Use correct button
-			if( e.button != 0 && !mode ) return cancelBubble( e );
-
-			var y = e.clientY ? e.clientY : e.pageYOffset;
-			var x = e.clientX ? e.clientX : e.pageXOffset;
-			window.mouseDown = FUI_MOUSEDOWN_WINDOW;
-			this.parentNode.offx = x - this.parentNode.offsetLeft;
-			this.parentNode.offy = y - this.parentNode.offsetTop;
-			_ActivateWindow( div, false, e );
-			
-			if( e.shiftKey && div.snapObject )
+			title.onmousedown = function( e, mode )
 			{
-				div.unsnap();
-			}
-			
-			return cancelBubble( e );
-		}
+				if ( !e ) e = window.event;
 
-		// Pawel must win!
-		title.ondblclick = function( e )
-		{
-			if( self.flags.clickableTitle )
-			{
-				if( !self.titleClickElement )
+				// Use correct button
+				if( e.button != 0 && !mode ) return cancelBubble( e );
+
+				var y = e.clientY ? e.clientY : e.pageYOffset;
+				var x = e.clientX ? e.clientX : e.pageXOffset;
+				window.mouseDown = FUI_MOUSEDOWN_WINDOW;
+				this.parentNode.offx = x - this.parentNode.offsetLeft;
+				this.parentNode.offy = y - this.parentNode.offsetTop;
+				_ActivateWindow( div, false, e );
+			
+				if( e.shiftKey && div.snapObject )
 				{
-					var d = document.createElement( 'input' );
-					d.type = 'text';
-					d.className = 'BackgroundHeavier NoMargins Absolute';
-					d.style.position = 'absolute';
-					d.style.outline = 'none';
-					d.style.border = '0';
-					d.style.top = '0px';
-					d.style.left = '0px';
-					d.style.width = '100%';
-					d.style.height = '100%';
-					d.style.textAlign = 'center';
-					d.style.pointerEvents = 'all';
-					d.value = contn.fileInfo.Path;
-					d.onkeydown = function( e )
-					{
-						self.flags.editing = true;
-						setTimeout( function()
-						{
-							self.flags.editing = false;
-						}, 150 );
-					}
-					d.onblur = function()
-					{
-						d.parentNode.removeChild( d );
-						self.titleClickElement = null;
-					}
-					d.onchange = function( e )
-					{
-						var t = this;
-						var f = ( new Door() ).get( this.value );
-						if( f )
-						{
-							f.getIcons( this.value, function( items )
-							{
-								if( items )
-								{
-									self.content.fileInfo.Path = t.value;
-									self.content.refresh();
-								}
-								else
-								{
-									t.value = contn.fileInfo.Path;
-								}
-							} );
-						}
-						else
-						{
-							t.value = contn.fileInfo.Path;
-						}
-					}
-					this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
-					self.titleClickElement = d;
+					div.unsnap();
 				}
-				self.titleClickElement.focus();
-				self.titleClickElement.select();
+			
+				return cancelBubble( e );
 			}
-			_WindowToFront( div );
+
+			// Pawel must win!
+		
+			title.ondblclick = function( e )
+			{
+				if( self.flags.clickableTitle )
+				{
+					if( !self.titleClickElement )
+					{
+						var d = document.createElement( 'input' );
+						d.type = 'text';
+						d.className = 'BackgroundHeavier NoMargins Absolute';
+						d.style.position = 'absolute';
+						d.style.outline = 'none';
+						d.style.border = '0';
+						d.style.top = '0px';
+						d.style.left = '0px';
+						d.style.width = '100%';
+						d.style.height = '100%';
+						d.style.textAlign = 'center';
+						d.style.pointerEvents = 'all';
+						d.value = contn.fileInfo.Path;
+						d.onkeydown = function( e )
+						{
+							self.flags.editing = true;
+							setTimeout( function()
+							{
+								self.flags.editing = false;
+							}, 150 );
+						}
+						d.onblur = function()
+						{
+							d.parentNode.removeChild( d );
+							self.titleClickElement = null;
+						}
+						d.onchange = function( e )
+						{
+							var t = this;
+							var f = ( new Door() ).get( this.value );
+							if( f )
+							{
+								f.getIcons( this.value, function( items )
+								{
+									if( items )
+									{
+										self.content.fileInfo.Path = t.value;
+										self.content.refresh();
+									}
+									else
+									{
+										t.value = contn.fileInfo.Path;
+									}
+								} );
+							}
+							else
+							{
+								t.value = contn.fileInfo.Path;
+							}
+						}
+						this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
+						self.titleClickElement = d;
+					}
+					self.titleClickElement.focus();
+					self.titleClickElement.select();
+				}
+				_WindowToFront( div );
+			}
 		}
 
 		// Clicking on window
