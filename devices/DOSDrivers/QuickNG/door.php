@@ -1344,6 +1344,10 @@ if( !class_exists( 'DoorQuickNG' ) )
 												{
 													$obj->backorders = 'notify';
 												}
+												else
+												{
+													$obj->backorders = 'yes';
+												}
 												
 												$obj->stock_quantity = (string)$stock;
 										

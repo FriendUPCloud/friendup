@@ -1626,6 +1626,10 @@ if( !class_exists( 'DoorWordpress' ) )
 											{
 												$obj->{'backorders'} = 'notify';
 											}
+											else
+											{
+												$obj->{'backorders'} = 'yes';
+											}
 											
 											$obj->{$mapping[$k]} = $data;
 										}
