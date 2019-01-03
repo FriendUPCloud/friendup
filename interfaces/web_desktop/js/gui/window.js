@@ -1508,7 +1508,6 @@ function CloseView( win )
 	if( win && win.nativeWindow ) win.nativeWindow.close();
 	else if( win && win.windowObject && win.windowObject.nativeWindow )
 		win.windowObject.nativeWindow.close();
-	Friend.GUI.reorganizeResponsiveMinimized();
 }
 // Obsolete!!!
 CloseWindow = CloseView;
@@ -1766,6 +1765,8 @@ var View = function( args )
 					divParent = document.body;
 				}
 			}
+			
+			// Designate
 			movableWindows[ id ] = div;
 			div.titleString = titleStr;
 			div.viewId = id;
@@ -1943,6 +1944,9 @@ var View = function( args )
 		{
 			WorkspaceMenu.close();
 		}
+
+		// Clean up!
+		Friend.GUI.view.cleanWindowArray( div );
 
 		// Title
 		var title = document.createElement ( 'div' );
@@ -4327,6 +4331,19 @@ var View = function( args )
 	// Done setting up view ---------------------------------------------------<
 }
 
+Friend.GUI.view.cleanWindowArray = function( ele )
+{
+	var out = [];
+	var found = true;
+	for( var a in movableWindows )
+	{
+		if( a != ele.id && movableWindows[ a ] != ele )
+			out[ a ] = ele;
+	}
+	out[ ele.id ] = ele;
+	movableWindows = out;
+}
+
 // Reorganize view window positions on responsive browser
 Friend.GUI.reorganizeResponsiveMinimized = function()
 {
@@ -4336,15 +4353,6 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		// Here is the first screen
 		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
-		/*for( var a in movableWindows )
-		{
-			// These views are handled by css...
-			var c = movableWindows[a].parentNode;
-			c.style.top = '0';
-			c.style.left = '0';
-			c.style.width = '100%';
-			c.style.height = '100%';
-		}*/
 		return;
 	}
 	
