@@ -1627,7 +1627,7 @@ function apiWrapper( event, force )
 								}
 								else
 								{
-									console.log( 'Activating window: ' + win._window.id );
+									console.log( 'Activating window: ' + win._window.parentNode.id );
 									win.activate();
 								}
 							}
