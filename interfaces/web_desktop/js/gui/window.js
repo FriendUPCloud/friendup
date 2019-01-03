@@ -1684,6 +1684,7 @@ var View = function( args )
 		parentWindow = self.getFlag( 'parentView' );
 		transparent = self.getFlag( 'transparent' );
 		
+		// Clean ID
 		if( !id )
 		{
 			id = titleStr.split( /^[\ a-z0-9]/i ).join( '_' );
@@ -1696,6 +1697,13 @@ var View = function( args )
 				tmp = id + '_' + (num++);
 			}
 			id = tmp;
+		}
+		// Clean ID
+		else
+		{
+			id = id.split( /^[\ a-z0-9]/i ).join( '_' );
+			if( id.substr( 0, 1 ) == '_' )
+				id = 'win' + id;
 		}
 
 		// Make a unique id
