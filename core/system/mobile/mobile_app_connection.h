@@ -50,7 +50,6 @@ typedef struct MobileAppConnection
 	UserMobileApp										*mac_UserMobileApp;
 	FULONG												mac_UserMobileAppID;
 	int													mac_Used;
-	FBOOL												mac_CloseConnection;
 }MobileAppConnection;
 
 //
