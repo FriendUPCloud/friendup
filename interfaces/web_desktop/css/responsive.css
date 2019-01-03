@@ -3,6 +3,11 @@ html, body
 	position: relative;
 }
 
+body *
+{
+	-webkit-tap-highlight-color: transparent;
+}
+
 /* Preload images */
 body.Inside > img
 {
@@ -564,6 +569,11 @@ body.WindowMenu #Screens .View
 	height: 100% !important;
 	min-height: 100% !important;
 	z-index: 99999999 !important;
+}
+
+.ViewContainer .ViewIcon 
+{
+	transform: rotateZ(0deg);
 }
 
 .ViewContainer.Active .ViewIcon 
