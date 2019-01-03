@@ -1697,6 +1697,7 @@ var View = function( args )
 				tmp = id + '_' + (num++);
 			}
 			id = tmp;
+			console.log( 'Mash is: ' + id );
 		}
 		// Clean ID
 		else
@@ -1704,6 +1705,7 @@ var View = function( args )
 			id = id.split( /^[\ a-z0-9]/i ).join( '_' );
 			if( id.substr( 0, 1 ) == '_' )
 				id = 'win' + id;
+			console.log( 'Cleaned mash: ' + id );
 		}
 
 		// Make a unique id
@@ -1828,8 +1830,6 @@ var View = function( args )
 
 		if( isMobile )
 			Workspace.exitMobileMenu();
-
-		console.log( 'Now getting a new window with id: ' + id );
 
 		// Tell it's opening
 		div.classList.add( 'Opening' );
