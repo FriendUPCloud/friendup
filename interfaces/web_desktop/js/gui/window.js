@@ -1687,7 +1687,7 @@ var View = function( args )
 		// Clean ID
 		if( !id )
 		{
-			id = titleStr.split( /^[\ a-z0-9]/i ).join( '_' );
+			id = titleStr.split( /[^\ a-z0-9]/i ).join( '_' );
 			if( id.substr( 0, 1 ) == '_' )
 				id = 'win' + id;
 			var tmp = id;
@@ -1697,15 +1697,13 @@ var View = function( args )
 				tmp = id + '_' + (num++);
 			}
 			id = tmp;
-			console.log( 'Mash is: ' + id );
 		}
 		// Clean ID
 		else
 		{
-			id = id.split( /^[\ a-z0-9]/i ).join( '_' );
+			id = id.split( /[^\ a-z0-9]/i ).join( '_' );
 			if( id.substr( 0, 1 ) == '_' )
 				id = 'win' + id;
-			console.log( 'Cleaned mash: ' + id );
 		}
 
 		// Make a unique id
