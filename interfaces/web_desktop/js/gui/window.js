@@ -1829,6 +1829,8 @@ var View = function( args )
 		if( isMobile )
 			Workspace.exitMobileMenu();
 
+		console.log( 'Now getting a new window with id: ' + id );
+
 		// Tell it's opening
 		div.classList.add( 'Opening' );
 		setTimeout( function()
