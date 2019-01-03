@@ -3775,6 +3775,7 @@ var View = function( args )
 	// Activate window
 	this.activate = function ()
 	{
+		console.log( 'Trying to activate ', this._window, this );
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Close a view window

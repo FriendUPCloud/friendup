@@ -1611,7 +1611,6 @@ function apiWrapper( event, force )
 							if( win )
 							{
 								win.focus();
-								console.log( 'Doing doing' );
 							}
 							break;
 						case 'activate':
@@ -1628,8 +1627,8 @@ function apiWrapper( event, force )
 								}
 								else
 								{
-									console.log( 'Activate window!' );
 									win.activate();
+									console.log( 'Here is : ', win );
 								}
 							}
 							break;
