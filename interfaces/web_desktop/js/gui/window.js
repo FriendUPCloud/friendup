@@ -1684,9 +1684,12 @@ var View = function( args )
 		parentWindow = self.getFlag( 'parentView' );
 		transparent = self.getFlag( 'transparent' );
 		
+		// Clean ID
 		if( !id )
 		{
-			id = titleStr.split ( ' ' ).join ( '_' );
+			id = titleStr.split( /[^a-z0-9]+/i ).join( '_' );
+			if( id.substr( 0, 1 ) == '_' )
+				id = 'win' + id;
 			var tmp = id;
 			var num = 2;
 			while( typeof ( movableWindows[ tmp ] ) != 'undefined' )
@@ -1694,6 +1697,13 @@ var View = function( args )
 				tmp = id + '_' + (num++);
 			}
 			id = tmp;
+		}
+		// Clean ID
+		else
+		{
+			id = id.split( /[^a-z0-9]+/i ).join( '_' );
+			if( id.substr( 0, 1 ) == '_' )
+				id = 'win' + id;
 		}
 
 		// Make a unique id
@@ -3775,7 +3785,6 @@ var View = function( args )
 	// Activate window
 	this.activate = function ()
 	{
-		console.log( 'Trying to activate ', this._window, this );
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Close a view window

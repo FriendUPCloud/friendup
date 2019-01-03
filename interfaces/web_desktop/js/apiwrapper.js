@@ -1396,7 +1396,6 @@ function apiWrapper( event, force )
 				if( msg.method && app.windows && app.windows[ msg.viewId ] )
 				{
 					var win = app.windows[ msg.viewId ];
-					console.log( 'This is the view now: ', win, msg.viewId );
 					switch( msg.method )
 					{
 						// Set a window state!
@@ -1628,7 +1627,6 @@ function apiWrapper( event, force )
 								}
 								else
 								{
-									console.log( 'And now: ', win );
 									win.activate();
 								}
 							}
@@ -1659,9 +1657,9 @@ function apiWrapper( event, force )
 					}
 
 					var postTarget = app;
-
+					
 					var v = new View( msg.data );
-					var win = msg.parentViewId && app.windows ? app.windows[msg.parentViewId] : false;
+					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{
 						v.parentViewId = msg.parentViewId;
