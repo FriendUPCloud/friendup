@@ -1658,8 +1658,13 @@ function apiWrapper( event, force )
 
 					var postTarget = app;
 
+					if( !msg.data.id )
+					{
+						msg.data.id = msg.data.viewId;
+					}
+					
 					var v = new View( msg.data );
-					var win = msg.parentViewId && app.windows ? app.windows[msg.parentViewId] : false;
+					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{
 						v.parentViewId = msg.parentViewId;
