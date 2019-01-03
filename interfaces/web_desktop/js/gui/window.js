@@ -908,7 +908,7 @@ function _ActivateWindowOnly( div )
 
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
-			
+
 			// Extra force!
 			if( isMobile )
 			{
@@ -916,6 +916,19 @@ function _ActivateWindowOnly( div )
 				m.viewContainer.style.left   = '0px';
 				m.viewContainer.style.width  = '100%';
 				m.viewContainer.style.height = '100%';
+				
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'minimized',
+						'viewId': div.windowObject.viewId,
+						'value': false
+					} );
+				}
+				
 			}
 
 			if( div.windowObject && !div.notifyActivated )
@@ -1065,6 +1078,11 @@ function _DeactivateWindow( m, skipCleanUp )
 			m.windowObject.sendMessage( msg );
 			m.notifyActivated = false;
 			PollTaskbar();
+		}
+		// Minimize on mobile
+		if( isMobile )
+		{
+			m.minimize.onclick();
 		}
 		ret = true;
 	}
@@ -2418,7 +2436,7 @@ var View = function( args )
 		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
 		minimize.onclick = function ( e )
 		{
-			if( !window.isTablet && e.button != 0 ) return;
+			if( !window.isTablet && e && e.button != 0 ) return;
 			if( div.minimized ) return;
 			div.minimized = true;
 			
