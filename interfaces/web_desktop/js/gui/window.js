@@ -1508,6 +1508,7 @@ function CloseView( win )
 	if( win && win.nativeWindow ) win.nativeWindow.close();
 	else if( win && win.windowObject && win.windowObject.nativeWindow )
 		win.windowObject.nativeWindow.close();
+	Friend.GUI.reorganizeResponsiveMinimized();
 }
 // Obsolete!!!
 CloseWindow = CloseView;

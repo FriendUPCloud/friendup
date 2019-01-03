@@ -1625,6 +1625,10 @@ function apiWrapper( event, force )
 									}
 									WorkspaceMenu.close();
 								}
+								else
+								{
+									win.activate();
+								}
 							}
 							break;
 					}
