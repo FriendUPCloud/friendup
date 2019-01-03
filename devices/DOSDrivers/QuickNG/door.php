@@ -2,11 +2,13 @@
 
 /*©lgpl*************************************************************************
 *                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
 *                                                                              *
-* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
-* General Public License, found in the file license_lgpl.txt.                  *
+* Copyright 2014-2017 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -14,6 +16,20 @@ global $args, $SqlDatabase, $User, $Config;
 
 include_once( 'php/classes/door.php' );
 include_once( 'php/include/i18n.php' );
+
+if( !defined( 'QUICK_SLASH_REPLACEMENT' ) )
+{
+	// To fix names
+	//define( 'QUICK_SLASH_REPLACEMENT', '&#47;' );
+	define( 'QUICK_SLASH_REPLACEMENT', '&#124;' );
+}
+
+// Make it a little bit aggressive!
+ini_set( 'sybct.login_timeout integer', 30 );
+ini_set( 'sybase.max_links', -1 );
+ini_set( 'sybct.deadlock_retry_count', 4 );
+
+ini_set( 'max_execution_time', 300 ); // 5min 
 
 i18nAddPath( 'devices/DOSDrivers/QuickNG/Locale/' );
 
@@ -24,14 +40,30 @@ if( !defined( 'QuickNG_FILE_LIMIT' ) )
 }
 
 if( !class_exists( 'DoorQuickNG' ) )
-{
+{	
 	class DoorQuickNG extends Door
 	{	
 		var $db;
 		
 		function onConstruct()
 		{
+			$this->authenticate();
+		}
+		
+		private function authenticate( $retries = 4 )
+		{
 			global $args, $Logger;
+			
+			if( $GLOBALS[ 'quickDatabaseLink' . $this->Username . $this->Password . $this->Server ] )
+			{
+				$this->db = $GLOBALS[ 'quickDatabaseLink' . $this->Username . $this->Password . $this->Server ];
+				//$Logger->log( 'Already authenticated. Using old database link.' );
+				return true;
+			}
+			
+			
+			//$Logger->log( 'QuickNG: Trying to authenticate (' . $retries . ' retries left.)' );
+			
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();	
 			
 			//$Logger->log( print_r( $this, 1 ) );
@@ -48,17 +80,22 @@ if( !class_exists( 'DoorQuickNG' ) )
 					{
 						//$Logger->log( 'Seems we didn\'t get an error.' );
 						//$this->expunge( 'Seems we didn\'t get an error.' . ( $this->Server . ':' . $this->Port . ' ' . $this->Username . ' ' . $this->Password ) . ' [] ' . $this->db );
-						
+						$GLOBALS[ 'quickDatabaseLink' . $this->Username . $this->Password . $this->Server ] = $this->db;
+						return true;
 					}
 					else
 					{
-						//$Logger->log( 'Error connecting!!' );
+						$Logger->log( 'Error connecting!!' . $this->db );
 						//$this->expunge( 'Error connecting!! ' . ( $this->Server . ':' . $this->Port . ' ' . $this->Username . ' ' . $this->Password ) );
+						// Try retries
+						if( $retries > 0 )
+							return $this->authenticate( $retries - 1 );
+						return false;
 					}
 				}
 				catch( Exception $e )
 				{
-					//$Logger->Log( 'We experienced an error: ', $e );
+					$Logger->log( 'QuickNG: We got a login error: ', $e );
 				}
 				//$Logger->log( 'We logged in!' );
 			}
@@ -66,6 +103,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 			{
 				//$Logger->log( 'We got no server information.' );
 			}
+			return false;
 		}
 		
 		function __destruct()
@@ -74,6 +112,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 			if( $this->db )
 			{
 				sybase_close( $this->db );
+				$GLOBALS[ 'quickDatabaseLink' . $this->Username . $this->Password . $this->Server ] = null;
 			}
 			//$Logger->log( 'Good bye!' );
 		}
@@ -141,7 +180,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 				}
 			}
 			
-			$Logger->log( '[[[[[[ QUICK ARGS: ]]]]]] ' . print_r( $args,1 ) . ' [] path: ' . $path . "\r\n" );
+			//$Logger->log( '[[[[[[ QUICK ARGS: ]]]]]] ' . print_r( $args,1 ) . ' [] path: ' . $path . "\r\n" );
 			
 			// Do a directory listing
 			// TODO: Make it uniform! Not to methods! use command == dir
@@ -238,7 +277,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 									$o = new stdClass();
 									$len = strlen( trim( $groupName ) );
 									$trimmed = trim( substr( $groupName, strlen( $filter ), $len - strlen( $filter ) ) );
-									$o->Filename = str_replace( '/', '→', $trimmed );
+									$o->Filename = str_replace( '/', QUICK_SLASH_REPLACEMENT, $trimmed );
 									$o->Filesize = 16;
 									$o->Type = 'Directory';
 									$o->MetaType = 'Directory';
@@ -246,15 +285,16 @@ if( !class_exists( 'DoorQuickNG' ) )
 									$o->DateModifed = date ( 'Y-m-d H:i:s', strtotime( $row['ChTime'] ) );
 									$o->ID = utf8_encode( $row['ID'] );
 									$o->Path = $this->Name . ':' . i18n( 'i18n_products' ) . 
-										'/' . $subPath . str_replace( '/', '→', $o->Filename ) . '/';
+										'/' . $subPath . str_replace( '/', QUICK_SLASH_REPLACEMENT, $o->Filename ) . '/';
 									$o->Shared = '';
+									$o->UniqueID = 'product_cat-' . $row[ 'ID' ];
 									$o->SharedLink = '';
 									$out[] = $o;
 									
 									// Create .info file for directory
 									$o = new stdClass();
 									$len = strlen( $groupName );
-									$o->Filename = str_replace( '/', '→', $trimmed ) . '.dirinfo';
+									$o->Filename = str_replace( '/', QUICK_SLASH_REPLACEMENT, $trimmed ) . '.dirinfo';
 									$o->Filesize = 16;
 									$o->Type = 'File';
 									$o->MetaType = 'DirectoryInformation';
@@ -262,8 +302,9 @@ if( !class_exists( 'DoorQuickNG' ) )
 									$o->DateModifed = date ( 'Y-m-d H:i:s', strtotime( $row['ChTime'] ) );
 									$o->ID = utf8_encode( $row['ID'] );
 									$o->Path = $this->Name . ':' . i18n( 'i18n_products' ) . 
-										'/' . $subPath . ( str_replace( '/', '→', $trimmed ) . '.dirinfo' );
+										'/' . $subPath . ( str_replace( '/', QUICK_SLASH_REPLACEMENT, $trimmed ) . '.dirinfo' );
 									$o->Shared = '';
+									$o->UniqueID = 'product_cat-' . $row[ 'ID' ] . '.dirinfo';
 									$o->SharedLink = '';
 									$out[] = $o;
 								}
@@ -277,6 +318,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 								
 								sybase_free_result( $res );
 								sybase_close( $this->db );
+								$GLOBALS[ 'quickDatabaseLink' . $this->Username . $this->Password . $this->Server ] = null;
 								
 								//die( print_r( $test,1 ) . ' --' );
 								
@@ -557,38 +599,10 @@ if( !class_exists( 'DoorQuickNG' ) )
 				// Get web link groups
 				$out = [];
 				
-				if( $res = sybase_query( /*'
-					SELECT ALL v.* FROM 
-						varereg v,
-						VKAT k, 
-						VUnderkat u 
-					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $cats ) ) ) . '\') AND
-						u.Webaktiv > 0           AND 
-						u.HovedGrpID = k.ID      AND 
-						v.WEBAKTIV > 0           AND 
-						v.VunderKatID > 0        AND 
-						v.VunderKatID = u.ID     AND 
-						v.VKatID = k.ID 
-					ORDER BY u.UKATNAVN 
-				'*//*'
-					SELECT ALL v.*, n.Varenavn
-					FROM 
-						varereg v,
-						VKAT k, 
-						VUnderkat u,
-						MLVarenavn n 
-					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $cats ) ) ) . '\') AND
-						u.Webaktiv > 0           AND 
-						u.HovedGrpID = k.ID      AND 
-						v.WEBAKTIV > 0           AND 
-						v.VunderKatID > 0        AND 
-						v.VunderKatID = u.ID     AND 
-						v.VKatID = k.ID          AND
-						n.VareID = v.ID 
-					ORDER BY u.UKATNAVN 
-				'*/'
+				$all_results = [];
+				
+				// One query for products, one for products with variants
+				$all_queries = array( '
 					SELECT ALL v.*, n.Varenavn, b.ChTime as ImageChTime, b.CrTime as ImageCrTime
 					FROM 
 						VKAT k, 
@@ -603,7 +617,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 								v.ID = b.VareID
 							)
 					WHERE 
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $cats ) ) ) . '\') AND
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $cats ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
 						v.WEBAKTIV > 0           AND 
@@ -611,116 +625,162 @@ if( !class_exists( 'DoorQuickNG' ) )
 						v.KLIENTNR = "1"         AND 
 						v.VunderKatID > 0        AND 
 						v.VunderKatID = u.ID     AND 
-						v.VKatID = k.ID 
+						v.VKatID = k.ID          AND
+						v.VariantAvID = NULL 
 					ORDER BY u.UKATNAVN 
-				' ) )
+				', '
+					SELECT ALL v.*, n.Varenavn, b.ChTime as ImageChTime, b.CrTime as ImageCrTime
+					FROM 
+						VKAT k, 
+						VUnderkat u, 
+						varereg v 
+							LEFT JOIN MLVarenavn n ON 
+							( 
+								n.VareID = v.ID 
+							)
+							LEFT JOIN WebBilder b ON
+							(
+								v.ID = b.VareID
+							)
+					WHERE 
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $cats ) ) ) . '\') AND
+						u.Webaktiv > 0           AND 
+						u.HovedGrpID = k.ID      AND 
+						v.WEBAKTIV > 0           AND 
+						v.AKTIVVARE = "1"        AND 
+						v.KLIENTNR = "1"         AND 
+						v.VunderKatID > 0        AND 
+						v.VunderKatID = u.ID     AND 
+						v.VKatID = k.ID          AND
+						v.ID = v.VariantAvID
+					ORDER BY u.UKATNAVN 
+				' );
+				
+				// Prepare variables
+				$out = [];
+				
+				foreach( $all_queries as $qk=>$qv )
 				{
-					$out = []; $files = []; $test = []; $ii = 0;
-					
-					while( $row = sybase_fetch_assoc( $res ) )
+					if( $q = sybase_query( $qv ) )
 					{
-						/*
-						//Picture test
-						if( $browres = sybase_query( '
-							SELECT ALL * FROM WebBilder AS b
-							WHERE
-								b.VareID = \'' . $row[ 'ID' ] . '\'
+						while( $row = sybase_fetch_assoc( $q ) )
+						{
+							/*
+							//Picture test
+							if( $browres = sybase_query( '
+								SELECT ALL * FROM WebBilder AS b
+								WHERE
+									b.VareID = \'' . $row[ 'ID' ] . '\'
 								
-						' ) )
-						{
-							if( $rrr = sybase_fetch_assoc( $browres ) )
+							' ) )
 							{
-								$Logger->log( print_r( $rrr, 1 ) );
-							}
-						}*/
+								if( $rrr = sybase_fetch_assoc( $browres ) )
+								{
+									$Logger->log( print_r( $rrr, 1 ) );
+								}
+							}*/
 						
-						// TODO: Make a list of non active products on "AKTIVVARE" for hiding them or for deleting them.
+							// TODO: Make a list of non active products on "AKTIVVARE" for hiding them or for deleting them.
 						
-						$cname = trim( trim( $row['Varenavn'] ) ? $row['Varenavn'] : $row['VARENAVN'] );
-						
-						if( $row['VARENAVN'] && trim( $row['VARENR'] ) && ( !$row['VariantAvID'] || $row['VariantAvID'] == $row['ID'] ) /* && $cname && !in_array( $cname, $files )*/ )
-						{
-							//die( print_r( $row,1 ) . ' --' );
+							$cname = trim( trim( $row['Varenavn'] ) ? $row['Varenavn'] : $row['VARENAVN'] );
 							
-							// Original state of the file
-							$o = new stdClass();
-							//$o->Title = str_replace( '/', '→', ucfirst( strtolower( utf8_encode( $cname ) ) ) );
-							$o->Title = str_replace( '/', '→', utf8_encode( $cname ) . ' (-' . $row['ID'] . '-)' );
-							//$o->Title = str_replace( '/', '→', trim( $row['ID'] ) );
-							$o->Filename = $o->Title;
-							$o->Filesize = '16';
-							$o->Type = 'File';
-							$o->MetaType = 'MetaFile';
-							
-							// Created time
-							$crtime = strtotime( $row['CrTime'] );
-							
-							// Get last time this file was modified
-							$chtime = strtotime( $row['ChTime'] );
-							
-							// Check if image is updated and use that on the "file" if so
-							$imageCh = strtotime( $row[ 'ImageChTime' ] ? $row[ 'ImageChTime' ] : $row[ 'ImageCrTime' ] );
-							if( $chtime < $imageCh )
-								$chtime = $imageCh;
-							
-							$o->DateCreated = date( 'Y-m-d H:i:s', $crtime );
-							$o->DateModified = date( 'Y-m-d H:i:s', $chtime );
-							
-							//$Logger->log( $row['VARENAVN' ] . ' changed at ' . $o->DateModified );
-							
-							$o->ID = $row['ID'];
-							// Actually, use the title for the path, as we want it stylized
-							// It's simple to check ucfirst( strtolower( utf8_encode( name ) ) )
-							$o->Path = $prodstr . $o->Filename;
-							$o->Shared = '';
-							$o->SharedLink = '';
-							$out[$o->ID.'1'] = $o;
-							
-							// File info
-							$o = new stdClass();
-							//$o->Title = str_replace( '/', '→', ucfirst( strtolower( utf8_encode( $cname ) ) ) ) . '.info';
-							//$o->Title = str_replace( '/', '→', trim( $row['ID'] ) ) . '.info';
-							$o->Title = str_replace( '/', '→', utf8_encode( $cname ) . ' (-' . $row['ID'] . '-)' ) . '.info';
-							$o->Filename = $o->Title;
-							$o->Filesize = '16';
-							$o->Type = 'File';
-							$o->MetaType = 'Information';
-							$o->DateCreated = date( 'Y-m-d H:i:s', strtotime( $row['CrTime'] ) );
-							$o->DateModified = date( 'Y-m-d H:i:s', strtotime( $row['ChTime'] ) );
-							$o->ID = $row['ID'];
-							// Actually, use the title for the path, as we want it stylized
-							// It's simple to check ucfirst( strtolower( utf8_encode( name ) ) )
-							$o->Path = $prodstr . $o->Filename;
-							$o->Shared = '';
-							$o->SharedLink = '';
-							$out[$o->ID.'2'] = $o;
-							
-							//$files[] = $cname;
-							
-							//if( !isset( $test[trim($row['VARENR'])] ) )
-							//{
-							//	$test[trim($row['VARENR'])] = array();
-							//}
-							
-							if( !isset( $test[trim($row['VariantAvID'])] ) )
+							if( $row['VARENAVN'] && trim( $row['VARENR'] ) )
 							{
-								$test[trim($row['VariantAvID'])] = array();
+								//die( print_r( $row,1 ) . ' --' );
+								
+								// TODO: There is more to what is a simple and a variable product and the ID change based on that and if there is sizes ... more work needed here ...
+								
+								$size = false;
+								
+								if( $varinfo = sybase_query( $q4 = '
+									SELECT TOP 20 i.* 
+									FROM VariantInfo i 
+									WHERE i.VareID = \'' . $row['ID'] . '\' 
+									ORDER BY i.ID 
+								' ) )
+								{
+									while( $rowl4 = sybase_fetch_assoc( $varinfo ) )
+									{
+										if( trim( $rowl4['Variant'] ) && !$size )
+										{
+											$size = trim( $rowl4['Variant'] );
+										}
+									}
+								}
+								
+								// Variable or Simple product ...
+								if( $size/* && $row['VariantAvID'] == $row['ID']*/ )
+								{
+									$sku = $row['ID'];
+								}
+								else
+								{
+									$sku = ( trim( $row['VARENR'] ) ? trim( $row['VARENR'] ) : $row['ID'] );
+								}
+								
+								// Original state of the file
+								$o = new stdClass();
+								//$o->Title = str_replace( '/', QUICK_SLASH_REPLACEMENT, ucfirst( strtolower( utf8_encode( $cname ) ) ) );
+								$o->Title = str_replace( '/', QUICK_SLASH_REPLACEMENT, utf8_encode( $cname ) . ' (-' . $sku . '-)' );
+								//$o->Title = str_replace( '/', QUICK_SLASH_REPLACEMENT, trim( $row['ID'] ) );
+								$o->Filename = $o->Title/* . '.jpg'*/;
+								$o->Filesize = '16';
+								$o->Type = 'File';
+								$o->MetaType = 'MetaFile';
+								//$o->MetaType = 'File';
+								$o->UniqueID = $sku;
+								
+								// Created time
+								$crtime = strtotime( $row['CrTime'] );
+							
+								// Get last time this file was modified
+								$chtime = strtotime( $row['ChTime'] );
+							
+								// Check if image is updated and use that on the "file" if so
+								$imageCh = strtotime( $row[ 'ImageChTime' ] ? $row[ 'ImageChTime' ] : $row[ 'ImageCrTime' ] );
+								if( $chtime < $imageCh )
+									$chtime = $imageCh;
+							
+								$o->DateCreated = date( 'Y-m-d H:i:s', $crtime );
+								$o->DateModified = date( 'Y-m-d H:i:s', $chtime );
+							
+								//$Logger->log( $row['VARENAVN' ] . ' changed at ' . $o->DateModified );
+							
+								$o->ID = $row['ID'];
+								// Actually, use the title for the path, as we want it stylized
+								// It's simple to check ucfirst( strtolower( utf8_encode( name ) ) )
+								$o->Path = $prodstr . $o->Filename;
+								$o->Shared = '';
+								$o->SharedLink = '';
+								$out[$o->ID.'1'] = $o;
+							
+								// File info
+								$o = new stdClass();
+								
+								$o->Title = str_replace( '/', QUICK_SLASH_REPLACEMENT, utf8_encode( $cname ) . ' (-' . $sku . '-)' ) . '.info';
+								$o->Filename = $o->Title;
+								$o->Filesize = '16';
+								$o->Type = 'File';
+								$o->MetaType = 'Information';
+								$o->DateCreated = date( 'Y-m-d H:i:s', strtotime( $row['CrTime'] ) );
+								$o->DateModified = date( 'Y-m-d H:i:s', strtotime( $row['ChTime'] ) );
+								$o->ID = $row['ID'];
+								
+								// Actually, use the title for the path, as we want it stylized
+								// It's simple to check ucfirst( strtolower( utf8_encode( name ) ) )
+								$o->Path = $prodstr . $o->Filename;
+								$o->Shared = '';
+								$o->UniqueID = $sku . '.info';
+							
+								$o->SharedLink = '';
+								$out[$o->ID.'2'] = $o;
 							}
-							
-							//$test[trim($row['VARENR'])][] = $row;
-							
-							$test[trim($row['VariantAvID'])][] = /*$row['ID'] . ' | ' . $row['VARENR'] . ' | ' . $row['Varenavn'] . ' | ' . $row['VARENAVN']*/$row;
 						}
-						
-						$ii++;
 					}
-					
-					//die( print_r( $test,1 ) . ' -- ' . $ii );
-					
-					if( count( $out ) )
-					{
-						return $out;
-					}
+				}	
+				if( count( $out ) )
+				{
+					return $out;
 				}
 			}
 			return false;
@@ -767,7 +827,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						$category = implode( ' -> ', $p );
 					}
 						 
-					$Logger->log( 'Directory mode: ' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) );
+					//$Logger->log( 'Directory mode: ' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $category ) ) ) );
 				
 					// TODO: Perhaps put this code into a GetCategory function
 					
@@ -787,7 +847,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						FROM  
 							VUnderkat u LEFT JOIN WebBilder AS b ON u.ID = b.VUnderkatID 
 						WHERE 
-							UPPER(u.UKATNAVN) = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) . '\') AND u.Webaktiv > 0 
+							UPPER(u.UKATNAVN) = UPPER(\'' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $category ) ) ) . '\') AND u.Webaktiv > 0 
 					' ) )
 					{
 						$imgname = ''; $imgmime = '';
@@ -804,7 +864,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 							}
 							
 							$cid   = $row['ID'];
-							$cname = str_replace( '/', '→', trim( $row['UKATNAVN'] ) );
+							$cname = str_replace( '/', QUICK_SLASH_REPLACEMENT, trim( $row['UKATNAVN'] ) );
 							
 							if( $cname = explode( ' -> ', $cname ) )
 							{
@@ -821,7 +881,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 							// Original state of the file
 							if( $infoMode )
 							{
-								$Logger->log( 'Quickng: infomode' );
+								//$Logger->log( 'Quickng: infomode' );
 								
 								// Add a meta information file
 								$meta = array(
@@ -876,7 +936,11 @@ if( !class_exists( 'DoorQuickNG' ) )
 							
 							if( $mode )
 							{
-								if( $mode == 'r' )
+								if( $args->mode == 'rs' )
+								{
+									die( $row['ImageData'] ? base64_decode( $row['ImageData'] ) : '' );
+								}
+								else if( $mode == 'r' )
 									print( 'ok<!--separate-->' );
 								return $this->expunge( $data );
 							}
@@ -895,7 +959,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 				
 				if( $productName )
 				{
-					$prodparts = explode( ' (-', utf8_decode( trim( str_replace( '.info', '', str_replace( '→', '/', $productName ) ) ) ) );
+					$prodparts = explode( ' (-', utf8_decode( trim( str_replace( array( '.jpg', '.info' ), '', str_replace( QUICK_SLASH_REPLACEMENT, '/', $productName ) ) ) ) );
 				}
 				
 				$prodnam = ( isset( $prodparts[0] ) ? $prodparts[0] : $prodparts );
@@ -903,32 +967,65 @@ if( !class_exists( 'DoorQuickNG' ) )
 				
 				// TODO: Fix the problem with listing out two rows for one ID when there is an image attached to the product even if it's left joined.
 				
-				if( $prodnam && ( $main = sybase_query( /*'
-					SELECT TOP 1 
-						h.*, 
-						n.Varenavn, 
-						b.Id AS ImageID,
-						b.FilePath AS ImagePath, 
-						b.FileSize AS ImageSize, 
-						b.URLLink AS ImageUrl, 
-						BASE64_ENCODE(xp_read_file( b.FilePath )) AS ImageData 
+				// One query for products, one for products with variants
+				$all_queries = array( '
+					SELECT ALL v.*, n.Varenavn, b.ChTime as ImageChTime, b.CrTime as ImageCrTime
 					FROM 
 						VKAT k, 
-						MLVarenavn n, 
-						varereg h, 
-						VUnderkat u LEFT JOIN WebBilder AS b ON u.ID = b.VUnderkatID 
-					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) . '\') AND
+						VUnderkat u, 
+						varereg v 
+							LEFT JOIN MLVarenavn n ON 
+							( 
+								n.VareID = v.ID 
+							)
+							LEFT JOIN WebBilder b ON
+							(
+								v.ID = b.VareID
+							)
+					WHERE 
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $cats ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
-						h.WEBAKTIV > 0           AND 
-						h.VunderKatID > 0        AND 
-						h.VunderKatID = u.ID     AND 
-						h.VKatID = k.ID          AND
-						n.VareID = h.ID          AND 
-						UPPER(n.Varenavn)      = UPPER(\'' . $prodnam . '\') 
+						v.WEBAKTIV > 0           AND 
+						v.AKTIVVARE = "1"        AND 
+						v.KLIENTNR = "1"         AND 
+						v.VunderKatID > 0        AND 
+						v.VunderKatID = u.ID     AND 
+						v.VKatID = k.ID          AND
+						v.VariantAvID = NULL 
 					ORDER BY u.UKATNAVN 
-				'*/'
+				', '
+					SELECT ALL v.*, n.Varenavn, b.ChTime as ImageChTime, b.CrTime as ImageCrTime
+					FROM 
+						VKAT k, 
+						VUnderkat u, 
+						varereg v 
+							LEFT JOIN MLVarenavn n ON 
+							( 
+								n.VareID = v.ID 
+							)
+							LEFT JOIN WebBilder b ON
+							(
+								v.ID = b.VareID
+							)
+					WHERE 
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $cats ) ) ) . '\') AND
+						u.Webaktiv > 0           AND 
+						u.HovedGrpID = k.ID      AND 
+						v.WEBAKTIV > 0           AND 
+						v.AKTIVVARE = "1"        AND 
+						v.KLIENTNR = "1"         AND 
+						v.VunderKatID > 0        AND 
+						v.VunderKatID = u.ID     AND 
+						v.VKatID = k.ID          AND
+						v.ID = v.VariantAvID
+					ORDER BY u.UKATNAVN 
+				' );
+				
+				// Prepare variables
+				$out = [];
+				
+				if( $prodnam && ( $all_queries = array( '
 					SELECT TOP 1 
 						h.*,  
 						b.Id AS ImageID,
@@ -945,7 +1042,36 @@ if( !class_exists( 'DoorQuickNG' ) )
 								u.ID = b.VUnderkatID 
 							) 
 					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) . '\') AND
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $category ) ) ) . '\') AND
+						u.Webaktiv > 0           AND 
+						u.HovedGrpID = k.ID      AND 
+						h.WEBAKTIV > 0           AND 
+						h.AKTIVVARE = "1"        AND 
+						h.KLIENTNR = "1"         AND 
+						h.VunderKatID > 0        AND 
+						h.VunderKatID = u.ID     AND 
+						h.VKatID = k.ID          AND 
+						' . ( $prodsku ? 'h.VARENR = \'' . $prodsku . '\' ' : 'UPPER(h.VARENAVN) = (\'' . $prodnam . '\') ' ) . '
+					ORDER BY u.UKATNAVN 
+				',
+				'
+					SELECT TOP 1 
+						h.*,  
+						b.Id AS ImageID,
+						b.FilePath AS ImagePath, 
+						b.FileSize AS ImageSize, 
+						b.URLLink AS ImageUrl, 
+						BASE64_ENCODE( xp_read_file( b.FilePath ) ) AS ImageData 
+					FROM 
+						VKAT k, 
+						varereg h, 
+						VUnderkat u 
+							LEFT JOIN WebBilder AS b ON 
+							( 
+								u.ID = b.VUnderkatID 
+							) 
+					WHERE 						
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( QUICK_SLASH_REPLACEMENT, '/', $category ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
 						h.WEBAKTIV > 0           AND 
@@ -967,285 +1093,300 @@ if( !class_exists( 'DoorQuickNG' ) )
 					$sku = ''; $price = ''; $totstock = 0;
 					$dateModified = $dateCreated = 0;
 					
-					if( $prod = sybase_fetch_assoc( $main ) )
+					foreach( $all_queries as $qk=>$qv )
 					{
-						// Modified and created
-						$dateModified = strtotime( $prod[ 'ChTime' ] );
-						$dateCreated  = strtotime( $prod[ 'CrTime' ] );
-						
-						if( $prod['ID'] )
+						if( $main = sybase_query( $qv ) )
 						{
-							$test[] = $prod;
-							
-							$res = sybase_query( $q = '
-								SELECT ALL 
-									v.*, 
-									n.Varenavn, 
-									b.Id AS ImageID, 
-									b.FilePath AS ImagePath, 
-									b.FileSize AS ImageSize, 
-									b.URLLink AS ImageUrl, 
-									b.ChTime as ImageChTime,
-									b.CrTime as ImageCrTime,
-									BASE64_ENCODE( xp_read_file( b.FilePath ) ) AS ImageData 
-								FROM  
-									varereg v 
-										LEFT JOIN MLVarenavn n ON 
-										( 
-											n.VareID = v.ID 
-										)
-										LEFT JOIN WebBilder AS b ON 
-										( 
-											v.ID = b.VareID 
-										) 
-								WHERE 
-									v.WEBAKTIV = "1" AND 
-									v.KLIENTNR = "1" AND 
-									v.AKTIVVARE = "1" AND 
-									' . ( $prod['VariantAvID'] ? 'v.VariantAvID = ' . $prod['VariantAvID'] : 'v.ID = ' . $prod['ID'] ) . '
-								ORDER BY v.ID 
-							' );
-							
-							// Loop through all products with the match on the product name in a certain category
-							
-							if( $res )
+							if( $prod = sybase_fetch_assoc( $main ) )
 							{
-								while( $row = sybase_fetch_assoc( $res ) )
+								// Modified and created
+								$dateModified = strtotime( $prod[ 'ChTime' ] );
+								$dateCreated  = strtotime( $prod[ 'CrTime' ] );
+						
+								if( $prod['ID'] )
 								{
-									// On pModified|Created compare with image dates
-									$pModified = strtotime( $row[ 'ChTime' ] );
-									$pCreated  = strtotime( $row[ 'CrTime' ] );
-									$iModified = strtotime( $row[ 'ImageChTime' ] );
-									$iCreated  = strtotime( $row[ 'ImageCrTime' ] );
-									if( $iCreated > $pCreated )
-										$pCreated = $iCreated;
-									if( $iModified > $pModified )
-										$pModified = $iModified;
-									
-									// Compare with product
-									if( $dateModified < $pModified )
-										$dateModified = $pModified;
-									if( $dateCreated < $pCreated )
-										$dateCreated = $pCreated;
-									
-									//if( !$row['Varenavn'] ) continue;
-									
-									$test[] = $row;
-									
-									if( !in_array( $row['ID'], $ids ) )
+									$test[] = $prod;
+							
+									$res = sybase_query( $q = '
+										SELECT ALL 
+											v.*, 
+											n.Varenavn, 
+											b.Id AS ImageID, 
+											b.FilePath AS ImagePath, 
+											b.FileSize AS ImageSize, 
+											b.URLLink AS ImageUrl, 
+											b.ChTime as ImageChTime,
+											b.CrTime as ImageCrTime,
+											BASE64_ENCODE( xp_read_file( b.FilePath ) ) AS ImageData 
+										FROM  
+											varereg v 
+												LEFT JOIN MLVarenavn n ON 
+												( 
+													n.VareID = v.ID 
+												)
+												LEFT JOIN WebBilder AS b ON 
+												( 
+													v.ID = b.VareID 
+												) 
+										WHERE 
+											v.WEBAKTIV = "1" AND 
+											v.KLIENTNR = "1" AND 
+											v.AKTIVVARE = "1" AND 
+											' . ( $prod['VariantAvID'] ? 'v.VariantAvID = ' . $prod['VariantAvID'] : 'v.ID = ' . $prod['ID'] ) . '
+										ORDER BY v.ID 
+									' );
+							
+									// Loop through all products with the match on the product name in a certain category
+							
+									if( $res )
 									{
-										$mva = 1.25; $size = false;
-										
-										$price = 0;
-										
-										//$price = (string)( $row['KOSTPRIS'] * $mva );
-										
-										$price = (string)( $row['PRIS1'] * $mva );
-										
-										/*$test[] = 'SELECT TOP 1 * FROM vareview WHERE Klientnr = "1" AND ( id = "' . $row['ID'] . '" OR id = "' . $row['VariantAvID'] . '" ) ';
-										
-										if( $blabla = sybase_query( 'SELECT TOP 1 * FROM vareview WHERE Klientnr = "1" AND ( id = "' . $row['ID'] . '" OR id = "' . $row['VariantAvID'] . '" ) ' ) )
+										while( $row = sybase_fetch_assoc( $res ) )
 										{
-											if( $bla = sybase_fetch_assoc( $blabla ) )
-											{
-												$test[] = $bla;
-												
-												$price = (string)$bla['_pris1inkl'];
-												
-												//die( print_r( $test,1 ) . ' [] ' . $price );
-											}
-										}*/
-										
-										if( $blabla = sybase_query( 'SELECT TOP 1 * FROM vareekstern WHERE ID = "' . trim( $row['ID'] ) . '" AND KLIENTNR = "1" AND AKTIVVARE > 0 AND WEBAKTIV > 0 ' ) )
-										{
-											//$test[] = 'SELECT * FROM vareekstern WHERE ID = "' . trim( $row['ID'] ) . '" AND KLIENTNR = "1" AND AKTIVVARE > 0 AND WEBAKTIV > 0 ';
-											
-											$pris2 = $pris;
-											
-											if( $bla = sybase_fetch_assoc( $blabla ) )
-											{
-												$price = round( (string)$bla['_Pris1Inkl'] );
-											}
-											
-											//die( print_r( $bla,1 ) . ' [] pris: ' . $price . ' [] fallback: ' . $pris2 );
-										}
-										
-										if( $row['ImagePath'] && $row['ImageData'] )
-										{
-											if( strstr( $row[ 'ImagePath' ], '.' ) )
-											{
-												$imgname = end( explode( '\\', $row['ImagePath'] ) );
-												$imgmime = ( 'image/' . end( explode( '.', $row['ImagePath'] ) ) );
-											}
-								
-											$imgdata = $row['ImageData'];
-										}
-							
-										
-										
-										$sku = trim( $row['VARENR'] );
-										
-										$artnr = trim( $row['VariantAvID'] );
-										
-										//$cname1 = $row['ID'];
-										//$artnr = $row['ID'];
-										//$sku = $row['ID'];
-										
-										if( !$row['VariantAvID'] || $row['VariantAvID'] == $row['ID'] )
-										{
-											$cname1 = str_replace( '/', '→', trim( $row['Varenavn'] ) );
-											$cname2 = str_replace( '/', '→', trim( $row['VARENAVN'] ) );
-										}
-										
-										$webinfo = ( !$webinfo ? str_replace( '#CRLF', "\n", $row['WEBINFO'] ) : $webinfo );
-							
-										$imgurl = ( !$imgurl ? $row['ImageUrl'] : $imgurl );
-							
-										$url = ( !$url ? $row['URL'] : $url );
-							
-										// lager -----------------------------------------------------------------------------------
-							
-										$lager2 = sybase_query( $q2 = '
-											SELECT TOP 10 l.* 
-											FROM lagerinfo l 
-											WHERE l.VareId = \'' . $row['ID'] . '\' 
-											ORDER BY l.ID 
-										' );
-							
-										$stock = '0';
-							
-										$test[] = $q2;
-							
-										while( $rowl2 = sybase_fetch_assoc( $lager2 ) )
-										{
-											$test[] = $rowl2;
-								
-											if( trim( $rowl2['_disp'] ) )
-											{
-												$stock = floor( (string)( $stock + (string)$rowl2['_disp'] ) );
-												
-												//$totstock = floor( $totstock + $stock );
-											}
-										}
-										
-										//die( print_r( $test,1 ) . ' -- ' . $totstock . ' [] ' . $stock );
-										
-										// variantinfo -----------------------------------------------------------------------------
-							
-										$varinfo = sybase_query( $q4 = '
-											SELECT TOP 20 i.* 
-											FROM VariantInfo i 
-											WHERE i.VareID = \'' . $row['ID'] . '\' 
-											ORDER BY i.ID 
-										' );
-							
-										//$test[] = $q4;
-							
-										while( $rowl4 = sybase_fetch_assoc( $varinfo ) )
-										{
-											//$test[] = $rowl4;
-								
-											if( trim( $rowl4['Variant'] ) && !$size )
-											{
-												$size = trim( $rowl4['Variant'] );
+											// On pModified|Created compare with image dates
+											$pModified = strtotime( $row[ 'ChTime' ] );
+											$pCreated  = strtotime( $row[ 'CrTime' ] );
+											$iModified = strtotime( $row[ 'ImageChTime' ] );
+											$iCreated  = strtotime( $row[ 'ImageCrTime' ] );
+											if( $iCreated > $pCreated )
+												$pCreated = $iCreated;
+											if( $iModified > $pModified )
+												$pModified = $iModified;
 									
-												$sizes[] = $size;
+											// Compare with product
+											if( $dateModified < $pModified )
+												$dateModified = $pModified;
+											if( $dateCreated < $pCreated )
+												$dateCreated = $pCreated;
+									
+											//if( !$row['Varenavn'] ) continue;
+									
+											$test[] = $row;
+									
+											if( !in_array( $row['ID'], $ids ) )
+											{
+												$mva = 1.25; $size = false;
+										
+												$price = 0;
+										
+												//$price = (string)( $row['KOSTPRIS'] * $mva );
+										
+												$price = (string)( $row['PRIS1'] * $mva );
+										
+												/*$test[] = 'SELECT TOP 1 * FROM vareview WHERE Klientnr = "1" AND ( id = "' . $row['ID'] . '" OR id = "' . $row['VariantAvID'] . '" ) ';
+										
+												if( $blabla = sybase_query( 'SELECT TOP 1 * FROM vareview WHERE Klientnr = "1" AND ( id = "' . $row['ID'] . '" OR id = "' . $row['VariantAvID'] . '" ) ' ) )
+												{
+													if( $bla = sybase_fetch_assoc( $blabla ) )
+													{
+														$test[] = $bla;
+												
+														$price = (string)$bla['_pris1inkl'];
+												
+														//die( print_r( $test,1 ) . ' [] ' . $price );
+													}
+												}*/
+										
+												if( $blabla = sybase_query( 'SELECT TOP 1 * FROM vareekstern WHERE ID = "' . trim( $row['ID'] ) . '" AND KLIENTNR = "1" AND AKTIVVARE > 0 AND WEBAKTIV > 0 ' ) )
+												{
+													//$test[] = 'SELECT * FROM vareekstern WHERE ID = "' . trim( $row['ID'] ) . '" AND KLIENTNR = "1" AND AKTIVVARE > 0 AND WEBAKTIV > 0 ';
+											
+													$pris2 = $pris;
+											
+													if( $bla = sybase_fetch_assoc( $blabla ) )
+													{
+														$price = round( (string)$bla['_Pris1Inkl'] );
+													}
+											
+													//die( print_r( $bla,1 ) . ' [] pris: ' . $price . ' [] fallback: ' . $pris2 );
+												}
+										
+												if( $row['ImagePath'] && $row['ImageData'] )
+												{
+													if( strstr( $row[ 'ImagePath' ], '.' ) )
+													{
+														$imgname = end( explode( '\\', $row['ImagePath'] ) );
+														$imgmime = ( 'image/' . end( explode( '.', $row['ImagePath'] ) ) );
+													}
+								
+													$imgdata = $row['ImageData'];
+												}
+							
+										
+										
+												$sku = trim( $row['VARENR'] );
+										
+												$artnr = trim( $row['VariantAvID'] );
+										
+												//$cname1 = $row['ID'];
+												//$artnr = $row['ID'];
+												//$sku = $row['ID'];
+										
+												if( !$row['VariantAvID'] || $row['VariantAvID'] == $row['ID'] )
+												{
+													$cname1 = str_replace( '/', QUICK_SLASH_REPLACEMENT, trim( $row['Varenavn'] ) );
+													$cname2 = str_replace( '/', QUICK_SLASH_REPLACEMENT, trim( $row['VARENAVN'] ) );
+												}
+										
+												$webinfo = ( !$webinfo ? str_replace( '#CRLF', "\n", $row['WEBINFO'] ) : $webinfo );
+							
+												$imgurl = ( !$imgurl ? $row['ImageUrl'] : $imgurl );
+							
+												$url = ( !$url ? $row['URL'] : $url );
+							
+												// lager -----------------------------------------------------------------------------------
+							
+												$lager2 = sybase_query( $q2 = '
+													SELECT TOP 10 l.* 
+													FROM lagerinfo l 
+													WHERE l.VareId = \'' . $row['ID'] . '\' 
+													ORDER BY l.ID 
+												' );
+							
+												$stock = '0';
+							
+												$test[] = $q2;
+							
+												while( $rowl2 = sybase_fetch_assoc( $lager2 ) )
+												{
+													$test[] = $rowl2;
+								
+													if( trim( $rowl2['_disp'] ) )
+													{
+														$stock = floor( (string)( $stock + (string)$rowl2['_disp'] ) );
+												
+														//$totstock = floor( $totstock + $stock );
+													}
+												}
+										
+												//die( print_r( $test,1 ) . ' -- ' . $totstock . ' [] ' . $stock );
+										
+												// variantinfo -----------------------------------------------------------------------------
+							
+												$varinfo = sybase_query( $q4 = '
+													SELECT TOP 20 i.* 
+													FROM VariantInfo i 
+													WHERE i.VareID = \'' . $row['ID'] . '\' 
+													ORDER BY i.ID 
+												' );
+							
+												//$test[] = $q4;
+							
+												while( $rowl4 = sybase_fetch_assoc( $varinfo ) )
+												{
+													//$test[] = $rowl4;
+								
+													if( trim( $rowl4['Variant'] ) && !$size )
+													{
+														$size = trim( $rowl4['Variant'] );
+									
+														$sizes[] = $size;
+													}
+												}
+										
+												// vareoversettelse ------------------------------------------------------------------------
+							
+												//$varlocal = sybase_query( $q5 = '
+												//	SELECT TOP 1 n.* 
+												//	FROM MLVarenavn n 
+												//	WHERE n.VareID = \'' . $row['ID'] . '\' 
+												//	ORDER BY n.ID 
+												//' );
+							
+												//$test[] = $q5;
+							
+												//while( $rowl5 = sybase_fetch_assoc( $varlocal ) )
+												//{
+													//$test[] = $rowl5;
+								
+													//if( trim( $rowl5['Varenavn'] ) && !$artnr )
+													//{
+													//	$artnr = trim( (string)$rowl5['Varenavn'] );
+													//}
+								
+													//if( trim( $rowl5['Webvarenavn'] ) )
+													//{
+													//	$cname = trim( (string)$rowl5['Webvarenavn'] );
+													//}
+								
+													//if( trim( $rowl5['Varenavn'] ) && !$cname )
+													//{
+													//	$cname = trim( (string)$rowl5['Varenavn'] );
+													//}
+												//}
+							
+												// varianter -------------------------------------------------------------------------------
+							
+												// TODO: Find the correct table ...
+							
+												//$varianter = sybase_query( $q6 = '
+												//	SELECT TOP 10 v.* 
+												//	FROM Inkludervare v 
+												//	WHERE v.VareID = \'' . $row['ID'] . '\' 
+												//	ORDER BY v.ID 
+												//' );
+							
+												//$test[] = $q6;
+							
+												//while( $rowl6 = sybase_fetch_assoc( $varianter ) )
+												//{
+												//	$test[] = $rowl6;
+												//}
+										
+							
+												// TODO: Make this more universal, just for this one client, making it specific because of time restraint ...
+										
+												$obj = new stdClass();
+												$obj->sku = $sku;
+												$obj->regular_price = $price;
+												$obj->manage_stock = true;
+												
+												if( !$stock )
+												{
+													$obj->backorders = 'notify';
+												}
+												
+												$obj->stock_quantity = (string)$stock;
+										
+												if( $size )
+												{
+													$obj->attributes = json_decode( '[{"name": "Size", "option": "' . $size . '"}]' );
+												}
+							
+												$data[] = $obj;
+							
+												$ids[] = $row['ID'];
+										
+												$idnr = trim( $artnr ? $artnr : $row['ID'] );
 											}
 										}
-										
-										// vareoversettelse ------------------------------------------------------------------------
-							
-										//$varlocal = sybase_query( $q5 = '
-										//	SELECT TOP 1 n.* 
-										//	FROM MLVarenavn n 
-										//	WHERE n.VareID = \'' . $row['ID'] . '\' 
-										//	ORDER BY n.ID 
-										//' );
-							
-										//$test[] = $q5;
-							
-										//while( $rowl5 = sybase_fetch_assoc( $varlocal ) )
-										//{
-											//$test[] = $rowl5;
 								
-											//if( trim( $rowl5['Varenavn'] ) && !$artnr )
-											//{
-											//	$artnr = trim( (string)$rowl5['Varenavn'] );
-											//}
+										// If we are missing image on product check if category has an image and use that as fallback ...
 								
-											//if( trim( $rowl5['Webvarenavn'] ) )
-											//{
-											//	$cname = trim( (string)$rowl5['Webvarenavn'] );
-											//}
-								
-											//if( trim( $rowl5['Varenavn'] ) && !$cname )
-											//{
-											//	$cname = trim( (string)$rowl5['Varenavn'] );
-											//}
-										//}
-							
-										// varianter -------------------------------------------------------------------------------
-							
-										// TODO: Find the correct table ...
-							
-										//$varianter = sybase_query( $q6 = '
-										//	SELECT TOP 10 v.* 
-										//	FROM Inkludervare v 
-										//	WHERE v.VareID = \'' . $row['ID'] . '\' 
-										//	ORDER BY v.ID 
-										//' );
-							
-										//$test[] = $q6;
-							
-										//while( $rowl6 = sybase_fetch_assoc( $varianter ) )
-										//{
-										//	$test[] = $rowl6;
-										//}
-										
-							
-										// TODO: Make this more universal, just for this one client, making it specific because of time restraint ...
-										
-										$obj = new stdClass();
-										$obj->sku = $sku;
-										$obj->regular_price = $price;
-										$obj->manage_stock = true;
-										$obj->stock_quantity = (string)$stock;
-										
-										if( $size )
+										if( !$imgdata && $prod['ImagePath'] && $prod['ImageData'] )
 										{
-											$obj->attributes = json_decode( '[{"name": "Size", "option": "' . $size . '"}]' );
+											if( strstr( $prod[ 'ImagePath' ], '.' ) )
+											{
+												$imgname = end( explode( '\\', $prod['ImagePath'] ) );
+												$imgmime = ( 'image/' . end( explode( '.', $prod['ImagePath'] ) ) );
+											}
+									
+											$imgdata = $prod['ImageData'];
 										}
-							
-										$data[] = $obj;
-							
-										$ids[] = $row['ID'];
-										
-										$idnr = trim( $artnr ? $artnr : $row['ID'] );
+								
+										if( !$imgurl && $prod['ImageUrl'] )
+										{
+											$imgurl = $prod['ImageUrl'];
+										}
+								
+										if( $prod['WEBINFO'] )
+										{
+											$webinfo = str_replace( '#CRLF', "\n", $prod['WEBINFO'] );
+										}
 									}
 								}
 								
-								// If we are missing image on product check if category has an image and use that as fallback ...
-								
-								if( !$imgdata && $prod['ImagePath'] && $prod['ImageData'] )
-								{
-									if( strstr( $prod[ 'ImagePath' ], '.' ) )
-									{
-										$imgname = end( explode( '\\', $prod['ImagePath'] ) );
-										$imgmime = ( 'image/' . end( explode( '.', $prod['ImagePath'] ) ) );
-									}
-									
-									$imgdata = $prod['ImageData'];
-								}
-								
-								if( !$imgurl && $prod['ImageUrl'] )
-								{
-									$imgurl = $prod['ImageUrl'];
-								}
-								
-								if( $prod['WEBINFO'] )
-								{
-									$webinfo = str_replace( '#CRLF', "\n", $prod['WEBINFO'] );
-								}
+								// Only find one first or second sku or by id
+								break;
 							}
 						}
 					}
@@ -1317,7 +1458,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 							'Url'          => array( 'Type' => 'string', 'Length' => strlen( utf8_encode( $url ) ), 'Encoding' => 'UTF-8' ),
 							'Attributes'   => array( 'Type' => 'string', 'Length' => strlen( utf8_encode( $attributes ? json_encode( $attributes ) : '' ) ), 'Encoding' => 'json' ), 
 							'Data'         => array( 'Type' => 'string', 'Length' => strlen( $data ? json_encode( $data ) : '' ), 'Encoding' => 'json' ),
-							'Data2'        => array( 'Type' => 'string', 'Length' => strlen( $test ? json_encode( $test ) : '' ), 'Encoding' => 'json' ),
+							//'Data2'        => array( 'Type' => 'string', 'Length' => strlen( $test ? json_encode( $test ) : '' ), 'Encoding' => 'json' ),
 							'DateModified' => array( 'Type' => 'string', 'Length' => strlen( $modified ), 'Encoding' => 'UTF-8' ),
 							'DateCreated'  => array( 'Type' => 'string', 'Length' => strlen( $created  ), 'Encoding' => 'UTF-8' )
 						);
@@ -1343,7 +1484,11 @@ if( !class_exists( 'DoorQuickNG' ) )
 					
 					if( $mode )
 					{
-						if( $mode == 'r' )
+						if( $mode == 'rs' )
+						{
+							die( $imgdata ? base64_decode( $imgdata ) : '' );
+						}
+						else if( $mode == 'r' )
 							print( 'ok<!--separate-->' );
 						return $this->expunge( 
 							utf8_encode( $idnr ) . 
@@ -1355,7 +1500,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 							utf8_encode( $url ) .
 							utf8_encode( $attributes ? json_encode( $attributes ) : '' ) . 
 							( $data ? json_encode( $data ) : '' ) . 
-							( $test ? json_encode( $test ) : '' ) . 
+							//( $test ? json_encode( $test ) : '' ) . 
 							utf8_encode( $modified ) .
 							utf8_encode( $created ) .
 							( trim( $imgdata ) ? $imgdata : $imgurl )
@@ -1372,7 +1517,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						utf8_encode( $url ) .
 						utf8_encode( $attributes ? json_encode( $attributes ) : '' ) . 
 						( $data ? json_encode( $data ) : '' ) . 
-						( $test ? json_encode( $test ) : '' ) .
+						//( $test ? json_encode( $test ) : '' ) .
 						utf8_encode( $modified ) .
 						utf8_encode( $created ) .
 						( trim( $imgdata ) ? $imgdata : $imgurl )
@@ -1397,7 +1542,10 @@ if( !class_exists( 'DoorQuickNG' ) )
 		private function expunge( $string )
 		{
 			if( $this->db )
+			{
 				sybase_close( $this->db );
+				$GLOBALS[ 'quickDatabaseLink' . $this->Username . $this->Password . $this->Server ] = null;
+			}
 			return $string;
 		}
 		
@@ -1410,30 +1558,36 @@ if( !class_exists( 'DoorQuickNG' ) )
 			$o->path = $path;
 			$o->command = 'read';
 			
-			return $this->dosAction( $o );
+			$data = $this->dosAction( $o );
+			
+			$fobj = new stdClass();
+			$fobj->_content = $data;
+			
+			// Return file object
+			return $fobj;
 			
 			// TODO: DELETE OBSOLETE CODE
 			
 			// Get the components of the path
 			list( $volume, $subpath ) = explode( ':', $path );
 			
-			$Logger->log( 'Here is the sub path: ' . $subpath );
+			//$Logger->log( 'Here is the sub path: ' . $subpath );
 			
 			if( trim( $subpath ) )
 			{
 				$subdirs = explode( '/', $subpath );
 				
-				$Logger->Log( 'Here: ' . strtolower( i18n( 'i18n_products' ) ) . ' == ' . strtolower( $subdirs[0] ) );
+				//$Logger->Log( 'Here: ' . strtolower( i18n( 'i18n_products' ) ) . ' == ' . strtolower( $subdirs[0] ) );
 				
 				// We got a product subdirectory
 				if( strtolower( i18n( 'i18n_products' ) ) == strtolower( $subdirs[0] ) )
 				{
 					$ppath = implode( '/', $subdirs );
 					$len = strlen( $subdirs[0] );
-					$Logger->log( 'Trying path: ' . $ppath );
+					//$Logger->log( 'Trying path: ' . $ppath );
 					$ppath = substr( $ppath, $len + 1, strlen( $ppath ) - $len );
 					
-					$Logger->log( 'Trying path now: ' . $ppath );
+					//$Logger->log( 'Trying path now: ' . $ppath );
 					
 					if( $file = $this->GetProduct( $ppath ) )
 					{

@@ -2,17 +2,29 @@
 
 /*©lgpl*************************************************************************
 *                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
 *                                                                              *
-* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
-* General Public License, found in the file license_lgpl.txt.                  *
+* Copyright 2014-2017 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
 *                                                                              *
 *****************************************************************************©*/
 
 global $args, $SqlDatabase, $User, $Config;
 
 include_once( 'php/classes/door.php' );
+
+if( !defined( 'DOOR_SLASH_REPLACEMENT' ) )
+{
+	// To fix names
+	//define( 'DOOR_SLASH_REPLACEMENT', '&#47;' );
+	define( 'DOOR_SLASH_REPLACEMENT', '&#124;' );
+}
+
+// Make it a little bit aggressive!
+ini_set( 'max_execution_time', 300 ); // 5min 
 
 if( !defined( 'WORDPRESS_FILE_LIMIT' ) )
 {
@@ -35,7 +47,7 @@ if( !class_exists( 'DoorWordpress' ) )
 		private function fixPathName( $string )
 		{
 			$str = html_entity_decode( $string );
-			$str = str_replace( '/', '-', $str );
+			$str = str_replace( '/', DOOR_SLASH_REPLACEMENT, $str );
 			return $str;
 		}
 		
@@ -223,6 +235,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					}
 					while ( $code && --$mr );
 					curl_close( $rch );
+					
 					if ( !$mr )
 					{
 						if ( $maxredirect === null )
@@ -357,10 +370,12 @@ if( !class_exists( 'DoorWordpress' ) )
 								// Finding matching object
 								if( trim( $v ) )
 								{
-									//$Logger->log( 'Matching ' .  str_replace( ' ', '-', strtolower( html_entity_decode( urldecode( trim( $v ) ) ) ) ) . ' == ' . str_replace( ' ', '-', strtolower( html_entity_decode( urldecode( trim( $obj->name ) ) ) ) ) );
-								
-									$matchParts = str_replace( ' ', '-', strtolower( html_entity_decode( urldecode( trim( $v ) ) ) ) );
-									$matchObject = str_replace( ' ', '-', strtolower( html_entity_decode( urldecode( trim( $obj->name ) ) ) ) );
+									//$Logger->log( 'Matching ' .  str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', strtolower( html_entity_decode( urldecode( trim( $v ) ) ) ) ) . ' == ' . str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', strtolower( html_entity_decode( urldecode( trim( $obj->name ) ) ) ) ) );
+									
+									// TODO: Add support for the DOOR_SLASH_REPLACEMENT thing ...
+									
+									$matchParts = str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', strtolower( html_entity_decode( urldecode( trim( $v ) ) ) ) );
+									$matchObject = str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', strtolower( html_entity_decode( urldecode( trim( $obj->name ) ) ) ) );
 									if( $matchParts == $matchObject )
 									{
 										$o = new stdClass();
@@ -416,7 +431,13 @@ if( !class_exists( 'DoorWordpress' ) )
 			return false;
 		}
 		
-		// Find a subpath by path string
+		/*
+			Find a subpath by path string
+			$path = path to product
+			$log = enable logging
+			$onlyfound = only look at this path
+			$depth = too many recursions prevention
+		*/
 		function getSubPath( $path, $log = false, $onlyfound = false, $depth = 2 )
 		{
 			global $Logger;
@@ -426,6 +447,13 @@ if( !class_exists( 'DoorWordpress' ) )
 			//if( $log ) $Logger->log( "\r\n" . '------------------ [[[[[[[[[[ getSubPath: Start ]]]]]]]]]] ------------------' . "\r\n" );
 			
 			$isfile = false; $name = ''; $infoname = false;
+			
+			// Find unique id
+			$sku = false;
+			if( preg_match( '/\(\-([^-]*?)\-\)/i', $path, $matches ) )
+			{
+				$sku = $matches[1];
+			}
 			
 			$parent = new stdClass();
 			$parent->id = 0;
@@ -474,7 +502,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					}
 				}
 				
-				$Logger->log( '[Wordpress: getSubPath] Path now is: ' . $path );
+				//$Logger->log( '[Wordpress: getSubPath] Path now is: ' . $path );
 				
 				// If it is a subpath
 				if( strstr( $path, '/' ) )
@@ -496,11 +524,12 @@ if( !class_exists( 'DoorWordpress' ) )
 						
 						// Get the category objects
 						
-						//$Logger->log( 'Getting category objects ---:.' );
+						//$slot = $Logger->addSlot( 'Getting category objects ' . $path );
 						
 						if( $catobj = $this->getPathData( $path, 0, $log ) )
 						{
-							//$Logger->log( 'CatOBJ: ' . print_r( $catobj, 1 ) );
+							//$slot->resolve( true, 'Got path data.' ); //, print_r( $catobj, 1 ) );
+							//$Logger->log( 'CatOBJ: ' . json_encode( $catobj ) );
 							
 							foreach( $catobj as $obj )
 							{
@@ -516,13 +545,13 @@ if( !class_exists( 'DoorWordpress' ) )
 									
 									if( 
 										$v && is_string( $v ) && 
-										trim( $v ) && str_replace( ' ', '-', $vname ) == str_replace( ' ', '-', $fixedObjName ) 
+										trim( $v ) && str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', $vname ) == str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', $fixedObjName ) 
 									)
 									{
 										$obj->pathname = ( $infoname ? $infoname : $name );
 										$obj->path = $path;
 										
-										if( str_replace( ' ', '-', $fixedName ) == str_replace( ' ', '-', $fixedObjName ) )
+										if( str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', $fixedName ) == str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', $fixedObjName ) )
 										{
 											$obj->found = true;
 											$found = true;
@@ -585,20 +614,69 @@ if( !class_exists( 'DoorWordpress' ) )
 								// TODO: Remove this or rewrite search doesn't work that well with the WP Api
 								
 								// Pure text search (no signs please! no html encode)
-								$catjson = $this->query( '/products?search=' . urlencode( str_replace( '.info', '', $name ) ) . '&category=' . $parent->id );
+								if( $sku )
+								{
+									$surl = '/products?sku=' . $sku . '&category=' . $parent->id;
+									//$Logger->log( 'Doing a sku search ' . $sku );
+								}
+								else
+								{
+									$test3 = explode( ' (-', $name );
+									
+									$surl = '/products?search=' . 
+										urlencode( str_replace( '.info', '', str_replace( DOOR_SLASH_REPLACEMENT, '/', $test3[0] ) ) ) . 
+										'&category=' . $parent->id;
+								}
 								
-								//if( $log ) $Logger->log( '[[[[[[[[[[ catjson: ]]]]]]]]]] Query: ' . '/products?search=' . urlencode( str_replace( '.info', '', $name ) ) . '&category=' . $parent->id . ' [] Json: ' . $catjson . "\r\n" );
+								//$Logger->log( '(Wordpress) Getting path: ' . $surl );
+								$catjson = $this->query( $surl );
+								
+								// If it has a fucked up filename hard to find because wordpress messup how it's listed out do a last try matching in php ...
+								
+								if( !json_decode( $catjson ) && ( strstr( $name, '-' ) || strstr( $name, '/' ) || strstr( $name, DOOR_SLASH_REPLACEMENT ) ) )
+								{
+									$catjson = $this->query( '/products?per_page=100&category=' . $parent->id );
+									
+									//$Logger->log( 'Doing a /products?per_page=100&category=' . $parent->id );
+								}
+								
+								//$Logger->log( '[[[[[[[[[[ catjson: ]]]]]]]]]] Url: ' . $surl . ' [] ' . json_encode( $catjson ) . "\r\n" );
+								
+								$matches = [];
 								
 								if( $catobj = json_decode( $catjson ) )
 								{
-									//$Logger->log( 'Product objects: ' . print_r( $catobj, 1 ) );
-								
 									// Find with the correct name
 									$foundcatobj = false;
+									$test2 = str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', $name );
 									foreach( $catobj as $c )
 									{
-										if( html_entity_decode( $c->name ) == $name )
-											$foundcatobj = $c;
+										if( $sku )
+										{
+											//$Logger->log( 'Matching on sku: ' . $sku . ' == ' . $c->sku );
+											
+											$matches[] = ( $sku . ' == ' . $c->sku );
+											
+											if( $c->sku == $sku )
+											{
+												$foundcatobj = $c;
+												break;
+											}
+										}
+										else
+										{
+											$test = str_replace( array( DOOR_SLASH_REPLACEMENT, '/', ' ' ), '-', html_entity_decode( $c->name ) );
+											
+											//$Logger->log( substr( $test2, 0, strlen( $test ) ) . ' == ' . $test );
+											
+											$matches[] = ( substr( $test2, 0, strlen( $test ) ) . ' == ' . $test );
+											
+											if( $test && $test2 && substr( $test2, 0, strlen( $test ) ) == $test )
+											{
+												$foundcatobj = $c;
+												break;
+											}
+										}
 									}
 									if( $foundcatobj )
 									{
@@ -609,9 +687,13 @@ if( !class_exists( 'DoorWordpress' ) )
 										//if( $log ) $Logger->log( '[[[[[[[[[[ File[1]: ]]]]]]]]]] Subpath' . ' (' . count($subpath) . '): ' . print_r( $subpath,1 ) . ' [] IsFile: ' . $isfile . ' [] File: ' . json_encode( $catobj[0] ) . ' [] Path: ' . $path . "\r\n" );
 										
 										
-										$Logger->log( '[Wordpress getSubPath: End with catobj ' . print_r( $foundcatobj, 1 ) );
+										//$Logger->log( '[Wordpress getSubPath: End with catobj ' . $foundcatobj->id );
 										
 										return $foundcatobj;
+									}
+									else
+									{
+										//$Logger->log( 'Didn\'t find any match for [' . $test2 . '] ' . json_encode( $matches )/* . json_encode( $catobj )*/ );
 									}
 								}
 								
@@ -624,8 +706,6 @@ if( !class_exists( 'DoorWordpress' ) )
 								return $file;
 							}
 						}
-						
-						
 						
 						//if( $log ) $Logger->log( '[[[[[[[[[[ Cats: ]]]]]]]]]] Subpath' . ' (' . count($subpath) . '): ' . print_r( $subpath,1 ) . ' [] IsFile: ' . $isfile . ' [] Path: ' . $path . "\r\n" );
 					}
@@ -732,7 +812,7 @@ if( !class_exists( 'DoorWordpress' ) )
 				}
 			}
 			
-			$Logger->log( '[[[[[[ ARGS: ]]]]]] ' . print_r( $args,1 ) . ' [] path: ' . $path . "\r\n" );
+			//$Logger->log( '[[[[[[ WORDPRESS ARGS: ]]]]]] ' . print_r( $args,1 ) . ' [] path: ' . $path . "\r\n" );
 			
 			// Do a directory listing
 			// TODO: Make it uniform! Not to methods! use command == dir
@@ -784,6 +864,7 @@ if( !class_exists( 'DoorWordpress' ) )
 													$tp->DateCreated = 0;
 													$tp->Filesize = 0;
 													$tp->Path = ( $path . $tp->Filename . '/' );
+													$tp->UniqueID = $o->slug;
 													$tp->Shared = '';
 													$tp->SharedLink = '';
 													
@@ -798,6 +879,7 @@ if( !class_exists( 'DoorWordpress' ) )
 													$tp->DateModified = 0;
 													$tp->ID = $o->id;
 													$tp->Path = ( $path . $tp->Filename );
+													$tp->UniqueID = $o->slug . '.dirinfo';
 													$tp->Shared = '';
 													$tp->SharedLink = '';
 													
@@ -857,14 +939,16 @@ if( !class_exists( 'DoorWordpress' ) )
 													
 													// Original state of the file
 													$tp = new stdClass();
-													$tp->Title = $this->fixPathName( $o->name );
-													$tp->Filename = $tp->Title;
+													$tp->Title = $this->fixPathName( $o->name ) . ' (-' . $o->sku . '-)';
+													$tp->Filename = $tp->Title/* . '.jpg'*/;
 													$tp->Filesize = '16';
 													$tp->Type = 'File';
 													$tp->MetaType = 'MetaFile';
+													//$tp->MetaType = 'File';
 													$tp->DateCreated = date( 'Y-m-d H:i:s', strtotime( $o->date_created ) );
 													$tp->DateModified = date( 'Y-m-d H:i:s', strtotime( $o->date_modified ) );
 													$tp->ID = $o->id;
+													$tp->UniqueID = $o->sku;
 													$tp->Path = ( $path . $tp->Filename );
 													$tp->Shared = '';
 													$tp->SharedLink = '';
@@ -872,7 +956,7 @@ if( !class_exists( 'DoorWordpress' ) )
 													$out[] = $tp;
 													
 													$tp = new stdClass();
-													$tp->Title = $this->fixPathName( $o->name ) . '.info';
+													$tp->Title = $this->fixPathName( $o->name ) . ' (-' . $o->sku . '-)' . '.info';
 													$tp->Filename = $tp->Title;
 													$tp->Filesize = '16';
 													$tp->Type = 'File';
@@ -880,6 +964,7 @@ if( !class_exists( 'DoorWordpress' ) )
 													$tp->DateCreated = date( 'Y-m-d H:i:s', strtotime( $o->date_created ) );
 													$tp->DateModified = date( 'Y-m-d H:i:s', strtotime( $o->date_modified ) );
 													$tp->ID = $o->id;
+													$tp->UniqueID = $o->sku . '.info';
 													$tp->Path = ( $path . $tp->Filename );
 													$tp->Shared = '';
 													$tp->SharedLink = '';
@@ -916,6 +1001,7 @@ if( !class_exists( 'DoorWordpress' ) )
 										$tp->DateModified = 0;
 										$tp->DateCreated = 0;
 										$tp->Filesize = 0;
+										$tp->UniqueID = $o->slug;
 										$tp->Path = ( $path . $tp->Filename . '/' );
 										$tp->Shared = '';
 										$tp->SharedLink = '';
@@ -930,6 +1016,7 @@ if( !class_exists( 'DoorWordpress' ) )
 										$tp->DateCreated = date( 'Y-m-d H:i:s' );
 										$tp->DateModified = $tp->DateCreated;
 										$tp->ID = $o->id;
+										$tp->UniqueID = $o->slug . '.dirinfo';
 										$tp->Path = ( $path . $tp->Filename );
 										$tp->Shared = '';
 										$tp->SharedLink = '';
@@ -1448,7 +1535,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					// Get file object
 					if( $file = $this->getSubPath( $path, $log ) )
 					{
-						$Logger->log( 'We got a file objecT: ' . print_r( $file, 1 ) );
+						//$Logger->log( 'We got a file objecT: ' . print_r( $file, 1 ) );
 						
 						$prodid = 0; $len = 0; $data = false;
 						
@@ -1531,10 +1618,16 @@ if( !class_exists( 'DoorWordpress' ) )
 										
 										if( $k == 'Stock' && $data != '' )
 										{
-											$obj->{'manage_stock'} = true;
-											$obj->{$mapping[$k]} = $data;
-											
 											$stock = $data;
+											
+											$obj->{'manage_stock'} = true;
+											
+											if( !$stock )
+											{
+												$obj->{'backorders'} = 'notify';
+											}
+											
+											$obj->{$mapping[$k]} = $data;
 										}
 										/*else if( $k == 'Display' )
 										{
@@ -1589,6 +1682,8 @@ if( !class_exists( 'DoorWordpress' ) )
 								//}
 								
 								// Fetch the existing object in WordPress
+								//$Logger->log( 'Object to be written: ' . print_r( $obj, 1 ) );
+								
 								
 								if( isset( $obj->sku ) && $obj->sku )
 								{
@@ -1601,22 +1696,29 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								$catobj = json_decode( $catjson );
 								
-								$Logger->log( 'File object: ' . print_r( $obj, 1 ) );
+								//$Logger->log( 'File object: ' . print_r( $obj, 1 ) );
+								//$Logger->log( 'Writing..' );
 								
+								$finalObject = $catobj[0];
 								foreach( $catobj as $v )
 								{
-									$Logger->log( '> Wordpress object: ' . $v[ 'name' ] );
+									if( $obj->sku && $v->sku == $obj->sku )
+									{
+										//$Logger->log( '> Wordpress object: ' . $v->name . ' ' . $v->sku );
+										$finalObject = $v;
+										break;
+									}
 								}
 								
-								if( $catobj && isset( $catobj[0]->id ) )
+								if( $catobj && isset( $finalObject->id ) )
 								{
-									$prodid = $catobj[0]->id;
+									$prodid = $finalObject->id;
 									
 									// Ugly workaround method to update relative product variations because of limitation when updating, since it wouldn't use sku number to update ...
 									
-									if( isset( $catobj[0]->variations ) && is_array( $catobj[0]->variations ) && isset( $obj->variations ) && is_array( $obj->variations ) )
+									if( isset( $finalObject->variations ) && is_array( $finalObject->variations ) && isset( $obj->variations ) && is_array( $obj->variations ) )
 									{
-										foreach( $catobj[0]->variations as $svar )
+										foreach( $finalObject->variations as $svar )
 										{
 											if( isset( $svar->id ) && $svar->id && $svar->sku )
 											{
@@ -1661,19 +1763,19 @@ if( !class_exists( 'DoorWordpress' ) )
 								// Not changed
 								if( !$changed )
 								{
-									$Logger->log( 'This product has not changed.' );
+									$Logger->log( 'This product has not changed. ['.$path.'] '/* . json_encode( $finalObject->images ) . ' [] ' . json_encode( $obj->images )*/ );
 									return 'ok<!--separate-->' . $len . '<!--separate-->';
 								}
 								
 								// Wordpress do not want these
 								unset( $obj->datemodified, $obj->datecreated );
 								
-								$Logger->log( 'Product changed.' );
+								//$Logger->log( '[Wordpress Write] >> Product changed.' );
 								
 								// Delete old files
-								if( isset( $catobj[0]->images[0]->id ) )
+								if( isset( $finalObject->images[0]->id ) )
 								{
-									$this->DeleteWPFiles( $catobj[0]->images[0]->id );
+									$this->DeleteWPFiles( $finalObject->images[0]->id );
 								}
 								
 								// Upload new files
@@ -1699,11 +1801,13 @@ if( !class_exists( 'DoorWordpress' ) )
 								}
 								
 								
-								$Logger->log( '[Wordpress write] Starting to create product for ' . $productid );
-								$json = $this->query( '/products' . ( $prodid ? ( '/' . $prodid ) : '' ), $obj );
-								$Logger->log( '[Wordpress write] Product for ' . $productid . ' created. OK!' );
+								//$slot = $Logger->addSlot( 'Writing object to Wordpress database. (' . $prodid . ')' );
 								
-								$Logger->log( '[[[[[[[[[[ Uploaded: ' . $json . ' [] Images: ' . ( isset( $files ) ? json_encode( $files ) : '' ) . ' [] ProductID: ' . $prodid . ' (' . $file->pathname . ') [] ParentID: ' . $file->pathname . ' Obj: ' . print_r( $obj,1 ) . ' [] Variations: ' . json_encode( $catobj[0]->variations ) . ' ]]]]]]]]]]' );
+								//$Logger->log( '[Wordpress write] Starting to create product for ' . $prodid );
+								$json = $this->query( '/products' . ( $prodid ? ( '/' . $prodid ) : '' ), $obj );
+								//$Logger->log( '[Wordpress write] Product for ' . $prodid . ' created. OK!' );
+								
+								//$Logger->log( '[[[[[[[[[[ Uploaded: ' . $json . ' [] Images: ' . ( isset( $files ) ? json_encode( $files ) : '' ) . ' [] ProductID: ' . $prodid . ' (' . $file->pathname . ') [] ParentID: ' . $file->pathname . ' Obj: ' . print_r( $obj,1 ) . ' [] Variations: ' . json_encode( $catobj[0]->variations ) . ' ]]]]]]]]]]' );
 								
 								if( $json )
 								{
@@ -1711,24 +1815,29 @@ if( !class_exists( 'DoorWordpress' ) )
 									
 									if( isset( $msg->code ) && $msg->code )
 									{
-										$Logger->log( 'fail<!--separate-->{"response":{"code":' . $msg->code . ',"message":' . $msg->message . '}}' );
+										//$slot->resolve( false, 'Failed: ' . json_encode( $msg ) );
+										//$Logger->log( 'fail<!--separate-->{"response":{"code":' . $msg->code . ',"message":' . $msg->message . '}}' );
 										return 'fail<!--separate-->{"response":{"code":' . $msg->code . ',"message":' . $msg->message . '}}';
 									}
 									else
 									{
-										$Logger->log( 'Wordpress: We got no error code!' );
+										//$slot->resolve( true, ( $json ? 'true' : 'false' ) . ' ' . $len );
 										return 'ok<!--separate-->' . $len . '<!--separate-->'/* . print_r( json_decode( $json ), 1 )*/;
 									}
 								}
+								else
+								{
+									//$slot->resolve( false, 'Did not get json back.' );
+								}
 								
-								$Logger->Log( 'Response: ' . $json );
+								//$Logger->Log( 'Response: ' . $json );
 								
 							}
 						}
 					}
 					else
 					{
-						$Logger->Log( 'No file object for us..' );
+						//$Logger->Log( 'No file object for us..' );
 					}
 				}
 				
@@ -1797,7 +1906,11 @@ if( !class_exists( 'DoorWordpress' ) )
 								return json_encode( $meta );
 							}
 							
-							if( $mode == 'r' )
+							if( $args->mode == 'rs' )
+							{
+								die( $imgdata ? base64_decode( $imgdata ) : '' );
+							}
+							else if( $args->mode == 'r' )
 								print( 'ok<!--separate-->' );
 							die(
 								utf8_encode( $cid ) . 
@@ -1849,9 +1962,9 @@ if( !class_exists( 'DoorWordpress' ) )
 											'Length'   => strlen( utf8_encode( $file->name ) ), 
 											'Encoding' => 'UTF-8' 
 										),
-										'Description'  => array( 
-											'Type'     => 'text',   
-											'Length'   => strlen( utf8_encode( $file->description ) ), 
+										'Type'         => array( 
+											'Type'     => 'string', 
+											'Length'   => strlen( utf8_encode( $file->type ) ), 
 											'Encoding' => 'UTF-8' 
 										),
 										'Price'        => array( 
@@ -1859,9 +1972,14 @@ if( !class_exists( 'DoorWordpress' ) )
 											'Length'   => strlen( utf8_encode( $file->regular_price ) ), 
 											'Encoding' => 'UTF-8' 
 										),
-										'Distributor'  => array( 
+										'Stock'        => array( 
 											'Type'     => 'string', 
-											'Length'   => 0, 
+											'Length'   => strlen( utf8_encode( $file->stock_quantity ? (string)$file->stock_quantity : '0' ) ), 
+											'Encoding' => 'UTF-8' 
+										),
+										'Description'  => array( 
+											'Type'     => 'text',   
+											'Length'   => strlen( utf8_encode( $file->description ) ), 
 											'Encoding' => 'UTF-8' 
 										),
 										'Url'          => array( 
@@ -1869,21 +1987,31 @@ if( !class_exists( 'DoorWordpress' ) )
 											'Length'   => strlen( utf8_encode( $file->external_url ) ), 
 											'Encoding' => 'UTF-8' 
 										),
+										'Attributes'   => array( 
+											'Type'     => 'string', 
+											'Length'   => strlen( utf8_encode( $file->attributes ? json_encode( $file->attributes ) : '' ) ), 
+											'Encoding' => 'json' 
+										),
+										'Data'         => array( 
+											'Type'     => 'string', 
+											'Length'   => strlen( utf8_encode( $file->variations ? json_encode( $file->variations ) : '' ) ), 
+											'Encoding' => 'json' 
+										),
+										'DateModified' => array( 
+											'Type'     => 'string', 
+											'Length'   => strlen( utf8_encode( $file->date_modified ) ), 
+											'Encoding' => 'UTF-8' 
+										),
+										'DateCreated'  => array( 
+											'Type'     => 'string', 
+											'Length'   => strlen( utf8_encode( $file->date_created ) ), 
+											'Encoding' => 'UTF-8' 
+										),
 										'Image'        => array( 
 											'Type'     => $imgmime, 
 											'Length'   => strlen( $imgdata ), 
 											'Encoding' => 'base64', 
 											'Name'     => $imgname 
-										),
-										'Display'      => array( 
-											'Type'     => 'string', 
-											'Length'   => strlen( utf8_encode( $file->status == 'publish' ? '1' : '0' ) ), 
-											'Encoding' => 'UTF-8' 
-										),
-										'Stock'        => array( 
-											'Type'     => 'string', 
-											'Length'   => strlen( utf8_encode( $file->stock_quantity ? (string)$file->stock_quantity : '0' ) ), 
-											'Encoding' => 'UTF-8' 
 										)
 									);
 									
@@ -1891,19 +2019,25 @@ if( !class_exists( 'DoorWordpress' ) )
 								}
 								
 								
-								
-								if( $mode == 'r' )
+								if( $args->mode == 'rs' )
+								{
+									die( $imgdata ? base64_decode( $imgdata ) : '' );
+								}
+								else if( $args->mode == 'r' )
 									print( 'ok<!--separate-->' );
 								die(
 									utf8_encode( $file->sku ) . 
 									utf8_encode( $file->name ) . 
-									utf8_encode( $file->description ) . 
+									utf8_encode( $file->type ) . 
 									utf8_encode( $file->regular_price ) . 
-									'' . 
+									utf8_encode( $file->stock_quantity ? (string)$file->stock_quantity : '0' ) . 
+									utf8_encode( $file->description ) . 
 									utf8_encode( $file->external_url ) . 
-									$imgdata . 
-									utf8_encode( $file->status == 'publish' ? '1' : '0' ) . 
-									utf8_encode( $file->stock_quantity ? (string)$file->stock_quantity : '0' ) 
+									utf8_encode( $file->attributes ? json_encode( $file->attributes ) : '' ) . 
+									utf8_encode( $file->variations ? json_encode( $file->variations ) : '' ) . 
+									utf8_encode( $file->date_modified ) . 
+									utf8_encode( $file->date_created ) . 
+									$imgdata 
 								);
 							}
 						}
@@ -2049,7 +2183,7 @@ if( !class_exists( 'DoorWordpress' ) )
 								$path = ( $path . '/' );
 							}
 							
-							$Logger->log( 'We got the correct path: ' . $path );
+							//$Logger->log( 'We got the correct path: ' . $path );
 							
 							if( $cat = $this->getSubPath( $path ) )
 							{
@@ -2059,11 +2193,11 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								if( $dta == -2 )
 								{
-									$Logger->log( '!! - [Wordpress Makedir] Waiting for full info.' );
+									//$Logger->log( '!! - [Wordpress Makedir] Waiting for full info.' );
 									return 'ok<!--separate-->{"message":"Waiting for complete .info"}';
 								}
 								
-								$Logger->log( 'HandleInfoFile: ' . print_r( $dta, 1 ) );
+								//$Logger->log( 'HandleInfoFile: ' . print_r( $dta, 1 ) );
 								
 								// INFO: Currently because of having to deal 
 								// with an .info file system to create either
@@ -2071,21 +2205,21 @@ if( !class_exists( 'DoorWordpress' ) )
 								// creation without the .info file until a
 								// better solution is made possible.
 								
-								$Logger->log( 'makedir: data: ' . json_encode( $cat ) . ' [] ' . json_encode( $dta ) );
+								//$Logger->log( 'makedir: data: ' . json_encode( $cat ) . ' [] ' . json_encode( $dta ) );
 								
 								if( $dta && ( $data = $this->CreateCategoryWP( $cat, $dta ) ) )
 								{
-									$Logger->log( '[Wordpress Makedir] Creating dir with ' . $cat->path . ' -------------' ); //. print_r( $dta, 1 ) );
+									//$Logger->log( '[Wordpress Makedir] Creating dir with ' . $cat->path . ' -------------' ); //. print_r( $dta, 1 ) );
 									return 'ok<!--separate-->'/* . print_r( json_decode( $data ), 1 )*/;
 								}
 								else if( isset( $cat->id ) && $cat->id > 0 )
 								{
-									$Logger->log( '@@ [Wordpress Makedir] makedir directory already exists ' . $cat->path . '.' );
+									//$Logger->log( '@@ [Wordpress Makedir] makedir directory already exists ' . $cat->path . '.' );
 									return 'ok<!--separate-->{"message":"Directory already exists."}';
 								}
 								else
 								{
-									$Logger->log( '!! [Wordpress Makedir] Makedir ' . $cat->path . ' no id.' ); //. print_r( $cat, 1 ) );
+									//$Logger->log( '!! [Wordpress Makedir] Makedir ' . $cat->path . ' no id.' ); //. print_r( $cat, 1 ) );
 								}
 								
 								// Temporary because of the .info regime so we don't get the failed notification
@@ -2104,23 +2238,39 @@ if( !class_exists( 'DoorWordpress' ) )
 						
 					case 'delete':
 						
+						//$slot = $Logger->addSlot( '(Wordpress) We are asked to delete: ' . $path );
+						
 						if( isset( $path ) )
 						{
 							if( $this->pathIsDir( $path ) )
 							{
 								if( $this->_deleteFolder( $path ) )
 								{
+									//$slot->resolve( true, 'Deleted folder successfully' );
 									return 'ok';
+								}
+								else
+								{
+									//$slot->resolve( false, 'Could not delete folder' );
+									return 'fail';
 								}
 							}
 							else if( $this->pathIsFile( $path ) )
 							{
 								if( $this->_deleteFile( $path ) )
 								{
+									//$slot->resolve( true, 'Deleted file successfully' );
 									return 'ok';
+								}
+								else
+								{
+									//$slot->resolve( false, '_deleteFile didn\'t return true' );
+									return 'fail';
 								}
 							}
 						}
+						
+						//$slot->resolve( false, 'Could not delete file.' );
 						
 						// Other combos not supported yet
 						return 'fail';
@@ -2209,7 +2359,7 @@ if( !class_exists( 'DoorWordpress' ) )
 			{
 				$json = $this->query( $server . '/media/' . $ids . '?force=true', false, 'DELETE' );
 				
-				$Logger->log( '[[[[[[[[[[[[[[[[[[[[[[[ DeletedFiles: ' . $json . ' [] ' . $server . '/media/' . $ids . '?force=true ]]]]]]]]]]]]]]]]]]]]]]]' );
+				//$Logger->log( '[[[[[[[[[[[[[[[[[[[[[[[ DeletedFiles: ' . $json . ' [] ' . $server . '/media/' . $ids . '?force=true ]]]]]]]]]]]]]]]]]]]]]]]' );
 				
 				if( $json && $filobj = json_decode( trim( $json ) ) )
 				{
@@ -2305,7 +2455,7 @@ if( !class_exists( 'DoorWordpress' ) )
 				$name = $name[ count( $name ) - 2 ] . '/';
 			}
 			
-			$Logger->log( 'Handling filename: ' . $name );
+			//$Logger->log( 'Handling filename: ' . $name );
 			
 			if( $name && $User->ID > 0 )
 			{
@@ -2315,22 +2465,22 @@ if( !class_exists( 'DoorWordpress' ) )
 				$extension = '';
 				if( substr( $name, strlen( $name ) - 8, 8 ) == '.dirinfo' )
 				{
-					$Logger->log( 'We got a .dirinfo file ' . $name );
+					//$Logger->log( 'We got a .dirinfo file ' . $name );
 					$extension = '.dirinfo';
 				}
 				else if( substr( $name, strlen( $name ) - 5, 5 ) == '.info' )
 				{
-					$Logger->log( 'We got a .info file ' . $name );
+					//$Logger->log( 'We got a .info file ' . $name );
 					$extension = '.info';
 				}
 				$directoryMode = false;
 				if( substr( $name, -1, 1 ) == '/' )
 				{
 					$directoryMode = true;
-					$Logger->log( 'Operating in dirinfo mode ' . $name );
+					//$Logger->log( 'Operating in dirinfo mode ' . $name );
 				}
 				
-				$Logger->log( 'HandleInfoFile: Here we go: ' . $extension . ' ' . $name );
+				//$Logger->log( 'HandleInfoFile: Here we go: ' . $extension . ' ' . $name );
 				
 				if( !file_exists( '/tmp/friend_wpdd/' . $User->ID ) )
 				{
@@ -2345,7 +2495,7 @@ if( !class_exists( 'DoorWordpress' ) )
 				
 				$theFilename = '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf;
 				
-				$Logger->log( 'Wordpress: Trying to write temp file: ' . $theFilename );
+				//$Logger->log( 'Wordpress: Trying to write temp file: ' . $theFilename );
 				
 				// Write new file
 				$fp = @fopen( $theFilename, 'wb' );
@@ -2353,7 +2503,7 @@ if( !class_exists( 'DoorWordpress' ) )
 				{
 					$written = fwrite( $fp, $data );
 					fclose( $fp );
-					$Logger->log( 'Wordpress: Temp file written bytes: ' . $written );
+					//$Logger->log( 'Wordpress: Temp file written bytes: ' . $written );
 				}
 				
 				// If both exists continue
@@ -2372,9 +2522,9 @@ if( !class_exists( 'DoorWordpress' ) )
 					$extension = '.info';
 				}
 				
-				$Logger->log( 'Checking for both files:' );
-				$Logger->log( '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf );
-				$Logger->log( '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf . $extension );
+				//$Logger->log( 'Checking for both files:' );
+				//$Logger->log( '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf );
+				//$Logger->log( '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf . $extension );
 				
 				if( 
 					file_exists( '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf ) && 
@@ -2387,7 +2537,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					@unlink( '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf . $extension );
 					@unlink( '/tmp/friend_wpdd/' . $User->ID . '/' . $urlf );
 					
-					$Logger->log( 'Wordpress: Cleaning up.' );
+					//$Logger->log( 'Wordpress: Cleaning up.' );
 					
 					$ind = explode( '<!--separate-->', $inf );
 					
@@ -2412,7 +2562,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					$obj->info = $info;
 					$obj->data = ( isset( $dat ) ? $dat : $dta );
 					
-					$Logger->log( $name . ' - We are using this info content: ' . $inf );
+					//$Logger->log( $name . ' - We are using this info content: ' . $inf );
 					
 					//$Logger->log( 'Create: File or Folder? ' . json_encode( $obj,1 )  . "\r\n" );
 					
@@ -2447,7 +2597,7 @@ if( !class_exists( 'DoorWordpress' ) )
 			{
 				$cat->pathname = str_replace( array( '.dirinfo' ), array( '' ), $cat->pathname );
 				
-				$Logger->log( 'Here we attempt on path: ' . $cat->pathname );
+				//$Logger->log( 'Here we attempt on path: ' . $cat->pathname );
 				
 				if( $dta && isset( $dta->info ) && isset( $dta->info->ID ) && isset( $dta->info->ID->Value ) )
 				{
@@ -2455,7 +2605,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					{
 						$catjson = $this->query( '/products/categories?slug=product_cat-' . $dta->info->ID->Value );
 						
-						$Logger->log( 'Result from slug: ' . $catjson );
+						//$Logger->log( 'Result from slug: ' . $catjson );
 						
 						if( $catobj = json_decode( trim( $catjson ) ) )
 						{
@@ -2470,7 +2620,7 @@ if( !class_exists( 'DoorWordpress' ) )
 							}
 						}
 						
-						$Logger->log( 'Wordpress: Result from create category wp.' ); //: ' . $catjson );
+						//$Logger->log( 'Wordpress: Result from create category wp.' ); //: ' . $catjson );
 					}
 					
 					// Temporary static mapping
@@ -2528,7 +2678,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					$obj->name = $cat->pathname;
 					$obj->parent = $cat->parent;
 					
-					$Logger->log( 'SETTING ID: ' . $dta->info->ID->Value . ' on parent ' . $cat->parent . ' ' . print_r( $cat, 1 ) );
+					//$Logger->log( 'SETTING ID: ' . $dta->info->ID->Value . ' on parent ' . $cat->parent . ' ' . print_r( $cat, 1 ) );
 					
 					$obj->slug = 'product_cat-' . $dta->info->ID->Value;
 					
@@ -2577,7 +2727,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					
 					$json = $this->query( '/products/categories' . ( isset( $cat->id ) && $cat->id ? '/' . $cat->id : '' ), $obj );
 					
-					$Logger->log( 'Result from create cat from slug: ' . $json . ' Cat id: ' . $cat->id );
+					//$Logger->log( 'Result from create cat from slug: ' . $json . ' Cat id: ' . $cat->id );
 					
 					/*if( $json )
 					{
@@ -2611,7 +2761,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					$json = $this->query( '/products/categories' . ( isset( $cat->id ) && $cat->id ? '/' . $cat->id : '' ), $obj );
 					
 					
-					$Logger->log( 'FREE Result from slug: ' . $json );
+					//$Logger->log( 'FREE Result from slug: ' . $json );
 					
 					//$Logger->log( '[[[[[[ CreateCategoryWP [NEW:2] ]]]]]]: [] query: ' . '/products/categories' . ( isset( $cat->id ) && $cat->id ? '/' . $cat->id : '' ) . ' [] obj: ' . json_encode( $obj ) . ' [] return: ' . $json . ' [] Obj: ' . print_r( $obj,1 ) . "\r\n" );
 					
@@ -2648,13 +2798,13 @@ if( !class_exists( 'DoorWordpress' ) )
 		{
 			global $Logger;
 			
-			$Logger->log( '[DeleteCategoriesWP] Start. Checking data.' ); //. print_r( $data, 1 ) );
+			//$Logger->log( '[DeleteCategoriesWP] Start. Checking data.' ); //. print_r( $data, 1 ) );
 			
 			if( $data && is_object( $data ) && $data->id )
 			{
 				// --- Fetch all content ----------------------------------- //
 				
-				$Logger->log( '[DeleteCategoriesWP] We will now fetch all categories and products.' );
+				//$Logger->log( '[DeleteCategoriesWP] We will now fetch all categories and products.' );
 				
 				// Fetch all products
 				$currentPage = 0;
@@ -2674,14 +2824,14 @@ if( !class_exists( 'DoorWordpress' ) )
 					{
 						$products[] = $obj;
 						
-						$Logger->log( '[DeleteCategoriesWP] Found ' . count( $obj ) . ' products.' );
+						//$Logger->log( '[DeleteCategoriesWP] Found ' . count( $obj ) . ' products.' );
 					}
 					else
 					{
 						$continue = false;
 					}
 					
-					$Logger->log( '[DeleteCategoriesWP] Fetched page ' . $currentPage . ' of products.' );
+					//$Logger->log( '[DeleteCategoriesWP] Fetched page ' . $currentPage . ' of products.' );
 					
 					$currentPage++;
 				}
@@ -2703,14 +2853,14 @@ if( !class_exists( 'DoorWordpress' ) )
 					{
 						$categories[] = $obj;
 						
-						$Logger->log( '[DeleteCategoriesWP] Found ' . count( $obj ) . ' categories.' );
+						//$Logger->log( '[DeleteCategoriesWP] Found ' . count( $obj ) . ' categories.' );
 					}
 					else
 					{
 						$continue = false;
 					}
 					
-					$Logger->log( '[DeleteCategoriesWP] Fetched page ' . $currentPage . ' of categories.' );
+					//$Logger->log( '[DeleteCategoriesWP] Fetched page ' . $currentPage . ' of categories.' );
 					
 					$currentPage++;
 					
@@ -2746,9 +2896,9 @@ if( !class_exists( 'DoorWordpress' ) )
 						
 							if( $file->id > 0 )
 							{
-								$Logger->log( '[DeleteCategoriesWP] Starting deletion of product ' . $file->name );
+								//$Logger->log( '[DeleteCategoriesWP] Starting deletion of product ' . $file->name );
 								$this->DeleteProductWP( $file );
-								$Logger->log( '[DeleteCategoriesWP] Product ' . $file->name . ' deleted.' );
+								//$Logger->log( '[DeleteCategoriesWP] Product ' . $file->name . ' deleted.' );
 							}
 						}
 					}
@@ -2765,7 +2915,7 @@ if( !class_exists( 'DoorWordpress' ) )
 							if( $cat->id > 0 )
 							{
 								$this->DeleteCategoriesWP( $cat );
-								$Logger->log( '[DeleteCategoriesWP] Category ' . $cat->name . ' deleted.' );
+								//$Logger->log( '[DeleteCategoriesWP] Category ' . $cat->name . ' deleted.' );
 							}
 						}
 					}
@@ -2777,7 +2927,7 @@ if( !class_exists( 'DoorWordpress' ) )
 				
 				$json = $this->query( '/products/categories/' . $data->id . '?force=true', false, 'DELETE' );
 				
-				$Logger->log( '[DeleteCategoriesWP] Final deletion, category ' . $data->id . ' deleted.' );
+				//$Logger->log( '[DeleteCategoriesWP] Final deletion, category ' . $data->id . ' deleted.' );
 				
 				if( isset( $data->image->id ) )
 				{
@@ -2797,13 +2947,13 @@ if( !class_exists( 'DoorWordpress' ) )
 		{
 			global $Logger;
 			
-			$Logger->log( 'DeleteProductWP: Preparing to delete.' );
+			//$Logger->log( 'DeleteProductWP: Preparing to delete.' );
 			
 			if( $data && is_object( $data ) && $data->id )
 			{
 				$json = $this->query( '/products/' . $data->id . '?force=true', false, 'DELETE' );
 				
-				$Logger->log( 'DeleteProductWP: Here is the JSON data: ' . $json . "\nDONE with DeleteProductWP.\n" );
+				//$Logger->log( 'DeleteProductWP: Here is the JSON data: ' . $json . "\nDONE with DeleteProductWP.\n" );
 				
 				if( $json && json_decode( trim( $json ) ) )
 				{
@@ -2850,8 +3000,8 @@ if( !class_exists( 'DoorWordpress' ) )
 			$o = new stdClass();
 			$o->command = 'write';
 			$o->path = $path;
-			$o->data = $fileObject;
-			return $this->dosAction( 'write', $o );
+			$o->data = isset( $fileObject->_content ) ? $fileObject->_content : $fileObject;
+			return $this->dosAction( $o );
 			
 			// TODO: Remove Obsolete code!
 			
@@ -2926,6 +3076,7 @@ if( !class_exists( 'DoorWordpress' ) )
 									
 									if( $k == 'Stock' )
 									{
+									
 										$obj->{'manage_stock'} = true;
 										$obj->{$mapping[$k]} = $data;
 										
@@ -3264,7 +3415,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					
 					if( $dta && ( $data = $this->CreateCategoryWP( $cat, $dta ) ) )
 					{
-						$Logger->log( '[Wordpress Makedir] Creating dir with ' . $cat->path . ' ------------- AY!' ); 
+						//$Logger->log( '[Wordpress Makedir] Creating dir with ' . $cat->path . ' ------------- AY!' ); 
 						return true;
 					}
 					
@@ -3299,20 +3450,34 @@ if( !class_exists( 'DoorWordpress' ) )
 		function _deleteFile( $path )
 		{
 			global $Logger;
-			$Logger->log( '_deleteFile: Checking path: ' . $path );
+			
 			if( $this->pathIsFile( $path ) )
 			{
-				$Logger->log( '_deleteFile: Yes, path is file.' );
 				if( $file = $this->getSubPath( $path ) )
 				{
+					//$slot = $Logger->addSlot( '(Wordpress) Carrying out delete: ' . $file->name );
+					
 					if( $file->id )
 					{
 						if( $this->DeleteProductWP( $file ) )
 						{
+							//$slot->resolve( true, 'Yes, path is file.' );
 							return true;
 						}
+						else
+						{
+							//$slot->resolve( false, 'We couldn\'t delete WP product. ' . print_r( $file, 1 ) );
+							return false;
+						}
+					}
+					else
+					{
+						//$slot->resolve( false, 'We have no file id: ' . print_r( $file, 1 ) );
+						return false;
 					}
 				}
+				
+				//$slot->resolve( false, 'Could not delete file.' );
 			}
 			
 			return false;
