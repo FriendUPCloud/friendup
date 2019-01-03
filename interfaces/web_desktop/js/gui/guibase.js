@@ -2600,6 +2600,19 @@ function PollTaskbar( curr )
 							var div = this.window;
 							div.viewContainer.setAttribute( 'minimized', '' );
 							div.minimized = false;
+							
+							var app = _getAppByAppId( div.applicationId );
+							if( app )
+							{
+								app.sendMessage( {
+									'command': 'notify',
+									'method': 'setviewflag',
+									'flag': 'minimized',
+									'viewId': div.windowObject.viewId,
+									'value': false
+								} );
+							}
+							
 							if( div.windowObject.workspace != globalConfig.workspaceCurrent )
 							{
 								Workspace.switchWorkspace( div.windowObject.workspace );
@@ -2612,6 +2625,18 @@ function PollTaskbar( curr )
 									{
 										div.attached[ a ].minimized = false;
 										div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
+										
+										var app = _getAppByAppId( div.attached[ a ].applicationId );
+										if( app )
+										{
+											app.sendMessage( {
+												'command': 'notify',
+												'method': 'setviewflag',
+												'flag': 'minimized',
+												'viewId': div.attached[ a ].windowObject.viewId,
+												'value': false
+											} );
+										}
 									}
 								}
 							}
@@ -2660,7 +2685,18 @@ function PollTaskbar( curr )
 								{
 									this.setInactive();
 									this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
+									
 									var div = this.window;
+									
+									var app = _getAppByAppId( div.applicationId );
+									app.sendMessage( {
+										'command': 'notify',
+										'method': 'setviewflag',
+										'flag': 'minimized',
+										'viewId': div.windowObject.viewId,
+										'value': true
+									} );
+									
 									if( div.attached )
 									{
 										for( var a = 0; a < div.attached.length; a++ )
@@ -2669,6 +2705,18 @@ function PollTaskbar( curr )
 											{
 												div.attached[ a ].minimized = true;
 												div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
+												
+												var app = _getAppByAppId( div.attached[ a ].applicationId );
+												if( app )
+												{
+													app.sendMessage( {
+														'command': 'notify',
+														'method': 'setviewflag',
+														'flag': 'minimized',
+														'viewId': div.attached[ a ].viewId,
+														'value': true
+													} );
+												}
 											}
 										}
 									}
