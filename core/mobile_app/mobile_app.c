@@ -163,7 +163,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 		if( userConnections == NULL )
 		{
 			DEBUG("Allocation failed\n");
-			return 2;//MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
+			return MOBILE_APP_ERR_INTERNAL;//MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
 		}
 		else
 		{
@@ -460,7 +460,9 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 			if( tokens_found < 1 )
 			{
-				MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
+				FERROR("Bad message\n");
+				return 0;
+				//MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
 			}
 
 			json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
@@ -673,6 +675,7 @@ static int MobileAppReplyError(struct lws *wsi, void *user, int error_code)
 #endif
 	}
 
+	/*
 	MobileAppConnection *appConnection = NULL;
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
@@ -681,6 +684,7 @@ static int MobileAppReplyError(struct lws *wsi, void *user, int error_code)
 
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
+	
 	//FFree(websocketHash);
 	if( appConnection )
 	{
@@ -692,7 +696,7 @@ static int MobileAppReplyError(struct lws *wsi, void *user, int error_code)
 			DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->umac_Username);
 		}
 		MobileAppRemoveAppConnection( userConnections, connectionIndex );
-	}
+	}*/
 
 	return -1;
 }
@@ -710,14 +714,14 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 
 	if( usernameString == NULL )
 	{
-		return MobileAppReplyError(wsi, userdata, MOBILE_APP_ERR_LOGIN_NO_USERNAME);
+		return MOBILE_APP_ERR_LOGIN_NO_USERNAME;//MobileAppReplyError(wsi, userdata, MOBILE_APP_ERR_LOGIN_NO_USERNAME);
 	}
 
 	char *passwordString = json_get_element_string(json, "pass");
 
 	if( passwordString == NULL )
 	{
-		return MobileAppReplyError(wsi, userdata, MOBILE_APP_ERR_LOGIN_NO_PASSWORD);
+		return MOBILE_APP_ERR_LOGIN_NO_PASSWORD;//MobileAppReplyError(wsi, userdata, MOBILE_APP_ERR_LOGIN_NO_PASSWORD);
 	}
 	
 	char *tokenString = json_get_element_string(json, "apptoken");
@@ -769,7 +773,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 			UserDelete( user );
 			user = NULL;
 		}
-		return MobileAppReplyError( wsi, userdata, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS );
+		return MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS;//MobileAppReplyError( wsi, userdata, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS );
 	}
 	else
 	{
