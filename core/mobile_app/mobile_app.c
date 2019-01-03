@@ -454,36 +454,37 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			jsmn_init(&parser);
 			jsmntok_t tokens[16]; //should be enough
 
-			int tokens_found = jsmn_parse(&parser, data, len, tokens, sizeof(tokens)/sizeof(tokens[0]));
+			int tokensFound = jsmn_parse(&parser, data, len, tokens, sizeof(tokens)/sizeof(tokens[0]));
 
-			DEBUG("JSON tokens found %d\n", tokens_found);
+			DEBUG("JSON tokens found %d\n", tokensFound);
 
-			if( tokens_found < 1 )
+			if( tokensFound < 1 )
 			{
 				FERROR("Bad message\n");
 				return 0;
 				//MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
 			}
 
-			json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
+			json_t json = { .string = data, .string_length = len, .token_count = tokensFound, .tokens = tokens };
 
-			char *msg_type_string = json_get_element_string(&json, "t");
+			char *msgTypeString = json_get_element_string(&json, "t");
 
-			if( msg_type_string )
+			if( msgTypeString )
 			{
 				//due to uniqueness of "t" field values only first letter has to be evaluated
-				char first_type_letter = msg_type_string[0];
-				DEBUG("Type letter <%c>\n", first_type_letter);
+				char firstTypeLetter = msgTypeString[0];
+				DEBUG("Type letter <%c>\n", firstTypeLetter);
 
-				if( first_type_letter == 'l'/*login*/)
+				if( firstTypeLetter == 'l'/*login*/)
 				{
-					MobileAppHandleLogin( wsi, user, &json );
+					int ret = MobileAppHandleLogin( wsi, user, &json );
 					
-					Log( FLOG_DEBUG, "\t\t\t\t\t\t\tADD APP CONNECTION Websocket pointer: %p\n", wsi );
+					Log( FLOG_DEBUG, "\t\t\t\t\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %d\n", wsi, ret );
+					return ret;		// remove WS connection if login fail
 				}
 				else
 				{
-					if (appConnection == NULL)
+					if( appConnection == NULL)
 					{
 						DEBUG("Session not found for this connection\n");
 						return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_SESSION);
@@ -491,7 +492,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 					appConnection->mac_LastCommunicationTimestamp = time(NULL);
 
-					switch (first_type_letter)
+					switch (firstTypeLetter)
 					{
 						case 'p': 
 							do
