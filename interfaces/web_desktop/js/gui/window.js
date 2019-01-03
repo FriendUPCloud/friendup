@@ -4338,7 +4338,7 @@ Friend.GUI.view.cleanWindowArray = function( ele )
 	for( var a in movableWindows )
 	{
 		if( a != ele.id && movableWindows[ a ] != ele )
-			out[ a ] = ele;
+			out[ a ] = movableWindows[ a ];
 	}
 	out[ ele.id ] = ele;
 	movableWindows = out;
