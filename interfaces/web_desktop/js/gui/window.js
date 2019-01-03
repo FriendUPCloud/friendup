@@ -4336,15 +4336,6 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		// Here is the first screen
 		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
-		/*for( var a in movableWindows )
-		{
-			// These views are handled by css...
-			var c = movableWindows[a].parentNode;
-			c.style.top = '0';
-			c.style.left = '0';
-			c.style.width = '100%';
-			c.style.height = '100%';
-		}*/
 		return;
 	}
 	
