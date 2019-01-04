@@ -1402,6 +1402,7 @@ function apiWrapper( event, force )
 						case 'windowstate':
 							if( win && typeof( win.states[ msg.state ] ) != 'undefined' )
 							{
+								console.log( 'We have the focus recorded!', msg.state, msg.value );
 								win.states[ msg.state ] = msg.value;
 							}
 							break;

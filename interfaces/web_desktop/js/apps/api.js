@@ -6069,9 +6069,17 @@ if( typeof( Say ) == 'undefined' )
 // Handle keys in iframes too!
 if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
 {
+	function _kfocus( e )
+	{
+		//console.log( 'Focusing: ', e.target, document.activeElement );
+	}
+
 	function _kmousedown( e )
 	{
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
+		
+		// Check if an input element has focus
+		Friend.GUI.checkInputFocus();
 	}
 	function _kmouseup( e )
 	{
@@ -6188,6 +6196,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.addEventListener( 'keyup',   _kresponseup, false );
 		window.addEventListener( 'mousedown', _kmousedown, false );
 		window.addEventListener( 'mouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 	else
 	{
@@ -6195,6 +6204,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.attachEvent( 'onkeyup',  _kresponseup, false );
 		window.attachEvent( 'onmousedown', _kmousedown, false );
 		window.attachEvent( 'onmouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 
 	window._keysAdded = true;
@@ -8276,12 +8286,16 @@ Friend.GUI.checkInputFocus = function()
 	if( !focused || focused == document.body )
 		focused = null;
 	else if( document.querySelector )
+	{
 		focused = document.querySelector( ':focus' );
+	}
+	if( !focused ) return;
 	var response = false;
-	if( focused && ( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' ) )
+	if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
 	{
 		response = true;
 	}
+	
 	Application.sendMessage( {
 		type: 'view',
 		method: 'windowstate',
