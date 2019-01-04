@@ -288,7 +288,7 @@ html body .Screen .MobileAppMenu:after
 [mobile] #WorkspaceMenu.Open
 {
 	height: calc(100% + 5px);
-	width: 80%;
+	width: 70%;
 	transform: translateX(-100%);
 	overflow: visible;
 	box-sizing: border-box;
@@ -314,14 +314,6 @@ html [mobile] #WorkspaceMenu.Open ul
 	border-left: 1px solid rgba(0,0,0,0.5);
 	transition: transform 0.25s;
 	box-shadow: none;
-}
-
-html body[mobile=mobile] div #WorkspaceMenu.Open .Menu
-{
-	width: auto;
-	display: block;
-	clear: both;
-	float: left;
 }
 
 html [mobile] #WorkspaceMenu.Open .Menu > ul > li
@@ -400,8 +392,8 @@ html #WorkspaceMenu .Menu
 	display: block;
 	content: " ";
 	position: fixed;
-	left: -25%;
-	width: 25%;
+	left: -45%;
+	width: 45%;
 	height: 100%;
 	top: 0;
 }

@@ -257,7 +257,7 @@ For now, we don't use this, we don't have enough tools...
     left: 100%;
     top: 0;
     transform: translateX(-100%);
-    width: 80%;
+    width: 70%;
     height: 100%;
     margin: 0;
     border-radius: 0;
@@ -282,7 +282,7 @@ For now, we don't use this, we don't have enough tools...
 	position: fixed;
 	left: 0;
 	top: 0;
-	width: 30%;
+	width: 40%;
 	height: 100%;
 	background: rgba(0,0,0,0);
 	transform: translateX(-100%);
