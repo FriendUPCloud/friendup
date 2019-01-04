@@ -2439,6 +2439,10 @@ var View = function( args )
 			if( !window.isTablet && e && e.button != 0 ) return;
 			if( div.minimized ) return;
 			div.minimized = true;
+			if( !e )
+			{
+				e = { button: 0 };
+			}
 			
 			
 			if( !window.isMobile )
