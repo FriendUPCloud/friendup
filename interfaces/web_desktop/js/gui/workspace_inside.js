@@ -7559,6 +7559,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		};
 		console.log('trying to upload here...',fileMessage);
 		uworker.postMessage( fileMessage );		
+	},
+	updateViewState: function( newState )
+	{
+		this.currentViewState = newState;
 	}
 
 };
