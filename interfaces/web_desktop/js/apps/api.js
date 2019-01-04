@@ -6088,7 +6088,10 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		setTimeout( function()
+		{
+			Friend.GUI.checkInputFocus();
+		}, 250 );
 	}
 	
 	// Handle keys
@@ -8284,18 +8287,23 @@ Friend.GUI.checkInputFocus = function()
 {
 	var focused = document.activeElement;
 	if( !focused || focused == document.body )
-		focused = null;
-	else if( document.querySelector )
 	{
-		focused = document.querySelector( ':focus' );
+		focused = false;
 	}
-	if( !focused ) return;
+	if( document.querySelector )
+	{
+		var cand = document.querySelector( ':focus' );
+		if( cand && cand != focused ) focused = cand;
+	}
 	var response = false;
-	if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
+	if( focused )
 	{
-		response = true;
+		if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
+		{
+			response = true;
+		}
 	}
-	
+	// Send the message
 	Application.sendMessage( {
 		type: 'view',
 		method: 'windowstate',
