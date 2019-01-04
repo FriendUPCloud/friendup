@@ -2689,13 +2689,16 @@ function PollTaskbar( curr )
 									var div = this.window;
 									
 									var app = _getAppByAppId( div.applicationId );
-									app.sendMessage( {
-										'command': 'notify',
-										'method': 'setviewflag',
-										'flag': 'minimized',
-										'viewId': div.windowObject.viewId,
-										'value': true
-									} );
+									if( app )
+									{
+										app.sendMessage( {
+											'command': 'notify',
+											'method': 'setviewflag',
+											'flag': 'minimized',
+											'viewId': div.windowObject.viewId,
+											'value': true
+										} );
+									}
 									
 									if( div.attached )
 									{
