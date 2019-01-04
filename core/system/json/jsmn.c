@@ -251,7 +251,7 @@ jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 			parser->toksuper = parser->toknext - 1;
 			break;
 		case ',':
-			if (tokens != NULL &&
+			if (tokens != NULL && parser->toksuper >= 0 &&
 					tokens[parser->toksuper].type != JSMN_ARRAY &&
 					tokens[parser->toksuper].type != JSMN_OBJECT) {
 #ifdef JSMN_PARENT_LINKS

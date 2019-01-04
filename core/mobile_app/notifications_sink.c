@@ -23,13 +23,6 @@ extern SystemBase *SLIB;
 
 #define WEBSOCKET_SEND_QUEUE
 
-static void NotificationsSinkInit(void);
-static void WebsocketRemove(struct lws *wsi);
-static char* GetWebsocketHash(struct lws *wsi);
-//static 
-
-
-static FBOOL IsSocketAuthenticated(struct lws *wsi);
 static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify );
 
 //
@@ -87,21 +80,6 @@ static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 	return len;
 }
 
-/**
- * Initialize Notification Sink
- *
- */
-static void NotificationsSinkInit( void )
-{
-	DEBUG("Initializing mobile app module\n");
-
-	//globalSocketAuthMap = HashmapNew();
-	
-	//"ServiceKeys"
-	//globalServerEntriesNr = iniparser_getsecnkeys(dictionary * d, char * s)
-	//globalServerEntries = iniparser_getseckeys(dictionary * d, char * s);	// memory must be released
-}
-
 /*
  * Error types
  */
@@ -116,17 +94,6 @@ enum {
 	WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND,
 	WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND
 };
-
-/**
- * 
- * Connection with server callback
- * 
- */
-
-void WebsocketNotificationConnCallback( struct WebsocketClient *wc, char *msg, int len )
-{
-	
-}
 
 /**
  * Main Websocket notification sink callback
@@ -147,8 +114,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 	{
 		case LWS_CALLBACK_PROTOCOL_INIT:
 		{
-			NotificationsSinkInit();
-		
+
 			return 0;
 		}
 		break;
@@ -532,7 +498,7 @@ void WebsocketNotificationsSetAuthKey( const char *key )
 /**
  * Reply error code to user
  *
- * @param wsi pointer to Websocket connection
+ * @param d pointer to DataQWSIM
  * @param error_code error code
  * @return -1
  */
@@ -552,27 +518,7 @@ static int ReplyError( DataQWSIM *d, int error_code )
 
 	WebsocketRemove(wsi);
 #endif
-	return -1;
-}
-
-/**
- * Check if websocket is authenticated
- *
- * @param wsi pointer to Websocket connection
- * @return true when socket is authenticated, otherwise false
- */
-static FBOOL IsSocketAuthenticated( struct lws *wsi )
-{
-	/*
-	char *websocketHash = GetWebsocketHash( wsi );
-	DataQWSIM *d = (DataQWSIM *)HashmapGetData( globalSocketAuthMap, websocketHash);
-	FFree( websocketHash );
-	if( d != NULL )
-	{
-		return d->d_Authenticated;
-	}
-	*/
-	return FALSE;
+	return error_code;
 }
 
 /**
@@ -597,45 +543,4 @@ static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify )
 		}
 	}
 	return false;
-}
-
-/**
- * Remove Websocket connection from global pool
- *
- * @param wsi pointer to Websocket connection
- */
-static void WebsocketRemove( struct lws *wsi )
-{
-	/*
-	char *websocketHash = GetWebsocketHash(wsi);
-	DataQWSIM *d = (DataQWSIM *) HashmapGetData( globalSocketAuthMap, websocketHash );
-
-	if( d != NULL )
-	{
-		HashmapRemove( globalSocketAuthMap, websocketHash );
-		pthread_mutex_destroy( &(d->d_Mutex) );
-		FQDeInitFree( &(d->d_Queue) );
-		FFree( d );
-	}
-	*/
-
-	//FFree(websocketHash);
-}
-
-/**
- * Get Websocket hash
- *
- * @param wsi pointer to Websocket connection
- * @return pointer to hash in allocated string
- */
-static char* GetWebsocketHash( struct lws *wsi )
-{
-	/*FIXME: this is a dirty workaround for currently used hashmap module. It accepts
-	 * only strings as keys, so we'll use the websocket pointer printed out as
-	 * string for the key. Eventually there should be a hashmap implementation available
-	 * that can use ints (or pointers) as keys!
-	 */
-	char *hash = FCalloc(16, 1);
-	snprintf(hash, 16, "%p", wsi);
-	return hash;
 }

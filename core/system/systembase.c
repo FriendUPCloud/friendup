@@ -392,24 +392,6 @@ SystemBase *SystemInit( void )
 				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 			}
 
-			const char *notifications_auth_key = plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL );
-			if( notifications_auth_key )
-			{
-				if( strlen( notifications_auth_key ) > 10 )
-				{
-					WebsocketNotificationsSetAuthKey(notifications_auth_key);
-				}
-				else
-				{
-					Log( FLOG_INFO, "Mobile notifications service - auth key is too short!\n");
-					return NULL;
-				}
-			}
-			else
-			{
-				Log( FLOG_INFO, "Mobile notifications service - no auth key, service will be disabled\n");
-			}
-			
 			l->l_AppleServerHost = StringDuplicate( plib->ReadStringNCS( prop, "NotificationService:host", NULL ) );
 			
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
