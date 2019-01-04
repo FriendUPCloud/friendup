@@ -316,11 +316,27 @@ html [mobile] #WorkspaceMenu.Open ul
 	box-shadow: none;
 }
 
+html body[mobile=mobile] div #WorkspaceMenu.Open .Menu
+{
+	width: auto;
+	display: block;
+	clear: both;
+	float: left;
+}
+
 html [mobile] #WorkspaceMenu.Open .Menu > ul > li
 {
 	margin: 0;
 	padding: 8px 20px;
 	color: white;
+}
+
+html [mobile] #WorkspaceMenu.Open .Menu.HasSubMenu:after
+{
+	display: inline-block;
+	margin-left: 10px;
+	font-family: fontawesome;
+	content: "\f105";
 }
 
 html [mobile] #WorkspaceMenu > div.MenuBack

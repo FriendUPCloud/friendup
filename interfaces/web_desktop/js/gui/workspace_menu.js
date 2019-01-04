@@ -597,6 +597,7 @@ var WorkspaceMenu =
 			{
 				ul.innerHTML = menuItems[i].itemsHTML;
 			}
+			d.classList.add( 'HasSubMenu' );
 			d.appendChild( ul );
 		}
 		if( ge( 'MobileMenu' ) )
@@ -632,7 +633,7 @@ var WorkspaceMenu =
 		var menus = wm.getElementsByTagName( 'div' );
 		for ( var a = 0; a < menus.length; a++ )
 		{
-			if( menus[a].className != 'Menu' )
+			if( !menus[a].classList.contains( 'Menu' ) )
 				continue;
 			// For mobile, create a close button
 
