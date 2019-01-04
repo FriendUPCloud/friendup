@@ -8304,7 +8304,6 @@ Friend.GUI.checkInputFocus = function()
 		}
 	}
 	// Send the message
-	console.log( 'Response: ' + response );
 	Application.sendMessage( {
 		type: 'view',
 		method: 'windowstate',
