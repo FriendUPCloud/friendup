@@ -274,6 +274,7 @@ For now, we don't use this, we don't have enough tools...
 	width: 100%;
 	height: 100%;
 	overflow: auto;
+	padding: 0 10px;
 }
 
 [mobile] #MobileMenu.Open:after
