@@ -247,20 +247,34 @@ For now, we don't use this, we don't have enough tools...
 	height: 32px;
 	overflow: hidden;
 	float: right;
-	transition: width 0.25s;
+	transform: translateX(0);
+	transition: transform 0.25s;
 }
 
 [mobile] #MobileMenu.Open 
 {
     position: fixed;
-    right: 0;
+    left: 100%;
     top: 0;
+    transform: translateX(-100%);
     width: 80%;
     height: 100%;
     margin: 0;
     border-radius: 0;
     box-shadow: 0px 0px 5px rgba(0,0,0,0.4);
-    overflow: auto;
+    overflow: visible;
+    float: none;
+}
+
+[mobile] #MobileMenu.Open > .MenuContents
+{
+	position: absolute;
+	top: 30px;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	padding: 0 10px;
 }
 
 [mobile] #MobileMenu.Open:after
@@ -268,9 +282,10 @@ For now, we don't use this, we don't have enough tools...
 	position: fixed;
 	left: 0;
 	top: 0;
-	width: 20%;
+	width: 30%;
 	height: 100%;
 	background: rgba(0,0,0,0);
+	transform: translateX(-100%);
 	content: " ";
 	display: block;
 }

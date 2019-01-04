@@ -6904,7 +6904,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		for( var a in movableWindows )
 		{
-			movableWindows[a].setAttribute( 'minimized', 'minimized' );
+			if( movableWindows[ a ].minimize )
+				movableWindows[ a ].minimize.onclick();
 		}
 		PollTaskbar();
 		Workspace.mainDock.refresh();
@@ -6912,11 +6913,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//
 	hideInactiveViews: function()
 	{
+		var v = currentMovable;
 		for( var a in movableWindows )
 		{
-			if( movableWindows[a].classList.contains( 'Active' ) )
-				continue;
-			movableWindows[a].setAttribute( 'minimized', 'minimized' );
+			if( movableWindows[ a ] != v )
+			{
+				if( movableWindows[ a ].minimize )
+					movableWindows[ a ].minimize.onclick();
+			}
 		}
 		PollTaskbar();
 		Workspace.mainDock.refresh();
