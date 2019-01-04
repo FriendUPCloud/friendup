@@ -4445,9 +4445,21 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 				dliframe.setAttribute('class', 'hidden');
 				dliframe.setAttribute('src', fileInfo.downloadhref );
 				dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
+				dliframe.onload = function()
+				{
+					document.body.removeChild( dliframe );
+					dliframe = null;
+				}
 				document.body.appendChild( dliframe );
 				
-				setTimeout( 'document.body.removeChild( document.getElementById(\'downloadFrame'+ fileInfo.ID +'\') );', 3000 );
+				// Just in case, if it takes more than 15 seconds, remove the iframe
+				setTimeout( function()
+				{
+					if( dliframe )
+					{
+						document.body.removeChild( dliframe );
+					}
+				}, 15000 );
 				return;
 			}
 			
