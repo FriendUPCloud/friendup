@@ -1,5 +1,10 @@
 /* Base setup */
 
+body *
+{
+	-webkit-tap-highlight-color: transparent;
+}
+
 :-webkit-full-screen-ancestor>:not(:-webkit-full-screen-ancestor):not(:-webkit-full-screen)
 {
  display:none!important
