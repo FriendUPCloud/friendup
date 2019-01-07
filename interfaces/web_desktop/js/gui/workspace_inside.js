@@ -8306,16 +8306,13 @@ document.addEventListener( 'paste', function( evt )
 // Push notification integration -----------------------------------------------
 if( window.friendApp )
 {
-	friendApp.pushListener = function()
+	Workspace.receivePush = function()
 	{
 		friendApp.get_notification( function( msg )
 		{
 			var messageRead = trash = false;
 			
-			Notify( { title: 'We got focus!!', text: msg } );
-			
-			// Now the view state is active
-			Workspace.updateViewState( 'active' );
+			Notify( { title: 'We got pushed!!', text: msg } );
 			
 			try
 			{
@@ -8401,6 +8398,5 @@ if( window.friendApp )
 			Notify( { title: 'friendApp notification failed', text: msg } );
 		} );
 	}
-	window.addEventListener( 'focus', friendApp.pushListener, true );
 }
 
