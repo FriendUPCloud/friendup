@@ -706,7 +706,6 @@ var WorkspaceInside = {
 					
 					// Find application
 					var apps = Workspace.applications;
-					var found = false;
 					for( var a = 0; a < apps.length; a++ )
 					{
 						// Found the application
@@ -723,6 +722,8 @@ var WorkspaceInside = {
 								};
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 								
+								Notify( { title: 'notification sent 3', text: msg } );
+								
 								// Delete wrapper callback if it isn't executed within 1 second
 								trash = setTimeout( function()
 								{
@@ -734,7 +735,6 @@ var WorkspaceInside = {
 								}, 1000 );
 								
 							} )( apps[ a ], msg.notificationData );
-							found = true;
 							return;
 						}
 					}
@@ -8365,6 +8365,8 @@ if( window.friendApp )
 						data: data
 					};
 					app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+					
+					Notify( { title: 'notification sent 2', text: msg } );
 					
 					// Delete wrapper callback if it isn't executed within 1 second
 					setTimeout( function()
