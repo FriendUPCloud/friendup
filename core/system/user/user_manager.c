@@ -692,7 +692,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 		}
 	}
 	
-	generate_uuid( &( usr->u_UUID ) );
+	GenerateUUID( &( usr->u_UUID ) );
 
 	int val = sqlLib->Save( sqlLib, UserDesc, usr );
 	sb->LibrarySQLDrop( sb, sqlLib );

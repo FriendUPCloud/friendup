@@ -908,7 +908,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				{
 					DEBUG("[UMWebRequest] FC will do a change\n");
 					
-					generate_uuid( &( logusr->u_UUID ) );
+					GenerateUUID( &( logusr->u_UUID ) );
 					
 					UMUserUpdateDB( l->sl_UM, logusr );
 					
