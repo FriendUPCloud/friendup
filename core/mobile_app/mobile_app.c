@@ -20,6 +20,7 @@
 #include <util/log/log.h>
 #include <util/session_id.h>
 #include <system/notification/notification.h>
+#include <util/sha256.h>
 
 #define KEEPALIVE_TIME_s 180 //ping time (10 before)
 #define ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL 1
@@ -702,6 +703,115 @@ static int MobileAppReplyError(struct lws *wsi, void *user, int error_code)
 	return -1;
 }
 
+
+
+FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *usr, char *pass, FULONG *blockTime )
+{
+	if( usr == NULL )
+	{
+		FERROR("Cannot check password for usr = NULL\n");
+		return FALSE;
+	}
+	
+	//
+	// checking if last user login attempts failed, if yes, then we cannot continue
+	//
+	*blockTime = 0;
+	DEBUG("SystemBase\n");
+	
+	SystemBase *sb = (SystemBase *)l->sb;
+	{
+		DEBUG("SystemBase ptr %p\n", sb );
+		time_t tm = 0;
+		time_t tm_now = time( NULL );
+		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, l->am_BlockAccountAttempts, &tm );
+		
+		DEBUG("[FCDB] Authentication, access flag set: %d, time difference between last login attempt and now %lu\n", (int)access, (unsigned long)( tm_now - tm ) );
+		// if last 3 access failed you must wait one hour from last login attempt
+		if( access == FALSE && ( (tm_now - tm ) < l->am_BlockAccountTimeout) )
+		{
+			//int max = rand( )%RANDOM_WAITING_TIME;
+			
+			// This "hack" will give login machine feeling that FC is doing something in DB
+			
+			//sleep( max );
+			
+			FERROR("User: %s was trying to login 3 times in a row (fail login attempts)\n", usr->u_Name );
+			sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, usr->u_Name, "Login fail", "Last login attempts fail" );
+			
+			*blockTime = (FULONG) (tm_now + l->am_BlockAccountTimeout);
+			
+			return FALSE;
+		}
+	}
+	
+	if( usr->u_Password[ 0 ] == '{' &&
+		usr->u_Password[ 1 ] == 'S' &&
+		usr->u_Password[ 2 ] == '6' &&
+		usr->u_Password[ 3 ] == '}' )
+	{
+		if( pass != NULL )
+		{
+			FBOOL passS6 = FALSE;
+			
+			if( pass[ 0 ] == '{' &&
+				pass[ 1 ] == 'S' &&
+				pass[ 2 ] == '6' &&
+				pass[ 3 ] == '}' )
+			{
+				passS6 = TRUE;
+			}
+			
+			FCSHA256_CTX ctx;
+			unsigned char hash[ 32 ];
+			char hashTarget[ 64 ];
+		
+			if( passS6 == TRUE )
+			{
+				if( strcmp( usr->u_Password, pass ) == 0 )
+				{
+					DEBUG("[FCDB] Password is ok! Both are hashed\n");
+					return TRUE;
+				}
+			}
+			else
+			{
+				DEBUG("[FCDB] Checkpassword, password is not in SHA256 format for user %s\n", usr->u_Name );
+		
+				Sha256Init( &ctx );
+				Sha256Update( &ctx, (unsigned char *) pass, (unsigned int)strlen( pass ) ); //&(usr->u_Password[4]), strlen( usr->u_Password )-4 );
+				Sha256Final( &ctx, hash );
+
+				int i;
+				int j=0;
+		
+				for( i = 0 ; i < 64 ; i += 2, j++ )
+				{
+					sprintf( &(hashTarget[ i ]), "%02x", (char )hash[ j ] & 0xff );
+				}
+		
+				DEBUG("[FCDB] Checking provided password '%s' versus active password '%s'\n", hashTarget, usr->u_Password );
+		
+				if( strncmp( &(hashTarget[0]), &(usr->u_Password[4]), 64 ) == 0 )
+				{
+					DEBUG("[FCDB] Password is ok!\n");
+					return TRUE;
+				}
+			}
+		}
+	}
+	else
+	{
+		if( strcmp( usr->u_Password, pass ) == 0 )
+		{
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+
+
 /**
  * User login handler
  *
@@ -766,7 +876,8 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 	}
 	AuthMod *a = SLIB->AuthModuleGet( SLIB );
 
-	if( a->CheckPassword(a, NULL, user, passwordString, &block_time) == FALSE )
+	DEBUG("Check password %s \n", passwordString );
+	if( CheckPassword(a, NULL, user, passwordString, &block_time) == FALSE )
 	{
 		DEBUG("Check = false\n");
 		if( user != NULL )
