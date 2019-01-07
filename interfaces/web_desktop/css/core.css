@@ -22,6 +22,22 @@ body *
 	display:none!important
 }
 
+/* TEMPORARY TEST */
+html body.ViewStateActive:after 
+{
+    position: absolute;
+    display: block;
+    content: " ";
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border: 2px solid green;
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 9999;
+}
+
 html
 {
 	position: absolute;

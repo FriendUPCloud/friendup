@@ -706,7 +706,6 @@ var WorkspaceInside = {
 					
 					// Find application
 					var apps = Workspace.applications;
-					var found = false;
 					for( var a = 0; a < apps.length; a++ )
 					{
 						// Found the application
@@ -723,6 +722,8 @@ var WorkspaceInside = {
 								};
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 								
+								Notify( { title: 'notification sent 3', text: msg } );
+								
 								// Delete wrapper callback if it isn't executed within 1 second
 								trash = setTimeout( function()
 								{
@@ -734,7 +735,6 @@ var WorkspaceInside = {
 								}, 1000 );
 								
 							} )( apps[ a ], msg.notificationData );
-							found = true;
 							return;
 						}
 					}
@@ -782,8 +782,9 @@ var WorkspaceInside = {
 					}
 					
 					// TODO: If we are here, generate a clickable Workspace notification
-					Notify( { title: 'get_notification', text: msg }, clickCallback );
-					console.log( 'This message from notifications: ', msg );
+					var t_title = msg.notificationData.application;
+					var t_txt = i18n( 'i18n_message_from' ) + ' ' + msg.notificationData.title;
+					Notify( { title: msg.t_title, text: t_txt }, false, clickCallback );
 					function clickCallback()
 					{
 						ExecuteApplication( msg.notificationData.application, '', appMessage );
@@ -7577,6 +7578,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
+		if( newState == 'active' )
+		{
+			document.body.classList.add( 'ViewStateActive' );
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewStateActive' );
+		}
 		this.currentViewState = newState;
 	}
 
@@ -8297,14 +8306,13 @@ document.addEventListener( 'paste', function( evt )
 // Push notification integration -----------------------------------------------
 if( window.friendApp )
 {
-	friendApp.pushListener = function()
+	Workspace.receivePush = function()
 	{
-		this.get_notification( function( msg )
+		friendApp.get_notification( function( msg )
 		{
 			var messageRead = trash = false;
 			
-			// Now the view state is active
-			Workspace.updateViewState( 'active' );
+			Notify( { title: 'We got pushed!!', text: msg } );
 			
 			try
 			{
@@ -8366,6 +8374,8 @@ if( window.friendApp )
 					};
 					app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 					
+					Notify( { title: 'notification sent 2', text: msg } );
+					
 					// Delete wrapper callback if it isn't executed within 1 second
 					setTimeout( function()
 					{
@@ -8388,6 +8398,5 @@ if( window.friendApp )
 			Notify( { title: 'friendApp notification failed', text: msg } );
 		} );
 	}
-	window.addEventListener( 'focus', friendApp.pushListener, true );
 }
 
