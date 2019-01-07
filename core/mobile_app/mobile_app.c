@@ -242,7 +242,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 
 		for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
 		{
-			if( userConnections->umac_Connection[i] == NULL )
+			if( userConnections->umac_Connection[i] != NULL )
 			{
 				if( userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
 				{
