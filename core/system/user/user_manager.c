@@ -433,6 +433,8 @@ int UMUserUpdateDB( UserManager *um, User *usr )
  */
 int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 {
+	return 0;	//disabled for test
+	
 	char tmpQuery[ 255 ];
 
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
