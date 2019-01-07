@@ -7578,6 +7578,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
+		if( newState == 'active' )
+		{
+			document.body.classList.add( 'ViewStateActive' );
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewStateActive' );
+		}
 		this.currentViewState = newState;
 	}
 
@@ -8300,7 +8308,7 @@ if( window.friendApp )
 {
 	friendApp.pushListener = function()
 	{
-		this.get_notification( function( msg )
+		friendApp.get_notification( function( msg )
 		{
 			var messageRead = trash = false;
 			
