@@ -35,6 +35,7 @@ html body.ViewStateActive:after
     border: 2px solid green;
     pointer-events: none;
     box-sizing: border-box;
+    z-index: 9999;
 }
 
 html
