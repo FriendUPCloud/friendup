@@ -585,7 +585,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				else		// user session is no longer active
 				{
 					//Generate new session ID for the user
-					char *new_session_id = session_id_generate();
+					char *new_session_id = SessionIDGenerate();
 					DEBUG("[FCDB] New sessionid <%s>\n", new_session_id);
 				
 					// Remove old session ID and update
