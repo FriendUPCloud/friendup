@@ -8304,6 +8304,8 @@ if( window.friendApp )
 		{
 			var messageRead = trash = false;
 			
+			Notify( { title: 'We got focus!!', text: msg } );
+			
 			// Now the view state is active
 			Workspace.updateViewState( 'active' );
 			
