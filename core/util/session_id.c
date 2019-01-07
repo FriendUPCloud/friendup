@@ -84,6 +84,10 @@ char* SessionIDGenerate( void )
 const char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
+
+#define KEY_LEN 190
+#define KEY_TEMP_LEN (KEY_LEN/2)
+
 /**
  * Generate UUID
  *
@@ -105,13 +109,13 @@ FBOOL GenerateUUID( char **dst )
 	}
 	if( *dst == NULL )
 	{
-		*dst = FCalloc( 257, sizeof(char) );
+		*dst = FCalloc( KEY_LEN+16, sizeof(char) );
 		if( (*dst) != NULL )
 		{
-			char tmp[ 128 ];
+			char tmp[ KEY_TEMP_LEN ];
 			int i, j=0;
-			MyGetentropy( tmp, 128 );
-			for ( i = 0; i < 128; i++ )
+			MyGetentropy( tmp, KEY_TEMP_LEN );
+			for ( i = 0; i < KEY_TEMP_LEN; i++ )
 			{
 				(*dst)[ 2 * i ] = hexmap[ (tmp[i] & 0xF0) >> 4 ];
 				(*dst)[ 2 * i + 1 ] = hexmap[ tmp[i] & 0x0F ];

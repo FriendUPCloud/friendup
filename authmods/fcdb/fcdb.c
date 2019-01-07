@@ -139,9 +139,11 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *u
 	// checking if last user login attempts failed, if yes, then we cannot continue
 	//
 	*blockTime = 0;
+	DEBUG("SystemBase\n");
 	
 	SystemBase *sb = (SystemBase *)l->sb;
 	{
+		DEBUG("SystemBase ptr %p\n", sb );
 		time_t tm = 0;
 		time_t tm_now = time( NULL );
 		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, l->am_BlockAccountAttempts, &tm );
