@@ -782,8 +782,9 @@ var WorkspaceInside = {
 					}
 					
 					// TODO: If we are here, generate a clickable Workspace notification
-					Notify( { title: 'get_notification', text: msg }, clickCallback );
-					console.log( 'This message from notifications: ', msg );
+					var t_title = msg.notificationData.application;
+					var t_txt = i18n( 'i18n_message_from' ) + ' ' + msg.notificationData.title;
+					Notify( { title: msg.t_title, text: t_txt }, false, clickCallback );
 					function clickCallback()
 					{
 						ExecuteApplication( msg.notificationData.application, '', appMessage );
