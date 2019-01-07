@@ -371,25 +371,33 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
     int i, j ;
     char    keym[ASCIILINESZ+1];
     int     seclen, nkeys ;
+	char *localGroupName = NULL;
 
     lkeys = NULL;
 	lvals = NULL;
+	
+	if (d==NULL) return 0;
+	seclen  = (int)strlen(s);
+	localGroupName = malloc( seclen + 1 );
+	
+	for( i=0 ; i < seclen ; i++ )
+	{
+		localGroupName[i] = tolower( s[i] );
+	}
 
-    if (d==NULL) return 0;
-    if (! iniparser_find_entry(d, s)) return 0;
+    if (! iniparser_find_entry(d, localGroupName))
+	{
+		free( localGroupName );
+		return 0;
+	}
 
-    nkeys = iniparser_getsecnkeys(d, s);
+    nkeys = iniparser_getsecnkeys(d, localGroupName);
 
     lkeys = (char**) malloc(nkeys*sizeof(char*));
 	lvals = (char**) malloc(nkeys*sizeof(char*));
 
-    seclen  = (int)strlen(s);
-    sprintf(keym, "%s:", s);
-	for( i=0 ; i < seclen ; i++ )
-	{
-		keym[i] = tolower( keym[i] );
-	}
-
+    sprintf(keym, "%s:", localGroupName);
+	
     i = 0;
 
     for (j=0 ; j<d->size ; j++) {
@@ -403,7 +411,8 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 			}
 			else
 			{
-				if( (lkeys[i] = calloc( strlen( d->key[j] ) + 1, sizeof(char) ) ) != NULL )
+				int keysize = strlen( d->key[j] );
+				if( (lkeys[i] = malloc( keysize+ 1 ) ) != NULL )
 				{
 					strcpy( lkeys[i], d->key[j] );
 				}
@@ -414,7 +423,7 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 			}
 			else
 			{
-				if( (lvals[i] = calloc( strlen( d->val[j] ) + 1, sizeof(char) ) ) != NULL )
+				if( (lvals[i] = malloc( strlen( d->val[j] ) + 1 ) ) != NULL )
 				{
 					strcpy( lvals[i], d->val[j] );
 				}
@@ -425,6 +434,8 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
     }
     *keys = lkeys;
 	*val = lvals;
+	
+	free( localGroupName );
 
     return nkeys;
 }
