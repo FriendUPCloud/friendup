@@ -34,7 +34,7 @@ MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID )
 	MobileAppConnection *newConnection = FCalloc(sizeof(MobileAppConnection), 1);
 	if( newConnection != NULL )
 	{
-		char *session_id = session_id_generate();
+		char *session_id = SessionIDGenerate();
 		newConnection->mac_SessionID = session_id;
 		newConnection->mac_LastCommunicationTimestamp = time(NULL);
 		newConnection->mac_WebsocketPtr = wsi;

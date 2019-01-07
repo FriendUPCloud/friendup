@@ -1407,7 +1407,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		{
 			// Generate the API user session
 			char temptext[ 2048 ];
-			char *sesid = session_id_generate( );
+			char *sesid = SessionIDGenerate( );
 			if( user->u_MainSessionID != NULL )
 			{
 				FFree( user->u_MainSessionID );

@@ -352,6 +352,85 @@ char ** iniparser_getseckeys(dictionary * d, char * s)
 
 /*-------------------------------------------------------------------------*/
 /**
+  @brief    Get the number of keys in a section of a dictionary.
+  @param    d   Dictionary to examine
+  @param    s   Section name of dictionary to examine
+  @return   pointer to statically allocated character strings
+
+  This function queries a dictionary and finds all keys in a given section.
+  Each pointer in the returned char pointer-to-pointer is pointing to
+  a string allocated in the dictionary; do not free or modify them.
+  
+  This function returns NULL in case of error.
+ */
+/*--------------------------------------------------------------------------*/
+int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***val )
+{
+    char **lkeys, **lvals;
+
+    int i, j ;
+    char    keym[ASCIILINESZ+1];
+    int     seclen, nkeys ;
+
+    lkeys = NULL;
+	lvals = NULL;
+
+    if (d==NULL) return 0;
+    if (! iniparser_find_entry(d, s)) return 0;
+
+    nkeys = iniparser_getsecnkeys(d, s);
+
+    lkeys = (char**) malloc(nkeys*sizeof(char*));
+	lvals = (char**) malloc(nkeys*sizeof(char*));
+
+    seclen  = (int)strlen(s);
+    sprintf(keym, "%s:", s);
+	for( i=0 ; i < seclen ; i++ )
+	{
+		keym[i] = tolower( keym[i] );
+	}
+
+    i = 0;
+
+    for (j=0 ; j<d->size ; j++) {
+        if (d->key[j]==NULL)
+            continue ;
+
+        if (!strncmp(d->key[j], keym, seclen+1)) {
+			if( d->key[j] == NULL )
+			{
+				lkeys[i] = NULL;
+			}
+			else
+			{
+				if( (lkeys[i] = calloc( strlen( d->key[j] ) + 1, sizeof(char) ) ) != NULL )
+				{
+					strcpy( lkeys[i], d->key[j] );
+				}
+			}
+			if( d->val[j] == NULL )
+			{
+				lvals[i] = NULL;
+			}
+			else
+			{
+				if( (lvals[i] = calloc( strlen( d->val[j] ) + 1, sizeof(char) ) ) != NULL )
+				{
+					strcpy( lvals[i], d->val[j] );
+				}
+			}
+
+            i++;
+        }
+    }
+    *keys = lkeys;
+	*val = lvals;
+
+    return nkeys;
+}
+
+/*-------------------------------------------------------------------------*/
+/**
   @brief    Get the string associated to a key
   @param    d       Dictionary to search
   @param    key     Key string to look for

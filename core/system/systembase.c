@@ -396,10 +396,6 @@ SystemBase *SystemInit( void )
 			
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
 
-			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:apns", NULL ) );
-			
-			l->l_PresenceKey = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL ) );
-			
 			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
 			if( tptr != NULL )
 			{
@@ -407,6 +403,9 @@ SystemBase *SystemInit( void )
 			}
 			
 			globalFriendCorePort = plib->ReadIntNCS( prop, "core:port", FRIEND_CORE_PORT );
+			
+			// additional server keys char ** iniparser_getseckeys(dictionary * d, char * s) - gret number of entries in group
+			l->l_ServerKeysNum = ReadGroupEntries( prop, "ServiceKeys", &(l->l_ServerKeys), &(l->l_ServerKeyValues) );
 		}
 		else
 		{
@@ -1297,15 +1296,23 @@ void SystemClose( SystemBase *l )
 	{
 		FFree( l->l_AppleServerHost );
 	}
-
-	if( l->l_AppleKeyAPI != NULL )
-	{
-		FFree( l->l_AppleKeyAPI );
-	}
 	
-	if( l->l_PresenceKey != NULL )
+	if( l->l_ServerKeysNum > 0 )
 	{
-		FFree( l->l_PresenceKey );
+		int i;
+		for( i=0 ; i < l->l_ServerKeysNum; i++ )
+		{
+			if( l->l_ServerKeys[i] != NULL )
+			{
+				free( l->l_ServerKeys[i] );
+			}
+			if( l->l_ServerKeyValues[i] != NULL )
+			{
+				free( l->l_ServerKeyValues[i] );
+			}
+		}
+		free( l->l_ServerKeys );
+		free( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();

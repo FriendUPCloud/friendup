@@ -42,7 +42,7 @@ DOSToken *DOSTokenNew( UserSession *us, time_t timeout, int usedTimes )
 		dt->ct_UserSessionID = us->us_ID;
 		dt->ct_UserID = us->us_UserID;
 		dt->ct_User = us->us_User;
-		dt->ct_TokenID = session_id_generate();						// token ID
+		dt->ct_TokenID = SessionIDGenerate();						// token ID
 		dt->ct_UsedTimes = usedTimes;								// -1 , unlimited
 		dt->ct_Commands = StringDuplicate("file/read;file/write");	// default actions allowed
 		dt->ct_MaxAccess = 0;
