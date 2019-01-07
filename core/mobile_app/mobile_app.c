@@ -227,7 +227,9 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 	int connectionToReplaceIndex = -1;
 	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 	{
-		if( userConnections->umac_Connection[i] == NULL )
+		// if there is free place or we have same WS connection
+		
+		if( userConnections->umac_Connection[i] == NULL || userConnections->umac_Connection[i]->mac_WebsocketPtr == newConnection->mac_WebsocketPtr )
 		{ //got empty slot
 			connectionToReplaceIndex = i;
 			DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
@@ -790,6 +792,8 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		MobileAppConnection *newConnection = MobileAppConnectionNew( wsi, umaID );
 		
 		int ret = MobileAppAddNewUserConnection( newConnection, usernameString, userdata );
+		
+		Log( FLOG_DEBUG, "\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %d position %d\n", wsi, ret, newConnection->mac_UserConnectionIndex );
 		
 		MobileAppNotif *n = (MobileAppNotif *)userdata;
 		n->man_Data = newConnection;
