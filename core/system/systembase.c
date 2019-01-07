@@ -2229,7 +2229,8 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 			
 				//FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
 				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				if( retlib == NULL || retlib->GetStatus( (void *)retlib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqllib );
+				if( retlib == NULL || retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqllib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d!\n", l->MsqLlibCounter );
 					// Increment and check

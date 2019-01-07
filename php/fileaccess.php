@@ -341,7 +341,7 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 			$result = $file->Save( $fc );
 			if( $result )
 			{
-				//faLog( 'File saved :) ' . $filePath . '!' . $result );
+				faLog( 'File saved :) ' . $filePath . '!' . $result );
 				if( !$Config ) faConnectDB( $username );		
 				if( $windowid )
 				{
