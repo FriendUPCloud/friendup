@@ -8309,13 +8309,12 @@ if( window.friendApp )
 			try
 			{
 				var data = JSON.parse( msg );
+				if( !data.category ) return;
 				
 				for( var a = 0; a < Workspace.applications.length; a++ )
 				{
 					if( Workspace.applications[a].applicationName == data.category )
-					{
-						Notify( { title: 'We received push', text: msg } );
-						
+					{	
 						// Need a "message id" to be able to update notification
 						// on the Friend Core side
 						if( data.id )
@@ -8334,12 +8333,6 @@ if( window.friendApp )
 						Notify( { title: 'notification sent', text: msg } );
 						return;
 					}
-				}
-				
-				// Workspace click on Workspace notification
-				function clickCallback()
-				{
-					ExecuteApplication( data.category, '', appMessage );
 				}
 				
 				// Application not found? Start it!
@@ -8378,8 +8371,7 @@ if( window.friendApp )
 					{
 						if( !messageRead )
 						{
-							var trash = getWrapperCallback( amsg.callback );
-							delete trash;
+							getWrapperCallback( amsg.callback );
 						}
 					}, 1000 );
 				}
