@@ -673,6 +673,16 @@ var WorkspaceInside = {
 		// Handle incoming push notifications and server notifications
 		function handleNotifications( msg )
 		{
+			if( isMobile )
+			{
+				if( window.friendApp && window.friendApp.isShowing )
+				{
+					if( window.friendApp.handleNotification )
+						window.friendApp.handleNotification( msg );
+					return;
+				}
+			}
+			
 			var messageRead = trash = false;
 			
 			// Check if we have notification data
@@ -725,53 +735,58 @@ var WorkspaceInside = {
 								
 							} )( apps[ a ], msg.notificationData );
 							found = true;
-							break;
+							return;
 						}
 					}
+					
 					// Application not found? Start it!
-					if( !found )
+					// Send message to app once it has started...
+					function appMessage()
 					{
-						// Send message to app once it has started...
-						function appMessage()
+						var app = false;
+						for( var a = 0; a < apps.length; a++ )
 						{
-							var app = false;
-							for( var a = 0; a < apps.length; a++ )
+							// Found the application
+							if( apps[ a ].applicationName == msg.notificationData.application )
 							{
-								// Found the application
-								if( apps[ a ].applicationName == msg.notificationData.application )
-								{
-									app = apps[ a ];
-									break;
-								}
+								app = apps[ a ];
+								break;
 							}
-							
-							// No application? Alert the user
-							// TODO: Localize response!
-							if( !app )
-							{
-								Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-								return;
-							}
-							
-							var amsg = {
-								type: 'system',
-								method: 'notification',
-								callback: addWrapperCallback( notificationRead ),
-								data: msg.notificationData
-							};
-							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-							
-							// Delete wrapper callback if it isn't executed within 1 second
-							setTimeout( function()
-							{
-								if( !messageRead )
-								{
-									var trash = getWrapperCallback( amsg.callback );
-									delete trash;
-								}
-							}, 1000 );
 						}
-						ExecuteApplication( msg.notificationData.application, '', appMessage )
+					
+						// No application? Alert the user
+						// TODO: Localize response!
+						if( !app )
+						{
+							Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+							return;
+						}
+					
+						var amsg = {
+							type: 'system',
+							method: 'notification',
+							callback: addWrapperCallback( notificationRead ),
+							data: msg.notificationData
+						};
+						app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+					
+						// Delete wrapper callback if it isn't executed within 1 second
+						setTimeout( function()
+						{
+							if( !messageRead )
+							{
+								var trash = getWrapperCallback( amsg.callback );
+								delete trash;
+							}
+						}, 1000 );
+					}
+					
+					// TODO: If we are here, generate a clickable Workspace notification
+					Notify( { title: 'get_notification', text: msg }, clickCallback );
+					console.log( 'This message from notifications: ', msg );
+					function clickCallback()
+					{
+						ExecuteApplication( msg.notificationData.application, '', appMessage );
 					}
 				}
 			}
@@ -8286,8 +8301,6 @@ if( window.friendApp )
 	{
 		this.get_notification( function( msg )
 		{
-			Notify( { title: 'get_notification', text: msg } );
-			
 			try
 			{
 				var data = JSON.parse( msg );
@@ -8297,23 +8310,84 @@ if( window.friendApp )
 					{
 						Notify( { title: 'We received push', text: msg } );
 						
-						// Function to set the notification as read...
-						var l = new Library( 'system.library' );
-						l.onExecuted = function(){};
-						l.execute( 'mobile/updatenotification', { 
-							notifid: data.id, 
-							action: 1
-						} );
+						// Need a "message id" to be able to update notification
+						// on the Friend Core side
+						if( data.id )
+						{
+							// Function to set the notification as read...
+							var l = new Library( 'system.library' );
+							l.onExecuted = function(){};
+							l.execute( 'mobile/updatenotification', { 
+								notifid: data.id, 
+								action: 1
+							} );
+						}
 						
 						var app = Workspace.applications[a];
 						app.postMessage( { command: 'push_notification', data: data }, '*' );
+						Notify( { title: 'get_notification', text: msg }, clickCallback );
+						return;
 					}
 				}
+				
+				// Workspace click on Workspace notification
+				function clickCallback()
+				{
+					ExecuteApplication( data.category, '', appMessage );
+				}
+				
+				// Application not found? Start it!
+				// Send message to app once it has started...
+				function appMessage()
+				{
+					var app = false;
+					for( var a = 0; a < apps.length; a++ )
+					{
+						// Found the application
+						if( apps[ a ].applicationName == data.category )
+						{
+							app = apps[ a ];
+							break;
+						}
+					}
+					
+					// No application? Alert the user
+					// TODO: Localize response!
+					if( !app )
+					{
+						Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+						return;
+					}
+					
+					var amsg = {
+						type: 'system',
+						method: 'notification',
+						callback: addWrapperCallback( notificationRead ),
+						data: data
+					};
+					app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+					
+					// Delete wrapper callback if it isn't executed within 1 second
+					setTimeout( function()
+					{
+						if( !messageRead )
+						{
+							var trash = getWrapperCallback( amsg.callback );
+							delete trash;
+						}
+					}, 1000 );
+				}
+				ExecuteApplication( data.category, '', appMessage )
+				
 			}
 			catch( e )
 			{
 				// How to handle?
+				Notify( { title: 'unhandled get_notification', text: msg } );
+				return;
 			}
+			
+			Notify( { title: 'friendApp notification failed', text: msg } );
 		} );
 	}
 	window.addEventListener( 'focus', friendApp.pushListener, true );
