@@ -675,7 +675,7 @@ var WorkspaceInside = {
 		{
 			if( isMobile )
 			{
-				if( window.friendApp && window.friendApp.isShowing )
+				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
 					if( window.friendApp.handleNotification )
 						window.friendApp.handleNotification( msg );
@@ -8301,9 +8301,15 @@ if( window.friendApp )
 	{
 		this.get_notification( function( msg )
 		{
+			var messageRead = trash = false;
+			
+			// Now the view state is active
+			Workspace.updateViewState( 'active' );
+			
 			try
 			{
 				var data = JSON.parse( msg );
+				
 				for( var a = 0; a < Workspace.applications.length; a++ )
 				{
 					if( Workspace.applications[a].applicationName == data.category )
@@ -8325,7 +8331,7 @@ if( window.friendApp )
 						
 						var app = Workspace.applications[a];
 						app.postMessage( { command: 'push_notification', data: data }, '*' );
-						Notify( { title: 'get_notification', text: msg }, clickCallback );
+						Notify( { title: 'notification sent', text: msg } );
 						return;
 					}
 				}
