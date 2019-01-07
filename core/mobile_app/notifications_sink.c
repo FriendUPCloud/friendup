@@ -524,21 +524,26 @@ static int ReplyError( DataQWSIM *d, int error_code )
 /**
  * Verify authentication key
  *
- * @param key_to_verify pointer to string with key
+ * @param keyName name of the server key
+ * @param keyToVerify pointer to string with key
  * @return true when key passed verification, otherwise false
  */
-static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify )
+static FBOOL VerifyAuthKey( const char *keyName, const char *keyToVerify )
 {
-	DEBUG("VerifyAuthKey - key_name <%s>\n", key_name );
-	DEBUG("VerifyAuthKey - key_to_verify <%s>\n", key_to_verify );
+	DEBUG("VerifyAuthKey - keyName <%s> VerifyAuthKey - keyToVerify <%s>\n", keyName, keyToVerify );
+
 	//TODO: verify against key name 
-	if( key_name != NULL && key_to_verify != NULL )
+	if( keyName != NULL && keyToVerify != NULL )
 	{
-		if( SLIB->l_PresenceKey != NULL && strcmp( key_name, "presence" ) == 0 )
+		int i;
+		for( i = 0 ; i < SLIB->l_ServerKeysNum ; i++ )
 		{
-			if( strcmp( SLIB->l_PresenceKey, key_to_verify) == 0 )
+			if( SLIB->l_ServerKeys[i] != NULL && strcmp( keyName, SLIB->l_ServerKeys[i] ) == 0 )
 			{
-				return true;
+				if( SLIB->l_ServerKeyValues[i] != NULL && strcmp( SLIB->l_ServerKeyValues[i], keyToVerify) == 0 )
+				{
+					return TRUE;
+				}
 			}
 		}
 	}

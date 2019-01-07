@@ -23,12 +23,12 @@
 #if __GLIBC__ > 2 || __GLIBC_MINOR__ > 24
 #include <sys/random.h>
 
-int my_getentropy(void *buf, size_t buflen){
+int MyGetentropy(void *buf, size_t buflen){
     return getentropy(buf, buflen);
 }
 
 #else /* older glibc */
-int my_getentropy(void *buf, size_t buflen){
+int MyGetentropy(void *buf, size_t buflen){
 	FILE* urandom_handle = fopen("/dev/urandom", "rb");
 	size_t bytes_read = fread(buf, 1, buflen, urandom_handle);
 	fclose(urandom_handle);
@@ -45,13 +45,18 @@ int my_getentropy(void *buf, size_t buflen){
 #endif
 
 
-
-char* session_id_generate(void){
+/**
+ * Generate sessionID
+ *
+ * @return sessionid as string or NULL if error appear
+ */
+char* SessionIDGenerate( void )
+{
 	const unsigned int ENTROPY_SIZE = 256;
 
 	unsigned char entropy[ENTROPY_SIZE];
 
-	int status = my_getentropy(entropy, ENTROPY_SIZE);
+	int status = MyGetentropy(entropy, ENTROPY_SIZE);
 
 	if (status != 0){
 		return NULL;
@@ -79,8 +84,25 @@ char* session_id_generate(void){
 const char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-FBOOL generate_uuid( char **dst )
+/**
+ * Generate UUID
+ *
+ * @param dst pointer to memory where string with UUID will be stored
+ * @return TRUE when success, otherwise FALSE
+ */
+FBOOL GenerateUUID( char **dst )
 {
+	// if uuid is empty string we must replace it with proper data
+	if( *dst != NULL )
+	{
+		char *t = *dst;
+		if( t[ 0 ] == 0 )
+		{
+			DEBUG("UUID is empty, will be removed!\n");
+			FFree( *dst );
+			*dst = NULL;
+		}
+	}
 	if( *dst == NULL )
 	{
 		*dst = FCalloc( 257, sizeof(char) );
@@ -88,13 +110,15 @@ FBOOL generate_uuid( char **dst )
 		{
 			char tmp[ 128 ];
 			int i, j=0;
-			my_getentropy( tmp, 128 );
+			MyGetentropy( tmp, 128 );
 			for ( i = 0; i < 128; i++ )
 			{
 				(*dst)[ 2 * i ] = hexmap[ (tmp[i] & 0xF0) >> 4 ];
 				(*dst)[ 2 * i + 1 ] = hexmap[ tmp[i] & 0x0F ];
 			}
+		DEBUG("UUID generated: %s\n", *dst );
 		}
 	}
-	return TRUE;
+return TRUE;
 }
+

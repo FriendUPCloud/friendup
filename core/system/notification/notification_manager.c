@@ -125,6 +125,11 @@ void NotificationManagerDelete( NotificationManager *nm )
 
 		pthread_mutex_destroy( &(nm->nm_Mutex) );
 		
+		if( nm->nm_APNSCert != NULL )
+		{
+			FFree( nm->nm_APNSCert );
+		}
+		
 		if( nm->nm_SQLLib != NULL )
 		{
 			LibraryClose( nm->nm_SQLLib );

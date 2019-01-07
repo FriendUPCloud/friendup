@@ -692,7 +692,7 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 		}
 	}
 	
-	generate_uuid( &( usr->u_UUID ) );
+	GenerateUUID( &( usr->u_UUID ) );
 
 	int val = sqlLib->Save( sqlLib, UserDesc, usr );
 	sb->LibrarySQLDrop( sb, sqlLib );
@@ -1407,7 +1407,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		{
 			// Generate the API user session
 			char temptext[ 2048 ];
-			char *sesid = session_id_generate( );
+			char *sesid = SessionIDGenerate( );
 			if( user->u_MainSessionID != NULL )
 			{
 				FFree( user->u_MainSessionID );

@@ -248,6 +248,10 @@ char * readline( FILE *fp, char *buffer, int *len )
 	return buffer;
 }
 
+//
+//
+//
+
 int PropertiesCheck( )
 {
 	FILE *fp;
@@ -328,14 +332,31 @@ int PropertiesCheck( )
 					result = 1;
 				}
 			}
-			
 			lineNr++;
 			free( s );
 		}
 		
 		fclose( fp );
 	}
-	
 	return result;
 }
 
+//
+// Read all keys and values from one section
+//
+
+int ReadGroupEntries( Props *p, const char *name, char ***keys, char ***values )
+{
+	int nkeys = 0;
+	if( p != NULL && p->p_Dict != NULL )
+	{
+		if (! iniparser_find_entry( p->p_Dict, (char *)name) )
+		{
+			DEBUG("Entry not found\n");
+			return 0;
+		}
+
+		return iniparser_getseckeysvalues( p->p_Dict, (char *)name, keys, values );
+	}
+	return nkeys;
+}

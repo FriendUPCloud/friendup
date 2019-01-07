@@ -259,7 +259,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 		MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
 	}
 
-	DEBUG("Adding connection to slot %d\n", connectionToReplaceIndex);
+	DEBUG("\t\t\tAdding connection to slot %d\n", connectionToReplaceIndex);
 	userConnections->umac_Connection[ connectionToReplaceIndex ] = newConnection;
 
 	newConnection->mac_UserData = userData;

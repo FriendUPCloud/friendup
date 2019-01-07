@@ -136,6 +136,7 @@ int iniparser_getsecnkeys(dictionary * d, char * s);
  */
 /*--------------------------------------------------------------------------*/
 char ** iniparser_getseckeys(dictionary * d, char * s);
+int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***val );
 
 /*-------------------------------------------------------------------------*/
 /**
