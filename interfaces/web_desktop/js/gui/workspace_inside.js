@@ -704,12 +704,14 @@ var WorkspaceInside = {
 						} );
 					}
 					
+					var appName = msg.notificationData.application;
+					
 					// Find application
 					var apps = Workspace.applications;
 					for( var a = 0; a < apps.length; a++ )
 					{
 						// Found the application
-						if( apps[a].applicationName == msg.notificationData.application )
+						if( apps[a].applicationName == appName )
 						{
 							// Post!
 							( function( app, data )
@@ -747,7 +749,7 @@ var WorkspaceInside = {
 						for( var a = 0; a < apps.length; a++ )
 						{
 							// Found the application
-							if( apps[ a ].applicationName == msg.notificationData.application )
+							if( apps[ a ].applicationName == appName )
 							{
 								app = apps[ a ];
 								break;
@@ -782,7 +784,7 @@ var WorkspaceInside = {
 					}
 					
 					// TODO: If we are here, generate a clickable Workspace notification
-					var t_title = msg.notificationData.application;
+					var t_title = appName;
 					var t_txt = i18n( 'i18n_message_from' ) + ' ' + msg.notificationData.title;
 					Notify( { title: msg.t_title, text: t_txt }, false, clickCallback );
 					function clickCallback()
