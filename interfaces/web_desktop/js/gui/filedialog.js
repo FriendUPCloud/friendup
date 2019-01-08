@@ -58,7 +58,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		multiSelect = false;
 	}
 
-	if( !path ) path = 'Mountlist:';
+	if( !path ) path = 'Home:';
 	if( !triggerfunction ) return;
 	if( !type ) type = 'open';
 	if( !mainview )
@@ -108,7 +108,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	w.dialog = this;
 
 	// Default path
-	this.path = path ? path : 'Mountlist:';
+	this.path = path ? path : 'Home:';
 	if ( typeof ( path ) == 'object' )
 		this.path = path.path;
 
