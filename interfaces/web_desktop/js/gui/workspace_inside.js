@@ -7624,8 +7624,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
-			
-			Workspace.receivePush();
 		}
 		else
 		{
