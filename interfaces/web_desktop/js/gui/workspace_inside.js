@@ -8397,6 +8397,7 @@ if( window.friendApp )
 			{
 				var app = false;
 				var apps = Workspace.applications;
+				Notify( { title: 'We are finding ' + msg.application, text: 'Alen: ' + apps.length + '...' } );
 				for( var a = 0; a < apps.length; a++ )
 				{
 					// Found the application
