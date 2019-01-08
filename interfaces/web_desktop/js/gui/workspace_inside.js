@@ -724,8 +724,6 @@ var WorkspaceInside = {
 								};
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 								
-								Notify( { title: 'notification sent 3', text: msg } );
-								
 								// Delete wrapper callback if it isn't executed within 1 second
 								trash = setTimeout( function()
 								{
@@ -784,8 +782,8 @@ var WorkspaceInside = {
 					}
 					
 					// TODO: If we are here, generate a clickable Workspace notification
-					var t_title = appName;
-					var t_txt = i18n( 'i18n_message_from' ) + ' ' + msg.notificationData.title;
+					var t_title = appName + ' - ' + msg.notificationData.title;
+					var t_txt = msg.notificationData.content;
 					Notify( { title: t_title, text: t_txt }, false, clickCallback );
 					function clickCallback()
 					{
@@ -8362,7 +8360,6 @@ if( window.friendApp )
 			friendApp.clear_notifications();
 			
 			var messageRead = trash = false;
-			
 			
 			if( !msg.application ) return;
 			
