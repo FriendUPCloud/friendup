@@ -1516,7 +1516,7 @@ function CloseView( win )
 	
 	if( !window.currentMovable )
 	{
-		document.title = Friend.windowBaseString;
+		document.title = Workspace.screen.getFlag( 'title' );
 	}
 	
 	if( isMobile )
