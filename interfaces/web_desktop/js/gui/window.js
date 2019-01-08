@@ -1070,6 +1070,7 @@ function _DeactivateWindow( m, skipCleanUp )
 	{
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+		
 		if( m.windowObject && m.notifyActivated )
 		{
 			var iftest = m.getElementsByTagName( _viewType );
@@ -1147,6 +1148,8 @@ function _DeactivateWindows()
 
 	// Check window
 	CheckScreenTitle();
+	
+	Friend.GUI.reorganizeResponsiveMinimized();
 }
 
 // Ouch! Use with care!
