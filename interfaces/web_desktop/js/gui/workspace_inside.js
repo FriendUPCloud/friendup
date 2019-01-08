@@ -5560,7 +5560,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Not the same app, just revert
 			if( fg.applicationId != this.mobileViews.application )
 				break;
-			if( a > 0 && currentMovable == fg && ( !mobileViews.prev || this.mobileViews.prev != pg ) )
+			if( a > 0 && currentMovable == fg && ( !this.mobileViews.prev || this.mobileViews.prev != pg ) )
 			{
 				this.mobileViews.prev = fg;
 				_ActivateWindow( pg );
