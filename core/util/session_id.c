@@ -85,7 +85,7 @@ const char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
 
-#define KEY_LEN 190
+#define KEY_LEN 64
 #define KEY_TEMP_LEN (KEY_LEN/2)
 
 /**
