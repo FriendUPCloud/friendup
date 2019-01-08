@@ -8424,6 +8424,8 @@ if( window.friendApp )
 				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 				
+				Notify( { title: 'Messaged the app!', text: 'Yes please: ' + msg.extra } );
+				
 				// Delete wrapper callback if it isn't executed within 1 second
 				setTimeout( function()
 				{
