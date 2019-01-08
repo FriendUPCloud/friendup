@@ -1070,7 +1070,6 @@ function _DeactivateWindow( m, skipCleanUp )
 	{
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
-		m.removeAttribute( 'maximized' );
 		
 		if( m.windowObject && m.notifyActivated )
 		{
