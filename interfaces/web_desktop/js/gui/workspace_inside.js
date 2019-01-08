@@ -8366,7 +8366,7 @@ if( window.friendApp )
 			
 			try
 			{
-				if( !data.category ) return;
+				if( !msg.application ) return;
 				
 				for( var a = 0; a < Workspace.applications.length; a++ )
 				{
