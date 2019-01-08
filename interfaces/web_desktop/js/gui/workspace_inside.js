@@ -5548,27 +5548,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				application: currentMovable ? currentMovable.applicationId : false
 			};
 		}
-		var currentZ = 0;
+		// Update view history with current application id
 		if( currentMovable )
 		{
-			currentZ = parseInt( currentMovable.style.zIndex );
 			this.mobileViews.application = currentMovable.applicationId;
 		}
-		if( currentZ > 0 )
+		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
-			for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+			var fg = Friend.GUI.view.viewHistory[ a ];
+			var pg = Friend.GUI.view.viewHistory[ a - 1 ];
+			// Not the same app, just revert
+			if( fg.applicationId != this.mobileViews.application )
+				break;
+			if( a > 0 && currentMovable == fg && ( !movileViews.prev || this.mobileViews.prev != pg ) )
 			{
-				var fg = Friend.GUI.view.viewHistory[ a ];
-				var pg = Friend.GUI.view.viewHistory[ a - 1 ];
-				// Not the same app, just revert
-				if( fg.applicationId != this.mobileViews.application )
-					break;
-				if( a > 0 && currentMovable == fg && ( !movileViews.prev || this.mobileViews.prev != pg ) )
-				{
-					this.movileViews.prev = fg;
-					_ActivateWindow( pg );
-					return;
-				}
+				this.mobileViews.prev = fg;
+				_ActivateWindow( pg );
+				return;
 			}
 		}
 		_DeactivateWindows();
