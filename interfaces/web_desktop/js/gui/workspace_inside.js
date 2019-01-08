@@ -8312,7 +8312,7 @@ if( window.friendApp )
 {
 	Workspace.receivePush = function()
 	{
-		Notify( { title: 'Getting push notifications!', text: msg } );
+		Notify( { title: 'Getting push notifications!', text: 'bleble' } );
 		friendApp.get_notification( function( msg )
 		{
 			var messageRead = trash = false;
