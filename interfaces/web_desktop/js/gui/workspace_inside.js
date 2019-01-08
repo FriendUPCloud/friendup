@@ -8449,7 +8449,8 @@ if( window.friendApp )
 		}
 		catch( e )
 		{
-			Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
+			// Do nothing for now...
+			//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 		}
 	}
 }
