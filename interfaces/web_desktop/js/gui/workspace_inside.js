@@ -724,8 +724,6 @@ var WorkspaceInside = {
 								};
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 								
-								Notify( { title: 'notification sent 3', text: msg } );
-								
 								// Delete wrapper callback if it isn't executed within 1 second
 								trash = setTimeout( function()
 								{
@@ -784,8 +782,8 @@ var WorkspaceInside = {
 					}
 					
 					// TODO: If we are here, generate a clickable Workspace notification
-					var t_title = appName;
-					var t_txt = i18n( 'i18n_message_from' ) + ' ' + msg.notificationData.title;
+					var t_title = appName + ' - ' + msg.notificationData.title;
+					var t_txt = msg.notificationData.content;
 					Notify( { title: t_title, text: t_txt }, false, clickCallback );
 					function clickCallback()
 					{
@@ -5353,6 +5351,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) return;
 
+		if( this.uploadWindow )
+		{
+			return this.uploadWindow.activate();
+		}
+
 		if( id )
 		{
 			var form = ge( id );
@@ -5414,7 +5417,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var fi = false;
 		if( currentMovable && currentMovable.content.fileInfo )
 			fi = currentMovable.content.fileInfo.Path;
-
+		
 		var w = new View( {
 			title: i18n( 'i18n_choose_file_to_upload' ),
 			width: 370,
@@ -5425,6 +5428,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: true,
 			screen: Workspace.screen
 		} );
+		
+		this.uploadWindow = w;
+		w.onClose = function()
+		{
+			Workspace.uploadWindow = null;
+		}
+		
+		
 		var f = new File( '/webclient/templates/file_upload.html' );
 		f.i18n()
 		f.onLoad = function( data )
@@ -5541,11 +5552,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Pick the prev window
 	handleBackButton: function()
 	{
+		if( !this.mobileViews )
+		{
+			this.mobileViews = {
+				prev: null,
+				application: currentMovable ? currentMovable.applicationId : false
+			};
+		}
+		// Update view history with current application id
+		if( currentMovable )
+		{
+			this.mobileViews.application = currentMovable.applicationId;
+		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
-			if( a > 0 && currentMovable == Friend.GUI.view.viewHistory[a] )
+			var fg = Friend.GUI.view.viewHistory[ a ];
+			var pg = Friend.GUI.view.viewHistory[ a - 1 ];
+			// Not the same app, just revert
+			if( fg.applicationId != this.mobileViews.application )
+				break;
+			if( a > 0 && currentMovable == fg && ( !this.mobileViews.prev || this.mobileViews.prev != pg ) )
 			{
-				_ActivateWindow( Friend.GUI.view.viewHistory[ a - 1 ] );
+				this.mobileViews.prev = fg;
+				_ActivateWindow( pg );
 				return;
 			}
 		}
@@ -6876,6 +6905,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) return;
 
+		if( this.launcherWindow )
+		{
+			return this.launcherWindow.activate();
+		}
 		var w = new View( {
 			title: i18n( 'menu_execute_command' ),
 			width: 320,
@@ -6885,6 +6918,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: false,
 			id: 'launcherview'
 		} );
+		
+		w.onClose = function()
+		{
+			Workspace.launcherWindow = null;
+		}
+		
 		var f = new File( 'templates/runcommand.html' );
 		f.replacements = {
 			'execute' : i18n( 'cmd_execute' ),
@@ -8310,95 +8349,98 @@ if( window.friendApp )
 {
 	Workspace.receivePush = function()
 	{
-		friendApp.get_notification( function( msg )
+		var msg = friendApp.get_notification();
+		if( !msg ) return;
+		try
 		{
+			msg = JSON.parse( msg );
+			if( !msg ) return;
+			
+			// Clear the notifications now...
+			friendApp.clear_notifications();
+			
 			var messageRead = trash = false;
 			
-			Notify( { title: 'We got pushed!!', text: msg } );
+			if( !msg.application ) return;
 			
-			try
+			for( var a = 0; a < Workspace.applications.length; a++ )
 			{
-				var data = JSON.parse( msg );
-				if( !data.category ) return;
-				
-				for( var a = 0; a < Workspace.applications.length; a++ )
-				{
-					if( Workspace.applications[a].applicationName == data.category )
-					{	
-						// Need a "message id" to be able to update notification
-						// on the Friend Core side
-						if( data.id )
-						{
-							// Function to set the notification as read...
-							var l = new Library( 'system.library' );
-							l.onExecuted = function(){};
-							l.execute( 'mobile/updatenotification', { 
-								notifid: data.id, 
-								action: 1
-							} );
-						}
-						
-						var app = Workspace.applications[a];
-						app.postMessage( { command: 'push_notification', data: data }, '*' );
-						Notify( { title: 'notification sent', text: msg } );
-						return;
-					}
-				}
-				
-				// Application not found? Start it!
-				// Send message to app once it has started...
-				function appMessage()
-				{
-					var app = false;
-					for( var a = 0; a < apps.length; a++ )
+				if( Workspace.applications[a].applicationName == msg.application )
+				{	
+					// Need a "message id" to be able to update notification
+					// on the Friend Core side
+					if( data.id )
 					{
-						// Found the application
-						if( apps[ a ].applicationName == data.category )
-						{
-							app = apps[ a ];
-							break;
-						}
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.id, 
+							action: 1
+						} );
 					}
 					
-					// No application? Alert the user
-					// TODO: Localize response!
-					if( !app )
-					{
-						Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-						return;
-					}
-					
-					var amsg = {
+					var app = Workspace.applications[a];
+					app.contentWindow.postMessage( JSON.stringify( { 
 						type: 'system',
 						method: 'notification',
-						callback: addWrapperCallback( notificationRead ),
-						data: data
-					};
-					app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-					
-					Notify( { title: 'notification sent 2', text: msg } );
-					
-					// Delete wrapper callback if it isn't executed within 1 second
-					setTimeout( function()
-					{
-						if( !messageRead )
-						{
-							getWrapperCallback( amsg.callback );
-						}
-					}, 1000 );
+						callback: false,
+						data: msg
+					} ), '*' );
+					return;
 				}
-				ExecuteApplication( data.category, '', appMessage )
-				
-			}
-			catch( e )
-			{
-				// How to handle?
-				Notify( { title: 'unhandled get_notification', text: msg } );
-				return;
 			}
 			
-			Notify( { title: 'friendApp notification failed', text: msg } );
-		} );
+			// Application not found? Start it!
+			// Send message to app once it has started...
+			function appMessage()
+			{
+				var app = false;
+				var apps = Workspace.applications;
+				for( var a = 0; a < apps.length; a++ )
+				{
+					// Found the application
+					if( apps[ a ].applicationName == msg.application )
+					{
+						app = apps[ a ];
+						break;
+					}
+				}
+				
+				// No application? Alert the user
+				// TODO: Localize response!
+				if( !app )
+				{
+					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+					return;
+				}
+				
+				var amsg = {
+					type: 'system',
+					method: 'notification',
+					callback: addWrapperCallback( notificationRead ),
+					data: msg
+				};
+				
+				Notify( { title: 'Successfully', text: JSON.stringify( amsg.extra ) } );
+				
+				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+				
+				// Delete wrapper callback if it isn't executed within 1 second
+				setTimeout( function()
+				{
+					if( !messageRead )
+					{
+						getWrapperCallback( amsg.callback );
+					}
+				}, 1000 );
+			}
+			ExecuteApplication( msg.application, '', appMessage )
+		}
+		catch( e )
+		{
+			Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
+		}
 	}
 }
 

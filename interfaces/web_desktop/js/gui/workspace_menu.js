@@ -273,6 +273,7 @@ var WorkspaceMenu =
 			{
 				divs[a].isActivated = null;
 				divs[a].classList.remove( 'Open' );
+				m.classList.remove( 'Open' );
 				if( e )
 					cancelBubble( e );
 			}
@@ -285,6 +286,7 @@ var WorkspaceMenu =
 				}
 			}
 			m.isActivated = false;
+			m.classList.remove( 'Open' );
 		}
 		if( ge( 'MobileMenu' ) ) ge( 'MobileMenu' ).classList.remove( 'Visible' );
 		
@@ -371,13 +373,23 @@ var WorkspaceMenu =
 		// This need to be able to stringify to validate menu items
 		if( depth == 0 )
 		{
-			if( !menuItems.length )
+			if( !menuItems.length && isMobile )
 			{
 				// Add option to quit application
-				menuItems.push( {
-					name: i18n( 'i18n_quit' ),
-					command: 'quit'
-				} );
+				if( typeof( appId ) == 'undefined' )
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_close' ),
+						command: 'quit'
+					} );
+				}
+				else
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_quit' ),
+						command: 'quit'
+					} );
+				}
 			}
 			var test = JSON.stringify( menuItems );
 			if( Friend.currentMenuItems == test )
