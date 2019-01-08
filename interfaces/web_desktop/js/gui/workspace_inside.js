@@ -8396,6 +8396,7 @@ if( window.friendApp )
 			function appMessage()
 			{
 				var app = false;
+				var apps = Workspace.applications;
 				for( var a = 0; a < apps.length; a++ )
 				{
 					// Found the application
@@ -8413,8 +8414,6 @@ if( window.friendApp )
 					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 					return;
 				}
-				
-				Notify( { title: 'Debug', text: JSON.stringify( msg.extra ) } );
 				
 				var amsg = {
 					type: 'system',
