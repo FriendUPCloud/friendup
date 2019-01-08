@@ -8391,6 +8391,18 @@ if( window.friendApp )
 				}
 			}
 			
+			// Function to set the notification as read...
+			function notificationRead()
+			{
+				messageRead = true;
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.id, 
+					action: 1
+				} );
+			}
+			
 			// Application not found? Start it!
 			// Send message to app once it has started...
 			function appMessage()
@@ -8423,8 +8435,6 @@ if( window.friendApp )
 				};
 				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-				
-				Notify( { title: 'Messaged the app!', text: 'Yes please: ' + msg.extra } );
 				
 				// Delete wrapper callback if it isn't executed within 1 second
 				setTimeout( function()
