@@ -5558,7 +5558,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				var fg = Friend.GUI.view.viewHistory[ a ];
 				var pg = Friend.GUI.view.viewHistory[ a - 1 ];
-				if( a > 0 && currentMovable == fg && this.mobileViews.prev != pg )
+				if( a > 0 && currentMovable == fg && ( !movileViews.prev || this.mobileViews.prev != pg ) )
 				{
 					this.movileViews.prev = fg;
 					_ActivateWindow( pg );
