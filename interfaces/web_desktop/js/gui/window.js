@@ -929,6 +929,8 @@ function _ActivateWindowOnly( div )
 					} );
 				}
 				
+				// Can't be minimized
+				m.viewContainer.removeAttribute( 'minimized' );
 			}
 
 			if( div.windowObject && !div.notifyActivated )
