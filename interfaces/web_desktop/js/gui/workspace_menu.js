@@ -461,7 +461,11 @@ var WorkspaceMenu =
 				d = n;
 				if( menuItems[ i ].command == 'close' )
 				{
-					CloseWindow();
+					n.onclick = function()
+					{
+						currentMovable.windowObject.close();
+						Workspace.exitMobileMenu();
+					}
 				}
 				else if( menuItems[ i ].command == 'quit' )
 				{
