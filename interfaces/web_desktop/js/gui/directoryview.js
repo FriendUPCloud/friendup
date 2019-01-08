@@ -2195,6 +2195,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			}
 		}
 		
+		var contentMode = this.window.classList.contains( 'ScreenContent' ) ? 'screen' : 'view';
+		
 		// Draw icons
 		for( var a = 0; a < icons.length; a++ )
 		{
@@ -2330,7 +2332,14 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				// Usually drawing from top to bottom
 				if( direction == 'vertical' )
 				{
-					iy += gridY;
+					if( contentMode == 'screen' )
+					{
+						iy += file.offsetHeight + marginTop;
+					}
+					else
+					{
+						iy += gridY;
+					}
 
 					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && iy + gridY > windowHeight )
 					{
@@ -4018,7 +4027,14 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			'volume'   : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
 
-		fileInfo.Dormant.addWindow( win );
+		if( fileInfo.Dormant && fileInfo.Dormant.addWindow )
+		{
+			fileInfo.Dormant.addWindow( win );
+		}
+		else
+		{
+			console.log( '[Directoryview] Expected fileInfo.Dormant.addWindow - which doesn\'t exist...' );
+		}
 
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>' );
 		var we = win.getWindowElement();
@@ -4184,7 +4200,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	}
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' )
-	{
+	{	
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		var id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4234,6 +4250,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		win.parentFile = iconObject;
 		win.parentWindow = iconObject.window;
 		win.fileInfo = fileInfo;
+		
 		if( !win.fileInfo.Volume )
 		{
 			if( win.fileInfo.Path )
@@ -4371,7 +4388,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					{
 						try
 						{
-							content = JSON.parse(this.returnData||"null");
+							content = JSON.parse(this.returnData || "null" );
 						}
 						catch ( e ){};
 					}
@@ -4381,13 +4398,21 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					{
 						try
 						{
-							content = JSON.parse(this.responseText() || "null");
+							content = JSON.parse(this.responseText() || "null" );
 						}
 						catch ( e ){}
 					}
 
 					if( content )
 					{
+						// Fix missing path! Paths come back with "[missing volume:]Documents/file.txt"
+						// TODO: This is wrong at the call level
+						for( var a = 0; a < content.length; a++ )
+						{
+							if( content[ a ].Path.indexOf( ':' ) < 0 )
+								content[ a ].Path = this.fileInfo.Volume + content[ a ].Path;
+						}
+					
 						var ww = this.win;
 						ww.redrawIcons( content, ww.direction );
 						ww.file = this.file;

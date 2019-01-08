@@ -4940,7 +4940,36 @@ function Door( path )
 		);
 	}
 	this.init();
+	
+	// Re-set path
+	this.setPath = function( path )
+	{
+		Application.sendMessage( 
+			{
+				type: 'door',
+				method: 'init',
+				path: path,
+				handler: this.handler
+			},
+			function( data )
+			{
+				if( data.handler && data.handler != 'void' )
+				{
+					door.initialized = true;
+					door.handler = data.handler;
+				}
+			}
+		);
+	}
+	
+	// Gets the files and subdirectories inside of a directory
+	this.getDirectory = function( callback )
+	{
+		return this.getIcons( callback );
+	}
+	
 	// Get files on current dir
+	// Deprecated
 	this.getIcons = function( callback )
 	{
 		Application.sendMessage(
