@@ -8352,6 +8352,7 @@ if( window.friendApp )
 	Workspace.receivePush = function()
 	{
 		var msg = friendApp.get_notification();
+		if( !msg ) return;
 		try
 		{
 			msg = JSON.parse( msg );
