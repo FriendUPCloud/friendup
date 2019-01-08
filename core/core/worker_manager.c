@@ -216,10 +216,11 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			wrk->w_Request = wrkinfo;
 			
 			strncpy( wrk->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
+			wrk->w_State = W_STATE_RUNNING;
+			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 			
 			WorkerRunCommand( wrk, foo, d );
 			testquit = 0;
-			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 			
 			break;
 		}
