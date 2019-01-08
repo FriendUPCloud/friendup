@@ -8363,89 +8363,73 @@ if( window.friendApp )
 			
 			var messageRead = trash = false;
 			
-			Notify( { title: 'We got pushed!!', text: msg.title } );
 			
-			try
+			if( !msg.application ) return;
+			
+			for( var a = 0; a < Workspace.applications.length; a++ )
 			{
-				if( !msg.application ) return;
-				
-				for( var a = 0; a < Workspace.applications.length; a++ )
+				if( Workspace.applications[a].applicationName == msg.application )
+				{	
+					// Need a "message id" to be able to update notification
+					// on the Friend Core side
+					if( data.id )
+					{
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.id, 
+							action: 1
+						} );
+					}
+					
+					var app = Workspace.applications[a];
+					app.postMessage( { command: 'push_notification', data: msg }, '*' );
+					return;
+				}
+			}
+			
+			// Application not found? Start it!
+			// Send message to app once it has started...
+			function appMessage()
+			{
+				var app = false;
+				for( var a = 0; a < apps.length; a++ )
 				{
-					if( Workspace.applications[a].applicationName == msg.application )
-					{	
-						// Need a "message id" to be able to update notification
-						// on the Friend Core side
-						if( data.id )
-						{
-							// Function to set the notification as read...
-							var l = new Library( 'system.library' );
-							l.onExecuted = function(){};
-							l.execute( 'mobile/updatenotification', { 
-								notifid: msg.id, 
-								action: 1
-							} );
-						}
-						
-						var app = Workspace.applications[a];
-						msg.notificationData = msg; // To make stuff work...
-						app.postMessage( { command: 'push_notification', data: msg }, '*' );
-						return;
+					// Found the application
+					if( apps[ a ].applicationName == msg.application )
+					{
+						app = apps[ a ];
+						break;
 					}
 				}
 				
-				// Application not found? Start it!
-				// Send message to app once it has started...
-				function appMessage()
+				// No application? Alert the user
+				// TODO: Localize response!
+				if( !app )
 				{
-					var app = false;
-					for( var a = 0; a < apps.length; a++ )
-					{
-						// Found the application
-						if( apps[ a ].applicationName == msg.application )
-						{
-							app = apps[ a ];
-							break;
-						}
-					}
-					
-					// No application? Alert the user
-					// TODO: Localize response!
-					if( !app )
-					{
-						Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-						return;
-					}
-					
-					msg.notificationData = msg; // To make stuff work...
-					
-					var amsg = {
-						type: 'system',
-						method: 'notification',
-						callback: addWrapperCallback( notificationRead ),
-						data: msg
-					};
-					app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-					
-					// Delete wrapper callback if it isn't executed within 1 second
-					setTimeout( function()
-					{
-						if( !messageRead )
-						{
-							getWrapperCallback( amsg.callback );
-						}
-					}, 1000 );
+					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+					return;
 				}
-				ExecuteApplication( msg.application, '', appMessage )
 				
+				var amsg = {
+					type: 'system',
+					method: 'notification',
+					callback: addWrapperCallback( notificationRead ),
+					data: msg
+				};
+				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+				
+				// Delete wrapper callback if it isn't executed within 1 second
+				setTimeout( function()
+				{
+					if( !messageRead )
+					{
+						getWrapperCallback( amsg.callback );
+					}
+				}, 1000 );
 			}
-			catch( e )
-			{
-				// How to handle?
-				Notify( { title: 'unhandled get_notification', text: msg } );
-				return;
-			}
-			
-			Notify( { title: 'friendApp notification failed', text: msg } );
+			ExecuteApplication( msg.application, '', appMessage )
 		}
 		catch( e )
 		{
