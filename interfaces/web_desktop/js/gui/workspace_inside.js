@@ -5541,12 +5541,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Pick the prev window
 	handleBackButton: function()
 	{
-		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		if( !this.mobileViews )
 		{
-			if( a > 0 && currentMovable == Friend.GUI.view.viewHistory[a] )
+			this.mobileViews = {
+				prev: null
+			};
+		}
+		var currentZ = 0;
+		if( currentMovable )
+		{
+			currentZ = parseInt( currentMovable.style.zIndex );
+		}
+		if( currentZ > 0 )
+		{
+			for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 			{
-				_ActivateWindow( Friend.GUI.view.viewHistory[ a - 1 ] );
-				return;
+				var fg = Friend.GUI.view.viewHistory[ a ];
+				var pg = Friend.GUI.view.viewHistory[ a - 1 ];
+				if( a > 0 && currentMovable == fg && this.mobileViews.prev != pg )
+				{
+					this.movileViews.prev = fg;
+					_ActivateWindow( pg );
+					return;
+				}
 			}
 		}
 		_DeactivateWindows();
