@@ -336,6 +336,8 @@ SystemBase *SystemInit( void )
 			
 			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
 			
+			l->sl_MasterServer = StringDuplicate( plib->ReadStringNCS( prop, "core:masterserveraddress", "pal.ideverket.no") );
+			
 			char *tptr  = plib->ReadStringNCS( prop, "core:ClientCert", NULL );
 			if( tptr != NULL )
 			{
@@ -1248,6 +1250,11 @@ void SystemClose( SystemBase *l )
 	{
 		FFree( l->sl_FSysPath );
 		l->sl_FSysPath = NULL;
+	}
+	if( l->sl_MasterServer != NULL )
+	{
+		FFree( l->sl_MasterServer );
+		l->sl_MasterServer = NULL;
 	}
 	
 	// close magic door of awesomeness!
