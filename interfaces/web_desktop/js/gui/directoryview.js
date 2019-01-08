@@ -4389,7 +4389,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 
 					if( content )
 					{
-						// Fix missing path!
+						// Fix missing path! Paths come back with "[missing volume:]Documents/file.txt"
 						// TODO: This is wrong at the call level
 						for( var a = 0; a < content.length; a++ )
 						{
