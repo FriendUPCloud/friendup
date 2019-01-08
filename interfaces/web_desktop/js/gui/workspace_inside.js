@@ -5544,13 +5544,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !this.mobileViews )
 		{
 			this.mobileViews = {
-				prev: null
+				prev: null,
+				application: currentMovable ? currentMovable.applicationId : false
 			};
 		}
 		var currentZ = 0;
 		if( currentMovable )
 		{
 			currentZ = parseInt( currentMovable.style.zIndex );
+			this.mobileViews.application = currentMovable.applicationId;
 		}
 		if( currentZ > 0 )
 		{
@@ -5558,7 +5560,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				var fg = Friend.GUI.view.viewHistory[ a ];
 				var pg = Friend.GUI.view.viewHistory[ a - 1 ];
-				if( a > 0 && currentMovable == fg && this.mobileViews.prev != pg )
+				// Not the same app, just revert
+				if( fg.applicationId != this.mobileViews.application )
+					break;
+				if( a > 0 && currentMovable == fg && ( !movileViews.prev || this.mobileViews.prev != pg ) )
 				{
 					this.movileViews.prev = fg;
 					_ActivateWindow( pg );
