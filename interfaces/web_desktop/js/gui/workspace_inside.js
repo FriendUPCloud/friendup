@@ -8381,7 +8381,12 @@ if( window.friendApp )
 					}
 					
 					var app = Workspace.applications[a];
-					app.postMessage( { command: 'push_notification', data: msg }, '*' );
+					app.contentWindow.postMessage( JSON.stringify( { 
+						type: 'system',
+						method: 'notification',
+						callback: false,
+						data: msg
+					} ), '*' );
 					return;
 				}
 			}
@@ -8408,6 +8413,8 @@ if( window.friendApp )
 					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 					return;
 				}
+				
+				Notify( { title: 'Debug', text: JSON.stringify( msg.extra ) } );
 				
 				var amsg = {
 					type: 'system',
