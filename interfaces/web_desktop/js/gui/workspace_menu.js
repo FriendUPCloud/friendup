@@ -371,7 +371,7 @@ var WorkspaceMenu =
 		// This need to be able to stringify to validate menu items
 		if( depth == 0 )
 		{
-			if( !menuItems.length )
+			if( !menuItems.length && isMobile )
 			{
 				// Add option to quit application
 				menuItems.push( {
