@@ -3192,23 +3192,71 @@ function Notify( msg, callback, clickcallback )
 			this.classList.remove( 'Showing' );
 			setTimeout( function()
 			{
-				n.parentNode.removeChild( n );
+				if( n.parentNode )
+					n.parentNode.removeChild( n );
 			}, 250 );
 		}
 		
 		// When clicking the bubble :)
 		if( clickcallback )
 		{
-			n.addEventListener( 'touchstart', clickcallback );
+			n.addEventListener( 'touchend', function( e )
+			{
+				if( mousePointer.candidate && mousePointer.candidate.el == n && Math.abs( mousePointer.candidate.diff ) >= 10 )
+				{
+					n.style.position = '';
+					n.style.left = '';
+					n.style.top = '';
+					n.style.width = '';
+					n.style.height = '';
+					clickcallback = null;
+					return;
+				}
+				if( n.parentNode )
+				{
+					n.close();
+					if( clickcallback )
+						clickcallback( e )
+				}
+			} );
 		}
+		
+		n.addEventListener( 'touchstart', function( e )
+		{
+			mousePointer.candidate = {
+				cx: e.touches[0].clientX,
+				cy: e.touches[0].clientY,
+				ox: GetElementLeft( n ),
+				oy: GetElementTop( n ),
+				ow: n.offsetWidth,
+				oh: n.offsetHeight,
+				el: n,
+				condition: function( e )
+				{
+					var diff = windowMouseX - this.cx;
+					n.style.position = 'absolute';
+					n.style.left = this.ox + diff + 'px';
+					n.style.top = this.oy - 5 + 'px';
+					n.style.width = this.ow + 'px';
+					n.style.height = this.oh + 'px';
+					this.diff = diff;
+					
+					if( Math.abs( diff ) > 100 )
+					{
+						mousePointer.candidate = null;
+						n.close();
+					}
+				}
+			};
+		} );
 		
 		if( msg.flags && msg.flags.sticky )
 		{
-			n.addEventListener( 'touchstart', function(){ n.close(); } );
+			n.addEventListener( 'touchend', function(){ if( n.parentNode ) n.close(); } );
 		}
 		else
 		{
-			setTimeout( function(){ n.close(); }, 8000 );
+			setTimeout( function(){ if( n.parentNode ) n.close(); }, 8000 );
 		}
 		
 		return;
