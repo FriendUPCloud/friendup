@@ -8317,6 +8317,9 @@ if( window.friendApp )
 		{
 			if( !msg ) return;
 			
+			// Clear the notifications now...
+			friendApp.clear_notifications();
+			
 			var messageRead = trash = false;
 			
 			Notify( { title: 'We got pushed!!', text: msg } );
