@@ -8407,8 +8407,6 @@ if( window.friendApp )
 					}
 				}
 				
-				Notify( { title: 'We found the app', text: app.applicationName } );
-				
 				// No application? Alert the user
 				// TODO: Localize response!
 				if( !app )
@@ -8423,8 +8421,6 @@ if( window.friendApp )
 					callback: addWrapperCallback( notificationRead ),
 					data: msg
 				};
-				
-				Notify( { title: 'Successfully', text: JSON.stringify( amsg.extra ) } );
 				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 				
