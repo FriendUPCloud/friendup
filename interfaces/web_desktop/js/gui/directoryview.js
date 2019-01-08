@@ -4184,7 +4184,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	}
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' )
-	{
+	{	
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		var id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4234,6 +4234,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		win.parentFile = iconObject;
 		win.parentWindow = iconObject.window;
 		win.fileInfo = fileInfo;
+		
 		if( !win.fileInfo.Volume )
 		{
 			if( win.fileInfo.Path )
@@ -4371,7 +4372,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					{
 						try
 						{
-							content = JSON.parse(this.returnData||"null");
+							content = JSON.parse(this.returnData || "null" );
 						}
 						catch ( e ){};
 					}
@@ -4381,13 +4382,21 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					{
 						try
 						{
-							content = JSON.parse(this.responseText() || "null");
+							content = JSON.parse(this.responseText() || "null" );
 						}
 						catch ( e ){}
 					}
 
 					if( content )
 					{
+						// Fix missing path!
+						// TODO: This is wrong at the call level
+						for( var a = 0; a < content.length; a++ )
+						{
+							if( content[ a ].Path.indexOf( ':' ) < 0 )
+								content[ a ].Path = this.fileInfo.Volume + content[ a ].Path;
+						}
+					
 						var ww = this.win;
 						ww.redrawIcons( content, ww.direction );
 						ww.file = this.file;
