@@ -8351,9 +8351,10 @@ if( window.friendApp )
 {
 	Workspace.receivePush = function()
 	{
-		Notify( { title: 'Getting push notifications!', text: 'bleble' } );
-		friendApp.get_notification( function( msg )
+		var msg = friendApp.get_notification();
+		try
 		{
+			msg = JSON.parse( msg );
 			if( !msg ) return;
 			
 			// Clear the notifications now...
@@ -8361,16 +8362,15 @@ if( window.friendApp )
 			
 			var messageRead = trash = false;
 			
-			Notify( { title: 'We got pushed!!', text: msg } );
+			Notify( { title: 'We got pushed!!', text: msg.title } );
 			
 			try
 			{
-				var data = JSON.parse( msg );
 				if( !data.category ) return;
 				
 				for( var a = 0; a < Workspace.applications.length; a++ )
 				{
-					if( Workspace.applications[a].applicationName == data.category )
+					if( Workspace.applications[a].applicationName == msg.application )
 					{	
 						// Need a "message id" to be able to update notification
 						// on the Friend Core side
@@ -8380,14 +8380,14 @@ if( window.friendApp )
 							var l = new Library( 'system.library' );
 							l.onExecuted = function(){};
 							l.execute( 'mobile/updatenotification', { 
-								notifid: data.id, 
+								notifid: msg.id, 
 								action: 1
 							} );
 						}
 						
 						var app = Workspace.applications[a];
-						app.postMessage( { command: 'push_notification', data: data }, '*' );
-						Notify( { title: 'notification sent', text: msg } );
+						msg.notificationData = msg; // To make stuff work...
+						app.postMessage( { command: 'push_notification', data: msg }, '*' );
 						return;
 					}
 				}
@@ -8400,7 +8400,7 @@ if( window.friendApp )
 					for( var a = 0; a < apps.length; a++ )
 					{
 						// Found the application
-						if( apps[ a ].applicationName == data.category )
+						if( apps[ a ].applicationName == msg.application )
 						{
 							app = apps[ a ];
 							break;
@@ -8415,15 +8415,15 @@ if( window.friendApp )
 						return;
 					}
 					
+					msg.notificationData = msg; // To make stuff work...
+					
 					var amsg = {
 						type: 'system',
 						method: 'notification',
 						callback: addWrapperCallback( notificationRead ),
-						data: data
+						data: msg
 					};
 					app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-					
-					Notify( { title: 'notification sent 2', text: msg } );
 					
 					// Delete wrapper callback if it isn't executed within 1 second
 					setTimeout( function()
@@ -8434,7 +8434,7 @@ if( window.friendApp )
 						}
 					}, 1000 );
 				}
-				ExecuteApplication( data.category, '', appMessage )
+				ExecuteApplication( msg.application, '', appMessage )
 				
 			}
 			catch( e )
@@ -8445,7 +8445,11 @@ if( window.friendApp )
 			}
 			
 			Notify( { title: 'friendApp notification failed', text: msg } );
-		} );
+		}
+		catch( e )
+		{
+			Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
+		}
 	}
 }
 
