@@ -934,6 +934,12 @@ function _ActivateWindowOnly( div )
 				
 				// Can't be minimized
 				m.viewContainer.removeAttribute( 'minimized' );
+				m.minimized = false;
+			}
+			else
+			{
+				m.viewContainer.removeAttribute( 'minimized' );
+				m.minimized = false;
 			}
 
 			if( div.windowObject && !div.notifyActivated )
