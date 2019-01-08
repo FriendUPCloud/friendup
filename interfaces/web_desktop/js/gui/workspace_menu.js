@@ -374,10 +374,20 @@ var WorkspaceMenu =
 			if( !menuItems.length && isMobile )
 			{
 				// Add option to quit application
-				menuItems.push( {
-					name: i18n( 'i18n_quit' ),
-					command: 'quit'
-				} );
+				if( typeof( appId ) == 'undefined' )
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_close' ),
+						command: 'quit'
+					} );
+				}
+				else
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_quit' ),
+						command: 'quit'
+					} );
+				}
 			}
 			var test = JSON.stringify( menuItems );
 			if( Friend.currentMenuItems == test )
