@@ -4027,7 +4027,14 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			'volume'   : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
 
-		fileInfo.Dormant.addWindow( win );
+		if( fileInfo.Dormant && fileInfo.Dormant.addWindow )
+		{
+			fileInfo.Dormant.addWindow( win );
+		}
+		else
+		{
+			console.log( '[Directoryview] Expected fileInfo.Dormant.addWindow - which doesn\'t exist...' );
+		}
 
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>' );
 		var we = win.getWindowElement();
