@@ -2195,6 +2195,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			}
 		}
 		
+		var contentMode = this.window.classList.contains( 'ScreenContent' ) ? 'screen' : 'view';
+		
 		// Draw icons
 		for( var a = 0; a < icons.length; a++ )
 		{
@@ -2330,7 +2332,14 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				// Usually drawing from top to bottom
 				if( direction == 'vertical' )
 				{
-					iy += gridY;
+					if( contentMode == 'screen' )
+					{
+						iy += file.offsetHeight + marginTop;
+					}
+					else
+					{
+						iy += gridY;
+					}
 
 					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && iy + gridY > windowHeight )
 					{
