@@ -8397,7 +8397,6 @@ if( window.friendApp )
 			{
 				var app = false;
 				var apps = Workspace.applications;
-				Notify( { title: 'We are finding ' + msg.application, text: 'Alen: ' + apps.length + '...' } );
 				for( var a = 0; a < apps.length; a++ )
 				{
 					// Found the application
@@ -8422,6 +8421,9 @@ if( window.friendApp )
 					callback: addWrapperCallback( notificationRead ),
 					data: msg
 				};
+				
+				Notify( { title: 'Successfully', text: JSON.stringify( amsg.extra ) } );
+				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 				
 				// Delete wrapper callback if it isn't executed within 1 second
