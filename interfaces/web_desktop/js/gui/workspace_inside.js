@@ -5353,6 +5353,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) return;
 
+		if( this.uploadWindow )
+		{
+			return this.uploadWindow.activate();
+		}
+
 		if( id )
 		{
 			var form = ge( id );
@@ -5414,7 +5419,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var fi = false;
 		if( currentMovable && currentMovable.content.fileInfo )
 			fi = currentMovable.content.fileInfo.Path;
-
+		
 		var w = new View( {
 			title: i18n( 'i18n_choose_file_to_upload' ),
 			width: 370,
@@ -5425,6 +5430,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: true,
 			screen: Workspace.screen
 		} );
+		
+		this.uploadWindow = w;
+		w.onClose = function()
+		{
+			Workspace.uploadWindow = null;
+		}
+		
+		
 		var f = new File( '/webclient/templates/file_upload.html' );
 		f.i18n()
 		f.onLoad = function( data )
@@ -6894,6 +6907,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) return;
 
+		if( this.launcherWindow )
+		{
+			return this.launcherWindow.activate();
+		}
 		var w = new View( {
 			title: i18n( 'menu_execute_command' ),
 			width: 320,
@@ -6903,6 +6920,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: false,
 			id: 'launcherview'
 		} );
+		
+		w.onClose = function()
+		{
+			Workspace.launcherWindow = null;
+		}
+		
 		var f = new File( 'templates/runcommand.html' );
 		f.replacements = {
 			'execute' : i18n( 'cmd_execute' ),

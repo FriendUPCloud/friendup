@@ -273,6 +273,7 @@ var WorkspaceMenu =
 			{
 				divs[a].isActivated = null;
 				divs[a].classList.remove( 'Open' );
+				m.classList.remove( 'Open' );
 				if( e )
 					cancelBubble( e );
 			}
@@ -285,6 +286,7 @@ var WorkspaceMenu =
 				}
 			}
 			m.isActivated = false;
+			m.classList.remove( 'Open' );
 		}
 		if( ge( 'MobileMenu' ) ) ge( 'MobileMenu' ).classList.remove( 'Visible' );
 		
