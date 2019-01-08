@@ -917,16 +917,19 @@ function _ActivateWindowOnly( div )
 				m.viewContainer.style.width  = '100%';
 				m.viewContainer.style.height = '100%';
 				
-				var app = _getAppByAppId( div.applicationId );
-				if( app )
+				if( window._getAppByAppId )
 				{
-					app.sendMessage( {
-						'command': 'notify',
-						'method': 'setviewflag',
-						'flag': 'minimized',
-						'viewId': div.windowObject.viewId,
-						'value': false
-					} );
+					var app = _getAppByAppId( div.applicationId );
+					if( app )
+					{
+						app.sendMessage( {
+							'command': 'notify',
+							'method': 'setviewflag',
+							'flag': 'minimized',
+							'viewId': div.windowObject.viewId,
+							'value': false
+						} );
+					}
 				}
 				
 				// Can't be minimized
@@ -2293,16 +2296,19 @@ var View = function( args )
 					this.window.setAttribute( 'maximized', 'true' );
 					
 					// Tell app
-					var app = _getAppByAppId( div.applicationId );
-					if( app )
+					if( window._getAppByAppId )
 					{
-						app.sendMessage( {
-							'command': 'notify',
-							'method': 'setviewflag',
-							'flag': 'maximized',
-							'viewId': div.windowObject.viewId,
-							'value': true
-						} );
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': true
+							} );
+						}
 					}
 					
 					// Store it just in case
@@ -2352,16 +2358,19 @@ var View = function( args )
 					}
 					
 					// Tell application if any
-					var app = _getAppByAppId( div.applicationId );
-					if( app )
+					if( window._getAppByAppId )
 					{
-						app.sendMessage( {
-							'command': 'notify',
-							'method': 'setviewflag',
-							'flag': 'maximized',
-							'viewId': div.windowObject.viewId,
-							'value': false
-						} );
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': false
+							} );
+						}
 					}
 				}
 				// Do resize events
@@ -2563,16 +2572,19 @@ var View = function( args )
 				Friend.GUI.reorganizeResponsiveMinimized();
 			}
 			
-			var app = _getAppByAppId( div.applicationId );
-			if( app )
+			if( window._getAppByAppId )
 			{
-				app.sendMessage( {
-					'command': 'notify',
-					'method': 'setviewflag',
-					'flag': 'minimized',
-					'viewId': div.windowObject.viewId,
-					'value': true
-				} );
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'minimized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
 			}
 		}
 
@@ -2843,16 +2855,19 @@ var View = function( args )
 					zoom.mode = 'maximized';
 					
 					// Tell application if any
-					var app = _getAppByAppId( div.applicationId );
-					if( app )
+					if( window._getAppByAppId )
 					{
-						app.sendMessage( {
-							'command': 'notify',
-							'method': 'setviewflag',
-							'flag': 'maximized',
-							'viewId': div.windowObject.viewId,
-							'value': true
-						} );
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': true
+							} );
+						}
 					}
 				}
 				
@@ -2949,16 +2964,19 @@ var View = function( args )
 			div.setAttribute( 'maximized', 'true' );
 			
 			// Tell application if any
-			var app = _getAppByAppId( div.applicationId );
-			if( app )
+			if( window._getAppByAppId )
 			{
-				app.sendMessage( {
-					'command': 'notify',
-					'method': 'setviewflag',
-					'flag': 'maximized',
-					'viewId': div.windowObject.viewId,
-					'value': true
-				} );
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'maximized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
 			}
 		}
 
@@ -3235,16 +3253,19 @@ var View = function( args )
 			div.setAttribute( 'maximized', 'true' );
 			
 			// Tell application if any
-			var app = _getAppByAppId( div.applicationId );
-			if( app )
+			if( window._getAppByAppId )
 			{
-				app.sendMessage( {
-					'command': 'notify',
-					'method': 'setviewflag',
-					'flag': 'maximized',
-					'viewId': div.windowObject.viewId,
-					'value': true
-				} );
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'maximized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
 			}
 		}
 
