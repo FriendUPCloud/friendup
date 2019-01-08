@@ -8407,6 +8407,8 @@ if( window.friendApp )
 					}
 				}
 				
+				Notify( { title: 'We found the app', text: app.applicationName } );
+				
 				// No application? Alert the user
 				// TODO: Localize response!
 				if( !app )
