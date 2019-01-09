@@ -3181,6 +3181,7 @@ function Notify( msg, callback, clickcallback )
 				}
 				not.onclick = function( e )
 				{
+					window.focus();
 					clickcallback( e );
 				}
 			}
