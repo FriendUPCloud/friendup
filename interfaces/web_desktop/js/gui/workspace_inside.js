@@ -8474,6 +8474,8 @@ document.addEventListener( 'visibilitychange' , function(){
 	}
 }, false );
 
+/*
+// Debug blob:
 if( isMobile )
 {
 	var blob = document.createElement( 'div' );
@@ -8486,6 +8488,6 @@ if( isMobile )
 	blob.style.zIndex = 10000000;
 	document.body.blob = blob;
 	document.body.appendChild( blob );
-}
+}*/
 
 
