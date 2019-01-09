@@ -695,7 +695,8 @@ var WorkspaceInside = {
 					// Function to set the notification as read...
 					function notificationRead()
 					{
-						clearTimeout( trash );
+						if( trash )
+							clearTimeout( trash );
 						messageRead = true;
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
@@ -714,28 +715,18 @@ var WorkspaceInside = {
 						// Found the application
 						if( apps[a].applicationName == appName )
 						{
+							// We read the notification!
+							notificationRead();
+
 							// Post!
-							( function( app, data )
-							{
-								var amsg = {
-									type: 'system',
-									method: 'notification',
-									callback: addWrapperCallback( notificationRead ),
-									data: data
-								};
-								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-								
-								// Delete wrapper callback if it isn't executed within 1 second
-								trash = setTimeout( function()
-								{
-									if( !messageRead )
-									{
-										var trash = getWrapperCallback( amsg.callback );
-										delete trash;
-									}
-								}, 1000 );
-								
-							} )( apps[ a ], msg.notificationData );
+							var amsg = {
+								type: 'system',
+								method: 'notification',
+								callback: false,
+								data: msg.notificationData
+							};
+							apps[ a ].contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+							
 							if( document.body.blob )
 							{
 								document.body.blob.innerHTML = 'Sent to application, return';
@@ -789,7 +780,7 @@ var WorkspaceInside = {
 					// TODO: If we are here, generate a clickable Workspace notification
 					var t_title = appName + ' - ' + msg.notificationData.title;
 					var t_txt = msg.notificationData.content;
-					Notify( { title: t_title, text: t_txt }, false, clickCallback );
+					Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
 					function clickCallback()
 					{
 						ExecuteApplication( appName, '', appMessage );
