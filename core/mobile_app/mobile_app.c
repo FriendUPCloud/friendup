@@ -969,7 +969,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			UserSession *locses = (UserSession *)usl->us;
 			if( locses != NULL )
 			{
-				DEBUG("[AdminWebRequest] Going through sessions, device: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSClients, ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+				DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSClients, ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) );
 				
 				if( ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSClients != NULL )
 				{
@@ -1051,7 +1051,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			//	case MN_force_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					DEBUG("force all , conptr %p\n", userConnections->umac_Connection[i]);
+					DEBUG("[MobileAppNotifyUserRegister] Send message to mobile device , conptr %p\n", userConnections->umac_Connection[i]);
 					if( userConnections->umac_Connection[i] != NULL )
 					{
 						NotificationSent *lns = NotificationSentNew();
@@ -1161,6 +1161,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			}*/
 		}
 		// wsMessageSent == FALSE
+		else
+		{
+			DEBUG("[MobileAppNotifyUserRegister] Message was already sent to WS\n");
+		}
 		
 		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 		{
@@ -1170,7 +1174,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	}
 	else
 	{
-		DEBUG("User <%s> does not have any app WS connections\n", username );
+		DEBUG("[MobileAppNotifyUserRegister] User <%s> does not have any app WS connections\n", username );
 	}
 	
 	BufStringDelete( bsMobileReceivedMessage );
@@ -1178,7 +1182,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 	
-	DEBUG("NotifyUser: send message to other mobile apps\n");
+	DEBUG("[MobileAppNotifyUserRegister] send message to other mobile apps, message was alerady sent? %d\n", wsMessageSent );
 	
 	char *jsonMessageIOS = NULL;
 	int jsonMessageIosLength = reqLengith+512;
@@ -1215,7 +1219,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	}
 	else
 	{
-		FERROR("Message was sent through websockets or APNS is not enabled!\n");
+		FERROR("Message was sent through websockets or there is no valid Apple APNS certyficate!\n");
 	}
 	FFree( jsonMessage );
 	
@@ -1242,7 +1246,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 {
 	if( username == NULL )
 	{
-		Log( FLOG_ERROR, "MobileAppNotifyUserUpdate: Username is NULL!\n");
+		Log( FLOG_ERROR, "[MobileAppNotifyUserUpdate]: Username is NULL!\n");
 		return 1;
 	}
 	SystemBase *sb = (SystemBase *)lsb;
@@ -1406,18 +1410,18 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 		//
 		else if( action == NOTIFY_ACTION_TIMEOUT )
 		{
+			/*
 			switch( notif->n_NotificationType )
 			{
 				case MN_force_all_devices:
+					*/
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					DEBUG("Send to %d\n", i );
+					DEBUG("[MobileAppNotifyUserUpdate]: Send to %d\n", i );
 					
 					// connection which was sending timeout 
 					if( userConnections->umac_Connection[i] )
 					{
-						DEBUG("Connection not null\n");
-						
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
@@ -1439,7 +1443,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						if( userConnections->umac_Connection[i] != NULL )
 						{
-							DEBUG("Connection pointer: %p\n", userConnections->umac_Connection[i] );
+							DEBUG("[MobileAppNotifyUserUpdate]: Connection pointer: %p\n", userConnections->umac_Connection[i] );
 							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 							if( notif->n_Extra )
@@ -1460,6 +1464,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						NotificationSentDelete( lns );
 					}
+					/*
 				}
 				break;
 
@@ -1513,6 +1518,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				break;
 				default: FERROR("**************** UNIMPLEMENTED %d\n", notif->n_NotificationType );
 			}
+			*/
 		}
 		
 		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
@@ -1531,7 +1537,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 	
-	DEBUG("NotifyUser: send message to other mobile apps\n");
+	DEBUG("[MobileAppNotifyUserUpdate]: send message to other mobile apps\n");
 	
 	char *jsonMessageIOS;
 	int jsonMessageIosLength = reqLengith+512;
@@ -1613,7 +1619,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	}
 	else
 	{
-		INFO("No connection to APNS server!\n");
+		INFO("[MobileAppNotifyUserUpdate]: No APNS notification certyficate!\n");
 	}
 	
 	FFree( jsonMessage );

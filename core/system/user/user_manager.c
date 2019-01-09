@@ -533,6 +533,9 @@ User *UMUserGetByName( UserManager *um, const char *name )
 		}
 		user = (User *)user->node.mln_Succ;
 	}
+	
+	sb->LibrarySQLDrop( sb, sqlLib );
+	
 	return user;
 }
 
@@ -635,13 +638,6 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( sqlLib == NULL )
-	{
-		FERROR("Cannot create user, mysql.library was not opened!\n");
-		return 1;
-	}
 	
 	if( usr == NULL )
 	{
@@ -651,9 +647,9 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	if( UMUserExistByNameDB( smgr, usr->u_Name ) == TRUE )
 	{
 		DEBUG("[UMUserCreate]: user exist already!\n");
-		sb->LibrarySQLDrop( sb, sqlLib );
 		return 1;
 	}
+	
 	time_t timestamp = time ( NULL );
 	
 	if( usr->u_Name != NULL )
@@ -703,6 +699,13 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 	
 	GenerateUUID( &( usr->u_UUID ) );
 
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	if( sqlLib == NULL )
+	{
+		FERROR("Cannot create user, mysql.library was not opened!\n");
+		return 1;
+	}
 	int val = sqlLib->Save( sqlLib, UserDesc, usr );
 	sb->LibrarySQLDrop( sb, sqlLib );
 	
@@ -897,13 +900,6 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 		where[ 0 ] = 0;
 	
 		DEBUG("[UMGetUserByNameDB] start\n");
-	
-		if( sqlLib == NULL )
-		{
-			FERROR("Cannot get user, mysql.library was not open\n");
-			sb->LibrarySQLDrop( sb, sqlLib );
-			return NULL;
-		}
 
 		sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `Name` = '%s'", name );
 	
@@ -981,7 +977,7 @@ FULONG UMGetUserIDByName( UserManager *um, const char *name )
 		SystemBase *sb = (SystemBase *)um->um_SB;
 		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
-		if( sqlLib )
+		if( sqlLib != NULL )
 		{
 			FULONG id = 0;
 			DEBUG("[UMGetUserIDByName] %s\n", name );
@@ -1069,7 +1065,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
-	if( sqlLib && sqlLib->con.sql_Con )
+	if( sqlLib != NULL )
 	{
 		DEBUG("[UMUserGetByAuthIDDB] %s\n", authId );
 		// temporary solution, using MYSQL connection
@@ -1098,6 +1094,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 					}
 					
 					sqlLib->FreeResult( sqlLib, result );
+					sb->LibrarySQLDrop( sb, sqlLib );
 					return user;
 				}
 			}
@@ -1415,7 +1412,6 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 
 		int entries;
 		user = sqlLib->Load( sqlLib, UserDesc, "Name = 'apiuser'", &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
 
 		if( user != NULL )
 		{
@@ -1430,6 +1426,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			
 			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID = '%s' WHERE`ID` = '%ld'",  user->u_MainSessionID, user->u_ID );
 			sqlLib->QueryWithoutResults( sqlLib, temptext );
+			sb->LibrarySQLDrop( sb, sqlLib );
 			
 			DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
 			UMAssignGroupToUser( um, user );
@@ -1447,6 +1444,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			
 			return 0;
 		}
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return 1;
 }
