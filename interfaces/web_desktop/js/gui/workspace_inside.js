@@ -7624,11 +7624,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			Say( "We are active!" );
 			document.body.classList.add( 'ViewStateActive' );
+			
+			var randr = Math.round( Math.random() * 255 );
+			var randg = Math.round( Math.random() * 255 );
+			var randb = Math.round( Math.random() * 255 );
+			document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
 		}
 		else
 		{
 			Say( "We are inactive!" );
 			document.body.classList.remove( 'ViewStateActive' );
+
+			var randr = 255;
+			var randg = '0';
+			var randb = '0';
+			blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
 
 			// Close websocket on mobile app
 			if( isMobile && window.friendApp )
@@ -8468,12 +8478,29 @@ if( window.friendApp )
 document.addEventListener( 'visibilitychange' , function(){
 	if (document.hidden)
 	{
-		Say( "We are hidden!" );
+		Workspace.updateViewState( 'inactive' );
 	} 
 	else 
 	{
-		Say( "We are showing!" );
+		Workspace.updateViewState( 'active' );
 	}
 }, false );
+
+if( isMobile )
+{
+	var blob = document.createElement( 'div' );
+	var randr = Math.round( Math.random() * 255 );
+	var randg = Math.round( Math.random() * 255 );
+	var randb = Math.round( Math.random() * 255 );
+	blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+	blob.style.top = '250px';
+	blob.style.width = '40px';
+	blob.style.height = '40px';
+	blob.style.left = '20px';
+	blob.style.position = 'absolute';
+	blob.style.zIndex = 10000000;
+	document.body.blob = blob;
+	document.body.appendChild( blob );
+}
 
 
