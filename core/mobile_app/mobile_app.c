@@ -1035,6 +1035,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	
+	BufString *bsMobileReceivedMessage = BufStringNew();
 	//unsigned int jsonMessageLength = strlen( jsonMessage + LWS_PRE);
 	// if message was already sent
 	// this means that user got msg on Workspace
@@ -1045,9 +1046,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		// and action is register
 		if( wsMessageSent == FALSE )
 		{
-			switch( notification_type )
-			{
-				case MN_force_all_devices:
+			//switch( notification_type )
+			//{
+			//	case MN_force_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
 					DEBUG("force all , conptr %p\n", userConnections->umac_Connection[i]);
@@ -1061,6 +1062,19 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						int msgSendLength;
+						
+						if( bsMobileReceivedMessage->bs_Size == 0 )
+						{
+							char number[ 128 ];
+							int numsize = snprintf( number, sizeof(number), "%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
+							BufStringAddSize( bsMobileReceivedMessage, number, numsize );
+						}
+						else
+						{
+							char number[ 128 ];
+							int numsize = snprintf( number, sizeof(number), ",%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
+							BufStringAddSize( bsMobileReceivedMessage, number, numsize );
+						}
 						
 #ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
@@ -1094,8 +1108,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						notif->n_NotificationsSent = lns;
 					}
 				}
-				break;
-
+				//break;
+/*
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
@@ -1144,7 +1158,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				}
 				break;
 				default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
-			}
+			}*/
 		}
 		// wsMessageSent == FALSE
 		
@@ -1158,6 +1172,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		DEBUG("User <%s> does not have any app WS connections\n", username );
 	}
+	
+	BufStringDelete( bsMobileReceivedMessage );
 	
 	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
@@ -1186,15 +1202,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 				
 				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
-				/*
-				DEBUG("Send message to device %s\n", lma->uma_Platform );
-				int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
-			
-				WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, jsonMessageIOS, msgsize );
-				*/
-				
-				//NotificationSentDelete( lns );
-				// add NotificationSent to Notification
+
 				lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 				notif->n_NotificationsSent = lns;
 				
