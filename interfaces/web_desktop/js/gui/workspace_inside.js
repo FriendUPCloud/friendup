@@ -7622,8 +7622,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( newState == 'active' )
 		{
-			if( window.Say )
-				Say( "We are active!" );
 			document.body.classList.add( 'ViewStateActive' );
 			
 			if( document.body.blob )
@@ -7636,8 +7634,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		else
 		{
-			if( window.Say )
-				Say( "We are inactive!" );
 			document.body.classList.remove( 'ViewStateActive' );
 
 			if( document.body.blob )
