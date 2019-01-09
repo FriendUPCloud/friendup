@@ -7637,10 +7637,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			document.body.classList.remove( 'ViewStateActive' );
 
 			// Close websocket on mobile app
-			if( isMobile )
-			{
-				this.conn.close();
-				
+			if( isMobile && window.friendApp )
+			{				
 				if( document.body.blob )
 				{
 					var randr = Math.round( Math.random() * 255 );
@@ -7648,6 +7646,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					var randb = Math.round( Math.random() * 255 );
 					document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
 				}
+				this.conn.close();
 			}
 		}
 		this.currentViewState = newState;
