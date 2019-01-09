@@ -137,23 +137,25 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	struct UserSession *usersession = NULL;
 	char tmpQuery[ 1024 ];
 	
-	if( sqlLib == NULL )
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	if( sqlLib != NULL )
+	{
+		int entries = 0;
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", id );
+	
+		DEBUG( "[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
+
+		usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
-	
-	int entries = 0;
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", id );
-	
-	DEBUG( "[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
-
-	usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
-	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	DEBUG("[USMGetSessionBySessionIDFromDB] end\n");
 	return usersession;
@@ -195,27 +197,28 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *devid, FULONG uid )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	struct UserSession *usersession = NULL;
 	char tmpQuery[ 1024 ];
 	
-	if( sqlLib == NULL )
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	if( sqlLib != NULL )
+	{
+		int entries = 0;
+		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," ( DeviceIdentity='%s' AND UserID = %ld )", devid, uid );
+	
+		DEBUG( "[USMGetSessionByDeviceIDandUserDB] Sending query: %s...\n", tmpQuery );
+	
+		// You added 'where' and on the end you did not used it??
+	
+		//usersession = ( UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, NULL, &entries );
+		usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
+		sb->LibrarySQLDrop( sb, sqlLib );	
+	}
+	else
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
-	
-	int entries = 0;
-	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," ( DeviceIdentity='%s' AND UserID = %ld )", devid, uid );
-	
-	DEBUG( "[USMGetSessionByDeviceIDandUserDB] Sending query: %s...\n", tmpQuery );
-	
-	// You added 'where' and on the end you did not used it??
-	
-	//usersession = ( UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, NULL, &entries );
-	usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
-	sb->LibrarySQLDrop( sb, sqlLib );
-	
 	DEBUG("[USMGetSessionByDeviceIDandUserDB] end\n");
 	return usersession;
 }
@@ -282,12 +285,12 @@ void USMLogUsersAndDevices( UserSessionManager *usm )
 UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG timeout )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	time_t timestamp = time ( NULL );
 	struct UserSession *usersession = NULL;
 	int entries = 0;
 	char tmpQuery[ 1024 ];
 	
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");

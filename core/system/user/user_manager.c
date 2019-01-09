@@ -419,15 +419,17 @@ int UMUserUpdateDB( UserManager *um, User *usr )
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
-	if( sqlLib == NULL )
+	if( sqlLib != NULL )
+	{
+		sqlLib->Update( sqlLib, UserDesc, usr );
+	
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
 		return 1;
 	}
-	
-	sqlLib->Update( sqlLib, UserDesc, usr );
-	
-	sb->LibrarySQLDrop( sb, sqlLib );
 	return 0;
 }
 
@@ -701,14 +703,17 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
-	if( sqlLib == NULL )
+	int val = 0;
+	if( sqlLib != NULL )
+	{
+		val = sqlLib->Save( sqlLib, UserDesc, usr );
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
 	{
 		FERROR("Cannot create user, mysql.library was not opened!\n");
 		return 1;
 	}
-	int val = sqlLib->Save( sqlLib, UserDesc, usr );
-	sb->LibrarySQLDrop( sb, sqlLib );
-	
 	return val;
 }
 
@@ -1020,12 +1025,12 @@ FULONG UMGetUserIDByName( UserManager *um, const char *name )
 User *UMGetUserByIDDB( UserManager *um, FULONG id )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	char where[ 128 ];
 	where[ 0 ] = 0;
 	
 	DEBUG("[UMGetUserByNameDB] start\n");
 	
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
@@ -1086,23 +1091,20 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 				user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
 				if( user != NULL )
 				{
-					sb->LibrarySQLDrop( sb, sqlLib );
-					{
-						UMAssignGroupToUser( um, user );
-						UMAssignApplicationsToUser( um, user );
-						user->u_MountedDevs = NULL;
-					}
-					
 					sqlLib->FreeResult( sqlLib, result );
 					sb->LibrarySQLDrop( sb, sqlLib );
+
+					UMAssignGroupToUser( um, user );
+					UMAssignApplicationsToUser( um, user );
+					user->u_MountedDevs = NULL;
+					
 					return user;
 				}
 			}
 			sqlLib->FreeResult( sqlLib, result );
 		}
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
-	
-	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	return NULL;
 }
@@ -1273,11 +1275,11 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 {
 	UserLogin ul;
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	User *usr = UMGetUserByNameDB( um, name );
 	
 	DEBUG("[UMStoreLoginAttempt] start\n");
 	
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
 	{
 		ul.ul_Login = (char *)name;
@@ -1444,7 +1446,10 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			
 			return 0;
 		}
-		sb->LibrarySQLDrop( sb, sqlLib );
+		else
+		{
+			sb->LibrarySQLDrop( sb, sqlLib );
+		}
 	}
 	return 1;
 }
