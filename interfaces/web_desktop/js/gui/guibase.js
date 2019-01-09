@@ -3150,8 +3150,62 @@ function Notify( msg, callback, clickcallback )
 		application: msg.application
 	};
 	
+	// Not active?
+	if( Workspace.currentViewState != 'active' )
+	{
+		// Use native app
+		if( window.friendApp )
+		{
+			return;
+		}
+		if( window.Notification )
+		{
+			// Desktop notifications
+			function showNotification()
+			{
+				var not = new Notification( 
+					msg.title + "\n" + ( msg.text ? msg.text : '' )
+				);
+				not.onshow = function( e )
+				{
+					if( msg.notificationId )
+					{
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.notificationId, 
+							action: 1
+						} );
+					}
+					if( callback ) callback();
+				}
+				not.onclick = function( e )
+				{
+					window.focus();
+					clickcallback( e );
+				}
+			}
+			if( Notification.permission === 'granted' )
+			{
+				showNotification();
+			}
+			else if( Notification.permission !== 'denied' )
+			{
+				Notification.requestPermission().then( function( permission )
+				{
+					if( permission === 'granted' )
+					{
+						showNotification();
+					}
+				} );
+			}
+			return;
+		}
+	}
+	
 	if( !msg.text ) msg.text = 'untexted';
 	if( !msg.title ) msg.title = 'untitled';
+	
 	
 	// Add dom element
 	var d = document.createElement( 'div' );

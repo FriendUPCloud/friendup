@@ -677,6 +677,17 @@ var WorkspaceInside = {
 			{
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
+					// Cancel push notification on the server
+					var l = new Library( 'system.library' );
+					l.onExecuted = function(){};
+					l.execute( 'mobile/updatenotification', { 
+						notifid: msg.notificationData.id, 
+						action: 1
+					} );
+					if( window.Say )
+					{
+						window.Say( 'New ' + msg.notificationData.application + ' message.' );
+					}
 					// Revert to push notifications on the OS side
 					//if( window.friendApp.handleNotification )
 					//	window.friendApp.handleNotification( msg );
@@ -7618,56 +7629,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
-			
-			/*if( document.body.blob )
-			{
-				var randr = '0';
-				var randg = '255';
-				var randb = '0';
-				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
-			}*/
 		}
 		else
 		{
 			document.body.classList.remove( 'ViewStateActive' );
-
-			// Close websocket on mobile app
-			if( isMobile && window.friendApp )
-			{				
-				try
-				{
-					if( document.body.blob )
-					{
-						var randr = Math.round( Math.random() * 255 );
-						var randg = Math.round( Math.random() * 255 );
-						var randb = Math.round( Math.random() * 255 );
-						document.body.blob.style.backgroundColor = 'silver';
-						document.body.blob.innerHTML = 'close';
-					}
-					Workspace.conn.close();
-				}
-				catch( ez )
-				{
-					try
-					{
-						if( document.body.blob )
-						{
-							document.body.blob.style.backgroundColor = 'yellow';
-							document.body.blob.innerHTML = 'cleanup';
-						}
-						Workspace.conn.cleanup();
-					}
-					catch( ez2 )
-					{
-						if( document.body.blob )
-						{
-							document.body.blob.style.backgroundColor = 'purple';
-							document.body.blob.innerHTML = ez.message + ' | ' + ez2.message;
-						}
-					}
-				}
-				delete Workspace.conn;
-			}
 		}
 		this.currentViewState = newState;
 	}
@@ -8426,6 +8391,7 @@ if( window.friendApp )
 					app.contentWindow.postMessage( JSON.stringify( { 
 						type: 'system',
 						method: 'notification',
+						source: 'pushnotification',
 						callback: false,
 						data: msg
 					} ), '*' );
@@ -8472,6 +8438,7 @@ if( window.friendApp )
 				var amsg = {
 					type: 'system',
 					method: 'notification',
+					source: 'pushnotification',
 					callback: addWrapperCallback( notificationRead ),
 					data: msg
 				};
