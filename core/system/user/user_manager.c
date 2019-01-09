@@ -889,32 +889,37 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	char where[ 128 ];
-	where[ 0 ] = 0;
+	User *user = NULL;
 	
-	DEBUG("[UMGetUserByNameDB] start\n");
-	
-	if( sqlLib == NULL )
+	if( sqlLib != NULL )
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
-		return NULL;
-	}
+		char where[ 256 ];
+		where[ 0 ] = 0;
+	
+		DEBUG("[UMGetUserByNameDB] start\n");
+	
+		if( sqlLib == NULL )
+		{
+			FERROR("Cannot get user, mysql.library was not open\n");
+			sb->LibrarySQLDrop( sb, sqlLib );
+			return NULL;
+		}
 
-	sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `Name` = '%s'", name );
+		sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `Name` = '%s'", name );
 	
-	struct User *user = NULL;
-	int entries;
+		int entries;
 	
-	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
-	sb->LibrarySQLDrop( sb, sqlLib );
-	
-	User *tmp = user;
-	while( tmp != NULL )
-	{
-		UMAssignGroupToUser( um, tmp );
-		UMAssignApplicationsToUser( um, tmp );
+		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
+		sb->LibrarySQLDrop( sb, sqlLib );
+
+		User *tmp = user;
+		while( tmp != NULL )
+		{
+			UMAssignGroupToUser( um, tmp );
+			UMAssignApplicationsToUser( um, tmp );
 		
-		tmp = (User *)tmp->node.mln_Succ;
+			tmp = (User *)tmp->node.mln_Succ;
+		}
 	}
 	
 	DEBUG("[UMGetUserByNameDB] end\n");
