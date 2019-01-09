@@ -380,7 +380,7 @@ var WorkspaceMenu =
 				{
 					menuItems.push( {
 						name: i18n( 'i18n_close' ),
-						command: 'quit'
+						command: 'close'
 					} );
 				}
 				else
@@ -459,7 +459,15 @@ var WorkspaceMenu =
 					n.setAttribute( 'icon', menuItems[i].icon );
 				}
 				d = n;
-				if( menuItems[ i ].command == 'quit' )
+				if( menuItems[ i ].command == 'close' )
+				{
+					n.onclick = function()
+					{
+						currentMovable.windowObject.close();
+						Workspace.exitMobileMenu();
+					}
+				}
+				else if( menuItems[ i ].command == 'quit' )
 				{
 					n.appid = appid;
 					n.onclick = function()

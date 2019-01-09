@@ -667,7 +667,7 @@ var WorkspaceInside = {
 					}
 					return;
 				}
-				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
+				//console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
 		}
 		// Handle incoming push notifications and server notifications
@@ -677,8 +677,9 @@ var WorkspaceInside = {
 			{
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
-					if( window.friendApp.handleNotification )
-						window.friendApp.handleNotification( msg );
+					// Revert to push notifications on the OS side
+					//if( window.friendApp.handleNotification )
+					//	window.friendApp.handleNotification( msg );
 					return;
 				}
 			}
@@ -735,6 +736,10 @@ var WorkspaceInside = {
 								}, 1000 );
 								
 							} )( apps[ a ], msg.notificationData );
+							if( document.body.blob )
+							{
+								document.body.blob.innerHTML = 'Sent to application, return';
+							}
 							return;
 						}
 					}
@@ -7622,10 +7627,56 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
+			
+			/*if( document.body.blob )
+			{
+				var randr = '0';
+				var randg = '255';
+				var randb = '0';
+				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+			}*/
 		}
 		else
 		{
 			document.body.classList.remove( 'ViewStateActive' );
+
+			// Close websocket on mobile app
+			if( isMobile && window.friendApp )
+			{				
+				try
+				{
+					if( document.body.blob )
+					{
+						var randr = Math.round( Math.random() * 255 );
+						var randg = Math.round( Math.random() * 255 );
+						var randb = Math.round( Math.random() * 255 );
+						document.body.blob.style.backgroundColor = 'silver';
+						document.body.blob.innerHTML = 'close';
+					}
+					Workspace.conn.close();
+				}
+				catch( ez )
+				{
+					try
+					{
+						if( document.body.blob )
+						{
+							document.body.blob.style.backgroundColor = 'yellow';
+							document.body.blob.innerHTML = 'cleanup';
+						}
+						Workspace.conn.cleanup();
+					}
+					catch( ez2 )
+					{
+						if( document.body.blob )
+						{
+							document.body.blob.style.backgroundColor = 'purple';
+							document.body.blob.innerHTML = ez.message + ' | ' + ez2.message;
+						}
+					}
+				}
+				delete Workspace.conn;
+			}
 		}
 		this.currentViewState = newState;
 	}
@@ -8391,6 +8442,18 @@ if( window.friendApp )
 				}
 			}
 			
+			// Function to set the notification as read...
+			function notificationRead()
+			{
+				messageRead = true;
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.id, 
+					action: 1
+				} );
+			}
+			
 			// Application not found? Start it!
 			// Send message to app once it has started...
 			function appMessage()
@@ -8407,8 +8470,6 @@ if( window.friendApp )
 					}
 				}
 				
-				Notify( { title: 'We found the app', text: app.applicationName } );
-				
 				// No application? Alert the user
 				// TODO: Localize response!
 				if( !app )
@@ -8423,8 +8484,6 @@ if( window.friendApp )
 					callback: addWrapperCallback( notificationRead ),
 					data: msg
 				};
-				
-				Notify( { title: 'Successfully', text: JSON.stringify( amsg.extra ) } );
 				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 				
@@ -8441,8 +8500,36 @@ if( window.friendApp )
 		}
 		catch( e )
 		{
-			Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
+			// Do nothing for now...
+			//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 		}
 	}
 }
+
+// TODO: Remove me after test
+document.addEventListener( 'visibilitychange' , function(){
+	if (document.hidden)
+	{
+		Workspace.updateViewState( 'inactive' );
+	} 
+	else 
+	{
+		Workspace.updateViewState( 'active' );
+	}
+}, false );
+
+if( isMobile )
+{
+	var blob = document.createElement( 'div' );
+	blob.style.backgroundColor = 'green';
+	blob.style.top = '250px';
+	blob.style.width = '200px';
+	blob.style.height = '100px';
+	blob.style.left = '20px';
+	blob.style.position = 'absolute';
+	blob.style.zIndex = 10000000;
+	document.body.blob = blob;
+	document.body.appendChild( blob );
+}
+
 
