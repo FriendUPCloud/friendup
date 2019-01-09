@@ -8476,4 +8476,14 @@ document.addEventListener( 'visibilitychange' , function(){
 	}
 }, false );
 
+if( isMobile )
+{
+	var blob = document.createElement( 'div' );
+	var randr = Math.round( Math.random() * 255 );
+	var randg = Math.round( Math.random() * 255 );
+	var randb = Math.round( Math.random() * 255 );
+	blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+	document.body.appendChild( blob );
+}
+
 
