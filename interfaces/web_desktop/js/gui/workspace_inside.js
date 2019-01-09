@@ -8390,8 +8390,7 @@ if( window.friendApp )
 					var app = Workspace.applications[a];
 					app.contentWindow.postMessage( JSON.stringify( { 
 						type: 'system',
-						method: 'notification',
-						source: 'pushnotification',
+						method: 'pushnotification',
 						callback: false,
 						data: msg
 					} ), '*' );
@@ -8437,8 +8436,7 @@ if( window.friendApp )
 				
 				var amsg = {
 					type: 'system',
-					method: 'notification',
-					source: 'pushnotification',
+					method: 'pushnotification',
 					callback: addWrapperCallback( notificationRead ),
 					data: msg
 				};
