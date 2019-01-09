@@ -15,7 +15,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var mainview = false;
 	var multiSelect = true;
 	var defaultPath = 'Home:';
-	if( path && path.toLowerCase() == 'Mountlist:' )
+	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
 	}
