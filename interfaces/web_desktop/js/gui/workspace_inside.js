@@ -7626,9 +7626,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			if( document.body.blob )
 			{
-				var randr = Math.round( Math.random() * 255 );
-				var randg = Math.round( Math.random() * 255 );
-				var randb = Math.round( Math.random() * 255 );
+				var randr = '0';
+				var randg = '255';
+				var randb = '0';
 				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
 			}
 		}
@@ -7638,12 +7638,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			if( document.body.blob )
 			{
-				var randr = 255;
-				var randg = '0';
-				var randb = '0';
+				var randr = Math.round( Math.random() * 255 );
+				var randg = Math.round( Math.random() * 255 );
+				var randb = Math.round( Math.random() * 255 );
 				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
 			}
-
+			
 			// Close websocket on mobile app
 			if( isMobile && window.friendApp )
 			{
