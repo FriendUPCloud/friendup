@@ -667,7 +667,7 @@ var WorkspaceInside = {
 					}
 					return;
 				}
-				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
+				//console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
 		}
 		// Handle incoming push notifications and server notifications
@@ -677,8 +677,12 @@ var WorkspaceInside = {
 			{
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
-					if( window.friendApp.handleNotification )
-						window.friendApp.handleNotification( msg );
+					// Close websocket
+					this.conn.close();
+					
+					// Revert to push notifications on the OS side
+					//if( window.friendApp.handleNotification )
+					//	window.friendApp.handleNotification( msg );
 					return;
 				}
 			}
