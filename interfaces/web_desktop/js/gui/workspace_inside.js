@@ -7624,13 +7624,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.add( 'ViewStateActive' );
 			
-			if( document.body.blob )
+			/*if( document.body.blob )
 			{
 				var randr = '0';
 				var randg = '255';
 				var randb = '0';
 				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
-			}
+			}*/
 		}
 		else
 		{
@@ -8493,10 +8493,7 @@ document.addEventListener( 'visibilitychange' , function(){
 if( isMobile )
 {
 	var blob = document.createElement( 'div' );
-	var randr = Math.round( Math.random() * 255 );
-	var randg = Math.round( Math.random() * 255 );
-	var randb = Math.round( Math.random() * 255 );
-	blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+	blob.style.backgroundColor = 'green';
 	blob.style.top = '250px';
 	blob.style.width = '40px';
 	blob.style.height = '40px';
