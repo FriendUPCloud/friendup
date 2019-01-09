@@ -3153,7 +3153,6 @@ function Notify( msg, callback, clickcallback )
 	if( !msg.text ) msg.text = 'untexted';
 	if( !msg.title ) msg.title = 'untitled';
 	
-	
 	// Add dom element
 	var d = document.createElement( 'div' );
 	d.className = msg.label ? 'PopInfo' : 'BubbleInfo';
@@ -3215,7 +3214,7 @@ function Notify( msg, callback, clickcallback )
 				if( n.parentNode )
 				{
 					n.close();
-					if( clickcallback )
+					if( clickcallback && mousePointer.candidate && mousePointer.candidate.el == n )
 						clickcallback( e )
 				}
 			} );
@@ -3245,6 +3244,17 @@ function Notify( msg, callback, clickcallback )
 					{
 						mousePointer.candidate = null;
 						n.close();
+						
+						// Function to set the notification as read...
+						if( msg.notificationId )
+						{
+							var l = new Library( 'system.library' );
+							l.onExecuted = function(){};
+							l.execute( 'mobile/updatenotification', { 
+								notifid: msg.notificationId, 
+								action: 1
+							} );
+						}
 					}
 				}
 			};
