@@ -8391,6 +8391,7 @@ if( window.friendApp )
 					app.contentWindow.postMessage( JSON.stringify( { 
 						type: 'system',
 						method: 'notification',
+						source: 'pushnotification',
 						callback: false,
 						data: msg
 					} ), '*' );
@@ -8437,6 +8438,7 @@ if( window.friendApp )
 				var amsg = {
 					type: 'system',
 					method: 'notification',
+					source: 'pushnotification',
 					callback: addWrapperCallback( notificationRead ),
 					data: msg
 				};
