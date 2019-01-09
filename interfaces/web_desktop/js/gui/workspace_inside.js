@@ -7647,6 +7647,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var randg = Math.round( Math.random() * 255 );
 						var randb = Math.round( Math.random() * 255 );
 						document.body.blob.style.backgroundColor = 'silver';
+						document.body.blob.innerHTML = 'close';
 					}
 					Workspace.conn.close();
 				}
@@ -7657,6 +7658,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( document.body.blob )
 						{
 							document.body.blob.style.backgroundColor = 'yellow';
+							document.body.blob.innerHTML = 'cleanup';
 						}
 						Workspace.conn.cleanup();
 					}
@@ -7667,7 +7669,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							document.body.blob.style.backgroundColor = 'purple';
 							document.body.blob.innerHTML = ez.message + ' | ' + ez2.message;
 						}
-						console.log( 'Conn is dead.', ez, ez2 );
 					}
 				}
 				delete Workspace.conn;
