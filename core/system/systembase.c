@@ -2511,7 +2511,14 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 
 				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 				{
-					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					if( wsc->wsc_Wsi != NULL )
+					{
+						bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					}
+					else
+					{
+						FERROR("Cannot write to WS, WSI is NULL!\n");
+					}
 
 					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				}
