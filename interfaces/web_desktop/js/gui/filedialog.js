@@ -15,7 +15,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var mainview = false;
 	var multiSelect = true;
 	var defaultPath = 'Home:';
-	if( path && path.toLowerCase() == 'Mountlist:' )
+	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
 	}
@@ -192,7 +192,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				p += '/' + fname;
 			else p += fname;
 			
-			console.log( 'Triggering with path: ' + p );
 			triggerfunction( p );
 			w.close();
 			return;
@@ -200,7 +199,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		
 		if( ele && ele.obj )
 		{
-			console.log( 'With obj: ', ele.obj );
 			triggerfunction ( [ ele.obj ] );
 			w.close ();
 			return;
@@ -224,14 +222,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 		if( out.length )
 		{
-			console.log( 'Much more: ', out );
 			triggerfunction( out );
 		}
 		else
 		{
 			if( dialog.type == 'path' )
 			{
-				console.log( 'Going with path: ' + dialog.path );
 				triggerfunction( dialog.path );
 			}
 			else

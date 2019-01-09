@@ -8390,8 +8390,7 @@ if( window.friendApp )
 					var app = Workspace.applications[a];
 					app.contentWindow.postMessage( JSON.stringify( { 
 						type: 'system',
-						method: 'notification',
-						source: 'pushnotification',
+						method: 'pushnotification',
 						callback: false,
 						data: msg
 					} ), '*' );
@@ -8437,8 +8436,7 @@ if( window.friendApp )
 				
 				var amsg = {
 					type: 'system',
-					method: 'notification',
-					source: 'pushnotification',
+					method: 'pushnotification',
 					callback: addWrapperCallback( notificationRead ),
 					data: msg
 				};
@@ -8476,6 +8474,8 @@ document.addEventListener( 'visibilitychange' , function(){
 	}
 }, false );
 
+/*
+// Debug blob:
 if( isMobile )
 {
 	var blob = document.createElement( 'div' );
@@ -8488,6 +8488,6 @@ if( isMobile )
 	blob.style.zIndex = 10000000;
 	document.body.blob = blob;
 	document.body.appendChild( blob );
-}
+}*/
 
 
