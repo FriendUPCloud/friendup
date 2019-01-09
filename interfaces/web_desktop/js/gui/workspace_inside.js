@@ -7665,6 +7665,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( document.body.blob )
 						{
 							document.body.blob.style.backgroundColor = 'purple';
+							document.body.blob.innerHTML = ez.message + ' | ' + ez2.message;
 						}
 						console.log( 'Conn is dead.', ez, ez2 );
 					}
@@ -8517,8 +8518,8 @@ if( isMobile )
 	var blob = document.createElement( 'div' );
 	blob.style.backgroundColor = 'green';
 	blob.style.top = '250px';
-	blob.style.width = '40px';
-	blob.style.height = '40px';
+	blob.style.width = '200px';
+	blob.style.height = '100px';
 	blob.style.left = '20px';
 	blob.style.position = 'absolute';
 	blob.style.zIndex = 10000000;
