@@ -1517,8 +1517,9 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				}
 				break;
 				default: FERROR("**************** UNIMPLEMENTED %d\n", notif->n_NotificationType );
+				*/
 			}
-			*/
+			
 		}
 		
 		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
@@ -1619,7 +1620,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	}
 	else
 	{
-		INFO("[MobileAppNotifyUserUpdate]: No APNS notification certyficate!\n");
+		INFO("[MobileAppNotifyUserUpdate]: No A!\n");
 	}
 	
 	FFree( jsonMessage );
