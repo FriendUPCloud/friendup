@@ -7628,8 +7628,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.remove( 'ViewStateActive' );
 
-			// Close websocket
-			this.conn.close();
+			// Close websocket on mobile app
+			if( isMobile && window.friendApp )
+			{
+				this.conn.close();
+			}
 		}
 		this.currentViewState = newState;
 	}
