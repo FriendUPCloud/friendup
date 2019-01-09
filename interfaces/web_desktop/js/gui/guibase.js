@@ -3151,8 +3151,8 @@ function Notify( msg, callback, clickcallback )
 	};
 	
 	// Not active?
-	//if( Workspace.currentViewState != 'active' )
-	//{
+	if( Workspace.currentViewState != 'active' )
+	{
 		// Use native app
 		if( window.friendApp )
 		{
@@ -3164,27 +3164,25 @@ function Notify( msg, callback, clickcallback )
 			function showNotification()
 			{
 				var not = new Notification( 
-					msg.title + "\n" + ( msg.text ? msg.text : '' ),
-					{
-						onshow: function()
-						{
-							if( msg.notificationId )
-							{
-								var l = new Library( 'system.library' );
-								l.onExecuted = function(){};
-								l.execute( 'mobile/updatenotification', { 
-									notifid: msg.notificationId, 
-									action: 1
-								} );
-							}
-							if( callback ) callback();
-						},
-						onclick: function()
-						{
-							clickcallback();
-						}
-					}
+					msg.title + "\n" + ( msg.text ? msg.text : '' )
 				);
+				not.onshow = function( e )
+				{
+					if( msg.notificationId )
+					{
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.notificationId, 
+							action: 1
+						} );
+					}
+					if( callback ) callback();
+				}
+				not.onclick = function( e )
+				{
+					clickcallback( e );
+				}
 			}
 			if( Notification.permission === 'granted' )
 			{
@@ -3202,7 +3200,7 @@ function Notify( msg, callback, clickcallback )
 			}
 			return;
 		}
-	//}
+	}
 	
 	if( !msg.text ) msg.text = 'untexted';
 	if( !msg.title ) msg.title = 'untitled';
