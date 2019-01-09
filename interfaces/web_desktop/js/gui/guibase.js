@@ -3150,8 +3150,96 @@ function Notify( msg, callback, clickcallback )
 		application: msg.application
 	};
 	
+	// Not active?
+	//if( Workspace.currentViewState != 'active' )
+	//{
+		// Use native app
+		if( window.friendApp )
+		{
+			return;
+		}
+		if( window.Notification )
+		{
+			// Desktop notifications
+			function showNotification()
+			{
+				var not = new Notification( 
+					msg.title + "\n" + ( msg.text ? msg.text : '' ),
+					{
+						onshow: function()
+						{
+							if( msg.notificationId )
+							{
+								var l = new Library( 'system.library' );
+								l.onExecuted = function(){};
+								l.execute( 'mobile/updatenotification', { 
+									notifid: msg.notificationId, 
+									action: 1
+								} );
+							}
+							if( callback ) callback();
+						},
+						onclick: function()
+						{
+							clickcallback();
+						}
+					}
+				);
+			}
+			if( Notification.permission === 'granted' )
+			{
+				showNotification();
+			}
+			else if( Notification.permission !== 'denied' )
+			{
+				Notification.requestPermission().then( function( permission )
+				{
+					if( permission === 'granted' )
+					{
+						showNotification();
+					}
+				} );
+			}
+			// Try chrome
+			else if( navigator.serviceWorker )
+			{
+				navigator.serviceWorker.register( 'sw.js' );
+		
+				navigator.serviceWorker.ready.then( function( registration )
+				{
+					registration.showNotification( msg.title + "\n" + ( msg.text ? msg.text : '' ),
+					{
+						/*body: options.body,
+						icon: options.icon,*/
+						vibrate: [200, 100, 200, 100, 200, 100, 200],
+						tag: 'vibration-sample',
+						onshow: function()
+						{
+							if( msg.notificationId )
+							{
+								var l = new Library( 'system.library' );
+								l.onExecuted = function(){};
+								l.execute( 'mobile/updatenotification', { 
+									notifid: msg.notificationId, 
+									action: 1
+								} );
+							}
+							if( callback ) callback();
+						},
+						onclick: function()
+						{
+							clickcallback();
+						}
+					});
+				});
+			}
+			return;
+		}
+	//}
+	
 	if( !msg.text ) msg.text = 'untexted';
 	if( !msg.title ) msg.title = 'untitled';
+	
 	
 	// Add dom element
 	var d = document.createElement( 'div' );
