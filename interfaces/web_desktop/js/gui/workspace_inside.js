@@ -7648,7 +7648,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var randb = Math.round( Math.random() * 255 );
 						document.body.blob.style.backgroundColor = 'silver';
 					}
-					this.conn.close();
+					Workspace.conn.close();
 				}
 				catch( ez )
 				{
@@ -7658,7 +7658,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							document.body.blob.style.backgroundColor = 'yellow';
 						}
-						this.conn.cleanup();
+						Workspace.conn.cleanup();
 					}
 					catch( ez2 )
 					{
@@ -7670,7 +7670,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						console.log( 'Conn is dead.', ez, ez2 );
 					}
 				}
-				delete this.conn;
+				delete Workspace.conn;
 			}
 		}
 		this.currentViewState = newState;
