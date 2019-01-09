@@ -583,7 +583,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
  * Get User structure from DB by id
  *
  * @param um pointer to UserManager
- * @param name user id
+ * @param id user id
  * @return User structure or NULL value when problem appear
  */
 User * UMUserGetByIDDB( UserManager *um, FULONG id )
