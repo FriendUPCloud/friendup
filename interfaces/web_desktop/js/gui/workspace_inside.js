@@ -7622,23 +7622,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( newState == 'active' )
 		{
-			Say( "We are active!" );
+			if( window.Say )
+				Say( "We are active!" );
 			document.body.classList.add( 'ViewStateActive' );
 			
-			var randr = Math.round( Math.random() * 255 );
-			var randg = Math.round( Math.random() * 255 );
-			var randb = Math.round( Math.random() * 255 );
-			document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+			if( document.body.blob )
+			{
+				var randr = Math.round( Math.random() * 255 );
+				var randg = Math.round( Math.random() * 255 );
+				var randb = Math.round( Math.random() * 255 );
+				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+			}
 		}
 		else
 		{
-			Say( "We are inactive!" );
+			if( window.Say )
+				Say( "We are inactive!" );
 			document.body.classList.remove( 'ViewStateActive' );
 
-			var randr = 255;
-			var randg = '0';
-			var randb = '0';
-			document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+			if( document.body.blob )
+			{
+				var randr = 255;
+				var randg = '0';
+				var randb = '0';
+				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+			}
 
 			// Close websocket on mobile app
 			if( isMobile && window.friendApp )
