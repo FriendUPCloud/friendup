@@ -3200,39 +3200,6 @@ function Notify( msg, callback, clickcallback )
 					}
 				} );
 			}
-			// Try chrome
-			else if( navigator.serviceWorker )
-			{
-				navigator.serviceWorker.register( 'sw.js' );
-		
-				navigator.serviceWorker.ready.then( function( registration )
-				{
-					registration.showNotification( msg.title + "\n" + ( msg.text ? msg.text : '' ),
-					{
-						/*body: options.body,
-						icon: options.icon,*/
-						vibrate: [200, 100, 200, 100, 200, 100, 200],
-						tag: 'vibration-sample',
-						onshow: function()
-						{
-							if( msg.notificationId )
-							{
-								var l = new Library( 'system.library' );
-								l.onExecuted = function(){};
-								l.execute( 'mobile/updatenotification', { 
-									notifid: msg.notificationId, 
-									action: 1
-								} );
-							}
-							if( callback ) callback();
-						},
-						onclick: function()
-						{
-							clickcallback();
-						}
-					});
-				});
-			}
 			return;
 		}
 	//}
