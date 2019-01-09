@@ -7636,18 +7636,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.remove( 'ViewStateActive' );
 
-			if( document.body.blob )
-			{
-				var randr = Math.round( Math.random() * 255 );
-				var randg = Math.round( Math.random() * 255 );
-				var randb = Math.round( Math.random() * 255 );
-				document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
-			}
-			
 			// Close websocket on mobile app
 			if( isMobile && window.friendApp )
 			{
 				this.conn.close();
+				
+				if( document.body.blob )
+				{
+					var randr = Math.round( Math.random() * 255 );
+					var randg = Math.round( Math.random() * 255 );
+					var randb = Math.round( Math.random() * 255 );
+					document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+				}
 			}
 		}
 		this.currentViewState = newState;
