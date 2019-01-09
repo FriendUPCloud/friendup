@@ -789,7 +789,7 @@ var WorkspaceInside = {
 					// TODO: If we are here, generate a clickable Workspace notification
 					var t_title = appName + ' - ' + msg.notificationData.title;
 					var t_txt = msg.notificationData.content;
-					Notify( { title: t_title, text: t_txt }, false, clickCallback );
+					Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
 					function clickCallback()
 					{
 						ExecuteApplication( appName, '', appMessage );
