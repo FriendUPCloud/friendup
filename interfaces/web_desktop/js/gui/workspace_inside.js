@@ -7637,7 +7637,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			document.body.classList.remove( 'ViewStateActive' );
 
 			// Close websocket on mobile app
-			if( isMobile && window.friendApp )
+			if( isMobile )
 			{
 				this.conn.close();
 				
