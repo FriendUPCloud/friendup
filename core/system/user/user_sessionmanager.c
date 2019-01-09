@@ -940,7 +940,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 			
 				DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
-				WebSocketSendMessage( sb, uses, tmpmsg, len );
+				sb->WebSocketSendMessage( sb, uses, tmpmsg, len );
 
 				RemoteUser *ruser = usr->u_RemoteUsers;
 				while( ruser != NULL )
