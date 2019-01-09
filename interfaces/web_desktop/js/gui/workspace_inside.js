@@ -7639,14 +7639,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Close websocket on mobile app
 			if( isMobile && window.friendApp )
 			{				
-				if( document.body.blob )
+				try
 				{
-					var randr = Math.round( Math.random() * 255 );
-					var randg = Math.round( Math.random() * 255 );
-					var randb = Math.round( Math.random() * 255 );
-					document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+					if( document.body.blob )
+					{
+						var randr = Math.round( Math.random() * 255 );
+						var randg = Math.round( Math.random() * 255 );
+						var randb = Math.round( Math.random() * 255 );
+						document.body.blob.style.backgroundColor = 'silver';
+					}
+					this.conn.close();
 				}
-				this.conn.close();
+				catch( ez )
+				{
+					try
+					{
+						if( document.body.blob )
+						{
+							document.body.blob.style.backgroundColor = 'yellow';
+						}
+						this.conn.cleanup();
+					}
+					catch( ez2 )
+					{
+						if( document.body.blob )
+						{
+							document.body.blob.style.backgroundColor = 'purple';
+						}
+						console.log( 'Conn is dead.', ez, ez2 );
+					}
+				}
+				delete this.conn;
 			}
 		}
 		this.currentViewState = newState;
