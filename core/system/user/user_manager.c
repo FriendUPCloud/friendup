@@ -155,9 +155,12 @@ void UMDelete( UserManager *smgr )
  * @param usr pointer to user structure to which groups will be assigned
  * @return 0 when success, otherwise error number
  */
+
+#define QUERY_SIZE 1024
+
 int UMAssignGroupToUser( UserManager *smgr, User *usr )
 {
-	char tmpQuery[ 512 ];
+	char *tmpQuery;
 	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
 	//sprintf( tmpQuery, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
@@ -166,12 +169,14 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 		return 1;
 	}
 	
+	tmpQuery = (char *)FCalloc( QUERY_SIZE, sizeof(char) );
+	
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 
 	if( sqlLib != NULL )
 	{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
+		sqlLib->SNPrintF( sqlLib, tmpQuery, QUERY_SIZE, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
 
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 	
@@ -206,14 +211,14 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 		if( usr->u_Groups != NULL )
 		{
 			int pos = 0;
-			FULONG ID = 0;
 			usr->u_GroupsNr = rows;
 		
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				DEBUG("[UMAssignGroupToUser] Going through loaded rows %d -> %s\n", j, row[ 0 ] );
 				{
-					FULONG gid = atol( row[ 0 ] );
+					char *end;
+					FULONG gid = strtol( (char *)row[0], &end, 0 );
 				
 					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
 				
@@ -249,6 +254,8 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
+	
+	FFree( tmpQuery );
 	
 	return 0;
 }
