@@ -7638,7 +7638,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var randr = 255;
 			var randg = '0';
 			var randb = '0';
-			blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
+			document.body.blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
 
 			// Close websocket on mobile app
 			if( isMobile && window.friendApp )
