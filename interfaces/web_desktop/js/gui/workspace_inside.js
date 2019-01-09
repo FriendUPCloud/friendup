@@ -736,6 +736,10 @@ var WorkspaceInside = {
 								}, 1000 );
 								
 							} )( apps[ a ], msg.notificationData );
+							if( document.body.blob )
+							{
+								document.body.blob.innerHTML = 'Sent to application, return';
+							}
 							return;
 						}
 					}
