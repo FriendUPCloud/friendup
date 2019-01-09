@@ -12,7 +12,7 @@
 class Door extends dbIO
 {	
 	// Construct a Door object
-	function Door( $path = false )
+	function __construct( $path = false )
 	{
 		global $SqlDatabase, $Logger;
 		
