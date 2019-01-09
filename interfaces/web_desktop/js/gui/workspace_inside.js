@@ -7622,10 +7622,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( newState == 'active' )
 		{
+			Say( "We are active!" );
 			document.body.classList.add( 'ViewStateActive' );
 		}
 		else
 		{
+			Say( "We are inactive!" );
 			document.body.classList.remove( 'ViewStateActive' );
 
 			// Close websocket on mobile app
@@ -8461,4 +8463,17 @@ if( window.friendApp )
 		}
 	}
 }
+
+// TODO: Remove me after test
+document.addEventListener( 'visibilitychange' , function(){
+	if (document.hidden)
+	{
+		Say( "We are hidden!" );
+	} 
+	else 
+	{
+		Say( "We are showing!" );
+	}
+}, false );
+
 
