@@ -8478,11 +8478,11 @@ if( window.friendApp )
 document.addEventListener( 'visibilitychange' , function(){
 	if (document.hidden)
 	{
-		Say( "We are hidden!" );
+		Workspace.updateViewState( 'inactive' );
 	} 
 	else 
 	{
-		Say( "We are showing!" );
+		Workspace.updateViewState( 'active' );
 	}
 }, false );
 
@@ -8494,7 +8494,11 @@ if( isMobile )
 	var randb = Math.round( Math.random() * 255 );
 	blob.style.backgroundColor = 'rgb(' + randr + ',' + randg + ',' + randb + ')';
 	blob.style.top = '250px';
+	blob.style.width = '40px';
+	blob.style.height = '40px';
 	blob.style.left = '20px';
+	blob.style.position = 'absolute';
+	blob.style.zIndex = 10000000;
 	document.body.blob = blob;
 	document.body.appendChild( blob );
 }
