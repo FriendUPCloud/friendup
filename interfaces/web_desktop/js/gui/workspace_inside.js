@@ -8382,13 +8382,13 @@ if( window.friendApp )
 			// We did a user interaction here
 			msg.clicked = true;
 			
-			// Clear the notifications now...
-			friendApp.clear_notifications();
+			// Clear the notifications now... (race cond?)
+			setTimeout( function()
+			{
+				friendApp.clear_notifications();
+			}, 250 );
 			
 			var messageRead = trash = false;
-			
-			if( msg.notificationData )
-				msg = msg.notificationData;
 			
 			if( !msg.application ) return;
 			
