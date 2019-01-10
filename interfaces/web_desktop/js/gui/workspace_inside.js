@@ -8483,20 +8483,30 @@ document.addEventListener( 'visibilitychange' , function(){
 	}
 }, false );
 
-/*
 // Debug blob:
 if( isMobile )
 {
-	var blob = document.createElement( 'div' );
-	blob.style.backgroundColor = 'green';
-	blob.style.top = '250px';
-	blob.style.width = '200px';
-	blob.style.height = '100px';
-	blob.style.left = '20px';
-	blob.style.position = 'absolute';
-	blob.style.zIndex = 10000000;
-	document.body.blob = blob;
-	document.body.appendChild( blob );
-}*/
+	var debug = document.createElement( 'div' );
+	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
+	debug.style.bottom = '0px';
+	debug.style.width = '100%';
+	debug.style.height = '80px';
+	debug.style.left = '0px';
+	debug.style.color = 'black';
+	debug.style.position = 'absolute';
+	debug.style.zIndex = 10000000;
+	debug.style.pointerEvents = 'none';
+	window.debugDiv = debug;
+	document.body.appendChild( debug );
+}
+function mobileDebug( str, clear )
+{
+	if( !isMobile ) return;
+	if( clear )
+	{
+		window.debugDiv.innerHTML = '';
+	}
+	window.debugDiv.innerHTML += str;
+}
 
 
