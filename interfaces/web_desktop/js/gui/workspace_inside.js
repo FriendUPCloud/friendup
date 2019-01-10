@@ -8400,7 +8400,7 @@ if( window.friendApp )
 						} );
 					}
 					
-					mobileDebug( 'Send to app ' + msg.application, true );
+					mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 					
 					var app = Workspace.applications[a];
 					app.contentWindow.postMessage( JSON.stringify( { 
@@ -8456,7 +8456,7 @@ if( window.friendApp )
 					data: msg
 				};
 				
-				mobileDebug( ' > Send to app ' + msg.application, true );
+				mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
 				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 				
