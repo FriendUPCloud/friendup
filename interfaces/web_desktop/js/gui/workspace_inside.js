@@ -683,7 +683,7 @@ var WorkspaceInside = {
 					var clickCallback = function()
 					{
 						// Tell that it was user initiated
-						nmsg.clicked = true;
+						nmsg.notificationData.clicked = true;
 						handleNotificationData( nmsg );
 					}
 					// Revert to push notifications on the OS side
@@ -736,11 +736,6 @@ var WorkspaceInside = {
 									data: msg.notificationData
 								};
 								apps[ a ].contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-							
-								if( document.body.blob )
-								{
-									document.body.blob.innerHTML = 'Sent to application, return';
-								}
 								return;
 							}
 						}
@@ -793,6 +788,7 @@ var WorkspaceInside = {
 						Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
 						function clickCallback()
 						{
+							msg.notificationData.clicked = true;
 							ExecuteApplication( appName, '', appMessage );
 						}
 					}
