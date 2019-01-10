@@ -802,3 +802,40 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 	return uma;
 }
 
+/**
+ * Get User Mobile Connections from database by user name, platform and ID is not in
+ *
+ * @param mmgr pointer to MobileManager
+ * @param userID ID of user to which mobile apps belong
+ * @param type type of mobile apps
+ * @param ids ids of usermobileapps which will not be taken from DB
+ * @return pointer to new created list of MobileListEntry
+ */
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, const char *ids )
+{
+	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
+	{
+		return NULL;
+	}
+	char *mobileType = NULL;
+	mobileType = MobileAppType[ type ];
+
+	UserMobileApp *uma = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		int size = 512 + strlen( ids );
+		char *where = FMalloc( size+1 );
+		snprintf( where, size, "UserID='%lu' AND Platform='%s' AND ID not in(%s)", userID, mobileType, ids );
+
+		int entries;
+		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+		FFree( where );
+
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return uma;
+}
+
