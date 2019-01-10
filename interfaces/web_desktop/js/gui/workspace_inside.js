@@ -671,130 +671,131 @@ var WorkspaceInside = {
 			}
 		}
 		// Handle incoming push notifications and server notifications
-		function handleNotifications( msg )
+		function handleNotifications( nmsg )
 		{
+			var messageRead = trash = false;
+			
 			if( isMobile )
 			{
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
 					// Cancel push notification on the server
-					var l = new Library( 'system.library' );
-					l.onExecuted = function(){};
-					l.execute( 'mobile/updatenotification', { 
-						notifid: msg.notificationData.id, 
-						action: 1
-					} );
-					if( window.Say )
+					var clickCallback = function()
 					{
-						window.Say( 'New ' + msg.notificationData.application + ' message.' );
+						// Tell that it was user initiated
+						nmsg.notificationData.clicked = true;
+						handleNotificationData( nmsg );
 					}
 					// Revert to push notifications on the OS side
-					//if( window.friendApp.handleNotification )
-					//	window.friendApp.handleNotification( msg );
+					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
 					return;
 				}
 			}
 			
-			var messageRead = trash = false;
+			handleNotificationData( nmsg );
 			
-			// Check if we have notification data
-			if( msg.notificationData )
+			function handleNotificationData( msg )
 			{
-				// Application notification
-				if( msg.notificationData.application )
+				// Check if we have notification data
+				if( msg.notificationData )
 				{
-					// Function to set the notification as read...
-					function notificationRead()
+					// Application notification
+					if( msg.notificationData.application )
 					{
-						if( trash )
-							clearTimeout( trash );
-						messageRead = true;
-						var l = new Library( 'system.library' );
-						l.onExecuted = function(){};
-						l.execute( 'mobile/updatenotification', { 
-							notifid: msg.notificationData.id, 
-							action: 1
-						} );
-					}
-					
-					var appName = msg.notificationData.application;
-					
-					// Find application
-					var apps = Workspace.applications;
-					for( var a = 0; a < apps.length; a++ )
-					{
-						// Found the application
-						if( apps[a].applicationName == appName )
+						// Function to set the notification as read...
+						function notificationRead()
 						{
-							// We read the notification!
-							notificationRead();
-
-							// Post!
-							var amsg = {
-								type: 'system',
-								method: 'notification',
-								callback: false,
-								data: msg.notificationData
-							};
-							apps[ a ].contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-							
-							if( document.body.blob )
-							{
-								document.body.blob.innerHTML = 'Sent to application, return';
-							}
-							return;
+							if( trash )
+								clearTimeout( trash );
+							messageRead = true;
+							var l = new Library( 'system.library' );
+							l.onExecuted = function(){};
+							l.execute( 'mobile/updatenotification', { 
+								notifid: msg.notificationData.id, 
+								action: 1
+							} );
 						}
-					}
 					
-					// Application not found? Start it!
-					// Send message to app once it has started...
-					function appMessage()
-					{
-						var app = false;
+						var appName = msg.notificationData.application;
+					
+						// Find application
+						var apps = Workspace.applications;
 						for( var a = 0; a < apps.length; a++ )
 						{
 							// Found the application
-							if( apps[ a ].applicationName == appName )
+							if( apps[a].applicationName == appName )
 							{
-								app = apps[ a ];
-								break;
+								// We read the notification!
+								notificationRead();
+
+								// Post!
+								var amsg = {
+									type: 'system',
+									method: 'notification',
+									callback: false,
+									data: msg.notificationData
+								};
+								apps[ a ].contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+								
+								mobileDebug( ' Send to appk: ' + JSON.stringify( amsg ), true );
+								return;
 							}
 						}
 					
-						// No application? Alert the user
-						// TODO: Localize response!
-						if( !app )
+						// Application not found? Start it!
+						// Send message to app once it has started...
+						function appMessage()
 						{
-							Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-							return;
+							var app = false;
+							for( var a = 0; a < apps.length; a++ )
+							{
+								// Found the application
+								if( apps[ a ].applicationName == appName )
+								{
+									app = apps[ a ];
+									break;
+								}
+							}
+					
+							// No application? Alert the user
+							// TODO: Localize response!
+							if( !app )
+							{
+								Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+								return;
+							}
+					
+							var amsg = {
+								type: 'system',
+								method: 'notification',
+								callback: addWrapperCallback( notificationRead ),
+								data: msg.notificationData
+							};
+							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+					
+							mobileDebug( ' Send to appz: ' + JSON.stringify( amsg ), true );
+							
+							// Delete wrapper callback if it isn't executed within 1 second
+							setTimeout( function()
+							{
+								if( !messageRead )
+								{
+									var trash = getWrapperCallback( amsg.callback );
+									delete trash;
+								}
+							}, 1000 );
 						}
 					
-						var amsg = {
-							type: 'system',
-							method: 'notification',
-							callback: addWrapperCallback( notificationRead ),
-							data: msg.notificationData
-						};
-						app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-					
-						// Delete wrapper callback if it isn't executed within 1 second
-						setTimeout( function()
+						// TODO: If we are here, generate a clickable Workspace notification
+						var t_title = appName + ' - ' + msg.notificationData.title;
+						var t_txt = msg.notificationData.content;
+						Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
+						function clickCallback()
 						{
-							if( !messageRead )
-							{
-								var trash = getWrapperCallback( amsg.callback );
-								delete trash;
-							}
-						}, 1000 );
-					}
-					
-					// TODO: If we are here, generate a clickable Workspace notification
-					var t_title = appName + ' - ' + msg.notificationData.title;
-					var t_txt = msg.notificationData.content;
-					Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
-					function clickCallback()
-					{
-						ExecuteApplication( appName, '', appMessage );
+							msg.notificationData.clicked = true;
+							mobileDebug( ' Startappz: ' + appName, true );
+							ExecuteApplication( appName, '', appMessage );
+						}
 					}
 				}
 			}
@@ -8349,23 +8350,41 @@ InitDynamicClassSystem();
 
 document.addEventListener( 'paste', function( evt )
 {
-	console.log('paste event received',evt);
+	//console.log('paste event received',evt);
 	Workspace.handlePasteEvent( evt );
 });
 
-// Push notification integration -----------------------------------------------
+// Push notification integration and other app events --------------------------
 if( window.friendApp )
 {
+	// Receive a click from an app bubble (notification on app side)
+	Workspace.receiveAppBubbleClick = function( cid )
+	{
+		// Run the click callback
+		var func = getWrapperCallback( cid );
+		if( func )
+		{
+			func();
+		}
+	}
+	// Receive push notification
 	Workspace.receivePush = function()
 	{
 		var msg = friendApp.get_notification();
 		if( !msg ) return;
 		try
 		{
+			mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')', true );
 			msg = JSON.parse( msg );
 			if( !msg ) return;
 			
-			// Clear the notifications now...
+			mobileDebug( 'We received a message.' );
+			mobileDebug( JSON.stringify( msg ) );
+			
+			// We did a user interaction here
+			msg.clicked = true;
+			
+			// Clear the notifications now... (race cond?)
 			friendApp.clear_notifications();
 			
 			var messageRead = trash = false;
@@ -8378,7 +8397,7 @@ if( window.friendApp )
 				{	
 					// Need a "message id" to be able to update notification
 					// on the Friend Core side
-					if( data.id )
+					if( msg.id )
 					{
 						// Function to set the notification as read...
 						var l = new Library( 'system.library' );
@@ -8388,6 +8407,8 @@ if( window.friendApp )
 							action: 1
 						} );
 					}
+					
+					mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 					
 					var app = Workspace.applications[a];
 					app.contentWindow.postMessage( JSON.stringify( { 
@@ -8443,6 +8464,8 @@ if( window.friendApp )
 					data: msg
 				};
 				
+				mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
+				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 				
 				// Delete wrapper callback if it isn't executed within 1 second
@@ -8454,6 +8477,9 @@ if( window.friendApp )
 					}
 				}, 1000 );
 			}
+			
+			mobileDebug( 'Start app ' + msg.application, true );
+			
 			ExecuteApplication( msg.application, '', appMessage )
 		}
 		catch( e )
@@ -8466,30 +8492,48 @@ if( window.friendApp )
 
 // TODO: Remove me after test
 document.addEventListener( 'visibilitychange' , function(){
-	if (document.hidden)
+	if( document.hidden )
 	{
 		Workspace.updateViewState( 'inactive' );
 	} 
 	else 
 	{
 		Workspace.updateViewState( 'active' );
+		
+		// See if we got push notification
+		if( Workspace.receivePush )
+			Workspace.receivePush();
 	}
 }, false );
 
-/*
 // Debug blob:
 if( isMobile )
 {
-	var blob = document.createElement( 'div' );
-	blob.style.backgroundColor = 'green';
-	blob.style.top = '250px';
-	blob.style.width = '200px';
-	blob.style.height = '100px';
-	blob.style.left = '20px';
-	blob.style.position = 'absolute';
-	blob.style.zIndex = 10000000;
-	document.body.blob = blob;
-	document.body.appendChild( blob );
-}*/
-
+	/*var debug = document.createElement( 'div' );
+	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
+	debug.style.bottom = '0px';
+	debug.style.width = '100%';
+	debug.style.height = '80px';
+	debug.style.left = '0px';
+	debug.style.color = 'black';
+	debug.style.position = 'absolute';
+	debug.style.zIndex = 10000000;
+	debug.style.pointerEvents = 'none';
+	window.debugDiv = debug;
+	document.body.appendChild( debug );*/
+}
+function mobileDebug( str, clear )
+{
+	if( !isMobile ) return;
+	if( !window.debugDiv ) return;
+	if( clear )
+	{
+		window.debugDiv.innerHTML = '';
+	}
+	window.debugDiv.innerHTML += str + '<br>';
+	setTimeout( function()
+	{
+		window.debugDiv.innerHTML = '';
+	}, 4000 );
+}
 

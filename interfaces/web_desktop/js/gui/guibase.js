@@ -3139,6 +3139,11 @@ function CallFriendApp( func, param1, param2, param3 )
 	}
 	return false;
 }
+
+// Buffer for click callbacks
+var _oldNotifyClickCallbacks = [];
+
+// Notify!
 function Notify( msg, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
@@ -3150,16 +3155,55 @@ function Notify( msg, callback, clickcallback )
 		application: msg.application
 	};
 	
+	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
+	
 	// Not active?
 	if( Workspace.currentViewState != 'active' )
 	{
 		// Use native app
 		if( window.friendApp )
 		{
+			if( !msg.text ) msg.text = 'untexted';
+			if( !msg.title ) msg.title = 'untitled';
+			
+			// Add click callback if any
+			var extra = false;
+			if( clickcallback )
+			{
+				extra = {
+					clickCallback: addWrapperCallback( function()
+					{
+						clickcallback();
+						
+						// Clear old click callbacks
+						for( var a = 0; a < _oldNotifyClickCallbacks.length; a++ )
+						{
+							getWrapperCallback( _oldNotifyClickCallbacks[ a ] );
+						}
+						_oldNotifyClickCallbacks = [];
+						// Done clearing
+					} )
+				};
+				_oldNotifyClickCallbacks.push( extra.clickCallback );
+				extra = JSON.stringify( extra );
+			}
+			
+			// Show the notification
+			friendApp.show_notification( msg.title, msg.text, extra );
+			
+			mobileDebug( 'Showing message with app bubble. (workspace is ' + Workspace.currentViewState + ')' );
+			
+			// The "show" callback is run immediately
+			if( callback )
+			{
+				callback();
+			}
 			return;
 		}
 		if( window.Notification )
 		{
+			mobileDebug( 'Showing desktop notification.' );
+			
 			// Desktop notifications
 			function showNotification()
 			{
@@ -3206,7 +3250,6 @@ function Notify( msg, callback, clickcallback )
 	if( !msg.text ) msg.text = 'untexted';
 	if( !msg.title ) msg.title = 'untitled';
 	
-	
 	// Add dom element
 	var d = document.createElement( 'div' );
 	d.className = msg.label ? 'PopInfo' : 'BubbleInfo';
@@ -3219,15 +3262,11 @@ function Notify( msg, callback, clickcallback )
 	
 	var notification = false;
 
-	//check for app interface and push notification out...
-	if( typeof friendApp != 'undefined' && typeof friendApp.show_notification == 'function')
-	{
-		friendApp.show_notification( msg.title, msg.text  );
-	}
-
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
 	{
+		mobileDebug( 'Showing mobile workspace notification.' );
+	
 		if( !ge( 'MobileNotifications' ) )
 		{
 			var d = document.createElement( 'div' );
