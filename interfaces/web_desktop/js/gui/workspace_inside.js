@@ -685,7 +685,7 @@ var WorkspaceInside = {
 						handleNotificationData( nmsg );
 					}
 					// Revert to push notifications on the OS side
-					Notify( { title: nmsg.title, text: nmsg.text }, null, addWrapperCallback( clickCallback ) );
+					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
 					return;
 				}
 			}
