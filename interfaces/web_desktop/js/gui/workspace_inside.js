@@ -8382,14 +8382,15 @@ if( window.friendApp )
 			// We did a user interaction here
 			msg.clicked = true;
 			
+			// Clear the notifications now... (race cond?)
+			setTimeout( function()
+			{
+				friendApp.clear_notifications();
+			}, 250 );
+			
 			var messageRead = trash = false;
 			
-			if( !msg.application ) 
-			{
-				// Clear the notifications now...
-				friendApp.clear_notifications();
-				return;
-			}
+			if( !msg.application ) return;
 			
 			for( var a = 0; a < Workspace.applications.length; a++ )
 			{
@@ -8417,8 +8418,6 @@ if( window.friendApp )
 						callback: false,
 						data: msg
 					} ), '*' );
-					// Clear the notifications now...
-					friendApp.clear_notifications();
 					return;
 				}
 			}
@@ -8483,9 +8482,6 @@ if( window.friendApp )
 			mobileDebug( 'Start app ' + msg.application, true );
 			
 			ExecuteApplication( msg.application, '', appMessage )
-			
-			// Clear the notifications now...
-			friendApp.clear_notifications();
 		}
 		catch( e )
 		{
