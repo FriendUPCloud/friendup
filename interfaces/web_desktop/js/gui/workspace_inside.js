@@ -8381,6 +8381,9 @@ if( window.friendApp )
 			
 			var messageRead = trash = false;
 			
+			if( msg.notificationData )
+				msg = msg.notificationData;
+			
 			if( !msg.application ) return;
 			
 			for( var a = 0; a < Workspace.applications.length; a++ )
