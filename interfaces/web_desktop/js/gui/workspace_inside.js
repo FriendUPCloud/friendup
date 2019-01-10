@@ -5359,11 +5359,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) return;
 
-		if( this.uploadWindow )
-		{
-			return this.uploadWindow.activate();
-		}
-
 		if( id )
 		{
 			var form = ge( id );
@@ -5374,10 +5369,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var resultfr = ge( 'fileUploadFrame' );
 			
 			// Need target frame to complete job
-			console.log( 'Could we upload?', uppath, resultfr );
 			if( resultfr && uppath.length )
 			{
-				console.log( 'Trying to upload!' );
 				form.submit();
 				var f = function( e )
 				{
@@ -5422,6 +5415,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				resultfr.addEventListener( 'load', f );
 			}
 			return;
+		}
+
+		if( this.uploadWindow )
+		{
+			return this.uploadWindow.activate();
 		}
 
 		var fi = false;
