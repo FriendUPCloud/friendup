@@ -757,44 +757,46 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	//
     if( us != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
-		WebsocketServerClient *nwsc = us->us_WSClients;
-        WebsocketServerClient *owsc = nwsc;
-		
-		// we must remove first Websocket from UserSession list and then from app session
-		
-		if( nwsc != NULL )
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
-			
-			// remove first entry!
-			if( nwsc->wsc_WebsocketsData == data )
+			WebsocketServerClient *nwsc = us->us_WSClients;
+			WebsocketServerClient *owsc = nwsc;
+		
+			// we must remove first Websocket from UserSession list and then from app session
+		
+			if( nwsc != NULL )
 			{
-				us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
-
-				DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
-            }
+				DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
 			
-			// remove entry from the list
-			else
-			{
-				DEBUG("[WS] Remove connection from list\n");
-
-				while( nwsc != NULL )
+				// remove first entry!
+				if( nwsc->wsc_WebsocketsData == data )
 				{
-					DEBUG("[WS] WS Entry\n");
-					owsc = nwsc;
-					nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
-					DEBUG("[WS ] OLDWSC %p NWSC %p\n", owsc, nwsc );
-					if( nwsc != NULL && nwsc->wsc_WebsocketsData == data )
+					us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
+
+					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
+				}
+			
+				// remove entry from the list
+				else
+				{
+					DEBUG("[WS] Remove connection from list\n");
+
+					while( nwsc != NULL )
 					{
-						owsc->node.mln_Succ = nwsc->node.mln_Succ;
-						break;
+						DEBUG("[WS] WS Entry\n");
+						owsc = nwsc;
+						nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
+						DEBUG("[WS ] OLDWSC %p NWSC %p\n", owsc, nwsc );
+						if( nwsc != NULL && nwsc->wsc_WebsocketsData == data )
+						{
+							owsc->node.mln_Succ = nwsc->node.mln_Succ;
+							break;
+						}
 					}
 				}
 			}
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 	}
 	else
 	{
