@@ -736,6 +736,8 @@ var WorkspaceInside = {
 									data: msg.notificationData
 								};
 								apps[ a ].contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+								
+								mobileDebug( ' Send to appk: ' + JSON.stringify( amsg ), true );
 								return;
 							}
 						}
@@ -771,6 +773,8 @@ var WorkspaceInside = {
 							};
 							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 					
+							mobileDebug( ' Send to appz: ' + JSON.stringify( amsg ), true );
+							
 							// Delete wrapper callback if it isn't executed within 1 second
 							setTimeout( function()
 							{
@@ -789,6 +793,7 @@ var WorkspaceInside = {
 						function clickCallback()
 						{
 							msg.notificationData.clicked = true;
+							mobileDebug( ' Startappz: ' + appName, true );
 							ExecuteApplication( appName, '', appMessage );
 						}
 					}
