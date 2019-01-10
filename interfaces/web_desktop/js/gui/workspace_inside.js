@@ -8369,8 +8369,11 @@ if( window.friendApp )
 		if( !msg ) return;
 		try
 		{
+			mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')', true );
 			msg = JSON.parse( msg );
 			if( !msg ) return;
+			
+			mobileDebug( 'We received a message.' );
 			
 			// Clear the notifications now...
 			friendApp.clear_notifications();
@@ -8395,6 +8398,8 @@ if( window.friendApp )
 							action: 1
 						} );
 					}
+					
+					mobileDebug( 'Send to app ' + msg.application, true );
 					
 					var app = Workspace.applications[a];
 					app.contentWindow.postMessage( JSON.stringify( { 
@@ -8450,6 +8455,8 @@ if( window.friendApp )
 					data: msg
 				};
 				
+				mobileDebug( ' > Send to app ' + msg.application, true );
+				
 				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 				
 				// Delete wrapper callback if it isn't executed within 1 second
@@ -8461,6 +8468,9 @@ if( window.friendApp )
 					}
 				}, 1000 );
 			}
+			
+			mobileDebug( 'Start app ' + msg.application, true );
+			
 			ExecuteApplication( msg.application, '', appMessage )
 		}
 		catch( e )
