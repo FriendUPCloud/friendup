@@ -2240,7 +2240,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqllib );
 				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
-					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib,  );
+					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
