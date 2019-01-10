@@ -3191,7 +3191,7 @@ function Notify( msg, callback, clickcallback )
 			// Show the notification
 			friendApp.show_notification( msg.title, msg.text, extra );
 			
-			mobileDebug( '<br>Showing message with app bubble.' );
+			mobileDebug( '<br>Showing message with app bubble. (workspace is ' + Workspace.currentViewState + ')' );
 			
 			// The "show" callback is run immediately
 			if( callback )
