@@ -682,6 +682,8 @@ var WorkspaceInside = {
 					// Cancel push notification on the server
 					var clickCallback = function()
 					{
+						// Tell that it was user initiated
+						nmsg.clicked = true;
 						handleNotificationData( nmsg );
 					}
 					// Revert to push notifications on the OS side
@@ -8374,6 +8376,9 @@ if( window.friendApp )
 			if( !msg ) return;
 			
 			mobileDebug( 'We received a message.' );
+			
+			// We did a user interaction here
+			msg.clicked = true;
 			
 			// Clear the notifications now...
 			friendApp.clear_notifications();
