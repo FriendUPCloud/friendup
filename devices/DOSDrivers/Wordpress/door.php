@@ -541,7 +541,7 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								foreach( $parts as $k=>$v )
 								{
-									if( $v && is_string( $v )
+									if( $v && is_string( $v ) )
 									{
 										$vname = strtolower( html_entity_decode( urldecode( trim( $v ) ) ) );
 									}
