@@ -9,6 +9,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
+if( !defined( 'DOOR_SLASH_REPLACEMENT' ) )
+{
+	// To fix names
+	//define( 'DOOR_SLASH_REPLACEMENT', '&#47;' );
+	define( 'DOOR_SLASH_REPLACEMENT', '&#124;' );
+}
+
 class Door extends dbIO
 {	
 	// Construct a Door object
@@ -195,18 +202,29 @@ class Door extends dbIO
 	{
 		global $Logger;
 		
+		/*
+			TODO:
+			We now have to figure out how to register which products
+			are not to be deleted - there is a UniqueID problem which
+			needs to be debugged further..
+		*/
+		
 		// Dest is a cleaned up version of the file listing for the destination
 		
 		$dest = [];
 		
-		if( $log ) $log->ok( "Going i on depth $depth.", true );
+		$debug = [];
+		
+		$Logger->log( 'Starting to sync here: ' . $pathFrom . ' to ' . $pathTo );
+		
+		//$Logger->log( 'From ' . $pathFrom );
+		//$Logger->log( 'To   ' . $pathTo );
 		
 		// Destination path ...
-		
-		if( $log ) $log->ok( "Prepping ... [To]   -> " . trim( $pathTo ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
-		
 		if( $dir = $this->dir( trim( $pathTo ) ) )
-		{	
+		{
+			//$Logger->log( '[' . trim( $pathTo ) . '] ' . print_r( $dir, 1 ) );
+			
 			// Organize by info files first
 			$outFiles = [];
 			$outDirs = [];
@@ -228,16 +246,33 @@ class Door extends dbIO
 			}
 			$dir = array_merge( $outInfos, $outDirs, $outFiles );
 			
+			// Organize in a dest array with keys on the filenames
 			foreach( $dir as $k=>$v )
 			{
-				$dest[str_replace( array( '→', ' - ' ), '', trim( $v->Filename ) )] = $v;
+				// Keep on dest
+				if( $v->UniqueID )
+				{
+					$dest[ $v->UniqueID ] = $v;
+					$debug[ $v->UniqueID ] = false;
+				}
+				else
+				{
+					//$Logger->log( 'No UniqueID ??? ' . print_r( $v, 1 ) );
+				}
+				
+				$properFilename = str_replace( array( DOOR_SLASH_REPLACEMENT, '/' ), '', trim( $v->Filename ) );
+				$dest[ $properFilename ] = $v;
+				
+				$debug[ $properFilename ] = false;
+				
+				//$Logger->log( ' -> Map found file (destination): ' . $properFilename . ' and ' . $v->UniqueID . ' | ' . $v->Filename );
+				//$Logger->log( ' Whole object: ' . print_r( $v, 1 ) );
 			}
+			//$Logger->log( 'Done mapping.' );
 		}
+		unset( $dir ); // Done with mapping to destination
 		
 		// Source path ... get a directory listing
-		
-		if( $log ) $log->ok( "Prepping ... [From] -> " . trim( $pathFrom ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
-		
 		if( $dir = $this->dir( trim( $pathFrom ) ) )
 		{
 			// Organize by info files first
@@ -261,106 +296,217 @@ class Door extends dbIO
 			}
 			$dir = array_merge( $outInfos, $outDirs, $outFiles );
 			
-			if( $log ) $log->log( " ", true );
 			
+			$fmod = false; $dmod = false;
 			
 			// Process directories and files
 			
-			// TODO: Figure out why dest on properfilename can't FIND / FOUND an existing directory
-			
 			// Do the copy
-			
 			foreach( $dir as $k=>$v )
 			{	
-				$modified = false;
-			
-				if( $log ) $log->waiting( "Copying ...        -> " . trim( $v->Filename ) );
-			
-				// Prepare destination file / directory path
+				$doCopy = false;
 			
 				$v->Destination = ( trim( $pathTo ) . trim( $v->Filename ) . ( $v->Type == 'Directory' ? '/' : '' ) );
+				if( !trim( $v->Destination ) )
+				{
+					$Logger->log( 'No desination in object!' ); //, print_r( $v, 1 ) );
+					//die();
+				}
 			
-				$properFilename = str_replace( array( '→', ' - ' ), '', trim( $v->Filename ) );
+				$properFilename = str_replace( array( DOOR_SLASH_REPLACEMENT, '/' ), '', trim( $v->Filename ) );
+			
+				//$Logger->log( 'Checking if we have ' . $properFilename . ' in destination....' );
+				//$Logger->log( 'Dump element: ' . print_r( $v, 1 ) );
 			
 				// Check if the file has been modified (source vs dest)
-			
-				if( isset( $dest[ $properFilename ] ) )
+				
+				// Check if the file we are processing are keepers! ------------
+				// Check on uniqueid
+				if( $v->UniqueID && isset( $dest[ $v->UniqueID ] ) )
 				{
-					$dest[ $properFilename ]->Found = true; // File exists!
-				
-					if( $log ) $log->ok( "File or directory is found ...        -> " . trim( $v->Filename ), true );
-				
-					$modified = $v->DateModified > $dest[ $properFilename ]->DateModified;
+					//if( isset( $dest[ $properFilename ]->ID ) )
+					//{
+					//	$dest[ $properFilename ]->Found = true;
+					//	$debug[ $properFilename ] = true;
+					//}
+					if( isset( $dest[ $v->UniqueID ]->ID ) )
+					{
+						$dest[ $v->UniqueID ]->Found = true;
+						$debug[ $v->UniqueID ] = true;
+					}
+					if( isset( $v->ID ) )
+					{
+						$v->Found = true;
+					}
+					if( isset( $dir[ $k ]->ID ) )
+					{
+						$dir[ $k ]->Found = true;
+					}
+					
+					$fmod = $v->DateModified; 
+					$dmod = $dest[ $v->UniqueID ]->DateModified;
+					
+					$doCopy = strtotime( $v->DateModified ) > strtotime( $dest[ $v->UniqueID ]->DateModified );
+					
+					//$Logger->log( 'DUMP:' );
+					//$Logger->log( print_r( $dest[ $v->UniqueID ], 1 ) );
+					
+					//$Logger->log( 'With UniqueID. ' . ( $doCopy ? 'Will copy' : 'Do not copy' ) . ' ' . ( $v->DateModified ? $v->DateModified : '0' ) . ' > ' . $dest[ $v->UniqueID ]->DateModified . ' ' . $v->Path );
+				}
+				// Check on filename
+				else if( isset( $dest[ $properFilename ] ) )
+				{
+					if( isset( $dest[ $properFilename ]->ID ) )
+					{
+						$dest[ $properFilename ]->Found = true;
+						$debug[ $properFilename ] = true;
+					}
+					if( isset( $dest[ $v->UniqueID ]->ID ) )
+					{
+						$dest[ $v->UniqueID ]->Found = true;
+						$debug[ $v->UniqueID ] = true;
+					}
+					if( isset( $v->ID ) )
+					{
+						$v->Found = true;
+					}
+					if( isset( $dir[ $k ]->ID ) )
+					{
+						$dir[ $k ]->Found = true;
+					}
+					
+					$fmod = $v->DateModified; 
+					$dmod = $dest[ $properFilename ]->DateModified;
+					
+					$doCopy = strtotime( $v->DateModified ) > strtotime( $dest[ $properFilename ]->DateModified );
+					
+					//$Logger->log( ( $doCopy ? 'Will copy' : 'Do not copy' ) . ' ' . ( $v->DateModified ? $v->DateModified : '0' ) . ' > ' . $dest[ $properFilename ]->DateModified . ' ' . $v->Path );
 				}
 				else
 				{
-					//die( 'Not alike: ' . $properFilename . ' = ' . $dest->Properfilename );
-				}
-			
-				// If the file was modified, then copy!
-			
-				if( !$v->DateModified || !$modified )
-				{
-					// Copy from source to destination (that we made proper path for above)
+					$doCopy = true;
+					//$Logger->log( 'Couldn\'t find proper unique id or filename (' . $properFilename . ') - Checking modified date: ' . $v->DateModified/* . ' ' . $v->Path . ' ' . json_encode( $debug )*/ );
+					//$Logger->log( 'Wordpress object: ' . print_r( $dest, 1 ) );
+					//die();
 					
-					if( $this->copyFile( trim( $v->Path ), trim( $v->Destination ) ) )
+					$fmod = false; $dmod = false;
+				}
+				// Done checking for keepers -----------------------------------
+				
+				
+				// If the file was modified, then copy!
+				
+				
+				$isIcon = substr( trim( $v->Filename ), -5, 5 ) == '.info' || substr( trim( $v->Filename ), -8, 8 ) == '.dirinfo';
+				
+				// We are testing whether we need to skip.' );
+				if( $doCopy )
+				{
+					if( ( $v->Type == 'Directory' || ( $v->Type == 'File' && substr( $v->Filename, -8, 8 ) == '.dirinfo' ) ) && SKIP_CREATE_EXISTING_DIRECTORIES == true && $v->Found == true )
 					{
-						if( !strstr( trim( $v->Filename ), '.info' ) )
-						{
-							if( $log ) $log->ok( "Copying ...        -> " . trim( $v->Filename ), true );
-						}
+						//$Logger->log( 'Skipping creation of directory that already exists.' );
+						continue;
+					}
+					else if( $v->Type == 'Directory' )
+					{
+						//$Logger->log( 'We have a directory to create.' );
 					}
 					else
 					{
-						if( $log ) $log->error( "Copying ...        -> " . trim( $v->Filename ), true );
+						//$Logger->log( 'This is a normal file to copy.' );
+					}
+					
+					//$Logger->log( 'From ' . $v->Path );
+					//$Logger->log( 'To   ' . $v->Destination );
+					
+					// Copy from source to destination (that we made proper path for above)
+					if( !$isIcon ) $slot = $Logger->addSlot( 'Copying ' . trim( $v->Filename ) . ' ' . ( $fmod && $dmod ? $fmod . ' > ' . $dmod : '' )/* . ' [] ' . print_r( $dest,1 )*/ );
+					
+					if( $this->copyFile( trim( $v->Path ), trim( $v->Destination ) ) )
+					{
+						//$dest[ $properFilename ]->Found = true;
+						if( isset( $dest[ $v->UniqueID ] ) )
+						{
+							$dest[ $v->UniqueID ]->Found = true;
+						}
+						$debug[ $properFilename ] = true;
+						
+						if( !$isIcon ) $slot->resolve( true, 'Copied' );
+					}
+					else
+					{
+						if( !$isIcon ) $slot->resolve( false );
 					}
 				}
 				else
 				{
-					if( !strstr( trim( $v->Filename ), '.info' ) )
-					{
-						if( $log ) $log->ok( "Ignored ...        -> " . trim( $v->Filename ), true );
-					}
+					if( !$isIcon ) $Logger->log( 'Skipping ' . trim( $v->Filename ) );
+					//$slot->resolve( true, 'skipped' );
 				}
+			}
 			
-				// See if we have destination files / directories that
-				// should be deleted because they do not exist in source
-			
-				if( count( $dest ) > 0 )
+			// See if we have destination files / directories that
+			// should be deleted because they do not exist in source
+			//$Logger->log( 'Checking if we need to delete.' );
+			if( count( $dest ) > 0 )
+			{
+				foreach( $dest as $k=>$des )
 				{
-					foreach( $dest as $des )
+					
+					$skipDelete = false;
+					
+					if( $des->Found )
 					{
-						if( !isset( $des->Found ) && $des->Path )
+						continue;
+					}
+					else if( !trim( $des->Path ) )
+					{
+						$Logger->log( $des->Filename . ' has no path. Skipping... ' . json_encode( $des ) );
+						continue;
+					}
+					
+					$properFilename = str_replace( array( DOOR_SLASH_REPLACEMENT, '/' ), '', trim( $des->Filename ) );
+					
+					// If this file is not a keeper
+					if( /*( !isset( $dest[$properFilename]->Found ) && !( $des->UniqueID && isset( $dest[ $des->UniqueID ] ) ) ) && */$des->Path )
+					{
+						$isIcon = substr( $des->Filename, -5, 5 ) == '.info' || substr( $des->Filename, -8, 8 ) == '.dirinfo';
+						
+						if( !$isIcon )
 						{
-							//die( 'Not found: ' . $des->Filename . ' ..' );
-							// TODO: If it has been deleted return ok when next loop has the same path in regards to .info files
-						
-							$isIcon = substr( $des->Filename, -5, 5 ) == '.info' ||
-								substr( $des->Filename, -8, 8 ) == '.dirinfo';
-							if( !$isIcon )
+							$slot = $Logger->addSlot( 'Shall we delete ' . trim( $des->Filename ) . '?' );
+							
+							if( $this->deleteFile( $des->Path ) )
 							{
-								if( $log ) $log->waiting( "Delete  ...        -> " . trim( $des->Filename ) );
-						
-								if( $this->deleteFile( $des->Path ) )
-								{
-									if( $log ) $log->ok( "Delete  ...        -> " . trim( $des->Filename ), true );
-								}
-								else
-								{
-									if( $log ) $log->error( "Delete  ...        -> " . trim( $des->Filename ), true );
-								}
+								$slot->resolve( true, 'Delete done [' . ( $des->UniqueID ? 1 : 0 ) . '] ' . ( isset( $dest[ $des->UniqueID ] ) ? 'UniqueID Found' : 'UniqueID Not Found' ) /*print_r( $debug,1 )*/ );
 							}
+							else
+							{
+								$slot->resolve( 'skipped' );
+							}
+						}
+						else
+						{
+							//$slot->resolve( 'skipped' );
 						}
 					}
 				}
+			}
 			
-				// We have sub directories
-			
+			// Go through directories and sync files
+			//$Logger->log( 'Traversing into subdirectories..........' );
+			foreach( $dir as $k=>$v )
+			{	
+				// Only go into directories that has been marked as "exists"
 				if( $v->Type == 'Directory' )
 				{
+					//$Logger->log( ' -> Entering ' . $v->Destination );
+					// We have sub directories
 					$this->syncFiles( trim( $v->Path ), trim( $v->Destination ), $log, $depth + 1 );
 				}
 			}
+			
+			//$Logger->log( 'Mapping: ' . print_r( $debug,1 ) );
 			
 			return true;
 		}
@@ -373,7 +519,14 @@ class Door extends dbIO
 		global $User, $Logger;
 		
 		// 1. Get the filesystem objects
-		$ph = reset( explode( ':', $delpath ) );
+		$ph = explode( ':', $delpath );
+		$ph = $ph[0];
+		
+		if( !trim( $ph ) )
+		{
+			$Logger->log( 'Tried to load inexistent disk.' );
+			return;
+		}
 		
 		$fs = new dbIO( 'Filesystem' );
 		$fs->UserID = $User->ID;
@@ -424,7 +577,7 @@ class Door extends dbIO
 					return true;
 				}
 				
-				$Logger->log( 'couldn\'t deleteFile... ' . $delpath );
+				//$Logger->log( 'couldn\'t deleteFile... ' . $delpath );
 				
 				return false;
 			}
@@ -440,8 +593,15 @@ class Door extends dbIO
 		global $User, $Logger;
 		
 		// 1. Get the filesystem objects
-		$from = reset( explode( ':', $pathFrom ) );
-		$to   = reset( explode( ':', $pathTo   ) );
+		$from = explode( ':', $pathFrom ); $from = $from[0];
+		$to   = explode( ':', $pathTo   ); $to = $to[0];
+		
+		//$Logger->log( 'Copying from ' . $pathFrom . ' to ' . $pathTo );
+		if( !trim( $pathTo ) )
+		{
+			$Logger->log( 'Error with path to!' );
+			return false;
+		}
 		
 		// Support caching
 		if( $this->cacheFrom && $this->cacheFrom->Name == $from )
@@ -521,24 +681,28 @@ class Door extends dbIO
 						$tpath .= '/';
 					
 					// Create the path
+					//$Logger->log( 'Creating folder ' . $folderName . ' in ' . $tpath . '..' );
 					if( $doorTo->createFolder( $folderName, $tpath ) )
 					{
 						return true;
 					}
-					$Logger->log('couldn\'t createFolder... ' . $folderName . ' :: ' . $tpath);
+					$Logger->log('Couldn\'t create folder (createFolder)... ' . $folderName . ' :: ' . $tpath);
 					return false;
 				}
 			}
 			// It's a file
 			else
 			{
+				//$Logger->log( 'Getting file ' . $pathFrom . '..' );
 				if( $file = $doorFrom->getFile( $pathFrom ) )
 				{
+					//$Logger->log( 'Result: ' . print_r( $file, 1 ) );
+					//$Logger->log( 'Putting file into ' . $pathTo . '..' );
 					if( $doorTo->putFile( $pathTo, $file ) )
 					{
 						return true;
 					}
-					$Logger->log('couldn\'t putFile... ' . $pathTo . ' :: ');
+					//$Logger->log('couldn\'t putFile... ' . $pathTo . ' :: ');
 				}
 			}
 			$Logger->log('how did we even get here... ' . $pathFrom . ' :: ' . $pathTo);

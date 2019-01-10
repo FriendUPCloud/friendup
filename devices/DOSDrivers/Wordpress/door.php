@@ -541,7 +541,10 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								foreach( $parts as $k=>$v )
 								{
-									$vname = strtolower( html_entity_decode( urldecode( trim( $v ) ) ) );
+									if( $v && is_string( $v )
+									{
+										$vname = strtolower( html_entity_decode( urldecode( trim( $v ) ) ) );
+									}
 									
 									if( 
 										$v && is_string( $v ) && 
@@ -1764,10 +1767,17 @@ if( !class_exists( 'DoorWordpress' ) )
 									$QIDateModified > $WPDateCreated || $QIDateModified > $WPDateModified
 								);
 								
+								
+								// Check if parent has changed or is missing ...
+								if( isset( $file->parent ) && ( !isset( $finalObject->categories[0]->id ) || $finalObject->categories[0]->id != $file->parent ) )
+								{
+									$changed = true;
+								}
+								
 								// Not changed
 								if( !$changed )
 								{
-									$Logger->log( 'This product has not changed. ['.$path.'] '/* . json_encode( $finalObject->images ) . ' [] ' . json_encode( $obj->images )*/ );
+									$Logger->log( 'This product has not changed. ['.$path.'] '/* . json_encode( $finalObject ) . ' [] ' . json_encode( $obj )*/ );
 									return 'ok<!--separate-->' . $len . '<!--separate-->';
 								}
 								
