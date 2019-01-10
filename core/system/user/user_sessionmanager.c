@@ -673,6 +673,11 @@ char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr )
  */
 int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 {
+	if( ses == NULL )
+	{
+		FERROR("UserSession parameter is NULL!\n");
+		return 1;
+	}
 	SystemBase *sb = (SystemBase *) smgr->usm_SB;
 	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
 	
@@ -683,10 +688,12 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 		// checking if entry exist in db
 		//
 		
-		int error = 0;
-		char temptext[ 512 ];
+		int TEMPSIZE = 512 + strlen( ses->us_DeviceIdentity );
 		
-		sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
+		int error = 0;
+		char *temptext = FMalloc( TEMPSIZE );
+		
+		sqllib->SNPrintF( sqllib, temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
 
 		void *res = sqllib->Query( sqllib, temptext );
 		char **row;
@@ -700,6 +707,8 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 			}
 			sqllib->FreeResult( sqllib, res );
 		}
+		
+		FFree( temptext );
 		
 		//
 		// if entry do not exist insert it
