@@ -8473,7 +8473,7 @@ if( window.friendApp )
 
 // TODO: Remove me after test
 document.addEventListener( 'visibilitychange' , function(){
-	if (document.hidden)
+	if( document.hidden )
 	{
 		Workspace.updateViewState( 'inactive' );
 	} 
@@ -8502,11 +8502,16 @@ if( isMobile )
 function mobileDebug( str, clear )
 {
 	if( !isMobile ) return;
+	if( !window.debugDiv ) return;
 	if( clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
-	window.debugDiv.innerHTML += str;
+	window.debugDiv.innerHTML += str + '<br>';
+	setTimeout( function()
+	{
+		window.debugDiv.innerHTML = '';
+	}, 4000 );
 }
 
 
