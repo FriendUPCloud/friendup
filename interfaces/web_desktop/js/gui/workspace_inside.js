@@ -8351,9 +8351,20 @@ document.addEventListener( 'paste', function( evt )
 	Workspace.handlePasteEvent( evt );
 });
 
-// Push notification integration -----------------------------------------------
+// Push notification integration and other app events --------------------------
 if( window.friendApp )
 {
+	// Receive a click from an app bubble (notification on app side)
+	Workspace.receiveAppBubbleClick = function( cid )
+	{
+		// Run the click callback
+		var func = getWrapperCallback( cid );
+		if( func )
+		{
+			func();
+		}
+	}
+	// Receive push notification
 	Workspace.receivePush = function()
 	{
 		var msg = friendApp.get_notification();

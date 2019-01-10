@@ -3139,6 +3139,11 @@ function CallFriendApp( func, param1, param2, param3 )
 	}
 	return false;
 }
+
+// Buffer for click callbacks
+var _oldNotifyClickCallbacks = [];
+
+// Notify!
 function Notify( msg, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
@@ -3156,6 +3161,39 @@ function Notify( msg, callback, clickcallback )
 		// Use native app
 		if( window.friendApp )
 		{
+			if( !msg.text ) msg.text = 'untexted';
+			if( !msg.title ) msg.title = 'untitled';
+			
+			// Add click callback if any
+			var extra = false;
+			if( clickcallback )
+			{
+				extra = {
+					clickCallback: addWrapperCallback( function()
+					{
+						clickcallback();
+						
+						// Clear old click callbacks
+						for( var a = 0; a < _oldNotifyClickCallbacks.length; a++ )
+						{
+							getWrapperCallback( _oldNotifyClickCallbacks[ a ] );
+						}
+						_oldNotifyClickCallbacks = [];
+						// Done clearing
+					} )
+				};
+				_oldNotifyClickCallbacks.push( extra.clickCallback );
+				extra = JSON.stringify( extra );
+			}
+			
+			// Show the notification
+			friendApp.show_notification( msg.title, msg.text, extra );
+			
+			// The "show" callback is run immediately
+			if( callback )
+			{
+				callback();
+			}
 			return;
 		}
 		if( window.Notification )
