@@ -3155,7 +3155,7 @@ function Notify( msg, callback, clickcallback )
 		application: msg.application
 	};
 	
-	mobileDebug( 'Notify...', true );
+	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
 	// Not active?
 	if( Workspace.currentViewState != 'active' )
