@@ -8377,16 +8377,13 @@ if( window.friendApp )
 			if( !msg ) return;
 			
 			mobileDebug( 'We received a message.' );
-			mobileDebug( msg.application + ' | ' + JSON.stringify( msg ) );
+			mobileDebug( JSON.stringify( msg ) );
 			
 			// We did a user interaction here
 			msg.clicked = true;
 			
 			// Clear the notifications now... (race cond?)
-			setTimeout( function()
-			{
-				friendApp.clear_notifications();
-			}, 250 );
+			friendApp.clear_notifications();
 			
 			var messageRead = trash = false;
 			
@@ -8398,7 +8395,7 @@ if( window.friendApp )
 				{	
 					// Need a "message id" to be able to update notification
 					// on the Friend Core side
-					if( data.id )
+					if( msg.id )
 					{
 						// Function to set the notification as read...
 						var l = new Library( 'system.library' );
