@@ -3155,6 +3155,8 @@ function Notify( msg, callback, clickcallback )
 		application: msg.application
 	};
 	
+	mobileDebug( 'Notify', true );
+	
 	// Not active?
 	if( Workspace.currentViewState != 'active' )
 	{
@@ -3189,6 +3191,8 @@ function Notify( msg, callback, clickcallback )
 			// Show the notification
 			friendApp.show_notification( msg.title, msg.text, extra );
 			
+			mobileDebug( '<br>Showing message with app bubble.' );
+			
 			// The "show" callback is run immediately
 			if( callback )
 			{
@@ -3198,6 +3202,8 @@ function Notify( msg, callback, clickcallback )
 		}
 		if( window.Notification )
 		{
+			mobileDebug( '<br>Showing desktop notification.' );
+			
 			// Desktop notifications
 			function showNotification()
 			{
@@ -3266,6 +3272,8 @@ function Notify( msg, callback, clickcallback )
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
 	{
+		mobileDebug( '<br>Showing mobile workspace notification.' );
+	
 		if( !ge( 'MobileNotifications' ) )
 		{
 			var d = document.createElement( 'div' );
