@@ -1608,6 +1608,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												request->uri->redirect = TRUE;
 
 												// Retry request with our new url
+												FFree( url );
 												goto partialRequest;
 												
 											}
