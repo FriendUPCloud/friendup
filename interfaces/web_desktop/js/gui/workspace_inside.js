@@ -8490,6 +8490,10 @@ document.addEventListener( 'visibilitychange' , function(){
 	else 
 	{
 		Workspace.updateViewState( 'active' );
+		
+		// See if we got push notification
+		if( Workspace.receivePush )
+			Workspace.receivePush();
 	}
 }, false );
 
@@ -8523,5 +8527,4 @@ function mobileDebug( str, clear )
 		window.debugDiv.innerHTML = '';
 	}, 4000 );
 }
-
 
