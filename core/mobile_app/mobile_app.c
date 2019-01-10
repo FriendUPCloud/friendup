@@ -1101,6 +1101,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						}
 						lws_write(userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 #endif
+						// adding ID's of connections which already got message
+						
 						
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
@@ -1177,6 +1179,32 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		DEBUG("[MobileAppNotifyUserRegister] User <%s> does not have any app WS connections\n", username );
 	}
 	
+	// select all connections without usermobileappid and store message for them in database
+	
+	if( wsMessageSent == FALSE )
+	{
+		UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, bsMobileReceivedMessage->bs_Buffer );
+		while( root != NULL )
+		{
+			UserMobileApp *toDelete = root;
+			root = (UserMobileApp *)root->node.mln_Succ;
+		
+			NotificationSent *lns = NotificationSentNew();
+			lns->ns_NotificationID = notif->n_ID;
+			lns->ns_UserMobileAppID = (FULONG)toDelete->uma_ID;
+			lns->ns_RequestID = (FULONG)toDelete->uma_ID;
+			lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+			lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+			NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+		
+			UserMobileAppDelete( toDelete );
+			NotificationSentDelete( lns );
+		}
+	}
+	/*				
+	// this way all of devices which were not avaiable during sending will get message
+	// they will not get them in one case, when Notification attached to it will be removed
+	 */
 	BufStringDelete( bsMobileReceivedMessage );
 	
 	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
@@ -1226,6 +1254,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// message was not sent via Websockets, there is no need to put it into queue
 	if( wsMessageSent == FALSE )
 	{
+		NotificationDelete( notif );
 		return -1;
 	}
 
