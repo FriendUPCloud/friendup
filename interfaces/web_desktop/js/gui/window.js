@@ -908,7 +908,7 @@ function _ActivateWindowOnly( div )
 
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
-			
+
 			// Extra force!
 			if( isMobile )
 			{
@@ -916,6 +916,30 @@ function _ActivateWindowOnly( div )
 				m.viewContainer.style.left   = '0px';
 				m.viewContainer.style.width  = '100%';
 				m.viewContainer.style.height = '100%';
+				
+				if( window._getAppByAppId )
+				{
+					var app = _getAppByAppId( div.applicationId );
+					if( app )
+					{
+						app.sendMessage( {
+							'command': 'notify',
+							'method': 'setviewflag',
+							'flag': 'minimized',
+							'viewId': div.windowObject.viewId,
+							'value': false
+						} );
+					}
+				}
+				
+				// Can't be minimized
+				m.viewContainer.removeAttribute( 'minimized' );
+				m.minimized = false;
+			}
+			else
+			{
+				m.viewContainer.removeAttribute( 'minimized' );
+				m.minimized = false;
 			}
 
 			if( div.windowObject && !div.notifyActivated )
@@ -1046,6 +1070,7 @@ function _DeactivateWindow( m, skipCleanUp )
 	{
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+		
 		if( m.windowObject && m.notifyActivated )
 		{
 			var iftest = m.getElementsByTagName( _viewType );
@@ -1065,6 +1090,11 @@ function _DeactivateWindow( m, skipCleanUp )
 			m.windowObject.sendMessage( msg );
 			m.notifyActivated = false;
 			PollTaskbar();
+		}
+		// Minimize on mobile
+		if( isMobile )
+		{
+			m.minimize.onclick();
 		}
 		ret = true;
 	}
@@ -1118,6 +1148,8 @@ function _DeactivateWindows()
 
 	// Check window
 	CheckScreenTitle();
+	
+	Friend.GUI.reorganizeResponsiveMinimized();
 }
 
 // Ouch! Use with care!
@@ -1498,7 +1530,7 @@ function CloseView( win )
 	
 	if( !window.currentMovable )
 	{
-		document.title = Friend.windowBaseString;
+		document.title = Workspace.screen.getFlag( 'title' );
 	}
 	
 	if( isMobile )
@@ -1684,9 +1716,12 @@ var View = function( args )
 		parentWindow = self.getFlag( 'parentView' );
 		transparent = self.getFlag( 'transparent' );
 		
+		// Clean ID
 		if( !id )
 		{
-			id = titleStr.split ( ' ' ).join ( '_' );
+			id = titleStr.split( /[^a-z0-9]+/i ).join( '_' );
+			if( id.substr( 0, 1 ) == '_' )
+				id = 'win' + id;
 			var tmp = id;
 			var num = 2;
 			while( typeof ( movableWindows[ tmp ] ) != 'undefined' )
@@ -1694,6 +1729,13 @@ var View = function( args )
 				tmp = id + '_' + (num++);
 			}
 			id = tmp;
+		}
+		// Clean ID
+		else
+		{
+			id = id.split( /[^a-z0-9]+/i ).join( '_' );
+			if( id.substr( 0, 1 ) == '_' )
+				id = 'win' + id;
 		}
 
 		// Make a unique id
@@ -1765,6 +1807,8 @@ var View = function( args )
 					divParent = document.body;
 				}
 			}
+			
+			// Designate
 			movableWindows[ id ] = div;
 			div.titleString = titleStr;
 			div.viewId = id;
@@ -1942,6 +1986,9 @@ var View = function( args )
 		{
 			WorkspaceMenu.close();
 		}
+
+		// Clean up!
+		Friend.GUI.view.cleanWindowArray( div );
 
 		// Title
 		var title = document.createElement ( 'div' );
@@ -2257,6 +2304,22 @@ var View = function( args )
 
 					this.window.setAttribute( 'maximized', 'true' );
 					
+					// Tell app
+					if( window._getAppByAppId )
+					{
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': true
+							} );
+						}
+					}
+					
 					// Store it just in case
 					var d = GetWindowStorage( div.id );
 					if( !d ) d = {};
@@ -2301,6 +2364,22 @@ var View = function( args )
 						this.window.style.top = this.prevTop + 'px';
 						this.window.style.left = this.prevLeft + 'px';
 						ResizeWindow( this.window, this.prevWidth, this.prevHeight );
+					}
+					
+					// Tell application if any
+					if( window._getAppByAppId )
+					{
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': false
+							} );
+						}
 					}
 				}
 				// Do resize events
@@ -2377,9 +2456,13 @@ var View = function( args )
 		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
 		minimize.onclick = function ( e )
 		{
-			if( !window.isTablet && e.button != 0 ) return;
+			if( !window.isTablet && e && e.button != 0 ) return;
 			if( div.minimized ) return;
 			div.minimized = true;
+			if( !e )
+			{
+				e = { button: 0 };
+			}
 			
 			
 			if( !window.isMobile )
@@ -2475,6 +2558,18 @@ var View = function( args )
 				{
 					for( var a = 0; a < div.attached.length; a++ )
 					{
+						var app = _getAppByAppId( div.attached[ a ].applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'minimized',
+								'viewId': div.attached[ a ].windowObject.viewId,
+								'value': true
+							} );
+						}
+					
 						div.attached[ a ].minimized = true;
 						div.attached[ a ].parentNode.setAttribute( 'minimized', 'minimized' );
 					}
@@ -2484,6 +2579,21 @@ var View = function( args )
 			else
 			{
 				Friend.GUI.reorganizeResponsiveMinimized();
+			}
+			
+			if( window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'minimized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
 			}
 		}
 
@@ -2752,6 +2862,22 @@ var View = function( args )
 				{
 					div.setAttribute( 'maximized', 'true' );
 					zoom.mode = 'maximized';
+					
+					// Tell application if any
+					if( window._getAppByAppId )
+					{
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': true
+							} );
+						}
+					}
 				}
 				
 				if( wp.top >= 0 && wp.top < hh )
@@ -2845,6 +2971,22 @@ var View = function( args )
 			width = window.innerWidth; height = window.innerHeight;
 			div.style.height = height + title.offsetHeight + FUI_WINDOW_MARGIN + 'px';
 			div.setAttribute( 'maximized', 'true' );
+			
+			// Tell application if any
+			if( window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'maximized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
+			}
 		}
 
 		// Add div to view container
@@ -3118,6 +3260,22 @@ var View = function( args )
 		{
 			this.setFlag( 'maximized', true );
 			div.setAttribute( 'maximized', 'true' );
+			
+			// Tell application if any
+			if( window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'maximized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
+			}
 		}
 
 		// Handle class
@@ -4326,6 +4484,19 @@ var View = function( args )
 	// Done setting up view ---------------------------------------------------<
 }
 
+Friend.GUI.view.cleanWindowArray = function( ele )
+{
+	var out = [];
+	var found = true;
+	for( var a in movableWindows )
+	{
+		if( a != ele.id && movableWindows[ a ] != ele )
+			out[ a ] = movableWindows[ a ];
+	}
+	out[ ele.id ] = ele;
+	movableWindows = out;
+}
+
 // Reorganize view window positions on responsive browser
 Friend.GUI.reorganizeResponsiveMinimized = function()
 {
@@ -4335,15 +4506,6 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		// Here is the first screen
 		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
-		/*for( var a in movableWindows )
-		{
-			// These views are handled by css...
-			var c = movableWindows[a].parentNode;
-			c.style.top = '0';
-			c.style.left = '0';
-			c.style.width = '100%';
-			c.style.height = '100%';
-		}*/
 		return;
 	}
 	

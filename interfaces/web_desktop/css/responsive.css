@@ -3,11 +3,6 @@ html, body
 	position: relative;
 }
 
-body *
-{
-	-webkit-tap-highlight-color: transparent;
-}
-
 /* Preload images */
 body.Inside > img
 {
@@ -293,7 +288,7 @@ html body .Screen .MobileAppMenu:after
 [mobile] #WorkspaceMenu.Open
 {
 	height: calc(100% + 5px);
-	width: 80%;
+	width: 70%;
 	transform: translateX(-100%);
 	overflow: visible;
 	box-sizing: border-box;
@@ -326,6 +321,14 @@ html [mobile] #WorkspaceMenu.Open .Menu > ul > li
 	margin: 0;
 	padding: 8px 20px;
 	color: white;
+}
+
+html [mobile] #WorkspaceMenu.Open .Menu.HasSubMenu:after
+{
+	display: inline-block;
+	margin-left: 10px;
+	font-family: fontawesome;
+	content: "\f105";
 }
 
 html [mobile] #WorkspaceMenu > div.MenuBack
@@ -389,8 +392,8 @@ html #WorkspaceMenu .Menu
 	display: block;
 	content: " ";
 	position: fixed;
-	left: -25%;
-	width: 25%;
+	left: -45%;
+	width: 45%;
 	height: 100%;
 	top: 0;
 }

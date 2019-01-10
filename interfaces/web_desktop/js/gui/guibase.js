@@ -2600,6 +2600,19 @@ function PollTaskbar( curr )
 							var div = this.window;
 							div.viewContainer.setAttribute( 'minimized', '' );
 							div.minimized = false;
+							
+							var app = _getAppByAppId( div.applicationId );
+							if( app )
+							{
+								app.sendMessage( {
+									'command': 'notify',
+									'method': 'setviewflag',
+									'flag': 'minimized',
+									'viewId': div.windowObject.viewId,
+									'value': false
+								} );
+							}
+							
 							if( div.windowObject.workspace != globalConfig.workspaceCurrent )
 							{
 								Workspace.switchWorkspace( div.windowObject.workspace );
@@ -2612,6 +2625,18 @@ function PollTaskbar( curr )
 									{
 										div.attached[ a ].minimized = false;
 										div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
+										
+										var app = _getAppByAppId( div.attached[ a ].applicationId );
+										if( app )
+										{
+											app.sendMessage( {
+												'command': 'notify',
+												'method': 'setviewflag',
+												'flag': 'minimized',
+												'viewId': div.attached[ a ].windowObject.viewId,
+												'value': false
+											} );
+										}
 									}
 								}
 							}
@@ -2660,7 +2685,21 @@ function PollTaskbar( curr )
 								{
 									this.setInactive();
 									this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
+									
 									var div = this.window;
+									
+									var app = _getAppByAppId( div.applicationId );
+									if( app )
+									{
+										app.sendMessage( {
+											'command': 'notify',
+											'method': 'setviewflag',
+											'flag': 'minimized',
+											'viewId': div.windowObject.viewId,
+											'value': true
+										} );
+									}
+									
 									if( div.attached )
 									{
 										for( var a = 0; a < div.attached.length; a++ )
@@ -2669,6 +2708,18 @@ function PollTaskbar( curr )
 											{
 												div.attached[ a ].minimized = true;
 												div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
+												
+												var app = _getAppByAppId( div.attached[ a ].applicationId );
+												if( app )
+												{
+													app.sendMessage( {
+														'command': 'notify',
+														'method': 'setviewflag',
+														'flag': 'minimized',
+														'viewId': div.attached[ a ].viewId,
+														'value': true
+													} );
+												}
 											}
 										}
 									}
@@ -3088,6 +3139,11 @@ function CallFriendApp( func, param1, param2, param3 )
 	}
 	return false;
 }
+
+// Buffer for click callbacks
+var _oldNotifyClickCallbacks = [];
+
+// Notify!
 function Notify( msg, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
@@ -3099,9 +3155,100 @@ function Notify( msg, callback, clickcallback )
 		application: msg.application
 	};
 	
+	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
+	
+	// Not active?
+	if( Workspace.currentViewState != 'active' )
+	{
+		// Use native app
+		if( window.friendApp )
+		{
+			if( !msg.text ) msg.text = 'untexted';
+			if( !msg.title ) msg.title = 'untitled';
+			
+			// Add click callback if any
+			var extra = false;
+			if( clickcallback )
+			{
+				extra = {
+					clickCallback: addWrapperCallback( function()
+					{
+						clickcallback();
+						
+						// Clear old click callbacks
+						for( var a = 0; a < _oldNotifyClickCallbacks.length; a++ )
+						{
+							getWrapperCallback( _oldNotifyClickCallbacks[ a ] );
+						}
+						_oldNotifyClickCallbacks = [];
+						// Done clearing
+					} )
+				};
+				_oldNotifyClickCallbacks.push( extra.clickCallback );
+				extra = JSON.stringify( extra );
+			}
+			
+			// Show the notification
+			friendApp.show_notification( msg.title, msg.text, extra );
+			
+			mobileDebug( 'Showing message with app bubble. (workspace is ' + Workspace.currentViewState + ')' );
+			
+			// The "show" callback is run immediately
+			if( callback )
+			{
+				callback();
+			}
+			return;
+		}
+		if( window.Notification )
+		{
+			mobileDebug( 'Showing desktop notification.' );
+			
+			// Desktop notifications
+			function showNotification()
+			{
+				var not = new Notification( 
+					msg.title + "\n" + ( msg.text ? msg.text : '' )
+				);
+				not.onshow = function( e )
+				{
+					if( msg.notificationId )
+					{
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.notificationId, 
+							action: 1
+						} );
+					}
+					if( callback ) callback();
+				}
+				not.onclick = function( e )
+				{
+					window.focus();
+					clickcallback( e );
+				}
+			}
+			if( Notification.permission === 'granted' )
+			{
+				showNotification();
+			}
+			else if( Notification.permission !== 'denied' )
+			{
+				Notification.requestPermission().then( function( permission )
+				{
+					if( permission === 'granted' )
+					{
+						showNotification();
+					}
+				} );
+			}
+			return;
+		}
+	}
+	
 	if( !msg.text ) msg.text = 'untexted';
 	if( !msg.title ) msg.title = 'untitled';
-	
 	
 	// Add dom element
 	var d = document.createElement( 'div' );
@@ -3115,15 +3262,11 @@ function Notify( msg, callback, clickcallback )
 	
 	var notification = false;
 
-	//check for app interface and push notification out...
-	if( typeof friendApp != 'undefined' && typeof friendApp.show_notification == 'function')
-	{
-		friendApp.show_notification( msg.title, msg.text  );
-	}
-
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
 	{
+		mobileDebug( 'Showing mobile workspace notification.' );
+	
 		if( !ge( 'MobileNotifications' ) )
 		{
 			var d = document.createElement( 'div' );
@@ -3141,23 +3284,82 @@ function Notify( msg, callback, clickcallback )
 			this.classList.remove( 'Showing' );
 			setTimeout( function()
 			{
-				n.parentNode.removeChild( n );
+				if( n.parentNode )
+					n.parentNode.removeChild( n );
 			}, 250 );
 		}
 		
 		// When clicking the bubble :)
 		if( clickcallback )
 		{
-			n.addEventListener( 'touchstart', clickcallback );
+			n.addEventListener( 'touchend', function( e )
+			{
+				if( mousePointer.candidate && mousePointer.candidate.el == n && Math.abs( mousePointer.candidate.diff ) >= 10 )
+				{
+					n.style.position = '';
+					n.style.left = '';
+					n.style.top = '';
+					n.style.width = '';
+					n.style.height = '';
+					clickcallback = null;
+					return;
+				}
+				if( n.parentNode )
+				{
+					n.close();
+					if( clickcallback && mousePointer.candidate && mousePointer.candidate.el == n )
+						clickcallback( e )
+				}
+			} );
 		}
+		
+		n.addEventListener( 'touchstart', function( e )
+		{
+			mousePointer.candidate = {
+				cx: e.touches[0].clientX,
+				cy: e.touches[0].clientY,
+				ox: GetElementLeft( n ),
+				oy: GetElementTop( n ),
+				ow: n.offsetWidth,
+				oh: n.offsetHeight,
+				el: n,
+				condition: function( e )
+				{
+					var diff = windowMouseX - this.cx;
+					n.style.position = 'absolute';
+					n.style.left = this.ox + diff + 'px';
+					n.style.top = this.oy - 5 + 'px';
+					n.style.width = this.ow + 'px';
+					n.style.height = this.oh + 'px';
+					this.diff = diff;
+					
+					if( Math.abs( diff ) > 100 )
+					{
+						mousePointer.candidate = null;
+						n.close();
+						
+						// Function to set the notification as read...
+						if( msg.notificationId )
+						{
+							var l = new Library( 'system.library' );
+							l.onExecuted = function(){};
+							l.execute( 'mobile/updatenotification', { 
+								notifid: msg.notificationId, 
+								action: 1
+							} );
+						}
+					}
+				}
+			};
+		} );
 		
 		if( msg.flags && msg.flags.sticky )
 		{
-			n.addEventListener( 'touchstart', function(){ n.close(); } );
+			n.addEventListener( 'touchend', function(){ if( n.parentNode ) n.close(); } );
 		}
 		else
 		{
-			setTimeout( function(){ n.close(); }, 5000 );
+			setTimeout( function(){ if( n.parentNode ) n.close(); }, 8000 );
 		}
 		
 		return;

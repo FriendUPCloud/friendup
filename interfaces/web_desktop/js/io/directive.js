@@ -16,6 +16,9 @@ function ExecuteApplication( app, args, callback )
 	if( isMobile )
 	{
 		Workspace.goToMobileDesktop();
+		if( Workspace.widget )
+			Workspace.widget.slideUp();
+		Workspace.mainDock.closeDesklet();
 	}
 	
 	if( args )
@@ -410,6 +413,14 @@ function ExecuteApplication( app, args, callback )
 				}
 				// Cleans subSubDomains allocation
 				SubSubDomains.freeSubSubDomain( this.applicationId );
+			}
+			
+			ifr.sendMessage = function( msg )
+			{
+				msg.applicationId = this.applicationId;
+				msg.applicationName = this.applicationName;
+				amsg = JSON.stringify( msg );
+				this.contentWindow.postMessage( amsg, '*' );
 			}
 
 			// FIXME: Francois here we close the iframe!

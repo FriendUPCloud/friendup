@@ -14,6 +14,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var self = this;
 	var mainview = false;
 	var multiSelect = true;
+	var defaultPath = 'Home:';
+	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
+	{
+		path = defaultPath;
+	}
 	
 	// We have a view
 	if( object && object.setBlocker )
@@ -58,7 +63,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		multiSelect = false;
 	}
 
-	if( !path ) path = 'Mountlist:';
+	if( !path ) path = defaultPath;
 	if( !triggerfunction ) return;
 	if( !type ) type = 'open';
 	if( !mainview )
@@ -108,7 +113,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	w.dialog = this;
 
 	// Default path
-	this.path = path ? path : 'Mountlist:';
+	this.path = path ? path : defaultPath;
 	if ( typeof ( path ) == 'object' )
 		this.path = path.path;
 
@@ -186,6 +191,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			else if ( p.substr ( p.length - 1, 1 ) != '/' )
 				p += '/' + fname;
 			else p += fname;
+			
 			triggerfunction( p );
 			w.close();
 			return;

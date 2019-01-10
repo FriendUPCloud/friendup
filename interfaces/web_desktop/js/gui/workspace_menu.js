@@ -273,6 +273,7 @@ var WorkspaceMenu =
 			{
 				divs[a].isActivated = null;
 				divs[a].classList.remove( 'Open' );
+				m.classList.remove( 'Open' );
 				if( e )
 					cancelBubble( e );
 			}
@@ -285,6 +286,7 @@ var WorkspaceMenu =
 				}
 			}
 			m.isActivated = false;
+			m.classList.remove( 'Open' );
 		}
 		if( ge( 'MobileMenu' ) ) ge( 'MobileMenu' ).classList.remove( 'Visible' );
 		
@@ -371,13 +373,23 @@ var WorkspaceMenu =
 		// This need to be able to stringify to validate menu items
 		if( depth == 0 )
 		{
-			if( !menuItems.length )
+			if( !menuItems.length && isMobile )
 			{
 				// Add option to quit application
-				menuItems.push( {
-					name: i18n( 'i18n_quit' ),
-					command: 'quit'
-				} );
+				if( typeof( appId ) == 'undefined' )
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_close' ),
+						command: 'close'
+					} );
+				}
+				else
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_quit' ),
+						command: 'quit'
+					} );
+				}
 			}
 			var test = JSON.stringify( menuItems );
 			if( Friend.currentMenuItems == test )
@@ -447,7 +459,15 @@ var WorkspaceMenu =
 					n.setAttribute( 'icon', menuItems[i].icon );
 				}
 				d = n;
-				if( menuItems[ i ].command == 'quit' )
+				if( menuItems[ i ].command == 'close' )
+				{
+					n.onclick = function()
+					{
+						currentMovable.windowObject.close();
+						Workspace.exitMobileMenu();
+					}
+				}
+				else if( menuItems[ i ].command == 'quit' )
 				{
 					n.appid = appid;
 					n.onclick = function()
@@ -597,6 +617,7 @@ var WorkspaceMenu =
 			{
 				ul.innerHTML = menuItems[i].itemsHTML;
 			}
+			d.classList.add( 'HasSubMenu' );
 			d.appendChild( ul );
 		}
 		if( ge( 'MobileMenu' ) )
@@ -632,7 +653,7 @@ var WorkspaceMenu =
 		var menus = wm.getElementsByTagName( 'div' );
 		for ( var a = 0; a < menus.length; a++ )
 		{
-			if( menus[a].className != 'Menu' )
+			if( !menus[a].classList.contains( 'Menu' ) )
 				continue;
 			// For mobile, create a close button
 

@@ -4940,7 +4940,36 @@ function Door( path )
 		);
 	}
 	this.init();
+	
+	// Re-set path
+	this.setPath = function( path )
+	{
+		Application.sendMessage( 
+			{
+				type: 'door',
+				method: 'init',
+				path: path,
+				handler: this.handler
+			},
+			function( data )
+			{
+				if( data.handler && data.handler != 'void' )
+				{
+					door.initialized = true;
+					door.handler = data.handler;
+				}
+			}
+		);
+	}
+	
+	// Gets the files and subdirectories inside of a directory
+	this.getDirectory = function( callback )
+	{
+		return this.getIcons( callback );
+	}
+	
 	// Get files on current dir
+	// Deprecated
 	this.getIcons = function( callback )
 	{
 		Application.sendMessage(
@@ -6069,9 +6098,17 @@ if( typeof( Say ) == 'undefined' )
 // Handle keys in iframes too!
 if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
 {
+	function _kfocus( e )
+	{
+		//console.log( 'Focusing: ', e.target, document.activeElement );
+	}
+
 	function _kmousedown( e )
 	{
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
+		
+		// Check if an input element has focus
+		Friend.GUI.checkInputFocus();
 	}
 	function _kmouseup( e )
 	{
@@ -6080,7 +6117,10 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		setTimeout( function()
+		{
+			Friend.GUI.checkInputFocus();
+		}, 250 );
 	}
 	
 	// Handle keys
@@ -6188,6 +6228,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.addEventListener( 'keyup',   _kresponseup, false );
 		window.addEventListener( 'mousedown', _kmousedown, false );
 		window.addEventListener( 'mouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 	else
 	{
@@ -6195,6 +6236,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.attachEvent( 'onkeyup',  _kresponseup, false );
 		window.attachEvent( 'onmousedown', _kmousedown, false );
 		window.attachEvent( 'onmouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 
 	window._keysAdded = true;
@@ -8274,14 +8316,23 @@ Friend.GUI.checkInputFocus = function()
 {
 	var focused = document.activeElement;
 	if( !focused || focused == document.body )
-		focused = null;
-	else if( document.querySelector )
-		focused = document.querySelector( ':focus' );
-	var response = false;
-	if( focused && ( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' ) )
 	{
-		response = true;
+		focused = false;
 	}
+	if( document.querySelector )
+	{
+		var cand = document.querySelector( ':focus' );
+		if( cand && cand != focused ) focused = cand;
+	}
+	var response = false;
+	if( focused )
+	{
+		if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
+		{
+			response = true;
+		}
+	}
+	// Send the message
 	Application.sendMessage( {
 		type: 'view',
 		method: 'windowstate',

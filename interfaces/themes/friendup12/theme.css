@@ -3057,7 +3057,6 @@ html .File.Selected
 html .File .Title
 {
 	-webkit-mask-image: -webkit-gradient(linear, left 70%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
-	min-height: 50px;
 	transition: height 0.2s;
 }
 
