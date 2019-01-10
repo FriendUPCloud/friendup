@@ -8377,7 +8377,7 @@ if( window.friendApp )
 			if( !msg ) return;
 			
 			mobileDebug( 'We received a message.' );
-			mobileDebug( JSON.stringify( msg ) );
+			mobileDebug( msg.application + ' | ' + JSON.stringify( msg ) );
 			
 			// We did a user interaction here
 			msg.clicked = true;
