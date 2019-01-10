@@ -125,6 +125,11 @@ void NotificationManagerDelete( NotificationManager *nm )
 
 		pthread_mutex_destroy( &(nm->nm_Mutex) );
 		
+		if( nm->nm_APNSCert != NULL )
+		{
+			FFree( nm->nm_APNSCert );
+		}
+		
 		if( nm->nm_SQLLib != NULL )
 		{
 			LibraryClose( nm->nm_SQLLib );
@@ -511,7 +516,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 		
 		sleep( 1 );
 		counter++;
-		if( counter > 15 )	// do checking every 15 seconds
+		if( counter > 10 )	// do checking every 15 seconds
 		{
 			DelListEntry *rootDeleteList = NULL;
 			DelListEntry *lastDeleteListEntry = NULL;
@@ -536,7 +541,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 					allEntries++;
 					
 					// + 20
-					if( (notif->n_Created + 20) <= locTime )		// seems notification is timeouted
+					if( (notif->n_Created + 10) <= locTime )		// seems notification is timeouted
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
 						
@@ -616,7 +621,8 @@ void NotificationManagerTimeoutThread( FThread *data )
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 			counter = 0;
 			
-			if( cleanCoutner > 2880 )	// 15 * 2880 = 43200 seconds around = 1 day
+			// 86400 - one day in seconds , 3600 *24
+			if( cleanCoutner > 17280 )	// 86400 seconds / 10 second interval * 2 days
 			{
 				NotificationManagerDeleteOldNotificationDB( nm );
 				cleanCoutner = 0;

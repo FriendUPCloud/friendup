@@ -160,9 +160,14 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 					FQPushFIFO( &(cl->wsc_MsgQueue), en );
 				}
 			}
+			
+			DEBUG("Send message to WSI, ptr: %p\n", cl->wsc_Wsi );
+			if( cl->wsc_Wsi != NULL )
+			{
+				lws_callback_on_writable( cl->wsc_Wsi );
+			}
 			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 		}
-		lws_callback_on_writable( cl->wsc_Wsi );
 	}
 	if( cl->wsc_Wsi != NULL )
 	{

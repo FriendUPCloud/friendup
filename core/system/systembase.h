@@ -240,6 +240,7 @@ typedef struct SystemBase
 	char							*sl_DefaultDBLib;		// default DB library name
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
 	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
+	char							*sl_MasterServer;		// FriendCore master server
 	
 	//
 	// 60 seconds
@@ -365,8 +366,10 @@ typedef struct SystemBase
 	// apple
 	char							*l_AppleServerHost;
 	int								l_AppleServerPort;
-	char							*l_AppleKeyAPI;
-	char							*l_PresenceKey;
+
+	char							**l_ServerKeys;
+	char							**l_ServerKeyValues;
+	int								l_ServerKeysNum;
 	
 	WebsocketAPNSConnector			*l_APNSConnection;
 } SystemBase;

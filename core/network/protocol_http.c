@@ -674,8 +674,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										pclose( pipe );
 									}
 
-									ListStringJoin( ls );
-
+									if( ls != NULL )
+									{
+										ListStringJoin( ls );
+									}
+									
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
 										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -685,7 +688,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									response = HttpNewSimple( HTTP_200_OK, tags );
 
-									if( ls->ls_Data != NULL )
+									if( ls != NULL && ls->ls_Data != NULL )
 									{
 										HttpSetContent( response, ls->ls_Data, res );
 									}
@@ -699,8 +702,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									HttpWrite( response, sock );
 									result = 200;
 
-									ls->ls_Data = NULL;
-									ListStringDelete( ls );
+									if( ls != NULL )
+									{
+										ls->ls_Data = NULL;
+										ListStringDelete( ls );
+									}
 								}
 							}
 
@@ -1602,6 +1608,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												request->uri->redirect = TRUE;
 
 												// Retry request with our new url
+												FFree( url );
 												goto partialRequest;
 												
 											}

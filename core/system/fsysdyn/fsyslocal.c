@@ -768,8 +768,10 @@ FLONG RemoveDirectoryLocal(const char *path)
 					else
 					{
 						r += statbuf.st_size;
-						unlink( buf );
-						remove( buf );
+						if( unlink( buf ) != 0 )
+						{
+							remove( buf );
+						}
 					}
 				}
 				FFree(buf);

@@ -1051,6 +1051,10 @@ int NumberOfRecordsCustomQuery( struct SQLLibrary *l, const char *query )
 MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 {
 	MYSQL_RES *result = NULL;
+	if( sel == NULL )
+	{
+		return NULL;
+	}
 	
 	if( mysql_query( l->con.sql_Con, sel ) )
 	{

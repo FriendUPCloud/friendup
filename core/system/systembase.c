@@ -336,6 +336,8 @@ SystemBase *SystemInit( void )
 			
 			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
 			
+			l->sl_MasterServer = StringDuplicate( plib->ReadStringNCS( prop, "core:masterserveraddress", "pal.ideverket.no") );
+			
 			char *tptr  = plib->ReadStringNCS( prop, "core:ClientCert", NULL );
 			if( tptr != NULL )
 			{
@@ -392,32 +394,10 @@ SystemBase *SystemInit( void )
 				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 			}
 
-			const char *notifications_auth_key = plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL );
-			if( notifications_auth_key )
-			{
-				if( strlen( notifications_auth_key ) > 10 )
-				{
-					WebsocketNotificationsSetAuthKey(notifications_auth_key);
-				}
-				else
-				{
-					Log( FLOG_INFO, "Mobile notifications service - auth key is too short!\n");
-					return NULL;
-				}
-			}
-			else
-			{
-				Log( FLOG_INFO, "Mobile notifications service - no auth key, service will be disabled\n");
-			}
-			
 			l->l_AppleServerHost = StringDuplicate( plib->ReadStringNCS( prop, "NotificationService:host", NULL ) );
 			
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
 
-			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:apns", NULL ) );
-			
-			l->l_PresenceKey = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL ) );
-			
 			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
 			if( tptr != NULL )
 			{
@@ -425,6 +405,9 @@ SystemBase *SystemInit( void )
 			}
 			
 			globalFriendCorePort = plib->ReadIntNCS( prop, "core:port", FRIEND_CORE_PORT );
+			
+			// additional server keys char ** iniparser_getseckeys(dictionary * d, char * s) - gret number of entries in group
+			l->l_ServerKeysNum = ReadGroupEntries( prop, "ServiceKeys", &(l->l_ServerKeys), &(l->l_ServerKeyValues) );
 		}
 		else
 		{
@@ -1268,6 +1251,11 @@ void SystemClose( SystemBase *l )
 		FFree( l->sl_FSysPath );
 		l->sl_FSysPath = NULL;
 	}
+	if( l->sl_MasterServer != NULL )
+	{
+		FFree( l->sl_MasterServer );
+		l->sl_MasterServer = NULL;
+	}
 	
 	// close magic door of awesomeness!
 	if( l->sl_Magic != NULL )
@@ -1315,15 +1303,23 @@ void SystemClose( SystemBase *l )
 	{
 		FFree( l->l_AppleServerHost );
 	}
-
-	if( l->l_AppleKeyAPI != NULL )
-	{
-		FFree( l->l_AppleKeyAPI );
-	}
 	
-	if( l->l_PresenceKey != NULL )
+	if( l->l_ServerKeysNum > 0 )
 	{
-		FFree( l->l_PresenceKey );
+		int i;
+		for( i=0 ; i < l->l_ServerKeysNum; i++ )
+		{
+			if( l->l_ServerKeys[i] != NULL )
+			{
+				free( l->l_ServerKeys[i] );
+			}
+			if( l->l_ServerKeyValues[i] != NULL )
+			{
+				free( l->l_ServerKeyValues[i] );
+			}
+		}
+		free( l->l_ServerKeys );
+		free( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();
@@ -2240,9 +2236,11 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 			
 				//FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
 				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				if( retlib == NULL || retlib->GetStatus( (void *)retlib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqllib );
+				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
-					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d!\n", l->MsqLlibCounter );
+					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
@@ -2514,7 +2512,14 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 
 				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 				{
-					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					if( wsc->wsc_Wsi != NULL )
+					{
+						bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					}
+					else
+					{
+						FERROR("Cannot write to WS, WSI is NULL!\n");
+					}
 
 					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				}
