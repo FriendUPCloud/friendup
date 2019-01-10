@@ -8507,7 +8507,7 @@ document.addEventListener( 'visibilitychange' , function(){
 // Debug blob:
 if( isMobile )
 {
-	var debug = document.createElement( 'div' );
+	/*var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
@@ -8518,7 +8518,7 @@ if( isMobile )
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
-	document.body.appendChild( debug );
+	document.body.appendChild( debug );*/
 }
 function mobileDebug( str, clear )
 {
