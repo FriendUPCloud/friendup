@@ -5373,8 +5373,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var resultfr = ge( 'fileUploadFrame' );
 			
 			// Need target frame to complete job
+			console.log( 'Could we upload?', uppath, resultfr );
 			if( resultfr && uppath.length )
 			{
+				console.log( 'Trying to upload!' );
 				form.submit();
 				var f = function( e )
 				{
