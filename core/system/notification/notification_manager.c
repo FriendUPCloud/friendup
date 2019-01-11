@@ -303,9 +303,11 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAI
 		{
 			snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu AND Target=%d", status, umaID, platform );
 		}
+		DEBUG("WHERE: >%s<\n", where );
 		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 	}
+	DEBUG("NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB found entries: %d\n", entries );
 		
 	return ns;
 }

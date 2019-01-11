@@ -107,6 +107,7 @@ static FULONG NotificationDesc[] = { SQLT_TABNAME, (FULONG)"FNotification", SQLT
 	SQLT_INT, (FULONG)"Status", offsetof( Notification, n_Status ),
 	SQLT_INT, (FULONG)"Type", offsetof( Notification, n_NotificationType ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&NotificationInit,
+	SQLT_NODE, (FULONG)"node", offsetof( Notification, node ),
 	SQLT_END };
 
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_H__
