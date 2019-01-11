@@ -205,7 +205,7 @@ function PollTray()
 	// Remove icon indicator
 	else if( tray.notifications )
 	{
-		tray.notifications.className = '';
+		tray.notifications.className = 'Hidden';
 		tray.notifications.onclick = null;
 	}
 	

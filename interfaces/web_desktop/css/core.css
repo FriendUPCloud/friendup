@@ -2078,6 +2078,11 @@ html body .PopInfo + .BubbleInfo
 	100% { opacity: 0.5; }
 }
 
+.TrayElement.Hidden
+{
+	display: none;
+}
+
 .TrayElement.Notification .BubbleInfo,
 .TrayElement.PopNotification .PopInfo
 {
