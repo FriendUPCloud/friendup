@@ -469,6 +469,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				if( event ) return cancelBubble( event );
 			}
 		} );
+		dir.showHiddenFiles = false;
 		dir.listMode = 'listview';
 		
 		// Get icons and load!

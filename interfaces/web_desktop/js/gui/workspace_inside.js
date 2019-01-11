@@ -787,14 +787,22 @@ var WorkspaceInside = {
 						}
 					
 						// TODO: If we are here, generate a clickable Workspace notification
-						var t_title = appName + ' - ' + msg.notificationData.title;
-						var t_txt = msg.notificationData.content;
-						Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
-						function clickCallback()
+						if( msg.notificationData.clicked )
 						{
-							msg.notificationData.clicked = true;
 							mobileDebug( ' Startappz: ' + appName, true );
 							ExecuteApplication( appName, '', appMessage );
+						}
+						else
+						{
+							var t_title = appName + ' - ' + msg.notificationData.title;
+							var t_txt = msg.notificationData.content;
+							Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
+							function clickCallback()
+							{
+								msg.notificationData.clicked = true;
+								mobileDebug( ' Startappz: ' + appName, true );
+								ExecuteApplication( appName, '', appMessage );
+							}
 						}
 					}
 				}
@@ -2518,66 +2526,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	diskNotification: function( windowList, type )
 	{
 		console.log( 'Disk notification!', windowList, type );
-	},
-	// Render all notifications on the deepest field
-	renderNotifications: function()
-	{
-		// Don't render these on mobile
-		if( window.isMobile ) return;
-
-		// Only add the ones that aren't in!
-		for( var a = 0; a < this.notifications.length; a++ )
-		{
-			var no = this.notifications[a];
-			if( !no.dom )
-			{
-				var d = ( new Date( no.date ) );
-				var d = d.getFullYear() + '-' + StrPad( d.getMonth(), 2, '0' ) + '-' +
-					StrPad( d.getDate(), 2, '0' ) + ' ' + StrPad( d.getHours(), 2, '0' ) +
-					':' + StrPad( d.getMinutes(), 2, '0' ); // + ':' + StrPad( d.getSeconds(), 2, '0' );
-				var n = document.createElement( 'div' );
-				n.className = 'MarginBottom';
-				n.innerHTML = '\
-				<div class="FloatRight IconSmall fa-remove MousePointer" onclick="Workspace.removeNotification(this.parentNode.index)"></div>\
-				<p class="Layout">' + ( no.application ? ( no.application + ': ' ) : ( i18n( 'i18n_system_message' ) + ': ' ) ) + d + '</p>\
-				<p class="Layout"><strong>' + no.msg.title + '</strong></p>\
-				<p class="Layout">' + no.msg.text + '</strong></p>';
-				no.dom = n;
-				ge( 'Notifications' ).appendChild( n );
-			}
-			no.dom.index = a + 1;
-		}
-		if( DeepestField.updateNotificationInformation )
-			DeepestField.updateNotificationInformation();
-		ge( 'Notifications' ).scrollTop = ge( 'Notifications' ).innerHeight + 50;
-	},
-	// TODO: Reenable notifications when the windows can open on the deepest field...
-	removeNotification: function( index )
-	{
-		// Not on mobile
-		if( window.isMobile ) return;
-		if( Workspace.notifications.length <= 0 ) return;
-
-		var nots = Workspace.notifications;
-
-		// Remove by index
-		var out = [];
-		for( var a = 0; a < nots.length; a++ )
-		{
-			if( index == a+1 )
-			{
-				if( nots[a].dom )
-				{
-					nots[a].dom.parentNode.removeChild( nots[a].dom );
-				}
-				continue;
-			}
-			else out.push( nots[a] );
-		}
-		for( var a = 0; a < out.length; a++ ) out[a].dom.index = a+1;
-		Workspace.notifications = out;
-		if( DeepestField.updateNotificationInformation )
-			DeepestField.updateNotificationInformation();
 	},
 	refreshTheme: function( themeName, update, themeConfig )
 	{
@@ -8497,12 +8445,18 @@ document.addEventListener( 'visibilitychange' , function(){
 	else 
 	{
 		Workspace.updateViewState( 'active' );
-		
-		// See if we got push notification
-		if( Workspace.receivePush )
-			Workspace.receivePush();
 	}
 }, false );
+
+// Make sure to register if the document is active
+if( document.hidden )
+{
+	Workspace.updateViewState( 'inactive' );
+} 
+else 
+{
+	Workspace.updateViewState( 'active' );
+}
 
 // Debug blob:
 if( isMobile )
@@ -8520,18 +8474,22 @@ if( isMobile )
 	window.debugDiv = debug;
 	document.body.appendChild( debug );*/
 }
+var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
 	if( !isMobile ) return;
 	if( !window.debugDiv ) return;
+	if( mobileDebugTime ) clearTimeout( mobileDebugTime );
 	if( clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
 	window.debugDiv.innerHTML += str + '<br>';
-	setTimeout( function()
+	mobileDebugTime = setTimeout( function()
 	{
 		window.debugDiv.innerHTML = '';
-	}, 4000 );
+		mobileDebugTime = null;
+	}, 15000 );
 }
+
 
