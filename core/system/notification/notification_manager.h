@@ -87,5 +87,7 @@ void NotificationManagerTimeoutThread( FThread *data );
 
 int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *content, const char *sound, int badge, char *userData, char *tokens );
 
+NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
+
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__
 

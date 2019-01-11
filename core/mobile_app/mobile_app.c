@@ -803,7 +803,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		if( umaID > 0 )
 		{
 			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
-			NotificationSent *nsroot = NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( SLIB->sl_NotificationManager, NOTIFICATION_SENT_STATUS_REGISTERED, umaID );
+			NotificationSent *nsroot = NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( SLIB->sl_NotificationManager, NOTIFICATION_SENT_STATUS_REGISTERED, MOBILE_APP_TYPE_ANDROID, umaID );
 			NotificationSent *ns = nsroot;
 			while( ns != NULL )
 			{
@@ -934,15 +934,18 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	}
 	
 	notif = NotificationNew();
-	notif->n_Application = escapedApp;
-	notif->n_Channel = escapedChannelId;
-	notif->n_UserName = StringDuplicate( username );
-	notif->n_Title = escapedTitle;
-	notif->n_Content = escapedMessage;
-	notif->n_Extra = escapedExtraString;
-	notif->n_NotificationType = notification_type;
-	notif->n_Status = NOTIFY_ACTION_REGISTER;
-	notif->n_Created = time(NULL);
+	if( notif != NULL )
+	{
+		notif->n_Application = escapedApp;
+		notif->n_Channel = escapedChannelId;
+		notif->n_UserName = StringDuplicate( username );
+		notif->n_Title = escapedTitle;
+		notif->n_Content = escapedMessage;
+		notif->n_Extra = escapedExtraString;
+		notif->n_NotificationType = notification_type;
+		notif->n_Status = NOTIFY_ACTION_REGISTER;
+		notif->n_Created = time(NULL);
+	}
 	
 	NotificationManagerAddNotificationDB( sb->sl_NotificationManager, notif );
 	
@@ -1110,57 +1113,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						notif->n_NotificationsSent = lns;
 					}
 				}
-				//break;
-/*
-				case MN_all_devices:
-				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
-				{
-					DEBUG("force all , conptr %p status %d\n", userConnections->umac_Connection[i], userConnections->umac_Connection[i]->mac_AppStatus );
-					if( userConnections->umac_Connection[i] && userConnections->umac_Connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
-					{
-						NotificationSent *lns = NotificationSentNew();
-						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
-						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
-						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
-						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-						int msgSendLength;
-						
-#ifdef WEBSOCKET_SEND_QUEUE
-						if( extraString )
-						{ //TK-1039
-							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
-						}
-						else
-						{
-							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
-						}
-						
-						if( userConnections->umac_Connection[i] != NULL )
-						{
-							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, msgSendLength );
-						}
-#else
-						if( extraString )
-						{ //TK-1039
-							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
-						}
-						else
-						{
-							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
-						}
-						lws_write(userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-#endif
-						//NotificationSentDelete( lns );
-						// add NotificationSent to Notification
-						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
-						notif->n_NotificationsSent = lns;
-					}
-				}
-				break;
-				default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
-			}*/
 		}
 		// wsMessageSent == FALSE
 		else
@@ -1188,6 +1140,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		{
 			UserMobileApp *toDelete = root;
 			root = (UserMobileApp *)root->node.mln_Succ;
+			
+			DEBUG("Notification for MobileDevice: %lu will be sent later\n", toDelete->uma_ID );
 		
 			NotificationSent *lns = NotificationSentNew();
 			lns->ns_NotificationID = notif->n_ID;

@@ -279,6 +279,38 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( Not
 }
 
 /**
+ * Get NotificationSent from database by notification sent ID, platform and status
+ *
+ * @param nm pointer to MobileManager
+ * @param status id of NotificationSent status
+ * @param umaID UserMobileApp ID
+ * @return pointer to structure UserMobileApp
+ */
+NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID )
+{
+	NotificationSent *ns = NULL;
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+	char where[ 1024 ];
+	int entries;
+	
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		if( platform <= 0 )
+		{
+			snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu", status, umaID );
+		}
+		else
+		{
+			snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu AND Target=%d", status, umaID, platform );
+		}
+		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+		
+	return ns;
+}
+
+/**
  * Save Notification in database
  *
  * @param nm pointer to MobileManager
