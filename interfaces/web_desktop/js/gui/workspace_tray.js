@@ -353,8 +353,8 @@ function Notify( msg, callback, clickcallback )
 		// Use native app
 		if( window.friendApp )
 		{
-			if( !msg.text ) msg.text = 'untexted';
-			if( !msg.title ) msg.title = 'untitled';
+			if( !msg.text ) msg.text = 'msg: ' + JSON.stringify( msg );
+			if( !msg.title ) msg.title = 'untitled 2';
 			
 			// Add click callback if any
 			var extra = false;
@@ -376,6 +376,17 @@ function Notify( msg, callback, clickcallback )
 				};
 				_oldNotifyClickCallbacks.push( extra.clickCallback );
 				extra = JSON.stringify( extra );
+			}
+			
+			// Since it is seen, then remove from server
+			if( msg.notificationId )
+			{
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.notificationId, 
+					action: 1
+				} );
 			}
 			
 			// Show the notification
@@ -464,6 +475,18 @@ function Notify( msg, callback, clickcallback )
 		}
 		// On mobile it's always seen!
 		nev.seen = true;
+		
+		// Since it is seen, then remove from server
+		if( msg.notificationId )
+		{
+			var l = new Library( 'system.library' );
+			l.onExecuted = function(){};
+			l.execute( 'mobile/updatenotification', { 
+				notifid: msg.notificationId, 
+				action: 1
+			} );
+		}
+		
 		var n = document.createElement( 'div' );
 		n.className = 'MobileNotification BackgroundDefault ColorDefault';
 		n.innerHTML = '<div class="Title">' + msg.title + '</div><div class="Text">' + msg.text + '</div>';
