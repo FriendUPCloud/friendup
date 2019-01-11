@@ -712,7 +712,8 @@ var WorkspaceInside = {
 							l.onExecuted = function(){};
 							l.execute( 'mobile/updatenotification', { 
 								notifid: msg.notificationData.id, 
-								action: 1
+								action: 1, 
+								pawel: 3
 							} );
 						}
 					
@@ -8350,7 +8351,8 @@ if( window.friendApp )
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
 							notifid: msg.id, 
-							action: 1
+							action: 1,
+							pawel: 1
 						} );
 					}
 					
@@ -8375,7 +8377,8 @@ if( window.friendApp )
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
 					notifid: msg.id, 
-					action: 1
+					action: 1,
+					pawel: 2
 				} );
 			}
 			
