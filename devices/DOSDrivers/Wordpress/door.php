@@ -2684,6 +2684,13 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								$obj->{$mapping[$k]} = $o;
 							}
+							else if( $k == 'Image' && $data != '' && strstr( $data, 'http' ) )
+							{
+								if( $this->CurlUrlExists( trim( $data ), 'content_type=>image' ) )
+								{
+									$obj->{$mapping[$k]} = $data;
+								}
+							}
 							else if( $v->Encoding != 'UTF-8' )
 							{
 								$data = utf8_encode( $data );
