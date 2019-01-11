@@ -582,6 +582,7 @@ if( !class_exists( 'DoorWordpress' ) )
 									}
 									$parent->name = $v->name;
 									$parent->id = $v->id;
+									$parent->image = $v->image;
 									$subpath[] = $v;
 								}
 								else if( !is_object( $v ) && trim( $v ) )
@@ -596,6 +597,7 @@ if( !class_exists( 'DoorWordpress' ) )
 									if( !isset( $subs[($k-1)] ) || !isset( $parent->name ) || str_replace( '.info', '', trim( $subs[($k-1)] ) ) == $parent->name )
 									{
 										$cat->parent = $parent->id;
+										$cat->parentimage = $parent->image;
 									}
 									
 									$subpath[] = $cat;
@@ -613,6 +615,7 @@ if( !class_exists( 'DoorWordpress' ) )
 								$file->path = $path;
 								$file->parentname = ( isset( $parent->name ) ? $parent->name : '' );
 								$file->parent = $parent->id;
+								$file->parentimage = $parent->image;
 								
 								// TODO: Remove this or rewrite search doesn't work that well with the WP Api
 								
@@ -686,6 +689,7 @@ if( !class_exists( 'DoorWordpress' ) )
 										$foundcatobj->pathname = $name;
 										$foundcatobj->path = $path;
 										$foundcatobj->parent = $parent->id;
+										$foundcatobj->parentimage = $parent->image;
 										
 										//if( $log ) $Logger->log( '[[[[[[[[[[ File[1]: ]]]]]]]]]] Subpath' . ' (' . count($subpath) . '): ' . print_r( $subpath,1 ) . ' [] IsFile: ' . $isfile . ' [] File: ' . json_encode( $catobj[0] ) . ' [] Path: ' . $path . "\r\n" );
 										
@@ -1743,6 +1747,13 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								$obj->categories = json_decode( '[{"id": "'.$file->parent.'"}]' );
 								
+								// If image missing set parent image if defined ...
+								
+								if( !$obj->images && $file->image )
+								{
+									$obj->images = $file->image;
+								}
+								
 								//$Logger->log( '[[[[[[[[[[ Uploading ]]]]]]]]]] ' . print_r( $dta,1 ) . ' [] ' . print_r( $obj,1 ) );
 								
 								// TODO: temporary that it deletes and creates new images every prod update, perhaps work with ID here also instead of filename
@@ -2701,6 +2712,13 @@ if( !class_exists( 'DoorWordpress' ) )
 						/*$Logger->log( '[[[[[[ CreateCategoryWP ]]]]]]: [] obj: ' . 
 							json_encode( $cat ) . ' [] data: ' . ( $dta ? json_encode( $dta ) : '' ) . "\r\n" 
 						);*/
+					}
+					
+					// If image missing set parent image if defined ...
+					
+					if( !$obj->image && $cat->image )
+					{
+						$obj->image = $cat->image;
 					}
 					
 					if( isset( $obj->image ) )
