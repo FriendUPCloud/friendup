@@ -1015,7 +1015,15 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}	// usr != NULL
-	
+	else
+	{
+		User *usr = UMGetUserByNameDB( sb->sl_UM, username );
+		if( usr != NULL )
+		{
+			userID = usr->u_ID;
+			UserDelete( usr );
+		}
+	}
 	// if message was sent via Websockets
 	// then Notification must be added to list, which will be checked before
 	if( wsMessageSent == TRUE )
