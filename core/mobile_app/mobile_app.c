@@ -1135,7 +1135,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	if( wsMessageSent == FALSE )
 	{
-		UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, bsMobileReceivedMessage->bs_Buffer );
+		UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, bsMobileReceivedMessage->bs_Buffer );
 		while( root != NULL )
 		{
 			UserMobileApp *toDelete = root;
