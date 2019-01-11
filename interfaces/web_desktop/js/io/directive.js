@@ -1095,6 +1095,14 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
 			}
+			
+			ifr.sendMessage = function( msg )
+			{
+				msg.applicationId = this.applicationId;
+				msg.applicationName = this.applicationName;
+				amsg = JSON.stringify( msg );
+				this.contentWindow.postMessage( amsg, '*' );
+			}
 
 			// Close method
 			ifr.close = function()
