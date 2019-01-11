@@ -856,7 +856,8 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
     size_t outbytesleft = strlen(notif->n_Extra) - 1;
 
     // Allocate a "conversion descriptor" for converting ISO-8859-1 to UTF-8.
-    iconv_t iconv_cd = iconv_open("UTF-8", "ISO-8859-1");
+    //iconv_t iconv_cd = iconv_open("UTF-8", "ISO-8859-1");
+	iconv_t iconv_cd = iconv_open ("UTF-8//TRANSLIT//IGNORE", "ISO−8859-1");
     if(iconv_cd == (iconv_t)-1)
     {
         printf("Unable to create conversion description!n");
