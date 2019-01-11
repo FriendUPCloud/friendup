@@ -811,7 +811,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 			{
 				DEBUG("Going through messages: %lu\n", ns->ns_ID );
 				Notification *notif = NotificationManagerGetDB( SLIB->sl_NotificationManager, ns->ns_NotificationID );
-				int reqLengith = 0;
+				int reqLengith = 512;
 				// send notification to device
 				DEBUG("Notification pointer %p\n", notif );
 				if( notif != NULL )
@@ -848,55 +848,6 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 #ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
 						{ //TK-1039
-							
-							
-							DEBUG("test1\n");
-							char *t = notif->n_Extra;
-							while( *t != 0 )
-							{
-								printf("--> %d - %c --", *t, *t );
-								t++;
-							}
-							printf("\n\n");
-							
-							DEBUG("Extra\n");
-							char latin1_buf[ 1024 ]; memset( latin1_buf, 0, 1024 );
-							    char *latin1_ptr = latin1_buf;
-    char *utf8_ptr = notif->n_Extra;
-    size_t inbytesleft = sizeof(latin1_buf) - 1;
-    size_t outbytesleft = strlen(notif->n_Extra) - 1;
-
-
-    // Allocate a "conversion descriptor" for converting ISO-8859-1 to UTF-8.
-    //iconv_t iconv_cd = iconv_open("UTF-8", "ISO-8859-1");
-	iconv_t iconv_cd = iconv_open ("UTF-8//TRANSLIT//IGNORE", "ISO−8859-1");
-    if(iconv_cd == (iconv_t)-1)
-    {
-        printf("Unable to create conversion description!n");
-
-    // Perform the actual conversion.
-    size_t chars = iconv(iconv_cd, &latin1_ptr, &inbytesleft,
-                                   &utf8_ptr, &outbytesleft);
-
-    // Print the results
-    if(chars == -1)
-        printf("An error occured!n");
-    else
-    {
-        printf("%zd chars convertedn", chars);
-        printf("UTF-8 bytes: ");
-        for(int i = 0; i < (strlen(notif->n_Extra) - outbytesleft - 1); i++)
-            printf("%02hhx ", notif->n_Extra[i]);
-        printf("n");
-    }
-    printf(">>>>%s<<<<\n", latin1_buf );
-	}
-	else
-	{
-		DEBUG("iconv != icon_t\n");
-	}
-							
-							
 							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, ns->ns_ID );
 						}
 						else
