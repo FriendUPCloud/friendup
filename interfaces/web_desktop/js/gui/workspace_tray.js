@@ -138,7 +138,7 @@ function PollTray()
 				var notties = Workspace.notificationEvents;
 				if( notties.length )
 				{
-					for( var a = 0; a < notties.length; a++ )
+					for( var a = notties.length - 1; a > 0; a-- )
 					{
 						var d = document.createElement( 'div' );
 						d.className = 'NotificationPopupElement BorderBottom';
