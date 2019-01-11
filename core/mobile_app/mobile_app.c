@@ -1234,7 +1234,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
  * @param action id of action
  * @return 0 when message was send, otherwise error number
  */
-int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, FULONG notifSentID, int action )
+int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *notif, FULONG notifSentID, int action )
 {
 	if( username == NULL )
 	{
@@ -1313,6 +1313,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	// allocate memory for message
 	
 	char *jsonMessage = FMalloc( reqLengith );
+	
+	BufString *bsMobileReceivedMessage = BufStringNew();
 	
 	//
 	// go through all mobile devices
@@ -1402,96 +1404,49 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 		//
 		else if( action == NOTIFY_ACTION_TIMEOUT )
 		{
-			/*
-			switch( notif->n_NotificationType )
+			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 			{
-				case MN_force_all_devices:
-					*/
-				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+				DEBUG("[MobileAppNotifyUserUpdate]: Send to %d\n", i );
+				
+				// connection which was sending timeout 
+				if( userConnections->umac_Connection[i] )
 				{
-					DEBUG("[MobileAppNotifyUserUpdate]: Send to %d\n", i );
+					NotificationSent *lns = NotificationSentNew();
+					lns->ns_NotificationID = notif->n_ID;
+					lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
+					lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
+					lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
-					// connection which was sending timeout 
-					if( userConnections->umac_Connection[i] )
+					if( bsMobileReceivedMessage->bs_Size == 0 )
 					{
-						NotificationSent *lns = NotificationSentNew();
-						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
-						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
-						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
-						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-						
-						unsigned int jsonMessageLength = 0;
-#ifdef WEBSOCKET_SEND_QUEUE
-						if( notif->n_Extra )
-						{ //TK-1039
-							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
-						}
-						else
-						{
-							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
-						}
-						
-						if( userConnections->umac_Connection[i] != NULL )
-						{
-							DEBUG("[MobileAppNotifyUserUpdate]: Connection pointer: %p\n", userConnections->umac_Connection[i] );
-							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-#else
-							if( notif->n_Extra )
-							{ //TK-1039
-								jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
-							}
-							else
-							{
-								jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
-							}
-						
-							if( userConnections->umac_Connection[i] != NULL && userConnections->umac_Connection[i]->mac_WebsocketPtr != NULL )
-							{
-								lws_write( userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-							}
-#endif
-						} // if( userConnections->umac_Connection[i] )
-						
-						NotificationSentDelete( lns );
+						char number[ 128 ];
+						int numsize = snprintf( number, sizeof(number), "%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
+						BufStringAddSize( bsMobileReceivedMessage, number, numsize );
 					}
-					/*
-				}
-				break;
-
-				case MN_all_devices:
-				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
-				{
-					DEBUG("Send1 to %d\n", i );
-					
-					if( userConnections->umac_Connection[i] && userConnections->umac_Connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
+					else
 					{
-						DEBUG("Connection not null\n");
+						char number[ 128 ];
+						int numsize = snprintf( number, sizeof(number), ",%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
+						BufStringAddSize( bsMobileReceivedMessage, number, numsize );
+					}
 						
-						NotificationSent *lns = NotificationSentNew();
-						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
-						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
-						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
-						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-						
-						unsigned int jsonMessageLength = 0;
+					unsigned int jsonMessageLength = 0;
 #ifdef WEBSOCKET_SEND_QUEUE
-						if( notif->n_Extra )
-						{ //TK-1039
-							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
-						}
-						else
-						{
-							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
-						}
-						
-						if( userConnections->umac_Connection[i] != NULL )
-						{
-							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						}
+					if( notif->n_Extra )
+					{ //TK-1039
+						jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+					}
+					else
+					{
+						jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+					}
+					
+					if( userConnections->umac_Connection[i] != NULL )
+					{
+						DEBUG("[MobileAppNotifyUserUpdate]: Connection pointer: %p\n", userConnections->umac_Connection[i] );
+						WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 						if( notif->n_Extra )
 						{ //TK-1039
@@ -1501,15 +1456,17 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						lws_write(userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+					
+						if( userConnections->umac_Connection[i] != NULL && userConnections->umac_Connection[i]->mac_WebsocketPtr != NULL )
+						{
+							lws_write( userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						}
 #endif
-						
-						NotificationSentDelete( lns );
-					}
+					} // if( userConnections->umac_Connection[i] )
+					
+					NotificationSentDelete( lns );
 				}
-				break;
-				default: FERROR("**************** UNIMPLEMENTED %d\n", notif->n_NotificationType );
-				*/
+				
 			}
 			
 		}
@@ -1524,6 +1481,35 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	{
 		DEBUG("User <%s> does not have any app WS connections\n", username);
 	}
+	
+	// select all connections without usermobileappid and store message for them in database
+	
+
+	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+	UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, bsMobileReceivedMessage->bs_Buffer );
+	while( root != NULL )
+	{
+		UserMobileApp *toDelete = root;
+		root = (UserMobileApp *)root->node.mln_Succ;
+		
+		DEBUG("Notification for MobileDevice: %lu will be sent later\n", toDelete->uma_ID );
+	
+		NotificationSent *lns = NotificationSentNew();
+		lns->ns_NotificationID = notif->n_ID;
+		lns->ns_UserMobileAppID = (FULONG)toDelete->uma_ID;
+		lns->ns_RequestID = (FULONG)toDelete->uma_ID;
+		lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+		lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+		NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+	
+		UserMobileAppDelete( toDelete );
+		NotificationSentDelete( lns );
+	}
+	/*				
+	// this way all of devices which were not avaiable during sending will get message
+	// they will not get them in one case, when Notification attached to it will be removed
+	 */
+	BufStringDelete( bsMobileReceivedMessage );
 	
 	//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	
