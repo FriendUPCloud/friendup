@@ -828,7 +828,14 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager 
 	{
 		int size = 512 + strlen( ids );
 		char *where = FMalloc( size+1 );
-		snprintf( where, size, "UserID='%lu' AND Platform='%s' AND ID not in(%s)", userID, mobileType, ids );
+		if( ids == NULL || strlen( ids ) <= 0 )
+		{
+			snprintf( where, size, "UserID='%lu' AND Platform='%s' AND", userID, mobileType );
+		}
+		else
+		{
+			snprintf( where, size, "UserID='%lu' AND Platform='%s' AND ID not in(%s)", userID, mobileType, ids );
+		}
 
 		int entries;
 		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
