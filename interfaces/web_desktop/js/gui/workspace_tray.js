@@ -347,12 +347,8 @@ function Notify( message, callback, clickcallback )
 		// Use native app
 		if( window.friendApp )
 		{
-			if( !message.text ) message.text = 'message: ' + JSON.stringify( message );
+			/*if( !message.text ) message.text = 'message: ' + JSON.stringify( message );
 			if( !message.title ) message.title = 'untitled 2';
-			
-			// Copy these
-			var ti = message.title + "";
-			var tx = message.text + "";
 			
 			// Add click callback if any
 			var extra = false;
@@ -389,13 +385,13 @@ function Notify( message, callback, clickcallback )
 			
 			// Show the notification
 			mobileDebug( 'friendApp.show_notification: ' + JSON.stringify( message ), true );
-			friendApp.show_notification( ti, tx, extra );
+			friendApp.show_notification( message.title, message.text, extra );
 			
 			// The "show" callback is run immediately
 			if( callback )
 			{
 				callback();
-			}
+			}*/
 			return;
 		}
 		if( window.Notification )
