@@ -787,14 +787,22 @@ var WorkspaceInside = {
 						}
 					
 						// TODO: If we are here, generate a clickable Workspace notification
-						var t_title = appName + ' - ' + msg.notificationData.title;
-						var t_txt = msg.notificationData.content;
-						Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
-						function clickCallback()
+						if( msg.notificationData.clicked )
 						{
-							msg.notificationData.clicked = true;
 							mobileDebug( ' Startappz: ' + appName, true );
 							ExecuteApplication( appName, '', appMessage );
+						}
+						else
+						{
+							var t_title = appName + ' - ' + msg.notificationData.title;
+							var t_txt = msg.notificationData.content;
+							Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
+							function clickCallback()
+							{
+								msg.notificationData.clicked = true;
+								mobileDebug( ' Startappz: ' + appName, true );
+								ExecuteApplication( appName, '', appMessage );
+							}
 						}
 					}
 				}
