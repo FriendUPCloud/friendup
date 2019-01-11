@@ -334,16 +334,10 @@ function GetNotificationEvent( uniqueId )
 // The notifications -----------------------------------------------------------
 
 // Notify!
-function Notify( msg, callback, clickcallback )
+function Notify( message, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
-	if( !msg ) return;
-	
-	var n = {
-		msg: msg,
-		date: ( new Date() ).getTime(),
-		application: msg.application
-	};
+	if( !message ) return;
 	
 	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
@@ -353,9 +347,8 @@ function Notify( msg, callback, clickcallback )
 		// Use native app
 		if( window.friendApp )
 		{
-			if( !msg.text ) msg.text = 'msg: ' + JSON.stringify( msg );
-			if( !msg.title ) msg.title = 'untitled 2';
-			else msg.title += ' torbjørn er en fis';
+			if( !message.text ) message.text = 'message: ' + JSON.stringify( message );
+			if( !message.title ) message.title = 'untitled 2';
 			
 			// Add click callback if any
 			var extra = false;
@@ -380,18 +373,18 @@ function Notify( msg, callback, clickcallback )
 			}
 			
 			// Since it is seen, then remove from server
-			if( msg.notificationId )
+			if( message.notificationId )
 			{
 				var l = new Library( 'system.library' );
 				l.onExecuted = function(){};
 				l.execute( 'mobile/updatenotification', { 
-					notifid: msg.notificationId, 
+					notifid: message.notificationId, 
 					action: 1
 				} );
 			}
 			
 			// Show the notification
-			friendApp.show_notification( msg.title, msg.text, extra );
+			friendApp.show_notification( message.title, message.text, extra );
 			
 			mobileDebug( 'Showing message with app bubble. (workspace is ' + Workspace.currentViewState + ')' );
 			
@@ -410,16 +403,16 @@ function Notify( msg, callback, clickcallback )
 			function showNotification()
 			{
 				var not = new Notification( 
-					msg.title + "\n" + ( msg.text ? msg.text : '' )
+					message.title + "\n" + ( message.text ? message.text : '' )
 				);
 				not.onshow = function( e )
 				{
-					if( msg.notificationId )
+					if( message.notificationId )
 					{
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							notifid: msg.notificationId, 
+							notifid: message.notificationId, 
 							action: 1
 						} );
 					}
@@ -449,13 +442,13 @@ function Notify( msg, callback, clickcallback )
 		}
 	}
 	
-	if( !msg.text ) msg.text = 'untexted';
-	if( !msg.title ) msg.title = 'untitled';
+	if( !message.text ) message.text = 'untexted';
+	if( !message.title ) message.title = 'untitled';
 
 	// The notification event
 	var nev = {
-		title: msg.title,
-		text: msg.text,
+		title: message.title,
+		text: message.text,
 		seen: false,
 		showCallback: callback,
 		clickCallback: clickcallback
@@ -478,19 +471,19 @@ function Notify( msg, callback, clickcallback )
 		nev.seen = true;
 		
 		// Since it is seen, then remove from server
-		if( msg.notificationId )
+		if( message.notificationId )
 		{
 			var l = new Library( 'system.library' );
 			l.onExecuted = function(){};
 			l.execute( 'mobile/updatenotification', { 
-				notifid: msg.notificationId, 
+				notifid: message.notificationId, 
 				action: 1
 			} );
 		}
 		
 		var n = document.createElement( 'div' );
 		n.className = 'MobileNotification BackgroundDefault ColorDefault';
-		n.innerHTML = '<div class="Title">' + msg.title + '</div><div class="Text">' + msg.text + '</div>';
+		n.innerHTML = '<div class="Title">' + message.title + '</div><div class="Text">' + message.text + '</div>';
 		ge( 'MobileNotifications' ).appendChild( n );
 		setTimeout( function(){ n.classList.add( 'Showing' ); }, 50 );
 		n.close = function()
@@ -556,12 +549,12 @@ function Notify( msg, callback, clickcallback )
 						n.close();
 						
 						// Function to set the notification as read...
-						if( msg.notificationId )
+						if( message.notificationId )
 						{
 							var l = new Library( 'system.library' );
 							l.onExecuted = function(){};
 							l.execute( 'mobile/updatenotification', { 
-								notifid: msg.notificationId, 
+								notifid: message.notificationId, 
 								action: 1
 							} );
 						}
@@ -570,7 +563,7 @@ function Notify( msg, callback, clickcallback )
 			};
 		} );
 		
-		if( msg.flags && msg.flags.sticky )
+		if( message.flags && message.flags.sticky )
 		{
 			n.addEventListener( 'touchend', function(){ if( n.parentNode ) n.close(); } );
 		}

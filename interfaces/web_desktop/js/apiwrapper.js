@@ -2998,8 +2998,6 @@ function apiWrapper( event, force )
 							// Sanitize title and text
 							var title = msg.title ? msg.title.split( /\<[^>]*?\>/ ).join( '' ) : '';
 							var text = msg.text ? msg.text.split( /\<[^>]*?\>/ ).join( '' ) : '';
-							title += ' er fordi?';
-							text += ' og Torbjørn.';
 							
 							// Do the notification
 							Notify( 
