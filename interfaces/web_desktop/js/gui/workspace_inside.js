@@ -8474,19 +8474,22 @@ if( isMobile )
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
 }
+var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
 	if( !isMobile ) return;
 	if( !window.debugDiv ) return;
+	if( mobileDebugTime ) clearTimeout( mobileDebugTime );
 	if( clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
 	window.debugDiv.innerHTML += str + '<br>';
-	setTimeout( function()
+	mobileDebugTime = setTimeout( function()
 	{
 		window.debugDiv.innerHTML = '';
-	}, 4000 );
+		mobileDebugTime = null;
+	}, 15000 );
 }
 
 

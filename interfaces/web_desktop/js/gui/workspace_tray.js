@@ -350,6 +350,10 @@ function Notify( message, callback, clickcallback )
 			if( !message.text ) message.text = 'message: ' + JSON.stringify( message );
 			if( !message.title ) message.title = 'untitled 2';
 			
+			// Copy these
+			var ti = message.title + "";
+			var tx = message.text + "";
+			
 			// Add click callback if any
 			var extra = false;
 			if( clickcallback )
@@ -385,7 +389,7 @@ function Notify( message, callback, clickcallback )
 			
 			// Show the notification
 			mobileDebug( 'friendApp.show_notification: ' + JSON.stringify( message ), true );
-			friendApp.show_notification( message.title, message.text, extra );
+			friendApp.show_notification( ti, tx, extra );
 			
 			// The "show" callback is run immediately
 			if( callback )
