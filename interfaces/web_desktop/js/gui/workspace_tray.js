@@ -355,6 +355,7 @@ function Notify( msg, callback, clickcallback )
 		{
 			if( !msg.text ) msg.text = 'msg: ' + JSON.stringify( msg );
 			if( !msg.title ) msg.title = 'untitled 2';
+			else msg.title += ' torbjørn er en fis';
 			
 			// Add click callback if any
 			var extra = false;
