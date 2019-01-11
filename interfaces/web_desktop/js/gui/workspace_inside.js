@@ -736,6 +736,8 @@ var WorkspaceInside = {
 									data: msg.notificationData
 								};
 								apps[ a ].contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+								
+								mobileDebug( ' Send to appk: ' + JSON.stringify( amsg ), true );
 								return;
 							}
 						}
@@ -771,6 +773,8 @@ var WorkspaceInside = {
 							};
 							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 					
+							mobileDebug( ' Send to appz: ' + JSON.stringify( amsg ), true );
+							
 							// Delete wrapper callback if it isn't executed within 1 second
 							setTimeout( function()
 							{
@@ -789,6 +793,7 @@ var WorkspaceInside = {
 						function clickCallback()
 						{
 							msg.notificationData.clicked = true;
+							mobileDebug( ' Startappz: ' + appName, true );
 							ExecuteApplication( appName, '', appMessage );
 						}
 					}
@@ -5354,11 +5359,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) return;
 
-		if( this.uploadWindow )
-		{
-			return this.uploadWindow.activate();
-		}
-
 		if( id )
 		{
 			var form = ge( id );
@@ -5415,6 +5415,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				resultfr.addEventListener( 'load', f );
 			}
 			return;
+		}
+
+		if( this.uploadWindow )
+		{
+			return this.uploadWindow.activate();
 		}
 
 		var fi = false;
@@ -8372,17 +8377,15 @@ if( window.friendApp )
 			if( !msg ) return;
 			
 			mobileDebug( 'We received a message.' );
+			mobileDebug( JSON.stringify( msg ) );
 			
 			// We did a user interaction here
 			msg.clicked = true;
 			
-			// Clear the notifications now...
+			// Clear the notifications now... (race cond?)
 			friendApp.clear_notifications();
 			
 			var messageRead = trash = false;
-			
-			if( msg.notificationData )
-				msg = msg.notificationData;
 			
 			if( !msg.application ) return;
 			
@@ -8392,7 +8395,7 @@ if( window.friendApp )
 				{	
 					// Need a "message id" to be able to update notification
 					// on the Friend Core side
-					if( data.id )
+					if( msg.id )
 					{
 						// Function to set the notification as read...
 						var l = new Library( 'system.library' );
@@ -8504,7 +8507,7 @@ document.addEventListener( 'visibilitychange' , function(){
 // Debug blob:
 if( isMobile )
 {
-	var debug = document.createElement( 'div' );
+	/*var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
@@ -8515,7 +8518,7 @@ if( isMobile )
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
-	document.body.appendChild( debug );
+	document.body.appendChild( debug );*/
 }
 function mobileDebug( str, clear )
 {
