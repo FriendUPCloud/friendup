@@ -412,7 +412,8 @@ function Notify( message, callback, clickcallback )
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
 							notifid: message.notificationId, 
-							action: 1
+							action: 1,
+							pawel: 10
 						} );
 					}
 					if( callback ) callback();
@@ -476,7 +477,8 @@ function Notify( message, callback, clickcallback )
 			l.onExecuted = function(){};
 			l.execute( 'mobile/updatenotification', { 
 				notifid: message.notificationId, 
-				action: 1
+				action: 1,
+				pawel: 11
 			} );
 		}
 		
@@ -554,7 +556,8 @@ function Notify( message, callback, clickcallback )
 							l.onExecuted = function(){};
 							l.execute( 'mobile/updatenotification', { 
 								notifid: message.notificationId, 
-								action: 1
+								action: 1,
+								pawel: 12
 							} );
 						}
 					}
