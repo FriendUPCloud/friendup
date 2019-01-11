@@ -30,6 +30,19 @@
 #include <websockets/websocket_req_manager.h>
 #include <util/friendqueue.h>
 
+//
+//
+//
+
+enum {
+	USER_MOBILE_APP_STATUS_APPROVED = 0,
+	USER_MOBILE_APP_STATUS_BLOCKED
+};
+
+//
+//
+//
+
 typedef struct UserMobileApp
 {
 	MinNode			node;
@@ -43,6 +56,7 @@ typedef struct UserMobileApp
 	char			*uma_Core;
 	time_t			uma_CreateTS;
 	time_t			uma_LastStartTS;
+	int				uma_Status;
 	
 	WebsocketClient	*uma_WSClient;
 }UserMobileApp;
@@ -99,6 +113,7 @@ static FULONG UserMobileAppDesc[] = {
 	SQLT_STR,     (FULONG)"Core",   offsetof( struct UserMobileApp, uma_Core ),
 	SQLT_INT,     (FULONG)"CreateTS", offsetof( struct UserMobileApp, uma_CreateTS ),
 	SQLT_INT,     (FULONG)"LastStartTS", offsetof( struct UserMobileApp, uma_LastStartTS ),
+	SQLT_INT,     (FULONG)"Status", offsetof( struct UserMobileApp, uma_Status ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserMobileAppInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserMobileApp, node ),
 	SQLT_END 

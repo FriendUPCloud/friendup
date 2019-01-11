@@ -44,6 +44,7 @@ MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID )
 
 		FQInit( &(newConnection->mac_Queue) );
 	}
+	return newConnection;
 }
 
 /**

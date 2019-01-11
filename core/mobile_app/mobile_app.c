@@ -1244,7 +1244,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	if( wsMessageSent == FALSE )
 	{
-		UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, bsMobileReceivedMessage->bs_Buffer );
+		UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, bsMobileReceivedMessage->bs_Buffer );
 		while( root != NULL )
 		{
 			UserMobileApp *toDelete = root;
@@ -1283,7 +1283,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		{
 			// on the end, list for the user should be taken from DB instead of going through all connections
 			
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
 			UserMobileApp *lma = lmaroot;
 			
 			while( lma != NULL )
@@ -1586,7 +1586,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	
 
 	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
-	UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, bsMobileReceivedMessage->bs_Buffer );
+	UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, bsMobileReceivedMessage->bs_Buffer );
 	while( root != NULL )
 	{
 		UserMobileApp *toDelete = root;
@@ -1633,7 +1633,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
 			UserMobileApp *lma = lmaroot;
 			
 			if( action == NOTIFY_ACTION_READ )

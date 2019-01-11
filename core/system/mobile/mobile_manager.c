@@ -774,9 +774,10 @@ int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
  * @param mmgr pointer to MobileManager
  * @param userID ID of user to which mobile apps belong
  * @param type type of mobile apps
+ * @param status status of device
  * @return pointer to new created list of MobileListEntry
  */
-UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type )
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status )
 {
 	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
 	{
@@ -792,7 +793,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 	if( lsqllib != NULL )
 	{
 		char where[ 512 ];
-		snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s'", userID, mobileType );
+		snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s' AND Status=%d", userID, mobileType, status );
 
 		int entries;
 		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
@@ -808,10 +809,11 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
  * @param mmgr pointer to MobileManager
  * @param userID ID of user to which mobile apps belong
  * @param type type of mobile apps
+ * @param status status of device
  * @param ids ids of usermobileapps which will not be taken from DB
  * @return pointer to new created list of MobileListEntry
  */
-UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, const char *ids )
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, int status, const char *ids )
 {
 	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
 	{
@@ -830,11 +832,11 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager 
 		char *where = FMalloc( size+1 );
 		if( ids == NULL || strlen( ids ) <= 0 )
 		{
-			snprintf( where, size, "UserID='%lu' AND Platform='%s'", userID, mobileType );
+			snprintf( where, size, "UserID='%lu' AND Platform='%s' AND Status=%d", userID, mobileType, status );
 		}
 		else
 		{
-			snprintf( where, size, "UserID='%lu' AND Platform='%s' AND ID not in(%s)", userID, mobileType, ids );
+			snprintf( where, size, "UserID='%lu' AND Platform='%s' AND ID not in(%s) AND Status=%d", userID, mobileType, ids, status );
 		}
 
 		int entries;

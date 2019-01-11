@@ -546,8 +546,6 @@ void NotificationManagerTimeoutThread( FThread *data )
 	
 	while( data->t_Quit != TRUE )
 	{
-		time_t locTime = time(NULL);
-		
 		sleep( 1 );
 		counter++;
 		if( counter > 10 )	// do checking every 15 seconds
@@ -574,8 +572,11 @@ void NotificationManagerTimeoutThread( FThread *data )
 					Notification *next = (Notification *)notif->node.mln_Succ;
 					allEntries++;
 					
+					time_t locTime = time(NULL);
 					// + 20
-					if( (notif->n_Created + 20) <= locTime )		// seems notification is timeouted
+					if( (notif->n_Created + 30) <= locTime )		
+						// seems notification is timeouted
+						// notify all users it wasnt read
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
 						

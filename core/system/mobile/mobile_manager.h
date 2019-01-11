@@ -68,9 +68,9 @@ void MobileManagerRefreshCache( MobileManager *mmgr );
 
 int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );
 
-UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type );
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status );
 
-UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, const char *ids );
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, int status, const char *ids );
 
 #endif //__SYSTEM_MOBILE_MOBILE_MANAGER_H__
 
