@@ -1657,7 +1657,7 @@ if( !class_exists( 'DoorWordpress' ) )
 											
 											$obj->{$mapping[$k]} = $o;
 										}
-										else if( $k == 'Image' && $data != '' && strstr( $data, 'http' ) )
+										else if( $k == 'Image' && $data != '' && ( strstr( $data, 'http' ) || strstr( substr( trim( $data ), 0, 2 ), '\\' ) ) )
 										{
 											if( $this->CurlUrlExists( trim( $data ), 'content_type=>image' ) )
 											{
@@ -1748,11 +1748,18 @@ if( !class_exists( 'DoorWordpress' ) )
 								$obj->categories = json_decode( '[{"id": "'.$file->parent.'"}]' );
 								
 								// If image missing set parent image if defined ...
-								
-								if( !$obj->images && $file->image )
-								{
-									$obj->images = $file->image;
-								}
+
+                                if( !$obj->images && $file->parentimage )
+                                {
+		                            if( isset( $file->parentimage->src ) )
+		                            {
+		                            	$obj->images = $file->parentimage->src;
+		                            }
+		                            else
+		                            {
+		                            	$obj->images = $file->parentimage;
+		                            }
+                                }
 								
 								//$Logger->log( '[[[[[[[[[[ Uploading ]]]]]]]]]] ' . print_r( $dta,1 ) . ' [] ' . print_r( $obj,1 ) );
 								
@@ -2684,7 +2691,7 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								$obj->{$mapping[$k]} = $o;
 							}
-							else if( $k == 'Image' && $data != '' && strstr( $data, 'http' ) )
+							else if( $k == 'Image' && $data != '' && ( strstr( $data, 'http' ) || strstr( substr( trim( $data ), 0, 2 ), '\\' ) ) )
 							{
 								if( $this->CurlUrlExists( trim( $data ), 'content_type=>image' ) )
 								{
@@ -2723,10 +2730,17 @@ if( !class_exists( 'DoorWordpress' ) )
 					
 					// If image missing set parent image if defined ...
 					
-					if( !$obj->image && $cat->image )
-					{
-						$obj->image = $cat->image;
-					}
+                    if( !$obj->image && $cat->parentimage )
+                    {
+                        if( isset( $cat->parentimage->src ) )
+                        {
+                            $obj->image = $cat->parentimage->src;
+                        }
+                        else
+                        {
+                            $obj->image = $cat->parentimage;
+                        }
+                    }
 					
 					if( isset( $obj->image ) )
 					{
@@ -3134,7 +3148,7 @@ if( !class_exists( 'DoorWordpress' ) )
 										
 										$obj->{$mapping[$k]} = $o;
 									}
-									else if( $k == 'Image' && $data != '' && strstr( $data, 'http' ) )
+									else if( $k == 'Image' && $data != '' && ( strstr( $data, 'http' ) || strstr( substr( trim( $data ), 0, 2 ), '\\' ) ) )
 									{
 										if( $this->CurlUrlExists( trim( $data ), 'content_type=>image' ) )
 										{
@@ -3203,6 +3217,19 @@ if( !class_exists( 'DoorWordpress' ) )
 							
 							$obj->categories = json_decode( '[{"id": "'.$file->parent.'"}]' );
 							
+							// If image missing set parent image if defined ...
+
+                            if( !$obj->images && $file->parentimage )
+                            {
+	                            if( isset( $file->parentimage->src ) )
+	                            {
+	                            	$obj->images = $file->parentimage->src;
+	                            }
+	                            else
+	                            {
+	                            	$obj->images = $file->parentimage;
+	                            }
+                            }
 							
 							// TODO: temporary that it deletes and creates new images every prod update, perhaps work with ID here also instead of filename
 								
