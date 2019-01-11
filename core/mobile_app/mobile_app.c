@@ -638,6 +638,103 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 #endif
 							}
 						break;
+						
+						case 'g': //get old notification
+							{
+								char *get = json_get_element_string( &json, "get" );
+								
+								FULONG umaID = appConnection->mac_UMAID;
+								if( umaID > 0 )
+								{
+									// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
+									NotificationSent *nsroot = NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( SLIB->sl_NotificationManager, NOTIFICATION_SENT_STATUS_REGISTERED, MOBILE_APP_TYPE_ANDROID, umaID );
+									DEBUG("NotificationSent ptr %p\n", nsroot );
+									NotificationSent *ns = nsroot;
+									while( ns != NULL )
+									{
+										DEBUG("Going through messages: %lu\n", ns->ns_ID );
+										Notification *notif = NotificationManagerGetDB( SLIB->sl_NotificationManager, ns->ns_NotificationID );
+										int reqLengith = 512;
+										// send notification to device
+										DEBUG("Notification pointer %p\n", notif );
+										if( notif != NULL )
+										{
+											if( notif->n_Channel != NULL )
+											{
+												reqLengith += strlen( notif->n_Channel );
+											}
+		
+											if( notif->n_Content != NULL )
+											{
+												reqLengith += strlen( notif->n_Content );
+											}
+		
+											if( notif->n_Title != NULL )
+											{
+												reqLengith += strlen( notif->n_Title );
+											}
+		
+											if( notif->n_Application != NULL )
+											{
+												reqLengith += strlen( notif->n_Application );
+											}
+		
+											if( notif->n_Extra != NULL )
+											{
+												reqLengith += strlen( notif->n_Extra );
+											}
+					
+											char *jsonMessage = FMalloc( reqLengith );
+											if( jsonMessage != NULL )
+											{
+												unsigned int jsonMessageLength = 0;
+#ifdef WEBSOCKET_SEND_QUEUE
+												if( notif->n_Extra )
+												{ //TK-1039
+													jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, ns->ns_ID );
+												}
+												else
+												{
+													jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, ns->ns_ID );
+												}
+						
+												DEBUG("Message will be sent through websockets\n");
+						
+												WriteMessageMA( appConnection, (unsigned char*)jsonMessage, jsonMessageLength );
+#else
+												if( notif->n_Extra )
+												{ //TK-1039
+													jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, ns->ns_ID );
+												}
+												else
+												{
+													jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, ns->ns_ID );
+												}
+						
+												if( userConnections->umac_Connection[i] != NULL && userConnections->umac_Connection[i]->mac_WebsocketPtr != NULL )
+												{
+													lws_write( userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+												}
+#endif
+												NotificationDelete( notif );
+						
+												FFree( jsonMessage );
+											}
+										}
+										else	// notification was received (it doesnt exist in database), we can remove entry
+										{
+											NotificationManagerDeleteNotificationSentDB( SLIB->sl_NotificationManager, ns->ns_ID );
+										}
+										
+										// maybe it should be confirmed by app?
+										//NotificationManagerNotificationSentSetStatusDB( SLIB->sl_NotificationManager, ns->ns_ID, NOTIFICATION_SENT_STATUS_RECEIVED );
+				
+										ns = (NotificationSent *)ns->node.mln_Succ;
+									}
+									NotificationSentDeleteAll( nsroot );
+								}
+							}
+						break;
 
 						default:
 							return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_WRONG_TYPE);
@@ -801,6 +898,8 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		DEBUG("New connection added, ret: %d umaID: %lu\n", ret, umaID );
 		
+		newConnection->mac_UMAID = umaID;
+		/*
 		if( umaID > 0 )
 		{
 			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
@@ -887,6 +986,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 			}
 			NotificationSentDeleteAll( nsroot );
 		}
+		*/
 		return ret;
 	}
 	return -1;
