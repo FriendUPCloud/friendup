@@ -848,12 +848,24 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 #ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
 						{ //TK-1039
+							
+							
+							DEBUG("test1\n");
+							char *t = notif->n_Extra;
+							while( *t != 0 )
+							{
+								printf("--> %d - %c --", *t, *t );
+								t++;
+							}
+							printf("\n\n");
+							
 							DEBUG("Extra\n");
 							char latin1_buf[ 1024 ]; memset( latin1_buf, 0, 1024 );
 							    char *latin1_ptr = latin1_buf;
     char *utf8_ptr = notif->n_Extra;
     size_t inbytesleft = sizeof(latin1_buf) - 1;
     size_t outbytesleft = strlen(notif->n_Extra) - 1;
+
 
     // Allocate a "conversion descriptor" for converting ISO-8859-1 to UTF-8.
     //iconv_t iconv_cd = iconv_open("UTF-8", "ISO-8859-1");
