@@ -77,9 +77,9 @@ function PollTray()
 					tray.notifications.appendChild( d );
 					d.onclick = function( e )
 					{
-						if( this.notification.clickCallback )
+						if( event.clickCallback )
 						{
-							this.notification.clickCallback();
+							event.clickCallback();
 							RemoveNotificationEvent( event.notificationId );
 							tray.notifications.removeChild( this );
 						}
