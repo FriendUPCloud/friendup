@@ -575,7 +575,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 					allEntries++;
 					
 					// + 20
-					if( (notif->n_Created + 10) <= locTime )		// seems notification is timeouted
+					if( (notif->n_Created + 20) <= locTime )		// seems notification is timeouted
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
 						
