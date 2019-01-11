@@ -2981,6 +2981,7 @@ function apiWrapper( event, force )
 						if( cw )
 						{
 							var ccb = false;
+							
 							if( nmsg.clickcallback )
 							{
 								var vmsg = {};
@@ -2993,13 +2994,24 @@ function apiWrapper( event, force )
 									cw.postMessage( JSON.stringify( vmsg ), '*' );
 								}
 							}
-
-							Notify( {
-								title: ( msg.title? msg.title.split( /\<[^>]*?\>/ ).join( '' ) : '' ),
-								text: ( msg.text ? msg.text.split( /\<[^>]*?\>/ ).join( '' ) : '' ), application: app ? app.applicationName : '' }, function()
-							{
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}, ccb );
+							
+							// Sanitize title and text
+							var title = msg.title ? msg.title.split( /\<[^>]*?\>/ ).join( '' ) : '';
+							var text = msg.text ? msg.text.split( /\<[^>]*?\>/ ).join( '' ) : '';
+							
+							// Do the notification
+							Notify( 
+								{
+									title: title,
+									text: text, 
+									application: app ? app.applicationName : '' 
+								}, 
+								function()
+								{
+									cw.postMessage( JSON.stringify( nmsg ), '*' );
+								}, 
+								ccb 
+							);
 						}
 						msg.callback = false;
 						break;
