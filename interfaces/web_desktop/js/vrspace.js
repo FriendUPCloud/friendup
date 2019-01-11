@@ -897,6 +897,7 @@ Workspace = {
 				'webclient/js/gui/filedialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/vr/vrengine.js;' +
 				'webclient/js/vr/vrwrapper.js;' +
 				'webclient/js/media/audio.js;' +

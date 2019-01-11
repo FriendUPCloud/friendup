@@ -27,6 +27,7 @@ Workspace = {
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
+	notificationEvents: [],
 	applications: [],
 	importWindow: false,
 	menuState: '',
@@ -1142,6 +1143,7 @@ Workspace = {
 				'webclient/js/gui/filedialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/media/audio.js;' +
 				'webclient/js/io/p2p.js;' +
 				'webclient/js/io/request.js;' +

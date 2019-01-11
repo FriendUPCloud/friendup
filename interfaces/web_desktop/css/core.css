@@ -2066,6 +2066,18 @@ html body .PopInfo + .BubbleInfo
 	line-height: 20px
 }
 
+.TrayElement.Blink:before
+{
+	animation: blinking 1s infinite;
+}
+
+@keyframes blinking
+{
+	0% { opacity: 0.5; }
+	50% { opacity: 1; }
+	100% { opacity: 0.5; }
+}
+
 .TrayElement.Notification .BubbleInfo,
 .TrayElement.PopNotification .PopInfo
 {
@@ -2080,6 +2092,22 @@ html body .PopInfo + .BubbleInfo
 {
 	max-height: initial;
 	padding: 8px;
+}
+
+#Tray > .Notification > .TrayInformation
+{
+	position: absolute;
+	display: block;
+	width: 300px;
+	bottom: 40px;
+	right: 0px;
+	background: rgba(0,0,0,0.8);
+	color: white;
+	text-align: left;
+}
+#Tray > .Notification > .TrayInformation *
+{
+	color: white;
 }
 
 .PopInfo:before,
