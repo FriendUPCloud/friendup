@@ -848,7 +848,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 #ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
 						{ //TK-1039
-							
+							DEBUG("Extra\n");
 							char latin1_buf[ 1024 ]; memset( latin1_buf, 0, 1024 );
 							    char *latin1_ptr = latin1_buf;
     char *utf8_ptr = notif->n_Extra;
@@ -877,6 +877,10 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
         printf("n");
     }
     printf(">>>>%s<<<<\n", latin1_buf );
+	}
+	else
+	{
+		DEBUG("iconv != icon_t\n");
 	}
 							
 							
