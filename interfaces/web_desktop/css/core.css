@@ -2078,7 +2078,8 @@ html body .PopInfo + .BubbleInfo
 	100% { opacity: 0.5; }
 }
 
-.TrayElement.Hidden
+.TrayElement.Hidden,
+html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 {
 	display: none;
 }
