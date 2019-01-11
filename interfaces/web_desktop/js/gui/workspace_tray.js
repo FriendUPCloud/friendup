@@ -84,6 +84,7 @@ function PollTray()
 							tray.notifications.removeChild( this );
 						}
 						PollTray();
+						return cancelBubble( e );
 					}
 					if( event.showCallback )
 					{
