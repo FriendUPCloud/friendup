@@ -379,7 +379,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			}
 			if( appConnection->mac_Queue.fq_First == NULL )
 			{
-				FERROR("We cannot send data on dead connection\n");
+				FERROR("We cannot send message without data\n");
 				return 0;
 			}
 			
@@ -804,6 +804,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		{
 			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
 			NotificationSent *nsroot = NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( SLIB->sl_NotificationManager, NOTIFICATION_SENT_STATUS_REGISTERED, MOBILE_APP_TYPE_ANDROID, umaID );
+			DEBUG("NotificationSent ptr %p\n", nsroot );
 			NotificationSent *ns = nsroot;
 			while( ns != NULL )
 			{
@@ -854,6 +855,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 						}
 						
 						DEBUG("Message will be sent through websockets\n");
+						
 						WriteMessageMA( newConnection, (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 						if( notif->n_Extra )
