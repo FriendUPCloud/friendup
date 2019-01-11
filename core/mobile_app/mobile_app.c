@@ -807,9 +807,11 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 			NotificationSent *ns = nsroot;
 			while( ns != NULL )
 			{
+				DEBUG("Going through messages: %lu\n", ns->ns_ID );
 				Notification *notif = NotificationManagerGetDB( SLIB->sl_NotificationManager, ns->ns_NotificationID );
 				int reqLengith = 0;
 				// send notification to device
+				DEBUG("Notification pointer %p\n", notif );
 				if( notif != NULL )
 				{
 					if( notif->n_Channel != NULL )
@@ -851,6 +853,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, ns->ns_ID );
 						}
 						
+						DEBUG("Message will be sent through websockets\n");
 						WriteMessageMA( newConnection, (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 						if( notif->n_Extra )
