@@ -830,7 +830,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager 
 		char *where = FMalloc( size+1 );
 		if( ids == NULL || strlen( ids ) <= 0 )
 		{
-			snprintf( where, size, "UserID='%lu' AND Platform='%s' AND", userID, mobileType );
+			snprintf( where, size, "UserID='%lu' AND Platform='%s'", userID, mobileType );
 		}
 		else
 		{
