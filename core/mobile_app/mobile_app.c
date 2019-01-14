@@ -1188,21 +1188,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-						int msgSendLength;
 						
-						if( bsMobileReceivedMessage->bs_Size == 0 )
-						{
-							char number[ 128 ];
-							int numsize = snprintf( number, sizeof(number), "%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
-							BufStringAddSize( bsMobileReceivedMessage, number, numsize );
-						}
-						else
-						{
-							char number[ 128 ];
-							int numsize = snprintf( number, sizeof(number), ",%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
-							BufStringAddSize( bsMobileReceivedMessage, number, numsize );
-						}
+						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+						
+						int msgSendLength;
 						
 #ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
@@ -1216,6 +1205,22 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 
 						if( userConnections->umac_Connection[i] != NULL )
 						{
+							if( userConnections->umac_Connection[i]->mac_WebsocketPtr != NULL )
+							{
+								if( bsMobileReceivedMessage->bs_Size == 0 )
+								{
+									char number[ 128 ];
+									int numsize = snprintf( number, sizeof(number), "%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
+									BufStringAddSize( bsMobileReceivedMessage, number, numsize );
+								}
+								else
+								{
+									char number[ 128 ];
+									int numsize = snprintf( number, sizeof(number), ",%lu", userConnections->umac_Connection[i]->mac_UserMobileAppID );
+									BufStringAddSize( bsMobileReceivedMessage, number, numsize );
+								}
+							}
+							
 							Log( FLOG_INFO, "Send notification through Mobile App: Android: '%s' len %d \n", jsonMessage, msgSendLength );
 							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, msgSendLength );
 						}
