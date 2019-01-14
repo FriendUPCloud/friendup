@@ -36,6 +36,8 @@
 #define DEVICE_BINARY_SIZE 32
 #define MAXPAYLOAD_SIZE 256
 
+#define TIME_OF_OLDER_MESSAGES_TO_REMOVE 20
+
 //
 // Notification Manager structure
 //

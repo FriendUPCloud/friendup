@@ -574,7 +574,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 					
 					time_t locTime = time(NULL);
 					// + 20
-					if( (notif->n_Created + 30) <= locTime )		
+					if( (notif->n_Created + TIME_OF_OLDER_MESSAGES_TO_REMOVE) <= locTime )		
 						// seems notification is timeouted
 						// notify all users it wasnt read
 					{

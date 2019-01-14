@@ -668,7 +668,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 										int reqLengith = 512;
 										// send notification to device
 										DEBUG("Notification pointer %p\n", notif );
-										if( notif != NULL )
+										if( notif != NULL && ((notif->n_Created+TIME_OF_OLDER_MESSAGES_TO_REMOVE) < time(NULL)) )
 										{
 											if( notif->n_Channel != NULL )
 											{
@@ -727,14 +727,19 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 													lws_write( userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 												}
 #endif
-												NotificationDelete( notif );
-						
+
 												FFree( jsonMessage );
 											}
+											
 										}
 										else	// notification was received (it doesnt exist in database), we can remove entry
 										{
 											NotificationManagerDeleteNotificationSentDB( SLIB->sl_NotificationManager, ns->ns_ID );
+										}
+										if( notif != NULL )
+										{
+											NotificationDelete( notif );
+											notif = NULL;
 										}
 										
 										// maybe it should be confirmed by app?
