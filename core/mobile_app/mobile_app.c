@@ -386,6 +386,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			
 			if( appConnection->mac_WebsocketPtr == NULL )
 			{
+				FERROR("Websocket connection removed, closing down\n");
 				return 1;
 			}
 			
