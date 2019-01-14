@@ -668,7 +668,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 										int reqLengith = 512;
 										// send notification to device
 										DEBUG("Notification pointer %p\n", notif );
-										if( notif != NULL && ((notif->n_Created+TIME_OF_OLDER_MESSAGES_TO_REMOVE) < time(NULL)) )
+										if( notif != NULL )//&& ((notif->n_Created+TIME_OF_OLDER_MESSAGES_TO_REMOVE) < time(NULL)) )
 										{
 											if( notif->n_Channel != NULL )
 											{
@@ -744,7 +744,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 										
 										// maybe it should be confirmed by app?
 										//NotificationManagerNotificationSentSetStatusDB( SLIB->sl_NotificationManager, ns->ns_ID, NOTIFICATION_SENT_STATUS_RECEIVED );
-				
+
 										ns = (NotificationSent *)ns->node.mln_Succ;
 									}
 									NotificationSentDeleteAll( nsroot );
