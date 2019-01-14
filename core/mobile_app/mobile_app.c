@@ -1105,7 +1105,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
 					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
 					
-					DEBUG("\t\t\t\t\t\t\t sndbuffer '%s' len %d \n", sndbuffer, msgsize );
+					Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
 					
 					WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
 					FFree( sndbuffer );
@@ -1200,6 +1200,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 
 						if( userConnections->umac_Connection[i] != NULL )
 						{
+							Log( FLOG_INFO, "Send notification through Mobile App: Android: '%s' len %d \n", jsonMessage, msgSendLength );
 							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, msgSendLength );
 						}
 #else
@@ -1296,6 +1297,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 				
+				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s'\n", notif->n_Content);
 				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
 
 				lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
@@ -1546,6 +1548,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					if( userConnections->umac_Connection[i] != NULL )
 					{
 						DEBUG("[MobileAppNotifyUserUpdate]: Connection pointer: %p\n", userConnections->umac_Connection[i] );
+						Log( FLOG_INFO, "Send notification (update) through Mobile App: Android '%s' len %d \n", jsonMessage, jsonMessageLength );
 						WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 						if( notif->n_Extra )
@@ -1587,6 +1590,9 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 
 	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
 	UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, bsMobileReceivedMessage->bs_Buffer );
+	
+	Log( FLOG_INFO, "Send notification (update) through Mobile App: Android, notifications will not be registered for ID: %s\n", bsMobileReceivedMessage->bs_Buffer );
+	
 	while( root != NULL )
 	{
 		UserMobileApp *toDelete = root;
@@ -1636,6 +1642,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
 			UserMobileApp *lma = lmaroot;
 			
+			/*
 			if( action == NOTIFY_ACTION_READ )
 			{
 				while( lma != NULL )
@@ -1648,23 +1655,19 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					lns->ns_Status = NOTIFICATION_SENT_STATUS_READ;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
-					DEBUG("Send message to device %s\n", lma->uma_Platform );
+					Log( FLOG_INFO, "Send notification (update) through Mobile App: IOS '%s' iostoken: %s\n", notif->n_Content, lma->uma_AppToken );
 					
 					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
-					/*
-					int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
-			
-					WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, jsonMessageIOS, msgsize );
-					*/
+
 					NotificationSentDelete( lns );
 
 					lma = (UserMobileApp *)lma->node.mln_Succ;
 				}
-			}
+			}*/
 			//
 			// seems noone readed message on desktop, we must inform all user channels that we have package for him
 			//
-			else if( action == NOTIFY_ACTION_TIMEOUT )
+			//else if( action == NOTIFY_ACTION_TIMEOUT )
 			{
 				while( lma != NULL )
 				{
@@ -1676,7 +1679,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
-					DEBUG("Send message to device %s\n", lma->uma_Platform );
+					Log( FLOG_INFO, "Send notification (update) through Mobile App: IOS '%s' iostoken: %s\n", notif->n_Content, lma->uma_AppToken );
 					
 					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
 					/*
