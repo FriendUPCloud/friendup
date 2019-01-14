@@ -50,7 +50,7 @@ typedef struct MobileAppConnection
 	UserMobileApp										*mac_UserMobileApp;
 	FULONG												mac_UserMobileAppID;
 	int													mac_Used;
-	FULONG												mac_UMAID;
+	//FULONG												mac_UMAID;
 }MobileAppConnection;
 
 //

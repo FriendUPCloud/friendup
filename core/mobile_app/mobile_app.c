@@ -230,9 +230,9 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 	{
 		FBOOL sameUMA = FALSE;
 		// if there is free place or we have same WS connection
-		if( newConnection->mac_UMAID > 0 && userConnections->umac_Connection[i]->mac_UMAID > 0 )
+		if( newConnection->mac_UserMobileAppID > 0 && userConnections->umac_Connection[i]->mac_UserMobileAppID > 0 )
 		{
-			if( newConnection->mac_UMAID == userConnections->umac_Connection[i]->mac_UMAID )
+			if( newConnection->mac_UserMobileAppID == userConnections->umac_Connection[i]->mac_UserMobileAppID )
 			{
 				sameUMA = TRUE;
 			}
@@ -663,7 +663,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 							{
 								char *get = json_get_element_string( &json, "get" );
 								
-								FULONG umaID = appConnection->mac_UMAID;
+								FULONG umaID = appConnection->mac_UserMobileAppID;
 								if( umaID > 0 )
 								{
 									// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
@@ -923,7 +923,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		DEBUG("New connection added, ret: %d umaID: %lu\n", ret, umaID );
 		
-		newConnection->mac_UMAID = umaID;
+		newConnection->mac_UserMobileAppID = umaID;
 		/*
 		if( umaID > 0 )
 		{
@@ -1188,9 +1188,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			//	case MN_force_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					DEBUG("[MobileAppNotifyUserRegister] Send message to mobile device , conptr %p\n", userConnections->umac_Connection[i]);
 					if( userConnections->umac_Connection[i] != NULL )
 					{
+						DEBUG("[MobileAppNotifyUserRegister] Send message to mobile device , conptr %p, umaID: %lu\n", userConnections->umac_Connection[i], userConnections->umac_Connection[i]->mac_UserMobileAppID );
+						
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_UserMobileAppID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
@@ -1230,7 +1231,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 								}
 							}
 							
-							Log( FLOG_INFO, "Send notification through Mobile App: Android: '%s' len %d \n", jsonMessage, msgSendLength );
+							Log( FLOG_INFO, "Send notification through Mobile App: Android: '%s' len %d UMAID: %lu\n", jsonMessage, msgSendLength, userConnections->umac_Connection[i]->mac_UserMobileAppID );
 							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, msgSendLength );
 						}
 #else
