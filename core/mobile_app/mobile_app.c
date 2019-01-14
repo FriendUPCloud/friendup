@@ -493,7 +493,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					if( appConnection == NULL)
 					{
 						DEBUG("Session not found for this connection\n");
-						return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_SESSION);
+						return MOBILE_APP_ERR_NO_SESSION;
 					}
 
 					appConnection->mac_LastCommunicationTimestamp = time(NULL);
