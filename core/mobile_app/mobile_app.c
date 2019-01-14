@@ -228,10 +228,19 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 	int connectionToReplaceIndex = -1;
 	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 	{
+		FBOOL sameUMA = FALSE;
 		// if there is free place or we have same WS connection
+		if( newConnection->mac_UMAID > 0 && userConnections->umac_Connection[i]->mac_UMAID > 0 )
+		{
+			if( newConnection->mac_UMAID == userConnections->umac_Connection[i]->mac_UMAID )
+			{
+				sameUMA = TRUE;
+			}
+		}
 		
-		if( userConnections->umac_Connection[i] == NULL || userConnections->umac_Connection[i]->mac_WebsocketPtr == newConnection->mac_WebsocketPtr )
+		if( userConnections->umac_Connection[i] == NULL || userConnections->umac_Connection[i]->mac_WebsocketPtr == newConnection->mac_WebsocketPtr || sameUMA == TRUE )
 		{ //got empty slot
+			
 			connectionToReplaceIndex = i;
 			DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
 			break;
