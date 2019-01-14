@@ -483,11 +483,13 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				{
 					int ret = MobileAppHandleLogin( wsi, user, &json );
 					
-					Log( FLOG_DEBUG, "\t\t\t\t\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %d\n", wsi, ret );
+					Log( FLOG_DEBUG, "ADD APP CONNECTION Websocket pointer: %p login return error: %d\n", wsi, ret );
 					return ret;		// remove WS connection if login fail
 				}
 				else
 				{
+					Log( FLOG_INFO, "MobileAppConnection: %p message received: %s\n", appConnection, data );
+					
 					if( appConnection == NULL)
 					{
 						DEBUG("Session not found for this connection\n");
