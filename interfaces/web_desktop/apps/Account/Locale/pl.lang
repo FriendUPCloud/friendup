@@ -11,9 +11,10 @@ i18n_new_password                    : Nowe hasło
 i18n_confirm                         : potwierdzać
 
 i18n_language                        : Język systemu
+i18n_workspace_mode                  : Tryb obszaru roboczego
 i18n_mode_gamified                   : Gamified
-i18n_mode_normal                     : Normal
-i18n_mode_developer                  : Developer
+i18n_mode_normal                     : Normalny
+i18n_mode_developer                  : Deweloper
 
 i18n_are_you_sure                    : Jesteś pewny?
 i18n_this_will_remove                : Spowoduje to usunięcie dysku z listy montowania.
@@ -22,8 +23,8 @@ i18n_delete_disk                     : Usuń dysk
 
 i18n_storage                         : Urządzeniaa
 
-i18n_key_type              			 : Typ klucza
-i18n_key_name              			 : Nazwa klucza
+i18n_key_type                        : Typ klucza
+i18n_key_name                        : Nazwa klucza
 i18n_key_password             	     : Hasło klucza
 i18n_generate                        : Wygenerować
 i18n_generate_keypair                : Wygeneruj parę kluczy
@@ -39,6 +40,7 @@ i18n_back                            : Wstecz
 i18n_publickey                       : Klucz publiczny
 
 i18n_key_information                 : Informacje o kluczu
+
 i18n_your_apps                       : Twoje aplikacje
 i18n_available_storage               : Dostępne urządzenia
 i18n_unmounted_storage               : Odlaczone urzadzenie
@@ -58,8 +60,8 @@ i18n_toggle_public_key_visibility    : Klucz publiczny
 i18n_password                        : Hasło
 i18n_edit_password                   : Zmień hasło
 
-i18n_descheading : Dodaj więcej miejsca do swojego systemu
-i18n_description : Wybierz typ dysku, który chcesz dodać do swojego systemu. Niektórzy dostawcy mogą poprosić o zarejestrowanie konta.
+i18n_descheading                     : Dodaj więcej miejsca do swojego systemu
+i18n_description                     : Wybierz typ dysku, który chcesz dodać do swojego systemu. Niektórzy dostawcy mogą poprosić o zarejestrowanie konta.
 
 i18n_disk                            : dysk
 i18n_add_a                           : Dodaj
@@ -106,11 +108,12 @@ i18n_data                            : Dane
 i18n_close                           : Zamknij
 i18n_encrypt                         : Szyfruj
 i18n_decrypt                         : Odszyfruj
-i18n_system_wide                     : System wide(WTF  !!!)
 
+i18n_system_wide                     : Szerokość systemu
 i18n_devices                         : Urządzenia
 
 i18n_generate_key                    : Wygeneruj kluczs
+
 i18n_useravatar                      : Użyj awataru
 i18n_changeavatar                    : Zmień awatar
 i18n_fileselectoravatar              : Wybierz obraz PNG
@@ -119,30 +122,53 @@ i18n_your_public_key                 : Twój klucz publiczny
 
 i18n_deleting_key                    : Usuwanie klucza
 
-i18n_friendNetwork					 : Friend Network
-i18n_fnetActivate					 : Aktywuj Friend Network
-i18n_fnetWorkgroup					 : Społeczność
-i18n_fnetPassword					 : Hasło społeczności
-i18n_fnetRepeatPassword				 : Powtórz hasło
-i18n_workgroupPlaceHolder			 : Wprowadź nazwę grupy roboczej lub pozostaw puste
-i18n_passwordNoMatch				 : Sieciowe hasła grup roboczych Friend nie są zgodne.
-i18n_fnetAcceptFromAny				 : Akceptuj wiadomości od osób nie oznaczonych jako znajomi
+i18n_friendNetwork                   : Friend Network
+i18n_fnetActivate                    : Aktywuj Friend Network
+i18n_fnetWorkgroup                   : Społeczność
+i18n_fnetPassword                    : Hasło społeczności
+i18n_fnetRepeatPassword              : Powtórz hasło
+i18n_workgroupPlaceHolder            : Wprowadź nazwę grupy roboczej lub pozostaw puste
+i18n_passwordNoMatch                 : Sieciowe hasła grup roboczych Friend nie są zgodne.
+i18n_fnetAcceptFromAny               : Akceptuj wiadomości od osób nie oznaczonych jako znajomi
 i18n_fnetDescription                 : Opisz siebie
-i18n_fnetDownloadFiles				 : Pobierz udostępnione pliki natychmiast
-i18n_fnetDownloadPath				 : Ścieżka
-i18n_fnetDownloadButton				 : Wybierz katalog
-i18n_fnetPleaseChooseDirectory		 : Proszę wybierz katalog ...
-i18n_fnetMountDrive					 : Zamontuj dysk Friend Network podczas startu
-i18n_fnetAutoMountDrive				 : Wyświetl ikonę Friend Network w obszarze roboczym
+i18n_fnetDownloadFiles               : Pobierz udostępnione pliki natychmiast
+i18n_fnetDownloadPath                : Ścieżka
+i18n_fnetDownloadButton              : Wybierz katalog
+i18n_fnetPleaseChooseDirectory		   : Proszę wybierz katalog ...
+i18n_fnetShareLocalDrives            : Udostępnij lokalne dyski
+i18n_fnetDeviceDescription           : Opis urządzenia
+i18n_fnetDeviceName                  : Nazwa urządzenia
+i18n_fnetChangeDeviceAvatar          : Zmień Awatar urządzenia
+i18n_nameOfDevice                    : Wprowadź nazwę urządzenia
+i18n_descriptionOfDevice             : Wprowadź opis
+i18n_device_information              : Urządzenie
+i18n_deviceNotice                    : Ta strona informacyjna jest specyficzna dla urządzenia, z którego właśnie korzystasz. Friend Network użyje go do wyświetlania na różnych urządzeniach, których używasz jednocześnie.
+i18n_fnetMountDrive                  : Zamontuj dysk Friend Network podczas startu
+i18n_fnetAutoMountDrive              : Wyświetl ikonę Friend Network w obszarze roboczym
 
 i18n_update_language_warning         : Aktualizacja języka
 i18n_update_language_desc            : Podczas aktualizacji ustawień języka Friend musi ponownie załadować obszar roboczy. Stracisz wszystko, co nie jest zapisane. Na pewno chcesz kontynuować?
-i18n_fnetShareLocalDrives			 : Podłącz lokalne dyski do Friend Network
-i18n_fnetDeviceDescription			 : Opis urządzenia
-i18n_fnetDeviceName					 : Nazwa urządzenia
-i18n_fnetChangeDeviceAvatar			 : Zmień obraz
-i18n_device_information				 : Urządzenie
-i18n_nameOfDevice					 : Wprowadź tutaj nazwę urządzenia
-i18n_descriptionOfDevice			 : Wprowadź opis
-i18n_deviceNotice					 : Ta strona informacyjna jest specyficzna dla urządzenia, z którego właśnie korzystasz. Friend Network użyje go do wyświetlania różnych urządzeń, z których korzystasz w danym momencie.
+
+i18n_fnetActivatePower               : Włącz dzielenie mocy obliczeniowej za pośrednictwem sieci znajomych
+i18n_fnetShareThisDevice             : Udostępnij to urządzenie
+i18n_fnetMaximumPercentage           : Maksymalna czas dostępu do udostępnienia
+i18n_fnetAllowPowerApplications      : Zezwól aplikacjom na żądanie zewnętrznego zasilania
+i18n_fnetNumberOfMachines            : Optymalna liczba maszyn
+i18n_fnetMinimalNumberOfMachines     : Minimalna liczba maszyn
+i18n_fnetAskOnlyToFriends            : Zapytaj znajomych
+i18n_friendNetworkPowerSharing       : Współdzielenie mocy
+i18n_fnetShareOnlyWithCommunity      : Tylko w twojej społeczności
+i18n_fnetShareOnlyWithFriends        : Udostępnij tylko znajomym
+i18n_fnetAskOnlyToCommunity          : Zapytaj swoją społeczność
+i18n_fnetSharingPower                : Podziel się swoją mocą
+i18n_fnetAskForPower                 : Poproś o moc
+
+i18n_fnetShareLocalDrives            : Podłącz lokalne dyski do Friend Network
+i18n_fnetDeviceDescription           : Opis urządzenia
+i18n_fnetDeviceName                  : Nazwa urządzenia
+i18n_fnetChangeDeviceAvatar          : Zmień obraz
+i18n_device_information              : Urządzenie
+i18n_nameOfDevice                    : Wprowadź tutaj nazwę urządzenia
+i18n_descriptionOfDevice             : Wprowadź opis
+i18n_deviceNotice                    : Ta strona informacyjna jest specyficzna dla urządzenia, z którego właśnie korzystasz. Friend Network użyje go do wyświetlania różnych urządzeń, z których korzystasz w danym momencie.
 
