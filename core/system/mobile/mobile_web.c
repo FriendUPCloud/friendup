@@ -692,6 +692,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			action = atoi( (char *)el->data );
 		}
 		
+		DEBUG("Update notification. Action %d notifsid %lu\n", action, notifid );
+		
 		if( action > 0 && notifid > 0 )	// register is not supported
 		{
 			char tmp[ 512 ];

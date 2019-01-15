@@ -1618,30 +1618,32 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	}
 	
 	// select all connections without usermobileappid and store message for them in database
-	
-
-	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
-	UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, bsMobileReceivedMessage->bs_Buffer );
-	
-	Log( FLOG_INFO, "Send notification (update) through Mobile App: Android, notifications will not be registered for ID: %s\n", bsMobileReceivedMessage->bs_Buffer );
-	
-	while( root != NULL )
+	// new messages must be created only when timeout appear
+	if( action == NOTIFY_ACTION_TIMEOUT )
 	{
-		UserMobileApp *toDelete = root;
-		root = (UserMobileApp *)root->node.mln_Succ;
+		FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+		UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, bsMobileReceivedMessage->bs_Buffer );
+	
+		Log( FLOG_INFO, "Send notification (update) through Mobile App: Android, notifications will not be registered for ID: %s\n", bsMobileReceivedMessage->bs_Buffer );
+	
+		while( root != NULL )
+		{
+			UserMobileApp *toDelete = root;
+			root = (UserMobileApp *)root->node.mln_Succ;
 		
-		DEBUG("Notification for MobileDevice: %lu will be sent later\n", toDelete->uma_ID );
+			DEBUG("Notification for MobileDevice: %lu will be sent later\n", toDelete->uma_ID );
 	
-		NotificationSent *lns = NotificationSentNew();
-		lns->ns_NotificationID = notif->n_ID;
-		lns->ns_UserMobileAppID = (FULONG)toDelete->uma_ID;
-		lns->ns_RequestID = (FULONG)toDelete->uma_ID;
-		lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
-		lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-		NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+			NotificationSent *lns = NotificationSentNew();
+			lns->ns_NotificationID = notif->n_ID;
+			lns->ns_UserMobileAppID = (FULONG)toDelete->uma_ID;
+			lns->ns_RequestID = (FULONG)toDelete->uma_ID;
+			lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+			lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+			NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 	
-		UserMobileAppDelete( toDelete );
-		NotificationSentDelete( lns );
+			UserMobileAppDelete( toDelete );
+			NotificationSentDelete( lns );
+		}
 	}
 	/*				
 	// this way all of devices which were not avaiable during sending will get message
@@ -1674,9 +1676,11 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
 			UserMobileApp *lma = lmaroot;
 			
-			/*
+			
 			if( action == NOTIFY_ACTION_READ )
 			{
+				// we should send message to all other devices that message was read
+				/*
 				while( lma != NULL )
 				{
 					NotificationSent *lns = NotificationSentNew();
@@ -1694,12 +1698,12 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					NotificationSentDelete( lns );
 
 					lma = (UserMobileApp *)lma->node.mln_Succ;
-				}
-			}*/
+				}*/
+			}
 			//
 			// seems noone readed message on desktop, we must inform all user channels that we have package for him
 			//
-			//else if( action == NOTIFY_ACTION_TIMEOUT )
+			else if( action == NOTIFY_ACTION_TIMEOUT )
 			{
 				while( lma != NULL )
 				{
