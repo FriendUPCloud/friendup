@@ -230,7 +230,8 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 	{
 		FBOOL sameUMA = FALSE;
 		// if there is free place or we have same WS connection
-		if( newConnection->mac_UserMobileAppID > 0 && userConnections->umac_Connection[i]->mac_UserMobileAppID > 0 )
+		
+		if( userConnections->umac_Connection[i] != NULL && newConnection->mac_UserMobileAppID > 0 && userConnections->umac_Connection[i]->mac_UserMobileAppID > 0 )
 		{
 			if( newConnection->mac_UserMobileAppID == userConnections->umac_Connection[i]->mac_UserMobileAppID )
 			{
