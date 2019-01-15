@@ -24,7 +24,7 @@ i18n_waCreated                  : Pomyślnie utworzono aplikację internetową.
 i18n_waAbout0                   : O aplikacji
 i18n_waAbout1                   : Ta aplikacja została stworzona przez
 i18n_waFile                     : Plik
-i18n_waFileSelectorTitle				: Wybierz, gdzie chcesz zapisać nową aplikację ...
+i18n_waFileSelectorTitle        : Wybierz, gdzie chcesz zapisać nową aplikację ...
 i18n_waIcon                     : Ikona aplikacji
 i18n_waPreview                  : Obraz podglądu aplikacji
 i18n_waChange                   : Zmień
