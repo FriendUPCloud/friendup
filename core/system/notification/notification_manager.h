@@ -87,7 +87,7 @@ int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm );
 
 void NotificationManagerTimeoutThread( FThread *data );
 
-int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *content, const char *sound, int badge, char *userData, char *tokens );
+int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 

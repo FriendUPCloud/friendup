@@ -1330,7 +1330,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 				
 				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s'\n", notif->n_Content);
-				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
+				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
 
 				lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 				notif->n_NotificationsSent = lns;
@@ -1717,7 +1717,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					
 					Log( FLOG_INFO, "Send notification (update) through Mobile App: IOS '%s' iostoken: %s\n", notif->n_Content, lma->uma_AppToken );
 					
-					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Content, "default", 1, notif->n_Application, lma->uma_AppToken );
+					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
 					/*
 					int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
 			

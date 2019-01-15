@@ -830,15 +830,17 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
  * Send notification to APNS server
  * 
  * @param nm pointer to NotificationManager
+ * @param title title
  * @param content content of message
  * @param sound sound name
  * @param badge badge
- * @param userData user data
+ * @param app application name
+ * @param extras user data
  * @param tokens device tokens separated by coma
  * @return 0 when success, otherwise error number
  */
 
-int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *content, const char *sound, int badge, char *userData, char *tokens )
+int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
 {
 	char *startToken = tokens;
 	char *curToken = tokens+1;
@@ -961,7 +963,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 
 		if( *curToken == ',' || *curToken == 0 )
 		{
-			char pushContent[ 1024 ];
+			char pushContent[ 4096 ];
 			if( *curToken != 0 )
 			{
 				*curToken = 0;
@@ -969,7 +971,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			
 			DEBUG("Send message to : >%s<\n", startToken );
 			
-			int pushContentLen = snprintf( pushContent, sizeof(pushContent), "{\"aps\":{\"alert\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"UserData\":\"%s\" }", content, badge, sound, userData );
+			int pushContentLen = snprintf( pushContent, sizeof(pushContent)-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
 			
 			char *tok = TokenToBinary( startToken );
 			DEBUG("Send payload, token pointer %p\n", tok );
