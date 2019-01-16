@@ -165,16 +165,16 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	}
 
 	// Take a selected file entry and use the trigger function on it
-	w.choose = function ( ele )
+	w.choose = function( ele )
 	{
-		if ( !dialog.path )
+		if( !dialog.path )
 		{
 			alert ( 'Please choose a path.' );
 			return false;
 		}
 		
 		// Save dialog uses current path and written filename
-		if ( dialog.type == 'save' )
+		if( dialog.type == 'save' )
 		{
 			if ( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 )
 			{
@@ -394,17 +394,21 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		ds = w.getElementsByTagName ( 'input' );
 		for( var a = 0; a < ds.length; a++ )
 		{
-			if ( ds[a].getAttribute ( 'name' ) )
+			if( ds[a].getAttribute( 'name' ) )
 			{
-				if ( ds[a].getAttribute ( 'name' ) == 'Path' )
+				if( ds[a].getAttribute( 'name' ) == 'Path' )
 				{
 					inpu = ds[a];
 					w.inpu = inpu;
 				}
+				if( ds[ a ].getAttribute( 'name' ) == 'filename' )
+				{
+					w.filename = ds[a];
+				}
 			}
 		}
 		// Cancel
-		if ( cacl )
+		if( cacl )
 		{
 			cacl.onclick = function()
 			{
@@ -412,7 +416,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				w.close();
 			}
 		}
-		if ( open )
+		if( open )
 		{
 			open.onclick = function()
 			{
@@ -420,7 +424,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 		}
 		// Save file
-		if ( save )
+		if( save )
 		{
 			save.onclick = function()
 			{
@@ -462,6 +466,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			nosidebarbackground: true,
 			toolbararea:         dialog.toolbararea,
 			mountlist:           true,
+			clickfile:           function( element, event )
+			{
+				if( w.filename && element.fileInfo.Type == 'File' )
+				{
+					w.filename.value = element.fileInfo.Filename;
+				}
+			},
 			doubleclickfiles:    function( element, event )
 			{
 				element.classList.add( 'Selected' );
