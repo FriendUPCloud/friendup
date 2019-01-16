@@ -1,0 +1,22 @@
+i18n_file                        : Plik
+i18n_add_to_playlist             : Dodaj do listy odtwarzania
+i18n_load_playlist               : Załaduj listę odtwarzania
+i18n_save_playlist               : Zapisz listę odtwarzania
+i18n_save_playlist_as            : Zapisz listę odtwarzania jako
+i18n_about_exotica               : O Friend Jukebox
+i18n_quit                        : Wyjdź
+i18n_playlist                    : Lista odtwarzania
+i18n_edit_playlist               : Edytuj listę odtwarzania
+i18n_clear_playlist              : Wyczyść listę odtwarzania
+i18n_close                       : Zamknij edytor listy odtwarzania
+i18n_up                          : W górę
+i18n_down                        : Na dół
+i18n_toggle_mini_playlist_show   : Pokaż mini listę odtwarzania
+i18n_toggle_mini_playlist_hide   : Ukryj mini listę odtwarzania
+i18n_about1                      : Friend Jukebox to prosty, ale zdolny odtwarzacz muzyczny, który zadaje ci trudność, dzięki czemu możesz pozostać produktywnym. Ma prosty oscyloskop i łatwy w użyciu, minimalistyczny interfejs użytkownika.
+i18n_about2                      : Jeśli masz pomysły lub propozycje funkcji - lub po prostu chcesz czatować, Wpadnij na nasz serwer Discord https://discord.gg/29kGtnw. Programiści i użytkownicy zbierają się tam, aby dzielić się wiedzą i rozmowami na każdy temat.
+i18n_add_source                  : Z sieci
+
+i18n_web_url                     : Adres internetowy
+i18n_add_source                  : Dodaj źródło
+i18n_add_web_stream              : Dodaj strumień sieciowy
