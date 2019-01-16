@@ -411,16 +411,17 @@ UserMobileApp *GetMobileAppByUserName( MobileManager *mmgr, SQLLibrary *sqllib, 
  *
  * @param mmgr pointer to MobileManager
  * @param sqllib pointer to SQLLibrary
+ * @param userID user ID
  * @param token application token
  * @return ID of UMA or 0 when function fail
  */
-FULONG MobileManagerGetUMAIDByToken( MobileManager *mmgr, SQLLibrary *sqllib, const char *token )
+FULONG MobileManagerGetUMAIDByTokenAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *token )
 {
 	UserMobileApp *root = NULL;
 	char query[ 256 ];
 	FULONG tokID = 0;
 	
-	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE AppToken = '%s'", token );
+	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE UserID=%lu AND AppToken = '%s'", userID, token );
 
 	void *res = sqllib->Query( sqllib, query );
 	

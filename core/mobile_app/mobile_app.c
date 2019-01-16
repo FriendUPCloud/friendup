@@ -880,9 +880,9 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		user = UMGetUserByNameDBCon( SLIB->sl_UM, sqlLib, usernameString );
 	
-		if( tokenString != NULL )
+		if( tokenString != NULL && user != NULL )
 		{
-			umaID = MobileManagerGetUMAIDByToken( SLIB->sl_MobileManager, sqlLib, tokenString );
+			umaID = MobileManagerGetUMAIDByTokenAndUserName( SLIB->sl_MobileManager, sqlLib, user->u_ID, tokenString );
 		}
 		else
 		{
