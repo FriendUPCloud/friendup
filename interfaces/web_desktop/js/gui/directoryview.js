@@ -49,6 +49,7 @@ DirectoryView = function( winobj, extra )
 	this.sidebarbackground = true;
 	this.toolbararea = false;
 	this.doubleclickfiles = false;
+	this.clickfile = false;
 	this.multiple = true;
 	this.mountlist = false;
 	this.filedialog = false;
@@ -79,6 +80,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.doubleclickfiles )
 		{
 			this.doubleclickfiles = extra.doubleclickfiles;
+		}
+		if( extra.clickfile )
+		{
+			this.clickfile = extra.clickfile;
 		}
 		if( extra.multiple === false )
 		{
@@ -2738,6 +2743,12 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.onclick = function( e )
 			{
 				var p = icnt;
+				
+				// We have an external event
+				if( dv.clickfile )
+				{
+					dv.clickfile( this.file, e );
+				}
 				
 				// Range
 				if( dv.multiple && e.shiftKey )
