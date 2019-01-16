@@ -177,7 +177,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					// if entry with token already exist there is no need to create new one
 					
 					char query[ 512 ];
-					snprintf( query, sizeof(query), "SELECT AppToken from `FUserMobileApp` where AppToken='%s'", apptoken );
+					snprintf( query, sizeof(query), "SELECT AppToken from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
 					
 					void *res = sqllib->Query( sqllib, query );
 				
