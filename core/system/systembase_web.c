@@ -60,6 +60,9 @@
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
 
+//test
+#undef __DEBUG
+
 //
 //
 //

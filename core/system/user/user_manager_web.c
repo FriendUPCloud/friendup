@@ -25,6 +25,9 @@
 #include <system/user/user_sessionmanager.h>
 #include <util/session_id.h>
 
+//test
+#undef __DEBUG
+
 /**
  * Http web call processor
  * Function which process all incoming Http requests

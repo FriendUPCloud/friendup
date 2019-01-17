@@ -118,6 +118,7 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 	}
 	if( connections == NULL || connections->umac_Connection[connectionIndex] == NULL )
 	{
+		FERROR("Connection is equal to NULL!\n", connectionIndex );
 		return;
 	}
 
@@ -213,6 +214,7 @@ UserMobileAppConnections *MobileAppAddNewUserConnection( void *wsi, FULONG umaID
 			//FIXME: check the deallocation order for permanent_username as it is held both
 			//by our internal sturcts and within hashmap structs
 
+			DEBUG("Will add entry to hashmap!\n");
 			//PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
 			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
@@ -296,6 +298,25 @@ UserMobileAppConnections *MobileAppAddNewUserConnection( void *wsi, FULONG umaID
 		newConnection->mac_UserData = userData;
 		newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
 		newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
+		
+		DEBUG("Will add entry to hashmap 1 !\n");
+		char *permanentUsername = StringDuplicate( username );
+
+		//PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		{
+			// add the new connections struct to global users' connections map
+			if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
+			{
+				DEBUG("Could not add new struct of user <%s> to global map\n", username);
+
+				FFree(userConnections);
+				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+				return NULL;
+			}
+			
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+		}
 	}
 
 	DEBUG("\t\t\tAdding connection to slot %d\n", connectionToReplaceIndex);
@@ -470,6 +491,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			}
 			DEBUG("writable end\n" );
 #endif
+			return 0;
 		}
 		break;
 		
