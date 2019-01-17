@@ -99,6 +99,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	this.type = type;
 
 	if( title ) ftitle = title;
+	
+	ftitle += ' - ' + path;
 
 	var wantedWidth = 800;
 
@@ -200,6 +202,24 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			else if ( p.substr ( p.length - 1, 1 ) != '/' )
 				p += '/' + fname;
 			else p += fname;
+			
+			
+			if( dialog.suffix )
+			{
+				// Check if the suffix matches
+				if( !dialog.checkSuffix( p ) )
+				{
+					var suf = typeof( w.dialog.suffix ) == 'string' ? w.dialog.suffix : w.dialog.suffix[0];
+					var fix = w.dialog.saveinput.value.split( '.' );
+					fix.pop();
+					fix.push( suf );
+					fix = fix.join( '.' );
+					w.dialog.saveinput.value = fix;
+					w.dialog.saveinput.focus();
+					w.dialog.saveinput.select();
+					return;
+				}
+			}
 			
 			// Check if file exists
 			var ic = w._window.icons;

@@ -1097,6 +1097,18 @@ function receiveEvent( event, queued )
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
 							var w = Application.windows[dataPacket.viewId];
+							if( w.onClose )
+							{
+								w.onClose( function( flag )
+								{
+									if( ( flag || !flag ) && flag !== false )
+									{
+										w.onClose = null;
+										w.close();
+									}
+								} );
+								return;
+							}
 							w.close();
 						}
 						// Ah, sub window! Channel to all sub windows then (unknown id?)

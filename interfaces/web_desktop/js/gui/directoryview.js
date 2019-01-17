@@ -559,7 +559,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			self.bookmarks = d;
 			
 		// Go instantiate!
-		winobj.fileBrowser = new Friend.FileBrowser( d, { displayFiles: false, filedialog: self.filedialog }, {
+		winobj.fileBrowser = new Friend.FileBrowser( d, { path: winobj.fileInfo.Path, displayFiles: false, filedialog: self.filedialog }, {
 			checkFile( filepath, fileextension )
 			{
 				console.log( filepath + ' on ' + fileextension );
@@ -2686,6 +2686,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		obj.iconsCache = icons;
 		obj.icons = [];
+		
+		var swi = 2;
 
 		for( var a = 0; a < icons.length; a++ )
 		{
@@ -2778,7 +2780,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				r.appendChild( c );
 			}
 			bts += icons[a].Filesize ? parseInt( icons[a].Filesize ) : 0;
-			if ( a % 2 == 0 ) r.className += ' Odd';
+			
+			swi = swi == 2 ? 1 : 2;
+			if ( swi == 1 ) r.className += ' Odd';
 
 			// Create icon object to extract FileInfo
 			var f = CreateIcon( icons[a], this );

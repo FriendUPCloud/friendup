@@ -23,6 +23,7 @@ Application.run = function( msg, iface )
 	w.onClose = function()
 	{
 		Application.quit();
+		return false;
 	}
 	
 	w.setMenuItems( [
