@@ -345,7 +345,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						inps[a].value = filename;
 					}
 					else if( typeof( path ) == 'object' )
+					{
 						inps[a].value = path.filename;
+					}
 					else if( path )
 					{
 						if( path.indexOf( ':' ) > 0 )
@@ -404,10 +406,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				{
 					inpu = ds[a];
 					w.inpu = inpu;
-				}
-				if( ds[ a ].getAttribute( 'name' ) == 'filename' )
-				{
-					w.filename = ds[a];
 				}
 			}
 		}
@@ -472,9 +470,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			mountlist:           true,
 			clickfile:           function( element, event )
 			{
-				if( w.filename && element.fileInfo.Type == 'File' )
+				if( dialog.saveinput && element.fileInfo.Type == 'File' )
 				{
-					w.filename.value = element.fileInfo.Filename;
+					dialog.saveinput.value = element.fileInfo.Filename;
 				}
 			},
 			doubleclickfiles:    function( element, event )
