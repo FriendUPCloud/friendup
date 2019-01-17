@@ -3361,6 +3361,7 @@ function apiWrapper( event, force )
 							path:        msg.path,
 							title:       msg.title,
 							filename:    msg.filename,
+							suffix:      msg.suffix,
 							multiSelect: msg.multiSelect,
 							triggerFunction: function( data )
 							{

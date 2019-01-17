@@ -13,6 +13,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 {
 	var self = this;
 	var mainview = false;
+	var suffix = false;
 	var multiSelect = true;
 	var defaultPath = 'Home:';
 	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
@@ -26,7 +27,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		mainview = object;
 	}
 	// We have flags
-	else if( object )
+	if( object )
 	{
 		for( var a in object )
 		{
@@ -53,6 +54,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				case 'mainView':
 					mainview = object[a];
 					break;
+				case 'suffix':
+					suffix = object[a];
+					break;
 			}
 		}
 	}
@@ -75,6 +79,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	}
 
 	var dialog = this;
+	dialog.suffix = suffix;
 	if( !filename ) filename = '';
 
 	var ftitle = '';
@@ -239,6 +244,32 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		w.close ();
 	}
 
+	this.checkSuffix = function( fn )
+	{
+		if( !this.suffix ) return true;
+		if( typeof( this.suffix ) == 'string' )
+		{
+			var suf = '.' + this.suffix;
+			if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) != suf )
+				return false;
+		}
+		else
+		{
+			var found = false;
+			for( var a in this.suffix )
+			{
+				var suf = '.' + this.suffix[a];
+				if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) == suf )
+				{
+					found = true;
+					break;
+				}
+			}
+			return found;
+		}
+		return true;
+	}
+
 	// Refresh dir listing
 	w.refreshView = function()
 	{
@@ -341,7 +372,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						inps[a].value = filename;
 					}
 					else if( typeof( path ) == 'object' )
+					{
 						inps[a].value = path.filename;
+					}
 					else if( path )
 					{
 						if( path.indexOf( ':' ) > 0 )
@@ -364,7 +397,25 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					{
 						var k = e.which ? e.which : e.keyCode;
 						if( k == 13 )
+						{
+							if( dialog.suffix )
+							{
+								// Check if the suffix matches
+								if( !dialog.checkSuffix( this.value ) )
+								{
+									var suf = typeof( this.suffix ) == 'string' ? this.suffix : this.suffix[0];
+									var fix = this.value.split( '.' );
+									fix = fix.pop();
+									fix.push( suf );
+									fix = fix.join( '.' );
+									this.value = fix;
+									this.focus();
+									this.select();
+									return;
+								}
+							}
 							w.choose();
+						}
 					}
 					break;
 				}
@@ -400,10 +451,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				{
 					inpu = ds[a];
 					w.inpu = inpu;
-				}
-				if( ds[ a ].getAttribute( 'name' ) == 'filename' )
-				{
-					w.filename = ds[a];
 				}
 			}
 		}
@@ -466,11 +513,20 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			nosidebarbackground: true,
 			toolbararea:         dialog.toolbararea,
 			mountlist:           true,
+			suffix:              dialog.suffix,
 			clickfile:           function( element, event )
 			{
-				if( w.filename && element.fileInfo.Type == 'File' )
+				if( dialog.saveinput && element.fileInfo.Type == 'File' )
 				{
-					w.filename.value = element.fileInfo.Filename;
+					var cand = element.fileInfo.Filename;
+					if( dialog.suffix )
+					{
+						if( !dialog.checkSuffix( cand ) )
+						{
+							return;
+						}
+					}
+					dialog.saveinput.value = cand;
 				}
 			},
 			doubleclickfiles:    function( element, event )

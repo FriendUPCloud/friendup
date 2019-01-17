@@ -15,7 +15,6 @@ html > body
 	bottom: 2px;
 	right: 10px;
 	text-align: right;
-	color: black;
 }
 #Status * { padding: 0; margin: 0; }
 
@@ -93,9 +92,13 @@ html > body
 }
 
 /* Bottom status bar text */
-a.cke_path_item, span.cke_path_empty
+html > body > div a.cke_path_item, html > body > div span.cke_path_empty
 {
-	padding: 15px 4px;
+	padding: 15px 5px 15px 10px;
+	text-shadow: none;
+	color: inherit;
+	font-weight: normal;
+	font-family: inherit;
 }
 
 /* Speech input */

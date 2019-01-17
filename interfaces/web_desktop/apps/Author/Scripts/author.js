@@ -227,6 +227,7 @@ Application.load = function()
 	
 	var flags = {
 		multiSelect: false,
+		suffix: 'html',
 		triggerFunction: function( arr )
 		{
 			if( arr )
@@ -242,8 +243,8 @@ Application.load = function()
 		},
 		path: false,
 		mainView: this.mainView,
-		type: 'load'
-		
+		type: 'load',
+		suffix: [ 'html', 'htm' ]	
 	};
 	
 	var f = new Filedialog( flags );
@@ -269,27 +270,34 @@ Application.save = function()
 	}
 	else
 	{
-		var f = new Filedialog( this.mainView, function( fname )
-		{
-			if( !fname || !fname.length )
+		var flags = {
+			type: 'save',
+			triggerFunction: function( fname )
 			{
-				if( Application.prevFilename )
+				if( !fname || !fname.length )
 				{
-					Application.wholeFilename = Application.prevFilename;
-					Application.prevFilename = false;
+					if( Application.prevFilename )
+					{
+						Application.wholeFilename = Application.prevFilename;
+						Application.prevFilename = false;
+					}
+					return;
 				}
-				return;
-			}
 				
-			if( fname.indexOf( '.' ) < 0 )
-				fname += '.html';
-			Application.mainView.sendMessage( {
-				command: 'savefile',
-				path: fname
-			} );
-			Application.wholeFilename = fname;
-			Application.mainView.setFlag( 'title', 'Author - ' + fname );
-		}, '', 'save' );
+				if( fname.indexOf( '.' ) < 0 )
+					fname += '.html';
+				Application.mainView.sendMessage( {
+					command: 'savefile',
+					path: fname
+				} );
+				Application.wholeFilename = fname;
+				Application.mainView.setFlag( 'title', 'Author - ' + fname );
+			},
+			mainView: this.mainView,
+			suffix: [ 'html', 'htm' ]
+		};
+	
+		var f = new Filedialog( flags );
 	}
 }
 
