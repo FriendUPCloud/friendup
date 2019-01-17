@@ -22,17 +22,21 @@ Application.run = function( msg, iface )
 	
 	w.onClose = function( closeWindow )
 	{
-		Confirm( 'Are you sure?', 'By closing the application you may lose unsaved data.', function( res )
+		/*if( !w.saved )
 		{
-			if( res.data )
+			Confirm( 'Are you sure?', 'By closing the application you may lose unsaved data.', function( res )
 			{
-				Application.quit();
-			}
-			else
-			{
-				closeWindow( false );
-			}
-		} );		
+				if( res.data )
+				{
+					Application.quit();
+				}
+				else
+				{
+					closeWindow( false );
+				}
+			} );
+		}*/
+		Application.quit();
 		return false;
 	}
 	
