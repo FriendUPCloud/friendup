@@ -109,8 +109,13 @@ static void MobileAppInit( void )
  * @param connections pointer to global list with connections
  * @param connectionIndex number of entry which will be removed from list
  */
-static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections, unsigned int connectionIndex )
+static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections, int connectionIndex )
 {
+	if( connectionIndex < 0 && connectionIndex >= MAX_CONNECTIONS_PER_USER )
+	{
+		FERROR("Connection index is bad: %d!\n", connectionIndex );
+		return;
+	}
 	if( connections == NULL || connections->umac_Connection[connectionIndex] == NULL )
 	{
 		return;
