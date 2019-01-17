@@ -462,6 +462,12 @@ textarea
 	font-size: $FontSizeButton;
 }
 
+textarea.Required,
+input.Required
+{
+	border-color     : $ColorDangerBg;
+}
+
 /* Boxes -------------------------------------------------------------------- */
 
 .Disabled
