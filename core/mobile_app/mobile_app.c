@@ -35,7 +35,50 @@ void MobileAppTestSignalHandler(int signum);
 
 #define WEBSOCKET_SEND_QUEUE
 
-static Hashmap *globalUserToAppConnectionsMap = NULL;
+typedef struct UCEntry
+{
+	char *u;
+	UserMobileAppConnections *c;
+	MinNode node;
+}UCEntry;
+
+//static Hashmap *globalUserToAppConnectionsMap = NULL;
+
+UCEntry *globalUserToAppConnection;
+
+int CAddToList( char *usernname, UserMobileAppConnections *lc )
+{
+	UCEntry *e = globalUserToAppConnection;
+	while( e != NULL )
+	{
+		if( e->u != NULL && ( strcmp( usernname, e->u ) == 0 ) )
+		{
+			e->c = lc;
+			return 0;
+		}
+		e = (UCEntry*) e->node.mln_Succ;
+	}
+	e = FCalloc( 1, sizeof(UCEntry) );
+	e->u = usernname;
+	e->c = lc;
+	e->node.mln_Succ = (MinNode *)globalUserToAppConnection;
+	globalUserToAppConnection = e;
+	return 0;
+}
+
+UserMobileAppConnections *CGetDataFromList( char *username )
+{
+	UCEntry *e = globalUserToAppConnection;
+	while( e != NULL )
+	{
+		if( e->u != NULL && ( strcmp( username, e->u ) == 0 ) )
+		{
+			return e->c;
+		}
+		e = (UCEntry*) e->node.mln_Succ;
+	}
+	return NULL;
+}
 
 static pthread_mutex_t globalSessionRemovalMutex; //used to avoid sending pings while a session is being removed
 static pthread_t globalPingThread;
@@ -94,10 +137,13 @@ static void MobileAppInit( void )
 {
 	DEBUG("Initializing mobile app module\n");
 	
+	globalUserToAppConnection = NULL;
+	/*
 	if( globalUserToAppConnectionsMap == NULL )
 	{
 		globalUserToAppConnectionsMap = HashmapNew();
 	}
+	*/
 
 	pthread_mutex_init( &globalSessionRemovalMutex, NULL );
 }
@@ -160,7 +206,9 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
-		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
+		DEBUG("Hashmap get 2 : %s\n", username );
+		//userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
+		userConnections = CGetDataFromList( username );
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	DEBUG("[MobileAppAddNewUserConnection] existing userConnections: %p\n", userConnections );
@@ -221,6 +269,9 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
 				// add the new connections struct to global users' connections map
+				DEBUG("Hashmap put: %s\n", permanentUsername );
+				CAddToList( permanentUsername, userConnections );
+				/*
 				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
 				{
 					DEBUG("Could not add new struct of user <%s> to global map\n", username);
@@ -229,6 +280,7 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 					FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 					return 3;
 				}
+				*/
 				
 				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
@@ -1206,11 +1258,15 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
+		DEBUG("Hashmap get: %s\n", username );
+		userConnections = CGetDataFromList( username );
+		/*
 		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		if( userConnections != NULL )
 		{
 			userConnections->umac_InUse=1;
 		}
+		*/
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	DEBUG("NotificationRegister: get all connections by name: %s pointer: %p\n", username, userConnections );
@@ -1501,11 +1557,16 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
+		DEBUG("Hashmap get 1: %s\n", username );
+		
+		userConnections = CGetDataFromList( username );
+		/*
 		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		if( userConnections != NULL )
 		{
 			userConnections->umac_InUse=1;
 		}
+		*/
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	DEBUG("got userConnections: %p\n", userConnections );
