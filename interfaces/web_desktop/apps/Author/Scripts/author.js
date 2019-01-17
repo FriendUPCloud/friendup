@@ -20,7 +20,7 @@ Application.run = function( msg, iface )
 	
 	this.mainView = w;
 	
-	w.onClose = function( cbk )
+	w.onClose = function( closeWindow )
 	{
 		Confirm( 'Are you sure?', 'By closing the application you may lose unsaved data.', function( res )
 		{
@@ -30,7 +30,7 @@ Application.run = function( msg, iface )
 			}
 			else
 			{
-				cbk( false );
+				closeWindow( false );
 			}
 		} );		
 		return false;

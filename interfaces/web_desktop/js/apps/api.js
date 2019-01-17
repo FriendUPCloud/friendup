@@ -1113,7 +1113,10 @@ function receiveEvent( event, queued )
 										w.onClose = onc;
 									}
 								} );
-								return;
+								if( res !== true )
+								{
+									return;
+								}
 							}
 							w.close();
 						}
