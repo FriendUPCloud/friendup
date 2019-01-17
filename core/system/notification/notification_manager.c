@@ -955,49 +955,53 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	
 	int successNumber = 0;
 	int failedNumber = 0;
-	
-	while( TRUE )
+#define TOKEN_MAX_SIZE 4096			
+			
+	char *pushContent = FMalloc( TOKEN_MAX_SIZE );
+	if( pushContent != NULL )
 	{
-		// go through all tokens separated by , (coma)
-		// and send message to them
-
-		if( *curToken == 0 || *curToken == ',' )
+		while( TRUE )
 		{
-			char pushContent[ 4096 ];
-			if( *curToken != 0 )
+			// go through all tokens separated by , (coma)
+			// and send message to them
+			if( *curToken == 0 || *curToken == ',' )
 			{
-				*curToken = 0;
-			}
-			
-			DEBUG("Send message to : >%s<\n", startToken );
-			
-			int pushContentLen = snprintf( pushContent, sizeof(pushContent)-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
-			
-			char *tok = TokenToBinary( startToken );
-			DEBUG("Send payload, token pointer %p\n", tok );
-			if( tok != NULL )
-			{
-				if(!SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+				if( *curToken != 0 )
 				{
-					failedNumber++;
+					*curToken = 0;
 				}
-				else
+			
+				DEBUG("Send message to : >%s<\n", startToken );
+			
+				int pushContentLen = snprintf( pushContent, TOKEN_MAX_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
+			
+				char *tok = TokenToBinary( startToken );
+				DEBUG("Send payload, token pointer %p\n", tok );
+				if( tok != NULL )
 				{
-					successNumber++;
+					if(!SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+					{
+						failedNumber++;
+					}
+					else
+					{
+						successNumber++;
+					}
+					FFree( tok );
 				}
-				FFree( tok );
-			}
 			
-			startToken = curToken+1;
+				startToken = curToken+1;
 			
-			if( *curToken == 0 )
-			{
-				break;
+				if( *curToken == 0 )
+				{
+					break;
+				}
+				curToken++;
 			}
+		
 			curToken++;
 		}
-		
-		curToken++;
+		FFree( pushContent );
 	}
 	
 	DEBUG("Notifications sent: %d fail: %d\n", successNumber, failedNumber );
