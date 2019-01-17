@@ -54,6 +54,7 @@ DirectoryView = function( winobj, extra )
 	this.mountlist = false;
 	this.filedialog = false;
 	this.suffix = false;
+	this.keyboardNavigation = true;
 	
 	// Read in extra stuff
 	if( extra )
@@ -97,6 +98,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.suffix )
 		{
 			this.suffix = extra.suffix;
+		}
+		if( extra.keyboardNavigation === false || extra.keyboardNavigation )
+		{
+			this.keyboardNavigation = extra.keyboardNavigation;
 		}
 	}
 
@@ -4658,7 +4663,8 @@ function CheckDoorsKeys( e )
 	if( 
 		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
-		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) 
+		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) &&
+		window.regionWindow.directoryview.keyboardNavigation
 	)
 	{
 		var rw = window.regionWindow.icons;

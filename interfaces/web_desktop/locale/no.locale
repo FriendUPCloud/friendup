@@ -379,6 +379,9 @@ rename_file                             : Endre filnavn
 new_name                                : Nytt navn
 i18n_read_only_filesystem               : Kan ikke skrive til filsystemet
 i18n_read_only_fs_desc                  : Filsystemet du prøver å skrive til er skrivebeskyttet eller støtter ikke skriving.
+i18n_overwriting_file                   : Overskriver eksisterende fil
+i18n_do_you_want_overwrite              : Ønsker du virkelig å overskrive den eksisterende filen?
+i18n_overwrite                          : Overskriv filen
 
 #File operations ---------------------------------------------------------------
 
