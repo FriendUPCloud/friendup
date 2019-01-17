@@ -118,6 +118,7 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 	}
 	if( connections == NULL || connections->umac_Connection[connectionIndex] == NULL )
 	{
+		FERROR("Connection is equal to NULL index %d\n", connectionIndex );
 		return;
 	}
 
@@ -142,17 +143,18 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 /**
  * Add user connectiono to global list
  *
- * @param newConnection pointer to new connection structure
+ * @param con pointer to new connection structure
  * @param username name of user which passed login
  * @param userData pointer to user data
  * @return 0 when success, otherwise error number
  */
-UserMobileAppConnections *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, const char *username, void *userData )
+int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *username, void *userData )
 {
+	FBOOL createNewConnection = FALSE;
 	if( username == NULL )
 	{
 		FERROR("Username is equal to NULL!\n");
-		return NULL;
+		return 1;
 	}
 	UserMobileAppConnections *userConnections = NULL;
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
@@ -172,13 +174,14 @@ UserMobileAppConnections *MobileAppAddNewUserConnection( void *wsi, FULONG umaID
 		if( userConnections == NULL )
 		{
 			DEBUG("Allocation failed\n");
-			return NULL;//MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
+			return 2;//MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
 		}
 		else
 		{
 			DEBUG("Creating new struct for user <%s>\n", username);
 			char *permanentUsername = StringDuplicate( username );
 			userConnections->umac_Username = permanentUsername;
+			createNewConnection = TRUE;
 			
 			//
 			// we must also attach UserID to User. This functionality will allow FC to find user by ID
@@ -213,6 +216,7 @@ UserMobileAppConnections *MobileAppAddNewUserConnection( void *wsi, FULONG umaID
 			//FIXME: check the deallocation order for permanent_username as it is held both
 			//by our internal sturcts and within hashmap structs
 
+			DEBUG("Will add entry to hashmap!\n");
 			//PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
 			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
@@ -223,84 +227,97 @@ UserMobileAppConnections *MobileAppAddNewUserConnection( void *wsi, FULONG umaID
 
 					FFree(userConnections);
 					FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-					return NULL;
+					return 3;
 				}
 				
 				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
+			createNewConnection = TRUE;	// there is new entry for user, we must create connection
 		}
-	}
-	
-	//add this struct to user connections struct
-	int connectionToReplaceIndex = -1;
-	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
-	{
-		FBOOL sameUMA = FALSE;
-		// if there is free place or we have same WS connection
-		
-		if( userConnections->umac_Connection[i] != NULL && umaID > 0 && userConnections->umac_Connection[i]->mac_UserMobileAppID > 0 )
-		{
-			if( umaID == userConnections->umac_Connection[i]->mac_UserMobileAppID )
-			{
-				DEBUG("[MobileAppAddNewUserConnection] seems two connections have same UMAID!\n");
-				sameUMA = TRUE;
-			}
-		}
-		
-		if( userConnections->umac_Connection[i] == NULL || userConnections->umac_Connection[i]->mac_WebsocketPtr == wsi || sameUMA == TRUE )
-		{ //got empty slot
-			
-			connectionToReplaceIndex = i;
-			DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
-			break;
-		}
-	}
-
-	if( connectionToReplaceIndex == -1 )
-	{ //no empty slots found - drop the oldest connection
-
-		connectionToReplaceIndex = 0;
-		unsigned int oldest_timestamp = userConnections->umac_Connection[0]->mac_LastCommunicationTimestamp;
-
-		for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
-		{
-			if( userConnections->umac_Connection[i] != NULL )
-			{
-				if( userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
-				{
-					oldest_timestamp = userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp;
-					connectionToReplaceIndex = i;
-					DEBUG("Will drop old connection from slot %d (last comm %d)\n", connectionToReplaceIndex, oldest_timestamp);
-				}
-			}
-		}
-	}
-
-	DEBUG("Create new connection or update old one? index: %d pointer %p\n", connectionToReplaceIndex, userConnections->umac_Connection[connectionToReplaceIndex] );
-	if( userConnections->umac_Connection[connectionToReplaceIndex] != NULL )
-	{
-		//MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
-		
-		MobileAppConnection *newConnection = userConnections->umac_Connection[connectionToReplaceIndex];
-		newConnection->mac_UserData = userData;
-		newConnection->mac_WebsocketPtr = wsi;
-		newConnection->mac_UserMobileAppID = umaID;
-		newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
-		newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
 	}
 	else
 	{
-		MobileAppConnection *newConnection = MobileAppConnectionNew( wsi, umaID );
-		userConnections->umac_Connection[ connectionToReplaceIndex ] = newConnection;
+		DEBUG("User connections is not null!\n");
+	}
+	
+	if( createNewConnection == TRUE )
+	{
+		userConnections->umac_Connection[ 0 ] = con;
 
-		newConnection->mac_UserData = userData;
-		newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
-		newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
+		con->mac_UserData = userData;
+		con->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
+		con->mac_UserConnectionIndex = 0;
+	}
+	else
+	{
+		//add this struct to user connections struct
+		int connectionToReplaceIndex = -1;
+		for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+		{
+			FBOOL sameUMA = FALSE;
+			// if there is free place or we have same WS connection
+		
+			if( userConnections->umac_Connection[i] != NULL && con->mac_UserMobileAppID > 0 && userConnections->umac_Connection[i]->mac_UserMobileAppID > 0 )
+			{
+				if( con->mac_UserMobileAppID == userConnections->umac_Connection[i]->mac_UserMobileAppID )
+				{
+					DEBUG("[MobileAppAddNewUserConnection] seems two connections have same UMAID!\n");
+					sameUMA = TRUE;
+				}
+			}
+		
+			if( userConnections->umac_Connection[i] == NULL || userConnections->umac_Connection[i]->mac_WebsocketPtr == con->mac_WebsocketPtr || sameUMA == TRUE )
+			{ //got empty slot
+			
+				connectionToReplaceIndex = i;
+				DEBUG("Will use slot %d for this connection, sameUMA? %d connection pointer %p\n", connectionToReplaceIndex, sameUMA, userConnections->umac_Connection[i] );
+				break;
+			}
+		}
+
+		if( connectionToReplaceIndex == -1 )
+		{ //no empty slots found - drop the oldest connection
+
+			connectionToReplaceIndex = 0;
+			unsigned int oldest_timestamp = userConnections->umac_Connection[0]->mac_LastCommunicationTimestamp;
+
+			for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
+			{
+				if( userConnections->umac_Connection[i] != NULL )
+				{
+					if( userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
+					{
+						oldest_timestamp = userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp;
+						connectionToReplaceIndex = i;
+						DEBUG("Will drop old connection from slot %d (last comm %d)\n", connectionToReplaceIndex, oldest_timestamp);
+					}
+				}
+			}
+		}
+
+		DEBUG("Create new connection or update old one? index: %d pointer %p\n", connectionToReplaceIndex, userConnections->umac_Connection[connectionToReplaceIndex] );
+		if( userConnections->umac_Connection[connectionToReplaceIndex] != NULL )
+		{
+			//MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
+		
+			//newConnection = userConnections->umac_Connection[connectionToReplaceIndex];
+			con->mac_UserData = userData;
+			con->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
+			con->mac_UserConnectionIndex = connectionToReplaceIndex;
+		}
+		else
+		{
+			userConnections->umac_Connection[ connectionToReplaceIndex ] = con;
+
+			con->mac_UserData = userData;
+			con->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
+			con->mac_UserConnectionIndex = connectionToReplaceIndex;
+		}
 	}
 
-	DEBUG("\t\t\tAdding connection to slot %d\n", connectionToReplaceIndex);
+	DEBUG("\t\t\tAdded\n");
 	
-	return userConnections;
+	return 0;
 }
 
 /**
@@ -339,14 +356,14 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		}
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
-	DEBUG("Checking: %p\n", appConnection );
+	DEBUG("Checking: connection to app pointer %p\n", appConnection );
 	
 	switch( reason )
 	{
 		case LWS_CALLBACK_ESTABLISHED:
 			{
 				MobileAppNotif *n = (MobileAppNotif *)user;
-				n->man_Data = NULL;
+				n->man_Data = MobileAppConnectionNew( wsi, 0 );
 			}
 			break;
 			
@@ -470,6 +487,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			}
 			DEBUG("writable end\n" );
 #endif
+			return 0;
 		}
 		break;
 		
@@ -498,7 +516,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			if( tokensFound < 1 )
 			{
 				FERROR("Bad message\n");
-				return 0;
+				return MOBILE_APP_ERR_NO_JSON;
 				//MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
 			}
 
@@ -938,16 +956,16 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		DEBUG("MobileAppConnectionNew\n");
 		
-		MobileAppConnection *newConnection = MobileAppAddNewUserConnection( wsi, umaID, usernameString, userdata );
-		
-		Log( FLOG_DEBUG, "\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %p position %d\n", wsi, newConnection, newConnection->mac_UserConnectionIndex );
-		
 		MobileAppNotif *n = (MobileAppNotif *)userdata;
-		n->man_Data = newConnection;
+		MobileAppConnection *con = (MobileAppConnection *)n->man_Data;
+		con->mac_UserMobileAppID = umaID;
+		con->mac_WebsocketPtr = wsi;
+		int err = MobileAppAddNewUserConnection( con, usernameString, userdata );
+		
+		Log( FLOG_DEBUG, "\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %p position %d\n", wsi, con, con->mac_UserConnectionIndex );
 		
 		DEBUG("New connection added, umaID: %lu\n", umaID );
 		
-		newConnection->mac_UserMobileAppID = umaID;
 		/*
 		if( umaID > 0 )
 		{
@@ -1036,10 +1054,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 			NotificationSentDeleteAll( nsroot );
 		}
 		*/
-		if( newConnection != NULL )
-		{
-			return 0;
-		}
+		return 0;
 	}
 	return -1;
 }
@@ -1198,6 +1213,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		}
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
+	DEBUG("NotificationRegister: get all connections by name: %s pointer: %p\n", username, userConnections );
 	
 	BufString *bsMobileReceivedMessage = BufStringNew();
 	//unsigned int jsonMessageLength = strlen( jsonMessage + LWS_PRE);
@@ -1210,6 +1226,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		// and action is register
 		if( wsMessageSent == FALSE )
 		{
+			DEBUG("NotificationRegister: message was not sent via WS\n");
 			//switch( notification_type )
 			//{
 			//	case MN_force_all_devices:

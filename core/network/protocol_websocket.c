@@ -695,7 +695,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		}
 		c[len ] = '\0';
 		
-		Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
+		// disabled for moment
+		//Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
 	//Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
@@ -1054,7 +1055,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 											if( wstdata && wstdata->fcd && fcd->fcd_WSClient && fcd->fcd_WSClient->wsc_UserSession )
 											{
 												UserSession *lus = fcd->fcd_WSClient->wsc_UserSession;
-												Log( FLOG_INFO, "WS Call ping: user session id: '%lu'\n", lus->us_ID );
+												//Log( FLOG_INFO, "WS Call ping: user session id: '%lu'\n", lus->us_ID );
 											}
 #if USE_PTHREAD_PING == 1
 											// Multithread mode
@@ -1714,7 +1715,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 
 	default:
-		Log( FLOG_INFO, "[WS] Default Call, size: %d - reason: %d\n", (int)len, reason );
+		// disabled for test
+		//Log( FLOG_INFO, "[WS] Default Call, size: %d - reason: %d\n", (int)len, reason );
 		if( len > 0 && len < 500 && in != NULL )
 		{
 			//DEBUG1("[WS]: Default Call, message size %d : %.*s \n", len, len, in );

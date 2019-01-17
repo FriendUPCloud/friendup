@@ -961,7 +961,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 		// go through all tokens separated by , (coma)
 		// and send message to them
 
-		if( *curToken == ',' || *curToken == 0 )
+		if( *curToken == 0 || *curToken == ',' )
 		{
 			char pushContent[ 4096 ];
 			if( *curToken != 0 )
