@@ -99,8 +99,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	this.type = type;
 
 	if( title ) ftitle = title;
-	
-	ftitle += ' - ' + path;
 
 	var wantedWidth = 800;
 
