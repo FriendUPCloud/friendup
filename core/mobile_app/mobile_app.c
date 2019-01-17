@@ -249,6 +249,10 @@ MobileAppConnection *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, con
 		newConnection->mac_UserData = userData;
 		newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
 		newConnection->mac_UserConnectionIndex = 0;
+		
+		MobileAppNotif *n = (MobileAppNotif *)userData;
+		n->man_Data = newConnection;
+		newConnection->mac_UserMobileAppID = umaID;
 	}
 	else
 	{
@@ -308,6 +312,10 @@ MobileAppConnection *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, con
 			newConnection->mac_UserMobileAppID = umaID;
 			newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
 			newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
+			
+			MobileAppNotif *n = (MobileAppNotif *)userData;
+			n->man_Data = newConnection;
+			newConnection->mac_UserMobileAppID = umaID;
 		}
 		else
 		{
@@ -317,6 +325,10 @@ MobileAppConnection *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, con
 			newConnection->mac_UserData = userData;
 			newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
 			newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
+			
+			MobileAppNotif *n = (MobileAppNotif *)userData;
+			n->man_Data = newConnection;
+			newConnection->mac_UserMobileAppID = umaID;
 		}
 	}
 
@@ -367,8 +379,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 	{
 		case LWS_CALLBACK_ESTABLISHED:
 			{
-				MobileAppNotif *n = (MobileAppNotif *)user;
-				n->man_Data = NULL;
+				//MobileAppNotif *n = (MobileAppNotif *)user;
+				//n->man_Data = NULL;
 			}
 			break;
 			
@@ -499,13 +511,6 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		case LWS_CALLBACK_RECEIVE:
 		{
 			char *data = (char*)in;
-			
-			if( appConnection == NULL )
-			{
-				DEBUG("Connection which is not on the list cannot accept messages\n");
-				return 1;
-				//return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
-			}
 
 			if( len == 0 )
 			{
@@ -528,7 +533,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			if( tokensFound < 1 )
 			{
 				FERROR("Bad message\n");
-				return 0;
+				return MOBILE_APP_ERR_NO_JSON;
 				//MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
 			}
 
@@ -972,12 +977,8 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		Log( FLOG_DEBUG, "\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %p position %d\n", wsi, newConnection, newConnection->mac_UserConnectionIndex );
 		
-		MobileAppNotif *n = (MobileAppNotif *)userdata;
-		n->man_Data = newConnection;
-		
 		DEBUG("New connection added, umaID: %lu\n", umaID );
 		
-		newConnection->mac_UserMobileAppID = umaID;
 		/*
 		if( umaID > 0 )
 		{
