@@ -1213,6 +1213,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		}
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
+	DEBUG("NotificationRegister: get all connections by name: %s pointer: %p\n", username, userConnections );
 	
 	BufString *bsMobileReceivedMessage = BufStringNew();
 	//unsigned int jsonMessageLength = strlen( jsonMessage + LWS_PRE);
@@ -1225,6 +1226,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		// and action is register
 		if( wsMessageSent == FALSE )
 		{
+			DEBUG("NotificationRegister: message was not sent via WS\n");
 			//switch( notification_type )
 			//{
 			//	case MN_force_all_devices:

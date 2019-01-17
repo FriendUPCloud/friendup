@@ -367,6 +367,7 @@ void* HashmapGetData( Hashmap* in, const char* key )
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
+		DEBUG("GetHashmap check: %s - %s\n", in->data[curr].key, key );
 		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
 		{
 			return (in->data[curr].data);
