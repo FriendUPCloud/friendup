@@ -20,9 +20,19 @@ Application.run = function( msg, iface )
 	
 	this.mainView = w;
 	
-	w.onClose = function()
+	w.onClose = function( cbk )
 	{
-		Application.quit();
+		Confirm( 'Are you sure?', 'By closing the application you may lose unsaved data.', function( res )
+		{
+			if( res.data )
+			{
+				Application.quit();
+			}
+			else
+			{
+				cbk( false );
+			}
+		} );		
 		return false;
 	}
 	

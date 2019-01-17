@@ -1099,12 +1099,18 @@ function receiveEvent( event, queued )
 							var w = Application.windows[dataPacket.viewId];
 							if( w.onClose )
 							{
-								w.onClose( function( flag )
+								var onc = w.onClose;
+								w.onClose = null;
+								var res = onc( function( flag )
 								{
 									if( ( flag || !flag ) && flag !== false )
 									{
-										w.onClose = null;
 										w.close();
+									}
+									// We aborted, reset onclose
+									else
+									{
+										w.onClose = onc;
 									}
 								} );
 								return;
