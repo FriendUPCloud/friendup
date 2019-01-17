@@ -274,10 +274,12 @@ UserMobileAppConnections *MobileAppAddNewUserConnection( void *wsi, FULONG umaID
 	DEBUG("Create new connection or update old one? index: %d pointer %p\n", connectionToReplaceIndex, userConnections->umac_Connection[connectionToReplaceIndex] );
 	if( userConnections->umac_Connection[connectionToReplaceIndex] != NULL )
 	{
-		MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
+		//MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
 		
 		MobileAppConnection *newConnection = userConnections->umac_Connection[connectionToReplaceIndex];
 		newConnection->mac_UserData = userData;
+		newConnection->mac_WebsocketPtr = wsi;
+		newConnection->mac_UserMobileAppID = umaID;
 		newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
 		newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
 	}
