@@ -13,6 +13,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 {
 	var self = this;
 	var mainview = false;
+	var suffix = false;
 	var multiSelect = true;
 	var defaultPath = 'Home:';
 	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
@@ -52,6 +53,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					break;
 				case 'mainView':
 					mainview = object[a];
+					break;
+				case 'suffix':
+					suffix = object[a];
 					break;
 			}
 		}
