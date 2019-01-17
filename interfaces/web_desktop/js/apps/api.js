@@ -5008,6 +5008,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 {
 	var mainview = false;
 	var targetview = false;
+	var suffix = false;
 	var multiSelect = true; // Select multiple files
 	
 	// We have a view
@@ -5016,7 +5017,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 		mainview = object;
 	}
 	// We have flags
-	else if( object )
+	if( object )
 	{
 		for( var a in object )
 		{
@@ -5046,11 +5047,15 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 				case 'targetView':
 					targetview = object[a];
 					break;
+				case 'suffix':
+					suffix = object[a];
+					break;
 			}
 		}
 	}
 
 	if ( !triggerFunction ) return;
+	
 	if ( !type ) type = 'open';
 
 	var dialog = this;
@@ -5065,6 +5070,8 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	{
 		targetview = targetview.getViewId ? targetview.getViewId() : false;
 	}
+	
+	dialog.suffix = suffix;
 
 	Application.sendMessage( {
 		type:        'system',
@@ -5077,7 +5084,8 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 		multiSelect:  multiSelect,
 		title:        title,
 		viewId:       mainview,
-		targetViewId: targetview
+		targetViewId: targetview,
+		suffix:       suffix
 	} );
 }
 

@@ -53,6 +53,7 @@ DirectoryView = function( winobj, extra )
 	this.multiple = true;
 	this.mountlist = false;
 	this.filedialog = false;
+	this.suffix = false;
 	
 	// Read in extra stuff
 	if( extra )
@@ -92,6 +93,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.mountlist )
 		{
 			this.mountlist = extra.mountlist;
+		}
+		if( extra.suffix )
+		{
+			this.suffix = extra.suffix;
 		}
 	}
 
@@ -143,6 +148,32 @@ DirectoryView = function( winobj, extra )
 	}
 
 	this.window = winobj;
+}
+
+DirectoryView.prototype.checkSuffix = function( fn )
+{
+	if( !this.suffix ) return true;
+	if( typeof( this.suffix ) == 'string' )
+	{
+		var suf = '.' + this.suffix;
+		if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) != suf )
+			return false;
+	}
+	else
+	{
+		var found = false;
+		for( var a in this.suffix )
+		{
+			var suf = '.' + this.suffix[a];
+			if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) == suf )
+			{
+				found = true;
+				break;
+			}
+		}
+		return found;
+	}
+	return true;
 }
 
 DirectoryView.prototype.addToHistory = function( ele )
@@ -717,6 +748,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.noRunPath = '';
 		}
 		
+		// Filter icons
 		if( this.icons )
 		{
 			for( var a = 0; a < this.icons.length; a++ )
@@ -2178,8 +2210,14 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		for( var a = 0; a < icons.length; a++ )
 		{
 			var fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
+			
 			// Skip dot files
 			if( !self.showHiddenFiles && fn.substr( 0, 1 ) == '.' ) continue;
+			// Skip files with wrong suffix
+			else if( icons[a].Type == 'File' && self.suffix && !self.checkSuffix( fn ) )
+			{
+				continue;
+			}
 			// Skip backup files
 			else if( !self.showHiddenFiles && fn.substr( fn.length - 4, 4 ) == '.bak' )
 				continue;
@@ -2245,6 +2283,13 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		 	};
 		 	// Skip dot files
 			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
+			
+			// Skip files with wrong suffix
+			else if( icons[a].Type == 'File' && self.suffix && !self.checkSuffix( fn ) )
+			{
+				continue;
+			}
+			
 			// Skip backup files
 			else if( !self.showHiddenFiles && fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
 				continue;
@@ -2488,6 +2533,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	}
 	
 	this.viewMode = 'listview';
+
+	var self = this;
 	
 	
 	// TODO: Direction not needed here
@@ -2639,6 +2686,28 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		{
 			var t = icons[a].Title ? icons[a].Title : icons[a].Filename;
 			var ic = icons[a];
+
+			// Skipping
+			// Skip dot files
+			if( !self.showHiddenFiles && t.substr( 0, 1 ) == '.' ) continue;
+			
+			// Skip files with wrong suffix
+			else if( icons[a].Type == 'File' && self.suffix && !self.checkSuffix( t ) )
+			{
+				continue;
+			}
+			
+			// Skip backup files
+			else if( !self.showHiddenFiles && t.substr( t.length - 4, 4 ) == '.bak' )
+				continue;
+				
+			// Only show orphan .info files
+			if( t.indexOf( '.info' ) > 0 || t.indexOf( '.dirinfo' ) > 0 )
+			{
+				if( !orphanInfoFile[ t.substr( 0, t.length - 5 ) ] )
+					continue;
+			}
+			// Dont skipping
 
 			if( t.split ( ' ' ).join ( '' ).length == 0 ) t = 'Unnamed';
 

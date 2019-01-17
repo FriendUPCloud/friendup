@@ -57,22 +57,22 @@ i18n_unordered_bullet_points      : Uordnede kulepunkter
 i18n_ordered_bullet_point         : Bestilte punktposter
 i18n_set_document_zoom            : Angi dokumentzoom
 i18n_set_block_format             : Sett blokkformat
-i18n_cancel : Avbryt
-i18n_keywords : søkeord ...
-i18n_path : sti...
-i18n_preferences : Preferanser
-i18n_failed_to_load_document : Kunne ikke laste inn dokument ...
-i18n_loaded : Lastet
-i18n_converting : Konvertere ...
-i18n_written : Skriftlig
+i18n_cancel                       : Avbryt
+i18n_keywords                     : søkeord ...
+i18n_path                         : sti...
+i18n_preferences                  : Preferanser
+i18n_failed_to_load_document      : Kunne ikke laste inn dokument ...
+i18n_loaded                       : Lastet
+i18n_converting                   : Konvertere ...
+i18n_written                      : Lagret
 menu_print_remote                 : Server print
-i18n_print_preview : Forhåndsvisning
-i18n_generating_print_preview : Genererer forhåndsvisning ...
-i18n_print_ready : Skriv ut klar
-i18n_language : Språk
-i18n_language_settings : Språkinnstillinger
-i18n_features : Egenskaper
-i18n_feature_settings : Funksjonsinnstillinger
+i18n_print_preview                : Forhåndsvisning
+i18n_generating_print_preview     : Genererer forhåndsvisning ...
+i18n_print_ready                  : Skriv ut klar
+i18n_language                     : Språk
+i18n_language_settings            : Språkinnstillinger
+i18n_features                     : Egenskaper
+i18n_feature_settings             : Funksjonsinnstillinger
 
 
 
