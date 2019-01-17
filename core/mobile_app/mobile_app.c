@@ -307,7 +307,7 @@ MobileAppConnection *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, con
 		}
 	}
 
-	DEBUG("\t\t\tAdding connection to slot %d\n", connectionToReplaceIndex);
+	DEBUG("\t\t\tAdded\n");
 	
 	return newConnection;
 }
