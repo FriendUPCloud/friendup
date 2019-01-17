@@ -1453,6 +1453,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	
 	BufString *bsMobileReceivedMessage = BufStringNew();
 	
+	DEBUG("Buffer generated\n");
 	//
 	// go through all mobile devices
 	//
@@ -1467,14 +1468,16 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		}
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
+	DEBUG("got userConnections: %p\n", userConnections );
 
 	// if message was already sent
 	// this means that user got msg on Workspace
 	if( userConnections != NULL )
 	{
-		//DEBUG("Send: <%s>\n", jsonMessage + LWS_PRE);
+		DEBUG("compare actions %d = %d\n", action, NOTIFY_ACTION_READ );
 		if( action == NOTIFY_ACTION_READ )
 		{
+			
 			/*
 			switch( notif->n_NotificationType )
 			{
@@ -1541,6 +1544,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		//
 		else if( action == NOTIFY_ACTION_TIMEOUT )
 		{
+			DEBUG("modify\n");
 			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 			{
 				DEBUG("[MobileAppNotifyUserUpdate]: Send to %d\n", i );
@@ -1617,7 +1621,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	}
 	else
 	{
-		DEBUG("User <%s> does not have any app WS connections\n", username);
+		FERROR("User <%s> does not have any app WS connections\n", username);
 	}
 	
 	// select all connections without usermobileappid and store message for them in database
