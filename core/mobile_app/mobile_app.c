@@ -118,7 +118,7 @@ static void MobileAppRemoveAppConnection( UserMobileAppConnections *connections,
 	}
 	if( connections == NULL || connections->umac_Connection[connectionIndex] == NULL )
 	{
-		FERROR("Connection is equal to NULL!\n", connectionIndex );
+		FERROR("Connection is equal to NULL index %d\n", connectionIndex );
 		return;
 	}
 
@@ -236,6 +236,10 @@ MobileAppConnection *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, con
 			createNewConnection = TRUE;	// there is new entry for user, we must create connection
 		}
 	}
+	else
+	{
+		DEBUG("User connections is not null!\n");
+	}
 	
 	if( createNewConnection == TRUE )
 	{
@@ -268,7 +272,7 @@ MobileAppConnection *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, con
 			{ //got empty slot
 			
 				connectionToReplaceIndex = i;
-				DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
+				DEBUG("Will use slot %d for this connection, sameUMA? %d connection pointer %p\n", connectionToReplaceIndex, sameUMA, userConnections->umac_Connection[i] );
 				break;
 			}
 		}
@@ -302,6 +306,15 @@ MobileAppConnection *MobileAppAddNewUserConnection( void *wsi, FULONG umaID, con
 			newConnection->mac_UserData = userData;
 			newConnection->mac_WebsocketPtr = wsi;
 			newConnection->mac_UserMobileAppID = umaID;
+			newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
+			newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
+		}
+		else
+		{
+			newConnection = MobileAppConnectionNew( wsi, umaID );
+			userConnections->umac_Connection[ connectionToReplaceIndex ] = newConnection;
+
+			newConnection->mac_UserData = userData;
 			newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
 			newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
 		}
@@ -486,6 +499,13 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		case LWS_CALLBACK_RECEIVE:
 		{
 			char *data = (char*)in;
+			
+			if( appConnection == NULL )
+			{
+				DEBUG("Connection which is not on the list cannot accept messages\n");
+				return 1;
+				//return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
+			}
 
 			if( len == 0 )
 			{
