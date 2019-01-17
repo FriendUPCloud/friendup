@@ -3356,13 +3356,14 @@ function apiWrapper( event, force )
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
 						var flags = {
-							mainView:    tar ? tar : win,
-							type:        msg.method,
-							path:        msg.path,
-							title:       msg.title,
-							filename:    msg.filename,
-							suffix:      msg.suffix,
-							multiSelect: msg.multiSelect,
+							mainView:           tar ? tar : win,
+							type:               msg.method,
+							path:               msg.path,
+							title:              msg.title,
+							filename:           msg.filename,
+							suffix:             msg.suffix,
+							multiSelect:        msg.multiSelect,
+							keyboardNavigation: msg.keyboardNavigation,
 							triggerFunction: function( data )
 							{
 								var nmsg = msg;

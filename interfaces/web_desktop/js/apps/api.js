@@ -5010,6 +5010,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	var targetview = false;
 	var suffix = false;
 	var multiSelect = true; // Select multiple files
+	var keyboardNavigation = false;
 	
 	// We have a view
 	if( object && object.getViewId )
@@ -5050,6 +5051,9 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 				case 'suffix':
 					suffix = object[a];
 					break;
+				case 'keyboardNavigation':
+					keyboardNavigation = object[a];
+					break;
 			}
 		}
 	}
@@ -5074,18 +5078,19 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	dialog.suffix = suffix;
 
 	Application.sendMessage( {
-		type:        'system',
-		command:     'filedialog',
-		method:       type,
-		callbackId:   cid,
-		dialogType:   type,
-		path:         path,
-		filename:     filename,
-		multiSelect:  multiSelect,
-		title:        title,
-		viewId:       mainview,
-		targetViewId: targetview,
-		suffix:       suffix
+		type:               'system',
+		command:            'filedialog',
+		method:             type,
+		callbackId:         cid,
+		dialogType:         type,
+		path:               path,
+		filename:           filename,
+		multiSelect:        multiSelect,
+		title:              title,
+		viewId:             mainview,
+		targetViewId:       targetview,
+		suffix:             suffix,
+		keyboardNavigation: keyboardNavigation
 	} );
 }
 

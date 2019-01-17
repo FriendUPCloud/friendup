@@ -16,6 +16,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var suffix = false;
 	var multiSelect = true;
 	var defaultPath = 'Home:';
+	var keyboardNavigation = false;
 	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
@@ -56,6 +57,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					break;
 				case 'suffix':
 					suffix = object[a];
+					break;
+				case 'keyboardNavigation':
+					keyboardNavigation = object[a];
 					break;
 			}
 		}
@@ -197,8 +201,33 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				p += '/' + fname;
 			else p += fname;
 			
-			triggerfunction( p );
-			w.close();
+			// Check if file exists
+			var ic = w._window.icons;
+			var found = false;
+			for( var a = 0; a < ic.length; a++ )
+			{
+				if( ic[a].Path == p )
+				{
+					found = true;
+				}
+			}
+			
+			if( found )
+			{
+				Confirm( i18n( 'i18n_overwriting_file' ), i18n( 'i18n_do_you_want_overwrite' ), function( ok )
+				{
+					if( ok )
+					{
+						triggerfunction( p );
+						w.close();
+					}
+				}, i18n( 'i18n_overwrite' ) );
+			}
+			else
+			{
+				triggerfunction( p );
+				w.close();
+			}
 			return;
 		}
 		
@@ -403,9 +432,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 								// Check if the suffix matches
 								if( !dialog.checkSuffix( this.value ) )
 								{
-									var suf = typeof( this.suffix ) == 'string' ? this.suffix : this.suffix[0];
-									var fix = this.value.split( '.' );
-									fix = fix.pop();
+									var suf = typeof( dialog.suffix ) == 'string' ? dialog.suffix : dialog.suffix[0];
+									var fix = dialog.saveinput.value.split( '.' );
+									fix.pop();
 									fix.push( suf );
 									fix = fix.join( '.' );
 									this.value = fix;
@@ -514,6 +543,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			toolbararea:         dialog.toolbararea,
 			mountlist:           true,
 			suffix:              dialog.suffix,
+			keyboardNavigation:  keyboardNavigation,
 			clickfile:           function( element, event )
 			{
 				if( dialog.saveinput && element.fileInfo.Type == 'File' )
