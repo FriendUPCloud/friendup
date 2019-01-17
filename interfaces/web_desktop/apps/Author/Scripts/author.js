@@ -227,6 +227,7 @@ Application.load = function()
 	
 	var flags = {
 		multiSelect: false,
+		suffix: 'html',
 		triggerFunction: function( arr )
 		{
 			if( arr )
