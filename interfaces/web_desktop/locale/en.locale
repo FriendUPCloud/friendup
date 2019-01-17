@@ -380,6 +380,9 @@ rename_file                             : Rename file
 new_name                                : New name
 i18n_read_only_filesystem               : Read only filesystem
 i18n_read_only_fs_desc                  : You are trying to write to a write protected or read only filesystem.
+i18n_overwriting_file                   : Overwriting file
+i18n_do_you_want_overwrite              : Do you want to save your file and replace the existing one?
+i18n_overwrite                          : Replace file
 
 #File operations ---------------------------------------------------------------
 
