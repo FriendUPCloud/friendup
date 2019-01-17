@@ -387,7 +387,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 {
 	//DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	MobileAppNotif *man = (MobileAppNotif *) user;
-
+	
 	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
 	{
 		MobileAppInit();
@@ -853,6 +853,23 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 									NotificationSentDeleteAll( nsroot );
 								}
 							}
+						break;
+						
+						case LWS_CALLBACK_PROTOCOL_DESTROY:
+						{
+							UCEntry *e = globalUserToAppConnection;
+							while( e != NULL )
+							{
+								UCEntry *de = e;
+								e = (UCEntry *)e->node.mln_Succ;
+								
+								if( de->u != NULL )
+								{
+									FFree( de->u );
+									FFree( de );
+								}
+							}
+						}
 						break;
 
 						default:
