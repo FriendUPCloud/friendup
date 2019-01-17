@@ -48,7 +48,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.dom.classList.add( 'FileBrowser' );
 	this.currentPath = 'Mountlist:';
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false, filedialog: false };
+	this.flags = flags ? flags : { displayFiles: false, filedialog: false, path: false };
 };
 Friend.FileBrowser.prototype.clear = function()
 {
@@ -253,6 +253,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		}
 	}
 
+	// A click element for incoming path
+	var clickElement = null;
+
 	// Just get a list of disks
 	if( path == 'Mountlist:' )
 	{
@@ -350,6 +353,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
 						nm.innerHTML = ' ' + msg.list[a].Title;
+						
+						// We have an incoming path
+						if( self.flags.path && self.flags.path == d.path )
+						{
+							clickElement = d;
+						}
+						
 						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
 							var driver = msg.list[a].Driver;
@@ -437,6 +447,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						eles[a].classList.remove( 'sw2' );
 						eles[a].classList.add( 'sw' + sw );
 					}
+				}
+				
+				// Click the click element for path
+				if( clickElement )
+				{
+					setTimeout( function()
+					{
+						clickElement.onclick();
+					}, 50 );
 				}
 			}
 			
@@ -564,6 +583,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							continue;
 						}
 						var d = document.createElement( 'div' );
+						
 						d.className = msg.list[a].Type == 'Directory' ? 'FolderItem' : 'FileItem';
 						var ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						var icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
@@ -575,6 +595,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							fn += '/';
 						d.path = path + fn;
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
+						
+						// We have an incoming path
+						if( self.flags.path && self.flags.path == d.path )
+						{
+							clickElement = d;
+						}
 					}
 				}
 				else if( foundItem && msg.list[a].Type == 'Directory' )
@@ -604,6 +630,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					eles[a].classList.remove( 'sw2' );
 					eles[a].classList.add( 'sw' + sw );
 				}
+			}
+			
+			// Click the click element for path
+			if( clickElement )
+			{
+				setTimeout( function()
+				{
+					clickElement.onclick();
+				}, 50 );
 			}
 		} );
 	}
