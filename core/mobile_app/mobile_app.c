@@ -319,6 +319,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		}
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
+	DEBUG("Checking: %p\n", appConnection );
 	
 	switch( reason )
 	{
@@ -447,6 +448,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				DEBUG("We have message to send, calling writable\n");
 				lws_callback_on_writable( wsi );
 			}
+			DEBUG("writable end\n" );
 #endif
 		}
 		break;
@@ -512,7 +514,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 						int som = snprintf(response+LWS_PRE, sizeof(response), "{ \"t\":\"error\", \"status\":%d}", MOBILE_APP_ERR_NO_SESSION );
 						lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);	// bad hack
 						//WriteMessageMA( appConnection, (unsigned char*)response, som );
-						return 0;
+						DEBUG("APP connection is equal to NULL!\n");
+						return MOBILE_APP_ERR_NO_SESSION;
 					}
 
 					appConnection->mac_LastCommunicationTimestamp = time(NULL);
