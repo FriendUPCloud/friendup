@@ -512,6 +512,43 @@ html body .View > .Title > div > span
 	height: 40px;
 }
 
+/* Child view navigation */
+.ViewContainer > .MobileBack
+{
+	transition: left 0.3s;
+	display: none;
+}
+.ViewContainer[childview].Active > .ViewIcon
+{
+	display: none;
+}
+.ViewContainer[childview].Active > .MobileBack 
+{
+    display: block;
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    top: -36px;
+    left: 5px;
+    text-align: center;
+    z-index: 2147483647 !important;
+    pointer-events: all;
+}
+
+.ViewContainer[childview].Active > .MobileBack:before
+{
+	font-family: fontawesome;
+	display: inline-block;
+	line-height: 32px;
+	content: "\f104";
+	font-weight: bold;
+}
+
+.ViewContainer[childview] > .MobileBack 
+{
+    left: -32px;
+}
+
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Dragging
 {
 	background-color: rgba(255,255,255,0.4);
