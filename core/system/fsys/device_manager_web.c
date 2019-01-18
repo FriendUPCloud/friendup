@@ -476,7 +476,7 @@ f.Name ASC";
 				FULONG locid = (FLONG)strtol(( char *)el->data, &next, 0);
 				if( locid > 0 )
 				{
-					UserGroup *lg = l->sl_UM->um_UserGroups;
+					UserGroup *lg = l->sl_UGM->ugm_UserGroups;
 					while( lg != NULL )
 					{
 						if( locid == lg->ug_ID )
@@ -1066,7 +1066,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 				}
 			}
 			
-			LIST_FOR_EACH( l->sl_UM->um_UserGroups, usergroup, UserGroup * )
+			LIST_FOR_EACH( l->sl_UGM->ugm_UserGroups, usergroup, UserGroup * )
 			{
 				if( strcmp( usergroupname, usergroup->ug_Name ) == 0 )
 				{

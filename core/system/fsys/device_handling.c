@@ -1325,7 +1325,7 @@ ug.UserID = '%ld' \
 				FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 				
 				// device was not found on user device list
-				UserGroup *ug = l->sl_UM->um_UserGroups;
+				UserGroup *ug = l->sl_UGM->ugm_UserGroups;
 				while( ug != NULL )
 				{
 					File *lf = ug->ug_MountedDevs;

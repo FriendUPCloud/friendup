@@ -53,6 +53,7 @@
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
 #include <system/user/user_manager.h>
+#include <system/user/user_group_manager.h>
 #include <system/user/remote_user.h>
 #include <system/fsys/fs_manager.h>
 #include <hardware/usb/usb_manager.h>
@@ -213,7 +214,8 @@ typedef struct SystemBase
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
 	AppSessionManager				*sl_AppSessionManager;		// application sessions
 	UserSessionManager				*sl_USM;			// user session manager
-	UserManager						*sl_UM;		// user database manager
+	UserManager						*sl_UM;		// user manager
+	UserGroupManager				*sl_UGM;	// user group manager
 	FSManager						*sl_FSM;		// filesystem manager
 	USBManager						*sl_USB;		// usb manager
 	PrinterManager					*sl_PrinterM;		// printer manager

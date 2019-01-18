@@ -36,7 +36,7 @@ typedef struct UserManager
 	void								*um_SB;
 	
 	User								*um_Users; 						// logged users with mounted devices
-	UserGroup							*um_UserGroups;			// all user groups
+	//UserGroup							*um_UserGroups;			// all user groups
 	void 								*um_USM;
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
 	User								*um_APIUser;	// API user

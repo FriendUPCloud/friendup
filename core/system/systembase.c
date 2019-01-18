@@ -863,6 +863,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize USMNew\n");
 	}
 	
+	l->sl_UGM = UGMNew( l );
+	if( l->sl_UGM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
+	}
+	
 	l->sl_UM = UMNew( l );
 	if( l->sl_UM == NULL )
 	{
@@ -1103,7 +1109,11 @@ void SystemClose( SystemBase *l )
 	}
 	if( l->sl_UM != NULL )
 	{
-		UMDelete(  l->sl_UM );
+		UMDelete( l->sl_UM );
+	}
+	if( l->sl_UGM != NULL )
+	{
+		UGMDelete( l->sl_UGM );
 	}
 	if( l->sl_FSM != NULL )
 	{
@@ -1350,10 +1360,6 @@ int SystemInitExternal( SystemBase *l )
 		//  get all users active
 	
 		time_t timestamp = time ( NULL );
-	
-		Log( FLOG_INFO,  "[SystemBase] Loading groups from DB\n");
-	
-		l->sl_UM->um_UserGroups = LoadGroups( l );
 		
 		//
 		// get sentinel
@@ -1606,7 +1612,7 @@ int SystemInitExternal( SystemBase *l )
 		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 		
-		UserGroup *ug = l->sl_UM->um_UserGroups;
+		UserGroup *ug = l->sl_UGM->ugm_UserGroups;
 		/*
 		User *sentUser = NULL;
 		if( l->sl_Sentinel != NULL )
@@ -1925,27 +1931,6 @@ void CheckAndUpdateDB( struct SystemBase *l )
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 	Log( FLOG_INFO, "---------Autoupdatedatabase process END-------------\n");
 	Log( FLOG_INFO, "----------------------------------------------------\n");
-}
-
-/**
- * Load all groups from FGroup table to FC
- *
- * @param sb pointer to SystemBase
- * @return list of groups
- */
-
-UserGroup *LoadGroups( struct SystemBase *sb )
-{
-	UserGroup *groups = NULL;
-	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	if( sqlLib != NULL )
-	{
-		int entries;
-		groups = sqlLib->Load( sqlLib, GroupDesc, NULL, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
-	}
-	return groups;
 }
 
 /**

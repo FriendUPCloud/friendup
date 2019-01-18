@@ -119,7 +119,7 @@ void UMDelete( UserManager *smgr )
 	
 	//if( smgr != NULL )
 	{
-		UserGroupDeleteAll( smgr->um_SB, smgr->um_UserGroups );
+		//UserGroupDeleteAll( smgr->um_SB, smgr->um_UserGroups );
 		/*
 		UserGroup *g = smgr->um_UserGroups, *rg;
 		DEBUG("[UMDelete] Cleaning groups\n");
@@ -142,7 +142,7 @@ void UMDelete( UserManager *smgr )
 			}
 		}
 		*/
-		smgr->um_UserGroups = NULL;
+		//smgr->um_UserGroups = NULL;
 		
 		FFree( smgr );
 	}
@@ -222,19 +222,18 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 				
 					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
 				
-					UserGroup *g = smgr->um_UserGroups;
+					UserGroup *g = sb->sl_UGM->ugm_UserGroups;
 					while( g != NULL )
 					{
 						if( g->ug_ID == gid )
 						{
-							if( strcmp( g->ug_Name, "Admin" ) == 0 )
+							if( g->ug_IsAdmin == TRUE )
 							{
-								isAdmin = TRUE;
+								isAdmin = g->ug_IsAdmin;
 							}
-							
-							if( strcmp( g->ug_Name, "API" ) == 0 )
+							if( g->ug_IsAPI == TRUE )
 							{
-								isAPI = TRUE;
+								isAPI = g->ug_IsAPI;
 							}
 							
 							UserGroupAddUser( g, usr );
@@ -337,18 +336,19 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 		DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated\n");
 		for( i = 0; i < pos; i++ )
 		{
-			UserGroup *gr = um->um_UserGroups;
+			UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
 			while( gr != NULL )
 			{
 				if( strcmp( gr->ug_Name, ptr[ i ] ) == 0 )
 				{
 					usrGroups[ i ] = gr;
 					
-					if( strcmp( gr->ug_Name, "Admin" ) == 0 )
+					if( gr->ug_IsAdmin == TRUE )
 					{
 						isAdmin = TRUE;
 					}
-					else if( strcmp( gr->ug_Name, "API" ) == 0 )
+					
+					if( gr->ug_IsAPI == TRUE )
 					{
 						isAPI = TRUE;
 					}

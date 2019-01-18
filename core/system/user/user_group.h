@@ -62,6 +62,9 @@ typedef struct UserGroup
 	
 	UserGroupAUser		*ug_UserList;		// users assigned to group 
 	File				*ug_MountedDevs;	// root file
+	int					ug_Status;
+	FBOOL				ug_IsAdmin;
+	FBOOL				ug_IsAPI;
 	// this is list of UserGroupDevices, all devices are shared to users by group
 	// if we want to share this device across another groups we must share it
 }UserGroup;
@@ -70,11 +73,12 @@ typedef struct UserGroup
 //
 //
 
-static FULONG GroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUCTSIZE, sizeof( struct UserGroup ), 
+static FULONG UserGroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUCTSIZE, sizeof( struct UserGroup ), 
 	SQLT_IDINT, (FULONG)"ID", offsetof( struct UserGroup, ug_ID ), 
 	SQLT_INT, (FULONG)"UserID", offsetof( struct UserGroup, ug_UserID ),
 	SQLT_STR, (FULONG)"Name", offsetof( struct UserGroup, ug_Name ),
 	SQLT_STR, (FULONG)"Type", offsetof( struct UserGroup, ug_Type ),
+	SQLT_INT, (FULONG)"Status", offsetof( struct UserGroup, ug_Status ),
 	SQLT_NODE, (FULONG)"node", offsetof( struct UserGroup, node ),
 	SQLT_END };
 
