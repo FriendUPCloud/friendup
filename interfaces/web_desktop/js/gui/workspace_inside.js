@@ -5523,7 +5523,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( window._getAppByAppId )
 				{
-					var app = _getAppByAppId( div.applicationId );
+					var app = _getAppByAppId( currentMovable.applicationId );
 					if( app.mainView )
 					{
 						_ActivateWindow( app.mainView.content.parentNode );
