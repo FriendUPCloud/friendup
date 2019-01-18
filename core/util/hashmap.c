@@ -288,7 +288,6 @@ int HashmapPut( Hashmap* in, char* key, void* value )
 	{
 		return MAP_OMEM;
 	}
-	DEBUG("HashmapPut\n");
 	// Find a place to put our value
 	int index = HashmapHash( in, key );
 	while( index == MAP_FULL )
@@ -314,7 +313,6 @@ int HashmapPut( Hashmap* in, char* key, void* value )
 		FFree( in->data[index].key );
 		in->data[index].key = NULL;
 	}
-	//DEBUG("HashmapPut 1: key : %s\n", key );
 	
 	in->data[index].key = key;
 	in->data[index].inUse = TRUE;
@@ -341,7 +339,6 @@ HashmapElement* HashmapGet( Hashmap* in, char* key )
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		//DEBUG("GetHashmap check: %d -  %s - %s\n", in->data[curr].inUse, in->data[curr].key, key );
 		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
 		{
 			return &in->data[curr];
@@ -371,7 +368,6 @@ void* HashmapGetData( Hashmap* in, const char* key )
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		//DEBUG("HashmapGetData check: %d = %s - %s\n", in->data[curr].inUse, in->data[curr].key, key );
 		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
 		{
 			DEBUG("Found!\n");

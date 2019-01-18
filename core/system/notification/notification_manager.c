@@ -961,14 +961,12 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	char *pushContent = FMalloc( TOKEN_MAX_SIZE );
 	if( pushContent != NULL )
 	{
-		printf("Tokens: %s\n", tokens );
 		while( TRUE )
 		{
 			// go through all tokens separated by , (coma)
 			// and send message to them
 			if( *curToken == 0 || *curToken == ',' )
 			{
-				printf("->%c %d\n", *curToken, *curToken );
 				if( *curToken != 0 )
 				{
 					*curToken = 0;
@@ -992,22 +990,17 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 					}
 					FFree( tok );
 				}
-				printf("here\n");
-			
+
 				startToken = curToken+1;
 			
 				if( *curToken == 0 )
 				{
-					printf("is 0\n");
 					break;
 				}
-				printf("x->%c %d\n", *curToken, *curToken );
 				curToken++;
 			}
-			printf("loop\n");
 			curToken++;
 		}
-		printf("release content\n");
 		FFree( pushContent );
 	}
 	
