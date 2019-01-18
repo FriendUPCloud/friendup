@@ -4022,6 +4022,38 @@ var View = function( args )
 	{
 		WindowLoadingAnimation( this._window );
 	}
+	
+	// Set the main view of app
+	this.setMainView = function( set )
+	{
+		if( !this.applicationId ) return;
+		
+		if( !window._getAppByAppId )
+			return;
+			
+		var app = _getAppByAppId( this.applicationId );
+		if( !app ) return;
+		
+		// Set main view
+		if( set )
+		{
+			app.mainWindow = this;
+		}
+		// Unset main view (pick the next view if possible
+		else
+		{
+			app.mainWindow = null;
+			for( var a in app.windows )
+			{
+				if( app.windows[ a ] != this )
+				{
+					app.mainWindow = app.windows[ a ];
+					break;
+				}
+			}
+		}
+	}
+	
 	// Set a window flag
 	this.setFlag = function( flag, value )
 	{	
@@ -4036,6 +4068,9 @@ var View = function( args )
 		// Set the flag
 		switch( flag )
 		{
+			case 'mainView':
+				this.setMainView( value );
+				break;
 			case 'clickableTitle':
 				this.flags.clickableTitle = value;
 				break;
