@@ -529,7 +529,7 @@ html body .View > .Title > div > span
     height: 32px;
     position: absolute;
     top: -36px;
-    left: 5px;
+    left: 0px;
     text-align: center;
     z-index: 2147483647 !important;
     pointer-events: all;
