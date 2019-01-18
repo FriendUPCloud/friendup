@@ -20,7 +20,8 @@
 typedef struct List
 {
 	void* data;
-	struct List* next;
+	struct List *next;
+	struct List *last;
 } List;
 
 //
@@ -43,11 +44,13 @@ void FreeList( List *list );
 
 List* ListNew();
 
-List* ListAdd( List* list, void* data );    // Add to the beginning of the list
+List* ListAdd( List **list, void* data );    // Add to the beginning of the list
 
-void    ListAppend( List* list, void* data ); // Add to the end of the list
+void ListAppend( List* list, void* data ); // Add to the end of the list
 
-void    ListFree( List* list );
+void ListFree( List* list );
+
+void ListFreeWithData( List* list );
 
 #endif	// __UTIL_LIST_H__
 

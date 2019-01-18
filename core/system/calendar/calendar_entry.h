@@ -48,7 +48,7 @@ typedef struct CalendarEntry
 	FULONG						ce_RemoteID;
 	char						*ce_MetaData;
 	
-	FLONG						*ce_RepeatTime;	// -1 never ends, >= number of times, 0- delete
+	FLONG						ce_RepeatTime;	// -1 never ends, >= number of times, 0- delete
 	time_t						ce_RepeatDelay;	// in seconds. How much time is between next same event
 } CalendarEntry;
 

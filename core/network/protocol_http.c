@@ -1373,8 +1373,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									if( SLIB->fcm->fcm_SSLEnabled )
 									{
-//redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=https://%s/webclient/index.html\"></head><body> \
- Attempting to redirect to <a href=\"https://%s/webclient/index.html\">https://%s</a>.</body></html>", newUrl, newUrl, newUrl );
+/* redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=https://%s/webclient/index.html\"></head><body> \
+ Attempting to redirect to <a href=\"https://%s/webclient/index.html\">https://%s</a>.</body></html>", newUrl, newUrl, newUrl ); */
 										if( fromUrl == TRUE )
 										{
 											redsize = snprintf( redirect, sizeof( redirect ), "https://%s/webclient/index.html", newUrl );
@@ -1386,8 +1386,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									}
 									else
 									{
-								//redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=http://%s:6502/webclient/index.html\"></head><body> \
- Attempting to redirect to <a href=\"http://%s:6502/webclient/index.html\">http://%s:6502</a>.</body></html>", newUrl, newUrl, newUrl );
+								/* redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=http://%s:6502/webclient/index.html\"></head><body> \
+ Attempting to redirect to <a href=\"http://%s:6502/webclient/index.html\">http://%s:6502</a>.</body></html>", newUrl, newUrl, newUrl ); */
 										if( fromUrl == TRUE )
 										{
 											redsize = snprintf( redirect, sizeof( redirect ), "http://%s/webclient/index.html", newUrl );

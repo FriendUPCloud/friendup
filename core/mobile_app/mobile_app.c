@@ -208,7 +208,7 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
 		DEBUG("Hashmap get 2 : %s\n", username );
 		//userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
-		userConnections = CGetDataFromList( username );
+		userConnections = CGetDataFromList( (char *)username );
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	DEBUG("[MobileAppAddNewUserConnection] existing userConnections: %p\n", userConnections );
@@ -387,7 +387,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 {
 	//DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	MobileAppNotif *man = (MobileAppNotif *) user;
-
+	
 	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
 	{
 		MobileAppInit();
@@ -854,6 +854,23 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 								}
 							}
 						break;
+						
+						case LWS_CALLBACK_PROTOCOL_DESTROY:
+						{
+							UCEntry *e = globalUserToAppConnection;
+							while( e != NULL )
+							{
+								UCEntry *de = e;
+								e = (UCEntry *)e->node.mln_Succ;
+								
+								if( de->u != NULL )
+								{
+									FFree( de->u );
+									FFree( de );
+								}
+							}
+						}
+						break;
 
 						default:
 							return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_WRONG_TYPE);
@@ -1259,7 +1276,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
 		DEBUG("Hashmap get: %s\n", username );
-		userConnections = CGetDataFromList( username );
+		userConnections = CGetDataFromList( (char *)username );
 		/*
 		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		if( userConnections != NULL )
@@ -1559,7 +1576,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
 		DEBUG("Hashmap get 1: %s\n", username );
 		
-		userConnections = CGetDataFromList( username );
+		userConnections = CGetDataFromList( (char *)username );
 		/*
 		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		if( userConnections != NULL )

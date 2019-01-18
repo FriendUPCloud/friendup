@@ -1665,7 +1665,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 				lws_write( fcd->fcd_WSClient->wsc_Wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
 
-				lws_send_pipe_choked( fcd->fcd_WSClient->wsc_Wsi );
+				int errret = lws_send_pipe_choked( fcd->fcd_WSClient->wsc_Wsi );
 				
 				//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 				if( e != NULL )

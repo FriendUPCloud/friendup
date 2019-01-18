@@ -770,6 +770,7 @@ char *TokenToBinary( const char *token )
 // Source: https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/LegacyFormat.html
 FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength )
 {
+	DEBUG("Send payload\n");
 	FBOOL rtn = FALSE;
 	if( sslPtr && deviceTokenBinary && payloadBuff && payloadLength )
 	{
@@ -850,12 +851,12 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	struct hostent *he;
 	struct sockaddr_in sa;
 	
-	if( tokens == NULL )
+	if( tokens == NULL || strlen( tokens ) < 6 )
 	{
 		return 21;
 	}
 	
-	DEBUG("Send notifications IOS, cert path >%s<\n", nm->nm_APNSCert );
+	DEBUG("Send notifications IOS, cert path >%s< - content %s title: %s\n", nm->nm_APNSCert, content, title );
 	
 	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
     
@@ -955,49 +956,59 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	
 	int successNumber = 0;
 	int failedNumber = 0;
-	
-	while( TRUE )
+#define TOKEN_MAX_SIZE 4096			
+			
+	char *pushContent = FMalloc( TOKEN_MAX_SIZE );
+	if( pushContent != NULL )
 	{
-		// go through all tokens separated by , (coma)
-		// and send message to them
-
-		if( *curToken == 0 || *curToken == ',' )
+		printf("Tokens: %s\n", tokens );
+		while( TRUE )
 		{
-			char pushContent[ 4096 ];
-			if( *curToken != 0 )
+			// go through all tokens separated by , (coma)
+			// and send message to them
+			if( *curToken == 0 || *curToken == ',' )
 			{
-				*curToken = 0;
-			}
-			
-			DEBUG("Send message to : >%s<\n", startToken );
-			
-			int pushContentLen = snprintf( pushContent, sizeof(pushContent)-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
-			
-			char *tok = TokenToBinary( startToken );
-			DEBUG("Send payload, token pointer %p\n", tok );
-			if( tok != NULL )
-			{
-				if(!SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+				printf("->%c %d\n", *curToken, *curToken );
+				if( *curToken != 0 )
 				{
-					failedNumber++;
+					*curToken = 0;
 				}
-				else
+			
+				DEBUG("Send message to : >%s<\n", startToken );
+			
+				int pushContentLen = snprintf( pushContent, TOKEN_MAX_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
+			
+				char *tok = TokenToBinary( startToken );
+				DEBUG("Send payload, token pointer %p token '%s'\n", tok, startToken );
+				if( tok != NULL )
 				{
-					successNumber++;
+					if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+					{
+						failedNumber++;
+					}
+					else
+					{
+						successNumber++;
+					}
+					FFree( tok );
 				}
-				FFree( tok );
-			}
+				printf("here\n");
 			
-			startToken = curToken+1;
+				startToken = curToken+1;
 			
-			if( *curToken == 0 )
-			{
-				break;
+				if( *curToken == 0 )
+				{
+					printf("is 0\n");
+					break;
+				}
+				printf("x->%c %d\n", *curToken, *curToken );
+				curToken++;
 			}
+			printf("loop\n");
 			curToken++;
 		}
-		
-		curToken++;
+		printf("release content\n");
+		FFree( pushContent );
 	}
 	
 	DEBUG("Notifications sent: %d fail: %d\n", successNumber, failedNumber );
