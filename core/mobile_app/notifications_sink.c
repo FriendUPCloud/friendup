@@ -407,7 +407,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 										{
 											char *username = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 											DEBUG("This user will get message: %s\n", username );
-											ListAdd( usersList, username );
+											ListAdd( &usersList, username );
 											p++;
 										}
 										p--;
@@ -446,7 +446,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								if( usersList == NULL || channel_id == NULL || title == NULL || message == NULL )
 								{
 									DEBUG( "channel_id: %s title: %s message: %s\n", channel_id, title , message );
-									ListFree( usersList );
+									if( usersList != NULL ) ListFreeWithData( usersList );
 									if( channel_id != NULL ) FFree( channel_id );
 									if( title != NULL ) FFree( title );
 									if( message != NULL ) FFree( message );
@@ -480,7 +480,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								return ReplyError( d, WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND );
 							}
 							
-							ListFree( usersList );
+							ListFreeWithData( usersList );
 							
 							//if( username != NULL ) FFree( username );
 							if( channel_id != NULL ) FFree( channel_id );

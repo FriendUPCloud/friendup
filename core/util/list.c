@@ -37,6 +37,17 @@ List* CreateList()
 	return l;
 }
 
+void FreeList( List* list )
+{
+	List* l;
+	while( list )
+	{
+		l = list;
+		list = list->next;
+		free( l );
+	}
+}
+
 //
 //
 //
@@ -79,25 +90,11 @@ void AddToList( List *list, void *data )
 	}
 }
 
-//
-//
-//
-
-void FreeList( List *list )
-{
-	List *tmp = NULL;
-	do
-	{
-		tmp = list;
-		list = list->next;
-		FFree ( tmp );
-	}
-	while ( list != NULL );
-}
-
-//
-//
-//
+/**
+ * Create new list
+ * 
+ * @return new List structure entry
+ */
 
 List* ListNew()
 {
@@ -108,30 +105,37 @@ List* ListNew()
 		return NULL;
 	}
 	l->data = NULL;
-	//l->next = NULL;
+	l->last = l;
 	return l;
 }
 
-//
-// Add to the list, returns the new list element, which can be used for appending
-//
+/**
+ * Add entry to the list
+ * 
+ * @param list pointer to root of list
+ * @param data data which will be stored in list
+ * @return pointer to added entry list
+ */
 
-List* ListAdd( List* list, void* data )
+List* ListAdd( List** list, void* data )
 {
-	if( !list->data )
+	if( !(*list)->data )
 	{
-		list->data = data;
-		return list;
+		(*list)->data = data;
+		return (*list);
 	}
 	List *l = ListNew();
-	list->next = l;
+	l->next = (*list);
+	(*list) = l;
 	l->data = data;
 	return l;
 }
 
-//
-//void    ListAppend( List* list, void* data ); // Add to the end of the list
-//
+/**
+ * Delete list
+ * 
+ * @param list pointer to root of list
+ */
 
 void ListFree( List* list )
 {
@@ -140,6 +144,27 @@ void ListFree( List* list )
 	{
 		l = list;
 		list = list->next;
+		free( l );
+	}
+}
+
+/**
+ * Delete list with data
+ * 
+ * @param list pointer to root of list
+ */
+
+void ListFreeWithData( List* list )
+{
+	List* l;
+	while( list )
+	{
+		l = list;
+		list = list->next;
+		if( l->data != NULL )
+		{
+			free( l->data );
+		}
 		free( l );
 	}
 }

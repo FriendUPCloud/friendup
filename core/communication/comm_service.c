@@ -833,7 +833,7 @@ int CommServiceThreadServer( FThread *ptr )
 							char incomingFriendCoreID[ FRIEND_CORE_MANAGER_ID_SIZE + 32 ];
 							memset( incomingFriendCoreID, 0, FRIEND_CORE_MANAGER_ID_SIZE + 32 );
 							
-							int z;
+							unsigned int z;
 							for( z=0 ; z < bs->bs_Size ; z++ )
 								printf("_%c_ ", bs->bs_Buffer[ z ] );
 							printf("\n");
