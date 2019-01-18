@@ -224,6 +224,12 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 	return 0;
 }
 
+typedef struct UMsg
+{
+	char *usrname;
+	MinNode node;
+}UMsg;
+
 /**
  * Process incoming request
  *
@@ -370,7 +376,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							char *application = NULL;
 							char *extra = NULL;
 							
-							List *usersList = ListNew(); // list of users
+							UMsg *ulistroot = NULL;
+							//List *usersList = ListNew(); // list of users
 							
 							// 8 -> 25
 							for( p = 8 ; p < tokens_found ; p++ )
@@ -407,7 +414,14 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 										{
 											char *username = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 											DEBUG("This user will get message: %s\n", username );
-											ListAdd( &usersList, username );
+											UMsg *le = FCalloc( 1, sizeof(UMsg) );
+											if( le != NULL )
+											{
+												le->usrname = username;
+												le->node.mln_Succ = (MinNode *)ulistroot;
+												ulistroot = le;
+											}
+											//ListAdd( &usersList, username );
 											p++;
 										}
 										p--;
@@ -443,10 +457,21 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							
 							if( notification_type >= 0 )
 							{
-								if( usersList == NULL || channel_id == NULL || title == NULL || message == NULL )
+								if( ulistroot == NULL || channel_id == NULL || title == NULL || message == NULL )
 								{
 									DEBUG( "channel_id: %s title: %s message: %s\n", channel_id, title , message );
-									if( usersList != NULL ) ListFreeWithData( usersList );
+									UMsg *le = ulistroot;
+									while( le != NULL )
+									{
+										UMsg *dme = le;
+										le = (UMsg *)le->node.mln_Succ;
+								
+										if( dme->usrname != NULL )
+										{
+											FFree( dme->usrname );
+										}
+										FFree( dme );
+									}
 									if( channel_id != NULL ) FFree( channel_id );
 									if( title != NULL ) FFree( title );
 									if( message != NULL ) FFree( message );
@@ -455,12 +480,12 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									return ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 								}
 								
-								List *le = usersList;
+								UMsg *le = ulistroot;
 								while( le != NULL )
 								{
-									if( le->data != NULL )
+									if( le->usrname != NULL )
 									{
-										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->data, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
+										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
 
 										char reply[256];
 										int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
@@ -472,7 +497,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 #endif
 									}
 									
-									le = le->next;
+									le = (UMsg *)le->node.mln_Succ;
 								}
 							}
 							else
@@ -480,7 +505,18 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								return ReplyError( d, WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND );
 							}
 							
-							ListFreeWithData( usersList );
+							UMsg *le = ulistroot;
+							while( le != NULL )
+							{
+								UMsg *dme = le;
+								le = (UMsg *)le->node.mln_Succ;
+								
+								if( dme->usrname != NULL )
+								{
+									FFree( dme->usrname );
+								}
+								FFree( dme );
+							}
 							
 							//if( username != NULL ) FFree( username );
 							if( channel_id != NULL ) FFree( channel_id );
