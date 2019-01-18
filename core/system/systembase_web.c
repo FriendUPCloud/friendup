@@ -54,6 +54,7 @@
 #include <system/token/token_web.h>
 #include <system/dictionary/dictionary.h>
 #include <system/mobile/mobile_web.h>
+#include <system/user/user_group_manager_web.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -1310,10 +1311,20 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// user function
 	//
 	
-	else if( strcmp(  urlpath[ 0 ], "user" ) == 0 )
+	else if( strcmp( urlpath[ 0 ], "user" ) == 0 )
 	{
 		DEBUG("User\n");
 		response = UMWebRequest( l, urlpath, (*request), loggedSession, result );
+	}
+	
+	//
+	// usergroup function
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "group" ) == 0 )
+	{
+		DEBUG("User\n");
+		response = UMGWebRequest( l, urlpath, (*request), loggedSession, result );
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
