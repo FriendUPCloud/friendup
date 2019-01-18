@@ -67,6 +67,8 @@ i18n_package_generation_error       : The package failed to generate. Please che
 i18n_package_submitted              : Package sent
 i18n_submitted_desc                 : The package was sent to Friend Store. Login there to track your package.
 
+i18n_no_entries                     : No entries.
+
 i18n_checking_file                  : Checking file.
 i18n_add_file_to_project            : File is not added to your project. You want to add it?
 i18n_add_to_project                 : Add to project
