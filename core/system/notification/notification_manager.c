@@ -856,7 +856,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 		return 21;
 	}
 	
-	DEBUG("Send notifications IOS, cert path >%s<\n", nm->nm_APNSCert );
+	DEBUG("Send notifications IOS, cert path >%s< - content %s title: %s\n", nm->nm_APNSCert, content, title );
 	
 	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
     
