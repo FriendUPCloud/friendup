@@ -767,6 +767,8 @@ char *TokenToBinary( const char *token )
 }
 */
 
+#define IOS_MAX_MSG_SIZE sizeof (uint8_t) + sizeof (uint32_t) + sizeof (uint32_t) + sizeof (uint16_t) + DEVICE_BINARY_SIZE + sizeof (uint16_t) + MAXPAYLOAD_SIZE
+
 // Source: https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/LegacyFormat.html
 FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength )
 {
@@ -775,53 +777,56 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
 	if( sslPtr && deviceTokenBinary && payloadBuff && payloadLength )
 	{
 		uint8_t command = 1; /* command number */
-		char binaryMessageBuff[sizeof (uint8_t) + sizeof (uint32_t) + sizeof (uint32_t) + sizeof (uint16_t) +
-                               DEVICE_BINARY_SIZE + sizeof (uint16_t) + MAXPAYLOAD_SIZE];
-        // message format is, |COMMAND|ID|EXPIRY|TOKENLEN|TOKEN|PAYLOADLEN|PAYLOAD|
-		char *binaryMessagePt = binaryMessageBuff;
-		uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
-		uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
-		uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
-		uint16_t networkOrderPayloadLength = htons(payloadLength);
-        
-		// command
-		*binaryMessagePt++ = command;
-        
-		// provider preference ordered ID 
-		memcpy(binaryMessagePt, &whicheverOrderIWantToGetBackInAErrorResponse_ID, sizeof (uint32_t));
-		binaryMessagePt += sizeof (uint32_t);
-        
-		// expiry date network order 
-		memcpy(binaryMessagePt, &networkOrderExpiryEpochUTC, sizeof (uint32_t));
-		binaryMessagePt += sizeof (uint32_t);
-        
-		// token length network order
-		memcpy(binaryMessagePt, &networkOrderTokenLength, sizeof (uint16_t));
-		binaryMessagePt += sizeof (uint16_t);
-        
-		// device token
-		memcpy(binaryMessagePt, deviceTokenBinary, DEVICE_BINARY_SIZE);
-		binaryMessagePt += DEVICE_BINARY_SIZE;
-        
-		// payload length network order 
-		memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
-		binaryMessagePt += sizeof (uint16_t);
-        
-		// payload 
-		memcpy(binaryMessagePt, payloadBuff, payloadLength);
-		binaryMessagePt += payloadLength;
-        
-        int result = SSL_write(sslPtr, binaryMessageBuff, (binaryMessagePt - binaryMessageBuff));
-		if( result > 0 )
+		char *binaryMessageBuff;
+		if( ( binaryMessageBuff = FMalloc( IOS_MAX_MSG_SIZE ) ) != NULL )
 		{
-			DEBUG("Msg sent\n");
-			rtn = true;
-			//cout<< "SSL_write():" << result<< endl;
-		}
-		else
-		{
-			int errorCode = SSL_get_error(sslPtr, result);
-			DEBUG( "Failed to write in SSL, error code: %d\n", errorCode );
+			// message format is, |COMMAND|ID|EXPIRY|TOKENLEN|TOKEN|PAYLOADLEN|PAYLOAD|
+			char *binaryMessagePt = binaryMessageBuff;
+			uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
+			uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
+			uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
+			uint16_t networkOrderPayloadLength = htons(payloadLength);
+        
+			// command
+			*binaryMessagePt++ = command;
+        
+			// provider preference ordered ID 
+			memcpy(binaryMessagePt, &whicheverOrderIWantToGetBackInAErrorResponse_ID, sizeof (uint32_t));
+			binaryMessagePt += sizeof (uint32_t);
+        
+			// expiry date network order 
+			memcpy(binaryMessagePt, &networkOrderExpiryEpochUTC, sizeof (uint32_t));
+			binaryMessagePt += sizeof (uint32_t);
+        
+			// token length network order
+			memcpy(binaryMessagePt, &networkOrderTokenLength, sizeof (uint16_t));
+			binaryMessagePt += sizeof (uint16_t);
+        
+			// device token
+			memcpy(binaryMessagePt, deviceTokenBinary, DEVICE_BINARY_SIZE);
+			binaryMessagePt += DEVICE_BINARY_SIZE;
+        
+			// payload length network order 
+			memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
+			binaryMessagePt += sizeof (uint16_t);
+        
+			// payload 
+			memcpy(binaryMessagePt, payloadBuff, payloadLength);
+			binaryMessagePt += payloadLength;
+        
+			int result = SSL_write(sslPtr, binaryMessageBuff, (binaryMessagePt - binaryMessageBuff));
+			if( result > 0 )
+			{
+				DEBUG("Msg sent\n");
+				rtn = true;
+				//cout<< "SSL_write():" << result<< endl;
+			}
+			else
+			{
+				int errorCode = SSL_get_error(sslPtr, result);
+				DEBUG( "Failed to write in SSL, error code: %d\n", errorCode );
+			}
+			FFree( binaryMessageBuff );
 		}
     }
     return rtn;
@@ -955,10 +960,9 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	}
 	
 	int successNumber = 0;
-	int failedNumber = 0;
-#define TOKEN_MAX_SIZE 4096			
+	int failedNumber = 0;		
 			
-	char *pushContent = FMalloc( TOKEN_MAX_SIZE );
+	char *pushContent = FMalloc( MAXPAYLOAD_SIZE );
 	if( pushContent != NULL )
 	{
 		while( TRUE )
@@ -974,7 +978,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			
 				DEBUG("Send message to : >%s<\n", startToken );
 			
-				int pushContentLen = snprintf( pushContent, TOKEN_MAX_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
+				int pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
 			
 				char *tok = TokenToBinary( startToken );
 				DEBUG("Send payload, token pointer %p token '%s'\n", tok, startToken );

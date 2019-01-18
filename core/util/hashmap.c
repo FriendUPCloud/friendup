@@ -370,7 +370,6 @@ void* HashmapGetData( Hashmap* in, const char* key )
 	{
 		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
 		{
-			DEBUG("Found!\n");
 			return (in->data[curr].data);
 		}
 		curr = (curr + 1) % in->table_size;
