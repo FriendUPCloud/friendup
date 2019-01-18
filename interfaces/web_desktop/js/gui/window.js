@@ -911,7 +911,7 @@ function _ActivateWindowOnly( div )
 
 			// Extra force!
 			if( isMobile )
-			{
+			{	
 				m.viewContainer.style.top    = '0px';
 				m.viewContainer.style.left   = '0px';
 				m.viewContainer.style.width  = '100%';
@@ -922,6 +922,15 @@ function _ActivateWindowOnly( div )
 					var app = _getAppByAppId( div.applicationId );
 					if( app )
 					{
+						if( m.windowObject != app.mainView )
+						{
+							m.parentNode.setAttribute( 'childview', true );
+						}
+						else
+						{
+							m.parentNode.removeAttribute( 'childview' );
+						}
+						
 						app.sendMessage( {
 							'command': 'notify',
 							'method': 'setviewflag',
@@ -1688,6 +1697,7 @@ var View = function( args )
 			'screen', 'parentView', 'transparent'
 		];
 
+		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
 		// Set initial workspace
@@ -1773,6 +1783,26 @@ var View = function( args )
 							viewContainer.appendChild( iconSpan );
 						}
 					}
+				}
+				
+				// Add mobile back button
+				if( isMobile )
+				{
+					var md = document.createElement( 'div' );
+					md.className = 'MobileBack';
+					md.addEventListener( 'touchstart', function( e )
+					{
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( div.applicationId );
+							if( app.mainView )
+							{
+								_ActivateWindow( app.mainView.content.parentNode );
+							}
+						}
+						return cancelBubble( e );
+					} );
+					viewContainer.appendChild( md );
 				}
 			}
 			else
@@ -1860,6 +1890,17 @@ var View = function( args )
 
 		if( isMobile )
 			Workspace.exitMobileMenu();
+
+		// Check to set mainview
+		var app = _getAppByAppId( this.applicationId );
+		if( app )
+		{
+			var l = 0; for( var k in app.windows ) l++;
+			if( l == 0 )
+			{
+				this.setFlag( 'mainView', true );
+			}
+		}
 
 		// Tell it's opening
 		div.classList.add( 'Opening' );
@@ -2134,16 +2175,19 @@ var View = function( args )
 			this.touchInterval = setInterval( function()
 			{
 				var t = ( new Date() ).getTime();
-				if( t - self.clickOffset.time > 300 )
+				if( self.clickOffset )
 				{
-					// Update time
-					self.clickOffset.removable = true;
-					self.viewIcon.classList.add( 'Dragging' );
-					clearInterval( self.touchInterval );
-					self.touchInterval = null;
+					if( t - self.clickOffset.time > 300 )
+					{
+						// Update time
+						self.clickOffset.removable = true;
+						self.viewIcon.classList.add( 'Dragging' );
+						clearInterval( self.touchInterval );
+						self.touchInterval = null;
 					
-					Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
-					Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
+						Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
+						Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
+					}
 				}
 			}, 150 );
 		}
@@ -4022,6 +4066,54 @@ var View = function( args )
 	{
 		WindowLoadingAnimation( this._window );
 	}
+	
+	// Set the main view of app
+	this.setMainView = function( set )
+	{
+		if( !this.applicationId ) return;
+		
+		if( !window._getAppByAppId )
+			return;
+			
+		var app = _getAppByAppId( this.applicationId );
+		if( !app ) return;
+		
+		this.flags.mainView = set;
+		
+		// Set main view
+		if( set )
+		{
+			app.mainView = this;
+		}
+		// Unset main view (pick the next view if possible
+		else
+		{
+			// Find new main view
+			app.mainView = null;
+			for( var a in app.windows )
+			{
+				if( app.windows[ a ] != this )
+				{
+					app.mainView = app.windows[ a ];
+					app.mainView.flags.mainView = true;
+				}
+			}
+		}
+		// Update other windows with the new main view!
+		if( app.mainView )
+		{
+			for( var a in app.windows )
+			{
+				if( app.windows[ a ] != app.mainView )
+				{
+					app.windows[ a ].mainView = false;
+					app.windows[ a ].flags.mainView = false;
+					app.windows[ a ].parentView = app.mainView;
+				}
+			}
+		}
+	}
+	
 	// Set a window flag
 	this.setFlag = function( flag, value )
 	{	
@@ -4036,6 +4128,10 @@ var View = function( args )
 		// Set the flag
 		switch( flag )
 		{
+			case 'mainView':
+				this.setMainView( value );
+				this.flags.mainView = value;
+				break;
 			case 'clickableTitle':
 				this.flags.clickableTitle = value;
 				break;
