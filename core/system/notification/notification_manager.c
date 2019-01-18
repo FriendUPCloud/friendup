@@ -770,6 +770,7 @@ char *TokenToBinary( const char *token )
 // Source: https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/LegacyFormat.html
 FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength )
 {
+	DEBUG("Send payload\n");
 	FBOOL rtn = FALSE;
 	if( sslPtr && deviceTokenBinary && payloadBuff && payloadLength )
 	{

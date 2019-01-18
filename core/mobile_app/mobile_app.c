@@ -208,7 +208,7 @@ int MobileAppAddNewUserConnection( MobileAppConnection *con, const char *usernam
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
 		DEBUG("Hashmap get 2 : %s\n", username );
 		//userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
-		userConnections = CGetDataFromList( username );
+		userConnections = CGetDataFromList( (char *)username );
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	DEBUG("[MobileAppAddNewUserConnection] existing userConnections: %p\n", userConnections );
@@ -1276,7 +1276,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
 		DEBUG("Hashmap get: %s\n", username );
-		userConnections = CGetDataFromList( username );
+		userConnections = CGetDataFromList( (char *)username );
 		/*
 		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		if( userConnections != NULL )
@@ -1576,7 +1576,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
 		DEBUG("Hashmap get 1: %s\n", username );
 		
-		userConnections = CGetDataFromList( username );
+		userConnections = CGetDataFromList( (char *)username );
 		/*
 		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		if( userConnections != NULL )
