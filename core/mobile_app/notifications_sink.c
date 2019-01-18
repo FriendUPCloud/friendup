@@ -401,8 +401,9 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									if( t[p].type == JSMN_ARRAY ) 
 									{
 										int j;
+										int locsize = t[p].size;
 										p++;
-										for( j=0 ; j < size ; j++ )
+										for( j=0 ; j < locsize ; j++ )
 										{
 											char *username = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 											DEBUG("This user will get message: %s\n", username );
