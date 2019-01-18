@@ -410,6 +410,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 											ListAdd( usersList, username );
 											p++;
 										}
+										p--;
 									}
 									
 								}
