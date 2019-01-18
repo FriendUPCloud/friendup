@@ -979,10 +979,10 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 				int pushContentLen = snprintf( pushContent, TOKEN_MAX_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"data\":{\"application\":\"%s\",\"extras\":\"%s\"} }", title, content, badge, sound, app, extras );
 			
 				char *tok = TokenToBinary( startToken );
-				DEBUG("Send payload, token pointer %p\n", tok );
+				DEBUG("Send payload, token pointer %p token '%s'\n", tok, startToken );
 				if( tok != NULL )
 				{
-					if(!SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+					if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
 					{
 						failedNumber++;
 					}
@@ -992,19 +992,22 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 					}
 					FFree( tok );
 				}
+				printf("here\n");
 			
 				startToken = curToken+1;
 			
 				if( *curToken == 0 )
 				{
+					printf("is 0\n");
 					break;
 				}
 				printf("x->%c %d\n", *curToken, *curToken );
 				curToken++;
 			}
-		
+			printf("loop\n");
 			curToken++;
 		}
+		printf("release content\n");
 		FFree( pushContent );
 	}
 	
