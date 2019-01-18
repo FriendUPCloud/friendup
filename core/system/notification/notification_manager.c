@@ -851,7 +851,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	struct hostent *he;
 	struct sockaddr_in sa;
 	
-	if( tokens == NULL )
+	if( tokens == NULL || strlen( tokens ) < 6 )
 	{
 		return 21;
 	}
@@ -961,12 +961,14 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	char *pushContent = FMalloc( TOKEN_MAX_SIZE );
 	if( pushContent != NULL )
 	{
+		printf("Tokens: %s\n", tokens );
 		while( TRUE )
 		{
 			// go through all tokens separated by , (coma)
 			// and send message to them
 			if( *curToken == 0 || *curToken == ',' )
 			{
+				printf("->%c %d\n", *curToken, *curToken );
 				if( *curToken != 0 )
 				{
 					*curToken = 0;
@@ -997,6 +999,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 				{
 					break;
 				}
+				printf("x->%c %d\n", *curToken, *curToken );
 				curToken++;
 			}
 		
