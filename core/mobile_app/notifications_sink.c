@@ -239,7 +239,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 
 	jsmn_parser parser;
 	jsmn_init( &parser );
-	jsmntok_t t[32]; //should be enough
+	jsmntok_t t[512]; //should be enough
 
 	int tokens_found = jsmn_parse( &parser, data, len, t, sizeof(t)/sizeof(t[0]) );
 	
@@ -363,12 +363,14 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							DEBUG( "\n\nnotification \\o/\n" );
 							int p;
 							int notification_type = -1;
-							char *username = NULL;
+							//char *username = NULL;
 							char *channel_id = NULL;
 							char *title = NULL;
 							char *message = NULL;
 							char *application = NULL;
 							char *extra = NULL;
+							
+							List *usersList = ListNew(); // list of users
 							
 							// 8 -> 25
 							for( p = 8 ; p < tokens_found ; p++ )
@@ -388,10 +390,27 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 										}
 									}
 								}
-								else if( strncmp( data + t[p].start, "username", size) == 0) 
+								
+								// username -  users
+								// "users":[ "username", "pawel", ....]
+								
+								else if( strncmp( data + t[p].start, "users", size) == 0) 
 								{
+									DEBUG("Found array of users\n");
 									p++;
-									username = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+									if( t[p].type == JSMN_ARRAY ) 
+									{
+										int j;
+										p++;
+										for( j=0 ; j < size ; j++ )
+										{
+											char *username = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+											DEBUG("This user will get message: %s\n", username );
+											ListAdd( usersList, username );
+											p++;
+										}
+									}
+									
 								}
 								else if( strncmp( data + t[p].start, "channel_id", size) == 0) 
 								{
@@ -422,11 +441,10 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							
 							if( notification_type >= 0 )
 							{
-								if( username == NULL || channel_id == NULL || title == NULL || message == NULL )
+								if( usersList == NULL || channel_id == NULL || title == NULL || message == NULL )
 								{
-									DEBUG( "username: %s channel_id: %s title: %s message: %s\n", username, channel_id, title , message );
-									
-									if( username != NULL ) FFree( username );
+									DEBUG( "channel_id: %s title: %s message: %s\n", channel_id, title , message );
+									ListFree( usersList );
 									if( channel_id != NULL ) FFree( channel_id );
 									if( title != NULL ) FFree( title );
 									if( message != NULL ) FFree( message );
@@ -435,23 +453,34 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									return ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 								}
 								
-								int status = MobileAppNotifyUserRegister( SLIB, username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
+								List *le = usersList;
+								while( le != NULL )
+								{
+									if( le->data != NULL )
+									{
+										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->data, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
 
-								char reply[256];
-								int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
+										char reply[256];
+										int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
 #ifdef WEBSOCKET_SEND_QUEUE
-								WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
+										WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
 #else
-								unsigned int json_message_length = strlen( reply + LWS_PRE );
-								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
+										unsigned int json_message_length = strlen( reply + LWS_PRE );
+										lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
 #endif
+									}
+									
+									le = le->next;
+								}
 							}
 							else
 							{
 								return ReplyError( d, WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND );
 							}
 							
-							if( username != NULL ) FFree( username );
+							ListFree( usersList );
+							
+							//if( username != NULL ) FFree( username );
 							if( channel_id != NULL ) FFree( channel_id );
 							if( title != NULL ) FFree( title );
 							if( message != NULL ) FFree( message );
