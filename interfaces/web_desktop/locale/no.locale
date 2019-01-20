@@ -408,6 +408,10 @@ i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
 
+#Colorpicker -------------------------------------------------------------------
+
+i18n_color_picker                       : Fargevelger
+
 #Misc --------------------------------------------------------------------------
 
 Shell output : Terminal utskrift

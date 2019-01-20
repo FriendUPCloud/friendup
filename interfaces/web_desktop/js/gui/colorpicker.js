@@ -1,55 +1,107 @@
+Friend.GUI.ColorPickers = [];
 
-var colordia = null;
-function showColorPicker( elementid, value )
+// Create a new color picker!
+Friend.GUI.ColorPicker = function( successcbk, failcbk )
 {
-	if( colordia )
+	Friend.GUI.ColorPickers.push( this );
+	this.init( successcbk, failcbk );
+}
+
+// Initialize the color picker gui
+Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
+{
+	var self = this;
+	
+	var v = new View( {
+		title: i18n( 'i18n_color_picker' ),
+		width: 400,
+		height: 300
+	} );
+	
+	v.addEvent( 'resize', function()
 	{
-		document.body.removeChild( colordia );
+		// Resize
+		if( ge( 'ColorPickerCanvas' ) )
+		{
+			self.refresh();
+		}
+	} );
+	
+	// Clean up!
+	v.onClose = function()
+	{
+		var out = [];
+		for( var a = 0; a < Friend.GUI.ColorPickers.length; a++ )
+		{
+			if( Friend.GUI.ColorPickers[ a ] != self )
+				out.push( Friend.GUI.ColorPickers[ a ] );
+		}
+		Friend.GUI.ColorPickers = out;
+		delete self;
 	}
-	var d = document.createElement( 'div' );
-	d.className = 'AuthFullscreenDialog';
 	
-	colordia = d;
-	
-	var box = document.createElement( 'div' );
-	box.className = 'AuthDiaBox Box Rounded Padding BackgroundDefault';
-	
-	var f = new File( 'Progdir:Templates/colorpicker.html' );
+	// Load template and populate
+	var f = new File( 'System:templates/colorpicker.html' );
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		box.innerHTML = data;
-		d.appendChild( box );
-		document.body.appendChild( d );
+		v.setContent( data );
 		
-		var btns = d.getElementsByTagName( 'button' );
-		for( var a = 0; a < btns.length; a++ )
+		// Get all elements
+		self.elHexCode = null;
+		self.elDiaColors = null;
+		self.elColorPickerCanvas = null;
+		self.elCancel = null;
+		self.elAccept = null;
+		var eles = v.content.getElementsByTagName( '*' );
+		for( var a = 0; a < eles.length; a++ )
 		{
-			if( btns[a].id == 'Close' )
-			{
-				btns[a].onclick = function()
-				{
-					document.body.removeChild( d );
-					colordia = null;
-				}
-			}
-			if( btns[a].id == 'Accept' )
-			{
-				btns[a].onclick = function()
-				{
-					ge( elementid ).value = ge( 'HexCode' ).value;
-					document.body.removeChild( d );
-					colordia = null;
-					
-				}
-			}
+			if( !eles[a].classList ) continue;
+			if( eles[a].classList.contains( 'HexCode' ) )
+				self.elHexCode = eles[a];
+			else if( eles[a].classList.contains( 'DiaColors' ) )
+				self.elDiaColors = eles[a];
+			else if( eles[a].classList.contains( 'ColorPickerCanvas' ) )
+				self.elColorPickerCanvas = eles[a];
+			else if( eles[a].classList.contains( 'Accept' ) )
+				self.elAccept = eles[a];
+			else if( eles[a].classList.contains( 'Cancel' ) )
+				self.elCancel = eles[a];
 		}
 		
+		// Total fail!
+		if( !self.elHexCode )
+		{
+			if( failcbk )
+				failcbk();
+			v.close();
+		}
+		
+		// Create some additional elements
+		var box = document.createElement( 'div' );
+		box.className = 'AuthDiaBox Box Rounded Padding BackgroundDefault';
+
+		box.innerHTML = data;
+		v.content.appendChild( box );
+	
+		self.elCancel.onclick = function()
+		{
+			if( failcbk )
+				failcbk();
+			v.close();
+		}
+		self.elAccept.onclick = function()
+		{
+			if( successcbk )
+				successcbk( elHexCode.value );
+			v.close();
+		}
+	
 		// Draw stuff
-		redrawColorPickerCanvas();
-		
-		var dia = ge( 'DiaColors' );
-		
+		self.refresh();
+	
+		var dia = self.elDiaColors;
+	
 		// And now add some nice controllers
 		var colCtrl = document.createElement( 'div' );
 		colCtrl.className = 'ColorPickerController MousePointer';
@@ -63,23 +115,23 @@ function showColorPicker( elementid, value )
 		{
 			var candx = x - this.offx;
 			var candy = y - this.offy;
-			
+		
 			var limw = 17 + 30;
-			
+		
 			if( candx < -17 ) candx = -17;
 			if( candy < -17 ) candy = -17;
 			if( candx > GetElementWidth( dia ) - limw )
 				candx = GetElementWidth( dia ) - limw;
 			if( candy > GetElementHeight( dia ) - 17 )
 				candy = GetElementHeight( dia ) - 17;
-			
+		
 			this.style.left = candx + 'px';
 			this.style.top = candy + 'px';
-			
-			getColorPickerHex();
+		
+			self.getColorPickerHex();
 		}
 		dia.appendChild( colCtrl );
-		
+	
 		// Shadw control
 		var shaCtrl = document.createElement( 'div' );
 		shaCtrl.className = 'ColorPickerShadeControl MousePointer';
@@ -94,20 +146,21 @@ function showColorPicker( elementid, value )
 			if( candy < 0 ) candy = 0;
 			if( candy + shaCtrl.offsetHeight > GetElementHeight( dia ) )
 				candy = GetElementHeight( dia ) - shaCtrl.offsetHeight;
-			
+		
 			this.style.top = candy + 'px';
-			
-			getColorPickerHex();
+		
+			self.getColorPickerHex();
 		}
 		dia.appendChild( shaCtrl );
-		
+	
 		dia.sha = shaCtrl;
 		dia.col = colCtrl;
 	}
 	f.load();
 }
 
-function getColorPickerHex()
+// Sample the hex color
+Friend.GUI.ColorPicker.getColorPickerHex = function()
 {
 	var cnv = ge( 'ColorPickerCanvas' );
 	var dia = ge( 'DiaColors' );
@@ -139,7 +192,8 @@ function getColorPickerHex()
 	ge( 'HexCode' ).value = '#' + r + g + b;
 }
 
-function redrawColorPickerCanvas()
+// Refresh the colors of the color picker
+Friend.GUI.ColorPicker.refresh = function()
 {
 	var c = ge( 'ColorPickerCanvas' );
 	if( c )
@@ -217,14 +271,7 @@ function redrawColorPickerCanvas()
 	}
 }
 
-window.addEventListener( 'resize', function()
-{
-	// Resize
-	if( ge( 'ColorPickerCanvas' ) )
-	{
-		redrawColorPickerCanvas();
-	}
-} );
+/*
 
 function _mouseMove( e )
 {
@@ -243,3 +290,4 @@ window.addEventListener( 'mousemove', _mouseMove );
 window.addEventListener( 'touchmove', _mouseMove );
 window.addEventListener( 'mouseup', _mouseUp );
 window.addEventListener( 'touchend', _mouseUp );
+*/
