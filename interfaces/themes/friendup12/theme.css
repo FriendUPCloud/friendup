@@ -949,7 +949,7 @@ html .View > .Title
 {
 	border-top: none;
 	border-bottom: 1px solid rgba(0,0,0,0);
-	height: 26px;
+	height: 26.6px; /* .6 because of rounding bug in browsers */
 	background-image: none;
 	border-radius: 2px 2px 0 0;
 	background-color: #4A6075;
