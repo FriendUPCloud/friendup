@@ -37,8 +37,10 @@ function showColorPicker( element, value )
 			{
 				btns[a].onclick = function()
 				{
+					ge( element ).value = ge( 'HexCode' ).value;
 					document.body.removeChild( d );
 					colordia = null;
+					
 				}
 			}
 		}
