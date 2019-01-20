@@ -21,7 +21,7 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 	v.addEvent( 'resize', function()
 	{
 		// Resize
-		if( ge( 'ColorPickerCanvas' ) )
+		if( self.elColorPickerCanvas )
 		{
 			self.refresh();
 		}
@@ -53,7 +53,9 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		self.elColorPickerCanvas = null;
 		self.elCancel = null;
 		self.elAccept = null;
+		
 		var eles = v.content.getElementsByTagName( '*' );
+		
 		for( var a = 0; a < eles.length; a++ )
 		{
 			if( !eles[a].classList ) continue;
@@ -70,26 +72,20 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		}
 		
 		// Total fail!
-		if( !self.elHexCode )
+		if( !self.elHexCode || !self.elDiaColors )
 		{
 			if( failcbk )
 				failcbk();
 			v.close();
 		}
 		
-		// Create some additional elements
-		var box = document.createElement( 'div' );
-		box.className = 'AuthDiaBox Box Rounded Padding BackgroundDefault';
-
-		box.innerHTML = data;
-		v.content.appendChild( box );
-	
 		self.elCancel.onclick = function()
 		{
 			if( failcbk )
 				failcbk();
 			v.close();
 		}
+		
 		self.elAccept.onclick = function()
 		{
 			if( successcbk )
@@ -109,47 +105,59 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		{
 			colCtrl.offx = e.clientX - colCtrl.offsetLeft;
 			colCtrl.offy = e.clientY - colCtrl.offsetTop;
-			mouseElement.candidate = colCtrl;
-		}
-		colCtrl.think = function( x, y )
-		{
-			var candx = x - this.offx;
-			var candy = y - this.offy;
+			
+			mousePointer.candidate = {
+				el: colCtrl,
+				condition: function( e )
+				{
+					var s = colCtrl;
+					var x = e.clientX;
+					var y = e.clientY;
+					var candx = x - s.offx;
+					var candy = y - s.offy;
 		
-			var limw = 17 + 30;
+					var limw = 17 + 30;
 		
-			if( candx < -17 ) candx = -17;
-			if( candy < -17 ) candy = -17;
-			if( candx > GetElementWidth( dia ) - limw )
-				candx = GetElementWidth( dia ) - limw;
-			if( candy > GetElementHeight( dia ) - 17 )
-				candy = GetElementHeight( dia ) - 17;
+					if( candx < -17 ) candx = -17;
+					if( candy < -17 ) candy = -17;
+					if( candx > GetElementWidth( dia ) - limw )
+						candx = GetElementWidth( dia ) - limw;
+					if( candy > GetElementHeight( dia ) - 17 )
+						candy = GetElementHeight( dia ) - 17;
 		
-			this.style.left = candx + 'px';
-			this.style.top = candy + 'px';
+					s.style.left = candx + 'px';
+					s.style.top = candy + 'px';
 		
-			self.getColorPickerHex();
+					self.getColorPickerHex();
+				}
+			};	
 		}
 		dia.appendChild( colCtrl );
 	
-		// Shadw control
+		// Shadow control
 		var shaCtrl = document.createElement( 'div' );
 		shaCtrl.className = 'ColorPickerShadeControl MousePointer';
 		shaCtrl.onmousedown = function( e )
 		{
 			shaCtrl.offy = e.clientY - shaCtrl.offsetTop;
-			mouseElement.candidate = shaCtrl;
-		}
-		shaCtrl.think = function( x, y )
-		{
-			var candy = y - this.offy;
-			if( candy < 0 ) candy = 0;
-			if( candy + shaCtrl.offsetHeight > GetElementHeight( dia ) )
-				candy = GetElementHeight( dia ) - shaCtrl.offsetHeight;
+			
+			mousePointer.candidate = {
+				el: colCtrl,
+				condition: function( e )
+				{
+					var s = shaCtrl;
+					var x = e.clientX;
+					var y = e.clientY;
+					var candy = y - s.offy;
+					if( candy < 0 ) candy = 0;
+					if( candy + shaCtrl.offsetHeight > GetElementHeight( dia ) )
+						candy = GetElementHeight( dia ) - shaCtrl.offsetHeight;
 		
-			this.style.top = candy + 'px';
+					s.style.top = candy + 'px';
 		
-			self.getColorPickerHex();
+					self.getColorPickerHex();
+				}
+			};
 		}
 		dia.appendChild( shaCtrl );
 	
@@ -160,12 +168,14 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 }
 
 // Sample the hex color
-Friend.GUI.ColorPicker.getColorPickerHex = function()
+Friend.GUI.ColorPicker.prototype.getColorPickerHex = function()
 {
-	var cnv = ge( 'ColorPickerCanvas' );
-	var dia = ge( 'DiaColors' );
-	var sha = dia.sha;
-	var col = dia.col;
+	var self = this;
+	
+	var cnv = self.elColorPickerCanvas;
+	var dia = self.elDiaColors;
+	var sha = self.elDiaColors.sha;
+	var col = self.elDiaColors.col;
 	var ctx = cnv.getContext( '2d' );
 	
 	var brightness = 255 - Math.floor( sha.offsetTop / ( cnv.offsetHeight - sha.offsetHeight ) * 255 );
@@ -189,20 +199,22 @@ Friend.GUI.ColorPicker.getColorPickerHex = function()
 	g = Math.floor( g ).toString( 16 ); if( g.length % 2 ) g = '0' + g;
 	b = Math.floor( b ).toString( 16 ); if( b.length % 2 ) b = '0' + b;
 
-	ge( 'HexCode' ).value = '#' + r + g + b;
+	self.elHexCode.value = '#' + r + g + b;
 }
 
 // Refresh the colors of the color picker
-Friend.GUI.ColorPicker.refresh = function()
+Friend.GUI.ColorPicker.prototype.refresh = function()
 {
-	var c = ge( 'ColorPickerCanvas' );
+	var self = this;
+	var c = self.elColorPickerCanvas;
 	if( c )
 	{
-		var w = ge( 'ColorPickerCanvas' ).parentNode.offsetWidth;
-		var h = ge( 'ColorPickerCanvas' ).parentNode.offsetHeight;
+		var w = c.parentNode.offsetWidth;
+		var h = c.parentNode.offsetHeight;
 	
 		c.setAttribute( 'width', w );
 		c.setAttribute( 'height', h );
+		
 		var ctx = c.getContext( '2d' );
 		
 		var imageData = ctx.createImageData( w, h );
