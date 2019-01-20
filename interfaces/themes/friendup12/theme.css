@@ -864,6 +864,13 @@ html .TrayElement.PopNotification .PopInfo
 .IconHeightMedium { height: 36px; padding: 4px; box-sizing: border-box; }
 .IconHeightLarge { height: 44px; padding: 4px; box-sizing: border-box; }
 
+/* Menu items --------------------------------------------------------------- */
+
+.Widget .MenuItems .MenuItem.Disabled
+{
+	display: none;
+}
+
 /* Dock menu ---------------------------------------------------------------- */
 
 html .DockMenu .DockSubMenu
