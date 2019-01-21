@@ -326,7 +326,10 @@ Application.insertImage = function( file )
 
 Application.showPrefs = function()
 {
-	if( this.pwin ) return;
+	if( this.pwin ) 
+	{
+		return this.pwin.activate();
+	}
 	this.pwin = new View( {
 		title: i18n('i18n_preferences'),
 		width: 800,
