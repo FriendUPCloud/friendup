@@ -1892,13 +1892,16 @@ var View = function( args )
 			Workspace.exitMobileMenu();
 
 		// Check to set mainview
-		var app = _getAppByAppId( this.applicationId );
-		if( app )
+		if( window._getAppByAppId )
 		{
-			var l = 0; for( var k in app.windows ) l++;
-			if( l == 0 )
+			var app = _getAppByAppId( this.applicationId );
+			if( app )
 			{
-				this.setFlag( 'mainView', true );
+				var l = 0; for( var k in app.windows ) l++;
+				if( l == 0 )
+				{
+					this.setFlag( 'mainView', true );
+				}
 			}
 		}
 
