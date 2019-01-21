@@ -1119,6 +1119,7 @@ var WorkspaceInside = {
 						Workspace.widget.slideUp();
 					Workspace.mainDock.closeDesklet();
 					DefaultToWorkspaceScreen();
+					_DeactivateWindows();
 					Friend.GUI.reorganizeResponsiveMinimized();
 				}
 				
