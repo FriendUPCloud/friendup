@@ -63,50 +63,56 @@ Application.checkFileType = function( p )
 	{
 		Application.path = p;
 		
-		var d = new Door( p );
-		d.getIcons( function( items )
-		{
-			ge( 'FileBar' ).innerHTML = '';
-			var byDate = [];
-			for( var a = 0; a < items.length; a++ )
-			{
-				byDate[ items[ a ].FileModified + '_' + a ] = items[ a ];
-			}
-			byDate.sort();
-			ge( 'FileBar' ).className = 'ZebraList ScrollArea ScrollBarSmall BorderRight';
-			var sw = 2;
-			var a = 0;
-			for( var num in byDate )
-			{
-				var ext = byDate[ num ].Filename.split( '.' );
-				ext = ext.pop().toLowerCase();
-				if( ext != 'html' && ext != 'htm' ) continue;
-				
-				sw = sw == 2 ? 1 : 2;
-				var d = document.createElement( 'div' );
-				d.className = 'sw' + sw;
-				d.className = 'NotesFileItem Padding BorderBottom MousePointer';
-				d.onmouseover = function()
-				{
-					this.classList.add( 'Hover' );
-				}
-				d.onmouseout = function()
-				{
-					this.classList.remove( 'Hover' );
-				}
-				
-				d.innerHTML = '<p class="Layout">' + byDate[ num ].Filename + '</p><p class="Layout"><em>' + byDate[ num ].DateModified + '</em></p>';
-				ge( 'FileBar' ).appendChild( d );
-				( function( dl, path ){
-					dl.onclick = function()
-					{
-						Application.loadFile( path );
-					}
-				} )( d, byDate[ num ].Path );
-				a++;
-			}
-		} );
+		
+		Application.refreshFilePane();
 	}
+}
+
+Application.refreshFilePane = function()
+{
+	var d = new Door( Application.path );
+	d.getIcons( function( items )
+	{
+		var byDate = [];
+		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
+		items.reverse();
+		
+		ge( 'FileBar' ).innerHTML = '';
+		ge( 'FileBar' ).className = 'ZebraList ScrollArea ScrollBarSmall BorderRight';
+		var sw = 2;
+		
+		for( var a = 0; a < items.length; a++ )
+		{
+			var num = items[ a ];
+			var ext = num.Filename.split( '.' );
+			ext = ext.pop().toLowerCase();
+			if( ext != 'html' && ext != 'htm' ) continue;
+			
+			sw = sw == 2 ? 1 : 2;
+			
+			var d = document.createElement( 'div' );
+			d.className = 'sw' + sw;
+			d.className = 'NotesFileItem Padding BorderBottom MousePointer';
+			d.onmouseover = function()
+			{
+				this.classList.add( 'Hover' );
+			}
+			d.onmouseout = function()
+			{
+				this.classList.remove( 'Hover' );
+			}
+			
+			d.innerHTML = '<p class="Layout">' + num.Filename + '</p><p class="Layout"><em>' + num.DateModified + '</em></p>';
+			
+			ge( 'FileBar' ).appendChild( d );
+			( function( dl, path ){
+				dl.onclick = function()
+				{
+					Application.loadFile( path );
+				}
+			} )( d, num.Path );
+		};
+	} );
 }
 
 Application.run = function( msg, iface )
@@ -900,6 +906,7 @@ Application.saveFile = function( path, content )
 						ge( 'Status' ).innerHTML = '';
 					}, 1000 );
 				}
+				Application.refreshFilePane();
 			}
 			m.execute( 'convertfile', { path: path, data: content, dataFormat: 'html', format: extension } );
 			break;
@@ -912,6 +919,7 @@ Application.saveFile = function( path, content )
 				{
 					ge( 'Status' ).innerHTML = '';
 				}, 500 );
+				Application.refreshFilePane();
 			}
 			f.save( content, path );
 			break;
