@@ -3169,6 +3169,7 @@ var View = function( args )
 						e.button = 0;
 						window.mouseDown = 1; // Window mode
 						title.onmousedown( e );
+						_ActivateWindow( div );
 					} );
 				}
 				if( !window.isMobile )
