@@ -4648,6 +4648,12 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 			c.style.height = '100%';
 			continue;
 		}
+		// Non-mainview windows are not displayed
+		else if( !v.windowObject.flags.mainView && v.windowObject.applicationId )
+		{
+			c.style.top = '-100%';
+			continue;
+		}
 		
 		// Next row
 		if( gridX + boxWidth >= pageX2 )
