@@ -1556,7 +1556,7 @@ html body.Dark #MousePointer .Row.Odd .Column,
 html body.Dark .ZebraList > tr, 
 html body.Dark .ZebraList > div
 {
-	background-color: #364c63;
+	background-color: #19232e;
 	color: #e0e0e0;
 }
 
@@ -1589,7 +1589,7 @@ html body.Dark #MousePointer .Row .Column,
 html body.Dark .ZebraList > tr:nth-child(odd), 
 html body.Dark .ZebraList > div:nth-child(odd)
 {
-	background-color: #34495e;
+	background-color: #1d2935;
 	color: #e0e0e0;
 }
 
