@@ -1351,13 +1351,15 @@ html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View
 
 html .ViewContainer[childview].Active > .MobileBack:before
 {
-	color: #303030;
+	color: #ffffff;
+	font-size: 1.4em;
 }
 
 html body.Dark .ViewContainer[childview].Active > .MobileBack:before,
 html body.Charcoal .ViewContainer[childview].Active > .MobileBack:before
 {
 	color: #e0e0e0;
+	font-size: 1.4em;
 }
 
 /* Dark theme */
@@ -2355,7 +2357,7 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow.Cust
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title > div > span
 {
-	text-align: left;
+	text-align: center;
 	text-shadow: none;
 }
 
@@ -4182,7 +4184,8 @@ body:not([tablet]) .View:not(.Active)[mobile=mobile][maximized=true] > .Content
 body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
 {
 	left: 40px;
-	width: calc(100% - 105px);
+	width: calc(100% - 80px);
+	text-align: center;
 }
 body:not([tablet])[mobile=mobile] #Screens .View
 body:not([tablet])[mobile=mobile] #Screens .View.Active
@@ -4193,7 +4196,7 @@ body:not([tablet])[mobile=mobile] #Screens .View > .Title,
 body:not([tablet])[mobile=mobile] #Screens .View.Active > .Title
 {
 	height: 40px;
-	border-top: 1px solid rgba(0,0,0,0.1);
+	border-top: 0;
 }
 body:not([tablet])[mobile=mobile] #Screens .View > .Title > div > span
 {

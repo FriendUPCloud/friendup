@@ -887,13 +887,17 @@ function _ActivateWindowOnly( div )
 		// No div selected or not the div we're looking for - do inactive!
 		if( !div || m != div )
 		{
-			_DeactivateWindow( m );
-			if( window.isMobile && !window.isTablet )
+			if( isMobile )
 			{
-				// TODO: May need to be deleted
-				m.style.height = '35px';
-				newOffsetY += 35;
+				_DeactivateWindow( m );
+				if( window.isMobile && !window.isTablet )
+				{
+					// TODO: May need to be deleted
+					m.style.height = '35px';
+					newOffsetY += 35;
+				}
 			}
+			_DeactivateWindow( m );
 		}
 		// This is the div we are looking for!
 		else if( m == div )
