@@ -20,6 +20,7 @@
 #include "notification_manager.h"
 #include <system/systembase.h>
 #include <mobile_app/mobile_app.h>
+#include <mobile_app/notifications_sink.h>
 
 /**
  * Create new NotificationManager
@@ -444,6 +445,66 @@ int NotificationManagerNotificationSentSetStatusDB( NotificationManager *nm, FUL
 }
 
 /**
+ * Add external server connection
+ * 
+ * @param nm pointer to NotificationManager
+ * @param con pointer to data connection
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerAddExternalConnection( NotificationManager *nm, void *con )
+{
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		ExternalServerConnection *esc = FCalloc( 1, sizeof(ExternalServerConnection) );
+		if( esc != NULL )
+		{
+			esc->esc_Connection = con;
+			esc->node.mln_Succ = (MinNode *)nm->nm_ESConnections;
+			nm->nm_ESConnections = esc;
+		}
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+	return 0;
+}
+
+/**
+ * Remove external server connection
+ * 
+ * @param nm pointer to NotificationManager
+ * @param con pointer to data connection which will be removed
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *con )
+{
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		ExternalServerConnection *escroot = NULL;
+		ExternalServerConnection *esc = nm->nm_ESConnections;
+		while( esc != NULL )
+		{
+			ExternalServerConnection *oldesc = esc;
+			esc = (ExternalServerConnection *)esc->node.mln_Succ;
+			
+			if( con == oldesc->esc_Connection )
+			{
+				FFree( oldesc );
+			}
+			else
+			{
+				oldesc->node.mln_Succ = (MinNode *)escroot;
+				escroot = oldesc;
+			}
+		}
+		nm->nm_ESConnections = escroot;
+		
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+	return 0;
+}
+
+/**
  * Find and delete old Notifications with NotificationsSent (old = 14 days)
  * 
  * @param nm pointer to NotificationManager
@@ -502,7 +563,7 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 			// entry was found
 			if( lnsIt != NULL )
 			{
-				Log( FLOG_INFO, "Notift will be removed\n" );
+				Log( FLOG_INFO, "Notify will be removed: NSID %ld NID %lu\n", lnsIt->ns_ID, lnsIt->ns_NotificationID );
 				if( notIt == nm->nm_Notifications )	// current notification is first, we set it as next
 				{
 					nm->nm_Notifications = (Notification *) nm->nm_Notifications->node.mln_Succ;
@@ -515,7 +576,7 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 			}
 			else
 			{
-				Log( FLOG_INFO, "Notift will not be removed (not found)\n" );
+				Log( FLOG_INFO, "Notify will not be removed (not found)\n" );
 			}
 			notPrevIt = notIt;
 			notIt = (Notification *)notIt->node.mln_Succ;

@@ -39,19 +39,31 @@
 #define TIME_OF_OLDER_MESSAGES_TO_REMOVE 20
 
 //
+// External server connections
+//
+
+typedef struct ExternalServerConnection
+{
+	void			*esc_Connection;
+	MinNode			node;
+}ExternalServerConnection;
+
+//
 // Notification Manager structure
 //
 
 typedef struct NotificationManager
 {
-	void					*nm_SB;
-	SQLLibrary				*nm_SQLLib;
-	FThread					*nm_TimeoutThread;
-	Notification			*nm_Notifications;
-	pthread_mutex_t			nm_Mutex;
-	char					*nm_APNSCert;
-	time_t					nm_APNSNotificationTimeout;
-	FBOOL					nm_APNSSandBox;
+	void						*nm_SB;
+	SQLLibrary					*nm_SQLLib;
+	FThread						*nm_TimeoutThread;
+	Notification				*nm_Notifications;
+	pthread_mutex_t				nm_Mutex;
+	char						*nm_APNSCert;
+	time_t						nm_APNSNotificationTimeout;
+	FBOOL						nm_APNSSandBox;
+	
+	ExternalServerConnection	*nm_ESConnections;
 }NotificationManager;
 
 
@@ -90,6 +102,10 @@ void NotificationManagerTimeoutThread( FThread *data );
 int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
+
+int NotificationManagerAddExternalConnection( NotificationManager *nm, void *con );
+
+int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *con );
 
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__
 

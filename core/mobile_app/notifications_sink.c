@@ -15,6 +15,7 @@
 #include <system/json/jsmn.h>
 #include <system/systembase.h>
 #include <system/user/user_mobile_app.h>
+#include "notifications_sink.h"
 
 extern SystemBase *SLIB;
 
@@ -24,17 +25,6 @@ extern SystemBase *SLIB;
 #define WEBSOCKET_SEND_QUEUE
 
 static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify );
-
-//
-// Data Queue WSI Mutex
-//
-
-typedef struct DataQWSIM{
-	struct lws			*d_Wsi;
-	pthread_mutex_t		d_Mutex;
-	FQueue				d_Queue;
-	FBOOL				d_Authenticated;
-}DataQWSIM;
 
 static int ReplyError( DataQWSIM *d, int error_code);
 
@@ -80,20 +70,19 @@ static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 	return len;
 }
 
-/*
- * Error types
+/**
+ * Write message to websocket
+ *
+ * @param d pointer to DataQWSIM structure
+ * @param msg pointer to string where message is stored
+ * @param len length of message
+ * @return number of bytes written to websocket
  */
 
-enum {
-	WS_NOTIF_SINK_SUCCESS = 0,
-	WS_NOTIF_SINK_ERROR_BAD_JSON,
-	WS_NOTIF_SINK_ERROR_WS_NOT_AUTHENTICATED,
-	WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND,
-	WS_NOTIF_SINK_ERROR_AUTH_FAILED,
-	WS_NOTIF_SINK_ERROR_NO_AUTH_ELEMENTS,
-	WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND,
-	WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND
-};
+int WriteMessageToServers( DataQWSIM *d, unsigned char *msg, int len )
+{
+	return WriteMessageSink( d, msg, len );
+}
 
 /**
  * Main Websocket notification sink callback
@@ -146,6 +135,13 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
 				if( d != NULL )
 				{
+					NotificationManagerRemoveExternalConnection( SLIB->sl_NotificationManager, d );
+					
+					if( d->d_ServerName != NULL )
+					{
+						FFree( d->d_ServerName );
+						d->d_ServerName = NULL;
+					}
 					//HashmapRemove( globalSocketAuthMap, websocketHash );
 					pthread_mutex_destroy( &(d->d_Mutex) );
 					FQDeInitFree( &(d->d_Queue) );
@@ -323,6 +319,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				}
 				
 				d->d_Authenticated = TRUE;
+				d->d_ServerName = StringDuplicate( authName );
 				
 				char reply[ 256 ];
 				int msize = snprintf( reply + LWS_PRE, sizeof(reply), "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
@@ -336,6 +333,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 #endif
 				FFree( authKey );
 				FFree( authName );
+				
+				NotificationManagerAddExternalConnection( SLIB->sl_NotificationManager, d );
 				
 				return 0;
 			}
