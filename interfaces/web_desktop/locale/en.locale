@@ -409,6 +409,10 @@ i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
 
+#Colorpicker -------------------------------------------------------------------
+
+i18n_color_picker                       : Color picker
+
 #Misc --------------------------------------------------------------------------
 
 Shell output : Shell output

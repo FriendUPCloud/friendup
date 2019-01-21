@@ -2,6 +2,10 @@ Application.run = function()
 {
 }
 
+var mouseElement = {
+	candidate: null
+};
+
 var currentStyles = {};
 
 function renderStyleGUI( data )
@@ -409,122 +413,6 @@ Application.receiveMessage = function( msg )
 	if( typeof( messageCommands[ msg.command ] ) != 'undefined' )
 		messageCommands[ msg.command ]( msg );
 }
-
-var colordia = null;
-function showColorPicker( element, value )
-{
-	if( colordia )
-	{
-		document.body.removeChild( colordia );
-	}
-	var d = document.createElement( 'div' );
-	d.className = 'AuthFullscreenDialog';
-	
-	colordia = d;
-	
-	var box = document.createElement( 'div' );
-	box.className = 'AuthDiaBox Box Rounded Padding BackgroundDefault';
-	
-	var f = new File( 'Progdir:Templates/colorpicker.html' );
-	f.i18n();
-	f.onLoad = function( data )
-	{
-		box.innerHTML = data;
-		d.appendChild( box );
-		document.body.appendChild( d );
-		
-		var btns = d.getElementsByTagName( 'button' );
-		for( var a = 0; a < btns.length; a++ )
-		{
-			if( btns[a].id == 'Close' )
-			{
-				btns[a].onclick = function()
-				{
-					document.body.removeChild( d );
-					colordia = null;
-				}
-			}
-			if( btns[a].id == 'Accept' )
-			{
-				btns[a].onclick = function()
-				{
-					document.body.removeChild( d );
-					colordia = null;
-				}
-			}
-		}
-		// Draw stuff
-		redrawColorPickerCanvas();
-	}
-	f.load();
-}
-
-function redrawColorPickerCanvas()
-{
-	var c = ge( 'ColorPickerCanvas' );
-	if( c )
-	{
-		var w = ge( 'ColorPickerCanvas' ).parentNode.offsetWidth;
-		var h = ge( 'ColorPickerCanvas' ).parentNode.offsetHeight;
-	
-		c.setAttribute( 'width', w );
-		c.setAttribute( 'height', h );
-		var ctx = c.getContext( '2d' );
-		
-		var imageData = ctx.createImageData( w, h );
-		var idata = imageData.data;
-		
-		var r = 0;
-		var g = 0;
-		var b = 0;
-		var c = 0;
-		var p, x, y;
-		
-		for( y = 0; y < idata.length; y++ )
-		{
-			idata[ y ] = 0xff00ffff;
-		}
-		
-		// Make rainbow
-		var mixcolor = 0; // to blend up and down
-		
-		var pw = w - 30;
-		for( y = 0; y < h; y++ )
-		{
-			b = Math.floor( y / h * 255 );
-			p = y * ( w * 4 );
-			for( x = 0; x < pw; x++ )
-			{
-				g = Math.floor( x / pw * 255 );
-				r = 255 - g;
-				idata[ p     ] = r;
-				idata[ p + 1 ] = g;
-				idata[ p + 2 ] = b;
-				p += 4;
-			}
-			// Make brightness gradient
-			for( x = pw; x < w; x++ )
-			{
-				idata[ p ] = 255-b;
-				idata[ p + 1 ] = 255-b;
-				idata[ p + 2 ] = 255-b;
-				p += 4;
-			}
-		}
-		
-		// Draw
-		ctx.putImageData( imageData, 0, 0 );
-	}
-}
-
-window.addEventListener( 'resize', function()
-{
-	// Resize
-	if( ge( 'ColorPickerCanvas' ) )
-	{
-		redrawColorPickerCanvas();
-	}
-} );
 
 // Apply this style!
 function ApplyStyle()
