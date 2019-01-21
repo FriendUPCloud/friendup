@@ -147,19 +147,58 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				// get information from DB if group already exist
 				
 				UserGroup *fg = UGMGetGroupByName( l->sl_UGM, groupname );
+				DEBUG("GroupCreate: pointer to group from memory: %p\n", fg );
 				
 				if( fg != NULL )	// group already exist, there is no need to create double
 				{
-					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_GROUP_ALREADY_EXIST] , DICT_USER_GROUP_ALREADY_EXIST );
-					HttpAddTextContent( response, buffer );
+					if( fg->ug_Status == USER_GROUP_STATUS_DISABLED )
+					{
+						fg->ug_Status = USER_GROUP_STATUS_ACTIVE;
+						
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_GROUP_ALREADY_EXIST] , DICT_USER_GROUP_ALREADY_EXIST );
+						HttpAddTextContent( response, buffer );
+					}
 				}
-				else	// group do not exist
+				else	// group do not exist in memory
 				{
-					UserGroup *ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type );
+					DEBUG("GroupCreate: group do not exist in memory\n");
+					UserGroup *ug = NULL;
+					FBOOL ugFromDatabase = FALSE;
+
+					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+					if( sqlLib != NULL )
+					{
+						char where[ 512 ];
+						int size = snprintf( where, sizeof(where), "Name='%s'", groupname );
+						int entries;
+					
+						ug = sqlLib->Load( sqlLib, UserGroupDesc, where, &entries );
+						if( ug != NULL )
+						{
+							ug->ug_Status = USER_GROUP_STATUS_ACTIVE;
+							UGMAddGroup( l->sl_UGM, ug );
+							ugFromDatabase = TRUE;
+						}
+						l->LibrarySQLDrop( l, sqlLib );
+					}
+					
+					if( ug == NULL )
+					{
+						DEBUG("GroupCreate: new UserGroup will be created\n");
+						ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type );
+					}
 					
 					if( ug != NULL )
 					{
+						ug->ug_UserID = loggedSession->us_UserID;
+						ug->ug_ParentID = parentID;
 						int error = UGMAddGroup( l->sl_UGM, ug );
 						
 						if( error == 0 )
@@ -168,7 +207,15 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							int val = 0;
 							if( sqlLib != NULL )
 							{
-								int val = sqlLib->Save( sqlLib, UserGroupDesc, ug );
+								if( ugFromDatabase == TRUE )
+								{
+									int val = sqlLib->Update( sqlLib, UserGroupDesc, ug );
+								}
+								else
+								{
+									int val = sqlLib->Save( sqlLib, UserGroupDesc, ug );
+								}
+								
 								l->LibrarySQLDrop( l, sqlLib );
 							}
 							groupID = ug->ug_ID;
@@ -218,7 +265,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* <HR><H2>system.library/group/delete</H2>Delete user. Function require admin rights.
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param id - (required) id of user which you want to delete
+	* @param id - (required) id of UserGroup which you want to delete
 	* @return { Result: success} when success, otherwise error with code
 	*/
 	/// @endcond
@@ -247,55 +294,42 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		{
 			if( id > 0 )
 			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-				if( sqllib != NULL )
+				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
+				
+				// group not found in memory, checking DB
+				if( fg == NULL )
 				{
-					char *tmpQuery = NULL;
-					int querysize = 1024;
-					
-					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					if( sqllib != NULL )
 					{
-						User * usr = UMGetUserByID( l->sl_UM, id );
-						if( usr != NULL )
-						{
-							UserDeviceUnMount( l, sqllib, usr );
-							UMRemoveUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
-						}
+						char where[ 512 ];
+						int size = snprintf( where, sizeof(where), "ID='%lu'", id );
+						int entries;
+					
+						fg = sqllib->Load( sqllib, UserGroupDesc, where, &entries );
 
-						sprintf( tmpQuery, "DELETE FROM `FUser` WHERE ID=%lu", id );
-						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
-						
-						sprintf( tmpQuery, " DELETE FROM `FUserGroup` WHERE UserID=%lu", id );
-						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
-						
-						sprintf( tmpQuery, " DELETE FROM `FUserSession` WHERE UserID=%lu", id );
-						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
-						
-						sprintf( tmpQuery, " DELETE FROM `Filesystem` WHERE UserID=%lu", id );
-						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
-						
-						FFree( tmpQuery );
+						l->LibrarySQLDrop( l, sqllib );
+					}
+				}
+				
+				if( fg != NULL )
+				{
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					if( sqllib != NULL )
+					{
+						fg->ug_Status = USER_GROUP_STATUS_DISABLED;
+						sqllib->Update( sqllib, UserGroupDesc, fg );
 						
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
+
+						l->LibrarySQLDrop( l, sqllib );
 					}
 					else
 					{
 						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
 						HttpAddTextContent( response, buffer );
 					}
-					
-					l->LibrarySQLDrop( l, sqllib );
-				}
-				else
-				{
-					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
-					HttpAddTextContent( response, buffer );
 				}
 			}
 			else
@@ -313,6 +347,146 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/group/update</H2>Update group. Function require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param id - (required) ID of group
+	* @param groupname - (required) group name
+	* @param type - type name
+	* @param parentid - id of parent workgroup
+	* @param status - group status
+	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 1 ], "update" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		char *groupname = NULL;
+		char *type = NULL;
+		FULONG parentID = 0;
+		FBOOL fParentID = FALSE;
+		FULONG groupID = 0;
+		int status = -1;
+		
+		DEBUG( "[UMWebRequest] Create user!!\n" );
+		
+		HashmapElement *el = NULL;
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		{
+			el = HttpGetPOSTParameter( request, "groupname" );
+			if( el != NULL )
+			{
+				groupname = UrlDecodeToMem( (char *)el->data );
+				DEBUG( "[UMGWebRequest] Update groupname %s!!\n", groupname );
+			}
+			
+			el = HttpGetPOSTParameter( request, "type" );
+			if( el != NULL )
+			{
+				type = UrlDecodeToMem( (char *)el->data );
+				DEBUG( "[UMWebRequest] Update type %s!!\n", type );
+			}
+			
+			el = HttpGetPOSTParameter( request, "id" );
+			if( el != NULL )
+			{
+				char *end;
+				groupID = strtol( (char *)el->data, &end, 0 );
+			}
+			
+			el = HttpGetPOSTParameter( request, "parentid" );
+			if( el != NULL )
+			{
+				char *end;
+				parentID = strtol( (char *)el->data, &end, 0 );
+				fParentID = TRUE;
+			}
+			
+			el = HttpGetPOSTParameter( request, "status" );
+			if( el != NULL )
+			{
+				status = atoi( (char *)el->data );
+			}
+			
+			if( groupID > 0 )
+			{
+				// get information from DB if group already exist
+				
+				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, groupID );
+				DEBUG("GroupUpdate: pointer to group from memory: %p\n", fg );
+				
+				if( fg != NULL )	// group already exist, there is no need to create double
+				{
+					if( status >= 0 )
+					{
+						fg->ug_Status = status;
+					}
+					
+					if( fParentID == TRUE )
+					{
+						fg->ug_ParentID = parentID;
+					}
+					
+					if( groupname != NULL )
+					{
+						FFree( fg->ug_Name );
+						fg->ug_Name = StringDuplicate( groupname );
+					}
+					
+					fg->ug_UserID = loggedSession->us_UserID;
+					
+					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+					int val = 0;
+					if( sqlLib != NULL )
+					{
+						int val = sqlLib->Update( sqlLib, UserGroupDesc, fg );
+
+						l->LibrarySQLDrop( l, sqlLib );
+					}
+
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
+					HttpAddTextContent( response, buffer );
+				}
+				else	// group do not exist in memory
+				{
+				
+					char buffer[ 256 ];
+					char buffer1[ 256 ];
+					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupUpdate", 1 );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_FUNCTION_RETURNED );
+					HttpAddTextContent( response, buffer );
+				}
+			} // missing parameters
+			else
+			{
+				char buffer[ 256 ];
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "groupname" );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, buffer );
+			}
+		}
+		
+		if( groupname != NULL )
+		{
+			FFree( groupname );
+		}
+
+		*result = 200;
 	}
 	
 	return response;

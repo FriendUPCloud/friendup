@@ -58,6 +58,7 @@ typedef struct UserGroup
 	FULONG 				ug_ID;
 	char 				*ug_Name;
 	FULONG 				ug_UserID;
+	FULONG				ug_ParentID;
 	char 				*ug_Type;
 	
 	UserGroupAUser		*ug_UserList;		// users assigned to group 
@@ -79,6 +80,7 @@ static FULONG UserGroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUC
 	SQLT_STR, (FULONG)"Name", offsetof( struct UserGroup, ug_Name ),
 	SQLT_STR, (FULONG)"Type", offsetof( struct UserGroup, ug_Type ),
 	SQLT_INT, (FULONG)"Status", offsetof( struct UserGroup, ug_Status ),
+	SQLT_INT, (FULONG)"ParentID", offsetof( struct UserGroup, ug_ParentID ),
 	SQLT_NODE, (FULONG)"node", offsetof( struct UserGroup, node ),
 	SQLT_END };
 
