@@ -315,7 +315,6 @@ button, .Button
 	position: relative;
 	outline: 0 !important;
 	font-size: inherit;
-	height: 27px;
 }
 
 body button.IconButton:not(:hover),
