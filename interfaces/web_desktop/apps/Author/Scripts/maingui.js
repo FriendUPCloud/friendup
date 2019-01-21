@@ -11,6 +11,104 @@
 var Config = {
 };
 
+var filebrowserCallbacks = {
+	// Check a file on file extension
+	checkFile( path, extension )
+	{
+		console.log( path, extension );
+		var ext = extension.toLowerCase();
+		if( ext == 'html' || ext == 'htm' )
+		{
+			Application.loadFile( path );
+		}
+		else
+		{
+			return;
+		}
+	},
+	// Load a file
+	loadFile( path )
+	{
+		var pp = path.toLowerCase();
+		if( pp.substr( pp.length - 4, 4 ) == '.htm' || pp.substr( pp.length - 5, 5 ) == '.html' )
+		{
+			Application.loadFile( path );
+		}
+		else
+		{
+			return;
+		}
+	},
+	// Do we permit?
+	permitFiletype( path )
+	{
+		return Application.checkFileType( path );
+	}
+};
+
+Application.checkFileType = function( p )
+{
+	if( p.indexOf( '/' ) > 0 )
+	{
+		p = p.split( '/' );
+		p.pop();
+		p = p.join( '/' ) + '/';
+	}
+	else if( p.indexOf( ':' ) > 0 )
+	{
+		p = p.split( ':' );
+		p = p[0] + ':';
+	}
+	if( Application.path != p )
+	{
+		Application.path = p;
+		
+		var d = new Door( p );
+		d.getIcons( function( items )
+		{
+			ge( 'FileBar' ).innerHTML = '';
+			var byDate = [];
+			for( var a = 0; a < items.length; a++ )
+			{
+				byDate[ items[ a ].FileModified + '_' + a ] = items[ a ];
+			}
+			byDate.sort();
+			ge( 'FileBar' ).className = 'ZebraList ScrollArea ScrollBarSmall BorderRight';
+			var sw = 2;
+			var a = 0;
+			for( var num in byDate )
+			{
+				var ext = byDate[ num ].Filename.split( '.' );
+				ext = ext.pop().toLowerCase();
+				if( ext != 'html' && ext != 'htm' ) continue;
+				
+				sw = sw == 2 ? 1 : 2;
+				var d = document.createElement( 'div' );
+				d.className = 'sw' + sw;
+				d.className = 'NotesFileItem Padding BorderBottom MousePointer';
+				d.onmouseover = function()
+				{
+					this.classList.add( 'Hover' );
+				}
+				d.onmouseout = function()
+				{
+					this.classList.remove( 'Hover' );
+				}
+				
+				d.innerHTML = '<p class="Layout">' + byDate[ num ].Filename + '</p><p class="Layout"><em>' + byDate[ num ].DateModified + '</em></p>';
+				ge( 'FileBar' ).appendChild( d );
+				( function( dl, path ){
+					dl.onclick = function()
+					{
+						Application.loadFile( path );
+					}
+				} )( d, byDate[ num ].Path );
+				a++;
+			}
+		} );
+	}
+}
+
 Application.run = function( msg, iface )
 {
 	// To tell about ck
@@ -39,35 +137,23 @@ Application.run = function( msg, iface )
 			} );
 			Application.contentTimeout = false;
 		}, 250 );
-	}	
+	}
+	
+	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:' }, filebrowserCallbacks );
+	FileBrowser.render();
+	this.fileBrowser = FileBrowser;
 }
 
 Application.checkWidth = function()
 {
 	var ww = window.innerWidth;
-	//console.log( ww );
-	/*if( ww <= 540 )
+	if( ww < 840 )
 	{
-		editorCommand( 'keepWidth' );
-	}
-	else if( ww < 640 )
-	{
-		editorCommand( 'zoom60%' );
-	}
-	else if( ww < 740 )
-	{
-		editorCommand( 'zoom70%' );
-	}
-	else*/ if( ww < 840 )
-	{
-		//editorCommand( 'zoom80%' );
 		editorCommand( 'staticWidth' );
-		//console.log( 'Static width!' );
 	}
 	else
 	{
 		editorCommand( 'dynamicWidth' );
-		//console.log( 'Dynamic width' );
 	}
 }
 
@@ -83,7 +169,6 @@ Application.initCKE = function()
 			instanceReady: function( evt )
 			{ 
 				var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
-				//evt.editor.execCommand( 'maximize' ); 
 				var eles = document.getElementsByTagName( 'link' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -100,24 +185,6 @@ Application.initCKE = function()
 				d.body.parentNode.style.cursor = computed.cursor;
 				
 				Application.initializeToolbar();
-				
-				/*if( isMobile )
-				{
-					d.body.onmousedown = function( e )
-					{
-						if( this == d.activeElement )
-						{
-							ge( 'AuthorToolbar' ).className = 'Hidden';
-							ge( 'cke_1_contents' ).className = 'Hidden';
-						}
-						else
-						{
-							ge( 'AuthorToolbar' ).className = '';
-							ge( 'cke_1_contents' ).className = '';
-						}
-					}
-					d.body.onthouchdown = d.body.onmousedown;
-				}*/
 			},
 			contentDom: function( e )
 			{
@@ -127,6 +194,7 @@ Application.initCKE = function()
 					var wh = e.which ? e.which : e.keyCode;
 					var ctrl = e.ctrlKey;
 					if( !ctrl ) return;
+					
 					// Don't trap irrelevant keys
 					switch( wh )
 					{
@@ -153,38 +221,6 @@ Application.initCKE = function()
 					}
 					return false;
 				}, false );
-				/*editable.attachListener( e.editor.document, 'keyup', function( evt ) 
-				{
-					if( evt.data.$.ctrlKey )
-					{
-						// Don't trap irrelevant keys
-						switch( evt.data.$.which )
-						{
-							case 73:
-								editorCommand( 'italic' );
-								break;
-							case 66:
-								editorCommand( 'bold' );
-								break;
-							case 85:
-								editorCommand( 'underline' );
-								break;
-							case 83:
-							case 78:
-							case 79:
-							case 80:
-								Application.sendMessage( {
-									command: 'keydown',
-									key: evt.data.$.which,
-									ctrlKey: evt.data.$.ctrlKey
-								} );
-								cancelBubble( evt );
-								return false;
-						}
-						return false;
-					}
-					else console.log( evt.data.$.which );
-				} );*/
 				editable.attachListener( e.editor.document, 'keydown', function( evt ) 
 				{
 					if( Application.contentTimeout )
@@ -467,7 +503,7 @@ Application.initializeToolbar = function()
 		d.id = 'AuthorToolbar';
 		d.className = 'BackgroundDefault ColorDefault BorderTop';
 		this.toolbar = d;
-		document.body.appendChild( d );
+		ge( 'RightBar' ).insertBefore( d, ge( 'RightBar' ).firstChild );
 		
 		var f = new File( 'Progdir:Templates/toolbar.html' );
 		f.onLoad = function( data )

@@ -18,6 +18,34 @@ html > body
 }
 #Status * { padding: 0; margin: 0; }
 
+#LeftBar
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 250px;
+	height: 100%;
+}
+
+#FileBar
+{
+	position: absolute;
+	top: 0;
+	left: 250px;
+	width: 250px;
+	height: 100%;
+}
+
+#RightBar
+{
+	position: absolute;
+	top: 0;
+	left: 500px;
+	width: calc(100% - 500px);
+	height: 100%;
+}
+
+
 /* Custom toolbar */
 
 #AuthorToolbar
@@ -163,7 +191,7 @@ html > body > div a.cke_path_item, html > body > div span.cke_path_empty
 .ToolDivider
 {
 	float: left;
-	border-left: 1px solid rgba(255,255,255,0.8);
+	border-left: 1px solid rgba(255,255,255,0.15);
 	border-right: 1px solid rgba(0,0,0,0.15);
 	width: auto;
 	height: 34px;

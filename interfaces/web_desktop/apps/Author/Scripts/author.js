@@ -12,9 +12,9 @@ Application.run = function( msg, iface )
 {
 	var w = new View( {
 		'title'     : 'Author',
-		'width'     : 960,
-		'height'    : 600,
-		'min-width' : 640,
+		'width'     : 1290,
+		'height'    : 800,
+		'min-width' : 700,
 		'min-height': 400,
 	} );
 	
