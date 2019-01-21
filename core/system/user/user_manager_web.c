@@ -469,7 +469,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							HttpAddTextContent( response, buffer );
 						}
 						
-						UMAssignGroupToUserByStringDB( l->sl_UM, locusr, groups );
+						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, groups );
 						
 						UserDelete( locusr );
 					}
@@ -915,7 +915,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					
 					UMUserUpdateDB( l->sl_UM, logusr );
 					
-					UMAssignGroupToUserByStringDB( l->sl_UM, logusr, groups );
+					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, groups );
 					
 					RefreshUserDrives( l, logusr, NULL );
 					

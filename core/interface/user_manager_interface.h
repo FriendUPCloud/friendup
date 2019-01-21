@@ -20,13 +20,14 @@
 #include <system/user/user_manager.h>
 #include <system/user/user_manager_remote.h>
 #include <system/user/user_manager_web.h>
+#include <system/user/user_group_manager.h>
 
 typedef struct UserManagerInterface
 {
 	UserManager			*(*UMNew)( void *sb );
 	void				(*UMDelete)( UserManager *smgr );
-	int					(*UMAssignGroupToUser)( UserManager *smgr, User *usr );
-	int					(*UMAssignGroupToUserByStringDB)( UserManager *smgr, User *usr, char *groups );
+	int					(*UMAssignGroupToUser)( UserGroupManager *smgr, User *usr );
+	int					(*UMAssignGroupToUserByStringDB)( UserGroupManager *smgr, User *usr, char *groups );
 	int					(*UMUserUpdateDB)( UserManager *um, User *usr );
 	int					(*UMAssignApplicationsToUser)( UserManager *smgr, User *usr );
 	User				*(*UMUserGetByNameDB)( UserManager *smgr, const char *name );
@@ -62,8 +63,8 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 {
 	si->UMNew = UMNew;
 	si->UMDelete = UMDelete;
-	si->UMAssignGroupToUser = UMAssignGroupToUser;
-	si->UMAssignGroupToUserByStringDB = UMAssignGroupToUserByStringDB;
+	si->UMAssignGroupToUser = UGMAssignGroupToUser;	//TODO we should provide other interface
+	si->UMAssignGroupToUserByStringDB = UGMAssignGroupToUserByStringDB;	//TODO we should provide other interface
 	si->UMUserUpdateDB = UMUserUpdateDB;
 	si->UMAssignApplicationsToUser = UMAssignApplicationsToUser;
 	si->UMUserGetByNameDB = UMUserGetByNameDB;

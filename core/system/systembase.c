@@ -1612,7 +1612,8 @@ int SystemInitExternal( SystemBase *l )
 		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 		
-		UserGroup *ug = l->sl_UGM->ugm_UserGroups;
+		
+		
 		/*
 		User *sentUser = NULL;
 		if( l->sl_Sentinel != NULL )
@@ -1620,14 +1621,11 @@ int SystemInitExternal( SystemBase *l )
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
 		
-		while( ug != NULL )
-		{
-			//UserGroupDeviceMount( l, sqllib, ug, NULL );
-			UserGroupDeviceMount( l, sqllib, ug, l->sl_UM->um_APIUser );
-			ug = (UserGroup *)ug->node.mln_Succ;
-		}
+		
 		
 		l->LibrarySQLDrop( l, sqllib );
+		
+		UGMMountDrives( l->sl_UGM );
 	}
 	
 	// mount INRAM drive
