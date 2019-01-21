@@ -3351,7 +3351,116 @@ function apiWrapper( event, force )
 						}
 						j.send();
 						break;
-					// File dialogs ----------------------------------------------------
+					// Color pickers -------------------------------------------
+					case 'colorpicker':
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[ msg.targetViewId ] : false; // Target for postmessage
+						
+						// Create a color picker
+						if( msg.method == 'new' )
+						{
+							// Success
+							var fs = function( hex )
+							{
+								if( hex.length )
+								{
+									if( msg.successCallback )
+									{
+										var nmsg = {
+											applicationId: msg.applicationId,
+											viewId: msg.viewId,
+											type: 'callback',
+											data: hex,
+											callback: msg.successCallback
+										};
+										if( tar )
+											tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+										else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+									}
+								}
+							}
+							// Cancel
+							var fc = function()
+							{
+								if( msg.failCallback )
+								{
+									var nmsg = {
+										applicationId: msg.applicationId,
+										viewId: msg.viewId,
+										type: 'callback',
+										callback: msg.failCallback
+									};
+									if( tar )
+										tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+									else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								}
+							}
+							var c = new Friend.GUI.ColorPicker( fs, fc );
+							var nmsg = {
+								applicationId: msg.applicationId,
+								viewId: msg.viewId,
+								type: 'callback',
+								callback: msg.failCallback
+							};
+						}
+						// Just activate the color picker view
+						else if( msg.method == 'activate' )
+						{
+							var found = false;
+							for( var a = 0; a < Friend.GUI.ColorPickers.length; a++ )
+							{
+								if( Friend.GUI.ColorPickers[ a ].uniqueId != msg.uniqueId )
+								{
+									continue;
+								}
+								Friend.GUI.ColorPickers[ a ].view.activate();
+								found = true;
+								break;
+							}
+							if( msg.callback )
+							{
+								var nmsg = {
+									applicationId: msg.applicationId,
+									viewId: msg.viewId,
+									type: 'callback',
+									data: found,
+									callback: msg.callback
+								};
+								if( tar )
+									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						// Just close the color picker view
+						else if( msg.method == 'close' )
+						{
+							var found = false;
+							for( var a = 0; a < Friend.GUI.ColorPickers.length; a++ )
+							{
+								if( Friend.GUI.ColorPickers[ a ].uniqueId != msg.uniqueId )
+								{
+									continue;
+								}
+								Friend.GUI.ColorPickers[ a ].view.close();
+								found = true;
+								break;
+							}
+							if( msg.callback )
+							{
+								var nmsg = {
+									applicationId: msg.applicationId,
+									viewId: msg.viewId,
+									type: 'callback',
+									data: found,
+									callback: msg.callback
+								};
+								if( tar )
+									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						break;
+					// File dialogs --------------------------------------------
 					case 'filedialog':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage

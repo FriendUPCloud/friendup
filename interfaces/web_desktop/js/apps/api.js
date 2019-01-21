@@ -1944,6 +1944,73 @@ function RemoveFilesystemEvent( path, event, callback )
 	return false;
 }
 
+// Color picker ----------------------------------------------------------------
+var ColorPicker = function( succcbk, failcbk )
+{
+	var self = this;
+	var amsg = {
+		type: 'system',
+		command: 'colorpicker',
+		method: 'new',
+		successCallback: succcbk ? addCallback( succcbk ) : false,
+		failCallback: failcbk ? addCallback( failcbk ) : false,
+		createCallback: addCallback( function( uniqueId )
+		{
+			self.uniqueId = uniqueId;
+			if( self.onReady )
+			{
+				self.onReady( {
+					uniqueId: self.uniqueId
+				} );
+			}
+		} )
+	};
+	Application.sendMessage( amsg );
+}
+// Activate the colorpicker window
+ColorPicker.prototype.activate = function()
+{
+	var self = this;
+	if( this.uniqueId )
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'colorpicker',
+			method: 'activate',
+			uniqueId: this.uniqueId,
+			callback: addCallback( function( state )
+			{
+				if( self.onActivated )
+				{
+					self.onActivated( state );
+				}
+			} )
+		} );
+	}
+}
+
+// Activate the colorpicker window
+ColorPicker.prototype.close = function()
+{
+	var self = this;
+	if( this.uniqueId )
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'colorpicker',
+			method: 'close',
+			uniqueId: this.uniqueId,
+			callback: addCallback( function( state )
+			{
+				if( self.onClosed )
+				{
+					self.onClosed( state );
+				}
+			} )
+		} );
+	}
+}
+
 // Open a new widget -----------------------------------------------------------
 function Widget( flags )
 {

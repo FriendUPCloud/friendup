@@ -37,8 +37,13 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 				out.push( Friend.GUI.ColorPickers[ a ] );
 		}
 		Friend.GUI.ColorPickers = out;
+		if( self.onClose )
+			self.onClose();
 		delete self;
 	}
+	
+	// Register the view
+	self.view = v;
 	
 	// Load template and populate
 	var f = new File( 'System:templates/colorpicker.html' );
@@ -89,7 +94,7 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		self.elAccept.onclick = function()
 		{
 			if( successcbk )
-				successcbk( elHexCode.value );
+				successcbk( self.elHexCode.value );
 			v.close();
 		}
 	

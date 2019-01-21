@@ -12,7 +12,13 @@ function showColorPicker( elementid, value )
 		colordia = new ColorPicker( function( hexCode )
 		{
 			el.value = hexcode;
-		}, null );
+			colordia = null;
+			console.log( 'success' );
+		}, function()
+		{
+			console.log( 'cancelled' );
+			colordia = null;
+		} );
 	}
 }
 
