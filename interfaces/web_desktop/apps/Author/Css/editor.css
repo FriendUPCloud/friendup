@@ -171,6 +171,11 @@ html > body > div a.cke_path_item, html > body > div span.cke_path_empty
 	margin: 10px 0 0 5px;
 }
 
+[mobile] .ToolDivider
+{
+	display: none;
+}
+
 /* Responsive design -------------------------------------------------------- */
 
 @media (max-width: 660px)
