@@ -288,23 +288,3 @@ Friend.GUI.ColorPicker.prototype.refresh = function()
 	}
 }
 
-/*
-
-function _mouseMove( e )
-{
-	if( mouseElement.candidate )
-	{
-		mouseElement.candidate.think( e.clientX, e.clientY );
-	}
-}
-
-function _mouseUp( e )
-{
-	mouseElement.candidate = null;
-}
-
-window.addEventListener( 'mousemove', _mouseMove );
-window.addEventListener( 'touchmove', _mouseMove );
-window.addEventListener( 'mouseup', _mouseUp );
-window.addEventListener( 'touchend', _mouseUp );
-*/
