@@ -106,7 +106,7 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		// And now add some nice controllers
 		var colCtrl = document.createElement( 'div' );
 		colCtrl.className = 'ColorPickerController MousePointer';
-		colCtrl.onmousedown = function( e )
+		colCtrl[ isMobile ? 'ontouchstart' : 'onmousedown' ] = function( e )
 		{
 			colCtrl.offx = e.clientX - colCtrl.offsetLeft;
 			colCtrl.offy = e.clientY - colCtrl.offsetTop;
@@ -142,7 +142,7 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		// Shadow control
 		var shaCtrl = document.createElement( 'div' );
 		shaCtrl.className = 'ColorPickerShadeControl MousePointer';
-		shaCtrl.onmousedown = function( e )
+		shaCtrl[ isMobile ? 'ontouchstart' : 'onmousedown' ] = function( e )
 		{
 			shaCtrl.offy = e.clientY - shaCtrl.offsetTop;
 			
