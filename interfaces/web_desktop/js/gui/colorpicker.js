@@ -108,8 +108,17 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		colCtrl.className = 'ColorPickerController MousePointer';
 		colCtrl[ isMobile ? 'ontouchstart' : 'onmousedown' ] = function( e )
 		{
-			colCtrl.offx = e.clientX - colCtrl.offsetLeft;
-			colCtrl.offy = e.clientY - colCtrl.offsetTop;
+			var px = e.clientX;
+			var py = e.clientY;
+			if( e.touches && e.touches[0] )
+			{
+				px = e.touches[0].clientX;
+				py = e.touches[0].clientY;
+			}
+			
+			colCtrl.offx = px - colCtrl.offsetLeft;
+			colCtrl.offy = py - colCtrl.offsetTop;
+			
 			
 			mousePointer.candidate = {
 				el: colCtrl,
@@ -118,6 +127,13 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 					var s = colCtrl;
 					var x = e.clientX;
 					var y = e.clientY;
+					
+					if( e.touches && e.touches[0] )
+					{
+						x = e.touches[0].clientX;
+						y = e.touches[0].clientY;
+					}
+					
 					var candx = x - s.offx;
 					var candy = y - s.offy;
 		
@@ -144,7 +160,13 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		shaCtrl.className = 'ColorPickerShadeControl MousePointer';
 		shaCtrl[ isMobile ? 'ontouchstart' : 'onmousedown' ] = function( e )
 		{
-			shaCtrl.offy = e.clientY - shaCtrl.offsetTop;
+			var py = e.clientY;
+			if( e.touches && e.touches[0] )
+			{
+				py = e.touches[0].clientY;
+			}
+			
+			shaCtrl.offy = py - shaCtrl.offsetTop;
 			
 			mousePointer.candidate = {
 				el: colCtrl,
@@ -153,6 +175,13 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 					var s = shaCtrl;
 					var x = e.clientX;
 					var y = e.clientY;
+					
+					if( e.touches && e.touches[0] )
+					{
+						x = e.touches[0].clientX;
+						y = e.touches[0].clientY;
+					}
+					
 					var candy = y - s.offy;
 					if( candy < 0 ) candy = 0;
 					if( candy + shaCtrl.offsetHeight > GetElementHeight( dia ) )
