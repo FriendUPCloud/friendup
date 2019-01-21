@@ -15,7 +15,6 @@ var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
 	{
-		console.log( path, extension );
 		var ext = extension.toLowerCase();
 		if( ext == 'html' || ext == 'htm' )
 		{
@@ -59,9 +58,9 @@ Application.checkFileType = function( p )
 		p = p.split( ':' );
 		p = p[0] + ':';
 	}
-	if( Application.path != p )
+	if( Application.browserPath != p )
 	{
-		Application.path = p;
+		Application.browserPath = p;
 		
 		
 		Application.refreshFilePane();
@@ -70,7 +69,7 @@ Application.checkFileType = function( p )
 
 Application.refreshFilePane = function()
 {
-	var d = new Door( Application.path );
+	var d = new Door( Application.browserPath );
 	d.getIcons( function( items )
 	{
 		var byDate = [];
@@ -78,7 +77,7 @@ Application.refreshFilePane = function()
 		items.reverse();
 		
 		ge( 'FileBar' ).innerHTML = '';
-		ge( 'FileBar' ).className = 'ZebraList ScrollArea ScrollBarSmall BorderRight';
+		ge( 'FileBar' ).className = 'List ScrollArea ScrollBarSmall BorderRight';
 		var sw = 2;
 		
 		for( var a = 0; a < items.length; a++ )
@@ -91,15 +90,22 @@ Application.refreshFilePane = function()
 			sw = sw == 2 ? 1 : 2;
 			
 			var d = document.createElement( 'div' );
-			d.className = 'sw' + sw;
-			d.className = 'NotesFileItem Padding BorderBottom MousePointer';
-			d.onmouseover = function()
+			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
+			
+			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
-				this.classList.add( 'Hover' );
+				d.classList.add( 'Selected' );
 			}
-			d.onmouseout = function()
+			else
 			{
-				this.classList.remove( 'Hover' );
+				d.onmouseover = function()
+				{
+					this.classList.add( 'Selected' );
+				}
+				d.onmouseout = function()
+				{
+					this.classList.remove( 'Selected' );
+				}
 			}
 			
 			d.innerHTML = '<p class="Layout">' + num.Filename + '</p><p class="Layout"><em>' + num.DateModified + '</em></p>';
@@ -746,6 +752,9 @@ Application.setCurrentDocument = function( pth )
 		this.fileName = fname;
 	}
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
+	this.currentDocument = pth;
+	
+	Application.refreshFilePane();
 	
 	this.sendMessage( {
 		command: 'currentfile',
@@ -793,7 +802,10 @@ Application.loadFile = function( path )
 					{
 						ge( 'Status' ).innerHTML = '';
 					}, 500 );
+					
+					Application.setCurrentDocument( path );
 				}
+				
 				// We got an error...
 				else
 				{
@@ -839,6 +851,8 @@ Application.loadFile = function( path )
 						}
 						f.contentWindow.document.body.innerHTML = bdata[1];
 						f.contentWindow.document.body.style.overflow = 'auto';
+					
+						Application.setCurrentDocument( path );
 					
 						// Remember content and top scroll
 						Application.sendMessage( { 
