@@ -476,3 +476,143 @@ function addScreenshot()
 	var f = new Filedialog( opts );
 }
 
+
+// Just a simple GUI list
+// Element format:
+// [ { title: "My title", onclick: function, remove: function }, {}, ... ]
+var SimpleList = function( parentNode, elements )
+{
+	if( !parentNode ) return null;
+	var d = document.createElement( 'div' );
+	d.className = 'FriendSimpleList Borders BackgroundLists ColorLists';
+	parentNode.appendChild( d );
+	
+	this.node = d;
+	this.idPool = {};
+	
+	this.setItems( elements );
+}
+
+SimpleList.prototype.setItems = function( elements )
+{
+	this.elements = elements ? elements : [];
+	for( var a = 0; a < this.elements.length; a++ )
+	{
+		// Generate a uniqueid
+		if( !this.elements[ a ].id )
+		{
+			var uid;
+			do
+			{
+				uid = ( new Date() ).getTime() + '_' + ( Math.random() * 999 ) + '_' + ( Math.random() * 999 ) + '_' + ( Math.random() * 999 );
+			}
+			while( this.idPool[ uid ] );
+			this.elements[ a ].id = uid;
+		}
+	}
+	this.refresh();
+}
+
+// Move an element up or down and refresh
+SimpleList.prototype.reorder = function( id, direction )
+{
+	for( var a = 0; a < this.elements.length; a++ )
+	{
+		if( this.elements[ a ].id == id )
+		{
+			if( direction == 'up' )
+			{
+				if( a > 0 )
+				{
+					var old = this.elements[ a - 1 ];
+					this.elements[ a - 1 ] = this.elements[ a ];
+					this.elements[ a ] = old;
+				}
+				else return;
+			}
+			else if( direction == 'down' )
+			{
+				if( a < this.elements.length - 1 )
+				{
+					var old = this.elements[ a + 1 ];
+					this.elements[ a + 1 ] = this.elements[ a ];
+					this.elements[ a ] = old;
+				}
+				else return;
+			}
+		}
+	}
+	this.refresh();
+}
+
+// Remove an item from the list and refresh
+SimpleList.prototype.removeItem = function( id )
+{
+	var out = [];
+	for( var a = 0; a < this.elements.length; a++ )
+	{
+		if( this.elements[ a ].id != id )
+		{
+			out.push( this.elements[ a ] );
+		}
+	}
+	this.elements = out;
+	this.refresh();
+}
+
+// Refresh the list
+SimpleList.prototype.refresh = function()
+{
+	var self = this;
+	this.node.innerHTML = '';
+	if( !this.elements )
+	{
+		this.node.innerHTML = '<div class="FriendSimpleListRow"><div class="FriendSimpleListEntryFull">' + i18n( 'i18n_no_entries' ) + '</div></div>';
+	}
+	else
+	{
+		for( var a = 0; a < this.elements.length; a++ )
+		{
+			var d = document.createElement( 'div' );
+			d.className = 'FriendSimpleListRow';
+			var e = document.createElement( 'div' );
+			d.className = 'FriendSimpleListEntry';
+			d.innerHTML = this.elements[ a ].title;
+			d.appendChild( e );
+			var b = document.createElement( 'div' );
+			b.className = 'FriendSimpleListButtons';
+			
+			// Attach buttons
+			( function( p, listItem ) {
+			
+				var b_up = document.createElement( 'div' );
+				b_up.className = 'FriendSimpleListBUp';
+				b_up.onclick = function()
+				{
+					self.reorder( listItem.id, 'up' );
+				}
+				p.appendChild( b_up );
+			
+				var b_down = document.createElement( 'div' );
+				b_down.className = 'FriendSimpleListBDown';
+				b_down.onclick = function()
+				{
+					self.reorder( listItem.id, 'down' );
+				}
+				p.appendChild( b_down );
+			
+				var b_re = document.createElement( 'div' );
+				b_re.className = 'FriendSimpleListBRemove';
+				b_re.onclick = function()
+				{
+					self.removeItem( listItem.id );
+				}
+				p.appendChild( b_re );
+			} )( b, this.elements[ a ] );
+			
+			d.appendChild( b );
+		}
+	}
+}
+
+

@@ -72,6 +72,8 @@ i18n_add_file_to_project            : Filen er ikke lagt til prosjektet. Ønsker
 i18n_add_to_project                 : Legg til
 i18n_could_not_add_file             : Kunne ikke tilføye til prosjektet.
 
+i18n_no_entries                     : Listen er tom.
+
 #macro menu
 i18n_macros                         : Makroer
 i18n_clear_macro                    : Tøm makroer

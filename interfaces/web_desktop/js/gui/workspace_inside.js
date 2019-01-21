@@ -5519,7 +5519,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Update view history with current application id
 		if( currentMovable )
 		{
-			this.mobileViews.application = currentMovable.applicationId;
+			if( currentMovable.applicationId )
+			{
+				if( window._getAppByAppId )
+				{
+					var app = _getAppByAppId( currentMovable.applicationId );
+					if( app.mainView )
+					{
+						_ActivateWindow( app.mainView.content.parentNode );
+						return;
+					}
+				}
+				this.mobileViews.application = currentMovable.applicationId;
+			}
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
