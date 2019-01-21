@@ -1250,8 +1250,9 @@ BufString *Info( File *s, const char *path )
 	int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
+	int globlen = rspath + spath + 512;
 	
-	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( globlen, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 
@@ -1280,10 +1281,16 @@ BufString *Info( File *s, const char *path )
 			SystemBase *l = (SystemBase *)locsd->sb;
 			DEBUG("[SAMBA] file stat FAIL %s\n", comm );
 			
-			char buffer[ 256 ];
-			int size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST );
+			globlen += 512;
+			char *buffer = FMalloc( globlen );
+			int size = 0;
+			if( buffer != NULL )
+			{
+				size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, comm );
 			
-			BufStringAddSize( bs, buffer, size );
+				BufStringAddSize( bs, buffer, size );
+				FFree( buffer );
+			}
 			//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 		}
 		
