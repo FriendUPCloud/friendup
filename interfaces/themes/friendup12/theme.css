@@ -1349,6 +1349,17 @@ html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View
 	border-radius: 0 0 2px 2px;
 }
 
+html .ViewContainer[childview].Active > .MobileBack:before
+{
+	color: #303030;
+}
+
+html body.Dark .ViewContainer[childview].Active > .MobileBack:before,
+html body.Charcoal .ViewContainer[childview].Active > .MobileBack:before
+{
+	color: #e0e0e0;
+}
+
 /* Dark theme */
 
 html body.Dark a, html body a.Dark:visited
