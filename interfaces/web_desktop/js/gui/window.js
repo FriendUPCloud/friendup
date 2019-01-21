@@ -2185,7 +2185,7 @@ var View = function( args )
 				var t = ( new Date() ).getTime();
 				if( self.clickOffset )
 				{
-					if( t - self.clickOffset.time > 300 )
+					if( t - self.clickOffset.time > 150 )
 					{
 						// Update time
 						self.clickOffset.removable = true;
