@@ -865,6 +865,16 @@ html .TrayElement.PopNotification .PopInfo
 
 /* Menu items --------------------------------------------------------------- */
 
+body.Charcoal .AppsShowingTitle
+{
+	background: #303030;
+}
+
+body.Dark .AppsShowingTitle
+{
+	background: #435260;
+}
+
 .Widget .MenuItems .MenuItem.Disabled
 {
 	display: none;
@@ -1372,7 +1382,12 @@ html body.Dark a, html body a.Dark:visited
 html [mobile=mobile].Dark.ViewMaximized.HasMenu #WorkspaceMenu,
 html [mobile=mobile].Dark.WidgetSlideDown.HasMenu #WorkspaceMenu
 {
-	background: #455155;
+	background: #34495e;
+}
+
+html [mobile=mobile].Dark.ViewMaximized #WorkspaceMenu
+{
+	background: #34495E;
 }
 
 [mobile].Charcoal #WorkspaceMenu.Open
