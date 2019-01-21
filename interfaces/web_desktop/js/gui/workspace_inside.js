@@ -5519,6 +5519,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Update view history with current application id
 		if( currentMovable )
 		{
+			FocusOnNothing();
 			if( currentMovable.applicationId )
 			{
 				if( window._getAppByAppId )

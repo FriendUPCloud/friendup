@@ -1797,6 +1797,7 @@ var View = function( args )
 							var app = _getAppByAppId( div.applicationId );
 							if( app.mainView )
 							{
+								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
 							}
 						}
