@@ -72,6 +72,11 @@ Application.refreshFilePane = function()
 	var d = new Door( Application.browserPath );
 	d.getIcons( function( items )
 	{
+		if( !items )
+		{
+			ge( 'FileBar' ).innerHTML = '';
+			return;
+		}
 		var byDate = [];
 		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
 		items.reverse();
