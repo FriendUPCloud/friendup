@@ -2210,7 +2210,7 @@ var View = function( args )
 				// Drag 100 px under 0.15ms
 				if( this.viewIcon.classList.contains( 'Dragging' ) )
 				{
-					if( diffy > 100 )
+					if( diffy > 50 )
 					{
 						this.viewIcon.classList.add( 'Remove' );
 					}
