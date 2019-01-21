@@ -264,6 +264,51 @@ html body .Screen .MobileAppMenu:after
 
 /* Mobile menu -------------------------------------------------------------- */
 
+.AppsShowingTitle
+{
+	background: #34495E;
+	position: absolute;
+	top: 0;
+	left: 100%;
+	width: 100%;
+	height: 40px;
+	line-height: 40px;
+	box-sizing: border-box;
+	padding-left: 35px;
+	color: white;
+	transform: translateX(0);
+	transition: transform 0.25s;
+	font-weight: bold;
+}
+
+.AppsShowing .ViewContainer.Active .ViewIcon,
+.AppsShowing .TitleBar .Left .Info,
+.AppsShowing #WorkspaceMenu
+{
+	display: none;
+}
+
+.AppsShowingTitle:before
+{
+	font-weight: normal;
+	content: "\f00a";
+	font-family: fontawesome;
+	font-size: 1em;
+	position: absolute;
+	left: 0;
+	top: 0;
+	text-align: center;
+	line-height: 40px;
+	width: 40px;
+	height: 40px;
+	color: white;
+}
+
+.AppsShowingTitle.Opened
+{
+	transform: translateX(-100%);
+}
+
 [mobile] #WorkspaceMenu
 {
 	position: absolute;
