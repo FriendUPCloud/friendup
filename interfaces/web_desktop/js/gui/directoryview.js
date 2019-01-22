@@ -158,6 +158,9 @@ DirectoryView = function( winobj, extra )
 DirectoryView.prototype.checkSuffix = function( fn )
 {
 	if( !this.suffix ) return true;
+	if( !fn ) return true;
+	if( typeof( fn ) == 'object' && fn.Filename )
+		fn = fn.Filename;
 	if( typeof( this.suffix ) == 'string' )
 	{
 		var suf = '.' + this.suffix;

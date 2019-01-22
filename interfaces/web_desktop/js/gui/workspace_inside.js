@@ -2240,6 +2240,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						};
 						Workspace.mainDock.addLauncher( fmenu );
 					}
+					// File browser for desktop
+					else
+					{
+						var fmenu = {
+							click: function( e )
+							{
+								OpenWindowByFileinfo( { Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' } );
+							},
+							type: 'Executable',
+							displayname: i18n( 'i18n_files' ),
+							src: '/iconthemes/friendup15/Folder.svg',
+							title: i18n( 'i18n_files' ),
+						};
+						Workspace.mainDock.addLauncher( fmenu );
+					}
 					
 					Workspace.mainDock.initialized();
 					
