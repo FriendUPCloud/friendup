@@ -1129,6 +1129,10 @@ function editorCommand( command, value )
 	{
 		f.execCommand( 'alignment', 'justify', false );
 	}
+	else if( command == 'fontType' )
+	{
+		f.execCommand( 'fontFamily', value, false );
+	}
 	/*else if( command == 'line-height' )
 	{
 		var st = !Application.elementHasLineHeight ? '2em' : '';
