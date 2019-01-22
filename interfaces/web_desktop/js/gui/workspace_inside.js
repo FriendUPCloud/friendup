@@ -5526,6 +5526,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				application: currentMovable ? currentMovable.applicationId : false
 			};
 		}
+		
 		// Update view history with current application id
 		if( currentMovable )
 		{
@@ -5542,6 +5543,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				this.mobileViews.application = currentMovable.applicationId;
+			}
+			else if( currentMovable.content.directoryview )
+			{
+				return currentMovable.content.directoryview.buttonUp.onclick();
 			}
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
