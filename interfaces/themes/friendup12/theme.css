@@ -380,7 +380,7 @@ html body .Screen > .TitleBar.Busy:after
 
 /* Views not activated for mobile ------------------------------------------- */
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	position: absolute;
 	clear: none;
@@ -394,7 +394,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.0);
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelauedDeactivation) > .View
 {
 	border-radius: 8px 8px 0 0;
 	height: 100% !important;
@@ -403,7 +403,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
 	background: none;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):after
 {
 	content: " ";
 	position: absolute;
@@ -414,27 +414,27 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
 	z-index: 2;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) .Content
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) .Content
 {
 	display: none;
 }
 
-html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active) .View > .Title > div > .Close
+html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title > div > .Close
 {
 	top: 3px;
 	left: auto;
 	right: 0;
 }
 
-html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active) .View > .Title,
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title
+html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title
 {
 	top: 0;
 	border-radius: 8px 8px 0 0;
 	background: none;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title > div > span
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title > div > span
 {
 	position: absolute;
 	width: 100%;
@@ -447,7 +447,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title
 	font-size: 0.9em;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .ViewIcon
 {
 	display: block;
 	position: absolute;
@@ -477,7 +477,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
 	left: 50%;
 }
 
-body[mobile].AppsShowing:not([tablet]) #Screens .ViewContainer:not(.Active)
+body[mobile].AppsShowing:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	opacity: 0.5 !important;
 }

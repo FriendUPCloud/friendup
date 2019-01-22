@@ -525,7 +525,7 @@ body:not([tablet]) #Screens .View
 	-webkit-box-shadow: none;
 }
 
-body:not([tablet]) #Screens .ViewContainer:not(.Active)
+body:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	height: 35px !important;
 	float: left;
@@ -618,7 +618,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remo
 	animation: jiggle 0.2s infinite;
 }
 
-html body[mobile] .View:not(.Active) > div:not(.Title)
+html body[mobile] .ViewContainer:not(.DelayedDeactivation) .View:not(.Active) > div:not(.Title)
 {
 	display: none;
 }
