@@ -3131,6 +3131,14 @@ html body[mobile=mobile] .File .Icon
 {
 	color: black;
 }
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:after,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:after
+{
+	content: "\f054";
+	font-family: fontawesome;
+	display: block;
+	float: right;
+}
 
 [mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
 [mobile].Charcoal .View .FileDialog .FileBrowser .DiskItem > .Name,
