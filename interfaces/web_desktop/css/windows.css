@@ -95,7 +95,7 @@
 }
 
 html body[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
-html body[mobile] .View .FileDialog .FileBrowserr .FileBrowserItemImage
+html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 {
 	width: 24px;
 	height: 24px;
