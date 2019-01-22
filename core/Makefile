@@ -48,7 +48,7 @@ endif
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
-			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c )
+			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c )
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
@@ -226,6 +226,10 @@ obj/%.o: system/user/%.c system/user/*.h system/user/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+obj/%.o: system/usergroup/%.c system/usergroup/*.h system/usergroup/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+	
 obj/%.o: system/inram/%.c system/inram/*.h system/inram/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -334,7 +338,7 @@ clean:
 	@rm -f *.d*
 	@rm -f $(C_FILES:%.c=%.d)
 	@rm -rf system/obj/* system/*.d*
-	@rm -f system/fsysdyn/*.d* system/moduledyn/*.d* system/servicesdyn/*.d* system/log/*.d* system/log/loggers/*.d*
+	@rm -f system/fsysdyn/*.d* system/moduledyn/*.d* system/servicesdyn/*.d* system/log/*.d* system/log/loggers/*.d* system/user/*.d system/usergroup/*.d
 	@rm -rf system/bin/emod/*
 	@rm -rf system/bin/fsys/*
 	@rm -rf system/bin/loggers/*

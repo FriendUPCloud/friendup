@@ -23,10 +23,10 @@
 #include <core/types.h>
 #include <core/nodes.h>
 
-#include "user_session.h"
+#include <system/user/user_session.h>
 #include "user_group.h"
-#include "user.h"
-#include "remote_user.h"
+#include <system/user/user.h>
+#include <system/user/remote_user.h>
 
 //
 //

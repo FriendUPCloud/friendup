@@ -9,16 +9,16 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  Mobile Web header
+ *  Notification Manager Web header
  *
- * All functions related to Mobile web calls
+ * All functions related to Notification Manager web calls
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 08/09/2018
+ *  @date created 22/01/2019
  */
 
-#ifndef __SYSTEM_MOBILE_MOBILE_MANAGER_WEB_H__
-#define __SYSTEM_MOBILE_MOBILE_MANAGER_WEB_H__
+#ifndef __SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_WEB_H__
+#define __SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_WEB_H__
 
 #include <core/types.h>
 #include <core/nodes.h>
@@ -26,12 +26,11 @@
 #include <system/user/user_session.h>
 #include <system/usergroup/user_group.h>
 #include <system/user/user.h>
-#include "mobile_manager.h"
 
 //
 //
 //
 
-Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result );
+Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result );
 
-#endif // __SYSTEM_MOBILE_MOBILE_MANAGER_WEB_H__
+#endif // __SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_WEB_H__

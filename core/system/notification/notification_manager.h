@@ -107,5 +107,7 @@ int NotificationManagerAddExternalConnection( NotificationManager *nm, void *con
 
 int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *con );
 
+int NotificationManagerSendInformationToConnections( NotificationManager *nm, char *sername, char *msg );
+
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__
 

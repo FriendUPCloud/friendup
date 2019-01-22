@@ -25,7 +25,7 @@
 
 #include <db/sql_defs.h>
 #include <system/user/user_application.h>
-#include "user_group.h"
+#include <system/usergroup/user_group.h>
 #include <system/fsys/file.h>
 #include <libwebsockets.h>
 #include <network/websocket_client.h>

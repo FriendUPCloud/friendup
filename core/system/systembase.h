@@ -53,7 +53,7 @@
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
 #include <system/user/user_manager.h>
-#include <system/user/user_group_manager.h>
+#include <system/usergroup/user_group_manager.h>
 #include <system/user/remote_user.h>
 #include <system/fsys/fs_manager.h>
 #include <hardware/usb/usb_manager.h>

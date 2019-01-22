@@ -54,7 +54,8 @@
 #include <system/token/token_web.h>
 #include <system/dictionary/dictionary.h>
 #include <system/mobile/mobile_web.h>
-#include <system/user/user_group_manager_web.h>
+#include <system/usergroup/user_group_manager_web.h>
+#include <system/notification/notification_manager_web.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -1323,8 +1324,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	else if( strcmp( urlpath[ 0 ], "group" ) == 0 )
 	{
-		DEBUG("User\n");
+		DEBUG("Group\n");
 		response = UMGWebRequest( l, urlpath, (*request), loggedSession, result );
+	}
+	
+	//
+	// notification function
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "notification" ) == 0 )
+	{
+		DEBUG("Notification\n");
+		response = NMWebRequest( l, urlpath, (*request), loggedSession, result );
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION

@@ -505,6 +505,20 @@ int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *
 }
 
 /**
+ * Remove external server connection
+ * 
+ * @param nm pointer to NotificationManager
+ * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
+ * @param msg message which will be send to servers
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerSendInformationToConnections( NotificationManager *nm, char *sername, char *msg )
+{
+	
+}
+
+/**
  * Find and delete old Notifications with NotificationsSent (old = 14 days)
  * 
  * @param nm pointer to NotificationManager

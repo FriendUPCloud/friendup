@@ -18,7 +18,7 @@
  */
 
 #include "user_group_manager.h"
-#include "user_sessionmanager.h"
+#include <system/user/user_sessionmanager.h>
 
 #include <system/systembase.h>
 #include <util/sha256.h>
@@ -465,13 +465,16 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 		// going through all groups and create new "insert"
 		//
 		
-		UserGroup **usrGroups = FCalloc( pos, sizeof( UserGroup *) );
+		UserGroup **usrGroups = FCalloc( pos+1, sizeof( UserGroup *) );	// end is equal to NULL
+		int userGroupsNr = 0;
 		BufString *bs = BufStringNew();
 		BufStringAdd( bs, "INSERT INTO FUserToGroup (UserID, UserGroupID ) VALUES ");
 		
 		FBOOL isAdmin = FALSE;
 		FBOOL isAPI = FALSE;
 		DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated\n");
+		
+		// get list of groups to which user will be assigned
 		for( i = 0; i < pos; i++ )
 		{
 			UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
@@ -480,6 +483,8 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 				if( strcmp( gr->ug_Name, ptr[ i ] ) == 0 )
 				{
 					usrGroups[ i ] = gr;
+					//groupid = gr->ug_ID;
+					userGroupsNr++;
 					
 					if( gr->ug_IsAdmin == TRUE )
 					{
@@ -506,8 +511,8 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 					break;
 				}
 				gr = (UserGroup *) gr->node.mln_Succ;
-			}
-		}
+			} // while group
+		} // for all groups as strings
 		
 		usr->u_IsAdmin = isAdmin;
 		usr->u_IsAPI = isAPI;
@@ -525,12 +530,65 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 		{
 			FERROR("Cannot call query: '%s'\n", bs->bs_Buffer );
 		}
+		
+		
+		/* // function abadoned for while
+		// function store ID's of groups which were added or removed
+		BufString *bsGroups = BufStringNew();
+		
+		BufStringAdd( bsGroups, "{\"type\":\"service\",\"data\":{\"type\":\"user-update\",\"data\":{\"type\":\"group\",\"data\":" );
+		
+		"{\"type\",\"add\",\"userid\":%lu,\"groupid\":%lu}"
+
+		// find groups to which user is not assigned anymore
+		for( i=0 ; i < userGroupsNr ; i++ )
+		{
+			int j;
+			FBOOL foundGroup = FALSE;
+			for( j=0 ; j < usr->u_GroupsNr ; j++ )
+			{
+				if( usrGroups[i]->ug_ID == usr->u_Groups[j]->ug_ID )
+				{
+					foundGroup = TRUE;
+					break;
+				}
+			}
+			
+			if( foundGroup == FALSE ) // group not found, it was added now
+			{
+				
+			}
+		}
+		
+		// going through old groups
+		for( i=0 ; i < usr->u_GroupsNr ; i++ )
+		{
+			int j;
+			FBOOL foundGroup = FALSE;
+			for( j=0 ; j < userGroupsNr ; j++ )
+			{
+				if( usrGroups[ j ]->ug_ID == usr->u_Groups[ i ]->ug_ID )
+				{
+					foundGroup = TRUE;
+					break;
+				}
+			}
+			
+			if( foundGroup == FALSE ) // group not found, it was removed now
+			{
+				
+			}
+		}
+		*/
+		
+		// --------------
 
 		if( usr->u_Groups != NULL )
 		{
 			FFree( usr->u_Groups );
 		}
 		usr->u_Groups = usrGroups;
+		usr->u_GroupsNr = userGroupsNr;
 		
 		if( bs != NULL )
 		{

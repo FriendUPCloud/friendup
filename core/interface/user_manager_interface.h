@@ -20,7 +20,7 @@
 #include <system/user/user_manager.h>
 #include <system/user/user_manager_remote.h>
 #include <system/user/user_manager_web.h>
-#include <system/user/user_group_manager.h>
+#include <system/usergroup/user_group_manager.h>
 
 typedef struct UserManagerInterface
 {

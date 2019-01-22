@@ -27,10 +27,17 @@
 #include <mobile_app/mobile_app.h>
 #include <system/notification/notification_manager.h>
 
-//
-//
-//
-
+/**
+ * Http web call processor
+ * Function which process all incoming Http requests
+ *
+ * @param m pointer to SystemBase
+ * @param urlpath pointer to table with path entries
+ * @param request http request
+ * @param loggedSession pointer to UserSession which called this function
+ * @param result pointer to result value
+ * @return response as Http structure, otherwise NULL
+ */
 Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result )
 {
 	Http *response = NULL;
@@ -41,7 +48,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		

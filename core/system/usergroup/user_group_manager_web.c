@@ -19,7 +19,7 @@
 
 #include <core/types.h>
 #include <core/nodes.h>
-#include "user_manager_web.h"
+#include <system/user/user_manager_web.h>
 #include <system/systembase.h>
 #include <system/fsys/device_handling.h>
 #include <system/user/user_sessionmanager.h>
@@ -119,8 +119,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		HashmapElement *el = NULL;
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
-		{
+		//if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		{	// user can create his own groups
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
 			{
@@ -158,6 +158,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						char buffer[ 256 ];
 						snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
 						HttpAddTextContent( response, buffer );
+						
+						{
+							char msg[ 512 ];
+							snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"create\",%lu\",\"name\",\"%s\"}}}", fg->ug_ID, fg->ug_Name );
+							NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+						}
 					}
 					else
 					{
@@ -192,7 +198,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					if( ug == NULL )
 					{
 						DEBUG("GroupCreate: new UserGroup will be created\n");
-						ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type );
+						if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+						{
+							ug = UserGroupNew( 0, groupname, 0, type );
+						}
+						else
+						{
+							ug = UserGroupNew( 0, groupname, loggedSession->us_User->u_ID, type );
+						}
 					}
 					
 					if( ug != NULL )
@@ -219,6 +232,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								l->LibrarySQLDrop( l, sqlLib );
 							}
 							groupID = ug->ug_ID;
+							
+							{
+								char msg[ 512 ];
+								snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"create\",%lu\",\"name\",\"%s\"}}}", ug->ug_ID, ug->ug_Name );
+								NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							}
 					
 							char buffer[ 256 ];
 							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", groupID );
@@ -290,35 +309,56 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			id = strtol ( (char *)el->data, &next, 0 );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
-		{
-			if( id > 0 )
-			{
-				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
-				
-				// group not found in memory, checking DB
-				if( fg == NULL )
-				{
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-					if( sqllib != NULL )
-					{
-						char where[ 512 ];
-						int size = snprintf( where, sizeof(where), "ID='%lu'", id );
-						int entries;
-					
-						fg = sqllib->Load( sqllib, UserGroupDesc, where, &entries );
+		//if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
 
-						l->LibrarySQLDrop( l, sqllib );
+		if( id > 0 )
+		{
+			UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
+			
+			// group not found in memory, checking DB
+			if( fg == NULL )
+			{
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				if( sqllib != NULL )
+				{
+					char where[ 512 ];
+					int size = snprintf( where, sizeof(where), "ID='%lu'", id );
+					int entries;
+					
+					fg = sqllib->Load( sqllib, UserGroupDesc, where, &entries );
+
+					l->LibrarySQLDrop( l, sqllib );
+				}
+			}
+			
+			if( fg != NULL )
+			{
+				FBOOL canChange = FALSE;
+				if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+				{
+					canChange = TRUE;
+				}
+				else
+				{
+					if( fg->ug_UserID == loggedSession->us_UserID )
+					{
+						canChange = TRUE;
 					}
 				}
-				
-				if( fg != NULL )
+					
+				if( canChange == TRUE )
 				{
 					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
 						fg->ug_Status = USER_GROUP_STATUS_DISABLED;
 						sqllib->Update( sqllib, UserGroupDesc, fg );
+						
+						{
+							char msg[ 512 ];
+							snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"delete\",%lu\",\"name\",\"%s\"}}}", fg->ug_ID, fg->ug_Name );
+							NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+						}
 						
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
 
@@ -331,20 +371,20 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						HttpAddTextContent( response, buffer );
 					}
 				}
-			}
-			else
-			{
-				char buffer[ 256 ];
-				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
-				HttpAddTextContent( response, buffer );
+				else
+				{
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+					HttpAddTextContent( response, buffer );
+				}
 			}
 		}
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}
 	}
@@ -456,6 +496,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 						l->LibrarySQLDrop( l, sqlLib );
 					}
+					
+					{
+						char msg[ 512 ];
+						snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"update\",%lu\",\"name\",\"%s\"}}}", fg->ug_ID, fg->ug_Name );
+						NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+					}
 
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
@@ -486,6 +532,96 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			FFree( groupname );
 		}
 
+		*result = 200;
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/group/list</H2>List groups. Function require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param parentid - id of parent workgroup
+	* @param status - group status
+	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 1 ], "list" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		int status = -1;
+		FULONG parentID = 0;
+		FBOOL fParentID = FALSE;
+		HashmapElement *el = NULL;
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		el = HttpGetPOSTParameter( request, "parentid" );
+		if( el != NULL )
+		{
+			char *end;
+			parentID = strtol( (char *)el->data, &end, 0 );
+			fParentID = TRUE;
+		}
+		
+		el = HttpGetPOSTParameter( request, "status" );
+		if( el != NULL )
+		{
+			status = atoi( (char *)el->data );
+		}
+		
+		BufString *retString = BufStringNew();
+		BufStringAddSize( retString, "ok<!--separate-->{", 18 );
+		UserGroup *lg = l->sl_UGM->ugm_UserGroups;
+		int pos = 0;
+		
+		while( lg != NULL )
+		{
+			// if values are set then we want to filter all messages by using them
+			FBOOL addToList = TRUE;
+			if( fParentID == TRUE )	// user want filtering
+			{
+				if( lg->ug_ParentID != parentID )
+				{
+					addToList = FALSE;
+				}
+			}
+			
+			if( status >= 0 )
+			{
+				if( status != lg->ug_Status )
+				{
+					addToList = FALSE;
+				}
+			}
+			
+			if( addToList == TRUE )
+			{
+				char tmp[ 512 ];
+				int tmpsize = 0;
+				if( pos == 0 )
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), "[\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\",\"%s\",\"status\":%d]", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+				}
+				else
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), ",[\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\",\"%s\",\"status\":%d]", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+				}
+				BufStringAddSize( retString, tmp, tmpsize );
+				pos++;
+			}
+			lg = (UserGroup *)lg->node.mln_Succ;
+		}
+		BufStringAddSize( retString, "}", 1 );
+		
+		HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
+		retString->bs_Buffer = NULL;
+		BufStringDelete( retString );
+		
 		*result = 200;
 	}
 	
