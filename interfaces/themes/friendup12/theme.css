@@ -3127,9 +3127,7 @@ html body[mobile=mobile] .File .Icon
 }
 
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
-[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name,
-[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
-[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
 {
 	color: black;
 }
@@ -3139,9 +3137,7 @@ html body[mobile=mobile] .File .Icon
 [mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
 [mobile].Charcoal .View .FileDialog .FileBrowser .FileBrowserItemImage,
 [mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
-[mobile].Dark .View .FileDialog .FileBrowser .DiskItem > .Name,
-[mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
-[mobile].Dark .View .FileDialog .FileBrowser .FileBrowserItemImage
+[mobile].Dark .View .FileDialog .FileBrowser .DiskItem > .Name
 {
 	color: white;
 }
