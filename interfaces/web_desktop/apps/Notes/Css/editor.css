@@ -55,6 +55,7 @@ html > body
 	left: 0;
 	height: 96px;
 	right: 0;
+	z-index: 2;
 }
 
 .HRow > .ToolButton
@@ -93,10 +94,10 @@ html > body
 #RightBar > div.ck > .ck.ck-editor__main
 {
 	position: absolute;
-	top: 50px;
+	top: 96px;
 	left: 0;
 	width: 100%;
-	height: calc(100% - 50px);
+	height: calc(100% - 96px);
 	color: black;
 }
 #RightBar > div.ck > .ck.ck-editor__main > .ck-content
@@ -109,6 +110,11 @@ html > body
 	padding: 20px;
 	box-sizing: border-box;
 	border: 0;
+}
+
+#RightBar > div.ck > .ck.ck-editor__main > .ck-content div
+{
+	background-color: transparent;
 }
 
 /* Bottom status bar text */
@@ -217,9 +223,10 @@ html > body > div a.cke_path_item, html > body > div span.cke_path_empty
 		height: 55px;
 		overflow: hidden;
 	}
-	#cke_1_contents
+	#RightBar > div.ck > .ck.ck-editor__main
 	{
 		top: 55px;
+		height: calc(100% - 55px);
 	}
 }
 
@@ -250,11 +257,6 @@ For now, we don't use this, we don't have enough tools...
 #cke_1_contents.Hidden
 {
 	top: 0;
-}
-
-.cke_wysiwyg_frame, .cke_wysiwyg_div
-{
-	background: #444444;
 }
 
 /* Mobile */

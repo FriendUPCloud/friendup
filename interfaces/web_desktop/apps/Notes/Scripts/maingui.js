@@ -149,8 +149,8 @@ Application.run = function( msg, iface )
 		{
 			Application.sendMessage( { 
 				command: 'remembercontent', 
-				data: CKEDITOR.instances.Editor.getData(),
-				scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+				data: Application.editor.getData(),
+				scrollTop: Application.editor.element.scrollTop
 			} );
 			Application.contentTimeout = false;
 		}, 250 );
@@ -184,12 +184,26 @@ Application.initCKE = function()
 	
 	ClassicEditor.create( ge( 'Editor' ) )
 		.then( editor => {
+		
+			Application.editor = editor;
 			Application.initializeToolbar();
 			
 			var editable = editor;
 			
-			editable.$.addEventListener( 'keydown', function( e )
-			{
+			editor.on( 'key', ( e ) => {
+				
+				if( Application.contentTimeout )
+					clearTimeout( Application.contentTimeout );
+				Application.contentTimeout = setTimeout( function()
+				{
+					Application.sendMessage( { 
+						command: 'remembercontent', 
+						data: Application.editor.getData(),
+						scrollTop: Application.editor.element.scrollTop
+					} );
+					Application.contentTimeout = false;
+				}, 250 );
+				
 				var wh = e.which ? e.which : e.keyCode;
 				var ctrl = e.ctrlKey;
 				if( !ctrl ) return;
@@ -219,27 +233,17 @@ Application.initCKE = function()
 						return false;
 				}
 				return false;
-			}, false );
-			editable.attachListener( e.editor.document, 'keydown', function( evt ) 
+			} );
+			/*editable.attachListener( e.editor.document, 'keydown', function( evt ) 
 			{
-				if( Application.contentTimeout )
-					clearTimeout( Application.contentTimeout );
-				Application.contentTimeout = setTimeout( function()
-				{
-					Application.sendMessage( { 
-						command: 'remembercontent', 
-						data: CKEDITOR.instances.Editor.getData(),
-						scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
-					} );
-					Application.contentTimeout = false;
-				}, 250 );
+				
 			} );
 			editable.attachListener( e.editor.document, 'mousedown', function( evt )
 			{
 				Application.sendMessage( {
 					command: 'activate'
 				} );
-			} );
+			} );*/
 			
 		} )
 		.catch( error => {
@@ -248,88 +252,7 @@ Application.initCKE = function()
 	
 	return;
 	
-	CKEDITOR.replace( ge( 'Editor' ), { 
-		on: { 
-			instanceReady: function( evt )
-			{ 
-				var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
-				var eles = document.getElementsByTagName( 'link' );
-				for( var a = 0; a < eles.length; a++ )
-				{
-					var n = d.createElement( 'link' );
-					n.rel = eles[a].rel;
-					n.href = eles[a].href;
-					d.getElementsByTagName( 'head' )[0].appendChild( n );
-				}
-				d.body.classList.add( 'MouseCursor' );
-				d.body.classList.add( 'ScrollArea' );
-				
-				// We want our cursor!
-				var computed = window.getComputedStyle( document.body, null );
-				d.body.parentNode.style.cursor = computed.cursor;
-				
-				Application.initializeToolbar();
-			},
-			contentDom: function( e )
-			{
-				var editable = e.editor.editable();
-				editable.$.addEventListener( 'keydown', function( e )
-				{
-					var wh = e.which ? e.which : e.keyCode;
-					var ctrl = e.ctrlKey;
-					if( !ctrl ) return;
-					
-					// Don't trap irrelevant keys
-					switch( wh )
-					{
-						case 73:
-							editorCommand( 'italic' );
-							break;
-						case 66:
-							editorCommand( 'bold' );
-							break;
-						case 85:
-							editorCommand( 'underline' );
-							break;
-						case 83:
-						case 78:
-						case 79:
-						case 80:
-							Application.sendMessage( {
-								command: 'keydown',
-								key: wh,
-								ctrlKey: ctrl
-							} );
-							cancelBubble( e );
-							return false;
-					}
-					return false;
-				}, false );
-				editable.attachListener( e.editor.document, 'keydown', function( evt ) 
-				{
-					if( Application.contentTimeout )
-						clearTimeout( Application.contentTimeout );
-					Application.contentTimeout = setTimeout( function()
-					{
-						Application.sendMessage( { 
-							command: 'remembercontent', 
-							data: CKEDITOR.instances.Editor.getData(),
-							scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
-						} );
-						Application.contentTimeout = false;
-					}, 250 );
-				} );
-				editable.attachListener( e.editor.document, 'mousedown', function( evt )
-				{
-					Application.sendMessage( {
-						command: 'activate'
-					} );
-				} );
-			}
-		}
-	} );
-	CKEDITOR.config.height = '100%';
-	CKEDITOR.config.extraAllowedContent = 'img[src,alt,width,height];h1;h2;h3;h4;h5;h6;p';
+	//CKEDITOR.config.extraAllowedContent = 'img[src,alt,width,height];h1;h2;h3;h4;h5;h6;p';
 }
 
 Application.resetToolbar = function()
@@ -482,8 +405,8 @@ function MyMouseListener( e )
 	{
 		Application.sendMessage( { 
 			command: 'remembercontent', 
-			data: CKEDITOR.instances.Editor.getData(),
-			scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+			data: Application.editor.getData(),
+			scrollTop: Application.editor.element.scrollTop
 		} );
 		Application.contentTimeout = false;
 	}, 250 );
@@ -565,7 +488,7 @@ function CleanSpeecher( textHere )
 	{
 		textHere = 'I ' + textHere.substr( 2, textHere.length - 2 );
 	}
-	CKEDITOR.instances.Editor.setData( CKEDITOR.instances.Editor.getData() + textHere );
+	Application.editor.setData( Application.editor.getData() + textHere );
 	
 	ge( 'Speecher' ).value = '';
 	ge( 'Speecher' ).blur();
@@ -666,45 +589,8 @@ Application.initializeToolbar = function()
 
 Application.initializeBody = function()
 {
-	var pageUrl = getImageUrl( 'Progdir:Gfx/page.png' );
-	// On click events for our toolbar
-	var f = document.getElementsByTagName( 'iframe' )[0];
-	f = f.contentWindow;
-	f.document.body.parentNode.style.background = '#444444';
-	f.document.body.parentNode.style.padding = '0';
-	f.document.body.parentNode.style.margin = '0';
-	f.document.body.style.position = 'relative';
-	f.document.body.style.backgroundColor = '#ffffff';
-	f.document.body.style.backgroundImage = 'url(' + pageUrl + ')';
-	f.document.body.style.backgroundSize = '595pt 842pt';
-	f.document.body.style.backgroundPosition = 'top left';
-	f.document.body.style.backgroundRepeat = 'repeat';
-	f.document.body.style.padding = '20pt 20pt';
-	f.document.body.style.borderRadius = '3px';
-	if( window.innerWidth < 600 )
-	{
-	}
-	else
-	{
-		f.document.body.style.width = '595pt';
-		f.document.body.style.minHeight = '842pt';
-	}
-	f.document.body.style.boxSizing = 'border-box';
-	f.document.body.style.margin = '20pt 0 20pt 0';
-	f.document.body.style.fontSize = '12pt';
-	f.document.body.style.color = 'black';
-	f.document.body.classList.add( 'activated' );
-	editorCommand( 'zoom100%', 'store' );
-	AddEvent( 'onmouseup', MyMouseListener, f );
-	AddEvent( 'onkeyup', MyKeyListener, f );
-	if( isMobile )
-	{
-		AddEvent( 'onblur', function( e )
-		{
-			ge( 'AuthorToolbar' ).className = 'BackgroundDefault ColorDefault BorderTop';
-			ge( 'cke_1_contents' ).className = '';
-		}, f );
-	}
+	AddEvent( 'onmouseup', MyMouseListener );
+	AddEvent( 'onkeyup', MyKeyListener );
 }
 
 var _repag = 0;
@@ -718,95 +604,6 @@ function MyKeyListener( e )
 		return;
 	}
 	if( _repag ) return;
-	_repag = true;
-	
-	var f = document.getElementsByTagName( 'iframe' )[0];
-	f = f.contentWindow.document.body;
-	
-	if( !f.pageBreaks ) f.pageBreaks = [];
-	
-	var pages = Math.ceil( f.offsetHeight / _a4pageHeightPx );
-	_lastPageCnt = _pageCount;
-	_pageCount = pages;
-	var lastInd = 0;
-	
-	if( _lastPageCnt != _pageCount )
-	{
-		// Clear redundant!
-		var lastPage = false;
-		var o = [];
-		for( var a = 0; a < f.pageBreaks.length; a++ )
-		{
-			if( a > pages - 1 )
-			{
-				f.removeChild( f.pageBreaks[a] );
-			}
-			// Within scope!
-			else 
-			{
-				o.push( f.pageBreaks[a] );
-				lastInd = a;
-			}
-		}
-		
-		// No aproximate
-		var ph = Math.floor( pages * _a4pageHeightPx );
-		if( ph <= _a4pageHeightPx ) ph = _a4pageHeightPx;
-		f.style.minHeight = ph + 'px';
-		
-		
-		// Create new array with correct pages
-		f.pageBreaks = o;
-		if( f.pageBreaks.length )
-		{
-			lastPage = f.pageBreaks[f.pageBreaks.length-1];
-			if( lastPage && lastPage.parentNode != f )
-				lastPage = false;
-		}
-		
-		// Potentially add pages
-		for( var a = lastInd; a < pages; a++ )
-		{
-			var d = document.createElement( 'img' );
-			d.src = getImageUrl( 'Progdir:Gfx/pagebreak.png' );
-			d.style.width = '595pt';
-			d.style.height = '842pt';
-			d.style.margin = '0 0 0 -20pt';
-			d.style.float = 'left';
-			d.style.clear = 'both';
-			d.style.shapeOutside = 'url(' + getImageUrl( 'Progdir:Gfx/pagebreak.png' ) + ')';
-			d.style.shapeMargin = '0';
-			d.style.pointerEvents = 'none';
-			if( lastPage || f.firstChild && f.firstChild.parentNode == f )
-			{
-				f.insertBefore( d, lastPage ? lastPage : f.firstChild );
-			}
-			else
-			{
-				f.appendChild( d );
-			}
-			f.pageBreaks.push( d );
-			lastPage = d;
-		}
-		
-		// Fix the last page
-		if( f.pageBreaks.length )
-		{
-			if( lastPage != f.pageBreaks[f.pageBreaks.length-1] )
-				lastPage.src = getImageUrl( 'Progdir:Gfx/pagebreak.png' );
-			f.pageBreaks[f.pageBreaks.length-1].src = getImageUrl( 'Progdir:Gfx/pagebreaklast.png' );
-		}
-		
-		/*if( f.offsetHeight > ph )
-		{
-			// No aproximate
-			var ph = Math.floor( pages * _a4pageHeightPx );
-			if( ph <= _a4pageHeightPx ) ph = _a4pageHeightPx ;
-			f.style.minHeight = ph + 'px';
-		}*/
-		
-	}
-	_repag = false;
 }
 
 Application.setCurrentDocument = function( pth )
@@ -855,7 +652,7 @@ Application.loadFile = function( path )
 					Application.setCurrentDocument( path );
 					
 					ge( 'Status' ).innerHTML = 'Loaded';
-					CKEDITOR.instances.Editor.setData( data,
+					Application.editor.setData( data,
 						function()
 						{
 							Application.initializeBody();
@@ -914,15 +711,14 @@ Application.loadFile = function( path )
 					{
 						if( !num ) num = 0;
 						if( num > 2 ) return; // <- failed
-						var f = document.getElementsByTagName( 'iframe' )[0];
+						var f = Application.editor;
 						
 						// retry
-						if( !f || ( f && !f.contentWindow.document.body ) )
+						if( !f || ( f && !f.element ) )
 						{
 							return setTimeout( function(){ loader( num+1 ); }, 150 );
 						}
-						f.contentWindow.document.body.innerHTML = bdata[1];
-						f.contentWindow.document.body.style.overflow = 'auto';
+						Application.editor.setData( bdata[1] );
 					
 						Application.setCurrentDocument( path );
 					
@@ -940,9 +736,7 @@ Application.loadFile = function( path )
 				// This is not a compliant HTML document
 				else
 				{
-					var f = document.getElementsByTagName( 'iframe' )[0];
-					f.contentWindow.document.body.innerHTML = data;
-					f.contentWindow.document.body.style.overflow = 'auto';
+					Application.editor.setData( data );
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -1014,8 +808,8 @@ Application.saveFile = function( path, content )
 	// Save state
 	Application.sendMessage( { 
 		command: 'remembercontent', 
-		data: CKEDITOR.instances.Editor.getData(),
-		scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+		data: Application.editor.getData(),
+		scrollTop: Application.editor.element.scrollTop
 	} );
 }
 
@@ -1056,15 +850,8 @@ Application.print = function( path, content, callback )
 
 Application.newDocument = function( args )
 {
-	// So async!
-	var hasBodyOnFrame = document.getElementsByTagName( 'iframe' );
-	hasBodyOnFrame = hasBodyOnFrame.length ? hasBodyOnFrame[0] : false;
-	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.contentWindow;
-	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.document;
-	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.body;
-
 	// Wait till ready
-	if( typeof( CKEDITOR ) == 'undefined' || !hasBodyOnFrame )
+	if( typeof( ClassicEditor ) == 'undefined' )
 	{
 		return setTimeout( function()
 		{
@@ -1086,20 +873,20 @@ Application.newDocument = function( args )
 	if( args.content )
 	{
 		var f = document.getElementsByTagName( 'iframe' )[0];
-		f.contentWindow.document.body.innerHTML = args.content;
+		Application.editor.setData( args.content );
 		if( args.scrollTop )
 		{
 			setTimeout( function()
 			{
 				var i = document.getElementsByTagName( 'iframe' )[0];
-				i.contentWindow.document.body.scrollTop = args.scrollTop;
+				Application.editor.element.scrollTop = args.scrollTop;
 				Application.initializeBody();
 			}, 50 );
 		}
 	}
 	else
 	{
-		CKEDITOR.instances.Editor.setData( '', function()
+		Application.editor.setData( '', function()
 		{
 			Application.initializeBody();
 		} );
@@ -1136,8 +923,7 @@ function ApplyStyle( styleObject, depth )
 	if( !styleElement )
 	{
 		styleElement = document.createElement( 'style' );
-		var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
-		d.getElementsByTagName( 'head' )[0].appendChild( styleElement );
+		// TODO: Add this
 	}
 	var style = '';
 	for( var a in styleObject )
@@ -1228,9 +1014,7 @@ Application.receiveMessage = function( msg )
 			}
 			break;
 		case 'print_iframe':
-			var f = document.getElementsByTagName( 'iframe' )[0];
-			f.contentWindow.document.title = 'Document';
-			f.contentWindow.print();
+			Application.editor.element.print();
 			break;
 		case 'makeinlineimages':
 			/*var eles = ge( 'Editor' ).getElementsByTagName( 'img' );
@@ -1240,16 +1024,10 @@ Application.receiveMessage = function( msg )
 			}*/
 			break;
 		case 'insertimage':
-			/*var f = new File( msg.path );
-			f.onLoad = function( data )
-			{
-				var i = '<img src="data:image/jpeg;base64,' + Base64.encode( data ) + '"/>';
-				CKEDITOR.instances.Editor.insertHtml( i );
-			}
-			f.load();*/
-			var i = '<img src="' + getImageUrl( msg.path ) + '" width="100%" height="auto"/>';
-			//console.log( i );
-			CKEDITOR.instances.Editor.insertHtml( i );
+			const i = '<img src="' + getImageUrl( msg.path ) + '" width="100%" height="auto"/>';
+			const viewFragment = Application.editor.data.processor.toView( i );
+			const modelFragment = Application.editor.data.toModel( viewFragment );
+			Application.editor.model.insertContent( modelFragment );
 			break;
 		case 'loadfiles':
 			for( var a = 0; a < msg.files.length; a++ )
@@ -1258,7 +1036,7 @@ Application.receiveMessage = function( msg )
 			}
 			break;
 		case 'print':
-			this.print( msg.path, '<!doctype html><html><head><title></title></head><body>' + CKEDITOR.instances.Editor.getData() + '</body></html>', function( data )
+			this.print( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>', function( data )
 			{
 				var w = new View( {
 					title: i18n('i18n_print_preview') + ' ' + msg.path,
@@ -1269,7 +1047,7 @@ Application.receiveMessage = function( msg )
 			} );
 			break;
 		case 'savefile':
-			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + CKEDITOR.instances.Editor.getData() + '</body></html>' );
+			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>' );
 			break;
 		case 'newdocument':
 			var o = {
@@ -1296,11 +1074,15 @@ Application.receiveMessage = function( msg )
 // Set some styles
 function editorCommand( command, value )
 {
-	var f = document.getElementsByTagName( 'iframe' )[0];
-	f = f.contentWindow.document;
-	var editor = CKEDITOR.instances.Editor;
+	var editor = Application.editor;
+	
+	var f = {};
+	f.execCommand = function( cmd, val )
+	{
+		return Application.editor.execute( cmd, val ? { value: val } : false );
+	}
+
 	var defWidth = 640;
-	var ed = ge( 'cke_1_contents' );
 	
 	if( command.substr( 0, 4 ) == 'zoom' )
 	{
@@ -1333,21 +1115,21 @@ function editorCommand( command, value )
 	}
 	else if( command == 'align-left' )
 	{
-		f.execCommand( 'justifyLeft', false, false );
+		f.execCommand( 'alignment', 'left', false );
 	}
 	else if( command == 'align-right' )
 	{
-		f.execCommand( 'justifyRight', false, false );
+		f.execCommand( 'alignment', 'right', false );
 	}
 	else if( command == 'align-center' )
 	{
-		f.execCommand( 'justifyCenter', false, false );
+		f.execCommand( 'alignment', 'center', false );
 	}
 	else if( command == 'align-justify' )
 	{
-		f.execCommand( 'justifyFull', false, false );
+		f.execCommand( 'alignment', 'justify', false );
 	}
-	else if( command == 'line-height' )
+	/*else if( command == 'line-height' )
 	{
 		var st = !Application.elementHasLineHeight ? '2em' : '';
 		var s = new CKEDITOR.style( { attributes: { style: 'line-height: ' + st } } );
@@ -1392,106 +1174,6 @@ function editorCommand( command, value )
 	{
 		f.execCommand( 'removeformat', false, false );
 	}
-	/*else if( command == 'zoom30%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.3;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom40%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.4;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom50%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.5;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom60%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.6;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}*/
-	else if( command == 'zoom75%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth ) + 'px';
-			f.body.style.zoom = 0.75;
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}/*
-	else if( command == 'zoom80%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.8;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom90%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.9;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}*/
-	else if( command == 'zoom100%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth ) + 'px';
-			f.body.style.zoom = 1;
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'zoom125%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth * 1.25 ) + 'px';
-			f.body.style.zoom = 1.25;
-			var c = Math.floor( defWidth * 1.25 * 0.5 );
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'zoom150%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth * 1.5 ) + 'px';
-			f.body.style.zoom = 1.5;
-			var c = Math.floor( defWidth * 1.5 * 0.5 );
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'zoom200%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth * 2 ) + 'px';
-			f.body.style.zoom = 2;
-			var c = Math.floor( defWidth * 2 * 0.5 );
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'staticWidth' )
-	{
-		ed.style.width = '100%';
-		f.body.style.width = 'calc(100% - 40px)';
-		f.body.style.left = '20px';
-		//console.log( 'We are using static width!' );
-	}
-	else if( command == 'dynamicWidth' )
-	{
-		var z = Application.sessionObject.currentZoom;
-		ed.style.width = Math.floor( defWidth * z ) + 'px';
-		f.body.style.zoom = z;
-		var c = Math.floor( defWidth * z * 0.5 );
-		f.body.style.left = 'calc(50% - 297.5pt)';
-		f.body.style.width = '595pt'; // default
-	}
 	else if( command == 'fontType' )
 	{
 		var s = new CKEDITOR.style( { attributes: { 'style': 'font-family: ' + value } } );
@@ -1501,7 +1183,7 @@ function editorCommand( command, value )
 	{
 		var s = new CKEDITOR.style( { attributes: { 'style': 'font-size: ' + value } } );
 		editor.applyStyle( s );
-	}
+	}*/
 }
 
 var documentStyles = [
