@@ -3131,6 +3131,14 @@ html body[mobile=mobile] .File .Icon
 {
 	color: black;
 }
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:active
+{
+	background-color: rgba(67,82,96,0.4);
+	border-radius: 3px;
+}
+
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:after,
 [mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:after
 {
@@ -3148,6 +3156,13 @@ html body[mobile=mobile] .File .Icon
 [mobile].Dark .View .FileDialog .FileBrowser .DiskItem > .Name
 {
 	color: white;
+}
+[mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile].Charcoal .View .FileDialog .FileBrowser .DiskItem > .Name:active,
+[mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile].Dark .View .FileDialog .FileBrowser .DiskItem > .Name:active
+{
+	background-color: rgba(255,255,255,0.2);
 }
 
 body.Charcoal .FileBrowserItemImage,
