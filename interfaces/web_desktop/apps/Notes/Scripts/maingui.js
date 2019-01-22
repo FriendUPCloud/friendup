@@ -182,7 +182,16 @@ Application.initCKE = function()
 	if( Application.ckinitialized ) return;
 	Application.ckinitialized = true;
 	
-	ClassicEditor.create( ge( 'Editor' ) )
+	ClassicEditor.create( ge( 'Editor' ), {
+			fontFamily: {
+				options: [
+					'default',
+					'Ubuntu, Arial, sans-serif',
+					'Ubuntu Mono, Courier New, Courier, monospace',
+					'Assistant'
+				]
+		    }
+		} )
 		.then( editor => {
 		
 			Application.editor = editor;
@@ -190,8 +199,9 @@ Application.initCKE = function()
 			
 			var editable = editor;
 			
-			editor.on( 'key', ( e ) => {
+			/*editor.on( 'key', ( e ) => {
 				
+				console.log( 'Test: ', e );
 				if( Application.contentTimeout )
 					clearTimeout( Application.contentTimeout );
 				Application.contentTimeout = setTimeout( function()
@@ -232,19 +242,7 @@ Application.initCKE = function()
 						cancelBubble( e );
 						return false;
 				}
-				return false;
-			} );
-			/*editable.attachListener( e.editor.document, 'keydown', function( evt ) 
-			{
-				
-			} );
-			editable.attachListener( e.editor.document, 'mousedown', function( evt )
-			{
-				Application.sendMessage( {
-					command: 'activate'
-				} );
 			} );*/
-			
 		} )
 		.catch( error => {
 			console.error( error );
@@ -328,7 +326,10 @@ function MyMouseListener( e )
 		if( fs.parentNode && fs.style.fontFamily )
 		{
 			// TODO: Dynamically load font list!
-			var fonts = [ 'times new roman', 'lato', 'verdana', 'sans serif', 'sans', 'monospace', 'courier' ];
+			var fonts = [ 'default',
+					'Ubuntu, Arial, sans-serif',
+					'Ubuntu Mono, Courier New, Courier, monospace',
+					'Assistant' ];
 			var current = Trim( fs.style.fontFamily.toLowerCase().split( '\'' ).join( '' ) );
 			var found = false;
 			for( var a = 0; a < fonts.length; a++ )
@@ -893,17 +894,6 @@ Application.newDocument = function( args )
 	}
 }
 
-// TODO: This won't work
-Application.handleKeys = function( k, e )
-{
-	if( e.ctrlKey )
-	{
-		this.sendMessage( { command: 'keydown', key: k, ctrlKey: e.ctrlKey } );
-		return true;
-	}
-	return false;
-}
-
 // Do a meta search on all connected systems
 function metaSearch( keywords )
 {
@@ -1138,41 +1128,30 @@ function editorCommand( command, value )
 		var st = !Application.elementHasLineHeight ? '2em' : '';
 		var s = new CKEDITOR.style( { attributes: { style: 'line-height: ' + st } } );
 		editor.applyStyle( s );
-	}
-	else if( command == 'formath1' )
-	{
-		var s = new CKEDITOR.style( { element: 'h1' } );
-		editor.applyStyle( s );
-	}
+	}*/
 	else if( command == 'formath2' )
 	{
-		var s = new CKEDITOR.style( { element: 'h2' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading2' );
 	}
 	else if( command == 'formath3' )
 	{
-		var s = new CKEDITOR.style( { element: 'h3' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading3' );
 	}
 	else if( command == 'formath4' )
 	{
-		var s = new CKEDITOR.style( { element: 'h4' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading4' );
 	}
 	else if( command == 'formath5' )
 	{
-		var s = new CKEDITOR.style( { element: 'h5' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading5' );
 	}
 	else if( command == 'formath6' )
 	{
-		var s = new CKEDITOR.style( { element: 'h6' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading6' );
 	}
 	else if( command == 'formatp' )
 	{
-		var s = new CKEDITOR.style( { element: 'p' } );
-		editor.applyStyle( s );
+		f.execCommand( 'removeformat', false, false );
 	}
 	else if( command == 'formatdefault' )
 	{
@@ -1180,14 +1159,12 @@ function editorCommand( command, value )
 	}
 	else if( command == 'fontType' )
 	{
-		var s = new CKEDITOR.style( { attributes: { 'style': 'font-family: ' + value } } );
-		editor.applyStyle( s );
+		f.execCommand( 'fontFamily', value, false );
 	}
 	else if( command == 'fontSize' )
 	{
-		var s = new CKEDITOR.style( { attributes: { 'style': 'font-size: ' + value } } );
-		editor.applyStyle( s );
-	}*/
+		f.execCommand( 'fontSize', value, false );
+	}
 }
 
 var documentStyles = [
