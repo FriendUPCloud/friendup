@@ -33,6 +33,25 @@ html > body
 		visibility: visible;
 		color: black;
 	}
+	
+	.Printable figure.image
+	{
+		width: 100%;
+		margin: 10px 20px;
+	}
+	
+	.Printable figure.image-style-side
+	{
+		float: right;
+		max-width: 50%;
+		margin: 10px 0 20px 10px;
+	}
+	
+	.Printable figure.image img
+	{
+		width: 100%;
+		height: auto;
+	}
 }
 
 #Status
@@ -79,7 +98,7 @@ html > body
 	position: absolute;
 	top: 0;
 	left: 0;
-	height: 96px;
+	height: 55px;
 	right: 0;
 	z-index: 2;
 }
@@ -120,10 +139,10 @@ html > body
 #RightBar > div.ck > .ck.ck-editor__main
 {
 	position: absolute;
-	top: 96px;
+	top: 55px;
 	left: 0;
 	width: 100%;
-	height: calc(100% - 96px);
+	height: calc(100% - 55px);
 	color: black;
 }
 #RightBar > div.ck > .ck.ck-editor__main > .ck-content
@@ -239,20 +258,6 @@ html > body > div a.cke_path_item, html > body > div span.cke_path_empty
 	#zoom, #zoomd
 	{
 		display: none !important;
-	}
-}
-
-@media (max-width: 556px)
-{
-	#AuthorToolbar
-	{
-		height: 55px;
-		overflow: hidden;
-	}
-	#RightBar > div.ck > .ck.ck-editor__main
-	{
-		top: 55px;
-		height: calc(100% - 55px);
 	}
 }
 
