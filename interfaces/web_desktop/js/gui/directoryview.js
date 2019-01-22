@@ -717,7 +717,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					dirv.bookmarks.style.transform = 'translateX(0%)';
 					winobj.parentNode.classList.add( 'Mountlist' );
 					dirv.ShowFileBrowser();
-					winobj.windowObject.setFlag( 'title', 'Mountlist' );
+					winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
 					return;
 				}
 				else
@@ -4383,7 +4383,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			extra.hasSidebar = true;
 			extra.filedialog = false;
 			extra.nosidebarbackground = true;
-			w.setFlag( 'title', 'Mountlist' );
+			w.setFlag( 'title', i18n( 'i18n_mountlist' ) );
 		}
 		
 		win.innerHTML = '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>';

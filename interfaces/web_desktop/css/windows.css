@@ -76,6 +76,19 @@
 	font-size: 1.1em;
 }
 
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem,
+[mobile] .View .FileDialog .FileBrowser .DiskItem
+{
+	padding: 0 0 10px 0;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	line-height: 1.6em;
+}
+
+
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem .fa-remove
 {
 	display: none;
@@ -84,8 +97,8 @@
 html body[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
 html body[mobile] .View .FileDialog .FileBrowserr .FileBrowserItemImage
 {
-	width: 20px;
-	height: 20px;
+	width: 24px;
+	height: 24px;
 	margin-right: 10px;
 }
 
