@@ -304,7 +304,7 @@ html .View[viewsnap] .Title > div > div
 	will-transform: transform, content;
 }
 
-[mobile=mobile] #Screens .ViewContainer:not(.Active)
+[mobile=mobile] #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	z-index: 0 !important;
 }
