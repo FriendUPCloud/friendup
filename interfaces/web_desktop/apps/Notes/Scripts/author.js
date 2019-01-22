@@ -11,7 +11,7 @@
 Application.run = function( msg, iface )
 {
 	var w = new View( {
-		'title'     : 'Author',
+		'title'     : 'Notes',
 		'width'     : 1290,
 		'height'    : 800,
 		'min-width' : 700,
@@ -131,7 +131,7 @@ Application.run = function( msg, iface )
 				
 				if( Application.sessionObject.currentDocument )
 				{
-					Application.mainView.setFlag( 'title', 'Author - ' + Application.sessionObject.currentDocument );
+					Application.mainView.setFlag( 'title', 'Notes - ' + Application.sessionObject.currentDocument );
 				}
 			}
 		} );
@@ -207,7 +207,7 @@ Application.newDocument = function()
 {
 	this.sessionObject = {};
 	this.wholeFilename = '';
-	this.mainView.setFlag( 'title', 'Author' );
+	this.mainView.setFlag( 'title', 'Notes' );
 	this.mainView.sendMessage( {
 		command: 'newdocument'
 	} );
@@ -252,7 +252,7 @@ Application.load = function()
 					files: arr
 				} );
 				Application.wholeFilename = arr[0].Path;
-				Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
+				Application.mainView.setFlag( 'title', 'Notes - ' + Application.wholeFilename );
 			}
 			Application.fileDialog = false;
 		},
@@ -306,7 +306,7 @@ Application.save = function( mode )
 					path: fname
 				} );
 				Application.wholeFilename = fname;
-				Application.mainView.setFlag( 'title', 'Author - ' + fname );
+				Application.mainView.setFlag( 'title', 'Notes - ' + fname );
 			},
 			mainView: this.mainView,
 			title: mode == 'saveas' ? i18n( 'i18n_save_as' ) : i18n( 'i18n_save' ),
@@ -371,7 +371,7 @@ Application.receiveMessage = function( msg )
 			this.fileName = msg.filename;
 			this.path = msg.path;
 			this.wholeFilename = msg.path + msg.filename;
-			this.mainView.setFlag( 'title', 'Author - ' + this.wholeFilename );
+			this.mainView.setFlag( 'title', 'Notes - ' + this.wholeFilename );
 			break;
 		case 'openfile':
 			this.load();
@@ -397,14 +397,14 @@ Application.receiveMessage = function( msg )
 			if( msg.path )
 			{
 				this.wholeFilename = msg.path;
-				this.mainView.setFlag( 'title', 'Author - ' + msg.path );
+				this.mainView.setFlag( 'title', 'Notes - ' + msg.path );
 			}
 			break;
 		case 'syncload':
 			if( msg.filename )
 			{
 				this.wholeFilename = msg.filename;
-				this.mainView.setFlag( 'title', 'Author - ' + this.wholeFilename );
+				this.mainView.setFlag( 'title', 'Notes - ' + this.wholeFilename );
 			}
 			break;
 		case 'load':

@@ -38,10 +38,15 @@ var filebrowserCallbacks = {
 			return;
 		}
 	},
-	// Do we permit?
-	permitFiletype( path )
+	folderOpen( ele )
 	{
-		return Application.checkFileType( path );
+		Application.browserPath = ele;
+		Application.refreshFilePane();
+	},
+	folderClose( ele )
+	{
+		Application.browserPath = ele;
+		Application.refreshFilePane();
 	}
 };
 
@@ -61,9 +66,6 @@ Application.checkFileType = function( p )
 	if( Application.browserPath != p )
 	{
 		Application.browserPath = p;
-		
-		
-		Application.refreshFilePane();
 	}
 }
 
@@ -81,8 +83,53 @@ Application.refreshFilePane = function()
 		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
 		items.reverse();
 		
-		ge( 'FileBar' ).innerHTML = '';
-		ge( 'FileBar' ).className = 'List ScrollArea ScrollBarSmall BorderRight';
+		var fBar = ge( 'FileBar' );
+		if( !fBar.contents )
+		{
+			fBar.contents = document.createElement( 'div' );
+			fBar.appendChild( fBar.contents );
+			fBar.add = document.createElement( 'div' );
+			fBar.add.className = 'NewItem';
+			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_item' ) + '</div>';
+			fBar.add.onclick = function()
+			{
+				var testFile = 'unnamed';
+				var d = new Door( Application.browserPath );
+				d.getIcons( function( icons )
+				{
+					if( icons )
+					{
+						var found = false;
+						var tries = 1;
+						do
+						{
+							found = false;
+							for( var a = 0; a < icons.length; a++ )
+							{
+								if( icons[ a ].Filename == testFile + '.html' )
+								{
+									testFile += '_' + ( ++tries );
+									found = true;
+									break;
+								}
+							}
+						}
+						while( found );
+					}
+					
+					var f = new File();
+					f.save( "\n", Application.browserPath + testFile + '.html' );
+					f.onSave = function()
+					{
+						Application.refreshFilePane();
+					}
+				} );
+			}
+			fBar.appendChild( fBar.add );
+		}
+		fBar.contents.innerHTML = '';
+		fBar.contents.className = 'ContentFull List ScrollArea ScrollBarSmall BorderRight';
+		
 		var sw = 2;
 		
 		for( var a = 0; a < items.length; a++ )
@@ -115,7 +162,7 @@ Application.refreshFilePane = function()
 			
 			d.innerHTML = '<p class="Layout"><strong>' + num.Filename + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
 			
-			ge( 'FileBar' ).appendChild( d );
+			fBar.contents.appendChild( d );
 			( function( dl, path ){
 				dl.onclick = function()
 				{
@@ -270,6 +317,7 @@ Application.initCKE = function()
 Application.resetToolbar = function()
 {
 	// ..
+
 	SelectOption( ge( 'ToolFormat' ), 0 );
 }
 
@@ -337,7 +385,7 @@ function MyMouseListener( e )
 			fs = fs.parentNode;
 		}
 		
-		if( fs.parentNode && fs.style.fontFamily )
+		/*if( fs.parentNode && fs.style.fontFamily )
 		{
 			// TODO: Dynamically load font list!
 			var fonts = [ 'default',
@@ -363,7 +411,7 @@ function MyMouseListener( e )
 		else
 		{
 			SelectOption( ge( 'FontSelector' ), 0 );
-		}
+		}*/
 		
 		// Check for lineheight
 		var fs = e.target;

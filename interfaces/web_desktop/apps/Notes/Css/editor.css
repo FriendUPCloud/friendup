@@ -79,6 +79,18 @@ html > body
 	left: 250px;
 	width: 250px;
 	height: 100%;
+	box-sizing: border-box;
+}
+
+#FileBar .NewItem
+{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 50px;
+	z-index: 2;
+	box-sizing: border-box;
 }
 
 #RightBar
@@ -400,7 +412,11 @@ For now, we don't use this, we don't have enough tools...
 {
 	left: 0;
 	width: 100%;
+	box-sizing: border-box;
+	padding-bottom: 50px;
 	transform: translateX(100%);
 	transition: transform 0.25s;
 }
+
+
 
