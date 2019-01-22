@@ -257,12 +257,6 @@
 }
 /* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
 
-input, select, textarea, button, a 
-{
-	-webkit-tap-highlight-color: yellow; 
-}
-
-
 ::selection
 {
 	background: #1F2D39;
