@@ -3177,13 +3177,13 @@ body.Dark .FileBrowserItemImage
 	vertical-align: middle;
 	display: block;
 	margin: 1px 4px 0 0;
-	filter: brightness(100);
+	filter: invert(100%);
 }
 
 body.Charcoal .Active > .FileBrowserItemImage,
 body.Dark .Active > .FileBrowserItemImage
 {
-	filter: brightness(100);
+	filter: invert(100%);
 }
 
 html .File
