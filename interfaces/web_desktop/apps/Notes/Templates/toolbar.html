@@ -1,0 +1,115 @@
+
+	<div class="Speech">
+		<div class="IconSmall fa-microphone" onclick="this.getElementsByTagName( 'input' )[0].focus();">
+			<input type="text" id="Speecher" onchange="Application.parseText(this.value)"/>
+		</div>
+	</div>
+
+	<div class="ToolbarInner">
+		<div class="HRow">
+			<div class="Button IconButton IconSmall fa-bold" id="tBold" title="{i18n_set_bold}" onclick="editorCommand('bold')">
+				<em>B</em>
+			</div>
+			<div class="Button IconButton IconSmall fa-italic" id="tItalic" title="{i18n_set_italic}" onclick="editorCommand('italic')">
+				<em>I</em>
+			</div>
+			<div class="Button IconButton IconSmall fa-underline" id="tUnderline" title="{i18n_set_underline}" onclick="editorCommand('underline')">
+				<em>U</em>
+			</div>
+			<div class="ToolDivider Divider1"></div>
+			<select id="ToolFormat" title="{i18n_set_block_format}" class="ToolSelect" onchange="editorCommand( 'format' + this.value )">
+				<option value="default" selected="selected">{i18n_default_style}</option>
+				<option value="h1">{i18n_header_1}</option>
+				<option value="h2">{i18n_header_2}</option>
+				<option value="h3">{i18n_header_3}</option>
+				<option value="h4">{i18n_header_4}</option>
+				<option value="h5">{i18n_header_5}</option>
+				<option value="h6">{i18n_header_6}</option>
+				<option value="p">{i18n_paragraph}</option>
+			</select>
+			<div id="MobileMenu">
+				<div class="MenuContents">
+					<div class="ToolDivider Divider2"></div>
+					<select class="ToolSelect" id="zoom" title="{i18n_set_document_zoom}" onchange="editorCommand( 'zoom' + this.value, 'store' )">
+						<option value="100%">{i18n_select_zoom}</option>
+						<option value="">--------------------</option>
+						<option value="75%">75%</option>
+						<option value="100%">100%</option>
+						<option value="125%">125%</option>
+						<option value="150%">150%</option>
+						<option value="200%">200%</option>
+					</select>
+					<div class="ToolDivider Divider3" id="zoomd"></div>
+					<select class="ToolSelect" id="FontSelector" title="{i18n_select_font}" onchange="editorCommand( 'fontType', this.value )">
+						<option selected="selected" value="sans serif">Sans serif</option>
+						<option value="sans">Sans</option>
+						<option value="monospace">Monospace</option>
+						<option value="lato">Lato</option>
+						<option value="times new roman">Times new roman</option>
+						<option value="verdana">Verdana</option>
+						<option value="courier">Courier</option>
+					</select>
+					<select class="ToolSelect" id="FontSize" title="{i18n_font_size}" onchange="editorCommand( 'fontSize', this.value )">
+						<option value="6pt">6pt</option>
+						<option value="7pt">7pt</option>
+						<option value="8pt">8pt</option>
+						<option value="9pt">9pt</option>
+						<option value="10pt">10pt</option>
+						<option value="11pt">11pt</option>
+						<option value="12pt" selected="selected">12pt</option>
+						<option value="14pt">14pt</option>
+						<option value="16pt">16pt</option>
+						<option value="18pt">18pt</option>
+						<option value="20pt">20pt</option>
+						<option value="24pt">24pt</option>
+						<option value="28pt">28pt</option>
+						<option value="32pt">32pt</option>
+						<option value="36pt">36pt</option>
+						<option value="40pt">40pt</option>
+						<option value="48pt">48pt</option>
+						<option value="56pt">56pt</option>
+					</select>
+					<div class="ToolDivider Divider4"></div>
+					<div class="Button IconButton IconSmall fa-file-image-o" id="tImage" title="{i18n_insert_image}" onclick="editorCommand('image')">
+						<em>IMG</em>
+					</div>
+					<div class="Button IconButton IconSmall fa-code" id="tStyles" title="{i18n_styles}" onclick="editStyles()">
+						<em>IMG</em>
+					</div>
+					<br style="clear: both"/>
+					<div class="Button IconButton IconSmall fa-align-left" id="tAlignLeft" title="{i18n_align_left}" onclick="editorCommand('align-left')">
+						<em>IMG</em>
+					</div>
+					<div class="Button IconButton IconSmall fa-align-center" id="tAlignCenter" title="{i18n_align_center}" onclick="editorCommand('align-center')">
+						<em>IMG</em>
+					</div>
+					<div class="Button IconButton IconSmall fa-align-right" id="tAlignRight" title="{i18n_align_right}" onclick="editorCommand('align-right')">
+						<em>IMG</em>
+					</div>
+					<div class="Button IconButton IconSmall fa-align-justify" id="tAlignJustify" title="{i18n_align_justify}" onclick="editorCommand('align-justify')">
+						<em>IMG</em>
+					</div>
+					<div class="Button IconButton IconSmall fa-list-ul" id="tUnorderedBulletList" title="{i18n_unordered_bullet_points}" onclick="editorCommand('ulbullets')">
+						<em>IMG</em>
+					</div>
+					<div class="Button IconButton IconSmall fa-list-ol" id="tOrderedBulletList" title="{i18n_ordered_bullet_point}" onclick="editorCommand('olbullets')">
+						<em>IMG</em>
+					</div>
+					<!--<div class="ToolDivider Divider5"></div>
+					<div class="ButtonLabel IconSmall fa-text-height" id="tTextHeight" title="Line height" onclick="ge('tTextHeight').focus()">
+						<em>IMG</em>
+					</div>
+					<select class="ToolSelect" id="tTextHeight" title="Line height" onchange="editorCommand('line-height', this.value)">
+						<option value="1pt">1pt</option>
+						<option value="1.5pt">1.5pt</option>
+						<option value="2pt">2pt</option>
+						<option value="2.5pt">2.5pt</option>
+					</select>-->
+					<!--<div class="Button" id="tStrikethrough">
+						<em>S</em>
+					</div>-->
+				</div>
+			</div>
+		</div>
+	</div>
+
