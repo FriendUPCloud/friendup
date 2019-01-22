@@ -257,9 +257,14 @@
 }
 /* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
 
-::selection
+:root
 {
 	background: transparent;
+}
+
+::selection
+{
+	background: #1F2D39;
 	color: #E7B66F;
 }
 
