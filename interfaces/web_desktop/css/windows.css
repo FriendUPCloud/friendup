@@ -45,6 +45,50 @@
 	display: none;
 }
 
+/* Special case for mobile */
+[mobile] .View.IconWindow .MobileFileBrowser
+{
+	position: absolute;
+	z-index: 11;
+	height: calc(100% - 40px);
+	top: 40px;
+}
+
+[mobile] .View .DirectoryToolbar button
+{
+	opacity: 1;
+	transition: opacity 0.25s;
+}
+
+[mobile] .View.Mountlist .DirectoryToolbar button
+{
+	opacity: 0;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser
+{
+	padding: 10px;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser,
+[mobile] .View .FileDialog .FileBrowser
+{
+	font-size: 1.1em;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem .fa-remove
+{
+	display: none;
+}
+
+html body[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
+html body[mobile] .View .FileDialog .FileBrowserr .FileBrowserItemImage
+{
+	width: 20px;
+	height: 20px;
+	margin-right: 10px;
+}
+
 .View > .ImageViewerToolbar
 {
 	overflow: hidden;

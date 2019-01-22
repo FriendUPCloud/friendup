@@ -55,13 +55,20 @@ DirectoryView = function( winobj, extra )
 	this.filedialog = false;
 	this.suffix = false;
 	this.keyboardNavigation = true;
+	this.startPath = false;
 	
 	// Read in extra stuff
 	if( extra )
 	{
+		if( extra.startPath )
+			this.startPath = extra.startPath;
 		if( extra.filedialog )
 		{
 			this.filedialog = true;
+		}
+		if( extra.hasSidebar )
+		{
+			this.hasSidebar = true;
 		}
 		if( extra.rightpanel )
 		{
@@ -274,13 +281,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			onclick: function( e )
 			{
 				var test = winobj.fileInfo.Path;
-				if( !winobj.directoryview.filedialog && test.substr( test.length - 1, 1 ) == ':' )
+				if( ( !winobj.directoryview.hasSidebar && !winobj.directoryview.filedialog ) && test.substr( test.length - 1, 1 ) == ':' )
 				{
 					return;
 				}
 				
 				var volu = path = '';
-				if( winobj.directoryview.filedialog && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
+				
+				if( ( winobj.directoryview.hasSidebar || winobj.directoryview.filedialog ) && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
 				{
 					path = 'Mountlist:';
 					volu = 'Mountlist';
@@ -449,6 +457,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		}
 	];
 
+	this.buttonUp = buttons[0];
+
 	// Non System gets makedir
 	if( rpath.substr( 0, 7 ) != 'System:' )
 	{
@@ -521,13 +531,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 DirectoryView.prototype.ShowFileBrowser = function()
 {
-	// If we have no custom toolbar area, it means that we're using
-	// the directoryview in a custom template
-	if( !this.toolbararea && isMobile )
-	{
-		return;
-	}
-	
+
 	var self = this;
 	
 	// Create the file browser
@@ -562,7 +566,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			self.bookmarks = d;
 			
 		// Go instantiate!
-		winobj.fileBrowser = new Friend.FileBrowser( d, { path: winobj.fileInfo.Path, displayFiles: false, filedialog: self.filedialog }, {
+		winobj.fileBrowser = new Friend.FileBrowser( d, { path: winobj.fileInfo.Path, displayFiles: false, justPaths: self.filedialog || self.hasSidebar, filedialog: self.filedialog }, {
 			checkFile( filepath, fileextension )
 			{
 				console.log( filepath + ' on ' + fileextension );
@@ -577,6 +581,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 				winobj.fileInfo.Path = path;
 				winobj.fileInfo.Volume = vol + ':';
 				self.addToHistory( winobj.fileInfo );
+				
 				winobj.refresh();
 			},
 			folderClose( path )
@@ -673,6 +678,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		var dirv = this.directoryview;
 		
+		// Start with a path
+		if( dirv.startPath )
+		{
+			winobj.fileInfo.Path = dirv.startPath;
+			dirv.startPath = false;
+		}
+		
 		// Mobile animations
 		if( isMobile )
 		{
@@ -690,17 +702,31 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				dirv.filearea.parentNode.style.left = '0';
 				dirv.filearea.parentNode.style.width = '100%';
 				dirv.filearea.parentNode.style.transition = 'transform 0.4s';
+				dirv.filearea.style.transition = 'transform 0.4s';
 				
 				if( winobj.fileInfo.Path == 'Mountlist:' )
 				{
-					dirv.filearea.parentNode.style.transform = 'translateX(100%)';
+					if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+					{
+						dirv.filearea.style.transform = 'translateX(100%)';
+					}
+					else
+					{
+						dirv.filearea.parentNode.style.transform = 'translateX(100%)';
+					}
 					dirv.bookmarks.style.transform = 'translateX(0%)';
+					winobj.parentNode.classList.add( 'Mountlist' );
+					dirv.ShowFileBrowser();
+					winobj.windowObject.setFlag( 'title', 'Mountlist' );
 					return;
 				}
 				else
 				{
-					dirv.filearea.parentNode.style.transform = 'translateX(0%)';
+					if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+						dirv.filearea.style.transform = 'translateX(0%)';
+					else dirv.filearea.parentNode.style.transform = 'translateX(0%)';
 					dirv.bookmarks.style.transform = 'translateX(-100%)';
+					winobj.parentNode.classList.remove( 'Mountlist' );
 				}
 			}
 		}
@@ -3734,6 +3760,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			// Animation for going to next folder
 			if( isMobile )
 			{
+				console.log( 'Animation!!!' );
 				var n = document.createElement( 'div' );
 				n.className = 'Content SlideAnimation';
 				n.style.willChange = 'transform';
@@ -4129,10 +4156,12 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		}
 
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>' );
+		
 		var we = win.getWindowElement();
 		we.parentFile = iconObject;
 		we.parentWindow = iconObject.window;
 		we.fileInfo = fileInfo;
+		
 		CreateDirectoryView( we );
 
 		we.win = win;
@@ -4293,6 +4322,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' )
 	{	
+		var extra = null;
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		var id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4338,6 +4368,24 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 
 		// Get legacy win element
 		var win = w.getWindowElement();
+		
+		// Special case - a mobile opens a mountlist
+		if( isMobile && fileInfo.Path == 'Mountlist:' )
+		{
+			extra = {};
+			fileInfo.Path = 'Home:';
+			iconObject.Path = 'Home:';
+			var t = document.createElement( 'div' );
+			t.className = 'MobileFileBrowser BackgroundDefault ScrollArea ScrollBarSmall';
+			win.parentNode.appendChild( t );
+			extra.leftpanel = t;
+			extra.startPath = 'Mountlist:';
+			extra.hasSidebar = true;
+			extra.filedialog = false;
+			extra.nosidebarbackground = true;
+			w.setFlag( 'title', 'Mountlist' );
+		}
+		
 		win.innerHTML = '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>';
 		win.parentFile = iconObject;
 		win.parentWindow = iconObject.window;
@@ -4352,7 +4400,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		}
 
 		// Create a directory view on window
-		CreateDirectoryView( win );
+		CreateDirectoryView( win, extra );
 		w.setFlag( 'hidden', false );
 
 		// Special case - the fileInfo object has a door!
@@ -4455,6 +4503,14 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 				var wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
 				
 				w.setFlag( 'title', _nameFix( wt ) );
+				
+				if( isMobile && wt == 'Mountlist:' )
+				{
+					w.content.redrawIcons( '', w.content.direction );
+					if( callback ) callback();
+					return;
+				}
+				
 				var j = new cAjax ();
 
 				var updateurl = '/system.library/file/dir?wr=1'
@@ -4476,11 +4532,11 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 
 					var content;
 					// New mode
-					if ( this.returnCode == 'ok' )
+					if( this.returnCode == 'ok' )
 					{
 						try
 						{
-							content = JSON.parse(this.returnData || "null" );
+							content = JSON.parse( this.returnData || "null" );
 						}
 						catch ( e ){};
 					}
@@ -4490,7 +4546,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					{
 						try
 						{
-							content = JSON.parse(this.responseText() || "null" );
+							content = JSON.parse( this.responseText() || "null" );
 						}
 						catch ( e ){}
 					}
@@ -4506,6 +4562,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 						}
 					
 						var ww = this.win;
+
 						ww.redrawIcons( content, ww.direction );
 						ww.file = this.file;
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
@@ -4517,7 +4574,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
 				}
-				j.send ();
+				j.send();
 			}
 		}
 
