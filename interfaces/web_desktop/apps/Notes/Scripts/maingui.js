@@ -579,11 +579,6 @@ Application.initializeToolbar = function()
 		f.onLoad = function( data )
 		{
 			d.innerHTML = data;
-			if( window.innerWidth < 600 )
-			{
-				ge( 'zoom' ).style.display = 'none';
-				ge( 'zoomd' ).style.display = 'none';
-			}
 			if( isMobile )
 			{
 				var menuContents = ge( 'MobileMenu' ).getElementsByClassName( 'MenuContents' )[0];
