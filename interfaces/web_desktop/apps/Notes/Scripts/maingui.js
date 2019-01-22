@@ -113,7 +113,7 @@ Application.refreshFilePane = function()
 				}
 			}
 			
-			d.innerHTML = '<p class="Layout">' + num.Filename + '</p><p class="Layout"><em>' + num.DateModified + '</em></p>';
+			d.innerHTML = '<p class="Layout"><strong>' + num.Filename + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
 			
 			ge( 'FileBar' ).appendChild( d );
 			( function( dl, path ){
