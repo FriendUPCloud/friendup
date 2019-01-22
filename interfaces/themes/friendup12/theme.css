@@ -257,6 +257,12 @@
 }
 /* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
 
+::selection
+{
+	background: transparent;
+	color: #333333;
+}
+
 html 
 {
 	height: 100vh;
