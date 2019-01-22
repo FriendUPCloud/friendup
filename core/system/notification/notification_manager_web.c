@@ -24,6 +24,7 @@
 #include <system/fsys/device_handling.h>
 #include <system/notification/notification_manager.h>
 #include <util/session_id.h>
+#include <mobile_app/mobile_app.h>
 
 //test
 #undef __DEBUG
@@ -195,11 +196,35 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 
-		FULONG id = 0;
+		char *username = NULL;
+		char *channelid = NULL;
+		char *app = NULL;
+		char *title = NULL;
+		char *message = NULL;
+		char *extra = NULL;
+		int type = 0;
+		
+		if( username == NULL || channelid == NULL || app == NULL || title == NULL || message == NULL )
+		{
+			int error = MobileAppNotifyUserRegister( l, username, channelid, app, title, message, type, extra );
+		} // missing parameters
+		else
+		{
+			char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, " );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
+		}
 		
 		DEBUG( "[NMWebRequest] notify-clients\n" );
 		
-
+		if( username != NULL ){ FFree( username ); }
+		if( channelid != NULL ){ FFree( channelid ); }
+		if( app != NULL ){ FFree( app ); }
+		if( title != NULL ){ FFree( title ); }
+		if( message != NULL ){ FFree( message ); }
+		if( extra != NULL ){ FFree( extra ); }
 	}
 	
 	return response;

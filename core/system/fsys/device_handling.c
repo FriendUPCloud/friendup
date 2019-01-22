@@ -2278,28 +2278,30 @@ File *GetRootDeviceByName( User *usr, char *devname )
 		int i;
 		for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
-			lDev = usr->u_Groups[ i ]->ug_MountedDevs;
-			while( lDev != NULL )
+			if( usr->u_Groups[ i ] != NULL )
 			{
-				if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
+				lDev = usr->u_Groups[ i ]->ug_MountedDevs;
+				while( lDev != NULL )
 				{
-					if( lDev->f_SharedFile == NULL )
+					if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
 					{
-						actDev = lDev;
+						if( lDev->f_SharedFile == NULL )
+						{
+							actDev = lDev;
+						}
+						else
+						{
+							actDev = lDev->f_SharedFile;
+						}
+						break;
 					}
-					else
-					{
-						actDev = lDev->f_SharedFile;
-					}
+					lDev = (File *)lDev->node.mln_Succ;
+				}
+				if( actDev != NULL )
+				{
 					break;
 				}
-				lDev = (File *)lDev->node.mln_Succ;
-			}
-			if( actDev != NULL )
-			{
-				break;
-			}
-			
+			} // usr->u_Groups[ i ] != NULL
 		}
 	}
 	
