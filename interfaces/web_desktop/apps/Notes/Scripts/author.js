@@ -270,11 +270,11 @@ Application.saveAs = function()
 {
 	this.prevFilename = this.wholeFilename;
 	this.wholeFilename = false;
-	this.save();
+	this.save( 'saveas' );
 }
 
 // Saves current file
-Application.save = function()
+Application.save = function( mode )
 {
 	if( this.wholeFilename )
 	{
@@ -309,6 +309,7 @@ Application.save = function()
 				Application.mainView.setFlag( 'title', 'Author - ' + fname );
 			},
 			mainView: this.mainView,
+			title: mode == 'saveas' ? i18n( 'i18n_save_as' ) : i18n( 'i18n_save' ),
 			suffix: [ 'html', 'htm' ]
 		};
 	

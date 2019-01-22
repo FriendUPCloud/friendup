@@ -18,6 +18,7 @@
 			</div>
 			<div class="ToolDivider Divider1"></div>
 			<select id="ToolFormat" title="{i18n_set_block_format}" class="ToolSelect" onchange="editorCommand( 'format' + this.value )">
+				<option value="">{i18n_headers}</option>
 				<option value="h2">{i18n_header_2}</option>
 				<option value="h3">{i18n_header_3}</option>
 				<option value="h4">{i18n_header_4}</option>
@@ -35,24 +36,12 @@
 						<option value="assistant">Assistant</option>
 					</select>
 					<select class="ToolSelect" id="FontSize" title="{i18n_font_size}" onchange="editorCommand( 'fontSize', this.value )">
-						<option value="6pt">6pt</option>
-						<option value="7pt">7pt</option>
-						<option value="8pt">8pt</option>
-						<option value="9pt">9pt</option>
-						<option value="10pt">10pt</option>
-						<option value="11pt">11pt</option>
-						<option value="12pt" selected="selected">12pt</option>
-						<option value="14pt">14pt</option>
-						<option value="16pt">16pt</option>
-						<option value="18pt">18pt</option>
-						<option value="20pt">20pt</option>
-						<option value="24pt">24pt</option>
-						<option value="28pt">28pt</option>
-						<option value="32pt">32pt</option>
-						<option value="36pt">36pt</option>
-						<option value="40pt">40pt</option>
-						<option value="48pt">48pt</option>
-						<option value="56pt">56pt</option>
+						<option value="">{i18n_sizes}</option>
+						<option value="tiny">{i18n_tiny}</option>
+						<option value="small">{i18n_small}</option>
+						<option value="normal">{i18n_normal}</option>
+						<option value="big">{i18n_big}</option>
+						<option value="huge">{i18n_huge}</option>
 					</select>
 					<div class="ToolDivider Divider4"></div>
 					<div class="Button IconButton IconSmall fa-file-image-o" id="tImage" title="{i18n_insert_image}" onclick="editorCommand('image')">

@@ -197,11 +197,53 @@ Application.initCKE = function()
 			Application.editor = editor;
 			Application.initializeToolbar();
 			
-			var editable = editor;
+			editor.keystrokes.set( 'Ctrl+S', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 83,
+					ctrlKey: true
+				} );
+				stop();
+			} );
 			
-			/*editor.on( 'key', ( e ) => {
-				
-				console.log( 'Test: ', e );
+			// Load
+			editor.keystrokes.set( 'Ctrl+L', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 79,
+					ctrlKey: true
+				} );
+				stop();
+			} );
+			
+			editor.keystrokes.set( 'Ctrl+Shift+S', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'save_as'
+				} );
+				stop();
+			} );
+			
+			editor.keystrokes.set( 'Ctrl+Q', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 81,
+					ctrlKey: true
+				} );
+				stop();
+			} );
+			
+			// Close
+			editor.keystrokes.set( 'Ctrl+W', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 73,
+					ctrlKey: true
+				} );
+				stop();
+			} );
+			
+			// Other keys...
+			editor.editing.view.document.on( 'keydown', ( evt, data ) => {
 				if( Application.contentTimeout )
 					clearTimeout( Application.contentTimeout );
 				Application.contentTimeout = setTimeout( function()
@@ -212,37 +254,9 @@ Application.initCKE = function()
 						scrollTop: Application.editor.element.scrollTop
 					} );
 					Application.contentTimeout = false;
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
 				}, 250 );
-				
-				var wh = e.which ? e.which : e.keyCode;
-				var ctrl = e.ctrlKey;
-				if( !ctrl ) return;
-				
-				// Don't trap irrelevant keys
-				switch( wh )
-				{
-					case 73:
-						editorCommand( 'italic' );
-						break;
-					case 66:
-						editorCommand( 'bold' );
-						break;
-					case 85:
-						editorCommand( 'underline' );
-						break;
-					case 83:
-					case 78:
-					case 79:
-					case 80:
-						Application.sendMessage( {
-							command: 'keydown',
-							key: wh,
-							ctrlKey: ctrl
-						} );
-						cancelBubble( e );
-						return false;
-				}
-			} );*/
+			} );
 		} )
 		.catch( error => {
 			console.error( error );
@@ -1004,7 +1018,7 @@ Application.receiveMessage = function( msg )
 			}
 			break;
 		case 'print_iframe':
-			Application.editor.element.print();
+			window.print();
 			break;
 		case 'makeinlineimages':
 			/*var eles = ge( 'Editor' ).getElementsByTagName( 'img' );
@@ -1131,23 +1145,23 @@ function editorCommand( command, value )
 	}*/
 	else if( command == 'formath2' )
 	{
-		f.execCommand( 'heading', 'heading2' );
+		f.execCommand( 'heading', 'heading1' );
 	}
 	else if( command == 'formath3' )
 	{
-		f.execCommand( 'heading', 'heading3' );
+		f.execCommand( 'heading', 'heading2' );
 	}
 	else if( command == 'formath4' )
 	{
-		f.execCommand( 'heading', 'heading4' );
+		f.execCommand( 'heading', 'heading3' );
 	}
 	else if( command == 'formath5' )
 	{
-		f.execCommand( 'heading', 'heading5' );
+		f.execCommand( 'heading', 'heading4' );
 	}
 	else if( command == 'formath6' )
 	{
-		f.execCommand( 'heading', 'heading6' );
+		f.execCommand( 'heading', 'heading5' );
 	}
 	else if( command == 'formatp' )
 	{

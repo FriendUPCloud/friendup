@@ -6,7 +6,9 @@ i18n_create_folder                  : Lag mappe
 
 menu_new                          : Nytt dokument
 menu_save                         : Lagre
+i18n_save                         : Lagre
 menu_save_as                      : Lagre som
+i18n_save_as                      : Lagre som
 menu_load                         : Åpne
 menu_quit                         : Avslutt
 menu_preferences                  : Innstillinger
@@ -42,6 +44,7 @@ i18n_set_bold                     : Sett fet skrift
 i18n_set_italic                   : Kursiv sett
 i18n_set_underline                : Sett understreke
 i18n_default_style                : Standard stil
+i18n_headers                      : Overskrifter
 i18n_header_1                     : Overskrift 1
 i18n_header_2                     : Overskrift 2
 i18n_header_3                     : Overskrift 3
@@ -77,5 +80,12 @@ i18n_language                     : Språk
 i18n_language_settings            : Språkinnstillinger
 i18n_features                     : Egenskaper
 i18n_feature_settings             : Funksjonsinnstillinger
+
+i18n_sizes                        : Tekststørrelse
+i18n_tiny                         : Mini
+i18n_small                        : Liten
+i18n_normal                       : Normal
+i18n_big                          : Stor
+i18n_huge                         : Størst
 
 

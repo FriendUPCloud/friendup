@@ -9,6 +9,32 @@ html > body
 	height: auto;
 }
 
+.Printable
+{
+	visibility: hidden;
+	pointer-events: none;
+	position: absolute;
+	top: 0;
+	height: 0;
+}
+
+@media print {
+	.EditorContentArea
+	{
+		display: none;
+	}
+	.Printable
+	{
+		display: block;
+		padding: 40px;
+		position: relative;
+		top: auto;
+		height: auto;
+		visibility: visible;
+		color: black;
+	}
+}
+
 #Status
 {
 	position: absolute;

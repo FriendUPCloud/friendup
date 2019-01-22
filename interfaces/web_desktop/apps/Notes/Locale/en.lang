@@ -5,7 +5,9 @@ i18n_create_folder                  : Create folder
 
 menu_new                          : New document
 menu_save                         : Save
+i18n_save                         : Save
 menu_save_as                      : Save as
+i18n_save_as                      : Save as
 menu_load                         : Load
 menu_quit                         : Quit
 menu_preferences                  : Preferences
@@ -41,6 +43,7 @@ i18n_set_bold                     : Set bold
 i18n_set_italic                   : Set italic
 i18n_set_underline                : Set underline
 i18n_default_style                : Default style
+i18n_headers                      : Headers
 i18n_header_1                     : Header 1
 i18n_header_2                     : Header 2
 i18n_header_3                     : Header 3
@@ -60,6 +63,13 @@ i18n_unordered_bullet_points      : Unordered bullet points
 i18n_ordered_bullet_point         : Ordered bullet points
 i18n_set_document_zoom            : Set document zoom
 i18n_set_block_format             : Set block format
+
+i18n_sizes                        : Font size
+i18n_tiny                         : Tiny
+i18n_small                        : Small
+i18n_normal                       : Normal
+i18n_big                          : Big
+i18n_huge                         : Huge
 
 i18n_cancel : Cancel
 i18n_keywords : keywords...
