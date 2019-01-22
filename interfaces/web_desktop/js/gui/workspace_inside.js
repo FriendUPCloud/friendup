@@ -2233,7 +2233,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					var fmenu = {
 						click: function( e )
 						{
-							OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' } );
+							if( isMobile )
+							{
+								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' } );
+							}
+							else
+							{
+								OpenWindowByFileinfo( { Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' } );
+							}
 							Workspace.mainDock.closeDesklet();
 						},
 						type: 'Executable',
