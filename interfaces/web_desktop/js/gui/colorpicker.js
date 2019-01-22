@@ -37,8 +37,13 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 				out.push( Friend.GUI.ColorPickers[ a ] );
 		}
 		Friend.GUI.ColorPickers = out;
+		if( self.onClose )
+			self.onClose();
 		delete self;
 	}
+	
+	// Register the view
+	self.view = v;
 	
 	// Load template and populate
 	var f = new File( 'System:templates/colorpicker.html' );
@@ -89,7 +94,7 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		self.elAccept.onclick = function()
 		{
 			if( successcbk )
-				successcbk( elHexCode.value );
+				successcbk( self.elHexCode.value );
 			v.close();
 		}
 	
@@ -101,10 +106,19 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		// And now add some nice controllers
 		var colCtrl = document.createElement( 'div' );
 		colCtrl.className = 'ColorPickerController MousePointer';
-		colCtrl.onmousedown = function( e )
+		colCtrl[ isMobile ? 'ontouchstart' : 'onmousedown' ] = function( e )
 		{
-			colCtrl.offx = e.clientX - colCtrl.offsetLeft;
-			colCtrl.offy = e.clientY - colCtrl.offsetTop;
+			var px = e.clientX;
+			var py = e.clientY;
+			if( e.touches && e.touches[0] )
+			{
+				px = e.touches[0].clientX;
+				py = e.touches[0].clientY;
+			}
+			
+			colCtrl.offx = px - colCtrl.offsetLeft;
+			colCtrl.offy = py - colCtrl.offsetTop;
+			
 			
 			mousePointer.candidate = {
 				el: colCtrl,
@@ -113,6 +127,13 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 					var s = colCtrl;
 					var x = e.clientX;
 					var y = e.clientY;
+					
+					if( e.touches && e.touches[0] )
+					{
+						x = e.touches[0].clientX;
+						y = e.touches[0].clientY;
+					}
+					
 					var candx = x - s.offx;
 					var candy = y - s.offy;
 		
@@ -137,9 +158,15 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 		// Shadow control
 		var shaCtrl = document.createElement( 'div' );
 		shaCtrl.className = 'ColorPickerShadeControl MousePointer';
-		shaCtrl.onmousedown = function( e )
+		shaCtrl[ isMobile ? 'ontouchstart' : 'onmousedown' ] = function( e )
 		{
-			shaCtrl.offy = e.clientY - shaCtrl.offsetTop;
+			var py = e.clientY;
+			if( e.touches && e.touches[0] )
+			{
+				py = e.touches[0].clientY;
+			}
+			
+			shaCtrl.offy = py - shaCtrl.offsetTop;
 			
 			mousePointer.candidate = {
 				el: colCtrl,
@@ -148,6 +175,13 @@ Friend.GUI.ColorPicker.prototype.init = function( successcbk, failcbk )
 					var s = shaCtrl;
 					var x = e.clientX;
 					var y = e.clientY;
+					
+					if( e.touches && e.touches[0] )
+					{
+						x = e.touches[0].clientX;
+						y = e.touches[0].clientY;
+					}
+					
 					var candy = y - s.offy;
 					if( candy < 0 ) candy = 0;
 					if( candy + shaCtrl.offsetHeight > GetElementHeight( dia ) )
@@ -283,23 +317,3 @@ Friend.GUI.ColorPicker.prototype.refresh = function()
 	}
 }
 
-/*
-
-function _mouseMove( e )
-{
-	if( mouseElement.candidate )
-	{
-		mouseElement.candidate.think( e.clientX, e.clientY );
-	}
-}
-
-function _mouseUp( e )
-{
-	mouseElement.candidate = null;
-}
-
-window.addEventListener( 'mousemove', _mouseMove );
-window.addEventListener( 'touchmove', _mouseMove );
-window.addEventListener( 'mouseup', _mouseUp );
-window.addEventListener( 'touchend', _mouseUp );
-*/

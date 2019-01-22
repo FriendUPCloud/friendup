@@ -865,6 +865,16 @@ html .TrayElement.PopNotification .PopInfo
 
 /* Menu items --------------------------------------------------------------- */
 
+body.Charcoal .AppsShowingTitle
+{
+	background: #303030;
+}
+
+body.Dark .AppsShowingTitle
+{
+	background: #435260;
+}
+
 .Widget .MenuItems .MenuItem.Disabled
 {
 	display: none;
@@ -1349,6 +1359,19 @@ html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View
 	border-radius: 0 0 2px 2px;
 }
 
+html .ViewContainer[childview].Active > .MobileBack:before
+{
+	color: #ffffff;
+	font-size: 1.4em;
+}
+
+html body.Dark .ViewContainer[childview].Active > .MobileBack:before,
+html body.Charcoal .ViewContainer[childview].Active > .MobileBack:before
+{
+	color: #e0e0e0;
+	font-size: 1.4em;
+}
+
 /* Dark theme */
 
 html body.Dark a, html body a.Dark:visited
@@ -1359,7 +1382,12 @@ html body.Dark a, html body a.Dark:visited
 html [mobile=mobile].Dark.ViewMaximized.HasMenu #WorkspaceMenu,
 html [mobile=mobile].Dark.WidgetSlideDown.HasMenu #WorkspaceMenu
 {
-	background: #455155;
+	background: #34495e;
+}
+
+html [mobile=mobile].Dark.ViewMaximized #WorkspaceMenu
+{
+	background: #34495E;
 }
 
 [mobile].Charcoal #WorkspaceMenu.Open
@@ -1528,7 +1556,7 @@ html body.Dark #MousePointer .Row.Odd .Column,
 html body.Dark .ZebraList > tr, 
 html body.Dark .ZebraList > div
 {
-	background-color: #364c63;
+	background-color: #19232e;
 	color: #e0e0e0;
 }
 
@@ -1561,7 +1589,7 @@ html body.Dark #MousePointer .Row .Column,
 html body.Dark .ZebraList > tr:nth-child(odd), 
 html body.Dark .ZebraList > div:nth-child(odd)
 {
-	background-color: #34495e;
+	background-color: #1d2935;
 	color: #e0e0e0;
 }
 
@@ -2344,7 +2372,7 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow.Cust
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title > div > span
 {
-	text-align: left;
+	text-align: center;
 	text-shadow: none;
 }
 
@@ -4171,7 +4199,8 @@ body:not([tablet]) .View:not(.Active)[mobile=mobile][maximized=true] > .Content
 body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
 {
 	left: 40px;
-	width: calc(100% - 105px);
+	width: calc(100% - 80px);
+	text-align: center;
 }
 body:not([tablet])[mobile=mobile] #Screens .View
 body:not([tablet])[mobile=mobile] #Screens .View.Active
@@ -4182,7 +4211,7 @@ body:not([tablet])[mobile=mobile] #Screens .View > .Title,
 body:not([tablet])[mobile=mobile] #Screens .View.Active > .Title
 {
 	height: 40px;
-	border-top: 1px solid rgba(0,0,0,0.1);
+	border-top: 0;
 }
 body:not([tablet])[mobile=mobile] #Screens .View > .Title > div > span
 {

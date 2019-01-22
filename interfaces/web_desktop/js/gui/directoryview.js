@@ -4824,6 +4824,7 @@ Friend.startImageViewer = function( iconObject )
 	var zoomLevel = 1;
 	var zoomImage = null;
 	var position = 'centered';
+	var zoomSet = false;
 
 	var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
 
@@ -4872,6 +4873,34 @@ Friend.startImageViewer = function( iconObject )
 				image.style.left = ( document.body.offsetWidth >> 1 ) - Math.round( w >> 1 ) + 'px';
 			}
 			return;
+		}
+		
+		if( !zoomSet )
+		{
+			var w = image.originalDims.w;
+			var h = image.originalDims.h;
+			if( w > h )
+			{
+				if( w > document.body.offsetWidth )
+				{
+					var firstzoom = w / document.body.offsetWidth;
+					if( firstzoom > 1 )
+					{
+						zoomLevel = 1 / Math.floor( firstzoom );
+					}
+				}
+			}
+			else
+			{
+				if( h > document.body.offsetHeight - 100 )
+				{
+					var firstzoom = h / ( document.body.offsetHeight - 100 );
+					if( firstzoom > 1 )
+					{
+						zoomLevel = 1 / Math.floor( firstzoom );
+					}
+				}
+			}
 		}
 
 		if( !pos ) pos = position;
@@ -4930,6 +4959,7 @@ Friend.startImageViewer = function( iconObject )
 			{
 				eles[a].onclick = function( e )
 				{
+					zoomSet = false;
 					goDirection( -1, e );
 				}
 			}
@@ -4937,6 +4967,7 @@ Friend.startImageViewer = function( iconObject )
 			{
 				eles[a].onclick = function( e )
 				{
+					zoomSet = false;
 					goDirection( 1, e );
 				}
 			}
@@ -4944,6 +4975,7 @@ Friend.startImageViewer = function( iconObject )
 			{
 				eles[a].onclick = function( e )
 				{
+					zoomSet = true;
 					zoomLevel *= 2;
 					if( zoomLevel > 10 )
 						zoomLevel = 10;
@@ -4954,6 +4986,7 @@ Friend.startImageViewer = function( iconObject )
 			{
 				eles[a].onclick = function( e )
 				{
+					zoomSet = true;
 					zoomLevel /= 2;
 					if( zoomLevel < 0.1 )
 						zoomLevel = 0.1;

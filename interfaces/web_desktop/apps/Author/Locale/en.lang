@@ -1,4 +1,7 @@
-
+i18n_your_devices                   : Your devices
+i18n_bookmarks                      : Bookmarks
+i18n_file_menu                      : File menu
+i18n_create_folder                  : Create folder
 
 menu_new                          : New document
 menu_save                         : Save

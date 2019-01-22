@@ -887,13 +887,17 @@ function _ActivateWindowOnly( div )
 		// No div selected or not the div we're looking for - do inactive!
 		if( !div || m != div )
 		{
-			_DeactivateWindow( m );
-			if( window.isMobile && !window.isTablet )
+			if( isMobile )
 			{
-				// TODO: May need to be deleted
-				m.style.height = '35px';
-				newOffsetY += 35;
+				_DeactivateWindow( m );
+				if( window.isMobile && !window.isTablet )
+				{
+					// TODO: May need to be deleted
+					m.style.height = '35px';
+					newOffsetY += 35;
+				}
 			}
+			_DeactivateWindow( m );
 		}
 		// This is the div we are looking for!
 		else if( m == div )
@@ -1797,6 +1801,7 @@ var View = function( args )
 							var app = _getAppByAppId( div.applicationId );
 							if( app.mainView )
 							{
+								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
 							}
 						}
@@ -2180,7 +2185,7 @@ var View = function( args )
 				var t = ( new Date() ).getTime();
 				if( self.clickOffset )
 				{
-					if( t - self.clickOffset.time > 300 )
+					if( t - self.clickOffset.time > 150 )
 					{
 						// Update time
 						self.clickOffset.removable = true;
@@ -2210,7 +2215,7 @@ var View = function( args )
 				// Drag 100 px under 0.15ms
 				if( this.viewIcon.classList.contains( 'Dragging' ) )
 				{
-					if( diffy > 100 )
+					if( diffy > 50 )
 					{
 						this.viewIcon.classList.add( 'Remove' );
 					}
@@ -3164,6 +3169,7 @@ var View = function( args )
 						e.button = 0;
 						window.mouseDown = 1; // Window mode
 						title.onmousedown( e );
+						_ActivateWindow( div );
 					} );
 				}
 				if( !window.isMobile )
@@ -4640,6 +4646,12 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 			c.style.left = '0';
 			c.style.width = '100%';
 			c.style.height = '100%';
+			continue;
+		}
+		// Non-mainview windows are not displayed
+		else if( !v.windowObject.flags.mainView && v.windowObject.applicationId )
+		{
+			c.style.top = '-100%';
 			continue;
 		}
 		

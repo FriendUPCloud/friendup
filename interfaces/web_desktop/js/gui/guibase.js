@@ -3174,7 +3174,8 @@ movableMouseDown = function ( e )
 	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
-		DefaultToWorkspaceScreen( tar );
+		if( !isMobile )
+			DefaultToWorkspaceScreen( tar );
 	}
 	
 	// TODO: Allow context menus!
@@ -3236,7 +3237,7 @@ movableMouseDown = function ( e )
 	
 	// Desktop / view selection 
 	if(
-		clickonDesktop || clickOnView
+		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
 		if( !sh )
@@ -3442,7 +3443,8 @@ function FocusOnNothing()
 {
 	if( !window.currentMovable ) return;
 	
-	_DeactivateWindows();
+	if( !isMobile )
+		_DeactivateWindows();
 	
 	// Put focus somewhere else than where it is now..
 	// Blur like hell! :)

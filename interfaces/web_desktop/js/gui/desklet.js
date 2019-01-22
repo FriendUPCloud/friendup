@@ -219,6 +219,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		
 			this.mobileClicked = true;
 		
+			var menuTitle = document.createElement( 'div' );
+			menuTitle.className = 'AppsShowingTitle';
+			this.menuTitle = menuTitle;
+			menuTitle.innerHTML = i18n( 'i18n_your_apps' );
+			Workspace.screen.contentDiv.parentNode.appendChild( menuTitle );
+		
 			// determine y pos
 			this.dom.className = 'Desklet Open';
 			var d = this.dom;
@@ -227,8 +233,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				d.classList.add( 'Opened' );
 				self.opening = false;
 				self.open = true;
+				menuTitle.classList.add( 'Opened' );
 			}, 5 );
 			document.body.classList.add( 'AppsShowing' );
+			
 			if( Workspace.widget ) Workspace.widget.slideUp();
 			return cancelBubble( e );
 		}
@@ -248,6 +256,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				self.open = false;
 			}, 250 );
 			document.body.classList.remove( 'AppsShowing' );
+			if( this.menuTitle )
+			{
+				Workspace.screen.contentDiv.parentNode.removeChild( this.menuTitle );
+				this.menuTitle = null;
+			}
 			Workspace.redrawIcons();
 			return cancelBubble( e );
 		}

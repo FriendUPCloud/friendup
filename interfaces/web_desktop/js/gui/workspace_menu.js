@@ -340,8 +340,13 @@ var WorkspaceMenu =
 		
 		// Add to body so we can style whether we have a menu or not
 		if( !menuItems || !menuItems.length )
+		{
 			document.body.classList.remove( 'HasMenu' );
-		else document.body.classList.add( 'HasMenu' );
+		}
+		else 
+		{
+			document.body.classList.add( 'HasMenu' );
+		}
 		
 		// We can't do this while showing!
 		if( ( window.isMobile || IsSharedApp() ) && ge( 'MobileMenu' ) && ge( 'MobileMenu' ).classList.contains( 'Visible' ) )

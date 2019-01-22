@@ -295,8 +295,11 @@ Screen = function ( flags, initObject )
 			( !t.id && t.parentNode.id == 'DoorsScreen' && t.classList && t.classList.contains( 'ScreenContent' ) )
 		)
 		{
-			_DeactivateWindows();
-			Workspace.toggleStartMenu( false );
+			if( !isMobile )
+			{
+				_DeactivateWindows();
+				Workspace.toggleStartMenu( false );
+			}
 		}
 	}
 	if( this.iframe )
@@ -481,7 +484,10 @@ Screen = function ( flags, initObject )
 		// We are registering a click inside
 		if( !( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) )
 		{	
-			_DeactivateWindows();
+			if( !isMobile )
+			{
+				_DeactivateWindows();
+			}
 			var tp = e.changedTouches[0];
 			if( !scrn.touch ) scrn.touch = {};
 			scrn.touch.moving = true;
@@ -506,7 +512,10 @@ Screen = function ( flags, initObject )
 			{
 				if( t.classList.contains( 'ScreenContent' ) )
 				{
-					_DeactivateWindows();
+					if( !isMobile )
+					{
+						_DeactivateWindows();
+					}
 					ExposeWindows();
 					ExposeScreens();
 				}

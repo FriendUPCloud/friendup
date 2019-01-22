@@ -11,6 +11,121 @@
 var Config = {
 };
 
+var filebrowserCallbacks = {
+	// Check a file on file extension
+	checkFile( path, extension )
+	{
+		var ext = extension.toLowerCase();
+		if( ext == 'html' || ext == 'htm' )
+		{
+			Application.loadFile( path );
+		}
+		else
+		{
+			return;
+		}
+	},
+	// Load a file
+	loadFile( path )
+	{
+		var pp = path.toLowerCase();
+		if( pp.substr( pp.length - 4, 4 ) == '.htm' || pp.substr( pp.length - 5, 5 ) == '.html' )
+		{
+			Application.loadFile( path );
+		}
+		else
+		{
+			return;
+		}
+	},
+	// Do we permit?
+	permitFiletype( path )
+	{
+		return Application.checkFileType( path );
+	}
+};
+
+Application.checkFileType = function( p )
+{
+	if( p.indexOf( '/' ) > 0 )
+	{
+		p = p.split( '/' );
+		p.pop();
+		p = p.join( '/' ) + '/';
+	}
+	else if( p.indexOf( ':' ) > 0 )
+	{
+		p = p.split( ':' );
+		p = p[0] + ':';
+	}
+	if( Application.browserPath != p )
+	{
+		Application.browserPath = p;
+		
+		
+		Application.refreshFilePane();
+	}
+}
+
+Application.refreshFilePane = function()
+{
+	var d = new Door( Application.browserPath );
+	d.getIcons( function( items )
+	{
+		if( !items )
+		{
+			ge( 'FileBar' ).innerHTML = '';
+			return;
+		}
+		var byDate = [];
+		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
+		items.reverse();
+		
+		ge( 'FileBar' ).innerHTML = '';
+		ge( 'FileBar' ).className = 'List ScrollArea ScrollBarSmall BorderRight';
+		var sw = 2;
+		
+		for( var a = 0; a < items.length; a++ )
+		{
+			var num = items[ a ];
+			var ext = num.Filename.split( '.' );
+			ext = ext.pop().toLowerCase();
+			if( ext != 'html' && ext != 'htm' ) continue;
+			
+			sw = sw == 2 ? 1 : 2;
+			
+			var d = document.createElement( 'div' );
+			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
+			
+			if( Application.currentDocument && Application.currentDocument == num.Path )
+			{
+				d.classList.add( 'Selected' );
+			}
+			else
+			{
+				d.onmouseover = function()
+				{
+					this.classList.add( 'Selected' );
+				}
+				d.onmouseout = function()
+				{
+					this.classList.remove( 'Selected' );
+				}
+			}
+			
+			d.innerHTML = '<p class="Layout">' + num.Filename + '</p><p class="Layout"><em>' + num.DateModified + '</em></p>';
+			
+			ge( 'FileBar' ).appendChild( d );
+			( function( dl, path ){
+				dl.onclick = function()
+				{
+					Application.loadFile( path );
+				}
+			} )( d, num.Path );
+		};
+	} );
+}
+
 Application.run = function( msg, iface )
 {
 	// To tell about ck
@@ -39,35 +154,23 @@ Application.run = function( msg, iface )
 			} );
 			Application.contentTimeout = false;
 		}, 250 );
-	}	
+	}
+	
+	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:' }, filebrowserCallbacks );
+	FileBrowser.render();
+	this.fileBrowser = FileBrowser;
 }
 
 Application.checkWidth = function()
 {
 	var ww = window.innerWidth;
-	//console.log( ww );
-	/*if( ww <= 540 )
+	if( ww < 840 )
 	{
-		editorCommand( 'keepWidth' );
-	}
-	else if( ww < 640 )
-	{
-		editorCommand( 'zoom60%' );
-	}
-	else if( ww < 740 )
-	{
-		editorCommand( 'zoom70%' );
-	}
-	else*/ if( ww < 840 )
-	{
-		//editorCommand( 'zoom80%' );
 		editorCommand( 'staticWidth' );
-		//console.log( 'Static width!' );
 	}
 	else
 	{
 		editorCommand( 'dynamicWidth' );
-		//console.log( 'Dynamic width' );
 	}
 }
 
@@ -83,7 +186,6 @@ Application.initCKE = function()
 			instanceReady: function( evt )
 			{ 
 				var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
-				//evt.editor.execCommand( 'maximize' ); 
 				var eles = document.getElementsByTagName( 'link' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -100,24 +202,6 @@ Application.initCKE = function()
 				d.body.parentNode.style.cursor = computed.cursor;
 				
 				Application.initializeToolbar();
-				
-				/*if( isMobile )
-				{
-					d.body.onmousedown = function( e )
-					{
-						if( this == d.activeElement )
-						{
-							ge( 'AuthorToolbar' ).className = 'Hidden';
-							ge( 'cke_1_contents' ).className = 'Hidden';
-						}
-						else
-						{
-							ge( 'AuthorToolbar' ).className = '';
-							ge( 'cke_1_contents' ).className = '';
-						}
-					}
-					d.body.onthouchdown = d.body.onmousedown;
-				}*/
 			},
 			contentDom: function( e )
 			{
@@ -127,6 +211,7 @@ Application.initCKE = function()
 					var wh = e.which ? e.which : e.keyCode;
 					var ctrl = e.ctrlKey;
 					if( !ctrl ) return;
+					
 					// Don't trap irrelevant keys
 					switch( wh )
 					{
@@ -153,38 +238,6 @@ Application.initCKE = function()
 					}
 					return false;
 				}, false );
-				/*editable.attachListener( e.editor.document, 'keyup', function( evt ) 
-				{
-					if( evt.data.$.ctrlKey )
-					{
-						// Don't trap irrelevant keys
-						switch( evt.data.$.which )
-						{
-							case 73:
-								editorCommand( 'italic' );
-								break;
-							case 66:
-								editorCommand( 'bold' );
-								break;
-							case 85:
-								editorCommand( 'underline' );
-								break;
-							case 83:
-							case 78:
-							case 79:
-							case 80:
-								Application.sendMessage( {
-									command: 'keydown',
-									key: evt.data.$.which,
-									ctrlKey: evt.data.$.ctrlKey
-								} );
-								cancelBubble( evt );
-								return false;
-						}
-						return false;
-					}
-					else console.log( evt.data.$.which );
-				} );*/
 				editable.attachListener( e.editor.document, 'keydown', function( evt ) 
 				{
 					if( Application.contentTimeout )
@@ -467,7 +520,7 @@ Application.initializeToolbar = function()
 		d.id = 'AuthorToolbar';
 		d.className = 'BackgroundDefault ColorDefault BorderTop';
 		this.toolbar = d;
-		document.body.appendChild( d );
+		ge( 'RightBar' ).insertBefore( d, ge( 'RightBar' ).firstChild );
 		
 		var f = new File( 'Progdir:Templates/toolbar.html' );
 		f.onLoad = function( data )
@@ -704,6 +757,9 @@ Application.setCurrentDocument = function( pth )
 		this.fileName = fname;
 	}
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
+	this.currentDocument = pth;
+	
+	Application.refreshFilePane();
 	
 	this.sendMessage( {
 		command: 'currentfile',
@@ -751,7 +807,10 @@ Application.loadFile = function( path )
 					{
 						ge( 'Status' ).innerHTML = '';
 					}, 500 );
+					
+					Application.setCurrentDocument( path );
 				}
+				
 				// We got an error...
 				else
 				{
@@ -797,6 +856,8 @@ Application.loadFile = function( path )
 						}
 						f.contentWindow.document.body.innerHTML = bdata[1];
 						f.contentWindow.document.body.style.overflow = 'auto';
+					
+						Application.setCurrentDocument( path );
 					
 						// Remember content and top scroll
 						Application.sendMessage( { 
@@ -864,6 +925,7 @@ Application.saveFile = function( path, content )
 						ge( 'Status' ).innerHTML = '';
 					}, 1000 );
 				}
+				Application.refreshFilePane();
 			}
 			m.execute( 'convertfile', { path: path, data: content, dataFormat: 'html', format: extension } );
 			break;
@@ -876,6 +938,7 @@ Application.saveFile = function( path, content )
 				{
 					ge( 'Status' ).innerHTML = '';
 				}, 500 );
+				Application.refreshFilePane();
 			}
 			f.save( content, path );
 			break;
