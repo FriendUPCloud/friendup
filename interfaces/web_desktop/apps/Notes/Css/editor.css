@@ -312,7 +312,17 @@ For now, we don't use this, we don't have enough tools...
 
 [mobile] .ToolbarInner
 {
-	padding: 0 10px;
+	padding: 2px 10px;
+}
+
+[mobile] .ToolbarInner .Button
+{
+	line-height: 18px;
+}
+
+[mobile] .ToolbarInner #ToolFormat
+{
+	margin-left: 10px;
 }
 
 [mobile] #MobileMenu
@@ -363,6 +373,11 @@ For now, we don't use this, we don't have enough tools...
 	transform: translateX(-100%);
 	content: " ";
 	display: block;
+}
+
+[mobile] #MobileMenu:before
+{
+	margin-left: -2px;
 }
 
 [mobile] #MobileMenu.Open:before
