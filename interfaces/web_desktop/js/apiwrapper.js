@@ -1615,21 +1615,17 @@ function apiWrapper( event, force )
 							break;
 						case 'activate':
 							// Don't touch moving windows!
-							if( !( window.currentMovable && currentMovable.getAttribute( 'moving' ) == 'moving' ) )
+							if( window.isMobile )
 							{
-								if( !window.isMobile )
+								if( win )
 								{
-									if( win )
-									{
-										win.activate();
-									}
-									WorkspaceMenu.close();
-								}
-								else
-								{
-									console.log( 'Activate: ' + win.flags.title );
 									win.activate();
 								}
+								WorkspaceMenu.close();
+							}
+							else if( !( window.currentMovable && currentMovable.getAttribute( 'moving' ) == 'moving' ) )
+							{
+								win.activate();	
 							}
 							break;
 					}
