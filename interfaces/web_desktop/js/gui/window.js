@@ -3363,7 +3363,6 @@ var View = function( args )
 		// If the current window is an app, move it to front.. (unless new window is a child window)
 		if( window.friend && Friend.currentWindowHover )
 			Friend.currentWindowHover = false;
-		div.justOpened = true;
 		_ActivateWindow( div );
 		_WindowToFront( div );
 		

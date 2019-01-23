@@ -665,6 +665,7 @@ body.WindowMenu #Screens .View
 
 body .ViewContainer .View.Active
 {
+	will-transform: transform, content;
 	transition: transform 0.25s !important;
 }
 
