@@ -473,8 +473,8 @@ body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
 {
 	width: 0%;
 	height: 0%;
-	top: 50%;
-	left: 50%;
+	top: 0%;
+	left: 0%;
 }
 
 /* 3D is for later ---------------------------------------------------------- */
