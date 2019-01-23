@@ -104,5 +104,35 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr );
 
 int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *groups );
 
+//
+//
+//
+
+int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
+
+//
+//
+//
+
+int UGMRemoveUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
+
+//
+//
+//
+
+FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG uid );
+
+//
+//
+//
+
+FBOOL UGMUserToGroupISConnectedByUNameDB( UserGroupManager *um, FULONG ugroupid, const char *uname );
+
+//
+//
+//
+
+FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, FULONG uid );
+
 
 #endif //__SYSTEM_USER_USER_GROUP_MANAGER_H__

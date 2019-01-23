@@ -88,6 +88,7 @@ typedef struct UserGroupLink
 {
 	MinNode				node;
 	UserGroup 			*ugl_Group;
+	FULONG				ugl_GroupID;
 }UserGroupLink;
 
 /*
@@ -109,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
 
 typedef struct UserSessListEntry
 {
-	void 					*us;
+	void 			*us;
 	MinNode			node;
 }UserSessListEntry;
 
@@ -137,8 +138,9 @@ typedef struct User
 	File						*u_WebDAVDevs;		// shared webdav resources 
 	int							u_WebDAVDevsNr;		// number of mounted webdav drives
 	
-	UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
-	int							u_GroupsNr;		// number of assigned groups
+	UserGroupLink				*u_UserGroupLinks;		// user groups
+	//UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
+	//int							u_GroupsNr;		// number of assigned groups
 	UserApplication				*u_Applications;   // pointer to application settings
 	FPrinter					*u_Printers;		// user printers
 	
@@ -221,6 +223,24 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error );
 //
 
 int UserRegenerateSessionID( User *usr, char *newsess );
+
+//
+//
+//
+
+void UserDeleteGroupLink( UserGroupLink *ugl );
+
+//
+//
+//
+
+void UserDeleteGroupLinkAll( UserGroupLink *ugl );
+
+//
+//
+//
+
+void UserRemoveFromGroups( User *u );
 
 //
 // SQL structure

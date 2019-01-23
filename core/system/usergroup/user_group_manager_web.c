@@ -667,6 +667,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				groupID = strtol( (char *)el->data, &end, 0 );
 			}
 			
+			BufString *bs = BufStringNew();
+			
 			if( groupID > 0 )
 			{
 				UserGroup *ug = NULL;
@@ -675,25 +677,43 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				{
 					// go through all elements and find proper users
 					
-					StringListEl *el = SLEParseString( users );
+					IntListEl *el = ILEParseString( users );
 					
 					while( el != NULL )
 					{
-						StringListEl *rmEntry = el;
+						IntListEl *rmEntry = el;
 						
-						el = (StringListEl *)el->node.mln_Succ;
+						el = (IntListEl *)el->node.mln_Succ;
 						
-						//
-						
-						if( rmEntry->s_Data != NULL )
+						FBOOL isInGroup = FALSE;
+						FBOOL isInMemory = FALSE;
+						// get user from memory first
+						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+						if( usr != NULL )
 						{
-							FFree( rmEntry->s_Data );
+							if( UserGroupAddUser( ug, usr ) == 1 )	// 1 - user is in group, no need to add him twice
+							{
+								isInGroup = TRUE;
+							}
+							isInMemory = TRUE;
 						}
+						else
+						{
+							// there is need to check and update DB
+							//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
+							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, el->i_Data );
+							if( exist == FALSE )
+							{
+								UGMAddUserToGroupDB( l->sl_UGM, groupID, el->i_Data );
+							}
+						}
+						
 						FFree( rmEntry );
 					}
 				}
 			}
 			
+			BufStringDelete( bs );
 		
 			if( users != NULL )
 			{
