@@ -724,6 +724,11 @@ body .ViewContainer.DelayedDeactivation .ViewIcon
 	opacity: 0 !important;
 }
 
+body .ViewContainer.Closing
+{
+	display: none;
+}
+
 body.ViewMaximized .ViewContainer.Active .ViewIcon 
 {
 	z-index: 2147483647 !important;
