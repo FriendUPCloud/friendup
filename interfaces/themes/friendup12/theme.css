@@ -4396,3 +4396,10 @@ body[mobile=mobile] .Desklet.Open.Opened
 	height: calc(100% - 97px) !important;
 }
 
+/* HACKS BE DRAGONS! */
+
+#hello #messages
+{
+	scroll-behavior: smooth;
+}
+
