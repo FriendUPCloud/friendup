@@ -408,7 +408,7 @@ var WorkspaceMenu =
 			}
 		}
 		
-		if( isMobile && appid )
+		if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
 		{
 			var found = false;
 			for( var z = 0; z < menuItems.length; z++ )
@@ -440,10 +440,20 @@ var WorkspaceMenu =
 				menuItems = clearQuit( menuItems );
 				
 				// Add option to quit application
-				menuItems.push( {
-					name: i18n( 'i18n_quit' ),
-					command: 'quit'
-				} );
+				if( currentMovable && currentMovable.content.directoryview )
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_close' ),
+						command: 'close'
+					} );
+				}
+				else
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_quit' ),
+						command: 'quit'
+					} );
+				}
 			}
 		}
 		

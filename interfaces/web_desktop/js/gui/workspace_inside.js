@@ -6201,7 +6201,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				items: Workspace.getBookmarks()
 			}*/
 		];
-
+		
 		// Generate
 		if( !prohibitworkspaceMenu )
 		{
