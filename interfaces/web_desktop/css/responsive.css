@@ -660,10 +660,14 @@ body.WindowMenu #Screens .View
 {
 	transform: rotateZ(0deg);
 	opacity: 1;
+	transition: opacity 0.25s;
 }
 
 body.ViewMaximized .ViewContainer:not(.Active),
-body.AppsShowing .ViewContainer
+body.AppsShowing .ViewContainer,
+body.AppsShowing .ViewContainer .ViewIcon,
+body .ViewContainer[childview] .ViewIcon,
+body .ViewContainer.Closing:not(.Active)
 {
 	opacity: 0 !important;
 }
