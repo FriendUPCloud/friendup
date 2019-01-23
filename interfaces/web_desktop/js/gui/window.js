@@ -872,18 +872,14 @@ function SetScreenByWindowElement( div )
 function _ActivateWindowOnly( div )
 {
 	// Blocker
-	if( div.content && div.content.blocker )
+	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
 	}
 	
-	var delayedDeactivation = false;
-	if( window.currentMovable && div.justOpened && currentMovable && div != currentMovable )
-	{
-		delayedDeactivation = true;
-		delete div.justOpened;
-	}
+	// Special case
+	var delayedDeactivation = true;
 	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
@@ -903,20 +899,14 @@ function _ActivateWindowOnly( div )
 					{
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
-						if( window.isMobile && !window.isTablet )
-						{
-							// TODO: May need to be deleted
-							dd.style.height = '35px';
-						}
 					}
-					if( delayedDeactivation && dd == currentMovable )
+					if( delayedDeactivation )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
 						setTimeout( function(){ deal() }, 500 );
 					}
 					else deal();
 				} )( m );
-				newOffsetY += 35;
 			}
 			else
 			{
@@ -996,22 +986,6 @@ function _ActivateWindowOnly( div )
 				div.notifyActivated = true;
 				div.windowObject.sendMessage( msg );
 			}
-
-			if( !window.isTablet && window.isMobile )
-			{
-				if( m.lastHeight )
-				{
-					m.style.height =  Math.min( Workspace.screenDiv.clientHeight - newOffsetY - 72, m.lastHeight) + 'px';
-				}
-				else if( Workspace && Workspace.screenDiv )
-				{
-					m.style.height = Math.min( Workspace.screenDiv.clientHeight - newOffsetY - 72, Workspace.screenDiv.clientHeight - 200 ) + 'px';
-				}
-				else
-				{
-					m.style.height = '175px';
-				}
-			}
 		}
 	}
 	// Check window
@@ -1059,6 +1033,26 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		_WindowToFront( div );
 	}
+	
+	// Tell window manager we are activating window
+	div.classList.add( 'Activating' );
+	div.parentNode.classList.add( 'Activating' );
+	setTimeout( function()
+	{
+		if( div )
+		{
+			div.classList.add( 'Activated' );
+			div.classList.remove( 'Activating' );
+			setTimeout( function()
+			{
+				if( div )
+				{
+					div.classList.remove( 'Activated' );
+					div.parentNode.classList.remove( 'Activating' );
+				}
+			}, 5 );
+		}
+	}, 250 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
@@ -1960,7 +1954,7 @@ var View = function( args )
 			div.setAttribute( 'transparent', 'transparent' );
 		}
 
-		div.style.webkitTransform = 'translate3d(0, 0, 0)';
+		div.style.transform = 'translate3d(0, 0, 0)';
 
 		var zoom; // for use later - zoom gadget
 

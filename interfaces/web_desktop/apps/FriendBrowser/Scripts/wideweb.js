@@ -150,7 +150,7 @@ Application.receiveMessage = function( msg )
 		case 'about':
 			if( this.ab )
 			{
-				return;
+				return this.ab.activate();
 			}
 			this.ab = new View( {
 				title: i18n( 'i18n_about_wideweb' ),

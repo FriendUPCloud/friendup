@@ -663,11 +663,60 @@ body.WindowMenu #Screens .View
 	transition: opacity 0.25s;
 }
 
-body.ViewMaximized .ViewContainer:not(.Active),
+body .ViewContainer .View.Active
+{
+	transition: transform 0.25s !important;
+}
+
+body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
+body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
+body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening,
+body #Screens .ViewContainer[childview] .View.DelayedDeactivation
+{
+	transform: translateX(100%) !important;
+	left: 100% !important;
+}
+body.ViewMaximized .ViewContainer:not(.DelayedDeactivation) .View.Activating,
+body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation) .View.Activating,
+body #Screens .ViewContainer:not(.DelayedDeactivation) .View.Opening
+{
+	transform: translateX(-100%) !important;
+	left: -100% !important;
+}
+body.ViewMaximized .ViewContainer .View.Activated
+{
+	transform: translateX(0%) !important;
+}
+
+#Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
+{
+	z-index: 0 !important;
+}
+
+body:not([sharedapp]) #Screens .View.Active .Thumbnail
+{
+	background-color: transparent;
+	transition: background 0.3s;
+}
+body:not([sharedapp]) #Screens .View.Active.Opening .Thumbnail,
+body:not([sharedapp]) #Screens .View.Active.Opened .Thumbnail,
+body:not([sharedapp]) #Screens .View.Active.Redrawing .Thumbnail
+{
+	background-image: none !important;
+	background-color: #202020;
+}
+
+body #Screens .View:not(.Active)
+{
+	max-height: 35px;
+}
+
+body.ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation),
 body.AppsShowing .ViewContainer,
 body.AppsShowing .ViewContainer .ViewIcon,
 body .ViewContainer[childview] .ViewIcon,
-body .ViewContainer.Closing:not(.Active)
+body .ViewContainer.Closing:not(.Active) .ViewIcon,
+body .ViewContainer.DelayedDeactivation .ViewIcon
 {
 	opacity: 0 !important;
 }

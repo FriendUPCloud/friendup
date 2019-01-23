@@ -464,11 +464,6 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	border-radius: 8px;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer > .ViewIcon
-{
-	transition: width,height,top,left 0.25s,0.25s,0.25s,0.25s;
-}
-
 body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
 {
 	width: 0%;
@@ -934,16 +929,6 @@ html .View.Active
 	transition: transform 0.25s;
 	-moz-transition: transform 0.25s;
 	-webkit-transition: transform 0.25s;
-}
-
-body[mobile=mobile] #Screens .View
-{
-	transition: none !important;
-	-webkit-transition: none !important;
-	transition-property: none !important;
-	-webkit-transition-property: none !important;
-	transition-duration: 0s !important;
-	-webkit-transition-duration: 0s !important;
 }
 
 html .View.Active > .Title
