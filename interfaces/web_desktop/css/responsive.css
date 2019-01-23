@@ -691,6 +691,11 @@ body.ViewMaximized .ViewContainer .View.Activated
 	transform: translateX(0%) !important;
 }
 
+.ViewContainer.Closing
+{
+	display: none;
+}
+
 #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	z-index: 0 !important;
@@ -722,11 +727,6 @@ body .ViewContainer.Closing:not(.Active) .ViewIcon,
 body .ViewContainer.DelayedDeactivation .ViewIcon
 {
 	opacity: 0 !important;
-}
-
-body .ViewContainer.Closing
-{
-	display: none;
 }
 
 body.ViewMaximized .ViewContainer.Active .ViewIcon 
