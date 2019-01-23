@@ -1800,6 +1800,7 @@ var View = function( args )
 			// Make a container to put the view div inside of
 			var viewContainer = document.createElement( 'div' );
 			viewContainer.className = 'ViewContainer';
+			viewContainer.style.display = 'none';
 			
 			// Get icon for visualizations
 			if( applicationId )
@@ -3151,6 +3152,7 @@ var View = function( args )
 		
 		// Append view window to parent
 		divParent.appendChild( viewContainer );
+		
 		if( inGroup )
 		{
 			ResizeWindow( divParent.parentNode );
@@ -3175,6 +3177,9 @@ var View = function( args )
 		// So, dont creating, behave normally now
 		setTimeout( function(){ div.setAttribute( 'created', '' ); }, 300 );
 
+		// Turn calculations on
+		viewContainer.style.display = '';
+		
 		// Once the view appears on screen, again, constrain it
 		ConstrainWindow( div );
 		
