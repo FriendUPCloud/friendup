@@ -675,6 +675,7 @@ body #Screens .ViewContainer[childview] .View.DelayedDeactivation
 {
 	transform: translateX(100%) !important;
 	left: 100% !important;
+	overflow: hidden;
 }
 body.ViewMaximized .ViewContainer:not(.DelayedDeactivation) .View.Activating,
 body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation) .View.Activating,
@@ -682,6 +683,7 @@ body #Screens .ViewContainer:not(.DelayedDeactivation) .View.Opening
 {
 	transform: translateX(-100%) !important;
 	left: -100% !important;
+	overflow: hidden;
 }
 body.ViewMaximized .ViewContainer .View.Activated
 {

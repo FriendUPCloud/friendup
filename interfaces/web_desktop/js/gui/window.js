@@ -900,7 +900,7 @@ function _ActivateWindowOnly( div )
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
 					}
-					if( delayedDeactivation )
+					if( delayedDeactivation && div.applicationId == dd.applicationId )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
 						setTimeout( function(){ deal() }, 500 );
