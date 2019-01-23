@@ -347,7 +347,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	var cnt  = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
-		if( !cnt && divs[a].className == 'Content' )
+		if( !cnt && divs[a].classList && divs[a].classList.contains( 'Content' ) )
 		{
 			cnt = divs[a];
 			break;
@@ -827,9 +827,10 @@ function AutoResizeWindow( div )
 	var title = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
-		if( divs[a].className == 'Content' )
+		if( !divs[a].classList ) continue;
+		if( divs[a].classList.contains( 'Content' ) )
 			cnt = divs[a];
-		if( divs[a].className == 'Title' )
+		if( divs[a].classList.contains( 'Title' ) )
 			title = divs[a];
 	}
 	if ( !cnt ) return false;
@@ -929,12 +930,9 @@ function _ActivateWindowOnly( div )
 				window.regionWindow = div.content;
 			else window.regionWindow = div;
 
-			if( window.currentMovable )
-			{
-				if( div.content )
-					window.currentMovable = div;
-				else window.currentMovable = div;
-			}
+			if( div.content )
+				window.currentMovable = div;
+			else window.currentMovable = div;
 
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
@@ -1336,7 +1334,7 @@ function GetWindowVariableByEvent( e, vari )
 		var cnt = false;
 		for( var a = 0; a < divs.length; a++ )
 		{
-			if ( divs[a].className == 'Content' )
+			if( divs[a].classList && divs[a].classList.contains( 'Content' ) )
 			{
 				cnt = divs[a];
 				break;
@@ -1365,7 +1363,7 @@ function GetWindowVariable( win, vari )
 	var cnt = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
-		if( divs[a].className == 'Content' )
+		if( divs[a].classList && divs[a].classList.contains( 'Content' ) )
 		{
 			cnt = divs[a];
 			break;
