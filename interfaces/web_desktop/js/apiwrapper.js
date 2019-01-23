@@ -1627,6 +1627,7 @@ function apiWrapper( event, force )
 								}
 								else
 								{
+									console.log( 'Activate: ' + win.flags.title );
 									win.activate();
 								}
 							}
