@@ -477,11 +477,6 @@ body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
 	left: 50%;
 }
 
-body[mobile].AppsShowing:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
-{
-	opacity: 0.5 !important;
-}
-
 /* 3D is for later ---------------------------------------------------------- */
 
 /*html .Screen > .ScreenContent > .WorkspaceWallpaper:after
