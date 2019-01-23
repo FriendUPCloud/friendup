@@ -906,9 +906,12 @@ function _ActivateWindowOnly( div )
 				window.regionWindow = div.content;
 			else window.regionWindow = div;
 
-			if( div.content )
-				window.currentMovable = div;
-			else window.currentMovable = div;
+			if( window.currentMovable )
+			{
+				if( div.content )
+					window.currentMovable = div;
+				else window.currentMovable = div;
+			}
 
 			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
@@ -1000,8 +1003,11 @@ function _ActivateWindow( div, nopoll, e )
 	// Don't reactivate
 	if( div.classList.contains( 'Active' ) ) 
 	{
-		if( window.currentMovable != div )
-			window.currentMovable = div;
+		if( window.currentMovable )
+		{
+			if( window.currentMovable != div )
+				window.currentMovable = div;
+		}
 		return;
 	}
 	
@@ -1372,7 +1378,7 @@ function CloseView( win )
 		// Clean up!
 		if( win == window.regionWindow )
 			window.regionWindow = null;
-		if( window.currentMovable == win )
+		if( window.currentMovable && window.currentMovable == win )
 			window.currentMovable = null;
 			
 		// Add to view container
