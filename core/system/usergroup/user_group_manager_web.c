@@ -24,6 +24,7 @@
 #include <system/fsys/device_handling.h>
 #include <system/user/user_sessionmanager.h>
 #include <util/session_id.h>
+#include <util/element_list.h>
 
 //test
 #undef __DEBUG
@@ -622,6 +623,89 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		retString->bs_Buffer = NULL;
 		BufStringDelete( retString );
 		
+		*result = 200;
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/group/addusers</H2>Add users to group. Function require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param groupid - (required) id of workgroup to which user will belong
+	* @param users - (required) user id's which will be assigned to group
+	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 1 ], "addusers" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+
+		FULONG groupID = 0;
+		char *users = NULL;
+		HashmapElement *el = NULL;
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		{
+			response = HttpNewSimple( HTTP_200_OK,  tags );
+			
+			el = HttpGetPOSTParameter( request, "users" );
+			if( el != NULL )
+			{
+				users = UrlDecodeToMem( (char *)el->data );
+				DEBUG( "[UMWebRequest] Update users %s!!\n", users );
+			}
+		
+			el = HttpGetPOSTParameter( request, "groupid" );
+			if( el != NULL )
+			{
+				char *end;
+				groupID = strtol( (char *)el->data, &end, 0 );
+			}
+			
+			if( groupID > 0 )
+			{
+				UserGroup *ug = NULL;
+				ug = UGMGetGroupByID( l->sl_UGM, groupID );
+				if( ug != NULL )
+				{
+					// go through all elements and find proper users
+					
+					StringListEl *el = SLEParseString( users );
+					
+					while( el != NULL )
+					{
+						StringListEl *rmEntry = el;
+						
+						el = (StringListEl *)el->node.mln_Succ;
+						
+						//
+						
+						if( rmEntry->s_Data != NULL )
+						{
+							FFree( rmEntry->s_Data );
+						}
+						FFree( rmEntry );
+					}
+				}
+			}
+			
+		
+			if( users != NULL )
+			{
+				FFree( users );
+			}
+		}
+		else
+		{
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 		*result = 200;
 	}
 	
