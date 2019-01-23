@@ -447,7 +447,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	font-size: 0.9em;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .ViewIcon
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):not(.Opening) > .ViewIcon
 {
 	display: block;
 	position: absolute;
