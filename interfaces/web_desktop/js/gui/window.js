@@ -4667,7 +4667,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		var v = movableWindows[ a ];
 		var c = v.parentNode; // ViewContainer
-		if( c.classList.contains( 'Active' ) )
+		if( c.classList.contains( 'Active' ) && !document.body.classList.contains( 'AppsShowing' ) )
 		{
 			// These views are handled by css...
 			c.style.top = '0';
