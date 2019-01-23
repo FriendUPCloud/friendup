@@ -659,9 +659,15 @@ body.WindowMenu #Screens .View
 .ViewContainer .ViewIcon 
 {
 	transform: rotateZ(0deg);
+	opacity: 1;
 }
 
-.ViewContainer.Active .ViewIcon 
+body.ViewMaximized .ViewContainer .ViewIcon 
+{
+	opacity: 0;
+}
+
+body.ViewMaximized .ViewContainer.Active .ViewIcon 
 {
 	z-index: 2147483647 !important;
 	position: absolute;
@@ -674,11 +680,7 @@ body.WindowMenu #Screens .View
 	background-size: contain;
 	background-position: center;
 	background-repeat: no-repeat;
-}
-
-body[mobile].AppsShowing .ViewContainer
-{
-	opacity: 0 !important;
+	opacity: 1;
 }
 
 #Screens .View.Active .BottomBar
