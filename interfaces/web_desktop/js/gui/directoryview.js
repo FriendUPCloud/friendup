@@ -2203,6 +2203,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		// TODO: Lets try to make directories first optional
 		var dirs = [];
 		var files = [];
+		
 		var orphanInfoFile = {};
 
 		for( var a = 0; a < icons.length; a++ )
@@ -2331,7 +2332,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			// Only show orphan .info files
 			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
 			{
-				if( orphanInfoFile && !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
+				if( !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
 					continue;
 			}
 
@@ -2715,6 +2716,40 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		obj.iconsCache = icons;
 		obj.icons = [];
+		
+		var orphanInfoFile = {};
+
+		for( var a = 0; a < icons.length; a++ )
+		{
+			if( icons[a].Type == 'Directory' ) 
+				dirs.push( icons[a] );
+			else 
+				files.push( icons[a] );
+
+			var i = icons[a];
+			if( i.Filename )
+			{
+				// Check .info
+				var mInfoname = i.Filename.toLowerCase().indexOf( '.info' ) > 0 ?
+					i.Filename.substr( 0, i.Filename.length - 5 ) : false;
+				// Check .dirinfo
+				if( !mInfoname )
+				{
+					mInfoname = i.Filename.toLowerCase().indexOf( '.dirinfo' ) > 0 ?
+						i.Filename.substr( 0, i.Filename.length - 8 ) : false;
+				}
+				if( mInfoname )
+				{
+					if( typeof( orphanInfoFile[ mInfoname ] ) == 'undefined' )
+						orphanInfoFile[ mInfoname ] = true;
+					else orphanInfoFile[ mInfoname ] = false;
+				}
+				else
+				{
+					orphanInfoFile[ i.Filename ] = false;
+				}
+			}
+		}
 		
 		var swi = 2;
 
