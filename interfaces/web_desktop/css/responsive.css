@@ -676,6 +676,11 @@ body.WindowMenu #Screens .View
 	background-repeat: no-repeat;
 }
 
+body[mobile].AppsShowing .ViewContainer
+{
+	opacity: 0 !important;
+}
+
 #Screens .View.Active .BottomBar
 {
 	display: block;

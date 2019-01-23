@@ -1,10 +1,5 @@
 /* Popup windows (movable) -------------------------------------------------- */
 
-body[mobile].AppsShowing .ViewContainer
-{
-	opacity: 0;
-}
-
 .ViewContainer
 {
 	top: 0;
