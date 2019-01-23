@@ -346,7 +346,7 @@ html .View[viewsnap] .Title > div > div
 
 .View.Opening
 {
-	will-transform: transform, content;
+	will-change: transform, content;
 }
 
 /* View groups */

@@ -663,9 +663,19 @@ body.WindowMenu #Screens .View
 	transition: opacity 0.25s;
 }
 
+body .ViewContainer .View
+{
+	will-change: transform, content;
+}
+
+body .ViewContainer .View .Content
+{
+	will-change: content;
+	transform: translateZ(0);
+}
+
 body .ViewContainer .View.Active
 {
-	will-transform: transform, content;
 	transition: transform 0.25s !important;
 }
 
