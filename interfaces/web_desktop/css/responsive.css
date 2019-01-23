@@ -669,7 +669,7 @@ body .ViewContainer .View.Active
 	transition: transform 0.25s !important;
 }
 
-body .ViewContainer.Activating .View .Content
+/*body .ViewContainer.Activating .View .Content
 {
 	transition: opacity 0.25s;
 	opacity: 0;
@@ -680,7 +680,7 @@ body .ViewContainer.Activating .View.DoneActivating .Content
 {
 	opacity: 1;
 	pointer-events: all;
-}
+}*/
 
 body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
 body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,

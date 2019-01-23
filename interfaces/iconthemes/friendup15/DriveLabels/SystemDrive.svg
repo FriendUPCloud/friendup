@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="20px" height="19px" viewBox="0 0 20 19" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
     <title>DL_SystemDrive</title>
     <desc>Created with Sketch.</desc>
     <defs>
@@ -13,15 +13,11 @@
         </filter>
     </defs>
     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.8">
-        <g id="Alt-1" transform="translate(-506.000000, -914.000000)">
-            <g id="Icons" transform="translate(76.000000, 53.000000)">
-                <g id="Disks" transform="translate(0.000000, 815.000000)">
-                    <g id="DL_SystemDrive" transform="translate(430.000000, 46.000000)">
-                        <g id="">
-                            <use fill="#34495E" fill-rule="evenodd" xlink:href="#path-1"></use>
-                            <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
-                        </g>
-                    </g>
+        <g id="Alt-1" transform="translate(-1278.000000, -839.000000)">
+            <g id="DL_SystemDrive" transform="translate(1278.000000, 839.000000)">
+                <g id="">
+                    <use fill="#000000" fill-rule="evenodd" xlink:href="#path-1"></use>
+                    <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
                 </g>
             </g>
         </g>
