@@ -157,7 +157,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			else
 			{
 				// Are we in a file dialog?
-				if( isMobile && self.flags.filedialog || self.flags.justPaths )
+				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
 					return self.callbacks.folderOpen( ppath );
 				}
