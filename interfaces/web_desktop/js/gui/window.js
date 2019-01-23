@@ -878,7 +878,7 @@ function _ActivateWindowOnly( div )
 	}
 	
 	var delayedDeactivation = false;
-	if( div.justOpened && currentMovable && div != currentMovable )
+	if( window.currentMovable && div.justOpened && currentMovable && div != currentMovable )
 	{
 		delayedDeactivation = true;
 		delete div.justOpened;
