@@ -154,7 +154,7 @@ Application.redrawMenu = function()
 // About exotica view window
 Application.openAbout = function()
 {
-	if( this.aboutWindow ) return;
+	if( this.aboutWindow ) return this.aboutWindow.activate();
 	this.aboutWindow = new View( {
 		title: i18n( 'i18n_about_exotica' ),
 		width: 400,
@@ -177,7 +177,7 @@ Application.openAbout = function()
 // Shows the playlist editor
 Application.editPlaylist = function()
 {
-	if( this.playlistWindow ) return;
+	if( this.playlistWindow ) return this.playlistWindow.activate();
 	this.playlistWindow = new View( {
 		title: i18n( 'i18n_edit_playlist' ),
 		width: 900,
@@ -239,7 +239,7 @@ Application.editPlaylist = function()
 // Opens a playlist using a file dialog
 Application.openPlaylist = function()
 {
-	if( this.of ) return;
+	if( this.of ) return this.of.activate();
 	this.of = new Filedialog( this.playlistWindow, function( arr )
 	{
 		Application.of = false;
@@ -252,7 +252,7 @@ Application.addToPlaylist = function( items )
 {
 	if( !items )
 	{
-		if( this.af ) return;
+		if( this.af ) return this.af.activate();
 		this.af = new Filedialog( this.playlistWindow, function( arr )
 		{
 			if( arr.length )

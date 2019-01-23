@@ -48,9 +48,11 @@ i18n_yes                             : Yes
 i18n_cancel                          : Cancel
 i18n_accept                          : Accept
 i18n_understood                      : Understood
-i18n_your_devices                    : Your devices
+i18n_your_devices                    : Disks
 i18n_quit                            : Quit
 i18n_menuback                        : <
+
+i18n_mountlist                       : Disks
 
 i18n_message_from                    : Message from
 

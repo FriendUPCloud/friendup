@@ -48,7 +48,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.dom.classList.add( 'FileBrowser' );
 	this.currentPath = 'Mountlist:';
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false, filedialog: false, path: false };
+	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false };
 };
 Friend.FileBrowser.prototype.clear = function()
 {
@@ -157,7 +157,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			else
 			{
 				// Are we in a file dialog?
-				if( isMobile && self.flags.filedialog )
+				if( isMobile && self.flags.filedialog || self.flags.justPaths )
 				{
 					return self.callbacks.folderOpen( ppath );
 				}

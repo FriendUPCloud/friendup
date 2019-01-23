@@ -45,6 +45,63 @@
 	display: none;
 }
 
+/* Special case for mobile */
+[mobile] .View.IconWindow .MobileFileBrowser
+{
+	position: absolute;
+	z-index: 11;
+	height: calc(100% - 40px);
+	top: 40px;
+}
+
+[mobile] .View .DirectoryToolbar button
+{
+	opacity: 1;
+	transition: opacity 0.25s;
+}
+
+[mobile] .View.Mountlist .DirectoryToolbar button
+{
+	opacity: 0;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser
+{
+	padding: 10px;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser,
+[mobile] .View .FileDialog .FileBrowser
+{
+	font-size: 1.1em;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem,
+[mobile] .View .FileDialog .FileBrowser .DiskItem
+{
+	padding: 0 0 10px 0;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	line-height: 1.6em;
+}
+
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem .fa-remove
+{
+	display: none;
+}
+
+html body[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
+html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
+{
+	width: 24px;
+	height: 24px;
+	margin-right: 10px;
+}
+
 .View > .ImageViewerToolbar
 {
 	overflow: hidden;
@@ -247,7 +304,7 @@ html .View[viewsnap] .Title > div > div
 	will-transform: transform, content;
 }
 
-[mobile=mobile] #Screens .ViewContainer:not(.Active)
+[mobile=mobile] #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	z-index: 0 !important;
 }

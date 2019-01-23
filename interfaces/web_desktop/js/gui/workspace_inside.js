@@ -2228,18 +2228,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Workspace.mainDock.addLauncher( ob );
 							}
 						}
-						var fmenu = {
-							click: function( e )
-							{
-								Workspace.openDrivePanel();
-							},
-							type: 'Executable',
-							displayname: i18n( 'i18n_files' ),
-							src: '/iconthemes/friendup15/Folder_Smaller.svg',
-							title: i18n( 'i18n_files' ),
-						};
-						Workspace.mainDock.addLauncher( fmenu );
 					}
+					// File browser
+					var fmenu = {
+						click: function( e )
+						{
+							if( isMobile )
+							{
+								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' } );
+							}
+							else
+							{
+								OpenWindowByFileinfo( { Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' } );
+							}
+							Workspace.mainDock.closeDesklet();
+						},
+						type: 'Executable',
+						displayname: i18n( 'i18n_files' ),
+						src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
+						title: i18n( 'i18n_files' ),
+					};
+					Workspace.mainDock.addLauncher( fmenu );
 					
 					Workspace.mainDock.initialized();
 					
@@ -5517,6 +5526,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				application: currentMovable ? currentMovable.applicationId : false
 			};
 		}
+		
 		// Update view history with current application id
 		if( currentMovable )
 		{
@@ -5533,6 +5543,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				this.mobileViews.application = currentMovable.applicationId;
+			}
+			else if( currentMovable.content.directoryview )
+			{
+				return currentMovable.content.directoryview.buttonUp.onclick();
 			}
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )

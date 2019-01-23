@@ -984,6 +984,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			div.onmousedown = function( e )
 			{
 				if( mousePointer.candidate ) return;
+				if( e.button != 0 )
+					return;
 				// Add candidate and rules
 				var self = this;
 				var px = e.clientX;

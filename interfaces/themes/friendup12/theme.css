@@ -257,6 +257,12 @@
 }
 /* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
 
+::selection
+{
+	background: #1F2D39;
+	color: #E7B66F;
+}
+
 html 
 {
 	height: 100vh;
@@ -374,7 +380,7 @@ html body .Screen > .TitleBar.Busy:after
 
 /* Views not activated for mobile ------------------------------------------- */
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	position: absolute;
 	clear: none;
@@ -388,7 +394,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.0);
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelauedDeactivation) > .View
 {
 	border-radius: 8px 8px 0 0;
 	height: 100% !important;
@@ -397,7 +403,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
 	background: none;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):after
 {
 	content: " ";
 	position: absolute;
@@ -408,27 +414,27 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
 	z-index: 2;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) .Content
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) .Content
 {
 	display: none;
 }
 
-html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active) .View > .Title > div > .Close
+html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title > div > .Close
 {
 	top: 3px;
 	left: auto;
 	right: 0;
 }
 
-html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active) .View > .Title,
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title
+html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title
 {
 	top: 0;
 	border-radius: 8px 8px 0 0;
 	background: none;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title > div > span
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title > div > span
 {
 	position: absolute;
 	width: 100%;
@@ -441,7 +447,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title
 	font-size: 0.9em;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .ViewIcon
 {
 	display: block;
 	position: absolute;
@@ -471,7 +477,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
 	left: 50%;
 }
 
-body[mobile].AppsShowing:not([tablet]) #Screens .ViewContainer:not(.Active)
+body[mobile].AppsShowing:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	opacity: 0.5 !important;
 }
@@ -1915,12 +1921,12 @@ html body.CharCoal #MousePointer .Row.Odd.Selected .Column
 html body.Charcoal .List tr.sw1.Selected, 
 html body.Charcoal .List div.sw1.Selected
 {
-	background-color: #096EB0;
+	background-color: #455155;
 }
 html body.Charcoal .List tr.sw2.Selected, 
 html body.Charcoal .List div.sw2.Selected
 {
-	background-color: #085C94;
+	background-color: #3e484c;
 }
 
 html body.Charcoal .VertTab
@@ -3126,6 +3132,45 @@ html body[mobile=mobile] .File .Icon
 	font-size: 0.95em;
 }
 
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	color: black;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:active
+{
+	background-color: rgba(67,82,96,0.4);
+	border-radius: 3px;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:after,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:after
+{
+	content: "\f105";
+	font-family: fontawesome;
+	display: block;
+	float: right;
+}
+
+[mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile].Charcoal .View .FileDialog .FileBrowser .DiskItem > .Name,
+[mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
+[mobile].Charcoal .View .FileDialog .FileBrowser .FileBrowserItemImage,
+[mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile].Dark .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	color: white;
+}
+[mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile].Charcoal .View .FileDialog .FileBrowser .DiskItem > .Name:active,
+[mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile].Dark .View .FileDialog .FileBrowser .DiskItem > .Name:active
+{
+	background-color: rgba(255,255,255,0.2);
+}
+
 body.Charcoal .FileBrowserItemImage,
 body.Dark .FileBrowserItemImage
 {
@@ -3138,13 +3183,13 @@ body.Dark .FileBrowserItemImage
 	vertical-align: middle;
 	display: block;
 	margin: 1px 4px 0 0;
-	filter: brightness(100);
+	filter: invert(100%);
 }
 
 body.Charcoal .Active > .FileBrowserItemImage,
 body.Dark .Active > .FileBrowserItemImage
 {
-	filter: brightness(100);
+	filter: invert(100%);
 }
 
 html .File

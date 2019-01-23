@@ -877,6 +877,13 @@ function _ActivateWindowOnly( div )
 		return;
 	}
 	
+	var delayedDeactivation = false;
+	if( div.justOpened && currentMovable && div != currentMovable )
+	{
+		delayedDeactivation = true;
+		delete div.justOpened;
+	}
+	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
 	for( var a in movableWindows )
@@ -889,15 +896,31 @@ function _ActivateWindowOnly( div )
 		{
 			if( isMobile )
 			{
-				_DeactivateWindow( m );
-				if( window.isMobile && !window.isTablet )
-				{
-					// TODO: May need to be deleted
-					m.style.height = '35px';
-					newOffsetY += 35;
-				}
+				// Support delayed deactivation
+				( function( dd ) {
+					function deal()
+					{
+						dd.parentNode.classList.remove( 'DelayedDeactivation' );
+						_DeactivateWindow( dd );
+						if( window.isMobile && !window.isTablet )
+						{
+							// TODO: May need to be deleted
+							dd.style.height = '35px';
+						}
+					}
+					if( delayedDeactivation && dd == currentMovable )
+					{
+						dd.parentNode.classList.add( 'DelayedDeactivation' );
+						setTimeout( function(){ deal() }, 500 );
+					}
+					else deal();
+				} )( m );
+				newOffsetY += 35;
 			}
-			_DeactivateWindow( m );
+			else
+			{
+				_DeactivateWindow( m );
+			}
 		}
 		// This is the div we are looking for!
 		else if( m == div )
@@ -3348,6 +3371,7 @@ var View = function( args )
 		// If the current window is an app, move it to front.. (unless new window is a child window)
 		if( window.friend && Friend.currentWindowHover )
 			Friend.currentWindowHover = false;
+		div.justOpened = true;
 		_ActivateWindow( div );
 		_WindowToFront( div );
 		
