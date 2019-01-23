@@ -662,9 +662,10 @@ body.WindowMenu #Screens .View
 	opacity: 1;
 }
 
-body.ViewMaximized .ViewContainer .ViewIcon 
+body.ViewMaximized .ViewContainer:not(.Active),
+body.AppsShowing .ViewContainer
 {
-	opacity: 0;
+	opacity: 0 !important;
 }
 
 body.ViewMaximized .ViewContainer.Active .ViewIcon 
