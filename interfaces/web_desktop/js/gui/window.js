@@ -4670,10 +4670,6 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		if( c.classList.contains( 'Active' ) )
 		{
 			// These views are handled by css...
-			c.style.top = '0';
-			c.style.left = '0';
-			c.style.width = '100%';
-			c.style.height = '100%';
 			continue;
 		}
 		// Non-mainview windows are not displayed
