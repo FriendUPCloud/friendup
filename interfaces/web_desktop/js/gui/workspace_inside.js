@@ -1143,6 +1143,7 @@ var WorkspaceInside = {
 					else
 					{
 						Workspace.mainDock.openDesklet();
+						Friend.GUI.reorganizeResponsiveMinimized();
 					}
 				}
 			}
