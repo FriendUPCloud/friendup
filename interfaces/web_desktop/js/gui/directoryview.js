@@ -2331,7 +2331,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			// Only show orphan .info files
 			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
 			{
-				if( !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
+				if( !orphanInfoFile || !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
 					continue;
 			}
 
