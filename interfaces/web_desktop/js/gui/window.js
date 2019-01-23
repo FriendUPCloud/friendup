@@ -1047,10 +1047,19 @@ function _ActivateWindow( div, nopoll, e )
 			{
 				if( div )
 				{
+					// Finally
+					div.classList.add( 'DoneActivating' );
 					div.classList.remove( 'Activated' );
-					div.parentNode.classList.remove( 'Activating' );
+					setTimeout( function()
+					{
+						if( div )
+						{
+							div.classList.remove( 'DoneActivating' );
+							div.parentNode.classList.remove( 'Activating' );
+						}
+					}, 250 );
 				}
-			}, 5 );
+			}, 250 );
 		}
 	}, 250 );
 
