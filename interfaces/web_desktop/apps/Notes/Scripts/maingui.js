@@ -74,8 +74,13 @@ Application.refreshFilePane = function( method )
 	if( !method ) method = false;
 	
 	var d = new Door( Application.browserPath );
+	
+	Application.path = Application.browserPath;
+	
 	d.getIcons( function( items )
 	{
+		Application._toBeSaved = null;
+		
 		if( !items )
 		{
 			ge( 'FileBar' ).innerHTML = '';
@@ -96,6 +101,7 @@ Application.refreshFilePane = function( method )
 			fBar.add.onclick = function()
 			{
 				var testFile = 'unnamed';
+				var nextTest = testFile;
 				var d = new Door( Application.browserPath );
 				d.getIcons( function( icons )
 				{
@@ -103,14 +109,15 @@ Application.refreshFilePane = function( method )
 					{
 						var found = false;
 						var tries = 1;
+						
 						do
 						{
 							found = false;
 							for( var a = 0; a < icons.length; a++ )
 							{
-								if( icons[ a ].Filename == testFile + '.html' )
+								if( icons[ a ].Filename == nextTest + '.html' )
 								{
-									testFile += '_' + ( ++tries );
+									nextTest = testFile + '_' + ( ++tries );
 									found = true;
 									break;
 								}
@@ -120,9 +127,14 @@ Application.refreshFilePane = function( method )
 					}
 					
 					var f = new File();
-					f.save( "\n", Application.browserPath + testFile + '.html' );
+					f.save( "\n", Application.browserPath + nextTest + '.html' );
 					f.onSave = function()
 					{
+						Application.currentDocument = Application.browserPath + nextTest + '.html';
+						Application.sendMessage( {
+							command: 'setfilename',
+							data: Application.currentDocument
+						} );
 						Application.refreshFilePane();
 					}
 				} );
@@ -147,7 +159,7 @@ Application.refreshFilePane = function( method )
 			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile )
 			{
 				Application.loadFile( items[ a ].Path );
-				Applicatino.currentDocument = num.Path;
+				Application.currentDocument = num.Path;
 				fouldFile = true;
 			}
 			
@@ -155,6 +167,64 @@ Application.refreshFilePane = function( method )
 			
 			var d = document.createElement( 'div' );
 			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
+			d.path = items[ a ].Path;
+			d.ondblclick = function()
+			{
+				var s = this;
+				if( this.tm )
+				{
+					clearTimeout( this.tm );
+				}
+				this.tm = 'block';
+				
+				var p = this.getElementsByTagName( 'p' )[0];
+				var ml = p.innerHTML;
+				var inp = document.createElement( 'input' );
+				inp.type = 'text';
+				inp.className = 'NoMargins';
+				inp.style.width = 'calc(100% - 32px)';
+				inp.value = p.innerText;
+				p.innerHTML = '';
+				p.appendChild( inp );
+				inp.select();
+				inp.focus();
+				p.onkeydown = function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					// Abort
+					if( k == 27 )
+					{
+						this.innerHTML = ml;
+						s.tm = null;
+					}
+					// Rename
+					else if( k == 13 )
+					{
+						var val = inp.value;
+						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+							val += '.html';
+						var l = new Library( 'system.library' );
+						l.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Application.sendMessage( {
+									command: 'setfilename',
+									data: Application.path + val
+								} );
+								Application.currentDocument = Application.path + val;
+								Application.refreshFilePane();
+							}
+							// Perhaps give error - file exists
+							else
+							{
+								inp.select();
+							}
+						}
+						l.execute( 'file/rename', { path: s.path, newname: val } );
+					}
+				}
+			}
 			
 			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
@@ -172,7 +242,12 @@ Application.refreshFilePane = function( method )
 				}
 			}
 			
-			d.innerHTML = '<p class="Layout"><strong>' + num.Filename + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
+			// No listing here
+			var fn = num.Filename.split( '.' );
+			fn.pop();
+			fn = fn.join( '.' );
+			
+			d.innerHTML = '<p class="Layout"><strong>' + fn + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
 			
 			// File permissions are given
 			// TODO: Check permissions
@@ -213,7 +288,13 @@ Application.refreshFilePane = function( method )
 			( function( dl, path ){
 				dl.onclick = function()
 				{
-					Application.loadFile( path );
+					if( dl.tm ) return;
+					dl.tm = setTimeout( function()
+					{
+						dl.tm = null;
+						Application.currentDocument = path;
+						Application.loadFile( path );
+					}, 250 );
 				}
 			} )( d, num.Path );
 		}
@@ -343,6 +424,42 @@ Application.initCKE = function()
 			
 			// Other keys...
 			editor.editing.view.document.on( 'keydown', ( evt, data ) => {
+			
+				// Create temporary file "to be saved"
+				if( !Application.fileSaved )
+				{
+					if( !Application._toBeSaved )
+					{
+						var fb = ge( 'FileBar' );
+						if( fb )
+						{
+							var d = fb.getElementsByClassName( 'List' );
+							if( d.length )
+							{
+								var el = document.createElement( 'div' );
+								el.className = 'NotesFileItem Padding BorderBottom MousePointer New';
+								d[0].insertBefore( el, d[0].firstChild );
+								Application._toBeSaved = el;
+							}
+						}
+					}
+					var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
+					data = data.split( /[^ a-z0-9]/i ).join( '' );
+					if( !data.length )
+						data = 'unnamed';
+					Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + data + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
+					Application.sendMessage( {
+						command: 'setfilename',
+						data: Application.path + data + '.html'
+					} );
+				}
+				// Remove "to be saved"
+				else if( Application._toBeSaved )
+				{
+					Application._toBeSaved.parentNode.removeChild( Application._toBeSaved );
+					Application._toBeSaved = null;
+				}
+			
 				if( Application.contentTimeout )
 					clearTimeout( Application.contentTimeout );
 				Application.contentTimeout = setTimeout( function()
@@ -739,8 +856,6 @@ Application.setCurrentDocument = function( pth )
 	
 	Application.refreshFilePane();
 	
-	
-	
 	this.sendMessage( {
 		command: 'currentfile',
 		path: this.path,
@@ -751,6 +866,8 @@ Application.setCurrentDocument = function( pth )
 Application.loadFile = function( path )
 {
 	ge( 'Status' ).innerHTML = i18n( 'i18n_status_loading' );
+	
+	Application.fileSaved = true;
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
 	
@@ -820,6 +937,8 @@ Application.loadFile = function( path )
 					ge( 'Status' ).innerHTML = '';
 				}, 500 );
 		
+				Application.setCurrentDocument( path );
+		
 				var bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
 				if( bdata && bdata[1] )
 				{
@@ -887,6 +1006,8 @@ Application.saveFile = function( path, content )
 			{
 				if( e == 'ok' )
 				{
+					Application.fileSaved = true;
+					
 					ge( 'Status' ).innerHTML = i18n('i18n_written');
 					setTimeout( function()
 					{
@@ -910,6 +1031,7 @@ Application.saveFile = function( path, content )
 			var f = new File();
 			f.onSave = function()
 			{
+				Application.fileSaved = true;
 				ge( 'Status' ).innerHTML = i18n('i18n_written');
 				setTimeout( function()
 				{
@@ -966,6 +1088,8 @@ Application.print = function( path, content, callback )
 
 Application.newDocument = function( args )
 {
+	this.fileSaved = false;
+	
 	// Wait till ready
 	if( typeof( ClassicEditor ) == 'undefined' )
 	{
@@ -1146,6 +1270,7 @@ Application.receiveMessage = function( msg )
 			for( var a = 0; a < msg.files.length; a++ )
 			{
 				this.loadFile( msg.files[a].Path );
+				break;
 			}
 			break;
 		case 'print':

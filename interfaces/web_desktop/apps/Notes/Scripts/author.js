@@ -358,6 +358,10 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'setfilename':
+			this.wholeFilename = msg.data;
+			this.mainView.setFlag( 'title', 'Notes - ' + msg.data );
+			break;
 		case 'newdocument':
 			this.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_new_document' ) );
 			break;

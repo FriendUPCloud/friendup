@@ -143,6 +143,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	{
 		ele.onclick = function( e )
 		{
+			if( !ppath ) return;
 			if ( ppath.indexOf( ':' ) < 0 )
 				ppath += ':';
 
