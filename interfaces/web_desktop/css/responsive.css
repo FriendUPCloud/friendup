@@ -505,14 +505,6 @@ body:not(.HasMenu) #Screens > div.Screen.HasWidget
 	right: 80px;
 }
 
-body:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
-{
-	height: 35px !important;
-	float: left;
-	clear: both;
-	position: relative;
-}
-
 body:not([tablet]) #Screens .View:last-child
 {
 	z-index: 1 !important;
@@ -716,6 +708,11 @@ body.ViewMaximized .ViewContainer .View.Activated
 {
 	opacity: 0;
 }
+.ViewContainer.OnWorkspace.DelayedDeactivation .View
+{
+	display: none;
+}
+
 
 .ViewContainer.Closing:not([childview]):not(.OnWorkspace) .View
 {
