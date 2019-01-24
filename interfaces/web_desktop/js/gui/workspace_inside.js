@@ -1138,6 +1138,7 @@ var WorkspaceInside = {
 					DefaultToWorkspaceScreen();
 					_DeactivateWindows();
 					Friend.GUI.reorganizeResponsiveMinimized();
+					window.focus();
 				}
 				
 				// App menu toggle
