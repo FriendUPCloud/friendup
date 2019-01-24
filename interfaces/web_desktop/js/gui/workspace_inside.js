@@ -1117,6 +1117,23 @@ var WorkspaceInside = {
 					}
 					if( Workspace.widget )
 						Workspace.widget.slideUp();
+					
+					// Store active window in mainwindow
+					if( window._getAppByAppId )
+					{
+						if( window.currentMovable && currentMovable.applicationId )
+						{
+							var app = _getAppByAppId( currentMovable.applicationId );
+							if( app.mainView )
+							{
+								if( currentMovable.windowObject != app.mainView )
+								{
+									app.mainView.lastActiveView = currentMovable;
+								}
+							}
+						}
+					}
+					
 					Workspace.mainDock.closeDesklet();
 					DefaultToWorkspaceScreen();
 					_DeactivateWindows();
