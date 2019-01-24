@@ -158,7 +158,7 @@ Application.refreshFilePane = function( method )
 			ext = ext.pop().toLowerCase();
 			if( ext != 'html' && ext != 'htm' ) continue;
 			
-			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile )
+			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile && !Application.fileSaved )
 			{
 				Application.loadFile( items[ a ].Path );
 				Application.currentDocument = num.Path;
@@ -886,6 +886,7 @@ Application.loadFile = function( path )
 	Application.statusMessage( 'i18n_status_loading' );
 	
 	Application.fileSaved = true;
+	Application.lastSaved = ( new Date() ).getTime();
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
 	
