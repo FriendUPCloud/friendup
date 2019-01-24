@@ -995,7 +995,7 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
-	if( isMobile && div.windowObject.lastActiveView )
+	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
 	{
 		_ActivateWindow( div.windowObject.lastActiveView );
 		div.windowObject.lastActiveView = null;
