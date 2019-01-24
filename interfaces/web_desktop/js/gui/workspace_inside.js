@@ -8473,6 +8473,12 @@ if( window.friendApp )
 					return;
 				}
 				
+				if( !app.contentWindow ) 
+				{
+					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+					return;
+				}
+				
 				var amsg = {
 					type: 'system',
 					method: 'pushnotification',
