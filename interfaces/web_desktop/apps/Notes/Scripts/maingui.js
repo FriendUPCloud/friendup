@@ -1128,6 +1128,12 @@ Application.newDocument = function( args )
 		
 		this.setCurrentDocument( args.path );
 		
+		if( args.path )
+		{
+			this.lastSaved = ( new Date() ).getTime();
+			this.fileSaved = true;
+		}
+		
 		Application.editor.setData( args.content );
 		if( args.scrollTop )
 		{
