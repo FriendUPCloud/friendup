@@ -380,7 +380,7 @@ html body .Screen > .TitleBar.Busy:after
 
 /* Views not activated for mobile ------------------------------------------- */
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):not(.OnWorkspace)
 {
 	position: absolute;
 	clear: none;
