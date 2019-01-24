@@ -309,7 +309,7 @@ html .View[viewsnap] .Title > div > div
 	transition: none;
 }
 
-#Screens .View:not([moving]):not(.Opening):not(.Opened)
+body:not([mobile]) #Screens .View:not([moving]):not(.Opening):not(.Opened)
 {
 	transition: opacity 0.25s;
 }

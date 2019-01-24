@@ -505,26 +505,6 @@ body:not(.HasMenu) #Screens > div.Screen.HasWidget
 	right: 80px;
 }
 
-body:not([tablet]) #Screens .View
-{
-	position: relative;
-	width: auto !important;
-	left: 0 !important;
-	top: auto !important;
-	height: 35px !important;
-	width: 100% !important;
-	max-width: 100%;
-	clear: both;
-	float: left;
-	overflow: hidden;
-	transition: none;
-	-moz-transition: none;
-	-webkit-transition: none;
-	box-shadow: none;
-	-moz-box-shadow: none;
-	-webkit-box-shadow: none;
-}
-
 body:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
 {
 	height: 35px !important;
@@ -628,6 +608,11 @@ body.WindowMenu #Screens .View
 	width: calc(50% - 20px) !important;
 }
 
+[mobile] #Screens .View
+{
+	transition: transform 0.25s;
+}
+
 /* Popup dialog boxes lil bit larger */
 #Screens .View > .Content > div.Dialog
 {
@@ -714,9 +699,14 @@ body.ViewMaximized .ViewContainer .View.Activated
 	transform: translateX(0%) !important;
 }
 
-.ViewContainer.Closing
+.ViewContainer.Closing .View
 {
-	display: none;
+	opacity: 1 !important;
+	overflow: hidden;
+}
+.ViewContainer.Closing:not([childview]) .View
+{
+	transform: translateX(100%) !important;
 }
 
 #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
@@ -982,11 +972,6 @@ body:not([tablet]) #Screens .View .Resize
 body #Screens .View.Active .BottomBar, #Screens .View.Active .Resize
 {
 	display: block;
-}
-
-html #Screens .View
-{
-	transition: none;
 }
 
 html #Screens .View > .Content > iframe

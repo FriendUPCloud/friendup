@@ -121,6 +121,11 @@ body > #FocusGrabber
 	top: 100%;
 }
 
+.NoEvents
+{
+	pointer-events: none;
+}
+
 /* Some backgrounds and colors */
 
 .BackgroundHeavy

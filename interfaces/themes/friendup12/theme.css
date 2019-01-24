@@ -2338,12 +2338,14 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View
 	overflow: visible;
 }
 
-html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Title
 {
 	top: -40px;
 }
 
-html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Content
 {
 	top: 0px !important;
 }

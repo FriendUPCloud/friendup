@@ -1392,7 +1392,7 @@ function HasClassname( div, classname )
 
 // Close a movable window by pointing to the content div
 // Could one day be moved to the View class...
-function CloseView( win )
+function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
@@ -1405,8 +1405,7 @@ function CloseView( win )
 		if( window.currentMovable && window.currentMovable == win )
 			window.currentMovable = null;
 			
-		// Add to view container
-		win.parentNode.parentNode.classList.add( 'Closing' );
+		win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 			
 		var count = 0;
 
@@ -1450,6 +1449,22 @@ function CloseView( win )
 
 		if ( !isGroupMember && div.parentNode )
 		{
+			// Immediately kill child views for mobile!
+			if( isMobile && window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app.mainView == div.windowObject )
+				{
+					for( var a in app.windows )
+					{
+						if( app.windows[ a ] != div.windowObject )
+						{
+							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+						}
+					}
+				}
+			}
+			
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
@@ -1462,9 +1477,10 @@ function CloseView( win )
 				{
 					console.log( 'Nothing to remove..' );
 				}
-			}, 500 );
+			}, isMobile ? 750 : 500 );
 
-			div.style.opacity = 0;
+			if( !isMobile )
+				div.style.opacity = 0;
 
 			// Do not click!
 			var ele = document.createElement( 'div' );
@@ -1519,7 +1535,7 @@ function CloseView( win )
 			var o = [];
 			for( var b in movableWindows )
 			{
-				if( movableWindows[b] != div )
+				if( movableWindows[b] != div && movableWindows[b].parentNode )
 				{
 					o[b] = movableWindows[b];
 				}
