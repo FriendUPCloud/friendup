@@ -41,12 +41,12 @@ var filebrowserCallbacks = {
 	folderOpen( ele )
 	{
 		Application.browserPath = ele;
-		Application.refreshFilePane();
+		Application.refreshFilePane( 'findFirstFile' );
 	},
 	folderClose( ele )
 	{
 		Application.browserPath = ele;
-		Application.refreshFilePane();
+		Application.refreshFilePane( 'findFirstFile' );
 	}
 };
 
@@ -69,8 +69,10 @@ Application.checkFileType = function( p )
 	}
 }
 
-Application.refreshFilePane = function()
+Application.refreshFilePane = function( method )
 {
+	if( !method ) method = false;
+	
 	var d = new Door( Application.browserPath );
 	d.getIcons( function( items )
 	{
@@ -131,6 +133,9 @@ Application.refreshFilePane = function()
 		fBar.contents.className = 'ContentFull List ScrollArea ScrollBarSmall BorderRight';
 		
 		var sw = 2;
+		var firstFileNum = 0;
+		
+		var foundFile = false;
 		
 		for( var a = 0; a < items.length; a++ )
 		{
@@ -138,6 +143,12 @@ Application.refreshFilePane = function()
 			var ext = num.Filename.split( '.' );
 			ext = ext.pop().toLowerCase();
 			if( ext != 'html' && ext != 'htm' ) continue;
+			
+			if( firstFileNum++ == 0 && method == 'findFirstFile' )
+			{
+				Application.loadFile( items[ a ].Path );
+				fouldFile = true;
+			}
 			
 			sw = sw == 2 ? 1 : 2;
 			
@@ -169,7 +180,12 @@ Application.refreshFilePane = function()
 					Application.loadFile( path );
 				}
 			} )( d, num.Path );
-		};
+		}
+		
+		if( !foundFile && method == 'findFirstFile' )
+		{
+			Application.newDocument( { just: 'makenew' } );
+		}
 	} );
 }
 
@@ -681,7 +697,13 @@ Application.setCurrentDocument = function( pth )
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
 	
+	
+	// Update filebrowser
+	this.fileBrowser.setPath( 'Mountlist:', this.path );
+	
 	Application.refreshFilePane();
+	
+	
 	
 	this.sendMessage( {
 		command: 'currentfile',
@@ -928,9 +950,12 @@ Application.newDocument = function( args )
 		} );
 	}
 	
-	if( args.content )
+	if( args && args.content )
 	{
 		var f = document.getElementsByTagName( 'iframe' )[0];
+		
+		this.setCurrentDocument( args.path );
+		
 		Application.editor.setData( args.content );
 		if( args.scrollTop )
 		{

@@ -112,6 +112,7 @@ Application.run = function( msg, iface )
 	{
 		w.setContent( data, function()
 		{
+			// Open by path
 			if( msg.args && typeof( msg.args ) != 'undefined' )
 			{
 				//console.log( 'What happens: ', msg.args );

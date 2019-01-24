@@ -93,6 +93,14 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 	}
 	return drop;
 };
+
+// Set a path
+Friend.FileBrowser.prototype.setPath = function( path, target, cbk )
+{
+	this.flags.path = target;
+	this.refresh( path, this.dom, cbk, 0 );
+}
+
 Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
@@ -114,6 +122,21 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		this.headerDisks = document.createElement( 'div' );
 		this.headerDisks.innerHTML = '<p class="Layout BorderBottom PaddingBottom"><strong>' + i18n( 'i18n_your_devices' ) + ':</strong></p>';
 		rootElement.appendChild( this.headerDisks );
+	}
+	
+	// What are we looking for at this level?
+	var targetPath = false;
+	if( this.flags.path )
+	{
+		var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
+		b.pop();
+		targetPath = '';
+		var pad = '';
+		for( var a = 0; a < depth; a++ )
+		{
+			targetPath += b[a] + ( a == 0 ? ':' : '/' );
+			pad += ' ';
+		}
 	}
 	
 	function createOnclickAction( ele, ppath, type, depth )
@@ -285,20 +308,24 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				var eles = rootElement.childNodes;
 				var found = [];
 				var foundElements = [];
+				var foundStructures = [];
 				var removers = [];
 				for( var a = 0; a < eles.length; a++ )
 				{
 					var elFound = false;
 					for( var b = 0; b < msg.list.length; b++ )
 					{
+						if( msg.list[ b ].Volume == 'System:' ) continue;
+						
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
-							createOnclickAction( eles[a], msg.list[a].Volume, 'volume', depth + 1 );
+							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
 							// Don't add twice
 							if( !found.find( function( ele ){ ele == msg.list[b].Title } ) )
 							{
 								found.push( msg.list[b].Title );
 								foundElements.push( eles[a] );
+								foundStructures.push( msg.list[ b ] );
 							}
 							elFound = true;
 						}
@@ -334,12 +361,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}
 					
 					// Check if this item already exists
-					var foundItem = false;
+					var foundItem = foundStructure = false;
 					for( var b = 0; b < found.length; b++ )
 					{
 						if( found[b] == msg.list[a].Title || msg.list[a].Type == 'header' )
 						{
-							foundItem = foundElements[b];
+							foundItem = foundElements[ b ];
+							foundStructure = foundStructures[ b ];
 							break;
 						}
 					}
@@ -355,10 +383,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nm.innerHTML = ' ' + msg.list[a].Title;
 						
 						// We have an incoming path
-						if( self.flags.path && self.flags.path == d.path )
+						if( !clickElement && self.flags.path && targetPath == d.path )
 						{
 							clickElement = d;
-						}
+						}							
+						
 						
 						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
@@ -420,7 +449,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						s.className = 'SubItems';
 						d.appendChild( s );
 						rootElement.appendChild( d );
-						createOnclickAction( d, msg.list[a].Volume, 'volume', depth + 1 );
+						createOnclickAction( d, foundStructure.Path, 'volume', depth + 1 );
 					}
 					// Existing items
 					else
@@ -458,7 +487,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}, 50 );
 				}
 			}
-			
 			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
@@ -597,7 +625,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
 						
 						// We have an incoming path
-						if( self.flags.path && self.flags.path == d.path )
+						if( !clickElement && self.flags.path && targetPath == d.path )
 						{
 							clickElement = d;
 						}
