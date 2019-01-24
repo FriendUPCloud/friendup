@@ -230,6 +230,7 @@ Application.refreshFilePane = function( method )
 			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
 				d.classList.add( 'Selected' );
+				Application.fileSaved = true;
 			}
 			else
 			{
