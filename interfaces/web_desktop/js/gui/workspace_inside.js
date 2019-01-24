@@ -501,13 +501,13 @@ var WorkspaceInside = {
 		{
 			try
 			{
-				this.conn.close();
+				this.conn.ws.close();
 			}
 			catch( ez )
 			{
 				try
 				{
-					this.conn.cleanup();
+					this.conn.ws.cleanup();
 				}
 				catch( ez2 )
 				{
@@ -7642,7 +7642,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
-			Workspace.initWebSocket();
+			if( isMobile )
+			{
+				Workspace.initWebSocket();
+			}
 		}
 		else
 		{
