@@ -705,14 +705,12 @@ var WorkspaceInside = {
 					}
 					if( Workspace.debugNotificationLog[ msg.id ] )
 					{
-						console.log( 'Handling duplicate' );
+						Workspace.debugNotificationLog[ msg.id ]++;
 						return;
 					}
 					else
 					{
-						if( Workspace.debugNotificationLog[ msg.id ] === 0 )
-							Workspace.debugNotificationLog[ msg.id ]++;
-						else Workspace.debugNotificationLog[ msg.id ] = 0;
+						Workspace.debugNotificationLog[ msg.id ] = 1;
 					}
 					// Application notification
 					if( msg.notificationData.application )
