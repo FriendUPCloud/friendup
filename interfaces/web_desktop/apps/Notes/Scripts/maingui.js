@@ -11,6 +11,8 @@
 var Config = {
 };
 
+Application.lastSaved = 0;
+
 var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
@@ -380,6 +382,7 @@ Application.initCKE = function()
 			Application.initializeToolbar();
 			
 			editor.keystrokes.set( 'Ctrl+S', ( data, stop ) => {
+				Application.lastSaved = ( new Date() ).getTime();
 				Application.sendMessage( {
 					command: 'keydown',
 					key: 83,
@@ -425,7 +428,7 @@ Application.initCKE = function()
 			} );
 			
 			// Other keys...
-			editor.editing.view.document.on( 'keydown', ( evt, data ) => {
+			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
 				// Create temporary file "to be saved"
 				if( !Application.fileSaved )
@@ -474,11 +477,15 @@ Application.initCKE = function()
 					// Save again
 					if( Application.fileSaved )
 					{
-						Application.sendMessage( {
-							command: 'keydown',
-							key: 83,
-							ctrlKey: true
-						} );
+						var test = ( new Date() ).getTime();
+						if( test - Application.lastSaved > 1000 )
+						{
+							Application.sendMessage( {
+								command: 'keydown',
+								key: 83,
+								ctrlKey: true
+							} );
+						}
 					}
 					Application.contentTimeout = false;
 					ge( 'Printable' ).innerHTML = Application.editor.getData();
@@ -876,7 +883,7 @@ Application.setCurrentDocument = function( pth )
 
 Application.loadFile = function( path )
 {
-	ge( 'Status' ).innerHTML = i18n( 'i18n_status_loading' );
+	Application.statusMessage( 'i18n_status_loading' );
 	
 	Application.fileSaved = true;
 	
@@ -895,7 +902,7 @@ Application.loadFile = function( path )
 				{
 					Application.setCurrentDocument( path );
 					
-					ge( 'Status' ).innerHTML = 'Loaded';
+					Application.statusMessage( i18n( 'i18n_loaded' ) );
 					Application.editor.setData( data,
 						function()
 						{
@@ -911,23 +918,13 @@ Application.loadFile = function( path )
 						scrollTop: 0
 					} );
 					
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 500 );
-					
 					Application.setCurrentDocument( path );
 				}
 				
 				// We got an error...
 				else
 				{
-					ge( 'Status' ).innerHTML = i18n('i18n_failed_to_load_document');
-					
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 1000 );
+					Application.statusMessage( i18n('i18n_failed_to_load_document') );
 				}	
 			}
 			m.execute( 'convertfile', { path: path, format: 'html', returnData: true } );
@@ -936,17 +933,12 @@ Application.loadFile = function( path )
 			var f = new File( path );
 			f.onLoad = function( data )
 			{
-				ge( 'Status' ).innerHTML = i18n('i18n_loaded');
+				Application.statusMessage( i18n('i18n_loaded') );
 				
 				// Let's fix authid paths and sessionid paths
 				var m = false;
 				data = data.split( /authid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 				data = data.split( /sessionid\=[^&]+/i ).join ( 'authid=' + Application.authId );
-				
-				setTimeout( function()
-				{
-					ge( 'Status' ).innerHTML = '';
-				}, 500 );
 		
 				Application.setCurrentDocument( path );
 		
@@ -998,9 +990,38 @@ Application.loadFile = function( path )
 	}
 }
 
+Application.statusMessage = function( msg )
+{
+	var s = ge( 'Status' );
+	if( s.timeout )
+	{
+		clearTimeout( s.timeout );
+		s.style.transition = '';
+		s.style.transform = 'translateX(0)';
+	}
+	s.innerHTML = msg;
+	s.timeout = setTimeout( function()
+	{
+		s.style.transition = 'left,opacity 0.25s,0.25s';
+		s.style.transform = 'translateX(0)';
+		s.style.opacity = 1;
+		s.timeout = setTimeout( function()
+		{
+			s.style.transform = 'translateX(20px)';
+			s.style.opacity = 0;
+			s.timeout = setTimeout( function()
+			{
+				s.innerHTML = '';
+				s.style.transform = 'translateX(0)';
+				s.style.opacity = 1;
+			}, 250 );
+		}, 250 );
+	}, 1000 );
+}
+
 Application.saveFile = function( path, content )
 {
-	ge( 'Status' ).innerHTML = i18n( 'i18n_status_saving' );
+	Application.statusMessage( i18n( 'i18n_status_saving' ) );
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
 	
@@ -1010,7 +1031,7 @@ Application.saveFile = function( path, content )
 		case 'docx':
 		case 'odt':
 		case 'rtf':
-			ge( 'Status' ).innerHTML = i18n('i18n_converting');
+			Application.statusMessage( i18n('i18n_converting') );
 					
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, data )
@@ -1019,33 +1040,12 @@ Application.saveFile = function( path, content )
 				{
 					Application.fileSaved = true;
 					
-					ge( 'Status' ).innerHTML = i18n('i18n_written');
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 500 );
+					Application.statusMessage( i18n('i18n_written') );
 				}
 				// We got an error...
 				else
 				{
-					ge( 'Status' ).innerHTML = data;
-					setTimeout( function()
-					{
-						ge( 'Status' ).style.transition = 'left,opacity 0.25s,0.25s';
-						ge( 'Status' ).style.transform = 'translateX(0)';
-						ge( 'Status' ).style.opacity = 1;
-						setTimeout( function()
-						{
-							ge( 'Status' ).style.transform = 'translateX(20px)';
-							ge( 'Status' ).style.opacity = 0;
-							setTimeout( function()
-							{
-								ge( 'Status' ).innerHTML = '';
-								ge( 'Status' ).style.transform = 'translateX(0)';
-								ge( 'Status' ).style.opacity = 1;
-							}, 250 );
-						}, 250 );
-					}, 1000 );
+					Application.statusMessage( data );
 				}
 				Application.refreshFilePane();
 			}
@@ -1056,11 +1056,7 @@ Application.saveFile = function( path, content )
 			f.onSave = function()
 			{
 				Application.fileSaved = true;
-				ge( 'Status' ).innerHTML = i18n('i18n_written');
-				setTimeout( function()
-				{
-					ge( 'Status' ).innerHTML = '';
-				}, 500 );
+				Application.statusMessage(  i18n('i18n_written') );
 				Application.refreshFilePane();
 			}
 			f.save( content, path );
@@ -1084,11 +1080,7 @@ Application.print = function( path, content, callback )
 	{
 		if( e == 'ok' )
 		{
-			ge( 'Status' ).innerHTML = i18n('i18n_print_ready');
-			setTimeout( function()
-			{
-				ge( 'Status' ).innerHTML = '';
-			}, 500 );
+			Application.statusMessage( i18n('i18n_print_ready') );
 			
 			v.close();
 			
@@ -1100,11 +1092,7 @@ Application.print = function( path, content, callback )
 		// We got an error...
 		else
 		{
-			ge( 'Status' ).innerHTML = data;
-			setTimeout( function()
-			{
-				ge( 'Status' ).innerHTML = '';
-			}, 1000 );
+			Application.statusMessage( data );
 		}
 	}
 	m.execute( 'convertfile', { path: path, format: 'pdf' } );
