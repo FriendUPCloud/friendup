@@ -710,7 +710,9 @@ var WorkspaceInside = {
 					}
 					else
 					{
-						Workspace.debugNotificationLog[ msg.id ] = true;
+						if( Workspace.debugNotificationLog[ msg.id ] === 0 )
+							Workspace.debugNotificationLog[ msg.id ]++;
+						else Workspace.debugNotificationLog[ msg.id ] = 0;
 					}
 					// Application notification
 					if( msg.notificationData.application )
