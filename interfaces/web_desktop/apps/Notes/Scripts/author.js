@@ -64,10 +64,10 @@ Application.run = function( msg, iface )
 					name: i18n( 'menu_print' ),
 					command: 'print'
 				},
-				{
+				/*{
 					name: i18n( 'menu_print_remote' ),
 					command: 'print_remote'
-				},
+				},*/
 				{
 					name: i18n( 'menu_quit' ),
 					command: 'quit'
@@ -93,11 +93,11 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_preferences' ),
 					command: 'showprefs'
-				},
+				}/*,
 				{
 					name: i18n( 'menu_vr_features' ),
 					command: 'togglevr'
-				}
+				}*/
 			]
 		}
 	] );
