@@ -1459,7 +1459,7 @@ function CloseView( win, delayed )
 					{
 						if( app.windows[ a ] != div.windowObject )
 						{
-							app.windows[ a ]._window.parentNode.parentNode.parentNode.removeChild( app.windows[ a ]._window.parentNode.parentNode );
+							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
 						}
 					}
 				}
