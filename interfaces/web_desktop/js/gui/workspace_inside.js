@@ -699,7 +699,7 @@ var WorkspaceInside = {
 				// Check if we have notification data
 				if( msg.notificationData )
 				{
-					if( !Workspace.debugNotificationLog )
+					/*if( !Workspace.debugNotificationLog )
 					{
 						Workspace.debugNotificationLog = {};
 					}
@@ -711,7 +711,8 @@ var WorkspaceInside = {
 					else
 					{
 						Workspace.debugNotificationLog[ msg.id ] = 1;
-					}
+					}*/
+					
 					// Application notification
 					if( msg.notificationData.application )
 					{
