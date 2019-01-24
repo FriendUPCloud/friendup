@@ -699,6 +699,19 @@ var WorkspaceInside = {
 				// Check if we have notification data
 				if( msg.notificationData )
 				{
+					if( !Workspace.debugNotificationLog )
+					{
+						Workspace.debugNotificationLog = {};
+					}
+					if( Workspace.debugNotificationLog[ msg.id ] )
+					{
+						console.log( 'Handling duplicate' );
+						return;
+					}
+					else
+					{
+						Workspace.debugNotificationLog[ msg.id ] = true;
+					}
 					// Application notification
 					if( msg.notificationData.application )
 					{
@@ -797,7 +810,6 @@ var WorkspaceInside = {
 						{
 							var t_title = appName + ' - ' + msg.notificationData.title;
 							var t_txt = msg.notificationData.content;
-							console.log( 'Notification data: ', msg );
 							Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
 							function clickCallback()
 							{
