@@ -1096,8 +1096,8 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 
 /* HACKS AND DRAGONS! */
 
-body .Button.IconButton:hover,
-body button.IconButton:hover
+body[mobile] .Button.IconButton:hover,
+body[mobile] button.IconButton:hover
 {
 	background-color: transparent !important;
 	outline: 0px !important;
