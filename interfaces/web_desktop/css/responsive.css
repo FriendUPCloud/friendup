@@ -705,7 +705,8 @@ body.ViewMaximized .ViewContainer .View.Activated
 {
 	opacity: 1;
 }
-.ViewContainer.Closing.OnWorkspace .View .Title
+.ViewContainer.Closing.OnWorkspace .View .Title,
+.ViewContainer.Closing:not(.Active) .View .Title
 {
 	opacity: 0;
 }
