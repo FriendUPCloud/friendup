@@ -4403,5 +4403,6 @@ body[mobile=mobile] .Desklet.Open.Opened
 	scroll-behavior: smooth;
 	overflow-y: scroll;
 	-webkit-overflow-scrolling: touch;
+	-webkit-scroll-behavior: smooth;
 }
 

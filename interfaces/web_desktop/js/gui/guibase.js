@@ -928,7 +928,7 @@ function GuiCreate ( obj )
 	return str;
 }
 
-function GuiColumns ( data )
+function GuiColumns( data )
 {
 	var widths = data[0];
 	var content = data[1];
@@ -943,7 +943,7 @@ function GuiColumns ( data )
 	return str;
 }
 
-function GuiContainer ( obj )
+function GuiContainer( obj )
 {
 	return '<div class="GuiContainer"><div class="GuiContent">' + GuiCreate ( obj ) + '</div></div>';
 }
@@ -955,7 +955,7 @@ var _epObject = {
 	t : -1000,
 	datas : new Array ()
 };
-function InitElementPopup ( pdiv, actionurl, forceupdate, immediateDisplay )
+function InitElementPopup( pdiv, actionurl, forceupdate, immediateDisplay )
 {
 	if ( !pdiv ) return;
 	if ( !immediateDisplay ) immediateDisplay = false;
@@ -2450,12 +2450,13 @@ function PollTaskbar( curr )
 	}
 	// Normal taskbar
 	else
-	{
+	{	
 		if( !baseElement ) 
 		{
 			pollingTaskbar = false;
 			return;
 		}
+		
 		if( baseElement.childNodes.length )
 		{
 			var lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
@@ -2564,6 +2565,23 @@ function PollTaskbar( curr )
 					if ( t.tasks[c].viewId == pn.viewId )
 					{
 						d = t.tasks[ c ].dom; // don't add twice
+						
+						// Race condition, Update the state
+						( function( ele, pp ){ 
+							setTimeout( function()
+							{
+								if( pp.parentNode.getAttribute( 'minimized' ) )
+								{
+									ele.classList.add( 'Task', 'Hidden', 'MousePointer' );
+								}
+								else
+								{
+									ele.classList.add( 'Task', 'MoustPointer' );
+									ele.classList.remove( 'Hidden' );
+								}
+							}, 5 );
+						} )( d, pn );
+						// Check directoryvuew
 						if( pn.content.directoryview )
 							d.classList.add( 'Directory' );
 						break;
@@ -2577,7 +2595,7 @@ function PollTaskbar( curr )
 					d = document.createElement ( 'div' );
 					d.viewId = pn.viewId;
 					d.view = pn;
-					d.className = pn.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
+					d.className = pn.parentNode.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
 					if( pn.content.directoryview )
 					{
 						d.classList.add( 'Directory' );
@@ -2680,6 +2698,7 @@ function PollTaskbar( curr )
 								{
 									this.setActive( true ); // with click
 									_WindowToFront( this.window );
+									this.classList.remove( 'Hidden' );
 								}
 								else
 								{
