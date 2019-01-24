@@ -16,6 +16,11 @@
 	will-change: scroll-position, content;
 }
 
+.Scroller
+{
+	scroll-behavior: smooth;
+}
+
 .Content.SlideAnimation
 {
 	pointer-events: none;
