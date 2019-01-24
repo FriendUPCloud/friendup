@@ -4398,7 +4398,8 @@ body[mobile=mobile] .Desklet.Open.Opened
 
 /* HACKS BE DRAGONS! */
 
-#hello #messages
+#hello #messages,
+#hello #conversations
 {
 	scroll-behavior: smooth;
 	overflow-y: scroll;
