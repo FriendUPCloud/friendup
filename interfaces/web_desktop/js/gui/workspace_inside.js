@@ -2233,13 +2233,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					var fmenu = {
 						click: function( e )
 						{
+							var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
 							if( isMobile )
 							{
-								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' } );
+								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
 							}
 							else
 							{
-								OpenWindowByFileinfo( { Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' } );
+								OpenWindowByFileinfo( 
+									{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
+									false, false, u
+								);
 							}
 							Workspace.mainDock.closeDesklet();
 						},
