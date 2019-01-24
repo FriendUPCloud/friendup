@@ -4703,6 +4703,8 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 			c.classList.remove( 'OnWorkspace' );
 			continue;
 		}
+		else if( c.style.display == 'none' || v.style.display == 'none' )
+			continue;
 		
 		c.classList.add( 'OnWorkspace' );
 		
