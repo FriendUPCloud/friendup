@@ -313,6 +313,8 @@ Application.run = function( msg, iface )
 	this.newLine = true;
 	this.initCKE();
 	
+	this.browserPath = 'Home:Notes/';
+	
 	this.sessionObject.currentZoom = '100%';
 	
 	AddEvent( 'onresize', function( e )

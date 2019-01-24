@@ -10,6 +10,9 @@
 
 Application.run = function( msg, iface )
 {
+	var nd = new Library( 'system.library' );
+	nd.execute( 'file/makedir', { path: 'Home:Notes' } );
+	
 	var w = new View( {
 		'title'     : 'Notes',
 		'width'     : 1290,
