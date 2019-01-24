@@ -4401,5 +4401,7 @@ body[mobile=mobile] .Desklet.Open.Opened
 #hello #messages
 {
 	scroll-behavior: smooth;
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
 }
 
