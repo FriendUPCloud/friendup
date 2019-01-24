@@ -797,6 +797,7 @@ var WorkspaceInside = {
 						{
 							var t_title = appName + ' - ' + msg.notificationData.title;
 							var t_txt = msg.notificationData.content;
+							console.log( 'Notification data: ', msg );
 							Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
 							function clickCallback()
 							{
