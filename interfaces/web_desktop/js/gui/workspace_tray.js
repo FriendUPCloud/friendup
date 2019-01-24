@@ -521,6 +521,7 @@ function Notify( message, callback, clickcallback )
 						RemoveNotificationEvent( notificationId );
 					}
 				}
+				cancelBubble( e );
 			} );
 		}
 		
