@@ -1041,12 +1041,20 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Tell window manager we are activating window
+	if( isMobile )
+	{
+		document.body.classList.add( 'WindowActivating' );
+	}
 	div.classList.add( 'Activating' );
 	div.parentNode.classList.add( 'Activating' );
 	setTimeout( function()
 	{
 		if( div )
 		{
+			if( isMobile )
+			{
+				document.body.classList.remove( 'WindowActivating' );
+			}
 			div.classList.add( 'Activated' );
 			div.classList.remove( 'Activating' );
 			setTimeout( function()

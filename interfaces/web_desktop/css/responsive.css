@@ -708,9 +708,27 @@ body.ViewMaximized .ViewContainer .View.Activated
 {
 	opacity: 0;
 }
-.ViewContainer.OnWorkspace.DelayedDeactivation .View
+.ViewContainer.OnWorkspace.DelayedDeactivation .View,
 {
 	display: none;
+}
+
+.WindowActivating .ViewContainer.OnWorkspace .View
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+.ViewContainer.OnWorkspace .View .Content,
+.WindowActivating .ViewContainer.OnWorkspace .View .Title,
+.ViewContainer.OnWorkspace .View .MobileFileBrowser,
+.ViewContainer.OnWorkspace .View .DirectoryToolbar
+{
+	display: none !important;
+}
+.ViewContainer.OnWorkspace .View .Title
+{
+	background: transparent;
 }
 
 
