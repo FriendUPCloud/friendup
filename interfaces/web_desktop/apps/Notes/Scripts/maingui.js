@@ -161,7 +161,6 @@ Application.refreshFilePane = function( method )
 			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile && !Application.fileSaved )
 			{
 				Application.loadFile( items[ a ].Path );
-				Application.currentDocument = num.Path;
 				fouldFile = true;
 			}
 			
@@ -941,8 +940,6 @@ Application.loadFile = function( path )
 				data = data.split( /authid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 				data = data.split( /sessionid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 		
-				Application.setCurrentDocument( path );
-		
 				var bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
 				if( bdata && bdata[1] )
 				{
@@ -959,8 +956,6 @@ Application.loadFile = function( path )
 						}
 						Application.editor.setData( bdata[1] );
 					
-						Application.setCurrentDocument( path );
-					
 						// Remember content and top scroll
 						Application.sendMessage( { 
 							command: 'remembercontent', 
@@ -968,6 +963,9 @@ Application.loadFile = function( path )
 							path: path,
 							scrollTop: 0
 						} );
+						
+						Application.setCurrentDocument( path );
+						console.log( 'all done!', path );
 					}
 					loader();
 					
@@ -1131,10 +1129,20 @@ Application.newDocument = function( args )
 		if( args.path )
 		{
 			this.setCurrentDocument( args.path );
-			
-			
 			this.lastSaved = ( new Date() ).getTime();
 			this.fileSaved = true;
+		}
+		else
+		{
+			if( args.browserPath )
+			{
+				this.browserPath = args.browserPath;
+				this.path = args.browserPath;
+				if( !args.content )
+				{
+					this.fileBrowser.setPath( 'Mountlist:', args.browserPath );
+				}
+			}
 		}
 		
 		Application.editor.setData( args.content );
@@ -1160,6 +1168,13 @@ Application.newDocument = function( args )
 		{
 			Application.initializeBody();
 		} );
+		
+		if( args.browserPath )
+		{
+			this.browserPath = args.browserPath;
+			this.path = args.browserPath;
+			this.fileBrowser.setPath( 'Mountlist:', args.browserPath );
+		}
 	}
 }
 
@@ -1313,7 +1328,8 @@ Application.receiveMessage = function( msg )
 			var o = {
 				content: msg.content ? msg.content : '', 
 				scrollTop: msg.scrollTop >= 0 ? msg.scrollTop : 0,
-				path: msg.path ? msg.path : ''
+				path: msg.path ? msg.path : '',
+				browserPath: msg.browserPath ? msg.browserPath : false
 			};
 			this.newDocument( o );
 			break;

@@ -123,12 +123,14 @@ Application.run = function( msg, iface )
 			}
 			else if( Application.sessionObject && Application.sessionObject.content )
 			{
-				w.sendMessage( { 
+				var msng = { 
 					command: 'newdocument',
 					content: Application.sessionObject.content, 
 					path: Application.sessionObject.currentDocument,
-					scrollTop: Application.sessionObject.scrollTop 
-				} );
+					scrollTop: Application.sessionObject.scrollTop,
+					browserPath: Application.sessionObject.currentDocument ? false : 'Home:Notes/'
+				};
+				w.sendMessage( msng );
 				
 				if( Application.sessionObject.currentDocument )
 					Application.wholeFilename = Application.sessionObject.currentDocument;
@@ -137,6 +139,14 @@ Application.run = function( msg, iface )
 				{
 					Application.mainView.setFlag( 'title', 'Notes - ' + Application.sessionObject.currentDocument );
 				}
+			}
+			else
+			{
+				w.sendMessage( { 
+					command: 'newdocument',
+					content: '',
+					browserPath: 'Home:Notes/'
+				} );
 			}
 		} );
 	}
