@@ -123,12 +123,17 @@ Application.run = function( msg, iface )
 			}
 			else if( Application.sessionObject && Application.sessionObject.content )
 			{
+				if( Application.sessionObject.currentDocument )
+				{
+					w.sendMessage( { command: 'loadfiles', files: [ { Path: Application.sessionObject.currentDocument } ] } );
+					return;
+				}
+				
 				var msng = { 
 					command: 'newdocument',
-					content: Application.sessionObject.content, 
-					path: Application.sessionObject.currentDocument,
+					content: Application.sessionObject.content,
 					scrollTop: Application.sessionObject.scrollTop,
-					browserPath: Application.sessionObject.currentDocument ? false : 'Home:Notes/'
+					browserPath: 'Home:Notes/'
 				};
 				w.sendMessage( msng );
 				

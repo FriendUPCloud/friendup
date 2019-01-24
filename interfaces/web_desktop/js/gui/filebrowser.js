@@ -149,7 +149,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 
 			if( type == 'File' )
 			{
-				
 				var eles = self.dom.getElementsByTagName( 'div' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -389,7 +388,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							clickElement = d;
 						}							
 						
-						
 						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
 							var driver = msg.list[a].Driver;
@@ -450,7 +448,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						s.className = 'SubItems';
 						d.appendChild( s );
 						rootElement.appendChild( d );
-						createOnclickAction( d, foundStructure.Path, 'volume', depth + 1 );
+						createOnclickAction( d, d.path, 'volume', depth + 1 );
 					}
 					// Existing items
 					else
@@ -485,7 +483,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					setTimeout( function()
 					{
 						clickElement.onclick();
-					}, 50 );
+					}, 5 );
 				}
 			}
 			

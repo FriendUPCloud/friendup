@@ -867,7 +867,6 @@ Application.setCurrentDocument = function( pth )
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
 	
-	
 	// Update filebrowser
 	this.fileBrowser.setPath( 'Mountlist:', this.path );
 	
@@ -965,7 +964,6 @@ Application.loadFile = function( path )
 						} );
 						
 						Application.setCurrentDocument( path );
-						console.log( 'all done!', path );
 					}
 					loader();
 					
