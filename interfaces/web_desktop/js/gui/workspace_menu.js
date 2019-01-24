@@ -507,6 +507,7 @@ var WorkspaceMenu =
 			if( menuItems[i].items )
 			{
 				var ul = document.createElement ( 'ul' );
+				ul.classList.add( 'SmoothScrolling' );
 				ul.onscroll = function( e )
 				{
 					if( WorkspaceMenu.scrollTim )
