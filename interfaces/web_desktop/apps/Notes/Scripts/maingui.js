@@ -1126,15 +1126,18 @@ Application.newDocument = function( args )
 	{
 		var f = document.getElementsByTagName( 'iframe' )[0];
 		
-		this.setCurrentDocument( args.path );
 		
 		if( args.path )
 		{
+			this.setCurrentDocument( args.path );
+			
+			
 			this.lastSaved = ( new Date() ).getTime();
 			this.fileSaved = true;
 		}
 		
 		Application.editor.setData( args.content );
+
 		if( args.scrollTop )
 		{
 			setTimeout( function()
