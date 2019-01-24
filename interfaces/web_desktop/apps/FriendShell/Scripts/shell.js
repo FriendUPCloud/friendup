@@ -56,6 +56,7 @@ Application.run = function( packet )
 		this.preventClose();
 		function doQuit()
 		{
+			w.onClose = null;
 			Application.quit();
 		}
 		
