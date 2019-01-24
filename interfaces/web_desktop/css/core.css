@@ -1057,6 +1057,14 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 
 /* Screen menu -------------------------------------------------------------- */
 
+.SmoothScrolling
+{
+	scroll-behavior: smooth;
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
+	-webkit-scroll-behavior: smooth;
+}
+
 #WorkspaceMenu
 {
 	position: absolute;
