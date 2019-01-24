@@ -3299,6 +3299,7 @@ movableMouseDown = function ( e )
 // Go into standard Workspace user mode (f.ex. clicking on wallpaper)
 function DefaultToWorkspaceScreen( tar ) // tar = click target
 {
+	if( isMobile ) return;
 	FocusOnNothing();
 	WorkspaceMenu.close();
 }
