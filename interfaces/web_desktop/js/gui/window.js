@@ -925,7 +925,7 @@ function _ActivateWindowOnly( div )
 			else window.currentMovable = div;
 
 			m.classList.add( 'Active' );
-			m.classList.remove( 'OnWorkspace' );
+			m.viewContainer.classList.remove( 'OnWorkspace' );
 			m.viewContainer.classList.add( 'Active' );
 
 			// Extra force!
@@ -998,6 +998,7 @@ function _ActivateWindow( div, nopoll, e )
 {
 	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
 	{
+		div.windowObject.lastActiveView.parentNode.classList.remove( 'OnWorkspace' );
 		_ActivateWindow( div.windowObject.lastActiveView );
 		div.windowObject.lastActiveView = null;
 		return;
