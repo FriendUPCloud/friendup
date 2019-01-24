@@ -704,7 +704,20 @@ body.ViewMaximized .ViewContainer .View.Activated
 	opacity: 1 !important;
 	overflow: hidden;
 }
-.ViewContainer.Closing:not([childview]) .View
+.ViewContainer.Closing .View .Title
+{
+	transition: opacity 0.25s;
+}
+.ViewContainer.OnWorkspace .View .Title
+{
+	opacity: 1;
+}
+.ViewContainer.Closing.OnWorkspace .View .Title
+{
+	opacity: 0;
+}
+
+.ViewContainer.Closing:not([childview]):not(.OnWorkspace) .View
 {
 	transform: translateX(100%) !important;
 }

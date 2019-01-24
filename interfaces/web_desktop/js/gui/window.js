@@ -4693,14 +4693,18 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		if( c.classList.contains( 'Active' ) )
 		{
 			// These views are handled by css...
+			c.classList.remove( 'OnWorkspace' );
 			continue;
 		}
 		// Non-mainview windows are not displayed
 		else if( !v.windowObject.flags.mainView && v.windowObject.applicationId )
 		{
 			c.style.top = '-200%';
+			c.classList.remove( 'OnWorkspace' );
 			continue;
 		}
+		
+		c.classList.add( 'OnWorkspace' );
 		
 		// Next row
 		if( gridX + boxWidth >= pageX2 )
