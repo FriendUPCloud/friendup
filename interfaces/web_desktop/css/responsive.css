@@ -709,7 +709,7 @@ body.ViewMaximized .ViewContainer .View.Activated
 	opacity: 0;
 }
 
-body #Screens .ViewContainer .View.DelayedDeactivation
+body #Screens .ViewContainer.DelayedDeactivation .View
 {
 	pointer-events: none;
 }
