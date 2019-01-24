@@ -38,6 +38,8 @@ i18n_not_saved_cant_print         : The document is not saved. Please save it fi
 
 i18n_add_item                     : Add item
 
+i18n_new_document                 : New note
+
 i18n_close                        : Close
 i18n_accept                       : Accept
 

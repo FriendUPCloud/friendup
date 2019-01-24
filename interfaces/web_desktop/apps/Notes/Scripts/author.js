@@ -358,6 +358,9 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'newdocument':
+			this.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_new_document' ) );
+			break;
 		case 'applystyle':
 			this.mainView.sendMessage( msg );
 			break;

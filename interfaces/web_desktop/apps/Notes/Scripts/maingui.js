@@ -144,9 +144,10 @@ Application.refreshFilePane = function( method )
 			ext = ext.pop().toLowerCase();
 			if( ext != 'html' && ext != 'htm' ) continue;
 			
-			if( firstFileNum++ == 0 && method == 'findFirstFile' )
+			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile )
 			{
 				Application.loadFile( items[ a ].Path );
+				Applicatino.currentDocument = num.Path;
 				fouldFile = true;
 			}
 			
@@ -172,6 +173,35 @@ Application.refreshFilePane = function( method )
 			}
 			
 			d.innerHTML = '<p class="Layout"><strong>' + num.Filename + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
+			
+			// File permissions are given
+			// TODO: Check permissions
+			var rem = false;
+			if( 1 == 1 )
+			{
+				( function( dd, path ){
+					rem = document.createElement( 'div' );
+					rem.className = 'IconButton fa-remove IconSmall FloatRight';
+					rem.onclick = function( e )
+					{
+						var l = new Library( 'system.library' );
+						l.onExecuted = function( e, mess )
+						{
+							if( e == 'ok' )
+							{
+								if( Application.currentDocument == path )
+								{
+									Application.newDocument( { just: 'makenew' } );
+								}
+								Application.refreshFilePane();
+							}
+						}
+						l.execute( 'file/delete', { path: path } );
+						return cancelBubble( e );
+					}
+					d.insertBefore( rem, d.firstChild );
+				} )( d, num.Path );
+			}
 			
 			fBar.contents.appendChild( d );
 			( function( dl, path ){
@@ -969,6 +999,11 @@ Application.newDocument = function( args )
 	}
 	else
 	{
+		// Blank document
+		Application.sendMessage( {
+			command: 'newdocument'
+		} );
+		
 		Application.editor.setData( '', function()
 		{
 			Application.initializeBody();
