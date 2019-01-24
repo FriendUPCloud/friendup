@@ -41,6 +41,9 @@ i18n_add_item                     : Nytt element
 
 i18n_new_document                 : Ny notat
 
+i18n_are_you_sure                 : Er du sikker?
+i18n_delete_note                  : Dette vil slette ditt dokument.
+
 i18n_close                        : Lukk
 i18n_accept                       : Aksepter
 

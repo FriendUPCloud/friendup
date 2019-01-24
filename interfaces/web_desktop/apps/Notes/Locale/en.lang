@@ -40,6 +40,9 @@ i18n_add_item                     : Add item
 
 i18n_new_document                 : New note
 
+i18n_are_you_sure                 : Are you sure?
+i18n_delete_note                  : This will delete your document.
+
 i18n_close                        : Close
 i18n_accept                       : Accept
 

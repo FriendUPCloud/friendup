@@ -184,19 +184,25 @@ Application.refreshFilePane = function( method )
 					rem.className = 'IconButton fa-remove IconSmall FloatRight';
 					rem.onclick = function( e )
 					{
-						var l = new Library( 'system.library' );
-						l.onExecuted = function( e, mess )
+						Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_delete_note' ), function( result )
 						{
-							if( e == 'ok' )
+							if( result.data )
 							{
-								if( Application.currentDocument == path )
+								var l = new Library( 'system.library' );
+								l.onExecuted = function( e, mess )
 								{
-									Application.newDocument( { just: 'makenew' } );
+									if( e == 'ok' )
+									{
+										if( Application.currentDocument == path )
+										{
+											Application.newDocument( { just: 'makenew' } );
+										}
+										Application.refreshFilePane();
+									}
 								}
-								Application.refreshFilePane();
+								l.execute( 'file/delete', { path: path } );
 							}
-						}
-						l.execute( 'file/delete', { path: path } );
+						} );
 						return cancelBubble( e );
 					}
 					d.insertBefore( rem, d.firstChild );
