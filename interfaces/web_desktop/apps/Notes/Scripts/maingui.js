@@ -476,7 +476,7 @@ Application.initCKE = function()
 					{
 						Application.sendMessage( {
 							command: 'keydown',
-							key: 79,
+							key: 83,
 							ctrlKey: true
 						} );
 					}
