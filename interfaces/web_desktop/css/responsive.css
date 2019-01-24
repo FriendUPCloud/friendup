@@ -315,6 +315,7 @@ html body .Screen .MobileAppMenu:after
 	right: auto;
 	top: 0;
 	left: 100%;
+	z-index: 2147483646;
 	background-color: #34495e;
 	width: 40px;
 	height: 40px;
