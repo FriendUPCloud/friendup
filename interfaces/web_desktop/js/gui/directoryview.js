@@ -3795,7 +3795,6 @@ FileIcon.prototype.Init = function( fileInfo )
 			// Animation for going to next folder
 			if( isMobile )
 			{
-				console.log( 'Animation!!!' );
 				var n = document.createElement( 'div' );
 				n.className = 'Content SlideAnimation';
 				n.style.willChange = 'transform';

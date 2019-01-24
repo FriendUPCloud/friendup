@@ -6160,7 +6160,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.openDirectory(); },
 						disabled: !iconsSelected
 					},*/
-					iconsAvailable ? {
+					!isMobile && iconsAvailable ? {
 						name: i18n( 'menu_show_as' ),
 						items:
 						[

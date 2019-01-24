@@ -1004,7 +1004,8 @@ html .View.Active > .BottomBar
 	background-color: #455155;
 }
 
-html .View.Active > .Title
+html .View.Active > .Title,
+html body[mobile] .View > .Title
 {
 	background-color: #34495E;
 }
@@ -1693,7 +1694,8 @@ html body.Charcoal .View, html body.Charcoal .View.Active
 	box-shadow: 0px 1px 15px 1px rgba(0,0,0,0.3);
 }
 
-html > body.Charcoal .View.Active > .Title
+html > body.Charcoal .View.Active > .Title,
+html > body[mobile].Charcoal .View > .Title
 {
 	background-color: #303030;
 }

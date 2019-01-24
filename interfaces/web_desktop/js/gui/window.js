@@ -4682,7 +4682,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		// Non-mainview windows are not displayed
 		else if( !v.windowObject.flags.mainView && v.windowObject.applicationId )
 		{
-			c.style.top = '-100%';
+			c.style.top = '-200%';
 			continue;
 		}
 		
