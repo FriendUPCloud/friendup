@@ -1094,3 +1094,10 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	display: block;
 }
 
+/* HACKS AND DRAGONS! */
+
+[mobile] .tab-bar .tab-item.active
+{
+	background-color: transparent;
+}
+
