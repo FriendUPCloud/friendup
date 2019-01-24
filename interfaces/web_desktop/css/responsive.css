@@ -315,6 +315,7 @@ html body .Screen .MobileAppMenu:after
 	right: auto;
 	top: 0;
 	left: 100%;
+	z-index: 2147483646;
 	background-color: #34495e;
 	width: 40px;
 	height: 40px;
@@ -505,34 +506,6 @@ body:not(.HasMenu) #Screens > div.Screen.HasWidget
 	right: 80px;
 }
 
-body:not([tablet]) #Screens .View
-{
-	position: relative;
-	width: auto !important;
-	left: 0 !important;
-	top: auto !important;
-	height: 35px !important;
-	width: 100% !important;
-	max-width: 100%;
-	clear: both;
-	float: left;
-	overflow: hidden;
-	transition: none;
-	-moz-transition: none;
-	-webkit-transition: none;
-	box-shadow: none;
-	-moz-box-shadow: none;
-	-webkit-box-shadow: none;
-}
-
-body:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
-{
-	height: 35px !important;
-	float: left;
-	clear: both;
-	position: relative;
-}
-
 body:not([tablet]) #Screens .View:last-child
 {
 	z-index: 1 !important;
@@ -628,6 +601,11 @@ body.WindowMenu #Screens .View
 	width: calc(50% - 20px) !important;
 }
 
+[mobile] #Screens .View
+{
+	transition: transform 0.25s;
+}
+
 /* Popup dialog boxes lil bit larger */
 #Screens .View > .Content > div.Dialog
 {
@@ -660,10 +638,146 @@ body.WindowMenu #Screens .View
 {
 	transform: rotateZ(0deg);
 	opacity: 1;
+	transition: opacity 0.25s;
 }
 
-body.ViewMaximized .ViewContainer:not(.Active),
-body.AppsShowing .ViewContainer
+body .ViewContainer .View
+{
+	will-change: transform, content;
+}
+
+body .ViewContainer .View .Content
+{
+	will-change: content;
+	transform: translateZ(0);
+}
+
+body .ViewContainer .View.Active
+{
+	transition: transform 0.25s !important;
+}
+
+/*body .ViewContainer.Activating .View .Content
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+	pointer-events: none;
+}
+
+body .ViewContainer.Activating .View.DoneActivating .Content
+{
+	opacity: 1;
+	pointer-events: all;
+}*/
+
+body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
+body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
+body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening,
+body #Screens .ViewContainer[childview] .View.DelayedDeactivation
+{
+	transform: translateX(100%) !important;
+	left: 100% !important;
+	overflow: hidden;
+}
+body.ViewMaximized .ViewContainer:not(.DelayedDeactivation) .View.Activating,
+body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation) .View.Activating,
+body #Screens .ViewContainer:not(.DelayedDeactivation) .View.Opening
+{
+	transform: translateX(-100%) !important;
+	left: -100% !important;
+	overflow: hidden;
+}
+body.ViewMaximized .ViewContainer .View.Activated
+{
+	transform: translateX(0%) !important;
+}
+
+.ViewContainer.Closing .View
+{
+	opacity: 1 !important;
+	overflow: hidden;
+}
+.ViewContainer.Closing .View .Title
+{
+	transition: opacity 0.25s;
+}
+.ViewContainer.OnWorkspace .View .Title
+{
+	opacity: 1;
+}
+.ViewContainer.Closing.OnWorkspace .View .Title
+{
+	opacity: 0;
+}
+
+.ViewContainer.Closing:not(.Active) .View .Title
+{
+	display: none;
+}
+
+body #Screens .ViewContainer.DelayedDeactivation .View
+{
+	pointer-events: none;
+}
+
+.ViewContainer.OnWorkspace.DelayedDeactivation .View,
+{
+	display: none;
+}
+
+.WindowActivating .ViewContainer.OnWorkspace .View
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+.ViewContainer.OnWorkspace .View .Content,
+.WindowActivating .ViewContainer.OnWorkspace .View .Title,
+.ViewContainer.OnWorkspace .View .MobileFileBrowser,
+.ViewContainer.OnWorkspace .View .DirectoryToolbar
+{
+	display: none !important;
+}
+.ViewContainer.OnWorkspace .View .Title
+{
+	background: transparent;
+}
+
+
+.ViewContainer.Closing:not([childview]):not(.OnWorkspace) .View
+{
+	transform: translateX(100%) !important;
+}
+
+#Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
+{
+	z-index: 0 !important;
+}
+
+body:not([sharedapp]) #Screens .View.Active .Thumbnail
+{
+	background-color: transparent;
+	transition: background 0.3s;
+}
+body:not([sharedapp]) #Screens .View.Active.Opening .Thumbnail,
+body:not([sharedapp]) #Screens .View.Active.Opened .Thumbnail,
+body:not([sharedapp]) #Screens .View.Active.Redrawing .Thumbnail
+{
+	background-image: none !important;
+	background-color: #202020;
+}
+
+body #Screens .View:not(.Active)
+{
+	max-height: 35px;
+}
+
+body.ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation),
+body.AppsShowing .ViewContainer,
+body.AppsShowing .ViewContainer .ViewIcon,
+body .ViewContainer[childview] .ViewIcon,
+body .ViewContainer.Closing:not(.Active) .ViewIcon,
+body .ViewContainer.DelayedDeactivation .ViewIcon
 {
 	opacity: 0 !important;
 }
@@ -900,11 +1014,6 @@ body #Screens .View.Active .BottomBar, #Screens .View.Active .Resize
 	display: block;
 }
 
-html #Screens .View
-{
-	transition: none;
-}
-
 html #Screens .View > .Content > iframe
 {
 	transition: none;
@@ -967,7 +1076,7 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 
 #MobileNotifications .MobileNotification.Showing
 {
-	opacity: 0.8;
+	opacity: 0.95;
 	pointer-events: all;
 }
 

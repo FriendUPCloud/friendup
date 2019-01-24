@@ -872,18 +872,14 @@ function SetScreenByWindowElement( div )
 function _ActivateWindowOnly( div )
 {
 	// Blocker
-	if( div.content && div.content.blocker )
+	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
 	}
 	
-	var delayedDeactivation = false;
-	if( window.currentMovable && div.justOpened && currentMovable && div != currentMovable )
-	{
-		delayedDeactivation = true;
-		delete div.justOpened;
-	}
+	// Special case
+	var delayedDeactivation = true;
 	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
@@ -903,20 +899,14 @@ function _ActivateWindowOnly( div )
 					{
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
-						if( window.isMobile && !window.isTablet )
-						{
-							// TODO: May need to be deleted
-							dd.style.height = '35px';
-						}
 					}
-					if( delayedDeactivation && dd == currentMovable )
+					if( delayedDeactivation && div.applicationId == dd.applicationId )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
 						setTimeout( function(){ deal() }, 500 );
 					}
 					else deal();
 				} )( m );
-				newOffsetY += 35;
 			}
 			else
 			{
@@ -935,6 +925,7 @@ function _ActivateWindowOnly( div )
 			else window.currentMovable = div;
 
 			m.classList.add( 'Active' );
+			m.viewContainer.classList.remove( 'OnWorkspace' );
 			m.viewContainer.classList.add( 'Active' );
 
 			// Extra force!
@@ -996,22 +987,6 @@ function _ActivateWindowOnly( div )
 				div.notifyActivated = true;
 				div.windowObject.sendMessage( msg );
 			}
-
-			if( !window.isTablet && window.isMobile )
-			{
-				if( m.lastHeight )
-				{
-					m.style.height =  Math.min( Workspace.screenDiv.clientHeight - newOffsetY - 72, m.lastHeight) + 'px';
-				}
-				else if( Workspace && Workspace.screenDiv )
-				{
-					m.style.height = Math.min( Workspace.screenDiv.clientHeight - newOffsetY - 72, Workspace.screenDiv.clientHeight - 200 ) + 'px';
-				}
-				else
-				{
-					m.style.height = '175px';
-				}
-			}
 		}
 	}
 	// Check window
@@ -1021,6 +996,13 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
+	{
+		div.windowObject.lastActiveView.parentNode.classList.remove( 'OnWorkspace' );
+		_ActivateWindow( div.windowObject.lastActiveView );
+		div.windowObject.lastActiveView = null;
+		return;
+	}
 	// Don't reactivate
 	if( div.classList.contains( 'Active' ) ) 
 	{
@@ -1059,6 +1041,43 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		_WindowToFront( div );
 	}
+	
+	// Tell window manager we are activating window
+	if( isMobile )
+	{
+		document.body.classList.add( 'WindowActivating' );
+	}
+	div.classList.add( 'Activating' );
+	div.parentNode.classList.add( 'Activating' );
+	setTimeout( function()
+	{
+		if( div )
+		{
+			if( isMobile )
+			{
+				document.body.classList.remove( 'WindowActivating' );
+			}
+			div.classList.add( 'Activated' );
+			div.classList.remove( 'Activating' );
+			setTimeout( function()
+			{
+				if( div )
+				{
+					// Finally
+					div.classList.add( 'DoneActivating' );
+					div.classList.remove( 'Activated' );
+					setTimeout( function()
+					{
+						if( div )
+						{
+							div.classList.remove( 'DoneActivating' );
+							div.parentNode.classList.remove( 'Activating' );
+						}
+					}, 250 );
+				}
+			}, 250 );
+		}
+	}, 250 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
@@ -1389,7 +1408,7 @@ function HasClassname( div, classname )
 
 // Close a movable window by pointing to the content div
 // Could one day be moved to the View class...
-function CloseView( win )
+function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
@@ -1402,8 +1421,7 @@ function CloseView( win )
 		if( window.currentMovable && window.currentMovable == win )
 			window.currentMovable = null;
 			
-		// Add to view container
-		win.parentNode.parentNode.classList.add( 'Closing' );
+		win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 			
 		var count = 0;
 
@@ -1447,6 +1465,22 @@ function CloseView( win )
 
 		if ( !isGroupMember && div.parentNode )
 		{
+			// Immediately kill child views for mobile!
+			if( isMobile && window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app.mainView == div.windowObject )
+				{
+					for( var a in app.windows )
+					{
+						if( app.windows[ a ] != div.windowObject )
+						{
+							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+						}
+					}
+				}
+			}
+			
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
@@ -1459,9 +1493,10 @@ function CloseView( win )
 				{
 					console.log( 'Nothing to remove..' );
 				}
-			}, 500 );
+			}, isMobile ? 750 : 500 );
 
-			div.style.opacity = 0;
+			if( !isMobile )
+				div.style.opacity = 0;
 
 			// Do not click!
 			var ele = document.createElement( 'div' );
@@ -1516,7 +1551,7 @@ function CloseView( win )
 			var o = [];
 			for( var b in movableWindows )
 			{
-				if( movableWindows[b] != div )
+				if( movableWindows[b] != div && movableWindows[b].parentNode )
 				{
 					o[b] = movableWindows[b];
 				}
@@ -1797,6 +1832,7 @@ var View = function( args )
 			// Make a container to put the view div inside of
 			var viewContainer = document.createElement( 'div' );
 			viewContainer.className = 'ViewContainer';
+			viewContainer.style.display = 'none';
 			
 			// Get icon for visualizations
 			if( applicationId )
@@ -1960,7 +1996,7 @@ var View = function( args )
 			div.setAttribute( 'transparent', 'transparent' );
 		}
 
-		div.style.webkitTransform = 'translate3d(0, 0, 0)';
+		div.style.transform = 'translate3d(0, 0, 0)';
 
 		var zoom; // for use later - zoom gadget
 
@@ -3148,6 +3184,7 @@ var View = function( args )
 		
 		// Append view window to parent
 		divParent.appendChild( viewContainer );
+		
 		if( inGroup )
 		{
 			ResizeWindow( divParent.parentNode );
@@ -3172,6 +3209,9 @@ var View = function( args )
 		// So, dont creating, behave normally now
 		setTimeout( function(){ div.setAttribute( 'created', '' ); }, 300 );
 
+		// Turn calculations on
+		viewContainer.style.display = '';
+		
 		// Once the view appears on screen, again, constrain it
 		ConstrainWindow( div );
 		
@@ -3369,7 +3409,6 @@ var View = function( args )
 		// If the current window is an app, move it to front.. (unless new window is a child window)
 		if( window.friend && Friend.currentWindowHover )
 			Friend.currentWindowHover = false;
-		div.justOpened = true;
 		_ActivateWindow( div );
 		_WindowToFront( div );
 		
@@ -4670,14 +4709,20 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		if( c.classList.contains( 'Active' ) )
 		{
 			// These views are handled by css...
+			c.classList.remove( 'OnWorkspace' );
 			continue;
 		}
 		// Non-mainview windows are not displayed
 		else if( !v.windowObject.flags.mainView && v.windowObject.applicationId )
 		{
-			c.style.top = '-100%';
+			c.style.top = '-200%';
+			c.classList.remove( 'OnWorkspace' );
 			continue;
 		}
+		else if( c.style.display == 'none' || v.style.display == 'none' )
+			continue;
+		
+		c.classList.add( 'OnWorkspace' );
 		
 		// Next row
 		if( gridX + boxWidth >= pageX2 )

@@ -380,7 +380,7 @@ html body .Screen > .TitleBar.Busy:after
 
 /* Views not activated for mobile ------------------------------------------- */
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):not(.OnWorkspace)
 {
 	position: absolute;
 	clear: none;
@@ -462,11 +462,6 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	background-repeat: no-repeat;
 	pointer-events: none;
 	border-radius: 8px;
-}
-
-body[mobile]:not([tablet]) #Screens .ViewContainer > .ViewIcon
-{
-	transition: width,height,top,left 0.25s,0.25s,0.25s,0.25s;
 }
 
 body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
@@ -936,16 +931,6 @@ html .View.Active
 	-webkit-transition: transform 0.25s;
 }
 
-body[mobile=mobile] #Screens .View
-{
-	transition: none !important;
-	-webkit-transition: none !important;
-	transition-property: none !important;
-	-webkit-transition-property: none !important;
-	transition-duration: 0s !important;
-	-webkit-transition-duration: 0s !important;
-}
-
 html .View.Active > .Title
 {
 	border-top: none;
@@ -1019,7 +1004,8 @@ html .View.Active > .BottomBar
 	background-color: #455155;
 }
 
-html .View.Active > .Title
+html .View.Active > .Title,
+html body[mobile] .View > .Title
 {
 	background-color: #34495E;
 }
@@ -1708,7 +1694,8 @@ html body.Charcoal .View, html body.Charcoal .View.Active
 	box-shadow: 0px 1px 15px 1px rgba(0,0,0,0.3);
 }
 
-html > body.Charcoal .View.Active > .Title
+html > body.Charcoal .View.Active > .Title,
+html > body[mobile].Charcoal .View > .Title
 {
 	background-color: #303030;
 }
@@ -2351,12 +2338,14 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View
 	overflow: visible;
 }
 
-html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Title
 {
 	top: -40px;
 }
 
-html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Content
 {
 	top: 0px !important;
 }
@@ -3313,7 +3302,7 @@ html .File .Icon .Drive
 
 html body.Charcoal .File .Icon .Drive .Label
 {
-	filter: grayscale(1) brightness(0.4) drop-shadow(1px 2px 2px rgba(255,255,255,0.8));
+	filter: grayscale(1) brightness(0.4) drop-shadow(1px 2px 2px rgba(255,255,255,0.4));
 }
 
 html body[mobile] .File .Icon .Drive > .Label
@@ -4409,5 +4398,16 @@ body[mobile=mobile].AppsShowing #DoorsScreen .Scroller:before
 body[mobile=mobile] .Desklet.Open.Opened
 {
 	height: calc(100% - 97px) !important;
+}
+
+/* HACKS BE DRAGONS! */
+
+#hello #messages,
+#hello #conversations
+{
+	scroll-behavior: smooth;
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
+	-webkit-scroll-behavior: smooth;
 }
 

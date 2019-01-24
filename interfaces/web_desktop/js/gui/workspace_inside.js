@@ -501,13 +501,13 @@ var WorkspaceInside = {
 		{
 			try
 			{
-				this.conn.close();
+				this.conn.ws.close();
 			}
 			catch( ez )
 			{
 				try
 				{
-					this.conn.cleanup();
+					this.conn.ws.cleanup();
 				}
 				catch( ez2 )
 				{
@@ -699,6 +699,20 @@ var WorkspaceInside = {
 				// Check if we have notification data
 				if( msg.notificationData )
 				{
+					/*if( !Workspace.debugNotificationLog )
+					{
+						Workspace.debugNotificationLog = {};
+					}
+					if( Workspace.debugNotificationLog[ msg.id ] )
+					{
+						Workspace.debugNotificationLog[ msg.id ]++;
+						return;
+					}
+					else
+					{
+						Workspace.debugNotificationLog[ msg.id ] = 1;
+					}*/
+					
 					// Application notification
 					if( msg.notificationData.application )
 					{
@@ -1117,10 +1131,28 @@ var WorkspaceInside = {
 					}
 					if( Workspace.widget )
 						Workspace.widget.slideUp();
+					
+					// Store active window in mainwindow
+					if( window._getAppByAppId )
+					{
+						if( window.currentMovable && currentMovable.applicationId )
+						{
+							var app = _getAppByAppId( currentMovable.applicationId );
+							if( app.mainView )
+							{
+								if( currentMovable.windowObject != app.mainView )
+								{
+									app.mainView.lastActiveView = currentMovable;
+								}
+							}
+						}
+					}
+					
 					Workspace.mainDock.closeDesklet();
 					DefaultToWorkspaceScreen();
 					_DeactivateWindows();
 					Friend.GUI.reorganizeResponsiveMinimized();
+					window.focus();
 				}
 				
 				// App menu toggle
@@ -2233,13 +2265,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					var fmenu = {
 						click: function( e )
 						{
+							var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
 							if( isMobile )
 							{
-								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' } );
+								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
 							}
 							else
 							{
-								OpenWindowByFileinfo( { Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' } );
+								OpenWindowByFileinfo( 
+									{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
+									false, false, u
+								);
 							}
 							Workspace.mainDock.closeDesklet();
 						},
@@ -6156,7 +6192,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.openDirectory(); },
 						disabled: !iconsSelected
 					},*/
-					iconsAvailable ? {
+					!isMobile && iconsAvailable ? {
 						name: i18n( 'menu_show_as' ),
 						items:
 						[
@@ -6201,7 +6237,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				items: Workspace.getBookmarks()
 			}*/
 		];
-
+		
 		// Generate
 		if( !prohibitworkspaceMenu )
 		{
@@ -7607,7 +7643,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
-			Workspace.initWebSocket();
+			if( isMobile )
+			{
+				Workspace.initWebSocket();
+			}
 		}
 		else
 		{
@@ -8430,6 +8469,12 @@ if( window.friendApp )
 				// No application? Alert the user
 				// TODO: Localize response!
 				if( !app )
+				{
+					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+					return;
+				}
+				
+				if( !app.contentWindow ) 
 				{
 					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 					return;

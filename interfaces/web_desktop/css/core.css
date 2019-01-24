@@ -121,6 +121,11 @@ body > #FocusGrabber
 	top: 100%;
 }
 
+.NoEvents
+{
+	pointer-events: none;
+}
+
 /* Some backgrounds and colors */
 
 .BackgroundHeavy
@@ -1056,6 +1061,14 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 
 
 /* Screen menu -------------------------------------------------------------- */
+
+.SmoothScrolling
+{
+	scroll-behavior: smooth;
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
+	-webkit-scroll-behavior: smooth;
+}
 
 #WorkspaceMenu
 {
@@ -3577,47 +3590,6 @@ html #DockWindowList .Task.Directory
 	bottom: 0;
 	overflow: hidden;
 	background: #2F669F;
-}
-
-#Screens .View
-{
-	position: absolute;
-	transition: opacity 0.2s;
-	opacity: 1;
-}
-
-#Screens .View[moving]
-{
-	transition: none;
-}
-
-#Screens .View:not([moving]):not(.Opening):not(.Opened)
-{
-	transition: opacity,width,height 0.2s,0.2s,0.2s;
-}
-
-#Screens .View.Opening
-{
-	opacity: 0;
-}
-
-#Screens .View > .Content > iframe
-{
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	border: 0;
-	margin: 0;
-	outline: none;
-	transition: opacity 0.2s ease-in;
-	opacity: 1;
-}
-
-#Screens .View > .Content > iframe.Loading
-{
-	opacity: 0;
 }
 
 .Screen > div

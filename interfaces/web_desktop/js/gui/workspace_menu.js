@@ -31,6 +31,7 @@ var WorkspaceMenu =
 		if( ge( 'WorkspaceMenu' ) )
 		{
 			var m = ge( 'WorkspaceMenu' );
+			m.classList.add( 'SmoothScrolling' );
 			m.parentNode.removeChild( m );
 			currentScreen.appendChild( m );
 			wm = m;
@@ -40,6 +41,7 @@ var WorkspaceMenu =
 		{
 			var d = document.createElement ( 'div' );
 			d.id = 'WorkspaceMenu';
+			d.classList.add( 'SmoothScrolling' );
 			
 			// Set up events on workspace menu
 			
@@ -408,7 +410,7 @@ var WorkspaceMenu =
 			}
 		}
 		
-		if( isMobile && appid )
+		if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
 		{
 			var found = false;
 			for( var z = 0; z < menuItems.length; z++ )
@@ -440,10 +442,20 @@ var WorkspaceMenu =
 				menuItems = clearQuit( menuItems );
 				
 				// Add option to quit application
-				menuItems.push( {
-					name: i18n( 'i18n_quit' ),
-					command: 'quit'
-				} );
+				if( currentMovable && currentMovable.content.directoryview )
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_close' ),
+						command: 'close'
+					} );
+				}
+				else
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_quit' ),
+						command: 'quit'
+					} );
+				}
 			}
 		}
 		
@@ -490,25 +502,28 @@ var WorkspaceMenu =
 					continue;
 				}
 			}
-			var ul = document.createElement ( 'ul' );
-			ul.onscroll = function( e )
-			{
-				if( WorkspaceMenu.scrollTim )
-				{
-					clearTimeout( WorkspaceMenu.scrollTim );
-				}
-				WorkspaceMenu.scrolling = e;
-				WorkspaceMenu.scrollTim = setTimeout( function()
-				{
-					WorkspaceMenu.scrollTim = false;
-				}, 250 );
-				return cancelBubble( e );
-			}
-			var depth2 = depth + 1;
-		
+			
 			// Object members
 			if( menuItems[i].items )
 			{
+				var ul = document.createElement ( 'ul' );
+				ul.classList.add( 'SmoothScrolling' );
+				ul.onscroll = function( e )
+				{
+					if( WorkspaceMenu.scrollTim )
+					{
+						clearTimeout( WorkspaceMenu.scrollTim );
+					}
+					WorkspaceMenu.scrolling = e;
+					WorkspaceMenu.scrollTim = setTimeout( function()
+					{
+						WorkspaceMenu.scrollTim = false;
+					}, 250 );
+					return cancelBubble( e );
+				}
+				var depth2 = depth + 1;
+		
+			
 				for ( var j in menuItems[i].items )
 				{
 					if( menuItems[i].items[j] == false ) continue;
@@ -616,14 +631,16 @@ var WorkspaceMenu =
 					}
 					ul.appendChild ( li );
 				}
+				d.classList.add( 'HasSubMenu' );
+				d.appendChild( ul );
 			}
 			// Static members
 			else if ( menuItems[i].itemsHTML )
 			{
 				ul.innerHTML = menuItems[i].itemsHTML;
+				d.classList.add( 'HasSubMenu' );
+				d.appendChild( ul );
 			}
-			d.classList.add( 'HasSubMenu' );
-			d.appendChild( ul );
 		}
 		if( ge( 'MobileMenu' ) )
 		{

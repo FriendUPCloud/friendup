@@ -254,55 +254,58 @@ Workspace = {
 		}
 
 		// Setup clock
-		var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
-		ex = ex.getElementsByClassName( 'Extra' )[0];
-		function clock()
+		if( !isMobile )
 		{
-			var d = new Date();
-			if( !ex.time )
+			var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
+			ex = ex.getElementsByClassName( 'Extra' )[0];
+			function clock()
 			{
-				var t = document.createElement( 'div' );
-				t.className = 'Time';
-				ex.appendChild( t );
-				ex.time = t;
-			}
-			if( Workspace.workspaceIsDisconnected )
-			{
-				if( !ex.offline )
+				var d = new Date();
+				if( !ex.time )
 				{
-					var o = document.createElement( 'div' );
-					o.className = 'Offline';
-					o.innerHTML = i18n( 'i18n_ws_disconnected' );
-					if( ex.time )
-					{
-						ex.insertBefore( o, ex.time );
-					}
-					else
-					{
-						ex.appendChild( o );
-					}
-					ex.offline = o;
+					var t = document.createElement( 'div' );
+					t.className = 'Time';
+					ex.appendChild( t );
+					ex.time = t;
 				}
-			}
-			else if( ex.offline )
-			{
-				ex.removeChild( ex.offline );
-				ex.offline = null;
-			}
+				if( Workspace.workspaceIsDisconnected )
+				{
+					if( !ex.offline )
+					{
+						var o = document.createElement( 'div' );
+						o.className = 'Offline';
+						o.innerHTML = i18n( 'i18n_ws_disconnected' );
+						if( ex.time )
+						{
+							ex.insertBefore( o, ex.time );
+						}
+						else
+						{
+							ex.appendChild( o );
+						}
+						ex.offline = o;
+					}
+				}
+				else if( ex.offline )
+				{
+					ex.removeChild( ex.offline );
+					ex.offline = null;
+				}
 
-			// Set the clock
-			var e = '';
-			e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
-					   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
-					   StrPad( d.getSeconds(), 2, '0' );*/
-			/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
-					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
-			ex.time.innerHTML = e;
+				// Set the clock
+				var e = '';
+				e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
+						   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
+						   StrPad( d.getSeconds(), 2, '0' );*/
+				/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
+						   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
+				ex.time.innerHTML = e;
 
-			// Realign workspaces
-			Workspace.nudgeWorkspacesWidget();
+				// Realign workspaces
+				Workspace.nudgeWorkspacesWidget();
+			}
+			this.clockInterval = setInterval( clock, 1000 );
 		}
-		this.clockInterval = setInterval( clock, 1000 );
 
 		// Recall wallpaper from settings
 		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
