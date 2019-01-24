@@ -1132,35 +1132,50 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 		if( remdev == NULL )
 		{
 			int i;
-			DEBUG("--remdevNULL, name : %s\n", name );
+			DEBUG("[UnMountFS] --remdevNULL, name : %s\n", name );
 			
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			{
+				DEBUG("[UnMountFS] --remdev grpname %s\n", ugl->ugl_Group->ug_Name );
+				UserGroup *ug = ugl->ugl_Group;
+				if( ugl->ugl_Group != NULL )
+				{
+					File *f = ugl->ugl_Group->ug_MountedDevs;
+					File *fprev = ugl->ugl_Group->ug_MountedDevs;
+			/*
 			for( i=0 ; i < usr->u_GroupsNr ; i++ )
 			{
-				DEBUG("--remdev grpname %s\n", usr->u_Groups[ i ]->ug_Name );
-				
-				File *f = usr->u_Groups[ i ]->ug_MountedDevs;
-				File *fprev = usr->u_Groups[ i ]->ug_MountedDevs;
-				
-				while( f != NULL )
+				if( usr->u_Groups[ i ] != NULL )
 				{
-					DEBUG("--file\n");
-					if( strcmp( f->f_Name, name ) == 0 )
+					DEBUG("[UnMountFS] --remdev grpname %s\n", usr->u_Groups[ i ]->ug_Name );
+				
+					File *f = usr->u_Groups[ i ]->ug_MountedDevs;
+					File *fprev = usr->u_Groups[ i ]->ug_MountedDevs;
+					UserGroup *ug = usr->u_Groups[ i ];
+					*/
+					while( f != NULL )
 					{
-						DEBUG("Device: '%s' removed from usergroup\n", name );
-						if( f == usr->u_Groups[ i ]->ug_MountedDevs )
+						DEBUG("[UnMountFS] --file\n");
+						if( strcmp( f->f_Name, name ) == 0 )
 						{
-							usr->u_Groups[ i ]->ug_MountedDevs = (File *)f->node.mln_Succ;
-						}
-						else
-						{
-							fprev->node.mln_Succ = f->node.mln_Succ;
-						}
+							DEBUG("[UnMountFS] Device: '%s' removed from usergroup\n", name );
+							if( f == ug->ug_MountedDevs )
+							{
+								ug->ug_MountedDevs = (File *)f->node.mln_Succ;
+							}
+							else
+							{
+								fprev->node.mln_Succ = f->node.mln_Succ;
+							}
 						
-						break;
+							break;
+						}
+						fprev = f;
+						f = (File *)f->node.mln_Succ;
 					}
-					fprev = f;
-					f = (File *)f->node.mln_Succ;
-				}
+				}	// != NULL
+				ugl = (UserGroupLink *) ugl->node.mln_Succ;
 			}
 		}
 		
@@ -2276,11 +2291,15 @@ File *GetRootDeviceByName( User *usr, char *devname )
 	if( actDev == NULL )
 	{
 		int i;
-		for( i=0 ; i < usr->u_GroupsNr ; i++ )
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		//for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
-			if( usr->u_Groups[ i ] != NULL )
+			//if( usr->u_Groups[ i ] != NULL )
+			if( ugl->ugl_Group != NULL )
 			{
-				lDev = usr->u_Groups[ i ]->ug_MountedDevs;
+				lDev = ugl->ugl_Group->ug_MountedDevs;
+				//lDev = usr->u_Groups[ i ]->ug_MountedDevs;
 				while( lDev != NULL )
 				{
 					if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
@@ -2302,6 +2321,7 @@ File *GetRootDeviceByName( User *usr, char *devname )
 					break;
 				}
 			} // usr->u_Groups[ i ] != NULL
+			ugl = (UserGroupLink *)ugl->node.mln_Succ;
 		}
 	}
 	

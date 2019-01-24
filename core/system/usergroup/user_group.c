@@ -19,6 +19,7 @@
 
 #include "user_group.h"
 #include <system/fsys/device_handling.h>
+#include <util/string.h>
 
 /**
  * Create new User Group
@@ -38,22 +39,9 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type )
 		int len = strlen( name );
 		
 		ug->ug_ID = id;
-		int len10 = len + 10;
-		
-		ug->ug_Name = FCalloc( len10, sizeof(char) );
-		if( ug->ug_Name != NULL )
-		{
-			strncpy( ug->ug_Name, name, len );
-		}
-	
+		ug->ug_Name = StringDuplicate(name);
 		ug->ug_UserID = uid;
-	
-		len = strlen( type );
-		ug->ug_Type = FCalloc( len10, sizeof(char) );
-		if( ug->ug_Type != NULL )
-		{
-			strncpy( ug->ug_Type, type, len );
-		}
+		ug->ug_Type = StringDuplicate(type);
 	}
 	
 	return ug;
@@ -226,29 +214,54 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
  */
 int UserGroupAddUser( UserGroup *ug, void *u )
 {
+	if( ug == NULL || u == NULL )
+	{
+		DEBUG("One value is equal to NULL. ug %p u %p\n", ug, u );
+		return 3;
+	}
 	User *locu = (User *)u;
-	UserGroupAUser *au = ug->ug_UserList;
-	while( au != NULL )
-	{
-		// user is added, no need to add it second time
-		if( au->ugau_User != NULL && locu->u_ID == au->ugau_UserID )
-		{
-			return 0;
-		}
-		au = (UserGroupAUser *)au->node.mln_Succ;
-	}
 	
-	if( ( au = (UserGroupAUser *) FCalloc( 1, sizeof( UserGroupAUser ) ) ) != NULL )
+	DEBUG("[UserGroupAddUser] User: %s will be added to group: %s\n", locu->u_Name, ug->ug_Name );
+	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
-		au->node.mln_Succ = (MinNode *)ug->ug_UserList;
-		au->ugau_UserID = locu->u_ID;
-		au->ugau_User = locu;
-		ug->ug_UserList = au;
+		UserGroupAUser *au = ug->ug_UserList;
+		while( au != NULL )
+		{
+			// user is added, no need to add it second time
+			if( au->ugau_User != NULL && locu->u_ID == au->ugau_UserID )
+			{
+				FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+				return 1;
+			}
+			au = (UserGroupAUser *)au->node.mln_Succ;
+		}
+	
+		// add link from group to user
+		if( ( au = (UserGroupAUser *) FCalloc( 1, sizeof( UserGroupAUser ) ) ) != NULL )
+		{
+			au->node.mln_Succ = (MinNode *)ug->ug_UserList;
+			au->ugau_UserID = locu->u_ID;
+			au->ugau_User = locu;
+			ug->ug_UserList = au;
+		
+			// add link from user to group
+			UserGroupLink *ugl = FCalloc( 1, sizeof(UserGroupLink ) );
+			if( ugl != NULL )
+			{
+				ugl->ugl_Group = ug;
+				ugl->ugl_GroupID = ug->ug_ID;
+				ugl->node.mln_Succ = (MinNode *) locu->u_UserGroupLinks;
+				locu->u_UserGroupLinks = ugl;
+			}
+		}
+		else
+		{
+			FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+			return 2;
+		}
+		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	}
-	else
-	{
-		return 1;
-	}
+	DEBUG("[UserGroupAddUser] end\n");
 	
 	return 0;
 }
@@ -265,32 +278,62 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 	if( ug == NULL || u == NULL )
 	{
 		DEBUG("One value is equal to NULL. ug %p u %p\n", ug, u );
-		return -1;
+		return 3;
 	}
 	User *locu = (User *)u;
 	
-	UserGroupAUser *au = ug->ug_UserList;
-	UserGroupAUser *auprev = ug->ug_UserList;
-	
-	while( au != NULL )
+	DEBUG("[UserGroupRemoveUser] user: %s will be removed from: %s\n", locu->u_Name, ug->ug_Name );
+	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
-		// user is added, no need to add it second time
-		if( au->ugau_User != NULL && locu->u_ID == au->ugau_UserID )
+		UserGroupAUser *au = ug->ug_UserList;
+		UserGroupAUser *auprev = ug->ug_UserList;
+	
+		while( au != NULL )
 		{
-			if( au == ug->ug_UserList )
+			// user is added, no need to add it second time
+			if( au->ugau_User != NULL && locu == au->ugau_User )
 			{
-				ug->ug_UserList = (UserGroupAUser *) au->node.mln_Succ;
+				if( au == ug->ug_UserList )
+				{
+					ug->ug_UserList = (UserGroupAUser *) au->node.mln_Succ;
+				}
+				else
+				{
+					auprev->node.mln_Succ = au->node.mln_Succ;
+				}
+				FFree( au );
+				break;
 			}
-			else
-			{
-				auprev->node.mln_Succ = au->node.mln_Succ;
-			}
-			FFree( au );
-			return 0;
-		}
 
-		auprev = au;
-		au = (UserGroupAUser *)au->node.mln_Succ;
+			auprev = au;
+			au = (UserGroupAUser *)au->node.mln_Succ;
+		}
+		
+		// remove entry from user list
+		UserGroupLink *ull = locu->u_UserGroupLinks;
+		UserGroupLink *ullprev = locu->u_UserGroupLinks;
+		while( ull != NULL )
+		{
+			ullprev = ull;
+			
+			if( ull->ugl_Group != NULL && ug == ull->ugl_Group )
+			{
+				if( ull == locu->u_UserGroupLinks )
+				{
+					locu->u_UserGroupLinks = (UserGroupLink *) ull->node.mln_Succ;
+				}
+				else
+				{
+					ullprev->node.mln_Succ = ull->node.mln_Succ;
+				}
+				FFree( ull );
+				break;
+			}
+			ull = (UserGroupLink *)ull->node.mln_Succ;
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	}
-	return 1;
+	DEBUG("[UserGroupRemoveUser] end\n");
+	return 0;
 }

@@ -745,10 +745,13 @@ AND LOWER(f.Name) = LOWER('%s')",
 				
 				// check also device attached to groups
 				
-				int gr;
-				for( gr = 0 ; gr < loggedSession->us_User->u_GroupsNr ; gr++ )
+				UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
+				while( ugl != NULL )
+				//int gr;
+				//for( gr = 0 ; gr < loggedSession->us_User->u_GroupsNr ; gr++ )
 				{
-					UserGroup *ug = loggedSession->us_User->u_Groups[ gr ];
+					//UserGroup *ug = loggedSession->us_User->u_Groups[ gr ];
+					UserGroup *ug = ugl->ugl_Group;
 					if( ug != NULL )
 					{
 						File *f = NULL;
@@ -774,6 +777,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 							}
 						}
 					}
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
 				}
 				
 				struct TagItem tags[] = {
@@ -1364,15 +1368,22 @@ AND LOWER(f.Name) = LOWER('%s')",
 				// get information about shared group drives
 				//
 				
-				int gr = 0;
-				for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
+				UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
+				while( ugl != NULL )
+				//int gr = 0;
+				//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
 				{
 					//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
 					dev = NULL;
-					if( curusr->u_Groups[ gr ] != NULL )
+					if( ugl->ugl_Group != NULL )
 					{
-						dev = curusr->u_Groups[ gr ]->ug_MountedDevs;
+						dev = ugl->ugl_Group->ug_MountedDevs;
 					}
+					//if( curusr->u_Groups[ gr ] != NULL )
+					//{
+					//	dev = curusr->u_Groups[ gr ]->ug_MountedDevs;
+					//}
+					
 					while( dev != NULL )
 					{
 						// if this is shared drive and user want details we must point to original drive
@@ -1516,6 +1527,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						devnr++;
 						dev = (File *)dev->node.mln_Succ;
 					}
+					ugl = (UserGroupLink *)ugl->node.mln_Succ;
 				}
 				
 				FFree( tmp );

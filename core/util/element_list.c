@@ -32,6 +32,7 @@ IntListEl *ILEParseString( char *str )
 	
 	while( TRUE )
 	{
+		//printf("'%c'-'%d'   ===== ", *curToken, *curToken );
 		if( *curToken == 0 || *curToken == ',' )
 		{
 			char *end;
@@ -40,7 +41,9 @@ IntListEl *ILEParseString( char *str )
 			{
 				*curToken = 0;
 			}
+			curToken++;
 			
+			//printf("Entry found: %s\n", startToken );
 			int64_t var = strtol( startToken, &end, 0 );
 			IntListEl *el = FCalloc( 1, sizeof( IntListEl ) );
 			if( el != NULL )
@@ -51,7 +54,7 @@ IntListEl *ILEParseString( char *str )
 			}
 			// do something here
 		
-			startToken = curToken+1;
+			startToken = curToken;
 		
 			if( *curToken == 0 )
 			{
@@ -94,6 +97,7 @@ StringListEl *SLEParseString( char *str )
 				*curToken = 0;
 			}
 			
+			curToken++;
 			int64_t var = strtol( startToken, &end, 0 );
 			StringListEl *el = FCalloc( 1, sizeof( StringListEl ) );
 			if( el != NULL )
@@ -104,7 +108,7 @@ StringListEl *SLEParseString( char *str )
 			}
 			// do something here
 		
-			startToken = curToken+1;
+			startToken = curToken;
 		
 			if( *curToken == 0 )
 			{

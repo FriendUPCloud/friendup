@@ -505,17 +505,89 @@ int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *
 }
 
 /**
- * Remove external server connection
+ * Send message to external servers
  * 
  * @param nm pointer to NotificationManager
  * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
  * @param msg message which will be send to servers
+ * @param len message length
  * @return 0 when success, otherwise error number
  */
 
-int NotificationManagerSendInformationToConnections( NotificationManager *nm, char *sername, char *msg )
+int NotificationManagerSendInformationToConnections( NotificationManager *nm, char *sername, char *msg, int len )
 {
+	int ret = 0;
+	ExternalServerConnection *con = nm->nm_ESConnections;
+	if( sername == NULL ) // send to all servers
+	{
+		while( con != NULL )
+		{
+			ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)msg, len );
+			con = (ExternalServerConnection *)con->node.mln_Succ;
+		}
+	}
+	else
+	{
+		while( con != NULL )
+		{
+			ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)msg, len );
+			con = (ExternalServerConnection *)con->node.mln_Succ;
+		}
+	}
+	return ret;
+}
+
+/**
+ * Send message to external servers
+ * 
+ * @param nm pointer to NotificationManager
+ * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
+ * @param sertype service type
+ * @param func function
+ * @param action name
+ * @param msg message which will be send to servers
+ * @return number bytes when success, otherwise error number (less and below 0 )
+ */
+
+int NotificationManagerSendEventToConnections( NotificationManager *nm, char *sername, const char *sertype, const char *func, const char *action, char *msg )
+{
+	if( sertype == NULL || func == NULL || action == NULL || msg == NULL )
+	{
 	
+		FERROR("Message missing parameters\n");
+		return 0;
+	}
+	
+	int ret = 0;
+	int msglen = 512 + strlen( sertype ) + strlen( func ) + strlen( action ) + strlen( msg );
+	char *dstMsg = FMalloc( msglen );
+	
+	if( dstMsg != NULL )
+	{
+		int dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":%s\",\"data\":%s}}}", sertype, func, action, msg );
+		
+		Log( FLOG_INFO, "[NotificationManagerSendEventToConnections] Send message: '%s'\n", dstMsg );
+		
+		ExternalServerConnection *con = nm->nm_ESConnections;
+		if( sername == NULL ) // send to all servers
+		{
+			while( con != NULL )
+			{
+				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
+				con = (ExternalServerConnection *)con->node.mln_Succ;
+			}
+		}
+		else
+		{
+			while( con != NULL )
+			{
+				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
+				con = (ExternalServerConnection *)con->node.mln_Succ;
+			}
+		}
+		FFree( dstMsg );
+	}
+	return ret;
 }
 
 /**
