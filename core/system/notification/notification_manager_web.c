@@ -136,7 +136,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			
 			if( msg != NULL )
 			{
-				int error = NotificationManagerSendInformationToConnections( l->sl_NotificationManager, servername, msg );
+				int error = NotificationManagerSendInformationToConnections( l->sl_NotificationManager, servername, msg, strlen(msg) );
 				
 				DEBUG("[NMWebRequest] Send notification to server, error: %d\n", error );
 				

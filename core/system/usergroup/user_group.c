@@ -19,6 +19,7 @@
 
 #include "user_group.h"
 #include <system/fsys/device_handling.h>
+#include <util/string.h>
 
 /**
  * Create new User Group
@@ -38,22 +39,9 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type )
 		int len = strlen( name );
 		
 		ug->ug_ID = id;
-		int len10 = len + 10;
-		
-		ug->ug_Name = FCalloc( len10, sizeof(char) );
-		if( ug->ug_Name != NULL )
-		{
-			strncpy( ug->ug_Name, name, len );
-		}
-	
+		ug->ug_Name = StringDuplicate(name);
 		ug->ug_UserID = uid;
-	
-		len = strlen( type );
-		ug->ug_Type = FCalloc( len10, sizeof(char) );
-		if( ug->ug_Type != NULL )
-		{
-			strncpy( ug->ug_Type, type, len );
-		}
+		ug->ug_Type = StringDuplicate(type);
 	}
 	
 	return ug;

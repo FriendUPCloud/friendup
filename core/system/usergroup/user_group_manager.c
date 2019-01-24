@@ -532,7 +532,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 		// removeing old group conections from DB
 		
 		//snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE UserID = %lu AND UserGroupId IN ( SELECT ID FROM FUserGroup fug WHERE fug.Type = 'Level')", usr->u_ID );
-		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE UserID = %lu AND UserGroupId IN ( SELECT ID FROM FUserGroup fug)", usr->u_ID ) ;
+		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID` = %lu AND `UserGroupID` IN ( SELECT ID FROM FUserGroup fug)", usr->u_ID ) ;
 
 		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
 		{
@@ -663,7 +663,7 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
  * @param userID ID of user which will be removed from group
  * @return 0 when ssuccess, otherwise error number
  */
-int UGMRemoveUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
+int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
@@ -671,7 +671,7 @@ int UGMRemoveUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID 
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[256];
-		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FUserToGroup where 'UserID'=%lu AND 'UserGroupID'=%lu", userID, groupID );
+		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE from `FUserToGroup` where `UserID`=%lu AND `UserGroupID`=%lu", userID, groupID );
 		
 		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
 		{
@@ -705,7 +705,7 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[256];
-		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE 'UserID'=%lu AND 'UserGroupID'=%lu", uid, ugroupid );
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE `UserID`=%lu AND `UserGroupID`=%lu", uid, ugroupid );
 		
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 		if( result != NULL )
@@ -749,7 +749,7 @@ FBOOL UGMUserToGroupISConnectedByUNameDB( UserGroupManager *um, FULONG ugroupid,
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[512];
-		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE 'GroupID'=%lu AND 'UserID' in (SELECT ID FROM FUser WHERE Name='%s')", ugroupid, uname );
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE `GroupID`=%lu AND 'UserID' in (SELECT ID FROM FUser WHERE Name='%s')", ugroupid, uname );
 		
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 		if( result != NULL )
@@ -794,7 +794,7 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[512];
-		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE 'GroupID'=%lu AND 'UserID' in (SELECT ID FROM FUser WHERE ID='%lu')", ugroupid, uid );
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE `UserGroupID`=%lu AND `UserID`=%lu", ugroupid, uid );
 		
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 		if( result != NULL )
@@ -802,6 +802,7 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 			int rows = sqlLib->NumberOfRows( sqlLib, result );
 			if( rows > 0 )
 			{
+				DEBUG("[UGMUserToGroupISConnectedByUIDDB] User is in group\n");
 				ret = TRUE;
 			}
 			sqlLib->FreeResult( sqlLib, result );
@@ -818,5 +819,6 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 		FERROR("UGMAddUserToGroup DBConnection fail!\n");
 		return FALSE;
 	}
+	DEBUG("[UGMUserToGroupISConnectedByUIDDB] User is in group? %d\n", ret );
 	return ret;
 }

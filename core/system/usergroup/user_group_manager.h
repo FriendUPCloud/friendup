@@ -114,7 +114,7 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
 //
 //
 
-int UGMRemoveUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
+int UGMRemoveUserFromGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID );
 
 //
 //

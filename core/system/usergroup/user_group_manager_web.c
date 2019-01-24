@@ -143,7 +143,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				parentID = strtol( (char *)el->data, &end, 0 );
 			}
 			
-			if( groupname != NULL )
+			if( groupname != NULL && type != NULL )
 			{
 				// get information from DB if group already exist
 				
@@ -162,8 +162,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						
 						{
 							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"create\",%lu\",\"name\",\"%s\"}}}", fg->ug_ID, fg->ug_Name );
-							NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
+							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "create", msg );
 						}
 					}
 					else
@@ -236,8 +237,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							
 							{
 								char msg[ 512 ];
-								snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"create\",%lu\",\"name\",\"%s\"}}}", ug->ug_ID, ug->ug_Name );
-								NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", ug->ug_ID, ug->ug_Name );
+								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "create", msg );
 							}
 					
 							char buffer[ 256 ];
@@ -265,7 +267,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "groupname" );
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "groupname, type" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
@@ -274,6 +276,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( groupname != NULL )
 		{
 			FFree( groupname );
+		}
+		if( type != NULL )
+		{
+			FFree( type );
 		}
 
 		*result = 200;
@@ -357,8 +363,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						
 						{
 							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"delete\",%lu\",\"name\",\"%s\"}}}", fg->ug_ID, fg->ug_Name );
-							NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
+							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "delete", msg );
 						}
 						
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
@@ -421,7 +428,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		FULONG groupID = 0;
 		int status = -1;
 		
-		DEBUG( "[UMWebRequest] Create user!!\n" );
+		DEBUG( "[UMGWebRequest] Update group!\n" );
 		
 		HashmapElement *el = NULL;
 		
@@ -487,6 +494,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						fg->ug_Name = StringDuplicate( groupname );
 					}
 					
+					if( type != NULL )
+					{
+						FFree( fg->ug_Type );
+						fg->ug_Type = StringDuplicate( type );
+					}
+					
 					fg->ug_UserID = loggedSession->us_UserID;
 					
 					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
@@ -500,8 +513,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 					{
 						char msg[ 512 ];
-						snprintf( msg, sizeof(msg), "{\"type\":\"service\",\"data\":{\"type:\"group\",\"data\":{\"update\",%lu\",\"name\",\"%s\"}}}", fg->ug_ID, fg->ug_Name );
-						NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+						snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\",\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
+						//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "update", msg );
 					}
 
 					char buffer[ 256 ];
@@ -522,7 +536,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "groupname" );
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
@@ -531,6 +545,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( groupname != NULL )
 		{
 			FFree( groupname );
+		}
+		if( type != NULL )
+		{
+			FFree( type );
 		}
 
 		*result = 200;
@@ -649,15 +667,15 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		char *users = NULL;
 		HashmapElement *el = NULL;
 		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
 		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
 		{
-			response = HttpNewSimple( HTTP_200_OK,  tags );
-			
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->data );
-				DEBUG( "[UMWebRequest] Update users %s!!\n", users );
+				DEBUG( "[UMWebRequest] addusers users %s!!\n", users );
 			}
 		
 			el = HttpGetPOSTParameter( request, "groupid" );
@@ -667,17 +685,158 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				groupID = strtol( (char *)el->data, &end, 0 );
 			}
 			
-			BufString *bs = BufStringNew();
+			BufString *retString = BufStringNew();
+			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			
 			if( groupID > 0 )
 			{
 				UserGroup *ug = NULL;
+				char tmp[ 256 ];
+				int itmp = 0;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
+				
+				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersids\":[", groupID );
+				BufStringAddSize( retString, tmp, itmp );
+				
 				if( ug != NULL )
 				{
 					// go through all elements and find proper users
 					
 					IntListEl *el = ILEParseString( users );
+					int pos = 0;
+					DEBUG("String parsed\n");
+					
+					while( el != NULL )
+					{
+						IntListEl *rmEntry = el;
+						
+						el = (IntListEl *)el->node.mln_Succ;
+						
+						FBOOL isInGroup = FALSE;
+						FBOOL isInMemory = FALSE;
+						// get user from memory first
+						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+						DEBUG("Got user from FC memory, pointer: %p\n", usr );
+						if( usr != NULL )
+						{
+							if( UserGroupAddUser( ug, usr ) == 1 )	// 1 - user is in group, no need to add him twice
+							{
+								isInGroup = TRUE;
+							}
+							isInMemory = TRUE;
+						}
+						// just to be sure that stuff is deleted
+						//else
+						{
+							DEBUG("Getting entry from DB\n");
+							// there is need to check and update DB
+							//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
+							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							if( exist == FALSE )
+							{
+								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							}
+						}
+
+						if( pos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "%lu", rmEntry->i_Data );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",%lu", rmEntry->i_Data );
+						}
+						BufStringAddSize( retString, tmp, itmp );
+						pos++;
+						
+						FFree( rmEntry );
+					}
+				}
+			}
+			
+			BufStringAddSize( retString, "]}", 2 );
+			
+			// send notification to external service
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "addusers", &(retString->bs_Buffer[17]) );
+		
+			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
+			retString->bs_Buffer = NULL;
+			BufStringDelete( retString );
+		
+			if( users != NULL )
+			{
+				FFree( users );
+			}
+		}
+		else
+		{
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
+		*result = 200;
+	}
+		/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/group/removeusers</H2>Remove users from group. Function require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param groupid - (required) id of workgroup from which users will be removed
+	* @param users - (required) user id's which will be removed from group
+	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 1 ], "removeusers" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+
+		FULONG groupID = 0;
+		char *users = NULL;
+		HashmapElement *el = NULL;
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		{
+			el = HttpGetPOSTParameter( request, "users" );
+			if( el != NULL )
+			{
+				users = UrlDecodeToMem( (char *)el->data );
+				DEBUG( "[UMWebRequest] removeusers users %s!!\n", users );
+			}
+		
+			el = HttpGetPOSTParameter( request, "groupid" );
+			if( el != NULL )
+			{
+				char *end;
+				groupID = strtol( (char *)el->data, &end, 0 );
+			}
+			
+			BufString *retString = BufStringNew();
+			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
+			
+			if( groupID > 0 )
+			{
+				char tmp[ 256 ];
+				int itmp = 0;
+				UserGroup *ug = NULL;
+				ug = UGMGetGroupByID( l->sl_UGM, groupID );
+				
+				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersid\":[", groupID );
+				BufStringAddSize( retString, tmp, itmp );
+				
+				if( ug != NULL )
+				{
+					// go through all elements and find proper users
+					
+					IntListEl *el = ILEParseString( users );
+					int pos =0;
 					
 					while( el != NULL )
 					{
@@ -691,29 +850,47 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
 						if( usr != NULL )
 						{
-							if( UserGroupAddUser( ug, usr ) == 1 )	// 1 - user is in group, no need to add him twice
+							if( UserGroupRemoveUser( ug, usr ) == 0 )	// 1 - user is in group, no need to add him twice
 							{
 								isInGroup = TRUE;
 							}
 							isInMemory = TRUE;
 						}
-						else
+						//else // to be sure that entry is removed from DB
 						{
 							// there is need to check and update DB
 							//FBOOL exist = UGMUserToGroupISConnectedDB( l->sl_UGM, groupID, User *u );
-							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, el->i_Data );
-							if( exist == FALSE )
+							FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							if( exist == TRUE )
 							{
-								UGMAddUserToGroupDB( l->sl_UGM, groupID, el->i_Data );
+								UGMRemoveUserFromGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
 							}
 						}
+						
+						if( pos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "%lu", rmEntry->i_Data );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",%lu", rmEntry->i_Data );
+						}
+						BufStringAddSize( retString, tmp, itmp );
+						pos++;
 						
 						FFree( rmEntry );
 					}
 				}
 			}
 			
-			BufStringDelete( bs );
+			BufStringAddSize( retString, "]}", 2 );
+			
+			// send notification to external service
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "removeusers", &(retString->bs_Buffer[16]) );
+		
+			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
+			retString->bs_Buffer = NULL;
+			BufStringDelete( retString );
 		
 			if( users != NULL )
 			{
