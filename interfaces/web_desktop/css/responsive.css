@@ -1071,7 +1071,7 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 
 #MobileNotifications .MobileNotification.Showing
 {
-	opacity: 0.8;
+	opacity: 0.95;
 	pointer-events: all;
 }
 
