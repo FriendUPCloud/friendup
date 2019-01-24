@@ -20,6 +20,11 @@
 {
 	scroll-behavior: smooth;
 }
+[mobile] .Scroller
+{
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
+}
 
 .Content.SlideAnimation
 {
