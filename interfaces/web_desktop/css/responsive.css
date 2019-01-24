@@ -1094,20 +1094,4 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	display: block;
 }
 
-/* HACKS AND DRAGONS! */
-
-html > body[mobile] > div button.IconButton,
-html > body[mobile] > div button.IconButton:hover,
-html > body[mobile] > div .Button.IconButton,
-html > body[mobile] > div .Button.IconButton:hover
-{
-	background-color: transparent !important;
-	outline: 0px !important;
-	border: 0 !important;
-}
-
-[mobile] .tab-bar .tab-item.active
-{
-	background-color: transparent;
-}
 
