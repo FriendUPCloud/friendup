@@ -708,6 +708,12 @@ body.ViewMaximized .ViewContainer .View.Activated
 {
 	opacity: 0;
 }
+
+body #Screens .ViewContainer .View.DelayedDeactivation
+{
+	pointer-events: none;
+}
+
 .ViewContainer.OnWorkspace.DelayedDeactivation .View,
 {
 	display: none;
