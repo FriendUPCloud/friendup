@@ -471,6 +471,15 @@ Application.initCKE = function()
 						data: Application.editor.getData(),
 						scrollTop: Application.editor.element.scrollTop
 					} );
+					// Save again
+					if( Application.fileSaved )
+					{
+						Application.sendMessage( {
+							command: 'keydown',
+							key: 79,
+							ctrlKey: true
+						} );
+					}
 					Application.contentTimeout = false;
 					ge( 'Printable' ).innerHTML = Application.editor.getData();
 				}, 250 );
@@ -1022,7 +1031,20 @@ Application.saveFile = function( path, content )
 					ge( 'Status' ).innerHTML = data;
 					setTimeout( function()
 					{
-						ge( 'Status' ).innerHTML = '';
+						ge( 'Status' ).style.transition = 'left,opacity 0.25s,0.25s';
+						ge( 'Status' ).style.transform = 'translateX(0)';
+						ge( 'Status' ).style.opacity = 1;
+						setTimeout( function()
+						{
+							ge( 'Status' ).style.transform = 'translateX(20px)';
+							ge( 'Status' ).style.opacity = 0;
+							setTimeout( function()
+							{
+								ge( 'Status' ).innerHTML = '';
+								ge( 'Status' ).style.transform = 'translateX(0)';
+								ge( 'Status' ).style.opacity = 1;
+							}, 250 );
+						}, 250 );
 					}, 1000 );
 				}
 				Application.refreshFilePane();
