@@ -332,28 +332,10 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
 		int j = 0;
 
 		// remove user from group and then assign to new ones
-		/*
-		if( usr->u_Groups )
-		{
-			for( j=0 ; j < usr->u_GroupsNr ; j++ )
-			{
-				UserGroupRemoveUser( usr->u_Groups[ j ], usr );
-			}
-			
-			FFree( usr->u_Groups );
-			usr->u_Groups = NULL;
-			usr->u_GroupsNr = 0;
-		}
-		*/
+
 		UserRemoveFromGroups( usr );
 	
 		int rows = sqlLib->NumberOfRows( sqlLib, result );
-		/*
-		if( rows > 0 )
-		{
-			usr->u_Groups = FCalloc( rows, sizeof( UserGroup *) );
-		}
-		*/
 	
 		DEBUG("[UMAssignGroupToUser] Memory for %d  groups allocated\n", rows );
 	
@@ -472,14 +454,21 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 			}
 		}
 		
+		// function store ID's of groups to which user is assigned
+		BufString *bsGroups = BufStringNew();
+		int pos = 0;
+		
+		int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
+		BufStringAddSize( bsGroups, tmpQuery, tmplen );
+		
 		//
 		// going through all groups and create new "insert"
 		//
 		
 		//UserGroup **usrGroups = FCalloc( pos+1, sizeof( UserGroup *) );	// end is equal to NULL
 		//int userGroupsNr = 0;
-		BufString *bs = BufStringNew();
-		BufStringAdd( bs, "INSERT INTO FUserToGroup (UserID, UserGroupID ) VALUES ");
+		BufString *bsInsert = BufStringNew();
+		BufStringAdd( bsInsert, "INSERT INTO FUserToGroup (UserID, UserGroupID ) VALUES ");
 		
 		FBOOL isAdmin = FALSE;
 		FBOOL isAPI = FALSE;
@@ -511,15 +500,19 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 					DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 					
 					char loctmp[ 255 ];
+					int loctmplen;
 					if( i == 0 )
 					{
-						snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
 					}
 					else
 					{
-						snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
 					}
-					BufStringAdd( bs, loctmp );
+					BufStringAdd( bsInsert, loctmp );
+					BufStringAddSize( bsGroups, tmpQuery, tmplen );
 					break;
 				}
 				gr = (UserGroup *) gr->node.mln_Succ;
@@ -539,79 +532,22 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 			FERROR("Cannot call query: '%s'\n", tmpQuery );
 		}
 
-		if( sqlLib->QueryWithoutResults( sqlLib, bs->bs_Buffer  ) !=  0 )
+		if( sqlLib->QueryWithoutResults( sqlLib, bsInsert->bs_Buffer  ) !=  0 )
 		{
-			FERROR("Cannot call query: '%s'\n", bs->bs_Buffer );
+			FERROR("Cannot call query: '%s'\n", bsInsert->bs_Buffer );
 		}
-		
-		
-		/* // function abadoned for while
-		// function store ID's of groups which were added or removed
-		BufString *bsGroups = BufStringNew();
-		
-		BufStringAdd( bsGroups, "{\"type\":\"service\",\"data\":{\"type\":\"user-update\",\"data\":{\"type\":\"group\",\"data\":" );
-		
-		"{\"type\",\"add\",\"userid\":%lu,\"groupid\":%lu}"
 
-		// find groups to which user is not assigned anymore
-		for( i=0 ; i < userGroupsNr ; i++ )
-		{
-			int j;
-			FBOOL foundGroup = FALSE;
-			for( j=0 ; j < usr->u_GroupsNr ; j++ )
-			{
-				if( usrGroups[i]->ug_ID == usr->u_Groups[j]->ug_ID )
-				{
-					foundGroup = TRUE;
-					break;
-				}
-			}
-			
-			if( foundGroup == FALSE ) // group not found, it was added now
-			{
-				
-			}
-		}
+		BufStringAddSize( bsGroups, "]}", 2 );
 		
-		// going through old groups
-		for( i=0 ; i < usr->u_GroupsNr ; i++ )
-		{
-			int j;
-			FBOOL foundGroup = FALSE;
-			for( j=0 ; j < userGroupsNr ; j++ )
-			{
-				if( usrGroups[ j ]->ug_ID == usr->u_Groups[ i ]->ug_ID )
-				{
-					foundGroup = TRUE;
-					break;
-				}
-			}
-			
-			if( foundGroup == FALSE ) // group not found, it was removed now
-			{
-				
-			}
-		}
-		*/
+		NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, "service", "user", "update", &(bsGroups->bs_Buffer[17]) );
 		
-		// --------------
-		/*
-		if( usr->u_Groups != NULL )
+		if( bsInsert != NULL )
 		{
-			int j;
-			for( j=0 ; j < usr->u_GroupsNr ; j++ )
-			{
-				UserGroupRemoveUser( usr->u_Groups[ j ], usr );
-			}
-			FFree( usr->u_Groups );
+			BufStringDelete( bsInsert );
 		}
-		usr->u_Groups = usrGroups;
-		usr->u_GroupsNr = userGroupsNr;
-		*/
-		
-		if( bs != NULL )
+		if( bsGroups != NULL )
 		{
-			BufStringDelete( bs );
+			BufStringDelete( bsGroups );
 		}
 		
 		FFree( ptr );
