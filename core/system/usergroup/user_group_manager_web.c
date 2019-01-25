@@ -561,6 +561,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param sessionid - (required) session id of logged user
 	* @param parentid - id of parent workgroup
 	* @param status - group status
+	* @param type - group type
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -575,6 +576,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		int status = -1;
 		FULONG parentID = 0;
 		FBOOL fParentID = FALSE;
+		char *type = NULL;
 		HashmapElement *el = NULL;
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -591,6 +593,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( el != NULL )
 		{
 			status = atoi( (char *)el->data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "type" );
+		if( el != NULL )
+		{
+			type = UrlDecodeToMem( (char *)el->data );
+			DEBUG( "type %s!!\n", type );
 		}
 		
 		BufString *retString = BufStringNew();
@@ -619,6 +628,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				}
 			}
 			
+			if( type != NULL )
+			{
+				if( strcmp( type, lg->ug_Type ) != 0 )
+				{
+					addToList = FALSE;
+				}
+			}
+			
 			if( addToList == TRUE )
 			{
 				char tmp[ 512 ];
@@ -641,6 +658,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 		retString->bs_Buffer = NULL;
 		BufStringDelete( retString );
+		
+		if( type != NULL )
+		{
+			FFree( type );
+		}
 		
 		*result = 200;
 	}
