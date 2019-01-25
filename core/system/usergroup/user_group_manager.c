@@ -456,7 +456,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 		
 		// function store ID's of groups to which user is assigned
 		BufString *bsGroups = BufStringNew();
-		int pos = 0;
+		pos = 0;
 		
 		int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
 		BufStringAddSize( bsGroups, tmpQuery, tmplen );
@@ -539,7 +539,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 
 		BufStringAddSize( bsGroups, "]}", 2 );
 		
-		NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, "service", "user", "update", &(bsGroups->bs_Buffer[17]) );
+		NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", &(bsGroups->bs_Buffer[17]) );
 		
 		if( bsInsert != NULL )
 		{

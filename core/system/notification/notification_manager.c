@@ -541,6 +541,7 @@ int NotificationManagerSendInformationToConnections( NotificationManager *nm, ch
  * Send message to external servers
  * 
  * @param nm pointer to NotificationManager
+ * @param req Http request
  * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
  * @param sertype service type
  * @param func function
@@ -549,12 +550,18 @@ int NotificationManagerSendInformationToConnections( NotificationManager *nm, ch
  * @return number bytes when success, otherwise error number (less and below 0 )
  */
 
-int NotificationManagerSendEventToConnections( NotificationManager *nm, char *sername, const char *sertype, const char *func, const char *action, char *msg )
+int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *sertype, const char *func, const char *action, char *msg )
 {
 	if( sertype == NULL || func == NULL || action == NULL || msg == NULL )
 	{
 	
 		FERROR("Message missing parameters\n");
+		return 0;
+	}
+	
+	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
+	{
+		INFO( "Request comes from external server\n");
 		return 0;
 	}
 	
