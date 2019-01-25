@@ -182,6 +182,13 @@ typedef struct
 #endif
 } zip64_internal;
 
+// missing declaration
+
+extern int ZEXPORT zipOpenNewDirectoryInZip4_64(zipFile file, const char* filename, const zip_fileinfo* zipfi,
+    const void* extrafield_local, uInt size_extrafield_local, const void* extrafield_global,
+    uInt size_extrafield_global, const char* comment, int method, int level, int raw, int windowBits, int memLevel,
+    int strategy, const char* password, uLong crcForCrypting, uLong versionMadeBy, uLong flagBase, int zip64);
+
 /* Allocate a new data block */
 local linkedlist_datablock_internal* allocate_new_datablock OF(());
 local linkedlist_datablock_internal* allocate_new_datablock()
@@ -291,12 +298,12 @@ local uLong zip64local_TmzDateToDosDate(const tm_zip* ptm)
        * [1980, 2107]
        Due to the date format limitations, only years between 1980 and 2107 can be stored.
     */
-    if (!(zip64local_in_range(1980, 2107, ptm->tm_year) || zip64local_in_range(0, 207, ptm->tm_year)) ||
-        !zip64local_in_range(0, 11, ptm->tm_mon) ||
+    if (!(zip64local_in_range(1980, 2107, ptm->tm_year) || zip64local_in_range(0, 207, (int)ptm->tm_year)) ||
+        !zip64local_in_range(0, 11, (int)ptm->tm_mon) ||
         !zip64local_in_range(1, 31, ptm->tm_mday) ||
-        !zip64local_in_range(0, 23, ptm->tm_hour) ||
-        !zip64local_in_range(0, 59, ptm->tm_min) ||
-        !zip64local_in_range(0, 59, ptm->tm_sec))
+        !zip64local_in_range(0, 23, (int)ptm->tm_hour) ||
+        !zip64local_in_range(0, 59, (int)ptm->tm_min) ||
+        !zip64local_in_range(0, 59, (int)ptm->tm_sec))
       return 0;
 #undef zip64local_in_range
 

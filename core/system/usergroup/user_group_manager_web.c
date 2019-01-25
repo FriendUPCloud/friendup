@@ -164,7 +164,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							char msg[ 512 ];
 							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "create", msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "create", msg );
 						}
 					}
 					else
@@ -239,7 +239,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								char msg[ 512 ];
 								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", ug->ug_ID, ug->ug_Name );
 								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "create", msg );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "create", msg );
 							}
 					
 							char buffer[ 256 ];
@@ -365,7 +365,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							char msg[ 512 ];
 							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "delete", msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
 						}
 						
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
@@ -515,7 +515,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						char msg[ 512 ];
 						snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\",\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
 						//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "update", msg );
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "update", msg );
 					}
 
 					char buffer[ 256 ];
@@ -595,6 +595,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		BufString *retString = BufStringNew();
 		BufStringAddSize( retString, "ok<!--separate-->{", 18 );
+		BufStringAdd( retString, "\"groups\":[" );
 		UserGroup *lg = l->sl_UGM->ugm_UserGroups;
 		int pos = 0;
 		
@@ -624,18 +625,18 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				int tmpsize = 0;
 				if( pos == 0 )
 				{
-					tmpsize = snprintf( tmp, sizeof(tmp), "[\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\",\"%s\",\"status\":%d]", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+					tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
 				}
 				else
 				{
-					tmpsize = snprintf( tmp, sizeof(tmp), ",[\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\",\"%s\",\"status\":%d]", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+					tmpsize = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
 				}
 				BufStringAddSize( retString, tmp, tmpsize );
 				pos++;
 			}
 			lg = (UserGroup *)lg->node.mln_Succ;
 		}
-		BufStringAddSize( retString, "}", 1 );
+		BufStringAddSize( retString, "]}", 2 );
 		
 		HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 		retString->bs_Buffer = NULL;
@@ -691,7 +692,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu", groupID );
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu group by ug.UserID", groupID );
 					void *result = sqlLib->Query(  sqlLib, tmpQuery );
 					if( result != NULL )
 					{
@@ -726,7 +727,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "listdetails", &(retString->bs_Buffer[17]) );
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "listdetails", &(retString->bs_Buffer[17]) );
 			
 			retString->bs_Buffer = NULL;
 			BufStringDelete( retString );
@@ -762,6 +763,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 		FULONG groupID = 0;
 		char *users = NULL;
+		char *usersSQL = NULL;
 		HashmapElement *el = NULL;
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -772,6 +774,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->data );
+				usersSQL = UrlDecodeToMem( (char *)el->data );
 				DEBUG( "[UMWebRequest] addusers users %s!!\n", users );
 			}
 		
@@ -846,7 +849,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", users, groupID );
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
 					void *result = sqlLib->Query(  sqlLib, tmpQuery );
 					if( result != NULL )
 					{
@@ -879,7 +882,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			BufStringAddSize( retString, "]}", 2 );
 			
 			// send notification to external service
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "addusers", &(retString->bs_Buffer[17]) );
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "addusers", &(retString->bs_Buffer[17]) );
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			retString->bs_Buffer = NULL;
@@ -888,6 +891,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( users != NULL )
 			{
 				FFree( users );
+			}
+			if( usersSQL != NULL )
+			{
+				FFree( usersSQL );
 			}
 		}
 		else
@@ -920,6 +927,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 		FULONG groupID = 0;
 		char *users = NULL;
+		char *usersSQL = NULL;
 		HashmapElement *el = NULL;
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -930,6 +938,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( el != NULL )
 			{
 				users = UrlDecodeToMem( (char *)el->data );
+				usersSQL = UrlDecodeToMem( (char *)el->data );
 				DEBUG( "[UMWebRequest] removeusers users %s!!\n", users );
 			}
 		
@@ -950,7 +959,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				UserGroup *ug = NULL;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersid\":[", groupID );
+				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersids\":[", groupID );
 				BufStringAddSize( retString, tmp, itmp );
 				
 				if( ug != NULL )
@@ -998,7 +1007,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", users, groupID );
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s)", usersSQL );
 					void *result = sqlLib->Query(  sqlLib, tmpQuery );
 					if( result != NULL )
 					{
@@ -1031,7 +1040,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			BufStringAddSize( retString, "]}", 2 );
 			
 			// send notification to external service
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, NULL, "service", "group", "removeusers", &(retString->bs_Buffer[16]) );
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "removeusers", &(retString->bs_Buffer[16]) );
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			retString->bs_Buffer = NULL;
@@ -1040,6 +1049,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			if( users != NULL )
 			{
 				FFree( users );
+			}
+			if( usersSQL != NULL )
+			{
+				FFree( usersSQL );
 			}
 		}
 		else
