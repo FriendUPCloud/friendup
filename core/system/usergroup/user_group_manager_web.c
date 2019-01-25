@@ -959,7 +959,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				UserGroup *ug = NULL;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersid\":[", groupID );
+				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersids\":[", groupID );
 				BufStringAddSize( retString, tmp, itmp );
 				
 				if( ug != NULL )
