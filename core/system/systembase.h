@@ -53,6 +53,7 @@
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
 #include <system/user/user_manager.h>
+#include <system/usergroup/user_group_manager.h>
 #include <system/user/remote_user.h>
 #include <system/fsys/fs_manager.h>
 #include <hardware/usb/usb_manager.h>
@@ -66,6 +67,7 @@
 #include <system/autotask/autotask.h>
 #include <system/mobile/mobile_manager.h>
 #include <system/calendar/calendar_manager.h>
+#include <system/notification/notification_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -83,6 +85,7 @@
 #include <webdav/webdav_token_manager.h>
 #include <communication/cluster_node.h>
 #include <config/properties.h>
+#include <websockets/websocket_apns_connector.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
 
@@ -211,7 +214,8 @@ typedef struct SystemBase
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
 	AppSessionManager				*sl_AppSessionManager;		// application sessions
 	UserSessionManager				*sl_USM;			// user session manager
-	UserManager						*sl_UM;		// user database manager
+	UserManager						*sl_UM;		// user manager
+	UserGroupManager				*sl_UGM;	// user group manager
 	FSManager						*sl_FSM;		// filesystem manager
 	USBManager						*sl_USB;		// usb manager
 	PrinterManager					*sl_PrinterM;		// printer manager
@@ -225,6 +229,7 @@ typedef struct SystemBase
 	MutexManager					*sl_MutexManager;	// Mutex Manager
 	MobileManager					*sl_MobileManager;	// Mobile Manager
 	CalendarManager					*sl_CalendarManager;	// Calendar Manager
+	NotificationManager				*sl_NotificationManager;	// Notification Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -237,6 +242,7 @@ typedef struct SystemBase
 	char							*sl_DefaultDBLib;		// default DB library name
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
 	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
+	char							*sl_MasterServer;		// FriendCore master server
 	
 	//
 	// 60 seconds
@@ -362,10 +368,12 @@ typedef struct SystemBase
 	// apple
 	char							*l_AppleServerHost;
 	int								l_AppleServerPort;
-	char							*l_AppleKeyAPI;
-	char							*l_PresenceKey;
+
+	char							**l_ServerKeys;
+	char							**l_ServerKeyValues;
+	int								l_ServerKeysNum;
 	
-	WebsocketClient					*l_APNSConnection;
+	WebsocketAPNSConnector			*l_APNSConnection;
 } SystemBase;
 
 

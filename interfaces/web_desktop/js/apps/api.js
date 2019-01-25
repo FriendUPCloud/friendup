@@ -1097,6 +1097,28 @@ function receiveEvent( event, queued )
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
 							var w = Application.windows[dataPacket.viewId];
+							if( w.onClose )
+							{
+								var onc = w.onClose;
+								w.onClose = null;
+								var res = onc( function( flag )
+								{
+									if( ( flag || !flag ) && flag !== false )
+									{
+										w.close();
+									}
+									// We aborted, reset onclose
+									else
+									{
+										w.onClose = onc;
+									}
+								} );
+								if( res === false )
+								{
+									w.onClose = onc;
+									return;
+								}
+							}
 							w.close();
 						}
 						// Ah, sub window! Channel to all sub windows then (unknown id?)
@@ -1162,6 +1184,7 @@ function receiveEvent( event, queued )
 			document.body.classList.add( 'Loading' );
 
 			// We need to set these if possible
+			Friend.dosDrivers         = dataPacket.dosDrivers;
 			Application.authId        = dataPacket.authId;
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
@@ -1278,6 +1301,7 @@ function receiveEvent( event, queued )
 		case 'register':
 			window.origin = event.origin;
 			// A function to send a message
+			Friend.dosDrivers         = dataPacket.dosDrivers;
 			Application.domain        = dataPacket.domain;
 			Application.authId        = dataPacket.authId;
 			Application.filePath      = dataPacket.filePath;
@@ -1918,6 +1942,73 @@ function RemoveFilesystemEvent( path, event, callback )
 		Application.sendMessage( msg );
 	}
 	return false;
+}
+
+// Color picker ----------------------------------------------------------------
+var ColorPicker = function( succcbk, failcbk )
+{
+	var self = this;
+	var amsg = {
+		type: 'system',
+		command: 'colorpicker',
+		method: 'new',
+		successCallback: succcbk ? addCallback( succcbk ) : false,
+		failCallback: failcbk ? addCallback( failcbk ) : false,
+		createCallback: addCallback( function( uniqueId )
+		{
+			self.uniqueId = uniqueId;
+			if( self.onReady )
+			{
+				self.onReady( {
+					uniqueId: self.uniqueId
+				} );
+			}
+		} )
+	};
+	Application.sendMessage( amsg );
+}
+// Activate the colorpicker window
+ColorPicker.prototype.activate = function()
+{
+	var self = this;
+	if( this.uniqueId )
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'colorpicker',
+			method: 'activate',
+			uniqueId: this.uniqueId,
+			callback: addCallback( function( state )
+			{
+				if( self.onActivated )
+				{
+					self.onActivated( state );
+				}
+			} )
+		} );
+	}
+}
+
+// Activate the colorpicker window
+ColorPicker.prototype.close = function()
+{
+	var self = this;
+	if( this.uniqueId )
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'colorpicker',
+			method: 'close',
+			uniqueId: this.uniqueId,
+			callback: addCallback( function( state )
+			{
+				if( self.onClosed )
+				{
+					self.onClosed( state );
+				}
+			} )
+		} );
+	}
 }
 
 // Open a new widget -----------------------------------------------------------
@@ -4938,7 +5029,36 @@ function Door( path )
 		);
 	}
 	this.init();
+	
+	// Re-set path
+	this.setPath = function( path )
+	{
+		Application.sendMessage( 
+			{
+				type: 'door',
+				method: 'init',
+				path: path,
+				handler: this.handler
+			},
+			function( data )
+			{
+				if( data.handler && data.handler != 'void' )
+				{
+					door.initialized = true;
+					door.handler = data.handler;
+				}
+			}
+		);
+	}
+	
+	// Gets the files and subdirectories inside of a directory
+	this.getDirectory = function( callback )
+	{
+		return this.getIcons( callback );
+	}
+	
 	// Get files on current dir
+	// Deprecated
 	this.getIcons = function( callback )
 	{
 		Application.sendMessage(
@@ -4977,7 +5097,9 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 {
 	var mainview = false;
 	var targetview = false;
+	var suffix = false;
 	var multiSelect = true; // Select multiple files
+	var keyboardNavigation = false;
 	
 	// We have a view
 	if( object && object.getViewId )
@@ -4985,7 +5107,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 		mainview = object;
 	}
 	// We have flags
-	else if( object )
+	if( object )
 	{
 		for( var a in object )
 		{
@@ -5015,11 +5137,18 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 				case 'targetView':
 					targetview = object[a];
 					break;
+				case 'suffix':
+					suffix = object[a];
+					break;
+				case 'keyboardNavigation':
+					keyboardNavigation = object[a];
+					break;
 			}
 		}
 	}
 
 	if ( !triggerFunction ) return;
+	
 	if ( !type ) type = 'open';
 
 	var dialog = this;
@@ -5034,19 +5163,23 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	{
 		targetview = targetview.getViewId ? targetview.getViewId() : false;
 	}
+	
+	dialog.suffix = suffix;
 
 	Application.sendMessage( {
-		type:        'system',
-		command:     'filedialog',
-		method:       type,
-		callbackId:   cid,
-		dialogType:   type,
-		path:         path,
-		filename:     filename,
-		multiSelect:  multiSelect,
-		title:        title,
-		viewId:       mainview,
-		targetViewId: targetview
+		type:               'system',
+		command:            'filedialog',
+		method:             type,
+		callbackId:         cid,
+		dialogType:         type,
+		path:               path,
+		filename:           filename,
+		multiSelect:        multiSelect,
+		title:              title,
+		viewId:             mainview,
+		targetViewId:       targetview,
+		suffix:             suffix,
+		keyboardNavigation: keyboardNavigation
 	} );
 }
 
@@ -6067,9 +6200,17 @@ if( typeof( Say ) == 'undefined' )
 // Handle keys in iframes too!
 if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
 {
+	function _kfocus( e )
+	{
+		//console.log( 'Focusing: ', e.target, document.activeElement );
+	}
+
 	function _kmousedown( e )
 	{
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
+		
+		// Check if an input element has focus
+		Friend.GUI.checkInputFocus();
 	}
 	function _kmouseup( e )
 	{
@@ -6078,7 +6219,10 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		setTimeout( function()
+		{
+			Friend.GUI.checkInputFocus();
+		}, 250 );
 	}
 	
 	// Handle keys
@@ -6186,6 +6330,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.addEventListener( 'keyup',   _kresponseup, false );
 		window.addEventListener( 'mousedown', _kmousedown, false );
 		window.addEventListener( 'mouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 	else
 	{
@@ -6193,6 +6338,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.attachEvent( 'onkeyup',  _kresponseup, false );
 		window.attachEvent( 'onmousedown', _kmousedown, false );
 		window.attachEvent( 'onmouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 
 	window._keysAdded = true;
@@ -8272,14 +8418,23 @@ Friend.GUI.checkInputFocus = function()
 {
 	var focused = document.activeElement;
 	if( !focused || focused == document.body )
-		focused = null;
-	else if( document.querySelector )
-		focused = document.querySelector( ':focus' );
-	var response = false;
-	if( focused && ( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' ) )
 	{
-		response = true;
+		focused = false;
 	}
+	if( document.querySelector )
+	{
+		var cand = document.querySelector( ':focus' );
+		if( cand && cand != focused ) focused = cand;
+	}
+	var response = false;
+	if( focused )
+	{
+		if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
+		{
+			response = true;
+		}
+	}
+	// Send the message
 	Application.sendMessage( {
 		type: 'view',
 		method: 'windowstate',

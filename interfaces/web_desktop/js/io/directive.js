@@ -13,6 +13,14 @@ var _appNum = 1;
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback )
 {
+	if( isMobile )
+	{
+		Workspace.goToMobileDesktop();
+		if( Workspace.widget )
+			Workspace.widget.slideUp();
+		Workspace.mainDock.closeDesklet();
+	}
+	
 	if( args )
 	{ 
 		Workspace.lastLaunchedAppArgs = args; 
@@ -42,9 +50,27 @@ function ExecuteApplication( app, args, callback )
 		Friend.singleInstanceApps[ app ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
 		for( var a in Friend.singleInstanceApps[ app ].windows )
 		{
-			_WindowToFront( Friend.singleInstanceApps[ app ].windows[ a ].content );
+			_ActivateWindow( Friend.singleInstanceApps[ app ].windows[ a ]._window.parentNode );
+			_WindowToFront( Friend.singleInstanceApps[ app ].windows[ a ]._window.parentNode );
+			return;
 		}
 		return;
+	}
+	else if( isMobile )
+	{
+		for( var a in Workspace.applications )
+		{
+			if( Workspace.applications[ a ].applicationName == app )
+			{
+				var app = Workspace.applications[ a ];
+				for( var z in app.windows )
+				{
+					_ActivateWindow( app.windows[ z ]._window.parentNode );
+					_WindowToFront( app.windows[ z ]._window.parentNode );
+					return;
+				}
+			}
+		}
 	}
 
 	// Common ones
@@ -388,6 +414,14 @@ function ExecuteApplication( app, args, callback )
 				// Cleans subSubDomains allocation
 				SubSubDomains.freeSubSubDomain( this.applicationId );
 			}
+			
+			ifr.sendMessage = function( msg )
+			{
+				msg.applicationId = this.applicationId;
+				msg.applicationName = this.applicationName;
+				amsg = JSON.stringify( msg );
+				this.contentWindow.postMessage( amsg, '*' );
+			}
 
 			// FIXME: Francois here we close the iframe!
 			// Close method
@@ -437,6 +471,7 @@ function ExecuteApplication( app, args, callback )
 					authId: ifr.authId,
 					args: oargs,
 					workspace: workspace,
+					dosDrivers: Friend.dosDrivers,
 					locale: Workspace.locale,
 					theme: Workspace.theme,
 					themeData: Workspace.themeData,
@@ -503,6 +538,11 @@ function FlushSingleApplicationLock( app )
 // Kill an app by name or PID
 KillApplication = function ( n, level )
 {
+	if( isMobile )
+	{
+		Workspace.goToMobileDesktop();
+	}
+	
 	var killed = 0;
 	if( !level ) level = 1;
 	if( typeof( n ) == 'number' )
@@ -559,6 +599,11 @@ KillApplication = function ( n, level )
 
 function KillApplicationById( appid, level )
 {
+	if( isMobile )
+	{
+		Workspace.goToMobileDesktop();
+	}
+	
 	var killed = 0;
 	for( var a = 0; a < Workspace.applications.length; a++ )
 	{
@@ -866,7 +911,6 @@ function ExecuteJSXByPath( path, args, callback, conf )
 	{
 		if( data )
 		{
-			console.log( 'Here\'s the response: ' + data );
 			// An error?
 			if ( data.indexOf( '404 - File not found!' ) < 0 )
 			{
@@ -1050,6 +1094,14 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					};
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
+			}
+			
+			ifr.sendMessage = function( msg )
+			{
+				msg.applicationId = this.applicationId;
+				msg.applicationName = this.applicationName;
+				amsg = JSON.stringify( msg );
+				this.contentWindow.postMessage( amsg, '*' );
 			}
 
 			// Close method

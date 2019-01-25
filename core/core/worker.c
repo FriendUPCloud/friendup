@@ -167,7 +167,11 @@ void WorkerThread( void *w )
 		if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 		{
 			wrk->w_State = W_STATE_WAITING;
+			FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );
+		}
 
+		if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
+		{
 			pthread_cond_wait( &(wrk->w_Cond), &(wrk->w_Mut) );
 
 			wrk->w_State = W_STATE_COMMAND_CALLED;

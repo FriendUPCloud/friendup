@@ -638,7 +638,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 						usle = (UserSessListEntry *)usle->node.mln_Succ;
 					}
 					
-					//int status = MobileAppNotifyUser( usr->u_Name, "test_app", "title", "test message", MN_all_devices, NULL/*no extras*/);
+					//int status = MobileAppNotifyUser( SLIB, usr->u_Name, "test_app", "app_name", "title", "test message", MN_all_devices, NULL/*no extras*/, 0 );
 				
 					if( msgsndsize > 0 )
 					{
@@ -700,7 +700,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 			Log( FLOG_INFO, "Websocket stopped\n");
 			
-			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled ) ) != NULL )
+			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0 ) ) != NULL )
 			{
 				WebSocketStart( l->fcm->fcm_WebSocket );
 				Log( FLOG_INFO, "Websocket thread will started\n");

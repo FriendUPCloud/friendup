@@ -1,5 +1,10 @@
 /* Base setup */
 
+body *
+{
+	-webkit-tap-highlight-color: transparent;
+}
+
 :-webkit-full-screen-ancestor>:not(:-webkit-full-screen-ancestor):not(:-webkit-full-screen)
 {
  display:none!important
@@ -17,6 +22,22 @@
 	display:none!important
 }
 
+/* TEMPORARY TEST */
+/*html body.ViewStateActive:after 
+{
+    position: absolute;
+    display: block;
+    content: " ";
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border: 2px solid green;
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 9999;
+}*/
+
 html
 {
 	position: absolute;
@@ -28,6 +49,7 @@ html
 	padding: 0;
 	user-select: none;
 	-webkit-user-select: none;
+	overflow: hidden;
 }
 
 body
@@ -46,6 +68,14 @@ body
    -ms-transform: rotateZ(0deg);
  	transform: rotateZ(0deg);*/
 	overflow: hidden;
+}
+
+/* Preload images */
+body > img
+{
+	visibility: hidden;
+	position: absolute;
+	pointer-events: none;
 }
 
 iframe.hidden
@@ -89,6 +119,11 @@ body > #FocusGrabber
 {
 	position: fixed;
 	top: 100%;
+}
+
+.NoEvents
+{
+	pointer-events: none;
 }
 
 /* Some backgrounds and colors */
@@ -262,6 +297,11 @@ button::-moz-focus-inner
 	padding:0;
 }
 
+.ButtonHeight
+{
+	height: 28px;
+}
+
 button, .Button
 {
 	display: inline;
@@ -284,6 +324,7 @@ button, .Button
 	cursor: pointer;
 	position: relative;
 	outline: 0 !important;
+	font-size: inherit;
 }
 
 body button.IconButton:not(:hover),
@@ -430,6 +471,12 @@ textarea
 	background-color: $ColorBgInput;
 	color: $ColorInput;
 	font-size: $FontSizeButton;
+}
+
+textarea.Required,
+input.Required
+{
+	border-color     : $ColorDangerBg;
 }
 
 /* Boxes -------------------------------------------------------------------- */
@@ -1015,6 +1062,14 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 
 /* Screen menu -------------------------------------------------------------- */
 
+.SmoothScrolling
+{
+	scroll-behavior: smooth;
+	overflow-y: scroll;
+	-webkit-overflow-scrolling: touch;
+	-webkit-scroll-behavior: smooth;
+}
+
 #WorkspaceMenu
 {
 	position: absolute;
@@ -1302,6 +1357,11 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 .Danger {
 	color : $ColorDanger;
 	background-color : $ColorDangerBg;
+}
+
+.DangerText {
+	color : $ColorDangerBg;
+	background-color : transparent;
 }
 
 .Warning {
@@ -2036,6 +2096,24 @@ html body .PopInfo + .BubbleInfo
 	line-height: 20px
 }
 
+.TrayElement.Blink:before
+{
+	animation: blinking 1s infinite;
+}
+
+@keyframes blinking
+{
+	0% { opacity: 0.5; }
+	50% { opacity: 1; }
+	100% { opacity: 0.5; }
+}
+
+.TrayElement.Hidden,
+html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
+{
+	display: none;
+}
+
 .TrayElement.Notification .BubbleInfo,
 .TrayElement.PopNotification .PopInfo
 {
@@ -2050,6 +2128,22 @@ html body .PopInfo + .BubbleInfo
 {
 	max-height: initial;
 	padding: 8px;
+}
+
+#Tray > .Notification > .TrayInformation
+{
+	position: absolute;
+	display: block;
+	width: 300px;
+	bottom: 40px;
+	right: 0px;
+	background: rgba(0,0,0,0.8);
+	color: white;
+	text-align: left;
+}
+#Tray > .Notification > .TrayInformation *
+{
+	color: white;
 }
 
 .PopInfo:before,
@@ -2359,6 +2453,7 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	margin: 5px auto;
 	text-align: center;
 	position: relative;
+	pointer-events: none;
 }
 .Desklet .Launcher.Minimized .ElementCount > span
 {
@@ -2760,6 +2855,25 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	-moz-box-sizing: border-box;
 	box-shadow: inset 0px 2px 8px rgba(0,0,0,0.3);
 	overflow: hidden;
+}
+
+html .DirectoryToolbar button.Makedir:before
+{
+	content: " ";
+	width: 16px;
+	height: 26px;
+	margin-top: 0;
+	display: inline-block;
+	background-image: url(/iconthemes/friendup15/AddFolder.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-color: transparent;
+}
+
+html .DirectoryToolbar button.Makedir
+{
+	color: transparent;
 }
 
 .Active .DirectoryToolbar
@@ -3478,47 +3592,6 @@ html #DockWindowList .Task.Directory
 	background: #2F669F;
 }
 
-#Screens .View
-{
-	position: absolute;
-	transition: opacity 0.2s;
-	opacity: 1;
-}
-
-#Screens .View[moving]
-{
-	transition: none;
-}
-
-#Screens .View:not([moving]):not(.Opening):not(.Opened)
-{
-	transition: opacity,width,height 0.2s,0.2s,0.2s;
-}
-
-#Screens .View.Opening
-{
-	opacity: 0;
-}
-
-#Screens .View > .Content > iframe
-{
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	border: 0;
-	margin: 0;
-	outline: none;
-	transition: opacity 0.2s ease-in;
-	opacity: 1;
-}
-
-#Screens .View > .Content > iframe.Loading
-{
-	opacity: 0;
-}
-
 .Screen > div
 {
 	z-index: 1;
@@ -3911,6 +3984,54 @@ textarea.InputHeight, input.InputHeight
 	padding: 6px;
 }
 
+/* Color picker ------------------------------------------------------------- */
+
+
+.ColorPickerGUI .ColorPickerController
+{
+	width: 30px;
+	height: 30px;
+	border-radius: 30px;
+	border: 2px solid white;
+	background-color: transparent;
+	position: absolute;
+	top: -15px;
+	left: -15px;
+}
+
+.ColorPickerGUI .DiaColors
+{
+	overflow: hidden;
+}
+
+.ColorPickerGUI .ColorPickerController:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 14px;
+	left: 14px;
+	width: 2px;
+	height: 2px;
+	border-radius: 4px;
+	background-color: white;
+}
+
+
+.ColorPickerGUI .ColorPickerShadeControl
+{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 30px;
+	height: 15px;
+	border-radius: 3px;
+	border: 0;
+	background-color: white;
+	filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.5));
+}
+
+
 /* Ho hoe ------------------------------------------------------------------- */
 
 blockquote.Code
@@ -4103,6 +4224,37 @@ div.Orange, button.Orange
     text-align: justify;
     font-size: 10px;
     overflow: hidden;
+}
+
+/* File upload adjustments */
+
+#fileUpload .FileUpload
+{
+	position: relative;
+}
+
+.FileUpload > input
+{
+	opacity: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.FileUpload .UploadButton 
+{
+	width: 100%;
+	height: 32px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+}
+
+.FileUpload .UploadButton > .Button
+{
+	pointer-events: none;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 /* Responsive page layout */

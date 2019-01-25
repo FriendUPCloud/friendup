@@ -200,23 +200,26 @@ var mousePointer =
 					
 					// Don't rotate icon on listviews
 					
-					if( 
-						!mover &&
-						( isScreen || ( moveWin && w == moveWin.content ) ) &&
-						ic.offsetTop < my && ic.offsetLeft < mx &&
-						ic.offsetTop + ic.offsetHeight > my &&
-						ic.offsetLeft + ic.offsetWidth > mx
-					)
+					if( ic )
 					{
-						ic.classList.add( 'Selected' );
-						ic.selected = true;
-						ic.fileInfo.selected = true;
-					}
-					else if( !mover || mover != icon )
-					{
-						ic.classList.remove( 'Selected' );
-						ic.selected = false;
-						ic.fileInfo.selected = false;
+						if( 
+							!mover &&
+							( isScreen || ( moveWin && w == moveWin.content ) ) &&
+							ic.offsetTop < my && ic.offsetLeft < mx &&
+							ic.offsetTop + ic.offsetHeight > my &&
+							ic.offsetLeft + ic.offsetWidth > mx
+						)
+						{
+							ic.classList.add( 'Selected' );
+							ic.selected = true;
+							ic.fileInfo.selected = true;
+						}
+						else if( !mover || mover != icon )
+						{
+							ic.classList.remove( 'Selected' );
+							ic.selected = false;
+							ic.fileInfo.selected = false;
+						}
 					}
 				}
 			}
@@ -232,6 +235,11 @@ var mousePointer =
 			this.mover = mover ? mover : moveWin;
 			if( this.mover.rollOver )
 				this.mover.rollOver( this.elements );
+		}
+		// We have a candidate for dragging / etc
+		else if( this.candidate && this.candidate.condition )
+		{
+			this.candidate.condition( e );
 		}
 	},
 	'stopMove': function ( e )
@@ -256,42 +264,41 @@ var mousePointer =
 			var dropper = false;
 			
 			// Check drop on tray icon
-			if( !dropper )
+			var titems = ge( 'Tray' ).childNodes;
+			for( var a = 0; a < titems.length; a++ )
 			{
-				var titems = ge( 'Tray' ).childNodes;
-				for( var a = 0; a < titems.length; a++ )
+				var tr = titems[a];
+				var l = GetElementLeft( tr ); // left
+				var t = GetElementTop( tr ); // bottom
+				var r = l + tr.offsetWidth; // right
+				var b = t + tr.offsetHeight; // bottom
+				if( windowMouseX >= l && windowMouseX < r && windowMouseY >= t && windowMouseY < b )
 				{
-					var tr = titems[a];
-					var l = GetElementLeft( tr ); // left
-					var t = GetElementTop( tr ); // bottom
-					var r = l + tr.offsetWidth; // right
-					var b = t + tr.offsetHeight; // bottom
-					if( windowMouseX >= l && windowMouseX < r && windowMouseY >= t && windowMouseY < b )
+					dropper = tr;
+					var objs = [];
+					for( var k = 0; k < this.elements.length; k++ )
 					{
-						dropper = tr;
-						var objs = [];
-						for( var k = 0; k < this.elements.length; k++ )
+						var e = this.elements[k];
+						if ( e.fileInfo.getDropInfo ) {
+							var info = e.fileInfo.getDropInfo();
+							objs.push( info );
+						} 
+						else 
 						{
-							var e = this.elements[k];
-							if ( e.fileInfo.getDropInfo ) {
-								var info = e.fileInfo.getDropInfo();
-								objs.push( info );
-							} 
-							else 
-							{
-								objs.push( {
-									Path: e.fileInfo.Path,
-									Type: e.fileInfo.Type,
-									Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
-									Filesize: e.fileInfo.fileSize,
-									Icon: e.fileInfo.Icon
-								} );
-							}
+							objs.push( {
+								Path: e.fileInfo.Path,
+								Type: e.fileInfo.Type,
+								Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
+								Filesize: e.fileInfo.fileSize,
+								Icon: e.fileInfo.Icon
+							} );
 						}
-						if( dropper.ondrop )
-							dropper.ondrop( objs );
-						break;
 					}
+					if( dropper.ondrop )
+					{
+						dropper.ondrop( objs );
+					}
+					break;
 				}
 			}
 
@@ -319,7 +326,7 @@ var mousePointer =
 			var skipDropCheck = false;
 			
 			// Check drop on view
-			if ( !dropper )
+			if( !dropper )
 			{
 				var z = 0;
 				for ( var a in ars )
@@ -397,25 +404,28 @@ var mousePointer =
 					{
 						var ic = w.icons[a].domNode;
 				
-						// Exclude elements dragged
-						var found = false;
-						for( var b = 0; b < this.dom.childNodes.length; b++ )
+						if( ic )
 						{
-							if( ic == this.dom.childNodes[b] )
-								found = true;
-						}
-						if( found ) continue;
-						// Done exclude
+							// Exclude elements dragged
+							var found = false;
+							for( var b = 0; b < this.dom.childNodes.length; b++ )
+							{
+								if( ic == this.dom.childNodes[b] )
+									found = true;
+							}
+							if( found ) continue;
+							// Done exclude
 				
-						var icon = w.icons[a];
-						if ( 
-							ic.offsetTop < my && ic.offsetLeft < mx &&
-							ic.offsetTop + ic.offsetHeight > my &&
-							ic.offsetLeft + ic.offsetWidth > mx
-						)
-						{
-							dropper = icon;
-							break;
+							var icon = w.icons[a];
+							if ( 
+								ic.offsetTop < my && ic.offsetLeft < mx &&
+								ic.offsetTop + ic.offsetHeight > my &&
+								ic.offsetLeft + ic.offsetWidth > mx
+							)
+							{
+								dropper = icon;
+								break;
+							}
 						}
 					}
 				}
@@ -469,20 +479,23 @@ var mousePointer =
 					for( var k = 0; k < this.elements.length; k++ )
 					{
 						var e = this.elements[k];
-						if( e.fileInfo.getDropInfo )
+						if( e.fileInfo )
 						{
-							var info = e.fileInfo.getDropInfo();
-							objs.push( info );
-						}
-						else
-						{
-							objs.push( {
-								Path: e.fileInfo.Path,
-								Type: e.fileInfo.Type,
-								Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
-								Filesize: e.fileInfo.fileSize,
-								Icon: e.fileInfo.Icon
-							});
+							if( e.fileInfo.getDropInfo )
+							{
+								var info = e.fileInfo.getDropInfo();
+								objs.push( info );
+							}
+							else
+							{
+								objs.push( {
+									Path: e.fileInfo.Path,
+									Type: e.fileInfo.Type,
+									Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
+									Filesize: e.fileInfo.fileSize,
+									Icon: e.fileInfo.Icon
+								});
+							}
 						}
 					}
 					if( dropper.windowObject )
@@ -509,6 +522,8 @@ var mousePointer =
 			{
 				for( var a = 0; a < this.elements.length; a++ )
 				{
+					if( this.elements[a].ondrop )
+						this.elements[a].ondrop( dropper );
 					if( this.elements[a].oldParent )
 					{
 						var ea = this.elements[a];
@@ -526,6 +541,8 @@ var mousePointer =
 			{
 				for( var a = 0; a < this.elements.length; a++ )
 				{
+					if( this.elements[a].ondrop )
+						this.elements[a].ondrop( dropper );
 					this.dom.removeChild( this.elements[a] );
 				}
 			}
@@ -911,7 +928,7 @@ function GuiCreate ( obj )
 	return str;
 }
 
-function GuiColumns ( data )
+function GuiColumns( data )
 {
 	var widths = data[0];
 	var content = data[1];
@@ -926,7 +943,7 @@ function GuiColumns ( data )
 	return str;
 }
 
-function GuiContainer ( obj )
+function GuiContainer( obj )
 {
 	return '<div class="GuiContainer"><div class="GuiContent">' + GuiCreate ( obj ) + '</div></div>';
 }
@@ -938,7 +955,7 @@ var _epObject = {
 	t : -1000,
 	datas : new Array ()
 };
-function InitElementPopup ( pdiv, actionurl, forceupdate, immediateDisplay )
+function InitElementPopup( pdiv, actionurl, forceupdate, immediateDisplay )
 {
 	if ( !pdiv ) return;
 	if ( !immediateDisplay ) immediateDisplay = false;
@@ -1677,7 +1694,7 @@ movableListener = function( e, data )
 		}
 		
 		// Moving a window..
-		if ( window.mouseDown == 1 )
+		if( !isMobile && window.mouseDown == 1 )
 		{
 			if( ( !lockX && !lockY ) && currentMovable.snap && currentMovable.unsnap && currentMovable.shiftKey )
 				currentMovable.unsnap();
@@ -2156,6 +2173,7 @@ movableMouseUp = function( e )
 	window.mouseDown = false;
 	if( window.currentMovable ) currentMovable.snapping = false;
 	window.mouseMoveFunc = false;
+	mousePointer.candidate = null;
 	document.body.style.cursor = '';
 	
 	// Execute the release function
@@ -2226,7 +2244,10 @@ movableMouseUp = function( e )
 	if( window.regionWindow && window.regionWindow.directoryview )
 	{
 		var scrl = window.regionWindow.directoryview.scroller;
-		scrl.scrolling = false;
+		if( scrl )
+		{
+			scrl.scrolling = false;
+		}
 	}
 }
 
@@ -2249,6 +2270,8 @@ function CheckScreenTitle( screen )
 	var testObject = screen ? screen : window.currentScreen;
 	if( !testObject ) return;
 	
+	Friend.GUI.reorganizeResponsiveMinimized();
+	
 	// Tell system we are maximized
 	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
 	{
@@ -2261,6 +2284,7 @@ function CheckScreenTitle( screen )
 	
 	// Set screen title
 	var csc = testObject.screenObject;
+	if( !csc ) return;
 	
 	// Set the screen title if we have a window with application name
 	var wo = window.currentMovable ? window.currentMovable.windowObject : false;
@@ -2426,12 +2450,13 @@ function PollTaskbar( curr )
 	}
 	// Normal taskbar
 	else
-	{
+	{	
 		if( !baseElement ) 
 		{
 			pollingTaskbar = false;
 			return;
 		}
+		
 		if( baseElement.childNodes.length )
 		{
 			var lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
@@ -2540,6 +2565,23 @@ function PollTaskbar( curr )
 					if ( t.tasks[c].viewId == pn.viewId )
 					{
 						d = t.tasks[ c ].dom; // don't add twice
+						
+						// Race condition, Update the state
+						( function( ele, pp ){ 
+							setTimeout( function()
+							{
+								if( pp.parentNode.getAttribute( 'minimized' ) )
+								{
+									ele.classList.add( 'Task', 'Hidden', 'MousePointer' );
+								}
+								else
+								{
+									ele.classList.add( 'Task', 'MoustPointer' );
+									ele.classList.remove( 'Hidden' );
+								}
+							}, 5 );
+						} )( d, pn );
+						// Check directoryvuew
 						if( pn.content.directoryview )
 							d.classList.add( 'Directory' );
 						break;
@@ -2553,7 +2595,7 @@ function PollTaskbar( curr )
 					d = document.createElement ( 'div' );
 					d.viewId = pn.viewId;
 					d.view = pn;
-					d.className = pn.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
+					d.className = pn.parentNode.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
 					if( pn.content.directoryview )
 					{
 						d.classList.add( 'Directory' );
@@ -2576,6 +2618,19 @@ function PollTaskbar( curr )
 							var div = this.window;
 							div.viewContainer.setAttribute( 'minimized', '' );
 							div.minimized = false;
+							
+							var app = _getAppByAppId( div.applicationId );
+							if( app )
+							{
+								app.sendMessage( {
+									'command': 'notify',
+									'method': 'setviewflag',
+									'flag': 'minimized',
+									'viewId': div.windowObject.viewId,
+									'value': false
+								} );
+							}
+							
 							if( div.windowObject.workspace != globalConfig.workspaceCurrent )
 							{
 								Workspace.switchWorkspace( div.windowObject.workspace );
@@ -2588,6 +2643,18 @@ function PollTaskbar( curr )
 									{
 										div.attached[ a ].minimized = false;
 										div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
+										
+										var app = _getAppByAppId( div.attached[ a ].applicationId );
+										if( app )
+										{
+											app.sendMessage( {
+												'command': 'notify',
+												'method': 'setviewflag',
+												'flag': 'minimized',
+												'viewId': div.attached[ a ].windowObject.viewId,
+												'value': false
+											} );
+										}
 									}
 								}
 							}
@@ -2631,12 +2698,27 @@ function PollTaskbar( curr )
 								{
 									this.setActive( true ); // with click
 									_WindowToFront( this.window );
+									this.classList.remove( 'Hidden' );
 								}
 								else
 								{
 									this.setInactive();
 									this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
+									
 									var div = this.window;
+									
+									var app = _getAppByAppId( div.applicationId );
+									if( app )
+									{
+										app.sendMessage( {
+											'command': 'notify',
+											'method': 'setviewflag',
+											'flag': 'minimized',
+											'viewId': div.windowObject.viewId,
+											'value': true
+										} );
+									}
+									
 									if( div.attached )
 									{
 										for( var a = 0; a < div.attached.length; a++ )
@@ -2645,6 +2727,18 @@ function PollTaskbar( curr )
 											{
 												div.attached[ a ].minimized = true;
 												div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
+												
+												var app = _getAppByAppId( div.attached[ a ].applicationId );
+												if( app )
+												{
+													app.sendMessage( {
+														'command': 'notify',
+														'method': 'setviewflag',
+														'flag': 'minimized',
+														'viewId': div.attached[ a ].viewId,
+														'value': true
+													} );
+												}
 											}
 										}
 									}
@@ -3064,288 +3158,6 @@ function CallFriendApp( func, param1, param2, param3 )
 	}
 	return false;
 }
-function Notify( msg, callback, clickcallback )
-{
-	if( !Workspace.notifications ) return;
-	if( !msg ) return;
-	
-	var n = {
-		msg: msg,
-		date: ( new Date() ).getTime(),
-		application: msg.application
-	};
-	
-	if( !msg.text ) msg.text = 'untexted';
-	if( !msg.title ) msg.title = 'untitled';
-	
-	
-	// Add dom element
-	var d = document.createElement( 'div' );
-	d.className = msg.label ? 'PopInfo' : 'BubbleInfo';
-	if( msg.sticky )
-		d.sticky = true;
-	var i = document.createElement( 'div' );
-	i.innerHTML = '<p class="Layout"><strong>' + msg.title + '</strong></p><p class="Layout">' + msg.text + '</p>';
-	d.appendChild( i );
-	d.style.opacity = 0;
-	
-	var notification = false;
-
-	//check for app interface and push notification out...
-	if( typeof friendApp != 'undefined' && typeof friendApp.show_notification == 'function')
-	{
-		friendApp.show_notification( msg.title, msg.text  );
-	}
-
-	// On mobile, we always show the notification on the Workspace screen
-	if( isMobile )
-	{
-		if( !ge( 'MobileNotifications' ) )
-		{
-			var d = document.createElement( 'div' );
-			d.className = 'Notification Mobile';
-			d.id = 'MobileNotifications';
-			ge( 'DoorsScreen' ).appendChild( d );
-		}
-		var n = document.createElement( 'div' );
-		n.className = 'MobileNotification BackgroundDefault ColorDefault';
-		n.innerHTML = '<div class="Title">' + msg.title + '</div><div class="Text">' + msg.text + '</div>';
-		ge( 'MobileNotifications' ).appendChild( n );
-		setTimeout( function(){ n.classList.add( 'Showing' ); }, 50 );
-		n.close = function()
-		{
-			this.classList.remove( 'Showing' );
-			setTimeout( function()
-			{
-				n.parentNode.removeChild( n );
-			}, 250 );
-		}
-		
-		if( msg.flags && msg.flags.sticky )
-		{
-			n.onclick = function(){ n.close(); }
-		}
-		else
-		{
-			setTimeout( function(){ n.close(); }, 3000 );
-		}
-		
-		return;
-	}
-	else
-	{
-		// Find notification
-		var chn = ge( 'Tray' ).childNodes;
-
-		// Named tray element
-		if( msg.label )
-		{
-			for( var a = 0; a < chn.length; a++ )
-			{
-				if( chn[a].getAttribute( 'label' ) && chn[a].getAttribute( 'label' ) == msg.label )
-				{
-					notification = chn[a];
-					notification.classList.add( 'PopNotification' );
-					break;
-				}
-			}
-			if( !notification ) return;
-		}
-
-		// Get existing notification element
-		if( !notification )
-		{
-			for( var a = 0; a < chn.length; a++ )
-			{
-				if( chn[a].className && chn[a].classList.contains( 'Notification' ) )
-				{
-					notification = chn[a];
-					break;
-				}
-			}
-		}
-	
-		// Create parent node
-		if( !notification )
-		{
-			notification = document.createElement( 'div' );
-			notification.className = 'TrayElement Notification IconSmall';
-			ge( 'Tray' ).appendChild( notification );
-		}
-	}
-		
-	// Add notification bubble
-	// But are we the first?
-	if( d.className == 'PopInfo' && notification.childNodes.length )
-	{
-		notification.insertBefore( d, notification.childNodes[0] );
-	}
-	else notification.appendChild( d );
-	
-	// When clicking the bubble
-	// :)
-	if( clickcallback )
-	{
-		d.onclick = clickcallback;
-		d.ontouchdown = clickcallback;
-	}
-	
-	// Do the fading
-	setTimeout( function()
-	{
-		d.style.opacity = 1;
-		if ( !msg.sticky )
-		{
-			setTimeout( function(){ d.style.opacity = 0; }, 4000 );
-			setTimeout( function(){ 
-				notification.removeChild( d ); 
-				if( notification.getAttribute( 'label' ) )
-				{
-					notification.classList.remove( 'PopNotification' );
-				}
-				if( !notification.getElementsByTagName( 'div' ).length )
-				{
-					ge( 'Tray' ).removeChild( notification );
-				}
-				// Standard notifications can reply to notification origin
-				// that the bubble did close
-				if( d.struct && d.struct.onCloseBubble )
-				{
-					d.struct.onCloseBubble();
-				}
-				if( callback && typeof( callback ) == 'function' ) callback();
-			}, 4750 );
-		}
-	}, 25 );
-	
-	// Add to global notification stack
-	Workspace.notifications.push( n );
-	Workspace.renderNotifications();
-	return notification;
-}
-function CloseNotification( notification )
-{
-	var d = notification.childNodes[ 0 ];
-	notification.removeChild( d ); 
-	if( notification.getAttribute( 'label' ) )
-	{
-		notification.classList.remove( 'PopNotification' );
-	}
-	if( !notification.getElementsByTagName( 'div' ).length )
-	{
-		ge( 'Tray' ).removeChild( notification );
-	}
-	// Standard notifications can reply to notification origin
-	// that the bubble did close
-	if( d.struct && d.struct.onCloseBubble )
-	{
-		d.struct.onCloseBubble();
-	}
-}
-// Poll the tray for elements
-function PollTray()
-{
-	var tray = ge( 'Tray' );
-	if( !tray )
-		return;
-	
-	// TODO: Do this dynamically
-	var s = tray.getElementsByTagName( 'div' );
-	
-	// Check various stuff
-	var tasks = false;
-	for( var a = 0; a < s.length; a++ )
-	{
-		if( s[a].parentNode != tray ) continue;
-		if( s[a].classList.contains( 'Tasks' ) )
-		{
-			tasks = s[a];
-			tasks.poll();
-		}
-	}
-	if( !tasks )
-	{
-		tasks = document.createElement( 'div' );
-		tasks.className = 'Tasks TrayElement IconSmall';
-		tasks.poll = function()
-		{
-			var taskn = Workspace.applications.length;
-			this.innerHTML = '<div class="BubbleInfo"><div>' + taskn + ' ' + ( taskn == 1 ? i18n( 'i18n_task_running' ) : i18n( 'i18n_tasks_running' ) ) + '.</div></div>';
-		}
-		tray.appendChild( tasks );
-	}
-	
-	/* No mic */
-	if( 1 == 2 )
-	{
-		var mic = false;
-		for( var a = 0; a < s.length; a++ )
-		{
-			if( !s[a].className ) continue;
-			if( s[a].className.indexOf( 'Microphone' ) == 0 )
-				mic = s[a];
-		}
-		// TODO: Reenable mic when it works.
-		mic.style.display = 'none';
-		mic.onclick = function()
-		{
-			if( Doors.handsFree )
-			{
-				var btn = Doors.handsFree.getElementsByClassName( 'si-btn' )[0];
-				if( btn.recognition ) btn.recognition.stop();
-				Doors.handsFree.parentNode.removeChild( Doors.handsFree );
-				Doors.handsFree = false;
-				return;
-			}
-			var f = new File( 'System:templates/handsfree.html' );
-			f.onLoad = function( data )
-			{
-				var d = document.createElement( 'div' );
-				d.id = 'Handsfree';
-				d.innerHTML = data;
-				document.body.insertBefore( d, document.body.firstChild );
-				Doors.handsFree = d;
-			
-				// For other browsers
-				if ( !( 'webkitSpeechRecognition' in window ) )
-				{
-					var inp = ge( 'Handsfree' ).getElementsByTagName( 'input' )[0];
-					inp.focus();
-					return;
-				}
-				else
-				{
-					setTimeout( function( e )
-					{
-						var dv = ge( 'Handsfree' ).getElementsByTagName( 'button' )[0];
-						dv.onclick = function( e )
-						{
-							return cancelBubble( e );
-						}
-						dv.click();
-					}, 100 );
-					// Remove it
-					d.onclick = function()
-					{
-						mic.onclick();
-						var stopper = ge( 'Tray' ).getElementsByClassName( 'Microphone' );
-						if( stopper.length ) stopper = stopper[0];
-						if( stopper )
-						{
-							stopper.className = 'Microphone IconSmall fa-microphone-slash';
-						}
-					}
-				}
-				// For google chrome
-				InitSpeechControls( function()
-				{
-					Say( 'Voice mode started.', false, 'both' );
-				} );
-			}
-			f.load();
-		}
-	}
-}
 
 function ClearSelectRegion()
 {
@@ -3381,7 +3193,8 @@ movableMouseDown = function ( e )
 	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
-		DefaultToWorkspaceScreen( tar );
+		if( !isMobile )
+			DefaultToWorkspaceScreen( tar );
 	}
 	
 	// TODO: Allow context menus!
@@ -3443,7 +3256,7 @@ movableMouseDown = function ( e )
 	
 	// Desktop / view selection 
 	if(
-		clickonDesktop || clickOnView
+		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
 		if( !sh )
@@ -3486,6 +3299,7 @@ movableMouseDown = function ( e )
 // Go into standard Workspace user mode (f.ex. clicking on wallpaper)
 function DefaultToWorkspaceScreen( tar ) // tar = click target
 {
+	if( isMobile ) return;
 	FocusOnNothing();
 	WorkspaceMenu.close();
 }
@@ -3508,7 +3322,16 @@ function clearRegionIcons()
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
-					ic.className = ic.className.split ( ' Selected' ).join ( '' );
+					ic.classList.remove( 'Selected' );
+					ic.classList.remove( 'Editing' );
+					if( ic.input )
+					{
+						if( ic.input.parentNode )
+						{
+							ic.input.parentNode.removeChild( ic.input );
+						}
+						ic.input = null;
+					}
 					w.icons[a].selected = false;
 				}
 			}
@@ -3640,7 +3463,8 @@ function FocusOnNothing()
 {
 	if( !window.currentMovable ) return;
 	
-	_DeactivateWindows();
+	if( !isMobile )
+		_DeactivateWindows();
 	
 	// Put focus somewhere else than where it is now..
 	// Blur like hell! :)
@@ -3663,7 +3487,8 @@ function AlertBox( title, desc, buttons, win )
 	var w = new View( {
 		title: title,
 		width: 380,
-		height: 200
+		height: 200,
+		resize: false
 	} );
 	
 	for( var a in buttons )

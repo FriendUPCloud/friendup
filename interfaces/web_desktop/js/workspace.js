@@ -27,6 +27,7 @@ Workspace = {
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
+	notificationEvents: [],
 	applications: [],
 	importWindow: false,
 	menuState: '',
@@ -251,128 +252,60 @@ Workspace = {
 				return cancelBubble( e );
 			}
 		}
-		// Widget for mobile mode!
-		else if( !this.widget )
-		{
-			o = {
-				width: window.innerWidth,
-				height: 32,
-				valign: 'top',
-				halign: 'center',
-				scrolling: false,
-				autosize: false,
-				animate: true
-			};
-			this.widget = new Widget( o, ge( 'DeepestField' ) );
-			this.widget.showWidget = function()
-			{
-				ge( 'DoorsScreen' ).classList.add( 'HasWidget' );
-				Workspace.refreshExtraWidgetContents();
-				this.raise();
-				this.show();
-				CoverScreens();
-			}
-			this.widget.hideWidget = function()
-			{
-				ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
-				this.showing = false;
-				this.hide();
-				this.lower();
-				ExposeScreens();
-			}
-			this.refreshExtraWidgetContents();
-			this.widget.showWidget();
-			this.widget.slideUp = function()
-			{
-				ge( 'DoorsScreen' ).classList.remove( 'WidgetSlideDown' );
-				document.body.classList.remove( 'WidgetSlideDown' );
-				Workspace.widget.setFlag( 'height', 32 );
-				Workspace.widget.touchDown = false;
-				clearTimeout( Workspace.widget.tdtimeout );
-				Workspace.widget.tdtimeout = false;
-			}
-			this.widget.dom.addEventListener( 'touchstart', function( evt )
-			{
-				if( Workspace.mainDock )
-					Workspace.mainDock.closeDesklet();
-
-				ge( 'DoorsScreen' ).classList.add( 'WidgetSlideDown' );
-				document.body.classList.add( 'WidgetSlideDown' );
-				Workspace.widget.setFlag( 'height', window.innerHeight - 112 );
-				Workspace.widget.touchDown = { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
-				
-				// Timeout for slide
-				Workspace.widget.tdtimeout = setTimeout( function()
-				{
-					Workspace.widget.touchDown = false;
-					Workspace.widget.tdtimeout = false;
-				}, 500 );
-				hideKeyboard();
-				cancelBubble( evt );
-			} );
-			this.widget.dom.addEventListener( 'touchmove', function( evt )
-			{
-				if( Workspace.widget.touchDown )
-				{
-					if( Workspace.widget.touchDown.y - evt.touches[0].clientY > 10 )
-					{
-						Workspace.widget.slideUp();
-						cancelBubble( evt );
-					}
-				}
-			} );
-		}
 
 		// Setup clock
-		var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
-		ex = ex.getElementsByClassName( 'Extra' )[0];
-		function clock()
+		if( !isMobile )
 		{
-			var d = new Date();
-			if( !ex.time )
+			var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
+			ex = ex.getElementsByClassName( 'Extra' )[0];
+			function clock()
 			{
-				var t = document.createElement( 'div' );
-				t.className = 'Time';
-				ex.appendChild( t );
-				ex.time = t;
-			}
-			if( Workspace.workspaceIsDisconnected )
-			{
-				if( !ex.offline )
+				var d = new Date();
+				if( !ex.time )
 				{
-					var o = document.createElement( 'div' );
-					o.className = 'Offline';
-					o.innerHTML = i18n( 'i18n_ws_disconnected' );
-					if( ex.time )
-					{
-						ex.insertBefore( o, ex.time );
-					}
-					else
-					{
-						ex.appendChild( o );
-					}
-					ex.offline = o;
+					var t = document.createElement( 'div' );
+					t.className = 'Time';
+					ex.appendChild( t );
+					ex.time = t;
 				}
-			}
-			else if( ex.offline )
-			{
-				ex.removeChild( ex.offline );
-				ex.offline = null;
-			}
+				if( Workspace.workspaceIsDisconnected )
+				{
+					if( !ex.offline )
+					{
+						var o = document.createElement( 'div' );
+						o.className = 'Offline';
+						o.innerHTML = i18n( 'i18n_ws_disconnected' );
+						if( ex.time )
+						{
+							ex.insertBefore( o, ex.time );
+						}
+						else
+						{
+							ex.appendChild( o );
+						}
+						ex.offline = o;
+					}
+				}
+				else if( ex.offline )
+				{
+					ex.removeChild( ex.offline );
+					ex.offline = null;
+				}
 
-			// Set the clock
-			var e = '';
-			e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
-					   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
-					   StrPad( d.getSeconds(), 2, '0' );*/
-			/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
-					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
-			ex.time.innerHTML = e;
+				// Set the clock
+				var e = '';
+				e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
+						   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
+						   StrPad( d.getSeconds(), 2, '0' );*/
+				/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
+						   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
+				ex.time.innerHTML = e;
 
-			// Realign workspaces
-			Workspace.nudgeWorkspacesWidget();
+				// Realign workspaces
+				Workspace.nudgeWorkspacesWidget();
+			}
+			this.clockInterval = setInterval( clock, 1000 );
 		}
-		this.clockInterval = setInterval( clock, 1000 );
 
 		// Recall wallpaper from settings
 		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
@@ -687,6 +620,25 @@ Workspace = {
 			}
 
 			return false;
+		}
+	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
 		}
 	},
 	showLoginPrompt: function()
@@ -1194,6 +1146,8 @@ Workspace = {
 				'webclient/js/gui/filedialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/colorpicker.js;' +
+				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/media/audio.js;' +
 				'webclient/js/io/p2p.js;' +
 				'webclient/js/io/request.js;' +

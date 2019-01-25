@@ -54,11 +54,16 @@
 #include <system/token/token_web.h>
 #include <system/dictionary/dictionary.h>
 #include <system/mobile/mobile_web.h>
+#include <system/usergroup/user_group_manager_web.h>
+#include <system/notification/notification_manager_web.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
+
+//test
+#undef __DEBUG
 
 //
 //
@@ -779,7 +784,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	* @param password (required) - user password
 	* @param deviceid (required) - id which recognize device which is used to login
 	* @param encryptedblob - used by keys which allow to login
-	* @param appname - application name which want 
+	* @param appname - is an application name which is trying to connect to our server (used by remotefs)
 	* @param sessionid - session id of logged user
 	* @return information about login process "{result:-1,response: success/fail, code:error code }
 	*/
@@ -1191,58 +1196,63 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							FERROR("Cannot  add session\n");
 						}
-						
+
+						char tmp[ 512 ];
+						User *loggedUser = NULL;
 						if( loggedSession != NULL )
 						{
 							DoorNotificationRemoveEntriesByUser( l, loggedSession->us_ID );
 							
 							// since we introduced deviceidentities with random number, we must remove also old entries
 							DoorNotificationRemoveEntries( l );
-						}
 						
-						User *loggedUser = loggedSession->us_User;
+							User *loggedUser = loggedSession->us_User;
 						
-						Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
+							Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
 						
-						char tmp[ 512 ];
-						
-						if( appname == NULL )
-						{
-							snprintf( tmp, sizeof(tmp) ,
-								"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
-								loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID
-							);	// check user.library to display errors
-						}
+							if( appname == NULL )
+							{
+								snprintf( tmp, sizeof(tmp) ,
+									"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
+									loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+							}
+							else
+							{
+								SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+
+								// Get authid from mysql
+								if( sqllib != NULL )
+								{
+									char authid[ 512 ];
+									authid[ 0 ] = 0;
+								
+									char qery[ 1024 ];
+									sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
+								
+									void *res = sqllib->Query( sqllib, qery );
+									if( res != NULL )
+									{
+										char **row;
+										if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+										{
+											snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
+										}
+										sqllib->FreeResult( sqllib, res );
+									}
+
+									l->LibrarySQLDrop( l, sqllib );
+
+									snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
+									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
+									);
+								}
+							}	// else to appname
+						} //else to logginsession == NULL
 						else
 						{
-							SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-
-							// Get authid from mysql
-							if( sqllib != NULL )
-							{
-								char authid[ 512 ];
-								authid[ 0 ] = 0;
-								
-								char qery[ 1024 ];
-								sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
-								
-								void *res = sqllib->Query( sqllib, qery );
-								if( res != NULL )
-								{
-									char **row;
-									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-									{
-										snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
-									}
-									sqllib->FreeResult( sqllib, res );
-								}
-
-								l->LibrarySQLDrop( l, sqllib );
-
-								snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
-									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
-								);
-							}
+							FERROR("[ERROR] User session was not added to list!\n" );
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
 						}
 						HttpAddTextContent( response, tmp );
 					}
@@ -1302,10 +1312,30 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	// user function
 	//
 	
-	else if( strcmp(  urlpath[ 0 ], "user" ) == 0 )
+	else if( strcmp( urlpath[ 0 ], "user" ) == 0 )
 	{
 		DEBUG("User\n");
 		response = UMWebRequest( l, urlpath, (*request), loggedSession, result );
+	}
+	
+	//
+	// usergroup function
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "group" ) == 0 )
+	{
+		DEBUG("Group\n");
+		response = UMGWebRequest( l, urlpath, (*request), loggedSession, result );
+	}
+	
+	//
+	// notification function
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "notification" ) == 0 )
+	{
+		DEBUG("Notification\n");
+		response = NMWebRequest( l, urlpath, (*request), loggedSession, result );
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION

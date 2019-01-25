@@ -211,12 +211,12 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 						{
 							if( row[i] != NULL )
 							{
-								int len = strlen( row[i] );
-								char *tmpval = calloc( len + 1, sizeof( char ) );
+								//int len = strlen( row[i] );
+								char *tmpval = calloc( lengths[i] + 1, sizeof( char ) );
 								if( tmpval )
 								{
 									// Copy mysql data
-									memcpy( tmpval, row[i], len );
+									memcpy( tmpval, row[i], lengths[i] );
 									// Add tmpval to string pointer list..
 									memcpy( strptr + dptr[2], &tmpval, sizeof( char * ) );
 								}
@@ -578,7 +578,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 		//strcat( tmpQuery, tmpvar );
 		BufStringAddSize( querybs, tmpvar, sprintfsize );
 	}
-	DEBUG("[MYSQLLibrary] UPDATE QUERY '%s'\n", tmpQuery );
+	DEBUG("[MYSQLLibrary] UPDATE QUERY '%s'\n", querybs->bs_Buffer );
 	
 	if( mysql_query( l->con.sql_Con, querybs->bs_Buffer ) )
 	{
@@ -1051,6 +1051,10 @@ int NumberOfRecordsCustomQuery( struct SQLLibrary *l, const char *query )
 MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 {
 	MYSQL_RES *result = NULL;
+	if( sel == NULL )
+	{
+		return NULL;
+	}
 	
 	if( mysql_query( l->con.sql_Con, sel ) )
 	{

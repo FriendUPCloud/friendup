@@ -40,6 +40,11 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
+#undef DEBUG
+#define DEBUG( ...)
+#undef DEBUG1
+#define DEBUG1( ...)
+
 //#define USE_SOCKET_REAPER
 
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte
@@ -58,11 +63,13 @@ static void _socket_remove_from_reaper(const Socket *sock);
 
 /** Initializes internal socket management structs. Call once at startup
  */
-void socket_init_once(void){
+void socket_init_once( void )
+{
 #ifdef USE_SOCKET_REAPER
 	struct rlimit limit;
 	int status = getrlimit(RLIMIT_NOFILE, &limit);
-	if (status != 0){
+	if( status != 0 )
+	{
 		FERROR("Can not get maximum amount of sockets! Socket reaper will not start\n");
 		return;
 	}
@@ -80,15 +87,20 @@ void socket_init_once(void){
 #endif
 }
 
-static void* _socket_reaper_thread(void *a __attribute__((unused))){
-	while (true){
+static void* _socket_reaper_thread(void *a __attribute__((unused)))
+{
+	while( TRUE )
+	{
 		//DEBUG("reaper\n");
-		for (unsigned int i = 0; i < _max_sockets; i++){
-			if (_socket_array[i] != NULL){ //there is probably a socket here...
-				FRIEND_MUTEX_LOCK(&_socket_array_mutex);
-				bool unlock_mutex = true;
-				if (_socket_array[i] != NULL){ //there is still a socket here, let's have a look!
-
+		for( unsigned int i = 0; i < _max_sockets; i++ )
+		{
+			if( _socket_array[i] != NULL )
+			{ //there is probably a socket here...
+				FRIEND_MUTEX_LOCK( &_socket_array_mutex );
+				FBOOL unlock_mutex = TRUE;
+				
+				if( _socket_array[i] != NULL )
+				{ //there is still a socket here, let's have a look!
 					unsigned int state_persistance_time_s = time(NULL) - _socket_array[i]->state_update_timestamp;
 					DEBUG("Socket [%d] is at %p, state %d, time %d\n",
 							i,
@@ -96,8 +108,10 @@ static void* _socket_reaper_thread(void *a __attribute__((unused))){
 							_socket_array[i]->state,
 							state_persistance_time_s);
 
-					switch (_socket_array[i]->state){
-					case socket_state_accepted:
+					if( ((int)_socket_array[i]->state) == SOCKET_STATE_MAX_ACCEPTED_TIME_s )
+					{
+					//switch (_socket_array[i]->state){
+					//case socket_state_accepted:
 						if (state_persistance_time_s > SOCKET_STATE_MAX_ACCEPTED_TIME_s){
 
 							DEBUG("Socket [%d] is too long (%ds) in accept state. Closing.\n",
@@ -108,8 +122,9 @@ static void* _socket_reaper_thread(void *a __attribute__((unused))){
 							FRIEND_MUTEX_UNLOCK(&_socket_array_mutex); //release mutex, otherwise _socket_remove_from_reaper called from SocketFree will block
 							unlock_mutex = false;
 							close( tmp->fd ); //brutally the socket here, rest of error handling will happen in the epoll function
-						} break;
-					} //end of switch
+						}
+						//break;
+					} //end of switch / if
 				}
 				if (unlock_mutex){
 					FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
@@ -122,12 +137,15 @@ static void* _socket_reaper_thread(void *a __attribute__((unused))){
 	return NULL;
 }
 
-static void _socket_add_to_reaper(Socket *sock){
+static void _socket_add_to_reaper( Socket *sock )
+{
 	sock->state_update_timestamp = time(NULL);
 	FRIEND_MUTEX_LOCK(&_socket_array_mutex);
 	//find a place in the global table to hold pointer to new socket
-	for (unsigned int i = 0; i < _max_sockets; i++){
-		if (_socket_array[i] == NULL){
+	for( unsigned int i = 0; i < _max_sockets; i++ )
+	{
+		if( _socket_array[i] == NULL )
+		{
 			_socket_array[i] = sock;
 			break;
 		}
@@ -135,7 +153,8 @@ static void _socket_add_to_reaper(Socket *sock){
 	FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
 }
 
-static void _socket_remove_from_reaper(const Socket *sock){
+static void _socket_remove_from_reaper(const Socket *sock)
+{
 	FRIEND_MUTEX_LOCK(&_socket_array_mutex);
 	//find a place in the global table to hold pointer to new socket
 	for (unsigned int i = 0; i < _max_sockets; i++){
@@ -147,7 +166,8 @@ static void _socket_remove_from_reaper(const Socket *sock){
 	FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
 }
 
-void socket_update_state(Socket *sock, socket_state_t state){
+void socket_update_state( Socket *sock, socket_state_t state )
+{
 	FRIEND_MUTEX_LOCK(&sock->mutex);
 	sock->state = state;
 	sock->state_update_timestamp = time(NULL);

@@ -379,6 +379,20 @@ Workspace = {
 			return false;
 		}
 	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+		}
+	},
 	showLoginPrompt: function()
 	{
 		// No loginprompt when we are inside
@@ -881,8 +895,10 @@ Workspace = {
 				'webclient/js/gui/menufactory.js;' +
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/filedialog.js;' +
+				'webclient/js/gui/colorpicker.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/vr/vrengine.js;' +
 				'webclient/js/vr/vrwrapper.js;' +
 				'webclient/js/media/audio.js;' +

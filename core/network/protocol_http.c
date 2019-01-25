@@ -674,8 +674,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										pclose( pipe );
 									}
 
-									ListStringJoin( ls );
-
+									if( ls != NULL )
+									{
+										ListStringJoin( ls );
+									}
+									
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
 										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -685,7 +688,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									response = HttpNewSimple( HTTP_200_OK, tags );
 
-									if( ls->ls_Data != NULL )
+									if( ls != NULL && ls->ls_Data != NULL )
 									{
 										HttpSetContent( response, ls->ls_Data, res );
 									}
@@ -699,8 +702,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									HttpWrite( response, sock );
 									result = 200;
 
-									ls->ls_Data = NULL;
-									ListStringDelete( ls );
+									if( ls != NULL )
+									{
+										ls->ls_Data = NULL;
+										ListStringDelete( ls );
+									}
 								}
 							}
 
@@ -1367,8 +1373,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									if( SLIB->fcm->fcm_SSLEnabled )
 									{
-//redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=https://%s/webclient/index.html\"></head><body> \
- Attempting to redirect to <a href=\"https://%s/webclient/index.html\">https://%s</a>.</body></html>", newUrl, newUrl, newUrl );
+/* redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=https://%s/webclient/index.html\"></head><body> \
+ Attempting to redirect to <a href=\"https://%s/webclient/index.html\">https://%s</a>.</body></html>", newUrl, newUrl, newUrl ); */
 										if( fromUrl == TRUE )
 										{
 											redsize = snprintf( redirect, sizeof( redirect ), "https://%s/webclient/index.html", newUrl );
@@ -1380,8 +1386,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									}
 									else
 									{
-								//redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=http://%s:6502/webclient/index.html\"></head><body> \
- Attempting to redirect to <a href=\"http://%s:6502/webclient/index.html\">http://%s:6502</a>.</body></html>", newUrl, newUrl, newUrl );
+								/* redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=http://%s:6502/webclient/index.html\"></head><body> \
+ Attempting to redirect to <a href=\"http://%s:6502/webclient/index.html\">http://%s:6502</a>.</body></html>", newUrl, newUrl, newUrl ); */
 										if( fromUrl == TRUE )
 										{
 											redsize = snprintf( redirect, sizeof( redirect ), "http://%s/webclient/index.html", newUrl );
@@ -1602,6 +1608,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												request->uri->redirect = TRUE;
 
 												// Retry request with our new url
+												FFree( url );
 												goto partialRequest;
 												
 											}
@@ -1696,6 +1703,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 															FFree( runFile );
 														}
 													}
+													FFree( allArgsNew );
 												}
 												
 												if( phpResp == NULL )

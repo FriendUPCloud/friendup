@@ -282,6 +282,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
 		SASUList *prevali = as->as_UserSessionList;
 		
+		DEBUG("[AppSession] Session before loop\n");
 		while( ali != NULL )
 		{
 			if( u ==  ali->usersession  )
@@ -299,12 +300,14 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 				DEBUG("[AppSession] Session removed, sessions %d\n", as->as_UserNumber );
 				
 				FFree( ali );
+				DEBUG("[AppSession] break\n");
 			
 				break;
 			}
 		
 			prevali = ali;
 			ali = (SASUList *) ali->node.mln_Succ;
+			DEBUG("[AppSession] Session end loop\n");
 		}
 		
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );

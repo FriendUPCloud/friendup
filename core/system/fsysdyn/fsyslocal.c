@@ -768,8 +768,10 @@ FLONG RemoveDirectoryLocal(const char *path)
 					else
 					{
 						r += statbuf.st_size;
-						unlink( buf );
-						remove( buf );
+						if( unlink( buf ) != 0 )
+						{
+							remove( buf );
+						}
 					}
 				}
 				FFree(buf);
@@ -1239,8 +1241,9 @@ BufString *Info( File *s, const char *path )
 	int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
+	int globlen = rspath + spath + 512;
 	
-	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( globlen, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 
@@ -1262,13 +1265,20 @@ BufString *Info( File *s, const char *path )
 		}
 		else
 		{
+			
 			SpecialData *locsd = (SpecialData *)s->f_SpecialData;
 			SystemBase *l = (SystemBase *)locsd->sb;
 			
-			char buffer[ 256 ];
-			int size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST );
-			
-			BufStringAddSize( bs, buffer, size );
+			globlen += 512;
+			char *buffer = FMalloc( globlen );
+			int size = 0;
+			if( buffer != NULL )
+			{
+				size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, comm );
+				
+				BufStringAddSize( bs, buffer, size );
+				FFree( buffer );
+			}
 			//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 		}
 		

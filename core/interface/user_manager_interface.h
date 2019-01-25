@@ -20,13 +20,14 @@
 #include <system/user/user_manager.h>
 #include <system/user/user_manager_remote.h>
 #include <system/user/user_manager_web.h>
+#include <system/usergroup/user_group_manager.h>
 
 typedef struct UserManagerInterface
 {
 	UserManager			*(*UMNew)( void *sb );
 	void				(*UMDelete)( UserManager *smgr );
-	int					(*UMAssignGroupToUser)( UserManager *smgr, User *usr );
-	int					(*UMAssignGroupToUserByStringDB)( UserManager *smgr, User *usr, char *groups );
+	int					(*UMAssignGroupToUser)( UserGroupManager *smgr, User *usr );
+	int					(*UMAssignGroupToUserByStringDB)( UserGroupManager *smgr, User *usr, char *groups );
 	int					(*UMUserUpdateDB)( UserManager *um, User *usr );
 	int					(*UMAssignApplicationsToUser)( UserManager *smgr, User *usr );
 	User				*(*UMUserGetByNameDB)( UserManager *smgr, const char *name );
@@ -37,7 +38,8 @@ typedef struct UserManagerInterface
 	FBOOL				(*UMUserIsAdminByAuthID)( UserManager *smgr, Http *r, char *auth );
 	User				*(*UMUserCheckExistsInMemory)( UserManager *smgr, User *u );
 	FBOOL				(*UMUserExistByNameDB)( UserManager *smgr, const char *name );
-	User				*(*UMGetUserByName)( UserManager *um, char *name );
+	User				*(*UMGetUserByName)( UserManager *um, const char *name );
+	FULONG				(*UMGetUserIDByName)( UserManager *um, const char *name );
 	User				*(*UMGetUserByID)( UserManager *um, FULONG id );
 	void				*(*UMUserGetByAuthIDDB)( UserManager *um, const char *authId );
 	User				*(*UMGetAllUsersDB)( UserManager *um );
@@ -61,8 +63,8 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 {
 	si->UMNew = UMNew;
 	si->UMDelete = UMDelete;
-	si->UMAssignGroupToUser = UMAssignGroupToUser;
-	si->UMAssignGroupToUserByStringDB = UMAssignGroupToUserByStringDB;
+	si->UMAssignGroupToUser = UGMAssignGroupToUser;	//TODO we should provide other interface
+	si->UMAssignGroupToUserByStringDB = UGMAssignGroupToUserByStringDB;	//TODO we should provide other interface
 	si->UMUserUpdateDB = UMUserUpdateDB;
 	si->UMAssignApplicationsToUser = UMAssignApplicationsToUser;
 	si->UMUserGetByNameDB = UMUserGetByNameDB;
@@ -80,6 +82,7 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 	si->UMRemoveUser = UMRemoveUser;
 	si->UMWebRequest = UMWebRequest;
 	si->UMGetUserByNameDB = UMGetUserByNameDB;
+	si->UMGetUserIDByName = UMGetUserIDByName;
 	si->UMGetAllowedLoginTime = UMGetAllowedLoginTime;
 	si->UMGetLoginPossibilityLastLogins = UMGetLoginPossibilityLastLogins;
 	si->UMStoreLoginAttempt = UMStoreLoginAttempt;

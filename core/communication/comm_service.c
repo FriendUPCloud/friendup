@@ -452,8 +452,6 @@ Create outgoing connections\n \
 		// Go through all connections
 		//
 		
-		char *masterServer = "pal.ideverket.no";
-		
 		FBOOL masterFriendFound = FALSE;
 		FConnection *loccon = fcm->fcm_CommService->s_Connections;
 		while( loccon != NULL )
@@ -518,14 +516,14 @@ Create outgoing connections\n \
 		
 		if( masterFriendFound == FALSE )
 		{
-			DEBUG("[CommServiceSetupOutgoing] trying to setup connection to Friend Master Server: %s\n", masterServer );
+			DEBUG("[CommServiceSetupOutgoing] trying to setup connection to Friend Master Server: %s\n", SLIB->sl_MasterServer );
 			
-			Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, masterServer, service->s_port );
+			Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, SLIB->sl_MasterServer, service->s_port );
 			//if( newsock != NULL ) // master connection must be always avaiable in list
 			{
 				DEBUG("[CommServiceSetupOutgoing] Connection to Master FriendNode created on port: %d\n", service->s_port);
 
-				FConnection *con = CommServiceAddConnection( service, newsock, "FriendMaster", masterServer, NULL, SERVER_CONNECTION_OUTGOING, 0 );
+				FConnection *con = CommServiceAddConnection( service, newsock, "FriendMaster", SLIB->sl_MasterServer, NULL, SERVER_CONNECTION_OUTGOING, 0 );
 				if( con != NULL )
 				{
 					con->fc_ServerType = SERVER_TYPE_FRIEND_MASTER;
@@ -835,7 +833,7 @@ int CommServiceThreadServer( FThread *ptr )
 							char incomingFriendCoreID[ FRIEND_CORE_MANAGER_ID_SIZE + 32 ];
 							memset( incomingFriendCoreID, 0, FRIEND_CORE_MANAGER_ID_SIZE + 32 );
 							
-							int z;
+							unsigned int z;
 							for( z=0 ; z < bs->bs_Size ; z++ )
 								printf("_%c_ ", bs->bs_Buffer[ z ] );
 							printf("\n");

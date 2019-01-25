@@ -131,7 +131,25 @@ static struct lws_protocols protocols[] = {
 		NULL,
 		WS_PROTOCOL_BUFFER_SIZE
 	},
-#if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
+	{
+		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
+	}
+};
+
+
+// list of supported protocols and callbacks 
+
+static struct lws_protocols protocols1[] = {
+	// first protocol must always be HTTP handler 
+	{
+		"http-only",		/* name */
+		callback_http,		/* callback */
+		sizeof (struct per_session_data__http),	/* per_session_data_size */
+		0,			/* max frame size / rx buffer */
+		1,
+		NULL,
+		0
+	},
 	{
 		"FriendApp-v1",
 		WebsocketAppCallback,
@@ -141,8 +159,24 @@ static struct lws_protocols protocols[] = {
 		NULL,
 		0
 	},
-#endif
-#if ENABLE_NOTIFICATIONS_SINK == 1
+	{
+		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
+	}
+};
+
+// list of supported protocols and callbacks 
+
+static struct lws_protocols protocols2[] = {
+	// first protocol must always be HTTP handler 
+	{
+		"http-only",		/* name */
+		callback_http,		/* callback */
+		sizeof (struct per_session_data__http),	/* per_session_data_size */
+		0,			/* max frame size / rx buffer */
+		1,
+		NULL,
+		0
+	},
 	{
 		"FriendService-v1",
 		WebsocketNotificationsSinkCallback,
@@ -152,11 +186,11 @@ static struct lws_protocols protocols[] = {
 		NULL,
 		0
 	},
-#endif
 	{
 		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
 	}
 };
+
 
 void hand(int s )
 {
@@ -175,7 +209,7 @@ int WebsocketThread( FThread *data )
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws->ws_Context == NULL )
 	{
-		FERROR("WsContext is empty\n");
+		FERROR("[WS] WsContext is empty\n");
 		return 0;
 	}
 	
@@ -233,9 +267,10 @@ int WebSocketStart( WebSocket *ws )
  * @param sb pointer to SystemBase
  * @param port port on which WS will work
  * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
+ * @param proto protocols
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -282,7 +317,18 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
 			break;
 			*/
 		ws->ws_Info.port = ws->ws_Port;
-		ws->ws_Info.protocols = protocols;
+		if( proto == 0 )
+		{
+			ws->ws_Info.protocols = protocols;
+		}
+		else if( proto == 1 )
+		{
+			ws->ws_Info.protocols = protocols1;
+		}
+		else
+		{
+			ws->ws_Info.protocols = protocols2;
+		}
 		ws->ws_Info.iface = ws->ws_Interface;
 		ws->ws_Info.gid = -1;
 		ws->ws_Info.uid = -1;
@@ -301,6 +347,8 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
 		
 		//ws->ws_Info.extensions = lws_get_internal_extensions();
 		//ws->ws_Info.extensions->per_context_private_data = ws;
+		//ws->ws_Info.ssl_cipher_list = "ALL";
+		
 		ws->ws_Info.ssl_cipher_list = "ECDHE-ECDSA-AES256-GCM-SHA384:"
 			       "ECDHE-RSA-AES256-GCM-SHA384:"
 			       "DHE-RSA-AES256-GCM-SHA384:"
@@ -313,7 +361,8 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
 			       "!AES128-SHA256:"
 			       "!DHE-RSA-AES256-SHA256:"
 			       "!AES256-GCM-SHA384:"
-			       "!AES256-SHA256";
+			       "!AES256-SHA256:"
+			       "ECDH-SHA22-NISTP256";
 		
 		ws->ws_CountPollfds = 0;
 		
@@ -652,7 +701,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		
 		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 		
-		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to new %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
+		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to new %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
 	}
 	else
 	{
@@ -700,6 +749,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
     UserSession *us = (UserSession *)wscl->wsc_UserSession;
 	//wscl->wc_UserSession = NULL;
+	wscl->wsc_Wsi = NULL;
 	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
     
 	//
@@ -707,44 +757,46 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	//
     if( us != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
-		WebsocketServerClient *nwsc = us->us_WSClients;
-        WebsocketServerClient *owsc = nwsc;
-		
-		// we must remove first Websocket from UserSession list and then from app session
-		
-		if( nwsc != NULL )
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
-			
-			// remove first entry!
-			if( nwsc->wsc_WebsocketsData == data )
+			WebsocketServerClient *nwsc = us->us_WSClients;
+			WebsocketServerClient *owsc = nwsc;
+		
+			// we must remove first Websocket from UserSession list and then from app session
+		
+			if( nwsc != NULL )
 			{
-				us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
-
-				DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
-            }
+				DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
 			
-			// remove entry from the list
-			else
-			{
-				DEBUG("[WS] Remove connection from list\n");
-
-				while( nwsc != NULL )
+				// remove first entry!
+				if( nwsc->wsc_WebsocketsData == data )
 				{
-					DEBUG("[WS] WS Entry\n");
-					owsc = nwsc;
-					nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
-					DEBUG("[WS ] OLDWSC %p NWSC %p\n", owsc, nwsc );
-					if( nwsc != NULL && nwsc->wsc_WebsocketsData == data )
+					us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
+
+					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
+				}
+			
+				// remove entry from the list
+				else
+				{
+					DEBUG("[WS] Remove connection from list\n");
+
+					while( nwsc != NULL )
 					{
-						owsc->node.mln_Succ = nwsc->node.mln_Succ;
-						break;
+						DEBUG("[WS] WS Entry\n");
+						owsc = nwsc;
+						nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
+						DEBUG("[WS ] OLDWSC %p NWSC %p\n", owsc, nwsc );
+						if( nwsc != NULL && nwsc->wsc_WebsocketsData == data )
+						{
+							owsc->node.mln_Succ = nwsc->node.mln_Succ;
+							break;
+						}
 					}
 				}
 			}
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 	}
 	else
 	{
@@ -753,7 +805,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	
 	FQDeInitFree( &(wscl->wsc_MsgQueue) );
 	
-	Log(FLOG_DEBUG, "WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
+	Log(FLOG_DEBUG, "[WS] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
 	WebsocketServerClientDelete( wscl );
 
     return 0;

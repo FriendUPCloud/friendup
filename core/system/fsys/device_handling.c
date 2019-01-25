@@ -1132,35 +1132,50 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 		if( remdev == NULL )
 		{
 			int i;
-			DEBUG("--remdevNULL, name : %s\n", name );
+			DEBUG("[UnMountFS] --remdevNULL, name : %s\n", name );
 			
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			{
+				DEBUG("[UnMountFS] --remdev grpname %s\n", ugl->ugl_Group->ug_Name );
+				UserGroup *ug = ugl->ugl_Group;
+				if( ugl->ugl_Group != NULL )
+				{
+					File *f = ugl->ugl_Group->ug_MountedDevs;
+					File *fprev = ugl->ugl_Group->ug_MountedDevs;
+			/*
 			for( i=0 ; i < usr->u_GroupsNr ; i++ )
 			{
-				DEBUG("--remdev grpname %s\n", usr->u_Groups[ i ]->ug_Name );
-				
-				File *f = usr->u_Groups[ i ]->ug_MountedDevs;
-				File *fprev = usr->u_Groups[ i ]->ug_MountedDevs;
-				
-				while( f != NULL )
+				if( usr->u_Groups[ i ] != NULL )
 				{
-					DEBUG("--file\n");
-					if( strcmp( f->f_Name, name ) == 0 )
+					DEBUG("[UnMountFS] --remdev grpname %s\n", usr->u_Groups[ i ]->ug_Name );
+				
+					File *f = usr->u_Groups[ i ]->ug_MountedDevs;
+					File *fprev = usr->u_Groups[ i ]->ug_MountedDevs;
+					UserGroup *ug = usr->u_Groups[ i ];
+					*/
+					while( f != NULL )
 					{
-						DEBUG("Device: '%s' removed from usergroup\n", name );
-						if( f == usr->u_Groups[ i ]->ug_MountedDevs )
+						DEBUG("[UnMountFS] --file\n");
+						if( strcmp( f->f_Name, name ) == 0 )
 						{
-							usr->u_Groups[ i ]->ug_MountedDevs = (File *)f->node.mln_Succ;
-						}
-						else
-						{
-							fprev->node.mln_Succ = f->node.mln_Succ;
-						}
+							DEBUG("[UnMountFS] Device: '%s' removed from usergroup\n", name );
+							if( f == ug->ug_MountedDevs )
+							{
+								ug->ug_MountedDevs = (File *)f->node.mln_Succ;
+							}
+							else
+							{
+								fprev->node.mln_Succ = f->node.mln_Succ;
+							}
 						
-						break;
+							break;
+						}
+						fprev = f;
+						f = (File *)f->node.mln_Succ;
 					}
-					fprev = f;
-					f = (File *)f->node.mln_Succ;
-				}
+				}	// != NULL
+				ugl = (UserGroupLink *) ugl->node.mln_Succ;
 			}
 		}
 		
@@ -1324,61 +1339,7 @@ ug.UserID = '%ld' \
 			{
 				FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 				
-				// device was not found on user device list
-				UserGroup *ug = l->sl_UM->um_UserGroups;
-				while( ug != NULL )
-				{
-					File *lf = ug->ug_MountedDevs;
-					File *lastone = lf;
-					while( lf != NULL )
-					{
-						DEBUG( "[UnMountFS] Checking fs in list %s == %s...\n", lf->f_Name, name );
-						if( strcmp( lf->f_Name, name ) == 0 )
-						{
-							DEBUG( "[UnMountFS] Found one (%s == %s)\n", lf->f_Name, name );
-							remdev = lf;
-							break;
-						}
-						lastone = lf;
-						lf = (File *)lf->node.mln_Succ;
-					}
-					
-					// remove drive
-					
-					if( remdev != NULL )
-					{
-						if( remdev->f_Operations <= 0 )
-						{
-							DEBUG("[UserRemDeviceByName] Remove device from list\n");
-			
-							if( ug->ug_MountedDevs == remdev )		// checking if its our first entry
-							{
-								File *next = (File*)remdev->node.mln_Succ;
-								ug->ug_MountedDevs = (File *)next;
-								if( next != NULL )
-								{
-									next->node.mln_Pred = NULL;
-								}
-							}
-							else
-							{
-								File *next = (File *)remdev->node.mln_Succ;
-								//next->node.mln_Pred = (struct MinNode *)prev;
-								if( lastone != NULL )
-								{
-									lastone->node.mln_Succ = (struct MinNode *)next;
-								}
-							}
-						}
-						else
-						{
-							//*error = FSys_Error_OpsInProgress;
-							//return remdev;
-						}
-					}
-					
-					ug = (UserGroup *)ug->node.mln_Succ;
-				}
+				remdev = UGMRemoveDrive( l->sl_UGM, name );
 
 				return FSys_Error_OpsInProgress;
 			}
@@ -2330,30 +2291,37 @@ File *GetRootDeviceByName( User *usr, char *devname )
 	if( actDev == NULL )
 	{
 		int i;
-		for( i=0 ; i < usr->u_GroupsNr ; i++ )
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		//for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
-			lDev = usr->u_Groups[ i ]->ug_MountedDevs;
-			while( lDev != NULL )
+			//if( usr->u_Groups[ i ] != NULL )
+			if( ugl->ugl_Group != NULL )
 			{
-				if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
+				lDev = ugl->ugl_Group->ug_MountedDevs;
+				//lDev = usr->u_Groups[ i ]->ug_MountedDevs;
+				while( lDev != NULL )
 				{
-					if( lDev->f_SharedFile == NULL )
+					if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
 					{
-						actDev = lDev;
+						if( lDev->f_SharedFile == NULL )
+						{
+							actDev = lDev;
+						}
+						else
+						{
+							actDev = lDev->f_SharedFile;
+						}
+						break;
 					}
-					else
-					{
-						actDev = lDev->f_SharedFile;
-					}
+					lDev = (File *)lDev->node.mln_Succ;
+				}
+				if( actDev != NULL )
+				{
 					break;
 				}
-				lDev = (File *)lDev->node.mln_Succ;
-			}
-			if( actDev != NULL )
-			{
-				break;
-			}
-			
+			} // usr->u_Groups[ i ] != NULL
+			ugl = (UserGroupLink *)ugl->node.mln_Succ;
 		}
 	}
 	

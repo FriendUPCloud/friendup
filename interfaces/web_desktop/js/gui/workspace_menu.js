@@ -31,6 +31,7 @@ var WorkspaceMenu =
 		if( ge( 'WorkspaceMenu' ) )
 		{
 			var m = ge( 'WorkspaceMenu' );
+			m.classList.add( 'SmoothScrolling' );
 			m.parentNode.removeChild( m );
 			currentScreen.appendChild( m );
 			wm = m;
@@ -40,6 +41,7 @@ var WorkspaceMenu =
 		{
 			var d = document.createElement ( 'div' );
 			d.id = 'WorkspaceMenu';
+			d.classList.add( 'SmoothScrolling' );
 			
 			// Set up events on workspace menu
 			
@@ -61,7 +63,9 @@ var WorkspaceMenu =
 				{
 					var m = ge( 'WorkspaceMenu' );
 					if( m && m.classList )
+					{
 						m.classList.remove( 'Hover' );
+					}
 				} );
 			}
 			d.onmousemove = function()
@@ -102,10 +106,42 @@ var WorkspaceMenu =
 				if( this.classList.contains( 'Open' ) )
 				{
 					this.classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
+					
+					// Close sub menus
+					var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+					for( var z = 0; z < eles.length; z++ )
+					{
+						if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+							eles[z].classList.remove( 'Open' );
+					}
+					
+					// Remove back
+					var eles = t.getElementsByClassName( 'MenuBack' );
+					if( eles.length )
+					{
+						for( var a = 0; a < eles.length; a++ )
+							eles[a].parentNode.removeChild( eles[a] );
+					}
+					
+					return cancelBubble( e );
 				}
 				else
 				{
+					var ts = this;
+					this.style.willChange = 'content transform';
+					setTimeout( function()
+					{
+						ts.style.willChange = 'auto';
+					}, 300 );
+					
 					this.classList.add( 'Open' );
+					document.body.classList.add( 'WorkspaceMenuOpen' );
+					
+					// Toggle docks and stuff
+					if( Workspace.mainDock )
+						Workspace.mainDock.closeDesklet();
+					Friend.GUI.reorganizeResponsiveMinimized();
 				}
 			}
 		}
@@ -224,6 +260,12 @@ var WorkspaceMenu =
 	},
 	close: function( e )
 	{
+		if( WorkspaceMenu.back )
+		{
+			WorkspaceMenu.back.parentNode.removeNode( WorkspaceMenu.back );
+			WorkspaceMenu.back = null;
+		}
+		
 		var m = ge( 'WorkspaceMenu' );
 		if( m )
 		{
@@ -233,6 +275,9 @@ var WorkspaceMenu =
 			{
 				divs[a].isActivated = null;
 				divs[a].classList.remove( 'Open' );
+				m.classList.remove( 'Open' );
+				if( e )
+					cancelBubble( e );
 			}
 			for( var a = 0; a < lis.length; a++ )
 			{
@@ -243,6 +288,7 @@ var WorkspaceMenu =
 				}
 			}
 			m.isActivated = false;
+			m.classList.remove( 'Open' );
 		}
 		if( ge( 'MobileMenu' ) ) ge( 'MobileMenu' ).classList.remove( 'Visible' );
 		
@@ -267,7 +313,7 @@ var WorkspaceMenu =
 		if( m )
 		{
 			var t = e ? ( e.target ? e.target : e.srcElement ) : false;
-			if( t && t.getAttribute ( 'onclick' ) ) t.onclick ();
+			if( t && t.getAttribute && t.getAttribute( 'onclick' ) ) t.onclick ();
 			// Remove open menus
 			var divs = m.getElementsByTagName( 'div' );
 			var lis = m.getElementsByTagName( 'li' );
@@ -276,6 +322,7 @@ var WorkspaceMenu =
 			m.style.display = 'none';
 			m.classList.remove( 'Visible' );
 			m.isActivated = false;
+			cancelBubble( e );
 		}
 		if( ge( 'MobileMenu' ) ) ge( 'MobileMenu' ).classList.remove( 'Visible' );
 	
@@ -295,8 +342,13 @@ var WorkspaceMenu =
 		
 		// Add to body so we can style whether we have a menu or not
 		if( !menuItems || !menuItems.length )
+		{
 			document.body.classList.remove( 'HasMenu' );
-		else document.body.classList.add( 'HasMenu' );
+		}
+		else 
+		{
+			document.body.classList.add( 'HasMenu' );
+		}
 		
 		// We can't do this while showing!
 		if( ( window.isMobile || IsSharedApp() ) && ge( 'MobileMenu' ) && ge( 'MobileMenu' ).classList.contains( 'Visible' ) )
@@ -328,6 +380,24 @@ var WorkspaceMenu =
 		// This need to be able to stringify to validate menu items
 		if( depth == 0 )
 		{
+			if( !menuItems.length && isMobile )
+			{
+				// Add option to quit application
+				if( typeof( appId ) == 'undefined' )
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_close' ),
+						command: 'close'
+					} );
+				}
+				else
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_quit' ),
+						command: 'quit'
+					} );
+				}
+			}
 			var test = JSON.stringify( menuItems );
 			if( Friend.currentMenuItems == test )
 			{
@@ -337,6 +407,55 @@ var WorkspaceMenu =
 			{
 				Friend.currentMenuItems = test;
 				menudiv.innerHTML = '';
+			}
+		}
+		
+		if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
+		{
+			var found = false;
+			for( var z = 0; z < menuItems.length; z++ )
+			{
+				if( menuItems[z].command == 'quit' )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{
+				// Clear quit for this - and add back buttons
+				function clearQuit( men )
+				{
+					var out = [];
+					for( var a = 0; a < men.length; a++ )
+					{
+						if( men[a].command && men[a].command == 'quit' )
+							continue;
+						if( men[a].items )
+						{
+							men[a].items = clearQuit( men[a].items );
+						}
+						out.push( men[a] );
+					}
+					return out;
+				}
+				menuItems = clearQuit( menuItems );
+				
+				// Add option to quit application
+				if( currentMovable && currentMovable.content.directoryview )
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_close' ),
+						command: 'close'
+					} );
+				}
+				else
+				{
+					menuItems.push( {
+						name: i18n( 'i18n_quit' ),
+						command: 'quit'
+					} );
+				}
 			}
 		}
 		
@@ -357,26 +476,54 @@ var WorkspaceMenu =
 					n.setAttribute( 'icon', menuItems[i].icon );
 				}
 				d = n;
-			}
-			var ul = document.createElement ( 'ul' );
-			ul.onscroll = function( e )
-			{
-				if( WorkspaceMenu.scrollTim )
+				if( menuItems[ i ].command == 'close' )
 				{
-					clearTimeout( WorkspaceMenu.scrollTim );
+					n.onclick = function()
+					{
+						currentMovable.windowObject.close();
+						Workspace.exitMobileMenu();
+					}
 				}
-				WorkspaceMenu.scrolling = e;
-				WorkspaceMenu.scrollTim = setTimeout( function()
+				else if( menuItems[ i ].command == 'quit' )
 				{
-					WorkspaceMenu.scrollTim = false;
-				}, 250 );
-				return cancelBubble( e );
+					n.appid = appid;
+					n.onclick = function()
+					{
+						if( currentMovable.windowObject.applicationId )
+						{
+							KillApplicationById( currentMovable.windowObject.applicationId );
+						}
+						else
+						{
+							currentMovable.windowObject.close();
+						}
+						Workspace.exitMobileMenu();
+					}
+					continue;
+				}
 			}
-			var depth2 = depth + 1;
-		
+			
 			// Object members
 			if( menuItems[i].items )
 			{
+				var ul = document.createElement ( 'ul' );
+				ul.classList.add( 'SmoothScrolling' );
+				ul.onscroll = function( e )
+				{
+					if( WorkspaceMenu.scrollTim )
+					{
+						clearTimeout( WorkspaceMenu.scrollTim );
+					}
+					WorkspaceMenu.scrolling = e;
+					WorkspaceMenu.scrollTim = setTimeout( function()
+					{
+						WorkspaceMenu.scrollTim = false;
+					}, 250 );
+					return cancelBubble( e );
+				}
+				var depth2 = depth + 1;
+		
+			
 				for ( var j in menuItems[i].items )
 				{
 					if( menuItems[i].items[j] == false ) continue;
@@ -484,13 +631,16 @@ var WorkspaceMenu =
 					}
 					ul.appendChild ( li );
 				}
+				d.classList.add( 'HasSubMenu' );
+				d.appendChild( ul );
 			}
 			// Static members
 			else if ( menuItems[i].itemsHTML )
 			{
 				ul.innerHTML = menuItems[i].itemsHTML;
+				d.classList.add( 'HasSubMenu' );
+				d.appendChild( ul );
 			}
-			d.appendChild( ul );
 		}
 		if( ge( 'MobileMenu' ) )
 		{
@@ -525,39 +675,11 @@ var WorkspaceMenu =
 		var menus = wm.getElementsByTagName( 'div' );
 		for ( var a = 0; a < menus.length; a++ )
 		{
-			if( menus[a].className != 'Menu' )
+			if( !menus[a].classList.contains( 'Menu' ) )
 				continue;
 			// For mobile, create a close button
 
-			// Shared apps w/o desktop or mobile
-			if( isMobile || IsSharedApp() )
-			{
-				var ul = menus[a].getElementsByTagName( 'ul' )[0];
-				if( ul && !ul.closeButton )
-				{			
-					var h = document.createElement( 'li' );
-					h.className = 'Heading';
-					h.innerHTML = menus[a].getAttribute( 'name' ) ? menus[a].getAttribute( 'name' ) : menus[a].innerText;
-					h.ontouchend = function( e )
-					{
-						WorkspaceMenu.close();
-						return cancelBubble( e );
-					}
-					ul.insertBefore( h, ul.firstChild );
-				
-					var d = document.createElement( 'li' );
-					d.className = 'CloseButton Close IconMedium fa-close';
-					d.innerHTML = i18n( 'i18n_close' );
-					d.closer = menus[a];
-					d.ontouchend = function( e )
-					{
-						WorkspaceMenu.close();
-						return cancelBubble( e );
-					}
-					ul.insertBefore( d, ul.firstChild );
-					ul.closeButton = d;
-				}
-			}
+			
 			
 			// Normal operation (tablet and desktop)
 			menus[a].menus = menus;
@@ -602,10 +724,38 @@ var WorkspaceMenu =
 					// Ah, we found the menu to open!
 					if ( this.menus[c] == this ) 
 					{
+						// Add back key
+						if( isMobile )
+						{
+							if( !WorkspaceMenu.back )
+							{
+								var b = document.createElement( 'div' );
+								b.className = 'MenuBack';
+								b.target = this;
+								b.onclick = function( e )
+								{
+									this.target.classList.remove( 'Open' );
+									if( this.parentNode )
+										this.parentNode.removeChild( this );
+									return cancelBubble( e );
+								}
+								ge( 'WorkspaceMenu' ).appendChild( b );
+							}
+						}
+						var ts = this;
+						this.style.willChange = 'content transform';
+						setTimeout( function()
+						{
+							ts.style.willChange = 'auto';
+						}, 300 );
+						
 						this.classList.add( 'Open' );
 					}
 					// This is a menu to close..
-					else this.menus[c].classList.remove( 'Open' );
+					else
+					{
+						this.menus[c].classList.remove( 'Open' );
+					}
 				}
 				return cancelBubble( e );
 			}
@@ -625,12 +775,20 @@ var WorkspaceMenu =
 		for ( var a = 0; a < lis.length; a++ )
 		{
 			lis[a].items = lis;
-			lis[a].onmouseover = function ()
+			lis[a].onmouseover = function ( e )
 			{	
 				// Activate menu
 				WorkspaceMenu.activateMenu( wm );
 				
 				// Open menu
+				
+				var ts = this;
+				this.style.willChange = 'content transform';
+				setTimeout( function()
+				{
+					ts.style.willChange = 'auto';
+				}, 300 );
+				
 				this.classList.add( 'Open' );
 				var sublis = this.getElementsByTagName( 'li' );
 				
@@ -650,6 +808,7 @@ var WorkspaceMenu =
 					if( this.items[a] != this )
 					{
 						this.items[a].classList.remove( 'Open' );
+						return cancelBubble( e );
 					}
 				}
 				
@@ -661,6 +820,10 @@ var WorkspaceMenu =
 					if ( d.nodeName == 'LI' )
 						d.classList.add( 'Open' );
 				}
+			}
+			lis[a].onmouseout = function()
+			{
+				//this.classList.remove( 'Open' );
 			}
 			if( mode == 'onmousedown' )
 			{

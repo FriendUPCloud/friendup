@@ -17,7 +17,7 @@
 
 #include "file_permissions.h"
 #include <system/user/user.h>
-#include <system/user/user_group.h>
+#include <system/usergroup/user_group.h>
 
 /**
  * Function creates FilePermission structure

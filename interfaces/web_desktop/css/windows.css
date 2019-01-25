@@ -9,6 +9,8 @@
 	height: 0%;
 	transform: rotatez(0deg);
 	pointer-events: none;
+	transition: opacity 0.2s;
+	opacity: 1;
 }
 
 .View
@@ -38,6 +40,140 @@
 	
 	pointer-events: all;
 }
+
+/* Disabled for default theme */
+.ViewContainer > .ViewIcon
+{
+	display: none;
+}
+
+/* Special case for mobile */
+[mobile] .View.IconWindow .MobileFileBrowser
+{
+	position: absolute;
+	z-index: 11;
+	height: calc(100% - 40px);
+	top: 40px;
+}
+
+[mobile] .View .DirectoryToolbar button
+{
+	opacity: 1;
+	transition: opacity 0.25s;
+}
+
+[mobile] .View.Mountlist .DirectoryToolbar button
+{
+	opacity: 0;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser
+{
+	padding: 10px;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser,
+[mobile] .View .FileDialog .FileBrowser
+{
+	font-size: 1.1em;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem,
+[mobile] .View .FileDialog .FileBrowser .DiskItem
+{
+	padding: 0 0 10px 0;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	line-height: 1.6em;
+}
+
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem .fa-remove
+{
+	display: none;
+}
+
+html body[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
+html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
+{
+	width: 24px;
+	height: 24px;
+	margin-right: 10px;
+}
+
+.View > .ImageViewerToolbar
+{
+	overflow: hidden;
+	position: absolute;
+	bottom: 20px;
+	left: 10%;
+	width: 80%;
+	height: 40px;
+	border-radius: 20px;
+	background: rgba(0,0,0,0.5);
+	text-align: center;
+	z-index: 100;
+}
+
+.View > .Content > .ImageViewerContent
+{
+	overflow: hidden;
+}
+
+.View > .Content > .ImageViewerContent > img
+{
+	position: absolute;
+	transform: rotateZ(0deg);
+	transition: top,left,width,height 0.25s,0.25s,0.25s,0.25s;
+	z-index: 99;
+}
+
+@media (max-width: 380px)
+{
+	.View > .ImageViewerToolbar
+	{
+		left: calc(50% - 200px);
+		width: 400px;
+	}
+	.View > .ImageViewerToolbar
+	{
+		width: calc(100% - 40px);
+		left: 20px;
+	}
+}
+
+.View > .ImageViewerToolbar > div
+{
+	display: inline-block;
+	width: 40px;
+	height: 30px;
+	margin: 5px 15px 0 0;
+	border-radius: 5px;
+	line-height: 30px;
+	background: transparent;
+	transition: background 0.25s;
+}
+
+body:not([mobile]) .View > .ImageViewerToolbar > div:hover
+{
+	background: rgba(0,0,0,0.5);
+}
+
+.View > .ImageViewerToolbar > div > span
+{
+	display: block;
+	margin: auto;
+}
+
+
+.View > .ImageViewerToolbar > div:last-child
+{
+	margin: 5px 0 0 0;
+}
+
 
 /* Snapping */
 
@@ -159,27 +295,58 @@ html .View[viewsnap] .Title > div > div
 
 /* Done snapping */
 
+/* Views */
+
+#Screens .View
+{
+	position: absolute;
+	transition: opacity 0.2s;
+	opacity: 1;
+}
+
+#Screens .View[moving]
+{
+	transition: none;
+}
+
+body:not([mobile]) #Screens .View:not([moving]):not(.Opening):not(.Opened)
+{
+	transition: opacity 0.25s;
+}
+
+#Screens .View.Opening
+{
+	opacity: 0;
+}
+
+#Screens .View > .Content > iframe
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	margin: 0;
+	outline: none;
+	transition: opacity 0.2s ease-in;
+	opacity: 1;
+}
+
+#Screens .View > .Content > iframe.Loading
+{
+	opacity: 0;
+}
+
 
 .View.Virtual
 {
 	display: none;
 }
 
-[mobile=mobile] #Screens .View.Active[maximized=true].Opened
+.View.Opening
 {
-	transition: transform 0.25s !important;
-}
-[mobile=mobile] #Screens .View.Active[maximized=true].Opening
-{
-	transform: translate3d(100%,0,0) !important;
-}
-[mobile=mobile] #Screens .View.Active[maximized=true].Opened
-{
-	transform: translate3d(0,0,0) !important;
-}
-[mobile=mobile] #Screens .View:not(.Active)
-{
-	max-height: 35px;
+	will-change: transform, content;
 }
 
 /* View groups */
@@ -277,7 +444,7 @@ html .View[viewsnap] .Title > div > div
 /* Always on top */
 .View[sticky=sticky], body[mobile=mobile] #Screens .View.Active[maximized=true]
 {
-	z-index: 2147483647 !important;
+	z-index: 2147483646 !important;
 }
 
 /* Don't animate moving of windows! */
@@ -286,6 +453,7 @@ html .View[viewsnap] .Title > div > div
 	transition: none;
 	-moz-transition: none;
 	-webkit-transition: none;
+	will-change: transform, content;
 }
 
 /* Don't animate but the opacity when fading in a window */
@@ -832,6 +1000,43 @@ html .Screen > .TitleBar > .Left .Offline
 	box-shadow: inset 0px 0px 30px 1px rgba(0,0,0,0.9);
 }
 
+/* File dialogs ------------------------------------------------------------- */
+
+.FileDialog.Toolbarbox
+{
+	height: 26px;
+}
+
+[mobile] .FileDialog.Toolbarbox
+{
+	height: 40px;
+}
+
+[mobile] .FileDialog.Sidebar
+{
+	top: 26px; 
+	height: calc(100% - 26px);
+}
+
+[mobile] .FileDialog.Sidebar
+{
+	top: 40px; 
+	height: calc(100% - 40px);
+}
+
+.FileDialog.List-view
+{
+	top: 26px; 
+	height: calc(100% - 26px);
+}
+
+[mobile] .FileDialog.List-view
+{
+	top: 40px; 
+	height: calc(100% - 40px);
+}
+
+
 /* Friend graphics elements ------------------------------------------------- */
 
 .FriendGraphic
@@ -866,10 +1071,12 @@ body[mobile=mobile] > .MobileMenu
 {
 	display: block;
 	position: fixed;
-    top: 100%;
+    top: 0;
     left: 0;
     width: 100%;
     bottom: 0;
+    transform: translateY(100%);
+    transition: transform 0.25s;
 }
 
 body[mobile=mobile] > .MobileMenu.Visible
@@ -882,7 +1089,7 @@ body[mobile=mobile] > .MobileMenu.Visible
     bottom: 0;
     background: rgba(255,255,255,0.9);
     padding: 20px;
-    top: 50px;
+    transform: translateY(50px);
 }
 
 body[mobile=mobile] > .MobileMenu > div
@@ -1014,7 +1221,7 @@ body #WorkspaceMenu .Open ul > li.CloseButton
 
 html body[mobile=mobile].ViewMaximized #WorkspaceMenu.Open
 {
-	z-index: 2147483647 !important;
+	z-index: 2147483646 !important;
 	overflow: visible !important;
 }
 

@@ -30,6 +30,9 @@
 #include <system/systembase.h>
 #include <arpa/inet.h>
 
+//test
+#undef __DEBUG
+
 extern SystemBase *SLIB;
 
 /**

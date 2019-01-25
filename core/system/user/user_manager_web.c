@@ -25,6 +25,9 @@
 #include <system/user/user_sessionmanager.h>
 #include <util/session_id.h>
 
+//test
+#undef __DEBUG
+
 /**
  * Http web call processor
  * Function which process all incoming Http requests
@@ -466,7 +469,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							HttpAddTextContent( response, buffer );
 						}
 						
-						UMAssignGroupToUserByStringDB( l->sl_UM, locusr, groups );
+						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, groups );
 						
 						UserDelete( locusr );
 					}
@@ -908,11 +911,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				{
 					DEBUG("[UMWebRequest] FC will do a change\n");
 					
-					generate_uuid( &( logusr->u_UUID ) );
+					GenerateUUID( &( logusr->u_UUID ) );
 					
 					UMUserUpdateDB( l->sl_UM, logusr );
 					
-					UMAssignGroupToUserByStringDB( l->sl_UM, logusr, groups );
+					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, groups );
 					
 					RefreshUserDrives( l, logusr, NULL );
 					
@@ -1068,6 +1071,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		if( usrname != NULL )
 		{
+			DEBUG(" username: %s\n", usrname );
 			char *temp = FCalloc( 2048, 1 );
 			int numberOfSessions = 0;
 			
@@ -1075,7 +1079,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				while( logusr != NULL )
 				{
-					if( strcmp( logusr->u_Name, usrname ) == 0 )
+					DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
+					if( logusr->u_Name != NULL && strcmp( logusr->u_Name, usrname ) == 0 )
 					{
 						BufString *bs = BufStringNew();
 						

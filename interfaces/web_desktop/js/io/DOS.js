@@ -60,7 +60,8 @@ Friend.DOS.getDisks = function( options, callback, extra )
 		( 
 			{
 				Title: disk.Title,
-				Volume: disk.Volume
+				Volume: disk.Volume,
+				Driver: disk.Driver
 			} 
 		);
 	}
@@ -436,9 +437,12 @@ Friend.DOS.loadFile = function( path, options, callback, extra )
  */
 Friend.DOS.getDriveInfo = function( path, options, callback, extra )
 {
-	if ( path.substring( path.length - 1 ) == ':' ) 
-		path = path.substring( 0, path.length - 1 )
-	var icon;
+	// Just a name? Must be a drive.. Add the colon..
+	if( path.indexOf( ':' ) < 0 && path.indexOf( '/' ) < 0 )
+	{
+		path += ':';
+	}
+	var icon = false;
 	for( var a = 0; a < Workspace.icons.length; a++ )
 	{
 		if( Workspace.icons[a].Volume == path )
@@ -446,6 +450,11 @@ Friend.DOS.getDriveInfo = function( path, options, callback, extra )
 			icon = Workspace.icons[ a ];
 			break;
 		}
+	}
+	
+	if( callback )
+	{
+		callback( icon ? icon : Friend.ERROR );
 	}
 	return ( icon ? icon : Friend.ERROR );
 };

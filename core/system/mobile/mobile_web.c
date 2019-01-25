@@ -24,11 +24,20 @@
 #include <system/systembase.h>
 #include <system/user/user_mobile_app.h>
 #include <hardware/network.h>
+#include <mobile_app/mobile_app.h>
+#include <system/notification/notification_manager.h>
 
-//
-//
-//
-
+/**
+ * Http web call processor
+ * Function which process all incoming Http requests
+ *
+ * @param m pointer to SystemBase
+ * @param urlpath pointer to table with path entries
+ * @param request http request
+ * @param loggedSession pointer to UserSession which called this function
+ * @param result pointer to result value
+ * @return response as Http structure, otherwise NULL
+ */
 Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result )
 {
 	Http *response = NULL;
@@ -39,7 +48,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -134,6 +143,15 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				apptoken = UrlDecodeToMem( (char *)el->data );
+				unsigned int z;
+				for( z = 0 ; z < strlen( apptoken ) ; z++ )
+				{
+					if( apptoken[ z ] == ' ' )
+					{
+						apptoken[ z ] = 0;
+						break;
+					}
+				}
 			}
 			
 			el = HttpGetPOSTParameter( request, "appversion" );
@@ -166,7 +184,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					// if entry with token already exist there is no need to create new one
 					
 					char query[ 512 ];
-					snprintf( query, sizeof(query), "SELECT AppToken from `FUserMobileApp` where AppToken='%s'", apptoken );
+					snprintf( query, sizeof(query), "SELECT AppToken from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
 					
 					void *res = sqllib->Query( sqllib, query );
 				
@@ -643,7 +661,78 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		}
 		*result = 200;
 	}
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/mobile/updatenotification</H2>Update Mobile Notification
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param notifid - (required) mobile request ID
+	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READED, NOTIFY_ACTION_TIMEOUT )
+	* @return { update: sucess, result: <ID> } when success, otherwise error with code
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "updatenotification" ) == 0 )
+	{
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HashmapElement *el = NULL;
+		FULONG notifid = 0;
+		int action = -1;
+		
+		el = HttpGetPOSTParameter( request, "notifid" );
+		if( el != NULL )
+		{
+			char *next;
+			notifid = strtol( el->data, &next, 0 );
+		}
+		el = HttpGetPOSTParameter( request, "action" );
+		if( el != NULL )
+		{
+			action = atoi( (char *)el->data );
+		}
+		
+		DEBUG("Update notification. Action %d notifsid %lu\n", action, notifid );
+		
+		if( action > 0 && notifid > 0 )	// register is not supported
+		{
+			char tmp[ 512 ];
+			
+			Notification *not = NotificationManagerRemoveNotification( l->sl_NotificationManager , notifid );
+			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, notifid, action );
+			Log( FLOG_INFO, "[Update notification] notifID: %lu action %d uname: %s\n", notifid, action, loggedSession->us_User->u_Name );
+			if( not != NULL )
+			{
+				NotificationDelete( not );
+			}
+			
+			if( err == 0 )
+			{
+				snprintf( tmp, sizeof(tmp), "{ \"update\": \"sucess\", \"result\":%d }", err );
+			}
+			else
+			{
+				snprintf( tmp, sizeof(tmp), "{ \"update\": \"fail\", \"result\":%d }", err );
+			}
+			
+			HttpAddTextContent( response, tmp );
+		}
+		else
+		{
+			char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "mobilereqid, action" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
+		}
+	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**

@@ -184,84 +184,79 @@ void UserDelete( User *usr )
 	if( usr != NULL )
 	{
 		int i;
-		FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
-		
-		if( usr->u_Printers != NULL )
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
-			usr->u_Printers = PrinterDeleteAll( usr->u_Printers );
-		}
+			if( usr->u_Printers != NULL )
+			{
+				usr->u_Printers = PrinterDeleteAll( usr->u_Printers );
+			}
 		
-		if( usr->u_Applications != NULL )
-		{
-			UserAppDeleteAll( usr->u_Applications );
-			usr->u_Applications = NULL;
-		}
+			if( usr->u_Applications != NULL )
+			{
+				UserAppDeleteAll( usr->u_Applications );
+				usr->u_Applications = NULL;
+			}
 		
-		if( usr->u_FileCache != NULL )
-		{
-			CacheUserFilesDelete( usr->u_FileCache );
-			usr->u_FileCache = NULL;
-		}
+			if( usr->u_FileCache != NULL )
+			{
+				CacheUserFilesDelete( usr->u_FileCache );
+				usr->u_FileCache = NULL;
+			}
 		
-		// remove all sessions connected to user
+			// remove all sessions connected to user
 		
-		UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
-		UserSessListEntry *delus = us;
-		while( us != NULL )
-		{
-			delus = us;
-			us = (UserSessListEntry *)us->node.mln_Succ;
+			UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+			UserSessListEntry *delus = us;
+			while( us != NULL )
+			{
+				delus = us;
+				us = (UserSessListEntry *)us->node.mln_Succ;
 			
-			FFree( delus );
+				FFree( delus );
+			}
+			usr->u_SessionsList = NULL;
+		
+			// remove all remote users and drives
+		
+			RemoteUserDeleteAll( usr->u_RemoteUsers );
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		}
-		usr->u_SessionsList = NULL;
-		
-		// remove all remote users and drives
-		
-		RemoteUserDeleteAll( usr->u_RemoteUsers );
-		
-		for( i=0 ; i < usr->u_GroupsNr ; i++ )
+			
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		//for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
-			UserGroupRemoveUser( usr->u_Groups[ i ], usr );
+			UserGroupLink *n = (UserGroupLink *)ugl->node.mln_Succ;
+			//UserGroupRemoveUser( usr->u_Groups[i], usr );
+			UserGroupRemoveUser( ugl->ugl_Group, usr );
+			ugl = n;
 		}
 
+		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
+		/*
 		if( usr->u_Groups != NULL )
 		{
 			FFree( usr->u_Groups );
 			usr->u_Groups = NULL;
 		}
+		*/
 		
-		if( usr->u_Email )
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
-			FFree( usr->u_Email );
-		}
+			if( usr->u_Email ){ FFree( usr->u_Email );}
 		
-		if( usr->u_FullName )
-		{
-			FFree( usr->u_FullName );
-		}
+			if( usr->u_FullName ){ FFree( usr->u_FullName );}
 		
-		if( usr->u_Name )
-		{
-			FFree( usr->u_Name );
-		}
+			if( usr->u_Name ){ FFree( usr->u_Name );}
 		
-		if( usr->u_Password )
-		{
-			FFree( usr->u_Password );
-		}
+			if( usr->u_Password ){ FFree( usr->u_Password );}
 		
-		if( usr->u_MainSessionID )
-		{
-			FFree( usr->u_MainSessionID );
-		}
+			if( usr->u_MainSessionID ){ FFree( usr->u_MainSessionID );}
 		
-		if( usr->u_UUID )
-		{
-			FFree( usr->u_UUID );
-		}
+			if( usr->u_UUID ){ FFree( usr->u_UUID );}
 		
-		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+		}
 		
 		pthread_mutex_destroy( &(usr->u_Mutex) );
 		
@@ -471,3 +466,85 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 	return 0;
 }
 
+/**
+ * Delete UserGRoupLinkEntry
+ *
+ * @param ugl pointer to UserGroupLink
+ */
+
+void UserDeleteGroupLink( UserGroupLink *ugl )
+{
+	if( ugl != NULL )
+	{
+		FFree( ugl );
+	}
+}
+
+/**
+ * Delete All UserGRoupLinkEntry's
+ *
+ * @param ugl pointer to UserGroupLink root entry
+ */
+void UserDeleteGroupLinkAll( UserGroupLink *ugl )
+{
+	while( ugl != NULL )
+	{
+		UserGroupLink *re = ugl;
+		ugl = (UserGroupLink *)ugl->node.mln_Succ;
+		
+		UserDeleteGroupLink( re );
+	}
+}
+
+/**
+ * Remove user from all groups
+ * 
+ * @param u pointer to User
+ */
+
+void UserRemoveFromGroups( User *u )
+{
+	if( u == NULL )
+	{
+		return;
+	}
+	
+	DEBUG("[UserRemoveFromGroups] remove start\n");
+	// remove user from group first
+	UserGroupLink *ugl = u->u_UserGroupLinks;
+	while( ugl != NULL )
+	{
+		if( ugl->ugl_Group != NULL )
+		{
+			UserGroupAUser *au = ugl->ugl_Group->ug_UserList;
+			UserGroupAUser *auprev = ugl->ugl_Group->ug_UserList;
+	
+			while( au != NULL )
+			{
+				// user is added, no need to add it second time
+				if( au->ugau_User != NULL && u == au->ugau_User )
+				{
+					if( au == ugl->ugl_Group->ug_UserList )
+					{
+						ugl->ugl_Group->ug_UserList = (UserGroupAUser *) au->node.mln_Succ;
+					}
+					else
+					{
+						auprev->node.mln_Succ = au->node.mln_Succ;
+					}
+					FFree( au );
+					break;
+				}
+
+				auprev = au;
+				au = (UserGroupAUser *)au->node.mln_Succ;
+			}
+		}
+		ugl = (UserGroupLink *)ugl->node.mln_Succ;
+	}
+	
+	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
+	// remove all links to group
+	UserDeleteGroupLinkAll( u->u_UserGroupLinks );
+	DEBUG("[UserRemoveFromGroups] remove end\n");
+}

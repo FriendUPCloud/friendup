@@ -20,7 +20,8 @@ typedef enum {
 	MOBILE_APP_ERR_LOGIN_NO_PASSWORD = 5,
 	MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS = 6,
 	MOBILE_APP_ERR_NO_SESSION = 7,
-	MOBILE_APP_ERR_INTERNAL = 8,
+	MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION = 8,
+	MOBILE_APP_ERR_INTERNAL = 9,
 } mobile_app_error_t;
 
 typedef enum {
@@ -29,4 +30,4 @@ typedef enum {
 	MOBILE_APP_STATUS_RESUMED = 2,
 } mobile_app_status_t;
 
-int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+int WebsocketAppCallback(struct lws *wsi, int reason, void *user, void *in, size_t len);

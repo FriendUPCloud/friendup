@@ -53,9 +53,9 @@ Application.run = function( packet )
 	}
 	w.onClose = function()
 	{
-		this.preventClose();
 		function doQuit()
 		{
+			w.onClose = null;
 			Application.quit();
 		}
 		
@@ -65,6 +65,7 @@ Application.run = function( packet )
 		};
 		
 		w.sendMessage( msg );
+		return false;
 	}
 
 	// Load resources

@@ -1,6 +1,6 @@
 {
 	"type":    "NodeDrive",
 	"literal": "Node Based Filesystem",
-	"group":   "User",
+	"group":   "Admin",
 	"sharing": "1"
 }

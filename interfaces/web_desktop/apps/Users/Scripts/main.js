@@ -1387,7 +1387,7 @@ function AddWorkgroup()
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		var wg = '<option value="">none</option>';
+		var wg = '<option value="0">none</option>';
 		
 		try
 		{
@@ -1456,7 +1456,7 @@ function EditWorkgroup( id )
 		var mm = new Module( 'system' );
 		mm.onExecuted = function( ee, dd )
 		{
-			var wg = '<option value="">none</option>';
+			var wg = '<option value="0">none</option>';
 			
 			try
 			{
@@ -1518,7 +1518,7 @@ function saveWorkgroup( callback, tmp )
 {
 	var o = {
 		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
-		ParentID: ( ge( 'pWorkgroupParent' ).value ? ge( 'pWorkgroupParent' ).value : null ),
+		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
 		Name: ge( 'pWorkgroupName' ).value,
 		Setup: ( ge( 'pWorkgroupSetup' ) ? ge( 'pWorkgroupSetup' ).value : '' ),
 		Members: ge( 'pMembers' ).value

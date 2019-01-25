@@ -72,6 +72,8 @@ i18n_add_file_to_project            : Filen er ikke lagt til prosjektet. Ønsker
 i18n_add_to_project                 : Legg til
 i18n_could_not_add_file             : Kunne ikke tilføye til prosjektet.
 
+i18n_no_entries                     : Listen er tom.
+
 #macro menu
 i18n_macros                         : Makroer
 i18n_clear_macro                    : Tøm makroer
@@ -126,6 +128,8 @@ i18n_version                        : Versjon
 i18n_desc                           : Beskrivelse
 i18n_pick_screenshot                : Velg et skjermskudd å legge til
 i18n_cancel                         : Avbryt
+
+i18n_project_wizard                 : Lag et nytt prosjekt
 
 i18n_sure_remove                     : Er du sikker?
 i18n_sure_remove_desc                : Er du sikker på at du ønsker å fjerne dette skjermskuddet?
@@ -194,7 +198,15 @@ i18n_tree_engine_canvas              : Tree Engine Canvas
 i18n_tree_engine_3D                  : Tree Engine 3D
 i18n_start_editing                   : Start å redigere
 
+i18n_select_where_to_create_folder      : Velg stien der prosjektmappen skal lages
 
+# Project types
+i18n_game                               : Nytt spill
+i18n_game_desc                          : Lag ditt eget spillprosjekt.
+i18n_gui_application                    : Nytt grafisk program
+i18n_gui_application_desc               : Lag ditt eget program med grafisk brukergrensesnitt.
+i18n_shell_application                  : Nytt program for kommandolinje
+i18n_shell_application_desc             : Lag ditt eget program som kan kjøres i Friend DOS.
 
 
 

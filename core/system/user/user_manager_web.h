@@ -24,7 +24,7 @@
 #include <core/nodes.h>
 
 #include "user_session.h"
-#include "user_group.h"
+#include <system/usergroup/user_group.h>
 #include "user.h"
 #include "remote_user.h"
 

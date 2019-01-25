@@ -144,6 +144,8 @@ FriendCoreManager *FriendCoreManagerNew()
 				
 				fcm->fcm_FCPort= plib->ReadIntNCS( prop, "core:port", FRIEND_CORE_PORT );
 				fcm->fcm_WSPort = plib->ReadIntNCS( prop, "core:wsport", WEBSOCKET_PORT );
+				fcm->fcm_WSMobilePort = plib->ReadIntNCS( prop, "core:wsmobileport", WEBSOCKET_MOBILE_PORT );
+				fcm->fcm_WSNotificationPort = plib->ReadIntNCS( prop, "core:wsnotificationport", WEBSOCKET_NOTIFICATION_PORT );
 				fcm->fcm_ComPort = plib->ReadIntNCS( prop, "core:communicationPort", FRIEND_COMMUNICATION_PORT );
 				fcm->fcm_ComRemotePort = plib->ReadIntNCS( prop, "core:remotecommunicationport", FRIEND_COMMUNICATION_REMOTE_PORT );
 				
@@ -226,6 +228,8 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		Log(FLOG_INFO, "-----Communication SSL enabled: %d\n", fcm->fcm_SSLEnabledCommuncation );
 		Log(FLOG_INFO, "-----FCPort: %d\n", fcm->fcm_FCPort );
 		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
+		Log(FLOG_INFO, "-----WSMobilePort: %d\n", fcm->fcm_WSMobilePort );
+		Log(FLOG_INFO, "-----WSNotificationPort: %d\n", fcm->fcm_WSNotificationPort );
 		Log(FLOG_INFO, "-----CommPort: %d\n", fcm->fcm_ComPort );
 		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
 		Log(FLOG_INFO, "-----SSH_SERVER_PORT %s\n", SSH_SERVER_PORT );
@@ -266,9 +270,29 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		
 		if( fcm->fcm_DisableWS != TRUE )
 		{
-			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0 ) ) != NULL )
 			{
 				WebSocketStart( fcm->fcm_WebSocket );
+			}
+			else
+			{
+				Log( FLOG_FATAL, "Cannot launch websocket server\n");
+				return -1;
+			}
+			
+			if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1 ) ) != NULL )
+			{
+				WebSocketStart( fcm->fcm_WebSocketMobile );
+			}
+			else
+			{
+				Log( FLOG_FATAL, "Cannot launch websocket server\n");
+				return -1;
+			}
+			
+			if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, fcm->fcm_WSSSLEnabled, 2 ) ) != NULL )
+			{
+				WebSocketStart( fcm->fcm_WebSocketNotification );
 			}
 			else
 			{
@@ -331,10 +355,22 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		
 		DEBUG("[FriendCoreManager] Closing websockets\n");
 		
+		if( fcm->fcm_WebSocketNotification != NULL )
+		{
+			WebSocketDelete( fcm->fcm_WebSocketNotification );
+			fcm->fcm_WebSocketNotification = NULL;
+		}
+		
 		if( fcm->fcm_WebSocket != NULL )
 		{
 			WebSocketDelete( fcm->fcm_WebSocket );
 			fcm->fcm_WebSocket = NULL;
+		}
+		
+		if( fcm->fcm_WebSocketMobile != NULL )
+		{
+			WebSocketDelete( fcm->fcm_WebSocketMobile );
+			fcm->fcm_WebSocketMobile = NULL;
 		}
 		
 		DEBUG("[FriendCoreManager] Shutdown\n");

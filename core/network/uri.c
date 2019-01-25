@@ -366,6 +366,10 @@ Hashmap* UriParseQuery( char* query )
 	                                 '--------'
 	                   Parses this part -'
 	*/
+	if( query == NULL )
+	{
+		return NULL;
+	}
 	Hashmap* map = HashmapNew();
 	if( map == NULL )
 	{
@@ -413,9 +417,9 @@ Hashmap* UriParseQuery( char* query )
 			{
 				DEBUG("POSTJSON1 - %s -\n", c );
 			}
-			i++;
+			//i++;
 		}
-		
+		else
 		// getting json ( data inside braces [] )
 		if( query[i] == '[' )
 		{

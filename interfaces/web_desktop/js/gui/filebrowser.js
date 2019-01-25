@@ -24,7 +24,6 @@ Friend.FileBrowserEntry = function()
 {
 };
 
-
 /*
 	Filebrowser class - creates a recursive file browser!
 	
@@ -49,7 +48,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.dom.classList.add( 'FileBrowser' );
 	this.currentPath = 'Mountlist:';
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false };
+	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false };
 };
 Friend.FileBrowser.prototype.clear = function()
 {
@@ -94,6 +93,14 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 	}
 	return drop;
 };
+
+// Set a path
+Friend.FileBrowser.prototype.setPath = function( path, target, cbk )
+{
+	this.flags.path = target;
+	this.refresh( path, this.dom, cbk, 0 );
+}
+
 Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
@@ -117,16 +124,31 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		rootElement.appendChild( this.headerDisks );
 	}
 	
+	// What are we looking for at this level?
+	var targetPath = false;
+	if( this.flags.path )
+	{
+		var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
+		b.pop();
+		targetPath = '';
+		var pad = '';
+		for( var a = 0; a < depth; a++ )
+		{
+			targetPath += b[a] + ( a == 0 ? ':' : '/' );
+			pad += ' ';
+		}
+	}
+	
 	function createOnclickAction( ele, ppath, type, depth )
 	{
 		ele.onclick = function( e )
 		{
+			if( !ppath ) return;
 			if ( ppath.indexOf( ':' ) < 0 )
 				ppath += ':';
 
 			if( type == 'File' )
 			{
-				
 				var eles = self.dom.getElementsByTagName( 'div' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -157,6 +179,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			else
 			{
+				// Are we in a file dialog?
+				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
+				{
+					return self.callbacks.folderOpen( ppath );
+				}
+				// Normal operation
 				if( !this.classList.contains( 'Open' ) )
 				{
 					var subitems = ele.getElementsByClassName( 'SubItems' );
@@ -248,6 +276,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		}
 	}
 
+	// A click element for incoming path
+	var clickElement = null;
+
 	// Just get a list of disks
 	if( path == 'Mountlist:' )
 	{
@@ -277,20 +308,24 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				var eles = rootElement.childNodes;
 				var found = [];
 				var foundElements = [];
+				var foundStructures = [];
 				var removers = [];
 				for( var a = 0; a < eles.length; a++ )
 				{
 					var elFound = false;
 					for( var b = 0; b < msg.list.length; b++ )
 					{
+						if( msg.list[ b ].Volume == 'System:' ) continue;
+						
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
-							createOnclickAction( eles[a], msg.list[a].Volume, 'volume', depth + 1 );
+							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
 							// Don't add twice
 							if( !found.find( function( ele ){ ele == msg.list[b].Title } ) )
 							{
 								found.push( msg.list[b].Title );
 								foundElements.push( eles[a] );
+								foundStructures.push( msg.list[ b ] );
 							}
 							elFound = true;
 						}
@@ -326,12 +361,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}
 					
 					// Check if this item already exists
-					var foundItem = false;
+					var foundItem = foundStructure = false;
 					for( var b = 0; b < found.length; b++ )
 					{
 						if( found[b] == msg.list[a].Title || msg.list[a].Type == 'header' )
 						{
-							foundItem = foundElements[b];
+							foundItem = foundElements[ b ];
+							foundStructure = foundStructures[ b ];
 							break;
 						}
 					}
@@ -342,12 +378,48 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						d.id = 'diskitem_' + msg.list[a].Title;
 						d.path = msg.list[a].Volume;
 						var nm = document.createElement( 'div' );
-						nm.style.paddingLeft = ( depth * 8 ) + 'px';
+						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
 						nm.innerHTML = ' ' + msg.list[a].Title;
+						
+						// We have an incoming path
+						if( !clickElement && self.flags.path && targetPath == d.path )
+						{
+							clickElement = d;
+						}							
+						
+						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
+						{
+							var driver = msg.list[a].Driver;
+							
+							// Find correct image
+							var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
+							if( Friend.dosDrivers[ driver ] && Friend.dosDrivers[ driver ].iconLabel )
+								img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver ].iconLabel;
+							if( msg.list[a].Title == 'Home' )
+								img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+							else if( msg.list[a].Title == 'System' )
+								img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+							
+							var i = document.createElement( 'div' );
+							i.className = 'FileBrowserItemImage';
+							i.style.backgroundImage = 'url("' + img + '")';
+							nm.appendChild( i );
+							nm.classList.remove( 'IconSmall' );
+							nm.classList.remove( 'IconDisk' );
+						}
 						d.appendChild( nm );
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
+							// Set nice folder icon
+							nm.classList.remove( 'IconSmall' );
+							nm.classList.remove( 'IconDisk' );
+							var img = '/iconthemes/friendup15/DriveLabels/Bookmark.svg';
+							var i = document.createElement( 'div' );
+							i.className = 'FileBrowserItemImage';
+							i.style.backgroundImage = 'url("' + img + '")';
+							nm.appendChild( i );
+							
 							( function( ls ){
 								var ex = document.createElement( 'span' );
 								ex.className = 'FloatRight IconButton IconSmall fa-remove';
@@ -376,7 +448,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						s.className = 'SubItems';
 						d.appendChild( s );
 						rootElement.appendChild( d );
-						createOnclickAction( d, msg.list[a].Volume, 'volume', depth + 1 );
+						createOnclickAction( d, d.path, 'volume', depth + 1 );
 					}
 					// Existing items
 					else
@@ -404,8 +476,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						eles[a].classList.add( 'sw' + sw );
 					}
 				}
+				
+				// Click the click element for path
+				if( clickElement )
+				{
+					setTimeout( function()
+					{
+						clickElement.onclick();
+					}, 5 );
+				}
 			}
-			
 			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
@@ -506,7 +586,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			delete removers;
 			
-			//
+			// Precalc
+			var d13 = depth * 13;
 			for( var a = 0; a < msg.list.length; a++ )
 			{
 				var foundItem = false;
@@ -529,17 +610,24 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							continue;
 						}
 						var d = document.createElement( 'div' );
+						
 						d.className = msg.list[a].Type == 'Directory' ? 'FolderItem' : 'FileItem';
 						var ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						var icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
 						d.id = 'fileitem_' + msg.list[a].Filename.split( ' ' ).join( '' );
-						d.innerHTML = '<div style="padding-left: ' + ( depth * 13 ) + 'px" class="Name IconSmall ' + icon + '"> ' + msg.list[a].Filename + '</div><div class="SubItems"></div>';
+						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"> ' + msg.list[a].Filename + '</div><div class="SubItems"></div>';
 						rootElement.appendChild( d );
 						var fn = msg.list[a].Filename;
 						if( msg.list[a].Type == 'Directory' )
 							fn += '/';
 						d.path = path + fn;
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
+						
+						// We have an incoming path
+						if( !clickElement && self.flags.path && targetPath == d.path )
+						{
+							clickElement = d;
+						}
 					}
 				}
 				else if( foundItem && msg.list[a].Type == 'Directory' )
@@ -569,6 +657,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					eles[a].classList.remove( 'sw2' );
 					eles[a].classList.add( 'sw' + sw );
 				}
+			}
+			
+			// Click the click element for path
+			if( clickElement )
+			{
+				setTimeout( function()
+				{
+					clickElement.onclick();
+				}, 50 );
 			}
 		} );
 	}

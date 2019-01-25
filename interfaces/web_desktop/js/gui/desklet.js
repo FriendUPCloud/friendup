@@ -157,13 +157,16 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			var px = e.changedTouches[0].clientX;
 			var py = e.changedTouches[0].clientY;
 			
+			var disty = py - this.touchY;
+			
 			var dist = Math.sqrt( Math.pow( this.touchX - px, 2 ) + Math.pow( this.touchY - py, 2 ) );
-			if( dist > 40 || !this.classList.contains( 'Open' ) )
+			if( disty > 100 || !this.classList.contains( 'Open' ) )
 			{
 				this.clickFunc( e );
 			}
 		}, false );
 	}
+	
 	this.dom.onmouseup = function ( e )
 	{
 		if ( !e ) e = window.event;
@@ -216,6 +219,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		
 			this.mobileClicked = true;
 		
+			var menuTitle = document.createElement( 'div' );
+			menuTitle.className = 'AppsShowingTitle';
+			this.menuTitle = menuTitle;
+			menuTitle.innerHTML = i18n( 'i18n_your_apps' );
+			Workspace.screen.contentDiv.parentNode.appendChild( menuTitle );
+		
 			// determine y pos
 			this.dom.className = 'Desklet Open';
 			var d = this.dom;
@@ -224,8 +233,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				d.classList.add( 'Opened' );
 				self.opening = false;
 				self.open = true;
+				menuTitle.classList.add( 'Opened' );
 			}, 5 );
 			document.body.classList.add( 'AppsShowing' );
+			
 			if( Workspace.widget ) Workspace.widget.slideUp();
 			return cancelBubble( e );
 		}
@@ -245,6 +256,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				self.open = false;
 			}, 250 );
 			document.body.classList.remove( 'AppsShowing' );
+			if( this.menuTitle )
+			{
+				Workspace.screen.contentDiv.parentNode.removeChild( this.menuTitle );
+				this.menuTitle = null;
+			}
 			Workspace.redrawIcons();
 			return cancelBubble( e );
 		}
@@ -890,8 +906,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
 			
-				// If not a single instance app, execute
-				if( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
+				// If not a single instance app, execute (or mobile)
+				if( isMobile || ( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 ) )
 				{
 					ExecuteApplication( executable, args );
 				}
@@ -947,18 +963,68 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			else 
 			{
 				div[ evt ] = function( e )
-				{				
+				{			
 					if( window.isMobile && !this.touchTime )
 						return;
 					
 					var t = e.target ? e.target : e.srcElement;
-					if( t != div ) return;
+					if( t && t != div ) return;
 					if( window.isMobile && !dk.open ) return;
 					clickFunc( e );
 					if( div.helpBubble ) div.helpBubble.close();
 				}
 			}
 			
+			div.onmouseover = function( e )
+			{
+				if( this.clickDown )
+					this.clickDown = null;
+			}
+			
+			div.onmousedown = function( e )
+			{
+				if( mousePointer.candidate ) return;
+				if( e.button != 0 )
+					return;
+				// Add candidate and rules
+				var self = this;
+				var px = e.clientX;
+				var py = e.clientY;
+				mousePointer.candidate = {
+					condition: function( e )
+					{
+						var dx = windowMouseX;
+						var dy = windowMouseY;
+						var dfx = dx - px;
+						var dfy = dy - py;
+						var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
+						if( dist > 30 )
+						{
+							mousePointer.candidate = null;
+							self.removeChild( self.getElementsByTagName( 'span' )[0] );
+							self.ondrop = function( target )
+							{
+								if( target && target.classList )
+								{
+									if( target.classList.contains( 'ScreenContent' ) )
+									{
+										var m = new Module( 'dock' );
+										m.onExecuted = function()
+										{
+											Workspace.reloadDocks();
+										}
+										m.execute( 'removefromdock', { name: o.exe } );
+										return;
+									}
+								}
+								Workspace.reloadDocks();
+							}
+							mousePointer.pickup( self );
+						}
+					}
+				};
+			}
+
 			var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
 			
 			if( bubbletext )

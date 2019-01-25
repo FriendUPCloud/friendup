@@ -55,7 +55,7 @@ typedef struct FQueue
  *
  * @param qroot pointer to main FQueue structure
  */
-#define FQDeInitFree( qroot ) { FQEntry *q = (qroot)->fq_First; while( q != NULL ){ void *r = q; FFree( q->fq_Data ); q = (FQEntry *)q->node.mln_Succ; FFree( r ); } }
+#define FQDeInitFree( qroot ) { FQEntry *q = (qroot)->fq_First; while( q != NULL ){ void *r = q; FFree( q->fq_Data ); q = (FQEntry *)q->node.mln_Succ; FFree( r ); } (qroot)->fq_First = NULL; (qroot)->fq_Last = NULL; }
 
 /**
  * Push data into FQueue structure in FILO mode
@@ -71,7 +71,7 @@ typedef struct FQueue
  * @param qroot pointer to main FQueue structure
  * @param q poitner to data which will be placed in FriendQueue
  */
-#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } printf("Added: %d\n", q->fq_Size );
+#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 
 
 FQEntry *FQPop( FQueue *qroot );
 

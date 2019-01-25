@@ -108,9 +108,7 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 		array( 'Author', 'A simple word processor' ),
 		array( 'Wallpaper', 'Select wallpapers' ),
 		array( 'Astray', 'A labyrinth ball game in 3D' ),
-		array( 'Calculator', 'Do some math' ),
-		array( 'Panzers', 'Multiplayer tanks fun!' ),
-		array( 'Welcome', 'Useful Friend information' )
+		array( 'Calculator', 'Do some math' )
 		);
 		$i = 0;
 		foreach( $dockItems as $r )

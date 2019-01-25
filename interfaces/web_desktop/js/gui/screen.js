@@ -295,8 +295,11 @@ Screen = function ( flags, initObject )
 			( !t.id && t.parentNode.id == 'DoorsScreen' && t.classList && t.classList.contains( 'ScreenContent' ) )
 		)
 		{
-			_DeactivateWindows();
-			Workspace.toggleStartMenu( false );
+			if( !isMobile )
+			{
+				_DeactivateWindows();
+				Workspace.toggleStartMenu( false );
+			}
 		}
 	}
 	if( this.iframe )
@@ -481,7 +484,10 @@ Screen = function ( flags, initObject )
 		// We are registering a click inside
 		if( !( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) )
 		{	
-			_DeactivateWindows();
+			if( !isMobile )
+			{
+				_DeactivateWindows();
+			}
 			var tp = e.changedTouches[0];
 			if( !scrn.touch ) scrn.touch = {};
 			scrn.touch.moving = true;
@@ -506,7 +512,10 @@ Screen = function ( flags, initObject )
 			{
 				if( t.classList.contains( 'ScreenContent' ) )
 				{
-					_DeactivateWindows();
+					if( !isMobile )
+					{
+						_DeactivateWindows();
+					}
 					ExposeWindows();
 					ExposeScreens();
 				}
@@ -544,6 +553,34 @@ Screen = function ( flags, initObject )
 		{
 			scrn.touchCycled = true;
 			scrn.screenCycle();
+		}
+		else if( isMobile && diffx < -100 && !scrn.moving )
+		{
+			if( Friend.GUI.responsiveViewPage < Friend.GUI.responsiveViewPageCount )
+			{
+				scrn.moving = true;
+				setTimeout( function()
+				{
+					scrn.moving = false;
+				}, 500 );
+				Friend.GUI.responsiveViewPage++;
+				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
+				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+			}
+		}
+		else if( isMobile && diffx > 100 && !scrn.moving )
+		{
+			if( Friend.GUI.responsiveViewPage > 0 )
+			{
+				scrn.moving = true;
+				setTimeout( function()
+				{
+					scrn.moving = false;
+				}, 500 );
+				Friend.GUI.responsiveViewPage--;
+				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
+				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+			}
 		}
 		// Show the dock!
 		else if( diffy < 0 && parseInt( ct ) == 0 )
@@ -763,6 +800,7 @@ Screen = function ( flags, initObject )
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
 			msg.locale = Workspace.locale;
+			msg.dosDrivers = Friend.dosDrivers;
 			// Authid is important, should not be left out if it is available
 			if( !msg.authId )
 			{

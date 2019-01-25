@@ -898,6 +898,9 @@ Application.receiveMessage = function( msg )
 				Application.prwin.sendMessage( msg );
 			}
 			break;
+		case 'project_create':
+			createProject( msg );
+			break;
 		case 'project_package':
 			if( !this.projectFilename )
 			{
@@ -949,6 +952,9 @@ Application.receiveMessage = function( msg )
 				}
 			}
 			j.execute( 'installpackage', { filename: this.projectFilename } );
+			break;
+		case 'project_wizard':
+			projectWizard();
 			break;
 		case 'project_new':
 			this.projectFilename = false;
@@ -1297,7 +1303,7 @@ Application.setMenuItems = function( w )
 		items : [
 			{
 				name:    i18n( 'i18n_project_new' ),
-				command: 'project_new'
+				command: 'project_wizard'
 			},
 			{
 				name:    i18n( 'i18n_project_fromweb' ),
@@ -2119,4 +2125,41 @@ function bindHostEvents()
 }
 // Done Shared application sessions --------------------------------------------
 
+// Project wizard
 
+var projectWin = false;
+
+function projectWizard()
+{
+	if( projectWin )
+	{
+		return projectWin.activate();
+	}
+	projectWin = new View( {
+		title: i18n( 'i18n_project_wizard' ),
+		width: 600,
+		height: 600
+	} );
+	projectWin.onClose = function()
+	{
+		projectWin = null;
+	}
+	
+	var f = new File( 'Progdir:Templates/project_wizard.html' );
+	f.onLoad = function( data )
+	{
+		projectWin.setContent( data );
+	}
+	f.load();
+}
+
+// Creates the project based on data.type!
+function createProject( data )
+{
+	console.log( 'Creating project directory.' );
+	var dos = new Shell();
+	dos.execute( 'makedir ' + data.path + 'NewProject', function( e )
+	{
+		console.log( 'The project directory was made: ', e );
+	} );
+}

@@ -17,38 +17,43 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 /* Make movable box --------------------------------------------------------- */
 
-Friend    = window.Friend || {};
-Friend.io = Friend.io     || {};
-Friend.GUI = Friend.GUI   || {};
-
+Friend          = window.Friend || {};    // Friend main namespace
+Friend.io       = Friend.io     || {};    // Input/output namespace
+Friend.GUI      = Friend.GUI    || {};    // GUI namespace
+Friend.GUI.view = {};                     // View window namespace
 
 // Lets remember values
-var _windowStorage = [];
-var _viewHistory = []; // History of views that have been opened
-var _windowStorageLoaded = false;
-var movableViewIdSeed = 0;
+Friend.GUI.responsiveViewPage       = 0;  // Current view page mobile
+Friend.GUI.responsiveViewPageCount  = 0;  // View page count mobile
+Friend.GUI.view.windowStorage       = [];
+Friend.GUI.view.viewHistory         = []; // History of opened views
+Friend.GUI.view.windowStorageLoaded = false;
+Friend.GUI.view.movableViewIdSeed   = 0;
 
 var _viewType = 'iframe'; //window.friendBook ? 'webview' : 'iframe';
 
+// Get stored data by window id
 function GetWindowStorage( id )
 {
 	if( !id )
 	{
-		return _windowStorage;
+		return Friend.GUI.view.windowStorage;
 	}
 	else
 	{
-		if( typeof( _windowStorage[id] ) != 'undefined' )
-			return _windowStorage[id];
+		if( typeof( Friend.GUI.view.windowStorage[ id ] ) != 'undefined' )
+			return Friend.GUI.view.windowStorage[ id ];
 	}
 	return {};
 }
 
+// Set window data by id
 function SetWindowStorage( id, data )
 {
-	_windowStorage[id] = data;
+	Friend.GUI.view.windowStorage[ id ] = data;
 }
 
+// Get a window by id
 function GetWindowById( id )
 {
 	for( var a in movableWindows )
@@ -59,10 +64,11 @@ function GetWindowById( id )
 	return false;
 }
 
+// Save window storage to Friend Core
 function SaveWindowStorage( callback )
 {
 	var m = new Module( 'system' );
-	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( _windowStorage ) ) } );
+	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( Friend.GUI.view.windowStorage ) ) } );
 	if( callback )
 	{
 		setTimeout( function()
@@ -72,9 +78,10 @@ function SaveWindowStorage( callback )
 	}
 }
 
+// Load window storage from Friend Core
 function LoadWindowStorage()
 {
-	if( !_windowStorageLoaded )
+	if( !Friend.GUI.view.windowStorageLoaded )
 	{
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
@@ -84,16 +91,16 @@ function LoadWindowStorage()
 				try
 				{
 					var dob = JSON.parse( d );
-					_windowStorage = dob.windowstorage ? dob.windowstorage : [];
-					if( typeof( _windowStorage ) != 'object' )
-						_windowStorage = [];
+					Friend.GUI.view.windowStorage = dob.windowstorage ? dob.windowstorage : [];
+					if( typeof( Friend.GUI.view.windowStorage ) != 'object' )
+						Friend.GUI.view.windowStorage = [];
 					else
 					{
-						for( var a in _windowStorage )
+						for( var a in Friend.GUI.view.windowStorage )
 						{
-							if( typeof( _windowStorage[a] ) == 'string' )
+							if( typeof( Friend.GUI.view.windowStorage[a] ) == 'string' )
 							{
-								_windowStorage[a] = {};
+								Friend.GUI.view.windowStorage[a] = {};
 							}
 						}
 					}
@@ -104,7 +111,7 @@ function LoadWindowStorage()
 			}
 		}
 		m.execute( 'getsetting', { setting: 'windowstorage' } );
-		_windowStorageLoaded = true;
+		Friend.GUI.view.windowStorageLoaded = true;
 	}
 }
 
@@ -138,6 +145,8 @@ function FindWindow( titleStr )
 // Return object with remembered window dimensions
 function RememberWindowDimensions( div )
 {
+	if( isMobile ) return;
+	
 	var wp = GetWindowStorage( div.uniqueId );
 	if ( wp )
 	{
@@ -152,7 +161,7 @@ function SetWindowContent( win, data )
 {
 	if( !win ) return;
 	if( win.content ) win = win.content;
-	win.innerHTML = Friend.view.cleanHTMLData( data );
+	win.innerHTML = Friend.GUI.view.cleanHTMLData( data );
 }
 
 // Refresh the window and add/remove features
@@ -237,7 +246,7 @@ function SetWindowTitle( div, titleStr )
 	}
 }
 
-// Do it!
+// Update window content size
 function UpdateWindowContentSize( div )
 {
 	// set the content width
@@ -338,7 +347,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	var cnt  = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
-		if( !cnt && divs[a].className == 'Content' )
+		if( !cnt && divs[a].classList && divs[a].classList.contains( 'Content' ) )
 		{
 			cnt = divs[a];
 			break;
@@ -535,12 +544,15 @@ function CascadeWindowPosition( obj )
 {
 	if( !Workspace.screen ) return;
 	
-	obj.dom.style.top = _cascadeValue + obj.y + 'px';
-	obj.dom.style.left = _cascadeValue + obj.x + 'px';
+	if( !isMobile )
+	{
+		obj.dom.style.top = _cascadeValue + obj.y + 'px';
+		obj.dom.style.left = _cascadeValue + obj.x + 'px';
 	
-	_cascadeValue += 20;
-	if( _cascadeValue + obj.x + obj.w > obj.maxw || _cascadeValue + obj.y + obj.h > obj.maxh )
-		_cascadeValue = 0;
+		_cascadeValue += 20;
+		if( _cascadeValue + obj.x + obj.w > obj.maxw || _cascadeValue + obj.y + obj.h > obj.maxh )
+			_cascadeValue = 0;
+	}
 }
 
 // Returns the display margins, taking into consideration the screen, dock etc
@@ -815,9 +827,10 @@ function AutoResizeWindow( div )
 	var title = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
-		if( divs[a].className == 'Content' )
+		if( !divs[a].classList ) continue;
+		if( divs[a].classList.contains( 'Content' ) )
 			cnt = divs[a];
-		if( divs[a].className == 'Title' )
+		if( divs[a].classList.contains( 'Title' ) )
 			title = divs[a];
 	}
 	if ( !cnt ) return false;
@@ -858,6 +871,16 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
 {
+	// Blocker
+	if( !isMobile && div.content && div.content.blocker )
+	{
+		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
+		return;
+	}
+	
+	// Special case
+	var delayedDeactivation = true;
+	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
 	for( var a in movableWindows )
@@ -868,12 +891,26 @@ function _ActivateWindowOnly( div )
 		// No div selected or not the div we're looking for - do inactive!
 		if( !div || m != div )
 		{
-			_DeactivateWindow( m );
-			if( window.isMobile && !window.isTablet )
+			if( isMobile )
 			{
-				// TODO: May need to be deleted
-				m.style.height = '35px';
-				newOffsetY += 35;
+				// Support delayed deactivation
+				( function( dd ) {
+					function deal()
+					{
+						dd.parentNode.classList.remove( 'DelayedDeactivation' );
+						_DeactivateWindow( dd );
+					}
+					if( delayedDeactivation && div.applicationId == dd.applicationId )
+					{
+						dd.parentNode.classList.add( 'DelayedDeactivation' );
+						setTimeout( function(){ deal() }, 500 );
+					}
+					else deal();
+				} )( m );
+			}
+			else
+			{
+				_DeactivateWindow( m );
 			}
 		}
 		// This is the div we are looking for!
@@ -888,7 +925,50 @@ function _ActivateWindowOnly( div )
 			else window.currentMovable = div;
 
 			m.classList.add( 'Active' );
+			m.viewContainer.classList.remove( 'OnWorkspace' );
 			m.viewContainer.classList.add( 'Active' );
+
+			// Extra force!
+			if( isMobile )
+			{	
+				m.viewContainer.style.top    = '0px';
+				m.viewContainer.style.left   = '0px';
+				m.viewContainer.style.width  = '100%';
+				m.viewContainer.style.height = '100%';
+				
+				if( window._getAppByAppId )
+				{
+					var app = _getAppByAppId( div.applicationId );
+					if( app )
+					{
+						if( m.windowObject != app.mainView )
+						{
+							m.parentNode.setAttribute( 'childview', true );
+						}
+						else
+						{
+							m.parentNode.removeAttribute( 'childview' );
+						}
+						
+						app.sendMessage( {
+							'command': 'notify',
+							'method': 'setviewflag',
+							'flag': 'minimized',
+							'viewId': div.windowObject.viewId,
+							'value': false
+						} );
+					}
+				}
+				
+				// Can't be minimized
+				m.viewContainer.removeAttribute( 'minimized' );
+				m.minimized = false;
+			}
+			else
+			{
+				m.viewContainer.removeAttribute( 'minimized' );
+				m.minimized = false;
+			}
 
 			if( div.windowObject && !div.notifyActivated )
 			{
@@ -907,22 +987,6 @@ function _ActivateWindowOnly( div )
 				div.notifyActivated = true;
 				div.windowObject.sendMessage( msg );
 			}
-
-			if( !window.isTablet && window.isMobile )
-			{
-				if( m.lastHeight )
-				{
-					m.style.height =  Math.min( Workspace.screenDiv.clientHeight - newOffsetY - 72, m.lastHeight) + 'px';
-				}
-				else if( Workspace && Workspace.screenDiv )
-				{
-					m.style.height = Math.min( Workspace.screenDiv.clientHeight - newOffsetY - 72, Workspace.screenDiv.clientHeight - 200 ) + 'px';
-				}
-				else
-				{
-					m.style.height = '175px';
-				}
-			}
 		}
 	}
 	// Check window
@@ -932,11 +996,21 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
+	{
+		div.windowObject.lastActiveView.parentNode.classList.remove( 'OnWorkspace' );
+		_ActivateWindow( div.windowObject.lastActiveView );
+		div.windowObject.lastActiveView = null;
+		return;
+	}
 	// Don't reactivate
 	if( div.classList.contains( 'Active' ) ) 
 	{
-		if( window.currentMovable != div )
-			window.currentMovable = div;
+		if( window.currentMovable )
+		{
+			if( window.currentMovable != div )
+				window.currentMovable = div;
+		}
 		return;
 	}
 	
@@ -967,6 +1041,43 @@ function _ActivateWindow( div, nopoll, e )
 	{
 		_WindowToFront( div );
 	}
+	
+	// Tell window manager we are activating window
+	if( isMobile )
+	{
+		document.body.classList.add( 'WindowActivating' );
+	}
+	div.classList.add( 'Activating' );
+	div.parentNode.classList.add( 'Activating' );
+	setTimeout( function()
+	{
+		if( div )
+		{
+			if( isMobile )
+			{
+				document.body.classList.remove( 'WindowActivating' );
+			}
+			div.classList.add( 'Activated' );
+			div.classList.remove( 'Activating' );
+			setTimeout( function()
+			{
+				if( div )
+				{
+					// Finally
+					div.classList.add( 'DoneActivating' );
+					div.classList.remove( 'Activated' );
+					setTimeout( function()
+					{
+						if( div )
+						{
+							div.classList.remove( 'DoneActivating' );
+							div.parentNode.classList.remove( 'Activating' );
+						}
+					}, 250 );
+				}
+			}, 250 );
+		}
+	}, 250 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
@@ -994,7 +1105,7 @@ function _ActivateWindow( div, nopoll, e )
 
 	// Push active view to history
 	if( !div.windowObject.flags.viewGroup )
-		_viewHistory.push( div );
+		Friend.GUI.view.viewHistory.push( div );
 
 	// Set screen
 	SetScreenByWindowElement( div );
@@ -1018,6 +1129,7 @@ function _DeactivateWindow( m, skipCleanUp )
 	{
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+		
 		if( m.windowObject && m.notifyActivated )
 		{
 			var iftest = m.getElementsByTagName( _viewType );
@@ -1037,6 +1149,11 @@ function _DeactivateWindow( m, skipCleanUp )
 			m.windowObject.sendMessage( msg );
 			m.notifyActivated = false;
 			PollTaskbar();
+		}
+		// Minimize on mobile
+		if( isMobile )
+		{
+			m.minimize.onclick();
 		}
 		ret = true;
 	}
@@ -1070,7 +1187,7 @@ function _DeactivateWindows()
 
 	if( isMobile )
 	{
-		_viewHistory = [];
+		Friend.GUI.view.viewHistory = [];
 	}
 
 	var a = null;
@@ -1090,6 +1207,8 @@ function _DeactivateWindows()
 
 	// Check window
 	CheckScreenTitle();
+	
+	Friend.GUI.reorganizeResponsiveMinimized();
 }
 
 // Ouch! Use with care!
@@ -1104,6 +1223,13 @@ function CloseAllWindows()
 
 function _WindowToFront( div, flags )
 {
+	// Blocker
+	if( div.content && div.content.blocker )
+	{
+		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
+		return;
+	}
+	
 	if( !div || !div.style ) return;
 
 	if( !flags ) flags = {};
@@ -1227,7 +1353,7 @@ function GetWindowVariableByEvent( e, vari )
 		var cnt = false;
 		for( var a = 0; a < divs.length; a++ )
 		{
-			if ( divs[a].className == 'Content' )
+			if( divs[a].classList && divs[a].classList.contains( 'Content' ) )
 			{
 				cnt = divs[a];
 				break;
@@ -1256,7 +1382,7 @@ function GetWindowVariable( win, vari )
 	var cnt = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
-		if( divs[a].className == 'Content' )
+		if( divs[a].classList && divs[a].classList.contains( 'Content' ) )
 		{
 			cnt = divs[a];
 			break;
@@ -1282,7 +1408,7 @@ function HasClassname( div, classname )
 
 // Close a movable window by pointing to the content div
 // Could one day be moved to the View class...
-function CloseView( win )
+function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
@@ -1292,8 +1418,10 @@ function CloseView( win )
 		// Clean up!
 		if( win == window.regionWindow )
 			window.regionWindow = null;
-		if( window.currentMovable == win )
+		if( window.currentMovable && window.currentMovable == win )
 			window.currentMovable = null;
+			
+		win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 			
 		var count = 0;
 
@@ -1308,12 +1436,12 @@ function CloseView( win )
 
 		// Clear view that is closed from view history
 		var out = [];
-		for( var a  = 0; a < _viewHistory.length; a++ )
+		for( var a  = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
-			if( _viewHistory[a] != win )
-				out.push( _viewHistory[a] );
+			if( Friend.GUI.view.viewHistory[a] != win )
+				out.push( Friend.GUI.view.viewHistory[a] );
 		}
-		_viewHistory = out;
+		Friend.GUI.view.viewHistory = out;
 
 		var div = win;
 
@@ -1337,6 +1465,22 @@ function CloseView( win )
 
 		if ( !isGroupMember && div.parentNode )
 		{
+			// Immediately kill child views for mobile!
+			if( isMobile && window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app.mainView == div.windowObject )
+				{
+					for( var a in app.windows )
+					{
+						if( app.windows[ a ] != div.windowObject )
+						{
+							app.windows[ a ]._window.parentNode.parentNode.style.display = 'none';
+						}
+					}
+				}
+			}
+			
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
@@ -1349,9 +1493,10 @@ function CloseView( win )
 				{
 					console.log( 'Nothing to remove..' );
 				}
-			}, 500 );
+			}, isMobile ? 750 : 500 );
 
-			div.style.opacity = 0;
+			if( !isMobile )
+				div.style.opacity = 0;
 
 			// Do not click!
 			var ele = document.createElement( 'div' );
@@ -1368,31 +1513,31 @@ function CloseView( win )
 		// Activate latest activated view (not on mobile)
 		if( div.classList.contains( 'Active' ) )
 		{
-			if( _viewHistory.length )
+			if( Friend.GUI.view.viewHistory.length )
 			{
 				// Only activate last view in the same app
 				if( appId )
 				{
-					for( var a = _viewHistory.length - 1; a >= 0; a-- )
+					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
-						if( _viewHistory[ a ].applicationId == appId )
+						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
 							// Only activate non minimized views
-							if( !_viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
-								_ActivateWindow( _viewHistory[ a ] );
+							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
 							break;
 						}
 					}
 				}
 				else
 				{
-					for( var a = _viewHistory.length - 1; a >= 0; a-- )
+					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
-						if( _viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
+						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
 							// Only activate non minimized views
-							if( !_viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
-								_ActivateWindow( _viewHistory[ a ] );
+							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
 							break;
 						}
 					}
@@ -1406,7 +1551,7 @@ function CloseView( win )
 			var o = [];
 			for( var b in movableWindows )
 			{
-				if( movableWindows[b] != div )
+				if( movableWindows[b] != div && movableWindows[b].parentNode )
 				{
 					o[b] = movableWindows[b];
 				}
@@ -1434,6 +1579,25 @@ function CloseView( win )
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
+		
+		// Make sure we count the windows in body
+		if( movableWindowCount > 0 )
+		{
+			if( window.windowCountTimeout )
+			{
+				clearTimeout( window.windowCountTimeout );
+				delete window.windowCountTimeout;
+			}
+			document.body.setAttribute( 'windowcount', movableWindowCount );
+		}
+		else
+		{
+			// Delay this with 400ms
+			window.windowCountTimeout = setTimeout( function()
+			{
+				document.body.removeAttribute( 'windowcount' );
+			}, 400 );
+		}
 	}
 
 	// Check window
@@ -1441,7 +1605,7 @@ function CloseView( win )
 	
 	if( !window.currentMovable )
 	{
-		document.title = Friend.windowBaseString;
+		document.title = Workspace.screen.getFlag( 'title' );
 	}
 	
 	if( isMobile )
@@ -1451,7 +1615,6 @@ function CloseView( win )
 	if( win && win.nativeWindow ) win.nativeWindow.close();
 	else if( win && win.windowObject && win.windowObject.nativeWindow )
 		win.windowObject.nativeWindow.close();
-
 }
 // Obsolete!!!
 CloseWindow = CloseView;
@@ -1491,31 +1654,29 @@ function WindowScrolling ( e )
 // The View class begins -------------------------------------------------------
 
 // Attach view class to friend
-Friend.view = {
-	create: View,
-	removeScriptsFromData: function( data )
+Friend.GUI.view.create = View;
+Friend.GUI.view.removeScriptsFromData = function( data )
+{
+	var r = false;
+	var assets = [];
+	while( r = data.match( /\<script id\=\"([^"]*?)\" type\=\"text\/html\"[^>]*?\>([\w\W]*?)\<\/script[^>]*?\>/i ) )
 	{
-		var r = false;
-		var assets = [];
-		while( r = data.match( /\<script id\=\"([^"]*?)\" type\=\"text\/html\"[^>]*?\>([\w\W]*?)\<\/script[^>]*?\>/i ) )
-		{
-			var asset = '<script id="' + r[1] + '" type="text/html">' + r[2] + '</script>';
-			data = data.split( r[0] ).join( '' );
-		}
-		// Remove scripts
-		data = data.split( /\<script[^>]*?\>[\w\W]*?\<\/script[^>]*?\>/i ).join ( '' );
-		// Add assets
-		if( assets.length > 0 )
-			data += assets.join( "\n" );
-		return data;
-	},
-	cleanHTMLData: function( data )
-	{
-		// Allow for "script" template assets
-		data = Friend.view.removeScriptsFromData( data );
-		data = data.split( /\<style[^>]*?\>[\w\W]*?\<\/style[^>]*?\>/i ).join ( '' );
-		return data;
+		var asset = '<script id="' + r[1] + '" type="text/html">' + r[2] + '</script>';
+		data = data.split( r[0] ).join( '' );
 	}
+	// Remove scripts
+	data = data.split( /\<script[^>]*?\>[\w\W]*?\<\/script[^>]*?\>/i ).join ( '' );
+	// Add assets
+	if( assets.length > 0 )
+		data += assets.join( "\n" );
+	return data;
+};
+Friend.GUI.view.cleanHTMLData = function( data )
+{
+	// Allow for "script" template assets
+	data = Friend.GUI.view.removeScriptsFromData( data );
+	data = data.split( /\<style[^>]*?\>[\w\W]*?\<\/style[^>]*?\>/i ).join ( '' );
+	return data;
 };
 
 // View class (the javascript way)
@@ -1572,8 +1733,8 @@ var View = function( args )
 	}
 
 	// Clean data
-	this.cleanHTMLData = Friend.view.cleanHTMLData;
-	this.removeScriptsFromData = Friend.view.removeScriptsFromData;
+	this.cleanHTMLData = Friend.GUI.view.cleanHTMLData;
+	this.removeScriptsFromData = Friend.GUI.view.removeScriptsFromData;
 
 	// Setup the dom elements
 	// div = existing DIV dom element or 'CREATE'
@@ -1602,6 +1763,7 @@ var View = function( args )
 			'screen', 'parentView', 'transparent'
 		];
 
+		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
 		// Set initial workspace
@@ -1630,9 +1792,12 @@ var View = function( args )
 		parentWindow = self.getFlag( 'parentView' );
 		transparent = self.getFlag( 'transparent' );
 		
+		// Clean ID
 		if( !id )
 		{
-			id = titleStr.split ( ' ' ).join ( '_' );
+			id = titleStr.split( /[^a-z0-9]+/i ).join( '_' );
+			if( id.substr( 0, 1 ) == '_' )
+				id = 'win' + id;
 			var tmp = id;
 			var num = 2;
 			while( typeof ( movableWindows[ tmp ] ) != 'undefined' )
@@ -1641,6 +1806,13 @@ var View = function( args )
 			}
 			id = tmp;
 		}
+		// Clean ID
+		else
+		{
+			id = id.split( /[^a-z0-9]+/i ).join( '_' );
+			if( id.substr( 0, 1 ) == '_' )
+				id = 'win' + id;
+		}
 
 		// Make a unique id
 		var uniqueId = id;
@@ -1648,6 +1820,7 @@ var View = function( args )
 
 		// Where to add div..
 		var divParent = false;
+		var iconSpan;
 
 		if( id )
 		{
@@ -1659,6 +1832,54 @@ var View = function( args )
 			// Make a container to put the view div inside of
 			var viewContainer = document.createElement( 'div' );
 			viewContainer.className = 'ViewContainer';
+			viewContainer.style.display = 'none';
+			
+			// Get icon for visualizations
+			if( applicationId )
+			{
+				for( var a = 0; a < Workspace.applications.length; a++ )
+				{
+					if( Workspace.applications[a].applicationId == applicationId )
+					{
+						if( Workspace.applications[a].icon )
+						{
+							var ic = Workspace.applications[a].icon;
+							iconSpan = document.createElement( 'span' );
+							iconSpan.classList.add( 'ViewIcon' );
+							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
+							viewContainer.appendChild( iconSpan );
+						}
+					}
+				}
+				
+				// Add mobile back button
+				if( isMobile )
+				{
+					var md = document.createElement( 'div' );
+					md.className = 'MobileBack';
+					md.addEventListener( 'touchstart', function( e )
+					{
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( div.applicationId );
+							if( app.mainView )
+							{
+								FocusOnNothing();
+								_ActivateWindow( app.mainView.content.parentNode );
+							}
+						}
+						return cancelBubble( e );
+					} );
+					viewContainer.appendChild( md );
+				}
+			}
+			else
+			{
+				iconSpan = document.createElement( 'span' );
+				iconSpan.classList.add( 'ViewIcon' );
+				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
+				viewContainer.appendChild( iconSpan );
+			}
 			
 			if( div == 'CREATE' )
 			{	
@@ -1684,6 +1905,8 @@ var View = function( args )
 					divParent = document.body;
 				}
 			}
+			
+			// Designate
 			movableWindows[ id ] = div;
 			div.titleString = titleStr;
 			div.viewId = id;
@@ -1723,7 +1946,7 @@ var View = function( args )
 			while( ge( id ) )
 				id = oid + '_' + ++num;
 
-			div.id = id ? id : ( 'window_' + movableViewIdSeed++ );
+			div.id = id ? id : ( 'window_' + Friend.GUI.view.movableViewIdSeed++ );
 			div.viewId = div.id;
 			movableWindows[ div.id ] = div;
 		}
@@ -1733,27 +1956,47 @@ var View = function( args )
 			movableWindows[ div.id ] = div;
 		}
 
-		// TODO: Test window animations when opening..
 		if( isMobile )
+			Workspace.exitMobileMenu();
+
+		// Check to set mainview
+		if( window._getAppByAppId )
 		{
-			div.classList.add( 'Opening' );
+			var app = _getAppByAppId( this.applicationId );
+			if( app )
+			{
+				var l = 0; for( var k in app.windows ) l++;
+				if( l == 0 )
+				{
+					this.setFlag( 'mainView', true );
+				}
+			}
+		}
+
+		// Tell it's opening
+		div.classList.add( 'Opening' );
+		setTimeout( function()
+		{
+			div.classList.add( 'Opened' );
+			div.classList.remove( 'Opening' );
 			setTimeout( function()
 			{
-				div.classList.add( 'Opened' );
-				div.classList.remove( 'Opening' );
+				div.classList.remove( 'Opened' );
+				// Give last call to port
+				div.classList.add( 'Redrawing' );
 				setTimeout( function()
 				{
-					div.classList.remove( 'Opened' );
+					div.classList.remove( 'Redrawing' );
 				}, 250 );
 			}, 250 );
-		}
+		}, 250 );
 
 		if( transparent )
 		{
 			div.setAttribute( 'transparent', 'transparent' );
 		}
 
-		div.style.webkitTransform = 'translate3d(0, 0, 0)';
+		div.style.transform = 'translate3d(0, 0, 0)';
 
 		var zoom; // for use later - zoom gadget
 
@@ -1856,6 +2099,9 @@ var View = function( args )
 			WorkspaceMenu.close();
 		}
 
+		// Clean up!
+		Friend.GUI.view.cleanWindowArray( div );
+
 		// Title
 		var title = document.createElement ( 'div' );
 		title.className = 'Title';
@@ -1878,99 +2124,96 @@ var View = function( args )
 		title.ondragstart = function( e ) { return cancelBubble ( e ); }
 		title.onselectstart = function( e ) { return cancelBubble ( e ); }
 
-		title.onmousedown = function( e, mode )
+		if( !isMobile )
 		{
-			if ( !e ) e = window.event;
-
-			// Blocker
-			if ( div.content.blocker )
+			title.onmousedown = function( e, mode )
 			{
-				_ActivateWindow ( div.content.blocker.getWindowElement().parentNode, false, e );
-				return cancelBubble ( e );
-			}
-			
-			// Use correct button
-			if( e.button != 0 && !mode ) return cancelBubble( e );
+				if ( !e ) e = window.event;
 
-			var y = e.clientY ? e.clientY : e.pageYOffset;
-			var x = e.clientX ? e.clientX : e.pageXOffset;
-			window.mouseDown = FUI_MOUSEDOWN_WINDOW;
-			this.parentNode.offx = x - this.parentNode.offsetLeft;
-			this.parentNode.offy = y - this.parentNode.offsetTop;
-			_ActivateWindow( div, false, e );
-			
-			if( e.shiftKey && div.snapObject )
-			{
-				div.unsnap();
-			}
-			
-			return cancelBubble( e );
-		}
+				// Use correct button
+				if( e.button != 0 && !mode ) return cancelBubble( e );
 
-		// Pawel must win!
-		title.ondblclick = function( e )
-		{
-			if( self.flags.clickableTitle )
-			{
-				if( !self.titleClickElement )
+				var y = e.clientY ? e.clientY : e.pageYOffset;
+				var x = e.clientX ? e.clientX : e.pageXOffset;
+				window.mouseDown = FUI_MOUSEDOWN_WINDOW;
+				this.parentNode.offx = x - this.parentNode.offsetLeft;
+				this.parentNode.offy = y - this.parentNode.offsetTop;
+				_ActivateWindow( div, false, e );
+			
+				if( e.shiftKey && div.snapObject )
 				{
-					var d = document.createElement( 'input' );
-					d.type = 'text';
-					d.className = 'BackgroundHeavier NoMargins Absolute';
-					d.style.position = 'absolute';
-					d.style.outline = 'none';
-					d.style.border = '0';
-					d.style.top = '0px';
-					d.style.left = '0px';
-					d.style.width = '100%';
-					d.style.height = '100%';
-					d.style.textAlign = 'center';
-					d.style.pointerEvents = 'all';
-					d.value = contn.fileInfo.Path;
-					d.onkeydown = function( e )
-					{
-						self.flags.editing = true;
-						setTimeout( function()
-						{
-							self.flags.editing = false;
-						}, 150 );
-					}
-					d.onblur = function()
-					{
-						d.parentNode.removeChild( d );
-						self.titleClickElement = null;
-					}
-					d.onchange = function( e )
-					{
-						var t = this;
-						var f = ( new Door() ).get( this.value );
-						if( f )
-						{
-							f.getIcons( this.value, function( items )
-							{
-								if( items )
-								{
-									self.content.fileInfo.Path = t.value;
-									self.content.refresh();
-								}
-								else
-								{
-									t.value = contn.fileInfo.Path;
-								}
-							} );
-						}
-						else
-						{
-							t.value = contn.fileInfo.Path;
-						}
-					}
-					this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
-					self.titleClickElement = d;
+					div.unsnap();
 				}
-				self.titleClickElement.focus();
-				self.titleClickElement.select();
+			
+				return cancelBubble( e );
 			}
-			_WindowToFront( div );
+
+			// Pawel must win!
+		
+			title.ondblclick = function( e )
+			{
+				if( self.flags.clickableTitle )
+				{
+					if( !self.titleClickElement )
+					{
+						var d = document.createElement( 'input' );
+						d.type = 'text';
+						d.className = 'BackgroundHeavier NoMargins Absolute';
+						d.style.position = 'absolute';
+						d.style.outline = 'none';
+						d.style.border = '0';
+						d.style.top = '0px';
+						d.style.left = '0px';
+						d.style.width = '100%';
+						d.style.height = '100%';
+						d.style.textAlign = 'center';
+						d.style.pointerEvents = 'all';
+						d.value = contn.fileInfo.Path;
+						d.onkeydown = function( e )
+						{
+							self.flags.editing = true;
+							setTimeout( function()
+							{
+								self.flags.editing = false;
+							}, 150 );
+						}
+						d.onblur = function()
+						{
+							d.parentNode.removeChild( d );
+							self.titleClickElement = null;
+						}
+						d.onchange = function( e )
+						{
+							var t = this;
+							var f = ( new Door() ).get( this.value );
+							if( f )
+							{
+								f.getIcons( this.value, function( items )
+								{
+									if( items )
+									{
+										self.content.fileInfo.Path = t.value;
+										self.content.refresh();
+									}
+									else
+									{
+										t.value = contn.fileInfo.Path;
+									}
+								} );
+							}
+							else
+							{
+								t.value = contn.fileInfo.Path;
+							}
+						}
+						this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
+						self.titleClickElement = d;
+					}
+					self.titleClickElement.focus();
+					self.titleClickElement.select();
+				}
+				_WindowToFront( div );
+			}
 		}
 
 		// Clicking on window
@@ -1983,9 +2226,90 @@ var View = function( args )
 			}
 		}
 
+		// Tablets and mobile
 		div.ontouchstart = function( e )
 		{
-			this.setAttribute( 'moving', 'moving' );
+			var self = this;
+			if( !isMobile )
+			{
+				this.setAttribute( 'moving', 'moving' );
+			}
+			else if( e && !div.classList.contains( 'Active' ) )
+			{
+				this.clickOffset = {
+					x: e.touches[0].clientX,
+					y: e.touches[0].clientY,
+					time: ( new Date() ).getTime()
+				};
+			}
+			// Only removable after 300 ms
+			this.touchInterval = setInterval( function()
+			{
+				var t = ( new Date() ).getTime();
+				if( self.clickOffset )
+				{
+					if( t - self.clickOffset.time > 150 )
+					{
+						// Update time
+						self.clickOffset.removable = true;
+						self.viewIcon.classList.add( 'Dragging' );
+						clearInterval( self.touchInterval );
+						self.touchInterval = null;
+					
+						Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
+						Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
+					}
+				}
+			}, 150 );
+		}
+		
+		// Remove window on drag
+		if( isMobile )
+		{
+			div.ontouchmove = function( e )
+			{
+				if( !this.clickOffset )
+					return;
+				var diffx = e.touches[0].clientX - this.clickOffset.x;
+				if( diffx > 20 )
+					return;
+				var diffy = e.touches[0].clientY - this.clickOffset.y;
+			
+				// Drag 100 px under 0.15ms
+				if( this.viewIcon.classList.contains( 'Dragging' ) )
+				{
+					if( diffy > 50 )
+					{
+						this.viewIcon.classList.add( 'Remove' );
+					}
+					else
+					{
+						this.viewIcon.classList.remove( 'Remove' );
+					}
+				}
+			}
+			div.ontouchend = function( e )
+			{
+				if( Workspace.screen.bufferedTitle )
+				{
+					Workspace.screen.setFlag( 'title', Workspace.screen.bufferedTitle );
+					Workspace.screen.bufferedTitle = null;
+				}
+				if( this.viewIcon.classList.contains( 'Dragging' ) )
+				{
+					this.viewIcon.classList.remove( 'Dragging' );
+				}
+				if( this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					this.viewIcon.classList.remove( 'Remove' );
+					this.close.click();
+				}
+				if( this.touchInterval )
+				{
+					clearInterval( this.touchInterval );
+					this.touchInterval = null;
+				}
+			}
 		}
 		
 		// Transparency
@@ -2094,6 +2418,29 @@ var View = function( args )
 					_ActivateWindow( this.window, false, e );
 
 					this.window.setAttribute( 'maximized', 'true' );
+					
+					// Tell app
+					if( window._getAppByAppId )
+					{
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': true
+							} );
+						}
+					}
+					
+					// Store it just in case
+					var d = GetWindowStorage( div.id );
+					if( !d ) d = {};
+					d.maximized = true;
+					SetWindowStorage( div.id, d );
+					
 					if( !window.isMobile )
 					{
 						this.prevLeft = parseInt ( this.window.style.left );
@@ -2120,11 +2467,34 @@ var View = function( args )
 				{
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
+					
+					// Store it just in case
+					var d = GetWindowStorage( div.id );
+					if( !d ) d = {};
+					d.maximized = false;
+					SetWindowStorage( div.id, d );
+					
 					if( !window.isMobile )
 					{
 						this.window.style.top = this.prevTop + 'px';
 						this.window.style.left = this.prevLeft + 'px';
 						ResizeWindow( this.window, this.prevWidth, this.prevHeight );
+					}
+					
+					// Tell application if any
+					if( window._getAppByAppId )
+					{
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': false
+							} );
+						}
 					}
 				}
 				// Do resize events
@@ -2182,10 +2552,14 @@ var View = function( args )
 
 			// Update information in the window storage object
 			var d = GetWindowStorage( this.uniqueId );
-			d.top = this.offsetTop;
-			d.left = this.offsetLeft;
-			d.width = wenable && wwi ? wwi : d.width;
-			d.height = wenable && hhe ? hhe : d.width;
+			
+			if( !div.getAttribute( 'maximized' ) )
+			{
+				d.top = this.offsetTop;
+				d.left = this.offsetLeft;
+				d.width = wenable && wwi ? wwi : d.width;
+				d.height = wenable && hhe ? hhe : d.width;
+			}
 
 			SetWindowStorage( this.uniqueId, d );
 		}
@@ -2197,9 +2571,13 @@ var View = function( args )
 		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
 		minimize.onclick = function ( e )
 		{
-			if( !window.isTablet && e.button != 0 ) return;
+			if( !window.isTablet && e && e.button != 0 ) return;
 			if( div.minimized ) return;
 			div.minimized = true;
+			if( !e )
+			{
+				e = { button: 0 };
+			}
 			
 			
 			if( !window.isMobile )
@@ -2295,9 +2673,41 @@ var View = function( args )
 				{
 					for( var a = 0; a < div.attached.length; a++ )
 					{
+						var app = _getAppByAppId( div.attached[ a ].applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'minimized',
+								'viewId': div.attached[ a ].windowObject.viewId,
+								'value': true
+							} );
+						}
+					
 						div.attached[ a ].minimized = true;
 						div.attached[ a ].parentNode.setAttribute( 'minimized', 'minimized' );
 					}
+				}
+			}
+			// Reorganize minimized view windows
+			else
+			{
+				Friend.GUI.reorganizeResponsiveMinimized();
+			}
+			
+			if( window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'minimized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
 				}
 			}
 		}
@@ -2354,6 +2764,7 @@ var View = function( args )
 			
 			function executeClose()
 			{
+				viewContainer.classList.add( 'Closing' );
 				if( div.windowObject )
 				{
 					var wo = div.windowObject;
@@ -2397,6 +2808,10 @@ var View = function( args )
 		div.leftbar   = leftbar;
 		div.rightbar  = rightbar;
 		div.minimize  = minimize;
+		
+		// For mobile
+		if( iconSpan )
+			div.viewIcon = iconSpan;
 
 		div.appendChild( title );
 		div.titleDiv = title;
@@ -2490,6 +2905,17 @@ var View = function( args )
 		var hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
 		movableWindowCount++; // Iterate global count of view windows
+		
+		// Make sure we count the windows in body
+		if( movableWindowCount > 0 )
+		{
+			if( window.windowCountTimeout )
+			{
+				clearTimeout( window.windowCountTimeout );
+				delete window.windowCountTimeout;
+			}
+			document.body.setAttribute( 'windowcount', movableWindowCount );
+		}
 
 		// Create event handler for view window
 		div.content.events = new Array ();
@@ -2547,6 +2973,28 @@ var View = function( args )
 			{
 				var sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
 				
+				if( wp.maximized )
+				{
+					div.setAttribute( 'maximized', 'true' );
+					zoom.mode = 'maximized';
+					
+					// Tell application if any
+					if( window._getAppByAppId )
+					{
+						var app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': true
+							} );
+						}
+					}
+				}
+				
 				if( wp.top >= 0 && wp.top < hh )
 				{
 					var wt = wp.top;
@@ -2597,29 +3045,32 @@ var View = function( args )
 			}
 		}
 		
-		if( !leftSet && self.flags.left )
+		if( !isMobile )
 		{
-			leftSet = true;
-			if( self.flags.left == 'center' )
+			if( !leftSet && self.flags.left )
 			{
-				div.style.left = ( mvh >> 1 - ( height >> 1 ) ) + 'px';
+				leftSet = true;
+				if( self.flags.left == 'center' )
+				{
+					div.style.left = ( mvh >> 1 - ( height >> 1 ) ) + 'px';
+				}
+				else
+				{
+					div.style.left = self.flags.left + 'px';
+				}
 			}
-			else
-			{
-				div.style.left = self.flags.left + 'px';
-			}
-		}
 		
-		if( !topSet && self.flags.top )
-		{
-			topSet = true;
-			if( self.flags.top == 'center' )
+			if( !topSet && self.flags.top )
 			{
-				div.style.left = ( mvw >> 1 - ( width >> 1 ) ) + 'px';
-			}
-			else
-			{
-				div.style.top = self.flags.top + 'px';
+				topSet = true;
+				if( self.flags.top == 'center' )
+				{
+					div.style.left = ( mvw >> 1 - ( width >> 1 ) ) + 'px';
+				}
+				else
+				{
+					div.style.top = self.flags.top + 'px';
+				}
 			}
 		}
 
@@ -2635,6 +3086,22 @@ var View = function( args )
 			width = window.innerWidth; height = window.innerHeight;
 			div.style.height = height + title.offsetHeight + FUI_WINDOW_MARGIN + 'px';
 			div.setAttribute( 'maximized', 'true' );
+			
+			// Tell application if any
+			if( window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'maximized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
+			}
 		}
 
 		// Add div to view container
@@ -2717,6 +3184,7 @@ var View = function( args )
 		
 		// Append view window to parent
 		divParent.appendChild( viewContainer );
+		
 		if( inGroup )
 		{
 			ResizeWindow( divParent.parentNode );
@@ -2741,6 +3209,9 @@ var View = function( args )
 		// So, dont creating, behave normally now
 		setTimeout( function(){ div.setAttribute( 'created', '' ); }, 300 );
 
+		// Turn calculations on
+		viewContainer.style.display = '';
+		
 		// Once the view appears on screen, again, constrain it
 		ConstrainWindow( div );
 		
@@ -2765,6 +3236,7 @@ var View = function( args )
 						e.button = 0;
 						window.mouseDown = 1; // Window mode
 						title.onmousedown( e );
+						_ActivateWindow( div );
 					} );
 				}
 				if( !window.isMobile )
@@ -2792,7 +3264,7 @@ var View = function( args )
 				touchResizeWindow(evt);
 			});
 
-			resize.addEventListener('touchend', function(evt)
+			resize.addEventListener( 'touchend', function( evt )
 			{
 				cancelBubble( evt );
 			});
@@ -2813,7 +3285,7 @@ var View = function( args )
 				touchResizeWindow(evt);
 			});
 
-			bottombar.addEventListener('touchend', function(evt) {
+			bottombar.addEventListener( 'touchend', function(evt) {
 				cancelBubble( evt );
 			});
 
@@ -2908,6 +3380,22 @@ var View = function( args )
 		{
 			this.setFlag( 'maximized', true );
 			div.setAttribute( 'maximized', 'true' );
+			
+			// Tell application if any
+			if( window._getAppByAppId )
+			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app )
+				{
+					app.sendMessage( {
+						'command': 'notify',
+						'method': 'setviewflag',
+						'flag': 'maximized',
+						'viewId': div.windowObject.viewId,
+						'value': true
+					} );
+				}
+			}
 		}
 
 		// Handle class
@@ -2935,6 +3423,7 @@ var View = function( args )
 	// Send window to different workspace
 	this.sendToWorkspace = function( wsnum )
 	{
+		if( isMobile ) return;
 		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
 			return;
 		var wn = this._window.parentNode;
@@ -3090,6 +3579,7 @@ var View = function( args )
 
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
+			msg.dosDrivers = Friend.dosDrivers;
 			msg.parentSandboxId = parentIframeId;
 			msg.locale = Workspace.locale;
 
@@ -3562,6 +4052,9 @@ var View = function( args )
 	// Close a view window
 	this.close = function ( force )
 	{
+		if( isMobile )
+			Workspace.exitMobileMenu();
+		
 		var c = this._window;
 		if( c && c.content )
 			c = c.content;
@@ -3648,6 +4141,54 @@ var View = function( args )
 	{
 		WindowLoadingAnimation( this._window );
 	}
+	
+	// Set the main view of app
+	this.setMainView = function( set )
+	{
+		if( !this.applicationId ) return;
+		
+		if( !window._getAppByAppId )
+			return;
+			
+		var app = _getAppByAppId( this.applicationId );
+		if( !app ) return;
+		
+		this.flags.mainView = set;
+		
+		// Set main view
+		if( set )
+		{
+			app.mainView = this;
+		}
+		// Unset main view (pick the next view if possible
+		else
+		{
+			// Find new main view
+			app.mainView = null;
+			for( var a in app.windows )
+			{
+				if( app.windows[ a ] != this )
+				{
+					app.mainView = app.windows[ a ];
+					app.mainView.flags.mainView = true;
+				}
+			}
+		}
+		// Update other windows with the new main view!
+		if( app.mainView )
+		{
+			for( var a in app.windows )
+			{
+				if( app.windows[ a ] != app.mainView )
+				{
+					app.windows[ a ].mainView = false;
+					app.windows[ a ].flags.mainView = false;
+					app.windows[ a ].parentView = app.mainView;
+				}
+			}
+		}
+	}
+	
 	// Set a window flag
 	this.setFlag = function( flag, value )
 	{	
@@ -3662,6 +4203,10 @@ var View = function( args )
 		// Set the flag
 		switch( flag )
 		{
+			case 'mainView':
+				this.setMainView( value );
+				this.flags.mainView = value;
+				break;
 			case 'clickableTitle':
 				this.flags.clickableTitle = value;
 				break;
@@ -3688,7 +4233,10 @@ var View = function( args )
 				{
 					value += '';
 					value = value.split( 'px' ).join( '' );
-					viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					if( !isMobile )
+					{
+						viewdiv.style.left = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					}
 				}
 				break;
 			case 'top':
@@ -3697,7 +4245,10 @@ var View = function( args )
 				{
 					value += '';
 					value = value.split( 'px' ).join( '' );
-					viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					if( !isMobile )
+					{
+						viewdiv.style.top = value.indexOf( '%' ) > 0 ? value : ( value + 'px' );
+					}
 				}
 				break;
 			case 'max-width':
@@ -4104,6 +4655,121 @@ var View = function( args )
 	// Done setting up view ---------------------------------------------------<
 }
 
+Friend.GUI.view.cleanWindowArray = function( ele )
+{
+	var out = [];
+	var found = true;
+	for( var a in movableWindows )
+	{
+		if( a != ele.id && movableWindows[ a ] != ele )
+			out[ a ] = movableWindows[ a ];
+	}
+	out[ ele.id ] = ele;
+	movableWindows = out;
+}
+
+// Reorganize view window positions on responsive browser
+Friend.GUI.reorganizeResponsiveMinimized = function()
+{
+	if( !isMobile ) return;
+	if( !Workspace.screen || !Workspace.screen.contentDiv ) return;
+	if( document.body.classList.contains( 'ViewMaximized' ) )
+	{
+		// Here is the first screen
+		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
+		return;
+	}
+	
+	var boxWidth = 96;  // Window width when minimized
+	var boxHeight = 80; // Window height when minimized
+	
+	var marginX = 12; // Minimum margin
+	var marginY = 42;
+	
+	var pageW  = Workspace.screen.contentDiv.parentNode.offsetWidth;
+	var pageH  = Workspace.screen.contentDiv.offsetHeight;
+	
+	// Maximum widths in page
+	var maxCount = Math.floor( pageW / ( boxWidth + marginX ) );
+	// Calculate optimum horiz margin (adds right margin with +1)
+	marginX = ( pageW - ( boxWidth * maxCount ) ) / ( maxCount + 1 );
+	
+	var startY = 12;
+	var page = 0;
+	var pageX2 = pageW;
+	var iconHeight = false;
+	var pageX1 = 0;
+	var gridX = marginX;
+	var gridY = startY;
+	for( var a in movableWindows )
+	{
+		var v = movableWindows[ a ];
+		var c = v.parentNode; // ViewContainer
+		if( c.classList.contains( 'Active' ) )
+		{
+			// These views are handled by css...
+			c.classList.remove( 'OnWorkspace' );
+			continue;
+		}
+		// Non-mainview windows are not displayed
+		else if( !v.windowObject.flags.mainView && v.windowObject.applicationId )
+		{
+			c.style.top = '-200%';
+			c.classList.remove( 'OnWorkspace' );
+			continue;
+		}
+		else if( c.style.display == 'none' || v.style.display == 'none' )
+			continue;
+		
+		c.classList.add( 'OnWorkspace' );
+		
+		// Next row
+		if( gridX + boxWidth >= pageX2 )
+		{
+			gridX = pageX1 + marginX;
+			gridY += iconHeight;
+			
+			// Next horizontal page
+			if( gridY + boxHeight >= pageH )
+			{
+				gridY = startY;
+				pageX1 += pageW;
+				pageX2 += pageW;
+				gridX = pageX1 + marginX;
+				page++;
+			}
+		}
+		
+		if( !iconHeight )
+		{
+			iconHeight = boxHeight + marginY;
+		}
+		
+		// Position and size
+		c.style.top = gridY + 'px';
+		c.style.left = gridX + 'px';
+		c.style.width = boxWidth + 'px';
+		c.style.height = boxHeight + 'px';
+		c.style.minWidth = boxWidth + 'px';
+		c.style.minHeight = boxHeight + 'px';
+		
+		// Next column
+		gridX += boxWidth + marginX;
+	}
+	// Store how many pages we are counting..
+	Friend.GUI.responsiveViewPageCount = page;
+	
+	// Resize screen content
+	Workspace.screen.contentDiv.style.width = ( pageW * ( page + 1 ) ) + 'px';
+	
+	// Reposition content div
+	if( Friend.GUI.responsiveViewPage > page )
+	{
+		Friend.GUI.responsiveViewPage = page;
+	}
+	Workspace.screen.contentDiv.style.transform = 'translateX(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px)';
+}
+
 // Intermediate anchor for code that uses new Window()
 var Window = View;
 
@@ -4235,6 +4901,7 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 	var v = new View( {
 		title: title,
 		width: 400,
+		resize: false,
 		height: d.offsetHeight + 75,
 		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
@@ -4306,6 +4973,7 @@ function Alert( title, string, cancelstring, callback )
 	var v = new View( {
 		title: title,
 		width: 400,
+		resize: false,
 		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
 		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );

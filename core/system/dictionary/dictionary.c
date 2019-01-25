@@ -91,7 +91,8 @@ static const char *DefaultDictionaryMessages[] =
 "Connection with that name already exist",
 "Cannot allocate memory for DOSToken",
 "Cannot add token to list",
-"Cannot remove token from list"
+"Cannot remove token from list",
+"User Group already exist"
 };
 
 /**

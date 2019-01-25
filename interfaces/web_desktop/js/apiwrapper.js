@@ -175,7 +175,7 @@ function apiWrapper( event, force )
 		}
 
 		// For Francois :)
-		if ( msg.type.substring( 0, 13 ) == 'friendNetwork' )
+		if( msg.type.substring( 0, 13 ) == 'friendNetwork' )
 		{
 			var messageInfo = {};
 			if ( msg.applicationId )
@@ -276,7 +276,7 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'getDriveInfo':
-						Friend.DOS.getDriveInfo( msg.path, function( response, icon, extra )
+						Friend.DOS.getDriveInfo( msg.path, false, function( response, icon, extra )
 						{
 							var nmsg = 
 							{
@@ -895,13 +895,13 @@ function apiWrapper( event, force )
 									data:          data
 								};
 
-								if (msg.callback)
+								if( msg.callback )
 									runWrapperCallback(msg.callback, data);
-							});
+							} );
 						}
 						else
 						{
-							if (msg.callback)
+							if( msg.callback )
 								runWrapperCallback(msg.callback, false);
 						}
 						break;
@@ -921,15 +921,16 @@ function apiWrapper( event, force )
 								}
 							}
 							// If we have a viable door, use it
-							if (door)
+							if( door )
 							{
 								for (var a = 0; a < msg.data.length; a++)
 								{
 									msg.data[a].Dormant = door;
 								}
-								runWrapperCallback(msg.callbackId, msg.data);
+								runWrapperCallback( msg.callbackId, msg.data );
 							}
-						} else
+						}
+						else
 						{
 							runWrapperCallback( msg.callbackId, null );
 						}
@@ -1242,8 +1243,8 @@ function apiWrapper( event, force )
 				}
 				break;
 
-				// Notify ----------------------------------------------------------
-				// Ok, the iframe was loaded!? Check data
+			// Notify ----------------------------------------------------------
+			// Ok, the iframe was loaded!? Check data
 			case 'notify':
 				if ( app.windows && app.windows[msg.viewId] )
 				{
@@ -1614,16 +1615,17 @@ function apiWrapper( event, force )
 							break;
 						case 'activate':
 							// Don't touch moving windows!
-							if( !( window.currentMovable && currentMovable.getAttribute( 'moving' ) == 'moving' ) )
+							if( window.isMobile )
 							{
-								if( !window.isMobile )
+								if( win )
 								{
-									if( win )
-									{
-										win.activate();
-									}
-									WorkspaceMenu.close();
+									win.activate();
 								}
+								WorkspaceMenu.close();
+							}
+							else if( !( window.currentMovable && currentMovable.getAttribute( 'moving' ) == 'moving' ) )
+							{
+								win.activate();	
 							}
 							break;
 					}
@@ -1652,9 +1654,9 @@ function apiWrapper( event, force )
 					}
 
 					var postTarget = app;
-
+					
 					var v = new View( msg.data );
-					var win = msg.parentViewId && app.windows ? app.windows[msg.parentViewId] : false;
+					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{
 						v.parentViewId = msg.parentViewId;
@@ -2608,6 +2610,14 @@ function apiWrapper( event, force )
 				// permission should probably be checked per command?
 				switch( msg.command )
 				{
+					// Support generic callbacks
+					case 'callback':
+						var df = getWrapperCallback( msg.callbackId );
+						if( df )
+						{
+							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
+						}
+						return false;
 					case 'addfilesystemevent':
 						if( msg.event && msg.path )
 						{
@@ -2968,6 +2978,7 @@ function apiWrapper( event, force )
 						if( cw )
 						{
 							var ccb = false;
+							
 							if( nmsg.clickcallback )
 							{
 								var vmsg = {};
@@ -2980,13 +2991,24 @@ function apiWrapper( event, force )
 									cw.postMessage( JSON.stringify( vmsg ), '*' );
 								}
 							}
-
-							Notify( {
-								title: ( msg.title? msg.title.split( /\<[^>]*?\>/ ).join( '' ) : '' ),
-								text: ( msg.text ? msg.text.split( /\<[^>]*?\>/ ).join( '' ) : '' ), application: app ? app.applicationName : '' }, function()
-							{
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}, ccb );
+							
+							// Sanitize title and text
+							var title = msg.title ? msg.title.split( /\<[^>]*?\>/ ).join( '' ) : '';
+							var text = msg.text ? msg.text.split( /\<[^>]*?\>/ ).join( '' ) : '';
+							
+							// Do the notification
+							Notify( 
+								{
+									title: title,
+									text: text, 
+									application: app ? app.applicationName : '' 
+								}, 
+								function()
+								{
+									cw.postMessage( JSON.stringify( nmsg ), '*' );
+								}, 
+								ccb 
+							);
 						}
 						msg.callback = false;
 						break;
@@ -3326,17 +3348,128 @@ function apiWrapper( event, force )
 						}
 						j.send();
 						break;
-					// File dialogs ----------------------------------------------------
+					// Color pickers -------------------------------------------
+					case 'colorpicker':
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[ msg.targetViewId ] : false; // Target for postmessage
+						
+						// Create a color picker
+						if( msg.method == 'new' )
+						{
+							// Success
+							var fs = function( hex )
+							{
+								if( hex.length )
+								{
+									if( msg.successCallback )
+									{
+										var nmsg = {
+											applicationId: msg.applicationId,
+											viewId: msg.viewId,
+											type: 'callback',
+											data: hex,
+											callback: msg.successCallback
+										};
+										if( tar )
+											tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+										else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+									}
+								}
+							}
+							// Cancel
+							var fc = function()
+							{
+								if( msg.failCallback )
+								{
+									var nmsg = {
+										applicationId: msg.applicationId,
+										viewId: msg.viewId,
+										type: 'callback',
+										callback: msg.failCallback
+									};
+									if( tar )
+										tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+									else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								}
+							}
+							var c = new Friend.GUI.ColorPicker( fs, fc );
+							var nmsg = {
+								applicationId: msg.applicationId,
+								viewId: msg.viewId,
+								type: 'callback',
+								callback: msg.failCallback
+							};
+						}
+						// Just activate the color picker view
+						else if( msg.method == 'activate' )
+						{
+							var found = false;
+							for( var a = 0; a < Friend.GUI.ColorPickers.length; a++ )
+							{
+								if( Friend.GUI.ColorPickers[ a ].uniqueId != msg.uniqueId )
+								{
+									continue;
+								}
+								Friend.GUI.ColorPickers[ a ].view.activate();
+								found = true;
+								break;
+							}
+							if( msg.callback )
+							{
+								var nmsg = {
+									applicationId: msg.applicationId,
+									viewId: msg.viewId,
+									type: 'callback',
+									data: found,
+									callback: msg.callback
+								};
+								if( tar )
+									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						// Just close the color picker view
+						else if( msg.method == 'close' )
+						{
+							var found = false;
+							for( var a = 0; a < Friend.GUI.ColorPickers.length; a++ )
+							{
+								if( Friend.GUI.ColorPickers[ a ].uniqueId != msg.uniqueId )
+								{
+									continue;
+								}
+								Friend.GUI.ColorPickers[ a ].view.close();
+								found = true;
+								break;
+							}
+							if( msg.callback )
+							{
+								var nmsg = {
+									applicationId: msg.applicationId,
+									viewId: msg.viewId,
+									type: 'callback',
+									data: found,
+									callback: msg.callback
+								};
+								if( tar )
+									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						break;
+					// File dialogs --------------------------------------------
 					case 'filedialog':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
 						var flags = {
-							mainView:    tar ? tar : win,
-							type:        msg.method,
-							path:        msg.path,
-							title:       msg.title,
-							filename:    msg.filename,
-							multiSelect: msg.multiSelect,
+							mainView:           tar ? tar : win,
+							type:               msg.method,
+							path:               msg.path,
+							title:              msg.title,
+							filename:           msg.filename,
+							suffix:             msg.suffix,
+							multiSelect:        msg.multiSelect,
+							keyboardNavigation: msg.keyboardNavigation,
 							triggerFunction: function( data )
 							{
 								var nmsg = msg;

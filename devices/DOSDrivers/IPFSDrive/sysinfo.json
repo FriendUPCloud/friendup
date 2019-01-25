@@ -1,7 +1,7 @@
 {
 	"type":    "IPFSDrive",
 	"literal": "IPFS filesystem",
-	"group":   "User",
+	"group":   "Admin",
 	"sharing":  "1"
 }
 

@@ -1,6 +1,6 @@
 {
 	"type":    "INRam",
 	"literal": "INRamDOSdriver",
-	"group":   "User",
+	"group":   "Admin",
 	"sharing": "1"
 }

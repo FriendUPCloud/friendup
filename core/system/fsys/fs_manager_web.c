@@ -510,6 +510,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									BufStringDelete( resp );
 									resp = dstBs;
 								}
+								else
+								{
+									BufStringDelete( dstBs );
+								}
 							}
 
 							HttpAddTextContent( response, resp->bs_Buffer );

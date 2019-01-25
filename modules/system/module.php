@@ -686,6 +686,12 @@ if( isset( $args->command ) )
 					if( $o->group == 'Admin' && $level != 'Admin' )
 						continue;
 
+					// Find default label
+					if( file_exists( 'devices/DOSDrivers/' . $f . '/icon.svg' ) )
+					{
+						$o->iconLabel = base64_encode( file_get_contents( 'devices/DOSDrivers/' . $f . '/icon.svg' ) );
+					}
+					
 					if( isset( $o->icon ) && file_exists( 'devices/DOSDrivers/' . $f . '/' . $o->icon ) )
 					{
 						$o->hasIcon = 'true';
@@ -1181,13 +1187,8 @@ if( isset( $args->command ) )
 					$test = 'devices/DOSDrivers/' . $row->Type . '/door.php';
 					if( file_exists( $test ) )
 					{
-						$Logger->log( 'Found: ' . $test );
-						$Logger->log( 'Found ' . 'devices/DOSDrivers/' . $row->Type . '/door.php' );
-
 						$args->command = 'dosaction';
 						$args->action = 'mount';
-
-						$Logger->log( 'right before... ' );
 
 						include_once( $test );
 
@@ -1200,10 +1201,8 @@ if( isset( $args->command ) )
 
 						if( $result = $door->dosAction( $args ) )
 						{
-							$Logger->log( 'Result: ' . $result );
 							die( $result );
 						}
-						$Logger->log( 'Included..' );
 					}
 					else
 					{
@@ -2192,6 +2191,7 @@ if( isset( $args->command ) )
 			$s = new stdClass();
 
 			// The first login test!
+			// NB: This is run on every user login
 			include( 'modules/system/include/firstlogin.php' );
 
 			// Theme information

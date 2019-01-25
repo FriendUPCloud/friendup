@@ -501,13 +501,13 @@ var WorkspaceInside = {
 		{
 			try
 			{
-				this.conn.close();
+				this.conn.ws.close();
 			}
 			catch( ez )
 			{
 				try
 				{
-					this.conn.cleanup();
+					this.conn.ws.cleanup();
 				}
 				catch( ez2 )
 				{
@@ -667,13 +667,161 @@ var WorkspaceInside = {
 					}
 					return;
 				}
-				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
+				//console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
 		}
 		// Handle incoming push notifications and server notifications
-		function handleNotifications( msg )
+		function handleNotifications( nmsg )
 		{
-			console.log( 'Notification received, ', msg );
+			var messageRead = trash = false;
+			
+			if( isMobile )
+			{
+				if( window.friendApp && Workspace.currentViewState != 'active' )
+				{
+					// Cancel push notification on the server
+					var clickCallback = function()
+					{
+						// Tell that it was user initiated
+						nmsg.notificationData.clicked = true;
+						handleNotificationData( nmsg );
+					}
+					// Revert to push notifications on the OS side
+					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
+					return;
+				}
+			}
+			
+			handleNotificationData( nmsg );
+			
+			function handleNotificationData( msg )
+			{
+				// Check if we have notification data
+				if( msg.notificationData )
+				{
+					/*if( !Workspace.debugNotificationLog )
+					{
+						Workspace.debugNotificationLog = {};
+					}
+					if( Workspace.debugNotificationLog[ msg.id ] )
+					{
+						Workspace.debugNotificationLog[ msg.id ]++;
+						return;
+					}
+					else
+					{
+						Workspace.debugNotificationLog[ msg.id ] = 1;
+					}*/
+					
+					// Application notification
+					if( msg.notificationData.application )
+					{
+						// Function to set the notification as read...
+						function notificationRead()
+						{
+							if( trash )
+								clearTimeout( trash );
+							messageRead = true;
+							var l = new Library( 'system.library' );
+							l.onExecuted = function(){};
+							l.execute( 'mobile/updatenotification', { 
+								notifid: msg.notificationData.id, 
+								action: 1, 
+								pawel: 3
+							} );
+						}
+					
+						var appName = msg.notificationData.application;
+					
+						// Find application
+						var apps = Workspace.applications;
+						for( var a = 0; a < apps.length; a++ )
+						{
+							// Found the application
+							if( apps[a].applicationName == appName )
+							{
+								// We read the notification!
+								notificationRead();
+
+								// Post!
+								var amsg = {
+									type: 'system',
+									method: 'notification',
+									callback: false,
+									data: msg.notificationData
+								};
+								apps[ a ].contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+								
+								mobileDebug( ' Send to appk: ' + JSON.stringify( amsg ), true );
+								return;
+							}
+						}
+					
+						// Application not found? Start it!
+						// Send message to app once it has started...
+						function appMessage()
+						{
+							var app = false;
+							for( var a = 0; a < apps.length; a++ )
+							{
+								// Found the application
+								if( apps[ a ].applicationName == appName )
+								{
+									app = apps[ a ];
+									break;
+								}
+							}
+					
+							// No application? Alert the user
+							// TODO: Localize response!
+							if( !app )
+							{
+								Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+								return;
+							}
+					
+							var amsg = {
+								type: 'system',
+								method: 'notification',
+								callback: addWrapperCallback( notificationRead ),
+								data: msg.notificationData
+							};
+							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+					
+							mobileDebug( ' Send to appz: ' + JSON.stringify( amsg ), true );
+							
+							// Delete wrapper callback if it isn't executed within 1 second
+							setTimeout( function()
+							{
+								if( !messageRead )
+								{
+									var trash = getWrapperCallback( amsg.callback );
+									delete trash;
+								}
+							}, 1000 );
+						}
+					
+						// TODO: If we are here, generate a clickable Workspace notification
+						if( msg.notificationData.clicked )
+						{
+							mobileDebug( ' Startappz: ' + appName, true );
+							ExecuteApplication( appName, '', appMessage );
+						}
+						else
+						{
+							var t_title = appName + ' - ' + msg.notificationData.title;
+							var t_txt = msg.notificationData.content;
+							Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
+							function clickCallback()
+							{
+								msg.notificationData.clicked = true;
+								mobileDebug( ' Startappz: ' + appName, true );
+								ExecuteApplication( appName, '', appMessage );
+							}
+						}
+					}
+				}
+			}
 		}
 	},
 	checkFriendNetwork: function()
@@ -835,135 +983,213 @@ var WorkspaceInside = {
 			</div>\
 			';
 
-			var wid = Workspace.widget ? Workspace.widget : m.widget;
-			if( wid )
+			// Mobile launches calendar in a different way, so this 
+			// functionality is only for desktops
+			if( !isMobile )
 			{
-				wid.showing = true;
-			}
+				var wid = Workspace.widget ? Workspace.widget : m.widget;
+				if( wid )
+				{
+					wid.showing = true;
+				}
 
-			if( wid && !wid.initialized )
-			{
-				wid.initialized = true;
+				if( wid && !wid.initialized )
+				{
+					wid.initialized = true;
 
-				var calendar = new Calendar( wid.dom );
-				wid.dom.id = 'CalendarWidget';
+					var calendar = new Calendar( wid.dom );
+					wid.dom.id = 'CalendarWidget';
 				
-				// Mobile hider
-				if( window.isMobile )
-				{
-					var hider = document.createElement( 'div' );
-					hider.className = 'Hider';
-					hider.onclick = function()
+					// Mobile hider
+					if( window.isMobile )
 					{
-						Workspace.widget.slideUp();
-					}
-					wid.dom.appendChild( hider );
-				}
-				Workspace.calendarWidget = wid;
-
-				var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
-				newBtn.onclick = function()
-				{
-					if( calendar.eventWin ) return;
-					
-					var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
-					var dateForm = date.split( '-' );
-					dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
-					
-					calendar.eventWin = new View( {
-						title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
-						width: 500,
-						height: 405
-					} );
-					
-					calendar.eventWin.onClose = function()
-					{
-						calendar.eventWin = false;
-					}
-
-					var f1 = new File( 'System:templates/calendar_event_add.html' );
-					f1.replacements = { date: dateForm };
-					f1.i18n();
-					f1.onLoad = function( data1 )
-					{
-						calendar.eventWin.setContent( data1 );
-					}
-					f1.load();
-
-					// Just close the widget
-					if( !window.isMobile && m && wid )
-						wid.hide();
-				}
-				calendar.addButton( newBtn );
-
-				var geBtn = calendar.createButton( 'fa-wrench' );
-				geBtn.onclick = function()
-				{
-					ExecuteApplication( 'Calendar' );
-				}
-				calendar.addButton( geBtn );
-
-				// Add events to calendar!
-				calendar.eventWin = false;
-				calendar.onSelectDay = function( date )
-				{
-					calendar.date.setDate( parseInt( date.split( '-' )[2] ) );
-					calendar.date.setMonth( parseInt( date.split( '-' )[1] ) - 1 );
-					calendar.date.setFullYear( parseInt( date.split( '-' )[0] ) );
-					calendar.render();
-				}
-
-				calendar.setDate( new Date() );
-				calendar.onRender = function( callback )
-				{
-					var md = new Module( 'system' );
-					md.onExecuted = function( e, d )
-					{
-						try
+						var hider = document.createElement( 'div' );
+						hider.className = 'Hider';
+						hider.onclick = function()
 						{
-							// Update events
-							var eles = JSON.parse( d );
-							calendar.events = [];
-							for( var a in eles )
+							Workspace.widget.slideUp();
+						}
+						wid.dom.appendChild( hider );
+					}
+					Workspace.calendarWidget = wid;
+
+					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
+					newBtn.onclick = function()
+					{
+						if( calendar.eventWin ) return;
+					
+						var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
+						var dateForm = date.split( '-' );
+						dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
+					
+						calendar.eventWin = new View( {
+							title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+							width: 500,
+							height: 405
+						} );
+					
+						calendar.eventWin.onClose = function()
+						{
+							calendar.eventWin = false;
+						}
+
+						var f1 = new File( 'System:templates/calendar_event_add.html' );
+						f1.replacements = { date: dateForm };
+						f1.i18n();
+						f1.onLoad = function( data1 )
+						{
+							calendar.eventWin.setContent( data1 );
+						}
+						f1.load();
+
+						// Just close the widget
+						if( !window.isMobile && m && wid )
+							wid.hide();
+					}
+					calendar.addButton( newBtn );
+
+					var geBtn = calendar.createButton( 'fa-wrench' );
+					geBtn.onclick = function()
+					{
+						ExecuteApplication( 'Calendar' );
+					}
+					calendar.addButton( geBtn );
+
+					// Add events to calendar!
+					calendar.eventWin = false;
+					calendar.onSelectDay = function( date )
+					{
+						calendar.date.setDate( parseInt( date.split( '-' )[2] ) );
+						calendar.date.setMonth( parseInt( date.split( '-' )[1] ) - 1 );
+						calendar.date.setFullYear( parseInt( date.split( '-' )[0] ) );
+						calendar.render();
+					}
+
+					calendar.setDate( new Date() );
+					calendar.onRender = function( callback )
+					{
+						var md = new Module( 'system' );
+						md.onExecuted = function( e, d )
+						{
+							try
 							{
-								if( !calendar.events[eles[a].Date] )
-									calendar.events[eles[a].Date] = [];
-								calendar.events[eles[a].Date].push( eles[a] );
+								// Update events
+								var eles = JSON.parse( d );
+								calendar.events = [];
+								for( var a in eles )
+								{
+									if( !calendar.events[eles[a].Date] )
+										calendar.events[eles[a].Date] = [];
+									calendar.events[eles[a].Date].push( eles[a] );
+								}
+							}
+							catch( e )
+							{
+							}
+							calendar.render( true );
+							wid.autosize();
+							ge( 'DoorsScreen' ).screenObject.resize();
+						}
+						md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
+					}
+					calendar.render();
+					Workspace.calendar = calendar;
+
+					m.calendar = calendar;
+
+					var sess = document.createElement( 'div' );
+					sess.className = 'ActiveSessions';
+					sess.innerHTML = d;
+					wid.dom.appendChild( sess );
+					m.sessions = sess;
+				}
+				else
+				{
+					if( m.calendar )
+					{
+						m.calendar.render();
+						m.sessions.innerHTML = d;
+					}
+				}
+				if( wid )
+					wid.autosize();
+			}
+			// For mobiles, we have a Friend icon at the top of the screen
+			// Also add the app menu
+			else if( !Workspace.topNavigation )
+			{
+				var topNavigation = document.createElement( 'div' );
+				topNavigation.className = 'MobileTopNavigation';
+				Workspace.topNavigation = topNavigation;
+				Workspace.screen.contentDiv.parentNode.appendChild( topNavigation );
+				topNavigation.onclick = function()
+				{
+					if( ge( 'WorkspaceMenu' ) )
+					{
+						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+						document.body.classList.remove( 'WorkspaceMenuOpen' );
+					}
+					if( Workspace.widget )
+						Workspace.widget.slideUp();
+					
+					// Store active window in mainwindow
+					if( window._getAppByAppId )
+					{
+						if( window.currentMovable && currentMovable.applicationId )
+						{
+							var app = _getAppByAppId( currentMovable.applicationId );
+							if( app.mainView )
+							{
+								if( currentMovable.windowObject != app.mainView )
+								{
+									app.mainView.lastActiveView = currentMovable;
+								}
 							}
 						}
-						catch( e )
-						{
-						}
-						calendar.render( true );
-						wid.autosize();
-						ge( 'DoorsScreen' ).screenObject.resize();
 					}
-					md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
+					
+					Workspace.mainDock.closeDesklet();
+					DefaultToWorkspaceScreen();
+					_DeactivateWindows();
+					Friend.GUI.reorganizeResponsiveMinimized();
+					window.focus();
 				}
-				calendar.render();
-				Workspace.calendar = calendar;
-
-				m.calendar = calendar;
-
-				var sess = document.createElement( 'div' );
-				sess.className = 'ActiveSessions';
-				sess.innerHTML = d;
-				wid.dom.appendChild( sess );
-				m.sessions = sess;
-			}
-			else
-			{
-				if( m.calendar )
+				
+				// App menu toggle
+				var appMenu = document.createElement( 'div' );
+				appMenu.className = 'MobileAppMenu';
+				Workspace.appMenu = appMenu;
+				Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
+				appMenu.onclick = function()
 				{
-					m.calendar.render();
-					m.sessions.innerHTML = d;
+					if( ge( 'WorkspaceMenu' ) )
+					{
+						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+						document.body.classList.remove( 'WorkspaceMenuOpen' );
+					}
+					if( document.body.classList.contains( 'AppsShowing' ) )
+					{
+						Workspace.mainDock.closeDesklet();
+						Friend.GUI.reorganizeResponsiveMinimized();
+					}
+					else
+					{
+						Workspace.mainDock.openDesklet();
+					}
 				}
 			}
-			if( wid )
-				wid.autosize();
 		}
 		// FRANCOIS: get unique device IDs...
 		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+	},
+	// Close widgets and return to desktop..
+	goToMobileDesktop: function()
+	{
+		if( Workspace.widget )
+			Workspace.widget.slideUp();
+		Workspace.closeDrivePanel();
+		Workspace.mainDock.closeDesklet();
+		this.exitMobileMenu();
 	},
 	removeCalendarEvent: function( id )
 	{
@@ -1452,6 +1678,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						p = p[0] + ':';
 					}
+					
+					// Control scrolling
+					dd.onscroll = function()
+					{
+						this.scrollTopCached = this.scrollTop;
+					}
+					dd.onmousemove = function()
+					{
+						if( this.scrollTopCached )
+							this.scrollTop = this.scrollTopCached;
+					}
+					// Done controlling scrolling
 
 					var menuHeader = document.createElement( 'div' );
 					menuHeader.className = 'DockMenuHeader';
@@ -1600,6 +1838,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									eles[z].classList.remove( 'Over' );
 								}
 							}
+							
 							if( this.leaveTimeout )
 								clearTimeout( this.leaveTimeout );
 						} );
@@ -1661,6 +1900,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( this.leaveTimeout )
 									clearTimeout( this.leaveTimeout );
 								return cancelBubble( e );
+							}
+							s.subMenu = s.getElementsByClassName( 'DockSubMenu' );
+							
+							// Watch dimensions! We need to support small screens
+							s.onmouseover = function()
+							{
+								if( this.subMenu && this.subMenu.length )
+								{
+									for( var z = 0; z < this.subMenu.length; z++ )
+									{
+										var sub = this.subMenu[z];
+										// Test top
+										var yTest = GetElementTop( sub );
+										if( yTest < 0 )
+										{
+											var top = sub.offsetTop + ( -yTest );
+											sub.style.top = top + 'px';
+										}
+										// Test height
+										if( sub.offsetHeight < sub.lastChild.offsetHeight + sub.lastChild.offsetTop )
+										{
+											sub.style.height = sub.lastChild.offsetHeight + sub.lastChild.offsetTop + 'px';
+										}
+										if( sub.offsetHeight >= Workspace.screen.contentDiv.offsetHeight )
+										{
+											sub.style.height = Workspace.screen.contentDiv.offsetHeight + 'px';
+											sub.style.overflow = 'auto';
+											sub.classList.add( 'ScrollBarSmall' );
+										}
+									}
+								}
 							}
 						}
 						else
@@ -1990,18 +2260,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Workspace.mainDock.addLauncher( ob );
 							}
 						}
-						var fmenu = {
-							click: function( e )
-							{
-								Workspace.openDrivePanel();
-							},
-							type: 'Executable',
-							displayname: i18n( 'i18n_files' ),
-							src: '/iconthemes/friendup15/Folder_Smaller.svg',
-							title: i18n( 'i18n_files' ),
-						};
-						Workspace.mainDock.addLauncher( fmenu );
 					}
+					// File browser
+					var fmenu = {
+						click: function( e )
+						{
+							var u = CryptoJS.SHA1( ( new Date() ).getTime() + ( Math.random() * 999 ) + ( Math.random() * 999 ) + "" ).toString();
+							if( isMobile )
+							{
+								OpenWindowByFileinfo( { Title: 'Mountlist', Path: 'Mountlist:', Type: 'Directory', MetaType: 'Directory' }, false, false, u );
+							}
+							else
+							{
+								OpenWindowByFileinfo( 
+									{ Title: 'Home', Path: 'Home:', Type: 'Directory', MetaType: 'Directory' },
+									false, false, u
+								);
+							}
+							Workspace.mainDock.closeDesklet();
+						},
+						type: 'Executable',
+						displayname: i18n( 'i18n_files' ),
+						src: isMobile ? '/iconthemes/friendup15/Folder_Smaller.svg' : '/iconthemes/friendup15/Folder.svg',
+						title: i18n( 'i18n_files' ),
+					};
+					Workspace.mainDock.addLauncher( fmenu );
 					
 					Workspace.mainDock.initialized();
 					
@@ -2290,66 +2573,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	diskNotification: function( windowList, type )
 	{
 		console.log( 'Disk notification!', windowList, type );
-	},
-	// Render all notifications on the deepest field
-	renderNotifications: function()
-	{
-		// Don't render these on mobile
-		if( window.isMobile ) return;
-
-		// Only add the ones that aren't in!
-		for( var a = 0; a < this.notifications.length; a++ )
-		{
-			var no = this.notifications[a];
-			if( !no.dom )
-			{
-				var d = ( new Date( no.date ) );
-				var d = d.getFullYear() + '-' + StrPad( d.getMonth(), 2, '0' ) + '-' +
-					StrPad( d.getDate(), 2, '0' ) + ' ' + StrPad( d.getHours(), 2, '0' ) +
-					':' + StrPad( d.getMinutes(), 2, '0' ); // + ':' + StrPad( d.getSeconds(), 2, '0' );
-				var n = document.createElement( 'div' );
-				n.className = 'MarginBottom';
-				n.innerHTML = '\
-				<div class="FloatRight IconSmall fa-remove MousePointer" onclick="Workspace.removeNotification(this.parentNode.index)"></div>\
-				<p class="Layout">' + ( no.application ? ( no.application + ': ' ) : ( i18n( 'i18n_system_message' ) + ': ' ) ) + d + '</p>\
-				<p class="Layout"><strong>' + no.msg.title + '</strong></p>\
-				<p class="Layout">' + no.msg.text + '</strong></p>';
-				no.dom = n;
-				ge( 'Notifications' ).appendChild( n );
-			}
-			no.dom.index = a + 1;
-		}
-		if( DeepestField.updateNotificationInformation )
-			DeepestField.updateNotificationInformation();
-		ge( 'Notifications' ).scrollTop = ge( 'Notifications' ).innerHeight + 50;
-	},
-	// TODO: Reenable notifications when the windows can open on the deepest field...
-	removeNotification: function( index )
-	{
-		// Not on mobile
-		if( window.isMobile ) return;
-		if( Workspace.notifications.length <= 0 ) return;
-
-		var nots = Workspace.notifications;
-
-		// Remove by index
-		var out = [];
-		for( var a = 0; a < nots.length; a++ )
-		{
-			if( index == a+1 )
-			{
-				if( nots[a].dom )
-				{
-					nots[a].dom.parentNode.removeChild( nots[a].dom );
-				}
-				continue;
-			}
-			else out.push( nots[a] );
-		}
-		for( var a = 0; a < out.length; a++ ) out[a].dom.index = a+1;
-		Workspace.notifications = out;
-		if( DeepestField.updateNotificationInformation )
-			DeepestField.updateNotificationInformation();
 	},
 	refreshTheme: function( themeName, update, themeConfig )
 	{
@@ -3148,250 +3371,285 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this;
-		var mo = new Module( 'system' );
-		mo.onExecuted = function( returnCode, shortcuts )
+		if( !Friend.dosDrivers )
 		{
-			var m = new Library( 'system.library' )
-			m.onExecuted = function( e, dat )
+			var d = new Module( 'system' );
+			d.onExecuted = function( res, dat )
 			{
-				var newIcons = [];
-
-				// Add system on top (after Ram: if it exists)
-				newIcons.push( {
-					Title:	  'System',
-					Volume:   'System:',
-					Path:	  'System:',
-					Type:	  'Door',
-					Handler:  'built-in',
-					Driver:   'Dormant',
-					MetaType: 'Directory',
-					IconClass:'SystemDisk',
-					ID:	      'system', // TODO: fix
-					Mounted:  true,
-					Visible:  globalConfig.hiddenSystem == true ? false : true,
-					Door:	  Friend.DoorSystem
-				} );
-				
-				if( returnCode == 'ok' )
+				if( res != 'ok' )
 				{
-					var shorts = JSON.parse( shortcuts );
-					for( var a = 0; a < shorts.length; a++ )
-					{
-						var pair = shorts[a].split( ':' );
-						// Shift camelcase
-						var literal = '';
-						for( var c = 0; c < pair[0].length; c++ )
-						{
-							if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
-							{
-								literal += ' ';
-							}
-							literal += pair[0].charAt( c );
-						}
-						
-						// Add custom icon
-						newIcons.push( {
-							Title: literal,
-							Filename: pair[0],
-							Type: 'Executable',
-							IconFile: '/' + pair[1],
-							Handler: 'built-in',
-							Driver: 'Shortcut',
-							MetaType: 'ExecutableShortcut',
-							ID: shorts[a].toLowerCase(),
-							Mounted: true,
-							Visible: true,
-							IconClass: literal.split( ' ' ).join( '_' ),
-							Door: 'executable'
-						} );
-					}
+					doGetMountlistHere();
+					return;
 				}
-
-				// Add DormantDrives to the list (automount)
-				var dormantDoors = DormantMaster.getDoors();
-				for ( var d = 0; d < dormantDoors.length; d++ )
-				{
-					var dormantDoor = dormantDoors[ d ];
-					if ( dormantDoor.AutoMount )
-					{
-						newIcons.push( 
-						{
-							Title: dormantDoor.Title,
-							Volume: dormantDoor.Volume,
-							Path: dormantDoor.Path,
-							Type: dormantDoor.Type,
-							Handler: dormantDoor.Handler,
-							Driver: dormantDoor.Drive,
-							MetaType: dormantDoor.MetaType,
-							IconClass: 'SystemDisk',
-							ID: 'local', // TODO: fix
-							Mounted:  true,
-							Visible: true,
-							Door: dormantDoor,
-							Dormant: dormantDoor.Dormant
-						} );						
-					}
-				}
-
-				// Redraw icons when tested for disk info
-				var redrawIconsT = false;
-				function testDrive( o, d )
-				{
-					if( !d ) return;
-					// Check disk info
-					d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
-					{
-						if( io.split( '<!--separate-->' )[0] == 'ok' )
-						{
-							var fl = new File( o.Volume + 'disk.info' );
-							fl.onLoad = function( data )
-							{
-								if( data.indexOf( '{' ) >= 0 )
-								{
-									var dt = JSON.parse( data );
-									if( dt && dt.DiskIcon )
-									{
-										o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
-										clearTimeout( redrawIconsT );
-										redrawIconsT = setTimeout( function()
-										{
-											t.redrawIcons();
-										}, 100 );
-									}
-								}
-							}
-							fl.load();
-						}
-						clearTimeout( redrawIconsT );
-						redrawIconsT = setTimeout( function()
-						{
-							t.redrawIcons();
-						}, 100 );
-					} );
-				}
-
-				// Network devices
-				var rows;
+				var types = null;
 				try
 				{
-					rows = JSON.parse( dat );
-				}
-				catch(e)
-				{
-					rows = false;
-					console.log( 'Could not parse network drives',e,dat );
-				}
-
-				if( rows && rows.length )
-				{
-					for ( var a = 0; a < rows.length; a++ )
+					var types = JSON.parse( dat );
+					Friend.dosDrivers = {};
+					for( var a = 0; a < types.length; a++ )
 					{
-						var r = rows[a];
-						if( r.Config.indexOf( '{' ) >= 0 )
-							r.Config = JSON.parse( r.Config );
-
-						// Check if it was already found!
-						var found = false;
-						for( var va in t.icons )
-						{
-							if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
-							{
-								found = true;
-								if( !forceRefresh )
-									newIcons.push( t.icons[va] );
-								break;
-							}
-						}
-						if( found && !forceRefresh )
-						{
-							continue;
-						}
-
-						// Doesn't exist, go on
-						var o = false;
-
-						var d;
-
-						d = ( new Door() ).get( r.Name + ':' );
-						d.permissions[0] = 'r';
-						d.permissions[1] = 'w';
-						d.permissions[2] = 'e';
-						d.permissions[3] = 'd';
-
-						var o = {
-							Title: r.Name.split(':').join(''),
-							Volume: r.Name.split(':').join('') + ':',
-							Path: r.Name.split(':').join('') + ':',
-							Handler: r.FSys,
-							Type: 'Door',
-							MetaType: 'Directory',
-							ID: r.ID,
-							Mounted: true,
-							Driver: r.Type,
-							Door: d,
-							Visible: r.Visible != "false" ? true : false,
-							Config: r.Config
-						};
-
-						// Execute it if it has execute flag set! Only the first time..
-						if( !found && r.Execute )
-						{
-							ExecuteJSXByPath( o.Volume + r.Execute );
-						}
-
-						// Force mount
-						var f = new FriendLibrary( 'system.library' );
-						f.addVar( 'devname', r.Name.split(':').join('') );
-						f.execute( 'device/mount' );
-
-						// We need volume information
-						d.Volume = o.Volume;
-						//d.Type = typ;
-
-						testDrive( o, d );
-
-						// Add to list
-						newIcons.push( o );
+						Friend.dosDrivers[ types[ a ].type ] = types[a];
 					}
 				}
-
-				// The new list
-				if( newIcons.length )
+				catch( e )
 				{
-					// Check change
-					if( t.icons )
+					Friend.dosDrivers = null;
+				}
+				doGetMountlistHere();
+			}
+			d.execute( 'types' );
+		}
+		else
+		{
+			doGetMountlistHere();
+		}
+		function doGetMountlistHere()
+		{
+			var mo = new Module( 'system' );
+			mo.onExecuted = function( returnCode, shortcuts )
+			{
+				var m = new Library( 'system.library' )
+				m.onExecuted = function( e, dat )
+				{
+					var newIcons = [];
+
+					// Add system on top (after Ram: if it exists)
+					newIcons.push( {
+						Title:	   'System',
+						Volume:    'System:',
+						Path:	   'System:',
+						Type:	   'Door',
+						Handler:   'built-in',
+						Driver:    'Dormant',
+						MetaType:  'Directory',
+						IconClass: 'SystemDisk',
+						ID:	       'system', // TODO: fix
+						Mounted:   true,
+						Visible:   globalConfig.hiddenSystem == true ? false : true,
+						Door:	   Friend.DoorSystem
+					} );
+				
+					if( returnCode == 'ok' )
 					{
-						for( var a = 0; a < t.icons.length; a++ )
+						var shorts = JSON.parse( shortcuts );
+						for( var a = 0; a < shorts.length; a++ )
 						{
-							var found = false;
-							for( var b = 0; b < newIcons.length; b++ )
+							var pair = shorts[a].split( ':' );
+							// Shift camelcase
+							var literal = '';
+							for( var c = 0; c < pair[0].length; c++ )
 							{
-								if( newIcons[b].Volume == t.icons[a].Volume )
+								if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
+								{
+									literal += ' ';
+								}
+								literal += pair[0].charAt( c );
+							}
+						
+							// Add custom icon
+							newIcons.push( {
+								Title: literal,
+								Filename: pair[0],
+								Type: 'Executable',
+								IconFile: '/' + pair[1],
+								Handler: 'built-in',
+								Driver: 'Shortcut',
+								MetaType: 'ExecutableShortcut',
+								ID: shorts[a].toLowerCase(),
+								Mounted: true,
+								Visible: true,
+								IconClass: literal.split( ' ' ).join( '_' ),
+								Door: 'executable'
+							} );
+						}
+					}
+
+					// Add DormantDrives to the list (automount)
+					var dormantDoors = DormantMaster.getDoors();
+					for ( var d = 0; d < dormantDoors.length; d++ )
+					{
+						var dormantDoor = dormantDoors[ d ];
+						if ( dormantDoor.AutoMount )
+						{
+							newIcons.push( 
+							{
+								Title: dormantDoor.Title,
+								Volume: dormantDoor.Volume,
+								Path: dormantDoor.Path,
+								Type: dormantDoor.Type,
+								Handler: dormantDoor.Handler,
+								Driver: dormantDoor.Drive,
+								MetaType: dormantDoor.MetaType,
+								IconClass: 'SystemDisk',
+								ID: 'local', // TODO: fix
+								Mounted:  true,
+								Visible: true,
+								Door: dormantDoor,
+								Dormant: dormantDoor.Dormant
+							} );						
+						}
+					}
+
+					// Redraw icons when tested for disk info
+					var redrawIconsT = false;
+					function testDrive( o, d )
+					{
+						if( !d ) return;
+						// Check disk info
+						d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
+						{
+							if( io.split( '<!--separate-->' )[0] == 'ok' )
+							{
+								var fl = new File( o.Volume + 'disk.info' );
+								fl.onLoad = function( data )
+								{
+									if( data.indexOf( '{' ) >= 0 )
+									{
+										var dt = JSON.parse( data );
+										if( dt && dt.DiskIcon )
+										{
+											o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
+											clearTimeout( redrawIconsT );
+											redrawIconsT = setTimeout( function()
+											{
+												t.redrawIcons();
+											}, 100 );
+										}
+									}
+								}
+								fl.load();
+							}
+							clearTimeout( redrawIconsT );
+							redrawIconsT = setTimeout( function()
+							{
+								t.redrawIcons();
+							}, 100 );
+						} );
+					}
+
+					// Network devices
+					var rows;
+					try
+					{
+						rows = JSON.parse( dat );
+					}
+					catch(e)
+					{
+						rows = false;
+						console.log( 'Could not parse network drives',e,dat );
+					}
+
+					if( rows && rows.length )
+					{
+						for ( var a = 0; a < rows.length; a++ )
+						{
+							var r = rows[a];
+							if( r.Config.indexOf( '{' ) >= 0 )
+								r.Config = JSON.parse( r.Config );
+
+							// Check if it was already found!
+							var found = false;
+							for( var va in t.icons )
+							{
+								if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
 								{
 									found = true;
+									if( !forceRefresh )
+										newIcons.push( t.icons[va] );
 									break;
 								}
 							}
-							if( !found )
+							if( found && !forceRefresh )
 							{
-								testDrive( t.icons[a], t.icons[a].Door )
-								break;
+								continue;
 							}
+
+							// Doesn't exist, go on
+							var o = false;
+
+							var d;
+
+							d = ( new Door() ).get( r.Name + ':' );
+							d.permissions[0] = 'r';
+							d.permissions[1] = 'w';
+							d.permissions[2] = 'e';
+							d.permissions[3] = 'd';
+
+							var o = {
+								Title: r.Name.split(':').join(''),
+								Volume: r.Name.split(':').join('') + ':',
+								Path: r.Name.split(':').join('') + ':',
+								Handler: r.FSys,
+								Type: 'Door',
+								MetaType: 'Directory',
+								ID: r.ID,
+								Mounted: true,
+								Driver: r.Type,
+								Door: d,
+								Visible: r.Visible != "false" ? true : false,
+								Config: r.Config
+							};
+
+							// Execute it if it has execute flag set! Only the first time..
+							if( !found && r.Execute )
+							{
+								ExecuteJSXByPath( o.Volume + r.Execute );
+							}
+
+							// Force mount
+							var f = new FriendLibrary( 'system.library' );
+							f.addVar( 'devname', r.Name.split(':').join('') );
+							f.execute( 'device/mount' );
+
+							// We need volume information
+							d.Volume = o.Volume;
+							//d.Type = typ;
+
+							testDrive( o, d );
+
+							// Add to list
+							newIcons.push( o );
 						}
 					}
-					t.icons = newIcons;
-				}
-				// Do the callback thing
-				if( callback && typeof( callback ) == 'function' ) callback( t.icons );
 
-				// Check for new events
-				t.checkDesktopEvents();
+					// The new list
+					if( newIcons.length )
+					{
+						// Check change
+						if( t.icons )
+						{
+							for( var a = 0; a < t.icons.length; a++ )
+							{
+								var found = false;
+								for( var b = 0; b < newIcons.length; b++ )
+								{
+									if( newIcons[b].Volume == t.icons[a].Volume )
+									{
+										found = true;
+										break;
+									}
+								}
+								if( !found )
+								{
+									testDrive( t.icons[a], t.icons[a].Door )
+									break;
+								}
+							}
+						}
+						t.icons = newIcons;
+					}
+					// Do the callback thing
+					if( callback && typeof( callback ) == 'function' ) callback( t.icons );
+
+					// Check for new events
+					t.checkDesktopEvents();
+				}
+				m.execute( 'device/list' );
 			}
-			m.execute( 'device/list' );
+			mo.forceHTTP = true;
+			mo.forceSend = true;
+			mo.execute( 'workspaceshortcuts' );
 		}
-		mo.forceHTTP = true;
-		mo.forceSend = true;
-		mo.execute( 'workspaceshortcuts' );
 
 		return true;
 	},
@@ -3775,16 +4033,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					path: icon.Path
 				}, function( result, data )
 				{
-					console.log( result, data );
 					if( win && win.content.refresh )
 						win.content.refresh();
-					Workspace.renameWindow.close();
+					if( Workspace.renameWindow )
+						Workspace.renameWindow.close();
 				} );
 			}
 			else
 			{
 				Alert( i18n( 'i18n_cannotRename' ), i18n( 'i18n_noWritePermission' ) );
-				Workspace.renameWindow.close();
+				if( Workspace.renameWindow )
+					Workspace.renameWindow.close();
 			}
 			return;
 		}
@@ -3793,10 +4052,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			path: icon.Path
 		}, function( result, data)
 			{
-				console.log( result, data );
 				if( win && win.content.refresh )
 					win.content.refresh();
-				Workspace.renameWindow.close();
+				if( Workspace.renameWindow )
+					Workspace.renameWindow.close();
 			}
 		);
 	},
@@ -5153,10 +5412,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return;
 		}
 
+		if( this.uploadWindow )
+		{
+			return this.uploadWindow.activate();
+		}
+
 		var fi = false;
 		if( currentMovable && currentMovable.content.fileInfo )
 			fi = currentMovable.content.fileInfo.Path;
-
+		
 		var w = new View( {
 			title: i18n( 'i18n_choose_file_to_upload' ),
 			width: 370,
@@ -5167,6 +5431,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: true,
 			screen: Workspace.screen
 		} );
+		
+		this.uploadWindow = w;
+		w.onClose = function()
+		{
+			Workspace.uploadWindow = null;
+		}
+		
+		
 		var f = new File( '/webclient/templates/file_upload.html' );
 		f.i18n()
 		f.onLoad = function( data )
@@ -5200,6 +5472,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var fu = ge( 'fileUpload' );
 				if( fu )
 				{
+					if( arr == 'Mountlist:' || !arr )
+					{
+						arr = 'Home:';
+					}
 					fu.path.value = arr;
 				}
 				Workspace.fupdialog = false;
@@ -5276,9 +5552,54 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		});
 	},
+	// Pick the prev window
 	handleBackButton: function()
 	{
-		Notify({'title':'Back button pressed.','text':'Handle this in workspace_inside line 4660.'});
+		if( !this.mobileViews )
+		{
+			this.mobileViews = {
+				prev: null,
+				application: currentMovable ? currentMovable.applicationId : false
+			};
+		}
+		
+		// Update view history with current application id
+		if( currentMovable )
+		{
+			FocusOnNothing();
+			if( currentMovable.applicationId )
+			{
+				if( window._getAppByAppId )
+				{
+					var app = _getAppByAppId( currentMovable.applicationId );
+					if( app.mainView )
+					{
+						_ActivateWindow( app.mainView.content.parentNode );
+						return;
+					}
+				}
+				this.mobileViews.application = currentMovable.applicationId;
+			}
+			else if( currentMovable.content.directoryview )
+			{
+				return currentMovable.content.directoryview.buttonUp.onclick();
+			}
+		}
+		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
+		{
+			var fg = Friend.GUI.view.viewHistory[ a ];
+			var pg = Friend.GUI.view.viewHistory[ a - 1 ];
+			// Not the same app, just revert
+			if( fg.applicationId != this.mobileViews.application )
+				break;
+			if( a > 0 && currentMovable == fg && ( !this.mobileViews.prev || this.mobileViews.prev != pg ) )
+			{
+				this.mobileViews.prev = fg;
+				_ActivateWindow( pg );
+				return;
+			}
+		}
+		_DeactivateWindows();
 	},
 	// Get a list of all applications ------------------------------------------
 	listApplications: function()
@@ -5677,7 +5998,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ 
 							if( window.friendBook )
 							{
-								// Just leavd!
+								// Just leave!
 								Workspace.leave = function(){};
 								Workspace.doLeave = function(){};
 								window.close();
@@ -5871,7 +6192,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.openDirectory(); },
 						disabled: !iconsSelected
 					},*/
-					iconsAvailable ? {
+					!isMobile && iconsAvailable ? {
 						name: i18n( 'menu_show_as' ),
 						items:
 						[
@@ -5905,7 +6226,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},*/
 					{
 						name:	i18n( 'menu_close_window' ),
-						command: function(){ CloseWindow( window.currentMovable ) },
+						command: function(){ CloseWindow( window.currentMovable ); if( isMobile ) Workspace.exitMobileMenu(); },
 						disabled: !windowsOpened
 					}
 				]
@@ -5916,7 +6237,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				items: Workspace.getBookmarks()
 			}*/
 		];
-
+		
 		// Generate
 		if( !prohibitworkspaceMenu )
 		{
@@ -6605,6 +6926,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) return;
 
+		if( this.launcherWindow )
+		{
+			return this.launcherWindow.activate();
+		}
 		var w = new View( {
 			title: i18n( 'menu_execute_command' ),
 			width: 320,
@@ -6614,6 +6939,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: false,
 			id: 'launcherview'
 		} );
+		
+		w.onClose = function()
+		{
+			Workspace.launcherWindow = null;
+		}
+		
 		var f = new File( 'templates/runcommand.html' );
 		f.replacements = {
 			'execute' : i18n( 'cmd_execute' ),
@@ -6651,7 +6982,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		for( var a in movableWindows )
 		{
-			movableWindows[a].setAttribute( 'minimized', 'minimized' );
+			if( movableWindows[ a ].minimize )
+				movableWindows[ a ].minimize.onclick();
 		}
 		PollTaskbar();
 		Workspace.mainDock.refresh();
@@ -6659,11 +6991,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//
 	hideInactiveViews: function()
 	{
+		var v = currentMovable;
 		for( var a in movableWindows )
 		{
-			if( movableWindows[a].classList.contains( 'Active' ) )
-				continue;
-			movableWindows[a].setAttribute( 'minimized', 'minimized' );
+			if( movableWindows[ a ] != v )
+			{
+				if( movableWindows[ a ].minimize )
+					movableWindows[ a ].minimize.onclick();
+			}
 		}
 		PollTaskbar();
 		Workspace.mainDock.refresh();
@@ -6863,7 +7198,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		var el = ele ? ele : ( document.documentElement ? document.documentElement : document.body );
-		var toggle = el.fullscreenEnabled;
+		var toggle = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
 		if( !toggle )
 		{
 			if( el.requestFullscreen )
@@ -7302,6 +7637,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		};
 		console.log('trying to upload here...',fileMessage);
 		uworker.postMessage( fileMessage );		
+	},
+	updateViewState: function( newState )
+	{
+		if( newState == 'active' )
+		{
+			document.body.classList.add( 'ViewStateActive' );
+			if( isMobile )
+			{
+				Workspace.initWebSocket();
+			}
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewStateActive' );
+		}
+		this.currentViewState = newState;
 	}
 
 };
@@ -7493,6 +7844,68 @@ function DoorsKeyDown( e )
 		}
 	}
 	
+	// Check keys on directoryview ---------------------------------------------
+	if( currentMovable && currentMovable.content.directoryview )
+	{
+		if( w == 113 || w == 27 )
+		{
+			var icons = currentMovable.content.icons;
+			for( var a = 0; a < icons.length; a++ )
+			{
+				if( icons[a].domNode && icons[a].domNode.classList.contains( 'Selected' ) )
+				{
+					// Abort editing
+					if( w == 27 )
+					{
+						for( var b = 0; b < icons.length; b++ )
+						{
+							if( icons[b].domNode )
+							{
+								icons[b].domNode.classList.remove( 'Selected' );
+								icons[b].domNode.classList.remove( 'Editing' );
+								if( icons[b].editField )
+								{
+									icons[b].editField.parentNode.removeChild( icons[b].editField );
+									icons[b].editField = null;
+								}
+							}
+						}
+						return cancelBubble( e );
+					}
+					icons[a].domNode.classList.add( 'Editing' );
+					var input = document.createElement( 'textarea' );
+					input.className = 'Title';
+					icons[a].editField = input;
+					input.value = icons[a].domNode.getElementsByClassName( 'Title' )[0].innerText;
+					input.dom = icons[a].domNode;
+					icons[a].domNode.input = input;
+					input.ico = icons[a];
+					input.onkeydown = function( e )
+					{
+						clearTimeout( Workspace.editing );
+						Workspace.editing = setTimeout( function()
+						{
+							Workspace.editing = false;
+						}, 100 );
+						if( e.which == 13 )
+						{
+							Workspace.executeRename( this.value, this.ico, currentMovable );
+							this.ico.editField = null;
+							this.dom.input = null;
+							this.dom.removeChild( this );
+						}
+					}
+					setTimeout( function()
+					{
+						input.select();
+						input.focus();
+					}, 50 );
+					icons[a].domNode.appendChild( input );
+				}
+			}
+		}
+	}
+	
 	if( ( e.shiftKey && e.ctrlKey ) || e.metaKey )
 	{
 		if( globalConfig && globalConfig.workspacecount > 1 )
@@ -7557,7 +7970,10 @@ function DoorsKeyDown( e )
 					mousePointer.dom.innerHTML = '';
 					mousePointer.drop();
 					if( currentMovable && currentMovable.content )
-						currentMovable.content.refresh();
+					{
+						if( currentMovable.content.refresh )
+							currentMovable.content.refresh();
+					}
 					return;
 				}
 				if( currentMovable )
@@ -7666,6 +8082,14 @@ function InitWorkspaceEvents()
 	}
 	else
 	{
+		// Track fullscreen
+		window.addEventListener( 'fullscreenchange', function( e )
+		{
+			// Add class when needed
+			if( document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement )
+				document.body.classList.add( 'Fullscreen' );
+			else document.body.classList.remove( 'Fullscreen' );
+		}, false );
 		window.addEventListener( 'mouseout', DoorsOutListener, false );
 		window.addEventListener( 'mouseleave', DoorsLeaveListener, false );
 		window.addEventListener( 'resize', WindowResizeFunc );
@@ -7941,35 +8365,208 @@ InitDynamicClassSystem();
 
 document.addEventListener( 'paste', function( evt )
 {
-	console.log('paste event received',evt);
+	//console.log('paste event received',evt);
 	Workspace.handlePasteEvent( evt );
 });
 
-// Push notification integration
+// Push notification integration and other app events --------------------------
 if( window.friendApp )
 {
-	friendApp.pushListener = function()
+	// Receive a click from an app bubble (notification on app side)
+	Workspace.receiveAppBubbleClick = function( cid )
 	{
-		this.get_notification( function( msg )
+		// Run the click callback
+		var func = getWrapperCallback( cid );
+		if( func )
 		{
-			try
+			func();
+		}
+	}
+	// Receive push notification
+	Workspace.receivePush = function()
+	{
+		var msg = friendApp.get_notification();
+		if( !msg ) return;
+		try
+		{
+			mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')', true );
+			msg = JSON.parse( msg );
+			if( !msg ) return;
+			
+			mobileDebug( 'We received a message.' );
+			mobileDebug( JSON.stringify( msg ) );
+			
+			// We did a user interaction here
+			msg.clicked = true;
+			
+			// Clear the notifications now... (race cond?)
+			friendApp.clear_notifications();
+			
+			var messageRead = trash = false;
+			
+			if( !msg.application ) return;
+			
+			for( var a = 0; a < Workspace.applications.length; a++ )
 			{
-				var data = JSON.parse( msg );
-				for( var a = 0; a < Workspace.applications.length; a++ )
-				{
-					if( Workspace.applications[a].applicationName == data.category )
+				if( Workspace.applications[a].applicationName == msg.application )
+				{	
+					// Need a "message id" to be able to update notification
+					// on the Friend Core side
+					if( msg.id )
 					{
-						var app = Workspace.applications[a];
-						app.postMessage( { command: 'push_notification', data: data }, '*' );
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.id, 
+							action: 1,
+							pawel: 1
+						} );
 					}
+					
+					mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
+					
+					var app = Workspace.applications[a];
+					app.contentWindow.postMessage( JSON.stringify( { 
+						type: 'system',
+						method: 'pushnotification',
+						callback: false,
+						data: msg
+					} ), '*' );
+					return;
 				}
 			}
-			catch( e )
+			
+			// Function to set the notification as read...
+			function notificationRead()
 			{
-				// How to handle?
+				messageRead = true;
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.id, 
+					action: 1,
+					pawel: 2
+				} );
 			}
-		} );
+			
+			// Application not found? Start it!
+			// Send message to app once it has started...
+			function appMessage()
+			{
+				var app = false;
+				var apps = Workspace.applications;
+				for( var a = 0; a < apps.length; a++ )
+				{
+					// Found the application
+					if( apps[ a ].applicationName == msg.application )
+					{
+						app = apps[ a ];
+						break;
+					}
+				}
+				
+				// No application? Alert the user
+				// TODO: Localize response!
+				if( !app )
+				{
+					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+					return;
+				}
+				
+				if( !app.contentWindow ) 
+				{
+					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+					return;
+				}
+				
+				var amsg = {
+					type: 'system',
+					method: 'pushnotification',
+					callback: addWrapperCallback( notificationRead ),
+					data: msg
+				};
+				
+				mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
+				
+				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+				
+				// Delete wrapper callback if it isn't executed within 1 second
+				setTimeout( function()
+				{
+					if( !messageRead )
+					{
+						getWrapperCallback( amsg.callback );
+					}
+				}, 1000 );
+			}
+			
+			mobileDebug( 'Start app ' + msg.application, true );
+			
+			ExecuteApplication( msg.application, '', appMessage )
+		}
+		catch( e )
+		{
+			// Do nothing for now...
+			//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
+		}
 	}
-	window.addEventListener( 'focus', friendApp.pushListener, true );
 }
+
+// TODO: Remove me after test
+document.addEventListener( 'visibilitychange' , function(){
+	if( document.hidden )
+	{
+		Workspace.updateViewState( 'inactive' );
+	} 
+	else 
+	{
+		Workspace.updateViewState( 'active' );
+	}
+}, false );
+
+// Make sure to register if the document is active
+if( document.hidden )
+{
+	Workspace.updateViewState( 'inactive' );
+} 
+else 
+{
+	Workspace.updateViewState( 'active' );
+}
+
+// Debug blob:
+if( isMobile )
+{
+	/*var debug = document.createElement( 'div' );
+	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
+	debug.style.bottom = '0px';
+	debug.style.width = '100%';
+	debug.style.height = '80px';
+	debug.style.left = '0px';
+	debug.style.color = 'black';
+	debug.style.position = 'absolute';
+	debug.style.zIndex = 10000000;
+	debug.style.pointerEvents = 'none';
+	window.debugDiv = debug;
+	document.body.appendChild( debug );*/
+}
+var mobileDebugTime = null;
+function mobileDebug( str, clear )
+{
+	if( !isMobile ) return;
+	if( !window.debugDiv ) return;
+	if( mobileDebugTime ) clearTimeout( mobileDebugTime );
+	if( clear )
+	{
+		window.debugDiv.innerHTML = '';
+	}
+	window.debugDiv.innerHTML += str + '<br>';
+	mobileDebugTime = setTimeout( function()
+	{
+		window.debugDiv.innerHTML = '';
+		mobileDebugTime = null;
+	}, 15000 );
+}
+
 

@@ -336,6 +336,8 @@ SystemBase *SystemInit( void )
 			
 			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
 			
+			l->sl_MasterServer = StringDuplicate( plib->ReadStringNCS( prop, "core:masterserveraddress", "pal.ideverket.no") );
+			
 			char *tptr  = plib->ReadStringNCS( prop, "core:ClientCert", NULL );
 			if( tptr != NULL )
 			{
@@ -392,32 +394,10 @@ SystemBase *SystemInit( void )
 				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 			}
 
-			const char *notifications_auth_key = plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL );
-			if( notifications_auth_key )
-			{
-				if( strlen( notifications_auth_key ) > 10 )
-				{
-					WebsocketNotificationsSetAuthKey(notifications_auth_key);
-				}
-				else
-				{
-					Log( FLOG_INFO, "Mobile notifications service - auth key is too short!\n");
-					return NULL;
-				}
-			}
-			else
-			{
-				Log( FLOG_INFO, "Mobile notifications service - no auth key, service will be disabled\n");
-			}
-			
 			l->l_AppleServerHost = StringDuplicate( plib->ReadStringNCS( prop, "NotificationService:host", NULL ) );
 			
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
 
-			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:apns", NULL ) );
-			
-			l->l_PresenceKey = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL ) );
-			
 			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
 			if( tptr != NULL )
 			{
@@ -425,6 +405,9 @@ SystemBase *SystemInit( void )
 			}
 			
 			globalFriendCorePort = plib->ReadIntNCS( prop, "core:port", FRIEND_CORE_PORT );
+			
+			// additional server keys char ** iniparser_getseckeys(dictionary * d, char * s) - gret number of entries in group
+			l->l_ServerKeysNum = ReadGroupEntries( prop, "ServiceKeys", &(l->l_ServerKeys), &(l->l_ServerKeyValues) );
 		}
 		else
 		{
@@ -601,6 +584,18 @@ SystemBase *SystemInit( void )
 		{
 			WebSocketDelete( l->fcm->fcm_WebSocket );
 			l->fcm->fcm_WebSocket = NULL;
+		}
+		
+		if( l->fcm->fcm_WebSocketMobile != NULL )
+		{
+			WebSocketDelete( l->fcm->fcm_WebSocketMobile );
+			l->fcm->fcm_WebSocketMobile = NULL;
+		}
+		
+		if( l->fcm->fcm_WebSocketNotification != NULL )
+		{
+			WebSocketDelete( l->fcm->fcm_WebSocketNotification );
+			l->fcm->fcm_WebSocketNotification = NULL;
 		}
 		
 		FERROR("FriendCoreManagerInit fail!\n");
@@ -868,6 +863,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize USMNew\n");
 	}
 	
+	l->sl_UGM = UGMNew( l );
+	if( l->sl_UGM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
+	}
+	
 	l->sl_UM = UMNew( l );
 	if( l->sl_UM == NULL )
 	{
@@ -930,6 +931,13 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
 	
+	l->sl_NotificationManager = NotificationManagerNew( l );
+	if( l->sl_NotificationManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
+	}
+	
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -967,7 +975,7 @@ SystemBase *SystemInit( void )
 	EventAdd( l->sl_EventManager, RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
 	//@BG-678 
-	EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
+	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
 	if( l->l_EnableHTTPChecker == 1 )
 	{
@@ -1004,7 +1012,7 @@ void SystemClose( SystemBase *l )
 	
 	if( l->l_APNSConnection != NULL )
 	{
-		WebsocketClientDelete( l->l_APNSConnection );
+		WebsocketAPNSConnectorDelete( l->l_APNSConnection );
 		l->l_APNSConnection = NULL;
 	}
 	
@@ -1086,6 +1094,11 @@ void SystemClose( SystemBase *l )
 	}
 
 	DEBUG("Delete Managers\n");
+	
+	if( l->sl_NotificationManager != NULL )
+	{
+		NotificationManagerDelete( l->sl_NotificationManager );
+	}
 	if( l->sl_CalendarManager != NULL )
 	{
 		CalendarManagerDelete( l->sl_CalendarManager );
@@ -1096,7 +1109,11 @@ void SystemClose( SystemBase *l )
 	}
 	if( l->sl_UM != NULL )
 	{
-		UMDelete(  l->sl_UM );
+		UMDelete( l->sl_UM );
+	}
+	if( l->sl_UGM != NULL )
+	{
+		UGMDelete( l->sl_UGM );
 	}
 	if( l->sl_FSM != NULL )
 	{
@@ -1244,6 +1261,11 @@ void SystemClose( SystemBase *l )
 		FFree( l->sl_FSysPath );
 		l->sl_FSysPath = NULL;
 	}
+	if( l->sl_MasterServer != NULL )
+	{
+		FFree( l->sl_MasterServer );
+		l->sl_MasterServer = NULL;
+	}
 	
 	// close magic door of awesomeness!
 	if( l->sl_Magic != NULL )
@@ -1291,15 +1313,23 @@ void SystemClose( SystemBase *l )
 	{
 		FFree( l->l_AppleServerHost );
 	}
-
-	if( l->l_AppleKeyAPI != NULL )
-	{
-		FFree( l->l_AppleKeyAPI );
-	}
 	
-	if( l->l_PresenceKey != NULL )
+	if( l->l_ServerKeysNum > 0 )
 	{
-		FFree( l->l_PresenceKey );
+		int i;
+		for( i=0 ; i < l->l_ServerKeysNum; i++ )
+		{
+			if( l->l_ServerKeys[i] != NULL )
+			{
+				free( l->l_ServerKeys[i] );
+			}
+			if( l->l_ServerKeyValues[i] != NULL )
+			{
+				free( l->l_ServerKeyValues[i] );
+			}
+		}
+		free( l->l_ServerKeys );
+		free( l->l_ServerKeyValues );
 	}
 	
 	xmlCleanupParser();
@@ -1322,22 +1352,7 @@ int SystemInitExternal( SystemBase *l )
 	DEBUG("[SystemBase] SystemInitExternal\n");
 	
 	USMRemoveOldSessionsinDB( l );
-	
-	DEBUG("[SystembaseInitExternal]APNS init\n" );
-	
-	l->l_APNSConnection = WebsocketClientNew( l->l_AppleServerHost, l->l_AppleServerPort, NULL );
-	if( l->l_APNSConnection != NULL )
-	{
-		if( WebsocketClientConnect( l->l_APNSConnection ) > 0 )
-		{
-			DEBUG("APNS server connected\n");
-		}
-		else
-		{
-			DEBUG("APNS server not connected\n");
-		}
-	}
-	
+
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
@@ -1345,10 +1360,6 @@ int SystemInitExternal( SystemBase *l )
 		//  get all users active
 	
 		time_t timestamp = time ( NULL );
-	
-		Log( FLOG_INFO,  "[SystemBase] Loading groups from DB\n");
-	
-		l->sl_UM->um_UserGroups = LoadGroups( l );
 		
 		//
 		// get sentinel
@@ -1601,7 +1612,8 @@ int SystemInitExternal( SystemBase *l )
 		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
 		Log( FLOG_INFO, "----------------------------------------------------\n");
 		
-		UserGroup *ug = l->sl_UM->um_UserGroups;
+		
+		
 		/*
 		User *sentUser = NULL;
 		if( l->sl_Sentinel != NULL )
@@ -1609,22 +1621,11 @@ int SystemInitExternal( SystemBase *l )
 			sentUser = l->sl_Sentinel->s_User;
 		}*/
 		
-		while( ug != NULL )
-		{
-			//UserGroupDeviceMount( l, sqllib, ug, NULL );
-			UserGroupDeviceMount( l, sqllib, ug, l->sl_UM->um_APIUser );
-			ug = (UserGroup *)ug->node.mln_Succ;
-		}
+		
 		
 		l->LibrarySQLDrop( l, sqllib );
-	}
-	
-	// we must launch mobile manager when all sessions and users are loaded
-	
-	l->sl_MobileManager = MobileManagerNew( l );
-	if( l->sl_MobileManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+		
+		UGMMountDrives( l->sl_UGM );
 	}
 	
 	// mount INRAM drive
@@ -1645,6 +1646,36 @@ int SystemInitExternal( SystemBase *l )
 	
 	
 	// test websocket client connection
+	
+	// we must launch mobile manager when all sessions and users are loaded
+	
+	l->sl_MobileManager = MobileManagerNew( l );
+	if( l->sl_MobileManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
+	DEBUG("[SystembaseInitExternal]APNS init\n" );
+	
+	/*
+	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
+	if( l->l_APNSConnection != NULL )
+	{
+		
+		//if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
+		//{
+		//	DEBUG("APNS server connected\n");
+		//}
+		//else
+		//{
+		//	DEBUG("APNS server not connected\n");
+		//}
+	}
+	else
+	{
+		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
+	}
+	*/
 	
 	return 0;
 }
@@ -1898,27 +1929,6 @@ void CheckAndUpdateDB( struct SystemBase *l )
 	Log( FLOG_INFO, "----------------------------------------------------\n");
 	Log( FLOG_INFO, "---------Autoupdatedatabase process END-------------\n");
 	Log( FLOG_INFO, "----------------------------------------------------\n");
-}
-
-/**
- * Load all groups from FGroup table to FC
- *
- * @param sb pointer to SystemBase
- * @return list of groups
- */
-
-UserGroup *LoadGroups( struct SystemBase *sb )
-{
-	UserGroup *groups = NULL;
-	
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	if( sqlLib != NULL )
-	{
-		int entries;
-		groups = sqlLib->Load( sqlLib, GroupDesc, NULL, &entries );
-		sb->LibrarySQLDrop( sb, sqlLib );
-	}
-	return groups;
 }
 
 /**
@@ -2209,9 +2219,11 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 			
 				//FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
 				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				if( retlib == NULL || retlib->GetStatus( (void *)retlib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
+				DEBUG("retlibptr %p pool %p\n", retlib, l->sqlpool[l->MsqLlibCounter ].sqllib );
+				int status = retlib->GetStatus( (void *)l->sqlpool[l->MsqLlibCounter ].sqllib );
+				if( retlib == NULL || status != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
-					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d!\n", l->MsqLlibCounter );
+					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d retlib %p status %d!\n", l->MsqLlibCounter, retlib, status );
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
 					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
@@ -2481,11 +2493,19 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			{
 				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
 
-				FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) );
+				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+				{
+					if( wsc->wsc_Wsi != NULL )
+					{
+						bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					}
+					else
+					{
+						FERROR("Cannot write to WS, WSI is NULL!\n");
+					}
 
-				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				}
 
 				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 			}
@@ -2724,7 +2744,7 @@ void RemoveOldLogs( SystemBase *l )
 					for( i = 0 ; i < numberOfFiles ; i++ )
 					{
 						
-						DEBUG1("maxbytes %d will survive %d MB %d\n", bytes, maxLogsBytes, (bytes/(1024*1000)) );
+						DEBUG1("maxbytes %lu will survive %d MB %lu\n", bytes, maxLogsBytes, (FULONG)(bytes/(1024*1000)) );
 						if( bytes > maxLogsBytes )
 						{
 							DEBUG1("Delete file %s modification date %lu\n", filesPtr[ i ]->lf_Name, filesPtr[ i ]->lf_ModDate );

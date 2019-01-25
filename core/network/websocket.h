@@ -87,7 +87,7 @@ typedef struct FCWSData
 //
 //
 
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL useSSL );
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto );
 
 //
 //

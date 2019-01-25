@@ -20,7 +20,7 @@
 
 #include <core/types.h>
 #include "user_session.h"
-#include "user_group.h"
+#include <system/usergroup/user_group.h>
 #include "user.h"
 
 //

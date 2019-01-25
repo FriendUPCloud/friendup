@@ -48,7 +48,13 @@ i18n_yes                             : Yes
 i18n_cancel                          : Cancel
 i18n_accept                          : Accept
 i18n_understood                      : Understood
-i18n_your_devices                    : Your devices
+i18n_your_devices                    : Disks
+i18n_quit                            : Quit
+i18n_menuback                        : <
+
+i18n_mountlist                       : Disks
+
+i18n_message_from                    : Message from
 
 i18n_active_session_list             : Active device sessions
 i18n_no_other_sessions_available     : No other devices connected
@@ -170,6 +176,8 @@ i18n_printers                           : Printers
 
 #Menu
 
+i18n_your_apps                          : Apps
+
 i18n_favorites                          : Favorites
 i18n_menu                               : Menu
 
@@ -222,6 +230,7 @@ i18n_upload_completed                   : Upload completed.
 i18n_upload_failed                      : Upload failed.
 i18n_upload_completed_description       : The upload process completed successfully.
 i18n_upload_failed_description          : Could not upload your file.
+i18n_select_local_files                 : Select local files
 
 i18n_unzip_completed                    : Uncompressing completed.
 i18n_unzip_comdesc                      : Uncompressing a file(s) completed successfully
@@ -261,6 +270,8 @@ menu_show_as_list                       : List
 menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
 menu_fullscreen                         : Toggle fullscreen
+
+i18n_swipe_down_to_close                : Swipe down to close
 
 menu_buildwebapp                        : Build web application
 menu_icons                              : File
@@ -373,6 +384,9 @@ rename_file                             : Rename file
 new_name                                : New name
 i18n_read_only_filesystem               : Read only filesystem
 i18n_read_only_fs_desc                  : You are trying to write to a write protected or read only filesystem.
+i18n_overwriting_file                   : Overwriting file
+i18n_do_you_want_overwrite              : Do you want to save your file and replace the existing one?
+i18n_overwrite                          : Replace file
 
 #File operations ---------------------------------------------------------------
 
@@ -398,6 +412,10 @@ i18n_could_not_make_dir                 : Could not create new directory.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
+
+#Colorpicker -------------------------------------------------------------------
+
+i18n_color_picker                       : Color picker
 
 #Misc --------------------------------------------------------------------------
 
@@ -670,4 +688,8 @@ menu_move_view_to_workspace_10          : Move to workspace 10
 
 i18n_minimize_all_windows               : Minimize all windows
 i18n_show_all_windows                   : Show all windows
+
+
+i18n_could_not_find_application         : Could not find application
+i18n_could_not_find_app_desc            : Application notification did not work because the application did not start.
 

@@ -673,20 +673,36 @@ OR \
 			int lsize = strlen(groupc);
 			for( i=0 ; i < lsize ; i++ ) groupc[ i ] = toupper( groupc[ i ] );
 			
-			for( i=0 ; i <usr->u_GroupsNr ; i++ )
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			//for( i=0 ; i <usr->u_GroupsNr ; i++ )
 			{
-				int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 1, '%s' )", permissionid,usr->u_Groups[ i ]->ug_ID, groupc );
-				sqllib->QueryWithoutResults( sqllib, insertQuery );
+				//UserGroup *ug = usr->u_Groups[ i ];
+				UserGroup *ug = ugl->ugl_Group;
+				if( ug != NULL )
+				{
+					int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 1, '%s' )", permissionid, ug->ug_ID, groupc );
+					sqllib->QueryWithoutResults( sqllib, insertQuery );
 				
-				DEBUG("[FSManagerProtect3] Group access stored %s\n", insertQuery );
+					DEBUG("[FSManagerProtect3] Group access stored %s\n", insertQuery );
+				}
+				ugl = (UserGroupLink *)ugl->node.mln_Succ;
 			}
 		}
 		else
 		{
-			for( i=0 ; i <usr->u_GroupsNr ; i++ )
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			//for( i=0 ; i <usr->u_GroupsNr ; i++ )
 			{
-				int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 1, '%s' )", permissionid,usr->u_Groups[ i ]->ug_ID, groupcOld );
-				sqllib->QueryWithoutResults( sqllib, insertQuery );
+				//UserGroup *ug = usr->u_Groups[ i ];
+				UserGroup *ug = ugl->ugl_Group;
+				if( ug != NULL )
+				{
+					int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 1, '%s' )", permissionid, ug->ug_ID, groupcOld );
+					sqllib->QueryWithoutResults( sqllib, insertQuery );
+				}
+				ugl = (UserGroupLink *)ugl->node.mln_Succ;
 			}
 		}
 		// others

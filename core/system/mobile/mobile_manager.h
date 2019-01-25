@@ -27,6 +27,12 @@
 #include <system/user/user_mobile_app.h>
 #include "mobile_list_entry.h"
 
+#include <util/friendqueue.h>
+#include <libwebsockets.h>
+#include <system/user/user_mobile_app.h>
+#include <mobile_app/mobile_app_websocket.h>
+#include <system/mobile/mobile_app_connection.h>
+
 //
 // Mobile Manager structure
 //
@@ -36,8 +42,9 @@ typedef struct MobileManager
 	void								*mm_SB;
 
 	UserMobileApp						*mm_UMApps;
-	
 	pthread_mutex_t						mm_Mutex;		// mutex
+	
+	UserMobileAppConnections			*mm_UserConnections;
 } MobileManager;
 
 
@@ -53,9 +60,17 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 
 MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG user_id, int type );
 
+MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULONG user_id, char *userName, int type );
+
+FULONG MobileManagerGetUMAIDByTokenAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *token );
+
 void MobileManagerRefreshCache( MobileManager *mmgr );
 
 int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );
+
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status );
+
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, int status, const char *ids );
 
 #endif //__SYSTEM_MOBILE_MOBILE_MANAGER_H__
 
