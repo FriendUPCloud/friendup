@@ -804,6 +804,16 @@ function IsPathOnDormantDoor( path )
 }
 function GetURLFromPath( path, callback, type, toAdd )
 {
+	// Http links
+	if( path.substr( 0, 5 ) == 'http:' || path.substr( 0, 6 ) == 'https:' )
+	{
+		// Evaluate external links
+		//var r = document.location.href.split( /\/[^\/]?*/ );
+		//r = r[0] + '//' + r[1];	
+		//if( path.substr( 0, r.length ) != r )
+			return callback( path );
+	}
+		
 	if ( IsPathOnDormantDoor( path ) )
 	{
 		// Type not defined, get type from file extension
