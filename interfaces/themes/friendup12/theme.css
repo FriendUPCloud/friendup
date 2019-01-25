@@ -4400,17 +4400,6 @@ body[mobile=mobile] .Desklet.Open.Opened
 	height: calc(100% - 97px) !important;
 }
 
-/* HACKS BE DRAGONS! */
-
-#hello #messages,
-#hello #conversations
-{
-	scroll-behavior: smooth;
-	overflow-y: scroll;
-	-webkit-overflow-scrolling: touch;
-	-webkit-scroll-behavior: smooth;
-}
-
 html > body[mobile] > div button.IconButton,
 html > body[mobile] > div button.IconButton:hover,
 html > body[mobile] > div .Button.IconButton,
