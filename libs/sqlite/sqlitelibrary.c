@@ -1161,7 +1161,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 		if( *ptr != '%' )
 		{
 			const char *q = strchr( ptr+1,'%' );
-			size_t n = (size_t)(!q ? strlen( ptr ) : ( q-ptr ) );
+			size_t n = (size_t)(!q ? (size_t)strlen( ptr ) : (size_t)( q-ptr ) );
 			
 			if( retStringSize < stringSize )
 			{
@@ -1339,7 +1339,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 							break;
 						}
 						case 's':
-							stringArg = va_arg( ap, const char * );
+							stringArg = (char *)va_arg( ap, const char * );
 							if( !stringArg )
 							{
 								stringArgSize = 0;
@@ -1355,7 +1355,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 							else
 							{
 								const char *q = memchr( stringArg, '\0', precision <= 0x7fffffff ? precision : 0x7fffffff );
-								stringArgSize = !q ? precision : (q-stringArg);
+								stringArgSize = !q ? precision : (size_t)(q-stringArg);
 							}
 							
 							if( stringArg != NULL )
@@ -1620,7 +1620,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 							justifyLeft = 1;
 							minWidthField = 0;
 							
-							stringArg = startPointer;
+							stringArg = (char *)startPointer;
 							stringArgSize = ptr - startPointer;
 
 							if( *ptr )
