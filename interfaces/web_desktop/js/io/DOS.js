@@ -598,6 +598,8 @@ Friend.DOS.openWindowByFilename = function( fileInfo, ext )
 		downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     )
 	};
 	
+	console.log( 'Opening: ', fileInfo );
+	
 	return OpenWindowByFileinfo( fileInfo );
 }
 

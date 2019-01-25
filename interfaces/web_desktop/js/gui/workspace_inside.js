@@ -1487,7 +1487,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Disable console log now..
 					if( Workspace.workspacemode == 'normal' || Workspace.workspacemode == 'gamified' )
 					{
-						console.log = function(){};
+						//console.log = function(){};
 					}
 
 					// Do the startup sequence in sequence (only once)

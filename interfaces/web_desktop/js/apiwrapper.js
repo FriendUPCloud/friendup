@@ -159,6 +159,7 @@ function apiWrapper( event, force )
 			messageInfo.view.postMessage( JSON.stringify( message ), '*' );
 		}
 	}
+	
 	if( msg.type )
 	{
 		// Find application iframe
@@ -188,6 +189,7 @@ function apiWrapper( event, force )
 				messageInfo.callback = msg.callback;
 			}
 		}
+		
 		switch( msg.type ) 
 		{
 			// DOS -------------------------------------------------------------
