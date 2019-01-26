@@ -175,11 +175,14 @@ Application.refreshFilePane = function( method )
 			ext = ext.pop().toLowerCase();
 			if( ext != 'html' && ext != 'htm' ) continue;
 			
-			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile && !Application.fileSaved )
+			if( firstFileNum++ == 0 )
 			{
-				Application.loadFile( items[ a ].Path );
-				Application.currentDocument = items[ a ].Path;
-				fouldFile = true;
+				if( method == 'findFirstFile' && !foundFile )
+				{
+					Application.loadFile( items[ a ].Path );
+					Application.currentDocument = items[ a ].Path;
+					fouldFile = true;
+				}
 			}
 			
 			sw = sw == 2 ? 1 : 2;
@@ -187,73 +190,6 @@ Application.refreshFilePane = function( method )
 			var d = document.createElement( 'div' );
 			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
 			d.path = items[ a ].Path;
-			d.ondblclick = function()
-			{
-				var s = this;
-				if( this.tm )
-				{
-					clearTimeout( this.tm );
-				}
-				this.tm = 'block';
-				
-				var p = this.getElementsByTagName( 'p' )[0];
-				var ml = p.innerHTML;
-				var inp = document.createElement( 'input' );
-				inp.type = 'text';
-				inp.className = 'NoMargins';
-				inp.style.width = 'calc(100% - 32px)';
-				inp.value = p.innerText;
-				p.innerHTML = '';
-				p.appendChild( inp );
-				inp.select();
-				inp.focus();
-				function renameNow()
-				{
-					var val = inp.value;
-					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-						val += '.html';
-					var l = new Library( 'system.library' );
-					l.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-							Application.sendMessage( {
-								command: 'setfilename',
-								data: Application.path + val
-							} );
-							Application.currentDocument = Application.path + val;
-							Application.refreshFilePane();
-						}
-						// Perhaps give error - file exists
-						else
-						{
-							inp.select();
-						}
-					}
-					l.execute( 'file/rename', { path: s.path, newname: val } );
-				}
-				p.onkeydown = function( e )
-				{
-					var k = e.which ? e.which : e.keyCode;
-					// Abort
-					if( k == 27 )
-					{
-						this.innerHTML = ml;
-						s.tm = null;
-					}
-					// Rename
-					else if( k == 13 )
-					{
-						renameNow();
-					}
-				}
-				inp.onblur = function()
-				{
-					console.log( 'Blurring?' );
-					p.innerHTML = ml;
-					s.tm = null;
-				}
-			}
 			
 			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
@@ -314,18 +250,89 @@ Application.refreshFilePane = function( method )
 			}
 			
 			fBar.contents.appendChild( d );
-			( function( dl, path ){
-				dl.onclick = function()
+			
+			// Selected files can be renamed
+			if( d.classList.contains( 'Selected' ) )
+			{
+				d.onclick = function()
 				{
-					if( dl.tm ) return;
-					dl.tm = setTimeout( function()
+					var s = this;
+					if( this.tm )
 					{
-						dl.tm = null;
+						clearTimeout( this.tm );
+					}
+					this.tm = 'block';
+				
+					var p = this.getElementsByTagName( 'p' )[0];
+					var ml = p.innerHTML;
+					var inp = document.createElement( 'input' );
+					inp.type = 'text';
+					inp.className = 'NoMargins';
+					inp.style.width = 'calc(100% - 32px)';
+					inp.value = p.innerText;
+					p.innerHTML = '';
+					p.appendChild( inp );
+					inp.select();
+					inp.focus();
+					function renameNow()
+					{
+						var val = inp.value;
+						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+							val += '.html';
+						var l = new Library( 'system.library' );
+						l.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Application.sendMessage( {
+									command: 'setfilename',
+									data: Application.path + val
+								} );
+								Application.currentDocument = Application.path + val;
+								Application.refreshFilePane();
+							}
+							// Perhaps give error - file exists
+							else
+							{
+								inp.select();
+							}
+						}
+						l.execute( 'file/rename', { path: s.path, newname: val } );
+					}
+					p.onkeydown = function( e )
+					{
+						var k = e.which ? e.which : e.keyCode;
+						// Abort
+						if( k == 27 )
+						{
+							this.innerHTML = ml;
+							s.tm = null;
+						}
+						// Rename
+						else if( k == 13 )
+						{
+							renameNow();
+						}
+					}
+					inp.onblur = function()
+					{
+						console.log( 'Blurring?' );
+						p.innerHTML = ml;
+						s.tm = null;
+					}
+				}
+			}
+			// Others are activated
+			else
+			{
+				( function( dl, path ){
+					dl.onclick = function()
+					{
 						Application.currentDocument = path;
 						Application.loadFile( path );
-					}, 250 );
-				}
-			} )( d, num.Path );
+					}
+				} )( d, num.Path );
+			}
 		}
 		
 		if( !foundFile && method == 'findFirstFile' )
@@ -1407,6 +1414,7 @@ Application.receiveMessage = function( msg )
 			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>' );
 			break;
 		case 'newdocument':
+			console.log( 'Got a request to make a new document!' );
 			var o = {
 				content: msg.content ? msg.content : '', 
 				scrollTop: msg.scrollTop >= 0 ? msg.scrollTop : 0,
