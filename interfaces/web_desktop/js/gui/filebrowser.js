@@ -29,7 +29,12 @@ Friend.FileBrowserEntry = function()
 	
 	flags:
 	{
-		displayFiles: true | false
+		displayFiles: true | false // File extension filter
+		filedialog: true | false   // Is the browser used in a file dialog?
+		justPaths: true | false    // Just show the directories?
+		path: true | false         // Target path to focus on at start
+		bookmarks: true | false    // Show the bookmarks pane?
+		rootPath: true | false     // The root from which to display structures
 	}
 	
 	callbacks:
