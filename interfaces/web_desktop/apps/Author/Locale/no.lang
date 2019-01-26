@@ -1,0 +1,99 @@
+
+i18n_your_devices                   : Dine enheter
+i18n_bookmarks                      : Bokmerker
+i18n_file_menu                      : Filmeny
+i18n_create_folder                  : Lag mappe
+
+menu_new                          : Nytt dokument
+menu_save                         : Lagre
+i18n_save                         : Lagre
+menu_save_as                      : Lagre som
+i18n_save_as                      : Lagre som
+menu_load                         : Åpne
+menu_quit                         : Avslutt
+menu_preferences                  : Innstillinger
+menu_file                         : Fil
+menu_print                        : Skriv ut
+menu_document                     : Dokument
+menu_insert_image                 : Sett inn bilde
+menu_convert_images_inline        : Til innline bilder
+menu_vr_features                  : Gjem/skjul VR funksjoner
+
+#Style editor
+i18n_edit_styles                  : Endre stiler
+i18n_styles                       : Endre stiler
+i18n_apply                        : Utfør
+
+i18n_status_loading               : Laster...
+i18n_status_saving                : Lagrer...
+
+i18n_find                         : Finn
+i18n_select                       : Velg
+i18n_search                       : Søk
+
+edit_image                        : Endre bilde
+insert_image                      : Sett inn bilde
+
+i18n_print_alert                  : Utskriftsvarsel
+i18n_not_saved_cant_print         : Dokumentet er ikke lagret. Vennligst lagre dokumentet først og prøv igjen.
+
+i18n_add_item                     : Nytt element
+
+i18n_new_document                 : Ny notat
+
+i18n_are_you_sure                 : Er du sikker?
+i18n_delete_note                  : Dette vil slette ditt dokument.
+i18n_unsaved                      : Ulagret
+
+i18n_close                        : Lukk
+i18n_accept                       : Aksepter
+
+i18n_set_bold                     : Sett fet skrift
+i18n_set_italic                   : Kursiv sett
+i18n_set_underline                : Sett understreke
+i18n_default_style                : Standard stil
+i18n_headers                      : Overskrifter
+i18n_header_1                     : Overskrift 1
+i18n_header_2                     : Overskrift 2
+i18n_header_3                     : Overskrift 3
+i18n_header_4                     : Overskrift 4
+i18n_header_5                     : Overskrift 5
+i18n_header_6                     : Overskrift 6
+i18n_paragraph                    : Avsnitt
+i18n_select_zoom                  : Velg zoom
+i18n_select_font                  : Velg skrift
+i18n_font_size                    : Skriftstørrelse
+i18n_insert_image                 : Sett inn bilde
+i18n_align_left                   : Juster til venstre
+i18n_align_center                 : Juster senteret
+i18n_align_right                  : Juster høyre
+i18n_align_justify                : Juster begrunnelsen
+i18n_unordered_bullet_points      : Uordnede kulepunkter
+i18n_ordered_bullet_point         : Bestilte punktposter
+i18n_set_document_zoom            : Angi dokumentzoom
+i18n_set_block_format             : Sett blokkformat
+i18n_cancel                       : Avbryt
+i18n_keywords                     : søkeord ...
+i18n_path                         : sti...
+i18n_preferences                  : Preferanser
+i18n_failed_to_load_document      : Kunne ikke laste inn dokument ...
+i18n_loaded                       : Lastet
+i18n_converting                   : Konvertere ...
+i18n_written                      : Lagret
+menu_print_remote                 : Server print
+i18n_print_preview                : Forhåndsvisning
+i18n_generating_print_preview     : Genererer forhåndsvisning ...
+i18n_print_ready                  : Skriv ut klar
+i18n_language                     : Språk
+i18n_language_settings            : Språkinnstillinger
+i18n_features                     : Egenskaper
+i18n_feature_settings             : Funksjonsinnstillinger
+
+i18n_sizes                        : Tekststørrelse
+i18n_tiny                         : Mini
+i18n_small                        : Liten
+i18n_normal                       : Normal
+i18n_big                          : Stor
+i18n_huge                         : Størst
+
+
