@@ -352,8 +352,6 @@ Application.run = function( msg, iface )
 	
 	this.browserPath = 'Mountlist:';
 	
-	this.sessionObject.currentZoom = '100%';
-	
 	AddEvent( 'onresize', function( e )
 	{
 		Application.checkWidth();
@@ -1447,11 +1445,6 @@ function editorCommand( command, value )
 	}
 
 	var defWidth = 640;
-	
-	if( command.substr( 0, 4 ) == 'zoom' )
-	{
-		if( value == 'store' ) Application.sessionObject.currentZoom = command.split('zoom').join('');
-	}
 	
 	if( command == 'bold' )
 	{

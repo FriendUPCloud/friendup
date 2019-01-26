@@ -57,7 +57,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.rootPath = 'Mountlist:'; // The current root path
 	this.callbacks = callbacks;
 	
-	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: false, bookmarks: true, rootPath: false };
+	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: self.rootPath, bookmarks: true, rootPath: false };
 	if( flags )
 	{
 		for( var a in flags )
