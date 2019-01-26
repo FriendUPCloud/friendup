@@ -368,12 +368,34 @@ Application.run = function( msg, iface )
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
 	this.fld.onclick = function( e )
 	{
-		var l = new Library( 'system.library' );
-		l.onExecuted = function()
+		var el = document.createElement( 'input' );
+		el.type = 'text';
+		el.className = 'FullWidth InputHeight';
+		el.placeholder = 'foldername';
+		ge( 'LeftBar' ).appendChild( el );
+		el.select();
+		el.focus();
+		el.onkeydown = function( e )
 		{
-			self.fileBrowser.refresh( 'Home:Notes/' );
+			var w = e.which ? e.which : e.keyCode;
+			if( w == 27 )
+			{
+				el.parentNode.removeChild( el );
+			}
+			else if( w == 13 )
+			{
+				var l = new Library( 'system.library' );
+				l.onExecuted = function()
+				{
+					self.fileBrowser.refresh( 'Home:Notes/' );
+				}
+				l.execute( 'file/makedir', { path: Application.path + this.value } );
+			}
 		}
-		l.execute( 'file/makedir', { path: Application.path + 'testing' } );
+		el.blur = function()
+		{
+			el.parentNode.removeChild( el );
+		}
 		return cancelBubble( e );
 	}
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
