@@ -38,6 +38,9 @@ Friend.FileBrowserEntry = function()
 		void loadFile( filepath )
 		bool permitFiletype( filepath )
 	}
+	
+	// flags.path is the target path in a query
+	// rootPath is where to start listing files from
 */
 
 
@@ -46,9 +49,21 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	var self = this;
 	this.dom = initElement;
 	this.dom.classList.add( 'FileBrowser' );
-	this.currentPath = 'Mountlist:';
+	this.rootPath = 'Mountlist:'; // The current root path
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false, bookmarks: true };
+	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false, bookmarks: true, rootPath: false };
+	if( this.flags.rootPath )
+		this.rootPath = this.flags.rootPath;
+	// Clicking the pane
+	this.dom.onclick = function( e )
+	{
+		var t = e.target ? e.target : e.srcElement;
+		if( t == this )
+		{
+			self.setPath( self.rootPath );
+			self.callbacks.folderOpen( self.rootPath );
+		}
+	}
 };
 Friend.FileBrowser.prototype.clear = function()
 {
@@ -98,11 +113,11 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 	return drop;
 };
 
-// Set a path
-Friend.FileBrowser.prototype.setPath = function( path, target, cbk )
+// Set an active path
+Friend.FileBrowser.prototype.setPath = function( target, cbk )
 {
-	this.flags.path = target;
-	this.refresh( path, this.dom, cbk, 0 );
+	this.flags.path = target; // This is the current target path..
+	this.refresh( this.rootPath, this.dom, cbk, 0 );
 }
 
 Friend.FileBrowser.prototype.rollOver = function( elements )
@@ -114,7 +129,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	var self = this;
 	
 	if( !rootElement ) rootElement = this.dom;
-	if( !path ) path = this.currentPath;
+	if( !path ) path = this.rootPath; // Use the rootpath
 	if( !depth ) depth = 1;
 
 	// Fix column problem
@@ -183,6 +198,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			else
 			{
+				// Set the current target path
+				self.flags.path = ppath;
+				
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
@@ -639,6 +657,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				else if( foundItem && msg.list[a].Type == 'Directory' )
 				{
+					// Remove active state from inactive items
+					var nam = foundItem.querySelector( '.Name' );
+					if( nam && nam.classList.contains( 'Active' ) && foundItem.path != self.flags.path )
+						nam.classList.remove( 'Active' );
 					// Existing items
 					if( foundItem.classList.contains( 'Open' ) )
 					{
@@ -654,6 +676,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 			}
 			// Checkers
+			var rootPathLength = self.rootPath.split( '/' ).length;
 			var sw = 2;
 			for( var a = 0; a < eles.length; a++ )
 			{

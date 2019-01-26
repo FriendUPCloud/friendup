@@ -346,23 +346,9 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
-	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:Notes/', bookmarks: false }, filebrowserCallbacks );
+	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:Notes/', bookmarks: false, rootPath: 'Home:Notes/' }, filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
-	
-	ge( 'LeftBar' ).onclick = function( e )
-	{
-		if( e.button != 0 ) return;
-		var t = e.target ? e.target : e.srcElement;
-		if( t == ge( 'LeftBar' ) )
-		{
-			self.path = 'Home:Notes/';
-			self.currentDocument = '';
-			self.browserPath = 'Home:Notes/';
-			self.fileBrowser.currentPath = 'Home:Notes/';
-			self.fileBrowser.setPath( 'Home:Notes/' );
-		}
-	}
 	
 	// Make an "add new folder" button
 	this.fld = document.createElement( 'div' );
@@ -906,7 +892,7 @@ Application.setCurrentDocument = function( pth )
 	this.currentDocument = pth;
 	
 	// Update filebrowser
-	this.fileBrowser.setPath( 'Home:Notes/', this.path );
+	this.fileBrowser.setPath( this.path );
 	
 	Application.refreshFilePane();
 	
@@ -1174,7 +1160,7 @@ Application.newDocument = function( args )
 				this.path = args.browserPath;
 				if( !args.content )
 				{
-					this.fileBrowser.setPath( 'Home:Notes/', args.browserPath );
+					this.fileBrowser.setPath( args.browserPath );
 				}
 			}
 		}
@@ -1207,7 +1193,7 @@ Application.newDocument = function( args )
 		{
 			this.browserPath = args.browserPath;
 			this.path = args.browserPath;
-			this.fileBrowser.setPath( 'Home:Notes/', args.browserPath );
+			this.fileBrowser.setPath( args.browserPath );
 		}
 	}
 }
