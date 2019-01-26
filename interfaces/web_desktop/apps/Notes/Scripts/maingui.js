@@ -487,7 +487,6 @@ Application.initCKE = function()
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
 				// Create temporary file "to be saved"
-				console.log( 'The current document: ' + Application.currentDocument );
 				if( !Application.currentDocument )
 				{
 					if( !Application._toBeSaved )
