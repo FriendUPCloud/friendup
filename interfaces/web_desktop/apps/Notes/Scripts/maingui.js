@@ -316,7 +316,6 @@ Application.refreshFilePane = function( method )
 					}
 					inp.onblur = function()
 					{
-						console.log( 'Blurring?' );
 						p.innerHTML = ml;
 						s.tm = null;
 					}
