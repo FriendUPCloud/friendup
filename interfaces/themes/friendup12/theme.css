@@ -2662,7 +2662,7 @@ html .TabActive
     border: 1px solid #e3e7e8;
 }
 
-html div.TabActive:first-child, html div.Tab:first-child
+html div.Tab:first-child
 {
 	border-radius: 3px 0 0 3px;
 }
@@ -2670,6 +2670,11 @@ html div.TabActive:first-child, html div.Tab:first-child
 html div.TabActive:last-child, html div.Tab:last-child
 {
 	border-radius: 0 3px 3px 0;
+}
+
+html div.Tab:first-child:last-child
+{
+	border-radius: 3px;
 }
 
 html .Pages > .Tab, html .Pages > .TabActive

@@ -896,6 +896,7 @@ Application.refreshFilesList = function ()
 					Application.refreshFilesList();
 				}
 			} );
+			return cancelBubble( e );
 		};
 		files.appendChild( c );
 		
