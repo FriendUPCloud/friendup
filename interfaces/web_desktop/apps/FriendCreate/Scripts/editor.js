@@ -726,6 +726,8 @@ Application.save = function( mode )
 {
 	if( !mode ) mode = 'normal';
 	
+	Application.diskActivity = true;
+	
 	// Do an autosave
 	if( mode == 'autosave' )
 	{
@@ -739,6 +741,8 @@ Application.save = function( mode )
 			{
 				ge( 'status' ).innerHTML = '';
 			}, 1000 );
+			
+			Application.diskActivity = false;
 		}
 		f.save( this.editor.getValue() );
 		
@@ -872,6 +876,8 @@ Application.refreshFilesList = function ()
 		c.uniqueId = this.files[t].uniqueId;
 		c.onclick = function( e )
 		{
+			// We won't do anything during disk activity!
+			if( Application.diskActivity ) return;
 			Application.setCurrentFile( this.ind, function()
 			{	
 				// Close when clicking on close icon
