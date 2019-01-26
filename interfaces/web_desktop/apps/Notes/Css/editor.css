@@ -94,6 +94,17 @@ html > body
 	box-sizing: border-box;
 }
 
+.EditorContentArea .NewFolder
+{
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	height: 50px;
+	z-index: 2;
+	box-sizing: border-box;
+	width: 250px;
+}
+
 #RightBar
 {
 	position: absolute;

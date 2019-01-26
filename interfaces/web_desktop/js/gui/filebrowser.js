@@ -557,7 +557,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			
 			// Get existing
 			var eles = rootElement.childNodes;
-			
+						
 			var removers = [];
 			var found = [];
 			var foundElements = [];

@@ -36,7 +36,8 @@ insert_image                      : Insert image
 i18n_print_alert                  : Print alert
 i18n_not_saved_cant_print         : The document is not saved. Please save it first, then retry.
 
-i18n_add_item                     : Add item
+i18n_add_note                     : Add note
+i18n_add_folder                   : Add folder
 
 i18n_new_document                 : New note
 

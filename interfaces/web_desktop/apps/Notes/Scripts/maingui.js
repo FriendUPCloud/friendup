@@ -77,6 +77,8 @@ Application.refreshFilePane = function( method )
 	
 	var d = new Door( Application.browserPath );
 	
+	var self = this;
+	
 	Application.path = Application.browserPath;
 	
 	d.getIcons( function( items )
@@ -94,12 +96,14 @@ Application.refreshFilePane = function( method )
 		
 		var fBar = ge( 'FileBar' );
 		if( !fBar.contents )
-		{
+		{	
 			fBar.contents = document.createElement( 'div' );
 			fBar.appendChild( fBar.contents );
+			
+			// Make an "add new note" button
 			fBar.add = document.createElement( 'div' );
 			fBar.add.className = 'NewItem';
-			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_item' ) + '</div>';
+			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
 			fBar.add.onclick = function()
 			{
 				var testFile = 'unnamed';
@@ -310,6 +314,8 @@ Application.refreshFilePane = function( method )
 
 Application.run = function( msg, iface )
 {
+	var self = this;
+	
 	// To tell about ck
 	this.ckinitialized = false;
 	this.newLine = true;
@@ -343,6 +349,36 @@ Application.run = function( msg, iface )
 	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:Notes/', bookmarks: false }, filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
+	
+	ge( 'LeftBar' ).onclick = function( e )
+	{
+		if( e.button != 0 ) return;
+		var t = e.target ? e.target : e.srcElement;
+		if( t == ge( 'LeftBar' ) )
+		{
+			self.path = 'Home:Notes/';
+			self.currentDocument = '';
+			self.browserPath = 'Home:Notes/';
+			self.fileBrowser.currentPath = 'Home:Notes/';
+			self.fileBrowser.setPath( 'Home:Notes/' );
+		}
+	}
+	
+	// Make an "add new folder" button
+	this.fld = document.createElement( 'div' );
+	this.fld.className = 'NewFolder';
+	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
+	this.fld.onclick = function( e )
+	{
+		var l = new Library( 'system.library' );
+		l.onExecuted = function()
+		{
+			self.fileBrowser.refresh( 'Home:Notes/' );
+		}
+		l.execute( 'file/makedir', { path: Application.path + 'testing' } );
+		return cancelBubble( e );
+	}
+	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
 }
 
 Application.checkWidth = function()
@@ -865,6 +901,7 @@ Application.setCurrentDocument = function( pth )
 		fname = fname[fname.length-1];
 		this.fileName = fname;
 	}
+	
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
 	
@@ -899,9 +936,7 @@ Application.loadFile = function( path )
 			m.onExecuted = function( e, data )
 			{
 				if( e == 'ok' )
-				{
-					Application.setCurrentDocument( path );
-					
+				{					
 					Application.statusMessage( i18n( 'i18n_loaded' ) );
 					Application.editor.setData( data,
 						function()

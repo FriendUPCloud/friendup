@@ -138,7 +138,9 @@ Application.run = function( msg, iface )
 				w.sendMessage( msng );
 				
 				if( Application.sessionObject.currentDocument )
+				{
 					Application.wholeFilename = Application.sessionObject.currentDocument;
+				}
 				
 				if( Application.sessionObject.currentDocument )
 				{
