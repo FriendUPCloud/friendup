@@ -13,6 +13,12 @@ var Config = {
 
 Application.lastSaved = 0;
 
+// Don't scroll out of view
+document.body.addEventListener( 'scroll', function()
+{
+	document.body.parentNode.scroll( 0, 0 );
+}, false );
+
 var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
@@ -525,7 +531,8 @@ Application.initCKE = function()
 					data = data.split( /[^ a-z0-9]/i ).join( '' );
 					if( !data.length )
 						data = 'unnamed';
-					Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + data + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
+					if( Application._toBeSaved )
+						Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + data + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
 					Application.sendMessage( {
 						command: 'setfilename',
 						data: Application.path + data + '.html'
