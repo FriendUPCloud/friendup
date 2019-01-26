@@ -349,7 +349,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			{
 				// Get existing
 				var eles = rootElement.childNodes;
-				
+								
 				var found = [];
 				var foundElements = [];
 				var foundStructures = [];
@@ -452,6 +452,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							nm.classList.remove( 'IconSmall' );
 							nm.classList.remove( 'IconDisk' );
 						}
+						
 						d.appendChild( nm );
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
@@ -567,6 +568,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}
 				}
 				m.execute( 'getbookmarks' );
+			}
+			else
+			{
+				done();
 			}
 		} );
 	}
