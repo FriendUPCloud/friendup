@@ -133,7 +133,7 @@ Application.run = function( msg, iface )
 					command: 'newdocument',
 					content: Application.sessionObject.content,
 					scrollTop: Application.sessionObject.scrollTop,
-					browserPath: 'Home:Documents/'
+					browserPath: 'Mountlist:'
 				};
 				w.sendMessage( msng );
 				
@@ -150,7 +150,7 @@ Application.run = function( msg, iface )
 				w.sendMessage( { 
 					command: 'newdocument',
 					content: '',
-					browserPath: 'Home:Documents/'
+					browserPath: 'Mountlist:'
 				} );
 			}
 		} );

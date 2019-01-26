@@ -109,7 +109,7 @@ Application.refreshFilePane = function( method )
 		
 		var fBar = ge( 'FileBar' );
 		if( !fBar.contents )
-		{	
+		{
 			fBar.contents = document.createElement( 'div' );
 			fBar.appendChild( fBar.contents );
 			
@@ -167,7 +167,7 @@ Application.refreshFilePane = function( method )
 		var sw = 2;
 		var firstFileNum = 0;
 		var foundFile = false;
-				
+
 		for( var a = 0; a < items.length; a++ )
 		{
 			var num = items[ a ];
@@ -1413,7 +1413,6 @@ Application.receiveMessage = function( msg )
 			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>' );
 			break;
 		case 'newdocument':
-			console.log( 'Got a request to make a new document!' );
 			var o = {
 				content: msg.content ? msg.content : '', 
 				scrollTop: msg.scrollTop >= 0 ? msg.scrollTop : 0,

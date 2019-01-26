@@ -43,10 +43,14 @@ var filebrowserCallbacks = {
 	folderOpen( ele )
 	{
 		Application.browserPath = ele;
+		Application.fileSaved = false;
+		Application.lastSaved = 0;
+		Application.currentDocument = null;
 		Application.refreshFilePane( 'findFirstFile' );
 	},
 	folderClose( ele )
 	{
+		Application.currentDocument = null;
 		Application.browserPath = ele;
 		Application.refreshFilePane( 'findFirstFile' );
 	}
@@ -75,7 +79,18 @@ Application.refreshFilePane = function( method )
 {
 	if( !method ) method = false;
 	
+	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
+	{
+		Application.fld.classList.add( 'Hidden' );
+	}
+	else
+	{
+		Application.fld.classList.remove( 'Hidden' );
+	}
+	
 	var d = new Door( Application.browserPath );
+	
+	var self = this;
 	
 	Application.path = Application.browserPath;
 	
@@ -97,9 +112,11 @@ Application.refreshFilePane = function( method )
 		{
 			fBar.contents = document.createElement( 'div' );
 			fBar.appendChild( fBar.contents );
+			
+			// Make an "add new note" button
 			fBar.add = document.createElement( 'div' );
 			fBar.add.className = 'NewItem';
-			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_item' ) + '</div>';
+			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_document' ) + '</div>';
 			fBar.add.onclick = function()
 			{
 				var testFile = 'unnamed';
@@ -138,6 +155,7 @@ Application.refreshFilePane = function( method )
 							data: Application.currentDocument
 						} );
 						Application.refreshFilePane();
+						Application.loadFile( Application.browserPath + nextTest + '.html' );
 					}
 				} );
 			}
@@ -148,9 +166,8 @@ Application.refreshFilePane = function( method )
 		
 		var sw = 2;
 		var firstFileNum = 0;
-		
 		var foundFile = false;
-		
+
 		for( var a = 0; a < items.length; a++ )
 		{
 			var num = items[ a ];
@@ -158,10 +175,14 @@ Application.refreshFilePane = function( method )
 			ext = ext.pop().toLowerCase();
 			if( ext != 'html' && ext != 'htm' ) continue;
 			
-			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile && !Application.fileSaved )
+			if( firstFileNum++ == 0 )
 			{
-				Application.loadFile( items[ a ].Path );
-				fouldFile = true;
+				if( method == 'findFirstFile' && !foundFile )
+				{
+					Application.loadFile( items[ a ].Path );
+					Application.currentDocument = items[ a ].Path;
+					fouldFile = true;
+				}
 			}
 			
 			sw = sw == 2 ? 1 : 2;
@@ -169,68 +190,10 @@ Application.refreshFilePane = function( method )
 			var d = document.createElement( 'div' );
 			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
 			d.path = items[ a ].Path;
-			d.ondblclick = function()
-			{
-				var s = this;
-				if( this.tm )
-				{
-					clearTimeout( this.tm );
-				}
-				this.tm = 'block';
-				
-				var p = this.getElementsByTagName( 'p' )[0];
-				var ml = p.innerHTML;
-				var inp = document.createElement( 'input' );
-				inp.type = 'text';
-				inp.className = 'NoMargins';
-				inp.style.width = 'calc(100% - 32px)';
-				inp.value = p.innerText;
-				p.innerHTML = '';
-				p.appendChild( inp );
-				inp.select();
-				inp.focus();
-				p.onkeydown = function( e )
-				{
-					var k = e.which ? e.which : e.keyCode;
-					// Abort
-					if( k == 27 )
-					{
-						this.innerHTML = ml;
-						s.tm = null;
-					}
-					// Rename
-					else if( k == 13 )
-					{
-						var val = inp.value;
-						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-							val += '.html';
-						var l = new Library( 'system.library' );
-						l.onExecuted = function( e, d )
-						{
-							if( e == 'ok' )
-							{
-								Application.sendMessage( {
-									command: 'setfilename',
-									data: Application.path + val
-								} );
-								Application.currentDocument = Application.path + val;
-								Application.refreshFilePane();
-							}
-							// Perhaps give error - file exists
-							else
-							{
-								inp.select();
-							}
-						}
-						l.execute( 'file/rename', { path: s.path, newname: val } );
-					}
-				}
-			}
 			
 			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
 				d.classList.add( 'Selected' );
-				Application.fileSaved = true;
 			}
 			else
 			{
@@ -287,18 +250,88 @@ Application.refreshFilePane = function( method )
 			}
 			
 			fBar.contents.appendChild( d );
-			( function( dl, path ){
-				dl.onclick = function()
+			
+			// Selected files can be renamed
+			if( d.classList.contains( 'Selected' ) )
+			{
+				d.onclick = function()
 				{
-					if( dl.tm ) return;
-					dl.tm = setTimeout( function()
+					var s = this;
+					if( this.tm )
 					{
-						dl.tm = null;
+						clearTimeout( this.tm );
+					}
+					this.tm = 'block';
+				
+					var p = this.getElementsByTagName( 'p' )[0];
+					var ml = p.innerHTML;
+					var inp = document.createElement( 'input' );
+					inp.type = 'text';
+					inp.className = 'NoMargins';
+					inp.style.width = 'calc(100% - 32px)';
+					inp.value = p.innerText;
+					p.innerHTML = '';
+					p.appendChild( inp );
+					inp.select();
+					inp.focus();
+					function renameNow()
+					{
+						var val = inp.value;
+						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+							val += '.html';
+						var l = new Library( 'system.library' );
+						l.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Application.sendMessage( {
+									command: 'setfilename',
+									data: Application.path + val
+								} );
+								Application.currentDocument = Application.path + val;
+								Application.refreshFilePane();
+							}
+							// Perhaps give error - file exists
+							else
+							{
+								inp.select();
+							}
+						}
+						l.execute( 'file/rename', { path: s.path, newname: val } );
+					}
+					p.onkeydown = function( e )
+					{
+						var k = e.which ? e.which : e.keyCode;
+						// Abort
+						if( k == 27 )
+						{
+							this.innerHTML = ml;
+							s.tm = null;
+						}
+						// Rename
+						else if( k == 13 )
+						{
+							renameNow();
+						}
+					}
+					inp.onblur = function()
+					{
+						p.innerHTML = ml;
+						s.tm = null;
+					}
+				}
+			}
+			// Others are activated
+			else
+			{
+				( function( dl, path ){
+					dl.onclick = function()
+					{
 						Application.currentDocument = path;
 						Application.loadFile( path );
-					}, 250 );
-				}
-			} )( d, num.Path );
+					}
+				} )( d, num.Path );
+			}
 		}
 		
 		if( !foundFile && method == 'findFirstFile' )
@@ -310,12 +343,14 @@ Application.refreshFilePane = function( method )
 
 Application.run = function( msg, iface )
 {
+	var self = this;
+	
 	// To tell about ck
 	this.ckinitialized = false;
 	this.newLine = true;
 	this.initCKE();
 	
-	this.browserPath = 'Home:Notes/';
+	this.browserPath = 'Mountlist:';
 	
 	this.sessionObject.currentZoom = '100%';
 	
@@ -340,9 +375,47 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
-	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:' }, filebrowserCallbacks );
+	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, bookmarks: false }, filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
+	
+	// Make an "add new folder" button
+	this.fld = document.createElement( 'div' );
+	this.fld.className = 'NewFolder';
+	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
+	this.fld.onclick = function( e )
+	{
+		var el = document.createElement( 'input' );
+		el.type = 'text';
+		el.className = 'FullWidth InputHeight';
+		el.placeholder = 'foldername';
+		ge( 'LeftBar' ).appendChild( el );
+		el.select();
+		el.focus();
+		el.onkeydown = function( e )
+		{
+			var w = e.which ? e.which : e.keyCode;
+			if( w == 27 )
+			{
+				el.parentNode.removeChild( el );
+			}
+			else if( w == 13 )
+			{
+				var l = new Library( 'system.library' );
+				l.onExecuted = function()
+				{
+					self.fileBrowser.refresh();
+				}
+				l.execute( 'file/makedir', { path: Application.path + this.value } );
+			}
+		}
+		el.blur = function()
+		{
+			el.parentNode.removeChild( el );
+		}
+		return cancelBubble( e );
+	}
+	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
 }
 
 Application.checkWidth = function()
@@ -431,7 +504,7 @@ Application.initCKE = function()
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
 				// Create temporary file "to be saved"
-				if( !Application.fileSaved )
+				if( !Application.currentDocument )
 				{
 					if( !Application._toBeSaved )
 					{
@@ -489,7 +562,7 @@ Application.initCKE = function()
 					}
 					Application.contentTimeout = false;
 					ge( 'Printable' ).innerHTML = Application.editor.getData();
-				}, 250 );
+				}, 750 );
 			} );
 		} )
 		.catch( error => {
@@ -865,11 +938,12 @@ Application.setCurrentDocument = function( pth )
 		fname = fname[fname.length-1];
 		this.fileName = fname;
 	}
+	
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
 	
 	// Update filebrowser
-	this.fileBrowser.setPath( 'Mountlist:', this.path );
+	this.fileBrowser.setPath( this.path );
 	
 	Application.refreshFilePane();
 	
@@ -882,10 +956,12 @@ Application.setCurrentDocument = function( pth )
 
 Application.loadFile = function( path )
 {
+	this.loading = true;
+	
 	Application.statusMessage( 'i18n_status_loading' );
 	
-	Application.fileSaved = true;
 	Application.lastSaved = ( new Date() ).getTime();
+	Application.fileSaved = true;
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
 	
@@ -899,9 +975,7 @@ Application.loadFile = function( path )
 			m.onExecuted = function( e, data )
 			{
 				if( e == 'ok' )
-				{
-					Application.setCurrentDocument( path );
-					
+				{					
 					Application.statusMessage( i18n( 'i18n_loaded' ) );
 					Application.editor.setData( data,
 						function()
@@ -909,6 +983,7 @@ Application.loadFile = function( path )
 							Application.initializeBody();
 						}
 					);
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -926,6 +1001,7 @@ Application.loadFile = function( path )
 				{
 					Application.statusMessage( i18n('i18n_failed_to_load_document') );
 				}	
+				Application.loading = false
 			}
 			m.execute( 'convertfile', { path: path, format: 'html', returnData: true } );
 			break;
@@ -955,6 +1031,7 @@ Application.loadFile = function( path )
 							return setTimeout( function(){ loader( num+1 ); }, 150 );
 						}
 						Application.editor.setData( bdata[1] );
+						ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 						// Remember content and top scroll
 						Application.sendMessage( { 
@@ -973,6 +1050,7 @@ Application.loadFile = function( path )
 				else
 				{
 					Application.editor.setData( data );
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -981,7 +1059,10 @@ Application.loadFile = function( path )
 						data: data,
 						scrollTop: 0
 					} );
+					
+					Application.refreshFilePane();
 				}
+				Application.loading = false;
 			}
 			f.load();
 			break;
@@ -1037,8 +1118,10 @@ Application.saveFile = function( path, content )
 				if( e == 'ok' )
 				{
 					Application.fileSaved = true;
-					
+					Application.lastSaved = ( new Date() ).getTime();
 					Application.statusMessage( i18n('i18n_written') );
+					Application.currentDocument = path;
+					Application.refreshFilePane();
 				}
 				// We got an error...
 				else
@@ -1054,7 +1137,9 @@ Application.saveFile = function( path, content )
 			f.onSave = function()
 			{
 				Application.fileSaved = true;
+				Application.lastSaved = ( new Date() ).getTime();
 				Application.statusMessage(  i18n('i18n_written') );
+				Application.currentDocument = path;
 				Application.refreshFilePane();
 			}
 			f.save( content, path );
@@ -1098,7 +1183,12 @@ Application.print = function( path, content, callback )
 
 Application.newDocument = function( args )
 {
+	// Don't make new document while loading..
+	if( this.loading )
+		return;
+	
 	this.fileSaved = false;
+	this.lastSaved = 0;
 	
 	// Wait till ready
 	if( typeof( ClassicEditor ) == 'undefined' )
@@ -1129,7 +1219,6 @@ Application.newDocument = function( args )
 		{
 			this.setCurrentDocument( args.path );
 			this.lastSaved = ( new Date() ).getTime();
-			this.fileSaved = true;
 		}
 		else
 		{
@@ -1139,7 +1228,7 @@ Application.newDocument = function( args )
 				this.path = args.browserPath;
 				if( !args.content )
 				{
-					this.fileBrowser.setPath( 'Mountlist:', args.browserPath );
+					this.fileBrowser.setPath( args.browserPath );
 				}
 			}
 		}
@@ -1172,7 +1261,7 @@ Application.newDocument = function( args )
 		{
 			this.browserPath = args.browserPath;
 			this.path = args.browserPath;
-			this.fileBrowser.setPath( 'Mountlist:', args.browserPath );
+			this.fileBrowser.setPath( args.browserPath );
 		}
 	}
 }
