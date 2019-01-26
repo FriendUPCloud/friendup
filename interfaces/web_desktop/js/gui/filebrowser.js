@@ -51,7 +51,13 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.dom.classList.add( 'FileBrowser' );
 	this.rootPath = 'Mountlist:'; // The current root path
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false, bookmarks: true, rootPath: false };
+	
+	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: false, bookmarks: true, rootPath: false };
+	if( flags )
+	{
+		for( var a in flags )
+			self.flags[ a ] = flags[ a ];
+	}
 	if( this.flags.rootPath )
 		this.rootPath = this.flags.rootPath;
 	// Clicking the pane
@@ -60,9 +66,12 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 		var t = e.target ? e.target : e.srcElement;
 		if( t == this )
 		{
-			self.setPath( self.rootPath );
-			self.callbacks.folderOpen( self.rootPath );
+			self.setPath( self.rootPath, function()
+			{
+				self.callbacks.folderOpen( self.rootPath );
+			} );
 		}
+		return cancelBubble( e );
 	}
 };
 Friend.FileBrowser.prototype.clear = function()
@@ -162,7 +171,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	{
 		ele.onclick = function( e )
 		{
-			if( !ppath ) return;
+			if( !ppath ) 
+			{
+				return cancelBubble( e );
+			}
 			if ( ppath.indexOf( ':' ) < 0 )
 				ppath += ':';
 
@@ -204,7 +216,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
-					return self.callbacks.folderOpen( ppath );
+					self.callbacks.folderOpen( ppath );
+					return  cancelBubble( e );
 				}
 				// Normal operation
 				if( !this.classList.contains( 'Open' ) )
@@ -304,30 +317,33 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	// Just get a list of disks
 	if( path == 'Mountlist:' )
 	{
-		var func = function( flags, callback )
+		var func = function( flags, cb )
 		{
 			if( window.Workspace )
 			{
 				Friend.DOS.getDisks( flags, function( response, msg )
 				{
-					callback( response ? {
+					cb( response ? {
 						list: msg
 					} : false );
 				} );
 			}
 			else
 			{
-				Friend.DOS.getDisks( flags, callback );
+				Friend.DOS.getDisks( flags, cb );
 			}
 		}
 		func( { sort: true }, function( msg )
 		{	
 			if( !msg || !msg.list ) return;
 			
+			if( callback ) callback();
+			
 			function done()
 			{
 				// Get existing
 				var eles = rootElement.childNodes;
+				
 				var found = [];
 				var foundElements = [];
 				var foundStructures = [];
@@ -552,26 +568,28 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	else
 	{
 		// Support both API scope and Workspace scope
-		var func = function( path, flags, callback )
+		var func = function( path, flags, cb )
 		{
 			if( window.Workspace )
 			{
 				Friend.DOS.getDirectory( path, flags, function( response, msg )
 				{
-					callback( response ? {
+					cb( response ? {
 						list: msg
 					} : false );
 				} );
 			}
 			else
 			{
-				Friend.DOS.getDirectory( path, flags, callback );
+				Friend.DOS.getDirectory( path, flags, cb );
 			}
 		}
 	
 		func( path, { sort: true }, function( msg )
 		{
 			if( !msg || !msg.list ) return;
+			
+			if( callback ) callback();
 			
 			// Get existing
 			var eles = rootElement.childNodes;
