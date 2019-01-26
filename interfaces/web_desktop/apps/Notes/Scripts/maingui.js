@@ -387,7 +387,7 @@ Application.run = function( msg, iface )
 	
 	// Make an "add new folder" button
 	this.fld = document.createElement( 'div' );
-	this.fld.className = 'NewFolder';
+	this.fld.className = 'NewFolder BackgroundHeavier';
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
 	this.fld.onclick = function( e )
 	{

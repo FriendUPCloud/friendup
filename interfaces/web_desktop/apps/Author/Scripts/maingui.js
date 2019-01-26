@@ -85,15 +85,6 @@ Application.refreshFilePane = function( method )
 {
 	if( !method ) method = false;
 	
-	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
-	{
-		Application.fld.classList.add( 'Hidden' );
-	}
-	else
-	{
-		Application.fld.classList.remove( 'Hidden' );
-	}
-	
 	var d = new Door( Application.browserPath );
 	
 	var self = this;
@@ -382,44 +373,6 @@ Application.run = function( msg, iface )
 	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true }, filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
-	
-	// Make an "add new folder" button
-	this.fld = document.createElement( 'div' );
-	this.fld.className = 'NewFolder';
-	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
-	this.fld.onclick = function( e )
-	{
-		var el = document.createElement( 'input' );
-		el.type = 'text';
-		el.className = 'FullWidth InputHeight';
-		el.placeholder = 'foldername';
-		ge( 'LeftBar' ).appendChild( el );
-		el.select();
-		el.focus();
-		el.onkeydown = function( e )
-		{
-			var w = e.which ? e.which : e.keyCode;
-			if( w == 27 )
-			{
-				el.parentNode.removeChild( el );
-			}
-			else if( w == 13 )
-			{
-				var l = new Library( 'system.library' );
-				l.onExecuted = function()
-				{
-					self.fileBrowser.refresh();
-				}
-				l.execute( 'file/makedir', { path: Application.path + this.value } );
-			}
-		}
-		el.blur = function()
-		{
-			el.parentNode.removeChild( el );
-		}
-		return cancelBubble( e );
-	}
-	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
 }
 
 Application.checkWidth = function()
