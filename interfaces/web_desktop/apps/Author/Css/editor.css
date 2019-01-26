@@ -70,7 +70,7 @@ html > body
 	top: 0;
 	left: 0;
 	width: 250px;
-	height: calc(100% - 50px);
+	height: 100%;
 	box-sizing: border-box;
 }
 
@@ -93,24 +93,6 @@ html > body
 	height: 50px;
 	z-index: 2;
 	box-sizing: border-box;
-}
-
-.EditorContentArea .NewFolder
-{
-	position: absolute;
-	left: 0;
-	bottom: 0;
-	height: 50px;
-	z-index: 2;
-	box-sizing: border-box;
-	width: 250px;
-	transition: opacity 0.25s;
-}
-
-.EditorContentArea .NewFolder.Hidden
-{
-	pointer-events: none;
-	opacity: 0;
 }
 
 #RightBar
