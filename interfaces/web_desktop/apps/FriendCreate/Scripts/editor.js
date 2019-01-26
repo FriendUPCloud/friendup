@@ -1659,7 +1659,7 @@ Application.receiveMessage = function( msg )
 				{
 					Application.sendMessage( {
 						command: 'settitle',
-						title: 'Files in ' + msg.data.ProjectName
+						title: i18n( 'i18n_files_in' ) + ' ' + msg.data.ProjectName
 					} );
 				}
 				else 

@@ -19,6 +19,8 @@ i18n_about_codeeditor               : About Friend Create
 i18n_your_devices                   : Your devices
 i18n_bookmarks                      : Bookmarks
 
+i18n_files_in                       : Files in
+
 i18n_autosaved                      : Autosaved.
 i18n_no_project                     : Could not find project
 i18n_cant_project_filename          : Found no project filename.

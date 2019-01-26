@@ -19,6 +19,8 @@ i18n_about_codeeditor               : Om Friend Create
 i18n_your_devices                   : Dine enheter
 i18n_bookmarks                      : Bokmerker
 
+i18n_files_in                       : Filer i
+
 i18n_autosaved                      : Autolagret.
 i18n_no_project                     : Fant ikke prosjektet
 i18n_cant_project_filename          : Fant ikke et filnavn for prosjektet.
