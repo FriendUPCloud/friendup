@@ -44,6 +44,7 @@ var filebrowserCallbacks = {
 	{
 		Application.browserPath = ele;
 		Application.fileSaved = false;
+		Application.lastSaved = 0;
 		Application.currentDocument = null;
 		Application.refreshFilePane( 'findFirstFile' );
 	},
@@ -545,7 +546,7 @@ Application.initCKE = function()
 					}
 					Application.contentTimeout = false;
 					ge( 'Printable' ).innerHTML = Application.editor.getData();
-				}, 250 );
+				}, 750 );
 			} );
 		} )
 		.catch( error => {
@@ -963,6 +964,7 @@ Application.loadFile = function( path )
 							Application.initializeBody();
 						}
 					);
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -1009,6 +1011,7 @@ Application.loadFile = function( path )
 							return setTimeout( function(){ loader( num+1 ); }, 150 );
 						}
 						Application.editor.setData( bdata[1] );
+						ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 						// Remember content and top scroll
 						Application.sendMessage( { 
@@ -1027,6 +1030,7 @@ Application.loadFile = function( path )
 				else
 				{
 					Application.editor.setData( data );
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -1091,8 +1095,10 @@ Application.saveFile = function( path, content )
 				if( e == 'ok' )
 				{
 					Application.fileSaved = true;
-					Application.currentDocument = path;
+					Application.lastSaved = ( new Date() ).getTime();
 					Application.statusMessage( i18n('i18n_written') );
+					Application.currentDocument = path;
+					Application.refreshFilePane();
 				}
 				// We got an error...
 				else
@@ -1108,6 +1114,7 @@ Application.saveFile = function( path, content )
 			f.onSave = function()
 			{
 				Application.fileSaved = true;
+				Application.lastSaved = ( new Date() ).getTime();
 				Application.statusMessage(  i18n('i18n_written') );
 				Application.currentDocument = path;
 				Application.refreshFilePane();
@@ -1154,6 +1161,7 @@ Application.print = function( path, content, callback )
 Application.newDocument = function( args )
 {
 	this.fileSaved = false;
+	this.lastSaved = 0;
 	
 	// Wait till ready
 	if( typeof( ClassicEditor ) == 'undefined' )
