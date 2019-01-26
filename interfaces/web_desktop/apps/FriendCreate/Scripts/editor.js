@@ -112,6 +112,8 @@ var filebrowserCallbacks = {
 
 Application.run = function( msg )
 {
+	this.diskActivity = 0;
+	
 	InitTabs( ge( 'EditorTabs' ) );
 	InitTabs( ge( 'filelisttabs' ) );	
 	
@@ -724,7 +726,12 @@ Application.open = function()
 // Say we wanna save
 Application.save = function( mode )
 {
+	var self = this;
+	
 	if( !mode ) mode = 'normal';
+	
+	// Busy saving
+	this.diskActivity++;
 	
 	// Do an autosave
 	if( mode == 'autosave' )
@@ -739,6 +746,9 @@ Application.save = function( mode )
 			{
 				ge( 'status' ).innerHTML = '';
 			}, 1000 );
+			
+			// Done saving
+			self.diskActivity--;
 		}
 		f.save( this.editor.getValue() );
 		
@@ -939,6 +949,10 @@ Application.refreshFilesList = function ()
 	// Reinitialize tabs with proper callback
 	InitTabs( ge( 'EditorTabs' ), function( self, pages )
 	{
+		// Don't change tabs on disk activity
+		if( Application.diskActivity > 0 )
+			return false;
+			
 		// Delayed clickfunc
 		if( clickFunc )
 		{
@@ -946,7 +960,7 @@ Application.refreshFilesList = function ()
 			clickFunc = null;
 		}
 		
-		// also do the files list!
+		// Also do the files list!
 		for( var a in files.childNodes )
 		{
 			if( files.childNodes[a].uniqueId == self.uniqueId )
@@ -958,7 +972,7 @@ Application.refreshFilesList = function ()
 		
 		// Set class
 		ge( 'CodeTabPage' ).className = 'Page PageActive';
-		return false;
+		return true;
 	} );
 	
 	this.applySyntaxHighlighting();
@@ -1101,6 +1115,10 @@ var inc = 0;
 Application.setCurrentFile = function( curr, ocallback, mode )
 {
 	var self = this;
+	
+	// Don't set anything when we're waiting!
+	if( this.diskActivity > 0 )
+		return;
 	
 	// Don't do it double
 	if( curr == this.currentFile ) return;
@@ -1818,6 +1836,12 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'updateStatus':
 				ge( 'status' ).innerHTML = msg.data ? msg.data : '';
+				break;
+			// We are done saving!
+			case 'donesaving':
+				Application.diskActivity--;
+				if( Application.diskActivity < 0 )
+					Application.diskActivity = 0;
 				break;
 		}
 	}
