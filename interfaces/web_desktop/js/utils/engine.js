@@ -2123,27 +2123,29 @@ function InitTabs( pdiv, tabCallback )
 			divs[a].tabs = tabs; 
 			divs[a].pages = pages;
 			divs[a].index = tabs.length - 1;
-			divs[a].onclick = function ()
+			divs[a].onclick = function()
 			{
-				SetCookie ( 'Tabs' + this.pdiv.id, this.index );
-				this.classList.add( 'TabActive' );
-				var ind;
-				for( var b = 0; b < this.tabs.length; b++ )
-				{
-					if( this.tabs[b] != this )
-					{
-						this.tabs[b].classList.remove( 'TabActive' );
-					}
-					else ind = b;
-				}
 				var result = true;
 				if( tabCallback )
 				{
-					result = tabCallback( this, this.pages );
+					var r = tabCallback( this, this.pages );
+					if( r === false || r === true )
+						result = r;
 				}
 				// Only continue if the tab callback has a positive result or doesn't exist
 				if( result )
 				{
+					SetCookie ( 'Tabs' + this.pdiv.id, this.index );
+					this.classList.add( 'TabActive' );
+					var ind;
+					for( var b = 0; b < this.tabs.length; b++ )
+					{
+						if( this.tabs[b] != this )
+						{
+							this.tabs[b].classList.remove( 'TabActive' );
+						}
+						else ind = b;
+					}
 					for( var b = 0; b < this.pages.length; b++ )
 					{
 						if( b != ind )
