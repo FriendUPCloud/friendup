@@ -1121,10 +1121,10 @@ Application.setCurrentFile = function( curr, ocallback, mode )
 	if( !mode ) mode = false;
 	
 	// Don't do it double
-	if( curr == this.currentFile ) return;
+	if( curr == this.currentFile ) return ocallback();
 	
 	// Race condition prevention
-	if( self.settingCurrentFile ) return;
+	if( self.settingCurrentFile ) return ocallback();
 	self.settingCurrentFile = true;
 	
 	// Reset when done
