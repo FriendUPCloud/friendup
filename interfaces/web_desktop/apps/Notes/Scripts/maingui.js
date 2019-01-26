@@ -340,7 +340,7 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
-	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:' }, filebrowserCallbacks );
+	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:Notes/', bookmarks: false }, filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
 }
@@ -869,7 +869,7 @@ Application.setCurrentDocument = function( pth )
 	this.currentDocument = pth;
 	
 	// Update filebrowser
-	this.fileBrowser.setPath( 'Mountlist:', this.path );
+	this.fileBrowser.setPath( 'Home:Notes/', this.path );
 	
 	Application.refreshFilePane();
 	
@@ -1139,7 +1139,7 @@ Application.newDocument = function( args )
 				this.path = args.browserPath;
 				if( !args.content )
 				{
-					this.fileBrowser.setPath( 'Mountlist:', args.browserPath );
+					this.fileBrowser.setPath( 'Home:Notes/', args.browserPath );
 				}
 			}
 		}
@@ -1172,7 +1172,7 @@ Application.newDocument = function( args )
 		{
 			this.browserPath = args.browserPath;
 			this.path = args.browserPath;
-			this.fileBrowser.setPath( 'Mountlist:', args.browserPath );
+			this.fileBrowser.setPath( 'Home:Notes/', args.browserPath );
 		}
 	}
 }

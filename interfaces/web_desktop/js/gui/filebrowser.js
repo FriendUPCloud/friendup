@@ -48,7 +48,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.dom.classList.add( 'FileBrowser' );
 	this.currentPath = 'Mountlist:';
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false };
+	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false, bookmarks: true };
 };
 Friend.FileBrowser.prototype.clear = function()
 {
@@ -66,30 +66,34 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 {
 	var drop = 0;
 	var self = this;
-	// Element was dropped here
-	for( var a = 0; a < elements.length; a++ )
+	// Only if we have bookmarks
+	if( self.flags.bookmarks )
 	{
-		if( elements[a].fileInfo.Type == 'Directory' )
+		// Element was dropped here
+		for( var a = 0; a < elements.length; a++ )
 		{
-			if( elements[a].fileInfo.Path.substr( elements[a].fileInfo.Path - 1, 1 ) != ':' )
+			if( elements[a].fileInfo.Type == 'Directory' )
 			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
+				if( elements[a].fileInfo.Path.substr( elements[a].fileInfo.Path - 1, 1 ) != ':' )
 				{
-					if( e == 'ok' )
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
 					{
-						self.clear();
-						self.refresh( 'Mountlist:' );
+						if( e == 'ok' )
+						{
+							self.clear();
+							self.refresh( 'Mountlist:' );
+						}
 					}
+					m.execute( 'addbookmark', { path: elements[a].fileInfo.Path, name: elements[a].fileInfo.Filename } );
+					drop++;
 				}
-				m.execute( 'addbookmark', { path: elements[a].fileInfo.Path, name: elements[a].fileInfo.Filename } );
-				drop++;
 			}
 		}
-	}
-	if( win )
-	{
-		if( win.refresh ) win.refresh();
+		if( win )
+		{
+			if( win.refresh ) win.refresh();
+		}
 	}
 	return drop;
 };
@@ -351,7 +355,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					if( msg.list[a].Volume == 'System:' ) continue;
 					
 					// Add the bookmark header if it doesn't exist
-					if( msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
+					if( self.flags.bookmarks && msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
 					{
 						var d = document.createElement( 'div' );
 						self.bookmarksHeader = d;
@@ -487,40 +491,43 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 			}
 			
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			if( self.flags.bookmarks )
 			{
-				if( e == 'ok' )
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
 				{
-					try
+					if( e == 'ok' )
 					{
-						var js = JSON.parse( d );
-						msg.list.push( {
-							Title: i18n( 'i18n_bookmarks' ) + ':',
-							Type: 'header'
-						} );
-						for( var a = 0; a < js.length; a++ )
+						try
 						{
-							var ele = {
-								Title: js[a].name,
-								Type: 'bookmark',
-								Path: js[a].path,
-								Volume: js[a].path
-							};
-							msg.list.push( ele );
+							var js = JSON.parse( d );
+							msg.list.push( {
+								Title: i18n( 'i18n_bookmarks' ) + ':',
+								Type: 'header'
+							} );
+							for( var a = 0; a < js.length; a++ )
+							{
+								var ele = {
+									Title: js[a].name,
+									Type: 'bookmark',
+									Path: js[a].path,
+									Volume: js[a].path
+								};
+								msg.list.push( ele );
+							}
 						}
+						catch( e )
+						{
+						}
+						done();
 					}
-					catch( e )
+					else
 					{
+						done();
 					}
-					done();
 				}
-				else
-				{
-					done();
-				}
+				m.execute( 'getbookmarks' );
 			}
-			m.execute( 'getbookmarks' );
 		} );
 	}
 	// Get sub directories
