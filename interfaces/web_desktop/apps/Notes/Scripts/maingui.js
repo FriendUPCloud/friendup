@@ -16,8 +16,15 @@ Application.lastSaved = 0;
 // Don't scroll out of view
 document.body.addEventListener( 'scroll', function()
 {
+	document.body.scroll( 0, 0 );
 	document.body.parentNode.scroll( 0, 0 );
 }, false );
+window.addEventListener( 'scroll', function()
+{
+	document.body.scroll( 0, 0 );
+	document.body.parentNode.scroll( 0, 0 );
+}, false );
+// End scroll watcher
 
 var filebrowserCallbacks = {
 	// Check a file on file extension
