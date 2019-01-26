@@ -950,9 +950,12 @@ Application.setCurrentDocument = function( pth )
 
 Application.loadFile = function( path )
 {
+	this.loading = true;
+	
 	Application.statusMessage( 'i18n_status_loading' );
 	
 	Application.lastSaved = ( new Date() ).getTime();
+	Application.fileSaved = true;
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
 	
@@ -992,6 +995,7 @@ Application.loadFile = function( path )
 				{
 					Application.statusMessage( i18n('i18n_failed_to_load_document') );
 				}	
+				Application.loading = false
 			}
 			m.execute( 'convertfile', { path: path, format: 'html', returnData: true } );
 			break;
@@ -1052,6 +1056,7 @@ Application.loadFile = function( path )
 					
 					Application.refreshFilePane();
 				}
+				Application.loading = false;
 			}
 			f.load();
 			break;
@@ -1172,6 +1177,10 @@ Application.print = function( path, content, callback )
 
 Application.newDocument = function( args )
 {
+	// Don't make new document while loading..
+	if( this.loading )
+		return;
+	
 	this.fileSaved = false;
 	this.lastSaved = 0;
 	
