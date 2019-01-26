@@ -207,6 +207,31 @@ Application.refreshFilePane = function( method )
 				p.appendChild( inp );
 				inp.select();
 				inp.focus();
+				function renameNow()
+				{
+					var val = inp.value;
+					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+						val += '.html';
+					var l = new Library( 'system.library' );
+					l.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.sendMessage( {
+								command: 'setfilename',
+								data: Application.path + val
+							} );
+							Application.currentDocument = Application.path + val;
+							Application.refreshFilePane();
+						}
+						// Perhaps give error - file exists
+						else
+						{
+							inp.select();
+						}
+					}
+					l.execute( 'file/rename', { path: s.path, newname: val } );
+				}
 				p.onkeydown = function( e )
 				{
 					var k = e.which ? e.which : e.keyCode;
@@ -219,29 +244,14 @@ Application.refreshFilePane = function( method )
 					// Rename
 					else if( k == 13 )
 					{
-						var val = inp.value;
-						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-							val += '.html';
-						var l = new Library( 'system.library' );
-						l.onExecuted = function( e, d )
-						{
-							if( e == 'ok' )
-							{
-								Application.sendMessage( {
-									command: 'setfilename',
-									data: Application.path + val
-								} );
-								Application.currentDocument = Application.path + val;
-								Application.refreshFilePane();
-							}
-							// Perhaps give error - file exists
-							else
-							{
-								inp.select();
-							}
-						}
-						l.execute( 'file/rename', { path: s.path, newname: val } );
+						renameNow();
 					}
+				}
+				inp.onblur = function()
+				{
+					console.log( 'Blurring?' );
+					p.innerHTML = ml;
+					s.tm = null;
 				}
 			}
 			
@@ -1039,6 +1049,8 @@ Application.loadFile = function( path )
 						data: data,
 						scrollTop: 0
 					} );
+					
+					Application.refreshFilePane();
 				}
 			}
 			f.load();
