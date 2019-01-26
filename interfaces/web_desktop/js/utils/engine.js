@@ -2103,6 +2103,8 @@ function InitTabs( pdiv, tabCallback )
 	
 	var hasContainer = tabContainer;
 	
+	var setPageState = true;
+	
 	for( var a = 0; a < divs.length; a++ )
 	{
 		// Skip orphan tabs and out of bounds subelements
@@ -2125,27 +2127,34 @@ function InitTabs( pdiv, tabCallback )
 			divs[a].index = tabs.length - 1;
 			divs[a].onclick = function()
 			{
+				// Already active? Just return
+				if( this.classList.contains( 'TabActive' ) ) return;
+				
+				// Assume it is ok to activate this tab
 				var result = true;
+				
+				SetCookie ( 'Tabs' + this.pdiv.id, this.index );
+				this.classList.add( 'TabActive' );
+				var ind;
+				for( var b = 0; b < this.tabs.length; b++ )
+				{
+					if( this.tabs[b] != this )
+					{
+						this.tabs[b].classList.remove( 'TabActive' );
+					}
+					else ind = b;
+				}
+				
 				if( tabCallback )
 				{
 					var r = tabCallback( this, this.pages );
 					if( r === false || r === true )
 						result = r;
 				}
+				
 				// Only continue if the tab callback has a positive result or doesn't exist
 				if( result )
 				{
-					SetCookie ( 'Tabs' + this.pdiv.id, this.index );
-					this.classList.add( 'TabActive' );
-					var ind;
-					for( var b = 0; b < this.tabs.length; b++ )
-					{
-						if( this.tabs[b] != this )
-						{
-							this.tabs[b].classList.remove( 'TabActive' );
-						}
-						else ind = b;
-					}
 					for( var b = 0; b < this.pages.length; b++ )
 					{
 						if( b != ind )
@@ -2173,6 +2182,8 @@ function InitTabs( pdiv, tabCallback )
 						}
 					}
 				}
+				
+				// Do magic with resize
 				if( typeof ( AutoResizeWindow ) != 'undefined' )
 				{
 					var pdiv = this.pdiv;

@@ -1491,16 +1491,16 @@ html body.Dark .PageActive, html body.Dark .PageActive .PageScroll
 
 html body.Dark .Tab.TabActive
 {
-	background-color: #34495e;
+	border: 1px solid #4A6075; 
+	background-color: #4A6075;
 	color: #e0e0e0;
-	border: 1px solid #34495e;
 }
 
 html body.Dark .Tab
 {
-	border: 1px solid #4A6075; 
-	background-color: #4A6075;
 	color: #b1c0ce;
+	background-color: #34495e;
+	border: 1px solid #34495e;
 	margin-right: 1px;
 }
 
@@ -1787,16 +1787,16 @@ html body.Charcoal .PageActive, html body.Charcoal .PageActive .PageScroll
 
 html body.Charcoal .Tab.TabActive
 {
-	background-color: #3c3c3c;
+	border: 1px solid #505050; 
+	background-color: #505050;
 	color: #e0e0e0;
-	border: 1px solid #3c3c3c;
 }
 
 html body.Charcoal .Tab
 {
-	border: 1px solid #505050; 
-	background-color: #505050;
 	color: #b1c0ce;
+	background-color: #3c3c3c;
+	border: 1px solid #3c3c3c;
 	margin-right: 1px;
 }
 html body.Charcoal .Tab:last-child
