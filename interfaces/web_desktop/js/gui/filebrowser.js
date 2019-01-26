@@ -138,6 +138,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	var self = this;
 	
 	if( !rootElement ) rootElement = this.dom;
+	if( !callback ) callback = false;
 	if( !path ) path = this.rootPath; // Use the rootpath
 	if( !depth ) depth = 1;
 

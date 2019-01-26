@@ -43,10 +43,13 @@ var filebrowserCallbacks = {
 	folderOpen( ele )
 	{
 		Application.browserPath = ele;
+		Application.fileSaved = false;
+		Application.currentDocument = null;
 		Application.refreshFilePane( 'findFirstFile' );
 	},
 	folderClose( ele )
 	{
+		Application.currentDocument = null;
 		Application.browserPath = ele;
 		Application.refreshFilePane( 'findFirstFile' );
 	}
@@ -74,6 +77,15 @@ Application.checkFileType = function( p )
 Application.refreshFilePane = function( method )
 {
 	if( !method ) method = false;
+	
+	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
+	{
+		Application.fld.classList.add( 'Hidden' );
+	}
+	else
+	{
+		Application.fld.classList.remove( 'Hidden' );
+	}
 	
 	var d = new Door( Application.browserPath );
 	
@@ -142,6 +154,7 @@ Application.refreshFilePane = function( method )
 							data: Application.currentDocument
 						} );
 						Application.refreshFilePane();
+						Application.loadFile( Application.browserPath + nextTest + '.html' );
 					}
 				} );
 			}
@@ -152,9 +165,8 @@ Application.refreshFilePane = function( method )
 		
 		var sw = 2;
 		var firstFileNum = 0;
-		
 		var foundFile = false;
-		
+				
 		for( var a = 0; a < items.length; a++ )
 		{
 			var num = items[ a ];
@@ -165,6 +177,7 @@ Application.refreshFilePane = function( method )
 			if( firstFileNum++ == 0 && method == 'findFirstFile' && !foundFile && !Application.fileSaved )
 			{
 				Application.loadFile( items[ a ].Path );
+				Application.currentDocument = items[ a ].Path;
 				fouldFile = true;
 			}
 			
@@ -234,7 +247,6 @@ Application.refreshFilePane = function( method )
 			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
 				d.classList.add( 'Selected' );
-				Application.fileSaved = true;
 			}
 			else
 			{
@@ -453,7 +465,8 @@ Application.initCKE = function()
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
 			
 				// Create temporary file "to be saved"
-				if( !Application.fileSaved )
+				console.log( 'The current document: ' + Application.currentDocument );
+				if( !Application.currentDocument )
 				{
 					if( !Application._toBeSaved )
 					{
@@ -907,7 +920,6 @@ Application.loadFile = function( path )
 {
 	Application.statusMessage( 'i18n_status_loading' );
 	
-	Application.fileSaved = true;
 	Application.lastSaved = ( new Date() ).getTime();
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
@@ -1058,7 +1070,7 @@ Application.saveFile = function( path, content )
 				if( e == 'ok' )
 				{
 					Application.fileSaved = true;
-					
+					Application.currentDocument = path;
 					Application.statusMessage( i18n('i18n_written') );
 				}
 				// We got an error...
@@ -1076,6 +1088,7 @@ Application.saveFile = function( path, content )
 			{
 				Application.fileSaved = true;
 				Application.statusMessage(  i18n('i18n_written') );
+				Application.currentDocument = path;
 				Application.refreshFilePane();
 			}
 			f.save( content, path );
@@ -1150,7 +1163,6 @@ Application.newDocument = function( args )
 		{
 			this.setCurrentDocument( args.path );
 			this.lastSaved = ( new Date() ).getTime();
-			this.fileSaved = true;
 		}
 		else
 		{

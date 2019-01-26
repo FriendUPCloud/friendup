@@ -105,6 +105,13 @@ html > body
 	z-index: 2;
 	box-sizing: border-box;
 	width: 250px;
+	transition: opacity 0.25s;
+}
+
+.EditorContentArea .NewFolder.Hidden
+{
+	pointer-events: none;
+	opacity: 0;
 }
 
 #RightBar
