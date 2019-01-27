@@ -1114,73 +1114,74 @@ var WorkspaceInside = {
 				if( wid )
 					wid.autosize();
 			}
-			// For mobiles, we have a Friend icon at the top of the screen
-			// Also add the app menu
-			else if( !Workspace.topNavigation )
-			{
-				var topNavigation = document.createElement( 'div' );
-				topNavigation.className = 'MobileTopNavigation';
-				Workspace.topNavigation = topNavigation;
-				Workspace.screen.contentDiv.parentNode.appendChild( topNavigation );
-				topNavigation.onclick = function()
-				{
-					if( ge( 'WorkspaceMenu' ) )
-					{
-						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
-						document.body.classList.remove( 'WorkspaceMenuOpen' );
-					}
-					if( Workspace.widget )
-						Workspace.widget.slideUp();
-					
-					// Store active window in mainwindow
-					if( window._getAppByAppId )
-					{
-						if( window.currentMovable && currentMovable.applicationId )
-						{
-							var app = _getAppByAppId( currentMovable.applicationId );
-							if( app.mainView )
-							{
-								if( currentMovable.windowObject != app.mainView )
-								{
-									app.mainView.lastActiveView = currentMovable;
-								}
-							}
-						}
-					}
-					
-					Workspace.mainDock.closeDesklet();
-					DefaultToWorkspaceScreen();
-					_DeactivateWindows();
-					Friend.GUI.reorganizeResponsiveMinimized();
-					window.focus();
-				}
-				
-				// App menu toggle
-				var appMenu = document.createElement( 'div' );
-				appMenu.className = 'MobileAppMenu';
-				Workspace.appMenu = appMenu;
-				Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
-				appMenu.onclick = function()
-				{
-					if( ge( 'WorkspaceMenu' ) )
-					{
-						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
-						document.body.classList.remove( 'WorkspaceMenuOpen' );
-					}
-					if( document.body.classList.contains( 'AppsShowing' ) )
-					{
-						Workspace.mainDock.closeDesklet();
-						Friend.GUI.reorganizeResponsiveMinimized();
-					}
-					else
-					{
-						Workspace.mainDock.openDesklet();
-					}
-				}
-			}
 		}
 		// FRANCOIS: get unique device IDs...
 		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		
+		// For mobiles, we have a Friend icon at the top of the screen
+		// Also add the app menu
+		if( isMobile && !Workspace.topNavigation )
+		{
+			var topNavigation = document.createElement( 'div' );
+			topNavigation.className = 'MobileTopNavigation';
+			Workspace.topNavigation = topNavigation;
+			Workspace.screen.contentDiv.parentNode.appendChild( topNavigation );
+			topNavigation.onclick = function()
+			{
+				if( ge( 'WorkspaceMenu' ) )
+				{
+					ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
+				}
+				if( Workspace.widget )
+					Workspace.widget.slideUp();
+				
+				// Store active window in mainwindow
+				if( window._getAppByAppId )
+				{
+					if( window.currentMovable && currentMovable.applicationId )
+					{
+						var app = _getAppByAppId( currentMovable.applicationId );
+						if( app.mainView )
+						{
+							if( currentMovable.windowObject != app.mainView )
+							{
+								app.mainView.lastActiveView = currentMovable;
+							}
+						}
+					}
+				}
+				
+				Workspace.mainDock.closeDesklet();
+				DefaultToWorkspaceScreen();
+				_DeactivateWindows();
+				Friend.GUI.reorganizeResponsiveMinimized();
+				window.focus();
+			}
+			
+			// App menu toggle
+			var appMenu = document.createElement( 'div' );
+			appMenu.className = 'MobileAppMenu';
+			Workspace.appMenu = appMenu;
+			Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
+			appMenu.onclick = function()
+			{
+				if( ge( 'WorkspaceMenu' ) )
+				{
+					ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
+				}
+				if( document.body.classList.contains( 'AppsShowing' ) )
+				{
+					Workspace.mainDock.closeDesklet();
+					Friend.GUI.reorganizeResponsiveMinimized();
+				}
+				else
+				{
+					Workspace.mainDock.openDesklet();
+				}
+			}
+		}
 	},
 	// Close widgets and return to desktop..
 	goToMobileDesktop: function()
