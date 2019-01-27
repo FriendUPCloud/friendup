@@ -26,10 +26,6 @@
 @append url(System:css/workspace.css);
 @append url(System:css/font-awesome.min.css);
 
-/* Flavors of the theme */
-@import url(/themes/friendup12/flavors_dark.css);
-@import url(/themes/friendup12/flavors_charcoal.css);
-
 @declaration
 {
 	/* Colors */
@@ -3724,4 +3720,10 @@ html > body[mobile] > div .Button.IconButton:hover
 	outline: 0px !important;
 	border: 0 !important;
 }
+
+/* Flavors of the theme */
+@append url(System:../themes/friendup12/flavors_dark.css);
+@append url(System:../themes/friendup12/flavors_charcoal.css);
+@append url(System:../themes/friendup12/flavors_synthwave.css);
+
 
