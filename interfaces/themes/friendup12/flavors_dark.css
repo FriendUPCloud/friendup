@@ -345,4 +345,38 @@ body.Dark .Active > .FileBrowserItemImage
 	filter: invert(100%);
 }
 
+/* Dark scheme scrollbars */
+
+body.Dark::-webkit-scrollbar
+body.Dark .View.Active ::-webkit-scrollbar
+{
+	background-color: hsla(210, 29%, 20%, 0.5);
+}
+
+html body.Dark ::-webkit-scrollbar,
+html body.Dark ::-webkit-scrollbar-track,
+html body.Dark .View.Active ::-webkit-scrollbar-track,
+.Dark .View.Active.IconWindow ::-webkit-scrollbar-track,
+.Dark .View.IconWindow ::-webkit-scrollbar-track,
+html body.Dark.activated ::-webkit-scrollbar-track,
+html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background-color: rgba(36,51,66,0.5) !important;
+	border: 0;
+}
+
+html body.Dark ::-webkit-scrollbar-thumb
+{
+	background-color: #34495e !important;
+	border-color: #314559;
+}
+
+html body.Dark .View.Active ::-webkit-scrollbar-thumb,
+html body.Dark.activated ::-webkit-scrollbar-thumb,
+html body.Dark .View.Active ::-webkit-scrollbar-thumb, 
+html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background-color: #34495e !important;
+	border-color: #314559;
+}  
 

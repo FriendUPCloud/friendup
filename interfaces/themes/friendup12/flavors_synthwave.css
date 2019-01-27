@@ -375,10 +375,37 @@ body.Synthwave .Active > .FileBrowserItemImage,
 }
 
 
+/* Synthwave scheme scrollbars */
 
+body.Charcoal::-webkit-scrollbar
+body.Charcoal .View.Active ::-webkit-scrollbar
+{
+	background-color: rgba(0,0,0,0.6);
+}
 
+html body.Charcoal ::-webkit-scrollbar,
+html body.Charcoal ::-webkit-scrollbar-track,
+html body.Charcoal .View.Active ::-webkit-scrollbar-track,
+.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track,
+.Charcoal .View.IconWindow ::-webkit-scrollbar-track,
+html body.Charcoal.activated ::-webkit-scrollbar-track,
+html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background-color: rgba(20,20,20,0.3) !important;
+	border-color: rgba(20,20,20,0.3) !important;
+}
 
+html body.Charcoal ::-webkit-scrollbar-thumb
+{
+	background-color: #383838 !important;
+	border-color: #303030;
+}
 
-/* End charcoal theme */
-
-
+html body.Charcoal .View.Active ::-webkit-scrollbar-thumb,
+html body.Charcoal.activated ::-webkit-scrollbar-thumb,
+html body.Charcoal .View.Active ::-webkit-scrollbar-thumb, 
+html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background-color: #404040 !important;
+	border-color: #383838;
+}
