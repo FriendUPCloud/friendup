@@ -8,7 +8,7 @@ html body[mobile].Synthwave #Screens > div
 
 html [mobile=mobile].Synthwave.ViewMaximized.HasMenu #WorkspaceMenu
 {
-	transition: background,transform 0.25s,0.25s;
+	transition: background 0.25s;
 }
 
 [mobile].Synthwave #WorkspaceMenu:not(.Open):before
