@@ -5534,7 +5534,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			document.getElementsByTagName( 'head' )[0].appendChild( Friend.themeStyleElement );
 		}
 		
-		var shades = [ 'dark', 'charcoal' ];
+		var shades = [ 'dark', 'charcoal', 'synthwave' ];
 		for( var c in shades )
 		{
 			var uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );

@@ -7,7 +7,7 @@ body.Synthwave .AppsShowingTitle
 
 html body.Synthwave #Screens > div
 {
-	background: #303030;
+	background: #000022;
 }
 
 html body.Synthwave .File .Icon .Drive .Label
@@ -32,13 +32,13 @@ body.Synthwave.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar,
 body.Synthwave[mobile] #WorkspaceMenu,
 html body.Synthwave #DoorsScreen:after
 {
-	background-color: #303030;
+	background-color: #461c64;
 }
 
 
 html body.Synthwave .ViewContainer[childview].Active > .MobileBack:before
 {
-	color: #e0e0e0;
+	color: #bdbcff;
 	font-size: 1.4em;
 }
 
@@ -80,9 +80,9 @@ body.Synthwave input[type=datetime-local], body.Synthwave input[type=password],
 html body.Synthwave textarea, html body.Synthwave select, html body.Synthwave select:hover
 {
     border-radius: 2px;
-    border: 1px solid #202020;
-    background: #242424;
-    color: #e0e0e0;
+    border: 1px solid #461c64;
+    background: #461c64;
+    color: #bdbcff;
 }
 
 html body.Synthwave .View, html body.Synthwave .View.Active
@@ -93,34 +93,34 @@ html body.Synthwave .View, html body.Synthwave .View.Active
 html > body.Synthwave .View.Active > .Title,
 html > body[mobile].Synthwave .View > .Title
 {
-	background-color: #303030;
+	background-color: #461c64;
 }
 
 html > body.Synthwave .View > .Title
 {
-	background-color: #404040;
+	background-color: #2d1a47;
 }
 
 html > body:not(.Inside):not(.Loading).Synthwave, html body.Synthwave .View:not([transparent]) .View > .Content,
 html body.Synthwave .View > .Content,
 html body.Synthwave
 {
-	background-color: #2b2b2b !important;
-	color: #e0e0e0;
+	background-color: #000026 !important;
+	color: #bdbcff;
 }
 
 html > body.Synthwave > div button, html > body.Synthwave > div .Button
 {
-	background-color: #3c3c3c;
-    border: 1px solid #3c3c3c;
-    color: #e0e0e0;
+	background-color: #18154c;
+    border: 1px solid #18154c;
+    color: #bdbcff;
 }
 
 html body.Synthwave .View .DirectoryToolbar,
 html body.Synthwave .View.Active .DirectoryToolbar 
 {
-	background-color: #3c3c3c;
-	color: #e0e0e0;
+	background-color: #18154c;
+	color: #bdbcff;
 }
 
 html body.Synthwave .DirectoryToolbar button.Makedir:before
@@ -131,14 +131,14 @@ html body.Synthwave .DirectoryToolbar button.Makedir:before
 html body.Synthwave .View .DirectoryToolbar button,
 html body.Synthwave .View .DirectoryToolbar .Button
 {
-	color: #e0e0e0;
+	color: #bdbcff;
 	background-color: none;
 }
 
 html body.Synthwave .View .DirectoryToolbar > .ToggleGroup > button:hover:before, 
 html body.Synthwave .View .DirectoryToolbar > button:hover:before
 {
-	color: #e0e0e0;
+	color: #bdbcff;
 }
 html > body.Synthwave .View .DirectoryToolbar button:before, 
 html > body.Synthwave .View .DirectoryToolbar button:after
@@ -167,7 +167,7 @@ html body.Synthwave .BoxBlue.Negative
 
 html body.Synthwave .File a
 {
-	color: #e0e0e0;
+	color: #bdbcff;
 }
 
 html body.Synthwave .File .Icon > *:after
@@ -183,16 +183,17 @@ html body.Synthwave .PageActive, html body.Synthwave .PageActive .PageScroll
 
 html body.Synthwave .Tab.TabActive
 {
-	border: 1px solid #505050; 
-	background-color: #505050;
-	color: #e0e0e0;
+	
+	color: #f2c7f2;
+	background-color: #18154c;
+	border: 1px solid #18154c;
 }
 
 html body.Synthwave .Tab
 {
-	color: #b1c0ce;
-	background-color: #3c3c3c;
-	border: 1px solid #3c3c3c;
+	border: 1px solid #0c0a37; 
+	background-color: #0c0a37;
+	color: #bdbcff;
 	margin-right: 1px;
 }
 html body.Synthwave .Tab:last-child
@@ -212,8 +213,8 @@ html body.Synthwave div.Listview > .Icons,
 html body.Synthwave .Box, 
 html body.Synthwave .BoxBlue
 {
-	background-color: #2b2b2b;
-	color: #e0e0e0;
+	background-color: #000026;
+	color: #bdbcff;
 }
 
 html body.Synthwave .PadBorder {
@@ -222,7 +223,7 @@ html body.Synthwave .PadBorder {
 
 html body.Synthwave .BackgroundLists
 {
-	background-color: #202020;
+	background-color: #000022;
 }
 
 html body.Synthwave .BackgroundLists .sw1,
@@ -234,14 +235,14 @@ html body.Synthwave #MousePointer .Row.Odd .Column,
 html body.Synthwave .ZebraList > tr, 
 html body.Synthwave .ZebraList > div
 {
-	background-color: #282828;
-	color: #e0e0e0;
+	background-color: #030325;
+	color: #bdbcff;
 }
 
 html body.Synthwave .ZebraList > tr .PadBorder, 
 html body.Synthwave .ZebraList > div .PadBorder
 {
-	border-color: #282828;
+	border-color: #030325;
 }
 
 html body.Synthwave .ZebraList.Interactive > tr:hover, 
@@ -267,32 +268,32 @@ html body.Synthwave #MousePointer .Row .Column,
 html body.Synthwave .ZebraList > tr:nth-child(odd), 
 html body.Synthwave .ZebraList > div:nth-child(odd)
 {
-	background-color: #202020;
-	color: #e0e0e0;
+	background-color: #000022;
+	color: #bdbcff;
 }
 
 html body.Synthwave .ZebraList > tr:nth-child(odd) .PadBorder, 
 html body.Synthwave .ZebraList > div:nth-child(odd) .PadBorder
 {
-	border-color: #202020;
+	border-color: #000022;
 }
 
 html body.Synthwave .ZebraList.Interactive > tr:nth-child(odd):hover, 
 html body.Synthwave .ZebraList.Interactive > div:nth-child(odd):hover
 {
-	background-color: #282828;
+	background-color: #18154c;
 }
 
 html body.Synthwave div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
 html body.Synthwave #MousePointer .Row.Selected .Column
 {
-	background: #151515;
+	background: #18154c;
 	color: white;
 }
 html body.Synthwave div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
 html body.Synthwave #MousePointer .Row.Odd.Selected .Column
 {
-	background: #101010;
+	background: #18154c;
 	color: white;
 }
 
@@ -307,10 +308,18 @@ html body.Synthwave .List div.sw2.Selected
 	background-color: #3e484c;
 }
 
+html .Synthwave div.Listview > .Icons > .Scroller > .Row > .Column, 
+html .Synthwave div.ColumnView .Row > .Column, 
+html .Synthwave #MousePointer .Row > .Column,
+html .Synthwave div.Listview > .Headers > .Header
+{
+	border-right: 1px solid rgba(0,0,3,0.3);
+}
+
 html body.Synthwave .VertTab
 {
 	background-color: #404040;
-	color: #e0e0e0;
+	color: #bdbcff;
 }
 
 html body.Synthwave .VertTab.Active
@@ -320,8 +329,8 @@ html body.Synthwave .VertTab.Active
 
 html body.Synthwave .Screen > .TitleBar
 {
-	background: #202020;
-	color: #e0e0e0;
+	background: #000022;
+	color: #bdbcff;
 }
 
 html body.Synthwave #WorkspaceMenu > ul > li,
@@ -329,7 +338,7 @@ html body.Synthwave #WorkspaceMenu .Menu,
 html body.Synthwave #WorkspaceMenu .Menu:hover,
 html body.Synthwave .Screen > .TitleBar > .Left *
 {
-	color: #e0e0e0;
+	color: #bdbcff;
 }
 
 body.Synthwave #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
@@ -340,6 +349,11 @@ body.Synthwave #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 html body.Synthwave .Screen > .TitleBar .ScreenList
 {
 	filter: invert(1);
+}
+
+.Synthwave .FileBrowser div.Name.Active
+{
+	background: #18154c;
 }
 
 [mobile].Synthwave .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
@@ -377,35 +391,45 @@ body.Synthwave .Active > .FileBrowserItemImage,
 
 /* Synthwave scheme scrollbars */
 
-body.Charcoal::-webkit-scrollbar
-body.Charcoal .View.Active ::-webkit-scrollbar
+body.Synthwave::-webkit-scrollbar
+body.Synthwave .View.Active ::-webkit-scrollbar
 {
 	background-color: rgba(0,0,0,0.6);
 }
 
-html body.Charcoal ::-webkit-scrollbar,
-html body.Charcoal ::-webkit-scrollbar-track,
-html body.Charcoal .View.Active ::-webkit-scrollbar-track,
-.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track,
-.Charcoal .View.IconWindow ::-webkit-scrollbar-track,
-html body.Charcoal.activated ::-webkit-scrollbar-track,
-html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track
+html body.Synthwave ::-webkit-scrollbar,
+html body.Synthwave ::-webkit-scrollbar-track,
+html body.Synthwave .View.Active ::-webkit-scrollbar-track,
+.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-track,
+.Synthwave .View.IconWindow ::-webkit-scrollbar-track,
+html body.Synthwave.activated ::-webkit-scrollbar-track,
+html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-track
 {
-	background-color: rgba(20,20,20,0.3) !important;
-	border-color: rgba(20,20,20,0.3) !important;
+	background-color: #000010 !important;
+	border-color: #000010 !important;
 }
 
-html body.Charcoal ::-webkit-scrollbar-thumb
+html body.Synthwave ::-webkit-scrollbar-thumb
 {
-	background-color: #383838 !important;
-	border-color: #303030;
+	background-color: #18154c !important;
+    border-color: #18154c;
 }
 
-html body.Charcoal .View.Active ::-webkit-scrollbar-thumb,
-html body.Charcoal.activated ::-webkit-scrollbar-thumb,
-html body.Charcoal .View.Active ::-webkit-scrollbar-thumb, 
-html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-thumb
+html body.Synthwave .View.Active ::-webkit-scrollbar-thumb,
+html body.Synthwave.activated ::-webkit-scrollbar-thumb,
+html body.Synthwave .View.Active ::-webkit-scrollbar-thumb, 
+html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-thumb
 {
-	background-color: #404040 !important;
-	border-color: #383838;
+	background-color: #18154c !important;
+    border-color: #18154c;
 }
+
+/* Icon color shift */
+
+.Synthwave .File > .Icon > div:not(.Thumbnail),
+.Synthwave .FileBrowser .FolderItem > .Name:before
+{
+	filter: contrast(1.5) hue-rotate(230deg) grayscale(0.3);
+}
+
+
