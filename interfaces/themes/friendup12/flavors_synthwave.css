@@ -1,9 +1,28 @@
 /* Synthwave ---------------------------------------------------------------- */
 
-body.Synthwave .AppsShowingTitle
+body.Synthwave .AppsShowingTitle,
+html body[mobile].Synthwave #Screens > div
 {
-	background: #303030;
+	background: #461c64;
 }
+
+html [mobile=mobile].Synthwave.ViewMaximized.HasMenu #WorkspaceMenu
+{
+	transition: background,transform 0.25s,0.25s;
+}
+
+[mobile].Synthwave #WorkspaceMenu:not(.Open):before
+{
+	right: auto;
+	left: 0;
+}
+
+html [mobile=mobile].Synthwave.ViewMaximized.HasMenu #WorkspaceMenu.Open, 
+html [mobile=mobile].Synthwave.WidgetSlideDown.HasMenu #WorkspaceMenu.Open
+{
+	background: #18154c;
+}
+
 
 html body.Synthwave #Screens > div
 {
@@ -18,12 +37,12 @@ html body.Synthwave .File .Icon .Drive .Label
 html body.Synthwave[mobile=mobile] > #MobileMenu.Visible
 {
 	background: #222222;
-	color: white;
+	color: #dadaff;
 }
 
 html body.Synthwave[mobile] #WorkspaceMenu.Open ul
 {
-	background: #303030;
+	background: #461c64;
 }
 
 html body.Synthwave #DoorScreen:after,
@@ -44,12 +63,12 @@ html body.Synthwave .ViewContainer[childview].Active > .MobileBack:before
 
 [mobile].Synthwave #WorkspaceMenu.Open
 {
-	background: #303030;
+	background: #461c64;
 }
 
 html body.Synthwave .Screen > .ScreenContent
 {
-	background: #303030;
+	background: #461c64;
 }
 
 html body.Synthwave a, html body a.Synthwave:visited
@@ -60,7 +79,7 @@ html body.Synthwave a, html body a.Synthwave:visited
 html [mobile=mobile].Synthwave.ViewMaximized.HasMenu #WorkspaceMenu,
 html [mobile=mobile].Synthwave.WidgetSlideDown.HasMenu #WorkspaceMenu
 {
-	background: #303030;
+	background: #461c64;
 }
 
 body.Synthwave .SliderElement .SliderGroove
@@ -143,12 +162,23 @@ html body.Synthwave .View .DirectoryToolbar > button:hover:before
 html > body.Synthwave .View .DirectoryToolbar button:before, 
 html > body.Synthwave .View .DirectoryToolbar button:after
 {
-	color: rgba(224,224,224,170);
+	color: #bdbcff;
+}
+
+html .Synthwave .View.Active > .Title > div > span,
+[mobile].Synthwave #WorkspaceMenu:before,
+.Synthwave .AppsShowingTitle:before,
+.Synthwave .AppsShowingTitle,
+.Synthwave .Desklet .Launcher span,
+html body.Synthwave .Screen .MobileAppMenu:after,
+html body.Synthwave .Screen .MobileTopNavigation
+{
+	color: #dadaff;
 }
 
 html body.Synthwave .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
-	color: white;
+	color: #dadaff;
 }
 
 html body.Synthwave .BackgroundNegative,
@@ -162,7 +192,7 @@ html body.Synthwave .Negative,
 html body.Synthwave .Box.Negative,
 html body.Synthwave .BoxBlue.Negative
 {
-	color: #ffffff;
+	color: #dadaff;
 }
 
 html body.Synthwave .File a
@@ -172,7 +202,7 @@ html body.Synthwave .File a
 
 html body.Synthwave .File .Icon > *:after
 {
-	color: #303030;
+	color: #461c64;
 }
 
 html body.Synthwave .PageActive, html body.Synthwave .PageActive .PageScroll
@@ -218,7 +248,7 @@ html body.Synthwave .BoxBlue
 }
 
 html body.Synthwave .PadBorder {
-	border-color : #303030;
+	border-color : #461c64;
 }
 
 html body.Synthwave .BackgroundLists
@@ -248,13 +278,13 @@ html body.Synthwave .ZebraList > div .PadBorder
 html body.Synthwave .ZebraList.Interactive > tr:hover, 
 html body.Synthwave .ZebraList.Interactive > div:hover
 {
-	background-color: #303030;
+	background-color: #461c64;
 }
 
 html body.Synthwave .ZebraList.Interactive > tr:hover .PadBorder, 
 html body.Synthwave .ZebraList.Interactive > div:hover .PadBorder
 {
-	border-color: #303030;
+	border-color: #461c64;
 }
 
 html body.Synthwave .BackgroundLists .sw2,
@@ -288,13 +318,13 @@ html body.Synthwave div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
 html body.Synthwave #MousePointer .Row.Selected .Column
 {
 	background: #18154c;
-	color: white;
+	color: #dadaff;
 }
 html body.Synthwave div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
 html body.Synthwave #MousePointer .Row.Odd.Selected .Column
 {
 	background: #18154c;
-	color: white;
+	color: #dadaff;
 }
 
 html body.Synthwave .List tr.sw1.Selected, 
@@ -324,7 +354,7 @@ html body.Synthwave .VertTab
 
 html body.Synthwave .VertTab.Active
 {
-	background-color: #303030;
+	background-color: #461c64;
 }
 
 html body.Synthwave .Screen > .TitleBar
@@ -361,7 +391,7 @@ html body.Synthwave .Screen > .TitleBar .ScreenList
 [mobile].Synthwave .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,
 [mobile].Synthwave .View .FileDialog .FileBrowser .FileBrowserItemImage
 {
-	color: white;
+	color: #dadaff;
 }
 [mobile].Synthwave .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
 [mobile].Synthwave .View .FileDialog .FileBrowser .DiskItem > .Name:active
