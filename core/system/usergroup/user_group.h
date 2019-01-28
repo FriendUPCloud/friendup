@@ -60,6 +60,7 @@ typedef struct UserGroup
 	FULONG 				ug_UserID;
 	FULONG				ug_ParentID;
 	char 				*ug_Type;
+	struct UserGroup	*ug_ParentGroup;
 	
 	UserGroupAUser		*ug_UserList;		// users assigned to group 
 	File				*ug_MountedDevs;	// root file

@@ -454,6 +454,7 @@ int NotificationManagerNotificationSentSetStatusDB( NotificationManager *nm, FUL
 
 int NotificationManagerAddExternalConnection( NotificationManager *nm, void *con )
 {
+	DEBUG("\n\n\n\n\n\n[NotificationManagerAddExternalConnection] Add connection!\n");
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
 		ExternalServerConnection *esc = FCalloc( 1, sizeof(ExternalServerConnection) );
@@ -578,14 +579,19 @@ int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *re
 		ExternalServerConnection *con = nm->nm_ESConnections;
 		if( sername == NULL ) // send to all servers
 		{
+			DEBUG("Server name = NULL\n");
 			while( con != NULL )
 			{
+				DataQWSIM *en = (DataQWSIM *)con->esc_Connection;
+				
+				DEBUG("Msg sent to: %s\n", en->d_ServerName );
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );
 				con = (ExternalServerConnection *)con->node.mln_Succ;
 			}
 		}
 		else
 		{
+			DEBUG("Server name != NULL\n");
 			while( con != NULL )
 			{
 				ret += WriteMessageToServers( con->esc_Connection, (unsigned char *)dstMsg, dstsize );

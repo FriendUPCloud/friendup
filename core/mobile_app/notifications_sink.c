@@ -47,6 +47,7 @@ static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
 	//if( man != NULL )
 	{
+		DEBUG("WriteMessageSink\n"); 
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
