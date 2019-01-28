@@ -81,7 +81,8 @@ function PollTray()
 						{
 							event.clickCallback();
 							RemoveNotificationEvent( event.notificationId );
-							tray.notifications.removeChild( this );
+							if( tray.notifications )
+								tray.notifications.removeChild( this );
 						}
 						PollTray();
 						return cancelBubble( e );
@@ -132,6 +133,7 @@ function PollTray()
 			// Clear and repopulate popup
 			function repopulate()
 			{
+				if( !tray.notificationPopup ) return;
 				tray.notificationPopup.innerHTML = '';
 			
 				var h = 8;

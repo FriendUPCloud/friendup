@@ -3449,6 +3449,11 @@ html .View > .MoveOverlay, html .Screen > .MoveOverlay
 	cursor: move;
 }
 
+html body[windowcount] #WorkspaceMenu .Menu li.Disabled
+{
+	display: none;
+}
+
 html .MouseRestricted,
 html body #WorkspaceMenu .Menu li.Disabled,
 html body #WorkspaceMenu .Menu li.Disabled:hover,

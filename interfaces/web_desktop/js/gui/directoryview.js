@@ -1013,11 +1013,31 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 			e.stopPropagation();
 			e.preventDefault();
+			
+			var info = false;
+			if( files && !this.content && this.classList.contains( 'Screen' ) )
+			{
+				info = {
+					'session': Workspace.sessionId,
+					'targetPath': 'Home:Download/',
+					'targetVolume': 'Home:',
+					'files': files
+				};
+			}
+			else if( files && this.content && this.content.fileInfo && this.content.fileInfo.Volume )
+			{
+				info = {
+					'session': Workspace.sessionId,
+					'targetPath': this.content.fileInfo.Path,
+					'targetVolume': this.content.fileInfo.Volume,
+					'files': files
+				};
+			}
 
-			if( files && this.content && this.content.fileInfo && this.content.fileInfo.Volume )
+			if( info )
 			{
 				// TODO: to detect read only filesystem!
-				if( this.content.fileInfo.Volume == 'System:' || this.content.fileInfo.Path.split( ':' )[0] == 'System' )
+				if( info.targetVolume == 'System:' || info.targetPath.split( ':' )[0] == 'System' )
 				{
 					Alert( i18n( 'i18n_read_only_filesystem' ), i18n( 'i18n_read_only_fs_desc' ) );
 					return false;
@@ -1157,8 +1177,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						if( e.data['uploadscomplete'] == 1 )
 						{
 							w.close();
-							winobj.refresh();
+							if( winobj && winobj.refresh )
+								winobj.refresh();
 
+							Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded_to_downloads') }, false, function()
+							{
+								OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
+							} );
 							return true;
 						}
 						else if( e.data['progress'] )
@@ -1180,16 +1205,11 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 				uprogress.load();
 
-				uworker.postMessage( {
-					'session': Workspace.sessionId,
-					'targetPath': this.content.fileInfo.Path,
-					'targetVolume': this.content.fileInfo.Volume,
-					'files': files
-				} );
+				uworker.postMessage( info );
 			}
 			else
 			{
-				console.log( 'We got nothing.', this.content );
+				console.log( 'We got nothing.', this );
 			}
 		}
 
@@ -4783,6 +4803,10 @@ function CheckDoorsKeys( e )
 	
 	if( !Workspace.editing )
 	{
+		// No normal dirmode when editing a filename
+		var dirMode = window.regionWindow && window.regionWindow.directoryview && 
+			( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing );
+		
 		switch( k )
 		{
 			// TODO: Implement confirm dialog!
@@ -4793,7 +4817,7 @@ function CheckDoorsKeys( e )
 				}
 				break;
 			case 13:
-				if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+				if( dirMode )
 				{
 					for( var a = 0; a < window.regionWindow.icons.length; a++ )
 					{
@@ -4808,7 +4832,7 @@ function CheckDoorsKeys( e )
 			case 86:
 				if( e.ctrlKey || e.command )
 				{
-					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					if( dirMode )
 					{
 						Workspace.pasteFiles( e );
 						return cancelBubble( e );
@@ -4818,7 +4842,7 @@ function CheckDoorsKeys( e )
 			case 67:
 				if( e.ctrlKey || e.command )
 				{
-					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					if( dirMode )
 					{
 						// Find active					
 						for( var a = 0; a < window.regionWindow.icons.length; a++ )
@@ -4841,7 +4865,7 @@ function CheckDoorsKeys( e )
 	if( 
 		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
-		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) &&
+		( window.regionWindow.windowObject && ( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing ) ) &&
 		window.regionWindow.directoryview.keyboardNavigation &&
 		!e.ctrlKey
 	)
