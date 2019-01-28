@@ -457,6 +457,10 @@ i18n_mark_as_read                       : Merk som lest
 i18n_messages_sent                      : Meldingene ble sendt...
 i18n_notifications_sent                 : Varslene ble sendt...
 
+i18n_pasted_file                        : Limer inn innhold
+i18n_pasted_to_downloads                : Ditt innhold ble limt inn i Downloads
+i18n_uploaded_to_downloads              : Du kan finne filen(e) dine i Downloads mappen.
+
 #Locale ------------------------------------------------------------------------
 
 i18n_locale_no                          : Norsk

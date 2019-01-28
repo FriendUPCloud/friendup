@@ -1013,11 +1013,31 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 			e.stopPropagation();
 			e.preventDefault();
+			
+			var info = false;
+			if( files && !this.content && this.classList.contains( 'Screen' ) )
+			{
+				info = {
+					'session': Workspace.sessionId,
+					'targetPath': 'Home:Download/',
+					'targetVolume': 'Home:',
+					'files': files
+				};
+			}
+			else if( files && this.content && this.content.fileInfo && this.content.fileInfo.Volume )
+			{
+				info = {
+					'session': Workspace.sessionId,
+					'targetPath': this.content.fileInfo.Path,
+					'targetVolume': this.content.fileInfo.Volume,
+					'files': files
+				};
+			}
 
-			if( files && this.content && this.content.fileInfo && this.content.fileInfo.Volume )
+			if( info )
 			{
 				// TODO: to detect read only filesystem!
-				if( this.content.fileInfo.Volume == 'System:' || this.content.fileInfo.Path.split( ':' )[0] == 'System' )
+				if( info.targetVolume == 'System:' || info.targetPath.split( ':' )[0] == 'System' )
 				{
 					Alert( i18n( 'i18n_read_only_filesystem' ), i18n( 'i18n_read_only_fs_desc' ) );
 					return false;
@@ -1157,8 +1177,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						if( e.data['uploadscomplete'] == 1 )
 						{
 							w.close();
-							winobj.refresh();
+							if( winobj && winobj.refresh )
+								winobj.refresh();
 
+							Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded_to_downloads') }, false, function()
+							{
+								OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
+							} );
 							return true;
 						}
 						else if( e.data['progress'] )
@@ -1180,16 +1205,11 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 				uprogress.load();
 
-				uworker.postMessage( {
-					'session': Workspace.sessionId,
-					'targetPath': this.content.fileInfo.Path,
-					'targetVolume': this.content.fileInfo.Volume,
-					'files': files
-				} );
+				uworker.postMessage( info );
 			}
 			else
 			{
-				console.log( 'We got nothing.', this.content );
+				console.log( 'We got nothing.', this );
 			}
 		}
 
