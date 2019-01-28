@@ -1068,7 +1068,7 @@ function _ActivateWindow( div, nopoll, e )
 					div.classList.remove( 'Activated' );
 					setTimeout( function()
 					{
-						if( div )
+						if( div && div.parentNode )
 						{
 							div.classList.remove( 'DoneActivating' );
 							div.parentNode.classList.remove( 'Activating' );
