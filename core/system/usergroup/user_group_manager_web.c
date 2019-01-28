@@ -834,8 +834,15 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			int tmpsize = 0;
 			BufString *retString = BufStringNew();
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
-			
-			tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"users\":[", groupID );
+			UserGroup *ug = UGMGetGroupByID( l->sl_UGM, groupID );
+			if( ug != NULL )
+			{
+				tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userid\":%lu,\"name\":\"%s\",\"parentid\":%lu,\"type\":\"%s\",\"status\":%d,\"users\":[", groupID, ug->ug_UserID, ug->ug_Name, ug->ug_ParentID, ug->ug_Type, ug->ug_Status );
+			}
+			else
+			{
+				tmpsize = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"users\":[", groupID );
+			}
 			BufStringAddSize( retString, tmp, tmpsize );
 		
 			if( groupID > 0 )	// we want list of users which belongs to one group
