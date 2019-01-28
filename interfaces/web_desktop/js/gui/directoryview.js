@@ -1738,7 +1738,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 							if( i + 1 == stopAt ) initNextBatch = true;
 
-							console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
+							//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
 
 							// Do the copy - we have files here only...
 							door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
