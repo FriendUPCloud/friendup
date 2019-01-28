@@ -4783,6 +4783,10 @@ function CheckDoorsKeys( e )
 	
 	if( !Workspace.editing )
 	{
+		// No normal dirmode when editing a filename
+		var dirMode = window.regionWindow && window.regionWindow.directoryview && 
+			( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing );
+		
 		switch( k )
 		{
 			// TODO: Implement confirm dialog!
@@ -4793,7 +4797,7 @@ function CheckDoorsKeys( e )
 				}
 				break;
 			case 13:
-				if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+				if( dirMode )
 				{
 					for( var a = 0; a < window.regionWindow.icons.length; a++ )
 					{
@@ -4808,7 +4812,7 @@ function CheckDoorsKeys( e )
 			case 86:
 				if( e.ctrlKey || e.command )
 				{
-					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					if( dirMode )
 					{
 						Workspace.pasteFiles( e );
 						return cancelBubble( e );
@@ -4818,7 +4822,7 @@ function CheckDoorsKeys( e )
 			case 67:
 				if( e.ctrlKey || e.command )
 				{
-					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					if( dirMode )
 					{
 						// Find active					
 						for( var a = 0; a < window.regionWindow.icons.length; a++ )
@@ -4841,7 +4845,7 @@ function CheckDoorsKeys( e )
 	if( 
 		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
-		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) &&
+		( window.regionWindow.windowObject && ( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing ) ) &&
 		window.regionWindow.directoryview.keyboardNavigation &&
 		!e.ctrlKey
 	)
