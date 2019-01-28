@@ -4012,13 +4012,74 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 	},
 	// paste from virtual clipboard
-	pasteFiles: function()
+	pasteFiles: function( e )
 	{
-		if( Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
+		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
 			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
-			window.currentMovable.drop( Friend.workspaceClipBoard, e );
+			
+			var clip = Friend.workspaceClipBoard;
+			
+			// Make sure we don't overwrite existing files!
+			var destPath = currentMovable.content.fileInfo.Path;
+			var d = new Door( destPath );
+			d.getIcons( currentMovable.content.fileInfo, function( items )
+			{
+				for( var a = 0; a < items.length; a++ )
+				{
+					for( var b = 0; b < clip.length; b++ )
+					{
+						var copy = 0;
+						if( items[ a ].Filename == clip[ b ].fileInfo.Filename )
+						{
+							var found = false;
+							do
+							{
+								found = false;
+								var str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
+								str += 'of ' + items[a].Filename;
+							
+								var f = clip[ b ].fileInfo.Filename;
+								var p = clip[ b ].fileInfo.Path;
+							
+								// Files
+								if( clip[ b ].fileInfo.MetaType == 'File' )
+								{
+									var dn = f;
+									p = p.substr( 0, p.length - dn.length ) + str;
+									clip[ b ].fileInfo.NewPath = p;
+								}
+								// Directory
+								else
+								{
+									var dn = f + '/';
+									p = p.substr( 0, p.length - dn.length ) + str + '/';
+									clip[ b ].fileInfo.NewPath = p;
+								}
+							
+								clip[ b ].fileInfo.NewFilename = str;
+								
+								// Still found?
+								for( var c = 0; c < items.length; c++ )
+								{
+									if( items[ c ].Filename == str )
+									{
+										found = true;
+										copy++;
+										break;
+									}
+								}
+								
+							}
+							while( found );
+						}
+					}
+				}
+				if( !e ) e = {};
+				e.paste = true;
+				window.currentMovable.drop( Friend.workspaceClipBoard, e );
+			} );
 		}
 	},
 	// Use a door and execute a filesystem function, rename
