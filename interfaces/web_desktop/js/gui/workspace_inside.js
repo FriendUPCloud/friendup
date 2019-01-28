@@ -4088,7 +4088,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	// Use a door and execute a filesystem function, rename
 	executeRename: function( nam, icon, win )
-	{
+	{	
 		if ( icon.Dormant )
 		{
 			if ( icon.Dormant.dosAction )
@@ -4113,7 +4113,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			return;
 		}
-		icon.Door.dosAction( 'rename', {
+		var d = new Door( icon.Path );
+		d.dosAction( 'rename', {
 			newname: nam,
 			path: icon.Path
 		}, function( result, data)
