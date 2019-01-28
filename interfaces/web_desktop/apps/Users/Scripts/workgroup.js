@@ -47,8 +47,9 @@ Application.receiveMessage = function( msg )
 
 function refreshMembers( id )
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
@@ -67,7 +68,7 @@ function refreshMembers( id )
 			ge( 'pMembers' ).value = out.join( ',' );
 		}
 	}
-	m.execute( 'workgroupget', { id: ge( 'pWorkgroupID' ).value } );
+	f.execute( 'group', {'command':'listdetails','id':ge( 'pWorkgroupID' ).value} );
 }
 
 function addMembers()
@@ -94,34 +95,34 @@ function addMembers()
 // Save a workgroup
 function saveWorkgroup( callback )
 {
-	var o = {
-		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
-		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
-		Name: ge( 'pWorkgroupName' ).value,
-		Members: ge( 'pMembers' ).value
+	var args = {
+		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
+		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+		groupname: ge( 'pWorkgroupName' ).value,
+		users: ge( 'pMembers' ).value
 	};
 
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
 			ge( 'pWorkgroupID' ).value = d;
 		}
+		else
+		{
+			console.log('Error during workgroup update',e,d);
+		}
 		if( callback ) callback();
 		Application.sendMessage( { command: 'refreshworkgroups', destinationViewId: ge( 'parentViewId' ).value } );
 	}
 	
-	console.log( o );
-	
-	if( o.ID > 0 )
-	{
-		m.execute( 'workgroupupdate', o );
-	}
-	else 
-	{
-		m.execute( 'workgroupadd', o );
-	}
+	if( args.id > 0  )
+		args.command ='update';
+	else
+		args.command ='create';
+		
+	f.execute( 'group', args );
 }
 
 function cancelWorkgroup()
