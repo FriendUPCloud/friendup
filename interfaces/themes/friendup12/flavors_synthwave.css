@@ -116,8 +116,8 @@ body.Synthwave input[type=datetime-local], body.Synthwave input[type=password],
 html body.Synthwave textarea, html body.Synthwave select, html body.Synthwave select:hover
 {
     border-radius: 2px;
-    border: 1px solid #240f34;
-    background: #240f34;
+    border: 1px solid #2d1a47;
+    background: #2d1a47;
     color: #bdbcff;
 }
 
