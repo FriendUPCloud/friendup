@@ -181,6 +181,7 @@ char * dictionary_get(dictionary * d, const char * key, char * def)
     for (i=0 ; i<d->size ; i++) {
         if (d->key[i]==NULL)
             continue ;
+		printf("dictionary_get: %s\n", d->key[i] );
         /* Compare hash */
         if (hash==d->hash[i]) {
             /* Compare string, to avoid hash collisions */

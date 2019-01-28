@@ -472,6 +472,7 @@ char * iniparser_getstring(dictionary * d, const char * key, char * def)
         return def ;
 
     lc_key = strlwc(key);
+	printf("iniparser_getstring: %s\n", key );
     sval = dictionary_get(d, lc_key, def);
     return sval ;
 }
