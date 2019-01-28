@@ -4800,11 +4800,12 @@ function CheckDoorsKeys( e )
 {
 	if ( !e ) e = window.event;
 	var k = e.which | e.keyCode;
+	var cycle = false;
 	
 	if( !Workspace.editing )
 	{
 		// No normal dirmode when editing a filename
-		var dirMode = window.regionWindow && window.regionWindow.directoryview && 
+		var dirMode = window.regionWindow && window.regionWindow.directoryview && window.regionWindow.windowObject &&
 			( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing );
 		
 		switch( k )
@@ -4844,7 +4845,7 @@ function CheckDoorsKeys( e )
 				{
 					if( dirMode )
 					{
-						// Find active					
+						// Find active
 						for( var a = 0; a < window.regionWindow.icons.length; a++ )
 						{
 							if( window.regionWindow.icons[a].selected )
@@ -4857,7 +4858,11 @@ function CheckDoorsKeys( e )
 					}
 				}
 				break;
+			case 9:
+				cycle = true;
+				break;
 			default:
+				console.log( k );
 				break;
 		}
 	}
@@ -4873,36 +4878,73 @@ function CheckDoorsKeys( e )
 		var rw = window.regionWindow.icons;
 		if( rw )
 		{
-			var out = [];
-			var found = false;
-			for( var a = 0; a < rw.length; a++ )
+			// cycle!
+			if( cycle )
 			{
-				var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
-				if( f.toUpperCase().charCodeAt(0) == k )
+				var scroll = false;
+				var found = false;
+				for( var a = 0; a < rw.length; a++ )
 				{
-					out.push( rw[a] );
-					if( rw[a].selected )
+					if( rw[ a ].domNode.classList.contains( 'Selected' ) )
 					{
 						found = true;
+						if( a == rw.length - 1 )
+						{
+							rw[ 0 ].domNode.click();
+							scroll = rw[ 0 ].domNode.offsetTop - 100;
+						}
+						else
+						{
+							rw[ a + 1 ].domNode.click();
+							scroll = rw[ a + 1 ].domNode.offsetTop - 100;
+						}
+						break;
 					}
 				}
-			}
-			if( out.length )
-			{
 				if( !found )
 				{
-					out[0].domNode.click();
-					return;
+					rw[ 0 ].domNode.click();
+					scroll = rw[ 0 ].domNode.offsetTop - 100;
 				}
-				for( var a = 0; a < out.length; a++ )
+				if( scroll )
 				{
-					if( out[a].selected && a < out.length - 1 )
+					window.regionWindow.directoryview.scroller.scrollTop = scroll;
+				}
+				return cancelBubble( e );
+			}
+			else
+			{
+				var out = [];
+				var found = false;
+				for( var a = 0; a < rw.length; a++ )
+				{
+					var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
+					if( f.toUpperCase().charCodeAt(0) == k )
 					{
-						out[a+1].domNode.click();
-						return;
+						out.push( rw[a] );
+						if( rw[a].selected )
+						{
+							found = true;
+						}
 					}
 				}
-				out[0].domNode.click();
+				if( out.length )
+				{
+					if( !found )
+					{
+						out[0].domNode.click();
+						return;
+					}
+					for( var a = 0; a < out.length; a++ )
+					{
+						if( out[a].selected && a < out.length - 1 )
+						{
+							out[a+1].domNode.click();
+							return;
+						}
+					}
+					out[0].domNode.click();
+				}
 			}
 		}
 	}
