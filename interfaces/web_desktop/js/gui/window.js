@@ -1018,6 +1018,7 @@ function _ActivateWindow( div, nopoll, e )
 	if( isMobile )
 	{
 		window.focus();
+		Workspace.mainDock.closeDesklet();
 	}
 	
 	// Blur previous window
