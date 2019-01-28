@@ -1181,6 +1181,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
 	var dview = this;
 	var mode = 'view';
+	
 	var a;
 
 	// Function to use for installing application packages
@@ -1371,7 +1372,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false; // <- dropped path
 
 	// We can't copy to self!
-	if( sPath == dPath )
+	if( sPath == dPath && !e.paste )
 	{
 		if( mode == 'view' ) dview.content.refresh();
 		else if( dview.directoryView.content ) dview.directoryView.content.refresh();
@@ -1725,7 +1726,11 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						for( i = 0; i < stopAt; i++ )
 						{
 							fl = this.files[ i ];
-							toPath = cfo.Path + p + fl.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
+							
+							// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
+							var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
+							
+							toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
 							door = Workspace.getDoorByPath( fl.fileInfo.Path );
 
 							// Sanitation
@@ -1733,7 +1738,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 							if( i + 1 == stopAt ) initNextBatch = true;
 
-							//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
+							console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
 
 							// Do the copy - we have files here only...
 							door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
@@ -4731,6 +4736,7 @@ function CheckDoorsKeys( e )
 {
 	if ( !e ) e = window.event;
 	var k = e.which | e.keyCode;
+	
 	if( !Workspace.editing )
 	{
 		switch( k )
@@ -4755,6 +4761,36 @@ function CheckDoorsKeys( e )
 					}
 				}
 				break;
+			case 86:
+				if( e.ctrlKey || e.command )
+				{
+					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					{
+						Workspace.pasteFiles( e );
+						return cancelBubble( e );
+					}
+				}
+				break;
+			case 67:
+				if( e.ctrlKey || e.command )
+				{
+					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					{
+						// Find active					
+						for( var a = 0; a < window.regionWindow.icons.length; a++ )
+						{
+							if( window.regionWindow.icons[a].selected )
+							{
+								Workspace.copyFiles( e );
+								return cancelBubble( e );
+							}
+						}
+					
+					}
+				}
+				break;
+			default:
+				break;
 		}
 	}
 	// Do the thing! Keyboard navigation
@@ -4762,7 +4798,8 @@ function CheckDoorsKeys( e )
 		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
 		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) &&
-		window.regionWindow.directoryview.keyboardNavigation
+		window.regionWindow.directoryview.keyboardNavigation &&
+		!e.ctrlKey
 	)
 	{
 		var rw = window.regionWindow.icons;
