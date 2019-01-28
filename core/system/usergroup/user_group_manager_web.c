@@ -680,7 +680,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* <HR><H2>system.library/group/listdetails</H2>List groups and users inside. Function require admin rights.
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param groupid - id of parent workgroup
+	* @param id - id of parent workgroup
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -697,7 +697,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		el = HttpGetPOSTParameter( request, "groupid" );
+		el = HttpGetPOSTParameter( request, "id" );
 		if( el != NULL )
 		{
 			char *end;
@@ -777,7 +777,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* <HR><H2>system.library/group/addusers</H2>Add users to group. Function require admin rights.
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param groupid - (required) id of workgroup to which user will belong
+	* @param id - (required) id of workgroup to which user will belong
 	* @param users - (required) user id's which will be assigned to group
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
@@ -808,7 +808,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				DEBUG( "[UMWebRequest] addusers users %s!!\n", users );
 			}
 		
-			el = HttpGetPOSTParameter( request, "groupid" );
+			el = HttpGetPOSTParameter( request, "id" );
 			if( el != NULL )
 			{
 				char *end;
@@ -941,7 +941,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* <HR><H2>system.library/group/removeusers</H2>Remove users from group. Function require admin rights.
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param groupid - (required) id of workgroup from which users will be removed
+	* @param id - (required) id of workgroup from which users will be removed
 	* @param users - (required) user id's which will be removed from group
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
@@ -972,7 +972,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				DEBUG( "[UMWebRequest] removeusers users %s!!\n", users );
 			}
 		
-			el = HttpGetPOSTParameter( request, "groupid" );
+			el = HttpGetPOSTParameter( request, "id" );
 			if( el != NULL )
 			{
 				char *end;
