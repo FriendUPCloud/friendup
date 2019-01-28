@@ -11,6 +11,7 @@
 	pointer-events: none;
 	transition: opacity 0.2s;
 	opacity: 1;
+	overflow: hidden;
 }
 
 .View
@@ -39,6 +40,12 @@
 	background: black;
 	
 	pointer-events: all;
+}
+
+.ViewContainer.Activating > .View, 
+.ViewContainer.DelayedDeactivation > .View
+{
+	overflow: hidden !important;
 }
 
 /* Disabled for default theme */

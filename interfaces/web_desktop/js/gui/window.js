@@ -1003,6 +1003,7 @@ function _ActivateWindow( div, nopoll, e )
 		div.windowObject.lastActiveView = null;
 		return;
 	}
+	
 	// Don't reactivate
 	if( div.classList.contains( 'Active' ) ) 
 	{
@@ -1012,6 +1013,12 @@ function _ActivateWindow( div, nopoll, e )
 				window.currentMovable = div;
 		}
 		return;
+	}
+	
+	if( isMobile )
+	{
+		window.focus();
+		Workspace.mainDock.closeDesklet();
 	}
 	
 	// Blur previous window
