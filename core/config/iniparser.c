@@ -380,13 +380,11 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 	seclen  = (int)strlen(s);
 	localGroupName = calloc( seclen + 1, sizeof(char) );
 	
-	printf("Localname: %s\n", s );
 	for( i=0 ; i < seclen ; i++ )
 	{
 		localGroupName[i] = tolower( s[i] );
 	}
 
-	printf("Find entry: %s \n", localGroupName );
     if(! iniparser_find_entry(d, localGroupName))
 	{
 		free( localGroupName );
@@ -395,8 +393,6 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 
     nkeys = iniparser_getsecnkeys(d, localGroupName);
 	
-	printf("[iniparser_getseckeysvalues] nkeys: %d\n", nkeys );
-
     lkeys = (char**) malloc(nkeys*sizeof(char*));
 	lvals = (char**) malloc(nkeys*sizeof(char*));
 
@@ -409,8 +405,6 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 		if (d->key[j]==NULL)
 			continue ;
 		
-		printf("Found entry: %s\n", d->key[j] );
-
 		if (!strncmp(d->key[j], keym, seclen+1))
 		{
 			if( d->key[j] == NULL )
@@ -472,7 +466,6 @@ char * iniparser_getstring(dictionary * d, const char * key, char * def)
         return def ;
 
     lc_key = strlwc(key);
-	printf("iniparser_getstring: %s\n", key );
     sval = dictionary_get(d, lc_key, def);
     return sval ;
 }
