@@ -1,0 +1,101 @@
+i18n_your_devices                   : Your devices
+i18n_bookmarks                      : Bookmarks
+i18n_file_menu                      : File menu
+i18n_create_folder                  : Create folder
+
+menu_new                          : New document
+menu_save                         : Save
+i18n_save                         : Save
+menu_save_as                      : Save as
+i18n_save_as                      : Save as
+menu_load                         : Load
+menu_quit                         : Quit
+menu_preferences                  : Preferences
+menu_file                         : File
+menu_print                        : Print
+menu_document                     : Document
+menu_insert_image                 : Insert image
+menu_convert_images_inline        : Images to inline
+menu_vr_features                  : Toggle VR features
+
+#Style editor
+i18n_edit_styles                  : Edit styles
+i18n_styles                       : Edit styles
+i18n_apply                        : Apply
+
+i18n_status_loading               : Loading...
+i18n_status_saving                : Saving...
+
+i18n_find                         : Find
+i18n_select                       : Select
+i18n_search                       : Search
+
+edit_image                        : Edit image
+insert_image                      : Insert image
+
+i18n_print_alert                  : Print alert
+i18n_not_saved_cant_print         : The document is not saved. Please save it first, then retry.
+
+i18n_add_document                 : Add document
+i18n_add_folder                   : Add folder
+
+i18n_new_document                 : New document
+
+i18n_are_you_sure                 : Are you sure?
+i18n_delete_note                  : This will delete your document.
+i18n_unsaved                      : Unsaved
+
+i18n_close                        : Close
+i18n_accept                       : Accept
+
+i18n_set_bold                     : Set bold
+i18n_set_italic                   : Set italic
+i18n_set_underline                : Set underline
+i18n_default_style                : Default style
+i18n_headers                      : Headers
+i18n_header_1                     : Header 1
+i18n_header_2                     : Header 2
+i18n_header_3                     : Header 3
+i18n_header_4                     : Header 4
+i18n_header_5                     : Header 5
+i18n_header_6                     : Header 6
+i18n_paragraph                    : Paragraph
+i18n_select_zoom                  : Select zoom
+i18n_select_font                  : Select font
+i18n_font_size                    : Font size
+i18n_insert_image                 : Insert image
+i18n_align_left                   : Align left
+i18n_align_center                 : Align center
+i18n_align_right                  : Align right
+i18n_align_justify                : Align justify
+i18n_unordered_bullet_points      : Unordered bullet points
+i18n_ordered_bullet_point         : Ordered bullet points
+i18n_set_document_zoom            : Set document zoom
+i18n_set_block_format             : Set block format
+
+i18n_sizes                        : Font size
+i18n_tiny                         : Tiny
+i18n_small                        : Small
+i18n_normal                       : Normal
+i18n_big                          : Big
+i18n_huge                         : Huge
+
+i18n_cancel : Cancel
+i18n_keywords : keywords...
+i18n_path : path...
+i18n_preferences : Preferences
+i18n_failed_to_load_document : Failed to load document...
+i18n_loaded : Loaded
+i18n_converting : Converting...
+i18n_written : Written
+menu_print_remote                 : Remote print
+i18n_print_preview : Print preview
+i18n_generating_print_preview : Generating print preview...
+i18n_print_ready : Print ready
+i18n_language : Language
+i18n_language_settings : Language settings
+i18n_features : Features
+i18n_feature_settings : Feature settings
+
+
+

@@ -164,7 +164,7 @@ i18n_directory_Modules                  : Modules
 i18n_directory_Plugins                  : Plugins
 i18n_directory_Prefs                    : Settings
 i18n_directory_Repositories             : Repositories
-i18n_directory_Devices                  : Devices
+i18n_directory_Devices                  : Disks
 i18n_directory_Libraries                : Libraries
 
 #Devices
