@@ -97,6 +97,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param groupname - (required) group name
 	* @param type - type of group. If parameter will miss default Workgroup name will be used.
 	* @param parentid - id of parent workgroup
+	* @param users - id's of users which will be assigned to group
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -113,6 +114,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		char *groupname = NULL;
 		char *type = NULL;
+		char *users = NULL;
 		FULONG parentID = 0;
 		FULONG groupID = 0;
 		
@@ -146,11 +148,18 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				char *end;
 				parentID = strtol( (char *)el->data, &end, 0 );
 			}
+			el = HttpGetPOSTParameter( request, "users" );
+			if( el != NULL )
+			{
+				users = UrlDecodeToMem( (char *)el->data );
+				DEBUG( "[UMWebRequest] create group, users %s!!\n", users );
+			}
 			
 			if( groupname != NULL && type != NULL )
 			{
+				FBOOL addUsers = FALSE;
 				// get information from DB if group already exist
-				
+				UserGroup *ug = NULL;
 				UserGroup *fg = UGMGetGroupByName( l->sl_UGM, groupname );
 				DEBUG("GroupCreate: pointer to group from memory: %p\n", fg );
 				
@@ -170,6 +179,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "create", msg );
 						}
+						ug = fg;
+						addUsers = TRUE;
 					}
 					else
 					{
@@ -181,7 +192,6 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				else	// group do not exist in memory
 				{
 					DEBUG("GroupCreate: group do not exist in memory\n");
-					UserGroup *ug = NULL;
 					FBOOL ugFromDatabase = FALSE;
 
 					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
@@ -239,6 +249,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							}
 							groupID = ug->ug_ID;
 							
+							addUsers = TRUE;
+							
 							{
 								char msg[ 512 ];
 								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", ug->ug_ID, ug->ug_Name );
@@ -266,6 +278,37 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						HttpAddTextContent( response, buffer );
 					}
 				} // UserGroup found in db
+				
+				// group was created, its time to add users to it
+				
+				if( addUsers == TRUE && users != NULL )
+				{
+					// go through all elements and find proper users
+					
+					IntListEl *el = ILEParseString( users );
+					
+					DEBUG("Assigning users to group\n");
+					
+					while( el != NULL )
+					{
+						IntListEl *rmEntry = el;
+						
+						el = (IntListEl *)el->node.mln_Succ;
+						
+						User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+						if( usr != NULL )
+						{
+							UserGroupAddUser( ug, usr );
+						}
+						FBOOL exist = UGMUserToGroupISConnectedByUIDDB( l->sl_UGM, groupID, rmEntry->i_Data );
+						if( exist == FALSE )
+						{
+							UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+						}
+						
+						FFree( rmEntry );
+					}
+				}
 			} // missing parameters
 			else
 			{
@@ -284,6 +327,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( type != NULL )
 		{
 			FFree( type );
+		}
+		if( users != NULL )
+		{
+			FFree( users );
 		}
 
 		*result = 200;
@@ -320,8 +367,6 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			id = strtol ( (char *)el->data, &next, 0 );
 		}
 		
-		//if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
-
 		if( id > 0 )
 		{
 			UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
@@ -411,6 +456,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param type - type name
 	* @param parentid - id of parent workgroup
 	* @param status - group status
+	* @param users - users which will be assigned to group. Remember! old users will be removed from group!
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -427,6 +473,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		char *groupname = NULL;
 		char *type = NULL;
+		char *users = NULL;
+		char *usersSQL = NULL;
 		FULONG parentID = 0;
 		FBOOL fParentID = FALSE;
 		FULONG groupID = 0;
@@ -473,6 +521,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				status = atoi( (char *)el->data );
 			}
 			
+			el = HttpGetPOSTParameter( request, "users" );
+			if( el != NULL )
+			{
+				users = UrlDecodeToMem( (char *)el->data );
+				usersSQL = StringDuplicate( users );
+				DEBUG( "[UMWebRequest] update group, users %s!!\n", users );
+			}
+			
 			if( groupID > 0 )
 			{
 				// get information from DB if group already exist
@@ -515,12 +571,72 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						l->LibrarySQLDrop( l, sqlLib );
 					}
 					
+					// if users parameter is passed then we must remove current users from group
+					if( users != NULL )
 					{
-						char msg[ 512 ];
-						snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\",\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
-						//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "update", msg );
+						// removeing users
+						
+						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+						if( sqlLib != NULL )
+						{
+							DEBUG("Remove users from group\n");
+							char tmpQuery[ 512 ];
+							snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.UserID FROM FUserToGroup ug WHERE ug.GroupID=%lu", groupID );
+							void *result = sqlLib->Query(  sqlLib, tmpQuery );
+							if( result != NULL )
+							{
+								int pos = 0;
+								char **row;
+								while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+								{
+									char *end;
+									FULONG userid = strtol( (char *)row[0], &end, 0 );
+									// add only this users which are in FC memory now, rest will be removed in SQL call
+									User *usr = UMGetUserByID( l->sl_UM, userid );
+									if( usr != NULL )
+									{
+										UserGroupRemoveUser( fg, usr );
+									}
+							
+									pos++;
+								}
+								sqlLib->FreeResult( sqlLib, result );
+							}
+							
+							// remove connections between users and group
+							snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup ug WHERE ug.GroupID=%lu", groupID );
+							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+							
+							l->LibrarySQLDrop( l, sqlLib );
+						}
+						
+						// group was created, its time to add users to it
+				
+						// go through all elements and find proper users
+					
+						IntListEl *el = ILEParseString( users );
+					
+						DEBUG("Assigning users to group\n");
+					
+						while( el != NULL )
+						{
+							IntListEl *rmEntry = el;
+							el = (IntListEl *)el->node.mln_Succ;
+						
+							User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+							if( usr != NULL )
+							{
+								UserGroupAddUser( fg, usr );
+							}
+
+							UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							FFree( rmEntry );
+						}
 					}
+					
+					char msg[ 512 ];
+					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\",\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "update", msg );
 
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
@@ -553,6 +669,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( type != NULL )
 		{
 			FFree( type );
+		}
+		if( users != NULL )
+		{
+			FFree( users );
+		}
+		if( usersSQL != NULL )
+		{
+			FFree( usersSQL );
 		}
 
 		*result = 200;
