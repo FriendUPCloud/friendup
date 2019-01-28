@@ -42,8 +42,8 @@
 	pointer-events: all;
 }
 
-.ViewContainer.Activating > .View, 
-.ViewContainer.DelayedDeactivation > .View
+.ViewContainer.Activating > .View > .Content, 
+.ViewContainer.DelayedDeactivation > .View > .Content
 {
 	overflow: hidden !important;
 }
