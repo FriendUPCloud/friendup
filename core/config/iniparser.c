@@ -380,11 +380,13 @@ int iniparser_getseckeysvalues(dictionary * d, char * s, char ***keys, char ***v
 	seclen  = (int)strlen(s);
 	localGroupName = malloc( seclen + 1 );
 	
+	printf("Localname: %s\n", s );
 	for( i=0 ; i < seclen ; i++ )
 	{
 		localGroupName[i] = tolower( s[i] );
 	}
 
+	printf("Find entry\n");
     if(! iniparser_find_entry(d, localGroupName))
 	{
 		free( localGroupName );
