@@ -4066,6 +4066,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( items[ c ].Filename == str )
 									{
 										found = true;
+										copy++;
 										break;
 									}
 								}
