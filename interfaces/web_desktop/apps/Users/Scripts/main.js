@@ -1430,6 +1430,106 @@ function AddWorkgroup()
 
 function EditWorkgroup( id )
 {
+
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			console.log('we got details here...',d);
+			
+			var ele;
+		
+			try{
+				ele = JSON.parse( d );
+			} catch(e) {
+				console.log(e,d);
+				Notify({'title':'ERROR in Users app','text':'Could not load workgroup data! Did not find workgroup details here ' + d});
+				return;
+			}
+			
+			//now load all workgroups anew for the damn dropdown for parent???
+			var ff = new Library( 'system.library' );
+			ff.onExecuted = function( ee, dd )
+			{
+				var wg = '<option value="0">none</option>';
+				
+				console.log('dd,ee,',dd);
+				try
+				{
+					if( ee == 'ok' && dd )
+					{
+						if(typeof dd != 'object') dd = JSON.parse( dd );
+					}
+				}
+				catch( error ){ 
+					Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+					return;
+				}		
+
+				if( dd.groups )
+				{
+					dd = dd.groups;
+					for( var i in dd )
+					{
+						if( dd[i].ID )
+						{
+							if( dd[i].ID == ele.groupid || dd[i].parentid == ele.groupid )
+							{
+								continue;
+							}
+
+							wg += '<option value="' + dd[i].ID + '"' + ( ele.parentid && dd[i].ID == ele.parentid ? ' Selected="Selected"' : '' ) + '>' + dd[i].name + '</option>';
+						}
+					}
+				}
+				else
+				{
+					Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+					return;
+
+				}
+
+				var t = new File( 'Progdir:Templates/workgroup.html' );
+				t.replacements = {
+					'id': ele.groupid,
+					'name': ele.name,
+					'parent': wg,
+					'members': ele.users,
+					'setup': '',
+					'viewId': ge( 'viewId' ).value,
+					'parentViewId': ge( 'viewId' ).value,
+					'delCss': ''
+				};
+				t.i18n();
+				t.onLoad = function( data )
+				{
+					ge( 'WorkgroupGui' ).innerHTML = data;
+				
+					if( ge( 'SetupGroupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'SetupGroupContainer' ).value )
+					{
+						ge( 'SetupGroupContainer' ).style.display = 'none';
+					}
+				
+					refreshMembers( ele.groupid );
+				}
+				t.load();
+				
+				
+				
+			}
+			ff.execute('group',{'command':'list'});
+					
+			
+		}
+	}
+	f.execute( 'group', {'command':'listdetails','id':id} );
+
+
+
+
+/*
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -1511,27 +1611,33 @@ function EditWorkgroup( id )
 		mm.execute( 'workgroups' );
 	}	
 	m.execute( 'workgroupget', { id: id } );
+	*/	
 }
 
 // Save a workgroup
 function saveWorkgroup( callback, tmp )
 {
-	var o = {
-		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
-		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
-		Name: ge( 'pWorkgroupName' ).value,
-		Setup: ( ge( 'pWorkgroupSetup' ) ? ge( 'pWorkgroupSetup' ).value : '' ),
-		Members: ge( 'pMembers' ).value
+
+	var args = {
+		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
+		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+		groupname: ge( 'pWorkgroupName' ).value,
+		users: ge( 'pMembers' ).value
 	};
-	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
 			ge( 'pWorkgroupID' ).value = d;
 		}
-		//update all members mount points...
+		else
+		{
+			console.log('Error during workgroup update',e,d);
+		}
+	
+		
 		var members = ge( 'pMembers' ).value.split(',');
 		var calls = [];
 		if( members.length > 0 )
@@ -1545,36 +1651,37 @@ function saveWorkgroup( callback, tmp )
 				calls[i].execute('user/update?id=' + members[i]);
 			}
 		}
-		
-		
+
+	
 		if( callback ) callback();
 		
-		if( o.ID > 0 && tmp )
+		if( args.id > 0 && tmp )
 		{
-			ApplyGroupSetup( o.ID );
+			ApplyGroupSetup( args.id );
 		}
 		else
 		{
 			RefreshWorkgroups();
 		}
+		
 	}
 	
-	console.log( o );
-	
-	if( o.ID > 0 )
-	{
-		m.execute( 'workgroupupdate', o );
-	}
+	if( args.id > 0  )
+		args.command ='update';
 	else
-	{
-		m.execute( 'workgroupadd', o );
-	}
+		args.command ='create';
+		
+	f.execute( 'group', args );
+
+
+
 }
 
 function RefreshWorkgroups()
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
 		{
@@ -1584,17 +1691,21 @@ function RefreshWorkgroups()
 		var rows;
 		try{
 			rows = JSON.parse( d );
+			rows = rows.groups;
 		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load workgroups!'}); return; }
 		var ml = '';
 		var sw = 1;
+		console.log('our rows ',rows);
+		
 		for( var a in rows )
 		{
-			ml += '<div workgroupId="' + rows[a].ID + '" class="sw' + sw + ' HRow BorderBottom Padding" onclick="EditWorkgroup(' + rows[a].ID + ')" onmouseover="SwitchRow(this, \'over\')" onmouseout="SwitchRow(this, \'out\')"><div class="IconMedium fa-group FloatLeft"></div><div class="FloatLeft LineHeight2x MarginLeft">' + rows[a].Name + '</div></div>';
+			ml += '<div workgroupId="' + rows[a].ID + '" class="sw' + sw + ' HRow BorderBottom Padding" onclick="EditWorkgroup(' + rows[a].ID + ')" onmouseover="SwitchRow(this, \'over\')" onmouseout="SwitchRow(this, \'out\')"><div class="IconMedium fa-group FloatLeft"></div><div class="FloatLeft LineHeight2x MarginLeft">' + rows[a].name + '</div></div>';
 			sw = sw == 1 ? 2 : 1;
 		}
 		ge( 'WorkgroupList' ).innerHTML = ml;
 	}
-	m.execute( 'workgroups' );
+	f.execute('group',{'command':'list'});
+
 }
 
 // Add members to workgroup

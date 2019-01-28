@@ -1074,6 +1074,28 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	pointer-events: none;
 }
 
+#MobileNotifications .MobileNotification .Application
+{
+	font-weight: bold;
+	line-height: 20px;
+}
+
+#MobileNotifications .MobileNotification .Application:after
+{
+	display: block;
+	content: " ";
+	clear: both;
+}
+
+#MobileNotifications .MobileNotification .Application img
+{
+	float: left;
+	margin: 0 10px 0 0;
+	width: 20px;
+	height: auto;
+	vertical-align: middle;
+}
+
 #MobileNotifications .MobileNotification.Showing
 {
 	opacity: 0.95;
@@ -1083,6 +1105,17 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 #MobileNotifications .MobileNotification .Title
 {
 	font-weight: bold;
+	text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#MobileNotifications .MobileNotification .Text
+{
+	position: relative;
+	height: 20px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 /* File uploads ------------------------------------------------------------- */
