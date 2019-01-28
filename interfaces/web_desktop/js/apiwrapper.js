@@ -3003,7 +3003,8 @@ function apiWrapper( event, force )
 								{
 									title: title,
 									text: text, 
-									application: app ? app.applicationName : '' 
+									application: app ? app.applicationName : '',
+									applicationIcon: ( app && app.icon ) ? app.icon : false
 								}, 
 								function()
 								{
