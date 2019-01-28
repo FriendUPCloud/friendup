@@ -572,7 +572,7 @@ int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *re
 	
 	if( dstMsg != NULL )
 	{
-		int dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":%s\",\"data\":%s}}}", sertype, func, action, msg );
+		int dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":%s}}}", sertype, func, action, msg );
 		
 		Log( FLOG_INFO, "[NotificationManagerSendEventToConnections] Send message: '%s'\n", dstMsg );
 		
