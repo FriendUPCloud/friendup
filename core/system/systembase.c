@@ -566,6 +566,11 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
+	l->sl_NotificationManager = NotificationManagerNew( l );
+	if( l->sl_NotificationManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
+	}
 	
 	l->fcm = FriendCoreManagerNew();
 
@@ -930,13 +935,6 @@ SystemBase *SystemInit( void )
 	{
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
-	
-	l->sl_NotificationManager = NotificationManagerNew( l );
-	if( l->sl_NotificationManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
-	}
-	
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
