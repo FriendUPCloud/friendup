@@ -350,13 +350,16 @@ int ReadGroupEntries( Props *p, const char *name, char ***keys, char ***values )
 	int nkeys = 0;
 	if( p != NULL && p->p_Dict != NULL )
 	{
+		DEBUG("[ReadGroupEntries]\n");
 		if (! iniparser_find_entry( p->p_Dict, (char *)name) )
 		{
 			DEBUG("Entry not found\n");
 			return 0;
 		}
 
-		return iniparser_getseckeysvalues( p->p_Dict, (char *)name, keys, values );
+		int val = iniparser_getseckeysvalues( p->p_Dict, (char *)name, keys, values );
+		DEBUG("[ReadGroupEntries] returned: %d\n", val );
+		return val;
 	}
 	return nkeys;
 }
