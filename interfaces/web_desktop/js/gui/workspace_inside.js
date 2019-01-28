@@ -4036,6 +4036,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							var found = false;
 							do
 							{
+								found = false;
 								var str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
 								str += 'of ' + items[a].Filename;
 							
