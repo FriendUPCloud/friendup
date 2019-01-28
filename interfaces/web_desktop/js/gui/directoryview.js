@@ -4862,7 +4862,7 @@ function CheckDoorsKeys( e )
 				cycle = true;
 				break;
 			default:
-				console.log( k );
+				
 				break;
 		}
 	}
