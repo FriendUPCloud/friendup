@@ -3642,7 +3642,7 @@ function CreateHelpBubble( element, text, uniqueid )
 			}
 			var mx = windowMouseX;
 			var my = windowMouseY;
-			var mt = GetElementTop( element ) - 50;
+			var mt = GetElementTop( element ) - ( 50 + 30 );
 			
 			var c = document.createElement( 'canvas' );
 			var d = c.getContext( '2d' );
@@ -3659,13 +3659,13 @@ function CreateHelpBubble( element, text, uniqueid )
 				if( attr.indexOf( 'right' ) == 0 )
 				{
 					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) - ( textWidth.width + 20 );
+					mx = GetElementLeft( element ) - ( textWidth.width + 40 );
 					posset = true;
 				}
 				else if( attr.indexOf( 'left' ) == 0 )
 				{
 					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode );
+					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode ) + 30;
 					posset = true;
 				}
 				else if( attr.indexOf( 'top' ) == 0 )
@@ -3687,6 +3687,7 @@ function CreateHelpBubble( element, text, uniqueid )
 			v.setFlag( 'width', textWidth.width + 60 );
 			v.setContent( '<div class="TextCenter Padding Ellipsis">' + text + '</div>' );
 			v.dom.addEventListener( 'mouseout', element.helpBubble.outListener );
+			v.dom.classList.add( 'HelpBubble' );
 			v.show();
 			element.helpBubble.widget = v;
 		},
