@@ -1128,6 +1128,8 @@ var WorkspaceInside = {
 			Workspace.screen.contentDiv.parentNode.appendChild( topNavigation );
 			topNavigation.onclick = function()
 			{
+				window.focus();
+				
 				if( ge( 'WorkspaceMenu' ) )
 				{
 					ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
