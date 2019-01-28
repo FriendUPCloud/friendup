@@ -493,6 +493,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		if( buttons[a].element == 'toggle-group' )
 		{
 			var ele = document.createElement( 'div' );
+			buttons[a].domElement = ele;
 			ele.className = 'ToggleGroup';
 			ele.className += ' ' + buttons[a].align;
 			ele.checkActive = function( value )
@@ -685,6 +686,30 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
 		var dirv = this.directoryview;
+		
+		// When we have a toolbar and no file browser, remove up on root paths
+		
+		var dormantDrive = winobj.fileInfo && (
+			winobj.fileInfo.Path.indexOf( 'System:' ) == 0 ||
+			winobj.fileInfo.Dormant ||
+			( winobj.fileInfo.Door && winobj.fileInfo.Door.dormantDoor )
+		);
+		
+		if( dirv.toolbar && dormantDrive )
+		{
+			var upb = dirv.toolbar.querySelector( '.Up' );
+			if( upb )
+			{
+				if( winobj.fileInfo && winobj.fileInfo.Path.substr( winobj.fileInfo.Path.length - 1, 1 ) == ':' )
+				{
+					upb.style.display = 'none';
+				}
+				else
+				{
+					upb.style.display = '';
+				}
+			}
+		}
 		
 		// Start with a path
 		if( dirv.startPath )
