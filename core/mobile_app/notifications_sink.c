@@ -605,6 +605,7 @@ static FBOOL VerifyAuthKey( const char *keyName, const char *keyToVerify )
 		int i;
 		for( i = 0 ; i < SLIB->l_ServerKeysNum ; i++ )
 		{
+			DEBUG(" SLIB->l_ServerKeys[i] - %s - SLIB->l_ServerKeyValues[i] - %s\n", SLIB->l_ServerKeys[i], SLIB->l_ServerKeyValues[i] );
 			if( SLIB->l_ServerKeys[i] != NULL && strcmp( keyName, SLIB->l_ServerKeys[i] ) == 0 )
 			{
 				if( SLIB->l_ServerKeyValues[i] != NULL && strcmp( SLIB->l_ServerKeyValues[i], keyToVerify) == 0 )
