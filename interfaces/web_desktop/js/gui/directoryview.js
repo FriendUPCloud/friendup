@@ -531,8 +531,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 DirectoryView.prototype.ShowFileBrowser = function()
 {
-	if( this.windowObject.fileInfo && this.windowObject.fileInfo.Path.indexOf( 'System:' ) == 0 )
+	if( this.windowObject.fileInfo && (
+		this.windowObject.fileInfo.Path.indexOf( 'System:' ) == 0 ||
+		this.windowObject.fileInfo.Dormant ||
+		( this.windowObject.fileInfo.Door && this.windowObject.fileInfo.Door.dormantDoor )
+	) )
+	{
 		return;
+	}
 	
 	var self = this;
 	
