@@ -435,7 +435,8 @@ For now, we don't use this, we don't have enough tools...
 	width: 100%;
 }
 
-[mobile] #LeftBar
+[mobile] #LeftBar,
+[mobile] .NewFolder
 {
 	left: 0;
 	width: 100%;
