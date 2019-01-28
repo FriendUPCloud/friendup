@@ -531,7 +531,15 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 DirectoryView.prototype.ShowFileBrowser = function()
 {
-
+	if( this.windowObject.fileInfo && (
+		this.windowObject.fileInfo.Path.indexOf( 'System:' ) == 0 ||
+		this.windowObject.fileInfo.Dormant ||
+		( this.windowObject.fileInfo.Door && this.windowObject.fileInfo.Door.dormantDoor )
+	) )
+	{
+		return;
+	}
+	
 	var self = this;
 	
 	// Create the file browser
@@ -2179,6 +2187,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		this.scroller = o;
 	}
 	
+	// Turn off smooth scrolling on redraw
+	this.scroller.style.scrollBehavior = 'unset';
+	
 	// Add the placeholder real fast
 	if( flags && flags.addPlaceholderFirst )
 	{
@@ -2503,6 +2514,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// We are loaded!
 	this.scroller.classList.add( 'Loaded' );
 	
+	// Normal scrolling again
+	this.scroller.style.scrollBehavior = '';
+	
 	// Handle scrolling
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
@@ -2713,6 +2727,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Just clear scroller
 			obj.scroller.innerHTML = '';
 		}
+		
+		// Turn off smooth scrolling on redraw
+		obj.scroller.style.scrollBehavior = 'unset';
 		
 		var icnt = obj.scroller;
 		var bts = 0;
@@ -3241,6 +3258,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	
 	// We are loaded!
 	icnt.classList.add( 'Loaded' );
+	
+	obj.scroller.style.scrollBehavior = '';
 }
 
 // -------------------------------------------------------------------------
