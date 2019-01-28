@@ -7162,6 +7162,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Actually do the delete
 						function doDeleteFiles( files, index )
 						{
+							console.log( 'To delete!' );
+						
 							// 
 							if( stop || index == files.length )
 							{
@@ -7188,6 +7190,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								file.door.dosAction( 'delete', { 
 									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
 								}, nextFile );
+								
+								var info = file.fileInfo.Path;
+								if( info.substr( info.length - 1, 1 ) == '/' )
+								info = info.substr( 0, info.length - 1 );
+								// Try to kill the info file!
+								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+								console.log( 'Die info file: ' + info + '.info' );
+								
 							}
 							// Dormant?
 							else if ( file.fileInfo.Dormant )
@@ -7197,7 +7207,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Path
 							else
 							{
+								var info = file.fileInfo.Path;
+								if( info.substr( info.length - 1, 1 ) == '/' )
+								info = info.substr( 0, info.length - 1 );
 								file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+								// Try to kill the info file!
+								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
 							}
 						}
 						doDeleteFiles( files, 0 );
