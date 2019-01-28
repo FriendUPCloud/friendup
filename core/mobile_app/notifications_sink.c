@@ -312,7 +312,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 					return ReplyError( d, WS_NOTIF_SINK_ERROR_NO_AUTH_ELEMENTS );
 				}
 				
-				if( VerifyAuthKey( authName, authKey ) == false )
+				if( VerifyAuthKey( authName, authKey ) == FALSE )
 				{
 					FFree( authKey );
 					FFree( authName );
@@ -610,10 +610,11 @@ static FBOOL VerifyAuthKey( const char *keyName, const char *keyToVerify )
 			{
 				if( SLIB->l_ServerKeyValues[i] != NULL && strcmp( SLIB->l_ServerKeyValues[i], keyToVerify) == 0 )
 				{
+					DEBUG("Key is same\n");
 					return TRUE;
 				}
 			}
 		}
 	}
-	return false;
+	return FALSE;
 }
