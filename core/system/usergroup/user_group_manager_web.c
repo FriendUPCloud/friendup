@@ -852,8 +852,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 				if( sqlLib != NULL )
 				{
-					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu group by ug.UserID", groupID );
+					char tmpQuery[ 768 ];
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Name,u.FullName FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu group by ug.UserID", groupID );
 					void *result = sqlLib->Query(  sqlLib, tmpQuery );
 					if( result != NULL )
 					{
@@ -867,11 +867,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
 							}
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;
