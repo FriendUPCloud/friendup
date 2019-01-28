@@ -95,7 +95,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param groupname - (required) group name
-	* @param type - type name
+	* @param type - type of group. If parameter will miss default Workgroup name will be used.
 	* @param parentid - id of parent workgroup
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
@@ -134,6 +134,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			{
 				type = UrlDecodeToMem( (char *)el->data );
 				DEBUG( "[UMWebRequest] Update type %s!!\n", type );
+			}
+			else
+			{
+				type = StringDuplicate( "Workgroup" );
 			}
 			
 			el = HttpGetPOSTParameter( request, "parentid" );
@@ -561,7 +565,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param sessionid - (required) session id of logged user
 	* @param parentid - id of parent workgroup
 	* @param status - group status
-	* @param type - group type
+	* @param type - group type. If parameter will miss default Workgroup name will be used.
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -600,6 +604,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		{
 			type = UrlDecodeToMem( (char *)el->data );
 			DEBUG( "type %s!!\n", type );
+		}
+		else
+		{
+			type = StringDuplicate( "Workgroup" );
 		}
 		
 		BufString *retString = BufStringNew();
