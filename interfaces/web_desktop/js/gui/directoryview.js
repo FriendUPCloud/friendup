@@ -531,7 +531,15 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 DirectoryView.prototype.ShowFileBrowser = function()
 {
-
+	if( this.windowObject.fileInfo && (
+		this.windowObject.fileInfo.Path.indexOf( 'System:' ) == 0 ||
+		this.windowObject.fileInfo.Dormant ||
+		( this.windowObject.fileInfo.Door && this.windowObject.fileInfo.Door.dormantDoor )
+	) )
+	{
+		return;
+	}
+	
 	var self = this;
 	
 	// Create the file browser
@@ -1181,6 +1189,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
 	var dview = this;
 	var mode = 'view';
+	
 	var a;
 
 	// Function to use for installing application packages
@@ -1371,7 +1380,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false; // <- dropped path
 
 	// We can't copy to self!
-	if( sPath == dPath )
+	if( sPath == dPath && !e.paste )
 	{
 		if( mode == 'view' ) dview.content.refresh();
 		else if( dview.directoryView.content ) dview.directoryView.content.refresh();
@@ -1725,7 +1734,11 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						for( i = 0; i < stopAt; i++ )
 						{
 							fl = this.files[ i ];
-							toPath = cfo.Path + p + fl.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
+							
+							// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
+							var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
+							
+							toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
 							door = Workspace.getDoorByPath( fl.fileInfo.Path );
 
 							// Sanitation
@@ -2174,6 +2187,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		this.scroller = o;
 	}
 	
+	// Turn off smooth scrolling on redraw
+	this.scroller.style.scrollBehavior = 'unset';
+	
 	// Add the placeholder real fast
 	if( flags && flags.addPlaceholderFirst )
 	{
@@ -2498,6 +2514,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// We are loaded!
 	this.scroller.classList.add( 'Loaded' );
 	
+	// Normal scrolling again
+	this.scroller.style.scrollBehavior = '';
+	
 	// Handle scrolling
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
@@ -2708,6 +2727,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Just clear scroller
 			obj.scroller.innerHTML = '';
 		}
+		
+		// Turn off smooth scrolling on redraw
+		obj.scroller.style.scrollBehavior = 'unset';
 		
 		var icnt = obj.scroller;
 		var bts = 0;
@@ -3236,6 +3258,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	
 	// We are loaded!
 	icnt.classList.add( 'Loaded' );
+	
+	obj.scroller.style.scrollBehavior = '';
 }
 
 // -------------------------------------------------------------------------
@@ -4731,6 +4755,7 @@ function CheckDoorsKeys( e )
 {
 	if ( !e ) e = window.event;
 	var k = e.which | e.keyCode;
+	
 	if( !Workspace.editing )
 	{
 		switch( k )
@@ -4755,6 +4780,36 @@ function CheckDoorsKeys( e )
 					}
 				}
 				break;
+			case 86:
+				if( e.ctrlKey || e.command )
+				{
+					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					{
+						Workspace.pasteFiles( e );
+						return cancelBubble( e );
+					}
+				}
+				break;
+			case 67:
+				if( e.ctrlKey || e.command )
+				{
+					if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+					{
+						// Find active					
+						for( var a = 0; a < window.regionWindow.icons.length; a++ )
+						{
+							if( window.regionWindow.icons[a].selected )
+							{
+								Workspace.copyFiles( e );
+								return cancelBubble( e );
+							}
+						}
+					
+					}
+				}
+				break;
+			default:
+				break;
 		}
 	}
 	// Do the thing! Keyboard navigation
@@ -4762,7 +4817,8 @@ function CheckDoorsKeys( e )
 		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
 		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) &&
-		window.regionWindow.directoryview.keyboardNavigation
+		window.regionWindow.directoryview.keyboardNavigation &&
+		!e.ctrlKey
 	)
 	{
 		var rw = window.regionWindow.icons;

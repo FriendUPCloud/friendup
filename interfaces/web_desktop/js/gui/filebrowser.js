@@ -29,7 +29,12 @@ Friend.FileBrowserEntry = function()
 	
 	flags:
 	{
-		displayFiles: true | false
+		displayFiles: true | false // File extension filter
+		filedialog: true | false   // Is the browser used in a file dialog?
+		justPaths: true | false    // Just show the directories?
+		path: true | false         // Target path to focus on at start
+		bookmarks: true | false    // Show the bookmarks pane?
+		rootPath: true | false     // The root from which to display structures
 	}
 	
 	callbacks:
@@ -38,6 +43,9 @@ Friend.FileBrowserEntry = function()
 		void loadFile( filepath )
 		bool permitFiletype( filepath )
 	}
+	
+	// flags.path is the target path in a query
+	// rootPath is where to start listing files from
 */
 
 
@@ -46,9 +54,30 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	var self = this;
 	this.dom = initElement;
 	this.dom.classList.add( 'FileBrowser' );
-	this.currentPath = 'Mountlist:';
+	this.rootPath = 'Mountlist:'; // The current root path
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false, filedialog: false, justPaths: false, path: false };
+	
+	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: self.rootPath, bookmarks: true, rootPath: false };
+	if( flags )
+	{
+		for( var a in flags )
+			self.flags[ a ] = flags[ a ];
+	}
+	if( this.flags.rootPath )
+		this.rootPath = this.flags.rootPath;
+	// Clicking the pane
+	this.dom.onclick = function( e )
+	{
+		var t = e.target ? e.target : e.srcElement;
+		if( t == this )
+		{
+			self.setPath( self.rootPath, function()
+			{
+				self.callbacks.folderOpen( self.rootPath );
+			} );
+		}
+		return cancelBubble( e );
+	}
 };
 Friend.FileBrowser.prototype.clear = function()
 {
@@ -66,39 +95,43 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 {
 	var drop = 0;
 	var self = this;
-	// Element was dropped here
-	for( var a = 0; a < elements.length; a++ )
+	// Only if we have bookmarks
+	if( self.flags.bookmarks )
 	{
-		if( elements[a].fileInfo.Type == 'Directory' )
+		// Element was dropped here
+		for( var a = 0; a < elements.length; a++ )
 		{
-			if( elements[a].fileInfo.Path.substr( elements[a].fileInfo.Path - 1, 1 ) != ':' )
+			if( elements[a].fileInfo.Type == 'Directory' )
 			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
+				if( elements[a].fileInfo.Path.substr( elements[a].fileInfo.Path - 1, 1 ) != ':' )
 				{
-					if( e == 'ok' )
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
 					{
-						self.clear();
-						self.refresh( 'Mountlist:' );
+						if( e == 'ok' )
+						{
+							self.clear();
+							self.refresh( 'Mountlist:' );
+						}
 					}
+					m.execute( 'addbookmark', { path: elements[a].fileInfo.Path, name: elements[a].fileInfo.Filename } );
+					drop++;
 				}
-				m.execute( 'addbookmark', { path: elements[a].fileInfo.Path, name: elements[a].fileInfo.Filename } );
-				drop++;
 			}
 		}
-	}
-	if( win )
-	{
-		if( win.refresh ) win.refresh();
+		if( win )
+		{
+			if( win.refresh ) win.refresh();
+		}
 	}
 	return drop;
 };
 
-// Set a path
-Friend.FileBrowser.prototype.setPath = function( path, target, cbk )
+// Set an active path
+Friend.FileBrowser.prototype.setPath = function( target, cbk )
 {
-	this.flags.path = target;
-	this.refresh( path, this.dom, cbk, 0 );
+	this.flags.path = target; // This is the current target path..
+	this.refresh( this.rootPath, this.dom, cbk, 0 );
 }
 
 Friend.FileBrowser.prototype.rollOver = function( elements )
@@ -110,7 +143,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	var self = this;
 	
 	if( !rootElement ) rootElement = this.dom;
-	if( !path ) path = this.currentPath;
+	if( !callback ) callback = false;
+	if( !path ) path = this.rootPath; // Use the rootpath
 	if( !depth ) depth = 1;
 
 	// Fix column problem
@@ -143,7 +177,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	{
 		ele.onclick = function( e )
 		{
-			if( !ppath ) return;
+			if( !ppath ) 
+			{
+				return cancelBubble( e );
+			}
 			if ( ppath.indexOf( ':' ) < 0 )
 				ppath += ':';
 
@@ -179,10 +216,14 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			else
 			{
+				// Set the current target path
+				self.flags.path = ppath;
+				
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
-					return self.callbacks.folderOpen( ppath );
+					self.callbacks.folderOpen( ppath );
+					return  cancelBubble( e );
 				}
 				// Normal operation
 				if( !this.classList.contains( 'Open' ) )
@@ -282,30 +323,33 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	// Just get a list of disks
 	if( path == 'Mountlist:' )
 	{
-		var func = function( flags, callback )
+		var func = function( flags, cb )
 		{
 			if( window.Workspace )
 			{
 				Friend.DOS.getDisks( flags, function( response, msg )
 				{
-					callback( response ? {
+					cb( response ? {
 						list: msg
 					} : false );
 				} );
 			}
 			else
 			{
-				Friend.DOS.getDisks( flags, callback );
+				Friend.DOS.getDisks( flags, cb );
 			}
 		}
 		func( { sort: true }, function( msg )
 		{	
 			if( !msg || !msg.list ) return;
 			
+			if( callback ) callback();
+			
 			function done()
 			{
 				// Get existing
 				var eles = rootElement.childNodes;
+								
 				var found = [];
 				var foundElements = [];
 				var foundStructures = [];
@@ -351,7 +395,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					if( msg.list[a].Volume == 'System:' ) continue;
 					
 					// Add the bookmark header if it doesn't exist
-					if( msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
+					if( self.flags.bookmarks && msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
 					{
 						var d = document.createElement( 'div' );
 						self.bookmarksHeader = d;
@@ -408,6 +452,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							nm.classList.remove( 'IconSmall' );
 							nm.classList.remove( 'IconDisk' );
 						}
+						
 						d.appendChild( nm );
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
@@ -487,60 +532,67 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 			}
 			
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			if( self.flags.bookmarks )
 			{
-				if( e == 'ok' )
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
 				{
-					try
+					if( e == 'ok' )
 					{
-						var js = JSON.parse( d );
-						msg.list.push( {
-							Title: i18n( 'i18n_bookmarks' ) + ':',
-							Type: 'header'
-						} );
-						for( var a = 0; a < js.length; a++ )
+						try
 						{
-							var ele = {
-								Title: js[a].name,
-								Type: 'bookmark',
-								Path: js[a].path,
-								Volume: js[a].path
-							};
-							msg.list.push( ele );
+							var js = JSON.parse( d );
+							msg.list.push( {
+								Title: i18n( 'i18n_bookmarks' ) + ':',
+								Type: 'header'
+							} );
+							for( var a = 0; a < js.length; a++ )
+							{
+								var ele = {
+									Title: js[a].name,
+									Type: 'bookmark',
+									Path: js[a].path,
+									Volume: js[a].path
+								};
+								msg.list.push( ele );
+							}
 						}
+						catch( e )
+						{
+						}
+						done();
 					}
-					catch( e )
+					else
 					{
+						done();
 					}
-					done();
 				}
-				else
-				{
-					done();
-				}
+				m.execute( 'getbookmarks' );
 			}
-			m.execute( 'getbookmarks' );
+			else
+			{
+				done();
+			}
 		} );
 	}
 	// Get sub directories
 	else
 	{
 		// Support both API scope and Workspace scope
-		var func = function( path, flags, callback )
+		var func = function( path, flags, cb )
 		{
 			if( window.Workspace )
 			{
 				Friend.DOS.getDirectory( path, flags, function( response, msg )
 				{
-					callback( response ? {
+					cb( response ? {
 						list: msg
 					} : false );
 				} );
 			}
 			else
 			{
-				Friend.DOS.getDirectory( path, flags, callback );
+				Friend.DOS.getDirectory( path, flags, cb );
 			}
 		}
 	
@@ -548,9 +600,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		{
 			if( !msg || !msg.list ) return;
 			
+			if( callback ) callback();
+			
 			// Get existing
 			var eles = rootElement.childNodes;
-			
+						
 			var removers = [];
 			var found = [];
 			var foundElements = [];
@@ -632,6 +686,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				else if( foundItem && msg.list[a].Type == 'Directory' )
 				{
+					// Remove active state from inactive items
+					var nam = foundItem.querySelector( '.Name' );
+					if( nam && nam.classList.contains( 'Active' ) && foundItem.path != self.flags.path )
+						nam.classList.remove( 'Active' );
 					// Existing items
 					if( foundItem.classList.contains( 'Open' ) )
 					{
@@ -647,6 +705,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 			}
 			// Checkers
+			var rootPathLength = self.rootPath.split( '/' ).length;
 			var sw = 2;
 			for( var a = 0; a < eles.length; a++ )
 			{

@@ -98,7 +98,7 @@ Application.showImages = function()
 			if( si - 1 == a || ( si < -2 && arr[a] == current ) )
 			{
 				Application.selectedImage = a + 1;
-				cl = ' Selected';
+				cl = ' Selected BoxSelected';
 				found = true;
 			}
 			var fname = arr[a].split(':')[1];
@@ -125,14 +125,14 @@ Application.showImages = function()
 		
 		cl = '';
 		if( !found && Application.selectedImage == -1 )
-			cl = ' Selected';
+			cl = ' Selected BoxSelected';
 		ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: ' + ( Application.mode == 'doors' ? '#2F669F' : '#ffffff' ) + ';"><div>Use background color.</div></div></div>';
 		
 		if( Application.mode == 'doors' )
 		{
 			cl = '';
 			if( !found && Application.selectedImage == -2 )
-				cl = ' Selected';
+				cl = ' Selected BoxSelected';
 			ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-image: url(/webclient/gfx/theme/default_login_screen.jpg); background-size: cover"><div>Use system default.</div></div></div>';
 		}
 		

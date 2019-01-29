@@ -512,6 +512,12 @@ input.Required
 	border-bottom: 1px solid #9BA4A8;
 }
 
+.BoxSelected
+{
+	box-sizing: border-box;
+	box-shadow: 0px 0px 1px $ColorLightBorder;
+}
+
 .Recessed
 {
 	box-shadow: $BoxShadowRecessed;

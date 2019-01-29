@@ -1,0 +1,74 @@
+
+
+menu_new                          : Nouveau document
+menu_save                         : Sauver
+menu_save_as                      : Sauver comme
+menu_load                         : Charger
+menu_quit                         : Quitter
+menu_preferences                  : Preferences
+menu_file                         : Fichier
+menu_print                        : Imprimer
+menu_document                     : Document
+menu_insert_image                 : Insérer une image
+menu_convert_images_inline        : Images vers ligne
+menu_vr_features                  : Inverser les options VR
+
+i18n_status_loading               : Chargement...
+i18n_status_saving                : Sauvegarde...
+
+i18n_find                         : Chercher
+i18n_select                       : Sélectionner
+i18n_search                       : Rechercher
+
+edit_image                        : Editer l'image
+insert_image                      : Insérer une image
+
+i18n_print_alert                  : Alerte impression
+i18n_not_saved_cant_print         : Le document n'est pas sauvé. Veuillez le sauver d'abord et ré-essayer.
+
+i18n_close                        : Sortie
+i18n_accept                       : Acceptez
+
+i18n_set_bold                     : Gras
+i18n_set_italic                   : Italique
+i18n_set_underline                : Souligné
+i18n_default_style                : Style par défaut
+i18n_header_1                     : Entête 1
+i18n_header_2                     : Entête 2
+i18n_header_3                     : Entête 3
+i18n_header_4                     : Entête 4
+i18n_header_5                     : Entête 5
+i18n_header_6                     : Entête 6
+i18n_paragraph                    : Paragraphe
+i18n_select_zoom                  : Zoom
+i18n_select_font                  : Choisir police
+i18n_font_size                    : Taille police
+i18n_insert_image                 : Insérer une image
+i18n_align_left                   : Aligner à gauche
+i18n_align_center                 : Centrer
+i18n_align_right                  : Aligner à droite
+i18n_align_justify                : Justifier
+i18n_unordered_bullet_points      : Liste non numérotée
+i18n_ordered_bullet_point         : Liste numérotée
+i18n_set_document_zoom            : Zoom du document
+i18n_set_block_format             : Style
+i18n_cancel : Annuler
+i18n_keywords : mots-clé...
+i18n_path : chemin...
+i18n_preferences : Préférences
+i18n_failed_to_load_document : Le chargement du document a échoué...
+i18n_loaded : Chagé
+i18n_converting : En conversion...
+i18n_written : Ecrit
+menu_print_remote                 : Impression à distance
+i18n_print_preview : Previsualisation impression
+i18n_generating_print_preview : Génération prévisualisation impression...
+i18n_print_ready : Impression prête
+i18n_language : Langage
+i18n_language_settings : Préférences langage
+i18n_features : Fonctionnalités
+i18n_feature_settings : Préférences fonctionnalités
+
+
+
+

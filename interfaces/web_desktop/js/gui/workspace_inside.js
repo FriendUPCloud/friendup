@@ -1114,73 +1114,74 @@ var WorkspaceInside = {
 				if( wid )
 					wid.autosize();
 			}
-			// For mobiles, we have a Friend icon at the top of the screen
-			// Also add the app menu
-			else if( !Workspace.topNavigation )
-			{
-				var topNavigation = document.createElement( 'div' );
-				topNavigation.className = 'MobileTopNavigation';
-				Workspace.topNavigation = topNavigation;
-				Workspace.screen.contentDiv.parentNode.appendChild( topNavigation );
-				topNavigation.onclick = function()
-				{
-					if( ge( 'WorkspaceMenu' ) )
-					{
-						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
-						document.body.classList.remove( 'WorkspaceMenuOpen' );
-					}
-					if( Workspace.widget )
-						Workspace.widget.slideUp();
-					
-					// Store active window in mainwindow
-					if( window._getAppByAppId )
-					{
-						if( window.currentMovable && currentMovable.applicationId )
-						{
-							var app = _getAppByAppId( currentMovable.applicationId );
-							if( app.mainView )
-							{
-								if( currentMovable.windowObject != app.mainView )
-								{
-									app.mainView.lastActiveView = currentMovable;
-								}
-							}
-						}
-					}
-					
-					Workspace.mainDock.closeDesklet();
-					DefaultToWorkspaceScreen();
-					_DeactivateWindows();
-					Friend.GUI.reorganizeResponsiveMinimized();
-					window.focus();
-				}
-				
-				// App menu toggle
-				var appMenu = document.createElement( 'div' );
-				appMenu.className = 'MobileAppMenu';
-				Workspace.appMenu = appMenu;
-				Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
-				appMenu.onclick = function()
-				{
-					if( ge( 'WorkspaceMenu' ) )
-					{
-						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
-						document.body.classList.remove( 'WorkspaceMenuOpen' );
-					}
-					if( document.body.classList.contains( 'AppsShowing' ) )
-					{
-						Workspace.mainDock.closeDesklet();
-						Friend.GUI.reorganizeResponsiveMinimized();
-					}
-					else
-					{
-						Workspace.mainDock.openDesklet();
-					}
-				}
-			}
 		}
 		// FRANCOIS: get unique device IDs...
 		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+		
+		// For mobiles, we have a Friend icon at the top of the screen
+		// Also add the app menu
+		if( isMobile && !Workspace.topNavigation )
+		{
+			var topNavigation = document.createElement( 'div' );
+			topNavigation.className = 'MobileTopNavigation';
+			Workspace.topNavigation = topNavigation;
+			Workspace.screen.contentDiv.parentNode.appendChild( topNavigation );
+			topNavigation.onclick = function()
+			{
+				if( ge( 'WorkspaceMenu' ) )
+				{
+					ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
+				}
+				if( Workspace.widget )
+					Workspace.widget.slideUp();
+				
+				// Store active window in mainwindow
+				if( window._getAppByAppId )
+				{
+					if( window.currentMovable && currentMovable.applicationId )
+					{
+						var app = _getAppByAppId( currentMovable.applicationId );
+						if( app.mainView )
+						{
+							if( currentMovable.windowObject != app.mainView )
+							{
+								app.mainView.lastActiveView = currentMovable;
+							}
+						}
+					}
+				}
+				
+				Workspace.mainDock.closeDesklet();
+				DefaultToWorkspaceScreen();
+				_DeactivateWindows();
+				Friend.GUI.reorganizeResponsiveMinimized();
+				window.focus();
+			}
+			
+			// App menu toggle
+			var appMenu = document.createElement( 'div' );
+			appMenu.className = 'MobileAppMenu';
+			Workspace.appMenu = appMenu;
+			Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
+			appMenu.onclick = function()
+			{
+				if( ge( 'WorkspaceMenu' ) )
+				{
+					ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
+				}
+				if( document.body.classList.contains( 'AppsShowing' ) )
+				{
+					Workspace.mainDock.closeDesklet();
+					Friend.GUI.reorganizeResponsiveMinimized();
+				}
+				else
+				{
+					Workspace.mainDock.openDesklet();
+				}
+			}
+		}
 	},
 	// Close widgets and return to desktop..
 	goToMobileDesktop: function()
@@ -1260,7 +1261,7 @@ var WorkspaceInside = {
 			document.getElementsByTagName( 'head' )[0].appendChild( this.themeStyleElement );
 		}
 		
-		var shades = [ 'dark', 'charcoal' ];
+		var shades = [ 'dark', 'charcoal', 'synthwave' ];
 		for( var c in shades )
 		{
 			var uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
@@ -4011,13 +4012,74 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 	},
 	// paste from virtual clipboard
-	pasteFiles: function()
+	pasteFiles: function( e )
 	{
-		if( Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
+		if( window.currentMovable && Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
 			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
-			window.currentMovable.drop( Friend.workspaceClipBoard, e );
+			
+			var clip = Friend.workspaceClipBoard;
+			
+			// Make sure we don't overwrite existing files!
+			var destPath = currentMovable.content.fileInfo.Path;
+			var d = new Door( destPath );
+			d.getIcons( currentMovable.content.fileInfo, function( items )
+			{
+				for( var a = 0; a < items.length; a++ )
+				{
+					for( var b = 0; b < clip.length; b++ )
+					{
+						var copy = 0;
+						if( items[ a ].Filename == clip[ b ].fileInfo.Filename )
+						{
+							var found = false;
+							do
+							{
+								found = false;
+								var str = 'Copy ' + ( copy > 0 ? ( copy + ' ' ) : '' );
+								str += 'of ' + items[a].Filename;
+							
+								var f = clip[ b ].fileInfo.Filename;
+								var p = clip[ b ].fileInfo.Path;
+							
+								// Files
+								if( clip[ b ].fileInfo.MetaType == 'File' )
+								{
+									var dn = f;
+									p = p.substr( 0, p.length - dn.length ) + str;
+									clip[ b ].fileInfo.NewPath = p;
+								}
+								// Directory
+								else
+								{
+									var dn = f + '/';
+									p = p.substr( 0, p.length - dn.length ) + str + '/';
+									clip[ b ].fileInfo.NewPath = p;
+								}
+							
+								clip[ b ].fileInfo.NewFilename = str;
+								
+								// Still found?
+								for( var c = 0; c < items.length; c++ )
+								{
+									if( items[ c ].Filename == str )
+									{
+										found = true;
+										copy++;
+										break;
+									}
+								}
+								
+							}
+							while( found );
+						}
+					}
+				}
+				if( !e ) e = {};
+				e.paste = true;
+				window.currentMovable.drop( Friend.workspaceClipBoard, e );
+			} );
 		}
 	},
 	// Use a door and execute a filesystem function, rename
@@ -7100,6 +7162,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Actually do the delete
 						function doDeleteFiles( files, index )
 						{
+							console.log( 'To delete!' );
+						
 							// 
 							if( stop || index == files.length )
 							{
@@ -7126,6 +7190,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								file.door.dosAction( 'delete', { 
 									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
 								}, nextFile );
+								
+								var info = file.fileInfo.Path;
+								if( info.substr( info.length - 1, 1 ) == '/' )
+								info = info.substr( 0, info.length - 1 );
+								// Try to kill the info file!
+								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+								console.log( 'Die info file: ' + info + '.info' );
+								
 							}
 							// Dormant?
 							else if ( file.fileInfo.Dormant )
@@ -7135,7 +7207,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Path
 							else
 							{
+								var info = file.fileInfo.Path;
+								if( info.substr( info.length - 1, 1 ) == '/' )
+								info = info.substr( 0, info.length - 1 );
 								file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+								// Try to kill the info file!
+								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
 							}
 						}
 						doDeleteFiles( files, 0 );

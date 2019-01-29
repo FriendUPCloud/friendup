@@ -510,6 +510,7 @@ Application.saveFile = function( filename, content, mode )
 				data:    ''
 			} );
 			Application.masterView.sendMessage( { command: 'checkfileinproject' } );
+			Application.masterView.sendMessage( { command: 'donesaving' } );
 		};
 		f.save( ( content.length === 0 ? ' ' : content ), filename );
 	});

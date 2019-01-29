@@ -111,7 +111,7 @@ var filebrowserCallbacks = {
 };
 
 Application.run = function( msg )
-{
+{	
 	InitTabs( ge( 'EditorTabs' ) );
 	InitTabs( ge( 'filelisttabs' ) );	
 	
@@ -413,7 +413,7 @@ Application.handleKeys = function( k, e )
 		}
 		Application.autoSaveTimeout = setTimeout( function()
 		{
-			Application.save( 'autosave' );
+			Application.save( 'autosave', Application.currentFile );
 		}, 1000 );
 	}
 
@@ -698,15 +698,17 @@ Application.loadFile = function( data, path, cb )
 		if( this.files[a].filename == path )
 		{
 			if( cb ) cb();
+			
 			// Activate it
 			this.setCurrentFile( a, function(){ self.refreshFilesList(); } );
 			return;
 		}
 	}
 	
-	// Set it
+	// Set it, it is a new file
 	this.files[ path ] = { content: data, filename: path, touched: true };
-	this.setCurrentFile( path, function(){
+	this.setCurrentFile( path, function()
+	{
 		// Refresh so we can see it in the list
 		self.refreshFilesList();
 		if( cb ) cb();
@@ -722,14 +724,23 @@ Application.open = function()
 }
 
 // Say we wanna save
-Application.save = function( mode )
+Application.save = function( mode, specificFile )
 {
+	var self = this;
+	
+	if( !specificFile )
+		specificFile = this.currentFile;
+	
 	if( !mode ) mode = 'normal';
 	
 	// Do an autosave
 	if( mode == 'autosave' )
 	{
-		var f = new File( this.files[ this.currentFile ].filename );
+		// It was somehow closed
+		if( !this.files[ specificFile ] )
+			return;
+			
+		var f = new File( this.files[ specificFile ].filename );
 		f.onSave = function()
 		{
 			ge( 'status' ).innerHTML = i18n( 'i18n_autosaved' );
@@ -747,7 +758,7 @@ Application.save = function( mode )
 		// Update tab
 		for( var a = 0; a < tabs.length; a++ )
 		{
-			if( tabs[a].uniqueId == this.files[ this.currentFile ].uniqueId )
+			if( tabs[a].uniqueId == this.files[ specificFile ].uniqueId )
 			{
 				var fn = this.files[ this.currentFile ].filename;
 				if( fn.indexOf( ':' ) > 0 )
@@ -765,6 +776,8 @@ Application.save = function( mode )
 	}
 	else
 	{
+		loading++; 
+		loadProgress();
 		// Bump!
 		this.sendMessage( { command: 'save', mode: mode } );
 	}
@@ -847,8 +860,6 @@ Application.refreshFilesList = function ()
 	if( tabContainer.length ) tabContainer = tabContainer[0];
 	else tabContainer = false;
 	
-	var clickFunc = false; // Delayed click
-	
 	for( var t in this.files )
 	{
 		var c = document.createElement ( 'div' );
@@ -885,6 +896,7 @@ Application.refreshFilesList = function ()
 					Application.refreshFilesList();
 				}
 			} );
+			return cancelBubble( e );
 		};
 		files.appendChild( c );
 		
@@ -896,57 +908,42 @@ Application.refreshFilesList = function ()
 			{
 				if( tabs[z].uniqueId == this.files[t].uniqueId )
 				{
+					// Found already!
 					tabFound = true;
-					break;
 				}
 			}
-			if( !tabFound )
+			if( tabFound ) continue;
+			
+			// Create a new tab
+			var tab = document.createElement( 'div' );
+			tab.className = 'Tab IconSmall fa-code';
+			tab.uniqueId = this.files[t].uniqueId;
+			if( this.files[t].filename.indexOf( ':' ) > 0 )
 			{
-				var tab = document.createElement( 'div' );
-				tab.className = 'Tab IconSmall fa-code';
-				tab.uniqueId = this.files[t].uniqueId;
-				if( this.files[t].filename.indexOf( ':' ) > 0 )
+				var lastPart = this.files[t].filename.split( ':' )[1];
+				if( lastPart.indexOf( '/' ) > 0 )
 				{
-					var lastPart = this.files[t].filename.split( ':' )[1];
-					if( lastPart.indexOf( '/' ) > 0 )
-					{
-						lastPart = lastPart.split( '/' ).pop();
-					}
-					tab.innerHTML = lastPart;
+					lastPart = lastPart.split( '/' ).pop();
 				}
-				else
-				{
-					tab.innerHTML = this.files[t].filename;
-				}
-				tab.page = ge( 'CodeTabPage' ); // Use this one for all content
-				tabContainer.appendChild( tab );
-				
-				// Find tabs anew
-				tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
-				
-				// Activate new file if this is the current file
-				if( tab.uniqueId == this.files[ this.currentFile ].uniqueId )
-				{
-					clickFunc = function()
-					{	
-						tab.click();
-					}
-				}
+				tab.innerHTML = lastPart;
 			}
+			else
+			{
+				tab.innerHTML = this.files[t].filename;
+			}
+			
+			tab.page = ge( 'CodeTabPage' ); // Use this one for all content
+			tabContainer.appendChild( tab );
+			
+			// Find tabs anew
+			tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
 		}
 	}
 	
 	// Reinitialize tabs with proper callback
 	InitTabs( ge( 'EditorTabs' ), function( self, pages )
-	{
-		// Delayed clickfunc
-		if( clickFunc )
-		{
-			clickFunc();
-			clickFunc = null;
-		}
-		
-		// also do the files list!
+	{	
+		// Also do the files list!
 		for( var a in files.childNodes )
 		{
 			if( files.childNodes[a].uniqueId == self.uniqueId )
@@ -956,10 +953,29 @@ Application.refreshFilesList = function ()
 			}
 		}
 		
-		// Set class
-		ge( 'CodeTabPage' ).className = 'Page PageActive';
+		// Set class on own page
+		self.page.classList.add( 'PageActive' );
+		
+		// Abort tab system setting the page
 		return false;
 	} );
+	
+	// Activate new file if this is the current file
+	for( var a = 0; a < tabs.length; a++ )
+	{
+		var tab = tabs[ a ];
+		if( tab.uniqueId == this.files[ this.currentFile ].uniqueId )
+		{
+			if( !tab.classList.contains( 'TabActive' ) )
+			{
+				tab.click();
+			}
+		}
+	}
+	
+	// We need to activate!
+	var tabActive = ge( 'EditorTabs' ).querySelector( '.TabActive' );
+	if( tabActive ) tabActive.page.classList.add( 'PageActive' );
 	
 	this.applySyntaxHighlighting();
 	
@@ -1098,15 +1114,26 @@ Application.setStoredSession = function( data )
 
 var inc = 0;
 // Set the content from current file -------------------------------------------
+// NB: Looks like we never use mode, perhaps remove!
 Application.setCurrentFile = function( curr, ocallback, mode )
 {
 	var self = this;
+	if( !mode ) mode = false;
 	
 	// Don't do it double
-	if( curr == this.currentFile ) return;
+	if( curr == this.currentFile )
+	{
+		if( ocallback ) ocallback( false );
+		return;
+	}
 	
 	// Race condition prevention
-	if( self.settingCurrentFile ) return;
+	if( self.settingCurrentFile )
+	{
+		if( ocallback ) ocallback( false );
+		return;
+	}
+	
 	self.settingCurrentFile = true;
 	
 	// Reset when done
@@ -1133,7 +1160,7 @@ Application.setCurrentFile = function( curr, ocallback, mode )
 		}
 	}
 
-	// Set current file
+	// Set new current file
 	if( curr )
 	{
 		this.currentFile = curr;
@@ -1143,7 +1170,7 @@ Application.setCurrentFile = function( curr, ocallback, mode )
 	{	
 		var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
 		var foundTab = false;
-	
+		
 		// Update currentfile
 		for( var a = 0; a < tabs.length; a++ )
 		{
@@ -1192,6 +1219,12 @@ Application.setCurrentFile = function( curr, ocallback, mode )
 	
 	// Syntax highlighting
 	this.applySyntaxHighlighting();
+	
+	// No callback? Make sure you unlock!
+	if( !ocallback )
+	{
+		self.settingCurrentFile = false;
+	}
 };
 
 function popFilename( path )
@@ -1626,7 +1659,7 @@ Application.receiveMessage = function( msg )
 				{
 					Application.sendMessage( {
 						command: 'settitle',
-						title: 'Files in ' + msg.data.ProjectName
+						title: i18n( 'i18n_files_in' ) + ' ' + msg.data.ProjectName
 					} );
 				}
 				else 
@@ -1779,7 +1812,7 @@ Application.receiveMessage = function( msg )
 						setTimeout( function()
 						{
 							loadProgress();
-						}, 500 );
+						}, 250 );
 						Application.sendMessage( {
 							type: 'callback',
 							callback: cb 
@@ -1818,6 +1851,14 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'updateStatus':
 				ge( 'status' ).innerHTML = msg.data ? msg.data : '';
+				break;
+			case 'donesaving':
+				loading--; 
+				// Give it time 
+				setTimeout( function()
+				{
+					loadProgress();
+				}, 250 );
 				break;
 		}
 	}
