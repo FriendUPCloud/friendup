@@ -43,10 +43,11 @@ var path;
 var session;
 var authid;
 var totals = 0;
-var filecounter = [];
-var filesundertransport = 0;
+var bytesInProgress = 0;
+var bytesWritten = 0;
+var loadPieces = [];
+var filesUnderTransport = 0;
 var makedirBuf = {};
-var indexes = [];
 
 // -----------------------------------------------------------------------------
 
@@ -78,26 +79,38 @@ self.checkVolume = function()
 				}
 				
 				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used );
-				var uploadsize = 0;
 				
 				for( var f in self.files )
 				{
-					if( self.files[ f ][ 'size' ] )
+					// Queue trick
+					var fullPath = false;
+					var file = self.files[ f ];
+					var size = file.size;
+					if( file.fullPath )
 					{
-						uploadsize += parseInt( self.files[ f ][ 'size' ] );
-						self.filecounter[ f ] = [ '0', uploadsize ];
+						fullPath = file.fullPath;
+						size = file.size;
+						file = file.file;
+					}
+					if( size )
+					{
+						bytesInProgress += parseInt( size )
 					}
 				}
 				
-				if( diskspace < uploadsize )
+				if( diskspace < bytesInProgress )
 				{ 
 					self.postMessage({'error':1,'errormessage':'Not enough space left on volume.'}); return; 
 					console.log( 'Not enough space left on volume.' );
 				}
 				
-				self.totals = uploadsize;
+				self.totals = bytesInProgress;
 				self.postMessage('ok<!--separate-->Volume has enough space left. Starting to upload files.');
-				self.uploadFiles();
+				
+				if( self.files.length )
+				{
+					self.uploadFiles();
+				}
 			}
 		}
 		else
@@ -131,18 +144,36 @@ self.checkVolume = function()
 } // end of checkVolumne
 
 // -----------------------------------------------------------------------------
-self.uploadFiles = function() 
+self.uploadFiles = function()
 {
 	var filesList = self.files;
-
-	// once we get here we can upload all files at once :)
-	var xhrs = [];
 	
-	for( var f = 0; f < filesList.length; f++ )
+	// Run a queue!
+	function uploadQueueRun( queuePos )
 	{
-		if( typeof filesList[ f ] != 'object' ) continue;
+		// Are we done?
+		if( queuePos > filesList.length )
+		{
+			self.postMessage( {
+				'progressinfo': 1,
+				'progress': 100,
+				'progresson': 0,
+				'uploadscomplete': 1,
+				'filesundertransport': 0
+			} );
+			self.close();
+			return;
+		}
 		
-		var file = filesList[ f ];
+		if( typeof filesList[ queuePos ] != 'object' )
+		{
+			return setTimeout( function()
+			{
+				uploadQueueRun( ++queuePos );
+			}, 0 );
+		}
+		
+		var file = filesList[ queuePos ];
 		
 		// Queue trick
 		var fullPath = false;
@@ -152,9 +183,9 @@ self.uploadFiles = function()
 			file = file.file;
 		}
 		
-		var filename = ( self.filenames && self.filenames[ f ] ? self.filenames[ f ] : file.name );
-		
-		var destPath = ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' )
+		// Get filename and destination path
+		var filename = ( self.filenames && self.filenames[ queuePos ] ? self.filenames[ queuePos ] : file.name );
+		var destPath = ( self.path.slice( -1 ) == '/' ? self.path : self.path + '/' ).split( ':/' ).join( ':' )
 		
 		if( fullPath )
 		{
@@ -184,103 +215,163 @@ self.uploadFiles = function()
 			}
 		}
 		
+		// Execute the makedir
 		if( destPath.substr( destPath.length - 1, 1 ) == '/' )
 		{
+			doMakedir( queuePos, destPath, function(){ 
+				// No go upload!
+				doUpload( queuePos, function()
+				{
+					// Rerun queue
+					uploadQueueRun( ++queuePos ); 
+				} );
+			} );
+		}
+		// Just upload the file
+		else
+		{
+			doUpload( queuePos, function()
+			{ 
+				// Rerun queue
+				uploadQueueRun( ++queuePos ); 
+			} );
+		}
+		
+		// Make a directory!
+		function doMakedir( fileIndex, path, cbk )
+		{
 			// Make the directory! Just in case
-			if( !makedirBuf[ destPath ] )
+			if( !makedirBuf[ path ] )
 			{
 				var n = new XMLHttpRequest();
 				n.open( 'POST', '/system.library/file/makedir' );
 				n.setRequestHeader( 'Method', 'POST /system.library/file/makedir HTTP/1.1' );
-				n.send( 'path=' + destPath + ( self.session ? ( '&sessionid=' + self.session ) : ( '&authid=' + self.authid ) ) );
-				console.log( 'Makeing dir: ' + destPath );
-				makedirBuf[ destPath ] = true;
-			}
-		}
-		
-		xhrs[f] = new XMLHttpRequest();
-		
-		console.log( 'Uploading: ' + destPath );
-		
-		self.filecounter[ f ] = [ 0, 0 ];
-		
-		xhrs[f].upload.uploadFileIndex = f;
-		xhrs[f].uploadFileIndex = f;
-		
-		xhrs[f].upload.addEventListener( 'progress', function ( e )
-		{
-			if( e.lengthComputable )
-			{
-				self.filecounter[ this.uploadFileIndex ][ 0 ] = e.loaded;
-				
-				var uploaded = 0;
-				for( var i in self.filecounter )
+				n.send( 'path=' + path + ( self.session ? ( '&sessionid=' + self.session ) : ( '&authid=' + self.authid ) ) );
+				n.counter = 0;
+				n.onreadystatechange = function()
 				{
-					uploaded += self.filecounter[ i ][ 0 ];
-				}
-				var progress = Math.min( ( 100 - self.filecounter.length ), ( uploaded * 100 / self.totals) );
-				
-				if( e.loaded == e.total ) self.filesundertransport++;
-				
-				self.postMessage(
+					// Directory created
+					if( this.readyState == 4 && this.status == 200  )
 					{
-						'progressinfo': 1,
-						'progress': progress,
-						'progresson': this.uploadFileIndex,
-						'filesundertransport': self.filesundertransport
-					} 
-				);
-			}
-		} );
-
-		xhrs[f].onreadystatechange = function()
-		{
-			if( this.status == 200 )
-			{
-				self.filecounter[ this.uploadFileIndex ][ 0 ] = self.filecounter[ this.uploadFileIndex ][ 1 ];
-				if( self.filesundertransport > 1 ) self.filesundertransport--;
-				
-				var done = true;
-				var progress = 100 - self.filesundertransport;
-
-				for(var i in self.filecounter)
-				{
-					if( self.filecounter[ i ][ 0 ] != self.filecounter[ i ][ 1 ] )
+						if( cbk ) cbk();
+					}
+					// An error occured
+					else if( this.readyState > 1 && this.status > 0 )
 					{
-						done = false;
+						self.postMessage( {
+							'progressinfo' : 1,
+							'fileindex' : fileIndex, 
+							'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+								this.readyState + '/' + this.status + '|' 
+						} );
 					}
 				}
-				if( done ) self.postMessage( { 'progressinfo' : 1,'uploadscomplete' : 1 } );
-				else self.postMessage( { 'progressinfo' : 1, 'progress' : progress } );
+				makedirBuf[ destPath ] = true;
 			}
-			else if( this.readyState > 1 && this.status > 0 )
+			// The directory was created, move on
+			else
 			{
-				self.postMessage( {
-					'progressinfo' : 1,
-					'fileindex' : this.uploadFileIndex, 
-					'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
-						this.readyState + '/' + this.status + '|' 
-				} );
+				if( cbk ) cbk();
 			}
 		}
 		
-		xhrs[f].open( 'POST', '/system.library/file/upload', true );
-		xhrs[f].setRequestHeader( 'Method', 'POST /system.library/file/upload HTTP/1.1' );
-		xhrs[f].setRequestHeader( 'Content-Type', 'multipart/form-data;' );
+		// Do the actual upload
+		function doUpload( ind, callback )
+		{
+			self.filesUnderTransport++;
+			
+			function calcProgress( linfo )
+			{
+				// Store progress
+				if( !loadPieces[ ind ] )
+					loadPieces[ ind ] = { loaded: 0, total: 0 };
+				if( linfo )
+				{
+					loadPieces[ ind ].loaded = linfo.loaded;
+					loadPieces[ ind ].total = linfo.total;
+				}
+				
+				// Check progress
+				var prog = 0, tota = 0;
+				for( var a in loadPieces )
+				{
+					prog += parseInt( loadPieces[ a ].loaded );
+					tota += parseInt( loadPieces[ a ].total );
+				}
+				
+				if( tota > 0 )
+				{
+					var progress = Math.floor( prog / bytesInProgress * 100 );
+			
+					self.postMessage( {
+						'progressinfo': 1,
+						'progress': progress,
+						'progresson': ind,
+						'filesundertransport': self.filesUnderTransport
+					} );
+				}
+			}
+			
+			var xh = new XMLHttpRequest();
+			xh.upload.addEventListener( 'progress', function( e )
+			{
+				if( e.lengthComputable )
+				{
+					calcProgress( e );
+				}
+			} );
+
+			xh.counter = 0;
+			xh.onreadystatechange = function()
+			{
+				if( this.readyState == 4 && this.status == 200  )
+				{
+					loadPieces[ ind ].loaded = loadPieces[ ind ].total;
+					
+					if( self.filesUnderTransport > 1 ) 
+					{
+						if( !loadPieces[ ind ].completed )
+						{
+							loadPieces[ ind ].completed = true;
+							self.filesUnderTransport--;
+						}
+					}
+				
+					calcProgress();
+					
+					// Run callback
+					if( callback ) callback();
+				}
+				else if( this.readyState > 1 && this.status > 0 )
+				{
+					self.postMessage( {
+						'progressinfo' : 1,
+						'fileindex' : ind, 
+						'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+							this.readyState + '/' + this.status + '|' 
+					} );
+				}
+			}
 		
-		// add request data...
-		var fd = new FormData();
-		if( self.session )
-			fd.append( 'sessionid',self.session );
-		else fd.append( 'authid', self.authid );
-		fd.append( 'module','files' );
-		fd.append( 'command','uploadfile' );
-		fd.append( 'path', destPath );
-		fd.append( 'file', file, encodeURIComponent( filename ) );
+			xh.open( 'POST', '/system.library/file/upload', true );
+			xh.setRequestHeader( 'Method', 'POST /system.library/file/upload HTTP/1.1' );
+			xh.setRequestHeader( 'Content-Type', 'multipart/form-data;' );
 		
-		//get the party started
-		xhrs[f].send( fd );
+			// add request data...
+			var fd = new FormData();
+			if( self.session )
+				fd.append( 'sessionid',self.session );
+			else fd.append( 'authid', self.authid );
+			fd.append( 'module','files' );
+			fd.append( 'command','uploadfile' );
+			fd.append( 'path', destPath );
+			fd.append( 'file', file, encodeURIComponent( filename ) );
+		
+			//get the party started
+			xh.send( fd );
+		}
 	}
+	uploadQueueRun( 0 );
 } // end of uploadFiles
 
 // -----------------------------------------------------------------------------
@@ -294,7 +385,7 @@ self.onmessage = function( e )
 	// Keep piling!
 	test = e;
 	if( e.data.recursiveUpdate )
-	{
+	{	
 		self.session = e.data.session;
 		if( e.data.executeQueue )
 		{
@@ -307,7 +398,8 @@ self.onmessage = function( e )
 			// Organize by longest path
 			for( a = 0; a < queue.length; a++ )
 			{
-				var l = queue[ a ].fullPath.split( '/' ).length;
+				var l = queue[ a ].fullPath.split( '/' ).length; 
+				if( l > qmax ) qmax = l;
 				if( !outQueue[ l ] ) 
 				{
 					outQueue[ l ] = [];
@@ -315,7 +407,17 @@ self.onmessage = function( e )
 				}
 				outQueue[ l ].push( queue[ a ] );		
 			}
-			outQueue.sort();
+			
+			// Sort ascending
+			var fin = [];
+			for( a = 0, rl = 0; a <= qmax; a++ )
+			{
+				if( outQueue[ a ] )
+					fin[ rl++ ] = outQueue[ a ];
+			}
+			
+			outQueue = fin; delete fin;
+			
 			
 			// Relayout
 			queue = [];
@@ -334,14 +436,13 @@ self.onmessage = function( e )
 			self.path = e.data.targetPath.split( ':/' ).join( ':' );
 			self.checkVolume();
 			queue = [];
-			
-			console.log( self.files );
 		}
 		else
 		{
 			queue.push( {
 				file: e.data.item,
-				fullPath: e.data.fullPath
+				fullPath: e.data.fullPath,
+				size: e.data.size
 			} );
 		}
 	}
@@ -392,6 +493,6 @@ self.onmessage = function( e )
 	else if( e.data && e.data['terminate'] == 1 )
 	{
 		console.log('Terminating worker here...');
-		//self.close();
+		self.close();
 	}
 } // end of onmessage

@@ -1040,7 +1040,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			
 			// Try recursion!
 			// TODO: Enable again when safe!!
-			if( 1 == 2 && e.dataTransfer.items )
+			if( e.dataTransfer.items )
 			{
 				info.files = [];
 				info.queued = true;
@@ -1090,7 +1090,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						itm.file( function( f )
 						{
-							uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, session: Workspace.sessionId } );
+							uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
 						} );
 					}
 					busyChecker();

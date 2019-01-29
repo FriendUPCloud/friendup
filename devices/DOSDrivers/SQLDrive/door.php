@@ -387,7 +387,14 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				}
 				
 				if( $fo = $this->getSubFolder( $subPath ) )
+				{
+					$Logger->log( '[SQLDRIVE] Found folder by path: ' . $subPath );
 					$f->FolderID = $fo->ID;
+				}
+				else
+				{
+					$Logger->log( '[SQLDRIVE] Could not find folder by path: ' . $subPath );
+				}
 				
 				// Overwrite existing and catch object
 				if( $f->Load() )
@@ -491,6 +498,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					
 					// Sanitize username
 					$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+					
+					$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
+					
 					$f->DiskFilename = $uname . '/' . $fn;
 					$f->Filesize = filesize( $wname. $fn );
 					if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
@@ -808,9 +818,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								$f->DateModified = date( 'Y-m-d H:i:s' );
 								$f->DateCreated = $f->DateModified;
 								$f->Save();
-								//$Logger->log( 'Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
+								$Logger->log( '[SQLDRIVE] Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
 								return 'ok<!--separate-->' . $f->ID;
 							}
+							$Logger->log( '[SQLDRIVE] Could not make directory.' );
 						}
 						die( 'fail<!--separate-->' ); //why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
@@ -1138,8 +1149,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			global $Config, $User, $Logger;
 		
 			// By ID
+			$Logger->log( '[SQLDRIVE] Deleting folder ' . $path );
 			if( preg_match( '/.*?\#\?([0-9]+)/i', $path, $m ) )
 			{
+				$Logger->log( '[SQLDRIVE] > Trying by ID ' . $m[1] );
 				$fo = new dbIO( 'FSFolder' );
 				if( $fo->Load( $m[1] ) )
 				{
@@ -1155,11 +1168,15 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			array_pop( $subPath );
 			$subPath = implode( '/', $subPath ) . '/';
 	
+			$Logger->log( '[SQLDRIVE] > Deleting folder by subfolder: ' . $subPath );
+	
 			if( $fo = $this->getSubFolder( $subPath ) )
 			{
-				//$Logger->log( 'Delete folder in subpath ' . $subPath . ' in fs ' . $this->Name . ': ---' );
+				$Logger->log( '[SQLDRIVE] > > Delete folder in subpath ' . $subPath . ' in fs ' . $this->Name . ': ---' );
 				return $this->_deleteFolder( $fo, $recursive );
 			}
+		
+			$Logger->log( '[SQLDRIVE] > Could not delete.' );
 		
 			return false;
 		}
@@ -1178,24 +1195,28 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		
 			// If it's a folder
 			if( substr( $path, -1, 1 ) == '/' )
+			{
+				$Logger->log( '[SQLDRIVE] Deleting a folder.' );
 				return $this->deleteFolder( $path, $recursive );
+			}
 		
 			$fi = $this->getFileByPath( $path );
 		
+			$Logger->log( '[SQLDRIVE] Found deletable file. ' . $fi->ID );
+		
+			$fileExists = false;
 			if( $fi->ID > 0 )
 			{
 				if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
 				{
+					$Logger->log( '[SQLDRIVE] Deleting physical file.' );
+					$fileExists = true;
 					unlink( $Config->FCUpload . $fi->DiskFilename );
-					$fi->Delete();
-					return true;
 				}
-				else 
-				{
-					$fi->Delete();
-				}
+				$Logger->log( '[SQLDRIVE] Deleting file entry.' );
+				$fi->Delete();
 			}
-			return false;
+			return $fileExists;
 		}
 		
 		// Private functions
