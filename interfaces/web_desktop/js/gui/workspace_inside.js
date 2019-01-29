@@ -3810,12 +3810,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( !HasClass( window.currentMovable, 'Active' ) )
 				return false;
 
+			if( Workspace.newDir )
+				return Workspace.newDir.activate();
+			
 			var d = new View( {
 				id: 'makedir',
 				width: 325,
 				height: 100,
 				title: i18n( 'i18n_make_a_new_container' )
 			} );
+			
+			Workspace.newDir = d;
+			d.onClose = function()
+			{
+				Workspace.newDir = null;
+			}
 
 			d.setContent( '\
 			<div class="ContentFull">\
