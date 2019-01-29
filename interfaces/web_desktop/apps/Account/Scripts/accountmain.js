@@ -234,10 +234,10 @@ Application.receiveMessage = function( msg )
 					}
 					if ( infos )
 					{
-						ge( 'fnetDeviceName' ).value = infos.name;
-						ge( 'fnetDeviceDescription' ).value = infos.description;
-						ge( 'fnetMountLocalCheck' ).checked = infos.mountLocalDrives;
-						ge( 'fnetDeviceAvatar' ).src = infos.image;
+						if(ge( 'fnetDeviceName' ) ) ge( 'fnetDeviceName' ).value = infos.name;
+						if(ge( 'fnetDeviceDescription' ) ) ge( 'fnetDeviceDescription' ).value = infos.description;
+						if(ge( 'fnetMountLocalCheck' ) ) ge( 'fnetMountLocalCheck' ).checked = infos.mountLocalDrives;
+						if(ge( 'fnetDeviceAvatar' ) ) ge( 'fnetDeviceAvatar' ).src = infos.image;
 					}
 					else
 					{
@@ -245,17 +245,20 @@ Application.receiveMessage = function( msg )
 						{
 							var infos = message.information;
 
-							if ( infos.name )
+							if ( infos.name && ge( 'fnetDeviceName' ))
 								ge( 'fnetDeviceName' ).value = infos.name;
-							else
+							else if( ge( 'fnetDeviceName' ) )
 								ge( 'fnetDeviceName' ).value = infos.os;
-							if ( infos.description )
+								
+							if ( infos.description && ge( 'fnetDeviceDescription' ) )
 								ge( 'fnetDeviceDescription' ).value = infos.description ? infos.description : '';
-							if ( infos.mountLocalDrives )
+
+							if ( infos.mountLocalDrives && ge( 'fnetMountLocalCheck' ) )
 								ge( 'fnetMountLocalCheck' ).checked = infos.mountLocalDrives;
-							else
+							else if( ge( 'fnetMountLocalCheck' ) )
 								ge( 'fnetMountLocalCheck' ).checked = true;
-							ge( 'fnetDeviceAvatar' ).src = infos.icon;
+
+							if( ge( 'fnetDeviceAvatar' ) ) ge( 'fnetDeviceAvatar' ).src = infos.icon;
 						} );
 					}
 				};
