@@ -636,7 +636,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 					char msg[ 512 ];
 					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "update", msg );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", msg );
 
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
@@ -1123,6 +1123,43 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
 				BufStringAddSize( retString, tmp, itmp );
 				
+				// get required information for external servers
+			
+				SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+				if( sqlLib != NULL )
+				{
+					char tmpQuery[ 512 ];
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
+					void *result = sqlLib->Query(  sqlLib, tmpQuery );
+					if( result != NULL )
+					{
+						int pos = 0;
+						char **row;
+						while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+						{
+							char *end;
+							FULONG userid = strtol( (char *)row[0], &end, 0 );
+							
+							if( pos == 0 )
+							{
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+							}
+							else
+							{
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+							}
+							BufStringAddSize( retString, tmp, itmp );
+							pos++;
+						}
+						
+						sqlLib->FreeResult( sqlLib, result );
+					}
+
+					l->LibrarySQLDrop( l, sqlLib );
+				}
+				
+				//
+				
 				if( ug != NULL )
 				{
 					// go through all elements and find proper users
@@ -1160,41 +1197,6 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						
 						FFree( rmEntry );
 					}
-				}
-				
-				// get required information for external servers
-			
-				SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-				if( sqlLib != NULL )
-				{
-					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s)", usersSQL );
-					void *result = sqlLib->Query(  sqlLib, tmpQuery );
-					if( result != NULL )
-					{
-						int pos = 0;
-						char **row;
-						while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
-						{
-							char *end;
-							FULONG userid = strtol( (char *)row[0], &end, 0 );
-							
-							if( pos == 0 )
-							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
-							}
-							else
-							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
-							}
-							BufStringAddSize( retString, tmp, itmp );
-							pos++;
-						}
-						
-						sqlLib->FreeResult( sqlLib, result );
-					}
-
-					l->LibrarySQLDrop( l, sqlLib );
 				}
 			}
 			
