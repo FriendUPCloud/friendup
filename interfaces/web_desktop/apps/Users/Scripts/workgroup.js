@@ -54,14 +54,14 @@ function refreshMembers( id )
 		if( e == 'ok' )
 		{
 			var re = JSON.parse( d );
-			var exist = re.Members;
+			var exist = re.users;
 			ge( 'pMembersListed' ).innerHTML = '';
 			var out  = [];
 			for( var a = 0; a < exist.length; a++ )
 			{
 				var o = document.createElement( 'option' );
-				o.value = exist[a].ID;
-				o.innerHTML = exist[a].FullName;
+				o.value = exist[a].id;
+				o.innerHTML = exist[a].fullname;
 				ge( 'pMembersListed' ).appendChild( o );
 				out.push( exist[a].ID );
 			}
@@ -92,63 +92,9 @@ function addMembers()
 	f.load();
 }
 
-// Save a workgroup
-function saveWorkgroup( callback )
-{
-	var args = {
-		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
-		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
-		groupname: ge( 'pWorkgroupName' ).value,
-		users: ge( 'pMembers' ).value
-	};
-
-	var f = new Library( 'system.library' );
-	f.onExecuted = function( e, d )
-	{
-		if( e == 'ok' )
-		{
-			ge( 'pWorkgroupID' ).value = d;
-		}
-		else
-		{
-			console.log('Error during workgroup update',e,d);
-		}
-		if( callback ) callback();
-		Application.sendMessage( { command: 'refreshworkgroups', destinationViewId: ge( 'parentViewId' ).value } );
-	}
-	
-	if( args.id > 0  )
-		args.command ='update';
-	else
-		args.command ='create';
-		
-	f.execute( 'group', args );
-}
-
 function cancelWorkgroup()
 {
 	Application.sendMessage( {
 		type: 'view', method: 'close'
 	} );
 }
-
-// Remove users from workgroup
-function removeFromGroup()
-{
-	var opts = ge( 'pMembersListed' ).getElementsByTagName( 'option' );
-	var ids = [];
-	var idstr = [];
-	for( var a = 0; a < opts.length; a++ )
-	{
-		if( opts[a].selected )
-		{
-			ids.push( opts[a] );
-		}
-		else idstr.push( opts[a].value );
-	}
-	ge( 'pMembers' ).value = idstr.join( ',' );
-	for( var a = 0; a < ids.length; a++ )
-		ids[a].parentNode.removeChild( ids[a] );
-	saveWorkgroup();
-}
-
