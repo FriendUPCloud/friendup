@@ -62,7 +62,10 @@ IntListEl *ILEParseString( char *str )
 			}
 			curToken++;
 		}
-		curToken++;
+		else
+		{
+			curToken++;
+		}
 	}
 	return rootEl;
 }
@@ -116,7 +119,10 @@ StringListEl *SLEParseString( char *str )
 			}
 			curToken++;
 		}
-		curToken++;
+		else
+		{
+			curToken++;
+		}
 	}
 	return rootEl;
 }
