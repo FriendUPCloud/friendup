@@ -82,7 +82,7 @@ Application.receiveMessage = function( msg )
 		case 'addmembers':
 			if( msg.members )
 			{
-				var exist = ge( 'pMembers' ).value.split( ',' );
+				var exist = ge( 'pMembers' ).value ? ge( 'pMembers' ).value.split( ',' ) : [];
 				var newst = msg.members.split( ',' );
 				for( var a = 0; a < newst.length; a++ )
 				{

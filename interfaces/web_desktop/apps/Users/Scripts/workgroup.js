@@ -22,7 +22,7 @@ Application.receiveMessage = function( msg )
 		case 'addmembers':
 			if( msg.members )
 			{
-				var exist = ge( 'pMembers' ).value.split( ',' );
+				var exist = ge( 'pMembers' ).value ? ge( 'pMembers' ).value.split( ',' ) : [];
 				var newst = msg.members.split( ',' );
 				for( var a = 0; a < newst.length; a++ )
 				{
@@ -63,7 +63,7 @@ function refreshMembers( id )
 				o.value = exist[a].id;
 				o.innerHTML = exist[a].fullname;
 				ge( 'pMembersListed' ).appendChild( o );
-				out.push( exist[a].ID );
+				out.push( exist[a].id );
 			}
 			ge( 'pMembers' ).value = out.join( ',' );
 		}
@@ -90,6 +90,53 @@ function addMembers()
 		v.setContent( data );
 	}
 	f.load();
+}
+
+/* used only when adding a new workgroup here... */
+function saveWorkgroup()
+{
+	var args = {
+		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
+		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+		groupname: ge( 'pWorkgroupName' ).value,
+		users: ge( 'pMembers' ).value
+	};
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			//ge( 'pWorkgroupID' ).value = d;
+			Notify({'title':'Users','text':'Workgroup changes saved.'});
+
+		}
+		else
+		{
+			console.log('Error during workgroup update',e,d);
+		}
+	
+		if( callback ) callback();
+		
+		if( args.id > 0 && tmp )
+		{
+			ApplyGroupSetup( args.id );
+		}
+		else
+		{
+			RefreshWorkgroups();
+		}
+		
+	}
+	
+
+	console.log('sending this for saving',args);
+	if( args.id > 0  )
+		args.command ='update';
+	else
+		args.command ='create';
+		
+	f.execute( 'group', args );
 }
 
 function cancelWorkgroup()
