@@ -1430,7 +1430,10 @@ function CloseView( win, delayed )
 			window.currentMovable = null;
 		
 		if( !win.parentNode.parentNode ) return;
-		win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+		if( win.parent.parentNode.classList.contains( 'ViewContainer' ) )
+		{
+			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+		}
 			
 		var count = 0;
 
