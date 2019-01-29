@@ -82,7 +82,7 @@ Application.receiveMessage = function( msg )
 		case 'addmembers':
 			if( msg.members )
 			{
-				var exist = ge( 'pMembers' ).value.split( ',' );
+				var exist = ge( 'pMembers' ).value ? ge( 'pMembers' ).value.split( ',' ) : [];
 				var newst = msg.members.split( ',' );
 				for( var a = 0; a < newst.length; a++ )
 				{
@@ -1630,28 +1630,14 @@ function saveWorkgroup( callback, tmp )
 	{
 		if( e == 'ok' )
 		{
-			ge( 'pWorkgroupID' ).value = d;
+			//ge( 'pWorkgroupID' ).value = d;
+			Notify({'title':'Users','text':'Workgroup changes saved.'});
+
 		}
 		else
 		{
 			console.log('Error during workgroup update',e,d);
 		}
-	
-		
-		var members = ge( 'pMembers' ).value.split(',');
-		var calls = [];
-		if( members.length > 0 )
-		{
-			for(var i = 0; i < members.length; i++)
-			{
-				calls[i] = new Library('system.library');
-				calls[i].onExecuted = function( e,d ) {  };
-				
-				calls[i].uindex = i;
-				calls[i].execute('user/update?id=' + members[i]);
-			}
-		}
-
 	
 		if( callback ) callback();
 		
@@ -1666,6 +1652,8 @@ function saveWorkgroup( callback, tmp )
 		
 	}
 	
+
+	console.log('sending this for saving',args);
 	if( args.id > 0  )
 		args.command ='update';
 	else
@@ -1738,32 +1726,29 @@ function cancelWorkgroup()
 
 function refreshMembers( id )
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
-			var re;
-			try
-			{
-				re = JSON.parse( d );
-			} catch( e ) { Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'}); return; }
-			
-			var exist = re.Members;
+			var re = JSON.parse( d );
+			var exist = re.users;
 			ge( 'pMembersListed' ).innerHTML = '';
 			var out  = [];
 			for( var a = 0; a < exist.length; a++ )
 			{
 				var o = document.createElement( 'option' );
-				o.value = exist[a].ID;
-				o.innerHTML = exist[a].FullName;
+				o.value = exist[a].id;
+				o.innerHTML = exist[a].fullname; // we need some form of name to display here :)
 				ge( 'pMembersListed' ).appendChild( o );
-				out.push( exist[a].ID );
+				out.push( exist[a].id );
 			}
 			ge( 'pMembers' ).value = out.join( ',' );
 		}
 	}
-	m.execute( 'workgroupget', { id: ge( 'pWorkgroupID' ).value } );
+	f.execute( 'group', {'command':'listdetails','id':ge( 'pWorkgroupID' ).value} );
+
 }
 
 // Remove users from workgroup
@@ -1780,7 +1765,10 @@ function removeFromGroup()
 		}
 		else idstr.push( opts[a].value );
 	}
+	
+	console.log('hæh',idstr);
 	ge( 'pMembers' ).value = idstr.join( ',' );
+	
 	for( var a = 0; a < ids.length; a++ )
 		ids[a].parentNode.removeChild( ids[a] );
 	saveWorkgroup();

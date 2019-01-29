@@ -22,7 +22,7 @@ Application.receiveMessage = function( msg )
 		case 'addmembers':
 			if( msg.members )
 			{
-				var exist = ge( 'pMembers' ).value.split( ',' );
+				var exist = ge( 'pMembers' ).value ? ge( 'pMembers' ).value.split( ',' ) : [];
 				var newst = msg.members.split( ',' );
 				for( var a = 0; a < newst.length; a++ )
 				{
@@ -54,16 +54,16 @@ function refreshMembers( id )
 		if( e == 'ok' )
 		{
 			var re = JSON.parse( d );
-			var exist = re.Members;
+			var exist = re.users;
 			ge( 'pMembersListed' ).innerHTML = '';
 			var out  = [];
 			for( var a = 0; a < exist.length; a++ )
 			{
 				var o = document.createElement( 'option' );
-				o.value = exist[a].ID;
-				o.innerHTML = exist[a].FullName;
+				o.value = exist[a].id;
+				o.innerHTML = exist[a].fullname;
 				ge( 'pMembersListed' ).appendChild( o );
-				out.push( exist[a].ID );
+				out.push( exist[a].id );
 			}
 			ge( 'pMembers' ).value = out.join( ',' );
 		}
@@ -92,8 +92,8 @@ function addMembers()
 	f.load();
 }
 
-// Save a workgroup
-function saveWorkgroup( callback )
+/* used only when adding a new workgroup here... */
+function saveWorkgroup()
 {
 	var args = {
 		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
@@ -107,16 +107,30 @@ function saveWorkgroup( callback )
 	{
 		if( e == 'ok' )
 		{
-			ge( 'pWorkgroupID' ).value = d;
+			//ge( 'pWorkgroupID' ).value = d;
+			Notify({'title':'Users','text':'Workgroup changes saved.'});
+
 		}
 		else
 		{
 			console.log('Error during workgroup update',e,d);
 		}
+	
 		if( callback ) callback();
-		Application.sendMessage( { command: 'refreshworkgroups', destinationViewId: ge( 'parentViewId' ).value } );
+		
+		if( args.id > 0 && tmp )
+		{
+			ApplyGroupSetup( args.id );
+		}
+		else
+		{
+			RefreshWorkgroups();
+		}
+		
 	}
 	
+
+	console.log('sending this for saving',args);
 	if( args.id > 0  )
 		args.command ='update';
 	else
@@ -131,24 +145,3 @@ function cancelWorkgroup()
 		type: 'view', method: 'close'
 	} );
 }
-
-// Remove users from workgroup
-function removeFromGroup()
-{
-	var opts = ge( 'pMembersListed' ).getElementsByTagName( 'option' );
-	var ids = [];
-	var idstr = [];
-	for( var a = 0; a < opts.length; a++ )
-	{
-		if( opts[a].selected )
-		{
-			ids.push( opts[a] );
-		}
-		else idstr.push( opts[a].value );
-	}
-	ge( 'pMembers' ).value = idstr.join( ',' );
-	for( var a = 0; a < ids.length; a++ )
-		ids[a].parentNode.removeChild( ids[a] );
-	saveWorkgroup();
-}
-
