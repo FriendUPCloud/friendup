@@ -35,8 +35,6 @@ Y?(c=c._blob(),this.setRequestHeader("Content-Type",c.type),T.call(this,c)):T.ca
 
 // -----------------------------------------------------------------------------
 
-console.log('FILETRANSFER c2');
-
 var files = [];
 var volume;
 var path;
@@ -102,7 +100,6 @@ self.checkVolume = function()
 				if( diskspace < bytesInProgress )
 				{ 
 					self.postMessage({'error':1,'errormessage':'Not enough space left on volume.'}); return; 
-					console.log( 'Not enough space left on volume.' );
 				}
 				
 				self.totals = bytesInProgress;
@@ -275,7 +272,6 @@ self.uploadFiles = function()
 			// Make the directory! Just in case
 			if( !makedirBuf[ path ] )
 			{
-				console.log( 'UPLOAD: Making directory ' + path );
 				var n = new XMLHttpRequest();
 				n.open( 'POST', '/system.library/file/makedir' );
 				n.setRequestHeader( 'Method', 'POST /system.library/file/makedir HTTP/1.1' );
@@ -294,7 +290,6 @@ self.uploadFiles = function()
 						}
 						else
 						{
-							console.log( 'Failed!', t );
 							self.postMessage( {
 								'progressinfo' : 1,
 								'fileindex' : fileIndex, 
@@ -373,10 +368,7 @@ self.uploadFiles = function()
 			xh.onreadystatechange = function()
 			{
 				if( this.readyState == 4 && this.status == 200  )
-				{
-					console.log( 'Folder exists: ' + ( makedirBuf[ destPath ] ? 'true' : 'false' ) );
-					console.log( 'UPLOAD: File uploaded ' + destPath + ' (' + filename + ')' );
-					
+				{					
 					loadPieces[ ind ].loaded = loadPieces[ ind ].total;
 					
 					if( self.filesUnderTransport > 1 ) 
