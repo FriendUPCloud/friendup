@@ -636,7 +636,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 					char msg[ 512 ];
 					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", msg );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "update", msg );
 
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
@@ -1224,6 +1224,166 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
+		*result = 200;
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/group/setusers</H2>Update group members. Function require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param id - (required) ID of group
+	* @param users - (required) users which will be assigned to group. Remember! old users will be removed from group!
+	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 1 ], "setusers" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+
+		char *users = NULL;
+		char *usersSQL = NULL;
+		FULONG groupID = 0;
+		
+		DEBUG( "[UMGWebRequest] setusers!\n" );
+		
+		HashmapElement *el = NULL;
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		{
+			el = HttpGetPOSTParameter( request, "id" );
+			if( el != NULL )
+			{
+				char *end;
+				groupID = strtol( (char *)el->data, &end, 0 );
+			}
+			
+			el = HttpGetPOSTParameter( request, "users" );
+			if( el != NULL )
+			{
+				users = UrlDecodeToMem( (char *)el->data );
+				usersSQL = StringDuplicate( users );
+				DEBUG( "[UMWebRequest] setusers group, users %s!!\n", users );
+			}
+			
+			if( groupID > 0 && users != NULL )
+			{
+				// get information from DB if group already exist
+				
+				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, groupID );
+				DEBUG("GroupUpdate: pointer to group from memory: %p\n", fg );
+				
+				if( fg != NULL )	// group already exist, there is no need to create double
+				{
+					fg->ug_UserID = loggedSession->us_UserID;
+
+					// if users parameter is passed then we must remove current users from group
+					//if( users != NULL )
+					{
+						// removeing users
+						
+						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+						if( sqlLib != NULL )
+						{
+							DEBUG("Remove users from group\n");
+							char tmpQuery[ 512 ];
+							snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
+							void *result = sqlLib->Query(  sqlLib, tmpQuery );
+							if( result != NULL )
+							{
+								int pos = 0;
+								char **row;
+								while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+								{
+									char *end;
+									FULONG userid = strtol( (char *)row[0], &end, 0 );
+									// add only this users which are in FC memory now, rest will be removed in SQL call
+									User *usr = UMGetUserByID( l->sl_UM, userid );
+									if( usr != NULL )
+									{
+										UserGroupRemoveUser( fg, usr );
+									}
+							
+									pos++;
+								}
+								sqlLib->FreeResult( sqlLib, result );
+							}
+							
+							// remove connections between users and group
+							snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
+							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+							
+							l->LibrarySQLDrop( l, sqlLib );
+						}
+						
+						// group was created, its time to add users to it
+				
+						// go through all elements and find proper users
+					
+						IntListEl *el = ILEParseString( users );
+					
+						DEBUG("Assigning users to group\n");
+					
+						while( el != NULL )
+						{
+							IntListEl *rmEntry = el;
+							el = (IntListEl *)el->node.mln_Succ;
+						
+							User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+							if( usr != NULL )
+							{
+								UserGroupAddUser( fg, usr );
+							}
+
+							UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+							FFree( rmEntry );
+						}
+					}
+					
+					char msg[ 512 ];
+					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", msg );
+
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
+					HttpAddTextContent( response, buffer );
+				}
+				else	// group do not exist in memory
+				{
+				
+					char buffer[ 256 ];
+					char buffer1[ 256 ];
+					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "UGMUserGroupUpdate", 1 );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_FUNCTION_RETURNED );
+					HttpAddTextContent( response, buffer );
+				}
+			} // missing parameters
+			else
+			{
+				char buffer[ 256 ];
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id, users" );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, buffer );
+			}
+		}
+
+		if( users != NULL )
+		{
+			FFree( users );
+		}
+		if( usersSQL != NULL )
+		{
+			FFree( usersSQL );
+		}
+
 		*result = 200;
 	}
 	
