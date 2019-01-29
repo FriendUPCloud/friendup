@@ -581,7 +581,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						{
 							DEBUG("Remove users from group\n");
 							char tmpQuery[ 512 ];
-							snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.UserID FROM FUserToGroup ug WHERE ug.GroupID=%lu", groupID );
+							snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
 							void *result = sqlLib->Query(  sqlLib, tmpQuery );
 							if( result != NULL )
 							{
@@ -604,7 +604,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							}
 							
 							// remove connections between users and group
-							snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup ug WHERE ug.GroupID=%lu", groupID );
+							snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", groupID );
 							sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 							
 							l->LibrarySQLDrop( l, sqlLib );

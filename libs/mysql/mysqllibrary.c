@@ -411,7 +411,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 					primaryId = tmpint;
 					primaryIdName = ( char *)dptr[ 1 ];
 					
-					DEBUG("[MYSQLLibrary] : we dont update PRIMARY KEY %d\n", primaryId );
+					//DEBUG("[MYSQLLibrary] : we dont update PRIMARY KEY %d\n", primaryId );
 				}
 				break;
 				
@@ -434,7 +434,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 					BufStringAddSize( querybs, tmp, sprintfsize );
 					cols++;
 
-					DEBUG("[MYSQLLibrary] update set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
+					//DEBUG("[MYSQLLibrary] update set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
 				}
 				break;
 				
@@ -443,7 +443,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 					char tmp[ 256 ];
 					char *tmpchar;
 					memcpy( &tmpchar, strptr + dptr[ 2 ], sizeof( char *) );
-					DEBUG("[MYSQLLibrary] update, pointer %p\n", tmpchar );
+					//DEBUG("[MYSQLLibrary] update, pointer %p\n", tmpchar );
 					int sprintfsize = 0;
 					
 					if( tmpchar != NULL )
@@ -475,7 +475,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 							FFree( ttext );
 						}
 						
-						DEBUG("[MYSQLLibrary] update set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
+						//DEBUG("[MYSQLLibrary] update set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
 						
 						cols++;
 					}
@@ -516,7 +516,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
 						
-						DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
+						//DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
 					
 						if( cols == 0 )
 						{
@@ -548,7 +548,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 						sprintf( date, "%04d-%02d-%02d", tp->tm_year, tp->tm_mon, tp->tm_mday );
 						
-						DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
+						//DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
 					
 						if( cols == 0 )
 						{
