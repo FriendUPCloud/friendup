@@ -1622,7 +1622,7 @@ function saveWorkgroup( callback, tmp )
 		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
 		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
 		groupname: ge( 'pWorkgroupName' ).value,
-		users: ge( 'pMembers' ).value.split(',')
+		users: ge( 'pMembers' ).value
 	};
 
 	var f = new Library( 'system.library' );
@@ -1638,22 +1638,6 @@ function saveWorkgroup( callback, tmp )
 		{
 			console.log('Error during workgroup update',e,d);
 		}
-	
-		
-		var members = ge( 'pMembers' ).value.split(',');
-		var calls = [];
-		if( members.length > 0 )
-		{
-			for(var i = 0; i < members.length; i++)
-			{
-				calls[i] = new Library('system.library');
-				calls[i].onExecuted = function( e,d ) {  };
-				
-				calls[i].uindex = i;
-				calls[i].execute('user/update?id=' + members[i]);
-			}
-		}
-
 	
 		if( callback ) callback();
 		
