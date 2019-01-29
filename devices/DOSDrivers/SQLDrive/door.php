@@ -233,6 +233,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 						}
 					}
+					
 					// List files
 					foreach( $entries as $entry )
 					{
@@ -349,7 +350,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				die( 'fail<!--separate-->Could not find file!' );
 			}
 			else if( $args->command == 'write' )
-			{	
+			{
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -378,6 +379,11 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				// Can we get sub folder?
 				$fo = false;
 				
+				// Get by path (subfolder)
+				$subPath = $testPath = false;
+				if( is_string( $path ) && strstr( $path, ':' ) )
+					$testPath = $subPath = end( explode( ':', $path ) );
+				
 				// Remove filename
 				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
 				{
@@ -396,7 +402,12 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$Logger->log( '[SQLDRIVE] Could not find folder by path: ' . $subPath );
 				}
 				
-				if( !$subPath || ( $subPath && $fo ) )
+				if( substr( $testPath, -1, 1 ) == '/' )
+					$testPath = substr( $testPath, 0, strlen( $testPath ) - 1 );
+				$pathLen = explode( '/', $testPath );
+				$pathLen = count( $pathLen );
+				
+				if( $pathLen == 1 || ( $pathLen > 1 && $fo ) )
 				{
 				
 					// Overwrite existing and catch object
@@ -467,7 +478,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 										}
 									}
 								}
-							
+
 								if( $total + $len < SQLDRIVE_FILE_LIMIT )
 								{
 									rename( $args->tmpfile, $wname . $fn );

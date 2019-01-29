@@ -237,7 +237,6 @@ self.uploadFiles = function()
 		// Execute the makedir
 		if( directoryMode || destPath.substr( destPath.length - 1, 1 ) == '/' )
 		{
-			console.log( 'Here is the dest: ' + destPath + ' ' + directoryMode );
 			doMakedir( queuePos, destPath, function(){ 
 				if( !directoryMode )
 				{
