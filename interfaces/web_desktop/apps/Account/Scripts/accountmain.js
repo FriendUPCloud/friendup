@@ -258,7 +258,7 @@ Application.receiveMessage = function( msg )
 							else if( ge( 'fnetMountLocalCheck' ) )
 								ge( 'fnetMountLocalCheck' ).checked = true;
 
-							if( ge( 'fnetDeviceAvatar' ) ge( 'fnetDeviceAvatar' ).src = infos.icon;
+							if( ge( 'fnetDeviceAvatar' ) ) ge( 'fnetDeviceAvatar' ).src = infos.icon;
 						} );
 					}
 				};
