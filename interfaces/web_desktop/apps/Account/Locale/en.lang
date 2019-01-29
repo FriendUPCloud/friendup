@@ -3,7 +3,7 @@
 i18n_account                         : My account
 
 i18n_basic_information               : General
-i18n_full_name                       : Your full name
+i18n_full_name                       : Full name
 i18n_username                        : Username
 i18n_change_password                 : Change password
 i18n_current_password                : Current password
