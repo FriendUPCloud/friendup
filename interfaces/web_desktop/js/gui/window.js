@@ -1878,6 +1878,7 @@ var View = function( args )
 							{
 								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
+								self.close();
 							}
 						}
 						return cancelBubble( e );
