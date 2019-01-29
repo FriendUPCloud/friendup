@@ -233,6 +233,7 @@ void UserDelete( User *usr )
 		}
 
 		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
+		usr->u_UserGroupLinks = NULL;
 		/*
 		if( usr->u_Groups != NULL )
 		{
@@ -546,5 +547,6 @@ void UserRemoveFromGroups( User *u )
 	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
 	// remove all links to group
 	UserDeleteGroupLinkAll( u->u_UserGroupLinks );
+	u->u_UserGroupLinks = NULL;
 	DEBUG("[UserRemoveFromGroups] remove end\n");
 }

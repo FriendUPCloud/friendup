@@ -314,8 +314,6 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 		UserGroupLink *ullprev = locu->u_UserGroupLinks;
 		while( ull != NULL )
 		{
-			ullprev = ull;
-			
 			if( ull->ugl_Group != NULL && ug == ull->ugl_Group )
 			{
 				if( ull == locu->u_UserGroupLinks )
@@ -329,8 +327,10 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 				FFree( ull );
 				break;
 			}
+			ullprev = ull;
 			ull = (UserGroupLink *)ull->node.mln_Succ;
 		}
+		//locu->u_UserGroupLinks = NULL;
 		
 		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	}

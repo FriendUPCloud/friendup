@@ -957,7 +957,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				int itmp = 0;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersids\":[", groupID );
+				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
 				BufStringAddSize( retString, tmp, itmp );
 				
 				if( ug != NULL )
@@ -1120,7 +1120,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				UserGroup *ug = NULL;
 				ug = UGMGetGroupByID( l->sl_UGM, groupID );
 				
-				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"usersids\":[", groupID );
+				itmp = snprintf( tmp, sizeof(tmp), "\"groupid\":%lu,\"userids\":[", groupID );
 				BufStringAddSize( retString, tmp, itmp );
 				
 				if( ug != NULL )
