@@ -806,7 +806,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								}
 								$fo = $this->getSubFolder( $subPath );
 							}
-							
+				
 							if( substr( $testPath, -1, 1 ) == '/' )
 								$testPath = substr( $testPath, 0, strlen( $testPath ) - 1 );
 							$pathLen = explode( '/', $testPath );
@@ -1172,7 +1172,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		public function deleteFolder( $path, $recursive = true )
 		{
 			global $Config, $User, $Logger;
-		
+
 			// By ID
 			$Logger->log( '[SQLDRIVE] Deleting folder ' . $path );
 			if( preg_match( '/.*?\#\?([0-9]+)/i', $path, $m ) )
@@ -1271,6 +1271,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 	
 				$fo = $this->getSubFolder( $subPath );
 		
+				$fi = new dbIO( 'FSFile' );
 				$fi->UserID = $User->ID;
 				$fi->FilesystemID = $this->ID;
 				$fi->FolderID = $fo ? $fo->ID : '0';
