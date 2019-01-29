@@ -1168,7 +1168,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s)", usersSQL );
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
 					void *result = sqlLib->Query(  sqlLib, tmpQuery );
 					if( result != NULL )
 					{
