@@ -1180,8 +1180,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				var w = new View( {
 					title:  i18n( 'i18n_copying_files' ),
 					width:  320,
-					height: 100,
-					id:     'fileops'
+					height: 100
 				} );
 
 				var uprogress = new File( 'templates/file_operation.html' );
