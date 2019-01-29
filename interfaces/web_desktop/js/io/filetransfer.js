@@ -85,6 +85,7 @@ self.checkVolume = function()
 					// Queue trick
 					var fullPath = false;
 					var file = self.files[ f ];
+					if( file == 'directory' ) continue;
 					var size = file.size;
 					if( file.fullPath )
 					{
@@ -177,10 +178,24 @@ self.uploadFiles = function()
 		
 		// Queue trick
 		var fullPath = false;
+		var directoryMode = false;
+		
 		if( file.fullPath )
 		{
 			fullPath = file.fullPath;
-			file = file.file;
+			if( file.file == 'directory' )
+			{
+				directoryMode = true;
+				file = {
+					name: file.fullPath.split( '/' ).pop(),
+					size: 0
+				};
+			}
+			else
+			{
+				file = file.file;
+			}
+			
 		}
 		
 		// Get filename and destination path
@@ -192,6 +207,13 @@ self.uploadFiles = function()
 			if( fullPath[0] == '/' )
 				fullPath = fullPath.substr( 1, fullPath.length - 1 );
 			destPath += fullPath;
+			
+			if( directoryMode )
+			{
+				if( destPath.substr( destPath.length - 1, 1 ) != '/' )
+					destPath += '/';
+			}
+			
 			if( destPath.indexOf( '/' ) > 0 )
 			{
 				destPath = destPath.split( '/' );
@@ -216,20 +238,30 @@ self.uploadFiles = function()
 		}
 		
 		// Execute the makedir
-		if( destPath.substr( destPath.length - 1, 1 ) == '/' )
+		if( directoryMode || destPath.substr( destPath.length - 1, 1 ) == '/' )
 		{
+			console.log( 'Here is the dest: ' + destPath + ' ' + directoryMode );
 			doMakedir( queuePos, destPath, function(){ 
-				// No go upload!
-				doUpload( queuePos, function()
+				if( !directoryMode )
 				{
-					// Rerun queue
+					// Now go upload!
+					doUpload( queuePos, function()
+					{
+						// Rerun queue
+						uploadQueueRun( ++queuePos ); 
+					} );
+				}
+				// Directory goes to next
+				else
+				{
 					uploadQueueRun( ++queuePos ); 
-				} );
+				}
 			} );
 		}
 		// Just upload the file
-		else
+		else if( !directoryMode )
 		{
+			//console.log( 'JUST UPLOAD: ' + destPath );
 			doUpload( queuePos, function()
 			{ 
 				// Rerun queue
@@ -243,6 +275,7 @@ self.uploadFiles = function()
 			// Make the directory! Just in case
 			if( !makedirBuf[ path ] )
 			{
+				console.log( 'UPLOAD: Making directory ' + path );
 				var n = new XMLHttpRequest();
 				n.open( 'POST', '/system.library/file/makedir' );
 				n.setRequestHeader( 'Method', 'POST /system.library/file/makedir HTTP/1.1' );
@@ -253,7 +286,22 @@ self.uploadFiles = function()
 					// Directory created
 					if( this.readyState == 4 && this.status == 200  )
 					{
-						if( cbk ) cbk();
+						var t = this.responseText;
+						if( t.substr( 0, 3 ) == 'ok<' )
+						{
+							makedirBuf[ destPath ] = true;
+							if( cbk ) cbk();
+						}
+						else
+						{
+							console.log( 'Failed!', t );
+							self.postMessage( {
+								'progressinfo' : 1,
+								'fileindex' : fileIndex, 
+								'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+									this.readyState + '/' + this.status + '|' 
+							} );
+						}
 					}
 					// An error occured
 					else if( this.readyState > 1 && this.status > 0 )
@@ -266,7 +314,6 @@ self.uploadFiles = function()
 						} );
 					}
 				}
-				makedirBuf[ destPath ] = true;
 			}
 			// The directory was created, move on
 			else
@@ -278,6 +325,7 @@ self.uploadFiles = function()
 		// Do the actual upload
 		function doUpload( ind, callback )
 		{
+			
 			self.filesUnderTransport++;
 			
 			function calcProgress( linfo )
@@ -326,6 +374,9 @@ self.uploadFiles = function()
 			{
 				if( this.readyState == 4 && this.status == 200  )
 				{
+					console.log( 'Folder exists: ' + ( makedirBuf[ destPath ] ? 'true' : 'false' ) );
+					console.log( 'UPLOAD: File uploaded ' + destPath + ' (' + filename + ')' );
+					
 					loadPieces[ ind ].loaded = loadPieces[ ind ].total;
 					
 					if( self.filesUnderTransport > 1 ) 
@@ -367,7 +418,7 @@ self.uploadFiles = function()
 			fd.append( 'path', destPath );
 			fd.append( 'file', file, encodeURIComponent( filename ) );
 		
-			//get the party started
+			// Get the party started
 			xh.send( fd );
 		}
 	}
@@ -434,6 +485,7 @@ self.onmessage = function( e )
 			self.filenames = false;
 			self.volume = e.data.targetVolume;
 			self.path = e.data.targetPath.split( ':/' ).join( ':' );
+			
 			self.checkVolume();
 			queue = [];
 		}
@@ -447,15 +499,15 @@ self.onmessage = function( e )
 		}
 	}
 	// Do the files
-	else if( e.data && e.data.files && e.data.info )
+	else if( e.data && ( e.data.files || e.data.queued ) )
 	{
 		// Support recursive mode
 		self.files = e.data.files;
 		self.filenames = false;
-		self.volume = e.data.info.targetVolume;
-		self.path = e.data.info.targetPath.split( ':/' ).join( ':' );
-		self.session = e.data.info.session;
-		self.authid = e.data.info.authid;
+		self.volume = e.data.targetVolume;
+		self.path = e.data.targetPath.split( ':/' ).join( ':' );
+		self.session = e.data.session;
+		self.authid = e.data.authid;
 		if( !e.data.queued )
 		{
 			self.checkVolume();

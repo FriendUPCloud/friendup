@@ -396,117 +396,121 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$Logger->log( '[SQLDRIVE] Could not find folder by path: ' . $subPath );
 				}
 				
-				// Overwrite existing and catch object
-				if( $f->Load() )
+				if( !$subPath || ( $subPath && $fo ) )
 				{
-					$deletable = $Config->FCUpload . $f->DiskFilename;
-					$fn = $f->DiskFilename;
-				}
-				else
-				{
-					$fn = $f->Filename;
-					$f->DiskFilename = '';
-				}
 				
-				// Sanitize!
-				if( strstr( $fn, '/' ) )
-				{
-					$fn = explode( '/', $fn );
-					$fn = $fn[1];
-				}
-	
-				// Write the file
-				
-				// The file is new, make sure we don't overwrite any existing file
-				if( $f->ID <= 0 )
-				{
-					$ofn = $fn;
-					$fna = explode( '.', $ofn ); $fna = end( $fna );
-					if( !is_dir( $wname ) ) mkdir( $wname );
-					while( file_exists( $wname . $fn ) )
+					// Overwrite existing and catch object
+					if( $f->Load() )
 					{
-						// Keep extension last
-						if( $fna )
-						{
-							$fn = substr( $ofn, 0, strlen( $ofn ) - 1 - strlen( $fna ) ) . rand(0,9999) . rand(0,9999) . rand(0,9999) . '.' . $fna;
-						}
-						// Has no extension
-						else $fn .= rand(0,99999); 
-					}
-				}
-				
-				if( $file = fopen( $wname . $fn, 'w+' ) )
-				{
-					// Delete existing file
-					if( $deletable ) unlink( $deletable );
-					
-					if( isset( $args->tmpfile ) )
-					{
-						if( file_exists( $args->tmpfile ) )
-						{
-							fclose( $file );
-							$len = filesize( $args->tmpfile );
-							
-							// TODO: UGLY WORKAROUND, FIX IT!
-							//       We need to support base64 streams
-							if( $fr = fopen( $args->tmpfile, 'r' ) )
-							{
-								$string = fread( $fr, 32 );
-								fclose( $fr );
-								if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
-								{
-									$fr = file_get_contents( $args->tmpfile );
-									$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
-									if( $fo = fopen( $args->tmpfile, 'w' ) )
-									{
-										fwrite( $fo, $fr );
-										fclose( $fo );
-									}
-								}
-							}
-							
-							if( $total + $len < SQLDRIVE_FILE_LIMIT )
-							{
-								rename( $args->tmpfile, $wname . $fn );
-							}
-							else
-							{
-								$Logger->log( 'fail<!--separate-->Limit broken' );
-								die( 'fail<!--separate-->Limit broken' );
-							}
-						}
-						else
-						{
-							$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
-							die( 'fail<!--separate-->Tempfile does not exist!' );
-						}
+						$deletable = $Config->FCUpload . $f->DiskFilename;
+						$fn = $f->DiskFilename;
 					}
 					else
 					{
-						if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
+						$fn = $f->Filename;
+						$f->DiskFilename = '';
+					}
+				
+					// Sanitize!
+					if( strstr( $fn, '/' ) )
+					{
+						$fn = explode( '/', $fn );
+						$fn = $fn[1];
+					}
+	
+					// Write the file
+				
+					// The file is new, make sure we don't overwrite any existing file
+					if( $f->ID <= 0 )
+					{
+						$ofn = $fn;
+						$fna = explode( '.', $ofn ); $fna = end( $fna );
+						if( !is_dir( $wname ) ) mkdir( $wname );
+						while( file_exists( $wname . $fn ) )
 						{
-							$len = fwrite( $file, $args->data );
-							fclose( $file );
+							// Keep extension last
+							if( $fna )
+							{
+								$fn = substr( $ofn, 0, strlen( $ofn ) - 1 - strlen( $fna ) ) . rand(0,9999) . rand(0,9999) . rand(0,9999) . '.' . $fna;
+							}
+							// Has no extension
+							else $fn .= rand(0,99999); 
+						}
+					}
+				
+					if( $file = fopen( $wname . $fn, 'w+' ) )
+					{
+						// Delete existing file
+						if( $deletable ) unlink( $deletable );
+					
+						if( isset( $args->tmpfile ) )
+						{
+							if( file_exists( $args->tmpfile ) )
+							{
+								fclose( $file );
+								$len = filesize( $args->tmpfile );
+							
+								// TODO: UGLY WORKAROUND, FIX IT!
+								//       We need to support base64 streams
+								if( $fr = fopen( $args->tmpfile, 'r' ) )
+								{
+									$string = fread( $fr, 32 );
+									fclose( $fr );
+									if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
+									{
+										$fr = file_get_contents( $args->tmpfile );
+										$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
+										if( $fo = fopen( $args->tmpfile, 'w' ) )
+										{
+											fwrite( $fo, $fr );
+											fclose( $fo );
+										}
+									}
+								}
+							
+								if( $total + $len < SQLDRIVE_FILE_LIMIT )
+								{
+									rename( $args->tmpfile, $wname . $fn );
+								}
+								else
+								{
+									$Logger->log( 'fail<!--separate-->Limit broken' );
+									die( 'fail<!--separate-->Limit broken' );
+								}
+							}
+							else
+							{
+								$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->Tempfile does not exist!' );
+							}
 						}
 						else
 						{
-							fclose( $file );
-							$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
-							die( 'fail<!--separate-->Limit broken' );
+							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
+							{
+								$len = fwrite( $file, $args->data );
+								fclose( $file );
+							}
+							else
+							{
+								fclose( $file );
+								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
+								die( 'fail<!--separate-->Limit broken' );
+							}
 						}
+					
+						// Sanitize username
+						$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+					
+						$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
+					
+						$f->DiskFilename = $uname . '/' . $fn;
+						$f->Filesize = filesize( $wname. $fn );
+						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
+						$f->DateModified = date( 'Y-m-d H:i:s' );
+						$f->Save();
+						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
-					
-					// Sanitize username
-					$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
-					
-					$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
-					
-					$f->DiskFilename = $uname . '/' . $fn;
-					$f->Filesize = filesize( $wname. $fn );
-					if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
-					$f->DateModified = date( 'Y-m-d H:i:s' );
-					$f->Save();
-					return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 				}
 				$Logger->log( 'fail<!--separate-->Could not write file: ' . $wname . $fn );
 				return 'fail<!--separate-->Could not write file: ' . $wname . $fn;
@@ -772,9 +776,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$f = new DbIO( 'FSFolder' );
 		
 							// Get by path (subfolder)
-							$subPath = false;
+							$subPath = $testPath = false;
 							if( is_string( $path ) && strstr( $path, ':' ) )
-								$subPath = end( explode( ':', $path ) );
+								$testPath = $subPath = end( explode( ':', $path ) );
 						
 							// Remove filename
 							$fo = false;
@@ -791,38 +795,48 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								}
 								$fo = $this->getSubFolder( $subPath );
 							}
-				
-							// Do it
-							$name = end( explode( ':', $path ) );
-							if( substr( $name, -1, 1 ) == '/' )
-								$name = substr( $name, 0, strlen( $name ) - 1 );
-							if( strstr( $name, '/' ) )
-								$name = end( explode( '/', $name ) );
 							
-							if( trim( $name ) )
+							if( substr( $testPath, -1, 1 ) == '/' )
+								$testPath = substr( $testPath, 0, strlen( $testPath ) - 1 );
+							$pathLen = explode( '/', $testPath );
+							$pathLen = count( $pathLen );
+							
+							if( $pathLen == 1 || ( $pathLen > 1 && $fo ) )
 							{
-								$name = trim( $name );
+								// Do it
+								$name = explode( ':', $path );
+								$name = end( $name );
 								if( substr( $name, -1, 1 ) == '/' )
 									$name = substr( $name, 0, strlen( $name ) - 1 );
-								$newFolder = end( explode( '/', $name ) );
-								$f->FilesystemID = $this->ID;
-								$f->Name = $newFolder;
-								$f->UserID = $User->ID;
-								$f->FolderID = $fo ? $fo->ID : '0';
-								
-								// Make sure the folder does not already exist!
-								if( $f->Load() )
+								if( strstr( $name, '/' ) )
+									$name = end( explode( '/', $name ) );
+						
+								if( trim( $name ) )
 								{
-									die( 'ok<!--separate-->{"message":"Directory already exists","response":-2}' );
+									$name = trim( $name );
+									if( substr( $name, -1, 1 ) == '/' )
+										$name = substr( $name, 0, strlen( $name ) - 1 );
+									$newFolder = end( explode( '/', $name ) );
+									$f->FilesystemID = $this->ID;
+									$f->Name = $newFolder;
+									$f->UserID = $User->ID;
+									$f->FolderID = $fo ? $fo->ID : '0';
+							
+									// Make sure the folder does not already exist!
+									if( $f->Load() )
+									{
+										die( 'ok<!--separate-->{"message":"Directory already exists","response":-2}' );
+									}
+									$f->DateModified = date( 'Y-m-d H:i:s' );
+									$f->DateCreated = $f->DateModified;
+									$f->Save();
+									//$Logger->log( '[SQLDRIVE] Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
+									if( $f->ID > 0 )
+										return 'ok<!--separate-->' . $f->ID;
 								}
-								$f->DateModified = date( 'Y-m-d H:i:s' );
-								$f->DateCreated = $f->DateModified;
-								$f->Save();
-								$Logger->log( '[SQLDRIVE] Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
-								return 'ok<!--separate-->' . $f->ID;
 							}
-							$Logger->log( '[SQLDRIVE] Could not make directory.' );
 						}
+						//$Logger->log( '[SQLDRIVE] Could not make directory.' . $path . ' ' . $subPath );
 						die( 'fail<!--separate-->' ); //why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':

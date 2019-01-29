@@ -7167,8 +7167,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Actually do the delete
 						function doDeleteFiles( files, index )
 						{
-							console.log( 'To delete!' );
-						
 							// 
 							if( stop || index == files.length )
 							{
@@ -7201,7 +7199,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								info = info.substr( 0, info.length - 1 );
 								// Try to kill the info file!
 								file.door.dosAction( 'delete', { path: info + '.info' } );
-								console.log( 'Die info file: ' + info + '.info' );
 								
 							}
 							// Dormant?

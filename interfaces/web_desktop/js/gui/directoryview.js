@@ -1092,7 +1092,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 				}
 
-				function renderItem( itm )
+				function sendItem( itm )
 				{
 					if( itm.file )
 					{
@@ -1100,6 +1100,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						{
 							uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
 						} );
+					}
+					else
+					{
+						uworker.postMessage( { recursiveUpdate: true, item: 'directory', fullPath: itm.fullPath, session: Workspace.sessionId } );
 					}
 					busyChecker();
 				}
@@ -1114,11 +1118,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						{
 							dirReader.readEntries( function( results )
 							{
-								if( !results.length )
-								{
-									renderItem( entry );
-								}
-								else
+								sendItem( entry, 'directory' );
+								if( results.length )
 								{
 									for( var a = 0; a < results.length; a++ )
 									{
@@ -1131,7 +1132,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					} 
 					else 
 					{
-						renderItem( entry, 1 );
+						sendItem( entry );
 					}
 				}
 
@@ -1146,11 +1147,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						{
 							dirReader.readEntries( function( results )
 							{
-								if( !results.length )
-								{
-									renderItem( entry );
-								}
-								else
+								sendItem( entry, 'directory' );
+								if( results.length )
 								{
 									for( var a = 0; a < results.length; a++ )
 									{
@@ -1163,7 +1161,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					} 
 					else 
 					{
-						renderItem( entry, 1 );
+						sendItem( entry );
 					}
 				}
 				countItems( e.dataTransfer.items );
@@ -1182,8 +1180,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				var w = new View( {
 					title:  i18n( 'i18n_copying_files' ),
 					width:  320,
-					height: 100,
-					id:     'fileops'
+					height: 100
 				} );
 
 				var uprogress = new File( 'templates/file_operation.html' );
