@@ -1430,7 +1430,7 @@ function CloseView( win, delayed )
 			window.currentMovable = null;
 		
 		if( !win.parentNode.parentNode ) return;
-		if( win.parent.parentNode.classList.contains( 'ViewContainer' ) )
+		if( win.parentNode.classList.contains( 'View' ) )
 		{
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
@@ -1878,7 +1878,7 @@ var View = function( args )
 							{
 								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
-								self.close();
+								CloseView( div );
 							}
 						}
 						return cancelBubble( e );
