@@ -1428,7 +1428,8 @@ function CloseView( win, delayed )
 			window.regionWindow = null;
 		if( window.currentMovable && window.currentMovable == win )
 			window.currentMovable = null;
-			
+		
+		if( !win.parentNode.parentNode ) return;
 		win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 			
 		var count = 0;

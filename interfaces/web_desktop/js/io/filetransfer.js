@@ -45,6 +45,8 @@ var authid;
 var totals = 0;
 var filecounter = [];
 var filesundertransport = 0;
+var makedirBuf = {};
+var indexes = [];
 
 // -----------------------------------------------------------------------------
 
@@ -56,7 +58,7 @@ self.checkVolume = function()
 	{
 		if( this.readyState == 4 && this.status == 200 )
 		{
-			console.log( 'Response from server: ', this.responseText );
+			//console.log( 'Response from server: ', this.responseText );
 			// Don't abort if we succeeded anyway
 			if( self.delayedAbort )
 			{
@@ -123,7 +125,7 @@ self.checkVolume = function()
 	data.push( 'command=volumeinfo' );
 	data.push( 'args=' + encodeURIComponent( '{"path":"' + self.volume + ':"}' ) );
 	
-	console.log( 'Here: ' + data.join( '&' ) );
+	//console.log( 'Here: ' + data.join( '&' ) );
 
 	xhr.send( data.join( '&' ) );
 } // end of checkVolumne
@@ -131,24 +133,86 @@ self.checkVolume = function()
 // -----------------------------------------------------------------------------
 self.uploadFiles = function() 
 {
+	var filesList = self.files;
+
 	// once we get here we can upload all files at once :)
 	var xhrs = [];
 	
-	for( var f in self.files )
+	for( var f = 0; f < filesList.length; f++ )
 	{
-		if( typeof self.files[ f ] != 'object' ) continue;
+		if( typeof filesList[ f ] != 'object' ) continue;
 		
-		var file = self.files[ f ];
+		var file = filesList[ f ];
+		
+		// Queue trick
+		var fullPath = false;
+		if( file.fullPath )
+		{
+			fullPath = file.fullPath;
+			file = file.file;
+		}
+		
 		var filename = ( self.filenames && self.filenames[ f ] ? self.filenames[ f ] : file.name );
 		
+		var destPath = ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' )
+		
+		if( fullPath )
+		{
+			if( fullPath[0] == '/' )
+				fullPath = fullPath.substr( 1, fullPath.length - 1 );
+			destPath += fullPath;
+			if( destPath.indexOf( '/' ) > 0 )
+			{
+				destPath = destPath.split( '/' );
+				destPath.pop();
+				destPath = destPath.join( '/' ) + '/';
+			}
+			else
+			{
+				destPath = destPath.split( ':' )[0] + ':';
+			}
+			
+			// This one always has this name!
+			filename = file.name;
+		}
+		// Append if needed
+		else
+		{
+			if( destPath.substr( destPath.length - 1, 1 ) != '/' )
+			{
+				destPath += file.name;
+			}
+		}
+		
+		if( destPath.substr( destPath.length - 1, 1 ) == '/' )
+		{
+			// Make the directory! Just in case
+			if( !makedirBuf[ destPath ] )
+			{
+				var n = new XMLHttpRequest();
+				n.open( 'POST', '/system.library/file/makedir' );
+				n.setRequestHeader( 'Method', 'POST /system.library/file/makedir HTTP/1.1' );
+				n.send( 'path=' + destPath + ( self.session ? ( '&sessionid=' + self.session ) : ( '&authid=' + self.authid ) ) );
+				console.log( 'Makeing dir: ' + destPath );
+				makedirBuf[ destPath ] = true;
+			}
+		}
+		
 		xhrs[f] = new XMLHttpRequest();
-		xhrs[f].upload.uploadfileindex = xhrs[ f ].uploadfileindex = f;
+		
+		console.log( 'Uploading: ' + destPath );
+		
+		self.filecounter[ f ] = [ 0, 0 ];
+		
+		xhrs[f].upload.uploadFileIndex = f;
+		xhrs[f].uploadFileIndex = f;
 		
 		xhrs[f].upload.addEventListener( 'progress', function ( e )
 		{
 			if( e.lengthComputable )
 			{
-				self.filecounter[ this.uploadfileindex ][ 0 ] = e.loaded;
+				self.filecounter[ this.uploadFileIndex ][ 0 ] = e.loaded;
+				
 				var uploaded = 0;
 				for( var i in self.filecounter )
 				{
@@ -162,7 +226,7 @@ self.uploadFiles = function()
 					{
 						'progressinfo': 1,
 						'progress': progress,
-						'progresson': this.uploadfileindex,
+						'progresson': this.uploadFileIndex,
 						'filesundertransport': self.filesundertransport
 					} 
 				);
@@ -173,7 +237,7 @@ self.uploadFiles = function()
 		{
 			if( this.status == 200 )
 			{
-				self.filecounter[ this.uploadfileindex ][ 0 ] = self.filecounter[ this.uploadfileindex ][ 1 ];
+				self.filecounter[ this.uploadFileIndex ][ 0 ] = self.filecounter[ this.uploadFileIndex ][ 1 ];
 				if( self.filesundertransport > 1 ) self.filesundertransport--;
 				
 				var done = true;
@@ -193,7 +257,7 @@ self.uploadFiles = function()
 			{
 				self.postMessage( {
 					'progressinfo' : 1,
-					'fileindex' : this.uploadfileindex, 
+					'fileindex' : this.uploadFileIndex, 
 					'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
 						this.readyState + '/' + this.status + '|' 
 				} );
@@ -211,7 +275,7 @@ self.uploadFiles = function()
 		else fd.append( 'authid', self.authid );
 		fd.append( 'module','files' );
 		fd.append( 'command','uploadfile' );
-		fd.append( 'path', ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' ) );
+		fd.append( 'path', destPath );
 		fd.append( 'file', file, encodeURIComponent( filename ) );
 		
 		//get the party started
@@ -221,11 +285,84 @@ self.uploadFiles = function()
 
 // -----------------------------------------------------------------------------
 
+var test = '';
+
+var queue = [];
+
 self.onmessage = function( e )
 {
-	// Do a copy with files list
-	if( e.data && e.data.files && e.data.targetVolume && e.data.targetPath )
+	// Keep piling!
+	test = e;
+	if( e.data.recursiveUpdate )
 	{
+		self.session = e.data.session;
+		if( e.data.executeQueue )
+		{
+			// Organize queue
+			var a = 0;
+			var qmax = -1;
+			var outQueue = [];
+			var rl = 0;
+			
+			// Organize by longest path
+			for( a = 0; a < queue.length; a++ )
+			{
+				var l = queue[ a ].fullPath.split( '/' ).length;
+				if( !outQueue[ l ] ) 
+				{
+					outQueue[ l ] = [];
+					rl++;
+				}
+				outQueue[ l ].push( queue[ a ] );		
+			}
+			outQueue.sort();
+			
+			// Relayout
+			queue = [];
+			var finalQueue = [];
+			for( a = 0; a < rl; a++ )
+			{
+				for( var b = 0; b < outQueue[ a ].length; b++ )
+				{
+					self.files.push( outQueue[ a ][ b ] );
+				}
+			}
+			
+			// Execute!
+			self.filenames = false;
+			self.volume = e.data.targetVolume;
+			self.path = e.data.targetPath.split( ':/' ).join( ':' );
+			self.checkVolume();
+			queue = [];
+			
+			console.log( self.files );
+		}
+		else
+		{
+			queue.push( {
+				file: e.data.item,
+				fullPath: e.data.fullPath
+			} );
+		}
+	}
+	// Do the files
+	else if( e.data && e.data.files && e.data.info )
+	{
+		// Support recursive mode
+		self.files = e.data.files;
+		self.filenames = false;
+		self.volume = e.data.info.targetVolume;
+		self.path = e.data.info.targetPath.split( ':/' ).join( ':' );
+		self.session = e.data.info.session;
+		self.authid = e.data.info.authid;
+		if( !e.data.queued )
+		{
+			self.checkVolume();
+		}
+	}
+	// Do a copy with files list
+	else if( e.data && e.data.files && e.data.targetVolume && e.data.targetPath )
+	{	
 		self.files = e.data.files;
 		self.filenames = ( e.data.filenames ? e.data.filenames : false );
 		self.volume = e.data.targetVolume;
@@ -255,6 +392,6 @@ self.onmessage = function( e )
 	else if( e.data && e.data['terminate'] == 1 )
 	{
 		console.log('Terminating worker here...');
-		self.close();
+		//self.close();
 	}
 } // end of onmessage

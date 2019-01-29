@@ -7200,7 +7200,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( info.substr( info.length - 1, 1 ) == '/' )
 								info = info.substr( 0, info.length - 1 );
 								// Try to kill the info file!
-								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+								file.door.dosAction( 'delete', { path: info + '.info' } );
 								console.log( 'Die info file: ' + info + '.info' );
 								
 							}

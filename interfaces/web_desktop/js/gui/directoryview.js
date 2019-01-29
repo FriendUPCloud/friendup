@@ -1005,6 +1005,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.classList.remove( 'DragTarget' );
 		}
 
+		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
 		{
 			var files = e.dataTransfer.files || e.target.files;
@@ -1014,24 +1015,150 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			e.stopPropagation();
 			e.preventDefault();
 			
+			
+			var di = winobj;
+			
 			var info = false;
-			if( files && !this.content && this.classList.contains( 'Screen' ) )
+			if( files && !di.content && di.classList.contains( 'Screen' ) || di.classList.contains( 'ScreenContent' ) )
 			{
 				info = {
 					'session': Workspace.sessionId,
-					'targetPath': 'Home:Download/',
+					'targetPath': 'Home:Downloads/',
 					'targetVolume': 'Home:',
 					'files': files
 				};
 			}
-			else if( files && this.content && this.content.fileInfo && this.content.fileInfo.Volume )
+			else if( files && di.content && di.content.fileInfo && di.content.fileInfo.Volume )
 			{
 				info = {
 					'session': Workspace.sessionId,
-					'targetPath': this.content.fileInfo.Path,
-					'targetVolume': this.content.fileInfo.Volume,
+					'targetPath': di.content.fileInfo.Path,
+					'targetVolume': di.content.fileInfo.Volume,
 					'files': files
 				};
+			}
+			
+			// Try recursion!
+			// TODO: Enable again when safe!!
+			if( 1 == 2 && e.dataTransfer.items )
+			{
+				info.files = [];
+				info.queued = true;
+				
+				var num = 0;
+				var finalElements = [];
+				
+				// Wait till the elements are all counted
+				var isBusy = true;
+				var busyTimeout = null;
+				function busyChecker()
+				{
+					if( busyTimeout )
+						clearTimeout( busyTimeout );
+					busyTimeout = setTimeout( function()
+					{
+						if( isBusy )
+						{
+							isBusy = false;
+							uworker.postMessage( { 
+								recursiveUpdate: true, 
+								executeQueue: true, 
+								session: info.session, 
+								targetPath: info.targetPath, 
+								targetVolume: info.targetVolume 
+							} );
+						}
+					}, 500 );
+				}
+			
+				function toArray( list )
+				{
+					return Array.prototype.slice.call( list || [], 0 );
+				}
+
+				function countItems( items )
+				{
+					for ( var i = 0, l = items.length; i < l; i++ )
+					{
+						countItem( items[ i ] );
+					}
+				}
+
+				function renderItem( itm )
+				{
+					if( itm.file )
+					{
+						itm.file( function( f )
+						{
+							uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, session: Workspace.sessionId } );
+						} );
+					}
+					busyChecker();
+				}
+
+				function countEntry( entry )
+				{
+					if( entry.isDirectory )
+					{
+						var dirReader = entry.createReader();
+						var num = 0;
+						var readEntries = function()
+						{
+							dirReader.readEntries( function( results )
+							{
+								if( !results.length )
+								{
+									renderItem( entry );
+								}
+								else
+								{
+									for( var a = 0; a < results.length; a++ )
+									{
+										countEntry( results[ a ] );
+									}
+								}
+							} );
+						};
+						readEntries();
+					} 
+					else 
+					{
+						renderItem( entry, 1 );
+					}
+				}
+
+				function countItem( item )
+				{
+					var entry = item.getAsEntry || item.webkitGetAsEntry();
+					if( entry.isDirectory )
+					{
+						var dirReader = entry.createReader();
+						var num = 0;
+						var readEntries = function()
+						{
+							dirReader.readEntries( function( results )
+							{
+								if( !results.length )
+								{
+									renderItem( entry );
+								}
+								else
+								{
+									for( var a = 0; a < results.length; a++ )
+									{
+										countEntry( results[ a ] );
+									}
+								}
+							} );
+						};
+						readEntries();
+					} 
+					else 
+					{
+						renderItem( entry, 1 );
+					}
+				}
+				countItems( e.dataTransfer.items );
 			}
 
 			if( info )
