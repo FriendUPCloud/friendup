@@ -1019,7 +1019,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			var di = winobj;
 			
 			var info = false;
-			if( files && !di.content && di.classList.contains( 'Screen' ) || di.classList.contains( 'ScreenContent' ) )
+			if( files && !di.content && ( di.classList.contains( 'Screen' ) || di.classList.contains( 'ScreenContent' ) ) )
 			{
 				info = {
 					'session': Workspace.sessionId,
@@ -1028,15 +1028,23 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					'files': files
 				};
 			}
-			else if( files && di.content && di.content.fileInfo && di.content.fileInfo.Volume )
+			else if( files && winobj.fileInfo && winobj.fileInfo.Volume )
 			{
 				info = {
 					'session': Workspace.sessionId,
-					'targetPath': di.content.fileInfo.Path,
-					'targetVolume': di.content.fileInfo.Volume,
+					'targetPath': winobj.fileInfo.Path,
+					'targetVolume': winobj.fileInfo.Volume,
 					'files': files
 				};
 			}
+			else
+			{
+				Notify( { title: 'Illegal upload target', text: 'Please upload to the desktop or a disk or folder.' } );
+				return;
+			}
+			
+			// Setup a file copying worker
+			var uworker = new Worker( 'js/io/filetransfer.js' );
 			
 			// Try recursion!
 			// TODO: Enable again when safe!!
@@ -1169,9 +1177,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					Alert( i18n( 'i18n_read_only_filesystem' ), i18n( 'i18n_read_only_fs_desc' ) );
 					return false;
 				}
-
-				// Setup a file copying worker
-				var uworker = new Worker( 'js/io/filetransfer.js' );
 
 				// Open window
 				var w = new View( {
