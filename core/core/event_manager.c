@@ -294,7 +294,11 @@ int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, tim
 CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 {
 	FBOOL removeEvent = FALSE;
-	
+	if( ev == NULL )
+	{
+		FERROR("Cannot do anything with empty event\n");
+		return NULL;
+	}
 	//DEBUG("Check event: time %lu eventTime %lu\n", ti, ev->ce_Time );
 	
 	if( ti >= ev->ce_Time  )
