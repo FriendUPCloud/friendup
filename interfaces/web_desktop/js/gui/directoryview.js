@@ -1308,7 +1308,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 							if( winobj && winobj.refresh )
 								winobj.refresh();
 
-							Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded_to_downloads') }, false, function()
+							Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
 							{
 								OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
 							} );

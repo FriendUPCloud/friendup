@@ -474,7 +474,7 @@ i18n_could_not_create_downloads:        : Could not create Downloads folder in y
 i18n_no_home_drive                      : Could not find your Home: drive
 i18n_pasted_file                        : Paste your content
 i18n_pasted_to_downloads                : Your clipboard contents have been pasted to Downloads
-i18n_uploaded_to_downloads                : Your file(s) have been uploaded to Downloads
+i18n_uploaded                           : Your file(s) have been uploaded.
 
 #Locale ------------------------------------------------------------------------
 
