@@ -3209,13 +3209,14 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				if( e.button == 0 )
 				{
-					if( !e.ctrlKey && !e.shiftKey && !e.command )
+					var sh = e.shiftKey || e.ctrlKey;
+					if( !sh ) 
 					{
-						clearRegionIcons();
+						if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+						{
+							clearRegionIcons( { exception: this } );
+						}
 					}
-					this.classList.add( 'Selected' );
-					this.selected = true;
-					this.fileInfo.selected = true;
 				}
 			}
 
@@ -3884,10 +3885,13 @@ FileIcon.prototype.Init = function( fileInfo )
 	file.onmouseup = function( e )
 	{
 		var sh = e.shiftKey || e.ctrlKey;
-		if( !sh ) clearRegionIcons();
-		this.classList.add( 'Selected' );
-		this.selected = true;
-		this.fileInfo.selected = true;
+		if( !sh ) 
+		{
+			if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+			{
+				clearRegionIcons( { exception: this } );
+			}
+		}
 		
 		if( mousePointer && mousePointer.elements.length )
 		{

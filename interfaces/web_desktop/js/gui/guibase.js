@@ -3345,10 +3345,17 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 	WorkspaceMenu.close();
 }
 
-function clearRegionIcons()
+function clearRegionIcons( flags )
 {
 	// No icons selected now..
 	Friend.iconsSelectedCount = 0;
+
+	// Exception for icon deselection
+	var exception = null;
+	if( flags && flags.exception )
+	{
+		exception = flags.exception;
+	}
 
 	// Clear all icons
 	for( var a in movableWindows )
@@ -3363,7 +3370,11 @@ function clearRegionIcons()
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
-					ic.classList.remove( 'Selected' );
+					if( exception != ic )
+					{
+						ic.classList.remove( 'Selected' );
+						w.icons[a].selected = false;
+					}
 					ic.classList.remove( 'Editing' );
 					if( ic.input )
 					{
@@ -3373,7 +3384,6 @@ function clearRegionIcons()
 						}
 						ic.input = null;
 					}
-					w.icons[a].selected = false;
 				}
 			}
 		}
@@ -3386,8 +3396,11 @@ function clearRegionIcons()
 			var icon = Doors.screen.contentDiv.icons[a];
 			var ic = icon.domNode;
 			if( !ic ) continue;
-			ic.className = ic.className.split ( ' Selected' ).join ( '' );
-			icon.selected = false;
+			if( exception != ic )
+			{
+				ic.classList.remove( 'Selected' );
+				icon.selected = false;
+			}
 		}
 	}
 }
