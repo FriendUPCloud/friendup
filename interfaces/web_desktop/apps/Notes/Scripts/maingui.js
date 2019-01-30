@@ -115,16 +115,19 @@ Application.updateViewMode = function()
 	{
 		case 'root':
 			ge( 'LeftBar' ).style.transform = 'translateX(0)';
+			this.fld.style.transform = 'translateX(0)';
 			ge( 'FileBar' ).style.transform = 'translateX(100%)';
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
 			break;
 		case 'files':
 			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
+			this.fld.style.transform = 'translateX(-100%)';
 			ge( 'FileBar' ).style.transform = 'translateX(0%)';
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
 			break;
 		default:
 			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
+			this.fld.style.transform = 'translateX(-100%)';
 			ge( 'FileBar' ).style.transform = 'translateX(-100%)';
 			ge( 'RightBar' ).style.transform = 'translateX(0%)';
 			break;
@@ -479,6 +482,11 @@ Application.run = function( msg, iface )
 	
 	// Make an "add new folder" button
 	this.fld = document.createElement( 'div' );
+	if( isMobile )
+	{
+		this.fld.style.transform = '-100%';
+		this.fld.style.transition = 'transform 0.25s';
+	}
 	this.fld.className = 'NewFolder BackgroundHeavier';
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
 	this.fld.onclick = function( e )
