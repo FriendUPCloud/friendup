@@ -374,8 +374,6 @@ var mousePointer =
 				// Find what we dropped on
 				for( var c in ars )
 				{
-					var dropperIcon = false;
-					
 					var isListView = false;
 					var isScreen = false;
 					var w = ars[c].icons ? ars[c] : ars[c].content;
@@ -450,13 +448,11 @@ var mousePointer =
 							
 							// Hit icon!
 							if( 
-								!dropperIcon && 
 								ic.offsetTop < my && ic.offsetLeft < mx &&
 								ic.offsetTop + ic.offsetHeight > my &&
 								ic.offsetLeft + ic.offsetWidth > mx
 							)
 							{
-								dropperIcon = true;
 								dropper = icon;
 								break;
 							}
@@ -507,7 +503,7 @@ var mousePointer =
 				{
 					dropper.domNode.drop( this.elements, e );
 				}
-				else if( dropper.domNode.file && dropper.domNode.file.drop )
+				else if( dropper.domNode && dropper.domNode.file && dropper.domNode.file.drop )
 				{
 					dropper.domNode.file.drop( this.elements, e );
 				}
@@ -603,10 +599,16 @@ var mousePointer =
 	{
 		this.testPointer ();
 	},
-	'pickup': function ( ele )
+	'pickup': function ( ele, e )
 	{
 		// Do not allow pickup for mobile
 		if( window.isMobile ) return;
+		
+		if( !e ) e = window.event;
+		var ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
+		
+		var target = false;
+		if( e ) target = e.target || e.srcElement;
 		
 		this.testPointer ();
 		// Check multiple (pickup multiple)
@@ -618,6 +620,10 @@ var mousePointer =
 			{
 				var ic = ele.window.icons[a];
 				if( !ic.domNode ) continue;
+				
+				if( !ctrl && target && ic.domNode != target )
+					continue;
+				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
 				{
 					var el = ic.domNode;

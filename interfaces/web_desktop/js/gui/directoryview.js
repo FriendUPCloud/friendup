@@ -4231,7 +4231,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		);
 	
 		if( distance > 15 )
-		{
+		{			
 			obj.iconsCache = [];
 			this.classList.add( 'Selected' );
 			this.selected = true;
