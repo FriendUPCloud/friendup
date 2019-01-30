@@ -61,6 +61,7 @@ typedef struct Event
     struct _Object			*e_Dst;
     FULONG					e_DstMethodID;
     void					*e_Data;
+	char					*e_Name;
 }Event;
 
 //
@@ -80,6 +81,7 @@ typedef struct CoreEvent
 	FBOOL					ce_Launched;
 	int						(*ce_Function)( void *sb );
 	void					*ce_Data;
+	char					*ce_Name;
 }CoreEvent;
 
 

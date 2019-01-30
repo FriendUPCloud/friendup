@@ -958,26 +958,26 @@ SystemBase *SystemInit( void )
 	#define DAYS1 24*MINS60
 	#define DAYS5 5*24*MINS60
 
-	EventAdd( l->sl_EventManager, DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
 	// test, to remove
-	EventAdd( l->sl_EventManager, PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
-	EventAdd( l->sl_EventManager, CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
+	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
+	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
 	
-	EventAdd( l->sl_EventManager, WebdavTokenManagerDeleteOld, l->sl_WDavTokM, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "WebdavTokenManagerDeleteOld", WebdavTokenManagerDeleteOld, l->sl_WDavTokM, time( NULL )+MINS360, MINS360, -1 );
 	
-	EventAdd( l->sl_EventManager, CommServicePING, l->fcm->fcm_CommService, time( NULL )+MINS1, MINS1, -1 );
+	EventAdd( l->sl_EventManager, "CommServicePING", CommServicePING, l->fcm->fcm_CommService, time( NULL )+MINS1, MINS1, -1 );
 	
-	EventAdd( l->sl_EventManager, DOSTokenManagerAutoDelete, l->sl_DOSTM, time( NULL )+MINS5, MINS5, -1 );
+	EventAdd( l->sl_EventManager, "DOSTokenManagerAutoDelete", DOSTokenManagerAutoDelete, l->sl_DOSTM, time( NULL )+MINS5, MINS5, -1 );
 	
-	EventAdd( l->sl_EventManager, RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
+	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
 	//@BG-678 
 	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
 	if( l->l_EnableHTTPChecker == 1 )
 	{
-		EventAdd( l->sl_EventManager, CheckServerAndRestart, l, time( NULL )+30, 30, -1 );
+		EventAdd( l->sl_EventManager, "CheckServerAndRestart", CheckServerAndRestart, l, time( NULL )+30, 30, -1 );
 	}
 	
 	l->sl_USM->usm_UM = l->sl_UM;

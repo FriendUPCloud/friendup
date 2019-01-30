@@ -419,6 +419,8 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 		return -10;
 	}
 	
+	DEBUG("\n\n\n\n\n");
+	
 	// checking  how many groups were passed
 	
 	int i;
@@ -454,9 +456,11 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 			}
 		}
 		
+		DEBUG("-----------------------> show groups at 0 position: %s\n", ptr[ 0 ] );
+		
 		// function store ID's of groups to which user is assigned
 		BufString *bsGroups = BufStringNew();
-		pos = 0;
+		//pos = 0;
 		
 		int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
 		BufStringAddSize( bsGroups, tmpQuery, tmplen );
@@ -472,14 +476,16 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 		
 		FBOOL isAdmin = FALSE;
 		FBOOL isAPI = FALSE;
-		DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated\n");
+		DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated, pos: %d\n", pos );
 		
 		// get list of groups to which user will be assigned
 		for( i = 0; i < pos; i++ )
 		{
+			DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", i );
 			UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
 			while( gr != NULL )
 			{
+				DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, ptr[ i ] );
 				if( strcmp( gr->ug_Name, ptr[ i ] ) == 0 )
 				{
 					//usrGroups[ i ] = gr;
