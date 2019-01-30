@@ -588,34 +588,36 @@ void WSThreadPing( void *p )
 		return;
 	}
 	
-	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
-	wscl->wsc_InUseCounter++;
-	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
-	
-	struct lws *wsi = wscl->wsc_Wsi;
-	
-	UserSession *ses = wscl->wsc_UserSession;
-	if( ses != NULL )
+	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
 	{
-		ses->us_LoggedTime = time( NULL );
+		wscl->wsc_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
 	
-		if( wscl->wsc_UserSession != NULL && fcd->fcd_WSClient != NULL )
+		struct lws *wsi = wscl->wsc_Wsi;
+	
+		UserSession *ses = wscl->wsc_UserSession;
+		if( ses != NULL )
 		{
-			WebsocketWriteInline( fcd->fcd_WSClient, answer, answersize, LWS_WRITE_TEXT );
+			ses->us_LoggedTime = time( NULL );
+	
+			if( wscl->wsc_UserSession != NULL && fcd->fcd_WSClient != NULL )
+			{
+				WebsocketWriteInline( fcd->fcd_WSClient, answer, answersize, LWS_WRITE_TEXT );
+			}
 		}
+	
+		FFree( answer );
+		FFree( data->requestid );
+		FFree( data );
+	
+		FRIEND_MUTEX_LOCK( &WSThreadMutex );
+		WSThreadNum--;
+		FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	
+		FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
+		wscl->wsc_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
 	}
-	
-	FFree( answer );
-	FFree( data->requestid );
-	FFree( data );
-	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum--;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
-	
-	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
-	wscl->wsc_InUseCounter--;
-	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
 	
 #if USE_PTHREAD_PING == 1
 	pthread_exit( 0 );
