@@ -8,6 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
+
 Application.run = function( msg, iface )
 {
 	
@@ -98,9 +99,10 @@ function saveWorkgroup()
 	var args = {
 		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
 		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
-		groupname: ge( 'pWorkgroupName' ).value,
-		users: ge( 'pMembers' ).value
+		groupname: ge( 'pWorkgroupName' ).value
+
 	};
+	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value;
 
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
@@ -109,7 +111,7 @@ function saveWorkgroup()
 		{
 			//ge( 'pWorkgroupID' ).value = d;
 			Notify({'title':'Users','text':'Workgroup changes saved.'});
-
+			Application.workgroupUserListChanged = false;
 		}
 		else
 		{
@@ -130,7 +132,7 @@ function saveWorkgroup()
 	}
 	
 
-	console.log('sending this for saving',args);
+	Application.workgroupUserListChanged = false;
 	if( args.id > 0  )
 		args.command ='update';
 	else
