@@ -195,9 +195,12 @@ function PollTray()
 				}
 				tray.notifications.timeout = setTimeout( function()
 				{
-					tray.notifications.removeChild( tray.notificationPopup );
-					tray.notificationPopup = null;
-					tray.notifications.timeout = null;
+					if( tray.notifications.removeChild && tray.notificationPopup && tray.notificationPopup.parentNode )
+					{
+						tray.notifications.removeChild( tray.notificationPopup );
+						tray.notificationPopup = null;
+						tray.notifications.timeout = null;
+					}
 				}, 250 );
 			}
 			

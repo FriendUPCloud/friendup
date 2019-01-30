@@ -5814,11 +5814,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					var lastChar = p.substr( 0, p.length - 1 );
 					if( lastChar != ':' && lastChar != ':' ) p += '/';
 					Workspace.refreshWindowByPath( p );
-					Notify( { title: i18n( 'i18n_zip_completed' ), text: i18n( 'i18n_zip_comdesc' ) + ': ' + ( files.split( ';' ).join( ', ' ) ) } );
+					Notify( { title: i18n( 'i18n_zip_completed' ), text: i18n( 'i18n_zip_comdesc' ) + ': ' + dest } );
 				}
 				else
 				{
-					Notify( { title: i18n( 'i18n_zip_not_completed' ), text: i18n( 'i18n_zip_not_comdesc' ) + ': ' +  ( files.split( ';' ).join( ', ' ) ) } );
+					Notify( { title: i18n( 'i18n_zip_not_completed' ), text: i18n( 'i18n_zip_not_comdesc' ) + ': ' +  dest } );
 				}
 			}
 			var lpath = dest;
