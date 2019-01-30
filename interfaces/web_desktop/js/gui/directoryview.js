@@ -3093,9 +3093,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				// Right mouse button
 				if( e.button == 2 )
 				{
-					// Clear selected icons
-					clearRegionIcons();
-			
 					// check icons
 					this.classList.add( 'Selected' );
 					found = this;
@@ -3820,9 +3817,6 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Right mouse button
 		if( e.button == 2 )
 		{
-			// Clear selected icons
-			clearRegionIcons();
-			
 			// check icons
 			this.classList.add( 'Selected' );
 			found = this;
