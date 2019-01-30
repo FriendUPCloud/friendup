@@ -5645,6 +5645,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			FocusOnNothing();
 			if( currentMovable.applicationId )
 			{
+				// Tell the application
+				currentMovable.windowObject.sendMessage( {
+					command: 'mobilebackbutton'
+				} );
 				if( window._getAppByAppId )
 				{
 					var app = _getAppByAppId( currentMovable.applicationId );
