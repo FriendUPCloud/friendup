@@ -2422,8 +2422,6 @@ function checkTablet()
 	return check;
 }
 
-alert( navigator.userAgent.toLowercase() );
-
 // Are we on a mobile browser?
 function checkMobileBrowser()
 {
