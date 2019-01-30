@@ -635,7 +635,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					}
 					
 					char msg[ 512 ];
-					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
+					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu}", fg->ug_ID, fg->ug_Name, fg->ug_Type, fg->ug_ParentID );
 					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "update", msg );
 
 					char buffer[ 256 ];
