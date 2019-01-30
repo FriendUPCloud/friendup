@@ -374,6 +374,8 @@ var mousePointer =
 				// Find what we dropped on
 				for( var c in ars )
 				{
+					var dropperIcon = false;
+					
 					var isListView = false;
 					var isScreen = false;
 					var w = ars[c].icons ? ars[c] : ars[c].content;
@@ -448,11 +450,13 @@ var mousePointer =
 							
 							// Hit icon!
 							if( 
+								!dropperIcon && 
 								ic.offsetTop < my && ic.offsetLeft < mx &&
 								ic.offsetTop + ic.offsetHeight > my &&
 								ic.offsetLeft + ic.offsetWidth > mx
 							)
 							{
+								dropperIcon = true;
 								dropper = icon;
 								break;
 							}

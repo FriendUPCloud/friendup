@@ -1015,7 +1015,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			e.stopPropagation();
 			e.preventDefault();
 			
-			
 			var di = winobj;
 			
 			var info = false;
