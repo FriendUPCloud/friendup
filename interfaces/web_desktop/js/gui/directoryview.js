@@ -4234,57 +4234,60 @@ function RefreshWindowGauge( win, finfo )
 	var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
 	if( isVolume )
 	{
-		if( win.vinfoTimeout ) clearTimeout( win.vinfoTimeout );
-		win.vinfoTimeout = setTimeout( function()
+		if( 1 == 2 )
 		{
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			if( win.vinfoTimeout ) clearTimeout( win.vinfoTimeout );
+			win.vinfoTimeout = setTimeout( function()
 			{
-				if( e == 'ok' )
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
 				{
-					var dj, fl;
-					try
+					if( e == 'ok' )
 					{
-						dj = JSON.parse( d );
-						fl = dj.Used / dj.Filesize;
-					}
-					catch( e )
-					{
-						fl = 1;
-					}
-					// Multiply by 100
-					fl *= 100;
-					if( win.parentNode && win.parentNode.volumeGauge )
-					{
-						win.parentNode.volumeGauge.style.height = fl + '%';
-					}
-
-					var eles = win.parentNode.getElementsByClassName( 'DriveGauge' );
-					if( eles )
-					{
-						var factor = 1;
+						var dj, fl;
 						try
 						{
 							dj = JSON.parse( d );
-							if( !isNaN( dj.Used ) || isNaN( dj.Filesize ) )
-							{
-								factor = dj.Used / dj.Filesize;
-								if( isNaN( factor ) ) factor = 1;
-							}
+							fl = dj.Used / dj.Filesize;
 						}
 						catch( e )
 						{
+							fl = 1;
 						}
-						eles[0].classList.add( 'Size' + Math.floor( factor * 10 ) );
-						eles[0].setAttribute( 'title', Math.ceil( factor * 100 ) + '% ' + i18n( 'i18n_full' ) );
+						// Multiply by 100
+						fl *= 100;
+						if( win.parentNode && win.parentNode.volumeGauge )
+						{
+							win.parentNode.volumeGauge.style.height = fl + '%';
+						}
+
+						var eles = win.parentNode.getElementsByClassName( 'DriveGauge' );
+						if( eles )
+						{
+							var factor = 1;
+							try
+							{
+								dj = JSON.parse( d );
+								if( !isNaN( dj.Used ) || isNaN( dj.Filesize ) )
+								{
+									factor = dj.Used / dj.Filesize;
+									if( isNaN( factor ) ) factor = 1;
+								}
+							}
+							catch( e )
+							{
+							}
+							eles[0].classList.add( 'Size' + Math.floor( factor * 10 ) );
+							eles[0].setAttribute( 'title', Math.ceil( factor * 100 ) + '% ' + i18n( 'i18n_full' ) );
+						}
 					}
 				}
-			}
-			var pth = wt.indexOf( ':' ) > 0 ? wt : ( wt + ':' );
-			m.execute( 'volumeinfo', { path: pth } );
-			clearTimeout( win.vinfoTimeout );
-			win.vinfoTimeout = false;
-		}, 250 );
+				var pth = wt.indexOf( ':' ) > 0 ? wt : ( wt + ':' );
+				m.execute( 'volumeinfo', { path: pth } );
+				clearTimeout( win.vinfoTimeout );
+				win.vinfoTimeout = false;
+			}, 250 );
+		}
 	}
 }
 
@@ -4356,6 +4359,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		
 		we.refresh = function( callback )
 		{
+			win.refreshing = true;
 			var self = this;
 			
 			var fi = this.fileInfo ? this.fileInfo : iconObject;
@@ -4380,6 +4384,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					if( callback ) callback();
 					RefreshWindowGauge( self.win );
 					self.refreshTimeout = null;
+					win.refreshing = false;
 				} );
 			}, 250 );
 
@@ -4609,6 +4614,8 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			
 			win.refresh = function( callback )
 			{
+				w.refreshing = true;
+				
 				var self = this;
 				
 				var timer = 0;
@@ -4677,6 +4684,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 						
 						// Release refresh timeout
 						self.refreshTimeout = null;
+						w.refreshing = false;
 					} );
 				}, timer );
 			}
@@ -4687,6 +4695,8 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			win.refresh = function ( callback )
 			{
 				var self = this;
+				w.refreshing = true;
+				
 				
 				var wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
 				
@@ -4761,6 +4771,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					}
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
+					w.windowObject.refreshing = true;
 				}
 				j.send();
 			}

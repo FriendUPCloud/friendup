@@ -352,6 +352,7 @@ var mousePointer =
 				}
 				if( dropWin )
 				{
+					if( dropWin.content && dropWin.content.windowObject && dropWin.content.windowObject.refreshing ) return;
 					// Did we drop on a file browser?
 					if( dropWin.content && dropWin.content.fileBrowser )
 					{
@@ -615,6 +616,8 @@ var mousePointer =
 		var multiple = false;
 		if ( ele.window )
 		{
+			if( ele.window.windowObject.refreshing ) return;
+			
 			_ActivateWindowOnly( ele.window.parentNode );
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
