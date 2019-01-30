@@ -1405,16 +1405,23 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// We are operating on a file directory icon?
 	else if( this.object && this.object.file )
 	{
+		// Ok, tell function we're operating on a FileIcon
+		mode = 'directory';
+		
 		if( !this.object.file.directoryView )
 		{
 			return false;
 		}
 		if( !this.object.file.fileInfo || ( this.object.file.fileInfo.Type != 'Directory' && this.object.file.fileInfo.Type != 'Door' ) )
 		{
-			return false;
+			if( this.object.file.fileInfo.Type == 'File' )
+			{
+				mode = 'view';
+				// Redirect to view mode
+				dview = this.object.file.directoryView.window.parentNode;
+			}
 		}
-		// Ok, tell function we're operating on a FileIcon
-		mode = 'directory';
+		
 	}
 
 
@@ -1434,9 +1441,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// Window is the target
 	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 
+	var dragFromWindow = eles[0].window;
+
 	// Can't drop stuff on myself!
 	if( mode == 'view' && dview.content == eles[0].window )
 	{
+		// The icon to drop on
 		cfo = false;
 
 		// Check if we're dropping on a folder icon
@@ -1453,6 +1463,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				var ic = divs[a];
 				icons.push( ic );
 				// Check if the mouse entered here
+				
 				if( !cfo && mx >= ic.offsetLeft && my >= ic.offsetTop && mx < ic.offsetLeft + ic.offsetWidth && my < ic.offsetTop + ic.offsetHeight )
 				{
 					// We found a better target!
@@ -1468,14 +1479,14 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		if( !cfo )
 		{
 			dview.content.refresh();
-			eles[0].window.refresh();
+			dragFromWindow.refresh();
 			return;
 		}
 	}
 
 	// Immediately refresh source!
 	var winobj = mode == 'view' ? this.windowObject : dview.directoryView.windowObject;
-	Workspace.diskNotification( [ winobj, eles[0].window ], 'refresh' );
+	Workspace.diskNotification( [ winobj, dragFromWindow ], 'refresh' );
 
 	// Sanitize input... no folder to be dropped into themselves or their children....
 	var clean = [];
@@ -1493,7 +1504,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			{
 				if(
 					movableWindows[j] && movableWindows[j].titleString &&
-					('' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) != -1
+					( '' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) != -1
 				)
 				{
 					if( movableWindows[ j ].content && movableWindows[ j ].content.directoryview )
@@ -3048,7 +3059,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			var f = CreateIcon( icons[a], this );
 			f.directoryView = this;
 			r.className += ' File';
-			RemoveIconEvents( f ); // Strip events
+			//RemoveIconEvents( f ); // Strip events
 			r.file = f;
 			
 			// Overwrite doubleclick

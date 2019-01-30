@@ -62,7 +62,7 @@ var mousePointer =
 			
 			// Skew them
 			if( ge( 'DoorsScreen' ).screenOffsetTop )
-				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;			
+				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;
 			
 			// Check move on window
 			var z = 0;
@@ -134,23 +134,32 @@ var mousePointer =
 		
 			for( var c in ars )
 			{
-				var isListview = false;
+				var isListView = false;
 				var isScreen = false;
 				var w = ars[c].icons ? ars[c] : ars[c].content;
 				if( !w || !w.icons ) continue; // No icons? Skip!
 				
 				var sctop = 0;
-				if( !w.classList.contains( 'ScreenContent' ) )
+
+				// Listview counts from a different element
+				var iconArea = w;
+				if( w.directoryview && w.directoryview.listMode == 'listview' )
 				{
-					sctop = w.getElementsByClassName( 'Scroller' );
-					isListview = w.getElementsByClassName( 'Listview' );
-					if( !sctop ) sctop = isListview;
-					isListview = isListview.length ? true : false;
+					iconArea = w.querySelector( '.ScrollArea' );
+					sctop = [ iconArea ];
+					isListView = true;
 				}
-				// We're checking screen icons
 				else
 				{
-					isScreen = true;
+					if( !w.classList.contains( 'ScreenContent' ) )
+					{
+						sctop = w.getElementsByClassName( 'Scroller' );
+					}
+					// We're checking screen icons
+					else
+					{
+						isScreen = true;
+					}
 				}
 				
 				var scleft = 0;
@@ -161,11 +170,11 @@ var mousePointer =
 				}
 				else sctop = 0;
 			
-				var my = windowMouseY - w.offsetTop - w.parentNode.offsetTop + sctop;
-				var mx = windowMouseX - w.offsetLeft - w.parentNode.offsetLeft + scleft;
+				var my = windowMouseY - GetElementTop( iconArea ) + sctop;
+				var mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
 				
 				// Add file browser offset
-				if( w.fileBrowser )
+				if( w.fileBrowser && !isListView )
 				{
 					if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
 					{
@@ -174,11 +183,7 @@ var mousePointer =
 					}
 				}
 				
-				
-				if( isListview )
-				{
-					my -= 56;
-				}
+				var hoverIcon = false;
 				
 				for( var a = 0; a < w.icons.length; a++ )
 				{
@@ -198,11 +203,10 @@ var mousePointer =
 					}
 					// Done exclude
 					
-					// Don't rotate icon on listviews
-					
 					if( ic )
 					{
 						if( 
+							!hoverIcon && 
 							!mover &&
 							( isScreen || ( moveWin && w == moveWin.content ) ) &&
 							ic.offsetTop < my && ic.offsetLeft < mx &&
@@ -210,6 +214,7 @@ var mousePointer =
 							ic.offsetLeft + ic.offsetWidth > mx
 						)
 						{
+							hoverIcon = true;
 							ic.classList.add( 'Selected' );
 							ic.selected = true;
 							ic.fileInfo.selected = true;
@@ -228,7 +233,7 @@ var mousePointer =
 			{
 				var wd = window.movableWindows[a];
 				if( ( !mover && wd.rollOut ) || ( wd != moveWin && wd.rollOut ) )
-					wd.rollOut ( e );
+					wd.rollOut( e );
 			}
 			
 			// Assign!
@@ -369,6 +374,8 @@ var mousePointer =
 				// Find what we dropped on
 				for( var c in ars )
 				{
+					var isListView = false;
+					var isScreen = false;
 					var w = ars[c].icons ? ars[c] : ars[c].content;
 					if( !w || !w.icons ) continue; // No icons? Skip!
 				
@@ -376,8 +383,29 @@ var mousePointer =
 					if( dropper && ( w != dropper.content && w != dropper ) )
 						continue;
 				
-					// Add scroll top!
-					var sctop = w.getElementsByClassName( 'Scroller' );
+					var sctop = 0;
+
+					// Listview counts from a different element
+					var iconArea = w;
+					if( w.directoryview && w.directoryview.listMode == 'listview' )
+					{
+						iconArea = w.querySelector( '.ScrollArea' );
+						sctop = [ iconArea ];
+						isListView = true;
+					}
+					else
+					{
+						if( !w.classList.contains( 'ScreenContent' ) )
+						{
+							sctop = w.getElementsByClassName( 'Scroller' );
+						}
+						// We're checking screen icons
+						else
+						{
+							isScreen = true;
+						}
+					}
+				
 					var scleft = 0;
 					if( sctop && sctop.length ) 
 					{
@@ -385,12 +413,12 @@ var mousePointer =
 						sctop = sctop[0].scrollTop;
 					}
 					else sctop = 0;
-				
-					var my = windowMouseY - w.offsetTop - w.parentNode.offsetTop + sctop;
-					var mx = windowMouseX - w.offsetLeft - w.parentNode.offsetLeft + scleft;
+					
+					var my = windowMouseY - GetElementTop( iconArea ) + sctop;
+					var mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
 				
 					// Add file browser offset
-					if( w.fileBrowser )
+					if( w.fileBrowser && !isListView )
 					{
 						if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
 						{
@@ -415,9 +443,11 @@ var mousePointer =
 							}
 							if( found ) continue;
 							// Done exclude
-				
+							
 							var icon = w.icons[a];
-							if ( 
+							
+							// Hit icon!
+							if( 
 								ic.offsetTop < my && ic.offsetLeft < mx &&
 								ic.offsetTop + ic.offsetHeight > my &&
 								ic.offsetLeft + ic.offsetWidth > mx
@@ -472,6 +502,10 @@ var mousePointer =
 				else if( dropper.domNode && dropper.domNode.drop )
 				{
 					dropper.domNode.drop( this.elements, e );
+				}
+				else if( dropper.domNode.file && dropper.domNode.file.drop )
+				{
+					dropper.domNode.file.drop( this.elements, e );
 				}
 				else
 				{
