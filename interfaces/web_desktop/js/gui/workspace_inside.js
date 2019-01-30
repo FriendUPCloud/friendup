@@ -5781,18 +5781,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				f.push( ic[a].Path );
 			}
 		}
+		
+		console.log( 'Dest now: ' + dest );
+		
 		if( dest && f.length )
 		{
-			if( dest.indexOf( '/' ) > 0 )
+			// Files
+			if( dest.indexOf( '.' ) > 0 && dest.substr( dest.length - 1, 1 ) != '/' )
 			{
-				dest = dest.split( '/' );
+				dest = dest.split( '.' );
 				dest.pop();
-				dest = dest.join( '/' ) + '.zip';
+				dest = dest.join( '.' )
 			}
+			// Folders
 			else
 			{
-				dest += '.zip';
+				if( dest.substr( dest.length - 1, 1 ) == '/' )
+				{
+					dest = dest.substr( 0, dest.length - 1 );
+				}
 			}
+			dest += '.zip';
 
 			var files = f.join( ';' );
 			var s = new Library( 'system.library' );
@@ -5831,6 +5840,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				lpath = lpath.slice( 0, lpath.lastIndexOf( ':' )+1 );
 			}
+			
 			s.execute( 'file/compress', { source: zipPath, files: files, archiver: 'zip', destination: dest, path: lpath } );
 		}
 	},
