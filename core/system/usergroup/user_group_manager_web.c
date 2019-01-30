@@ -888,7 +888,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "listdetails", &(retString->bs_Buffer[17]) );
+			//NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "listdetails", &(retString->bs_Buffer[17]) );
 			
 			retString->bs_Buffer = NULL;
 			BufStringDelete( retString );
