@@ -1688,12 +1688,13 @@ function removeFromGroup()
 // Remove a workgroup outright
 function deleteWorkgroup()
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		RefreshWorkgroups();
 	}
-	m.execute( 'workgroupdelete', { id: ge( 'pWorkgroupID' ).value } );
+	f.execute( 'group', {'command':'delete','id':ge( 'pWorkgroupID' ).value} );
+
 }
 
 /* Sessions --------------------------------------------------------------- */
