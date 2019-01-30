@@ -4765,7 +4765,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					}
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
-					w.windowObject.refreshing = true;
+					win.refreshing = true;
 				}
 				j.send();
 			}
