@@ -6579,6 +6579,49 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			menuout.appendChild( head );
 
+			
+			// Check current file
+			if( window.currentMovable && currentMovable.content && currentMovable.content.icons )
+			{
+				var thisicon = false;
+				if( tr )
+				{
+					thisicon = tr;
+					while( thisicon.classList && !thisicon.classList.contains( 'File' ) && thisicon.parentNode && thisicon != document.body )
+					{
+						thisicon = thisicon.parentNode;
+					}
+					if( thisicon.fileInfo )
+					{
+						var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
+						if( ext )
+						{
+							switch( ext.toLowerCase() )
+							{
+								case 'jpg':
+								case 'jpeg':
+								case 'png':
+								case 'gif':
+									menu.push( {
+										name: i18n( 'menu_set_as_wallpaper' ),
+										command: function()
+										{
+											var m = new Module( 'system' );
+											m.onExecuted = function()
+											{
+												Workspace.wallpaperImage = thisicon.fileInfo.Path;
+												Workspace.refreshDesktop();
+											}
+											m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
+										}
+									} );
+									break;
+							}
+						}
+					}
+				}
+			}
+			
 			for( var z = 0; z < menu.length; z++ )
 			{
 				if( menu[z].divider ) continue;
