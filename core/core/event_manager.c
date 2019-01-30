@@ -34,6 +34,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <util/string.h>
+#include <mutex/mutex_manager.h>
 
 void *EventManagerLoopThread( FThread *ptr );
 
@@ -53,6 +54,7 @@ EventManager *EventManagerNew( void *sb )
 	{
 		em->lastID = 0xf;
 		em->em_SB = sb;
+		pthread_mutex_init( &(em->em_Mutex), NULL );
 		em->em_EventThread = ThreadNew( EventManagerLoopThread, em, TRUE, NULL );
 	}
 	else
@@ -115,6 +117,8 @@ void EventManagerDelete( EventManager *em )
 			}
 			FFree( rem );
 		}
+		
+		pthread_mutex_destroy( &(em->em_Mutex) );
 		
 		FFree( em );
 	}
@@ -185,7 +189,11 @@ void *EventManagerLoopThread( FThread *ptr )
 		CoreEvent *locnce = ce->em_EventList;
 		while( locnce != NULL )
 		{
-			EventCheck( ce, locnce, stime );
+			if( FRIEND_MUTEX_LOCK( &(ce->em_Mutex) ) == 0 )
+			{
+				EventCheck( ce, locnce, stime );
+				FRIEND_MUTEX_UNLOCK( &(ce->em_Mutex) );
+			}
 			
 			locnce = (CoreEvent *) locnce->node.mln_Succ;
 		}

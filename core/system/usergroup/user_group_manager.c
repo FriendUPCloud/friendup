@@ -98,7 +98,7 @@ void UGMDelete( UserGroupManager *um )
  *
  * @param um pointer to UserManager structure
  * @param id UserGroupID
- * @param return UserGroup structure if it exist, otherwise NULL
+ * @return UserGroup structure if it exist, otherwise NULL
  */
 
 UserGroup *UGMGetGroupByID( UserGroupManager *um, FULONG id )
@@ -125,7 +125,7 @@ UserGroup *UGMGetGroupByID( UserGroupManager *um, FULONG id )
  *
  * @param ugm pointer to UserManager structure
  * @param name name of the group
- * @param return UserGroup structure if it exist, otherwise NULL
+ * @return UserGroup structure if it exist, otherwise NULL
  */
 
 UserGroup *UGMGetGroupByName( UserGroupManager *ugm, const char *name )
@@ -152,7 +152,7 @@ UserGroup *UGMGetGroupByName( UserGroupManager *ugm, const char *name )
  *
  * @param ugm pointer to UserManager structure
  * @param ug pointer to new group which will be added to list
- * @param return 0 when success, otherwise error number
+ * return 0 when success, otherwise error number
  */
 
 int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
@@ -176,15 +176,90 @@ int UGMAddGroup( UserGroupManager *ugm, UserGroup *ug )
  *
  * @param ugm pointer to UserManager structure
  * @param ug pointer to new group which will be disabled
- * @param return 0 when success, otherwise error number
+ * @return 0 when success, otherwise error number
  */
 
 int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 {
-	if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
+	SystemBase *l = (SystemBase *)ugm->ugm_SB;
+	//if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
 	{
+		////fg->ug_Status = USER_GROUP_STATUS_DISABLED;
+						//sqllib->Update( sqllib, UserGroupDesc, fg );
 		ug->ug_Status = USER_GROUP_STATUS_DISABLED;
-		FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+		
+		SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+		if( sqlLib != NULL )
+		{
+			DEBUG("Remove users from group\n");
+			char tmpQuery[ 512 ];
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserID FROM FUserToGroup WHERE UserGroupID=%lu", ug->ug_ID );
+			void *result = sqlLib->Query(  sqlLib, tmpQuery );
+			if( result != NULL )
+			{
+				int pos = 0;
+				char **row;
+				while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+				{
+					char *end;
+					FULONG userid = strtol( (char *)row[0], &end, 0 );
+					// add only this users which are in FC memory now, rest will be removed in SQL call
+					User *usr = UMGetUserByID( l->sl_UM, userid );
+					if( usr != NULL )
+					{
+						UserGroupRemoveUser( ug, usr );
+					}
+				
+					pos++;
+				}
+				sqlLib->FreeResult( sqlLib, result );
+			}
+			
+			// remove connections between users and group
+			snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", ug->ug_ID );
+			sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+			
+			l->LibrarySQLDrop( l, sqlLib );
+		}
+		
+		// phisic remove
+	
+		if( FRIEND_MUTEX_LOCK( &ugm->ugm_Mutex ) == 0 )
+		{
+			UserGroup *actug = ugm->ugm_UserGroups;
+			while( actug != NULL )
+			{
+				printf("Groupid %lu name %s\n", actug->ug_ID, actug->ug_Name );
+				actug = (UserGroup *)actug->node.mln_Succ;
+			}
+			actug = ugm->ugm_UserGroups;
+			UserGroup *prevug = ugm->ugm_UserGroups;
+	
+			while( actug != NULL )
+			{
+				if( ug == actug )
+				{
+					DEBUG("Found group to delete\n");
+					if( actug == ugm->ugm_UserGroups )
+					{
+						DEBUG("It is root\n");
+						ugm->ugm_UserGroups = (UserGroup *) ugm->ugm_UserGroups->node.mln_Succ;
+					}
+					else
+					{
+						DEBUG("Its not root, prev %s current %s\n", prevug->ug_Name, actug->ug_Name );
+						prevug->node.mln_Succ = actug->node.mln_Succ;
+					}
+					UserGroupDelete( l, actug );
+					DEBUG("Data removed\n");
+					break;
+				}
+				prevug = actug;
+				actug = (UserGroup *)actug->node.mln_Succ;
+			}
+			DEBUG("Unlock\n");
+			FRIEND_MUTEX_UNLOCK( &ugm->ugm_Mutex );
+		}
 	}
 	return 0;
 }

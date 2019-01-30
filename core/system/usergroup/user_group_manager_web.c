@@ -45,6 +45,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
 	
+	DEBUG("[UMGWebRequest] -> command : %s\n", urlpath[ 1 ] );
+	
 	if( urlpath[ 1 ] == NULL )
 	{
 		struct TagItem tags[] = {
@@ -358,7 +360,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 		FULONG id = 0;
 		
-		DEBUG( "[UMWebRequest] Delete user!!\n" );
+		DEBUG( "[UMWebRequest] Delete group!!\n" );
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
 		if( el != NULL )
@@ -387,6 +389,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				}
 			}
 			
+			DEBUG("Group found\n");
 			if( fg != NULL )
 			{
 				FBOOL canChange = FALSE;
@@ -401,31 +404,41 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						canChange = TRUE;
 					}
 				}
-					
+				
+				DEBUG("Can change: %d\n", canChange );
 				if( canChange == TRUE )
 				{
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-					if( sqllib != NULL )
+					if( strcmp( fg->ug_Type, "Level" ) != 0 )	//you can only remove entries which dont have "Level" type
 					{
-						fg->ug_Status = USER_GROUP_STATUS_DISABLED;
-						sqllib->Update( sqllib, UserGroupDesc, fg );
-						
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
 						{
-							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
-						}
+						//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
+						//sqllib->Update( sqllib, UserGroupDesc, fg );
 						
-						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
+						
+							{
+								char msg[ 512 ];
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
+								UGMRemoveGroup( l->sl_UGM, fg );
+							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
+							}
+						
+							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
 
-						l->LibrarySQLDrop( l, sqllib );
+							l->LibrarySQLDrop( l, sqllib );
+						}
+						else
+						{
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+							HttpAddTextContent( response, buffer );
+						}
 					}
 					else
 					{
-						char buffer[ 256 ];
-						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
-						HttpAddTextContent( response, buffer );
+						HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Cannot remove group with 'Level' type\", \"code\":\"1\" }" );
 					}
 				}
 				else
@@ -739,59 +752,64 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		BufString *retString = BufStringNew();
 		BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 		BufStringAdd( retString, "\"groups\":[" );
-		UserGroup *lg = l->sl_UGM->ugm_UserGroups;
-		int pos = 0;
 		
-		while( lg != NULL )
+		if( FRIEND_MUTEX_LOCK( &(l->sl_UGM->ugm_Mutex) ) == 0 )
 		{
-			// if values are set then we want to filter all messages by using them
-			FBOOL addToList = TRUE;
-			if( fParentID == TRUE )	// user want filtering
-			{
-				if( lg->ug_ParentID != parentID )
-				{
-					addToList = FALSE;
-				}
-			}
-			
-			if( status >= 0 )
-			{
-				if( status != lg->ug_Status )
-				{
-					addToList = FALSE;
-				}
-			}
-			
-			if( type != NULL )
-			{
-				if( strcmp( type, lg->ug_Type ) != 0 )
-				{
-					addToList = FALSE;
-				}
-			}
-			
-			if( addToList == TRUE )
-			{
-				char tmp[ 512 ];
-				int tmpsize = 0;
-				if( pos == 0 )
-				{
-					tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
-				}
-				else
-				{
-					tmpsize = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
-				}
-				BufStringAddSize( retString, tmp, tmpsize );
-				pos++;
-			}
-			lg = (UserGroup *)lg->node.mln_Succ;
-		}
-		BufStringAddSize( retString, "]}", 2 );
+			UserGroup *lg = l->sl_UGM->ugm_UserGroups;
+			int pos = 0;
 		
-		HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
-		retString->bs_Buffer = NULL;
-		BufStringDelete( retString );
+			while( lg != NULL )
+			{
+				// if values are set then we want to filter all messages by using them
+				FBOOL addToList = TRUE;
+				if( fParentID == TRUE )	// user want filtering
+				{
+					if( lg->ug_ParentID != parentID )
+					{
+						addToList = FALSE;
+					}
+				}
+			
+				if( status >= 0 )
+				{
+					if( status != lg->ug_Status )
+					{
+						addToList = FALSE;
+					}
+				}
+			
+				if( type != NULL )
+				{
+					if( strcmp( type, lg->ug_Type ) != 0 )
+					{
+						addToList = FALSE;
+					}
+				}
+			
+				if( addToList == TRUE )
+				{
+					char tmp[ 512 ];
+					int tmpsize = 0;
+					if( pos == 0 )
+					{
+						tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+					}
+					else
+					{
+						tmpsize = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+					}
+					BufStringAddSize( retString, tmp, tmpsize );
+					pos++;
+				}
+				lg = (UserGroup *)lg->node.mln_Succ;
+			}
+			BufStringAddSize( retString, "]}", 2 );
+		
+			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
+			retString->bs_Buffer = NULL;
+			BufStringDelete( retString );
+			FRIEND_MUTEX_UNLOCK( &(l->sl_UGM->ugm_Mutex) );
+		}
 		
 		if( type != NULL )
 		{
