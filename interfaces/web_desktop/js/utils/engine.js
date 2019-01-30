@@ -2422,6 +2422,8 @@ function checkTablet()
 	return check;
 }
 
+alert( navigator.userAgent.toLowercase() );
+
 // Are we on a mobile browser?
 function checkMobileBrowser()
 {
@@ -2444,11 +2446,11 @@ function checkMobileBrowser()
 				window.isTablet = true;
 				window.isMobile = false;
 			}
-			
-			if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) )
-				window.isMobile = true;
 		}
 	}
+	// Ipads are always mobiles
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) )
+		window.isMobile = true;
 	window.isTouch = !!('ontouchstart' in window);
 	if( window.isMobile )
 	{
