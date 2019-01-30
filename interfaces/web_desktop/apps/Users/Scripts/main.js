@@ -12,14 +12,12 @@ var state = { mode: null, user: null };
 
 var startlimit = 0;
 var maxlimit = 50;
-
 var nothingnew = false;
-
 var limit = ( maxlimit ? ( startlimit + ', ' + maxlimit ) : '' );
-
 var updateuserlist = true;
-
 var searchQuery = {};
+
+Application.workgroupUserListChanged = false;
 
 Application.run = function( msg, iface )
 {
@@ -96,11 +94,15 @@ Application.receiveMessage = function( msg )
 							break;
 						}
 					}
-					if( !found ) exist.push( newst[a] );
+					if( !found )
+					{
+						Application.workgroupUserListChanged = true;
+						exist.push( newst[a] );
+					}
 				}
 				ge( 'pMembers' ).value = exist.join( ',' );
 			}
-			saveWorkgroup( refreshMembers );
+			if( Application.workgroupUserListChanged ) saveWorkgroup( refreshMembers );
 			break;
 		case 'savestartup':
 			if( msg.value )
@@ -1348,10 +1350,7 @@ function ApplyGroupSetup( id )
 		{
 			try { d = JSON.parse( d ) } catch( e ) {}
 			
-			console.log( { e: e, d: d, id: ( ge( 'pWorkgroupSetup' ).value ? ge( 'pWorkgroupSetup' ).value : '0' ), members: ( ge( 'pMembers' ).value ? ge( 'pMembers' ).value : '0' ), group: id } );
-			
 			RefreshWorkgroups();
-			//EditWorkgroup( id );
 		}
 		m.execute( 'usersetupapply', { id: ( ge( 'pWorkgroupSetup' ).value ? ge( 'pWorkgroupSetup' ).value : '0' ), members: ( ge( 'pMembers' ).value ? ge( 'pMembers' ).value : '0' ), group: id } );
 	}
@@ -1437,10 +1436,9 @@ function EditWorkgroup( id )
 	{
 		if( e == 'ok' )
 		{
-			console.log('we got details here...',d);
-			
 			var ele;
-		
+
+			Application.workgroupUserListChanged = false;
 			try{
 				ele = JSON.parse( d );
 			} catch(e) {
@@ -1455,7 +1453,6 @@ function EditWorkgroup( id )
 			{
 				var wg = '<option value="0">none</option>';
 				
-				console.log('dd,ee,',dd);
 				try
 				{
 					if( ee == 'ok' && dd )
@@ -1525,93 +1522,6 @@ function EditWorkgroup( id )
 		}
 	}
 	f.execute( 'group', {'command':'listdetails','id':id} );
-
-
-
-
-/*
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		var ele;
-		
-		try{
-			ele = JSON.parse( d );
-		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'}); return; }
-		
-		var str = '';
-		
-		if( ele.Setup && ele.Setup.length > 0 )
-		{
-			str += '<option value="0">none</option>';
-			
-			for( k in ele.Setup )
-			{
-				var s = ( ele.Setup[k].UserID > 0 ? ' selected="selected"' : '' );
-				
-				str += '<option value="' + ele.Setup[k].ID + '"' + s + '>' + ele.Setup[k].Name + '</option>';
-			}
-		}
-		
-		var mm = new Module( 'system' );
-		mm.onExecuted = function( ee, dd )
-		{
-			var wg = '<option value="0">none</option>';
-			
-			try
-			{
-				if( ee == 'ok' && dd )
-				{
-					dd = JSON.parse( dd );
-					
-					if( dd )
-					{
-						for( var i in dd )
-						{
-							if( dd[i].ID )
-							{
-								if( dd[i].ID == ele.ID || dd[i].ParentID == ele.ID )
-								{
-									continue;
-								}
-								
-								wg += '<option value="' + dd[i].ID + '"' + ( ele.ParentID && dd[i].ID == ele.ParentID ? ' Selected="Selected"' : '' ) + '>' + dd[i].Name + '</option>';
-							}
-						}
-					}
-				}
-			}
-			catch( e ){  }
-			
-			var f = new File( 'Progdir:Templates/workgroup.html' );
-			f.replacements = {
-				'id': ele.ID,
-				'name': ele.Name,
-				'parent': wg,
-				'members': ele.Members,
-				'setup': str,
-				'viewId': ge( 'viewId' ).value,
-				'parentViewId': ge( 'viewId' ).value,
-				'delCss': ''
-			};
-			f.i18n();
-			f.onLoad = function( data )
-			{
-				ge( 'WorkgroupGui' ).innerHTML = data;
-			
-				if( ge( 'SetupGroupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'SetupGroupContainer' ).value )
-				{
-					ge( 'SetupGroupContainer' ).style.display = 'none';
-				}
-			
-				refreshMembers( ele.ID );
-			}
-			f.load();
-		}	
-		mm.execute( 'workgroups' );
-	}	
-	m.execute( 'workgroupget', { id: id } );
-	*/	
 }
 
 // Save a workgroup
@@ -1622,9 +1532,11 @@ function saveWorkgroup( callback, tmp )
 		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
 		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
 		groupname: ge( 'pWorkgroupName' ).value,
-		users: ge( 'pMembers' ).value
 	};
 
+	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value;
+	Application.workgroupUserListChanged = false;
+		
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
@@ -1653,7 +1565,7 @@ function saveWorkgroup( callback, tmp )
 	}
 	
 
-	console.log('sending this for saving',args);
+	//console.log('sending this for saving',args);
 	if( args.id > 0  )
 		args.command ='update';
 	else
@@ -1683,7 +1595,6 @@ function RefreshWorkgroups()
 		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load workgroups!'}); return; }
 		var ml = '';
 		var sw = 1;
-		console.log('our rows ',rows);
 		
 		for( var a in rows )
 		{
@@ -1765,12 +1676,12 @@ function removeFromGroup()
 		}
 		else idstr.push( opts[a].value );
 	}
-	
-	console.log('hæh',idstr);
 	ge( 'pMembers' ).value = idstr.join( ',' );
 	
 	for( var a = 0; a < ids.length; a++ )
 		ids[a].parentNode.removeChild( ids[a] );
+
+	Application.workgroupUserListChanged = true;
 	saveWorkgroup();
 }
 
