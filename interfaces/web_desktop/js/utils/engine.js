@@ -2447,8 +2447,9 @@ function checkMobileBrowser()
 		}
 	}
 	// Ipads are always mobiles
-	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) )
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 )
 		window.isMobile = true;
+	
 	window.isTouch = !!('ontouchstart' in window);
 	if( window.isMobile )
 	{
