@@ -1478,9 +1478,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	Workspace.diskNotification( [ winobj, eles[0].window ], 'refresh' );
 
 	// Sanitize input... no folder to be dropped into themselves or their children....
-	// HOGNE: Bug! If a window title contains the path of the icon to be dropped
-	// you close it (example: FriendBrowser showing index.html, and drag&drop of index.html)! :) 
-	// Maybe you should check if the window is a directoryView?
 	var clean = [];
 	for( var i = 0; i < eles.length; i++ )
 	{
@@ -1499,7 +1496,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					('' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) != -1
 				)
 				{
-					movableWindows[j].windowObject.close();
+					if( movableWindows[ j ].content && movableWindows[ j ].content.directoryview )
+					{
+						movableWindows[j].windowObject.close();
+					}
 				}
 			}
 		}
