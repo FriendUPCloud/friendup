@@ -5782,8 +5782,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 		
-		console.log( 'Dest now: ' + dest );
-		
 		if( dest && f.length )
 		{
 			// Files

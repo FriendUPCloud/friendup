@@ -621,9 +621,6 @@ var mousePointer =
 				var ic = ele.window.icons[a];
 				if( !ic.domNode ) continue;
 				
-				if( !ctrl && target && ic.domNode != target )
-					continue;
-				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
 				{
 					var el = ic.domNode;
