@@ -3125,7 +3125,6 @@ var View = function( args )
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 			if( !msg.origin ) msg.origin = document.location.href;
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
-			ifr.body = ifr.contentWindow.document.body;
 		}
 		c.appendChild( ifr );
 	}

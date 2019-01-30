@@ -20,7 +20,7 @@ class LogCat
 	var $_save = false;
 	var $_prevBufferSize = 0;
 	
-	public function LogCat( $save = false )
+	public function __construct( $save = false )
 	{
 		$this->_save = $save;
 	}

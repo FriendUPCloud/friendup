@@ -358,6 +358,7 @@ window.Shell = function( appObject )
 		var t = this;
 		this.execute( array[index++], function( result, data )
 		{
+			console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
 			if( result )
 			{
 				buffer += typeof( result ) == 'object' ? result.response : result;
@@ -1600,6 +1601,9 @@ window.Shell = function( appObject )
 	// Parse a command
 	this.execute = function( cmd, ecallback )
 	{
+		if( !cmd ) return false;
+		
+		console.log( 'this.execute = function( cmd, ecallback )', cmd );
 		// References
 		// TODO: Remove dosobj and replace with t
 		var dosobj = t = this;
@@ -1649,7 +1653,11 @@ window.Shell = function( appObject )
 		{
 			return this.mind.parse( cmd, ecallback );
 		}
-
+		
+		// testing ...
+		// Get an intelligent parsed object for variables and fin_args
+		cmd = Trim( EntityDecode( cmd.split( '<!--semicolon-->' ).join( ';' ) ) );
+		
 		var rawLine = cmd + '';
 
 		// Setup proxy caller we can add some things to
@@ -1693,12 +1701,20 @@ window.Shell = function( appObject )
 				cmd[a] = Trim( cmd[a] );
 			}
 			cmd = cmd.join( "\n" );
+			
+			console.log( 'cmd [1] ', cmd );
+			
 			return this.parseScript( cmd, dcallback );
 		}
-
+		
+		console.log( 'cmd [2] ', cmd );
+		
+		// Commented out temporary because, testing this method before multiline fork ...
 		// Get an intelligent parsed object for variables and fin_args
-		cmd = Trim( EntityDecode( cmd.split( '<!--semicolon-->' ).join( ';' ) ) );
-
+		//cmd = Trim( EntityDecode( cmd.split( '<!--semicolon-->' ).join( ';' ) ) );
+		
+		console.log( 'cmd [3] ', cmd );
+		
 		// Common ones
 		switch( cmd.toLowerCase() )
 		{
@@ -1713,7 +1729,9 @@ window.Shell = function( appObject )
 		var parsedObject = this.parseInput( cmd );
 		cmd = parsedObject.args; // Just the fin_args
 		this.parsedObj = parsedObject;
-
+		
+		console.log( 'cmd [4] ', { parsedObj: this.parsedObj, cmd: cmd } );
+		
 		// Let's do lowercase
 		cmd[0] = cmd[0].toLowerCase();
 
@@ -2051,6 +2069,17 @@ window.Shell = function( appObject )
 			out += string[a];
 		}
 		// Get an array. Return an object with vars and args
+		/*out = [];
+		
+		out1 = out.split( ';' );
+		
+		for( var i in out1 )
+		{
+			out.push( out1[i] );
+		}
+		
+		out2 = out.split( ' ' );*/
+		console.log( 'this.parseInput = function( string ) ', out );
 		out = out.split( ' ' );
 		var object = { args: [], vars: [] };
 		for( a = 0; a < out.length; a++ )
