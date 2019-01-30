@@ -312,6 +312,10 @@ Application.refreshFilePane = function( method )
 						} );
 						return cancelBubble( e );
 					}
+					if( isMobile )
+					{
+						rem.ontouchstart = rem.onclick;
+					}
 					d.insertBefore( rem, d.firstChild );
 				} )( d, num.Path );
 			}
