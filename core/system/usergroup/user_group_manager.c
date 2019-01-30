@@ -539,7 +539,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 
 		BufStringAddSize( bsGroups, "]}", 2 );
 		
-		NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", &(bsGroups->bs_Buffer[17]) );
+		NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 		
 		if( bsInsert != NULL )
 		{
