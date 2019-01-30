@@ -47,8 +47,8 @@
 #include <websockets/websocket_req_manager.h>
 #include <network/protocol_websocket.h>
 #include <mobile_app/mobile_app.h>
-#define ENABLE_MOBILE_APP_NOTIFICATIONS 1
-#define ENABLE_NOTIFICATIONS_SINK 1
+#define ENABLE_MOBILE_APP_NOTIFICATIONS 0
+#define ENABLE_NOTIFICATIONS_SINK 0
 
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
 #include <mobile_app/mobile_app_websocket.h>
