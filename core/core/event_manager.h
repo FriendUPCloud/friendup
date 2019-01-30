@@ -66,7 +66,7 @@ FUQUAD EventGetNewID( EventManager *em );
 // add new event
 //
 
-int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat );
+int EventAdd( EventManager *em, char *name, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat );
 
 //
 // check event

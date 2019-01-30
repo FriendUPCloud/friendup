@@ -33,6 +33,7 @@
 #include <core/thread.h>
 #include <time.h>
 #include <unistd.h>
+#include <util/string.h>
 
 void *EventManagerLoopThread( FThread *ptr );
 
@@ -108,6 +109,10 @@ void EventManagerDelete( EventManager *em )
 			CoreEvent *rem = locnce;
 			locnce = (CoreEvent *)locnce->node.mln_Succ;
 
+			if( rem->ce_Name != NULL )
+			{
+				FFree( rem->ce_Name );
+			}
 			FFree( rem );
 		}
 		
@@ -249,13 +254,14 @@ void *EventManagerLoopThread( FThread *ptr )
  * Add a new event to the list of events to handle
  *
  * @param em pointer to the event manager structure
- * @param id ID of the event returned by EventGetNewID
- * @param thread pointer to the thread to send the message to
+ * @param name name of event
+ * @param function pointer to function which will be called
+ * @param data pointer to data which will be provided to function
  * @param nextCall delay before sending the message
  * @param repeat number of repetitions
  * @return 0 when success, otherwise error number
  */
-int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat )
+int EventAdd( EventManager *em, char *name, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat )
 {
 	CoreEvent *nce = FCalloc( sizeof( CoreEvent ), 1 );
 	if( nce != NULL )
@@ -269,6 +275,7 @@ int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, tim
 		nce->ce_RepeatTime = repeat;
 		nce->ce_TimeDelta = deltaTime;
 		nce->ce_Data = data;
+		nce->ce_Name = StringDuplicate( name );
 
 		DEBUG("[EventManager] Add new event, ID: %lu\n", nce->ce_ID );
 
@@ -319,7 +326,7 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 			ev->ce_RepeatTime--;
 		}
 		
-		DEBUG("[EventManager] Start thread %p  SB ptr %p\n", ev->ce_Function, em->em_SB );
+		DEBUG("[EventManager] Start thread %p  SB ptr %p event name: %s\n", ev->ce_Function, em->em_SB, ev->ce_Name );
 		//ThreadStart( ev->ce_Thread );
 		//ev->ce_Data = em->em_SB;
 		//ev->ce_Thread = ThreadNew( EventLaunch, ev, TRUE, NULL );

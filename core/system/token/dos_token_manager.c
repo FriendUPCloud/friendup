@@ -347,6 +347,7 @@ void DOSTokenManagerAutoDelete( DOSTokenManager *d )
 		d->dtm_Tokens = newTokenList;
 		
 		FRIEND_MUTEX_UNLOCK( &d->dtm_Mutex );
+		DEBUG("DOSTokenManagerAutoDelete end\n");
 	}
 }
 
