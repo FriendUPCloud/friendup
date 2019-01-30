@@ -110,6 +110,7 @@ Application.handleBack = function()
 
 Application.updateViewMode = function()
 {
+	if( !isMobile ) return;
 	switch( currentViewMode )
 	{
 		case 'root':
@@ -1056,7 +1057,7 @@ Application.loadFile = function( path )
 {
 	this.loading = true;
 	
-	Application.statusMessage( 'i18n_status_loading' );
+	Application.statusMessage( i18n( 'i18n_status_loading' ) );
 	
 	Application.lastSaved = ( new Date() ).getTime();
 	Application.fileSaved = true;
