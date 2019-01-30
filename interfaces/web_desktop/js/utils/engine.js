@@ -2438,7 +2438,7 @@ function checkMobileBrowser()
 				navigator.userAgent.toLowerCase().indexOf( 'phone' ) > 0 ||
 				navigator.userAgent.toLowerCase().indexOf( 'pad' ) > 0 ||
 				navigator.userAgent.toLowerCase().indexOf( 'bowser' ) > 0 );
-	
+			
 			if( ( window.isMobile || navigator.userAgent.indexOf( 'Mobile' ) > 0 ) && window.innerWidth >= 1024 )
 			{
 				window.isTablet = true;
@@ -2446,6 +2446,9 @@ function checkMobileBrowser()
 			}
 		}
 	}
+	// Ipads are always mobiles
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) )
+		window.isMobile = true;
 	window.isTouch = !!('ontouchstart' in window);
 	if( window.isMobile )
 	{

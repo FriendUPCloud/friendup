@@ -352,6 +352,7 @@ var mousePointer =
 				}
 				if( dropWin )
 				{
+					if( dropWin.content && dropWin.content.windowObject && dropWin.content.windowObject.refreshing ) return;
 					// Did we drop on a file browser?
 					if( dropWin.content && dropWin.content.fileBrowser )
 					{
@@ -374,8 +375,6 @@ var mousePointer =
 				// Find what we dropped on
 				for( var c in ars )
 				{
-					var dropperIcon = false;
-					
 					var isListView = false;
 					var isScreen = false;
 					var w = ars[c].icons ? ars[c] : ars[c].content;
@@ -450,13 +449,11 @@ var mousePointer =
 							
 							// Hit icon!
 							if( 
-								!dropperIcon && 
 								ic.offsetTop < my && ic.offsetLeft < mx &&
 								ic.offsetTop + ic.offsetHeight > my &&
 								ic.offsetLeft + ic.offsetWidth > mx
 							)
 							{
-								dropperIcon = true;
 								dropper = icon;
 								break;
 							}
@@ -507,7 +504,7 @@ var mousePointer =
 				{
 					dropper.domNode.drop( this.elements, e );
 				}
-				else if( dropper.domNode.file && dropper.domNode.file.drop )
+				else if( dropper.domNode && dropper.domNode.file && dropper.domNode.file.drop )
 				{
 					dropper.domNode.file.drop( this.elements, e );
 				}
@@ -603,21 +600,30 @@ var mousePointer =
 	{
 		this.testPointer ();
 	},
-	'pickup': function ( ele )
+	'pickup': function ( ele, e )
 	{
 		// Do not allow pickup for mobile
 		if( window.isMobile ) return;
+		
+		if( !e ) e = window.event;
+		var ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
+		
+		var target = false;
+		if( e ) target = e.target || e.srcElement;
 		
 		this.testPointer ();
 		// Check multiple (pickup multiple)
 		var multiple = false;
 		if ( ele.window )
 		{
+			if( ele.window.windowObject.refreshing ) return;
+			
 			_ActivateWindowOnly( ele.window.parentNode );
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				var ic = ele.window.icons[a];
 				if( !ic.domNode ) continue;
+				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
 				{
 					var el = ic.domNode;
@@ -3342,10 +3348,17 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 	WorkspaceMenu.close();
 }
 
-function clearRegionIcons()
+function clearRegionIcons( flags )
 {
 	// No icons selected now..
 	Friend.iconsSelectedCount = 0;
+
+	// Exception for icon deselection
+	var exception = null;
+	if( flags && flags.exception )
+	{
+		exception = flags.exception;
+	}
 
 	// Clear all icons
 	for( var a in movableWindows )
@@ -3360,7 +3373,11 @@ function clearRegionIcons()
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
-					ic.classList.remove( 'Selected' );
+					if( exception != ic )
+					{
+						ic.classList.remove( 'Selected' );
+						w.icons[a].selected = false;
+					}
 					ic.classList.remove( 'Editing' );
 					if( ic.input )
 					{
@@ -3370,7 +3387,6 @@ function clearRegionIcons()
 						}
 						ic.input = null;
 					}
-					w.icons[a].selected = false;
 				}
 			}
 		}
@@ -3383,8 +3399,11 @@ function clearRegionIcons()
 			var icon = Doors.screen.contentDiv.icons[a];
 			var ic = icon.domNode;
 			if( !ic ) continue;
-			ic.className = ic.className.split ( ' Selected' ).join ( '' );
-			icon.selected = false;
+			if( exception != ic )
+			{
+				ic.classList.remove( 'Selected' );
+				icon.selected = false;
+			}
 		}
 	}
 }
