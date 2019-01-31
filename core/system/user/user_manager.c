@@ -642,12 +642,12 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	
 	if( sqlLib != NULL )
 	{
-		char where[ 256 ];
-		where[ 0 ] = 0;
+		int len = strlen(name)+128;
+		char *where = FMalloc( len );
 	
 		DEBUG("[UMGetUserByNameDB] start\n");
 
-		sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `Name` = '%s'", name );
+		sqlLib->SNPrintF( sqlLib, where, len, " `Name`='%s'", name );
 	
 		int entries;
 	
@@ -662,6 +662,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 		
 			tmp = (User *)tmp->node.mln_Succ;
 		}
+		FFree( where );
 	}
 	
 	DEBUG("[UMGetUserByNameDB] end\n");
