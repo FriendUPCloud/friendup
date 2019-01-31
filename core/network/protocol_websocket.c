@@ -841,8 +841,16 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						BufStringAddSize( fcd->fcd_Buffer, in, len );
 						
 						jsmn_init(&p);
-						r = jsmn_parse( &p, fcd->fcd_Buffer->bs_Buffer, fcd->fcd_Buffer->bs_Size+1, t, 128 );
-						DEBUG("PARSE: msg '%s' len %d ret %d\n", fcd->fcd_Buffer->bs_Buffer, fcd->fcd_Buffer->bs_Size, r );
+						if( fcd->fcd_Buffer == NULL )
+						{
+							r = 0;
+							DEBUG("ProtocolWebsocket: buffer is empty!\n");
+						}
+						else
+						{
+							r = jsmn_parse( &p, fcd->fcd_Buffer->bs_Buffer, fcd->fcd_Buffer->bs_Size+1, t, 128 );
+							DEBUG("PARSE: msg '%s' len %d ret %d\n", fcd->fcd_Buffer->bs_Buffer, fcd->fcd_Buffer->bs_Size, r );
+						}
 						if( r > 0 )
 						{
 							FFree( in );
