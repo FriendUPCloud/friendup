@@ -1,0 +1,94 @@
+{
+  "_from": "@ckeditor/ckeditor5-heading",
+  "_id": "@ckeditor/ckeditor5-heading@10.1.1",
+  "_inBundle": false,
+  "_integrity": "sha512-2hUJbVqTUKkZJGuRhaTj2I8x0cIKFJgT/2w93jQ/PVBLfE84JmJKNnXFC1rsW7RC8Uxo55we89FVeDdXjSJwSg==",
+  "_location": "/@ckeditor/ckeditor5-heading",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "@ckeditor/ckeditor5-heading",
+    "name": "@ckeditor/ckeditor5-heading",
+    "escapedName": "@ckeditor%2fckeditor5-heading",
+    "scope": "@ckeditor",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@ckeditor/ckeditor5-heading/-/ckeditor5-heading-10.1.1.tgz",
+  "_shasum": "1b94da7ddef17b60d697c0f06104691ca03f6f1f",
+  "_spec": "@ckeditor/ckeditor5-heading",
+  "_where": "/home/hogne/Projects/CKEditor",
+  "author": {
+    "name": "CKSource",
+    "url": "http://cksource.com/"
+  },
+  "bugs": {
+    "url": "https://github.com/ckeditor/ckeditor5-heading/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@ckeditor/ckeditor5-core": "^11.1.0",
+    "@ckeditor/ckeditor5-paragraph": "^10.0.4",
+    "@ckeditor/ckeditor5-theme-lark": "^12.0.0",
+    "@ckeditor/ckeditor5-ui": "^11.2.0",
+    "@ckeditor/ckeditor5-utils": "^11.1.0"
+  },
+  "deprecated": false,
+  "description": "Headings feature for CKEditor 5.",
+  "devDependencies": {
+    "@ckeditor/ckeditor5-cloud-services": "^10.1.1",
+    "@ckeditor/ckeditor5-editor-classic": "^11.0.2",
+    "@ckeditor/ckeditor5-engine": "^12.0.0",
+    "@ckeditor/ckeditor5-enter": "^10.1.3",
+    "@ckeditor/ckeditor5-image": "^12.0.0",
+    "@ckeditor/ckeditor5-typing": "^11.0.2",
+    "@ckeditor/ckeditor5-undo": "^10.0.4",
+    "eslint": "^5.5.0",
+    "eslint-config-ckeditor5": "^1.0.7",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=6.9.0",
+    "npm": ">=3.0.0"
+  },
+  "eslintIgnore": [
+    "src/lib/**",
+    "packages/**"
+  ],
+  "files": [
+    "lang",
+    "src",
+    "theme"
+  ],
+  "homepage": "https://ckeditor.com",
+  "keywords": [
+    "ckeditor",
+    "ckeditor5",
+    "ckeditor 5",
+    "ckeditor5-feature",
+    "ckeditor5-plugin"
+  ],
+  "license": "GPL-2.0-or-later",
+  "lint-staged": {
+    "**/*.js": [
+      "eslint --quiet"
+    ]
+  },
+  "name": "@ckeditor/ckeditor5-heading",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckeditor/ckeditor5-heading.git"
+  },
+  "scripts": {
+    "lint": "eslint --quiet '**/*.js'",
+    "precommit": "lint-staged"
+  },
+  "version": "10.1.1"
+}

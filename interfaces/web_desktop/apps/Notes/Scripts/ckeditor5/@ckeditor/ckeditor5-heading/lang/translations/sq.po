@@ -1,0 +1,30 @@
+# Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
+msgid ""
+msgstr ""
+"Language-Team: Albanian (https://www.transifex.com/ckeditor/teams/11143/sq/)\n"
+"Language: sq\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgctxt "Dropdown option label for the paragraph format."
+msgid "Paragraph"
+msgstr "Paragrafi"
+
+msgctxt "Tooltip for the heading dropdown."
+msgid "Heading"
+msgstr "Nëntitulli"
+
+msgctxt "Default label for the heading dropdown."
+msgid "Choose heading"
+msgstr "Përzgjidh nëntitullin"
+
+msgctxt "Dropdown option label for the heading level 1 format."
+msgid "Heading 1"
+msgstr "Nëntitulli 1"
+
+msgctxt "Dropdown option label for the heading level 2 format."
+msgid "Heading 2"
+msgstr "Nëntitulli 2"
+
+msgctxt "Dropdown option label for the heading level 3 format."
+msgid "Heading 3"
+msgstr "Nëntitulli 3"
