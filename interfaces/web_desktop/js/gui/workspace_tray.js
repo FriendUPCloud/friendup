@@ -81,7 +81,7 @@ function PollTray()
 						{
 							event.clickCallback();
 							RemoveNotificationEvent( event.notificationId );
-							if( tray.notifications && tray.notifications.removeChild )
+							if( tray.notifications && this && this.parentNode == tray.notifications )
 								tray.notifications.removeChild( this );
 						}
 						PollTray();

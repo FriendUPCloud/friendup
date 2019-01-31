@@ -219,6 +219,7 @@ menu_show_hidden_files                  : Vis skjulte filer
 menu_new_window                         : Nytt vindu
 
 menu_edit_wallpaper                     : Endre skrivebordsbakgrunn
+menu_set_as_wallpaper                   : Bruk som skrivebordsbakgrunn
 i18n_edit_dock                          : Rediger docken
 i18n_remove_from_dock                   : Fjern fra docken
 

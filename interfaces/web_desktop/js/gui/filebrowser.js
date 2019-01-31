@@ -65,6 +65,10 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	}
 	if( this.flags.rootPath )
 		this.rootPath = this.flags.rootPath;
+	
+	// If we don't have a rootPath the default is Mountlist:
+	if( !this.rootPath ) this.rootPath = 'Mountlist:';
+	
 	// Clicking the pane
 	this.dom.onclick = function( e )
 	{
@@ -216,9 +220,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			else
 			{
-				// Set the current target path
-				self.flags.path = ppath;
-				
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{

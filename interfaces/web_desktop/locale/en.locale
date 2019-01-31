@@ -218,6 +218,7 @@ menu_show_hidden_files                  : Show hidden files
 menu_new_window                         : New window
 
 menu_edit_wallpaper                     : Edit wallpaper
+menu_set_as_wallpaper                   : Set as wallpaper
 i18n_edit_dock                          : Edit dock
 i18n_remove_from_dock                   : Remove from dock
 

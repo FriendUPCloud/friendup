@@ -26,32 +26,30 @@ window.addEventListener( 'scroll', function()
 }, false );
 // End scroll watcher
 
+var currentViewMode = 'default';
+if( isMobile )
+{
+	ge( 'LeftBar' ).style.transform = '-100%';
+	ge( 'LeftBar' ).style.width = '100%';
+	ge( 'LeftBar' ).style.transition = 'transform 0.25s';
+	ge( 'FileBar' ).style.transform = '-100%';
+	ge( 'FileBar' ).style.width = '100%';
+	ge( 'FileBar' ).style.transition = 'transform 0.25s';
+	ge( 'RightBar' ).style.transform = '0%';
+	ge( 'RightBar' ).style.width = '100%';
+	ge( 'RightBar' ).style.transition = 'transform 0.25s';
+}
+
 var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
 	{
-		var ext = extension.toLowerCase();
-		if( ext == 'html' || ext == 'htm' )
-		{
-			Application.loadFile( path );
-		}
-		else
-		{
-			return;
-		}
+		
 	},
 	// Load a file
 	loadFile( path )
 	{
-		var pp = path.toLowerCase();
-		if( pp.substr( pp.length - 4, 4 ) == '.htm' || pp.substr( pp.length - 5, 5 ) == '.html' )
-		{
-			Application.loadFile( path );
-		}
-		else
-		{
-			return;
-		}
+		
 	},
 	folderOpen( ele )
 	{
@@ -60,12 +58,16 @@ var filebrowserCallbacks = {
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
 		Application.refreshFilePane( 'findFirstFile' );
+		currentViewMode = 'files';
+		Application.updateViewMode();
 	},
 	folderClose( ele )
 	{
 		Application.currentDocument = null;
 		Application.browserPath = ele;
 		Application.refreshFilePane( 'findFirstFile' );
+		currentViewMode = 'files';
+		Application.updateViewMode();
 	}
 };
 
@@ -85,6 +87,50 @@ Application.checkFileType = function( p )
 	if( Application.browserPath != p )
 	{
 		Application.browserPath = p;
+	}
+}
+
+Application.handleBack = function()
+{
+	if( !isMobile ) return;
+	switch( currentViewMode )
+	{
+		case 'root':
+			currentViewMode = 'root';
+			break;
+		case 'files':
+			currentViewMode = 'root';
+			break;
+		default:
+			currentViewMode = 'files';
+			break;
+	}
+	this.updateViewMode();
+}
+
+Application.updateViewMode = function()
+{
+	if( !isMobile ) return;
+	switch( currentViewMode )
+	{
+		case 'root':
+			ge( 'LeftBar' ).style.transform = 'translateX(0)';
+			this.fld.style.transform = 'translateX(0)';
+			ge( 'FileBar' ).style.transform = 'translateX(100%)';
+			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			break;
+		case 'files':
+			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
+			this.fld.style.transform = 'translateX(-100%)';
+			ge( 'FileBar' ).style.transform = 'translateX(0%)';
+			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			break;
+		default:
+			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
+			this.fld.style.transform = 'translateX(-100%)';
+			ge( 'FileBar' ).style.transform = 'translateX(-100%)';
+			ge( 'RightBar' ).style.transform = 'translateX(0%)';
+			break;
 	}
 }
 
@@ -132,6 +178,11 @@ Application.refreshFilePane = function( method )
 			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
 			fBar.add.onclick = function()
 			{
+				if( isMobile )
+				{
+					currentViewMode = 'default';
+					Application.updateViewMode();
+				}
 				var testFile = 'unnamed';
 				var nextTest = testFile;
 				var d = new Door( Application.browserPath );
@@ -202,7 +253,10 @@ Application.refreshFilePane = function( method )
 			
 			var d = document.createElement( 'div' );
 			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
-			d.path = items[ a ].Path;
+			
+			( function( p, o ){
+				o.path = p;
+			} )( items[ a ].Path, d );
 			
 			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
@@ -258,6 +312,10 @@ Application.refreshFilePane = function( method )
 						} );
 						return cancelBubble( e );
 					}
+					if( isMobile )
+					{
+						rem.ontouchstart = rem.onclick;
+					}
 					d.insertBefore( rem, d.firstChild );
 				} )( d, num.Path );
 			}
@@ -267,7 +325,7 @@ Application.refreshFilePane = function( method )
 			// Selected files can be renamed
 			if( d.classList.contains( 'Selected' ) )
 			{
-				d.onclick = function()
+				d.clicker = function()
 				{
 					var s = this;
 					if( this.tm )
@@ -333,17 +391,51 @@ Application.refreshFilePane = function( method )
 						s.tm = null;
 					}
 				}
+				if( isMobile )
+				{
+					( function( dd ) {
+						dd.ontouchstart = function( e )
+						{
+							var f = dd;
+							this.editTimeout = setTimeout( function()
+							{
+								f.editTimeout = null;
+								f.clicker();
+							}, 750 );
+							return cancelBubble( e );
+						}
+						dd.ontouchend = function()
+						{
+							var f = this;
+							if( f.editTimeout )
+							{
+								clearTimeout( f.editTimeout );
+								f.editTimeout = null;
+								currentViewMode = 'default';
+								Application.updateViewMode();
+								Application.currentDocument = f.path;
+								Application.loadFile( f.path );
+							}
+						}
+					} )( d );
+				}
+				else
+				{
+					d.onclick = d.clicker;
+				}
 			}
 			// Others are activated
 			else
 			{
-				( function( dl, path ){
-					dl.onclick = function()
+				( function( dl ){
+					dl[ isMobile ? 'ontouchstart' : 'onclick' ] = function()
 					{
-						Application.currentDocument = path;
-						Application.loadFile( path );
+						currentViewMode = 'default';
+						Application.updateViewMode();
+						Application.currentDocument = dl.path;
+						Application.loadFile( dl.path );
 					}
-				} )( d, num.Path );
+				} )( d );
 			}
 		}
 		
@@ -394,6 +486,11 @@ Application.run = function( msg, iface )
 	
 	// Make an "add new folder" button
 	this.fld = document.createElement( 'div' );
+	if( isMobile )
+	{
+		this.fld.style.transform = '-100%';
+		this.fld.style.transition = 'transform 0.25s';
+	}
 	this.fld.className = 'NewFolder BackgroundHeavier';
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
 	this.fld.onclick = function( e )
@@ -972,7 +1069,7 @@ Application.loadFile = function( path )
 {
 	this.loading = true;
 	
-	Application.statusMessage( 'i18n_status_loading' );
+	Application.statusMessage( i18n( 'i18n_status_loading' ) );
 	
 	Application.lastSaved = ( new Date() ).getTime();
 	Application.fileSaved = true;
@@ -1383,6 +1480,9 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'mobilebackbutton':
+			Application.handleBack();
+			break;
 		case 'applystyle':
 			if( msg.style )
 			{
