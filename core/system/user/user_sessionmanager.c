@@ -933,7 +933,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 		return FALSE;
 	}
     
-    //FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+    //
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
 	{
@@ -941,15 +941,15 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 		if( usr->u_ID == notification->dn_OwnerID )
 		{
 			char *uname = usr->u_Name;
+			int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
 			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
+			FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 			UserSessListEntry *le = usr->u_SessionsList;
 			while( le != NULL )
 			{
 				UserSession *uses = (UserSession *)le->us;
-			
-				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
 				DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
@@ -1020,11 +1020,12 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 				}
 				
 				le = (UserSessListEntry *)le->node.mln_Succ;
-			} // if ->usr == NULL
+			} // while loop, session
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
-	//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	
 	
     /*
 	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
