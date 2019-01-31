@@ -30,6 +30,51 @@
 #undef __DEBUG
 
 /**
+ * Generate json table with Users assigned to group
+ *
+ * @param l pointer to SystemBase
+ * @param groupID ID of group
+ * @param retString BufString to which results will be stored
+ * @return 0 when success, otherwise error number
+ */
+int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString )
+{
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[ 512 ];
+		char tmp[ 512 ];
+		int itmp = 0;
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu", groupID );
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int pos = 0;
+			char **row;
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FULONG userid = strtol( (char *)row[0], &end, 0 );
+				
+				if( pos == 0 )
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+					}
+				else
+				{
+					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+				}
+				BufStringAddSize( retString, tmp, itmp );
+				pos++;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return 0;
+}
+
+/**
  * Http web call processor
  * Function which process all incoming Http requests
  *
@@ -252,7 +297,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							groupID = ug->ug_ID;
 							
 							addUsers = TRUE;
-							
+
 							{
 								char msg[ 512 ];
 								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", ug->ug_ID, ug->ug_Name );
@@ -309,6 +354,19 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						}
 						
 						FFree( rmEntry );
+					}
+					
+					{
+						char tmp[256];
+						int itmp;
+						BufString *retString = BufStringNew();
+						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"userids\":[", groupID );
+						BufStringAddSize( retString, tmp, itmp );
+						generateConnectedUsers( l, groupID, retString );
+						BufStringAddSize( retString, "]}", 2 );
+						
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", retString->bs_Buffer );
+						BufStringDelete( retString );
 					}
 				}
 			} // missing parameters
@@ -650,7 +708,18 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							FFree( rmEntry );
 						}
 						
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", msg );
+						{
+							char tmp[256];
+							int itmp;
+							BufString *retString = BufStringNew();
+							itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"userids\":[", groupID );
+							BufStringAddSize( retString, tmp, itmp );
+							generateConnectedUsers( l, groupID, retString );
+							BufStringAddSize( retString, "]}", 2 );
+						
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", retString->bs_Buffer );
+							BufStringDelete( retString );
+						}
 					}
 					
 					char buffer[ 256 ];
@@ -1026,38 +1095,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				
 				// get required information for external servers
 			
-				SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-				if( sqlLib != NULL )
-				{
-					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
-					void *result = sqlLib->Query(  sqlLib, tmpQuery );
-					if( result != NULL )
-					{
-						int pos = 0;
-						char **row;
-						while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
-						{
-							char *end;
-							FULONG userid = strtol( (char *)row[0], &end, 0 );
-							
-							if( pos == 0 )
-							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
-							}
-							else
-							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
-							}
-							BufStringAddSize( retString, tmp, itmp );
-							pos++;
-						}
-						
-						sqlLib->FreeResult( sqlLib, result );
-					}
-
-					l->LibrarySQLDrop( l, sqlLib );
-				}
+				generateConnectedUsers( l, groupID, retString );
 			} // groupID > 0
 			
 			BufStringAddSize( retString, "]}", 2 );
