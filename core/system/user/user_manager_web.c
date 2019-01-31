@@ -1360,7 +1360,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			User *usr = l->sl_UM->um_Users;
 			while( usr != NULL )
 			{
-				DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
+				//DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 				
 				UserSessListEntry  *usl = usr->u_SessionsList;
 				while( usl != NULL )
@@ -1479,7 +1479,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					if( locses != NULL )
 					{
 						FBOOL add = FALSE;
-						DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
+						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
 						
 						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSClients != NULL )
 						{

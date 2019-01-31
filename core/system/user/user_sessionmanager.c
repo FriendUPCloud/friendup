@@ -587,42 +587,43 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	DEBUG("[USMUserSessionRemove] UserSessionRemove\n");
 	
-	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-	
-	if( remsess == smgr->usm_Sessions )
+	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
-		smgr->usm_Sessions = (UserSession *)smgr->usm_Sessions->node.mln_Succ;
-		UserSession *nexts = (UserSession *)sess->node.mln_Succ;
-		if( nexts != NULL )
+		if( remsess == smgr->usm_Sessions )
 		{
-			nexts->node.mln_Pred = (MinNode *)NULL;
-		}
-		sessionRemoved = TRUE;
-		smgr->usm_SessionCounter--;
-		INFO("[USMUserSessionRemove] Session removed from list\n");
-	}
-	else
-	{
-		while( sess != NULL )
-		{
-			prev = sess;
-			sess = (UserSession *)sess->node.mln_Succ;
-			
-			if( sess == remsess )
+			smgr->usm_Sessions = (UserSession *)smgr->usm_Sessions->node.mln_Succ;
+			UserSession *nexts = (UserSession *)sess->node.mln_Succ;
+			if( nexts != NULL )
 			{
-				prev->node.mln_Succ = (MinNode *)sess->node.mln_Succ;
-				UserSession *nexts = (UserSession *)sess->node.mln_Succ;
-				if( nexts != NULL )
+				nexts->node.mln_Pred = (MinNode *)NULL;
+			}
+			sessionRemoved = TRUE;
+			smgr->usm_SessionCounter--;
+			INFO("[USMUserSessionRemove] Session removed from list\n");
+		}
+		else
+		{
+			while( sess != NULL )
+			{
+				prev = sess;
+				sess = (UserSession *)sess->node.mln_Succ;
+			
+				if( sess == remsess )
 				{
-					nexts->node.mln_Pred = (MinNode *)prev;
+					prev->node.mln_Succ = (MinNode *)sess->node.mln_Succ;
+					UserSession *nexts = (UserSession *)sess->node.mln_Succ;
+					if( nexts != NULL )
+					{
+						nexts->node.mln_Pred = (MinNode *)prev;
+					}
+					DEBUG("[USMUserSessionRemove] Session removed from list\n");
+					sessionRemoved = TRUE;
+					break;
 				}
-				DEBUG("[USMUserSessionRemove] Session removed from list\n");
-				sessionRemoved = TRUE;
-				break;
 			}
 		}
+		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	
 	if( sessionRemoved == TRUE )
 	{
