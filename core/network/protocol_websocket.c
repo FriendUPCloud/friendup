@@ -1613,12 +1613,15 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						FFree( t );
 						
 						WebsocketServerClient *wscl = fcd->fcd_WSClient;
-						FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
-						wscl->wsc_InUseCounter--;
-						DEBUG("\t\t\t\t\t->%d\n", wscl->wsc_InUseCounter );
-						FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
-						
-						FLUSH_QUEUE();
+						if( wscl != NULL )
+						{
+							FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
+							wscl->wsc_InUseCounter--;
+							DEBUG("\t\t\t\t\t->%d\n", wscl->wsc_InUseCounter );
+							FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
+
+							FLUSH_QUEUE();
+						}
 						
 						if( in != NULL )
 						{
