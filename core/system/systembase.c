@@ -2509,7 +2509,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 
 					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 				}
-				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) )
+				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 			}
 			
 			FFree( buf );
