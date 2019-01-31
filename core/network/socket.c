@@ -40,10 +40,10 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
-#undef DEBUG
-#define DEBUG( ...)
-#undef DEBUG1
-#define DEBUG1( ...)
+//#undef DEBUG
+//#define DEBUG( ...)
+//#undef DEBUG1
+//#define DEBUG1( ...)
 
 //#define USE_SOCKET_REAPER
 
