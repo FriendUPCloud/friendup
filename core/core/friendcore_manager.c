@@ -117,6 +117,9 @@ FriendCoreManager *FriendCoreManagerNew()
 		
 		fcm->fcm_NodeIDGenerator = 2;
 		
+		fcm->disableMobileWS = 0;
+		fcm->disableExternalWS = 0;
+		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
 		//if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
@@ -153,7 +156,10 @@ FriendCoreManager *FriendCoreManagerNew()
 				fcm->fcm_WSSSLEnabled = plib->ReadIntNCS( prop, "core:wssslenable", 0 );
 				fcm->fcm_SSLEnabledCommuncation = plib->ReadIntNCS( prop, "core:communicationsslenable", 0 );
 				fcm->fcm_ClusterMaster = plib->ReadIntNCS( prop, "core:clustermaster", 0 );
+				
 				fcm->fcm_DisableWS = plib->ReadIntNCS( prop, "core:disablews", 0 );
+				fcm->disableMobileWS = plib->ReadIntNCS( prop, "core:disablemobilews", 0 );
+				fcm->disableExternalWS = plib->ReadIntNCS( prop, "core:disableexternalws", 0 );
 				
 				char *tptr  = plib->ReadStringNCS( prop, "LoginModules:modules", "" );
 				if( tptr != NULL )
@@ -280,24 +286,30 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 				return -1;
 			}
 			
-			if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1 ) ) != NULL )
+			if( fcm->disableMobileWS == 0 )
 			{
-				WebSocketStart( fcm->fcm_WebSocketMobile );
-			}
-			else
-			{
-				Log( FLOG_FATAL, "Cannot launch websocket server\n");
-				return -1;
+				if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1 ) ) != NULL )
+				{
+					WebSocketStart( fcm->fcm_WebSocketMobile );
+				}
+				else
+				{
+					Log( FLOG_FATAL, "Cannot launch websocket server\n");
+					return -1;
+				}
 			}
 			
-			if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, fcm->fcm_WSSSLEnabled, 2 ) ) != NULL )
+			if( fcm->disableExternalWS == 0 )
 			{
-				WebSocketStart( fcm->fcm_WebSocketNotification );
-			}
-			else
-			{
-				Log( FLOG_FATAL, "Cannot launch websocket server\n");
-				return -1;
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, fcm->fcm_WSSSLEnabled, 2 ) ) != NULL )
+				{
+					WebSocketStart( fcm->fcm_WebSocketNotification );
+				}
+				else
+				{
+					Log( FLOG_FATAL, "Cannot launch websocket server\n");
+					return -1;
+				}
 			}
 		}
 
