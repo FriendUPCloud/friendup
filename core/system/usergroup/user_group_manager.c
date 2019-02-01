@@ -888,14 +888,13 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 				
 				if( currGroupID == 0 || groupid != currGroupID )
 				{
-					BufStringAddSize( bs, "]}", 2 );
 					if( currGroupID == 0 )
 					{
 						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[1], (char *)row[3], parentid );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[1], (char *)row[3], parentid );
+						itmp = snprintf( tmp, sizeof(tmp), "]},{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[1], (char *)row[3], parentid );
 					}
 					BufStringAddSize( bs, tmp, itmp );
 
