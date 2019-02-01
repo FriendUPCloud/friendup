@@ -125,17 +125,67 @@ DoorLocalDevice.prototype.read = function( path, callback )
 {
 	if( !callback || !path ) return;
 	var pathstr = path.split( ':' )[1];
+
 	
 }
 
 DoorLocalDevice.prototype.write = function( path, callback )
 {
+	
 }
 
 // Will delete a device from local storage and add to sync list if linked to 
 // device
 DoorLocalDevice.prototype.delete = function( path, callback )
 {
+}
+
+// Make a directory
+DoorLocalDevice.prototype.makeDirectory = function( path, callback )
+{
+	var self = this;
+	if( this.deviceStructure[ 'paths' ][ path ] )
+	{
+		callback( false, { message: 'This directory already exists.', response: -1 } );
+		return false;
+	}
+	if( path.substr( path.length - 1, 1 ) == '/' )
+		path = path.substr( 0, path.length - 1 );
+	var paths = path.split( ':' ).join( '/' ).split( '/' );
+	var testPath = '';
+	for( var a = 0; a < paths.length; a++ )
+	{
+		if( !paths[ a ].length ) break;
+		testPath += paths[a] + a == 0 ? ':' : '/';
+		if( a == paths.length - 1 && !this.deviceStructure[ 'paths' ][ testPath ] )
+		{
+			this.deviceStructure[ 'paths' ][ testPath ] = {
+				permissions: {
+					owner: 'arwed',
+					groups: 'arwed',
+					others: 'arwed'
+				}
+				files: []
+			};
+			// Silent syncing
+			this.state.syncing = true;
+			if( this.onSync )
+				this.onSync( 'makedir', path );
+			this.sync( function()
+			{
+				self.state.syncing = false;
+				if( self.onSynced ) self.onSynced( 'makedir', path );
+			} );
+			// Tell system that the operation was successful
+			callback( true, { message: 'Directory was created.', response, 1 );
+			return true;
+		}
+		else if( a < paths.length - 1 && !this.deviceStructure[ 'paths' ][ testPath ] )
+		{
+			callback( false, { message: 'The parent directory does not exist.', response: -1 } );
+			return false;
+		}
+	}
 }
 
 // Will sync when online, and callback with synchronized files
