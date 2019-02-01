@@ -108,7 +108,7 @@ function saveWorkgroup( callback, tmp )
 		groupname: ge( 'pWorkgroupName' ).value
 
 	};
-	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value ? ge( 'pMembers' ).value : '';
+	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value ? ge( 'pMembers' ).value : 'false';
 
 
 
