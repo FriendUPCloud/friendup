@@ -425,13 +425,18 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 {
 	DEBUG("[USMUserSessionAddToList] start\n");
 	
-	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-
-	s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
-	smgr->usm_Sessions = s;
-	smgr->usm_SessionCounter++;
+	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
+	{
+		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+		smgr->usm_Sessions = s;
+		smgr->usm_SessionCounter++;
 	
-	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+	}
+	else
+	{
+		return NULL;
+	}
 	
 	DEBUG("[USMUserSessionAddToList] end\n");
 	
@@ -945,7 +950,8 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 			
 			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
-			FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+			//FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 			UserSessListEntry *le = usr->u_SessionsList;
 			while( le != NULL )
 			{
@@ -1021,7 +1027,8 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 				
 				le = (UserSessListEntry *)le->node.mln_Succ;
 			} // while loop, session
-			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
