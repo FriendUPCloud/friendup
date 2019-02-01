@@ -8,10 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
+Application.workgroupUserListChanged = false;
 
 Application.run = function( msg, iface )
 {
-	
+	ge('memberContainer').style.display = 'none';	
+	ge('addmemberbutton').style.display = 'none';	
 }
 
 Application.receiveMessage = function( msg )
@@ -37,7 +39,11 @@ Application.receiveMessage = function( msg )
 							break;
 						}
 					}
-					if( !found ) exist.push( newst[a] );
+					if( !found )
+					{
+						exist.push( newst[a] );
+						Application.workgroupUserListChanged = true;
+					}
 				}
 				ge( 'pMembers' ).value = exist.join( ',' );
 			}
@@ -94,7 +100,7 @@ function addMembers()
 }
 
 /* used only when adding a new workgroup here... */
-function saveWorkgroup()
+function saveWorkgroup( callback, tmp )
 {
 	var args = {
 		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
@@ -102,20 +108,44 @@ function saveWorkgroup()
 		groupname: ge( 'pWorkgroupName' ).value
 
 	};
-	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value;
+	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value ? ge( 'pMembers' ).value : 'false';
+
+
 
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
+		console.log('new workgroup saved...',e,d);
 		if( e == 'ok' )
 		{
 			//ge( 'pWorkgroupID' ).value = d;
-			Notify({'title':'Users','text':'Workgroup changes saved.'});
+			Notify({'title':i18n('i18n_users_title'),'text':i18n('i18n_workgroup_saved')});
 			Application.workgroupUserListChanged = false;
+			
+			
+			try{
+				var rs = JSON.parse(d);
+				if( rs.id )
+				{
+					Application.sendMessage({'command':'editnewworkgroup','workgroupid':rs.id});
+				}
+				else
+				{
+					Notify({'title':i18n('i18n_users_title'),'text':i18n('i18n_error_during_workgroup_save')});
+					cancelWorkgroup();
+				}
+			}
+			catch(e)
+			{
+				Notify({'title':i18n('i18n_users_title'),'text':i18n('i18n_error_during_workgroup_save')});
+				cancelWorkgroup();
+			}
 		}
 		else
 		{
+			Notify({'title':i18n('i18n_users_title'),'text':i18n('i18n_error_during_workgroup_save')});
 			console.log('Error during workgroup update',e,d);
+			cancelWorkgroup();
 		}
 	
 		if( callback ) callback();
@@ -126,7 +156,7 @@ function saveWorkgroup()
 		}
 		else
 		{
-			RefreshWorkgroups();
+			cancelWorkgroup();
 		}
 		
 	}

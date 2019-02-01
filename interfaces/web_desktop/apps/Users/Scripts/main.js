@@ -116,6 +116,10 @@ Application.receiveMessage = function( msg )
 				SaveSoftware( msg.apps );
 			}
 			break;
+		case 'editnewworkgroup':
+			RefreshWorkgroups();
+			EditWorkgroup( msg.workgroupid );
+			break;
 	}
 }
 
@@ -1382,32 +1386,42 @@ function AddWorkgroup()
 		width: 320,
 		height: 300
 	} );
-	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var ff = new Library( 'system.library' );
+	ff.onExecuted = function( ee, dd )
 	{
 		var wg = '<option value="0">none</option>';
 		
 		try
 		{
-			if( e == 'ok' && d )
+			if( ee == 'ok' && dd )
 			{
-				d = JSON.parse( d );
-				
-				if( d )
+				if(typeof dd != 'object') dd = JSON.parse( dd );
+			}
+		}
+		catch( error ){ 
+			Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+			return;
+		}		
+
+		if( dd.groups )
+		{
+			dd = dd.groups;
+			for( var i in dd )
+			{
+				if( dd[i].ID )
 				{
-					for( var i in d )
-					{
-						if( d[i].ID )
-						{
-							wg += '<option value="' + d[i].ID + '">' + d[i].Name + '</option>';
-						}
-					}
+					wg += '<option value="' + dd[i].ID + '">' + dd[i].name + '</option>';
 				}
 			}
 		}
-		catch( e ){  }
-		
+		else
+		{
+			Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+			return;
+
+		}
+
 		var f = new File( 'Progdir:Templates/workgroup.html' );
 		f.replacements = {
 			'id': '',
@@ -1423,13 +1437,18 @@ function AddWorkgroup()
 			v.setContent( data );
 		}
 		f.load();
-	}	
-	m.execute( 'workgroups' );
+		
+		
+		
+	}
+	ff.execute('group',{'command':'list'});
+
 }
 
 function EditWorkgroup( id )
 {
-
+	if( !id ) return;
+	console.log('edit this workgroup',id);
 
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
@@ -1534,9 +1553,11 @@ function saveWorkgroup( callback, tmp )
 		groupname: ge( 'pWorkgroupName' ).value,
 	};
 
-	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value;
+	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value ? ge( 'pMembers' ).value : 'false';
 	Application.workgroupUserListChanged = false;
 		
+		
+	console.log('save workgroup',args);
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
@@ -1685,15 +1706,25 @@ function removeFromGroup()
 	saveWorkgroup();
 }
 
+
 // Remove a workgroup outright
 function deleteWorkgroup()
 {
-	var f = new Library( 'system.library' );
-	f.onExecuted = function( e, d )
+	Confirm( i18n( 'i18n_deleting_workgroup' ), i18n( 'i18n_deleting_workgroup_verify' ), function( result )
 	{
-		RefreshWorkgroups();
-	}
-	f.execute( 'group', {'command':'delete','id':ge( 'pWorkgroupID' ).value} );
+		// Confirmed!
+		if( result && result.data && result.data == true )
+		{
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				RefreshWorkgroups();
+			}
+			f.execute( 'group', {'command':'delete','id':ge( 'pWorkgroupID' ).value} );		
+			ge( 'pWorkgroupID' ).value = 0;
+			ge( 'WorkgroupGui' ).innerHTML = '';
+		}
+	} );	
 
 }
 

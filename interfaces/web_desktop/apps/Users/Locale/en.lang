@@ -92,6 +92,11 @@ i18n_none                            : None
 i18n_select_template                 : Select template
 i18n_select_workgroups               : Select workgroups
 
+i18n_workgroup_saved                 : Workgroup saved
+i18n_error_during_workgroup_save     : An unexpected error occurred during saving your workgroup. Please restart the users app.
+i18n_deleting_workgroup              : Delete the workgroup
+i18n_deleting_workgroup_verify       : Are you sure you want to delete the workgroup? This cannot be undone!
+
 #Locale ------------------------------------------------------------------------
 
 i18n_locale_no                          : Norwegian
