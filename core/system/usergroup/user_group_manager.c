@@ -218,6 +218,9 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 			// remove connections between users and group
 			snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", ug->ug_ID );
 			sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+			// remove entry from FUserGroup
+			snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserGroup WHERE ID=%lu", ug->ug_ID );
+			sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 			
 			l->LibrarySQLDrop( l, sqlLib );
 		}
@@ -865,7 +868,7 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 		}
 		else
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type=%s order by utg.UserGroupID", type );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
