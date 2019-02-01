@@ -34,6 +34,7 @@
 		
 		<hr/>
 		
+		<div id="memberContainer">
 		<p class="Layout">
 			<strong>{i18n_members}:</strong>
 		</p>
@@ -45,6 +46,7 @@
 				{i18n_remove_users_from_group}
 			</button>
 		</p>
+		</div>
 		
 	</div>
 	<div id="BottomButtons" class="BorderTop Padding VContentBottom">
@@ -57,7 +59,7 @@
 		<button type="button" class="Button IconSmall fa-trash" onclick="deleteWorkgroup()" id="deleteButton">
 			{i18n_delete}
 		</button>
-		<button type="button" class="Button IconSmall fa-user" onclick="addMembers()">
+		<button id="addmemberbutton" type="button" class="Button IconSmall fa-user" onclick="addMembers()">
 			{i18n_add_members}
 		</button>
 	</div>
