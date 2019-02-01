@@ -689,23 +689,27 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				
 						// go through all elements and find proper users
 					
-						IntListEl *el = ILEParseString( users );
-					
-						DEBUG("Assigning users to group\n");
-					
-						while( el != NULL )
+						if( strcmp( users, "false" ) != 0 )
 						{
-							IntListEl *rmEntry = el;
-							el = (IntListEl *)el->node.mln_Succ;
-						
-							User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
-							if( usr != NULL )
+							DEBUG("List is empty\n");
+							IntListEl *el = ILEParseString( users );
+					
+							DEBUG("Assigning users to group\n");
+					
+							while( el != NULL )
 							{
-								UserGroupAddUser( fg, usr );
-							}
+								IntListEl *rmEntry = el;
+								el = (IntListEl *)el->node.mln_Succ;
+						
+								User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
+								if( usr != NULL )
+								{
+									UserGroupAddUser( fg, usr );
+								}
 
-							UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
-							FFree( rmEntry );
+								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
+								FFree( rmEntry );
+							}
 						}
 						
 						{
