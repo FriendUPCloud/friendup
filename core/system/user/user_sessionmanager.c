@@ -942,7 +942,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
 	{
-		DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
+		//DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
 		if( usr->u_ID == notification->dn_OwnerID )
 		{
 			char *uname = usr->u_Name;
