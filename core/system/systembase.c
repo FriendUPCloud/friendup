@@ -2486,26 +2486,30 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		
 			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
 
-			WebsocketServerClient *wsc = usersession->us_WSClients;
-			while( wsc != NULL )
+			if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 			{
-				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
-
-				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+				WebsocketServerClient *wsc = usersession->us_WSClients;
+				while( wsc != NULL )
 				{
-					if( wsc->wsc_Wsi != NULL )
+					DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
+
+					if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 					{
-						bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-					}
-					else
-					{
-						FERROR("Cannot write to WS, WSI is NULL!\n");
+						if( wsc->wsc_Wsi != NULL )
+						{
+							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+						}
+						else
+						{
+							FERROR("Cannot write to WS, WSI is NULL!\n");
+						}
+
+						FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 					}
 
-					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 				}
-
-				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 			}
 			
 			FFree( buf );

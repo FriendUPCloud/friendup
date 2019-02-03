@@ -425,13 +425,18 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 {
 	DEBUG("[USMUserSessionAddToList] start\n");
 	
-	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-
-	s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
-	smgr->usm_Sessions = s;
-	smgr->usm_SessionCounter++;
+	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
+	{
+		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+		smgr->usm_Sessions = s;
+		smgr->usm_SessionCounter++;
 	
-	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+	}
+	else
+	{
+		return NULL;
+	}
 	
 	DEBUG("[USMUserSessionAddToList] end\n");
 	
@@ -587,42 +592,43 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	DEBUG("[USMUserSessionRemove] UserSessionRemove\n");
 	
-	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-	
-	if( remsess == smgr->usm_Sessions )
+	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
-		smgr->usm_Sessions = (UserSession *)smgr->usm_Sessions->node.mln_Succ;
-		UserSession *nexts = (UserSession *)sess->node.mln_Succ;
-		if( nexts != NULL )
+		if( remsess == smgr->usm_Sessions )
 		{
-			nexts->node.mln_Pred = (MinNode *)NULL;
-		}
-		sessionRemoved = TRUE;
-		smgr->usm_SessionCounter--;
-		INFO("[USMUserSessionRemove] Session removed from list\n");
-	}
-	else
-	{
-		while( sess != NULL )
-		{
-			prev = sess;
-			sess = (UserSession *)sess->node.mln_Succ;
-			
-			if( sess == remsess )
+			smgr->usm_Sessions = (UserSession *)smgr->usm_Sessions->node.mln_Succ;
+			UserSession *nexts = (UserSession *)sess->node.mln_Succ;
+			if( nexts != NULL )
 			{
-				prev->node.mln_Succ = (MinNode *)sess->node.mln_Succ;
-				UserSession *nexts = (UserSession *)sess->node.mln_Succ;
-				if( nexts != NULL )
+				nexts->node.mln_Pred = (MinNode *)NULL;
+			}
+			sessionRemoved = TRUE;
+			smgr->usm_SessionCounter--;
+			INFO("[USMUserSessionRemove] Session removed from list\n");
+		}
+		else
+		{
+			while( sess != NULL )
+			{
+				prev = sess;
+				sess = (UserSession *)sess->node.mln_Succ;
+			
+				if( sess == remsess )
 				{
-					nexts->node.mln_Pred = (MinNode *)prev;
+					prev->node.mln_Succ = (MinNode *)sess->node.mln_Succ;
+					UserSession *nexts = (UserSession *)sess->node.mln_Succ;
+					if( nexts != NULL )
+					{
+						nexts->node.mln_Pred = (MinNode *)prev;
+					}
+					DEBUG("[USMUserSessionRemove] Session removed from list\n");
+					sessionRemoved = TRUE;
+					break;
 				}
-				DEBUG("[USMUserSessionRemove] Session removed from list\n");
-				sessionRemoved = TRUE;
-				break;
 			}
 		}
+		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	
 	if( sessionRemoved == TRUE )
 	{
@@ -932,23 +938,24 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 		return FALSE;
 	}
     
-    //FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+    //
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
 	{
-		DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
+		//DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
 		if( usr->u_ID == notification->dn_OwnerID )
 		{
 			char *uname = usr->u_Name;
+			int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
 			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
+			//FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 			UserSessListEntry *le = usr->u_SessionsList;
 			while( le != NULL )
 			{
 				UserSession *uses = (UserSession *)le->us;
-			
-				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
 				DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
@@ -1019,11 +1026,13 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 				}
 				
 				le = (UserSessListEntry *)le->node.mln_Succ;
-			} // if ->usr == NULL
+			} // while loop, session
+			//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
-	//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	
 	
     /*
 	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );

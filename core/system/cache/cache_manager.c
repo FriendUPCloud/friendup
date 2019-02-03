@@ -178,7 +178,7 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 				
 				FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 				
-				if( cm->cm_LocFileCache != NULL )
+				if( cm->cm_CacheFileGroup != NULL )
 				{
 					DEBUG("ID %d\n", id );
 					if( cm->cm_CacheFileGroup[ id ].cg_File == NULL )

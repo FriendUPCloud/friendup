@@ -337,6 +337,13 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				
 				NotificationManagerAddExternalConnection( SLIB->sl_NotificationManager, d );
 				
+				// send message about current groups and users
+				
+				BufString *bs = BufStringNew();
+				UGMReturnAllAndMembers( SLIB->sl_UGM, bs, "Workgroup" );
+				NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, "service", "group", "list", bs->bs_Buffer );
+				BufStringDelete( bs );
+				
 				return 0;
 			}
 			else if( d->d_Authenticated ) 

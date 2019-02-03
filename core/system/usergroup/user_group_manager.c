@@ -218,6 +218,9 @@ int UGMRemoveGroup( UserGroupManager *ugm, UserGroup *ug )
 			// remove connections between users and group
 			snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserToGroup WHERE UserGroupID=%lu", ug->ug_ID );
 			sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
+			// remove entry from FUserGroup
+			snprintf( tmpQuery, sizeof(tmpQuery), "delete FROM FUserGroup WHERE ID=%lu", ug->ug_ID );
+			sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 			
 			l->LibrarySQLDrop( l, sqlLib );
 		}
@@ -838,4 +841,84 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 	}
 	DEBUG("[UGMUserToGroupISConnectedByUIDDB] User is in group? %d\n", ret );
 	return ret;
+}
+
+/**
+ * Return all groups and their members as string
+ *
+ * @param um pointer to UserGroupManager
+ * @param bs pointer to BufString where string will be stored
+ * @param type type of group or NULL when everything should be returned
+ * @return 0 when success, otherwise error number
+ */
+int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
+{
+	SystemBase *l = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[ 512 ];
+		char tmp[ 512 ];
+		int itmp = 0;
+		FULONG currGroupID = 0;
+		
+		if( type == NULL )
+		{
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
+		}
+		else
+		{
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
+		}
+		
+		BufStringAddSize( bs, "[", 1 );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int usrpos = 0;
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char *end;
+				FULONG userid = strtol( (char *)row[4], &end, 0 );
+				FULONG groupid =  strtol( (char *)row[0], &end, 0 );
+				FULONG parentid =  strtol( (char *)row[2], &end, 0 );
+				
+				if( currGroupID == 0 || groupid != currGroupID )
+				{
+					if( currGroupID == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[1], (char *)row[3], parentid );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "]},{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu,\"userids\":[", groupid, (char *)row[1], (char *)row[3], parentid );
+					}
+					BufStringAddSize( bs, tmp, itmp );
+
+					currGroupID = groupid;
+					usrpos = 0;
+				}
+				
+				if( usrpos == 0 )
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+				}
+				else
+				{
+					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+				}
+				BufStringAddSize( bs, tmp, itmp );
+				usrpos++;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+			BufStringAddSize( bs, "]}", 2 );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+		
+		BufStringAddSize( bs, "]", 1 );
+	}
+	return 0;
 }

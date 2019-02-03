@@ -1308,6 +1308,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											BufStringDelete( bs );
 										}
 										FFree( multipath );
+										DEBUG("multipath released\n");
 									}
 								}	// file not found in cache
 							}
@@ -1429,7 +1430,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										LocFile* file = NULL;
 
 										if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
-										{	
+										{
 											char *decoded = UrlDecodeToMem( completePath->raw );
 											if( SLIB->sl_CacheFiles == 1 )
 											{
@@ -1475,6 +1476,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												freeFile = TRUE;
 											}
 											FFree( decoded );
+											DEBUG("Resource mutex released\n");
 											FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
 										Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p\n", file );
@@ -1482,6 +1484,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										// Send reply
 										if( file != NULL )
 										{
+											DEBUG("Check mime\n");
 											char *mime = NULL;
 
 											if(  file->lf_Buffer == NULL )
