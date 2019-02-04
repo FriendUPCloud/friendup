@@ -3,6 +3,8 @@ Friend Unifying Platform version 1.2-RC2
 
 **NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch* after proper testing. Check this out for more information on [commit guidelines](https://github.com/FriendUPCloud/friendup/wiki/4.-Developer-Commit-Guidelines). Bleeding edge *users* should check out the *friendup-1.2-rc2* branch. 
 
+For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs)
+
 ---
 
 Friend is THE Internet Operating System for everyone, that runs on everything.
@@ -26,7 +28,7 @@ Getting started
 
 Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
 
-Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern linux distributions. Post to the Developer Community if you run into any problems here.
+Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern Linux distributions. Post to the [Developer Community](https://developers.friendup.cloud/) if you run into any problems here.
 
 The below script has been tested on Ubuntu 16. You might need to install MySQL or MariaDB first.
 
@@ -68,7 +70,7 @@ If you want to run it without debug output in your console, you can use nohup:
 ```
 nohup ./FriendCore >> /dev/null &
 ```
-If you want to kill Friend Core and it's dedicated servers (see later), use the killfriend.sh script located in both the build directory and the friendup directory.
+If you want to **kill Friend Core and it's dedicated servers** (see later), use the **killfriend.sh script** located in both the build directory and the friendup directory.
 ```
 ./killfriend.sh
 ```
@@ -85,12 +87,17 @@ make clean setup release install
 Default login
 -------------
 
-Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: *fadmin*/*securefassword*. The first thing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
+Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: 
+```
+    User: fadmin
+Password: securefassword
+```
+The first thing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
 
 FriendNetwork
 -------------
 
-FriendNetwork can only be installed on an already installed Friend Core.
+FriendNetwork is included in this project, but must be installed separately. It can only be installed on an already installed Friend Core.
 
 To install FriendNetwork, enter the following command in a shell:
 ```
@@ -101,15 +108,26 @@ cd myfriend
 In order to function, Friend Network needs a node server running on the machine. Friend Network installer will automatically install the latest version of node, npm and n.
 
 You will also need to provide links to a TURN server, a STUN server and the credentials to enter the TURN server.
+The installer provides access to a public stun and turn server at:
+```
+  turn Server: ice.friendup.cloud
+    turn User: TINA
+turn Password: TURNER
+```
+
+```
+stun Server: ice.friendup.cloud
+```
+
 
 Friend Network server will be automatically launched when you run Friend Core after a successful installation.
 
-In order to kill Friend Core and all the associated servers, we suggest you use the 'killfriend.sh' script.
+In order to **kill Friend Core and all the associated servers**, we suggest you use the **'killfriend.sh' script**.
 
 Friend Chat
 -----------
 
-You can also install Friend Chat, our integrated text and video communication tool.
+You can also install [Friend Chat](https://github.com/FriendSoftwareLabs/friendchat), our integrated text and video communication tool.
 
 FriendChat can only be installed on an already installed Friend Core.
 
@@ -129,10 +147,18 @@ As for Friend Network, you will need to provide links to a TURN server, a STUN s
 
 Friend Chat needs two servers to function, the 'Presence' server, and the 'Friend Chat' server. Both servers will automatically be launched by Friend Core.
 
-In order to kill Friend Core and all the associated servers, we suggest you use the 'killfriend.sh' script.
+In order to **kill Friend Core and all the associated servers**, we suggest you use the **'killfriend.sh' script.**
 
 Please note that the 'Presence' server, necessary for IRC connections, does not work with user 'fadmin'": you have to create a real user and define
-bothy its name and user name and use its session for it to connect.
+both its name and user name and use its session for it to connect.
+
+Ports
+-----
+
+- 6502 -> used by main Friend Workspace. Needs to be forwarded by the router to permit remote access.
+- 3306 -> used by MSQL database
+- 3478 -> (UDP, TCP) Stun servers
+- 5349 -> (TLS) Stun servers
 
 Documentation
 -------------
@@ -160,7 +186,7 @@ New developers joining the project needs to sign our contributor agreement befor
 
  * https://friendup.cloud/developer-platform/open-source/contributors/
 
-The contributor agreement is our vechile for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
+The contributor agreement is our vehicle for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
 
 Developer Community
 ===================
