@@ -2749,8 +2749,12 @@ DirectoryView.prototype.SelectAll = function()
 		var ics = this.window.icons;
 		for( var a = 0; a < ics.length; a++ )
 		{
-			ics[a].domNode.classList.add( 'Selected' );
-			ics[a].domNode.selected = true;
+			if( ics[a].domNode )
+			{
+				ics[a].domNode.classList.add( 'Selected' );
+				ics[a].domNode.selected = true;
+			}
+			ics[a].selected = true;
 			if( ics[a].fileInfo )
 				ics[a].fileInfo.selected = true;
 		}
