@@ -455,7 +455,7 @@ done
 
 # Asks for mysql db root password
 while true; do
-    mysqlRootPass=$(dialog --backtitle "Friend Installer" --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
+    mysqlRootPass=$(dialog --backtitle "Friend Installer" --insecure --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
     if [ $? = "1" ]
     then
         clear
