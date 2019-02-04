@@ -1501,7 +1501,7 @@ if( isset( $args->command ) )
 				$out = [];
 				foreach( $users as $u )
 				{
-					$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'Level' ];
+					$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'Level', 'UniqueID' ];
 					$o = new stdClass();
 					foreach( $keys as $key )
 					{
