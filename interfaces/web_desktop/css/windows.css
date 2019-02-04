@@ -110,6 +110,16 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 	margin-right: 10px;
 }
 
+.FileBrowser .DiskItem > .Name span 
+{
+	white-space: nowrap;
+	max-width: 80%;
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+
 .View > .ImageViewerToolbar
 {
 	overflow: hidden;

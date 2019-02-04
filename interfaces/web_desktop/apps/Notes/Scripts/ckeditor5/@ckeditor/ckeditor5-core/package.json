@@ -1,0 +1,109 @@
+{
+  "_from": "@ckeditor/ckeditor5-core@^11.1.0",
+  "_id": "@ckeditor/ckeditor5-core@11.1.0",
+  "_inBundle": false,
+  "_integrity": "sha512-iwSV1SUBITOxncuIVbGv/xFwkZ1Sd0Po/8CRn+p6r5mq91T73L6nMC+MUfT52W9Z/12DfjAz4hRMsabLqRbkIQ==",
+  "_location": "/@ckeditor/ckeditor5-core",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@ckeditor/ckeditor5-core@^11.1.0",
+    "name": "@ckeditor/ckeditor5-core",
+    "escapedName": "@ckeditor%2fckeditor5-core",
+    "scope": "@ckeditor",
+    "rawSpec": "^11.1.0",
+    "saveSpec": null,
+    "fetchSpec": "^11.1.0"
+  },
+  "_requiredBy": [
+    "/@ckeditor/ckeditor5-alignment",
+    "/@ckeditor/ckeditor5-ui"
+  ],
+  "_resolved": "https://registry.npmjs.org/@ckeditor/ckeditor5-core/-/ckeditor5-core-11.1.0.tgz",
+  "_shasum": "e2ff1e399a0024a2343c750f2796606196167f1a",
+  "_spec": "@ckeditor/ckeditor5-core@^11.1.0",
+  "_where": "/home/hogne/Projects/CKEditor/node_modules/@ckeditor/ckeditor5-alignment",
+  "author": {
+    "name": "CKSource",
+    "url": "http://cksource.com/"
+  },
+  "bugs": {
+    "url": "https://github.com/ckeditor/ckeditor5-core/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@ckeditor/ckeditor5-engine": "^12.0.0",
+    "@ckeditor/ckeditor5-utils": "^11.1.0",
+    "lodash-es": "^4.17.10"
+  },
+  "deprecated": false,
+  "description": "The core architecture of CKEditor 5 – the best browser-based rich text editor.",
+  "devDependencies": {
+    "@ckeditor/ckeditor5-autoformat": "^10.0.4",
+    "@ckeditor/ckeditor5-basic-styles": "^10.1.0",
+    "@ckeditor/ckeditor5-block-quote": "^10.1.1",
+    "@ckeditor/ckeditor5-editor-classic": "^11.0.2",
+    "@ckeditor/ckeditor5-essentials": "^10.1.3",
+    "@ckeditor/ckeditor5-heading": "^10.1.1",
+    "@ckeditor/ckeditor5-image": "^12.0.0",
+    "@ckeditor/ckeditor5-link": "^10.1.0",
+    "@ckeditor/ckeditor5-list": "^11.0.3",
+    "@ckeditor/ckeditor5-media-embed": "^10.1.0",
+    "@ckeditor/ckeditor5-paragraph": "^10.0.4",
+    "@ckeditor/ckeditor5-table": "^11.0.1",
+    "@ckeditor/ckeditor5-ui": "^11.2.0",
+    "eslint": "^5.5.0",
+    "eslint-config-ckeditor5": "^1.0.7",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=6.9.0",
+    "npm": ">=3.0.0"
+  },
+  "eslintIgnore": [
+    "src/lib/**",
+    "packages/**"
+  ],
+  "files": [
+    "lang",
+    "src",
+    "theme"
+  ],
+  "homepage": "https://ckeditor.com",
+  "keywords": [
+    "ckeditor5-lib",
+    "ckeditor",
+    "ckeditor5",
+    "ckeditor 5",
+    "wysiwyg",
+    "rich text",
+    "editor",
+    "html",
+    "contentEditable",
+    "editing",
+    "operational transformation",
+    "ot",
+    "collaboration",
+    "collaborative",
+    "real-time",
+    "framework"
+  ],
+  "license": "GPL-2.0-or-later",
+  "lint-staged": {
+    "**/*.js": [
+      "eslint --quiet"
+    ]
+  },
+  "name": "@ckeditor/ckeditor5-core",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckeditor/ckeditor5-core.git"
+  },
+  "scripts": {
+    "lint": "eslint --quiet '**/*.js'",
+    "precommit": "lint-staged"
+  },
+  "version": "11.1.0"
+}

@@ -1,0 +1,29 @@
+/*
+ * Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
+ * For licensing, see LICENSE.md.
+ */
+
+/* Infinite progress bar default width. */
+:root {
+	--ck-image-upload-progress-line-width: 30px;
+}
+
+.ck-content .image {
+	/* Showing animation. */
+	&.ck-appear {
+		animation: fadeIn 700ms;
+	}
+
+	/* Upload progress bar. */
+	& .ck-progress-bar {
+		height: 2px;
+		width: 0;
+		background: var(--ck-color-upload-bar-background);
+		transition: width 100ms;
+	}
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}

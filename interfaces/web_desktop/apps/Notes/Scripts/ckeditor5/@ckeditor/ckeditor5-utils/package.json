@@ -1,0 +1,87 @@
+{
+  "_from": "@ckeditor/ckeditor5-utils@^11.1.0",
+  "_id": "@ckeditor/ckeditor5-utils@11.1.0",
+  "_inBundle": false,
+  "_integrity": "sha512-QgjK5BHs2krdqv8OY7qR0SMEKePcLaBo+b26oh3vMuzdC0KckMytbngn+uIGRoGBiKiza5RwI51Wk4Y8zxKMxQ==",
+  "_location": "/@ckeditor/ckeditor5-utils",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@ckeditor/ckeditor5-utils@^11.1.0",
+    "name": "@ckeditor/ckeditor5-utils",
+    "escapedName": "@ckeditor%2fckeditor5-utils",
+    "scope": "@ckeditor",
+    "rawSpec": "^11.1.0",
+    "saveSpec": null,
+    "fetchSpec": "^11.1.0"
+  },
+  "_requiredBy": [
+    "/@ckeditor/ckeditor5-core",
+    "/@ckeditor/ckeditor5-engine",
+    "/@ckeditor/ckeditor5-ui"
+  ],
+  "_resolved": "https://registry.npmjs.org/@ckeditor/ckeditor5-utils/-/ckeditor5-utils-11.1.0.tgz",
+  "_shasum": "53535004ca9e2074fc0776b60a1706aa8af9a180",
+  "_spec": "@ckeditor/ckeditor5-utils@^11.1.0",
+  "_where": "/home/hogne/Projects/CKEditor/node_modules/@ckeditor/ckeditor5-core",
+  "author": {
+    "name": "CKSource",
+    "url": "http://cksource.com/"
+  },
+  "bugs": {
+    "url": "https://github.com/ckeditor/ckeditor5-utils/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "ckeditor5": "^11.2.0",
+    "lodash-es": "^4.17.10"
+  },
+  "deprecated": false,
+  "description": "Miscellaneous utils used by CKEditor 5.",
+  "devDependencies": {
+    "@ckeditor/ckeditor5-core": "^11.1.0",
+    "@ckeditor/ckeditor5-engine": "^12.0.0",
+    "del": "^2.2.0",
+    "eslint": "^5.5.0",
+    "eslint-config-ckeditor5": "^1.0.7",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=6.9.0",
+    "npm": ">=3.0.0"
+  },
+  "eslintIgnore": [
+    "src/lib/**",
+    "packages/**"
+  ],
+  "files": [
+    "lang",
+    "src",
+    "theme"
+  ],
+  "homepage": "https://ckeditor.com",
+  "keywords": [
+    "ckeditor",
+    "ckeditor5",
+    "ckeditor 5",
+    "ckeditor5-lib"
+  ],
+  "license": "GPL-2.0-or-later",
+  "lint-staged": {
+    "**/*.js": [
+      "eslint --quiet"
+    ]
+  },
+  "name": "@ckeditor/ckeditor5-utils",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckeditor/ckeditor5-utils.git"
+  },
+  "scripts": {
+    "lint": "eslint --quiet '**/*.js'",
+    "precommit": "lint-staged"
+  },
+  "version": "11.1.0"
+}
