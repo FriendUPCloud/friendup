@@ -759,6 +759,28 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	{
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
+			WebsocketServerClient *actwsc = us->us_WSClients;
+			WebsocketServerClient *prvwsc = us->us_WSClients;
+			while( actwsc != NULL )
+			{
+				if( actwsc->wsc_WebsocketsData == data )
+				{
+					if( actwsc == us->us_WSClients )
+					{
+						us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
+					}
+					else
+					{
+						prvwsc->node.mln_Succ = actwsc->node.mln_Succ;
+					}
+					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", actwsc, us->us_WSClients );
+					break;
+				}
+					
+				prvwsc = actwsc;
+				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
+			}
+			/*
 			WebsocketServerClient *nwsc = us->us_WSClients;
 			WebsocketServerClient *owsc = nwsc;
 		
@@ -795,6 +817,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 					}
 				}
 			}
+			*/
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 	}
