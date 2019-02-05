@@ -2506,8 +2506,8 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 						{
 							FERROR("Cannot write to WS, WSI is NULL!\n");
 						}
+						wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 					}
-					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 				}
 				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				//FRIEND_MUTEX_UNLOCK( &(wsc->wsc_Mutex) );
