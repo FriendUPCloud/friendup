@@ -215,6 +215,12 @@
 				DateModified: ( new Date() ).getTime()
 			};
 		}
+		// Can't create a non existent file
+		else if( mode == 'a' || mode == 'w' )
+		{
+			if( callback ) callback( false, { message: 'File does not exist.', response: -1 } );
+			return false;
+		}
 		// TODO: Files sync!
 		// Return written length
 		return content.length;
