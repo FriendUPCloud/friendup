@@ -52,7 +52,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 	{
 		while( TRUE )
 		{
-			DEBUG("Check in use %d\n", cl->wsc_InUseCounter );
+			DEBUG("[WebsocketServerClientDelete]Check in use %d\n", cl->wsc_InUseCounter );
 			if( cl->wsc_InUseCounter <= 0 )
 			{
 				break;
@@ -84,7 +84,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 		
 		pthread_mutex_destroy( &(cl->wsc_Mutex) );
 		FFree( cl );
-		DEBUG("Done!\n");
+		DEBUG("[WebsocketServerClientDelete]Done!\n");
 	}
 }
 
