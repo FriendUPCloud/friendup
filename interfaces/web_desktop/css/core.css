@@ -22,8 +22,7 @@ body *
 	display:none!important
 }
 
-/* TEMPORARY TEST */
-html body.ViewStateActive:after,
+/* TEMPORARY TESThtml body.ViewStateActive:after,
 html body:not(.ViewStateActive):after 
 {
     position: absolute;
@@ -43,6 +42,7 @@ html body:not(.ViewStateActive):after
 {
 	border-top: 2px solid red;
 }
+ */
 
 html
 {
