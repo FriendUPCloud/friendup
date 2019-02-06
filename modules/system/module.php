@@ -1512,7 +1512,7 @@ if( isset( $args->command ) )
 				
 				if( isset( $args->args->count ) && $args->args->count )
 				{
-					$count = $SqlDatabase->FetchObject( 'SELECT COUNT( ID ) AS Num FROM FUser ' );
+					$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
 					$out['Count'] = ( $count ? $count->Num : 0 );
 				}
 				

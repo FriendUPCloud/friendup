@@ -17,6 +17,7 @@ var limit = ( maxlimit ? ( startlimit + ', ' + maxlimit ) : '' );
 var updateuserlist = true;
 var searchQuery = {};
 
+Application.totalUserCount = 0;
 Application.workgroupUserListChanged = false;
 
 Application.run = function( msg, iface )
@@ -128,16 +129,14 @@ Application.listUsers = function( current, mode )
 	// Open system module
 	// TODO: Use user.library
 	var m = new Module( 'system' );
-	
 	updateuserlist = false;
 	
 	var query = ( ge( 'UserFilterInput' ).value ? ge( 'UserFilterInput' ).value : '' );
-	
+		
 	// What happens when we've executed?
 	m.onExecuted = function( e, d )
 	{
 		var users; var i = 0;
-		
 		if( e == 'ok' )
 		{
 			try
@@ -146,22 +145,20 @@ Application.listUsers = function( current, mode )
 			}
 			catch(e)
 			{
-				console.log( '<h4 style="#F00">ERROR!</h4><p>Could not parse user list!</p><p>' + e + ' :: ' + d + '</p>' );
+     			console.log( ' ERROR! Users listUser function ' + e + ' :: ' + d + '</p>' );
 				Notify({'title':'ERROR in Users app','text':'Could not parse user list!'});
-				//ge( 'UserList' ).innerHTML = '<h4 style="#F00">ERROR!</h4><p>Could not parse user list!</p><p>' + e + ' :: ' + d + '</p>';
 				return;
 			}
 			
 			var ml = '';
-			
 			var sw = 1;
 		
-			console.log('users',users);
-			
 			if( ge( 'UsersCount' ) && users['Count'] )
 			{
 				ge( 'UsersCount' ).innerHTML = ' (' + users['Count'] + ')';
 			}
+			
+			if( users['Count'] ) Application.totalUserCount = users['Count'];
 			
 			for( var a in users )
 			{
@@ -211,7 +208,7 @@ Application.listUsers = function( current, mode )
 		
 		updateuserlist = true;
 		
-		console.log( 'listusers result: ', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query, res: e, num: i } );
+		//console.log( 'listusers result: ', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query, res: e, num: i } );
 	}
 	// Execute the "get user list"
 	m.execute( 'listusers', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query } );
@@ -348,17 +345,16 @@ function CheckUserList( ele )
 	
 	if( maxlimit > 0 && !query && !nothingnew && updateuserlist && check && check >= 50 )
 	{
-		// 
-		
+		// maxlimit startlimit and limit are GLOBAL variables our app scope !!!
+
 		startlimit = ( startlimit + maxlimit );
+		if( startlimit > Application.totalUserCount ) startlimit = Math.max( 0, Application.totalUserCount - maxlimit);
+
 		
-		
-		
-		//console.log( 'limit [' + check + '] ' + limit );
+		var listAmount = ( startlimit + maxlimit > Application.totalUserCount ? maxlimit : 2 * maxlimit);
+		limit = ''+ startlimit +','+ Math.min( maxlimit, Application.totalUserCount - startlimit - 1)  +'';
 		
 		Application.listUsers();
-		//RefreshSessions();
-		
 	}
 }
 
@@ -588,7 +584,6 @@ function DeleteUser( id )
 				    
 				    ge( 'UserList' ).innerHTML = '';
 				    Application.listUsers();
-				    console.log('User deleted. List refreshed?');
 				}
 				else
 				{
@@ -1304,9 +1299,6 @@ function ApplySetup( id )
 		m.onExecuted = function( e, d )
 		{
 			try { d = JSON.parse( d ) } catch( e ) {}
-			
-			console.log( { e: e, d: d, id: ( ge( 'Setup' ).value ? ge( 'Setup' ).value : '0' ), userid: id } );
-			
 			EditUser( id );
 		}
 		m.execute( 'usersetupapply', { id: ( ge( 'Setup' ).value ? ge( 'Setup' ).value : '0' ), userid: id } );
@@ -1336,9 +1328,6 @@ function ApplyUserGroups( id )
 		m.onExecuted = function( e, d )
 		{
 			try { d = JSON.parse( d ) } catch( e ) {}
-			
-			console.log( { e: e, d: d, workgroups: ( opt ? opt : '0' ), userid: id } );
-			
 			EditUser( id );
 		}
 		m.execute( 'workgroupupdate', { workgroups: ( opt ? opt : '0' ), userid: id } );
@@ -1448,7 +1437,6 @@ function AddWorkgroup()
 function EditWorkgroup( id )
 {
 	if( !id ) return;
-	console.log('edit this workgroup',id);
 
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
@@ -1461,7 +1449,7 @@ function EditWorkgroup( id )
 			try{
 				ele = JSON.parse( d );
 			} catch(e) {
-				console.log(e,d);
+				console.log('error during loading workgroup... ',e,d);
 				Notify({'title':'ERROR in Users app','text':'Could not load workgroup data! Did not find workgroup details here ' + d});
 				return;
 			}
@@ -1556,16 +1544,12 @@ function saveWorkgroup( callback, tmp )
 	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value ? ge( 'pMembers' ).value : 'false';
 	Application.workgroupUserListChanged = false;
 		
-		
-	console.log('save workgroup',args);
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
-			//ge( 'pWorkgroupID' ).value = d;
 			Notify({'title':'Users','text':'Workgroup changes saved.'});
-
 		}
 		else
 		{
