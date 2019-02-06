@@ -1955,6 +1955,11 @@ body:not(.friendapp):not([mobile]).Loading:after
 	-webkit-animation: bodyLoading 0.1s;
 }
 
+body[mobile].Loading:after
+{
+	display: none;
+}
+
 @-webkit-keyframes bodyLoading
 {
 	from { opacity: 0; }
