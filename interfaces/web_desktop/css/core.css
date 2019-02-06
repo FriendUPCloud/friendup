@@ -23,7 +23,8 @@ body *
 }
 
 /* TEMPORARY TEST */
-/*html body.ViewStateActive:after 
+html body.ViewStateActive:after,
+html body:not(.ViewStateActive):after 
 {
     position: absolute;
     display: block;
@@ -32,11 +33,16 @@ body *
     height: 100%;
     top: 0;
     left: 0;
-    border: 2px solid green;
+    border-top: 2px solid green;
     pointer-events: none;
     box-sizing: border-box;
     z-index: 9999;
-}*/
+}
+
+html body:not(.ViewStateActive):after 
+{
+	border-top: 2px solid red;
+}
 
 html
 {
