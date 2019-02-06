@@ -69,6 +69,11 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	//Log( FLOG_DEBUG, "WSwriteinline pointer: %p\n", wsi );
 	int result = 0;
 	WebsocketServerClient *cl = (WebsocketServerClient *)wsi;
+	if( cl->wsc_UserSession == NULL )
+	{
+		INFO("No user session attached to WS, message will not be send\n");
+		return 0;
+	}
 
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
