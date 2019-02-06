@@ -178,7 +178,7 @@ body > #FocusGrabber
 
 /* Loading animation */
 
-body:not(.friendapp) .LoadingAnimation
+body:not(.friendapp):not([mobile]) .LoadingAnimation
 {
 	background: $GuiImgWinLoading;
 }
