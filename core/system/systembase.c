@@ -621,7 +621,7 @@ SystemBase *SystemInit( void )
 	CommServiceInterfaceInit( &(l->sl_CommServiceInterface) );
 	CommServiceRemoteInterfaceInit( &(l->sl_CommServiceRemoteInterface) );
 
-	l->alib = (struct ApplicationLibrary *)LibraryOpen( l, "application.library", 0 ); //l->LibraryApplicationGet( l );
+	//l->alib = (struct ApplicationLibrary *)LibraryOpen( l, "application.library", 0 ); //l->LibraryApplicationGet( l );
 
 	l->ilib = l->LibraryImageGet( l );
 	
@@ -1230,10 +1230,10 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Closing application.library\n");
 	// Application lib
 	
-	if( l->alib != NULL )
-	{
-		LibraryClose( l->alib );
-	}
+	//if( l->alib != NULL )
+	//{
+	//	LibraryClose( l->alib );
+	//}
 	
 	if( l->zlib != NULL )
 	{
