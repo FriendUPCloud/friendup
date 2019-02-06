@@ -218,7 +218,10 @@ int WebsocketThread( FThread *data )
 	//signal( SIGPIPE, SIG_IGN );
 	//signal( SIGPIPE, hand );
 
-	//lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG , NULL );
+	if( ws->ws_ExtendedDebug )
+	{
+		lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG , NULL );
+	}
 	
 	Log( FLOG_INFO, "[WS] Service will be started now\n" );
 
@@ -228,10 +231,12 @@ int WebsocketThread( FThread *data )
 		
 		if( ws->ws_Quit == TRUE && WSThreadNum <= 0 )
 		{
+			FINFO("WS Quit!\n");
 			break;
 		}
 		else if( ws->ws_Quit == TRUE )
 		{
+			FINFO("WS Quit! but threads left: %d\n", WSThreadNum );
 			cnt++;
 			
 			if( cnt > 500 )
@@ -268,9 +273,10 @@ int WebSocketStart( WebSocket *ws )
  * @param port port on which WS will work
  * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
  * @param proto protocols
+ * @param extDebug enable extended debug
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -283,6 +289,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto )
 	{
 		//char *fhome = getenv( "FRIEND_HOME" );
 		ws->ws_FCM = lsb->fcm;
+		ws->ws_ExtendedDebug = extDebug;
 		
 		ws->ws_Port = port;
 		ws->ws_UseSSL = sslOn;
