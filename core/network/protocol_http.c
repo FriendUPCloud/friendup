@@ -1492,24 +1492,30 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
 											}
 
-											DEBUG("GET single file : extension '%s'\n", completePath->extension );
-											if( completePath->extension )
+											if( file->lf_Mime == NULL )
 											{
-												mime = StringDuplicate( MimeFromExtension( completePath->extension ) );
+												DEBUG("GET single file : extension '%s'\n", completePath->extension );
+												if( completePath->extension )
+												{
+													const char *t = MimeFromExtension( completePath->extension );
+													mime = StringDuplicate( t );
+												}
+												else
+												{
+													mime = StringDuplicate( "text/plain" );
+												}
+												file->lf_Mime = mime;
 											}
 											else
 											{
-												mime = StringDuplicate( "text/plain" );
+												file->lf_Mime = mime;
 											}
-
 											struct TagItem tags[] = {
-												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( mime ) },
+												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( file->lf_Mime ) },
 												{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 												{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
 												{ TAG_DONE, TAG_DONE }
 											};
-
-											file->lf_Mime = mime;
 
 											response = HttpNewSimple( HTTP_200_OK, tags );
 
