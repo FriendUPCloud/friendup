@@ -43,30 +43,31 @@
 
 typedef struct WebSocket
 {
-	char                                            *ws_CertPath;
-	char                                            *ws_KeyPath;
-	int                                             ws_Port;
-	FBOOL                                           ws_UseSSL;
-	FBOOL                                           ws_AllowNonSSL;
+	char								*ws_CertPath;
+	char								*ws_KeyPath;
+	int									ws_Port;
+	FBOOL								ws_UseSSL;
+	FBOOL								ws_AllowNonSSL;
 
-	struct lws_context                              *ws_Context;
-	char                                            ws_InterfaceName[128];
-	char                                            *ws_Interface;
-	struct lws_context_creation_info                ws_Info;
-	int                                             ws_DebugLevel;
-	int                                             ws_OldTime;
-	int                                             ws_Opts;
+	struct lws_context					*ws_Context;
+	char								ws_InterfaceName[128];
+	char								*ws_Interface;
+	struct lws_context_creation_info	ws_Info;
+	int									ws_DebugLevel;
+	int									ws_OldTime;
+	int									ws_Opts;
 	
-	unsigned char                                   ws_Buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 + LWS_SEND_BUFFER_POST_PADDING];
+	unsigned char						ws_Buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 + LWS_SEND_BUFFER_POST_PADDING];
 						  
 	// connection epoll
-	struct lws_pollfd                               ws_Pollfds[ MAX_POLL_ELEMENTS ];
-	int                                             ws_CountPollfds;
+	struct lws_pollfd					ws_Pollfds[ MAX_POLL_ELEMENTS ];
+	int									ws_CountPollfds;
 	
-	FThread                                         *ws_Thread;
+	FThread								*ws_Thread;
 	
-	FBOOL                                           ws_Quit;
-	void                                            *ws_FCM;
+	FBOOL								ws_Quit;
+	FBOOL								ws_ExtendedDebug;
+	void								*ws_FCM;
 } WebSocket;
 
 
@@ -87,7 +88,7 @@ typedef struct FCWSData
 //
 //
 
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto );
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug );
 
 //
 //
