@@ -52,8 +52,14 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 	{
 		while( TRUE )
 		{
+			int inUse = 0;
 			DEBUG("[WebsocketServerClientDelete]Check in use %d\n", cl->wsc_InUseCounter );
-			if( cl->wsc_InUseCounter <= 0 )
+			if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
+			{
+				inUse = cl->wsc_InUseCounter;
+				FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+			}
+			if( inUse <= 0 )
 			{
 				break;
 			}
@@ -70,18 +76,18 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 		
 		AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
 		
-		FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) );
+		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
+		{
+			//DEBUG("[WS] connection will be removed %p\n", cl );
+			Log(FLOG_DEBUG, "WebsocketServerClient delete %p\n", cl );
 		
-		//DEBUG("[WS] connection will be removed %p\n", cl );
-		Log(FLOG_DEBUG, "WebsocketServerClient delete %p\n", cl );
-		
-		cl->wsc_UserSession = NULL;
-		cl->wsc_Wsi = NULL;
-		FCWSData *data = (FCWSData *)cl->wsc_WebsocketsData;
-		//data->fcd_WSClient = NULL;
-		//cl->wc_WebsocketsData = NULL;
-		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
-		
+			cl->wsc_UserSession = NULL;
+			cl->wsc_Wsi = NULL;
+			FCWSData *data = (FCWSData *)cl->wsc_WebsocketsData;
+			//data->fcd_WSClient = NULL;
+			//cl->wc_WebsocketsData = NULL;
+			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+		}
 		pthread_mutex_destroy( &(cl->wsc_Mutex) );
 		FFree( cl );
 		DEBUG("[WebsocketServerClientDelete]Done!\n");
