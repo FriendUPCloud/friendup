@@ -172,9 +172,9 @@ int RescanDOSDrivers( SystemBase *l )
 				continue;
 			}
 			
-			char tempString[ 1024 ];
+			char *tempString = FCalloc( 1024, sizeof(char) );
 		
-			sprintf( tempString, "%s%s", ddrivedirectory, dir->d_name );
+			snprintf( tempString, 1024, "%s%s", ddrivedirectory, dir->d_name );
 
 			DEBUG("[RescanDOSDrivers] %s DOSDriver %s\n", dir->d_name, tempString );
 
@@ -189,6 +189,7 @@ int RescanDOSDrivers( SystemBase *l )
 			{
 				DEBUG("[RescanDOSDrivers] Cannot load DOSDriver %s\n", dir->d_name );
 			}
+			FFree( tempString );
 		}
 		closedir( d );
 		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );

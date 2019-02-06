@@ -160,7 +160,7 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 		INFO(" cache size %ld file size %ld cache max %ld\n",  cm->cm_CacheSize ,(FLONG)lf->lf_FileSize, (FLONG)cm->cm_CacheMax );
 		if( (cm->cm_CacheSize + lf->lf_FileSize) > cm->cm_CacheMax )
 		{
-			FERROR("Cannot add file to cache, cache is FULL\n");
+			INFO("Cannot add file to cache, cache is FULL\n");
 			return -3;
 		}
 		else

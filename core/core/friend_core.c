@@ -456,7 +456,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	socklen_t clientLen = sizeof( client );
 	int fd = 0;
 	
-	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK    ) ) > 0 )
+	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
 		if( fd == -1 )
 		{
@@ -623,6 +623,12 @@ void *FriendCoreAcceptPhase2( void *d )
 					break;
 				}
 				usleep( 0 );
+				
+				if( fc->fci_Shutdown == TRUE )
+				{
+					FINFO("Accept socket process will be stopped, becaouse Shutdown is in progress\n");
+					break;
+				}
 			}
 		}
 		else
