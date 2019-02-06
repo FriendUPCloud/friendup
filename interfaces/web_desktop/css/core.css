@@ -178,7 +178,7 @@ body > #FocusGrabber
 
 /* Loading animation */
 
-body:not(.friendapp):not([mobile]) .LoadingAnimation
+body:not(.friendapp) .LoadingAnimation
 {
 	background: $GuiImgWinLoading;
 }
@@ -1938,7 +1938,7 @@ body.Loading > #Screens
 	opacity: 0;
 }
 
-body:not(.friendapp).Loading:after
+body:not(.friendapp):not([mobile]).Loading:after
 {
 	content: ' ';
 	background: url(/themes/friendup12/gfx/loading.gif) no-repeat center center #222222;
