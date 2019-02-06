@@ -1508,7 +1508,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											}
 											else
 											{
-												file->lf_Mime = mime;
+												//file->lf_Mime = mime;
 											}
 											struct TagItem tags[] = {
 												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( file->lf_Mime ) },
