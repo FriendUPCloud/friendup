@@ -1340,7 +1340,7 @@ function _WindowToFront( div, flags )
 // TODO: Make a progress bar!
 function WindowLoadingAnimation( w )
 {
-	return;
+	if( isMobile ) return;
 	if( w.content )
 		w = w.content;
 	w.innerHTML = '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>';
