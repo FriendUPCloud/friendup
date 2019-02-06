@@ -1799,8 +1799,10 @@ BufString *Info( File *s, const char *path )
 				strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.mtime) ) );
 				sprintf( tmp, "\"DateModified\": \"%s\",", timeStr );
 				BufStringAdd( bs, tmp );
+				strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.atime) ) );
+				sprintf( tmp, "\"DateAccessed\": \"%s\",", timeStr );
+				BufStringAdd( bs, tmp );
 				FFree( timeStr );
-				//BufStringAdd( bs, "\"DateModified\": \"\"," );
 				
 				if( isDir )
 				{

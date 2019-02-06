@@ -1144,6 +1144,9 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
 	snprintf( tmp, 1023, "\"DateModified\": \"%s\",", timeStr );
 	BufStringAdd( bs, tmp );
+	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_ctime ) );
+	snprintf( tmp, 1023, "\"DateCreated\": \"%s\",", timeStr );
+	BufStringAdd( bs, tmp );
 	FFree( timeStr );
 	
 	if( S_ISDIR( s->st_mode ) )
