@@ -54,10 +54,10 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 		{
 			int inUse = 0;
 			DEBUG("[WebsocketServerClientDelete]Check in use %d\n", cl->wsc_InUseCounter );
-			if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
+			//if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 			{
 				inUse = cl->wsc_InUseCounter;
-				FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+				//FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 			}
 			if( inUse <= 0 )
 			{
