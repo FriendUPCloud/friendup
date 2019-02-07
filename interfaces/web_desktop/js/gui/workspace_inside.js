@@ -7766,6 +7766,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				uprogress.displayError(e.data['errormessage']);
 			}
+			else
+			{
+				console.log('Unhandles messge from out filetransfer worker',e);
+			}
 
 		}
 

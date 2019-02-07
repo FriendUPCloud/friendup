@@ -36,6 +36,7 @@ Y?(c=c._blob(),this.setRequestHeader("Content-Type",c.type),T.call(this,c)):T.ca
 // -----------------------------------------------------------------------------
 
 var files = [];
+var filenames = [];
 var volume;
 var path;
 var session;
@@ -145,6 +146,9 @@ self.checkVolume = function()
 self.uploadFiles = function()
 {
 	var filesList = self.files;
+
+
+	self.postMessage( {'filelist': filesList } );
 	
 	// Run a queue!
 	function uploadQueueRun( queuePos )
@@ -172,7 +176,7 @@ self.uploadFiles = function()
 		}
 		
 		var file = filesList[ queuePos ];
-		
+				
 		// Queue trick
 		var fullPath = false;
 		var directoryMode = false;
@@ -194,7 +198,7 @@ self.uploadFiles = function()
 			}
 			
 		}
-		
+						
 		// Get filename and destination path
 		var filename = ( self.filenames && self.filenames[ queuePos ] ? self.filenames[ queuePos ] : file.name );
 		var destPath = ( self.path.slice( -1 ) == '/' ? self.path : self.path + '/' ).split( ':/' ).join( ':' )
@@ -233,7 +237,7 @@ self.uploadFiles = function()
 				destPath += file.name;
 			}
 		}
-		
+				
 		// Execute the makedir
 		if( directoryMode || destPath.substr( destPath.length - 1, 1 ) == '/' )
 		{
@@ -489,21 +493,6 @@ self.onmessage = function( e )
 			} );
 		}
 	}
-	// Do the files
-	else if( e.data && ( e.data.files || e.data.queued ) )
-	{
-		// Support recursive mode
-		self.files = e.data.files;
-		self.filenames = false;
-		self.volume = e.data.targetVolume;
-		self.path = e.data.targetPath.split( ':/' ).join( ':' );
-		self.session = e.data.session;
-		self.authid = e.data.authid;
-		if( !e.data.queued )
-		{
-			self.checkVolume();
-		}
-	}
 	// Do a copy with files list
 	else if( e.data && e.data.files && e.data.targetVolume && e.data.targetPath )
 	{	
@@ -514,6 +503,21 @@ self.onmessage = function( e )
 		self.session = e.data.session;
 		self.authid = e.data.authid;
 		self.checkVolume();
+	}
+	// Do the files
+	else if( e.data && ( e.data.files || e.data.queued ) )
+	{
+		// Support recursive mode
+		self.files = e.data.files;
+		self.filenames = ( e.data.filenames ? e.data.filenames : false );
+		self.volume = e.data.targetVolume;
+		self.path = e.data.targetPath.split( ':/' ).join( ':' );
+		self.session = e.data.session;
+		self.authid = e.data.authid;
+		if( !e.data.queued )
+		{
+			self.checkVolume();
+		}
 	}
 	// Do a copy using objecturl instead of file!
 	else if( e.data.objectdata )
