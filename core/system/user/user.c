@@ -140,6 +140,7 @@ void UserRemoveSession( User *usr, void *ls )
 				}
 				usr->u_SessionsNr--;
 				removed = TRUE;
+				break;
 			}
 		}
 		
@@ -147,7 +148,10 @@ void UserRemoveSession( User *usr, void *ls )
 		{
 			usr->u_SessionsList = NULL;
 		}
-		FFree( prevus );
+		if( prevus != NULL )
+		{
+			FFree( prevus );
+		}
 		/*
 		if( us != NULL )
 		{
