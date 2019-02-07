@@ -575,7 +575,13 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			self.bookmarks = d;
 			
 		// Go instantiate!
-		winobj.fileBrowser = new Friend.FileBrowser( d, { path: winobj.fileInfo.Path, displayFiles: false, justPaths: self.filedialog || self.hasSidebar, filedialog: self.filedialog }, {
+		winobj.fileBrowser = new Friend.FileBrowser( d, {
+			path: winobj.fileInfo.Path, 
+			displayFiles: false, 
+			justPaths: self.filedialog || self.hasSidebar, 
+			filedialog: self.filedialog 
+		}, 
+		{
 			checkFile( filepath, fileextension )
 			{
 				console.log( filepath + ' on ' + fileextension );
@@ -4290,8 +4296,13 @@ function RefreshWindowGauge( win, finfo )
 }
 
 // Opens a window based on the fileInfo (type etc) -----------------------------
-function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
+function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 {
+	// Make a copy of fileinfo
+	var fileInfo = {};
+	for( var a in oFileInfo )
+		fileInfo[ a ] = oFileInfo[ a ];
+
 	//console.log('OpenWindowByFileinfo fileInfo is ',fileInfo);
 	if( !iconObject )
 	{
