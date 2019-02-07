@@ -430,7 +430,7 @@ static inline void moveToHttps( Socket *sock )
 			int s;
 			//s = SSL_write( sock->s_Ssl, response->response, response->responseLength );
 			s = send( sock->fd, response->response, response->responseLength, 0 );
-			DEBUG("Response send!!!\n\n\n %s\n\n\n%d\n\n\n", response->response, response->responseLength );
+			//DEBUG("Response send!!!\n\n\n %s\n\n\n%d\n\n\n", response->response, response->responseLength );
 			//close( fd );
 		}
 		HttpFree( response );

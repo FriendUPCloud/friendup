@@ -168,7 +168,7 @@ int USMRemoveOldSessionsinDB( void *lsb );
 //
 //
 
-FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notification, File *device, char *path );
+FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notification, UserSession *ses, File *device, char *path );
 
 //
 // get user by auth id
