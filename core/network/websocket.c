@@ -742,6 +742,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	}
 	
 	//data->fcd_WSClient = NULL;
+	int pos = 0;
 	while( TRUE )
 	{
 		DEBUG("DeleteWebSocketConnection: Check in use %d\n", wscl->wsc_InUseCounter );
@@ -750,6 +751,12 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 			break;
 		}
 		sleep( 1 );
+		pos++;
+		if( pos >= 10 )
+		{
+			DEBUG("Cannot wait longer, removeing connection\n");
+			break;
+		}
 	}
 	//
 	
