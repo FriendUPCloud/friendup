@@ -731,7 +731,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				int val = 0;
 				while( TRUE )
 				{
-					DEBUG("Check in use %d\n", fcd->fcd_WSClient->wsc_InUseCounter );
+					DEBUG("PROTOCOL_WS: Check in use %d\n", fcd->fcd_WSClient->wsc_InUseCounter );
 					if( fcd->fcd_WSClient->wsc_InUseCounter <= 0 )
 					{
 						break;

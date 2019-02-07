@@ -744,7 +744,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	//data->fcd_WSClient = NULL;
 	while( TRUE )
 	{
-		DEBUG("Check in use %d\n", wscl->wsc_InUseCounter );
+		DEBUG("DeleteWebSocketConnection: Check in use %d\n", wscl->wsc_InUseCounter );
 		if( wscl->wsc_InUseCounter <= 0 )
 		{
 			break;
