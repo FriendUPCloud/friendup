@@ -537,8 +537,11 @@ function Notify( message, callback, clickcallback )
 		}
 		if( !found )
 		{
-			clearTimeout( n.tm );
 			ge( 'MobileNotifications' ).appendChild( n );
+		}
+		else
+		{
+			clearTimeout( n.tm );
 		}
 		setTimeout( function(){ n.classList.add( 'Showing' ); }, 50 );
 		n.close = function()
