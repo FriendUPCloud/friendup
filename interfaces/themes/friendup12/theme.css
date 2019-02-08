@@ -1060,13 +1060,13 @@ body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
 	background: rgba(200,200,200,0.7);
 	position: absolute;
 	margin: 0;
-	top: 0px;
+	top: -2px;
+	right: -2px;
 	width: 27px;
 	height: 30px;
 	background-image: url(/iconthemes/friendup15/close.svg);
 	background-repeat: no-repeat;
 	background-size: 35%;
-	right: 0;
 	border-radius: 100%;
 	left: auto;
 	background-position: center;
