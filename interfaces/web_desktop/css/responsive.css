@@ -574,19 +574,19 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Drag
 
 @keyframes jiggle
 {
-	0% { transform: rotateZ(5deg); }
-	50% { transform: rotateZ(-5deg); }
-	100% { transform: rotateZ(5deg); }
+	0% { transform: rotateZ(3deg); }
+	50% { transform: rotateZ(-3deg); }
+	100% { transform: rotateZ(3deg); }
 }
 @-webkit-keyframes jiggle
 {
-	0% { transform: rotateZ(5deg); }
-	50% { transform: rotateZ(-5deg); }
-	100% { transform: rotateZ(5deg); }
+	0% { transform: rotateZ(3deg); }
+	50% { transform: rotateZ(-3deg); }
+	100% { transform: rotateZ(3deg); }
 }
 
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove .Title span
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove .Title
 {
 	animation: jiggle 0.3s infinite;
 }
