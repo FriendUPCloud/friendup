@@ -586,7 +586,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Drag
 }
 
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove .Title
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove
 {
 	animation: jiggle 0.3s infinite;
 }
