@@ -1074,6 +1074,21 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	pointer-events: none;
 }
 
+#MobileNotifications .MobileNotification .NotificationCount 
+{
+	position: absolute;
+	right: 15px;
+	top: 15px;
+	background-color: rgba(200,200,200,0.6);
+	border-radius: 100%;
+	height: 30px;
+	line-height: 30px;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
 #MobileNotifications .MobileNotification .Application
 {
 	font-weight: bold;

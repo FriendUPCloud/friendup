@@ -516,7 +516,8 @@ function Notify( message, callback, clickcallback )
 				if( isNaN( num ) || !num ) num = 1;
 				num++;
 				nod.setAttribute( 'notificationCount', num );
-				if( !nod.querySelector( '.NotificationCount' ) )
+				var existing = nod.querySelector( '.NotificationCount' );
+				if( !existing )
 				{
 					var nc = document.createElement( 'div' );
 					nc.className = 'NotificationCount';
@@ -525,10 +526,10 @@ function Notify( message, callback, clickcallback )
 				}
 				else
 				{
-					nod.querySelector( '.NotificationCount' ).innerHTML = num;
+					existing.innerHTML = num;
 				}
-				nod.querySelector( 'Title' ).innerHTML = message.title;
-				nod.querySelector( 'Text' ).innerHTML = message.text;
+				nod.querySelector( '.Title' ).innerHTML = message.title;
+				nod.querySelector( '.Text' ).innerHTML = message.text;
 				n = nod;
 				found = true;
 				break;
