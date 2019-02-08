@@ -169,19 +169,19 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			DEBUG("Send message to WSI, ptr: %p\n", cl->wsc_Wsi );
 			if( cl->wsc_Wsi != NULL )
 			{
-				lws_callback_on_writable( cl->wsc_Wsi );
+				
 			}
 			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+			lws_callback_on_writable( cl->wsc_Wsi );
 		}
 	}
-	if( cl->wsc_Wsi != NULL )
+
+	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
-		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
-		{
-			cl->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
-		}
+		cl->wsc_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 	}
+	
 	return result;
 }
 
@@ -727,7 +727,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			if( fcd->fcd_WSClient != NULL )
 			{
 				fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
-				usleep( 2000 );
+				//usleep( 2000 );
 				/*
 				int val = 0;
 				while( TRUE )
