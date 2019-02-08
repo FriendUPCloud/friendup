@@ -497,18 +497,53 @@ function Notify( message, callback, clickcallback )
 		}
 		if( message.application )
 		{
+			n.application = message.application;
 			ic += '<span>' + message.application + '</span>';
 		}
 		if( ic.length )
 			ic = '<div class="Application">' + ic + '</div>';
 			
 		n.innerHTML = ic + '<div class="Title">' + message.title + '</div><div class="Text">' + message.text + '</div>';
-		ge( 'MobileNotifications' ).appendChild( n );
+		
+		// Check duplicate
+		var found = false;
+		for( var a = 0; a < ge( 'MobileNotifications' ).childNodes.length; a++ )
+		{
+			var nod = ge( 'MobileNotifications' ).childNodes[ a ];
+			if( nod.application == message.application )
+			{
+				var num = parseInt( nod.getAttribute( 'notificationCount' ) );
+				if( isNaN( num ) || !num ) num = 1;
+				num++;
+				nod.setAttribute( 'notificationCount', num );
+				if( !nod.querySelector( '.NotificationCount' ) )
+				{
+					var nc = document.createElement( 'div' );
+					nc.className = 'NotificationCount';
+					nc.innerHTML = num;
+					nod.appendChild( nc );
+				}
+				else
+				{
+					nod.querySelector( '.NotificationCount' ).innerHTML = num;
+				}
+				nod.querySelector( 'Title' ).innerHTML = message.title;
+				nod.querySelector( 'Text' ).innerHTML = message.text;
+				n = nod;
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+		{
+			clearTimeout( n.tm );
+			ge( 'MobileNotifications' ).appendChild( n );
+		}
 		setTimeout( function(){ n.classList.add( 'Showing' ); }, 50 );
 		n.close = function()
 		{
 			this.classList.remove( 'Showing' );
-			setTimeout( function()
+			n.tm = setTimeout( function()
 			{
 				if( n.parentNode )
 					n.parentNode.removeChild( n );
@@ -541,6 +576,13 @@ function Notify( message, callback, clickcallback )
 				}
 				cancelBubble( e );
 			} );
+		}
+		else
+		{
+			n.ontouchend = function( e )
+			{
+				return cancelBubble( e );
+			}
 		}
 		
 		n.addEventListener( 'touchstart', function( e )
