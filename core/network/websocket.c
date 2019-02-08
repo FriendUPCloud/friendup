@@ -741,6 +741,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 		return 0;
 	}
 	
+	/*
 	//data->fcd_WSClient = NULL;
 	int pos = 0;
 	while( TRUE )
@@ -758,12 +759,13 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 			break;
 		}
 	}
+	*/
 	//
 	
 	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
 	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
     UserSession *us = (UserSession *)wscl->wsc_UserSession;
-	//wscl->wc_UserSession = NULL;
+	us->us_WSClients = NULL;
 	wscl->wsc_Wsi = NULL;
 	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
     
