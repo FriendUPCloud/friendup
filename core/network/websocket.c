@@ -798,44 +798,6 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 				prvwsc = actwsc;
 				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
 			}
-			/*
-			WebsocketServerClient *nwsc = us->us_WSClients;
-			WebsocketServerClient *owsc = nwsc;
-		
-			// we must remove first Websocket from UserSession list and then from app session
-		
-			if( nwsc != NULL )
-			{
-				DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
-			
-				// remove first entry!
-				if( nwsc->wsc_WebsocketsData == data )
-				{
-					us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
-
-					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
-				}
-			
-				// remove entry from the list
-				else
-				{
-					DEBUG("[WS] Remove connection from list\n");
-
-					while( nwsc != NULL )
-					{
-						DEBUG("[WS] WS Entry\n");
-						owsc = nwsc;
-						nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
-						DEBUG("[WS ] OLDWSC %p NWSC %p\n", owsc, nwsc );
-						if( nwsc != NULL && nwsc->wsc_WebsocketsData == data )
-						{
-							owsc->node.mln_Succ = nwsc->node.mln_Succ;
-							break;
-						}
-					}
-				}
-			}
-			*/
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 	}
