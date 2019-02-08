@@ -954,6 +954,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "logout" ) == 0 )
 	{
+		char *sessid = NULL;
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -963,16 +964,34 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		if( response != NULL ) FERROR("RESPONSE \n");
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		DEBUG( "[UMWebRequest] Logging out!!\n" );
+		DEBUG("[UMWebRequest] Logging out!!\n" );
 		
 		//
 		// we must provide sessionid of user who wants to logout
 		//
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "sessionid" );
-		if( el != NULL )
+		
+		if( UMUserIsAdmin( l->sl_UM  , request, loggedSession->us_User ) == TRUE )
 		{
-			char *sessid = (char *)el->data;
+			if( el == NULL )
+			{
+				sessid = loggedSession->us_SessionID;
+			}
+			else
+			{
+				sessid = (char *)el->data;
+			}
+		}
+		else
+		{
+			sessid = loggedSession->us_SessionID;
+		}
+		
+		DEBUG("[UMWebRequest] Session got: %p\n", sessid );
+		
+		if( sessid != NULL )
+		{
 			UserSession *sess = NULL;
 			
 			DEBUG("[UMWebRequest] Logout\n");
@@ -995,6 +1014,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					FRIEND_MUTEX_LOCK( &(sess->us_Mutex) );
 					sess->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(sess->us_Mutex) );
+					
+					if( l->sl_ActiveAuthModule != NULL )
+					{
+						l->sl_ActiveAuthModule->Logout( l->sl_ActiveAuthModule, request, sessid );
+					}
 					
 					error = USMUserSessionRemove( l->sl_USM, sess );
 				}
@@ -1026,7 +1050,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			}
 			if( l->sl_ActiveAuthModule != NULL )
 			{
-				l->sl_ActiveAuthModule->Logout( l->sl_ActiveAuthModule, request, sessid );
+				//l->sl_ActiveAuthModule->Logout( l->sl_ActiveAuthModule, request, sessid );
 			}
 			else
 			{

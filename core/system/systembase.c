@@ -2514,11 +2514,12 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 						}
 						wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 					}
+					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				}
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				//FRIEND_MUTEX_UNLOCK( &(wsc->wsc_Mutex) );
 	//			FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 			}
+			DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
 			
 			FFree( buf );
 		}

@@ -380,6 +380,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 			DoorNotificationDelete( rem );
 		}
 	}
+	DEBUG("[DoorNotificationCommunicateChanges] Lock communicate changes END\n");
 	return 0;
 }
 
