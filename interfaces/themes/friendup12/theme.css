@@ -456,7 +456,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	background-position: center;
 	background-repeat: no-repeat;
 	pointer-events: none;
-	border-radius: 8px;
+	border-radius: 100%;
 }
 
 body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
