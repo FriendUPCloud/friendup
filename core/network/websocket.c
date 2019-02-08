@@ -752,7 +752,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 		}
 		sleep( 1 );
 		pos++;
-		if( pos >= 10 )
+		if( pos >= 4 )
 		{
 			DEBUG("Cannot wait longer, removeing connection\n");
 			break;

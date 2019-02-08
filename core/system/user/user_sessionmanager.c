@@ -929,6 +929,8 @@ int USMRemoveOldSessionsinDB( void *lsb )
  */
 FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession *ses, File *device, char *path )
 {
+	return FALSE;
+	
 	SystemBase *sb = (SystemBase *)usm->usm_SB;
 	DoorNotification *notification = (DoorNotification *)notif;
 	
