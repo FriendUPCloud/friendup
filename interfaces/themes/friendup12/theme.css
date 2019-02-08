@@ -450,7 +450,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	left: 0;
 	width: 100%;
 	height: calc(100% + 20px);
-	z-index: 5;
+	z-index: 1;
 	background-size: 45%;
 	background-color: rgba(100,100,100,0.3);
 	background-position: center 20px;
