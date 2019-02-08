@@ -586,7 +586,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Drag
 }
 
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove .Title
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove .Title span
 {
 	animation: jiggle 0.3s infinite;
 }
@@ -980,7 +980,7 @@ body.Login > .View
 }
 
 body[mobile=mobile] .View .Title > div > .Minimize,
-body[mobile=mobile] .View .Title > div > .Close,
+body[mobile=mobile] .View:not(.Remove) .Title > div > .Close,
 body[mobile=mobile] .View .Title > div > .MobileClose
 {
 	display: none;
