@@ -50,6 +50,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 {
 	if( cl != NULL )
 	{
+		int tr = 0;
 		while( TRUE )
 		{
 			int inUse = 0;
@@ -64,15 +65,15 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 				break;
 			}
 			sleep( 1 );
-			/*
-			tries++;
-			if( tries >= 30 )
+
+			tr++;
+			if( tr >= 5 )
 			{
 				Log( FLOG_DEBUG, "Websocket released %p\n", cl );
 				break;
 			}
-			*/
 		}
+		DEBUG("[WebsocketServerClientDelete] Close\n");
 		
 		AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
 		

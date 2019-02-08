@@ -745,27 +745,29 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	int pos = 0;
 	while( TRUE )
 	{
-		DEBUG("DeleteWebSocketConnection: Check in use %d\n", wscl->wsc_InUseCounter );
+		DEBUG("[DeleteWebSocketConnection] Check in use %d\n", wscl->wsc_InUseCounter );
 		if( wscl->wsc_InUseCounter <= 0 )
 		{
 			break;
 		}
 		sleep( 1 );
 		pos++;
-		if( pos >= 10 )
+		if( pos >= 4 )
 		{
-			DEBUG("Cannot wait longer, removeing connection\n");
+			DEBUG("[DeleteWebSocketConnection] Cannot wait longer, removeing connection\n");
 			break;
 		}
 	}
 	//
 	
+	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
 	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
     UserSession *us = (UserSession *)wscl->wsc_UserSession;
 	//wscl->wc_UserSession = NULL;
 	wscl->wsc_Wsi = NULL;
 	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
     
+	DEBUG("[DeleteWebSocketConnection] Remove UserSession from User list\n");
 	//
 	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
 	//
@@ -840,9 +842,10 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
 	}
 	
+	DEBUG("[DeleteWebSocketConnection] Remove Queue\n");
 	FQDeInitFree( &(wscl->wsc_MsgQueue) );
 	
-	Log(FLOG_DEBUG, "[WS] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
+	Log(FLOG_DEBUG, "[DeleteWebSocketConnection] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
 	WebsocketServerClientDelete( wscl );
 
     return 0;
