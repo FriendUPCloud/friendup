@@ -585,10 +585,10 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Drag
 	100% { transform: rotateZ(5deg); }
 }
 
-
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove .Title
 {
-	animation: jiggle 0.2s infinite;
+	animation: jiggle 0.3s infinite;
 }
 
 html body[mobile] .ViewContainer:not(.DelayedDeactivation) .View:not(.Active) > div:not(.Title)

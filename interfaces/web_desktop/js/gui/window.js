@@ -1171,6 +1171,11 @@ function _DeactivateWindow( m, skipCleanUp )
 		m.style.height = '35px';
 	}
 	
+	if( isMobile )
+	{
+		_removeMobileCloseButtons();
+	}
+	
 	// If we will not skip cleanup then do this
 	if( !skipCleanUp )
 	{
@@ -1185,6 +1190,20 @@ function _DeactivateWindow( m, skipCleanUp )
 	}
 	
 	return ret;
+}
+
+function _removeMobileCloseButtons()
+{
+	for( var a in movableWindows )
+	{
+		var f = movableWindows[ a ];
+		if( f.viewIcon )
+		{
+			f.viewIcon.classList.remove( 'Remove' );
+			f.classList.remove( 'Remove' );
+			f.classList.remove( 'Dragging' );
+		}
+	}
 }
 
 function _DeactivateWindows()
@@ -2234,8 +2253,11 @@ var View = function( args )
 		{
 			if( e.button == 0 )
 			{
-				_ActivateWindow( this, false, e );
-				this.setAttribute( 'moving', 'moving' );
+				if( !this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					_ActivateWindow( this, false, e );
+					this.setAttribute( 'moving', 'moving' );
+				}
 			}
 		}
 
@@ -2255,13 +2277,14 @@ var View = function( args )
 					time: ( new Date() ).getTime()
 				};
 			}
+			// Start jiggling on longpress
 			// Only removable after 300 ms
 			this.touchInterval = setInterval( function()
 			{
 				var t = ( new Date() ).getTime();
 				if( self.clickOffset )
 				{
-					if( t - self.clickOffset.time > 150 )
+					if( t - self.clickOffset.time > 100 )
 					{
 						// Update time
 						self.clickOffset.removable = true;
@@ -2269,8 +2292,8 @@ var View = function( args )
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
 					
-						Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
-						Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
+						self.viewIcon.classList.add( 'Remove' );
+						self.classList.add( 'Remove' );
 					}
 				}
 			}, 150 );
@@ -2279,7 +2302,7 @@ var View = function( args )
 		// Remove window on drag
 		if( isMobile )
 		{
-			div.ontouchmove = function( e )
+			/*div.ontouchmove = function( e )
 			{
 				if( !this.clickOffset )
 					return;
@@ -2294,33 +2317,26 @@ var View = function( args )
 					if( diffy > 50 )
 					{
 						this.viewIcon.classList.add( 'Remove' );
+						this.classList.add( 'Remove' );
 					}
 					else
 					{
 						this.viewIcon.classList.remove( 'Remove' );
+						this.classList.remove( 'Remove' );
 					}
 				}
-			}
+			}*/
 			div.ontouchend = function( e )
 			{
-				if( Workspace.screen.bufferedTitle )
-				{
-					Workspace.screen.setFlag( 'title', Workspace.screen.bufferedTitle );
-					Workspace.screen.bufferedTitle = null;
-				}
-				if( this.viewIcon.classList.contains( 'Dragging' ) )
-				{
-					this.viewIcon.classList.remove( 'Dragging' );
-				}
-				if( this.viewIcon.classList.contains( 'Remove' ) )
-				{
-					this.viewIcon.classList.remove( 'Remove' );
-					this.close.click();
-				}
 				if( this.touchInterval )
 				{
 					clearInterval( this.touchInterval );
 					this.touchInterval = null;
+				}
+				// Only cancel bubble if view icon is jiggling on mobile
+				if( this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					return cancelBubble( e );
 				}
 			}
 		}

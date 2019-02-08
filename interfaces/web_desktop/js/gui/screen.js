@@ -452,6 +452,7 @@ Screen = function ( flags, initObject )
 		window.currentScreen = this.parentNode;
 		CheckScreenTitle();
 	}
+	
 	// Alias clicking the screen
 	div.onmouseup = function( e )
 	{ 

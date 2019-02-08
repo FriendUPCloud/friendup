@@ -1057,18 +1057,22 @@ body .View > .Snap > .SnapRight
 
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
 {
+	background: rgba(200,200,200,0.7);
 	position: absolute;
 	margin: 0;
 	top: 0px;
-	width: 40px;
-	height: 40px;
+	width: 27px;
+	height: 30px;
 	background-image: url(/iconthemes/friendup15/close.svg);
 	background-repeat: no-repeat;
 	background-size: 35%;
 	right: 0;
+	border-radius: 100%;
 	left: auto;
 	background-position: center;
+	padding: 0;
 }
+
 .View.Active > .Title > div > .MobileClose:before,
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:before
 {
