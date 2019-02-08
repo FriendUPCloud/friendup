@@ -557,7 +557,7 @@ function Notify( message, callback, clickcallback )
 		// When clicking the bubble :)
 		if( clickcallback )
 		{
-			n.addEventListener( 'touchend', function( e )
+			n.ontouchend = function( e )
 			{
 				if( mousePointer.candidate && mousePointer.candidate.el == n && Math.abs( mousePointer.candidate.diff ) >= 10 )
 				{
@@ -579,7 +579,7 @@ function Notify( message, callback, clickcallback )
 					}
 				}
 				cancelBubble( e );
-			} );
+			};
 		}
 		else
 		{
@@ -589,7 +589,7 @@ function Notify( message, callback, clickcallback )
 			}
 		}
 		
-		n.addEventListener( 'touchstart', function( e )
+		n.ontouchstart = function( e )
 		{
 			mousePointer.candidate = {
 				cx: e.touches[0].clientX,
@@ -628,7 +628,7 @@ function Notify( message, callback, clickcallback )
 					}
 				}
 			};
-		} );
+		};
 		
 		if( message.flags && message.flags.sticky )
 		{
