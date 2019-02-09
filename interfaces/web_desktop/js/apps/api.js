@@ -2212,6 +2212,21 @@ function View( flags )
 		};
 		Application.sendMessage( o );
 	}
+	
+	// Show the mobile back button
+	this.showBackButton = function( visible, callback )
+	{
+		if( !isMobile ) return;
+		var cid = addCallback( callback );
+		var o = {
+			type: 'view',
+			method: 'showbackbutton',
+			visible: visible,
+			callback: cid
+		};
+		Application.sendMessage( o );
+	}
+	
 	// Set window content
 	this.setContent = function( data, callback )
 	{

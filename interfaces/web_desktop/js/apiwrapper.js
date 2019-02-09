@@ -1400,6 +1400,24 @@ function apiWrapper( event, force )
 					var win = app.windows[ msg.viewId ];
 					switch( msg.method )
 					{
+						case 'showbackbutton':
+							if( win )
+							{
+								var cbk = null;
+								if( message.callbackId )
+								{
+									cbk = function( e )
+									{
+										win.sendMessage( {
+											type: 'callback',
+											callback: msg.callback
+										} );
+									}
+								}
+								win.showBackButton( message.visibility, cbk );
+							}
+							break;
+							
 						// Set a window state!
 						case 'windowstate':
 							if( win && typeof( win.states[ msg.state ] ) != 'undefined' )

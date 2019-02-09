@@ -1888,7 +1888,8 @@ var View = function( args )
 				{
 					var md = document.createElement( 'div' );
 					md.className = 'MobileBack';
-					md.addEventListener( 'touchstart', function( e )
+					self.mobileBack = md;
+					md.ontouchstart =function( e )
 					{
 						if( window._getAppByAppId )
 						{
@@ -1901,7 +1902,7 @@ var View = function( args )
 							}
 						}
 						return cancelBubble( e );
-					} );
+					};
 					viewContainer.appendChild( md );
 				}
 			}
@@ -3943,6 +3944,22 @@ var View = function( args )
 		// Add after options set
 		if( !eles[0] ) this._window.appendChild( ifr );
 
+	}
+	
+	this.showBackButton = function( visible, cbk )
+	{
+		if( visible )
+		{
+			self.mobileBack.style.display = 'block';
+			if( cbk )
+			{
+				self.mobileBack.ontouchstart = function( e )
+				{
+					cbk( e );
+				}
+			}
+		}
+		else self.mobileBack.style.display = 'none';
 	}
 
 	// Send a message
