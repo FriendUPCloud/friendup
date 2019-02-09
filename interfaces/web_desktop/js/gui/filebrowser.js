@@ -599,6 +599,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	
 		func( path, { sort: true }, function( msg )
 		{
+			console.log( 'The result: ', msg );
 			if( !msg || !msg.list ) return;
 			
 			if( callback ) callback();

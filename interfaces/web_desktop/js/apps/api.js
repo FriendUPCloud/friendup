@@ -1856,7 +1856,7 @@ function receiveEvent( event, queued )
 				{
 					for( var a in Application.windows )
 					{
-						if( Application.windows[a].viewId == dataPacket.viewId )
+						if( a == dataPacket.viewId )
 						{
 							Application.windows[a].sendMessage( dataPacket );
 							return true;
