@@ -779,7 +779,7 @@ body.ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation),
 body.AppsShowing .ViewContainer,
 body.AppsShowing .ViewContainer .ViewIcon,
 body .ViewContainer[childview] .ViewIcon,
-body .ViewContainer .ViewIcon.MobileBackHidesIt,
+body .ViewContainer:not(.OnWorkspace) .ViewIcon.MobileBackHidesIt,
 body .ViewContainer.Closing:not(.Active) .ViewIcon,
 body .ViewContainer.DelayedDeactivation .ViewIcon
 {
