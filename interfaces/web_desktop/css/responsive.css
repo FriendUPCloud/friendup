@@ -540,7 +540,8 @@ html body .View > .Title > div > span
 {
 	display: none;
 }
-.ViewContainer[childview].Active > .MobileBack 
+.ViewContainer[childview].Active > .MobileBack,
+.ViewContainer.Active > .MobileBack.Showing
 {
     display: block;
     width: 32px;
@@ -553,7 +554,8 @@ html body .View > .Title > div > span
     pointer-events: all;
 }
 
-.ViewContainer[childview].Active > .MobileBack:before
+.ViewContainer[childview].Active > .MobileBack:before,
+.ViewContainer.Active > .MobileBack.Showing:before
 {
 	font-family: fontawesome;
 	display: inline-block;
@@ -562,7 +564,8 @@ html body .View > .Title > div > span
 	font-weight: bold;
 }
 
-.ViewContainer[childview] > .MobileBack 
+.ViewContainer[childview] > .MobileBack,
+.ViewContainer > .MobileBack.Showing
 {
     left: -32px;
 }
@@ -776,6 +779,7 @@ body.ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation),
 body.AppsShowing .ViewContainer,
 body.AppsShowing .ViewContainer .ViewIcon,
 body .ViewContainer[childview] .ViewIcon,
+body .ViewContainer .ViewIcon.MobileBackHidesIt,
 body .ViewContainer.Closing:not(.Active) .ViewIcon,
 body .ViewContainer.DelayedDeactivation .ViewIcon
 {

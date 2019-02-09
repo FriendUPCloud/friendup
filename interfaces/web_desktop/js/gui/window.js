@@ -1878,6 +1878,7 @@ var View = function( args )
 							iconSpan = document.createElement( 'span' );
 							iconSpan.classList.add( 'ViewIcon' );
 							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
+							self.viewIcon = iconSpan;
 							viewContainer.appendChild( iconSpan );
 						}
 					}
@@ -1910,6 +1911,7 @@ var View = function( args )
 			{
 				iconSpan = document.createElement( 'span' );
 				iconSpan.classList.add( 'ViewIcon' );
+				self.viewIcon = iconSpan;
 				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
 				viewContainer.appendChild( iconSpan );
 			}
@@ -3950,7 +3952,9 @@ var View = function( args )
 	{
 		if( visible )
 		{
-			self.mobileBack.style.display = 'block';
+			self.mobileBack.classList.add( 'Showing' );
+			self.viewIcon.classList.add( 'MobileBackHidesIt' );
+			
 			if( cbk )
 			{
 				self.mobileBack.ontouchstart = function( e )
@@ -3959,7 +3963,11 @@ var View = function( args )
 				}
 			}
 		}
-		else self.mobileBack.style.display = 'none';
+		else 
+		{
+			self.mobileBack.classList.remove( 'Showing' );
+			self.viewIcon.classList.remove( 'MobileBackHidesIt' );
+		}
 	}
 
 	// Send a message

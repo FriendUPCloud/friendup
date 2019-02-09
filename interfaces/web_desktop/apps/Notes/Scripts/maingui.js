@@ -27,6 +27,7 @@ window.addEventListener( 'scroll', function()
 // End scroll watcher
 
 var currentViewMode = 'default';
+
 if( isMobile )
 {
 	ge( 'LeftBar' ).style.transform = '-100%';
@@ -118,18 +119,30 @@ Application.updateViewMode = function()
 			this.fld.style.transform = 'translateX(0)';
 			ge( 'FileBar' ).style.transform = 'translateX(100%)';
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'root'
+			} );
 			break;
 		case 'files':
 			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
 			this.fld.style.transform = 'translateX(-100%)';
 			ge( 'FileBar' ).style.transform = 'translateX(0%)';
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'files'
+			} );
 			break;
 		default:
 			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
 			this.fld.style.transform = 'translateX(-100%)';
 			ge( 'FileBar' ).style.transform = 'translateX(-100%)';
 			ge( 'RightBar' ).style.transform = 'translateX(0%)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'notes'
+			} );
 			break;
 	}
 }
@@ -526,6 +539,8 @@ Application.run = function( msg, iface )
 		return cancelBubble( e );
 	}
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
+	
+	Application.updateViewMode();
 }
 
 Application.checkWidth = function()
@@ -1480,6 +1495,10 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'updateViewMode':
+			currentViewMode = msg.mode;
+			Application.updateViewMode();
+			break;
 		case 'mobilebackbutton':
 			Application.handleBack();
 			break;

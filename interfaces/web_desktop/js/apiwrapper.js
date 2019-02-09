@@ -1404,17 +1404,30 @@ function apiWrapper( event, force )
 							if( win )
 							{
 								var cbk = null;
-								if( message.callbackId )
+								if( msg.callback )
 								{
+									var cid = msg.callback;
 									cbk = function( e )
 									{
-										win.sendMessage( {
-											type: 'callback',
-											callback: msg.callback
-										} );
+										if( win.viewId == msg.targetViewId )
+										{
+											win.sendMessage( {
+												command: 'callback',
+												callback: cid,
+												viewId: msg.targetViewId
+											} );
+										}
+										else
+										{
+											app.sendMessage( {
+												command: 'callback',
+												callback: cid
+											} );
+										}
 									}
+									msg.callback = null;
 								}
-								win.showBackButton( message.visibility, cbk );
+								win.showBackButton( msg.visible, cbk );
 							}
 							break;
 							

@@ -378,6 +378,24 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'updateViewMode':
+			var mode = msg.mode;
+			if( mode == 'notes' || mode == 'files' )
+			{
+				var v = this.mainView;
+				v.showBackButton( true, function()
+				{
+					var t = 'root';
+					if( mode == 'notes' )
+						t = 'files';
+					v.sendMessage( { command: 'updateViewMode', mode: t } );
+				} );
+			}
+			else
+			{
+				this.mainView.showBackButton( false );
+			}
+			break;
 		case 'setfilename':
 			this.wholeFilename = msg.data;
 			this.mainView.setFlag( 'title', 'Notes - ' + msg.data );
