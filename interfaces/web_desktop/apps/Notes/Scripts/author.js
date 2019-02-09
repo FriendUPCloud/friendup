@@ -144,7 +144,8 @@ Application.run = function( msg, iface )
 				
 				if( Application.sessionObject.currentDocument )
 				{
-					Application.mainView.setFlag( 'title', 'Notes - ' + Application.sessionObject.currentDocument );
+					Application.wholeFilename = Application.sessionObject.currentDocument;
+					this.setCorrectTitle();
 				}
 			}
 			else
@@ -373,31 +374,65 @@ Application.showPrefs = function()
 	f.load();
 }
 
+function sanitizeFilename( data )
+{
+	if( !data ) return '';
+	var filename = data.split( ':' )[1];
+	if( filename.indexOf( '/' ) > 0 )
+		filename = filename.split( '/' ).pop();
+	filename = filename.split( '.' );
+	filename.pop();
+	filename = filename.join( '.' );
+	return filename;
+}
+
+Application.setCorrectTitle = function()
+{
+	if( this.currentViewMode == 'files' )
+	{
+		Application.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_list' ) );
+	}
+	else if( this.currentViewMode == 'root' )
+	{
+		Application.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_categories' ) );
+	}
+	else
+	{
+		Application.mainView.setFlag( 'title', 'Notes - ' + sanitizeFilename( Application.wholeFilename ) );
+	}
+}
+
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
 		case 'updateViewMode':
-			var mode = msg.mode;
-			if( mode == 'notes' || mode == 'files' )
+			this.currentViewMode = msg.mode;
+			if( isMobile )
 			{
-				var v = this.mainView;
-				v.showBackButton( true, function()
+				var mode = msg.mode;
+				if( mode == 'notes' || mode == 'files' )
 				{
-					v.sendMessage( { command: 'mobilebackbutton' } );
-				} );
+					var v = this.mainView;
+					v.showBackButton( true, function()
+					{
+						v.sendMessage( { command: 'mobilebackbutton' } );
+					} );
+				}
+				else
+				{
+					this.mainView.showBackButton( false );
+				}
 			}
-			else
-			{
-				this.mainView.showBackButton( false );
-			}
+			this.setCorrectTitle();
 			break;
 		case 'setfilename':
 			this.wholeFilename = msg.data;
-			this.mainView.setFlag( 'title', 'Notes - ' + msg.data );
+			this.setCorrectTitle();
 			break;
 		case 'newdocument':
+			this.wholeFilename = '';
 			this.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_new_document' ) );
 			break;
 		case 'applystyle':
@@ -414,7 +449,7 @@ Application.receiveMessage = function( msg )
 			this.fileName = msg.filename;
 			this.path = msg.path;
 			this.wholeFilename = msg.path + msg.filename;
-			this.mainView.setFlag( 'title', 'Notes - ' + this.wholeFilename );
+			this.setCorrectTitle();
 			break;
 		case 'openfile':
 			this.load();
@@ -440,14 +475,14 @@ Application.receiveMessage = function( msg )
 			if( msg.path )
 			{
 				this.wholeFilename = msg.path;
-				this.mainView.setFlag( 'title', 'Notes - ' + msg.path );
+				this.setCorrectTitle();
 			}
 			break;
 		case 'syncload':
 			if( msg.filename )
 			{
 				this.wholeFilename = msg.filename;
-				this.mainView.setFlag( 'title', 'Notes - ' + this.wholeFilename );
+				this.setCorrectTitle();
 			}
 			break;
 		case 'load':
