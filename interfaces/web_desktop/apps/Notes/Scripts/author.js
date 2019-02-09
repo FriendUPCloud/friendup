@@ -385,10 +385,7 @@ Application.receiveMessage = function( msg )
 				var v = this.mainView;
 				v.showBackButton( true, function()
 				{
-					var t = 'root';
-					if( mode == 'notes' )
-						t = 'files';
-					v.sendMessage( { command: 'updateViewMode', mode: t } );
+					v.sendMessage( { command: 'mobilebackbutton' } );
 				} );
 			}
 			else
