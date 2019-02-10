@@ -1118,6 +1118,8 @@ function _ActivateWindow( div, nopoll, e )
 	// Set screen
 	SetScreenByWindowElement( div );
 
+	_setWindowTiles( div );
+
 	// When activating for the first time, deselect selected icons
 	if( div.classList && !div.classList.contains( 'Screen' ) )
 		clearRegionIcons();
@@ -1127,6 +1129,66 @@ function _ActivateWindow( div, nopoll, e )
 	_ActivateWindowOnly( div );
 
 	if( !nopoll ) PollTaskbar( div );
+}
+
+// Activate tiling system
+function _setWindowTiles( div )
+{
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		if( div.className.indexOf( 'TilingMode' ) >= 0 )
+		{
+			_removeWindowTiles( div );
+		}
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		div.classList.add( 'TilingMode' + attachedCount );
+		var tile = 2;
+		for( var a in div.attached )
+		{
+			div.attached[a].classList.add( 'Tile' + tile++, 'TilingMode' + attachedCount );
+		}
+	}
+}
+
+// Remove tiling system
+function _removeWindowTiles( div )
+{
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		while( div.className.indexOf( 'Til' ) >= 0 )
+		{
+			var ind = div.className.indexOf( 'Til' );
+			if( ind >= 0 )
+			{
+				for( var b = ind; div.className[b] != ' ' && b < div.className.length; b++ ){}
+				div.className = div.className.split( div.className.substr( ind, b - ind ) ).join( ' ' );
+			}
+		}
+		for( var a in div.attached )
+		{
+			var d = div.attached[ a ]
+			while( d.className.indexOf( 'Til' ) >= 0 )
+			{
+				var ind = d.className.indexOf( 'Til' );
+				if( ind >= 0 )
+				{
+					for( var b = ind; d.className[b] != ' ' && b < d.className.length; b++ ){}
+					d.className = d.className.split( d.className.substr( ind, b - ind ) ).join( ' ' );
+				}
+			}
+		}
+	}
 }
 
 function _DeactivateWindow( m, skipCleanUp )
@@ -2455,6 +2517,9 @@ var View = function( args )
 
 					this.window.setAttribute( 'maximized', 'true' );
 					
+					// Check tiling
+					_setWindowTiles( div );
+					
 					// Tell app
 					if( window._getAppByAppId )
 					{
@@ -2497,12 +2562,14 @@ var View = function( args )
 						}
 						ResizeWindow( this.window, wid, hei );
 					}
-					this.mode = 'maximized';
+					this.mode = 'maximized';					
 				}
 				else
 				{
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
+					
+					_removeWindowTiles( div );
 					
 					// Store it just in case
 					var d = GetWindowStorage( div.id );

@@ -616,7 +616,7 @@ var mousePointer =
 		var multiple = false;
 		if ( ele.window )
 		{
-			if( ele.window.windowObject.refreshing ) return;
+			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
 			
 			_ActivateWindowOnly( ele.window.parentNode );
 			for( var a = 0; a < ele.window.icons.length; a++ )
@@ -1608,7 +1608,17 @@ movableListener = function( e, data )
 									}
 									else
 									{
-										mw.attached.push( currentMovable );
+										var found = false;
+										for( var a in mw.attached )
+										{
+											if( mw.attached[ a ] == currentMovable )
+											{
+												found = true;
+												break;
+											}
+										}
+										if( !found )
+											mw.attached.push( currentMovable );
 									}
 									mw.setAttribute( 'attach_' + direction, 'attached' );
 									
@@ -2331,6 +2341,10 @@ function CheckScreenTitle( screen )
 	
 	// Tell system we are maximized
 	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
+	{
+		document.body.classList.add( 'ViewMaximized' );
+	}
+	else if( window.currentMovable && currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
 	{
 		document.body.classList.add( 'ViewMaximized' );
 	}
