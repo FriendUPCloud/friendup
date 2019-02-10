@@ -684,6 +684,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 	if( !flagMaxHeight || flagMaxHeight > maxHeight )
 	{
 		div.style.maxHeight = maxHeight + 'px';
+		div.parentNode.style.maxHeight = maxHeight + 'px';
 	}
 
 	var mt = margins.top;
@@ -1134,6 +1135,7 @@ function _ActivateWindow( div, nopoll, e )
 // Activate tiling system
 function _setWindowTiles( div )
 {
+	if( isMobile ) return;
 	// Check if we have windows attached
 	if( div.attached )
 	{
@@ -1158,6 +1160,7 @@ function _setWindowTiles( div )
 // Remove tiling system
 function _removeWindowTiles( div )
 {
+	if( isMobile ) return;
 	// Check if we have windows attached
 	if( div.attached )
 	{

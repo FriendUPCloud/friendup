@@ -1279,12 +1279,17 @@ html .NativeViewContainer > .View > .Content
 
 /* Attached windows | window tiling ----------------------------------------- */
 
+body.ViewMaximized .ViewContainer
+{
+	height: 100%;
+}
+
 body.ViewMaximized .View[maximized].TilingMode2
 {
 	top: 0 !important;
 	left: 0 !important;
 	width: 50vw !important;
-	height: 100vh !important;
+	height: 100% !important;
 }
 
 body.ViewMaximized .View.TilingMode2.Tile2
@@ -1292,7 +1297,7 @@ body.ViewMaximized .View.TilingMode2.Tile2
 	top: 0 !important;
 	left: 50vw !important;
 	width: 50vw !important;
-	height: 100vh !important;
+	height: 100% !important;
 }
 
 /* Three tiles */
@@ -1302,22 +1307,24 @@ body.ViewMaximized .View[maximized].TilingMode3
 	top: 0 !important;
 	left: 0 !important;
 	width: 50vw !important;
-	height: 100vh !important;
+	height: 100% !important;
 }
 
 body.ViewMaximized .View.TilingMode3.Tile2
 {
 	top: 0 !important;
 	left: 50vw !important;
+	bottom: 50% !important;
+	height: 50% !important;
 	width: 50vw !important;
-	height: 50vh !important;
 }
 
 body.ViewMaximized .View.TilingMode3.Tile3
 {
-	top: 50vh !important;
+	top: 50% !important;
 	left: 50vw !important;
+	bottom: 100% !important;
+	height: 50% !important;
 	width: 50vw !important;
-	height: 50vh !important;
 }
 
