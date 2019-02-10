@@ -20,6 +20,7 @@ menu_convert_images_inline        : Til innline bilder
 menu_vr_features                  : Gjem/skjul VR funksjoner
 
 i18n_list                         : Liste
+i18n_uncategorized                : Ukategorisert
 i18n_categories                   : Kategorier
 
 #Style editor

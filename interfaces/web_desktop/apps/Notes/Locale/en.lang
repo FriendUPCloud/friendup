@@ -19,6 +19,7 @@ menu_convert_images_inline        : Images to inline
 menu_vr_features                  : Toggle VR features
 
 i18n_list                         : List
+i18n_uncategorized                : Uncategorized
 i18n_categories                   : Categories
 
 #Style editor

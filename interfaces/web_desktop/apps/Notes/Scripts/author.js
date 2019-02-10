@@ -390,7 +390,36 @@ Application.setCorrectTitle = function()
 {
 	if( this.currentViewMode == 'files' )
 	{
-		Application.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_list' ) );
+		var cand = '';
+		if( this.browserPath )
+		{
+			cand = this.browserPath;
+			if( cand.indexOf( '/' ) > 0 )
+			{
+				cand = cand.split( '/' );
+				cand.pop();
+				cand = cand.join( '/' );
+				if( cand.indexOf( '/' ) > 0 )
+				{
+					cand = cand.split( '/' ).pop();
+				}
+				else
+				{
+					cand = cand.split( ':' ).pop();
+				}
+				if( cand == 'Notes' )
+					cand = i18n( 'i18n_uncategorized' );
+			}
+			else
+			{
+				cand = i18n( 'i18n_uncategorized' );
+			}
+		}
+		else
+		{
+			cand = i18n( 'i18n_uncategorized' );
+		}
+		Application.mainView.setFlag( 'title', 'Notes - ' + cand );
 	}
 	else if( this.currentViewMode == 'root' )
 	{
@@ -425,6 +454,7 @@ Application.receiveMessage = function( msg )
 					this.mainView.showBackButton( false );
 				}
 			}
+			this.browserPath = msg.browserPath;
 			this.setCorrectTitle();
 			break;
 		case 'setfilename':
@@ -433,7 +463,6 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'newdocument':
 			this.wholeFilename = '';
-			this.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_new_document' ) );
 			break;
 		case 'applystyle':
 			this.mainView.sendMessage( msg );

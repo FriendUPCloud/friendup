@@ -112,6 +112,7 @@ Application.handleBack = function()
 Application.updateViewMode = function()
 {
 	if( !isMobile ) return;
+	
 	switch( currentViewMode )
 	{
 		case 'root':
@@ -121,7 +122,8 @@ Application.updateViewMode = function()
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
 			this.sendMessage( {
 				command: 'updateViewMode',
-				mode: 'root'
+				mode: 'root',
+				browserPath: this.browserPath
 			} );
 			break;
 		case 'files':
@@ -131,7 +133,8 @@ Application.updateViewMode = function()
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
 			this.sendMessage( {
 				command: 'updateViewMode',
-				mode: 'files'
+				mode: 'files',
+				browserPath: this.browserPath
 			} );
 			break;
 		default:
@@ -141,7 +144,8 @@ Application.updateViewMode = function()
 			ge( 'RightBar' ).style.transform = 'translateX(0%)';
 			this.sendMessage( {
 				command: 'updateViewMode',
-				mode: 'notes'
+				mode: 'notes',
+				browserPath: this.browserPath
 			} );
 			break;
 	}
