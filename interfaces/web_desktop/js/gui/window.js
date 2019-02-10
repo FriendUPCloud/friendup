@@ -2268,6 +2268,10 @@ var View = function( args )
 		div.ontouchstart = function( e )
 		{
 			var self = this;
+			
+			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
+				return;
+			
 			if( !isMobile )
 			{
 				this.setAttribute( 'moving', 'moving' );
