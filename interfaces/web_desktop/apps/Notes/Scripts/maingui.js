@@ -52,8 +52,9 @@ var filebrowserCallbacks = {
 	{
 		
 	},
-	folderOpen( ele )
+	folderOpen( ele, e )
 	{
+		if( isMobile && currentViewMode != 'root' ) return;
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
@@ -62,8 +63,9 @@ var filebrowserCallbacks = {
 		currentViewMode = 'files';
 		Application.updateViewMode();
 	},
-	folderClose( ele )
+	folderClose( ele, e )
 	{
+		if( isMobile && currentViewMode != 'root' ) return;
 		Application.currentDocument = null;
 		Application.browserPath = ele;
 		Application.refreshFilePane( 'findFirstFile' );
@@ -154,6 +156,8 @@ Application.updateViewMode = function()
 Application.refreshFilePane = function( method )
 {
 	if( !method ) method = false;
+	if( this.refreshingFilePane ) return;
+	this.refreshingFilePane = true;
 	
 	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
 	{
@@ -172,6 +176,7 @@ Application.refreshFilePane = function( method )
 	
 	d.getIcons( function( items )
 	{
+		self.refreshingFilePane = false;
 		Application._toBeSaved = null;
 		
 		if( !items )
