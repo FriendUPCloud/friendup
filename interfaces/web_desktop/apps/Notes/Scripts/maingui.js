@@ -58,7 +58,7 @@ var filebrowserCallbacks = {
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( 'findFirstFile' );
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
 		currentViewMode = 'files';
 		Application.updateViewMode();
 		cancelBubble( e );
@@ -68,7 +68,7 @@ var filebrowserCallbacks = {
 		if( isMobile && currentViewMode != 'root' ) return;
 		Application.currentDocument = null;
 		Application.browserPath = ele;
-		Application.refreshFilePane( 'findFirstFile' );
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
 		currentViewMode = 'files';
 		Application.updateViewMode();
 		cancelBubble( e );
@@ -154,7 +154,7 @@ Application.updateViewMode = function()
 	}
 }
 
-Application.refreshFilePane = function( method )
+Application.refreshFilePane = function( method, force )
 {
 	if( !method ) method = false;
 	
@@ -172,7 +172,7 @@ Application.refreshFilePane = function( method )
 	var self = this;
 	
 	// Already showing!
-	if( Application.path == Application.browserPath ) return;
+	if( Application.path == Application.browserPath && !force ) return;
 	
 	Application.path = Application.browserPath;
 	var p = Application.path;
@@ -352,7 +352,7 @@ Application.refreshFilePane = function( method )
 			// Selected files can be renamed
 			if( d.classList.contains( 'Selected' ) )
 			{
-				d.clicker = function()
+				d.clicker = function( e )
 				{
 					var s = this;
 					if( this.tm )
@@ -387,7 +387,7 @@ Application.refreshFilePane = function( method )
 									data: Application.path + val
 								} );
 								Application.currentDocument = Application.path + val;
-								Application.refreshFilePane();
+								Application.refreshFilePane( false, true );
 							}
 							// Perhaps give error - file exists
 							else
@@ -417,6 +417,7 @@ Application.refreshFilePane = function( method )
 						p.innerHTML = ml;
 						s.tm = null;
 					}
+					cancelBubble( e );
 				}
 				if( isMobile )
 				{
@@ -433,6 +434,11 @@ Application.refreshFilePane = function( method )
 						}
 						dd.ontouchend = function()
 						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								console.log( 'Found an inpuyt!' );
+								return;
+							}
 							var f = this;
 							if( f.editTimeout )
 							{
