@@ -245,7 +245,7 @@ Application.refreshFilePane = function( method, force )
 							command: 'setfilename',
 							data: Application.currentDocument
 						} );
-						Application.refreshFilePane();
+						Application.refreshFilePane( false, true );
 						Application.loadFile( Application.browserPath + nextTest + '.html' );
 					}
 				} );
@@ -349,76 +349,78 @@ Application.refreshFilePane = function( method, force )
 			
 			fBar.contents.appendChild( d );
 			
+			d.clicker = function( e )
+			{
+				var s = this;
+				if( this.tm )
+				{
+					clearTimeout( this.tm );
+				}
+				this.tm = 'block';
+			
+				var p = this.getElementsByTagName( 'p' )[0];
+				var ml = p.innerHTML;
+				var inp = document.createElement( 'input' );
+				inp.type = 'text';
+				inp.className = 'NoMargins';
+				inp.style.width = 'calc(100% - 32px)';
+				inp.value = p.innerText;
+				p.innerHTML = '';
+				p.appendChild( inp );
+				inp.select();
+				inp.focus();
+				function renameNow()
+				{
+					var val = inp.value;
+					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+						val += '.html';
+					var l = new Library( 'system.library' );
+					l.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.sendMessage( {
+								command: 'setfilename',
+								data: Application.path + val
+							} );
+							Application.currentDocument = Application.path + val;
+							Application.refreshFilePane( false, true );
+						}
+						// Perhaps give error - file exists
+						else
+						{
+							inp.select();
+						}
+					}
+					l.execute( 'file/rename', { path: s.path, newname: val } );
+				}
+				p.onkeydown = function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					// Abort
+					if( k == 27 )
+					{
+						if( p && p.parentNode )
+							p.innerHTML = ml;
+						s.tm = null;
+					}
+					// Rename
+					else if( k == 13 )
+					{
+						renameNow();
+					}
+				}
+				inp.onblur = function()
+				{
+					p.innerHTML = ml;
+					s.tm = null;
+				}
+				cancelBubble( e );
+			}
+			
 			// Selected files can be renamed
 			if( d.classList.contains( 'Selected' ) )
 			{
-				d.clicker = function( e )
-				{
-					var s = this;
-					if( this.tm )
-					{
-						clearTimeout( this.tm );
-					}
-					this.tm = 'block';
-				
-					var p = this.getElementsByTagName( 'p' )[0];
-					var ml = p.innerHTML;
-					var inp = document.createElement( 'input' );
-					inp.type = 'text';
-					inp.className = 'NoMargins';
-					inp.style.width = 'calc(100% - 32px)';
-					inp.value = p.innerText;
-					p.innerHTML = '';
-					p.appendChild( inp );
-					inp.select();
-					inp.focus();
-					function renameNow()
-					{
-						var val = inp.value;
-						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-							val += '.html';
-						var l = new Library( 'system.library' );
-						l.onExecuted = function( e, d )
-						{
-							if( e == 'ok' )
-							{
-								Application.sendMessage( {
-									command: 'setfilename',
-									data: Application.path + val
-								} );
-								Application.currentDocument = Application.path + val;
-								Application.refreshFilePane( false, true );
-							}
-							// Perhaps give error - file exists
-							else
-							{
-								inp.select();
-							}
-						}
-						l.execute( 'file/rename', { path: s.path, newname: val } );
-					}
-					p.onkeydown = function( e )
-					{
-						var k = e.which ? e.which : e.keyCode;
-						// Abort
-						if( k == 27 )
-						{
-							this.innerHTML = ml;
-							s.tm = null;
-						}
-						// Rename
-						else if( k == 13 )
-						{
-							renameNow();
-						}
-					}
-					inp.onblur = function()
-					{
-						p.innerHTML = ml;
-						s.tm = null;
-					}
-					cancelBubble( e );
-				}
 				if( isMobile )
 				{
 					( function( dd ) {
@@ -436,7 +438,6 @@ Application.refreshFilePane = function( method, force )
 						{
 							if( dd.getElementsByTagName( 'input' ).length ) 
 							{
-								console.log( 'Found an inpuyt!' );
 								return;
 							}
 							var f = this;
@@ -460,15 +461,57 @@ Application.refreshFilePane = function( method, force )
 			// Others are activated
 			else
 			{
-				( function( dl ){
-					dl[ isMobile ? 'ontouchstart' : 'onclick' ] = function()
-					{
-						currentViewMode = 'default';
-						Application.updateViewMode();
-						Application.currentDocument = dl.path;
-						Application.loadFile( dl.path );
-					}
-				} )( d );
+				if( isMobile )
+				{
+					( function( dd ){ 
+						dd.ontouchstart = function( e )
+						{
+							dd.classList.add( 'Selected' );
+							var eles = dd.parentNode.childNodes;
+							for( var a = 0; a < eles.length; a++ )
+							{
+								if( eles[a].tagName == 'DIV' && eles[a] != dd )
+									eles[a].classList.remove( 'Selected' );
+							}
+							var f = dd;
+							this.editTimeout = setTimeout( function()
+							{
+								f.editTimeout = null;
+								f.clicker();
+							}, 750 );
+							return cancelBubble( e );
+						}
+						dd.ontouchend = function()
+						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								return;
+							}
+							var f = this;
+							if( f.editTimeout )
+							{
+								clearTimeout( f.editTimeout );
+								f.editTimeout = null;
+								currentViewMode = 'default';
+								Application.updateViewMode();
+								Application.currentDocument = f.path;
+								Application.loadFile( f.path );
+							}
+						}
+					} )( d );
+				}
+				else
+				{
+					( function( dl ){
+						dl.onclick = function()
+						{
+							currentViewMode = 'default';
+							Application.updateViewMode();
+							Application.currentDocument = dl.path;
+							Application.loadFile( dl.path );
+						}
+					} )( d );
+				}
 			}
 		}
 		
