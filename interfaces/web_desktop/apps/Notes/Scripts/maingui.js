@@ -54,6 +54,7 @@ var filebrowserCallbacks = {
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		ge( 'FileBar' ).innerHTML = '';
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
@@ -66,6 +67,7 @@ var filebrowserCallbacks = {
 	folderClose( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		ge( 'FileBar' ).innerHTML = '';
 		Application.currentDocument = null;
 		Application.browserPath = ele;
 		Application.refreshFilePane( 'findFirstFile' );
