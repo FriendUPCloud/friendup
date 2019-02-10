@@ -171,6 +171,9 @@ Application.refreshFilePane = function( method )
 	
 	var self = this;
 	
+	// Already showing!
+	if( Application.path == Application.browserPath ) return;
+	
 	Application.path = Application.browserPath;
 	var p = Application.path;
 	
