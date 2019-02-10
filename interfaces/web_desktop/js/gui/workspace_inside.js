@@ -3,6 +3,7 @@ var WorkspaceInside = {
 	trayIcons: {},
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
+	websocketDisconnectTime: 0,
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -559,6 +560,7 @@ var WorkspaceInside = {
 				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
 				document.body.classList.remove( 'Offline' );
 				Workspace.workspaceIsDisconnected = false;
+				Workspace.websocketDisconnectTime = 0;
 				
 				// Reattach
 				if( !Workspace.conn && selfConn )
@@ -7436,6 +7438,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
+			
+			// If we have no conn, and we have waited five cycles, force reconnect
+			// the websocket...
+			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 5 )
+			{
+				Workspace.connectingWebsocket = false;
+				Workspace.websocketDisconnectTime = 0;
+				Workspace.initWebSocket();
+			}
 		}
 		// Only set serverIsThere if we don't have a response from the server
 		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
