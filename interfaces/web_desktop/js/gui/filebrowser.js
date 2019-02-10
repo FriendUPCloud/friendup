@@ -75,10 +75,15 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 		var t = e.target ? e.target : e.srcElement;
 		if( t == this )
 		{
-			self.setPath( self.rootPath, function()
+			var cb = function()
 			{
-				self.callbacks.folderOpen( self.rootPath, e );
-			} );
+				if( t )
+				{
+					self.callbacks.folderOpen( self.rootPath, e );
+				}
+				t = null;
+			};
+			self.setPath( self.rootPath, cb );
 		}
 		return cancelBubble( e );
 	}

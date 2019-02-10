@@ -40,7 +40,6 @@ if( isMobile )
 	ge( 'RightBar' ).style.width = '100%';
 	ge( 'RightBar' ).style.transition = 'transform 0.25s';
 }
-
 var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
@@ -62,6 +61,7 @@ var filebrowserCallbacks = {
 		Application.refreshFilePane( 'findFirstFile' );
 		currentViewMode = 'files';
 		Application.updateViewMode();
+		cancelBubble( e );
 	},
 	folderClose( ele, e )
 	{
@@ -71,6 +71,7 @@ var filebrowserCallbacks = {
 		Application.refreshFilePane( 'findFirstFile' );
 		currentViewMode = 'files';
 		Application.updateViewMode();
+		cancelBubble( e );
 	}
 };
 
@@ -156,8 +157,6 @@ Application.updateViewMode = function()
 Application.refreshFilePane = function( method )
 {
 	if( !method ) method = false;
-	if( this.refreshingFilePane ) return;
-	this.refreshingFilePane = true;
 	
 	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
 	{
@@ -173,10 +172,13 @@ Application.refreshFilePane = function( method )
 	var self = this;
 	
 	Application.path = Application.browserPath;
+	var p = Application.path;
 	
 	d.getIcons( function( items )
 	{
-		self.refreshingFilePane = false;
+		// Something changed in transit. Do nothing
+		if( p != Application.path ) return;
+	
 		Application._toBeSaved = null;
 		
 		if( !items )
@@ -536,7 +538,7 @@ Application.run = function( msg, iface )
 				var l = new Library( 'system.library' );
 				l.onExecuted = function()
 				{
-					self.fileBrowser.refresh( 'Home:Notes/' );
+					self.fileBrowser.refresh( Application.browserPath );
 				}
 				l.execute( 'file/makedir', { path: Application.path + this.value } );
 			}
