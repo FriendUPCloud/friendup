@@ -174,7 +174,11 @@ Application.refreshFilePane = function( method )
 	Application.path = Application.browserPath;
 	var p = Application.path;
 	
-	ge( 'FileBar' ).innerHTML = '';
+	if( ge( 'FileBar' ).contents )
+	{
+		ge( 'FileBar' ).contents.innerHTML = '';
+	}
+	
 	d.getIcons( function( items )
 	{
 		// Something changed in transit. Do nothing
