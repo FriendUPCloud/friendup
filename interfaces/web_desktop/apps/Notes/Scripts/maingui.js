@@ -54,7 +54,6 @@ var filebrowserCallbacks = {
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
-		ge( 'FileBar' ).innerHTML = '';
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
@@ -67,7 +66,6 @@ var filebrowserCallbacks = {
 	folderClose( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
-		ge( 'FileBar' ).innerHTML = '';
 		Application.currentDocument = null;
 		Application.browserPath = ele;
 		Application.refreshFilePane( 'findFirstFile' );
@@ -176,6 +174,7 @@ Application.refreshFilePane = function( method )
 	Application.path = Application.browserPath;
 	var p = Application.path;
 	
+	ge( 'FileBar' ).innerHTML = '';
 	d.getIcons( function( items )
 	{
 		// Something changed in transit. Do nothing
@@ -183,11 +182,6 @@ Application.refreshFilePane = function( method )
 	
 		Application._toBeSaved = null;
 		
-		if( !items )
-		{
-			ge( 'FileBar' ).innerHTML = '';
-			return;
-		}
 		var byDate = [];
 		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
 		items.reverse();
