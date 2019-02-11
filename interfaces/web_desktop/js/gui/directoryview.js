@@ -3785,7 +3785,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	// -------------------------------------------------------------------------
 	file.rollOut = function ( eles )
 	{
-		this.classList.remove('DragTarget');
+		this.classList.remove( 'DragTarget' );
 	}
 
 	// -------------------------------------------------------------------------
@@ -4106,7 +4106,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		if ( !e ) e = window.event;
 		if ( window.mouseDown == this )
 		{
-			mousePointer.pickup ( this );
+			mousePointer.pickup( this );
 			window.mouseDown = 4;
 			return cancelBubble ( e );
 		}
@@ -4402,8 +4402,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					win.refreshing = false;
 				} );
 			}, 250 );
-
-
 		}
 		we.refresh ();
 		
@@ -4712,7 +4710,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				var self = this;
 				w.refreshing = true;
 				
-				
 				var wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
 				
 				w.setFlag( 'title', _nameFix( wt ) );
@@ -4786,7 +4783,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					}
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
-					w.refreshing = true;
+					w.refreshing = false;
 				}
 				j.send();
 			}
