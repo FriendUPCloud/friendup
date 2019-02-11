@@ -1005,7 +1005,8 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
-	if( document.body.classList.contains( 'Activating' ) )
+	// Already activating
+	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
 		return;
 	}
@@ -1077,7 +1078,7 @@ function _ActivateWindow( div, nopoll, e )
 			pn.classList.remove( 'Activating' );
 			setTimeout( function()
 			{
-				if( div )
+				/*if( div )
 				{
 					// Finally
 					pn.classList.add( 'DoneActivating' );
@@ -1091,7 +1092,7 @@ function _ActivateWindow( div, nopoll, e )
 							document.body.classList.remove( 'Activating' );
 						}
 					}, 300 );
-				}
+				}*/
 			}, 300 );
 		}
 	}, 300 );
