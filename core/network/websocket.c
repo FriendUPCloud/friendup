@@ -740,39 +740,21 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	{
 		return 0;
 	}
-	
-	/*
-	//data->fcd_WSClient = NULL;
-	int pos = 0;
-	while( TRUE )
-	{
-		DEBUG("[DeleteWebSocketConnection] Check in use %d\n", wscl->wsc_InUseCounter );
-		if( wscl->wsc_InUseCounter <= 0 )
-		{
-			break;
-		}
-		sleep( 1 );
-		pos++;
-		if( pos >= 4 )
-		{
-			DEBUG("[DeleteWebSocketConnection] Cannot wait longer, removeing connection\n");
-			break;
-		}
-	}
-	*/
+
 	//
-	
+	UserSession *us = NULL;
 	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
-	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
-    UserSession *us = (UserSession *)wscl->wsc_UserSession;
-	if( us != NULL )
+	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
 	{
-		DEBUG("[DeleteWebSocketConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %s\n", us, us->us_SessionID, wscl->wsc_Wsi );
-		us->us_WSClients = NULL;
+		us = (UserSession *)wscl->wsc_UserSession;
+		if( us != NULL )
+		{
+			DEBUG("[DeleteWebSocketConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %s\n", us, us->us_SessionID, wscl->wsc_Wsi );
+			us->us_WSClients = NULL;
+		}
+		wscl->wsc_Wsi = NULL;
+		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
 	}
-	wscl->wsc_Wsi = NULL;
-	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
-    
 	DEBUG("[DeleteWebSocketConnection] Remove UserSession from User list\n");
 	//
 	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there

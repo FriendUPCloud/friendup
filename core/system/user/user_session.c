@@ -108,13 +108,15 @@ void UserSessionDelete( UserSession *us )
 	
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
-		FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
-		
 		WebsocketServerClient *nwsc = us->us_WSClients;
-		us->us_WSClients = NULL;
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			us->us_WSClients = NULL;
 		
-		Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSClients );
-
+			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSClients );
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}
+		
 		if( nwsc != NULL )
 		{
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl != NULL\n");
@@ -137,23 +139,26 @@ void UserSessionDelete( UserSession *us )
 		}
 
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
-	
-		if( us->us_WSReqManager != NULL )
+
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			WebsocketReqManagerDelete( us->us_WSReqManager );
-			us->us_WSReqManager = NULL;
-		}
+			if( us->us_WSReqManager != NULL )
+			{
+				WebsocketReqManagerDelete( us->us_WSReqManager );
+				us->us_WSReqManager = NULL;
+			}
 		
-		if( us->us_DeviceIdentity != NULL )
-		{
-			FFree( us->us_DeviceIdentity );
-		}
+			if( us->us_DeviceIdentity != NULL )
+			{
+				FFree( us->us_DeviceIdentity );
+			}
 	
-		if( us->us_SessionID != NULL )
-		{
-			FFree( us->us_SessionID );
+			if( us->us_SessionID != NULL )
+			{
+				FFree( us->us_SessionID );
+			}
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
-		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		pthread_mutex_destroy( &(us->us_Mutex) );
 	
 		FFree( us );

@@ -51,11 +51,12 @@ void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
 {
 	if( wrm != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
-		WebsocketReqDeleteAll( wrm->wrm_WRWaiting );
-		WebsocketReqDeleteAll( wrm->wrm_WRQueue );
-		FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
-		
+		if( FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) ) == 0 )
+		{
+			WebsocketReqDeleteAll( wrm->wrm_WRWaiting );
+			WebsocketReqDeleteAll( wrm->wrm_WRQueue );
+			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
+		}
 		pthread_mutex_destroy( &(wrm->wrm_Mutex) );
 		
 		FFree( wrm );
