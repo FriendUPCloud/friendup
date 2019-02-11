@@ -33,6 +33,8 @@ function ExecuteApplication( app, args, callback )
 	}
 
 	mousePointer.clear();
+	if( isMobile )
+		window.blur();
 
 	// Check if the app called is found in the singleInstanceApps array
 	if( Friend.singleInstanceApps[ app ] )
