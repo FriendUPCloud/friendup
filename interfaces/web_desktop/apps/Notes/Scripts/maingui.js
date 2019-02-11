@@ -1566,11 +1566,11 @@ function editorCommand( command, value )
 	}
 	else if( command == 'olbullets' )
 	{
-		f.execCommand( 'insertOrderedList', false, false );
+		f.execCommand( 'bulletedList', false, false );
 	}
 	else if( command == 'ulbullets' )
 	{
-		f.execCommand( 'insertUnorderedList', false, false );
+		f.execCommand( 'numberedList', false, false );
 	}
 	else if( command == 'align-left' )
 	{
