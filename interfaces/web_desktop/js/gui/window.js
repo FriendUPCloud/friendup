@@ -1093,9 +1093,9 @@ function _ActivateWindow( div, nopoll, e )
 						}
 					}, 300 );
 				}
-			}, 300 );
+			}, 600 );
 		}
-	}, 600 );
+	}, 300 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
