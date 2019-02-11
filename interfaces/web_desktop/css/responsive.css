@@ -10,13 +10,6 @@ body.Inside > img
 	pointer-events: none;
 }
 
-/* iOS zoom */
-
-iframe
-{
-	-webkit-overflow-scrolling: touch
-}
-
 /* Main screen */
 
 #Screens
