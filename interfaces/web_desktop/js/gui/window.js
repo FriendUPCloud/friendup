@@ -4996,8 +4996,10 @@ function _kresponseup( e )
 }
 
 // Resize all screens
-function _kresize( e )
+function _kresize( e, depth )
 {
+	if( !depth ) depth = 0;
+	
 	checkMobileBrowser();
 	
 	// Resize screens
@@ -5015,6 +5017,17 @@ function _kresize( e )
 	for( var a in movableWindows )
 	{
 		ConstrainWindow( movableWindows[a] );
+	}
+	
+	if( depth == 0 )
+	{
+		if( navigator.userAgent.toLowerCase().indexOf( 'ios' ) )
+		{
+			setTimeout( function()
+			{
+				_kresize( e, 1 );
+			}, 150 );
+		}
 	}
 }
 
