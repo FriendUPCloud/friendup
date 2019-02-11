@@ -862,11 +862,11 @@ if( isset( $args->command ) )
 		case 'mountlist_list':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"mountlist_list failed"}' );
 
-			if( !isset($args->args->userids) ) die('fail<!--seperate-->no userids given');
+			if( !isset( $args->args->userids ) ) die('fail<!--seperate-->no userids given');
 			$sql = '';
 			if( isset($args->args->path) )
 			{
-				$type = ( isset($args->args->type) ? ' AND f.Type=\''. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) .'\'' : '' );
+				$type = ( isset( $args->args->type ) ? ' AND f.Type=\''. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) .'\'' : '' );
 				$sql = '
 					SELECT f.* FROM Filesystem f
 					WHERE
@@ -878,7 +878,7 @@ if( isset( $args->command ) )
 
 			if( $sql == '' ) die('fail<!--seperate-->no filter given');
 
-			$Logger->log( 'mounstlist list ' . $sql );
+			//$Logger->log( 'mounstlist list ' . $sql );
 
 			if( $rows = $SqlDatabase->FetchObjects( $sql ) )
 			{

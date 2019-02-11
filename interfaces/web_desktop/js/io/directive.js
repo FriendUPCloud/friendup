@@ -626,6 +626,7 @@ function ActivateApplication( app, conf )
 	if( conf && conf.type == 'disk' )
 	{
 		type = 'disk';
+		
 		// Defaults
 		conf.Permissions = [
 			'Module System',

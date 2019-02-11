@@ -3543,7 +3543,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					catch(e)
 					{
 						rows = false;
-						console.log( 'Could not parse network drives',e,dat );
+						console.log( 'Could not parse network drives', e, dat );
 					}
 
 					if( rows && rows.length )
