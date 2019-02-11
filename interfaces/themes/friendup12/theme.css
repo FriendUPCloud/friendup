@@ -380,7 +380,6 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	position: absolute;
 	clear: none;
 	border-radius: 8px;
-	transition: box-shadow;
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
 }
 
@@ -901,9 +900,6 @@ html .View
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	transition: transform 0.25s;
-	-moz-transition: transform 0.25s;
-	-webkit-transition: transform 0.25s;
 }
 
 html .View.Active
@@ -911,9 +907,6 @@ html .View.Active
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	transition: transform 0.25s;
-	-moz-transition: transform 0.25s;
-	-webkit-transition: transform 0.25s;
 }
 
 html .View.Active > .Title

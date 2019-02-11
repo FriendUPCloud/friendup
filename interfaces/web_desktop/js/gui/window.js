@@ -898,13 +898,17 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
+						if( currentMovable && ( currentMovable.classList.contains( 'Redrawing' ) || currentMovable.classList.contains( 'DoneActivating' ) || currentMovable.classList.contains( 'Activated' ) ) )
+						{
+							return setTimeout( function(){ deal() }, 250 );
+						}
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
 					}
 					if( delayedDeactivation && div.applicationId == dd.applicationId )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
-						setTimeout( function(){ deal() }, 500 );
+						setTimeout( function(){ deal() }, 250 );
 					}
 					else deal();
 				} )( m );

@@ -612,7 +612,7 @@ body.WindowMenu #Screens .View
 
 [mobile] #Screens .View
 {
-	transition: transform 0.25s;
+	transition: transform 0.25s ease-in;
 }
 
 /* Popup dialog boxes lil bit larger */
@@ -632,7 +632,8 @@ body.WindowMenu #Screens .View
 	min-height: 175px; /* calc(100% - 200px); */
 }
 
-#Screens .View.Active[maximized=true]
+#Screens .View.Active[maximized=true],
+[mobile] #Screens .DelayedDeactivation .View
 {
 	position: absolute;
 	top: 0 !important; 
@@ -660,24 +661,6 @@ body .ViewContainer .View .Content
 	will-change: content;
 	transform: translateZ(0);
 }
-
-body .ViewContainer .View.Active
-{
-	transition: transform 0.25s !important;
-}
-
-/*body .ViewContainer.Activating .View .Content
-{
-	transition: opacity 0.25s;
-	opacity: 0;
-	pointer-events: none;
-}
-
-body .ViewContainer.Activating .View.DoneActivating .Content
-{
-	opacity: 1;
-	pointer-events: all;
-}*/
 
 body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
 body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
@@ -751,7 +734,6 @@ body #Screens .ViewContainer.DelayedDeactivation .View
 {
 	background: transparent;
 }
-
 
 .ViewContainer.Closing:not([childview]):not(.OnWorkspace) .View
 {
