@@ -1078,7 +1078,7 @@ function _ActivateWindow( div, nopoll, e )
 			pn.classList.remove( 'Activating' );
 			setTimeout( function()
 			{
-				/*if( div )
+				if( div )
 				{
 					// Finally
 					pn.classList.add( 'DoneActivating' );
@@ -1092,10 +1092,10 @@ function _ActivateWindow( div, nopoll, e )
 							document.body.classList.remove( 'Activating' );
 						}
 					}, 300 );
-				}*/
+				}
 			}, 300 );
 		}
-	}, 300 );
+	}, 600 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
