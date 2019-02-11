@@ -616,7 +616,7 @@ var mousePointer =
 		var multiple = false;
 		if ( ele.window )
 		{
-			if( ele.window.windowObject.refreshing ) return;
+			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
 			
 			_ActivateWindowOnly( ele.window.parentNode );
 			for( var a = 0; a < ele.window.icons.length; a++ )
@@ -1461,6 +1461,7 @@ movableListener = function( e, data )
 							{
 								var mw = movableWindows[ z ];
 
+								if( mw.snapObject ) continue; // Can't snap to snapped windows
 								if( mw == currentMovable ) continue;
 								if( mw.parentNode && mw.parentNode && mw.parentNode.getAttribute( 'minimized' ) == 'minimized' ) 
 									continue;
@@ -1608,7 +1609,17 @@ movableListener = function( e, data )
 									}
 									else
 									{
-										mw.attached.push( currentMovable );
+										var found = false;
+										for( var a in mw.attached )
+										{
+											if( mw.attached[ a ] == currentMovable )
+											{
+												found = true;
+												break;
+											}
+										}
+										if( !found )
+											mw.attached.push( currentMovable );
 									}
 									mw.setAttribute( 'attach_' + direction, 'attached' );
 									
@@ -2211,8 +2222,21 @@ movableMouseUp = function( e )
 {
 	if( !e ) e = window.event;
 	
+	
 	var target = e.target ? e.target : e.srcElement;
 	
+	// For mobile
+	if( isMobile )
+	{
+		if( 
+			!( target.classList && target.classList.contains( 'View' ) ) &&
+			!( target.classList && target.classList.contains( 'ViewIcon' ) )
+		)
+		{
+			_removeMobileCloseButtons();
+		}
+	}
+
 	window.fileMenuElement = null;
 	window.mouseDown = false;
 	if( window.currentMovable ) currentMovable.snapping = false;
@@ -2318,6 +2342,10 @@ function CheckScreenTitle( screen )
 	
 	// Tell system we are maximized
 	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
+	{
+		document.body.classList.add( 'ViewMaximized' );
+	}
+	else if( window.currentMovable && currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
 	{
 		document.body.classList.add( 'ViewMaximized' );
 	}

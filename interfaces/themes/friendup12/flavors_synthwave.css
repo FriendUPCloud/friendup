@@ -126,6 +126,11 @@ html body.Synthwave .View, html body.Synthwave .View.Active
 	box-shadow: 0px 1px 15px 1px rgba(0,0,0,0.3);
 }
 
+body.Synthwave[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .ViewIcon
+{
+	background-color: rgba(70,28,100,0.6);
+}
+
 html > body.Synthwave .View.Active > .Title,
 html > body[mobile].Synthwave .View > .Title
 {

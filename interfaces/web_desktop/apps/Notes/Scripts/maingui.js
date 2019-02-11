@@ -27,6 +27,7 @@ window.addEventListener( 'scroll', function()
 // End scroll watcher
 
 var currentViewMode = 'default';
+
 if( isMobile )
 {
 	ge( 'LeftBar' ).style.transform = '-100%';
@@ -39,7 +40,6 @@ if( isMobile )
 	ge( 'RightBar' ).style.width = '100%';
 	ge( 'RightBar' ).style.transition = 'transform 0.25s';
 }
-
 var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
@@ -51,23 +51,27 @@ var filebrowserCallbacks = {
 	{
 		
 	},
-	folderOpen( ele )
+	folderOpen( ele, e )
 	{
+		if( isMobile && currentViewMode != 'root' ) return;
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( 'findFirstFile' );
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
 		currentViewMode = 'files';
 		Application.updateViewMode();
+		cancelBubble( e );
 	},
-	folderClose( ele )
+	folderClose( ele, e )
 	{
+		if( isMobile && currentViewMode != 'root' ) return;
 		Application.currentDocument = null;
 		Application.browserPath = ele;
-		Application.refreshFilePane( 'findFirstFile' );
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
 		currentViewMode = 'files';
 		Application.updateViewMode();
+		cancelBubble( e );
 	}
 };
 
@@ -111,6 +115,7 @@ Application.handleBack = function()
 Application.updateViewMode = function()
 {
 	if( !isMobile ) return;
+	
 	switch( currentViewMode )
 	{
 		case 'root':
@@ -118,23 +123,38 @@ Application.updateViewMode = function()
 			this.fld.style.transform = 'translateX(0)';
 			ge( 'FileBar' ).style.transform = 'translateX(100%)';
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'root',
+				browserPath: this.browserPath
+			} );
 			break;
 		case 'files':
 			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
 			this.fld.style.transform = 'translateX(-100%)';
 			ge( 'FileBar' ).style.transform = 'translateX(0%)';
 			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'files',
+				browserPath: this.browserPath
+			} );
 			break;
 		default:
 			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
 			this.fld.style.transform = 'translateX(-100%)';
 			ge( 'FileBar' ).style.transform = 'translateX(-100%)';
 			ge( 'RightBar' ).style.transform = 'translateX(0%)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'notes',
+				browserPath: this.browserPath
+			} );
 			break;
 	}
 }
 
-Application.refreshFilePane = function( method )
+Application.refreshFilePane = function( method, force )
 {
 	if( !method ) method = false;
 	
@@ -151,17 +171,24 @@ Application.refreshFilePane = function( method )
 	
 	var self = this;
 	
+	// Already showing!
+	if( Application.path == Application.browserPath && !force ) return;
+	
 	Application.path = Application.browserPath;
+	var p = Application.path;
+	
+	if( ge( 'FileBar' ).contents )
+	{
+		ge( 'FileBar' ).contents.innerHTML = '';
+	}
 	
 	d.getIcons( function( items )
 	{
+		// Something changed in transit. Do nothing
+		if( p != Application.path ) return;
+	
 		Application._toBeSaved = null;
 		
-		if( !items )
-		{
-			ge( 'FileBar' ).innerHTML = '';
-			return;
-		}
 		var byDate = [];
 		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
 		items.reverse();
@@ -218,7 +245,7 @@ Application.refreshFilePane = function( method )
 							command: 'setfilename',
 							data: Application.currentDocument
 						} );
-						Application.refreshFilePane();
+						Application.refreshFilePane( false, true );
 						Application.loadFile( Application.browserPath + nextTest + '.html' );
 					}
 				} );
@@ -322,75 +349,78 @@ Application.refreshFilePane = function( method )
 			
 			fBar.contents.appendChild( d );
 			
+			d.clicker = function( e )
+			{
+				var s = this;
+				if( this.tm )
+				{
+					clearTimeout( this.tm );
+				}
+				this.tm = 'block';
+			
+				var p = this.getElementsByTagName( 'p' )[0];
+				var ml = p.innerHTML;
+				var inp = document.createElement( 'input' );
+				inp.type = 'text';
+				inp.className = 'NoMargins';
+				inp.style.width = 'calc(100% - 32px)';
+				inp.value = p.innerText;
+				p.innerHTML = '';
+				p.appendChild( inp );
+				inp.select();
+				inp.focus();
+				function renameNow()
+				{
+					var val = inp.value;
+					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+						val += '.html';
+					var l = new Library( 'system.library' );
+					l.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.sendMessage( {
+								command: 'setfilename',
+								data: Application.path + val
+							} );
+							Application.currentDocument = Application.path + val;
+							Application.refreshFilePane( false, true );
+						}
+						// Perhaps give error - file exists
+						else
+						{
+							inp.select();
+						}
+					}
+					l.execute( 'file/rename', { path: s.path, newname: val } );
+				}
+				p.onkeydown = function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					// Abort
+					if( k == 27 )
+					{
+						if( p && p.parentNode )
+							p.innerHTML = ml;
+						s.tm = null;
+					}
+					// Rename
+					else if( k == 13 )
+					{
+						renameNow();
+					}
+				}
+				inp.onblur = function()
+				{
+					p.innerHTML = ml;
+					s.tm = null;
+				}
+				cancelBubble( e );
+			}
+			
 			// Selected files can be renamed
 			if( d.classList.contains( 'Selected' ) )
 			{
-				d.clicker = function()
-				{
-					var s = this;
-					if( this.tm )
-					{
-						clearTimeout( this.tm );
-					}
-					this.tm = 'block';
-				
-					var p = this.getElementsByTagName( 'p' )[0];
-					var ml = p.innerHTML;
-					var inp = document.createElement( 'input' );
-					inp.type = 'text';
-					inp.className = 'NoMargins';
-					inp.style.width = 'calc(100% - 32px)';
-					inp.value = p.innerText;
-					p.innerHTML = '';
-					p.appendChild( inp );
-					inp.select();
-					inp.focus();
-					function renameNow()
-					{
-						var val = inp.value;
-						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-							val += '.html';
-						var l = new Library( 'system.library' );
-						l.onExecuted = function( e, d )
-						{
-							if( e == 'ok' )
-							{
-								Application.sendMessage( {
-									command: 'setfilename',
-									data: Application.path + val
-								} );
-								Application.currentDocument = Application.path + val;
-								Application.refreshFilePane();
-							}
-							// Perhaps give error - file exists
-							else
-							{
-								inp.select();
-							}
-						}
-						l.execute( 'file/rename', { path: s.path, newname: val } );
-					}
-					p.onkeydown = function( e )
-					{
-						var k = e.which ? e.which : e.keyCode;
-						// Abort
-						if( k == 27 )
-						{
-							this.innerHTML = ml;
-							s.tm = null;
-						}
-						// Rename
-						else if( k == 13 )
-						{
-							renameNow();
-						}
-					}
-					inp.onblur = function()
-					{
-						p.innerHTML = ml;
-						s.tm = null;
-					}
-				}
 				if( isMobile )
 				{
 					( function( dd ) {
@@ -406,6 +436,10 @@ Application.refreshFilePane = function( method )
 						}
 						dd.ontouchend = function()
 						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								return;
+							}
 							var f = this;
 							if( f.editTimeout )
 							{
@@ -427,15 +461,57 @@ Application.refreshFilePane = function( method )
 			// Others are activated
 			else
 			{
-				( function( dl ){
-					dl[ isMobile ? 'ontouchstart' : 'onclick' ] = function()
-					{
-						currentViewMode = 'default';
-						Application.updateViewMode();
-						Application.currentDocument = dl.path;
-						Application.loadFile( dl.path );
-					}
-				} )( d );
+				if( isMobile )
+				{
+					( function( dd ){ 
+						dd.ontouchstart = function( e )
+						{
+							dd.classList.add( 'Selected' );
+							var eles = dd.parentNode.childNodes;
+							for( var a = 0; a < eles.length; a++ )
+							{
+								if( eles[a].tagName == 'DIV' && eles[a] != dd )
+									eles[a].classList.remove( 'Selected' );
+							}
+							var f = dd;
+							this.editTimeout = setTimeout( function()
+							{
+								f.editTimeout = null;
+								f.clicker();
+							}, 750 );
+							return cancelBubble( e );
+						}
+						dd.ontouchend = function()
+						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								return;
+							}
+							var f = this;
+							if( f.editTimeout )
+							{
+								clearTimeout( f.editTimeout );
+								f.editTimeout = null;
+								currentViewMode = 'default';
+								Application.updateViewMode();
+								Application.currentDocument = f.path;
+								Application.loadFile( f.path );
+							}
+						}
+					} )( d );
+				}
+				else
+				{
+					( function( dl ){
+						dl.onclick = function()
+						{
+							currentViewMode = 'default';
+							Application.updateViewMode();
+							Application.currentDocument = dl.path;
+							Application.loadFile( dl.path );
+						}
+					} )( d );
+				}
 			}
 		}
 		
@@ -514,7 +590,7 @@ Application.run = function( msg, iface )
 				var l = new Library( 'system.library' );
 				l.onExecuted = function()
 				{
-					self.fileBrowser.refresh( 'Home:Notes/' );
+					self.fileBrowser.refresh( Application.browserPath );
 				}
 				l.execute( 'file/makedir', { path: Application.path + this.value } );
 			}
@@ -526,6 +602,8 @@ Application.run = function( msg, iface )
 		return cancelBubble( e );
 	}
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
+	
+	Application.updateViewMode();
 }
 
 Application.checkWidth = function()
@@ -1480,6 +1558,10 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'updateViewMode':
+			currentViewMode = msg.mode;
+			Application.updateViewMode();
+			break;
 		case 'mobilebackbutton':
 			Application.handleBack();
 			break;
