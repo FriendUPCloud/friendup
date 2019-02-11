@@ -610,9 +610,9 @@ body.WindowMenu #Screens .View
 	width: calc(50% - 20px) !important;
 }
 
-[mobile] #Screens .View
+html body .View
 {
-	transition: transform 0.25s ease-in;
+	transition: transform 0.25s ease !important;
 }
 
 /* Popup dialog boxes lil bit larger */
