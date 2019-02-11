@@ -5021,7 +5021,9 @@ function _kresize( e, depth )
 	
 	if( depth == 0 )
 	{
-		if( navigator.userAgent.toLowerCase().indexOf( 'ios' ) )
+		// ios fix
+		var nav = navigator.userAgent.toLowerCase();
+		if( nav.indexOf( 'iphone' ) >= 0 || nav.indexOf( 'ipad' ) >= 0 )
 		{
 			setTimeout( function()
 			{
