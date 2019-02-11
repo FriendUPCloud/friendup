@@ -75,10 +75,15 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 		var t = e.target ? e.target : e.srcElement;
 		if( t == this )
 		{
-			self.setPath( self.rootPath, function()
+			var cb = function()
 			{
-				self.callbacks.folderOpen( self.rootPath );
-			} );
+				if( t )
+				{
+					self.callbacks.folderOpen( self.rootPath, e );
+				}
+				t = null;
+			};
+			self.setPath( self.rootPath, cb );
 		}
 		return cancelBubble( e );
 	}
@@ -223,7 +228,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
-					self.callbacks.folderOpen( ppath );
+					self.callbacks.folderOpen( ppath, e );
 					return  cancelBubble( e );
 				}
 				// Normal operation
@@ -236,7 +241,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						this.classList.add( 'Open' );
 						if( self.callbacks && self.callbacks.folderOpen )
 						{
-							self.callbacks.folderOpen( ppath );
+							self.callbacks.folderOpen( ppath, e );
+							cancelBubble( e );
 						}
 						var nam = ele.getElementsByClassName( 'Name' );
 						if( nam.length )
@@ -254,7 +260,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nam[0].classList.remove( 'Open' );
 						if( self.callbacks && self.callbacks.folderClose )
 						{
-							self.callbacks.folderClose( ppath );
+							self.callbacks.folderClose( ppath, e );
+							cancelBubble( e );
 						}
 					}
 				}

@@ -1788,7 +1788,7 @@ function receiveEvent( event, queued )
 	{
 		// Run callbacks and clean up
 		if( dataPacket.callback )
-		{	
+		{
 			// Ok, we will try to execute the callback we found here!
 			var f;
 			if( dataPacket.resp && ( f = extractCallback( dataPacket.callback ) ) )
@@ -1804,8 +1804,9 @@ function receiveEvent( event, queued )
 					return true;
 				}
 			}
+			// Try to extract here
 			else if( ( f = extractCallback( dataPacket.callback ) ) )
-			{	
+			{
 				try
 				{
 					if ( dataPacket.isFriendAPI )
@@ -1813,7 +1814,9 @@ function receiveEvent( event, queued )
 						f( dataPacket.response, dataPacket.data, dataPacket.extra );
 					}
 					else
+					{
 						f( dataPacket );
+					}
 				}
 				catch( e )
 				{
@@ -1824,15 +1827,43 @@ function receiveEvent( event, queued )
 			// Aha, we have a window to send to (see if it's at this level)
 			else if( dataPacket.viewId )
 			{
+				// At this level allright
+				if( dataPacket.viewId == Application.viewId )
+				{
+					if( f = extractCallback( dataPacket.callback ) )
+					{
+						// It's us!
+						try
+						{
+							if ( dataPacket.isFriendAPI )
+							{
+								f( dataPacket.response, dataPacket.data, dataPacket.extra );
+							}
+							else
+							{
+								f( dataPacket );
+							}
+						}
+						catch( e )
+						{
+							console.log( e, f );
+						}
+						return true;
+					}
+				}
 				// Search for our callback!
 				if( Application.windows )
 				{
 					for( var a in Application.windows )
 					{
-						Application.windows[a].sendMessage( dataPacket );
+						if( a == dataPacket.viewId )
+						{
+							Application.windows[a].sendMessage( dataPacket );
+							return true;
+						}
 					}
-					return true;
 				}
+				return false;
 			}
 		}
 		// Clean up callbacks unless they are to be kept
@@ -2212,6 +2243,24 @@ function View( flags )
 		};
 		Application.sendMessage( o );
 	}
+	
+	// Show the mobile back button
+	this.showBackButton = function( visible, callback )
+	{
+		if( !isMobile ) return;
+		var cid = addCallback( callback );
+		var o = {
+			type: 'view',
+			method: 'showbackbutton',
+			viewId: viewId,
+			// Right scope!
+			targetViewId: Application.viewId ? Application.viewId : null,
+			visible: visible,
+			callback: cid
+		};
+		Application.sendMessage( o );
+	}
+	
 	// Set window content
 	this.setContent = function( data, callback )
 	{

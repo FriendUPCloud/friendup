@@ -540,7 +540,8 @@ html body .View > .Title > div > span
 {
 	display: none;
 }
-.ViewContainer[childview].Active > .MobileBack 
+.ViewContainer[childview].Active > .MobileBack,
+.ViewContainer.Active > .MobileBack.Showing
 {
     display: block;
     width: 32px;
@@ -553,7 +554,8 @@ html body .View > .Title > div > span
     pointer-events: all;
 }
 
-.ViewContainer[childview].Active > .MobileBack:before
+.ViewContainer[childview].Active > .MobileBack:before,
+.ViewContainer.Active > .MobileBack.Showing:before
 {
 	font-family: fontawesome;
 	display: inline-block;
@@ -562,7 +564,8 @@ html body .View > .Title > div > span
 	font-weight: bold;
 }
 
-.ViewContainer[childview] > .MobileBack 
+.ViewContainer[childview] > .MobileBack,
+.ViewContainer > .MobileBack.Showing
 {
     left: -32px;
 }
@@ -574,21 +577,21 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Drag
 
 @keyframes jiggle
 {
-	0% { transform: rotateZ(5deg); }
-	50% { transform: rotateZ(-5deg); }
-	100% { transform: rotateZ(5deg); }
+	0% { transform: rotateZ(3deg); }
+	50% { transform: rotateZ(-3deg); }
+	100% { transform: rotateZ(3deg); }
 }
 @-webkit-keyframes jiggle
 {
-	0% { transform: rotateZ(5deg); }
-	50% { transform: rotateZ(-5deg); }
-	100% { transform: rotateZ(5deg); }
+	0% { transform: rotateZ(3deg); }
+	50% { transform: rotateZ(-3deg); }
+	100% { transform: rotateZ(3deg); }
 }
 
-
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove
 {
-	animation: jiggle 0.2s infinite;
+	animation: jiggle 0.3s infinite;
 }
 
 html body[mobile] .ViewContainer:not(.DelayedDeactivation) .View:not(.Active) > div:not(.Title)
@@ -776,6 +779,7 @@ body.ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation),
 body.AppsShowing .ViewContainer,
 body.AppsShowing .ViewContainer .ViewIcon,
 body .ViewContainer[childview] .ViewIcon,
+body .ViewContainer:not(.OnWorkspace) .ViewIcon.MobileBackHidesIt,
 body .ViewContainer.Closing:not(.Active) .ViewIcon,
 body .ViewContainer.DelayedDeactivation .ViewIcon
 {
@@ -980,7 +984,7 @@ body.Login > .View
 }
 
 body[mobile=mobile] .View .Title > div > .Minimize,
-body[mobile=mobile] .View .Title > div > .Close,
+body[mobile=mobile] .View:not(.Remove) .Title > div > .Close,
 body[mobile=mobile] .View .Title > div > .MobileClose
 {
 	display: none;
@@ -1072,6 +1076,21 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	margin: 5px 5px 5px 5px;
 	transition: opacity 0.25s;
 	pointer-events: none;
+}
+
+#MobileNotifications .MobileNotification .NotificationCount 
+{
+	position: absolute;
+	right: 15px;
+	top: 15px;
+	background-color: rgba(200,200,200,0.6);
+	border-radius: 100%;
+	height: 30px;
+	line-height: 30px;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 #MobileNotifications .MobileNotification .Application

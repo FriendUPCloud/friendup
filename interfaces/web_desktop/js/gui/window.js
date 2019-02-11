@@ -684,6 +684,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 	if( !flagMaxHeight || flagMaxHeight > maxHeight )
 	{
 		div.style.maxHeight = maxHeight + 'px';
+		div.parentNode.style.maxHeight = maxHeight + 'px';
 	}
 
 	var mt = margins.top;
@@ -1118,6 +1119,8 @@ function _ActivateWindow( div, nopoll, e )
 	// Set screen
 	SetScreenByWindowElement( div );
 
+	_setWindowTiles( div );
+
 	// When activating for the first time, deselect selected icons
 	if( div.classList && !div.classList.contains( 'Screen' ) )
 		clearRegionIcons();
@@ -1127,6 +1130,68 @@ function _ActivateWindow( div, nopoll, e )
 	_ActivateWindowOnly( div );
 
 	if( !nopoll ) PollTaskbar( div );
+}
+
+// Activate tiling system
+function _setWindowTiles( div )
+{
+	if( isMobile ) return;
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		if( div.className.indexOf( 'TilingMode' ) >= 0 )
+		{
+			_removeWindowTiles( div );
+		}
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		div.classList.add( 'TilingMode' + attachedCount );
+		var tile = 2;
+		for( var a in div.attached )
+		{
+			div.attached[a].classList.add( 'Tile' + tile++, 'TilingMode' + attachedCount );
+		}
+	}
+}
+
+// Remove tiling system
+function _removeWindowTiles( div )
+{
+	if( isMobile ) return;
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		while( div.className.indexOf( 'Til' ) >= 0 )
+		{
+			var ind = div.className.indexOf( 'Til' );
+			if( ind >= 0 )
+			{
+				for( var b = ind; div.className[b] != ' ' && b < div.className.length; b++ ){}
+				div.className = div.className.split( div.className.substr( ind, b - ind ) ).join( ' ' );
+			}
+		}
+		for( var a in div.attached )
+		{
+			var d = div.attached[ a ]
+			while( d.className.indexOf( 'Til' ) >= 0 )
+			{
+				var ind = d.className.indexOf( 'Til' );
+				if( ind >= 0 )
+				{
+					for( var b = ind; d.className[b] != ' ' && b < d.className.length; b++ ){}
+					d.className = d.className.split( d.className.substr( ind, b - ind ) ).join( ' ' );
+				}
+			}
+		}
+	}
 }
 
 function _DeactivateWindow( m, skipCleanUp )
@@ -1171,6 +1236,11 @@ function _DeactivateWindow( m, skipCleanUp )
 		m.style.height = '35px';
 	}
 	
+	if( isMobile )
+	{
+		_removeMobileCloseButtons();
+	}
+	
 	// If we will not skip cleanup then do this
 	if( !skipCleanUp )
 	{
@@ -1185,6 +1255,20 @@ function _DeactivateWindow( m, skipCleanUp )
 	}
 	
 	return ret;
+}
+
+function _removeMobileCloseButtons()
+{
+	for( var a in movableWindows )
+	{
+		var f = movableWindows[ a ];
+		if( f.viewIcon )
+		{
+			f.viewIcon.classList.remove( 'Remove' );
+			f.classList.remove( 'Remove' );
+			f.classList.remove( 'Dragging' );
+		}
+	}
 }
 
 function _DeactivateWindows()
@@ -1859,6 +1943,7 @@ var View = function( args )
 							iconSpan = document.createElement( 'span' );
 							iconSpan.classList.add( 'ViewIcon' );
 							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
+							self.viewIcon = iconSpan;
 							viewContainer.appendChild( iconSpan );
 						}
 					}
@@ -1869,7 +1954,8 @@ var View = function( args )
 				{
 					var md = document.createElement( 'div' );
 					md.className = 'MobileBack';
-					md.addEventListener( 'touchstart', function( e )
+					self.mobileBack = md;
+					md.ontouchstart =function( e )
 					{
 						if( window._getAppByAppId )
 						{
@@ -1882,7 +1968,7 @@ var View = function( args )
 							}
 						}
 						return cancelBubble( e );
-					} );
+					};
 					viewContainer.appendChild( md );
 				}
 			}
@@ -1890,6 +1976,7 @@ var View = function( args )
 			{
 				iconSpan = document.createElement( 'span' );
 				iconSpan.classList.add( 'ViewIcon' );
+				self.viewIcon = iconSpan;
 				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
 				viewContainer.appendChild( iconSpan );
 			}
@@ -2234,8 +2321,11 @@ var View = function( args )
 		{
 			if( e.button == 0 )
 			{
-				_ActivateWindow( this, false, e );
-				this.setAttribute( 'moving', 'moving' );
+				if( !this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					_ActivateWindow( this, false, e );
+					this.setAttribute( 'moving', 'moving' );
+				}
 			}
 		}
 
@@ -2243,6 +2333,10 @@ var View = function( args )
 		div.ontouchstart = function( e )
 		{
 			var self = this;
+			
+			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
+				return;
+			
 			if( !isMobile )
 			{
 				this.setAttribute( 'moving', 'moving' );
@@ -2255,13 +2349,14 @@ var View = function( args )
 					time: ( new Date() ).getTime()
 				};
 			}
+			// Start jiggling on longpress
 			// Only removable after 300 ms
 			this.touchInterval = setInterval( function()
 			{
 				var t = ( new Date() ).getTime();
 				if( self.clickOffset )
 				{
-					if( t - self.clickOffset.time > 150 )
+					if( t - self.clickOffset.time > 100 )
 					{
 						// Update time
 						self.clickOffset.removable = true;
@@ -2269,8 +2364,8 @@ var View = function( args )
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
 					
-						Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
-						Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
+						self.viewIcon.classList.add( 'Remove' );
+						self.classList.add( 'Remove' );
 					}
 				}
 			}, 150 );
@@ -2279,7 +2374,7 @@ var View = function( args )
 		// Remove window on drag
 		if( isMobile )
 		{
-			div.ontouchmove = function( e )
+			/*div.ontouchmove = function( e )
 			{
 				if( !this.clickOffset )
 					return;
@@ -2294,33 +2389,26 @@ var View = function( args )
 					if( diffy > 50 )
 					{
 						this.viewIcon.classList.add( 'Remove' );
+						this.classList.add( 'Remove' );
 					}
 					else
 					{
 						this.viewIcon.classList.remove( 'Remove' );
+						this.classList.remove( 'Remove' );
 					}
 				}
-			}
+			}*/
 			div.ontouchend = function( e )
 			{
-				if( Workspace.screen.bufferedTitle )
-				{
-					Workspace.screen.setFlag( 'title', Workspace.screen.bufferedTitle );
-					Workspace.screen.bufferedTitle = null;
-				}
-				if( this.viewIcon.classList.contains( 'Dragging' ) )
-				{
-					this.viewIcon.classList.remove( 'Dragging' );
-				}
-				if( this.viewIcon.classList.contains( 'Remove' ) )
-				{
-					this.viewIcon.classList.remove( 'Remove' );
-					this.close.click();
-				}
 				if( this.touchInterval )
 				{
 					clearInterval( this.touchInterval );
 					this.touchInterval = null;
+				}
+				// Only cancel bubble if view icon is jiggling on mobile
+				if( this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					return cancelBubble( e );
 				}
 			}
 		}
@@ -2432,6 +2520,9 @@ var View = function( args )
 
 					this.window.setAttribute( 'maximized', 'true' );
 					
+					// Check tiling
+					_setWindowTiles( div );
+					
 					// Tell app
 					if( window._getAppByAppId )
 					{
@@ -2474,12 +2565,14 @@ var View = function( args )
 						}
 						ResizeWindow( this.window, wid, hei );
 					}
-					this.mode = 'maximized';
+					this.mode = 'maximized';					
 				}
 				else
 				{
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
+					
+					_removeWindowTiles( div );
 					
 					// Store it just in case
 					var d = GetWindowStorage( div.id );
@@ -3927,6 +4020,28 @@ var View = function( args )
 		// Add after options set
 		if( !eles[0] ) this._window.appendChild( ifr );
 
+	}
+	
+	this.showBackButton = function( visible, cbk )
+	{
+		if( visible )
+		{
+			self.mobileBack.classList.add( 'Showing' );
+			self.viewIcon.classList.add( 'MobileBackHidesIt' );
+			
+			if( cbk )
+			{
+				self.mobileBack.ontouchstart = function( e )
+				{
+					cbk( e );
+				}
+			}
+		}
+		else 
+		{
+			self.mobileBack.classList.remove( 'Showing' );
+			self.viewIcon.classList.remove( 'MobileBackHidesIt' );
+		}
 	}
 
 	// Send a message
