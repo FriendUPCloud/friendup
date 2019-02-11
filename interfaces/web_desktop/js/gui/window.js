@@ -900,7 +900,7 @@ function _ActivateWindowOnly( div )
 					{
 						if( currentMovable && ( currentMovable.parentNode.classList.contains( 'Redrawing' ) || currentMovable.parentNode.classList.contains( 'DoneActivating' ) || currentMovable.parentNode.classList.contains( 'Activated' ) ) )
 						{
-							return setTimeout( function(){ deal() }, 250 );
+							return setTimeout( function(){ deal() }, 300 );
 						}
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
@@ -908,7 +908,7 @@ function _ActivateWindowOnly( div )
 					if( delayedDeactivation && div.applicationId == dd.applicationId )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
-						setTimeout( function(){ deal() }, 250 );
+						setTimeout( function(){ deal() }, 300 );
 					}
 					else deal();
 				} )( m );
@@ -1081,11 +1081,11 @@ function _ActivateWindow( div, nopoll, e )
 							pn.classList.remove( 'Activating' );
 							document.body.classList.remove( 'Activating' );
 						}
-					}, 250 );
+					}, 300 );
 				}
-			}, 250 );
+			}, 300 );
 		}
-	}, 250 );
+	}, 300 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
