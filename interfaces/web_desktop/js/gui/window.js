@@ -5003,6 +5003,12 @@ function _kresize( e, depth )
 	
 	checkMobileBrowser();
 	
+	if( isMobile && depth > 0 )
+	{
+		return ConstrainWindow( currentMovable );
+	}
+	
+	
 	// Resize screens
 	if( Workspace && Workspace.screenList )
 	{
@@ -5029,7 +5035,7 @@ function _kresize( e, depth )
 			setTimeout( function()
 			{
 				_kresize( e, 1 );
-			}, 250 );
+			}, 500 );
 		}
 	}
 }
