@@ -898,7 +898,7 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
-						if( currentMovable && ( currentMovable.classList.contains( 'Redrawing' ) || currentMovable.classList.contains( 'DoneActivating' ) || currentMovable.classList.contains( 'Activated' ) ) )
+						if( currentMovable && ( currentMovable.parentNode.classList.contains( 'Redrawing' ) || currentMovable.parentNode.classList.contains( 'DoneActivating' ) || currentMovable.parentNode.classList.contains( 'Activated' ) ) )
 						{
 							return setTimeout( function(){ deal() }, 250 );
 						}
@@ -1056,36 +1056,29 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Tell window manager we are activating window
-	if( isMobile )
-	{
-		document.body.classList.add( 'WindowActivating' );
-	}
-	div.classList.add( 'Activating' );
+	var pn = div.parentNode;
+	
 	document.body.classList.add( 'Activating' );
-	div.parentNode.classList.add( 'Activating' );
+	pn.classList.add( 'Activating' );
 	setTimeout( function()
 	{
 		if( div )
 		{
-			if( isMobile )
-			{
-				document.body.classList.remove( 'WindowActivating' );
-			}
-			div.classList.add( 'Activated' );
-			div.classList.remove( 'Activating' );
+			pn.classList.add( 'Activated' );
+			pn.classList.remove( 'Activating' );
 			setTimeout( function()
 			{
 				if( div )
 				{
 					// Finally
-					div.classList.add( 'DoneActivating' );
-					div.classList.remove( 'Activated' );
+					pn.classList.add( 'DoneActivating' );
+					pn.classList.remove( 'Activated' );
 					setTimeout( function()
 					{
 						if( div && div.parentNode )
 						{
-							div.classList.remove( 'DoneActivating' );
-							div.parentNode.classList.remove( 'Activating' );
+							pn.classList.remove( 'DoneActivating' );
+							pn.classList.remove( 'Activating' );
 							document.body.classList.remove( 'Activating' );
 						}
 					}, 250 );
@@ -2080,6 +2073,7 @@ var View = function( args )
 		}
 
 		// Tell it's opening
+		viewContainer.classList.add( 'Opening' );
 		div.classList.add( 'Opening' );
 		setTimeout( function()
 		{
@@ -2092,6 +2086,7 @@ var View = function( args )
 				div.classList.add( 'Redrawing' );
 				setTimeout( function()
 				{
+					viewContainer.classList.remove( 'Opening' );
 					div.classList.remove( 'Redrawing' );
 				}, 250 );
 			}, 250 );

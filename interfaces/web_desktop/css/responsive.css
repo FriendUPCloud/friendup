@@ -633,7 +633,8 @@ html body .View
 }
 
 #Screens .View.Active[maximized=true],
-[mobile] #Screens .DelayedDeactivation .View
+[mobile] #Screens .DelayedDeactivation .View,
+[mobile] #Screens .ViewContainer:not(.OnWorkspace) .View
 {
 	position: absolute;
 	top: 0 !important; 
@@ -641,7 +642,7 @@ html body .View
 	width: 100% !important; 
 	height: 100% !important;
 	min-height: 100% !important;
-	z-index: 99999999 !important;
+	z-index: 99999999 !important
 }
 
 body[mobile].Activating:after
@@ -675,24 +676,29 @@ body .ViewContainer .View .Content
 	transform: translateZ(0);
 }
 
-body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
-body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
-body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening,
-body #Screens .ViewContainer[childview] .View.DelayedDeactivation
+body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
+body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
+body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening
 {
 	transform: translateX(100%) !important;
 	left: 100% !important;
 	overflow: hidden;
 }
-body.ViewMaximized .ViewContainer:not(.DelayedDeactivation) .View.Activating,
-body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation) .View.Activating,
+body.ViewMaximized .ViewContainer:not(.DelayedDeactivation).Activating .View,
+body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation).Activating .View,
 body #Screens .ViewContainer:not(.DelayedDeactivation) .View.Opening
 {
 	transform: translateX(-100%) !important;
 	left: -100% !important;
 	overflow: hidden;
 }
-body.ViewMaximized .ViewContainer .View.Activated
+
+body #Screens .ViewContainer.Opening .ViewIcon
+{
+	opacity: 0;
+}
+
+body.ViewMaximized .ViewContainer.Activated .View
 {
 	transform: translateX(0%) !important;
 }
@@ -730,14 +736,8 @@ body #Screens .ViewContainer.DelayedDeactivation .View
 	display: none;
 }
 
-.WindowActivating .ViewContainer.OnWorkspace .View
-{
-	opacity: 0;
-	pointer-events: none;
-}
-
 .ViewContainer.OnWorkspace .View .Content,
-.WindowActivating .ViewContainer.OnWorkspace .View .Title,
+body.Activating .ViewContainer.OnWorkspace .View .Title,
 .ViewContainer.OnWorkspace .View .MobileFileBrowser,
 .ViewContainer.OnWorkspace .View .DirectoryToolbar
 {
