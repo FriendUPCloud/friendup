@@ -1064,13 +1064,27 @@ body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
 	right: -2px;
 	width: 27px;
 	height: 30px;
-	background-image: url(/iconthemes/friendup15/close.svg);
-	background-repeat: no-repeat;
-	background-size: 35%;
 	border-radius: 100%;
 	left: auto;
 	background-position: center;
 	padding: 0;
+}
+
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:after
+{
+	content: "\f011";
+	display: block;
+	font-family: fontawesome;
+	font-weight: normal;
+	font-size: 0.9em;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	color: white;
+	text-align: center;
+	line-height: 28px;
 }
 
 .View.Active > .Title > div > .MobileClose:before,
