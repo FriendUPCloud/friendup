@@ -5656,7 +5656,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					var app = _getAppByAppId( currentMovable.applicationId );
 					if( app.mainView )
 					{
-						_ActivateWindow( app.mainView.content.parentNode );
+						if( !currentMovable.windowObject.mobileBack.classList.contains( 'Showing' ) )
+						{
+							Workspace.appMenu.onclick();
+						}
+						else
+						{
+							_ActivateWindow( app.mainView.content.parentNode );
+						}
 						return;
 					}
 				}
