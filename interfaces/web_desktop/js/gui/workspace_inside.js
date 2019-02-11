@@ -5654,7 +5654,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( window._getAppByAppId )
 				{
 					var app = _getAppByAppId( currentMovable.applicationId );
-					if( app.mainView )
+					if( app.mainView == currentMovable.windowObject )
 					{
 						if( !currentMovable.windowObject.mobileBack.classList.contains( 'Showing' ) )
 						{
