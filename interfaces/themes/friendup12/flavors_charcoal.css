@@ -1,6 +1,7 @@
 /* Charcoal ----------------------------------------------------------------- */
 
-html > body
+html > body,
+html > body.Inside
 {
 	background: #303030;
 }

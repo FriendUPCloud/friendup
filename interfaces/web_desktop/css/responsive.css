@@ -10,7 +10,8 @@ body.Inside > img
 	pointer-events: none;
 }
 
-html > body
+html > body,
+html > body.Inside
 {
 	background: #34495E;
 }
