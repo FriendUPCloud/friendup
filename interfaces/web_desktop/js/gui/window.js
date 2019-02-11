@@ -1061,6 +1061,7 @@ function _ActivateWindow( div, nopoll, e )
 		document.body.classList.add( 'WindowActivating' );
 	}
 	div.classList.add( 'Activating' );
+	document.body.classList.add( 'Activating' );
 	div.parentNode.classList.add( 'Activating' );
 	setTimeout( function()
 	{
@@ -1085,6 +1086,7 @@ function _ActivateWindow( div, nopoll, e )
 						{
 							div.classList.remove( 'DoneActivating' );
 							div.parentNode.classList.remove( 'Activating' );
+							document.body.classList.remove( 'Activating' );
 						}
 					}, 250 );
 				}
@@ -1200,8 +1202,6 @@ function _removeWindowTiles( div )
 
 function _DeactivateWindow( m, skipCleanUp )
 {
-	if( isMobile && document.body.classList.contains( 'ViewMaximized' ) )
-		return;
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
@@ -1279,11 +1279,6 @@ function _removeMobileCloseButtons()
 
 function _DeactivateWindows()
 {
-	if( isMobile )
-	{
-		document.body.classList.remove( 'ViewMaximized' );
-	}
-	
 	clearRegionIcons();
 	var windowsDeactivated = 0;
 	window.currentMovable = null;
