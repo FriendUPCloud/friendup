@@ -2309,6 +2309,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						Workspace.mainDock.openDesklet();
 						Workspace.insideInitialized = true;
+						forceScreenMaxHeight();
 					}
 				}
 				dm.execute( 'getdock', { dockid: '0' } );

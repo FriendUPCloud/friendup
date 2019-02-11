@@ -1297,6 +1297,19 @@ function _NewSelectBoxCheck ( pid, ele )
 	}
 }
 
+function forceScreenMaxHeight()
+{
+	if( isMobile )
+	{
+		if( !window.styleDims )
+		{
+			window.styleDims = document.createElement( 'style' );
+			document.body.appendChild( window.styleDims );
+		}
+		window.styleDims.innerHTML = 'html > body{ max-height: ' + screen.height + 'px; }';
+	}
+}
+
 // Gets values from a SelectBox - multiple select returns array, otherwise string
 function GetSelectBoxValue( pel )
 {
