@@ -1,5 +1,10 @@
 /* Charcoal ----------------------------------------------------------------- */
 
+html > body
+{
+	background: #303030;
+}
+
 body.Charcoal .AppsShowingTitle
 {
 	background: #303030;

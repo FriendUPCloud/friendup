@@ -10,6 +10,11 @@ body.Inside > img
 	pointer-events: none;
 }
 
+html > body
+{
+	background: #34495E;
+}
+
 /* Main screen */
 
 #Screens
