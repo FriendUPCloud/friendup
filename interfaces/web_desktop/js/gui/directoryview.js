@@ -3820,7 +3820,10 @@ FileIcon.prototype.Init = function( fileInfo )
 			else if( e.button ) rc = ( e.button == 2 );
 			if( !rc )
 			{
-				window.mouseDown = this;
+				if( e.button === 0 || e.button === 3 || e.button === 2 )
+				{
+					window.mouseDown = this;
+				}
 			}
 		}
 
@@ -3867,6 +3870,7 @@ FileIcon.prototype.Init = function( fileInfo )
 				return cancelBubble( e );
 			}
 
+			clearRegionIcons();
 			this.classList.add( 'Selected' );
 			this.selected = true;
 			this.fileInfo.selected = true;
@@ -3881,7 +3885,8 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 		}
 
-		e.stopPropagation();
+		if( e )
+			e.stopPropagation();
 	}
 
 	// -------------------------------------------------------------------------
@@ -4990,17 +4995,17 @@ function CheckDoorsKeys( e )
 				var found = false;
 				for( var a = 0; a < rw.length; a++ )
 				{
-					if( rw[ a ].domNode.classList.contains( 'Selected' ) )
+					if( rw[ a ].selected )
 					{
 						found = true;
 						if( a == rw.length - 1 )
 						{
-							rw[ 0 ].domNode.click();
+							rw[ 0 ].domNode.onmousedown( e );
 							scroll = rw[ 0 ].domNode.offsetTop - 100;
 						}
 						else
 						{
-							rw[ a + 1 ].domNode.click();
+							rw[ a + 1 ].domNode.onmousedown( e );
 							scroll = rw[ a + 1 ].domNode.offsetTop - 100;
 						}
 						break;
@@ -5008,7 +5013,7 @@ function CheckDoorsKeys( e )
 				}
 				if( !found )
 				{
-					rw[ 0 ].domNode.click();
+					rw[ 0 ].domNode.onmousedown( e );
 					scroll = rw[ 0 ].domNode.offsetTop - 100;
 				}
 				if( scroll )
@@ -5037,18 +5042,18 @@ function CheckDoorsKeys( e )
 				{
 					if( !found )
 					{
-						out[0].domNode.click();
+						out[0].domNode.onmousedown( e );
 						return;
 					}
 					for( var a = 0; a < out.length; a++ )
 					{
 						if( out[a].selected && a < out.length - 1 )
 						{
-							out[a+1].domNode.click();
+							out[ a + 1 ].domNode.onmousedown( e );
 							return;
 						}
 					}
-					out[0].domNode.click();
+					out[ 0 ].domNode.onmousedown( e );
 				}
 			}
 		}
