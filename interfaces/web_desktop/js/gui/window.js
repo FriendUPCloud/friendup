@@ -5029,7 +5029,7 @@ function _kresize( e, depth )
 			setTimeout( function()
 			{
 				_kresize( e, 1 );
-			}, 150 );
+			}, 250 );
 		}
 	}
 }
