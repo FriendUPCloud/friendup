@@ -898,7 +898,11 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
-						if( currentMovable && ( currentMovable.parentNode.classList.contains( 'Redrawing' ) || currentMovable.parentNode.classList.contains( 'DoneActivating' ) || currentMovable.parentNode.classList.contains( 'Activated' ) ) )
+						if( currentMovable && ( 
+							currentMovable.parentNode.classList.contains( 'Redrawing' ) || 
+							currentMovable.parentNode.classList.contains( 'DoneActivating' ) || 
+							currentMovable.parentNode.classList.contains( 'Activated' ) 
+						) )
 						{
 							return setTimeout( function(){ deal() }, 300 );
 						}
@@ -1001,6 +1005,11 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	if( document.body.classList.contains( 'Activating' ) )
+	{
+		return;
+	}
+	
 	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
 	{
 		div.windowObject.lastActiveView.parentNode.classList.remove( 'OnWorkspace' );

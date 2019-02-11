@@ -88,7 +88,7 @@ body #Screens > div.Screen > .TitleBar > .Right
 
 body #Screens > #DoorsScreen.Screen > .ScreenContent
 {
-	transition: transform 0.3s;
+	transition: transform 0.25s;
 }
 
 #Screens > div.Screen + div.Screen > .TitleBar,
@@ -612,7 +612,7 @@ body.WindowMenu #Screens .View
 
 html body .View
 {
-	transition: transform 0.25s ease !important;
+	transition: transform 0.25s !important;
 }
 
 /* Popup dialog boxes lil bit larger */
@@ -708,6 +708,7 @@ body.ViewMaximized .ViewContainer.Activated .View
 	opacity: 1 !important;
 	overflow: hidden;
 }
+
 .ViewContainer.Closing .View .Title
 {
 	transition: opacity 0.25s;
