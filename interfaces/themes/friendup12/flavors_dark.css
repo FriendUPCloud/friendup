@@ -1,7 +1,7 @@
 /* Dark --------------------------------------------------------------------- */
 
-html > body,
-html > body.Inside
+html > body.Dark,
+html > body.Dark.Inside
 {
 	background: #34495E;
 }

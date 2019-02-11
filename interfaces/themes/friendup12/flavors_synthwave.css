@@ -1,7 +1,7 @@
 /* Synthwave ---------------------------------------------------------------- */
 
-html > body,
-html > body.Inside
+html > body.Synthwave,
+html > body.Synthwave.Inside
 {
 	background: #461C64;
 }
