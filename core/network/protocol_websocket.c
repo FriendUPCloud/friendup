@@ -95,51 +95,53 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			
 			DEBUG("[WS] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
 		
-			for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
+			if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 			{
-				unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
-				if( queueMsg != NULL )
+				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
-					unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
-					int queueMsgLen = 0;
-					
-					int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
-					int copysize = msglen;
-					if( copysize > MAX_SIZE_WS_MESSAGE )
+					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
+					if( queueMsg != NULL )
 					{
-						copysize = MAX_SIZE_WS_MESSAGE;
-					}
+						unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
+						int queueMsgLen = 0;
 					
-					queueMsgLen = txtmsgpos;
-					queueMsgPtr += txtmsgpos;
-					// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
-
-					memcpy( queueMsgPtr, msgToSend, copysize );
-					queueMsgLen += copysize;
-					queueMsgPtr += copysize;
+						int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
+						int copysize = msglen;
+						if( copysize > MAX_SIZE_WS_MESSAGE )
+						{
+							copysize = MAX_SIZE_WS_MESSAGE;
+						}
 					
-					memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
-					queueMsgPtr += END_CHAR_SIGNS;
-					queueMsgLen += END_CHAR_SIGNS;
-					*queueMsgPtr = 0;	//end message with NULL
+						queueMsgLen = txtmsgpos;
+						queueMsgPtr += txtmsgpos;
+						// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
+
+						memcpy( queueMsgPtr, msgToSend, copysize );
+						queueMsgLen += copysize;
+						queueMsgPtr += copysize;
 					
-					msgToSend += copysize;
-					msglen -= MAX_SIZE_WS_MESSAGE;
+						memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
+						queueMsgPtr += END_CHAR_SIGNS;
+						queueMsgLen += END_CHAR_SIGNS;
+						*queueMsgPtr = 0;	//end message with NULL
+					
+						msgToSend += copysize;
+						msglen -= MAX_SIZE_WS_MESSAGE;
 
-					DEBUG( "Determined chunk: %d\n", actChunk );
-
-					if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
-					{
+						DEBUG( "Determined chunk: %d\n", actChunk );
+					
 						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 						en->fq_Data = queueMsg;
 						en->fq_Size = queueMsgLen;
 				
 						FQPushFIFO( &(cl->wsc_MsgQueue), en );
 
-						FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+						
 						// callback writeable was here
 					}
 				}
+				
+				FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 			}
 			if( cl->wsc_Wsi != NULL )
 			{
