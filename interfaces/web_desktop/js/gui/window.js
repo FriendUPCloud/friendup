@@ -1200,6 +1200,8 @@ function _removeWindowTiles( div )
 
 function _DeactivateWindow( m, skipCleanUp )
 {
+	if( isMobile && document.body.classList.contains( 'ViewMaximized' ) )
+		return;
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
@@ -1277,6 +1279,11 @@ function _removeMobileCloseButtons()
 
 function _DeactivateWindows()
 {
+	if( isMobile )
+	{
+		document.body.classList.remove( 'ViewMaximized' );
+	}
+	
 	clearRegionIcons();
 	var windowsDeactivated = 0;
 	window.currentMovable = null;
