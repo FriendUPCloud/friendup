@@ -14,7 +14,6 @@ html > body,
 html > body.Inside
 {
 	background: #34495E;
-	max-height: 100vh;
 }
 
 /* Main screen */
