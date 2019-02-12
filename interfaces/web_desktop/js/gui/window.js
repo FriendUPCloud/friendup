@@ -2190,7 +2190,6 @@ var View = function( args )
 		this.checkMaximized = function( d )
 		{
 			// Tell system we are maximized
-			console.log( d.className );
 			if( d.getAttribute( 'maximized' ) == 'true' )
 			{
 				document.body.classList.add( 'ViewMaximized' );
