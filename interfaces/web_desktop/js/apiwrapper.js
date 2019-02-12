@@ -1877,6 +1877,40 @@ function apiWrapper( event, force )
 			// Are there admin only filesystems?
 			case 'file':
 
+				// Faster way to get javascripts.
+				if( msg.command && msg.command == 'getapidefaultscripts' )
+				{
+					// Load from cache
+					if( Workspace.apidefaultscripts )
+					{
+						event.source.postMessage( {
+							type: 'callback',
+							callback: msg.callback,
+							data: Workspace.apidefaultscripts
+						} );
+					}
+					// Build
+					else
+					{
+						var n = new XMLHttpRequest();
+						n.open( 'POST', msg.data );
+						n.onreadystatechange = function()
+						{
+							if( this.readyState == 4 && this.status == 200  )
+							{
+								Workspace.apidefaultscripts = this.responseText;
+								event.source.postMessage( {
+									type: 'callback',
+									callback: msg.callback,
+									data: Workspace.apidefaultscripts
+								} );
+							}
+						}
+						n.send();
+					}
+					return true;
+				}
+				
 				// Some paths come as filenames obviously..
 				if( !msg.data.path && msg.data.filename && msg.data.filename.indexOf( ':' ) > 0 )
 					msg.data.path = msg.data.filename;
