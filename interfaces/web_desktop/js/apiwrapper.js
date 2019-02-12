@@ -76,13 +76,26 @@ function runWrapperCallback( uniqueId, data )
 }
 
 // Make a callback function for an app based on a previous callback
-function makeAppCallbackFunction( app, data )
+function makeAppCallbackFunction( app, data, source )
 {
 	if( !app || !data ) return false;
+	
 	var nmsg = {};
-	for( var b in data ) nmsg[b] = data[b];
-	nmsg.type = 'callback'; nmsg = JSON.stringify( nmsg ); // Easy now, Satan. Calm down, please.
-	return function(){ app.contentWindow.postMessage( nmsg, '*' ); }
+	for( var a in data ) nmsg[ a ] = data[ a ];
+	nmsg.type = 'callback';
+	
+	// Our destination
+	if( source )
+	{
+		// Just send to app
+		return function(){
+			source.postMessage( JSON.stringify( nmsg ), '*' ); 
+		}
+	}
+	// Just send to app
+	return function(){
+		app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' ); 
+	}
 }
 
 // Native windows
@@ -1257,7 +1270,7 @@ function apiWrapper( event, force )
 					if( app.windows[msg.viewId].iframe )
 						app.windows[msg.viewId].iframe.loaded = true;
 					app.windows[msg.viewId].executeSendQueue();
-
+					
 					// Try to execute register callback function
 					if( msg.registerCallback )
 						runWrapperCallback( msg.registerCallback );
@@ -1299,7 +1312,9 @@ function apiWrapper( event, force )
 								// Create a new callback dispatch here..
 								var cb = false;
 								if( msg.callback )
-									cb = makeAppCallbackFunction( app, msg );
+								{
+									cb = makeAppCallbackFunction( app, msg, event.source );
+								}
 								
 								// Do the setting!
 								var domain = GetDomainFromConf(app.config, msg.applicationId);
@@ -1522,7 +1537,7 @@ function apiWrapper( event, force )
 								}
 								if( msg.callback )
 								{
-									cb = makeAppCallbackFunction( app, msg );
+									cb = makeAppCallbackFunction( app, msg, event.source );
 								}
 							}
 							break;
@@ -1541,9 +1556,7 @@ function apiWrapper( event, force )
 								// Create a new callback dispatch here..
 								var cb = false;
 								if( msg.callback )
-								{
-									cb = makeAppCallbackFunction( app, msg );
-								}
+									cb = makeAppCallbackFunction( app, msg, event.source );
 
 								// Do the setting!
 								var domain = GetDomainFromConf( app.config, msg.applicationId );
@@ -1560,7 +1573,7 @@ function apiWrapper( event, force )
 								// Remember callback
 								var cb = false;
 								if( msg.callback )
-									cb = makeAppCallbackFunction( app, msg );
+									cb = makeAppCallbackFunction( app, msg, event.source );
 
 								win.setContentById( msg.data, msg, cb );
 
@@ -1768,7 +1781,7 @@ function apiWrapper( event, force )
 								var cb = false;
 								if ( msg.callback )
 								{
-									cb = makeAppCallbackFunction( app, msg );
+									cb = makeAppCallbackFunction( app, msg, event.source );
 								}
 
 								// Do the setting!

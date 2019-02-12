@@ -394,7 +394,7 @@ var Application =
 		}
 
 		// Close all widgets
-		if (Application.widgets)
+		if( Application.widgets )
 		{
 			for (var a in Application.widgets )
 			{
@@ -1784,7 +1784,7 @@ function receiveEvent( event, queued )
 	done();
 
 	function done()
-	{
+	{	
 		// Run callbacks and clean up
 		if( dataPacket.callback )
 		{
@@ -1862,6 +1862,9 @@ function receiveEvent( event, queued )
 						}
 					}
 				}
+				
+				console.log( 'This message should be sent elsewhere:', dataPacket );
+				
 				return false;
 			}
 		}
@@ -2089,6 +2092,7 @@ function Widget( flags )
 			callback: cid,
 			data:     data
 		};
+		
 		// Take this in your hand if it's there
 		if( Application.sessionId ) o.sessionId = Application.sessionId;
 		// Todo: App path or file path? synonymous!?
@@ -2275,6 +2279,7 @@ function View( flags )
 			callback: cid,
 			data:     data
 		};
+		
 		// Take this in your hand if it's there
 		if( Application.sessionId ) o.sessionId = Application.sessionId;
 		// Todo: App path or file path? synonymous!?
