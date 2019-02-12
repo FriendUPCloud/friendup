@@ -170,7 +170,7 @@ function apiWrapper( event, force )
 			// Special case, enter the switch with these conditions
 			if( msg.type != 'friendNetworkRun' )
 			{
-				console.log( 'apiwrapper - found no app for ', msg );
+				//console.log( 'apiwrapper - found no app for ', msg );
 				return false;
 			}
 		}

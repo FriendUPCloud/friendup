@@ -737,7 +737,6 @@ function receiveEvent( event, queued )
 {
 	// TODO: Do security stuff...
 	//
-	
 	if( !window.eventQueue )
 		window.eventQueue = [];
 
