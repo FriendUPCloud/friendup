@@ -6995,7 +6995,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	hideLauncherError: function()
 	{
-		if( Workspace.launcherWindow.setFlag )
+		if( Workspace.launcherWindow && Workspace.launcherWindow.setFlag )
 		{
 			Workspace.launcherWindow.setFlag( 'max-height', 80 );
 			Workspace.launcherWindow.setFlag( 'height', 80 );
