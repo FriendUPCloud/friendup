@@ -18,7 +18,7 @@ html > body.Inside
 html > body.Inside #Screens
 {
 	top: env(safe-area-inset-top, 20px) !important;
-	height: calc(100% - env(safe-area-inset-top, 20px)) !important;
+	height: calc(100% - env(safe-area-inset-top, 2px)) !important;
 }
 
 /* Main screen */
