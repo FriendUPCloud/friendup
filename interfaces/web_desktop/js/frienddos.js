@@ -1659,7 +1659,13 @@ window.Shell = function( appObject )
 		}
 
 		var rawLine = cmd + '';
-
+		
+		// Fix newline support ...
+		cmd = cmd.split( "\\n" ).join( "\n" );
+		
+		// Fix tab support ...
+		cmd = cmd.split( "\\t" ).join( "\t" );
+		
 		// Setup proxy caller we can add some things to
 		var dcallback;
 		if( !ecallback )
