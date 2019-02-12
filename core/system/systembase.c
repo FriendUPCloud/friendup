@@ -2554,17 +2554,21 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			memcpy( buf, msg,  len );
 
-			WebsocketServerClient *wsc = usersession->us_WSClients;
-		
-			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
-		
-			while( wsc != NULL )
+			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 			{
-				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
-			}
+				WebsocketServerClient *wsc = usersession->us_WSClients;
 		
-			FFree( buf );
+				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
+		
+				while( wsc != NULL )
+				{
+					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+				}
+		
+				FFree( buf );
+				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+			}
 		}
 		else
 		{
