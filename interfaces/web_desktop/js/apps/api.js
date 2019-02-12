@@ -5967,22 +5967,90 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Autogenerate this
 	Application.sendMessage   = setupMessageFunction( packet, eventOrigin ? eventOrigin : packet.origin );
 	
-	Application.sendMessage( {
-		type: 'file',
-		command: 'getapidefaultscripts',
-		data: '/webclient/' + elez.join( ';webclient/' ),
-		callback: addCallback( function( msg )
-		{
-			window.eval( msg.data ? msg.data : msg );
-			//eval( msg.data );
-			if( typeof( Workspace ) == 'undefined' )
+	if( Application.sessionId )
+	{
+		Application.sendMessage( {
+			type: 'file',
+			command: 'getapidefaultscripts',
+			data: '/webclient/' + elez.join( ';webclient/' ),
+			callback: addCallback( function( msg )
 			{
-				if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-				if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+				window.eval( msg.data ? msg.data : msg );
+				//eval( msg.data );
+				if( typeof( Workspace ) == 'undefined' )
+				{
+					if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+					if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+				}
+				onLoaded();
+			} )
+		} );
+	}
+	// Slow way for now session
+	else
+	{
+		var js = [
+			[
+				'js/utils/engine.js',
+				'js/io/cajax.js',
+				'js/utils/tool.js',
+				'js/utils/json.js',
+				'js/gui/treeview.js',
+				'js/io/appConnection.js',
+				'js/io/coreSocket.js',
+				'js/oo.js',
+				'js/api/friendappapi.js'
+			]
+		];
+
+		var elez = [];
+		for ( var a = 0; a < js.length; a++ )
+		{
+			var s = document.createElement( 'script' );
+			// Set src with some rules whether it's an app or a Workspace component
+			var path = js[ a ].join( ';/webclient/' );
+			s.src = '/webclient/' + path;
+			s.async = false;
+			elez.push( s );
+
+			// When last javascript loads, parse css, setup translations and say:
+			// We are now registered..
+			if( a == js.length-1 )
+			{
+				function fl()
+				{
+					if( this ) this.isLoaded = true;
+					var allLoaded = true;
+					for( var b = 0; b < elez.length; b++ )
+					{
+						if( !elez[b].isLoaded ) allLoaded = false;
+					}
+					if( allLoaded )
+					{
+						if( typeof( Workspace ) == 'undefined' )
+						{
+							if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+							if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+						}
+						onLoaded();
+					}
+					else
+					{
+						setTimeout( fl, 50 );
+					}
+				}
+				s.onload = fl;
 			}
-			onLoaded();
-		} )
-	} );
+			else
+			{
+				s.onload = function()
+				{
+					this.isLoaded = true;
+				}
+			}
+			head.appendChild( s );
+		}
+	}
 }
 
 // Register clicks as default:
