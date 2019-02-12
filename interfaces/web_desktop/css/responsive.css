@@ -17,10 +17,7 @@ html > body.Inside
 }
 html > body.Inside #Screens
 {
-	top: env(safe-area-inset-left)px;
-    left: env(safe-area-inset-right)px;
-    right: env(safe-area-inset-top)px;
-    bottom: env(safe-area-inset-bottom)px;
+	top: 20px;
 }
 
 /* Main screen */
