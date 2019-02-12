@@ -980,10 +980,7 @@ function _ActivateWindowOnly( div )
 			}
 			
 			if( div.windowObject )
-			{
-				// Check maximized state
-				div.windowObject.checkMaximized( div );
-				
+			{	
 				if( !div.notifyActivated )
 				{
 					var iftest = div.getElementsByTagName( _viewType );
@@ -1002,6 +999,8 @@ function _ActivateWindowOnly( div )
 					div.windowObject.sendMessage( msg );
 				}
 			}
+			
+			CheckMaximizedView();
 		}
 	}
 	// Check window
@@ -1215,9 +1214,11 @@ function _DeactivateWindow( m, skipCleanUp )
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
-	{
+	{	
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+
+		CheckMaximizedView();
 		
 		if( m.windowObject && m.notifyActivated )
 		{
@@ -1304,9 +1305,6 @@ function _DeactivateWindows()
 		var m = movableWindows[a];
 		windowsDeactivated += _DeactivateWindow( m, true );
 	}
-	
-	// None are maximized now (actively)
-	document.body.classList.remove( 'ViewMaximized' );
 
 	//if( windowsDeactivated > 0 ) PollTaskbar ();
 	
@@ -1599,7 +1597,9 @@ function CloseView( win, delayed )
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
+				{
 					div.viewContainer.parentNode.removeChild( div.viewContainer );
+				}
 				else if( div.parentNode )
 				{
 					div.parentNode.removeChild( div );
@@ -1608,6 +1608,7 @@ function CloseView( win, delayed )
 				{
 					console.log( 'Nothing to remove..' );
 				}
+				CheckMaximizedView();
 			}, isMobile ? 750 : 500 );
 
 			if( !isMobile )
@@ -1624,9 +1625,9 @@ function CloseView( win, delayed )
 			ele.style.zIndex = 7867878;
 			div.appendChild( ele );
 		}
-		document.body.classList.remove( 'ViewMaximized' );
 
 		// Activate latest activated view (not on mobile)
+		var nextActive = false;
 		if( div.classList.contains( 'Active' ) )
 		{
 			if( Friend.GUI.view.viewHistory.length )
@@ -1640,7 +1641,10 @@ function CloseView( win, delayed )
 						{
 							// Only activate non minimized views
 							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -1653,7 +1657,10 @@ function CloseView( win, delayed )
 						{
 							// Only activate non minimized views
 							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -2185,24 +2192,6 @@ var View = function( args )
 				Friend.currentWindowHover = null;
 			} );
 		}
-		
-		// Check for the maximized state
-		this.checkMaximized = function( d )
-		{
-			// Tell system we are maximized
-			if( d.getAttribute( 'maximized' ) == 'true' )
-			{
-				document.body.classList.add( 'ViewMaximized' );
-			}
-			else if( d.snapObject && d.snapObject.getAttribute( 'maximized' ) == 'true' )
-			{
-				document.body.classList.add( 'ViewMaximized' );
-			}
-			else
-			{
-				document.body.classList.remove( 'ViewMaximized' );
-			}
-		}
 
 		if ( !div.id )
 		{
@@ -2654,7 +2643,10 @@ var View = function( args )
 						}
 					}
 				}
-				self.checkMaximized( div );
+				
+				// Check maximized
+				CheckMaximizedView();
+				
 				return cancelBubble( e );
 			}
 			zoom.addEventListener( 'touchstart', zoom.onclick, false );
@@ -4843,6 +4835,10 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 {
 	if( !isMobile ) return;
 	if( !Workspace.screen || !Workspace.screen.contentDiv ) return;
+	
+	// Check if we have a maximized window
+	CheckMaximizedView();
+	
 	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
 		// Here is the first screen

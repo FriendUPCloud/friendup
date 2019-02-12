@@ -2399,6 +2399,44 @@ function CheckScreenTitle( screen )
 	
 }
 
+// Indicator that we have a maximized view
+function CheckMaximizedView()
+{
+	if( isMobile )
+	{
+		if( window.currentMovable && currentMovable.classList.contains( 'Active' ) )
+		{
+			document.body.classList.add( 'ViewMaximized' );
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
+	else
+	{
+		if( window.currentMovable )
+		{
+			if( currentMovable.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else if( currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else
+			{
+				document.body.classList.remove( 'ViewMaximized' );
+			}
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
+}
+
 // Get the taskbar element
 function GetTaskbarElement()
 {
