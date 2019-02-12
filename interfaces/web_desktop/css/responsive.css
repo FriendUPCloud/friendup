@@ -14,8 +14,11 @@ html > body,
 html > body.Inside
 {
 	background: #34495E;
-	height: 100vh;
-	width: 100vw;
+}
+html > body.Inside #Screens
+{
+	top: env(safe-area-inset-top, 20px) !important;
+	bottom: env(safe-area-inset-bottom, 20px) !important;
 }
 
 /* Main screen */
