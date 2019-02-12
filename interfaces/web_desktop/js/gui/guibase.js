@@ -1306,7 +1306,7 @@ function forceScreenMaxHeight()
 		{
 			if( screen.width == 1125 && screen.height === 2436 )
 			{
-				ge( 'Screens' ).style.top = '32px';
+				ge( 'Screens' ).style.top = 'env(safe-area-inset-top, 20px)';
 			}
 		}
 	}
