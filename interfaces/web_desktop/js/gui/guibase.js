@@ -1301,12 +1301,12 @@ function forceScreenMaxHeight()
 {
 	if( isMobile )
 	{
+				ge( 'Screens' ).style.top = 'env(safe-area-inset-top, 20px)';
 		var ue = navigator.userAgent.toLowerCase();
 		if( ue.indexOf( 'ipad' ) >= 0 || ue.indexOf( 'iphone' ) >= 0 )
 		{
 			if( screen.width == 1125 && screen.height === 2436 )
 			{
-				ge( 'Screens' ).style.top = 'env(safe-area-inset-top, 20px)';
 			}
 		}
 	}
