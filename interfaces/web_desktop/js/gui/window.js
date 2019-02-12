@@ -2185,6 +2185,7 @@ var View = function( args )
 		// Check for the maximized state
 		this.checkMaximized = function( d )
 		{
+			if( isMobile ) return;
 			// Tell system we are maximized
 			if( d.getAttribute( 'maximized' ) == 'true' )
 			{
