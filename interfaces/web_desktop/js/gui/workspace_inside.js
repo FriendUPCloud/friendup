@@ -2309,6 +2309,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						Workspace.mainDock.openDesklet();
 						Workspace.insideInitialized = true;
+						forceScreenMaxHeight();
 					}
 				}
 				dm.execute( 'getdock', { dockid: '0' } );
@@ -6374,11 +6375,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var i = document.createElement( 'iframe' );
 			i.src = dowloadURI;
-			setTimeout( function()
-				{
-					document.body.removeChild( i );
-				}
-			, 250 );
+			i.onload = function()
+			{
+				setTimeout( function()
+					{
+						document.body.removeChild( i );
+					}
+				, 250 );
+			}
 			document.body.appendChild( i );			
 		}
 	},

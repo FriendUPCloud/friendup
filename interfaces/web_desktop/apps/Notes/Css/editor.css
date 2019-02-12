@@ -107,7 +107,7 @@ html > body
 	transition: opacity 0.25s;
 }
 
-.EditorContentArea .NewFolder.Hidden
+[mobile] .EditorContentArea .NewFolder.Hidden
 {
 	pointer-events: none;
 	opacity: 0;

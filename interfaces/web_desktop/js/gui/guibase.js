@@ -1297,6 +1297,19 @@ function _NewSelectBoxCheck ( pid, ele )
 	}
 }
 
+function forceScreenMaxHeight()
+{
+	if( isMobile )
+	{
+		if( !window.styleDims )
+		{
+			window.styleDims = document.createElement( 'style' );
+			document.body.appendChild( window.styleDims );
+		}
+		window.styleDims.innerHTML = 'html > body{ max-height: ' + screen.height + 'px; }';
+	}
+}
+
 // Gets values from a SelectBox - multiple select returns array, otherwise string
 function GetSelectBoxValue( pel )
 {
@@ -1693,7 +1706,7 @@ movableListener = function( e, data )
 						{
 							lockX = true;
 						
-							if( ( dir == 'left' && dragDistanceX > 150 ) || ( dir == 'right' && dragDistanceX < -150 ) )
+							if( ( dir == 'left' /*&& dragDistanceX > 150*/ ) || ( dir == 'right' /*&& dragDistanceX < -150*/ ) )
 							{
 								currentMovable.style.top = currentMovable.snapObject.style.top;
 								currentMovable.style.height = currentMovable.snapObject.style.height;
@@ -1709,7 +1722,7 @@ movableListener = function( e, data )
 						{
 							lockY = true;
 						
-							if( ( dir == 'up' && dragDistanceY > 150 ) || ( dir == 'down' && dragDistanceY < -150 ) )
+							if( ( dir == 'up' /*&& dragDistanceY > 150 */) || ( dir == 'down' /*&& dragDistanceY < -150 */) )
 							{
 								currentMovable.style.left = currentMovable.snapObject.style.left;
 								currentMovable.style.width = currentMovable.snapObject.style.width;
@@ -2338,20 +2351,6 @@ function CheckScreenTitle( screen )
 	
 	Friend.GUI.reorganizeResponsiveMinimized();
 	
-	// Tell system we are maximized
-	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else if( window.currentMovable && currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else
-	{
-		document.body.classList.remove( 'ViewMaximized' );
-	}
-	
 	// Set screen title
 	var csc = testObject.screenObject;
 	if( !csc ) return;
@@ -2398,6 +2397,44 @@ function CheckScreenTitle( screen )
 		}
 	}
 	
+}
+
+// Indicator that we have a maximized view
+function CheckMaximizedView()
+{
+	if( isMobile )
+	{
+		if( window.currentMovable && currentMovable.classList.contains( 'Active' ) )
+		{
+			document.body.classList.add( 'ViewMaximized' );
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
+	else
+	{
+		if( window.currentMovable )
+		{
+			if( currentMovable.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else if( currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else
+			{
+				document.body.classList.remove( 'ViewMaximized' );
+			}
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
 }
 
 // Get the taskbar element
