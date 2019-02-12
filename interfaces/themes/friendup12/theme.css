@@ -413,6 +413,12 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	display: none;
 }
 
+html .ViewContainer[childview].Active > .MobileBack, 
+html .ViewContainer.Active > .MobileBack.Showing
+{
+	color: white;
+}
+
 html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title > div > .Close
 {
 	top: 3px;
