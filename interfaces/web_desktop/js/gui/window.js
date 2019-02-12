@@ -1304,6 +1304,9 @@ function _DeactivateWindows()
 		var m = movableWindows[a];
 		windowsDeactivated += _DeactivateWindow( m, true );
 	}
+	
+	// None are maximized now (actively)
+	document.body.classList.remove( 'ViewMaximized' );
 
 	//if( windowsDeactivated > 0 ) PollTaskbar ();
 	
@@ -2185,8 +2188,8 @@ var View = function( args )
 		// Check for the maximized state
 		this.checkMaximized = function( d )
 		{
-			if( isMobile ) return;
 			// Tell system we are maximized
+			console.log( d.className );
 			if( d.getAttribute( 'maximized' ) == 'true' )
 			{
 				document.body.classList.add( 'ViewMaximized' );
