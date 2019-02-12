@@ -978,23 +978,29 @@ function _ActivateWindowOnly( div )
 				m.viewContainer.removeAttribute( 'minimized' );
 				m.minimized = false;
 			}
-
-			if( div.windowObject && !div.notifyActivated )
+			
+			if( div.windowObject )
 			{
-				var iftest = div.getElementsByTagName( _viewType );
-				var msg = {
-					type:    'system',
-					command: 'notify',
-					method:  'activateview',
-					viewId: div.windowObject.viewId
-				};
-				if( iftest && iftest[0] )
+				// Check maximized state
+				div.windowObject.checkMaximized( div );
+				
+				if( !div.notifyActivated )
 				{
-					msg.applicationId = iftest[0].applicationId;
-					msg.authId = iftest[0].authId;
+					var iftest = div.getElementsByTagName( _viewType );
+					var msg = {
+						type:    'system',
+						command: 'notify',
+						method:  'activateview',
+						viewId: div.windowObject.viewId
+					};
+					if( iftest && iftest[0] )
+					{
+						msg.applicationId = iftest[0].applicationId;
+						msg.authId = iftest[0].authId;
+					}
+					div.notifyActivated = true;
+					div.windowObject.sendMessage( msg );
 				}
-				div.notifyActivated = true;
-				div.windowObject.sendMessage( msg );
 			}
 		}
 	}
@@ -1145,6 +1151,7 @@ function _ActivateWindow( div, nopoll, e )
 function _setWindowTiles( div )
 {
 	if( isMobile ) return;
+	
 	// Check if we have windows attached
 	if( div.attached )
 	{
@@ -2174,6 +2181,24 @@ var View = function( args )
 				Friend.currentWindowHover = null;
 			} );
 		}
+		
+		// Check for the maximized state
+		this.checkMaximized = function( d )
+		{
+			// Tell system we are maximized
+			if( d.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else if( d.snapObject && d.snapObject.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else
+			{
+				document.body.classList.remove( 'ViewMaximized' );
+			}
+		}
 
 		if ( !div.id )
 		{
@@ -2625,6 +2650,7 @@ var View = function( args )
 						}
 					}
 				}
+				self.checkMaximized( div );
 				return cancelBubble( e );
 			}
 			zoom.addEventListener( 'touchstart', zoom.onclick, false );

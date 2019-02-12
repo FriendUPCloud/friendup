@@ -2351,20 +2351,6 @@ function CheckScreenTitle( screen )
 	
 	Friend.GUI.reorganizeResponsiveMinimized();
 	
-	// Tell system we are maximized
-	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else if( window.currentMovable && currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else
-	{
-		document.body.classList.remove( 'ViewMaximized' );
-	}
-	
 	// Set screen title
 	var csc = testObject.screenObject;
 	if( !csc ) return;
