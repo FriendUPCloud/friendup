@@ -15,11 +15,6 @@ html > body.Inside
 {
 	background: #34495E;
 }
-html > body.Inside #Screens
-{
-	top: env(safe-area-inset-top, 5px) !important;
-	height: 100vh !important;
-}
 
 /* Main screen */
 
