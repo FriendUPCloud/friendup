@@ -1863,8 +1863,6 @@ function receiveEvent( event, queued )
 					}
 				}
 				
-				console.log( 'This message should be sent elsewhere:', dataPacket );
-				
 				return false;
 			}
 		}
