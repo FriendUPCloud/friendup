@@ -1297,16 +1297,12 @@ function _NewSelectBoxCheck ( pid, ele )
 	}
 }
 
+// Rules for forcing screen dimensions
 function forceScreenMaxHeight()
 {
 	if( isMobile )
 	{
-		if( !window.styleDims )
-		{
-			window.styleDims = document.createElement( 'style' );
-			document.body.appendChild( window.styleDims );
-		}
-		window.styleDims.innerHTML = 'html > body{ max-height: ' + screen.height + 'px; }';
+		// Nothing yet
 	}
 }
 
