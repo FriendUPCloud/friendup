@@ -1301,12 +1301,14 @@ function forceScreenMaxHeight()
 {
 	if( isMobile )
 	{
-		if( !window.styleDims )
+		var ue = navigator.userAgent.toLowerCase();
+		if( ue.indexOf( 'ipad' ) >= 0 || ue.indexOf( 'iphone' ) >= 0 )
 		{
-			window.styleDims = document.createElement( 'style' );
-			document.body.appendChild( window.styleDims );
+			if( screen.width == 1125 && screen.height === 2436 )
+			{
+				ge( 'Screens' ).style.top = '28px';
+			}
 		}
-		window.styleDims.innerHTML = 'html > body{ max-height: ' + screen.height + 'px; }';
 	}
 }
 
