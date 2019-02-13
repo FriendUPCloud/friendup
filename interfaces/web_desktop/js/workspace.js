@@ -319,71 +319,74 @@ Workspace = {
 
 		// Add desklet to dock
 		this.mainDock = mainDesklet;
-		this.mainDock.dom.oncontextmenu = function( e )
+		if( !isMobile )
 		{
-			var tar = e.target ? e.target : e.srcElement;
-			if( tar.classList && tar.classList.contains( 'Task' ) )
+			this.mainDock.dom.oncontextmenu = function( e )
 			{
-				return Workspace.showContextMenu( false, e );
-			}
-
-			var men = [
+				var tar = e.target ? e.target : e.srcElement;
+				if( tar.classList && tar.classList.contains( 'Task' ) )
 				{
-					name: i18n( 'i18n_edit_dock' ),
-					command: function()
-					{
-						ExecuteApplication( 'Dock' );
-					}
+					return Workspace.showContextMenu( false, e );
 				}
-			];
 
-			if( tar.classList && tar.classList.contains( 'Launcher' ) )
-			{
-				men.push( {
-					name: i18n( 'i18n_remove_from_dock' ),
-					command: function()
+				var men = [
 					{
-						Workspace.removeFromDock( tar.executable );
+						name: i18n( 'i18n_edit_dock' ),
+						command: function()
+						{
+							ExecuteApplication( 'Dock' );
+						}
 					}
-				} );
-			}
+				];
+
+				if( tar.classList && tar.classList.contains( 'Launcher' ) )
+				{
+					men.push( {
+						name: i18n( 'i18n_remove_from_dock' ),
+						command: function()
+						{
+							Workspace.removeFromDock( tar.executable );
+						}
+					} );
+				}
 			
-			if( movableWindowCount > 0 )
-			{
-				men.push( {
-					name: i18n( 'i18n_minimize_all_windows' ),
-					command: function( e )
-					{
-						var t = GetTaskbarElement();
-						var lW = null;
-						for( var a = 0; a < t.childNodes.length; a++ )
+				if( movableWindowCount > 0 )
+				{
+					men.push( {
+						name: i18n( 'i18n_minimize_all_windows' ),
+						command: function( e )
 						{
-							if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+							var t = GetTaskbarElement();
+							var lW = null;
+							for( var a = 0; a < t.childNodes.length; a++ )
 							{
-								t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+								if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+								{
+									t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+								}
 							}
+							_DeactivateWindows();
 						}
-						_DeactivateWindows();
-					}
-				} );
-				men.push( {
-					name: i18n( 'i18n_show_all_windows' ),
-					command: function( e )
-					{
-						var t = GetTaskbarElement();
-						for( var a = 0; a < t.childNodes.length; a++ )
+					} );
+					men.push( {
+						name: i18n( 'i18n_show_all_windows' ),
+						command: function( e )
 						{
-							if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+							var t = GetTaskbarElement();
+							for( var a = 0; a < t.childNodes.length; a++ )
 							{
-								t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+								if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+								{
+									t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+								}
 							}
+							_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
 						}
-						_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
-					}
-				} );
-			}
+					} );
+				}
 
-			Workspace.showContextMenu( men, e );
+				Workspace.showContextMenu( men, e );
+			}
 		}
 		this.reloadDocks();
 
