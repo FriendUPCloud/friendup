@@ -980,18 +980,20 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 					{
 						DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
+						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 						sb->WebSocketSendMessage( sb, uses, tmpmsg, len );
+						FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 
 						// send message to all remote users
 						RemoteUser *ruser = usr->u_RemoteUsers;
 						while( ruser != NULL )
 						{
-							DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
+							//DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
 							RemoteDrive *rdrive = ruser->ru_RemoteDrives;
 				
 							while( rdrive != NULL )
 							{
-								DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
+								//DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
 					
 								if( rdrive->rd_DriveID == device->f_ID )
 								{
@@ -1025,12 +1027,12 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 									DataForm *df = DataFormNew( tags );
 									if( df != NULL )
 									{
-										DEBUG("[USMSendDoorNotification] Register device, send notification\n");
+										//DEBUG("[USMSendDoorNotification] Register device, send notification\n");
 							
 										BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
 										if( result != NULL )
 										{
-											DEBUG("[USMSendDoorNotification] Received response\n");
+											//DEBUG("[USMSendDoorNotification] Received response\n");
 											BufStringDelete( result );
 										}
 										DataFormDelete( df );

@@ -77,7 +77,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 			}
 			sleep( 1 );
 			pthread_yield();
-			
+			/*
 			tr++;
 			if( tr >= 2 )
 			{
@@ -85,7 +85,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 				
 				break;
 			}
-			
+			*/
 		}
 		
 		pthread_mutex_destroy( &(cl->wsc_Mutex) );
