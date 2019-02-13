@@ -273,21 +273,41 @@ function apiWrapper( event, force )
 								}
 							}
 						}
+						// Check on hash
+						if( !out.length )
+						{
+							for( var a in ApplicationMessagingNexus.ports )
+							{
+								if( ApplicationMessagingNexus.ports[ a ].hash == msg.filter )
+								{
+									out.push( ApplicationMessagingNexus.ports[a ] );
+									responders.push( {
+										hash: ApplicationMessagingNexus.ports[ a ].hash,
+										name: app.applicationName
+									} );
+								}
+							}
+						}
+						
 						if( out.length )
 						{
 							for( var a = 0; a < out.length; a++ )
 							{
-								out[ a ].app.sendMessage( {
-									type: 'applicationmessage',
-									message: msg.message,
-									callback: addWrapperCallback( function( data )
-									{
-										event.source.postMessage( {
-											type: 'applicationmessage',
-											message: data
-										} );
-									} )
-								} );
+								( function( o )
+								{
+									o.app.sendMessage( {
+										type: 'applicationmessage',
+										message: msg.message,
+										callback: addWrapperCallback( function( data )
+										{
+											event.source.postMessage( {
+												type: 'applicationmessage',
+												source: o.hash,
+												message: data
+											} );
+										} )
+									} );
+								} )( out[ a ] );
 							}	
 							// Respond with responders
 							event.source.postMessage( {
