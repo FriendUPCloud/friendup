@@ -76,6 +76,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 				break;
 			}
 			sleep( 1 );
+			pthread_yield();
 			/*
 			tr++;
 			if( tr >= 5 )

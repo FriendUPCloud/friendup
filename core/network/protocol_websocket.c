@@ -828,7 +828,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					type : session
 					data : string
 				*/
-				//DEBUG1("[WS] Callback receive: %s\n", in );
+				DEBUG1("[WS] Callback receive: %s\n", in );
 				
 				{
 					int i, i1;
