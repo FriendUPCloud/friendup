@@ -7826,9 +7826,72 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			document.body.classList.remove( 'ViewStateActive' );
 		}
 		this.currentViewState = newState;
-	}
-
+	},
 };
+
+// Application messaging start -------------------------------------------------
+ApplicationMessagingNexus = {
+	ports: {},
+	// Opens a message port on application
+	open: function( appid, callback )
+	{
+		var fapp = false;
+		for( var a = 0; a < Workspace.applications.length; a++ )
+		{
+			if( Workspace.applications[ a ].applicationId == appid )
+			{
+				fapp = Workspace.applications[ a ];
+				break;
+			}
+		}
+		if( fapp )
+		{
+			this.ports[ appid ] = {
+				hash: CryptoJS.SHA1( appid ).toString(),
+				app: fapp
+			};
+		}
+		// Call back
+		if( callback )
+		{
+			callback( fapp ? true : false );
+		}
+	},
+	// Closes a messageport on application
+	close: function( appid, callback )
+	{
+		var found = false;
+		var newl = {};
+		for( var a in this.ports )
+		{
+			if( a == appid )
+			{
+				found = this.ports[ a ];
+			}
+			else
+			{
+				newl[ a ] = this.ports[ a ];
+			}
+		}
+		if( found )
+		{
+			this.ports = newl;
+			if( found.app.sendMessage )
+			{
+				found.app.sendMessage( {
+					type: 'applicationmessage',
+					command: 'closed'
+				} );
+			}
+		}
+		// Callback
+		if( callback )
+		{
+			callback( found ? true : false );
+		}
+	}
+};
+// Application messaging end ---------------------------------------------------
 
 Doors = Workspace;
 

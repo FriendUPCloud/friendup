@@ -413,14 +413,20 @@ function ExecuteApplication( app, args, callback )
 				}
 				// Cleans subSubDomains allocation
 				SubSubDomains.freeSubSubDomain( this.applicationId );
+				
+				// Silently close message port
+				ApplicationMessagingNexus.close( this.applicationId );
 			}
 			
 			ifr.sendMessage = function( msg )
 			{
-				msg.applicationId = this.applicationId;
-				msg.applicationName = this.applicationName;
-				amsg = JSON.stringify( msg );
-				this.contentWindow.postMessage( amsg, '*' );
+				if( this.contentWindow )
+				{
+					msg.applicationId = this.applicationId;
+					msg.applicationName = this.applicationName;
+					amsg = JSON.stringify( msg );
+					this.contentWindow.postMessage( amsg, '*' );
+				}
 			}
 
 			// FIXME: Francois here we close the iframe!
@@ -1095,14 +1101,19 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					};
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
+				// Silently close message port
+				ApplicationMessagingNexus.close( this.applicationId );
 			}
 			
 			ifr.sendMessage = function( msg )
 			{
-				msg.applicationId = this.applicationId;
-				msg.applicationName = this.applicationName;
-				amsg = JSON.stringify( msg );
-				this.contentWindow.postMessage( amsg, '*' );
+				if( this.contentWindow )
+				{
+					msg.applicationId = this.applicationId;
+					msg.applicationName = this.applicationName;
+					amsg = JSON.stringify( msg );
+					this.contentWindow.postMessage( amsg, '*' );
+				}
 			}
 
 			// Close method

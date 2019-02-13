@@ -205,6 +205,130 @@ function apiWrapper( event, force )
 		
 		switch( msg.type ) 
 		{
+			// Application messaging -------------------------------------------
+			case 'applicationmessaging':
+				switch( msg.method )
+				{
+					case 'open':
+						ApplicationMessagingNexus.open( msg.applicationId, function( response )
+						{
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: response
+							} );
+						} );
+						break;
+					case 'close':
+						ApplicationMessagingNexus.close( msg.applicationId, function( response )
+						{
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: response
+							} );
+						} );
+						break;
+					case 'getapplications':
+						if( msg.callback )
+						{
+							var out = [];
+							for( var a = 0; a < Workspace.applications.length; a++ )
+							{
+								var app = Workspace.applications[a];
+								if( app.applicationId == msg.applicationId ) continue;
+								if( msg.application == '*' || app.applicationName.indexOf( msg.application ) == 0 )
+								{
+									if( ApplicationMessagingNexus.ports[ app.applicationId ] )
+									{
+										out.push( {
+											hash: ApplicationMessagingNexus.ports[ app.applicationId ].hash,
+											name: app.applicationName
+										} );
+									}
+								}
+							}
+							// Respond
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: out
+							} );
+						}
+						break;
+					case 'sendtoapp':
+						var out = [];
+						var responders = [];
+						
+						var sourceHash = '';
+						if( ApplicationMessagingNexus.ports[ msg.applicationId ] )
+						{
+							sourceHash = ApplicationMessagingNexus.ports[ msg.applicationId ].hash;
+						}
+						
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							var app = Workspace.applications[a];
+							if( app.applicationId == msg.applicationId ) continue;
+							if( msg.application == '*' || app.applicationName.indexOf( msg.filter ) == 0 )
+							{
+								if( ApplicationMessagingNexus.ports[ app.applicationId ] )
+								{
+									out.push( ApplicationMessagingNexus.ports[ app.applicationId ] );
+									responders.push( {
+										hash: ApplicationMessagingNexus.ports[ app.applicationId ].hash,
+										name: app.applicationName
+									} );
+								}
+							}
+						}
+						// Check on hash
+						if( !out.length )
+						{
+							for( var a in ApplicationMessagingNexus.ports )
+							{
+								if( ApplicationMessagingNexus.ports[ a ].app.applicationId == msg.applicationId ) continue;
+								if( ApplicationMessagingNexus.ports[ a ].hash == msg.filter )
+								{
+									out.push( ApplicationMessagingNexus.ports[a ] );
+									responders.push( {
+										hash: ApplicationMessagingNexus.ports[ a ].hash,
+										name: app.applicationName
+									} );
+								}
+							}
+						}
+						
+						if( out.length )
+						{
+							for( var a = 0; a < out.length; a++ )
+							{
+								( function( o )
+								{
+									o.app.sendMessage( {
+										type: 'applicationmessage',
+										message: msg.message,
+										source: sourceHash,
+										callback: addWrapperCallback( function( data )
+										{
+											event.source.postMessage( {
+												type: 'applicationmessage',
+												message: data
+											} );
+										} )
+									} );
+								} )( out[ a ] );
+							}	
+							// Respond with responders
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: responders
+							} );
+						}
+						break;
+				}
+				break;
 			// DOS -------------------------------------------------------------
 			case 'dos':
 				var win = ( app && app.windows ) ? app.windows[ msg.viewId ] : false;
