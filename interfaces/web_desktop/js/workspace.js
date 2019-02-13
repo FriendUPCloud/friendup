@@ -388,6 +388,18 @@ Workspace = {
 				Workspace.showContextMenu( men, e );
 			}
 		}
+		// For mobiles
+		else
+		{
+			this.mainDock.dom.oncontextmenu = function( e )
+			{
+				var tar = e.target ? e.target : e.srcElement;
+				if( window.MobileContextMenu )
+				{
+					MobileContextMenu.show( tar );
+				}
+			}
+		}
 		this.reloadDocks();
 
 		// Init security subdomains
