@@ -52,7 +52,10 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 	{
 		DEBUG("[WebsocketServerClientDelete] Close\n");
 		
-		AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
+		if( SLIB != NULL && SLIB->sl_AppSessionManager != NULL )
+		{
+			AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
+		}
 		
 		DEBUG("lock CL\n");
 		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
@@ -63,7 +66,10 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 			cl->wsc_UserSession = NULL;
 			cl->wsc_Wsi = NULL;
 			FCWSData *data = (FCWSData *)cl->wsc_WebsocketsData;
-			//data->fcd_WSClient = NULL;
+			if( data != NULL )
+			{
+				data->fcd_WSClient = NULL;
+			}
 			//cl->wc_WebsocketsData = NULL;
 			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 		}

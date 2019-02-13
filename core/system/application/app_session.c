@@ -561,6 +561,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 						// if user is not logged in he will not get invitation
 						DEBUG("[AppSession] Going throug sessions userptr %p\n", usrses->us_User );
 
+						//FRIEND_MUTEX_LOCK( &usrses->us_Mutex );
 						if( usrses->us_User != NULL )
 						{
 							DEBUG("[AppSession] share user name %s --- ptr to list %p\n", usrses->us_User->u_Name, usrses );
@@ -613,6 +614,8 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 									}
 								}
 							}
+							
+							//FRIEND_MUTEX_UNLOCK( &usrses->us_Mutex );
 						}
 						else
 						{

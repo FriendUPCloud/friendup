@@ -167,3 +167,72 @@ void UserSessionDelete( UserSession *us )
 		FFree( us );
 	}
 }
+
+/**
+ * Remove Websocket connection from UserSession
+ *
+ * @param us pointer to UserSession from which connection will be removed
+ * @param wscl pointer to WebsocketServerClient connection which will be detached from connections list
+ * @return pointer to removed connection when success or NULL when connection was not on the list
+ */
+WebsocketServerClient *UserSessionRemoveConnection( UserSession *us, WebsocketServerClient *wscl )
+{
+	if( us == NULL )
+	{
+		return NULL;
+	}
+	DEBUG("[UserSessionRemoveConnection] Set NULL to WSI\n");
+	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
+	{
+		us = (UserSession *)wscl->wsc_UserSession;
+		if( us != NULL )
+		{
+			DEBUG("[UserSessionRemoveConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %p\n", us, us->us_SessionID, wscl->wsc_Wsi );
+			us->us_WSClients = NULL;
+		}
+		wscl->wsc_Wsi = NULL;
+		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
+	}
+	DEBUG("[UserSessionRemoveConnection] Remove UserSession from User list\n");
+	//
+	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
+	//
+    if( us != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+		{
+			WebsocketServerClient *actwsc = us->us_WSClients;
+			WebsocketServerClient *prvwsc = us->us_WSClients;
+			while( actwsc != NULL )
+			{
+				if( actwsc == wscl )
+				{
+					if( actwsc == us->us_WSClients )
+					{
+						us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
+					}
+					else
+					{
+						prvwsc->node.mln_Succ = actwsc->node.mln_Succ;
+					}
+					DEBUG("[UserSessionRemoveConnection] Remove single connection  %p  session connections pointer %p\n", actwsc, us->us_WSClients );
+					
+					FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+					return actwsc;
+				}
+					
+				prvwsc = actwsc;
+				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}
+	}
+	else
+	{
+		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
+	}
+	
+	DEBUG("[UserSessionRemoveConnection] Remove Queue\n");
+
+	return NULL;
+}
