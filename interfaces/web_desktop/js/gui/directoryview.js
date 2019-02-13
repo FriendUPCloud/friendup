@@ -3870,8 +3870,6 @@ FileIcon.prototype.Init = function( fileInfo )
 				return cancelBubble( e );
 			}
 
-			if( !e.shiftKey && !e.ctrlKey )
-				clearRegionIcons();
 			this.classList.add( 'Selected' );
 			this.selected = true;
 			this.fileInfo.selected = true;
