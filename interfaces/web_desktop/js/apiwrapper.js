@@ -249,7 +249,7 @@ function apiWrapper( event, force )
 							}
 							// Respond
 							event.source.postMessage( {
-								type: callback,
+								type: 'callback',
 								callback: msg.callback,
 								data: out
 							} );
@@ -291,7 +291,7 @@ function apiWrapper( event, force )
 							}	
 							// Respond with responders
 							event.source.postMessage( {
-								type: callback,
+								type: 'callback',
 								callback: msg.callback,
 								data: responders
 							} );
