@@ -2182,7 +2182,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					ge( 'Taskbar' ).tasks = [];
 
 					// Add start menu
-					if( globalConfig.viewList == 'dockedlist' )
+					if( !isMobile && globalConfig.viewList == 'dockedlist' )
 					{
 						var img = 'startmenu.png';
 						if( Workspace.mainDock.conf )
@@ -2298,11 +2298,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.docksReloading = null;
 					
 					// Make sure taskbar is polled
-					PollTaskbar();
+					if( !isMobile )
+					{
+						PollTaskbar();
 					
-					// Reload start menu
-					// TODO: Remove the need for this hack
-					Workspace.pollStartMenu( true );
+						// Reload start menu
+						// TODO: Remove the need for this hack
+						Workspace.pollStartMenu( true );
+					}
 					
 					// Open the main dock first
 					if( !Workspace.insideInitialized )

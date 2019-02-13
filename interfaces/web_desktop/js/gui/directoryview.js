@@ -3886,7 +3886,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 		}
 
-		if( e )
+		if( e && e.stopPropagation )
 			e.stopPropagation();
 	}
 
