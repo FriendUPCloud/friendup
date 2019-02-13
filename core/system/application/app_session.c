@@ -277,6 +277,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			return -1;
 		}
 		
+		DEBUG("Before  as_SessionsMut lock\n");
 		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
@@ -950,6 +951,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	*/
 	
 	int err = AppSessionRemUsersession( as, ws->wsc_UserSession );
+	DEBUG("[AppSession] App session remove by WS END\n");
 	
 	return 0;
 }

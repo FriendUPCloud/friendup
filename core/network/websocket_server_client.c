@@ -54,6 +54,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 		
 		AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
 		
+		DEBUG("lock CL\n");
 		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 		{
 			//DEBUG("[WS] connection will be removed %p\n", cl );
@@ -66,6 +67,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 			//cl->wc_WebsocketsData = NULL;
 			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 		}
+		DEBUG("end cl lock\n");
 		
 		int tr = 0;
 		while( TRUE )

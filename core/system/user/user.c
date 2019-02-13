@@ -152,56 +152,7 @@ void UserRemoveSession( User *usr, void *ls )
 		{
 			FFree( prevus );
 		}
-		/*
-		if( us != NULL )
-		{
-			// first entry
-			if( remses == us->us )
-		{
-			usr->u_SessionsList = (UserSessListEntry *) us->node.mln_Succ;
-			if( usr->u_SessionsList != NULL )
-			{
-				usr->u_SessionsList->node.mln_Pred = NULL;
-			}
-			
-			usr->u_SessionsNr--;
-			removed = TRUE;
-		}
-		else
-		{
-			prev = us;
-			us = (UserSessListEntry *)us->node.mln_Succ;
-			
-			while( us != NULL )
-			{
-				if( remses == us->us )
-				{
-					prev->node.mln_Succ = (MinNode *)us->node.mln_Succ;
-					UserSessListEntry *nexts = (UserSessListEntry *)us->node.mln_Succ;
-					if( nexts != NULL )
-					{
-						nexts->node.mln_Pred = (MinNode *)prev;
-					}
-					usr->u_SessionsNr--;
-					removed = TRUE;
-					break;
-				}
-				
-				prev = us;
-				us = (UserSessListEntry *)us->node.mln_Succ;
-				}
-			}
-		
-			if( us != NULL )
-			{
-				if( usr->u_SessionsNr <= 0 )
-				{
-					usr->u_SessionsList = NULL;
-				}
-				FFree( us );
-			}
-		}
-		*/
+
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
 }
