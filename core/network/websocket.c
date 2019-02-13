@@ -749,7 +749,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 		us = (UserSession *)wscl->wsc_UserSession;
 		if( us != NULL )
 		{
-			DEBUG("[DeleteWebSocketConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %s\n", us, us->us_SessionID, wscl->wsc_Wsi );
+			DEBUG("[DeleteWebSocketConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %p\n", us, us->us_SessionID, wscl->wsc_Wsi );
 			us->us_WSClients = NULL;
 		}
 		wscl->wsc_Wsi = NULL;

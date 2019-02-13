@@ -75,6 +75,7 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 		return 0;
 	}
 
+	DEBUG("clwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
 		cl->wsc_InUseCounter++;
@@ -190,6 +191,7 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 		cl->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 	}
+	DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
 	
 	return result;
 }
