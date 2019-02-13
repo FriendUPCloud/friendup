@@ -236,6 +236,7 @@ function apiWrapper( event, force )
 							for( var a = 0; a < Workspace.applications.length; a++ )
 							{
 								var app = Workspace.applications[a];
+								if( app.applicationId == msg.applicationId ) continue;
 								if( msg.application == '*' || app.applicationName.indexOf( msg.application ) == 0 )
 								{
 									if( ApplicationMessagingNexus.ports[ app.applicationId ] )
@@ -258,9 +259,17 @@ function apiWrapper( event, force )
 					case 'sendtoapp':
 						var out = [];
 						var responders = [];
+						
+						var sourceHash = '';
+						if( ApplicationMessagingNexus.ports[ msg.applicationId ] )
+						{
+							sourceHash = ApplicationMessagingNexus.ports[ msg.applicationId ].hash;
+						}
+						
 						for( var a = 0; a < Workspace.applications.length; a++ )
 						{
 							var app = Workspace.applications[a];
+							if( app.applicationId == msg.applicationId ) continue;
 							if( msg.application == '*' || app.applicationName.indexOf( msg.filter ) == 0 )
 							{
 								if( ApplicationMessagingNexus.ports[ app.applicationId ] )
@@ -278,6 +287,7 @@ function apiWrapper( event, force )
 						{
 							for( var a in ApplicationMessagingNexus.ports )
 							{
+								if( ApplicationMessagingNexus.ports[ a ].app.applicationId == msg.applicationId ) continue;
 								if( ApplicationMessagingNexus.ports[ a ].hash == msg.filter )
 								{
 									out.push( ApplicationMessagingNexus.ports[a ] );
@@ -298,11 +308,11 @@ function apiWrapper( event, force )
 									o.app.sendMessage( {
 										type: 'applicationmessage',
 										message: msg.message,
+										source: sourceHash,
 										callback: addWrapperCallback( function( data )
 										{
 											event.source.postMessage( {
 												type: 'applicationmessage',
-												source: o.hash,
 												message: data
 											} );
 										} )
