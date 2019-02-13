@@ -210,10 +210,24 @@ function apiWrapper( event, force )
 				switch( msg.method )
 				{
 					case 'open':
-						ApplicationMessagingNexus.open( msg.applicationId, msg.callback );
+						ApplicationMessagingNexus.open( msg.applicationId, function( response )
+						{
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: response
+							} );
+						} );
 						break;
 					case 'close':
-						ApplicationMessagingNexus.close( msg.applicationId, msg.callback );
+						ApplicationMessagingNexus.close( msg.applicationId, function( response )
+						{
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: response
+							} );
+						} );
 						break;
 					case 'getapplications':
 						if( msg.callback )
