@@ -362,6 +362,61 @@ var Application =
 			el.fullscreenEnabled = false;
 		}
 	},
+	// Application messaging ---------------------------------------------------
+	sendApplicationMessage: function( appFilter, msg, cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'sendtoapp',
+			filter: appFilter,
+			message: msg
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	getApplicationsByName: function( appName, cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'getapplications',
+			application: appName
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// Opens
+	openMessagePort: function( cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'open'
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// Close the port!
+	closeMessagePort: function( cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'close'
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// End application messaging -----------------------------------------------
 	// Send quit up in hierarchy
 	quit: function( skipSendMessage )
 	{

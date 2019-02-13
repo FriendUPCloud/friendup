@@ -7826,9 +7826,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			document.body.classList.remove( 'ViewStateActive' );
 		}
 		this.currentViewState = newState;
-	}
-
+	},
 };
+
+// Application messaging start -------------------------------------------------
+ApplicationMessagingNexus = {
+	ports: {}
+};
+// Application messaging end ---------------------------------------------------
 
 Doors = Workspace;
 

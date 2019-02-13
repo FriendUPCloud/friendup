@@ -205,6 +205,86 @@ function apiWrapper( event, force )
 		
 		switch( msg.type ) 
 		{
+			// Application messaging -------------------------------------------
+			case 'applicationmessaging':
+				switch( msg.method )
+				{
+					case 'open':
+						ApplicationMessagingNexus.open( msg.applicationId, msg.callback );
+						break;
+					case 'close':
+						ApplicationMessagingNexus.close( msg.applicationId, msg.callback );
+						break;
+					case 'getapplications':
+						if( msg.callback )
+						{
+							var out = [];
+							for( var a = 0; a < Workspace.applications.length; a++ )
+							{
+								var app = Workspace.applications[a];
+								if( msg.application == '*' || app.applicationName.indexOf( msg.application ) == 0 )
+								{
+									if( ApplicationMessagingNexus.ports[ app.applicationId ] )
+									{
+										out.push( {
+											hash: ApplicationMessagingNexus.ports[ app.applicationId ].hash,
+											name: app.applicationName
+										} );
+									}
+								}
+							}
+							// Respond
+							event.source.postMessage( {
+								type: callback,
+								callback: msg.callback,
+								data: out
+							} );
+						}
+						break;
+					case 'sendtoapp':
+						var out = [];
+						var responders = [];
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							var app = Workspace.applications[a];
+							if( msg.application == '*' || app.applicationName.indexOf( msg.filter ) == 0 )
+							{
+								if( ApplicationMessagingNexus.ports[ app.applicationId ] )
+								{
+									out.push( ApplicationMessagingNexus.ports[ app.applicationId ] );
+									responders.push( {
+										hash: ApplicationMessagingNexus.ports[ app.applicationId ].hash,
+										name: app.applicationName
+									} );
+								}
+							}
+						}
+						if( out.length )
+						{
+							for( var a = 0; a < out.length; a++ )
+							{
+								out[ a ].app.sendMessage( {
+									type: 'applicationmessage',
+									message: msg.message,
+									callback: addWrapperCallback( function( data )
+									{
+										event.source.postMessage( {
+											type: 'applicationmessage',
+											message: data
+										} );
+									} )
+								} );
+							}	
+							// Respond with responders
+							event.source.postMessage( {
+								type: callback,
+								callback: msg.callback,
+								data: responders
+							} );
+						}
+						break;
+				}
+				break;
 			// DOS -------------------------------------------------------------
 			case 'dos':
 				var win = ( app && app.windows ) ? app.windows[ msg.viewId ] : false;

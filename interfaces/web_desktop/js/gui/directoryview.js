@@ -3960,7 +3960,8 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Normal folders etc
 		// Open unique windows if we're in toolbar mode and are double clicking a disk
 		var uniqueView = false;
-		if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && obj.directoryView.navMode == 'toolbar' )
+		var dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
+		if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
 		{
 			uniqueView = true;
 			if( obj.fileInfo.Path != obj.fileInfo.Volume )
@@ -3973,11 +3974,11 @@ FileIcon.prototype.Init = function( fileInfo )
 			return window.isMobile ? Workspace.closeDrivePanel() : false;
 		}
 		// Just change directory
-		else if( obj.fileInfo.Type == 'Directory' && obj.directoryView.navMode == 'toolbar' )
+		else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
 		{
 			// Set a new path and record the old one!
-			var we = obj.directoryView.windowObject;
-			var dw = obj.directoryView;
+			var we = dv.windowObject;
+			var dw = dv;
 
 			// Add current and set it to end of history
 			var path = obj.fileInfo.Path.split( ':' );
@@ -4042,11 +4043,11 @@ FileIcon.prototype.Init = function( fileInfo )
 				n.className = 'Content SlideAnimation';
 				n.style.willChange = 'transform';
 				n.style.transition = 'transform 0.4s';
-				n.innerHTML = obj.directoryView.windowObject.innerHTML;
-				n.scrollTop = obj.directoryView.windowObject.scrollTop;
+				n.innerHTML = dv.windowObject.innerHTML;
+				n.scrollTop = dv.windowObject.scrollTop;
 				n.style.zIndex = 10;
-				obj.directoryView.windowObject.parentNode.appendChild( n );
-				obj.directoryView.windowObject.parentNode.classList.add( 'Redrawing' );
+				dv.windowObject.parentNode.appendChild( n );
+				dv.windowObject.parentNode.classList.add( 'Redrawing' );
 				
 				// Refresh and add animation
 				we.refresh( function()
