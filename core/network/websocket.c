@@ -740,7 +740,11 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	{
 		return 0;
 	}
+	
+	wscl->wsc_Wsi = NULL;
+	wscl->wsc_WebsocketsData = NULL;
 
+	/*
 	//
 	UserSession *us = NULL;
 	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
@@ -797,6 +801,6 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	
 	Log(FLOG_DEBUG, "[DeleteWebSocketConnection] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
 	WebsocketServerClientDelete( wscl );
-
+	*/
     return 0;
 }

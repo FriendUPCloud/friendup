@@ -134,6 +134,8 @@ void UserSessionDelete( UserSession *us )
 
 				rws->wsc_InUseCounter = 0;
 				rws->wsc_UserSession = NULL;
+				
+				WebsocketServerClientDelete( rws );
 				FRIEND_MUTEX_UNLOCK( &(rws->wsc_Mutex) );
 			}
 		}
