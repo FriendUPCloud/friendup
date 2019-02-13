@@ -77,14 +77,15 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 			}
 			sleep( 1 );
 			pthread_yield();
-			/*
+			
 			tr++;
-			if( tr >= 5 )
+			if( tr >= 2 )
 			{
 				Log( FLOG_DEBUG, "Websocket released %p\n", cl );
+				
 				break;
 			}
-			*/
+			
 		}
 		
 		pthread_mutex_destroy( &(cl->wsc_Mutex) );
