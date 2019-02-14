@@ -676,6 +676,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	FCWSData *fcd =  (FCWSData *) user;// lws_context_user ( this );
 	int returnError = 0;
 	
+	DEBUG("FC_Callback: reason: %d\n", reason );
+	
 	FRIEND_MUTEX_LOCK( &WSThreadMutex );
 	WSThreadNum++;
 	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
@@ -717,7 +719,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		//Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
-	//Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
+	Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
 	
 	switch( reason )
 	{
