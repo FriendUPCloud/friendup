@@ -50,6 +50,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 {
 	if( cl != NULL )
 	{
+		DEBUG("[WebsocketServerClientDelete] time to remove connection\n");
 		int tr = 0;
 		while( TRUE )
 		{
