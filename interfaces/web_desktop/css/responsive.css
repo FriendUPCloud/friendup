@@ -10,6 +10,12 @@ body.Inside > img
 	pointer-events: none;
 }
 
+html > body,
+html > body.Inside
+{
+	background: #34495E;
+}
+
 /* Main screen */
 
 #Screens
@@ -82,7 +88,7 @@ body #Screens > div.Screen > .TitleBar > .Right
 
 body #Screens > #DoorsScreen.Screen > .ScreenContent
 {
-	transition: transform 0.3s;
+	transition: transform 0.25s;
 }
 
 #Screens > div.Screen + div.Screen > .TitleBar,
@@ -570,7 +576,7 @@ html body .View > .Title > div > span
     left: -32px;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Dragging
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.OnWorkspace) > .ViewIcon.Dragging
 {
 	background-color: rgba(255,255,255,0.4);
 }
@@ -604,9 +610,9 @@ body.WindowMenu #Screens .View
 	width: calc(50% - 20px) !important;
 }
 
-[mobile] #Screens .View
+html body .View
 {
-	transition: transform 0.25s;
+	transition: transform 0.25s !important;
 }
 
 /* Popup dialog boxes lil bit larger */
@@ -626,7 +632,9 @@ body.WindowMenu #Screens .View
 	min-height: 175px; /* calc(100% - 200px); */
 }
 
-#Screens .View.Active[maximized=true]
+#Screens .View.Active[maximized=true],
+[mobile] #Screens .DelayedDeactivation .View,
+[mobile] #Screens .ViewContainer:not(.OnWorkspace) .View
 {
 	position: absolute;
 	top: 0 !important; 
@@ -634,7 +642,20 @@ body.WindowMenu #Screens .View
 	width: 100% !important; 
 	height: 100% !important;
 	min-height: 100% !important;
-	z-index: 99999999 !important;
+	z-index: 99999999 !important
+}
+
+body[mobile].Activating:after
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	content: " ";
+	display: block;
+	background: rgba(0,0,0,0);
+	z-index: 2147483647;
 }
 
 .ViewContainer .ViewIcon 
@@ -655,42 +676,29 @@ body .ViewContainer .View .Content
 	transform: translateZ(0);
 }
 
-body .ViewContainer .View.Active
-{
-	transition: transform 0.25s !important;
-}
-
-/*body .ViewContainer.Activating .View .Content
-{
-	transition: opacity 0.25s;
-	opacity: 0;
-	pointer-events: none;
-}
-
-body .ViewContainer.Activating .View.DoneActivating .Content
-{
-	opacity: 1;
-	pointer-events: all;
-}*/
-
-body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
-body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
-body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening,
-body #Screens .ViewContainer[childview] .View.DelayedDeactivation
+body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
+body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
+body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening
 {
 	transform: translateX(100%) !important;
 	left: 100% !important;
 	overflow: hidden;
 }
-body.ViewMaximized .ViewContainer:not(.DelayedDeactivation) .View.Activating,
-body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation) .View.Activating,
+body.ViewMaximized .ViewContainer:not(.DelayedDeactivation).Activating .View,
+body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation).Activating .View,
 body #Screens .ViewContainer:not(.DelayedDeactivation) .View.Opening
 {
 	transform: translateX(-100%) !important;
 	left: -100% !important;
 	overflow: hidden;
 }
-body.ViewMaximized .ViewContainer .View.Activated
+
+body #Screens .ViewContainer.Opening .ViewIcon
+{
+	opacity: 0;
+}
+
+body.ViewMaximized .ViewContainer.Activated .View
 {
 	transform: translateX(0%) !important;
 }
@@ -700,6 +708,7 @@ body.ViewMaximized .ViewContainer .View.Activated
 	opacity: 1 !important;
 	overflow: hidden;
 }
+
 .ViewContainer.Closing .View .Title
 {
 	transition: opacity 0.25s;
@@ -728,14 +737,8 @@ body #Screens .ViewContainer.DelayedDeactivation .View
 	display: none;
 }
 
-.WindowActivating .ViewContainer.OnWorkspace .View
-{
-	opacity: 0;
-	pointer-events: none;
-}
-
 .ViewContainer.OnWorkspace .View .Content,
-.WindowActivating .ViewContainer.OnWorkspace .View .Title,
+body.Activating .ViewContainer.OnWorkspace .View .Title,
 .ViewContainer.OnWorkspace .View .MobileFileBrowser,
 .ViewContainer.OnWorkspace .View .DirectoryToolbar
 {
@@ -745,7 +748,6 @@ body #Screens .ViewContainer.DelayedDeactivation .View
 {
 	background: transparent;
 }
-
 
 .ViewContainer.Closing:not([childview]):not(.OnWorkspace) .View
 {

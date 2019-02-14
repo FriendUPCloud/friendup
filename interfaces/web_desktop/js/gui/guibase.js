@@ -617,7 +617,6 @@ var mousePointer =
 		if ( ele.window )
 		{
 			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
-			
 			_ActivateWindowOnly( ele.window.parentNode );
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
@@ -1298,8 +1297,17 @@ function _NewSelectBoxCheck ( pid, ele )
 	}
 }
 
+// Rules for forcing screen dimensions
+function forceScreenMaxHeight()
+{
+	if( isMobile )
+	{
+		// Nothing yet
+	}
+}
+
 // Gets values from a SelectBox - multiple select returns array, otherwise string
-function GetSelectBoxValue ( pel )
+function GetSelectBoxValue( pel )
 {
 	if ( !pel ) return false;
 	var inputs = pel.getElementsByTagName ( 'input' );
@@ -1694,7 +1702,7 @@ movableListener = function( e, data )
 						{
 							lockX = true;
 						
-							if( ( dir == 'left' && dragDistanceX > 150 ) || ( dir == 'right' && dragDistanceX < -150 ) )
+							if( ( dir == 'left' /*&& dragDistanceX > 150*/ ) || ( dir == 'right' /*&& dragDistanceX < -150*/ ) )
 							{
 								currentMovable.style.top = currentMovable.snapObject.style.top;
 								currentMovable.style.height = currentMovable.snapObject.style.height;
@@ -1710,7 +1718,7 @@ movableListener = function( e, data )
 						{
 							lockY = true;
 						
-							if( ( dir == 'up' && dragDistanceY > 150 ) || ( dir == 'down' && dragDistanceY < -150 ) )
+							if( ( dir == 'up' /*&& dragDistanceY > 150 */) || ( dir == 'down' /*&& dragDistanceY < -150 */) )
 							{
 								currentMovable.style.left = currentMovable.snapObject.style.left;
 								currentMovable.style.width = currentMovable.snapObject.style.width;
@@ -2222,7 +2230,6 @@ movableMouseUp = function( e )
 {
 	if( !e ) e = window.event;
 	
-	
 	var target = e.target ? e.target : e.srcElement;
 	
 	// For mobile
@@ -2340,20 +2347,6 @@ function CheckScreenTitle( screen )
 	
 	Friend.GUI.reorganizeResponsiveMinimized();
 	
-	// Tell system we are maximized
-	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else if( window.currentMovable && currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else
-	{
-		document.body.classList.remove( 'ViewMaximized' );
-	}
-	
 	// Set screen title
 	var csc = testObject.screenObject;
 	if( !csc ) return;
@@ -2400,6 +2393,44 @@ function CheckScreenTitle( screen )
 		}
 	}
 	
+}
+
+// Indicator that we have a maximized view
+function CheckMaximizedView()
+{
+	if( isMobile )
+	{
+		if( window.currentMovable && currentMovable.classList.contains( 'Active' ) )
+		{
+			document.body.classList.add( 'ViewMaximized' );
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
+	else
+	{
+		if( window.currentMovable )
+		{
+			if( currentMovable.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else if( currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else
+			{
+				document.body.classList.remove( 'ViewMaximized' );
+			}
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
 }
 
 // Get the taskbar element
@@ -3463,7 +3494,15 @@ function contextMenu( e )
 	)
 	{
 		window.mouseDown = false;
-		WorkspaceMenu.show();
+		if( isMobile )
+		{
+			console.log( 'Showing mobile context menu.' );
+			MobileContextMenu.show( tar );
+		}
+		else
+		{
+			WorkspaceMenu.show();
+		}
 	}
 	return cancelBubble( e );
 }

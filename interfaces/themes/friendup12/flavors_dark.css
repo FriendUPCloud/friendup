@@ -1,5 +1,11 @@
 /* Dark --------------------------------------------------------------------- */
 
+html > body.Dark,
+html > body.Dark.Inside
+{
+	background: #34495E;
+}
+
 body.Dark .AppsShowingTitle
 {
 	background: #435260;

@@ -171,19 +171,19 @@ Application.refreshFilePane = function( method, force )
 	
 	var self = this;
 	
-	// Already showing!
-	if( Application.path == Application.browserPath && !force ) return;
+	// Already showing (mobile only)!
+	if( isMobile && Application.path == Application.browserPath && !force ) return;
 	
 	Application.path = Application.browserPath;
 	var p = Application.path;
 	
-	if( ge( 'FileBar' ).contents )
-	{
-		ge( 'FileBar' ).contents.innerHTML = '';
-	}
-	
 	d.getIcons( function( items )
 	{
+		if( ge( 'FileBar' ).contents )
+		{
+			ge( 'FileBar' ).contents.innerHTML = '';
+		}
+		
 		// Something changed in transit. Do nothing
 		if( p != Application.path ) return;
 	
@@ -509,6 +509,7 @@ Application.refreshFilePane = function( method, force )
 							Application.updateViewMode();
 							Application.currentDocument = dl.path;
 							Application.loadFile( dl.path );
+							Application.refreshFilePane();
 						}
 					} )( d );
 				}
@@ -690,7 +691,7 @@ Application.initCKE = function()
 			
 			// Other keys...
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
-			
+				
 				// Create temporary file "to be saved"
 				if( !Application.currentDocument )
 				{
@@ -1156,44 +1157,6 @@ Application.loadFile = function( path )
 	
 	switch( extension )
 	{
-		case 'doc':
-		case 'docx':
-		case 'odt':
-		case 'rtf':
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, data )
-			{
-				if( e == 'ok' )
-				{					
-					Application.statusMessage( i18n( 'i18n_loaded' ) );
-					Application.editor.setData( data,
-						function()
-						{
-							Application.initializeBody();
-						}
-					);
-					ge( 'Printable' ).innerHTML = Application.editor.getData();
-					
-					// Remember content and top scroll
-					Application.sendMessage( { 
-						command: 'remembercontent', 
-						data: data,
-						path: path,
-						scrollTop: 0
-					} );
-					
-					Application.setCurrentDocument( path );
-				}
-				
-				// We got an error...
-				else
-				{
-					Application.statusMessage( i18n('i18n_failed_to_load_document') );
-				}	
-				Application.loading = false
-			}
-			m.execute( 'convertfile', { path: path, format: 'html', returnData: true } );
-			break;
 		default:
 			var f = new File( path );
 			f.onLoad = function( data )
@@ -1295,32 +1258,6 @@ Application.saveFile = function( path, content )
 	
 	switch( extension )
 	{
-		case 'doc':
-		case 'docx':
-		case 'odt':
-		case 'rtf':
-			Application.statusMessage( i18n('i18n_converting') );
-					
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, data )
-			{
-				if( e == 'ok' )
-				{
-					Application.fileSaved = true;
-					Application.lastSaved = ( new Date() ).getTime();
-					Application.statusMessage( i18n('i18n_written') );
-					Application.currentDocument = path;
-					Application.refreshFilePane();
-				}
-				// We got an error...
-				else
-				{
-					Application.statusMessage( data );
-				}
-				Application.refreshFilePane();
-			}
-			m.execute( 'convertfile', { path: path, data: content, dataFormat: 'html', format: extension } );
-			break;
 		default:
 			var f = new File();
 			f.onSave = function()
@@ -1341,33 +1278,6 @@ Application.saveFile = function( path, content )
 		data: Application.editor.getData(),
 		scrollTop: Application.editor.element.scrollTop
 	} );
-}
-
-Application.print = function( path, content, callback )
-{
-	var v = new View( { title: i18n('i18n_print_preview'), width: 200, height: 100 } );
-	v.setContent( '<div class="Padding"><p><strong>' + i18n('i18n_generating_print_preview') + '</strong></p></div>' );
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, data )
-	{
-		if( e == 'ok' )
-		{
-			Application.statusMessage( i18n('i18n_print_ready') );
-			
-			v.close();
-			
-			if( callback )
-			{
-				callback( data );
-			}
-		}
-		// We got an error...
-		else
-		{
-			Application.statusMessage( data );
-		}
-	}
-	m.execute( 'convertfile', { path: path, format: 'pdf' } );
 }
 
 Application.newDocument = function( args )
@@ -1594,17 +1504,6 @@ Application.receiveMessage = function( msg )
 				break;
 			}
 			break;
-		case 'print':
-			this.print( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>', function( data )
-			{
-				var w = new View( {
-					title: i18n('i18n_print_preview') + ' ' + msg.path,
-					width: 700,
-					height: 800
-				} );
-				w.setContent( '<iframe style="margin: 0; width: 100%; height: 100%; position: absolute; top: 0; left: 0; border: 0" src="/system.library/file/read/?path=' + data + '&authid=' + Application.authId + '&mode=rb"></iframe><style>html, body{padding:0;margin:0}</style>' );
-			} );
-			break;
 		case 'savefile':
 			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>' );
 			break;
@@ -1667,11 +1566,11 @@ function editorCommand( command, value )
 	}
 	else if( command == 'olbullets' )
 	{
-		f.execCommand( 'insertOrderedList', false, false );
+		f.execCommand( 'bulletedList', false, false );
 	}
 	else if( command == 'ulbullets' )
 	{
-		f.execCommand( 'insertUnorderedList', false, false );
+		f.execCommand( 'numberedList', false, false );
 	}
 	else if( command == 'align-left' )
 	{

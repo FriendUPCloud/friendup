@@ -1,5 +1,11 @@
 /* Synthwave ---------------------------------------------------------------- */
 
+html > body.Synthwave,
+html > body.Synthwave.Inside
+{
+	background: #461C64;
+}
+
 body.Synthwave .AppsShowingTitle,
 html body[mobile].Synthwave #Screens > div
 {

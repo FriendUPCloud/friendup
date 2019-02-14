@@ -927,12 +927,7 @@ function AddSoftware()
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		v.setContent( data, function()
-		{
-			var o = { command: 'apps', viewid: ge( 'viewId' ).value, guiview: v.getViewId() };
-			
-			v.sendMessage( o );
-		} );
+		v.setContent( data );
 	}
 	f.load();
 }
@@ -1059,6 +1054,7 @@ function AddStartup()
 	{
 		v.setContent( data, function()
 		{
+
 			var o = { command: 'item', viewid: ge( 'viewId' ).value, guiview: v.getViewId() };
 			
 			v.sendMessage( o );

@@ -76,13 +76,26 @@ function runWrapperCallback( uniqueId, data )
 }
 
 // Make a callback function for an app based on a previous callback
-function makeAppCallbackFunction( app, data )
+function makeAppCallbackFunction( app, data, source )
 {
 	if( !app || !data ) return false;
+	
 	var nmsg = {};
-	for( var b in data ) nmsg[b] = data[b];
-	nmsg.type = 'callback'; nmsg = JSON.stringify( nmsg ); // Easy now, Satan. Calm down, please.
-	return function(){ app.contentWindow.postMessage( nmsg, '*' ); }
+	for( var a in data ) nmsg[ a ] = data[ a ];
+	nmsg.type = 'callback';
+	
+	// Our destination
+	if( source )
+	{
+		// Just send to app
+		return function(){
+			source.postMessage( JSON.stringify( nmsg ), '*' ); 
+		}
+	}
+	// Just send to app
+	return function(){
+		app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' ); 
+	}
 }
 
 // Native windows
@@ -170,7 +183,7 @@ function apiWrapper( event, force )
 			// Special case, enter the switch with these conditions
 			if( msg.type != 'friendNetworkRun' )
 			{
-				console.log( 'apiwrapper - found no app for ', msg );
+				//console.log( 'apiwrapper - found no app for ', msg );
 				return false;
 			}
 		}
@@ -192,6 +205,130 @@ function apiWrapper( event, force )
 		
 		switch( msg.type ) 
 		{
+			// Application messaging -------------------------------------------
+			case 'applicationmessaging':
+				switch( msg.method )
+				{
+					case 'open':
+						ApplicationMessagingNexus.open( msg.applicationId, function( response )
+						{
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: response
+							} );
+						} );
+						break;
+					case 'close':
+						ApplicationMessagingNexus.close( msg.applicationId, function( response )
+						{
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: response
+							} );
+						} );
+						break;
+					case 'getapplications':
+						if( msg.callback )
+						{
+							var out = [];
+							for( var a = 0; a < Workspace.applications.length; a++ )
+							{
+								var app = Workspace.applications[a];
+								if( app.applicationId == msg.applicationId ) continue;
+								if( msg.application == '*' || app.applicationName.indexOf( msg.application ) == 0 )
+								{
+									if( ApplicationMessagingNexus.ports[ app.applicationId ] )
+									{
+										out.push( {
+											hash: ApplicationMessagingNexus.ports[ app.applicationId ].hash,
+											name: app.applicationName
+										} );
+									}
+								}
+							}
+							// Respond
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: out
+							} );
+						}
+						break;
+					case 'sendtoapp':
+						var out = [];
+						var responders = [];
+						
+						var sourceHash = '';
+						if( ApplicationMessagingNexus.ports[ msg.applicationId ] )
+						{
+							sourceHash = ApplicationMessagingNexus.ports[ msg.applicationId ].hash;
+						}
+						
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							var app = Workspace.applications[a];
+							if( app.applicationId == msg.applicationId ) continue;
+							if( msg.application == '*' || app.applicationName.indexOf( msg.filter ) == 0 )
+							{
+								if( ApplicationMessagingNexus.ports[ app.applicationId ] )
+								{
+									out.push( ApplicationMessagingNexus.ports[ app.applicationId ] );
+									responders.push( {
+										hash: ApplicationMessagingNexus.ports[ app.applicationId ].hash,
+										name: app.applicationName
+									} );
+								}
+							}
+						}
+						// Check on hash
+						if( !out.length )
+						{
+							for( var a in ApplicationMessagingNexus.ports )
+							{
+								if( ApplicationMessagingNexus.ports[ a ].app.applicationId == msg.applicationId ) continue;
+								if( ApplicationMessagingNexus.ports[ a ].hash == msg.filter )
+								{
+									out.push( ApplicationMessagingNexus.ports[a ] );
+									responders.push( {
+										hash: ApplicationMessagingNexus.ports[ a ].hash,
+										name: app.applicationName
+									} );
+								}
+							}
+						}
+						
+						if( out.length )
+						{
+							for( var a = 0; a < out.length; a++ )
+							{
+								( function( o )
+								{
+									o.app.sendMessage( {
+										type: 'applicationmessage',
+										message: msg.message,
+										source: sourceHash,
+										callback: addWrapperCallback( function( data )
+										{
+											event.source.postMessage( {
+												type: 'applicationmessage',
+												message: data
+											} );
+										} )
+									} );
+								} )( out[ a ] );
+							}	
+							// Respond with responders
+							event.source.postMessage( {
+								type: 'callback',
+								callback: msg.callback,
+								data: responders
+							} );
+						}
+						break;
+				}
+				break;
 			// DOS -------------------------------------------------------------
 			case 'dos':
 				var win = ( app && app.windows ) ? app.windows[ msg.viewId ] : false;
@@ -1257,7 +1394,7 @@ function apiWrapper( event, force )
 					if( app.windows[msg.viewId].iframe )
 						app.windows[msg.viewId].iframe.loaded = true;
 					app.windows[msg.viewId].executeSendQueue();
-
+					
 					// Try to execute register callback function
 					if( msg.registerCallback )
 						runWrapperCallback( msg.registerCallback );
@@ -1299,7 +1436,9 @@ function apiWrapper( event, force )
 								// Create a new callback dispatch here..
 								var cb = false;
 								if( msg.callback )
-									cb = makeAppCallbackFunction( app, msg );
+								{
+									cb = makeAppCallbackFunction( app, msg, event.source );
+								}
 								
 								// Do the setting!
 								var domain = GetDomainFromConf(app.config, msg.applicationId);
@@ -1522,7 +1661,7 @@ function apiWrapper( event, force )
 								}
 								if( msg.callback )
 								{
-									cb = makeAppCallbackFunction( app, msg );
+									cb = makeAppCallbackFunction( app, msg, event.source );
 								}
 							}
 							break;
@@ -1541,9 +1680,7 @@ function apiWrapper( event, force )
 								// Create a new callback dispatch here..
 								var cb = false;
 								if( msg.callback )
-								{
-									cb = makeAppCallbackFunction( app, msg );
-								}
+									cb = makeAppCallbackFunction( app, msg, event.source );
 
 								// Do the setting!
 								var domain = GetDomainFromConf( app.config, msg.applicationId );
@@ -1560,7 +1697,7 @@ function apiWrapper( event, force )
 								// Remember callback
 								var cb = false;
 								if( msg.callback )
-									cb = makeAppCallbackFunction( app, msg );
+									cb = makeAppCallbackFunction( app, msg, event.source );
 
 								win.setContentById( msg.data, msg, cb );
 
@@ -1768,7 +1905,7 @@ function apiWrapper( event, force )
 								var cb = false;
 								if ( msg.callback )
 								{
-									cb = makeAppCallbackFunction( app, msg );
+									cb = makeAppCallbackFunction( app, msg, event.source );
 								}
 
 								// Do the setting!
@@ -1864,6 +2001,40 @@ function apiWrapper( event, force )
 			// Are there admin only filesystems?
 			case 'file':
 
+				// Faster way to get javascripts.
+				if( msg.command && msg.command == 'getapidefaultscripts' )
+				{
+					// Load from cache
+					if( Workspace.apidefaultscripts )
+					{
+						event.source.postMessage( {
+							type: 'callback',
+							callback: msg.callback,
+							data: Workspace.apidefaultscripts
+						} );
+					}
+					// Build
+					else
+					{
+						var n = new XMLHttpRequest();
+						n.open( 'POST', msg.data );
+						n.onreadystatechange = function()
+						{
+							if( this.readyState == 4 && this.status == 200  )
+							{
+								Workspace.apidefaultscripts = this.responseText;
+								event.source.postMessage( {
+									type: 'callback',
+									callback: msg.callback,
+									data: Workspace.apidefaultscripts
+								} );
+							}
+						}
+						n.send();
+					}
+					return true;
+				}
+				
 				// Some paths come as filenames obviously..
 				if( !msg.data.path && msg.data.filename && msg.data.filename.indexOf( ':' ) > 0 )
 					msg.data.path = msg.data.filename;
