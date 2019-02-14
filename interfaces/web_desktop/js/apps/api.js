@@ -362,6 +362,61 @@ var Application =
 			el.fullscreenEnabled = false;
 		}
 	},
+	// Application messaging ---------------------------------------------------
+	sendApplicationMessage: function( appFilter, msg, cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'sendtoapp',
+			filter: appFilter,
+			message: msg
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	getApplicationsByName: function( appName, cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'getapplications',
+			application: appName
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// Opens
+	openMessagePort: function( cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'open'
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// Close the port!
+	closeMessagePort: function( cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'close'
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// End application messaging -----------------------------------------------
 	// Send quit up in hierarchy
 	quit: function( skipSendMessage )
 	{
@@ -394,7 +449,7 @@ var Application =
 		}
 
 		// Close all widgets
-		if (Application.widgets)
+		if( Application.widgets )
 		{
 			for (var a in Application.widgets )
 			{
@@ -737,7 +792,6 @@ function receiveEvent( event, queued )
 {
 	// TODO: Do security stuff...
 	//
-	
 	if( !window.eventQueue )
 		window.eventQueue = [];
 
@@ -1785,7 +1839,7 @@ function receiveEvent( event, queued )
 	done();
 
 	function done()
-	{
+	{	
 		// Run callbacks and clean up
 		if( dataPacket.callback )
 		{
@@ -1863,6 +1917,7 @@ function receiveEvent( event, queued )
 						}
 					}
 				}
+				
 				return false;
 			}
 		}
@@ -2090,6 +2145,7 @@ function Widget( flags )
 			callback: cid,
 			data:     data
 		};
+		
 		// Take this in your hand if it's there
 		if( Application.sessionId ) o.sessionId = Application.sessionId;
 		// Todo: App path or file path? synonymous!?
@@ -2276,6 +2332,7 @@ function View( flags )
 			callback: cid,
 			data:     data
 		};
+		
 		// Take this in your hand if it's there
 		if( Application.sessionId ) o.sessionId = Application.sessionId;
 		// Todo: App path or file path? synonymous!?
@@ -5898,30 +5955,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
 
 	var js = [
-		[
-			'js/utils/engine.js',
-			'js/io/cajax.js',
-			'js/utils/tool.js',
-			'js/utils/json.js',
-			'js/gui/treeview.js',
-			'js/io/appConnection.js',
-			'js/io/coreSocket.js',
-			'js/oo.js',
-			'js/api/friendappapi.js'
-		]
+		'js/oo.js',
+		'js/api/friendappapi.js',
+		'js/utils/engine.js',
+		'js/utils/tool.js',
+		'js/utils/json.js',
+		'js/io/cajax.js',
+		'js/io/appConnection.js',
+		'js/io/coreSocket.js',
+		'js/gui/treeview.js'
 	];
-
+	
 	var elez = [];
 	for ( var a = 0; a < js.length; a++ )
 	{
-		var s = document.createElement( 'script' );
+		//var s = document.createElement( 'script' );
 		// Set src with some rules whether it's an app or a Workspace component
-		var path = js[ a ].join( ';/webclient/' );
-		s.src = '/webclient/' + path;
-		s.async = false;
-		elez.push( s );
+		elez.push( js[ a ] );
 
-		// When last javascript loads, parse css, setup translations and say:
+		/*// When last javascript loads, parse css, setup translations and say:
 		// We are now registered..
 		if( a == js.length-1 )
 		{
@@ -5956,7 +6008,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				this.isLoaded = true;
 			}
 		}
-		head.appendChild( s );
+		head.appendChild( s );*/
 	}
 
 	// Setup application id from message
@@ -5969,6 +6021,91 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 	// Autogenerate this
 	Application.sendMessage   = setupMessageFunction( packet, eventOrigin ? eventOrigin : packet.origin );
+	
+	if( Application.sessionId )
+	{
+		Application.sendMessage( {
+			type: 'file',
+			command: 'getapidefaultscripts',
+			data: '/webclient/' + elez.join( ';webclient/' ),
+			callback: addCallback( function( msg )
+			{
+				window.eval( msg.data ? msg.data : msg );
+				//eval( msg.data );
+				if( typeof( Workspace ) == 'undefined' )
+				{
+					if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+					if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+				}
+				onLoaded();
+			} )
+		} );
+	}
+	// Slow way for now session
+	else
+	{
+		var js = [
+			[
+				'js/utils/engine.js',
+				'js/io/cajax.js',
+				'js/utils/tool.js',
+				'js/utils/json.js',
+				'js/gui/treeview.js',
+				'js/io/appConnection.js',
+				'js/io/coreSocket.js',
+				'js/oo.js',
+				'js/api/friendappapi.js'
+			]
+		];
+
+		var elez = [];
+		for ( var a = 0; a < js.length; a++ )
+		{
+			var s = document.createElement( 'script' );
+			// Set src with some rules whether it's an app or a Workspace component
+			var path = js[ a ].join( ';/webclient/' );
+			s.src = '/webclient/' + path;
+			s.async = false;
+			elez.push( s );
+
+			// When last javascript loads, parse css, setup translations and say:
+			// We are now registered..
+			if( a == js.length-1 )
+			{
+				function fl()
+				{
+					if( this ) this.isLoaded = true;
+					var allLoaded = true;
+					for( var b = 0; b < elez.length; b++ )
+					{
+						if( !elez[b].isLoaded ) allLoaded = false;
+					}
+					if( allLoaded )
+					{
+						if( typeof( Workspace ) == 'undefined' )
+						{
+							if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+							if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+						}
+						onLoaded();
+					}
+					else
+					{
+						setTimeout( fl, 50 );
+					}
+				}
+				s.onload = fl;
+			}
+			else
+			{
+				s.onload = function()
+				{
+					this.isLoaded = true;
+				}
+			}
+			head.appendChild( s );
+		}
+	}
 }
 
 // Register clicks as default:

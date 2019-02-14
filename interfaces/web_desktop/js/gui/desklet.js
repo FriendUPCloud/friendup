@@ -975,61 +975,64 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			
-			div.onmouseover = function( e )
+			if( !isMobile )
 			{
-				if( this.clickDown )
-					this.clickDown = null;
-			}
+				div.onmouseover = function( e )
+				{
+					if( this.clickDown )
+						this.clickDown = null;
+				}
 			
-			div.onmousedown = function( e )
-			{
-				if( mousePointer.candidate ) return;
-				if( e.button != 0 )
-					return;
-				// Add candidate and rules
-				var self = this;
-				var px = e.clientX;
-				var py = e.clientY;
-				mousePointer.candidate = {
-					condition: function( e )
-					{
-						var dx = windowMouseX;
-						var dy = windowMouseY;
-						var dfx = dx - px;
-						var dfy = dy - py;
-						var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
-						if( dist > 30 )
+				div.onmousedown = function( e )
+				{
+					if( mousePointer.candidate ) return;
+					if( e.button != 0 )
+						return;
+					// Add candidate and rules
+					var self = this;
+					var px = e.clientX;
+					var py = e.clientY;
+					mousePointer.candidate = {
+						condition: function( e )
 						{
-							mousePointer.candidate = null;
-							self.removeChild( self.getElementsByTagName( 'span' )[0] );
-							self.ondrop = function( target )
+							var dx = windowMouseX;
+							var dy = windowMouseY;
+							var dfx = dx - px;
+							var dfy = dy - py;
+							var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
+							if( dist > 30 )
 							{
-								if( target && target.classList )
+								mousePointer.candidate = null;
+								self.removeChild( self.getElementsByTagName( 'span' )[0] );
+								self.ondrop = function( target )
 								{
-									if( target.classList.contains( 'ScreenContent' ) )
+									if( target && target.classList )
 									{
-										var m = new Module( 'dock' );
-										m.onExecuted = function()
+										if( target.classList.contains( 'ScreenContent' ) )
 										{
-											Workspace.reloadDocks();
+											var m = new Module( 'dock' );
+											m.onExecuted = function()
+											{
+												Workspace.reloadDocks();
+											}
+											m.execute( 'removefromdock', { name: o.exe } );
+											return;
 										}
-										m.execute( 'removefromdock', { name: o.exe } );
-										return;
 									}
+									Workspace.reloadDocks();
 								}
-								Workspace.reloadDocks();
+								mousePointer.pickup( self );
 							}
-							mousePointer.pickup( self );
 						}
-					}
-				};
-			}
+					};
+				}
 
-			var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
+				var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
 			
-			if( bubbletext )
-			{
-				CreateHelpBubble( div, bubbletext );
+				if( bubbletext )
+				{
+					CreateHelpBubble( div, bubbletext );
+				}
 			}
 			this.dom.appendChild( div );
 			this.refresh ();

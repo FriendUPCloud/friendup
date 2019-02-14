@@ -833,3 +833,9 @@ var WorkspaceMenu =
 	}
 }
 
+// The mobile context menu
+var MobileContextMenu = {
+	show: function( target )
+	{
+	}
+};

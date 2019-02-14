@@ -898,13 +898,21 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
+						if( currentMovable && ( 
+							currentMovable.parentNode.classList.contains( 'Redrawing' ) || 
+							currentMovable.parentNode.classList.contains( 'DoneActivating' ) || 
+							currentMovable.parentNode.classList.contains( 'Activated' ) 
+						) )
+						{
+							return setTimeout( function(){ deal() }, 300 );
+						}
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
 					}
 					if( delayedDeactivation && div.applicationId == dd.applicationId )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
-						setTimeout( function(){ deal() }, 500 );
+						setTimeout( function(){ deal() }, 300 );
 					}
 					else deal();
 				} )( m );
@@ -970,24 +978,29 @@ function _ActivateWindowOnly( div )
 				m.viewContainer.removeAttribute( 'minimized' );
 				m.minimized = false;
 			}
-
-			if( div.windowObject && !div.notifyActivated )
-			{
-				var iftest = div.getElementsByTagName( _viewType );
-				var msg = {
-					type:    'system',
-					command: 'notify',
-					method:  'activateview',
-					viewId: div.windowObject.viewId
-				};
-				if( iftest && iftest[0] )
+			
+			if( div.windowObject )
+			{	
+				if( !div.notifyActivated )
 				{
-					msg.applicationId = iftest[0].applicationId;
-					msg.authId = iftest[0].authId;
+					var iftest = div.getElementsByTagName( _viewType );
+					var msg = {
+						type:    'system',
+						command: 'notify',
+						method:  'activateview',
+						viewId: div.windowObject.viewId
+					};
+					if( iftest && iftest[0] )
+					{
+						msg.applicationId = iftest[0].applicationId;
+						msg.authId = iftest[0].authId;
+					}
+					div.notifyActivated = true;
+					div.windowObject.sendMessage( msg );
 				}
-				div.notifyActivated = true;
-				div.windowObject.sendMessage( msg );
 			}
+			
+			CheckMaximizedView();
 		}
 	}
 	// Check window
@@ -997,6 +1010,12 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	// Already activating
+	if( div.parentNode.classList.contains( 'Activating' ) )
+	{
+		return;
+	}
+	
 	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
 	{
 		div.windowObject.lastActiveView.parentNode.classList.remove( 'OnWorkspace' );
@@ -1052,41 +1071,36 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Tell window manager we are activating window
-	if( isMobile )
-	{
-		document.body.classList.add( 'WindowActivating' );
-	}
-	div.classList.add( 'Activating' );
-	div.parentNode.classList.add( 'Activating' );
+	var pn = div.parentNode;
+	
+	document.body.classList.add( 'Activating' );
+	pn.classList.add( 'Activating' );
 	setTimeout( function()
 	{
 		if( div )
 		{
-			if( isMobile )
-			{
-				document.body.classList.remove( 'WindowActivating' );
-			}
-			div.classList.add( 'Activated' );
-			div.classList.remove( 'Activating' );
+			pn.classList.add( 'Activated' );
+			pn.classList.remove( 'Activating' );
 			setTimeout( function()
 			{
 				if( div )
 				{
 					// Finally
-					div.classList.add( 'DoneActivating' );
-					div.classList.remove( 'Activated' );
+					pn.classList.add( 'DoneActivating' );
+					pn.classList.remove( 'Activated' );
 					setTimeout( function()
 					{
 						if( div && div.parentNode )
 						{
-							div.classList.remove( 'DoneActivating' );
-							div.parentNode.classList.remove( 'Activating' );
+							pn.classList.remove( 'DoneActivating' );
+							pn.classList.remove( 'Activating' );
+							document.body.classList.remove( 'Activating' );
 						}
-					}, 250 );
+					}, 300 );
 				}
-			}, 250 );
+			}, 600 );
 		}
-	}, 250 );
+	}, 300 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
@@ -1136,6 +1150,7 @@ function _ActivateWindow( div, nopoll, e )
 function _setWindowTiles( div )
 {
 	if( isMobile ) return;
+	
 	// Check if we have windows attached
 	if( div.attached )
 	{
@@ -1199,9 +1214,11 @@ function _DeactivateWindow( m, skipCleanUp )
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
-	{
+	{	
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+
+		CheckMaximizedView();
 		
 		if( m.windowObject && m.notifyActivated )
 		{
@@ -1580,7 +1597,9 @@ function CloseView( win, delayed )
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
+				{
 					div.viewContainer.parentNode.removeChild( div.viewContainer );
+				}
 				else if( div.parentNode )
 				{
 					div.parentNode.removeChild( div );
@@ -1589,6 +1608,7 @@ function CloseView( win, delayed )
 				{
 					console.log( 'Nothing to remove..' );
 				}
+				CheckMaximizedView();
 			}, isMobile ? 750 : 500 );
 
 			if( !isMobile )
@@ -1607,6 +1627,7 @@ function CloseView( win, delayed )
 		}
 
 		// Activate latest activated view (not on mobile)
+		var nextActive = false;
 		if( div.classList.contains( 'Active' ) )
 		{
 			if( Friend.GUI.view.viewHistory.length )
@@ -1620,7 +1641,10 @@ function CloseView( win, delayed )
 						{
 							// Only activate non minimized views
 							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -1633,7 +1657,10 @@ function CloseView( win, delayed )
 						{
 							// Only activate non minimized views
 							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -2074,6 +2101,7 @@ var View = function( args )
 		}
 
 		// Tell it's opening
+		viewContainer.classList.add( 'Opening' );
 		div.classList.add( 'Opening' );
 		setTimeout( function()
 		{
@@ -2086,6 +2114,7 @@ var View = function( args )
 				div.classList.add( 'Redrawing' );
 				setTimeout( function()
 				{
+					viewContainer.classList.remove( 'Opening' );
 					div.classList.remove( 'Redrawing' );
 				}, 250 );
 			}, 250 );
@@ -2614,6 +2643,10 @@ var View = function( args )
 						}
 					}
 				}
+				
+				// Check maximized
+				CheckMaximizedView();
+				
 				return cancelBubble( e );
 			}
 			zoom.addEventListener( 'touchstart', zoom.onclick, false );
@@ -3720,6 +3753,7 @@ var View = function( args )
 				msg.screenId = self.flags.screen.externScreenId;
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 			if( !msg.origin ) msg.origin = document.location.href;
+			
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
 			ifr.body = ifr.contentWindow.document.body;
 		}
@@ -4802,6 +4836,10 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 {
 	if( !isMobile ) return;
 	if( !Workspace.screen || !Workspace.screen.contentDiv ) return;
+	
+	// Check if we have a maximized window
+	CheckMaximizedView();
+	
 	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
 		// Here is the first screen
@@ -4996,9 +5034,13 @@ function _kresponseup( e )
 }
 
 // Resize all screens
-function _kresize( e )
+function _kresize( e, depth )
 {
+	if( !depth ) depth = 0;
+	
 	checkMobileBrowser();
+	
+	forceScreenMaxHeight();	
 	
 	// Resize screens
 	if( Workspace && Workspace.screenList )
@@ -5011,10 +5053,28 @@ function _kresize( e )
 		Workspace.checkWorkspaceWallpapers();
 	}
 	
+	if( isMobile && depth > 0 )
+	{
+		return ConstrainWindow( currentMovable );
+	}
+	
 	// Resize windows
 	for( var a in movableWindows )
 	{
 		ConstrainWindow( movableWindows[a] );
+	}
+	
+	if( depth == 0 )
+	{
+		// ios fix
+		var nav = navigator.userAgent.toLowerCase();
+		if( nav.indexOf( 'iphone' ) >= 0 || nav.indexOf( 'ipad' ) >= 0 )
+		{
+			setTimeout( function()
+			{
+				_kresize( e, 1 );
+			}, 500 );
+		}
 	}
 }
 

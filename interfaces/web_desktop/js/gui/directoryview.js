@@ -3785,7 +3785,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	// -------------------------------------------------------------------------
 	file.rollOut = function ( eles )
 	{
-		this.classList.remove('DragTarget');
+		this.classList.remove( 'DragTarget' );
 	}
 
 	// -------------------------------------------------------------------------
@@ -3820,7 +3820,10 @@ FileIcon.prototype.Init = function( fileInfo )
 			else if( e.button ) rc = ( e.button == 2 );
 			if( !rc )
 			{
-				window.mouseDown = this;
+				if( e.button === 0 || e.button === 3 || e.button === 2 )
+				{
+					window.mouseDown = this;
+				}
 			}
 		}
 
@@ -3881,7 +3884,8 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 		}
 
-		e.stopPropagation();
+		if( e && e.stopPropagation )
+			e.stopPropagation();
 	}
 
 	// -------------------------------------------------------------------------
@@ -3954,7 +3958,8 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Normal folders etc
 		// Open unique windows if we're in toolbar mode and are double clicking a disk
 		var uniqueView = false;
-		if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && obj.directoryView.navMode == 'toolbar' )
+		var dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
+		if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
 		{
 			uniqueView = true;
 			if( obj.fileInfo.Path != obj.fileInfo.Volume )
@@ -3967,11 +3972,11 @@ FileIcon.prototype.Init = function( fileInfo )
 			return window.isMobile ? Workspace.closeDrivePanel() : false;
 		}
 		// Just change directory
-		else if( obj.fileInfo.Type == 'Directory' && obj.directoryView.navMode == 'toolbar' )
+		else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
 		{
 			// Set a new path and record the old one!
-			var we = obj.directoryView.windowObject;
-			var dw = obj.directoryView;
+			var we = dv.windowObject;
+			var dw = dv;
 
 			// Add current and set it to end of history
 			var path = obj.fileInfo.Path.split( ':' );
@@ -4036,11 +4041,11 @@ FileIcon.prototype.Init = function( fileInfo )
 				n.className = 'Content SlideAnimation';
 				n.style.willChange = 'transform';
 				n.style.transition = 'transform 0.4s';
-				n.innerHTML = obj.directoryView.windowObject.innerHTML;
-				n.scrollTop = obj.directoryView.windowObject.scrollTop;
+				n.innerHTML = dv.windowObject.innerHTML;
+				n.scrollTop = dv.windowObject.scrollTop;
 				n.style.zIndex = 10;
-				obj.directoryView.windowObject.parentNode.appendChild( n );
-				obj.directoryView.windowObject.parentNode.classList.add( 'Redrawing' );
+				dv.windowObject.parentNode.appendChild( n );
+				dv.windowObject.parentNode.classList.add( 'Redrawing' );
 				
 				// Refresh and add animation
 				we.refresh( function()
@@ -4100,7 +4105,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		if ( !e ) e = window.event;
 		if ( window.mouseDown == this )
 		{
-			mousePointer.pickup ( this );
+			mousePointer.pickup( this );
 			window.mouseDown = 4;
 			return cancelBubble ( e );
 		}
@@ -4396,8 +4401,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					win.refreshing = false;
 				} );
 			}, 250 );
-
-
 		}
 		we.refresh ();
 		
@@ -4706,7 +4709,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				var self = this;
 				w.refreshing = true;
 				
-				
 				var wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
 				
 				w.setFlag( 'title', _nameFix( wt ) );
@@ -4780,7 +4782,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					}
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
-					w.refreshing = true;
+					w.refreshing = false;
 				}
 				j.send();
 			}
@@ -4990,17 +4992,17 @@ function CheckDoorsKeys( e )
 				var found = false;
 				for( var a = 0; a < rw.length; a++ )
 				{
-					if( rw[ a ].domNode.classList.contains( 'Selected' ) )
+					if( rw[ a ].selected )
 					{
 						found = true;
 						if( a == rw.length - 1 )
 						{
-							rw[ 0 ].domNode.click();
+							rw[ 0 ].domNode.onmousedown( e );
 							scroll = rw[ 0 ].domNode.offsetTop - 100;
 						}
 						else
 						{
-							rw[ a + 1 ].domNode.click();
+							rw[ a + 1 ].domNode.onmousedown( e );
 							scroll = rw[ a + 1 ].domNode.offsetTop - 100;
 						}
 						break;
@@ -5008,7 +5010,7 @@ function CheckDoorsKeys( e )
 				}
 				if( !found )
 				{
-					rw[ 0 ].domNode.click();
+					rw[ 0 ].domNode.onmousedown( e );
 					scroll = rw[ 0 ].domNode.offsetTop - 100;
 				}
 				if( scroll )
@@ -5037,18 +5039,18 @@ function CheckDoorsKeys( e )
 				{
 					if( !found )
 					{
-						out[0].domNode.click();
+						out[0].domNode.onmousedown( e );
 						return;
 					}
 					for( var a = 0; a < out.length; a++ )
 					{
 						if( out[a].selected && a < out.length - 1 )
 						{
-							out[a+1].domNode.click();
+							out[ a + 1 ].domNode.onmousedown( e );
 							return;
 						}
 					}
-					out[0].domNode.click();
+					out[ 0 ].domNode.onmousedown( e );
 				}
 			}
 		}

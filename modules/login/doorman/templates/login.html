@@ -192,11 +192,12 @@
 					
 					if( r || ( this.loginUsername && this.loginPassword ) )
 					{
-						//_this.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
+						_this.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
 						_this.encryption.setKeys( this.loginUsername, this.loginPassword );
 						
 						var data = {
 							username: ( u ? u : ( Application.keys ? Application.keys.username : '' ) ),
+							password: ( p ? p : ( Application.keys ? Application.keys.password : '' ) ),
 							publickey: _this.encryption.keys.client.publickey,
 							deviceid: _this.deviceid
 						};
@@ -206,7 +207,10 @@
 						
 						if( 1!=1 && _this.encryption.keys.server.publickey )
 						{
-							m.addVar( 'encrypted', _this.encryption.encrypt( JSON.stringify( data ) ) );
+							console.log( _this.encryption.keys.server.publickey );
+							console.log( JSON.stringify( data ) );
+							m.addVar( 'encrypted', _this.encryption.encrypt( JSON.stringify( data )/*, _this.encryption.keys.server.publickey*/ ) );
+							console.log( _this.encryption.encrypt( JSON.stringify( data ), _this.encryption.keys.server.publickey ) );
 						}
 						else
 						{
@@ -262,6 +266,10 @@
 										//}
 									}
 								}
+							}
+							else
+							{
+								console.log( this.responseText() );
 							}
 							
 							if( callback && typeof( callback ) == 'function' ) callback( false );
