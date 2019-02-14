@@ -99,17 +99,18 @@ inline void MutexManagerRelease( MutexManager *mm __attribute__((unused)), void 
 #endif
 */
 
+/*
 #ifndef FRIEND_MUTEX_LOCK
 #define FRIEND_MUTEX_LOCK( mutPointer ) \
 	pthread_mutex_lock( mutPointer )
 #endif
+*/
 
-/*
 #ifndef FRIEND_MUTEX_LOCK
 #define FRIEND_MUTEX_LOCK( mutPointer ) \
 	PthreadTimedLock( mutPointer, __FILE__, __LINE__ )
 #endif
-*/
+
 
 //if (rc != EBUSY) { LOG( FLOG_ERRROR, "Cannot lock mutex" ); } rc; })
 
