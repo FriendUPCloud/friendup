@@ -2011,7 +2011,7 @@ function apiWrapper( event, force )
 							type: 'callback',
 							callback: msg.callback,
 							data: Workspace.apidefaultscripts
-						} );
+						}, '*' );
 					}
 					// Build
 					else
@@ -2027,7 +2027,7 @@ function apiWrapper( event, force )
 									type: 'callback',
 									callback: msg.callback,
 									data: Workspace.apidefaultscripts
-								} );
+								}, '*' );
 							}
 						}
 						n.send();
