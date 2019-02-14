@@ -216,7 +216,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: response
-							} );
+							}, '*' );
 						} );
 						break;
 					case 'close':
@@ -226,7 +226,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: response
-							} );
+							}, '*' );
 						} );
 						break;
 					case 'getapplications':
@@ -253,7 +253,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: out
-							} );
+							}, '*' );
 						}
 						break;
 					case 'sendtoapp':
@@ -314,7 +314,7 @@ function apiWrapper( event, force )
 											event.source.postMessage( {
 												type: 'applicationmessage',
 												message: data
-											} );
+											}, '*' );
 										} )
 									} );
 								} )( out[ a ] );
@@ -324,7 +324,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: responders
-							} );
+							}, '*' );
 						}
 						break;
 				}
