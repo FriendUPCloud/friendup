@@ -647,12 +647,14 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	
 	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
 	
+	/*
 	if( listEntry != NULL )
 	{
 		INFO("[WS] User already have this websocket connection\n");
 		//pthread_mutex_unlock( &(actUserSess->us_Mutex) );
 		return 1;
 	}
+	*/
 	
 	//@BG-678 
 	// remove old connections
@@ -677,7 +679,18 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	*/
 	// create and use new WebSocket connection
 	
-	WebsocketServerClient *nwsc = WebsocketServerClientNew();
+	WebsocketServerClient *nwsc;
+	
+	if( listEntry != NULL )
+	{
+		INFO("[WS] User already have this websocket connection\n");
+		nwsc = listEntry;
+	}
+	else
+	{
+		nwsc = WebsocketServerClientNew();
+	}
+	
 	if( nwsc != NULL )
 	{
 		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to new %p\n", nwsc, nwsc->node.mln_Succ );
@@ -700,15 +713,27 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		data->fcd_SystemBase = l;
 		nwsc->wsc_WebsocketsData = data;
 		
-		// everything is set, we are adding new connection to list
-		FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) );
-		nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
-		actUserSess->us_WSClients = nwsc;
-		nwsc->wsc_UserSession = actUserSess;
+		if( listEntry == NULL )
+		{
+			// everything is set, we are adding new connection to list
+			FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) );
+			nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
+			actUserSess->us_WSClients = nwsc;
+			nwsc->wsc_UserSession = actUserSess;
 		
-		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
-		
+			FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
+		}
+		else
+		{
+			actUserSess->us_WSClients = nwsc;
+		}
+			
 		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to new %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
+		
+		if( listEntry != NULL )
+		{
+			return 1;
+		}
 	}
 	else
 	{
