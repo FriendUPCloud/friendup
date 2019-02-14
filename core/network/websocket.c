@@ -637,7 +637,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	while( listEntry != NULL )
 	{
 		DEBUG("[WS] wsclientptr %p\n", listEntry );
-		if( listEntry->wsc_Wsi == wsi )
+		if( listEntry->wsc_Wsi == NULL || listEntry->wsc_Wsi == wsi )
 		{
 			break;
 		}
