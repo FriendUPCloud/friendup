@@ -82,6 +82,7 @@ void USMDelete( UserSessionManager *smgr )
  */
 User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 {
+	DEBUG("CHECK3\n");
 	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
@@ -112,17 +113,20 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
         FERROR("Sessionid is NULL!\n");
         return NULL;
     }
+    DEBUG("CHECK4\n");
 	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
 		if( strcmp( sessionid, us->us_SessionID ) == 0 )
 		{
+			DEBUG("CHECK4END\n");
 			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			return us;
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
+	DEBUG("CHECK4END\n");
 	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
@@ -171,17 +175,20 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
  */
 UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devid, FULONG uid )
 {
+	DEBUG("CHECK5\n");
  	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
 		if( us->us_UserID == uid && strcmp( devid, us->us_SessionID ) == 0 )
 		{
+			DEBUG("CHECK5END\n");
 			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			return us;
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
+	DEBUG("CHECK5END\n");
 	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
@@ -232,6 +239,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
  */
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
+	DEBUG("CHECK6\n");
 	//  we  will take only first session of that user
 	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
@@ -425,6 +433,7 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 {
 	DEBUG("[USMUserSessionAddToList] start\n");
 	
+	DEBUG("CHECK7\n");
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
 		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
@@ -458,11 +467,14 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	FBOOL userHaveMoreSessions = FALSE;
 	FBOOL duplicateMasterSession = FALSE;
 	
-	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) )
+	DEBUG("CHECK8\n");
+	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
+		DEBUG("CHECK8 LOCKED\n");
 		UserSession  *ses =  smgr->usm_Sessions;
 		while( ses != NULL )
 		{
+			DEBUG("inside session\n");
 			if( ses->us_DeviceIdentity != NULL )
 			{
 				if( s->us_UserID == ses->us_UserID && strcmp( s->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
@@ -482,6 +494,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 		
 			ses =  (UserSession *)ses->node.mln_Succ;
 		}
+		DEBUG("CHECK8 after while\n");
 
 		// if session doesnt exist in memory we must add it to the list
 	
@@ -497,6 +510,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 			duplicateMasterSession = TRUE;
 			s = ses;
 		}
+		DEBUG("CHECK8END\n");
 		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
 	
@@ -593,6 +607,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	DEBUG("[USMUserSessionRemove] UserSessionRemove\n");
 	
+	DEBUG("CHECK9\n");
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
 		if( remsess == smgr->usm_Sessions )
@@ -796,6 +811,7 @@ int USMRemoveOldSessions( void *lsb )
 	int nr = 0;
 	// we are conting maximum number of sessions
 	//FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
+	DEBUG("CHECK10\n");
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
 		
@@ -947,6 +963,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
     // Go through logged users
     //
     
+    DEBUG("CHECK11\n");
     FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
@@ -1061,6 +1078,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 			} // mutex lock
 			
+			DEBUG("CHECK12\n");
 			FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 		}
 		usr = (User *)usr->node.mln_Succ;

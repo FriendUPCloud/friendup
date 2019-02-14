@@ -491,6 +491,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			else
 			{
+				DEBUG("CHECK1\n");
 				FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
 				while( curusrsess != NULL )
 				{
@@ -995,6 +996,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					FBOOL isUserSentinel = FALSE;
 					
+					DEBUG("CHECK2\n");
 					FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
 					
 					if( deviceid == NULL )
@@ -1061,6 +1063,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 					}
 					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+					DEBUG("CHECK2END\n");
 					
 					if( dstusrsess == NULL )
 					{
