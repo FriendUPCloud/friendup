@@ -627,19 +627,22 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		return -1;
 	}
 	
+	WebsocketServerClient *listEntry = NULL;
 	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
-	FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) );
-	WebsocketServerClient *listEntry = actUserSess->us_WSClients;
-	while( listEntry != NULL )
+	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
-		DEBUG("[WS] wsclientptr %p\n", listEntry );
-		if( listEntry->wsc_Wsi == NULL || listEntry->wsc_Wsi == wsi )
+		listEntry = actUserSess->us_WSClients;
+		while( listEntry != NULL )
 		{
-			break;
+			DEBUG("[WS] wsclientptr %p\n", listEntry );
+			if( listEntry->wsc_Wsi == NULL || listEntry->wsc_Wsi == wsi )
+			{
+				break;
+			}
+			listEntry = (WebsocketServerClient *)listEntry->node.mln_Succ;
 		}
-		listEntry = (WebsocketServerClient *)listEntry->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	
 	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
 	
@@ -712,12 +715,14 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		if( listEntry == NULL )
 		{
 			// everything is set, we are adding new connection to list
-			FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) );
-			nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
-			actUserSess->us_WSClients = nwsc;
-			nwsc->wsc_UserSession = actUserSess;
+			if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
+			{
+				nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
+				actUserSess->us_WSClients = nwsc;
+				nwsc->wsc_UserSession = actUserSess;
 		
-			FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
+			}
 		}
 		else
 		{
