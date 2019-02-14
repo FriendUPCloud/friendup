@@ -7808,7 +7808,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'files': [ file ],
 			'filenames': [ filename ]
 		};
-		console.log('trying to upload here...',fileMessage);
 		uworker.postMessage( fileMessage );		
 	},
 	updateViewState: function( newState )
