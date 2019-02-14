@@ -958,6 +958,8 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 			
 			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			
 			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 			{
 				// go through all User Sessions and send message
@@ -980,11 +982,10 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 					{
 						DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
-						FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+						
 						//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 						WebSocketSendMessage( sb, uses, tmpmsg, len );
 						//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
-						FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 
 						// send message to all remote users
 						RemoteUser *ruser = usr->u_RemoteUsers;
@@ -1057,6 +1058,8 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 				//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 			} // mutex lock
+			
+			FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
