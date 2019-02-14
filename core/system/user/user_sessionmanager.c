@@ -474,24 +474,37 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 		UserSession  *ses =  smgr->usm_Sessions;
 		while( ses != NULL )
 		{
+			FBOOL quit = FALSE;
 			DEBUG("inside session\n");
-			if( ses->us_DeviceIdentity != NULL )
+			
+			if( FRIEND_MUTEX_LOCK( &s->us_Mutex ) == 0 )
 			{
-				if( s->us_UserID == ses->us_UserID && strcmp( s->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
+				if( ses->us_DeviceIdentity != NULL )
 				{
-					DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
-					break;
+					if( s->us_UserID == ses->us_UserID && strcmp( s->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
+					{
+						DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
+						quit = TRUE;
+					}
 				}
+				else
+				{
+					if( ses->us_DeviceIdentity == s->us_DeviceIdentity )
+					{
+						DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
+						quit = TRUE;
+					}
+				}
+				FRIEND_MUTEX_UNLOCK( &s->us_Mutex );
 			}
-			else
+			
+			if( quit == TRUE )
 			{
-				if( ses->us_DeviceIdentity == s->us_DeviceIdentity )
-				{
-					DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
-					break;
-				}
+				DEBUG("Break\n");
+				break;
 			}
 		
+			DEBUG("inside session 2 id: %s\n", s->us_SessionID );
 			ses =  (UserSession *)ses->node.mln_Succ;
 		}
 		DEBUG("CHECK8 after while\n");

@@ -239,7 +239,7 @@ int WebsocketThread( FThread *data )
 			FINFO("WS Quit! but threads left: %d\n", WSThreadNum );
 			cnt++;
 			
-			if( cnt > 500 )
+			if( cnt > 100 )
 			{
 				Log( FLOG_INFO, "[WS] Service stopping threads: %d\n", WSThreadNum );
 				cnt = 0;
