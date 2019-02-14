@@ -76,7 +76,7 @@ int UserAddSession( User *usr, void *ls )
 	UserSession *s = (UserSession *)ls;
 	UserSessListEntry *us = NULL;
 	
-	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 	{
 		UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
 		while( exses != NULL )
@@ -84,7 +84,7 @@ int UserAddSession( User *usr, void *ls )
 			if( exses->us == ls )
 			{
 				DEBUG("Session was already added to user\n");
-				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex ) )
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 				return 0;
 			}
 			exses = (UserSessListEntry *) exses->node.mln_Succ;
@@ -101,7 +101,7 @@ int UserAddSession( User *usr, void *ls )
 		
 			usr->u_SessionsNr++;
 		}
-		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex ) )
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 	}
 	
 	return 0;
