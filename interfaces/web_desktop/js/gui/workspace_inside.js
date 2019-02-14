@@ -5675,6 +5675,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			else if( currentMovable.content.directoryview )
 			{
+				if( currentMovable.content.fileInfo.Path == 'Mountlist:' )
+				{
+					return currentMovable.windowObject.close();
+				}
 				return currentMovable.content.directoryview.buttonUp.onclick();
 			}
 		}
