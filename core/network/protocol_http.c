@@ -1504,14 +1504,14 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												{
 													mime = StringDuplicate( "text/plain" );
 												}
-												file->lf_Mime = mime;
+												file->lf_Mime = StringDuplicate( mime );
 											}
 											else
 											{
-												//file->lf_Mime = mime;
+												mime = StringDuplicate( file->lf_Mime );
 											}
 											struct TagItem tags[] = {
-												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( file->lf_Mime ) },
+												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) mime },
 												{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 												{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
 												{ TAG_DONE, TAG_DONE }
