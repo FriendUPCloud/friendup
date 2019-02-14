@@ -283,8 +283,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 	
 	DEBUG1("[WS] New websocket\n");
 	
-	pthread_mutex_init( &WSThreadMutex, NULL );
-	
 	if( ( ws = FCalloc( 1, sizeof( WebSocket ) ) ) != NULL )
 	{
 		//char *fhome = getenv( "FRIEND_HOME" );
@@ -452,8 +450,6 @@ void WebSocketDelete( WebSocket* ws )
 			
 		FFree( ws );
 	}
-	
-	pthread_mutex_destroy( &WSThreadMutex );
 }
 
 
