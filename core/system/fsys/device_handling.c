@@ -1651,25 +1651,26 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 	{
 		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"path\":\"%s\"}}", evt, path );
 		
-		//FRIEND_MUTEX_LOCK( &(u->u_Mutex) );
-		
-		UserSessListEntry *list = u->u_SessionsList;
-		while( list != NULL )
+		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 		{
-			if( list->us != NULL )
+			UserSessListEntry *list = u->u_SessionsList;
+			while( list != NULL )
 			{
 				if( list->us != NULL )
 				{
-					WebSocketSendMessage( sb, list->us, message, strlen( message ) );
+					if( list->us != NULL )
+					{
+						WebSocketSendMessage( sb, list->us, message, strlen( message ) );
+					}
+					else
+					{
+						INFO("Cannot send WS message: %s\n", message );
+					}
 				}
-				else
-				{
-					INFO("Cannot send WS message: %s\n", message );
-				}
+				list = (UserSessListEntry *)list->node.mln_Succ;
 			}
-			list = (UserSessListEntry *)list->node.mln_Succ;
+			FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
 		}
-		//FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
 	}
 	
 	if( message != NULL )

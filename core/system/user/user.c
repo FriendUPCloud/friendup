@@ -76,27 +76,32 @@ int UserAddSession( User *usr, void *ls )
 	UserSession *s = (UserSession *)ls;
 	UserSessListEntry *us = NULL;
 	
-	UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
-	while( exses != NULL )
+	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) ) == 0 )
 	{
-		if( exses->us == ls )
+		UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
+		while( exses != NULL )
 		{
-			DEBUG("Session was already added to user\n");
-			return 0;
+			if( exses->us == ls )
+			{
+				DEBUG("Session was already added to user\n");
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex ) )
+				return 0;
+			}
+			exses = (UserSessListEntry *) exses->node.mln_Succ;
 		}
-		exses = (UserSessListEntry *) exses->node.mln_Succ;
-	}
 	
-	if( ( us = FCalloc( 1, sizeof( UserSessListEntry ) ) ) != NULL )
-	{
-		us->us = s;
-		s->us_User = usr;	// assign user to session
-		s->us_UserID = usr->u_ID;
+		if( ( us = FCalloc( 1, sizeof( UserSessListEntry ) ) ) != NULL )
+		{
+			us->us = s;
+			s->us_User = usr;	// assign user to session
+			s->us_UserID = usr->u_ID;
 		
-		us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
-		usr->u_SessionsList = us;
+			us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
+			usr->u_SessionsList = us;
 		
-		usr->u_SessionsNr++;
+			usr->u_SessionsNr++;
+		}
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex ) )
 	}
 	
 	return 0;

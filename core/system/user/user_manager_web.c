@@ -1108,46 +1108,47 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					{
 						BufString *bs = BufStringNew();
 						
-						FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) );
-					
-						UserSessListEntry *sessions = logusr->u_SessionsList;
-						BufStringAdd( bs, "ok<!--separate-->[" );
-						int pos = 0;
-						//unsigned long t = time( NULL );
-					
-						while( sessions != NULL )
+						if( FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) ) == 0 )
 						{
-							UserSession *us = (UserSession *) sessions->us;
-							if( us == NULL )
+							UserSessListEntry *sessions = logusr->u_SessionsList;
+							BufStringAdd( bs, "ok<!--separate-->[" );
+							int pos = 0;
+							//unsigned long t = time( NULL );
+					
+							while( sessions != NULL )
 							{
-								DEBUG("ERR\n");
-								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-								continue;
-							}
-
-							//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
-							//if( us->us_WSClients != NULL )
-							time_t timestamp = time(NULL);
-							if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
-							{
-
-								int size = 0;
-								if( pos == 0 )
+								UserSession *us = (UserSession *) sessions->us;
+								if( us == NULL )
 								{
-									size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+									DEBUG("ERR\n");
+									sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+									continue;
 								}
-								else
+
+								//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
+								//if( us->us_WSClients != NULL )
+								time_t timestamp = time(NULL);
+								if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
 								{
-									size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
-								}
-								BufStringAddSize( bs, temp, size );
+
+									int size = 0;
+									if( pos == 0 )
+									{
+										size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+									}
+									else
+									{
+										size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+									}
+									BufStringAddSize( bs, temp, size );
 							
-								pos++;
+									pos++;
+								}
+								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 							}
-							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-						}
 						
-						FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
+							FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
+						}
 					
 						BufStringAdd( bs, "]" );
 					

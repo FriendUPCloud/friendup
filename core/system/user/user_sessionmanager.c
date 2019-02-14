@@ -239,9 +239,9 @@ UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 	{
 		if( us->us_User  != NULL  && us->us_User->u_ID == id )
 		{
-			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			if( us->us_User->u_SessionsList != NULL )
 			{
+				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 				return us->us_User->u_SessionsList->us;
 			}
 		}
@@ -458,45 +458,47 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	FBOOL userHaveMoreSessions = FALSE;
 	FBOOL duplicateMasterSession = FALSE;
 	
-	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-	UserSession  *ses =  smgr->usm_Sessions;
-	while( ses != NULL )
+	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) )
 	{
-		if( ses->us_DeviceIdentity != NULL )
+		UserSession  *ses =  smgr->usm_Sessions;
+		while( ses != NULL )
 		{
-			if( s->us_UserID == ses->us_UserID && strcmp( s->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
+			if( ses->us_DeviceIdentity != NULL )
 			{
-				DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
-				break;
+				if( s->us_UserID == ses->us_UserID && strcmp( s->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
+				{
+					DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
+					break;
+				}
 			}
+			else
+			{
+				if( ses->us_DeviceIdentity == s->us_DeviceIdentity )
+				{
+					DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
+					break;
+				}
+			}
+		
+			ses =  (UserSession *)ses->node.mln_Succ;
+		}
+
+		// if session doesnt exist in memory we must add it to the list
+	
+		if( ses ==  NULL )
+		{
+			INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s\n", s->us_SessionID );
+	
+			s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+			smgr->usm_Sessions = s;
 		}
 		else
 		{
-			if( ses->us_DeviceIdentity == s->us_DeviceIdentity )
-			{
-				DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
-				break;
-			}
+			duplicateMasterSession = TRUE;
+			s = ses;
 		}
-		
-		ses =  (UserSession *)ses->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
-
-	// if session doesnt exist in memory we must add it to the list
-	
-	if( ses ==  NULL )
-	{
-		INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s\n", s->us_SessionID );
-	
-		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
-		smgr->usm_Sessions = s;
-	}
-	else
-	{
-		duplicateMasterSession = TRUE;
-		s = ses;
-	}
-	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	
 	DEBUG("[USMUserSessionAdd] Checking session id %lu\n",  s->us_UserID );
 	
@@ -542,7 +544,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 			DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s\n", locusr->u_Name, locusr->u_MainSessionID );
 			
 			UserAddSession( locusr, s );
-			FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
+
 			s->us_User = locusr;
 			
 			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
@@ -561,7 +563,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 				
 				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
 			}
-			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
 	}
 	else
@@ -792,19 +793,20 @@ int USMRemoveOldSessions( void *lsb )
 	
 	// remove sessions from memory
 	UserSessionManager *smgr = sb->sl_USM;
-	
+	int nr = 0;
 	// we are conting maximum number of sessions
 	//FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-    FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
-	int nr = 0;
-	UserSession *cntses = smgr->usm_Sessions;
-	while( cntses != NULL )
+	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
-		nr++;
-		cntses = (UserSession *)cntses->node.mln_Succ;
+		
+		UserSession *cntses = smgr->usm_Sessions;
+		while( cntses != NULL )
+		{
+			nr++;
+			cntses = (UserSession *)cntses->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
-	
 	// now we are adding entries  which will be removed to array
 	
 	UserSession **remsessions = FCalloc( nr, sizeof(UserSession *) );
@@ -1182,22 +1184,23 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 {
 	time_t actTime = time( NULL );
 	DEBUG("[USMCloseUnusedWebSockets] start\n");
-	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
-	UserSession *ses = usm->usm_Sessions;
-	while( ses != NULL )
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
-		WebsocketServerClient *cl = ses->us_WSClients;
-		if( cl != NULL )
+		UserSession *ses = usm->usm_Sessions;
+		while( ses != NULL )
 		{
-			if( ( actTime - cl->wsc_LastPingTime ) < 150 )		// if last call was done 150 secs ago, we can close it
+			WebsocketServerClient *cl = ses->us_WSClients;
+			if( cl != NULL )
 			{
-				lws_close_reason( cl->wsc_Wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char *)"CLOSE", 5 );
-				DEBUG("[USMCloseUnusedWebSockets] close WS connection\n");
+				if( ( actTime - cl->wsc_LastPingTime ) < 150 )		// if last call was done 150 secs ago, we can close it
+				{
+					lws_close_reason( cl->wsc_Wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char *)"CLOSE", 5 );
+					DEBUG("[USMCloseUnusedWebSockets] close WS connection\n");
+				}
 			}
+			ses = (UserSession *)ses->node.mln_Succ;
 		}
-		
-		ses = (UserSession *)ses->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	DEBUG("[USMCloseUnusedWebSockets] end\n");
 }
