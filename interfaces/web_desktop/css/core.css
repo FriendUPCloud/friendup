@@ -3638,8 +3638,8 @@ html #DockWindowList .Task.Directory
 	position: absolute;
 	top: 50%; 
 	left: 50%;
-	-webkit-transform: translateX(-50%) translateY(-50%);
-	transform: translateX(-50%) translateY(-50%);
+	-webkit-transform: translate3d(-50%,-50%,0);
+	transform: translate3d(-50%,-50%,0);
 	min-width: 100%; 
 	min-height: 100%; 
 	width: auto; 
