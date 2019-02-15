@@ -2779,11 +2779,11 @@ DirectoryView.prototype.SelectAll = function()
 			if( ics[a].domNode )
 			{
 				ics[a].domNode.classList.add( 'Selected' );
-				ics[a].domNode.selected = true;
+				ics[a].domNode.selected = 'multiple';
 			}
-			ics[a].selected = true;
+			ics[a].selected = 'multiple';
 			if( ics[a].fileInfo )
-				ics[a].fileInfo.selected = true;
+				ics[a].fileInfo.selected = 'multiple';
 		}
 	}
 }
@@ -3121,6 +3121,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Single click
 			r.onmousedown = function( e )
 			{
+				// This means we are adding
+				if( e.shiftKey || e.ctrlKey )
+				{
+					convertIconsToMultiple();
+				}
+				
+				
 				// Right mouse button
 				if( e.button == 2 )
 				{
@@ -3193,8 +3200,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							{
 								if( !p.childNodes[b] ) continue;
 								p.childNodes[b].classList.add( 'Selected' );
-								p.childNodes[b].selected = true;
-								p.childNodes[b].fileInfo.selected = true;
+								p.childNodes[b].selected = 'multiple';
+								p.childNodes[b].fileInfo.selected = 'multiple';
 							}
 						}
 						dv.lastListItem = this;
@@ -3212,38 +3219,31 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						else
 						{
 							this.classList.add( 'Selected' );
-							this.selected = true;
-							this.fileInfo.selected = true;
+							this.selected = 'multiple';
+							this.fileInfo.selected = 'multiple';
 							dv.lastListItem = this;
 						}
 					}
 					else
 					{
+						var sh = e.shiftKey || e.ctrlKey;
+						if( !sh ) 
+						{
+							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+							{
+								clearRegionIcons( { exception: this } );
+							}
+						}
+						
 						this.classList.add( 'Selected' );
-						this.selected = true;
-						this.fileInfo.selected = true;
+						this.selected = sh ? 'multiple' : true;
+						this.fileInfo.selected = sh ? 'multiple' : true;
 						dv.lastListItem = this;
 					}
 
 					if( window.isSettopBox )
 					{
 						return cancelBubble( e );
-					}
-				}
-			}
-			
-			// Releasing the left mouse button
-			r.onmouseup = function( e )
-			{
-				if( e.button == 0 )
-				{
-					var sh = e.shiftKey || e.ctrlKey;
-					if( !sh ) 
-					{
-						if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
-						{
-							clearRegionIcons( { exception: this } );
-						}
 					}
 				}
 			}
@@ -3831,6 +3831,12 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 		}
 
+		// This means we are adding
+		if( e.shiftKey || e.ctrlKey )
+		{
+			convertIconsToMultiple();
+		}
+
 		if( !e ) e = window.event;
 		if( !e ) e = {};
 		
@@ -3891,9 +3897,18 @@ FileIcon.prototype.Init = function( fileInfo )
 				return cancelBubble( e );
 			}
 
+			var sh = e.shiftKey || e.ctrlKey;
+			if( !sh ) 
+			{
+				if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+				{
+					clearRegionIcons( { exception: this } );
+				}
+			}
+
 			this.classList.add( 'Selected' );
-			this.selected = true;
-			this.fileInfo.selected = true;
+			this.selected = sh ? 'multiple' : true;
+			this.fileInfo.selected = sh ? 'multiple' : true;
 
 
 			// Refresh the menu based on selected icons
@@ -3913,15 +3928,6 @@ FileIcon.prototype.Init = function( fileInfo )
 	// This one driggers dropping icons! (believe it or not)
 	file.onmouseup = function( e )
 	{
-		var sh = e.shiftKey || e.ctrlKey;
-		if( !sh ) 
-		{
-			if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
-			{
-				clearRegionIcons( { exception: this } );
-			}
-		}
-		
 		if( mousePointer && mousePointer.elements.length )
 		{
 			// Drop on an icon on a workbench icon
