@@ -730,10 +730,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			// Enforce icon view for mobile
 			dirv.listMode = 'iconview';
 			var changed = false;
-			if( !this._redrawPath || this._redrawPath != winobj.fileInfo.Path )
+			if( !this._redrawPath || !winobj.fileInfo || this._redrawPath != winobj.fileInfo.Path )
 			{
 				changed = true;
-				this._redrawPath = winobj.fileInfo.Path;
+				this._redrawPath = winobj.fileInfo ? winobj.fileInfo.Path : null;
 			}
 			
 			if( changed )
