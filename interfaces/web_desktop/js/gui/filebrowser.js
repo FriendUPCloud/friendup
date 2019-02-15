@@ -83,7 +83,11 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 				}
 				t = null;
 			};
-			self.setPath( self.rootPath, cb );
+			// Can't set icon listing path to mountlist..
+			if( self.rootPath != 'Mountlist:' )
+			{
+				self.setPath( self.rootPath, cb );
+			}
 		}
 		return cancelBubble( e );
 	}
