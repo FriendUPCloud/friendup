@@ -2699,6 +2699,11 @@ var View = function( args )
 				d.width = wenable && wwi ? wwi : d.width;
 				d.height = wenable && hhe ? hhe : d.width;
 			}
+			
+			if( div.content.directoryview )
+			{
+				d.listMode = div.content.directoryview.listMode;
+			}
 
 			SetWindowStorage( this.uniqueId, d );
 		}

@@ -35,6 +35,7 @@ function _nameFix( wt )
 DirectoryView = function( winobj, extra )
 {	
 	var ws = GetWindowStorage( winobj.uniqueId );
+	
 	// Initial values
 	this.listMode = ws && ws.listMode ? ws.listMode : 'iconview';
 	this.sortColumn = 'filename';
