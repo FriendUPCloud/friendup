@@ -743,7 +743,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				dirv.filearea.parentNode.style.transition = 'transform 0.4s';
 				dirv.filearea.style.transition = 'transform 0.4s';
 				
-				var iphone == navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
+				var iphone = navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
 				
 				if( winobj.fileInfo.Path == 'Mountlist:' )
 				{
