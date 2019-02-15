@@ -1,7 +1,7 @@
 
 File_Date                            : Data
 
-i18n_Builtin_Label_Trash             : Śmieci
+i18n_Builtin_Label_Trash             : Kosz
 i18n_Builtin_Label_Ram_disk          : Ram Door
 i18n_Builtin_Label_Home              : Home
 i18n_Builtin_Label_System            : System
@@ -14,7 +14,7 @@ i18n_install_application             : Zainstaluj program
 i18n_security_domain                 : Domena bezpieczeństwa
 i18n_looknfeel                       : Wygląd
 i18n_startup_sequence                : Sekwencja uruchamiania
-i18n_screens                         : Screens
+i18n_screens                         : Obszary robocze
 i18n_wallpaper                       : Tapeta
 i18n_printers                        : Drukarki
 i18n_network                         : Sieć
@@ -250,7 +250,7 @@ menu_fullscreen                         : Przełącz tryb pełnoekranowy
 menu_buildwebapp                        : Zbuduj aplikację internetową
 menu_icons                              : Plik
 menu_new_directory                      : Utwórz katalog
-menu_new_weblink                        : Utwórz link do strony internetowej
+menu_new_weblink                        : Utwórz link www
 menu_show_icon_information              : Właściwość
 menu_edit_filename                      : Zmień nazwę
 menu_delete                             : Usuń
@@ -425,13 +425,13 @@ i18n_what_you_share_with                : Co udostępniasz
 i18n_mark_as_read                       : Oznacz jako przeczytane
 i18n_messages_sent                      : Wiadomość wysłana...
 i18n_notifications_sent                 : Powiadomienia wysłane...
-i18n_connectingTo						: Łączenie z 
-i18n_pleaseEnterPassword				: , proszę wpisać hasło.
-i18n_passwordsDoNotMatch				: Hasła nie pasują do siebie.
-i18n_FriendNetwork						: Friend Network
-i18n_connectionFailed					: Połączenie z grupą roboczą nie powiodło się. Sprawdź hasło w ustawieniach konta.
-i18n_connectionAborted					: Połączenie z grupą roboczą zostało przerwane.
-i18n_password							: Hasło
+i18n_connectingTo                       : Łączenie z 
+i18n_pleaseEnterPassword                : , proszę wpisać hasło.
+i18n_passwordsDoNotMatch                : Hasła nie pasują do siebie.
+i18n_FriendNetwork                      : Friend Network
+i18n_connectionFailed                   : Połączenie z grupą roboczą nie powiodło się. Sprawdź hasło w ustawieniach konta.
+i18n_connectionAborted                  : Połączenie z grupą roboczą zostało przerwane.
+i18n_password                           : Hasło
 
 
 i18n_paste_error                        : Wklej błąd
@@ -509,9 +509,9 @@ i18n_evt_addeddesc                      : Wydarzenie zostało dodane do Twojego 
 i18n_evt_delete_desc                    : Spowoduje to usunięcie wydarzenia w kalendarzu.
 i18n_evt_delete_failed                  : Nie udało się usunąć
 i18n_evt_delete_failed_desc             : Nie udało się usunąć wydarzenia z kalendarza.
-i18n_cannotRename						: Nie można zmienić nazwy
-i18n_cannotDelete						: Nie udało się usunąć
-i18n_noWritePermission					: Nie masz uprawnień do zapisywania na tym dysku.
+i18n_cannotRename                       : Nie można zmienić nazwy
+i18n_cannotDelete                       : Nie udało się usunąć
+i18n_noWritePermission                  : Nie masz uprawnień do zapisywania na tym dysku.
 month_january                           : styczeń
 month_february                          : luty
 month_march                             : marzec
@@ -604,39 +604,39 @@ i18n_filetype_mp4                       : Wideo MP4
 i18n_filetype_svg                       : Skalowalna Grafika wektorowa
 i18n_filetype_ogv                       : Wideo Ogg Vorbis
 i18n_filetype_run                       : Friend script
-i18n_createWebApp					    : Stwórz
-i18n_buildWebApp						: Zbuduj aplikację internetową
-menu_buildWebApp						: Zbuduj aplikację internetową
-menu_openfolder							: Otwórz folder
-i18n_waUrl								: Adres URL witryny sieci Web (musi zaczynać się od "http" lub "https")
-i18n_waName								: Nazwa aplikacji
-i18n_waAuthor							: Twoje imię
-i18n_waEmail							: Twój adres email
-i18n_waDescription						: Informacje o tej aplikacji
-i18n_waWidth							: Szerokość
-i18n_waHeight							: Wysokość
-i18n_waCategory							: Kategoria aplikacji
-i18n_waWindow							: Okno
-i18n_typeWebApp							: Rodzaj
-i18n_waWrongUrl							: Wprowadź adres URL w postaci 'http://www.website.com' or 'https://www.website.com'
-i18n_waWrongName						: Wprowadź nazwę dla nowej nazwy aplikacji
-i18n_waWrongWidth						: Szerokość okna musi być liczbą dodatnią
-i18n_waWrongHeight						: Wysokość okna musi być liczbą dodatnią
-i18n_waGames							: Gary
-i18n_waOffice							: Biuro
-i18n_waGraphics							: Grafika
-i18n_waProgramming						: Programowanie
-i18n_waInternet							: Internet
-i18n_waCreated							: O nas
-i18n_waAbout1							: Ta aplikacja została utworzona za pomocą opcji "Twórz aplikację internetową" z menu Narzędzia wg
-i18n_waFile								: Plik
-i18n_waFileSelectorTitle				: Wybierz miejsce, w którym chcesz zapisać nową aplikację ...
-i18n_waIcon								: Ikona aplikacji
-i18n_waPreview							: Podglądu aplikacji
-i18n_waChange							: Zmiań
-i18n_waChangeWebAppPreviewTitle			: Wybierz obraz png, aby użyć podglądu
-i18n_waChangeWebAppIconTitle			: Wybierz obraz png, który będzie używany jako ikona
-i18n_waPleaseFill						: Definicja aplikacji
+i18n_createWebApp                       : Stwórz
+i18n_buildWebApp                        : Zbuduj aplikację internetową
+menu_buildWebApp                        : Zbuduj aplikację internetową
+menu_openfolder                         : Otwórz folder
+i18n_waUrl                              : Adres URL witryny sieci Web (musi zaczynać się od "http" lub "https")
+i18n_waName                             : Nazwa aplikacji
+i18n_waAuthor                           : Twoje imię
+i18n_waEmail                            : Twój adres email
+i18n_waDescription                      : Informacje o aplikacji
+i18n_waWidth                            : Szerokość
+i18n_waHeight                           : Wysokość
+i18n_waCategory                         : Kategoria aplikacji
+i18n_waWindow                           : Okno
+i18n_typeWebApp                         : Rodzaj
+i18n_waWrongUrl                         : Wprowadź adres URL w postaci 'http://www.website.com' lub 'https://www.website.com'
+i18n_waWrongName                        : Wprowadź nazwę dla nowej nazwy aplikacji
+i18n_waWrongWidth                       : Szerokość okna musi być liczbą dodatnią
+i18n_waWrongHeight                      : Wysokość okna musi być liczbą dodatnią
+i18n_waGames                            : Gary
+i18n_waOffice                           : Biuro
+i18n_waGraphics                         : Grafika
+i18n_waProgramming                      : Programowanie
+i18n_waInternet                         : Internet
+i18n_waCreated                          : O nas
+i18n_waAbout1                           : Ta aplikacja została utworzona za pomocą opcji "Twórz aplikację internetową" z menu Narzędzia wg
+i18n_waFile                             : Plik
+i18n_waFileSelectorTitle                : Wybierz miejsce, w którym chcesz zapisać nową aplikację ...
+i18n_waIcon                             : Ikona aplikacji
+i18n_waPreview                          : Podglądu aplikacji
+i18n_waChange                           : Zmiań
+i18n_waChangeWebAppPreviewTitle         : Wybierz obraz png, aby użyć podglądu
+i18n_waChangeWebAppIconTitle            : Wybierz obraz png, który będzie używany jako ikona
+i18n_waPleaseFill                       : Definicja aplikacji
 
 menu_move_view_to_workspace_1           : Przejdź do obszaru roboczego 1
 menu_move_view_to_workspace_2           : Przejdź do obszaru roboczego 2
