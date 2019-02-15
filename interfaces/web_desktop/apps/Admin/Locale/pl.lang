@@ -1,0 +1,33 @@
+#User account info
+
+i18n_user_profile                      : Profil użytkownika
+i18n_user_fullname                     : Imię i nazwisko
+i18n_user_username                     : Nazwa Użytkownika
+i18n_user_email                        : E-mail
+i18n_user_password                     : Hasło
+
+i18n_looknfeel                         : Wygląd
+i18n_theme                             : Motyw
+i18n_wallpaper                         : Tapeta
+i18n_window_style                      : Styl okna
+i18n_darktheme                         : Ciemny motyw
+i18n_system_disk                       : Dysk systemowy
+i18n_workspaces                        : Obszary robocze
+
+i18n_workgroups                        : Grupy robocze
+
+i18n_roles                             : Role
+
+i18n_storage                           : SMagazyn danych
+
+i18n_applications                      : Aplikacje
+
+i18n_enabled                           : Włączone
+i18n_disabled                          : Wyłączone
+i18n_default                           : Domyślne
+
+i18n_name                              : Nazwa
+i18n_category                          : Kategoria
+i18n_dock                              : In dock
+
+i18n_no_applications_available         : Brak dostępnych aplikacji.
