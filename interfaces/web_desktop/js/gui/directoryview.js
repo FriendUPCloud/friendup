@@ -3121,6 +3121,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Single click
 			r.onmousedown = function( e )
 			{
+				if( !e ) e = window.event ? window.event : {};
+			
 				// This means we are adding
 				if( e.shiftKey || e.ctrlKey )
 				{
@@ -3813,6 +3815,8 @@ FileIcon.prototype.Init = function( fileInfo )
 	// Attach events
 	file.onmousedown = function( e )
 	{
+		if( !e ) e = window.event ? window.event : {};
+	
 		// Activate screen on click
 		if( this.window )
 		{
