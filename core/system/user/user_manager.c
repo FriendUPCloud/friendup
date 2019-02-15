@@ -824,7 +824,7 @@ FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name )
  * @param name user name
  * @return User structure when success, otherwise NULL
  */
-User *UMGetUserByName( UserManager *um, char *name )
+User *UMGetUserByName( UserManager *um, const char *name )
 {
 	User *tuser = um->um_Users;
 	while( tuser != NULL )
@@ -902,6 +902,54 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	
 	DEBUG("[UMGetUserByNameDB] end\n");
 	return user;
+}
+
+/**
+ * Get user ID database by his name
+ *
+ * @param um pointer to UserManager
+ * @param name name of the user
+ * @return User or NULL when error will appear
+ */
+FULONG UMGetUserIDByName( UserManager *um, const char *name )
+{
+	User *usr = UMGetUserByName( um, name );
+	if( usr == NULL )
+	{
+		SystemBase *sb = (SystemBase *)um->um_SB;
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+		if( sqlLib )
+		{
+			FULONG id = 0;
+			DEBUG("[UMGetUserIDByName] %s\n", name );
+
+			char query[ 1024 ];
+			sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT ID FROM `FUser` WHERE Name='%s'", name );
+		
+			void *result = sqlLib->Query( sqlLib, query );
+			if( result != NULL )
+			{
+				char **row;
+				if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+				{
+					char *end;
+					if( row[ 0 ] != NULL )
+					{
+						id = strtol( (char *)row[ 0 ], &end, 0 );
+						
+						sqlLib->FreeResult( sqlLib, result );
+						sb->LibrarySQLDrop( sb, sqlLib );
+						return id;
+					}
+				}
+				sqlLib->FreeResult( sqlLib, result );
+			}
+			sb->LibrarySQLDrop( sb, sqlLib );
+		}
+	}
+
+	return usr->u_ID;
 }
 
 /**

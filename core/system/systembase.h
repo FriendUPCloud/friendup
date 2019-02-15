@@ -66,6 +66,7 @@
 #include <system/autotask/autotask.h>
 #include <system/mobile/mobile_manager.h>
 #include <system/calendar/calendar_manager.h>
+#include <system/notification/notification_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -83,6 +84,7 @@
 #include <webdav/webdav_token_manager.h>
 #include <communication/cluster_node.h>
 #include <config/properties.h>
+#include <websockets/websocket_apns_connector.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
 
@@ -225,6 +227,7 @@ typedef struct SystemBase
 	MutexManager					*sl_MutexManager;	// Mutex Manager
 	MobileManager					*sl_MobileManager;	// Mobile Manager
 	CalendarManager					*sl_CalendarManager;	// Calendar Manager
+	NotificationManager				*sl_NotificationManager;	// Notification Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -365,7 +368,7 @@ typedef struct SystemBase
 	char							*l_AppleKeyAPI;
 	char							*l_PresenceKey;
 	
-	WebsocketClient					*l_APNSConnection;
+	WebsocketAPNSConnector			*l_APNSConnection;
 } SystemBase;
 
 

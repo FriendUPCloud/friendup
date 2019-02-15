@@ -8,7 +8,7 @@ i18n_username                        : Nazwa Użytkownika
 i18n_change_password                 : Zmień hasło
 i18n_current_password                : Aktualne hasło
 i18n_new_password                    : Nowe hasło
-i18n_confirm                         : potwierdzać
+i18n_confirm                         : potwierdź
 
 i18n_language                        : Język systemu
 i18n_workspace_mode                  : Tryb obszaru roboczego
@@ -21,13 +21,13 @@ i18n_this_will_remove                : Spowoduje to usunięcie dysku z listy mon
 
 i18n_delete_disk                     : Usuń dysk
 
-i18n_storage                         : Urządzeniaa
+i18n_storage                         : Urządzenia
 
 i18n_key_type                        : Typ klucza
 i18n_key_name                        : Nazwa klucza
 i18n_key_password             	     : Hasło klucza
-i18n_generate                        : Wygenerować
-i18n_generate_keypair                : Wygeneruj parę kluczy
+i18n_generate                        : Wygeneruj
+i18n_generate_keypair                : Wygeneruj kilka kluczy
 
 i18n_extended_information            : Rozszerzone informacje
 i18n_telephone                       : Telefon
@@ -148,7 +148,6 @@ i18n_fnetAutoMountDrive              : Wyświetl ikonę Friend Network w obszarz
 
 i18n_update_language_warning         : Aktualizacja języka
 i18n_update_language_desc            : Podczas aktualizacji ustawień języka Friend musi ponownie załadować obszar roboczy. Stracisz wszystko, co nie jest zapisane. Na pewno chcesz kontynuować?
-
 i18n_fnetActivatePower               : Włącz dzielenie mocy obliczeniowej za pośrednictwem sieci znajomych
 i18n_fnetShareThisDevice             : Udostępnij to urządzenie
 i18n_fnetMaximumPercentage           : Maksymalna czas dostępu do udostępnienia
@@ -167,6 +166,12 @@ i18n_fnetShareLocalDrives            : Podłącz lokalne dyski do Friend Network
 i18n_fnetDeviceDescription           : Opis urządzenia
 i18n_fnetDeviceName                  : Nazwa urządzenia
 i18n_fnetChangeDeviceAvatar          : Zmień obraz
+
+i18n_fnetShareLocalDrives            : Podłącz lokalne dyski do Friend Network
+i18n_fnetDeviceDescription           : Opis urządzenia
+i18n_fnetDeviceName                  : Nazwa urządzenia
+i18n_fnetChangeDeviceAvatar          : Zmień avatar
+
 i18n_device_information              : Urządzenie
 i18n_nameOfDevice                    : Wprowadź tutaj nazwę urządzenia
 i18n_descriptionOfDevice             : Wprowadź opis

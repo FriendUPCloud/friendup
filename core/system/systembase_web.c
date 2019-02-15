@@ -779,7 +779,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	* @param password (required) - user password
 	* @param deviceid (required) - id which recognize device which is used to login
 	* @param encryptedblob - used by keys which allow to login
-	* @param appname - application name which want 
+	* @param appname - is an application name which is trying to connect to our server (used by remotefs)
 	* @param sessionid - session id of logged user
 	* @return information about login process "{result:-1,response: success/fail, code:error code }
 	*/

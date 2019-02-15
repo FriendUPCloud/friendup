@@ -201,6 +201,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 	sd->sock = socket( AF_INET, SOCK_STREAM, 0 );
 	if( sd->sock != 0 )
 	{
+		char *userauthlist = NULL;
 		// Set a timeout
 		struct timeval timeout;      
 		timeout.tv_sec = 4; // 4 secs!
@@ -218,7 +219,11 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		}
 		
 		sd->session = libssh2_session_init();
-		
+		if( sd->session == NULL )
+		{
+			FERROR("Cannot initalize session!\n");
+			return -3;
+		}
 		libssh2_session_set_timeout( sd->session, 5000 );
 		
 		if( libssh2_session_handshake( sd->session, sd->sock ) < 0 ) 
@@ -248,8 +253,6 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		}
 
 		DEBUG( "Now going into userauthlist.\n" );
-		
-		char *userauthlist = NULL;
 		
 		userauthlist = libssh2_userauth_list( sd->session, sd->sd_LoginUser, strlen(sd->sd_LoginUser) );
 		
@@ -554,7 +557,14 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		
 		sdat->session = libssh2_session_init();
 		
+		if( sdat->session == NULL )
+		{
+			FERROR("Cannot create ssh2 session\n");
+			goto shutdown;
+		}
 		libssh2_session_set_timeout( sdat->session, 5000 );
+		
+		DEBUG("SSH2 timeout, sessptr %p socknr %d\n", sdat->session, sdat->sock );
 		
 		if( libssh2_session_handshake( sdat->session, sdat->sock ) < 0 ) 
 		{

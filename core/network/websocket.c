@@ -47,8 +47,8 @@
 #include <websockets/websocket_req_manager.h>
 #include <network/protocol_websocket.h>
 #include <mobile_app/mobile_app.h>
-#define ENABLE_MOBILE_APP_NOTIFICATIONS 1
-#define ENABLE_NOTIFICATIONS_SINK 1
+#define ENABLE_MOBILE_APP_NOTIFICATIONS 0
+#define ENABLE_NOTIFICATIONS_SINK 0
 
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
 #include <mobile_app/mobile_app_websocket.h>
@@ -301,6 +301,8 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
 		
 		//ws->ws_Info.extensions = lws_get_internal_extensions();
 		//ws->ws_Info.extensions->per_context_private_data = ws;
+		//ws->ws_Info.ssl_cipher_list = "ALL";
+		
 		ws->ws_Info.ssl_cipher_list = "ECDHE-ECDSA-AES256-GCM-SHA384:"
 			       "ECDHE-RSA-AES256-GCM-SHA384:"
 			       "DHE-RSA-AES256-GCM-SHA384:"
@@ -313,7 +315,8 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
 			       "!AES128-SHA256:"
 			       "!DHE-RSA-AES256-SHA256:"
 			       "!AES256-GCM-SHA384:"
-			       "!AES256-SHA256";
+			       "!AES256-SHA256:"
+			       "ECDH-SHA22-NISTP256";
 		
 		ws->ws_CountPollfds = 0;
 		
