@@ -729,52 +729,59 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		{
 			// Enforce icon view for mobile
 			dirv.listMode = 'iconview';
-			
-			if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
+			var changed = false;
+			if( !this._redrawPath || this._redrawPath != winobj.fileInfo.Path )
 			{
-				// Bookmarks
-				dirv.bookmarks.style.width = '100%';
-				dirv.bookmarks.style.left = '0';
-				dirv.bookmarks.style.transition = 'transform 0.4s';
-				
-				// Filearea is always put in a container
-				dirv.filearea.parentNode.style.left = '0';
-				dirv.filearea.parentNode.style.width = '100%';
-				dirv.filearea.parentNode.style.transition = 'transform 0.4s';
-				dirv.filearea.style.transition = 'transform 0.4s';
-				
-				var iphone = navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
-				
-				if( winobj.fileInfo.Path == 'Mountlist:' )
+				changed = true;
+				this._redrawPath = winobj.fileInfo.Path;
+			}
+			
+			if( changed )
+			{
+				if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
 				{
-					if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+					// Bookmarks
+					dirv.bookmarks.style.width = '100%';
+					dirv.bookmarks.style.left = '0';
+					dirv.bookmarks.style.transition = 'transform 0.4s';
+				
+					// Filearea is always put in a container
+					dirv.filearea.parentNode.style.left = '0';
+					dirv.filearea.parentNode.style.width = '100%';
+					dirv.filearea.parentNode.style.transition = 'transform 0.4s';
+					dirv.filearea.style.transition = 'transform 0.4s';
+				
+					var iphone = navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
+				
+					if( winobj.fileInfo.Path == 'Mountlist:' )
 					{
-						dirv.filearea.style.transform = 'translateX(100%)';
+						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+						{
+							dirv.filearea.style.transform = 'translateX(100%)';
+						}
+						else
+						{
+							dirv.filearea.parentNode.style.transform = 'translateX(100%)';
+						}
+						dirv.bookmarks.style.transform = 'translateX(0%)';
+						winobj.parentNode.classList.add( 'Mountlist' );
+						dirv.ShowFileBrowser();
+						winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
+						return;
 					}
 					else
 					{
-						dirv.filearea.parentNode.style.transform = 'translateX(100%)';
+						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+						{
+							dirv.filearea.style.transform = 'translateX(0%)';
+						}
+						else 
+						{
+							dirv.filearea.parentNode.style.transform = 'translateX(0%)';
+						}
+						dirv.bookmarks.style.transform = 'translateX(-100%)';
+						winobj.parentNode.classList.remove( 'Mountlist' );
 					}
-					dirv.bookmarks.style.transform = 'translateX(0%)';
-					if( iphone ) _kresize();
-					winobj.parentNode.classList.add( 'Mountlist' );
-					dirv.ShowFileBrowser();
-					winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
-					return;
-				}
-				else
-				{
-					if( dirv.filearea.parentNode.classList.contains( 'View' ) )
-					{
-						dirv.filearea.style.transform = 'translateX(0%)';
-					}
-					else 
-					{
-						dirv.filearea.parentNode.style.transform = 'translateX(0%)';
-					}
-					if( iphone ) _kresize();
-					dirv.bookmarks.style.transform = 'translateX(-100%)';
-					winobj.parentNode.classList.remove( 'Mountlist' );
 				}
 			}
 		}
