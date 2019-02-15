@@ -282,7 +282,7 @@ html body .Screen .MobileAppMenu:after
 	box-sizing: border-box;
 	padding-left: 35px;
 	color: white;
-	transform: translateX(0);
+	transform: translate3d(0,0,0);
 	transition: transform 0.25s;
 	font-weight: bold;
 }
@@ -312,7 +312,7 @@ html body .Screen .MobileAppMenu:after
 
 .AppsShowingTitle.Opened
 {
-	transform: translateX(-100%);
+	transform: translate3d(-100%,0,0);
 }
 
 [mobile] #WorkspaceMenu
@@ -328,7 +328,7 @@ html body .Screen .MobileAppMenu:after
 	overflow: hidden;
 	opacity: 1;
 	pointer-events: all;
-	transform: translateX(-40px);
+	transform: translate3d(-40px,0,0);
 	transition: opacity,transform 0.25s;
 }
 
@@ -341,7 +341,7 @@ html body .Screen .MobileAppMenu:after
 {
 	height: calc(100% + 5px);
 	width: 70%;
-	transform: translateX(-100%);
+	transform: translate3d(-100%,0,0);
 	overflow: visible;
 	box-sizing: border-box;
 	padding-top: 40px;
@@ -356,7 +356,7 @@ html [mobile] #WorkspaceMenu.Open ul
 	color: white;
 	position: fixed;
 	left: 0;
-	transform: translateX(100%);
+	transform: translate3d(100%,0,0);
 	top: 40px;
 	width: 100%;
 	height: calc(100% - 40px);
@@ -404,7 +404,7 @@ html [mobile] #WorkspaceMenu > div.MenuBack:after
 
 html [mobile] #WorkspaceMenu.Open .Menu.Open > ul
 {
-	transform: translateX(0%);
+	transform: translate3d(0%,0,0);
 	border-left: 0;
 }
 
@@ -680,7 +680,7 @@ body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Activatin
 body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
 body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening
 {
-	transform: translateX(100%) !important;
+	transform: translate3d(100%,0,0) !important;
 	left: 100% !important;
 	overflow: hidden;
 }
@@ -688,7 +688,7 @@ body.ViewMaximized .ViewContainer:not(.DelayedDeactivation).Activating .View,
 body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation).Activating .View,
 body #Screens .ViewContainer:not(.DelayedDeactivation) .View.Opening
 {
-	transform: translateX(-100%) !important;
+	transform: translate3d(-100%,0,0) !important;
 	left: -100% !important;
 	overflow: hidden;
 }
@@ -700,7 +700,7 @@ body #Screens .ViewContainer.Opening .ViewIcon
 
 body.ViewMaximized .ViewContainer.Activated .View
 {
-	transform: translateX(0%) !important;
+	transform: translate3d(0%,0,0) !important;
 }
 
 .ViewContainer.Closing .View
@@ -751,7 +751,7 @@ body.Activating .ViewContainer.OnWorkspace .View .Title,
 
 .ViewContainer.Closing:not([childview]):not(.OnWorkspace) .View
 {
-	transform: translateX(100%) !important;
+	transform: translate3d(100%,0,0) !important;
 }
 
 #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)

@@ -761,13 +761,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
 						{
-							dirv.filearea.style.transform = 'translateX(100%)';
+							dirv.filearea.style.transform = 'translate3d(100%,0,0)';
 						}
 						else
 						{
-							dirv.filearea.parentNode.style.transform = 'translateX(100%)';
+							dirv.filearea.parentNode.style.transform = 'translate3d(100%,0,0)';
 						}
-						dirv.bookmarks.style.transform = 'translateX(0%)';
+						dirv.bookmarks.style.transform = 'translate3d(0%,0,0)';
 						winobj.parentNode.classList.add( 'Mountlist' );
 						dirv.ShowFileBrowser();
 						winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
@@ -777,13 +777,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
 						{
-							dirv.filearea.style.transform = 'translateX(0%)';
+							dirv.filearea.style.transform = 'translate3d(0%,0,0)';
 						}
 						else 
 						{
-							dirv.filearea.parentNode.style.transform = 'translateX(0%)';
+							dirv.filearea.parentNode.style.transform = 'translate3d(0%,0,0)';
 						}
-						dirv.bookmarks.style.transform = 'translateX(-100%)';
+						dirv.bookmarks.style.transform = 'translate3d(-100%,0,0)';
 						winobj.parentNode.classList.remove( 'Mountlist' );
 					}
 				}
