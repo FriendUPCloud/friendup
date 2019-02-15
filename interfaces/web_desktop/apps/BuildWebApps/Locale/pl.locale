@@ -1,0 +1,41 @@
+i18n_waCreateWebApp             : Stwórz
+i18n_waCancel                   : Anuluj
+i18n_waTitle                    : Zbuduj aplikację internetową
+i18n_waUrl                      : URL strony internetowej (musi zaczynać się od "https")
+i18n_waName                     : Nazwa aplikacji
+i18n_waAuthor                   : Twoje imię
+i18n_waEmail                    : Twój adres e-mail
+i18n_waDescription              : Informacje o tej aplikacji
+i18n_waWidth                    : Szerokość
+i18n_waHeight                   : Wysokość
+i18n_waCategory                 : Kategoria aplikacji
+i18n_waWindow                   : Okno
+i18n_typeWebApp                 : Typ
+i18n_waWrongUrl                 : Wpisz adres URL w postaci "https://www.website.com"
+i18n_waWrongName                : Wpisz nazwę nowego obiektu applicationName
+i18n_waWrongWidth               : Szerokość okna musi być liczbą dodatnią
+i18n_waWrongHeight              : Wysokość okna musi być liczbą dodatnią
+i18n_waGames                    : Gry
+i18n_waOffice                   : Biuro
+i18n_waGraphics                 : Grafika
+i18n_waProgramming              : Programowanie
+i18n_waInternet                 : Internet
+i18n_waCreated                  : Pomyślnie utworzono aplikację internetową.
+i18n_waAbout0                   : O aplikacji
+i18n_waAbout1                   : Ta aplikacja została stworzona przez
+i18n_waFile                     : Plik
+i18n_waFileSelectorTitle        : Wybierz, gdzie chcesz zapisać nową aplikację ...
+i18n_waIcon                     : Ikona aplikacji
+i18n_waPreview                  : Obraz podglądu aplikacji
+i18n_waChange                   : Zmień
+i18n_waChangeWebAppPreviewTitle : Wybierz obraz png, aby użyć podglądu
+i18n_waChangeWebAppIconTitle    : Wybierz obraz png do użycia jako ikona
+i18n_waPleaseFil                : Definicja aplikacji
+i18n_waClose                    : Zamknij
+i18n_waAlert                    : Alert
+i18n_waSuccess                  : Sukces
+i18n_waCannotCreatePackage      : Wystąpił błąd podczas tworzenia pakietu.
+i18n_waPackageCreated           : Pakiet stworzony. Możesz teraz zainstalować na swoim koncie Friend.
+i18n_waBlankAuthor              : Twoje imię
+i18n_waBlankEmail               : twoj_email@domena.pl
+i18n_waBlankDescription         : Opis tej aplikacji
