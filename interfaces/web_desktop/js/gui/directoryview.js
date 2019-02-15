@@ -743,7 +743,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				dirv.filearea.parentNode.style.transition = 'transform 0.4s';
 				dirv.filearea.style.transition = 'transform 0.4s';
 				
-				var nullPercent == navigator.userAgent.toLowerCase().indexOf( 'ios' ) ? '0.01%' : '0%';
+				var iphone == navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
 				
 				if( winobj.fileInfo.Path == 'Mountlist:' )
 				{
@@ -755,7 +755,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						dirv.filearea.parentNode.style.transform = 'translateX(100%)';
 					}
-					dirv.bookmarks.style.transform = 'translateX(' + nullPercent + ')';
+					dirv.bookmarks.style.transform = 'translateX(0%)';
+					if( iphone ) setTimeout( function(){ dirv.bookmarks.style.transform = ''; }, 5 );
 					winobj.parentNode.classList.add( 'Mountlist' );
 					dirv.ShowFileBrowser();
 					winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
@@ -765,12 +766,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				{
 					if( dirv.filearea.parentNode.classList.contains( 'View' ) )
 					{
-						dirv.filearea.style.transform = 'translateX(' + nullPercent + ')';
+						dirv.filearea.style.transform = 'translateX(0%)';
 					}
 					else 
 					{
-						dirv.filearea.parentNode.style.transform = 'translateX(' + nullPercent + ')';
+						dirv.filearea.parentNode.style.transform = 'translateX(0%)';
 					}
+					if( iphone ) setTimeout( function(){ dirv.filearea.parentNode.style.transform = ''; }, 5 );
 					dirv.bookmarks.style.transform = 'translateX(-100%)';
 					winobj.parentNode.classList.remove( 'Mountlist' );
 				}
