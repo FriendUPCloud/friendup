@@ -757,8 +757,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						dirv.animationsSet = true;
 					}
 				
-					var iphone = navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
-				
 					if( winobj.fileInfo.Path == 'Mountlist:' )
 					{
 						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
@@ -788,6 +786,20 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						dirv.bookmarks.style.transform = 'translateX(-100%)';
 						winobj.parentNode.classList.remove( 'Mountlist' );
 					}
+				}
+			}
+			// Disable transitions when idle
+			else
+			{
+				//var iphone = navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
+				dirv.animationsSet = null;
+				if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+				{
+					dirv.filearea.style.transition = '';
+				}
+				else 
+				{
+					dirv.filearea.parentNode.style.transition = '';
 				}
 			}
 		}
