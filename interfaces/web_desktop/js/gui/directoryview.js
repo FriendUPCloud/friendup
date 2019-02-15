@@ -788,20 +788,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					}
 				}
 			}
-			// Disable transitions when idle
-			else
-			{
-				//var iphone = navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
-				dirv.animationsSet = null;
-				if( dirv.filearea.parentNode.classList.contains( 'View' ) )
-				{
-					dirv.filearea.style.transition = '';
-				}
-				else 
-				{
-					dirv.filearea.parentNode.style.transition = '';
-				}
-			}
 		}
 		
 		// For screen icons
