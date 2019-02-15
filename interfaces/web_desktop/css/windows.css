@@ -1095,7 +1095,7 @@ body[mobile=mobile] > .MobileMenu
     left: 0;
     width: 100%;
     bottom: 0;
-    transform: translateY(100%);
+    transform: translate3d(0,100%,0);
     transition: transform 0.25s;
 }
 
@@ -1109,7 +1109,7 @@ body[mobile=mobile] > .MobileMenu.Visible
     bottom: 0;
     background: rgba(255,255,255,0.9);
     padding: 20px;
-    transform: translateY(50px);
+    transform: translate3d(0,50px,0);
 }
 
 body[mobile=mobile] > .MobileMenu > div

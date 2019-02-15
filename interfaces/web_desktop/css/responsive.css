@@ -867,7 +867,7 @@ body[mobile=mobile] .Desklet.Open.Opened
 	top: 100%;
 	height: auto;
 	margin:0px;
-	transform: translateY(0%);
+	transform: translate3d(0,0,0);
 	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
 
 }
@@ -891,7 +891,7 @@ html .Desklet .Launcher
 	z-index: 9999999;
 	position: fixed;
 	background: rgba(0,0,0,0.5);
-	transform: translateY(0%);
+	transform: translate3d(0,0,0);
 	transition: top,transform 0.25s !important;
 }
 
@@ -915,7 +915,7 @@ html .Desklet .Launcher
 
 .Desklet.Open.Opened
 {
-	transform: translateY(calc(-100% - 49px));
+	transform: translate3d(0,calc(-100% - 49px),0);
 }
 
 .Desklet.Open .Launcher
