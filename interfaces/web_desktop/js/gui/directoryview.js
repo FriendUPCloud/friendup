@@ -741,15 +741,21 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
 				{
 					// Bookmarks
-					dirv.bookmarks.style.width = '100%';
-					dirv.bookmarks.style.left = '0';
-					dirv.bookmarks.style.transition = 'transform 0.4s';
-				
-					// Filearea is always put in a container
-					dirv.filearea.parentNode.style.left = '0';
-					dirv.filearea.parentNode.style.width = '100%';
-					dirv.filearea.parentNode.style.transition = 'transform 0.4s';
-					dirv.filearea.style.transition = 'transform 0.4s';
+					if( !dirv.animationsSet )
+					{
+						dirv.bookmarks.style.width = '100%';
+						dirv.bookmarks.style.left = '0';
+						dirv.bookmarks.style.transition = 'transform 0.4s';
+						
+						// Filearea is always put in a container
+					
+						dirv.filearea.parentNode.style.left = '0';
+						dirv.filearea.parentNode.style.width = '100%';
+						dirv.filearea.parentNode.style.transition = 'transform 0.4s';
+						dirv.filearea.style.transition = 'transform 0.4s';
+						
+						dirv.animationsSet = true;
+					}
 				
 					var iphone = navigator.userAgent.toLowerCase().indexOf( 'iphone' ) ? true : false;
 				
