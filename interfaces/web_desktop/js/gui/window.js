@@ -4843,7 +4843,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
 		// Here is the first screen
-		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
+		Workspace.screen.contentDiv.style.transform = 'translate3d(0,0,0)';
 		return;
 	}
 	
@@ -4934,7 +4934,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		Friend.GUI.responsiveViewPage = page;
 	}
-	Workspace.screen.contentDiv.style.transform = 'translateX(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px)';
+	Workspace.screen.contentDiv.style.transform = 'translate3d(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px,0,0)';
 }
 
 // Intermediate anchor for code that uses new Window()
