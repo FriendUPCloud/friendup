@@ -354,7 +354,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					// Refresh and animate
 					winobj.refresh( function()
 					{
-						n.style.transform = 'translateX(100%)';
+						n.style.transform = 'translate3d(100%,0,0)';
 						setTimeout( function()
 						{
 							n.parentNode.removeChild( n );
@@ -4070,7 +4070,7 @@ FileIcon.prototype.Init = function( fileInfo )
 				// Refresh and add animation
 				we.refresh( function()
 				{
-					n.style.transform = 'translateX(-100%)';
+					n.style.transform = 'translate3d(-100%,0,0)';
 					setTimeout( function()
 					{
 						n.parentNode.classList.remove( 'Redrawing' );

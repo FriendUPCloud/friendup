@@ -350,7 +350,7 @@ For now, we don't use this, we don't have enough tools...
 	height: 32px;
 	overflow: hidden;
 	float: right;
-	transform: translateX(0);
+	transform: translate3d(0,0,0);
 	transition: transform 0.25s;
 }
 
@@ -359,7 +359,7 @@ For now, we don't use this, we don't have enough tools...
     position: fixed;
     left: 100%;
     top: 0;
-    transform: translateX(-100%);
+    transform: translate3d(-100%,0,0);
     width: 70%;
     height: 100%;
     margin: 0;
@@ -389,7 +389,7 @@ For now, we don't use this, we don't have enough tools...
 	width: 40%;
 	height: 100%;
 	background: rgba(0,0,0,0);
-	transform: translateX(-100%);
+	transform: translate3d(-100%,0,0);
 	content: " ";
 	display: block;
 }
@@ -440,7 +440,7 @@ For now, we don't use this, we don't have enough tools...
 {
 	left: 0;
 	width: 100%;
-	transform: translateX(100%);
+	transform: translate3d(100%,0,0);
 	transition: transform 0.25s;
 }
 
@@ -450,7 +450,7 @@ For now, we don't use this, we don't have enough tools...
 	width: 100%;
 	box-sizing: border-box;
 	padding-bottom: 50px;
-	transform: translateX(100%);
+	transform: translate3d(100%,0,0);
 	transition: transform 0.25s;
 }
 

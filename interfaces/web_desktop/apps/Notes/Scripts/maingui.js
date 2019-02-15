@@ -119,10 +119,10 @@ Application.updateViewMode = function()
 	switch( currentViewMode )
 	{
 		case 'root':
-			ge( 'LeftBar' ).style.transform = 'translateX(0)';
-			this.fld.style.transform = 'translateX(0)';
-			ge( 'FileBar' ).style.transform = 'translateX(100%)';
-			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			ge( 'LeftBar' ).style.transform = 'translate3d(0,0,0)';
+			this.fld.style.transform = 'translate3d(0,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'root',
@@ -130,10 +130,10 @@ Application.updateViewMode = function()
 			} );
 			break;
 		case 'files':
-			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
-			this.fld.style.transform = 'translateX(-100%)';
-			ge( 'FileBar' ).style.transform = 'translateX(0%)';
-			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'files',
@@ -141,10 +141,10 @@ Application.updateViewMode = function()
 			} );
 			break;
 		default:
-			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
-			this.fld.style.transform = 'translateX(-100%)';
-			ge( 'FileBar' ).style.transform = 'translateX(-100%)';
-			ge( 'RightBar' ).style.transform = 'translateX(0%)';
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'notes',
@@ -1228,22 +1228,22 @@ Application.statusMessage = function( msg )
 	{
 		clearTimeout( s.timeout );
 		s.style.transition = '';
-		s.style.transform = 'translateX(0)';
+		s.style.transform = 'translate3d(0,0,0)';
 	}
 	s.innerHTML = msg;
 	s.timeout = setTimeout( function()
 	{
 		s.style.transition = 'left,opacity 0.25s,0.25s';
-		s.style.transform = 'translateX(0)';
+		s.style.transform = 'translate3d(0,0,0)';
 		s.style.opacity = 1;
 		s.timeout = setTimeout( function()
 		{
-			s.style.transform = 'translateX(20px)';
+			s.style.transform = 'translate3d(20px,0,0)';
 			s.style.opacity = 0;
 			s.timeout = setTimeout( function()
 			{
 				s.innerHTML = '';
-				s.style.transform = 'translateX(0)';
+				s.style.transform = 'translate3d(0,0,0)';
 				s.style.opacity = 1;
 			}, 250 );
 		}, 250 );
