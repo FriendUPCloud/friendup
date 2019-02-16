@@ -30,13 +30,13 @@ var currentViewMode = 'default';
 
 if( isMobile )
 {
-	ge( 'LeftBar' ).style.transform = '-100%';
+	ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
 	ge( 'LeftBar' ).style.width = '100%';
 	ge( 'LeftBar' ).style.transition = 'transform 0.25s';
-	ge( 'FileBar' ).style.transform = '-100%';
+	ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
 	ge( 'FileBar' ).style.width = '100%';
 	ge( 'FileBar' ).style.transition = 'transform 0.25s';
-	ge( 'RightBar' ).style.transform = '0%';
+	ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
 	ge( 'RightBar' ).style.width = '100%';
 	ge( 'RightBar' ).style.transition = 'transform 0.25s';
 }
@@ -445,10 +445,12 @@ Application.refreshFilePane = function( method, force )
 							{
 								clearTimeout( f.editTimeout );
 								f.editTimeout = null;
-								currentViewMode = 'default';
-								Application.updateViewMode();
 								Application.currentDocument = f.path;
-								Application.loadFile( f.path );
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
+								} );
 							}
 						}
 					} )( d );
@@ -492,10 +494,12 @@ Application.refreshFilePane = function( method, force )
 							{
 								clearTimeout( f.editTimeout );
 								f.editTimeout = null;
-								currentViewMode = 'default';
-								Application.updateViewMode();
 								Application.currentDocument = f.path;
-								Application.loadFile( f.path );
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
+								} );
 							}
 						}
 					} )( d );
@@ -505,10 +509,12 @@ Application.refreshFilePane = function( method, force )
 					( function( dl ){
 						dl.onclick = function()
 						{
-							currentViewMode = 'default';
-							Application.updateViewMode();
 							Application.currentDocument = dl.path;
-							Application.loadFile( dl.path );
+							Application.loadFile( dl.path, function()
+							{
+								currentViewMode = 'default';
+								Application.updateViewMode();
+							} );
 							Application.refreshFilePane();
 						}
 					} )( d );
@@ -1144,7 +1150,7 @@ Application.setCurrentDocument = function( pth )
 	} );
 }
 
-Application.loadFile = function( path )
+Application.loadFile = function( path, cbk )
 {
 	this.loading = true;
 	
@@ -1194,6 +1200,8 @@ Application.loadFile = function( path )
 						} );
 						
 						Application.setCurrentDocument( path );
+						
+						if( cbk ) cbk();
 					}
 					loader();
 					
@@ -1213,6 +1221,8 @@ Application.loadFile = function( path )
 					} );
 					
 					Application.refreshFilePane();
+					
+					if( cbk ) cbk();
 				}
 				Application.loading = false;
 			}
