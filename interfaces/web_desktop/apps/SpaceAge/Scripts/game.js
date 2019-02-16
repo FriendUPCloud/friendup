@@ -41,6 +41,7 @@ Application.task_start = function()
 		{
 			var p = new Player( name );
 			Brain.addPlayer( p );
+			Brain.refreshStatus();
 		}  ); 
 	} );
 }
@@ -52,6 +53,7 @@ Application.task_menu = function()
 // Structure -------------------------------------------------------------------
 
 var Brain = {
+	screen: 'status',
 	addPlayer: function( player )
 	{
 		this.memory.players.push( player );
@@ -59,7 +61,17 @@ var Brain = {
 	},
 	memory: {
 		players: [
-		]
+		],
+		bank: {
+			balance: 10000.0
+		}
+	},
+	refreshStatus()
+	{
+		Application.sendMessage( {
+			command: 'setScreenTitle',
+			data: 'SpaceAge - Balance: ' + Brain.memory.bank.balance
+		} );
 	}
 };
 
