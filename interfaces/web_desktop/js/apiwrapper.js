@@ -2896,7 +2896,7 @@ function apiWrapper( event, force )
 					case 'registermouseup':
 						windowMouseX = msg.x;
 						windowMouseY = msg.y;
-						if( app && app.windows[msg.viewId] )
+						if( app && app.windows && app.windows[msg.viewId] )
 						{
 							var div = app.windows[ msg.viewId ];
 							var x = GetElementLeft( div.content );
