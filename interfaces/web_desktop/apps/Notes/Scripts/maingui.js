@@ -58,9 +58,11 @@ var filebrowserCallbacks = {
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
-		currentViewMode = 'files';
-		Application.updateViewMode();
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		{
+			currentViewMode = 'files';
+			Application.updateViewMode();
+		} );
 		cancelBubble( e );
 	},
 	folderClose( ele, e )
@@ -68,9 +70,11 @@ var filebrowserCallbacks = {
 		if( isMobile && currentViewMode != 'root' ) return;
 		Application.currentDocument = null;
 		Application.browserPath = ele;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
-		currentViewMode = 'files';
-		Application.updateViewMode();
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		{
+			currentViewMode = 'files';
+			Application.updateViewMode();
+		} );	
 		cancelBubble( e );
 	}
 };
@@ -154,7 +158,7 @@ Application.updateViewMode = function()
 	}
 }
 
-Application.refreshFilePane = function( method, force )
+Application.refreshFilePane = function( method, force, callback )
 {
 	if( !method ) method = false;
 	
@@ -526,6 +530,9 @@ Application.refreshFilePane = function( method, force )
 		{
 			Application.newDocument( { just: 'makenew' } );
 		}
+		
+		if( callback )
+			callback();
 	} );
 }
 
