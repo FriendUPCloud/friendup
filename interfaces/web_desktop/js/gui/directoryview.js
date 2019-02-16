@@ -2353,10 +2353,25 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	}
 	
 	// Get display frame
-	var display = {
-		top: this.scroller.scrollTop - this.scroller.offsetHeight,
-		bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight * 2 )
-	};
+	var display;
+	if( isMobile && this.cachedDisplay )
+	{
+		display = this.cachedDisplay;
+		windowWidth = display.width;
+	}
+	else
+	{
+		display = {
+			top: this.scroller.scrollTop - this.scroller.offsetHeight,
+			bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight * 2 ),
+			width: windowWidth
+		};
+		if( isMobile )
+		{
+			if( !this.cachedDisplay )
+				this.cachedDisplay = display;
+		}
+	}
 	
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
@@ -2372,7 +2387,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Calculate marginLeft to center icons on mobile
 	if( isMobile )
 	{
-		var whWidth = this.scroller.offsetWidth;
+		var whWidth = windowWidth;
 		var columns = Math.floor( whWidth / mobIW );
 		marginLeft = Math.floor( whWidth - ( mobIW * columns ) ) >> 1;
 	}
