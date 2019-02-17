@@ -381,6 +381,11 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					var fin = dw.pathHistory[--dw.pathHistoryIndex];
 					winobj.fileInfo = fin;
 					winobj.refresh();
+					
+					if( winobj.fileBrowser )
+					{
+						winobj.fileBrowser.setPath( fin.Path );
+					}
 				}
 			}
 		}: false,
