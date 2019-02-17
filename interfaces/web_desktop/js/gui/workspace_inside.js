@@ -5688,9 +5688,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return currentMovable.content.directoryview.buttonUp.onclick();
 			}
 			// Just go back
-			else if(currentMovable.windowObject.parentView )
+			else if( currentMovable.windowObject.parentView )
 			{
-				currentMovable.windowObject.parentView.activate();
+				var pv = currentMovable.windowObject.parentView;
+				if( isMobile )
+				{
+					currentMobable.windowObject.close();
+				}
+				pv.activate();
 				return;
 			}
 			
