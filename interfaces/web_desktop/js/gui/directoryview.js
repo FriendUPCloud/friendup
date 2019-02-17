@@ -5227,7 +5227,7 @@ Friend.startImageViewer = function( iconObject, extra )
 	
 	win.onclose = function()
 	{
-		if( extra.parentView )
+		if( extra && extra.parentView )
 		{
 			_ActivateWindow( extra.parentView );
 		}
