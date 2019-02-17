@@ -194,15 +194,22 @@ DirectoryView.prototype.checkSuffix = function( fn )
 
 DirectoryView.prototype.addToHistory = function( ele )
 {
+	// Don't do it twice
+	if( this.window && this.window.fileInfo )
+	{
+		if( this.window.fileInfo.Path == ele.Path )
+			return false;
+	}
 	if( this.pathHistory.length == 0 )
 	{
 		this.pathHistory = [ ele ];
 		this.pathHistoryIndex = 0;
-		return;
+		return true;
 	}
 	this.pathHistory.push( ele );
 	this.pathHistoryIndex = this.pathHistory.length - 1;
 	this.window.fileInfo = ele;
+	return true;
 }
 
 DirectoryView.prototype.setHistoryCurrent = function( ele )
@@ -602,7 +609,6 @@ DirectoryView.prototype.ShowFileBrowser = function()
 				winobj.fileInfo.Path = path;
 				winobj.fileInfo.Volume = vol + ':';
 				self.addToHistory( winobj.fileInfo );
-				
 				winobj.refresh();
 			},
 			folderClose( path )
