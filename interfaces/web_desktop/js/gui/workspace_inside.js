@@ -5691,7 +5691,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Just go back
 			else if( cm.windowObject.parentView )
 			{
-				var pv = cm.windowObject.parentView;
+				var pv = cm.windowObject.parentView.windowObject;
 				if( isMobile )
 				{
 					cm.windowObject.close();
