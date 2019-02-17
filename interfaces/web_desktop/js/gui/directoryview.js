@@ -4518,7 +4518,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
-		Friend.startImageViewer( iconObject );
+		Friend.startImageViewer( iconObject, { parentView: currentWindow } );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -5214,7 +5214,7 @@ if( typeof noEvent == 'undefined' )
 }
 
 // The Friend image viewer! ----------------------------------------------------
-Friend.startImageViewer = function( iconObject )
+Friend.startImageViewer = function( iconObject, extra )
 {
 	var win = new View ( {
 		title            : iconObject.Title ? iconObject.Title : iconObject.Filename,
@@ -5223,6 +5223,15 @@ Friend.startImageViewer = function( iconObject )
 		memorize         : true,
 		fullscreenenabled: true
 	} );
+	
+	
+	win.onclose = function()
+	{
+		if( extra.parentView )
+		{
+			_ActivateWindow( extra.parentView );
+		}
+	}
 	
 	var owin = win;
 
