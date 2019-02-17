@@ -5671,6 +5671,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return;
 					}
 				}
+				// Just go back
+				if( currentMovable.windowObject.parentView )
+				{
+					currentMovable.windowObject.parentView.activate();
+					return;
+				}
 				this.mobileViews.application = currentMovable.applicationId;
 			}
 			else if( currentMovable.content.directoryview )
