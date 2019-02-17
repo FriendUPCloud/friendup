@@ -5216,6 +5216,8 @@ if( typeof noEvent == 'undefined' )
 // The Friend image viewer! ----------------------------------------------------
 Friend.startImageViewer = function( iconObject, extra )
 {
+	if( !extra ) extra = false;
+	
 	var win = new View ( {
 		title            : iconObject.Title ? iconObject.Title : iconObject.Filename,
 		width            : 650,
@@ -5225,7 +5227,7 @@ Friend.startImageViewer = function( iconObject, extra )
 	} );
 	
 	
-	win.onclose = function()
+	win.onClose = function()
 	{
 		if( extra && extra.parentView )
 		{
