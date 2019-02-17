@@ -5226,6 +5226,8 @@ Friend.startImageViewer = function( iconObject, extra )
 		fullscreenenabled: true
 	} );
 	
+	win.parentView = extra.parentView;
+	
 	
 	win.onClose = function()
 	{

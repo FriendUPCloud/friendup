@@ -1745,6 +1745,11 @@ function CloseView( win, delayed )
 		{
 			app.mainView.activate();
 		}
+		// We have a parent view
+		else if( win.parentView )
+		{
+			win.parentView.activate();
+		}
 		
 	}
 
@@ -2017,6 +2022,7 @@ var View = function( args )
 								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
 								self.close();
+								return cancelBubble( e );
 							}
 						}
 						return cancelBubble( e );
