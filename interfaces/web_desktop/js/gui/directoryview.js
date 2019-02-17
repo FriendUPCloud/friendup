@@ -4518,7 +4518,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
-		Friend.startImageViewer( iconObject, { parentView: currentWindow } );
+		Friend.startImageViewer( iconObject, { parentView: currentMovable } );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
