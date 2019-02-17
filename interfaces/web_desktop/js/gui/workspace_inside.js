@@ -5687,6 +5687,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				return currentMovable.content.directoryview.buttonUp.onclick();
 			}
+			// Just go back
+			else if(currentMovable.windowObject.parentView )
+			{
+				currentMovable.windowObject.parentView.activate();
+				return;
+			}
+			
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
