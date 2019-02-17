@@ -7459,7 +7459,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			// If we have no conn, and we have waited five cycles, force reconnect
 			// the websocket...
-			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 5 )
+			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 3 )
 			{
 				Workspace.connectingWebsocket = false;
 				Workspace.websocketDisconnectTime = 0;
