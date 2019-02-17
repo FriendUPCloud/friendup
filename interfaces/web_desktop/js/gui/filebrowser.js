@@ -252,6 +252,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								Type: 'Directory',
 								Door: Workspace.getDoorByPath( ppath )
 							};
+					
+							// Set as current history element at end of list
+							dw.addToHistory( fin );
 						}
 					}
 				}
