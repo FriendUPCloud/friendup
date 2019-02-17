@@ -5648,19 +5648,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Update view history with current application id
 		if( currentMovable )
 		{
+			var cm = currentMovable;
 			FocusOnNothing();
-			if( currentMovable.applicationId )
+			if( cm.applicationId )
 			{
 				// Tell the application
-				currentMovable.windowObject.sendMessage( {
+				cm.windowObject.sendMessage( {
 					command: 'mobilebackbutton'
 				} );
 				if( window._getAppByAppId )
 				{
-					var app = _getAppByAppId( currentMovable.applicationId );
-					if( app.mainView == currentMovable.windowObject )
+					var app = _getAppByAppId( cm.applicationId );
+					if( app.mainView == cm.windowObject )
 					{
-						if( !currentMovable.windowObject.mobileBack.classList.contains( 'Showing' ) )
+						if( !cm.windowObject.mobileBack.classList.contains( 'Showing' ) )
 						{
 							Workspace.appMenu.onclick();
 						}
@@ -5672,33 +5673,32 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 				// Just go back
-				if( currentMovable.windowObject.parentView )
+				if( cm.windowObject.parentView )
 				{
-					currentMovable.windowObject.parentView.activate();
+					cm.windowObject.parentView.activate();
 					return;
 				}
-				this.mobileViews.application = currentMovable.applicationId;
+				this.mobileViews.application = cm.applicationId;
 			}
-			else if( currentMovable.content.directoryview )
+			else if( cm.content.directoryview )
 			{
-				if( currentMovable.content.fileInfo.Path == 'Mountlist:' )
+				if( cm.content.fileInfo.Path == 'Mountlist:' )
 				{
-					return currentMovable.windowObject.close();
+					return cm.windowObject.close();
 				}
-				return currentMovable.content.directoryview.buttonUp.onclick();
+				return cm.content.directoryview.buttonUp.onclick();
 			}
 			// Just go back
-			else if( currentMovable.windowObject.parentView )
+			else if( cm.windowObject.parentView )
 			{
-				var pv = currentMovable.windowObject.parentView;
+				var pv = cm.windowObject.parentView;
 				if( isMobile )
 				{
-					currentMobable.windowObject.close();
+					cm.windowObject.close();
 				}
 				pv.activate();
 				return;
-			}
-			
+			}	
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
