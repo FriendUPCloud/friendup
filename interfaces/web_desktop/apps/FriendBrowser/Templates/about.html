@@ -2,28 +2,102 @@
 	<head>
 		<title></title>
 	</head>
-	<body style="color: black; background: white">	
+	<body>
 		<div class="ContentFull ScrollArea">
-			<div class="Padding">
-				<h2>About Friend Browser</h2>
-				<p>
-					Friend Browser is a web browser for FriendUP resources. It does now allow you to
-					load <strong>https://</strong> urls if the remote site does not block
-					iframes. Additionally it reads HTML5 files on your <strong>disk drives</strong>, like in "Home:".
-					Finally, it can load content located on hosts in the <strong>Friend Network</strong>.
-				</p>
-				<p>
-					To read more about Friend Browser, please refer to the documentation.
-				</p>
-				<p>
-					Friend Browser is often times used to read documentation and help files.
-					But it becomes very useful when accessing remote disk drives that
-					you have connected using the <strong>Disk catalog</strong>.
-				</p>
-				<p>
-					Enjoy a new world of networked content using Friend Browser!
-				</p>
+			<div class="HRow">
+				<div class="Padding LeftColumn">
+					<div class="MenuBox">
+						Documentation
+					</div>
+					<div class="MenuBox">
+						Store
+					</div>
+					<div class="MenuBox">
+						Stuff
+					</div>
+				</div>
+				<div class="Padding RightColumn">
+					<h2>About Friend Browser</h2>
+					<p>
+						Friend Browser is a web browser for FriendUP resources. It does now allow you to
+						load <strong>https://</strong> urls if the remote site does not block
+						iframes. Additionally it reads HTML5 files on your <strong>disk drives</strong>, like in "Home:".
+						Finally, it can load content located on hosts in the <strong>Friend Network</strong>.
+					</p>
+					<p>
+						To read more about Friend Browser, please refer to the documentation.
+					</p>
+					<p>
+						Friend Browser is often times used to read documentation and help files.
+						But it becomes very useful when accessing remote disk drives that
+						you have connected using the <strong>Disk catalog</strong>.
+					</p>
+					<p>
+						Enjoy a new world of networked content using Friend Browser!
+					</p>
+				</div>
 			</div>
 		</div>
+		<style>
+			body
+			{
+				background: #112233;
+				color: white;
+				font-family: raleway, lato, helvetica;
+				font-size: 0.9em;
+			}
+			
+			.MenuBox
+			{
+				height: 70px;
+				width: 100%;
+				box-sizing: border-box;
+				border-radius: 5px;
+				background: #223344;
+				margin: 0 0 10px;
+			}
+			
+			@media (max-width: 760px)
+			{
+				.LeftColumn
+				{
+					width: 100%;
+					padding: 0;
+				}
+				.RightColumn
+				{
+					width: 100%;
+					padding: 0;
+				}
+			}
+			
+			@media (min-width: 760px)
+			{
+				.RightColumn
+				{
+					position: absolute;
+					left: 300px;
+					right: 20px;
+					bottom: 0;
+					top: 0;
+					box-sizing: border-box;
+					scroll-behavior: smooth;
+					background: #223344;
+					padding: 40px;
+					overflow: auto;
+				}
+				.LeftColumn
+				{
+					position: absolute;
+					left: 0;
+					width: 270px;
+					top: 20px;
+					bottom: 20px;
+					box-sizing: border-box;
+					padding: 40px;
+				}
+			}
+			
+		</style>
 	</body>
 </html>
