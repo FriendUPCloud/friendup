@@ -5729,7 +5729,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			}
 		}
-		_DeactivateWindows();
 	},
 	// Get a list of all applications ------------------------------------------
 	listApplications: function()
