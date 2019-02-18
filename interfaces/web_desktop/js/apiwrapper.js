@@ -216,7 +216,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: response
-							} );
+							}, '*' );
 						} );
 						break;
 					case 'close':
@@ -226,7 +226,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: response
-							} );
+							}, '*' );
 						} );
 						break;
 					case 'getapplications':
@@ -253,7 +253,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: out
-							} );
+							}, '*' );
 						}
 						break;
 					case 'sendtoapp':
@@ -314,7 +314,7 @@ function apiWrapper( event, force )
 											event.source.postMessage( {
 												type: 'applicationmessage',
 												message: data
-											} );
+											}, '*' );
 										} )
 									} );
 								} )( out[ a ] );
@@ -324,7 +324,7 @@ function apiWrapper( event, force )
 								type: 'callback',
 								callback: msg.callback,
 								data: responders
-							} );
+							}, '*' );
 						}
 						break;
 				}
@@ -2011,7 +2011,7 @@ function apiWrapper( event, force )
 							type: 'callback',
 							callback: msg.callback,
 							data: Workspace.apidefaultscripts
-						} );
+						}, '*' );
 					}
 					// Build
 					else
@@ -2027,7 +2027,7 @@ function apiWrapper( event, force )
 									type: 'callback',
 									callback: msg.callback,
 									data: Workspace.apidefaultscripts
-								} );
+								}, '*' );
 							}
 						}
 						n.send();
@@ -2872,7 +2872,7 @@ function apiWrapper( event, force )
 					case 'registermousedown':
 						windowMouseX = msg.x;
 						windowMouseY = msg.y;
-						if( app && app.windows[msg.viewId] )
+						if( app && app.windows && app.windows[msg.viewId] )
 						{
 							var div = app.windows[ msg.viewId ];
 							var x = GetElementLeft( div.content );
@@ -2896,7 +2896,7 @@ function apiWrapper( event, force )
 					case 'registermouseup':
 						windowMouseX = msg.x;
 						windowMouseY = msg.y;
-						if( app && app.windows[msg.viewId] )
+						if( app && app.windows && app.windows[msg.viewId] )
 						{
 							var div = app.windows[ msg.viewId ];
 							var x = GetElementLeft( div.content );

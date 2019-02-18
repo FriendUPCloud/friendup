@@ -7,14 +7,15 @@
 	
 	// TODO: Check why this fails when adding a bigger server publickey to encrypt data and the server respons with a error message with no info, most likely before it arrives here ...
 	
-	if( isset( $GLOBALS['request_variables']['encrypted'] ) )
+	if( isset( $GLOBALS['request_variables']['encrypted'] ) || isset( $GLOBALS['request_variables']['data'] ) )
 	{
+		
 		include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
+		
+		$fcrypt = new fcrypto(); $privateKey = false; $json = false;
 		
 		if( ( $file1 = file_exists( 'cfg/crt/key.pem' ) ) || ( $file2 = file_exists( 'cfg/crt/server_encryption_key.pem' ) ) )
 		{
-			$privateKey = false;
-			
 			if( $file1 && ( $key = file_get_contents( 'cfg/crt/key.pem' ) ) )
 			{
 				$privateKey = $key;
@@ -29,191 +30,44 @@
 					}
 				}
 			}
-			
-			//die( 'JAVELL ||| ' );
-			
+		}
+		
+		if( isset( $GLOBALS['request_variables']['encrypted'] ) )
+		{
 			if( $privateKey )
 			{
-				$fcrypt = new fcrypto();
-				
 				$decrypted = $fcrypt->decryptString( $GLOBALS['request_variables']['encrypted'], $privateKey );
-				
-				die( $GLOBALS['request_variables']['encrypted'] . ' [] ' . print_r( $decrypted,1 ) . ' [] ' . $privateKey );
-				
-				
-				
-				
-				// TODO: Simplify into one return place for both methods ....
-				
-				
-				
-				
 				
 				if( $decrypted && $decrypted->plaintext )
 				{
-					if( $json = json_decode( $decrypted->plaintext ) )
+					$json = json_decode( $decrypted->plaintext );
+				}
+			}
+		}
+		else if( isset( $GLOBALS['request_variables']['data'] ) )
+		{
+			$json = json_decode( $GLOBALS['request_variables']['data'] );
+			
+			if( $json && $json->password )
+			{
+				if( $privateKey )
+				{
+					$decrypted = $fcrypt->decryptString( $json->password, $privateKey );
+					
+					if( $decrypted && $decrypted->plaintext )
 					{
-						// Setup mysql abstraction
-						if( file_exists( 'cfg/cfg.ini' ) )
-						{
-							$configfilesettings = parse_ini_file( 'cfg/cfg.ini', true );
-							include_once( 'php/classes/dbio.php' );
-							
-							// Set config object
-							$Config = new stdClass();
-							$car = array( 'Hostname', 'Username', 'Password', 'DbName',
-										  'FCHost', 'FCPort', 'FCUpload', 
-										  'SSLEnable', 'FCOnLocalhost', 'Domains' );
-							
-							foreach( array(
-								'host', 'login', 'password', 'dbname', 
-								'fchost', 'fcport', 'fcupload',
-								'SSLEnable', 'fconlocalhost', 'domains'
-							) as $k=>$type )
-							{
-								$val = '';
-								switch( $type )
-								{
-									case 'host':
-									case 'login':
-									case 'password':
-									case 'dbname':
-										$val = isset( $configfilesettings['DatabaseUser'][$type] ) ? $configfilesettings['DatabaseUser'][$type] : '';
-										break;	
-									
-									case 'fchost':
-									case 'fcport':
-									case 'fcupload':
-									case 'fconlocalhost':
-										$val = isset( $configfilesettings['FriendCore'][$type] ) ? $configfilesettings['FriendCore'][$type] : '';
-										break;
-										
-									case 'SSLEnable':	
-										$val = isset( $configfilesettings['Core'][$type] ) ? $configfilesettings['Core'][$type] : '';
-										break;
-										
-									case 'domains':
-										$val = isset( $configfilesettings['Security'][$type] ) ? $configfilesettings['Security'][$type] : '';
-										break;		
-									default:
-										$val = '';
-										break;	
-								}
-								$Config->{$car[$k]} = $val;
-							}
-							
-							$SqlDatabase = new SqlDatabase();
-							if( !$SqlDatabase->Open( $Config->Hostname, $Config->Username, $Config->Password ) )
-							{
-								die( 'fail<!--separate-->Could not connect to database.' );
-							}
-							$SqlDatabase->SelectDatabase( $Config->DbName );
-							
-							// DeviceID, PublicKey and Username
-							
-							if( $usr = $SqlDatabase->FetchObject( '
-								SELECT * 
-								FROM FUser 
-								WHERE Name = \'' . $json->username . '\' 
-							' ) )
-							{
-								// If PublicKey is missing add it once and use the PublicKey from the database to send data back to client
-								
-								$json->publickey = $fcrypt->encodeKeyHeader( trim( $json->publickey ) );
-								
-								if( !isset( $usr->PublicKey ) || !$usr->PublicKey )
-								{
-									$d = new DbTable( 'FUser', $SqlDatabase );
-									if( $d->LoadTable() )
-									{
-										$publickey = false;
-										
-										if ( isset( $d->_fieldnames ) )
-										{
-											foreach( $d->_fieldnames as $f )
-											{
-												if( $f == 'PublicKey' )
-												{
-													$publickey = true;
-												}
-											}
-											
-											if( !$publickey )
-											{
-												$d->AddField ( 'PublicKey', 'text', array ( 'after'=>'Password' ) );
-											}
-										}
-									}
-									
-									$u = new dbIO( 'FUser', $SqlDatabase );
-									$u->ID = $usr->ID;
-									if( $u->Load() )
-									{
-										if( isset( $u->PublicKey ) )
-										{
-											$u->PublicKey = $json->publickey;
-											$u->Save();
-										
-											$usr->PublicKey = $u->PublicKey;
-										}
-									}
-								}
-								
-								if( !$usr->PublicKey || ( $json->publickey != $usr->PublicKey ) )
-								{
-									//die( print_r( $json,1 ) . ' [] ' . print_r( $usr,1 ) );
-									die( 'failed ... wrong login information' );
-								}
-								
-								$s = new dbIO( 'FUserSession', $SqlDatabase );
-								$s->UserID = $usr->ID;
-								$s->DeviceIdentity = $json->deviceid;
-								if( !$s->Load() )
-								{
-									$s->SessionID = hash( 'sha256', ( time().$usr->Name.rand(0,999).rand(0,999).rand(0,999) ) );
-								}
-								$s->LoggedTime = time();
-								$s->Save();
-								
-								if( $s->ID > 0 && ( $ses = $SqlDatabase->FetchObject( '
-									SELECT * 
-									FROM FUserSession 
-									WHERE ID = \'' . $s->ID . '\' 
-									AND UserID = \'' . $usr->ID . '\' 
-								' ) ) )
-								{
-									$ret = new stdClass();
-									$ret->result    = 0;
-									$ret->userid    = $usr->ID;
-									$ret->fullname  = $usr->FullName;
-									$ret->sessionid = $ses->SessionID;
-									$ret->loginid   = $ses->ID;
-									
-									//die( json_encode( $ret ) . ' [] ' . $usr->PublicKey );
-									
-									$encrypted = $fcrypt->encryptString( json_encode( $ret ), $usr->PublicKey );
-									
-									if( $encrypted && $encrypted->cipher )
-									{
-										die( $encrypted->cipher );
-									}
-								}
-							}
-						}
+						$json->password = $decrypted->plaintext;
 					}
 				}
 			}
 		}
 		
-		die( 'fail ......' );
-	}
-	else if( isset( $GLOBALS['request_variables']['data'] ) )
-	{
-		include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
 		
-		if( $json = json_decode( $GLOBALS['request_variables']['data'] ) )
+		
+		if( $json )
 		{
-			$dbiopath = __DIR__ . '/../../../php/classes/dbio.php';
+			
+			$dbiopath   = __DIR__ . '/../../../php/classes/dbio.php';
 			$configpath = __DIR__ . '/../../../cfg/cfg.ini';
 			
 			if( !( file_exists( $dbiopath ) && file_exists( $configpath ) ) ) 
@@ -243,262 +97,220 @@
 				die( 'ERROR! MySQL unavailable!' );
 			}	
 			
+			$server = getServerSettings( $dbo );
 			
+			if( !( $server && $server->host && $server->user_template_id && $server->admin_template_id ) )
+			{
+				die( 'ERROR! Server settings is missing! doormanoffice/settings 
+{
+	"host":'.$server->host.',
+	"user_template_id":'.$server->user_template_id.',
+	"admin_template_id":'.$server->admin_template_id.',
+	"parent_workgroup_id":'.$server->parent_workgroup_id.'
+} 
+				' );
+			}
 			
 			// TODO: Make support for managing to login to Friend if login to DoormanOffice fails if there is a Friend user that matches ??? Or do we want or need that ...
 			
 			
-			// Setup mysql abstraction
-			if( file_exists( 'cfg/cfg.ini' ) )
+			if( $auth = remoteAuth( 
+				$server->host . '/admin.php?module=restapi', 
+				array(
+					'username' => $json->username, 
+					'password' => $json->password 
+			) ) )
 			{
-				$data = [];
+				$query = ''; $userdata = '';
 				
-				if( $auth = remoteAuth( 
-					'https://doormanoffice.friendup.cloud' . '/admin.php?module=restapi', 
-					array(
-						'username' => $json->username, 
-						'password' => $json->password, 
-				) ) )
+				if( $data = json_decode( $auth ) )
 				{
-					$query = ''; $rs = '';
+					// TODO: Make support for checking on publickey if security ever is uppgraded in the future and we are not using passwords to authenticate ...
+				
+					// TODO: Perhaps look at storing userid's from DoormanOffice instead of names for matching both ways if needed ...
 					
-					if( $data = json_decode( $auth ) )
+					$query = '
+						SELECT 
+							fu.*, fug2.Name AS Level 
+						FROM 
+							FUser fu, 
+							FUserToGroup futg1, 
+							FUserGroup fug1, 
+							FUserToGroup futg2, 
+							FUserGroup fug2 
+						WHERE 
+								fu.Name           = \'' . mysqli_real_escape_string( $dbo->_link, $json->username . '#' . $data->User->ID ) . '\' 
+							AND fu.Password       = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', generateDoormanUserPassword( $json->password ) ) ) . '\' 
+							AND fu.ID             = futg1.UserID 
+							AND futg1.UserGroupID = fug1.ID 
+							AND fug1.Name         = \'User\' 
+							AND fug1.Type         = \'Doorman\' 
+							AND futg2.UserID      = fu.ID 
+							AND futg2.UserGroupID = fug2.ID 
+							AND fug2.Type         = \'Level\' 
+					';
+					
+					if( !( $json->username && $json->password && $json->publickey && $json->deviceid ) )
 					{
-						// TODO: Make support for checking on publickey if security ever is uppgraded in the future and we are not using passwords to authenticate ...
+						die( 'ERROR! Missing required login parameters ...' ); 
+					}
+				
+					if( !( $data->User && $data->User->ID && $data->User->Level ) )
+					{
+						die( 'ERROR! Missing required api data from DoormanOffice ...' ); 
+					}
+					
+					//die( $query . ' [] ' . print_r( $json,1 ) . ' [] ' . print_r( $data,1 ) );
+					
+					if( !$userdata = $dbo->fetchObject( $query ) )
+					{
 						
-						// TODO: Perhaps look at storing userid's from DoormanOffice instead of names for matching both ways if needed ...
+						// Create new user when nothing found ...
 						
-						$query = '
+						if( !$udata = $dbo->fetchObject( '
 							SELECT 
 								fu.* 
 							FROM 
-								FUser fu, 
-								FUserToGroup futg, 
-								FUserGroup fug 
+								FUser fu 
 							WHERE 
-									fu.Name          = \'' . mysqli_real_escape_string( $dbo->_link, $json->username ) . '\' 
-								AND fu.Password      = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', generateDoormanUserPassword( $json->password ) ) ) . '\' 
-								AND fu.ID            = futg.UserID 
-								AND futg.UserGroupID = fug.ID 
-								AND fug.Name         = \'User\' 
-								AND fug.Type         = \'Doorman\' 
-						';
-						
-						if( $rs = $dbo->fetchObject( $query ) )
+									fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $json->username . '#' . $data->User->ID ) . '\' 
+								AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', generateDoormanUserPassword( $json->password ) ) ) . '\' 
+						' ) )
 						{
-							
-							// There is a user ...
-							
-								
-							
-						}
-						else
-						{
-							
-							// Create new user when nothing found ...
-							
-							/*$rs = $dbo->Query( '
-							INSERT INTO FUser ( `Name`, `Password`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime` ) 
+							$rs = $dbo->Query( '
+							INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime` ) 
 							VALUES ('
-								. ' \'' . mysqli_real_escape_string( $dbo->_link, $json->username ) . '\'' 
+								. ' \'' . mysqli_real_escape_string( $dbo->_link, $json->username . '#' . $data->User->ID ) . '\'' 
 								. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', generateDoormanUserPassword( $json->password ) )  ) . '\'' 
-								. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->User->Fullname ) . '\'' 
-								. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->User->Email ) . '\'' 
+								. ',\'' . mysqli_real_escape_string( $dbo->_link, $json->publickey ) . '\'' 
+								. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->User->Fullname ? $data->User->Fullname : '' ) . '\'' 
+								. ',\'' . mysqli_real_escape_string( $dbo->_link, $data->User->Email ? $data->User->Email : '' ) . '\'' 
 								. ','   . time() 
 								. ','   . time() 
 								. ','   . time() 
-							.') ' );*/
-							
-							//$udata = $dbo->fetchObject( 'SELECT fu.* FROM FUser fu, FUserToGroup futg, FUserGroup fug WHERE fu.Name = \''. mysqli_real_escape_string($dbo->_link, $uid) .'\' AND fu.Password = \''. mysqli_real_escape_string($dbo->_link, '{S6}' . hash('sha256', generateSAMLUserPassword( $uid ) )  ) .'\';' );
-							
-							// add user to users group....
-							//$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $udata->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'Level\' ) )' );
-							
-							//checkSAMLUserGroup( $dbo );
-							
-							// add user to SAML users group....
-							//$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`, `UserGroupID` ) VALUES ('. intval( $udata->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'Doorman\' ) )' );
-							
-							
-							// get users data...
-							$rs = $dbo->fetchObject( $query );
-							
+							.') ' );
+						
+							$udata = $dbo->fetchObject( '
+								SELECT 
+									fu.* 
+								FROM 
+									FUser fu 
+								WHERE 
+										fu.Name     = \'' . mysqli_real_escape_string( $dbo->_link, $json->username . '#' . $data->User->ID ) . '\' 
+									AND fu.Password = \'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', generateDoormanUserPassword( $json->password ) ) ) . '\' 
+							' );
 						}
 						
-					}
-					else
-					{
-						die( 'fail .....' . $auth );
-					}
-				}
-				
-				die( print_r( $json,1 ) . ' ... ' . $query . ' [] ' . print_r( $data,1 ) . ' -||- ' . print_r( $rs,1 ) );
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				$configfilesettings = parse_ini_file( 'cfg/cfg.ini', true );
-				include_once( 'php/classes/dbio.php' );
-				
-				// Set config object
-				$Config = new stdClass();
-				$car = array( 'Hostname', 'Username', 'Password', 'DbName',
-							  'FCHost', 'FCPort', 'FCUpload', 
-							  'SSLEnable', 'FCOnLocalhost', 'Domains' );
-				
-				foreach( array(
-					'host', 'login', 'password', 'dbname', 
-					'fchost', 'fcport', 'fcupload',
-					'SSLEnable', 'fconlocalhost', 'domains'
-				) as $k=>$type )
-				{
-					$val = '';
-					switch( $type )
-					{
-						case 'host':
-						case 'login':
-						case 'password':
-						case 'dbname':
-							$val = isset( $configfilesettings['DatabaseUser'][$type] ) ? $configfilesettings['DatabaseUser'][$type] : '';
-							break;	
+						//die( print_r( $udata,1 ) . ' -- ' );
 						
-						case 'fchost':
-						case 'fcport':
-						case 'fcupload':
-						case 'fconlocalhost':
-							$val = isset( $configfilesettings['FriendCore'][$type] ) ? $configfilesettings['FriendCore'][$type] : '';
+						// add user to users group....
+						$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $udata->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'' . ( $data->User->Level >= 99 ? 'Admin' : 'User' ) . '\' AND `Type` = \'Level\' ) );' );
+						
+						checkDoormanUserGroup( $dbo );
+						
+						// add user to Doorman users group....
+						$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $udata->ID ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'User\' AND `Type` = \'Doorman\' ) );' );
+						
+						// get users data...
+						$rs = $dbo->fetchObject( $query );
+						
+						$userdata = $rs;
+						
+						
+					}
+					
+					if( !$userdata ) 
+					{ 
+						die( 'CORRUPT FRIEND INSTALL! Could not get user data.' ); 
+					}
+					
+					// TODO: Check if firstlogin has allready been inited
+						
+					// TODO: If it fails it should be retried ... create a check ...
+					
+					switch( $userdata->Level )
+					{
+				
+						case 'User':
+					
+							if( !firstLoginSetup( $server->user_template_id, $userdata->ID, $dbo ) )
+							{
+								die( 'First Login Setup Error! Could not create user template!' );
+							}
+					
 							break;
-							
-						case 'SSLEnable':	
-							$val = isset( $configfilesettings['Core'][$type] ) ? $configfilesettings['Core'][$type] : '';
+					
+						case 'Admin':
+					
+							if( !firstLoginSetup( $server->admin_template_id, $userdata->ID, $dbo ) )
+							{
+								die( 'First Login Setup Error! Could not create admin template!' );
+							}
+					
 							break;
-							
-						case 'domains':
-							$val = isset( $configfilesettings['Security'][$type] ) ? $configfilesettings['Security'][$type] : '';
-							break;		
+				
 						default:
-							$val = '';
-							break;	
-					}
-					$Config->{$car[$k]} = $val;
-				}
+					
+							die( 'First Login Setup Error! User Level missing!' );
+					
+							break;
 				
-				$SqlDatabase = new SqlDatabase();
-				if( !$SqlDatabase->Open( $Config->Hostname, $Config->Username, $Config->Password ) )
-				{
-					die( 'fail<!--separate-->Could not connect to database.' );
-				}
-				$SqlDatabase->SelectDatabase( $Config->DbName );
-				
-				// DeviceID, PublicKey and Username
-						
-				if( $usr = $SqlDatabase->FetchObject( '
-					SELECT * 
-					FROM FUser 
-					WHERE Name = \'' . $json->username . '\' 
-				' ) )
-				{
-					// If PublicKey is missing add it once and use the PublicKey from the database to send data back to client
-					
-					$fcrypt = new fcrypto();
-					
-					$json->publickey = $fcrypt->encodeKeyHeader( trim( $json->publickey ) );
-					
-					if( !isset( $usr->PublicKey ) || !$usr->PublicKey )
-					{
-						$d = new dbTable( 'FUser', $SqlDatabase );
-						if( $d->LoadTable() )
-						{
-							$publickey = false;
-							
-							if ( isset( $d->_fieldnames ) )
-							{
-								foreach( $d->_fieldnames as $f )
-								{
-									if( $f == 'PublicKey' )
-									{
-										$publickey = true;
-									}
-								}
-								
-								if( !$publickey )
-								{
-									$d->AddField ( 'PublicKey', 'text', array ( 'after'=>'Password' ) );
-								}
-							}
-						}
-						
-						$u = new dbIO( 'FUser', $SqlDatabase );
-						$u->ID = $usr->ID;
-						if( $u->Load() )
-						{
-							if( isset( $u->PublicKey ) )
-							{
-								$u->PublicKey = $json->publickey;
-								$u->Save();
-							
-								$usr->PublicKey = $u->PublicKey;
-							}
-						}
 					}
 					
-					if( !$usr->PublicKey || ( $json->publickey != $usr->PublicKey ) )
-					{
-						//die( print_r( $json,1 ) . ' [] ' . print_r( $usr,1 ) . ' [] "' . $json->publickey . '" [] "' . $usr->PublicKey . '"' );
-						die( 'failed ... wrong login information' );
-					}
+					// If missing add login credentials to doormanoffice for the client in key management ...
 					
-					$s = new dbIO( 'FUserSession', $SqlDatabase );
-					$s->UserID = $usr->ID;
+					checkDoormanStoredKeys( $json, $userdata->ID, $dbo );
+					
+					
+					
+					// All done then ???
+					
+					
+					$s = new dbIO( 'FUserSession', $dbo );
+					$s->UserID = $userdata->ID;
 					$s->DeviceIdentity = $json->deviceid;
 					if( !$s->Load() )
 					{
-						$s->SessionID = hash( 'sha256', ( time().$usr->Name.rand(0,999).rand(0,999).rand(0,999) ) );
+						$s->SessionID = hash( 'sha256', ( time().$userdata->Name.rand(0,999).rand(0,999).rand(0,999) ) );
 					}
 					$s->LoggedTime = time();
 					$s->Save();
-					
-					if( $s->ID > 0 && ( $ses = $SqlDatabase->FetchObject( '
+				
+					if( $s->ID > 0 && ( $ses = $dbo->FetchObject( '
 						SELECT * 
 						FROM FUserSession 
 						WHERE ID = \'' . $s->ID . '\' 
-						AND UserID = \'' . $usr->ID . '\' 
+						AND UserID = \'' . $userdata->ID . '\' 
 					' ) ) )
 					{
 						$ret = new stdClass();
 						$ret->result    = 0;
-						$ret->userid    = $usr->ID;
-						$ret->fullname  = $usr->FullName;
+						$ret->userid    = $userdata->ID;
+						$ret->fullname  = $userdata->FullName;
 						$ret->sessionid = $ses->SessionID;
 						$ret->loginid   = $ses->ID;
-						
-						$encrypted = $fcrypt->encryptString( json_encode( $ret ), $usr->PublicKey );
-						
+					
+						$encrypted = $fcrypt->encryptString( json_encode( $ret ), $userdata->PublicKey );
+					
 						//die( json_encode( $ret ) . ' [] ' . $usr->PublicKey . ' [] ' . $json->publickey );
-						
+				
 						if( $encrypted && $encrypted->cipher )
 						{
 							die( $encrypted->cipher );
 						}
 					}
+					
 				}
+				else
+				{
+					die( 'fail ... could not login to doormanoffice .....' . $server->host . '/admin.php?module=restapi ' . json_encode( array( 'username' => $json->username, 'password' => $json->password ) ) . ' ' . $auth );
+				}
+				
 			}
+			
+			die( 'fail ......' );
+			
 		}
-		
-		die( 'fail ......' );
 	}
 	
 	/*
@@ -519,8 +331,8 @@
 	{
 		include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
 		
-		$welcome = $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] !== null ? $GLOBALS['login_modules']['saml']['Login']['logintitle_en'] : 'Doorman';
-		$samlendpoint = $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] !== null ? $GLOBALS['login_modules']['saml']['Module']['samlendpoint'] : 'about:blank';
+		$welcome = $GLOBALS['login_modules']['doorman']['Login']['logintitle_en'] !== null ? $GLOBALS['login_modules']['doorman']['Login']['logintitle_en'] : 'Doorman';
+		$samlendpoint = $GLOBALS['login_modules']['doorman']['Module']['samlendpoint'] !== null ? $GLOBALS['login_modules']['doorman']['Module']['samlendpoint'] : 'about:blank';
 		
 		$samlendpoint .= '?friendendpoint=' . urlencode($GLOBALS['request_path']);
 		
@@ -557,6 +369,7 @@
 			,'{samlendpoint}'
 			,'{publickey}'
 		];
+		
 		$replacements = [
 				$GLOBALS['request_path']
 				,$welcome
@@ -564,14 +377,355 @@
 				,$publickey
 		];
 		
-		return str_replace($finds, $replacements, $template);
+		return str_replace( $finds, $replacements, $template );
+	}
+	
+	
+	function findInSearchPaths( $app )
+	{
+		$ar = array(
+			'repository/',
+			'resources/webclient/apps/'
+		);
+		foreach ( $ar as $apath )
+		{
+			if( file_exists( $apath . $app ) && is_dir( $apath . $app ) )
+			{
+				return $apath . $app;
+			}
+		}
+		return false;
+	}
+	
+	
+	function firstLoginSetup( $setupid, $uid, $dbo )
+	{
+		
+		if( $setupid && $uid && $dbo )
+		{
+			// If we have a populated dock it's not firstime and the template will have to be updated manual through the users app ...
+			
+			if( ( $row = $dbo->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) ) )
+			{
+				return true;
+			}
+			
+			if( $ug = $dbo->FetchObject( '
+				SELECT 
+					g.*, s.Data 
+				FROM 
+					`FUserGroup` g, 
+					`FSetting` s 
+				WHERE 
+						g.ID = \'' . $setupid . '\' 
+					AND g.Type = "Setup" 
+					AND s.Type = "setup" 
+					AND s.Key = "usergroup" 
+					AND s.UserID = g.ID 
+			' ) )
+			{
+				
+				// TODO: Connect this to the main handling of user templates so it doesn't fall out of sync ...
+				
+				$ug->Data = ( $ug->Data ? json_decode( $ug->Data ) : false );
+						
+				
+				if( $ug->Data && $uid )
+				{
+					// Language ----------------------------------------------------------------------------------------
+	
+					if( $ug->Data->language )
+					{
+						// 1. Check and update language!
+
+						$lang = new dbIO( 'FSetting', $dbo );
+						$lang->UserID = $uid;
+						$lang->Type = 'system';
+						$lang->Key = 'locale';
+						$lang->Load();
+						$lang->Data = $ug->Data->language;
+						$lang->Save();
+					}
+
+					// Startup -----------------------------------------------------------------------------------------
+
+					if( isset( $ug->Data->startups ) )
+					{
+						// 2. Check and update startup!
+
+						$star = new dbIO( 'FSetting', $dbo );
+						$star->UserID = $uid;
+						$star->Type = 'system';
+						$star->Key = 'startupsequence';
+						$star->Load();
+						$star->Data = ( $ug->Data->startups ? json_encode( $ug->Data->startups ) : '[]' );
+						$star->Save();
+					}
+
+					// Theme -------------------------------------------------------------------------------------------
+
+					if( $ug->Data->theme )
+					{
+						// 3. Check and update theme!
+
+						$them = new dbIO( 'FSetting', $dbo );
+						$them->UserID = $uid;
+						$them->Type = 'system';
+						$them->Key = 'theme';
+						$them->Load();
+						$them->Data = $ug->Data->theme;
+						$them->Save();
+					}
+			
+					// Software ----------------------------------------------------------------------------------------
+			
+					if( !isset( $ug->Data->software ) )
+					{
+						$ug->Data->software = json_decode( '[["Dock","1"]]' );
+					}
+			
+					if( $ug->Data->software )
+					{
+						// 4. Check dock!
+				
+						// TODO: Perhaps we should add the current list of dock items if there is any included with the software list for adding ...
+
+						if( 1==1/* || !( $row = $dbo->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $uid . '\'' ) )*/ )
+						{
+							$i = 0;
+							
+							foreach( $ug->Data->software as $r )
+							{
+								if( $r[0] )
+								{
+									// 5. Store applications
+		
+									if( $path = findInSearchPaths( $r[0] ) )
+									{
+										if( file_exists( $path . '/Config.conf' ) )
+										{
+											$f = file_get_contents( $path . '/Config.conf' );
+											// Path is dynamic!
+											$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
+			
+											// Store application!
+											$a = new dbIO( 'FApplication', $dbo );
+											$a->UserID = $uid;
+											$a->Name = $r[0];
+											if( !$a->Load() )
+											{
+												$a->DateInstalled = date( 'Y-m-d H:i:s' );
+												$a->Config = $f;
+												$a->Permissions = 'UGO';
+												$a->DateModified = $a->DateInstalled;
+												$a->Save();
+											}
+				
+											// 6. Setup dock items
+				
+											if( $r[1] )
+											{
+												$d = new dbIO( 'DockItem', $dbo );
+												$d->Application = $r[0];
+												$d->UserID = $uid;
+												$d->Parent = 0;
+												if( !$d->Load() )
+												{
+													//$d->ShortDescription = $r[1];
+													$d->SortOrder = $i++;
+													$d->Save();
+												}
+											}
+					
+											// 7. Pre-install applications
+				
+											if( $ug->Data->preinstall != '0' && $a->ID > 0 )
+											{
+												if( $a->Config && ( $cf = json_decode( $a->Config ) ) )
+												{
+													if( isset( $cf->Permissions ) && $cf->Permissions )
+													{
+														$perms = [];
+														foreach( $cf->Permissions as $p )
+														{
+															$perms[] = [$p,(strtolower($p)=='door all'?'all':'')];
+														}
+						
+														// TODO: Get this from Config.ini in the future, atm set nothing
+														$da = new stdClass();
+														$da->domain = '';
+							
+														// Collect permissions in a string
+														$app = new dbIO( 'FUserApplication', $dbo );
+														$app->ApplicationID = $a->ID;
+														$app->UserID = $a->UserID;
+														if( !$app->Load() )
+														{
+															$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+															$app->Permissions = json_encode( $perms );
+															$app->Data = json_encode( $da );
+															$app->Save();
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				
+				
+				if( $uid )
+				{
+					if( $dels = $dbo->FetchObjects( $q = '
+						SELECT 
+							g.* 
+						FROM 
+							`FUserGroup` g, 
+							`FUserToGroup` ug 
+						WHERE 
+								g.Type = "Setup" 
+							AND ug.UserGroupID = g.ID 
+							AND ug.UserID = \'' . $uid . '\' 
+						ORDER BY 
+							g.ID ASC 
+					' ) )
+					{
+
+						foreach( $dels as $del )
+						{
+							if( $del->ID != $setupid )
+							{
+								$dbo->Query( 'DELETE FROM FUserToGroup WHERE UserID = \'' . $uid . '\' AND UserGroupID = \'' . $del->ID . '\'' );
+							}
+						}
+					}
+
+					if( $dbo->FetchObject( '
+						SELECT 
+							ug.* 
+						FROM 
+							`FUserToGroup` ug 
+						WHERE 
+								ug.UserGroupID = \'' . $ug->ID . '\' 
+							AND ug.UserID = \'' . $uid . '\' 
+					' ) )
+					{
+						$dbo->query( '
+							UPDATE FUserToGroup SET UserGroupID = \'' . $ug->ID . '\' 
+							WHERE UserGroupID = \'' . $ug->ID . '\' AND UserID = \'' . $uid . '\' 
+						' );
+					}
+					else
+					{
+						$dbo->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $uid . '\', \'' . $ug->ID . '\' )' );
+					}
+				}
+				
+			
+				return ( $ug->Data ? json_encode( $ug->Data ) : false );
+			}
+		}
+		
+		return false;
+	}
+	
+	function getServerSettings( $dbo )
+	{
+		if( $dbo )
+		{
+			if( $row = $dbo->FetchObject( '
+				SELECT * FROM FSetting s
+				WHERE
+					s.UserID = \'-1\'
+				AND s.Type = \'doormanoffice\'
+				AND s.Key = \'settings\'
+				ORDER BY s.Key ASC
+			' ) )
+			{
+				if( $resp = json_decode( $row->Data ) )
+				{
+					return $resp;
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	function checkDoormanUserGroup( $dbo )
+	{
+		if( $dbo )
+		{
+			if( $rs = $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name`=\'User\' AND `Type`=\'Doorman\' ' ) )
+			{
+				return;
+			}
+			
+			$rs = $dbo->Query( 'INSERT INTO `FUserGroup` (`UserID`,`ParentID`,`Name`,`Type`) VALUES (\'0\',\'0\',\'User\',\'Doorman\');' );
+			
+			return;
+		}
+	}
+	
+	function checkDoormanStoredKeys( $data, $uid, $dbo )
+	{
+		if( $data && $data->username && $data->password && $data->publickey && $uid && $dbo )
+		{
+			if( $app = $dbo->fetchObject( '
+				SELECT 
+					a.* 
+				FROM 
+					FApplication a 
+				WHERE 
+						a.Name = "DoormanOffice" 
+					AND a.UserID = \'' . $uid . '\' 
+			' ) )
+			{
+				include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
+				
+				// Store key
+				$k = new dbIO( 'FKeys', $dbo );
+				$k->UserID = $uid;
+				$k->ApplicationID = $app->ID;
+				$k->IsDeleted = 0;
+				if( !$k->Load() || !$k->Data )
+				{
+					$fcrypt = new fcrypto();
+					
+					$encrypted = $fcrypt->encryptString( '{"username":"' . $data->username . '","password":"' . $data->password . '"}', $data->publickey );
+					
+					if( $encrypted && $encrypted->cipher )
+					{
+						$k->Name         = 'credentials';
+						$k->Data         = $encrypted->cipher;
+						$k->PublicKey    = $data->publickey;
+						$k->DateModified = date( 'Y-m-d H:i:s' );
+						$k->DateCreated  = date( 'Y-m-d H:i:s' );
+						$k->Save();
+						
+						return true;
+					}
+				}
+			}
+			else
+			{
+				// didn't find the application ...
+			}
+		}
+		
+		return false;
 	}
 	
 	function generateDoormanUserPassword( $input )
 	{
 		// TODO: Look at this and see if everyone connected via this method is supposed to be unique ...
 		
-		$ret = 'HASHED' . hash('sha256', 'DOORMAN' . $input );
+		$ret = 'HASHED' . hash( 'sha256', 'DOORMAN' . $input );
 		return $ret;
 	}
 	
@@ -669,6 +823,8 @@
 	
 		return $output;
 	}
+	
+	
 	
 	//render the form
 	renderSecureLoginForm();

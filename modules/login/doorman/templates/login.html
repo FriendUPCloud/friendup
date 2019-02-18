@@ -195,22 +195,37 @@
 						_this.encryption.keys.server = ( ge( 'publickey' ) && ge( 'publickey' ).value ? { publickey: ge( 'publickey' ).value } : false );
 						_this.encryption.setKeys( this.loginUsername, this.loginPassword );
 						
+						if( _this.encryption.keys.server && _this.encryption.keys.server.publickey )
+						{
+							var pw = _this.encryption.encrypt( ( p ? p : ( Application.keys ? Application.keys.password : '' ) ), _this.encryption.keys.server.publickey );
+						}
+						else
+						{
+							var pw = ( p ? p : ( Application.keys ? Application.keys.password : '' ) );
+						}
+						
+						
+						
 						var data = {
 							username: ( u ? u : ( Application.keys ? Application.keys.username : '' ) ),
-							password: ( p ? p : ( Application.keys ? Application.keys.password : '' ) ),
+							password: pw,
 							publickey: _this.encryption.keys.client.publickey,
 							deviceid: _this.deviceid
 						};
 						
+						
+						
 						var m = new cAjax();
 						m.open( 'POST', '/loginprompt', true );
 						
+						// TODO: Look at why this method is not working properly, encrypting all json data with the servers publickey ...
+						
 						if( 1!=1 && _this.encryption.keys.server.publickey )
 						{
-							console.log( _this.encryption.keys.server.publickey );
-							console.log( JSON.stringify( data ) );
-							m.addVar( 'encrypted', _this.encryption.encrypt( JSON.stringify( data )/*, _this.encryption.keys.server.publickey*/ ) );
-							console.log( _this.encryption.encrypt( JSON.stringify( data ), _this.encryption.keys.server.publickey ) );
+							//console.log( _this.encryption.keys.server.publickey );
+							//console.log( JSON.stringify( data ) );
+							m.addVar( 'encrypted', _this.encryption.encrypt( JSON.stringify( data ), _this.encryption.keys.server.publickey ) );
+							//console.log( _this.encryption.encrypt( JSON.stringify( data ), _this.encryption.keys.server.publickey ) );
 						}
 						else
 						{
@@ -245,6 +260,7 @@
 												privatekey  : _this.encryption.keys.client.privatekey, 
 												publickey   : _this.encryption.keys.client.publickey, 
 												username    : ( u ? u : ( Application.keys ? Application.keys.username : '' ) ),
+												password    : ( p ? p : ( Application.keys ? Application.keys.password : '' ) ),
 												recoverykey : _this.encryption.keys.client.recoverykey 
 											},
 											{ applicationName : 'Workspace' } );

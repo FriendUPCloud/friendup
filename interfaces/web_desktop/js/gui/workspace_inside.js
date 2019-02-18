@@ -5648,19 +5648,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Update view history with current application id
 		if( currentMovable )
 		{
+			var cm = currentMovable;
 			FocusOnNothing();
-			if( currentMovable.applicationId )
+			if( cm.applicationId )
 			{
 				// Tell the application
-				currentMovable.windowObject.sendMessage( {
+				cm.windowObject.sendMessage( {
 					command: 'mobilebackbutton'
 				} );
 				if( window._getAppByAppId )
 				{
-					var app = _getAppByAppId( currentMovable.applicationId );
-					if( app.mainView == currentMovable.windowObject )
+					var app = _getAppByAppId( cm.applicationId );
+					if( app.mainView == cm.windowObject )
 					{
-						if( !currentMovable.windowObject.mobileBack.classList.contains( 'Showing' ) )
+						if( !cm.windowObject.mobileBack.classList.contains( 'Showing' ) )
 						{
 							Workspace.appMenu.onclick();
 						}
@@ -5671,16 +5672,36 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return;
 					}
 				}
-				this.mobileViews.application = currentMovable.applicationId;
-			}
-			else if( currentMovable.content.directoryview )
-			{
-				if( currentMovable.content.fileInfo.Path == 'Mountlist:' )
+				// Just go back
+				if( cm.windowObject.parentView )
 				{
-					return currentMovable.windowObject.close();
+					cm.windowObject.parentView.activate();
+					return;
 				}
-				return currentMovable.content.directoryview.buttonUp.onclick();
+				this.mobileViews.application = cm.applicationId;
 			}
+			else if( cm.content.directoryview )
+			{
+				if( cm.content.fileInfo.Path == 'Mountlist:' )
+				{
+					if( cm.windowObject.dialog )
+					{
+						return cm.windowObject.close();
+					}
+					else
+					{
+						return Workspace.appMenu.onclick();
+					}
+				}
+				return cm.content.directoryview.buttonUp.onclick();
+			}
+			// Just go back
+			else if( cm.windowObject.parentView )
+			{
+				var pv = cm.windowObject.parentView.windowObject;
+				pv.activate();
+				return;
+			}	
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
@@ -7459,7 +7480,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			// If we have no conn, and we have waited five cycles, force reconnect
 			// the websocket...
-			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 5 )
+			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 3 )
 			{
 				Workspace.connectingWebsocket = false;
 				Workspace.websocketDisconnectTime = 0;

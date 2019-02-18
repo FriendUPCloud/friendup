@@ -2145,12 +2145,14 @@ function DrawRegionSelector( e )
 					if ( overlapping || intersecting )
 					{
 						ics.classList.add( 'Selected' );
-						ics.fileInfo.selected = true;
+						ics.fileInfo.selected = 'multiple';
+						ics.selected = 'multiple';
 					}
 					else if ( !sh )
 					{
 						ics.classList.remove( 'Selected' );
 						ics.fileInfo.selected = false;
+						ics.selected = false;
 					}
 				}
 			}
@@ -3367,7 +3369,7 @@ movableMouseDown = function ( e )
 			// Don't count scrollbar
 			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
 			{
-				clearRegionIcons();
+				clearRegionIcons( { force: true } );
 			}
 		}
 		
@@ -3407,6 +3409,24 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 	WorkspaceMenu.close();
 }
 
+function convertIconsToMultiple()
+{
+	if( currentMovable && currentMovable && currentMovable.content.icons )
+	{
+		var ics = currentMovable.content.icons;
+		for( var a = 0; a < ics.length; a++ )
+		{
+			if( ics[a].selected )
+			{
+				ics[a].selected = 'multiple';
+				ics[a].domNode.selected = 'multiple';
+				if( ics[a].fileInfo )
+					ics[a].fileInfo.selected = 'multiple';
+			}
+		}
+	}
+}
+
 function clearRegionIcons( flags )
 {
 	// No icons selected now..
@@ -3418,6 +3438,8 @@ function clearRegionIcons( flags )
 	{
 		exception = flags.exception;
 	}
+
+	var multipleCheck = flags && flags.force ? 'none' : 'multiple';
 
 	// Clear all icons
 	for( var a in movableWindows )
@@ -3432,7 +3454,7 @@ function clearRegionIcons( flags )
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
-					if( exception != ic )
+					if( exception != ic && ic.selected != multipleCheck )
 					{
 						ic.classList.remove( 'Selected' );
 						w.icons[a].selected = false;
@@ -3458,7 +3480,7 @@ function clearRegionIcons( flags )
 			var icon = Doors.screen.contentDiv.icons[a];
 			var ic = icon.domNode;
 			if( !ic ) continue;
-			if( exception != ic )
+			if( exception != ic && ic.selected != multipleCheck )
 			{
 				ic.classList.remove( 'Selected' );
 				icon.selected = false;

@@ -83,7 +83,11 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 				}
 				t = null;
 			};
-			self.setPath( self.rootPath, cb );
+			// Can't set icon listing path to mountlist..
+			if( self.rootPath != 'Mountlist:' )
+			{
+				self.setPath( self.rootPath, cb );
+			}
 		}
 		return cancelBubble( e );
 	}
@@ -174,18 +178,19 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
 		b.pop();
 		targetPath = '';
-		var pad = '';
 		for( var a = 0; a < depth; a++ )
 		{
-			targetPath += b[a] + ( a == 0 ? ':' : '/' );
-			pad += ' ';
+			if( b[a] )
+			{
+				targetPath += b[a] + ( a == 0 ? ':' : '/' );
+			}
 		}
 	}
 	
 	function createOnclickAction( ele, ppath, type, depth )
 	{
 		ele.onclick = function( e )
-		{
+		{	
 			if( !ppath ) 
 			{
 				return cancelBubble( e );
@@ -231,8 +236,31 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					self.callbacks.folderOpen( ppath, e );
 					return  cancelBubble( e );
 				}
+				
+				// Make sure to add to history
+				if( e && e.button !== null )
+				{
+					var dw = window.currentMovable && currentMovable.content.directoryview;
+					if( dw )
+					{
+						if( dw.window.fileInfo.Path != ppath )
+						{
+							var fin = {
+								Volume: ppath.split( ':' )[0] + ':',
+								Path: ppath,
+								Filename: fnam,
+								Type: 'Directory',
+								Door: Workspace.getDoorByPath( ppath )
+							};
+					
+							// Set as current history element at end of list
+							dw.addToHistory( fin );
+						}
+					}
+				}
+				
 				// Normal operation
-				if( !this.classList.contains( 'Open' ) )
+				if( !this.classList.contains( 'Open' ) || ( e && e.mode == 'open' ) )
 				{
 					var subitems = ele.getElementsByClassName( 'SubItems' );
 					if( subitems.length )
@@ -275,6 +303,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				{
 					nam[0].classList.add( 'Active' );
 				}
+				
+				var fnam = ppath.split( ':' )[1];
+				if( fnam.indexOf( '/' ) > 0 )
+					fnam = fnam.split( '/' ).pop();
 			}
 			return cancelBubble( e );
 		}
@@ -438,7 +470,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( !clickElement && self.flags.path && targetPath == d.path )
 						{
 							clickElement = d;
-						}							
+						}						
 						
 						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
@@ -515,6 +547,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								self.refresh( msg.list[a].Volume, s[0], false, depth + 1 );
 							}
 						}
+						if( !clickElement && self.flags.path && targetPath == foundItem.path )
+						{
+							clickElement = foundItem;
+						}
 					}
 				}
 				// Add checkers classes
@@ -535,7 +571,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				{
 					setTimeout( function()
 					{
-						clickElement.onclick();
+						clickElement.onclick( { mode: 'open' } );
 					}, 5 );
 				}
 			}

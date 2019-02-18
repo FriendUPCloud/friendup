@@ -1024,6 +1024,19 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Set currently displayed view on app
+	if( isMobile )
+	{
+		if( window._getAppByAppId )
+		{
+			var app = _getAppByAppId( this.applicationId );
+			if( app )
+			{
+				app.displayedView = div;
+			}
+		}
+	}
+	
 	// Don't reactivate
 	if( div.classList.contains( 'Active' ) ) 
 	{
@@ -1576,12 +1589,18 @@ function CloseView( win, delayed )
 		if ( window.regionWindow == div.content )
 			window.regionWindow = false;
 
-		if ( !isGroupMember && div.parentNode )
+		var app = false;
+		if( div.applicationId )
+			app = _getAppByAppId( div.applicationId );
+
+		if( app && div == app.displayedView )
+			app.displayedView = null;
+
+		if( !isGroupMember && div.parentNode )
 		{
 			// Immediately kill child views for mobile!
 			if( isMobile && window._getAppByAppId )
 			{
-				var app = _getAppByAppId( div.applicationId );
 				if( app.mainView == div.windowObject )
 				{
 					for( var a in app.windows )
@@ -1721,6 +1740,17 @@ function CloseView( win, delayed )
 				document.body.removeAttribute( 'windowcount' );
 			}, 400 );
 		}
+		
+		if( app && isMobile && app.mainView )
+		{
+			app.mainView.activate();
+		}
+		// We have a parent view
+		else if( win.parentView )
+		{
+			win.parentView.activate();
+		}
+		
 	}
 
 	// Check window
@@ -1992,6 +2022,7 @@ var View = function( args )
 								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
 								self.close();
+								return cancelBubble( e );
 							}
 						}
 						return cancelBubble( e );
@@ -2352,6 +2383,20 @@ var View = function( args )
 			{
 				if( !this.viewIcon.classList.contains( 'Remove' ) )
 				{
+					if( isMobile )
+					{
+						var target = this;
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( this.applicationId );
+							if( app && app.displayedView )
+							{
+								target = app.displayedView;
+							}
+						}
+						_ActivateWindow( target, false, e );
+						return;
+					}
 					_ActivateWindow( this, false, e );
 					this.setAttribute( 'moving', 'moving' );
 				}
@@ -2698,6 +2743,11 @@ var View = function( args )
 				d.left = this.offsetLeft;
 				d.width = wenable && wwi ? wwi : d.width;
 				d.height = wenable && hhe ? hhe : d.width;
+			}
+			
+			if( div.content.directoryview )
+			{
+				d.listMode = div.content.directoryview.listMode;
 			}
 
 			SetWindowStorage( this.uniqueId, d );
@@ -4843,7 +4893,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
 		// Here is the first screen
-		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
+		Workspace.screen.contentDiv.style.transform = 'translate3d(0,0,0)';
 		return;
 	}
 	
@@ -4934,7 +4984,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		Friend.GUI.responsiveViewPage = page;
 	}
-	Workspace.screen.contentDiv.style.transform = 'translateX(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px)';
+	Workspace.screen.contentDiv.style.transform = 'translate3d(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px,0,0)';
 }
 
 // Intermediate anchor for code that uses new Window()

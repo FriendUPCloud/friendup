@@ -566,7 +566,7 @@ Screen = function ( flags, initObject )
 				}, 500 );
 				Friend.GUI.responsiveViewPage++;
 				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
-				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+				scrn.contentDiv.style.transform = 'translate3d(' + px + ',0,0)';
 			}
 		}
 		else if( isMobile && diffx > 100 && !scrn.moving )
@@ -580,7 +580,7 @@ Screen = function ( flags, initObject )
 				}, 500 );
 				Friend.GUI.responsiveViewPage--;
 				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
-				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+				scrn.contentDiv.style.transform = 'translate3d(' + px + ',0,0)';
 			}
 		}
 		// Show the dock!

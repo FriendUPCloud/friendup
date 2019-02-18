@@ -35,6 +35,7 @@ function _nameFix( wt )
 DirectoryView = function( winobj, extra )
 {	
 	var ws = GetWindowStorage( winobj.uniqueId );
+	
 	// Initial values
 	this.listMode = ws && ws.listMode ? ws.listMode : 'iconview';
 	this.sortColumn = 'filename';
@@ -193,15 +194,22 @@ DirectoryView.prototype.checkSuffix = function( fn )
 
 DirectoryView.prototype.addToHistory = function( ele )
 {
+	// Don't do it twice
+	if( this.window && this.window.fileInfo )
+	{
+		if( this.window.fileInfo.Path == ele.Path )
+			return false;
+	}
 	if( this.pathHistory.length == 0 )
 	{
 		this.pathHistory = [ ele ];
 		this.pathHistoryIndex = 0;
-		return;
+		return true;
 	}
 	this.pathHistory.push( ele );
 	this.pathHistoryIndex = this.pathHistory.length - 1;
 	this.window.fileInfo = ele;
+	return true;
 }
 
 DirectoryView.prototype.setHistoryCurrent = function( ele )
@@ -354,7 +362,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					// Refresh and animate
 					winobj.refresh( function()
 					{
-						n.style.transform = 'translateX(100%)';
+						n.style.transform = 'translate3d(100%,0,0)';
 						setTimeout( function()
 						{
 							n.parentNode.removeChild( n );
@@ -380,6 +388,11 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					var fin = dw.pathHistory[--dw.pathHistoryIndex];
 					winobj.fileInfo = fin;
 					winobj.refresh();
+					
+					if( winobj.fileBrowser )
+					{
+						winobj.fileBrowser.setPath( fin.Path );
+					}
 				}
 			}
 		}: false,
@@ -596,7 +609,6 @@ DirectoryView.prototype.ShowFileBrowser = function()
 				winobj.fileInfo.Path = path;
 				winobj.fileInfo.Volume = vol + ':';
 				self.addToHistory( winobj.fileInfo );
-				
 				winobj.refresh();
 			},
 			folderClose( path )
@@ -729,43 +741,63 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		{
 			// Enforce icon view for mobile
 			dirv.listMode = 'iconview';
-			
-			if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
+			var changed = false;
+			if( !this._redrawPath || !winobj.fileInfo || this._redrawPath != winobj.fileInfo.Path )
 			{
-				// Bookmarks
-				dirv.bookmarks.style.width = '100%';
-				dirv.bookmarks.style.left = '0';
-				dirv.bookmarks.style.transition = 'transform 0.4s';
-				
-				// Filearea is always put in a container
-				dirv.filearea.parentNode.style.left = '0';
-				dirv.filearea.parentNode.style.width = '100%';
-				dirv.filearea.parentNode.style.transition = 'transform 0.4s';
-				dirv.filearea.style.transition = 'transform 0.4s';
-				
-				if( winobj.fileInfo.Path == 'Mountlist:' )
+				changed = true;
+				this._redrawPath = winobj.fileInfo ? winobj.fileInfo.Path : null;
+			}
+			
+			if( changed )
+			{
+				if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
 				{
-					if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+					// Bookmarks
+					if( !dirv.animationsSet )
 					{
-						dirv.filearea.style.transform = 'translateX(100%)';
+						dirv.bookmarks.style.width = '100%';
+						dirv.bookmarks.style.left = '0';
+						dirv.bookmarks.style.transition = 'transform 0.4s';
+						
+						// Filearea is always put in a container
+					
+						dirv.filearea.parentNode.style.left = '0';
+						dirv.filearea.parentNode.style.width = '100%';
+						dirv.filearea.parentNode.style.transition = 'transform 0.4s';
+						dirv.filearea.style.transition = 'transform 0.4s';
+						
+						dirv.animationsSet = true;
+					}
+				
+					if( winobj.fileInfo.Path == 'Mountlist:' )
+					{
+						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+						{
+							dirv.filearea.style.transform = 'translate3d(100%,0,0)';
+						}
+						else
+						{
+							dirv.filearea.parentNode.style.transform = 'translate3d(100%,0,0)';
+						}
+						dirv.bookmarks.style.transform = 'translate3d(0%,0,0)';
+						winobj.parentNode.classList.add( 'Mountlist' );
+						dirv.ShowFileBrowser();
+						winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
+						return;
 					}
 					else
 					{
-						dirv.filearea.parentNode.style.transform = 'translateX(100%)';
+						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+						{
+							dirv.filearea.style.transform = 'translate3d(0%,0,0)';
+						}
+						else 
+						{
+							dirv.filearea.parentNode.style.transform = 'translate3d(0%,0,0)';
+						}
+						dirv.bookmarks.style.transform = 'translate3d(-100%,0,0)';
+						winobj.parentNode.classList.remove( 'Mountlist' );
 					}
-					dirv.bookmarks.style.transform = 'translateX(0%)';
-					winobj.parentNode.classList.add( 'Mountlist' );
-					dirv.ShowFileBrowser();
-					winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
-					return;
-				}
-				else
-				{
-					if( dirv.filearea.parentNode.classList.contains( 'View' ) )
-						dirv.filearea.style.transform = 'translateX(0%)';
-					else dirv.filearea.parentNode.style.transform = 'translateX(0%)';
-					dirv.bookmarks.style.transform = 'translateX(-100%)';
-					winobj.parentNode.classList.remove( 'Mountlist' );
 				}
 			}
 		}
@@ -2332,10 +2364,25 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	}
 	
 	// Get display frame
-	var display = {
-		top: this.scroller.scrollTop - this.scroller.offsetHeight,
-		bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight * 2 )
-	};
+	var display;
+	if( isMobile && this.cachedDisplay )
+	{
+		display = this.cachedDisplay;
+		windowWidth = display.width;
+	}
+	else
+	{
+		display = {
+			top: this.scroller.scrollTop - this.scroller.offsetHeight,
+			bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight * 2 ),
+			width: windowWidth
+		};
+		if( isMobile )
+		{
+			if( !this.cachedDisplay )
+				this.cachedDisplay = display;
+		}
+	}
 	
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
@@ -2351,7 +2398,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Calculate marginLeft to center icons on mobile
 	if( isMobile )
 	{
-		var whWidth = this.scroller.offsetWidth;
+		var whWidth = windowWidth;
 		var columns = Math.floor( whWidth / mobIW );
 		marginLeft = Math.floor( whWidth - ( mobIW * columns ) ) >> 1;
 	}
@@ -2758,11 +2805,11 @@ DirectoryView.prototype.SelectAll = function()
 			if( ics[a].domNode )
 			{
 				ics[a].domNode.classList.add( 'Selected' );
-				ics[a].domNode.selected = true;
+				ics[a].domNode.selected = 'multiple';
 			}
-			ics[a].selected = true;
+			ics[a].selected = 'multiple';
 			if( ics[a].fileInfo )
-				ics[a].fileInfo.selected = true;
+				ics[a].fileInfo.selected = 'multiple';
 		}
 	}
 }
@@ -3100,6 +3147,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Single click
 			r.onmousedown = function( e )
 			{
+				if( !e ) e = window.event ? window.event : {};
+			
+				// This means we are adding
+				if( e.shiftKey || e.ctrlKey )
+				{
+					convertIconsToMultiple();
+				}
+				
+				
 				// Right mouse button
 				if( e.button == 2 )
 				{
@@ -3172,8 +3228,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							{
 								if( !p.childNodes[b] ) continue;
 								p.childNodes[b].classList.add( 'Selected' );
-								p.childNodes[b].selected = true;
-								p.childNodes[b].fileInfo.selected = true;
+								p.childNodes[b].selected = 'multiple';
+								p.childNodes[b].fileInfo.selected = 'multiple';
 							}
 						}
 						dv.lastListItem = this;
@@ -3191,38 +3247,31 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						else
 						{
 							this.classList.add( 'Selected' );
-							this.selected = true;
-							this.fileInfo.selected = true;
+							this.selected = 'multiple';
+							this.fileInfo.selected = 'multiple';
 							dv.lastListItem = this;
 						}
 					}
 					else
 					{
+						var sh = e.shiftKey || e.ctrlKey;
+						if( !sh ) 
+						{
+							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+							{
+								clearRegionIcons( { exception: this } );
+							}
+						}
+						
 						this.classList.add( 'Selected' );
-						this.selected = true;
-						this.fileInfo.selected = true;
+						this.selected = sh ? 'multiple' : true;
+						this.fileInfo.selected = sh ? 'multiple' : true;
 						dv.lastListItem = this;
 					}
 
 					if( window.isSettopBox )
 					{
 						return cancelBubble( e );
-					}
-				}
-			}
-			
-			// Releasing the left mouse button
-			r.onmouseup = function( e )
-			{
-				if( e.button == 0 )
-				{
-					var sh = e.shiftKey || e.ctrlKey;
-					if( !sh ) 
-					{
-						if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
-						{
-							clearRegionIcons( { exception: this } );
-						}
 					}
 				}
 			}
@@ -3792,6 +3841,8 @@ FileIcon.prototype.Init = function( fileInfo )
 	// Attach events
 	file.onmousedown = function( e )
 	{
+		if( !e ) e = window.event ? window.event : {};
+	
 		// Activate screen on click
 		if( this.window )
 		{
@@ -3808,6 +3859,12 @@ FileIcon.prototype.Init = function( fileInfo )
 				if( !this.window.parentNode.classList.contains( 'Active' ) )
 					_ActivateWindow( this.window.parentNode );
 			}
+		}
+
+		// This means we are adding
+		if( e.shiftKey || e.ctrlKey )
+		{
+			convertIconsToMultiple();
 		}
 
 		if( !e ) e = window.event;
@@ -3870,9 +3927,18 @@ FileIcon.prototype.Init = function( fileInfo )
 				return cancelBubble( e );
 			}
 
+			var sh = e.shiftKey || e.ctrlKey;
+			if( !sh ) 
+			{
+				if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+				{
+					clearRegionIcons( { exception: this } );
+				}
+			}
+
 			this.classList.add( 'Selected' );
-			this.selected = true;
-			this.fileInfo.selected = true;
+			this.selected = sh ? 'multiple' : true;
+			this.fileInfo.selected = sh ? 'multiple' : true;
 
 
 			// Refresh the menu based on selected icons
@@ -3892,15 +3958,6 @@ FileIcon.prototype.Init = function( fileInfo )
 	// This one driggers dropping icons! (believe it or not)
 	file.onmouseup = function( e )
 	{
-		var sh = e.shiftKey || e.ctrlKey;
-		if( !sh ) 
-		{
-			if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
-			{
-				clearRegionIcons( { exception: this } );
-			}
-		}
-		
 		if( mousePointer && mousePointer.elements.length )
 		{
 			// Drop on an icon on a workbench icon
@@ -4050,7 +4107,7 @@ FileIcon.prototype.Init = function( fileInfo )
 				// Refresh and add animation
 				we.refresh( function()
 				{
-					n.style.transform = 'translateX(-100%)';
+					n.style.transform = 'translate3d(-100%,0,0)';
 					setTimeout( function()
 					{
 						n.parentNode.classList.remove( 'Redrawing' );
@@ -4461,7 +4518,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
-		Friend.startImageViewer( iconObject );
+		Friend.startImageViewer( iconObject, { parentView: currentMovable } );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -5157,8 +5214,10 @@ if( typeof noEvent == 'undefined' )
 }
 
 // The Friend image viewer! ----------------------------------------------------
-Friend.startImageViewer = function( iconObject )
+Friend.startImageViewer = function( iconObject, extra )
 {
+	if( !extra ) extra = false;
+	
 	var win = new View ( {
 		title            : iconObject.Title ? iconObject.Title : iconObject.Filename,
 		width            : 650,
@@ -5166,6 +5225,17 @@ Friend.startImageViewer = function( iconObject )
 		memorize         : true,
 		fullscreenenabled: true
 	} );
+	
+	win.parentView = extra.parentView;
+	
+	
+	win.onClose = function()
+	{
+		if( extra && extra.parentView )
+		{
+			_ActivateWindow( extra.parentView );
+		}
+	}
 	
 	var owin = win;
 

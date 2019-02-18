@@ -380,7 +380,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 	// Request parsed without errors!
 	else if( result == 1 && request->uri->path != NULL )
 	{
-		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without errors.\n");
+		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->uri;
 		Path *path = NULL;
 		if( uri->path->raw )

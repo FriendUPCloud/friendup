@@ -30,13 +30,13 @@ var currentViewMode = 'default';
 
 if( isMobile )
 {
-	ge( 'LeftBar' ).style.transform = '-100%';
+	ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
 	ge( 'LeftBar' ).style.width = '100%';
 	ge( 'LeftBar' ).style.transition = 'transform 0.25s';
-	ge( 'FileBar' ).style.transform = '-100%';
+	ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
 	ge( 'FileBar' ).style.width = '100%';
 	ge( 'FileBar' ).style.transition = 'transform 0.25s';
-	ge( 'RightBar' ).style.transform = '0%';
+	ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
 	ge( 'RightBar' ).style.width = '100%';
 	ge( 'RightBar' ).style.transition = 'transform 0.25s';
 }
@@ -58,9 +58,11 @@ var filebrowserCallbacks = {
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
-		currentViewMode = 'files';
-		Application.updateViewMode();
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		{
+			currentViewMode = 'files';
+			Application.updateViewMode();
+		} );
 		cancelBubble( e );
 	},
 	folderClose( ele, e )
@@ -68,9 +70,11 @@ var filebrowserCallbacks = {
 		if( isMobile && currentViewMode != 'root' ) return;
 		Application.currentDocument = null;
 		Application.browserPath = ele;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile' );
-		currentViewMode = 'files';
-		Application.updateViewMode();
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		{
+			currentViewMode = 'files';
+			Application.updateViewMode();
+		} );	
 		cancelBubble( e );
 	}
 };
@@ -119,10 +123,10 @@ Application.updateViewMode = function()
 	switch( currentViewMode )
 	{
 		case 'root':
-			ge( 'LeftBar' ).style.transform = 'translateX(0)';
-			this.fld.style.transform = 'translateX(0)';
-			ge( 'FileBar' ).style.transform = 'translateX(100%)';
-			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			ge( 'LeftBar' ).style.transform = 'translate3d(0,0,0)';
+			this.fld.style.transform = 'translate3d(0,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'root',
@@ -130,10 +134,10 @@ Application.updateViewMode = function()
 			} );
 			break;
 		case 'files':
-			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
-			this.fld.style.transform = 'translateX(-100%)';
-			ge( 'FileBar' ).style.transform = 'translateX(0%)';
-			ge( 'RightBar' ).style.transform = 'translateX(100%)';
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'files',
@@ -141,10 +145,10 @@ Application.updateViewMode = function()
 			} );
 			break;
 		default:
-			ge( 'LeftBar' ).style.transform = 'translateX(-100%)';
-			this.fld.style.transform = 'translateX(-100%)';
-			ge( 'FileBar' ).style.transform = 'translateX(-100%)';
-			ge( 'RightBar' ).style.transform = 'translateX(0%)';
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'notes',
@@ -154,7 +158,7 @@ Application.updateViewMode = function()
 	}
 }
 
-Application.refreshFilePane = function( method, force )
+Application.refreshFilePane = function( method, force, callback )
 {
 	if( !method ) method = false;
 	
@@ -445,10 +449,12 @@ Application.refreshFilePane = function( method, force )
 							{
 								clearTimeout( f.editTimeout );
 								f.editTimeout = null;
-								currentViewMode = 'default';
-								Application.updateViewMode();
 								Application.currentDocument = f.path;
-								Application.loadFile( f.path );
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
+								} );
 							}
 						}
 					} )( d );
@@ -492,10 +498,12 @@ Application.refreshFilePane = function( method, force )
 							{
 								clearTimeout( f.editTimeout );
 								f.editTimeout = null;
-								currentViewMode = 'default';
-								Application.updateViewMode();
 								Application.currentDocument = f.path;
-								Application.loadFile( f.path );
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
+								} );
 							}
 						}
 					} )( d );
@@ -505,10 +513,12 @@ Application.refreshFilePane = function( method, force )
 					( function( dl ){
 						dl.onclick = function()
 						{
-							currentViewMode = 'default';
-							Application.updateViewMode();
 							Application.currentDocument = dl.path;
-							Application.loadFile( dl.path );
+							Application.loadFile( dl.path, function()
+							{
+								currentViewMode = 'default';
+								Application.updateViewMode();
+							} );
 							Application.refreshFilePane();
 						}
 					} )( d );
@@ -520,6 +530,9 @@ Application.refreshFilePane = function( method, force )
 		{
 			Application.newDocument( { just: 'makenew' } );
 		}
+		
+		if( callback )
+			callback();
 	} );
 }
 
@@ -1144,7 +1157,7 @@ Application.setCurrentDocument = function( pth )
 	} );
 }
 
-Application.loadFile = function( path )
+Application.loadFile = function( path, cbk )
 {
 	this.loading = true;
 	
@@ -1194,6 +1207,8 @@ Application.loadFile = function( path )
 						} );
 						
 						Application.setCurrentDocument( path );
+						
+						if( cbk ) cbk();
 					}
 					loader();
 					
@@ -1213,6 +1228,8 @@ Application.loadFile = function( path )
 					} );
 					
 					Application.refreshFilePane();
+					
+					if( cbk ) cbk();
 				}
 				Application.loading = false;
 			}
@@ -1228,22 +1245,22 @@ Application.statusMessage = function( msg )
 	{
 		clearTimeout( s.timeout );
 		s.style.transition = '';
-		s.style.transform = 'translateX(0)';
+		s.style.transform = 'translate3d(0,0,0)';
 	}
 	s.innerHTML = msg;
 	s.timeout = setTimeout( function()
 	{
 		s.style.transition = 'left,opacity 0.25s,0.25s';
-		s.style.transform = 'translateX(0)';
+		s.style.transform = 'translate3d(0,0,0)';
 		s.style.opacity = 1;
 		s.timeout = setTimeout( function()
 		{
-			s.style.transform = 'translateX(20px)';
+			s.style.transform = 'translate3d(20px,0,0)';
 			s.style.opacity = 0;
 			s.timeout = setTimeout( function()
 			{
 				s.innerHTML = '';
-				s.style.transform = 'translateX(0)';
+				s.style.transform = 'translate3d(0,0,0)';
 				s.style.opacity = 1;
 			}, 250 );
 		}, 250 );
