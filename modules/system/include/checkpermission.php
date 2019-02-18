@@ -17,7 +17,7 @@ if( isset( $args->args->permission ) )
 	if( $row = $SqlDatabase->fetchRow( '
 		SELECT p.*, us.Name AS RoleName FROM FUser us, FUserToGroup fug, FUserGroup ug, FUserRolePermission p
 		WHERE
-			p.RoleID = ug.ID AND fug.UserID = us.ID AND fug.GroupID = ug.ID AND p.Name = "' . $args->args->permission . '"
+			p.RoleID = ug.ID AND fug.UserID = us.ID AND fug.UserGroupID = ug.ID AND p.Name = "' . $args->args->permission . '"
 	' ) )
 	{
 		die( 'ok<!--separate-->{"message":"Permission granted.","response":1,"role":"' . $row[ 'RoleName' ] . '"}' );
