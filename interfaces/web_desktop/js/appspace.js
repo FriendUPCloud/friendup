@@ -8,7 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// App space version of workspace!
+/*******************************************************************************
+*                                                                              *
+* The FriendUP Desktop Environment interface. For use on workstations and      *
+* other places. This is the app space version of workspace!                    *
+*                                                                              *
+*******************************************************************************/
 var _protocol = document.location.href.split( '://' )[0];
 
 /* just make the needed functions available without enven doing stuff in deepestfield */
@@ -39,6 +44,11 @@ Workspace = {
 					eles[z].classList.remove( 'Open' );
 			}
 			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
 		}
 	},
 	init: function( mode )
@@ -160,6 +170,7 @@ Workspace = {
 						'webclient/js/io/friendnetworkextension.js;' +
 						'webclient/js/io/friendnetworkdoor.js;' +
 						'webclient/js/io/friendnetworkapps.js;' +
+						'webclient/js/io/DOS.js;' +
 						'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 						'webclient/js/gui/widget.js;' +
 						'webclient/js/gui/listview.js;' +
@@ -168,9 +179,9 @@ Workspace = {
 						'webclient/js/gui/workspace_menu.js;' +
 						'webclient/js/gui/deepestfield.js;' +
 						'webclient/js/gui/filedialog.js;' +
-						'webclient/js/gui/colorpicker.js;' +
 						'webclient/js/gui/desklet.js;' +
 						'webclient/js/gui/calendar.js;' +
+						'webclient/js/gui/colorpicker.js;' +
 						'webclient/js/gui/workspace_tray.js;' +
 						'webclient/js/media/audio.js;' +
 						'webclient/js/io/p2p.js;' +
@@ -180,7 +191,8 @@ Workspace = {
 						'webclient/js/io/connection.js;' +
 						'webclient/js/friendmind.js;' +
 						'webclient/js/frienddos.js;' +
-						'webclient/js/oo.js';
+						'webclient/js/oo.js;' + 
+						'webclient/js/api/friendAPIv1_2.js';
 					s.onload = function()
 					{
 						// Register no Workspace object
