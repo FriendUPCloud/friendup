@@ -1532,7 +1532,6 @@ function HasClassname( div, classname )
 // Could one day be moved to the View class...
 function CloseView( win, delayed )
 {
-	debugger;
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
 	
