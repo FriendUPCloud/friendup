@@ -1919,6 +1919,19 @@ var View = function( args )
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
+		
+		var app = false;
+		if( window._getAppByAppId )
+		{
+			var app = _getAppByAppId( div.applicationId );
+		}
+		
+		// Set a parent relation to main view
+		if( app && app.mainView	)
+		{
+			self.parentView = app.mainView
+		}
+		
 		// Set initial workspace
 		if( flags.workspace && flags.workspace > 0 )
 		{
