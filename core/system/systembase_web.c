@@ -532,6 +532,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 				}
 				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+				DEBUG("CHECK1END\n");
 			}
 		}
 		
