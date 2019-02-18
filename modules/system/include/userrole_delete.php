@@ -16,14 +16,14 @@ global $SqlDatabase, $Logger, $User;
 if( $level != 'Admin' )
 	die( '404' );
 
-if( !$args->args->name && !$args->args->id )
+if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 {
 	die( 'fail<!--separate-->{"message":"Please specify the name or id of your role.","response":-1}' );
 }
 	
 $d = new dbIO( 'FUserGroup' );
 
-if( $args->args->id )
+if( isset( $args->args->id ) )
 {
 	$d->Load( $args->args->id );
 }

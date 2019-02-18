@@ -10,35 +10,21 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $SqlDatabase, $Logger, $User;
+global $SqlDatabase, $User;
 
-// Must be admin
-if( $level != 'Admin' )
-	die( '404' );
-
-if( !isset( $args->args->name ) && !isset( $args->args->id ) )
+if( isset( $args->args->permission ) )
 {
-	die( 'fail<!--separate-->{"message":"Please specify the name or id of your role.","response":-1}' );
-}
-	
-$d = new dbIO( 'FUserGroup' );
+	if( $row = $SqlDatabase->fetchRow( '
+		SELECT p.*, us.Name AS RoleName FROM FUser us, FUserToGroup fug, FUserGroup ug, FUserRolePermission p
+		WHERE
+			p.RoleID = ug.ID AND fug.UserID = us.ID AND fug.GroupID = ug.ID AND p.Name = "' . $args->args->permission . '"
+	' ) )
+	{
+		die( 'ok<!--separate-->{"message":"Permission granted.","response":1,"role":"' . $row[ 'RoleName' ] . '"}' );
+	}
 
-if( isset( $args->args->id ) )
-{
-	$d->Load( $args->args->id );
 }
-else
-{
-	$d->Type = 'Role';
-	$d->Name = trim( $args->args->name );
-	$d->Load();
-}
+die( 'fail<!--separate-->{"message":"Permission denied.","response":-1}' );
 
-if( $d->ID > 0 )
-{
-	die( 'ok<!--separate-->' . json_encode( $d ) );
-}
-
-die( 'fail<!--separate-->{"message":"Role not found.","response":-1}' );
 
 ?>

@@ -2043,6 +2043,9 @@ if( isset( $args->command ) )
 		case 'userroleget':
 			require( 'modules/system/include/userrole_get.php' );
 			break;
+		case 'checkpermission':
+			require( 'modules/system/include/checkpermission.php' );
+			break;
 		/* End roles */
 		case 'userbetamail':
 		case 'listbetausers':

@@ -16,7 +16,7 @@ global $SqlDatabase, $Logger, $User;
 if( $level != 'Admin' )
 	die( '404' );
 
-if( !$args->args->name )
+if( !isset( $args->args->name ) )
 {
 	die( 'fail<!--separate-->{"message":"Please specify a name for your role.","response":-1}' );
 }
