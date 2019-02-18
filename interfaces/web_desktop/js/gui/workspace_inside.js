@@ -7837,6 +7837,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		uprogress.load();
 
 		//hardcoded pathes here!! TODO!
+		
+		
 		var fileMessage = {
 			'session': Workspace.sessionId,
 			'targetPath': 'Home:Downloads/',

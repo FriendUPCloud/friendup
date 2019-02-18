@@ -1045,337 +1045,390 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
-		{
-			var files = e.dataTransfer.files || e.target.files;
-
-			if( files.length < 1 ) return;
-
-			e.stopPropagation();
-			e.preventDefault();
+		{	
+			var hasDownload = false;
 			
-			var di = winobj;
-			
-			var info = false;
-			if( files && !di.content && ( di.classList.contains( 'Screen' ) || di.classList.contains( 'ScreenContent' ) ) )
+			function makeTransferDirectory()
 			{
-				info = {
-					'session': Workspace.sessionId,
-					'targetPath': 'Home:Downloads/',
-					'targetVolume': 'Home:',
-					'files': files
-				};
-			}
-			else if( files && winobj.fileInfo && winobj.fileInfo.Volume )
-			{
-				info = {
-					'session': Workspace.sessionId,
-					'targetPath': winobj.fileInfo.Path,
-					'targetVolume': winobj.fileInfo.Volume,
-					'files': files
-				};
-			}
-			else
-			{
-				Notify( { title: 'Illegal upload target', text: 'Please upload to the desktop or a disk or folder.' } );
-				return;
-			}
-			
-			// Setup a file copying worker
-			var uworker = new Worker( 'js/io/filetransfer.js' );
-			
-			// Try recursion!
-			// TODO: Enable again when safe!!
-			if( e.dataTransfer.items )
-			{
-				info.files = [];
-				info.queued = true;
-				
-				var num = 0;
-				var finalElements = [];
-				
-				// Wait till the elements are all counted
-				var isBusy = true;
-				var busyTimeout = null;
-				function busyChecker()
+				// Check the destination
+				var d = new Door( 'Home:' );
+				d.getIcons( 'Home:', function( items )
 				{
-					if( busyTimeout )
-						clearTimeout( busyTimeout );
-					busyTimeout = setTimeout( function()
+					for( var a = 0; a < items.length; a++ )
 					{
-						if( isBusy )
+						if( items[a].Path == 'Home:Downloads/' )
 						{
-							isBusy = false;
-							uworker.postMessage( { 
-								recursiveUpdate: true, 
-								executeQueue: true, 
-								session: info.session, 
-								targetPath: info.targetPath, 
-								targetVolume: info.targetVolume 
-							} );
+							hasDownload = true;
+							return;
 						}
-					}, 500 );
-				}
-			
-				function toArray( list )
-				{
-					return Array.prototype.slice.call( list || [], 0 );
-				}
-
-				function countItems( items )
-				{
-					for ( var i = 0, l = items.length; i < l; i++ )
-					{
-						countItem( items[ i ] );
 					}
-				}
-
-				function sendItem( itm )
-				{
-					if( itm.file )
+					if( !hasDownload )
 					{
-						itm.file( function( f )
+						d.dosAction( 'makedir', { path: 'Home:Downloads/' }, function( result )
 						{
-							uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
+							if( result.substr( 0, 3 ) == 'ok<' )
+							{
+								hasDownload = true;
+							}
+							else
+							{
+								Alert( 'Error uploading', 'The Home:Downloads/ folder could not be created.' );
+								hasDownload = 'aborted';
+							}
 						} );
 					}
-					else
-					{
-						uworker.postMessage( { recursiveUpdate: true, item: 'directory', fullPath: itm.fullPath, session: Workspace.sessionId } );
-					}
-					busyChecker();
-				}
-
-				function countEntry( entry )
-				{
-					if( entry.isDirectory )
-					{
-						var dirReader = entry.createReader();
-						var num = 0;
-						var readEntries = function()
-						{
-							dirReader.readEntries( function( results )
-							{
-								sendItem( entry, 'directory' );
-								if( results.length )
-								{
-									for( var a = 0; a < results.length; a++ )
-									{
-										countEntry( results[ a ] );
-									}
-								}
-							} );
-						};
-						readEntries();
-					} 
-					else 
-					{
-						sendItem( entry );
-					}
-				}
-
-				function countItem( item )
-				{
-					var entry = item.getAsEntry || item.webkitGetAsEntry();
-					if( entry.isDirectory )
-					{
-						var dirReader = entry.createReader();
-						var num = 0;
-						var readEntries = function()
-						{
-							dirReader.readEntries( function( results )
-							{
-								sendItem( entry, 'directory' );
-								if( results.length )
-								{
-									for( var a = 0; a < results.length; a++ )
-									{
-										countEntry( results[ a ] );
-									}
-								}
-							} );
-						};
-						readEntries();
-					} 
-					else 
-					{
-						sendItem( entry );
-					}
-				}
-				countItems( e.dataTransfer.items );
-			}
-
-			if( info )
-			{
-				// TODO: to detect read only filesystem!
-				if( info.targetVolume == 'System:' || info.targetPath.split( ':' )[0] == 'System' )
-				{
-					Alert( i18n( 'i18n_read_only_filesystem' ), i18n( 'i18n_read_only_fs_desc' ) );
-					return false;
-				}
-
-				// Open window
-				var w = new View( {
-					title:  i18n( 'i18n_copying_files' ),
-					width:  320,
-					height: 100
 				} );
+			}
+			
+			// Make sure we have it
+			makeTransferDirectory();
+			// Do the actual transfer
+			doTheTransfer();
+			
+			// Prevent default behavior
+			e.preventDefault();
+			
+			// When everything is ready start the transfer
+			function doTheTransfer()
+			{
+				var permItems = e.dataTransfer ? e.dataTransfer.items : null;
+				var files = e.dataTransfer.files || e.target.files;
 
-				var uprogress = new File( 'templates/file_operation.html' );
-
-				uprogress.connectedworker = uworker;
-
-				uprogress.onLoad = function( data )
+				if( files.length < 1 ) 
 				{
-					data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
-					w.setContent( data );
-
-					w.connectedworker = this.connectedworker;
-					w.onClose = function()
+					Notify( { title: 'Nothing to upload', text: 'The upload data was incomplete.' } );
+					return;
+				}
+			
+				var di = winobj;
+			
+				var info = false;
+				if( files && !di.content && ( di.classList.contains( 'Screen' ) || di.classList.contains( 'ScreenContent' ) ) )
+				{
+					info = {
+						'session': Workspace.sessionId,
+						'targetPath': 'Home:Downloads/',
+						'targetVolume': 'Home:',
+						'files': files
+					};
+				}
+				else if( files && winobj.fileInfo && winobj.fileInfo.Volume )
+				{
+					info = {
+						'session': Workspace.sessionId,
+						'targetPath': winobj.fileInfo.Path,
+						'targetVolume': winobj.fileInfo.Volume,
+						'files': files
+					};
+				}
+				else
+				{
+					Notify( { title: 'Illegal upload target', text: 'Please upload to the desktop or a disk or folder.' } );
+					return;
+				}
+			
+				// Setup a file copying worker
+				var uworker = new Worker( 'js/io/filetransfer.js' );
+			
+				// Try recursion!
+				// TODO: Enable again when safe!!
+				if( permItems )
+				{
+					info.files = [];
+					info.queued = true;
+				
+					var num = 0;
+					var finalElements = [];
+				
+					// Wait till the elements are all counted
+					var isBusy = true;
+					var busyTimeout = null;
+					function busyChecker()
 					{
-						Workspace.diskNotification( [ winobj ], 'refresh' );
-						if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
+						if( busyTimeout || hasDownload == false || hasDownload == 'aborted' )
+							clearTimeout( busyTimeout );
+						// Aborted
+						if( hasDownload == 'aborted' )
+							return;
+						busyTimeout = setTimeout( function()
+						{
+							if( isBusy )
+							{
+								isBusy = false;
+								uworker.postMessage( { 
+									recursiveUpdate: true, 
+									executeQueue: true, 
+									session: info.session, 
+									targetPath: info.targetPath, 
+									targetVolume: info.targetVolume 
+								} );
+							}
+						}, 500 );
+					}
+			
+					function toArray( list )
+					{
+						return Array.prototype.slice.call( list || [], 0 );
 					}
 
-					uprogress.myview = w;
-
-					// Setup progress bar
-					var eled = w.getWindowElement().getElementsByTagName( 'div' );
-					var groove = false, bar = false, frame = false, progressbar = false;
-					for( var a = 0; a < eled.length; a++ )
+					function countItems( items )
 					{
-						if( eled[a].className )
+						for ( var i = 0, l = items.length; i < l; i++ )
 						{
-							var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
-							for( var b = 0; b < types.length; b++ )
+							countItem( items[ i ] );
+						}
+					}
+
+					function sendItem( itm )
+					{
+						if( itm.file )
+						{
+							console.log( 'Posting file: ', itm.file );
+							itm.file( function( f )
 							{
-								if( eled[a].className.indexOf( types[b] ) == 0 )
+								uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
+							} );
+						}
+						else
+						{
+							console.log( 'Making directory: ', itm.fullPath );
+							uworker.postMessage( { recursiveUpdate: true, item: 'directory', fullPath: itm.fullPath, session: Workspace.sessionId } );
+						}
+						busyChecker();
+					}
+
+					function countEntry( entry )
+					{
+						if( entry.isDirectory )
+						{
+							var dirReader = entry.createReader();
+							var num = 0;
+							var readEntries = function()
+							{
+								dirReader.readEntries( function( results )
 								{
-									switch( types[b] )
+									sendItem( entry, 'directory' );
+									if( results.length )
 									{
-										case 'ProgressBar': progressbar    = eled[a]; break;
-										case 'Groove':      groove         = eled[a]; break;
-										case 'Frame':       frame          = eled[a]; break;
-										case 'Bar':         bar            = eled[a]; break;
-										case 'Info':		uprogress.info = eled[a]; break;
+										for( var a = 0; a < results.length; a++ )
+										{
+											countEntry( results[ a ] );
+										}
 									}
-									break;
+								} );
+							};
+							readEntries();
+						} 
+						else 
+						{
+							sendItem( entry );
+						}
+					}
+
+					function countItem( item )
+					{
+						var entry = item.getAsEntry || item.webkitGetAsEntry();
+						if( entry.isDirectory )
+						{
+							var dirReader = entry.createReader();
+							var num = 0;
+							var readEntries = function()
+							{
+								dirReader.readEntries( function( results )
+								{
+									sendItem( entry, 'directory' );
+									if( results.length )
+									{
+										for( var a = 0; a < results.length; a++ )
+										{
+											countEntry( results[ a ] );
+										}
+									}
+								} );
+							};
+							readEntries();
+						} 
+						else 
+						{
+							sendItem( entry );
+						}
+					}
+					countItems( permItems );
+				}
+
+				if( info )
+				{
+					// TODO: to detect read only filesystem!
+					if( info.targetVolume == 'System:' || info.targetPath.split( ':' )[0] == 'System' )
+					{
+						Alert( i18n( 'i18n_read_only_filesystem' ), i18n( 'i18n_read_only_fs_desc' ) );
+						return false;
+					}
+
+					// Open window
+					var w = new View( {
+						title:  i18n( 'i18n_copying_files' ),
+						width:  320,
+						height: 100
+					} );
+
+					var uprogress = new File( 'templates/file_operation.html' );
+
+					uprogress.connectedworker = uworker;
+
+					uprogress.onLoad = function( data )
+					{
+						data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
+						w.setContent( data );
+
+						w.connectedworker = this.connectedworker;
+						w.onClose = function()
+						{
+							Workspace.diskNotification( [ winobj ], 'refresh' );
+							if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
+						}
+
+						uprogress.myview = w;
+
+						// Setup progress bar
+						var eled = w.getWindowElement().getElementsByTagName( 'div' );
+						var groove = false, bar = false, frame = false, progressbar = false;
+						for( var a = 0; a < eled.length; a++ )
+						{
+							if( eled[a].className )
+							{
+								var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
+								for( var b = 0; b < types.length; b++ )
+								{
+									if( eled[a].className.indexOf( types[b] ) == 0 )
+									{
+										switch( types[b] )
+										{
+											case 'ProgressBar': progressbar    = eled[a]; break;
+											case 'Groove':      groove         = eled[a]; break;
+											case 'Frame':       frame          = eled[a]; break;
+											case 'Bar':         bar            = eled[a]; break;
+											case 'Info':		uprogress.info = eled[a]; break;
+										}
+										break;
+									}
 								}
 							}
 						}
-					}
 
 
-					//activate cancel button... we assume we only hav eone button in the template
-					var cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
+						//activate cancel button... we assume we only hav eone button in the template
+						var cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
 
-					cb.mywindow = w;
-					cb.onclick = function( e )
-					{
-						uworker.terminate(); // End the copying process
-						this.mywindow.close();
-					}
-
-					// Only continue if we have everything
-					if( progressbar && groove && frame && bar )
-					{
-						progressbar.style.position = 'relative';
-						frame.style.width = '100%';
-						frame.style.height = '40px';
-						groove.style.position = 'absolute';
-						groove.style.width = '100%';
-						groove.style.height = '30px';
-						groove.style.top = '0';
-						groove.style.left = '0';
-						bar.style.position = 'absolute';
-						bar.style.width = '2px';
-						bar.style.height = '30px';
-						bar.style.top = '0';
-						bar.style.left = '0';
-
-						// Preliminary progress bar
-						bar.total = files.length;
-						bar.items = files.length;
-						uprogress.bar = bar;
-					}
-					uprogress.loaded = true;
-					uprogress.setProgress( 0 );
-				}
-
-				// For the progress bar
-				uprogress.setProgress = function( percent )
-				{
-					// only update display if we are loaded...
-					// otherwise just drop and wait for next call to happen ;)
-					if( uprogress.loaded )
-					{
-						uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
-						uprogress.bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
-						Math.floor( percent ) + '%</div>';
-					}
-				};
-
-				// show notice that we are transporting files to the server....
-				uprogress.setUnderTransport = function()
-				{
-					uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
-						'Transferring files to target volume...</div>';
-					uprogress.myview.setFlag( 'height', 125 );
-				}
-
-				// An error occurred
-				uprogress.displayError = function( msg )
-				{
-					uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
-					uprogress.myview.setFlag( 'height', 140 );
-				}
-
-				// Error happened!
-				uworker.onerror = function( err )
-				{
-					console.log( 'Upload worker error #######' );
-					console.log( err );
-					console.log( '###########################' );
-				};
-				uworker.onmessage = function( e )
-				{
-					if( e.data['progressinfo'] == 1 )
-					{
-						if( e.data['uploadscomplete'] == 1 )
+						cb.mywindow = w;
+						cb.onclick = function( e )
 						{
-							w.close();
-							if( winobj && winobj.refresh )
-								winobj.refresh();
-
-							Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
-							{
-								OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
-							} );
-							return true;
+							uworker.terminate(); // End the copying process
+							this.mywindow.close();
 						}
-						else if( e.data['progress'] )
+
+						// Only continue if we have everything
+						if( progressbar && groove && frame && bar )
 						{
-							uprogress.setProgress( e.data['progress'] );
-							if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
+							progressbar.style.position = 'relative';
+							frame.style.width = '100%';
+							frame.style.height = '40px';
+							groove.style.position = 'absolute';
+							groove.style.width = '100%';
+							groove.style.height = '30px';
+							groove.style.top = '0';
+							groove.style.left = '0';
+							bar.style.position = 'absolute';
+							bar.style.width = '2px';
+							bar.style.height = '30px';
+							bar.style.top = '0';
+							bar.style.left = '0';
+
+							// Preliminary progress bar
+							bar.total = files.length;
+							bar.items = files.length;
+							uprogress.bar = bar;
+						}
+						uprogress.loaded = true;
+						uprogress.setProgress( 0 );
+					}
+
+					// For the progress bar
+					uprogress.setProgress = function( percent )
+					{
+						// only update display if we are loaded...
+						// otherwise just drop and wait for next call to happen ;)
+						if( uprogress.loaded )
+						{
+							uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
+							uprogress.bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
+							Math.floor( percent ) + '%</div>';
+						}
+					};
+
+					// show notice that we are transporting files to the server....
+					uprogress.setUnderTransport = function()
+					{
+						uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+							'Transferring files to target volume...</div>';
+						uprogress.myview.setFlag( 'height', 125 );
+					}
+
+					// An error occurred
+					uprogress.displayError = function( msg )
+					{
+						uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
+						uprogress.myview.setFlag( 'height', 140 );
+					}
+
+					// Error happened!
+					uworker.onerror = function( err )
+					{
+						console.log( 'Upload worker error #######' );
+						console.log( err );
+						console.log( '###########################' );
+					};
+					uworker.onmessage = function( e )
+					{
+						if( e.data['progressinfo'] == 1 )
+						{
+							if( e.data['uploadscomplete'] == 1 )
 							{
-								uprogress.setUnderTransport();
+								w.close();
+								if( winobj && winobj.refresh )
+									winobj.refresh();
+
+								Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
+								{
+									OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
+								} );
+								return true;
 							}
+							else if( e.data['progress'] )
+							{
+								uprogress.setProgress( e.data['progress'] );
+								if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
+								{
+									uprogress.setUnderTransport();
+								}
+							}
+
+						}
+						else if( e.data['error'] == 1 )
+						{
+							uprogress.displayError(e.data['errormessage']);
 						}
 
 					}
-					else if( e.data['error'] == 1 )
-					{
-						uprogress.displayError(e.data['errormessage']);
-					}
 
+					uprogress.load();
+
+					uworker.postMessage( info );
 				}
-
-				uprogress.load();
-
-				uworker.postMessage( info );
-			}
-			else
-			{
-				console.log( 'We got nothing.', this );
+				else
+				{
+					console.log( 'We got nothing.', this );
+				}
 			}
 		}
 
