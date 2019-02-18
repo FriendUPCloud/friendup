@@ -1086,6 +1086,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			doTheTransfer();
 			
 			// Prevent default behavior
+			e.stopPropagation();
 			e.preventDefault();
 			
 			// When everything is ready start the transfer
