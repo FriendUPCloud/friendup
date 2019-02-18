@@ -95,14 +95,14 @@
 			
 			$server = getServerSettings( $dbo );
 			
-			if( !( $server && $server->host && $server->user_template_id && $server->admin_template_id ) )
+			if( !( $server && $server->host && $server->parent_workgroup_id && $server->user_template_id && $server->admin_template_id ) )
 			{
 				die( 'ERROR! Server settings is missing! doormanoffice/settings 
 {
 	"host":'.$server->host.',
+	"parent_workgroup_id":'.$server->parent_workgroup_id.',
 	"user_template_id":'.$server->user_template_id.',
-	"admin_template_id":'.$server->admin_template_id.',
-	"parent_workgroup_id":'.$server->parent_workgroup_id.'
+	"admin_template_id":'.$server->admin_template_id.'
 } 
 				' );
 			}
@@ -174,7 +174,7 @@
 						' ) )
 						{
 							$rs = $dbo->Query( '
-							INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime` ) 
+							INSERT INTO FUser ( `Name`, `Password`, `PublicKey`, `Fullname`, `Email`, `LoggedTime`, `CreatedTime`, `LoginTime`, `UniqueID` ) 
 							VALUES ('
 								. ' \'' . mysqli_real_escape_string( $dbo->_link, $json->username . '#' . $data->User->ID ) . '\'' 
 								. ',\'' . mysqli_real_escape_string( $dbo->_link, '{S6}' . hash( 'sha256', generateDoormanUserPassword( $json->password ) )  ) . '\'' 
@@ -184,8 +184,11 @@
 								. ','   . time() 
 								. ','   . time() 
 								. ','   . time() 
+								. ',\'' . mysqli_real_escape_string( $dbo->_link, generateDoormanUniqueID( $json->username . '#' . $data->User->ID ) ) . '\'' 
 							.') ' );
-						
+							
+							
+							
 							$udata = $dbo->fetchObject( '
 								SELECT 
 									fu.* 
@@ -217,7 +220,7 @@
 					
 					if( !$userdata ) 
 					{ 
-						die( 'CORRUPT FRIEND INSTALL! Could not get user data.' ); 
+						die( 'CORRUPT FRIEND INSTALL! Could not get user data. ' . $dbo->_lastError ); 
 					}
 					
 					// TODO: Check if firstlogin has allready been inited
@@ -242,7 +245,12 @@
 							{
 								die( 'First Login Setup Error! Could not create admin template!' );
 							}
-					
+							
+							if( !adminWorkgroupSetup( $server->parent_workgroup_id, $userdata->ID, $dbo ) )
+							{
+								die( 'First Login Setup Error! Could not add Admin to parent workgroup!' );
+							}
+							
 							break;
 				
 						default:
@@ -299,7 +307,7 @@
 				}
 				else
 				{
-					die( 'fail ... could not login to doormanoffice .....' . $server->host . '/admin.php?module=restapi ' . json_encode( array( 'username' => $json->username, 'password' => $json->password ) ) . ' ' . $auth );
+					die( 'fail ... could not login to doormanoffice .....' . $server->host . '/admin.php?module=restapi ' . json_encode( array( 'username' => $json->username, 'password' => '******' ) ) . ' ' . $auth );
 				}
 				
 			}
@@ -389,6 +397,37 @@
 		return false;
 	}
 	
+	function adminWorkgroupSetup( $groupid, $uid, $dbo )
+	{
+		if( $groupid && $uid && $dbo )
+		{
+			if( $rs = $dbo->fetchObject( '
+				SELECT 
+					gr.* 
+				FROM 
+					FUserGroup gr, 
+					FUserToGroup ug 
+				WHERE 
+						gr.ID = ' . intval( $groupid ) . ' 
+					AND gr.Type = \'Workgroup\' 
+					AND ug.UserGroupID = gr.ID 
+					AND ug.UserID = ' . intval( $uid ) . ' 
+			' ) )
+			{
+				return true;
+			}
+			
+			if( $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `ID` = '. intval( $groupid ) .' AND `Type`=\'Workgroup\' ' ) )
+			{
+				// add user to admin workgroup....
+				$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $uid ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `ID` = '. intval( $groupid ) .' AND `Type` = \'Workgroup\' ) );' );
+			
+				return true;
+			}
+		}
+		
+		return false;
+	}
 	
 	function firstLoginSetup( $setupid, $uid, $dbo )
 	{
@@ -713,12 +752,16 @@
 		return false;
 	}
 	
+	function generateDoormanUniqueID( $uniquedata )
+	{
+		return hash( 'sha256', ( time().$uniquedata.rand(0,999).rand(0,999).rand(0,999) ) );
+	}
+	
 	function generateDoormanUserPassword( $input )
 	{
 		// TODO: Look at this and see if everyone connected via this method is supposed to be unique ...
 		
-		$ret = 'HASHED' . hash( 'sha256', 'DOORMAN' . $input );
-		return $ret;
+		return ( 'HASHED' . hash( 'sha256', 'DOORMAN' . $input ) );
 	}
 	
 	function remoteAuth( $url, $args = false, $method = 'POST', $headers = false )
