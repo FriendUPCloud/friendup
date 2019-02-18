@@ -5699,10 +5699,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( cm.windowObject.parentView )
 			{
 				var pv = cm.windowObject.parentView.windowObject;
-				if( pv )
-				{
-					cm.windowObject.close();
-				}
 				pv.activate();
 				return;
 			}	
