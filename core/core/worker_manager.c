@@ -235,10 +235,10 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		{
 			//Log( FLOG_INFO, "[WorkManagerRun] All workers are busy, waiting\n");
 
-			if( testquit++ > 10 )
+			if( testquit++ > 30 )
 			{
 				Log( FLOG_ERROR, "[WorkManagerRun] Worker dispatch timeout, dropping client\n");
-				
+				pthread_yield();	// try to finish other tasks
 				//exit( 0 ); // <- die! only for debug
 				testquit = 0;
 				//usleep( 15000 );
