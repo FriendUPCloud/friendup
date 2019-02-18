@@ -1010,6 +1010,10 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 							sendNotif = FALSE;
 						}
 					}
+					if( uses == NULL )
+					{
+						sendNotif = FALSE;
+					}
 			
 					if( sendNotif == TRUE )
 					{

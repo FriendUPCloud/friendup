@@ -7837,6 +7837,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		uprogress.load();
 
 		//hardcoded pathes here!! TODO!
+		
+		
 		var fileMessage = {
 			'session': Workspace.sessionId,
 			'targetPath': 'Home:Downloads/',
@@ -8660,10 +8662,13 @@ Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return;
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
+	
+	mobileDebug( 'What? ' + msg, true );
+	
 	if( !msg ) return;
 	try
 	{
-		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')', true );
+		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
 		msg = JSON.parse( msg );
 		if( !msg ) return;
 		

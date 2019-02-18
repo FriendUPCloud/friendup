@@ -303,6 +303,9 @@ function apiWrapper( event, force )
 						{
 							for( var a = 0; a < out.length; a++ )
 							{
+								// Don't send to self
+								if( out[ a ].app.applicationId == msg.applicationId )
+									continue;
 								( function( o )
 								{
 									o.app.sendMessage( {
