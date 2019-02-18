@@ -17,13 +17,36 @@ if( isset( $args->args->permission ) )
 	if( $row = $SqlDatabase->fetchRow( '
 		SELECT p.*, us.Name AS RoleName FROM FUser us, FUserToGroup fug, FUserGroup ug, FUserRolePermission p
 		WHERE
-			p.RoleID = ug.ID AND fug.UserID = us.ID AND fug.UserGroupID = ug.ID AND p.Name = "' . $args->args->permission . '"
+			p.RoleID = ug.ID AND fug.UserID = us.ID AND fug.UserGroupID = ug.ID AND p.Name = "' . mysqli_real_escape_string( $args->args->permission ) . '"
 	' ) )
 	{
+		if( trim( $row[ 'Data' ] ) )
+		{
+			// Validate the data
+			if( isset( $args->args->data ) && handlePermissionData( $args->args->permission, $row[ 'Data' ], $args->args->data ) )
+			{
+				die( 'ok<!--separate-->{"message":"Permission granted.","response":1,"role":"' . $row[ 'RoleName' ] . '"}' );
+			}
+			else
+			{
+				die( 'fail<!--separate-->{"message":"Permission denied.","response":-1}' );
+			}
+		}
 		die( 'ok<!--separate-->{"message":"Permission granted.","response":1,"role":"' . $row[ 'RoleName' ] . '"}' );
 	}
 
 }
+
+function handlePermissionData( $permission, $data, $userData )
+{
+	if( $data == $userData )
+	{
+		return true;
+	}
+	return false;
+}
+
+
 die( 'fail<!--separate-->{"message":"Permission denied.","response":-1}' );
 
 
