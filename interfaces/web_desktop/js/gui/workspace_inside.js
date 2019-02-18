@@ -8662,10 +8662,13 @@ Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return;
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
+	
+	mobileDebug( 'What?' + msg );
+	
 	if( !msg ) return;
 	try
 	{
-		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')', true );
+		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
 		msg = JSON.parse( msg );
 		if( !msg ) return;
 		
