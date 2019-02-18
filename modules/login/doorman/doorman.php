@@ -14,13 +14,9 @@
 		
 		$fcrypt = new fcrypto(); $privateKey = false; $json = false;
 		
-		if( ( $file1 = file_exists( 'cfg/crt/key.pem' ) ) || ( $file2 = file_exists( 'cfg/crt/server_encryption_key.pem' ) ) )
+		if( $file2 = file_exists( 'cfg/crt/server_encryption_key.pem' ) )
 		{
-			if( $file1 && ( $key = file_get_contents( 'cfg/crt/key.pem' ) ) )
-			{
-				$privateKey = $key;
-			}
-			else if( $file2 && ( $keys = file_get_contents( 'cfg/crt/server_encryption_key.pem' ) ) )
+			if( $file2 && ( $keys = file_get_contents( 'cfg/crt/server_encryption_key.pem' ) ) )
 			{
 				if( strstr( $keys, '-----' . "\r\n" . '-----' ) && ( $keys = explode( '-----' . "\r\n" . '-----', $keys ) ) )
 				{
@@ -338,11 +334,7 @@
 		
 		$publickey = '';
 		
-		if( file_exists( 'cfg/crt/key.pub' ) )
-		{
-			$publickey = file_get_contents( 'cfg/crt/key.pub' );
-		}
-		else if( file_exists( 'cfg/crt/server_encryption_key.pem' ) )
+		if( file_exists( 'cfg/crt/server_encryption_key.pem' ) )
 		{
 			if( $keys = file_get_contents( 'cfg/crt/server_encryption_key.pem' ) )
 			{

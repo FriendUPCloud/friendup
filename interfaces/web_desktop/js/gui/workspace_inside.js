@@ -3689,7 +3689,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var w = movableWindows[a];
 			if( w.content ) w = w.content;
-			if( w.fileInfo )
+			if( w.fileInfo && w.fileInfo.Volume != 'Mountlist:' )
 			{
 				var found = false;
 				for( var b in this.icons )
@@ -5645,6 +5645,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			};
 		}
 		
+		// Just close app menu
+		if( Workspace.appMenu && document.body.classList.contains( 'AppsShowing' ) )
+		{
+			return Workspace.appMenu.onclick();
+		}
+		
 		// Update view history with current application id
 		if( currentMovable )
 		{
@@ -5656,6 +5662,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				cm.windowObject.sendMessage( {
 					command: 'mobilebackbutton'
 				} );
+				// Check with standard functionality
 				if( window._getAppByAppId )
 				{
 					var app = _getAppByAppId( cm.applicationId );
@@ -5676,6 +5683,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( cm.windowObject.parentView )
 				{
 					cm.windowObject.parentView.activate();
+					return;
+				}
+				if( app.mainView )
+				{
+					app.mainView.activate();
 					return;
 				}
 				this.mobileViews.application = cm.applicationId;
@@ -5717,7 +5729,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			}
 		}
-		_DeactivateWindows();
 	},
 	// Get a list of all applications ------------------------------------------
 	listApplications: function()
@@ -8800,7 +8811,7 @@ else
 // Debug blob:
 if( isMobile )
 {
-	/*var debug = document.createElement( 'div' );
+	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
@@ -8811,7 +8822,7 @@ if( isMobile )
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
-	document.body.appendChild( debug );*/
+	document.body.appendChild( debug );
 }
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
