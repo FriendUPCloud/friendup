@@ -1138,9 +1138,6 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			
 				DEBUG("Send message to : >%s<\n", startToken );
 			
-<<<<<<< HEAD
-				int pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-=======
 				int pushContentLen = 0;
 				if( extras != NULL && strlen( extras ) > 0 )
 				{
@@ -1160,7 +1157,6 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 				{
 					pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
 				}
->>>>>>> dev
 			
 				char *tok = TokenToBinary( startToken );
 				DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
