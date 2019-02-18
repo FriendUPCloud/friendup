@@ -1141,7 +1141,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 				int pushContentLen = 0;
 				if( extras != NULL && strlen( extras ) > 0 )
 				{
-					int extrasSize = 0; 
+					int extrasSize = strlen( extras ); 
 					char *encmsg = Base64Encode( (const unsigned char *)extras, extrasSize, &extrasSize );
 					if( encmsg != NULL )
 					{
