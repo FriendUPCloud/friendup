@@ -1130,7 +1130,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 								time_t timestamp = time(NULL);
 								if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
 								{
-
 									int size = 0;
 									if( pos == 0 )
 									{
