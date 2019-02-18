@@ -479,6 +479,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 			
 			if( FRIEND_MUTEX_LOCK( &s->us_Mutex ) == 0 )
 			{
+				DEBUG("Session locked\n");
 				if( ses->us_DeviceIdentity != NULL )
 				{
 					if( s->us_UserID == ses->us_UserID && strcmp( s->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
