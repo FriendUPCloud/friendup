@@ -231,7 +231,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 		DEBUG("[MountFS] %s: Start - MountFS before lock for user..\n", usr->u_Name );
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
 	{
 		FHandler *filesys = NULL;
 		DOSDriver *filedd = NULL;
@@ -309,7 +309,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 				FERROR("[ERROR]: %s - No name passed\n", usr->u_Name );
 			}
 			l->sl_Error = FSys_Error_NOName;
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 			if( type != NULL ){ FFree( type );}
 			return FSys_Error_NOName;
 		}
@@ -318,7 +318,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 		{
 			FERROR("[ERROR]: No user or usergroup passed, cannot put device on mountlist\n" );
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 			if( type != NULL ){ FFree( type );}
 			return FSys_Error_NOUser;
 		}
@@ -417,7 +417,7 @@ AND f.Name = '%s'",
 					}
 					if( ( res = sqllib->Query( sqllib, temptext ) ) == NULL )
 					{
-						FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+						//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 						if( type != NULL ){ FFree( type );}
 						l->sl_Error = FSys_Error_SelectFail;
 						l->LibrarySQLDrop( l, sqllib );
@@ -428,7 +428,7 @@ AND f.Name = '%s'",
 				else
 				{
 					sqllib->FreeResult( sqllib, res );
-					FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+					//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
 					l->LibrarySQLDrop( l, sqllib );
@@ -610,6 +610,7 @@ AND f.Name = '%s'",
 
 		File *f = NULL;
 	
+		FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
 		// super user feauture	
 		if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
 		{
@@ -642,10 +643,12 @@ AND f.Name = '%s'",
 
 					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					
+					FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 					goto merror;
 				}
 			}
 		}
+		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 		//
 		// If FHandler not found return NULL
 	
@@ -693,7 +696,7 @@ AND f.Name = '%s'",
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	
 		// Using sentinel?
 		User *mountUser = usr;
@@ -719,7 +722,7 @@ AND f.Name = '%s'",
 			}
 		}
 		
-		if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+		//if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
 		{
 			if( retFile != NULL )
 			{
@@ -818,7 +821,7 @@ AND f.Name = '%s'",
 						// User doesn't have this disk, add it!
 						if( search == NULL )
 						{
-							FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+							//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 							
 							// Try to mount the device with all privileges
 							//DEBUG( "[MountFS] Doing it with session %s\n", retFile->f_SessionID );
@@ -831,10 +834,10 @@ AND f.Name = '%s'",
 							// Tell user!
 							UserNotifyFSEvent2( l, tmpUser, "refresh", "Mountlist:" );
 							
-							if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) != 0 )
+							//if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) != 0 )
 							{
-								DEBUG("Go to error\n");
-								goto merror;
+								//DEBUG("Go to error\n");
+								//goto merror;
 							}
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
@@ -852,11 +855,11 @@ AND f.Name = '%s'",
 			}
 		}
 		
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 		// Send notify to user and all his sessions
 		UserNotifyFSEvent2( l, usr, "refresh", "Mountlist:" );
 		
-		FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
+		//FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
 		
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}
@@ -869,7 +872,7 @@ AND f.Name = '%s'",
 	if( uname != NULL ) FFree( uname );
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
-	FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+	//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	
 	return 0;
 	
@@ -882,7 +885,7 @@ merror:
 	if( uname != NULL ) FFree( uname );
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
-	FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+	//FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 
 	return l->sl_Error;
 }
@@ -1633,10 +1636,9 @@ WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
  * Send notification to users when filesystem event will happen
  *
  * @param sb pointer to SystemBase
- * @param user user
+ * @param u user
  * @param evt event type (char *)
  * @param path path to file
- * @return nothing
  */
 
 void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
