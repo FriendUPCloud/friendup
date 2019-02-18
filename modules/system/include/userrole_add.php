@@ -12,8 +12,28 @@
 
 global $SqlDatabase, $Logger, $User;
 
+// Must be admin
+if( $level != 'Admin' )
+	die( '404' );
+
+if( !$args->args->name )
+{
+	die( 'fail<!--separate-->{"message":"Please specify a name for your role.","response":-1}' );
+}
+	
+$d = new dbIO( 'FUserGroup' );
+$d->Type = 'Role';
+$d->Name = trim( $args->args->name );
+if( $d->Load() )
+{
+	die( 'fail<!--separate-->{"message":"Role already exists.","response":-1}' );
+}
+$d->Save();
+if( $d->ID > 0 )
+{
+	die( 'ok<!--separate-->{"message":"Role created.","response":1}' );
+}
+
 die( 'fail' );
-
-
 
 ?>
