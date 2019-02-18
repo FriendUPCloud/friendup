@@ -5658,6 +5658,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			FocusOnNothing();
 			if( cm.applicationId )
 			{
+				console.log( 'Checking back!' );
 				// Tell the application
 				cm.windowObject.sendMessage( {
 					command: 'mobilebackbutton'
@@ -5674,6 +5675,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 						else
 						{
+							console.log( 'Activating back!' );
 							_ActivateWindow( app.mainView.content.parentNode );
 						}
 						return;
@@ -5682,11 +5684,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				// Just go back
 				if( cm.windowObject.parentView )
 				{
+					console.log( 'Activating parent' );
 					cm.windowObject.parentView.activate();
 					return;
 				}
 				if( app.mainView )
 				{
+					console.log( 'Activating main view' );
 					app.mainView.activate();
 				}
 				this.mobileViews.application = cm.applicationId;
@@ -5697,6 +5701,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					if( cm.windowObject.dialog )
 					{
+						console.log( 'Closing window object' );
 						return cm.windowObject.close();
 					}
 					else
@@ -5728,6 +5733,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			}
 		}
+		console.log( 'Got here, no match' );
 		_DeactivateWindows();
 	},
 	// Get a list of all applications ------------------------------------------
