@@ -2030,6 +2030,23 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"checkuserbyname failed"}'  );
 			break;
+		/* Roles */
+		case 'userroleadd':
+			require( 'modules/system/include/userrole_add.php' );
+			break;
+		case 'userroledelete':
+			require( 'modules/system/include/userrole_delete.php' );
+			break;
+		case 'userroleupdate':
+			require( 'modules/system/include/userrole_update.php' );
+			break;
+		case 'userroleget':
+			require( 'modules/system/include/userrole_get.php' );
+			break;
+		case 'checkpermission':
+			require( 'modules/system/include/checkpermission.php' );
+			break;
+		/* End roles */
 		case 'userbetamail':
 		case 'listbetausers':
 			require( 'modules/system/include/betaimport.php' );
