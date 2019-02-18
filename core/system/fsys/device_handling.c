@@ -1643,6 +1643,7 @@ WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
 
 void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 {
+	return; //test
 	DEBUG("[UserNotifyFSEvent2] start\n");
 	// Produce message
 	char *prototype = "{\"type\":\"msg\",\"data\":{\"type\":\"\",\"path\":\"\"}}";
@@ -1689,11 +1690,12 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
  * @param sb pointer to SystemBase
  * @param evt event type (char *)
  * @param path path to file
- * @return nothing
  */
 
 void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
 {
+	return; //test
+	
 	// Find the devname of path
 	int pass = 0, i = 0;
 	char *devName = NULL;
@@ -1750,7 +1752,6 @@ void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
  * @param usr pointer to user which call this function
  * @param row database row entryf
  * @param mountUser pointer to user which is mounting device
- * @param param to user session which called function
  * @return success (0) or fail value (not equal to 0)
  */
 int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attribute__((unused)))
@@ -1877,7 +1878,7 @@ int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attr
 				{TAG_DONE, TAG_DONE}
 			};
 			
-			pthread_mutex_unlock( &l->sl_InternalMutex );
+			//pthread_mutex_unlock( &l->sl_InternalMutex );
 			
 			// Using sentinel?
 			/*
