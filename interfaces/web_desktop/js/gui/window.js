@@ -1929,7 +1929,7 @@ var View = function( args )
 		// Set a parent relation to main view
 		if( app && app.mainView	)
 		{
-			self.parentView = app.mainView
+			self.parentView = app.mainView;
 		}
 		
 		// Set initial workspace

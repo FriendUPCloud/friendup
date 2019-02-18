@@ -5685,6 +5685,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					cm.windowObject.parentView.activate();
 					return;
 				}
+				if( app.mainView )
+				{
+					app.mainView.activate();
+				}
 				this.mobileViews.application = cm.applicationId;
 			}
 			else if( cm.content.directoryview )
