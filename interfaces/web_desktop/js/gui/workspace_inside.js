@@ -8663,7 +8663,7 @@ Workspace.receivePush = function( jsonMsg )
 	if( !isMobile ) return;
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
 	
-	mobileDebug( 'What?' + msg );
+	mobileDebug( 'What? ' + msg, true );
 	
 	if( !msg ) return;
 	try
