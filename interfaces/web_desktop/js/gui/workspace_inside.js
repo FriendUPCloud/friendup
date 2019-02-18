@@ -3689,7 +3689,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var w = movableWindows[a];
 			if( w.content ) w = w.content;
-			if( w.fileInfo )
+			if( w.fileInfo && w.fileInfo.Volume != 'Mountlist:' )
 			{
 				var found = false;
 				for( var b in this.icons )
@@ -5645,6 +5645,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			};
 		}
 		
+		// Just close app menu
+		if( Workspace.appMenu && document.body.classList.contains( 'AppsShowing' ) )
+		{
+			return Workspace.appMenu.onclick();
+		}
+		
 		// Update view history with current application id
 		if( currentMovable )
 		{
@@ -5656,6 +5662,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				cm.windowObject.sendMessage( {
 					command: 'mobilebackbutton'
 				} );
+				// Check with standard functionality
 				if( window._getAppByAppId )
 				{
 					var app = _getAppByAppId( cm.applicationId );
@@ -5676,6 +5683,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( cm.windowObject.parentView )
 				{
 					cm.windowObject.parentView.activate();
+					return;
+				}
+				if( app.mainView )
+				{
+					app.mainView.activate();
 					return;
 				}
 				this.mobileViews.application = cm.applicationId;
@@ -5717,7 +5729,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			}
 		}
-		_DeactivateWindows();
 	},
 	// Get a list of all applications ------------------------------------------
 	listApplications: function()
