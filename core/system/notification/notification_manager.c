@@ -1141,7 +1141,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 				int pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
 			
 				char *tok = TokenToBinary( startToken );
-				DEBUG("Send payload, token pointer %p token '%s'\n", tok, startToken );
+				DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
 				if( tok != NULL )
 				{
 					if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
