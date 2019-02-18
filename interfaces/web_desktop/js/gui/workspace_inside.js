@@ -5684,7 +5684,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( cm.content.fileInfo.Path == 'Mountlist:' )
 				{
-					return cm.windowObject.close();
+					if( cm.windowObject.dialog )
+					{
+						return cm.windowObject.close();
+					}
+					else
+					{
+						return Workspace.appMenu.onclick();
+					}
 				}
 				return cm.content.directoryview.buttonUp.onclick();
 			}
@@ -5692,7 +5699,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			else if( cm.windowObject.parentView )
 			{
 				var pv = cm.windowObject.parentView.windowObject;
-				cm.windowObject.close();
+				if( pv )
+				{
+					cm.windowObject.close();
+				}
 				pv.activate();
 				return;
 			}	
