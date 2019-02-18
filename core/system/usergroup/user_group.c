@@ -20,6 +20,7 @@
 #include "user_group.h"
 #include <system/fsys/device_handling.h>
 #include <util/string.h>
+#include <system/systembase.h>
 
 /**
  * Create new User Group

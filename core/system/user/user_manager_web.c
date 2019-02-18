@@ -917,7 +917,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, groups );
 					
-					RefreshUserDrives( l, logusr, NULL );
+					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL );
 					
 					HttpAddTextContent( response, "ok<!--separate-->{ \"update\": \"success!\"}" );
 				}

@@ -79,26 +79,8 @@ void UMDelete( UserManager *smgr )
 				
 				if( remdev != NULL )
 				{
-					DeviceRelease( smgr->um_SB, remdev );
-					/*
-					FHandler *fsys = (FHandler *)remdev->f_FSys;
-
-					if( fsys != NULL && fsys->UnMount != NULL )
-					{
-						//
-						// we are releasing device memory
-						//
-						
-						if( fsys->Release( fsys, remdev ) != 0 )
-						{
-							DEBUG("[UMDelete] Device released\n");
-						}
-					}
-					else
-					{
-						FERROR("Cannot free FSYS (null)\n");
-					}
-					*/
+					SystemBase *sb = (SystemBase *)smgr->um_SB;
+					DeviceRelease( sb->sl_DeviceManager, remdev );
 				
 					FileDelete( remdev );
 					remdev = NULL;

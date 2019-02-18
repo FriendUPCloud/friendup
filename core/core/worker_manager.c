@@ -134,7 +134,6 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 		}
 		else
 		{
-			//pthread_mutex_unlock( &(w->w_Mut) );
 			FERROR("[WorkerRunCommand] Thread not initalized\n");
 			return 1;
 		}
@@ -187,7 +186,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		}
 
 		// Safely test the state of the worker
-		//if( pthread_mutex_trylock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut ) == 0 )
 		{
 			int lw = wm->wm_LastWorker;
 			Worker *w1 = wm->wm_Workers[ lw ];
@@ -199,7 +197,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				//struct SocketThreadData *td = ( struct SocketThreadData *)d;
 				//td->workerIndex = wm->wm_LastWorker;
 			}
-			//pthread_mutex_unlock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut );
 		}
 	
 		if( wrk != NULL )

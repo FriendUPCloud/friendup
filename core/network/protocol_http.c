@@ -148,8 +148,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 		{
 			file = CacheManagerFileGet( SLIB->cm, completePath->raw, FALSE );
 
-			//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
-
 			if( file == NULL )
 			{
 				char *decoded = UrlDecodeToMem( completePath->raw );
@@ -158,13 +156,9 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 
 				if( file != NULL )
 				{
-					//if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
+					if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
 					{
-						if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
-						{
-							freeFile = TRUE;
-						}
-						//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
+						freeFile = TRUE;
 					}
 				}
 				else
@@ -189,8 +183,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 		}
 		else
 		{
-			//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
-
 			char *decoded = UrlDecodeToMem( completePath->raw );
 			file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
 			FFree( decoded );

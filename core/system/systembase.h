@@ -36,6 +36,7 @@
 #include <core/friendcore_manager.h>
 
 #include <system/fsys/fsys.h>
+#include <system/fsys/device_handling.h>
 #include <util/buffered_string.h>
 #include <db/sqllib.h>
 #include <application/applicationlibrary.h>
@@ -211,6 +212,7 @@ typedef struct SystemBase
 	DOSDriver						*sl_DOSDrivers;         // avaiable DOSDrivers
 	File 							*sl_INRAM;						// INRAM filesystem drive, avaiable for all users
 
+	DeviceManager					*sl_DeviceManager;	// DeviceManager
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
 	AppSessionManager				*sl_AppSessionManager;		// application sessions
 	UserSessionManager				*sl_USM;			// user session manager
@@ -304,9 +306,9 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( struct SystemBase *l, struct TagItem *tl, File **mfile, User *usr );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr );
 
-	int								(*UnMountFS)( struct SystemBase *l, struct TagItem *tl, UserSession *usr );
+	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
 
 // "Global" functions
 

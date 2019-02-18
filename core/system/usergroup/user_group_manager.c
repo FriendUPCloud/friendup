@@ -357,7 +357,7 @@ int UGMMountDrives( UserGroupManager *sm )
 		while( ug != NULL && sb->sl_UM && sb->sl_UM->um_APIUser )
 		{
 			//UserGroupDeviceMount( l, sqllib, ug, NULL );
-			UserGroupDeviceMount( sb, sqllib, ug, sb->sl_UM->um_APIUser );
+			UserGroupDeviceMount( sb->sl_DeviceManager, sqllib, ug, sb->sl_UM->um_APIUser );
 			ug = (UserGroup *)ug->node.mln_Succ;
 		}
 		
