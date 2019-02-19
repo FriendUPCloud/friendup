@@ -76,11 +76,13 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	}
 
 	DEBUG("clwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
+	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
-		cl->wsc_InUseCounter++;
+		
 		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 	}
+	*/
 	
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
@@ -98,6 +100,7 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 		
 			if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 			{
+				cl->wsc_InUseCounter++;
 				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
 					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -135,13 +138,13 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 						en->fq_Data = queueMsg;
 						en->fq_Size = queueMsgLen;
 				
+						//DEBUG("FQPush: %p\n 
 						FQPushFIFO( &(cl->wsc_MsgQueue), en );
 
-						
 						// callback writeable was here
 					}
 				}
-				
+				cl->wsc_InUseCounter--;
 				FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 			}
 			if( cl->wsc_Wsi != NULL )
@@ -157,6 +160,7 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	{
 		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 		{
+			cl->wsc_InUseCounter++;
 			if( cl->wsc_Wsi != NULL && cl->wsc_UserSession != NULL )
 			{
 				int val;
@@ -178,6 +182,8 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			{
 				
 			}
+			
+			cl->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 			if( cl->wsc_Wsi != NULL )
 			{
@@ -186,11 +192,13 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 		}
 	}
 
+	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
 		cl->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 	}
+	*/
 	DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
 	
 	return result;
