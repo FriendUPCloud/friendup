@@ -134,6 +134,27 @@ void UserRemoveSession( User *usr, void *ls )
 		UserSessListEntry *prevus = actus;
 		FBOOL removed = FALSE;
 	
+		if( usr->u_SessionsList->us == remses )
+		{
+			usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
+		}
+		else
+		{
+			while( actus != NULL )
+			{
+				prevus = actus;
+				actus = (UserSessListEntry *)actus->node.mln_Succ;
+			
+				if( actus != NULL && actus->us == remses )
+				{
+					prevus->node.mln_Succ = actus->node.mln_Succ;
+					
+					usr->u_SessionsNr--;
+					removed = TRUE;
+					break;
+				}
+			}
+			/*
 		while( actus != NULL )
 		{
 			prevus = actus;
@@ -153,6 +174,8 @@ void UserRemoveSession( User *usr, void *ls )
 				removed = TRUE;
 				break;
 			}
+		}
+		*/
 		}
 		
 		if( usr->u_SessionsNr <= 0 )

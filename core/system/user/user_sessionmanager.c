@@ -634,6 +634,26 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 		{
 			while( sess != NULL )
 			{
+				/*
+				prev = sess;
+				sess = (UserSession *)sess->node.mln_Succ;
+			
+				if( sess == remses )
+				{
+				if( prevus == usr->u_SessionsList )
+				{
+					usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
+				}
+				else
+				{
+					prevus->node.mln_Succ = (MinNode *)actus;
+				}
+				usr->u_SessionsNr--;
+				removed = TRUE;
+				break;
+			}
+			*/
+				
 				prev = sess;
 				sess = (UserSession *)sess->node.mln_Succ;
 			
@@ -644,6 +664,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 					sessionRemoved = TRUE;
 					break;
 				}
+				
 			}
 			smgr->usm_SessionCounter--;
 		}
