@@ -457,12 +457,12 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
  * Function check first if session with provided already exist. If it exist its not added.
  *
  * @param smgr pointer to UserSessionManager
- * @param s pointer to user session which  will be added
+ * @param us pointer to user session which  will be added
  * @return UserSession if success, otherwise NULL
  */
-UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
+UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 {
-	DEBUG("[USMUserSessionAdd] start\n");
+	DEBUG("[USMUserSessionAdd] start, usptr : %p\n", us );
 	
 	FBOOL userHaveMoreSessions = FALSE;
 	FBOOL duplicateMasterSession = FALSE;
@@ -471,18 +471,18 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	if( FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) ) == 0 )
 	{
 		DEBUG("CHECK8 LOCKED\n");
-		UserSession  *ses =  smgr->usm_Sessions;
+		UserSession *ses =  smgr->usm_Sessions;
 		while( ses != NULL )
 		{
 			FBOOL quit = FALSE;
 			DEBUG("inside session\n");
 			
-			if( FRIEND_MUTEX_LOCK( &s->us_Mutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 			{
 				DEBUG("Session locked\n");
 				if( ses->us_DeviceIdentity != NULL )
 				{
-					if( s->us_UserID == ses->us_UserID && strcmp( s->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
+					if( us->us_UserID == ses->us_UserID && strcmp( us->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
 					{
 						DEBUG("[USMUserSessionAdd] Session found, no need to create new  one %lu devid %s\n", ses->us_UserID, ses->us_DeviceIdentity );
 						quit = TRUE;
@@ -490,13 +490,13 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 				}
 				else
 				{
-					if( ses->us_DeviceIdentity == s->us_DeviceIdentity )
+					if( ses->us_DeviceIdentity == us->us_DeviceIdentity )
 					{
 						DEBUG("[USMUserSessionAdd] Found session with empty deviceid\n");
 						quit = TRUE;
 					}
 				}
-				FRIEND_MUTEX_UNLOCK( &s->us_Mutex );
+				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
 			}
 			
 			if( quit == TRUE )
@@ -505,8 +505,8 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 				break;
 			}
 		
-			DEBUG("inside session 2 id: %s\n", s->us_SessionID );
-			ses =  (UserSession *)ses->node.mln_Succ;
+			DEBUG("inside session 2 id: %s\n", us->us_SessionID );
+			ses = (UserSession *)ses->node.mln_Succ;
 		}
 		DEBUG("CHECK8 after while\n");
 
@@ -514,15 +514,16 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	
 		if( ses ==  NULL )
 		{
-			INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s\n", s->us_SessionID );
+			INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s usptr: %p\n", us->us_SessionID, us );
 	
-			s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
-			smgr->usm_Sessions = s;
+			us->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+			smgr->usm_Sessions = us;
 		}
 		else
 		{
 			duplicateMasterSession = TRUE;
-			s = ses;
+			us = ses;
+			DEBUG("User session was overwritten, ptr %p\n", us );
 		}
 		DEBUG("CHECK8END\n");
 		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
@@ -530,36 +531,32 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	
 	DEBUG("[USMUserSessionAdd] Checking session id %lu\n",  s->us_UserID );
 	
-	if( s->us_UserID != 0 )
+	if( us->us_UserID != 0 )
 	{
+		SystemBase *sb = (SystemBase *)smgr->usm_SB;
 		smgr->usm_SessionCounter++;
-		UserManager *um = (UserManager *)smgr->usm_UM;
-		User *locusr = um->um_Users;
+		User *locusr = NULL;
 		
-		if( s->us_User != NULL )
+		if( us->us_User != NULL )
 		{
-			locusr = s->us_User;
+			locusr = us->us_User;
 		}
 		else
 		{
-			while( locusr != NULL )
+			locusr = UMGetUserByID( sb->sl_UM, us->us_UserID );
+			if( locusr != NULL )
 			{
-				if( locusr->u_ID == s->us_UserID )
+				if( locusr->u_SessionsNr > 0 )
 				{
-					if( locusr->u_SessionsNr > 0 )
-					{
-						userHaveMoreSessions = TRUE;
-					}
-					break;
+					userHaveMoreSessions = TRUE;
 				}
-				locusr  = (User *)locusr->node.mln_Succ;
 			}
 		}
 		
 		if( locusr == NULL )
 		{
 			DEBUG("[USMUserSessionAdd] User found in DB, generate new master session for him and his devices\n");
-			locusr = UMUserGetByIDDB( um, s->us_UserID );
+			locusr = UMUserGetByIDDB( sb->sl_UM, us->us_UserID );
 		}
 		
 		if( locusr == NULL )
@@ -569,11 +566,11 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 		}
 		else
 		{
-			DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s\n", locusr->u_Name, locusr->u_MainSessionID );
+			DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s usptr: %p\n", locusr->u_Name, locusr->u_MainSessionID, us );
 			
-			UserAddSession( locusr, s );
+			UserAddSession( locusr, us );
 
-			s->us_User = locusr;
+			us->us_User = locusr;
 			
 			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
 			
@@ -595,10 +592,10 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	}
 	else
 	{
-		FERROR("Couldnt find user with ID %lu\n", s->us_UserID );
+		FERROR("Couldnt find user with ID %lu\n", us->us_UserID );
 		return NULL;
 	}
-	return s;
+	return us;
 }
 
 /**
