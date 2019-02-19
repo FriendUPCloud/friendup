@@ -8685,6 +8685,12 @@ Workspace.receivePush = function( jsonMsg )
 		
 		if( !msg.application ) return;
 		
+		//check if extra are base 64 encoded...
+		if( isset( msg.extrasencoded ) && msg.extrasencoded.toLowerCase() == 'yes' )
+		{
+			if( msg.extras ) msg.extras = atob( msg.extras );
+		}
+		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
 			if( Workspace.applications[a].applicationName == msg.application )
