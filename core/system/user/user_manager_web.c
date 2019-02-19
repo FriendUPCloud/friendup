@@ -136,7 +136,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				if( sessionid != NULL )
 				{
-					UserSessListEntry *ses = loggedSession->us_User->u_SessionsList;
+					User *usr = loggedSession->us_User;
+					FRIEND_MUTEX_LOCK( &usr->u_Mutex );
+					UserSessListEntry *ses = usr->u_SessionsList;
 					while( ses != NULL )
 					{
 						UserSession *uses = (UserSession *) ses->us;
@@ -147,6 +149,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						}
 						ses = (UserSessListEntry *)ses->node.mln_Succ;
 					}
+					FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 				}
 				else
 				{
@@ -1270,6 +1273,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
+				FRIEND_MUTEX_LOCK( &u->u_Mutex );
 				UserSessListEntry *usl = u->u_SessionsList;
 				while( usl != NULL )
 				{
@@ -1280,19 +1284,23 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 							
 						int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
-						
-						FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
-						s->us_InUseCounter--;
-						FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-						
-						error = USMUserSessionRemove( l->sl_USM, s );
-						
+
 						DEBUG("Bytes send: %d\n", msgsndsize );
 						
 						break;
 					}
-					
 					usl = (UserSessListEntry *)usl->node.mln_Succ;
+				}
+				FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
+				
+				if( usl != NULL )
+				{
+					UserSession *s = (UserSession *) usl->us;
+					FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
+					s->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
+						
+					error = USMUserSessionRemove( l->sl_USM, usl->us );
 				}
 			}
 			else
@@ -1496,6 +1504,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 				
+				FRIEND_MUTEX_LOCK( &usr->u_Mutex );
 				UserSessListEntry  *usl = usr->u_SessionsList;
 				while( usl != NULL )
 				{
@@ -1542,6 +1551,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					}
 					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+				
 				usr = (User *)usr->node.mln_Succ;
 			}
 			

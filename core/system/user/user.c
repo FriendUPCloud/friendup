@@ -73,6 +73,11 @@ int UserInit( User *u )
  */
 int UserAddSession( User *usr, void *ls )
 {
+	if( usr == NULL || ls == NULL )
+	{
+		FERROR("User %p or session %p are empty\n", usr, ls );
+		return 1;
+	}
 	UserSession *s = (UserSession *)ls;
 	UserSessListEntry *us = NULL;
 	
@@ -81,7 +86,7 @@ int UserAddSession( User *usr, void *ls )
 		UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
 		while( exses != NULL )
 		{
-			if( exses->us == ls )
+			if( exses != NULL && exses->us == ls )
 			{
 				DEBUG("Session was already added to user\n");
 				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );

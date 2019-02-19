@@ -1208,6 +1208,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		time_t timestamp = time( NULL );
 		//
 		
+		FRIEND_MUTEX_LOCK( &usr->u_Mutex );
 		UserSessListEntry  *usl = usr->u_SessionsList;
 		while( usl != NULL )
 		{
@@ -1255,7 +1256,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			} // locses = NULL
 			usl = (UserSessListEntry *)usl->node.mln_Succ;
 		}
-		usr = (User *)usr->node.mln_Succ;
+		//usr = (User *)usr->node.mln_Succ;
+		
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 	}	// usr != NULL
 	else
 	{
