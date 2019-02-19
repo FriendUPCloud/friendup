@@ -984,7 +984,7 @@ void FriendCoreProcess( void *fcv )
 	char *incoming_buffer_ptr = 0;
 	unsigned int incoming_buffer_length = 0;
 
-	BufString *resultString = BufStringNewSize( SHIFT_LEFT( bufferSizeAlloc, 1) );
+	BufString *resultString = BufStringNewSize( bufferSizeAlloc*2 );
 
 	char *locBuffer = FMalloc( bufferSizeAlloc );
 	char *firstLocBuffer = locBuffer;

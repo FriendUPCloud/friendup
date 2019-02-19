@@ -137,6 +137,10 @@ void UserRemoveSession( User *usr, void *ls )
 		if( usr->u_SessionsList->us == remses )
 		{
 			usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
+			if( prevus != NULL )
+			{
+				FFree( actus );
+			}
 		}
 		else
 		{
@@ -151,6 +155,11 @@ void UserRemoveSession( User *usr, void *ls )
 					
 					usr->u_SessionsNr--;
 					removed = TRUE;
+					
+					if( prevus != NULL )
+					{
+						FFree( actus );
+					}
 					break;
 				}
 			}
@@ -182,10 +191,7 @@ void UserRemoveSession( User *usr, void *ls )
 		{
 			usr->u_SessionsList = NULL;
 		}
-		if( prevus != NULL )
-		{
-			FFree( prevus );
-		}
+		
 
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
