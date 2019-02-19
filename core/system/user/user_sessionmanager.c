@@ -626,11 +626,6 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 		if( remsess == smgr->usm_Sessions )
 		{
 			smgr->usm_Sessions = (UserSession *)smgr->usm_Sessions->node.mln_Succ;
-			UserSession *nexts = (UserSession *)sess->node.mln_Succ;
-			if( nexts != NULL )
-			{
-				nexts->node.mln_Pred = (MinNode *)NULL;
-			}
 			sessionRemoved = TRUE;
 			smgr->usm_SessionCounter--;
 			INFO("[USMUserSessionRemove] Session removed from list\n");
@@ -642,19 +637,15 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 				prev = sess;
 				sess = (UserSession *)sess->node.mln_Succ;
 			
-				if( prev == remsess )
+				if( sess != NULL && sess == remsess )
 				{
-					prev->node.mln_Succ = (MinNode *)sess->node.mln_Succ;
-					UserSession *nexts = (UserSession *)sess->node.mln_Succ;
-					if( nexts != NULL )
-					{
-						nexts->node.mln_Pred = (MinNode *)prev;
-					}
+					prev->node.mln_Succ = sess->node.mln_Succ;
 					DEBUG("[USMUserSessionRemove] Session removed from list\n");
 					sessionRemoved = TRUE;
 					break;
 				}
 			}
+			smgr->usm_SessionCounter--;
 		}
 		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
