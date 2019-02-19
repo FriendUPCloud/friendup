@@ -1095,9 +1095,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		{
 			usrname = UrlDecodeToMem( (char *)el->data );
 		}
-		/*
+		
 		if( usrname != NULL )
 		{
+		/*
 			DEBUG(" username: %s\n", usrname );
 			char *temp = FCalloc( 2048, 1 );
 			int numberOfSessions = 0;
@@ -1187,9 +1188,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			HttpAddTextContent( response, buffer );
 		}
 		
-		//if( usrname != NULL )
+		if( usrname != NULL )
 		{
-			//FFree( usrname );
+			FFree( usrname );
 		}
 		*result = 200;
 	}
