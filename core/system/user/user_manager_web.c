@@ -1079,7 +1079,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1095,7 +1095,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		{
 			usrname = UrlDecodeToMem( (char *)el->data );
 		}
-		
+		/*
 		if( usrname != NULL )
 		{
 			DEBUG(" username: %s\n", usrname );
@@ -1104,6 +1104,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			
 			if( temp != NULL )
 			{
+				//User *logusr = loggedSession->us_User;
 				while( logusr != NULL )
 				{
 					DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
@@ -1174,6 +1175,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 				HttpAddTextContent( response, buffer );
 			}
+			*/
 		}
 		else
 		{
@@ -1185,9 +1187,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			HttpAddTextContent( response, buffer );
 		}
 		
-		if( usrname != NULL )
+		//if( usrname != NULL )
 		{
-			FFree( usrname );
+			//FFree( usrname );
 		}
 		*result = 200;
 	}
@@ -1394,7 +1396,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				//DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 				
-				UserSessListEntry  *usl = usr->u_SessionsList;
+				UserSessListEntry *usl = usr->u_SessionsList;
 				while( usl != NULL )
 				{
 					UserSession *locses = (UserSession *)usl->us;

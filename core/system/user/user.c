@@ -103,6 +103,7 @@ int UserAddSession( User *usr, void *ls )
 		
 			us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
 			usr->u_SessionsList = us;
+			DEBUG("LIST OVERWRITEN: %p\n", usr->u_SessionsList );
 		
 			usr->u_SessionsNr++;
 		}
