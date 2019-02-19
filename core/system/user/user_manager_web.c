@@ -1145,6 +1145,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 									//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
 									//if( us->us_WSClients != NULL )
 									time_t timestamp = time(NULL);
+									
+									FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
+									
 									if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
 									{
 										int size = 0;
@@ -1160,10 +1163,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							
 										pos++;
 									}
+									FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+									
 									sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 								}
 							}
-						
 							FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
 						}
 					
