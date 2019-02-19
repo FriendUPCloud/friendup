@@ -781,7 +781,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 								char *mime = NULL;
 
-								File *rootDev = GetUserDeviceByUserID( SLIB, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
+								File *rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
 
 								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs->fs_DeviceName );
 

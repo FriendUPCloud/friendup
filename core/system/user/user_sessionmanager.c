@@ -529,7 +529,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 		FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	}
 	
-	DEBUG("[USMUserSessionAdd] Checking session id %lu\n",  s->us_UserID );
+	DEBUG("[USMUserSessionAdd] Checking session id %lu\n", us->us_UserID );
 	
 	if( us->us_UserID != 0 )
 	{
