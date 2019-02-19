@@ -1684,7 +1684,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
 			
-			if( fcd->fcd_WSClient == NULL )
+			if( fcd->fcd_WSClient == NULL || fcd->fcd_WSClient->wsc_Wsi == NULL )
 			{
 				if( in != NULL )
 				{
@@ -1704,9 +1704,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 				t[ e->fq_Size+1 ] = 0;
 
-				lws_write( fcd->fcd_WSClient->wsc_Wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
+				lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
 
-				int errret = lws_send_pipe_choked( fcd->fcd_WSClient->wsc_Wsi );
+				int errret = lws_send_pipe_choked( wsi );
 				
 				//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 				if( e != NULL )
