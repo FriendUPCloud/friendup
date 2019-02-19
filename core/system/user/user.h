@@ -137,6 +137,7 @@ typedef struct User
 	int							u_MountedDevsNr;		// number of mounted devices
 	File						*u_WebDAVDevs;		// shared webdav resources 
 	int							u_WebDAVDevsNr;		// number of mounted webdav drives
+	UserSessListEntry			*u_SessionsList;
 	
 	UserGroupLink				*u_UserGroupLinks;		// user groups
 	//UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
@@ -147,7 +148,6 @@ typedef struct User
 	FBOOL						u_InitialDevMount;
 	FBOOL						u_Anonymous;		// if user is anonymous
 	
-	UserSessListEntry			*u_SessionsList;
 	int							u_SessionsNr;		// number of sessions
 	int							u_NumberOfBadLogins;	// number of bad logins
 	
