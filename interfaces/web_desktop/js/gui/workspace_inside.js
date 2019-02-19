@@ -8118,7 +8118,7 @@ function DoorsKeyDown( e )
 	}
 	
 	// Check keys on directoryview ---------------------------------------------
-	if( currentMovable && currentMovable.content.directoryview )
+	if( window.currentMovable && currentMovable.content.directoryview )
 	{
 		if( w == 113 || w == 27 )
 		{
@@ -8685,6 +8685,12 @@ Workspace.receivePush = function( jsonMsg )
 		
 		if( !msg.application ) return;
 		
+		//check if extra are base 64 encoded...
+		if( isset( msg.extrasencoded ) && msg.extrasencoded.toLowerCase() == 'yes' )
+		{
+			if( msg.extras ) msg.extras = atob( msg.extras );
+		}
+		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
 			if( Workspace.applications[a].applicationName == msg.application )
@@ -8816,7 +8822,7 @@ else
 // Debug blob:
 if( isMobile )
 {
-	var debug = document.createElement( 'div' );
+	/*var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
@@ -8827,7 +8833,7 @@ if( isMobile )
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
-	document.body.appendChild( debug );
+	document.body.appendChild( debug );*/
 }
 var mobileDebugTime = null;
 function mobileDebug( str, clear )

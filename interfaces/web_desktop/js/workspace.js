@@ -989,7 +989,7 @@ Workspace = {
 				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
-				{	
+				{
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
