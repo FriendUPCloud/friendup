@@ -147,7 +147,7 @@ else if( $level == 'Admin' )
 					$s->Save();
 				}
 			}
-		
+			
 			// Update members, delete old and insert anew
 			$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $o->ID . '\'' );
 			if( $o->ID > 0 && isset( $args->args->Members ) )
