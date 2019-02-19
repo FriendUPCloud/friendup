@@ -8663,9 +8663,7 @@ Workspace.receivePush = function( jsonMsg )
 	if( !isMobile ) return;
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
 	
-	mobileDebug( 'What? ' + msg, true );
-	
-	if( !msg ) return;
+	if( msg == false ) return;
 	try
 	{
 		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
@@ -8685,10 +8683,10 @@ Workspace.receivePush = function( jsonMsg )
 		
 		if( !msg.application ) return;
 		
-		//check if extra are base 64 encoded...
-		if( isset( msg.extrasencoded ) && msg.extrasencoded.toLowerCase() == 'yes' )
+		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
+		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
 		{
-			if( msg.extras ) msg.extras = atob( msg.extras );
+			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
 		}
 		
 		for( var a = 0; a < Workspace.applications.length; a++ )
@@ -8792,7 +8790,8 @@ Workspace.receivePush = function( jsonMsg )
 	}
 	catch( e )
 	{
-		// Do nothing for now...
+		mobileDebug('OH OH. ERROR' + e, true);
+                // Do nothing for now...
 		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
 }
@@ -8819,10 +8818,10 @@ else
 	Workspace.updateViewState( 'active' );
 }
 
-// Debug blob:
-if( isMobile )
+/*  Debug blob:
+if( isMobile  )
 {
-	/*var debug = document.createElement( 'div' );
+	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
@@ -8833,8 +8832,9 @@ if( isMobile )
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
-	document.body.appendChild( debug );*/
-}
+	document.body.appendChild( debug );
+}*/
+
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {

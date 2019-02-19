@@ -36,7 +36,7 @@
 #define DEVICE_BINARY_SIZE 32
 #define MAXPAYLOAD_SIZE 4032
 
-#define TIME_OF_OLDER_MESSAGES_TO_REMOVE 20
+#define TIME_OF_OLDER_MESSAGES_TO_REMOVE 10
 
 //
 // External server connections

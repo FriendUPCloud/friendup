@@ -25,6 +25,12 @@
 #include <libwebsockets.h>
 #include <util/friendqueue.h>
 
+enum
+{
+	WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED = 0,
+	WEBSOCKET_SERVER_CLIENT_STATUS_DISABLED
+};
+
 //
 //
 //
@@ -40,6 +46,7 @@ typedef struct WebsocketServerClient
 	FQueue							wsc_MsgQueue;
 	FBOOL							wsc_ToBeRemoved;
 	time_t							wsc_LastPingTime;
+	int								wsc_Status;	//enabled=0, disabled=1
 }WebsocketServerClient;
 
 //

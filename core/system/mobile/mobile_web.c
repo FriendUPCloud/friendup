@@ -377,6 +377,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	* @param appversion - application version
 	* @param platform - platform name
 	* @param version - platform version
+	* @param status - uma status
 	* @return { create: sucess, result: <ID> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -396,6 +397,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		char *appversion = NULL;
 		char *platform = NULL;
 		char *version = NULL;
+		int status = -1;
 		FBOOL uappCreated = FALSE;
 		
 		DEBUG( "[MobileWebRequest] Create user mobile app!!\n" );
@@ -415,6 +417,12 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			{
 				char *next;
 				uid = strtol( el->data, &next, 0 );
+			}
+			
+			el = HttpGetPOSTParameter( request, "status" );
+			if( el != NULL )
+			{
+				status = atoi( el->data );
 			}
 			
 			el = HttpGetPOSTParameter( request, "apptoken" );
@@ -484,10 +492,17 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						}
 						ma->uma_PlatformVersion = version;
 					}
+					
 					if( uid > 0 )
 					{
 						ma->uma_UserID = uid;
 					}
+					
+					if( status >= 0 )
+					{
+						ma->uma_Status = status;
+					}
+					
 					apptoken = appversion = platform = version = NULL;
 					
 					SQLLibrary *lsqllib = l->LibrarySQLGet( l );
@@ -761,6 +776,62 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		HttpAddTextContent( response, buffer );
 		
 		*result = 200;
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/mobile/setwsstate</H2>Update WebSocket state
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param status - (required) status of websockets 0 - enabled, 1 - disabled
+	* @return { response: 0 } when success, otherwise error with code
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "setwsstate" ) == 0 )
+	{
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		FULONG uid = 0, umaid = 0;
+		int status = -1;
+		
+		DEBUG( "[MobileWebRequest] Update WS state!!\n" );
+		
+		HashmapElement *el = NULL;
+		
+		el = HttpGetPOSTParameter( request, "status" );
+		if( el != NULL )
+		{
+			status = atoi( el->data );
+		}
+		
+		if( status >= 0 )
+		{
+			char buffer[ 256 ];
+			if( loggedSession->us_WSClients != NULL )
+			{
+				loggedSession->us_WSClients->wsc_Status = status;
+			}
+			
+			snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"set\":\"%d\" }", status );
+			HttpAddTextContent( response, buffer );
+
+		} // missing parameters
+		else  // umaid
+		{
+			char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "status" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
+		}
 	}
 	
 	return response;
