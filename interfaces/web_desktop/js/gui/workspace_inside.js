@@ -8822,8 +8822,8 @@ else
 	Workspace.updateViewState( 'active' );
 }
 
-// Debug blob:
-if( isMobile )
+/*  Debug blob:
+if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
@@ -8837,7 +8837,8 @@ if( isMobile )
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
-}
+}*/
+
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {
