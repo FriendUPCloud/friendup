@@ -3552,7 +3552,8 @@ function apiWrapper( event, force )
 							nmsg.returnData = dt;
 							var cw = GetContentWindowByAppMessage( app, msg );
 							if( cw ) cw.postMessage( JSON.stringify( nmsg ), '*' );
-							else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							else if( app && app.contentWindow ) app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							else console.log('nowhere to take this :( ' + JSON.stringify( nmsg ) );
 						}
 						j.send();
 						break;

@@ -8663,8 +8663,6 @@ Workspace.receivePush = function( jsonMsg )
 	if( !isMobile ) return;
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
 	
-	mobileDebug( 'What? ' + msg, true );
-	
 	if( msg == false ) return;
 	try
 	{
@@ -8685,12 +8683,10 @@ Workspace.receivePush = function( jsonMsg )
 		
 		if( !msg.application ) return;
 		
-		//check if extra are base 64 encoded...
+		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
 		{
 			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
-                        Workspace.decodedExtras = msg.extra;
-          		//setTimeout(function(){ var v = new View({width:640,height:640,title:'DEBUG TEST'}); v.setContent('<pre style="max-width:100%; word-wrap:break-word;">'+(typeof Workspace.decodedExtras)+" : "+JSON.stringify(Workspace.decodedExtras)+'</pre>'); Notify({'title':'DEBUG FROM THOMAS','text':JSON.stringify( Workspace.decodedExtras )});  },4000);
 		}
 		
 		for( var a = 0; a < Workspace.applications.length; a++ )
