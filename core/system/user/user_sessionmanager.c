@@ -640,7 +640,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 				prev = sess;
 				sess = (UserSession *)sess->node.mln_Succ;
 			
-				if( sess == remsess )
+				if( prev == remsess )
 				{
 					prev->node.mln_Succ = (MinNode *)sess->node.mln_Succ;
 					UserSession *nexts = (UserSession *)sess->node.mln_Succ;

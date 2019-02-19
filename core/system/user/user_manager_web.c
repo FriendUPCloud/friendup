@@ -39,7 +39,7 @@
  * @param result pointer to result value
  * @return response as Http structure, otherwise NULL
  */
-Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result )
+Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedSession, int *result )
 {
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
@@ -1085,7 +1085,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		User *logusr = l->sl_UM->um_Users;
 		char *usrname = NULL;
 		
 		DEBUG( "[UMWebRequest] get sessionlist!!\n" );
@@ -1098,15 +1097,26 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		if( usrname != NULL )
 		{
-		/*
+			User *logusr = NULL;
+			
+			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+			{
+				logusr = UMGetUserByName( l->sl_UM, usrname );
+			}
+			else
+			{
+				logusr = loggedSession->us_User;
+			}
+		
 			DEBUG(" username: %s\n", usrname );
 			char *temp = FCalloc( 2048, 1 );
 			int numberOfSessions = 0;
 			
 			if( temp != NULL )
 			{
+				if( logusr != NULL )
 				//User *logusr = loggedSession->us_User;
-				while( logusr != NULL )
+				//while( logusr != NULL )
 				{
 					DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
 					if( logusr->u_Name != NULL && strcmp( logusr->u_Name, usrname ) == 0 )
@@ -1120,35 +1130,38 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							int pos = 0;
 							//unsigned long t = time( NULL );
 					
-							while( sessions != NULL )
+							if( logusr->u_SessionsNr > 0 )
 							{
-								UserSession *us = (UserSession *) sessions->us;
-								if( us == NULL )
+								while( sessions != NULL )
 								{
-									DEBUG("ERR\n");
-									sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-									continue;
-								}
+									UserSession *us = (UserSession *) sessions->us;
+									if( us == NULL )
+									{
+										DEBUG("ERR\n");
+										sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+										continue;
+									}
 
-								//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
-								//if( us->us_WSClients != NULL )
-								time_t timestamp = time(NULL);
-								if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
-								{
-									int size = 0;
-									if( pos == 0 )
+									//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
+									//if( us->us_WSClients != NULL )
+									time_t timestamp = time(NULL);
+									if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
 									{
-										size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
-									}
-									else
-									{
-										size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
-									}
-									BufStringAddSize( bs, temp, size );
+										int size = 0;
+										if( pos == 0 )
+										{
+											size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+										}
+										else
+										{
+											size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+										}
+										BufStringAddSize( bs, temp, size );
 							
-									pos++;
+										pos++;
+									}
+									sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 								}
-								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 							}
 						
 							FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
@@ -1164,7 +1177,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						BufStringDelete( bs );
 						numberOfSessions++;
 					}
-					logusr = (User *)logusr->node.mln_Succ;
+					//logusr = (User *)logusr->node.mln_Succ;
 				}
 				FFree( temp );
 			}
@@ -1176,7 +1189,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 				HttpAddTextContent( response, buffer );
 			}
-			*/
 		}
 		else
 		{
