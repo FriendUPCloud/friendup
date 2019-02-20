@@ -225,7 +225,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		{
 			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 			Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
-			usleep( 100 );
+			usleep( 1000 );
 		}
 		
 		if( max > wm->wm_MaxWorkers )
