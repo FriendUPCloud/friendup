@@ -1625,12 +1625,18 @@ void HttpFree( Http* http )
 {
 	//DEBUG("Free HashMap\n");
 	int i;
-	for( i = 0; i < HTTP_HEADER_END ; i++ )
+	if( http->h_RequestSource == HTTP_SOURCE_HTTP )
 	{
-		if( (http->h_RespHeaders[ i ] != NULL) && (i != HTTP_HEADER_X_FRAME_OPTIONS) )
+		for( i = 0; i < HTTP_HEADER_END ; i++ )
 		{
-			FFree( http->h_RespHeaders[ i ]  );
-			http->h_RespHeaders[ i ] = NULL;
+			if( (i != HTTP_HEADER_X_FRAME_OPTIONS) )
+			{
+				if( http->h_RespHeaders[ i ] != NULL)
+				{
+					FFree( http->h_RespHeaders[ i ]  );
+					http->h_RespHeaders[ i ] = NULL;
+				}
+			}
 		}
 	}
 	

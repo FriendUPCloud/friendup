@@ -505,6 +505,7 @@ void WSThread( void *d )
 				}
 			}
 			
+			response->h_RequestSource = HTTP_SOURCE_WS;
 			HttpFree( response );
 		}
 		DEBUG1("[WS] SysWebRequest return\n"  );
