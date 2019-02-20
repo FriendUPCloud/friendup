@@ -993,12 +993,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( l->sl_ActiveAuthModule != NULL )
 				{
 					UserSession *dstusrsess = NULL;
-					UserSession *tusers = l->sl_USM->usm_Sessions;
+					UserSession *tusers = NULL;
 					
 					FBOOL isUserSentinel = FALSE;
 					
 					DEBUG("CHECK2\n");
 					FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
+					
+					tusers = l->sl_USM->usm_Sessions;
 					
 					if( deviceid == NULL )
 					{
