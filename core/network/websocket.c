@@ -421,10 +421,11 @@ void WebSocketDelete( WebSocket* ws )
 			sleep( 1 );
 			
 			tries++;
-			if( tries > 50 )
+			if( tries > 30 )
 			{
 				//WorkerManagerDebug( SLIB );
 				tries = 0;
+				break;
 			}
 		}
 #endif

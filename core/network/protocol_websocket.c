@@ -39,6 +39,16 @@ extern SystemBase *SLIB;
 pthread_mutex_t WSThreadMutex;
 int WSThreadNum = 0;
 
+#define INCREASE_WS_THREADS() \
+FRIEND_MUTEX_LOCK( &WSThreadMutex ); \
+WSThreadNum++; \
+FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+
+#define DECREASE_WS_THREADS() \
+FRIEND_MUTEX_LOCK( &WSThreadMutex ); \
+WSThreadNum--; \
+FRIEND_MUTEX_UNLOCK( &WSThreadMutex );  
+
 typedef struct WSThreadData
 {
 	FCWSData *fcd;
@@ -232,9 +242,7 @@ void WSThread( void *d )
 	pthread_detach( pthread_self() );
 #endif
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum++;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	INCREASE_WS_THREADS();
 	
 	Http *http = data->http;
 	char **pathParts = data->pathParts;
@@ -271,9 +279,7 @@ void WSThread( void *d )
 		
 		FFree( data );
 		
-		FRIEND_MUTEX_LOCK( &WSThreadMutex );
-		WSThreadNum--;
-		FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+		DECREASE_WS_THREADS();
 		
 		FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 		wscl->wsc_InUseCounter--;
@@ -327,9 +333,7 @@ void WSThread( void *d )
 			FFree( data );
 			HttpFree( response );
 			
-			FRIEND_MUTEX_LOCK( &WSThreadMutex );
-			WSThreadNum--;
-			FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+			DECREASE_WS_THREADS();
 			
 			FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 			wscl->wsc_InUseCounter--;
@@ -560,9 +564,7 @@ void WSThread( void *d )
 	
 	FFree( data );
     
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum--;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	DECREASE_WS_THREADS();
 	
 	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 	wscl->wsc_InUseCounter--;
@@ -591,9 +593,7 @@ void WSThreadPing( void *p )
 	pthread_detach( pthread_self() );
 #endif
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum++;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	INCREASE_WS_THREADS();
 	
 	int n = 0;
 	FCWSData *fcd = data->fcd;
@@ -604,9 +604,7 @@ void WSThreadPing( void *p )
 	WebsocketServerClient *wscl = fcd->fcd_WSClient;
 	if( wscl == NULL )
 	{
-		FRIEND_MUTEX_LOCK( &WSThreadMutex );
-		WSThreadNum--;
-		FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+		DECREASE_WS_THREADS();
 		FFree( answer );
 		FFree( data->requestid );
 		FFree( data );
@@ -635,9 +633,7 @@ void WSThreadPing( void *p )
 		FFree( data->requestid );
 		FFree( data );
 	
-		FRIEND_MUTEX_LOCK( &WSThreadMutex );
-		WSThreadNum--;
-		FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+		DECREASE_WS_THREADS();
 	
 		FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 		wscl->wsc_InUseCounter--;
@@ -687,9 +683,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	
 	DEBUG("FC_Callback: reason: %d\n", reason );
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum++;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	INCREASE_WS_THREADS();
 	
 	char *in = NULL;
 	
@@ -711,9 +705,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		if( in == NULL )
 		{
 			DEBUG( "Seems we have a null message (length: %d)\n", (int)len );
-			FRIEND_MUTEX_LOCK( &WSThreadMutex );
-			WSThreadNum--;
-			FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+			DECREASE_WS_THREADS();
 			
 			if( in != NULL )
 			{
@@ -808,9 +800,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				/*
 				if( fcd->fcd_WSClient == NULL )
 				{
-					FRIEND_MUTEX_LOCK( &WSThreadMutex );
-					WSThreadNum--;
-					FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+					DECREASE_WS_THREADS();
 					return 0;
 				}
 				*/
@@ -1636,9 +1626,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							WebsocketWriteInline( fcd->fcd_WSClient, buf, locmsgsize, LWS_WRITE_TEXT );
 						}
 						
-						FRIEND_MUTEX_LOCK( &WSThreadMutex );
-						WSThreadNum--;
-						FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+						DECREASE_WS_THREADS();
 						FFree( t );
 						
 						WebsocketServerClient *wscl = fcd->fcd_WSClient;
@@ -1691,6 +1679,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					FFree( in );
 				}
+				DEBUG("Cannot write message, WS Client is equal to NULL\n");
+				DECREASE_WS_THREADS();
 				return 0;
 			}
 				
@@ -1771,9 +1761,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		FLUSH_QUEUE();
 	}
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum--;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	DECREASE_WS_THREADS();
 	
 	if( in != NULL )
 	{
