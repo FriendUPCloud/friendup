@@ -33,6 +33,7 @@
 #include <application/applicationlibrary.h>
 #include <db/sqllib.h>
 #include <config/properties.h>
+#include <util/base64.h>
 
 char CRASH_LOG_FILENAME[ 92 ];
 
@@ -95,6 +96,8 @@ int main( int argc __attribute__((unused)), char *argv[])
 	signal( SIGKILL, InterruptSignalHandler );
 	signal( SIGSEGV, crash_handler);
 	signal( SIGABRT, crash_handler);
+	
+	build_decoding_table();
 
 	srand( time( NULL ) );
 	
@@ -169,6 +172,8 @@ int main( int argc __attribute__((unused)), char *argv[])
 		FFree( envvar );
 	}
 	FFree( cwd );
+	
+	base64_cleanup();
 
 	return 0;
 }

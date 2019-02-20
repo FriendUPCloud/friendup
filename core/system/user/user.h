@@ -127,6 +127,7 @@ typedef struct User
 	char						*u_FullName;
 	char						*u_Email;
 	int							u_Error;            // if error
+	UserSessListEntry			*u_SessionsList;
 
 	char						*u_MainSessionID;       // session id ,  generated only when user is taken from db
 	time_t						u_LoggedTime;       // last action time
@@ -137,7 +138,6 @@ typedef struct User
 	int							u_MountedDevsNr;		// number of mounted devices
 	File						*u_WebDAVDevs;		// shared webdav resources 
 	int							u_WebDAVDevsNr;		// number of mounted webdav drives
-	UserSessListEntry			*u_SessionsList;
 	
 	UserGroupLink				*u_UserGroupLinks;		// user groups
 	//UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
