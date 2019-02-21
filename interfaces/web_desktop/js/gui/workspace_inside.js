@@ -7854,11 +7854,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( isMobile )
 			{
 				Workspace.initWebSocket();
+
+				var dl = new FriendLibrary( 'system.library' );
+				dl.addVar( 'status', 0 );
+				dl.onExecuted = function(e,d)
+				{
+					//console.log( 'Sockets.', e, d );
+				};
+				dl.execute( 'mobile/setwsstate' );
 			}
 		}
 		else
 		{
 			document.body.classList.remove( 'ViewStateActive' );
+			if( isMobile )
+			{
+				var dl = new FriendLibrary( 'system.library' );
+				dl.addVar( 'status', 1 );
+				dl.onExecuted = function(e,d)
+				{
+					//console.log( 'Sockets.', e, d );
+				};
+				dl.execute( 'mobile/setwsstate' );
+			}
 		}
 		this.currentViewState = newState;
 	},
