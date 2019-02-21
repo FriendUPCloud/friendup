@@ -1498,30 +1498,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Do the startup sequence in sequence (only once)
-					if( dat.wizardrun && !isMobile )
+					if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
 					{
-						if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
-						{
-							Workspace.startupsequenceHasRun = true;
-							var l = {
-								index: 0,
-								func: function()
+						Workspace.startupsequenceHasRun = true;
+						var l = {
+							index: 0,
+							func: function()
+							{
+								var cmd = dat.startupsequence[this.index++];
+								if( cmd )
 								{
-									var cmd = dat.startupsequence[this.index++];
-									if( cmd )
+									Workspace.shell.execute( cmd, function()
 									{
-										Workspace.shell.execute( cmd, function()
-										{
-											l.func();
-											if( Workspace.mainDock )
-												Workspace.mainDock.closeDesklet();
-										} );
-									}
+										l.func();
+										if( Workspace.mainDock )
+											Workspace.mainDock.closeDesklet();
+									} );
 								}
 							}
-							l.func();
 						}
+						l.func();
 					}
+
 
 					PollTaskbar();
 				}
