@@ -14,7 +14,7 @@ Sections.accounts_roles = function( cmd, extra )
 	
 	
 	// Get the user list
-	var m = new Module( 'roles' );
+	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		console.log( { e:e, d:d } );
@@ -128,7 +128,7 @@ Sections.userroleadd = function( input )
 {
 	if( input )
 	{
-		var m = new Module( 'roles' );
+		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			console.log( { e:e, d:d } );
@@ -144,7 +144,7 @@ Sections.userroledelete = function( rid )
 {
 	if( rid )
 	{
-		var m = new Module( 'roles' );
+		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			console.log( { e:e, d:d } );
@@ -160,7 +160,7 @@ Sections.userroleupdate = function( rid, input, perms )
 {
 	if( rid )
 	{
-		var m = new Module( 'roles' );
+		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			console.log( { e:e, d:d } );
@@ -176,7 +176,7 @@ Sections.checkpermission = function( input )
 {
 	if( input )
 	{
-		var m = new Module( 'roles' );
+		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			console.log( { e:e, d:d } );

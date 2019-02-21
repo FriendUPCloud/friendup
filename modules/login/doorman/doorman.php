@@ -236,7 +236,9 @@
 							{
 								die( 'First Login Setup Error! Could not create user template!' );
 							}
-					
+							
+							userWorkgroupSetup( $userdata->ID, $dbo );
+							
 							break;
 					
 						case 'Admin':
@@ -250,6 +252,8 @@
 							{
 								die( 'First Login Setup Error! Could not add Admin to parent workgroup!' );
 							}
+							
+							userWorkgroupSetup( $userdata->ID, $dbo );
 							
 							break;
 				
@@ -421,6 +425,43 @@
 			{
 				// add user to admin workgroup....
 				$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $uid ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `ID` = '. intval( $groupid ) .' AND `Type` = \'Workgroup\' ) );' );
+			
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	function userWorkgroupSetup( $uid, $dbo )
+	{
+		if( $uid && $dbo )
+		{
+			if( $rs = $dbo->fetchObject( '
+				SELECT 
+					gr.* 
+				FROM 
+					FUserGroup gr, 
+					FUserToGroup ug 
+				WHERE 
+						gr.Name = \'Doorman\' 
+					AND gr.Type = \'Workgroup\' 
+					AND ug.UserGroupID = gr.ID 
+					AND ug.UserID = ' . intval( $uid ) . ' 
+			' ) )
+			{
+				return true;
+			}
+			
+			if( !$dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name` = \'Doorman\' AND `Type`=\'Workgroup\' ' ) )
+			{
+				$rs = $dbo->Query( 'INSERT INTO `FUserGroup` (`UserID`,`ParentID`,`Name`,`Type`) VALUES (\'0\',\'0\',\'Doorman\',\'Workgroup\');' );
+			}
+			
+			if( $dbo->fetchObject( 'SELECT * FROM `FUserGroup` WHERE `Name` = \'Doorman\' AND `Type`=\'Workgroup\' ' ) )
+			{
+				// add user to admin workgroup....
+				$rs = $dbo->Query( 'INSERT INTO `FUserToGroup` ( `UserID`,`UserGroupID` ) VALUES ('. intval( $uid ) .', ( SELECT `ID` FROM `FUserGroup` WHERE `Name` = \'Doorman\' AND `Type` = \'Workgroup\' ) );' );
 			
 				return true;
 			}

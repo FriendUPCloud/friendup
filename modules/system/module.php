@@ -251,7 +251,8 @@ if( isset( $args->command ) )
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
-				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey' 
+				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey', 
+				'userroleget', 'checkpermission', 'userroleadd', 'userroleupdate', 'userroledelete' 
 			);
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
