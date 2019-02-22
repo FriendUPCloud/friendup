@@ -24,7 +24,7 @@ Sections.accounts_roles = function( cmd, extra )
 				var workspaceSettings = info.workspaceSettings;
 				var wgroups = info.workgroups;
 				var mountlist = info.mountlist;
-				var apps = info.applications;
+				var apps = info.Permissions;
 				
 				if( settings )
 				{				
@@ -124,9 +124,11 @@ Sections.accounts_roles = function( cmd, extra )
 					}
 				}
 				
+				
+				
 				var apl = '';
-				var types = [ i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
-				var keyz  = [ 'Name', 'Category', 'Dock' ];
+				var types = [ i18n( 'i18n_name' ) ];
+				var keyz  = [ 'Permission' ];
 				apl += '<div class="HRow">';
 				for( var a = 0; a < types.length; a++ )
 				{
@@ -146,6 +148,7 @@ Sections.accounts_roles = function( cmd, extra )
 						{
 							var ex = '';
 							var value = apps[ a ][ keyz[ k ] ];
+							if( !value ) continue;
 							if( keyz[ k ] == 'Category' )
 								value = apps[ a ].Config.Category;
 							if( keyz[ k ] == 'Dock' )
@@ -160,7 +163,7 @@ Sections.accounts_roles = function( cmd, extra )
 				}
 				else
 				{
-					apl += i18n( 'i18n_no_applications_available' );
+					apl += i18n( 'i18n_no_permissions_available' );
 				}
 				apl += '</div>';
 				
@@ -169,6 +172,7 @@ Sections.accounts_roles = function( cmd, extra )
 				
 				// Add all data for the template
 				d.replacements = {
+					id: info.ID,
 					role_name: info.Name,
 					role_description: info.Description,
 					/*user_username: roleInfo.Name,
@@ -180,8 +184,8 @@ Sections.accounts_roles = function( cmd, extra )
 					workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
 					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
 					storage: mlst,
-					workgroups: wstr,
-					applications: apl*/
+					workgroups: wstr,*/
+					permissions: apl
 				};
 				
 				// Add translations

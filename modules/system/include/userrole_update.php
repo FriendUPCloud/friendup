@@ -58,7 +58,7 @@ if( $d->ID > 0 )
 		foreach( $args->args->permissions as $perm )
 		{
 			$p = new dbIO( 'FUserRolePermission' );
-			$p->Name = $perm;
+			$p->Permission = $perm;
 			$p->RoleID = $d->ID;
 			$p->Load();
 			$p->Save();

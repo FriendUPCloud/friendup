@@ -12,7 +12,7 @@
 				<strong>{i18n_role_name}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" value="{role_name}"/>
+				<input id="RoleName" type="text" class="FullWidth" value="{role_name}"/>
 			</div>
 		</div>
 		<div class="HRow MarginBottom">
@@ -24,7 +24,9 @@
 			</div>
 		</div>
 		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
+			<!--<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>-->
+			<button class="IconSmall FloatRight" onclick="Sections.userroleupdate({id},ge('RoleName').value)">Save</button>
+			<button class="IconSmall FloatRight">Cancel</button>
 		</div>
 	</div>
 
