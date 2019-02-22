@@ -38,8 +38,8 @@ Sections.accounts_roles = function( cmd, extra )
 		// Types of listed fields
 		var types = {
 			Edit: '10',
-			Name: '30',
-			Description: '60'
+			Name: '90'/*,
+			Description: '60'*/
 		};
 		
 		

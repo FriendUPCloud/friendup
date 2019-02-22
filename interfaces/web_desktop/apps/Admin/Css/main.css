@@ -1,0 +1,51 @@
+
+#Admin
+{
+	/*background-color: #20374D;*/
+	background-color: #34495E;
+}
+
+#Admin .BackgroundHeavier
+{
+	background-color: transparent;
+}
+
+#Admin input
+{
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid #979797;
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a
+{
+	color: #FFFFFF;
+}
+
+#Admin #GuiSidebar h2
+{
+	font-weight: bold;
+}
+
+#Admin #GuiContent
+{
+	background-color: #ECF0F1;
+	color: #34495E;
+}
+
+#Admin #GuiContent .FullContent > div.List > .HRow
+{
+	background-color: #34495E;
+	color: #FFFFFF;
+}
+
+#Admin #GuiContent .FullContent > div.List + div.List > .HRow
+{
+	background-color: #FFFFFF;
+	color: #34495E;
+}
+
+#Admin #GuiContent div
+{
+	border: 0;
+}
