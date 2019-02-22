@@ -3,6 +3,8 @@
 {
 	/*background-color: #20374D;*/
 	background-color: #34495E;
+	font-weight: normal;
+	font-size: 20px;
 }
 
 #Admin .BackgroundHeavier
@@ -12,6 +14,7 @@
 
 #Admin input
 {
+	font-size: 20px;
 	border-radius: 0;
 	background: transparent;
 	border: 0;
@@ -20,25 +23,45 @@
 
 #Admin textarea
 {
+	font-size: 20px;
 	border-radius: 0;
 	background: transparent;
 	border: 1px solid #979797;
 }
 
+#Admin #GuiSidebar
+{
+	padding: 20px;
+	box-sizing: border-box;
+}
+
 #Admin #GuiSidebar, #Admin #GuiSidebar a
 {
 	color: #FFFFFF;
+	font-weight: normal;
+	font-size: 20px;
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
+{
+	padding-right: 10px;
 }
 
 #Admin #GuiSidebar h2
 {
 	font-weight: bold;
+	font-size: 18px;
 }
 
 #Admin #GuiContent
 {
 	background-color: #ECF0F1;
 	color: #34495E;
+}
+
+#Admin #GuiContent > div
+{
+	padding: 20px;
 }
 
 #Admin #GuiContent h1
