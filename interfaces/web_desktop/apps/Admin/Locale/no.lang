@@ -31,3 +31,8 @@ i18n_category                          : Kategori
 i18n_dock                              : I dock
 
 i18n_no_applications_available         : Ingen applikasjoner tilgjengelig.
+
+i18n_role_profile                      : Rolle Profil
+i18n_role_name                         : Rolle Navn
+i18n_role_description                  : Beskrivelse
+i18n_permissions                       : Tillatelser

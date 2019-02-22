@@ -12,9 +12,17 @@
 
 #Admin input
 {
+	border-radius: 0;
 	background: transparent;
 	border: 0;
 	border-bottom: 1px solid #979797;
+}
+
+#Admin textarea
+{
+	border-radius: 0;
+	background: transparent;
+	border: 1px solid #979797;
 }
 
 #Admin #GuiSidebar, #Admin #GuiSidebar a
@@ -31,6 +39,16 @@
 {
 	background-color: #ECF0F1;
 	color: #34495E;
+}
+
+#Admin #GuiContent h1
+{
+	background-color: #34495E;
+	color: #FFFFFF;
+	text-align: center;
+	padding: 10px;
+	margin: 0;
+	box-sizing: border-box;
 }
 
 #Admin #GuiContent .FullContent > div.List > .HRow
