@@ -158,7 +158,7 @@ int ImageCleanComments( FImage *img )
 //
 //
 
-gdImagePtr ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
+gdImagePtr ImageRead( File *rootDev, const char *path )
 {
 	gdImagePtr img = NULL;
 	FHandler *fh = rootDev->f_FSys;

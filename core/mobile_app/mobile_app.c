@@ -1435,7 +1435,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		{
 			// on the end, list for the user should be taken from DB instead of going through all connections
 			
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, TRUE );
 			UserMobileApp *lma = lmaroot;
 			
 			while( lma != NULL )
@@ -1801,7 +1801,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, TRUE );
 			UserMobileApp *lma = lmaroot;
 			
 			
