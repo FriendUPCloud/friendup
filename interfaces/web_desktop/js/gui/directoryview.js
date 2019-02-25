@@ -5281,11 +5281,6 @@ Friend.startImageViewer = function( iconObject, extra )
 	} );
 	
 	win.parentView = extra.parentView;
-	win.showBackButton( true, function( e )
-	{
-		Workspace.handleBackButton();
-		win.close();
-	} );
 	
 	win.onClose = function()
 	{
@@ -5403,6 +5398,15 @@ Friend.startImageViewer = function( iconObject, extra )
 		repositionElement( owin, position );
 	} );
 	
+	function handleBackButton()
+	{
+		win.showBackButton( true, function( e )
+		{
+			Workspace.handleBackButton();
+			win.close();
+		} );
+	}
+	
 
 	function renderToolbar( eparent )
 	{
@@ -5486,7 +5490,10 @@ Friend.startImageViewer = function( iconObject, extra )
 		GetURLFromPath( iconObject.Path, function( imageUrl )
 		{
 			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
-			owin.setContent( '<iframe class="ImageViewerContent" src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+			owin.setContent( '<iframe class="ImageViewerContent" src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>', function()
+			{
+				handleBackButton();
+			} );
 		} );
 	}
 	else
@@ -5498,7 +5505,10 @@ Friend.startImageViewer = function( iconObject, extra )
 		{
 			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
 			
-			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; z-index: 1;">' + checkers + '</div>' );
+			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; z-index: 1;">' + checkers + '</div>', function()
+			{
+				handleBackButton();
+			} );
 			var i = new Image();
 			i.src = imageUrl;
 			owin._window.getElementsByClassName( 'ImageViewerContent' )[0].appendChild( i );
