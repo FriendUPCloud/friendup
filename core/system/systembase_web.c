@@ -321,6 +321,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
 				{ TAG_DONE, TAG_DONE }
 			};
+			
+			
+			DEBUG("\n\n\nURL : %s\n\n\nPOST URL: %s\n\n\n", (*request)->content, (*request)->rawRequestPath );
+			
 			response = HttpNewSimple( HTTP_200_OK, tags );
 			
 			char buffer[ 256 ];
