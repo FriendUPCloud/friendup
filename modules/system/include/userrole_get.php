@@ -70,6 +70,21 @@ $d = new dbIO( 'FUserGroup' );
 if( isset( $args->args->id ) )
 {
 	$d->Load( $args->args->id );
+	
+	if( $perms = $SqlDatabase->FetchObjects( '
+		SELECT 
+			p.ID, p.Permission, p.Data 
+		FROM 
+			FUserRolePermission p 
+		WHERE 
+			p.RoleID = ' . $d->ID . ' 
+		ORDER BY 
+			p.ID 
+	' ) )
+	{
+		$d->Permissions = $perms;
+	}
+	
 }
 else
 {

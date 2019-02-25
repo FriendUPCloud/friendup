@@ -5282,7 +5282,6 @@ Friend.startImageViewer = function( iconObject, extra )
 	
 	win.parentView = extra.parentView;
 	
-	
 	win.onClose = function()
 	{
 		if( extra && extra.parentView )
@@ -5291,6 +5290,9 @@ Friend.startImageViewer = function( iconObject, extra )
 		}
 	}
 	
+	// Use system default
+	win.content.defaultContextMenu = true;
+	
 	var owin = win;
 
 	var zoomLevel = 1;
@@ -5298,7 +5300,7 @@ Friend.startImageViewer = function( iconObject, extra )
 	var position = 'centered';
 	var zoomSet = false;
 
-	var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
+	var checkers = '<div class="DefaultContextMenu" style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
 
 	function repositionElement( win, pos, extra )
 	{		
@@ -5399,6 +5401,12 @@ Friend.startImageViewer = function( iconObject, extra )
 		repositionElement( owin, position );
 	} );
 	
+	// Handle back
+	win.showBackButton( true, function( e )
+	{
+		Workspace.handleBackButton();
+	} );
+	
 
 	function renderToolbar( eparent )
 	{
@@ -5482,7 +5490,7 @@ Friend.startImageViewer = function( iconObject, extra )
 		GetURLFromPath( iconObject.Path, function( imageUrl )
 		{
 			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
-			owin.setContent( '<iframe class="ImageViewerContent" src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+			owin.setContent( '<iframe class="DefaultContextMenu ImageViewerContent" src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 		} );
 	}
 	else
@@ -5497,6 +5505,7 @@ Friend.startImageViewer = function( iconObject, extra )
 			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; z-index: 1;">' + checkers + '</div>' );
 			var i = new Image();
 			i.src = imageUrl;
+			i.className = 'DefaultContextMenu';
 			owin._window.getElementsByClassName( 'ImageViewerContent' )[0].appendChild( i );
 			i.onload = function()
 			{

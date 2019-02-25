@@ -321,6 +321,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
 				{ TAG_DONE, TAG_DONE }
 			};
+
+			//DEBUG("\n\n\nURL : %s\n\n\nPOST URL: %s\n\n\n", (*request)->content, (*request)->rawRequestPath );
+			
 			response = HttpNewSimple( HTTP_200_OK, tags );
 			
 			char buffer[ 256 ];
@@ -895,7 +898,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 						if( sqlLib != NULL )
 						{
-							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, DeviceIdentity='%s' WHERE `SessionID`='%s", (long long)loggedSession->us_LoggedTime, deviceid,  loggedSession->us_SessionID );
+							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, DeviceIdentity='%s' WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid,  loggedSession->us_SessionID );
 							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 							{ 
 								
