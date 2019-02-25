@@ -517,6 +517,13 @@ var WorkspaceInside = {
 			}
 			delete this.conn;
 		}
+		
+		if( typeof FriendConnection == 'undefined' )
+		{
+			setTimeout(Workspace.initWebSocket, 250);
+			return;
+		}
+		
 		this.conn = new FriendConnection( conf );
 		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 		this.conn.on( 'server-notice', handleServerNotice );
