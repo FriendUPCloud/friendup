@@ -4146,6 +4146,7 @@ var View = function( args )
 	
 	this.showBackButton = function( visible, cbk )
 	{
+		if( !isMobile ) return;
 		if( visible )
 		{
 			self.mobileBack.classList.add( 'Showing' );
