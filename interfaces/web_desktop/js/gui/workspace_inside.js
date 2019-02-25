@@ -517,6 +517,13 @@ var WorkspaceInside = {
 			}
 			delete this.conn;
 		}
+		
+		if( typeof FriendConnection == 'undefined' )
+		{
+			setTimeout(Workspace.initWebSocket, 250);
+			return;
+		}
+		
 		this.conn = new FriendConnection( conf );
 		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 		this.conn.on( 'server-notice', handleServerNotice );
@@ -6469,9 +6476,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		var tr = e.target ? e.target : e.srcElement;
-		
+
 		if( tr == window )
 			tr = document.body;
+		
+		// Item uses system default
+		if( tr.defaultContextMenu ) 
+		{
+			return false;
+		}
 		
 		var findView = false;
 		var el = tr;
@@ -6738,6 +6751,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.raise();
 			v.show();
 		}
+		return true;
 	},
 	newDirectoryView: function()
 	{

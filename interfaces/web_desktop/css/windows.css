@@ -72,6 +72,7 @@ body:not([mobile]) .View
 [mobile] .View.Mountlist .DirectoryToolbar button
 {
 	opacity: 0;
+	pointer-events: none;
 }
 
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser

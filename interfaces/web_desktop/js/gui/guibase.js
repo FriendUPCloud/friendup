@@ -3518,7 +3518,6 @@ function contextMenu( e )
 		window.mouseDown = false;
 		if( isMobile )
 		{
-			console.log( 'Showing mobile context menu.' );
 			MobileContextMenu.show( tar );
 		}
 		else
