@@ -636,18 +636,21 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							{
 								FULONG res = 0;
 
-								char command[ 1024 ];
+#define MAX_LEN_PHP_INT_COMMAND 1024
+								char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
 
 								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-								int cx = snprintf( command, sizeof(command), "php \"%s\" \"%s\" \"%s\" \"%s\";", "php/login.php", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
-								if( !( cx >= 0 ) )
-								{
-									FERROR( "[ProtocolHttp] snprintf\n" );;
-								}
-								else
+								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
+								//if( !( cx >= 0 ) )
+								//{
+								//	FERROR( "[ProtocolHttp] snprintf\n" );;
+								//}
+								//else
 								{
 									FILE *pipe = popen( command, "r" );
 									ListString *ls = NULL;
+									
+									Log( FLOG_INFO, "Sending php command: %s < pipe: %p\n", command, pipe );
 
 									if( pipe != NULL )
 									{
@@ -665,6 +668,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										}
 										pclose( pipe );
 									}
+									else
+									{
+										Log( FLOG_ERROR, "Cannot open pipe!\n");
+									}
+									
+									Log( FLOG_INFO, "End of PHP loop\n");
 
 									if( ls != NULL )
 									{
@@ -699,6 +708,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										ls->ls_Data = NULL;
 										ListStringDelete( ls );
 									}
+									
+									FFree( command );
 								}
 							}
 
