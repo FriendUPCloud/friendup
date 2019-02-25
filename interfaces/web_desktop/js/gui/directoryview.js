@@ -5290,6 +5290,12 @@ Friend.startImageViewer = function( iconObject, extra )
 		}
 	}
 	
+	// No context menu here
+	win.content.oncontextmenu = function( e )
+	{
+		cancelBubble( e );
+	}
+	
 	var owin = win;
 
 	var zoomLevel = 1;
