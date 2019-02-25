@@ -5281,7 +5281,11 @@ Friend.startImageViewer = function( iconObject, extra )
 	} );
 	
 	win.parentView = extra.parentView;
-	
+	win.showBackButton( true, function( e )
+	{
+		Workspace.handleBackButton();
+		win.close();
+	} );
 	
 	win.onClose = function()
 	{
