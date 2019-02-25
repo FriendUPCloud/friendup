@@ -2050,6 +2050,31 @@ var View = function( args )
 				self.viewIcon = iconSpan;
 				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
 				viewContainer.appendChild( iconSpan );
+				
+				// Add mobile back button
+				if( isMobile )
+				{
+					var md = document.createElement( 'div' );
+					md.className = 'MobileBack';
+					self.mobileBack = md;
+					md.ontouchstart =function( e )
+					{
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( div.applicationId );
+							if( app.mainView )
+							{
+								FocusOnNothing();
+								_ActivateWindow( app.mainView.content.parentNode );
+								self.close();
+								return cancelBubble( e );
+							}
+						}
+						return cancelBubble( e );
+					};
+					viewContainer.appendChild( md );
+				}
+				
 			}
 			
 			if( div == 'CREATE' )
