@@ -5402,7 +5402,6 @@ Friend.startImageViewer = function( iconObject, extra )
 	win.showBackButton( true, function( e )
 	{
 		Workspace.handleBackButton();
-		win.close();
 	} );
 	
 
