@@ -4826,7 +4826,11 @@ var View = function( args )
 					btn.onclick = function( e )
 					{
 						var canv = document.createElement( 'canvas' );
-						canv.srcObject = d.captureStream();
+						canv.setAttribute( 'width', d.offsetWidth );
+						canv.setAttribute( 'height', d.offsetHeight );
+						v.appendChild( canv );
+						var ctx = canv.getContext( '2d' );
+						ctx.drawImage( d, 0, 0, d.offsetWidth, d.offsetHeight );
 						var dt = canv.toDataURL();
 						
 						// Stop taking video
