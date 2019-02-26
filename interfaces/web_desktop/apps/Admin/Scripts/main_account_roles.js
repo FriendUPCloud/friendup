@@ -386,7 +386,7 @@ Sections.accounts_roles = function( cmd, extra )
 		// Types of listed fields
 		var types = {
 			Edit: '10',
-			Name: '90'/*,
+			Name: '80'/*,
 			Description: '60'*/
 		};
 		
@@ -417,6 +417,13 @@ Sections.accounts_roles = function( cmd, extra )
 			d.innerHTML = '<strong>' + ( z != 'Edit' ? z : '' ) + '</strong>';
 			headRow.appendChild( d );
 		}
+		
+		var d = document.createElement( 'div' );
+		d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
+		d.innerHTML = '<strong>(+)</strong>';
+		d.onclick = function(){ Sections.userroleadd( 'Unnamed role' ) };
+		headRow.appendChild( d );
+		
 		header.appendChild( headRow );
 		o.appendChild( header );
 		
@@ -467,6 +474,7 @@ Sections.accounts_roles = function( cmd, extra )
 				list.appendChild( r );
 			}
 		}
+		
 		o.appendChild( list );
 		
 		Friend.responsive.pageActive = ge( 'RoleList' );
@@ -474,6 +482,49 @@ Sections.accounts_roles = function( cmd, extra )
 	}
 	m.execute( 'userroleget' );
 };
+
+
+
+Sections.role_edit = function( id, _this )
+{
+	
+	var pnt = _this.parentNode;
+	
+	var edit = pnt.innerHTML;
+	
+	var buttons = [ 
+		{ 'name' : 'Save',   'icon' : '', 'func' : function()
+			{ 
+				Sections.userroleupdate( id, ge( 'RoleName' ).value ) 
+			} 
+		}, 
+		{ 'name' : 'Delete', 'icon' : '', 'func' : function()
+			{ 
+				Sections.userroledelete( id ) 
+			} 
+		}, 
+		{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
+			{ 
+				pnt.innerHTML = edit 
+			} 
+		}
+	];
+	
+	pnt.innerHTML = '';
+	
+	for( var i in buttons )
+	{
+		var b = document.createElement( 'button' );
+		b.className = 'IconSmall FloatRight';
+		b.innerHTML = buttons[i].name;
+		b.onclick = buttons[i].func;
+		
+		pnt.appendChild( b );
+	}
+	
+}
+
+
 
 
 
