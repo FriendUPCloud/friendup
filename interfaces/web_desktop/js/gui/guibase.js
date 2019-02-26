@@ -2366,12 +2366,33 @@ function CheckScreenTitle( screen )
 		{
 			csc.originalTitle = csc.getFlag( 'title' );
 		}
-		csc.setFlag( 'title', wnd );
+		
+		// Don't do it twice
+		if( wnd != csc.getFlag( 'title' ) )
+		{
+			csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+			setTimeout( function()
+			{
+				csc.setFlag( 'title', wnd );
+				setTimeout( function()
+				{
+					csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+				}, 70 );
+			}, 70 );
+		}
 	}
-	// Just use the screen
-	else if( csc.originalTitle )
+	// Just use the screen (don't do it twice)
+	else if( csc.originalTitle && csc.getFlag( 'title' ) != csc.originalTitle )
 	{
-		csc.setFlag( 'title', csc.originalTitle );
+		csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+		setTimeout( function()
+		{
+			csc.setFlag( 'title', csc.originalTitle );
+			setTimeout( function()
+			{
+				csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+			}, 70 );
+		}, 70 );	
 	}
 
 	// Enable the global menu
