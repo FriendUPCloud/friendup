@@ -4830,6 +4830,7 @@ var View = function( args )
 						var dt = canv.toDataURL();
 						
 						// Stop taking video
+						d.srcObject.getTracks().forEach(track => track.stop())
 						d.srcObject = null;
 						
 						// FLASH!
