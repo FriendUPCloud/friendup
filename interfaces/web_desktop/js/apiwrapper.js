@@ -1551,6 +1551,7 @@ function apiWrapper( event, force )
 									var cid = msg.callback;
 									cbk = function( data )
 									{
+										// For Friend Chat?
 										if( win.viewId == msg.targetViewId )
 										{
 											win.sendMessage( {

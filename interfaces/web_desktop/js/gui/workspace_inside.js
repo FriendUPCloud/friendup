@@ -2609,9 +2609,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( !themeName ) themeName = 'friendup12';
 		
-		// Only friendup12 for now.
-		themeName = 'friendup12';
-		
 		themeName = themeName.toLowerCase();
 		
 		Workspace.theme = themeName;

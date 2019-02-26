@@ -4811,7 +4811,7 @@ var View = function( args )
 				d.srcObject.getTracks().forEach( track => track.stop() );
 			}
 			 
-			 // Now get the media!
+			// Now get the media!
 			navigator.gm(
 				constraints,
 				// Success Callback
@@ -4826,7 +4826,11 @@ var View = function( args )
 					btn.onclick = function( e )
 					{
 						var canv = document.createElement( 'canvas' );
-						canv.srcObject = d.captureStream();
+						canv.setAttribute( 'width', d.offsetWidth );
+						canv.setAttribute( 'height', d.offsetHeight );
+						v.appendChild( canv );
+						var ctx = canv.getContext( '2d' );
+						ctx.drawImage( d, 0, 0, d.offsetWidth, d.offsetHeight );
 						var dt = canv.toDataURL();
 						
 						// Stop taking video
@@ -4860,6 +4864,12 @@ var View = function( args )
 				{
 					// Log the error to the console.
 					callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+					v.classList.add( 'Closing' );
+					setTimeout( function()
+					{
+						callback( { response: 1, message: 'Image captured', data: dt } );
+						v.parentNode.removeChild( v );
+					}, 250 );
 				}
 			);
 		}
@@ -4867,6 +4877,12 @@ var View = function( args )
 		else
 		{
 			callback( { response: -1, message: 'Could not access camera.' } );
+			v.classList.add( 'Closing' );
+			setTimeout( function()
+			{
+				callback( { response: 1, message: 'Image captured', data: dt } );
+				v.parentNode.removeChild( v );
+			}, 250 );
 		}
 	}
 	
