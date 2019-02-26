@@ -4886,6 +4886,11 @@ var View = function( args )
 					}
 				);
 			}
+			else
+			{
+				Alert( 'Error in camera', navigator.mediaDevices );
+				callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+			}
 		}
 		// We failed!
 		else
