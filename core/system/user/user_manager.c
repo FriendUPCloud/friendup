@@ -737,7 +737,11 @@ FULONG UMGetUserIDByName( UserManager *um, const char *name )
 		}
 	}
 
-	return usr->u_ID;
+	if( usr != NULL )
+	{
+		return usr->u_ID;
+	}
+	return 0;
 }
 
 /**
