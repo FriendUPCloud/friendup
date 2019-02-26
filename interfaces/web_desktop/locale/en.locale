@@ -695,3 +695,6 @@ i18n_show_all_windows                   : Show all windows
 i18n_could_not_find_application         : Could not find application
 i18n_could_not_find_app_desc            : Application notification did not work because the application did not start.
 
+i18n_camera_action_description          : Take a picture with your device.
+i18n_take_photo                         : Take a picture
+
