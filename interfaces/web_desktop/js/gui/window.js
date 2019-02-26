@@ -4830,7 +4830,6 @@ var View = function( args )
 						var dt = canv.toDataURL();
 						
 						// Stop taking video
-						d.stop();
 						d.srcObject = null;
 						
 						// FLASH!
