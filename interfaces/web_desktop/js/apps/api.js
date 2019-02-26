@@ -2300,6 +2300,25 @@ function View( flags )
 		Application.sendMessage( o );
 	}
 	
+	// Show the camera
+	this.openCamera = function( flags, callback )
+	{
+		var cid = addCallback( function( msg )
+		{
+			callback( msg.data );
+		} );
+		var o = {
+			type: 'view',
+			method: 'opencamera',
+			viewId: viewId,
+			// Right scope!
+			targetViewId: Application.viewId ? Application.viewId : null,
+			flags: flags,
+			callback: cid
+		};
+		Application.sendMessage( o );
+	}
+	
 	// Show the mobile back button
 	this.showBackButton = function( visible, callback )
 	{

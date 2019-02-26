@@ -1542,6 +1542,39 @@ function apiWrapper( event, force )
 					var win = app.windows[ msg.viewId ];
 					switch( msg.method )
 					{
+						case 'opencamera':
+							if( win )
+							{
+								var cbk = null;
+								if( msg.callback )
+								{
+									var cid = msg.callback;
+									cbk = function( data )
+									{
+										if( win.viewId == msg.targetViewId )
+										{
+											win.sendMessage( {
+												command: 'callback',
+												callback: cid,
+												viewId: msg.targetViewId,
+												data: data
+											} );
+										}
+										else
+										{
+											app.sendMessage( {
+												command: 'callback',
+												callback: cid,
+												data: data
+											} );
+										}
+									}
+									msg.callback = null;
+								}
+								win.openCamera( msg.flags, cbk );
+							}
+							break;
+							
 						case 'showbackbutton':
 							if( win )
 							{

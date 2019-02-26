@@ -4764,8 +4764,114 @@ var View = function( args )
 		}
 		return false;
 	}
+	
+	this.openCamera = function( flags, callback )
+	{
+		// TODO: Parse the flags! E.g. facingMode should be user or environment
+		
+		// Set up elements
+		var d = document.createElement( 'video' );
+		d.setAttribute( 'autoplay', 'autoplay' );
+		d.setAttribute( 'playinline', 'playinline' );
+		d.className = 'FriendCameraElement';
+		
+		var v = document.createElement( 'div' );
+		v.className = 'FriendCameraContainer';
+		v.camera = v;
+		v.appendChild( d );
+		
+		// Add to content
+		this.content.appendChild( v );
+		this.content.classList.add( 'HasCamera' );
+		
+		// Just get the available camera
+		// Normalize the various vendor prefixed versions of getUserMedia.
+		// TODO: Perhaps place this in a central location once and for all...
+		navigator.gm = (navigator.getUserMedia ||
+			navigator.webkitGetUserMedia ||
+			navigator.mozGetUserMedia || 
+			navigator.msGetUserMedia
+		);
+		if( navigator.gm )
+		{
+			// Request the camera.
+			var constraints = { 
+				video: {
+					facingMode: flags.facingMode ? flags.facingMode : 'environment'
+				} 
+			};
+			// We know which device we want..
+			if( flags.deviceId )
+			{
+				constraints = { video: { deviceId: info.deviceId } };
+			}
+		
+			if( d && d.srcObject )
+			{
+				d.srcObject.getTracks().forEach( track => track.stop() );
+			}
+			 
+			 // Now get the media!
+			navigator.gm(
+				constraints,
+				// Success Callback
+				function( localMediaStream ) 
+				{
+					// Create an object URL for the video stream and use this 
+					// to set the video source.
+					d.srcObject = localMediaStream;
+					// Add the record button
+					var btn = document.createElement( 'button' );
+					btn.className = 'IconButton IconSmall fa-camera';
+					btn.onclick = function( e )
+					{
+						var canv = document.createElement( 'canvas' );
+						canv.srcObject = d.captureStream();
+						var dt = canv.toDataURL();
+						
+						// Stop taking video
+						d.srcObject.getTracks().forEach(track => track.stop())
+						d.srcObject = null;
+						
+						// FLASH!
+						v.classList.add( 'Flash' );
+						setTimeout( function()
+						{
+							v.classList.add( 'Flashing' );
+							setTimeout( function()
+							{
+								v.classList.remove( 'Flashing' );
+								setTimeout( function()
+								{
+									v.classList.add( 'Closing' );
+									setTimeout( function()
+									{
+										callback( { response: 1, message: 'Image captured', data: dt } );
+										v.parentNode.removeChild( v );
+									}, 250 );
+								}, 250 );
+							}, 250 );
+						}, 5 );
+					}
+					v.appendChild( btn );
+				},
+				// Error Callback
+				function( err )
+				{
+					// Log the error to the console.
+					callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+				}
+			);
+		}
+		// We failed!
+		else
+		{
+			callback( { response: -1, message: 'Could not access camera.' } );
+		}
+	}
+	
 	// Add a child window to this window
-	this.addChildWindow = function ( ele )
+	this.addChildWindow = function( ele )
 	{
 		if ( ele.tagName && ele.windowObject )
 			return this.childWindows.push ( ele.windowObject );
