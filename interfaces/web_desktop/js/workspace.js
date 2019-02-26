@@ -800,6 +800,7 @@ Workspace = {
 			m.addVar( 'deviceid', this.deviceid );
 			m.onExecuted = function( json, serveranswer )
 			{
+
 				if( typeof( json ) != 'object' )
 				{
 					try
