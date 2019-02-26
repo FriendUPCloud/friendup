@@ -4795,6 +4795,7 @@ var View = function( args )
 		
 		if( navigator.gm || ( navigator.mediaDevices && navigator.mediaDevices.getUserMedia ) )
 		{
+			Alert( navigator.mediaDevices ? 'Media devices' : 'No media devices', navigator.gm ? 'gm' : 'no gm' );
 			// Request the camera.
 			var constraints = { 
 				video: {
