@@ -4792,7 +4792,8 @@ var View = function( args )
 			navigator.mozGetUserMedia || 
 			navigator.msGetUserMedia
 		);
-		if( navigator.gm )
+		
+		if( navigator.gm || ( navigator.mediaDevices && navigator.mediaDevices.getUserMedia ) )
 		{
 			// Request the camera.
 			var constraints = { 
@@ -4811,61 +4812,80 @@ var View = function( args )
 				d.srcObject.getTracks().forEach( track => track.stop() );
 			}
 			 
-			 // Now get the media!
-			navigator.gm(
-				constraints,
-				// Success Callback
-				function( localMediaStream ) 
+			function success( localMediaStream )
+			{
+				// Create an object URL for the video stream and use this 
+				// to set the video source.
+				d.srcObject = localMediaStream;
+				// Add the record button
+				var btn = document.createElement( 'button' );
+				btn.className = 'IconButton IconSmall fa-camera';
+				btn.onclick = function( e )
 				{
-					// Create an object URL for the video stream and use this 
-					// to set the video source.
-					d.srcObject = localMediaStream;
-					// Add the record button
-					var btn = document.createElement( 'button' );
-					btn.className = 'IconButton IconSmall fa-camera';
-					btn.onclick = function( e )
+					var canv = document.createElement( 'canvas' );
+					canv.setAttribute( 'width', d.offsetWidth );
+					canv.setAttribute( 'height', d.offsetHeight );
+					v.appendChild( canv );
+					var ctx = canv.getContext( '2d' );
+					ctx.drawImage( d, 0, 0, d.offsetWidth, d.offsetHeight );
+					var dt = canv.toDataURL();
+			
+					// Stop taking video
+					d.srcObject.getTracks().forEach(track => track.stop())
+					d.srcObject = null;
+			
+					// FLASH!
+					v.classList.add( 'Flash' );
+					setTimeout( function()
 					{
-						var canv = document.createElement( 'canvas' );
-						canv.setAttribute( 'width', d.offsetWidth );
-						canv.setAttribute( 'height', d.offsetHeight );
-						v.appendChild( canv );
-						var ctx = canv.getContext( '2d' );
-						ctx.drawImage( d, 0, 0, d.offsetWidth, d.offsetHeight );
-						var dt = canv.toDataURL();
-						
-						// Stop taking video
-						d.srcObject.getTracks().forEach(track => track.stop())
-						d.srcObject = null;
-						
-						// FLASH!
-						v.classList.add( 'Flash' );
+						v.classList.add( 'Flashing' );
 						setTimeout( function()
 						{
-							v.classList.add( 'Flashing' );
+							v.classList.remove( 'Flashing' );
 							setTimeout( function()
 							{
-								v.classList.remove( 'Flashing' );
+								v.classList.add( 'Closing' );
 								setTimeout( function()
 								{
-									v.classList.add( 'Closing' );
-									setTimeout( function()
-									{
-										callback( { response: 1, message: 'Image captured', data: dt } );
-										v.parentNode.removeChild( v );
-									}, 250 );
+									callback( { response: 1, message: 'Image captured', data: dt } );
+									v.parentNode.removeChild( v );
 								}, 250 );
 							}, 250 );
-						}, 5 );
-					}
-					v.appendChild( btn );
-				},
-				// Error Callback
-				function( err )
-				{
-					// Log the error to the console.
-					callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+						}, 250 );
+					}, 5 );
 				}
-			);
+				v.appendChild( btn );
+			}
+			 
+			// Now get the media!
+			if( navigator.gm )
+			{
+				navigator.gm(
+					constraints,
+					// Success Callback
+					success,
+					// Error Callback
+					function( err )
+					{
+						// Log the error to the console.
+						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+					}
+				);
+			}
+			else if( navigator.mediaDevices && navigator.mediaDevices.getUserMedia )
+			{
+				navigator.mediaDevices.getUserMedia(
+					constraints,
+					// Success Callback
+					success,
+					// Error Callback
+					function( err )
+					{
+						// Log the error to the console.
+						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+					}
+				);
+			}
 		}
 		// We failed!
 		else
