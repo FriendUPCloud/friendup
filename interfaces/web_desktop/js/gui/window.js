@@ -4829,6 +4829,10 @@ var View = function( args )
 						canv.srcObject = d.captureStream();
 						var dt = canv.toDataURL();
 						
+						// Stop taking video
+						d.stop();
+						d.srcObject = null;
+						
 						// FLASH!
 						v.classList.add( 'Flash' );
 						setTimeout( function()
