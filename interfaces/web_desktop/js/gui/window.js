@@ -4828,7 +4828,26 @@ var View = function( args )
 						var canv = document.createElement( 'canvas' );
 						canv.srcObject = d.captureStream();
 						var dt = canv.toDataURL();
-						callback( { response: 1, message: 'Image captured', data: dt } );
+						
+						// FLASH!
+						v.classList.add( 'Flash' );
+						setTimeout( function()
+						{
+							v.classList.add( 'Flashing' );
+							setTimeout( function()
+							{
+								v.classList.remove( 'Flashing' );
+								setTimeout( function()
+								{
+									v.classList.add( 'Closing' );
+									setTimeout( function()
+									{
+										callback( { response: 1, message: 'Image captured', data: dt } );
+										v.parentNode.removeChild( v );
+									}, 250 );
+								}, 250 );
+							}, 250 );
+						}, 5 );
 					}
 					v.appendChild( btn );
 				},
