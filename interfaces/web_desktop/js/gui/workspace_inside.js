@@ -478,9 +478,14 @@ var WorkspaceInside = {
 		if( Workspace.reloginInProgress || Workspace.connectingWebsocket )
 			return;
 		
-		if( !Workspace.sessionId )
+		if( !Workspace.sessionId && Workspace.userLevel )
 		{
 			return Workspace.relogin();
+		}
+		
+		if(!Workspace.sessionId)
+		{
+			setTimeout(Workspace.initWebSocket, 1000);
 		}
 
 		Workspace.connectingWebsocket = true;
@@ -7862,6 +7867,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
+		if( !Workspace.sessionId ) { setTimeout(Workspace.updateViewState, 1000); return; }
+
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
