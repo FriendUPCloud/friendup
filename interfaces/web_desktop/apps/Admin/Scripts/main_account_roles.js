@@ -524,6 +524,44 @@ Sections.role_edit = function( id, _this )
 	
 }
 
+Sections.permission_edit = function( id, _this )
+{
+	
+	var pnt = _this.parentNode;
+	
+	var edit = pnt.innerHTML;
+	
+	var buttons = [ 
+		{ 'name' : 'Save',   'icon' : '', 'func' : function()
+			{ 
+				alert( 'Save ', id ); 
+			} 
+		}, 
+		{ 'name' : 'Delete', 'icon' : '', 'func' : function()
+			{ 
+				alert( 'Delete ', id ); 
+			} 
+		}, 
+		{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
+			{ 
+				pnt.innerHTML = edit 
+			} 
+		}
+	];
+	
+	pnt.innerHTML = '';
+	
+	for( var i in buttons )
+	{
+		var b = document.createElement( 'button' );
+		b.className = 'IconSmall FloatRight';
+		b.innerHTML = buttons[i].name;
+		b.onclick = buttons[i].func;
+		
+		pnt.appendChild( b );
+	}
+	
+}
 
 
 
