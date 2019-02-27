@@ -728,7 +728,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		}
 		else
 		{
-			actUserSess->us_WSClients = nwsc;
+			//actUserSess->us_WSClients = nwsc;
 		}
 			
 		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to next %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
