@@ -4038,6 +4038,8 @@ FileIcon.prototype.Init = function( fileInfo )
 		
 		obj = ele ? ele : file;
 		
+		console.log( 'Here: ', obj, obj.fileInfo );
+		
 		// File extension
 		if( obj.fileInfo && obj.fileInfo.Path && obj.fileInfo.Path.indexOf( '.' ) > 0 )
 		{
@@ -4052,7 +4054,8 @@ FileIcon.prototype.Init = function( fileInfo )
 					var mt = Workspace.mimeTypes[a];
 					for( var b in mt.types )
 					{
-						if( ext == mt.types[b].toLowerCase() )
+						// Make sure we have a valid executable
+						if( ext == mt.types[b].toLowerCase() && mt.executable.length )
 						{
 							return ExecuteApplication( mt.executable, obj.fileInfo.Path );
 						}
@@ -4188,6 +4191,8 @@ FileIcon.prototype.Init = function( fileInfo )
 					js = JSON.parse( md );
 				}
 				catch( e ){};
+				
+				console.log( 'Checking mime: ', js );
 				
 				if( me == 'ok' && js )
 				{
@@ -4435,6 +4440,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			window: false
 		};
 	}
+	
 	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
