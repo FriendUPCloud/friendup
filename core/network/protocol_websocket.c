@@ -1157,6 +1157,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 											
 											if( wstdata != NULL )
 											{
+												DEBUG("Request received\n");
 												char *requestid = NULL;
 												int requestis = 0;
 												char *path = NULL;
@@ -1205,6 +1206,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 													int error = 0;
 													BufString *queryrawbs = BufStringNewSize( 2048 );
+													
+													DEBUG("[WS] Parsing messages\n");
 													
 													for( i = 7 ; i < r ; i++ )
 													{
@@ -1349,6 +1352,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 #endif
 #if USE_WORKERS == 1
 													SystemBase *lsb = (SystemBase *)fcd->fcd_SystemBase;
+													
+													DEBUG("[WS] Message parsed, sedning\n");
 													
 													if( fcd->fcd_WSClient != NULL && fcd->fcd_WSClient->wsc_ToBeRemoved == FALSE )
 													{

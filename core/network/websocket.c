@@ -689,6 +689,8 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		
 		FQDeInitFree( &(nwsc->wsc_MsgQueue) );
 		FQInit( &(nwsc->wsc_MsgQueue) );
+		
+		nwsc->wsc_ToBeRemoved = FALSE;
 	}
 	else
 	{
