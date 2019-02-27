@@ -1019,15 +1019,14 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													unsigned char *buf;
 													//int len = strlen( answer );
 													buf = (unsigned char *)FCalloc( len + 256, sizeof( char ) );
-													DEBUG("Buf assigned: %p\n", buf );
+													INFO("Buf assigned: %p\n", buf );
 													if( buf != NULL )
 													{
 														memcpy( buf, answer,  len );
 
-														DEBUG("[WS] Writeline %p\n", fcd->fcd_WSClient );
+														INFO("[WS] Writeline %p\n", fcd->fcd_WSClient );
 														if( fcd->fcd_WSClient != NULL )
 														{
-															
 															WebsocketWriteInline( fcd->fcd_WSClient, buf, len, LWS_WRITE_TEXT );
 														}
 														FFree( buf );
