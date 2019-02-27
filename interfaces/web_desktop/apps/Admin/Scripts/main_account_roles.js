@@ -167,6 +167,109 @@ Sections.accounts_roles = function( cmd, extra )
 				}
 				apl += '</div>';
 				
+				//System
+				//Module
+				//App
+				
+				Sections.system_permissions();
+				
+				var perm = [
+					{ 
+						app: "Users", name : "Users", description : "", permissions : [
+							{ 
+								permission : "USERS_READ", name : "Read", description : "", active: true 
+							},
+							{ 
+								permission : "USERS_WRITE", name : "Write", description : "", active: true 
+							},
+							{ 
+								permission : "USERS_DELETE", name : "Delete", description : "", active: true 
+							}
+						] 
+					},
+					{ 
+						app: "Liberator", name : "Liberator", description : "", permissions : [
+							{ 
+								permission : "USERS_READ", name : "Read", description : "", active: true 
+							},
+							{ 
+								permission : "USERS_WRITE", name : "Write", description : "", active: true 
+							},
+							{ 
+								permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+							}
+						] 
+					},
+					{ 
+						app: "Server", name : "Server", description : "", permissions : [
+							{ 
+								permission : "USERS_READ", name : "Read", description : "", active: false 
+							},
+							{ 
+								permission : "USERS_WRITE", name : "Write", description : "", active: false 
+							},
+							{ 
+								permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+							}
+						] 
+					},
+					{ 
+						app: "Mimetypes", name : "Mimetypes", description : "", permissions : [
+							{ 
+								permission : "USERS_READ", name : "Read", description : "", active: false 
+							},
+							{ 
+								permission : "USERS_WRITE", name : "Write", description : "", active: false 
+							},
+							{ 
+								permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+							}
+						] 
+					}
+				];
+				
+				console.log( perm );
+				
+				apl = '';
+				
+				if( perm )
+				{
+					for( var a in perm )
+					{
+						var sw = 2;
+						
+						apl += '<div class="Wrapper collapse">';
+						
+						apl += '<div class="HRow">';
+						apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].name + '</strong></div>';
+						apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+						apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
+						apl += '</div>';
+						apl += '</div>';
+						
+						apl += '<div class="List">';
+						
+						for( var k in perm[a].permissions )
+						{
+							sw = sw == 2 ? 1 : 2;
+							
+							apl += '<div class="HRow">';
+							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + perm[a].permissions[k].name + '</div>';
+							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+							apl += '<button onclick="Toggle(this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].active ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+							apl += '</div>';
+							apl += '</div>';
+						}
+						
+						apl += '</div>';
+						
+						apl += '</div>';
+					}
+				}
+				
+				
+				
+				
 				// Get the user details template
 				var d = new File( 'Progdir:Templates/account_role_details.html' );
 				
