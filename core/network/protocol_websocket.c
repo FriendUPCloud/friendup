@@ -1014,11 +1014,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													login = TRUE;
 												
 													char answer[ 1024 ];
-													snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+													int len = snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
 												
 													unsigned char *buf;
-													int len = strlen( answer );
-													buf = (unsigned char *)FCalloc( len + 128, sizeof( char ) );
+													//int len = strlen( answer );
+													buf = (unsigned char *)FCalloc( len + 256, sizeof( char ) );
+													DEBUG("Buf assigned: %p\n", buf );
 													if( buf != NULL )
 													{
 														memcpy( buf, answer,  len );
