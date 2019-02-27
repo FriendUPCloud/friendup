@@ -2391,7 +2391,7 @@ function CheckScreenTitle( screen )
 			csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
 			_screenTitleTimeout = setTimeout( function()
 			{
-				csc.setFlag( 'title', wnd );
+				setTitleAndMoveMenu( csc, wnd );
 				_screenTitleTimeout = setTimeout( function()
 				{
 					csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
@@ -2400,7 +2400,7 @@ function CheckScreenTitle( screen )
 		}
 		else
 		{
-			csc.setFlag( 'title', wnd );
+			setTitleAndMoveMenu( csc, wnd );
 		}
 	}
 	// Just use the screen (don't do it twice)
@@ -2410,31 +2410,40 @@ function CheckScreenTitle( screen )
 		var titl = csc.originalTitle;
 		_screenTitleTimeout = setTimeout( function()
 		{
-			csc.setFlag( 'title', titl );
+			setTitleAndMoveMenu( csc, titl );
 			_screenTitleTimeout = setTimeout( function()
 			{
 				csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
 			}, 70 );
 		}, 70 );	
 	}
-
-	// Enable the global menu
-	if( Workspace && Workspace.menuMode == 'pear' )
+	else
 	{
-		if( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen )
+		setTitleAndMoveMenu();
+	}
+
+	// Delayed
+	function setTitleAndMoveMenu( obj, tit )
+	{
+		if( obj && tit )
+			obj.setFlag( 'title', tit );
+		// Enable the global menu
+		if( Workspace && Workspace.menuMode == 'pear' )
 		{
-			WorkspaceMenu.show();
-			WorkspaceMenu.currentView = currentMovable;
-			WorkspaceMenu.currentScreen = currentScreen;
-		}
-		// Nudge workspace menu to right side of screen title 
-		if( !isMobile && ge( 'WorkspaceMenu' ) )
-		{
-			var t = currentScreen.screen._titleBar.getElementsByClassName( 'Info' );
-			if( t ) 
+			if( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen )
 			{
-				t = t[0];
-				ge( 'WorkspaceMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
+				WorkspaceMenu.show();
+				WorkspaceMenu.currentView = currentMovable;
+				WorkspaceMenu.currentScreen = currentScreen;
+			}
+			// Nudge workspace menu to right side of screen title 
+			if( !isMobile && ge( 'WorkspaceMenu' ) )
+			{
+				var t = currentScreen.screen._titleBar.querySelector( '.Info' );
+				if( t ) 
+				{
+					ge( 'WorkspaceMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
+				}
 			}
 		}
 	}
