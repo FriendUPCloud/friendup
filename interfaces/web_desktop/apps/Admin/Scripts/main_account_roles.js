@@ -180,7 +180,23 @@ Sections.accounts_roles = function( cmd, extra )
 				{
 					var perm = data.Apps;
 					
-					
+					if( info.role.Permissions )
+					{
+						var roleperm = info.role.Permissions;
+						
+						for( var i in perm )
+						{
+							for( var ii in perm[i].permissions )
+							{
+								for( var r in roleperm )
+								{
+									console.log( perm[i] );
+									console.log( perm[i].permissions[ii] );
+									console.log( roleperm[r] );
+								}
+							}
+						}
+					}
 				}
 				else
 				{
@@ -188,54 +204,54 @@ Sections.accounts_roles = function( cmd, extra )
 					
 					var perm = [
 						{ 
-							app: "Users", name : "Users", description : "", permissions : [
+							app : "Users", name : "Users", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", active: true 
+									permission : "USERS_READ", name : "Read", description : "", id: true 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", active: true 
+									permission : "USERS_WRITE", name : "Write", description : "", id: true 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", active: true 
+									permission : "USERS_DELETE", name : "Delete", description : "", id: true 
 								}
 							] 
 						},
 						{ 
-							app: "Liberator", name : "Liberator", description : "", permissions : [
+							app : "Liberator", name : "Liberator", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", active: true 
+									permission : "USERS_READ", name : "Read", description : "", id: true 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", active: true 
+									permission : "USERS_WRITE", name : "Write", description : "", id: true 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+									permission : "USERS_DELETE", name : "Delete", description : "", id: false 
 								}
 							] 
 						},
 						{ 
-							app: "Server", name : "Server", description : "", permissions : [
+							app : "Server", name : "Server", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", active: false 
+									permission : "USERS_READ", name : "Read", description : "", id: false 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", active: false 
+									permission : "USERS_WRITE", name : "Write", description : "", id: false 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+									permission : "USERS_DELETE", name : "Delete", description : "", id: false 
 								}
 							] 
 						},
 						{ 
-							app: "Mimetypes", name : "Mimetypes", description : "", permissions : [
+							app : "Mimetypes", name : "Mimetypes", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", active: false 
+									permission : "USERS_READ", name : "Read", description : "", id: false 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", active: false 
+									permission : "USERS_WRITE", name : "Write", description : "", id: false 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+									permission : "USERS_DELETE", name : "Delete", description : "", id: false 
 								}
 							] 
 						}
@@ -270,7 +286,7 @@ Sections.accounts_roles = function( cmd, extra )
 							apl += '<div class="HRow">';
 							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + perm[a].permissions[k].name + '</div>';
 							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-							apl += '<button onclick="Toggle(this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].active ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+							apl += '<button onclick="Toggle(this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].id ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 							apl += '</div>';
 							apl += '</div>';
 						}
@@ -291,7 +307,7 @@ Sections.accounts_roles = function( cmd, extra )
 				d.replacements = {
 					id: info.role.ID,
 					role_name: info.role.Name,
-					role_description: info.role.Description,
+					role_description: ( info.role.Description ? info.role.Description : '' ),
 					/*user_username: roleInfo.Name,
 					user_email: roleInfo.Email,
 					theme_name: settings.Theme,

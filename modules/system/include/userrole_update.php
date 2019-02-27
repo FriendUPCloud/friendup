@@ -54,14 +54,21 @@ if( $d->ID > 0 )
 {
 	if( isset( $args->args->permissions ) )
 	{
-		$perms = count( $args->args->permissions );
-		foreach( $args->args->permissions as $perm )
+		if( $perms = count( $args->args->permissions ) )
 		{
-			$p = new dbIO( 'FUserRolePermission' );
-			$p->Permission = $perm;
-			$p->RoleID = $d->ID;
-			$p->Load();
-			$p->Save();
+			foreach( $args->args->permissions as $perm )
+			{
+				if( $perm->name && $perm->key )
+				{
+					$p = new dbIO( 'FUserRolePermission' );
+					$p->Permission = $perm->name;
+					$p->Key = $perm->key;
+					$p->RoleID = $d->ID;
+					$p->Load();
+					$p->Data = $perm->data;
+					$p->Save();
+				}
+			}
 		}
 		
 		if( $namechange )
