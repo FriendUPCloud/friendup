@@ -1023,12 +1023,15 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													{
 														memcpy( buf, answer,  len );
 
+														DEBUG("[WS] Writeline %p\n", fcd->fcd_WSClient );
 														if( fcd->fcd_WSClient != NULL )
 														{
+															
 															WebsocketWriteInline( fcd->fcd_WSClient, buf, len, LWS_WRITE_TEXT );
 														}
 														FFree( buf );
 													}
+													
 												}
 											}
 											// Incoming connection is authenticating with authid (from an application or an FS)
@@ -1055,6 +1058,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 															memcpy( buf, answer,  len );
 
+															DEBUG("[WS] Writeline1 %p\n", fcd->fcd_WSClient );
 															if( fcd->fcd_WSClient != NULL )
 															{
 																WebsocketWriteInline( fcd->fcd_WSClient, buf, len, LWS_WRITE_TEXT );

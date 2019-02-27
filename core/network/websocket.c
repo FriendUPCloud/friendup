@@ -629,6 +629,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	}
 	
 	WebsocketServerClient *listEntry = NULL;
+	/*
 	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
 	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
@@ -644,6 +645,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		}
 		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	}
+	*/
 	
 	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
 	
@@ -693,7 +695,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	
 	if( nwsc != NULL )
 	{
-		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to new %p\n", nwsc, nwsc->node.mln_Succ );
+		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to next %p\n", nwsc, nwsc->node.mln_Succ );
 		DEBUG("[WS] AddWSCon new connection created\n");
 		nwsc->wsc_Wsi = wsi;
 		
@@ -709,7 +711,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 			FERROR("User sessions %s is not attached to user %lu\n", actUserSess->us_SessionID, actUserSess->us_UserID );
 		}
 
-		data->fcd_WSClient  = nwsc;
+		data->fcd_WSClient = nwsc;
 		data->fcd_SystemBase = l;
 		nwsc->wsc_WebsocketsData = data;
 		nwsc->wsc_UserSession = actUserSess;
@@ -730,7 +732,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 			actUserSess->us_WSClients = nwsc;
 		}
 			
-		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to new %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
+		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to next %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
 		
 		if( listEntry != NULL )
 		{
