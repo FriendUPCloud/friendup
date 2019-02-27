@@ -712,6 +712,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		data->fcd_WSClient  = nwsc;
 		data->fcd_SystemBase = l;
 		nwsc->wsc_WebsocketsData = data;
+		nwsc->wsc_UserSession = actUserSess;
 		
 		if( listEntry == NULL )
 		{
@@ -720,8 +721,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 			{
 				nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
 				actUserSess->us_WSClients = nwsc;
-				nwsc->wsc_UserSession = actUserSess;
-		
+				
 				FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 			}
 		}
