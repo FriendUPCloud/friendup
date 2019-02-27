@@ -92,7 +92,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		BufString *bs = BufStringNew();
-		if( ( resperr = RefreshUserDrives( l, loggedSession->us_User, bs ) ) == 0 )
+		if( ( resperr = RefreshUserDrives( l->sl_DeviceManager, loggedSession->us_User, bs ) ) == 0 )
 		{
 			HttpSetContent( response, bs->bs_Buffer, bs->bs_Bufsize );
 			bs->bs_Buffer = NULL;
@@ -517,7 +517,7 @@ f.Name ASC";
 				
 				File *mountedDev = NULL;
 				
-				int mountError = MountFS( l, (struct TagItem *)&tags, &mountedDev, loggedSession->us_User );
+				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, loggedSession->us_User );
 				
 				// This is ok!
 				if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
@@ -787,7 +787,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					{TAG_DONE, TAG_DONE }
 				};
 				
-				mountError = UnMountFS( l, (struct TagItem *)&tags, loggedSession );
+				mountError = UnMountFS( l->sl_DeviceManager, (struct TagItem *)&tags, loggedSession );
 				DEBUG("[DeviceMWebRequest] Unmounting device error %d\n", mountError );
 				
 				// default handle
@@ -1148,7 +1148,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						LIST_ADD_HEAD( user->u_MountedDevs, file );
 					
 						int err;
-						if( ( err = DeviceMountDB( l, file, TRUE ) ) != 0 )
+						if( ( err = DeviceMountDB( l->sl_DeviceManager, file, TRUE ) ) != 0 )
 						{
 							FERROR("[DeviceMWebRequest] Cannot share device, error %d\n", err );
 							char dictmsgbuf[ 256 ];

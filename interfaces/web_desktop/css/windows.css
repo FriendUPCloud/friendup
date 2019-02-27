@@ -974,6 +974,21 @@ _:-ms-fullscreen, :root .View.Active > .Title { border-top-width: 1px; } /* IE11
 	-webkit-box-shadow: inset 0px 0px 2px 2px #2F6699;
 }
 
+html .Screen > .TitleBar .Info,
+html .Screen #WorkspaceMenu
+{
+	transition: opacity 0.07s;
+	opacity: 1;
+}
+
+html .Screen.ChangingScreenTitle > .TitleBar .Info,
+html .Screen.ChangingScreenTitle #WorkspaceMenu
+{
+	opacity: 0;
+}
+
+html .Screen > .TitleBar.ChangingScreenTitle 
+
 html .Screen > .TitleBar.Busy:after
 {
 	background-image: url(/themes/friendup12/gfx/loading_corner.gif);
@@ -986,6 +1001,25 @@ html .Screen > .TitleBar > .Left .Offline
 {
 	margin: 0 10px 0 0;
 	pointer-events: none;
+}
+
+/* Fullscreen app */
+
+html body.FullscreenApp .Screen > .ScreenContent,
+html body.FullscreenApp #DoorsScreen.Screen > .ScreenContent
+{
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	z-index: 2147483647 !important;
+}
+
+html body.FullscreenApp .MobileTopNavigation,
+html body.FullscreenApp .MobileAppMenu
+{
+	display: none !important;
 }
 
 /* Popup view --------------------------------------------------------------- */
@@ -1398,5 +1432,64 @@ body.ViewMaximized .View.TilingMode3.Tile3
 	margin: 0 !important;
 	border: 0 !important;
 	cursor: pointer;
+}
+body .Content > .FriendCameraContainer > button
+{
+	color: white;
+}
+
+/* For iOS and unsupported devices */
+
+.FriendCameraFallback
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transition: transform 0.25s;
+	transform: scale3d(1,0,1);
+	background: rgba(0,0,0,0.7);
+	color: white;
+}
+
+body .FriendCameraFallback button
+{
+	color: white;
+}
+
+.FriendCameraFallback.Showing
+{
+	transform: scale3d(1,1,1);
+}
+
+.FriendCameraFallback.Showing p
+{
+	margin: 20px auto;
+	text-align: center;
+}
+
+body .FriendCameraFallback input[type=file]
+{
+	position: absolute;
+	top: 80px;
+	left: calc(50% - 100px);
+	width: 200px;
+	opacity: 0;
+	z-index: 2;
+}
+
+body .FriendCameraFallback button
+{
+	position: absolute;
+	top: 80px;
+	left: calc(50% - 100px);
+	width: 200px;
+	z-index: 1;
+}
+
+body .FriendCameraFallback button:before
+{
+	margin-right: 5px;
 }
 

@@ -671,19 +671,22 @@ loginfail:
 void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *name )
 {
 	SystemBase *sb = (SystemBase *)l->sb;
-	UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, name );
+	//UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, name );
 	
+	DEBUG("Logout get\n");
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 1024 ];
 		
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserSession WHERE SessionID = '%s'", name );
+		DEBUG("Logout sql: %s\n", tmpQuery );
 		
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 	
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
+	DEBUG("Logout get end\n");
 }
 
 /**

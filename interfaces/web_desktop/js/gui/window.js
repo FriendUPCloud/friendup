@@ -4873,16 +4873,45 @@ var View = function( args )
 				}
 			);
 		}
-		// We failed!
+		// We failed! Try to use the fallback
 		else
 		{
-			callback( { response: -1, message: 'Could not access camera.' } );
-			v.classList.add( 'Closing' );
+			// TODO: Hogne
+			// Remove video
+			v.removeChild( d );
+			
+			// Add fallback
+			var fb = document.createElement( 'div' );
+			fb.className = 'FriendCameraFallback';
+			v.appendChild( fb );
+			var mediaElement = document.createElement( 'input' );
+			mediaElement.type = 'file';
+			mediaElement.accept = 'image/*';
+			mediaElement.className = 'FriendCameraInput';
+			fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
+				'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
+			fb.appendChild( mediaElement );
+			
 			setTimeout( function()
 			{
-				callback( { response: 1, message: 'Image captured', data: dt } );
-				v.parentNode.removeChild( v );
-			}, 250 );
+				fb.classList.add( 'Showing' );
+			}, 5 );
+			
+			mediaElement.onchange = function( e )
+			{
+				var reader = new FileReader();
+				reader.onload = function( e )
+				{
+					var dataURL = e.target.result;
+					v.classList.remove( 'Showing' );
+					setTimeout( function()
+					{
+						callback( { response: 1, message: 'Image captured', data: dataURL } );
+						v.parentNode.removeChild( v );
+					}, 250 );
+				}
+				reader.readAsDataURL( mediaElement.files[0] );
+			}
 		}
 	}
 	

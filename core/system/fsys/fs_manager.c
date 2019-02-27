@@ -19,6 +19,7 @@
 #include <system/fsys/device_handling.h>
 #include <network/mime.h>
 #include <util/md5.h>
+#include <system/systembase.h>
 
 #define DEFAULT_ACCESS "-RWED"
 

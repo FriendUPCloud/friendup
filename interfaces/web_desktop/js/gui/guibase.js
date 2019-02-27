@@ -2340,6 +2340,7 @@ function RemoveDragTargets()
 	}
 }
 
+var _screenTitleTimeout = null;
 
 // Check the screen title of active window/screen and check menu
 function CheckScreenTitle( screen )
@@ -2355,23 +2356,66 @@ function CheckScreenTitle( screen )
 	
 	// Set the screen title if we have a window with application name
 	var wo = window.currentMovable ? window.currentMovable.windowObject : false;
-	if( wo && wo.screen && wo.screen != csc ) wo = false; // Only movables on current screen
+	// Fix screen
+	if( wo && !wo.screen && wo.flags.screen ) wo.screen = wo.flags.screen;
+	// Check screen
+	if( wo && wo.screen && wo.screen != csc )
+	{
+		wo = false; // Only movables on current screen
+	}
+	
+	var hasScreen = ( !csc || testObject.screenObject == wo.screen || ( !wo.screen && isDoorsScreen ) );
 	
 	var isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
-	if( wo && wo.applicationName && ( !csc || testObject == wo.screen || ( !wo.screen && isDoorsScreen ) ) )
+	// Clear the delayed action
+	if( _screenTitleTimeout )
+	{
+		clearTimeout( _screenTitleTimeout );
+		csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+		_screenTitleTimeout = null;
+	}
+	
+	// Get app title
+	if( wo && wo.applicationName && hasScreen )
 	{
 		var wnd = wo.applicationDisplayName ? wo.applicationDisplayName : wo.applicationName;
 		if( !csc.originalTitle )
 		{
 			csc.originalTitle = csc.getFlag( 'title' );
 		}
-		csc.setFlag( 'title', wnd );
+		
+		// Don't do it twice
+		if( wnd != csc.getFlag( 'title' ) )
+		{
+			csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+			_screenTitleTimeout = setTimeout( function()
+			{
+				csc.setFlag( 'title', wnd );
+				_screenTitleTimeout = setTimeout( function()
+				{
+					csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+				}, 70 );
+			}, 70 );
+		}
+		else
+		{
+			csc.setFlag( 'title', wnd );
+		}
 	}
-	// Just use the screen
-	else if( csc.originalTitle )
+	// Just use the screen (don't do it twice)
+	else if( csc.originalTitle && csc.getFlag( 'title' ) != csc.originalTitle )
 	{
-		csc.setFlag( 'title', csc.originalTitle );
+		csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+		var titl = csc.originalTitle;
+		_screenTitleTimeout = setTimeout( function()
+		{
+			csc.setFlag( 'title', titl );
+			_screenTitleTimeout = setTimeout( function()
+			{
+				csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+			}, 70 );
+		}, 70 );	
 	}
 
 	// Enable the global menu

@@ -2348,6 +2348,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		this.scroller = sc;
 	}
 	
+	// Remove loading animation
 	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
 	{
 		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
@@ -2929,6 +2930,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 		this.changed = false;
+	}
+
+	// Remove loading animation
+	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
+	{
+		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
+		la.parentNode.removeChild( la );
 	}
 
 	// Make sure we have a listview columns header bar
@@ -4038,6 +4046,8 @@ FileIcon.prototype.Init = function( fileInfo )
 		
 		obj = ele ? ele : file;
 		
+		console.log( 'Here: ', obj, obj.fileInfo );
+		
 		// File extension
 		if( obj.fileInfo && obj.fileInfo.Path && obj.fileInfo.Path.indexOf( '.' ) > 0 )
 		{
@@ -4052,7 +4062,8 @@ FileIcon.prototype.Init = function( fileInfo )
 					var mt = Workspace.mimeTypes[a];
 					for( var b in mt.types )
 					{
-						if( ext == mt.types[b].toLowerCase() )
+						// Make sure we have a valid executable
+						if( ext == mt.types[b].toLowerCase() && mt.executable.length )
 						{
 							return ExecuteApplication( mt.executable, obj.fileInfo.Path );
 						}
@@ -4435,6 +4446,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			window: false
 		};
 	}
+	
 	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{

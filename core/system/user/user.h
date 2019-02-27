@@ -127,6 +127,7 @@ typedef struct User
 	char						*u_FullName;
 	char						*u_Email;
 	int							u_Error;            // if error
+	UserSessListEntry			*u_SessionsList;
 
 	char						*u_MainSessionID;       // session id ,  generated only when user is taken from db
 	time_t						u_LoggedTime;       // last action time
@@ -147,7 +148,6 @@ typedef struct User
 	FBOOL						u_InitialDevMount;
 	FBOOL						u_Anonymous;		// if user is anonymous
 	
-	UserSessListEntry			*u_SessionsList;
 	int							u_SessionsNr;		// number of sessions
 	int							u_NumberOfBadLogins;	// number of bad logins
 	

@@ -277,6 +277,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			return -1;
 		}
 		
+		DEBUG("Before  as_SessionsMut lock\n");
 		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
@@ -560,6 +561,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 						// if user is not logged in he will not get invitation
 						DEBUG("[AppSession] Going throug sessions userptr %p\n", usrses->us_User );
 
+						//FRIEND_MUTEX_LOCK( &usrses->us_Mutex );
 						if( usrses->us_User != NULL )
 						{
 							DEBUG("[AppSession] share user name %s --- ptr to list %p\n", usrses->us_User->u_Name, usrses );
@@ -612,6 +614,8 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 									}
 								}
 							}
+							
+							//FRIEND_MUTEX_UNLOCK( &usrses->us_Mutex );
 						}
 						else
 						{
@@ -950,6 +954,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	*/
 	
 	int err = AppSessionRemUsersession( as, ws->wsc_UserSession );
+	DEBUG("[AppSession] App session remove by WS END\n");
 	
 	return 0;
 }

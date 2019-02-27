@@ -785,6 +785,18 @@ SystemBase *SystemInit( void )
 		return NULL;	
 	}
 	
+	l->sl_UM = UMNew( l );
+	if( l->sl_UM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
+	}
+	
+	l->sl_DeviceManager = DeviceManagerNew( l );
+	if( l->sl_DeviceManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize DeviceManager\n");
+	}
+	
 	Log( FLOG_INFO, "AUTHOD master set to %s\n", l->sl_ActiveAuthModule->am_Name );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -795,7 +807,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	RescanHandlers( l );
+	RescanHandlers( l->sl_DeviceManager );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers END\n");
@@ -805,7 +817,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create DOSDrivers\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	RescanDOSDrivers( l );
+	RescanDOSDrivers( l->sl_DeviceManager );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create DOSDrivers END\n");
@@ -875,12 +887,6 @@ SystemBase *SystemInit( void )
 	
 	l->sl_UGM = UGMNew( l );
 	if( l->sl_UGM == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
-	}
-	
-	l->sl_UM = UMNew( l );
-	if( l->sl_UM == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
 	}
@@ -1154,6 +1160,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_DOSTM != NULL )
 	{
 		DOSTokenManagerDelete( l->sl_DOSTM );
+	}
+	if( l->sl_DeviceManager != NULL )
+	{
+		DeviceManagerDelete( l->sl_DeviceManager );
 	}
 	
 	// Remove sentinel from active memory
@@ -1990,7 +2000,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 	}
 	DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
 	{
 		char **row;
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
@@ -2018,13 +2028,13 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
-			int err = MountFS( l, (struct TagItem *)&tags, &device, usr );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr );
 
-			FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
@@ -2068,7 +2078,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 
 		usr->u_InitialDevMount = TRUE;
 
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 	}
 	
 	return 0;
@@ -2098,7 +2108,7 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DeviceUnMount( l, remdev, usr );
+				DeviceUnMount( l->sl_DeviceManager, remdev, usr );
 				
 				FFree( remdev );
 			}
@@ -2514,11 +2524,12 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 						}
 						wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 					}
+					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				}
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				//FRIEND_MUTEX_UNLOCK( &(wsc->wsc_Mutex) );
 	//			FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 			}
+			DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
 			
 			FFree( buf );
 		}
@@ -2553,17 +2564,21 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			memcpy( buf, msg,  len );
 
-			WebsocketServerClient *wsc = usersession->us_WSClients;
-		
-			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
-		
-			while( wsc != NULL )
+			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 			{
-				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
-			}
+				WebsocketServerClient *wsc = usersession->us_WSClients;
 		
-			FFree( buf );
+				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
+		
+				while( wsc != NULL )
+				{
+					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+				}
+		
+				FFree( buf );
+				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+			}
 		}
 		else
 		{

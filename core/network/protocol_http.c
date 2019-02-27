@@ -148,8 +148,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 		{
 			file = CacheManagerFileGet( SLIB->cm, completePath->raw, FALSE );
 
-			//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
-
 			if( file == NULL )
 			{
 				char *decoded = UrlDecodeToMem( completePath->raw );
@@ -158,13 +156,9 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 
 				if( file != NULL )
 				{
-					//if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
+					if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
 					{
-						if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
-						{
-							freeFile = TRUE;
-						}
-						//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
+						freeFile = TRUE;
 					}
 				}
 				else
@@ -189,8 +183,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 		}
 		else
 		{
-			//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
-
 			char *decoded = UrlDecodeToMem( completePath->raw );
 			file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
 			FFree( decoded );
@@ -644,18 +636,21 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							{
 								FULONG res = 0;
 
-								char command[ 1024 ];
+#define MAX_LEN_PHP_INT_COMMAND 1024
+								char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
 
 								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-								int cx = snprintf( command, sizeof(command), "php \"%s\" \"%s\" \"%s\" \"%s\";", "php/login.php", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
-								if( !( cx >= 0 ) )
-								{
-									FERROR( "[ProtocolHttp] snprintf\n" );;
-								}
-								else
+								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
+								//if( !( cx >= 0 ) )
+								//{
+								//	FERROR( "[ProtocolHttp] snprintf\n" );;
+								//}
+								//else
 								{
 									FILE *pipe = popen( command, "r" );
 									ListString *ls = NULL;
+									
+									Log( FLOG_INFO, "Sending php command: %s < pipe: %p\n", command, pipe );
 
 									if( pipe != NULL )
 									{
@@ -673,6 +668,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										}
 										pclose( pipe );
 									}
+									else
+									{
+										Log( FLOG_ERROR, "Cannot open pipe!\n");
+									}
+									
+									Log( FLOG_INFO, "End of PHP loop\n");
 
 									if( ls != NULL )
 									{
@@ -707,6 +708,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										ls->ls_Data = NULL;
 										ListStringDelete( ls );
 									}
+									
+									FFree( command );
 								}
 							}
 
@@ -789,7 +792,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 								char *mime = NULL;
 
-								File *rootDev = GetUserDeviceByUserID( SLIB, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
+								File *rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
 
 								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs->fs_DeviceName );
 

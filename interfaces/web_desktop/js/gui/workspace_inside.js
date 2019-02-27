@@ -2603,6 +2603,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.themeRefreshed && !update )
 			return;
 
+		// Check url var
+		if( GetUrlVar( 'fullscreenapp' ) )
+		{
+			document.body.classList.add( 'FullscreenApp' );
+		}
+
 		if( Workspace.themeOverride ) themeName = Workspace.themeOverride.toLowerCase();
 
 		document.body.classList.add( 'Loading' );
@@ -5719,8 +5725,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				var pv = cm.windowObject.parentView.windowObject;
 				pv.activate();
+				// Delayed close other
+				setTimeout( function()
+				{
+					cm.windowObject.close();
+				}, 750 );
 				return;
-			}	
+			}
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{

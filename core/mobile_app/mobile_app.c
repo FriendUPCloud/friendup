@@ -1208,6 +1208,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		time_t timestamp = time( NULL );
 		//
 		
+		FRIEND_MUTEX_LOCK( &usr->u_Mutex );
 		UserSessListEntry  *usl = usr->u_SessionsList;
 		while( usl != NULL )
 		{
@@ -1255,7 +1256,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			} // locses = NULL
 			usl = (UserSessListEntry *)usl->node.mln_Succ;
 		}
-		usr = (User *)usr->node.mln_Succ;
+		//usr = (User *)usr->node.mln_Succ;
+		
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 	}	// usr != NULL
 	else
 	{
@@ -1432,7 +1435,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		{
 			// on the end, list for the user should be taken from DB instead of going through all connections
 			
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, TRUE );
 			UserMobileApp *lma = lmaroot;
 			
 			while( lma != NULL )
@@ -1798,7 +1801,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED );
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, TRUE );
 			UserMobileApp *lma = lmaroot;
 			
 			

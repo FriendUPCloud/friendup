@@ -134,7 +134,6 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 		}
 		else
 		{
-			//pthread_mutex_unlock( &(w->w_Mut) );
 			FERROR("[WorkerRunCommand] Thread not initalized\n");
 			return 1;
 		}
@@ -187,7 +186,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		}
 
 		// Safely test the state of the worker
-		//if( pthread_mutex_trylock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut ) == 0 )
 		{
 			int lw = wm->wm_LastWorker;
 			Worker *w1 = wm->wm_Workers[ lw ];
@@ -199,7 +197,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				//struct SocketThreadData *td = ( struct SocketThreadData *)d;
 				//td->workerIndex = wm->wm_LastWorker;
 			}
-			//pthread_mutex_unlock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut );
 		}
 	
 		if( wrk != NULL )
@@ -228,17 +225,17 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		{
 			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 			Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
-			usleep( 100 );
+			usleep( 1000 );
 		}
 		
 		if( max > wm->wm_MaxWorkers )
 		{
 			//Log( FLOG_INFO, "[WorkManagerRun] All workers are busy, waiting\n");
 
-			if( testquit++ > 10 )
+			if( testquit++ > 30 )
 			{
 				Log( FLOG_ERROR, "[WorkManagerRun] Worker dispatch timeout, dropping client\n");
-				
+				pthread_yield();	// try to finish other tasks
 				//exit( 0 ); // <- die! only for debug
 				testquit = 0;
 				//usleep( 15000 );
