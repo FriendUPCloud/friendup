@@ -4192,8 +4192,6 @@ FileIcon.prototype.Init = function( fileInfo )
 				}
 				catch( e ){};
 				
-				console.log( 'Checking mime: ', js );
-				
 				if( me == 'ok' && js )
 				{
 					ExecuteApplication( js.executable, obj.fileInfo.Path );
