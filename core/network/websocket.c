@@ -629,7 +629,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	}
 	
 	WebsocketServerClient *listEntry = NULL;
-	/*
+	
 	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
 	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
@@ -645,7 +645,6 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		}
 		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	}
-	*/
 	
 	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
 	
