@@ -2426,6 +2426,11 @@ function apiWrapper( event, force )
 							nmsg.viewId = msg.viewId;
 							nmsg.type = 'callback';
 						}
+						else if( msg.screenId )
+						{
+							nmsg.screenId = msg.screenId;
+							nmsg.type = 'callback';
+						}
 						if( cw )
 							cw.postMessage( JSON.stringify( nmsg ), '*' );
 					}
