@@ -687,7 +687,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		INFO("[WS] User already have this websocket connection\n");
 		nwsc = listEntry;
 		
-		FQDeleteLast( &(nwsc->wsc_MsgQueue) );
+		FQDeInitFree( &(nwsc->wsc_MsgQueue) );
 		FQInit( &(nwsc->wsc_MsgQueue) );
 	}
 	else
