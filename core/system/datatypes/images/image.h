@@ -76,4 +76,10 @@ int ImageAddComment( FImage *img, char *key, char *value );
 
 int IimageDeleteComments( FImage *img );
 
+//
+//
+//
+
+//gdImagePtr ImageRead( File *rootDev, const char *path );
+
 #endif // __SYSTEM_DATATYPES_IMAGES_H__

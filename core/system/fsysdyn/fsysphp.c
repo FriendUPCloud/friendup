@@ -168,22 +168,41 @@ ListString *PHPCall( const char *command, int *length )
 	char *temp = NULL, *result = NULL, *gptr = NULL;
 	int size = 0, res = 0, sch = sizeof( char );
 
-#define PHP_READ_SIZE 262144
+//#define PHP_READ_SIZE 262144
+	#define PHP_READ_SIZE 132144
 	
 	//DEBUG("[PHPFsys] command launched\n");
 
 	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
 	ListString *data = ListStringNew();
+	int errCounter = 0;
 	
 	while( !feof( pipe ) )
 	{
 		// Make a new buffer and read
 		size = fread( buf, sch, PHP_READ_SIZE, pipe );
-		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
-		ListStringAdd( data, buf, size );
+		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			ListStringAdd( data, buf, size );
+		}
+		else
+		{
+			if( ferror( pipe ) )
+			{
+				FERROR("Cannot read from popen!\n");
+			}
+			errCounter++;
+			if( errCounter > 16 )
+			{
+				FERROR("Error in popen, Quit! Command: %s\n", command );
+				break;
+			}
+		}
 	}
 	
 	FFree( buf );
+	DEBUG("File readed\n");
 	
 	// Free pipe if it's there
 	pclose( pipe );

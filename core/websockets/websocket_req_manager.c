@@ -51,11 +51,12 @@ void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
 {
 	if( wrm != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
-		WebsocketReqDeleteAll( wrm->wrm_WRWaiting );
-		WebsocketReqDeleteAll( wrm->wrm_WRQueue );
-		FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
-		
+		if( FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) ) == 0 )
+		{
+			WebsocketReqDeleteAll( wrm->wrm_WRWaiting );
+			WebsocketReqDeleteAll( wrm->wrm_WRQueue );
+			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
+		}
 		pthread_mutex_destroy( &(wrm->wrm_Mutex) );
 		
 		FFree( wrm );
@@ -77,21 +78,23 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 {
 	if( wrm != NULL )
 	{
-		// we must find first if request with provided ID exist
-		FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
-		WebsocketReq *req = wrm->wrm_WRWaiting;
+		WebsocketReq *req = NULL;
 		WebsocketReq *prevreq = NULL;
-		while( req != NULL )
+		// we must find first if request with provided ID exist
+		if( FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) ) == 0 )
 		{
-			if( strcmp( id, req->wr_ID ) == 0 )
+			req = wrm->wrm_WRWaiting;
+			while( req != NULL )
 			{
-				break;
+				if( strcmp( id, req->wr_ID ) == 0 )
+				{
+					break;
+				}
+				prevreq = req;
+				req = (WebsocketReq *)req->node.mln_Succ;
 			}
-			prevreq = req;
-			req = (WebsocketReq *)req->node.mln_Succ;
+			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		}
-		FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
-		
 		DEBUG("[WebsocketReqPutData] req pointer %p chunk %d/%d , datasize %d\n", req, chunk, total, datasize );
 		
 		// request exist, we are adding new part to it

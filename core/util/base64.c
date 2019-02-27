@@ -143,7 +143,7 @@ char *MarkAndBase64EncodeString( const char *chr )
 /* Unstable code! Please test! */
 char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 {
-	if( decoding_table == NULL ) build_decoding_table();
+	//if( decoding_table == NULL ) build_decoding_table();
 
 	if( length % 4 != 0 )
 	{
@@ -161,8 +161,11 @@ char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 
 	unsigned char *decoded_data = FCalloc( output_length + 1, sizeof( char ) );
     
-	if( decoded_data == NULL ) return NULL;
-
+	if( decoded_data == NULL )
+	{
+		FERROR("Decoded data is equal to NULL\n");
+		return NULL;
+	}
 
 	for( int i = 0, j = 0; i < length; )
 	{
@@ -186,7 +189,7 @@ char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 	*finalLength = output_length;
 
 	// Clean up and return
-	base64_cleanup();
+	//base64_cleanup();
 	
 	return (char *)decoded_data;
 }

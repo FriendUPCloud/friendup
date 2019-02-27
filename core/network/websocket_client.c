@@ -346,34 +346,35 @@ int WebsocketClientConnect( WebsocketClient *cl )
 int WebsocketClientSendMessage( WebsocketClient *cl, char *msg, int len )
 {
 	DEBUG("[WebsocketClientSendMessage] start\n" );
-	FRIEND_MUTEX_LOCK( &(cl->wc_Mutex) );
-		
-	if( cl->wc_WSI != NULL && cl->wc_ToRemove == FALSE )
+	if( FRIEND_MUTEX_LOCK( &(cl->wc_Mutex) ) == 0 )
 	{
-		int val;
-		
-		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-		if( en != NULL )
+		if( cl->wc_WSI != NULL && cl->wc_ToRemove == FALSE )
 		{
-			en->fq_Data = FMalloc( len+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
-			en->fq_Size = len;
+			int val;
 		
-			FQPushFIFO( &(cl->wc_MsgQueue), en );
+			FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+			if( en != NULL )
+			{
+				en->fq_Data = FMalloc( len+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+				memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
+				en->fq_Size = len;
+		
+				FQPushFIFO( &(cl->wc_MsgQueue), en );
+			}
+			else
+			{
+				len = 0;
+			}
+		
+			FRIEND_MUTEX_UNLOCK( &(cl->wc_Mutex) );
+	
+			lws_callback_on_writable( cl->wc_WSI );
 		}
 		else
 		{
+			FRIEND_MUTEX_UNLOCK( &(cl->wc_Mutex) );
 			len = 0;
 		}
-		
-		FRIEND_MUTEX_UNLOCK( &(cl->wc_Mutex) );
-	
-		lws_callback_on_writable( cl->wc_WSI );
-	}
-	else
-	{
-		FRIEND_MUTEX_UNLOCK( &(cl->wc_Mutex) );
-		len = 0;
 	}
 	DEBUG("[WebsocketClientSendMessage] end\n" );
 	return len;

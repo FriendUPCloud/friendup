@@ -776,9 +776,10 @@ int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
  * @param userID ID of user to which mobile apps belong
  * @param type type of mobile apps
  * @param status status of device
+ * @param logged set TRUE if you want to get devices on which users are logged in
  * @return pointer to new created list of MobileListEntry
  */
-UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status )
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status, FBOOL logged )
 {
 	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
 	{
@@ -793,12 +794,61 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
 	if( lsqllib != NULL )
 	{
-		char where[ 512 ];
-		snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s' AND Status=%d", userID, mobileType, status );
+		// if we want entries where user is logged in we must also connect his mobiledevice with usersession
+		if( logged == TRUE )
+		{
+// required
+//				lns->ns_UserMobileAppID = lma->uma_ID;
+//				lma->uma_AppToken 
+				char *qery = FMalloc( 1048 );
+				qery[ 1024 ] = 0;
+				lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu AND us.DeviceIdentity LIKE CONCAT('%', uma.AppToken, '%') AND LENGTH( uma.AppToken ) > 0", userID );
+				void *res = lsqllib->Query( lsqllib, qery );
+				if( res != NULL )
+				{
+					char **row;
+					if( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+					{
+						UserMobileApp *local = FCalloc( 1, sizeof(UserMobileApp) );
+						if( local != NULL )
+						{
+							if( row[ 0 ] != NULL )
+							{
+								char *end;
+								local->uma_ID = strtoul( row[0], &end, 0 );
+							}
 
-		int entries;
-		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+							local->uma_AppToken = StringDuplicate( row[ 1 ] );
 
+							// add entry to list
+							local->node.mln_Succ = (MinNode *) uma;
+							uma = local;
+						}
+					}
+					lsqllib->FreeResult( lsqllib, res );
+				}
+
+			// select * from FUserMobileApp where UserID = XX AND Platform = Ios AND status = 0
+			// FUserSession DeviceIdentity = touch_ios_app_5dca3266e489bfb672bba0aa86cc993a459f63dd65a4237514c75206444619f9
+			//
+			// select uma.* from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu uma.AppToken LIKE CONCAT('%', us.DeviceIdentity, '%')
+			//
+			//select uma.* from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu uma.AppToken LIKE CONCAT('%', us.DeviceIdentity, '%')
+			//select uma.* from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where Status=0 AND us.DeviceIdentity like uma.AppToken
+			//
+			// THIS one is ok
+			//
+			//select uma.* from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu AND uma.AppToken LIKE CONCAT('%', us.DeviceIdentity, '%')
+		}
+		else
+		{
+			char where[ 512 ];
+			snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s' AND Status=%d", userID, mobileType, status );
+			
+			int entries;
+			uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+		}
+		
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	return uma;

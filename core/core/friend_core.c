@@ -984,7 +984,7 @@ void FriendCoreProcess( void *fcv )
 	char *incoming_buffer_ptr = 0;
 	unsigned int incoming_buffer_length = 0;
 
-	BufString *resultString = BufStringNewSize( SHIFT_LEFT( bufferSizeAlloc, 1) );
+	BufString *resultString = BufStringNewSize( bufferSizeAlloc*2 );
 
 	char *locBuffer = FMalloc( bufferSizeAlloc );
 	char *firstLocBuffer = locBuffer;
@@ -1780,6 +1780,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				if( pre != NULL )
 				{
 					pre->fc = fc;
+					DEBUG("Thread create pointer: %p friendcore: %p\n", pre, fc );
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase2, ( void *)pre ) != 0 )
 					{
 						DEBUG("Pthread create fail\n");

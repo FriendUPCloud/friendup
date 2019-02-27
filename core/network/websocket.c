@@ -239,7 +239,7 @@ int WebsocketThread( FThread *data )
 			FINFO("WS Quit! but threads left: %d\n", WSThreadNum );
 			cnt++;
 			
-			if( cnt > 500 )
+			if( cnt > 100 )
 			{
 				Log( FLOG_INFO, "[WS] Service stopping threads: %d\n", WSThreadNum );
 				cnt = 0;
@@ -282,8 +282,6 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 	SystemBase *lsb = (SystemBase *)sb;
 	
 	DEBUG1("[WS] New websocket\n");
-	
-	pthread_mutex_init( &WSThreadMutex, NULL );
 	
 	if( ( ws = FCalloc( 1, sizeof( WebSocket ) ) ) != NULL )
 	{
@@ -423,10 +421,11 @@ void WebSocketDelete( WebSocket* ws )
 			sleep( 1 );
 			
 			tries++;
-			if( tries > 50 )
+			if( tries > 30 )
 			{
 				//WorkerManagerDebug( SLIB );
 				tries = 0;
+				break;
 			}
 		}
 #endif
@@ -452,8 +451,6 @@ void WebSocketDelete( WebSocket* ws )
 			
 		FFree( ws );
 	}
-	
-	pthread_mutex_destroy( &WSThreadMutex );
 }
 
 
@@ -631,28 +628,33 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		return -1;
 	}
 	
+	WebsocketServerClient *listEntry = NULL;
 	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
-	FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) );
-	WebsocketServerClient *listEntry = actUserSess->us_WSClients;
-	while( listEntry != NULL )
+	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
-		DEBUG("[WS] wsclientptr %p\n", listEntry );
-		if( listEntry->wsc_Wsi == wsi )
+		listEntry = actUserSess->us_WSClients;
+		while( listEntry != NULL )
 		{
-			break;
+			DEBUG("[WS] wsclientptr %p\n", listEntry );
+			if( listEntry->wsc_Wsi == NULL || listEntry->wsc_Wsi == wsi )
+			{
+				break;
+			}
+			listEntry = (WebsocketServerClient *)listEntry->node.mln_Succ;
 		}
-		listEntry = (WebsocketServerClient *)listEntry->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	
 	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
 	
+	/*
 	if( listEntry != NULL )
 	{
 		INFO("[WS] User already have this websocket connection\n");
 		//pthread_mutex_unlock( &(actUserSess->us_Mutex) );
 		return 1;
 	}
+	*/
 	
 	//@BG-678 
 	// remove old connections
@@ -677,7 +679,18 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	*/
 	// create and use new WebSocket connection
 	
-	WebsocketServerClient *nwsc = WebsocketServerClientNew();
+	WebsocketServerClient *nwsc;
+	
+	if( listEntry != NULL )
+	{
+		INFO("[WS] User already have this websocket connection\n");
+		nwsc = listEntry;
+	}
+	else
+	{
+		nwsc = WebsocketServerClientNew();
+	}
+	
 	if( nwsc != NULL )
 	{
 		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to new %p\n", nwsc, nwsc->node.mln_Succ );
@@ -700,15 +713,29 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		data->fcd_SystemBase = l;
 		nwsc->wsc_WebsocketsData = data;
 		
-		// everything is set, we are adding new connection to list
-		FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) );
-		nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
-		actUserSess->us_WSClients = nwsc;
-		nwsc->wsc_UserSession = actUserSess;
+		if( listEntry == NULL )
+		{
+			// everything is set, we are adding new connection to list
+			if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
+			{
+				nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
+				actUserSess->us_WSClients = nwsc;
+				nwsc->wsc_UserSession = actUserSess;
 		
-		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
-		
+				FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
+			}
+		}
+		else
+		{
+			actUserSess->us_WSClients = nwsc;
+		}
+			
 		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to new %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
+		
+		if( listEntry != NULL )
+		{
+			return 1;
+		}
 	}
 	else
 	{
@@ -741,34 +768,24 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 		return 0;
 	}
 	
-	/*
-	//data->fcd_WSClient = NULL;
-	int pos = 0;
-	while( TRUE )
-	{
-		DEBUG("[DeleteWebSocketConnection] Check in use %d\n", wscl->wsc_InUseCounter );
-		if( wscl->wsc_InUseCounter <= 0 )
-		{
-			break;
-		}
-		sleep( 1 );
-		pos++;
-		if( pos >= 4 )
-		{
-			DEBUG("[DeleteWebSocketConnection] Cannot wait longer, removeing connection\n");
-			break;
-		}
-	}
-	*/
-	//
-	
-	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
-	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
-    UserSession *us = (UserSession *)wscl->wsc_UserSession;
-	us->us_WSClients = NULL;
 	wscl->wsc_Wsi = NULL;
-	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
-    
+	wscl->wsc_WebsocketsData = NULL;
+
+	/*
+	//
+	UserSession *us = NULL;
+	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
+	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
+	{
+		us = (UserSession *)wscl->wsc_UserSession;
+		if( us != NULL )
+		{
+			DEBUG("[DeleteWebSocketConnection] Set NULL to WSI, SESSIONPTR: %p SESSION NAME: %s WSI ptr: %p\n", us, us->us_SessionID, wscl->wsc_Wsi );
+			us->us_WSClients = NULL;
+		}
+		wscl->wsc_Wsi = NULL;
+		FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
+	}
 	DEBUG("[DeleteWebSocketConnection] Remove UserSession from User list\n");
 	//
 	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
@@ -798,44 +815,6 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 				prvwsc = actwsc;
 				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
 			}
-			/*
-			WebsocketServerClient *nwsc = us->us_WSClients;
-			WebsocketServerClient *owsc = nwsc;
-		
-			// we must remove first Websocket from UserSession list and then from app session
-		
-			if( nwsc != NULL )
-			{
-				DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
-			
-				// remove first entry!
-				if( nwsc->wsc_WebsocketsData == data )
-				{
-					us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
-
-					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
-				}
-			
-				// remove entry from the list
-				else
-				{
-					DEBUG("[WS] Remove connection from list\n");
-
-					while( nwsc != NULL )
-					{
-						DEBUG("[WS] WS Entry\n");
-						owsc = nwsc;
-						nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
-						DEBUG("[WS ] OLDWSC %p NWSC %p\n", owsc, nwsc );
-						if( nwsc != NULL && nwsc->wsc_WebsocketsData == data )
-						{
-							owsc->node.mln_Succ = nwsc->node.mln_Succ;
-							break;
-						}
-					}
-				}
-			}
-			*/
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 	}
@@ -849,6 +828,6 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	
 	Log(FLOG_DEBUG, "[DeleteWebSocketConnection] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
 	WebsocketServerClientDelete( wscl );
-
+	*/
     return 0;
 }
