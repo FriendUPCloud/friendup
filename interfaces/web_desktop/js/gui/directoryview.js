@@ -2348,6 +2348,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		this.scroller = sc;
 	}
 	
+	// Remove loading animation
 	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
 	{
 		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
@@ -2929,6 +2930,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 		this.changed = false;
+	}
+
+	// Remove loading animation
+	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
+	{
+		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
+		la.parentNode.removeChild( la );
 	}
 
 	// Make sure we have a listview columns header bar
