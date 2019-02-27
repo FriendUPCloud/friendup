@@ -19,12 +19,13 @@ Sections.accounts_roles = function( cmd, extra )
 			function initRoleDetails( info )
 			{
 				// Some shortcuts
-				var roleInfo = info.roleInfo;
+				var roleInfo = info.role;
 				var settings = info.settings;
 				var workspaceSettings = info.workspaceSettings;
 				var wgroups = info.workgroups;
 				var mountlist = info.mountlist;
-				var apps = info.Permissions;
+				var permissions = info.permission;
+				var apps = info.role.Permissions;
 				
 				if( settings )
 				{				
@@ -168,65 +169,78 @@ Sections.accounts_roles = function( cmd, extra )
 				apl += '</div>';
 				
 				//System
-				//Module
-				//App
+				//Modules
+				//Apps
 				
-				Sections.system_permissions();
+				var data = permissions;
 				
-				var perm = [
-					{ 
-						app: "Users", name : "Users", description : "", permissions : [
-							{ 
-								permission : "USERS_READ", name : "Read", description : "", active: true 
-							},
-							{ 
-								permission : "USERS_WRITE", name : "Write", description : "", active: true 
-							},
-							{ 
-								permission : "USERS_DELETE", name : "Delete", description : "", active: true 
-							}
-						] 
-					},
-					{ 
-						app: "Liberator", name : "Liberator", description : "", permissions : [
-							{ 
-								permission : "USERS_READ", name : "Read", description : "", active: true 
-							},
-							{ 
-								permission : "USERS_WRITE", name : "Write", description : "", active: true 
-							},
-							{ 
-								permission : "USERS_DELETE", name : "Delete", description : "", active: false 
-							}
-						] 
-					},
-					{ 
-						app: "Server", name : "Server", description : "", permissions : [
-							{ 
-								permission : "USERS_READ", name : "Read", description : "", active: false 
-							},
-							{ 
-								permission : "USERS_WRITE", name : "Write", description : "", active: false 
-							},
-							{ 
-								permission : "USERS_DELETE", name : "Delete", description : "", active: false 
-							}
-						] 
-					},
-					{ 
-						app: "Mimetypes", name : "Mimetypes", description : "", permissions : [
-							{ 
-								permission : "USERS_READ", name : "Read", description : "", active: false 
-							},
-							{ 
-								permission : "USERS_WRITE", name : "Write", description : "", active: false 
-							},
-							{ 
-								permission : "USERS_DELETE", name : "Delete", description : "", active: false 
-							}
-						] 
-					}
-				];
+				console.log( data );
+				
+				if( data && data.Apps )
+				{
+					var perm = data.Apps;
+					
+					
+				}
+				else
+				{
+					// Will be removed ... just for testing purposes ...
+					
+					var perm = [
+						{ 
+							app: "Users", name : "Users", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", active: true 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", active: true 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", active: true 
+								}
+							] 
+						},
+						{ 
+							app: "Liberator", name : "Liberator", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", active: true 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", active: true 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+								}
+							] 
+						},
+						{ 
+							app: "Server", name : "Server", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", active: false 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", active: false 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+								}
+							] 
+						},
+						{ 
+							app: "Mimetypes", name : "Mimetypes", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", active: false 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", active: false 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", active: false 
+								}
+							] 
+						}
+					];
+				}
 				
 				console.log( perm );
 				
@@ -275,9 +289,9 @@ Sections.accounts_roles = function( cmd, extra )
 				
 				// Add all data for the template
 				d.replacements = {
-					id: info.ID,
-					role_name: info.Name,
-					role_description: info.Description,
+					id: info.role.ID,
+					role_name: info.role.Name,
+					role_description: info.role.Description,
 					/*user_username: roleInfo.Name,
 					user_email: roleInfo.Email,
 					theme_name: settings.Theme,
@@ -305,6 +319,8 @@ Sections.accounts_roles = function( cmd, extra )
 				d.load();
 			}
 			
+			var info = {};
+			
 			// Go through all data gathering until stop
 			var loadingSlot = 0;
 			
@@ -317,11 +333,12 @@ Sections.accounts_roles = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						if( e != 'ok' ) return;
-						var info = null;
+						info.role = null;
+						
 						try
 						{
-							info = JSON.parse( d );
-							console.log( 'roleInfo ', info );
+							info.role = JSON.parse( d );
+							console.log( 'role ', info.role );
 						}
 						catch( e )
 						{
@@ -331,6 +348,28 @@ Sections.accounts_roles = function( cmd, extra )
 			
 					}
 					u.execute( 'userroleget', { id: extra } );
+				},
+				
+				function()
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e != 'ok' ) return;
+						info.permission = null;
+						
+						try
+						{
+							info.permission = JSON.parse( d );
+							console.log( 'permission ', info.permission );
+						}
+						catch( e ) 
+						{
+							return;
+						}
+						loadingList[ ++loadingSlot ]( info );
+					}
+					m.execute( 'getsystempermissions' );
 				},
 				
 				/*// Load user settings
@@ -450,6 +489,10 @@ Sections.accounts_roles = function( cmd, extra )
 				
 				function( info )
 				{
+					console.log( 'info ', info );
+					
+					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' ) return;
+					
 					initRoleDetails( info );
 				}
 				

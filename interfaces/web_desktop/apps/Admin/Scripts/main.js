@@ -201,6 +201,18 @@ var Sections = {
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			if( e == 'ok' )
+			{
+				try
+				{
+					d = JSON.parse( d );
+				}
+				catch( e ) 
+				{
+					
+				}
+			}
+			
 			console.log( 'system_permissions() ', { e:e, d:d } );
 		}
 		m.execute( 'getsystempermissions' );
