@@ -4568,7 +4568,6 @@ var View = function( args )
 				if( value == true )
 				{
 					this.loadingAnimation();
-					console.log( 'Activating loading animation.' );
 				}
 				break;
 			case 'hidden':

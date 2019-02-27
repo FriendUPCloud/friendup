@@ -1389,6 +1389,13 @@ movableListener = function( e, data )
 	
 	windowMouseX = x;
 	windowMouseY = y;
+	
+	// Keep alive!
+	if( window.Workspace )
+	{
+		Workspace.updateViewState( 'active' );
+	}
+	
 
 	mousePointer.poll();
 	mousePointer.move( e );
