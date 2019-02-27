@@ -4564,6 +4564,9 @@ var View = function( args )
 				ResizeWindow( viewdiv );
 				RefreshWindow( viewdiv );
 				break;
+			case 'loadinganimation':
+				this.loadingAnimation();
+				break;
 			case 'hidden':
 			case 'invisible':
 				if( viewdiv )
