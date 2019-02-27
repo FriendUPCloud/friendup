@@ -252,7 +252,8 @@ if( isset( $args->command ) )
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
 				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey', 
-				'userroleget', 'checkpermission', 'userroleadd', 'userroleupdate', 'userroledelete' 
+				'userroleget', 'checkpermission', 'userroleadd', 'userroleupdate', 'userroledelete',
+				'getsystempermissions' 
 			);
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
@@ -481,6 +482,10 @@ if( isset( $args->command ) )
 
 		case 'getconfiginijson':
 			require( 'modules/system/include/getconfiginijson.php' );
+			break;
+			
+		case 'getsystempermissions':
+			require( 'modules/system/include/getsystempermissions.php' );
 			break;
 
 		// Save f.eg from photopea
