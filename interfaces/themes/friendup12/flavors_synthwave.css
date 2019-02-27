@@ -490,4 +490,28 @@ html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	filter: contrast(1.5) hue-rotate(230deg) grayscale(0.3);
 }
 
+/* Resize gad */
+
+html body:not([mobile]).Synthwave .View > .Resize:before
+{
+	border: 2px solid #000010;
+}
+
+html body:not([mobile]).Synthwave .View:not(.Active) > .Resize:before
+{
+	background-color: #18154c;
+}
+
+html body:not([mobile]).Synthwave .View.Active > .Resize:before
+{
+	background-color: #18154c;
+}
+
+html body:not([mobile]).Synthwave .View > .Resize:hover:before,
+html body:not([mobile]).Synthwave .View > .Resize:active:before
+{
+	background-color: #1F1B61;
+}
+
+
 
