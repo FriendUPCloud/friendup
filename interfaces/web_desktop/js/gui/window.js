@@ -4565,7 +4565,11 @@ var View = function( args )
 				RefreshWindow( viewdiv );
 				break;
 			case 'loadinganimation':
-				this.loadingAnimation();
+				if( value == true )
+				{
+					this.loadingAnimation();
+					console.log( 'Activating loading animation.' );
+				}
 				break;
 			case 'hidden':
 			case 'invisible':
