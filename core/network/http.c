@@ -1625,7 +1625,7 @@ void HttpFree( Http* http )
 {
 	//DEBUG("Free HashMap\n");
 	int i;
-	if( http->h_RequestSource == HTTP_SOURCE_HTTP )
+	//if( http->h_RequestSource == HTTP_SOURCE_HTTP )
 	{
 		for( i = 0; i < HTTP_HEADER_END ; i++ )
 		{
