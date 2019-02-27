@@ -73,7 +73,7 @@ if( isset( $args->args->id ) )
 	
 	if( $perms = $SqlDatabase->FetchObjects( '
 		SELECT 
-			p.ID, p.Permission, p.Data 
+			p.ID, p.Permission, p.Key, p.Data 
 		FROM 
 			FUserRolePermission p 
 		WHERE 

@@ -190,9 +190,14 @@ Sections.accounts_roles = function( cmd, extra )
 							{
 								for( var r in roleperm )
 								{
-									console.log( perm[i] );
-									console.log( perm[i].permissions[ii] );
-									console.log( roleperm[r] );
+									if( roleperm[r].Key && roleperm[r].Key == perm[i].app && roleperm[r].Permission == perm[i].permissions[ii].permission )
+									{
+										console.log( perm[i] );
+										console.log( perm[i].permissions[ii] );
+										console.log( roleperm[r] );
+										
+										perm[i].permissions[ii].data = roleperm[r].Data;
+									}
 								}
 							}
 						}
@@ -206,52 +211,52 @@ Sections.accounts_roles = function( cmd, extra )
 						{ 
 							app : "Users", name : "Users", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", id: true 
+									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", id: true 
+									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", id: true 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: "Activated" 
 								}
 							] 
 						},
 						{ 
 							app : "Liberator", name : "Liberator", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", id: true 
+									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", id: true 
+									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", id: false 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
 								}
 							] 
 						},
 						{ 
 							app : "Server", name : "Server", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", id: false 
+									permission : "USERS_READ", name : "Read", description : "", data: false 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", id: false 
+									permission : "USERS_WRITE", name : "Write", description : "", data: false 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", id: false 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
 								}
 							] 
 						},
 						{ 
 							app : "Mimetypes", name : "Mimetypes", description : "", permissions : [
 								{ 
-									permission : "USERS_READ", name : "Read", description : "", id: false 
+									permission : "USERS_READ", name : "Read", description : "", data: false 
 								},
 								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", id: false 
+									permission : "USERS_WRITE", name : "Write", description : "", data: false 
 								},
 								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", id: false 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
 								}
 							] 
 						}
@@ -286,7 +291,7 @@ Sections.accounts_roles = function( cmd, extra )
 							apl += '<div class="HRow">';
 							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + perm[a].permissions[k].name + '</div>';
 							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-							apl += '<button onclick="Toggle(this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].id ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+							apl += '<button onclick="Toggle(this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 							apl += '</div>';
 							apl += '</div>';
 						}
