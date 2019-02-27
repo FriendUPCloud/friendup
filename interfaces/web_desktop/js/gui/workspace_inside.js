@@ -5725,8 +5725,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				var pv = cm.windowObject.parentView.windowObject;
 				pv.activate();
+				// Delayed close other
+				setTimeout( function()
+				{
+					cm.windowObject.close();
+				}, 750 );
 				return;
-			}	
+			}
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
