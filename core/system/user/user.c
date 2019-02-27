@@ -134,33 +134,36 @@ void UserRemoveSession( User *usr, void *ls )
 		UserSessListEntry *prevus = actus;
 		FBOOL removed = FALSE;
 	
-		if( usr->u_SessionsList->us == remses )
+		if( usr->u_SessionsList != NULL )
 		{
-			usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
-			if( prevus != NULL )
+			if( usr->u_SessionsList->us == remses )
 			{
-				FFree( actus );
-			}
-		}
-		else
-		{
-			while( actus != NULL )
-			{
-				prevus = actus;
-				actus = (UserSessListEntry *)actus->node.mln_Succ;
-			
-				if( actus != NULL && actus->us == remses )
+				usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
+				if( prevus != NULL )
 				{
-					prevus->node.mln_Succ = actus->node.mln_Succ;
-					
-					usr->u_SessionsNr--;
-					removed = TRUE;
-					
-					if( prevus != NULL )
+					FFree( actus );
+				}
+			}
+			else
+			{
+				while( actus != NULL )
+				{
+					prevus = actus;
+					actus = (UserSessListEntry *)actus->node.mln_Succ;
+			
+					if( actus != NULL && actus->us == remses )
 					{
-						FFree( actus );
+						prevus->node.mln_Succ = actus->node.mln_Succ;
+					
+						usr->u_SessionsNr--;
+						removed = TRUE;
+					
+						if( prevus != NULL )
+						{
+							FFree( actus );
+						}
+						break;
 					}
-					break;
 				}
 			}
 			/*

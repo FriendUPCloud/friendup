@@ -629,7 +629,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	}
 	
 	WebsocketServerClient *listEntry = NULL;
-	/*
+	
 	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
 	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
@@ -645,7 +645,6 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		}
 		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	}
-	*/
 	
 	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
 	
@@ -687,6 +686,11 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	{
 		INFO("[WS] User already have this websocket connection\n");
 		nwsc = listEntry;
+		
+		FQDeInitFree( &(nwsc->wsc_MsgQueue) );
+		FQInit( &(nwsc->wsc_MsgQueue) );
+		
+		nwsc->wsc_ToBeRemoved = FALSE;
 	}
 	else
 	{
@@ -729,7 +733,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		}
 		else
 		{
-			actUserSess->us_WSClients = nwsc;
+			//actUserSess->us_WSClients = nwsc;
 		}
 			
 		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to next %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );

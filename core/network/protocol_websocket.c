@@ -21,10 +21,10 @@
 #include <time.h>
 #include <util/friendqueue.h>
 
-#undef DEBUG
-#define DEBUG( ...)
-#undef DEBUG1
-#define DEBUG1( ...)
+//#undef DEBUG
+//#define DEBUG( ...)
+//#undef DEBUG1
+//#define DEBUG1( ...)
 
 extern SystemBase *SLIB;
 
@@ -1014,19 +1014,19 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													login = TRUE;
 												
 													char answer[ 1024 ];
-													snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+													int len = snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
 												
 													unsigned char *buf;
-													int len = strlen( answer );
-													buf = (unsigned char *)FCalloc( len + 128, sizeof( char ) );
+													//int len = strlen( answer );
+													buf = (unsigned char *)FCalloc( len + 256, sizeof( char ) );
+													INFO("Buf assigned: %p\n", buf );
 													if( buf != NULL )
 													{
 														memcpy( buf, answer,  len );
 
-														DEBUG("[WS] Writeline %p\n", fcd->fcd_WSClient );
+														INFO("[WS] Writeline %p\n", fcd->fcd_WSClient );
 														if( fcd->fcd_WSClient != NULL )
 														{
-															
 															WebsocketWriteInline( fcd->fcd_WSClient, buf, len, LWS_WRITE_TEXT );
 														}
 														FFree( buf );
@@ -1157,6 +1157,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 											
 											if( wstdata != NULL )
 											{
+												DEBUG("Request received\n");
 												char *requestid = NULL;
 												int requestis = 0;
 												char *path = NULL;
@@ -1205,6 +1206,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 													int error = 0;
 													BufString *queryrawbs = BufStringNewSize( 2048 );
+													
+													DEBUG("[WS] Parsing messages\n");
 													
 													for( i = 7 ; i < r ; i++ )
 													{
@@ -1349,6 +1352,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 #endif
 #if USE_WORKERS == 1
 													SystemBase *lsb = (SystemBase *)fcd->fcd_SystemBase;
+													
+													DEBUG("[WS] Message parsed, sedning\n");
 													
 													if( fcd->fcd_WSClient != NULL && fcd->fcd_WSClient->wsc_ToBeRemoved == FALSE )
 													{
