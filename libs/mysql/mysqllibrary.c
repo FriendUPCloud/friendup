@@ -1265,7 +1265,8 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 			int alternateForm = 0, forceSign = 0;
 			int spaceForPositive = 1; 
 			char lengthModifier = '\0'; 
-			char tmp[ 32 ];
+			//char tmp[ 32 ];
+			char *tmp = FMalloc( 64 );
 			
 			const char *stringArg;
 			size_t stringArgSize;
@@ -1785,6 +1786,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 					retStringSize += n;
 				}
 			}
+			FFree( tmp );
 		}
 	}
 	

@@ -55,6 +55,10 @@ Application.run = function( msg )
 			name: i18n( 'i18n_bookmarks' ),
 			items: [
 				{
+					name: 'Friend Browser Home',
+					command: 'navto:about:blank'
+				},
+				{
 					name: 'FriendUP',
 					command: 'navto:https://friendup.cloud/'
 				},
@@ -123,7 +127,7 @@ Application.receiveMessage = function( msg )
 			this.currentUrl = msg.url;
 			break;
 		case 'seturl':
-			if ( msg.url.indexOf( 'WideWeb/Templates/about.html' ) < 0 && msg.url != this.currentUrl )
+			if( msg.url.indexOf( 'FriendBrowser/Templates/about.html' ) < 0 && msg.url != this.currentUrl )
 			{
 				this.currentUrl = msg.url;
 				Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' - ' + msg.url );

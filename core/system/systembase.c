@@ -114,13 +114,14 @@ SystemBase *SystemInit( void )
 	socket_init_once();
 
 	struct SystemBase *l = NULL;
-	char tempString[ PATH_MAX ];
+	char *tempString = FCalloc( PATH_MAX, sizeof(char) );
 	Log( FLOG_INFO,  "SystemBase Init\n");
 	
 	mkdir( DEFAULT_TMP_DIRECTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 	
 	if( ( l = FCalloc( 1, sizeof( struct SystemBase ) ) ) == NULL )
 	{
+		FFree( tempString );
 		return NULL;
 	}
 	
@@ -154,7 +155,7 @@ SystemBase *SystemInit( void )
 			perror(0);
 		}
 		
-		if( getcwd( l->sl_AutotaskPath, sizeof ( tempString ) ) == NULL )
+		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
 			FERROR("getcwd failed!");
 			exit(5);
@@ -170,7 +171,7 @@ SystemBase *SystemInit( void )
 				if( asdir->d_name[0] == '.' ) continue;
 				Log( FLOG_INFO,  "[SystemBase] Reading autostart scripts:  %s\n", asdir->d_name );
 			
-				snprintf( tempString, sizeof(tempString), "%s%s", l->sl_AutotaskPath, asdir->d_name );
+				snprintf( tempString, PATH_MAX, "%s%s", l->sl_AutotaskPath, asdir->d_name );
 				
 				Autotask *loctask = AutotaskNew( "/bin/bash", tempString );
 				if( loctask != NULL )
@@ -201,8 +202,9 @@ SystemBase *SystemInit( void )
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
 	pthread_mutex_init( &l->sl_ResourceMutex, NULL );
 
-	if( getcwd( tempString, sizeof ( tempString ) ) == NULL )
+	if( getcwd( tempString, PATH_MAX ) == NULL )
 	{
+		FFree( tempString );
 		FERROR("getcwd failed!");
 		exit(5);
 	}
@@ -485,6 +487,7 @@ SystemBase *SystemInit( void )
 	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqllib == NULL )
 	{
 		FERROR("Cannot open 'mysql.library' in first slot\n");
+		FFree( tempString );
 		FFree( l->sqlpool );
 		FFree( l );
 		LogDelete();
@@ -618,7 +621,7 @@ SystemBase *SystemInit( void )
 	CommServiceInterfaceInit( &(l->sl_CommServiceInterface) );
 	CommServiceRemoteInterfaceInit( &(l->sl_CommServiceRemoteInterface) );
 
-	l->alib = (struct ApplicationLibrary *)LibraryOpen( l, "application.library", 0 ); //l->LibraryApplicationGet( l );
+	//l->alib = (struct ApplicationLibrary *)LibraryOpen( l, "application.library", 0 ); //l->LibraryApplicationGet( l );
 
 	l->ilib = l->LibraryImageGet( l );
 	
@@ -655,7 +658,7 @@ SystemBase *SystemInit( void )
 	{
 		while( ( dir = readdir( d ) ) != NULL )
 		{
-			sprintf( tempString, "%s%s", l->sl_ModPath, dir->d_name );
+			snprintf( tempString, PATH_MAX, "%s%s", l->sl_ModPath, dir->d_name );
 
 			Log( FLOG_INFO,  "Reading modules:  %s fullmodpath %s\n", dir->d_name, tempString );
 			if( dir->d_name[0] == '.' ) continue;
@@ -706,8 +709,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create authentication modules\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	if (getcwd( tempString, sizeof ( tempString ) ) == NULL)
+	if (getcwd( tempString, PATH_MAX ) == NULL)
 	{
+		FFree( tempString );
 		FERROR("getcwd failed!");
 		exit(5);
 	}
@@ -777,6 +781,7 @@ SystemBase *SystemInit( void )
 	else
 	{
 		FERROR("Authentication module not provided\n");
+		FFree( tempString );
 		return NULL;	
 	}
 	
@@ -990,6 +995,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO,  "[SystemBase] base initialized properly\n");
 	
 	// we cannot open libs inside another init
+	FFree( tempString );
 
 	return ( void *)l;
 }
@@ -1224,10 +1230,10 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Closing application.library\n");
 	// Application lib
 	
-	if( l->alib != NULL )
-	{
-		LibraryClose( l->alib );
-	}
+	//if( l->alib != NULL )
+	//{
+	//	LibraryClose( l->alib );
+	//}
 	
 	if( l->zlib != NULL )
 	{
@@ -2486,16 +2492,19 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		
 			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
 
-			if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+		//	if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
 			{
-				WebsocketServerClient *wsc = usersession->us_WSClients;
-				while( wsc != NULL )
+				
+				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 				{
-					DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
-
-					if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+					WebsocketServerClient *wsc = usersession->us_WSClients;
+					while( wsc != NULL )
 					{
-						if( wsc->wsc_Wsi != NULL )
+						DEBUG("[SystemBase] Writing to websockets, pointer to ws %p, ptr to ws: %p wscptr: %p\n", wsc->wsc_Wsi, usersession, wsc );
+
+					//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
+					
+						if( wsc->wsc_Wsi != NULL && wsc->wsc_UserSession != NULL )
 						{
 							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 						}
@@ -2503,13 +2512,12 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 						{
 							FERROR("Cannot write to WS, WSI is NULL!\n");
 						}
-
-						FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+						wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 					}
-
-					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 				}
-				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				//FRIEND_MUTEX_UNLOCK( &(wsc->wsc_Mutex) );
+	//			FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 			}
 			
 			FFree( buf );

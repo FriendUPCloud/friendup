@@ -10,6 +10,12 @@ body.Inside > img
 	pointer-events: none;
 }
 
+html > body,
+html > body.Inside
+{
+	background: #34495E;
+}
+
 /* Main screen */
 
 #Screens
@@ -82,7 +88,7 @@ body #Screens > div.Screen > .TitleBar > .Right
 
 body #Screens > #DoorsScreen.Screen > .ScreenContent
 {
-	transition: transform 0.3s;
+	transition: transform 0.25s;
 }
 
 #Screens > div.Screen + div.Screen > .TitleBar,
@@ -276,7 +282,7 @@ html body .Screen .MobileAppMenu:after
 	box-sizing: border-box;
 	padding-left: 35px;
 	color: white;
-	transform: translateX(0);
+	transform: translate3d(0,0,0);
 	transition: transform 0.25s;
 	font-weight: bold;
 }
@@ -306,7 +312,7 @@ html body .Screen .MobileAppMenu:after
 
 .AppsShowingTitle.Opened
 {
-	transform: translateX(-100%);
+	transform: translate3d(-100%,0,0);
 }
 
 [mobile] #WorkspaceMenu
@@ -322,7 +328,7 @@ html body .Screen .MobileAppMenu:after
 	overflow: hidden;
 	opacity: 1;
 	pointer-events: all;
-	transform: translateX(-40px);
+	transform: translate3d(-40px,0,0);
 	transition: opacity,transform 0.25s;
 }
 
@@ -335,7 +341,7 @@ html body .Screen .MobileAppMenu:after
 {
 	height: calc(100% + 5px);
 	width: 70%;
-	transform: translateX(-100%);
+	transform: translate3d(-100%,0,0);
 	overflow: visible;
 	box-sizing: border-box;
 	padding-top: 40px;
@@ -350,7 +356,7 @@ html [mobile] #WorkspaceMenu.Open ul
 	color: white;
 	position: fixed;
 	left: 0;
-	transform: translateX(100%);
+	transform: translate3d(100%,0,0);
 	top: 40px;
 	width: 100%;
 	height: calc(100% - 40px);
@@ -398,7 +404,7 @@ html [mobile] #WorkspaceMenu > div.MenuBack:after
 
 html [mobile] #WorkspaceMenu.Open .Menu.Open > ul
 {
-	transform: translateX(0%);
+	transform: translate3d(0%,0,0);
 	border-left: 0;
 }
 
@@ -540,7 +546,8 @@ html body .View > .Title > div > span
 {
 	display: none;
 }
-.ViewContainer[childview].Active > .MobileBack 
+.ViewContainer[childview].Active > .MobileBack,
+.ViewContainer.Active > .MobileBack.Showing
 {
     display: block;
     width: 32px;
@@ -553,7 +560,8 @@ html body .View > .Title > div > span
     pointer-events: all;
 }
 
-.ViewContainer[childview].Active > .MobileBack:before
+.ViewContainer[childview].Active > .MobileBack:before,
+.ViewContainer.Active > .MobileBack.Showing:before
 {
 	font-family: fontawesome;
 	display: inline-block;
@@ -562,33 +570,34 @@ html body .View > .Title > div > span
 	font-weight: bold;
 }
 
-.ViewContainer[childview] > .MobileBack 
+.ViewContainer[childview] > .MobileBack,
+.ViewContainer > .MobileBack.Showing
 {
     left: -32px;
 }
 
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Dragging
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.OnWorkspace) > .ViewIcon.Dragging
 {
 	background-color: rgba(255,255,255,0.4);
 }
 
 @keyframes jiggle
 {
-	0% { transform: rotateZ(5deg); }
-	50% { transform: rotateZ(-5deg); }
-	100% { transform: rotateZ(5deg); }
+	0% { transform: rotateZ(3deg); }
+	50% { transform: rotateZ(-3deg); }
+	100% { transform: rotateZ(3deg); }
 }
 @-webkit-keyframes jiggle
 {
-	0% { transform: rotateZ(5deg); }
-	50% { transform: rotateZ(-5deg); }
-	100% { transform: rotateZ(5deg); }
+	0% { transform: rotateZ(3deg); }
+	50% { transform: rotateZ(-3deg); }
+	100% { transform: rotateZ(3deg); }
 }
 
-
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove
 {
-	animation: jiggle 0.2s infinite;
+	animation: jiggle 0.3s infinite;
 }
 
 html body[mobile] .ViewContainer:not(.DelayedDeactivation) .View:not(.Active) > div:not(.Title)
@@ -601,9 +610,9 @@ body.WindowMenu #Screens .View
 	width: calc(50% - 20px) !important;
 }
 
-[mobile] #Screens .View
+html body .View
 {
-	transition: transform 0.25s;
+	transition: transform 0.25s !important;
 }
 
 /* Popup dialog boxes lil bit larger */
@@ -623,7 +632,9 @@ body.WindowMenu #Screens .View
 	min-height: 175px; /* calc(100% - 200px); */
 }
 
-#Screens .View.Active[maximized=true]
+#Screens .View.Active[maximized=true],
+[mobile] #Screens .DelayedDeactivation .View,
+[mobile] #Screens .ViewContainer:not(.OnWorkspace) .View
 {
 	position: absolute;
 	top: 0 !important; 
@@ -631,7 +642,20 @@ body.WindowMenu #Screens .View
 	width: 100% !important; 
 	height: 100% !important;
 	min-height: 100% !important;
-	z-index: 99999999 !important;
+	z-index: 99999999 !important
+}
+
+body[mobile].Activating:after
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	content: " ";
+	display: block;
+	background: rgba(0,0,0,0);
+	z-index: 2147483647;
 }
 
 .ViewContainer .ViewIcon 
@@ -652,44 +676,31 @@ body .ViewContainer .View .Content
 	transform: translateZ(0);
 }
 
-body .ViewContainer .View.Active
+body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
+body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
+body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening
 {
-	transition: transform 0.25s !important;
-}
-
-/*body .ViewContainer.Activating .View .Content
-{
-	transition: opacity 0.25s;
-	opacity: 0;
-	pointer-events: none;
-}
-
-body .ViewContainer.Activating .View.DoneActivating .Content
-{
-	opacity: 1;
-	pointer-events: all;
-}*/
-
-body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
-body.ViewMaximized #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Activating,
-body #Screens .ViewContainer[childview]:not(.DelayedDeactivation) .View.Opening,
-body #Screens .ViewContainer[childview] .View.DelayedDeactivation
-{
-	transform: translateX(100%) !important;
+	transform: translate3d(100%,0,0) !important;
 	left: 100% !important;
 	overflow: hidden;
 }
-body.ViewMaximized .ViewContainer:not(.DelayedDeactivation) .View.Activating,
-body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation) .View.Activating,
+body.ViewMaximized .ViewContainer:not(.DelayedDeactivation).Activating .View,
+body.ViewMaximized #Screens .ViewContainer:not(.DelayedDeactivation).Activating .View,
 body #Screens .ViewContainer:not(.DelayedDeactivation) .View.Opening
 {
-	transform: translateX(-100%) !important;
+	transform: translate3d(-100%,0,0) !important;
 	left: -100% !important;
 	overflow: hidden;
 }
-body.ViewMaximized .ViewContainer .View.Activated
+
+body #Screens .ViewContainer.Opening .ViewIcon
 {
-	transform: translateX(0%) !important;
+	opacity: 0;
+}
+
+body.ViewMaximized .ViewContainer.Activated .View
+{
+	transform: translate3d(0%,0,0) !important;
 }
 
 .ViewContainer.Closing .View
@@ -697,6 +708,7 @@ body.ViewMaximized .ViewContainer .View.Activated
 	opacity: 1 !important;
 	overflow: hidden;
 }
+
 .ViewContainer.Closing .View .Title
 {
 	transition: opacity 0.25s;
@@ -725,14 +737,8 @@ body #Screens .ViewContainer.DelayedDeactivation .View
 	display: none;
 }
 
-.WindowActivating .ViewContainer.OnWorkspace .View
-{
-	opacity: 0;
-	pointer-events: none;
-}
-
 .ViewContainer.OnWorkspace .View .Content,
-.WindowActivating .ViewContainer.OnWorkspace .View .Title,
+body.Activating .ViewContainer.OnWorkspace .View .Title,
 .ViewContainer.OnWorkspace .View .MobileFileBrowser,
 .ViewContainer.OnWorkspace .View .DirectoryToolbar
 {
@@ -743,10 +749,9 @@ body #Screens .ViewContainer.DelayedDeactivation .View
 	background: transparent;
 }
 
-
 .ViewContainer.Closing:not([childview]):not(.OnWorkspace) .View
 {
-	transform: translateX(100%) !important;
+	transform: translate3d(100%,0,0) !important;
 }
 
 #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation)
@@ -776,6 +781,7 @@ body.ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation),
 body.AppsShowing .ViewContainer,
 body.AppsShowing .ViewContainer .ViewIcon,
 body .ViewContainer[childview] .ViewIcon,
+body .ViewContainer:not(.OnWorkspace) .ViewIcon.MobileBackHidesIt,
 body .ViewContainer.Closing:not(.Active) .ViewIcon,
 body .ViewContainer.DelayedDeactivation .ViewIcon
 {
@@ -861,7 +867,7 @@ body[mobile=mobile] .Desklet.Open.Opened
 	top: 100%;
 	height: auto;
 	margin:0px;
-	transform: translateY(0%);
+	transform: translate3d(0,0,0);
 	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
 
 }
@@ -885,7 +891,7 @@ html .Desklet .Launcher
 	z-index: 9999999;
 	position: fixed;
 	background: rgba(0,0,0,0.5);
-	transform: translateY(0%);
+	transform: translate3d(0,0,0);
 	transition: top,transform 0.25s !important;
 }
 
@@ -909,7 +915,7 @@ html .Desklet .Launcher
 
 .Desklet.Open.Opened
 {
-	transform: translateY(calc(-100% - 49px));
+	transform: translate3d(0,calc(-100% - 49px),0);
 }
 
 .Desklet.Open .Launcher
@@ -980,7 +986,7 @@ body.Login > .View
 }
 
 body[mobile=mobile] .View .Title > div > .Minimize,
-body[mobile=mobile] .View .Title > div > .Close,
+body[mobile=mobile] .View:not(.Remove) .Title > div > .Close,
 body[mobile=mobile] .View .Title > div > .MobileClose
 {
 	display: none;
@@ -1072,6 +1078,21 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	margin: 5px 5px 5px 5px;
 	transition: opacity 0.25s;
 	pointer-events: none;
+}
+
+#MobileNotifications .MobileNotification .NotificationCount 
+{
+	position: absolute;
+	right: 15px;
+	top: 15px;
+	background-color: rgba(200,200,200,0.6);
+	border-radius: 100%;
+	height: 30px;
+	line-height: 30px;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 #MobileNotifications .MobileNotification .Application

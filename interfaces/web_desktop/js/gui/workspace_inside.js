@@ -3,6 +3,7 @@ var WorkspaceInside = {
 	trayIcons: {},
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
+	websocketDisconnectTime: 0,
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -477,9 +478,14 @@ var WorkspaceInside = {
 		if( Workspace.reloginInProgress || Workspace.connectingWebsocket )
 			return;
 		
-		if( !Workspace.sessionId )
+		if( !Workspace.sessionId && Workspace.userLevel )
 		{
 			return Workspace.relogin();
+		}
+		
+		if(!Workspace.sessionId)
+		{
+			setTimeout(Workspace.initWebSocket, 1000);
 		}
 
 		Workspace.connectingWebsocket = true;
@@ -516,6 +522,13 @@ var WorkspaceInside = {
 			}
 			delete this.conn;
 		}
+		
+		if( typeof FriendConnection == 'undefined' )
+		{
+			setTimeout(Workspace.initWebSocket, 250);
+			return;
+		}
+		
 		this.conn = new FriendConnection( conf );
 		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 		this.conn.on( 'server-notice', handleServerNotice );
@@ -559,6 +572,7 @@ var WorkspaceInside = {
 				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
 				document.body.classList.remove( 'Offline' );
 				Workspace.workspaceIsDisconnected = false;
+				Workspace.websocketDisconnectTime = 0;
 				
 				// Reattach
 				if( !Workspace.conn && selfConn )
@@ -1496,30 +1510,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Do the startup sequence in sequence (only once)
-					if( dat.wizardrun && !isMobile )
+					if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
 					{
-						if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
-						{
-							Workspace.startupsequenceHasRun = true;
-							var l = {
-								index: 0,
-								func: function()
+						Workspace.startupsequenceHasRun = true;
+						var l = {
+							index: 0,
+							func: function()
+							{
+								var cmd = dat.startupsequence[this.index++];
+								if( cmd )
 								{
-									var cmd = dat.startupsequence[this.index++];
-									if( cmd )
+									Workspace.shell.execute( cmd, function()
 									{
-										Workspace.shell.execute( cmd, function()
-										{
-											l.func();
-											if( Workspace.mainDock )
-												Workspace.mainDock.closeDesklet();
-										} );
-									}
+										l.func();
+										if( Workspace.mainDock )
+											Workspace.mainDock.closeDesklet();
+									} );
 								}
 							}
-							l.func();
 						}
+						l.func();
 					}
+
 
 					PollTaskbar();
 				}
@@ -2180,7 +2192,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					ge( 'Taskbar' ).tasks = [];
 
 					// Add start menu
-					if( globalConfig.viewList == 'dockedlist' )
+					if( !isMobile && globalConfig.viewList == 'dockedlist' )
 					{
 						var img = 'startmenu.png';
 						if( Workspace.mainDock.conf )
@@ -2296,17 +2308,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.docksReloading = null;
 					
 					// Make sure taskbar is polled
-					PollTaskbar();
+					if( !isMobile )
+					{
+						PollTaskbar();
 					
-					// Reload start menu
-					// TODO: Remove the need for this hack
-					Workspace.pollStartMenu( true );
+						// Reload start menu
+						// TODO: Remove the need for this hack
+						Workspace.pollStartMenu( true );
+					}
 					
 					// Open the main dock first
 					if( !Workspace.insideInitialized )
 					{
 						Workspace.mainDock.openDesklet();
 						Workspace.insideInitialized = true;
+						forceScreenMaxHeight();
 					}
 				}
 				dm.execute( 'getdock', { dockid: '0' } );
@@ -2587,14 +2603,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.themeRefreshed && !update )
 			return;
 
+		// Check url var
+		if( GetUrlVar( 'fullscreenapp' ) )
+		{
+			document.body.classList.add( 'FullscreenApp' );
+		}
+
 		if( Workspace.themeOverride ) themeName = Workspace.themeOverride.toLowerCase();
 
 		document.body.classList.add( 'Loading' );
 
 		if( !themeName ) themeName = 'friendup12';
-		
-		// Only friendup12 for now.
-		themeName = 'friendup12';
 		
 		themeName = themeName.toLowerCase();
 		
@@ -3541,7 +3560,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					catch(e)
 					{
 						rows = false;
-						console.log( 'Could not parse network drives',e,dat );
+						console.log( 'Could not parse network drives', e, dat );
 					}
 
 					if( rows && rows.length )
@@ -3683,7 +3702,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var w = movableWindows[a];
 			if( w.content ) w = w.content;
-			if( w.fileInfo )
+			if( w.fileInfo && w.fileInfo.Volume != 'Mountlist:' )
 			{
 				var found = false;
 				for( var b in this.icons )
@@ -5639,31 +5658,75 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			};
 		}
 		
+		// Just close app menu
+		if( Workspace.appMenu && document.body.classList.contains( 'AppsShowing' ) )
+		{
+			return Workspace.appMenu.onclick();
+		}
+		
 		// Update view history with current application id
 		if( currentMovable )
 		{
+			var cm = currentMovable;
 			FocusOnNothing();
-			if( currentMovable.applicationId )
+			if( cm.applicationId )
 			{
 				// Tell the application
-				currentMovable.windowObject.sendMessage( {
+				cm.windowObject.sendMessage( {
 					command: 'mobilebackbutton'
 				} );
+				// Check with standard functionality
 				if( window._getAppByAppId )
 				{
-					var app = _getAppByAppId( currentMovable.applicationId );
-					if( app.mainView )
+					var app = _getAppByAppId( cm.applicationId );
+					if( app.mainView == cm.windowObject )
 					{
-						_ActivateWindow( app.mainView.content.parentNode );
+						if( !cm.windowObject.mobileBack.classList.contains( 'Showing' ) )
+						{
+							Workspace.appMenu.onclick();
+						}
+						else
+						{
+							_ActivateWindow( app.mainView.content.parentNode );
+						}
 						return;
 					}
 				}
-				this.mobileViews.application = currentMovable.applicationId;
+				// Just go back
+				if( cm.windowObject.parentView )
+				{
+					cm.windowObject.parentView.activate();
+					return;
+				}
+				if( app.mainView )
+				{
+					app.mainView.activate();
+					return;
+				}
+				this.mobileViews.application = cm.applicationId;
 			}
-			else if( currentMovable.content.directoryview )
+			else if( cm.content.directoryview )
 			{
-				return currentMovable.content.directoryview.buttonUp.onclick();
+				if( cm.content.fileInfo.Path == 'Mountlist:' )
+				{
+					if( cm.windowObject.dialog )
+					{
+						return cm.windowObject.close();
+					}
+					else
+					{
+						return Workspace.appMenu.onclick();
+					}
+				}
+				return cm.content.directoryview.buttonUp.onclick();
 			}
+			// Just go back
+			else if( cm.windowObject.parentView )
+			{
+				var pv = cm.windowObject.parentView.windowObject;
+				pv.activate();
+				return;
+			}	
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
@@ -5679,7 +5742,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			}
 		}
-		_DeactivateWindows();
 	},
 	// Get a list of all applications ------------------------------------------
 	listApplications: function()
@@ -6365,11 +6427,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var i = document.createElement( 'iframe' );
 			i.src = dowloadURI;
-			setTimeout( function()
-				{
-					document.body.removeChild( i );
-				}
-			, 250 );
+			i.onload = function()
+			{
+				setTimeout( function()
+					{
+						document.body.removeChild( i );
+					}
+				, 250 );
+			}
 			document.body.appendChild( i );			
 		}
 	},
@@ -6419,9 +6484,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		var tr = e.target ? e.target : e.srcElement;
-		
+
 		if( tr == window )
 			tr = document.body;
+		
+		// Item uses system default
+		if( tr.defaultContextMenu ) 
+		{
+			return false;
+		}
 		
 		var findView = false;
 		var el = tr;
@@ -6688,6 +6759,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.raise();
 			v.show();
 		}
+		return true;
 	},
 	newDirectoryView: function()
 	{
@@ -6982,7 +7054,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	hideLauncherError: function()
 	{
-		if( Workspace.launcherWindow.setFlag )
+		if( Workspace.launcherWindow && Workspace.launcherWindow.setFlag )
 		{
 			Workspace.launcherWindow.setFlag( 'max-height', 80 );
 			Workspace.launcherWindow.setFlag( 'height', 80 );
@@ -7159,12 +7231,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var files = [];
 			var eles = w.getElementsByTagName( 'div' );
-			for( var a = 0; a < eles.length; a++ )
+			for( var a = 0; a < w.icons.length; a++ )
 			{
-				if( eles[a].classList.contains( 'Selected' ) )
+				if( w.icons[a].selected )
 				{
+					
 					var d = new Door();
-					files.push( { fileInfo: eles[a].fileInfo, door: d.get( eles[a].fileInfo.Path ) } );
+					files.push( { fileInfo: w.icons[a], door: d.get( w.icons[a].Path ) } );
 				}
 			}
 
@@ -7435,6 +7508,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
+			
+			// If we have no conn, and we have waited five cycles, force reconnect
+			// the websocket...
+			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 3 )
+			{
+				Workspace.connectingWebsocket = false;
+				Workspace.websocketDisconnectTime = 0;
+				Workspace.initWebSocket();
+			}
 		}
 		// Only set serverIsThere if we don't have a response from the server
 		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
@@ -7765,12 +7847,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				uprogress.displayError(e.data['errormessage']);
 			}
+			else
+			{
+				console.log('Unhandles messge from out filetransfer worker',e);
+			}
 
 		}
 
 		uprogress.load();
 
 		//hardcoded pathes here!! TODO!
+		
+		
 		var fileMessage = {
 			'session': Workspace.sessionId,
 			'targetPath': 'Home:Downloads/',
@@ -7778,27 +7866,109 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'files': [ file ],
 			'filenames': [ filename ]
 		};
-		console.log('trying to upload here...',fileMessage);
 		uworker.postMessage( fileMessage );		
 	},
 	updateViewState: function( newState )
 	{
+		if( !Workspace.sessionId ) { setTimeout(Workspace.updateViewState, 1000); return; }
+
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
 				Workspace.initWebSocket();
+
+				var dl = new FriendLibrary( 'system.library' );
+				dl.addVar( 'status', 0 );
+				dl.onExecuted = function(e,d)
+				{
+					//console.log( 'Sockets.', e, d );
+				};
+				dl.execute( 'mobile/setwsstate' );
 			}
 		}
 		else
 		{
 			document.body.classList.remove( 'ViewStateActive' );
+			if( isMobile )
+			{
+				var dl = new FriendLibrary( 'system.library' );
+				dl.addVar( 'status', 1 );
+				dl.onExecuted = function(e,d)
+				{
+					//console.log( 'Sockets.', e, d );
+				};
+				dl.execute( 'mobile/setwsstate' );
+			}
 		}
 		this.currentViewState = newState;
-	}
-
+	},
 };
+
+// Application messaging start -------------------------------------------------
+ApplicationMessagingNexus = {
+	ports: {},
+	// Opens a message port on application
+	open: function( appid, callback )
+	{
+		var fapp = false;
+		for( var a = 0; a < Workspace.applications.length; a++ )
+		{
+			if( Workspace.applications[ a ].applicationId == appid )
+			{
+				fapp = Workspace.applications[ a ];
+				break;
+			}
+		}
+		if( fapp )
+		{
+			this.ports[ appid ] = {
+				hash: CryptoJS.SHA1( appid ).toString(),
+				app: fapp
+			};
+		}
+		// Call back
+		if( callback )
+		{
+			callback( fapp ? true : false );
+		}
+	},
+	// Closes a messageport on application
+	close: function( appid, callback )
+	{
+		var found = false;
+		var newl = {};
+		for( var a in this.ports )
+		{
+			if( a == appid )
+			{
+				found = this.ports[ a ];
+			}
+			else
+			{
+				newl[ a ] = this.ports[ a ];
+			}
+		}
+		if( found )
+		{
+			this.ports = newl;
+			if( found.app.sendMessage )
+			{
+				found.app.sendMessage( {
+					type: 'applicationmessage',
+					command: 'closed'
+				} );
+			}
+		}
+		// Callback
+		if( callback )
+		{
+			callback( found ? true : false );
+		}
+	}
+};
+// Application messaging end ---------------------------------------------------
 
 Doors = Workspace;
 
@@ -7988,7 +8158,7 @@ function DoorsKeyDown( e )
 	}
 	
 	// Check keys on directoryview ---------------------------------------------
-	if( currentMovable && currentMovable.content.directoryview )
+	if( window.currentMovable && currentMovable.content.directoryview )
 	{
 		if( w == 113 || w == 27 )
 		{
@@ -8525,134 +8695,144 @@ if( window.friendApp )
 			func();
 		}
 	}
-	// Receive push notification
-	Workspace.receivePush = function()
+}
+
+// Receive push notification
+Workspace.receivePush = function( jsonMsg )
+{
+	if( !isMobile ) return;
+	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
+	
+	if( msg == false ) return;
+	try
 	{
-		var msg = friendApp.get_notification();
+		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
+		msg = JSON.parse( msg );
 		if( !msg ) return;
-		try
+		
+		mobileDebug( 'We received a message.' );
+		mobileDebug( JSON.stringify( msg ) );
+		
+		// We did a user interaction here
+		msg.clicked = true;
+		
+		// Clear the notifications now... (race cond?)
+		friendApp.clear_notifications();
+		
+		var messageRead = trash = false;
+		
+		if( !msg.application ) return;
+		
+		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
+		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
 		{
-			mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')', true );
-			msg = JSON.parse( msg );
-			if( !msg ) return;
-			
-			mobileDebug( 'We received a message.' );
-			mobileDebug( JSON.stringify( msg ) );
-			
-			// We did a user interaction here
-			msg.clicked = true;
-			
-			// Clear the notifications now... (race cond?)
-			friendApp.clear_notifications();
-			
-			var messageRead = trash = false;
-			
-			if( !msg.application ) return;
-			
-			for( var a = 0; a < Workspace.applications.length; a++ )
-			{
-				if( Workspace.applications[a].applicationName == msg.application )
-				{	
-					// Need a "message id" to be able to update notification
-					// on the Friend Core side
-					if( msg.id )
-					{
-						// Function to set the notification as read...
-						var l = new Library( 'system.library' );
-						l.onExecuted = function(){};
-						l.execute( 'mobile/updatenotification', { 
-							notifid: msg.id, 
-							action: 1,
-							pawel: 1
-						} );
-					}
-					
-					mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
-					
-					var app = Workspace.applications[a];
-					app.contentWindow.postMessage( JSON.stringify( { 
-						type: 'system',
-						method: 'pushnotification',
-						callback: false,
-						data: msg
-					} ), '*' );
-					return;
-				}
-			}
-			
-			// Function to set the notification as read...
-			function notificationRead()
-			{
-				messageRead = true;
-				var l = new Library( 'system.library' );
-				l.onExecuted = function(){};
-				l.execute( 'mobile/updatenotification', { 
-					notifid: msg.id, 
-					action: 1,
-					pawel: 2
-				} );
-			}
-			
-			// Application not found? Start it!
-			// Send message to app once it has started...
-			function appMessage()
-			{
-				var app = false;
-				var apps = Workspace.applications;
-				for( var a = 0; a < apps.length; a++ )
+			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+		}
+		
+		for( var a = 0; a < Workspace.applications.length; a++ )
+		{
+			if( Workspace.applications[a].applicationName == msg.application )
+			{	
+				// Need a "message id" to be able to update notification
+				// on the Friend Core side
+				if( msg.id )
 				{
-					// Found the application
-					if( apps[ a ].applicationName == msg.application )
-					{
-						app = apps[ a ];
-						break;
-					}
+					// Function to set the notification as read...
+					var l = new Library( 'system.library' );
+					l.onExecuted = function(){};
+					l.execute( 'mobile/updatenotification', { 
+						notifid: msg.id, 
+						action: 1,
+						pawel: 1
+					} );
 				}
 				
-				// No application? Alert the user
-				// TODO: Localize response!
-				if( !app )
-				{
-					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-					return;
-				}
+				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
 				
-				if( !app.contentWindow ) 
-				{
-					Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-					return;
-				}
-				
-				var amsg = {
+				var app = Workspace.applications[a];
+				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
 					method: 'pushnotification',
-					callback: addWrapperCallback( notificationRead ),
+					callback: false,
 					data: msg
-				};
-				
-				mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
-				
-				app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-				
-				// Delete wrapper callback if it isn't executed within 1 second
-				setTimeout( function()
+				} ), '*' );
+				return;
+			}
+		}
+		
+		// Function to set the notification as read...
+		function notificationRead()
+		{
+			messageRead = true;
+			var l = new Library( 'system.library' );
+			l.onExecuted = function(){};
+			l.execute( 'mobile/updatenotification', { 
+				notifid: msg.id, 
+				action: 1,
+				pawel: 2
+			} );
+		}
+		
+		// Application not found? Start it!
+		// Send message to app once it has started...
+		function appMessage()
+		{
+			var app = false;
+			var apps = Workspace.applications;
+			for( var a = 0; a < apps.length; a++ )
+			{
+				// Found the application
+				if( apps[ a ].applicationName == msg.application )
 				{
-					if( !messageRead )
-					{
-						getWrapperCallback( amsg.callback );
-					}
-				}, 1000 );
+					app = apps[ a ];
+					break;
+				}
 			}
 			
-			mobileDebug( 'Start app ' + msg.application, true );
+			// No application? Alert the user
+			// TODO: Localize response!
+			if( !app )
+			{
+				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				return;
+			}
 			
-			ExecuteApplication( msg.application, '', appMessage )
+			if( !app.contentWindow ) 
+			{
+				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				return;
+			}
+			
+			var amsg = {
+				type: 'system',
+				method: 'pushnotification',
+				callback: addWrapperCallback( notificationRead ),
+				data: msg
+			};
+			
+			mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
+			
+			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+			
+			// Delete wrapper callback if it isn't executed within 1 second
+			setTimeout( function()
+			{
+				if( !messageRead )
+				{
+					getWrapperCallback( amsg.callback );
+				}
+			}, 1000 );
 		}
-		catch( e )
-		{
-			// Do nothing for now...
-			//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
-		}
+		
+		mobileDebug( 'Start app ' + msg.application, true );
+		
+		ExecuteApplication( msg.application, '', appMessage )
+	}
+	catch( e )
+	{
+		mobileDebug('OH OH. ERROR' + e, true);
+                // Do nothing for now...
+		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
 }
 
@@ -8678,10 +8858,10 @@ else
 	Workspace.updateViewState( 'active' );
 }
 
-// Debug blob:
-if( isMobile )
+/*  Debug blob:
+if( isMobile  )
 {
-	/*var debug = document.createElement( 'div' );
+	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
@@ -8692,8 +8872,9 @@ if( isMobile )
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
-	document.body.appendChild( debug );*/
-}
+	document.body.appendChild( debug );
+}*/
+
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
 {

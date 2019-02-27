@@ -1,0 +1,93 @@
+{
+  "_from": "@ckeditor/ckeditor5-editor-classic",
+  "_id": "@ckeditor/ckeditor5-editor-classic@11.0.2",
+  "_inBundle": false,
+  "_integrity": "sha512-RdQ3CHkK3M0pdj8YbC1jx1kfGZ4zv82Rthd1S2h0h1cS5Db/9xA2p/zz3G3nSq8ctWv7P9qeW6UleWTZ9nQJLg==",
+  "_location": "/@ckeditor/ckeditor5-editor-classic",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "@ckeditor/ckeditor5-editor-classic",
+    "name": "@ckeditor/ckeditor5-editor-classic",
+    "escapedName": "@ckeditor%2fckeditor5-editor-classic",
+    "scope": "@ckeditor",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@ckeditor/ckeditor5-editor-classic/-/ckeditor5-editor-classic-11.0.2.tgz",
+  "_shasum": "4aea352883fe5049b092fc6809c4b786ad5083ae",
+  "_spec": "@ckeditor/ckeditor5-editor-classic",
+  "_where": "/home/hogne/Projects/CKEditor",
+  "author": {
+    "name": "CKSource",
+    "url": "http://cksource.com/"
+  },
+  "bugs": {
+    "url": "https://github.com/ckeditor/ckeditor5-editor-classic/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@ckeditor/ckeditor5-core": "^11.1.0",
+    "@ckeditor/ckeditor5-engine": "^12.0.0",
+    "@ckeditor/ckeditor5-theme-lark": "^12.0.0",
+    "@ckeditor/ckeditor5-ui": "^11.2.0",
+    "@ckeditor/ckeditor5-utils": "^11.1.0",
+    "lodash-es": "^4.17.10"
+  },
+  "deprecated": false,
+  "description": "Classic editor implementation for CKEditor 5.",
+  "devDependencies": {
+    "@ckeditor/ckeditor5-basic-styles": "^10.1.0",
+    "@ckeditor/ckeditor5-enter": "^10.1.3",
+    "@ckeditor/ckeditor5-heading": "^10.1.1",
+    "@ckeditor/ckeditor5-paragraph": "^10.0.4",
+    "@ckeditor/ckeditor5-typing": "^11.0.2",
+    "@ckeditor/ckeditor5-undo": "^10.0.4",
+    "eslint": "^5.5.0",
+    "eslint-config-ckeditor5": "^1.0.7",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=6.9.0",
+    "npm": ">=3.0.0"
+  },
+  "eslintIgnore": [
+    "src/lib/**",
+    "packages/**"
+  ],
+  "files": [
+    "lang",
+    "src",
+    "theme"
+  ],
+  "homepage": "https://ckeditor.com",
+  "keywords": [
+    "ckeditor",
+    "ckeditor5",
+    "ckeditor 5",
+    "ckeditor5-editor"
+  ],
+  "license": "GPL-2.0-or-later",
+  "lint-staged": {
+    "**/*.js": [
+      "eslint --quiet"
+    ]
+  },
+  "name": "@ckeditor/ckeditor5-editor-classic",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ckeditor/ckeditor5-editor-classic.git"
+  },
+  "scripts": {
+    "lint": "eslint --quiet '**/*.js'",
+    "precommit": "lint-staged"
+  },
+  "version": "11.0.2"
+}

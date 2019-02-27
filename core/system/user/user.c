@@ -117,16 +117,46 @@ void UserRemoveSession( User *usr, void *ls )
 		return;
 	}
 	
-	FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
-	
-	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
-	UserSessListEntry *prev = us;
-	FBOOL removed = FALSE;
-	
-	if( us != NULL )
+	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
-		// first entry
-		if( remses == us->us )
+		UserSessListEntry *actus = (UserSessListEntry *)usr->u_SessionsList;
+		UserSessListEntry *prevus = actus;
+		FBOOL removed = FALSE;
+	
+		while( actus != NULL )
+		{
+			prevus = actus;
+			actus = (UserSessListEntry *)actus->node.mln_Succ;
+			
+			if( prevus->us == remses )
+			{
+				if( prevus == usr->u_SessionsList )
+				{
+					usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
+				}
+				else
+				{
+					prevus->node.mln_Succ = (MinNode *)actus;
+				}
+				usr->u_SessionsNr--;
+				removed = TRUE;
+				break;
+			}
+		}
+		
+		if( usr->u_SessionsNr <= 0 )
+		{
+			usr->u_SessionsList = NULL;
+		}
+		if( prevus != NULL )
+		{
+			FFree( prevus );
+		}
+		/*
+		if( us != NULL )
+		{
+			// first entry
+			if( remses == us->us )
 		{
 			usr->u_SessionsList = (UserSessListEntry *) us->node.mln_Succ;
 			if( usr->u_SessionsList != NULL )
@@ -159,19 +189,21 @@ void UserRemoveSession( User *usr, void *ls )
 				
 				prev = us;
 				us = (UserSessListEntry *)us->node.mln_Succ;
+				}
 			}
-		}
 		
-		if( us != NULL )
-		{
-			if( usr->u_SessionsNr <= 0 )
+			if( us != NULL )
 			{
-				usr->u_SessionsList = NULL;
+				if( usr->u_SessionsNr <= 0 )
+				{
+					usr->u_SessionsList = NULL;
+				}
+				FFree( us );
 			}
-			FFree( us );
 		}
+		*/
+		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 }
 
 /**

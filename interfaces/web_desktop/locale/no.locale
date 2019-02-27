@@ -641,3 +641,6 @@ i18n_show_all_windows                   : Vis alle vinduer
 i18n_could_not_find_application         : Kunne ikke finne programmet
 i18n_could_not_find_app_desc            : Beskjeden kunne ikke sendes til programmet fordi det ikke startet.
 
+i18n_camera_action_description          : Ta et bilde med ditt kamera.
+i18n_take_photo                         : Ta bildet
+

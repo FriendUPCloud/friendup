@@ -1180,6 +1180,9 @@ void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 	strftime( timeStr, 54, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
 	ls = snprintf( tmp, TMP_SIZEM1, "\"DateModified\": \"%s\",", timeStr );
 	BufStringAddSize( bs, tmp, ls );
+	strftime( timeStr, 54, "%Y-%m-%d %H:%M:%S", localtime( &s->st_ctime ) );
+	ls = snprintf( tmp, TMP_SIZEM1, "\"DateCreated\": \"%s\",", timeStr );
+	BufStringAddSize( bs, tmp, ls );
 	FFree( timeStr );
 	
 	//DEBUG( "FILLSTAT filesize set\n");

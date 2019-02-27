@@ -258,7 +258,7 @@ void Log( int lev, char* fmt, ...)
                         // list have reverse order, on the top we have oldest entries
                         if( remove( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] )  == 0 )
                         {
-                            Log( FLOG_DEBUG, "Old file removed: %s\n", slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] );
+                            //Log( FLOG_DEBUG, "Old file removed: %s\n", slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] );
                         }
 
                         int i=0;

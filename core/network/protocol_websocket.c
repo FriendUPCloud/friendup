@@ -69,6 +69,11 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	//Log( FLOG_DEBUG, "WSwriteinline pointer: %p\n", wsi );
 	int result = 0;
 	WebsocketServerClient *cl = (WebsocketServerClient *)wsi;
+	if( cl->wsc_UserSession == NULL )
+	{
+		INFO("No user session attached to WS, message will not be send\n");
+		return 0;
+	}
 
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
@@ -723,10 +728,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
 				usleep( 2000 );
+				/*
 				int val = 0;
 				while( TRUE )
 				{
-					DEBUG("Check in use %d\n", fcd->fcd_WSClient->wsc_InUseCounter );
+					DEBUG("PROTOCOL_WS: Check in use %d\n", fcd->fcd_WSClient->wsc_InUseCounter );
 					if( fcd->fcd_WSClient->wsc_InUseCounter <= 0 )
 					{
 						break;
@@ -734,6 +740,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					if( val++ > 5 ) break;
 					sleep( 1 );
 				}
+				*/
 				
 				if( fcd->fcd_Buffer != NULL )
 				{

@@ -1,72 +1,75 @@
 <!DOCTYPE html>
 <html>
+	<title>Friend UP</title>
 	<head>
-		<script src="/webclient/js/apps/api.js"></script>
+		<script onload="" src="/webclient/js/apps/api.js"></script>
 	</head>
 	<body class="Loading" onload="">
-		<div id="LoginElement" style="visible: hidden">
+		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
+				<div class="Logo" style="cursor: pointer" onclick="document.location.reload()">
+					FriendUP
+				</div>
+				<h1>
+					{welcome}
+				</h1>
 				<div class="Box">
-					<h1>
-						{welcome}
-					</h1>
-					<div class="HRow">
-						<div class="HContent45 FloatLeft">
-							<label id="UsernameLabel" for="Username">Your username:</label>
-						</div>
-						<div class="HContent55 FloatLeft">
-							<input type="text" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" />
-						</div>
-					</div>
-					<div class="HRow MarginTop HideForPass">
-						<div class="HContent45 FloatLeft">
-							<label id="PasswordLabel" for="Password">Password:</label>
-						</div>
-						<div class="HContent55 FloatLeft">
-							<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
-						</div>
-					</div>
-					<div class="HRow MarginTop">
-						<div class="HContent100">
-							<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
-								<label id="rememberLabel" for="remember">Remember me</label>
-							</p>
-							<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
-								<input type="checkbox" id="remember"/>
-							</p>
-							<button id="loginButton" type="submit" class="IconSmall fa-unlock" onclick="Application.doLogin(event)">
-								Log in
-							</button>
-							<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
+					<form method="post" onsubmit="return false">
+						<div class="HRow">
 							<p>
-								<a id="forgotPassword" href="javascript:Application.forgotPassword()">Forgot password</a> 
+								<label id="UsernameLabel" for="Username">Login</label>
+							</p>
+							<p>
+								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" />
+							</p>
+						</div>
+						<div class="HRow MarginTop HideForPass">
+							<p>
+								<label id="PasswordLabel" for="Password">Password</label>
+							</p>
+							<p>
+								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+							</p>
+						</div>
+						<div class="HRow MarginTop HideForPass">
+							<p>
+								<a id="forgotPassword" href="javascript:Application.forgotPassword()">Forgot password</a>
 								<span> | </span>
 								<a href="{scriptpath}?module=fcdb">Login using Friend account</a>
 							</p>
 						</div>
-					</div>
-					<input type="hidden" id="publickey" value="{publickey}"/>
+						<div class="HRow MarginTop">
+							<div class="HContent100">
+								<button id="loginButton" type="submit" class="IconSmall fa-unlock" onclick="Application.doLogin(event)">
+									Sign in
+								</button>
+								<div id="RememberMe">
+									<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
+										<label id="rememberLabel" for="remember">Remember me</label>
+									</p>
+									<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
+										<input type="checkbox" id="remember"/>
+									</p>
+								</div>
+								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
+							</div>
+						</div>
+						<input type="hidden" id="publickey" value="{publickey}"/>
+					</form>
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
 						<p><strong>Compatibility information:</strong></p>
-						<p>Please use Google Chrome or Samsung Internet. Experimental support for Firefox and MS Edge.</p>
+						<p>Please use Google Chrome or Samsung Internet. Experimental support for Safari, Opera, Firefox and MS Edge.</p>
 					</div>
 				</div>
 			</div>
 		</div>
-		<style>
-			label { font-weight:bold; }
-			#invalidLogin { color:#F00; padding-top:6px; }
-			#invalidLogin p { margin:0 0 6px 0; }
-			button, .Button { margin:0; }
-		</style>
 		<script>
 			Application = {
 				failedAttempt: false,
+				passwordRecoveryMode: false,
 				loginUsername: false,
 				loginPassword: false,
-				logoutURL: false,
-				loginAttempts: 0,
 				
 				keys: parent.ApplicationStorage.load( { applicationName : 'Workspace' } ),
 				
@@ -77,6 +80,39 @@
 				
 				doLogin: function( e )
 				{
+					
+					/*
+						in password recivery mode we do stuff a bit differently...
+					*/
+					if( this.passwordRecoveryMode )
+					{
+						
+						if( Trim( ge( 'Username' ).value ) == '')
+						{
+							ge( 'Username' ).focus();
+							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username!';
+							return;
+						}
+						document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+						parent.Workspace.resetPassword( Trim( ge( 'Username' ).value ), function( result ){
+							Application.forgotPassword();
+							if( document.getElementById('Username').value.indexOf('@') > 1 ) document.getElementById('Username').value = '';
+							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
+						});
+						return;
+					}
+					
+					// Don't do it many times while working!
+					if( this.busy ) return;
+					this.busy = true;
+					
+					if( this.failedAttempt )
+					{
+						document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Logging in...';
+					}
+					
+					//track users login..
+					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
 					
 					this.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
 					{
@@ -274,34 +310,38 @@
 						Application.passwordRecoveryMode = false;
 						document.getElementById('loginButton').classList.remove('FloatRight');
 						document.getElementById('loginButton').innerHTML = ' &nbsp; Log in';
-						document.getElementById('UsernameLabel').innerHTML = 'Your username:';
+						document.getElementById('UsernameLabel').innerHTML = 'Login';
 						document.getElementById('forgotPassword').innerHTML = 'Forgot password';
 						document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
 							thisNode.style.display = thisNode.dataset.oldDisplay;
 						});	
+						document.getElementById('loginButton').classList.remove( 'Forgot' );
 						
 						return;
 					}
 					
 					Application.passwordRecoveryMode = true;
-					//document.getElementsByClassName('HideForPass')..style.display = 'none';
 					document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
 						thisNode.dataset.oldDisplay = thisNode.style.display;
 						thisNode.style.display = 'none';
 					});	
 					document.getElementById('loginButton').classList.add('FloatRight');
 					document.getElementById('loginButton').innerHTML = ' &nbsp; Request new password';
+					document.getElementById('loginButton').classList.add( 'Forgot' );
 					document.getElementById('UsernameLabel').innerHTML = 'Username / e-mail:';
 					document.getElementById('forgotPassword').innerHTML = 'Return to login form';
 				}
 								
 			};
 			
-			function showLoginError(msg)
+			function showLoginError()
 			{
-				document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = (msg ? msg : 'Invalid credentials. Please check you  input.' );
+				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
+				document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( Application.errorMessage ? Application.errorMessage : 'Invalid credentials. Please check your input.');
+				document.getElementById( 'Username' ).focus();
 				Application.failedAttempt = true;
 				Application.busy = false;
+				document.getElementById('LoginElement').style.visibility = 'visible';
 			}
 			
 			// Focus the username field
@@ -330,14 +370,16 @@
 			setTimeout( loginNow, 150 );
 		</script>
 		<script>
-		  
-			  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-			  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-			  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-			  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-			  ga('create', 'UA-64441212-5', 'auto');
-			  ga('send', 'pageview');			  
-			  ga( 'send', 'event', 'logindisplay', htmlentities( document.location.href ) );
+			if( document.location.href.indexOf( 'friendsky.cloud' ) >= 0 )
+			{
+				(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+				(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+				m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+				})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+				ga('create', 'UA-64441212-5', 'auto');
+				ga('send', 'pageview');			  
+				ga( 'send', 'event', 'logindisplay', document.location.href );
+			}
 		</script>
 	</body>
 </html>

@@ -300,7 +300,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 
 							{
 								char msg[ 512 ];
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", ug->ug_ID, ug->ug_Name );
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
 								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "create", msg );
 							}
@@ -360,7 +360,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						char tmp[256];
 						int itmp;
 						BufString *retString = BufStringNew();
-						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"userids\":[", groupID );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"userids\":[", groupID, parentID );
 						BufStringAddSize( retString, tmp, itmp );
 						generateConnectedUsers( l, groupID, retString );
 						BufStringAddSize( retString, "]}", 2 );

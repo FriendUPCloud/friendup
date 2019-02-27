@@ -1,0 +1,12 @@
+/*
+ * Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
+ * For licensing, see LICENSE.md.
+ */
+
+/* See ckeditor/ckeditor5#936. */
+.ck.ck-placeholder, .ck .ck-placeholder {
+	&::before {
+		cursor: text;
+		color: var(--ck-color-engine-placeholder-text);
+	}
+}

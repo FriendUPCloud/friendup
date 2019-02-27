@@ -856,7 +856,15 @@ window.Shell = function( appObject )
 		if( input[index] )
 		{
 			rawLine = input[index];
-			cmd = rawLine.split( /<[^>]*?>/i ).join( '' );
+			
+			// Fix newline support ...
+			cmd = rawLine.split( "\\n" ).join( "\n" );
+			
+			// Fix tab support ...
+			cmd = cmd.split( "\\t" ).join( "\t" );
+			
+			// Remove html tags ...
+			cmd = cmd.split( /<[^>]*?>/i ).join( '' );
 		}
 		else
 		{
@@ -1651,7 +1659,13 @@ window.Shell = function( appObject )
 		}
 
 		var rawLine = cmd + '';
-
+		
+		// Fix newline support ...
+		cmd = cmd.split( "\\n" ).join( "\n" );
+		
+		// Fix tab support ...
+		cmd = cmd.split( "\\t" ).join( "\t" );
+		
 		// Setup proxy caller we can add some things to
 		var dcallback;
 		if( !ecallback )

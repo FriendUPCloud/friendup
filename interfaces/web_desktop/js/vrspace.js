@@ -45,6 +45,7 @@ Workspace = {
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
+	notificationEvents: [],
 	applications: [],
 	importWindow: false,
 	menuState: '',
@@ -99,7 +100,6 @@ Workspace = {
 	// Ready after init
 	postInit: function()
 	{
-
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' || !document.body.classList.contains( 'Inside' ) )
 		{
@@ -391,6 +391,11 @@ Workspace = {
 					eles[z].classList.remove( 'Open' );
 			}
 			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
 		}
 	},
 	showLoginPrompt: function()
@@ -488,7 +493,7 @@ Workspace = {
 					var js = JSON.parse( d );
 					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
-						Workspace.flushSession() = null;
+						Workspace.flushSession();
 					}
 				}
 				catch( n )
@@ -627,7 +632,7 @@ Workspace = {
 			// Login by url vars
 			if( GetUrlVar( 'username' ) && GetUrlVar( 'password' ) )
 			{
-				return Workspace.login( GetUrlVar( 'username' ), GetUrlVar( 'password' ) );
+				return Workspace.login( decodeURIComponent( GetUrlVar( 'username' ) ), decodeURIComponent( GetUrlVar( 'password' ) ) );
 			}
 			else if( GetUrlVar( 'sessionid' ) )
 			{
@@ -726,7 +731,7 @@ Workspace = {
 				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
-				{	
+				{
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
@@ -895,9 +900,9 @@ Workspace = {
 				'webclient/js/gui/menufactory.js;' +
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/filedialog.js;' +
-				'webclient/js/gui/colorpicker.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/colorpicker.js;' +
 				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/vr/vrengine.js;' +
 				'webclient/js/vr/vrwrapper.js;' +
@@ -909,7 +914,8 @@ Workspace = {
 				'webclient/js/io/connection.js;' +
 				'webclient/js/friendmind.js;' +
 				'webclient/js/frienddos.js;' +
-				'webclient/js/oo.js';
+				'webclient/js/oo.js;' + 
+				'webclient/js/api/friendAPIv1_2.js';
 			s.onload = function()
 			{
 				// Start with expanding the workspace object

@@ -17,7 +17,7 @@ i18n_toggle_mini_playlist_show   : Show mini playlist
 i18n_toggle_mini_playlist_hide   : Hide mini playlist
 i18n_about1                      : Friend Jukebox is a simple, yet capable music player that gets out of your way so that you can stay productive. It has a simple oscilloscope and an easy to use, minimalist user interface.
 i18n_about2                      : If you have ideas or feature requests - or simply want to chat, please drop by the #friendup channel on irc.freenode.net. Developers and users gather there to share knowledge and small talk every day of the week.
-i18n_add_source                  : From web
+i18n_add_source                  : Add from web
 
 i18n_web_url                     : Web url
 i18n_add_source                  : Add source

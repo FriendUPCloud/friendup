@@ -684,6 +684,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 	if( !flagMaxHeight || flagMaxHeight > maxHeight )
 	{
 		div.style.maxHeight = maxHeight + 'px';
+		div.parentNode.style.maxHeight = maxHeight + 'px';
 	}
 
 	var mt = margins.top;
@@ -897,13 +898,21 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
+						if( currentMovable && ( 
+							currentMovable.parentNode.classList.contains( 'Redrawing' ) || 
+							currentMovable.parentNode.classList.contains( 'DoneActivating' ) || 
+							currentMovable.parentNode.classList.contains( 'Activated' ) 
+						) )
+						{
+							return setTimeout( function(){ deal() }, 300 );
+						}
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
 					}
 					if( delayedDeactivation && div.applicationId == dd.applicationId )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
-						setTimeout( function(){ deal() }, 500 );
+						setTimeout( function(){ deal() }, 300 );
 					}
 					else deal();
 				} )( m );
@@ -969,24 +978,29 @@ function _ActivateWindowOnly( div )
 				m.viewContainer.removeAttribute( 'minimized' );
 				m.minimized = false;
 			}
-
-			if( div.windowObject && !div.notifyActivated )
-			{
-				var iftest = div.getElementsByTagName( _viewType );
-				var msg = {
-					type:    'system',
-					command: 'notify',
-					method:  'activateview',
-					viewId: div.windowObject.viewId
-				};
-				if( iftest && iftest[0] )
+			
+			if( div.windowObject )
+			{	
+				if( !div.notifyActivated )
 				{
-					msg.applicationId = iftest[0].applicationId;
-					msg.authId = iftest[0].authId;
+					var iftest = div.getElementsByTagName( _viewType );
+					var msg = {
+						type:    'system',
+						command: 'notify',
+						method:  'activateview',
+						viewId: div.windowObject.viewId
+					};
+					if( iftest && iftest[0] )
+					{
+						msg.applicationId = iftest[0].applicationId;
+						msg.authId = iftest[0].authId;
+					}
+					div.notifyActivated = true;
+					div.windowObject.sendMessage( msg );
 				}
-				div.notifyActivated = true;
-				div.windowObject.sendMessage( msg );
 			}
+			
+			CheckMaximizedView();
 		}
 	}
 	// Check window
@@ -996,12 +1010,31 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	// Already activating
+	if( div.parentNode.classList.contains( 'Activating' ) )
+	{
+		return;
+	}
+	
 	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
 	{
 		div.windowObject.lastActiveView.parentNode.classList.remove( 'OnWorkspace' );
 		_ActivateWindow( div.windowObject.lastActiveView );
 		div.windowObject.lastActiveView = null;
 		return;
+	}
+	
+	// Set currently displayed view on app
+	if( isMobile )
+	{
+		if( window._getAppByAppId )
+		{
+			var app = _getAppByAppId( this.applicationId );
+			if( app )
+			{
+				app.displayedView = div;
+			}
+		}
 	}
 	
 	// Don't reactivate
@@ -1051,41 +1084,36 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Tell window manager we are activating window
-	if( isMobile )
-	{
-		document.body.classList.add( 'WindowActivating' );
-	}
-	div.classList.add( 'Activating' );
-	div.parentNode.classList.add( 'Activating' );
+	var pn = div.parentNode;
+	
+	document.body.classList.add( 'Activating' );
+	pn.classList.add( 'Activating' );
 	setTimeout( function()
 	{
 		if( div )
 		{
-			if( isMobile )
-			{
-				document.body.classList.remove( 'WindowActivating' );
-			}
-			div.classList.add( 'Activated' );
-			div.classList.remove( 'Activating' );
+			pn.classList.add( 'Activated' );
+			pn.classList.remove( 'Activating' );
 			setTimeout( function()
 			{
 				if( div )
 				{
 					// Finally
-					div.classList.add( 'DoneActivating' );
-					div.classList.remove( 'Activated' );
+					pn.classList.add( 'DoneActivating' );
+					pn.classList.remove( 'Activated' );
 					setTimeout( function()
 					{
 						if( div && div.parentNode )
 						{
-							div.classList.remove( 'DoneActivating' );
-							div.parentNode.classList.remove( 'Activating' );
+							pn.classList.remove( 'DoneActivating' );
+							pn.classList.remove( 'Activating' );
+							document.body.classList.remove( 'Activating' );
 						}
-					}, 250 );
+					}, 300 );
 				}
-			}, 250 );
+			}, 600 );
 		}
-	}, 250 );
+	}, 300 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
@@ -1118,6 +1146,8 @@ function _ActivateWindow( div, nopoll, e )
 	// Set screen
 	SetScreenByWindowElement( div );
 
+	_setWindowTiles( div );
+
 	// When activating for the first time, deselect selected icons
 	if( div.classList && !div.classList.contains( 'Screen' ) )
 		clearRegionIcons();
@@ -1129,14 +1159,79 @@ function _ActivateWindow( div, nopoll, e )
 	if( !nopoll ) PollTaskbar( div );
 }
 
+// Activate tiling system
+function _setWindowTiles( div )
+{
+	if( isMobile ) return;
+	
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		if( div.className.indexOf( 'TilingMode' ) >= 0 )
+		{
+			_removeWindowTiles( div );
+		}
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		div.classList.add( 'TilingMode' + attachedCount );
+		var tile = 2;
+		for( var a in div.attached )
+		{
+			div.attached[a].classList.add( 'Tile' + tile++, 'TilingMode' + attachedCount );
+		}
+	}
+}
+
+// Remove tiling system
+function _removeWindowTiles( div )
+{
+	if( isMobile ) return;
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		while( div.className.indexOf( 'Til' ) >= 0 )
+		{
+			var ind = div.className.indexOf( 'Til' );
+			if( ind >= 0 )
+			{
+				for( var b = ind; div.className[b] != ' ' && b < div.className.length; b++ ){}
+				div.className = div.className.split( div.className.substr( ind, b - ind ) ).join( ' ' );
+			}
+		}
+		for( var a in div.attached )
+		{
+			var d = div.attached[ a ]
+			while( d.className.indexOf( 'Til' ) >= 0 )
+			{
+				var ind = d.className.indexOf( 'Til' );
+				if( ind >= 0 )
+				{
+					for( var b = ind; d.className[b] != ' ' && b < d.className.length; b++ ){}
+					d.className = d.className.split( d.className.substr( ind, b - ind ) ).join( ' ' );
+				}
+			}
+		}
+	}
+}
+
 function _DeactivateWindow( m, skipCleanUp )
 {
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
-	{
+	{	
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+
+		CheckMaximizedView();
 		
 		if( m.windowObject && m.notifyActivated )
 		{
@@ -1171,6 +1266,11 @@ function _DeactivateWindow( m, skipCleanUp )
 		m.style.height = '35px';
 	}
 	
+	if( isMobile )
+	{
+		_removeMobileCloseButtons();
+	}
+	
 	// If we will not skip cleanup then do this
 	if( !skipCleanUp )
 	{
@@ -1185,6 +1285,20 @@ function _DeactivateWindow( m, skipCleanUp )
 	}
 	
 	return ret;
+}
+
+function _removeMobileCloseButtons()
+{
+	for( var a in movableWindows )
+	{
+		var f = movableWindows[ a ];
+		if( f.viewIcon )
+		{
+			f.viewIcon.classList.remove( 'Remove' );
+			f.classList.remove( 'Remove' );
+			f.classList.remove( 'Dragging' );
+		}
+	}
 }
 
 function _DeactivateWindows()
@@ -1475,12 +1589,18 @@ function CloseView( win, delayed )
 		if ( window.regionWindow == div.content )
 			window.regionWindow = false;
 
-		if ( !isGroupMember && div.parentNode )
+		var app = false;
+		if( div.applicationId )
+			app = _getAppByAppId( div.applicationId );
+
+		if( app && div == app.displayedView )
+			app.displayedView = null;
+
+		if( !isGroupMember && div.parentNode )
 		{
 			// Immediately kill child views for mobile!
 			if( isMobile && window._getAppByAppId )
 			{
-				var app = _getAppByAppId( div.applicationId );
 				if( app.mainView == div.windowObject )
 				{
 					for( var a in app.windows )
@@ -1496,7 +1616,9 @@ function CloseView( win, delayed )
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
+				{
 					div.viewContainer.parentNode.removeChild( div.viewContainer );
+				}
 				else if( div.parentNode )
 				{
 					div.parentNode.removeChild( div );
@@ -1505,6 +1627,7 @@ function CloseView( win, delayed )
 				{
 					console.log( 'Nothing to remove..' );
 				}
+				CheckMaximizedView();
 			}, isMobile ? 750 : 500 );
 
 			if( !isMobile )
@@ -1523,6 +1646,7 @@ function CloseView( win, delayed )
 		}
 
 		// Activate latest activated view (not on mobile)
+		var nextActive = false;
 		if( div.classList.contains( 'Active' ) )
 		{
 			if( Friend.GUI.view.viewHistory.length )
@@ -1536,7 +1660,10 @@ function CloseView( win, delayed )
 						{
 							// Only activate non minimized views
 							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -1549,7 +1676,10 @@ function CloseView( win, delayed )
 						{
 							// Only activate non minimized views
 							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -1610,6 +1740,17 @@ function CloseView( win, delayed )
 				document.body.removeAttribute( 'windowcount' );
 			}, 400 );
 		}
+		
+		if( app && isMobile && app.mainView )
+		{
+			app.mainView.activate();
+		}
+		// We have a parent view
+		else if( win.parentView )
+		{
+			win.parentView.activate();
+		}
+		
 	}
 
 	// Check window
@@ -1778,6 +1919,19 @@ var View = function( args )
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
+		
+		var app = false;
+		if( window._getAppByAppId )
+		{
+			var app = _getAppByAppId( div.applicationId );
+		}
+		
+		// Set a parent relation to main view
+		if( app && app.mainView	)
+		{
+			self.parentView = app.mainView;
+		}
+		
 		// Set initial workspace
 		if( flags.workspace && flags.workspace > 0 )
 		{
@@ -1859,6 +2013,7 @@ var View = function( args )
 							iconSpan = document.createElement( 'span' );
 							iconSpan.classList.add( 'ViewIcon' );
 							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
+							self.viewIcon = iconSpan;
 							viewContainer.appendChild( iconSpan );
 						}
 					}
@@ -1869,7 +2024,8 @@ var View = function( args )
 				{
 					var md = document.createElement( 'div' );
 					md.className = 'MobileBack';
-					md.addEventListener( 'touchstart', function( e )
+					self.mobileBack = md;
+					md.ontouchstart =function( e )
 					{
 						if( window._getAppByAppId )
 						{
@@ -1879,10 +2035,11 @@ var View = function( args )
 								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
 								self.close();
+								return cancelBubble( e );
 							}
 						}
 						return cancelBubble( e );
-					} );
+					};
 					viewContainer.appendChild( md );
 				}
 			}
@@ -1890,8 +2047,34 @@ var View = function( args )
 			{
 				iconSpan = document.createElement( 'span' );
 				iconSpan.classList.add( 'ViewIcon' );
+				self.viewIcon = iconSpan;
 				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
 				viewContainer.appendChild( iconSpan );
+				
+				// Add mobile back button
+				if( isMobile )
+				{
+					var md = document.createElement( 'div' );
+					md.className = 'MobileBack';
+					self.mobileBack = md;
+					md.ontouchstart =function( e )
+					{
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( div.applicationId );
+							if( app.mainView )
+							{
+								FocusOnNothing();
+								_ActivateWindow( app.mainView.content.parentNode );
+								self.close();
+								return cancelBubble( e );
+							}
+						}
+						return cancelBubble( e );
+					};
+					viewContainer.appendChild( md );
+				}
+				
 			}
 			
 			if( div == 'CREATE' )
@@ -1987,6 +2170,7 @@ var View = function( args )
 		}
 
 		// Tell it's opening
+		viewContainer.classList.add( 'Opening' );
 		div.classList.add( 'Opening' );
 		setTimeout( function()
 		{
@@ -1999,6 +2183,7 @@ var View = function( args )
 				div.classList.add( 'Redrawing' );
 				setTimeout( function()
 				{
+					viewContainer.classList.remove( 'Opening' );
 					div.classList.remove( 'Redrawing' );
 				}, 250 );
 			}, 250 );
@@ -2234,8 +2419,25 @@ var View = function( args )
 		{
 			if( e.button == 0 )
 			{
-				_ActivateWindow( this, false, e );
-				this.setAttribute( 'moving', 'moving' );
+				if( !this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					if( isMobile )
+					{
+						var target = this;
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( this.applicationId );
+							if( app && app.displayedView )
+							{
+								target = app.displayedView;
+							}
+						}
+						_ActivateWindow( target, false, e );
+						return;
+					}
+					_ActivateWindow( this, false, e );
+					this.setAttribute( 'moving', 'moving' );
+				}
 			}
 		}
 
@@ -2243,6 +2445,10 @@ var View = function( args )
 		div.ontouchstart = function( e )
 		{
 			var self = this;
+			
+			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
+				return;
+			
 			if( !isMobile )
 			{
 				this.setAttribute( 'moving', 'moving' );
@@ -2255,13 +2461,14 @@ var View = function( args )
 					time: ( new Date() ).getTime()
 				};
 			}
+			// Start jiggling on longpress
 			// Only removable after 300 ms
 			this.touchInterval = setInterval( function()
 			{
 				var t = ( new Date() ).getTime();
 				if( self.clickOffset )
 				{
-					if( t - self.clickOffset.time > 150 )
+					if( t - self.clickOffset.time > 100 )
 					{
 						// Update time
 						self.clickOffset.removable = true;
@@ -2269,8 +2476,8 @@ var View = function( args )
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
 					
-						Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
-						Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
+						self.viewIcon.classList.add( 'Remove' );
+						self.classList.add( 'Remove' );
 					}
 				}
 			}, 150 );
@@ -2279,7 +2486,7 @@ var View = function( args )
 		// Remove window on drag
 		if( isMobile )
 		{
-			div.ontouchmove = function( e )
+			/*div.ontouchmove = function( e )
 			{
 				if( !this.clickOffset )
 					return;
@@ -2294,33 +2501,26 @@ var View = function( args )
 					if( diffy > 50 )
 					{
 						this.viewIcon.classList.add( 'Remove' );
+						this.classList.add( 'Remove' );
 					}
 					else
 					{
 						this.viewIcon.classList.remove( 'Remove' );
+						this.classList.remove( 'Remove' );
 					}
 				}
-			}
+			}*/
 			div.ontouchend = function( e )
 			{
-				if( Workspace.screen.bufferedTitle )
-				{
-					Workspace.screen.setFlag( 'title', Workspace.screen.bufferedTitle );
-					Workspace.screen.bufferedTitle = null;
-				}
-				if( this.viewIcon.classList.contains( 'Dragging' ) )
-				{
-					this.viewIcon.classList.remove( 'Dragging' );
-				}
-				if( this.viewIcon.classList.contains( 'Remove' ) )
-				{
-					this.viewIcon.classList.remove( 'Remove' );
-					this.close.click();
-				}
 				if( this.touchInterval )
 				{
 					clearInterval( this.touchInterval );
 					this.touchInterval = null;
+				}
+				// Only cancel bubble if view icon is jiggling on mobile
+				if( this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					return cancelBubble( e );
 				}
 			}
 		}
@@ -2432,6 +2632,9 @@ var View = function( args )
 
 					this.window.setAttribute( 'maximized', 'true' );
 					
+					// Check tiling
+					_setWindowTiles( div );
+					
 					// Tell app
 					if( window._getAppByAppId )
 					{
@@ -2474,12 +2677,14 @@ var View = function( args )
 						}
 						ResizeWindow( this.window, wid, hei );
 					}
-					this.mode = 'maximized';
+					this.mode = 'maximized';					
 				}
 				else
 				{
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
+					
+					_removeWindowTiles( div );
 					
 					// Store it just in case
 					var d = GetWindowStorage( div.id );
@@ -2521,6 +2726,10 @@ var View = function( args )
 						}
 					}
 				}
+				
+				// Check maximized
+				CheckMaximizedView();
+				
 				return cancelBubble( e );
 			}
 			zoom.addEventListener( 'touchstart', zoom.onclick, false );
@@ -2572,6 +2781,11 @@ var View = function( args )
 				d.left = this.offsetLeft;
 				d.width = wenable && wwi ? wwi : d.width;
 				d.height = wenable && hhe ? hhe : d.width;
+			}
+			
+			if( div.content.directoryview )
+			{
+				d.listMode = div.content.directoryview.listMode;
 			}
 
 			SetWindowStorage( this.uniqueId, d );
@@ -3627,6 +3841,7 @@ var View = function( args )
 				msg.screenId = self.flags.screen.externScreenId;
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 			if( !msg.origin ) msg.origin = document.location.href;
+			
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
 			ifr.body = ifr.contentWindow.document.body;
 		}
@@ -3927,6 +4142,29 @@ var View = function( args )
 		// Add after options set
 		if( !eles[0] ) this._window.appendChild( ifr );
 
+	}
+	
+	this.showBackButton = function( visible, cbk )
+	{
+		if( !isMobile ) return;
+		if( visible )
+		{
+			self.mobileBack.classList.add( 'Showing' );
+			self.viewIcon.classList.add( 'MobileBackHidesIt' );
+			
+			if( cbk )
+			{
+				self.mobileBack.ontouchstart = function( e )
+				{
+					cbk( e );
+				}
+			}
+		}
+		else 
+		{
+			self.mobileBack.classList.remove( 'Showing' );
+			self.viewIcon.classList.remove( 'MobileBackHidesIt' );
+		}
 	}
 
 	// Send a message
@@ -4526,8 +4764,159 @@ var View = function( args )
 		}
 		return false;
 	}
+	
+	this.openCamera = function( flags, callback )
+	{
+		// TODO: Parse the flags! E.g. facingMode should be user or environment
+		
+		// Set up elements
+		var d = document.createElement( 'video' );
+		d.setAttribute( 'autoplay', 'autoplay' );
+		d.setAttribute( 'playinline', 'playinline' );
+		d.className = 'FriendCameraElement';
+		
+		var v = document.createElement( 'div' );
+		v.className = 'FriendCameraContainer';
+		v.camera = v;
+		v.appendChild( d );
+		
+		// Add to content
+		this.content.appendChild( v );
+		this.content.classList.add( 'HasCamera' );
+		
+		// Just get the available camera
+		// Normalize the various vendor prefixed versions of getUserMedia.
+		// TODO: Perhaps place this in a central location once and for all...
+		navigator.gm = (navigator.getUserMedia ||
+			navigator.webkitGetUserMedia ||
+			navigator.mozGetUserMedia || 
+			navigator.msGetUserMedia
+		);
+		if( navigator.gm )
+		{
+			// Request the camera.
+			var constraints = { 
+				video: {
+					facingMode: flags.facingMode ? flags.facingMode : 'environment'
+				} 
+			};
+			// We know which device we want..
+			if( flags.deviceId )
+			{
+				constraints = { video: { deviceId: info.deviceId } };
+			}
+		
+			if( d && d.srcObject )
+			{
+				d.srcObject.getTracks().forEach( track => track.stop() );
+			}
+			 
+			// Now get the media!
+			navigator.gm(
+				constraints,
+				// Success Callback
+				function( localMediaStream ) 
+				{
+					// Create an object URL for the video stream and use this 
+					// to set the video source.
+					d.srcObject = localMediaStream;
+					// Add the record button
+					var btn = document.createElement( 'button' );
+					btn.className = 'IconButton IconSmall fa-camera';
+					btn.onclick = function( e )
+					{
+						var canv = document.createElement( 'canvas' );
+						canv.setAttribute( 'width', d.offsetWidth );
+						canv.setAttribute( 'height', d.offsetHeight );
+						v.appendChild( canv );
+						var ctx = canv.getContext( '2d' );
+						ctx.drawImage( d, 0, 0, d.offsetWidth, d.offsetHeight );
+						var dt = canv.toDataURL();
+						
+						// Stop taking video
+						d.srcObject.getTracks().forEach(track => track.stop())
+						d.srcObject = null;
+						
+						// FLASH!
+						v.classList.add( 'Flash' );
+						setTimeout( function()
+						{
+							v.classList.add( 'Flashing' );
+							setTimeout( function()
+							{
+								v.classList.remove( 'Flashing' );
+								setTimeout( function()
+								{
+									v.classList.add( 'Closing' );
+									setTimeout( function()
+									{
+										callback( { response: 1, message: 'Image captured', data: dt } );
+										v.parentNode.removeChild( v );
+									}, 250 );
+								}, 250 );
+							}, 250 );
+						}, 5 );
+					}
+					v.appendChild( btn );
+				},
+				// Error Callback
+				function( err )
+				{
+					// Log the error to the console.
+					callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+					v.classList.add( 'Closing' );
+					setTimeout( function()
+					{
+						callback( { response: 1, message: 'Image captured', data: dt } );
+						v.parentNode.removeChild( v );
+					}, 250 );
+				}
+			);
+		}
+		// We failed! Try to use the fallback
+		else
+		{
+			// TODO: Hogne
+			// Remove video
+			v.removeChild( d );
+			
+			// Add fallback
+			var fb = document.createElement( 'div' );
+			fb.className = 'FriendCameraFallback';
+			v.appendChild( fb );
+			var mediaElement = document.createElement( 'input' );
+			mediaElement.type = 'file';
+			mediaElement.accept = 'image/*';
+			mediaElement.className = 'FriendCameraInput';
+			fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
+				'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
+			fb.appendChild( mediaElement );
+			
+			setTimeout( function()
+			{
+				fb.classList.add( 'Showing' );
+			}, 5 );
+			
+			mediaElement.onchange = function( e )
+			{
+				var reader = new FileReader();
+				reader.onload = function( e )
+				{
+					var dataURL = e.target.result;
+					v.classList.remove( 'Showing' );
+					setTimeout( function()
+					{
+						callback( { response: 1, message: 'Image captured', data: dataURL } );
+						v.parentNode.removeChild( v );
+					}, 250 );
+				}
+				reader.readAsDataURL( mediaElement.files[0] );
+			}
+		}
+	}
+	
 	// Add a child window to this window
-	this.addChildWindow = function ( ele )
+	this.addChildWindow = function( ele )
 	{
 		if ( ele.tagName && ele.windowObject )
 			return this.childWindows.push ( ele.windowObject );
@@ -4687,10 +5076,14 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 {
 	if( !isMobile ) return;
 	if( !Workspace.screen || !Workspace.screen.contentDiv ) return;
+	
+	// Check if we have a maximized window
+	CheckMaximizedView();
+	
 	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
 		// Here is the first screen
-		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
+		Workspace.screen.contentDiv.style.transform = 'translate3d(0,0,0)';
 		return;
 	}
 	
@@ -4781,7 +5174,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		Friend.GUI.responsiveViewPage = page;
 	}
-	Workspace.screen.contentDiv.style.transform = 'translateX(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px)';
+	Workspace.screen.contentDiv.style.transform = 'translate3d(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px,0,0)';
 }
 
 // Intermediate anchor for code that uses new Window()
@@ -4881,9 +5274,13 @@ function _kresponseup( e )
 }
 
 // Resize all screens
-function _kresize( e )
+function _kresize( e, depth )
 {
+	if( !depth ) depth = 0;
+	
 	checkMobileBrowser();
+	
+	forceScreenMaxHeight();	
 	
 	// Resize screens
 	if( Workspace && Workspace.screenList )
@@ -4896,10 +5293,28 @@ function _kresize( e )
 		Workspace.checkWorkspaceWallpapers();
 	}
 	
+	if( isMobile && depth > 0 )
+	{
+		return ConstrainWindow( currentMovable );
+	}
+	
 	// Resize windows
 	for( var a in movableWindows )
 	{
 		ConstrainWindow( movableWindows[a] );
+	}
+	
+	if( depth == 0 )
+	{
+		// ios fix
+		var nav = navigator.userAgent.toLowerCase();
+		if( nav.indexOf( 'iphone' ) >= 0 || nav.indexOf( 'ipad' ) >= 0 )
+		{
+			setTimeout( function()
+			{
+				_kresize( e, 1 );
+			}, 500 );
+		}
 	}
 }
 

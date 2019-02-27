@@ -255,6 +255,9 @@ void deinit( struct FHandler *s )
 
 void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
 {
+	FERROR("Disabled for a moment\n");
+	return NULL;
+	
 	File *dev = NULL;
 	char *path = NULL, *ulogin = NULL, *upass = NULL;
 	char *name = NULL, *host = NULL;
@@ -1143,6 +1146,9 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	char *timeStr = FCalloc( 40, sizeof( char ) );
 	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
 	snprintf( tmp, 1023, "\"DateModified\": \"%s\",", timeStr );
+	BufStringAdd( bs, tmp );
+	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_ctime ) );
+	snprintf( tmp, 1023, "\"DateCreated\": \"%s\",", timeStr );
 	BufStringAdd( bs, tmp );
 	FFree( timeStr );
 	

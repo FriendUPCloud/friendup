@@ -1138,10 +1138,28 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			
 				DEBUG("Send message to : >%s<\n", startToken );
 			
-				int pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+				int pushContentLen = 0;
+				if( extras != NULL && strlen( extras ) > 0 )
+				{
+					int extrasSize = strlen( extras ); 
+					char *encmsg = Base64Encode( (const unsigned char *)extras, extrasSize, &extrasSize );
+					if( encmsg != NULL )
+					{
+						pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
+						FFree( encmsg );
+					}
+					else
+					{
+						FERROR("Cannot allocate memory for IOS Encoded message!\n");
+					}
+				}
+				else
+				{
+					pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+				}
 			
 				char *tok = TokenToBinary( startToken );
-				DEBUG("Send payload, token pointer %p token '%s'\n", tok, startToken );
+				DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
 				if( tok != NULL )
 				{
 					if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )

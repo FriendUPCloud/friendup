@@ -380,7 +380,6 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	position: absolute;
 	clear: none;
 	border-radius: 8px;
-	transition: box-shadow;
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
 }
 
@@ -414,6 +413,12 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	display: none;
 }
 
+html .ViewContainer[childview].Active > .MobileBack, 
+html .ViewContainer.Active > .MobileBack.Showing
+{
+	color: white;
+}
+
 html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title > div > .Close
 {
 	top: 3px;
@@ -432,10 +437,10 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title > div > span
 {
 	position: absolute;
-	width: 100%;
-	left: 0px;
+	width: 94%;
+	left: 2%;
 	text-align: center;
-	top: 80px;
+	top: 60px;
 	z-index: 2;
 	color: white;
 	text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
@@ -449,11 +454,11 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeac
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 100%;
-	z-index: 5;
+	height: calc(100% + 20px);
+	z-index: 1;
 	background-size: 45%;
 	background-color: rgba(100,100,100,0.3);
-	background-position: center;
+	background-position: center 20px;
 	background-repeat: no-repeat;
 	pointer-events: none;
 	border-radius: 8px;
@@ -901,9 +906,6 @@ html .View
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	transition: transform 0.25s;
-	-moz-transition: transform 0.25s;
-	-webkit-transition: transform 0.25s;
 }
 
 html .View.Active
@@ -911,9 +913,6 @@ html .View.Active
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	transition: transform 0.25s;
-	-moz-transition: transform 0.25s;
-	-webkit-transition: transform 0.25s;
 }
 
 html .View.Active > .Title
@@ -1057,18 +1056,36 @@ body .View > .Snap > .SnapRight
 
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
 {
+	background: rgba(200,200,200,1);
 	position: absolute;
 	margin: 0;
-	top: 0px;
-	width: 40px;
-	height: 40px;
-	background-image: url(/iconthemes/friendup15/close.svg);
-	background-repeat: no-repeat;
-	background-size: 35%;
-	right: 0;
+	top: -2px;
+	right: -2px;
+	width: 27px;
+	height: 30px;
+	border-radius: 100%;
 	left: auto;
 	background-position: center;
+	padding: 0;
 }
+
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:after
+{
+	content: "\f011";
+	display: block;
+	font-family: fontawesome;
+	font-weight: normal;
+	font-size: 0.9em;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	color: white;
+	text-align: center;
+	line-height: 28px;
+}
+
 .View.Active > .Title > div > .MobileClose:before,
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:before
 {

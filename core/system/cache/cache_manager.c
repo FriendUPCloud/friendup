@@ -160,7 +160,7 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 		INFO(" cache size %ld file size %ld cache max %ld\n",  cm->cm_CacheSize ,(FLONG)lf->lf_FileSize, (FLONG)cm->cm_CacheMax );
 		if( (cm->cm_CacheSize + lf->lf_FileSize) > cm->cm_CacheMax )
 		{
-			FERROR("Cannot add file to cache, cache is FULL\n");
+			INFO("Cannot add file to cache, cache is FULL\n");
 			return -3;
 		}
 		else
@@ -309,26 +309,29 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath __
 		
 		LocFile *lf = NULL;
 
-		FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
-				
-		if( cm->cm_LocFileCache != NULL )
+		if( FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) ) == 0 )
 		{
-			CacheFileGroup *cg = &(cm->cm_CacheFileGroup[ id ]);
-			lf = cg->cg_File;
-
-			while( lf != NULL )
+			//if( cm->cm_LocFileCache != NULL )
 			{
-				if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
+				CacheFileGroup *cg = &(cm->cm_CacheFileGroup[ id ]);
+				lf = cg->cg_File;
+
+				while( lf != NULL )
 				{
-					lf->lf_FileUsed++;
-					return lf;
-				}
+					if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
+					{
+						//DEBUG("\n\n\n\n\n======================================got file\n\n\n\n\n\n\n\n\n");
+						lf->lf_FileUsed++;
+						FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+						return lf;
+					}
 			
-				lf = (LocFile *)lf->node.mln_Succ;
+					lf = (LocFile *)lf->node.mln_Succ;
+				}
 			}
-		}
 		
-		FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+		}
 		
 		/*
 		LocFile *lf = cm->cm_LocFileCache;

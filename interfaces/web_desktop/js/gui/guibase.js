@@ -616,8 +616,7 @@ var mousePointer =
 		var multiple = false;
 		if ( ele.window )
 		{
-			if( ele.window.windowObject.refreshing ) return;
-			
+			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
 			_ActivateWindowOnly( ele.window.parentNode );
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
@@ -1298,8 +1297,17 @@ function _NewSelectBoxCheck ( pid, ele )
 	}
 }
 
+// Rules for forcing screen dimensions
+function forceScreenMaxHeight()
+{
+	if( isMobile )
+	{
+		// Nothing yet
+	}
+}
+
 // Gets values from a SelectBox - multiple select returns array, otherwise string
-function GetSelectBoxValue ( pel )
+function GetSelectBoxValue( pel )
 {
 	if ( !pel ) return false;
 	var inputs = pel.getElementsByTagName ( 'input' );
@@ -1461,6 +1469,7 @@ movableListener = function( e, data )
 							{
 								var mw = movableWindows[ z ];
 
+								if( mw.snapObject ) continue; // Can't snap to snapped windows
 								if( mw == currentMovable ) continue;
 								if( mw.parentNode && mw.parentNode && mw.parentNode.getAttribute( 'minimized' ) == 'minimized' ) 
 									continue;
@@ -1608,7 +1617,17 @@ movableListener = function( e, data )
 									}
 									else
 									{
-										mw.attached.push( currentMovable );
+										var found = false;
+										for( var a in mw.attached )
+										{
+											if( mw.attached[ a ] == currentMovable )
+											{
+												found = true;
+												break;
+											}
+										}
+										if( !found )
+											mw.attached.push( currentMovable );
 									}
 									mw.setAttribute( 'attach_' + direction, 'attached' );
 									
@@ -1683,7 +1702,7 @@ movableListener = function( e, data )
 						{
 							lockX = true;
 						
-							if( ( dir == 'left' && dragDistanceX > 150 ) || ( dir == 'right' && dragDistanceX < -150 ) )
+							if( ( dir == 'left' /*&& dragDistanceX > 150*/ ) || ( dir == 'right' /*&& dragDistanceX < -150*/ ) )
 							{
 								currentMovable.style.top = currentMovable.snapObject.style.top;
 								currentMovable.style.height = currentMovable.snapObject.style.height;
@@ -1699,7 +1718,7 @@ movableListener = function( e, data )
 						{
 							lockY = true;
 						
-							if( ( dir == 'up' && dragDistanceY > 150 ) || ( dir == 'down' && dragDistanceY < -150 ) )
+							if( ( dir == 'up' /*&& dragDistanceY > 150 */) || ( dir == 'down' /*&& dragDistanceY < -150 */) )
 							{
 								currentMovable.style.left = currentMovable.snapObject.style.left;
 								currentMovable.style.width = currentMovable.snapObject.style.width;
@@ -2126,12 +2145,14 @@ function DrawRegionSelector( e )
 					if ( overlapping || intersecting )
 					{
 						ics.classList.add( 'Selected' );
-						ics.fileInfo.selected = true;
+						ics.fileInfo.selected = 'multiple';
+						ics.selected = 'multiple';
 					}
 					else if ( !sh )
 					{
 						ics.classList.remove( 'Selected' );
 						ics.fileInfo.selected = false;
+						ics.selected = false;
 					}
 				}
 			}
@@ -2213,6 +2234,18 @@ movableMouseUp = function( e )
 	
 	var target = e.target ? e.target : e.srcElement;
 	
+	// For mobile
+	if( isMobile )
+	{
+		if( 
+			!( target.classList && target.classList.contains( 'View' ) ) &&
+			!( target.classList && target.classList.contains( 'ViewIcon' ) )
+		)
+		{
+			_removeMobileCloseButtons();
+		}
+	}
+
 	window.fileMenuElement = null;
 	window.mouseDown = false;
 	if( window.currentMovable ) currentMovable.snapping = false;
@@ -2307,6 +2340,7 @@ function RemoveDragTargets()
 	}
 }
 
+var _screenTitleTimeout = null;
 
 // Check the screen title of active window/screen and check menu
 function CheckScreenTitle( screen )
@@ -2316,39 +2350,72 @@ function CheckScreenTitle( screen )
 	
 	Friend.GUI.reorganizeResponsiveMinimized();
 	
-	// Tell system we are maximized
-	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else
-	{
-		document.body.classList.remove( 'ViewMaximized' );
-	}
-	
 	// Set screen title
 	var csc = testObject.screenObject;
 	if( !csc ) return;
 	
 	// Set the screen title if we have a window with application name
 	var wo = window.currentMovable ? window.currentMovable.windowObject : false;
-	if( wo && wo.screen && wo.screen != csc ) wo = false; // Only movables on current screen
+	// Fix screen
+	if( wo && !wo.screen && wo.flags.screen ) wo.screen = wo.flags.screen;
+	// Check screen
+	if( wo && wo.screen && wo.screen != csc )
+	{
+		wo = false; // Only movables on current screen
+	}
+	
+	var hasScreen = ( !csc || testObject.screenObject == wo.screen || ( !wo.screen && isDoorsScreen ) );
 	
 	var isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
-	if( wo && wo.applicationName && ( !csc || testObject == wo.screen || ( !wo.screen && isDoorsScreen ) ) )
+	// Clear the delayed action
+	if( _screenTitleTimeout )
+	{
+		clearTimeout( _screenTitleTimeout );
+		csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+		_screenTitleTimeout = null;
+	}
+	
+	// Get app title
+	if( wo && wo.applicationName && hasScreen )
 	{
 		var wnd = wo.applicationDisplayName ? wo.applicationDisplayName : wo.applicationName;
 		if( !csc.originalTitle )
 		{
 			csc.originalTitle = csc.getFlag( 'title' );
 		}
-		csc.setFlag( 'title', wnd );
+		
+		// Don't do it twice
+		if( wnd != csc.getFlag( 'title' ) )
+		{
+			csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+			_screenTitleTimeout = setTimeout( function()
+			{
+				csc.setFlag( 'title', wnd );
+				_screenTitleTimeout = setTimeout( function()
+				{
+					csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+				}, 70 );
+			}, 70 );
+		}
+		else
+		{
+			csc.setFlag( 'title', wnd );
+		}
 	}
-	// Just use the screen
-	else if( csc.originalTitle )
+	// Just use the screen (don't do it twice)
+	else if( csc.originalTitle && csc.getFlag( 'title' ) != csc.originalTitle )
 	{
-		csc.setFlag( 'title', csc.originalTitle );
+		csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+		var titl = csc.originalTitle;
+		_screenTitleTimeout = setTimeout( function()
+		{
+			csc.setFlag( 'title', titl );
+			_screenTitleTimeout = setTimeout( function()
+			{
+				csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+			}, 70 );
+		}, 70 );	
 	}
 
 	// Enable the global menu
@@ -2372,6 +2439,44 @@ function CheckScreenTitle( screen )
 		}
 	}
 	
+}
+
+// Indicator that we have a maximized view
+function CheckMaximizedView()
+{
+	if( isMobile )
+	{
+		if( window.currentMovable && currentMovable.classList.contains( 'Active' ) )
+		{
+			document.body.classList.add( 'ViewMaximized' );
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
+	else
+	{
+		if( window.currentMovable )
+		{
+			if( currentMovable.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else if( currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else
+			{
+				document.body.classList.remove( 'ViewMaximized' );
+			}
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
 }
 
 // Get the taskbar element
@@ -3308,7 +3413,7 @@ movableMouseDown = function ( e )
 			// Don't count scrollbar
 			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
 			{
-				clearRegionIcons();
+				clearRegionIcons( { force: true } );
 			}
 		}
 		
@@ -3348,6 +3453,24 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 	WorkspaceMenu.close();
 }
 
+function convertIconsToMultiple()
+{
+	if( currentMovable && currentMovable && currentMovable.content.icons )
+	{
+		var ics = currentMovable.content.icons;
+		for( var a = 0; a < ics.length; a++ )
+		{
+			if( ics[a].selected )
+			{
+				ics[a].selected = 'multiple';
+				ics[a].domNode.selected = 'multiple';
+				if( ics[a].fileInfo )
+					ics[a].fileInfo.selected = 'multiple';
+			}
+		}
+	}
+}
+
 function clearRegionIcons( flags )
 {
 	// No icons selected now..
@@ -3359,6 +3482,8 @@ function clearRegionIcons( flags )
 	{
 		exception = flags.exception;
 	}
+
+	var multipleCheck = flags && flags.force ? 'none' : 'multiple';
 
 	// Clear all icons
 	for( var a in movableWindows )
@@ -3373,7 +3498,7 @@ function clearRegionIcons( flags )
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
-					if( exception != ic )
+					if( exception != ic && ic.selected != multipleCheck )
 					{
 						ic.classList.remove( 'Selected' );
 						w.icons[a].selected = false;
@@ -3399,7 +3524,7 @@ function clearRegionIcons( flags )
 			var icon = Doors.screen.contentDiv.icons[a];
 			var ic = icon.domNode;
 			if( !ic ) continue;
-			if( exception != ic )
+			if( exception != ic && ic.selected != multipleCheck )
 			{
 				ic.classList.remove( 'Selected' );
 				icon.selected = false;
@@ -3435,7 +3560,14 @@ function contextMenu( e )
 	)
 	{
 		window.mouseDown = false;
-		WorkspaceMenu.show();
+		if( isMobile )
+		{
+			MobileContextMenu.show( tar );
+		}
+		else
+		{
+			WorkspaceMenu.show();
+		}
 	}
 	return cancelBubble( e );
 }

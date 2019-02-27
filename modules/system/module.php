@@ -251,7 +251,8 @@ if( isset( $args->command ) )
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
-				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey' 
+				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey', 
+				'userroleget', 'checkpermission', 'userroleadd', 'userroleupdate', 'userroledelete' 
 			);
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
@@ -862,11 +863,11 @@ if( isset( $args->command ) )
 		case 'mountlist_list':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"mountlist_list failed"}' );
 
-			if( !isset($args->args->userids) ) die('fail<!--seperate-->no userids given');
+			if( !isset( $args->args->userids ) ) die('fail<!--seperate-->no userids given');
 			$sql = '';
 			if( isset($args->args->path) )
 			{
-				$type = ( isset($args->args->type) ? ' AND f.Type=\''. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) .'\'' : '' );
+				$type = ( isset( $args->args->type ) ? ' AND f.Type=\''. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) .'\'' : '' );
 				$sql = '
 					SELECT f.* FROM Filesystem f
 					WHERE
@@ -878,7 +879,7 @@ if( isset( $args->command ) )
 
 			if( $sql == '' ) die('fail<!--seperate-->no filter given');
 
-			$Logger->log( 'mounstlist list ' . $sql );
+			//$Logger->log( 'mounstlist list ' . $sql );
 
 			if( $rows = $SqlDatabase->FetchObjects( $sql ) )
 			{
@@ -1512,7 +1513,7 @@ if( isset( $args->command ) )
 				
 				if( isset( $args->args->count ) && $args->args->count )
 				{
-					$count = $SqlDatabase->FetchObject( 'SELECT COUNT( ID ) AS Num FROM FUser ' );
+					$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
 					$out['Count'] = ( $count ? $count->Num : 0 );
 				}
 				
@@ -2030,6 +2031,23 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"checkuserbyname failed"}'  );
 			break;
+		/* Roles */
+		case 'userroleadd':
+			require( 'modules/system/include/userrole_add.php' );
+			break;
+		case 'userroledelete':
+			require( 'modules/system/include/userrole_delete.php' );
+			break;
+		case 'userroleupdate':
+			require( 'modules/system/include/userrole_update.php' );
+			break;
+		case 'userroleget':
+			require( 'modules/system/include/userrole_get.php' );
+			break;
+		case 'checkpermission':
+			require( 'modules/system/include/checkpermission.php' );
+			break;
+		/* End roles */
 		case 'userbetamail':
 		case 'listbetausers':
 			require( 'modules/system/include/betaimport.php' );

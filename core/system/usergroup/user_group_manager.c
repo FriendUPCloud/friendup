@@ -349,10 +349,12 @@ int UGMMountDrives( UserGroupManager *sm )
 {
 	SystemBase *sb = (SystemBase *)sm->ugm_SB;
 	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
-	if( sqllib != NULL )
+	if( sb != NULL && sqllib != NULL )
 	{
+		// Test for null pointers
 		UserGroup *ug = sm->ugm_UserGroups;
-		while( ug != NULL )
+		// While we have nice weather conditions
+		while( ug != NULL && sb->sl_UM && sb->sl_UM->um_APIUser )
 		{
 			//UserGroupDeviceMount( l, sqllib, ug, NULL );
 			UserGroupDeviceMount( sb, sqllib, ug, sb->sl_UM->um_APIUser );

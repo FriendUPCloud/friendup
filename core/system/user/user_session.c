@@ -130,6 +130,7 @@ void UserSessionDelete( UserSession *us )
 
 				Log( FLOG_DEBUG, "[UserSessionDelete] Remove websockets ptr %p from usersession %p\n", rws, us );
 
+				rws->wsc_InUseCounter = 0;
 				rws->wsc_UserSession = NULL;
 				FRIEND_MUTEX_UNLOCK( &(rws->wsc_Mutex) );
 			}

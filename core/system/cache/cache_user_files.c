@@ -77,7 +77,7 @@ int CacheUserFilesAddFile( CacheUserFiles *cuf, FULONG devid __attribute__((unus
 {
 	if( (cuf->cuf_CacheSize + lf->cf_FileSize) > cuf->cuf_MaxCacheSize )
 	{
-		FERROR("Cannot add file to cache, cache is FULL\n");
+		INFO("Cannot add file to cache, cache is FULL\n");
 		return 1;
 	}
 	

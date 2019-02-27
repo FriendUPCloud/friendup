@@ -1374,7 +1374,14 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 			
 			//cfcn->fc_ConnectionsNumber++;
 		
-			INFO("[CommServiceAddConnection] INCOMING Connection added %s %s number of connections %d type %d\n", addr, recvfcid, cfcn->fc_ConnectionsNumber, type );
+			if( strlen( recvfcid ) > 0 )
+			{
+				INFO("[CommServiceAddConnection] INCOMING Connection added addr: %s recvfcid: %s number of connections %d type %d\n", addr, recvfcid, cfcn->fc_ConnectionsNumber, type );
+			}
+			else
+			{
+				INFO("[CommServiceAddConnection] INCOMING Connection added addr: %s number of connections %d type %d\n", addr, cfcn->fc_ConnectionsNumber, type );
+			}
 
 			cfcn->node.mln_Succ = (MinNode *) s->s_Connections;
 			s->s_Connections = cfcn;

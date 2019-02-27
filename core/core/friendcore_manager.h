@@ -137,8 +137,9 @@ typedef struct FriendCoreManager
 	//ConnectionInfo				*fcm_ConnectionsInformation;					// connection information
 	ClusterNode					*fcm_ClusterNodes;								// cluster node information
 																				// first Node is always current FC node
-	FBOOL						disableMobileWS;
-	FBOOL						disableExternalWS;
+	FBOOL						fcm_DisableMobileWS;
+	FBOOL						fcm_DisableExternalWS;
+	FBOOL						fcm_WSExtendedDebug;
 }FriendCoreManager;
 
 //

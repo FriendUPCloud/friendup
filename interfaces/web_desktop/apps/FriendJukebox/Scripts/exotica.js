@@ -72,7 +72,6 @@ Application.addPlaylist = function ( fname )
 	f.load();
 }
 
-
 // Handle files by path
 Application.handleFiles = function( args )
 {
@@ -139,6 +138,10 @@ Application.redrawMenu = function()
 				{
 					name: i18n( 'i18n_edit_playlist' ),
 					command: 'edit_playlist'
+				},
+				{
+					name: i18n( 'i18n_add_source' ),
+					command: 'add_source'
 				},
 				{
 					name: i18n( 'i18n_toggle_mini_playlist' + ( this.miniplaylist ? '_hide' : '_show' ) ),

@@ -28,17 +28,18 @@
 	-khtml-user-select: none;
 	-webkit-user-select: none;
 	user-select: none;
+	pointer-events: all;
+	background: black;
 	
+}
+body:not([mobile]) .View
+{
 	transition-property: top, left, opacity, transform;
 	-transition-property: top, left, opacity, transform;
 	-webkit-transition-property: top, left, opacity, transform;
-	transition-duration: 0.3s, 0.3s, 0.3s, 0.3s;
-	-moz-transition-duration: 0.3s, 0.3s, 0.3s, 0.3s;
-	-webkit-transition-duration: 0.3s, 0.3s, 0.3s, 0.3s;
-	
-	background: black;
-	
-	pointer-events: all;
+	transition-duration: 0.25s, 0.25s, 0.25s, 0.25s;
+	-moz-transition-duration: 0.25s, 0.25s, 0.3s, 0.25s;
+	-webkit-transition-duration: 0.25s, 0.25s, 0.25s, 0.25s;
 }
 
 .ViewContainer.Activating > .View > .Content, 
@@ -71,6 +72,7 @@
 [mobile] .View.Mountlist .DirectoryToolbar button
 {
 	opacity: 0;
+	pointer-events: none;
 }
 
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser
@@ -109,6 +111,16 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 	height: 24px;
 	margin-right: 10px;
 }
+
+.FileBrowser .DiskItem > .Name span 
+{
+	white-space: nowrap;
+	max-width: 80%;
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 
 .View > .ImageViewerToolbar
 {
@@ -306,7 +318,10 @@ html .View[viewsnap] .Title > div > div
 #Screens .View
 {
 	position: absolute;
-	transition: opacity 0.2s;
+}
+body:not([mobile]) #Screens .View
+{
+	transition: opacity 0.25s;
 	opacity: 1;
 }
 
@@ -320,7 +335,7 @@ body:not([mobile]) #Screens .View:not([moving]):not(.Opening):not(.Opened)
 	transition: opacity 0.25s;
 }
 
-#Screens .View.Opening
+body:not([mobile]) #Screens .View.Opening
 {
 	opacity: 0;
 }
@@ -335,7 +350,7 @@ body:not([mobile]) #Screens .View:not([moving]):not(.Opening):not(.Opened)
 	border: 0;
 	margin: 0;
 	outline: none;
-	transition: opacity 0.2s ease-in;
+	transition: opacity 0.25s ease;
 	opacity: 1;
 }
 
@@ -463,11 +478,11 @@ body:not([mobile]) #Screens .View:not([moving]):not(.Opening):not(.Opened)
 }
 
 /* Don't animate but the opacity when fading in a window */
-.View[created=created]
+body:not([mobile]) .View[created=created]
 {
-	transition: opacity 0.3s;
-	-moz-transition: opacity 0.3s;
-	-webkit-transition: opacity 0.3s;
+	transition: opacity 0.25s;
+	-moz-transition: opacity 0.25s;
+	-webkit-transition: opacity 0.25s;
 }
 
 .ViewContainer[minimized=minimized], 
@@ -959,6 +974,21 @@ _:-ms-fullscreen, :root .View.Active > .Title { border-top-width: 1px; } /* IE11
 	-webkit-box-shadow: inset 0px 0px 2px 2px #2F6699;
 }
 
+html .Screen > .TitleBar .Info,
+html .Screen #WorkspaceMenu
+{
+	transition: opacity 0.07s;
+	opacity: 1;
+}
+
+html .Screen.ChangingScreenTitle > .TitleBar .Info,
+html .Screen.ChangingScreenTitle #WorkspaceMenu
+{
+	opacity: 0;
+}
+
+html .Screen > .TitleBar.ChangingScreenTitle 
+
 html .Screen > .TitleBar.Busy:after
 {
 	background-image: url(/themes/friendup12/gfx/loading_corner.gif);
@@ -971,6 +1001,25 @@ html .Screen > .TitleBar > .Left .Offline
 {
 	margin: 0 10px 0 0;
 	pointer-events: none;
+}
+
+/* Fullscreen app */
+
+html body.FullscreenApp .Screen > .ScreenContent,
+html body.FullscreenApp #DoorsScreen.Screen > .ScreenContent
+{
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	z-index: 2147483647 !important;
+}
+
+html body.FullscreenApp .MobileTopNavigation,
+html body.FullscreenApp .MobileAppMenu
+{
+	display: none !important;
 }
 
 /* Popup view --------------------------------------------------------------- */
@@ -1081,7 +1130,7 @@ body[mobile=mobile] > .MobileMenu
     left: 0;
     width: 100%;
     bottom: 0;
-    transform: translateY(100%);
+    transform: translate3d(0,100%,0);
     transition: transform 0.25s;
 }
 
@@ -1095,7 +1144,7 @@ body[mobile=mobile] > .MobileMenu.Visible
     bottom: 0;
     background: rgba(255,255,255,0.9);
     padding: 20px;
-    transform: translateY(50px);
+    transform: translate3d(0,50px,0);
 }
 
 body[mobile=mobile] > .MobileMenu > div
@@ -1265,5 +1314,182 @@ html .NativeViewContainer > .View > .Content
 	left: 0px;
 	width: 100%;
 	height: 100%;
+}
+
+/* Attached windows | window tiling ----------------------------------------- */
+
+body.ViewMaximized .ViewContainer
+{
+	height: 100%;
+}
+
+body.ViewMaximized .View[maximized].TilingMode2
+{
+	top: 0 !important;
+	left: 0 !important;
+	width: 50vw !important;
+	height: 100% !important;
+}
+
+body.ViewMaximized .View.TilingMode2.Tile2
+{
+	top: 0 !important;
+	left: 50vw !important;
+	width: 50vw !important;
+	height: 100% !important;
+}
+
+/* Three tiles */
+
+body.ViewMaximized .View[maximized].TilingMode3
+{
+	top: 0 !important;
+	left: 0 !important;
+	width: 50vw !important;
+	height: 100% !important;
+}
+
+body.ViewMaximized .View.TilingMode3.Tile2
+{
+	top: 0 !important;
+	left: 50vw !important;
+	bottom: 50% !important;
+	height: 50% !important;
+	width: 50vw !important;
+}
+
+body.ViewMaximized .View.TilingMode3.Tile3
+{
+	top: 50% !important;
+	left: 50vw !important;
+	bottom: 100% !important;
+	height: 50% !important;
+	width: 50vw !important;
+}
+
+/* Camera ------------------------------------------------------------------- */
+
+.Content > .FriendCameraContainer
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transition: transform 0.25s;
+	transform: translate3d(0,0,0);
+}
+
+.Content > .FriendCameraContainer video.FriendCameraElement
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #000000;
+	z-index: 1;
+}
+
+.Content > .FriendCameraContainer.Flash:after
+{
+	opacity: 0;
+	transition: opacity 0.2s;
+	background-color: rgba(255,255,255,0.5);
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+}
+
+.Content > .FriendCameraContainer.Flash.Flashing:after
+{
+	opacity: 1;
+}
+
+.Content > .FriendCameraContainer.Closing
+{
+	transform: translate3d(100%,0,0);
+}
+
+.Content > .FriendCameraContainer > button.fa-camera, 
+.Content > .FriendCameraContainer > button.fa-camera:hover
+{
+	position: absolute;
+	z-index: 3;
+	top: calc(50% - 15px);
+	left: calc(50% - 15px);
+	width: 30px;
+	height: 30px;
+	background-color: rgba(0,0,0,0.7) !important;
+	color: white;
+	text-align: center;
+	line-height: 30px;
+	padding: 0 !important;
+	margin: 0 !important;
+	border: 0 !important;
+	cursor: pointer;
+}
+body .Content > .FriendCameraContainer > button
+{
+	color: white;
+}
+
+/* For iOS and unsupported devices */
+
+.FriendCameraFallback
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transition: transform 0.25s;
+	transform: scale3d(1,0,1);
+	background: rgba(0,0,0,0.7);
+	color: white;
+}
+
+body .FriendCameraFallback button
+{
+	color: white;
+}
+
+.FriendCameraFallback.Showing
+{
+	transform: scale3d(1,1,1);
+}
+
+.FriendCameraFallback.Showing p
+{
+	margin: 20px auto;
+	text-align: center;
+}
+
+body .FriendCameraFallback input[type=file]
+{
+	position: absolute;
+	top: 80px;
+	left: calc(50% - 100px);
+	width: 200px;
+	opacity: 0;
+	z-index: 2;
+}
+
+body .FriendCameraFallback button
+{
+	position: absolute;
+	top: 80px;
+	left: calc(50% - 100px);
+	width: 200px;
+	z-index: 1;
+}
+
+body .FriendCameraFallback button:before
+{
+	margin-right: 5px;
 }
 

@@ -218,7 +218,10 @@ int WebsocketThread( FThread *data )
 	//signal( SIGPIPE, SIG_IGN );
 	//signal( SIGPIPE, hand );
 
-	//lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG , NULL );
+	if( ws->ws_ExtendedDebug )
+	{
+		lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG , NULL );
+	}
 	
 	Log( FLOG_INFO, "[WS] Service will be started now\n" );
 
@@ -228,10 +231,12 @@ int WebsocketThread( FThread *data )
 		
 		if( ws->ws_Quit == TRUE && WSThreadNum <= 0 )
 		{
+			FINFO("WS Quit!\n");
 			break;
 		}
 		else if( ws->ws_Quit == TRUE )
 		{
+			FINFO("WS Quit! but threads left: %d\n", WSThreadNum );
 			cnt++;
 			
 			if( cnt > 500 )
@@ -268,9 +273,10 @@ int WebSocketStart( WebSocket *ws )
  * @param port port on which WS will work
  * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
  * @param proto protocols
+ * @param extDebug enable extended debug
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -283,6 +289,7 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto )
 	{
 		//char *fhome = getenv( "FRIEND_HOME" );
 		ws->ws_FCM = lsb->fcm;
+		ws->ws_ExtendedDebug = extDebug;
 		
 		ws->ws_Port = port;
 		ws->ws_UseSSL = sslOn;
@@ -734,24 +741,35 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 		return 0;
 	}
 	
+	/*
 	//data->fcd_WSClient = NULL;
+	int pos = 0;
 	while( TRUE )
 	{
-		DEBUG("Check in use %d\n", wscl->wsc_InUseCounter );
+		DEBUG("[DeleteWebSocketConnection] Check in use %d\n", wscl->wsc_InUseCounter );
 		if( wscl->wsc_InUseCounter <= 0 )
 		{
 			break;
 		}
 		sleep( 1 );
+		pos++;
+		if( pos >= 4 )
+		{
+			DEBUG("[DeleteWebSocketConnection] Cannot wait longer, removeing connection\n");
+			break;
+		}
 	}
+	*/
 	//
 	
+	DEBUG("[DeleteWebSocketConnection] Set NULL to WSI\n");
 	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
     UserSession *us = (UserSession *)wscl->wsc_UserSession;
-	//wscl->wc_UserSession = NULL;
+	us->us_WSClients = NULL;
 	wscl->wsc_Wsi = NULL;
 	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
     
+	DEBUG("[DeleteWebSocketConnection] Remove UserSession from User list\n");
 	//
 	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
 	//
@@ -759,6 +777,28 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	{
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
+			WebsocketServerClient *actwsc = us->us_WSClients;
+			WebsocketServerClient *prvwsc = us->us_WSClients;
+			while( actwsc != NULL )
+			{
+				if( actwsc->wsc_WebsocketsData == data )
+				{
+					if( actwsc == us->us_WSClients )
+					{
+						us->us_WSClients = (WebsocketServerClient *)us->us_WSClients->node.mln_Succ;
+					}
+					else
+					{
+						prvwsc->node.mln_Succ = actwsc->node.mln_Succ;
+					}
+					DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", actwsc, us->us_WSClients );
+					break;
+				}
+					
+				prvwsc = actwsc;
+				actwsc = (WebsocketServerClient *)actwsc->node.mln_Succ;
+			}
+			/*
 			WebsocketServerClient *nwsc = us->us_WSClients;
 			WebsocketServerClient *owsc = nwsc;
 		
@@ -795,6 +835,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 					}
 				}
 			}
+			*/
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 	}
@@ -803,9 +844,10 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
 	}
 	
+	DEBUG("[DeleteWebSocketConnection] Remove Queue\n");
 	FQDeInitFree( &(wscl->wsc_MsgQueue) );
 	
-	Log(FLOG_DEBUG, "[WS] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
+	Log(FLOG_DEBUG, "[DeleteWebSocketConnection] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
 	WebsocketServerClientDelete( wscl );
 
     return 0;
