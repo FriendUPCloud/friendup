@@ -4958,7 +4958,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 						for( var a = 0; a < content.length; a++ )
 						{
 							if( content[ a ].Path.indexOf( ':' ) < 0 )
-								content[ a ].Path = this.fileInfo.Volume + content[ a ].Path;
+							{
+								content[ a ].Path = this.fileInfo.Path.split( ':' )[0] + ':' + content[ a ].Path;
+							}
 						}
 					
 						var ww = this.win;
