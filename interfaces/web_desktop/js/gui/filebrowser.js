@@ -238,7 +238,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				
 				// Make sure to add to history
-				if( e && e.button !== null )
+				if( !isMobile && e && e.button !== null )
 				{
 					var dw = window.currentMovable && currentMovable.content.directoryview;
 					if( dw )
