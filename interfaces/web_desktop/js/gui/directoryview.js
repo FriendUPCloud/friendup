@@ -362,13 +362,16 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					// Refresh and animate
 					winobj.refresh( function()
 					{
-						n.style.transform = 'translate3d(100%,0,0)';
-						
 						setTimeout( function()
 						{
-							n.parentNode.classList.remove( 'Redrawing' );
-							n.parentNode.removeChild( n );
-						}, 400 );
+							n.style.transform = 'translate3d(100%,0,0)';
+						
+							setTimeout( function()
+							{
+								n.parentNode.classList.remove( 'Redrawing' );
+								n.parentNode.removeChild( n );
+							}, 400 );
+						}, 50 );
 					} );
 				}
 				else
@@ -4171,16 +4174,16 @@ FileIcon.prototype.Init = function( fileInfo )
 				// Refresh and add animation
 				we.refresh( function()
 				{
-					n.style.transform = 'translate3d(-100%,0,0)';
-					
-					// HACK ALARM! THIS DOES NOTHING BUG FIXES REPAINT
-					setTimeout( function() { n.style.zIndex = 10; }, 5 );
-					
 					setTimeout( function()
 					{
-						n.parentNode.classList.remove( 'Redrawing' );
-						n.parentNode.removeChild( n );
-					}, 400 );
+						n.style.transform = 'translate3d(-100%,0,0)';
+					
+						setTimeout( function()
+						{
+							n.parentNode.classList.remove( 'Redrawing' );
+							n.parentNode.removeChild( n );
+						}, 400 );
+					}, 50 );
 				} );
 			}
 			// Desktop mode, just refresh
