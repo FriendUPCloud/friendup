@@ -1557,15 +1557,18 @@ function apiWrapper( event, force )
 											win.sendMessage( {
 												command: 'callback',
 												callback: cid,
-												viewId: msg.targetViewId,
+												viewId: win.viewId,
 												data: data
 											} );
 										}
 										else
 										{
+											console.log( msg );
 											app.sendMessage( {
 												command: 'callback',
 												callback: cid,
+												viewId: msg.targetViewId,
+												targetViewId: msg.targetViewId,
 												data: data
 											} );
 										}
