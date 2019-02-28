@@ -364,14 +364,10 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					{
 						n.style.transform = 'translate3d(100%,0,0)';
 						
-						// HACK ALARM! THIS DOES NOTHING BUG FIXES REPAINT
-						setTimeout( function() { n.style.zIndex = 11; }, 5 );
-						setTimeout( function() { n.style.zIndex = 10; }, 10 );
-						
 						setTimeout( function()
 						{
+							n.parentNode.classList.remove( 'Redrawing' );
 							n.parentNode.removeChild( n );
-							winobj.parentNode.classList.remove( 'Redrawing' );
 						}, 400 );
 					} );
 				}
