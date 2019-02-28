@@ -174,8 +174,6 @@ Sections.accounts_roles = function( cmd, extra )
 				
 				var data = permissions;
 				
-				console.log( data );
-				
 				if( data && data.Apps )
 				{
 					var perm = data.Apps;
@@ -193,7 +191,6 @@ Sections.accounts_roles = function( cmd, extra )
 									if( roleperm[r].Key && roleperm[r].Key == perm[i].app && roleperm[r].Permission == perm[i].permissions[ii].permission )
 									{
 										console.log( perm[i] );
-										console.log( perm[i].permissions[ii] );
 										console.log( roleperm[r] );
 										
 										perm[i].permissions[ii].data = roleperm[r].Data;
@@ -288,10 +285,14 @@ Sections.accounts_roles = function( cmd, extra )
 						{
 							sw = sw == 2 ? 1 : 2;
 							
+							var rid = info.role.ID;
+							var pem = perm[a].permissions[k].permission;
+							var key = perm[a].app;
+							
 							apl += '<div class="HRow">';
 							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + perm[a].permissions[k].name + '</div>';
 							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-							apl += '<button onclick="Toggle(this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+							apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 							apl += '</div>';
 							apl += '</div>';
 						}
@@ -691,46 +692,6 @@ Sections.role_edit = function( id, _this )
 	
 }
 
-Sections.permission_edit = function( id, _this )
-{
-	
-	var pnt = _this.parentNode;
-	
-	var edit = pnt.innerHTML;
-	
-	var buttons = [ 
-		{ 'name' : 'Save',   'icon' : '', 'func' : function()
-			{ 
-				alert( 'Save ', id ); 
-			} 
-		}, 
-		{ 'name' : 'Delete', 'icon' : '', 'func' : function()
-			{ 
-				alert( 'Delete ', id ); 
-			} 
-		}, 
-		{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
-			{ 
-				pnt.innerHTML = edit 
-			} 
-		}
-	];
-	
-	pnt.innerHTML = '';
-	
-	for( var i in buttons )
-	{
-		var b = document.createElement( 'button' );
-		b.className = 'IconSmall FloatRight';
-		b.innerHTML = buttons[i].name;
-		b.onclick = buttons[i].func;
-		
-		pnt.appendChild( b );
-	}
-	
-}
-
-
 
 
 Sections.userroleadd = function( input )
@@ -779,7 +740,25 @@ Sections.userroleupdate = function( rid, input, perms )
 		}
 		m.execute( 'userroleupdate', { id: rid, name: ( input ? input : null ), permissions: ( perms ? perms : null ) } );
 	}
-}
+};
+
+Sections.updatepermission = function( rid, pem, key, data, _this )
+{
+	if( _this )
+	{
+		Toggle( _this, function( on )
+		{
+			data = ( on ? 'Activated' : '' );
+		} );
+	}
+	
+	if( rid && pem && key )
+	{
+		var perms = [ { name : pem, key : key, data : data } ];
+		
+		Sections.userroleupdate( rid, null, perms );
+	}
+};
 
 Sections.checkpermission = function( input )
 {
@@ -792,7 +771,7 @@ Sections.checkpermission = function( input )
 		}
 		m.execute( 'checkpermission', { permission: input } );
 	}
-}
+};
 
 console.log( 'Sections.userroleadd =', Sections.userroleadd );
 console.log( 'Sections.userroledelete =', Sections.userroledelete );
