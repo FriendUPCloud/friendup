@@ -352,7 +352,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				} );
 			}
 			if( cf ) menu.push( cf );
-			ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
+			Workspace.ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
 			return cancelBubble( e );
 		}
 	}
