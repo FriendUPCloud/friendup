@@ -141,17 +141,18 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 };
 
 // Set an active path
-Friend.FileBrowser.prototype.setPath = function( target, cbk )
+// Supported flags ( { lockHistory: true|false } )
+Friend.FileBrowser.prototype.setPath = function( target, cbk, flags )
 {
 	this.flags.path = target; // This is the current target path..
-	this.refresh( this.rootPath, this.dom, cbk, 0 );
+	this.refresh( this.rootPath, this.dom, cbk, 0, flags );
 }
 
 Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
 };
-Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth )
+Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags )
 {
 	var self = this;
 	
@@ -172,6 +173,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	}
 	
 	// What are we looking for at this level?
+	// Keeps the whole target path, but searches on each level recursively..
 	var targetPath = false;
 	if( this.flags.path )
 	{
@@ -225,7 +227,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				if( !treated && self.callbacks.loadFile )
 				{
-					self.callbacks.loadFile( ppath );
+					self.callbacks.loadFile( ppath, e, flags );
 				}
 			}
 			else
@@ -233,7 +235,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
-					self.callbacks.folderOpen( ppath, e );
+					self.callbacks.folderOpen( ppath, e, flags );
 					return  cancelBubble( e );
 				}
 				
@@ -247,7 +249,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						this.classList.add( 'Open' );
 						if( self.callbacks && self.callbacks.folderOpen )
 						{
-							self.callbacks.folderOpen( ppath, e );
+							self.callbacks.folderOpen( ppath, e, flags );
 							cancelBubble( e );
 						}
 						var nam = ele.getElementsByClassName( 'Name' );
@@ -266,7 +268,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nam[0].classList.remove( 'Open' );
 						if( self.callbacks && self.callbacks.folderClose )
 						{
-							self.callbacks.folderClose( ppath, e );
+							self.callbacks.folderClose( ppath, e, flags );
 							cancelBubble( e );
 						}
 					}
@@ -448,7 +450,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( !clickElement && self.flags.path && targetPath == d.path )
 						{
 							clickElement = d;
-						}						
+						}				
 						
 						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
@@ -723,6 +725,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								fn += '/';
 							self.refresh( path + fn, s[0], false, depth + 1 );
 						}
+					}
+					// We have an incoming path
+					if( !clickElement && self.flags.path && targetPath == foundItem.path )
+					{
+						clickElement = foundItem;
 					}
 				}
 			}

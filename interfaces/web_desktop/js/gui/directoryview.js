@@ -192,10 +192,24 @@ DirectoryView.prototype.checkSuffix = function( fn )
 	return true;
 }
 
-DirectoryView.prototype.addToHistory = function( ele )
+DirectoryView.prototype.addToHistory = function( info )
 {
 	// Don't do it twice
 	if( !this.window ) return;
+	
+	// Make a copy
+	var ele = {};
+	for( var a in info ) ele[ a ] = info[ a ];
+	
+	
+	var his = [];
+	for( var a = 0; a < this.pathHistory.length; a++ )
+	{
+		var el = {};
+		for( var b in this.pathHistory[ a ] )
+			el[ b ] = this.pathHistory[ a ];
+		his.push( el );
+	}
 	
 	if( !this.pathHistory.length )
 	{
@@ -208,8 +222,13 @@ DirectoryView.prototype.addToHistory = function( ele )
 		if( this.pathHistory[ this.pathHistory.length - 1 ].Path != ele.Path )
 		{
 			this.pathHistory.push( ele );
+			this.pathHistoryIndex = this.pathHistory.length - 1;
 		}
-		this.pathHistoryIndex = this.pathHistory.length - 1;
+		// Do not add duplicate
+		else
+		{
+			return false;
+		}
 	}
 	// Insert into path history
 	else
@@ -404,7 +423,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
-						winobj.fileBrowser.setPath( fin.Path );
+						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
 					else
 					{
@@ -425,7 +444,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					var fin = dw.pathHistoryForward();
 					if( !isMobile && winobj.fileBrowser )
 					{
-						winobj.fileBrowser.setPath( fin.Path );
+						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
 					else
 					{
@@ -620,30 +639,37 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		{
 			checkFile( filepath, fileextension )
 			{
-				console.log( filepath + ' on ' + fileextension );
+				//console.log( filepath + ' on ' + fileextension );
 			},
-			loadFile( filepath )
+			loadFile( filepath, event, flags )
 			{
 				// 
 			},
-			folderOpen( path )
+			folderOpen( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
-				winobj.fileInfo.Path = path;
-				winobj.fileInfo.Volume = vol + ':';
-				
-				var ele = {
-					Path: path,
-					Volume: vol + ':'
-				};
-				
-				self.addToHistory( ele );
+				if( !flags || !flags.lockHistory )
+				{
+					var vol = path.split( ':' )[0];
+					winobj.fileInfo = {
+						Path: path,
+						Volume: vol + ':',
+						Door: ( new Door( vol + ':' ) )
+					};
+					self.addToHistory( winobj.fileInfo );
+				}
 				winobj.refresh();
 			},
-			folderClose( path )
+			folderClose( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
-				winobj.fileInfo.Path = path;
+				if( !flags || !flags.lockHistory )
+				{
+					var vol = path.split( ':' )[0];
+					winobj.fileInfo = {
+						Path: path,
+						Volume: vol + ':',
+						Door: ( new Door( vol + ':' ) )
+					};
+				}
 				winobj.refresh();
 			}
 		} );
@@ -660,6 +686,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	this.windowObject = winobj;
 	winobj.parentNode.classList.add( 'IconWindow' );
 	winobj.redrawtimeouts = [];
+	
+	if( winobj.fileInfo )
+	{
+		// Initial path
+		this.pathHistory = [ winobj.fileInfo ];
+	}
 	
 	// Add context menu
 	if( !winobj.oldContextMenuEvent ) winobj.oldContextMenuEvent = winobj.oncontextmenu;
@@ -857,7 +889,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		if( this.redrawing )
 		{
 			// This will overwrite the queued redraw with updated data
-			this.queuedRedraw = function(){
+			this.queuedRedraw = function()
+			{
 				winobj.redrawIcons( icons, direction );
 			};
 			return;
