@@ -647,7 +647,8 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
-				if( !flags || !flags.lockHistory )
+				var lockH = flags && flags.lockHistory;
+				if( !lockH )
 				{
 					var vol = path.split( ':' )[0];
 					winobj.fileInfo = {
@@ -661,7 +662,8 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderClose( path, event, flags )
 			{
-				if( !flags || !flags.lockHistory )
+				var lockH = flags && flags.lockHistory;
+				if( lockH )
 				{
 					var vol = path.split( ':' )[0];
 					winobj.fileInfo = {

@@ -142,10 +142,12 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 
 // Set an active path
 // Supported flags ( { lockHistory: true|false } )
-Friend.FileBrowser.prototype.setPath = function( target, cbk, flags )
+Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags )
 {
+	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
-	this.refresh( this.rootPath, this.dom, cbk, 0, flags );
+	if( tempFlags ) this.tempFlags = tempFlags;
+	this.refresh( this.rootPath, this.dom, cbk, 0 );
 }
 
 Friend.FileBrowser.prototype.rollOver = function( elements )
@@ -192,7 +194,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	function createOnclickAction( ele, ppath, type, depth )
 	{
 		ele.onclick = function( e )
-		{	
+		{
+			// Real click removes temp flags
+			if( e && e.button >= 0 )
+				self.tempFlags = false;
+				
 			if( !ppath ) 
 			{
 				return cancelBubble( e );
@@ -227,7 +233,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				if( !treated && self.callbacks.loadFile )
 				{
-					self.callbacks.loadFile( ppath, e, flags );
+					self.callbacks.loadFile( ppath, e, self.tempFlags );
 				}
 			}
 			else
@@ -235,7 +241,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
-					self.callbacks.folderOpen( ppath, e, flags );
+					self.callbacks.folderOpen( ppath, e, self.tempFlags );
 					return  cancelBubble( e );
 				}
 				
@@ -249,7 +255,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						this.classList.add( 'Open' );
 						if( self.callbacks && self.callbacks.folderOpen )
 						{
-							self.callbacks.folderOpen( ppath, e, flags );
+							self.callbacks.folderOpen( ppath, e, self.tempFlags );
 							cancelBubble( e );
 						}
 						var nam = ele.getElementsByClassName( 'Name' );
@@ -268,7 +274,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nam[0].classList.remove( 'Open' );
 						if( self.callbacks && self.callbacks.folderClose )
 						{
-							self.callbacks.folderClose( ppath, e, flags );
+							self.callbacks.folderClose( ppath, e, self.tempFlags );
 							cancelBubble( e );
 						}
 					}
