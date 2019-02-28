@@ -362,16 +362,12 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					// Refresh and animate
 					winobj.refresh( function()
 					{
+						n.style.transform = 'translate3d(100%,0,0)';
 						setTimeout( function()
 						{
-							n.style.transform = 'translate3d(100%,0,0)';
-						
-							setTimeout( function()
-							{
-								n.parentNode.classList.remove( 'Redrawing' );
-								n.parentNode.removeChild( n );
-							}, 400 );
-						}, 50 );
+							n.parentNode.removeChild( n );
+							winobj.parentNode.classList.remove( 'Redrawing' );
+						}, 400 );
 					} );
 				}
 				else
@@ -4174,16 +4170,12 @@ FileIcon.prototype.Init = function( fileInfo )
 				// Refresh and add animation
 				we.refresh( function()
 				{
+					n.style.transform = 'translate3d(-100%,0,0)';
 					setTimeout( function()
 					{
-						n.style.transform = 'translate3d(-100%,0,0)';
-					
-						setTimeout( function()
-						{
-							n.parentNode.classList.remove( 'Redrawing' );
-							n.parentNode.removeChild( n );
-						}, 400 );
-					}, 50 );
+						n.parentNode.classList.remove( 'Redrawing' );
+						n.parentNode.removeChild( n );
+					}, 400 );
 				} );
 			}
 			// Desktop mode, just refresh
@@ -4364,6 +4356,7 @@ FileIcon.prototype.Init = function( fileInfo )
 // -----------------------------------------------------------------------------
 function RefreshWindowGauge( win, finfo )
 {
+	if( isMobile ) return;
 	if( win.content ) win = win.content;
 	if( !win.fileInfo && finfo ) win.fileInfo = finfo;
 	if( !win.fileInfo ) return;
@@ -4524,10 +4517,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					{
 						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
-					if( callback ) callback();
 					RefreshWindowGauge( self.win );
 					self.refreshTimeout = null;
 					win.refreshing = false;
+					if( callback ) callback();
 				} );
 			}, 250 );
 		}
@@ -4802,6 +4795,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 									self.redrawIcons( self.icons, self.direction, cbk );
 								} );
 								RefreshWindowGauge( self );
+								
 							}
 						}
 						// empty
