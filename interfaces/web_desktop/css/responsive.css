@@ -91,7 +91,6 @@ body #Screens > #DoorsScreen.Screen > .ScreenContent
 	transition: transform 0.25s;
 }
 
-#Screens > div.Screen + div.Screen > .TitleBar,
 #Screens > div.Screen[moved=moved] > .TitleBar
 {
 	pointer-events: none;
@@ -109,9 +108,9 @@ body #Screens > #DoorsScreen.Screen > .ScreenContent
 	position: absolute;
 }
 
-#Screens > .Screen + div.Screen > .ScreenContent {
-    top: 0;
-    height: 100% !important;
+#Screens > div.Screen + .Screen > .ScreenContent
+{
+	top: 0;
 }
 
 body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
@@ -120,20 +119,6 @@ body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 	height: 100% !important;
 }
 
-/* Sub screens */
-#Screens > div.Screen + div.Screen
-{
-	padding-top: 40px;
-}
-#Screens > div.Screen + div.Screen .View.Active[maximized=true]
-{
-	top: 40px !important;
-	height: calc(100% - 64px) !important;
-	min-height: calc(100% - 64px) !important;
-}
-/* End sub screens */
-
-#Screens > div.Screen + div.Screen > .ScreenContent,
 #Screens > div.Screen[moved=moved] > .ScreenContent
 {
 	width: 100%;
@@ -948,6 +933,20 @@ html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
 	height: calc(100% - 80px) !important;
+}
+
+/* Subscreens */
+
+html body[mobile=mobile] #DoorsScreen + .Screen > .ScreenContent, 
+html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen + .Screen > .ScreenContent
+{
+	height: 100% !important;
+}
+
+html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen + .Screen > .ScreenContent > .Content
+{
+	top: 0 !important;
+	height: 100% !important;
 }
 
 #DoorsScreen > .ScreenContent > .Scroller
