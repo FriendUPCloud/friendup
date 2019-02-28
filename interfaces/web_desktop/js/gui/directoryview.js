@@ -363,6 +363,10 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					winobj.refresh( function()
 					{
 						n.style.transform = 'translate3d(100%,0,0)';
+						
+						// HACK ALARM! THIS DOES NOTHING BUG FIXES REPAINT
+						setTimeout( function() { n.style.zIndex = 10; }, 5 );
+						
 						setTimeout( function()
 						{
 							n.parentNode.removeChild( n );
@@ -4171,7 +4175,10 @@ FileIcon.prototype.Init = function( fileInfo )
 				we.refresh( function()
 				{
 					n.style.transform = 'translate3d(-100%,0,0)';
+					
+					// HACK ALARM! THIS DOES NOTHING BUG FIXES REPAINT
 					setTimeout( function() { n.style.zIndex = 10; }, 5 );
+					
 					setTimeout( function()
 					{
 						n.parentNode.classList.remove( 'Redrawing' );
