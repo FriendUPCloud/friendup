@@ -4165,6 +4165,7 @@ FileIcon.prototype.Init = function( fileInfo )
 				n.scrollTop = dv.windowObject.scrollTop;
 				n.style.zIndex = 10;
 				dv.windowObject.parentNode.appendChild( n );
+				Notify( { title: 'Redrawing', 'We are redrawing' } );
 				dv.windowObject.parentNode.classList.add( 'Redrawing' );
 				
 				// Refresh and add animation
@@ -4173,6 +4174,7 @@ FileIcon.prototype.Init = function( fileInfo )
 					n.style.transform = 'translate3d(-100%,0,0)';
 					setTimeout( function()
 					{
+						Notify( { title: 'Redrawn', 'We have redrawn' } );
 						n.parentNode.classList.remove( 'Redrawing' );
 						n.parentNode.removeChild( n );
 					}, 400 );
