@@ -195,33 +195,63 @@ DirectoryView.prototype.checkSuffix = function( fn )
 DirectoryView.prototype.addToHistory = function( ele )
 {
 	// Don't do it twice
-	if( this.window && this.window.fileInfo )
-	{
-		if( this.window.fileInfo.Path == ele.Path )
-			return false;
-	}
-	if( this.pathHistory.length == 0 )
+	if( !this.window ) return;
+	
+	if( !this.pathHistory.length )
 	{
 		this.pathHistory = [ ele ];
 		this.pathHistoryIndex = 0;
+		this.window.fileInfo = ele;
 		return true;
 	}
-	this.pathHistory.push( ele );
-	this.pathHistoryIndex = this.pathHistory.length - 1;
+	
+	if( this.pathHistoryIndex == this.pathHistory.length - 1 )
+	{
+		this.pathHistory.push( ele );
+		this.pathHistoryIndex = this.pathHistory.length - 1;
+	}
+	// Insert into path history
+	else
+	{
+		var out = [];
+		for( var a = 0; a < this.pathHistory.length; a++ )
+		{
+			out.push( this.pathHistory[ a ] );
+			if( a == this.pathHistoryIndex )
+			{
+				out.push( ele );
+				this.pathHistoryIndex = a + 1;
+				break;
+			}
+		}
+		this.pathHistory = out;
+	}
 	this.window.fileInfo = ele;
 	return true;
 }
 
-DirectoryView.prototype.setHistoryCurrent = function( ele )
+// Rewind to previous path history item
+DirectoryView.prototype.pathHistoryRewind = function()
 {
-	this.pathHistory[ this.pathHistoryIndex ] = ele;
-	var out = [];
-	for( var a = 0; a <= this.pathHistoryIndex; a++ )
+	// Previous
+	if( this.pathHistoryIndex > 0 )
 	{
-		out.push( this.pathHistory[a] );
+		return this.pathHistory[ --this.pathHistoryIndex ];
 	}
-	this.pathHistory = out;
-	this.window.fileInfo = ele;
+	// Start
+	return this.pathHistory[ 0 ];
+}
+
+// Rewind to next path history item
+DirectoryView.prototype.pathHistoryForward = function()
+{
+	// Next
+	if( this.pathHistoryIndex < this.pathHistory.length - 1 )
+	{
+		return this.pathHistory[ ++this.pathHistoryIndex ];
+	}
+	// End of the line
+	return this.pathHistory[ this.pathHistory.length - 1 ];
 }
 
 // Generate toolbar
@@ -260,27 +290,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	var lmode = this.listMode;
 
 	var buttons = [
-		/*{
-			element: 'button',
-			className: 'Home IconSmall fa-home',
-			content: i18n( 'i18n_dir_btn_root' ),
-			onclick: function( e )
-			{
-				var path = winobj.fileInfo.Volume.split( ':' );
-				var fin = {
-					Volume: path[0] + ':',
-					Path: path[0] + ':',
-					Title: path[0],
-					Type: winobj.fileInfo.Type,
-					Door: Workspace.getDoorByPath( path.join( ':' ) )
-				}
-
-				// Set current ele
-				dw.setHistoryCurrent( fin );
-
-				winobj.refresh();
-			}
-		},*/
 		// Go up a level
 		{
 			element: 'button',
@@ -385,7 +394,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the top of the history array, go back
 				if( dw.pathHistoryIndex > 0 )
 				{
-					var fin = dw.pathHistory[--dw.pathHistoryIndex];
+					var fin = dw.pathHistoryRewind();
+					console.log( 'Here we go!: ', fin );
 					winobj.fileInfo = fin;
 					winobj.refresh();
 					
@@ -393,6 +403,10 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					{
 						winobj.fileBrowser.setPath( fin.Path );
 					}
+				}
+				else
+				{
+					console.log( 'The history isn\'t there.' );
 				}
 			}
 		}: false,
@@ -405,7 +419,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the end of the history array, go forward
 				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
 				{
-					var fin = dw.pathHistory[++dw.pathHistoryIndex];
+					var fin = dw.pathHistoryForward();
 					winobj.fileInfo = fin;
 					winobj.refresh();
 				}

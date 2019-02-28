@@ -237,28 +237,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					return  cancelBubble( e );
 				}
 				
-				// Make sure to add to history
-				if( !isMobile && e && e.button !== null )
-				{
-					var dw = window.currentMovable && currentMovable.content.directoryview;
-					if( dw )
-					{
-						if( dw.window.fileInfo.Path != ppath )
-						{
-							var fin = {
-								Volume: ppath.split( ':' )[0] + ':',
-								Path: ppath,
-								Filename: fnam,
-								Type: 'Directory',
-								Door: Workspace.getDoorByPath( ppath )
-							};
-					
-							// Set as current history element at end of list
-							dw.addToHistory( fin );
-						}
-					}
-				}
-				
 				// Normal operation
 				if( !this.classList.contains( 'Open' ) || ( e && e.mode == 'open' ) )
 				{
