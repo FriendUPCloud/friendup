@@ -256,7 +256,7 @@ Sections.accounts_roles = function( cmd, extra )
 	{
 		console.log( { e:e, d:d } );
 		
-		if( e != 'ok' ) return;
+		//if( e != 'ok' ) return;
 		var userList = null;
 		try
 		{
@@ -264,7 +264,7 @@ Sections.accounts_roles = function( cmd, extra )
 		}
 		catch( e )
 		{
-			return;
+			//return;
 		}
 		
 		var o = ge( 'RoleList' );
@@ -326,38 +326,41 @@ Sections.accounts_roles = function( cmd, extra )
 		var sw = 2;
 		for( var b = 0; b < levels.length; b++ )
 		{
-			for( var a = 0; a < userList.length; a++ )
+			if( userList )
 			{
-				// Skip irrelevant level
-				//if( userList[ a ].Level != levels[ b ] ) continue;
-				
-				sw = sw == 2 ? 1 : 2;
-				var r = document.createElement( 'div' );
-				setROnclick( r, userList[ a ].ID );
-				r.className = 'HRow sw' + sw;
-			
-				var icon = '<span class="IconSmall fa-user"></span>';
-				userList[ a ][ 'Edit' ] = icon;
-				
-				for( var z in types )
+				for( var a = 0; a < userList.length; a++ )
 				{
-					var borders = '';
-					var d = document.createElement( 'div' );
-					if( z != 'Edit' )
-					{
-						d.className = '';
-						borders += ' BorderRight';
-					}
-					else d.className = 'TextCenter';
-					if( a < userList.length - a )
-						borders += ' BorderBottom';
-					d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
-					d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
-					r.appendChild( d );
-				}
+					// Skip irrelevant level
+					//if( userList[ a ].Level != levels[ b ] ) continue;
+				
+					sw = sw == 2 ? 1 : 2;
+					var r = document.createElement( 'div' );
+					setROnclick( r, userList[ a ].ID );
+					r.className = 'HRow sw' + sw;
 			
-				// Add row
-				list.appendChild( r );
+					var icon = '<span class="IconSmall fa-user"></span>';
+					userList[ a ][ 'Edit' ] = icon;
+				
+					for( var z in types )
+					{
+						var borders = '';
+						var d = document.createElement( 'div' );
+						if( z != 'Edit' )
+						{
+							d.className = '';
+							borders += ' BorderRight';
+						}
+						else d.className = 'TextCenter';
+						if( a < userList.length - a )
+							borders += ' BorderBottom';
+						d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
+						d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
+						r.appendChild( d );
+					}
+			
+					// Add row
+					list.appendChild( r );
+				}
 			}
 		}
 		
