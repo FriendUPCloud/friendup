@@ -987,7 +987,7 @@ Screen = function ( flags, initObject )
 		if( this.iframe && this.iframe.contentWindow )
 		{
 			var u = Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0];
-			var origin = event.origin && event.origin != 'null' ? event.origin : u;
+			var origin = u;
 			if( !dataObject.applicationId && this._screen.applicationId )
 			{
 				dataObject.applicationId = this._screen.applicationId;

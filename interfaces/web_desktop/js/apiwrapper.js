@@ -1540,6 +1540,7 @@ function apiWrapper( event, force )
 				if( msg.method && app.windows && app.windows[ msg.viewId ] )
 				{
 					var win = app.windows[ msg.viewId ];
+					var twin = app.windows[ msg.targetViewId ? msg.targetViewId : msg.viewId ];
 					switch( msg.method )
 					{
 						case 'opencamera':
@@ -1551,27 +1552,16 @@ function apiWrapper( event, force )
 									var cid = msg.callback;
 									cbk = function( data )
 									{
-										// For Friend Chat?
-										if( win.viewId == msg.targetViewId )
-										{
-											win.sendMessage( {
-												command: 'callback',
-												callback: cid,
-												viewId: win.viewId,
-												data: data
-											} );
-										}
-										else
-										{
-											console.log( msg );
-											app.sendMessage( {
-												command: 'callback',
-												callback: cid,
-												viewId: msg.targetViewId,
-												targetViewId: msg.targetViewId,
-												data: data
-											} );
-										}
+										var nmsg = {
+											command: 'callback',
+											callback: cid,
+											data: data
+										};
+										
+										if( msg.screenId )
+											nmsg.screenId = msg.screenId;
+										
+										event.source.postMessage( nmsg, '*' );
 									}
 									msg.callback = null;
 								}
