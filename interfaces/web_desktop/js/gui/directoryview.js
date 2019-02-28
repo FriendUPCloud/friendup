@@ -4171,8 +4171,7 @@ FileIcon.prototype.Init = function( fileInfo )
 				we.refresh( function()
 				{
 					n.style.transform = 'translate3d(-100%,0,0)';
-					n.style.zIndex = 11;
-					setTimeout( function() { n.style.zIndex = 10; }, 50 );
+					setTimeout( function() { var a = n.offsetHeight; }, 5 );
 					setTimeout( function()
 					{
 						n.parentNode.classList.remove( 'Redrawing' );
