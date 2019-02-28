@@ -227,10 +227,14 @@ DirectoryView.prototype.addToHistory = function( info )
 		// Do not add duplicate
 		else
 		{
-			return false;
+			this.pathHistoryIndex = this.pathHistory.length - 1;
+			var el = this.pathHistory[ this.pathHistoryIndex];
+			var f = {};
+			for( var a in el ) f[ a ] = el[ a ];
+			ele = f;
 		}
 	}
-	// Insert into path history
+	// Insert into path history (cuts history)
 	else
 	{
 		var out = [];
@@ -243,13 +247,12 @@ DirectoryView.prototype.addToHistory = function( info )
 				if( this.pathHistory[ a ].Path != ele.Path )
 				{
 					out.push( ele );
-					this.pathHistoryIndex = out.length - 1;
 				}
-				else this.pathHistoryIndex = a;
 				break;
 			}
 		}
 		this.pathHistory = out;
+		this.pathHistoryIndex = out.length - 1;
 	}
 	this.window.fileInfo = ele;
 	return true;
@@ -647,30 +650,31 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
+				winobj.fileInfo = {
+					Path: path,
+					Volume: vol + ':',
+					Door: ( new Door( vol + ':' ) )
+				};
 				var lockH = flags && flags.lockHistory;
 				if( !lockH )
 				{
 					var vol = path.split( ':' )[0];
-					winobj.fileInfo = {
-						Path: path,
-						Volume: vol + ':',
-						Door: ( new Door( vol + ':' ) )
-					};
 					self.addToHistory( winobj.fileInfo );
 				}
 				winobj.refresh();
 			},
 			folderClose( path, event, flags )
 			{
+				winobj.fileInfo = {
+					Path: path,
+					Volume: vol + ':',
+					Door: ( new Door( vol + ':' ) )
+				};
 				var lockH = flags && flags.lockHistory;
-				if( lockH )
+				if( !lockH )
 				{
 					var vol = path.split( ':' )[0];
-					winobj.fileInfo = {
-						Path: path,
-						Volume: vol + ':',
-						Door: ( new Door( vol + ':' ) )
-					};
+					self.addToHistory( winobj.fileInfo );
 				}
 				winobj.refresh();
 			}
