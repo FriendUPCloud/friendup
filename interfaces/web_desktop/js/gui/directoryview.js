@@ -201,13 +201,14 @@ DirectoryView.prototype.addToHistory = function( ele )
 	{
 		this.pathHistory = [ ele ];
 		this.pathHistoryIndex = 0;
-		this.window.fileInfo = ele;
-		return true;
 	}
-	
-	if( this.pathHistoryIndex == this.pathHistory.length - 1 )
+	else if( this.pathHistoryIndex == this.pathHistory.length - 1 )
 	{
-		this.pathHistory.push( ele );
+		// Check duplicate
+		if( this.pathHistory[ this.pathHistory.length - 1 ].Path != ele.Path )
+		{
+			this.pathHistory.push( ele );
+		}
 		this.pathHistoryIndex = this.pathHistory.length - 1;
 	}
 	// Insert into path history
@@ -219,8 +220,13 @@ DirectoryView.prototype.addToHistory = function( ele )
 			out.push( this.pathHistory[ a ] );
 			if( a == this.pathHistoryIndex )
 			{
-				out.push( ele );
-				this.pathHistoryIndex = a + 1;
+				// Check duplicate
+				if( this.pathHistory[ a ].Path != ele.Path )
+				{
+					out.push( ele );
+					this.pathHistoryIndex = out.length - 1;
+				}
+				else this.pathHistoryIndex = a;
 				break;
 			}
 		}
@@ -395,18 +401,15 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex > 0 )
 				{
 					var fin = dw.pathHistoryRewind();
-					console.log( 'Here we go!: ', fin );
-					winobj.fileInfo = fin;
-					winobj.refresh();
 					
-					if( winobj.fileBrowser )
+					if( !isMobile && winobj.fileBrowser )
 					{
 						winobj.fileBrowser.setPath( fin.Path );
 					}
-				}
-				else
-				{
-					console.log( 'The history isn\'t there.' );
+					else
+					{
+						winobj.refresh();
+					}
 				}
 			}
 		}: false,
@@ -420,8 +423,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
 				{
 					var fin = dw.pathHistoryForward();
-					winobj.fileInfo = fin;
-					winobj.refresh();
+					if( !isMobile && winobj.fileBrowser )
+					{
+						winobj.fileBrowser.setPath( fin.Path );
+					}
+					else
+					{
+						winobj.refresh();
+					}
 				}
 			}
 		}: false,
@@ -622,7 +631,13 @@ DirectoryView.prototype.ShowFileBrowser = function()
 				var vol = path.split( ':' )[0];
 				winobj.fileInfo.Path = path;
 				winobj.fileInfo.Volume = vol + ':';
-				self.addToHistory( winobj.fileInfo );
+				
+				var ele = {
+					Path: path,
+					Volume: vol + ':'
+				};
+				
+				self.addToHistory( ele );
 				winobj.refresh();
 			},
 			folderClose( path )
