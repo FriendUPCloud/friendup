@@ -3702,13 +3702,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var w = movableWindows[a];
 			if( w.content ) w = w.content;
-			if( w.fileInfo && w.fileInfo.Volume != 'Mountlist:' )
+			
+			if( !w.fileInfo ) continue;
+
+			// Find volume from path
+			var vol = w.fileInfo.Path.split( ':' )[0];
+			
+			if( vol != 'Mountlist:' )
 			{
+				var pureVol = vol.split( ':' )[0];
 				var found = false;
 				for( var b in this.icons )
 				{
 					// TODO: The colon thing... :)
-					if( w.fileInfo.Volume && w.fileInfo.Volume.split( ':' )[0] == this.icons[b].Title.split( ':' )[0] )
+					if( vol && pureVol == this.icons[b].Title.split( ':' )[0] )
 					{
 						found = true;
 						break;
@@ -3718,7 +3725,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				for( var b in dormants )
 				{
 					// TODO: The colon thing... :)
-					if( w.fileInfo.Volume && w.fileInfo.Volume.split( ':' )[0] == dormants[b].Title.split( ':' )[0] )
+					if( vol && pureVol == dormants[b].Title.split( ':' )[0] )
 					{
 						found = true;
 						break;

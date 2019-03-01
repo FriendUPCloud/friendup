@@ -132,9 +132,12 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 				}
 			}
 		}
-		if( win )
+		if( win && drop == 0 )
 		{
-			if( win.refresh ) win.refresh();
+			if( win.refresh )
+			{
+				win.refresh();
+			}
 		}
 	}
 	return drop;
