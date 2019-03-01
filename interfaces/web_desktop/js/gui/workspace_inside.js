@@ -9,6 +9,8 @@ var WorkspaceInside = {
 	wallpaperLoaded: false,
 	// We only initialize once
 	insideInitialized: false,
+	// Onready functions
+	onReadyList: [],
 	// Switch to workspace
 	switchWorkspace: function( num )
 	{
@@ -1385,6 +1387,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		this.themeStyleElement.innerHTML = str;
 	},
+	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
 		var m = new Module( 'system' );
@@ -1510,28 +1513,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Do the startup sequence in sequence (only once)
-					if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
+					if( !Workspace.startupSequenceRegistered )
 					{
-						Workspace.startupsequenceHasRun = true;
-						var l = {
-							index: 0,
-							func: function()
-							{
-								var cmd = dat.startupsequence[this.index++];
-								if( cmd )
+						Workspace.startupSequenceRegistered = true;
+						Workspace.onReadyList.push( function()
+						{
+							var seq = dat.startupsequence;
+							var l = {
+								index: 0,
+								func: function()
 								{
-									Workspace.shell.execute( cmd, function()
+									var cmd = seq[ this.index++ ];
+									if( cmd )
 									{
-										l.func();
-										if( Workspace.mainDock )
-											Workspace.mainDock.closeDesklet();
-									} );
+										Workspace.shell.execute( cmd, function()
+										{
+											l.func();
+											if( Workspace.mainDock )
+												Workspace.mainDock.closeDesklet();
+										} );
+									}
 								}
 							}
-						}
-						l.func();
+							l.func();
+						} );
 					}
-
 
 					PollTaskbar();
 				}
@@ -2746,6 +2752,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												}, 1000 );
 											} );
 										}
+									}
+									
+									// We are ready!
+									if( !window.friendApp )
+									{
+										Workspace.onReady();
 									}
 								}
 							}, 50 );
@@ -7916,6 +7928,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		this.currentViewState = newState;
 	},
+	// Execute when everything is ready
+	onReady: function()
+	{
+		if( this.onReadyList.length )
+		{
+			for( var a = 0; a < this.onReadyList.length; a++ )
+			{
+				this.onReadyList[ a ]();
+			}
+			this.onReadyList = [];
+		}
+	}
 };
 
 // Application messaging start -------------------------------------------------
