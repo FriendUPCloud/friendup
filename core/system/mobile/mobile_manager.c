@@ -822,6 +822,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 							}
 
 							local->uma_AppToken = StringDuplicate( row[ 1 ] );
+							DEBUG("ADDED: %s ID: %lu\n", local->uma_AppToken, local->uma_ID );
 
 							// add entry to list
 							local->node.mln_Succ = (MinNode *) uma;
