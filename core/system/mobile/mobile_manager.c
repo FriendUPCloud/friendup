@@ -809,6 +809,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 					char **row;
 					if( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
 					{
+						DEBUG("ROW\n");
 						UserMobileApp *local = FCalloc( 1, sizeof(UserMobileApp) );
 						if( local != NULL )
 						{
@@ -827,7 +828,15 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 					}
 					lsqllib->FreeResult( lsqllib, res );
 				}
-
+				
+				DEBUG("Going through list\n");
+				UserMobileApp *t = uma;
+				while( t != NULL )
+				{
+					DEBUG("T: %s id: %lu\n", t->uma_AppToken, t->uma_ID );
+					t = (UserMobileApp *)t->node.mln_Succ;
+				}
+				DEBUG("Going through list END\n");
 			// select * from FUserMobileApp where UserID = XX AND Platform = Ios AND status = 0
 			// FUserSession DeviceIdentity = touch_ios_app_5dca3266e489bfb672bba0aa86cc993a459f63dd65a4237514c75206444619f9
 			//
