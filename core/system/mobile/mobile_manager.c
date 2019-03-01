@@ -787,6 +787,8 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 	}
 	char *mobileType = NULL;
 	mobileType = MobileAppType[ type ];
+	
+	DEBUG("--------------MobleManagerGetMobileAppByUserPlatformDBm\n");
 
 	UserMobileApp *uma = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
