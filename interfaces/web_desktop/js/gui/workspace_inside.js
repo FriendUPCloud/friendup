@@ -2632,6 +2632,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		document.body.classList.add( 'Loading' );
 
 		if( !themeName ) themeName = 'friendup12';
+		if( themeName == 'friendup' ) themeName = 'friendup12';
 		
 		themeName = themeName.toLowerCase();
 		
