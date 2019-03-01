@@ -8472,9 +8472,6 @@ function AboutFriendUP()
 
 	v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
 	{
-		
-		
-		
 		var buildInfo = '<div id="buildInfo">no build information available</div>';
 		if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
 		{
