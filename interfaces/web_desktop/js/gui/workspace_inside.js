@@ -3977,7 +3977,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 
 			// Get name of file
-			var nam = EntityDecode( sele.getElementsByTagName( 'a' )[0].innerHTML );
+			var nam = EntityDecode( sele.fileInfo.Filename );
 
 			// Find out which type it is
 			var icons = rwin.content.icons;
@@ -8212,6 +8212,7 @@ function DoorsKeyDown( e )
 		if( w == 113 || w == 27 )
 		{
 			var icons = currentMovable.content.icons;
+			var dvi = currentMovable.content.directoryview;
 			for( var a = 0; a < icons.length; a++ )
 			{
 				if( icons[a].domNode && icons[a].domNode.classList.contains( 'Selected' ) )
@@ -8238,8 +8239,8 @@ function DoorsKeyDown( e )
 					var input = document.createElement( 'textarea' );
 					input.className = 'Title';
 					icons[a].editField = input;
-					input.value = icons[a].domNode.getElementsByClassName( 'Title' )[0].innerText;
-					input.dom = icons[a].domNode;
+					input.value = icons[a].Filename ? icons[a].Filename : icons[a].fileInfo.Filename;
+					input.dom = dvi.listMode == 'listview' ? icons[a].domNode.querySelector( '.Column' ) : icons[a].domNode;
 					icons[a].domNode.input = input;
 					input.ico = icons[a];
 					input.onkeydown = function( e )
@@ -8254,7 +8255,14 @@ function DoorsKeyDown( e )
 							Workspace.executeRename( this.value, this.ico, currentMovable );
 							this.ico.editField = null;
 							this.dom.input = null;
-							this.dom.removeChild( this );
+							try
+							{
+								this.dom.removeChild( this );
+							}
+							catch( e )
+							{
+								/* .. */
+							}
 						}
 					}
 					setTimeout( function()
