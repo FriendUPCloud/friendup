@@ -1519,12 +1519,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.onReadyList.push( function()
 						{
 							var seq = dat.startupsequence;
+							if( typeof( seq ) != 'object' )
+							{
+								try
+								{
+									seq = JSON.parse( seq );
+								}
+								catch( e )
+								{
+									seq = [];
+								}
+							}
 							var l = {
 								index: 0,
 								func: function()
 								{
 									var cmd = seq[ this.index++ ];
-									if( cmd )
+									console.log( 'This is it: ', cmd );
+									if( cmd && cmd.length )
 									{
 										Workspace.shell.execute( cmd, function()
 										{
