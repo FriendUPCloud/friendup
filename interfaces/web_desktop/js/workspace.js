@@ -104,6 +104,7 @@ Workspace = {
 		this.login();
 	},
 	// Ready after init
+	// NB: This is where we go towards workspace_inside.js
 	postInit: function()
 	{
 		// Everything must be ready
