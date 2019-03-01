@@ -8459,8 +8459,22 @@ function AboutFriendUP()
 		id: 'about_friendup'
 	} );
 
+	// Check for app token
+	var token = '';
+	if( isMobile && window.friendApp )
+	{
+		token = friendApp.get_app_token();
+		if( token && token.length )
+		{
+			token = '<div class="item"><span class="label">App token</span><span class="value"> ' + token + '</span></div>';
+		}
+	}
+
 	v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
 	{
+		
+		
+		
 		var buildInfo = '<div id="buildInfo">no build information available</div>';
 		if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
 		{
@@ -8468,6 +8482,9 @@ function AboutFriendUP()
 			buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
 			if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
 			if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
+
+			// Add app token
+			if( token ) buildInfo += token;
 
 			buildInfo += '<div style="clear: both"></div></div>';
 		}
