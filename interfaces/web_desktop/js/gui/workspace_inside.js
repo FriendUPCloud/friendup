@@ -702,6 +702,8 @@ var WorkspaceInside = {
 						nmsg.notificationData.clicked = true;
 						handleNotificationData( nmsg );
 					}
+					console.log( 'Whole: ', nmsg );
+					
 					// Revert to push notifications on the OS side
 					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
 					return;
