@@ -703,11 +703,8 @@ var WorkspaceInside = {
 						handleNotificationData( nmsg );
 					}
 					
-					var appName = msg.notificationData.application;
-					var t_title = ( appName ? ( appName + ' - ' ) : '' ) + nmsg.title;
-					
 					// Revert to push notifications on the OS side
-					Notify( { title: t_title, text: nmsg.text }, null, clickCallback );
+					Notify( { title: nmsg.title + ' here', text: nmsg.text }, null, clickCallback );
 					return;
 				}
 			}
@@ -831,7 +828,7 @@ var WorkspaceInside = {
 						{
 							var t_title = appName + ' - ' + msg.notificationData.title;
 							var t_txt = msg.notificationData.content;
-							Notify( { title: t_title, text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
+							Notify( { title: t_title + ' yes', text: t_txt, notificationId: msg.notificationData.id }, false, clickCallback );
 							function clickCallback()
 							{
 								msg.notificationData.clicked = true;
