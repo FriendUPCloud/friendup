@@ -702,8 +702,12 @@ var WorkspaceInside = {
 						nmsg.notificationData.clicked = true;
 						handleNotificationData( nmsg );
 					}
+					
+					var appName = msg.notificationData.application;
+					var t_title = ( appName ? ( appName + ' - ' ) : '' ) + nmsg.title;
+					
 					// Revert to push notifications on the OS side
-					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
+					Notify( { title: t_title, text: nmsg.text }, null, clickCallback );
 					return;
 				}
 			}
