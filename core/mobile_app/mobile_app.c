@@ -1448,7 +1448,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 				
-				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s'\n", notif->n_Content);
+				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : token %s\n", notif->n_Content, lma->uma_AppToken );
 				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
 
 				lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;

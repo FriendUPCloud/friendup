@@ -787,6 +787,8 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 	}
 	char *mobileType = NULL;
 	mobileType = MobileAppType[ type ];
+	
+	DEBUG("--------------MobleManagerGetMobileAppByUserPlatformDBm\n");
 
 	UserMobileApp *uma = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
@@ -802,13 +804,14 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 //				lma->uma_AppToken 
 				char *qery = FMalloc( 1048 );
 				qery[ 1024 ] = 0;
-				lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu AND us.DeviceIdentity LIKE CONCAT('%', uma.AppToken, '%') AND LENGTH( uma.AppToken ) > 0", userID );
+				lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu AND us.DeviceIdentity LIKE CONCAT('%', uma.AppToken, '%') AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", userID );
 				void *res = lsqllib->Query( lsqllib, qery );
 				if( res != NULL )
 				{
 					char **row;
-					if( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+					while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
 					{
+						DEBUG("ROW\n");
 						UserMobileApp *local = FCalloc( 1, sizeof(UserMobileApp) );
 						if( local != NULL )
 						{
@@ -819,6 +822,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 							}
 
 							local->uma_AppToken = StringDuplicate( row[ 1 ] );
+							DEBUG("ADDED: %s ID: %lu\n", local->uma_AppToken, local->uma_ID );
 
 							// add entry to list
 							local->node.mln_Succ = (MinNode *) uma;
