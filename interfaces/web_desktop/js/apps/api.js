@@ -5636,7 +5636,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	// TODO: Move to a proper theme parser
 	function ApplyThemeConfig( themeData )
 	{
-		if( !themeData ) return;
+		if( !themeData || typeof( themeData ) == 'undefined' ) return;
 		
 		if( themeData && typeof( themeData ) == 'string' )
 		{

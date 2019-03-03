@@ -18,173 +18,153 @@ Sections.accounts_roles = function( cmd, extra )
 			// Show the form
 			function initRoleDetails( info )
 			{
-				// Some shortcuts
-				var roleInfo = info.roleInfo;
-				var settings = info.settings;
-				var workspaceSettings = info.workspaceSettings;
-				var wgroups = info.workgroups;
-				var mountlist = info.mountlist;
-				var apps = info.Permissions;
 				
-				if( settings )
-				{				
-					var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
-					if( !themeData )
-						themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
-				}
+				//System
+				//Modules
+				//Apps
 				
-				// Workgroups
-				var wstr = '';
-				if( wgroups && wgroups.length )
+				var data = info.permission;
+				
+				if( data && data.Apps )
 				{
-					for( var b = 0; b < wgroups.length; b++ )
+					var perm = data.Apps;
+					
+					if( info.role.Permissions )
 					{
-						wstr += '<div class="HRow">';
-						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
-						wstr += '</div>';
-					}
-				}
-				
-				// Mountlist
-				var mlst = '';
-				if( mountlist && mountlist.length )
-				{
-					mlst += '<div class="HRow">';
-					for( var b = 0; b < mountlist.length; b++ )
-					{
-						try
-						{
-							mountlist[b].Config = JSON.parse( mountlist[b].Config );
-						}
-						catch( e )
-						{
-							mountlist[b].Config = {};
-						}
-						mlst += '<div class="HContent20 FloatLeft">';
-						mlst += '<div class="PaddingSmall Ellipsis">';
-						mlst += '<div id="Storage_' + mountlist[b].ID + '">';
-						mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
-						mlst += '</div>';
-						mlst += '<div class="FloatLeft HContent100 Name Ellipsis TextCenter" title="' + mountlist[b].Name + '">' + mountlist[b].Name + '</div>';
-						mlst += '</div>';
-						mlst += '</div>';
-					}
-					mlst += '</div>';
-				}
-				
-				function initStorageGraphs()
-				{
-					var d = document.getElementsByTagName( 'canvas' );
-					for( var a = 0; a < d.length; a++ )
-					{
-						if( !d[a].id || d[a].id.substr( 0, 4 ) != 'Stor' )
-							continue;
-						var nod = d[a];
-						nod.setAttribute( 'width', nod.parentNode.offsetWidth );
-						nod.setAttribute( 'height', 64 );
+						var roleperm = info.role.Permissions;
 						
-						// Calculate disk usage
-						var size = nod.getAttribute( 'size' );
-						var mode = size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ];
-						size = parseInt( size );
-						var type = mode[0].toLowerCase();
-						if( type == 'mb' )
+						for( var i in perm )
 						{
-							size = size * 1024;
-						}
-						else if( type == 'gb' )
-						{
-							size = size * 1024 * 1024;
-						}
-						else if( type == 'tb' )
-						{
-							size = size * 1024 * 1024 * 1024;
-						}
-						var used = parseInt( nod.getAttribute( 'used' ) );
-						if( isNaN( size ) ) size = 500 * 1024;
-						if( !used && !size ) used = 0, size = 1;
-						if( !used ) used = 0;
-						if( used > size || ( used && !size ) ) size = used;
-						
-						// Create doghnut chart
-						var pie = new Chart( nod, 
+							for( var ii in perm[i].permissions )
 							{
-								type: 'doughnut',
-								data: { 
-									labels: [ 'Space', 'Data' ], 
-									datasets: [ { 
-										label: 'Disk usage', data: [ size - used, used ], 
-										backgroundColor: [ '#27BBB0', '#D75B4E' ],
-										borderWidth: 0,
-									} ]
-								},
-								options: { legend: { display: false } }
-							} 
-						);
-					}
-				}
-				
-				
-				
-				var apl = '';
-				var types = [ i18n( 'i18n_name' ) ];
-				var keyz  = [ 'Permission' ];
-				apl += '<div class="HRow">';
-				for( var a = 0; a < types.length; a++ )
-				{
-					apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis">' + types[ a ] + '</div>';
-				}
-				apl += '</div>';
-				
-				apl += '<div class="List">';
-				var sw = 2;
-				if( apps )
-				{
-					for( var a = 0; a < apps.length; a++ )
-					{
-						sw = sw == 2 ? 1 : 2;
-						apl += '<div class="HRow sw' + sw + '">';
-						for( var k = 0; k < keyz.length; k++ )
-						{
-							var ex = '';
-							var value = apps[ a ][ keyz[ k ] ];
-							if( !value ) continue;
-							if( keyz[ k ] == 'Category' )
-								value = apps[ a ].Config.Category;
-							if( keyz[ k ] == 'Dock' )
-							{
-								value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
-								ex = ' TextCenter';
+								for( var r in roleperm )
+								{
+									if( roleperm[r].Key && roleperm[r].Key == perm[i].app && roleperm[r].Permission == perm[i].permissions[ii].permission )
+									{
+										console.log( perm[i] );
+										console.log( roleperm[r] );
+										
+										perm[i].permissions[ii].data = roleperm[r].Data;
+									}
+								}
 							}
-							apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis' + ex + '">' + value + '</div>';
 						}
-						apl += '</div>';
 					}
 				}
 				else
 				{
-					apl += i18n( 'i18n_no_permissions_available' );
+					// Will be removed ... just for testing purposes ...
+					
+					var perm = [
+						{ 
+							app : "Users", name : "Users", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: "Activated" 
+								}
+							] 
+						},
+						{ 
+							app : "Liberator", name : "Liberator", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
+								}
+							] 
+						},
+						{ 
+							app : "Server", name : "Server", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", data: false 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", data: false 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
+								}
+							] 
+						},
+						{ 
+							app : "Mimetypes", name : "Mimetypes", description : "", permissions : [
+								{ 
+									permission : "USERS_READ", name : "Read", description : "", data: false 
+								},
+								{ 
+									permission : "USERS_WRITE", name : "Write", description : "", data: false 
+								},
+								{ 
+									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
+								}
+							] 
+						}
+					];
 				}
-				apl += '</div>';
+				
+				console.log( perm );
+				
+				apl = '';
+				
+				if( perm )
+				{
+					for( var a in perm )
+					{
+						var sw = 2;
+						
+						apl += '<div class="Wrapper collapse">';
+						
+						apl += '<div class="HRow">';
+						apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].name + '</strong></div>';
+						apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+						apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
+						apl += '</div>';
+						apl += '</div>';
+						
+						apl += '<div class="List">';
+						
+						for( var k in perm[a].permissions )
+						{
+							sw = sw == 2 ? 1 : 2;
+							
+							var rid = info.role.ID;
+							var pem = perm[a].permissions[k].permission;
+							var key = perm[a].app;
+							
+							apl += '<div class="HRow">';
+							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + perm[a].permissions[k].name + '</div>';
+							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+							apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+							apl += '</div>';
+							apl += '</div>';
+						}
+						
+						apl += '</div>';
+						
+						apl += '</div>';
+					}
+				}
+				
+				
+				
 				
 				// Get the user details template
 				var d = new File( 'Progdir:Templates/account_role_details.html' );
 				
 				// Add all data for the template
 				d.replacements = {
-					id: info.ID,
-					role_name: info.Name,
-					role_description: info.Description,
-					/*user_username: roleInfo.Name,
-					user_email: roleInfo.Email,
-					theme_name: settings.Theme,
-					theme_dark: themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
-					wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
-					workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
-					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					storage: mlst,
-					workgroups: wstr,*/
+					id: info.role.ID,
+					role_name: info.role.Name,
+					role_description: ( info.role.Description ? info.role.Description : '' ),
 					permissions: apl
 				};
 				
@@ -193,7 +173,6 @@ Sections.accounts_roles = function( cmd, extra )
 				d.onLoad = function( data )
 				{
 					ge( 'RoleDetails' ).innerHTML = data;
-					initStorageGraphs();
 					
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'RoleDetails' );
@@ -201,6 +180,8 @@ Sections.accounts_roles = function( cmd, extra )
 				}
 				d.load();
 			}
+			
+			var info = {};
 			
 			// Go through all data gathering until stop
 			var loadingSlot = 0;
@@ -213,12 +194,12 @@ Sections.accounts_roles = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
+						info.role = null;
 						if( e != 'ok' ) return;
-						var info = null;
+						
 						try
 						{
-							info = JSON.parse( d );
-							console.log( 'roleInfo ', info );
+							info.role = JSON.parse( d );
 						}
 						catch( e )
 						{
@@ -230,123 +211,31 @@ Sections.accounts_roles = function( cmd, extra )
 					u.execute( 'userroleget', { id: extra } );
 				},
 				
-				/*// Load user settings
-				function( roleInfo )
+				function()
 				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
 					{
+						info.permission = null;
 						if( e != 'ok' ) return;
-						var settings = null;
-						try
-						{
-							settings = JSON.parse( d );
-						}
-						catch( e )
-						{
-							settings = null;
-						}
-						loadingList[ ++loadingSlot ]( { roleInfo: roleInfo, settings: settings } );
-					}
-					u.execute( 'usersettings', { userid: roleInfo.ID } );
-				},
-				
-				// Get more user settings
-				function( data )
-				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
-					{
-						if( e != 'ok' ) return;
-						var workspacesettings = null;
-						try
-						{
-							workspacesettings = JSON.parse( d );
-						}
-						catch( e )
-						{
-							workspacesettings = null;
-						}
 						
-						loadingList[ ++loadingSlot ]( { roleInfo: data.roleInfo, settings: data.settings, workspaceSettings: workspacesettings } );
-					}
-					u.execute( 'getsetting', { settings: [ 
-						'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
-						'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
-						'focusmode', 'hiddensystem', 'workspacecount', 
-						'scrolldesktopicons', 'wizardrun', 'themedata_' + data.settings.Theme,
-						'workspacemode'
-					], userid: data.roleInfo.ID } );
-				},
-				
-				// Get user's workgroups
-				function( info )
-				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
-					{
-						if( e != 'ok' ) return;
-						var wgroups = null;
 						try
 						{
-							wgroups = JSON.parse( d );
+							info.permission = JSON.parse( d );
 						}
-						catch( e )
+						catch( e ) 
 						{
-							wgroups = null;
+							return;
 						}
-						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'workgroups' );
+					m.execute( 'getsystempermissions' );
 				},
 				
-				// Get storage
 				function( info )
 				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
-					{
-						if( e != 'ok' ) return;
-						var ul = null;
-						try
-						{
-							ul = JSON.parse( d );
-						}
-						catch( e )
-						{
-							ul = null;
-						}
-						info.mountlist = ul;
-						loadingList[ ++loadingSlot ]( info );
-					}
-					u.execute( 'mountlist', { userid: info.roleInfo.ID } );
-				},
-				
-				// Get user applications
-				function( info )
-				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
-					{
-						var apps = null;
-						if( e != 'ok' ) return;
-						try
-						{
-							apps = JSON.parse( d );
-						}
-						catch( e )
-						{
-							apps = null;
-						}
-						info.applications = apps;
-						loadingList[ ++loadingSlot ]( info );
-					}
-					u.execute( 'listuserapplications', { userid: info.roleInfo.ID } );
-				},*/
-				
-				function( info )
-				{
+					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' ) return;
+					
 					initRoleDetails( info );
 				}
 				
@@ -367,7 +256,7 @@ Sections.accounts_roles = function( cmd, extra )
 	{
 		console.log( { e:e, d:d } );
 		
-		if( e != 'ok' ) return;
+		//if( e != 'ok' ) return;
 		var userList = null;
 		try
 		{
@@ -375,10 +264,8 @@ Sections.accounts_roles = function( cmd, extra )
 		}
 		catch( e )
 		{
-			return;
+			//return;
 		}
-		
-		console.log( { e:e, d:userList } );
 		
 		var o = ge( 'RoleList' );
 		o.innerHTML = '';
@@ -386,8 +273,7 @@ Sections.accounts_roles = function( cmd, extra )
 		// Types of listed fields
 		var types = {
 			Edit: '10',
-			Name: '80'/*,
-			Description: '60'*/
+			Name: '80'
 		};
 		
 		
@@ -440,38 +326,41 @@ Sections.accounts_roles = function( cmd, extra )
 		var sw = 2;
 		for( var b = 0; b < levels.length; b++ )
 		{
-			for( var a = 0; a < userList.length; a++ )
+			if( userList )
 			{
-				// Skip irrelevant level
-				//if( userList[ a ].Level != levels[ b ] ) continue;
-				
-				sw = sw == 2 ? 1 : 2;
-				var r = document.createElement( 'div' );
-				setROnclick( r, userList[ a ].ID );
-				r.className = 'HRow sw' + sw;
-			
-				var icon = '<span class="IconSmall fa-user"></span>';
-				userList[ a ][ 'Edit' ] = icon;
-				
-				for( var z in types )
+				for( var a = 0; a < userList.length; a++ )
 				{
-					var borders = '';
-					var d = document.createElement( 'div' );
-					if( z != 'Edit' )
-					{
-						d.className = '';
-						borders += ' BorderRight';
-					}
-					else d.className = 'TextCenter';
-					if( a < userList.length - a )
-						borders += ' BorderBottom';
-					d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
-					d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
-					r.appendChild( d );
-				}
+					// Skip irrelevant level
+					//if( userList[ a ].Level != levels[ b ] ) continue;
+				
+					sw = sw == 2 ? 1 : 2;
+					var r = document.createElement( 'div' );
+					setROnclick( r, userList[ a ].ID );
+					r.className = 'HRow sw' + sw;
 			
-				// Add row
-				list.appendChild( r );
+					var icon = '<span class="IconSmall fa-user"></span>';
+					userList[ a ][ 'Edit' ] = icon;
+				
+					for( var z in types )
+					{
+						var borders = '';
+						var d = document.createElement( 'div' );
+						if( z != 'Edit' )
+						{
+							d.className = '';
+							borders += ' BorderRight';
+						}
+						else d.className = 'TextCenter';
+						if( a < userList.length - a )
+							borders += ' BorderBottom';
+						d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
+						d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
+						r.appendChild( d );
+					}
+			
+					// Add row
+					list.appendChild( r );
+				}
 			}
 		}
 		
@@ -524,46 +413,6 @@ Sections.role_edit = function( id, _this )
 	
 }
 
-Sections.permission_edit = function( id, _this )
-{
-	
-	var pnt = _this.parentNode;
-	
-	var edit = pnt.innerHTML;
-	
-	var buttons = [ 
-		{ 'name' : 'Save',   'icon' : '', 'func' : function()
-			{ 
-				alert( 'Save ', id ); 
-			} 
-		}, 
-		{ 'name' : 'Delete', 'icon' : '', 'func' : function()
-			{ 
-				alert( 'Delete ', id ); 
-			} 
-		}, 
-		{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
-			{ 
-				pnt.innerHTML = edit 
-			} 
-		}
-	];
-	
-	pnt.innerHTML = '';
-	
-	for( var i in buttons )
-	{
-		var b = document.createElement( 'button' );
-		b.className = 'IconSmall FloatRight';
-		b.innerHTML = buttons[i].name;
-		b.onclick = buttons[i].func;
-		
-		pnt.appendChild( b );
-	}
-	
-}
-
-
 
 
 Sections.userroleadd = function( input )
@@ -612,7 +461,25 @@ Sections.userroleupdate = function( rid, input, perms )
 		}
 		m.execute( 'userroleupdate', { id: rid, name: ( input ? input : null ), permissions: ( perms ? perms : null ) } );
 	}
-}
+};
+
+Sections.updatepermission = function( rid, pem, key, data, _this )
+{
+	if( _this )
+	{
+		Toggle( _this, function( on )
+		{
+			data = ( on ? 'Activated' : '' );
+		} );
+	}
+	
+	if( rid && pem && key )
+	{
+		var perms = [ { name : pem, key : key, data : data } ];
+		
+		Sections.userroleupdate( rid, null, perms );
+	}
+};
 
 Sections.checkpermission = function( input )
 {
@@ -625,11 +492,11 @@ Sections.checkpermission = function( input )
 		}
 		m.execute( 'checkpermission', { permission: input } );
 	}
-}
+};
 
-console.log( 'Sections.userroleadd =', Sections.userroleadd );
-console.log( 'Sections.userroledelete =', Sections.userroledelete );
-console.log( 'Sections.userroleupdate =', Sections.userroleupdate );
-console.log( 'Sections.accounts_roles =', Sections.accounts_roles );
-console.log( 'Sections.checkpermission =', Sections.checkpermission );
+//console.log( 'Sections.userroleadd =', Sections.userroleadd );
+//console.log( 'Sections.userroledelete =', Sections.userroledelete );
+//console.log( 'Sections.userroleupdate =', Sections.userroleupdate );
+//console.log( 'Sections.accounts_roles =', Sections.accounts_roles );
+//console.log( 'Sections.checkpermission =', Sections.checkpermission );
 

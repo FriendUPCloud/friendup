@@ -192,36 +192,94 @@ DirectoryView.prototype.checkSuffix = function( fn )
 	return true;
 }
 
-DirectoryView.prototype.addToHistory = function( ele )
+DirectoryView.prototype.addToHistory = function( info )
 {
 	// Don't do it twice
-	if( this.window && this.window.fileInfo )
+	if( !this.window ) return;
+	
+	// Make a copy
+	var ele = {};
+	for( var a in info ) ele[ a ] = info[ a ];
+	
+	
+	var his = [];
+	for( var a = 0; a < this.pathHistory.length; a++ )
 	{
-		if( this.window.fileInfo.Path == ele.Path )
-			return false;
+		var el = {};
+		for( var b in this.pathHistory[ a ] )
+			el[ b ] = this.pathHistory[ a ];
+		his.push( el );
 	}
-	if( this.pathHistory.length == 0 )
+	
+	if( !this.pathHistory.length )
 	{
 		this.pathHistory = [ ele ];
 		this.pathHistoryIndex = 0;
-		return true;
 	}
-	this.pathHistory.push( ele );
-	this.pathHistoryIndex = this.pathHistory.length - 1;
+	else if( this.pathHistoryIndex == this.pathHistory.length - 1 )
+	{
+		// Check duplicate
+		if( this.pathHistory[ this.pathHistory.length - 1 ].Path != ele.Path )
+		{
+			this.pathHistory.push( ele );
+			this.pathHistoryIndex = this.pathHistory.length - 1;
+		}
+		// Do not add duplicate
+		else
+		{
+			this.pathHistoryIndex = this.pathHistory.length - 1;
+			var el = this.pathHistory[ this.pathHistoryIndex];
+			var f = {};
+			for( var a in el ) f[ a ] = el[ a ];
+			ele = f;
+		}
+	}
+	// Insert into path history (cuts history)
+	else
+	{
+		var out = [];
+		for( var a = 0; a < this.pathHistory.length; a++ )
+		{
+			out.push( this.pathHistory[ a ] );
+			if( a == this.pathHistoryIndex )
+			{
+				// Check duplicate
+				if( this.pathHistory[ a ].Path != ele.Path )
+				{
+					out.push( ele );
+				}
+				break;
+			}
+		}
+		this.pathHistory = out;
+		this.pathHistoryIndex = out.length - 1;
+	}
 	this.window.fileInfo = ele;
 	return true;
 }
 
-DirectoryView.prototype.setHistoryCurrent = function( ele )
+// Rewind to previous path history item
+DirectoryView.prototype.pathHistoryRewind = function()
 {
-	this.pathHistory[ this.pathHistoryIndex ] = ele;
-	var out = [];
-	for( var a = 0; a <= this.pathHistoryIndex; a++ )
+	// Previous
+	if( this.pathHistoryIndex > 0 )
 	{
-		out.push( this.pathHistory[a] );
+		return this.pathHistory[ --this.pathHistoryIndex ];
 	}
-	this.pathHistory = out;
-	this.window.fileInfo = ele;
+	// Start
+	return this.pathHistory[ 0 ];
+}
+
+// Rewind to next path history item
+DirectoryView.prototype.pathHistoryForward = function()
+{
+	// Next
+	if( this.pathHistoryIndex < this.pathHistory.length - 1 )
+	{
+		return this.pathHistory[ ++this.pathHistoryIndex ];
+	}
+	// End of the line
+	return this.pathHistory[ this.pathHistory.length - 1 ];
 }
 
 // Generate toolbar
@@ -260,27 +318,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	var lmode = this.listMode;
 
 	var buttons = [
-		/*{
-			element: 'button',
-			className: 'Home IconSmall fa-home',
-			content: i18n( 'i18n_dir_btn_root' ),
-			onclick: function( e )
-			{
-				var path = winobj.fileInfo.Volume.split( ':' );
-				var fin = {
-					Volume: path[0] + ':',
-					Path: path[0] + ':',
-					Title: path[0],
-					Type: winobj.fileInfo.Type,
-					Door: Workspace.getDoorByPath( path.join( ':' ) )
-				}
-
-				// Set current ele
-				dw.setHistoryCurrent( fin );
-
-				winobj.refresh();
-			}
-		},*/
 		// Go up a level
 		{
 			element: 'button',
@@ -385,13 +422,15 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the top of the history array, go back
 				if( dw.pathHistoryIndex > 0 )
 				{
-					var fin = dw.pathHistory[--dw.pathHistoryIndex];
-					winobj.fileInfo = fin;
-					winobj.refresh();
+					var fin = dw.pathHistoryRewind();
 					
-					if( winobj.fileBrowser )
+					if( !isMobile && winobj.fileBrowser )
 					{
-						winobj.fileBrowser.setPath( fin.Path );
+						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+					}
+					else
+					{
+						winobj.refresh();
 					}
 				}
 			}
@@ -405,9 +444,15 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the end of the history array, go forward
 				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
 				{
-					var fin = dw.pathHistory[++dw.pathHistoryIndex];
-					winobj.fileInfo = fin;
-					winobj.refresh();
+					var fin = dw.pathHistoryForward();
+					if( !isMobile && winobj.fileBrowser )
+					{
+						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+					}
+					else
+					{
+						winobj.refresh();
+					}
 				}
 			}
 		}: false,
@@ -597,24 +642,40 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		{
 			checkFile( filepath, fileextension )
 			{
-				console.log( filepath + ' on ' + fileextension );
+				//console.log( filepath + ' on ' + fileextension );
 			},
-			loadFile( filepath )
+			loadFile( filepath, event, flags )
 			{
 				// 
 			},
-			folderOpen( path )
+			folderOpen( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
-				winobj.fileInfo.Path = path;
-				winobj.fileInfo.Volume = vol + ':';
-				self.addToHistory( winobj.fileInfo );
+				winobj.fileInfo = {
+					Path: path,
+					Volume: vol + ':',
+					Door: ( new Door( vol + ':' ) )
+				};
+				var lockH = flags && flags.lockHistory;
+				if( !lockH )
+				{
+					var vol = path.split( ':' )[0];
+					self.addToHistory( winobj.fileInfo );
+				}
 				winobj.refresh();
 			},
-			folderClose( path )
+			folderClose( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
-				winobj.fileInfo.Path = path;
+				winobj.fileInfo = {
+					Path: path,
+					Volume: vol + ':',
+					Door: ( new Door( vol + ':' ) )
+				};
+				var lockH = flags && flags.lockHistory;
+				if( !lockH )
+				{
+					var vol = path.split( ':' )[0];
+					self.addToHistory( winobj.fileInfo );
+				}
 				winobj.refresh();
 			}
 		} );
@@ -631,6 +692,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	this.windowObject = winobj;
 	winobj.parentNode.classList.add( 'IconWindow' );
 	winobj.redrawtimeouts = [];
+	
+	if( winobj.fileInfo )
+	{
+		// Initial path
+		this.pathHistory = [ winobj.fileInfo ];
+	}
 	
 	// Add context menu
 	if( !winobj.oldContextMenuEvent ) winobj.oldContextMenuEvent = winobj.oncontextmenu;
@@ -828,7 +895,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		if( this.redrawing )
 		{
 			// This will overwrite the queued redraw with updated data
-			this.queuedRedraw = function(){
+			this.queuedRedraw = function()
+			{
 				winobj.redrawIcons( icons, direction );
 			};
 			return;
@@ -2348,6 +2416,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		this.scroller = sc;
 	}
 	
+	// Remove loading animation
 	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
 	{
 		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
@@ -2929,6 +2998,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 		this.changed = false;
+	}
+
+	// Remove loading animation
+	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
+	{
+		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
+		la.parentNode.removeChild( la );
 	}
 
 	// Make sure we have a listview columns header bar
@@ -4052,7 +4128,8 @@ FileIcon.prototype.Init = function( fileInfo )
 					var mt = Workspace.mimeTypes[a];
 					for( var b in mt.types )
 					{
-						if( ext == mt.types[b].toLowerCase() )
+						// Make sure we have a valid executable
+						if( ext == mt.types[b].toLowerCase() && mt.executable.length )
 						{
 							return ExecuteApplication( mt.executable, obj.fileInfo.Path );
 						}
@@ -4347,6 +4424,7 @@ FileIcon.prototype.Init = function( fileInfo )
 // -----------------------------------------------------------------------------
 function RefreshWindowGauge( win, finfo )
 {
+	if( isMobile ) return;
 	if( win.content ) win = win.content;
 	if( !win.fileInfo && finfo ) win.fileInfo = finfo;
 	if( !win.fileInfo ) return;
@@ -4435,6 +4513,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			window: false
 		};
 	}
+	
 	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
@@ -4506,10 +4585,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					{
 						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
-					if( callback ) callback();
 					RefreshWindowGauge( self.win );
 					self.refreshTimeout = null;
 					win.refreshing = false;
+					if( callback ) callback();
 				} );
 			}, 250 );
 		}
@@ -4784,6 +4863,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 									self.redrawIcons( self.icons, self.direction, cbk );
 								} );
 								RefreshWindowGauge( self );
+								
 							}
 						}
 						// empty
@@ -4878,7 +4958,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 						for( var a = 0; a < content.length; a++ )
 						{
 							if( content[ a ].Path.indexOf( ':' ) < 0 )
-								content[ a ].Path = this.fileInfo.Volume + content[ a ].Path;
+							{
+								content[ a ].Path = this.fileInfo.Path.split( ':' )[0] + ':' + content[ a ].Path;
+							}
 						}
 					
 						var ww = this.win;

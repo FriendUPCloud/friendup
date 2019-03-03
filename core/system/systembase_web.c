@@ -494,6 +494,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			else
 			{
+				DEBUG("CHECK1\n");
 				FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
 				while( curusrsess != NULL )
 				{
@@ -534,6 +535,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 				}
 				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+				DEBUG("CHECK1END\n");
 			}
 		}
 		
@@ -994,11 +996,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( l->sl_ActiveAuthModule != NULL )
 				{
 					UserSession *dstusrsess = NULL;
-					UserSession *tusers = l->sl_USM->usm_Sessions;
+					UserSession *tusers = NULL;
 					
 					FBOOL isUserSentinel = FALSE;
 					
+					DEBUG("CHECK2\n");
 					FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
+					
+					tusers = l->sl_USM->usm_Sessions;
 					
 					if( deviceid == NULL )
 					{
@@ -1064,6 +1069,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 					}
 					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+					DEBUG("CHECK2END\n");
 					
 					if( dstusrsess == NULL )
 					{

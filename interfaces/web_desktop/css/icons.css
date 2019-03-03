@@ -173,9 +173,20 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	webkit-transition: transform,opacity 0.25s;
 }
 
-.File.Editing a.Title
+.File.Editing a.Title,
+.File.Editing .Column
 {
 	display: none;
+}
+
+.Listview .File.Editing textarea
+{
+	text-align: left;
+	padding: 0 0 0 48px;
+	width: 100%;
+	box-sizing: border-box;
+	height: 28px;
+	line-height: 28px;
 }
 
 .File.Selected

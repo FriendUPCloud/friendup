@@ -50,8 +50,8 @@
 	$ColorListSw2:           #030303;
 	$ColorTdListSw1:         #333333;
 	$ColorTdListSw2:         #030303;
-	$ColorBgThListSw1:       #e4e4e4;
-	$ColorBgThListSw2:       #ededed;
+	$ColorBgThListSw1:       #fefefe;
+	$ColorBgThListSw2:       #f5f5f5;
 	$ColorThListSw1:         #333333;
 	$ColorThListSw2:         #333333;
 	$ColorNegativeListSw1:   #f0f0f0;
@@ -1405,26 +1405,64 @@ html .View.Scrolling > .Resize
 	background-color: transparent !important;
 }
 
-html .View > .Resize
+html body:not([mobile]) .View > .Resize
 {
     background-color: transparent !important;
-    background-position: 5px 1px;
-    background-image: url(/themes/friendup12/gfx/win_resizewin_active.png);
-    background-repeat: no-repeat;
-    background-color: transparent !important;
     cursor: hand;
-    opacity: 0.5;
     cursor: pointer;
     right: 0px;
     bottom: 0px;
-    width: 13px !important;
-    height: 9px !important;
+    width: 20px !important;
+    height: 20px !important;
+    position: relative;
+    overflow: hidden;
+    background-image: none;
+}
+
+html body:not([mobile]) .View > .Resize:after
+{
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 24px;
+	height: 24px;
+	content: " ";
+	display: block;
+    background: transparent !important;
+    z-index: 2;
+    opacity: 0.5;
     transition: opacity 0.25s;
 }
 
-html .View > .Resize:hover
+html body:not([mobile]) .View > .Resize:before
 {
-	opacity: 0.7;
+	content: " ";
+	display: block;
+	width: 24px;
+	height: 24px;
+	transform: rotateZ(45deg);
+	position: absolute;
+	z-index: 1;
+	top: 40%;
+	left: 40%;
+	transition: background-color 0.25s;
+	border: 2px solid #2e393d;
+}
+
+html body:not([mobile]) .View:not(.Active) > .Resize:before
+{
+	background-color: #34495E;
+}
+
+html body:not([mobile]) .View.Active > .Resize:before
+{
+	background-color: #4A6075;
+}
+
+html body:not([mobile]) .View > .Resize:hover:before,
+html body:not([mobile]) .View > .Resize:active:before
+{
+	background-color: #455155;
 }
 
 .Screen > .TitleBar .ScreenList > img

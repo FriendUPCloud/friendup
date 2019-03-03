@@ -4,7 +4,12 @@
 	/*background-color: #20374D;*/
 	background-color: #34495E;
 	font-weight: normal;
-	font-size: 20px;
+	/*font-size: 20px;*/
+}
+
+#Admin .collapse > .List
+{
+	display: none;
 }
 
 #Admin .BackgroundHeavier
@@ -24,7 +29,7 @@
 
 #Admin textarea
 {
-	font-size: 20px;
+	/*font-size: 20px;*/
 	padding: 5px;
 	border-radius: 0;
 	background: transparent;
@@ -41,7 +46,7 @@
 {
 	color: #FFFFFF;
 	font-weight: normal;
-	font-size: 20px;
+	/*font-size: 20px;*/
 }
 
 #Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
@@ -52,7 +57,7 @@
 #Admin #GuiSidebar h2
 {
 	font-weight: bold;
-	font-size: 18px;
+	/*font-size: 18px;*/
 }
 
 #Admin #GuiContent

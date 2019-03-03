@@ -2166,6 +2166,12 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	padding: 8px;
 }
 
+#Tray .Notification .BubbleInfo p.Layout
+{
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+
 #Tray > .Notification > .TrayInformation
 {
 	position: absolute;

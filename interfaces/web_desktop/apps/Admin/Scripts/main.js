@@ -196,10 +196,98 @@ var Sections = {
 		}
 		m.execute( 'getconfiginijson' );
 	},
+	system_permissions()
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				try
+				{
+					d = JSON.parse( d );
+				}
+				catch( e ) 
+				{
+					
+				}
+			}
+			
+			console.log( 'system_permissions() ', { e:e, d:d } );
+		}
+		m.execute( 'getsystempermissions' );
+	},
 	user_edit( id )
 	{
 	}
 }
+
+
+
+function Toggle( _this, callback, on )
+{
+	if( _this.className.indexOf( 'fa-toggle-off' ) >= 0 )
+	{
+		_this.className = _this.className.split( ' fa-toggle-off' ).join( '' ) + ' fa-toggle-on';
+		
+		if( callback ) callback( true );
+	}
+	else if( _this.className.indexOf( 'fa-toggle-on' ) >= 0 )
+	{
+		_this.className = _this.className.split( ' fa-toggle-on' ).join( '' ) + ' fa-toggle-off';
+		
+		if( callback ) callback( false );
+	}
+	
+	// If nothing is set, set default based on ( on | off ) preset
+	
+	if( _this.className.indexOf( 'fa-toggle-on' ) < 0 && _this.className.indexOf( 'fa-toggle-off' ) < 0 )
+	{
+		_this.className = _this.className.split( ' fa-toggle-on' ).join( '' ).split( ' fa-toggle-off' ).join( '' ) + ( on ? ' fa-toggle-on' : ' fa-toggle-off' );
+	}
+}
+
+function Expand( _this, level, on )
+{
+	var pnt = _this.parentNode;
+	
+	if( level && level > 1 )
+	{
+		pnt = _this;
+		
+		for( var i = 0; i < level; i++ )
+		{
+			if( pnt.parentNode )
+			{
+				pnt = pnt.parentNode;
+			}
+		}
+	}
+	
+	if( _this.className.indexOf( 'fa-chevron-right' ) >= 0 )
+	{
+		_this.className = _this.className.split( ' fa-chevron-right' ).join( '' ) + ' fa-chevron-down';
+		
+		pnt.className = pnt.className.split( ' collapse' ).join( '' );
+	}
+	else if( _this.className.indexOf( 'fa-chevron-down' ) >= 0 )
+	{
+		_this.className = _this.className.split( ' fa-chevron-down' ).join( '' ) + ' fa-chevron-right';
+		
+		pnt.className = pnt.className.split( ' collapse' ).join( '' ) + ' collapse';
+	}
+	
+	// If nothing is set, set default based on ( on | off ) preset
+	
+	if( _this.className.indexOf( 'fa-chevron-right' ) < 0 && _this.className.indexOf( 'fa-chevron-down' ) < 0 )
+	{
+		_this.className = _this.className.split( ' fa-chevron-right' ).join( '' ).split( ' fa-chevron-down' ).join( '' ) + ( on ? ' fa-chevron-down' : ' fa-chevron-right' );
+		
+		pnt.className = pnt.className.split( ' collapse' ).join( '' ) + ( on ? '' : ' collapse' );
+	}
+}
+
+
 
 function FieldToInput( key, data )
 {

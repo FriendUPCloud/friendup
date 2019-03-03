@@ -148,6 +148,10 @@ char *GetFileName( const char *path )
 	return p;
 }
 
+//#define PHP_READ_SIZE 262144
+//#define PHP_READ_SIZE 2048
+#define PHP_READ_SIZE 132144
+
 //
 // php call, send request, read answer
 //
@@ -156,7 +160,145 @@ ListString *PHPCall( const char *command, int *length )
 {
 	DEBUG("[PHPFsys] run app: '%s'\n", command );
 	//Log( FLOG_INFO, "[PHPFsys] run app: '%s'\n", command );
+	/*
+	int p[2];
+	int pipeNr;
+	int timeout = 10;
+	time_t lastTime = 0;
+
+	printf("-------------------------------------------------\n");
+	printf("Makeing call: >%s< timeout: %d\n", command, timeout );
+	printf("-------------------------------------------------\n");
 	
+	ListString *data = ListStringNew();
+
+	if( pipe( p ) < 0 )
+	{
+		printf("pipe < 0\n"); 
+		return data;
+	}
+
+	if( fcntl( p[0], F_SETFL, O_NONBLOCK) < 0 )
+   	{
+   	    printf("cannot set nonblock option\n");
+		return data;
+   	}
+
+	pipeNr = fork();
+	switch( pipeNr )
+	{ 
+	    // error 
+	    case -1:
+	        printf("fork -1\n");
+	        break;
+  
+		// 0 for child process 
+		case 0:
+			{
+				printf("process created write\n");
+				FILE *pipe = popen( command, "r" );
+				if( pipe != NULL )
+				{
+					//printf("process opened\n");
+					close( p[0] ); 
+					char *buf = FMalloc( PHP_READ_SIZE );
+					if( buf != NULL )
+					{
+						//printf("buffer allocated\n");
+						while( !feof( pipe ) )
+						{
+							// Make a new buffer and read
+							int size = fread( buf, 1, PHP_READ_SIZE, pipe );
+							//printf("Readed: %d\n", size );
+							if( size <= 0 )
+							{
+								break;
+							}
+							else
+							{
+								write( p[1], buf, size );
+							}
+						}
+						close( p[1] );
+						FFree( buf );
+					}
+					fclose( pipe );
+				}
+			}
+        break; 
+  
+    default: 
+		{
+			int times = 0;
+			close( p[1] ); 
+        	//printf("parent read\n");
+			char *buf = FMalloc( PHP_READ_SIZE );
+			if( buf != NULL )
+			{
+				int quit = 0;
+				lastTime = time( NULL );
+				//printf("read buffer allocated\n");
+				while( 1 )
+				{
+					usleep( 1000 );
+					int nread = read( p[0], buf, PHP_READ_SIZE ); 
+					//printf("read got bytes %d\n", nread );
+        			switch( nread )
+					{ 
+						case -1: 
+						// case -1 means pipe is empty and errono 
+						// set EAGAIN 
+						if( errno == EAGAIN )
+						{
+							if( timeout > 0 && (time( NULL ) - lastTime) > timeout )
+							{
+								//printf("Timeout!\n");
+								close( p[0] ); 
+								//kill( pipeNr , SIGKILL );
+								quit = 1;
+							}
+							//printf("(pipe empty)\n"); 
+							//sleep(1); 
+							//if( times++ > 40 )
+							{
+								//kill( pipeNr , SIGKILL );
+							}
+							break; 
+						} 
+						else
+						{ 
+							//printf("read -1"); 
+							quit = 1;
+							break;
+						}
+					
+						// case 0 means all bytes are read and EOF(end of conv.) 
+						case 0: 
+							printf("End of conversation\n"); 
+  
+							// read link 
+							//close( p[0] ); 
+			  				quit = 1;
+							break;
+						default: 
+							lastTime = time( NULL );
+							//printf(">>>>>>>>>>>>>>>>>>>>>>%s<<<<<<<<<<<<<<<<", buf); 
+							ListStringAdd( data, buf, nread );
+					}
+					if( quit == 1 )
+					{
+						printf("quit in progress!\n");
+						break;
+					}
+				}
+				FFree( buf );
+			}
+
+        	break; 
+		}
+    }	// switch pipe
+    */
+    
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
@@ -167,23 +309,39 @@ ListString *PHPCall( const char *command, int *length )
 	
 	char *temp = NULL, *result = NULL, *gptr = NULL;
 	int size = 0, res = 0, sch = sizeof( char );
-
-#define PHP_READ_SIZE 262144
 	
 	//DEBUG("[PHPFsys] command launched\n");
 
 	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
 	ListString *data = ListStringNew();
+	int errCounter = 0;
 	
 	while( !feof( pipe ) )
 	{
 		// Make a new buffer and read
 		size = fread( buf, sch, PHP_READ_SIZE, pipe );
-		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
-		ListStringAdd( data, buf, size );
+		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			ListStringAdd( data, buf, size );
+		}
+		else
+		{
+			if( ferror( pipe ) )
+			{
+				FERROR("Cannot read from popen!\n");
+			}
+			errCounter++;
+			if( errCounter > 16 )
+			{
+				FERROR("Error in popen, Quit! Command: %s\n", command );
+				break;
+			}
+		}
 	}
 	
 	FFree( buf );
+	DEBUG("File readed\n");
 	
 	// Free pipe if it's there
 	pclose( pipe );

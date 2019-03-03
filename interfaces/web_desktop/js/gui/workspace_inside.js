@@ -9,6 +9,8 @@ var WorkspaceInside = {
 	wallpaperLoaded: false,
 	// We only initialize once
 	insideInitialized: false,
+	// Onready functions
+	onReadyList: [],
 	// Switch to workspace
 	switchWorkspace: function( num )
 	{
@@ -700,6 +702,7 @@ var WorkspaceInside = {
 						nmsg.notificationData.clicked = true;
 						handleNotificationData( nmsg );
 					}
+					
 					// Revert to push notifications on the OS side
 					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
 					return;
@@ -1385,6 +1388,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		this.themeStyleElement.innerHTML = str;
 	},
+	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
 		var m = new Module( 'system' );
@@ -1510,28 +1514,43 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Do the startup sequence in sequence (only once)
-					if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
+					if( !Workspace.startupSequenceRegistered )
 					{
-						Workspace.startupsequenceHasRun = true;
-						var l = {
-							index: 0,
-							func: function()
+						Workspace.startupSequenceRegistered = true;
+						Workspace.onReadyList.push( function()
+						{
+							var seq = dat.startupsequence;
+							if( typeof( seq ) != 'object' )
 							{
-								var cmd = dat.startupsequence[this.index++];
-								if( cmd )
+								try
 								{
-									Workspace.shell.execute( cmd, function()
-									{
-										l.func();
-										if( Workspace.mainDock )
-											Workspace.mainDock.closeDesklet();
-									} );
+									seq = JSON.parse( seq );
+								}
+								catch( e )
+								{
+									seq = [];
 								}
 							}
-						}
-						l.func();
+							var l = {
+								index: 0,
+								func: function()
+								{
+									var cmd = seq[ this.index++ ];
+									console.log( 'This is it: ', cmd );
+									if( cmd && cmd.length )
+									{
+										Workspace.shell.execute( cmd, function()
+										{
+											l.func();
+											if( Workspace.mainDock )
+												Workspace.mainDock.closeDesklet();
+										} );
+									}
+								}
+							}
+							l.func();
+						} );
 					}
-
 
 					PollTaskbar();
 				}
@@ -2614,6 +2633,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		document.body.classList.add( 'Loading' );
 
 		if( !themeName ) themeName = 'friendup12';
+		if( themeName == 'friendup' ) themeName = 'friendup12';
 		
 		themeName = themeName.toLowerCase();
 		
@@ -2746,6 +2766,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												}, 1000 );
 											} );
 										}
+									}
+									
+									// We are ready!
+									if( !window.friendApp )
+									{
+										Workspace.onReady();
 									}
 								}
 							}, 50 );
@@ -3702,13 +3728,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			var w = movableWindows[a];
 			if( w.content ) w = w.content;
-			if( w.fileInfo && w.fileInfo.Volume != 'Mountlist:' )
+			
+			if( !w.fileInfo ) continue;
+
+			// Find volume from path
+			var vol = w.fileInfo.Path.split( ':' )[0];
+			
+			if( vol != 'Mountlist:' )
 			{
+				var pureVol = vol.split( ':' )[0];
 				var found = false;
 				for( var b in this.icons )
 				{
 					// TODO: The colon thing... :)
-					if( w.fileInfo.Volume && w.fileInfo.Volume.split( ':' )[0] == this.icons[b].Title.split( ':' )[0] )
+					if( vol && pureVol == this.icons[b].Title.split( ':' )[0] )
 					{
 						found = true;
 						break;
@@ -3718,7 +3751,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				for( var b in dormants )
 				{
 					// TODO: The colon thing... :)
-					if( w.fileInfo.Volume && w.fileInfo.Volume.split( ':' )[0] == dormants[b].Title.split( ':' )[0] )
+					if( vol && pureVol == dormants[b].Title.split( ':' )[0] )
 					{
 						found = true;
 						break;
@@ -3945,7 +3978,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 
 			// Get name of file
-			var nam = EntityDecode( sele.getElementsByTagName( 'a' )[0].innerHTML );
+			var nam = EntityDecode( sele.fileInfo.Filename );
 
 			// Find out which type it is
 			var icons = rwin.content.icons;
@@ -5725,8 +5758,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				var pv = cm.windowObject.parentView.windowObject;
 				pv.activate();
+				// Delayed close other
+				setTimeout( function()
+				{
+					cm.windowObject.close();
+				}, 750 );
 				return;
-			}	
+			}
 		}
 		for( var a = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
@@ -7904,6 +7942,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		this.currentViewState = newState;
 	},
+	// Execute when everything is ready
+	onReady: function()
+	{
+		if( this.onReadyList.length )
+		{
+			for( var a = 0; a < this.onReadyList.length; a++ )
+			{
+				this.onReadyList[ a ]();
+			}
+			this.onReadyList = [];
+		}
+	}
 };
 
 // Application messaging start -------------------------------------------------
@@ -8163,6 +8213,7 @@ function DoorsKeyDown( e )
 		if( w == 113 || w == 27 )
 		{
 			var icons = currentMovable.content.icons;
+			var dvi = currentMovable.content.directoryview;
 			for( var a = 0; a < icons.length; a++ )
 			{
 				if( icons[a].domNode && icons[a].domNode.classList.contains( 'Selected' ) )
@@ -8189,8 +8240,8 @@ function DoorsKeyDown( e )
 					var input = document.createElement( 'textarea' );
 					input.className = 'Title';
 					icons[a].editField = input;
-					input.value = icons[a].domNode.getElementsByClassName( 'Title' )[0].innerText;
-					input.dom = icons[a].domNode;
+					input.value = icons[a].Filename ? icons[a].Filename : icons[a].fileInfo.Filename;
+					input.dom = dvi.listMode == 'listview' ? icons[a].domNode.querySelector( '.Column' ) : icons[a].domNode;
 					icons[a].domNode.input = input;
 					input.ico = icons[a];
 					input.onkeydown = function( e )
@@ -8205,7 +8256,14 @@ function DoorsKeyDown( e )
 							Workspace.executeRename( this.value, this.ico, currentMovable );
 							this.ico.editField = null;
 							this.dom.input = null;
-							this.dom.removeChild( this );
+							try
+							{
+								this.dom.removeChild( this );
+							}
+							catch( e )
+							{
+								/* .. */
+							}
 						}
 					}
 					setTimeout( function()
@@ -8454,6 +8512,17 @@ function AboutFriendUP()
 		id: 'about_friendup'
 	} );
 
+	// Check for app token
+	var token = '';
+	if( isMobile && window.friendApp )
+	{
+		token = friendApp.get_app_token();
+		if( token && token.length )
+		{
+			token = '<div class="item"><span class="label">App token</span><span class="value"> ' + token + '</span></div>';
+		}
+	}
+
 	v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
 	{
 		var buildInfo = '<div id="buildInfo">no build information available</div>';
@@ -8463,6 +8532,9 @@ function AboutFriendUP()
 			buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
 			if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
 			if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
+
+			// Add app token
+			if( token ) buildInfo += token;
 
 			buildInfo += '<div style="clear: both"></div></div>';
 		}

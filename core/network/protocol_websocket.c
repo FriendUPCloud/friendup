@@ -21,10 +21,10 @@
 #include <time.h>
 #include <util/friendqueue.h>
 
-#undef DEBUG
-#define DEBUG( ...)
-#undef DEBUG1
-#define DEBUG1( ...)
+//#undef DEBUG
+//#define DEBUG( ...)
+//#undef DEBUG1
+//#define DEBUG1( ...)
 
 extern SystemBase *SLIB;
 
@@ -38,6 +38,16 @@ extern SystemBase *SLIB;
 
 pthread_mutex_t WSThreadMutex;
 int WSThreadNum = 0;
+
+#define INCREASE_WS_THREADS() \
+FRIEND_MUTEX_LOCK( &WSThreadMutex ); \
+WSThreadNum++; \
+FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+
+#define DECREASE_WS_THREADS() \
+FRIEND_MUTEX_LOCK( &WSThreadMutex ); \
+WSThreadNum--; \
+FRIEND_MUTEX_UNLOCK( &WSThreadMutex );  
 
 typedef struct WSThreadData
 {
@@ -75,11 +85,14 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 		return 0;
 	}
 
+	DEBUG("clwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
+	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
-		cl->wsc_InUseCounter++;
+		
 		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 	}
+	*/
 	
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
@@ -95,51 +108,58 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			
 			DEBUG("[WS] Sending big message, size %d (%d chunks of max: %d)\n", msglen, totalChunk, MAX_SIZE_WS_MESSAGE );
 		
-			for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
+			if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 			{
-				unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
-				if( queueMsg != NULL )
+				cl->wsc_InUseCounter++;
+				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
-					unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
-					int queueMsgLen = 0;
-					
-					int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
-					int copysize = msglen;
-					if( copysize > MAX_SIZE_WS_MESSAGE )
+					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
+					if( queueMsg != NULL )
 					{
-						copysize = MAX_SIZE_WS_MESSAGE;
-					}
+						unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
+						int queueMsgLen = 0;
 					
-					queueMsgLen = txtmsgpos;
-					queueMsgPtr += txtmsgpos;
-					// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
-
-					memcpy( queueMsgPtr, msgToSend, copysize );
-					queueMsgLen += copysize;
-					queueMsgPtr += copysize;
+						int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
+						int copysize = msglen;
+						if( copysize > MAX_SIZE_WS_MESSAGE )
+						{
+							copysize = MAX_SIZE_WS_MESSAGE;
+						}
 					
-					memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
-					queueMsgPtr += END_CHAR_SIGNS;
-					queueMsgLen += END_CHAR_SIGNS;
-					*queueMsgPtr = 0;	//end message with NULL
+						queueMsgLen = txtmsgpos;
+						queueMsgPtr += txtmsgpos;
+						// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
+
+						memcpy( queueMsgPtr, msgToSend, copysize );
+						queueMsgLen += copysize;
+						queueMsgPtr += copysize;
 					
-					msgToSend += copysize;
-					msglen -= MAX_SIZE_WS_MESSAGE;
+						memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
+						queueMsgPtr += END_CHAR_SIGNS;
+						queueMsgLen += END_CHAR_SIGNS;
+						*queueMsgPtr = 0;	//end message with NULL
+					
+						msgToSend += copysize;
+						msglen -= MAX_SIZE_WS_MESSAGE;
 
-					DEBUG( "Determined chunk: %d\n", actChunk );
-
-					if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
-					{
+						DEBUG( "Determined chunk: %d\n", actChunk );
+					
 						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 						en->fq_Data = queueMsg;
 						en->fq_Size = queueMsgLen;
 				
+						//DEBUG("FQPush: %p\n 
 						FQPushFIFO( &(cl->wsc_MsgQueue), en );
-						lws_callback_on_writable( cl->wsc_Wsi );
 
-						FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+						// callback writeable was here
 					}
 				}
+				cl->wsc_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+			}
+			if( cl->wsc_Wsi != NULL )
+			{
+				lws_callback_on_writable( cl->wsc_Wsi );
 			}
 
 			//lws_callback_on_writable( cl->wc_Wsi );
@@ -150,6 +170,7 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	{
 		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 		{
+			cl->wsc_InUseCounter++;
 			if( cl->wsc_Wsi != NULL && cl->wsc_UserSession != NULL )
 			{
 				int val;
@@ -169,19 +190,27 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			DEBUG("Send message to WSI, ptr: %p\n", cl->wsc_Wsi );
 			if( cl->wsc_Wsi != NULL )
 			{
-				lws_callback_on_writable( cl->wsc_Wsi );
+				
 			}
-			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
-		}
-	}
-	if( cl->wsc_Wsi != NULL )
-	{
-		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
-		{
+			
 			cl->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+			if( cl->wsc_Wsi != NULL )
+			{
+				lws_callback_on_writable( cl->wsc_Wsi );
+			}
 		}
 	}
+
+	/*
+	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
+	{
+		cl->wsc_InUseCounter--;
+		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+	}
+	*/
+	DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
+	
 	return result;
 }
 
@@ -213,9 +242,7 @@ void WSThread( void *d )
 	pthread_detach( pthread_self() );
 #endif
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum++;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	INCREASE_WS_THREADS();
 	
 	Http *http = data->http;
 	char **pathParts = data->pathParts;
@@ -252,9 +279,7 @@ void WSThread( void *d )
 		
 		FFree( data );
 		
-		FRIEND_MUTEX_LOCK( &WSThreadMutex );
-		WSThreadNum--;
-		FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+		DECREASE_WS_THREADS();
 		
 		FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 		wscl->wsc_InUseCounter--;
@@ -308,9 +333,7 @@ void WSThread( void *d )
 			FFree( data );
 			HttpFree( response );
 			
-			FRIEND_MUTEX_LOCK( &WSThreadMutex );
-			WSThreadNum--;
-			FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+			DECREASE_WS_THREADS();
 			
 			FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 			wscl->wsc_InUseCounter--;
@@ -486,6 +509,7 @@ void WSThread( void *d )
 				}
 			}
 			
+			response->h_RequestSource = HTTP_SOURCE_WS;
 			HttpFree( response );
 		}
 		DEBUG1("[WS] SysWebRequest return\n"  );
@@ -540,9 +564,7 @@ void WSThread( void *d )
 	
 	FFree( data );
     
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum--;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	DECREASE_WS_THREADS();
 	
 	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 	wscl->wsc_InUseCounter--;
@@ -571,9 +593,7 @@ void WSThreadPing( void *p )
 	pthread_detach( pthread_self() );
 #endif
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum++;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	INCREASE_WS_THREADS();
 	
 	int n = 0;
 	FCWSData *fcd = data->fcd;
@@ -584,9 +604,7 @@ void WSThreadPing( void *p )
 	WebsocketServerClient *wscl = fcd->fcd_WSClient;
 	if( wscl == NULL )
 	{
-		FRIEND_MUTEX_LOCK( &WSThreadMutex );
-		WSThreadNum--;
-		FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+		DECREASE_WS_THREADS();
 		FFree( answer );
 		FFree( data->requestid );
 		FFree( data );
@@ -615,9 +633,7 @@ void WSThreadPing( void *p )
 		FFree( data->requestid );
 		FFree( data );
 	
-		FRIEND_MUTEX_LOCK( &WSThreadMutex );
-		WSThreadNum--;
-		FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+		DECREASE_WS_THREADS();
 	
 		FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 		wscl->wsc_InUseCounter--;
@@ -665,9 +681,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	FCWSData *fcd =  (FCWSData *) user;// lws_context_user ( this );
 	int returnError = 0;
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum++;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	DEBUG("FC_Callback: reason: %d\n", reason );
+	
+	INCREASE_WS_THREADS();
 	
 	char *in = NULL;
 	
@@ -689,9 +705,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		if( in == NULL )
 		{
 			DEBUG( "Seems we have a null message (length: %d)\n", (int)len );
-			FRIEND_MUTEX_LOCK( &WSThreadMutex );
-			WSThreadNum--;
-			FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+			DECREASE_WS_THREADS();
 			
 			if( in != NULL )
 			{
@@ -706,7 +720,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		//Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
-	//Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
+	Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
 	
 	switch( reason )
 	{
@@ -727,7 +741,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			if( fcd->fcd_WSClient != NULL )
 			{
 				fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
-				usleep( 2000 );
+				//usleep( 2000 );
 				/*
 				int val = 0;
 				while( TRUE )
@@ -786,9 +800,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				/*
 				if( fcd->fcd_WSClient == NULL )
 				{
-					FRIEND_MUTEX_LOCK( &WSThreadMutex );
-					WSThreadNum--;
-					FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+					DECREASE_WS_THREADS();
 					return 0;
 				}
 				*/
@@ -817,7 +829,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					type : session
 					data : string
 				*/
-				//DEBUG1("[WS] Callback receive: %s\n", in );
+				DEBUG1("[WS] Callback receive: %s\n", in );
 				
 				{
 					int i, i1;
@@ -1002,21 +1014,24 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													login = TRUE;
 												
 													char answer[ 1024 ];
-													snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+													int len = snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
 												
 													unsigned char *buf;
-													int len = strlen( answer );
-													buf = (unsigned char *)FCalloc( len + 128, sizeof( char ) );
+													//int len = strlen( answer );
+													buf = (unsigned char *)FCalloc( len + 256, sizeof( char ) );
+													INFO("Buf assigned: %p\n", buf );
 													if( buf != NULL )
 													{
 														memcpy( buf, answer,  len );
 
+														INFO("[WS] Writeline %p\n", fcd->fcd_WSClient );
 														if( fcd->fcd_WSClient != NULL )
 														{
 															WebsocketWriteInline( fcd->fcd_WSClient, buf, len, LWS_WRITE_TEXT );
 														}
 														FFree( buf );
 													}
+													
 												}
 											}
 											// Incoming connection is authenticating with authid (from an application or an FS)
@@ -1043,6 +1058,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 															memcpy( buf, answer,  len );
 
+															DEBUG("[WS] Writeline1 %p\n", fcd->fcd_WSClient );
 															if( fcd->fcd_WSClient != NULL )
 															{
 																WebsocketWriteInline( fcd->fcd_WSClient, buf, len, LWS_WRITE_TEXT );
@@ -1141,6 +1157,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 											
 											if( wstdata != NULL )
 											{
+												DEBUG("Request received\n");
 												char *requestid = NULL;
 												int requestis = 0;
 												char *path = NULL;
@@ -1189,6 +1206,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 													int error = 0;
 													BufString *queryrawbs = BufStringNewSize( 2048 );
+													
+													DEBUG("[WS] Parsing messages\n");
 													
 													for( i = 7 ; i < r ; i++ )
 													{
@@ -1333,6 +1352,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 #endif
 #if USE_WORKERS == 1
 													SystemBase *lsb = (SystemBase *)fcd->fcd_SystemBase;
+													
+													DEBUG("[WS] Message parsed, sedning\n");
 													
 													if( fcd->fcd_WSClient != NULL && fcd->fcd_WSClient->wsc_ToBeRemoved == FALSE )
 													{
@@ -1614,9 +1635,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							WebsocketWriteInline( fcd->fcd_WSClient, buf, locmsgsize, LWS_WRITE_TEXT );
 						}
 						
-						FRIEND_MUTEX_LOCK( &WSThreadMutex );
-						WSThreadNum--;
-						FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+						DECREASE_WS_THREADS();
 						FFree( t );
 						
 						WebsocketServerClient *wscl = fcd->fcd_WSClient;
@@ -1663,12 +1682,14 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
 			
-			if( fcd->fcd_WSClient == NULL )
+			if( fcd->fcd_WSClient == NULL || fcd->fcd_WSClient->wsc_Wsi == NULL )
 			{
 				if( in != NULL )
 				{
 					FFree( in );
 				}
+				DEBUG("Cannot write message, WS Client is equal to NULL\n");
+				DECREASE_WS_THREADS();
 				return 0;
 			}
 				
@@ -1683,9 +1704,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 				t[ e->fq_Size+1 ] = 0;
 
-				lws_write( fcd->fcd_WSClient->wsc_Wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
+				lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
 
-				int errret = lws_send_pipe_choked( fcd->fcd_WSClient->wsc_Wsi );
+				int errret = lws_send_pipe_choked( wsi );
 				
 				//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 				if( e != NULL )
@@ -1749,9 +1770,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		FLUSH_QUEUE();
 	}
 	
-	FRIEND_MUTEX_LOCK( &WSThreadMutex );
-	WSThreadNum--;
-	FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+	DECREASE_WS_THREADS();
 	
 	if( in != NULL )
 	{

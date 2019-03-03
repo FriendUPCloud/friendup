@@ -209,11 +209,6 @@ Application.refreshFilePane = function( method, force, callback )
 			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
 			fBar.add.onclick = function()
 			{
-				if( isMobile )
-				{
-					currentViewMode = 'default';
-					Application.updateViewMode();
-				}
 				var testFile = 'unnamed';
 				var nextTest = testFile;
 				var d = new Door( Application.browserPath );
@@ -250,7 +245,14 @@ Application.refreshFilePane = function( method, force, callback )
 							data: Application.currentDocument
 						} );
 						Application.refreshFilePane( false, true );
-						Application.loadFile( Application.browserPath + nextTest + '.html' );
+						Application.loadFile( Application.browserPath + nextTest + '.html', function()
+						{
+							if( isMobile )
+							{
+								currentViewMode = 'default';
+								Application.updateViewMode();
+							}
+						} );
 					}
 				} );
 			}

@@ -22,6 +22,18 @@
 //
 //
 
+void build_decoding_table();
+
+//
+//
+//
+
+void base64_cleanup();
+
+//
+//
+//
+
 char* Base64Encode( const unsigned char* data, int length, int *dstlen );
 
 //

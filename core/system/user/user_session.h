@@ -102,6 +102,12 @@ void UserSessionInit( UserSession *us );
 //
 //
 
+WebsocketServerClient *UserSessionRemoveConnection( UserSession *us, WebsocketServerClient *wscl );
+
+//
+//
+//
+
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       
     SQLT_STRUCTSIZE, sizeof( struct UserSession ), 

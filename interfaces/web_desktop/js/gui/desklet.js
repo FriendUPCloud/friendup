@@ -848,8 +848,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( dk.toggleViewVisibility( this ) ) return;
 				}
 
+				var rememberCurrent = false;
 				if( currentMovable )
+				{
+					rememberCurrent = currentMovable;
 					_DeactivateWindow( currentMovable );
+				}
 			
 				var args = '';
 				var executable = o.exe + '';
@@ -909,7 +913,32 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				// If not a single instance app, execute (or mobile)
 				if( isMobile || ( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 ) )
 				{
-					ExecuteApplication( executable, args );
+					if( !Friend.singleInstanceApps[ executable ] )				
+						ExecuteApplication( executable, args );
+					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
+					{
+						_ActivateWindow( rememberCurrent );
+					}
+					else
+					{
+						// Find application window
+						// TODO: Find the last active
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							if( Workspace.applications[a].applicationName == executable )
+							{
+								if( Workspace.applications[a].windows )
+								{
+									for( var c in Workspace.applications[a].windows )
+									{
+										Workspace.applications[a].windows[ c ].activate();
+										break;
+									}
+									break;
+								}
+							}
+						}
+					}
 				}
 				// Just minimize apps if you find them, if not execute
 				else
