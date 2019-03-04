@@ -4,6 +4,7 @@ var WorkspaceInside = {
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
+	currentViewState: 'active',
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -7943,7 +7944,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		// Don't update if not changed
 		if( this.currentViewState == newState ) return;
-		console.log( this.currentViewState + ' is set to ' + newState );
 		
 		if( newState == 'active' )
 		{
