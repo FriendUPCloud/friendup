@@ -3290,7 +3290,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				if( e.button == 2 )
 				{
 					// check icons
-					console.log( 'Fopa' );
+					clearRegionIcons();
 					this.classList.add( 'Selected' );
 					this.fileInfo.selected = true;
 					found = this;
@@ -3537,6 +3537,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				
 				r.onclick = null;
 				r.onmousedown = null;
+			}
+			
+			// Releasing
+			r.onmouseup = function( e )
+			{
+				if( !e.ctrlKey && !e.shiftKey && !e.command )
+				{
+					clearRegionIcons( { exception: this, force: true } );
+				}
 			}
 
 			// For clicks
@@ -4020,6 +4029,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		if( e.button == 2 )
 		{
 			// check icons
+			clearRegionIcons();
 			this.classList.add( 'Selected' );
 			found = this;
 			this.selected = true;
@@ -4106,6 +4116,10 @@ FileIcon.prototype.Init = function( fileInfo )
 			else
 			{
 			}
+		}
+		if( !e.ctrlKey && !e.shiftKey && !e.command )
+		{
+			clearRegionIcons( { exception: this, force: true } );
 		}
 		window.targetMovable = false;
 	}

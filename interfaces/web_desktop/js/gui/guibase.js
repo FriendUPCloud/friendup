@@ -3365,14 +3365,7 @@ movableMouseDown = function ( e )
 	// TODO: Allow context menus!
 	if( !window.isMobile && !window.isTablet && ( rc || e.button != 0 ) )
 	{
-		try
-		{
-			return cancelBubble ( e );
-		}
-		catch( e )
-		{
-			return;
-		}
+		return;
 	}
 	
 	// Remove menu on calendar slide and menu click
@@ -3555,6 +3548,7 @@ function contextMenu( e )
 	if ( !e ) e = window.event;
 	var tar = e.target ? e.target : e.srcEvent;
 	if ( !tar ) return;
+	
 	var mov, mov2, mov3;
 	var mdl = GetTitleBarG ();
 	if ( tar.parentNode )
