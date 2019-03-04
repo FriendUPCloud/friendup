@@ -600,12 +600,6 @@ html body .View
 	transition: transform 0.25s !important;
 }
 
-/* Popup dialog boxes lil bit larger */
-#Screens .View > .Content > div.Dialog
-{
-	font-size: 24px;
-}
-
 #Screens .View > .Content
 {
 	bottom: 0;
