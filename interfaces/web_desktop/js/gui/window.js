@@ -1158,7 +1158,23 @@ function _ActivateWindow( div, nopoll, e )
 		// Make sure!
 		if( changedActiveWindow )
 		{
-			clearRegionIcons();
+			var clear = true;
+			var t = e.target;
+			if( t )
+			{
+				while( t && t != document.body && !t.fileInfo )
+					t = t.parentNode;
+				if( t && t.fileInfo )
+					clear = false;
+			}
+			if( !clear )
+			{
+				clearRegionIcons( { exception: t } );
+			}
+			else
+			{
+				clearRegionIcons();
+			}
 		}
 	}
 	else if( e && ( !e.shiftKey && !e.ctrlKey ) ) clearRegionIcons();
@@ -1668,7 +1684,7 @@ function CloseView( win, delayed )
 						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
 							// Only activate non minimized views
-							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
 								nextActive = true;
@@ -1684,7 +1700,7 @@ function CloseView( win, delayed )
 						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
 							// Only activate non minimized views
-							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
 							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
 								nextActive = true;
