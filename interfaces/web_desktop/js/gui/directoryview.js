@@ -4593,7 +4593,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		{
 			// Don't interfere
 			if( win.refreshing && this.parentNode.classList.contains( 'Redrawing' ) )
+			{
+				if( callback ) callback();
 				return;
+			}
 			
 			win.refreshing = true;
 			var self = this;
@@ -4850,7 +4853,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			{
 				// Don't interfere when redrawing
 				if( w.refreshing && this.parentNode.classList.contains( 'Redrawing' ) )
+				{
+					if( callback ) callback();
 					return;
+				}
 				
 				w.refreshing = true;
 				
@@ -4931,13 +4937,16 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		// No door, implement standard refresh
 		else
 		{
-			win.refresh = function ( callback )
+			win.refresh = function( callback )
 			{
 				var self = this;
 				
 				// Don't interfere
 				if( w.refreshing && self.parentNode.classList.contains( 'Redrawing' ) )
+				{
+					if( callback ) callback();
 					return;
+				}
 				
 				w.refreshing = true;
 				
