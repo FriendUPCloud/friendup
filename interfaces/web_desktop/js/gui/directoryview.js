@@ -4898,11 +4898,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 								console.log( 'Refresh directory view - Something bad happened..' );
 							}
 						}
-						if( callback ) callback();
 						
 						// Release refresh timeout
 						self.refreshTimeout = null;
 						w.refreshing = false;
+						
+						// Run callback
+						if( callback ) callback();
 					} );
 				}, timer );
 			}
@@ -4988,9 +4990,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 							ww.redrawIcons( content, ww.direction, cbk );
 						} );
 					}
+					w.refreshing = false;
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
-					w.refreshing = false;
 				}
 				j.send();
 			}
