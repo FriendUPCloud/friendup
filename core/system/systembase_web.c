@@ -1176,7 +1176,25 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 							if( sqlLib != NULL )
 							{
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, SessionID='%s' WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, deviceid,  loggedSession->us_UserID );
+								FULONG umaID = 0;
+								if( deviceid != NULL )
+								{
+									int len = strlen( deviceid );
+									int i, lpos = 0;
+									for( i=0 ; i < len ; i++ )
+									{
+										if( deviceid[ i ] == '_' )
+										{
+											lpos = i+1;
+										}
+									}
+									if( lpos > 0 && lpos < len )
+									{
+										umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_ID, &(deviceid[ lpos ] ) );
+									}
+								}
+								
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 									
@@ -1193,6 +1211,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								DEBUG("[SystembaseWeb] user login\n");
 
+								loggedSession->us_MobileAppID = umaID;
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 
 								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE );

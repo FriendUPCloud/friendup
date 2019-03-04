@@ -266,7 +266,7 @@ ListString *PHPCall( const char *command, int *length )
 							break; 
 						} 
 						else
-						{ 
+					logut	{ 
 							//printf("read -1"); 
 							quit = 1;
 							break;

@@ -29,6 +29,7 @@
 #include <system/user/user.h>
 #include <websockets/websocket_req_manager.h>
 #include <util/friendqueue.h>
+#include "user_mobile_app.h"
 
 enum 
 {
@@ -78,6 +79,8 @@ typedef struct UserSession
 	int						us_InUseCounter;
 	WebsocketReqManager		*us_WSReqManager;
 	void					*us_DOSToken;
+	FULONG					us_MobileAppID;
+	UserMobileApp			*us_MobileApp;
 }UserSession;
 
 //
@@ -116,6 +119,7 @@ static FULONG UserSessionDesc[] = {
 	SQLT_STR,     (FULONG)"DeviceIdentity",       offsetof( struct UserSession, us_DeviceIdentity ),
 	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct UserSession, us_LoggedTime ),
+	SQLT_INT,     (FULONG)"UMA_ID", offsetof( struct UserSession, us_MobileAppID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserSessionInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserSession, node ),
 	SQLT_END 
