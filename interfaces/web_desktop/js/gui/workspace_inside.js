@@ -7643,7 +7643,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				filetype = ( blob.type == '' ? 'application/octet-stream' : blob.type );
 				
 				Workspace.uploadBlob = blob;
-				console.log('Upload this file...',filetype,blob);
+				//console.log('Upload this file...',filetype,blob);
 				
 				var m = new Library( 'system.library' );
 				m.onExecuted = function( e, d )
