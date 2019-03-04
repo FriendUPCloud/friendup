@@ -4108,6 +4108,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 			}
 		}
+		clearRegionIcons( { exception: this, force: true } );
 		window.targetMovable = false;
 	}
 
