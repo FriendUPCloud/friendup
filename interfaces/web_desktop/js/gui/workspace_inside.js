@@ -2652,7 +2652,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				CheckScreenTitle();
 			
 				// We only allow two mobile themes
-				if( isMobile )
+				/*if( isMobile )
 				{
 					switch( themeName )
 					{
@@ -2666,7 +2666,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Workspace.theme = themeName = 'friendup12';
 							break;
 					}
-				}
+				}*/
 
 				var h = document.getElementsByTagName( 'head' );
 				if( h )
