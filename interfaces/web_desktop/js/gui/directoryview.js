@@ -4601,8 +4601,19 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 
 			var t = fi && fi.Path ? fi.Path : ( fi.Volume ? fi.Volume : fi.Title );
 
-			if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
+			if( this.refreshTimeout )
+			{
+				// Handle timed out callback immediately
+				if( this.refreshCallback )
+				{
+					this.refreshCallback();
+					this.refreshCallback = null;
+				}
+				clearTimeout( this.refreshTimeout );
+			}
 			
+			if( callback )
+				this.refreshCallback = callback;
 			this.refreshTimeout = setTimeout( function()
 			{
 				fileInfo.Dormant.getDirectory( t, function( icons, data )
@@ -4615,6 +4626,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					} );
 					RefreshWindowGauge( self.win );
 					self.refreshTimeout = null;
+					self.refreshCallback = null;
 					win.refreshing = false;
 					if( callback ) callback();
 				} );
@@ -4851,9 +4863,17 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				var timer = 0;
 				if( this.refreshTimeout )
 				{
+					// Handle timed out callback immediately
+					if( this.refreshCallback )
+					{
+						this.refreshCallback();
+						this.refreshCallback = null;
+					}
 					clearTimeout( this.refreshTimeout );
 					timer = 250;
 				}
+				
+				if( callback ) this.refreshCallback = callback;
 				
 				this.refreshTimeout = setTimeout( function()
 				{
@@ -4915,6 +4935,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 						
 						// Release refresh timeout
 						self.refreshTimeout = null;
+						self.refreshCallback = null;
 						w.refreshing = false;
 					} );
 				}, timer );
@@ -4954,6 +4975,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				{
 					if( this.win.refreshTimeout )
 					{
+						if( this.win.refreshCallback )
+						{
+							this.win.refreshCallback();
+							this.win.refreshCallback = null;
+						}
 						clearTimeout( this.win.refreshTimeout );
 						this.win.refreshTimeout = false;
 					}
