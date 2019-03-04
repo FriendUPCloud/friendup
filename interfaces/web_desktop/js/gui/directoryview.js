@@ -4591,11 +4591,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		
 		we.refresh = function( callback )
 		{
-			// Don't interfere
-			if( win.refreshing && this.parentNode.classList.contains( 'Redrawing' ) )
+			// Run previous callback
+			if( callback )
 			{
-				if( callback ) callback();
-				return;
+				if( this.refreshCallback ) this.refreshCallback();
+				this.refreshCallback = callback;
 			}
 			
 			win.refreshing = true;
@@ -4851,11 +4851,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			
 			win.refresh = function( callback )
 			{
-				// Don't interfere when redrawing
-				if( w.refreshing && this.parentNode.classList.contains( 'Redrawing' ) )
+				// Run previous callback
+				if( callback )
 				{
-					if( callback ) callback();
-					return;
+					if( this.refreshCallback ) this.refreshCallback();
+					this.refreshCallback = callback;
 				}
 				
 				w.refreshing = true;
@@ -4937,17 +4937,16 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		// No door, implement standard refresh
 		else
 		{
-			win.refresh = function( callback )
+			win.refresh = function ( callback )
 			{
-				var self = this;
-				
-				// Don't interfere
-				if( w.refreshing && self.parentNode.classList.contains( 'Redrawing' ) )
+				// Run previous callback
+				if( callback )
 				{
-					if( callback ) callback();
-					return;
+					if( this.refreshCallback ) this.refreshCallback();
+					this.refreshCallback = callback;
 				}
 				
+				var self = this;
 				w.refreshing = true;
 				
 				var wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
