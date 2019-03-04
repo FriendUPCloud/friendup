@@ -7943,6 +7943,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		// Don't update if not changed
 		if( this.currentViewState == newState ) return;
+		console.log( this.currentViewState + ' is set to ' + newState );
 		
 		if( newState == 'active' )
 		{
