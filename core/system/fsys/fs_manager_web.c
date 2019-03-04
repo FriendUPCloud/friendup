@@ -1727,6 +1727,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						HttpFile *file = request->h_FileList;
 						FBOOL fileNameIsTmpPath = FALSE;
 						
+						DEBUG("File %p\n", file );
 						if( file != NULL )
 						{
 							// Mind situations where hf_FileName is uploaded filename, where
@@ -1742,6 +1743,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						while( file != NULL )
 						{
+							DEBUG("Going throug files\n");
 							if( targetPath )
 							{
 								sprintf( tmpPath, "%s", targetPath );
