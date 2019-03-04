@@ -385,14 +385,19 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// Animation for going to next folder
 				if( isMobile )
 				{
+					// Remove previous one
+					if( winobj.slideAnimation )
+						winobj.parentNode.removeChild( winobj.slideAnimation );
+					
 					var n = document.createElement( 'div' );
 					n.className = 'Content SlideAnimation';
-					
+					n.style.willChange = 'transform';
 					n.style.transition = 'transform 0.4s';
 					n.innerHTML = winobj.innerHTML;
 					n.scrollTop = winobj.scrollTop;
 					n.style.zIndex = 10;
 					winobj.parentNode.appendChild( n );
+					winobj.slideAnimation = n;
 					
 					winobj.parentNode.classList.add( 'Redrawing' );
 					
@@ -404,8 +409,10 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						{
 							n.parentNode.removeChild( n );
 							winobj.parentNode.classList.remove( 'Redrawing' );
+							winobj.slideAnimation = null;
 						}, 400 );
 					} );
+					
 				}
 				else
 				{
@@ -4240,14 +4247,19 @@ FileIcon.prototype.Init = function( fileInfo )
 			// Animation for going to next folder
 			if( isMobile )
 			{
+				// Remove previous one
+				if( dv.windowObject.slideAnimation )
+					dv.windowObject.parentNode.removeChild( dv.windowObject.slideAnimation );
+				
 				var n = document.createElement( 'div' );
 				n.className = 'Content SlideAnimation';
-				
+				n.style.willChange = 'transform';
 				n.style.transition = 'transform 0.4s';
 				n.innerHTML = dv.windowObject.innerHTML;
 				n.scrollTop = dv.windowObject.scrollTop;
 				n.style.zIndex = 10;
 				dv.windowObject.parentNode.appendChild( n );
+				dv.windowObject.slideAnimation = n;
 				dv.windowObject.parentNode.classList.add( 'Redrawing' );
 				
 				// Refresh and add animation
@@ -4258,6 +4270,7 @@ FileIcon.prototype.Init = function( fileInfo )
 					{
 						n.parentNode.classList.remove( 'Redrawing' );
 						n.parentNode.removeChild( n );
+						dv.windowObject.slideAnimation = null;
 					}, 400 );
 				} );
 			}
@@ -4898,13 +4911,11 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 								console.log( 'Refresh directory view - Something bad happened..' );
 							}
 						}
+						if( callback ) callback();
 						
 						// Release refresh timeout
 						self.refreshTimeout = null;
 						w.refreshing = false;
-						
-						// Run callback
-						if( callback ) callback();
 					} );
 				}, timer );
 			}
@@ -4990,9 +5001,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 							ww.redrawIcons( content, ww.direction, cbk );
 						} );
 					}
-					w.refreshing = false;
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
+					w.refreshing = false;
 				}
 				j.send();
 			}
