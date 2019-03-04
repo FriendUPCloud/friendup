@@ -6531,16 +6531,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( tr )
 		{
 			var p = tr.parentNode.parentNode;
-			
-			while( p != document.body && ( !p.classList || !p.classList.contains( 'View' ) ) )
+			if( p )
 			{
-				p = p.parentNode;
-			}
-			if( p && p.classList && p.classList.contains( 'View' ) )
-			{
-				_ActivateWindow( p );
-				if( p.content && p.content.directoryview )
-					iconWindow = p.content;
+				while( p && p != document.body && ( !p.classList || !p.classList.contains( 'View' ) ) )
+				{
+					p = p.parentNode;
+				}
+				if( p && p.classList && p.classList.contains( 'View' ) )
+				{
+					_ActivateWindow( p );
+					if( p.content && p.content.directoryview )
+						iconWindow = p.content;
+				}
 			}
 		}
 		
@@ -6790,7 +6792,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					p.onclick = function( event )
 					{
 						if( !v.shown ) return;
-						this.cmd( event );
+						if( this.cmd && typeof( this.cmd ) == 'function' )
+						{
+							this.cmd( event );
+						}
 						v.hide();
 						Workspace.contextMenuShowing = false;
 						return cancelBubble( event );
@@ -6801,7 +6806,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( Workspace.contextMenuAllowMouseUp )
 						{ 
 							if( !v.shown ) return;
-							this.cmd( event );
+							if( this.cmd && typeof( this.cmd ) == 'function' )
+							{
+								this.cmd( event );
+							}
 							v.hide();
 							Workspace.contextMenuShowing = false;
 							return cancelBubble( event );
