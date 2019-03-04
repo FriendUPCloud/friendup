@@ -3290,7 +3290,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				if( e.button == 2 )
 				{
 					// check icons
+					console.log( 'Fopa' );
 					this.classList.add( 'Selected' );
+					this.fileInfo.selected = true;
 					found = this;
 					this.selected = true;
 			
@@ -4021,6 +4023,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			this.classList.add( 'Selected' );
 			found = this;
 			this.selected = true;
+			this.fileInfo.selected = true;
 			
 			if( !window.isMobile )
 			{
