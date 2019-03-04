@@ -2652,7 +2652,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				CheckScreenTitle();
 			
 				// We only allow two mobile themes
-				if( isMobile )
+				/*if( isMobile )
 				{
 					switch( themeName )
 					{
@@ -2666,7 +2666,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Workspace.theme = themeName = 'friendup12';
 							break;
 					}
-				}
+				}*/
 
 				var h = document.getElementsByTagName( 'head' );
 				if( h )
@@ -6526,6 +6526,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( tr == window )
 			tr = document.body;
 		
+		// Check if we need to activate
+		var iconWindow = false;
+		if( tr )
+		{
+			var p = tr.parentNode.parentNode;
+			if( p )
+			{
+				while( p && p != document.body && ( !p.classList || !p.classList.contains( 'View' ) ) )
+				{
+					p = p.parentNode;
+				}
+				if( p && p.classList && p.classList.contains( 'View' ) )
+				{
+					_ActivateWindow( p );
+					if( p.content && p.content.directoryview )
+						iconWindow = p.content;
+				}
+			}
+		}
+		
 		// Item uses system default
 		if( tr.defaultContextMenu ) 
 		{
@@ -6617,9 +6637,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			// Make sure the menu is up to date
 			var t = tr;
-			while( !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
+			if( iconWindow )
+				t = iconWindow;
+			else
 			{
-				t = t.parentNode;
+				while( !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
+				{
+					t = t.parentNode;
+				}
 			}
 			if( t.checkSelected )
 				t.checkSelected();
@@ -6767,7 +6792,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					p.onclick = function( event )
 					{
 						if( !v.shown ) return;
-						this.cmd( event );
+						if( this.cmd && typeof( this.cmd ) == 'function' )
+						{
+							this.cmd( event );
+						}
 						v.hide();
 						Workspace.contextMenuShowing = false;
 						return cancelBubble( event );
@@ -6778,7 +6806,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( Workspace.contextMenuAllowMouseUp )
 						{ 
 							if( !v.shown ) return;
-							this.cmd( event );
+							if( this.cmd && typeof( this.cmd ) == 'function' )
+							{
+								this.cmd( event );
+							}
 							v.hide();
 							Workspace.contextMenuShowing = false;
 							return cancelBubble( event );
@@ -8774,7 +8805,7 @@ Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return;
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
-	
+
 	if( msg == false ) return;
 	try
 	{

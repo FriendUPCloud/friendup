@@ -301,6 +301,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		}
 		ele.oncontextmenu = function( e )
 		{
+			if( isMobile ) return;
+			
 			var men = cmd = '';
 			var cf = false; // create file
 			if( type == 'File' )
@@ -341,7 +343,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				} );
 			}
 			if( cf ) menu.push( cf );
-			Workspace.ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
+			if( window.ShowContextMenu )
+			{
+				ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
+			}
+			else if( window.Workspace )
+				Workspace.showContextMenu( menu, e );
 			return cancelBubble( e );
 		}
 	}

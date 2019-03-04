@@ -1468,7 +1468,7 @@ Application.createDirectoryGUI = function( parentPath )
 			inp.className = 'FullWidth';
 			d.appendChild( inp );
 			subs.appendChild( d );
-			if( !ele.classList.contains( 'Open' ) )
+			if( !ele.classList.contains( 'Open' ) && ele.ondblclick )
 				ele.ondblclick();
 			inp.addEventListener( 'keydown', function( e )
 			{

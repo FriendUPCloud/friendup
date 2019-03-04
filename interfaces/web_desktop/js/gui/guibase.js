@@ -3365,14 +3365,7 @@ movableMouseDown = function ( e )
 	// TODO: Allow context menus!
 	if( !window.isMobile && !window.isTablet && ( rc || e.button != 0 ) )
 	{
-		try
-		{
-			return cancelBubble ( e );
-		}
-		catch( e )
-		{
-			return;
-		}
+		return;
 	}
 	
 	// Remove menu on calendar slide and menu click
@@ -3400,12 +3393,18 @@ movableMouseDown = function ( e )
 	window.regionScrollLeft = 0;
 	window.regionScrollTop = 0;
 	
-	// Clicking inside content
+	// Clicking inside content (listview or normal)
 	if ( 
-		tar.classList && tar.classList.contains( 'Scroller' ) &&
 		( 
-			tar.parentNode.classList.contains( 'Content' ) || 
-			tar.parentNode.classList.contains( 'ScreenContent' ) 
+			tar.classList && tar.classList.contains( 'Scroller' ) &&
+			( 
+				tar.parentNode.classList.contains( 'Content' ) || 
+				tar.parentNode.classList.contains( 'ScreenContent' ) 
+			)
+		) ||
+		(
+			tar.classList && tar.classList.contains( 'ScrollArea' ) &&
+			tar.parentNode.classList.contains( 'Listview' )
 		)
 	)
 	{
@@ -3418,13 +3417,16 @@ movableMouseDown = function ( e )
 	);
 	
 	var clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
+	// Listview
+	if( !clickOnView && tar.classList.contains( 'Listview' ) )
+		clickOnView = true;
 	
 	// Desktop / view selection 
 	if(
 		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
-		if( !sh )
+		if( !sh && e.button === 0 )
 		{
 			// Don't count scrollbar
 			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
@@ -3555,6 +3557,7 @@ function contextMenu( e )
 	if ( !e ) e = window.event;
 	var tar = e.target ? e.target : e.srcEvent;
 	if ( !tar ) return;
+	
 	var mov, mov2, mov3;
 	var mdl = GetTitleBarG ();
 	if ( tar.parentNode )

@@ -387,7 +387,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					var n = document.createElement( 'div' );
 					n.className = 'Content SlideAnimation';
-					n.style.willChange = 'transform';
+					
 					n.style.transition = 'transform 0.4s';
 					n.innerHTML = winobj.innerHTML;
 					n.scrollTop = winobj.scrollTop;
@@ -2954,7 +2954,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 	var self = this;
 	
-	
 	// TODO: Direction not needed here
 	obj.direction = direction ? direction : 'horizontal';
 	icons = icons ? icons : obj.icons;
@@ -3285,16 +3284,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					convertIconsToMultiple();
 				}
 				
-				
 				// Right mouse button
 				if( e.button == 2 )
 				{
 					// check icons
-					clearRegionIcons();
+					clearRegionIcons( { exception: this } );
 					this.classList.add( 'Selected' );
 					this.fileInfo.selected = true;
-					found = this;
 					this.selected = true;
+					found = this;
 			
 					if( !window.isMobile )
 					{
@@ -3537,6 +3535,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				
 				r.onclick = null;
 				r.onmousedown = null;
+			}
+			
+			// Releasing
+			r.onmouseup = function( e )
+			{
+				if( !e.ctrlKey && !e.shiftKey && !e.command )
+				{
+					clearRegionIcons( { exception: this, force: true } );
+				}
 			}
 
 			// For clicks
@@ -4108,7 +4115,10 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 			}
 		}
-		clearRegionIcons( { exception: this, force: true } );
+		if( !e.ctrlKey && !e.shiftKey && !e.command )
+		{
+			clearRegionIcons( { exception: this, force: true } );
+		}
 		window.targetMovable = false;
 	}
 
@@ -4232,7 +4242,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 				var n = document.createElement( 'div' );
 				n.className = 'Content SlideAnimation';
-				n.style.willChange = 'transform';
+				
 				n.style.transition = 'transform 0.4s';
 				n.innerHTML = dv.windowObject.innerHTML;
 				n.scrollTop = dv.windowObject.scrollTop;
@@ -4888,11 +4898,13 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 								console.log( 'Refresh directory view - Something bad happened..' );
 							}
 						}
-						if( callback ) callback();
 						
 						// Release refresh timeout
 						self.refreshTimeout = null;
 						w.refreshing = false;
+						
+						// Run callback
+						if( callback ) callback();
 					} );
 				}, timer );
 			}
@@ -4978,9 +4990,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 							ww.redrawIcons( content, ww.direction, cbk );
 						} );
 					}
+					w.refreshing = false;
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
-					w.refreshing = false;
 				}
 				j.send();
 			}

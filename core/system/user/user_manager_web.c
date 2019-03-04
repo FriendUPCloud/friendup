@@ -1010,6 +1010,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					if( sqlLib != NULL )
 					{
 						sqlLib->Delete( sqlLib, UserSessionDesc, sess );
+						
+						if( sess->us_MobileAppID > 0 )
+						{
+							char temp[ 1024 ];
+							snprintf( temp, sizeof(temp), "DELETE from `FUserMobileApp` where `ID`=%lu", sess->us_MobileAppID );
+	
+							sqlLib->QueryWithoutResults( sqlLib, temp );
+						}
 						l->LibrarySQLDrop( l, sqlLib );
 					}
 					
