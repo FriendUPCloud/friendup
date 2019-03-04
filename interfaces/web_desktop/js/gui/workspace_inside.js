@@ -485,9 +485,9 @@ var WorkspaceInside = {
 			return Workspace.relogin();
 		}
 		
-		if(!Workspace.sessionId)
+		if( !Workspace.sessionId )
 		{
-			setTimeout(Workspace.initWebSocket, 1000);
+			setTimeout( Workspace.initWebSocket, 1000 );
 		}
 
 		Workspace.connectingWebsocket = true;
@@ -7941,6 +7941,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) { setTimeout(Workspace.updateViewState, 1000); return; }
 
+		// Don't update if not changed
+		if( this.currentViewState == newState ) return;
+		
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
