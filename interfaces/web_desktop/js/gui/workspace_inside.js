@@ -6526,6 +6526,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( tr == window )
 			tr = document.body;
 		
+		// Check if we need to activate
+		if( tr )
+		{
+			var p = tr.parentNode.parentNode;
+			if( p && p.classList && p.classList.contains( 'View' ) )
+			{
+				_ActivateWindow( p );
+			}
+		}
+		
 		// Item uses system default
 		if( tr.defaultContextMenu ) 
 		{
