@@ -387,7 +387,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					// Remove previous one
 					if( winobj.slideAnimation )
-						winobj.parentNode.removeChild( winobj.slideAnimation );
+						winobj.slideAnimation.parentNode.removeChild( winobj.slideAnimation );
 					
 					var n = document.createElement( 'div' );
 					n.className = 'Content SlideAnimation';
@@ -407,8 +407,12 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						n.style.transform = 'translate3d(100%,0,0)';
 						setTimeout( function()
 						{
-							n.parentNode.removeChild( n );
-							winobj.parentNode.classList.remove( 'Redrawing' );
+							if( n.parentNode )
+							{
+								n.parentNode.removeChild( n );
+								if( winobj.parentNode )
+									winobj.parentNode.classList.remove( 'Redrawing' );
+							}
 							winobj.slideAnimation = null;
 						}, 400 );
 					} );
@@ -4249,7 +4253,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 				// Remove previous one
 				if( dv.windowObject.slideAnimation )
-					dv.windowObject.parentNode.removeChild( dv.windowObject.slideAnimation );
+					dv.windowObject.slideAnimation.parentNode.removeChild( dv.windowObject.slideAnimation );
 				
 				var n = document.createElement( 'div' );
 				n.className = 'Content SlideAnimation';
@@ -4268,8 +4272,12 @@ FileIcon.prototype.Init = function( fileInfo )
 					n.style.transform = 'translate3d(-100%,0,0)';
 					setTimeout( function()
 					{
-						n.parentNode.classList.remove( 'Redrawing' );
-						n.parentNode.removeChild( n );
+						if( n.parentNode )
+						{
+							n.parentNode.removeChild( n );
+							if( dv.windowObject.parentNode.classList )
+								dv.windowObject.parentNode.classList.remove( 'Redrawing' );
+						}
 						dv.windowObject.slideAnimation = null;
 					}, 400 );
 				} );
