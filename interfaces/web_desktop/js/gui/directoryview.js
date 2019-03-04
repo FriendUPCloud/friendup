@@ -4979,7 +4979,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				j.fileInfo = this.fileInfo;
 				j.file = iconObject;
 				j.win = this;
-				j.onload = function ()
+				j.onload = function()
 				{
 					if( this.win.refreshTimeout )
 					{

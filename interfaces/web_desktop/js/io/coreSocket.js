@@ -772,7 +772,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	
 	code = code || 1000;
 	reason = reason || 'WS connection closed';
-	
+	console.trace();
 	try {
 		console.log('closing websocket',code,reason);
 		self.ws.close( code, reason );
