@@ -8774,7 +8774,7 @@ Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return;
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
-	
+
 	if( msg == false ) return;
 	try
 	{
