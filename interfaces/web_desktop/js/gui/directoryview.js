@@ -397,15 +397,18 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					winobj.parentNode.classList.add( 'Redrawing' );
 					
 					// Refresh and animate
-					winobj.refresh( function()
+					setTimeout( function()
 					{
-						n.style.transform = 'translate3d(100%,0,0)';
-						setTimeout( function()
+						winobj.refresh( function()
 						{
-							n.parentNode.removeChild( n );
-							winobj.parentNode.classList.remove( 'Redrawing' );
-						}, 400 );
-					} );
+							n.style.transform = 'translate3d(100%,0,0)';
+							setTimeout( function()
+							{
+								n.parentNode.removeChild( n );
+								winobj.parentNode.classList.remove( 'Redrawing' );
+							}, 400 );
+						} );
+					}, 25 );
 				}
 				else
 				{
@@ -4251,15 +4254,18 @@ FileIcon.prototype.Init = function( fileInfo )
 				dv.windowObject.parentNode.classList.add( 'Redrawing' );
 				
 				// Refresh and add animation
-				we.refresh( function()
+				setTimeout( function()
 				{
-					n.style.transform = 'translate3d(-100%,0,0)';
-					setTimeout( function()
+					we.refresh( function()
 					{
-						n.parentNode.classList.remove( 'Redrawing' );
-						n.parentNode.removeChild( n );
-					}, 400 );
-				} );
+						n.style.transform = 'translate3d(-100%,0,0)';
+						setTimeout( function()
+						{
+							n.parentNode.classList.remove( 'Redrawing' );
+							n.parentNode.removeChild( n );
+						}, 400 );
+					} );
+				}, 25 );
 			}
 			// Desktop mode, just refresh
 			else 
