@@ -29,6 +29,7 @@
 #include <system/user/user.h>
 #include <websockets/websocket_req_manager.h>
 #include <util/friendqueue.h>
+#include "user_mobile_app.h"
 
 enum 
 {
@@ -78,6 +79,8 @@ typedef struct UserSession
 	int						us_InUseCounter;
 	WebsocketReqManager		*us_WSReqManager;
 	void					*us_DOSToken;
+	FULONG					us_MobileAppID;
+	UserMobileApp			*us_MobileApp;
 }UserSession;
 
 //
