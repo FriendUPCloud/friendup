@@ -355,11 +355,15 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		url.indexOf( '/file/read' ) < 0
 	)
 	{
+		console.log( 'Using websockets: ' + url );
 		this.mode = 'websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
 		return true;
 	}
+
+	console.log( 'Using http: ' + url );
+	
 	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )
