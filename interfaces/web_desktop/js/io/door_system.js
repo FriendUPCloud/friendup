@@ -305,7 +305,8 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		},
 		'System:Documentation/': function()
 		{
-			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+			var files = [ 'Documentation.pdf', 'Programmer\'s Manual.pdf', 'Friend DOS and CLI Manual.pdf', 'FriendUP API Manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+//			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
 				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
 			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Repositories', 'Devices' ];
 			var eles = [];
