@@ -492,25 +492,20 @@ html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 /* Resize gad */
 
-html body:not([mobile]).Synthwave .View > .Resize:before
-{
-	border: 2px solid #000010;
-}
-
 html body:not([mobile]).Synthwave .View:not(.Active) > .Resize:before
 {
-	background-color: #18154c;
+	background-color: #461C64;
 }
 
 html body:not([mobile]).Synthwave .View.Active > .Resize:before
 {
-	background-color: #18154c;
+	background-color: #461C64;
 }
 
 html body:not([mobile]).Synthwave .View > .Resize:hover:before,
 html body:not([mobile]).Synthwave .View > .Resize:active:before
 {
-	background-color: #1F1B61;
+	background-color: #E693E6;
 }
 
 

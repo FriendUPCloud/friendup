@@ -388,23 +388,18 @@ html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 /* Resize gad */
 
-html body:not([mobile]).Dark .View > .Resize:before
-{
-	border: 2px solid #19242e;
-}
-
 html body:not([mobile]).Dark .View:not(.Active) > .Resize:before
 {
-	background-color: #34495e;
+	background-color: #e0e0e0;
 }
 
 html body:not([mobile]).Dark .View.Active > .Resize:before
 {
-	background-color: #34495e;
+	background-color: #e0e0e0;
 }
 
 html body:not([mobile]).Dark .View > .Resize:hover:before,
 html body:not([mobile]).Dark .View > .Resize:active:before
 {
-	background-color: #3B536B;
+	background-color: #ffffff;
 }
