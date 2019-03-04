@@ -3290,7 +3290,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				if( e.button == 2 )
 				{
 					// check icons
+					clearRegionIcons();
 					this.classList.add( 'Selected' );
+					this.fileInfo.selected = true;
 					found = this;
 					this.selected = true;
 			
@@ -4018,9 +4020,11 @@ FileIcon.prototype.Init = function( fileInfo )
 		if( e.button == 2 )
 		{
 			// check icons
+			clearRegionIcons();
 			this.classList.add( 'Selected' );
 			found = this;
 			this.selected = true;
+			this.fileInfo.selected = true;
 			
 			if( !window.isMobile )
 			{
@@ -4104,6 +4108,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 			}
 		}
+		clearRegionIcons( { exception: this, force: true } );
 		window.targetMovable = false;
 	}
 
