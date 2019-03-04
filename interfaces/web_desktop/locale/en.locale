@@ -219,6 +219,7 @@ menu_new_window                         : New window
 
 menu_edit_wallpaper                     : Edit wallpaper
 menu_set_as_wallpaper                   : Set as wallpaper
+menu_look_and_feel			: Personalize Look and feel
 i18n_edit_dock                          : Edit dock
 i18n_remove_from_dock                   : Remove from dock
 

@@ -6591,6 +6591,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			menu = [
 				{
+					name: i18n( 'menu_look_and_feel' ),
+					command: function()
+					{
+						ExecuteApplication( 'Looknfeel' );
+					}
+				},				{
 					name: i18n( 'menu_edit_wallpaper' ),
 					command: function()
 					{
