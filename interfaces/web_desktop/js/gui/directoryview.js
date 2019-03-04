@@ -4594,7 +4594,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			// Run previous callback
 			if( callback )
 			{
-				if( this.refreshCallback ) this.refreshCallback();
+				if( this.refreshCallback ) this.refreshCallback( false );
 				this.refreshCallback = callback;
 			}
 			
@@ -4854,7 +4854,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				// Run previous callback
 				if( callback )
 				{
-					if( this.refreshCallback ) this.refreshCallback();
+					if( this.refreshCallback ) this.refreshCallback( false );
 					this.refreshCallback = callback;
 				}
 				
@@ -4942,7 +4942,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				// Run previous callback
 				if( callback )
 				{
-					if( this.refreshCallback ) this.refreshCallback();
+					if( this.refreshCallback ) this.refreshCallback( false );
 					this.refreshCallback = callback;
 				}
 				
