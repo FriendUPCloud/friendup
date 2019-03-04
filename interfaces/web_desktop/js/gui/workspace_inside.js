@@ -6527,12 +6527,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			tr = document.body;
 		
 		// Check if we need to activate
+		var iconWindow = false;
 		if( tr )
 		{
 			var p = tr.parentNode.parentNode;
+			
+			while( p != document.body && ( !p.classList || !p.classList.contains( 'View' ) ) )
+			{
+				p = p.parentNode;
+			}
 			if( p && p.classList && p.classList.contains( 'View' ) )
 			{
 				_ActivateWindow( p );
+				if( p.content && p.content.directoryview )
+					iconWindow = p.content;
 			}
 		}
 		
@@ -6627,9 +6635,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			// Make sure the menu is up to date
 			var t = tr;
-			while( !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
+			if( iconWindow )
+				t = iconWindow;
+			else
 			{
-				t = t.parentNode;
+				while( !( t.classList && t.classList.contains( 'Content' ) ) && t.parentNode != document.body )
+				{
+					t = t.parentNode;
+				}
 			}
 			if( t.checkSelected )
 				t.checkSelected();

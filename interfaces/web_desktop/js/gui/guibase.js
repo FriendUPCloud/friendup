@@ -3393,12 +3393,18 @@ movableMouseDown = function ( e )
 	window.regionScrollLeft = 0;
 	window.regionScrollTop = 0;
 	
-	// Clicking inside content
+	// Clicking inside content (listview or normal)
 	if ( 
-		tar.classList && tar.classList.contains( 'Scroller' ) &&
 		( 
-			tar.parentNode.classList.contains( 'Content' ) || 
-			tar.parentNode.classList.contains( 'ScreenContent' ) 
+			tar.classList && tar.classList.contains( 'Scroller' ) &&
+			( 
+				tar.parentNode.classList.contains( 'Content' ) || 
+				tar.parentNode.classList.contains( 'ScreenContent' ) 
+			)
+		) ||
+		(
+			tar.classList && tar.classList.contains( 'ScrollArea' ) &&
+			tar.parentNode.classList.contains( 'Listview' )
 		)
 	)
 	{
@@ -3411,13 +3417,16 @@ movableMouseDown = function ( e )
 	);
 	
 	var clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
+	// Listview
+	if( !clickOnView && tar.classList.contains( 'Listview' ) )
+		clickOnView = true;
 	
 	// Desktop / view selection 
 	if(
 		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
-		if( !sh )
+		if( !sh && e.button === 0 )
 		{
 			// Don't count scrollbar
 			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )

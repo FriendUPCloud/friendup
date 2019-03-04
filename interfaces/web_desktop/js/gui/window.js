@@ -1010,6 +1010,8 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	if( !e ) e = window.event;
+	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
@@ -1056,10 +1058,12 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Blur previous window
+	var changedActiveWindow = false;
 	if( window.currentMovable )
 	{
 		if( currentMovable != div )
 		{
+			changedActiveWindow = true;
 			currentMovable.windowObject.sendMessage( { type: 'view', command: 'blur' } );
 		}
 	}
@@ -1150,9 +1154,14 @@ function _ActivateWindow( div, nopoll, e )
 
 	// When activating for the first time, deselect selected icons
 	if( div.classList && !div.classList.contains( 'Screen' ) )
-		clearRegionIcons();
-
-	if( e && ( !e.shiftKey && !e.ctrlKey ) ) clearRegionIcons();
+	{
+		// Make sure!
+		if( changedActiveWindow )
+		{
+			clearRegionIcons();
+		}
+	}
+	else if( e && ( !e.shiftKey && !e.ctrlKey ) ) clearRegionIcons();
 
 	_ActivateWindowOnly( div );
 

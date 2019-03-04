@@ -2954,7 +2954,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 	var self = this;
 	
-	
 	// TODO: Direction not needed here
 	obj.direction = direction ? direction : 'horizontal';
 	icons = icons ? icons : obj.icons;
@@ -3285,16 +3284,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					convertIconsToMultiple();
 				}
 				
-				
 				// Right mouse button
 				if( e.button == 2 )
 				{
 					// check icons
-					clearRegionIcons();
+					clearRegionIcons( { exception: this } );
 					this.classList.add( 'Selected' );
 					this.fileInfo.selected = true;
-					found = this;
 					this.selected = true;
+					found = this;
 			
 					if( !window.isMobile )
 					{
