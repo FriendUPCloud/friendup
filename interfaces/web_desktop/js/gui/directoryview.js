@@ -3538,6 +3538,12 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				r.onclick = null;
 				r.onmousedown = null;
 			}
+			
+			// Releasing
+			r.onmouseup = function( e )
+			{
+				clearRegionIcons( { exception: this, force: true } );
+			}
 
 			// For clicks
 			icons[a].domNode = r;
