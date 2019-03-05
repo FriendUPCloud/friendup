@@ -1341,6 +1341,11 @@ html .View > .Content
 	left: 0 !important;
 	right: 0;
 }
+ 
+html body:not([mobile]) .View > .Content
+{
+	border-radius: 0 0 3px 3px;
+}
 
 html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View > .Content
 {
@@ -1410,10 +1415,11 @@ html body:not([mobile]) .View > .Resize
     background-color: transparent !important;
     cursor: hand;
     cursor: pointer;
-    right: 0px;
-    bottom: 0px;
+    right: 2px;
+    bottom: 2px;
     width: 20px !important;
     height: 20px !important;
+    border-radius: 0 0 5px 0;
     position: relative;
     overflow: hidden;
     background-image: none;
@@ -1438,15 +1444,15 @@ html body:not([mobile]) .View > .Resize:before
 {
 	content: " ";
 	display: block;
-	width: 24px;
-	height: 24px;
+	width: 16px;
+	height: 16px;
 	transform: rotateZ(45deg);
 	position: absolute;
 	z-index: 1;
-	top: 40%;
-	left: 40%;
+	top: 60%;
+	left: 60%;
 	transition: background-color 0.25s;
-	border: 2px solid #2e393d;
+	border-radius: 5px;
 }
 
 html body:not([mobile]) .View:not(.Active) > .Resize:before
@@ -1456,7 +1462,7 @@ html body:not([mobile]) .View:not(.Active) > .Resize:before
 
 html body:not([mobile]) .View.Active > .Resize:before
 {
-	background-color: #4A6075;
+	background-color: #34495E;
 }
 
 html body:not([mobile]) .View > .Resize:hover:before,

@@ -701,7 +701,7 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	var now = Date.now();
 	var pingTime = now - timeSent;
 
-	if( self.pingCheck ) { clearTimeout( self.pingCheck); self.pingCheck = 0 }
+	if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
 	self.setState( 'ping', pingTime );
 }
 
@@ -772,7 +772,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 	
 	code = code || 1000;
 	reason = reason || 'WS connection closed';
-	console.trace();
+	
 	try {
 		console.log('closing websocket',code,reason);
 		self.ws.close( code, reason );
@@ -785,7 +785,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 FriendWebSocket.prototype.cleanup = function()
 {
 	var self = this;
-	self.ready = false;
+	this.conn = false;
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();

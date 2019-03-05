@@ -4,6 +4,7 @@ var WorkspaceInside = {
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
+	currentViewState: 'active',
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -485,9 +486,9 @@ var WorkspaceInside = {
 			return Workspace.relogin();
 		}
 		
-		if(!Workspace.sessionId)
+		if( !Workspace.sessionId )
 		{
-			setTimeout(Workspace.initWebSocket, 1000);
+			setTimeout( Workspace.initWebSocket, 1000 );
 		}
 
 		Workspace.connectingWebsocket = true;
@@ -5494,14 +5495,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
 			{
+				// We are busy!
+				if( form.classList.contains( 'Busy' ) )
+				{
+					return;
+				}
+				ge( 'uploadFeedback' ).parentNode.classList.add( 'Busy' );
 				form.submit();
+				form.classList.add( 'Busy' );
 				var f = function( e )
 				{
+					form.classList.remove( 'Busy' );
+					ge( 'uploadFeedback' ).parentNode.classList.remove( 'Busy' );
 					var res = resultfr.contentDocument.body.innerHTML;
 					res = res.split( '<!--separate-->' );
 					if( res[0] == 'ok' )
 					{
-						ge( 'uploadFeedback' ).innerHTML = i18n( 'i18n_upload_completed' );
 						for( var a in movableWindows )
 						{
 							var w = movableWindows[a];
@@ -5522,14 +5531,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					else
 					{
 						Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
-						
-						ge( 'uploadFeedback' ).innerHTML = i18n( 'i18n_upload_failed' );
 					}
-					
-					setTimeout( function()
-					{
-						ge( 'uploadFeedback' ).innerHTML = '';
-					}, 1500 );
 					
 					resultfr.removeEventListener( 'load', f );
 					
@@ -5593,22 +5595,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.sessionId ) return;
 
 		if( this.fupdialog ) return;
-		this.fupdialog = new Filedialog( false, function( arr )
-		{
-			if( Workspace.fupdialog )
+		var flags = {
+			path: 'Home:Downloads/',
+			triggerFunction: function( arr )
 			{
-				var fu = ge( 'fileUpload' );
-				if( fu )
+				if( Workspace.fupdialog )
 				{
-					if( arr == 'Mountlist:' || !arr )
+					var fu = ge( 'fileUpload' );
+					if( fu )
 					{
-						arr = 'Home:';
+						if( arr == 'Mountlist:' || !arr )
+						{
+							arr = 'Home:';
+						}
+						fu.path.value = arr;
 					}
-					fu.path.value = arr;
+					Workspace.fupdialog = false;
 				}
-				Workspace.fupdialog = false;
-			}
-		}, 'Mountlist:', 'path' );
+			},
+			type: 'path',
+			mainView: window.currentMovable ? currentMovable.windowObject : null
+		};
+		this.fupdialog = new Filedialog( flags );
 		return;
 	},
 	// Simple logout..
@@ -6335,7 +6343,34 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_download' ),
-						command: function() { Workspace.download( downloadIcon.Path ); },
+						command: function() { 
+							// Find icon for download
+							if( currentMovable )
+							{
+								var selPath = false;
+								var dv = currentMovable.content;
+								if( dv )
+								{
+									for( var a = 0; a < dv.icons.length; a++ )
+									{
+										var ic = dv.icons[a];
+										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.domNode.fileInfo.selected )
+										{
+											selPath = ic.domNode.fileInfo.Path;
+											break;
+										}
+									}
+								}
+								if( selPath )
+								{
+									Workspace.download( selPath ); 
+								}
+								else
+								{
+									Notify( { title: i18n( 'i18n_could_not_download' ), text: i18n( 'i18n_file_cannot_be_downloaded' ) } );
+								}
+							}
+						},
 						disabled: ( !iconsSelected || volumeIcon || systemDrive || dormant || directoryIcon )
 					}
 				]
@@ -6611,6 +6646,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			menu = [
 				{
+					name: i18n( 'menu_look_and_feel' ),
+					command: function()
+					{
+						ExecuteApplication( 'Looknfeel' );
+					}
+				},				{
 					name: i18n( 'menu_edit_wallpaper' ),
 					command: function()
 					{
@@ -7941,6 +7982,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( !Workspace.sessionId ) { setTimeout(Workspace.updateViewState, 1000); return; }
 
+		// Don't update if not changed
+		if( this.currentViewState == newState ) return;
+		
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );

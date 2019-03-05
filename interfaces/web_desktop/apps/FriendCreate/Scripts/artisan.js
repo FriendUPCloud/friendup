@@ -1213,6 +1213,9 @@ Application.showPrefs = function()
 };
 
 // Check if we support the filetype --------------------------------------------
+/* If a file is (Currently) un-supported, return true anyway. The file's extension
+   will still be recorded and then can be opened as a standard text file.
+*/
 Application.checkFileType = function( path )
 {
 	if( !path || ( path && !path.split ) ) return;
@@ -1252,7 +1255,7 @@ Application.checkFileType = function( path )
 		case 'conf':
 			return true;
 		default:
-			return false;
+			return true;	// no reason to reject a file. just force to a .txt syntax
 	}
 };
 

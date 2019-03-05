@@ -44,7 +44,7 @@ DirectoryView = function( winobj, extra )
 	this.navMode = globalConfig.navigationMode == 'spacial' ? globalConfig.navigationMode : 'toolbar'; // default is now using toolbar
 	this.pathHistory = [];
 	this.pathHistoryIndex = 0;
-	
+	this.ignoreFiles = false;
 	this.filearea = winobj;
 	this.bookmarks = null;
 	this.sidebarbackground = true;
@@ -78,6 +78,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.leftpanel )
 		{
 			this.bookmarks = extra.leftpanel;
+		}
+		if( extra.ignoreFiles )
+		{
+			this.ignoreFiles = true;
 		}
 		if( extra.nosidebarbackground )
 		{
@@ -2595,6 +2599,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			if( icons[a].Type == 'Directory' ) 
 				dirs.push( icons[a] );
 			else 
@@ -2665,6 +2671,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		// Draw icons
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			// Do not draw icons out of bounds!
 			if( this.mode != 'Volumes' && ( iy > display.bottom || iy < display.top ) )
 			{
@@ -3124,6 +3132,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			if( icons[a].Type == 'Directory' ) 
 				dirs.push( icons[a] );
 			else 
@@ -3158,6 +3168,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			var t = icons[a].Title ? icons[a].Title : icons[a].Filename;
 			var ic = icons[a];
 
@@ -3404,9 +3416,18 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							}
 						}
 						
-						this.classList.add( 'Selected' );
-						this.selected = sh ? 'multiple' : true;
-						this.fileInfo.selected = sh ? 'multiple' : true;
+						if( this.classList.contains( 'Selected' ) )
+						{
+							this.classList.remove( 'Selected' );
+							this.selected = false;
+							this.fileInfo.selected = false;
+						}
+						else
+						{
+							this.classList.add( 'Selected' );
+							this.selected = sh ? 'multiple' : true;
+							this.fileInfo.selected = sh ? 'multiple' : true;
+						}
 						dv.lastListItem = this;
 					}
 
@@ -3455,12 +3476,11 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						self.click = false;
 						if( self.classList.contains( 'Selected' ) )
 						{
-							self.classList.remove( 'Selected' );
-							self.selected = false;
-							self.fileInfo.selected = false;
+							clearRegionIcons();
 						}
 						else
 						{
+							clearRegionIcons();
 							self.classList.add( 'Selected' );
 							self.selected = true;
 							self.fileInfo.selected = true;
@@ -4088,9 +4108,19 @@ FileIcon.prototype.Init = function( fileInfo )
 				}
 			}
 
-			this.classList.add( 'Selected' );
-			this.selected = sh ? 'multiple' : true;
-			this.fileInfo.selected = sh ? 'multiple' : true;
+			// Toggle
+			if( this.classList.contains( 'Selected' ) )
+			{
+				this.classList.remove( 'Selected' );
+				this.selected = false;
+				this.fileInfo.selected = false;
+			}
+			else
+			{
+				this.classList.add( 'Selected' );
+				this.selected = sh ? 'multiple' : true;
+				this.fileInfo.selected = sh ? 'multiple' : true;
+			}
 
 
 			// Refresh the menu based on selected icons
@@ -4433,8 +4463,6 @@ FileIcon.prototype.Init = function( fileInfo )
 			return;
 			
 		this.touchPos = false;
-		
-		file.onmousedown();
 
 		// When single clicking (under a second) click the file!
 		var time = ( new Date() ).getTime() - file.clickedTime;
@@ -4454,6 +4482,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		file.contextMenuTimeout = false;
 		Workspace.closeDrivePanel();
 		window.clickElement = null;
+		return cancelBubble( event );
 	} );
 }
 
@@ -5074,7 +5103,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			
 			if( cmd == 'file' )
 			{
-				
 				var dliframe = document.createElement('iframe');
 				dliframe.setAttribute('class', 'hidden');
 				dliframe.setAttribute('src', fileInfo.downloadhref );

@@ -1141,4 +1141,9 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	display: block;
 }
 
+[mobile] .Busy button.FloatRight.IconSmall.fa-upload 
+{
+	display: none !important;
+}
+
 

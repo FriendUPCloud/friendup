@@ -214,6 +214,8 @@ menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
 menu_share				: Del
 menu_download                           : Last ned
+i18n_could_not_download                 : Kunne ikke laste ned
+i18n_file_cannot_be_downloaded          : Filen er ikke av rett type for nedlastning
 menu_close_idle_connections             : Fjern nettverksprosesser
 menu_hide_hidden_files                  : Gjem skjulbare filer
 menu_show_hidden_files                  : Vis skjulte filer
