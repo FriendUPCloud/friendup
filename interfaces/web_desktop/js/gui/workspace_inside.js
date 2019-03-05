@@ -6772,29 +6772,32 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( thisicon.fileInfo )
 					{
-						var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
-						if( ext )
+						if( thisicon.fileInfo.Filename )
 						{
-							switch( ext.toLowerCase() )
+							var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
+							if( ext )
 							{
-								case 'jpg':
-								case 'jpeg':
-								case 'png':
-								case 'gif':
-									menu.push( {
-										name: i18n( 'menu_set_as_wallpaper' ),
-										command: function()
-										{
-											var m = new Module( 'system' );
-											m.onExecuted = function()
+								switch( ext.toLowerCase() )
+								{
+									case 'jpg':
+									case 'jpeg':
+									case 'png':
+									case 'gif':
+										menu.push( {
+											name: i18n( 'menu_set_as_wallpaper' ),
+											command: function()
 											{
-												Workspace.wallpaperImage = thisicon.fileInfo.Path;
-												Workspace.refreshDesktop();
+												var m = new Module( 'system' );
+												m.onExecuted = function()
+												{
+													Workspace.wallpaperImage = thisicon.fileInfo.Path;
+													Workspace.refreshDesktop();
+												}
+												m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
 											}
-											m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
-										}
-									} );
-									break;
+										} );
+										break;
+								}
 							}
 						}
 					}
