@@ -44,7 +44,7 @@ DirectoryView = function( winobj, extra )
 	this.navMode = globalConfig.navigationMode == 'spacial' ? globalConfig.navigationMode : 'toolbar'; // default is now using toolbar
 	this.pathHistory = [];
 	this.pathHistoryIndex = 0;
-	
+	this.ignoreFiles = false;
 	this.filearea = winobj;
 	this.bookmarks = null;
 	this.sidebarbackground = true;
@@ -78,6 +78,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.leftpanel )
 		{
 			this.bookmarks = extra.leftpanel;
+		}
+		if( extra.ignoreFiles )
+		{
+			this.ignoreFiles = true;
 		}
 		if( extra.nosidebarbackground )
 		{
@@ -2595,6 +2599,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			if( icons[a].Type == 'Directory' ) 
 				dirs.push( icons[a] );
 			else 
@@ -2665,6 +2671,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		// Draw icons
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			// Do not draw icons out of bounds!
 			if( this.mode != 'Volumes' && ( iy > display.bottom || iy < display.top ) )
 			{
@@ -3124,6 +3132,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			if( icons[a].Type == 'Directory' ) 
 				dirs.push( icons[a] );
 			else 
@@ -3158,6 +3168,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			var t = icons[a].Title ? icons[a].Title : icons[a].Filename;
 			var ic = icons[a];
 

@@ -17,6 +17,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var multiSelect = true;
 	var defaultPath = 'Home:';
 	var keyboardNavigation = false;
+	var ignoreFiles = false;
 	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
@@ -39,6 +40,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					break;
 				case 'multiSelect':
 					multiSelect = object[a];
+					break;
+				case 'ignoreFiles':
+					ignoreFiles = object[a];
 					break;
 				case 'path':
 					path = object[a];
@@ -63,6 +67,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					break;
 			}
 		}
+	}
+	
+	// Special case, just looking for folders
+	if( type == 'path' )
+	{
+		ignoreFiles = true;
 	}
 
 	// Save never has multiselect
@@ -557,6 +567,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			rightpanel:          dialog.contentbox,
 			leftpanel:           dialog.sidebar,
 			multiple:            multiSelect,
+			ignoreFiles:         ignoreFiles,
 			nosidebarbackground: true,
 			toolbararea:         dialog.toolbararea,
 			mountlist:           true,

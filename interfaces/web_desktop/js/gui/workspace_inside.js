@@ -5594,22 +5594,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.sessionId ) return;
 
 		if( this.fupdialog ) return;
-		this.fupdialog = new Filedialog( false, function( arr )
-		{
-			if( Workspace.fupdialog )
+		var flags = {
+			path: 'Home:Downloads/',
+			triggerFunction: function( arr )
 			{
-				var fu = ge( 'fileUpload' );
-				if( fu )
+				if( Workspace.fupdialog )
 				{
-					if( arr == 'Mountlist:' || !arr )
+					var fu = ge( 'fileUpload' );
+					if( fu )
 					{
-						arr = 'Home:';
+						if( arr == 'Mountlist:' || !arr )
+						{
+							arr = 'Home:';
+						}
+						fu.path.value = arr;
 					}
-					fu.path.value = arr;
+					Workspace.fupdialog = false;
 				}
-				Workspace.fupdialog = false;
-			}
-		}, 'Mountlist:', 'path' );
+			},
+			type: 'path',
+			mainView: window.currentMovable ? currentMovable.windowObject : null
+		};
+		this.fupdialog = new Filedialog( flags );
 		return;
 	},
 	// Simple logout..
