@@ -3416,9 +3416,18 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							}
 						}
 						
-						this.classList.add( 'Selected' );
-						this.selected = sh ? 'multiple' : true;
-						this.fileInfo.selected = sh ? 'multiple' : true;
+						if( this.classList.contains( 'Selected' ) )
+						{
+							this.classList.remove( 'Selected' );
+							this.selected = false;
+							this.fileInfo.selected = false;
+						}
+						else
+						{
+							this.classList.add( 'Selected' );
+							this.selected = sh ? 'multiple' : true;
+							this.fileInfo.selected = sh ? 'multiple' : true;
+						}
 						dv.lastListItem = this;
 					}
 
@@ -4099,9 +4108,19 @@ FileIcon.prototype.Init = function( fileInfo )
 				}
 			}
 
-			this.classList.add( 'Selected' );
-			this.selected = sh ? 'multiple' : true;
-			this.fileInfo.selected = sh ? 'multiple' : true;
+			// Toggle
+			if( this.classList.contains( 'Selected' ) )
+			{
+				this.classList.remove( 'Selected' );
+				this.selected = false;
+				this.fileInfo.selected = false;
+			}
+			else
+			{
+				this.classList.add( 'Selected' );
+				this.selected = sh ? 'multiple' : true;
+				this.fileInfo.selected = sh ? 'multiple' : true;
+			}
 
 
 			// Refresh the menu based on selected icons
