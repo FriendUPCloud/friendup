@@ -6344,6 +6344,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_download' ),
 						command: function() { 
+							// Find icon for download
 							if( currentMovable )
 							{
 								var selPath = false;
@@ -6363,6 +6364,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( selPath )
 								{
 									Workspace.download( selPath ); 
+								}
+								else
+								{
+									Notify( { title: i18n( 'i18n_could_not_download' ), text: i18n( 'i18n_file_cannot_be_downloaded' ) } );
 								}
 							}
 						},
