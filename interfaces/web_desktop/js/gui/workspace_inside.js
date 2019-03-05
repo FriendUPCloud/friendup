@@ -5495,9 +5495,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
 			{
+				// We are busy!
+				if( form.classList.contains( 'Busy' ) )
+				{
+					return;
+				}
+				ge( 'uploadFeedback' ).parentNode.classList.add( 'Busy' );
 				form.submit();
+				form.classList.add( 'Busy' );
 				var f = function( e )
 				{
+					form.classList.remove( 'Busy' );
+					ge( 'uploadFeedback' ).parentNode.classList.remove( 'Busy' );
 					var res = resultfr.contentDocument.body.innerHTML;
 					res = res.split( '<!--separate-->' );
 					if( res[0] == 'ok' )

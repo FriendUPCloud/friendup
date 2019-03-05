@@ -4275,6 +4275,76 @@ div.Orange, button.Orange
 	position: relative;
 }
 
+#fileUpload.Busy input,
+#fileUpload.Busy button
+{
+	pointer-events: none;
+	opacity: 0.8;
+	cursor: not-allowed;
+}
+
+#fileUpload.Busy input[type=file]
+{
+	display: none;
+}
+
+#fileUpload button.fa-upload
+{
+	transition: opacity 0.2s;
+	opacity: 1;
+}
+
+#fileUpload.Busy button.fa-upload
+{
+	opacity: 0.5;
+}
+
+.Busy button.fa-upload
+{
+	display: none;
+}
+
+.ProgressReport
+{
+	display: none;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.Busy .ProgressReport
+{
+	display: block;
+	opacity: 1;
+	position: relative;
+	width: 60px;
+	margin: auto;
+	height: 60px;
+	line-height: 60px;
+	text-align: center;
+}
+
+.ProgressReport .Progress
+{
+	position: absolute;
+	display: block;
+	font-size: 30px;
+	color: white;
+	animation: uprotate 2s infinite linear;
+}
+
+.ProgressReport .Progress:after
+{
+	content: "\f1ce";
+	font-family: fontawesome;
+	display: block;
+}
+
+@keyframes uprotate
+{
+	0% { transform: rotateZ(0deg); }
+	100% { transform: rotateZ(360deg); }
+}
+
 .FileUpload > input
 {
 	opacity: 0;
