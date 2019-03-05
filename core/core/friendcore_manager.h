@@ -178,6 +178,12 @@ int FriendCoreManagerServicesRun( FriendCoreManager *fcm );
 
 void FriendCoreManagerShutdown( FriendCoreManager *fcm );
 
+//
+//
+//
+
+int FriendCoreManagerInitServices( FriendCoreManager *fcm );
+
 
 
 #endif //__CORE_FRIENDCORE_MANAGER_H__
