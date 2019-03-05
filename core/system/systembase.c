@@ -947,6 +947,8 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
 	
+	FriendCoreManagerInitServices( l->fcm );
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
