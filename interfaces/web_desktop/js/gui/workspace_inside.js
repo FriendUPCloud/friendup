@@ -6343,7 +6343,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_download' ),
-						command: function() { Workspace.download( downloadIcon.Path ); },
+						command: function() { 
+							if( currentMovable )
+							{
+								var selPath = false;
+								var dv = currentMovable.content;
+								if( dv )
+								{
+									for( var a = 0; a < dv.icons.length; a++ )
+									{
+										var ic = dv.icons[a];
+										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.domNode.fileInfo.selected )
+										{
+											selPath = ic.domNode.fileInfo.Path;
+											break;
+										}
+									}
+								}
+								if( selPath )
+								{
+									Workspace.download( selPath ); 
+								}
+							}
+						},
 						disabled: ( !iconsSelected || volumeIcon || systemDrive || dormant || directoryIcon )
 					}
 				]

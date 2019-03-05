@@ -5085,7 +5085,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			
 			if( cmd == 'file' )
 			{
-				
 				var dliframe = document.createElement('iframe');
 				dliframe.setAttribute('class', 'hidden');
 				dliframe.setAttribute('src', fileInfo.downloadhref );
