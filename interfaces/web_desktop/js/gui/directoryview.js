@@ -3467,12 +3467,11 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						self.click = false;
 						if( self.classList.contains( 'Selected' ) )
 						{
-							self.classList.remove( 'Selected' );
-							self.selected = false;
-							self.fileInfo.selected = false;
+							clearRegionIcons();
 						}
 						else
 						{
+							clearRegionIcons();
 							self.classList.add( 'Selected' );
 							self.selected = true;
 							self.fileInfo.selected = true;
