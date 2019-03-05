@@ -1,7 +1,7 @@
 Friend Unifying Platform version 1.2-RC2
 ========================================
 
-**NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch* after proper testing. Check this out for more information on [commit guidelines](https://github.com/FriendUPCloud/friendup/wiki/4.-Developer-Commit-Guidelines). Bleeding edge *users* should check out the *friendup-1.2-rc2* branch. 
+**NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch* after proper testing. Check this out for more information on [commit guidelines](https://github.com/FriendUPCloud/friendup/wiki/4.-Developer-Commit-Guidelines). Bleeding edge *users* should check out the *dev* branch (where daily activity is occuring). This one will be merged into the *friendup-1.2-rc2* branch as soon as it is deemed ready. Then this will be merged back into master in 04/2019. 
 
 ---
 
