@@ -5511,7 +5511,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					res = res.split( '<!--separate-->' );
 					if( res[0] == 'ok' )
 					{
-						ge( 'uploadFeedback' ).innerHTML = i18n( 'i18n_upload_completed' );
 						for( var a in movableWindows )
 						{
 							var w = movableWindows[a];
@@ -5532,14 +5531,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					else
 					{
 						Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
-						
-						ge( 'uploadFeedback' ).innerHTML = i18n( 'i18n_upload_failed' );
 					}
-					
-					setTimeout( function()
-					{
-						ge( 'uploadFeedback' ).innerHTML = '';
-					}, 1500 );
 					
 					resultfr.removeEventListener( 'load', f );
 					
