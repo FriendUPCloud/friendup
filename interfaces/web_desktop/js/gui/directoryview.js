@@ -4463,8 +4463,6 @@ FileIcon.prototype.Init = function( fileInfo )
 			return;
 			
 		this.touchPos = false;
-		
-		file.onmousedown();
 
 		// When single clicking (under a second) click the file!
 		var time = ( new Date() ).getTime() - file.clickedTime;
@@ -4484,6 +4482,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		file.contextMenuTimeout = false;
 		Workspace.closeDrivePanel();
 		window.clickElement = null;
+		return cancelBubble( event );
 	} );
 }
 
