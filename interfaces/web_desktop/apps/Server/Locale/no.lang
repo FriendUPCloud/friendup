@@ -50,3 +50,12 @@ i18n_no                                 : Nei
 
 i18n_app_permissions                    : App rettigheter
 i18n_no_workgroup                       : Ingen arbeidsgruppe
+
+# Globals
+
+i18n_save_globals                       : Lagre server globaler
+i18n_eula_long                          : EULA lang versjon
+i18n_eula_short                         : EULA kort versjon
+i18n_use_text                           : Bruk denne teksten
+i18n_login_logo_image                   : Innloggingsgrafikk
+

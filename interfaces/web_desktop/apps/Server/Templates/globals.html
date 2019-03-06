@@ -1,19 +1,19 @@
 
 	<div>
 		<p class="Layout">
-			<strong>{i18n_login_logo_image}</strong>
+			<strong>{i18n_login_logo_image}</strong> <input type="checkbox" id="logo_image_check" onclick="Globals.checkLogoImage( this )"/> {i18n_use_text}
 		</p>
-		<div id="LoginLogoImage MarginBottom">
+		<div id="LoginLogoImage MarginBottom Padding">
 		</div>
 		<p class="Layout">
 			<strong>{i18n_eula_short}</strong> <input type="checkbox" id="eula_short_check" onclick="Globals.checkEulaShort( this )"/> {i18n_use_text}
 		</p>
-		<textarea size="8" class="FullWidth MarginBottom" id="eula_short_text">{eula_short}</textarea>
+		<textarea size="8" class="FullWidth MarginBottom" id="eula_short_text" style="height: 100px">{eula_short}</textarea>
 		<p class="Layout">
 			<strong>{i18n_eula_long}</strong> <input type="checkbox" id="eula_long_check" onclick="Globals.checkEulaLong( this )"/> {i18n_use_text}
 		</p>
-		<textarea size="20" class="FullWidth MarginBottom" id="eula_long_text">{eula_long}</textarea>
+		<textarea class="FullWidth MarginBottom" id="eula_long_text" style="height: 250px">{eula_long}</textarea>
 	</div>
 	<div class="BorderTop Padding">
-		<button type="button" class="IconSmall fa-disk"> {i18n_save_globals}
+		<button type="button" class="IconSmall fa-save"> {i18n_save_globals}
 	</div>

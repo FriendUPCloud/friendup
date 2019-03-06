@@ -49,3 +49,12 @@ i18n_no                                 : No
 
 i18n_app_permissions                    : App permissions
 i18n_no_workgroup                       : No workgroup
+
+# Globals
+
+i18n_save_globals                       : Save server globals
+i18n_eula_long                          : EULA long version
+i18n_eula_short                         : EULA short version
+i18n_use_text                           : Use this text
+i18n_login_logo_image                   : Login image graphic
+

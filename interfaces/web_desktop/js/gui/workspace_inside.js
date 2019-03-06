@@ -9008,7 +9008,7 @@ else
 	Workspace.updateViewState( 'active' );
 }
 
-/*  Debug blob:
+/*  Debug blob: */
 if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
@@ -9023,7 +9023,7 @@ if( isMobile  )
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
-}*/
+}
 
 var mobileDebugTime = null;
 function mobileDebug( str, clear )

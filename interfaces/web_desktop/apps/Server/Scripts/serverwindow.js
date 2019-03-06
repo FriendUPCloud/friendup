@@ -24,6 +24,7 @@ Application.run = function( msg, iface )
 function reloadGlobals()
 {
 	var f = new File( 'Progdir:Templates/globals.html' );
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		ge( 'ServerGlobals' ).innerHTML = data;
