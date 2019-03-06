@@ -666,6 +666,8 @@ function refreshSetupWallpaper()
 				b.style.clear = 'both';
 				ge( 'DefaultWallpaperPreview' ).appendChild( b );
 			}
+			if( i.width || i.height )
+				i.onload();
 		}
 	}
 	m.execute( 'usersetupwallpaperexists', { setupId: ge( 'pSetupID' ).value } );
