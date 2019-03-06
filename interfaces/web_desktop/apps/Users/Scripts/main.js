@@ -597,6 +597,72 @@ function DeleteUser( id )
 	} );
 }
 
+function selectSetupUploadImage()
+{
+	if( !ge( 'pSetupID' ).value ) 
+	{
+		Notify( { title: 'No template ID', text: 'Please save your user template before selecting default wallpaper.' } );
+		return;
+	}
+	var flags = {
+		type: 'load',
+		path: 'Home:',
+		suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+		triggerFunction: function( items )
+		{
+			if( items && items.length && items[ 0 ].Path )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					refreshSetupWallpaper();
+				}
+				m.execute( 'usersetupwallpaperset', { path: items[ 0 ].Path, setupId: ge( 'pSetupID' ).value } );
+			}
+		}
+	};
+	// Execute
+	( new Filedialog( flags ) );
+}
+
+// Refresh the preview of the user template wallpaper
+function refreshSetupWallpaper()
+{
+	if( !ge( 'pSetupID' ).value ) return;
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			var i = new Image();
+			i.src = '/system.library/module/?module=system&command=usersetupwallpaperget&setupId=' + ge( 'pSetupID' ).value + '&authid=' + Application.authId;
+			i.onload = function()
+			{
+				i.style.width = '320px';
+				i.style.height = 'auto';
+				ge( 'DefaultWallpaperPreview' ).innerHTML = '';
+				ge( 'DefaultWallpaperPreview' ).appendChild( i );
+			}
+		}
+	}
+	m.execute( 'usersetupwallpaperexists', { setupId: ge( 'pSetupID' ).value } );
+}
+
+// For cleaning out the wallpaper for the user template
+function deleteSetupWallpaper()
+{
+	if( !ge( 'pSetupID' ).value ) return;
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		refreshSetupWallpaper();
+	}
+	m.execute( 'usersetupwallpaperdelete', { setupId: ge( 'pSetupID' ).value } );
+}
+
+
 function RefreshUserGroups( groups )
 {
 	if ( ge( 'pUserWorkgroup' ) )
@@ -1791,3 +1857,5 @@ function TogglePasswordField( inputid )
 			finput.setAttribute('type','text')
 	}
 }
+
+

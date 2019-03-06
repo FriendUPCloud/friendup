@@ -2081,6 +2081,18 @@ if( isset( $args->command ) )
 		case 'usersetupdelete':
 			require( 'modules/system/include/usersetupdelete.php' );
 			break;
+		case 'usersetupwallpaperdelete':
+			require( 'modules/system/include/usersetupwallpaperdelete.php' );
+			break;
+		case 'usersetupwallpaperexists':
+			require( 'modules/system/include/usersetupwallpaperexists.php' );
+			break;
+		case 'usersetupwallpaperget':
+			require( 'modules/system/include/usersetupwallpaperget.php' );
+			break;
+		case 'usersetupwallpaperset':
+			require( 'modules/system/include/usersetupwallpaperset.php' );
+			break;
 		// Get setup
 		case 'usersetupget':
 			require( 'modules/system/include/usersetupget.php' );
