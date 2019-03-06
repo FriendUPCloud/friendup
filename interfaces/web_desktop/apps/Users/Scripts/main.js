@@ -639,7 +639,7 @@ function refreshSetupWallpaper()
 		if( e == 'ok' )
 		{
 			var i = new Image();
-			i.src = '/system.library/module/?module=system&command=usersetupwallpaperget&setupId=' + ge( 'pSetupID' ).value + '&authid=' + Application.authId;
+			i.src = '/system.library/module/?module=system&command=usersetupwallpaperget&setupId=' + ge( 'pSetupID' ).value + '&authid=' + Application.authId + '&random=' + ( Math.random() * 999999 + Math.random() * 909999 );
 			i.onload = function()
 			{
 				i.style.width = '320px';
@@ -681,7 +681,7 @@ function deleteSetupWallpaper()
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		refreshSetupWallpaper();
+		ge( 'DefaultWallpaperPreview' ).innerHTML = '';
 	}
 	m.execute( 'usersetupwallpaperdelete', { setupId: ge( 'pSetupID' ).value } );
 }
