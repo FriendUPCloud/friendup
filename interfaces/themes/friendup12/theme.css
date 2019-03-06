@@ -1413,8 +1413,6 @@ html .View.Scrolling > .Resize
 html body:not([mobile]) .View > .Resize
 {
     background-color: transparent !important;
-    cursor: hand;
-    cursor: pointer;
     right: 2px;
     bottom: 2px;
     width: 20px !important;
@@ -1423,36 +1421,6 @@ html body:not([mobile]) .View > .Resize
     position: relative;
     overflow: hidden;
     background-image: none;
-}
-
-html body:not([mobile]) .View > .Resize:after
-{
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	width: 24px;
-	height: 24px;
-	content: " ";
-	display: block;
-    background: transparent !important;
-    z-index: 2;
-    opacity: 0.5;
-    transition: opacity 0.25s;
-}
-
-html body:not([mobile]) .View > .Resize:before
-{
-	content: " ";
-	display: block;
-	width: 16px;
-	height: 16px;
-	transform: rotateZ(45deg);
-	position: absolute;
-	z-index: 1;
-	top: 60%;
-	left: 60%;
-	transition: background-color 0.25s;
-	border-radius: 5px;
 }
 
 html body:not([mobile]) .View:not(.Active) > .Resize:before
@@ -3474,7 +3442,6 @@ html #Statusbar .Task,
 html .View > .Title > div > .Zoom,
 html .View > .Title > div > .Depth,
 html .View > .Title > div > .Close,
-html .View > .Resize,
 html .View > .Title,
 html .View > .Title *,
 html .View > .Title > div > span,

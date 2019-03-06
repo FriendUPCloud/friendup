@@ -386,20 +386,3 @@ html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	border-color: #314559;
 }  
 
-/* Resize gad */
-
-html body:not([mobile]).Dark .View:not(.Active) > .Resize:before
-{
-	background-color: #e0e0e0;
-}
-
-html body:not([mobile]).Dark .View.Active > .Resize:before
-{
-	background-color: #e0e0e0;
-}
-
-html body:not([mobile]).Dark .View > .Resize:hover:before,
-html body:not([mobile]).Dark .View > .Resize:active:before
-{
-	background-color: #ffffff;
-}

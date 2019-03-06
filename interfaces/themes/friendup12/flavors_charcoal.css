@@ -415,21 +415,3 @@ html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	border-color: #383838;
 }
 
-/* Resize gad */
-
-html body:not([mobile]).Charcoal .View:not(.Active) > .Resize:before
-{
-	background-color: #e0e0e0;
-}
-
-html body:not([mobile]).Charcoal .View.Active > .Resize:before
-{
-	background-color: #e0e0e0;
-}
-
-html body:not([mobile]).Charcoal .View > .Resize:hover:before,
-html body:not([mobile]).Charcoal .View > .Resize:active:before
-{
-	background-color: #ffffff;
-}
-
