@@ -58,3 +58,6 @@ i18n_eula_short                         : EULA short version
 i18n_use_text                           : Use this text
 i18n_login_logo_image                   : Login image graphic
 
+i18n_server_globals_saved               : Server globals saved
+i18n_please_refresh_to_see_results      : Please refresh your browser or client to see the result.
+

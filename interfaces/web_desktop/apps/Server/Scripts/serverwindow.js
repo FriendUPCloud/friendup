@@ -51,6 +51,27 @@ function reloadGlobals()
 	m.execute( 'getserverglobals' );
 }
 
+// Save the server globals
+function saveGlobals()
+{
+	var eulaShortText = ge( 'eula_short_text' ).value;
+	var eulaLongText  = ge( 'eula_long_text' ).value;
+	if( !ge( 'eula_short_check' ).checked )
+		eulaShortText = false;
+	if( !ge( 'eula_long_check' ).checked )
+		eulaLongText = false;
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			Notify( { title: i18n( 'i18n_server_globals_saved' ), text: i18n( 'i18n_please_refresh_to_see_results' ) } );
+		}
+	}
+	m.execute( 'setserverglobals', { eulaShortText: eulaShortText, eulaLongText: eulaLongText, logoImage: logoImage } );
+}
+
 function reloadServices()
 {
 	var m = new Module( 'system' );
