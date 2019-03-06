@@ -680,8 +680,8 @@ body.ViewMaximized .ScreenContent > .View:not(.Active)
 	background-image: $WinGadResizeImg;
 	background-repeat: no-repeat;
 	background-position: center center;
-	cursor: hand;
-	cursor: pointer;
+	cursor: resize;
+	cursor: nwse-resize;
 	right: 0px;
 	bottom: 0px;
 }

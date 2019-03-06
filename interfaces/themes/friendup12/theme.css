@@ -1413,8 +1413,6 @@ html .View.Scrolling > .Resize
 html body:not([mobile]) .View > .Resize
 {
     background-color: transparent !important;
-    cursor: hand;
-    cursor: pointer;
     right: 2px;
     bottom: 2px;
     width: 20px !important;
@@ -3474,7 +3472,6 @@ html #Statusbar .Task,
 html .View > .Title > div > .Zoom,
 html .View > .Title > div > .Depth,
 html .View > .Title > div > .Close,
-html .View > .Resize,
 html .View > .Title,
 html .View > .Title *,
 html .View > .Title > div > span,
