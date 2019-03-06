@@ -1,32 +1,32 @@
 <?php
 
-require_once( 'classes/dbIO.php' );
+require_once( 'php/classes/dbio.php' );
 
 // We need args!
-if( !isset( $args->args ) ) die( '404' );
+if( !isset( $args->setupId ) ) die( '404' );
 
 if( $level != 'Admin' ) die( '404' );
 
 // Get varargs
 $setupId = false;
-if( isset( $args->args->setupId ) )
-	$setupId = $args->args->setupId;
+if( isset( $args->setupId ) )
+	$setupId = $args->setupId;
 
 if( $setupId )
 {
 	// Load metadata
 	$d = new dbIO( 'FMetaData' );
 	$d->Key = 'UserTemplateSetupWallpaper';
+	$d->DataTable = 'FSetting';
 	$d->DataID = $setupId;
 	if( $d->Load() )
 	{
 		// Check if file exists no disk
-		if( file_exists( $d->DataString ) )
+		if( file_exists( $d->ValueString ) )
 		{
-			$ext = explode( '.', $d->DataString );
-			$ext = $ext[ count( $ext ) - 1 ];
-			FriendHeader( 'Content-type: image/' . $ext );
-			die( file_get_contents( $d->DataString );
+			ob_clean();
+			readfile( $d->ValueString );
+			die();
 		}
 		// Clean up defunct setup wallpaper meta data
 		$d->Delete();

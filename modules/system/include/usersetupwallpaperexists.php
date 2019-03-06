@@ -1,6 +1,6 @@
 <?php
 
-require_once( 'classes/dbIO.php' );
+require_once( 'php/classes/dbio.php' );
 
 // We need args!
 if( !isset( $args->args ) ) die( '404' );
@@ -17,11 +17,12 @@ if( $setupId )
 	// Load metadata
 	$d = new dbIO( 'FMetaData' );
 	$d->Key = 'UserTemplateSetupWallpaper';
+	$d->DataTable = 'FSetting';
 	$d->DataID = $setupId;
 	if( $d->Load() )
 	{
 		// Check if file exists no disk
-		if( file_exists( $d->DataString ) )
+		if( file_exists( $d->ValueString ) )
 		{
 			die( 'ok<!--separate-->{"message":"Wallpaper exists.","response":1}' );
 		}

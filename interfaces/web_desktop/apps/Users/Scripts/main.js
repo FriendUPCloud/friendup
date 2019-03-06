@@ -615,7 +615,10 @@ function selectSetupUploadImage()
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
-					refreshSetupWallpaper();
+					if( e == 'ok' )
+					{
+						refreshSetupWallpaper();
+					}
 				}
 				m.execute( 'usersetupwallpaperset', { path: items[ 0 ].Path, setupId: ge( 'pSetupID' ).value } );
 			}
@@ -917,6 +920,7 @@ function EditSetup( id )
 			RefreshStartup( data.startups );
 			RefreshLanguages( data.language );
 			RefreshThemes( data.theme );
+			refreshSetupWallpaper();
 		}
 		f.load();
 	}

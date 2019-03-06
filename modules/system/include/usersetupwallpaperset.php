@@ -1,8 +1,10 @@
 <?php
 
-require_once( 'classes/dbIO.php' );
-require_once( 'classes/door.php' );
-require_once( 'classes/file.php' );
+global $Logger;
+
+require_once( 'php/classes/dbio.php' );
+require_once( 'php/classes/door.php' );
+require_once( 'php/classes/file.php' );
 
 // We need args!
 if( !isset( $args->args ) ) die( '404' );
@@ -29,6 +31,23 @@ if( $setup = $SqlDatabase->FetchObject( '
 	ORDER BY g.Name ASC 
 ' ) )
 {
+	// Remove old file if it exists
+	// Load metadata
+	$old = new dbIO( 'FMetaData' );
+	$old->Key = 'UserTemplateSetupWallpaper';
+	$old->DataTable = 'FSetting';
+	$old->DataID = $setup->ID;
+	if( $old->Load() )
+	{
+		// Check if file exists no disk
+		if( file_exists( $old->ValueString ) )
+		{
+			unlink( $old->ValueString );
+		}
+		// Clean up defunct setup wallpaper meta data
+		$old->Delete();
+	}
+
 	// Get the file into the right position and register it
 	$d = new File( $file );
 	if( $d->Load() )
@@ -38,7 +57,7 @@ if( $setup = $SqlDatabase->FetchObject( '
 		$orig = $orig[1];
 		if( strstr( $orig, '/' ) )
 		{
-			$orig = split( $orig, '/' );
+			$orig = explode( '/', $orig );
 			$orig = $orig[ count( $orig ) - 1 ];
 		}
 		
@@ -48,7 +67,7 @@ if( $setup = $SqlDatabase->FetchObject( '
 		$count = 1;
 		while( file_exists( 'storage/' . $temp . $orig ) )
 		{
-			$temp = $comp . $count++ . '_';
+			$temp = $comp . ( $count++ ) . '_';
 		}
 		
 		if( $f = fopen( 'storage/' . $temp . $orig, 'w+' ) )
@@ -65,9 +84,10 @@ if( $setup = $SqlDatabase->FetchObject( '
 			$m->DataTable = 'FSetting';
 			$m->ValueString = 'storage/' . $temp . $orig;
 			$m->ValueNumber = 0;
-			if( $m->Save() )
+			$m->Save();
+			if( $m->ID > 0 )
 			{
-				die( 'ok<!--separate-->{"message":"Saved user template setup wallpaper.","response":1}' );
+				die( 'ok<!--separate-->{"message":"Saved user template setup wallpaper.","response":1,"DataID":"' . $m->ID . '"}' );
 			}
 			die( 'fail<!--separate-->{"message":"Failed top save wallpaper file.","response":-1}' );
 		}

@@ -61,7 +61,8 @@ class File
 			$this->_content = $r;
 			$this->_filesize = strlen( $r );
 			
-			$ex = end( explode( ':', $this->path ) );
+			$ex = explode( ':', $this->path );
+			$ex = end( $ex );
 			if( strstr( $ex, '/' ) )
 			{
 				$ex = explode( '/', $ex );
