@@ -10,6 +10,8 @@ i18n_cancel                             : Cancel
 i18n_add_property                       : Add property
 i18n_save_changes                       : Save changes
 
+i18n_server_globals                     : Server globals
+
 i18n_additem                            : Add item
 
 i18n_type                               : Type
@@ -17,7 +19,7 @@ i18n_key                                : Key
 i18n_your_key                           : Type in a key name
 i18n_your_type                          : Type in a key type
 i18n_save                               : Save
-i18n_delete                             : Slett
+i18n_delete                             : Delete
 
 i18n_add_new_value_set                  : Add a new value set
 

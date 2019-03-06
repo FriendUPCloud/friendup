@@ -16,6 +16,13 @@ Application.run = function( msg, iface )
 	reloadSoftware();
 	reloadServices();
 	reloadApplicationPermissions();
+	reloadGlobals();
+}
+
+
+// Server globals
+function reloadGlobals()
+{
 }
 
 function reloadServices()

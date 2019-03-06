@@ -10,6 +10,8 @@ i18n_cancel                             : Avbryt
 i18n_add_property                       : Legg til egenskap
 i18n_save_changes                       : Lagre endringer
 
+i18n_server_globals                     : Serverglobaler
+
 i18n_additem                            : Legg til
 
 i18n_type                               : Type
