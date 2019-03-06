@@ -137,17 +137,17 @@ function redrawSettings()
 		if( settings[a].Data )
 		{
 			setting = JSON.parse( ('' + settings[a].Data).replace(/\r/g,'\\r').replace(/\n/g,'\\n') );
-			for( var c = 0; c < setting.length; c++ )
+			/*for( var c = 0; c < setting.length; c++ )
 			{
 				pout += setting[c][0] + ( ( setting[c][1] && setting[c][1].length ) ? ( '(' + setting[c][1] + ')' ) : '' ) + ( ( c < setting.length - 1 ) ? ', ' : '' );
-			}
+			}*/
 		}
 		var btn1 = '<button type="button" class="FullWidth Button IconSmall fa-pencil" onclick="ServerSettingEdit( \'' + settings[a].ID + '\' )">&nbsp;' + i18n( 'i18n_edit' ) + '</button>';
 		var btn2 = '<button type="button" class="FullWidth Button IconSmall fa-remove" onclick="ServerSettingDelete( \'' + settings[a].ID + '\' )">&nbsp;' + i18n( 'i18n_delete' ) + '</button>';
 		sw = sw == 2 ? 1 : 2;
 		str += '<div class="GuiContainer"><div class="HRow BackgroundDefault sw' + sw + '">';
-		str += '<div class="HContent25 FloatLeft Padding LineHeight2x"><strong>' + settings[a].Type + '/' + settings[a].Key + '</strong></div>';
-		str += '<div class="HContent45 FloatLeft Padding LineHeight2x" title="' + pout + '"><em>' + pout + '</em></div>';
+		str += '<div class="HContent65 FloatLeft Padding LineHeight2x"><strong>' + settings[a].Type + '/' + settings[a].Key + '</strong></div>';
+		//str += '<div class="HContent45 FloatLeft Padding LineHeight2x" title="' + pout + '"><em>' + pout + '</em></div>';
 		str += '<div class="HContent15 FloatLeft Padding">' + btn1 + '</div>';
 		str += '<div class="HContent15 FloatLeft Padding">' + btn2 + '</div>';
 		str += '</div></div>';
