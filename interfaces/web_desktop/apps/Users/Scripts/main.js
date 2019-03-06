@@ -650,7 +650,7 @@ function refreshSetupWallpaper()
 				
 				var dele = document.createElement( 'button' );
 				dele.className = 'FloatRight IconSmall fa-remove';
-				dele.innerHTML = 'Remove image';
+				dele.innerHTML = ' Remove image';
 				dele.onclick = function( e )
 				{
 					Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
