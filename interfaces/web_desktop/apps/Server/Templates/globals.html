@@ -1,0 +1,19 @@
+
+	<div>
+		<p class="Layout">
+			<strong>{i18n_login_logo_image}</strong>
+		</p>
+		<div id="LoginLogoImage MarginBottom">
+		</div>
+		<p class="Layout">
+			<strong>{i18n_eula_short}</strong> <input type="checkbox" id="eula_short_check" onclick="Globals.checkEulaShort( this )"/> {i18n_use_text}
+		</p>
+		<textarea size="8" class="FullWidth MarginBottom" id="eula_short_text">{eula_short}</textarea>
+		<p class="Layout">
+			<strong>{i18n_eula_long}</strong> <input type="checkbox" id="eula_long_check" onclick="Globals.checkEulaLong( this )"/> {i18n_use_text}
+		</p>
+		<textarea size="20" class="FullWidth MarginBottom" id="eula_long_text">{eula_long}</textarea>
+	</div>
+	<div class="BorderTop Padding">
+		<button type="button" class="IconSmall fa-disk"> {i18n_save_globals}
+	</div>

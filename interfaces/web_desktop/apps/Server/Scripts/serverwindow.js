@@ -23,6 +23,12 @@ Application.run = function( msg, iface )
 // Server globals
 function reloadGlobals()
 {
+	var f = new File( 'Progdir:Templates/globals.html' );
+	f.onLoad = function( data )
+	{
+		ge( 'ServerGlobals' ).innerHTML = data;
+	}
+	f.load();
 }
 
 function reloadServices()
