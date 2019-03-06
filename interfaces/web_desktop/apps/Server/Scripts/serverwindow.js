@@ -23,13 +23,32 @@ Application.run = function( msg, iface )
 // Server globals
 function reloadGlobals()
 {
-	var f = new File( 'Progdir:Templates/globals.html' );
-	f.i18n();
-	f.onLoad = function( data )
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
 	{
-		ge( 'ServerGlobals' ).innerHTML = data;
+		var replacements = {
+			login_logo_image: '',
+			eula_long: '',
+			eula_short: ''
+		};
+		if( e == 'ok' )
+		{
+			JSON.parse( d );
+			for( var a in d )
+			{
+				replacements[ a ] = d[ a ];
+			}
+		}
+		var f = new File( 'Progdir:Templates/globals.html' );
+		f.replacements = replacements;
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			ge( 'ServerGlobals' ).innerHTML = data;
+		}
+		f.load();
 	}
-	f.load();
+	m.execute( 'getserverglobals' );
 }
 
 function reloadServices()

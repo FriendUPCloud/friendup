@@ -5,3 +5,8 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
+input[type=checkbox]
+{
+	vertical-align: middle;
+}
