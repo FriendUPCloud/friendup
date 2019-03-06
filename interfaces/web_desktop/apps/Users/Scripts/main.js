@@ -644,8 +644,27 @@ function refreshSetupWallpaper()
 			{
 				i.style.width = '320px';
 				i.style.height = 'auto';
+				i.className = 'FloatLeft';
 				ge( 'DefaultWallpaperPreview' ).innerHTML = '';
 				ge( 'DefaultWallpaperPreview' ).appendChild( i );
+				
+				var dele = document.createElement( 'button' );
+				dele.className = 'FloatRight IconSmall fa-remove';
+				dele.innerHTML = 'Remove image';
+				dele.onclick = function( e )
+				{
+					Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
+					{
+						if( r.data == true )
+						{
+							deleteSetupWallpaper();
+						}
+					} );
+				}
+				ge( 'DefaultWallpaperPreview' ).appendChild( dele );
+				var b = document.createElement( 'br' );
+				b.style.clear = 'both';
+				ge( 'DefaultWallpaperPreview' ).appendChild( b );
 			}
 		}
 	}
