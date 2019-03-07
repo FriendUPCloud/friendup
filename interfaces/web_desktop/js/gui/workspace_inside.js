@@ -1230,11 +1230,11 @@ var WorkspaceInside = {
 	},
 	zapMobileAppMenu: function()
 	{
+		// Turn on openlock
+		Workspace.mainDock.openLock = true;
 		if( document.body.classList.contains( 'AppsShowing' ) )
 		{
 			Workspace.mainDock.closeDesklet();
-			// Turn on openlock
-			Workspace.mainDock.openLock = true;
 			Workspace.mainDock.dom.classList.remove( 'Open' );
 		}
 		
