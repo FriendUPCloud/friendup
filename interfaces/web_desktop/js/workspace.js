@@ -836,7 +836,7 @@ Workspace = {
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				
-				console.log( '[login session id] We got a json session: ' + json.sessionid + ' ' + hasSessionID );
+				console.log( '[login session id] We got a json session: \'' + json.sessionid + '\' ' + hasSessionID );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
@@ -996,7 +996,7 @@ Workspace = {
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				
-				console.log( '[login] We got a json session: ' + json.sessionid + ' ' + hasSessionID );
+				console.log( '[login] We got a json session: \'' + json.sessionid + '\' ' + hasSessionID );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
