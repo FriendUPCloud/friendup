@@ -528,7 +528,7 @@ var WorkspaceInside = {
 		
 		if( typeof FriendConnection == 'undefined' )
 		{
-			setTimeout(Workspace.initWebSocket, 250);
+			setTimeout( Workspace.initWebSocket, 250 );
 			return;
 		}
 		
@@ -8861,7 +8861,6 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
 		msg = JSON.parse( msg );
-	}
 	}
 	catch( e )
 	{
