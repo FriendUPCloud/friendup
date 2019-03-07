@@ -1325,6 +1325,15 @@ if( isset( $args->command ) )
 		case 'systemmail':
 			require( 'modules/system/include/systemmail.php' );
 			break;
+			
+		// Set/get the system global settings
+		case 'setserverglobals':
+			require( 'modules/system/include/setserverglobals.php' );
+			break;
+		case 'getserverglobals':
+			require( 'modules/system/include/getserverglobals.php' );
+			break;
+			
 		// Remove a bookmark
 		case 'removebookmark':
 			$s = new dbIO( 'FSetting' );
