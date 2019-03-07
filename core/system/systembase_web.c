@@ -898,6 +898,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 						if( sqlLib != NULL )
 						{
+							DEBUG("Try to get mobileappid from DeviceID: %s\n", deviceid );
 							FULONG umaID = 0;
 							if( deviceid != NULL )
 							{
@@ -1214,6 +1215,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 								}
 								
+								DEBUG("UMAID %lu\n", umaID );
 								//
 								// no usermobileapp is signed to session/user
 								//
