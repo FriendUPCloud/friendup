@@ -553,6 +553,14 @@ var WorkspaceInside = {
 			//console.log( 'Worspace.conn.onState', e );
 			if( e.type == 'error' || e.type == 'close' )
 			{
+				if( e.type == 'close' )
+				{
+					console.log( '[onState] The ws closed.' );
+				}
+				else if( e.type == 'error' )
+				{
+					console.log( '[onState] We got an error.' );
+				}
 				if( !Workspace.httpCheckConnectionInterval )
 				{
 					Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 7000 );
@@ -9039,6 +9047,7 @@ function mobileDebug( str, clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
+	console.log( '[mobileDebug] ' + str );
 	window.debugDiv.innerHTML += str + '<br>';
 	mobileDebugTime = setTimeout( function()
 	{
