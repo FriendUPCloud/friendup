@@ -52,6 +52,10 @@ i18n_no_workgroup                       : No workgroup
 
 # Globals
 
+i18n_select_a_logo_image                : Select a logo image
+i18n_change_logo_image                  : Change the logo image
+i18n_use_image                          : Use image
+
 i18n_save_globals                       : Save server globals
 i18n_eula_long                          : EULA long version
 i18n_eula_short                         : EULA short version

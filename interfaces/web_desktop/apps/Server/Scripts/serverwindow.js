@@ -27,13 +27,13 @@ function reloadGlobals()
 	m.onExecuted = function( e, d )
 	{
 		var replacements = {
-			login_logo_image: '',
-			eula_long: '',
-			eula_short: ''
+			logoImage: '',
+			eulaLong: '',
+			eulaShort: ''
 		};
 		if( e == 'ok' )
 		{
-			JSON.parse( d );
+			d = JSON.parse( d );
 			for( var a in d )
 			{
 				replacements[ a ] = d[ a ];
@@ -48,7 +48,22 @@ function reloadGlobals()
 		}
 		f.load();
 	}
-	m.execute( 'getserverglobals' );
+	m.execute( 'getserverglobals', { test: 'test' } );
+}
+
+function changeGlobalsLogoImage()
+{
+	var flags = {
+		type: 'load',
+		title: i18n( 'i18n_select_a_logo_image' ),
+		path: 'Mountlist:',
+		suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+		multiple: false,
+		triggerFunction: function( items )
+		{
+		}
+	};
+	( new Filedialog( flags ) );
 }
 
 // Save the server globals
@@ -58,10 +73,8 @@ function saveGlobals()
 	var eulaLongText  = ge( 'eula_long_text' ).value;
 	var logoImage = false;
 	var useEulaShort = useEulaLong = useLogoImage = false;
-	if( !ge( 'eula_short_check' ).checked )
-		eulaShortText = false;
-	if( !ge( 'eula_long_check' ).checked )
-		eulaLongText = false;
+	useEulaShort = ge( 'eula_short_check' ).checked;
+	useEulaLong = ge( 'eula_long_check' ).checked;
 	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )

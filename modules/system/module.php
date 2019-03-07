@@ -238,7 +238,7 @@ if( isset( $args->command ) )
 				'languages', 'types', 'keys', 'events', 'news', 'setdiskcover', 'getdiskcover', 'calendarmodules',
 				'mountlist', 'mountlist_list', 'deletedoor', 'fileinfo',
 				'addfilesystem', 'editfilesystem', 'status', 'makedir', 'mount',
-				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions',
+				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions', 'getapppermissions',
 				'installapplication',  'uninstallapplication', 'package',  'updateappdata',
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
@@ -1280,6 +1280,9 @@ if( isset( $args->command ) )
 		case 'updateapppermissions':
 			require( 'modules/system/include/updateapppermissions.php' );
 			break;
+		case 'getapppermissions':
+			require( 'modules/system/include/getapppermissions.php' );
+			break;
 		// Get a repository resource
 		case 'resource':
 			require( 'modules/system/include/resource.php' );
@@ -1325,6 +1328,16 @@ if( isset( $args->command ) )
 		case 'systemmail':
 			require( 'modules/system/include/systemmail.php' );
 			break;
+			
+		// Set/get the system global settings
+		case 'setserverglobals':
+			require( 'modules/system/include/setserverglobals.php' );
+			break;
+		
+		case 'getserverglobals':
+			require( 'modules/system/include/getserverglobals.php' );
+			break;
+			
 		// Remove a bookmark
 		case 'removebookmark':
 			$s = new dbIO( 'FSetting' );

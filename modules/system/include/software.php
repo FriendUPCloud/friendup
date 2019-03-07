@@ -104,7 +104,7 @@ foreach( $paths as $path )
 			$stat = stat( $path . $file . '/Config.conf' );
 			$o->DateModifiedUnix = $stat[9];
 			$o->DateModified = date( 'Y-m-d H:i:s', $stat[9] );
-			$o->Visible = $f->Visible == 'true' ? true : false;
+			$o->Visible = isset( $f->Visible ) == 'true' ? true : false;
 			
 			// If this application is associated with a workgroup
 			$o->Workgroups = isset( $organizedWorkgroups[ $file ] ) ? $organizedWorkgroups[ $file ] : '';

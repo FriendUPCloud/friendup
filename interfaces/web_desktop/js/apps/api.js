@@ -5829,27 +5829,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
 							{
+								var permissions = {};
+								Application.checkAppPermission = function( key )
+								{
+									if( permissions[ key ] )
+										return permissions[ key ];
+									return false;
+								}
+								
 								if( e == 'ok' )
 								{
 									try
 									{
-										var permissions = JSON.parse( d );
-										Application.checkAppPermission = function( key )
-										{
-											if( permissions[ key ] )
-												return permissions[ key ];
-											return false;
-										}
+										permissions = JSON.parse( d );
 									}
-									catch( e )
-									{
-										runNow();
-									}
+									catch( e ) {  }
 								}
-								else
-								{
-									runNow();
-								}
+								
+								runNow();
 							}
 							m.execute( 'getapppermissions', { applicationName: Application.applicationName } );
 						}
@@ -5882,27 +5879,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								var m = new Module( 'system' );
 								m.onExecuted = function( e, d )
 								{
+									var permissions = {};
+									Application.checkAppPermission = function( key )
+									{
+										if( permissions[ key ] )
+											return permissions[ key ];
+										return false;
+									}
+									
 									if( e == 'ok' )
 									{
 										try
 										{
-											var permissions = JSON.parse( d );
-											Application.checkAppPermission = function( key )
-											{
-												if( permissions[ key ] )
-													return permissions[ key ];
-												return false;
-											}
+											permissions = JSON.parse( d );
 										}
-										catch( e )
-										{
-											runNow();
-										}
+										catch( e ) {  }
 									}
-									else
-									{
-										runNow();
-									}
+									
+									runNow();
 								}
 								m.execute( 'getapppermissions', { applicationName: Application.applicationName } );
 							}
