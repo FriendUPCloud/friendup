@@ -820,6 +820,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// Respond to old expired sessions!
 	else if( self.returnCode == 'fail' )
 	{
+		console.log( 'We got a fail: ' + url + ' ' + Workspace.sessionId );
 		try
 		{
 			var r = JSON.parse( self.returnData );
