@@ -5822,10 +5822,46 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( Application.run && !window.applicationStarted )
 					{
 						window.applicationStarted = true;
-						Application.run( packet );
-						if( packet.state ) Application.sessionStateSet( packet.state );
-						window.loaded = true;
-						Friend.application.doneLoading();
+						
+						// Fetch application permissions
+						if( !Application.checkAppPermission )
+						{
+							var m = new Module( 'system' );
+							m.onExecuted = function( e, d )
+							{
+								if( e == 'ok' )
+								{
+									try
+									{
+										var permissions = JSON.parse( d );
+										Application.checkAppPermission = function( key )
+										{
+											if( permissions[ key ] )
+												return permissions[ key ];
+											return false;
+										}
+									}
+									catch( e )
+									{
+										runNow();
+									}
+								}
+								else
+								{
+									runNow();
+								}
+							}
+							m.execute( 'getapppermissions', { applicationName: Application.applicationName } );
+						}
+						else runNow();
+						
+						function runNow()
+						{
+							Application.run( packet );
+							if( packet.state ) Application.sessionStateSet( packet.state );
+							window.loaded = true;
+							Friend.application.doneLoading();
+						}
 					}
 					for( var a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
@@ -5839,9 +5875,45 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( Application.run && !window.applicationStarted )
 						{
 							window.applicationStarted = true;
-							Application.run( packet );
-							if( packet.state ) Application.sessionStateSet( packet.state );
-							Friend.application.doneLoading();
+							
+							// Fetch application permissions
+							if( !Application.checkAppPermission )
+							{
+								var m = new Module( 'system' );
+								m.onExecuted = function( e, d )
+								{
+									if( e == 'ok' )
+									{
+										try
+										{
+											var permissions = JSON.parse( d );
+											Application.checkAppPermission = function( key )
+											{
+												if( permissions[ key ] )
+													return permissions[ key ];
+												return false;
+											}
+										}
+										catch( e )
+										{
+											runNow();
+										}
+									}
+									else
+									{
+										runNow();
+									}
+								}
+								m.execute( 'getapppermissions', { applicationName: Application.applicationName } );
+							}
+							else runNow();
+							
+							function runNow()
+							{
+								Application.run( packet );
+								if( packet.state ) Application.sessionStateSet( packet.state );
+								Friend.application.doneLoading();
+							}
 						}
 						// Could be wr don't have any application, run scripts
 						for( var a = 0; a < activat.length; a++ )
