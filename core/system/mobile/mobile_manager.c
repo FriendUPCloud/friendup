@@ -770,7 +770,60 @@ int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
 }
 
 /**
- * Get User Mobile Connections from database by user name and platform
+ * Get User Mobile AppTokens from database by user
+ *
+ * @param mmgr pointer to MobileManager
+ * @param userID ID of user to which mobile apps belong
+ * @return comma separated app tokens
+ */
+char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID )
+{
+	char *results = NULL;
+	BufString *bs = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		char *query = FMalloc( 1048 );
+		query[ 1024 ] = 0;
+		lsqllib->SNPrintF( lsqllib, query, 1024, "select uma.AppToken from FUserMobileApp uma where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu", userID );
+		void *res = lsqllib->Query( lsqllib, query );
+		if( res != NULL )
+		{
+			char **row;
+			
+			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+			{
+				if( bs == NULL )
+				{
+					bs = BufStringNew();
+					BufStringAdd( bs, row[0] );
+				}
+				else
+				{
+					BufStringAddSize( bs, ",", 1 );
+					BufStringAdd( bs, row[0] );
+				}
+			}
+			lsqllib->FreeResult( lsqllib, res );
+		}
+		
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	
+	if( bs != NULL )
+	{
+		results = bs->bs_Buffer;
+		bs->bs_Buffer = NULL;
+		BufStringDelete( bs );
+	}
+	
+	return results;	
+}
+
+/**
+ * Get User Mobile Connections from database by user ID and platform
  *
  * @param mmgr pointer to MobileManager
  * @param userID ID of user to which mobile apps belong
