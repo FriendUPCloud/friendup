@@ -1207,6 +1207,8 @@ var WorkspaceInside = {
 			Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
 			appMenu.onclick = function()
 			{
+				// Turn off openlock
+				Workspace.mainDock.openLock = false;
 				window.focus();
 				
 				if( ge( 'WorkspaceMenu' ) )
@@ -1231,6 +1233,8 @@ var WorkspaceInside = {
 		if( document.body.classList.contains( 'AppsShowing' ) )
 		{
 			Workspace.mainDock.closeDesklet();
+			// Turn on openlock
+			Workspace.mainDock.openLock = true;
 			Workspace.mainDock.dom.classList.remove( 'Open' );
 		}
 		
