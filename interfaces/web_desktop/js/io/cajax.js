@@ -220,6 +220,7 @@ cAjax = function()
 						var res = r ? r.response.toLowerCase() : '';
 						if( res == 'user session not found' )
 						{
+							console.log( '[cAjax 2] Doing a relogin (no user session)' );
 							AddToCajaxQueue( jax );
 							Workspace.flushSession();
 							return Workspace.relogin();
@@ -827,6 +828,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			var r = JSON.parse( self.returnData );
 			if( r.response == 'user session not found' )
 			{
+				console.log( '[cAjax] Doing a relogin (no user session)' );
 				AddToCajaxQueue( self );
 				Workspace.flushSession();
 				return Workspace.relogin();
