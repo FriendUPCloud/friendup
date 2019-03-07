@@ -795,16 +795,22 @@ char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID )
 			
 			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
 			{
-				if( bs == NULL )
+				if( row[0] != NULL )
 				{
-					bs = BufStringNew();
-					BufStringAdd( bs, row[0] );
-				}
-				else
-				{
-					BufStringAddSize( bs, ",", 1 );
-					BufStringAdd( bs, row[0] );
-				}
+					if( bs == NULL )
+					{
+						bs = BufStringNew();
+						BufStringAdd( bs, row[0] );
+					}
+					else
+					{
+						if( strlen( row[0] ) > 0 )
+						{
+							BufStringAddSize( bs, ",", 1 );
+							BufStringAdd( bs, row[0] );
+						}
+					}
+				} // row[0] != NULL
 			}
 			lsqllib->FreeResult( lsqllib, res );
 		}
