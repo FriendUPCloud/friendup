@@ -213,8 +213,6 @@ cAjax = function()
 				// Respond to old expired sessions!
 				else if( jax.returnCode == 'fail' )
 				{
-					console.log( 'We got a fail: ' + jax.url + ' ' + Workspace.sessionId );
-					console.trace();
 					try
 					{
 						var r = JSON.parse( jax.returnData );
@@ -222,6 +220,7 @@ cAjax = function()
 						if( res == 'user session not found' )
 						{
 							console.log( '[cAjax 2] Doing a relogin (no user session)' );
+							console.trace();
 							AddToCajaxQueue( jax );
 							Workspace.flushSession();
 							return Workspace.relogin();
@@ -823,14 +822,13 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// Respond to old expired sessions!
 	else if( self.returnCode == 'fail' )
 	{
-		console.log( 'We got a fail: ' + self.url + ' ' + Workspace.sessionId );
-		console.trace();
 		try
 		{
 			var r = JSON.parse( self.returnData );
 			if( r.response == 'user session not found' )
 			{
 				console.log( '[cAjax] Doing a relogin (no user session)' );
+				console.trace();
 				AddToCajaxQueue( self );
 				Workspace.flushSession();
 				return Workspace.relogin();
