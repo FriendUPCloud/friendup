@@ -898,6 +898,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 						if( sqlLib != NULL )
 						{
+							DEBUG("Try to get mobileappid from DeviceID: %s\n", deviceid );
 							FULONG umaID = 0;
 							if( deviceid != NULL )
 							{
@@ -1191,6 +1192,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						//
 							
 							char tmpQuery[ 512 ];
+							int lpos = 0;
 							
 							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 							if( sqlLib != NULL )
@@ -1199,7 +1201,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								if( deviceid != NULL )
 								{
 									int len = strlen( deviceid );
-									int i, lpos = 0;
+									int i;
 									for( i=0 ; i < len ; i++ )
 									{
 										if( deviceid[ i ] == '_' )
@@ -1210,6 +1212,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									if( lpos > 0 && lpos < len )
 									{
 										umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
+									}
+								}
+								
+								DEBUG("UMAID %lu\n", umaID );
+								//
+								// no usermobileapp is signed to session/user
+								//
+								if( umaID == 0 )
+								{
+									// if device is mobile device, we must create it
+									// entry will be deleted when user will logout
+									if( deviceid != NULL && (strstr( deviceid, "_ios_" ) != NULL ) && (strstr( deviceid, "_android_" ) != NULL ) )
+									{
+										UserMobileApp *ma = UserMobileAppNew();
+										if( ma != NULL )
+										{
+											ma->uma_AppToken = &(deviceid[ lpos ] );
+											ma->uma_UserID = loggedSession->us_UserID;
+					
+											int err = sqlLib->Save( sqlLib, UserMobileAppDesc, ma );
+											ma->uma_AppToken = NULL;
+											umaID = ma->uma_ID;
+											
+											UserMobileAppDelete( ma );
+										}
 									}
 								}
 								
