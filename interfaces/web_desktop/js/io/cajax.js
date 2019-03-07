@@ -213,6 +213,7 @@ cAjax = function()
 				// Respond to old expired sessions!
 				else if( jax.returnCode == 'fail' )
 				{
+					console.log( 'We got a fail: ' + jax.url + ' ' + Workspace.sessionId );
 					try
 					{
 						var r = JSON.parse( jax.returnData );
@@ -820,7 +821,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	// Respond to old expired sessions!
 	else if( self.returnCode == 'fail' )
 	{
-		console.log( 'We got a fail: ' + url + ' ' + Workspace.sessionId );
+		console.log( 'We got a fail: ' + self.url + ' ' + Workspace.sessionId );
 		try
 		{
 			var r = JSON.parse( self.returnData );
