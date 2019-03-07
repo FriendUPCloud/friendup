@@ -704,6 +704,9 @@ Workspace = {
 		
 		var self = this;
 		
+		console.log( '[Relogin]' );
+		console.trace();
+		
 		function executeCleanRelogin()
 		{	
 			if( Workspace.conn )
