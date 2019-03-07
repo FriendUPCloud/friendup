@@ -11,6 +11,8 @@
 
 if( $level != 'Admin' ) die( '404' );
 
+require_once( 'php/classes/dbio.php' );
+
 if( !file_exists( 'cfg/serverglobals' ) )
 {
 	mkdir( 'cfg/serverglobals' );

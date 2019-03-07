@@ -11,7 +11,7 @@
 
 global $Logger;
 
-$Logger->log( 'Get server globals' );
+require_once( 'php/classes/dbio.php' );
 
 if( $level != 'Admin' ) die( '404' );
 
@@ -31,27 +31,21 @@ $js = json_decode( $s->Data );
 if( $js )
 {
 	$json = new stdClass();
-	$json->logoImage = '/webclient/graphics/logoblue.png';
-	$json->eulaShort = file_get_contents( 'resources/templates/eula_short.html' );
-	$json->eulaLong  = file_get_contents( 'resources/templates/eula.html' );
+	$json->logoImage = '/graphics/logoblue.png';
+	$json->eulaShort = file_get_contents( 'resources/webclient/templates/eula_short.html' );
+	$json->eulaLong  = file_get_contents( 'resources/webclient/templates/eula.html' );
 	
-	if( $js->useEulaShort )
+	if( file_exists( 'cfg/serverglobals/' . $files->eulaShortText ) )
 	{
 		$json->eulaShort = file_get_contents( 'cfg/serverglobals/' . $files->eulaShortText );
 	}
-	if( $js->useEulaLong )
+	if( file_exists( 'cfg/serverglobals/' . $files->eulaLongText ) )
 	{
 		$json->eulaLong = file_get_contents( 'cfg/serverglobals/' . $files->eulaLongText );
 	}
 	
-	$Logger->log( 'Here we go: ' );
-	$Logger->log( print_r( $json, 1 ) );
-	
-	die( 'ok<!--separate-->' . json_encode( $json );
+	die( 'ok<!--separate-->' . json_encode( $json ) );
 }
-
-$Logger->log( 'No no no ' );
-$Logger->log( $s->Data );
 
 die( 'ok<!--separate-->{}' );
 
