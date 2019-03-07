@@ -9008,7 +9008,7 @@ Workspace.receivePush = function( jsonMsg )
 			data: msg
 		};
 		
-		mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
+		mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ) );
 		
 		app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 		
@@ -9022,7 +9022,7 @@ Workspace.receivePush = function( jsonMsg )
 		}, 1000 );
 	}
 	
-	mobileDebug( 'Start app ' + msg.application, true );
+	mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
 	
 	ExecuteApplication( msg.application, '', appMessage )
 
