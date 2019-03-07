@@ -1131,9 +1131,14 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			// and send message to them
 			if( *curToken == 0 || *curToken == ',' )
 			{
+				FBOOL quit = FALSE;
 				if( *curToken != 0 )
 				{
 					*curToken = 0;
+				}
+				else
+				{
+					quit = TRUE;
 				}
 			
 				DEBUG("Send message to : >%s<\n", startToken );
@@ -1177,7 +1182,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 
 				startToken = curToken+1;
 			
-				if( *curToken == 0 )
+				if( quit == TRUE )
 				{
 					break;
 				}

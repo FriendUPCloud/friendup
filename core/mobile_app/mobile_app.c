@@ -1435,6 +1435,14 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		{
 			// on the end, list for the user should be taken from DB instead of going through all connections
 			
+			char *tokens = MobleManagerGetIOSAppTokensDBm( sb->sl_MobileManager, userID );
+			if( tokens != NULL )
+			{
+				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : tokens %s\n", notif->n_Content, tokens );
+				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
+				FFree( tokens );
+			}
+			/*
 			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, FALSE );
 			UserMobileApp *lma = lmaroot;
 			
@@ -1457,6 +1465,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				lma = (UserMobileApp *)lma->node.mln_Succ;
 			}
 			UserMobileAppDeleteAll( lmaroot );
+			*/
 
 			FFree( jsonMessageIOS );
 		}

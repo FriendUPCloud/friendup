@@ -68,6 +68,8 @@ void MobileManagerRefreshCache( MobileManager *mmgr );
 
 int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );
 
+char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID );
+
 UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status, FBOOL logged );
 
 UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, int status, const char *ids );
