@@ -196,6 +196,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.openDesklet = function( e )
 	{
+		if( this.openLock ) return;
 		var self = this;
 		if( !this.open && !this.opening )
 		{

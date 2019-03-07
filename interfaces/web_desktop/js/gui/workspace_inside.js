@@ -5,7 +5,7 @@ var WorkspaceInside = {
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
 	websocketState: null,
-	currentViewState: 'active',
+	currentViewState: 'inactive',
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -1207,6 +1207,8 @@ var WorkspaceInside = {
 			Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
 			appMenu.onclick = function()
 			{
+				// Turn off openlock
+				Workspace.mainDock.openLock = false;
 				window.focus();
 				
 				if( ge( 'WorkspaceMenu' ) )
@@ -1225,6 +1227,22 @@ var WorkspaceInside = {
 				}
 			}
 		}
+	},
+	zapMobileAppMenu: function()
+	{
+		// Turn on openlock
+		Workspace.mainDock.openLock = true;
+		if( document.body.classList.contains( 'AppsShowing' ) )
+		{
+			Workspace.mainDock.dom.style.display = 'none';
+			setTimeout( function()
+			{
+				Workspace.mainDock.dom.style.display = '';
+			}, 400 );
+			Workspace.mainDock.closeDesklet();
+			Workspace.mainDock.dom.classList.remove( 'Open' );
+		}
+		
 	},
 	// Close widgets and return to desktop..
 	goToMobileDesktop: function()
@@ -8003,7 +8021,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
-		if( !Workspace.sessionId ) { setTimeout(Workspace.updateViewState, 1000); return; }
+		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
 
 		// Don't update if not changed
 		if( this.currentViewState == newState ) return;
@@ -9033,7 +9051,7 @@ else
 }
 
 /*  Debug blob: */
-if( isMobile  )
+/*if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
@@ -9047,7 +9065,7 @@ if( isMobile  )
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
-}
+}*/
 
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
