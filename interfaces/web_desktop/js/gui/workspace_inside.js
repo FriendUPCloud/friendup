@@ -7988,18 +7988,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Don't update if not changed
 		if( this.currentViewState == newState ) return;
 		
+		mobileDebug( 'Starting update view state.' + newState, true );
+		
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
+				mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
 
 				var dl = new FriendLibrary( 'system.library' );
 				dl.addVar( 'status', 0 );
 				dl.onExecuted = function(e,d)
 				{
-					//console.log( 'Sockets.', e, d );
+					mobileDebug( 'setwsstate active', e );
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
@@ -8013,7 +8016,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				dl.addVar( 'status', 1 );
 				dl.onExecuted = function(e,d)
 				{
-					//console.log( 'Sockets.', e, d );
+					mobileDebug( 'setwsstate inactive', e );
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
