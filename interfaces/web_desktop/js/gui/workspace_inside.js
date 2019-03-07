@@ -7763,7 +7763,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		var updateurl = '/system.library/file/dir?wr=1'
 		updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
-		updateurl += '&sessionid= ' + encodeURIComponent( Workspace.sessionId );
+		updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 		
 		j.open( 'get', updateurl, true, true );
 		j.onload = function ()

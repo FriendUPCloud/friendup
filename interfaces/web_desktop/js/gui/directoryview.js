@@ -5001,7 +5001,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 
 				var updateurl = '/system.library/file/dir?wr=1'
 				updateurl += '&path=' + encodeURIComponent( this.fileInfo.Path );
-				updateurl += '&sessionid= ' + encodeURIComponent( Workspace.sessionId );
+				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 
 				j.open( 'get', updateurl, true, true );
 
