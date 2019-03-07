@@ -38,7 +38,7 @@ function ExecuteApplication( app, args, callback )
 		return;
 
 	// Register that we are executing
-	_executionQueue[ app ] = true;
+	//_executionQueue[ app ] = true;
 
 	if( isMobile )
 	{
