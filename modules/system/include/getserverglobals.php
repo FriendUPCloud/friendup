@@ -1,4 +1,17 @@
 <?php
+/*©lgpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
+global $Logger;
+
+$Logger->log( 'Get server globals' );
 
 if( $level != 'Admin' ) die( '404' );
 
@@ -31,8 +44,14 @@ if( $js )
 		$json->eulaLong = file_get_contents( 'cfg/serverglobals/' . $files->eulaLongText );
 	}
 	
+	$Logger->log( 'Here we go: ' );
+	$Logger->log( print_r( $json, 1 ) );
+	
 	die( 'ok<!--separate-->' . json_encode( $json );
 }
+
+$Logger->log( 'No no no ' );
+$Logger->log( $s->Data );
 
 die( 'ok<!--separate-->{}' );
 

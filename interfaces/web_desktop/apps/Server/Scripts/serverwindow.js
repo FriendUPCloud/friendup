@@ -49,7 +49,7 @@ function reloadGlobals()
 		}
 		f.load();
 	}
-	m.execute( 'getserverglobals' );
+	m.execute( 'getserverglobals', { test: 'test' } );
 }
 
 // Save the server globals

@@ -1,10 +1,19 @@
 <?php
+/*©lgpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
 
 if( $level != 'Admin' ) die( '404' );
 
 if( !file_exists( 'cfg/serverglobals' ) )
 {
-	makedir( 'cfg/serverglobals' );
+	mkdir( 'cfg/serverglobals' );
 }
 
 if( !file_exists( 'cfg/serverglobals' ) )
@@ -89,5 +98,7 @@ if( $possibilities->useEulaLong )
 if( $possibilities->useLogoImage )
 {
 }
+
+die( 'ok<!--separate-->{"message":"Server globals were saved.","response":"1"}' );
 
 ?>

@@ -1330,6 +1330,7 @@ if( isset( $args->command ) )
 		case 'setserverglobals':
 			require( 'modules/system/include/setserverglobals.php' );
 			break;
+		
 		case 'getserverglobals':
 			require( 'modules/system/include/getserverglobals.php' );
 			break;

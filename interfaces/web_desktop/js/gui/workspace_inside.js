@@ -9044,7 +9044,7 @@ document.addEventListener( 'visibilitychange' , function(){
 if( document.hidden )
 {
 	Workspace.updateViewState( 'inactive' );
-} 
+}
 else 
 {
 	Workspace.updateViewState( 'active' );
