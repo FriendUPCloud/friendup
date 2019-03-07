@@ -2456,14 +2456,16 @@ function apiWrapper( event, force )
 									if( icons )
 										msg.data = JSON.stringify( jsonSafeObject( icons ) );
 									else msg.data = false;
-									app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+									if( app && app.contentWindow )
+										app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 								} );
 								return;
 							}
 						}
 						// Give negative response - works as it should...
 						msg.data = false;
-						app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+						if( app && app.contentWindow )
+							app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 						return;
 				}
 				break;
