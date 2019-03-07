@@ -5,7 +5,7 @@ var WorkspaceInside = {
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
 	websocketState: null,
-	currentViewState: 'active',
+	currentViewState: 'inactive',
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
@@ -8003,7 +8003,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
-		if( !Workspace.sessionId ) { setTimeout(Workspace.updateViewState, 1000); return; }
+		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
 
 		// Don't update if not changed
 		if( this.currentViewState == newState ) return;
