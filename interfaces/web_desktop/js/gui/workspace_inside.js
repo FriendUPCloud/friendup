@@ -1234,6 +1234,11 @@ var WorkspaceInside = {
 		Workspace.mainDock.openLock = true;
 		if( document.body.classList.contains( 'AppsShowing' ) )
 		{
+			Workspace.mainDock.dom.style.display = 'none';
+			setTimeout( function()
+			{
+				Workspace.mainDock.dom.style.display = '';
+			}, 400 );
 			Workspace.mainDock.closeDesklet();
 			Workspace.mainDock.dom.classList.remove( 'Open' );
 		}
