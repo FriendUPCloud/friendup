@@ -33,7 +33,8 @@ function reloadGlobals()
 		};
 		if( e == 'ok' )
 		{
-			JSON.parse( d );
+			d = JSON.parse( d );
+			console.log( d );
 			for( var a in d )
 			{
 				replacements[ a ] = d[ a ];
