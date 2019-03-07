@@ -912,7 +912,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								if( lpos > 0 && lpos < len )
 								{
-									umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_ID, &(deviceid[ lpos ] ) );
+									umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
 								}
 							}
 							loggedSession->us_MobileAppID = umaID;
@@ -1209,7 +1209,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 									if( lpos > 0 && lpos < len )
 									{
-										umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_ID, &(deviceid[ lpos ] ) );
+										umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
 									}
 								}
 								
