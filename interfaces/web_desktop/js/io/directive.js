@@ -10,9 +10,27 @@
 
 var _appNum = 1;
 
+var _executionQueue = {};
+
+function RemoveFromExecutionQueue( app )
+{
+	var out = {};
+	for( var a in _executionQueue )
+		if( a != app )
+			out[ a ] = true;
+	_executionQueue = out;
+}
+
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback )
 {
+	// You need to wait with opening apps until they are loaded by app name
+	if( _executionQueue[ app ] )
+		return;
+
+	// Register that we are executing
+	_executionQueue[ app ] = true;
+
 	if( isMobile )
 	{
 		Workspace.goToMobileDesktop();
@@ -37,6 +55,9 @@ function ExecuteApplication( app, args, callback )
 	// Check if the app called is found in the singleInstanceApps array
 	if( Friend.singleInstanceApps[ app ] )
 	{
+		// Clean blocker
+		RemoveFromExecutionQueue( app );
+		
 		var msg = {
 			command: 'cliarguments',
 			args: args
@@ -67,6 +88,8 @@ function ExecuteApplication( app, args, callback )
 				{
 					_ActivateWindow( app.windows[ z ]._window.parentNode );
 					_WindowToFront( app.windows[ z ]._window.parentNode );
+					// Clean blocker
+					RemoveFromExecutionQueue( app );
 					return;
 				}
 			}
@@ -141,10 +164,16 @@ function ExecuteApplication( app, args, callback )
 		{
 			ActivateApplication( app, conf );
 			if( callback ) callback( false );
+			
+			// Clean blocker
+			RemoveFromExecutionQueue( app );
 			return false;
 		}
 		else if( r != 'ok' )
 		{
+			// Clean blocker
+			RemoveFromExecutionQueue( app );
+			
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
 				var hideView = false;
@@ -228,6 +257,9 @@ function ExecuteApplication( app, args, callback )
 				}
 				Ac2Alert( 'Can not run v0 applications.' );
 				if( callback ) callback( false );
+				
+				// Clean blocker
+				RemoveFromExecutionQueue( app );
 				return false;
 			}
 
@@ -317,6 +349,9 @@ function ExecuteApplication( app, args, callback )
 			// Quit the application
 			ifr.quit = function( level )
 			{
+				// Clean blocker
+				RemoveFromExecutionQueue( app );
+				
 				// Check vr
 				if( window.FriendVR )
 				{
@@ -446,6 +481,9 @@ function ExecuteApplication( app, args, callback )
 			// Register application
 			ifr.onload = function()
 			{
+				// Clean blocker
+				RemoveFromExecutionQueue( app );
+				
 				// Make sure pickup items are cleared
 				mousePointer.clear();
 				
@@ -523,6 +561,9 @@ function ExecuteApplication( app, args, callback )
 		else
 		{
 			if( callback ) callback( "\n", { response: 'Executable has run.' } );
+			
+			// Clean blocker
+			RemoveFromExecutionQueue( app );
 		}
 	}
 	var eo = { application: app, args: args };
@@ -913,6 +954,13 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 // Do it by path!
 function ExecuteJSXByPath( path, args, callback, conf )
 {
+	if( !path ) return;
+	var app = path.split( ':' )[1];
+	if( app.indexOf( '/' ) > 0 )
+	{
+		app = app.split( '/' );
+		app = app[app.length-1];
+	}
 	var f = new File( path );
 	f.onLoad = function( data )
 	{
@@ -921,13 +969,13 @@ function ExecuteJSXByPath( path, args, callback, conf )
 			// An error?
 			if ( data.indexOf( '404 - File not found!' ) < 0 )
 			{
-				var app = path.split( ':' )[1];
-				if( app.indexOf( '/' ) > 0 )
+				var r = ExecuteJSX( data, app, args, path, function()
 				{
-					app = app.split( '/' );
-					app = app[app.length-1];
-				}
-				var r = ExecuteJSX( data, app, args, path, callback, conf ? conf.ConfFilename : false );
+					if( callback )
+						callback();
+					// Clean blocker
+					RemoveFromExecutionQueue( app );
+				}, conf ? conf.ConfFilename : false );
 				// Uncommented running callback, it is already running in executeJSX!
 				// Perhaps 'r' should tell us if it was run, and then run it if not?
 				//if( callback ) callback( true );
@@ -939,6 +987,8 @@ function ExecuteJSXByPath( path, args, callback, conf )
 			console.log( 'Failed to load data: ', data, path );
 		}
 		if( callback ) callback( false );
+		// Clean blocker
+		RemoveFromExecutionQueue( app );
 	};
 	f.load();
 }
