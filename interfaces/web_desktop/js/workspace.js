@@ -993,6 +993,8 @@ Workspace = {
 
 				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+				
+				console.log( '[login] We got a json session: ' + json.sessionId );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
