@@ -1188,7 +1188,10 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 				}
 				curToken++;
 			}
-			curToken++;
+			else
+			{
+				curToken++;
+			}
 		}
 		FFree( pushContent );
 	}
