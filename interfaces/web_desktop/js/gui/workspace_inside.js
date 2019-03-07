@@ -1226,6 +1226,15 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	zapMobileAppMenu: function()
+	{
+		if( document.body.classList.contains( 'AppsShowing' ) )
+		{
+			Workspace.mainDock.closeDesklet();
+			Workspace.mainDock.dom.classList.remove( 'Open' );
+		}
+		
+	},
 	// Close widgets and return to desktop..
 	goToMobileDesktop: function()
 	{

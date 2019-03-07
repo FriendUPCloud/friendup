@@ -3060,6 +3060,22 @@ window.Shell = function( appObject )
 			} ) } );
 			return callback( false, { response: 'Killed ' + args[ 1 ] + '.' } );
 		},		
+		'surpress': function( args, callback )
+		{
+			if( args.length >= 2 )
+			{
+				switch( args[ 1 ] )
+				{
+					case 'menu':
+						if( isMobile )
+						{
+							Workspace.zapMobileAppMenu();
+						}
+						break;
+				}
+			}
+			return callback( true );
+		},
 		'launch': function( args, callback )
 		{
 			if( args.length >= 2 )
