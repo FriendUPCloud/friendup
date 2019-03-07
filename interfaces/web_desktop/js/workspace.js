@@ -704,7 +704,7 @@ Workspace = {
 		
 		var self = this;
 		
-		console.log( '[Relogin]' );
+		console.log( '[Relogin] WS State: ' + Workspace.websocketState );
 		console.trace();
 		
 		function executeCleanRelogin()
@@ -713,7 +713,7 @@ Workspace = {
 			{
 				try
 				{
-					Workspace.conn.close();
+					Workspace.conn.ws.close();
 				}
 				catch( e )
 				{
