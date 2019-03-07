@@ -231,7 +231,13 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 							
 							if( err == 0 )
 							{
-								loggedSession->us_MobileAppID = ma->uma_ID;
+								if( loggedSession->us_MobileAppID != ma->uma_ID )
+								{
+									char tmpQuery[ 256 ];
+									loggedSession->us_MobileAppID = ma->uma_ID;
+									sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET UMA_ID=%lu WHERE `ID`=%lu", ma->uma_ID, loggedSession->us_ID );
+									sqllib->QueryWithoutResults( sqllib, tmpQuery );
+								}
 								snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"%lu\" }", ma->uma_ID );
 								HttpAddTextContent( response, buffer );
 							}
