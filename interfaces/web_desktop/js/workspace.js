@@ -869,6 +869,7 @@ Workspace = {
 		if( sess && sess.length )
 		{
 			this.sessionId = sess;
+			console.log( '[login] We got a session: ' + sess );
 		}
 	
 		// TODO: If we have sessionid - verify it through ajax.
