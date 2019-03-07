@@ -497,6 +497,7 @@ var WorkspaceInside = {
 
 		// Force connecting ws state (we will close it!)
 		Workspace.websocketState = 'connecting';
+		Workspace.websocketsOffline = false;
 
 		var conf = {
 			onstate: onState,

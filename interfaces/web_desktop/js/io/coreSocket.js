@@ -89,6 +89,9 @@ FriendWebSocket.prototype.close = function( code, reason )
 	self.sessionId = null;
 	self.authId = null;
 	self.onmessage = null;
+	// Tell we are closing
+	if( self.onstate )
+		self.onstate( { type: 'close' }, true );
 	self.onstate = null;
 	self.onend = null;
 	self.wsClose( code, reason );

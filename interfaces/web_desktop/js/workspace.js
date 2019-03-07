@@ -33,6 +33,7 @@ Workspace = {
 	menuState: '',
 	themeOverride: false,
 	systemInfo: false,
+	websocketsOffline: true,
 	lastfileSystemChangeMessage:false,
 	serverIsThere: false,
 	runLevels: [
