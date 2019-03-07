@@ -861,6 +861,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			if( locsessionid != NULL && deviceid != NULL )
 			{
+				// get user session from memory
+				// if it doesnt exist, load it from database
 				UserSession *us = USMGetSessionBySessionID( l->sl_USM, locsessionid );
 				
 				if( us == NULL )
@@ -871,6 +873,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( us != NULL )
 				{
 					loggedSession = us;
+					
+					// add session to global users session listt
 					
 					DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
 					if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
@@ -1197,6 +1201,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 							if( sqlLib != NULL )
 							{
+								//
+								// get UserMobileApp ID if possible
+								//
 								FULONG umaID = 0;
 								if( deviceid != NULL )
 								{
@@ -1223,7 +1230,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								{
 									// if device is mobile device, we must create it
 									// entry will be deleted when user will logout
-									if( deviceid != NULL && (strstr( deviceid, "_ios_" ) != NULL ) && (strstr( deviceid, "_android_" ) != NULL ) )
+									if( deviceid != NULL && ( (strstr( deviceid, "_ios_" ) != NULL ) || (strstr( deviceid, "_android_" ) != NULL ) ) )
 									{
 										UserMobileApp *ma = UserMobileAppNew();
 										if( ma != NULL )
@@ -1239,6 +1246,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										}
 									}
 								}
+								
+								//
+								// update UserSession
+								//
 								
 								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
