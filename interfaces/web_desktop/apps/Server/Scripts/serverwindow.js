@@ -56,6 +56,8 @@ function saveGlobals()
 {
 	var eulaShortText = ge( 'eula_short_text' ).value;
 	var eulaLongText  = ge( 'eula_long_text' ).value;
+	var logoImage = false;
+	var useEulaShort = useEulaLong = useLogoImage = false;
 	if( !ge( 'eula_short_check' ).checked )
 		eulaShortText = false;
 	if( !ge( 'eula_long_check' ).checked )
@@ -69,7 +71,14 @@ function saveGlobals()
 			Notify( { title: i18n( 'i18n_server_globals_saved' ), text: i18n( 'i18n_please_refresh_to_see_results' ) } );
 		}
 	}
-	m.execute( 'setserverglobals', { eulaShortText: eulaShortText, eulaLongText: eulaLongText, logoImage: logoImage } );
+	m.execute( 'setserverglobals', { 
+		eulaShortText: eulaShortText, 
+		eulaLongText: eulaLongText, 
+		logoImage: logoImage,
+		useEulaShort: useEulaShort,
+		useEulaLong: useEulaLong,
+		useLogoImage: useLogoImage
+	} );
 }
 
 function reloadServices()
