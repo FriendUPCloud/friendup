@@ -4,6 +4,7 @@ var WorkspaceInside = {
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
+	websocketState: null,
 	currentViewState: 'active',
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
@@ -478,7 +479,10 @@ var WorkspaceInside = {
 	},
 	initWebSocket: function()
 	{	
-		if( Workspace.reloginInProgress || Workspace.connectingWebsocket )
+		// We're already open
+		if( Workspace.websocketState == 'open' ) return;
+		
+		if( Workspace.reloginInProgress || Workspace.websocketState == 'connecting' )
 			return;
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
@@ -491,7 +495,8 @@ var WorkspaceInside = {
 			setTimeout( Workspace.initWebSocket, 1000 );
 		}
 
-		Workspace.connectingWebsocket = true;
+		// Force connecting ws state (we will close it!)
+		Workspace.websocketState = 'connecting';
 
 		var conf = {
 			onstate: onState,
@@ -556,15 +561,16 @@ var WorkspaceInside = {
 				if( e.type == 'close' )
 				{
 					console.log( '[onState] The ws closed.' );
+					Workspace.websocketState = 'closed';
 				}
 				else if( e.type == 'error' )
 				{
 					console.log( '[onState] We got an error.' );
+					Workspace.websocketState = 'error';
 				}
 				if( !Workspace.httpCheckConnectionInterval )
 				{
 					Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 7000 );
-					Workspace.websocketsOffline = true;
 				}
 			}
 			else if( e.type == 'ping' )
@@ -572,13 +578,11 @@ var WorkspaceInside = {
 				//if we get a ping we have a websocket.... no need to do the http server check
 				clearInterval( Workspace.httpCheckConnectionInterval );
 				Workspace.httpCheckConnectionInterval = false;
-				if( Workspace.websocketsOffline )
+				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
 					Workspace.refreshDesktop( false, true );
 				}
-				Workspace.websocketsOffline = false;
-				Workspace.connectingWebsocket = false;
 
 				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
 				document.body.classList.remove( 'Offline' );
@@ -593,6 +597,14 @@ var WorkspaceInside = {
 			}
 			else
 			{
+				if( e.type == 'open' )
+				{
+					Workspace.websocketState = 'open';
+				}
+				else if( e.type == 'connecting' )
+				{
+					Workspace.websocketState = 'connecting';
+				}
 				if( e.type != 'connecting' && e.type != 'open' ) console.log( e );
 			}
 		}
@@ -600,7 +612,7 @@ var WorkspaceInside = {
 		function onEnd( e )
 		{
 			console.log( 'Workspace.conn.onEnd', e );
-			Workspace.websocketsOffline = true;
+			Workspace.websocketState = 'closed';
 		}
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
@@ -7634,7 +7646,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// the websocket...
 			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 3 )
 			{
-				Workspace.connectingWebsocket = false;
 				Workspace.websocketDisconnectTime = 0;
 				Workspace.initWebSocket();
 			}
