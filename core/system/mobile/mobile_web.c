@@ -176,7 +176,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			{
 				char buffer[ 256 ];
 				int err = 0;
-				FBOOL tokenFound = FALSE;
+				FULONG umaID = 0;
 				
 				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				if( sqllib != NULL )
@@ -184,7 +184,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					// if entry with token already exist there is no need to create new one
 					
 					char query[ 512 ];
-					snprintf( query, sizeof(query), "SELECT AppToken from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
+					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
 					
 					void *res = sqllib->Query( sqllib, query );
 				
@@ -195,13 +195,14 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						{
 							if( row[ 0 ] != NULL )
 							{
-								tokenFound = TRUE;
+								char *end;
+								umaID = strtol( row[ 0 ], &end, 0 );
 							}
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
 				
-					if( tokenFound == FALSE )
+					if( umaID == 0 )
 					{
 						int addErr = 1;	// 1 entry wasnt added, must be released
 						
@@ -244,6 +245,28 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						}
 						else
 						{
+							char where[ 256 ];
+							int entries;
+							snprintf( where, sizeof(where), " ID=%lu", umaID );
+			
+							UserMobileApp *ma = sqllib->Load( sqllib, FKeyDesc, where, &entries );
+							if( ma != NULL )
+							{
+								if( ma->uma_AppToken != NULL ){ FFree( ma->uma_AppToken ); }
+								if( ma->uma_AppVersion != NULL ){ FFree( ma->uma_AppVersion ); }
+								if( ma->uma_Platform != NULL ){ FFree( ma->uma_Platform ); }
+								if( ma->uma_PlatformVersion != NULL ){ FFree( ma->uma_PlatformVersion ); }
+								ma->uma_AppToken = apptoken;
+								ma->uma_AppVersion = appversion;
+								ma->uma_Platform = platform;
+								ma->uma_PlatformVersion = version;
+								ma->uma_UserID = uid;
+								apptoken = appversion = platform = version = NULL;
+								
+								err = sqllib->Update( sqllib, UserMobileAppDesc, ma );
+								
+								UserMobileAppDelete( ma );
+							}
 							//snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 							err = 2;
 						}
@@ -256,16 +279,18 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					l->LibrarySQLDrop( l, sqllib );
 				}
 				
-				if( tokenFound == TRUE )
+				//if( umaID == TRUE )
 				{
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"0\" }" );
 					HttpAddTextContent( response, buffer );
 				}
+				/*
 				else if( err != 0 )
 				{
 					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"1\", \"code\":\"%d\" }" , err );
 					HttpAddTextContent( response, buffer );
 				}
+				*/
 			} // missing parameters
 			else
 			{
