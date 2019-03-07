@@ -421,7 +421,7 @@ FULONG MobileManagerGetUMAIDByTokenAndUserName( MobileManager *mmgr, SQLLibrary 
 	char query[ 256 ];
 	FULONG tokID = 0;
 	
-	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE UserID=%lu AND AppToken = '%s'", userID, token );
+	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE UserID=%lu AND AppToken='%s'", userID, token );
 
 	void *res = sqllib->Query( sqllib, query );
 	
