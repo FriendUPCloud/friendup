@@ -238,7 +238,7 @@ if( isset( $args->command ) )
 				'languages', 'types', 'keys', 'events', 'news', 'setdiskcover', 'getdiskcover', 'calendarmodules',
 				'mountlist', 'mountlist_list', 'deletedoor', 'fileinfo',
 				'addfilesystem', 'editfilesystem', 'status', 'makedir', 'mount',
-				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions',
+				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions', 'getapppermissions',
 				'installapplication',  'uninstallapplication', 'package',  'updateappdata',
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
@@ -1279,6 +1279,9 @@ if( isset( $args->command ) )
 			break;
 		case 'updateapppermissions':
 			require( 'modules/system/include/updateapppermissions.php' );
+			break;
+		case 'getapppermissions':
+			require( 'modules/system/include/getapppermissions.php' );
 			break;
 		// Get a repository resource
 		case 'resource':
