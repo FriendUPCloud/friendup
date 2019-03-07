@@ -8026,21 +8026,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Don't update if not changed
 		if( this.currentViewState == newState ) return;
 		
-		mobileDebug( 'Starting update view state.' + newState, true );
+		//mobileDebug( 'Starting update view state.' + newState, true );
 		
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
-				mobileDebug( 'Trying to init websocket.' );
+				//mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
 
 				var dl = new FriendLibrary( 'system.library' );
 				dl.addVar( 'status', 0 );
 				dl.onExecuted = function(e,d)
 				{
-					mobileDebug( 'setwsstate active: ' + e );
+					//mobileDebug( 'setwsstate active: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
@@ -8054,7 +8054,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				dl.addVar( 'status', 1 );
 				dl.onExecuted = function(e,d)
 				{
-					mobileDebug( 'setwsstate inactive: ' + e );
+					//mobileDebug( 'setwsstate inactive: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
@@ -9008,7 +9008,7 @@ Workspace.receivePush = function( jsonMsg )
 			data: msg
 		};
 		
-		mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
+		mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ) );
 		
 		app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 		
@@ -9022,7 +9022,7 @@ Workspace.receivePush = function( jsonMsg )
 		}, 1000 );
 	}
 	
-	mobileDebug( 'Start app ' + msg.application, true );
+	mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
 	
 	ExecuteApplication( msg.application, '', appMessage )
 
@@ -9051,7 +9051,7 @@ else
 }
 
 /*  Debug blob: */
-/*if( isMobile  )
+if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
@@ -9065,7 +9065,7 @@ else
 	debug.style.pointerEvents = 'none';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
-}*/
+}
 
 var mobileDebugTime = null;
 function mobileDebug( str, clear )

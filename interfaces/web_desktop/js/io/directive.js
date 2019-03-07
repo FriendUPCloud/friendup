@@ -14,11 +14,20 @@ var _executionQueue = {};
 
 function RemoveFromExecutionQueue( app )
 {
-	var out = {};
-	for( var a in _executionQueue )
-		if( a != app )
-			out[ a ] = true;
-	_executionQueue = out;
+	try
+	{
+		var out = {};
+		for( var a in _executionQueue )
+			if( a != app )
+				out[ a ] = true;
+		_executionQueue = out;
+	}
+	// Something went wrong, flush
+	catch( e )
+	{
+		mobileDebug( 'Something failed with execution queue.', true );
+		_executionQueue = {};
+	}
 }
 
 // Load a javascript application into a sandbox
