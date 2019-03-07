@@ -991,10 +991,10 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				
-				console.log( '[login] We got a json session: ' + json.sessionId );
+				console.log( '[login] We got a json session: ' + json.sessionId + ' ' + hasSessionId );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
@@ -1078,6 +1078,8 @@ Workspace = {
 		function setupWorkspaceData( json, cb )
 		{
 			// Ok, we're in
+			console.log( '[setupWorkspaceData] We are in with a session: ' + json.sessionid );
+			
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
 			_this.fullName  = json.fullname;
