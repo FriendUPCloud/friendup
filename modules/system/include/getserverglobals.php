@@ -44,6 +44,11 @@ if( $js )
 		$json->eulaLong = file_get_contents( 'cfg/serverglobals/' . $files->eulaLongText );
 	}
 	
+	/*if( file_exists( 'cfg/serverglobals/' . $files->logoImage ) )
+	{
+		$json->eulaLong = file_get_contents( 'cfg/serverglobals/' . $files->logoImage );
+	}*/
+	
 	die( 'ok<!--separate-->' . json_encode( $json ) );
 }
 
