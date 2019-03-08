@@ -151,10 +151,10 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 
 			while( lf != NULL )
 			{
-				DEBUG( "[UserGroupRemDeviceByName] Checking fs in list %s == %s...\n", lf->f_Name, name );
+				//DEBUG( "[UserGroupRemDeviceByName] Checking fs in list %s == %s...\n", lf->f_Name, name );
 				if( strcmp( lf->f_Name, name ) == 0 )
 				{
-					DEBUG( "[UserGroupRemDeviceByName] Found one (%s == %s)\n", lf->f_Name, name );
+					//DEBUG( "[UserGroupRemDeviceByName] Found one (%s == %s)\n", lf->f_Name, name );
 					remdev = lf;
 					break;
 				}
@@ -166,7 +166,7 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 			{
 				if( remdev->f_Operations <= 0 )
 				{
-					DEBUG("[UserGroupRemDeviceByName] Remove device from list\n");
+					//DEBUG("[UserGroupRemDeviceByName] Remove device from list\n");
 
 					if( ugrlist->ug_MountedDevs == remdev )		// checking if its our first entry
 					{
@@ -222,7 +222,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 	}
 	User *locu = (User *)u;
 	
-	DEBUG("[UserGroupAddUser] User: %s will be added to group: %s\n", locu->u_Name, ug->ug_Name );
+	//DEBUG("[UserGroupAddUser] User: %s will be added to group: %s\n", locu->u_Name, ug->ug_Name );
 	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
 		UserGroupAUser *au = ug->ug_UserList;
@@ -262,7 +262,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 		}
 		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	}
-	DEBUG("[UserGroupAddUser] end\n");
+	//DEBUG("[UserGroupAddUser] end\n");
 	
 	return 0;
 }
@@ -283,7 +283,7 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 	}
 	User *locu = (User *)u;
 	
-	DEBUG("[UserGroupRemoveUser] user: %s will be removed from: %s\n", locu->u_Name, ug->ug_Name );
+	//DEBUG("[UserGroupRemoveUser] user: %s will be removed from: %s\n", locu->u_Name, ug->ug_Name );
 	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
 		UserGroupAUser *au = ug->ug_UserList;
@@ -335,6 +335,6 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 		
 		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	}
-	DEBUG("[UserGroupRemoveUser] end\n");
+	//DEBUG("[UserGroupRemoveUser] end\n");
 	return 0;
 }
