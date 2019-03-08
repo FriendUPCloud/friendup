@@ -5820,9 +5820,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					// If we can run, then run!
 					if( Application.run && !window.applicationStarted )
-					{
-						window.applicationStarted = true;
-						
+					{	
 						// Fetch application permissions
 						if( !Application.checkAppPermission )
 						{
@@ -5854,6 +5852,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						
 						function runNow()
 						{
+							if( window.applicationStarted ) return;
+							window.applicationStarted = true;
 							Application.run( packet );
 							if( packet.state ) Application.sessionStateSet( packet.state );
 							window.loaded = true;
@@ -5871,8 +5871,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( Application.run && !window.applicationStarted )
 						{
-							window.applicationStarted = true;
-							
 							// Fetch application permissions
 							if( !Application.checkAppPermission )
 							{
@@ -5904,6 +5902,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							
 							function runNow()
 							{
+								if( window.applicationStarted ) return;
+								window.applicationStarted = true;
 								Application.run( packet );
 								if( packet.state ) Application.sessionStateSet( packet.state );
 								Friend.application.doneLoading();
