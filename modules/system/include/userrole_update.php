@@ -80,6 +80,50 @@ if( $d->ID > 0 )
 			die( 'ok<!--separate-->{"message":"Role updated. Permissions saved.","response":2}' );
 		}
 	}
+	else if( isset( $args->args->userid ) )
+	{
+		// Built out support for setting user to a Role ...
+		// TODO: Review code and update documentation ...
+		
+		if( $args->args->userid )
+		{
+			// Set user on role if data has activate value
+			
+			if( isset( $args->args->data ) && $args->args->data )
+			{
+				if( !$SqlDatabase->FetchObject( '
+					SELECT * FROM FUserToGroup 
+					WHERE UserID = \'' . $args->args->userid . '\' AND UserGroupID = \'' . $d->ID . '\' 
+				' ) )
+				{
+					$SqlDatabase->query( '
+					INSERT INTO FUserToGroup 
+						( UserID, UserGroupID ) 
+						VALUES 
+						( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->userid ) . '\', \'' . $d->ID . '\' )
+					' );
+				}
+			}
+			
+			// Remove user on role if data has no activate value
+			
+			else
+			{
+				$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $args->args->userid . '\' AND UserGroupID=\'' . $d->ID . '\'' );
+			}
+			
+			if( $namechange )
+			{
+				die( 'ok<!--separate-->{"message":"User on role updated. Role name changed.","response":5}' );
+			}
+			else
+			{
+				die( 'ok<!--separate-->{"message":"User on role updated.","response":4}' );
+			}
+		}
+		
+		die( 'fail<!--separate-->{"message":"Missing parameters.","response":-1}' );
+	}
 	else if( $namechange )
 	{
 		die( 'ok<!--separate-->{"message":"Role updated. Name changed.","response":1}' );

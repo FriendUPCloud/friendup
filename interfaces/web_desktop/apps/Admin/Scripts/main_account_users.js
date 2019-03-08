@@ -23,9 +23,10 @@ Sections.accounts_users = function( cmd, extra )
 				var settings = info.settings;
 				var workspaceSettings = info.workspaceSettings;
 				var wgroups = info.workgroups;
+				var uroles = info.roles;
 				var mountlist = info.mountlist;
 				var apps = info.applications;
-									
+						
 				var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 				if( !themeData )
 					themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
@@ -39,6 +40,31 @@ Sections.accounts_users = function( cmd, extra )
 						wstr += '<div class="HRow">';
 						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
 						wstr += '</div>';
+					}
+				}
+				
+				// Roles
+				var rstr = '';
+				/*if( uroles && uroles.length )
+				{
+					for( var b = 0; b < uroles.length; b++ )
+					{
+						rstr += '<div class="HRow">';
+						rstr += '<div class="HContent100">' + uroles[b].Name + '</div>';
+						rstr += '</div>';
+					}
+				}*/
+				
+				if( uroles && uroles.length )
+				{
+					for( var a in uroles )
+					{
+						rstr += '<div class="HRow">';
+						rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + uroles[a].Name + '</div>';
+						rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+						rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+						rstr += '</div>';
+						rstr += '</div>';
 					}
 				}
 				
@@ -177,6 +203,7 @@ Sections.accounts_users = function( cmd, extra )
 					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
 					storage: mlst,
 					workgroups: wstr,
+					roles: rstr,
 					applications: apl
 				};
 				// Add translations
@@ -284,6 +311,30 @@ Sections.accounts_users = function( cmd, extra )
 						loadingList[ ++loadingSlot ]( info );
 					}
 					u.execute( 'workgroups' );
+				},
+				// Get user's roles
+				function( info )
+				{
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						var uroles = null;
+						console.log( { e:e, d:d } );
+						if( e == 'ok' )
+						{
+							try
+							{
+								uroles = JSON.parse( d );
+							}
+							catch( e )
+							{
+								uroles = null;
+							}
+							info.roles = uroles;
+						}
+						loadingList[ ++loadingSlot ]( info );
+					}
+					u.execute( 'userroleget', { userid: info.userInfo.ID } );
 				},
 				// Get storage
 				function( info )
@@ -443,3 +494,57 @@ Sections.accounts_users = function( cmd, extra )
 	}
 	m.execute( 'listusers' );
 };
+
+
+Sections.userrole_edit = function( userid, _this )
+{
+	
+	var pnt = _this.parentNode;
+	
+	var edit = pnt.innerHTML;
+	
+	var buttons = [  
+		{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
+			{ 
+				pnt.innerHTML = edit 
+			} 
+		}
+	];
+	
+	pnt.innerHTML = '';
+	
+	for( var i in buttons )
+	{
+		var b = document.createElement( 'button' );
+		b.className = 'IconSmall FloatRight';
+		b.innerHTML = buttons[i].name;
+		b.onclick = buttons[i].func;
+		
+		pnt.appendChild( b );
+	}
+	
+}
+
+Sections.userrole_update = function( rid, userid, _this )
+{
+	var data = '';
+	
+	if( _this )
+	{
+		Toggle( _this, function( on )
+		{
+			data = ( on ? 'Activated' : '' );
+		} );
+	}
+	
+	if( rid && userid )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d } );
+		}
+		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data } );
+	}
+};
+

@@ -24,12 +24,16 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 	
 	if( $rows = $SqlDatabase->FetchObjects( '
 		SELECT 
-			g.* 
+			g.*, u.UserID AS UserRoleID 
 		FROM 
 			FUserGroup g 
+				LEFT JOIN FUserToGroup u ON 
+				( 
+						u.UserGroupID = g.ID 
+					AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? $args->args->userid : 'NULL' ) . ' 
+				)
 		WHERE 
 			g.Type = "Role" 
-			' . ( isset( $args->args->userid ) ? 'AND g.UserID = ' . $args->args->userid : '' ) . '
 		ORDER BY 
 			g.Name 
 	' ) )
@@ -38,7 +42,7 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 		{
 			$o = new stdClass();
 			$o->ID = $row->ID;
-			$o->UserID = $row->UserID;
+			$o->UserID = $row->UserRoleID;
 			$o->ParentID = $row->ParentID;
 			$o->Name = $row->Name;
 			
@@ -62,8 +66,10 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 		die( 'ok<!--separate-->' . json_encode( $out ) );
 	}
 	
-	die( 'fail<!--separate-->{"message":"Please specify the name or id of your role.","response":-1}' );
+	die( 'fail<!--separate-->{"message":"No roles listed or on user.","response":-1}' );
 }
+
+
 
 $d = new dbIO( 'FUserGroup' );
 
