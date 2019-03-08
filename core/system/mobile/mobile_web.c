@@ -159,6 +159,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				deviceID = UrlDecodeToMem( (char *)el->data );
+				DEBUG("Got deviceID: >%s<\n");
 				unsigned int z;
 				for( z = 0 ; z < strlen( deviceID ) ; z++ )
 				{
@@ -200,6 +201,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					// if entry with token already exist there is no need to create new one
 					char query[ 512 ];
 					
+					DEBUG("Find entry for Device: %s\n", deviceID );
+					
 					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
 					//snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND AppToken='%s' AND UserID=%lu", deviceID, apptoken, uid );
 					
@@ -219,6 +222,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						sqllib->FreeResult( sqllib, res );
 					}
 					
+					DEBUG("Entry found: %lu\n", umaID );
+					
 					// seems we have one or more devices, we can remove them and create new one
 					if( umaID > 0 )
 					{
@@ -226,6 +231,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
 						sqllib->QueryWithoutResults( sqllib, query );
 					}
+					
+					DEBUG("UMAID: %lu\n", umaID );
 					
 					UserMobileApp *ma = UserMobileAppNew();
 					if( ma != NULL )
