@@ -159,7 +159,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				deviceID = UrlDecodeToMem( (char *)el->data );
-				DEBUG("Got deviceID: >%s<\n");
+				DEBUG("Got deviceID: >%s<\n",  deviceID );
 				unsigned int z;
 				for( z = 0 ; z < strlen( deviceID ) ; z++ )
 				{
