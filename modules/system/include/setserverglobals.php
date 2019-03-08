@@ -67,7 +67,7 @@ if( $possibilities->logoImage )
 {
 	if( $f = fopen( 'cfg/serverglobals/' . $files->logoImage, 'w+' ) )
 	{
-		fwrite( $f, $possibilities->logoImage );
+		fwrite( $f, base64_decode( $possibilities->logoImage ) );
 		fclose( $f );
 	}
 }

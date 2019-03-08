@@ -61,6 +61,10 @@ function changeGlobalsLogoImage()
 		multiple: false,
 		triggerFunction: function( items )
 		{
+			if( items.length )
+			{
+				ge( 'theLogoImage' ).src = getWebUrl( items[ 0 ].Path );
+			}
 		}
 	};
 	( new Filedialog( flags ) );
@@ -76,22 +80,39 @@ function saveGlobals()
 	useEulaShort = ge( 'eula_short_check' ).checked;
 	useEulaLong = ge( 'eula_long_check' ).checked;
 	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	// Convert image
+	var i = ge( 'theLogoImage' );
+	
+	var d = document.createElement( 'canvas' );
+	d.setAttribute( 'width', i.offsetWidth );
+	d.setAttribute( 'height', i.offsetHeight );
+	
+	var ctx = d.getContext( '2d' );
+	ctx.drawImage( i, 0, 0, i.offsetWidth, i.offsetHeight );
+	var png = d.toDataURL( 'image/png' );
+	png = png.replace( /^data:image\/(png|jpg);base64,/, '' );
+	
+	function doSave()
 	{
-		if( e == 'ok' )
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
 		{
-			Notify( { title: i18n( 'i18n_server_globals_saved' ), text: i18n( 'i18n_please_refresh_to_see_results' ) } );
+			if( e == 'ok' )
+			{
+				Notify( { title: i18n( 'i18n_server_globals_saved' ), text: i18n( 'i18n_please_refresh_to_see_results' ) } );
+			}
 		}
+		m.execute( 'setserverglobals', { 
+			eulaShortText: eulaShortText, 
+			eulaLongText: eulaLongText, 
+			logoImage: png,
+			useEulaShort: useEulaShort,
+			useEulaLong: useEulaLong,
+			useLogoImage: useLogoImage
+		} );
 	}
-	m.execute( 'setserverglobals', { 
-		eulaShortText: eulaShortText, 
-		eulaLongText: eulaLongText, 
-		logoImage: logoImage,
-		useEulaShort: useEulaShort,
-		useEulaLong: useEulaLong,
-		useLogoImage: useLogoImage
-	} );
+	
+	doSave();
 }
 
 function reloadServices()
