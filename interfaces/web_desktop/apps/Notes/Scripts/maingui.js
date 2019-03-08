@@ -706,7 +706,7 @@ Application.initCKE = function()
 			
 			// Other keys...
 			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
-				
+			
 				// Create temporary file "to be saved"
 				if( !Application.currentDocument )
 				{
