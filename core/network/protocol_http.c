@@ -1679,7 +1679,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 													if( allArgsNew != NULL )
 													{
 														int argssize = strlen( allArgsNew );
-														char *runFile = FCalloc( ( argssize * 2 ) + 512 + strlen( uri->path->raw ), sizeof(char) );
+														char *runFile = FCalloc( ( argssize << 1 ) + 512 + strlen( uri->path->raw ), sizeof(char) );
 														if( runFile != NULL )
 														{
 															int rawLength = strlen( uri->path->raw );
