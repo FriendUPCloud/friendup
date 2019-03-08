@@ -120,6 +120,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		char *appversion = NULL;
 		char *platform = NULL;
 		char *version = NULL;
+		char *deviceID = NULL;
 		FBOOL uappCreated = FALSE;
 		
 		DEBUG( "[MobileWebRequest] Create user mobile app!!\n" );
@@ -154,6 +155,21 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				}
 			}
 			
+			el = HttpGetPOSTParameter( request, "deviceid" );
+			if( el != NULL )
+			{
+				deviceID = UrlDecodeToMem( (char *)el->data );
+				unsigned int z;
+				for( z = 0 ; z < strlen( deviceID ) ; z++ )
+				{
+					if( deviceID[ z ] == ' ' )
+					{
+						deviceID[ z ] = 0;
+						break;
+					}
+				}
+			}
+			
 			el = HttpGetPOSTParameter( request, "appversion" );
 			if( el != NULL )
 			{
@@ -172,7 +188,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				version = UrlDecodeToMem( (char *)el->data );
 			}
 			
-			if( uid > 0 && apptoken != NULL )
+			if( uid > 0 && apptoken != NULL && deviceID != NULL )
 			{
 				char buffer[ 256 ];
 				int err = 0;
@@ -182,9 +198,10 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				if( sqllib != NULL )
 				{
 					// if entry with token already exist there is no need to create new one
-					
 					char query[ 512 ];
-					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where AppToken='%s' AND UserID=%lu", apptoken, uid );
+					
+					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
+					//snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND AppToken='%s' AND UserID=%lu", deviceID, apptoken, uid );
 					
 					void *res = sqllib->Query( sqllib, query );
 				
@@ -201,7 +218,58 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
-				
+					
+					// seems we have one or more devices, we can remove them and create new one
+					if( umaID > 0 )
+					{
+						DEBUG("Delete old entries\n");
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
+						sqllib->QueryWithoutResults( sqllib, query );
+					}
+					
+					UserMobileApp *ma = UserMobileAppNew();
+					if( ma != NULL )
+					{
+						char ipbuffer[ 128 ];
+						ma->uma_AppToken = apptoken;
+						ma->uma_DeviceID = deviceID;
+						ma->uma_AppVersion = appversion;
+						ma->uma_Platform = platform;
+						ma->uma_PlatformVersion = version;
+						ma->uma_UserID = uid;
+						apptoken = appversion = platform = version = deviceID = NULL;
+					
+						if( getLocalIP( ipbuffer, sizeof(ipbuffer) ) == 0 )
+						{
+							ma->uma_Core = StringDuplicate( ipbuffer );
+						}
+						else
+						{
+							ma->uma_Core = StringDuplicate("Error");
+						}
+					
+						err = sqllib->Save( sqllib, UserMobileAppDesc, ma );
+						
+						DEBUG("UserMobileAppStored id: %lu\n", ma->uma_ID );
+						if( err == 0 )
+						{
+							if( loggedSession->us_MobileAppID != ma->uma_ID )
+							{
+								char tmpQuery[ 256 ];
+								loggedSession->us_MobileAppID = ma->uma_ID;
+								sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET UMA_ID=%lu WHERE `ID`=%lu", ma->uma_ID, loggedSession->us_ID );
+								sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							}
+							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"%lu\" }", ma->uma_ID );
+							HttpAddTextContent( response, buffer );
+						}
+						UserMobileAppDelete( ma );
+					}
+					
+					
+
+					
+				/*
 					if( umaID == 0 )
 					{
 						int addErr = 1;	// 1 entry wasnt added, must be released
@@ -211,11 +279,12 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						{
 							char ipbuffer[ 128 ];
 							ma->uma_AppToken = apptoken;
+							ma->uma_DeviceID = deviceID;
 							ma->uma_AppVersion = appversion;
 							ma->uma_Platform = platform;
 							ma->uma_PlatformVersion = version;
 							ma->uma_UserID = uid;
-							apptoken = appversion = platform = version = NULL;
+							apptoken = appversion = platform = version = deviceID = NULL;
 					
 							if( getLocalIP( ipbuffer, sizeof(ipbuffer) ) == 0 )
 							{
@@ -228,7 +297,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					
 							err = sqllib->Save( sqllib, UserMobileAppDesc, ma );
 							
-							addErr = MobileManagerAddUMA( l->sl_MobileManager, ma );
+							//addErr = MobileManagerAddUMA( l->sl_MobileManager, ma );
 							
 							if( err == 0 )
 							{
@@ -275,7 +344,15 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 						{
 							UserMobileAppDelete( ma );
 						}
+					}	// umaID > 0
+					else
+					{
+						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
+					
+						sqllib->QueryWithoutResults( sqllib, query );
 					}
+					
+					*/
 					l->LibrarySQLDrop( l, sqllib );
 				}
 				
@@ -296,7 +373,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			{
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid, apptoken" );
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid, apptoken, deviceid" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
@@ -304,6 +381,10 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 
 		//if( userCreated == TRUE )
 		{
+			if( deviceID != NULL )
+			{
+				FFree( deviceID );
+			}
 			if( apptoken != NULL )
 			{
 				FFree( apptoken );

@@ -728,6 +728,7 @@ function checkForFriendApp()
 		var version = null;
 		var platform = null;
 		var appToken = null;
+		var deviceID = null;
 		//var appToken = friendApp.appToken ? friendApp.appToken : false;
 
 		if( typeof friendApp.get_version == 'function' )
@@ -744,6 +745,10 @@ function checkForFriendApp()
 		{
 			appToken = friendApp.get_app_token();
 		}
+		if( typeof friendApp.get_deviceid == 'function' )
+		{
+			deviceID = friendApp.get_deviceid();
+		}
 
 		console.log('call ' + Workspace.sessionId );
 
@@ -757,7 +762,7 @@ function checkForFriendApp()
 		}
 		if( appToken != null )	// old applications which do not have appToken will skip this part
 		{
-			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, appversion: version, platform: platform } );
+			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
 		}
 	}
 }

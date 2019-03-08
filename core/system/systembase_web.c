@@ -917,7 +917,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								if( lpos > 0 && lpos < len )
 								{
-									umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
+									umaID = MobileManagerGetUMAIDByDeviceIDAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
 								}
 							}
 							loggedSession->us_MobileAppID = umaID;
@@ -1218,7 +1218,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									}
 									if( lpos > 0 && lpos < len )
 									{
-										umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
+										umaID = MobileManagerGetUMAIDByDeviceIDAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
 									}
 								}
 								
@@ -1226,6 +1226,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								//
 								// no usermobileapp is signed to session/user
 								//
+								/*
 								if( umaID == 0 )
 								{
 									// if device is mobile device, we must create it
@@ -1246,6 +1247,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 										}
 									}
 								}
+								*/
 								
 								//
 								// update UserSession
