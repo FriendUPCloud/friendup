@@ -29,19 +29,24 @@ function reloadGlobals()
 		var replacements = {
 			logoImage: '',
 			eulaLong: '',
-			eulaShort: '',
-			useLogoImage: false,
-			useEulaLong: false,
-			useEulaShort: false
+			eulaShort: ''
 		};
 		if( e == 'ok' )
 		{
-			d = JSON.parse( d );
-			for( var a in d )
+			try
 			{
-				replacements[ a ] = d[ a ];
+				d = JSON.parse( d );
+				for( var a in d )
+				{
+					replacements[ a ] = d[ a ];
+				}
+			}
+			catch( e )
+			{
+				console.log( 'Failed to load json.' );
 			}
 		}
+		
 		var f = new File( 'Progdir:Templates/globals.html' );
 		f.replacements = replacements;
 		f.i18n();
