@@ -29,7 +29,8 @@ function reloadGlobals()
 		var replacements = {
 			logoImage: '',
 			eulaLong: '',
-			eulaShort: ''
+			eulaShort: '',
+			rand: 'ra' + ( Math.random() * 999 ) + ( new Date() ).getTime()
 		};
 		if( e == 'ok' )
 		{
