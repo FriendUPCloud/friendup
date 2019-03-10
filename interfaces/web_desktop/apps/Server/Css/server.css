@@ -10,3 +10,13 @@ input[type=checkbox]
 {
 	vertical-align: middle;
 }
+
+#eula_short_text, #eula_long_text
+{
+	overflow: hidden;
+}
+
+#eula_short_text:focus, #eula_long_text:focus
+{
+	overflow: auto;
+}
