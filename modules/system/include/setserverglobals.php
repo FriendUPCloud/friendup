@@ -9,6 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $Logger;
+
 if( $level != 'Admin' ) die( '404' );
 
 require_once( 'php/classes/dbio.php' );
@@ -40,14 +42,14 @@ foreach( $args->args as $k=>$v )
 	{
 		if( $k == $p )
 		{
-			$possibilities->$p =& $v;
+			$possibilities->{$p} = $v;
 		}
 	}
 }
 
 // Save customized data --------------------------------------------------------
 
-if( $possibilities->eulaShortText )
+if( isset( $possibilities->eulaShortText ) )
 {
 	if( $f = fopen( 'cfg/serverglobals/' . $files->eulaShortText, 'w+' ) )
 	{
@@ -56,7 +58,7 @@ if( $possibilities->eulaShortText )
 	}
 }
 
-if( $possibilities->eulaLongText )
+if( isset( $possibilities->eulaLongText ) )
 {
 	if( $f = fopen( 'cfg/serverglobals/' . $files->eulaLongText, 'w+' ) )
 	{
@@ -65,7 +67,7 @@ if( $possibilities->eulaLongText )
 	}
 }
 
-if( $possibilities->logoImage )
+if( isset( $possibilities->logoImage ) )
 {
 	$possibilities->logoImage = base64_decode( $possibilities->logoImage );
 	if( $f = fopen( 'cfg/serverglobals/' . $files->logoImage, 'w+' ) )
@@ -106,12 +108,14 @@ $backups = [
 $keys = [ 'EulaShort', 'EulaLong', 'LogoImage' ];
 $keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage' ];
 
-foreach( $targets as $k => $target )
+for( $k = 0; $k < 3; $k++ )
 {
 	$backup = $backups[ $k ];
+	$target = $targets[ $k ];
 
 	$kk = 'use' . $keys[ $k ];
-	if( $possibilities->$kk )
+	
+	if( $possibilities->{$kk} )
 	{
 		// Make sure we have a backup
 		if( !file_exists( $backup ) )
@@ -131,7 +135,7 @@ foreach( $targets as $k => $target )
 		{
 			// Write new data
 			$kstring = $keyz[ $k ];
-			fwrite( $fp, $possibilities->$kstring );
+			fwrite( $fp, $possibilities->{$kstring} );
 			fclose( $fp );
 		}
 		else
