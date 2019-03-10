@@ -40,10 +40,12 @@ foreach( $args->args as $k=>$v )
 	{
 		if( $k == $p )
 		{
-			$possibilities->$p = $v;
+			$possibilities->$p =& $v;
 		}
 	}
 }
+
+// Save customized data --------------------------------------------------------
 
 if( $possibilities->eulaShortText )
 {
@@ -65,13 +67,15 @@ if( $possibilities->eulaLongText )
 
 if( $possibilities->logoImage )
 {
+	$possibilities->logoImage = base64_decode( $possibilities->logoImage );
 	if( $f = fopen( 'cfg/serverglobals/' . $files->logoImage, 'w+' ) )
 	{
-		fwrite( $f, base64_decode( $possibilities->logoImage ) );
+		fwrite( $f, $possibilities->logoImage );
 		fclose( $f );
 	}
 }
 
+// Save use config -------------------------------------------------------------
 
 $js = new stdClass();
 $js->useEulaShort = $possibilities->useEulaShort;
@@ -86,19 +90,69 @@ $s->Load();
 $s->Data = json_encode( $js );;
 $s->Save();
 
-// Activate!
-if( $possibilities->useEulaShort )
-{
-}
+// Activate! -------------------------------------------------------------------
 
-// Activate!
-if( $possibilities->useEulaLong )
-{
-}
+$targets = [
+	'resources/webclient/templates/eula_short.html',
+	'resources/webclient/templates/eula.html',
+	'resources/graphics/logoblue.png'
+];
+$backups = [
+	'cfg/serverglobals/eulashort_backup.html',
+	'cfg/serverglobals/eulalong_backup.html',
+	'cfg/serverglobals/logo_backup.png'
+];
 
-// Activate!
-if( $possibilities->useLogoImage )
+$keys = [ 'EulaShort', 'EulaLong', 'LogoImage' ];
+$keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage' ];
+
+foreach( $targets as $k => $target )
 {
+	$backup = $backups[ $k ];
+
+	$kk = 'use' . $keys[ $k ];
+	if( $possibilities->$kk )
+	{
+		// Make sure we have a backup
+		if( !file_exists( $backup ) )
+		{
+			$f = file_get_contents( $target );
+			if( $fp = fopen( $backup, 'w+' ) )
+			{
+				fwrite( $fp, $f );
+				fclose( $fp );
+			}
+			else
+			{
+				die( 'fail<!--separate-->{"message":"Could not write ' . $kk . ' backup.","response":-1}' );
+			}
+		}
+		if( $fp = fopen( $target, 'w+' ) )
+		{
+			// Write new data
+			$kstring = $keyz[ $k ];
+			fwrite( $fp, $possibilities->$kstring );
+			fclose( $fp );
+		}
+		else
+		{
+			die( 'fail<!--separate-->{"message":"Could not overwrite ' . $kk . '.","response":-1}' );
+		}
+	
+	}
+	// Restore the backup
+	else
+	{
+		if( file_exists( $backup ) )
+		{
+			$f = file_get_contents( $backup );
+			if( $fp = fopen( $target, 'w+' ) )
+			{
+				fwrite( $fp, $f );
+				fclose( $fp );
+			}
+		}
+	}
 }
 
 die( 'ok<!--separate-->{"message":"Server globals were saved.","response":"1"}' );

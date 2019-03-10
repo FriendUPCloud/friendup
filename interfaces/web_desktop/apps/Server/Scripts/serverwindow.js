@@ -29,7 +29,10 @@ function reloadGlobals()
 		var replacements = {
 			logoImage: '',
 			eulaLong: '',
-			eulaShort: ''
+			eulaShort: '',
+			useLogoImage: false,
+			useEulaLong: false,
+			useEulaShort: false
 		};
 		if( e == 'ok' )
 		{
@@ -45,6 +48,9 @@ function reloadGlobals()
 		f.onLoad = function( data )
 		{
 			ge( 'ServerGlobals' ).innerHTML = data;
+			ge( 'eula_short_check' ).checked = d.useEulaShort ? 'checked' : '';
+			ge( 'eula_long_check' ).checked = d.useEulaLong ? 'checked' : '';
+			ge( 'logo_image_check' ).checked = d.useLogoImage ? 'checked' : '';
 		}
 		f.load();
 	}
@@ -79,6 +85,7 @@ function saveGlobals()
 	var useEulaShort = useEulaLong = useLogoImage = false;
 	useEulaShort = ge( 'eula_short_check' ).checked;
 	useEulaLong = ge( 'eula_long_check' ).checked;
+	useLogoImage = ge( 'logo_image_check' ).checked;
 	
 	// Convert image
 	var i = ge( 'theLogoImage' );

@@ -34,6 +34,9 @@ if( $js )
 	$json->logoImage = '/graphics/logoblue.png';
 	$json->eulaShort = file_get_contents( 'resources/webclient/templates/eula_short.html' );
 	$json->eulaLong  = file_get_contents( 'resources/webclient/templates/eula.html' );
+	$json->useLogoImage = $js->useLogoImage;
+	$json->useEulaShort = $js->UseEulaShort;
+	$json->useEulaLong  = $js->UseEulaLong;
 	
 	if( file_exists( 'cfg/serverglobals/' . $files->eulaShortText ) )
 	{
