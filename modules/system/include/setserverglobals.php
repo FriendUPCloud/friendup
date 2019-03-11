@@ -28,13 +28,16 @@ $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
+$files->backgroundImage = 'leaves.jpg';
 $possibilities = new stdClass();
 $possibilities->eulaShortText = '';
 $possibilities->eulaLongText = '';
 $possibilities->logoImage = '';
+$possibilities->backgroundImage = '';
 $possibilities->useEulaShort = false;
 $possibilities->useEulaLong = false;
 $possibilities->useLogoImage = false;
+$possibilities->useBackgroundImage = false;
 
 foreach( $args->args as $k=>$v )
 {
@@ -77,12 +80,24 @@ if( isset( $possibilities->logoImage ) )
 	}
 }
 
+if( isset( $possibilities->backgroundImage ) )
+{
+	$possibilities->backgroundImage = base64_decode( $possibilities->backgroundImage );
+	if( $f = fopen( 'cfg/serverglobals/' . $files->backgroundImage, 'w+' ) )
+	{
+		fwrite( $f, $possibilities->backgroundImage );
+		fclose( $f );
+	}
+}
+
+
 // Save use config -------------------------------------------------------------
 
 $js = new stdClass();
 $js->useEulaShort = $possibilities->useEulaShort;
 $js->useEulaLong = $possibilities->useEulaLong;
 $js->useLogoImage = $possibilities->useLogoImage;
+$js->useBackgroundImage = $possibilities->useBackgroundImage;
 
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
@@ -97,16 +112,18 @@ $s->Save();
 $targets = [
 	'resources/webclient/templates/eula_short.html',
 	'resources/webclient/templates/eula.html',
-	'resources/graphics/logoblue.png'
+	'resources/graphics/logoblue.png',
+	'resources/graphics/leaves.jpg'
 ];
 $backups = [
 	'cfg/serverglobals/eulashort_backup.html',
 	'cfg/serverglobals/eulalong_backup.html',
-	'cfg/serverglobals/logo_backup.png'
+	'cfg/serverglobals/logo_backup.png',
+	'cfg/serverglobals/background_backup.jpg'
 ];
 
-$keys = [ 'EulaShort', 'EulaLong', 'LogoImage' ];
-$keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage' ];
+$keys = [ 'EulaShort', 'EulaLong', 'LogoImage', 'BackgroundImage' ];
+$keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage', 'backgroundImage' ];
 
 for( $k = 0; $k < 3; $k++ )
 {

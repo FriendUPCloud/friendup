@@ -8691,7 +8691,7 @@ function ClearCache()
 
 // Shows eula
 
-function ShowEula( accept )
+function ShowEula( accept, cbk )
 {
 	if( accept )
 	{

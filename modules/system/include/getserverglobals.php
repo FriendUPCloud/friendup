@@ -19,6 +19,7 @@ $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
+$files->backgroundImage = 'leaves.jpg';
 
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
@@ -32,11 +33,13 @@ if( $js )
 {
 	$json = new stdClass();
 	$json->logoImage = '/graphics/logoblue.png';
+	$json->backgroundImage = '/graphics/leaves.jpg';
 	$json->eulaShort = file_get_contents( 'resources/webclient/templates/eula_short.html' );
 	$json->eulaLong  = file_get_contents( 'resources/webclient/templates/eula.html' );
-	$json->useLogoImage = $js->useLogoImage;
-	$json->useEulaShort = $js->useEulaShort;
-	$json->useEulaLong  = $js->useEulaLong;
+	$json->useLogoImage       = $js->useLogoImage;
+	$json->useBackgroundImage = $js->useBackgroundImage;
+	$json->useEulaShort       = $js->useEulaShort;
+	$json->useEulaLong        = $js->useEulaLong;
 	
 	if( file_exists( 'cfg/serverglobals/' . $files->eulaShortText ) )
 	{
@@ -46,11 +49,6 @@ if( $js )
 	{
 		$json->eulaLong = file_get_contents( 'cfg/serverglobals/' . $files->eulaLongText );
 	}
-	
-	/*if( file_exists( 'cfg/serverglobals/' . $files->logoImage ) )
-	{
-		$json->eulaLong = file_get_contents( 'cfg/serverglobals/' . $files->logoImage );
-	}*/
 	
 	die( 'ok<!--separate-->' . json_encode( $json ) );
 }

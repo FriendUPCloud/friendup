@@ -14,6 +14,19 @@
 		</p>
 		
 		<p class="Layout">
+			<strong>{i18n_login_background_image}</strong> <input type="checkbox" id="logo_image_check"/> {i18n_use_image}
+		</p>
+		<div id="LoginBackgroundImage MarginBottom Padding Margins">
+			<center><img id="theBackgroundImage" src="{backgroundImage}?rand={rand}"/></center>
+		</div>
+		
+		<p>
+			<button type="button" class="IconSmall fa-upload" onclick="changeGlobalsBackgroundImage()">
+				{i18n_change_background_image}
+			</button>
+		</p>
+		
+		<p class="Layout">
 			<strong>{i18n_eula_short}</strong> <input type="checkbox" id="eula_short_check"/> {i18n_use_text}
 		</p>
 		<textarea size="8" class="FullWidth MarginBottom" id="eula_short_text" style="height: 100px">{eulaShort}</textarea>

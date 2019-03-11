@@ -56,12 +56,15 @@ i18n_no_workgroup                       : Ingen arbeidsgruppe
 i18n_select_a_logo_image                : Velg et logobilde
 i18n_change_logo_image                  : Endre logobildet
 i18n_use_image                          : Bruk bildet
+i18n_select_a_background_image          : Velg et bakgrunnsbilde
+i18n_change_background_image            : Endre bakgrunnsbildet
 
 i18n_save_globals                       : Lagre serverglobaler
 i18n_eula_long                          : EULA lang versjon
 i18n_eula_short                         : EULA kort versjon
 i18n_use_text                           : Bruk denne teksten
 i18n_login_logo_image                   : Innloggingsgrafikk
+i18n_login_background_image             : Bakgrunnsgrafikk
 
 i18n_server_globals_saved               : Serverglobaler lagret
 i18n_please_refresh_to_see_results      : Vennligst frisk opp nettleser arkfanen eller din klient for å se resultatet.
