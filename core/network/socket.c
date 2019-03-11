@@ -1563,15 +1563,8 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 				return read;
 				case SSL_ERROR_SYSCALL:
 
-					DEBUG("SSLERR : err : %d res: %d\n", err, res );
+					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
 					
-					if( res != 0 && ( time(NULL) - startTime ) <= 5 )
-					{
-						// TODO: If we've been trying for 30 seconds, go on, else continue trying 
-						continue;
-					}
-					usleep( 10 );
-
 					FERROR("[SocketRead] Error syscall, bufsize = %d.\n", buf );
 					if( err > 0 )
 					{
@@ -1592,12 +1585,6 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 						return read;
 					}
 					
-					usleep( 10 );
-					if( ( time(NULL) - startTime ) <= 5 )
-					{
-						// TODO: If we've been trying for 30 seconds, go on, else continue trying 
-						continue;
-					}
 					FERROR( "[SocketRead] Error syscall other error. return.\n" );
 					return read;
 					// Don't retry, just return read
