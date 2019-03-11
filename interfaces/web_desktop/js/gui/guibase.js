@@ -713,6 +713,8 @@ html .View.SnapRight
 //check if we run inside an app and do some magic
 function checkForFriendApp()
 {
+// just disabled to do not loose compatybility
+/*
 	//if we dont have a sessionid we will need to wait a bit here...
 	if( !Workspace.sessionId )
 	{
@@ -765,6 +767,7 @@ function checkForFriendApp()
 			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
 		}
 	}
+*/
 }
 
 // Refresh programmatic classes
