@@ -8701,6 +8701,16 @@ function AboutFriendUP()
 
 			// Add app token
 			if( token ) buildInfo += token;
+			
+			// Add device ID
+			if( window.friendApp )
+			{
+				var devId = friendApp.get_deviceid();
+				if( devId )
+				{
+					buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>';
+				}
+			}
 
 			buildInfo += '<div style="clear: both"></div></div>';
 		}
