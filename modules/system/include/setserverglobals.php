@@ -24,21 +24,31 @@ if( !file_exists( 'cfg/serverglobals' ) )
 if( !file_exists( 'cfg/serverglobals' ) )
 	die( '404' );
 
-// Possible globals
+// Possible globals ------------------------------------------------------------
+
 $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
 $files->backgroundImage = 'dew.jpg';
+$files->templateHTML = 'templateHTML.html';
+$files->extraLoginCSS = 'extraLoginCSS.css';
+
 $possibilities = new stdClass();
-$possibilities->eulaShortText = '';
-$possibilities->eulaLongText = '';
-$possibilities->logoImage = '';
+
+$possibilities->eulaShortText   = '';
+$possibilities->eulaLongText    = '';
+$possibilities->logoImage       = '';
 $possibilities->backgroundImage = '';
-$possibilities->useEulaShort = false;
-$possibilities->useEulaLong = false;
-$possibilities->useLogoImage = false;
+$possibilities->extraLoginCSS   = '';
+$possibilities->aboutTemplate   = '';
+
+$possibilities->useEulaShort       = false;
+$possibilities->useEulaLong        = false;
+$possibilities->useLogoImage       = false;
 $possibilities->useBackgroundImage = false;
+$possibilities->useExtraLoginCSS   = false;
+$possibilities->useAboutTemplate   = false;
 
 foreach( $args->args as $k=>$v )
 {
@@ -97,14 +107,42 @@ if( isset( $possibilities->backgroundImage ) && strstr( $possibilities->backgrou
 	}
 }
 
+if( isset( $possibilities->extraLoginCSS ) && strstr( $possibilities->extraLoginCSS, ':' ) )
+{
+	$file = new File( $possibilities->extraLoginCSS );
+	if( $file->Load() )
+	{
+		if( $f = fopen( 'cfg/serverglobals/' . $files->extraLoginCSS, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
+	}
+}
+
+if( isset( $possibilities->aboutTemplate ) && strstr( $possibilities->aboutTemplate, ':' ) )
+{
+	$file = new File( $possibilities->aboutTemplate );
+	if( $file->Load() )
+	{
+		if( $f = fopen( 'cfg/serverglobals/' . $files->aboutTemplate, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
+	}
+}
+
 
 // Save use config -------------------------------------------------------------
 
 $js = new stdClass();
-$js->useEulaShort = $possibilities->useEulaShort;
-$js->useEulaLong = $possibilities->useEulaLong;
-$js->useLogoImage = $possibilities->useLogoImage;
+$js->useEulaShort       = $possibilities->useEulaShort;
+$js->useEulaLong        = $possibilities->useEulaLong;
+$js->useLogoImage       = $possibilities->useLogoImage;
 $js->useBackgroundImage = $possibilities->useBackgroundImage;
+$js->useExtraLoginCSS   = $possibilities->useExtraLoginCSS;
+$js->useAboutTemplate   = $possibilities->useAboutTemplate;
 
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
@@ -124,6 +162,7 @@ $targets = [
 	'resources/webclient/css/extraLoginCSS.css',
 	'resources/webclient/templates/aboutTemplate.html'
 ];
+
 $backups = [
 	'cfg/serverglobals/eulashort_backup.html',
 	'cfg/serverglobals/eulalong_backup.html',
@@ -132,6 +171,7 @@ $backups = [
 	'cfg/serverglobals/extraLoginCSS_backup.css',
 	'cfg/serverglobals/aboutTemplate_backup.html'
 ];
+
 $sources = [
 	'cfg/serverglobals/eulashort.html',
 	'cfg/serverglobals/eulalong.html',
@@ -141,8 +181,23 @@ $sources = [
 	'cfg/serverglobals/aboutTemplate.html'
 ];
 
-$keys = [ 'EulaShort', 'EulaLong', 'LogoImage', 'BackgroundImage', 'ExtraLoginCSS', 'AboutTemplate' ];
-$keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage', 'backgroundImage', 'extraLoginCSS', 'aboutTemplate' ];
+$keys = [ 
+	'EulaShort', 
+	'EulaLong', 
+	'LogoImage', 
+	'BackgroundImage', 
+	'ExtraLoginCSS', 
+	'AboutTemplate' 
+];
+
+$keyz = [ 
+	'eulaShortText', 
+	'eulaLongText', 
+	'logoImage', 
+	'backgroundImage', 
+	'extraLoginCSS', 
+	'aboutTemplate' 
+];
 
 for( $k = 0; $k < 4; $k++ )
 {
@@ -171,7 +226,6 @@ for( $k = 0; $k < 4; $k++ )
 		{
 			die( 'fail<!--separate-->{"message":"Could not overwrite ' . $target . ' with ' . $source . '.","response":-1}' );
 		}
-	
 	}
 	// Restore the backup
 	else

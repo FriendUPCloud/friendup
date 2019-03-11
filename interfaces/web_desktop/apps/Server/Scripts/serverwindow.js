@@ -59,6 +59,8 @@ function reloadGlobals()
 			ge( 'eula_long_check' ).checked = d.useEulaLong === '1' ? 'checked' : '';
 			ge( 'logo_image_check' ).checked = d.useLogoImage === '1' ? 'checked' : '';
 			ge( 'background_image_check' ).checked = d.useBackgroundImage === '1' ? 'checked' : '';
+			ge( 'extra_template_html_check' ).checked = d.useAboutTemplate === '1' ? 'checked' : '';
+			ge( 'extra_login_css_check' ).checked = d.useExtraLoginCSS === '1' ? 'checked' : '';
 		}
 		f.load();
 	}
@@ -146,15 +148,19 @@ function changeGlobalsBackgroundImage()
 // Save the server globals
 function saveGlobals()
 {
-	var eulaShortText = ge( 'eula_short_text' ).value;
-	var eulaLongText  = ge( 'eula_long_text' ).value;
-	var logoImage = false;
+	var eulaShortText   = ge( 'eula_short_text' ).value;
+	var eulaLongText    = ge( 'eula_long_text' ).value;
+	var logoImage       = false;
 	var backgroundImage = false;
-	var useEulaShort = useEulaLong = useLogoImage = useBackgroundImage = false;
-	useEulaShort = ge( 'eula_short_check' ).checked ? '1' : '0';
-	useEulaLong = ge( 'eula_long_check' ).checked ? '1' : '0';
-	useLogoImage = ge( 'logo_image_check' ).checked ? '1' : '0';
-	useBackgroundImage = ge( 'background_image_check' ).checked ? '1' : '0';
+	var extraLoginCSS   = ge( 'extra_login_css' ).value;
+	var aboutTemplate   = ge( 'about_template' ).value;
+	var useEulaShort    = useEulaLong = useLogoImage = useBackgroundImage = useExtraLoginCSS = useAboutTemplate = false;
+	useEulaShort        = ge( 'eula_short_check' ).checked ? '1' : '0';
+	useEulaLong         = ge( 'eula_long_check' ).checked ? '1' : '0';
+	useLogoImage        = ge( 'logo_image_check' ).checked ? '1' : '0';
+	useBackgroundImage  = ge( 'background_image_check' ).checked ? '1' : '0';
+	useExtraLoginCSS    = ge( 'extra_login_css_check' ).checked ? '1' : '0';
+	useAboutTemplate    = ge( 'extra_template_html_check' ).checked ? '1' : '0';
 	
 	// Convert image
 	var png = ge( 'theLogoImage' ).getAttribute( 'friendUrl' );
@@ -163,14 +169,18 @@ function saveGlobals()
 	function doSave()
 	{
 		var mdata = { 
-			eulaShortText: eulaShortText, 
-			eulaLongText: eulaLongText, 
-			logoImage: png,
-			backgroundImage: jpg,
-			useEulaShort: useEulaShort,
-			useEulaLong: useEulaLong,
-			useLogoImage: useLogoImage,
-			useBackgroundImage: useBackgroundImage
+			eulaShortText:      eulaShortText, 
+			eulaLongText:       eulaLongText, 
+			logoImage:          png,
+			backgroundImage:    jpg,
+			extraLoginCSS:      extraLoginCSS,
+			aboutTemplate:      aboutTemplate,
+			useEulaShort:       useEulaShort,
+			useEulaLong:        useEulaLong,
+			useLogoImage:       useLogoImage,
+			useBackgroundImage: useBackgroundImage,
+			useExtraLoginCSS:   useExtraLoginCSS,
+			useAboutTemplate:   useAboutTemplate
 		};
 		
 		var m = new Module( 'system' );

@@ -23,10 +23,10 @@ $files->aboutTemplate   = 'aboutTemplate.html';
 $files->logoImage       = 'logoimage.png';
 $files->backgroundImage = 'dew.jpg';
 
-$s = new dbIO( 'FSetting' );
-$s->Type   = 'system';
-$s->UserID = '0';
-$s->Key    = 'ServerGlobals';
+$s          = new dbIO( 'FSetting' );
+$s->Type    = 'system';
+$s->UserID  = '0';
+$s->Key     = 'ServerGlobals';
 $s->Load();
 
 $js = json_decode( $s->Data );
