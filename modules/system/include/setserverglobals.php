@@ -120,23 +120,29 @@ $targets = [
 	'resources/webclient/templates/eula_short.html',
 	'resources/webclient/templates/eula.html',
 	'resources/graphics/logoblue.png',
-	'resources/graphics/dew.jpg'
+	'resources/graphics/dew.jpg',
+	'resources/webclient/css/extraLoginCSS.css',
+	'resources/webclient/templates/aboutTemplate.html'
 ];
 $backups = [
 	'cfg/serverglobals/eulashort_backup.html',
 	'cfg/serverglobals/eulalong_backup.html',
 	'cfg/serverglobals/logo_backup.png',
-	'cfg/serverglobals/background_backup.jpg'
+	'cfg/serverglobals/background_backup.jpg',
+	'cfg/serverglobals/extraLoginCSS_backup.css',
+	'cfg/serverglobals/aboutTemplate_backup.html'
 ];
 $sources = [
 	'cfg/serverglobals/eulashort.html',
 	'cfg/serverglobals/eulalong.html',
 	'cfg/serverglobals/logoimage.png',
-	'cfg/serverglobals/dew.jpg'
+	'cfg/serverglobals/dew.jpg',
+	'cfg/serverglobals/extraLoginCSS.css',
+	'cfg/serverglobals/aboutTemplate.html'
 ];
 
-$keys = [ 'EulaShort', 'EulaLong', 'LogoImage', 'BackgroundImage' ];
-$keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage', 'backgroundImage' ];
+$keys = [ 'EulaShort', 'EulaLong', 'LogoImage', 'BackgroundImage', 'ExtraLoginCSS', 'AboutTemplate' ];
+$keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage', 'backgroundImage', 'extraLoginCSS', 'aboutTemplate' ];
 
 for( $k = 0; $k < 4; $k++ )
 {
