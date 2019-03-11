@@ -1159,7 +1159,7 @@ function _ActivateWindow( div, nopoll, e )
 		if( changedActiveWindow )
 		{
 			var clear = true;
-			var t = e.target;
+			var t = e ? e.target : false;
 			if( t )
 			{
 				while( t && t != document.body && !t.fileInfo )
