@@ -1464,6 +1464,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 #define MINIMUMRETRY 30000
 		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000;
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
+		int startTime = time( NULL );
 
 		//DEBUG("SOCKREAD %p\n", sock );
 
@@ -1562,8 +1563,12 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 				return read;
 				case SSL_ERROR_SYSCALL:
 				
-					// TODO: If we've been trying for 30 seconds, go on, else continue trying 
-					continue;
+					usleep( 10 );
+					if( ( time(NULL) - startTime ) <= 5 )
+					{
+						// TODO: If we've been trying for 30 seconds, go on, else continue trying 
+						continue;
+					}
 					
 					FERROR("[SocketRead] Error syscall, bufsize = %d.\n", buf );
 					if( err > 0 )
