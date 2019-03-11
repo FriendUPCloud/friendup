@@ -133,7 +133,6 @@ if( isset( $possibilities->aboutTemplate ) && strstr( $possibilities->aboutTempl
 	}
 }
 
-
 // Save use config -------------------------------------------------------------
 
 $js = new stdClass();
