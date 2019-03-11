@@ -3514,9 +3514,12 @@ function apiWrapper( event, force )
 									'applicationexecuted' : 
 									'applicationnotexecuted';
 								
-								app.contentWindow.postMessage( 
-									JSON.stringify( nmsg ), '*' 
-								);
+								if( app && app.contentWindow )
+								{
+									app.contentWindow.postMessage( 
+										JSON.stringify( nmsg ), '*' 
+									);
+								}
 
 								if( nmsg.callback )
 								{
