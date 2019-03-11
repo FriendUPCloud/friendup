@@ -78,6 +78,7 @@ function changeGlobalsLogoImage()
 			if( items.length )
 			{
 				ge( 'theLogoImage' ).src = getWebUrl( items[ 0 ].Path );
+				ge( 'theLogoImage' ).friendUrl = items[ 0 ].Path;
 			}
 		}
 	};
@@ -97,6 +98,7 @@ function changeGlobalsBackgroundImage()
 			if( items.length )
 			{
 				ge( 'theBackgroundImage' ).src = getWebUrl( items[ 0 ].Path );
+				ge( 'theBackgroundImage' ).friendUrl = items[ 0 ].Path;
 			}
 		}
 	};
@@ -117,27 +119,8 @@ function saveGlobals()
 	useBackgroundImage = ge( 'background_image_check' ).checked ? '1' : '0';
 	
 	// Convert image
-	var i = ge( 'theLogoImage' );
-	var b = ge( 'theBackgroundImage' );
-	
-	var d = document.createElement( 'canvas' );
-	d.setAttribute( 'width', i.offsetWidth );
-	d.setAttribute( 'height', i.offsetHeight );
-	
-	var ctx = d.getContext( '2d' );
-	ctx.drawImage( i, 0, 0, i.offsetWidth, i.offsetHeight );
-	var png = d.toDataURL( 'image/png' );
-	png = png.replace( /^data:image\/(png|jpg);base64,/, '' );
-	
-	
-	var s = document.createElement( 'canvas' );
-	s.setAttribute( 'width', b.offsetWidth );
-	s.setAttribute( 'height', b.offsetHeight );
-	
-	ctx = s.getContext( '2d' );
-	ctx.drawImage( b, 0, 0, b.offsetWidth, b.offsetHeight );
-	var jpg = s.toDataURL( 'image/jpeg' );
-	jpg = jpg.replace( /^data:image\/jpg;base64,/, '' );
+	var png = ge( 'theLogoImage' ).getAttribute( 'friendUrl' );
+	var jpg = ge( 'theBackgroundImage' ).getAttribute( 'friendUrl' );
 	
 	function doSave()
 	{

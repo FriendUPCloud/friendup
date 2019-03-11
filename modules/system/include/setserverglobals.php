@@ -14,6 +14,7 @@ global $Logger;
 if( $level != 'Admin' ) die( '404' );
 
 require_once( 'php/classes/dbio.php' );
+require_once( 'php/classes/file.php' );
 
 if( !file_exists( 'cfg/serverglobals' ) )
 {
@@ -38,8 +39,6 @@ $possibilities->useEulaShort = false;
 $possibilities->useEulaLong = false;
 $possibilities->useLogoImage = false;
 $possibilities->useBackgroundImage = false;
-
-$Logger->log( 'Getting arguments.' );
 
 foreach( $args->args as $k=>$v )
 {
@@ -74,21 +73,27 @@ if( isset( $possibilities->eulaLongText ) )
 
 if( isset( $possibilities->logoImage ) )
 {
-	$possibilities->logoImage = base64_decode( $possibilities->logoImage );
-	if( $f = fopen( 'cfg/serverglobals/' . $files->logoImage, 'w+' ) )
+	$file = new File( $possibilities->logoImage );
+	if( $file->Load() )
 	{
-		fwrite( $f, $possibilities->logoImage );
-		fclose( $f );
+		if( $f = fopen( 'cfg/serverglobals/' . $files->logoImage, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
 	}
 }
 
 if( isset( $possibilities->backgroundImage ) )
 {
-	$possibilities->backgroundImage = base64_decode( $possibilities->backgroundImage );
-	if( $f = fopen( 'cfg/serverglobals/' . $files->backgroundImage, 'w+' ) )
+	$file = new File( $possibilities->backgroundImage );
+	if( $file->Load() )
 	{
-		fwrite( $f, $possibilities->backgroundImage );
-		fclose( $f );
+		if( $f = fopen( 'cfg/serverglobals/' . $files->backgroundImage, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
 	}
 }
 
