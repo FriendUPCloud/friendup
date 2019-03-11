@@ -2396,6 +2396,11 @@ function apiWrapper( event, force )
 				var f = new Module( msg.module );
 				f.application = app;
 
+				if( msg.forceHTTP )
+				{
+					f.forceHTTP = msg.forceHTTP;
+				}
+
 				// Add variables
 				if( msg.vars )
 				{

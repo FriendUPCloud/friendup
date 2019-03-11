@@ -1561,6 +1561,10 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 				FERROR("[SocketRead] want write everything read....\n");
 				return read;
 				case SSL_ERROR_SYSCALL:
+				
+					// TODO: If we've been trying for 30 seconds, go on, else continue trying 
+					continue;
+					
 					FERROR("[SocketRead] Error syscall, bufsize = %d.\n", buf );
 					if( err > 0 )
 					{

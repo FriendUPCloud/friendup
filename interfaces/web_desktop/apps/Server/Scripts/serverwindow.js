@@ -153,6 +153,7 @@ function saveGlobals()
 		};
 		
 		var m = new Module( 'system' );
+		m.forceHTTP = true;
 		m.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
