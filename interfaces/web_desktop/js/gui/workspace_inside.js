@@ -8661,7 +8661,7 @@ function AboutFriendUP()
 				var devId = friendApp.get_deviceid();
 				if( devId )
 				{
-					buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>
+					buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>';
 				}
 			}
 
