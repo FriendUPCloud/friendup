@@ -82,6 +82,7 @@ extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int fo
 
 char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 {
+	FILE *log = fopen( "debugfile.txt", "wb" );
 	// Send both get and post
 	int size = 0;
 
@@ -90,7 +91,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
 	char *allArgsNew = NULL;
 	
-	DEBUG(" CONTENT : %s\n\n\n\n\n", request->content );
+	fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
 	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
@@ -137,6 +138,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 		char *sessptr = NULL;
 		if( request->h_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
 		{
+			int add = 0;
 			// Check in the middle of the query
 			sessptr = strstr( allArgs, "&sessionid=" );
 			
@@ -144,18 +146,56 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 			if( sessptr == NULL )
 			{
 				sessptr = strstr( allArgs, "sessionid=" );
-				
-				// Should never happen
-				if( sessptr != allArgs )
-					sessptr = NULL;
+				if( sessptr != NULL )
+				{
+					add = 10;
+				}
 			}
-			// Move past the & sign
 			else
 			{
-				sessptr++;
+				add = 11;
 			}
 			
+			if( sessptr != NULL )
+			{
+				//  |  till sessionid  |  sessionid  |  after sessionid
+				int size = (sessptr-allArgs)+add;
+				char *src = allArgs + size;
+				char *dst = allArgsNew + size;
+				add += sessptr-allArgs;
+				memcpy( allArgsNew, allArgs, add );
+				
+				fprintf( log, "First add: %d - %c\n", add, allArgsNew[ add - 1 ] );
+				if( loggedSession != NULL && loggedSession->us_User != NULL )
+				{
+					strcat( dst, loggedSession->us_User->u_MainSessionID );
+					dst += strlen( loggedSession->us_User->u_MainSessionID );
+				}
+				//add += 40; // len of sessionid
+
+				while( *src != 0 )
+				{
+					DEBUG("1");
+					if( *src == '&' )
+					{
+						break;
+					}
+					src++;
+					add++;
+				}
+				
+				int restSize = fullsize - ( src-allArgs );
+				if( restSize > 0 )
+				{
+					DEBUG("size %d\n", restSize );
+					memcpy( dst, src, restSize );
+				}
+			}
+			
+			fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
+			
 			// We got a valid sessptr
+			/*
 			if( sessptr != NULL )
 			{
 				int i=0;
@@ -187,19 +227,19 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 							}
 						}
 					
-						/*
-						if( allArgs[ i ] == '&' )
-						{
-							j += sprintf( tmp, "sessionid=%lu&", loggedSession->us_User->u_ID );
-							strcat( allArgsNew, tmp );
-							overwrite = TRUE;
-						}
-						if( i == fullsize - 1 )
-						{
-							j += sprintf( tmp, "sessionid=%lu", loggedSession->us_User->u_ID );
-							strcat( allArgsNew, tmp );
-							overwrite = TRUE;
-						}*/
+						//
+						//if( allArgs[ i ] == '&' )
+						//{
+						//	j += sprintf( tmp, "sessionid=%lu&", loggedSession->us_User->u_ID );
+						//	strcat( allArgsNew, tmp );
+						//	overwrite = TRUE;
+						//}
+						//if( i == fullsize - 1 )
+						//{
+						//	j += sprintf( tmp, "sessionid=%lu", loggedSession->us_User->u_ID );
+						//	strcat( allArgsNew, tmp );
+						//	overwrite = TRUE;
+						//}
 					}
 					else
 					{
@@ -208,6 +248,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 					}
 				}
 			}
+			*/
 		}
 		else
 		{
@@ -221,8 +262,9 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 			Hashmap *hm = request->parsedPostContent;
 			unsigned int i = 0;
 			FBOOL quotationFound = FALSE;
-			DEBUG("AllAgrsNews : '%s' after parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
-			DEBUG("Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
+			fprintf( log, "AllAgrsNew : '%s'\n\n fter parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
+			fprintf( log, "AllAgrs : '%s'\n", allArgs );
+			fprintf( log, "Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
 			
 			if( strstr( allArgsNew, "?" ) != NULL )
 			{
@@ -279,9 +321,10 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 			}
 			*/
 		}
-		
 		FFree( allArgs );
 	}
+	fclose( log );
+	
 	return allArgsNew;
 }
 
