@@ -59,6 +59,12 @@ i18n_use_image                          : Bruk bildet
 i18n_select_a_background_image          : Velg et bakgrunnsbilde
 i18n_change_background_image            : Endre bakgrunnsbildet
 
+i18n_extra_login_css                    : Ekstra login CSS
+i18n_use_data                           : Bruk data
+i18n_change_extra_login_css             : Bruk ekstra login CSS
+i18n_about_template                     : Mal for "Om løsningen"
+i18n_change_about_template              : Endre "Om løsningen"
+
 i18n_save_globals                       : Lagre serverglobaler
 i18n_eula_long                          : EULA lang versjon
 i18n_eula_short                         : EULA kort versjon

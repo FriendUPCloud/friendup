@@ -58,6 +58,12 @@ i18n_use_image                          : Use image
 i18n_select_a_background_image          : Select a background image
 i18n_change_background_image            : Change the background image
 
+i18n_extra_login_css                    : Extra login CSS
+i18n_use_data                           : Use data
+i18n_change_extra_login_css             : Change extra login CSS
+i18n_about_template                     : About template
+i18n_change_about_template              : Change About template
+
 i18n_save_globals                       : Save server globals
 i18n_eula_long                          : EULA long version
 i18n_eula_short                         : EULA short version

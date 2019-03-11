@@ -20,3 +20,39 @@ input[type=checkbox]
 {
 	overflow: auto;
 }
+
+#LoginBackgroundImage,
+#LoginLogoImage
+{
+	height: 250px;
+}
+
+#LoginBackgroundImage img,
+#LoginLogoImage img
+{
+	max-width: 320px;
+	height: auto;
+}
+
+@media (min-width: 640px)
+{
+	.HRow > .HContent50
+	{
+		padding-right: 10px;
+	}
+	
+	.HRow > .HContent50
+	{
+		padding-left: 10px;
+	}
+}
+
+@media (max-width: 639px)
+{
+	.HRow > .HContent50
+	{
+		width: 100%;
+		clear: both;
+	}
+}
+
