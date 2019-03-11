@@ -39,6 +39,8 @@ $possibilities->useEulaLong = false;
 $possibilities->useLogoImage = false;
 $possibilities->useBackgroundImage = false;
 
+$Logger->log( 'Getting arguments.' );
+
 foreach( $args->args as $k=>$v )
 {
 	foreach( $possibilities as $p=>$poss )

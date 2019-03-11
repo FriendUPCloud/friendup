@@ -135,55 +135,77 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	
 		// application/json are used to communicate with another tools like onlyoffce
 		char *sessptr = NULL;
-		if( request->h_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON && ( sessptr = strstr( allArgs, "sessionid" ) ) != NULL )
+		if( request->h_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
 		{
-			int i=0;
-			int j=0;
-		
-			int startpos = (sessptr - allArgs);
-		
-			FBOOL overwrite = FALSE;
-			int fumin = fullsize - 1;
-			for( i = 0; i < fullsize; i++ )
+			// Check in the middle of the query
+			sessptr = strstr( allArgs, "&sessionid=" );
+			
+			// If not check first part of the query
+			if( sessptr == NULL )
 			{
-				if( i >= startpos && overwrite == FALSE )
+				sessptr = strstr( allArgs, "sessionid=" );
+				
+				// Should never happen
+				if( sessptr != allArgs )
+					sessptr = NULL;
+			}
+			// Move past the & sign
+			else
+			{
+				sessptr++;
+			}
+			
+			// We got a valid sessptr
+			if( sessptr != NULL )
+			{
+				int i=0;
+				int j=0;
+		
+				int startpos = (sessptr - allArgs);
+		
+				FBOOL overwrite = FALSE;
+				int fumin = fullsize - 1;
+				for( i = 0; i < fullsize; i++ )
 				{
-					char tmp[ 255 ];
-					
-					if( loggedSession != NULL && loggedSession->us_User != NULL )
+					if( i >= startpos && overwrite == FALSE )
 					{
+						char tmp[ 512 ];
+					
+						if( loggedSession != NULL && loggedSession->us_User != NULL )
+						{
+							if( allArgs[ i ] == '&' )
+							{
+								j += sprintf( tmp, "sessionid=%s&", loggedSession->us_User->u_MainSessionID );
+								strcat( allArgsNew, tmp );
+								overwrite = TRUE;
+							}
+							if( i == fumin )
+							{
+								j += sprintf( tmp, "sessionid=%s", loggedSession->us_User->u_MainSessionID );
+								strcat( allArgsNew, tmp );
+								overwrite = TRUE;
+							}
+						}
+					
+						/*
 						if( allArgs[ i ] == '&' )
 						{
-							j += sprintf( tmp, "sessionid=%s&", loggedSession->us_User->u_MainSessionID );
+							j += sprintf( tmp, "sessionid=%lu&", loggedSession->us_User->u_ID );
 							strcat( allArgsNew, tmp );
 							overwrite = TRUE;
 						}
-						if( i == fumin )
+						if( i == fullsize - 1 )
 						{
-							j += sprintf( tmp, "sessionid=%s", loggedSession->us_User->u_MainSessionID );
+							j += sprintf( tmp, "sessionid=%lu", loggedSession->us_User->u_ID );
 							strcat( allArgsNew, tmp );
 							overwrite = TRUE;
-						}
+						}*/
 					}
-					
-					/*
-					if( allArgs[ i ] == '&' )
+					else
 					{
-						j += sprintf( tmp, "sessionid=%lu&", loggedSession->us_User->u_ID );
-						strcat( allArgsNew, tmp );
-						overwrite = TRUE;
+						allArgsNew[ j ] = allArgs[ i ];
+						j++;
 					}
-					if( i == fullsize - 1 )
-					{
-						j += sprintf( tmp, "sessionid=%lu", loggedSession->us_User->u_ID );
-						strcat( allArgsNew, tmp );
-						overwrite = TRUE;
-					}*/
-				}
-				else
-				{
-					allArgsNew[ j ] = allArgs[ i ];
-					j++;
 				}
 			}
 		}
