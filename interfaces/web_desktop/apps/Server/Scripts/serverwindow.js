@@ -85,6 +85,44 @@ function changeGlobalsLogoImage()
 	( new Filedialog( flags ) );
 }
 
+function changeGlobalsLoginCSS()
+{
+	var flags = {
+		type: 'load',
+		title: i18n( 'i18n_select_a_css_file' ),
+		path: 'Mountlist:',
+		suffix: [ 'jpg', 'jpeg' ],
+		multiple: false,
+		triggerFunction: function( items )
+		{
+			if( items.length )
+			{
+				ge( 'extra_login_css' ).value = items[ 0 ].Path;
+			}
+		}
+	};
+	( new Filedialog( flags ) );
+}
+
+function changeAboutTemplate()
+{
+	var flags = {
+		type: 'load',
+		title: i18n( 'i18n_change_about_template' ),
+		path: 'Mountlist:',
+		suffix: [ 'jpg', 'jpeg' ],
+		multiple: false,
+		triggerFunction: function( items )
+		{
+			if( items.length )
+			{
+				ge( 'about_template' ).value = items[ 0 ].Path;
+			}
+		}
+	};
+	( new Filedialog( flags ) );
+}
+
 function changeGlobalsBackgroundImage()
 {
 	var flags = {

@@ -75,3 +75,6 @@ i18n_login_background_image             : Bakgrunnsgrafikk
 i18n_server_globals_saved               : Serverglobaler lagret
 i18n_please_refresh_to_see_results      : Vennligst frisk opp nettleser arkfanen eller din klient for å se resultatet.
 
+i18n_select_a_css_file                  : Velg en CSS fil
+i18n_change_about_template              : Endre "Om systemet" malen
+

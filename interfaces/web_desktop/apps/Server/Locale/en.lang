@@ -74,3 +74,6 @@ i18n_login_background_image             : Login background graphic
 i18n_server_globals_saved               : Server globals saved
 i18n_please_refresh_to_see_results      : Please refresh your browser or client to see the result.
 
+i18n_select_a_css_file                  : Select a CSS file
+i18n_change_about_template              : Change the About template
+
