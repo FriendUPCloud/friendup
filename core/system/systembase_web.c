@@ -90,6 +90,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
 	char *allArgsNew = NULL;
 	
+	DEBUG(" CONTENT : %s\n\n\n\n\n", request->content );
+	
 	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
