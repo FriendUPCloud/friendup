@@ -8072,6 +8072,53 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			this.onReadyList = [];
 		}
+
+		//
+		//if we dont have a sessionid we will need to wait a bit here...
+		//
+
+		if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
+		{
+			// if this is mobile app we must register it
+			// if its already registered FC will not do it again
+			var version = null;
+			var platform = null;
+			var appToken = null;
+			var deviceID = null;
+			//var appToken = friendApp.appToken ? friendApp.appToken : false;
+
+			if( typeof friendApp.get_version == 'function' )
+			{
+				version = friendApp.get_version();
+			}
+			if( typeof friendApp.get_platform == 'function' )
+			{
+				platform = friendApp.get_platform();
+			}
+			if( typeof friendApp.get_app_token == 'function' )
+			{
+				appToken = friendApp.get_app_token();
+			}
+			if( typeof friendApp.get_deviceid == 'function' )
+			{
+				deviceID = friendApp.get_deviceid();
+			}
+
+			console.log('call ' + Workspace.sessionId );
+
+			var l = new Library( 'system.library' );
+			l.onExecuted = function( e, d )
+			{
+				if( e != 'ok' )
+				{
+
+				}
+			}
+			if( appToken != null )	// old applications which do not have appToken will skip this part
+			{
+				l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
+			}
+		}
 	}
 };
 
