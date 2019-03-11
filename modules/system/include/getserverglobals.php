@@ -19,7 +19,7 @@ $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
-$files->backgroundImage = 'leaves.jpg';
+$files->backgroundImage = 'dew.jpg';
 
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';

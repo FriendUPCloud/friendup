@@ -55,10 +55,10 @@ function reloadGlobals()
 		f.onLoad = function( data )
 		{
 			ge( 'ServerGlobals' ).innerHTML = data;
-			ge( 'eula_short_check' ).checked = d.useEulaShort ? 'checked' : '';
-			ge( 'eula_long_check' ).checked = d.useEulaLong ? 'checked' : '';
-			ge( 'logo_image_check' ).checked = d.useLogoImage ? 'checked' : '';
-			ge( 'background_image_check' ).checked = d.useBackgroundImage ? 'checked' : '';
+			ge( 'eula_short_check' ).checked = d.useEulaShort === '1' ? 'checked' : '';
+			ge( 'eula_long_check' ).checked = d.useEulaLong === '1' ? 'checked' : '';
+			ge( 'logo_image_check' ).checked = d.useLogoImage === '1' ? 'checked' : '';
+			ge( 'background_image_check' ).checked = d.useBackgroundImage === '1' ? 'checked' : '';
 		}
 		f.load();
 	}
@@ -78,7 +78,7 @@ function changeGlobalsLogoImage()
 			if( items.length )
 			{
 				ge( 'theLogoImage' ).src = getWebUrl( items[ 0 ].Path );
-				ge( 'theLogoImage' ).friendUrl = items[ 0 ].Path;
+				ge( 'theLogoImage' ).setAttribute( 'friendUrl', items[ 0 ].Path );
 			}
 		}
 	};
@@ -98,7 +98,7 @@ function changeGlobalsBackgroundImage()
 			if( items.length )
 			{
 				ge( 'theBackgroundImage' ).src = getWebUrl( items[ 0 ].Path );
-				ge( 'theBackgroundImage' ).friendUrl = items[ 0 ].Path;
+				ge( 'theBackgroundImage' ).setAttribute( 'friendUrl', items[ 0 ].Path );
 			}
 		}
 	};

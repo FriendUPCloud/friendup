@@ -29,7 +29,7 @@ $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
-$files->backgroundImage = 'leaves.jpg';
+$files->backgroundImage = 'dew.jpg';
 $possibilities = new stdClass();
 $possibilities->eulaShortText = '';
 $possibilities->eulaLongText = '';
@@ -71,7 +71,7 @@ if( isset( $possibilities->eulaLongText ) )
 	}
 }
 
-if( isset( $possibilities->logoImage ) )
+if( isset( $possibilities->logoImage ) && strstr( $possibilities->logoImage, ':' ) )
 {
 	$file = new File( $possibilities->logoImage );
 	if( $file->Load() )
@@ -84,7 +84,7 @@ if( isset( $possibilities->logoImage ) )
 	}
 }
 
-if( isset( $possibilities->backgroundImage ) )
+if( isset( $possibilities->backgroundImage ) && strstr( $possibilities->backgroundImage, ':' ) )
 {
 	$file = new File( $possibilities->backgroundImage );
 	if( $file->Load() )
@@ -120,7 +120,7 @@ $targets = [
 	'resources/webclient/templates/eula_short.html',
 	'resources/webclient/templates/eula.html',
 	'resources/graphics/logoblue.png',
-	'resources/graphics/leaves.jpg'
+	'resources/graphics/dew.jpg'
 ];
 $backups = [
 	'cfg/serverglobals/eulashort_backup.html',
@@ -128,14 +128,21 @@ $backups = [
 	'cfg/serverglobals/logo_backup.png',
 	'cfg/serverglobals/background_backup.jpg'
 ];
+$sources = [
+	'cfg/serverglobals/eulashort.html',
+	'cfg/serverglobals/eulalong.html',
+	'cfg/serverglobals/logoimage.png',
+	'cfg/serverglobals/dew.jpg'
+];
 
 $keys = [ 'EulaShort', 'EulaLong', 'LogoImage', 'BackgroundImage' ];
 $keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage', 'backgroundImage' ];
 
-for( $k = 0; $k < 3; $k++ )
+for( $k = 0; $k < 4; $k++ )
 {
 	$backup = $backups[ $k ];
 	$target = $targets[ $k ];
+	$source = $sources[ $k ];
 
 	$kk = 'use' . $keys[ $k ];
 	
@@ -144,27 +151,19 @@ for( $k = 0; $k < 3; $k++ )
 		// Make sure we have a backup
 		if( !file_exists( $backup ) )
 		{
-			$f = file_get_contents( $target );
-			if( $fp = fopen( $backup, 'w+' ) )
+			if( !( copy( $target, $backup ) ) )
 			{
-				fwrite( $fp, $f );
-				fclose( $fp );
-			}
-			else
-			{
-				die( 'fail<!--separate-->{"message":"Could not write ' . $kk . ' backup.","response":-1}' );
+				die( 'fail<!--separate-->{"message":"Could not write ' . $backup . ' backup.","response":-1}' );
 			}
 		}
-		if( $fp = fopen( $target, 'w+' ) )
+		if( file_exists( $source ) )
 		{
 			// Write new data
-			$kstring = $keyz[ $k ];
-			fwrite( $fp, $possibilities->{$kstring} );
-			fclose( $fp );
+			copy( $source, $target );
 		}
 		else
 		{
-			die( 'fail<!--separate-->{"message":"Could not overwrite ' . $kk . '.","response":-1}' );
+			die( 'fail<!--separate-->{"message":"Could not overwrite ' . $target . ' with ' . $source . '.","response":-1}' );
 		}
 	
 	}
