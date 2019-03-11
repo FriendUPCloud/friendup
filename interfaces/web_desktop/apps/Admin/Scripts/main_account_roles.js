@@ -25,9 +25,11 @@ Sections.accounts_roles = function( cmd, extra )
 				
 				var data = info.permission;
 				
-				if( data && data.Apps )
+				console.log( data );
+				
+				if( data )
 				{
-					var perm = data.Apps;
+					var perm = data;
 					
 					if( info.role.Permissions )
 					{
@@ -35,16 +37,44 @@ Sections.accounts_roles = function( cmd, extra )
 						
 						for( var i in perm )
 						{
-							for( var ii in perm[i].permissions )
+							for( var ii in perm[i].Permissions )
 							{
 								for( var r in roleperm )
 								{
-									if( roleperm[r].Key && roleperm[r].Key == perm[i].app && roleperm[r].Permission == perm[i].permissions[ii].permission )
+									if( roleperm[r].Key && roleperm[r].Key == perm[i].Name )
 									{
-										console.log( perm[i] );
-										console.log( roleperm[r] );
-										
-										perm[i].permissions[ii].data = roleperm[r].Data;
+										if( typeof perm[i].Permissions[ii] == "string" )
+										{
+											if( perm[i].Permissions[ii].split( 'App ' )[1] )
+											{
+												if( roleperm[r].Permission == perm[i].Permissions[ii].split( 'App ' )[1].trim() )
+												{
+													console.log( perm[i] );
+													console.log( roleperm[r] );
+													
+													perm[i].Permissions[ii] = {
+														Permission  : perm[i].Permissions[ii].split( 'App ' )[1].trim(), 
+														Name        : perm[i].Permissions[ii].split( 'App ' )[1].trim(), 
+														Description : "", 
+														Data        : roleperm[r].Data
+													};
+												}
+											}
+										}
+										else if( typeof perm[i].Permissions[ii] == "object" )
+										{
+											if( perm[i].Permissions[ii].Name && perm[i].Permissions[ii].Permission )
+											{
+												console.log( perm[i] );
+												console.log( roleperm[r] );
+												
+												perm[i].Permissions[ii].Data = roleperm[r].Data;
+											}
+										}
+										else
+										{
+											console.log( perm[i].Permissions[ii] );
+										}
 									}
 								}
 							}
@@ -55,7 +85,7 @@ Sections.accounts_roles = function( cmd, extra )
 				{
 					// Will be removed ... just for testing purposes ...
 					
-					var perm = [
+					/*var perm = [
 						{ 
 							app : "Users", name : "Users", description : "", permissions : [
 								{ 
@@ -108,7 +138,7 @@ Sections.accounts_roles = function( cmd, extra )
 								}
 							] 
 						}
-					];
+					];*/
 				}
 				
 				console.log( perm );
@@ -119,38 +149,60 @@ Sections.accounts_roles = function( cmd, extra )
 				{
 					for( var a in perm )
 					{
-						var sw = 2;
-						
-						apl += '<div class="Wrapper collapse">';
-						
-						apl += '<div class="HRow">';
-						apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].name + '</strong></div>';
-						apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-						apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
-						apl += '</div>';
-						apl += '</div>';
-						
-						apl += '<div class="List">';
-						
-						for( var k in perm[a].permissions )
+						if( perm[a].Permissions && perm[a].Name )
 						{
-							sw = sw == 2 ? 1 : 2;
+							var sw = 2;
 							
-							var rid = info.role.ID;
-							var pem = perm[a].permissions[k].permission;
-							var key = perm[a].app;
-							
+							apl += '<div class="Wrapper collapse">';
+						
 							apl += '<div class="HRow">';
-							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + perm[a].permissions[k].name + '</div>';
+							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].Name + '</strong></div>';
 							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-							apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+							apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
 							apl += '</div>';
+							apl += '</div>';
+							
+							apl += '<div class="List">';
+						
+							for( var k in perm[a].Permissions )
+							{
+								if( typeof perm[a].Permissions[k] == "object" )
+								{
+									var obj = perm[a].Permissions[k];
+								}
+								else
+								{
+									if( !perm[a].Permissions[k].split( 'App ' )[1] )
+									{
+										continue;
+									}
+									
+									var obj = {
+										Permission  : perm[a].Permissions[k].split( 'App ' )[1].trim(), 
+										Name        : perm[a].Permissions[k].split( 'App ' )[1].trim(), 
+										Description : "", 
+										Data        : ""
+									};
+								}
+								
+								sw = sw == 2 ? 1 : 2;
+								
+								var rid = info.role.ID;
+								var pem = obj.Permission;
+								var key = perm[a].Name;
+								
+								apl += '<div class="HRow">';
+								apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + obj.Name + '</div>';
+								apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+								apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( obj.Data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								apl += '</div>';
+								apl += '</div>';
+							}
+						
+							apl += '</div>';
+						
 							apl += '</div>';
 						}
-						
-						apl += '</div>';
-						
-						apl += '</div>';
 					}
 				}
 				

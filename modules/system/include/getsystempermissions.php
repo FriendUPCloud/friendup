@@ -104,7 +104,7 @@ if( !file_exists( 'cfg/system_permissions.json' ) || !filesize( 'cfg/system_perm
 	]
 }';
 		
-		fwrite( $fp, trim( $json ) );
+		fwrite( $fp, trim( /*$json*/ '{}' ) );
 		fclose( $fp );
 	}
 	else

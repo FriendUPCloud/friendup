@@ -720,7 +720,9 @@ function ActivateApplication( app, conf )
 		m.onExecuted = function( e, da )
 		{
 			var perms = '';
+			var permissions = [];
 			var filesystemoptions = '';
+			
 			if( conf.Permissions )
 			{
 				for( var a = 0; a < conf.Permissions.length; a++ )
@@ -735,18 +737,21 @@ function ActivateApplication( app, conf )
 							perms += '<select><option value="all">' +
 								i18n( 'all_filesystems' ) + '</option>' + filesystemoptions + '</select>';
 							perms += '.</p>';
+							permissions.push( conf.Permissions[a] );
 							break;
 						case 'module':
 							perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
 							perms += '<label>' + i18n('grant_module_access' ) + '</label> ';
 							perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
 							perms += '</p>';
+							permissions.push( conf.Permissions[a] );
 							break;
 						case 'service':
 							perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
 							perms += '<label>' + i18n('grant_service_access' ) + '</label> ';
 							perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
 							perms += '</p>';
+							permissions.push( conf.Permissions[a] );
 							break;
 						default:
 							continue;
@@ -755,7 +760,7 @@ function ActivateApplication( app, conf )
 			}
 
 			w.setContent( d.split( '{permissions}' ).join ( perms ) );
-
+			
 			// Check the security domains
 			var domains = [];
 			if( e == 'ok' )
@@ -793,14 +798,14 @@ function ActivateApplication( app, conf )
 				{
 					abtn.onclick = function()
 					{
-						ExecuteApplicationActivation( app, w, conf.Permissions );
+						ExecuteApplicationActivation( app, w, ( permissions ? permissions : conf.Permissions ) );
 					}
 				}
 			}
 			if( hideView )
 			{
 				//console.log('view is hidden... == trusted app == auto activate')
-				ExecuteApplicationActivation( app, w, conf.Permissions );
+				ExecuteApplicationActivation( app, w, ( permissions ? permissions : conf.Permissions ) );
 			}
 		}
 		m.execute( 'securitydomains' );
@@ -858,7 +863,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 	{
 		for( var a = 0, i = 0; a < eles.length, i < permissions.length; a++ )
 		{
-			if( eles[a].getAttribute( 'type' ) != 'checkbox' )
+			if( !eles[a] || !eles[a].getAttribute( 'type' ) || eles[a].getAttribute( 'type' ) != 'checkbox' )
 				continue;
 			// Ah, we've got a permission setting
 			if( eles[a].className.substr( 0, 10 ) == 'permission' )
@@ -1346,7 +1351,9 @@ function AuthorizePermission( app, permissions )
 	f.onLoad = function( d )
 	{
 		var perms = '';
+		var pems = [];
 		var filesystemoptions = '';
+		
 		if( permissions )
 		{
 			for( var a = 0; a < permissions.length; a++ )
@@ -1361,18 +1368,21 @@ function AuthorizePermission( app, permissions )
 						perms += '<select><option value="all">' +
 							i18n( 'all_filesystems' ) + '</option>' + filesystemoptions + '</select>';
 						perms += '.</p>';
+						pems.push( permissions[a] );
 						break;
 					case 'module':
 						perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
 						perms += '<label>' + i18n('grant_module_access' ) + '</label> ';
 						perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
 						perms += '</p>';
+						pems.push( permissions[a] );
 						break;
 					case 'service':
 						perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
 						perms += '<label>' + i18n('grant_service_access' ) + '</label> ';
 						perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
 						perms += '</p>';
+						pems.push( permissions[a] );
 						break;
 					default:
 						continue;
@@ -1393,7 +1403,7 @@ function AuthorizePermission( app, permissions )
 		{
 			abtn.onclick = function()
 			{
-				ExecuteApplicationActivation( app, w, conf.Permissions, 'reactivate' );
+				ExecuteApplicationActivation( app, w, ( pems ? pems : conf.Permissions ), 'reactivate' );
 			}
 		}
 	}
