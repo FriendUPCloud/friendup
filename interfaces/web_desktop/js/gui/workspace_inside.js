@@ -6162,7 +6162,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				items:
 				[
 					{
-						name:	i18n( 'menu_about_friendup' ),
+						name:	i18n( 'menu_about' ),
 						command: function(){ AboutFriendUP(); }
 					},
 					{

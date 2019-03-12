@@ -133,7 +133,7 @@ i18n_your_command                       : Your command
 i18n_door_home                          : Home
 
 please_choose_an_icon                   : Please choose icon(s).
-about_friendup                          : About FriendUP
+about                                   : About system
 information                             : Information & updates
 documentation_central                   : Documentation central
 software_catalog                        : Software catalog
@@ -195,7 +195,7 @@ menu_run_command                        : Run command
 menu_show_launcher                      : Show Launcher
 menu_hide_launcher                      : Hide Launcher
 menu_log_out                            : Log out
-menu_exit								: Quit FriendUP
+menu_exit								: Log out
 menu_execute_command                    : Execute command
 menu_upload_file                        : Upload file
 menu_snapshot                           : Snapshot
