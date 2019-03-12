@@ -5520,26 +5520,22 @@ Friend.startImageViewer = function( iconObject, extra )
 		{
 			var w = image.originalDims.w;
 			var h = image.originalDims.h;
+
+			var winWidth = win.getFlag( 'width' );
+			var winHeight = win.getFlag( 'height' );
+
 			if( w > h )
 			{
-				if( w > document.body.offsetWidth )
+				if( w > winWidth )
 				{
-					var firstzoom = w / document.body.offsetWidth;
-					if( firstzoom > 1 )
-					{
-						zoomLevel = 1 / Math.floor( firstzoom );
-					}
+					zoomLevel = winWidth / w;
 				}
 			}
 			else
 			{
-				if( h > document.body.offsetHeight - 100 )
+				if( h > winHeight - 100 )
 				{
-					var firstzoom = h / ( document.body.offsetHeight - 100 );
-					if( firstzoom > 1 )
-					{
-						zoomLevel = 1 / Math.floor( firstzoom );
-					}
+					zoomLevel = ( winHeight - 100 ) / h;
 				}
 			}
 		}
@@ -5552,7 +5548,8 @@ Friend.startImageViewer = function( iconObject, extra )
 		{
 			var width = image.originalDims.w * zoomLevel;
 			var height = image.originalDims.h * zoomLevel;
-						
+			
+			
 			var ileft = ( container.offsetWidth >> 1 ) - ( width >> 1 ) + 'px';
 			var itop  = ( container.offsetHeight >> 1 ) - ( height >> 1 ) + 'px';
 			image.style.top = itop;
