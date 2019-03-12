@@ -93,7 +93,7 @@ function changeGlobalsLoginCSS()
 		type: 'load',
 		title: i18n( 'i18n_select_a_css_file' ),
 		path: 'Mountlist:',
-		suffix: [ 'jpg', 'jpeg' ],
+		suffix: [ 'css' ],
 		multiple: false,
 		triggerFunction: function( items )
 		{
@@ -112,7 +112,7 @@ function changeAboutTemplate()
 		type: 'load',
 		title: i18n( 'i18n_change_about_template' ),
 		path: 'Mountlist:',
-		suffix: [ 'jpg', 'jpeg' ],
+		suffix: [ 'html', 'htm' ],
 		multiple: false,
 		triggerFunction: function( items )
 		{
