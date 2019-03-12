@@ -187,7 +187,7 @@ i18n_close_menu                         : Close menu
 menu_workspace                          : Workspace
 menu_system                             : System
 menu_new_shell                          : New shell
-menu_about_friendup                     : About FriendUP
+menu_about                              : About FriendUP
 menu_examine_system                     : Explore system
 menu_refresh_desktop                    : Refresh desktop
 menu_add_storage                        : Add storage
