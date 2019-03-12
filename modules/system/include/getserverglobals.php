@@ -34,8 +34,8 @@ $js = json_decode( $s->Data );
 if( $js )
 {
 	$json                     = new stdClass();
-	$json->logoImage          = '/graphics/logoblue.png';
-	$json->backgroundImage    = '/graphics/leaves.jpg';
+	$json->logoImage          = $js->logoImage ?  $js->logoImage : '/graphics/logoblue.png';
+	$json->backgroundImage    = $js->backgroundImage ? $js->backgroundImage : '/graphics/leaves.jpg';
 	$json->eulaShort          = file_get_contents( 'resources/webclient/templates/eula_short.html' );
 	$json->eulaLong           = file_get_contents( 'resources/webclient/templates/eula.html' );
 	$json->useLogoImage       = $js->useLogoImage;
@@ -46,6 +46,7 @@ if( $js )
 	$json->useAboutTemplate   = $js->useAboutTemplate;
 	$json->extraLoginCSS      = $js->extraLoginCSS;
 	$json->aboutTemplate      = $js->aboutTemplate;
+	$json->liveAboutTemplate  = '/webclient/templates/aboutTemplate.html';
 	
 	if( file_exists( 'cfg/serverglobals/' . $files->eulaShortText ) )
 	{

@@ -8702,17 +8702,7 @@ function AboutFriendUP()
 			catch( e ){};
 			if( json && json.useAboutTemplate === '1' )
 			{
-				var f = new File( 'System:templates/aboutTemplate.html' );
-				f.onLoad = function( data )
-				{
-					if( data && data.length )
-					{
-						setData( data );
-						return;
-					}
-					setData();
-				}
-				f.load();
+				setData( json.liveAboutTemplate );
 				return;
 			}
 		}
@@ -8724,7 +8714,7 @@ function AboutFriendUP()
 	{
 		if( !str ) str = false;
 		
-		v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
+		v.setRichContentUrl( str ? str : '/webclient/templates/about.html', false, null, null, function()
 		{
 			var buildInfo = '<div id="buildInfo">no build information available</div>';
 			if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
@@ -8750,13 +8740,12 @@ function AboutFriendUP()
 				buildInfo += '<div style="clear: both"></div></div>';
 			}
 
-			var aboutFrame = ge('about_friendup').getElementsByTagName('iframe')[0];
-			if( str && str.length )
+			var aboutFrame = ge( 'about_friendup' ).getElementsByTagName( 'iframe' )[ 0 ];
+			if( aboutFrame.contentWindow.document.getElementById( 'fc-info' ) )
 			{
-				aboutFrame.contentWindow.document.getElementById( 'contributors_inside' ).innerHTML = str;
+				aboutFrame.contentWindow.document.getElementById( 'fc-info' ).innerHTML = buildInfo;
 			}
-			aboutFrame.contentWindow.document.getElementById('fc-info').innerHTML = buildInfo;
-			aboutFrame.setAttribute('scrolling', 'yes');
+			aboutFrame.setAttribute( 'scrolling', 'yes' );
 
 		} );
 	}
