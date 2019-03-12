@@ -7828,9 +7828,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						newfilename += '_' + i;
 					}
-					if( i > 100 )
+					if( i > 10000 )
 					{
-						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files.'});
+						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files. Please cleanup your Home:Download directory.'});
 						break; // no endless loop please	
 					}
 				}
