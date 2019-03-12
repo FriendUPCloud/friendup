@@ -133,7 +133,7 @@ i18n_your_command                       : Your command
 i18n_door_home                          : Home
 
 please_choose_an_icon                   : Please choose icon(s).
-about                                   : About system
+about_system                            : About system
 information                             : Information & updates
 documentation_central                   : Documentation central
 software_catalog                        : Software catalog

@@ -8672,7 +8672,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_friendup' ) + ' v1.2rc1',
+		title: i18n( 'about_system' ) + ' v1.2rc1',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
