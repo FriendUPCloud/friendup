@@ -122,8 +122,8 @@ if( $js )
 	// Output ------------------------------------------------------------------
 	
 	$json                     = new stdClass();
-	$json->logoImage          = $js->logoImage ?  $js->logoImage : '/graphics/logoblue.png';
-	$json->backgroundImage    = $js->backgroundImage ? $js->backgroundImage : '/graphics/leaves.jpg';
+	$json->logoImage          = '/graphics/logoblue.png';
+	$json->backgroundImage    = '/graphics/dew.jpg';
 	$json->eulaShort          = file_get_contents( 'resources/webclient/templates/eula_short.html' );
 	$json->eulaLong           = file_get_contents( 'resources/webclient/templates/eula.html' );
 	$json->useLogoImage       = $js->useLogoImage;

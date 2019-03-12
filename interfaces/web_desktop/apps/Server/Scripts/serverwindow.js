@@ -193,7 +193,6 @@ function saveGlobals()
 			{
 				Notify( { title: i18n( 'i18n_server_globals_saved' ), text: i18n( 'i18n_please_refresh_to_see_results' ) } );
 			}
-			console.log( 'System library call.' );
 			var sl = new Library( 'system.library' );
 			sl.onExecuted = function( e, d )
 			{
