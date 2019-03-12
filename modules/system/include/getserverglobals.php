@@ -33,6 +33,94 @@ $js = json_decode( $s->Data );
 
 if( $js )
 {
+	// Try to copy just in case ------------------------------------------------
+	
+	$targets = [
+		'resources/webclient/templates/eula_short.html',
+		'resources/webclient/templates/eula.html',
+		'resources/graphics/logoblue.png',
+		'resources/graphics/dew.jpg',
+		'resources/webclient/css/extraLoginCSS.css',
+		'resources/webclient/templates/aboutTemplate.html'
+	];
+	$backups = [
+		'cfg/serverglobals/eulashort_backup.html',
+		'cfg/serverglobals/eulalong_backup.html',
+		'cfg/serverglobals/logo_backup.png',
+		'cfg/serverglobals/background_backup.jpg',
+		'cfg/serverglobals/extraLoginCSS_backup.css',
+		'cfg/serverglobals/aboutTemplate_backup.html'
+	];
+	$sources = [
+		'cfg/serverglobals/eulashort.html',
+		'cfg/serverglobals/eulalong.html',
+		'cfg/serverglobals/logoimage.png',
+		'cfg/serverglobals/dew.jpg',
+		'cfg/serverglobals/extraLoginCSS.css',
+		'cfg/serverglobals/aboutTemplate.html'
+	];
+	$keys = [ 
+		'EulaShort', 
+		'EulaLong', 
+		'LogoImage', 
+		'BackgroundImage', 
+		'ExtraLoginCSS', 
+		'AboutTemplate' 
+	];
+	$keyz = [ 
+		'eulaShortText', 
+		'eulaLongText', 
+		'logoImage', 
+		'backgroundImage', 
+		'extraLoginCSS', 
+		'aboutTemplate' 
+	];
+
+	for( $k = 0; $k < 6; $k++ )
+	{
+		$backup = $backups[ $k ];
+		$target = $targets[ $k ];
+		$source = $sources[ $k ];
+
+		$kk = 'use' . $keys[ $k ];
+	
+		if( $js->{$kk} )
+		{
+			// Make sure we have a backup
+			if( !file_exists( $backup ) )
+			{
+				if( !( copy( $target, $backup ) ) )
+				{
+					die( 'fail<!--separate-->{"message":"Could not write ' . $backup . ' backup.","response":-1}' );
+				}
+			}
+			if( file_exists( $source ) )
+			{
+				// Write new data
+				copy( $source, $target );
+			}
+			else
+			{
+				die( 'fail<!--separate-->{"message":"Could not overwrite ' . $target . ' with ' . $source . '.","response":-1}' );
+			}
+		}
+		// Restore the backup
+		else
+		{
+			if( file_exists( $backup ) )
+			{
+				$f = file_get_contents( $backup );
+				if( $fp = fopen( $target, 'w+' ) )
+				{
+					fwrite( $fp, $f );
+					fclose( $fp );
+				}
+			}
+		}
+	}
+	
+	// Output ------------------------------------------------------------------
+	
 	$json                     = new stdClass();
 	$json->logoImage          = $js->logoImage ?  $js->logoImage : '/graphics/logoblue.png';
 	$json->backgroundImage    = $js->backgroundImage ? $js->backgroundImage : '/graphics/leaves.jpg';
