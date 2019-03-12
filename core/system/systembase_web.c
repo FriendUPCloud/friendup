@@ -191,6 +191,10 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 					memcpy( dst, src, restSize );
 				}
 			}
+			else
+			{
+				memcpy( allArgsNew, allArgs, fullsize );
+			}
 			
 			fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
 			
