@@ -4109,7 +4109,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 
 			// Toggle
-			if( this.classList.contains( 'Selected' ) && this.selected != 'multiple' )
+			if( this.classList.contains( 'Selected' ) && ( !sh && this.selected != 'multiple' ) )
 			{
 				this.classList.remove( 'Selected' );
 				this.selected = false;
