@@ -8038,13 +8038,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				//mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
 
+				var setwsstate = setTimeout( function()
+				{
+					if( Workspace.conn && Workspace.conn.ws )
+						Workspace.conn.ws.close();
+				}, 1500 );
 				var dl = new FriendLibrary( 'system.library' );
 				dl.addVar( 'status', 0 );
 				dl.onExecuted = function(e,d)
 				{
+					console.log( 'Cancelled closing websocket.' );
+					clearTimeout( setwsstate );
 					//mobileDebug( 'setwsstate active: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
+				console.log( 'Also checking ws state' );
 			}
 		}
 		else
