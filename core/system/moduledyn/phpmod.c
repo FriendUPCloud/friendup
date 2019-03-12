@@ -74,7 +74,10 @@ struct linkedCharArray
 
 char *FilterPHPVar( char *line )
 {
-	if( !line ) return NULL;
+	if( !line )
+	{
+		return NULL;
+	}
 	
 	int len = strlen( line ) + 1;
 	int i = 0; for( ; i < len; i++ )
@@ -87,9 +90,13 @@ char *FilterPHPVar( char *line )
 		}
 		// Kill unwanted stuff
 		if( line[ i ] == '`' )
+		{
 			line[ i ] = ' ';
+		}
 		else if( line[ i ] == '"' || line[ i ] == '\n' || line[ i ] == '\r' )
+		{
 			line[ i ] = ' '; // Eradicate!
+		}
 	}
 	return line;
 }
