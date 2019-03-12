@@ -3326,7 +3326,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				else
 				{
 					// Use override if possible
-					if( this.file.directoryView.filedialog )
+					if( this.file.directoryView.filedialog && isMobile )
 					{
 						if( this.file.directoryView.doubleclickfiles )
 						{
