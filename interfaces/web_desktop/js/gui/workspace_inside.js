@@ -7604,7 +7604,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
-	{
+	{	
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -7625,6 +7625,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		var inactiveTimeout = false;
 		var m = new Module('system');
+		m.forceHTTP = true;
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -7663,9 +7664,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			// If we have no conn, and we have waited five cycles, force reconnect
 			// the websocket...
-			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 3 )
+			if( Workspace.websocketState != 'open' )
 			{
-				Workspace.websocketDisconnectTime = 0;
 				Workspace.initWebSocket();
 			}
 		}
