@@ -569,10 +569,12 @@ var WorkspaceInside = {
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
 				}
-				if( !Workspace.httpCheckConnectionInterval )
+				// After such an error, always try reconnect
+				if( Workspace.httpCheckConnectionInterval )
 				{
-					Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 7000 );
+					clearInterval( Workspace.httpCheckConnectionInterval );
 				}
+				Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 3000 );
 			}
 			else if( e.type == 'ping' )
 			{
@@ -8107,11 +8109,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			console.log('call ' + Workspace.sessionId );
 
 			var l = new Library( 'system.library' );
+			l.forceHTTP = true;
 			l.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
 				{
-
+					console.log( 'Failed to create uma.' );
 				}
 			}
 			if( appToken != null )	// old applications which do not have appToken will skip this part
