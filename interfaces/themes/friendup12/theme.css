@@ -273,6 +273,7 @@ html body
 {
 	font-size: 0.9em;
 	color: #333333;
+	-webkit-font-smoothing:antialiased;
 }
 
 html body[mobile=mobile]
