@@ -82,7 +82,7 @@ extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int fo
 
 char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 {
-	FILE *log = fopen( "debugfile.txt", "wb" );
+	//FILE *log = fopen( "debugfile.txt", "wb" );
 	// Send both get and post
 	int size = 0;
 
@@ -91,7 +91,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
 	char *allArgsNew = NULL;
 	
-	fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
+	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
 	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
@@ -100,6 +100,17 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 	{
 		fullsize += (int)request->h_ContentLength;
+	}
+	
+	if( fullsize > 3096 )
+	{
+		int len = strlen( "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}" );
+		allArgsNew = FMalloc( len+16 );
+		if( allArgsNew != NULL )
+		{
+			strncpy( allArgsNew, "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}", len );
+		}
+		return allArgsNew;
 	}
 	
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
@@ -165,7 +176,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 				add += sessptr-allArgs;
 				memcpy( allArgsNew, allArgs, add );
 				
-				fprintf( log, "First add: %d - %c\n", add, allArgsNew[ add - 1 ] );
+				//fprintf( log, "First add: %d - %c\n", add, allArgsNew[ add - 1 ] );
 				if( loggedSession != NULL && loggedSession->us_User != NULL )
 				{
 					strcat( dst, loggedSession->us_User->u_MainSessionID );
@@ -175,7 +186,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 
 				while( *src != 0 )
 				{
-					DEBUG("1");
 					if( *src == '&' )
 					{
 						break;
@@ -187,7 +197,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 				int restSize = fullsize - ( src-allArgs );
 				if( restSize > 0 )
 				{
-					DEBUG("size %d\n", restSize );
 					memcpy( dst, src, restSize );
 				}
 			}
@@ -196,63 +205,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 				memcpy( allArgsNew, allArgs, fullsize );
 			}
 			
-			fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
-			
-			// We got a valid sessptr
-			/*
-			if( sessptr != NULL )
-			{
-				int i=0;
-				int j=0;
-		
-				int startpos = (sessptr - allArgs);
-		
-				FBOOL overwrite = FALSE;
-				int fumin = fullsize - 1;
-				for( i = 0; i < fullsize; i++ )
-				{
-					if( i >= startpos && overwrite == FALSE )
-					{
-						char tmp[ 512 ];
-					
-						if( loggedSession != NULL && loggedSession->us_User != NULL )
-						{
-							if( allArgs[ i ] == '&' )
-							{
-								j += sprintf( tmp, "sessionid=%s&", loggedSession->us_User->u_MainSessionID );
-								strcat( allArgsNew, tmp );
-								overwrite = TRUE;
-							}
-							if( i == fumin )
-							{
-								j += sprintf( tmp, "sessionid=%s", loggedSession->us_User->u_MainSessionID );
-								strcat( allArgsNew, tmp );
-								overwrite = TRUE;
-							}
-						}
-					
-						//
-						//if( allArgs[ i ] == '&' )
-						//{
-						//	j += sprintf( tmp, "sessionid=%lu&", loggedSession->us_User->u_ID );
-						//	strcat( allArgsNew, tmp );
-						//	overwrite = TRUE;
-						//}
-						//if( i == fullsize - 1 )
-						//{
-						//	j += sprintf( tmp, "sessionid=%lu", loggedSession->us_User->u_ID );
-						//	strcat( allArgsNew, tmp );
-						//	overwrite = TRUE;
-						//}
-					}
-					else
-					{
-						allArgsNew[ j ] = allArgs[ i ];
-						j++;
-					}
-				}
-			}
-			*/
+			//fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
 		}
 		else
 		{
@@ -266,9 +219,9 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 			Hashmap *hm = request->parsedPostContent;
 			unsigned int i = 0;
 			FBOOL quotationFound = FALSE;
-			fprintf( log, "AllAgrsNew : '%s'\n\n fter parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
-			fprintf( log, "AllAgrs : '%s'\n", allArgs );
-			fprintf( log, "Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
+			//fprintf( log, "AllAgrsNew : '%s'\n\n fter parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
+			//fprintf( log, "AllAgrs : '%s'\n", allArgs );
+			//fprintf( log, "Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
 			
 			if( strstr( allArgsNew, "?" ) != NULL )
 			{
@@ -327,7 +280,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 		}
 		FFree( allArgs );
 	}
-	fclose( log );
+	//fclose( log );
 	
 	return allArgsNew;
 }
