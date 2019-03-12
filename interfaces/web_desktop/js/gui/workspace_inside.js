@@ -8688,38 +8688,78 @@ function AboutFriendUP()
 			token = '<div class="item"><span class="label">App token</span><span class="value"> ' + token + '</span></div>';
 		}
 	}
-
-	v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
+	
+	var s = new Module( 'system' );
+	s.onExecuted = function( e, d )
 	{
-		var buildInfo = '<div id="buildInfo">no build information available</div>';
-		if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
+		if( e == 'ok' )
 		{
-			buildInfo = '<div id="buildInfo">';
-			buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
-			if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
-			if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
-
-			// Add app token
-			if( token ) buildInfo += token;
-			
-			// Add device ID
-			if( window.friendApp )
+			var json = false;
+			try
 			{
-				var devId = friendApp.get_deviceid();
-				if( devId )
+				json = JSON.parse( d );
+			}
+			catch( e ){};
+			if( json && json.useAboutTemplate === '1' )
+			{
+				var f = new File( 'System:templates/aboutTemplate.html' );
+				f.onLoad = function( data )
 				{
-					buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>';
+					if( data && data.length )
+					{
+						setData( data );
+						return;
+					}
+					setData();
 				}
+				f.load();
+				return;
+			}
+		}
+		setData();
+	}
+	s.execute( 'getserverglobals' );
+
+	function setData( str )
+	{
+		if( !str ) str = false;
+		
+		v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
+		{
+			var buildInfo = '<div id="buildInfo">no build information available</div>';
+			if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
+			{
+				buildInfo = '<div id="buildInfo">';
+				buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
+				if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
+				if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
+
+				// Add app token
+				if( token ) buildInfo += token;
+			
+				// Add device ID
+				if( window.friendApp )
+				{
+					var devId = friendApp.get_deviceid();
+					if( devId )
+					{
+						buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>';
+					}
+				}
+
+				buildInfo += '<div style="clear: both"></div></div>';
 			}
 
-			buildInfo += '<div style="clear: both"></div></div>';
-		}
+			var aboutFrame = ge('about_friendup').getElementsByTagName('iframe')[0];
+			if( str && str.length )
+			{
+				aboutFrame.contentWindow.document.getElementById( 'contributors_inside' ).innerHTML = str;
+			}
+			aboutFrame.contentWindow.document.getElementById('fc-info').innerHTML = buildInfo;
+			aboutFrame.setAttribute('scrolling', 'yes');
 
-		var aboutFrame = ge('about_friendup').getElementsByTagName('iframe')[0];
-		aboutFrame.contentWindow.document.getElementById('fc-info').innerHTML = buildInfo;
-		aboutFrame.setAttribute('scrolling', 'yes');
-
-	} );
+		} );
+	}
 }
 
 // Clear cache

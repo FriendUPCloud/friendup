@@ -44,6 +44,8 @@ if( $js )
 	$json->useEulaLong        = $js->useEulaLong;
 	$json->useExtraLoginCSS   = $js->useExtraLoginCSS;
 	$json->useAboutTemplate   = $js->useAboutTemplate;
+	$json->extraLoginCSS      = $js->extraLoginCSS;
+	$json->aboutTemplate      = $js->aboutTemplate;
 	
 	if( file_exists( 'cfg/serverglobals/' . $files->eulaShortText ) )
 	{
@@ -52,14 +54,6 @@ if( $js )
 	if( file_exists( 'cfg/serverglobals/' . $files->eulaLongText ) )
 	{
 		$json->eulaLong = file_get_contents( 'cfg/serverglobals/' . $files->eulaLongText );
-	}
-	if( file_exists( 'cfg/serverglobals/' . $files->extraLoginCSS ) )
-	{
-		$json->extraLoginCSS = file_get_contents( 'cfg/serverglobals/' . $files->extraLoginCSS );
-	}
-	if( file_exists( 'cfg/serverglobals/' . $files->aboutTemplate ) )
-	{
-		$json->aboutTemplate = file_get_contents( 'cfg/serverglobals/' . $files->aboutTemplate );
 	}
 	
 	die( 'ok<!--separate-->' . json_encode( $json ) );

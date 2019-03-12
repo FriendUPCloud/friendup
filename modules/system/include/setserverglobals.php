@@ -11,8 +11,6 @@
 
 global $Logger;
 
-if( $level != 'Admin' ) die( '404' );
-
 require_once( 'php/classes/dbio.php' );
 require_once( 'php/classes/file.php' );
 
@@ -31,7 +29,7 @@ $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
 $files->backgroundImage = 'dew.jpg';
-$files->templateHTML = 'templateHTML.html';
+$files->aboutTemplate = 'aboutTemplate.html';
 $files->extraLoginCSS = 'extraLoginCSS.css';
 
 $possibilities = new stdClass();
@@ -142,6 +140,8 @@ $js->useLogoImage       = $possibilities->useLogoImage;
 $js->useBackgroundImage = $possibilities->useBackgroundImage;
 $js->useExtraLoginCSS   = $possibilities->useExtraLoginCSS;
 $js->useAboutTemplate   = $possibilities->useAboutTemplate;
+$js->aboutTemplate      = $args->args->aboutTemplate;
+$js->extraLoginCSS      = $args->args->extraLoginCSS;
 
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
@@ -198,7 +198,7 @@ $keyz = [
 	'aboutTemplate' 
 ];
 
-for( $k = 0; $k < 4; $k++ )
+for( $k = 0; $k < 6; $k++ )
 {
 	$backup = $backups[ $k ];
 	$target = $targets[ $k ];
