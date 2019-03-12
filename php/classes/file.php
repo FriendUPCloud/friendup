@@ -31,16 +31,21 @@ class File
 		return $this->_content;
 	}
 	
-	function Load( $path = false )
+	function Load( $path = false, $userInfo = false )
 	{
 		global $Config, $User, $Logger;
 		
 		if( $path ) $this->path = urldecode( $path );
 		
+		$sessionId = $GLOBALS[ 'args' ]->sessionid;
+		$authId = $GLOBALS[ 'args' ]->authid;
+		
 		$ex = '/system.library/file/read/?mode=rb&path=' . jsUrlEncode( $this->path );
 		$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
 			( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $ex;
-		if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+		if( $userInfo )
+			$url .= '&sessionid=' . $userInfo->SessionID;
+		else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
 			$url .= '&sessionid=' . $GLOBALS[ 'args' ]->sessionid;
 		else if( isset( $GLOBALS[ 'args' ]->authid ) )
 			$url .= '&authid=' . $GLOBALS[ 'args' ]->authid;

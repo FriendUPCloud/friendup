@@ -3595,14 +3595,22 @@ function Module( module )
 	this.execute = function( method, args )
 	{
 		var fid = addCallback( this );
-		Application.sendMessage( {
+		
+		var ms = {
 			type:    'module',
 			module:  module,
 			method:  method,
 			args:    args,
 			vars:    this.vars,
 			fileId:  fid
-		} );
+		};
+		
+		if( this.forceHTTP )
+		{
+			ms.forceHTTP = this.forceHTTP;
+		}
+		
+		Application.sendMessage( ms );
 	}
 	this.addVar = function( key, value )
 	{

@@ -14,6 +14,7 @@ global $Logger;
 if( $level != 'Admin' ) die( '404' );
 
 require_once( 'php/classes/dbio.php' );
+require_once( 'php/classes/file.php' );
 
 if( !file_exists( 'cfg/serverglobals' ) )
 {
@@ -23,18 +24,31 @@ if( !file_exists( 'cfg/serverglobals' ) )
 if( !file_exists( 'cfg/serverglobals' ) )
 	die( '404' );
 
-// Possible globals
+// Possible globals ------------------------------------------------------------
+
 $files = new stdClass();
 $files->eulaShortText = 'eulashort.html';
 $files->eulaLongText = 'eulalong.html';
 $files->logoImage = 'logoimage.png';
+$files->backgroundImage = 'dew.jpg';
+$files->templateHTML = 'templateHTML.html';
+$files->extraLoginCSS = 'extraLoginCSS.css';
+
 $possibilities = new stdClass();
-$possibilities->eulaShortText = '';
-$possibilities->eulaLongText = '';
-$possibilities->logoImage = '';
-$possibilities->useEulaShort = false;
-$possibilities->useEulaLong = false;
-$possibilities->useLogoImage = false;
+
+$possibilities->eulaShortText   = '';
+$possibilities->eulaLongText    = '';
+$possibilities->logoImage       = '';
+$possibilities->backgroundImage = '';
+$possibilities->extraLoginCSS   = '';
+$possibilities->aboutTemplate   = '';
+
+$possibilities->useEulaShort       = false;
+$possibilities->useEulaLong        = false;
+$possibilities->useLogoImage       = false;
+$possibilities->useBackgroundImage = false;
+$possibilities->useExtraLoginCSS   = false;
+$possibilities->useAboutTemplate   = false;
 
 foreach( $args->args as $k=>$v )
 {
@@ -67,22 +81,67 @@ if( isset( $possibilities->eulaLongText ) )
 	}
 }
 
-if( isset( $possibilities->logoImage ) )
+if( isset( $possibilities->logoImage ) && strstr( $possibilities->logoImage, ':' ) )
 {
-	$possibilities->logoImage = base64_decode( $possibilities->logoImage );
-	if( $f = fopen( 'cfg/serverglobals/' . $files->logoImage, 'w+' ) )
+	$file = new File( $possibilities->logoImage );
+	if( $file->Load() )
 	{
-		fwrite( $f, $possibilities->logoImage );
-		fclose( $f );
+		if( $f = fopen( 'cfg/serverglobals/' . $files->logoImage, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
+	}
+}
+
+if( isset( $possibilities->backgroundImage ) && strstr( $possibilities->backgroundImage, ':' ) )
+{
+	$file = new File( $possibilities->backgroundImage );
+	if( $file->Load() )
+	{
+		if( $f = fopen( 'cfg/serverglobals/' . $files->backgroundImage, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
+	}
+}
+
+if( isset( $possibilities->extraLoginCSS ) && strstr( $possibilities->extraLoginCSS, ':' ) )
+{
+	$file = new File( $possibilities->extraLoginCSS );
+	if( $file->Load() )
+	{
+		if( $f = fopen( 'cfg/serverglobals/' . $files->extraLoginCSS, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
+	}
+}
+
+if( isset( $possibilities->aboutTemplate ) && strstr( $possibilities->aboutTemplate, ':' ) )
+{
+	$file = new File( $possibilities->aboutTemplate );
+	if( $file->Load() )
+	{
+		if( $f = fopen( 'cfg/serverglobals/' . $files->aboutTemplate, 'w+' ) )
+		{
+			fwrite( $f, $file->GetContent() );
+			fclose( $f );
+		}
 	}
 }
 
 // Save use config -------------------------------------------------------------
 
 $js = new stdClass();
-$js->useEulaShort = $possibilities->useEulaShort;
-$js->useEulaLong = $possibilities->useEulaLong;
-$js->useLogoImage = $possibilities->useLogoImage;
+$js->useEulaShort       = $possibilities->useEulaShort;
+$js->useEulaLong        = $possibilities->useEulaLong;
+$js->useLogoImage       = $possibilities->useLogoImage;
+$js->useBackgroundImage = $possibilities->useBackgroundImage;
+$js->useExtraLoginCSS   = $possibilities->useExtraLoginCSS;
+$js->useAboutTemplate   = $possibilities->useAboutTemplate;
 
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
@@ -97,21 +156,53 @@ $s->Save();
 $targets = [
 	'resources/webclient/templates/eula_short.html',
 	'resources/webclient/templates/eula.html',
-	'resources/graphics/logoblue.png'
+	'resources/graphics/logoblue.png',
+	'resources/graphics/dew.jpg',
+	'resources/webclient/css/extraLoginCSS.css',
+	'resources/webclient/templates/aboutTemplate.html'
 ];
+
 $backups = [
 	'cfg/serverglobals/eulashort_backup.html',
 	'cfg/serverglobals/eulalong_backup.html',
-	'cfg/serverglobals/logo_backup.png'
+	'cfg/serverglobals/logo_backup.png',
+	'cfg/serverglobals/background_backup.jpg',
+	'cfg/serverglobals/extraLoginCSS_backup.css',
+	'cfg/serverglobals/aboutTemplate_backup.html'
 ];
 
-$keys = [ 'EulaShort', 'EulaLong', 'LogoImage' ];
-$keyz = [ 'eulaShortText', 'eulaLongText', 'logoImage' ];
+$sources = [
+	'cfg/serverglobals/eulashort.html',
+	'cfg/serverglobals/eulalong.html',
+	'cfg/serverglobals/logoimage.png',
+	'cfg/serverglobals/dew.jpg',
+	'cfg/serverglobals/extraLoginCSS.css',
+	'cfg/serverglobals/aboutTemplate.html'
+];
 
-for( $k = 0; $k < 3; $k++ )
+$keys = [ 
+	'EulaShort', 
+	'EulaLong', 
+	'LogoImage', 
+	'BackgroundImage', 
+	'ExtraLoginCSS', 
+	'AboutTemplate' 
+];
+
+$keyz = [ 
+	'eulaShortText', 
+	'eulaLongText', 
+	'logoImage', 
+	'backgroundImage', 
+	'extraLoginCSS', 
+	'aboutTemplate' 
+];
+
+for( $k = 0; $k < 4; $k++ )
 {
 	$backup = $backups[ $k ];
 	$target = $targets[ $k ];
+	$source = $sources[ $k ];
 
 	$kk = 'use' . $keys[ $k ];
 	
@@ -120,29 +211,20 @@ for( $k = 0; $k < 3; $k++ )
 		// Make sure we have a backup
 		if( !file_exists( $backup ) )
 		{
-			$f = file_get_contents( $target );
-			if( $fp = fopen( $backup, 'w+' ) )
+			if( !( copy( $target, $backup ) ) )
 			{
-				fwrite( $fp, $f );
-				fclose( $fp );
-			}
-			else
-			{
-				die( 'fail<!--separate-->{"message":"Could not write ' . $kk . ' backup.","response":-1}' );
+				die( 'fail<!--separate-->{"message":"Could not write ' . $backup . ' backup.","response":-1}' );
 			}
 		}
-		if( $fp = fopen( $target, 'w+' ) )
+		if( file_exists( $source ) )
 		{
 			// Write new data
-			$kstring = $keyz[ $k ];
-			fwrite( $fp, $possibilities->{$kstring} );
-			fclose( $fp );
+			copy( $source, $target );
 		}
 		else
 		{
-			die( 'fail<!--separate-->{"message":"Could not overwrite ' . $kk . '.","response":-1}' );
+			die( 'fail<!--separate-->{"message":"Could not overwrite ' . $target . ' with ' . $source . '.","response":-1}' );
 		}
-	
 	}
 	// Restore the backup
 	else

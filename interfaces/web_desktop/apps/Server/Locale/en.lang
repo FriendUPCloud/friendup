@@ -55,13 +55,25 @@ i18n_no_workgroup                       : No workgroup
 i18n_select_a_logo_image                : Select a logo image
 i18n_change_logo_image                  : Change the logo image
 i18n_use_image                          : Use image
+i18n_select_a_background_image          : Select a background image
+i18n_change_background_image            : Change the background image
+
+i18n_extra_login_css                    : Extra login CSS
+i18n_use_data                           : Use data
+i18n_change_extra_login_css             : Change extra login CSS
+i18n_about_template                     : About template
+i18n_change_about_template              : Change About template
 
 i18n_save_globals                       : Save server globals
 i18n_eula_long                          : EULA long version
 i18n_eula_short                         : EULA short version
 i18n_use_text                           : Use this text
 i18n_login_logo_image                   : Login image graphic
+i18n_login_background_image             : Login background graphic
 
 i18n_server_globals_saved               : Server globals saved
 i18n_please_refresh_to_see_results      : Please refresh your browser or client to see the result.
+
+i18n_select_a_css_file                  : Select a CSS file
+i18n_change_about_template              : Change the About template
 

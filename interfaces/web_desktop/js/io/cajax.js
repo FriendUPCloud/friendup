@@ -364,7 +364,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		return true;
 	}
 	
-	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )
 	{
