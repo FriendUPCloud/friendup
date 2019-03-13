@@ -134,6 +134,7 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 	background: rgba(0,0,0,0.5);
 	text-align: center;
 	z-index: 100;
+	color: white;
 }
 
 .View > .Content > .ImageViewerContent

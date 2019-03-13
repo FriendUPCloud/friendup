@@ -133,7 +133,7 @@ i18n_your_command                       : Din kommando
 i18n_door_home                          : Hjem
 
 please_choose_an_icon                   : Vennligst velg et ikon.
-about_friendup                          : Om FriendUP
+about_system                            : Om systemet
 information                             : Info og oppdateringer
 documentation_central                   : Dokumentasjonssentralen
 software_catalog                        : Programvarekatalog
@@ -187,7 +187,7 @@ i18n_close_menu                         : Lukk meny
 menu_workspace                          : Workspace
 menu_system                             : System
 menu_new_shell                          : Ny terminal
-menu_about_friendup                     : Om Friend UP
+menu_about                              : Om systemet
 menu_examine_system                     : Utførsk systemet
 menu_refresh_desktop                    : Frisk opp
 menu_add_storage                        : Tilføy disk
@@ -195,7 +195,7 @@ menu_run_command                        : Kjør kommando
 menu_show_launcher                      : Vis Launcher
 menu_hide_launcher                      : Gjem Launcher
 menu_log_out                            : Logg ut
-menu_exit								: Avslutt FriendUP
+menu_exit								: Logg ut
 menu_execute_command                    : Kjør kommando
 menu_upload_file                        : Last opp fil
 menu_snapshot                           : Memoriser

@@ -569,10 +569,12 @@ var WorkspaceInside = {
 					console.log( '[onState] We got an error.' );
 					Workspace.websocketState = 'error';
 				}
-				if( !Workspace.httpCheckConnectionInterval )
+				// After such an error, always try reconnect
+				if( Workspace.httpCheckConnectionInterval )
 				{
-					Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 7000 );
+					clearInterval( Workspace.httpCheckConnectionInterval );
 				}
+				Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 3000 );
 			}
 			else if( e.type == 'ping' )
 			{
@@ -6162,7 +6164,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				items:
 				[
 					{
-						name:	i18n( 'menu_about_friendup' ),
+						name:	i18n( 'menu_about' ),
 						command: function(){ AboutFriendUP(); }
 					},
 					{
@@ -7604,7 +7606,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
-	{
+	{	
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -7625,6 +7627,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		var inactiveTimeout = false;
 		var m = new Module('system');
+		m.forceHTTP = true;
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -7663,9 +7666,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			// If we have no conn, and we have waited five cycles, force reconnect
 			// the websocket...
-			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 3 )
+			if( Workspace.websocketState != 'open' )
 			{
-				Workspace.websocketDisconnectTime = 0;
 				Workspace.initWebSocket();
 			}
 		}
@@ -7828,9 +7830,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						newfilename += '_' + i;
 					}
-					if( i > 100 )
+					if( i > 10000 )
 					{
-						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files.'});
+						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files. Please cleanup your Home:Download directory.'});
 						break; // no endless loop please	
 					}
 				}
@@ -8036,13 +8038,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				//mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
 
+				var setwsstate = setTimeout( function()
+				{
+					if( Workspace.conn && Workspace.conn.ws )
+						Workspace.conn.ws.close();
+				}, 1500 );
 				var dl = new FriendLibrary( 'system.library' );
 				dl.addVar( 'status', 0 );
 				dl.onExecuted = function(e,d)
 				{
+					console.log( 'Cancelled closing websocket.' );
+					clearTimeout( setwsstate );
 					//mobileDebug( 'setwsstate active: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
+				console.log( 'Also checking ws state' );
 			}
 		}
 		else
@@ -8107,11 +8117,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			console.log('call ' + Workspace.sessionId );
 
 			var l = new Library( 'system.library' );
+			l.forceHTTP = true;
 			l.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
 				{
-
+					console.log( 'Failed to create uma.' );
 				}
 			}
 			if( appToken != null )	// old applications which do not have appToken will skip this part
@@ -8672,7 +8683,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_friendup' ) + ' v1.2rc1',
+		title: i18n( 'about_system' ) + ' v1.2rc1',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -8688,38 +8699,67 @@ function AboutFriendUP()
 			token = '<div class="item"><span class="label">App token</span><span class="value"> ' + token + '</span></div>';
 		}
 	}
-
-	v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
+	
+	var s = new Module( 'system' );
+	s.onExecuted = function( e, d )
 	{
-		var buildInfo = '<div id="buildInfo">no build information available</div>';
-		if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
+		if( e == 'ok' )
 		{
-			buildInfo = '<div id="buildInfo">';
-			buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
-			if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
-			if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
-
-			// Add app token
-			if( token ) buildInfo += token;
-			
-			// Add device ID
-			if( window.friendApp )
+			var json = false;
+			try
 			{
-				var devId = friendApp.get_deviceid();
-				if( devId )
+				json = JSON.parse( d );
+			}
+			catch( e ){};
+			if( json && json.useAboutTemplate === '1' )
+			{
+				setData( json.liveAboutTemplate );
+				return;
+			}
+		}
+		setData();
+	}
+	s.execute( 'getserverglobals' );
+
+	function setData( str )
+	{
+		if( !str ) str = false;
+		
+		v.setRichContentUrl( str ? str : '/webclient/templates/about.html', false, null, null, function()
+		{
+			var buildInfo = '<div id="buildInfo">no build information available</div>';
+			if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
+			{
+				buildInfo = '<div id="buildInfo">';
+				buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
+				if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
+				if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
+
+				// Add app token
+				if( token ) buildInfo += token;
+			
+				// Add device ID
+				if( window.friendApp )
 				{
-					buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>';
+					var devId = friendApp.get_deviceid();
+					if( devId )
+					{
+						buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>';
+					}
 				}
+
+				buildInfo += '<div style="clear: both"></div></div>';
 			}
 
-			buildInfo += '<div style="clear: both"></div></div>';
-		}
+			var aboutFrame = ge( 'about_friendup' ).getElementsByTagName( 'iframe' )[ 0 ];
+			if( aboutFrame.contentWindow.document.getElementById( 'fc-info' ) )
+			{
+				aboutFrame.contentWindow.document.getElementById( 'fc-info' ).innerHTML = buildInfo;
+			}
+			aboutFrame.setAttribute( 'scrolling', 'yes' );
 
-		var aboutFrame = ge('about_friendup').getElementsByTagName('iframe')[0];
-		aboutFrame.contentWindow.document.getElementById('fc-info').innerHTML = buildInfo;
-		aboutFrame.setAttribute('scrolling', 'yes');
-
-	} );
+		} );
+	}
 }
 
 // Clear cache

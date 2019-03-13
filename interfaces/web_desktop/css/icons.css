@@ -612,3 +612,23 @@ html .Launcher .File div *
 	background-size: contain;
 }
 
+/* Compact icons ------------------------------------------------------------ */
+
+html .File.Compact
+{
+	width: 170px;
+}
+
+html .File.Compact > .Title
+{
+	min-height: 35px;
+}
+
+
+html .File.Compact > .Icon
+{
+	height: 35px;
+}
+
+
+

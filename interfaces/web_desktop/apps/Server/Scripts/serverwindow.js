@@ -59,7 +59,9 @@ function reloadGlobals()
 			ge( 'eula_long_check' ).checked = d.useEulaLong === '1' ? 'checked' : '';
 			ge( 'logo_image_check' ).checked = d.useLogoImage === '1' ? 'checked' : '';
 			ge( 'background_image_check' ).checked = d.useBackgroundImage === '1' ? 'checked' : '';
-			ge( 'extra_template_html_check' ).checked = d.useAboutTemplate === '1' ? 'checked' : '';
+			ge( 'about_template' ).value = d.aboutTemplate ? d.aboutTemplate : '';
+			ge( 'extra_about_template_check' ).checked = d.useAboutTemplate === '1' ? 'checked' : '';
+			ge( 'extra_login_css' ).value = d.extraLoginCSS ? d.extraLoginCSS : '';
 			ge( 'extra_login_css_check' ).checked = d.useExtraLoginCSS === '1' ? 'checked' : '';
 		}
 		f.load();
@@ -93,7 +95,7 @@ function changeGlobalsLoginCSS()
 		type: 'load',
 		title: i18n( 'i18n_select_a_css_file' ),
 		path: 'Mountlist:',
-		suffix: [ 'jpg', 'jpeg' ],
+		suffix: [ 'css' ],
 		multiple: false,
 		triggerFunction: function( items )
 		{
@@ -112,7 +114,7 @@ function changeAboutTemplate()
 		type: 'load',
 		title: i18n( 'i18n_change_about_template' ),
 		path: 'Mountlist:',
-		suffix: [ 'jpg', 'jpeg' ],
+		suffix: [ 'html', 'htm' ],
 		multiple: false,
 		triggerFunction: function( items )
 		{
@@ -160,7 +162,7 @@ function saveGlobals()
 	useLogoImage        = ge( 'logo_image_check' ).checked ? '1' : '0';
 	useBackgroundImage  = ge( 'background_image_check' ).checked ? '1' : '0';
 	useExtraLoginCSS    = ge( 'extra_login_css_check' ).checked ? '1' : '0';
-	useAboutTemplate    = ge( 'extra_template_html_check' ).checked ? '1' : '0';
+	useAboutTemplate    = ge( 'extra_about_template_check' ).checked ? '1' : '0';
 	
 	// Convert image
 	var png = ge( 'theLogoImage' ).getAttribute( 'friendUrl' );
@@ -191,6 +193,12 @@ function saveGlobals()
 			{
 				Notify( { title: i18n( 'i18n_server_globals_saved' ), text: i18n( 'i18n_please_refresh_to_see_results' ) } );
 			}
+			var sl = new Library( 'system.library' );
+			sl.onExecuted = function( e, d )
+			{
+				console.log( 'Library call: ', e, d );
+			}
+			sl.execute( 'clearcache' );
 		}
 		m.execute( 'setserverglobals', mdata );
 	}

@@ -259,9 +259,26 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			return;
 		}
 		
-		if( ele && ele.obj )
+		// Get the file object
+		var fobj = ele.obj ? ele.obj : false;
+		
+		// Try to recreate the file object from the file info
+		if( !fobj )
 		{
-			triggerfunction ( [ ele.obj ] );
+			if( ele.fileInfo )
+			{
+				fobj = {
+					Type: ele.fileInfo.Type,
+					Filename: ele.fileInfo.Filename,
+					Path: ele.fileInfo.Path,
+					Volume: ele.fileInfo.Volume
+				};
+			}
+		}
+		
+		if( ele && fobj )
+		{
+			triggerfunction ( [ fobj ] );
 			w.close ();
 			return;
 		}
@@ -590,6 +607,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			},
 			doubleclickfiles:    function( element, event )
 			{
+				console.log( 'Here we go: ', element, event );
 				element.classList.add( 'Selected' );
 				w.choose( element );
 				if( event ) return cancelBubble( event );
