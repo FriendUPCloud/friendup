@@ -1433,6 +1433,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
+		console.log( 'Going' );
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
