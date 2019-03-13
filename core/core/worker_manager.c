@@ -176,6 +176,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 	
 	while( TRUE )
 	{
+		/*
 		wrk = NULL;
 
 		FRIEND_MUTEX_LOCK( &wm->wm_Mutex );
@@ -208,7 +209,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		testquit = 0;
 		
 		FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ wm->wm_LastWorker ])->w_Mut );
-		/*
+		*/
 		wrk = NULL;
 
 		FRIEND_MUTEX_LOCK( &wm->wm_Mutex );
@@ -260,7 +261,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
 			usleep( 1000 );
 		}
-		*/
 		
 		if( max > wm->wm_MaxWorkers )
 		{
