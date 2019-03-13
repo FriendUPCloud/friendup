@@ -451,7 +451,7 @@ Workspace = {
 			{
 				try
 				{
-					Workspace.conn.close();
+					Workspace.conn.ws.close();
 				}
 				catch( e )
 				{
@@ -570,9 +570,9 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
-
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
+				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
@@ -727,8 +727,8 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
@@ -1028,7 +1028,7 @@ Workspace = {
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{	
-							var m = new Module( 'system' );
+							/*var m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{
 						        if( ee != 'ok' )
@@ -1039,7 +1039,8 @@ Workspace = {
 							}
 							m.execute( 'getsetting', {
 								setting: 'accepteula'
-							} );
+							} );*/
+							afterEula( 'ok' );
 							
 							// When eula is displayed or not
 							function afterEula( e )
