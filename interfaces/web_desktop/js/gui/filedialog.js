@@ -277,10 +277,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 		
 		// Get the file object
-		var fobj = ele.obj ? ele.obj : false;
+		var fobj = ele && ele.obj ? ele.obj : false;
 		
 		// Try to recreate the file object from the file info
-		if( !fobj )
+		if( ele && !fobj )
 		{
 			if( ele.fileInfo )
 			{
@@ -295,10 +295,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		
 		if( ele && fobj )
 		{
-			triggerfunction ( [ fobj ] );
+			triggerfunction( [ fobj ] );
 			w.close ();
 			return;
 		}
+		
 		var cont = this.getContainer();
 		var eles = cont.getElementsByTagName ( 'div' );
 		var out = [];
@@ -318,7 +319,14 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 		if( out.length )
 		{
-			triggerfunction( out );
+			if( dialog.type == 'path' )
+			{
+				triggerfunction( out[0].Path );
+			}
+			else
+			{
+				triggerfunction( out );
+			}
 		}
 		else
 		{
