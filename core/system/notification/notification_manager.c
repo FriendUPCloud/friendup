@@ -708,7 +708,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 	{
 		sleep( 1 );
 		counter++;
-		if( counter > 10 )	// do checking every 15 seconds
+		if( counter > TIME_OF_CHECKING_NOTIFICATIONS )	// do checking every 15 seconds
 		{
 			DelListEntry *rootDeleteList = NULL;
 			DelListEntry *lastDeleteListEntry = NULL;
@@ -838,8 +838,6 @@ void NotificationManagerTimeoutThread( FThread *data )
 //
 //
 //
-
-
 
 int hex2int(char ch)
 {
