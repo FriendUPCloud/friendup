@@ -330,8 +330,8 @@ function ExecuteApplication( app, args, callback )
 				else
 				{
 					var sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ?
-						Workspace.sessionId : Workspace.conf.authId;
-					var svalu = sid ? Workspace.sessionId : Workspace.conf.authId;
+						Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
+					var svalu = sid ? Workspace.sessionId :( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
 					var stype = sid ? 'sessionid' : 'authid';
 					console.log( 'Launching with stype: ' + stype + ' and svalu: ' + svalu + ' and session ' + Workspace.sessionId );
 					ifr.src = sdomain + '/system.library/module?module=system&' +

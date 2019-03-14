@@ -1783,7 +1783,8 @@ function CloseView( win, delayed )
 	
 	if( !window.currentMovable )
 	{
-		document.title = Workspace.screen.getFlag( 'title' );
+		if( Workspace.screen && Workspace.screen.getFlag )
+			document.title = Workspace.screen.getFlag( 'title' );
 	}
 	
 	if( isMobile )

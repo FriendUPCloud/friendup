@@ -121,7 +121,7 @@ if( $app->ID )
 else
 {
 	// TODO: Actually send it
-	die( 'fail' );
+	die( 'fail<!--separate-->{"response":"fatal error in launch"}' );
 }
 
 ?>

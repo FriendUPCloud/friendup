@@ -52,6 +52,6 @@ if( $level == 'Admin' )
 		die( 'ok<!--separate-->' . json_encode( $on ) );
 	}
 }
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"unauthorized access in workgroupget"}' );
 
 ?>

@@ -191,6 +191,8 @@ cAjax = function()
 								// Drop these (don't retry!) because of remote fs disconnect
 								if( jax.url.indexOf( 'file/info' ) > 0 )
 									return;
+								console.log( '[cAjax 2] Doing a relogin (no user session)' );
+								console.trace();
 								// Add to queue
 								AddToCajaxQueue( jax );
 								Workspace.flushSession();
@@ -202,11 +204,8 @@ cAjax = function()
 					{
 						if( !jax.rawData )
 						{
-							if( Workspace )
-							{
-								AddToCajaxQueue( jax );
-								return Workspace.relogin();
-							}
+							console.log( '[cAjax] Can not understand server response: ', jax.rawData );
+							return;
 						}
 					}
 				}
@@ -219,8 +218,9 @@ cAjax = function()
 						var res = r ? r.response.toLowerCase() : '';
 						if( res == 'user session not found' )
 						{
-							console.log( '[cAjax 2] Doing a relogin (no user session)' );
+							console.log( '[cAjax 3] Doing a relogin (no user session)' );
 							console.trace();
+							// Add to queue
 							AddToCajaxQueue( jax );
 							Workspace.flushSession();
 							return Workspace.relogin();
@@ -799,6 +799,9 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( Workspace )
 				{
 					// Add to queue
+					console.log( '[cAjax 2] Doing a relogin (no user session)' );
+					console.trace();
+					// Add to queue
 					AddToCajaxQueue( self );
 					Workspace.flushSession();
 					return Workspace.relogin();
@@ -809,12 +812,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			if( !self.rawData )
 			{
-				if( Workspace )
-				{
-					AddToCajaxQueue( self );
-					Workspace.flushSession();
-					return Workspace.relogin();
-				}
+				console.log( '[cAjax] Could not understand server response: ', self.returnData );
+				return;
 			}
 		}
 	}

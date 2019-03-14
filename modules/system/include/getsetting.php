@@ -42,7 +42,10 @@ if( isset( $args->args->settings ) )
 			$failed = false;
 		}
 	}
-	if( !$failed ) die( 'ok<!--separate-->' . json_encode( $settings ) );
+	if( !$failed ) 
+		die( 'ok<!--separate-->' . json_encode( $settings ) );
+	else
+		die('fail<!--separate-->{"response":"settings not found"}');
 }
 else if ( isset( $args->args->setting ) )
 {
@@ -69,8 +72,9 @@ else if ( isset( $args->args->setting ) )
 		else $settings->$set = $s->Data;
 		die( 'ok<!--separate-->' . json_encode( $settings ) );
 	}
+	die( 'fail<!--separate-->{"response":"setting not found"}' );
 }
 
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"fatal error in getsetting - no setting(s) parameter given"}' );
 
 ?>

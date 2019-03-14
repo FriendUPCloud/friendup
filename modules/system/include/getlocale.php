@@ -53,6 +53,6 @@ if( isset( $args->args->type ) )
 	}
 }
 
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"fatal error in getlocale no type given"}' );
 
 ?>

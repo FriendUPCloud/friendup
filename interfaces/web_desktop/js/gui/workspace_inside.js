@@ -1581,7 +1581,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								func: function()
 								{
 									var cmd = seq[ this.index++ ];
-									console.log( 'This is it: ', cmd );
 									if( cmd && cmd.length )
 									{
 										Workspace.shell.execute( cmd, function()
@@ -2695,23 +2694,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.refreshUserSettings( function() 
 			{
 				CheckScreenTitle();
-			
-				// We only allow two mobile themes
-				/*if( isMobile )
-				{
-					switch( themeName )
-					{
-						case 'friendup':
-						case 'friendup_twilight':
-						case 'friendup_dreamy':
-						case 'friendup_green':
-						case 'friendup_pink':
-							break;
-						default:
-							Workspace.theme = themeName = 'friendup12';
-							break;
-					}
-				}*/
 
 				var h = document.getElementsByTagName( 'head' );
 				if( h )
@@ -2746,9 +2728,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
+							var retries = 0;
 							Workspace.insideInterval = setInterval( function()
 							{
-								if( Workspace.wallpaperLoaded )
+								// If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
+								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
 								{
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
@@ -2777,7 +2761,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Redraw now
 									DeepestField.redraw();
 									
-									if( location.hash && location.hash.indexOf("clean") ) Workspace.goDialogShown = true;
+									if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
+									
 									// Show about dialog
 									if( !isMobile && window.go && !Workspace.goDialogShown )
 									{
@@ -7655,14 +7640,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			//console.log( 'Response from connection checker: ', e, d );
 			if( e == 'fail' ) 
 			{
-				if( d == false ) 
-				{
-					Workspace.serverIsThere = false;
-					Workspace.workspaceIsDisconnected = true;
-					Workspace.flushSession(); 
-					Workspace.relogin();
-					return;
-				}
+				console.log( '[getsetting] Got "fail" response.' );
+				//console.trace();
 			}
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;

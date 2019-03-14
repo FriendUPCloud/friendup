@@ -705,9 +705,6 @@ Workspace = {
 		
 		var self = this;
 		
-		console.log( '[Relogin] WS State: ' + Workspace.websocketState );
-		console.trace();
-		
 		function executeCleanRelogin()
 		{	
 			if( Workspace.conn )
@@ -805,7 +802,6 @@ Workspace = {
 			m.addVar( 'deviceid', this.deviceid );
 			m.onExecuted = function( json, serveranswer )
 			{
-
 				if( typeof( json ) != 'object' )
 				{
 					try
@@ -837,8 +833,6 @@ Workspace = {
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				
-				console.log( '[login session id] We got a json session: \'' + json.sessionid + '\' ' + hasSessionID );
-
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
@@ -872,7 +866,6 @@ Workspace = {
 		if( sess && sess.length )
 		{
 			this.sessionId = sess;
-			console.log( '[login] We got a session: ' + sess );
 		}
 	
 		// TODO: If we have sessionid - verify it through ajax.
@@ -996,8 +989,6 @@ Workspace = {
 
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
-				
-				console.log( '[login] We got a json session: \'' + json.sessionid + '\' ' + hasSessionID );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
@@ -1081,8 +1072,6 @@ Workspace = {
 		function setupWorkspaceData( json, cb )
 		{
 			// Ok, we're in
-			console.log( '[setupWorkspaceData] We are in with a session: ' + json.sessionid );
-			
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
 			_this.fullName  = json.fullname;

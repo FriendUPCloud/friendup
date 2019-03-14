@@ -3178,7 +3178,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			if( !self.showHiddenFiles && t.substr( 0, 1 ) == '.' ) continue;
 			
 			// Skip files with wrong suffix
-			else if( icons[a].Type == 'File' && self.suffix && !self.checkSuffix( t ) )
+			else if( ic.Type == 'File' && self.suffix && !self.checkSuffix( t ) )
 			{
 				continue;
 			}
@@ -3205,25 +3205,25 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				switch( b )
 				{
 					case 'filename':
-						if( icons[a].Type == 'Directory' )
+						if( ic.Type == 'Directory' )
 							c.innerHTML = t;
 						else c.innerHTML = t;
 						r.primaryDom = c;
 						break;
 					case 'size':
-						c.innerHTML = icons[a].Filesize > 0 ? humanFilesize ( icons[a].Filesize ) : '&nbsp;';
+						c.innerHTML = ic.Filesize > 0 ? humanFilesize ( ic.Filesize ) : '&nbsp;';
 						c.style.textAlign = 'right';
 						break;
 					case 'date':
-						c.innerHTML = icons[a].DateModified;
+						c.innerHTML = ic.DateModified;
 						c.style.textAlign = 'right';
 						break;
 					case 'type':
 						/*var fn = icons[a].Title ? icons[a].Title : icons[a].Filename;
 						var ext = fn.split( '.' ); ext = ext[ext.length-1].toLowerCase();
 						ext = ext.split( '#' ).join( '' );*/
-						var ext = icons[a].Extension.split( '#' )[0];
-						var tp = i18n( icons[a].Type == 'Directory' ? 'i18n_directory' : 'i18n_filetype_' + ext );
+						var ext = ic.Extension.split( '#' )[0];
+						var tp = i18n( ic.Type == 'Directory' ? 'i18n_directory' : 'i18n_filetype_' + ext );
 						if( tp.substr( 0, 5 ) == 'i18n_' )
 							tp = i18n( 'i18n_driver_handled' );
 						c.innerHTML = tp;
@@ -3231,9 +3231,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						break;
 					case 'permissions':
 						var pr = '-rwed';
-						if( icons[a].Permissions )
+						if( ic.Permissions )
 						{
-							var p = icons[a].Permissions.split( ',' );
+							var p = ic.Permissions.split( ',' );
 							var perms = ['-','-','-','-','-'];
 							for( var b = 0; b < p.length; b++ )
 							{
@@ -3258,25 +3258,25 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				c.style.width = defwidths[b];
 				r.appendChild( c );
 			}
-			bts += icons[a].Filesize ? parseInt( icons[a].Filesize ) : 0;
+			bts += ic.Filesize ? parseInt( ic.Filesize ) : 0;
 			
 			swi = swi == 2 ? 1 : 2;
 			if ( swi == 1 ) r.className += ' Odd';
 
 			// Create icon object to extract FileInfo
-			var f = CreateIcon( icons[a], this );
+			var f = CreateIcon( ic, this );
 			f.directoryView = this;
 			r.className += ' File';
 			//RemoveIconEvents( f ); // Strip events
 			r.file = f;
 			
 			// Overwrite doubleclick
-			if( icons[a].Type == 'File' && this.doubleclickfiles )
+			if( ic.Type == 'File' && this.doubleclickfiles )
 			{
 				var cl = this.doubleclickfiles;
 				r.ondblclick = function( e )
 				{
-					cl( f, e );
+					cl( this.file, e );
 				}
 			}
 			else
@@ -3578,9 +3578,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 
 			// For clicks
-			icons[a].domNode = r;
+			ic.domNode = r;
 
-			obj.icons.push( icons[a] );
+			obj.icons.push( ic );
 		}
 
 		// Position the rows
