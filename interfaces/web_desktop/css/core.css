@@ -4299,7 +4299,7 @@ div.Orange, button.Orange
 	opacity: 0.5;
 }
 
-.Busy button.fa-upload
+#fileUpload.Busy button.fa-upload
 {
 	display: none;
 }
@@ -4311,7 +4311,7 @@ div.Orange, button.Orange
 	transition: opacity 0.2s;
 }
 
-.Busy .ProgressReport
+#fileUpload.Busy .ProgressReport
 {
 	display: block;
 	opacity: 1;
