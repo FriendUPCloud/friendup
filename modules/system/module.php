@@ -1783,7 +1783,7 @@ if( isset( $args->command ) )
 				{
 					if( !$key->Load( $args->args->id ) )
 					{
-						die( 'fail' );
+						die( 'fail<!--separate-->{"response":"no user key found"}' );
 					}
 					
 					$found = true;
@@ -1817,7 +1817,7 @@ if( isset( $args->command ) )
 					}
 					else
 					{
-						die( 'fail' );
+						die( 'fail<!--separate-->{"response":"no application key found"}' );
 					}					
 				}
 				else if( isset( $args->args->appPath ) && $args->args->appPath )
@@ -1876,7 +1876,7 @@ if( isset( $args->command ) )
 					}
 					else
 					{
-						die( 'fail' );
+						die( 'fail<!--separate-->{"response":"no filesystem key found"}' );
 					}					
 				}
 				/*else
@@ -2084,7 +2084,7 @@ if( isset( $args->command ) )
 			{
 				require( 'modules/system/include/usersetupapply.php' );
 			}
-			die( 'fail' );
+			die( 'fail<!--separate-->{"response":"unauthorized access to usersetupapply"}' );
 			break;
 		// Save setup
 		case 'usersetupsave':
@@ -2394,7 +2394,7 @@ if( isset( $args->command ) )
 			{
 				require( 'modules/system/include/getservices.php' );
 			}
-			die( 'fail' );
+			die( 'fail<!--separate-->{"response":"unauthorized access to getservices"}' );
 			break;
 		
 		// get server publickey, create keypairs if not found
@@ -2447,7 +2447,7 @@ if( isset( $args->command ) )
 				die( 'ok<!--separate-->' . $publickey );
 			}
 			
-			die( 'fail' );
+			die( 'fail<!--separate-->{"response":"getserverkey fatal error"}' );
 			
 			break;
 		
