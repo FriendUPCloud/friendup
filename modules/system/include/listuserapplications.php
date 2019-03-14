@@ -69,7 +69,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 	}
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"fatal error in listuserapplications"}' );
 
 
 ?>

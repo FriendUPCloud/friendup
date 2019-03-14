@@ -18,6 +18,6 @@ if( $level == 'Admin' )
 
 	die( 'ok<!--separate-->' . json_encode( $output ) );
 }
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"unauthorized access to list windows"}' );
 
 ?>
