@@ -4275,31 +4275,31 @@ div.Orange, button.Orange
 	position: relative;
 }
 
-#fileUpload.Busy input,
-#fileUpload.Busy button
+.UploadFeedbackContainer.Busy input,
+.UploadFeedbackContainer.Busy button
 {
 	pointer-events: none;
 	opacity: 0.8;
 	cursor: not-allowed;
 }
 
-#fileUpload.Busy input[type=file]
+.UploadFeedbackContainer.Busy input[type=file]
 {
 	display: none;
 }
 
-#fileUpload button.fa-upload
+.UploadFeedbackContainer button.fa-upload
 {
 	transition: opacity 0.2s;
 	opacity: 1;
 }
 
-#fileUpload.Busy button.fa-upload
+.UploadFeedbackContainer.Busy button.fa-upload
 {
 	opacity: 0.5;
 }
 
-#fileUpload.Busy button.fa-upload
+.UploadFeedbackContainer.Busy button.fa-upload
 {
 	display: none;
 }
@@ -4311,7 +4311,7 @@ div.Orange, button.Orange
 	transition: opacity 0.2s;
 }
 
-#fileUpload.Busy .ProgressReport
+.UploadFeedbackContainer.Busy .ProgressReport
 {
 	display: block;
 	opacity: 1;
