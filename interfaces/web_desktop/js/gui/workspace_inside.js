@@ -760,16 +760,19 @@ var WorkspaceInside = {
 						// Function to set the notification as read...
 						function notificationRead()
 						{
-							if( trash )
-								clearTimeout( trash );
-							messageRead = true;
-							var l = new Library( 'system.library' );
-							l.onExecuted = function(){};
-							l.execute( 'mobile/updatenotification', { 
-								notifid: msg.notificationData.id, 
-								action: 1, 
-								pawel: 3
-							} );
+							if( window.friendApp && Workspace.currentViewState == 'active' )
+							{
+								if( trash )
+									clearTimeout( trash );
+								messageRead = true;
+								var l = new Library( 'system.library' );
+								l.onExecuted = function(){};
+								l.execute( 'mobile/updatenotification', { 
+									notifid: msg.notificationData.id, 
+									action: 1, 
+									pawel: 3
+								} );
+							}
 						}
 					
 						var appName = msg.notificationData.application;

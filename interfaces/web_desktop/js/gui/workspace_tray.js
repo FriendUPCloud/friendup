@@ -464,27 +464,30 @@ function Notify( message, callback, clickcallback )
 	if( isMobile )
 	{
 		mobileDebug( 'Showing mobile workspace notification.' );
-	
-		if( !ge( 'MobileNotifications' ) )
+
+		if( window.friendApp && Workspace.currentViewState == 'active' )
 		{
-			var d = document.createElement( 'div' );
-			d.className = 'Notification Mobile';
-			d.id = 'MobileNotifications';
-			ge( 'DoorsScreen' ).appendChild( d );
-		}
-		// On mobile it's always seen!
-		nev.seen = true;
+			if( !ge( 'MobileNotifications' ) )
+			{
+				var d = document.createElement( 'div' );
+				d.className = 'Notification Mobile';
+				d.id = 'MobileNotifications';
+				ge( 'DoorsScreen' ).appendChild( d );
+			}
+			// On mobile it's always seen!
+			nev.seen = true;
 		
-		// Since it is seen, then remove from server
-		if( message.notificationId )
-		{
-			var l = new Library( 'system.library' );
-			l.onExecuted = function(){};
-			l.execute( 'mobile/updatenotification', { 
-				notifid: message.notificationId, 
-				action: 1,
-				pawel: 11
-			} );
+			// Since it is seen, then remove from server
+			if( message.notificationId )
+			{
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: message.notificationId, 
+					action: 1,
+					pawel: 11
+				} );
+			}
 		}
 		
 		var n = document.createElement( 'div' );
