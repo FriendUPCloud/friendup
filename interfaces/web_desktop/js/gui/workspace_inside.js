@@ -1436,7 +1436,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// NB: Start of workspace_inside.js ----------------------------------------
 	refreshUserSettings: function( callback )
 	{
-		console.log( 'Going' );
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -1582,7 +1581,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								func: function()
 								{
 									var cmd = seq[ this.index++ ];
-									console.log( 'This is it: ', cmd );
 									if( cmd && cmd.length )
 									{
 										Workspace.shell.execute( cmd, function()
@@ -2696,23 +2694,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.refreshUserSettings( function() 
 			{
 				CheckScreenTitle();
-			
-				// We only allow two mobile themes
-				/*if( isMobile )
-				{
-					switch( themeName )
-					{
-						case 'friendup':
-						case 'friendup_twilight':
-						case 'friendup_dreamy':
-						case 'friendup_green':
-						case 'friendup_pink':
-							break;
-						default:
-							Workspace.theme = themeName = 'friendup12';
-							break;
-					}
-				}*/
 
 				var h = document.getElementsByTagName( 'head' );
 				if( h )
@@ -2749,7 +2730,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							Workspace.insideInterval = setInterval( function()
 							{
-								if( Workspace.wallpaperLoaded )
+								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded )
 								{
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
