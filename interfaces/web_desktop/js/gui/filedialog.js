@@ -192,6 +192,23 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			return false;
 		}
 		
+		// No element, try to find it
+		if( !ele )
+		{
+			if( w.content.icons )
+			{
+				// TODO: Check multiple
+				for( var a = 0; a < w.content.icons.length; a++ )
+				{
+					if( w.content.icons[a].selected )
+					{
+						ele = w.content.icons[a];
+						break;
+					}
+				}
+			}
+		}
+		
 		// Save dialog uses current path and written filename
 		if( dialog.type == 'save' )
 		{
@@ -607,7 +624,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			},
 			doubleclickfiles:    function( element, event )
 			{
-				console.log( 'Here we go: ', element, event );
 				element.classList.add( 'Selected' );
 				w.choose( element );
 				if( event ) return cancelBubble( event );
