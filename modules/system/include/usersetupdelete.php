@@ -27,6 +27,6 @@ if( $level == 'Admin' )
 		die( 'ok' );
 	}
 }
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"fatal error in usersetupdelete"}' );
 
 ?>

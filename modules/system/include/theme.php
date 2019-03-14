@@ -13,7 +13,7 @@ global $Logger;
 
 if( !isset( $args->args->theme ) )
 {
-	die( 'fail' );
+	die( 'fail<!--separate-->{"response":"no theme set in theme call"}' );
 }
 
 $path = 'resources/webclient/theme/';
@@ -26,6 +26,6 @@ include_once( 'modules/system/include/cssparser.php' );
 
 ParseCssFile( $path );
 
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"fatal error in theme"}' );
 
 ?>
