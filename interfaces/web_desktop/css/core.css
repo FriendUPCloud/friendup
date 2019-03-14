@@ -4318,8 +4318,8 @@ div.Orange, button.Orange
 	position: relative;
 	width: 60px;
 	margin: auto;
-	height: 60px;
-	line-height: 60px;
+	height: 40px;
+	line-height: 40px;
 	text-align: center;
 	left: 15px;
 }
