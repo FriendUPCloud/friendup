@@ -7640,8 +7640,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			//console.log( 'Response from connection checker: ', e, d );
 			if( e == 'fail' ) 
 			{
-				console.log( 'Got fail' );
-				console.trace();
+				console.log( '[getsetting] Got "fail" response.' );
+				//console.trace();
 			}
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
