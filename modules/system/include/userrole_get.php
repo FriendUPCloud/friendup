@@ -22,9 +22,9 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 	
 	$out = array();
 	
-	if( $rows = $SqlDatabase->FetchObjects( '
+	if( $rows = $SqlDatabase->FetchObjects( $q = '
 		SELECT 
-			g.*, u.UserID AS UserRoleID 
+			g.*, u.UserID AS UserRoleID, w.FromGroupID AS WorkgroupRoleID 
 		FROM 
 			FUserGroup g 
 				LEFT JOIN FUserToGroup u ON 
@@ -32,6 +32,11 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 						u.UserGroupID = g.ID 
 					AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? $args->args->userid : 'NULL' ) . ' 
 				)
+				LEFT JOIN FGroupToGroup w ON
+				(
+						w.ToGroupID = g.ID 
+					AND w.FromGroupID = ' . ( isset( $args->args->groupid ) && $args->args->groupid ? $args->args->groupid : 'NULL' ) . ' 
+				) 
 		WHERE 
 			g.Type = "Role" 
 		ORDER BY 
@@ -41,10 +46,11 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 		foreach( $rows as $row )
 		{
 			$o = new stdClass();
-			$o->ID = $row->ID;
-			$o->UserID = $row->UserRoleID;
-			$o->ParentID = $row->ParentID;
-			$o->Name = $row->Name;
+			$o->ID          = $row->ID;
+			$o->UserID      = $row->UserRoleID;
+			$o->WorkgroupID = $row->WorkgroupRoleID;
+			$o->ParentID    = $row->ParentID;
+			$o->Name        = $row->Name;
 			
 			if( $perms = $SqlDatabase->FetchObjects( '
 				SELECT 
