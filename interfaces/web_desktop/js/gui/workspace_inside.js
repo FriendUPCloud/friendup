@@ -2728,9 +2728,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
+							var retries = 0;
 							Workspace.insideInterval = setInterval( function()
 							{
-								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded )
+								// If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
+								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
 								{
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
@@ -2759,7 +2761,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Redraw now
 									DeepestField.redraw();
 									
-									if( location.hash && location.hash.indexOf("clean") ) Workspace.goDialogShown = true;
+									if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
+									
 									// Show about dialog
 									if( !isMobile && window.go && !Workspace.goDialogShown )
 									{
