@@ -2069,6 +2069,16 @@ function apiWrapper( event, force )
 				if( !msg.data.path && msg.data.filename && msg.data.filename.indexOf( ':' ) > 0 )
 					msg.data.path = msg.data.filename;
 
+				// Perhaps do error?
+				if( msg.data.path && msg.data.path.toLowerCase && msg.data.path.toLowerCase().substr( 0, 8 ) != 'progdir:' && msg.data.path.indexOf( ':' ) > 0 )
+				{
+					if( !checkAppPermission( app.authId, 'Door Local' ) )
+					{
+						console.log( 'Permission denied to local filesystems!' );
+						return false;
+					}
+				}
+
 				if( typeof( msg.data.path ) == 'undefined' )
 				{
 					console.log( 'Empty path..' );
