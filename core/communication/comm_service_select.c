@@ -438,7 +438,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 						if( con != NULL )
 						{
 							con->cfcc_Data = service;
-							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE );
+							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE, NULL );
 							
 							service->s_NumberConnections++;
 							FFree( lfcm );
@@ -519,7 +519,7 @@ int CommServiceRegisterEvent( CommFCConnection *con, Socket *socket )
 	CommService *cserv = (CommService *)con->cfcc_Service;
 	// add event
 
-	con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE );
+	con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE, NULL );
 
 	return 0;
 }

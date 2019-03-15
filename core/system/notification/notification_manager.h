@@ -64,9 +64,9 @@ typedef struct NotificationManager
 	time_t						nm_APNSNotificationTimeout;
 	FBOOL						nm_APNSSandBox;
 	
+	int							nm_NumberOfLaunchedThreads;
 	ExternalServerConnection	*nm_ESConnections;
 }NotificationManager;
-
 
 NotificationManager *NotificationManagerNew( void *sb );
 

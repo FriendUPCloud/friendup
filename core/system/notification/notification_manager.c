@@ -100,8 +100,24 @@ NotificationManager *NotificationManagerNew( void *sb )
  */
 void NotificationManagerDelete( NotificationManager *nm )
 {
+	DEBUG("[NotificationManagerDelete]\n");
 	if( nm != NULL )
 	{
+		DEBUG("[NotificationManagerDelete] remove threads\n");
+		// kill launched thread with messages to be send
+		
+		while( TRUE )
+		{
+			if( nm->nm_NumberOfLaunchedThreads <= 0 )
+			{
+				break;
+			}
+			sleep( 1 );
+		}
+		
+		DEBUG("[NotificationManagerDelete] kill main thread\n");
+		
+		// kill main notification thread
 		if( nm->nm_TimeoutThread != NULL )
 		{
 			nm->nm_TimeoutThread->t_Quit = TRUE;
@@ -117,6 +133,8 @@ void NotificationManagerDelete( NotificationManager *nm )
 		
 			ThreadDelete( nm->nm_TimeoutThread );
 		}
+		
+		DEBUG("[NotificationManagerDelete] all threads deleted\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
 		{
@@ -139,6 +157,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 		
 		FFree( nm );
 	}
+	DEBUG("[NotificationManagerDelete] end\n");
 }
 
 /**
@@ -687,11 +706,58 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 	return ret;
 }
 
+//
+//
+//
+
 typedef struct DelListEntry
 {
 	Notification *dle_NotificationPtr;
 	MinNode node;
 }DelListEntry;
+
+typedef struct SendNotifThreadData
+{
+	DelListEntry				*sntd_RootNotification;
+	DelListEntry				*sntd_LastNotification;
+	NotificationManager			*sntd_NM;
+}SendNotifThreadData;
+//
+// Send message to devices thread
+//
+
+void NotificationSendThread( FThread *data )
+{
+	SendNotifThreadData *nstd = (SendNotifThreadData *)data->t_Data;
+	
+	DelListEntry *le = nstd->sntd_RootNotification;
+	while( le != NULL )
+	{
+		DelListEntry *nextentry = (DelListEntry *)le->node.mln_Succ;
+		
+		Notification *dnotif = le->dle_NotificationPtr;
+		
+		if( dnotif != NULL )
+		{
+			DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
+		
+			MobileAppNotifyUserUpdate( nstd->sntd_NM->nm_SB, dnotif->n_UserName, dnotif, 0, NOTIFY_ACTION_TIMEOUT );
+			NotificationDelete( dnotif );
+			le->dle_NotificationPtr = NULL;
+		}
+		
+		FFree( le );
+		
+		le = nextentry;
+	}
+	FFree( nstd );
+	
+	if( FRIEND_MUTEX_LOCK( &(nstd->sntd_NM->nm_Mutex) ) == 0 )
+	{
+		nstd->sntd_NM->nm_NumberOfLaunchedThreads--;
+		FRIEND_MUTEX_UNLOCK( &(nstd->sntd_NM->nm_Mutex) );
+	}
+}
 
 //
 // Timeout thread
@@ -710,8 +776,10 @@ void NotificationManagerTimeoutThread( FThread *data )
 		counter++;
 		if( counter > TIME_OF_CHECKING_NOTIFICATIONS )	// do checking every 15 seconds
 		{
-			DelListEntry *rootDeleteList = NULL;
-			DelListEntry *lastDeleteListEntry = NULL;
+			SendNotifThreadData *sntd = FCalloc( 1, sizeof( SendNotifThreadData ) );
+			sntd->sntd_NM = nm;
+			//DelListEntry *rootDeleteList = NULL;
+			//DelListEntry *lastDeleteListEntry = NULL;
 			
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
@@ -749,15 +817,15 @@ void NotificationManagerTimeoutThread( FThread *data )
 						{
 							le->dle_NotificationPtr = notif;
 						
-							if( rootDeleteList == NULL )
+							if( sntd->sntd_RootNotification == NULL )
 							{
-								rootDeleteList = le;
-								lastDeleteListEntry = le;
+								sntd->sntd_RootNotification = le;
+								sntd->sntd_LastNotification = le;
 							}
 							else
 							{
-								lastDeleteListEntry->node.mln_Succ = (MinNode *)le;
-								lastDeleteListEntry = le;
+								sntd->sntd_LastNotification->node.mln_Succ = (MinNode *)le;
+								sntd->sntd_LastNotification = le;
 							}
 						}
 					}
@@ -791,6 +859,22 @@ void NotificationManagerTimeoutThread( FThread *data )
 			// update and remove list of entries
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries: %d all entries %d\n", toDel, allEntries );
 			
+			// seems there is no new notification to delete
+			if( sntd->sntd_RootNotification == NULL )
+			{
+				FFree( sntd );
+				sntd = NULL;
+			}
+			else if( data->t_Quit != TRUE )
+			{
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
+				{
+					nm->nm_NumberOfLaunchedThreads++;
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+				}
+				FThread *t = ThreadNew( NotificationSendThread, sntd, TRUE, NULL );
+			}
+			/*
 			DelListEntry *le = rootDeleteList;
 			while( le != NULL )
 			{
@@ -812,7 +896,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				le = nextentry;
 			}
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries END\n" );
-			
+			*/
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 			counter = 0;
 			

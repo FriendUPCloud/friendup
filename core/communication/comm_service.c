@@ -249,7 +249,7 @@ int CommServiceStart( CommService *s )
 		pthread_mutex_init( &InitMutex, NULL );
 
 #ifdef USE_SELECT
-		s->s_Thread = ThreadNew( CommServiceThreadServerSelect, s, TRUE );
+		s->s_Thread = ThreadNew( CommServiceThreadServerSelect, s, TRUE, NULL );
 #else
 		s->s_Thread = ThreadNew( CommServiceThreadServer, s, TRUE, NULL );
 #endif
