@@ -1021,6 +1021,15 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	
 	DEBUG("Send notifications IOS, cert path >%s< - content %s title: %s\n", nm->nm_APNSCert, content, title );
 	
+	int pushContentLen = 0;
+	int extrasSize = 0; 
+	char *encmsg = NULL;
+	if( extras != NULL && strlen( extras ) > 0 )
+	{
+		extrasSize = strlen( extras ); 
+		encmsg = Base64Encode( (const unsigned char *)extras, extrasSize, &extrasSize );
+	}
+	
 	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
     
 	SSLeay_add_ssl_algorithms();
@@ -1059,16 +1068,7 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 		ERR_print_errors_fp( stderr );
 		return 5;
 	}
-    
-	sockfd = socket( AF_INET, SOCK_STREAM, 0 );
-	if( sockfd == -1 )
-	{
-		FERROR("socket()...-1\n");
-		SSL_CTX_free( ctx );
- 		return 6;
-	}
-    
-	sa.sin_family = AF_INET;
+	
 	if( nm->nm_APNSSandBox )
 	{
 		he = gethostbyname( APNS_SANDBOX_HOST );
@@ -1080,41 +1080,18 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
     
 	if( !he )
 	{
-		close( sockfd );
 		SSL_CTX_free( ctx );
 		return 7;
 	}
 	
-	memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
-	
-	//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
-	
+	in_port_t sinPort;
 	if( nm->nm_APNSSandBox )
 	{
-		sa.sin_port = htons(APNS_SANDBOX_PORT);
+		sinPort = htons(APNS_SANDBOX_PORT);
 	}
 	else
 	{
-		sa.sin_port = htons(APNS_PORT);
-	}
-    
-	if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) == -1 )
-	{
-		close(sockfd);
-		SSL_CTX_free( ctx );
-		return 8;
-	}
-	
-	DEBUG("Connected to APNS server\n");
-    
-	ssl = SSL_new(ctx);
-	SSL_set_fd(ssl, sockfd);
-	if( SSL_connect(ssl) == -1 )
-	{
-		shutdown(sockfd, 2);
-		close(sockfd);
-		SSL_CTX_free( ctx );
-		return 9;
+		sinPort = htons(APNS_PORT);
 	}
 	
 	int successNumber = 0;
@@ -1140,43 +1117,58 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 				}
 			
 				DEBUG("Send message to : >%s<\n", startToken );
+				
+				sockfd = socket( AF_INET, SOCK_STREAM, 0 );
+				if( sockfd > -1 )
+				{
+					sa.sin_family = AF_INET;
+					memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
+					//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
+	
+					sa.sin_port = sinPort;
+
+					if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) != -1 )
+					{
+						DEBUG("Connected to APNS server\n");
+    
+						ssl = SSL_new( ctx );
+						if( ssl != NULL )
+						{
+							SSL_set_fd( ssl, sockfd );
+							if( SSL_connect( ssl ) != -1 )
+							{
+								if( encmsg != NULL )
+								{
+									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
+									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
+								}
+								else
+								{
+									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+								}
 			
-				int pushContentLen = 0;
-				if( extras != NULL && strlen( extras ) > 0 )
-				{
-					int extrasSize = strlen( extras ); 
-					char *encmsg = Base64Encode( (const unsigned char *)extras, extrasSize, &extrasSize );
-					if( encmsg != NULL )
-					{
-						//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
-						pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
-						FFree( encmsg );
-					}
-					else
-					{
-						FERROR("Cannot allocate memory for IOS Encoded message!\n");
-					}
-				}
-				else
-				{
-					//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-					pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-				}
-			
-				char *tok = TokenToBinary( startToken );
-				DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
-				if( tok != NULL )
-				{
-					if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
-					{
-						failedNumber++;
-					}
-					else
-					{
-						successNumber++;
-					}
-					FFree( tok );
-				}
+								char *tok = TokenToBinary( startToken );
+								DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
+								if( tok != NULL )
+								{
+									if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+									{
+										failedNumber++;
+									}
+									else
+									{
+										successNumber++;
+									}
+									FFree( tok );
+								}
+							} // SSL_connect
+							SSL_shutdown( ssl );
+							SSL_free( ssl );
+						} // SSLNew
+					} // connect
+					close( sockfd );
+				}	// sockfd == -1
 
 				startToken = curToken+1;
 			
@@ -1190,16 +1182,18 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			{
 				curToken++;
 			}
-		}
+		} // while, sending message
 		FFree( pushContent );
 	}
 	
 	DEBUG("Notifications sent: %d fail: %d\n", successNumber, failedNumber );
 	
-	SSL_shutdown(ssl);
-	SSL_free(ssl);
-	close(sockfd);
-	SSL_CTX_free(ctx);
+	SSL_CTX_free( ctx );
+	
+	if( encmsg != NULL )
+	{
+		FFree( encmsg );
+	}
 	
 	return 0;
 }
