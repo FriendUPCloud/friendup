@@ -666,6 +666,11 @@ Application.receiveMessage = function( msg )
 			for( var a in this.project.Files )
 			{
 				var fn = this.project.Files[a];
+				var ext = fn.Path.split( '.' ); ext = ext[ ext.length - 1 ];
+				ext = ext.toLowerCase();
+				// Skip images
+				if( ext == 'jpg' || ext == 'png' || ext == 'jpeg' || ext == 'bmp' || ext == 'gif' )
+					continue;
 				if( fn.Path.indexOf( ':' ) < 0 )
 				{
 					var f = {};
