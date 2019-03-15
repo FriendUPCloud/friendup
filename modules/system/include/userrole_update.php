@@ -124,6 +124,50 @@ if( $d->ID > 0 )
 		
 		die( 'fail<!--separate-->{"message":"Missing parameters.","response":-1}' );
 	}
+	else if( isset( $args->args->groupid ) )
+	{
+		// Built out support for setting group to a Role ...
+		// TODO: Review code and update documentation ...
+		
+		if( $args->args->groupid )
+		{
+			// Set user on role if data has activate value
+			
+			if( isset( $args->args->data ) && $args->args->data )
+			{
+				if( !$SqlDatabase->FetchObject( '
+					SELECT * FROM FGroupToGroup 
+					WHERE FromGroupID = \'' . $args->args->groupid . '\' AND ToGroupID = \'' . $d->ID . '\' 
+				' ) )
+				{
+					$SqlDatabase->query( '
+					INSERT INTO FGroupToGroup 
+						( FromGroupID, ToGroupID ) 
+						VALUES 
+						( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->groupid ) . '\', \'' . $d->ID . '\' )
+					' );
+				}
+			}
+			
+			// Remove group on role if data has no activate value
+			
+			else
+			{
+				$SqlDatabase->query( 'DELETE FROM FGroupToGroup WHERE FromGroupID=\'' . $args->args->groupid . '\' AND ToGroupID=\'' . $d->ID . '\'' );
+			}
+			
+			if( $namechange )
+			{
+				die( 'ok<!--separate-->{"message":"Workgroup on role updated. Role name changed.","response":7}' );
+			}
+			else
+			{
+				die( 'ok<!--separate-->{"message":"Workgroup on role updated.","response":6}' );
+			}
+		}
+		
+		die( 'fail<!--separate-->{"message":"Missing parameters.","response":-1}' );
+	}
 	else if( $namechange )
 	{
 		die( 'ok<!--separate-->{"message":"Role updated. Name changed.","response":1}' );

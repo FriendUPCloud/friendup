@@ -12,11 +12,11 @@
 
 global $SqlDatabase, $User;
 
-// TODO: Make support for role permissions ...
-
 if( $User->ID > 0 && isset( $args->args->applicationName ) && $args->args->applicationName )
 {
-	if( $rows = $SqlDatabase->FetchObjects( $q = '
+	// TODO: Fix support for user and group role at the same time ... A bug makes it not work atm ... have to fix when time allows for it.
+	
+	if( $rows = $SqlDatabase->FetchObjects( $q = /*'
 		SELECT 
 			p.*, 
 			ug.Name AS RoleName 
@@ -30,6 +30,33 @@ if( $User->ID > 0 && isset( $args->args->applicationName ) && $args->args->appli
 			AND ug.Type = "Role" 
 			And p.RoleID = ug.ID 
 			AND p.Key = "' . $args->args->applicationName . '" 
+		ORDER BY 
+			p.ID 
+	'*/'
+		SELECT 
+			p.*, 
+			ug.Name AS RoleName 
+		FROM 
+			FUserToGroup fug, 
+			FUserGroup ug, 
+			FUserRolePermission p 
+		WHERE 
+				fug.UserID = ' . $User->ID . ' 
+			AND 
+			(
+				(	
+					ug.ID = fug.UserGroupID 
+				)
+				OR
+				(
+					ug.ID = ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID )
+				) 
+			)
+			AND ug.Type = "Role" 
+			And p.RoleID = ug.ID 
+			AND p.Key = "' . $args->args->applicationName . '" 
+		GROUP BY 
+			p.ID 
 		ORDER BY 
 			p.ID 
 	' ) )
@@ -49,19 +76,8 @@ if( $User->ID > 0 && isset( $args->args->applicationName ) && $args->args->appli
 		die( 'ok<!--separate-->' . json_encode( $pem ) );
 	}
 	
-	die( 'fail' );
-	
-	// TODO: Check if this is ever going to be used, if not delete ...
-	
-	$app = new dbIO( 'FApplication' );
-	$app->UserID = $User->ID;
-	$app->Name = $args->args->applicationName;
-	if( $app->Load() )
-	{
-		die( 'ok<!--separate-->' . $app->Config );
-	}
 }
 
-die( 'fail' );
+die( 'fail ' . $q );
 
 ?>

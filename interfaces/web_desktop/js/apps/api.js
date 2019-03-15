@@ -5853,7 +5853,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 								
 								// TODO: remove this after debug process is complete
-								console.log( '[1] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: Application.applicationName } );
+								console.log( '[1] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: Application.applicationName, e:e, d:d } );
 								
 								runNow();
 							}
@@ -5906,7 +5906,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// TODO: remove this after debug process is complete
-									console.log( '[2] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: Application.applicationName } );
+									console.log( '[2] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: Application.applicationName, e:e, d:d } );
 									
 									runNow();
 								}

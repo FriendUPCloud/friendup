@@ -49,31 +49,36 @@ Sections.accounts_roles = function( cmd, extra )
 											{
 												if( roleperm[r].Permission == perm[i].Permissions[ii].split( 'App ' )[1].trim() )
 												{
-													console.log( perm[i] );
+													//console.log( perm[i] );
 													console.log( roleperm[r] );
 													
 													perm[i].Permissions[ii] = {
 														Permission  : perm[i].Permissions[ii].split( 'App ' )[1].trim(), 
 														Name        : perm[i].Permissions[ii].split( 'App ' )[1].trim(), 
 														Description : "", 
-														Data        : roleperm[r].Data
+														Data        : roleperm[r].Data, 
+														ID          : roleperm[r].ID 
 													};
+													
+													console.log( '[1]', perm[i].Permissions[ii] );
 												}
 											}
 										}
 										else if( typeof perm[i].Permissions[ii] == "object" )
 										{
-											if( perm[i].Permissions[ii].Name && perm[i].Permissions[ii].Permission )
+											if( typeof perm[i].Permissions[ii].Data == "undefined" && perm[i].Permissions[ii].Name && perm[i].Permissions[ii].Permission )
 											{
-												console.log( perm[i] );
+												//console.log( perm[i] );
 												console.log( roleperm[r] );
 												
 												perm[i].Permissions[ii].Data = roleperm[r].Data;
+												
+												console.log( '[2]', perm[i].Permissions[ii] );
 											}
 										}
 										else
 										{
-											console.log( perm[i].Permissions[ii] );
+											//console.log( perm[i].Permissions[ii] );
 										}
 									}
 								}
