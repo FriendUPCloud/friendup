@@ -238,7 +238,7 @@ typedef struct UMsg
 
 int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 {
-	DEBUG("Incoming notification request: <%*s>\n", (unsigned int)len, data);
+	Log( FLOG_INFO, "[NotificationSink] Incoming notification request: <%*s>\n", (unsigned int)len, data);
 
 	jsmn_parser parser;
 	jsmn_init( &parser );
