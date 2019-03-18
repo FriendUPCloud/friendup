@@ -1770,14 +1770,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							// if there is upload to not existing Downloads folder, FriendCore must create it
 							// https://app.yodiz.com/plan/pages/board.vz?cid=33486#/app/tk-1465
-							if( strncmp( tmpPath, "Home:Downloads/", 15 ) == 0 )
+							DEBUG("original path: %s\n", originalPath );
+							if( strncmp( originalPath, "Home:Downloads/", 15 ) == 0 )
 							{
 								BufString *bs = NULL;
 								DEBUG("User want to upload file into Home:Downloads\n");
 								bs = actFS->Info( actDev, tmpPath );
 								if( bs != NULL )
 								{
-									DEBUG("Got response from file system\n");
+									DEBUG("Got response from file system: %s response: %s\n", tmpPath, bs->bs_Buffer );
 									// seems directory do not exist, FriendCore must create it
 									if( strncmp( bs->bs_Buffer, "fail", 4 ) == 0 )
 									{
