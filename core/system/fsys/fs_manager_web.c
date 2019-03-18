@@ -1768,6 +1768,26 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								dstPath =  &tmpPath[ dpos + 1 ] ;
 							}
 							
+							// if there is upload to not existing Downloads folder, FriendCore must create it
+							// https://app.yodiz.com/plan/pages/board.vz?cid=33486#/app/tk-1465
+							if( strncmp( tmpPath, "Home:Downloads/", 15 ) == 0 )
+							{
+								BufString *bs = NULL;
+								DEBUG("User want to upload file into Home:Downloads\n");
+								bs = actFS->Info( actDev, tmpPath );
+								if( bs != NULL )
+								{
+									DEBUG("Got response from file system\n");
+									// seems directory do not exist, FriendCore must create it
+									if( strncmp( bs->bs_Buffer, "fail", 4 ) == 0 )
+									{
+										int err = actFS->MakeDir( actDev, "Downloads" );
+										DEBUG("Makedir called, response: %d\n", err );
+									}
+									BufStringDelete( bs );
+								}
+							}
+							
 							DEBUG( "[FSMWebRequest] Trying to save file %s (path: %s, devname: %s)\n", dstPath, path, devname );
 							
 							FBOOL have = FSManagerCheckAccess( l->sl_FSM, tmpPath, actDev->f_ID, loggedSession->us_User, "--W---" );
