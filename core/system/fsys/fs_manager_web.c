@@ -1775,7 +1775,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								BufString *bs = NULL;
 								DEBUG("User want to upload file into Home:Downloads\n");
-								bs = actFS->Info( actDev, tmpPath );
+								bs = actFS->Info( actDev, originalPath );
 								if( bs != NULL )
 								{
 									DEBUG("Got response from file system: %s response: %s\n", tmpPath, bs->bs_Buffer );
