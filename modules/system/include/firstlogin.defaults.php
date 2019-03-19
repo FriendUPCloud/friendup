@@ -165,6 +165,17 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f->Save();
 		}
 
+		$fdownloadfolder = new dbIO( 'FSFolder' );
+		$fdownloadfolder->FilesystemID = $o->ID;
+		$fdownloadfolder->UserID = $User->ID;
+		$fdownloadfolder->Name = 'Downloads';
+		if( !$fdownloadfolder->Load() )
+		{
+			$fdownloadfolder->DateCreated = date( 'Y-m-d H:i:s' );
+			$fdownloadfolder->DateModified = $f->DateCreated;
+			$fdownloadfolder->Save();
+		}
+
 		$f1 = new dbIO( 'FSFolder' );
 		$f1->FilesystemID = $o->ID;
 		$f1->UserID = $User->ID;
