@@ -62,7 +62,8 @@ function refreshSidebar()
 				icon: 'fa-info-circle'
 			},
 			'Users': {
-				icon: 'fa-user'
+				icon: 'fa-user',
+				permissions: [ 'CRUD_USER_GLOBAL', 'CRUD_USER_WORKGROUP' ]
 			},
 			'Workgroups': {
 				icon: 'fa-users'
@@ -111,6 +112,20 @@ function refreshSidebar()
 			var atag = document.createElement( 'a' );
 			atag.innerHTML = b;
 			ptag.appendChild( atag );
+			if( ch.permissions )
+			{
+				var access = false;
+				
+				for( var i in ch.permissions )
+				{
+					if( ch.permissions[i] && Application.checkAppPermission( ch.permissions[i] ) )
+					{
+						access = true;
+					}
+				}
+				
+				if( !access ) continue;
+			}
 			if( ch.icon )
 			{
 				atag.classList.add( 'IconSmall', ch.icon );
