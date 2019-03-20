@@ -5832,6 +5832,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Fetch application permissions
 						if( !Application.checkAppPermission )
 						{
+							var n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+							
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
 							{
@@ -5853,7 +5855,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 								
 								// TODO: remove this after debug process is complete
-								console.log( '[1] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: Application.applicationName, e:e, d:d } );
+								console.log( '[1] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : n ), e:e, d:d } );
 								
 								runNow();
 							}
@@ -5885,6 +5887,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Fetch application permissions
 							if( !Application.checkAppPermission )
 							{
+								var n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+								
 								var m = new Module( 'system' );
 								m.onExecuted = function( e, d )
 								{
@@ -5906,11 +5910,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// TODO: remove this after debug process is complete
-									console.log( '[2] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: Application.applicationName, e:e, d:d } );
+									console.log( '[2] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : n ), e:e, d:d } );
 									
 									runNow();
 								}
-								m.execute( 'getapppermissions', { applicationName: Application.applicationName } );
+								m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
 							}
 							else runNow();
 							
