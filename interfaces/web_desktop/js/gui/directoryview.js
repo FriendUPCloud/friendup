@@ -4659,7 +4659,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					} );
 					RefreshWindowGauge( self.win );
 					self.refreshTimeout = null;
-					win.refreshing = false;
+					self.win.refreshing = false;
 					if( callback ) callback();
 				} );
 			}, 250 );
