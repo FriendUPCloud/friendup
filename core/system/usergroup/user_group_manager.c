@@ -356,8 +356,16 @@ int UGMMountDrives( UserGroupManager *sm )
 		// While we have nice weather conditions
 		while( ug != NULL && sb->sl_UM && sb->sl_UM->um_APIUser )
 		{
+			char *error = NULL;
 			//UserGroupDeviceMount( l, sqllib, ug, NULL );
-			UserGroupDeviceMount( sb->sl_DeviceManager, sqllib, ug, sb->sl_UM->um_APIUser );
+			UserGroupDeviceMount( sb->sl_DeviceManager, sqllib, ug, sb->sl_UM->um_APIUser, &error );
+			
+			if( error != NULL )
+			{
+				Log( FLOG_ERROR, "UGMountDrives. Error: %s\n", error );
+				FFree( error );
+			}
+			
 			ug = (UserGroup *)ug->node.mln_Succ;
 		}
 		

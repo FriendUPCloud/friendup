@@ -243,10 +243,11 @@ int RescanDOSDrivers( DeviceManager *dm )
  * @param tl list to tagitems (table of attributes) like FSys_Mount_Mount, FSys_Mount_Name etc. For more details check systembase heder.
  * @param mfile pointer to pointer where new created door will be stored
  * @param usr pointer to user which call this function
+ * @param error pointer where error will be stored if any
  * @return success (0) or fail value (not equal to 0)
  */
 
-int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr )
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **error )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	char *path = NULL;
@@ -747,7 +748,7 @@ AND f.Name = '%s'",
 		
 		DEBUG( "[MountFS] Filesystem to mount now.\n" );
 	
-		retFile = filesys->Mount( filesys, tags, mountUser );
+		retFile = filesys->Mount( filesys, tags, mountUser, error );
 		
 		DEBUG( "[MountFS] Filesystem mounted. Pointer to returned device: %p.\n", retFile );
 		
@@ -866,7 +867,7 @@ AND f.Name = '%s'",
 							// Try to mount the device with all privileges
 							//DEBUG( "[MountFS] Doing it with session %s\n", retFile->f_SessionID );
 							File *dstFile = NULL;
-							if( MountFS( dm, tl, &dstFile, tmpUser ) != 0 )
+							if( MountFS( dm, tl, &dstFile, tmpUser, error ) != 0 )
 							{
 								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 							}
@@ -937,9 +938,10 @@ merror:
  * @param dm pointer to DeviceManager
  * @param tl list to tagitems (table of attributes) like FSys_Mount_Mount, FSys_Mount_Name etc. For more details check systembase heder.
  * @param mfile pointer to pointer where new created door will be stored
+ * @param error pointer where error will be stored if any
  * @return success (0) or fail value (not equal to 0)
  */
-int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile )
+int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **error )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
@@ -1056,7 +1058,7 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile )
 	
 		INFO("[MountFSNoUser] Localtype %s DDriverType %s\n", type, filedd->dd_Type );
 	
-		retFile = filesys->Mount( filesys, tl, NULL );
+		retFile = filesys->Mount( filesys, tl, NULL, error );
 	
 		if( retFile != NULL )
 		{
@@ -1587,10 +1589,11 @@ ug.UserID = '%ld' \
  * @param sqllib pointer to sql.library
  * @param uid user ID to which device is assigned
  * @param devname device name
+ * @param error pointer to place where error string will be stored
  * @return when device exist and its avaiable then pointer to it is returned
  */
 
-File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname )
+File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **error )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	File *device = NULL;
@@ -1651,7 +1654,7 @@ WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
 				{TAG_DONE, TAG_DONE}
 			};
 
-			int err = MountFS( dm, (struct TagItem *)&tags, &device, tuser );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, tuser, error );
 			if( err != 0 )
 			{
 				if( l->sl_Error == FSys_Error_DeviceAlreadyMounted )
@@ -1957,9 +1960,10 @@ int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser __
  * @param dm pointer to DeviceManager
  * @param u pointer to user which call this function
  * @param bs pointer to BufferString when results will be stored
+ * @param error pointer to place where error will be stored
  * @return success (0) or fail value (not equal to 0)
  */
-int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs )
+int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **error )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	FULONG *ids = FCalloc( 512, sizeof( FULONG ) );
@@ -2057,7 +2061,7 @@ ug.UserID = '%lu' \
 					
 							File *mountedDev = NULL;
 					
-							int mountError = MountFS( dm, (struct TagItem *)&tags, &mountedDev, u );
+							int mountError = MountFS( dm, (struct TagItem *)&tags, &mountedDev, u, error );
 					
 							if( bs != NULL )
 							{
@@ -2398,10 +2402,11 @@ File *GetRootDeviceByName( User *usr, char *devname )
  * @param sqllib pointer to sql.library
  * @param usrgrp pointer to usergroup to which doors belong
  * @param usr pointer to User. If user is not in FC list it will be added
+ * @param error pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr )
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **error )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	Log( FLOG_INFO,  "[UserGroupDeviceMount] Mount user device from Database\n");
@@ -2496,7 +2501,7 @@ usrgrp->ug_ID
 
 			File *device = NULL;
 			DEBUG("[UserGroupDeviceMount] Before mounting\n");
-			int err = MountFS( dm, (struct TagItem *)&tags, &device, usr );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, usr, error );
 
 			FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
 

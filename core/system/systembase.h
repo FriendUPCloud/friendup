@@ -497,7 +497,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail );
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err );
 
 //
 //

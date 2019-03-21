@@ -1618,8 +1618,14 @@ int SystemInitExternal( SystemBase *l )
 		User *tmpUser = l->sl_UM->um_Users;
 		while( tmpUser != NULL )
 		{
+			char *err = NULL;
 			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE );
+			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE, &err );
+			if( err != NULL )
+			{
+				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
+				FFree( err );
+			}
 			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
@@ -1955,10 +1961,11 @@ void CheckAndUpdateDB( struct SystemBase *l )
  * @param usr pointer to user to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
+ * @param error pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail )
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **error )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	
@@ -2034,15 +2041,18 @@ usr->u_ID , usr->u_ID, usr->u_ID
 
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr );
+			
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, error );
 
 			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
 				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
-				if( mount == 1 && unmountIfFail == TRUE )
+				if( mount == 1 && unmountIfFail == TRUE && err != FSys_Error_CustomError )
 				{
+					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
+					
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
 UPDATE Filesystem f SET `Mounted` = '0' \
 WHERE \

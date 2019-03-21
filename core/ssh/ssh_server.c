@@ -255,7 +255,12 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 				SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 				if( sqllib != NULL )
 				{
-					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE );
+					char *err = NULL;
+					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE, &err );
+					if( err != NULL )
+					{
+						FFree( err );
+					}
 					
 					sb->LibrarySQLDrop( sb, sqllib );
 				}

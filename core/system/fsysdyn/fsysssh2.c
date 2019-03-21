@@ -59,7 +59,7 @@
 
 #define h_addr h_addr_list[0]
 
-//int UnMount( struct FHandler *s, void *f, User *usr );
+//int UnMount( struct FHandler *s, void *f, User *usr, char **error  );
 
 //
 // Special SSH data
@@ -397,7 +397,7 @@ int UnMount( struct FHandler *s, void *f )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((unused)) )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((unused)), char **error )
 {
 	File *dev = NULL;
 	char *path = NULL;

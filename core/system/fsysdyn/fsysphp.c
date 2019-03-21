@@ -377,7 +377,7 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **error )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -535,9 +535,15 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 							if( dev->f_Path ) FFree( dev->f_Path );
 							FFree( sd );
 							FFree( dev );
+							
+							if( *error == NULL )
+							{
+								*error = StringDup( result->ls_Data );
+							}
 					
 							// Free up buffer
 							ListStringDelete( result );
+							
 							return NULL;
 						}
 					}
@@ -551,6 +557,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 						if( dev->f_Path ) FFree( dev->f_Path );
 						FFree( sd );
 						FFree( dev );
+						
+						if( *error == NULL )
+						{
+							*error = StringDup( "PHP returned empty string" );
+						}
 				
 						// Free up buffer
 						if( result ) ListStringDelete( result );

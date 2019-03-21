@@ -912,6 +912,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				
 				if( logusr != NULL && canChange == TRUE )
 				{
+					char *error = NULL;
 					DEBUG("[UMWebRequest] FC will do a change\n");
 					
 					GenerateUUID( &( logusr->u_UUID ) );
@@ -920,7 +921,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, groups );
 					
-					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL );
+					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+					if( error != NULL )
+					{
+						FFree( error );
+					}
 					
 					HttpAddTextContent( response, "ok<!--separate-->{ \"update\": \"success!\"}" );
 				}

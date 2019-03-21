@@ -67,19 +67,19 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
 //
 //
 
-int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr );
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **error );
 
 //
 //
 //
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr );
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **error );
 
 //
 //
 //
 
-int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile );
+int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **error );
 
 //
 //
@@ -97,7 +97,7 @@ int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount );
 //
 //
 
-File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname );
+File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **error );
 
 //
 //
@@ -127,7 +127,7 @@ int CheckAndMountWorkgroupDrive( DeviceManager *dm, char *type, User *usr, FUQUA
 //
 //
 
-int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs );
+int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **error );
 
 //
 //
