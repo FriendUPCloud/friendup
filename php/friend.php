@@ -167,6 +167,139 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 	return 'fail<!--separate-->{"Error":"Can not understand query."}';
 }
 
+function GetAppPermissions( $appName, $UserID = false )
+{
+	global $SqlDatabase, $User;
+	
+	$UserID = ( $UserID ? $UserID : $User->ID );
+	
+	if( $appName )
+	{
+		if( $rows = $SqlDatabase->FetchObjects( $q = /*'
+			SELECT 
+				p.*, 
+				ug.Name AS RoleName 
+			FROM 
+				FUserToGroup fug, 
+				FUserGroup ug, 
+				FUserRolePermission p 
+			WHERE 
+					fug.UserID = ' . $User->ID . ' 
+				AND	ug.ID = fug.UserGroupID 
+				AND ug.Type = "Role" 
+				And p.RoleID = ug.ID 
+				AND p.Key = "' . $args->args->applicationName . '" 
+			ORDER BY 
+				p.ID 
+		'*/'
+			SELECT 
+				p.*, 
+				ug.Name AS RoleName, 
+				ug2.ID AS GroupID, 
+				ug2.Type AS GroupType, 
+				ug2.Name AS GroupName 
+			FROM 
+				FUserToGroup fug,
+				FUserGroup ug, 
+				FUserGroup ug2, 
+				FUserRolePermission p 
+			WHERE 
+					fug.UserID = ' . $UserID . ' 
+				AND 
+				(
+					(	
+						ug.ID = fug.UserGroupID 
+					)
+					OR
+					(
+						ug.ID = ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID ) 
+					) 
+				)
+				AND ug.Type = "Role" 
+				AND ug2.ID = fug.UserGroupID 
+				And p.RoleID = ug.ID 
+				AND p.Key ' . ( strstr( $appName, '","' ) ? 'IN (' . $appName . ')' : '= "' . $appName . '"' ) . ' 
+			ORDER BY 
+				p.ID 
+		' ) )
+		{
+			$found = false;
+			
+			$pem = new stdClass();
+			
+			foreach( $rows as $v )
+			{
+				if( $v->Permission && $v->Data == 'Activated' )
+				{
+					$found = true;
+					
+					// TODO: Add some useful info here if needed ... { "id": 22, "name": "Read", "description": "" }
+				
+					$pem->{ $v->Permission } = $v;
+				}
+			}
+			
+			if( $found )
+			{
+				return $pem;
+			}
+		}
+		
+		// Get user level
+		if( $level = $SqlDatabase->FetchObject( '
+			SELECT g.Name FROM FUserGroup g, FUserToGroup ug
+			WHERE
+				g.Type = \'Level\' AND
+				ug.UserID=\'' . $UserID . '\' AND
+				ug.UserGroupID = g.ID
+		' ) )
+		{
+			// If User is SuperAdmin just return true
+			if( $level->Name == 'Admin' )
+			{
+				$pem = new stdClass();
+				$pem->{ 'SUPER_ADMIN' } = true;
+				
+				return $pem;
+			}
+		}
+	}
+	
+	return false;
+}
+
+function CheckAppPermission( $key, $appName )
+{
+	global $SqlDatabase, $User;
+	
+	$permissions = GetAppPermissions( $appName );
+	
+	if( isset( $permissions->{ $key } ) && $permissions->{ $key } )
+	{
+		return $permissions->{ $key };
+	}
+	else
+	{
+		// Get user level
+		if( $level = $SqlDatabase->FetchObject( '
+			SELECT g.Name FROM FUserGroup g, FUserToGroup ug
+			WHERE
+				g.Type = \'Level\' AND
+				ug.UserID=\'' . $User->ID . '\' AND
+				ug.UserGroupID = g.ID
+		' ) )
+		{
+			// If User is SuperAdmin just return true
+			if( $level->Name == 'Admin' )
+			{
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
 // Find apps and search path..
 function FindAppInSearchPaths( $app )
 {
