@@ -209,6 +209,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			if ( ppath.indexOf( ':' ) < 0 )
 				ppath += ':';
 
+			// Real click or entering target path
 			var doClick = ( ppath == self.flags.path ) || ( e && e.button >= 0 );
 
 			if( type == 'File' )
