@@ -209,6 +209,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			if ( ppath.indexOf( ':' ) < 0 )
 				ppath += ':';
 
+			var doClick = ( ppath == self.flags.path ) || ( e && e.button >= 0 );
+
 			if( type == 'File' )
 			{
 				var eles = self.dom.getElementsByTagName( 'div' );
@@ -254,12 +256,19 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					var subitems = ele.getElementsByClassName( 'SubItems' );
 					if( subitems.length )
 					{
-						self.refresh( ppath, subitems[0], callback, depth );
+						// Only refresh at final destination
+						if( doClick )
+						{
+							self.refresh( ppath, subitems[0], callback, depth );
+						}
 						this.classList.add( 'Open' );
 						if( self.callbacks && self.callbacks.folderOpen )
 						{
-							self.callbacks.folderOpen( ppath, e, self.tempFlags );
-							cancelBubble( e );
+							if( doClick)
+							{
+								self.callbacks.folderOpen( ppath, e, self.tempFlags );
+								cancelBubble( e );
+							}
 						}
 						var nam = ele.getElementsByClassName( 'Name' );
 						if( nam.length )
@@ -277,8 +286,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nam[0].classList.remove( 'Open' );
 						if( self.callbacks && self.callbacks.folderClose )
 						{
-							self.callbacks.folderClose( ppath, e, self.tempFlags );
-							cancelBubble( e );
+							if( doClick )
+							{
+								self.callbacks.folderClose( ppath, e, self.tempFlags );
+								cancelBubble( e );
+							}
 						}
 					}
 				}
@@ -361,6 +373,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	{
 		var func = function( flags, cb )
 		{
+			// For Workspace scope
 			if( window.Workspace )
 			{
 				Friend.DOS.getDisks( flags, function( response, msg )
@@ -370,11 +383,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					} : false );
 				} );
 			}
+			// For application scope
 			else
 			{
 				Friend.DOS.getDisks( flags, cb );
 			}
 		}
+		// Check from off mountlist
 		func( { sort: true }, function( msg )
 		{	
 			if( !msg || !msg.list ) return;
@@ -400,12 +415,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
 							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
+							
 							// Don't add twice
 							if( !found.find( function( ele ){ ele == msg.list[b].Title } ) )
 							{
-								found.push( msg.list[b].Title );
-								foundElements.push( eles[a] );
-								foundStructures.push( msg.list[ b ] );
+								found.push( msg.list[b].Title ); // Found item titles
+								foundElements.push( eles[a] ); // Found dom nodes
+								foundStructures.push( msg.list[ b ] ); // Found dos structures
 							}
 							elFound = true;
 						}
@@ -428,6 +444,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Iterate through the resulting list
 				for( var a = 0; a < msg.list.length; a++ )
 				{
+					// Skip system drive
 					if( msg.list[a].Volume == 'System:' ) continue;
 					
 					// Add the bookmark header if it doesn't exist
@@ -451,6 +468,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							break;
 						}
 					}
+					
+					// Didn't already exist, make it
 					if( !foundItem )
 					{
 						var d = document.createElement( 'div' );
@@ -490,6 +509,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						}
 						
 						d.appendChild( nm );
+						
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
 							// Set nice folder icon
@@ -525,6 +545,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								nm.appendChild( ex );
 							} )( msg.list[a] );
 						}
+						
 						var s = document.createElement( 'div' );
 						s.className = 'SubItems';
 						d.appendChild( s );
@@ -543,6 +564,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								self.refresh( msg.list[a].Volume, s[0], false, depth + 1 );
 							}
 						}
+						
 						if( !clickElement && self.flags.path && targetPath == foundItem.path )
 						{
 							clickElement = foundItem;
