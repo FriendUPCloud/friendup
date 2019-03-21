@@ -75,7 +75,7 @@ typedef struct FHandler
 	char                    *(*GetSuffix)();
 	char                    *(*GetPrefix)();
 	
-	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti, User *us );
+	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti, User *us, char **error );
 	int                     (*UnMount)( struct FHandler *s, void *f, User *usr );
 	int                     (*Release)( struct FHandler *s, void *f );
 

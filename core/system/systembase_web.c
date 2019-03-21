@@ -69,7 +69,7 @@
 //
 //
 
-extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail );
+extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err );
 
 
 /**
@@ -966,7 +966,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							
 							DEBUG("New user and session added\n");
 							
-							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE );
+							char *err = NULL;
+							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err );
+							if( err != NULL )
+							{
+								Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
+								FFree( err );
+							}
 							
 							DEBUG("Devices mounted\n");
 							userAdded = TRUE;
@@ -1297,7 +1303,13 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								loggedSession->us_MobileAppID = umaID;
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 
-								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE );
+								char *err = NULL;
+								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err );
+								if( err != NULL )
+								{
+									Log( FLOG_ERROR, "Login1 mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
+									FFree( err );
+								}
 
 								userAdded = TRUE;
 								l->LibrarySQLDrop( l, sqlLib );
