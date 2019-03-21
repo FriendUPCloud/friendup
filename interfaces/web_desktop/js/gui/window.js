@@ -4807,10 +4807,73 @@ var View = function( args )
 		d.setAttribute( 'playinline', 'playinline' );
 		d.className = 'FriendCameraElement';
 		
+		
+		var currentType = 0;
+		var types = [ 'environment', 'user' ];
+		
+		d.ontouchstart = function( e )
+		{
+			this.offX = e.touches[0].clientX;
+			this.timeStamp = ( new Date() ).getTime();
+		}
+		
+		d.ontouchend = function( e )
+		{
+			var diff = e.changedTouches[0].clientX - this.offX;
+			var difftime = ( new Date() ).getTime() - this.timeStamp;
+			if( difftime > 200 )
+			{
+				return;
+			}
+			// Swipe right
+			if( diff < 127 )
+			{
+				currentType--;
+				if( currentType < 0 )
+					currentType = types.length - 1;
+				setCameraMode();
+			}
+			// Swipe left
+			else if( diff > 127 )
+			{
+				currentType++;
+				if( currentType > types.length - 1 )
+					currentType = 0;
+				setCameraMode();
+			}
+			
+		}
+		
 		var v = document.createElement( 'div' );
 		v.className = 'FriendCameraContainer';
 		v.camera = v;
 		v.appendChild( d );
+		
+		function setCameraMode()
+		{
+			var constraints = {
+				video: {
+					facingMode: types[ currentType ]
+				}
+			};
+			navigator.gm( 
+				constraints, 
+				function( localMediaStream )
+				{
+					if( d && d.srcObject )
+					{
+						d.srcObject.getTracks().forEach( track => track.stop() );
+						d.srcObject = null;
+					}
+					d.srcObject = localMediaStream;
+				},
+				function( err )
+				{
+					console.log( 'Error: ', err );
+					return;
+				}
+			);
+		}
 		
 		// Add to content
 		this.content.appendChild( v );
