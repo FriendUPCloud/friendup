@@ -8029,17 +8029,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				dl.addVar( 'status', 0 );
 				dl.onExecuted = function(e,d)
 				{
-					console.log( 'Cancelled closing websocket.' );
 					clearTimeout( setwsstate );
-					//mobileDebug( 'setwsstate active: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
-				console.log( 'Also checking ws state' );
 			}
 		}
 		else
 		{
 			document.body.classList.remove( 'ViewStateActive' );
+			document.body.classList.remove( 'Activating' );
 			if( isMobile )
 			{
 				var dl = new FriendLibrary( 'system.library' );

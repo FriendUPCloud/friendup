@@ -1370,10 +1370,14 @@ Application.newDocument = function( args )
 			command: 'newdocument'
 		} );
 		
-		Application.editor.setData( '', function()
+		// TODO: Check why we have no editor
+		if( Application.editor )
 		{
-			Application.initializeBody();
-		} );
+			Application.editor.setData( '', function()
+			{
+				Application.initializeBody();
+			} );
+		}
 		
 		if( args.browserPath )
 		{

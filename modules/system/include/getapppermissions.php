@@ -35,10 +35,14 @@ if( $User->ID > 0 && isset( $args->args->applicationName ) && $args->args->appli
 	'*/'
 		SELECT 
 			p.*, 
-			ug.Name AS RoleName 
+			ug.Name AS RoleName, 
+			ug2.ID AS GroupID, 
+			ug2.Type AS GroupType, 
+			ug2.Name AS GroupName 
 		FROM 
-			FUserToGroup fug, 
+			FUserToGroup fug,
 			FUserGroup ug, 
+			FUserGroup ug2, 
 			FUserRolePermission p 
 		WHERE 
 				fug.UserID = ' . $User->ID . ' 
@@ -49,14 +53,13 @@ if( $User->ID > 0 && isset( $args->args->applicationName ) && $args->args->appli
 				)
 				OR
 				(
-					ug.ID = ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID )
+					ug.ID = ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID ) 
 				) 
 			)
 			AND ug.Type = "Role" 
+			AND ug2.ID = fug.UserGroupID 
 			And p.RoleID = ug.ID 
 			AND p.Key = "' . $args->args->applicationName . '" 
-		GROUP BY 
-			p.ID 
 		ORDER BY 
 			p.ID 
 	' ) )
@@ -69,7 +72,9 @@ if( $User->ID > 0 && isset( $args->args->applicationName ) && $args->args->appli
 			{
 				// TODO: Add some useful info here if needed ... { "id": 22, "name": "Read", "description": "" }
 				
-				$pem->{ $v->Permission } = new stdClass;
+				
+				
+				$pem->{ $v->Permission } = $v;
 			}
 		}
 		
