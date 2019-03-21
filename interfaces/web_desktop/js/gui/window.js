@@ -4852,9 +4852,7 @@ var View = function( args )
 		function setCameraMode()
 		{
 			var constraints = {
-				video: {
-					facingMode: { exact: types[ currentType ] }
-				}
+				facingMode: { exact: types[ currentType ] }
 			};
 			navigator.gm( 
 				constraints, 
