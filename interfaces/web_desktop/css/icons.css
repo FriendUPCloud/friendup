@@ -73,7 +73,7 @@
 
 .Active > .FileBrowserItemImage
 {
-	filter: brightness(100);
+	filter: invert(1);
 }
 
 .FileBrowser div.Name.Active, 

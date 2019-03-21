@@ -134,7 +134,11 @@ function refreshSidebar()
 				{
 					ele.onclick = function()
 					{
-						setGUISection( module, sect );
+						// Update latest changes to permissions before showing page ...
+						Application.checkAppPermission( false, function()
+						{
+							setGUISection( module, sect );
+						} );
 					}
 				} )( a, b, atag );
 			}

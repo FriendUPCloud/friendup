@@ -397,191 +397,185 @@ Sections.accounts_users = function( cmd, extra )
 		
 		var groups = Application.checkAppPermission( 'CRUD_USER_WORKGROUP' );
 		
-		if( groups )
+		var f = new Library( 'system.library' );
+		f.onExecuted = function( ee, dd )
 		{
-			if( groups.GroupID && groups.GroupType )
+			console.log( { e:ee, d:dd } );
+			
+			var data = false;
+			
+			if( ee == 'ok' )
 			{
-				var f = new Library( 'system.library' );
-				f.onExecuted = function( ee, dd )
+				try
 				{
-					console.log( { e:ee, d:dd } );
+					data = JSON.parse( dd );
 					
-					var data = false;
-					
-					if( ee == 'ok' )
+					if( data.users )
 					{
-						try
+						for( var i in data.users )
 						{
-							data = JSON.parse( dd );
-							
-							if( data.users )
+							if( data.users[i] && data.users[i].id )
 							{
-								for( var i in data.users )
-								{
-									if( data.users[i] && data.users[i].id )
-									{
-										uids[ data.users[i].id ] = data.users[i];
-									}
-								}
+								uids[ data.users[i].id ] = data.users[i];
 							}
 						}
-						catch( e ) {  }
 					}
-					
-					
-					// Get the user list
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+				}
+				catch( e ) {  }
+			}
+			
+			
+			// Get the user list
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e != 'ok' ) return;
+				var userList = null;
+	
+				console.log( JSON.parse( d ) );
+	
+				if( Application.checkAppPermission( 'CRUD_USER_GLOBAL' ) )
+				{
+					try
 					{
-						if( e != 'ok' ) return;
-						var userList = null;
-			
-						console.log( JSON.parse( d ) );
-			
-						if( Application.checkAppPermission( 'CRUD_USER_GLOBAL' ) )
+						userList = JSON.parse( d );
+					}
+					catch( e )
+					{
+						return;
+					}
+				}
+				else if( Application.checkAppPermission( 'CRUD_USER_WORKGROUP' ) )
+				{
+					try
+					{
+						userList = [];
+						
+						var ulist = JSON.parse( d );
+						
+						if( ulist )
 						{
-							try
+							for( var ii in ulist )
 							{
-								userList = JSON.parse( d );
-							}
-							catch( e )
-							{
-								return;
-							}
-						}
-						else if( Application.checkAppPermission( 'CRUD_USER_WORKGROUP' ) )
-						{
-							try
-							{
-								userList = [];
-								
-								var ulist = JSON.parse( d );
-								
-								if( ulist )
+								if( ulist[ii] && ulist[ii].ID )
 								{
-									for( var ii in ulist )
+									if( uids[ ulist[ii].ID ] )
 									{
-										if( ulist[ii] && ulist[ii].ID )
-										{
-											if( uids[ ulist[ii].ID ] )
-											{
-												userList.push( ulist[ii] );
-											}
-										}
+										userList.push( ulist[ii] );
 									}
 								}
-								
-								console.log( { uids: uids, ulist: ulist } );
-								
-								
-							}
-							catch( e )
-							{
-								return;
 							}
 						}
-						else
-						{
-							userList = [];
-						}
+						
+						console.log( { uids: uids, ulist: ulist } );
 						
 						
-						
-						var o = ge( 'UserList' );
-						o.innerHTML = '';
+					}
+					catch( e )
+					{
+						return;
+					}
+				}
+				else
+				{
+					userList = [];
+				}
+				
+				
+				
+				var o = ge( 'UserList' );
+				o.innerHTML = '';
+
+				// Types of listed fields
+				var types = {
+					Edit: '10',
+					FullName: '30',
+					Name: '30',
+					Level: '30'
+				};
+
+
+				// List by level
+				var levels = [ 'Admin', 'User', 'Guest', 'API' ];
+
+				// List headers
+				var header = document.createElement( 'div' );
+				header.className = 'List';
+				var headRow = document.createElement( 'div' );
+				headRow.className = 'HRow sw1';
+				for( var z in types )
+				{
+					var borders = '';
+					var d = document.createElement( 'div' );
+					if( z != 'Edit' )
+						borders += ' BorderRight';
+					if( a < userList.length - a )
+						borders += ' BorderBottom';
+					var d = document.createElement( 'div' );
+					d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
+					d.innerHTML = '<strong>' + z + '</strong>';
+					headRow.appendChild( d );
+				}
+				header.appendChild( headRow );
+				o.appendChild( header );
+
+				function setROnclick( r, uid )
+				{
+					r.onclick = function()
+					{
+						Sections.accounts_users( 'edit', uid );
+					}
+				}
+
+				var list = document.createElement( 'div' );
+				list.className = 'List';
+				var sw = 2;
+				for( var b = 0; b < levels.length; b++ )
+				{
+					for( var a = 0; a < userList.length; a++ )
+					{
+						// Skip irrelevant level
+						if( userList[ a ].Level != levels[ b ] ) continue;
 		
-						// Types of listed fields
-						var types = {
-							Edit: '10',
-							FullName: '30',
-							Name: '30',
-							Level: '30'
-						};
-		
-		
-						// List by level
-						var levels = [ 'Admin', 'User', 'Guest', 'API' ];
-		
-						// List headers
-						var header = document.createElement( 'div' );
-						header.className = 'List';
-						var headRow = document.createElement( 'div' );
-						headRow.className = 'HRow sw1';
+						sw = sw == 2 ? 1 : 2;
+						var r = document.createElement( 'div' );
+						setROnclick( r, userList[ a ].ID );
+						r.className = 'HRow sw' + sw;
+	
+						var icon = '<span class="IconSmall fa-user"></span>';
+						userList[ a ][ 'Edit' ] = icon;
+	
 						for( var z in types )
 						{
 							var borders = '';
 							var d = document.createElement( 'div' );
 							if( z != 'Edit' )
+							{
+								d.className = '';
 								borders += ' BorderRight';
+							}
+							else d.className = 'TextCenter';
 							if( a < userList.length - a )
 								borders += ' BorderBottom';
-							var d = document.createElement( 'div' );
-							d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-							d.innerHTML = '<strong>' + z + '</strong>';
-							headRow.appendChild( d );
+							d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
+							d.innerHTML = userList[a][ z ];
+							r.appendChild( d );
 						}
-						header.appendChild( headRow );
-						o.appendChild( header );
-		
-						function setROnclick( r, uid )
-						{
-							r.onclick = function()
-							{
-								Sections.accounts_users( 'edit', uid );
-							}
-						}
-		
-						var list = document.createElement( 'div' );
-						list.className = 'List';
-						var sw = 2;
-						for( var b = 0; b < levels.length; b++ )
-						{
-							for( var a = 0; a < userList.length; a++ )
-							{
-								// Skip irrelevant level
-								if( userList[ a ].Level != levels[ b ] ) continue;
-				
-								sw = sw == 2 ? 1 : 2;
-								var r = document.createElement( 'div' );
-								setROnclick( r, userList[ a ].ID );
-								r.className = 'HRow sw' + sw;
-			
-								var icon = '<span class="IconSmall fa-user"></span>';
-								userList[ a ][ 'Edit' ] = icon;
-			
-								for( var z in types )
-								{
-									var borders = '';
-									var d = document.createElement( 'div' );
-									if( z != 'Edit' )
-									{
-										d.className = '';
-										borders += ' BorderRight';
-									}
-									else d.className = 'TextCenter';
-									if( a < userList.length - a )
-										borders += ' BorderBottom';
-									d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
-									d.innerHTML = userList[a][ z ];
-									r.appendChild( d );
-								}
-			
-								// Add row
-								list.appendChild( r );
-							}
-						}
-						o.appendChild( list );
-		
-						Friend.responsive.pageActive = ge( 'UserList' );
-						Friend.responsive.reinit();
+	
+						// Add row
+						list.appendChild( r );
 					}
-					m.execute( 'listusers' );
-					
 				}
-				f.execute( 'group', { command: 'listdetails', id: ( ( groups.GroupType == 'Workgroup' && groups.GroupID ) ? groups.GroupID : null ) } );
+				o.appendChild( list );
+
+				Friend.responsive.pageActive = ge( 'UserList' );
+				Friend.responsive.reinit();
 			}
+			m.execute( 'listusers' );
+			
 		}
-		
+		f.execute( 'group', { command: 'listdetails', id: ( ( groups && groups.GroupType == 'Workgroup' && groups.GroupID ) ? groups.GroupID : null ) } );
+			
 		
 	}
 	else
