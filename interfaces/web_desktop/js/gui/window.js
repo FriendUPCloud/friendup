@@ -4852,7 +4852,9 @@ var View = function( args )
 		function setCameraMode()
 		{
 			var constraints = {
-				facingMode: { exact: types[ currentType ] }
+				video: {
+					facingMode: { exact: types[ currentType ] }
+				}
 			};
 			navigator.gm( 
 				constraints, 
@@ -4864,6 +4866,7 @@ var View = function( args )
 						d.srcObject = null;
 					}
 					d.srcObject = localMediaStream;
+					console.log( 'Got media steam.' );
 				},
 				function( err )
 				{
