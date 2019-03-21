@@ -4853,7 +4853,7 @@ var View = function( args )
 		{
 			var constraints = {
 				video: {
-					facingMode: { exact: types[ currentType ] }
+					mandatory: { facingMode: types[ currentType ] }
 				}
 			};
 			navigator.gm( 
