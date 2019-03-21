@@ -209,7 +209,7 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 	}
 	*/
-	DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
+	//DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
 	
 	return result;
 }

@@ -5838,11 +5838,47 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							m.onExecuted = function( e, d )
 							{
 								var permissions = {};
-								Application.checkAppPermission = function( key )
+								
+								Application.checkAppPermission = function( key, callback )
 								{
-									if( permissions[ key ] )
-										return permissions[ key ];
-									return false;
+									if( key && !callback )
+									{
+										if( permissions[ key ] )
+										{
+											return permissions[ key ];
+										}
+										return false;
+									}
+									else
+									{
+										var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+										
+										var mm = new Module( 'system' );
+										mm.onExecuted = function( ee, dd )
+										{
+											if( ee == 'ok' )
+											{
+												try
+												{
+													permissions = JSON.parse( dd );
+												}
+												catch( e ) {  }
+											}
+											
+											// TODO: remove this after debug process is complete
+											console.log( '[3] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : nn ), e:ee, d:dd } );
+											
+											if( callback )
+											{
+												if( permissions[ key ] )
+												{
+													return callback( permissions[ key ] );
+												}
+												return callback( false );
+											}
+										}
+										mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+									}
 								}
 								
 								if( e == 'ok' )
@@ -5859,7 +5895,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 								runNow();
 							}
-							m.execute( 'getapppermissions', { applicationName: Application.applicationName } );
+							m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
 						}
 						else runNow();
 						
@@ -5893,11 +5929,47 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								m.onExecuted = function( e, d )
 								{
 									var permissions = {};
-									Application.checkAppPermission = function( key )
+									
+									Application.checkAppPermission = function( key, callback )
 									{
-										if( permissions[ key ] )
-											return permissions[ key ];
-										return false;
+										if( key && !callback )
+										{
+											if( permissions[ key ] )
+											{
+												return permissions[ key ];
+											}
+											return false;
+										}
+										else
+										{
+											var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+											
+											var mm = new Module( 'system' );
+											mm.onExecuted = function( ee, dd )
+											{
+												if( ee == 'ok' )
+												{
+													try
+													{
+														permissions = JSON.parse( dd );
+													}
+													catch( e ) {  }
+												}
+												
+												// TODO: remove this after debug process is complete
+												console.log( '[4] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : nn ), e:ee, d:dd } );
+												
+												if( callback )
+												{
+													if( permissions[ key ] )
+													{
+														return callback( permissions[ key ] );
+													}
+													return callback( false );
+												}
+											}
+											mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+										}
 									}
 									
 									if( e == 'ok' )
