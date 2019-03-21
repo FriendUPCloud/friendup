@@ -39,6 +39,8 @@ if( $level = $SqlDatabase->FetchObject( '
 		ug.UserGroupID = g.ID
 ' ) )
 {
+	
+	
 	$level = $level->Name;
 }
 else $level = false;
@@ -1481,8 +1483,64 @@ if( isset( $args->command ) )
 		// TODO: Permissions!!! Only list out when you have users below your
 		//                      level, unless you are Admin
 		case 'listusers':
-			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"list users failed Error 1"}' );
-
+			
+			$permission = false;
+			
+			// TODO: Make this permissions handling more general for the whole system at some point, and beautify it.
+			
+			if( $pobj = CheckAppPermission( 'CRUD_USER_WORKGROUP', 'Admin' ) )
+			{
+				if( $pobj->GroupID )
+				{
+					if( $uds = $SqlDatabase->FetchObjects( '
+						SELECT 
+							ug.UserID, g.Name AS Workgroup 
+						FROM 
+							`FUserGroup` g, 
+							`FUserToGroup` ug 
+						WHERE 
+								g.ID IN (' . $pobj->GroupID . ') 
+							AND g.Type = "Workgroup" 
+							AND ug.UserGroupID = g.ID 
+						ORDER BY 
+							ug.UserID ASC 
+					' ) )
+					{
+						$uids = '';
+						
+						foreach( $uds as $v )
+						{
+							$uids = ( $uids ? ( $uids . ',' ) : '' ) . $v->UserID;
+						}
+						
+						// UserID's in the Workgroups this user has access to ...
+						
+						if( $args->args == false || $args->args == 'false' )
+						{
+							$args->args = new stdClass();
+						}
+						
+						$args->args->userid = $uids;
+						
+						if( $args->args->userid )
+						{
+							$permission = 'Workgroup';
+						}
+					}
+				}
+			}
+			else if( $pobj = CheckAppPermission( 'CRUD_USER_GLOBAL', 'Admin' ) )
+			{
+				$permission = 'Global';
+			}
+			
+			
+			
+			if( !$permission && $level != 'Admin' )
+			{
+				die('fail<!--separate-->{"response":"list users failed Error 1"}' );
+			}
+			
 			if( $users = $SqlDatabase->FetchObjects( '
 				SELECT u.*, g.Name AS `Level` FROM 
 					`FUser` u, `FUserGroup` g, `FUserToGroup` ug 

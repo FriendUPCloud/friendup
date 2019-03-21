@@ -5847,6 +5847,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										{
 											return permissions[ key ];
 										}
+										else if( permissions[ 'SUPER_ADMIN' ] )
+										{
+											return permissions[ 'SUPER_ADMIN' ];
+										}
 										return false;
 									}
 									else
@@ -5866,13 +5870,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											}
 											
 											// TODO: remove this after debug process is complete
-											console.log( '[3] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : nn ), e:ee, d:dd } );
+											//console.log( '[3] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : nn ), e:ee, d:dd } );
 											
 											if( callback )
 											{
 												if( permissions[ key ] )
 												{
 													return callback( permissions[ key ] );
+												}
+												else if( permissions[ 'SUPER_ADMIN' ] )
+												{
+													return callback( permissions[ 'SUPER_ADMIN' ] );
 												}
 												return callback( false );
 											}
@@ -5938,6 +5946,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											{
 												return permissions[ key ];
 											}
+											else if( permissions[ 'SUPER_ADMIN' ] )
+											{
+												return permissions[ 'SUPER_ADMIN' ];
+											}
 											return false;
 										}
 										else
@@ -5957,13 +5969,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												}
 												
 												// TODO: remove this after debug process is complete
-												console.log( '[4] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : nn ), e:ee, d:dd } );
+												//console.log( '[4] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : nn ), e:ee, d:dd } );
 												
 												if( callback )
 												{
 													if( permissions[ key ] )
 													{
 														return callback( permissions[ key ] );
+													}
+													else if( permissions[ 'SUPER_ADMIN' ] )
+													{
+														return callback( permissions[ 'SUPER_ADMIN' ] );
 													}
 													return callback( false );
 												}
@@ -5982,7 +5998,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// TODO: remove this after debug process is complete
-									console.log( '[2] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : n ), e:e, d:d } );
+									//console.log( '[2] Application.checkAppPermission( key ) ', { permissions: permissions, applicationName: ( Application.applicationName ? Application.applicationName : n ), e:e, d:d } );
 									
 									runNow();
 								}

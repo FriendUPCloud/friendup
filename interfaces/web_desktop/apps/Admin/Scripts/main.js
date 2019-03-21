@@ -32,44 +32,54 @@ function refreshSidebar()
 	Application.mods = {
 		'Server': {
 			'Status': {
-				icon: 'fa-info-circle'
+				icon: 'fa-info-circle',
+				permissions: [ 'SUPER_ADMIN' ]
 			},
 			'Configuration': {
-				icon: 'fa-gear'
+				icon: 'fa-gear',
+				permissions: [ 'SUPER_ADMIN' ]
 			},
 			'Certificates': {
-				icon: 'fa-certificate'
+				icon: 'fa-certificate',
+				permissions: [ 'SUPER_ADMIN' ]
 			},
 			'Backup': {
-				icon: 'fa-cloud-download'
+				icon: 'fa-cloud-download',
+				permissions: [ 'SUPER_ADMIN' ]
 			},
 			'Logs': {
-				icon: 'fa-list-alt'
+				icon: 'fa-list-alt',
+				permissions: [ 'SUPER_ADMIN' ]
 			}
 		},
 		'Services': {
 			'Status': {
-				icon: 'fa-info-circle'
+				icon: 'fa-info-circle',
+				permissions: [ 'SUPER_ADMIN' ]
 			}
 		},
 		'Applications': {
 			'Status': {
-				icon: 'fa-info-circle'
+				icon: 'fa-info-circle',
+				permissions: [ 'SUPER_ADMIN' ]
 			}
 		},
 		'Accounts': {
 			'Status': {
-				icon: 'fa-info-circle'
+				icon: 'fa-info-circle',
+				permissions: [ 'SUPER_ADMIN' ]
 			},
 			'Users': {
 				icon: 'fa-user',
 				permissions: [ 'CRUD_USER_GLOBAL', 'CRUD_USER_WORKGROUP' ]
 			},
 			'Workgroups': {
-				icon: 'fa-users'
+				icon: 'fa-users',
+				permissions: [ 'SUPER_ADMIN' ]
 			},
 			'Roles': {
-				icon: 'fa-user-secret'
+				icon: 'fa-user-secret',
+				permissions: [ 'SUPER_ADMIN' ]
 			}
 		}
 	};
