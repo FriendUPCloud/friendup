@@ -4866,7 +4866,7 @@ var View = function( args )
 						d.srcObject = null;
 					}
 					d.srcObject = localMediaStream;
-					console.log( 'Got media steam.' );
+					console.log( 'Got media steam: ' + types[ currentType ] );
 				},
 				function( err )
 				{
