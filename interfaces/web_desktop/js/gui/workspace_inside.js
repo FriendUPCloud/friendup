@@ -8036,16 +8036,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Tell all windows
 			if( window.friendApp )
 			{
+				var appsNotified = {};
 				for( var a in movableWindows )
 				{
 					var win = movableWindows[ a ];
 					if( win.applicationId )
 					{
+						// Notify window
 						win.windowObject.sendMessage( {
 							type: 'notify',
 							method: 'wakeup',
 							value: 'active'
 						} );
+						// Notify application too
+						if( !appsNotified[ win.applicationId ] )
+						{
+							for( var b = 0; b < Workspace.applications.length; b++ )
+							{
+								if( Workspace.applications[ b ].applicationId == win.applicationId )
+								{
+									Workspace.applications[ b ].sendMessage( {
+										type: 'notify',
+										method: 'wakeup',
+										value: 'active'
+									} );
+									appsNotified[ win.applicationId ] = true;
+									break;
+								}
+							}
+						}
 					}
 				}
 			}
