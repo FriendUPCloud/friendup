@@ -1,5 +1,5 @@
 i18n_configuration_details         : Konfigurasjonsdetaljer
-i18n_host                          : Vertsnavn
+i18n_hostname                      : Vertsnavn
 i18n_port                          : Port
 i18n_host                          : Server
 i18n_notes                         : Notater
@@ -7,7 +7,5 @@ i18n_your_notes                    : Dine notater
 i18n_connection_details            : Tilkoblingsdetaljer
 i18n_username                      : Brukernavn/Arbeidsgruppe
 i18n_password                      : Passord
-i18n_private_key                   : Privat nøkkel
-i18n_server_id                     : Server ID
 
-i18n_connection_description        : The SSH File Transfer Protocol (<strong>SFTP</strong>)is a network protocol that provides file access, file transfer, and file management over any reliable data stream.
+i18n_connection_description        : Samba is a free software re-implementation of the SMB networking protocol. Samba provides file and print services for various Microsoft Windows clients.

@@ -1,6 +1,6 @@
 i18n_IMAP : IMAP Disk
 
-i18n_connection_details            : Connection details
+i18n_configuration_details         : Configuration Details
 i18n_hostname                      : Hostname
 i18n_port                          : Port
 i18n_host                          : Host
@@ -9,3 +9,7 @@ i18n_your_notes                    : Your notes
 i18n_connection_details            : Connection details
 i18n_username                      : Username
 i18n_password                      : Password
+
+i18n_connection_description        : The Internet Message Access Protocol (<strong>IMAP</strong>) is an Internet standard protocol used by email clients to retrieve email messages from a mail server over a TCP/IP connection.
+
+

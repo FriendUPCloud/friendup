@@ -1,5 +1,3 @@
-i18n_IMAP : IMAP Disk
-
 i18n_configuration_details         : Szczegó?y konfiguracji
 i18n_hostname                      : Nazwa hosta
 i18n_port                          : Port
@@ -7,7 +5,7 @@ i18n_host                          : Host
 i18n_notes                         : Uwagi
 i18n_your_notes                    : Twoje uwagi
 i18n_connection_details            : Szczegóły połączenia
-i18n_username                      : Nazwa Użytkownika
+i18n_username                      : Nazwa Użytkownika/Grupa robocza
 i18n_password                      : Hasło
 
-i18n_connection_description        : The Internet Message Access Protocol (<strong>IMAP</strong>) is an Internet standard protocol used by email clients to retrieve email messages from a mail server over a TCP/IP connection.
+i18n_connection_description        : Samba is a free software re-implementation of the SMB networking protocol. Samba provides file and print services for various Microsoft Windows clients.

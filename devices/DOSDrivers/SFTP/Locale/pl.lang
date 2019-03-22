@@ -1,2 +1,13 @@
-i18n_public_key                      : Klucz publiczny
-i18n_server_id                       : ID serwera
+i18n_configuration_details         : Szczegó?y konfiguracji
+i18n_host                          : Nazwa hosta
+i18n_port                          : Port
+i18n_host                          : Host
+i18n_notes                         : Uwagi
+i18n_your_notes                    : Twoje uwagi
+i18n_connection_details            : Szczegóły połączenia
+i18n_username                      : Nazwa Użytkownika
+i18n_password                      : Hasło
+i18n_public_key                    : Klucz publiczny
+i18n_server_id                     : ID serwera
+
+i18n_connection_description        : The SSH File Transfer Protocol (<strong>SFTP</strong>)is a network protocol that provides file access, file transfer, and file management over any reliable data stream.
