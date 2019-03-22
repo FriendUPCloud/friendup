@@ -923,11 +923,16 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					)
 				)
 				{
+					console.log( 'Execute like: ' );
 					if( !Friend.singleInstanceApps[ executable ] )				
+					{
 						ExecuteApplication( executable, args );
+						console.log( 'Normal' );
+					}
 					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
 					{
 						_ActivateWindow( rememberCurrent );
+						console.log( 'Just activate' );
 					}
 					else
 					{
@@ -942,19 +947,24 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 									for( var c in Workspace.applications[a].windows )
 									{
 										Workspace.applications[a].windows[ c ].activate();
+										console.log( 'Another activate' );
 										break;
 									}
 									break;
 								}
 							}
 						}
+						console.log( '..' );
 					}
 				}
 				// Just minimize apps if you find them, if not execute
 				else
 				{
+					console.log( 'Just else!' );
+					
 					if( dk.toggleExecutable( div ) ) 
 					{
+						console.log( 'The toggle' );
 						return;
 					}
 				
