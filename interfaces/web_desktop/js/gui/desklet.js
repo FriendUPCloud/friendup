@@ -715,8 +715,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				var ws = ap.windows[w].workspace;
 				if( st || ws != globalConfig.workspaceCurrent )
 				{
-					_WindowToFront( ap.windows[w]._window );
-					_ActivateWindowOnly( ap.windows[w]._window.parentNode );
+					_ActivateWindow( ap.windows[w]._window );
 					ele.classList.remove( 'Minimized' );
 					Workspace.switchWorkspace( ws );
 					ap.windows[w].setFlag( 'hidden', false );
@@ -923,16 +922,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					)
 				)
 				{
-					console.log( 'Execute like: ' );
 					if( !Friend.singleInstanceApps[ executable ] )				
 					{
 						ExecuteApplication( executable, args );
-						console.log( 'Normal' );
 					}
 					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
 					{
 						_ActivateWindow( rememberCurrent );
-						console.log( 'Just activate' );
 					}
 					else
 					{
@@ -954,17 +950,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 								}
 							}
 						}
-						console.log( '..' );
 					}
 				}
 				// Just minimize apps if you find them, if not execute
 				else
 				{
-					console.log( 'Just else!' );
-					
 					if( dk.toggleExecutable( div ) ) 
 					{
-						console.log( 'The toggle' );
 						return;
 					}
 				
