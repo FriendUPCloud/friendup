@@ -8044,7 +8044,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						// Notify window
 						win.windowObject.sendMessage( {
-							type: 'notify',
+							command: 'notify',
 							method: 'wakeup',
 							value: 'active'
 						} );
