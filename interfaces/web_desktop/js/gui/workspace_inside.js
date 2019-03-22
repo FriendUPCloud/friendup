@@ -8033,6 +8033,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
+			// Tell all windows
+			if( window.friendApp )
+			{
+				for( var a in movableWindows )
+				{
+					var win = movableWindows[ a ];
+					if( win.applicationId )
+					{
+						win.windowObject.sendMessage( {
+							type: 'notify',
+							method: 'wakeup',
+							value: 'active'
+						} );
+					}
+				}
+			}
 		}
 		else
 		{
