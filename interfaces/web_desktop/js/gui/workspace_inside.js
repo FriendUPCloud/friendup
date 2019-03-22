@@ -8056,7 +8056,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( Workspace.applications[ b ].applicationId == win.applicationId )
 								{
 									Workspace.applications[ b ].sendMessage( {
-										type: 'notify',
+										command: 'notify',
 										method: 'wakeup',
 										value: 'active'
 									} );
