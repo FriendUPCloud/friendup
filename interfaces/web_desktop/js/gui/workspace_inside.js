@@ -8034,7 +8034,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				dl.execute( 'mobile/setwsstate' );
 			}
 			// Tell all windows
-			if( window.friendApp )
+			//if( window.friendApp )
 			{
 				var appsNotified = {};
 				for( var a in movableWindows )
