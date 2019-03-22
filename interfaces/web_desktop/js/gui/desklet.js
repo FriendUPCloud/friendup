@@ -911,8 +911,17 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
 			
-				// If not a single instance app, execute (or mobile)
-				if( isMobile || ( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 ) )
+				// If not mobile OR not ( docked AND ( NOT single instyance OR with arguments ) )
+				if( 
+					isMobile || 
+					( 
+						!docked && 
+						!( 
+							Friend.singleInstanceApps[ executable ] || 
+							o.exe.indexOf( ' ' ) > 0 
+						)	
+					)
+				)
 				{
 					if( !Friend.singleInstanceApps[ executable ] )				
 						ExecuteApplication( executable, args );
