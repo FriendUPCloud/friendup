@@ -1402,9 +1402,9 @@ function _WindowToFront( div, flags )
 	{
 		for( var b in movableWindows )
 		{
-			if( div != movableWindows[b] && movableWindows[b].viewContainer.style.zIndex == a )
+			if( div != movableWindows[ b ] && movableWindows[ b ].viewContainer.style.zIndex == a )
 			{
-				sorted.push( movableWindows[b] );
+				sorted.push( movableWindows[ b ] );
 			}
 		}
 	}
@@ -1413,8 +1413,8 @@ function _WindowToFront( div, flags )
 	var sortedInd = 100;
 	for( var a = 0; a < sorted.length; a++ )
 	{
-		sorted[a].viewContainer.style.zIndex = sortedInd++;
-		sorted[a].style.zIndex = sorted[a].viewContainer.style.zIndex;
+		sorted[ a ].viewContainer.style.zIndex = sortedInd++;
+		sorted[ a ].style.zIndex = sorted[ a ].viewContainer.style.zIndex;
 	}
 
 	// 4. now apply the one we want to front to the front
@@ -1426,12 +1426,14 @@ function _WindowToFront( div, flags )
 	{
 		flags.sourceElements = [];
 	}
+	
 	// Don't check snap objects etc if we're already affected
 	for( var a = 0; a < flags.sourceElements.length; a++ )
 	{
-		if( flags.sourceElements[a] == div )
+		if( flags.sourceElements[ a ] == div )
 			return;
 	}
+	
 	if( flags.source != 'attachment' )
 	{
 		if( div.snap && div.snapObject )
@@ -1442,6 +1444,7 @@ function _WindowToFront( div, flags )
 			_WindowToFront( div.snapObject, { source: 'attachment', sourceElements: flags.sourceElements } );
 		}
 	}
+	
 	if( flags.source != 'snapobject' )
 	{
 		if( div.attached )

@@ -376,6 +376,10 @@ var WorkspaceInside = {
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
+						// No need for change
+						if( this.ind == globalConfig.workspaceCurrent )
+							return;
+							
 						var cnt = 0;
 						for( var z = 0; z < d.childNodes.length; z++ )
 						{
@@ -396,6 +400,7 @@ var WorkspaceInside = {
 						for( var c in movableWindows )
 						{
 							if( !movableWindows[c].windowObject ) continue;
+							
 							if( movableWindows[c].windowObject.workspace == this.ind )
 							{
 								if( movableWindows[c].getAttribute( 'minimized' ) != 'minimized' )

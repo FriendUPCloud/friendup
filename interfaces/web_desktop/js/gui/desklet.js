@@ -716,6 +716,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				if( st || ws != globalConfig.workspaceCurrent )
 				{
 					_ActivateWindow( ap.windows[w]._window );
+					_WindowToFront( ap.windows[w]._window );
 					ele.classList.remove( 'Minimized' );
 					Workspace.switchWorkspace( ws );
 					ap.windows[w].setFlag( 'hidden', false );
@@ -943,7 +944,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 									for( var c in Workspace.applications[a].windows )
 									{
 										Workspace.applications[a].windows[ c ].activate();
-										console.log( 'Another activate' );
 										break;
 									}
 									break;
