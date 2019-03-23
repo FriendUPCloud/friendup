@@ -1,7 +1,7 @@
 i18n_IMAP : IMAP Disk
 
 i18n_configuration_details         : Configuration Details
-i18n_hostname                      : Hostname
+i18n_host                          : Hostname
 i18n_port                          : Port
 i18n_host                          : Host
 i18n_notes                         : Notes

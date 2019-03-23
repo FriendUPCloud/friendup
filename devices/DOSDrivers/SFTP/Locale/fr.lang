@@ -1,14 +1,12 @@
 i18n_configuration_details         : Détails de la configuration
-i18n_host                          : Hostname
+i18n_host                          : Hôte
 i18n_port                          : Port
-i18n_host                          : Host
-i18n_notes                         : Notes
-i18n_your_notes                    : Your notes
-i18n_connection_details            : Connection details
-i18n_username                      : Username
-i18n_password                      : Password
-i18n_private_key                   : Private key
-i18n_server_id                     : Server ID
+i18n_path                          : Chemin
+i18n_notes                         : Remarques
+i18n_your_notes                    : Tes notes
+i18n_connection_details            : Détails de la connexion
+i18n_username                      : Nom d'utilisateur
+i18n_password                      : Mot de passe
 i18n_private_key                   : Clé privée
 i18n_server_id                     : ID serveur
 

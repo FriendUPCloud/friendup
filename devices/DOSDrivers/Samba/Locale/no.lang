@@ -1,7 +1,7 @@
 i18n_configuration_details         : Konfigurasjonsdetaljer
-i18n_hostname                      : Vertsnavn
+i18n_host                          : Vert
 i18n_port                          : Port
-i18n_host                          : Server
+i18n_path                          : Path
 i18n_notes                         : Notater
 i18n_your_notes                    : Dine notater
 i18n_connection_details            : Tilkoblingsdetaljer
