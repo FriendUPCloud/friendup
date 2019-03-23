@@ -3573,7 +3573,7 @@ html #DockWindowList .Task.Directory
 	position: absolute;
 	left: 100%;
 	top: 0;
-	width: 220px;
+	width: 230px;		/* was 220px. to prevent wrap around */
 	background: rgba(0,0,0,0.8);
 }
 
