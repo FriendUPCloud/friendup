@@ -1,4 +1,4 @@
-
+i18n_configuration_details       : Configuration Details
 i18n_FriendStoreDrive            : FriendStore Drive
 i18n_FriendStoreDOSdriver        : FriendStore driver for vendors
 i18n_vendor                      : Vendor info
@@ -8,3 +8,4 @@ i18n_vendor_ID                   : Your registered vendor id
 
 i18n_cannotcreate_deep_directory : You can only create project directories (one level).
 
+i18n_connection_description      : The FriendStore DOS driver allows you to abstractly connect to your Friend Store vendor account. The drive gives you the ability to upload and download app packages, managing versions and updating your content. You need to have a vendor account to use this DOS driver.
