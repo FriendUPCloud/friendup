@@ -1,3 +1,8 @@
-
 i18n_CorvoDrive                    : Corvo Disk
+
+i18n_configuration_details         : Configuration details
+i18n_host                          : Host
+i18n_port                          : Port
+
+i18n_connection_description        : Mount Corvo CRM as a disk
 
