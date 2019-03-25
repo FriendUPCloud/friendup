@@ -376,6 +376,10 @@ var WorkspaceInside = {
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
+						// No need for change
+						if( this.ind == globalConfig.workspaceCurrent )
+							return;
+							
 						var cnt = 0;
 						for( var z = 0; z < d.childNodes.length; z++ )
 						{
@@ -396,6 +400,7 @@ var WorkspaceInside = {
 						for( var c in movableWindows )
 						{
 							if( !movableWindows[c].windowObject ) continue;
+							
 							if( movableWindows[c].windowObject.workspace == this.ind )
 							{
 								if( movableWindows[c].getAttribute( 'minimized' ) != 'minimized' )
@@ -8032,6 +8037,41 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					clearTimeout( setwsstate );
 				};
 				dl.execute( 'mobile/setwsstate' );
+			}
+			// Tell all windows
+			if( window.friendApp )
+			{
+				var appsNotified = {};
+				for( var a in movableWindows )
+				{
+					var win = movableWindows[ a ];
+					if( win.applicationId )
+					{
+						// Notify window
+						win.windowObject.sendMessage( {
+							command: 'notify',
+							method: 'wakeup',
+							value: 'active'
+						} );
+						// Notify application too
+						if( !appsNotified[ win.applicationId ] )
+						{
+							for( var b = 0; b < Workspace.applications.length; b++ )
+							{
+								if( Workspace.applications[ b ].applicationId == win.applicationId )
+								{
+									Workspace.applications[ b ].sendMessage( {
+										command: 'notify',
+										method: 'wakeup',
+										value: 'active'
+									} );
+									appsNotified[ win.applicationId ] = true;
+									break;
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 		else

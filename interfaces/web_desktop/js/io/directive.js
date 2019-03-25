@@ -333,7 +333,7 @@ function ExecuteApplication( app, args, callback )
 						Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
 					var svalu = sid ? Workspace.sessionId :( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authId : '');
 					var stype = sid ? 'sessionid' : 'authid';
-					console.log( 'Launching with stype: ' + stype + ' and svalu: ' + svalu + ' and session ' + Workspace.sessionId );
+					//console.log( 'Launching with stype: ' + stype + ' and svalu: ' + svalu + ' and session ' + Workspace.sessionId );
 					ifr.src = sdomain + '/system.library/module?module=system&' +
 						stype + '=' + svalu + '&command=launch&app=' +
 						app + '&friendup=' + Doors.runLevels[0].domain;

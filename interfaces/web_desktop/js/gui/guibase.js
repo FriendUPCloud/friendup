@@ -3221,8 +3221,10 @@ function PollDockedTaskbar()
 						// TODO: Make sure we also have touch
 						if( !e || e.button != '0' ) return;
 						
+						var theView = movableWindows[ this.viewId ];
+						
 						this.state = this.state == 'visible' ? 'hidden' : 'visible';
-						var wsp = movableWindows[ this.viewId ].windowObject.workspace;
+						var wsp = theView.windowObject.workspace;
 						if( wsp != globalConfig.workspaceCurrent )
 						{
 							Workspace.switchWorkspace( wsp );
@@ -3230,17 +3232,18 @@ function PollDockedTaskbar()
 						}
 						if( this.state == 'hidden' )
 						{
-							this.viewContainer.classList.add( 'Minimized' );
+							theView.viewContainer.classList.add( 'Minimized' );
 							
 						}
 						else
 						{
 							this.viewContainer.classList.remove( 'Minimized' );
+							_WindowToFront( theView );
 						}
-						var mv = movableWindows[ this.viewId ];
+						var mv = theView;
 						if( mv && mv.windowObject )
 						{
-							movableWindows[ this.viewId ].windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+							theView.windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
 							if( this.state == 'hidden' )
 							{
 								if( !this.elementCount )
@@ -3261,7 +3264,7 @@ function PollDockedTaskbar()
 								}
 							}
 						}
-						_WindowToFront( movableWindows[ this.viewId ] );
+						_WindowToFront( theView );
 					}
 					desklet.viewList.appendChild( viewRep );
 					changed++;
