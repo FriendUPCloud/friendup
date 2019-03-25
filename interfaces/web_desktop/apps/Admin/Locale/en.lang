@@ -36,3 +36,11 @@ i18n_role_profile                      : Role Profile
 i18n_role_name                         : Role Name
 i18n_role_description                  : Description
 i18n_permissions                       : Permissions
+
+#permissions related
+i18n_CRUD_USER_GLOBAL                  : Edit users globally
+i18n_CRUD_USER_WORKGROUP               : Edit users per workgroup
+i18n_CCRUD_WORKGROUP_GLOBAL            : Edit workgroups globally
+i18n_CCRUD_WORKGROUP_WORKGROUP         : Edit workgroups below a workgroup
+i18n_CCRUD_TEMPLATE_GLOBAL             : Edit templates globaly
+i18n_CCRUD_TEMPLATE_WORKGROUP          : Edit templates below a workgroup

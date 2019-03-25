@@ -148,8 +148,9 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr );
 static inline int ColonPosition( const char *c )
 {
 	int res = 0;
+	unsigned int i;
 	
-	for( unsigned int i=0 ; i < strlen( c ) ; i++ )
+	for( i=0 ; i < strlen( c ) ; i++ )
 	{
 		if( c[ i ] == ':' )
 		{
