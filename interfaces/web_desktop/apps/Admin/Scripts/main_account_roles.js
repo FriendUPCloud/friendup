@@ -37,51 +37,50 @@ Sections.accounts_roles = function( cmd, extra )
 						
 						for( var i in perm )
 						{
-							for( var ii in perm[i].Permissions )
+							for( var ii in perm[i].AppPermissions )
 							{
 								for( var r in roleperm )
 								{
 									if( roleperm[r].Key && roleperm[r].Key == perm[i].Name )
 									{
-										if( typeof perm[i].Permissions[ii] == "string" )
+										if( typeof perm[i].AppPermissions[ii] == "string" )
 										{
-											if( perm[i].Permissions[ii].split( 'App ' )[1] )
+											if( perm[i].AppPermissions[ii].split( 'App ' )[1] )
 											{
-												if( roleperm[r].Permission == perm[i].Permissions[ii].split( 'App ' )[1].trim() )
+												if( roleperm[r].Permission == perm[i].AppPermissions[ii].split( 'App ' )[1].trim() )
 												{
 													//console.log( perm[i] );
 													console.log( roleperm[r] );
 													
-													perm[i].Permissions[ii] = {
-														Permission  : perm[i].Permissions[ii].split( 'App ' )[1].trim(), 
-														Name        : perm[i].Permissions[ii].split( 'App ' )[1].trim(), 
-														Description : "", 
-														Data        : roleperm[r].Data, 
-														ID          : roleperm[r].ID 
+													perm[i].AppPermissions[ii] = {
+														id          : perm[i].AppPermissions[ii].split( 'App ' )[1].trim(), 
+														parameter   : "", 
+														description : "", 
+														data        : ( roleperm[r].Data ? true : false ) 
 													};
 													
-													console.log( '[1]', perm[i].Permissions[ii] );
+													console.log( '[1]', perm[i].AppPermissions[ii] );
 												}
 											}
 										}
-										else if( typeof perm[i].Permissions[ii] == "object" )
+										else if( typeof perm[i].AppPermissions[ii] == "object" )
 										{
-											if( typeof perm[i].Permissions[ii].Data == "undefined" && perm[i].Permissions[ii].Name && perm[i].Permissions[ii].Permission )
+											if( typeof perm[i].AppPermissions[ii].data == "undefined" && perm[i].AppPermissions[ii].id )
 											{
-												if( roleperm[r].Permission == perm[i].Permissions[ii].Permission )
+												if( roleperm[r].Permission == perm[i].AppPermissions[ii].id )
 												{
 													//console.log( perm[i] );
 													console.log( roleperm[r] );
 													
-													perm[i].Permissions[ii].Data = roleperm[r].Data;
+													perm[i].AppPermissions[ii].data = ( roleperm[r].Data ? true : false );
 												
-													console.log( '[2]', perm[i].Permissions[ii] );
+													console.log( '[2]', perm[i].AppPermissions[ii] );
 												}
 											}
 										}
 										else
 										{
-											//console.log( perm[i].Permissions[ii] );
+											//console.log( perm[i].AppPermissions[ii] );
 										}
 									}
 								}
@@ -157,7 +156,7 @@ Sections.accounts_roles = function( cmd, extra )
 				{
 					for( var a in perm )
 					{
-						if( perm[a].Permissions && perm[a].Name )
+						if( perm[a].AppPermissions && perm[a].Name )
 						{
 							var sw = 2;
 							
@@ -172,37 +171,37 @@ Sections.accounts_roles = function( cmd, extra )
 							
 							apl += '<div class="List">';
 						
-							for( var k in perm[a].Permissions )
+							for( var k in perm[a].AppPermissions )
 							{
-								if( typeof perm[a].Permissions[k] == "object" )
+								if( typeof perm[a].AppPermissions[k] == "object" )
 								{
-									var obj = perm[a].Permissions[k];
+									var obj = perm[a].AppPermissions[k];
 								}
 								else
 								{
-									if( !perm[a].Permissions[k].split( 'App ' )[1] )
+									if( !perm[a].AppPermissions[k].split( 'App ' )[1] )
 									{
 										continue;
 									}
 									
 									var obj = {
-										Permission  : perm[a].Permissions[k].split( 'App ' )[1].trim(), 
-										Name        : perm[a].Permissions[k].split( 'App ' )[1].trim(), 
-										Description : "", 
-										Data        : ""
+										id          : perm[a].AppPermissions[k].split( 'App ' )[1].trim(), 
+										parameter   : "", 
+										description : "", 
+										data        : ""
 									};
 								}
 								
 								sw = sw == 2 ? 1 : 2;
 								
 								var rid = info.role.ID;
-								var pem = obj.Permission;
+								var pem = obj.id;
 								var key = perm[a].Name;
 								
 								apl += '<div class="HRow">';
-								apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + obj.Name + '</div>';
+								apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + ( 'i18n_' + obj.id ) + '</div>';
 								apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-								apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( obj.Data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( obj.data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 								apl += '</div>';
 								apl += '</div>';
 							}
