@@ -3237,7 +3237,7 @@ function PollDockedTaskbar()
 						}
 						else
 						{
-							this.viewContainer.classList.remove( 'Minimized' );
+							theView.viewContainer.classList.remove( 'Minimized' );
 							_WindowToFront( theView );
 						}
 						var mv = theView;
