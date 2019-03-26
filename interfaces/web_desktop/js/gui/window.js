@@ -4958,11 +4958,11 @@ var View = function( args )
 							btn.onclick = function( e )
 							{
 								var canv = document.createElement( 'canvas' );
-								canv.setAttribute( 'width', d.videoWidth );
-								canv.setAttribute( 'height', d.videoHeight );
+								canv.setAttribute( 'width', dd.videoWidth );
+								canv.setAttribute( 'height', dd.videoHeight );
 								v.appendChild( canv );
 								var ctx = canv.getContext( '2d' );
-								ctx.drawImage( d, 0, 0, d.videoWidth, d.videoHeight );
+								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
 								var dt = canv.toDataURL();
 						
 								// Stop taking video
