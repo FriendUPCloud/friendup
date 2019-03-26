@@ -4802,216 +4802,252 @@ var View = function( args )
 	
 	this.openCamera = function( flags, callback )
 	{
-		// TODO: Parse the flags! E.g. facingMode should be user or environment
+		var self = this;
 		
-		// Set up elements
-		var d = document.createElement( 'video' );
-		d.setAttribute( 'autoplay', 'autoplay' );
-		d.setAttribute( 'playinline', 'playinline' );
-		d.className = 'FriendCameraElement';
-		
-		
-		var currentType = 0;
-		var types = [ 'environment', 'user' ];
-		
-		d.ontouchstart = function( e )
+		// Just get the available devices
+		function getAvailableDevices( cbk )
 		{
-			this.offX = e.touches[0].clientX;
-			this.timeStamp = ( new Date() ).getTime();
+			if( !navigator.mediaDevices )
+			{
+				return cbk( { response: -1, message: 'Could not get any devices.' } );
+			}
+			navigator.mediaDevices.enumerateDevices().then( function( devs ) {
+				cbk( { response: 1, message: 'Success', data: devs } );
+			} ).catch( function( err ) {
+				return cbk( { response: -1, message: err } );
+			} );
 		}
 		
-		d.ontouchend = function( e )
+		function setCameraEvents( ele )
 		{
-			var diff = e.changedTouches[0].clientX - this.offX;
-			var difftime = ( new Date() ).getTime() - this.timeStamp;
-			if( difftime > 200 )
+			ele.ontouchstart = function( e )
 			{
-				return;
+				this.offX = e.touches[0].clientX;
+				this.timeStamp = ( new Date() ).getTime();
 			}
-			// Swipe right
-			if( diff < 127 )
-			{
-				currentType--;
-				if( currentType < 0 )
-					currentType = types.length - 1;
-				setCameraMode();
-			}
-			// Swipe left
-			else if( diff > 127 )
-			{
-				currentType++;
-				if( currentType > types.length - 1 )
-					currentType = 0;
-				setCameraMode();
-			}
-			
-		}
 		
-		var v = document.createElement( 'div' );
-		v.className = 'FriendCameraContainer';
-		v.camera = v;
-		v.appendChild( d );
-		
-		function setCameraMode()
-		{
-			var constraints = {
-				video: {
-					mandatory: { facingMode: types[ currentType ] }
-				}
-			};
-			navigator.gm( 
-				constraints, 
-				function( localMediaStream )
+			ele.ontouchend = function( e )
+			{
+				var diff = e.changedTouches[0].clientX - this.offX;
+				var difftime = ( new Date() ).getTime() - this.timeStamp;
+				if( difftime > 200 )
 				{
-					if( d && d.srcObject )
-					{
-						d.srcObject.getTracks().forEach( track => track.stop() );
-						d.srcObject = null;
-					}
-					d.srcObject = localMediaStream;
-					console.log( 'Got media steam: ' + types[ currentType ] );
-				},
-				function( err )
-				{
-					console.log( 'Error: ', err );
 					return;
 				}
-			);
+				// Swipe right
+				if( diff < 127 )
+				{
+					setCameraMode();
+				}
+				// Swipe left
+				else if( diff > 127 )
+				{
+					setCameraMode();
+				}	
+			}
 		}
 		
-		// Add to content
-		this.content.appendChild( v );
-		this.content.classList.add( 'HasCamera' );
-		
-		// Just get the available camera
-		// Normalize the various vendor prefixed versions of getUserMedia.
-		// TODO: Perhaps place this in a central location once and for all...
-		navigator.gm = (navigator.getUserMedia ||
-			navigator.webkitGetUserMedia ||
-			navigator.mozGetUserMedia || 
-			navigator.msGetUserMedia
-		);
-		if( navigator.gm )
+		function setCameraMode( e )
 		{
-			// Request the camera.
-			var constraints = { 
-				video: {
-					facingMode: flags.facingMode ? flags.facingMode : 'environment'
-				} 
-			};
-			// We know which device we want..
-			if( flags.deviceId )
+			if( !self.cameraOptions )
 			{
-				constraints = { video: { deviceId: info.deviceId } };
+				self.cameraOptions = {
+					devices: e,
+					currentDevice: false
+				};
+				// Add container
+				var v = document.createElement( 'div' );
+				v.className = 'FriendCameraContainer';
+				self.content.appendChild( v );
+				self.content.container = v;
+				self.content.classList.add( 'HasCamera' );
 			}
-		
-			if( d && d.srcObject )
+			
+			// Find video devices
+			var initial = false;
+			var devs = [];
+			for( var a in self.cameraOptions.devices )
 			{
-				d.srcObject.getTracks().forEach( track => track.stop() );
-			}
-			 
-			// Now get the media!
-			navigator.gm(
-				constraints,
-				// Success Callback
-				function( localMediaStream ) 
+				var dev = self.cameraOptions.devices[ a ];
+				if( dev.kind == 'videoinput' )
 				{
-					// Create an object URL for the video stream and use this 
-					// to set the video source.
-					d.srcObject = localMediaStream;
-					// Add the record button
-					var btn = document.createElement( 'button' );
-					btn.className = 'IconButton IconSmall fa-camera';
-					btn.onclick = function( e )
+					if( !self.cameraOptions.currentDevice )
 					{
-						var canv = document.createElement( 'canvas' );
-						canv.setAttribute( 'width', d.videoWidth );
-						canv.setAttribute( 'height', d.videoHeight );
-						v.appendChild( canv );
-						var ctx = canv.getContext( '2d' );
-						ctx.drawImage( d, 0, 0, d.videoWidth, d.videoHeight );
-						var dt = canv.toDataURL();
-						
-						// Stop taking video
-						d.srcObject.getTracks().forEach(track => track.stop())
-						d.srcObject = null;
-						
-						// FLASH!
-						v.classList.add( 'Flash' );
-						setTimeout( function()
+						self.cameraOptions.currentDevice = dev;
+						initial = true;
+					}
+					devs.push( dev );
+				}
+			}
+			
+			// Initial pass over, now just choose next device
+			if( !initial )
+			{
+				var found = nextfound = false;
+				for( var a = 0; a < devs.length; a++ )
+				{
+					if( devs[a].deviceId == self.cameraOptions.currentDevice.deviceId )
+					{
+						found = true;
+					}
+					// We found stuff
+					else if( found )
+					{
+						nextfound = true;
+						self.cameraOptions.currentDevice = devs[a];
+						break;
+					}
+				}
+				// Wrap around
+				if( !nextfound )
+				{
+					self.cameraOptions.currentDevice = devs[0];
+				}
+			}
+			
+			var constraints = {
+				video: {
+					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
+				}
+			};
+			
+			// Shortcut
+			navigator.gm = (navigator.getUserMedia ||
+				navigator.webkitGetUserMedia ||
+				navigator.mozGetUserMedia || 
+				navigator.msGetUserMedia
+			);
+			
+			if( navigator.gm )
+			{
+				navigator.gm( 
+					constraints, 
+					function( localMediaStream )
+					{
+						// Remove old video object
+						var oldCam = self.content.container.camera;
+						if( oldCam && oldCam.srcObject )
 						{
-							v.classList.add( 'Flashing' );
-							setTimeout( function()
+							oldCam.srcObject.getTracks().forEach( track => track.stop() );
+							oldCam.srcObject = localMediaStream;
+						}
+						else
+						{
+							// New element!
+							var vi = document.createElement( 'video' );
+							vi.setAttribute( 'autoplay', 'autoplay' );
+							vi.setAttribute( 'playinline', 'playinline' );
+							vi.className = 'FriendCameraElement';
+							vi.srcObject = localMediaStream;
+							self.content.container.appendChild( vi );
+							self.content.container.camera = vi;
+					
+							setCameraEvents( vi );
+						}
+					
+						// Create an object URL for the video stream and use this 
+						// to set the video source.
+						var dd = self.content.container.camera;
+						dd.srcObject = localMediaStream;
+					
+						// Add the record button
+						if( !self.content.container.button )
+						{
+							var btn = document.createElement( 'button' );
+							btn.className = 'IconButton IconSmall fa-camera';
+							btn.onclick = function( e )
 							{
-								v.classList.remove( 'Flashing' );
+								var canv = document.createElement( 'canvas' );
+								canv.setAttribute( 'width', dd.videoWidth );
+								canv.setAttribute( 'height', dd.videoHeight );
+								v.appendChild( canv );
+								var ctx = canv.getContext( '2d' );
+								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
+								var dt = canv.toDataURL();
+						
+								// Stop taking video
+								dd.srcObject.getTracks().forEach(track => track.stop())
+								dd.srcObject = null;
+						
+								// FLASH!
+								v.classList.add( 'Flash' );
 								setTimeout( function()
 								{
-									v.classList.add( 'Closing' );
+									v.classList.add( 'Flashing' );
 									setTimeout( function()
 									{
-										callback( { response: 1, message: 'Image captured', data: dt } );
-										v.parentNode.removeChild( v );
+										v.classList.remove( 'Flashing' );
+										setTimeout( function()
+										{
+											v.classList.add( 'Closing' );
+											setTimeout( function()
+											{
+												callback( { response: 1, message: 'Image captured', data: dt } );
+												v.parentNode.removeChild( v );
+											}, 250 );
+										}, 250 );
 									}, 250 );
-								}, 250 );
-							}, 250 );
-						}, 5 );
+								}, 5 );
+							}
+							self.content.container.appendChild( btn );
+							self.content.container.button = btn;
+						}
+					},
+					function( err )
+					{
+						// Log the error to the console.
+						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
+						v.classList.add( 'Closing' );
+						setTimeout( function()
+						{
+							v.parentNode.removeChild( v );
+						}, 250 );
 					}
-					v.appendChild( btn );
-				},
-				// Error Callback
-				function( err )
-				{
-					// Log the error to the console.
-					callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
-					v.classList.add( 'Closing' );
-					setTimeout( function()
-					{
-						callback( { response: 1, message: 'Image captured', data: dt } );
-						v.parentNode.removeChild( v );
-					}, 250 );
-				}
-			);
-		}
-		// We failed! Try to use the fallback
-		else
-		{
-			// TODO: Hogne
-			// Remove video
-			v.removeChild( d );
-			
-			// Add fallback
-			var fb = document.createElement( 'div' );
-			fb.className = 'FriendCameraFallback';
-			v.appendChild( fb );
-			var mediaElement = document.createElement( 'input' );
-			mediaElement.type = 'file';
-			mediaElement.accept = 'image/*';
-			mediaElement.className = 'FriendCameraInput';
-			fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
-				'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
-			fb.appendChild( mediaElement );
-			
-			setTimeout( function()
+				);
+			}
+			else
 			{
-				fb.classList.add( 'Showing' );
-			}, 5 );
+				// TODO: Hogne
+				// Remove video
+				v.removeChild( d );
 			
-			mediaElement.onchange = function( e )
-			{
-				var reader = new FileReader();
-				reader.onload = function( e )
+				// Add fallback
+				var fb = document.createElement( 'div' );
+				fb.className = 'FriendCameraFallback';
+				v.appendChild( fb );
+				var mediaElement = document.createElement( 'input' );
+				mediaElement.type = 'file';
+				mediaElement.accept = 'image/*';
+				mediaElement.className = 'FriendCameraInput';
+				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
+					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
+				fb.appendChild( mediaElement );
+			
+				setTimeout( function()
 				{
-					var dataURL = e.target.result;
-					v.classList.remove( 'Showing' );
-					setTimeout( function()
+					fb.classList.add( 'Showing' );
+				}, 5 );
+			
+				mediaElement.onchange = function( e )
+				{
+					var reader = new FileReader();
+					reader.onload = function( e )
 					{
-						callback( { response: 1, message: 'Image captured', data: dataURL } );
-						v.parentNode.removeChild( v );
-					}, 250 );
+						var dataURL = e.target.result;
+						v.classList.remove( 'Showing' );
+						setTimeout( function()
+						{
+							callback( { response: 1, message: 'Image captured', data: dataURL } );
+							v.parentNode.removeChild( v );
+						}, 250 );
+					}
+					reader.readAsDataURL( mediaElement.files[0] );
 				}
-				reader.readAsDataURL( mediaElement.files[0] );
 			}
 		}
+		
+		// Execute async operation
+		getAvailableDevices( function( e ){ setCameraMode( e.data ) } );
 	}
 	
 	// Add a child window to this window
