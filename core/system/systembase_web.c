@@ -77,10 +77,11 @@ extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int fo
  *
  * @param request Http request
  * @param loggedSession pointer to logged user session
+ * @param returnedAsFile pointer to boolean value with information if parameter is passed via FILE instead of argument
  * @return pointer to memory where arguments are stored
  */
 
-char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
+char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL *returnedAsFile )
 {
 	//FILE *log = fopen( "debugfile.txt", "wb" );
 	// Send both get and post
@@ -100,17 +101,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 	{
 		fullsize += (int)request->h_ContentLength;
-	}
-	
-	if( fullsize > 3096 )
-	{
-		int len = strlen( "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}" );
-		allArgsNew = FMalloc( len+16 );
-		if( allArgsNew != NULL )
-		{
-			strncpy( allArgsNew, "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}", len );
-		}
-		return allArgsNew;
 	}
 	
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
@@ -281,6 +271,60 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 		FFree( allArgs );
 	}
 	//fclose( log );
+	
+	if( fullsize > 3096 )
+	{
+		*returnedAsFile = TRUE;
+		// if message is too big, allocate memory for filename
+		char *tmpFileName = FMalloc( 1024 );
+		FILE *fp;
+		
+		while( TRUE )
+		{
+			FILE *f;
+			int len = snprintf( tmpFileName, 1024, "/tmp/Friendup/_phpcommand_%d%d.%lu", rand()%9999, rand()%9999, time(NULL) );
+			// if file doesnt exist we can create new one
+			if( ( f = fopen( tmpFileName, "rb" ) ) == NULL )
+			{
+				// new file created, we can store all parameters there
+				fp = fopen( tmpFileName, "wb" );
+				if( fp != NULL )
+				{
+					fwrite( allArgsNew, 1, strlen( allArgsNew ), fp );
+					fclose( fp );
+					FFree( allArgsNew );
+					int len2 = len + 128;
+					// we are returning now name of the file which contain all parameters
+					allArgsNew = FMalloc( len2 );
+					if( allArgsNew != NULL )
+					{
+						snprintf( allArgsNew, len2, MODULE_FILE_CALL_STRING, tmpFileName );
+					}
+					break;
+				}
+			}
+			else
+			{
+				fclose( f );
+			}
+		}
+		
+		FFree( tmpFileName );
+		
+		/*
+		int len = strlen( "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}" );
+		allArgsNew = FMalloc( len+16 );
+		if( allArgsNew != NULL )
+		{
+			strncpy( allArgsNew, "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}", len );
+		}
+		return allArgsNew;
+		*/
+	}
+	else
+	{
+		*returnedAsFile = FALSE;
+	}
 	
 	return allArgsNew;
 }
@@ -1501,14 +1545,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					if( stat( runfile, &f ) != -1 )
 					{
+						FBOOL isFile;
 						DEBUG("MODRUNPHP %s\n", runfile );
-						char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession );
+						char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
 						if( allArgsNew != NULL )
 						{
 							Log( FLOG_INFO, "Module called: %s : %p\n", allArgsNew, pthread_self() );
 							
 							data = l->sl_PHPModule->Run( l->sl_PHPModule, runfile, allArgsNew, &dataLength );
 							phpCalled = TRUE;
+							
+							if( isFile )
+							{
+								//"file<!--separate-->%s"
+								char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+								remove( fname );
+							}
 						}
 					}
 					else
@@ -1598,7 +1650,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								strcmp( modType, "py" ) == 0
 							)
 							{
-								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession );
+								FBOOL isFile;
+								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
 								
 								DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
 
@@ -1608,6 +1661,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								// We don't use them now
 								if( allArgsNew != NULL )
 								{
+									if( isFile )
+									{
+										//"file<!--separate-->%s"
+										char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+										remove( fname );
+									}
 									FFree( allArgsNew );
 								}
 							}

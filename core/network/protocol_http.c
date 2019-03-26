@@ -51,7 +51,7 @@ extern SystemBase *SLIB;
 
 // external
 
-char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession );
+//char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession );
 
 // 
 //	TODO: This should be moved
@@ -1681,7 +1681,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 													*/
 													
 													DEBUG("MODRUNPHP %s\n", "php/catch_all.php" );
-													char *allArgsNew = GetArgsAndReplaceSession( request, NULL );
+													FBOOL isFile;
+													char *allArgsNew = GetArgsAndReplaceSession( request, NULL, &isFile );
 													if( allArgsNew != NULL )
 													{
 														int argssize = strlen( allArgsNew );
@@ -1721,6 +1722,14 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 															FFree( runFile );
 														}
 													}
+													
+													if( isFile )
+													{
+														//"file<!--separate-->%s"
+														char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+														remove( fname );
+													}
+													
 													FFree( allArgsNew );
 												}
 												
