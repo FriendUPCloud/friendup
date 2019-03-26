@@ -94,8 +94,8 @@
 // Module file call string
 //
 
-#define MODULE_FILE_CALL_STRING "file<!--separate-->%s"
-#define MODULE_FILE_CALL_STRING_LEN 19
+#define MODULE_FILE_CALL_STRING "friendrequestparameters=%s"
+#define MODULE_FILE_CALL_STRING_LEN 24
 
 //
 // Exit code list
