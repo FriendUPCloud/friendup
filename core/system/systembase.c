@@ -1961,11 +1961,11 @@ void CheckAndUpdateDB( struct SystemBase *l )
  * @param usr pointer to user to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
- * @param error pointer to error message
+ * @param mountError pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **error )
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	
@@ -2009,9 +2009,13 @@ usr->u_ID , usr->u_ID, usr->u_ID
 	}
 	DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
 	{
 		char **row;
+		
+		int num = sqllib->NumberOfRows( sqllib, res );
+		DEBUG("number of rows: %d\n", num );
+		
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
@@ -2037,12 +2041,12 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+			//FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, error );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError );
 
 			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 
@@ -2082,7 +2086,9 @@ AND LOWER(f.Name) = LOWER('%s')",
 			else
 			{
 				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", row[0] );
-			}	
+			}
+			
+			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 		}	// going through all rows
 		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
@@ -2090,7 +2096,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 
 		usr->u_InitialDevMount = TRUE;
 
-		FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+		
 	}
 	
 	return 0;

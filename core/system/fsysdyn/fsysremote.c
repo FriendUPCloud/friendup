@@ -562,7 +562,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **error )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountError )
 {
 	File *dev = NULL;
 	char *path = NULL;
