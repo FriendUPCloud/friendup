@@ -7252,7 +7252,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( e != 'ok' ) return;
+			if( e != 'ok' ) 
+			{
+				ExecuteApplication( app, args, cbk );
+				return;
+			}
 			try
 			{
 				var js = JSON.parse( d );
