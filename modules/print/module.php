@@ -1,5 +1,15 @@
 <?php
 
+/*©lgpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
 require_once( 'php/friend.php' );
 require_once( 'php/classes/dbio.php' );
 
@@ -18,16 +28,12 @@ if( $level = $SqlDatabase->FetchObject( '
 }
 else $level = false;
 
-
-
 if( $level != 'Admin' ) die( 'fail<!--separate-->{"response":"unauthorized access to system settings"}' );
-
-
 
 switch( $args->command )
 {
 	
-	// read --------------------------------------------------------------------------------------------------------- //
+	// read ----------------------------------------------------------------- //
 	
 	case 'list': 
 		
@@ -66,7 +72,7 @@ switch( $args->command )
 		
 		break;
 	
-	// write -------------------------------------------------------------------------------------------------------- //
+	// write ---------------------------------------------------------------- //
 	
 	case 'create':
 		
@@ -109,7 +115,7 @@ switch( $args->command )
 		
 		break;
 		
-	// delete ------------------------------------------------------------------------------------------------------- //
+	// delete --------------------------------------------------------------- //
 	
 	case 'remove':
 		
@@ -135,7 +141,7 @@ switch( $args->command )
 	
 }
 
-die( print_r( $args,1 ) . ' --' );
+//die( print_r( $args,1 ) . ' --' );
 
 die( 'fail' );
 
