@@ -24,6 +24,7 @@ Sections.accounts_roles = function( cmd, extra )
 				//Apps
 				
 				var data = info.permission;
+				var wgroups = info.workgroups;
 				
 				console.log( data );
 				
@@ -87,65 +88,6 @@ Sections.accounts_roles = function( cmd, extra )
 							}
 						}
 					}
-				}
-				else
-				{
-					// Will be removed ... just for testing purposes ...
-					
-					/*var perm = [
-						{ 
-							app : "Users", name : "Users", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: "Activated" 
-								}
-							] 
-						},
-						{ 
-							app : "Liberator", name : "Liberator", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
-								}
-							] 
-						},
-						{ 
-							app : "Server", name : "Server", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
-								}
-							] 
-						},
-						{ 
-							app : "Mimetypes", name : "Mimetypes", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
-								}
-							] 
-						}
-					];*/
 				}
 				
 				console.log( perm );
@@ -213,6 +155,188 @@ Sections.accounts_roles = function( cmd, extra )
 					}
 				}
 				
+				//apl = '';
+				
+				if( perm )
+				{
+					for( var a in perm )
+					{
+						if( perm[a].AppPermissions && perm[a].Name )
+						{
+							var sw = 2;
+							
+							apl += '<div class="Wrapper collapse">';
+						
+							apl += '<div class="HRow">';
+							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].Name + '</strong></div>';
+							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+							apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
+							apl += '</div>';
+							apl += '</div>';
+							
+							apl += '<div class="List">';
+							
+							
+							
+							
+							
+							
+							
+							for( var li in perm[a].AppPermissions )
+							{
+								if( typeof perm[a].AppPermissions[li] == "object" )
+								{
+									var obj2 = perm[a].AppPermissions[li];
+								}
+								else
+								{
+									if( !perm[a].AppPermissions[li].split( 'App ' )[1] )
+									{
+										continue;
+									}
+								
+									var obj2 = {
+										id          : perm[a].AppPermissions[li].split( 'App ' )[1].trim(), 
+										parameter   : "", 
+										description : "", 
+										data        : ""
+									};
+								}
+								
+								
+								
+								apl += '<div class="HRow">';
+								apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select class="FullWidth">';
+								
+								apl += '<option> - - - </option>';
+								
+								for( var k in perm[a].AppPermissions )
+								{
+									if( typeof perm[a].AppPermissions[k] == "object" )
+									{
+										var obj = perm[a].AppPermissions[k];
+									}
+									else
+									{
+										if( !perm[a].AppPermissions[k].split( 'App ' )[1] )
+										{
+											continue;
+										}
+									
+										var obj = {
+											id          : perm[a].AppPermissions[k].split( 'App ' )[1].trim(), 
+											parameter   : "", 
+											description : "", 
+											data        : ""
+										};
+									}
+								
+									sw = sw == 2 ? 1 : 2;
+								
+									var rid = info.role.ID;
+									var pem = obj.id;
+									var key = perm[a].Name;
+									
+									apl += '<option' + ( obj2.id == obj.id ? ' selected="selected"' : '' ) + '>' + ( 'i18n_' + obj.id ) + '</option>';
+								}
+							
+								apl += '</select></div>';
+								apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select class="FullWidth">';
+							
+								if( wgroups && wgroups.length )
+								{
+									apl += '<option> - - - </option>';
+									
+									for( var k in wgroups )
+									{
+										apl += '<option>' + wgroups[k].Name + '</option>';
+									}
+								}
+								
+								apl += '</select></div>';
+								apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
+								//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
+								apl += '<strong>(-)</strong>';
+								apl += '</div>';
+								apl += '</div>';
+							
+							}
+							
+							
+							
+							
+							
+							
+							
+							apl += '<div class="HRow">';
+							apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select class="FullWidth">';
+							
+							apl += '<option> - - - </option>';
+							
+							for( var k in perm[a].AppPermissions )
+							{
+								if( typeof perm[a].AppPermissions[k] == "object" )
+								{
+									var obj = perm[a].AppPermissions[k];
+								}
+								else
+								{
+									if( !perm[a].AppPermissions[k].split( 'App ' )[1] )
+									{
+										continue;
+									}
+									
+									var obj = {
+										id          : perm[a].AppPermissions[k].split( 'App ' )[1].trim(), 
+										parameter   : "", 
+										description : "", 
+										data        : ""
+									};
+								}
+								
+								sw = sw == 2 ? 1 : 2;
+								
+								var rid = info.role.ID;
+								var pem = obj.id;
+								var key = perm[a].Name;
+								
+								apl += '<option>' + ( 'i18n_' + obj.id ) + '</option>';
+							}
+							
+							apl += '</select></div>';
+							apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select class="FullWidth">';
+							
+							if( wgroups && wgroups.length )
+							{
+								apl += '<option> - - - </option>';
+								
+								for( var k in wgroups )
+								{
+									apl += '<option>' + wgroups[k].Name + '</option>';
+								}
+							}
+							
+							apl += '</select></div>';
+							apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
+							//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
+							apl += '<strong>(+)</strong>';
+							apl += '</div>';
+							apl += '</div>';
+							
+							apl += '<div class="HRow">&nbsp;</div>';
+							
+							apl += '<div class="HRow">';
+							apl += '<button onclick="javascript:void(0)" class="IconSmall FloatRight">Save</button>';
+							apl += '</div>';
+							
+							
+							
+							apl += '</div>';
+						
+							apl += '</div>';
+						}
+					}
+				}
 				
 				
 				
@@ -291,9 +415,30 @@ Sections.accounts_roles = function( cmd, extra )
 					m.execute( 'getsystempermissions' );
 				},
 				
+				function()
+				{
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						info.workgroups = null;
+						//if( e != 'ok' ) return;
+						
+						try
+						{
+							info.workgroups = JSON.parse( d );
+						}
+						catch( e )
+						{
+							return;
+						}
+						loadingList[ ++loadingSlot ]( info );
+					}
+					u.execute( 'workgroups' );
+				},
+				
 				function( info )
 				{
-					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' ) return;
+					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
 					
 					initRoleDetails( info );
 				}
