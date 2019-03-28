@@ -109,24 +109,23 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 		array( 'Wallpaper', 'Select wallpapers' ),
 		array( 'Astray', 'A labyrinth ball game in 3D' ),
 		array( 'Calculator', 'Do some math' )
-		);
-		$i = 0;
-		foreach( $dockItems as $r )
-		{
-			$d = new dbIO( 'DockItem' );
-			$d->Application = $r[0];
-			$d->ShortDescription = $r[1];
-			$d->UserID = $User->ID;
-			$d->SortOrder = $i++;
-			$d->Parent = 0;
-			$d->Save();
-		}
+	);
+	$i = 0;
+	foreach( $dockItems as $r )
+	{
+		$d = new dbIO( 'DockItem' );
+		$d->Application = $r[0];
+		$d->ShortDescription = $r[1];
+		$d->UserID = $User->ID;
+		$d->SortOrder = $i++;
+		$d->Parent = 0;
+		$d->Save();
+	}
 }
 
 // 2. Check if we never logged in before..
 if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $User->ID . '\'' ) ) )
 {
-
 	$Logger->log( 'Creating home dir' );
 	
 	// 3. Setup a standard disk
