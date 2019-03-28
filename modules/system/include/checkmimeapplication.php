@@ -80,7 +80,7 @@ foreach( $paths as $path )
 			if( isset( $f->HideInCatalog ) && $f->HideInCatalog == 'yes' ) continue;
 			
 			$user = true; $admin = false;
-			if( $f->UserGroups )
+			if( isset( $f->UserGroups ) )
 			{
 				$user = false;
 				foreach( $f->UserGroups as $ug )
@@ -99,7 +99,7 @@ foreach( $paths as $path )
 			}
 			
 			// Check matching mimetypes
-			if( $f->Trusted == 'yes' && $f->MimeTypes )
+			if( isset( $f->Trusted ) && $f->Trusted == 'yes' && isset( $f->MimeTypes ) )
 			{
 				foreach( $f->MimeTypes as $v )
 				{
