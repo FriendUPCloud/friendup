@@ -5832,7 +5832,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Fetch application permissions
 						if( !Application.checkAppPermission )
 						{
-							var n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+							var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+							if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
 							
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
@@ -5931,7 +5932,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Fetch application permissions
 							if( !Application.checkAppPermission )
 							{
-								var n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+								var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+								if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
 								
 								var m = new Module( 'system' );
 								m.onExecuted = function( e, d )
