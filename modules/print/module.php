@@ -22,123 +22,170 @@ if( $level = $SqlDatabase->FetchObject( '
 		ug.UserGroupID = g.ID
 ' ) )
 {
-	
-	
 	$level = $level->Name;
 }
 else $level = false;
 
-if( $level != 'Admin' ) die( 'fail<!--separate-->{"response":"unauthorized access to system settings"}' );
-
-switch( $args->command )
+// User level ------------------------------------------------------------------
+if( $level != 'Admin' )
 {
-	
-	// read ----------------------------------------------------------------- //
-	
-	case 'list': 
-		
-		if( isset( $args->args->id ) )
-		{
-			if( $row = $SqlDatabase->FetchObject( '
-				SELECT `ID`, `Data` 
-				FROM FSetting 
-				WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" AND ID = "' . $args->args->id . '"
-				ORDER BY `ID` ASC 
-			' ) )
+	switch( $args->command )
+	{
+		case 'list':
+			// TODO: Apply user permissions
+			if( isset( $args->args->id ) )
 			{
-				die( 'ok<!--separate-->' . json_encode( $row ) );
+				if( $row = $SqlDatabase->FetchObject( '
+					SELECT `ID`, `Data` 
+					FROM FSetting 
+					WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" AND ID = "' . $args->args->id . '"
+					ORDER BY `ID` ASC 
+				' ) )
+				{
+					die( 'ok<!--separate-->' . json_encode( $row ) );
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"response":-1,"message":"No printer found"}' );
+				}
 			}
+			// TODO: Apply user permissions
 			else
 			{
-				die( 'ok<!--separate-->noprinterfound' );
+				if( $rows = $SqlDatabase->FetchObjects( '
+					SELECT `ID`, `Data` 
+					FROM FSetting 
+					WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" 
+					ORDER BY `ID` ASC 
+				' ) )
+				{
+					die( 'ok<!--separate-->' . json_encode( $rows ) );
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"response":-1,"message":"No printers found"}' );
+				}
 			}
-		}
-		else
-		{
-			if( $rows = $SqlDatabase->FetchObjects( '
-				SELECT `ID`, `Data` 
-				FROM FSetting 
-				WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" 
-				ORDER BY `ID` ASC 
-			' ) )
-			{
-				die( 'ok<!--separate-->' . json_encode( $rows ) );
-			}
-			else
-			{
-				die( 'ok<!--separate-->noprintersfound' );
-			}
-		}
-		
-		break;
-	
-	// write ---------------------------------------------------------------- //
-	
-	case 'create':
-		
-		if( $args->args->data )
-		{
-			$o = new dbIO( 'FSetting' );
-			$o->UserID = 0;
-			$o->Type = 'system';
-			$o->Key = 'printer';
-			$o->Data = json_encode( $args->args->data );
-			$o->Save();
+			break;
+		case 'print':
 			
-			die( 'ok<!--separate-->' . $o->ID );
-		}
-		
-		die( 'fail create' );
-		
-		break;
+			break;
+	}
+}
+// Admin level -----------------------------------------------------------------
+else
+{
+
+	switch( $args->command )
+	{
 	
-	case 'update':
+		// read ----------------------------------------------------------------- //
+	
+		case 'list': 
 		
-		if( $args->args->id && $args->args->data )
-		{
-			$o = new dbIO( 'FSetting' );
-			$o->ID = $args->args->id;
-			$o->UserID = 0;
-			$o->Type = 'system';
-			$o->Key = 'printer';
-			if( $o->Load() )
+			if( isset( $args->args->id ) )
 			{
-				$id = $o->ID;
+				if( $row = $SqlDatabase->FetchObject( '
+					SELECT `ID`, `Data` 
+					FROM FSetting 
+					WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" AND ID = "' . $args->args->id . '"
+					ORDER BY `ID` ASC 
+				' ) )
+				{
+					die( 'ok<!--separate-->' . json_encode( $row ) );
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"response":-1,"message":"No printer found"}' );
+				}
+			}
+			else
+			{
+				if( $rows = $SqlDatabase->FetchObjects( '
+					SELECT `ID`, `Data` 
+					FROM FSetting 
+					WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" 
+					ORDER BY `ID` ASC 
+				' ) )
+				{
+					die( 'ok<!--separate-->' . json_encode( $rows ) );
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"response":-1,"message":"No printers found"}' );
+				}
+			}
+		
+			break;
+	
+		// write ---------------------------------------------------------------- //
+	
+		case 'create':
+		
+			if( $args->args->data )
+			{
+				$o = new dbIO( 'FSetting' );
+				$o->UserID = 0;
+				$o->Type = 'system';
+				$o->Key = 'printer';
 				$o->Data = json_encode( $args->args->data );
 				$o->Save();
-				
+			
 				die( 'ok<!--separate-->' . $o->ID );
 			}
-		}
 		
-		die( 'fail update' );
+			die( 'fail<!--separate-->{"response":-1,"message":"Could not create printer"}' );
 		
-		break;
-		
-	// delete --------------------------------------------------------------- //
+			break;
 	
-	case 'remove':
+		case 'update':
 		
-		if( $args->args->id )
-		{
-			$o = new dbIO( 'FSetting' );
-			$o->ID = $args->args->id;
-			$o->UserID = 0;
-			$o->Type = 'system';
-			$o->Key = 'printer';
-			if( $o->Load() )
+			if( $args->args->id && $args->args->data )
 			{
-				$id = $o->ID;
-				$o->Delete();
+				$o = new dbIO( 'FSetting' );
+				$o->ID = $args->args->id;
+				$o->UserID = 0;
+				$o->Type = 'system';
+				$o->Key = 'printer';
+				if( $o->Load() )
+				{
+					$id = $o->ID;
+					$o->Data = json_encode( $args->args->data );
+					$o->Save();
 				
-				die( 'ok<!--separate-->' . $id );
+					die( 'ok<!--separate-->' . $o->ID );
+				}
 			}
-		}
 		
-		die( 'fail remove' );
+			die( 'fail<!--separate-->{"response":-1,"message":"Could not update printer"}' );
 		
-		break;
+			break;
+		
+		// delete --------------------------------------------------------------- //
 	
+		case 'remove':
+		
+			if( $args->args->id )
+			{
+				$o = new dbIO( 'FSetting' );
+				$o->ID = $args->args->id;
+				$o->UserID = 0;
+				$o->Type = 'system';
+				$o->Key = 'printer';
+				if( $o->Load() )
+				{
+					$id = $o->ID;
+					$o->Delete();
+				
+					die( 'ok<!--separate-->' . $id );
+				}
+			}
+		
+			die( 'fail<!--separate-->{"response":-1,"message":"Could not remove printer"}' );
+		
+			break;
+	
+	}
 }
 
 //die( print_r( $args,1 ) . ' --' );
