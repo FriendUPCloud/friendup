@@ -1053,6 +1053,7 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 	MYSQL_RES *result = NULL;
 	if( sel == NULL )
 	{
+		FERROR("Sel is empty!\n");
 		return NULL;
 	}
 	
@@ -1070,7 +1071,7 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 		return NULL;
 	}
 	
-	DEBUG("[MYSQLLibrary] SELECT QUERY %s\n", sel );
+	DEBUG("[MYSQLLibrary] SELECT QUERY: >%s<\n", sel );
 
 	result = mysql_store_result( l->con.sql_Con );
 

@@ -1981,9 +1981,12 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FB
 		return 0;
 	}
 	
+	FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
+	
 	char temptext[ 1024 ];
+	//char *temptext = FCalloc( 1024, 1 );
 
-	sqllib->SNPrintF( sqllib, temptext, sizeof(temptext) ,"\
+	sqllib->SNPrintF( sqllib, temptext, 1024 ,"\
 SELECT \
 `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
 FROM `Filesystem` f \
@@ -2012,10 +2015,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 	//if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
 	{
 		char **row;
-		
-		int num = sqllib->NumberOfRows( sqllib, res );
-		DEBUG("number of rows: %d\n", num );
-		
+
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
@@ -2041,7 +2041,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			//FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
@@ -2088,16 +2088,15 @@ AND LOWER(f.Name) = LOWER('%s')",
 				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", row[0] );
 			}
 			
-			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
+			//FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 		}	// going through all rows
 		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
 		sqllib->FreeResult( sqllib, res );
 
 		usr->u_InitialDevMount = TRUE;
-
-		
 	}
+	FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 	
 	return 0;
 }
