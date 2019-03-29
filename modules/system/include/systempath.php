@@ -242,6 +242,45 @@ else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'sys
 		
 	}
 }
+// Printers
+else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'system:devices/printers/' )
+{
+	// TODO: Apply user permissions
+	if( $rows = $SqlDatabase->FetchObjects( '
+		SELECT `ID`, `Data` 
+		FROM FSetting 
+		WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" 
+		ORDER BY `ID` ASC 
+	' ) )
+	{
+		$out = [];
+		foreach( $rows as $row )
+		{
+			if( $f{0} == '.' ) continue;
+			$o = new stdClass();
+			
+			$identity = json_decode( $row->Data );
+			
+			$o->Filename = $identity->name;
+			$o->Type = 'File';
+			$o->MetaType = 'File';
+			$o->IconClass = 'Printer';
+			$o->Path = 'System:Devices/Printers/' . $identity->name;
+			$o->Permissions = '';
+			$o->DateModified = date( 'Y-m-d H:i:s' );
+			$o->DateCreated = $o->DateModified;
+			$out[] = $o;
+		}
+		if( count( $out ) )
+		{
+			die( 'ok<!--separate-->' . json_encode( $out ) );
+		}
+	}
+	else
+	{
+		die( 'fail<!--separate-->{"response":-1,"message":"No printers found"}' );
+	}
+}
 // Sessions
 else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'system:devices/sessions/' )
 {

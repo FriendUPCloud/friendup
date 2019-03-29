@@ -138,22 +138,25 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 	$o->Server = 'localhost';
 	$o->Mounted = '1';
 	
-	// 3b. Mount the thing
-	$u = $Config->SSLEnable ? 'https://' : 'http://';
-	$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
-	$c = curl_init();
-	curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
-	curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
-	if( $Config->SSLEnable )
-	{
-		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
-		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
-	}
-	$ud = curl_exec( $c );
-	curl_close( $c );
-
 	if( $o->Save() )
 	{
+
+	
+		// 3b. Mount the thing
+		$u = $Config->SSLEnable ? 'https://' : 'http://';
+		$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+		$c = curl_init();
+		curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
+		curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
+		if( $Config->SSLEnable )
+		{
+			curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
+		}
+		$ud = curl_exec( $c );
+		curl_close( $c );
+
+
 		// 4. Wallpaper images directory
 		$f2 = new dbIO( 'FSFolder' );
 		$f2->FilesystemID = $o->ID;

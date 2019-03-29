@@ -165,7 +165,7 @@ i18n_directory_Modules                  : Modules
 i18n_directory_Plugins                  : Plugins
 i18n_directory_Prefs                    : Settings
 i18n_directory_Repositories             : Repositories
-i18n_directory_Devices                  : Disks
+i18n_directory_Devices                  : Devices
 i18n_directory_Libraries                : Libraries
 
 #Devices
@@ -174,6 +174,10 @@ i18n_dosdrivers                         : DOS Drivers
 i18n_cores                              : Cores
 i18n_sessions                           : Sessions
 i18n_printers                           : Printers
+
+i18n_print_failed                       : Printing failed
+i18n_system_administrator_no_printers   : Your system administrator has not set up any printers.
+i18n_print                              : Print
 
 #Menu
 
