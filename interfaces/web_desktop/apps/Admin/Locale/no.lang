@@ -36,3 +36,22 @@ i18n_role_profile                      : Rolle Profil
 i18n_role_name                         : Rolle Navn
 i18n_role_description                  : Beskrivelse
 i18n_permissions                       : Tillatelser
+
+
+#printers related
+i18n_save                              : Lagre
+i18n_delete                            : Slett
+i18n_cancel                            : Avbryt
+
+i18n_printers                          : Printere
+i18n_printer_profile                   : Printer profil
+
+i18n_printer_name                      : Navn
+i18n_printer_type                      : Type
+i18n_printer_host                      : Host
+i18n_printer_ip                        : IP
+i18n_printer_port                      : Port
+i18n_printer_ip_port                   : IP/Port
+
+i18n_deleting_printer                  : Slett printer
+i18n_deleting_printer_verify           : Are you sure?

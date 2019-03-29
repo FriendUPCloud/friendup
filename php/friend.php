@@ -320,10 +320,6 @@ function FindAppInSearchPaths( $app )
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
 {
-	
-	
-	//die(print_r($argv,1));
-	
 	if( $args = explode( '&', $argv[1] ) )
 	{
 		//include_once( 'classes/logger.php' );

@@ -38,9 +38,9 @@ Sections.server_printers = function( cmd, extra )
 		
 		case 'update':
 			
-			if( extra && extra.id )
+			if( extra )
 			{
-				update( extra.id );
+				update( extra );
 			}
 			
 			break;
@@ -51,6 +51,12 @@ Sections.server_printers = function( cmd, extra )
 			{
 				remove( extra );
 			}
+			
+			break;
+		
+		case 'cancel':
+			
+			cancel();
 			
 			break;
 		
@@ -99,6 +105,7 @@ Sections.server_printers = function( cmd, extra )
 									var data = JSON.parse( json.Data );
 									
 									if( data.name ) obj.Name = data.name;
+									if( data.host ) obj.Host = data.host;
 									if( data.ip   ) obj.IP   = data.ip;
 									if( data.port ) obj.Port = data.port;
 									if( data.type ) obj.Type = data.type;
@@ -142,6 +149,7 @@ Sections.server_printers = function( cmd, extra )
 										var data = JSON.parse( json[k].Data );
 										
 										if( data.name ) obj.Name = data.name;
+										if( data.host ) obj.Host = data.host;
 										if( data.ip   ) obj.IP   = data.ip;
 										if( data.port ) obj.Port = data.port;
 										if( data.type ) obj.Type = data.type;
@@ -180,7 +188,7 @@ Sections.server_printers = function( cmd, extra )
 		var buttons = [ 
 			{ 'name' : 'Save',   'icon' : '', 'func' : function()
 				{ 
-					Sections.server_printers( 'update', { id: id } ) 
+					Sections.server_printers( 'update', id ) 
 				} 
 			}, 
 			{ 'name' : 'Delete', 'icon' : '', 'func' : function()
@@ -209,6 +217,11 @@ Sections.server_printers = function( cmd, extra )
 		
 	}
 	
+	function cancel()
+	{
+		ge( 'PrinterDetails' ).innerHTML = '';
+	}
+	
 	// write -------------------------------------------------------------------------------------------------------- //
 	
 	function create()
@@ -220,6 +233,11 @@ Sections.server_printers = function( cmd, extra )
 			console.log( { e:e, d:d } );
 			
 			Sections.server_printers( 'refresh' );
+			
+			if( e == 'ok' && d )
+			{
+				Sections.server_printers( 'details', d );
+			}
 		}
 		m.execute( 'create', { data: { name: 'Unnamed printer' } } );
 		
@@ -229,6 +247,7 @@ Sections.server_printers = function( cmd, extra )
 	{
 		var data = {
 			name : ge( 'PrinterName' ).value,
+			host : ge( 'PrinterHost' ).value,
 			ip   : ge( 'PrinterIP'   ).value,
 			port : ge( 'PrinterPort' ).value,
 			type : ge( 'PrinterType' ).value
@@ -264,6 +283,7 @@ Sections.server_printers = function( cmd, extra )
 					console.log( { e:e, d:d } );
 			
 					Sections.server_printers( 'refresh' );
+					Sections.server_printers( 'cancel' );
 				}
 				m.execute( 'remove', { id: id } );	
 			}
@@ -342,6 +362,7 @@ Sections.server_printers = function( cmd, extra )
 		d.replacements = {
 			id           : ( printer.ID   ? printer.ID   : '' ),
 			printer_name : ( printer.Name ? printer.Name : '' ),
+			printer_host : ( printer.Host ? printer.Host : '' ),
 			printer_ip   : ( printer.IP   ? printer.IP   : '' ),
 			printer_port : ( printer.Port ? printer.Port : '' ),
 			printer_type : ( type ? type : '' )
@@ -387,7 +408,7 @@ Sections.server_printers = function( cmd, extra )
 			
 			
 			var h2 = document.createElement( 'h2' );
-			h2.innerHTML = '{i18n_printers}';
+			h2.innerHTML = i18n( 'i18n_printers' );
 			o.appendChild( h2 );
 			
 			// List headers
@@ -415,11 +436,11 @@ Sections.server_printers = function( cmd, extra )
 			header.appendChild( headRow );
 			o.appendChild( header );
 			
-			function setROnclick( r, uid )
+			function setROnclick( r, id )
 			{
 				r.onclick = function()
 				{
-					Sections.server_printers( 'details', uid );
+					Sections.server_printers( 'details', id );
 				}
 			}
 			
