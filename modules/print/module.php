@@ -72,8 +72,17 @@ switch( $args->command )
 		}
 		break;
 	case 'print':
-		
-		die( 'fail' );
+		// Find by driver
+		if( isset( $args->args->type ) )
+		{
+			// Do the printing!
+			if( file_exists( 'modules/print/drivers/' . $args->args->type . '.php' ) )
+			{
+				require( 'modules/print/drivers/' . $args->args->type . '.php' );
+			}
+			die( 'fail<!--separate-->{"response":-1,"message":"Could not find printer driver."}' );
+		}
+		die( 'fail<!--separate-->{"response":-1,"message":"Failed to contact printer."}' );
 		break;
 	case 'status':
 		break;
