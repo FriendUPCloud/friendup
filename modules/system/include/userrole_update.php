@@ -60,13 +60,28 @@ if( $d->ID > 0 )
 			{
 				if( $perm->name && $perm->key )
 				{
-					$p = new dbIO( 'FUserRolePermission' );
-					$p->Permission = $perm->name;
-					$p->Key = $perm->key;
-					$p->RoleID = $d->ID;
-					$p->Load();
-					$p->Data = $perm->data;
-					$p->Save();
+					if( isset( $perm->command ) && $perm->command == 'delete' )
+					{
+						$p = new dbIO( 'FUserRolePermission' );
+						$p->Permission = $perm->name;
+						$p->Key        = $perm->key;
+						$p->RoleID     = $d->ID;
+						$p->Data       = $perm->data;
+						if( $p->Load() )
+						{
+							$p->Delete();
+						}
+					}
+					else
+					{
+						$p = new dbIO( 'FUserRolePermission' );
+						$p->Permission = $perm->name;
+						$p->Key        = $perm->key;
+						$p->RoleID     = $d->ID;
+						$p->Data       = $perm->data;
+						$p->Load();
+						$p->Save();
+					}
 				}
 			}
 		}
