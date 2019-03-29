@@ -70,6 +70,8 @@ if( $level != 'Admin' )
 		case 'print':
 			
 			break;
+		case 'status':
+			break;
 	}
 }
 // Admin level -----------------------------------------------------------------

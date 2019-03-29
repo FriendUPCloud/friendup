@@ -1780,6 +1780,30 @@ function receiveEvent( event, queued )
 				}
 			}
 			break;
+		// Response from the print dialog
+		case 'printdialog':
+			// Handle the callback
+			if( dataPacket.callbackId && typeof( Application.callbacks[dataPacket.callbackId] ) != 'undefined' )
+			{
+				var f = extractCallback( dataPacket.callbackId );
+				if( f )
+				{
+					try
+					{
+						f( dataPacket.data );
+					}
+					catch( e )
+					{
+						//console.log( 'Error running callback function.' );
+					}
+				}
+			}
+			// We don't have the callback? Check the view window
+			else if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
+			{
+				Application.windows[dataPacket.viewId].sendMessage( dataPacket );
+			}
+			break;
 		// Response from the file dialog
 		case 'filedialog':
 			// Handle the callback
@@ -5222,6 +5246,13 @@ function Door( path )
 			}
 		);
 	}
+}
+
+// Print dialogs ---------------------------------------------------------------
+
+function Printdialog( flags, triggerfunction )
+{
+	
 }
 
 // File dialogs ----------------------------------------------------------------
