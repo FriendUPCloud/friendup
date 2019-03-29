@@ -8,18 +8,33 @@
 *                                                                              *
 *****************************************************************************©*/
 
-Printdialog = function( flags )
+Printdialog = function( flags, triggerfunc )
 {
-	var v = new View( {
-		title: 'i18n_print',
-		width: 700,
-		height: 400
-	} );
+	var title = i18n( 'i18n_print' );
+	if( !flags ) flags = {};
+	if( flags.title )
+		title = flags.title;
 	
-	var f = new File( 'System:templates/print.html' );
-	f.onLoad = function( data )
+	var m = new Module( 'print' );
+	m.onExecuted = function( e, d )
 	{
-		v.setContent( data );
+		if( e != 'ok' )
+		{
+			Alert( i18n( 'i18n_print_failed' ), i18n( 'i18n_system_administrator_no_printers' ) );
+			return;
+		}
+		var v = new View( {
+			title: title,
+			width: 700,
+			height: 400
+		} );
+		var f = new File( 'System:templates/print.html' );
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			v.setContent( data );
+		}
+		f.load();
 	}
-	f.load();
+	m.execute( 'list' );
 };

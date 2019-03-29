@@ -5252,7 +5252,20 @@ function Door( path )
 
 function Printdialog( flags, triggerfunction )
 {
+	var cid = triggerfunction ? addCallback( triggerfunction ) : false;
 	
+	if( flags && flags.triggerFunction )
+	{
+		cid = addCallback( flags.triggerFunction );
+		flags.triggerFunction = null;
+	}
+	
+	Application.sendMessage( {
+		type:               'system',
+		command:            'printdialog',
+		callbackId:         cid,
+		flags:              flags
+	} );
 }
 
 // File dialogs ----------------------------------------------------------------
