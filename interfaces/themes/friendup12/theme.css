@@ -3036,6 +3036,7 @@ html .File .Icon .TypeMOV, html .File .Icon .TypeMP4
 }
 
 html .File .Icon .Devs_Drawer_DOSDrivers,
+html .File .Icon .Devs_Drawer_Printers,
 html .File .Icon .Devs_Drawer_Cores,
 html .File .Icon .Devs_Drawer_Sessions
 {
@@ -3056,6 +3057,17 @@ html .File .Icon .Devs_Drawer_Cores:after
 html .File .Icon .Devs_Drawer_DOSDrivers:after
 {
 	content: "\f277";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .Devs_Drawer_Printers:after
+{
+	content: "\f02f";
 	font-family: FontAwesome;
 	display: block;
 	position: absolute;
@@ -3094,6 +3106,11 @@ html .File.Selected .Icon .Devs_Drawer_DOSDrivers
 html .File .Icon .DOSDriver
 {
 	background-image: url(/iconthemes/friendup15/File_DosDriver.svg);
+}
+
+html .File .Icon .Printer
+{
+	background-image: url(/iconthemes/friendup15/File_Printer.svg);
 }
 
 html .File .Icon .MetaFile

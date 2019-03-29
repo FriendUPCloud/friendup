@@ -1780,6 +1780,30 @@ function receiveEvent( event, queued )
 				}
 			}
 			break;
+		// Response from the print dialog
+		case 'printdialog':
+			// Handle the callback
+			if( dataPacket.callbackId && typeof( Application.callbacks[dataPacket.callbackId] ) != 'undefined' )
+			{
+				var f = extractCallback( dataPacket.callbackId );
+				if( f )
+				{
+					try
+					{
+						f( dataPacket.data );
+					}
+					catch( e )
+					{
+						//console.log( 'Error running callback function.' );
+					}
+				}
+			}
+			// We don't have the callback? Check the view window
+			else if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
+			{
+				Application.windows[dataPacket.viewId].sendMessage( dataPacket );
+			}
+			break;
 		// Response from the file dialog
 		case 'filedialog':
 			// Handle the callback
@@ -5224,6 +5248,26 @@ function Door( path )
 	}
 }
 
+// Print dialogs ---------------------------------------------------------------
+
+function Printdialog( flags, triggerfunction )
+{
+	var cid = triggerfunction ? addCallback( triggerfunction ) : false;
+	
+	if( flags && flags.triggerFunction )
+	{
+		cid = addCallback( flags.triggerFunction );
+		flags.triggerFunction = null;
+	}
+	
+	Application.sendMessage( {
+		type:               'system',
+		command:            'printdialog',
+		callbackId:         cid,
+		flags:              flags
+	} );
+}
+
 // File dialogs ----------------------------------------------------------------
 
 function Filedialog( object, triggerFunction, path, type, filename, title )
@@ -5832,7 +5876,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// Fetch application permissions
 						if( !Application.checkAppPermission )
 						{
-							var n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+							var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+							if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
 							
 							var m = new Module( 'system' );
 							m.onExecuted = function( e, d )
@@ -5931,7 +5976,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Fetch application permissions
 							if( !Application.checkAppPermission )
 							{
-								var n = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+								var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+								if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
 								
 								var m = new Module( 'system' );
 								m.onExecuted = function( e, d )

@@ -51,7 +51,7 @@ extern SystemBase *SLIB;
 
 // external
 
-//char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession );
+char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL *arg );
 
 // 
 //	TODO: This should be moved
