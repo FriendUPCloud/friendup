@@ -43,6 +43,10 @@ function refreshSidebar()
 				icon: 'fa-certificate',
 				permissions: [ 'SUPER_ADMIN' ]
 			},
+			'Printers': {
+				icon: 'fa-print',
+				permissions: [ 'SUPER_ADMIN' ]
+			},
 			'Backup': {
 				icon: 'fa-cloud-download',
 				permissions: [ 'SUPER_ADMIN' ]
