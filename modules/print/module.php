@@ -27,55 +27,60 @@ if( $level = $SqlDatabase->FetchObject( '
 else $level = false;
 
 // User level ------------------------------------------------------------------
-if( $level != 'Admin' )
+
+switch( $args->command )
 {
-	switch( $args->command )
-	{
-		case 'list':
-			// TODO: Apply user permissions
-			if( isset( $args->args->id ) )
+	case 'listprinters':
+		// TODO: Apply user permissions
+		if( isset( $args->args->id ) )
+		{
+			if( $row = $SqlDatabase->FetchObject( '
+				SELECT `ID`, `Data` 
+				FROM FSetting 
+				WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" AND ID = "' . $args->args->id . '"
+				ORDER BY `ID` ASC 
+			' ) )
 			{
-				if( $row = $SqlDatabase->FetchObject( '
-					SELECT `ID`, `Data` 
-					FROM FSetting 
-					WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" AND ID = "' . $args->args->id . '"
-					ORDER BY `ID` ASC 
-				' ) )
-				{
-					die( 'ok<!--separate-->' . json_encode( $row ) );
-				}
-				else
-				{
-					die( 'fail<!--separate-->{"response":-1,"message":"No printer found"}' );
-				}
+				die( 'ok<!--separate-->' . $row->Data );
 			}
-			// TODO: Apply user permissions
 			else
 			{
-				if( $rows = $SqlDatabase->FetchObjects( '
-					SELECT `ID`, `Data` 
-					FROM FSetting 
-					WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" 
-					ORDER BY `ID` ASC 
-				' ) )
-				{
-					die( 'ok<!--separate-->' . json_encode( $rows ) );
-				}
-				else
-				{
-					die( 'fail<!--separate-->{"response":-1,"message":"No printers found"}' );
-				}
+				die( 'fail<!--separate-->{"response":-1,"message":"No printer found"}' );
 			}
-			break;
-		case 'print':
-			
-			break;
-		case 'status':
-			break;
-	}
+		}
+		// TODO: Apply user permissions
+		else
+		{
+			if( $rows = $SqlDatabase->FetchObjects( '
+				SELECT `ID`, `Data` 
+				FROM FSetting 
+				WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" 
+				ORDER BY `ID` ASC 
+			' ) )
+			{
+				$out = [];
+				foreach( $rows as $row )
+				{
+					$out[] = json_decode( $row->Data );
+				}
+				die( 'ok<!--separate-->' . json_encode( $out ) );
+			}
+			else
+			{
+				die( 'fail<!--separate-->{"response":-1,"message":"No printers found"}' );
+			}
+		}
+		break;
+	case 'print':
+		
+		break;
+	case 'status':
+		break;
 }
+
 // Admin level -----------------------------------------------------------------
-else
+// TODO: Add permission checker
+if( $level == 'Admin' )
 {
 
 	switch( $args->command )
