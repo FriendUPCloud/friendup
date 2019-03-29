@@ -178,6 +178,10 @@ i18n_printers                           : Printere
 i18n_print_failed                       : Utskriften feilet
 i18n_system_administrator_no_printers   : Din systemadministrator har ikke satt opp printere.
 i18n_print                              : Skriv ut
+i18n_print_sent                         : Utskriften ble sendt
+i18n_print_sent_to_printer              : Ditt dokument ble sendt til printeren.
+i18n_print_error                        : Utskriftsfeil
+i18n_print_error_desc                   : En feil oppsto under dokumentforsendelsen.
 
 #Menu
 

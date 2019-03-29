@@ -31,23 +31,104 @@ Printdialog = function( flags, triggerfunc )
 				height: 400
 			} );
 			
-			var printers = JSON.parse( d );
-		
-			console.log( printers );
-			var out = '';
-			for( var a = 0; a < printers.length; a++ )
+			v.onClose = function()
 			{
-				out += '<div class="Printer HRow BorderBottom">';
-				out += '<p class="Padding"><strong>' + printers[a].name + '</strong></p>';
-				out += '</div>';
+				if( flags.mainView )
+					flags.mainView.activate();
 			}
-		
+			
+			var printers = JSON.parse( d );
+
 			var f = new File( 'System:templates/print.html' );
-			f.replacements = { 'printers': out };
 			f.i18n();
 			f.onLoad = function( data )
 			{
-				v.setContent( data );
+				v.setContent( data, function()
+				{
+					var printersList = v.content.getElementsByClassName( 'Printers' );
+					if( printersList )
+					{
+						printersList = printersList[0];
+						for( var a = 0; a < printers.length; a++ )
+						{
+							var d = document.createElement( 'div' );
+							d.innerHTML = '<div class="Padding"><span class="IconSmall FloatLeft fa-print"></span> <strong>' + printers[a].name + '</strong></div>';
+							d.className = 'Printer HRow BorderBottom' + ( a == 0 ? ' Selected' : '' );
+							d.onclick = function()
+							{
+								selectIt( this );
+							}
+							d.printer = printers[a];
+							printersList.appendChild( d );
+						}
+						
+						function selectIt( dr )
+						{
+							for( var a = 0; a < printersList.childNodes.length; a++ )
+							{
+								if( printersList.childNodes[ a ] == dr )
+								{
+									dr.classList.add( 'Selected' );
+								}
+								else if( printersList.childNodes[ a ].classList )
+								{
+									printersList.childNodes[ a ].classList.remove( 'Selected' );
+								}
+							}
+						}
+					}
+					
+					function doPrint()
+					{
+						var m = new Module( 'print' );
+						m.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Alert( i18n( 'i18n_print_sent' ), i18n( 'i18n_print_sent_to_printer' ) );
+								v.close();
+							}
+							else
+							{
+								Alert( i18n( 'i18n_print_error' ), i18n( 'i18n_print_error_desc' ) );
+							}							
+						}
+						m.execute( 'print', { file: flags.path } );
+					}
+					
+					var print = v.content.getElementsByClassName( 'print-button' );
+					if( print.length )
+					{
+						print[0].onclick = function()
+						{
+							if( printersList )
+							{
+								var printer = printersList.getElementsByClassName( 'Selected' );
+								if( printer.length )
+								{
+									if( printer[0].printer )
+									{
+										doPrint( printer[0].printer );
+									}
+								}
+							}
+						}
+					}
+					
+					var cancel = v.content.getElementsByClassName( 'fa-remove' );
+					if( cancel.length )
+					{
+						cancel[0].onclick = function()
+						{
+							v.close();
+							if( triggerfunc )
+							{	
+								triggerfunc( false );
+							}
+						}
+					}
+				} );
+				
 			}
 			f.load();
 		

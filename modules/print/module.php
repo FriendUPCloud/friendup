@@ -73,6 +73,7 @@ switch( $args->command )
 		break;
 	case 'print':
 		
+		die( 'fail' );
 		break;
 	case 'status':
 		break;
