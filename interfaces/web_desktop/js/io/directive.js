@@ -35,7 +35,9 @@ function ExecuteApplication( app, args, callback )
 {
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ app ] )
+	{
 		return;
+	}
 
 	// Register that we are executing
 	_executionQueue[ app ] = true;
@@ -147,6 +149,8 @@ function ExecuteApplication( app, args, callback )
 	// TODO: Make this safe!
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
+		// Remove from execution queue
+		_executionQueue[ app ] = null;
 		return ExecuteJSXByPath( app, args, callback, undefined );
 	}
 	else if( app.indexOf( ':' ) > 0 )
