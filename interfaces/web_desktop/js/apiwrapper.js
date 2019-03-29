@@ -3708,6 +3708,30 @@ function apiWrapper( event, force )
 							}
 						}
 						break;
+					// Print dialogs -------------------------------------------
+					case 'printdialog':
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						var triggerFunc = null;
+						if( msg.callbackId )
+						{
+							triggerFunc = function( data )
+							{
+								var nmsg = {
+									command: 'printdialog',
+									applicationId: msg.applicationId,
+									viewId: msg.viewId,
+									targetViewId: msg.targetViewId,
+									callbackId: msg.callbackId,
+									data: data
+								};
+								if( tar )
+									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						var d = new Printdialog( msg.flags, triggerFunc );
+						break;
 					// File dialogs --------------------------------------------
 					case 'filedialog':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;

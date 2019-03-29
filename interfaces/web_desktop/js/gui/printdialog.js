@@ -8,18 +8,56 @@
 *                                                                              *
 *****************************************************************************©*/
 
-Printdialog = function( flags )
+Printdialog = function( flags, triggerfunc )
 {
-	var v = new View( {
-		title: 'i18n_print',
-		width: 700,
-		height: 400
-	} );
+	var title = i18n( 'i18n_print' );
+	if( !flags ) flags = {};
+	if( flags.title )
+		title = flags.title;
 	
-	var f = new File( 'System:templates/print.html' );
-	f.onLoad = function( data )
+	var m = new Module( 'print' );
+	m.onExecuted = function( e, d )
 	{
-		v.setContent( data );
+		if( e != 'ok' )
+		{
+			Alert( i18n( 'i18n_print_failed' ), i18n( 'i18n_system_administrator_no_printers' ) );
+			return;
+		}
+		try
+		{
+			var v = new View( {
+				title: title,
+				width: 700,
+				height: 400
+			} );
+			
+			var printers = JSON.parse( d );
+		
+			console.log( printers );
+			var out = '';
+			for( var a = 0; a < printers.length; a++ )
+			{
+				out += '<div class="Printer HRow BorderBottom">';
+				out += '<p class="Padding"><strong>' + printers[a].name + '</strong></p>';
+				out += '</div>';
+			}
+		
+			var f = new File( 'System:templates/print.html' );
+			f.replacements = { 'printers': out };
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				v.setContent( data );
+			}
+			f.load();
+		
+		}
+		// TODO: Make unique error message
+		catch( e )
+		{
+			Alert( i18n( 'i18n_print_failed' ), i18n( 'i18n_system_administrator_no_printers' ) );
+			return;
+		}
 	}
-	f.load();
+	m.execute( 'listprinters' );
 };

@@ -541,9 +541,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		struct timeval timeout;      
 		timeout.tv_sec = 4; // 4 secs!
 		timeout.tv_usec = 0;
+		DEBUG("Socket timeout will be set\n");
 		setsockopt( sdat->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof( timeout) );
 		setsockopt( sdat->sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof( timeout ) );
 		
+		DEBUG("Before connect\n");
 		if( connect( sdat->sock, (struct sockaddr *)&(sdat->sin), sizeof(sdat->sin) ) != 0 ) 
 		{
 			close( sdat->sock );
@@ -555,6 +557,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		// banners, exchange keys, and setup crypto, compression, and MAC layers
 		// 
 		
+		DEBUG("SSH init\n");
 		sdat->session = libssh2_session_init();
 		
 		if( sdat->session == NULL )
@@ -562,6 +565,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 			FERROR("Cannot create ssh2 session\n");
 			goto shutdown;
 		}
+		DEBUG("SSH timeout set\n");
 		libssh2_session_set_timeout( sdat->session, 5000 );
 		
 		DEBUG("SSH2 timeout, sessptr %p socknr %d\n", sdat->session, sdat->sock );

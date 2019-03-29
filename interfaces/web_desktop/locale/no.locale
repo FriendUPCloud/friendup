@@ -175,6 +175,10 @@ i18n_cores                              : Kjerner
 i18n_clients                            : Økter
 i18n_printers                           : Printere
 
+i18n_print_failed                       : Utskriften feilet
+i18n_system_administrator_no_printers   : Din systemadministrator har ikke satt opp printere.
+i18n_print                              : Skriv ut
+
 #Menu
 
 i18n_your_apps                          : Programmer

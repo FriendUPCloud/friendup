@@ -493,7 +493,8 @@ Application.receiveMessage = function( msg )
 			this.newDocument();
 			break;
 		case 'print':
-			this.mainView.sendMessage( { command: 'print_iframe' } );
+			var p = new Printdialog();
+			//this.mainView.sendMessage( { command: 'print_iframe' } );
 			break;
 		case 'print_remote':
 			this.print();

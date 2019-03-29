@@ -175,6 +175,10 @@ i18n_cores                              : Cores
 i18n_sessions                           : Sessions
 i18n_printers                           : Printers
 
+i18n_print_failed                       : Printing failed
+i18n_system_administrator_no_printers   : Your system administrator has not set up any printers.
+i18n_print                              : Print
+
 #Menu
 
 i18n_your_apps                          : Apps
