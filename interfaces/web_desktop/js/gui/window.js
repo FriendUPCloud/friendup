@@ -3699,10 +3699,11 @@ var View = function( args )
 	}
 
 	// Set content on window
-	this.setContent = function( content )
+	this.setContent = function( content, cbk )
 	{
 		// Safe content without any scripts or styles!
 		SetWindowContent( this._window, this.cleanHTMLData( content ) );
+		if( cbk ) cbk();
 	}
 	this.fullscreen = function( val )
 	{

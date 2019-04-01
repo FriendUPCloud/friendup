@@ -88,7 +88,7 @@ Sections.server_printers = function( cmd, extra )
 				var m = new Module( 'print' );
 				m.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d } );
+					//console.log( { e:e , d:d } );
 				
 					if( e == 'ok' && d )
 					{
@@ -111,8 +111,6 @@ Sections.server_printers = function( cmd, extra )
 									if( data.type ) obj.Type = data.type;
 								}
 								
-								console.log( { json: json, obj: obj } );
-								
 								return callback( true, obj );
 							}
 						} 
@@ -128,7 +126,7 @@ Sections.server_printers = function( cmd, extra )
 				var m = new Module( 'print' );
 				m.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d } );
+					//console.log( { e:e , d:d } );
 				
 					if( e == 'ok' && d )
 					{
@@ -154,8 +152,6 @@ Sections.server_printers = function( cmd, extra )
 										if( data.port ) obj.Port = data.port;
 										if( data.type ) obj.Type = data.type;
 									}
-									
-									console.log( { json: json[k], obj: obj } );
 									
 									arr.push( obj );
 								}
@@ -230,7 +226,7 @@ Sections.server_printers = function( cmd, extra )
 		var m = new Module( 'print' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			Sections.server_printers( 'refresh' );
 			
@@ -258,7 +254,7 @@ Sections.server_printers = function( cmd, extra )
 			var m = new Module( 'print' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				//console.log( { e:e, d:d } );
 			
 				Sections.server_printers( 'refresh' );
 			}
@@ -280,7 +276,7 @@ Sections.server_printers = function( cmd, extra )
 				var m = new Module( 'print' );
 				m.onExecuted = function( e, d )
 				{
-					console.log( { e:e, d:d } );
+					//console.log( { e:e, d:d } );
 			
 					Sections.server_printers( 'refresh' );
 					Sections.server_printers( 'cancel' );

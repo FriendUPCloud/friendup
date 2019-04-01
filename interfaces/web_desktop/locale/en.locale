@@ -178,6 +178,10 @@ i18n_printers                           : Printers
 i18n_print_failed                       : Printing failed
 i18n_system_administrator_no_printers   : Your system administrator has not set up any printers.
 i18n_print                              : Print
+i18n_print_sent                         : Print job sent
+i18n_print_sent_to_printer              : Your document was sent to the printer successfully.
+i18n_print_error                        : Printer error
+i18n_print_error_desc                   : An error occured while connecting to the printer.
 
 #Menu
 

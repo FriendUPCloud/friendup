@@ -25,6 +25,7 @@ function RemoveFromExecutionQueue( app )
 	// Something went wrong, flush
 	catch( e )
 	{
+		console.log( 'Problem!' );
 		mobileDebug( 'Something failed with execution queue.', true );
 		_executionQueue = {};
 	}
@@ -33,12 +34,22 @@ function RemoveFromExecutionQueue( app )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback )
 {
+	var appName = app;
+	if( app.indexOf( ':' ) > 0 )
+	{
+		if( app.indexOf( '/' ) > 0 )
+			appName = app.split( '/' ).pop();
+		else appName = app.split( ':' ).pop();
+	}
+	
 	// You need to wait with opening apps until they are loaded by app name
-	if( _executionQueue[ app ] )
+	if( _executionQueue[ appName ] )
+	{
 		return;
+	}
 
 	// Register that we are executing
-	_executionQueue[ app ] = true;
+	_executionQueue[ appName ] = true;
 
 	if( isMobile )
 	{
@@ -62,10 +73,10 @@ function ExecuteApplication( app, args, callback )
 	mousePointer.clear();
 
 	// Check if the app called is found in the singleInstanceApps array
-	if( Friend.singleInstanceApps[ app ] )
+	if( Friend.singleInstanceApps[ appName ] )
 	{
 		// Clean blocker
-		RemoveFromExecutionQueue( app );
+		RemoveFromExecutionQueue( appName );
 		
 		var msg = {
 			command: 'cliarguments',
@@ -77,11 +88,11 @@ function ExecuteApplication( app, args, callback )
 			msg.type = 'callback';
 		}
 		// If it is found, send the message directly to the app instead of relaunching
-		Friend.singleInstanceApps[ app ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
-		for( var a in Friend.singleInstanceApps[ app ].windows )
+		Friend.singleInstanceApps[ appName ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
+		for( var a in Friend.singleInstanceApps[ appName ].windows )
 		{
-			_ActivateWindow( Friend.singleInstanceApps[ app ].windows[ a ]._window.parentNode );
-			_WindowToFront( Friend.singleInstanceApps[ app ].windows[ a ]._window.parentNode );
+			_ActivateWindow( Friend.singleInstanceApps[ appName ].windows[ a ]._window.parentNode );
+			_WindowToFront( Friend.singleInstanceApps[ appName ].windows[ a ]._window.parentNode );
 			return;
 		}
 		return;
@@ -90,7 +101,7 @@ function ExecuteApplication( app, args, callback )
 	{
 		for( var a in Workspace.applications )
 		{
-			if( Workspace.applications[ a ].applicationName == app )
+			if( Workspace.applications[ a ].applicationName == appName )
 			{
 				var app = Workspace.applications[ a ];
 				for( var z in app.windows )
@@ -98,7 +109,7 @@ function ExecuteApplication( app, args, callback )
 					_ActivateWindow( app.windows[ z ]._window.parentNode );
 					_WindowToFront( app.windows[ z ]._window.parentNode );
 					// Clean blocker
-					RemoveFromExecutionQueue( app );
+					RemoveFromExecutionQueue( appName );
 					return;
 				}
 			}
@@ -147,6 +158,7 @@ function ExecuteApplication( app, args, callback )
 	// TODO: Make this safe!
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
+		// Remove from execution queue
 		return ExecuteJSXByPath( app, args, callback, undefined );
 	}
 	else if( app.indexOf( ':' ) > 0 )
@@ -175,13 +187,13 @@ function ExecuteApplication( app, args, callback )
 			if( callback ) callback( false );
 			
 			// Clean blocker
-			RemoveFromExecutionQueue( app );
+			RemoveFromExecutionQueue( appName );
 			return false;
 		}
 		else if( r != 'ok' )
 		{
 			// Clean blocker
-			RemoveFromExecutionQueue( app );
+			RemoveFromExecutionQueue( appName );
 			
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
@@ -268,7 +280,7 @@ function ExecuteApplication( app, args, callback )
 				if( callback ) callback( false );
 				
 				// Clean blocker
-				RemoveFromExecutionQueue( app );
+				RemoveFromExecutionQueue( appName );
 				return false;
 			}
 
@@ -359,7 +371,7 @@ function ExecuteApplication( app, args, callback )
 			ifr.quit = function( level )
 			{
 				// Clean blocker
-				RemoveFromExecutionQueue( app );
+				RemoveFromExecutionQueue( appName );
 				
 				// Check vr
 				if( window.FriendVR )
@@ -491,7 +503,7 @@ function ExecuteApplication( app, args, callback )
 			ifr.onload = function()
 			{
 				// Clean blocker
-				RemoveFromExecutionQueue( app );
+				RemoveFromExecutionQueue( appName );
 				
 				// Make sure pickup items are cleared
 				mousePointer.clear();
@@ -572,7 +584,7 @@ function ExecuteApplication( app, args, callback )
 			if( callback ) callback( "\n", { response: 'Executable has run.' } );
 			
 			// Clean blocker
-			RemoveFromExecutionQueue( app );
+			RemoveFromExecutionQueue( appName );
 		}
 	}
 	var eo = { application: app, args: args };
@@ -1011,6 +1023,9 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 {
 	if( data.indexOf( '{' ) < 0 ) return;
 
+	// Remove from execution queue
+	RemoveFromExecutionQueue( app );
+	
 	// Only run jsx after refreshing desktop to get mounted drives
 	Workspace.refreshDesktop( function()
 	{

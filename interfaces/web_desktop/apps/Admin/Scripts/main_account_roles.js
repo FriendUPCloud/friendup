@@ -36,6 +36,8 @@ Sections.accounts_roles = function( cmd, extra )
 					{
 						var roleperm = info.role.Permissions;
 						
+						console.log( roleperm );
+						
 						for( var i in perm )
 						{
 							for( var ii in perm[i].AppPermissions )
@@ -44,6 +46,7 @@ Sections.accounts_roles = function( cmd, extra )
 								{
 									if( roleperm[r].Key && roleperm[r].Key == perm[i].Name )
 									{
+										
 										if( typeof perm[i].AppPermissions[ii] == "string" )
 										{
 											if( perm[i].AppPermissions[ii].split( 'App ' )[1] )
@@ -57,27 +60,67 @@ Sections.accounts_roles = function( cmd, extra )
 														id          : perm[i].AppPermissions[ii].split( 'App ' )[1].trim(), 
 														parameter   : "", 
 														description : "", 
-														data        : ( roleperm[r].Data ? true : false ) 
+														data        : roleperm[r].Data
 													};
 													
 													console.log( '[1]', perm[i].AppPermissions[ii] );
+													
+													// New method ----
+													
+													if( !perm[i].RolePermissions )
+													{
+														perm[i].RolePermissions = {};
+													}
+													
+													if( !perm[i].RolePermissions[ roleperm[r].ID ] )
+													{
+														perm[i].RolePermissions[ roleperm[r].ID ] = {
+															id          : perm[i].AppPermissions[ii].split( 'App ' )[1].trim(), 
+															parameter   : "", 
+															description : "", 
+															data        : roleperm[r].Data
+														};
+													}
 												}
+												
 											}
 										}
 										else if( typeof perm[i].AppPermissions[ii] == "object" )
 										{
-											if( typeof perm[i].AppPermissions[ii].data == "undefined" && perm[i].AppPermissions[ii].id )
+											if( perm[i].AppPermissions[ii].id )
 											{
 												if( roleperm[r].Permission == perm[i].AppPermissions[ii].id )
 												{
-													//console.log( perm[i] );
-													console.log( roleperm[r] );
+													if( typeof perm[i].AppPermissions[ii].data == "undefined" )
+													{
+														//console.log( perm[i] );
+														console.log( roleperm[r] );
 													
-													perm[i].AppPermissions[ii].data = ( roleperm[r].Data ? true : false );
+														perm[i].AppPermissions[ii].data = roleperm[r].Data;
+													
+														console.log( '[2]', perm[i].AppPermissions[ii] );
+													}
+													
+													// New method ----
 												
-													console.log( '[2]', perm[i].AppPermissions[ii] );
+													if( !perm[i].RolePermissions )
+													{
+														perm[i].RolePermissions = {};
+													}
+													
+													if( !perm[i].RolePermissions[ roleperm[r].ID ] )
+													{
+														perm[i].RolePermissions[ roleperm[r].ID ] = {
+															id          : perm[i].AppPermissions[ii].id, 
+															parameter   : perm[i].AppPermissions[ii].parameter, 
+															description : "", 
+															data        : roleperm[r].Data
+														};
+													}
 												}
+												
 											}
+											
 										}
 										else
 										{
@@ -155,7 +198,9 @@ Sections.accounts_roles = function( cmd, extra )
 					}
 				}
 				
-				//apl = '';
+				// old method will not be used so new method under ...
+				
+				apl = '';
 				
 				if( perm )
 				{
@@ -170,96 +215,120 @@ Sections.accounts_roles = function( cmd, extra )
 							apl += '<div class="HRow">';
 							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].Name + '</strong></div>';
 							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-							apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
+							//apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
 							apl += '</div>';
 							apl += '</div>';
 							
-							apl += '<div class="List">';
+							apl += '<div class="">';
 							
 							
 							
 							
 							
-							
-							
-							for( var li in perm[a].AppPermissions )
+							if( perm[a].RolePermissions )
 							{
-								if( typeof perm[a].AppPermissions[li] == "object" )
+								for( var li in perm[a].RolePermissions )
 								{
-									var obj2 = perm[a].AppPermissions[li];
-								}
-								else
-								{
-									if( !perm[a].AppPermissions[li].split( 'App ' )[1] )
+									if( typeof perm[a].RolePermissions[li] == "object" )
 									{
-										continue;
-									}
-								
-									var obj2 = {
-										id          : perm[a].AppPermissions[li].split( 'App ' )[1].trim(), 
-										parameter   : "", 
-										description : "", 
-										data        : ""
-									};
-								}
-								
-								
-								
-								apl += '<div class="HRow">';
-								apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select class="FullWidth">';
-								
-								apl += '<option> - - - </option>';
-								
-								for( var k in perm[a].AppPermissions )
-								{
-									if( typeof perm[a].AppPermissions[k] == "object" )
-									{
-										var obj = perm[a].AppPermissions[k];
+										var obj2 = perm[a].RolePermissions[li];
 									}
 									else
 									{
-										if( !perm[a].AppPermissions[k].split( 'App ' )[1] )
+										if( !perm[a].RolePermissions[li].split( 'App ' )[1] )
 										{
 											continue;
 										}
-									
-										var obj = {
-											id          : perm[a].AppPermissions[k].split( 'App ' )[1].trim(), 
+								
+										var obj2 = {
+											id          : perm[a].RolePermissions[li].split( 'App ' )[1].trim(), 
 											parameter   : "", 
 											description : "", 
 											data        : ""
 										};
 									}
 								
-									sw = sw == 2 ? 1 : 2;
 								
-									var rid = info.role.ID;
-									var pem = obj.id;
-									var key = perm[a].Name;
-									
-									apl += '<option' + ( obj2.id == obj.id ? ' selected="selected"' : '' ) + '>' + ( 'i18n_' + obj.id ) + '</option>';
-								}
-							
-								apl += '</select></div>';
-								apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select class="FullWidth">';
-							
-								if( wgroups && wgroups.length )
-								{
-									apl += '<option> - - - </option>';
-									
-									for( var k in wgroups )
+									//if( !obj2.data ) continue;
+								
+								
+									var rid  = info.role.ID;
+									var pem  = obj2.id;
+									var key  = perm[a].Name;
+									var data = obj2.data;
+								
+								
+									apl += '<div class="HRow">';
+									//apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select class="FullWidth">';
+									apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis">';
+								
+									//apl += '<option> - - - </option>';
+								
+									for( var k in perm[a].AppPermissions )
 									{
-										apl += '<option>' + wgroups[k].Name + '</option>';
-									}
-								}
+										if( typeof perm[a].AppPermissions[k] == "object" )
+										{
+											var obj = perm[a].AppPermissions[k];
+										}
+										else
+										{
+											if( !perm[a].AppPermissions[k].split( 'App ' )[1] )
+											{
+												continue;
+											}
+									
+											var obj = {
+												id          : perm[a].AppPermissions[k].split( 'App ' )[1].trim(), 
+												parameter   : "", 
+												description : "", 
+												data        : ""
+											};
+										}
 								
-								apl += '</select></div>';
-								apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
-								//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
-								apl += '<strong>(-)</strong>';
-								apl += '</div>';
-								apl += '</div>';
+										sw = sw == 2 ? 1 : 2;
+								
+										//var rid = info.role.ID;
+										//var pem = obj.id;
+										//var key = perm[a].Name;
+									
+										//apl += '<option' + ( obj2.id == obj.id ? ' selected="selected"' : '' ) + '>' + ( 'i18n_' + obj.id ) + '</option>';
+									
+										if( obj2.id == obj.id )
+										{
+											apl += '<div class="PaddingSmall">' + ( 'i18n_' + obj.id ) + '</div>';
+										}
+									}
 							
+									//apl += '</select></div>';
+									apl += '</div>';
+									//apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select class="FullWidth">';
+									apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis">';
+								
+									if( wgroups && wgroups.length )
+									{
+										//apl += '<option> - - - </option>';
+										//apl += '<div class="PaddingSmall"> - - - </div>';
+									
+										for( var k in wgroups )
+										{
+											if( wgroups[k].ID == data )
+											{
+												apl += '<div class="PaddingSmall">' + wgroups[k].Name + '</div>';
+											}
+											//apl += '<option>' + wgroups[k].Name + '</option>';
+										}
+									}
+								
+									//apl += '</select></div>';
+									apl += '</div>';
+									apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
+									//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
+									//apl += '<strong>(-)</strong>';
+									apl += '<button class="IconButton IconSmall ButtonSmall FloatRight fa-minus-circle" onclick="Sections.removepermission('+rid+',\''+pem+'\',\''+key+'\',\''+data+'\',this)"></button>';
+									apl += '</div>';
+									apl += '</div>';
+							
+								}
 							}
 							
 							
@@ -269,9 +338,9 @@ Sections.accounts_roles = function( cmd, extra )
 							
 							
 							apl += '<div class="HRow">';
-							apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select class="FullWidth">';
+							apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select id="RolePermissionList_' + key + '" class="FullWidth">';
 							
-							apl += '<option> - - - </option>';
+							apl += '<option value=""> - - - </option>';
 							
 							for( var k in perm[a].AppPermissions )
 							{
@@ -296,37 +365,41 @@ Sections.accounts_roles = function( cmd, extra )
 								
 								sw = sw == 2 ? 1 : 2;
 								
-								var rid = info.role.ID;
-								var pem = obj.id;
-								var key = perm[a].Name;
+								//var rid = info.role.ID;
+								//var pem = obj.id;
+								//var key = perm[a].Name;
 								
-								apl += '<option>' + ( 'i18n_' + obj.id ) + '</option>';
+								apl += '<option value="' + obj.id + '">' + ( 'i18n_' + obj.id ) + '</option>';
 							}
 							
 							apl += '</select></div>';
-							apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select class="FullWidth">';
+							apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select id="RoleWorkgroupList_' + key + '" class="FullWidth">';
 							
 							if( wgroups && wgroups.length )
 							{
-								apl += '<option> - - - </option>';
+								apl += '<option value=""> - - - </option>';
 								
 								for( var k in wgroups )
 								{
-									apl += '<option>' + wgroups[k].Name + '</option>';
+									apl += '<option value="' + wgroups[k].ID + '">' + wgroups[k].Name + '</option>';
 								}
 							}
 							
 							apl += '</select></div>';
 							apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
 							//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
-							apl += '<strong>(+)</strong>';
+							//apl += '<strong>(+)</strong>';
+							apl += '<button class="IconButton IconSmall ButtonSmall FloatRight fa-plus-circle" onclick="Sections.addpermission('+rid+',\''+key+'\',this)"></button>';
 							apl += '</div>';
 							apl += '</div>';
 							
-							apl += '<div class="HRow">&nbsp;</div>';
+							//apl += '<div class="HRow">&nbsp;</div>';
+							
+							
 							
 							apl += '<div class="HRow">';
-							apl += '<button onclick="javascript:void(0)" class="IconSmall FloatRight">Save</button>';
+							//apl += '<button onclick="javascript:void(0)" class="IconSmall FloatRight">Save</button>';
+							//apl += '<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick=""></button>';
 							apl += '</div>';
 							
 							
@@ -510,7 +583,11 @@ Sections.accounts_roles = function( cmd, extra )
 		
 		var d = document.createElement( 'div' );
 		d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
+		
 		d.innerHTML = '<strong>(+)</strong>';
+		
+		//d.innerHTML = '<button class="IconButton IconSmall ButtonSmall fa-plus-circle"></button>';
+		
 		d.onclick = function(){ Sections.userroleadd( 'Unnamed role' ) };
 		headRow.appendChild( d );
 		
@@ -651,7 +728,7 @@ Sections.userroledelete = function( rid )
 	}
 };
 
-Sections.userroleupdate = function( rid, input, perms )
+Sections.userroleupdate = function( rid, input, perms, refresh )
 {
 	if( rid )
 	{
@@ -662,8 +739,45 @@ Sections.userroleupdate = function( rid, input, perms )
 			
 			// refresh
 			Sections.accounts_roles();
+			
+			// refresh details also ...
+			if( refresh )
+			{
+				Sections.accounts_roles( 'edit', rid );
+			}
 		}
 		m.execute( 'userroleupdate', { id: rid, name: ( input ? input : null ), permissions: ( perms ? perms : null ) } );
+	}
+};
+
+Sections.removepermission = function( rid, pem, key, data, _this )
+{
+	if( rid && pem && key && _this )
+	{
+		var perms = [ { command: 'delete', name: pem, key: key, data: data } ];
+		
+		Confirm( i18n( 'i18n_deleting_permission' ), i18n( 'i18n_deleting_permission_verify' ), function( result )
+		{
+			// Confirmed!
+			if( result && result.data && result.data == true )
+			{
+				Sections.userroleupdate( rid, null, perms, true );
+			}
+			
+		} );
+	}
+};
+
+Sections.addpermission = function( rid, key, _this )
+{
+	var pem  = ge( 'RolePermissionList_' + key ).value;
+	var data = ge( 'RoleWorkgroupList_' + key ).value;
+	
+	if( rid && key && pem && _this )
+	{
+		var perms = [ { name: pem, key: key, data: data } ];
+		
+		Sections.userroleupdate( rid, null, perms, true );
 	}
 };
 
@@ -698,9 +812,5 @@ Sections.checkpermission = function( input )
 	}
 };
 
-//console.log( 'Sections.userroleadd =', Sections.userroleadd );
-//console.log( 'Sections.userroledelete =', Sections.userroledelete );
-//console.log( 'Sections.userroleupdate =', Sections.userroleupdate );
-//console.log( 'Sections.accounts_roles =', Sections.accounts_roles );
-//console.log( 'Sections.checkpermission =', Sections.checkpermission );
+
 
