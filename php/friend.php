@@ -223,19 +223,62 @@ function GetAppPermissions( $appName, $UserID = false )
 				p.ID 
 		' ) )
 		{
-			$found = false;
+			$found = false; 
+			
+			$wgs = new stdClass();
 			
 			$pem = new stdClass();
 			
+			if( $wgroups = $SqlDatabase->FetchObjects( $q2 = '
+				SELECT 
+					g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID 
+				FROM 
+					FUserGroup g, 
+					FUserToGroup u 
+				WHERE 
+						g.Type = \'Workgroup\' 
+					AND u.UserID = \'' . $UserID . '\' 
+					AND u.UserGroupID = g.ID 
+				ORDER BY 
+					g.Name ASC 
+			' ) )
+			{
+				foreach( $wgroups as $wg )
+				{
+					$wgs->{ $wg->ID } = $wg;
+				}
+			}
+			
 			foreach( $rows as $v )
 			{
-				if( $v->Permission && $v->Data == 'Activated' )
+				// TODO: Build out to support other methods not defined yet ...
+				
+				// If we have data and it's "parameter": "FRIEND_WORKGROUP" check if User has this workgroup
+				
+				//if( $v->Data && !isset( $wgs->{ $v->Data } ) )
+				//{
+				//	continue;
+				//}
+				
+				if( $v->Permission )
 				{
 					$found = true;
 					
 					// TODO: Add some useful info here if needed ... { "id": 22, "name": "Read", "description": "" }
-				
-					$pem->{ $v->Permission } = $v;
+					
+					if( isset( $pem->{ $v->Permission } ) )
+					{
+						if( !is_array( $pem->{ $v->Permission } ) )
+						{
+							$pem->{ $v->Permission } = array( $pem->{ $v->Permission } );
+						}
+						
+						$pem->{ $v->Permission }[] = $v;
+					}
+					else
+					{
+						$pem->{ $v->Permission } = $v;
+					}
 				}
 			}
 			
