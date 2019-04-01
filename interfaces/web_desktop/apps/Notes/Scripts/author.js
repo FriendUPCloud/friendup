@@ -493,7 +493,9 @@ Application.receiveMessage = function( msg )
 			this.newDocument();
 			break;
 		case 'print':
-			var p = new Printdialog();
+			var p = new Printdialog( {
+				path: this.wholeFilename
+			} );
 			//this.mainView.sendMessage( { command: 'print_iframe' } );
 			break;
 		case 'print_remote':

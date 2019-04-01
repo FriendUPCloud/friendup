@@ -1488,9 +1488,43 @@ if( isset( $args->command ) )
 			
 			// TODO: Make this permissions handling more general for the whole system at some point, and beautify it.
 			
-			if( $pobj = CheckAppPermission( 'CRUD_USER_WORKGROUP', 'Admin' ) )
+			if( $pobj = CheckAppPermission( 'CRUD_USER_GLOBAL', 'Admin' ) )
 			{
-				if( $pobj->GroupID )
+				$permission = 'Global';
+			}
+			else if( $pobj = CheckAppPermission( 'CRUD_USER_WORKGROUP', 'Admin' ) )
+			{
+				$uids = '';
+				
+				if( is_array( $pobj ) )
+				{
+					foreach( $pobj as $po )
+					{
+						if( $po->Data )
+						{
+							if( $uds = $SqlDatabase->FetchObjects( '
+								SELECT 
+									ug.UserID, g.Name AS Workgroup 
+								FROM 
+									`FUserGroup` g, 
+									`FUserToGroup` ug 
+								WHERE 
+										g.ID IN (' . $po->Data . ') 
+									AND g.Type = "Workgroup" 
+									AND ug.UserGroupID = g.ID 
+								ORDER BY 
+									ug.UserID ASC 
+							' ) )
+							{
+								foreach( $uds as $v )
+								{
+									$uids = ( $uids ? ( $uids . ',' ) : '' ) . $v->UserID;
+								}
+							}
+						}
+					}
+				}
+				else if( $pobj->Data )
 				{
 					if( $uds = $SqlDatabase->FetchObjects( '
 						SELECT 
@@ -1499,39 +1533,33 @@ if( isset( $args->command ) )
 							`FUserGroup` g, 
 							`FUserToGroup` ug 
 						WHERE 
-								g.ID IN (' . $pobj->GroupID . ') 
+								g.ID IN (' . $pobj->Data . ') 
 							AND g.Type = "Workgroup" 
 							AND ug.UserGroupID = g.ID 
 						ORDER BY 
 							ug.UserID ASC 
 					' ) )
 					{
-						$uids = '';
-						
 						foreach( $uds as $v )
 						{
 							$uids = ( $uids ? ( $uids . ',' ) : '' ) . $v->UserID;
 						}
-						
-						// UserID's in the Workgroups this user has access to ...
-						
-						if( $args->args == false || $args->args == 'false' )
-						{
-							$args->args = new stdClass();
-						}
-						
-						$args->args->userid = $uids;
-						
-						if( $args->args->userid )
-						{
-							$permission = 'Workgroup';
-						}
 					}
 				}
-			}
-			else if( $pobj = CheckAppPermission( 'CRUD_USER_GLOBAL', 'Admin' ) )
-			{
-				$permission = 'Global';
+				
+				// UserID's in the Workgroups this user has access to ...
+					
+				if( $args->args == false || $args->args == 'false' )
+				{
+					$args->args = new stdClass();
+				}
+				
+				$args->args->userid = $uids;
+				
+				if( $args->args->userid )
+				{
+					$permission = 'Workgroup';
+				}
 			}
 			
 			

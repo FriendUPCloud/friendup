@@ -249,7 +249,7 @@ Sections.accounts_roles = function( cmd, extra )
 									}
 								
 								
-									if( !obj2.data ) continue;
+									//if( !obj2.data ) continue;
 								
 								
 									var rid  = info.role.ID;
@@ -752,7 +752,7 @@ Sections.userroleupdate = function( rid, input, perms, refresh )
 
 Sections.removepermission = function( rid, pem, key, data, _this )
 {
-	if( rid && pem && key && data && _this )
+	if( rid && pem && key && _this )
 	{
 		var perms = [ { command: 'delete', name: pem, key: key, data: data } ];
 		
@@ -773,7 +773,7 @@ Sections.addpermission = function( rid, key, _this )
 	var pem  = ge( 'RolePermissionList_' + key ).value;
 	var data = ge( 'RoleWorkgroupList_' + key ).value;
 	
-	if( rid && key && pem && data && _this )
+	if( rid && key && pem && _this )
 	{
 		var perms = [ { name: pem, key: key, data: data } ];
 		
