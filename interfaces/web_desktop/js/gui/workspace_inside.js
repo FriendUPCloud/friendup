@@ -482,6 +482,10 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	getWebSocketsState: function()
+	{
+		return Workspace.websocketState;
+	},
 	initWebSocket: function()
 	{	
 		// We're already open
@@ -557,7 +561,6 @@ var WorkspaceInside = {
 		
 		// Reference for handler
 		var selfConn = this.conn;
-
 
 		function onState( e )
 		{

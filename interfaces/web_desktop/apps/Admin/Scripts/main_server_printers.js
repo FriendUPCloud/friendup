@@ -342,7 +342,7 @@ Sections.server_printers = function( cmd, extra )
 	{
 		var printer = info.printer;
 		
-		var arr = [ 'safeq-spooler', 'generic-postscript' ];
+		var arr = [ 'safeq-spooler', 'generic-postscript', 'local-printer' ];
 		
 		var type = '';
 		

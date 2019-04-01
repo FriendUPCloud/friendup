@@ -12,6 +12,7 @@
 
 require_once( 'php/friend.php' );
 require_once( 'php/classes/dbio.php' );
+require_once( 'php/classes/file.php' );
 
 // Get user level
 if( $level = $SqlDatabase->FetchObject( '
@@ -75,11 +76,25 @@ switch( $args->command )
 		// Find by driver
 		if( isset( $args->args->type ) )
 		{
-			// Do the printing!
-			if( file_exists( 'modules/print/drivers/' . $args->args->type . '.php' ) )
+			// Get printer config
+			if( $row = $SqlDatabase->FetchObject( '
+				SELECT `ID`, `Data` 
+				FROM FSetting 
+				WHERE `UserID` = "0" AND `Type` = "system" AND `Key` = "printer" AND ID = "' . intval( $args->args->id, 10 ) . '"
+				ORDER BY `ID` ASC 
+			' ) )
 			{
-				require( 'modules/print/drivers/' . $args->args->type . '.php' );
+				$conf = json_decode( $row->Data );
+				if( $conf )
+				{
+					// Do the printing!
+					if( file_exists( 'modules/print/drivers/' . $args->args->type . '.php' ) )
+					{
+						require( 'modules/print/drivers/' . $args->args->type . '.php' );
+					}
+				}
 			}
+			
 			die( 'fail<!--separate-->{"response":-1,"message":"Could not find printer driver."}' );
 		}
 		die( 'fail<!--separate-->{"response":-1,"message":"Failed to contact printer."}' );
