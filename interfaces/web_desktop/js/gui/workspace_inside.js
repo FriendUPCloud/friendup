@@ -9172,21 +9172,22 @@ else
 }
 
 /*  Debug blob: */
-/*if( isMobile  )
+if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
-	debug.style.height = '80px';
+	debug.style.height = '120px';
 	debug.style.left = '0px';
 	debug.style.color = 'black';
 	debug.style.position = 'absolute';
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
+	debug.innerHTML = '<span>thomasdebug v01</span>';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
-}*/
+}
 
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
