@@ -11,22 +11,74 @@
 *****************************************************************************©*/
 
 // TODO: Support file conversions
-$file = new File( $args->args->file );
-if( $file->Load() )
+if( substr( $args->args->file, 0, 7 ) == 'http://' || substr( $args->args->file, 0, 8 ) == 'https://' )
 {
-	// IP Printer - simple mode
-	if( $conf->ip && $conf->port )
-	{
-		$ch = curl_init();
-		curl_setopt( $ch, CURLOPT_URL, $conf->ip );
-		curl_setopt( $ch, CURLOPT_PORT, $conf->port );
-		$result = curl_execute( $ch );
-	}
-	// TODO: Support hostnames
-	else if( $conf->host )
-	{
-	}
+	$fileContent = file_get_contents( $args->args->file );
+	$result = true;
+}
+else
+{
+	$file = new File( $args->args->file );
+	$result = $file->Load();
+	$fileContent =& $file->_content;
+}
 
+if( $result )
+{
+	$ftpl = 'friend_print_file';
+	$fn = $ftpl;
+	$num = 1;
+	while( file_exists( '/tmp/' . $fn ) )
+	{
+		$fn = $ftpl . '_' . ( $num++ );
+	}
+	
+	$destination = false;
+	
+	if( $f = fopen( '/tmp/' . $fn, 'w+' ) )
+	{
+		fwrite( $f, $fileContent );
+		fclose( $f );
+		
+		// IP Printer - simple mode
+		if( $conf->ip )
+		{
+			$destination = $conf->ip;
+		}
+		// Host based
+		else if( $conf->host )
+		{
+			$destination = $conf->host;
+		}
+		
+		if( $destination )
+		{
+			$ftpl = 'friend_print_file';
+			$fn = $ftpl;
+			$num = 1;
+			while( file_exists( '/tmp/' . $fn ) )
+			{
+				$fn = $ftpl . '_' . ( $num++ );
+			}
+			if( $f = fopen( '/tmp/' . $fn, 'w+' ) )
+			{
+				fwrite( $f, $fileContent );
+				fclose( $f );
+		
+				$response = shell_exec( 'lpr -h' . $destination . ' /tmp/' . $fn );
+		
+				// Clean up
+				unlink( '/tmp/' . $fn );
+		
+				die( 'ok<!--separate-->{"response":1,"message":"Document was sent to printer."}' );
+			}
+			
+			// Clean up
+			unlink( '/tmp/' . $fn );
+		}
+		
+		die( 'ok<!--separate-->{"response":1,"message":"Document was sent to printer."}' );
+	}
 	die( 'fail<!--separate-->{"response":-1,"message":"Missing parameters."}' );
 }
 

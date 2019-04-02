@@ -20,7 +20,7 @@ else
 {
 	$file = new File( $args->args->file );
 	$result = $file->Load();
-	$fileContent =& $file->GetContent();
+	$fileContent =& $file->_content;
 }
 
 if( $result )
@@ -32,30 +32,49 @@ if( $result )
 	{
 		$fn = $ftpl . '_' . ( $num++ );
 	}
+	
+	$destination = false;
+	
 	if( $f = fopen( '/tmp/' . $fn, 'w+' ) )
 	{
 		fwrite( $f, $fileContent );
 		fclose( $f );
 		
 		// IP Printer - simple mode
-		if( $conf->ip && $conf->port )
+		if( $conf->ip )
 		{
-			$ch = curl_init();
-			curl_setopt( $ch, CURLOPT_URL, $conf->ip );
-			curl_setopt( $ch, CURLOPT_PORT, $conf->port );
-			$result = curl_execute( $ch );
+			$destination = $conf->ip;
+		}
+		// Host based
+		else if( $conf->host )
+		{
+			$destination = $conf->host;
+		}
+		
+		if( $destination )
+		{
+			$ftpl = 'friend_print_file';
+			$fn = $ftpl;
+			$num = 1;
+			while( file_exists( '/tmp/' . $fn ) )
+			{
+				$fn = $ftpl . '_' . ( $num++ );
+			}
+			if( $f = fopen( '/tmp/' . $fn, 'w+' ) )
+			{
+				fwrite( $f, $fileContent );
+				fclose( $f );
+		
+				$response = shell_exec( 'lpr -U ' . $User->Name . ' -h' . $destination . ' /tmp/' . $fn );
+		
+				// Clean up
+				unlink( '/tmp/' . $fn );
+		
+				die( 'ok<!--separate-->{"response":1,"message":"Document was sent to printer."}' );
+			}
 			
 			// Clean up
 			unlink( '/tmp/' . $fn );
-		}
-		// TODO: Support hostnames
-		else if( $conf->host )
-		{
-			// Clean up
-			unlink( '/tmp/' . $fn );
-	
-			// Fails now..
-			die( 'fail<!--separate-->{"response":-1,"message":"Missing parameters."}' );
 		}
 		
 		die( 'ok<!--separate-->{"response":1,"message":"Document was sent to printer."}' );

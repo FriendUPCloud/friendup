@@ -20,7 +20,7 @@ else
 {
 	$file = new File( $args->args->file );
 	$result = $file->Load();
-	$fileContent =& $file->GetContent();
+	$fileContent =& $file->_content;
 }
 
 if( $result )
