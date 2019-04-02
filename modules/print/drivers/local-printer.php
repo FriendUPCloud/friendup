@@ -11,8 +11,19 @@
 *****************************************************************************©*/
 
 // TODO: Support file conversions
-$file = new File( $args->args->file );
-if( $file->Load() )
+if( substr( $args->args->file, 0, 7 ) == 'http://' || substr( $args->args->file, 0, 8 ) == 'https://' )
+{
+	$fileContent = file_get_contents( $args->args->file );
+	$result = true;
+}
+else
+{
+	$file = new File( $args->args->file );
+	$result = $file->Load();
+	$fileContent =& $file->GetContent();
+}
+
+if( $result )
 {
 	$ftpl = 'friend_print_file';
 	$fn = $ftpl;
@@ -23,7 +34,7 @@ if( $file->Load() )
 	}
 	if( $f = fopen( '/tmp/' . $fn, 'w+' ) )
 	{
-		fwrite( $f, $file->GetContent() );
+		fwrite( $f, $fileContent );
 		fclose( $f );
 		
 		$response = shell_exec( 'lp /tmp/' . $fn );
