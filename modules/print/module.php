@@ -42,7 +42,9 @@ switch( $args->command )
 				ORDER BY `ID` ASC 
 			' ) )
 			{
-				die( 'ok<!--separate-->' . $row->Data );
+				$d = json_decode( $row->Data );
+				$d->id = $row->ID;
+				die( 'ok<!--separate-->' . json_encode( $d ) );
 			}
 			else
 			{
@@ -62,7 +64,9 @@ switch( $args->command )
 				$out = [];
 				foreach( $rows as $row )
 				{
-					$out[] = json_decode( $row->Data );
+					$o = json_decode( $row->Data );
+					$o->id = $row->ID;
+					$out[] = $o;
 				}
 				die( 'ok<!--separate-->' . json_encode( $out ) );
 			}
@@ -74,7 +78,7 @@ switch( $args->command )
 		break;
 	case 'print':
 		// Find by driver
-		if( isset( $args->args->type ) )
+		if( isset( $args->args->id ) )
 		{
 			// Get printer config
 			if( $row = $SqlDatabase->FetchObject( '
@@ -88,9 +92,9 @@ switch( $args->command )
 				if( $conf )
 				{
 					// Do the printing!
-					if( file_exists( 'modules/print/drivers/' . $args->args->type . '.php' ) )
+					if( file_exists( 'modules/print/drivers/' . $conf->type . '.php' ) )
 					{
-						require( 'modules/print/drivers/' . $args->args->type . '.php' );
+						require( 'modules/print/drivers/' . $conf->type . '.php' );
 					}
 				}
 			}

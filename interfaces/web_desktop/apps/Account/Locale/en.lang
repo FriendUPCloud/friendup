@@ -82,6 +82,7 @@ i18n_host_port                       : Server port
 i18n_host_ip                         : Server address or IP
 i18n_hostname                        : Server address
 i18n_workgroup_name                  : Your workgroup
+i18n_choose_workgroup                : Choose workgroup
 i18n_workgroup                       : Workgroup
 i18n_device_name                     : Disk name
 i18n_placeholder_connection          : Mydisk

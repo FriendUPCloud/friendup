@@ -1027,11 +1027,9 @@ if( isset( $args->command ) )
 				if( isset( $args->args->Workgroup ) )
 				{
 					if( $group = $SqlDatabase->FetchObject( '
-						SELECT ug.* FROM FUserGroup ug, FUserToGroup tg
+						SELECT ug.* FROM FUserGroup ug
 							WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
 							AND ug.Type = "Workgroup"
-							AND tg.UserGroupID = ug.ID
-							AND tg.UserID = \'' . $userid . '\'
 					' ) )
 					{
 						$groupID = $group->ID;
