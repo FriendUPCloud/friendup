@@ -895,6 +895,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( el != NULL )
 				{
 					workgroups = UrlDecodeToMem( (char *)el->data );
+					DEBUG("Workgroups found!: %s\n", workgroups );
 				}
 			
 				DEBUG("[UMWebRequest] Changing user data %lu\n", id );
@@ -929,6 +930,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+					// we must notify user
+					if( logusr != loggedSession->us_User )
+					{
+						UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
+					}
 					
 					if( error != NULL )
 					{

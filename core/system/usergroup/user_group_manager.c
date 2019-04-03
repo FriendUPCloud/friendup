@@ -536,52 +536,54 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	FBOOL isAdmin = FALSE;
 	FBOOL isAPI = FALSE;
 	
+			// set proper user level
+	UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
+	while( gr != NULL )
+	{
+		if( strcmp( gr->ug_Name, level ) == 0 )
+		{
+			DEBUG("User is in level: %s\n", level );
+			if( gr->ug_IsAdmin == TRUE )
+			{
+				isAdmin = TRUE;
+			}
+			
+			if( gr->ug_IsAPI == TRUE )
+			{
+				isAdmin = TRUE;
+			}
+			
+			UserGroupAddUser( gr, usr );
+			
+			DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+			
+			char loctmp[ 255 ];
+			int loctmplen;
+			if( pos == 0 )
+			{
+				loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+				tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+			}
+			else
+			{
+				loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+				tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+			}
+			BufStringAdd( bsInsert, loctmp );
+			BufStringAddSize( bsGroups, tmpQuery, tmplen );
+			
+			pos++;
+			break;
+		}
+		gr = (UserGroup *) gr->node.mln_Succ;
+	}
+	
 	while( el != NULL )
 	{
 		UIntListEl *rmEntry = el;
 		el = (UIntListEl *)el->node.mln_Succ;
 		
 		DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated, pos: %d\n", pos );
-		
-		// set proper user level
-		UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
-		while( gr != NULL )
-		{
-			if( strcmp( gr->ug_Name, level ) == 0 )
-			{
-				if( gr->ug_IsAdmin == TRUE )
-				{
-					isAdmin = TRUE;
-				}
-				
-				if( gr->ug_IsAPI == TRUE )
-				{
-					isAdmin = TRUE;
-				}
-				
-				UserGroupAddUser( gr, usr );
-				
-				DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
-				
-				char loctmp[ 255 ];
-				int loctmplen;
-				if( pos == 0 )
-				{
-					loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
-					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-				}
-				else
-				{
-					loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
-					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-				}
-				BufStringAdd( bsInsert, loctmp );
-				BufStringAddSize( bsGroups, tmpQuery, tmplen );
-				
-				pos++;
-			}
-			gr = (UserGroup *) gr->node.mln_Succ;
-		}
 		
 		DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
 		gr = sb->sl_UGM->ugm_UserGroups;
@@ -631,9 +633,12 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		FERROR("Cannot call query: '%s'\n", tmpQuery );
 	}
 
-	if( sqlLib->QueryWithoutResults( sqlLib, bsInsert->bs_Buffer  ) !=  0 )
+	//if( workgroups != NULL )
 	{
-		FERROR("Cannot call query: '%s'\n", bsInsert->bs_Buffer );
+		if( sqlLib->QueryWithoutResults( sqlLib, bsInsert->bs_Buffer  ) !=  0 )
+		{
+			FERROR("Cannot call query: '%s'\n", bsInsert->bs_Buffer );
+		}
 	}
 
 	BufStringAddSize( bsGroups, "]}", 2 );
