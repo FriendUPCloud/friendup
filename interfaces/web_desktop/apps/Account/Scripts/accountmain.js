@@ -1219,9 +1219,14 @@ function getStorage()
 		{
 			var js = JSON.parse( d );
 			var str = '';
+			var userLevel = parent.Workspace.userLevel.toLowerCase();
 			for( var a = 0; a < js.length; a++ )
 			{
-				if( js[a].Mounted != '0' )
+				console.log('storage device', JSON.stringify(js[a]));
+				//dont let non-admins manage workgroup drives.
+				if( js[a].Type == 'SQLWorkgroupDrive' && userLevel != 'admin')
+					str += '<div class="FloatLeft Disk MousePointer NonEditableDisk" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+				else if( js[a].Mounted != '0' )
 					str += '<div class="FloatLeft Disk MousePointer" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 			}
 			str += '<div onclick="addStorage()" class="MousePointer FloatLeft BigButton IconSmall fa-plus"><div class="Label Ellipsis">' + i18n( 'i18n_add_storage' ) + '</div></div>';
