@@ -541,11 +541,6 @@ function SaveUser( id )
 				EditUser( id );
 			}
 			
-			if( ge( 'pUserWorkgroup' ) )
-			{
-				ApplyUserGroups( id );
-			}
-			
 			Application.listUsers( id );
 		}
 		else
@@ -553,6 +548,25 @@ function SaveUser( id )
 			console.log('Error during user update',e,d);
 		}
 		//RefreshSessions( id )	
+	}
+
+	if( ge( 'pUserWorkgroup' ) )
+	{
+		var workgroupmemberships = [];
+
+		var obj = ge( 'pUserWorkgroup' ).obj;
+		
+		if( obj )
+		{
+			for( k in obj )
+			{
+				if( obj[k].ID > 0 && obj[k].UserID > 0 )
+				{
+					workgroupmemberships.push( obj[k].ID );
+				}
+			}
+		}
+		args.workgroups = workgroupmemberships;
 	}
 	
 	args.command ='update';
@@ -1389,35 +1403,6 @@ function ApplySetup( id )
 			EditUser( id );
 		}
 		m.execute( 'usersetupapply', { id: ( ge( 'Setup' ).value ? ge( 'Setup' ).value : '0' ), userid: id } );
-	}
-}
-
-function ApplyUserGroups( id )
-{
-	if( id && ge( 'pUserWorkgroup' ) )
-	{
-		var opt = [];
-		
-		var obj = ge( 'pUserWorkgroup' ).obj;
-		
-		if( obj )
-		{
-			for( k in obj )
-			{
-				if( obj[k].ID > 0 && obj[k].UserID > 0 )
-				{
-					opt.push( obj[k].ID );
-				}
-			}
-		}
-		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			try { d = JSON.parse( d ) } catch( e ) {}
-			EditUser( id );
-		}
-		m.execute( 'workgroupupdate', { workgroups: ( opt ? opt : '0' ), userid: id } );
 	}
 }
 

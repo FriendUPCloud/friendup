@@ -686,8 +686,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						}
 						
 						// group was created, its time to add users to it
-				
 						// go through all elements and find proper users
+						// this part is called when user is assigned to at least one group
 					
 						if( strcmp( users, "false" ) != 0 )
 						{

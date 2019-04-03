@@ -748,7 +748,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *usrpass = NULL;
 		char *fullname = NULL;
 		char *email = NULL;
-		char *groups = NULL;
+		char *level = NULL;
+		char *workgroups = NULL;
+		char *allGroups = NULL;
 		FULONG id = 0;
 		FBOOL userFromSession = FALSE;
 		FBOOL canChange = FALSE;
@@ -887,7 +889,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				el = HttpGetPOSTParameter( request, "level" );
 				if( el != NULL )
 				{
-					groups = UrlDecodeToMem( (char *)el->data );
+					level = UrlDecodeToMem( (char *)el->data );
+				}
+				
+				el = HttpGetPOSTParameter( request, "workgroups" );
+				if( el != NULL )
+				{
+					workgroups = UrlDecodeToMem( (char *)el->data );
 				}
 			
 				DEBUG("[UMWebRequest] Changing user data %lu\n", id );
@@ -919,7 +927,40 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					UMUserUpdateDB( l->sl_UM, logusr );
 					
-					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, groups );
+					// create one list with groups and levels
+					{
+						int size = 0;
+						if( level != NULL )
+						{
+							size += strlen( level );
+						}
+						if( workgroups != NULL )
+						{
+							size += strlen( workgroups );
+						}
+						if( size > 0 )
+						{
+							size += 16;	// just in case , must be added
+							allGroups = FMalloc( size );
+							allGroups[0] = 0;
+							if( level != NULL )
+							{
+								strcat( allGroups, level );
+								if( workgroups != NULL )
+								{
+									strcat( allGroups, "," );
+									strcat( allGroups, workgroups );
+								}
+							}
+							else
+							{
+								strcat( allGroups, workgroups );
+							}
+						}
+						
+					}
+					
+					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, allGroups );
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
@@ -945,9 +986,17 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			}
 		}
 		
-		if( groups != NULL )
+		if( level != NULL )
 		{
-			FFree( groups );
+			FFree( level );
+		}
+		if( allGroups != NULL )
+		{
+			FFree( allGroups );
+		}
+		if( workgroups != NULL )
+		{
+			FFree( workgroups );
 		}
 		*result = 200;
 	}
