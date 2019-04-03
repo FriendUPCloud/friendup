@@ -932,10 +932,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
 					// we must notify user
-					if( logusr != loggedSession->us_User )
-					{
-						UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
-					}
+					//if( logusr != loggedSession->us_User )
+					//{
+					//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
+					//}
 					
 					if( error != NULL )
 					{
