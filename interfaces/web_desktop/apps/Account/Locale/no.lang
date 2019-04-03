@@ -95,6 +95,8 @@ i18n_unmount_disk                    : Avmonter disk
 i18_account2                         : Konto
 i18n_settings_saved                  : Instillinger lagret
 
+i18n_admin_managed_drive             : Denne disken er styrt av din administrator.
+
 i18n_key_password_confirm            : Bekreft passord
 i18n_pass_mis_desc                   : Passordene må stemme overens.
 i18n_password_mismatch               : Password mismatch!
