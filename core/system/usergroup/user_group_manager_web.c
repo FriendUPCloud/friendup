@@ -704,7 +704,15 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
 								if( usr != NULL )
 								{
+									char *mountError = 0;
 									UserGroupAddUser( fg, usr );
+									RefreshUserDrives( l->sl_DeviceManager, usr, NULL, &mountError );
+									if( mountError != NULL )
+									{
+										FERROR("Error while mounting drives!");
+										FFree( mountError );
+									}
+									DEBUG("User was assigned to groups and refreshed\n");
 								}
 
 								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );
