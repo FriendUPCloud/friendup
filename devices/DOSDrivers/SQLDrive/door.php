@@ -26,7 +26,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			$defaultDiskspace = 536870912;
-			if( $this->Config )
+			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
 				if( isset( $this->configObject->DiskSize ) )
@@ -574,7 +574,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$mime = $info['mime'];
 					
 						// Try to guess the mime type
-						if( !$mime && $ext = end( explode( '.', $fname ) ) )
+						$ext = explode( '.', $fname );
+						if( !$mime && $ext = end( $ext ) )
 						{
 							switch( strtolower( $ext ) )
 							{

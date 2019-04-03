@@ -281,12 +281,13 @@ function mountDisk( devname )
 		}, 5 );
 	}
 	
+	var the_mount_command = ge( 'mountedDisk' ).value == 'mounted' ? 'unmount' : 'mount'
 	var args = {
-		command: ge( 'mountedDisk' ).value == 'mounted' ? 'unmount' : 'mount',
-		devname: devname
+		devname: devname,
+		sessionid: parent.Workspace.sessionid
 	};
 	
-	f.execute( 'device', args );
+	f.execute( 'device/' + the_mount_command, args );
 }
 
 function verifyForm( typing, mode )

@@ -83,6 +83,7 @@ i18n_host_port                       : Server port
 i18n_host_ip                         : Server adresse eller IP
 i18n_hostname                        : Server adresse
 i18n_workgroup_name                  : Din arbeidsgruppe
+i18n_choose_workgroup                : Velg arbeidsgruppe
 i18n_workgroup                       : Arbeidsgruppe
 i18n_device_name                     : Disk navn
 i18n_placeholder_connection          : Mindisk

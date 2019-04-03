@@ -78,7 +78,7 @@ Printdialog = function( flags, triggerfunc )
 						}
 					}
 					
-					function doPrint()
+					function doPrint( printer )
 					{
 						var m = new Module( 'print' );
 						m.onExecuted = function( e, d )
@@ -93,7 +93,7 @@ Printdialog = function( flags, triggerfunc )
 								Alert( i18n( 'i18n_print_error' ), i18n( 'i18n_print_error_desc' ) );
 							}							
 						}
-						m.execute( 'print', { file: flags.path } );
+						m.execute( 'print', { file: flags.path, id: printer.id } );
 					}
 					
 					var print = v.content.getElementsByClassName( 'print-button' );
