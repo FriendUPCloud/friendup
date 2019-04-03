@@ -26,7 +26,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			$defaultDiskspace = 536870912;
-			if( $this->Config )
+			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
 				if( isset( $this->configObject->DiskSize ) )
