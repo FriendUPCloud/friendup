@@ -71,6 +71,64 @@ IntListEl *ILEParseString( char *str )
 }
 
 /**
+ * Parse string and return list of entries (unsigned int)
+ *
+ * @param str pointer to string
+ * @return new pointer to root element IntListEl
+ */
+
+UIntListEl *UILEParseString( char *str )
+{
+	if( str == NULL )
+	{
+		return NULL;
+	}
+	int i;
+	char *startToken = str;
+	char *curToken = str+1;
+	
+	UIntListEl *rootEl = NULL;
+	
+	while( TRUE )
+	{
+		if( *curToken == 0 || *curToken == ',' )
+		{
+			char *end;
+			
+			if( *curToken != 0 )
+			{
+				*curToken = 0;
+			}
+			curToken++;
+			
+			//printf("Entry found: %s\n", startToken );
+			uint64_t var = strtoul( startToken, &end, 0 );
+			UIntListEl *el = FCalloc( 1, sizeof( UIntListEl ) );
+			if( el != NULL )
+			{
+				el->i_Data = var;
+				el->node.mln_Succ = (MinNode *)rootEl;
+				rootEl = el;
+			}
+			// do something here
+		
+			startToken = curToken;
+		
+			if( *curToken == 0 )
+			{
+				break;
+			}
+			curToken++;
+		}
+		else
+		{
+			curToken++;
+		}
+	}
+	return rootEl;
+}
+
+/**
  * Parse string and return list of entries (char *)
  *
  * @param str pointer to string

@@ -24,6 +24,7 @@
 #include <util/sha256.h>
 #include <system/fsys/device_handling.h>
 #include <util/session_id.h>
+#include <util/element_list.h>
 
 /**
  * Create UserGroupManager
@@ -484,19 +485,20 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr )
  *
  * @param um pointer to UserGroupManager
  * @param usr pointer to user structure to which groups will be assigned
- * @param groups groups provided as string, where comma is separator between group names
+ * @param level user level (Admin, User, etc.) 
+ * @param workgroups provided as string, where comma is separator between group names
  * @return 0 when success, otherwise error number
  */
-int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *groups )
+int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level, char *workgroups )
 {
-	if( groups == NULL )
+	if( level == NULL )
 	{
 		FERROR("Group value is empty, cannot setup groups!\n");
 		return 1;
 	}
 	char tmpQuery[ 512 ];
 	
-	DEBUG("[UMAssignGroupToUserByStringDB] Assign group to user start NEW GROUPS: %s\n", groups );
+	DEBUG("[UMAssignGroupToUserByStringDB] Assign group to user start NEW GROUPS: >%s< AND WORKGROUPS: >%s<\n", level, workgroups );
 	
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
@@ -511,141 +513,142 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *group
 	
 	// checking  how many groups were passed
 	
-	int i;
+	int pos = 0;
 	int commas = 1;
-	int glen = strlen( groups );
 	
-	if( groups != NULL )
-	{
-		for( i=0 ; i < glen; i++ )
-		{
-			if( groups[ i ] == ',' )
-			{
-				commas++;
-			}
-		}
-	}
+	UIntListEl *el = UILEParseString( workgroups );
+	
+	DEBUG("-----------------------> show groups at 0\n" );
+	
+	// function store ID's of groups to which user is assigned
+	BufString *bsGroups = BufStringNew();
+	//pos = 0;
+	
+	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
+	BufStringAddSize( bsGroups, tmpQuery, tmplen );
 	
 	//
-	// put all groups into table
+	// going through all groups and create new "insert"
+	//
 	
-	char **ptr = NULL;
-	if( ( ptr = FCalloc( commas, sizeof(char *) ) ) != NULL )
+	BufString *bsInsert = BufStringNew();
+	BufStringAdd( bsInsert, "INSERT INTO FUserToGroup (UserID, UserGroupID ) VALUES ");
+	FBOOL isAdmin = FALSE;
+	FBOOL isAPI = FALSE;
+	
+	while( el != NULL )
 	{
-		int pos = 0;
-		ptr[ pos++ ] = groups;
+		UIntListEl *rmEntry = el;
+		el = (UIntListEl *)el->node.mln_Succ;
 		
-		for( i=1 ; i < glen; i++ )
-		{
-			if( groups[ i ] == ',' )
-			{
-				groups[ i ] = 0;
-				ptr[ pos++ ] = &(groups[ i+1 ]);
-			}
-		}
-		
-		DEBUG("-----------------------> show groups at 0 position: %s\n", ptr[ 0 ] );
-		
-		// function store ID's of groups to which user is assigned
-		BufString *bsGroups = BufStringNew();
-		//pos = 0;
-		
-		int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
-		BufStringAddSize( bsGroups, tmpQuery, tmplen );
-		
-		//
-		// going through all groups and create new "insert"
-		//
-		
-		//UserGroup **usrGroups = FCalloc( pos+1, sizeof( UserGroup *) );	// end is equal to NULL
-		//int userGroupsNr = 0;
-		BufString *bsInsert = BufStringNew();
-		BufStringAdd( bsInsert, "INSERT INTO FUserToGroup (UserID, UserGroupID ) VALUES ");
-		
-		FBOOL isAdmin = FALSE;
-		FBOOL isAPI = FALSE;
 		DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated, pos: %d\n", pos );
 		
-		// get list of groups to which user will be assigned
-		for( i = 0; i < pos; i++ )
+		// set proper user level
+		UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
+		while( gr != NULL )
 		{
-			DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", i );
-			UserGroup *gr = sb->sl_UGM->ugm_UserGroups;
-			while( gr != NULL )
+			if( strcmp( gr->ug_Name, level ) == 0 )
 			{
-				DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, ptr[ i ] );
-				if( strcmp( gr->ug_Name, ptr[ i ] ) == 0 )
+				if( gr->ug_IsAdmin == TRUE )
 				{
-					//usrGroups[ i ] = gr;
-					//groupid = gr->ug_ID;
-					//userGroupsNr++;
-					
-					if( gr->ug_IsAdmin == TRUE )
-					{
-						isAdmin = TRUE;
-					}
-					
-					if( gr->ug_IsAPI == TRUE )
-					{
-						isAPI = TRUE;
-					}
-					UserGroupAddUser( gr, usr );
-					
-					DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
-					
-					char loctmp[ 255 ];
-					int loctmplen;
-					if( i == 0 )
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
-					}
-					else
-					{
-						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
-						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
-					}
-					BufStringAdd( bsInsert, loctmp );
-					BufStringAddSize( bsGroups, tmpQuery, tmplen );
-					break;
+					isAdmin = TRUE;
 				}
-				gr = (UserGroup *) gr->node.mln_Succ;
-			} // while group
-		} // for all groups as strings
-		
-		usr->u_IsAdmin = isAdmin;
-		usr->u_IsAPI = isAPI;
-		
-		// removeing old group conections from DB
-		
-		//snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE UserID = %lu AND UserGroupId IN ( SELECT ID FROM FUserGroup fug WHERE fug.Type = 'Level')", usr->u_ID );
-		snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID` = %lu AND `UserGroupID` IN ( SELECT ID FROM FUserGroup fug)", usr->u_ID ) ;
-
-		if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
-		{
-			FERROR("Cannot call query: '%s'\n", tmpQuery );
-		}
-
-		if( sqlLib->QueryWithoutResults( sqlLib, bsInsert->bs_Buffer  ) !=  0 )
-		{
-			FERROR("Cannot call query: '%s'\n", bsInsert->bs_Buffer );
-		}
-
-		BufStringAddSize( bsGroups, "]}", 2 );
-		
-		NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
-		
-		if( bsInsert != NULL )
-		{
-			BufStringDelete( bsInsert );
-		}
-		if( bsGroups != NULL )
-		{
-			BufStringDelete( bsGroups );
+				
+				if( gr->ug_IsAPI == TRUE )
+				{
+					isAdmin = TRUE;
+				}
+				
+				UserGroupAddUser( gr, usr );
+				
+				DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+				
+				char loctmp[ 255 ];
+				int loctmplen;
+				if( pos == 0 )
+				{
+					loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+				}
+				else
+				{
+					loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+				}
+				BufStringAdd( bsInsert, loctmp );
+				BufStringAddSize( bsGroups, tmpQuery, tmplen );
+				
+				pos++;
+			}
+			gr = (UserGroup *) gr->node.mln_Succ;
 		}
 		
-		FFree( ptr );
+		DEBUG("[UMAssignGroupToUserByStringDB] in loop %d\n", pos );
+		gr = sb->sl_UGM->ugm_UserGroups;
+		while( gr != NULL )
+		{
+			DEBUG("[UMAssignGroupToUserByStringDB] compare %s - %s\n", gr->ug_Name, gr->ug_Name );
+			
+			if( gr->ug_ID == rmEntry->i_Data )
+			{
+				UserGroupAddUser( gr, usr );
+				
+				DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+				
+				char loctmp[ 255 ];
+				int loctmplen;
+				if( pos == 0 )
+				{
+					loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
+					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+				}
+				else
+				{
+					loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %lu, %lu ) ", usr->u_ID, gr->ug_ID ); 
+					tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+				}
+				BufStringAdd( bsInsert, loctmp );
+				BufStringAddSize( bsGroups, tmpQuery, tmplen );
+				
+				pos++;
+				break;
+			}
+			gr = (UserGroup *) gr->node.mln_Succ;
+		} // while group
+		FFree( rmEntry );
 	}
+
+	usr->u_IsAdmin = isAdmin;
+	usr->u_IsAPI = isAPI;
+	
+	// removeing old group conections from DB
+	
+	//snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE UserID = %lu AND UserGroupId IN ( SELECT ID FROM FUserGroup fug WHERE fug.Type = 'Level')", usr->u_ID );
+	snprintf( tmpQuery, sizeof(tmpQuery), "DELETE FROM FUserToGroup WHERE `UserID` = %lu AND `UserGroupID` IN ( SELECT ID FROM FUserGroup fug)", usr->u_ID ) ;
+
+	if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) !=  0 )
+	{
+		FERROR("Cannot call query: '%s'\n", tmpQuery );
+	}
+
+	if( sqlLib->QueryWithoutResults( sqlLib, bsInsert->bs_Buffer  ) !=  0 )
+	{
+		FERROR("Cannot call query: '%s'\n", bsInsert->bs_Buffer );
+	}
+
+	BufStringAddSize( bsGroups, "]}", 2 );
+	
+	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
+	
+	if( bsInsert != NULL )
+	{
+		BufStringDelete( bsInsert );
+	}
+	if( bsGroups != NULL )
+	{
+		BufStringDelete( bsGroups );
+	}
+
 	sb->LibrarySQLDrop( sb, sqlLib );
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign  groups to user end\n");
 	

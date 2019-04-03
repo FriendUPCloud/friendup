@@ -25,6 +25,16 @@ typedef struct IntListEl
 }IntListEl;
 
 //
+// Element List entry (int)
+//
+
+typedef struct UIntListEl
+{
+	uint64_t	i_Data;
+	MinNode		node;
+}UIntListEl;
+
+//
 // Element List entry
 //
 
@@ -39,6 +49,8 @@ typedef struct StringListEl
 //
 
 IntListEl *ILEParseString( char *str );
+
+UIntListEl *UILEParseString( char *str );
 
 StringListEl *SLEParseString( char *str );
 
