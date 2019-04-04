@@ -27,7 +27,7 @@ typedef struct UserManagerInterface
 	UserManager			*(*UMNew)( void *sb );
 	void				(*UMDelete)( UserManager *smgr );
 	int					(*UMAssignGroupToUser)( UserGroupManager *smgr, User *usr );
-	int					(*UMAssignGroupToUserByStringDB)( UserGroupManager *smgr, User *usr, char *groups );
+	int					(*UMAssignGroupToUserByStringDB)( UserGroupManager *smgr, User *usr, char *level, char *workgroups );
 	int					(*UMUserUpdateDB)( UserManager *um, User *usr );
 	int					(*UMAssignApplicationsToUser)( UserManager *smgr, User *usr );
 	User				*(*UMUserGetByNameDB)( UserManager *smgr, const char *name );

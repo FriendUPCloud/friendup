@@ -566,7 +566,7 @@ function SaveUser( id )
 				}
 			}
 		}
-		args.workgroups = workgroupmemberships;
+		args.workgroups = workgroupmemberships.join(',');
 	}
 	
 	args.command ='update';
