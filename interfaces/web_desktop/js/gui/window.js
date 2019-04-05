@@ -3491,7 +3491,10 @@ var View = function( args )
 						e.clientY = e.touches[0].clientY;
 						e.button = 0;
 						window.mouseDown = 1; // Window mode
-						title.onmousedown( e );
+						if( title.onmousedown )
+						{
+							title.onmousedown( e );
+						}
 						_ActivateWindow( div );
 					} );
 				}
@@ -3507,51 +3510,52 @@ var View = function( args )
 			// Resize touch events.... -----------------------------------------
 			var winTouchStart = [ 0, 0 ];
 			var winTouchDowned = winTouchEnd = 0;
-			resize.addEventListener('touchstart', function(evt) {
+			resize.addEventListener('touchstart', function( evt )
+			{
 				cancelBubble( evt );
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
 				winTouchDowned = evt.timeStamp;
-			});
-			resize.addEventListener('touchmove', function(evt)
+			} );
+			resize.addEventListener('touchmove', function( evt )
 			{
 				cancelBubble( evt );
-
 				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
 				touchResizeWindow(evt);
-			});
-
+			} );
 			resize.addEventListener( 'touchend', function( evt )
 			{
 				cancelBubble( evt );
-			});
+			} );
 
-			bottombar.addEventListener('touchstart', function(evt)
+			bottombar.addEventListener('touchstart', function( evt )
 			{
 				cancelBubble( evt );
 
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
 				winTouchDowned = evt.timeStamp;
-			});
+			} );
 
-			bottombar.addEventListener('touchmove', function(evt)
+			bottombar.addEventListener('touchmove', function( evt )
 			{
 				cancelBubble( evt );
 
 				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
 				touchResizeWindow(evt);
-			});
+			} );
 
-			bottombar.addEventListener( 'touchend', function(evt) {
+			bottombar.addEventListener( 'touchend', function( evt )
+			{
 				cancelBubble( evt );
-			});
+			} );
 
 			//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
-			close.addEventListener('touchstart', function( evt ) {
+			close.addEventListener( 'touchstart', function( evt )
+			{
 				cancelBubble( evt );
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
 				winTouchEnd = winTouchStart;
 				winTouchDowned = evt.timeStamp;
-			});
+			} );
 		}
 		// Ok, if no window position is remembered.. place it somewhere
 		else if( !wp )
