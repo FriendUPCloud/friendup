@@ -99,7 +99,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
 	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
-	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: <%s> msg len: %d\n", reason, len );
+	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
 	
 	switch( reason )
 	{
