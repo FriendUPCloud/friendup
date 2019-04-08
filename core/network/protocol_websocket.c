@@ -720,7 +720,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		//Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
-	Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
+	Log( FLOG_INFO, "[WorkspaceWebsocketCall] pointer to message %p msg len %d reason %d\n", in, len, reason );
 	
 	switch( reason )
 	{
