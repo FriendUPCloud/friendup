@@ -4470,7 +4470,10 @@ FileIcon.prototype.Init = function( fileInfo )
 		{
 			setTimeout( function()
 			{
-				file.ondblclick();
+				if( file.ondblclick )
+					file.ondblclick();
+				else if( file.onclick )
+					file.onclick;
 			}, 100 );
 		}
 
