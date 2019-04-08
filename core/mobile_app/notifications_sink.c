@@ -99,6 +99,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
 	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: <%s> msg len: %d\n", reason, len );
 	
 	switch( reason )
 	{
@@ -352,7 +353,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				int dlen =  t[3].end - t[3].start;
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
-					DEBUG( "do Ping things\n" );
+					Log( FLOG_INFO, 
 
 					char reply[ 128 ];
 					int locmsglen = snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
