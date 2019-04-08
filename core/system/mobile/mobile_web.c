@@ -216,7 +216,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 							if( row[ 0 ] != NULL )
 							{
 								char *end;
-								umaID = strtol( row[ 0 ], &end, 0 );
+								umaID = strtoul( row[ 0 ], &end, 0 );
 							}
 						}
 						sqllib->FreeResult( sqllib, res );
@@ -418,7 +418,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	* <HR><H2>system.library/mobile/deleteuma</H2>Delete User Mobile Application entry.
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param id - (required) id of UserMobileApp which you want to delete
+	* @param id - (required if deviceid was not passed) id of UserMobileApp which you want to delete
+	* @param deviceid - (required if id was not passed) deviceid of UserMobileApp which you want to delete
 	* @return { Result: success} when success, otherwise error with code
 	*/
 	/// @endcond
@@ -426,13 +427,14 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 
 		FULONG id = 0;
+		char *deviceID = NULL;
 		
 		DEBUG( "[MobileWebRequest] Delete UserMobileApp!!\n" );
 		
@@ -443,10 +445,41 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			id = strtol ( (char *)el->data, &next, 0 );
 		}
 		
-		if( id > 0 )
+		el = HttpGetPOSTParameter( request, "deviceid" );
+		if( el != NULL )
 		{
-			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-			if( sqllib != NULL )
+			deviceID = UrlDecodeToMem( (char *)el->data );
+		}
+		
+		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+		if( sqllib != NULL )
+		{
+			// looks like id parameter was not passed, checking additional parameters like deviceid
+			if( id == 0 )
+			{
+				char query[ 512 ];
+			
+				DEBUG("Find entry for Device: %s\n", deviceID );
+			
+				snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, loggedSession->us_UserID );
+				void *res = sqllib->Query( sqllib, query );
+			
+				if( res != NULL )
+				{
+					char **row;
+					while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					{
+						if( row[ 0 ] != NULL )
+						{
+							char *end;
+							id = strtoul( row[ 0 ], &end, 0 );
+						}
+					}
+					sqllib->FreeResult( sqllib, res );
+				}
+			}
+		
+			if( id > 0 )
 			{
 				char *tmpQuery = NULL;
 				int querysize = 1024;
@@ -466,23 +499,21 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 					HttpAddTextContent( response, buffer );
 				}
-				
-				l->LibrarySQLDrop( l, sqllib );
 			}
 			else
 			{
 				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id or deviceid" );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
-		}
-		else
+			l->LibrarySQLDrop( l, sqllib );
+		}	// no DB connection
+		
+		if( deviceID != NULL )
 		{
-			char buffer[ 256 ];
-			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
-			HttpAddTextContent( response, buffer );
+			FFree( deviceID );
 		}
 	}
 	
