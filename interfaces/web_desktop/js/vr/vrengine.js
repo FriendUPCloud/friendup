@@ -158,19 +158,14 @@ var FriendVR = {
 			//  It’s really a THREE.Object3D so you can just add it to your scene:
 			var controller = event.detail;
 			FriendVR.scene.add( controller );
-			//  HEY HEY HEY! This is important. You need to make sure you do this.
-			//  For standing experiences (not seated) we need to set the standingMatrix
-			//  otherwise you’ll wonder why your controller appears on the floor
-			//  instead of in your hands! And for seated experiences this will have no
-			//  effect, so safe to do either way:
+			
+			// Standing pos
 			controller.standingMatrix = FriendVR.renderer.vr.getStandingMatrix();
-			//  And for 3DOF (seated) controllers you need to set the controller.head
-			//  to reference your camera. That way we can make an educated guess where
-			//  your hand ought to appear based on the camera’s rotation.
+			
+			// 3DOF controller
 			controller.head = FriendVR.camera;
-			//  Right now your controller has no visual.
-			//  It’s just an empty THREE.Object3D.
-			//  Let’s fix that!
+			
+			// Controller color
 			var meshColorOff = 0xDB3236;//  Red.
 			var meshColorOn  = 0xF4C20D;//  Yellow.
 			var controllerMaterial = new THREE.MeshStandardMaterial({
@@ -191,21 +186,16 @@ var FriendVR = {
 			controller.userData.mesh = controllerMesh; //  So we can change the color later.
 			controller.add( controllerMesh );
 		
-			//  Button events. How easy is this?!
-			//  We’ll just use the “primary” button -- whatever that might be ;)
-			//  Check out the THREE.VRController.supported{} object to see
-			//  all the named buttons we’ve already mapped for you!
+			// Easy buttons on
 			controller.addEventListener( 'primary press began', function( event ){
 				event.target.userData.mesh.material.color.setHex( meshColorOn );
-				//guiInputHelper.pressed( true );
 			} );
-		
+			// Off
 			controller.addEventListener( 'primary press ended', function( event ){
 				event.target.userData.mesh.material.color.setHex( meshColorOff );
-				//guiInputHelper.pressed( false );
 			} );
 		
-			//  Daddy, what happens when we die?
+			// Disconnections
 			controller.addEventListener( 'disconnected', function( event ){
 				controller.parent.remove( controller );
 			} );
