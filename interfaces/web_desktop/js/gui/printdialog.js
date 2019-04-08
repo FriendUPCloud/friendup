@@ -45,8 +45,8 @@ Printdialog = function( flags, triggerfunc )
 			
 			var printers = JSON.parse( d );
 
-			// Just print
-			if( printers.length == 1 )
+			// Just print when the only printer available has no confirmation flag
+			if( printers.length == 1 && printers[0].Confirmation != true )
 			{
 				doPrint( printers[ 0 ] );
 				return;

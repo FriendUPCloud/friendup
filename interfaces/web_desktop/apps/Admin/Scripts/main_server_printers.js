@@ -109,6 +109,7 @@ Sections.server_printers = function( cmd, extra )
 									if( data.ip   ) obj.IP   = data.ip;
 									if( data.port ) obj.Port = data.port;
 									if( data.type ) obj.Type = data.type;
+									if( data.confirmation ) obj.Confirmation = data.confirmation;
 								}
 								
 								return callback( true, obj );
@@ -151,6 +152,7 @@ Sections.server_printers = function( cmd, extra )
 										if( data.ip   ) obj.IP   = data.ip;
 										if( data.port ) obj.Port = data.port;
 										if( data.type ) obj.Type = data.type;
+										if( data.confirmation ) obj.Confirmation = data.confirmation;
 									}
 									
 									arr.push( obj );
@@ -242,11 +244,12 @@ Sections.server_printers = function( cmd, extra )
 	function update( id )
 	{
 		var data = {
-			name : ge( 'PrinterName' ).value,
-			host : ge( 'PrinterHost' ).value,
-			ip   : ge( 'PrinterIP'   ).value,
-			port : ge( 'PrinterPort' ).value,
-			type : ge( 'PrinterType' ).value
+			name        : ge( 'PrinterName' ).value,
+			host        : ge( 'PrinterHost' ).value,
+			ip          : ge( 'PrinterIP'   ).value,
+			port        : ge( 'PrinterPort' ).value,
+			type        : ge( 'PrinterType' ).value,
+			confirmation: ge( 'RequiresConfirmation' ).checked ? true : false
 		}
 		
 		if( id && data )
@@ -356,12 +359,13 @@ Sections.server_printers = function( cmd, extra )
 		
 		// Add all data for the template
 		d.replacements = {
-			id           : ( printer.ID   ? printer.ID   : '' ),
-			printer_name : ( printer.Name ? printer.Name : '' ),
-			printer_host : ( printer.Host ? printer.Host : '' ),
-			printer_ip   : ( printer.IP   ? printer.IP   : '' ),
-			printer_port : ( printer.Port ? printer.Port : '' ),
-			printer_type : ( type ? type : '' )
+			id                  : ( printer.ID   ? printer.ID   : '' ),
+			printer_name        : ( printer.Name ? printer.Name : '' ),
+			printer_host        : ( printer.Host ? printer.Host : '' ),
+			printer_ip          : ( printer.IP   ? printer.IP   : '' ),
+			printer_port        : ( printer.Port ? printer.Port : '' ),
+			printer_type        : ( type ? type : '' ),
+			confirmation_checked: ( ( !printer.ID || printer.Confirmation ) ? ' checked="checked"' : '' )
 		};
 		
 		// Add translations
@@ -376,9 +380,6 @@ Sections.server_printers = function( cmd, extra )
 		}
 		d.load();
 	}
-	
-	
-	
 	
 	function initMain()
 	{
