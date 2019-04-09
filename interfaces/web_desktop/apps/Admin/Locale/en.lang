@@ -46,6 +46,7 @@ i18n_CCRUD_TEMPLATE_GLOBAL             : Edit templates globaly
 i18n_CCRUD_TEMPLATE_WORKGROUP          : Edit templates below a workgroup
 
 #printers related
+
 i18n_save                              : Save
 i18n_delete                            : Delete
 i18n_cancel                            : Cancel
@@ -59,6 +60,7 @@ i18n_printer_host                      : Host
 i18n_printer_ip                        : IP
 i18n_printer_port                      : Port
 i18n_printer_ip_port                   : IP/Port
+i18n_requires_confirmation_to_print    : Requires confirmation to print
 
 i18n_deleting_printer                  : Deleting printer
 i18n_deleting_printer_verify           : Are you sure?

@@ -42,6 +42,14 @@
 				<input id="PrinterPort" type="text" class="FullWidth" value="{printer_port}"/>
 			</div>
 		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent20 FloatLeft Ellipsis">
+				<strong>{i18n_requires_confirmation_to_print}</strong>
+			</div>
+			<div class="HContent80 FloatLeft Ellipsis">
+				<input type="checkbox"{confirmation_checked} id="RequiresConfirmation" />
+			</div>
+		</div>
 		<div class="HRow">
 			<div class="FloatRight">
 				<!--<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.server_printers('edit',{id:{id},_this:this})"></button>-->

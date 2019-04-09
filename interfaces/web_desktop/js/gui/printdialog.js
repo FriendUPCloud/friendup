@@ -25,6 +25,33 @@ Printdialog = function( flags, triggerfunc )
 		}
 		try
 		{
+			function doPrint( printer )
+			{
+				var m = new Module( 'print' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						Alert( i18n( 'i18n_print_sent' ), i18n( 'i18n_print_sent_to_printer' ) );
+						v.close();
+					}
+					else
+					{
+						Alert( i18n( 'i18n_print_error' ), i18n( 'i18n_print_error_desc' ) );
+					}							
+				}
+				m.execute( 'print', { file: flags.path, id: printer.id } );
+			}
+			
+			var printers = JSON.parse( d );
+
+			// Just print when the only printer available has no confirmation flag
+			if( printers.length == 1 && printers[0].Confirmation != true )
+			{
+				doPrint( printers[ 0 ] );
+				return;
+			}
+			
 			var v = new View( {
 				title: title,
 				width: 700,
@@ -36,8 +63,6 @@ Printdialog = function( flags, triggerfunc )
 				if( flags.mainView )
 					flags.mainView.activate();
 			}
-			
-			var printers = JSON.parse( d );
 
 			var f = new File( 'System:templates/print.html' );
 			f.i18n();
@@ -76,24 +101,6 @@ Printdialog = function( flags, triggerfunc )
 								}
 							}
 						}
-					}
-					
-					function doPrint( printer )
-					{
-						var m = new Module( 'print' );
-						m.onExecuted = function( e, d )
-						{
-							if( e == 'ok' )
-							{
-								Alert( i18n( 'i18n_print_sent' ), i18n( 'i18n_print_sent_to_printer' ) );
-								v.close();
-							}
-							else
-							{
-								Alert( i18n( 'i18n_print_error' ), i18n( 'i18n_print_error_desc' ) );
-							}							
-						}
-						m.execute( 'print', { file: flags.path, id: printer.id } );
 					}
 					
 					var print = v.content.getElementsByClassName( 'print-button' );

@@ -304,6 +304,13 @@ Friend.VRObjectAbstraction = {
 		{
 			var filename = getImageUrl( msg.path );
 			
+			// Toggle global gamma (ugly way)
+			if( msg.globalGamma )
+			{
+				FriendVR.renderer.gammaFactor = msg.globalGamma;
+				FriendVR.renderer.gammaOutput = true;
+			}
+			
 			// Load the model
 			var loader = new THREE.GLTFLoader();
 			FriendVR.loading++;
@@ -316,8 +323,13 @@ Friend.VRObjectAbstraction = {
 					gltf.scene.rotation.x = msg.rotation.x;
 					gltf.scene.rotation.y = msg.rotation.y;
 					gltf.scene.rotation.z = msg.rotation.z;
-					gltf.castShadow = true;
-					gltf.receiveShadow = true;
+					
+					// If shaded..
+					if( !msg.unshaded )
+					{
+						gltf.castShadow = true;
+						gltf.receiveShadow = true;
+					}
 					
 					// Cast and receive shadows!
 					for( var a = 0; a < gltf.scene.children.length; a++ )
@@ -332,7 +344,7 @@ Friend.VRObjectAbstraction = {
 						{
 							console.log( 'Found a pointlamp!' );
 						}
-						else if( child.name.indexOf( 'noShadow' ) >= 0 )
+						else if( msg.unshaded || child.name.indexOf( 'noShadow' ) >= 0 )
 						{
 							child.castShadow = false;
 							child.receiveShadow = false;

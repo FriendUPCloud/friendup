@@ -11,6 +11,7 @@ var WorkspaceInside = {
 	wallpaperLoaded: false,
 	// We only initialize once
 	insideInitialized: false,
+	readyToRun: false,
 	// Onready functions
 	onReadyList: [],
 	// Switch to workspace
@@ -484,7 +485,8 @@ var WorkspaceInside = {
 	},
 	getWebSocketsState: function()
 	{
-		return Workspace.websocketState;
+		if( Workspace.readyToRun ) return Workspace.websocketState;
+		return false;
 	},
 	initWebSocket: function()
 	{	
@@ -2807,9 +2809,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// We are ready!
+									Workspace.readyToRun = true;
 									if( !window.friendApp )
 									{
 										Workspace.onReady();
+									}
+									else if( typeof( window.friendApp.onWorkspaceReady ) == 'function' )
+									{
+										friendApp.onWorkspaceReady();
 									}
 								}
 							}, 50 );
@@ -8141,19 +8148,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				deviceID = friendApp.get_deviceid();
 			}
 
-			console.log('call ' + Workspace.sessionId );
+			console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
 
-			var l = new Library( 'system.library' );
-			l.forceHTTP = true;
-			l.onExecuted = function( e, d )
-			{
-				if( e != 'ok' )
-				{
-					console.log( 'Failed to create uma.' );
-				}
-			}
 			if( appToken != null )	// old applications which do not have appToken will skip this part
 			{
+				var l = new Library( 'system.library' );
+				l.forceHTTP = true;
+				l.onExecuted = function( e, d )
+				{
+					if( e != 'ok' )
+					{
+						console.log( 'Failed to create uma.' );
+					}
+				}
 				l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
 			}
 		}
