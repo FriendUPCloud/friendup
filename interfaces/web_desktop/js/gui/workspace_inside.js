@@ -487,7 +487,7 @@ var WorkspaceInside = {
 	getWebSocketsState: function()
 	{
 		if( Workspace.readyToRun ) return Workspace.websocketState;
-		return "false;
+		return "false";
 	},
 	initWebSocket: function()
 	{	
