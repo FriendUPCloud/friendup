@@ -3571,7 +3571,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Releasing
 			r.onmouseup = function( e )
 			{
-				if( !e.ctrlKey && !e.shiftKey && !e.command )
+				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 				{
 					clearRegionIcons( { exception: this, force: true } );
 				}
@@ -4156,7 +4156,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 			}
 		}
-		if( !e.ctrlKey && !e.shiftKey && !e.command )
+		if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
 		{
 			clearRegionIcons( { exception: this, force: true } );
 		}
