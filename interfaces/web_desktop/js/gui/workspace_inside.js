@@ -8492,15 +8492,32 @@ function DoorsKeyDown( e )
 							Workspace.executeRename( this.value, this.ico, currentMovable );
 							this.ico.editField = null;
 							this.dom.input = null;
-							try
+							var s = this;
+							setTimeout( function()
 							{
-								this.dom.removeChild( this );
-							}
-							catch( e )
-							{
-								/* .. */
-							}
+								try
+								{
+									s.dom.removeChild( s );
+								}
+								catch( error )
+								{
+									/* .. */
+								}
+							}, 5 );
 						}
+					}
+					input.onmousedown = function( e )
+					{
+						return cancelBubble( e );
+					}
+					input.onmouseup = function( e )
+					{
+						return cancelBubble( e );
+					}
+					input.onblur = function()
+					{
+						this.onkeydown( { which: 13 } );
+						return;
 					}
 					setTimeout( function()
 					{
@@ -9047,10 +9064,10 @@ if( window.friendApp )
 // Receive push notification
 Workspace.receivePush = function( jsonMsg )
 {
-	if( !isMobile ) return;
+	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
 
-	if( msg == false ) return;
+	if( msg == false ) return "nomsg";
 	try
 	{
 		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
@@ -9062,7 +9079,7 @@ Workspace.receivePush = function( jsonMsg )
 		// Do nothing for now...
 		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
-	if( !msg ) return;
+	if( !msg ) return "nomsg";
 		
 	mobileDebug( 'We received a message.' );
 	mobileDebug( JSON.stringify( msg ) );
@@ -9075,7 +9092,7 @@ Workspace.receivePush = function( jsonMsg )
 	
 	var messageRead = trash = false;
 	
-	if( !msg.application ) return;
+	if( !msg.application ) return "noapp";
 	
 	//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 	if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
@@ -9110,7 +9127,7 @@ Workspace.receivePush = function( jsonMsg )
 				callback: false,
 				data: msg
 			} ), '*' );
-			return;
+			return "ok";
 		}
 	}
 	
@@ -9180,8 +9197,9 @@ Workspace.receivePush = function( jsonMsg )
 	
 	mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
 	
-	ExecuteApplication( msg.application, '', appMessage )
+	ExecuteApplication( msg.application, '', appMessage );
 
+	return "ok";
 }
 
 // TODO: Remove me after test

@@ -612,6 +612,7 @@ html #Screens .File.Selected .Title
 	box-shadow: none;
 	color: #444444;
 	border-radius: 2px;
+	resize: none;
 }
 
 html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
