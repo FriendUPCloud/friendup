@@ -487,7 +487,7 @@ var WorkspaceInside = {
 	getWebSocketsState: function()
 	{
 		if( Workspace.readyToRun ) return Workspace.websocketState;
-		return "false";
+		return "false;
 	},
 	initWebSocket: function()
 	{	
@@ -9023,10 +9023,10 @@ if( window.friendApp )
 // Receive push notification
 Workspace.receivePush = function( jsonMsg )
 {
-	if( !isMobile ) return;
+	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
 
-	if( msg == false ) return;
+	if( msg == false ) return "nomsg";
 	try
 	{
 		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
@@ -9038,7 +9038,7 @@ Workspace.receivePush = function( jsonMsg )
 		// Do nothing for now...
 		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
-	if( !msg ) return;
+	if( !msg ) return "nomsg";
 		
 	mobileDebug( 'We received a message.' );
 	mobileDebug( JSON.stringify( msg ) );
@@ -9051,7 +9051,7 @@ Workspace.receivePush = function( jsonMsg )
 	
 	var messageRead = trash = false;
 	
-	if( !msg.application ) return;
+	if( !msg.application ) return "noapp";
 	
 	//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 	if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
@@ -9086,7 +9086,7 @@ Workspace.receivePush = function( jsonMsg )
 				callback: false,
 				data: msg
 			} ), '*' );
-			return;
+			return "ok";
 		}
 	}
 	
@@ -9158,6 +9158,7 @@ Workspace.receivePush = function( jsonMsg )
 	
 	ExecuteApplication( msg.application, '', appMessage )
 
+	return "ok";
 }
 
 // TODO: Remove me after test
