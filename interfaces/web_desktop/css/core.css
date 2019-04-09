@@ -2214,6 +2214,12 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	bottom: 0;
 	height: 30px;
 	opacity: 0;
+	pointer-events: none;
+}
+
+.TrayElement:hover .BubbleInfo:after
+{
+	pointer-events: all;
 }
 
 .TrayElement:hover .BubbleInfo:before, 
