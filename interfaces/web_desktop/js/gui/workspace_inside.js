@@ -8492,15 +8492,32 @@ function DoorsKeyDown( e )
 							Workspace.executeRename( this.value, this.ico, currentMovable );
 							this.ico.editField = null;
 							this.dom.input = null;
-							try
+							var s = this;
+							setTimeout( function()
 							{
-								this.dom.removeChild( this );
-							}
-							catch( e )
-							{
-								/* .. */
-							}
+								try
+								{
+									s.dom.removeChild( s );
+								}
+								catch( error )
+								{
+									/* .. */
+								}
+							}, 5 );
 						}
+					}
+					input.onmousedown = function( e )
+					{
+						return cancelBubble( e );
+					}
+					input.onmouseup = function( e )
+					{
+						return cancelBubble( e );
+					}
+					input.onblur = function()
+					{
+						this.onkeydown( { which: 13 } );
+						return;
 					}
 					setTimeout( function()
 					{
