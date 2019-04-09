@@ -9197,7 +9197,7 @@ Workspace.receivePush = function( jsonMsg )
 	
 	mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
 	
-	ExecuteApplication( msg.application, '', appMessage )
+	ExecuteApplication( msg.application, '', appMessage );
 
 	return "ok";
 }
