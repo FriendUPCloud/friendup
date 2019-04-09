@@ -9175,7 +9175,7 @@ else
 }
 
 /*  Debug blob: */
-if( isMobile  )
+/*if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
@@ -9190,7 +9190,7 @@ if( isMobile  )
 	debug.innerHTML = '<span>thomasdebug v01</span>';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
-}
+}*/
 
 var mobileDebugTime = null;
 function mobileDebug( str, clear )
