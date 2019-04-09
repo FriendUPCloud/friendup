@@ -4201,16 +4201,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if ( icon.Dormant.dosAction )
 			{
 				icon.Dormant.dosAction( 'rename', 
-				{
-					newname: nam,
-					path: icon.Path
-				}, function( result, data )
-				{
-					if( win && win.content.refresh )
-						win.content.refresh();
-					if( Workspace.renameWindow )
-						Workspace.renameWindow.close();
-				} );
+					{
+						newname: nam,
+						path: icon.Path
+					}, 
+					function( result, data )
+					{
+						// Try to rename .info file
+						icon.Dormant.dosAction( 'rename', 
+							{
+								newname: nam + '.info',
+								path: icon.Path + '.info'
+							},
+							function( rr, dd )
+							{
+								if( win && win.content.refresh )
+									win.content.refresh();
+								if( Workspace.renameWindow )
+									Workspace.renameWindow.close();
+							} 
+						);
+					} 
+				);
 			}
 			else
 			{
@@ -4221,15 +4233,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return;
 		}
 		var d = new Door( icon.Path );
-		d.dosAction( 'rename', {
-			newname: nam,
-			path: icon.Path
-		}, function( result, data)
+		d.dosAction( 'rename', 
 			{
-				if( win && win.content.refresh )
-					win.content.refresh();
-				if( Workspace.renameWindow )
-					Workspace.renameWindow.close();
+				newname: nam,
+				path: icon.Path
+			},
+			function( result, data)
+			{
+				// Try to rename .info file
+				d.dosAction( 'rename',
+					{
+						newname: nam + '.info',
+						path: icon.Path + '.info'
+					},
+					function( rr, dd )
+					{
+						if( win && win.content.refresh )
+							win.content.refresh();
+						if( Workspace.renameWindow )
+							Workspace.renameWindow.close();
+					}
+				);
 			}
 		);
 	},
@@ -8468,15 +8492,32 @@ function DoorsKeyDown( e )
 							Workspace.executeRename( this.value, this.ico, currentMovable );
 							this.ico.editField = null;
 							this.dom.input = null;
-							try
+							var s = this;
+							setTimeout( function()
 							{
-								this.dom.removeChild( this );
-							}
-							catch( e )
-							{
-								/* .. */
-							}
+								try
+								{
+									s.dom.removeChild( s );
+								}
+								catch( error )
+								{
+									/* .. */
+								}
+							}, 5 );
 						}
+					}
+					input.onmousedown = function( e )
+					{
+						return cancelBubble( e );
+					}
+					input.onmouseup = function( e )
+					{
+						return cancelBubble( e );
+					}
+					input.onblur = function()
+					{
+						this.onkeydown( { which: 13 } );
+						return;
 					}
 					setTimeout( function()
 					{
