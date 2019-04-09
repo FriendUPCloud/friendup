@@ -2515,15 +2515,15 @@ pollingTaskbar = false;
 function PollTaskbar( curr )
 {
 	if( pollingTaskbar ) return;
-	
-	// Abort if we have a premature element
-	if( curr && !curr.parentNode )
-		return;
-	
-	if( globalConfig.viewList == 'docked' )
+		
+	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
 	{
 		return PollDockedTaskbar(); // <- we are using the dock
 	}
+
+	// Abort if we have a premature element
+	if( curr && !curr.parentNode )
+		return;
 	
 	var doorsScreen = ge( 'DoorsScreen' );
 	if( !doorsScreen ) return;
