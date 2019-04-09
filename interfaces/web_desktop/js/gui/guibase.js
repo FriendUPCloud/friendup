@@ -2518,7 +2518,9 @@ function PollTaskbar( curr )
 		
 	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
 	{
-		return PollDockedTaskbar(); // <- we are using the dock
+		PollDockedTaskbar(); // <- we are using the dock
+		if( globalConfig.viewList == 'docked' )
+			return;
 	}
 
 	// Abort if we have a premature element
@@ -3097,181 +3099,185 @@ function PollDockedTaskbar()
 		}
 		
 		// Go through all movable view windows and check!
-		for( var b in movableWindows )
+		// Buty only for docked mode.
+		if( globalConfig.viewList == 'docked' )
 		{
-			if( movableWindows[ b ].windowObject )
+			for( var b in movableWindows )
 			{
-				// Skip hidden and invisible windows
-				if( movableWindows[ b ].windowObject.flags.hidden )
+				if( movableWindows[ b ].windowObject )
 				{
-					continue;
-				}
-				if( movableWindows[ b ].windowObject.flags.invisible )
-				{
-					continue;
-				}
-				
-				var app = movableWindows[ b ].windowObject.applicationName;
-				var win = b;
-				var wino = movableWindows[ b ];
-				var found = false;
-				
-				// Try to find view in viewlist
-				for( var c = 0; c < desklet.viewList.childNodes.length; c++ )
-				{
-					var cn = desklet.viewList.childNodes[ c ];
-					if( cn.viewId == win )
+					// Skip hidden and invisible windows
+					if( movableWindows[ b ].windowObject.flags.hidden )
 					{
-						found = wino;
-						
-						// Check if it is a directory
-						if( found.content.directoryview )
-						{
-							cn.classList.add( 'Directory' );
-						}
-						else if( found.applicationId )
-						{
-							cn.classList.add( 'Running' );
-						}
-						break;
+						continue;
 					}
-				}
-				
-				// Try to find the application if it is an application window
-				if( !found && app )
-				{
-					for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+					if( movableWindows[ b ].windowObject.flags.invisible )
 					{
-						var dof = desklet.dom.childNodes[ c ];
-						if( dof.executable == app )
+						continue;
+					}
+				
+					var app = movableWindows[ b ].windowObject.applicationName;
+					var win = b;
+					var wino = movableWindows[ b ];
+					var found = false;
+				
+					// Try to find view in viewlist
+					for( var c = 0; c < desklet.viewList.childNodes.length; c++ )
+					{
+						var cn = desklet.viewList.childNodes[ c ];
+						if( cn.viewId == win )
 						{
-							found = dof.executable;
-							dof.classList.add( 'Running' );
-							dof.running = true;
+							found = wino;
+						
+							// Check if it is a directory
+							if( found.content.directoryview )
+							{
+								cn.classList.add( 'Directory' );
+							}
+							else if( found.applicationId )
+							{
+								cn.classList.add( 'Running' );
+							}
 							break;
 						}
 					}
-				}
 				
-				// If it's a found app, check if it isn't a single instance app
-				if( found && typeof( found ) == 'string' )
-				{
-					// Single instance apps handle themselves
-					if( !Friend.singleInstanceApps[ found ] )
+					// Try to find the application if it is an application window
+					if( !found && app )
 					{
 						for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 						{
-							var d = desklet.dom.childNodes[ c ];
-							if( !d.classList.contains( 'Launcher' ) ) continue;
-							if( d.executable == found )
+							var dof = desklet.dom.childNodes[ c ];
+							if( dof.executable == app )
 							{
-								if( !d.views ) d.views = [];
-								if( !d.views[ win ] ) d.views[ win ] = wino;
-								
-								// Clear non existing
-								var out = [];
-								for( var i in d.views )
-									if( movableWindows[ i ] ) out[ i ] = d.views[ i ];
-								d.views = out;
+								found = dof.executable;
+								dof.classList.add( 'Running' );
+								dof.running = true;
+								break;
 							}
 						}
 					}
-				}
 				
-				// Check for an app icon
-				var labelIcon = false;
-				if( app && ge( 'Tasks' ) )
-				{
-					var tk = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-					for( var a1 = 0; a1 < tk.length; a1++ )
+					// If it's a found app, check if it isn't a single instance app
+					if( found && typeof( found ) == 'string' )
 					{
-						if( tk[a1].applicationName != app ) continue;
-						var f = tk[ a1 ].parentNode;
-						if( f.className && f.className == 'AppSandbox' )
+						// Single instance apps handle themselves
+						if( !Friend.singleInstanceApps[ found ] )
 						{
-							var img = f.getElementsByTagName( 'div' );
-							for( var b1 = 0; b1 < img.length; b1++ )
+							for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 							{
-								if( img[ b1 ].style.backgroundImage )
+								var d = desklet.dom.childNodes[ c ];
+								if( !d.classList.contains( 'Launcher' ) ) continue;
+								if( d.executable == found )
 								{
-									labelIcon = document.createElement( 'div' );
-									labelIcon.style.backgroundImage = img[ b1 ].style.backgroundImage;
-									labelIcon.className = 'LabelIcon';
-									break;
+									if( !d.views ) d.views = [];
+									if( !d.views[ win ] ) d.views[ win ] = wino;
+								
+									// Clear non existing
+									var out = [];
+									for( var i in d.views )
+										if( movableWindows[ i ] ) out[ i ] = d.views[ i ];
+									d.views = out;
 								}
 							}
 						}
 					}
-				}
 				
-				// Add the window list item into the desklet
-				if( !found )
-				{
-					var viewRep = document.createElement( 'div' );
-					viewRep.className = 'Launcher View MousePointer';
-					
-					if( labelIcon ) viewRep.appendChild( labelIcon );
-					if( app ) viewRep.classList.add( app );
-					viewRep.style.backgroundSize = 'contain';
-					viewRep.state = 'visible';
-					viewRep.viewId = win;
-					viewRep.setAttribute( 'title', movableWindows[win].titleString );
-					viewRep.onclick = function( e )
+					// Check for an app icon
+					var labelIcon = false;
+					if( app && ge( 'Tasks' ) )
 					{
-						// TODO: Make sure we also have touch
-						if( !e || e.button != '0' ) return;
+						var tk = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+						for( var a1 = 0; a1 < tk.length; a1++ )
+						{
+							if( tk[a1].applicationName != app ) continue;
+							var f = tk[ a1 ].parentNode;
+							if( f.className && f.className == 'AppSandbox' )
+							{
+								var img = f.getElementsByTagName( 'div' );
+								for( var b1 = 0; b1 < img.length; b1++ )
+								{
+									if( img[ b1 ].style.backgroundImage )
+									{
+										labelIcon = document.createElement( 'div' );
+										labelIcon.style.backgroundImage = img[ b1 ].style.backgroundImage;
+										labelIcon.className = 'LabelIcon';
+										break;
+									}
+								}
+							}
+						}
+					}
+				
+					// Add the window list item into the desklet
+					if( !found )
+					{
+						var viewRep = document.createElement( 'div' );
+						viewRep.className = 'Launcher View MousePointer';
+					
+						if( labelIcon ) viewRep.appendChild( labelIcon );
+						if( app ) viewRep.classList.add( app );
+						viewRep.style.backgroundSize = 'contain';
+						viewRep.state = 'visible';
+						viewRep.viewId = win;
+						viewRep.setAttribute( 'title', movableWindows[win].titleString );
+						viewRep.onclick = function( e )
+						{
+							// TODO: Make sure we also have touch
+							if( !e || e.button != '0' ) return;
 						
-						var theView = movableWindows[ this.viewId ];
+							var theView = movableWindows[ this.viewId ];
 						
-						this.state = this.state == 'visible' ? 'hidden' : 'visible';
-						var wsp = theView.windowObject.workspace;
-						if( wsp != globalConfig.workspaceCurrent )
-						{
-							Workspace.switchWorkspace( wsp );
-							this.state = 'visible';
-						}
-						if( this.state == 'hidden' )
-						{
-							theView.viewContainer.classList.add( 'Minimized' );
-							
-						}
-						else
-						{
-							theView.viewContainer.classList.remove( 'Minimized' );
-							_WindowToFront( theView );
-						}
-						var mv = theView;
-						if( mv && mv.windowObject )
-						{
-							theView.windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+							this.state = this.state == 'visible' ? 'hidden' : 'visible';
+							var wsp = theView.windowObject.workspace;
+							if( wsp != globalConfig.workspaceCurrent )
+							{
+								Workspace.switchWorkspace( wsp );
+								this.state = 'visible';
+							}
 							if( this.state == 'hidden' )
 							{
-								if( !this.elementCount )
-								{
-									var d = document.createElement( 'div' );
-									d.className = 'ElementCount';
-									this.elementCount = d;
-									this.appendChild( d );
-								}
-								this.elementCount.innerHTML = '<span>' + 1 + '</span>';
+								theView.viewContainer.classList.add( 'Minimized' );
+							
 							}
 							else
 							{
-								if( this.elementCount ) 
+								theView.viewContainer.classList.remove( 'Minimized' );
+								_WindowToFront( theView );
+							}
+							var mv = theView;
+							if( mv && mv.windowObject )
+							{
+								theView.windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+								if( this.state == 'hidden' )
 								{
-									this.removeChild( this.elementCount );
-									this.elementCount = null;	
+									if( !this.elementCount )
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'ElementCount';
+										this.elementCount = d;
+										this.appendChild( d );
+									}
+									this.elementCount.innerHTML = '<span>' + 1 + '</span>';
+								}
+								else
+								{
+									if( this.elementCount ) 
+									{
+										this.removeChild( this.elementCount );
+										this.elementCount = null;	
+									}
 								}
 							}
+							_WindowToFront( theView );
 						}
-						_WindowToFront( theView );
+						desklet.viewList.appendChild( viewRep );
+						changed++;
 					}
-					desklet.viewList.appendChild( viewRep );
-					changed++;
-				}
-				else
-				{
+					else
+					{
 					
+					}
 				}
 			}
 		}
