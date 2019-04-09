@@ -15,7 +15,7 @@ var WorkspaceInside = {
 	// Onready functions
 	onReadyList: [],
 	// Switch to workspace
-	getReadyToRun: function() { return this.readyToRun; },
+	getReadyToRun: function() { return ( this.readyToRun ? "true" : "false" ); },
 	switchWorkspace: function( num )
 	{
 		if( this.mode == 'vr' ) return;
