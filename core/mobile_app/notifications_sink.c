@@ -104,6 +104,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 	{
 		// copy received bufffer
 		buf = FCallocAlign( (len+1), sizeof(char) );
+		memcpy( buf, in, len );
 		buf[ len ] = 0;
 	}
 	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
