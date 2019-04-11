@@ -59,7 +59,6 @@
 #endif
 
 extern pthread_mutex_t WSThreadMutex;
-extern int WSThreadNum;
 
 static void dump_handshake_info(struct lws_tokens *lwst);
 
@@ -229,19 +228,19 @@ int WebsocketThread( FThread *data )
 	{
 		int n = lws_service( ws->ws_Context, 500 );
 		
-		if( ws->ws_Quit == TRUE && WSThreadNum <= 0 )
+		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
 			FINFO("WS Quit!\n");
 			break;
 		}
 		else if( ws->ws_Quit == TRUE )
 		{
-			FINFO("WS Quit! but threads left: %d\n", WSThreadNum );
+			FINFO("WS Quit! but threads left: %d\n", ws->ws_NumberCalls );
 			cnt++;
 			
 			if( cnt > 100 )
 			{
-				Log( FLOG_INFO, "[WS] Service stopping threads: %d\n", WSThreadNum );
+				Log( FLOG_INFO, "[WS] Service stopping threads: %d\n", ws->ws_NumberCalls );
 				cnt = 0;
 			}
 		}
@@ -296,6 +295,8 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extD
 		memset( &(ws->ws_Info), 0, sizeof ws->ws_Info );
 		ws->ws_Opts = 0;
 		ws->ws_Interface = NULL;
+		
+		pthread_mutex_init( &(ws->ws_Mutex), NULL );
 		
 		if( ws->ws_UseSSL == TRUE )
 		{
@@ -413,11 +414,11 @@ void WebSocketDelete( WebSocket* ws )
 #ifdef ENABLE_WEBSOCKETS_THREADS
 		while( TRUE )
 		{
-			if( WSThreadNum <= 0 && ws->ws_Thread->t_Launched == FALSE )
+			if( ws->ws_NumberCalls <= 0 && ws->ws_Thread->t_Launched == FALSE )
 			{
 				break;
 			}
-			DEBUG("[WS] Closing WS. Threads: %d\n", WSThreadNum );
+			DEBUG("[WS] Closing WS. Threads: %d\n", ws->ws_NumberCalls );
 			sleep( 1 );
 			
 			tries++;
@@ -436,6 +437,8 @@ void WebSocketDelete( WebSocket* ws )
 			ThreadDelete( ws->ws_Thread );
 			ws->ws_Thread = NULL;
 		}
+		
+		pthread_mutex_destroy( &(ws->ws_Mutex) );
 		
 		Log( FLOG_DEBUG, "[WS] Thread closed\n");
 		

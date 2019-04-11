@@ -68,6 +68,9 @@ typedef struct WebSocket
 	FBOOL								ws_Quit;
 	FBOOL								ws_ExtendedDebug;
 	void								*ws_FCM;
+	
+	int									ws_NumberCalls;
+	pthread_mutex_t						ws_Mutex;
 } WebSocket;
 
 

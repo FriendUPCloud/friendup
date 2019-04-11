@@ -27,8 +27,6 @@
 #include <system/systembase.h>
 #include <hardware/machine_info.h>
 
-extern pthread_mutex_t WSThreadMutex;
-
 //
 // currently Friend can create only one core
 //
@@ -121,8 +119,6 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_DisableMobileWS = 0;
 		fcm->fcm_DisableExternalWS = 0;
 		fcm->fcm_WSExtendedDebug = 0;
-		
-		pthread_mutex_init( &WSThreadMutex, NULL );
 		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
@@ -438,7 +434,7 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 			fcm->fcm_CommService = NULL;
 		}
 		
-		DEBUG("[FriendCoreManager] Closing websockets\n");
+		DEBUG("[FriendCoreManager] Closing websockets notification channel\n");
 		
 		if( fcm->fcm_WebSocketNotification != NULL )
 		{
@@ -500,9 +496,7 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 			ClusterNodeDeleteAll( fcm->fcm_ClusterNodes );
 			fcm->fcm_ClusterNodes = NULL;
 		}
-		
-		pthread_mutex_destroy( &WSThreadMutex );
-		
+
 		if( fcm->fcm_SSHRSAKey != NULL )
 		{
 			FFree( fcm->fcm_SSHRSAKey );
