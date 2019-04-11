@@ -99,6 +99,13 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
 	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	char *buf = NULL;
+	if( in != NULL )
+	{
+		// copy received bufffer
+		buf = FCallocAlign( (len+1), sizeof(char) );
+		buf[ len ] = 0;
+	}
 	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
 	
 	switch( reason )
@@ -106,7 +113,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 		case LWS_CALLBACK_PROTOCOL_INIT:
 		{
 
-			return 0;
 		}
 		break;
 	
@@ -125,7 +131,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 					man->man_Data = locd;
 				}
 			}
-			return 0;
 		}
 		break;
 	
@@ -151,7 +156,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 				}	
 				man->man_Data = NULL;
 			}
-			return 0;
 		}
 		break;
 		
@@ -213,10 +217,15 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 			if( man != NULL && man->man_Data != NULL )
 			{
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
-				int ret = ProcessIncomingRequest( d, (char*)in, len, user );
+				int ret = ProcessIncomingRequest( d, buf, len, user );
 			}
 		}
 		break;
+	}
+	
+	if( buf != NULL )
+	{
+		FFree( buf );
 	}
 	
 	return 0;
