@@ -95,15 +95,17 @@ int WriteMessageToServers( DataQWSIM *d, unsigned char *msg, int len )
  * @param len size of provided message
  * @return 0 when everything is ok, otherwise return different value
  */
-int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user, void *in, size_t len )
+int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, void* in, ssize_t len)
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
-	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p lenasint %d\n", reason, len, wsi, (int) len);
+	DEBUG("notifications websocket callback, reason %d, len %ld, wsi %p lenasint %d is bigger then 0: %d\n", reason, len, wsi, (int) len,  (len > 0)  );
 	char *buf = NULL;
-	if( in != NULL )
+	if( in != NULL && (len > 0) )
 	{
+		int s = (int)len;
 		// copy received bufffer
-		buf = FCallocAlign( (len+1), sizeof(char) );
+		buf = FCallocAlign( s, sizeof(char) );
 		memcpy( buf, in, len );
 		buf[ len ] = 0;
 	}
