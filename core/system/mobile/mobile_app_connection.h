@@ -38,6 +38,7 @@ typedef struct MobileAppConnection
 	struct lws											*mac_WebsocketPtr;
 	void												*mac_UserData;
 	char												*mac_SessionID;
+	void												*mac_UserSession;
 	FQueue												mac_Queue;
 	pthread_mutex_t										mac_Mutex;
 	time_t												mac_LastCommunicationTimestamp;
@@ -70,7 +71,7 @@ typedef struct UserMobileAppConnections
 //
 //
 
-MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID );
+MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID, void *userSession );
 
 //
 //

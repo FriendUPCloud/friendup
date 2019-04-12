@@ -36,18 +36,17 @@ extern SystemBase *SLIB;
 #define ENABLE_WEBSOCKETS_THREADS 1
 //#define USE_PTHREAD 1
 
-pthread_mutex_t WSThreadMutex;
-int WSThreadNum = 0;
+//pthread_mutex_t WSThreadMutex;
 
 #define INCREASE_WS_THREADS() \
-FRIEND_MUTEX_LOCK( &WSThreadMutex ); \
-WSThreadNum++; \
-FRIEND_MUTEX_UNLOCK( &WSThreadMutex );
+FRIEND_MUTEX_LOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) ); \
+SLIB->fcm->fcm_WebSocket->ws_NumberCalls++; \
+FRIEND_MUTEX_UNLOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) );
 
 #define DECREASE_WS_THREADS() \
-FRIEND_MUTEX_LOCK( &WSThreadMutex ); \
-WSThreadNum--; \
-FRIEND_MUTEX_UNLOCK( &WSThreadMutex );  
+FRIEND_MUTEX_LOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) ); \
+SLIB->fcm->fcm_WebSocket->ws_NumberCalls--; \
+FRIEND_MUTEX_UNLOCK( &(SLIB->fcm->fcm_WebSocket->ws_Mutex) );  
 
 typedef struct WSThreadData
 {

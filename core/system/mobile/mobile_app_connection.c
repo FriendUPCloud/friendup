@@ -26,9 +26,10 @@
  *
  * @param wsi pointer to WebSockets
  * @param umaID id of user mobile application
+ * @param userSession pointer to UserSession structure
  * @return pointer to new created list of MobileAppConnection
  */
-MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID )
+MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID, void *userSession )
 {
 	//create struct holding this connection
 	MobileAppConnection *newConnection = FCalloc(sizeof(MobileAppConnection), 1);
@@ -39,6 +40,7 @@ MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID )
 		newConnection->mac_LastCommunicationTimestamp = time(NULL);
 		newConnection->mac_WebsocketPtr = wsi;
 		newConnection->mac_UserMobileAppID = umaID;
+		newConnection->mac_UserSession = userSession;
 		
 		pthread_mutex_init( &newConnection->mac_Mutex, NULL );
 

@@ -415,7 +415,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		case LWS_CALLBACK_ESTABLISHED:
 			{
 				MobileAppNotif *n = (MobileAppNotif *)user;
-				n->man_Data = MobileAppConnectionNew( wsi, 0 );
+				n->man_Data = MobileAppConnectionNew( wsi, 0, NULL );
 			}
 			break;
 			
@@ -739,8 +739,14 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 									en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 									int msgsize = snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"time\":\"%s\"}", timeString );
 									en->fq_Size = msgsize;
+									
+									UserSession *us = appConnection->mac_UserSession;
+									if( us != NULL )
+									{
+										us->us_LoggedTime = time( NULL );
+									}
 						
-									DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+									DEBUG("[websocket_app_callback] Msg to send1: %s pointer to user session %p\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, us );
 			
 									if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
 									{
@@ -962,6 +968,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		return MOBILE_APP_ERR_LOGIN_NO_PASSWORD;//MobileAppReplyError(wsi, userdata, MOBILE_APP_ERR_LOGIN_NO_PASSWORD);
 	}
 	
+	char *sessionid = json_get_element_string( json, "sessionid" );
 	char *tokenString = json_get_element_string(json, "apptoken");
 
 	//step 3 - check if the username and password is correct
@@ -1029,9 +1036,12 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		MobileAppConnection *con = (MobileAppConnection *)n->man_Data;
 		con->mac_UserMobileAppID = umaID;
 		con->mac_WebsocketPtr = wsi;
+		
+		con->mac_UserSession = USMGetSessionBySessionID( SLIB->sl_USM, sessionid );
+		
 		int err = MobileAppAddNewUserConnection( con, usernameString, userdata );
 		
-		Log( FLOG_DEBUG, "\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %p position %d\n", wsi, con, con->mac_UserConnectionIndex );
+		Log( FLOG_DEBUG, "\t\t\tADD APP CONNECTION Websocket pointer: %p login return error: %p position %d pointer to UserSession %p\n", wsi, con, con->mac_UserConnectionIndex, con->mac_UserSession );
 		
 		DEBUG("New connection added, umaID: %lu\n", umaID );
 		

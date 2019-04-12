@@ -95,10 +95,20 @@ int WriteMessageToServers( DataQWSIM *d, unsigned char *msg, int len )
  * @param len size of provided message
  * @return 0 when everything is ok, otherwise return different value
  */
-int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user, void *in, size_t len )
+int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, void* in, ssize_t len)
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
-	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p lenasint %d\n", reason, len, wsi, (int) len);
+	DEBUG("notifications websocket callback, reason %d, len %ld, wsi %p lenasint %d is bigger then 0: %d\n", reason, len, wsi, (int) len,  (len > 0)  );
+	char *buf = NULL;
+	if( in != NULL && (len > 0) )
+	{
+		int s = (int)len;
+		// copy received bufffer
+		buf = FCallocAlign( s, sizeof(char) );
+		memcpy( buf, in, len );
+		buf[ len ] = 0;
+	}
 	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
 	
 	switch( reason )
@@ -106,7 +116,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 		case LWS_CALLBACK_PROTOCOL_INIT:
 		{
 
-			return 0;
 		}
 		break;
 	
@@ -125,7 +134,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 					man->man_Data = locd;
 				}
 			}
-			return 0;
 		}
 		break;
 	
@@ -151,7 +159,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 				}	
 				man->man_Data = NULL;
 			}
-			return 0;
 		}
 		break;
 		
@@ -213,10 +220,15 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 			if( man != NULL && man->man_Data != NULL )
 			{
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
-				int ret = ProcessIncomingRequest( d, (char*)in, len, user );
+				int ret = ProcessIncomingRequest( d, buf, len, user );
 			}
 		}
 		break;
+	}
+	
+	if( buf != NULL )
+	{
+		FFree( buf );
 	}
 	
 	return 0;
