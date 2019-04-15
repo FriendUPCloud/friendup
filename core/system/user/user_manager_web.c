@@ -1022,8 +1022,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			UserSession *sess = NULL;
 			
-			DEBUG("[UMWebRequest] Logout\n");
-			
+			Log( FLOG_INFO, "[UMWebRequest] Logout user, sessionid: %s\n", sessid );
+
 			if( sessid != NULL )
 			{
 				sess = USMGetSessionBySessionID( l->sl_USM, sessid );
@@ -1031,6 +1031,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				
 				if( sess != NULL )
 				{
+					Log( FLOG_INFO, "[UMWebRequest] Logout user, user: %s deviceID: %s\n", sess->us_User->u_Name, sess->us_DeviceIdentity );
+					
 					SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 					if( sqlLib != NULL )
 					{
