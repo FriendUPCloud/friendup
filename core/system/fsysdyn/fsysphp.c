@@ -24,6 +24,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <util/newpopen.h>
 
 #define SUFFIX "fsys"
 #define PREFIX "php"
@@ -92,9 +93,13 @@ char *FilterPHPVar( char *line )
 		}
 		// Kill unwanted stuff
 		if( line[ i ] == '`' )
+		{
 			line[ i ] = ' ';
+		}
 		else if( line[ i ] == '"' || line[ i ] == '\n' || line[ i ] == '\r' )
+		{
 			line[ i ] = ' '; // Eradicate!
+		}
 	}
 	return line;
 }
@@ -299,6 +304,66 @@ ListString *PHPCall( const char *command, int *length )
     }	// switch pipe
     */
     
+	pid_t pid;
+	int p[3];
+	
+	pid = newpopen( command, p );
+	if( pid <= 0 )
+	{
+		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror(errno) );
+		return NULL;
+	}
+	
+	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
+	ListString *data = ListStringNew();
+	int errCounter = 0;
+	int size = 0;
+	
+	//do {
+    //  pid = waitpid(p->child_pid, &status, 0);
+    //} while (pid =  = -1 && errno =  = EINTR);
+	// p[1] - stdout p[2] - stderr
+	while( TRUE )
+	{
+		// Make a new buffer and read
+		size = read( p[ 1 ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			ListStringAdd( data, buf, size );
+		}
+		else
+		{
+			char clo[2];
+			clo[0] = '\'';
+			clo[1] = EOF;
+			write( p[0], clo, 2 );
+			errCounter++;
+			if( errCounter > 8 )
+			{
+				FERROR("Error in popen, Quit! Command: %s\n", command );
+				break;
+			}
+		}
+	}
+	
+	FFree( buf );
+	DEBUG("File readed\n");
+	
+	// Free pipe if it's there
+	newpclose( pid, p );
+	
+	ListStringJoin( data );		//we join all string into one buffer
+
+	// Set the length
+	if( length != NULL ) *length = data->ls_Size;
+	
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
+	return data;
+	
+	
+	/*
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
@@ -353,6 +418,7 @@ ListString *PHPCall( const char *command, int *length )
 	
 	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
 	return data;
+	*/
 }
 
 //
