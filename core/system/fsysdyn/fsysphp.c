@@ -314,7 +314,7 @@ ListString *PHPCall( const char *command, int *length )
 		return NULL;
 	}
 	
-	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	ListString *data = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
@@ -335,6 +335,7 @@ ListString *PHPCall( const char *command, int *length )
 			/* Initialize the file descriptor set. */
 		FD_ZERO( &set );
 		FD_SET( p[1], &set);
+		DEBUG("[PHPFsys] in loop\n");
 		
 		int ret = select( p[ 1 ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
@@ -353,7 +354,9 @@ ListString *PHPCall( const char *command, int *length )
 		DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		if( size > 0 )
 		{
+			DEBUG( "[PHPFsys] before adding to list\n");
 			ListStringAdd( data, buf, size );
+			DEBUG( "[PHPFsys] after adding to list\n");
 		}
 		else
 		{
@@ -369,9 +372,10 @@ ListString *PHPCall( const char *command, int *length )
 			}
 		}
 	}
+	DEBUG( "[PHPFsys] after loop, memory will be released\n");
 	
 	FFree( buf );
-	DEBUG("File readed\n");
+	DEBUG("[PHPFsys] File readed\n");
 	
 	// Free pipe if it's there
 	newpclose( pid, p );
