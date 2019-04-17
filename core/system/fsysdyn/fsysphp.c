@@ -319,13 +319,35 @@ ListString *PHPCall( const char *command, int *length )
 	int errCounter = 0;
 	int size = 0;
 	
+	fd_set set;
+	struct timeval timeout;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+	
 	//do {
     //  pid = waitpid(p->child_pid, &status, 0);
     //} while (pid =  = -1 && errno =  = EINTR);
 	// p[1] - stdout p[2] - stderr
 	while( TRUE )
 	{
+			/* Initialize the file descriptor set. */
+		FD_ZERO( &set );
+		FD_SET( p[1], &set);
+		
+		int ret = select( p[ 1 ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
 		size = read( p[ 1 ], buf, PHP_READ_SIZE);
 
 		DEBUG( "[PHPFsys] Adding %d of data\n", size );
@@ -340,7 +362,7 @@ ListString *PHPCall( const char *command, int *length )
 			clo[1] = EOF;
 			write( p[0], clo, 2 );
 			errCounter++;
-			if( errCounter > 8 )
+			if( errCounter > 3 )
 			{
 				FERROR("Error in popen, Quit! Command: %s\n", command );
 				break;
