@@ -135,7 +135,7 @@ html > body
 	}
 	#RightBar
 	{
-		width: calc(100% - 340px);
+		width: calc(100% - 260px);
 		left: 260px;
 	}
 	.MenuContents
