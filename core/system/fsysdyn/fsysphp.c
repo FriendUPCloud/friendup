@@ -304,13 +304,11 @@ ListString *PHPCall( const char *command, int *length )
     }	// switch pipe
     */
     
-	pid_t pid;
-	int p[3];
-	
-	pid = newpopen( command, p );
-	if( pid <= 0 )
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
 	{
-		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror(errno) );
+		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror( errno ) );
 		return NULL;
 	}
 	
@@ -334,10 +332,10 @@ ListString *PHPCall( const char *command, int *length )
 	{
 			/* Initialize the file descriptor set. */
 		FD_ZERO( &set );
-		FD_SET( p[1], &set);
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
 		DEBUG("[PHPFsys] in loop\n");
 		
-		int ret = select( p[ 1 ]+1, &set, NULL, NULL, &timeout );
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
 		if( ret == 0 )
 		{
@@ -349,7 +347,7 @@ ListString *PHPCall( const char *command, int *length )
 			DEBUG("Error\n");
 			break;
 		}
-		size = read( p[ 1 ], buf, PHP_READ_SIZE);
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
 		DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		if( size > 0 )
@@ -363,7 +361,7 @@ ListString *PHPCall( const char *command, int *length )
 			char clo[2];
 			clo[0] = '\'';
 			clo[1] = EOF;
-			write( p[0], clo, 2 );
+			write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
 			errCounter++;
 			if( errCounter > 3 )
 			{
@@ -378,7 +376,7 @@ ListString *PHPCall( const char *command, int *length )
 	DEBUG("[PHPFsys] File readed\n");
 	
 	// Free pipe if it's there
-	newpclose( pid, p );
+	newpclose( &pofd );
 	
 	ListStringJoin( data );		//we join all string into one buffer
 
