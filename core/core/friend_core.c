@@ -1714,7 +1714,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			if( fc->fci_Sockets != NULL )
 			{
 				//FERROR("epoll event %d sock %p fd %d - listen %d\n", currentEvent->events, sock, sock->fd, fc->fci_Sockets->fd );
-				FERROR("epoll event %d sock %p - listen %d\n", currentEvent->events, sock, fc->fci_Sockets->fd );
+				FERROR("epoll event %d sock %d - listen %d\n", currentEvent->events, sock->fd, fc->fci_Sockets->fd );
 			}
 			
 			// Ok, we have a problem with our connection
