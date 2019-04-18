@@ -154,13 +154,14 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 					}
 				}
 				cl->wsc_InUseCounter--;
+				
+				if( cl->wsc_Wsi != NULL )
+				{
+					lws_callback_on_writable( cl->wsc_Wsi );
+				}
 				FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 			}
-			if( cl->wsc_Wsi != NULL )
-			{
-				lws_callback_on_writable( cl->wsc_Wsi );
-			}
-
+			
 			//lws_callback_on_writable( cl->wc_Wsi );
 			FFree( encmsg );
 		}
@@ -193,11 +194,13 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			}
 			
 			cl->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+			
 			if( cl->wsc_Wsi != NULL )
 			{
 				lws_callback_on_writable( cl->wsc_Wsi );
 			}
+			
+			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 		}
 	}
 
