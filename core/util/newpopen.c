@@ -77,7 +77,7 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		// do same thing as popen
 		
 		execl("/bin/sh", "sh", "-c", cmd, NULL);
-		exit( EXIT_FAILURE );
+		//exit( EXIT_FAILURE );
 	}
 	else
 	{

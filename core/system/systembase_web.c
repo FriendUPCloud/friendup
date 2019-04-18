@@ -1248,23 +1248,25 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					if( loggedSession != NULL )
 					{
 						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
-						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
-						{
-							if( loggedSession->us_User == NULL )
+						//if( dstusrsess == NULL )
+						//{
+							if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
 							{
-								DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
-								User *lusr = l->sl_UM->um_Users;
-								while( lusr != NULL )
+								if( loggedSession->us_User == NULL )
 								{
-									if( loggedSession->us_UserID == lusr->u_ID )
+									DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
+									User *lusr = l->sl_UM->um_Users;
+									while( lusr != NULL )
 									{
-										loggedSession->us_User = lusr;
-										break;
+										if( loggedSession->us_UserID == lusr->u_ID )
+										{
+											loggedSession->us_User = lusr;
+											break;
+										}
+										lusr = (User *)lusr->node.mln_Succ;
 									}
-									lusr = (User *)lusr->node.mln_Succ;
 								}
-							}
-						
+							//}
 						//
 						// update user and session
 						//

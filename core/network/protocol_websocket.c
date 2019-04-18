@@ -640,6 +640,7 @@ void WSThreadPing( void *p )
 	}
 	
 #if USE_PTHREAD_PING == 1
+	DEBUG("[Protocol_websocket] pthread_exit\n");
 	pthread_exit( 0 );
 #endif
 	return;

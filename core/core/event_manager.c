@@ -156,6 +156,7 @@ void EventLaunch( CoreEvent *ptr )
 	threadsNo--;
 	ptr->ce_Launched = FALSE;
 	
+	DEBUG("[EventLaunch] quit\n");
 	pthread_exit( 0 );
 }
 

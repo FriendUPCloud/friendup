@@ -705,13 +705,13 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	FFree( pre );
 	DecreaseThreads();
-	pthread_exit( 0 );
+	//pthread_exit( 0 );
 	return NULL;
 accerror:
 	DEBUG("ERROR\n");
 	FFree( pre );
 	DecreaseThreads();
-	pthread_exit( 0 );
+	//pthread_exit( 0 );
 
 	return NULL;
 }
@@ -929,7 +929,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 	// No more threads
 	DecreaseThreads();
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+	//pthread_exit( 0 );
 #endif
 	return NULL;
 }
@@ -1703,7 +1703,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	while( !fc->fci_Shutdown )
 	{
 		// Wait for something to happen on any of the sockets we're listening on
-		
+		DEBUG("Before epollwait\n");
 		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, -1, &curmask );
 		DEBUG("Epollwait, eventcount: %d\n", eventCount );
 

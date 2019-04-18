@@ -482,6 +482,14 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 			{
 				DEBUG("Session locked\n");
+				
+				if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strcmp( us->us_SessionID, ses->us_SessionID ) == 0 )
+				{
+					DEBUG("Found session with same sessionID, return!\n");
+					FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+					return ses;
+				}
+				
 				if( ses->us_DeviceIdentity != NULL )
 				{
 					if( us->us_UserID == ses->us_UserID && strcmp( us->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
