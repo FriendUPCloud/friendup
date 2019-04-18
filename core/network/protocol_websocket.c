@@ -192,13 +192,12 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			
 			DEBUG("Send message to WSI, ptr: %p\n", wscdata->wsc_Wsi );
 
-			wscdata->wsc_InUseCounter--;
-			
 			if( wscdata->wsc_Wsi != NULL )
 			{
 				lws_callback_on_writable( wscdata->wsc_Wsi );
 			}
 			
+			wscdata->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 		}
 	}
@@ -749,6 +748,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				//fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
 				//usleep( 2000 );
 				
+				DetachWebsocketFromSession( fcd );
 				int val = 0;
 				while( TRUE )
 				{
@@ -766,7 +766,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					BufStringDelete( fcd->wsc_Buffer );
 				}
-				DetachWebsocketFromSession( fcd );
+				
+				FQDeInitFree( &(fcd->wsc_MsgQueue) );
+				pthread_mutex_destroy( &(fcd->wsc_Mutex) );
+				
 				//DeleteWebSocketConnection( SLIB, wsi, fcd );
 				//FFree( fcd->fcd_WSClient );
 				//fcd->wsc_WebsocketsServerClient = NULL;
