@@ -197,6 +197,8 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 				lws_callback_on_writable( wscdata->wsc_Wsi );
 			}
 			
+			DEBUG("In use counter %d\n", wscdata->wsc_InUseCounter );
+			
 			wscdata->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 		}
@@ -757,7 +759,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					{
 						break;
 					}
-					if( val++ > 5 ) break;
+					//if( val++ > 5 ) break;
+					pthread_yield();
 					sleep( 1 );
 				}
 				
