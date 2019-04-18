@@ -444,6 +444,7 @@ static inline void moveToHttps( Socket *sock )
 */
 void *FriendCoreAcceptPhase2( void *d )
 {
+	DEBUG("[FriendCoreAcceptPhase2] detached\n");
 	pthread_detach( pthread_self() );
 
 	IncreaseThreads();
@@ -455,6 +456,8 @@ void *FriendCoreAcceptPhase2( void *d )
 	struct sockaddr_in6 client;
 	socklen_t clientLen = sizeof( client );
 	int fd = 0;
+	
+	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
@@ -493,6 +496,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			goto accerror;
 		}
 		
+		DEBUG("[FriendCoreAcceptPhase2] before get peer name, fd: %d\n", fd );
 		// Create socket object
 		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 		if( prerr == -1 )
@@ -524,6 +528,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			close( fd );
 			goto accerror;
 		}
+		DEBUG("[FriendCoreAcceptPhase2] socket initialized\n");
 		
 		int lbreak = 0;
 		
@@ -543,8 +548,11 @@ void *FriendCoreAcceptPhase2( void *d )
 				goto accerror;
 			}
 
+			DEBUG("[FriendCoreAcceptPhase2] set fd\n");
 			srl = SSL_set_fd( incoming->s_Ssl, incoming->fd );
 			SSL_set_accept_state( incoming->s_Ssl );
+			
+			DEBUG("[FriendCoreAcceptPhase2] state accepted\n");
 
 			if( srl != 1 )
 			{
@@ -558,6 +566,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				FFree( incoming );
 				goto accerror;
 			}
+			DEBUG("[FriendCoreAcceptPhase2] before while\n");
 			
 			// setup SSL session
 			int err = 0;
@@ -635,6 +644,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		{
 			//DEBUG("No SSL\n");
 		}
+		DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
 		
 		// We got incoming!
 		if( incoming != NULL )
@@ -673,10 +683,13 @@ void *FriendCoreAcceptPhase2( void *d )
 			event.data.ptr = incoming;
 			event.events = EPOLLIN| EPOLLET;
 			//event.events = EPOLLIN| EPOLLET| EPOLLHUP | EPOLLERR;
+			DEBUG("[FriendCoreAcceptPhase2] epoll_add\n");
 
 			error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
 	
+			DEBUG("[FriendCoreAcceptPhase2] before yield\n");
 			pthread_yield();
+			DEBUG("[FriendCoreAcceptPhase2] after yield\n");
 			
 			if( error )
 			{
@@ -701,6 +714,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			}
 			break;
 		}
+		DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 	}	// while accept
 	
 	FFree( pre );
