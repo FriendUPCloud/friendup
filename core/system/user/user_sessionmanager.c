@@ -1141,14 +1141,17 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 		UserSession *ses = usm->usm_Sessions;
 		while( ses != NULL )
 		{
-			WebsocketServerClient *cl = ses->us_WSClients;
+			WebsocketServerClient *cl = ses->us_WSConnections;
 			if( cl != NULL )
 			{
+				//TODO check maybe ws connections should be removed?
+				/*
 				if( ( actTime - cl->wsc_LastPingTime ) < 150 )		// if last call was done 150 secs ago, we can close it
 				{
 					lws_close_reason( cl->wsc_Wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char *)"CLOSE", 5 );
 					DEBUG("[USMCloseUnusedWebSockets] close WS connection\n");
 				}
+				*/
 			}
 			ses = (UserSession *)ses->node.mln_Succ;
 		}

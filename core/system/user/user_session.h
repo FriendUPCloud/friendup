@@ -59,7 +59,8 @@ typedef struct UserSession
 	MinNode					node;
 	
 	FULONG					us_ID;
-	WebsocketServerClient	*us_WSClients;
+	//WebsocketServerClient	*us_WSClients;
+	WebsocketServerClient	*us_WSConnections;
 	pthread_mutex_t			us_Mutex;
 	
 	FULONG					us_UserID;					//

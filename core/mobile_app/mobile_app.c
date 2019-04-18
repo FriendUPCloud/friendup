@@ -1225,9 +1225,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			UserSession *locses = (UserSession *)usl->us;
 			if( locses != NULL )
 			{
-				DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSClients, ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) );
+				//WSCData *data = (WSCData *)us_WSConnections;
+				DEBUG("[AdminWebRequest] Send Message through websockets: %s clients: %p timestamptrue: %d\n", locses->us_DeviceIdentity, locses->us_WSConnections, ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) );
 				
-				if( ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSClients != NULL && locses->us_WSClients->wsc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+				if( ( ( (timestamp - locses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime ) ) && locses->us_WSConnections != NULL )
 				{
 					int msgLen = 0;
 					NotificationSent *lns = NotificationSentNew();

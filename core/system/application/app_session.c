@@ -571,7 +571,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 								int err = 0;
 								char tmp[ 512 ];
 
-								if( usrses->us_WSClients == NULL )
+								if( usrses->us_WSConnections == NULL )
 								{
 									int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
 									if( pos > 0  )
@@ -628,9 +628,9 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 				{
 					UserSession *ses = (UserSession *)curgusr->usersession;
 					
-					DEBUG("[AppSession] Found user session %p wscon %p\n", ses, ses->us_WSClients );
+					DEBUG("[AppSession] Found user session %p wscon %p\n", ses, ses->us_WSConnections );
 					
-					if( ses != NULL && ses->us_WSClients != NULL && ses != loggedSession )
+					if( ses != NULL && ses->us_WSConnections != NULL && ses != loggedSession )
 					{
 						char tmp[ 512 ];
 						int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", ses->us_User->u_Name, ses->us_DeviceIdentity );
@@ -953,7 +953,11 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	}
 	*/
 	
-	int err = AppSessionRemUsersession( as, ws->wsc_UserSession );
+	if( ws->wusc_Data != NULL )
+	{
+		WSCData *data = (WSCData *)ws->wusc_Data;
+		int err = AppSessionRemUsersession( as, data->wsc_UserSession );
+	}
 	DEBUG("[AppSession] App session remove by WS END\n");
 	
 	return 0;

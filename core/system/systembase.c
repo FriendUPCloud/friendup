@@ -2524,16 +2524,16 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 				
 				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 				{
-					WebsocketServerClient *wsc = usersession->us_WSClients;
+					WebsocketServerClient *wsc = usersession->us_WSConnections;
 					while( wsc != NULL )
 					{
-						DEBUG("[SystemBase] Writing to websockets, pointer to ws %p, ptr to ws: %p wscptr: %p\n", wsc->wsc_Wsi, usersession, wsc );
+						DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
 
 					//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
 					
-						if( wsc->wsc_Wsi != NULL && wsc->wsc_UserSession != NULL )
+						if( wsc->wusc_Data != NULL )
 						{
-							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+							bytes += WebsocketWrite( wsc->wusc_Data , buf , len, LWS_WRITE_TEXT );
 						}
 						else
 						{
@@ -2583,13 +2583,20 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 
 			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 			{
-				WebsocketServerClient *wsc = usersession->us_WSClients;
+				WebsocketServerClient *wsc = usersession->us_WSConnections;
 		
 				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
 		
 				while( wsc != NULL )
 				{
-					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+					if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+					{
+						//WSCData *data = (WSCData *)wsc->wusc_Data;
+						//if( data->wsc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+						{
+							bytes += WebsocketWrite( wsc->wusc_Data , buf , len, LWS_WRITE_TEXT );
+						}
+					}
 					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 				}
 		

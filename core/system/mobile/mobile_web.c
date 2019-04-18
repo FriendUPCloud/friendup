@@ -968,14 +968,14 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char buffer[ 256 ];
 			
 			DEBUG("[MobileWebRequest] setWS state to: %d\n", status );
-			if( loggedSession->us_WSClients != NULL )
+			if( loggedSession->us_WSConnections != NULL )
 			{
-				WebsocketServerClient *cl = loggedSession->us_WSClients;
+				WebsocketServerClient *cl = loggedSession->us_WSConnections;
 				while( cl != NULL )
 				{
-					cl->wsc_Status = status;
+					cl->wusc_Status = status;
 					
-					DEBUG("[MobileWebRequest] connection %p set status to: %d\n", cl->wsc_Wsi, cl->wsc_Status );
+					//DEBUG("[MobileWebRequest] connection %p set status to: %d\n", cl->wsc_Wsi, cl->wsc_Status );
 					cl = (WebsocketServerClient *) cl->node.mln_Succ;
 				}
 			}

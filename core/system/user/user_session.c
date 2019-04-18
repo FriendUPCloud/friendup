@@ -108,12 +108,13 @@ void UserSessionDelete( UserSession *us )
 	
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
-		WebsocketServerClient *nwsc = us->us_WSClients;
+		// copy connection poiner to remove possibility of using it
+		WebsocketServerClient *nwsc = us->us_WSConnections;
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			us->us_WSClients = NULL;
+			us->us_WSConnections = NULL;
 		
-			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSClients );
+			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSConnections );
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
@@ -127,15 +128,16 @@ void UserSessionDelete( UserSession *us )
 			{
 				rws = nwsc;
 				
-				FRIEND_MUTEX_LOCK( &(rws->wsc_Mutex) );
+				WSCData *data = (WSCData *)rws->wusc_Data;
+				FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) );
 				nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
 
 				Log( FLOG_DEBUG, "[UserSessionDelete] Remove websockets ptr %p from usersession %p\n", rws, us );
 
-				rws->wsc_InUseCounter = 0;
-				rws->wsc_UserSession = NULL;
+				//rws->wsc_InUseCounter = 0;
+				data->wsc_UserSession = NULL;
 				
-				FRIEND_MUTEX_UNLOCK( &(rws->wsc_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 				WebsocketServerClientDelete( rws );
 				
 			}
@@ -181,6 +183,7 @@ WebsocketServerClient *UserSessionRemoveConnection( UserSession *us, WebsocketSe
 	{
 		return NULL;
 	}
+	/*
 	DEBUG("[UserSessionRemoveConnection] Set NULL to WSI\n");
 	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
 	{
@@ -231,7 +234,7 @@ WebsocketServerClient *UserSessionRemoveConnection( UserSession *us, WebsocketSe
 	{
 		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
 	}
-	
+	*/
 	DEBUG("[UserSessionRemoveConnection] Remove Queue\n");
 
 	return NULL;

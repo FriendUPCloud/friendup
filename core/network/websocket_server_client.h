@@ -24,6 +24,7 @@
 #include <core/nodes.h>
 #include <libwebsockets.h>
 #include <util/friendqueue.h>
+#include <network/websocket.h>
 
 enum
 {
@@ -34,10 +35,9 @@ enum
 //
 //
 //
-
+/*
 typedef struct WebsocketServerClient
 {
-	struct MinNode 					node;
 	struct lws				 		*wsc_Wsi;
 	int								wsc_InUseCounter;
 	void							*wsc_UserSession;
@@ -48,6 +48,19 @@ typedef struct WebsocketServerClient
 	time_t							wsc_LastPingTime;
 	int								wsc_Status;	//enabled=0, disabled=1
 }WebsocketServerClient;
+*/
+
+//
+//
+//
+
+typedef struct WebsocketServerClient
+{
+	struct MinNode 					node;
+	WSCData							*wusc_Data;
+	int								wusc_Status;
+}WebsocketServerClient;
+
 
 //
 //
