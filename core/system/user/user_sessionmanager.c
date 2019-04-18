@@ -487,6 +487,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 				{
 					DEBUG("Found session with same sessionID, return!\n");
 					FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+					FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 					return ses;
 				}
 				
