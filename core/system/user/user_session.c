@@ -131,6 +131,7 @@ void UserSessionDelete( UserSession *us )
 				WSCData *data = (WSCData *)rws->wusc_Data;
 				FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) );
 				nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
+				data->wsc_WebsocketsServerClient = NULL;
 
 				Log( FLOG_DEBUG, "[UserSessionDelete] Remove websockets ptr %p from usersession %p\n", rws, us );
 
@@ -139,7 +140,7 @@ void UserSessionDelete( UserSession *us )
 				
 				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 				WebsocketServerClientDelete( rws );
-				
+				rws->wusc_Data = NULL;
 			}
 		}
 
