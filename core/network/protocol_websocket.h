@@ -35,7 +35,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len );
 //
 //
 
-int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len );
+int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, ssize_t len );
 
 //
 //
