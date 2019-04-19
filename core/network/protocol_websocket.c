@@ -1784,11 +1784,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 	}
 
+	/*
 	if( user != NULL && fcd->wsc_Wsi != NULL )//&& fcd != NULL && reason != LWS_CALLBACK_CLOSED )
 	{
 		DEBUG("fcd->wsc_Wsi %p\n", fcd->wsc_Wsi );
 		FLUSH_QUEUE();
 	}
+	*/
 	
 	DECREASE_WS_THREADS();
 	
