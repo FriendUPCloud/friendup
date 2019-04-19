@@ -742,8 +742,12 @@ int DetachWebsocketFromSession( WSCData *data )
 		return 0;
 	}
 	
-	wscl->wusc_Data = NULL;
-
+	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
+	{
+		wscl->wusc_Data = NULL;
+		data->wsc_WebsocketsServerClient = NULL;
+		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+	}
 	/*
 	//
 	UserSession *us = NULL;

@@ -748,14 +748,14 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 		
 		case LWS_CALLBACK_CLOSED:
-			Log( FLOG_DEBUG, "[WS] Callback session before closed\n");
+			Log( FLOG_DEBUG, "[WS] Callback session before closed, in use: %d\n", fcd->wsc_InUseCounter );
 			//if( fcd->fcd_WSClient != NULL )
 			{
 				//fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
 				//usleep( 2000 );
 				
 				DetachWebsocketFromSession( fcd );
-				int val = 0;
+				//int val = 0;
 				while( TRUE )
 				{
 					DEBUG("PROTOCOL_WS: Check in use %d\n", fcd->wsc_InUseCounter );
