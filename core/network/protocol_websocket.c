@@ -1740,6 +1740,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 			}
 			
+			FLUSH_QUEUE();
+			
 			break;
 		
 		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
