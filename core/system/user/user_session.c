@@ -128,6 +128,7 @@ void UserSessionDelete( UserSession *us )
 			while( nwsc != NULL )
 			{
 				rws = nwsc;
+				nwsc = (UserSessionWebsocket *)nwsc->node.mln_Succ;
 				/*
 				WSCData *data = (WSCData *)rws->wusc_Data;
 				if( data != NULL )
