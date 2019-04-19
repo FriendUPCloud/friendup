@@ -1832,11 +1832,13 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						}
 #else
 #ifdef USE_WORKERS
+						DEBUG("Worker will be launched\n");
 						SystemBase *locsb = (SystemBase *)fc->fci_SB;
 						if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "FriendCoreProcess" ) != 0 )
 						{
 							SocketClose( sock );
 						}
+						DEBUG("Worker launched\n");
 						//WorkerManagerRun( fc->fci_WorkerManager,  FriendCoreProcess, pre );
 #else
 						int pid = fork();
