@@ -748,7 +748,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 		
 		case LWS_CALLBACK_CLOSED:
-			INFO("[WS] Callback session before closed\n");
+			Log( FLOG_DEBUG, "[WS] Callback session before closed\n");
 			//if( fcd->fcd_WSClient != NULL )
 			{
 				//fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;

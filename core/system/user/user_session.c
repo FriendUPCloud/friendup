@@ -70,6 +70,7 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
+		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
 		int count = 0;
 
 		// we must wait till all tasks will be finished
@@ -127,7 +128,7 @@ void UserSessionDelete( UserSession *us )
 			while( nwsc != NULL )
 			{
 				rws = nwsc;
-				
+				/*
 				WSCData *data = (WSCData *)rws->wusc_Data;
 				if( data != NULL )
 				{
@@ -142,6 +143,7 @@ void UserSessionDelete( UserSession *us )
 				
 					FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 				}
+				*/
 				WebsocketServerClientDelete( rws );
 				rws->wusc_Data = NULL;
 			}

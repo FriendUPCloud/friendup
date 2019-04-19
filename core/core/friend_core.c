@@ -228,7 +228,7 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 	}
 	
 	// Destroy listen mutex
-	DEBUG("[FriendCoreShutdown] Waiting for listen mutex\n" );
+	//DEBUG("[FriendCoreShutdown] Waiting for listen mutex\n" );
 	if( FRIEND_MUTEX_LOCK( &fc->fci_ListenMutex ) == 0 )
 	{
 		FRIEND_MUTEX_UNLOCK( &fc->fci_ListenMutex );
@@ -339,7 +339,7 @@ static inline void moveToHttp( int fd )
 			break;
 		}
 		re += r;
-		DEBUG("Received from socket '%s' size %d\n", buf, re );
+		//DEBUG("Received from socket '%s' size %d\n", buf, re );
 		sleep( 1 );
 	}
 
@@ -444,7 +444,7 @@ static inline void moveToHttps( Socket *sock )
 */
 void *FriendCoreAcceptPhase2( void *d )
 {
-	DEBUG("[FriendCoreAcceptPhase2] detached\n");
+	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
 	pthread_detach( pthread_self() );
 
 	IncreaseThreads();
@@ -457,7 +457,7 @@ void *FriendCoreAcceptPhase2( void *d )
 	socklen_t clientLen = sizeof( client );
 	int fd = 0;
 	
-	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
+	//DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK ) ) > 0 )
 	{
@@ -496,7 +496,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			goto accerror;
 		}
 		
-		DEBUG("[FriendCoreAcceptPhase2] before get peer name, fd: %d\n", fd );
+		//DEBUG("[FriendCoreAcceptPhase2] before get peer name, fd: %d\n", fd );
 		// Create socket object
 		int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 		if( prerr == -1 )
@@ -528,7 +528,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			close( fd );
 			goto accerror;
 		}
-		DEBUG("[FriendCoreAcceptPhase2] socket initialized\n");
+		//DEBUG("[FriendCoreAcceptPhase2] socket initialized\n");
 		
 		int lbreak = 0;
 		
@@ -548,11 +548,11 @@ void *FriendCoreAcceptPhase2( void *d )
 				goto accerror;
 			}
 
-			DEBUG("[FriendCoreAcceptPhase2] set fd\n");
+			//DEBUG("[FriendCoreAcceptPhase2] set fd\n");
 			srl = SSL_set_fd( incoming->s_Ssl, incoming->fd );
 			SSL_set_accept_state( incoming->s_Ssl );
 			
-			DEBUG("[FriendCoreAcceptPhase2] state accepted\n");
+			//DEBUG("[FriendCoreAcceptPhase2] state accepted\n");
 
 			if( srl != 1 )
 			{
@@ -566,7 +566,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				FFree( incoming );
 				goto accerror;
 			}
-			DEBUG("[FriendCoreAcceptPhase2] before while\n");
+			//DEBUG("[FriendCoreAcceptPhase2] before while\n");
 			
 			// setup SSL session
 			int err = 0;
@@ -644,7 +644,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		{
 			//DEBUG("No SSL\n");
 		}
-		DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
+		//DEBUG("[FriendCoreAcceptPhase2] before getting incoming\n");
 		
 		// We got incoming!
 		if( incoming != NULL )
@@ -683,13 +683,13 @@ void *FriendCoreAcceptPhase2( void *d )
 			event.data.ptr = incoming;
 			event.events = EPOLLIN| EPOLLET;
 			//event.events = EPOLLIN| EPOLLET| EPOLLHUP | EPOLLERR;
-			DEBUG("[FriendCoreAcceptPhase2] epoll_add\n");
+			//DEBUG("[FriendCoreAcceptPhase2] epoll_add\n");
 
 			error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
 	
-			DEBUG("[FriendCoreAcceptPhase2] before yield\n");
+			//DEBUG("[FriendCoreAcceptPhase2] before yield\n");
 			pthread_yield();
-			DEBUG("[FriendCoreAcceptPhase2] after yield\n");
+			//DEBUG("[FriendCoreAcceptPhase2] after yield\n");
 			
 			if( error )
 			{
@@ -714,7 +714,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			}
 			break;
 		}
-		DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+		//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
 	}	// while accept
 	
 	FFree( pre );
@@ -1173,7 +1173,7 @@ void FriendCoreProcess( void *fcv )
 					}
 					break;
 				}
-				DEBUG("Socket read: %d\n", res );
+				//DEBUG("Socket read: %d\n", res );
 			} //end if inner socket reading loop
 
 			if( count > 0 )
@@ -1201,10 +1201,10 @@ void FriendCoreProcess( void *fcv )
 							DEBUG("incoming buffer already set? unmapping");
 							munmap(incoming_buffer_ptr, incoming_buffer_length);
 						}
-						DEBUG( "mmaping" );
+						//DEBUG( "mmaping" );
 						incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
 						incoming_buffer_ptr = mmap(0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0/*offset*/);
-						DEBUG( "mmap status %p", incoming_buffer_ptr );
+						//DEBUG( "mmap status %p", incoming_buffer_ptr );
 					}
 					else 
 					{
@@ -1377,7 +1377,7 @@ void FriendCoreProcess( void *fcv )
 			}
 		}
 
-		DEBUG("Removing string\n");
+		//DEBUG("Removing string\n");
 
 		// Free up buffers
 		if( locBuffer )
@@ -1766,7 +1766,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				char ch;
 				int result = 1;
 					
-				DEBUG("[FriendCoreEpoll] FC Reads from pipe!\n");
+				//DEBUG("[FriendCoreEpoll] FC Reads from pipe!\n");
 				
 				while( result > 0 )
 				{

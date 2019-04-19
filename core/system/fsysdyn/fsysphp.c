@@ -333,7 +333,7 @@ ListString *PHPCall( const char *command, int *length )
 			/* Initialize the file descriptor set. */
 		FD_ZERO( &set );
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
-		DEBUG("[PHPFsys] in loop\n");
+		//DEBUG("[PHPFsys] in loop\n");
 		
 		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
@@ -344,17 +344,17 @@ ListString *PHPCall( const char *command, int *length )
 		}
 		else if(  ret < 0 )
 		{
-			DEBUG("Error\n");
+			//DEBUG("Error\n");
 			break;
 		}
 		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			DEBUG( "[PHPFsys] before adding to list\n");
+			//DEBUG( "[PHPFsys] before adding to list\n");
 			ListStringAdd( data, buf, size );
-			DEBUG( "[PHPFsys] after adding to list\n");
+			//DEBUG( "[PHPFsys] after adding to list\n");
 		}
 		else
 		{
@@ -370,10 +370,10 @@ ListString *PHPCall( const char *command, int *length )
 			}
 		}
 	}
-	DEBUG( "[PHPFsys] after loop, memory will be released\n");
+	//DEBUG( "[PHPFsys] after loop, memory will be released\n");
 	
 	FFree( buf );
-	DEBUG("[PHPFsys] File readed\n");
+	//DEBUG("[PHPFsys] File readed\n");
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
