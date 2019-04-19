@@ -226,9 +226,13 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
  * @param type type of websocket message which will be send
  * @return number of bytes sent
  */
-int WebsocketWrite( void *wsi, unsigned char *msgptr, int msglen, int type )
+int WebsocketWrite( WebsocketServerClient *wsi, unsigned char *msgptr, int msglen, int type )
 {
-	return WebsocketWriteInline( wsi,  msgptr, msglen, type );
+	if( wsi->wusc_Data != NULL )
+	{
+		return WebsocketWriteInline( wsi->wusc_Data,  msgptr, msglen, type );
+	}
+	return 0;
 }
 
 /**

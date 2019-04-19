@@ -64,7 +64,7 @@ fsyslocal: system/fsysdyn/fsyslocal.c obj/buffered_string.o system/fsysdyn/fsysl
 
 fsysssh2: system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o system/fsysdyn/fsysssh2.d
 	@echo "\033[34mCompile FSYSssh2 ...\033[0m"
-	$(CC) -D__DEBUG -I. -I../core/ -Iproperties/ -I/usr/include/mysql/ -Isystem/ -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I../$(LIBSSH2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR) -fPIC --std=c11 -Wall -Wno-unused-variable -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/ system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o -o system/bin/fsys/ssh2.fsys -shared -I ../$(LIBSSH2_INCLUDE_DIR)/ ../$(LIBSSH2_LIB_DIR)libssh2.a -lssl -lgcrypt
+	$(CC) $(CFLAGS) -D__DEBUG -I. -I../core/ -Iproperties/ -I/usr/include/mysql/ -Isystem/ -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I../$(LIBSSH2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR) -fPIC --std=c11 -Wall -Wno-unused-variable -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/ system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o -o system/bin/fsys/ssh2.fsys -shared -I ../$(LIBSSH2_INCLUDE_DIR)/ ../$(LIBSSH2_LIB_DIR)libssh2.a -lssl -lgcrypt
 
 fsysphp: system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/newpopen.o ../core/obj/list.o system/fsysdyn/fsysphp.d
 	@echo "\033[34mCompile FSYSphp ...\033[0m"

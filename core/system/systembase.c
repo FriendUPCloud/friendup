@@ -2533,7 +2533,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 					
 						if( wsc->wusc_Data != NULL )
 						{
-							bytes += WebsocketWrite( wsc->wusc_Data , buf , len, LWS_WRITE_TEXT );
+							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 						}
 						else
 						{
@@ -2594,7 +2594,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 						//WSCData *data = (WSCData *)wsc->wusc_Data;
 						//if( data->wsc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 						{
-							bytes += WebsocketWrite( wsc->wusc_Data , buf , len, LWS_WRITE_TEXT );
+							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 						}
 					}
 					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;

@@ -370,7 +370,8 @@ int thread( FThread *t )
 				
 				if( si->pi_WSI != NULL )
 				{
-					sb->WebsocketWrite( si->pi_WSI , buf, reads, LWS_WRITE_TEXT );
+					//TODO fix for service
+					//sb->WebsocketWrite( si->pi_WSI , buf, reads, LWS_WRITE_TEXT );
 			
 					DEBUG1("Wrote to websockets %lu bytes\n", res );
 				}

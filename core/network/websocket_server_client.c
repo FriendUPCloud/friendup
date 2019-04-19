@@ -66,7 +66,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 					break;
 				}
 				sleep( 1 );
-				pthread_yield();
+				//pthread_yield();
 			}
 			
 			data->wsc_WebsocketsServerClient = NULL;

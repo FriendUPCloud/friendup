@@ -126,12 +126,6 @@ int WebSocketStart( WebSocket *ws );
 //
 //
 
-int WebsocketWrite( void *cl, unsigned char *msgptr, int msglen, int type );
-
-//
-//
-//
-
 int AttachWebsocketToSession( void *l, struct lws *wsi, const char *sessionid, const char *authid, WSCData *data );
 
 //

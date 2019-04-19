@@ -134,7 +134,8 @@ int thread( FThread *t )
 				{
 					int len = strlen( data );
 					memcpy( buf, data,  len );
-					hs->hs_SB->WebsocketWrite( s->s_WSI, buf , len, LWS_WRITE_TEXT );
+					//TODO fix for service
+					//hs->hs_SB->WebsocketWrite( s->s_WSI, buf , len, LWS_WRITE_TEXT );
 					
 					//DEBUG1("Wrote to websockets %d bytes\n", n );
 				}
