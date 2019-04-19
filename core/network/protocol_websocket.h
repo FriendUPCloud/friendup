@@ -23,7 +23,7 @@
 #include <core/thread.h>
 #include <time.h>
 
-#include <network/websocket_server_client.h>
+#include <network/user_session_websocket.h>
 
 //
 //
@@ -41,7 +41,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 //
 //
 
-int WebsocketWrite( WebsocketServerClient *cl, unsigned char *msgptr, int msglen, int type );
+int WebsocketWrite( UserSessionWebsocket *cl, unsigned char *msgptr, int msglen, int type );
 
 
 #endif // __NETWORK_PROTOCOL_WEBDAV_H__

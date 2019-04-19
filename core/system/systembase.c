@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
-#include <network/websocket_server_client.h>
+#include <network/user_session_websocket.h>
 #include <system/fsys/device_handling.h>
 #include <core/functions.h>
 #include <util/md5.h>
@@ -2524,7 +2524,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 				
 				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 				{
-					WebsocketServerClient *wsc = usersession->us_WSConnections;
+					UserSessionWebsocket *wsc = usersession->us_WSConnections;
 					while( wsc != NULL )
 					{
 						DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
@@ -2539,7 +2539,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 						{
 							FERROR("Cannot write to WS, WSI is NULL!\n");
 						}
-						wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
 					}
 					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				}
@@ -2583,7 +2583,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 
 			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 			{
-				WebsocketServerClient *wsc = usersession->us_WSConnections;
+				UserSessionWebsocket *wsc = usersession->us_WSConnections;
 		
 				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
 		
@@ -2597,7 +2597,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 						}
 					}
-					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+					wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
 				}
 		
 				FFree( buf );

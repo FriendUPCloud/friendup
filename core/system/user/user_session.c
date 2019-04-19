@@ -110,7 +110,7 @@ void UserSessionDelete( UserSession *us )
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
 		// copy connection poiner to remove possibility of using it
-		WebsocketServerClient *nwsc = us->us_WSConnections;
+		UserSessionWebsocket *nwsc = us->us_WSConnections;
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_WSConnections = NULL;
@@ -123,7 +123,7 @@ void UserSessionDelete( UserSession *us )
 		{
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl != NULL\n");
 
-			WebsocketServerClient *rws = nwsc;
+			UserSessionWebsocket *rws = nwsc;
 			Log( FLOG_DEBUG, "[UserSessionDelete] nwsc %p\n", nwsc );
 			while( nwsc != NULL )
 			{
@@ -144,7 +144,7 @@ void UserSessionDelete( UserSession *us )
 					FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 				}
 				*/
-				WebsocketServerClientDelete( rws );
+				UserSessionWebsocketDelete( rws );
 				rws->wusc_Data = NULL;
 			}
 		}
@@ -183,7 +183,7 @@ void UserSessionDelete( UserSession *us )
  * @param wscl pointer to WebsocketServerClient connection which will be detached from connections list
  * @return pointer to removed connection when success or NULL when connection was not on the list
  */
-WebsocketServerClient *UserSessionRemoveConnection( UserSession *us, WebsocketServerClient *wscl )
+UserSessionWebsocket *UserSessionRemoveConnection( UserSession *us, UserSessionWebsocket *wscl )
 {
 	if( us == NULL )
 	{

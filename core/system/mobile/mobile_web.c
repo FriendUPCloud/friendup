@@ -970,13 +970,13 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			DEBUG("[MobileWebRequest] setWS state to: %d\n", status );
 			if( loggedSession->us_WSConnections != NULL )
 			{
-				WebsocketServerClient *cl = loggedSession->us_WSConnections;
+				UserSessionWebsocket *cl = loggedSession->us_WSConnections;
 				while( cl != NULL )
 				{
 					cl->wusc_Status = status;
 					
 					//DEBUG("[MobileWebRequest] connection %p set status to: %d\n", cl->wsc_Wsi, cl->wsc_Status );
-					cl = (WebsocketServerClient *) cl->node.mln_Succ;
+					cl = (UserSessionWebsocket *) cl->node.mln_Succ;
 				}
 			}
 			

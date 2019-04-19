@@ -1040,7 +1040,7 @@ void FriendCoreProcess( void *fcv )
 					//this is going to be a huge request, create a temporary file
 					//copy already received data to it and continue writing to the file
 					tmp_filename = mktemp( tmp_filename_template );
-					DEBUG( "large upload will go to remporary file %s", tmp_filename );
+					//DEBUG( "large upload will go to remporary file %s", tmp_filename );
 					if( strlen( tmp_filename ) == 0 )
 					{
 						FERROR("mktemp failed!");
@@ -1077,7 +1077,7 @@ void FriendCoreProcess( void *fcv )
 						int err = BufStringAddSize( resultString, locBuffer, res );
 						incoming_buffer_ptr = resultString->bs_Buffer; //buffer can be in a different place after resize
 						incoming_buffer_length = resultString->bs_Size;
-						DEBUG( "Data added : %d res: %d count: %d received %d\n", err, res, count, count + res );
+						//DEBUG( "Data added : %d res: %d count: %d received %d\n", err, res, count, count + res );
 					}
 				
 					if( pass == 0 && partialDivider != 0 )
@@ -1122,7 +1122,7 @@ void FriendCoreProcess( void *fcv )
 					{
 						// remove preroll to get correct read bytes
 						count -= preroll;
-						DEBUG( "[FriendCoreProcess] Fixing preroll %d\n", preroll );
+						//DEBUG( "[FriendCoreProcess] Fixing preroll %d\n", preroll );
 						break;
 					}
 				}
@@ -1146,7 +1146,7 @@ void FriendCoreProcess( void *fcv )
 					//  we must report to client that he must switch (or error)
 					//
 					
-					DEBUG("No data, res %d\n", res );
+					//DEBUG("No data, res %d\n", res );
 					if( th->sock->s_SSLEnabled == TRUE )
 					{
 						char buf[ 1024 ];
@@ -1198,7 +1198,7 @@ void FriendCoreProcess( void *fcv )
 					{
 						if( incoming_buffer_ptr )
 						{
-							DEBUG("incoming buffer already set? unmapping");
+							//DEBUG("incoming buffer already set? unmapping");
 							munmap(incoming_buffer_ptr, incoming_buffer_length);
 						}
 						//DEBUG( "mmaping" );
@@ -1217,7 +1217,7 @@ void FriendCoreProcess( void *fcv )
 
 					socket_update_state(th->sock, socket_state_got_header);
 
-					DEBUG("CONT LENGTH %ld\n", request->h_ContentLength );
+					//DEBUG("CONT LENGTH %ld\n", request->h_ContentLength );
 
 					// If we have content, then parse it
 					if( request->h_ContentLength > 0 )
@@ -1340,13 +1340,13 @@ void FriendCoreProcess( void *fcv )
 				{
 					if (incoming_buffer_ptr)
 					{
-						DEBUG("incoming buffer already set? unmapping");
+						//DEBUG("incoming buffer already set? unmapping");
 						munmap(incoming_buffer_ptr, incoming_buffer_length);
 					}
-					DEBUG("mmaping");
+					//DEBUG("mmaping");
 					incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
 					incoming_buffer_ptr = mmap(0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0 );// offset);
-					DEBUG("mmap status %p", incoming_buffer_ptr);
+					//DEBUG("mmap status %p", incoming_buffer_ptr);
 				}
 				else
 				{
@@ -1404,7 +1404,7 @@ void FriendCoreProcess( void *fcv )
 			munmap( incoming_buffer_ptr, incoming_buffer_length );
 		}
 		close( tmp_file_handle );
-		DEBUG( "Deleting temporary file %s", tmp_filename );
+		//DEBUG( "Deleting temporary file %s", tmp_filename );
 		unlink( tmp_filename );
 	}
 	else 
@@ -1849,13 +1849,13 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 #endif
 #endif
 					}
-					DEBUG("EPOLLIN end\n");
+					//DEBUG("EPOLLIN end\n");
 				}
 			}
 		}
 	}
 	
-	DEBUG("End main loop\n");
+	//DEBUG("End main loop\n");
 	
 	usleep( 1 );
 

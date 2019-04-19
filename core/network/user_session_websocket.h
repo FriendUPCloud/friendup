@@ -17,8 +17,8 @@
  *  @date created 11/2016
  */
 
-#ifndef __NETWORK_WEBSOCKET_SERVER_CLIENT_H__
-#define __NETWORK_WEBSOCKET_SERVER_CLIENT_H__
+#ifndef __NETWORK_USER_SESSION_WEBSOCKET_H__
+#define __NETWORK_USER_SESSION_WEBSOCKET_H__
 
 #include <core/types.h>
 #include <core/nodes.h>
@@ -35,44 +35,26 @@ enum
 //
 //
 //
-/*
-typedef struct WebsocketServerClient
-{
-	struct lws				 		*wsc_Wsi;
-	int								wsc_InUseCounter;
-	void							*wsc_UserSession;
-	void 							*wsc_WebsocketsData;
-	pthread_mutex_t					wsc_Mutex;
-	FQueue							wsc_MsgQueue;
-	FBOOL							wsc_ToBeRemoved;
-	time_t							wsc_LastPingTime;
-	int								wsc_Status;	//enabled=0, disabled=1
-}WebsocketServerClient;
-*/
 
-//
-//
-//
-
-typedef struct WebsocketServerClient
+typedef struct UserSessionWebsocket
 {
 	struct MinNode 					node;
 	WSCData							*wusc_Data;
 	int								wusc_Status;
-}WebsocketServerClient;
+}UserSessionWebsocket;
 
 
 //
 //
 //
 
-WebsocketServerClient *WebsocketServerClientNew();
+UserSessionWebsocket *UserSessionWebsocketNew();
 
 //
 //
 //
 
-void WebsocketServerClientDelete( WebsocketServerClient *cl );
+void UserSessionWebsocketDelete( UserSessionWebsocket *cl );
 
-#endif // __NETWORK_WEBSOCKET_SERVER_CLIENT__
+#endif // __NETWORK_USER_SESSION_WEBSOCKET__
 

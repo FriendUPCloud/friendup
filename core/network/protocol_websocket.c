@@ -220,13 +220,13 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
  * Write data to websockets
  * If message is bigger then WS buffer then message is encoded, splitted and send
  *
- * @param wsi pointer to websocket structure
+ * @param wsi pointer to UserSessionWebsocket
  * @param msgptr pointer to message
  * @param msglen length of the messsage
  * @param type type of websocket message which will be send
  * @return number of bytes sent
  */
-int WebsocketWrite( WebsocketServerClient *wsi, unsigned char *msgptr, int msglen, int type )
+int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen, int type )
 {
 	if( wsi->wusc_Data != NULL )
 	{
@@ -256,7 +256,7 @@ void WSThread( void *d )
 	BufString *queryrawbs = data->queryrawbs;
 	WSCData *fcd = data->fcd;
 	
-	WebsocketServerClient *wscl = fcd->wsc_WebsocketsServerClient;
+	UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
 	struct lws *wsi = fcd->wsc_Wsi;
 	
 	FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
@@ -607,7 +607,7 @@ void WSThreadPing( void *p )
 	unsigned char *answer = FCalloc( 1024, sizeof(char) );
 	int answersize = snprintf( (char *)answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->requestid );
 	
-	WebsocketServerClient *wscl = fcd->wsc_WebsocketsServerClient;
+	UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
 	if( wscl == NULL )
 	{
 		DECREASE_WS_THREADS();
@@ -812,7 +812,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				FBOOL login = FALSE;
 				
-				WebsocketServerClient *wscl = fcd->wsc_WebsocketsServerClient;
+				UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
 				/*
 				if( fcd->fcd_WSClient == NULL )
 				{
@@ -969,7 +969,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 												char *idc = StringDuplicateN( in + t[ id ].start, (int)(t[ id ].end-t[ id ].start) );
 												part = StringNToInt( in + t[ part ].start, (int)(t[ part ].end-t[ part ].start) );
 												total = StringNToInt( in + t[ total ].start, (int)(t[ total ].end-t[ total ].start) );
-												WebsocketServerClient *cl = (WebsocketServerClient *)fcd->wsc_WebsocketsServerClient;
+												UserSessionWebsocket *cl = (UserSessionWebsocket *)fcd->wsc_WebsocketsServerClient;
 												if( fcd->wsc_UserSession != NULL )
 												{
 													UserSession *ses = (UserSession *)fcd->wsc_UserSession;
@@ -1654,7 +1654,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						DECREASE_WS_THREADS();
 						FFree( t );
 						
-						WebsocketServerClient *wscl = fcd->wsc_WebsocketsServerClient;
+						UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
 						if( wscl != NULL )
 						{
 							FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );

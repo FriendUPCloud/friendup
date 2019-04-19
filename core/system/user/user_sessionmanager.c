@@ -997,7 +997,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
     // Go through logged users
     //
     
-    DEBUG("CHECK11\n");
+    //DEBUG("CHECK11\n");
     FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
@@ -1009,7 +1009,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 			char *uname = usr->u_Name;
 			int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
-			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
+			//DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
 			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			
@@ -1141,7 +1141,7 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 		UserSession *ses = usm->usm_Sessions;
 		while( ses != NULL )
 		{
-			WebsocketServerClient *cl = ses->us_WSConnections;
+			UserSessionWebsocket *cl = ses->us_WSConnections;
 			if( cl != NULL )
 			{
 				//TODO check maybe ws connections should be removed?

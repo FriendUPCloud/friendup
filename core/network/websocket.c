@@ -632,7 +632,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	}
 	
 	// going through all user session WS connections
-	WebsocketServerClient *listEntry = NULL;
+	UserSessionWebsocket *listEntry = NULL;
 	
 	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
 	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
@@ -646,7 +646,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 			{
 				break;
 			}
-			listEntry = (WebsocketServerClient *)listEntry->node.mln_Succ;
+			listEntry = (UserSessionWebsocket *)listEntry->node.mln_Succ;
 		}
 		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 	}
@@ -655,7 +655,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 
 	// create and use new WebSocket connection
 	
-	WebsocketServerClient *nwsc;
+	UserSessionWebsocket *nwsc;
 	
 	if( listEntry != NULL )
 	{
@@ -664,7 +664,7 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 	}
 	else
 	{
-		nwsc = WebsocketServerClientNew();
+		nwsc = UserSessionWebsocketNew();
 	}
 	
 	if( nwsc != NULL )
@@ -736,7 +736,7 @@ int DetachWebsocketFromSession( WSCData *data )
 		return 1;
 	}
 
-	WebsocketServerClient *wscl = (WebsocketServerClient *)data->wsc_WebsocketsServerClient;
+	UserSessionWebsocket *wscl = (UserSessionWebsocket *)data->wsc_WebsocketsServerClient;
 	if( wscl == NULL )
 	{
 		return 0;

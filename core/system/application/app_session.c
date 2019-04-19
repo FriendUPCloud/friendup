@@ -858,7 +858,7 @@ typedef struct RWSCon
 
 int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 {
-	WebsocketServerClient *ws = (WebsocketServerClient *) lwsc;
+	UserSessionWebsocket *ws = (UserSessionWebsocket *) lwsc;
 	RWSCon *root = NULL;
 	RWSCon *rwsentr = NULL;
 	

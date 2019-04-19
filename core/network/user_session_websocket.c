@@ -17,19 +17,19 @@
  *  @date created 11/2016
  */
 
-#include "websocket_server_client.h"
+#include "user_session_websocket.h"
 #include <system/systembase.h>
 
 extern SystemBase *SLIB;
 
 /**
- * Create new WebsocketServerClient
+ * Create new UserSessionWebsocket
  *
- * @return new WebsocketServerClient structure when success, otherwise NULL
+ * @return new UserSessionWebsocket structure when success, otherwise NULL
  */
-WebsocketServerClient *WebsocketServerClientNew()
+UserSessionWebsocket *UserSessionWebsocketNew()
 {
-	WebsocketServerClient *cl = FCalloc( 1, sizeof(WebsocketServerClient) );
+	UserSessionWebsocket *cl = FCalloc( 1, sizeof(UserSessionWebsocket) );
 	if( cl != NULL )
 	{
 
@@ -38,29 +38,29 @@ WebsocketServerClient *WebsocketServerClientNew()
 }
 
 /**
- * Delete WebsocketServerClient
+ * Delete UserSessionWebsocket
  *
- * @param cl pointer to WebsocketServerClient which will be deleted
+ * @param cl pointer to UserSessionWebsocket which will be deleted
  */
-void WebsocketServerClientDelete( WebsocketServerClient *cl )
+void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 {
 	if( cl != NULL )
 	{
-		DEBUG("[WebsocketServerClientDelete] Close\n");
+		DEBUG("[UserSessionWebsocketDelete] Close\n");
 		
 		if( SLIB != NULL && SLIB->sl_AppSessionManager != NULL )
 		{
 			AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
 		}
 		
-		DEBUG("lock CL\n");
+		Log( FLOG_DEBUG, "\n[UserSessionWebsocketDelete] connection will be removed\n\n");
 		WSCData *data = (WSCData *)cl->wusc_Data;
 		if( data != NULL )
 		{
 			int tr = 0;
 			while( TRUE )
 			{
-				DEBUG("[WebsocketServerClientDelete]Check in use %d\n", data->wsc_InUseCounter );
+				DEBUG("[UserSessionWebsocketDelete]Check in use %d\n", data->wsc_InUseCounter );
 				if( data->wsc_InUseCounter <= 0 )
 				{
 					break;
@@ -94,7 +94,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 		int tr = 0;
 		while( TRUE )
 		{
-			DEBUG("[WebsocketServerClientDelete]Check in use %d\n", cl->wsc_InUseCounter );
+			DEBUG("[UserSessionWebsocketDelete]Check in use %d\n", cl->wsc_InUseCounter );
 			if( cl->wsc_InUseCounter <= 0 )
 			{
 				break;
@@ -106,7 +106,7 @@ void WebsocketServerClientDelete( WebsocketServerClient *cl )
 		pthread_mutex_destroy( &(cl->wsc_Mutex) );
 		*/
 		FFree( cl );
-		DEBUG("[WebsocketServerClientDelete]Done!\n");
+		DEBUG("[UserSessionWebsocketDelete]Done!\n");
 	}
 }
 
