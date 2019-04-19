@@ -3,7 +3,7 @@
 
 GCC		=	gcc
 OUTPUT		=	bin/fcdb.authmod
-CFLAGS		+=	-I../../core/ -I../../libs/properties/ -I../../libs/application/ -I../../libs/ -fPIC -I../../libs-ext/libwebsockets/build/include/
+CFLAGS		+=	-I../../core/ -I../../libs/properties/ -I../../libs/application/ -I../../libs/ -fPIC -I../../libs-ext/libwebsockets/build/include/ -I/usr/include/libxml2/ 
 LFLAGS		=	-shared -fPIC -Wl,--no-as-needed -lz -lpthread -lrt -lcrypt -lssl $(shell mysql_config --libs)
 DFLAGS		=	-M $(CFLAGS)  
 FPATH		=	$(shell pwd)
@@ -40,7 +40,7 @@ ALL:	$(OBJ_FILES) $(OUTPUT)
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
-	$(GCC) -o $(OUTPUT) $(LFLAGS) $(OBJ_FILES) $(CFLAGS) ../../core/obj/library.o ../../core/obj/user_session.o ../../core/obj/sha256.o ../../core/obj/list.o ../../core/obj/string.o ../../core/obj/hashmap.o ../../core/obj/uri.o ../../core/obj/path.o ../../core/obj/user_application.o ../../core/obj/user.o -lcrypto
+	$(GCC) $(CFLAGS)-o $(OUTPUT) $(LFLAGS) $(OBJ_FILES) ../../core/obj/library.o ../../core/obj/user_session.o ../../core/obj/sha256.o ../../core/obj/list.o ../../core/obj/string.o ../../core/obj/hashmap.o ../../core/obj/uri.o ../../core/obj/path.o ../../core/obj/user_application.o ../../core/obj/user.o -lcrypto
 
 obj/fcdb.o: fcdb.c
 	@echo "\033[34mCompile ...\033[0m"
