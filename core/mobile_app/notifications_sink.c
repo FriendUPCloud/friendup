@@ -617,7 +617,6 @@ static FBOOL VerifyAuthKey( const char *keyName, const char *keyToVerify )
 {
 	DEBUG("VerifyAuthKey - keyName <%s> VerifyAuthKey - keyToVerify <%s>\n", keyName, keyToVerify );
 
-	//TODO: verify against key name 
 	if( keyName != NULL && keyToVerify != NULL )
 	{
 		int i;

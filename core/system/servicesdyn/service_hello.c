@@ -132,12 +132,11 @@ int hthread( FThread *t )
 			while( ( fgets( data, 2048, file ) ) != NULL )
 			{
 				int len = strlen( data );
-				if( s->s_WSI != NULL && len > 0 )
+				if( s->s_USW != NULL && len > 0 )
 				{
 					memcpy( buf, data,  len );
 
-					//TODO fix for service
-					//hs->hs_SB->WebsocketWrite( s->s_WSI, buf , len, LWS_WRITE_TEXT );
+					hs->hs_SB->WebsocketWrite( s->s_USW, buf , len, LWS_WRITE_TEXT );
 
 					DEBUG1("Wrote to websockets %d bytes\n", n );
 				}
