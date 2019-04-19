@@ -146,7 +146,7 @@ void UserSessionDelete( UserSession *us )
 				}
 				*/
 				UserSessionWebsocketDelete( rws );
-				rws->wusc_Data = NULL;
+				//rws->wusc_Data = NULL;
 			}
 		}
 
