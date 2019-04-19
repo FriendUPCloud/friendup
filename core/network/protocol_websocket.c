@@ -158,11 +158,12 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 				}
 				wscdata->wsc_InUseCounter--;
 				
-				if( wscdata->wsc_Wsi != NULL )
-				{
-					lws_callback_on_writable( wscdata->wsc_Wsi );
-				}
+				struct lws *wsi = wscdata->wsc_Wsi;
 				FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
+				if( wsi != NULL )
+				{
+					lws_callback_on_writable( wsi );
+				}
 			}
 			
 			//lws_callback_on_writable( wscdata->wc_Wsi );
@@ -192,15 +193,17 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 			
 			DEBUG("Send message to WSI, ptr: %p\n", wscdata->wsc_Wsi );
 
-			if( wscdata->wsc_Wsi != NULL )
-			{
-				lws_callback_on_writable( wscdata->wsc_Wsi );
-			}
+			struct lws *wsi = wscdata->wsc_Wsi;
 			
 			DEBUG("In use counter %d\n", wscdata->wsc_InUseCounter );
 			
 			wscdata->wsc_InUseCounter--;
 			FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
+			
+			if( wsi != NULL )
+			{
+				lws_callback_on_writable( wsi );
+			}
 		}
 	}
 
