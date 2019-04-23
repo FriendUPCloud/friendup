@@ -30,12 +30,12 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 				LEFT JOIN FUserToGroup u ON 
 				( 
 						u.UserGroupID = g.ID 
-					AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? $args->args->userid : 'NULL' ) . ' 
+					AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? intval( $args->args->userid, 10 ) : 'NULL' ) . ' 
 				)
 				LEFT JOIN FGroupToGroup w ON
 				(
 						w.ToGroupID = g.ID 
-					AND w.FromGroupID = ' . ( isset( $args->args->groupid ) && $args->args->groupid ? $args->args->groupid : 'NULL' ) . ' 
+					AND w.FromGroupID = ' . ( isset( $args->args->groupid ) && $args->args->groupid ? intval( $args->args->groupid, 10 ) : 'NULL' ) . ' 
 				) 
 		WHERE 
 			g.Type = "Role" 

@@ -442,7 +442,7 @@ Sections.accounts_users = function( cmd, extra )
 	
 	
 	
-	if( Application.checkAppPermission( 'CRUD_USER_GLOBAL' ) || Application.checkAppPermission( 'CRUD_USER_WORKGROUP' ) )
+	if( Application.checkAppPermission( 'PERM_USER_GLOBAL' ) || Application.checkAppPermission( 'PERM_USER_WORKGROUP' ) )
 	{
 				
 		// Get the user list

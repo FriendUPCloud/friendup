@@ -39,12 +39,12 @@ i18n_permissions                       : Tillatelser
 
 #permissions related
 
-i18n_CRUD_USER_GLOBAL                  : Endre brukere globalt
-i18n_CRUD_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
-i18n_CRUD_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
-i18n_CRUD_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
-i18n_CRUD_TEMPLATE_GLOBAL              : Endre maler globalt
-i18n_CRUD_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
+i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
+i18n_PERM_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
+i18n_PERM_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
+i18n_PERM_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
+i18n_PERM_TEMPLATE_GLOBAL              : Endre maler globalt
+i18n_PERM_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
 
 #printers related
 

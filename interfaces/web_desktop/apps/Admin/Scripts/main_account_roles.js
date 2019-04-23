@@ -18,15 +18,14 @@ Sections.accounts_roles = function( cmd, extra )
 			// Show the form
 			function initRoleDetails( info )
 			{
+				console.log( 'This: ', info );
 				
-				//System
-				//Modules
-				//Apps
+				// System
+				// Modules
+				// Apps
 				
 				var data = info.permission;
 				var wgroups = info.workgroups;
-				
-				console.log( data );
 				
 				if( data )
 				{
@@ -35,8 +34,6 @@ Sections.accounts_roles = function( cmd, extra )
 					if( info.role.Permissions )
 					{
 						var roleperm = info.role.Permissions;
-						
-						console.log( roleperm );
 						
 						for( var i in perm )
 						{
@@ -421,6 +418,7 @@ Sections.accounts_roles = function( cmd, extra )
 					id: info.role.ID,
 					role_name: info.role.Name,
 					role_description: ( info.role.Description ? info.role.Description : '' ),
+					existing_permissions: existing,
 					permissions: apl
 				};
 				
@@ -462,11 +460,11 @@ Sections.accounts_roles = function( cmd, extra )
 							return;
 						}
 						loadingList[ ++loadingSlot ]( info );
-			
 					}
 					u.execute( 'userroleget', { id: extra } );
 				},
 				
+				// Load system permissions
 				function()
 				{
 					var m = new Module( 'system' );
@@ -488,6 +486,7 @@ Sections.accounts_roles = function( cmd, extra )
 					m.execute( 'getsystempermissions' );
 				},
 				
+				// Load workgroups
 				function()
 				{
 					var u = new Module( 'system' );
@@ -509,6 +508,7 @@ Sections.accounts_roles = function( cmd, extra )
 					u.execute( 'workgroups' );
 				},
 				
+				// Then, finally, show role details
 				function( info )
 				{
 					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
@@ -527,17 +527,18 @@ Sections.accounts_roles = function( cmd, extra )
 	
 	
 	
-	// Get the user list
+	// Get the user list -------------------------------------------------------
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		console.log( { e:e, d:d } );
 		
 		//if( e != 'ok' ) return;
-		var userList = null;
+		var roleList = null;
 		try
 		{
-			userList = JSON.parse( d );
+			roleList = JSON.parse( d );
 		}
 		catch( e )
 		{
@@ -573,7 +574,7 @@ Sections.accounts_roles = function( cmd, extra )
 			var d = document.createElement( 'div' );
 			if( z != 'Edit' )
 				borders += ' BorderRight';
-			if( a < userList.length - a )
+			if( a < roleList.length - a )
 				borders += ' BorderBottom';
 			var d = document.createElement( 'div' );
 			d.className = 'PaddingSmall HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
@@ -602,25 +603,24 @@ Sections.accounts_roles = function( cmd, extra )
 			}
 		}
 		
+		// List out roles
+		
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		var sw = 2;
 		for( var b = 0; b < levels.length; b++ )
 		{
-			if( userList )
+			if( roleList )
 			{
-				for( var a = 0; a < userList.length; a++ )
+				for( var a = 0; a < roleList.length; a++ )
 				{
-					// Skip irrelevant level
-					//if( userList[ a ].Level != levels[ b ] ) continue;
-				
 					sw = sw == 2 ? 1 : 2;
 					var r = document.createElement( 'div' );
-					setROnclick( r, userList[ a ].ID );
+					setROnclick( r, roleList[ a ].ID );
 					r.className = 'HRow sw' + sw;
 			
 					var icon = '<span class="IconSmall fa-user"></span>';
-					userList[ a ][ 'Edit' ] = icon;
+					roleList[ a ][ 'Edit' ] = icon;
 				
 					for( var z in types )
 					{
@@ -632,10 +632,10 @@ Sections.accounts_roles = function( cmd, extra )
 							borders += ' BorderRight';
 						}
 						else d.className = 'TextCenter';
-						if( a < userList.length - a )
+						if( a < roleList.length - a )
 							borders += ' BorderBottom';
 						d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
-						d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
+						d.innerHTML = ( roleList[a][ z ] ? roleList[a][ z ] : '-' );
 						r.appendChild( d );
 					}
 			

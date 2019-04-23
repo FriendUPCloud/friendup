@@ -33,57 +33,57 @@ function refreshSidebar()
 		'Server': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			},
 			'Configuration': {
 				icon: 'fa-gear',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			},
 			'Certificates': {
 				icon: 'fa-certificate',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			},
 			'Printers': {
 				icon: 'fa-print',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			},
 			'Backup': {
 				icon: 'fa-cloud-download',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			},
 			'Logs': {
 				icon: 'fa-list-alt',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			}
 		},
 		'Services': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			}
 		},
 		'Applications': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			}
 		},
 		'Accounts': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			},
 			'Users': {
 				icon: 'fa-user',
-				permissions: [ 'CRUD_USER_GLOBAL', 'CRUD_USER_WORKGROUP' ]
+				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ]
 			},
 			'Workgroups': {
 				icon: 'fa-users',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			},
 			'Roles': {
 				icon: 'fa-user-secret',
-				permissions: [ 'SUPER_ADMIN' ]
+				permissions: [ 'FRIEND_ADMIN' ]
 			}
 		}
 	};

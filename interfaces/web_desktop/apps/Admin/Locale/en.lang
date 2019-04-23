@@ -39,12 +39,12 @@ i18n_permissions                       : Permissions
 
 #permissions related
 
-i18n_CRUD_USER_GLOBAL                  : Edit users globally
-i18n_CRUD_USER_WORKGROUP               : Edit users per workgroup
-i18n_CRUD_WORKGROUP_GLOBAL             : Edit workgroups globally
-i18n_CRUD_WORKGROUP_WORKGROUP          : Edit sub-workgroups
-i18n_CRUD_TEMPLATE_GLOBAL              : Edit templates globally
-i18n_CRUD_TEMPLATE_WORKGROUP           : Edit templates below a workgroup
+i18n_PERM_USER_GLOBAL                  : Edit users globally
+i18n_PERM_USER_WORKGROUP               : Edit users per workgroup
+i18n_PERM_WORKGROUP_GLOBAL             : Edit workgroups globally
+i18n_PERM_WORKGROUP_WORKGROUP          : Edit sub-workgroups
+i18n_PERM_TEMPLATE_GLOBAL              : Edit templates globally
+i18n_PERM_TEMPLATE_WORKGROUP           : Edit templates below a workgroup
 
 #printers related
 
