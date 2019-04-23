@@ -19,11 +19,11 @@ $permission = false;
 			
 // TODO: Make this permissions handling more general for the whole system at some point, and beautify it.
 
-if( $pobj = CheckAppPermission( 'CRUD_USER_GLOBAL', 'Admin' ) )
+if( $pobj = CheckAppPermission( 'PERM_USER_GLOBAL', 'Admin' ) )
 {
 	$permission = 'Global';
 }
-else if( $pobj = CheckAppPermission( 'CRUD_USER_WORKGROUP', 'Admin' ) )
+else if( $pobj = CheckAppPermission( 'PERM_USER_WORKGROUP', 'Admin' ) )
 {
 	$uids = '';
 	

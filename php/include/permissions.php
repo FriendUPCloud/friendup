@@ -11,7 +11,9 @@
 
 function CheckAppPermission( $key, $appName )
 {
-	global $SqlDatabase, $User;
+	global $SqlDatabase, $User, $level;
+	
+	if( $level == 'Admin' ) return true;
 	
 	$permissions = GetAppPermissions( $appName );
 	
@@ -19,22 +21,113 @@ function CheckAppPermission( $key, $appName )
 	{
 		return $permissions->{ $key };
 	}
-	else
+	
+	return false;
+}
+
+/**
+ * Get app permissions
+ *
+ * Gets the permissions for a specific application, optionally for a user other
+ * than the user who is logged in by session id.
+**/
+function GetAppPermissions( $appName, $UserID = false )
+{
+	global $SqlDatabase, $User;
+	
+	if( !$appName ) return false;
+
+	// Specific or session based userid?
+	$UserID = ( $UserID ? $UserID : $User->ID );
+	
+	// Fetch permissions from user based on role relations
+	if( $rows = $SqlDatabase->FetchObjects( '
+		SELECT 
+			p.*, 
+			ug.Name AS RoleName, 
+			ug2.ID AS GroupID, 
+			ug2.Type AS GroupType, 
+			ug2.Name AS GroupName 
+		FROM 
+			FUserToGroup fug,
+			FUserGroup ug, 
+			FUserGroup ug2, 
+			FUserRolePermission p 
+		WHERE 
+				fug.UserID = ' . $UserID . ' 
+			AND 
+			(
+				(	
+					ug.ID = fug.UserGroupID 
+				)
+				OR
+				(
+					ug.ID = ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID ) 
+				) 
+			)
+			AND ug.Type = "Role" 
+			AND ug2.ID = fug.UserGroupID 
+			And p.RoleID = ug.ID 
+			AND p.Key ' . ( strstr( $appName, '","' ) ? 'IN (' . $appName . ')' : '= "' . $appName . '"' ) . ' 
+		ORDER BY 
+			p.ID 
+	' ) )
 	{
-		// Get user level
-		if( $level = $SqlDatabase->FetchObject( '
-			SELECT g.Name FROM FUserGroup g, FUserToGroup ug
-			WHERE
-				g.Type = \'Level\' AND
-				ug.UserID=\'' . $User->ID . '\' AND
-				ug.UserGroupID = g.ID
+		$found = false; 
+		
+		$wgs = new stdClass();
+		$pem = new stdClass();
+		
+		// Fetch workgroups where user is a member
+		if( $wgroups = $SqlDatabase->FetchObjects( $q2 = '
+			SELECT 
+				g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID 
+			FROM 
+				FUserGroup g, 
+				FUserToGroup u 
+			WHERE 
+					g.Type = \'Workgroup\' 
+				AND u.UserID = \'' . $UserID . '\' 
+				AND u.UserGroupID = g.ID 
+			ORDER BY 
+				g.Name ASC 
 		' ) )
 		{
-			// If User is SuperAdmin just return true
-			if( $level->Name == 'Admin' )
+			foreach( $wgroups as $wg )
 			{
-				return true;
+				$wgs->{ $wg->ID } = $wg;
 			}
+		}
+		
+		// Go through all roles and set permissions
+		foreach( $rows as $v )
+		{
+			if( $v->Permission )
+			{
+				$found = true;
+				
+				// If this key is already set
+				if( isset( $pem->{ $v->Permission } ) )
+				{
+					// If the element is an object, convert to array
+					if( !is_array( $pem->{ $v->Permission } ) )
+					{
+						$pem->{ $v->Permission } = array( $pem->{ $v->Permission } );
+					}
+					
+					$pem->{ $v->Permission }[] = $v;
+				}
+				// Just set key with value
+				else
+				{
+					$pem->{ $v->Permission } = $v;
+				}
+			}
+		}
+		
+		if( $found )
+		{
+			return $pem;
 		}
 	}
 	

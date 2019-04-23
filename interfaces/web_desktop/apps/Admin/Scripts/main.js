@@ -77,6 +77,7 @@ function refreshSidebar()
 			},
 			'Users': {
 				icon: 'fa-user',
+				showing: isAdmin,
 				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ]
 			},
 			'Workgroups': {

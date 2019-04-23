@@ -21,7 +21,9 @@ Sections.accounts_roles = function( cmd, extra )
 				console.log( 'This: ', info );
 				
 				// System
+				
 				// Modules
+				
 				// Apps
 				
 				var data = info.permission;
@@ -412,6 +414,8 @@ Sections.accounts_roles = function( cmd, extra )
 				
 				// Get the user details template
 				var d = new File( 'Progdir:Templates/account_role_details.html' );
+				
+				var existing = '';
 				
 				// Add all data for the template
 				d.replacements = {

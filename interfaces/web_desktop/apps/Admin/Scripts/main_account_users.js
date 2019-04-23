@@ -440,11 +440,8 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
-	
-	
 	if( Application.checkAppPermission( 'PERM_USER_GLOBAL' ) || Application.checkAppPermission( 'PERM_USER_WORKGROUP' ) )
 	{
-				
 		// Get the user list
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
