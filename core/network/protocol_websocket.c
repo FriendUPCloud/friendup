@@ -758,7 +758,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				//usleep( 2000 );
 				
 				DetachWebsocketFromSession( fcd );
-				//int val = 0;
+				int val = 0;
 				while( TRUE )
 				{
 					DEBUG("PROTOCOL_WS: Check in use %d\n", fcd->wsc_InUseCounter );
@@ -766,7 +766,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					{
 						break;
 					}
-					//if( val++ > 5 ) break;
+					if( val++ > 15 )
+					{
+						break;
+						Log( FLOG_INFO, "Closeing WS connection\n");
+					}
 					pthread_yield();
 					sleep( 1 );
 				}
@@ -823,7 +827,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					return 0;
 				}
 				*/
-				if( fcd->wsc_WebsocketsServerClient != NULL )
+				//if( fcd->wsc_WebsocketsServerClient != NULL )
 				{
 					FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 					fcd->wsc_InUseCounter++;
@@ -1657,8 +1661,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						DECREASE_WS_THREADS();
 						FFree( t );
 						
-						UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
-						if( wscl != NULL )
+						//UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
+						//if( wscl != NULL )
 						{
 							FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 							fcd->wsc_InUseCounter--;
@@ -1666,7 +1670,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 
 							FLUSH_QUEUE();
-						}
+						//}
 						
 						if( in != NULL )
 						{
@@ -1681,7 +1685,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					FFree( t );
 				} 
 				//WebsocketServerClient *wscl = fcd->fcd_WSClient;
-				if( fcd->wsc_WebsocketsServerClient != NULL && login == FALSE )
+				//if( fcd->wsc_WebsocketsServerClient != NULL && login == FALSE )
+				if( login == FALSE )
 				{
 					FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 					fcd->wsc_InUseCounter--;
