@@ -122,6 +122,31 @@ html > body
 	height: 100%;
 }
 
+@media (max-width: 768px)
+{
+	#LeftBar
+	{
+		width: 100px;
+	}
+	#FileBar
+	{
+		width: 160px;
+		left: 100px;
+	}
+	#RightBar
+	{
+		width: calc(100% - 260px);
+		left: 260px;
+	}
+	.MenuContents
+	{
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		height: 40px;
+	}
+}
+
 
 /* Custom toolbar */
 
