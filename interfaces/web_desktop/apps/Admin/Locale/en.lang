@@ -46,6 +46,9 @@ i18n_PERM_WORKGROUP_WORKGROUP          : Edit sub-workgroups
 i18n_PERM_TEMPLATE_GLOBAL              : Edit templates globally
 i18n_PERM_TEMPLATE_WORKGROUP           : Edit templates below a workgroup
 
+i18n_deleting_permission               : Deleting permission
+i18n_deleting_permission_verify        : Please confirm that you want to delete this permission.
+
 #printers related
 
 i18n_save                              : Save

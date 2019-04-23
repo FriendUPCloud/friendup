@@ -46,6 +46,9 @@ i18n_PERM_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
 i18n_PERM_TEMPLATE_GLOBAL              : Endre maler globalt
 i18n_PERM_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
 
+i18n_deleting_permission               : Sletter rettighet
+i18n_deleting_permission_verify        : Vennligst bekreft at du ønsker å slette.
+
 #printers related
 
 i18n_save                              : Lagre

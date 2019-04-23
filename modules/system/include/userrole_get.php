@@ -16,10 +16,42 @@ global $SqlDatabase, $Logger, $User;
 if( $level != 'Admin' )
 	die( '404' );
 
-if( !isset( $args->args->name ) && !isset( $args->args->id ) )
+// What it says!
+function getPermissionsForRole( $role )
 {
-	// We need a listout of all Roles ... so no arguments is then allowed ...
+	global $SqlDatabase;
 	
+	if( $perms = $SqlDatabase->FetchObjects( '
+		SELECT 
+			p.ID, p.Permission, p.Key /*, p.Data*/ 
+		FROM 
+			FUserRolePermission p 
+		WHERE 
+			p.RoleID = ' . $role->ID . ' 
+		ORDER BY 
+			p.ID 
+	' ) )
+	{
+		// Create clean permission objects without database crap
+		$permissions = array();
+		$keys = array( 'ID', 'Permission', 'Key', 'Data' );
+		foreach( $perms as $perm )
+		{
+			$co = new stdClass();
+			foreach( $keys as $kk )
+			{
+				$co->$kk = $perm->$kk;
+			}
+			$permissions[] = $co;
+		}
+		return $permissions;
+	}
+	return false;
+}
+
+// We need a listout of all Roles ... so no arguments is then allowed ...
+if( !isset( $args->args->name ) && !isset( $args->args->id ) )
+{	
 	$out = array();
 	
 	if( $rows = $SqlDatabase->FetchObjects( $q = '
@@ -52,30 +84,7 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 			$o->ParentID    = $row->ParentID;
 			$o->Name        = $row->Name;
 			
-			if( $perms = $SqlDatabase->FetchObjects( '
-				SELECT 
-					p.ID, p.Permission, p.Key, p.Data 
-				FROM 
-					FUserRolePermission p 
-				WHERE 
-					p.RoleID = ' . $row->ID . ' 
-				ORDER BY 
-					p.ID 
-			' ) )
-			{
-				// Create clean permission objects without database crap
-				$o->Permissions = array();
-				$keys = array( 'ID', 'Permission', 'Key', 'Data' );
-				foreach( $perms as $perm )
-				{
-					$co = new stdClass();
-					foreach( $keys as $kk )
-					{
-						$co->$kk = $perm->$kk;
-					}
-					$o->Permissions[] = $co;
-				}
-			}
+			$o->Permissions = getPermissionsForRole( $row );
 			
 			// Add to list
 			$out[] = $o;
@@ -91,6 +100,8 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 $fin = false;
 $d = new dbIO( 'FUserGroup' );
 
+
+
 if( isset( $args->args->id ) )
 {
 	if( $d->Load( $args->args->id ) )
@@ -100,33 +111,12 @@ if( isset( $args->args->id ) )
 		foreach( $d->_fieldnames as $f )
 			$fin->$f = $d->$f;
 		
-		if( $perms = $SqlDatabase->FetchObjects( '
-			SELECT 
-				p.ID, p.Permission, p.Key, p.Data 
-			FROM 
-				FUserRolePermission p 
-			WHERE 
-				p.RoleID = ' . $d->ID . ' 
-			ORDER BY 
-				p.ID 
-		' ) )
-		{
-			// Create clean permission objects without database crap
-			$fin->Permissions = array();
-			$keys = array( 'ID', 'Permission', 'Key', 'Data' );
-			foreach( $perms as $perm )
-			{
-				$co = new stdClass();
-				foreach( $keys as $kk )
-				{
-					$co->$kk = $perm->$kk;
-				}
-				$fin->Permissions[] = $co;
-			}
-		}
+		// Fetch role permissions
+		$fin->Permissions = getPermissionsForRole( $d );
 	}
 	
 }
+// Get by name - the most primitive one
 else
 {
 	$d->Type = 'Role';
@@ -137,9 +127,13 @@ else
 		$fin = new stdClass();
 		foreach( $d->_fieldnames as $f )
 			$fin->$f = $d->$f;
+		
+		// Fetch role permissions
+		$fin->Permissions = getPermissionsForRole( $d );
 	}
 }
 
+// Output json encoded structure to the client
 if( $fin && $fin->ID > 0 )
 {
 	die( 'ok<!--separate-->' . json_encode( $fin ) );
