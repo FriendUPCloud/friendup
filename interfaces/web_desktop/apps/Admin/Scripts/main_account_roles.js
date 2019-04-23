@@ -369,7 +369,7 @@ Sections.accounts_roles = function( cmd, extra )
 								//var pem = obj.id;
 								//var key = perm[a].Name;
 								
-								apl += '<option value="' + obj.id + '">' + ( 'i18n_' + obj.id ) + '</option>';
+								apl += '<option value="' + obj.id + '">' + i18n( 'i18n_' + obj.id ) + '</option>';
 							}
 							
 							apl += '</select></div>';
@@ -559,7 +559,7 @@ Sections.accounts_roles = function( cmd, extra )
 		
 		
 		var h2 = document.createElement( 'h2' );
-		h2.innerHTML = '{i18n_roles}';
+		h2.innerHTML = i18n( 'i18n_roles' );
 		o.appendChild( h2 );
 		
 		// List headers
@@ -584,7 +584,7 @@ Sections.accounts_roles = function( cmd, extra )
 		var d = document.createElement( 'div' );
 		d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
 		
-		d.innerHTML = '<strong>(+)</strong>';
+		d.innerHTML = '<button type="button" class="FullWidth IconSmall fa-plus NoBorders NoPadding IconButton Negative"> </button>';
 		
 		//d.innerHTML = '<button class="IconButton IconSmall ButtonSmall fa-plus-circle"></button>';
 		
