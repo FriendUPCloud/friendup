@@ -481,9 +481,9 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			
 			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 			{
-				DEBUG("Session locked\n");
+				DEBUG("Session locked, compare: %s vs %s\n", us->us_SessionID, ses->us_SessionID );
 				
-				if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strcmp( us->us_SessionID, ses->us_SessionID ) == 0 )
+				if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strncmp( us->us_SessionID, ses->us_SessionID, 256 ) == 0 )
 				{
 					DEBUG("Found session with same sessionID, return!\n");
 					FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
@@ -1023,13 +1023,6 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 					
 					// do not send message to sender
 					FBOOL sendNotif = TRUE;
-					if( ses != NULL )
-					{
-						if( ses->us_ID == uses->us_ID )
-						{
-							sendNotif = FALSE;
-						}
-					}
 					if( uses == NULL )
 					{
 						sendNotif = FALSE;

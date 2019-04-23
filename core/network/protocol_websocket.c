@@ -832,7 +832,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 					fcd->wsc_InUseCounter++;
 					fcd->wsc_LastPingTime = time( NULL );
-					DEBUG("\t\t\t\t\t->%d\n", fcd->wsc_InUseCounter );
+					DEBUG("\t\t\t\t\tRECEIVE->%d\n", fcd->wsc_InUseCounter );
 					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 				}
 				// if we want to move full calls to WS threads
@@ -1666,7 +1666,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						{
 							FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 							fcd->wsc_InUseCounter--;
-							DEBUG("\t\t\t\t\t->%d\n", fcd->wsc_InUseCounter );
+							DEBUG("\t\t\t\t\tRECEIVE END 0->%d\n", fcd->wsc_InUseCounter );
 							FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 
 							FLUSH_QUEUE();
