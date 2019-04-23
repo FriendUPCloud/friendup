@@ -1361,7 +1361,15 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 								}
 							}
 							
-							Log( FLOG_INFO, "Send notification through Mobile App: Android: '%s' len %d UMAID: %lu\n", jsonMessage, msgSendLength, userConnections->umac_Connection[i]->mac_UserMobileAppID );
+							UserSession *us = userConnections->umac_Connection[i]->mac_UserSession;
+							if( us != NULL )
+							{
+								Log( FLOG_INFO, "Send notification through Mobile App: Android: '%s' len %d UMAID: %lu deviceID: %s\n", jsonMessage, msgSendLength, userConnections->umac_Connection[i]->mac_UserMobileAppID, us->us_DeviceIdentity );
+							}
+							else
+							{
+								Log( FLOG_INFO, "Send notification through Mobile App No Session: Android: '%s' len %d UMAID: %lu\n", jsonMessage, msgSendLength, userConnections->umac_Connection[i]->mac_UserMobileAppID );
+							}
 							WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, msgSendLength );
 						}
 #else
@@ -1421,6 +1429,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 			lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 			NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+			
+			Log( FLOG_INFO, "Notification will be send to android device, umaid: %lu\n", lns->ns_UserMobileAppID );
 		
 			UserMobileAppDelete( toDelete );
 			NotificationSentDelete( lns );
@@ -1452,31 +1462,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
 				FFree( tokens );
 			}
-			/*
-			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, FALSE );
-			UserMobileApp *lma = lmaroot;
-			
-			while( lma != NULL )
-			{
-				NotificationSent *lns = NotificationSentNew();
-				lns->ns_NotificationID = notif->n_ID;
-				lns->ns_UserMobileAppID = lma->uma_ID;
-				lns->ns_RequestID = lma->uma_ID;
-				lns->ns_Target = MOBILE_APP_TYPE_IOS;
-				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-				
-				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : token %s\n", notif->n_Content, lma->uma_AppToken );
-				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
-
-				lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
-				notif->n_NotificationsSent = lns;
-				
-				lma = (UserMobileApp *)lma->node.mln_Succ;
-			}
-			UserMobileAppDeleteAll( lmaroot );
-			*/
-
 			FFree( jsonMessageIOS );
 		}
 	}
@@ -1578,7 +1563,6 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	else
 	{
 		FERROR("\n\n\n\nCannot find notification!\n");
-		//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 		return 1;
 	}
 	
@@ -1595,17 +1579,10 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
 		DEBUG("Hashmap get 1: %s\n", username );
 		
 		userConnections = CGetDataFromList( (char *)username );
-		/*
-		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
-		if( userConnections != NULL )
-		{
-			userConnections->umac_InUse=1;
-		}
-		*/
+
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	DEBUG("got userConnections: %p\n", userConnections );
@@ -1727,7 +1704,18 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					if( userConnections->umac_Connection[i] != NULL )
 					{
 						DEBUG("[MobileAppNotifyUserUpdate]: Connection pointer: %p\n", userConnections->umac_Connection[i] );
-						Log( FLOG_INFO, "Send notification (update) through Mobile App: Android '%s' len %d \n", jsonMessage, jsonMessageLength );
+						//Log( FLOG_INFO, "Send notification (update) through Mobile App: Android '%s' len %d \n", jsonMessage, jsonMessageLength );
+						
+						UserSession *us = userConnections->umac_Connection[i]->mac_UserSession;
+						if( us != NULL )
+						{
+							Log( FLOG_INFO, "Send notification (update) through Mobile App: Android: '%s' len %d UMAID: %lu deviceID: %s\n", jsonMessage, jsonMessageLength, userConnections->umac_Connection[i]->mac_UserMobileAppID, us->us_DeviceIdentity );
+						}
+						else
+						{
+							Log( FLOG_INFO, "Send notification (update) through Mobile App No Session: Android: '%s' len %d UMAID: %lu\n", jsonMessage, jsonMessageLength, userConnections->umac_Connection[i]->mac_UserMobileAppID );
+						}
+						
 						WriteMessageMA( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 						if( notif->n_Extra )
