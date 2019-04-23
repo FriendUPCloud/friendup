@@ -1686,7 +1686,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				} 
 				//WebsocketServerClient *wscl = fcd->fcd_WSClient;
 				//if( fcd->wsc_WebsocketsServerClient != NULL && login == FALSE )
-				if( login == FALSE )
+				//if( login == FALSE )
 				{
 					FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 					fcd->wsc_InUseCounter--;
