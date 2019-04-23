@@ -267,6 +267,7 @@ html
 {
 	height: 100vh;
 	width: 100vw;
+	-webkit-text-size-adjust: 100%;
 }
 
 html body
