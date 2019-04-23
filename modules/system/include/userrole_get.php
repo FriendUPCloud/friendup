@@ -63,9 +63,21 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 					p.ID 
 			' ) )
 			{
-				$o->Permissions = $perms;
+				// Create clean permission objects without database crap
+				$o->Permissions = array();
+				$keys = array( 'ID', 'Permission', 'Key', 'Data' );
+				foreach( $perms as $perm )
+				{
+					$co = new stdClass();
+					foreach( $keys as $kk )
+					{
+						$co->$kk = $perm->$kk;
+					}
+					$o->Permissions[] = $co;
+				}
 			}
 			
+			// Add to list
 			$out[] = $o;
 		}
 		
@@ -75,26 +87,43 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 	die( 'fail<!--separate-->{"message":"No roles listed or on user.","response":-1}' );
 }
 
-
-
+// Just fetch by id
+$fin = false;
 $d = new dbIO( 'FUserGroup' );
 
 if( isset( $args->args->id ) )
 {
-	$d->Load( $args->args->id );
-	
-	if( $perms = $SqlDatabase->FetchObjects( '
-		SELECT 
-			p.ID, p.Permission, p.Key, p.Data 
-		FROM 
-			FUserRolePermission p 
-		WHERE 
-			p.RoleID = ' . $d->ID . ' 
-		ORDER BY 
-			p.ID 
-	' ) )
+	if( $d->Load( $args->args->id ) )
 	{
-		$d->Permissions = $perms;
+		// Sanitized copy
+		$fin = new stdClass();
+		foreach( $d->_fieldnames as $f )
+			$fin->$f = $d->$f;
+		
+		if( $perms = $SqlDatabase->FetchObjects( '
+			SELECT 
+				p.ID, p.Permission, p.Key, p.Data 
+			FROM 
+				FUserRolePermission p 
+			WHERE 
+				p.RoleID = ' . $d->ID . ' 
+			ORDER BY 
+				p.ID 
+		' ) )
+		{
+			// Create clean permission objects without database crap
+			$fin->Permissions = array();
+			$keys = array( 'ID', 'Permission', 'Key', 'Data' );
+			foreach( $perms as $perm )
+			{
+				$co = new stdClass();
+				foreach( $keys as $kk )
+				{
+					$co->$kk = $perm->$kk;
+				}
+				$fin->Permissions[] = $co;
+			}
+		}
 	}
 	
 }
@@ -102,12 +131,18 @@ else
 {
 	$d->Type = 'Role';
 	$d->Name = trim( $args->args->name );
-	$d->Load();
+	if( $d->Load() )
+	{
+		// Sanitized copy
+		$fin = new stdClass();
+		foreach( $d->_fieldnames as $f )
+			$fin->$f = $d->$f;
+	}
 }
 
-if( $d->ID > 0 )
+if( $fin && $fin->ID > 0 )
 {
-	die( 'ok<!--separate-->' . json_encode( $d ) );
+	die( 'ok<!--separate-->' . json_encode( $fin ) );
 }
 
 die( 'fail<!--separate-->{"message":"Role not found.","response":-1}' );
