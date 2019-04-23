@@ -5499,6 +5499,10 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			msg.username = dataPacket.username;
 		}
+		if( !msg.userLevel )
+		{
+			msg.userLevel = dataPacket.userLevel;
+		}
 		if( !msg.viewId )
 		{
 			if( dataPacket.viewId )

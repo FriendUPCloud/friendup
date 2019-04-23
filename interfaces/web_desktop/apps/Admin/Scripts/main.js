@@ -29,49 +29,51 @@ function initGui()
 // Side bar being refreshed
 function refreshSidebar()
 {
+	var isAdmin = Application.getUserLevel();
+
 	Application.mods = {
 		'Server': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			},
 			'Configuration': {
 				icon: 'fa-gear',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			},
 			'Certificates': {
 				icon: 'fa-certificate',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			},
 			'Printers': {
 				icon: 'fa-print',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			},
 			'Backup': {
 				icon: 'fa-cloud-download',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			},
 			'Logs': {
 				icon: 'fa-list-alt',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			}
 		},
 		'Services': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			}
 		},
 		'Applications': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			}
 		},
 		'Accounts': {
 			'Status': {
 				icon: 'fa-info-circle',
-				permissions: [ 'FRIEND_ADMIN' ]
+				condition: isAdmin
 			},
 			'Users': {
 				icon: 'fa-user',
@@ -79,11 +81,11 @@ function refreshSidebar()
 			},
 			'Workgroups': {
 				icon: 'fa-users',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			},
 			'Roles': {
 				icon: 'fa-user-secret',
-				permissions: [ 'FRIEND_ADMIN' ]
+				showing: isAdmin
 			}
 		}
 	};
@@ -126,7 +128,9 @@ function refreshSidebar()
 			var atag = document.createElement( 'a' );
 			atag.innerHTML = b;
 			ptag.appendChild( atag );
-			if( ch.permissions )
+			
+			// If we have no showing check permissions
+			if( !ch.showing && ch.permissions )
 			{
 				var access = false;
 				
