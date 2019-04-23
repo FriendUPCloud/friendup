@@ -73,7 +73,7 @@ static int MAX_SIZE_WS_MESSAGE = WS_PROTOCOL_BUFFER_SIZE-2048;
  * @param type type of websocket message which will be send
  * @return number of bytes sent
  */
-static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type )
+int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type )
 {
 	//Log( FLOG_DEBUG, "WSwriteinline pointer: %p\n", wsi );
 	int result = 0;
