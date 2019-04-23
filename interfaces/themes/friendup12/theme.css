@@ -712,7 +712,7 @@ html > body > div button, html > body > div .Button
 	background-repeat: repeat-x;
 	background-position: top left;
 	background-color: #e3e7e8;
-	border: 1px solid #e3e7e8;
+	border: 0;
 	border-radius: 3px;
 	box-shadow: 0;
 	transition: background-color 0.25s;
