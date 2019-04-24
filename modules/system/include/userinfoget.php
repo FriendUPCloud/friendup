@@ -11,7 +11,7 @@
 *****************************************************************************©*/
 
 // Get user by ID
-if( isset($args->args->id) )
+if( isset( $args->args->id ) )
 	$uid = $args->args->id;
 else $uid = $User->ID;
 
@@ -105,6 +105,7 @@ if( $level == 'Admin' || $uid == $User->ID )
 		
 		switch( $args->args->mode )
 		{
+			// All data
 			case 'all':
 				
 				$userinfo->Workgroup = '';
@@ -117,11 +118,11 @@ if( $level == 'Admin' || $uid == $User->ID )
 						ug.UserID 
 					FROM 
 						`FUserGroup` g 
-							LEFT JOIN `FUserToGroup` ug ON 
-							(
-									ug.UserID = \'' . $uid . '\'
-								AND g.ID = ug.UserGroupID
-							)
+						RIGHT JOIN `FUserToGroup` ug ON 
+						(
+								ug.UserID = \'' . $uid . '\'
+							AND g.ID = ug.UserGroupID
+						)
 					WHERE g.Type = "Workgroup" 
 					ORDER BY g.Name ASC 
 				' ) )
@@ -140,7 +141,8 @@ if( $level == 'Admin' || $uid == $User->ID )
 				}
 				
 				break;
-				
+			
+			// Strings
 			default:
 				
 				// TODO: Fix this sql code to work with workgroup, code under is temporary

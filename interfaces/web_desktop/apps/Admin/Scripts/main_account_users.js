@@ -38,7 +38,7 @@ Sections.accounts_users = function( cmd, extra )
 					for( var b = 0; b < wgroups.length; b++ )
 					{
 						wstr += '<div class="HRow">';
-						wstr += '<div class="HContent100">' + wgroups[b] + '</div>';
+						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
 						wstr += '</div>';
 					}
 				}
@@ -296,7 +296,7 @@ Sections.accounts_users = function( cmd, extra )
 						loadingList[ ++loadingSlot ]( userInfo );
 			
 					}
-					u.execute( 'userinfoget', { id: extra } );
+					u.execute( 'userinfoget', { id: extra, mode: 'all' } );
 				},
 				// Load user settings
 				function( userInfo )
