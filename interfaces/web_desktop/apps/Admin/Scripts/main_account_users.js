@@ -129,7 +129,7 @@ Sections.accounts_users = function( cmd, extra )
 							size = size * 1024 * 1024 * 1024;
 						}
 						var used = parseInt( nod.getAttribute( 'used' ) );
-						if( isNaN( size ) ) size = 500 * 1024;
+						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
 						if( !used && !size ) used = 0, size = 1;
 						if( !used ) used = 0;
 						if( used > size || ( used && !size ) ) size = used;
@@ -260,10 +260,41 @@ Sections.accounts_users = function( cmd, extra )
 							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
 							for( var a = 0; a < workBtns.length; a++ )
 							{
+								// Toggle user relation to workgroup
 								( function( b ) {
 									b.onclick = function( e )
 									{
-										console.log( this.getAttribute( 'wid' ) );
+										var enabled = false;
+										if( this.classList.contains( 'fa-toggle-off' ) )
+										{
+											this.classList.remove( 'fa-toggle-off' );
+											this.classList.add( 'fa-toggle-on' );
+											enabled = true;
+										}
+										else
+										{
+											this.classList.remove( 'fa-toggle-on' );
+											this.classList.add( 'fa-toggle-off' );
+										}
+										var args = { command: 'update', id: userInfo.ID };
+										args.workgroups = [];
+										
+										for( var c = 0; c < workBtns.length; c++ )
+										{
+											if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+											{
+												args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+											}
+										}
+										args.workgroups = args.workgroups.join( ',' );
+										
+										// Reload user gui now
+										var f = new Library( 'system.library' );
+										f.onExecuted = function( e, d )
+										{
+											// Do nothing
+										}
+										f.execute( 'user', args );
 									}
 								} )( workBtns[ a ] );
 							}

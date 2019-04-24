@@ -93,6 +93,7 @@ function GetAppPermissions( $appName, $UserID = false )
 				g.Name ASC 
 		' ) )
 		{
+			// Link to wgs for quick lookups
 			foreach( $wgroups as $wg )
 			{
 				$wgs->{ $wg->ID } = $wg;
@@ -109,18 +110,12 @@ function GetAppPermissions( $appName, $UserID = false )
 				// If this key is already set
 				if( isset( $pem->{ $v->Permission } ) )
 				{
-					// If the element is an object, convert to array
-					if( !is_array( $pem->{ $v->Permission } ) )
-					{
-						$pem->{ $v->Permission } = array( $pem->{ $v->Permission } );
-					}
-					
 					$pem->{ $v->Permission }[] = $v;
 				}
 				// Just set key with value
 				else
 				{
-					$pem->{ $v->Permission } = $v;
+					$pem->{ $v->Permission } = array( $v );
 				}
 			}
 		}
