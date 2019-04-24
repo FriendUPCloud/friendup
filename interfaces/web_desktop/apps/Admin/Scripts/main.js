@@ -29,7 +29,7 @@ function initGui()
 // Side bar being refreshed
 function refreshSidebar()
 {
-	var isAdmin = Application.getUserLevel();
+	var isAdmin = Application.getUserLevel() == 'admin' ? true : false;
 
 	Application.mods = {
 		'Server': {
@@ -95,6 +95,8 @@ function refreshSidebar()
 	var eles = container.getElementsByClassName( 'DashboardHeading' );
 	var headings = {};
 	var mods = Application.mods;
+	
+	// Go through all modules
 	for( var a in mods )
 	{
 		var found = false;
@@ -107,10 +109,11 @@ function refreshSidebar()
 				break;
 			}
 		}
+		
+		// Create header
 		if( !found )
 		{
 			headings[ a ] = document.createElement( 'div' );
-			container.appendChild( headings[ a ] );
 			headings[ a ].innerHTML = '<h2>' + a + '</h2>';
 			var elements = document.createElement( 'div' );
 			elements.className = 'Elements';
@@ -118,8 +121,9 @@ function refreshSidebar()
 		}
 		
 		// Clear elements
-		// TODO: Gracefully!
 		headings[ a ].elements.innerHTML = '';
+		
+		var heading_children = 0;
 		
 		// Populate children
 		for( var b in mods[ a ] )
@@ -131,19 +135,23 @@ function refreshSidebar()
 			ptag.appendChild( atag );
 			
 			// If we have no showing check permissions
-			if( !ch.showing && ch.permissions )
+			if( !ch.showing )
 			{
-				var access = false;
-				
-				for( var i in ch.permissions )
+				if( ch.permissions )
 				{
-					if( ch.permissions[i] && Application.checkAppPermission( ch.permissions[i] ) )
-					{
-						access = true;
-					}
-				}
+					var access = false;
 				
-				if( !access ) continue;
+					for( var i in ch.permissions )
+					{
+						if( ch.permissions[i] && Application.checkAppPermission( ch.permissions[i] ) )
+						{
+							access = true;
+						}
+					}
+				
+					if( !access ) continue;
+				}
+				else continue;
 			}
 			if( ch.icon )
 			{
@@ -162,6 +170,13 @@ function refreshSidebar()
 				} )( a, b, atag );
 			}
 			headings[ a ].elements.appendChild( ptag );
+			heading_children++;
+		}
+		
+		// Add header with contents
+		if( !found && heading_children > 0 )
+		{
+			container.appendChild( headings[ a ] );
 		}
 	}
 }
