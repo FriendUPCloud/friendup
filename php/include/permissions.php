@@ -129,4 +129,48 @@ function GetAppPermissions( $appName, $UserID = false )
 	return false;
 }
 
+// Determine if the user may have access here through a role
+function CheckPermission( $type, $identifier, $permission = false )
+{
+	global $SqlDatabase;
+	
+	// Permission on user
+	if( $type == 'user' )
+	{	
+		// Check if the user has global user's access
+		if( $rpermTest = CheckAppPermission( 'PERM_USER_GLOBAL', 'Admin' ) )
+		{
+			return true;
+		}
+		// Check if the user has access to a user through workgroups
+		else if( $rpermTest = CheckAppPermission( 'PERM_USER_WORKGROUP', 'Admin' ) )
+		{
+			// Create the correct SQL
+			$workgroups = array();
+			foreach( $rpermTest as $t )
+			{
+				if( isset( $t->Data ) )
+				{
+					$workgroups[] = $t->Data;
+				}
+			}
+			if( $test = $SqlDatabase->FetchObject( '
+				SELECT u.ID FROM 
+					FUser u,
+					FUserToGroup ug,
+					FUserGroup g
+				WHERE
+					u.ID = \'' . $identifier . '\' AND
+					ug.UserID = u.ID AND
+					ug.UserGroupID = g.ID AND
+					g.ID IN ( ' . implode( ',', $workgroups ) . ' )
+			' ) )
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 ?>

@@ -10,12 +10,16 @@
 *                                                                              *
 *****************************************************************************©*/
 
+require_once( 'php/include/permissions.php' );
+
 // Get user by ID
 if( isset( $args->args->id ) )
 	$uid = $args->args->id;
 else $uid = $User->ID;
 
-if( $level == 'Admin' || $uid == $User->ID )
+$rolePermission = CheckPermission( 'user', $uid, 'edit' );
+
+if( $rolePermission || $level == 'Admin' || $uid == $User->ID )
 {
 	// Create FKeys table for storing encrypted keys connected to user
 	$t = new dbTable( 'FKeys' );
