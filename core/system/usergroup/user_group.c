@@ -43,9 +43,24 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type )
 		ug->ug_Name = StringDuplicate(name);
 		ug->ug_UserID = uid;
 		ug->ug_Type = StringDuplicate(type);
+		
+		UserGroupInit( ug );
 	}
 	
 	return ug;
+}
+
+/**
+ * Create new User Group
+ *
+ * @param ug pointer to UserGroup
+ */
+void UserGroupInit( UserGroup *ug )
+{
+	if( ug != NULL )
+	{
+		pthread_mutex_init( &(ug->ug_Mutex), NULL );
+	}
 }
 
 /**
@@ -61,14 +76,18 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 	{
 		// remove connection to users
 		
-		UserGroupAUser *au = ug->ug_UserList;
-		UserGroupAUser *remau;
-		while( au != NULL )
+		if( FRIEND_MUTEX_LOCK( &(ug->ug_Mutex) ) == 0 )
 		{
-			remau = au;
-			au = (UserGroupAUser *)au->node.mln_Succ;
+			GroupUserLink *au = ug->ug_UserList;
+			GroupUserLink *remau;
+			while( au != NULL )
+			{
+				remau = au;
+				au = (GroupUserLink *)au->node.mln_Succ;
 			
-			FFree( remau );
+				FFree( remau );
+			}
+			FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
 		}
 		
 		// Remove all mounted devices
@@ -97,6 +116,8 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 		{
 			FFree( ug->ug_Type );
 		}
+		
+		pthread_mutex_destroy( &(ug->ug_Mutex) );
 		
 		FFree( ug );
 	}
@@ -225,7 +246,7 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 	//DEBUG("[UserGroupAddUser] User: %s will be added to group: %s\n", locu->u_Name, ug->ug_Name );
 	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
 	{
-		UserGroupAUser *au = ug->ug_UserList;
+		GroupUserLink *au = ug->ug_UserList;
 		while( au != NULL )
 		{
 			// user is added, no need to add it second time
@@ -234,17 +255,12 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 				FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 				return 1;
 			}
-			au = (UserGroupAUser *)au->node.mln_Succ;
+			au = (GroupUserLink *)au->node.mln_Succ;
 		}
 	
 		// add link from group to user
-		if( ( au = (UserGroupAUser *) FCalloc( 1, sizeof( UserGroupAUser ) ) ) != NULL )
+		if( ( au = (GroupUserLink *) FCalloc( 1, sizeof( GroupUserLink ) ) ) != NULL )
 		{
-			au->node.mln_Succ = (MinNode *)ug->ug_UserList;
-			au->ugau_UserID = locu->u_ID;
-			au->ugau_User = locu;
-			ug->ug_UserList = au;
-		
 			// add link from user to group
 			UserGroupLink *ugl = FCalloc( 1, sizeof(UserGroupLink ) );
 			if( ugl != NULL )
@@ -254,13 +270,24 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 				ugl->node.mln_Succ = (MinNode *) locu->u_UserGroupLinks;
 				locu->u_UserGroupLinks = ugl;
 			}
+			FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+			
+			au->ugau_UserID = locu->u_ID;
+			au->ugau_User = locu;
+			
+			if( FRIEND_MUTEX_LOCK( &ug->ug_Mutex ) == 0 )
+			{
+				au->node.mln_Succ = (MinNode *)ug->ug_UserList;
+				ug->ug_UserList = au;
+				FRIEND_MUTEX_UNLOCK( &ug->ug_Mutex );
+			}
 		}
 		else
 		{
 			FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 			return 2;
 		}
-		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+		
 	}
 	//DEBUG("[UserGroupAddUser] end\n");
 	
@@ -284,10 +311,10 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 	User *locu = (User *)u;
 	
 	//DEBUG("[UserGroupRemoveUser] user: %s will be removed from: %s\n", locu->u_Name, ug->ug_Name );
-	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &ug->ug_Mutex ) == 0 )
 	{
-		UserGroupAUser *au = ug->ug_UserList;
-		UserGroupAUser *auprev = ug->ug_UserList;
+		GroupUserLink *au = ug->ug_UserList;
+		GroupUserLink *auprev = ug->ug_UserList;
 	
 		while( au != NULL )
 		{
@@ -296,7 +323,7 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 			{
 				if( au == ug->ug_UserList )
 				{
-					ug->ug_UserList = (UserGroupAUser *) au->node.mln_Succ;
+					ug->ug_UserList = (GroupUserLink *) au->node.mln_Succ;
 				}
 				else
 				{
@@ -307,9 +334,13 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 			}
 
 			auprev = au;
-			au = (UserGroupAUser *)au->node.mln_Succ;
+			au = (GroupUserLink *)au->node.mln_Succ;
 		}
+		FRIEND_MUTEX_UNLOCK( &ug->ug_Mutex );
+	}
 		
+	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
+	{
 		// remove entry from user list
 		UserGroupLink *ull = locu->u_UserGroupLinks;
 		UserGroupLink *ullprev = locu->u_UserGroupLinks;
@@ -335,6 +366,81 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 		
 		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
 	}
+	//DEBUG("[UserGroupRemoveUser] end\n");
+	return 0;
+}
+
+/**
+ * Remove user from all UserGroup users list
+ *
+ * @param ug pointer to UserGroup to which user will be removed
+ * @param u pointer to User structure which will be removed from list
+ * @return 0 when success, otherwise error number
+ */
+int UserGroupRemoveUserFromAll( UserGroup *ug, void *u )
+{
+	if( ug == NULL || u == NULL )
+	{
+		DEBUG("One value is equal to NULL. ug %p u %p\n", ug, u );
+		return 3;
+	}
+	User *locu = (User *)u;
+	
+	// remove user->group link
+	if( FRIEND_MUTEX_LOCK( &locu->u_Mutex ) == 0 )
+	{
+		// go through all groups connected to user
+		// and remove user from them
+		UserGroupLink *ull = locu->u_UserGroupLinks;
+		while( ull != NULL )
+		{
+			UserGroupLink *rem = ull;
+			ull = (UserGroupLink *)ull->node.mln_Succ;
+			FFree( rem );
+		}
+		locu->u_UserGroupLinks = NULL;
+		
+		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+		
+		if( FRIEND_MUTEX_LOCK( &ug->ug_Mutex ) == 0 )
+		{
+			GroupUserLink *au = ug->ug_UserList;
+			GroupUserLink *newListEntryRoot = NULL, *lastListEntry = NULL;
+	
+			while( au != NULL )
+			{
+				GroupUserLink *rem = NULL;
+				// user is added, no need to add it second time
+				if( au->ugau_User != NULL && locu == au->ugau_User )
+				{
+					rem = au;
+				}
+				else // if entry should stay we create new list
+				{
+					if( newListEntryRoot == NULL )
+					{
+						newListEntryRoot = au;
+						lastListEntry = au;
+					}
+					else
+					{
+						lastListEntry->node.mln_Succ = (MinNode *)au;
+						lastListEntry = au;
+					}
+				}
+				
+				au = (GroupUserLink *)au->node.mln_Succ;
+				if( rem != NULL )
+				{
+					FFree( rem );
+				}
+			}
+			ug->ug_UserList = newListEntryRoot;
+			
+			FRIEND_MUTEX_UNLOCK( &ug->ug_Mutex );
+		}
+	}
+	
 	//DEBUG("[UserGroupRemoveUser] end\n");
 	return 0;
 }
