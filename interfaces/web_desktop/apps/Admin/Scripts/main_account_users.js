@@ -11,7 +11,6 @@
 // Section for user account management
 Sections.accounts_users = function( cmd, extra )
 {
-	
 	if( cmd )
 	{
 		if( cmd == 'edit' )
@@ -120,7 +119,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Mountlist
 				var mlst = '';
-				if( mountlist.length )
+				if( mountlist && mountlist.length )
 				{
 					mlst += '<div class="HRow">';
 					for( var b = 0; b < mountlist.length; b++ )
@@ -144,6 +143,11 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					mlst += '</div>';
 				}
+				else
+				{
+					mlst += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_mountlist_empty' ) + '</div></div>';
+				}
+				
 				function initStorageGraphs()
 				{
 					var d = document.getElementsByTagName( 'canvas' );
@@ -300,7 +304,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var settings = null;
 						try
 						{
@@ -320,7 +324,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var workspacesettings = null;
 						try
 						{
@@ -347,7 +351,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var wgroups = null;
 						try
 						{
@@ -392,7 +396,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var ul = null;
 						try
 						{
@@ -414,7 +418,7 @@ Sections.accounts_users = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						var apps = null;
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						try
 						{
 							apps = JSON.parse( d );
