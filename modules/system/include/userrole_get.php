@@ -23,7 +23,7 @@ function getPermissionsForRole( $role )
 	
 	if( $perms = $SqlDatabase->FetchObjects( '
 		SELECT 
-			p.ID, p.Permission, p.Key /*, p.Data*/ 
+			p.ID, p.Permission, p.Key, p.Data
 		FROM 
 			FUserRolePermission p 
 		WHERE 

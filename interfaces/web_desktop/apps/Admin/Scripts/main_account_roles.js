@@ -94,7 +94,6 @@ Sections.accounts_roles = function( cmd, extra )
 				{
 					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
 					
-					console.log( 'Here is the info: ', info );
 					initRoleDetails( info );
 				}
 				
@@ -114,7 +113,7 @@ Sections.accounts_roles = function( cmd, extra )
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		console.log( { e:e, d:d } );
+		//console.log( { e:e, d:d } );
 		
 		//if( e != 'ok' ) return;
 		var roleList = null;
@@ -285,7 +284,7 @@ Sections.userroleadd = function( input )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		
 			// refresh
 			Sections.accounts_roles();
@@ -301,7 +300,7 @@ Sections.userroledelete = function( rid )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		
 			// refresh
 			Sections.accounts_roles();
@@ -317,7 +316,7 @@ Sections.userroleupdate = function( rid, input, perms, refresh )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			// refresh
 			Sections.accounts_roles();
@@ -388,7 +387,7 @@ Sections.checkpermission = function( input )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		}
 		m.execute( 'checkpermission', { permission: input } );
 	}
