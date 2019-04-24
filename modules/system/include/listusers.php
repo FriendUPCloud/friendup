@@ -27,53 +27,28 @@ else if( $pobj = CheckAppPermission( 'PERM_USER_WORKGROUP', 'Admin' ) )
 {
 	$uids = '';
 	
-	if( is_array( $pobj ) )
+	foreach( $pobj as $po )
 	{
-		foreach( $pobj as $po )
+		if( $po->Data )
 		{
-			if( $po->Data )
+			if( $uds = $SqlDatabase->FetchObjects( $q = '
+				SELECT 
+					ug.UserID, g.Name AS Workgroup 
+				FROM 
+					`FUserGroup` g, 
+					`FUserToGroup` ug 
+				WHERE 
+						g.ID IN (' . $po->Data . ') 
+					AND g.Type = "Workgroup" 
+					AND ug.UserGroupID = g.ID 
+				ORDER BY 
+					ug.UserID ASC 
+			' ) )
 			{
-				if( $uds = $SqlDatabase->FetchObjects( '
-					SELECT 
-						ug.UserID, g.Name AS Workgroup 
-					FROM 
-						`FUserGroup` g, 
-						`FUserToGroup` ug 
-					WHERE 
-							g.ID IN (' . $po->Data . ') 
-						AND g.Type = "Workgroup" 
-						AND ug.UserGroupID = g.ID 
-					ORDER BY 
-						ug.UserID ASC 
-				' ) )
+				foreach( $uds as $v )
 				{
-					foreach( $uds as $v )
-					{
-						$uids = ( $uids ? ( $uids . ',' ) : '' ) . $v->UserID;
-					}
+					$uids = ( $uids ? ( $uids . ',' ) : '' ) . $v->UserID;
 				}
-			}
-		}
-	}
-	else if( $pobj->Data )
-	{
-		if( $uds = $SqlDatabase->FetchObjects( '
-			SELECT 
-				ug.UserID, g.Name AS Workgroup 
-			FROM 
-				`FUserGroup` g, 
-				`FUserToGroup` ug 
-			WHERE 
-					g.ID IN (' . $pobj->Data . ') 
-				AND g.Type = "Workgroup" 
-				AND ug.UserGroupID = g.ID 
-			ORDER BY 
-				ug.UserID ASC 
-		' ) )
-		{
-			foreach( $uds as $v )
-			{
-				$uids = ( $uids ? ( $uids . ',' ) : '' ) . $v->UserID;
 			}
 		}
 	}
@@ -93,11 +68,9 @@ else if( $pobj = CheckAppPermission( 'PERM_USER_WORKGROUP', 'Admin' ) )
 	}
 }
 
-
-
 if( !$permission && $level != 'Admin' )
 {
-	die('fail<!--separate-->{"response":"list users failed Error 1"}' );
+	die('fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
 }
 
 if( $users = $SqlDatabase->FetchObjects( '
@@ -154,6 +127,6 @@ if( $users = $SqlDatabase->FetchObjects( '
 	
 	die( 'ok<!--separate-->' . json_encode( $out ) );
 }
-die( 'fail<!--separate-->{"response":"list users failed Error 2"}'  );
+die( 'fail<!--separate-->{"response":"-2","message":"list users failed Error 2"}'  );
 
 ?>

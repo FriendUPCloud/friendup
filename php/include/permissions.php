@@ -93,6 +93,7 @@ function GetAppPermissions( $appName, $UserID = false )
 				g.Name ASC 
 		' ) )
 		{
+			// Link to wgs for quick lookups
 			foreach( $wgroups as $wg )
 			{
 				$wgs->{ $wg->ID } = $wg;
@@ -109,18 +110,12 @@ function GetAppPermissions( $appName, $UserID = false )
 				// If this key is already set
 				if( isset( $pem->{ $v->Permission } ) )
 				{
-					// If the element is an object, convert to array
-					if( !is_array( $pem->{ $v->Permission } ) )
-					{
-						$pem->{ $v->Permission } = array( $pem->{ $v->Permission } );
-					}
-					
 					$pem->{ $v->Permission }[] = $v;
 				}
 				// Just set key with value
 				else
 				{
-					$pem->{ $v->Permission } = $v;
+					$pem->{ $v->Permission } = array( $v );
 				}
 			}
 		}
@@ -131,6 +126,56 @@ function GetAppPermissions( $appName, $UserID = false )
 		}
 	}
 	
+	return false;
+}
+
+/**
+ * Determine if the user may have access here through a role
+ * This function allows abstract permission checks which may require the
+ * system to test multiple permissions depending on object $type and permission
+ * type. But it makes it much more elegant for developers who need to use the 
+ * system in their own code.
+**/
+function CheckPermission( $type, $identifier, $permission = false )
+{
+	global $SqlDatabase;
+	
+	// Permission on user
+	if( $type == 'user' )
+	{	
+		// Check if the user has global user's access
+		if( $rpermTest = CheckAppPermission( 'PERM_USER_GLOBAL', 'Admin' ) )
+		{
+			return true;
+		}
+		// Check if the user has access to a user through workgroups
+		else if( $rpermTest = CheckAppPermission( 'PERM_USER_WORKGROUP', 'Admin' ) )
+		{
+			// Create the correct SQL
+			$workgroups = array();
+			foreach( $rpermTest as $t )
+			{
+				if( isset( $t->Data ) )
+				{
+					$workgroups[] = $t->Data;
+				}
+			}
+			if( $test = $SqlDatabase->FetchObject( '
+				SELECT u.ID FROM 
+					FUser u,
+					FUserToGroup ug,
+					FUserGroup g
+				WHERE
+					u.ID = \'' . $identifier . '\' AND
+					ug.UserID = u.ID AND
+					ug.UserGroupID = g.ID AND
+					g.ID IN ( ' . implode( ',', $workgroups ) . ' )
+			' ) )
+			{
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
