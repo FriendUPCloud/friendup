@@ -251,11 +251,23 @@ Sections.accounts_users = function( cmd, extra )
 								str += '<div class="HRow">\
 									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
 									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-										<button class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+										<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
 									</div>\
 								</div>';
 							}
 							ge( 'WorkgroupGui' ).innerHTML = str;
+							
+							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							for( var a = 0; a < workBtns.length; a++ )
+							{
+								( function( b ) {
+									b.onclick = function( e )
+									{
+										console.log( this.getAttribute( 'wid' ) );
+									}
+								} )( workBtns[ a ] );
+							}
+							
 						}
 						// Hide
 						else
