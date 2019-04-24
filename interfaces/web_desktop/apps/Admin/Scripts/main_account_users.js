@@ -55,6 +55,7 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}*/
 				
+				// Roles and role adherence
 				if( uroles && uroles.length )
 				{
 					for( var a in uroles )
@@ -67,55 +68,6 @@ Sections.accounts_users = function( cmd, extra )
 						rstr += '</div>';
 					}
 				}
-				
-				
-				
-				/*if( uroles && uroles.length )
-				{
-					for( var a in uroles )
-					{
-						var sw = 2;
-						
-						rstr += '<div class="Wrapper collapse">';
-						
-						rstr += '<div class="HRow">';
-						rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + uroles[a].Name + '</strong></div>';
-						rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-						rstr += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
-						rstr += '</div>';
-						rstr += '</div>';
-						
-						rstr += '<div class="List">';
-					
-						// List of workgroups for that role perhaps ??? ...
-						
-						if( wgroups && wgroups.length )
-						{
-							for( var k in wgroups )
-							{							
-								sw = sw == 2 ? 1 : 2;
-								
-								var rid = null;
-								var pem = null;
-								var key = null;
-								
-								rstr += '<div class="HRow">';
-								rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + wgroups[k].Name + '</div>';
-								rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-								//rstr += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( 1!=1 ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
-								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
-								rstr += '</div>';
-								rstr += '</div>';
-							}
-						}
-						
-						rstr += '</div>';
-					
-						rstr += '</div>';
-					}
-				}*/
-				
-				
 				
 				// Mountlist
 				var mlst = '';
@@ -200,6 +152,7 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
+				// Applications
 				var apl = '';
 				var types = [ i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
 				var keyz  = [ 'Name', 'Category', 'Dock' ];
