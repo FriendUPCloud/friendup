@@ -198,21 +198,22 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Add all data for the template
 				d.replacements = {
-					user_name: userInfo.FullName,
-					user_fullname: userInfo.FullName,
-					user_username: userInfo.Name,
-					user_email: userInfo.Email,
-					theme_name: settings.Theme,
-					theme_dark: themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
-					wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
-					workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
+					user_name:         userInfo.FullName,
+					user_fullname:     userInfo.FullName,
+					user_username:     userInfo.Name,
+					user_email:        userInfo.Email,
+					theme_name:        settings.Theme,
+					theme_dark:        themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+					theme_style:       themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
+					wallpaper_name:    workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
+					workspace_count:   workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
 					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					storage: mlst,
-					workgroups: wstr,
-					roles: rstr,
-					applications: apl
+					storage:           mlst,
+					workgroups:        wstr,
+					roles:             rstr,
+					applications:      apl
 				};
+				
 				// Add translations
 				d.i18n();
 				d.onLoad = function( data )
@@ -226,7 +227,27 @@ Sections.accounts_users = function( cmd, extra )
 					
 					// Events --------------------------------------------------
 					
-					// Editing workgroups 
+					// Editing basic details
+					
+					var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+					var bge  = ge( 'UserBasicEdit' );
+					for( var a = 0; a < inps.length; a++ )
+					{
+						( function( i ) {
+							i.onkeyup = function( e )
+							{
+								bge.innerHTML = ' ' + i18n( 'i18n_save_changes' );
+							}
+						} )( inps[ a ] );
+					}
+					bge.onclick = function( e )
+					{
+						/*var m = new Module( 'system' );
+						m.*/
+					}
+					
+					// Editing workgroups
+					
 					var wge = ge( 'WorkgroupEdit' );
 					if( wge ) wge.onclick = function( e )
 					{

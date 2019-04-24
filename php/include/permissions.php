@@ -129,7 +129,13 @@ function GetAppPermissions( $appName, $UserID = false )
 	return false;
 }
 
-// Determine if the user may have access here through a role
+/**
+ * Determine if the user may have access here through a role
+ * This function allows abstract permission checks which may require the
+ * system to test multiple permissions depending on object $type and permission
+ * type. But it makes it much more elegant for developers who need to use the 
+ * system in their own code.
+**/
 function CheckPermission( $type, $identifier, $permission = false )
 {
 	global $SqlDatabase;
