@@ -22,7 +22,7 @@ Sections.accounts_users = function( cmd, extra )
 				var userInfo = info.userInfo;
 				var settings = info.settings;
 				var workspaceSettings = info.workspaceSettings;
-				var wgroups = info.workgroups;
+				var wgroups = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : [ userInfo.Workgroup ];
 				var uroles = info.roles;
 				var mountlist = info.mountlist;
 				var apps = info.applications;
@@ -38,7 +38,7 @@ Sections.accounts_users = function( cmd, extra )
 					for( var b = 0; b < wgroups.length; b++ )
 					{
 						wstr += '<div class="HRow">';
-						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
+						wstr += '<div class="HContent100">' + wgroups[b] + '</div>';
 						wstr += '</div>';
 					}
 				}
