@@ -223,6 +223,49 @@ Sections.accounts_users = function( cmd, extra )
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
 					Friend.responsive.reinit();
+					
+					// Events --------------------------------------------------
+					
+					// Editing workgroups 
+					var wge = ge( 'WorkgroupEdit' );
+					if( wge ) wge.onclick = function( e )
+					{
+						// Show
+						if( !this.activated )
+						{
+							this.activated = true;
+							this.oldML = ge( 'WorkgroupGui' ).innerHTML;
+							
+							var str = '';
+							for( var a = 0; a < info.workgroups.length; a++ )
+							{
+								var found = false;
+								for( var c = 0; c < wgroups.length; c++ )
+								{
+									if( info.workgroups[a].Name == wgroups[c].Name )
+									{
+										found = true;
+										break;
+									}
+								}
+								str += '<div class="HRow">\
+									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
+									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+										<button class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+									</div>\
+								</div>';
+							}
+							ge( 'WorkgroupGui' ).innerHTML = str;
+						}
+						// Hide
+						else
+						{
+							this.activated = false;
+							ge( 'WorkgroupGui' ).innerHTML = this.oldML;
+						}
+					}
+					
+					// End events ----------------------------------------------
 				}
 				d.load();
 			}
