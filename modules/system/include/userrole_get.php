@@ -16,10 +16,42 @@ global $SqlDatabase, $Logger, $User;
 if( $level != 'Admin' )
 	die( '404' );
 
-if( !isset( $args->args->name ) && !isset( $args->args->id ) )
+// What it says!
+function getPermissionsForRole( $role )
 {
-	// We need a listout of all Roles ... so no arguments is then allowed ...
+	global $SqlDatabase;
 	
+	if( $perms = $SqlDatabase->FetchObjects( '
+		SELECT 
+			p.ID, p.Permission, p.Key, p.Data
+		FROM 
+			FUserRolePermission p 
+		WHERE 
+			p.RoleID = ' . $role->ID . ' 
+		ORDER BY 
+			p.ID 
+	' ) )
+	{
+		// Create clean permission objects without database crap
+		$permissions = array();
+		$keys = array( 'ID', 'Permission', 'Key', 'Data' );
+		foreach( $perms as $perm )
+		{
+			$co = new stdClass();
+			foreach( $keys as $kk )
+			{
+				$co->$kk = $perm->$kk;
+			}
+			$permissions[] = $co;
+		}
+		return $permissions;
+	}
+	return false;
+}
+
+// We need a listout of all Roles ... so no arguments is then allowed ...
+if( !isset( $args->args->name ) && !isset( $args->args->id ) )
+{	
 	$out = array();
 	
 	if( $rows = $SqlDatabase->FetchObjects( $q = '
@@ -30,12 +62,12 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 				LEFT JOIN FUserToGroup u ON 
 				( 
 						u.UserGroupID = g.ID 
-					AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? $args->args->userid : 'NULL' ) . ' 
+					AND u.UserID = ' . ( isset( $args->args->userid ) && $args->args->userid ? intval( $args->args->userid, 10 ) : 'NULL' ) . ' 
 				)
 				LEFT JOIN FGroupToGroup w ON
 				(
 						w.ToGroupID = g.ID 
-					AND w.FromGroupID = ' . ( isset( $args->args->groupid ) && $args->args->groupid ? $args->args->groupid : 'NULL' ) . ' 
+					AND w.FromGroupID = ' . ( isset( $args->args->groupid ) && $args->args->groupid ? intval( $args->args->groupid, 10 ) : 'NULL' ) . ' 
 				) 
 		WHERE 
 			g.Type = "Role" 
@@ -52,20 +84,9 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 			$o->ParentID    = $row->ParentID;
 			$o->Name        = $row->Name;
 			
-			if( $perms = $SqlDatabase->FetchObjects( '
-				SELECT 
-					p.ID, p.Permission, p.Key, p.Data 
-				FROM 
-					FUserRolePermission p 
-				WHERE 
-					p.RoleID = ' . $row->ID . ' 
-				ORDER BY 
-					p.ID 
-			' ) )
-			{
-				$o->Permissions = $perms;
-			}
+			$o->Permissions = getPermissionsForRole( $row );
 			
+			// Add to list
 			$out[] = $o;
 		}
 		
@@ -75,39 +96,47 @@ if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 	die( 'fail<!--separate-->{"message":"No roles listed or on user.","response":-1}' );
 }
 
-
-
+// Just fetch by id
+$fin = false;
 $d = new dbIO( 'FUserGroup' );
+
+
 
 if( isset( $args->args->id ) )
 {
-	$d->Load( $args->args->id );
-	
-	if( $perms = $SqlDatabase->FetchObjects( '
-		SELECT 
-			p.ID, p.Permission, p.Key, p.Data 
-		FROM 
-			FUserRolePermission p 
-		WHERE 
-			p.RoleID = ' . $d->ID . ' 
-		ORDER BY 
-			p.ID 
-	' ) )
+	if( $d->Load( $args->args->id ) )
 	{
-		$d->Permissions = $perms;
+		// Sanitized copy
+		$fin = new stdClass();
+		foreach( $d->_fieldnames as $f )
+			$fin->$f = $d->$f;
+		
+		// Fetch role permissions
+		$fin->Permissions = getPermissionsForRole( $d );
 	}
 	
 }
+// Get by name - the most primitive one
 else
 {
 	$d->Type = 'Role';
 	$d->Name = trim( $args->args->name );
-	$d->Load();
+	if( $d->Load() )
+	{
+		// Sanitized copy
+		$fin = new stdClass();
+		foreach( $d->_fieldnames as $f )
+			$fin->$f = $d->$f;
+		
+		// Fetch role permissions
+		$fin->Permissions = getPermissionsForRole( $d );
+	}
 }
 
-if( $d->ID > 0 )
+// Output json encoded structure to the client
+if( $fin && $fin->ID > 0 )
 {
-	die( 'ok<!--separate-->' . json_encode( $d ) );
+	die( 'ok<!--separate-->' . json_encode( $fin ) );
 }
 
 die( 'fail<!--separate-->{"message":"Role not found.","response":-1}' );

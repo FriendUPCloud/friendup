@@ -754,12 +754,12 @@ AND f.Name = '%s'",
 		
 		if( usrgrp != NULL )
 		{
-			UserGroupAUser * ugu = usrgrp->ug_UserList;
+			GroupUserLink * ugu = usrgrp->ug_UserList;
 			while( ugu != NULL )
 			{
 				UserNotifyFSEvent2( dm, ugu->ugau_User, "refresh", "Mountlist:" );
 				
-				ugu = (UserGroupAUser *)ugu->node.mln_Succ;
+				ugu = (GroupUserLink *)ugu->node.mln_Succ;
 			}
 		}
 		

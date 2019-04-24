@@ -360,6 +360,7 @@ function ExecuteApplication( app, args, callback )
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
 			ifr.userId = Workspace.userId;
 			ifr.username = Workspace.loginUsername;
+			ifr.userLevel = Workspace.userLevel;
 			ifr.workspace = workspace;
 			ifr.applicationId = applicationId;
 			ifr.id = 'sandbox_' + ifr.applicationId;
@@ -532,6 +533,7 @@ function ExecuteApplication( app, args, callback )
 					applicationId: ifr.applicationId,
 					applicationName: ifr.applicationName,
 					userId: ifr.userId,
+					userLevel: ifr.userLevel,
 					username: ifr.username,
 					authId: ifr.authId,
 					args: oargs,
@@ -1108,6 +1110,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			ifr.applicationNumber = _appNum++;
 			ifr.applicationId = app + '-' + (new Date()).getTime();
 			ifr.userId = Workspace.userId;
+			ifr.userLevel = Workspace.userLevel;
 			ifr.username = Workspace.loginUsername;
 			ifr.applicationType = 'jsx';
 			if( sid ) 
@@ -1245,6 +1248,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 						base:             '/',
 						applicationId:    ifr.applicationId,
 						userId:           ifr.userId,
+						userLevel:        ifr.userLevel,
 						username:         ifr.username,
 						theme:            Workspace.theme,
 						themeData:        Workspace.themeData,

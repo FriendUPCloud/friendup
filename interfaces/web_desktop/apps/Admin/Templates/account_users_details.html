@@ -6,7 +6,7 @@
 	<h1 class="ImageHeading">
 		{user_name}
 	</h1>
-	<div class="Box Padding">
+	<div class="Box Padding" id="UserBasicDetails">
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
 				<strong>{i18n_user_fullname}</strong>
@@ -40,7 +40,7 @@
 			</div>
 		</div>
 		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
+			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="UserBasicEdit"></button>
 		</div>
 	</div>
 
@@ -111,10 +111,10 @@
 	<h2 class="MarginTop">
 		{i18n_workgroups}
 	</h2>
-	<div class="Box Padding">
+	<div class="Box Padding" id="WorkgroupGui">
 		{workgroups}
 		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
+			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="WorkgroupEdit"></button>
 		</div>
 	</div>
 	

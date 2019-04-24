@@ -30,6 +30,10 @@ i18n_name                              : Navn
 i18n_category                          : Kategori
 i18n_dock                              : I dock
 
+i18n_user_mountlist_empty              : Disklisten er tom.
+
+i18n_save_changes                      : Lagre endringer
+
 i18n_no_applications_available         : Ingen applikasjoner tilgjengelig.
 
 i18n_role_profile                      : Rolle Profil
@@ -37,6 +41,17 @@ i18n_role_name                         : Rolle Navn
 i18n_role_description                  : Beskrivelse
 i18n_permissions                       : Tillatelser
 
+#permissions related
+
+i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
+i18n_PERM_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
+i18n_PERM_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
+i18n_PERM_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
+i18n_PERM_TEMPLATE_GLOBAL              : Endre maler globalt
+i18n_PERM_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
+
+i18n_deleting_permission               : Sletter rettighet
+i18n_deleting_permission_verify        : Vennligst bekreft at du ønsker å slette.
 
 #printers related
 
