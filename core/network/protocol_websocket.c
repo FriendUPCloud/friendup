@@ -87,7 +87,7 @@ int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type
 	*/
 	WSCData *wscdata = (WSCData *)wsi;
 	
-	if( wscdata->wsc_ToBeRemoved == TRUE )
+	if( wscdata->wsc_Wsi == NULL )
 	{
 		return 0;
 	}
@@ -236,7 +236,7 @@ int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type
  */
 int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen, int type )
 {
-	if( wsi->wusc_Data->wsc_ToBeRemoved == TRUE )
+	if( wsi->wusc_Data->wsc_Wsi == NULL )
 	{
 		return 0;
 	}
@@ -265,61 +265,62 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 		
 			if( wsi->wusc_Data != NULL )
 			{
-			if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
-			{
-				wsi->wusc_Data->wsc_InUseCounter++;
-				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
+				if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
 				{
-					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
-					if( queueMsg != NULL )
+					wsi->wusc_Data->wsc_InUseCounter++;
+					for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 					{
-						unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
-						int queueMsgLen = 0;
-					
-						int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
-						int copysize = msglen;
-						if( copysize > MAX_SIZE_WS_MESSAGE )
+						unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
+						if( queueMsg != NULL )
 						{
-							copysize = MAX_SIZE_WS_MESSAGE;
-						}
+							unsigned char *queueMsgPtr = queueMsg + LWS_SEND_BUFFER_PRE_PADDING;
+							int queueMsgLen = 0;
 					
-						queueMsgLen = txtmsgpos;
-						queueMsgPtr += txtmsgpos;
-						// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
+							int txtmsgpos = sprintf( (char *)queueMsgPtr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", encmsg, totalChunk, actChunk );
+							int copysize = msglen;
+							if( copysize > MAX_SIZE_WS_MESSAGE )
+							{
+								copysize = MAX_SIZE_WS_MESSAGE;
+							}
+					
+							queueMsgLen = txtmsgpos;
+							queueMsgPtr += txtmsgpos;
+							// queue   |    PRE_PADDING  |  txtmsgpos   |  body  |  END_CHARS  | POST_PADDING
 
-						memcpy( queueMsgPtr, msgToSend, copysize );
-						queueMsgLen += copysize;
-						queueMsgPtr += copysize;
+							memcpy( queueMsgPtr, msgToSend, copysize );
+							queueMsgLen += copysize;
+							queueMsgPtr += copysize;
 					
-						memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
-						queueMsgPtr += END_CHAR_SIGNS;
-						queueMsgLen += END_CHAR_SIGNS;
-						*queueMsgPtr = 0;	//end message with NULL
+							memcpy( queueMsgPtr, end, END_CHAR_SIGNS );
+							queueMsgPtr += END_CHAR_SIGNS;
+							queueMsgLen += END_CHAR_SIGNS;
+							*queueMsgPtr = 0;	//end message with NULL
 					
-						msgToSend += copysize;
-						msglen -= MAX_SIZE_WS_MESSAGE;
+							msgToSend += copysize;
+							msglen -= MAX_SIZE_WS_MESSAGE;
 
-						DEBUG( "Determined chunk: %d\n", actChunk );
+							DEBUG( "Determined chunk: %d\n", actChunk );
 					
-						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-						en->fq_Data = queueMsg;
-						en->fq_Size = queueMsgLen;
+							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+							en->fq_Data = queueMsg;
+							en->fq_Size = queueMsgLen;
 				
-						//DEBUG("FQPush: %p\n 
-						FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
+							//DEBUG("FQPush: %p\n 
+							FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
 
 						// callback writeable was here
+						}
 					}
-				}
-				wsi->wusc_Data->wsc_InUseCounter--;
+					wsi->wusc_Data->wsc_InUseCounter--;
+					
+					if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
+					{
+						lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+					}
 				
-				FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
-				if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
-				{
-					lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+					FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 				}
 			}
-		}
 			
 			//lws_callback_on_writable( wscdata->wc_Wsi );
 			FFree( encmsg );
@@ -329,38 +330,39 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 	{
 		if( wsi->wusc_Data != NULL )
 		{
-		if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
-		{
-			wsi->wusc_Data->wsc_InUseCounter++;
-			if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_UserSession != NULL )
+			if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
 			{
-				int val;
-			
-				UserSession *us = ( UserSession *)wsi->wusc_Data->wsc_UserSession;
-				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-				if( en != NULL )
+				wsi->wusc_Data->wsc_InUseCounter++;
+				if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_UserSession != NULL )
 				{
-					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
-					en->fq_Size = msglen;
+					int val;
 			
-					FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
+					UserSession *us = ( UserSession *)wsi->wusc_Data->wsc_UserSession;
+					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+					if( en != NULL )
+					{
+						en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
+						en->fq_Size = msglen;
+			
+						FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
+					}
 				}
-			}
 			
-			DEBUG("Send message to WSI, ptr: %p\n", wsi->wusc_Data->wsc_Wsi );
+				DEBUG("Send message to WSI, ptr: %p\n", wsi->wusc_Data->wsc_Wsi );
 
-			DEBUG("In use counter %d\n", wsi->wusc_Data->wsc_InUseCounter );
+				DEBUG("In use counter %d\n", wsi->wusc_Data->wsc_InUseCounter );
 			
-			wsi->wusc_Data->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
-			
-			if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
-			{
-				lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+				wsi->wusc_Data->wsc_InUseCounter--;
+				
+				if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
+				{
+					lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+				}
+				
+				FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 			}
 		}
-	}
 	}
 
 	return 0;
@@ -386,7 +388,7 @@ void WSThread( void *d )
 	int error = 0;
 	BufString *queryrawbs = data->queryrawbs;
 	WSCData *fcd = data->fcd;
-	if( fcd->wsc_ToBeRemoved == TRUE )
+	if( fcd->wsc_Wsi == NULL )
 	{
 		return;
 	}
@@ -398,7 +400,7 @@ void WSThread( void *d )
 	fcd->wsc_InUseCounter++;
 	FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 	
-	if( fcd->wsc_ToBeRemoved == TRUE || fcd->wsc_UserSession == NULL )
+	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
 		FERROR("Error session is NULL\n");
 		if( http != NULL )
@@ -889,7 +891,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				//fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
 				//usleep( 2000 );
 				
-				fcd->wsc_ToBeRemoved = TRUE;
+				fcd->wsc_Wsi = NULL;
 				int val = 0;
 				while( TRUE )
 				{

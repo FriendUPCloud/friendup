@@ -98,7 +98,7 @@ typedef struct WSCData
 	void 							*wsc_WebsocketsServerClient;
 	pthread_mutex_t					wsc_Mutex;
 	FQueue							wsc_MsgQueue;
-	FBOOL							wsc_ToBeRemoved;
+	//FBOOL							wsc_ToBeRemoved;
 	time_t							wsc_LastPingTime;
 	//int								wsc_Status;	//enabled=0, disabled=1
 	BufString						*wsc_Buffer;
