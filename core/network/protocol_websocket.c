@@ -73,19 +73,10 @@ static int MAX_SIZE_WS_MESSAGE = WS_PROTOCOL_BUFFER_SIZE-2048;
  * @param type type of websocket message which will be send
  * @return number of bytes sent
  */
-int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type )
+int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, int type )
 {
 	//Log( FLOG_DEBUG, "WSwriteinline pointer: %p\n", wsi );
 	int result = 0;
-	//WebsocketServerClient *cl = (WebsocketServerClient *)wsi;
-	/*
-	if( cl->wusc_Data == NULL )
-	{
-		INFO("No user session attached to WS, message will not be send\n");
-		return 0;
-	}
-	*/
-	WSCData *wscdata = (WSCData *)wsi;
 	
 	if( wscdata->wsc_Wsi == NULL )
 	{
@@ -163,12 +154,11 @@ int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type
 				}
 				wscdata->wsc_InUseCounter--;
 				
-				struct lws *wsi = wscdata->wsc_Wsi;
-				FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
-				if( wsi != NULL )
+				if( wscdata->wsc_Wsi != NULL )
 				{
-					lws_callback_on_writable( wsi );
+					lws_callback_on_writable( wscdata->wsc_Wsi );
 				}
+				FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 			}
 			
 			//lws_callback_on_writable( wscdata->wc_Wsi );
@@ -203,12 +193,12 @@ int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type
 			DEBUG("In use counter %d\n", wscdata->wsc_InUseCounter );
 			
 			wscdata->wsc_InUseCounter--;
-			FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 			
-			if( wsi != NULL )
+			if( wscdata->wsc_Wsi != NULL )
 			{
-				lws_callback_on_writable( wsi );
+				lws_callback_on_writable( wscdata->wsc_Wsi );
 			}
+			FRIEND_MUTEX_UNLOCK( &(wscdata->wsc_Mutex) );
 		}
 	}
 
@@ -1694,7 +1684,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													
 														if( strcmp( pathParts[ 0 ], "system.library" ) == 0)
 														{
-															http->h_WSocket = wsi;
+															http->h_WSocket = fcd->wsc_WebsocketsServerClient;
 														
 															struct timeval start, stop;
 															gettimeofday(&start, NULL);
