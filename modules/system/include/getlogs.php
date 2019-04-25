@@ -21,11 +21,27 @@ if( !isset( $args->args->logfile ) )
 {
 	if( $d = opendir( 'log' ) )
 	{
-		$out = [];
+		$out = array();
 	
 		while( $f = readdir( $d ) )
 		{
-			$out[] = $d;
+			if( $f{0} == '.' ) continue;
+			
+			// Handle differently
+			if( is_dir( 'log/' . $f ) )
+			{
+				continue;
+			}
+			
+			$info = stat( 'log/' . $f );
+
+			$o = new stdClass();
+			$o->Filename = $f;
+			$o->DateModified = $info[9];
+			$o->DateCreated = $info[10];
+			$o->Filesize = $info[7];
+			
+			$out[] = $o;
 		}
 
 		closedir( $d );
