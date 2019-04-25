@@ -1,3 +1,0 @@
-/*
-	Uses the system module with the getlogs command..
-*/
