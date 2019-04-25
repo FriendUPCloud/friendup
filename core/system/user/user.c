@@ -587,7 +587,11 @@ void UserRemoveFromGroups( User *u )
 	
 	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
 	// remove all links to group
-	UserDeleteGroupLinkAll( u->u_UserGroupLinks );
-	u->u_UserGroupLinks = NULL;
+	if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
+	{
+		UserDeleteGroupLinkAll( u->u_UserGroupLinks );
+		u->u_UserGroupLinks = NULL;
+		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
+	}
 	DEBUG("[UserRemoveFromGroups] remove end\n");
 }
