@@ -37,6 +37,7 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					for( var b = 0; b < wgroups.length; b++ )
 					{
+						if( !wgroups[b].Name ) continue;
 						wstr += '<div class="HRow">';
 						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
 						wstr += '</div>';
