@@ -504,7 +504,10 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
-	if( Application.checkAppPermission( 'PERM_USER_GLOBAL' ) || Application.checkAppPermission( 'PERM_USER_WORKGROUP' ) )
+	var checkedGlobal = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
+	var checkedWorkgr = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
+	
+	if( checkedGlobal || checkedWorkgr )
 	{
 		// Get the user list
 		var m = new Module( 'system' );
@@ -532,8 +535,8 @@ Sections.accounts_users = function( cmd, extra )
 			var types = {
 				Edit: '10',
 				FullName: '30',
-				Name: '30',
-				Level: '30'
+				Name: '25',
+				Level: '25'
 			};
 
 
@@ -555,9 +558,56 @@ Sections.accounts_users = function( cmd, extra )
 					borders += ' BorderBottom';
 				var d = document.createElement( 'div' );
 				d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-				d.innerHTML = '<strong>' + z + '</strong>';
+				if( z == 'Edit' ) z = '';
+				d.innerHTML = '<strong>' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
 				headRow.appendChild( d );
 			}
+			
+			// New user button
+			var l = document.createElement( 'div' );
+			l.className = 'HContent10 FloatLeft BorderBottom';
+			var b = document.createElement( 'button' );
+			b.className = 'IconButton IconSmall fa-plus Negative';
+			b.innerHTML = '&nbsp;';
+			l.appendChild( b );		
+			headRow.appendChild( l );
+			b.onclick = function( e )
+			{
+				var d = new File( 'Progdir:Templates/account_users_details.html' );
+				// Add all data for the template
+				d.replacements = {
+					user_name:         '',
+					user_fullname:     '',
+					user_username:     '',
+					user_email:        '',
+					theme_name:        '',
+					theme_dark:        '',
+					theme_style:       '',
+					theme_preview:     '',
+					wallpaper_name:    '',
+					workspace_count:   '',
+					system_disk_state: '',
+					storage:           '',
+					workgroups:        '',
+					roles:             '',
+					applications:      ''
+				};
+				
+				// Add translations
+				d.i18n();
+				d.onLoad = function( data )
+				{
+					ge( 'UserDetails' ).innerHTML = data;
+					initStorageGraphs();
+					
+					// Responsive framework
+					Friend.responsive.pageActive = ge( 'UserDetails' );
+					Friend.responsive.reinit();
+				}
+				d.load();
+			}
+			
+			// Add header columns
 			header.appendChild( headRow );
 			o.appendChild( header );
 
