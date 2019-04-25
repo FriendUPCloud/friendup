@@ -364,6 +364,12 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	//
 	// https://www.ietf.org/rfc/rfc2616.txt
 	// http://tools.ietf.org/html/rfc7230 <- Better!
+	
+	if( request == NULL )
+	{
+		FERROR("Cannot parse header, request is empty!\n");
+		return 1;
+	}
 
 	char* r = (char *)request;
 
@@ -905,7 +911,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 		i++; // In case we ended on a proper \r\n note, we need to adjust i by 1 to get to the beginning of the content (if any)
 	}
 
-	return 1;
+	return 0;
 }
 
 /**

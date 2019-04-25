@@ -1199,11 +1199,12 @@ void FriendCoreProcess( void *fcv )
 						if( incoming_buffer_ptr )
 						{
 							//DEBUG("incoming buffer already set? unmapping");
-							munmap(incoming_buffer_ptr, incoming_buffer_length);
+							munmap( incoming_buffer_ptr, incoming_buffer_length );
+							incoming_buffer_ptr = NULL;
 						}
 						//DEBUG( "mmaping" );
 						incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
-						incoming_buffer_ptr = mmap(0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0/*offset*/);
+						incoming_buffer_ptr = mmap( 0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0/*offset*/);
 						//DEBUG( "mmap status %p", incoming_buffer_ptr );
 					}
 					else 
