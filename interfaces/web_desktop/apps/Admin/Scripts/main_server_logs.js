@@ -12,7 +12,7 @@
 	Uses the system module with the getlogs command..
 */
 
-Sections.logs = function( cmd, extra )
+Sections.server_logs = function( cmd, extra )
 {
 	console.log( cmd, extra );
 	if( cmd )
