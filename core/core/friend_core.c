@@ -1337,12 +1337,13 @@ void FriendCoreProcess( void *fcv )
 			{
 				// Process data
 				// -------------- Support for large uploads --------------------
-				if (tmp_file_handle >= 0)
+				if( tmp_file_handle >= 0 )
 				{
-					if (incoming_buffer_ptr)
+					if( incoming_buffer_ptr )
 					{
 						//DEBUG("incoming buffer already set? unmapping");
-						munmap(incoming_buffer_ptr, incoming_buffer_length);
+						munmap( incoming_buffer_ptr, incoming_buffer_length );
+						incoming_buffer_ptr = NULL;
 					}
 					//DEBUG("mmaping");
 					incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
@@ -1403,6 +1404,7 @@ void FriendCoreProcess( void *fcv )
 		if( incoming_buffer_ptr )
 		{
 			munmap( incoming_buffer_ptr, incoming_buffer_length );
+			incoming_buffer_ptr = NULL;
 		}
 		close( tmp_file_handle );
 		//DEBUG( "Deleting temporary file %s", tmp_filename );
