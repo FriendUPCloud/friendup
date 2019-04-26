@@ -593,6 +593,8 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	
 	if( workgroups != NULL )
 	{
+		UserRemoveFromGroups( usr );
+		
 		if( strcmp( "none", workgroups ) == 0 )
 		{
 		

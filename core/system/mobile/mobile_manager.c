@@ -114,11 +114,12 @@ void MobileManagerDelete( MobileManager *mmgr )
 {
 	if( mmgr != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+		if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
+		{
+			UserMobileAppDeleteAll( mmgr->mm_UMApps );
 		
-		UserMobileAppDeleteAll( mmgr->mm_UMApps );
-		
-		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+		}
 		
 		pthread_mutex_destroy( &(mmgr->mm_Mutex) );
 		

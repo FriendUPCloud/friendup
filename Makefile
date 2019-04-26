@@ -167,6 +167,7 @@ install:
 	make -C libs install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C authmods install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	cp scripts/*.sh $(FRIEND_PATH)/
+	cp scripts/bash-ini-parser $(FRIEND_PATH)/
 
 goinstall: install
 	rm -f build/resources/webclient/index.html
