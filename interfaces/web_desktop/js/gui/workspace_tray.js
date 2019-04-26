@@ -219,12 +219,12 @@ function PollTray()
 							}
 						} )( a, d );
 						
+						h += GetElementHeight( d ) + 8;
+
 						if( GetElementTop( d ) < 150 )
 						{
 							break;
-						}
-						
-						h += GetElementHeight( d ) + 8;
+						}						
 					}
 					
 					if( notties.length > 1 )
