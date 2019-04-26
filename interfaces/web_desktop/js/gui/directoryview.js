@@ -1780,6 +1780,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		dview.fileoperations[ dview.operationcounter ].sPath = sPath;
 		dview.fileoperations[ dview.operationcounter ].dPath = dPath;
 
+		// Register current open window
+		var curr = window.currentMovable;
 
 		// Open window
 		dview.fileoperations[ dview.operationcounter ].view = new View( {
@@ -2334,8 +2336,17 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				// On close, stop copying
 				w.onClose = function()
 				{
-					console.log( 'Stopping the copy process.' );
 					fileCopyObject.stop = true;
+					
+					// If we have prev current
+					if( curr && isMobile )
+					{
+						setTimeout( function()
+						{
+							_ActivateWindow( curr );
+							_WindowToFront( curr );
+						}, 550 );
+					}
 				}
 
 			}
