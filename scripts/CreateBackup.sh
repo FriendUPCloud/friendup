@@ -18,6 +18,7 @@ backup_path=../backup
 time_stamp=$(date +%Y-%m-%d-%T)
 current_backup_dir=${backup_path}/${time_stamp}
 archive_path=${backup_path}/backup_archive_${time_stamp}.tar.gz
+
 mkdir -p "${current_backup_dir}"
 
 echo "Create storage files backup"
@@ -32,7 +33,7 @@ rsync -ravl cfg/* ${current_backup_dir}/cfg
 cfg_section_DatabaseUser
 echo "Create database backup"
 mkdir -p "${current_backup_dir}/db"
-echo 
+
 mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/dump.sql
 
 #
@@ -46,5 +47,15 @@ tar -zcvf $archive_path ${current_backup_dir}
 # Send file to server
 #
 
-scp -i AWSWorkspace.pem $archive_path pal@pal.ideverket.no:/home/ubuntu/
-
+cfg_section_Backup
+echo "Sending data to server"
+# key = -i blablabla.pem
+# user = name of user
+# server = host name
+# storepath = path where backup file will be stored
+if [ -z "$server" ]
+then
+	echo "Server value not set, archive will not be transfered to backup server"
+else
+	scp $key $archive_path $user@$server:$storepath
+fi
