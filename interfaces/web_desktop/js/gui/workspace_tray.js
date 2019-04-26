@@ -142,6 +142,7 @@ function PollTray()
 			
 				var h = 8;
 				var notties = Workspace.notificationEvents;
+				
 				if( notties.length > 0 )
 				{
 					for( var a = notties.length - 1; a >= 0; a-- )
@@ -177,6 +178,7 @@ function PollTray()
 							}
 						}
 						tray.notificationPopup.appendChild( d );
+						
 						notties[ a ].seen = true; // They are seen!
 				
 						d.style.bottom = h + 'px';
@@ -211,6 +213,28 @@ function PollTray()
 						}
 						
 						h += GetElementHeight( d ) + 8;
+					}
+					
+					if( notties.length > 1 )
+					{
+						var remAll = document.createElement( 'div' );
+						remAll.className = 'NotificationPopupElement BorderBottom';
+						remAll.innerHTML = '\
+							<div>\
+								<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
+								<p class="Layout"><strong>' + i18n( 'i18n_remove_all' ) + '</strong></p>\
+							</div>';
+						tray.notificationPopup.appendChild( remAll );
+						remAll.onmousedown = function( e )
+						{
+							Workspace.notificationEvents = [];
+							PollTray();
+							cancelBubble( e );
+						}
+						
+						remAll.style.bottom = h + 'px';
+						
+						h += GetElementHeight( remAll ) + 8;
 					}
 				}
 				// No notifications?

@@ -83,6 +83,7 @@ i18n_notification_archive               : Varselsarkiv
 i18n_sure_remove_notification           : Ønsker du virkelig å gjerne varsel?
 i18n_sure_remove_notification_desc      : Dette er arkiverte varsler. Når du fjerner dem, fjernes de også fra minnet.
 i18n_system_message                     : Systemmelding
+i18n_remove_all                         : Fjern alle
 
 #Tools
 i18n_processmgr                         : Prosesser
