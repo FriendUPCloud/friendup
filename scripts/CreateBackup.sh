@@ -35,7 +35,7 @@ then
 else
 	echo "Create storage files backup (all)"
 	cfg_section_FriendCore
-	rsync -ravl * ${current_backup_dir}/
+	rsync -ravl * ${current_backup_dir}/ –exclude 'log'
 fi
 
 cfg_section_DatabaseUser
