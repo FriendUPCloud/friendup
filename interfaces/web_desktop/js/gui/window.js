@@ -5467,6 +5467,8 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	var curr = window.currentMovable;
+
 	var v = new View( {
 		title: title,
 		width: 400,
@@ -5474,6 +5476,18 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 		height: d.offsetHeight + 75,
 		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+
+	v.onClose = function()
+	{
+		if( curr && isMobile )
+		{
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
+		}
+	}
 
 	v.setSticky();
 
@@ -5532,6 +5546,9 @@ function Alert( title, string, cancelstring, callback )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	// Register current movable
+	var curr = window.currentMovable;
+
 	var minContentHeight = 100;
 	if( d.offsetHeight > minContentHeight )
 		minContentHeight = d.offsetHeight;
@@ -5546,6 +5563,18 @@ function Alert( title, string, cancelstring, callback )
 		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
 		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+	
+	v.onClose = function()
+	{
+		if( curr && isMobile )
+		{
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
+		}
+	}
 	
 	v.setSticky();
 

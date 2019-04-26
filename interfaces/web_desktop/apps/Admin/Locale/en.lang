@@ -75,6 +75,9 @@ i18n_deleting_printer_verify           : Are you sure?
 
 #User related
 
+i18n_users                             : Users
+i18n_find_users                        : Find users...
+
 i18n_header_FullName                   : Name
 i18n_header_Name                       : Username
 i18n_header_Level                      : Level

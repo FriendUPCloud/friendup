@@ -83,6 +83,7 @@ i18n_notification_archive               : Notification archive
 i18n_sure_remove_notification           : Are you sure you want to remove this notification?
 i18n_sure_remove_notification_desc      : These are archived notifications. When you remove them, they are erased from memory.
 i18n_system_message                     : System message
+i18n_remove_all                         : Clear all
 
 #Tools
 i18n_processmgr                         : Process manager
