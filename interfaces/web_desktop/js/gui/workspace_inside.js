@@ -7878,6 +7878,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Setup a file copying worker
 		var uworker = new Worker( 'js/io/filetransfer.js' );
 
+		// Remember current window
+		var curr = window.currentMovable;
+
 		// Open window
 		var w = new View( {
 			title:  i18n( 'i18n_copying_files' ),
@@ -7899,7 +7902,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			w.connectedworker = this.connectedworker;
 			w.onClose = function()
 			{
-				if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
+				if( this.connectedworker ) this.connectedworker.postMessage( {'terminate':1} );
+				
+				// If we have prev current
+				if( curr )
+				{
+					_ActivateWindow( curr );
+					_WindowToFront( curr );
+				}
 			}
 
 			uprogress.myview = w;

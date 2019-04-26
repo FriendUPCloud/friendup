@@ -5532,6 +5532,9 @@ function Alert( title, string, cancelstring, callback )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	// Register current movable
+	var curr = window.currentMovable;
+
 	var minContentHeight = 100;
 	if( d.offsetHeight > minContentHeight )
 		minContentHeight = d.offsetHeight;
@@ -5546,6 +5549,15 @@ function Alert( title, string, cancelstring, callback )
 		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
 		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+	
+	v.onClose = function()
+	{
+		if( curr )
+		{
+			_ActivateWindow( curr );
+			_WindowToFront( curr );
+		}
+	}
 	
 	v.setSticky();
 
