@@ -194,7 +194,14 @@ function PollTray()
 								}
 								Workspace.notificationEvents = out;
 								cancelBubble( e );						
-								PollTray();
+								if( out.length )
+								{
+									repopulate();
+								}
+								else
+								{
+									PollTray();
+								}
 							}
 						} )( a, d );
 						
