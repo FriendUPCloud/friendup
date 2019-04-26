@@ -14,6 +14,7 @@ cfg_parser 'cfg/cfg.ini'
 # Action
 #
 
+backup_type=all
 backup_path=../backup
 time_stamp=$(date +%Y-%m-%d-%T)
 current_backup_dir=${backup_path}/${time_stamp}
@@ -21,14 +22,21 @@ archive_path=${backup_path}/backup_archive_${time_stamp}.tar.gz
 
 mkdir -p "${current_backup_dir}"
 
-echo "Create storage files backup"
-mkdir -p "${current_backup_dir}/storage"
-cfg_section_FriendCore
-rsync -ravl $fcupload* ${current_backup_dir}/storage
+if [ -z "$backup_type" ]
+then
+	echo "Create storage files backup"
+	mkdir -p "${current_backup_dir}/storage"
+	cfg_section_FriendCore
+	rsync -ravl $fcupload* ${current_backup_dir}/storage
 
-echo "Create cfg files backup"
-mkdir -p "${current_backup_dir}/cfg"
-rsync -ravl cfg/* ${current_backup_dir}/cfg
+	echo "Create cfg files backup"
+	mkdir -p "${current_backup_dir}/cfg"
+	rsync -ravl cfg/* ${current_backup_dir}/cfg
+else
+	echo "Create storage files backup (all)"
+	cfg_section_FriendCore
+	rsync -ravl * ${current_backup_dir}/
+fi
 
 cfg_section_DatabaseUser
 echo "Create database backup"
