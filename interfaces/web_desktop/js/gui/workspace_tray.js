@@ -221,7 +221,7 @@ function PollTray()
 						remAll.className = 'NotificationPopupElement BorderBottom';
 						remAll.innerHTML = '\
 							<div>\
-								<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
+								<div class="NotificationClose FloatRight fa-trash IconSmall"></div>\
 								<p class="Layout"><strong>' + i18n( 'i18n_remove_all' ) + '</strong></p>\
 							</div>';
 						tray.notificationPopup.appendChild( remAll );
