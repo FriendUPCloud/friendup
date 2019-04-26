@@ -298,6 +298,10 @@ if( isset( $args->command ) )
 		case 'getmetadata':
 			require( 'modules/system/include/getmetadata.php' );
 			break;
+		// Get server logs
+		case 'getlogs':
+			require( 'modules/system/include/getlogs.php' );
+			break;
 		case 'resetguisettings':
 			require( 'modules/system/include/resetguisettings.php' );
 			break;

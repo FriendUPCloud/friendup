@@ -72,3 +72,10 @@ i18n_requires_confirmation_to_print    : Requires confirmation to print
 
 i18n_deleting_printer                  : Deleting printer
 i18n_deleting_printer_verify           : Are you sure?
+
+#User related
+
+i18n_header_FullName                   : Name
+i18n_header_Name                       : Username
+i18n_header_Level                      : Level
+
