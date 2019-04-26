@@ -126,6 +126,9 @@ function PollTray()
 			tray.notifications.classList.remove( 'Blink' );
 			tray.notifications.innerHTML = '';
 			
+			if( !Workspace.notificationEvents.length )
+				return;
+			
 			// Create popup
 			tray.notificationPopup = document.createElement( 'div' );
 			tray.notificationPopup.className = 'BubbleInfo TrayNotificationPopup';
@@ -139,14 +142,20 @@ function PollTray()
 			
 				var h = 8;
 				var notties = Workspace.notificationEvents;
-				if( notties.length )
+				if( notties.length > 0 )
 				{
-					for( var a = notties.length - 1; a > 0; a-- )
+					for( var a = notties.length - 1; a >= 0; a-- )
 					{
 						var d = document.createElement( 'div' );
 						d.className = 'NotificationPopupElement BorderBottom';
 						d.notification = notties[a];
-						d.innerHTML = '<div><p class="Layout"><strong>' + notties[a].title + '</strong></p><p class="Layout">' + notties[a].text + '</p></div>';
+						notties[ a ].seen = true;
+						d.innerHTML = '\
+							<div>\
+								<div class="NotificationClose FloatRight fa-remove IconSmall"></div>\
+								<p class="Layout"><strong>' + notties[a].title + '</strong></p>\
+								<p class="Layout">' + notties[a].text + '</p>\
+							</div>';
 						d.onmousedown = function( ev )
 						{
 							if( this.notification.clickCallback )
@@ -172,6 +181,23 @@ function PollTray()
 				
 						d.style.bottom = h + 'px';
 						
+						// Remove notification
+						( function( not, dd ){
+							var el = dd.getElementsByClassName( 'NotificationClose' )[ 0 ];
+							el.onmousedown = function( e )
+							{
+								var out = [];
+								for( var z = 0; z < Workspace.notificationEvents.length; z++ )
+								{
+									if( z == not ) continue;
+									else out.push( Workspace.notificationEvents[ z ] );
+								}
+								Workspace.notificationEvents = out;
+								cancelBubble( e );						
+								PollTray();
+							}
+						} )( a, d );
+						
 						if( GetElementTop( d ) < 100 )
 						{
 							break;
@@ -180,8 +206,13 @@ function PollTray()
 						h += GetElementHeight( d ) + 8;
 					}
 				}
+				// No notifications?
 				else 
 				{
+					// Remove blinking icon
+					tray.notifications.classList.remove( 'Blink' );
+					tray.notificationPopup.classList.remove( 'BubbleInfo' );
+					tray.notifications.innerHTML = '';
 					PollTray();
 				}
 			}
