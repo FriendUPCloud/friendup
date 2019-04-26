@@ -83,7 +83,11 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 		return 0;
 	}
 
-	DEBUG("clwsc_InUseCounter: %d msg: %s\n", wscdata->wsc_InUseCounter, msgptr );
+	DEBUG("WSCDATAptr %p clwsc_InUseCounter: %d msg: %s\n", wscdata, wscdata->wsc_InUseCounter, msgptr );
+	if( wscdata->wsc_InUseCounter > 0 )
+	{
+		Log( FLOG_INFO, "Previous WS call was not closed properly, ptr: %p\n", wscdata );
+	}
 	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
