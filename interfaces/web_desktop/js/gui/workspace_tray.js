@@ -113,7 +113,7 @@ function PollTray()
 		// Do we have some 
 		tray.notifications.classList.add( 'Blink' );
 		
-		// On click!
+		// On click to see all notifications!
 		tray.notifications.onclick = function( e )
 		{
 			if( tray.notifications.timeout )
@@ -122,7 +122,7 @@ function PollTray()
 				tray.notifications.timeout = null;
 			}
 			
-			// Clear showing
+			// Clear showing, because they are all seen!
 			tray.notifications.classList.remove( 'Blink' );
 			tray.notifications.innerHTML = '';
 			
