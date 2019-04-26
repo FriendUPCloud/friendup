@@ -1205,6 +1205,12 @@ void FriendCoreProcess( void *fcv )
 						//DEBUG( "mmaping" );
 						incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
 						incoming_buffer_ptr = mmap( 0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0/*offset*/);
+						
+						if( incoming_buffer_ptr == MAP_FAILED )
+						{
+							Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incoming_buffer_length );
+							goto close_fcp;
+						}
 						//DEBUG( "mmap status %p", incoming_buffer_ptr );
 					}
 					else 
@@ -1349,6 +1355,12 @@ void FriendCoreProcess( void *fcv )
 					incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
 					incoming_buffer_ptr = mmap(0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0 );// offset);
 					//DEBUG("mmap status %p", incoming_buffer_ptr);
+					
+					if( incoming_buffer_ptr == MAP_FAILED )
+					{
+						Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incoming_buffer_length );
+						goto close_fcp;
+					}
 				}
 				else
 				{
