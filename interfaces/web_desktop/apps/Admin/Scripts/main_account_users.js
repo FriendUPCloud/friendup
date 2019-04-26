@@ -11,7 +11,6 @@
 // Section for user account management
 Sections.accounts_users = function( cmd, extra )
 {
-	
 	if( cmd )
 	{
 		if( cmd == 'edit' )
@@ -23,7 +22,7 @@ Sections.accounts_users = function( cmd, extra )
 				var userInfo = info.userInfo;
 				var settings = info.settings;
 				var workspaceSettings = info.workspaceSettings;
-				var wgroups = info.workgroups;
+				var wgroups = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : [ userInfo.Workgroup ];
 				var uroles = info.roles;
 				var mountlist = info.mountlist;
 				var apps = info.applications;
@@ -38,6 +37,7 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					for( var b = 0; b < wgroups.length; b++ )
 					{
+						if( !wgroups[b].Name ) continue;
 						wstr += '<div class="HRow">';
 						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
 						wstr += '</div>';
@@ -56,6 +56,7 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}*/
 				
+				// Roles and role adherence
 				if( uroles && uroles.length )
 				{
 					for( var a in uroles )
@@ -69,58 +70,9 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
-				
-				
-				/*if( uroles && uroles.length )
-				{
-					for( var a in uroles )
-					{
-						var sw = 2;
-						
-						rstr += '<div class="Wrapper collapse">';
-						
-						rstr += '<div class="HRow">';
-						rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + uroles[a].Name + '</strong></div>';
-						rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-						rstr += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
-						rstr += '</div>';
-						rstr += '</div>';
-						
-						rstr += '<div class="List">';
-					
-						// List of workgroups for that role perhaps ??? ...
-						
-						if( wgroups && wgroups.length )
-						{
-							for( var k in wgroups )
-							{							
-								sw = sw == 2 ? 1 : 2;
-								
-								var rid = null;
-								var pem = null;
-								var key = null;
-								
-								rstr += '<div class="HRow">';
-								rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + wgroups[k].Name + '</div>';
-								rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-								//rstr += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( 1!=1 ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
-								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
-								rstr += '</div>';
-								rstr += '</div>';
-							}
-						}
-						
-						rstr += '</div>';
-					
-						rstr += '</div>';
-					}
-				}*/
-				
-				
-				
 				// Mountlist
 				var mlst = '';
-				if( mountlist.length )
+				if( mountlist && mountlist.length )
 				{
 					mlst += '<div class="HRow">';
 					for( var b = 0; b < mountlist.length; b++ )
@@ -144,6 +96,11 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					mlst += '</div>';
 				}
+				else
+				{
+					mlst += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_mountlist_empty' ) + '</div></div>';
+				}
+				
 				function initStorageGraphs()
 				{
 					var d = document.getElementsByTagName( 'canvas' );
@@ -173,7 +130,7 @@ Sections.accounts_users = function( cmd, extra )
 							size = size * 1024 * 1024 * 1024;
 						}
 						var used = parseInt( nod.getAttribute( 'used' ) );
-						if( isNaN( size ) ) size = 500 * 1024;
+						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
 						if( !used && !size ) used = 0, size = 1;
 						if( !used ) used = 0;
 						if( used > size || ( used && !size ) ) size = used;
@@ -196,6 +153,7 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
+				// Applications
 				var apl = '';
 				var types = [ i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
 				var keyz  = [ 'Name', 'Category', 'Dock' ];
@@ -241,21 +199,22 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Add all data for the template
 				d.replacements = {
-					user_name: userInfo.FullName,
-					user_fullname: userInfo.FullName,
-					user_username: userInfo.Name,
-					user_email: userInfo.Email,
-					theme_name: settings.Theme,
-					theme_dark: themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
-					wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
-					workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
+					user_name:         userInfo.FullName,
+					user_fullname:     userInfo.FullName,
+					user_username:     userInfo.Name,
+					user_email:        userInfo.Email,
+					theme_name:        settings.Theme,
+					theme_dark:        themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+					theme_style:       themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
+					wallpaper_name:    workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
+					workspace_count:   workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
 					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					storage: mlst,
-					workgroups: wstr,
-					roles: rstr,
-					applications: apl
+					storage:           mlst,
+					workgroups:        wstr,
+					roles:             rstr,
+					applications:      apl
 				};
+				
 				// Add translations
 				d.i18n();
 				d.onLoad = function( data )
@@ -266,6 +225,112 @@ Sections.accounts_users = function( cmd, extra )
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
 					Friend.responsive.reinit();
+					
+					// Events --------------------------------------------------
+					
+					// Editing basic details
+					
+					var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+					var bge  = ge( 'UserBasicEdit' );
+					for( var a = 0; a < inps.length; a++ )
+					{
+						( function( i ) {
+							i.onkeyup = function( e )
+							{
+								bge.innerHTML = ' ' + i18n( 'i18n_save_changes' );
+							}
+						} )( inps[ a ] );
+					}
+					bge.onclick = function( e )
+					{
+						/*var m = new Module( 'system' );
+						m.*/
+					}
+					
+					// Editing workgroups
+					
+					var wge = ge( 'WorkgroupEdit' );
+					if( wge ) wge.onclick = function( e )
+					{
+						// Show
+						if( !this.activated )
+						{
+							this.activated = true;
+							this.oldML = ge( 'WorkgroupGui' ).innerHTML;
+							
+							var str = '';
+							for( var a = 0; a < info.workgroups.length; a++ )
+							{
+								var found = false;
+								for( var c = 0; c < wgroups.length; c++ )
+								{
+									if( info.workgroups[a].Name == wgroups[c].Name )
+									{
+										found = true;
+										break;
+									}
+								}
+								str += '<div class="HRow">\
+									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
+									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+										<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+									</div>\
+								</div>';
+							}
+							ge( 'WorkgroupGui' ).innerHTML = str;
+							
+							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							for( var a = 0; a < workBtns.length; a++ )
+							{
+								// Toggle user relation to workgroup
+								( function( b ) {
+									b.onclick = function( e )
+									{
+										var enabled = false;
+										if( this.classList.contains( 'fa-toggle-off' ) )
+										{
+											this.classList.remove( 'fa-toggle-off' );
+											this.classList.add( 'fa-toggle-on' );
+											enabled = true;
+										}
+										else
+										{
+											this.classList.remove( 'fa-toggle-on' );
+											this.classList.add( 'fa-toggle-off' );
+										}
+										var args = { command: 'update', id: userInfo.ID };
+										args.workgroups = [];
+										
+										for( var c = 0; c < workBtns.length; c++ )
+										{
+											if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+											{
+												args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+											}
+										}
+										args.workgroups = args.workgroups.join( ',' );
+										
+										// Reload user gui now
+										var f = new Library( 'system.library' );
+										f.onExecuted = function( e, d )
+										{
+											// Do nothing
+										}
+										f.execute( 'user', args );
+									}
+								} )( workBtns[ a ] );
+							}
+							
+						}
+						// Hide
+						else
+						{
+							this.activated = false;
+							ge( 'WorkgroupGui' ).innerHTML = this.oldML;
+						}
+					}
+					
+					// End events ----------------------------------------------
 				}
 				d.load();
 			}
@@ -292,7 +357,7 @@ Sections.accounts_users = function( cmd, extra )
 						loadingList[ ++loadingSlot ]( userInfo );
 			
 					}
-					u.execute( 'userinfoget', { id: extra } );
+					u.execute( 'userinfoget', { id: extra, mode: 'all' } );
 				},
 				// Load user settings
 				function( userInfo )
@@ -300,7 +365,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var settings = null;
 						try
 						{
@@ -320,7 +385,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var workspacesettings = null;
 						try
 						{
@@ -347,7 +412,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var wgroups = null;
 						try
 						{
@@ -392,7 +457,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var ul = null;
 						try
 						{
@@ -414,7 +479,7 @@ Sections.accounts_users = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						var apps = null;
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						try
 						{
 							apps = JSON.parse( d );
@@ -440,11 +505,11 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
+	var checkedGlobal = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
+	var checkedWorkgr = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
 	
-	
-	if( Application.checkAppPermission( 'CRUD_USER_GLOBAL' ) || Application.checkAppPermission( 'CRUD_USER_WORKGROUP' ) )
+	if( checkedGlobal || checkedWorkgr )
 	{
-				
 		// Get the user list
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
@@ -467,14 +532,30 @@ Sections.accounts_users = function( cmd, extra )
 			var o = ge( 'UserList' );
 			o.innerHTML = '';
 
+			// Add the main heading
+			( function( ol ) {
+				var tr = document.createElement( 'div' );
+				tr.className = 'HRow';
+				
+				tr.innerHTML = '\
+					<div class="HContent50 FloatLeft">\
+						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+					</div>\
+					<div class="HContent50 FloatLeft">\
+						<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+					</div>\
+				';
+						
+				ol.appendChild( tr );
+			} )( o );
+
 			// Types of listed fields
 			var types = {
 				Edit: '10',
 				FullName: '30',
-				Name: '30',
-				Level: '30'
+				Name: '25',
+				Level: '25'
 			};
-
 
 			// List by level
 			var levels = [ 'Admin', 'User', 'Guest', 'API' ];
@@ -494,9 +575,56 @@ Sections.accounts_users = function( cmd, extra )
 					borders += ' BorderBottom';
 				var d = document.createElement( 'div' );
 				d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-				d.innerHTML = '<strong>' + z + '</strong>';
+				if( z == 'Edit' ) z = '';
+				d.innerHTML = '<strong>' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
 				headRow.appendChild( d );
 			}
+			
+			// New user button
+			var l = document.createElement( 'div' );
+			l.className = 'HContent10 FloatLeft BorderBottom';
+			var b = document.createElement( 'button' );
+			b.className = 'IconButton IconSmall fa-plus Negative';
+			b.innerHTML = '&nbsp;';
+			l.appendChild( b );		
+			headRow.appendChild( l );
+			b.onclick = function( e )
+			{
+				var d = new File( 'Progdir:Templates/account_users_details.html' );
+				// Add all data for the template
+				d.replacements = {
+					user_name:         '',
+					user_fullname:     '',
+					user_username:     '',
+					user_email:        '',
+					theme_name:        '',
+					theme_dark:        '',
+					theme_style:       '',
+					theme_preview:     '',
+					wallpaper_name:    '',
+					workspace_count:   '',
+					system_disk_state: '',
+					storage:           '',
+					workgroups:        '',
+					roles:             '',
+					applications:      ''
+				};
+				
+				// Add translations
+				d.i18n();
+				d.onLoad = function( data )
+				{
+					ge( 'UserDetails' ).innerHTML = data;
+					initStorageGraphs();
+					
+					// Responsive framework
+					Friend.responsive.pageActive = ge( 'UserDetails' );
+					Friend.responsive.reinit();
+				}
+				d.load();
+			}
+			
+			// Add header columns
 			header.appendChild( headRow );
 			o.appendChild( header );
 

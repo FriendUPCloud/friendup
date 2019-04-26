@@ -473,15 +473,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						{
 						//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
 						//sqllib->Update( sqllib, UserGroupDesc, fg );
-						
-						
-							{
-								char msg[ 512 ];
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
-								UGMRemoveGroup( l->sl_UGM, fg );
+
+							char msg[ 512 ];
+							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
+							UGMRemoveGroup( l->sl_UGM, fg );
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
-							}
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
 						
 							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
 

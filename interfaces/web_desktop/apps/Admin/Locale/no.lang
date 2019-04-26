@@ -30,6 +30,10 @@ i18n_name                              : Navn
 i18n_category                          : Kategori
 i18n_dock                              : I dock
 
+i18n_user_mountlist_empty              : Disklisten er tom.
+
+i18n_save_changes                      : Lagre endringer
+
 i18n_no_applications_available         : Ingen applikasjoner tilgjengelig.
 
 i18n_role_profile                      : Rolle Profil
@@ -39,12 +43,15 @@ i18n_permissions                       : Tillatelser
 
 #permissions related
 
-i18n_CRUD_USER_GLOBAL                  : Endre brukere globalt
-i18n_CRUD_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
-i18n_CRUD_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
-i18n_CRUD_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
-i18n_CRUD_TEMPLATE_GLOBAL              : Endre maler globalt
-i18n_CRUD_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
+i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
+i18n_PERM_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
+i18n_PERM_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
+i18n_PERM_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
+i18n_PERM_TEMPLATE_GLOBAL              : Endre maler globalt
+i18n_PERM_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
+
+i18n_deleting_permission               : Sletter rettighet
+i18n_deleting_permission_verify        : Vennligst bekreft at du ønsker å slette.
 
 #printers related
 
@@ -65,3 +72,14 @@ i18n_requires_confirmation_to_print    : Krever bekreftelse for å printe
 
 i18n_deleting_printer                  : Slett printer
 i18n_deleting_printer_verify           : Are you sure?
+
+#User related
+
+i18n_users                             : Brukere
+i18n_find_users                        : Finn brukere...
+
+i18n_header_FullName                   : Navn
+i18n_header_Name                       : Brukernavn
+i18n_header_Level                      : Nivå
+
+

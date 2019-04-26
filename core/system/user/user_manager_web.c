@@ -730,6 +730,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param fullname - new full user name
 	* @param email - new user email
 	* @param level - new groups to which user will be assigned. Groups must be separated by comma sign
+	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
 	* @return { update: success!} when success, otherwise error with code
 	*/
 	/// @endcond
@@ -970,6 +971,170 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		}
 		*result = 200;
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/user/updategroups</H2>Update user groups. Changes on other user accounts require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param id - (required) id of user which you want to change
+	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
+	* @return { update: success!} when success, otherwise error with code
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "updategroups" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		User *logusr = l->sl_UM->um_Users;
+		char *workgroups = NULL;
+		FULONG id = 0;
+		FBOOL userFromSession = FALSE;
+		FBOOL canChange = FALSE;
+		FBOOL imAdmin = FALSE;
+		int entries = 0;
+		
+		DEBUG( "[UMWebRequest] Update user!!\n" );
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) )
+		{
+			imAdmin = TRUE;
+		}
+		DEBUG("[UMWebRequest] Im admin %d\n", imAdmin );
+		
+		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		if( el != NULL )
+		{
+			char *next;
+			id = strtol ( (char *)el->data, &next, 0 );
+			DEBUG( "[UMWebRequest] Update id %ld!!\n", id );
+		}
+		
+		if( id > 0 && imAdmin == TRUE )
+		{
+			while( logusr != NULL )
+			{
+				if( logusr->u_ID == id  )
+				{
+					userFromSession = TRUE;
+					DEBUG("[UMWebRequest] Found session, update\n");
+					break;
+				}
+				logusr = (User *)logusr->node.mln_Succ;
+			}
+		}
+		else if( id > 0 && imAdmin == FALSE )
+		{
+			logusr = NULL;
+		}
+		else
+		{
+			id = loggedSession->us_User->u_ID;
+			userFromSession = TRUE;
+			logusr = loggedSession->us_User;
+		}
+		
+		if( logusr == NULL && id > 0 )
+		{
+			DEBUG("[UMWebRequest] Getting user from db\n");
+			logusr = UMUserGetByIDDB( l->sl_UM, id );
+		}
+		
+		if( logusr == NULL )
+		{
+			FERROR("[ERROR] User not found\n" );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+			HttpAddTextContent( response, buffer );
+		}
+		else
+		{
+			if( entries != 0 )
+			{
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
+				HttpAddTextContent( response, buffer );
+			}
+			else
+			{
+				el = HttpGetPOSTParameter( request, "workgroups" );
+				if( el != NULL )
+				{
+					workgroups = UrlDecodeToMem( (char *)el->data );
+					DEBUG("Workgroups found!: %s\n", workgroups );
+				}
+			
+				DEBUG("[UMWebRequest] Changing user data %lu\n", id );
+				// user is not logged in
+				// try to get it from DB
+				
+				if( imAdmin  == TRUE )
+				{
+					canChange = TRUE;
+				}
+				else
+				{
+					if( loggedSession->us_User == logusr )
+					{
+						canChange = TRUE;
+					}
+					else
+					{
+						canChange = FALSE;
+					}
+				}
+				
+				if( logusr != NULL && canChange == TRUE )
+				{
+					char *error = NULL;
+					DEBUG("[UMWebRequest] FC user/updategroups will do a change\n");
+
+					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, NULL, workgroups );
+					
+					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+					// we must notify user
+					//if( logusr != loggedSession->us_User )
+					//{
+					//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
+					//}
+					
+					if( error != NULL )
+					{
+						FFree( error );
+					}
+					
+					HttpAddTextContent( response, "ok<!--separate-->{ \"update\": \"success!\"}" );
+				}
+				else
+				{
+					FERROR("[ERROR] User not found\n" );
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+					HttpAddTextContent( response, buffer );
+				}
+				
+				if( userFromSession == FALSE )
+				{
+					UserDelete( logusr );
+				}
+			}
+		}
+
+		if( workgroups != NULL )
+		{
+			FFree( workgroups );
+		}
+		*result = 200;
+	}
+	
 	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**

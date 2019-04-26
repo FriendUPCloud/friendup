@@ -721,6 +721,12 @@ html > body > div button, html > body > div .Button
 	padding: 5px 10px;
 }
 
+html body button.IconButton:not(:hover), 
+html body .Button.IconButton:not(:hover)
+{
+	border: 0 !important;
+}
+
 html body .BigButton
 {
 	border-radius: 3px;

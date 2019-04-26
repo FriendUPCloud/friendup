@@ -924,7 +924,15 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 						sb->sl_USM->usm_Sessions = ses;
 					}
 				}
-				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE );
+				
+				{
+					char *err = NULL;
+					sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
+					if( err != NULL )
+					{
+						FFree( err );
+					}
+				}
 			}
 			else
 			{
@@ -953,7 +961,12 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		else
 		{
-			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE );
+			char *err;
+			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
+			if( err != NULL )
+			{
+				FFree( err );
+			}
 		}
 		sb->LibrarySQLDrop( sb, sqll );
 	}

@@ -313,7 +313,7 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **err );
 
 	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
 
@@ -339,7 +339,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail  );
+	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	

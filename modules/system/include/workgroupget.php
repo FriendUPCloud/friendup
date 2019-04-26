@@ -30,7 +30,12 @@ if( $level == 'Admin' )
 		$on->Name = $o->Name;
 		$on->ParentID = $o->ParentID;
 		$on->ID = $o->ID;
-		$on->Members = $mems ? $mems : '';
+		$on->Members = $mems ? $mems : false;
+		
+		// TODO: WARNING!
+		// As you can see, there is a strange thing here with workgroup templates
+		// called "setups" here. They are connected on UserGroupID (UserID).
+		// probably a special case that needs to be cleaned up!
 		
 		if( $sts = $SqlDatabase->FetchObjects( '
 			SELECT g.ID, g.Name, g.ParentID, ug.UserID 
