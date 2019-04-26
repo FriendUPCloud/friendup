@@ -5467,6 +5467,8 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	var curr = window.currentMovable;
+
 	var v = new View( {
 		title: title,
 		width: 400,
@@ -5474,6 +5476,18 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 		height: d.offsetHeight + 75,
 		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+
+	v.onClose = function()
+	{
+		if( curr && isMobile )
+		{
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
+		}
+	}
 
 	v.setSticky();
 
@@ -5552,10 +5566,13 @@ function Alert( title, string, cancelstring, callback )
 	
 	v.onClose = function()
 	{
-		if( curr )
+		if( curr && isMobile )
 		{
-			_ActivateWindow( curr );
-			_WindowToFront( curr );
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
 		}
 	}
 	
