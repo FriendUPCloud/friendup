@@ -532,6 +532,23 @@ Sections.accounts_users = function( cmd, extra )
 			var o = ge( 'UserList' );
 			o.innerHTML = '';
 
+			// Add the main heading
+			( function( ol ) {
+				var tr = document.createElement( 'div' );
+				tr.className = 'HRow';
+				
+				tr.innerHTML = '\
+					<div class="HContent50 FloatLeft">\
+						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+					</div>\
+					<div class="HContent50 FloatLeft">\
+						<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+					</div>\
+				';
+						
+				ol.appendChild( tr );
+			} )( o );
+
 			// Types of listed fields
 			var types = {
 				Edit: '10',
@@ -539,7 +556,6 @@ Sections.accounts_users = function( cmd, extra )
 				Name: '25',
 				Level: '25'
 			};
-
 
 			// List by level
 			var levels = [ 'Admin', 'User', 'Guest', 'API' ];

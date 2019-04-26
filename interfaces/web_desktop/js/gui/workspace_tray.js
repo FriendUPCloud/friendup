@@ -123,6 +123,7 @@ function PollTray()
 			}
 			
 			// Clear showing
+			tray.notifications.classList.remove( 'Blink' );
 			tray.notifications.innerHTML = '';
 			
 			// Create popup
