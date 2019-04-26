@@ -207,7 +207,7 @@ function PollTray()
 							}
 						} )( a, d );
 						
-						if( GetElementTop( d ) < 100 )
+						if( GetElementTop( d ) < 150 )
 						{
 							break;
 						}
@@ -233,8 +233,6 @@ function PollTray()
 						}
 						
 						remAll.style.bottom = h + 'px';
-						
-						h += GetElementHeight( remAll ) + 8;
 					}
 				}
 				// No notifications?
