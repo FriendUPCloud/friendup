@@ -50,6 +50,7 @@ mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/d
 
 echo "Create archive"
 tar -zcvf $archive_path ${current_backup_dir}
+rm -rf ${current_backup_dir}
 
 #
 # Send file to server
