@@ -77,7 +77,7 @@ function PollTray()
 						action: 1,
 						pawel: 10
 					} );
-					console.log( 'Cancelling notification event as we are online.' );
+					console.log( 'Cancelling notification event as we are online.', nots[ a ].notificationId );
 				}
 				
 				// Add this bubble!
