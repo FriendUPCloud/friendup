@@ -8,6 +8,10 @@ LFLAGS		=	-shared -fPIC -Wl,--no-as-needed -lz -lpthread -lrt -lcrypt -lssl $(sh
 DFLAGS		=	-M $(CFLAGS)  
 FPATH		=	$(shell pwd)
 
+ifeq ($(USE_SANITIZER),1)
+LFLAGS				+=	-lasan
+endif
+
 ifeq ($(DEBUG),1)
 CFLAGS  +=      -D__DEBUG
 endif

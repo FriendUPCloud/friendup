@@ -18,6 +18,10 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
 
+ifeq ($(USE_SANITIZER),1)
+LFLAGS			+=	-lasan
+endif
+
 ifeq ($(DEBUG),1)
 CFLAGS  +=	-D__DEBUG
 endif
