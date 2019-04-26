@@ -68,6 +68,18 @@ function PollTray()
 			{
 				nots[ a ].seen = true;
 				
+				if( nots[ a ].notificationId )
+				{
+					var l = new Library( 'system.library' );
+					l.onExecuted = function(){};
+					l.execute( 'mobile/updatenotification', { 
+						notifid: nots[ a ].notificationId, 
+						action: 1,
+						pawel: 10
+					} );
+					console.log( 'Cancelling notification event as we are online.' );
+				}
+				
 				// Add this bubble!
 				( function( event )
 				{
