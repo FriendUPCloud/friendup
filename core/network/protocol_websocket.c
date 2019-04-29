@@ -234,7 +234,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 	{
 		return 0;
 	}
-	DEBUG("clwsc_InUseCounter: %d msg: %s\n", wsi->wusc_Data->wsc_InUseCounter, msgptr );
+	DEBUG("clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
 	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
@@ -819,7 +819,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	WSCData *fcd =  (WSCData *) user;// lws_context_user ( this );
 	int returnError = 0;
 	
-	DEBUG("FC_Callback: reason: %d\n", reason );
+	DEBUG("FC_Callback: reason: %d wsiptr %p fcwdptr %p\n", reason, wsi, user );
 	
 	INCREASE_WS_THREADS();
 	
@@ -875,7 +875,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
 			//Log( FLOG_INFO, "[WS] LWS_CALLBACK_WS_PEER_INITIATED_CLOSE\n");
 			
-			INFO("[WS] Callback peer session closed\n");
+			INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
 		break;
 		
 		case LWS_CALLBACK_CLOSED:
@@ -889,7 +889,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				int val = 0;
 				while( TRUE )
 				{
-					DEBUG("PROTOCOL_WS: Check in use %d\n", fcd->wsc_InUseCounter );
+					DEBUG("PROTOCOL_WS: Check in use %d wsiptr %p fcws ptr %p\n", fcd->wsc_InUseCounter, wsi, fcd );
 					if( fcd->wsc_InUseCounter <= 0 )
 					{
 						break;
@@ -1840,7 +1840,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					FFree( in );
 				}
-				DEBUG("Cannot write message, WS Client is equal to NULL\n");
+				DEBUG("Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", fcd, wsi );
 				DECREASE_WS_THREADS();
 				return 0;
 			}
@@ -1872,6 +1872,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 			}
+			DEBUG("WS Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
 			
 			FLUSH_QUEUE();
 			
