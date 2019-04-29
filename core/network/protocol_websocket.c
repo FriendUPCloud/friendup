@@ -1114,7 +1114,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 														//DEBUG("\n\n\n\nFINAL MESSAGE %s %lu\n\n\n", wsreq->wr_Message, wsreq->wr_MessageSize );
 														if( wsreq->wr_Message != NULL && wsreq->wr_MessageSize > 0 && wsreq->wr_IsBroken == 0 )
 														{
+															DEBUG("Callback will be called again!\n");
 															FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
+															DEBUG("Callback was called again!\n");
 														}
 														else
 														{
@@ -1510,11 +1512,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													{
 														if( http->uri != NULL )
 														{
-															WorkerManagerRun( SLIB->sl_WorkerManager,  WSThread, wstdata, http, http->uri->queryRaw );
+															WorkerManagerRun( lsb->sl_WorkerManager,  WSThread, wstdata, http, http->uri->queryRaw );
 														}
 														else
 														{
-															WorkerManagerRun( SLIB->sl_WorkerManager,  WSThread, wstdata, http, "ProtocolWebsocket.c: line 1220" );
+															WorkerManagerRun( lsb->sl_WorkerManager,  WSThread, wstdata, http, "ProtocolWebsocket.c: line 1220" );
 														}
 													}
 #endif

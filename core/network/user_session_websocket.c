@@ -73,38 +73,7 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 			data->wsc_UserSession = NULL;
 			cl->wusc_Data = NULL;
 		}
-		/*
-		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
-		{
-			//DEBUG("[WS] connection will be removed %p\n", cl );
-			Log(FLOG_DEBUG, "WebsocketServerClient delete %p\n", cl );
-		
-			cl->wsc_UserSession = NULL;
-			cl->wsc_Wsi = NULL;
-			FCWSData *data = (FCWSData *)cl->wsc_WebsocketsData;
-			if( data != NULL )
-			{
-				data->fcd_WSClient = NULL;
-			}
-			//cl->wc_WebsocketsData = NULL;
-			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
-		}
-		DEBUG("end cl lock\n");
-		
-		int tr = 0;
-		while( TRUE )
-		{
-			DEBUG("[UserSessionWebsocketDelete]Check in use %d\n", cl->wsc_InUseCounter );
-			if( cl->wsc_InUseCounter <= 0 )
-			{
-				break;
-			}
-			sleep( 1 );
-			pthread_yield();
-		}
-		
-		pthread_mutex_destroy( &(cl->wsc_Mutex) );
-		*/
+
 		FFree( cl );
 		DEBUG("[UserSessionWebsocketDelete]Done!\n");
 	}
