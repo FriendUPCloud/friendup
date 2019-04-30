@@ -1487,6 +1487,11 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/listusers.php' );
 			break;
 
+		// store new public key
+		case 'setuserpublickey':
+			require( 'modules/system/include/setuserpublickey.php' );
+			break;
+
 		// Get detailed info about a user
 		// TODO: Permissions!!! Only access users if you are admin!
 		case 'userinfoget':
