@@ -246,6 +246,12 @@ select
 	cursor: pointer;
 }
 
+#MousePointer .MousePointer
+{
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .MouseCrosshair
 {
 	cursor: crosshair;
