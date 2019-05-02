@@ -767,6 +767,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 									else
 									{
 										$f->Filename = $args->newname;
+										$f->DateModified = date( 'Y-m-d H:i:s' );
 										$f->Save();
 										die( 'ok<!--separate-->{"response":1,"message":"Renamed the file."}' );
 									}

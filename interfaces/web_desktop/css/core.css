@@ -246,6 +246,12 @@ select
 	cursor: pointer;
 }
 
+#MousePointer .MousePointer
+{
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .MouseCrosshair
 {
 	cursor: crosshair;
@@ -1831,6 +1837,28 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	color: white;
 	border-radius: 3px;
 }
+
+.Widget.Fadable
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+.Widget.Faded
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadeout
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadein
+{
+	opacity: 1;
+}
+
 html body .Widget.Raised
 {
 	z-index: 2147483643;
@@ -1839,6 +1867,11 @@ html body .Widget.Raised
 html body[mobile=mobile] .Widget.Raised
 {
 	
+}
+
+.Widget.Faded
+{
+	opacity: 0;
 }
 
 html body.WindowMenu .Widget
@@ -3527,7 +3560,7 @@ html #DockWindowList .Task.Directory
 	margin-right: 5px;
 }
 
-.DockMenu .DockMenuItem.Directory img
+.DockMenu .DockMenuItem.Directory > img
 {
 	position: relative;
 	top: -2px;
@@ -3581,12 +3614,15 @@ html #DockWindowList .Task.Directory
 	top: 0;
 	width: 220px;
 	background: rgba(0,0,0,0.8);
+	transition: opacity 0.25s;
+	opacity: 0;
 }
 
 .DockMenu .DockMenuItem.Directory.Over > .DockSubMenu,
 .DockMenu .DockMenuItem.Directory.Active > .DockSubMenu
 {
 	pointer-events: all;
+	opacity: 1;
 	visibility: visible;
 }
 

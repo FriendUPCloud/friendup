@@ -3905,7 +3905,9 @@ function CreateHelpBubble( element, text, uniqueid )
 				width: 200,
 				height: 40,
 				'border-radius': 20,
-				above: true
+				above: true,
+				fadeOut: true,
+				fadeIn: true
 			} );
 			
 			d.innerHTML = text;
