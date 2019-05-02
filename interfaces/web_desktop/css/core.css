@@ -1837,6 +1837,27 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	color: white;
 	border-radius: 3px;
 }
+
+.Widget.Fadable
+{
+	transition: opacity 0.25s;
+}
+
+.Widget.Faded
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadeout
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadein
+{
+	opacity: 1;
+}
+
 html body .Widget.Raised
 {
 	z-index: 2147483643;
@@ -1845,6 +1866,11 @@ html body .Widget.Raised
 html body[mobile=mobile] .Widget.Raised
 {
 	
+}
+
+.Widget.Faded
+{
+	opacity: 0;
 }
 
 html body.WindowMenu .Widget

@@ -1093,7 +1093,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		var keep = []; // elements to keep
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( eles[a].className == 'ViewList' )
+			// Close help bubbles
+			if( eles[ a ].helpBubble )
+			{
+				eles[ a ].helpBubble.close();
+			}
+			if( eles[ a ].className == 'ViewList' )
 			{
 				keep.push( eles[a] );
 			}
@@ -1101,7 +1106,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		this.dom.innerHTML = '';
 		for( var a = 0; a < keep.length; a++ )
 		{
-			this.dom.appendChild( keep[a] );
+			this.dom.appendChild( keep[ a ] );
 		}
 	}
 	// Standard refresh function
