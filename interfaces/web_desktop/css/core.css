@@ -1959,12 +1959,12 @@ html body.WindowMenu .Widget
 
 .Widget.HelpBubble.Fadable.Fadein:after
 {
-	height: 30px;
+	height: 10px;
 }
 
 .Widget.HelpBubble.Fadable:after
 {
-	height: 20px;
+	height: 5px;
 }
 
 /* Formerly doors.css ------------------------------------------------------- */

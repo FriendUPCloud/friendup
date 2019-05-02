@@ -3867,7 +3867,7 @@ function CreateHelpBubble( element, text, uniqueid )
 			}
 			var mx = windowMouseX;
 			var my = windowMouseY;
-			var mt = GetElementTop( element ) - ( 50 + 30 );
+			var mt = GetElementTop( element ) - ( 50 + 10 );
 			
 			var c = document.createElement( 'canvas' );
 			var d = c.getContext( '2d' );
