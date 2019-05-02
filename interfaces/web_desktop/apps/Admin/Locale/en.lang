@@ -82,3 +82,9 @@ i18n_header_FullName                   : Name
 i18n_header_Name                       : Username
 i18n_header_Level                      : Level
 
+i18n_user_updated                      : User updated
+i18n_user_updated_succ                 : The user was successfully updated.
+
+i18n_user_update_fail                  : User update failed
+i18n_user_update_failed                : Failed to update the user.
+

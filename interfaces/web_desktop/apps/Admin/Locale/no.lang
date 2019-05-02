@@ -82,4 +82,10 @@ i18n_header_FullName                   : Navn
 i18n_header_Name                       : Brukernavn
 i18n_header_Level                      : Nivå
 
+i18n_user_updated                      : Bruker oppdatert
+i18n_user_updated_succ                 : Brukeren ble oppdatert i databasen.
+
+i18n_user_update_fail                  : Feil ved oppdatering
+i18n_user_update_failed                : Kunne ikke oppdatere brukeren.
+
 
