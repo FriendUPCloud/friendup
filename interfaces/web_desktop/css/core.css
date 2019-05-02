@@ -1936,6 +1936,11 @@ html body.WindowMenu .Widget
 	opacity: 0.6;
 }
 
+.Widget.HelpBubble
+{
+	border-radius: 25px;
+}
+
 .Widget.HelpBubble.Fadable,
 .Widget.HelpBubble.Fadable:after
 {
