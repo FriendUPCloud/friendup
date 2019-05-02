@@ -1841,6 +1841,7 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 .Widget.Fadable
 {
 	transition: opacity 0.25s;
+	opacity: 0;
 }
 
 .Widget.Faded
