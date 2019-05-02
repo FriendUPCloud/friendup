@@ -762,6 +762,11 @@ function saveUser( uid )
 	for( var a in mapping )
 	{
 		var k = mapping[ a ];
+		
+		// Skip nonchanged passwords
+		if( a == 'usPassword' && ge( a ).value == '********' )
+			continue;
+		
 		args[ k ] = Trim( ge( a ).value );
 		
 		// Special case, hashed password
