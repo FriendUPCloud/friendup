@@ -3587,12 +3587,15 @@ html #DockWindowList .Task.Directory
 	top: 0;
 	width: 220px;
 	background: rgba(0,0,0,0.8);
+	transition: opacity 0.25s;
+	opacity: 0;
 }
 
 .DockMenu .DockMenuItem.Directory.Over > .DockSubMenu,
 .DockMenu .DockMenuItem.Directory.Active > .DockSubMenu
 {
 	pointer-events: all;
+	opacity: 1;
 	visibility: visible;
 }
 

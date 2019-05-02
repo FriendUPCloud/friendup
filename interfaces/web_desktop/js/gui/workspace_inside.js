@@ -1918,6 +1918,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						s.className = 'DockMenuItem MousePointer ' + data[a].Type;
 						s.addEventListener( 'mouseover', function( e )
 						{
+							var self = this;
 							this.classList.add( 'Over' );
 							var eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
 							for( var z = 0; z < eles.length; z++ )
@@ -1977,6 +1978,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							buildMenu( data[a].Path, s, depth + 1 );
 							s.onclick = function( e )
 							{
+								var self = this;
 								this.classList.add( 'Over' );
 								var eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
 								for( var z = 0; z < eles.length; z++ )
