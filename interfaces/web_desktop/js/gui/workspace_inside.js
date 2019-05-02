@@ -1814,8 +1814,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
 
-							var nam = eles[b].getAttribute('data-displayname') ? eles[b].getAttribute('data-displayname') : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
-							var exe = eles[b].getAttribute('data-exename') ? eles[b].getAttribute('data-exename') : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							var nam = eles[b].getAttribute( 'data-displayname' ) ? eles[b].getAttribute( 'data-displayname' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							var exe = eles[b].getAttribute( 'data-exename' ) ? eles[b].getAttribute( 'data-exename' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
 							
 							var im = eles[b].style.backgroundImage ? 
 								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
@@ -1949,13 +1949,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							data[a].IconFile = '/iconthemes/friendup15/File_Binary.svg';
 	
 						if( data[a].Icon )
-							s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="' + data[a].Icon + '" alt="' + s.innerHTML + '"/> ' + s.innerHTML;
+							s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="' + data[a].Icon + '"/></span><span>' + s.innerHTML + '</span>';
 						else if( data[a].IconFile )
 						{
 							var i = data[a].IconFile;
 							if( i.indexOf( 'resources/' ) == 0 )
 								i = i.substr( 9, i.length - 9 );
-							s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="' + i + '" alt="' + s.innerHTML + '"/> ' + s.innerHTML;
+							s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="' + i + '"/></span><span>' + s.innerHTML + '</span>';
 							data[a].Icon = i;
 						}
 						
@@ -2129,7 +2129,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						var s = document.createElement( 'div' );
 						s.className = 'DockMenuItem MousePointer Executable';
-						s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg" alt="' + s.innerHTML + '"/> ' + i18n( 'menu_run_command' );
+						s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
 						s.onclick = function()
 						{
 							Workspace.toggleStartMenu( false );

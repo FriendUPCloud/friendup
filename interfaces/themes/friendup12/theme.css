@@ -903,6 +903,28 @@ html .DockMenu .DockMenuItem:hover
 	background: rgba(52,73,94,0.5);
 }
 
+html .DockMenu .DockMenuItem > span:first-child
+{
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem > span + span
+{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: calc(100% - 28px);
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem.Directory > span + span
+{
+	width: calc(100% - 40px);
+}
+
 /* Extra styling just for this theme ---------------------------------------- */
 
 html .View
