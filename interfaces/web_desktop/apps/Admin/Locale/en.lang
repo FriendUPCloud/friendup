@@ -41,6 +41,12 @@ i18n_role_name                         : Role Name
 i18n_role_description                  : Description
 i18n_permissions                       : Permissions
 
+i18n_yes                               : Yes
+i18n_no                                : No
+i18n_col_name                          : Name
+i18n_col_visible                       : Visible
+i18n_col_date                          : Date
+
 #permissions related
 
 i18n_PERM_USER_GLOBAL                  : Edit users globally

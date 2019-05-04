@@ -681,7 +681,7 @@ Workspace = {
 			height: 480,
 			'min-height': 280,
 			'resize': false,
-			title: 'Login to FriendUP',
+			title: 'Login to FriendOS',
 			close: false,
 			login: true,
 			theme: 'login'

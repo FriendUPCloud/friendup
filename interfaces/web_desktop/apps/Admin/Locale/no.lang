@@ -41,6 +41,12 @@ i18n_role_name                         : Rolle Navn
 i18n_role_description                  : Beskrivelse
 i18n_permissions                       : Tillatelser
 
+i18n_yes                               : Ja
+i18n_no                                : Nei
+i18n_col_name                          : Navn
+i18n_col_visible                       : Viser
+i18n_col_date                          : Dato
+
 #permissions related
 
 i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
