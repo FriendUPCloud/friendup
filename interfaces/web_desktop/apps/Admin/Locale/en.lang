@@ -47,6 +47,15 @@ i18n_col_name                          : Name
 i18n_col_visible                       : Visible
 i18n_col_date                          : Date
 
+#application related
+
+i18n_application_list                  : Application list
+i18n_application_profile               : Application profile
+i18n_app_marketplace_info              : Marketplace information
+i18n_application_graphics              : Graphics
+i18n_application_information           : Information
+
+
 #permissions related
 
 i18n_PERM_USER_GLOBAL                  : Edit users globally

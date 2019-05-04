@@ -12,7 +12,7 @@
 	...
 */
 
-Sections.applications_status = function( cmd, extra )
+Sections.applications_applications = function( cmd, extra )
 {
 	if( !extra ) extra = false;
 	if( typeof( Applications[ cmd ] ) != 'undefined' )
@@ -63,7 +63,7 @@ Applications = {
 					{
 						sw = sw == 1 ? 2 : 1;
 						str += '\
-							<div class="HRow sw' + sw + '">\
+							<div class="HRow sw' + sw + ' Application" appName="' + js[ a ].Name + '">\
 								<div class="PaddingSmall HContent50 FloatLeft Ellipsis">\
 									' + js[ a ].Name + '\
 								</div>\
@@ -77,6 +77,18 @@ Applications = {
 						';
 					}
 					ge( 'ApplicationList' ).innerHTML = str + '</div>';
+					
+					var apps = ge( 'ApplicationList' ).getElementsByClassName( 'Application' );
+					for( var a = 0; a < apps.length; a++ )
+					{
+						( function( app ) {
+							var nam = app.getAttribute( 'appName' );
+							app.onclick = function()
+							{
+								Applications.showApp( { name: nam } );
+							}
+						} )( apps[ a ] );
+					}
 				}
 				catch( e )
 				{
@@ -87,6 +99,24 @@ Applications = {
 			}
 		}
 		m.execute( 'software', { mode: 'global_permissions' } );
+	},
+	showApp: function( extra )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var f = new File( 'Progdir:Templates/applications_details.html' );
+			f.replacements = {
+				application_name: extra.name
+			};
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				ge( 'ApplicationDetails' ).innerHTML = data;
+			}
+			f.load();
+		}
+		m.execute( 'applicationdetails', { mode: 'data', application: extra.name } );
 	}
 };
 
