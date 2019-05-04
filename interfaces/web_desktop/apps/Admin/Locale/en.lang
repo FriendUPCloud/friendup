@@ -54,6 +54,8 @@ i18n_application_profile               : Application profile
 i18n_app_marketplace_info              : Marketplace information
 i18n_application_graphics              : Graphics
 i18n_application_information           : Information
+i18n_applications                      : Applications
+i18n_find_applications                 : Find apps
 
 
 #permissions related

@@ -39,7 +39,18 @@ Applications = {
 				try
 				{
 					var js = JSON.parse( d );
-					var str = '<div class="List">';
+					var str = '\
+					<div class="HRow">\
+						<div class="HContent50 FloatLeft">\
+							<h2>' + i18n( 'i18n_applications' ) + '</h2>\
+						</div>\
+						<div class="HContent50 FloatLeft">\
+							<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_applications' ) + '"/>\
+						</div>\
+					</div>\
+					';
+				
+					str += '<div class="List">';
 					
 					// Generate columns
 					str += '<div class="HRow">';

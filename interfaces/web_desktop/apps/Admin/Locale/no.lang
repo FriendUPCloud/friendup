@@ -54,6 +54,8 @@ i18n_application_profile               : Profil
 i18n_app_marketplace_info              : Markedsplass informasjon
 i18n_application_graphics              : Grafikk
 i18n_application_information           : Informasjon
+i18n_applications                      : Programmer
+i18n_find_applications                 : Finn programmer
 
 #permissions related
 
