@@ -507,15 +507,195 @@ Sections.accounts_users = function( cmd, extra )
 	var checkedGlobal = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
 	var checkedWorkgr = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
 	
-	if( checkedGlobal || checkedWorkgr )
+	function doListUsers( userList, clearFilter )
 	{
-		// Get the user list
+		var o = ge( 'UserList' );
+		o.innerHTML = '';
+
+		// Add the main heading
+		( function( ol ) {
+			var tr = document.createElement( 'div' );
+			tr.className = 'HRow';
+			
+			var extr = '';
+			if( clearFilter )
+			{
+				extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconButton IconSmall fa-remove"/>&nbsp;</button>';
+			}
+			
+			tr.innerHTML = '\
+				<div class="HContent50 FloatLeft">\
+					<h2>' + i18n( 'i18n_users' ) + '</h2>\
+				</div>\
+				<div class="HContent50 FloatLeft Relative">\
+					' + extr + '\
+					<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+				</div>\
+			';
+					
+			var inp = tr.getElementsByTagName( 'input' )[0];
+			inp.onkeyup = function( e )
+			{
+				if( e.which == 13 )
+				{
+					filterUsers( this.value );
+				}
+			}
+			
+			if( clearFilter )
+			{
+				inp.value = clearFilter;
+			}
+			
+			var bt = tr.getElementsByTagName( 'button' )[0];
+			if( bt )
+			{
+				bt.onclick = function()
+				{
+					filterUsers( false );
+				}
+			}
+					
+			ol.appendChild( tr );
+		} )( o );
+
+		// Types of listed fields
+		var types = {
+			Edit: '10',
+			FullName: '30',
+			Name: '25',
+			Level: '25'
+		};
+
+		// List by level
+		var levels = [ 'Admin', 'User', 'Guest', 'API' ];
+
+		// List headers
+		var header = document.createElement( 'div' );
+		header.className = 'List';
+		var headRow = document.createElement( 'div' );
+		headRow.className = 'HRow sw1';
+		for( var z in types )
+		{
+			var borders = '';
+			var d = document.createElement( 'div' );
+			if( z != 'Edit' )
+				borders += ' BorderRight';
+			if( a < userList.length - a )
+				borders += ' BorderBottom';
+			var d = document.createElement( 'div' );
+			d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
+			if( z == 'Edit' ) z = '';
+			d.innerHTML = '<strong>' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
+			headRow.appendChild( d );
+		}
+		
+		// New user button
+		var l = document.createElement( 'div' );
+		l.className = 'HContent10 FloatLeft BorderBottom';
+		var b = document.createElement( 'button' );
+		b.className = 'IconButton IconSmall fa-plus Negative';
+		b.innerHTML = '&nbsp;';
+		l.appendChild( b );		
+		headRow.appendChild( l );
+		b.onclick = function( e )
+		{
+			var d = new File( 'Progdir:Templates/account_users_details.html' );
+			// Add all data for the template
+			d.replacements = {
+				user_name:         '',
+				user_fullname:     '',
+				user_username:     '',
+				user_email:        '',
+				theme_name:        '',
+				theme_dark:        '',
+				theme_style:       '',
+				theme_preview:     '',
+				wallpaper_name:    '',
+				workspace_count:   '',
+				system_disk_state: '',
+				storage:           '',
+				workgroups:        '',
+				roles:             '',
+				applications:      ''
+			};
+			
+			// Add translations
+			d.i18n();
+			d.onLoad = function( data )
+			{
+				ge( 'UserDetails' ).innerHTML = data;
+				initStorageGraphs();
+				
+				// Responsive framework
+				Friend.responsive.pageActive = ge( 'UserDetails' );
+				Friend.responsive.reinit();
+			}
+			d.load();
+		}
+		
+		// Add header columns
+		header.appendChild( headRow );
+		o.appendChild( header );
+
+		function setROnclick( r, uid )
+		{
+			r.onclick = function()
+			{
+				Sections.accounts_users( 'edit', uid );
+			}
+		}
+
+		var list = document.createElement( 'div' );
+		list.className = 'List';
+		var sw = 2;
+		for( var b = 0; b < levels.length; b++ )
+		{
+			for( var a = 0; a < userList.length; a++ )
+			{
+				// Skip irrelevant level
+				if( userList[ a ].Level != levels[ b ] ) continue;
+
+				sw = sw == 2 ? 1 : 2;
+				var r = document.createElement( 'div' );
+				setROnclick( r, userList[ a ].ID );
+				r.className = 'HRow sw' + sw;
+
+				var icon = '<span class="IconSmall fa-user"></span>';
+				userList[ a ][ 'Edit' ] = icon;
+
+				for( var z in types )
+				{
+					var borders = '';
+					var d = document.createElement( 'div' );
+					if( z != 'Edit' )
+					{
+						d.className = '';
+						borders += ' BorderRight';
+					}
+					else d.className = 'TextCenter';
+					if( a < userList.length - a )
+						borders += ' BorderBottom';
+					d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
+					d.innerHTML = userList[a][ z ];
+					r.appendChild( d );
+				}
+
+				// Add row
+				list.appendChild( r );
+			}
+		}
+		o.appendChild( list );
+
+		Friend.responsive.pageActive = ge( 'UserList' );
+		Friend.responsive.reinit();
+	}
+	
+	function filterUsers( filter )
+	{
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			//console.log( { e:e, d:d } );
-			
-			//if( e != 'ok' ) return;
 			var userList = null;
 			
 			try
@@ -527,157 +707,36 @@ Sections.accounts_users = function( cmd, extra )
 				return;
 			}
 			
-			
-			var o = ge( 'UserList' );
-			o.innerHTML = '';
-
-			// Add the main heading
-			( function( ol ) {
-				var tr = document.createElement( 'div' );
-				tr.className = 'HRow';
-				
-				tr.innerHTML = '\
-					<div class="HContent50 FloatLeft">\
-						<h2>' + i18n( 'i18n_users' ) + '</h2>\
-					</div>\
-					<div class="HContent50 FloatLeft">\
-						<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
-					</div>\
-				';
-						
-				ol.appendChild( tr );
-			} )( o );
-
-			// Types of listed fields
-			var types = {
-				Edit: '10',
-				FullName: '30',
-				Name: '25',
-				Level: '25'
-			};
-
-			// List by level
-			var levels = [ 'Admin', 'User', 'Guest', 'API' ];
-
-			// List headers
-			var header = document.createElement( 'div' );
-			header.className = 'List';
-			var headRow = document.createElement( 'div' );
-			headRow.className = 'HRow sw1';
-			for( var z in types )
-			{
-				var borders = '';
-				var d = document.createElement( 'div' );
-				if( z != 'Edit' )
-					borders += ' BorderRight';
-				if( a < userList.length - a )
-					borders += ' BorderBottom';
-				var d = document.createElement( 'div' );
-				d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-				if( z == 'Edit' ) z = '';
-				d.innerHTML = '<strong>' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
-				headRow.appendChild( d );
-			}
-			
-			// New user button
-			var l = document.createElement( 'div' );
-			l.className = 'HContent10 FloatLeft BorderBottom';
-			var b = document.createElement( 'button' );
-			b.className = 'IconButton IconSmall fa-plus Negative';
-			b.innerHTML = '&nbsp;';
-			l.appendChild( b );		
-			headRow.appendChild( l );
-			b.onclick = function( e )
-			{
-				var d = new File( 'Progdir:Templates/account_users_details.html' );
-				// Add all data for the template
-				d.replacements = {
-					user_name:         '',
-					user_fullname:     '',
-					user_username:     '',
-					user_email:        '',
-					theme_name:        '',
-					theme_dark:        '',
-					theme_style:       '',
-					theme_preview:     '',
-					wallpaper_name:    '',
-					workspace_count:   '',
-					system_disk_state: '',
-					storage:           '',
-					workgroups:        '',
-					roles:             '',
-					applications:      ''
-				};
-				
-				// Add translations
-				d.i18n();
-				d.onLoad = function( data )
-				{
-					ge( 'UserDetails' ).innerHTML = data;
-					initStorageGraphs();
-					
-					// Responsive framework
-					Friend.responsive.pageActive = ge( 'UserDetails' );
-					Friend.responsive.reinit();
-				}
-				d.load();
-			}
-			
-			// Add header columns
-			header.appendChild( headRow );
-			o.appendChild( header );
-
-			function setROnclick( r, uid )
-			{
-				r.onclick = function()
-				{
-					Sections.accounts_users( 'edit', uid );
-				}
-			}
-
-			var list = document.createElement( 'div' );
-			list.className = 'List';
-			var sw = 2;
-			for( var b = 0; b < levels.length; b++ )
-			{
-				for( var a = 0; a < userList.length; a++ )
-				{
-					// Skip irrelevant level
-					if( userList[ a ].Level != levels[ b ] ) continue;
+			doListUsers( userList, filter ? filter : false );
+		}
+		if( filter )
+		{
+			m.execute( 'listusers', { query: filter } );
+		}
+		else
+		{
+			m.execute( 'listusers' );
+		}
+	}
 	
-					sw = sw == 2 ? 1 : 2;
-					var r = document.createElement( 'div' );
-					setROnclick( r, userList[ a ].ID );
-					r.className = 'HRow sw' + sw;
-
-					var icon = '<span class="IconSmall fa-user"></span>';
-					userList[ a ][ 'Edit' ] = icon;
-
-					for( var z in types )
-					{
-						var borders = '';
-						var d = document.createElement( 'div' );
-						if( z != 'Edit' )
-						{
-							d.className = '';
-							borders += ' BorderRight';
-						}
-						else d.className = 'TextCenter';
-						if( a < userList.length - a )
-							borders += ' BorderBottom';
-						d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
-						d.innerHTML = userList[a][ z ];
-						r.appendChild( d );
-					}
-
-					// Add row
-					list.appendChild( r );
-				}
+	if( checkedGlobal || checkedWorkgr )
+	{
+		// Get the user list
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{			
+			var userList = null;
+			
+			try
+			{
+				userList = JSON.parse( d );
 			}
-			o.appendChild( list );
-
-			Friend.responsive.pageActive = ge( 'UserList' );
-			Friend.responsive.reinit();
+			catch( e )
+			{
+				return;
+			}
+			
+			doListUsers( userList );
 		}
 		m.execute( 'listusers' );
 		
