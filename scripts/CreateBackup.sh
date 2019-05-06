@@ -23,8 +23,13 @@ archive_path=${backup_path}/backup_archive_${time_stamp}.tar.gz
 
 mkdir -p "${current_backup_dir}"
 
-if [ -z "$backup_type" ]
+#if [ -z "$backup_type" ]
+if [ "$backup_type" = "all" ]
 then
+	echo "Create storage files backup (all)"
+	cfg_section_FriendCore
+	rsync -ravl * ${current_backup_dir}/ --exclude 'log'
+else
 	echo "Create storage files backup"
 	mkdir -p "${current_backup_dir}/storage"
 	cfg_section_FriendCore
@@ -33,10 +38,6 @@ then
 	echo "Create cfg files backup"
 	mkdir -p "${current_backup_dir}/cfg"
 	rsync -ravl cfg/* ${current_backup_dir}/cfg
-else
-	echo "Create storage files backup (all)"
-	cfg_section_FriendCore
-	rsync -ravl * ${current_backup_dir}/ --exclude 'log'
 fi
 
 cfg_section_DatabaseUser
@@ -69,3 +70,11 @@ then
 else
 	scp $key $archive_path $user@$server:$storepath
 fi
+
+#
+# Delete old files (older then 7 days)
+#
+
+echo "Delete old files"
+find $backup_path -mtime +7 -type f -delete
+
