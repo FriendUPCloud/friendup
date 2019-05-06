@@ -68,7 +68,12 @@ if [ -z "$server" ]
 then
 	echo "Server value not set, archive will not be transfered to backup server"
 else
-	scp $key $archive_path $user@$server:$storepath
+	if [ -z "$password" ]
+	then
+		scp $key $archive_path $user@$server:$storepath
+	else
+		sshpass -p '${password}' scp $key $archive_path $user@$server:$storepath 
+	fi
 fi
 
 #
