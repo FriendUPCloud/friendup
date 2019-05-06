@@ -7,7 +7,7 @@
 # ini parser
 #
 
-. /home/stefkos/development/osfriend/friendup/build/bash-ini-parser
+. bash-ini-parser
 #cfg.parser '../build/cfg/cfg.ini'
 cfg_parser 'cfg/cfg.ini'
 
