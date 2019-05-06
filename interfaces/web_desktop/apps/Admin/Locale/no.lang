@@ -41,6 +41,22 @@ i18n_role_name                         : Rolle Navn
 i18n_role_description                  : Beskrivelse
 i18n_permissions                       : Tillatelser
 
+i18n_yes                               : Ja
+i18n_no                                : Nei
+i18n_col_name                          : Navn
+i18n_col_visible                       : Viser
+i18n_col_date                          : Dato
+
+#application related
+
+i18n_application_list                  : Programliste
+i18n_application_profile               : Profil
+i18n_app_marketplace_info              : Markedsplass informasjon
+i18n_application_graphics              : Grafikk
+i18n_application_information           : Informasjon
+i18n_applications                      : Programmer
+i18n_find_applications                 : Finn programmer
+
 #permissions related
 
 i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
@@ -81,5 +97,11 @@ i18n_find_users                        : Finn brukere...
 i18n_header_FullName                   : Navn
 i18n_header_Name                       : Brukernavn
 i18n_header_Level                      : Nivå
+
+i18n_user_updated                      : Bruker oppdatert
+i18n_user_updated_succ                 : Brukeren ble oppdatert i databasen.
+
+i18n_user_update_fail                  : Feil ved oppdatering
+i18n_user_update_failed                : Kunne ikke oppdatere brukeren.
 
 

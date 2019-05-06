@@ -1936,6 +1936,37 @@ html body.WindowMenu .Widget
 	opacity: 0.6;
 }
 
+.Widget.HelpBubble
+{
+	border-radius: 25px;
+}
+
+.Widget.HelpBubble.Fadable,
+.Widget.HelpBubble.Fadable:after
+{
+	transition: margin-top,height 0.25s,0.25s;
+}
+
+.Widget.HelpBubble.Fadable
+{
+	margin-top: 0;
+}
+
+.Widget.HelpBubble.Fadable.Fadein
+{
+	margin-top: -10px;
+}
+
+.Widget.HelpBubble.Fadable.Fadein:after
+{
+	height: 10px;
+}
+
+.Widget.HelpBubble.Fadable:after
+{
+	height: 5px;
+}
+
 /* Formerly doors.css ------------------------------------------------------- */
 
 /* Non logged in state */

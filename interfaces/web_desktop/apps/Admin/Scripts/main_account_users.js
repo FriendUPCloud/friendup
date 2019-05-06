@@ -243,8 +243,7 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					bge.onclick = function( e )
 					{
-						/*var m = new Module( 'system' );
-						m.*/
+						saveUser( userInfo.ID );
 					}
 					
 					// Editing workgroups
@@ -746,4 +745,50 @@ Sections.userrole_update = function( rid, userid, _this )
 		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data } );
 	}
 };
+
+// Save a user
+function saveUser( uid )
+{
+	if( !uid ) return;
+	
+	var args = { command: 'update' };
+	args.id = uid;
+	var mapping = {
+		usFullname: 'fullname',
+		usEmail:    'email',
+		usUsername: 'username',
+		usPassword: 'password'
+	};
+	for( var a in mapping )
+	{
+		var k = mapping[ a ];
+		
+		// Skip nonchanged passwords
+		if( a == 'usPassword' && ge( a ).value == '********' )
+			continue;
+		
+		args[ k ] = Trim( ge( a ).value );
+		
+		// Special case, hashed password
+		if( a == 'usPassword' )
+		{
+			args[ k ] = '{S6}' + Sha256.hash( 'HASHED' + Sha256.hash( args[ k ] ) );
+		}
+	}
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+			Sections.accounts_users( 'edit', uid );
+		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
+		}
+	}
+	f.execute( 'user', args );
+}
 
