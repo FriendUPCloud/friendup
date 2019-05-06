@@ -41,6 +41,23 @@ i18n_role_name                         : Role Name
 i18n_role_description                  : Description
 i18n_permissions                       : Permissions
 
+i18n_yes                               : Yes
+i18n_no                                : No
+i18n_col_name                          : Name
+i18n_col_visible                       : Visible
+i18n_col_date                          : Date
+
+#application related
+
+i18n_application_list                  : Application list
+i18n_application_profile               : Application profile
+i18n_app_marketplace_info              : Marketplace information
+i18n_application_graphics              : Graphics
+i18n_application_information           : Information
+i18n_applications                      : Applications
+i18n_find_applications                 : Find apps
+
+
 #permissions related
 
 i18n_PERM_USER_GLOBAL                  : Edit users globally
@@ -81,4 +98,10 @@ i18n_find_users                        : Find users...
 i18n_header_FullName                   : Name
 i18n_header_Name                       : Username
 i18n_header_Level                      : Level
+
+i18n_user_updated                      : User updated
+i18n_user_updated_succ                 : The user was successfully updated.
+
+i18n_user_update_fail                  : User update failed
+i18n_user_update_failed                : Failed to update the user.
 

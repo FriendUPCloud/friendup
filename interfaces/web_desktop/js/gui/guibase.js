@@ -3867,7 +3867,7 @@ function CreateHelpBubble( element, text, uniqueid )
 			}
 			var mx = windowMouseX;
 			var my = windowMouseY;
-			var mt = GetElementTop( element ) - ( 50 + 30 );
+			var mt = GetElementTop( element ) - ( 50 + 10 );
 			
 			var c = document.createElement( 'canvas' );
 			var d = c.getContext( '2d' );
@@ -3905,7 +3905,9 @@ function CreateHelpBubble( element, text, uniqueid )
 				width: 200,
 				height: 40,
 				'border-radius': 20,
-				above: true
+				above: true,
+				fadeOut: true,
+				fadeIn: true
 			} );
 			
 			d.innerHTML = text;

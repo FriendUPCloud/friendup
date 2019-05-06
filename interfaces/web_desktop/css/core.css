@@ -1837,6 +1837,28 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	color: white;
 	border-radius: 3px;
 }
+
+.Widget.Fadable
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+.Widget.Faded
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadeout
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadein
+{
+	opacity: 1;
+}
+
 html body .Widget.Raised
 {
 	z-index: 2147483643;
@@ -1845,6 +1867,11 @@ html body .Widget.Raised
 html body[mobile=mobile] .Widget.Raised
 {
 	
+}
+
+.Widget.Faded
+{
+	opacity: 0;
 }
 
 html body.WindowMenu .Widget
@@ -1907,6 +1934,37 @@ html body.WindowMenu .Widget
 	background-position: top center;
 	background-repeat: no-repeat;
 	opacity: 0.6;
+}
+
+.Widget.HelpBubble
+{
+	border-radius: 25px;
+}
+
+.Widget.HelpBubble.Fadable,
+.Widget.HelpBubble.Fadable:after
+{
+	transition: margin-top,height 0.25s,0.25s;
+}
+
+.Widget.HelpBubble.Fadable
+{
+	margin-top: 0;
+}
+
+.Widget.HelpBubble.Fadable.Fadein
+{
+	margin-top: -10px;
+}
+
+.Widget.HelpBubble.Fadable.Fadein:after
+{
+	height: 10px;
+}
+
+.Widget.HelpBubble.Fadable:after
+{
+	height: 5px;
 }
 
 /* Formerly doors.css ------------------------------------------------------- */
@@ -3533,7 +3591,7 @@ html #DockWindowList .Task.Directory
 	margin-right: 5px;
 }
 
-.DockMenu .DockMenuItem.Directory img
+.DockMenu .DockMenuItem.Directory > img
 {
 	position: relative;
 	top: -2px;
@@ -3587,12 +3645,15 @@ html #DockWindowList .Task.Directory
 	top: 0;
 	width: 220px;
 	background: rgba(0,0,0,0.8);
+	transition: opacity 0.25s;
+	opacity: 0;
 }
 
 .DockMenu .DockMenuItem.Directory.Over > .DockSubMenu,
 .DockMenu .DockMenuItem.Directory.Active > .DockSubMenu
 {
 	pointer-events: all;
+	opacity: 1;
 	visibility: visible;
 }
 

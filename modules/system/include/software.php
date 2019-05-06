@@ -120,6 +120,17 @@ foreach( $paths as $path )
 	}
 }
 
+// Sorting
+$byName = [];
+foreach( $apps as $a )
+{
+	$byName[ $a->Name ] = $a;
+}
+ksort( $byName );
+$apps = [];
+foreach( $byName as $k=>$v )
+	$apps[] = $v;
+
 die( 'ok<!--separate-->' . json_encode( $apps ) );
 
 ?>

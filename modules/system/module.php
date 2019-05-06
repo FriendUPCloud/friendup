@@ -1938,25 +1938,7 @@ if( isset( $args->command ) )
 			if( $o->ID > 0 )
 				die( 'ok' );
 			die( 'fail<!--separate-->{"response":"set theme failed"}'  );
-//-------------------------------------- DEPRECATED ---------------------------------------------
-/* This piece of code handled user deletion, however it did not clear current sessions
- * (because they are stored in the core). This in turn lead to problems if a user was deleted
- * and re-created with the same username. The core was confused and the new account has seen
- * incomplete workspace. User removal is now handled in user_manager_web.c
- */
-//
-// 		case 'userdelete':
-// 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"user delete failed"}' );
-// 			$u = new dbIO( 'FUser' );
-// 			if( $u->Load( $args->args->id ) )
-// 			{
-// 				$SqlDatabase->query( 'DELETE FROM `FSetting` WHERE UserID=\'' . $u->ID . '\'' );
-// 				$SqlDatabase->query( 'DELETE FROM `DockItem` WHERE UserID=\'' . $u->ID . '\'' );
-// 				$u->Delete();
-// 				die( 'ok' );
-// 			}
-// 			die( 'fail<!--separate-->{"response":"user delete failed"}'  );
-//-----------------------------------------------------------------------------------------------
+
 		case 'userunblock':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"userunblock failed"}' );
 			$u = new dbIO( 'FUser' );

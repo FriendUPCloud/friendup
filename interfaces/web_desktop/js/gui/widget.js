@@ -34,6 +34,12 @@ Widget.prototype.init = function( flags, target )
 	// Dimensions
 	for( var a in this.flags ) this.setFlag( a, this.flags[a] );
 	
+	// Can fade
+	if( this.fadeOut || this.fadeIn )
+	{
+		this.dom.classList.add( 'Fadable' );
+	}
+	
 	this.dom.onmousedown = function( e )
 	{
 		return cancelBubble( e );
@@ -280,22 +286,19 @@ Widget.prototype.lower = function( callback )
 Widget.prototype.show = function( callback )
 {
 	var self = this;
+	
+	// Remove fadeout class if it exists
+	self.dom.classList.remove( 'Fadeout' );
+	
 	this.shown = true;
 	this.calcPosition();
 	if( this.fadeIn )
 	{
-		if( this.fadeTimeout ) clearTimeout( this.fadeTimeout );
-		var fader = 0;
-		this.fadeMotion = 'in';
-		function fade()
+		this.dom.classList.add( 'Faded' );
+		setTimeout( function()
 		{
-			if( self.fadeMotion != 'in' ) return;
-			self.dom.style.opacity = ++fader;
-			if( fader < 255 )
-				requestAnimationFrame( function(){ fade(); } );
-			console.log( fader );
-		}
-		fade();
+			self.dom.classList.add( 'Fadein' );
+		}, 5 );
 	}
 	this.dom.style.visibility = 'visible';
 	this.dom.style.pointerEvents = 'all';
@@ -314,22 +317,12 @@ Widget.prototype.hide = function( callback )
 	}
 	if( this.fadeOut )
 	{
-		if( this.fadeTimeout ) clearTimeout( this.fadeTimeout );
-		var fader = 255;
-		this.fadeMotion = 'out';
-		function fade()
+		this.dom.classList.add( 'Fadeout' );
+		this.dom.classList.remove( 'Fadein' );
+		setTimeout( function()
 		{
-			if( self.fadeMotion != 'out' ){ doHide(); return; }
-			self.dom.style.opacity = --fader;
-			if( fader > 0 )
-				requestAnimationFrame( function(){ fade(); } );
-			else
-			{
-				doHide();
-				self.fadeTimeout = null;
-			}
-		}
-		fade();
+			doHide();
+		}, 250 );
 	}
 	else doHide();
 }
