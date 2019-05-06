@@ -23,6 +23,19 @@ archive_path=${backup_path}/backup_archive_${time_stamp}.tar.gz
 
 mkdir -p "${current_backup_dir}"
 
+cfg_section_Backup
+echo "Backup Type: $type"
+if [ -z "$type" ]
+then
+	echo "Type server not set, using default option"
+else
+	backup_type="$type"
+fi
+
+#
+# Doing backup
+#
+
 #if [ -z "$backup_type" ]
 if [ "$backup_type" = "all" ]
 then
@@ -70,9 +83,12 @@ then
 else
 	if [ -z "$password" ]
 	then
-		scp $key $archive_path $user@$server:$storepath
+		scp $port $key $archive_path $user@$server:$storepath
 	else
-		sshpass -p '${password}' scp $key $archive_path $user@$server:$storepath 
+		echo "Using command line: sshpass -p '${password}' scp -oBatchMode=no $port $key $archive_path $user@$server:$storepath"
+		SSHPASS=${password} sshpass -e scp -o StrictHostKeyChecking=no $port $key $archive_path $user@$server:$storepath 
+		#echo "Using command line: echo '${password}' | scp -o StrictHostKeyChecking=no $port $key $archive_path $user@$server:$storepath "
+		#echo "${password}" | scp -o StrictHostKeyChecking=no $port $key $archive_path $user@$server:$storepath 
 	fi
 fi
 
