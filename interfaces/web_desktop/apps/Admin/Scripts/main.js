@@ -65,7 +65,7 @@ function refreshSidebar()
 			}
 		},
 		'Applications': {
-			'Status': {
+			'Applications': {
 				icon: 'fa-info-circle',
 				showing: isAdmin
 			}

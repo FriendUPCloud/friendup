@@ -447,10 +447,10 @@ function EditUser( id, mode )
 					ge( 'SetupContainer' ).style.display = 'none';
 				}
 				
-				if( ge( 'WorkgroupContainer' ) && !dat.Workgroup.length )
+				/*if( ge( 'WorkgroupContainer' ) && !dat.Workgroup.length )
 				{
 					ge( 'WorkgroupContainer' ).style.display = 'none';
-				}
+				}*/
 				
 				if( dat.Workgroup )
 				{

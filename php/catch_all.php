@@ -61,7 +61,7 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );
 		}
 		// Check for quest accounts
-		else if( preg_match( '/\/guests[\/]{0,1}/i', $argv[1], $m ) )
+		else if( preg_match( '/^\/guests[\/]{0,1}/i', $argv[1], $m ) )
 		{
 			$groupSession = true;
 			require( 'guests.php' );
@@ -98,7 +98,7 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			}
 			die( file_get_contents( 'cfg/crt/key.pub' ) );
 		}
-		else if( preg_match( '/\/fileaccess[\/]{0,1}/i', $argv[1], $m ) )
+		else if( preg_match( '/^\/fileaccess[\/]{0,1}/i', $argv[1], $m ) )
 		{
 			// external server file access interface
 			require_once( 'fileaccess.php' );

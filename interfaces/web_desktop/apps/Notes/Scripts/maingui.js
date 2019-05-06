@@ -1308,6 +1308,8 @@ Application.newDocument = function( args )
 	this.fileSaved = false;
 	this.lastSaved = 0;
 	
+	var self = this;
+	
 	// Wait till ready
 	if( typeof( ClassicEditor ) == 'undefined' )
 	{
@@ -1383,7 +1385,21 @@ Application.newDocument = function( args )
 		{
 			this.browserPath = args.browserPath;
 			this.path = args.browserPath;
-			this.fileBrowser.setPath( args.browserPath );
+			if( this.fileBrowser )
+			{
+				this.fileBrowser.setPath( args.browserPath );
+			}
+			// Try again
+			else
+			{
+				setTimeout( function()
+				{
+					if( self.fileBrowser )
+					{
+						self.fileBrowser.setPath( args.browserPath );
+					}
+				}, 5000 );
+			}
 		}
 	}
 }

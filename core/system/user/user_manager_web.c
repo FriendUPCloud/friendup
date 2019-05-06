@@ -824,7 +824,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( imAdmin == TRUE )
 				{
 					char query[ 1024 ];
-					sprintf( query, " FUser where `Name`='%s' AND ID != %lu" , usrname, id );
+					sprintf( query, " FUser WHERE `Name`='%s' AND ID != %lu" , usrname, id );
 	
 					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 					if( sqlLib != NULL )

@@ -681,7 +681,7 @@ Workspace = {
 			height: 480,
 			'min-height': 280,
 			'resize': false,
-			title: 'Login to FriendUP',
+			title: 'Login to FriendOS',
 			close: false,
 			login: true,
 			theme: 'login'
@@ -1120,6 +1120,22 @@ Workspace = {
 					_this.encryption.keys.server = ( server ? { publickey: server } : false );
 				} );
 			}
+
+			// Make sure we have a public key for this user (depending on login interface)
+			// TODO: See if we actually need this (and it doesn't work properly)
+			/*if( window.friendApp )
+			{
+				var credentials = friendApp.getCredentials();
+				var info = Workspace.generateKeys( credentials.username, credentials.password );
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					// Call back!
+					if( cb ) cb();
+				}
+				m.execute( 'setuserpublickey', { publickey: info.publickey } );
+				return;
+			}*/
 
 			// Call back!
 			if( cb ) cb();
