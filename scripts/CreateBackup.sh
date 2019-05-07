@@ -11,7 +11,8 @@
 # port = port parameter used by scp
 # server = host name
 # storepath = path where backup file will be stored
-# archive = use compression yes/no
+# compression = use compression yes/no
+# directories = directory names which backup will contain. Stored as string, names are separated by comma. This option works only when type is equal to "partial"
 
 #
 # Parse configuration
@@ -64,7 +65,7 @@ fi
 
 echo "$(date +%Y-%m-%d-%T): Copy files" >> ${log_file}
 
-if [ "$archive" = "yes" ]
+if [ "$archive" = "yes" ] && [! -z "$server" ]
 then
 	# store all files in archive
 	if [ "$backup_type" = "all" ]
@@ -72,13 +73,24 @@ then
 		echo "Create storage files backup (all)"
 		rsync -ravl ${storage_directory}* ${current_backup_dir}/ --exclude 'log'
 	else
-		echo "Create storage files backup"
-		mkdir -p "${current_backup_dir}/storage"
-		rsync -ravl ${storage_directory}* ${current_backup_dir}/storage
+		if [ -z "$directories" ]
+		then
+			echo "Create storage files backup"
+			mkdir -p "${current_backup_dir}/storage"
+			rsync -ravl ${storage_directory}* ${current_backup_dir}/storage
 
-		echo "Create cfg files backup"
-		mkdir -p "${current_backup_dir}/cfg"
-		rsync -ravl cfg/* ${current_backup_dir}/cfg
+			echo "Create cfg files backup"
+			mkdir -p "${current_backup_dir}/cfg"
+			rsync -ravl cfg/* ${current_backup_dir}/cfg
+		else
+			echo "Create storage files backup: ${directories}"
+			IFS=',' read -r -a array <<< "$directories"
+			for i in "${array[@]}"
+			do
+				mkdir -p "${current_backup_dir}/$i"
+				rsync -ravl $i/* ${current_backup_dir}/$i
+			done
+		fi
 	fi
 else
 	# send all files separated
@@ -88,12 +100,23 @@ else
 		SSHPASS=${password} sshpass -e ssh $port_small $user@$server "mkdir -p $storepath$backup_file_name/build"
 		SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" * $user@$server:$storepath$backup_file_name/build --exclude 'log' >> ${log_file} 2>&1
 	else
-		echo "Create storage files backup"
-		SSHPASS=${password} sshpass -e ssh $port_small $user@$server "mkdir -p $storepath$backup_file_name/storage $storepath$backup_file_name/cfg $storepath$backup_file_name/services" >> ${log_file} 2>&1
-		echo "sshpass -e rsync -raz -e \"ssh $port_small\" ${storage_directory} $user@$server:$storepath$backup_file_name/storage"
-		SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${storage_directory} $user@$server:$storepath$backup_file_name/storage >> ${log_file} 2>&1
-		SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" cfg/ $user@$server:$storepath$backup_file_name/cfg >> ${log_file} 2>&1
-		SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" services/ $user@$server:$storepath$backup_file_name/services >> ${log_file} 2>&1
+		if [ -z "$directories" ]
+		then
+			echo "Create storage files backup"
+			SSHPASS=${password} sshpass -e ssh $port_small $user@$server "mkdir -p $storepath$backup_file_name/storage $storepath$backup_file_name/cfg $storepath$backup_file_name/services" >> ${log_file} 2>&1
+			echo "sshpass -e rsync -raz -e \"ssh $port_small\" ${storage_directory} $user@$server:$storepath$backup_file_name/storage"
+			SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${storage_directory} $user@$server:$storepath$backup_file_name/storage >> ${log_file} 2>&1
+			SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" cfg/ $user@$server:$storepath$backup_file_name/cfg >> ${log_file} 2>&1
+			SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" services/ $user@$server:$storepath$backup_file_name/services >> ${log_file} 2>&1
+		else
+			echo "Create storage files backup: ${directories}"
+			IFS=',' read -r -a array <<< "$directories"
+			for i in "${array[@]}"
+			do
+				SSHPASS=${password} sshpass -e ssh $port_small $user@$server "mkdir -p $storepath$backup_file_name/$i" >> ${log_file} 2>&1
+				SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" $i/* $user@$server:$storepath$backup_file_name/$i >> ${log_file} 2>&1
+			done
+		fi
 	fi
 fi
 
