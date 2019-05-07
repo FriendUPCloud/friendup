@@ -116,16 +116,52 @@ Applications = {
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			var f = new File( 'Progdir:Templates/applications_details.html' );
-			f.replacements = {
-				application_name: extra.name
-			};
-			f.i18n();
-			f.onLoad = function( data )
+			var h = new Module( 'system' );
+			h.onExecuted = function( cod, dat )
 			{
-				ge( 'ApplicationDetails' ).innerHTML = data;
+				var js = false;
+				var ds = false;
+				
+				try
+				{
+					js = JSON.parse( d );
+					ds = JSON.parse( dat );
+				}
+				catch( e )
+				{
+					return;
+				}
+				
+				var extraData = null;
+				
+				var visible = false;
+				var promoted = false;
+				
+				for( var z = 0; z < ds.length; z++ )
+				{
+					if( ds[ z ].Key.split( '_' )[0] == extra.name )
+					{
+						if( ds[ z ].ValueString == 'Visible' )
+						{
+							visible = ds[ z ].ValueNumber == '1' ? true : false;
+						}
+						break;
+					}
+				}
+			
+				var f = new File( 'Progdir:Templates/applications_details.html' );
+				f.replacements = {
+					application_name: extra.name,
+					application_visible: visible ? 'true' : 'false'
+				};
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					ge( 'ApplicationDetails' ).innerHTML = data;
+				}
+				f.load();
 			}
-			f.load();
+			h.execute( 'getmetadata', { search: 'application_', valueStrings: [ 'Visible', 'Featured' ] } );
 		}
 		m.execute( 'applicationdetails', { mode: 'data', application: extra.name } );
 	}
