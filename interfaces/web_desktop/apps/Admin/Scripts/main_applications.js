@@ -181,11 +181,16 @@ Applications = {
 					}
 				}
 			
+				var check = '<div class="IconSmall FloatRight fa-toggle-!">&nbsp;</div>';
+			
+				var vis = visible  ? 'on' : 'off'; vis = check.replace( '!', vis );
+				var fea = featured ? 'on' : 'off'; fea = check.replace( '!', fea );
+			
 				var f = new File( 'Progdir:Templates/applications_details.html' );
 				f.replacements = {
 					application_name: extra.name,
-					application_visible: visible ? 'true' : 'false',
-					application_featured: featured ? 'true' : 'false'
+					application_visible: vis,
+					application_featured: fea
 				};
 				f.i18n();
 				f.onLoad = function( data )
