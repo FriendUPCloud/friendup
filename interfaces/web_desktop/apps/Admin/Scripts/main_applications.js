@@ -31,14 +31,25 @@ Applications = {
 	default: function( extra )
 	{
 		var filter = extra ? ( extra.filter ? extra.filter : false ) : false;
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		var h = new Module( 'system' );
+		h.onExecuted = function( ec, dt )
 		{
-			if( e == 'ok' )
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
 			{
-				try
+				if( e == 'ok' )
 				{
-					var js = JSON.parse( d );
+					try
+					{
+						var mt = false;
+						if( ec == 'ok' )
+							mt = JSON.parse( dt );
+						var js = JSON.parse( d );
+					}
+					catch( e )
+					{
+					}
+					
 					var str = '\
 					<div class="HRow">\
 						<div class="HContent50 FloatLeft">\
@@ -49,46 +60,66 @@ Applications = {
 						</div>\
 					</div>\
 					';
-				
+			
 					str += '<div class="List">';
-					
+				
 					// Generate columns
 					str += '<div class="HRow">';
-					var cols = [ 'name', 'visible', 'date' ];
-					var size = [ 50, 15, 35 ]
+					var cols = [ 'name', 'featured', 'visible', 'date' ];
+					var size = [ 35, 15, 15, 35 ]
 					for( var a = 0; a < cols.length; a++ )
 					{
-						str += '<div class="PaddingSmall HContent' + size[ a ] + ' FloatLeft Ellipsis">' + i18n( 'i18n_col_' + cols[a] ) + '</div>';
+						str += '<div class="PaddingSmall HContent' + size[ a ] + ' FloatLeft Ellipsis">' + i18n( 'i18n_col_' + cols[ a ] ) + '</div>';
 					}
 					str += '</div>';
-					
+				
 					str += '</div>';
 					str += '<div class="List">';
-					
+				
 					var ino  = i18n( 'i18n_no' );
 					var iyes = i18n( 'i18n_yes' );
-					
+				
+					// Organize by name
+					var final = {};
+					for( var b = 0; b < js.length; b++ )
+					{
+						final[ js[ b ].Name ] = js[ b ];
+					}
+					for( var b = 0; b < mt.length; b++ )
+					{
+						var n = mt[ b ].Key.split( '_' )[1];
+						if( !final[ n ].MetaData )
+							final[ n ].MetaData = {};
+						final[ n ].MetaData[ mt[ b ].ValueString ] = mt[ b ].ValueNumber;
+					}
+				
 					// Generate rows
 					var sw = 2;
-					for( var a = 0; a < js.length; a++ )
-					{
+					
+					delete js; delete mt;
+					
+					for( var a in final )
+					{	
 						sw = sw == 1 ? 2 : 1;
 						str += '\
-							<div class="HRow sw' + sw + ' Application" appName="' + js[ a ].Name + '">\
-								<div class="PaddingSmall HContent50 FloatLeft Ellipsis">\
-									' + js[ a ].Name + '\
+							<div class="HRow sw' + sw + ' Application" appName="' + final[ a ].Name + '">\
+								<div class="PaddingSmall HContent35 FloatLeft Ellipsis">\
+									' + final[ a ].Name + '\
 								</div>\
 								<div class="PaddingSmall HContent15 FloatLeft Ellipsis">\
-									' + ( js[ a ].Visible ? iyes : ino ) + '\
+									' + ( ( final[ a ].MetaData && final[ a ].MetaData.Featured ) ? iyes : ino ) + '\
+								</div>\
+								<div class="PaddingSmall HContent15 FloatLeft Ellipsis">\
+									' + ( ( final[ a ].MetaData && final[ a ].MetaData.Visible ) ? iyes : ino ) + '\
 								</div>\
 								<div class="PaddingSmall HContent35 FloatLeft Ellipsis">\
-									' + js[ a ].DateModified + '\
+									' + final[ a ].DateModified + '\
 								</div>\
 							</div>\
 						';
 					}
 					ge( 'ApplicationList' ).innerHTML = str + '</div>';
-					
+				
 					var apps = ge( 'ApplicationList' ).getElementsByClassName( 'Application' );
 					for( var a = 0; a < apps.length; a++ )
 					{
@@ -101,15 +132,13 @@ Applications = {
 						} )( apps[ a ] );
 					}
 				}
-				catch( e )
+				else
 				{
 				}
 			}
-			else
-			{
-			}
+			m.execute( 'software', { mode: 'global_permissions' } );
 		}
-		m.execute( 'software', { mode: 'global_permissions' } );
+		h.execute( 'getmetadata', { search: 'application_', valueStrings: [ 'Visible', 'Featured' ] } );
 	},
 	showApp: function( extra )
 	{
@@ -135,7 +164,7 @@ Applications = {
 				var extraData = null;
 				
 				var visible = false;
-				var promoted = false;
+				var featured = false;
 				
 				for( var z = 0; z < ds.length; z++ )
 				{
