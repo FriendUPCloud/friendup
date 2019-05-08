@@ -181,10 +181,10 @@ Applications = {
 					}
 				}
 			
-				var check = '<div class="IconSmall FloatRight fa-toggle-!">&nbsp;</div>';
+				var check = '<div class="AppToggleBtn IconSmall FloatRight fa-toggle-!" type="---">&nbsp;</div>';
 			
-				var vis = visible  ? 'on' : 'off'; vis = check.replace( '!', vis );
-				var fea = featured ? 'on' : 'off'; fea = check.replace( '!', fea );
+				var vis = visible  ? 'on' : 'off'; vis = check.replace( '!', vis ).replace( '---', 'BVisible' );
+				var fea = featured ? 'on' : 'off'; fea = check.replace( '!', fea ).replace( '---', 'BFeature' );;
 			
 				var f = new File( 'Progdir:Templates/applications_details.html' );
 				f.replacements = {
@@ -196,6 +196,34 @@ Applications = {
 				f.onLoad = function( data )
 				{
 					ge( 'ApplicationDetails' ).innerHTML = data;
+					
+					var btns = ge( 'ApplicationDetails' ).getElementsByClassName( 'AppToggleBtn' );
+					var visb = feab = null;
+					for( var a = 0; a < btns.length; a++ )
+					{
+						if( btns[ a ].getAttribute( 'type' ) == 'BVisible' )
+							visb = btns[ a ];
+						else if( btns[ a ].getAttribute( 'type' ) == 'BFeature' )
+							feab = btns[ a ];
+					}
+					function toggleB( el, btn )
+					{
+						el.onclick = function( e )
+						{
+							if( this.classList.contains( 'fa-toggle-on' ) )
+							{
+								this.classList.remove( 'fa-toggle-on' );
+								this.classList.add( 'fa-toggle-off' );
+							}
+							else
+							{
+								this.classList.remove( 'fa-toggle-off' );
+								this.classList.add( 'fa-toggle-on' );
+							}
+						}
+					}
+					toggleB( visb, 'Visible' );
+					toggleB( feab, 'Featured' );
 				}
 				f.load();
 			}
