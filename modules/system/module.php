@@ -1894,6 +1894,12 @@ if( isset( $args->command ) )
 		case 'setmimetypes':
 			require( 'modules/system/include/setmimetypes.php' );
 			break;
+		case 'checkuserpermission':
+			require( 'modules/system/include/checkuserpermission.php' );
+			break;
+		case 'checkapppermission':
+			require( 'modules/system/include/checkapppermission.php' );
+			break;
 		case 'checkmimeapplication':
 			require( 'modules/system/include/checkmimeapplication.php' );
 			break;
