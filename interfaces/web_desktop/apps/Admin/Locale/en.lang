@@ -45,7 +45,11 @@ i18n_yes                               : Yes
 i18n_no                                : No
 i18n_col_name                          : Name
 i18n_col_visible                       : Visible
+i18n_col_featured                      : Featured
 i18n_col_date                          : Date
+
+i18n_application_visible               : Visible
+i18n_application_featured              : Featured
 
 #application related
 
