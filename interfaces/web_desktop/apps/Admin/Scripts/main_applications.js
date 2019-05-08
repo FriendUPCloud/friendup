@@ -92,11 +92,10 @@ Applications = {
 							final[ n ].MetaData = {};
 						final[ n ].MetaData[ mt[ b ].ValueString ] = mt[ b ].ValueNumber;
 					}
+					delete js; delete mt;
 				
 					// Generate rows
-					var sw = 2;
-					
-					delete js; delete mt;
+					var sw = 2;					
 					
 					for( var a in final )
 					{	
@@ -174,6 +173,10 @@ Applications = {
 						{
 							visible = ds[ z ].ValueNumber == '1' ? true : false;
 						}
+						else if( ds[ z ].ValueString == 'Featured' )
+						{
+							featured = ds[ z ].ValueNumber == '1' ? true : false;
+						}
 						break;
 					}
 				}
@@ -181,7 +184,8 @@ Applications = {
 				var f = new File( 'Progdir:Templates/applications_details.html' );
 				f.replacements = {
 					application_name: extra.name,
-					application_visible: visible ? 'true' : 'false'
+					application_visible: visible ? 'true' : 'false',
+					application_featured: featured ? 'true' : 'false'
 				};
 				f.i18n();
 				f.onLoad = function( data )

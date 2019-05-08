@@ -48,6 +48,9 @@ i18n_col_visible                       : Visible
 i18n_col_featured                      : Featured
 i18n_col_date                          : Date
 
+i18n_application_visible               : Visible
+i18n_application_featured              : Featured
+
 #application related
 
 i18n_application_list                  : Application list
