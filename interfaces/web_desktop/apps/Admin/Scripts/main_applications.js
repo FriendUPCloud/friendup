@@ -167,7 +167,7 @@ Applications = {
 				
 				for( var z = 0; z < ds.length; z++ )
 				{
-					if( ds[ z ].Key.split( '_' )[0] == extra.name )
+					if( ds[ z ].Key.split( '_' )[1] == extra.name )
 					{
 						if( ds[ z ].ValueString == 'Visible' )
 						{
