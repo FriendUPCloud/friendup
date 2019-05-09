@@ -941,10 +941,10 @@ function saveDia()
 	// Saves the avatar
 	var image = ge( 'Avatar' );
 	canvas = document.createElement( 'canvas' );
-	canvas.width = 64;
-	canvas.height = 64;
+	canvas.width = 256;
+	canvas.height = 256;
 	context = canvas.getContext( '2d' );
-	context.drawImage( image, 0, 0, 64, 64 );
+	context.drawImage( image, 0, 0, 256, 256 );
 	var base64 = canvas.toDataURL();
 	var ma = new Module( 'system' );
 	ma.onExecuted = function( e, d )
@@ -1153,9 +1153,10 @@ function saveDia()
 			setTimeout( function(){ updateLanguages(); }, 150 );
 		else updateLanguages();
 		
-		var mo = new Module( 'system' );
-		mo.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
 	}
+	
+	var mo = new Module( 'system' );
+	mo.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
 	
 	// How do we run Friend
 	var workspaceMode = ge( 'UserMode' );
