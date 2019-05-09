@@ -76,9 +76,15 @@ Application.receiveMessage = function( msg )
 							}
 						}
 					}
-					if ( d )
+					if( d )
 					{
-						avatar.src = d.avatar;
+						// Only update the avatar if it exists..
+						var avSrc = new Image();
+						avSrc.src = d.avatar;
+						avSrc.onload = function()
+						{
+							avatar.src = d.avatar;
+						}
 					}
 				}
 				sm.execute( 'getsetting', { setting: 'avatar' } );
