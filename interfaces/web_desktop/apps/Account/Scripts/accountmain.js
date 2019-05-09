@@ -1153,9 +1153,10 @@ function saveDia()
 			setTimeout( function(){ updateLanguages(); }, 150 );
 		else updateLanguages();
 		
-		var mo = new Module( 'system' );
-		mo.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
 	}
+	
+	var mo = new Module( 'system' );
+	mo.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
 	
 	// How do we run Friend
 	var workspaceMode = ge( 'UserMode' );

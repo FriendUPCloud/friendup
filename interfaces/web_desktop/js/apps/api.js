@@ -1362,6 +1362,7 @@ function receiveEvent( event, queued )
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
 			Application.username      = dataPacket.username;
+			Application.workspaceMode = dataPacket.workspaceMode;
 			Application.applicationName = dataPacket.applicationName;
 			Application.sendMessage   = setupMessageFunction( dataPacket, window.origin );
 			
@@ -6253,6 +6254,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	Application.applicationId = packet.applicationId;
 	Application.userId        = packet.userId;
 	Application.username      = packet.username;
+	Application.workspaceMode = packet.workspaceMode;
 	Application.authId        = packet.authId;
 	Application.sessionId     = packet.sessionId != undefined ? packet.sessionId : false;
 	Application.theme         = packet.theme;
