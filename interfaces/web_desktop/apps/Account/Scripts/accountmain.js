@@ -937,29 +937,61 @@ function cancelDia()
 
 function saveDia()
 {
-	// Save Friend Network
-	if ( Application.friendNetwork )
-	{
-		// Save device information 
-		var image = ge( 'fnetDeviceAvatar' );
-		var canvas = document.createElement( 'canvas' );
-		canvas.width = 128;
-		canvas.height = 128;
-		var context = canvas.getContext( '2d' );
-		context.drawImage( image, 0, 0, 128, 128 );
-		var image = canvas.toDataURL();
-		var deviceName = ge( 'fnetDeviceName' ).value;
-		var deviceDescription = ge( 'fnetDeviceDescription' ).value;
-		var mountLocalDrives = ge( 'fnetMountLocalCheck' ).checked;
+	// Save settings
 
-		var save = 
-		{
-			version: 1,
-			image: image,
-			name: deviceName,
-			description: deviceDescription,
-			mountLocalDrives: mountLocalDrives
-		};
+	// Save device information 
+	var image = ge( 'fnetDeviceAvatar' );
+	var canvas = document.createElement( 'canvas' );
+	canvas.width = 128;
+	canvas.height = 128;
+	var context = canvas.getContext( '2d' );
+	context.drawImage( image, 0, 0, 128, 128 );
+	var image = canvas.toDataURL();
+	var deviceName = ge( 'fnetDeviceName' ).value;
+	var deviceDescription = ge( 'fnetDeviceDescription' ).value;
+	var mountLocalDrives = ge( 'fnetMountLocalCheck' ).checked;
+
+	var save = 
+	{
+		version: 1,
+		image: image,
+		name: deviceName,
+		description: deviceDescription,
+		mountLocalDrives: mountLocalDrives
+	};
+
+	// Saves the avatar
+	var image = ge( 'Avatar' );
+	canvas = document.createElement( 'canvas' );
+	canvas.width = 64;
+	canvas.height = 64;
+	context = canvas.getContext( '2d' );
+	context.drawImage( image, 0, 0, 64, 64 );
+	var base64 = canvas.toDataURL();
+	var ma = new Module( 'system' );
+	ma.onExecuted = function( e, d )
+	{
+		if( e != 'ok' )
+			console.log( 'Avatar saving failed.' );
+	};
+	ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
+
+	if ( downloadPath == '' )
+		downloadChecked = false;
+	if ( workgroup == '' ) // Empty workgroup-> global 'friend' space
+	{
+		workgroup = 'friend';
+		password = 'public';
+	}
+	if ( password.value != repeat.value )
+	{
+		Alert( i18n( 'i18n_account' ), i18n( 'i18n_passwordNoMatch' ) );
+		return;
+	}
+	
+
+	if( Application.friendNetwork )
+	{
 		FriendNetworkFriends.getUniqueDeviceIdentifier( function( message ) 
 		{
 			var me = new Module( 'system' );
@@ -970,23 +1002,7 @@ function saveDia()
 			};
 			me.execute( 'setsetting', { setting: message.identifier, data: save } );
 		} );
-
-		// Saves the avatar
-		var image = ge( 'Avatar' );
-		canvas = document.createElement( 'canvas' );
-		canvas.width = 64;
-		canvas.height = 64;
-		context = canvas.getContext( '2d' );
-		context.drawImage( image, 0, 0, 64, 64 );
-		var base64 = canvas.toDataURL();
-		var ma = new Module( 'system' );
-		ma.onExecuted = function( e, d )
-		{
-			if( e != 'ok' )
-				console.log( 'Avatar saving failed.' );
-		};
-		ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
-
+		
 		// Save Friend Network settings...
 		var activate = ge( 'fnetActivate' );
 		var workgroup = ge( 'fnetWorkgroup' );
@@ -998,20 +1014,7 @@ function saveDia()
 		var downloadChecked = ge( 'fnetDownloadCheck' ).checked;
 		var mountDriveChecked = ge( 'fnetMountDriveCheck' ).checked;
 		var mountOnWorkspaceChecked = ge( 'fnetMountOnWorkspaceCheck' ).checked;
-
-		if ( downloadPath == '' )
-			downloadChecked = false;
-		if ( workgroup == '' )								// Empty workgroup-> global 'friend' space
-		{
-			workgroup = 'friend';
-			password = 'public';
-		}
-		if ( password.value != repeat.value )
-		{
-			Alert( i18n( 'i18n_account' ), i18n( 'i18n_passwordNoMatch' ) );
-			return;
-		}
-		
+	
 		var fnet = 
 		{
 			configVersion: FriendNetworkFriends.configVersion,
@@ -1037,7 +1040,6 @@ function saveDia()
 				askOnlyToFriends: ge( 'fnetAskOnlyToFriends' ).checked
 			}
 		};
-
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
