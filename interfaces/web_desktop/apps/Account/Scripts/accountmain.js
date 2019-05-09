@@ -623,7 +623,7 @@ function generateKey()
 	{
 		Application.encryption.generateKeys( args.data, args.type, function( e, d )
 		{
-			console.log( 'Return on callback: ', { e:e, d:d } );
+			//console.log( 'Return on callback: ', { e:e, d:d } );
 			
 			if( e == 'ok' && d )
 			{
@@ -1222,7 +1222,7 @@ function getStorage()
 			var userLevel = parent.Workspace.userLevel.toLowerCase();
 			for( var a = 0; a < js.length; a++ )
 			{
-				console.log('storage device', JSON.stringify(js[a]));
+				//console.log('storage device', JSON.stringify(js[a]));
 				//dont let non-admins manage workgroup drives.
 				if( js[a].Type == 'SQLWorkgroupDrive' && userLevel != 'admin')
 					str += '<div class="FloatLeft Disk MousePointer NonEditableDisk" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
