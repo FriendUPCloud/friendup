@@ -165,32 +165,77 @@ Applications = {
 				var visible = false;
 				var featured = false;
 				
+				// Go through metadata
 				for( var z = 0; z < ds.length; z++ )
 				{
 					if( ds[ z ].Key.split( '_' )[1] == extra.name )
 					{
 						if( ds[ z ].ValueString == 'Visible' )
 						{
-							visible = ds[ z ].ValueNumber == '1' ? true : false;
+							visible = parseInt( ds[ z ].ValueNumber ) == 1 ? true : false;
 						}
-						else if( ds[ z ].ValueString == 'Featured' )
+						if( ds[ z ].ValueString == 'Featured' )
 						{
-							featured = ds[ z ].ValueNumber == '1' ? true : false;
+							featured = parseInt( ds[ z ].ValueNumber ) == 1 ? true : false;
 						}
-						break;
 					}
 				}
+			
+				var check = '<div class="AppToggleBtn IconSmall FloatRight fa-toggle-!" type="---">&nbsp;</div>';
+			
+				var vis = visible  ? 'on' : 'off'; vis = check.replace( '!', vis ).replace( '---', 'BVisible' );
+				var fea = featured ? 'on' : 'off'; fea = check.replace( '!', fea ).replace( '---', 'BFeature' );;
 			
 				var f = new File( 'Progdir:Templates/applications_details.html' );
 				f.replacements = {
 					application_name: extra.name,
-					application_visible: visible ? 'true' : 'false',
-					application_featured: featured ? 'true' : 'false'
+					application_visible: vis,
+					application_featured: fea
 				};
 				f.i18n();
 				f.onLoad = function( data )
 				{
 					ge( 'ApplicationDetails' ).innerHTML = data;
+					
+					var btns = ge( 'ApplicationDetails' ).getElementsByClassName( 'AppToggleBtn' );
+					var visb = feab = null;
+					for( var a = 0; a < btns.length; a++ )
+					{
+						if( btns[ a ].getAttribute( 'type' ) == 'BVisible' )
+							visb = btns[ a ];
+						else if( btns[ a ].getAttribute( 'type' ) == 'BFeature' )
+							feab = btns[ a ];
+					}
+					function toggleB( el, strval )
+					{
+						el.onclick = function( e )
+						{
+							var on = false;
+							if( this.classList.contains( 'fa-toggle-on' ) )
+							{
+								this.classList.remove( 'fa-toggle-on' );
+								this.classList.add( 'fa-toggle-off' );
+							}
+							else
+							{
+								on = true;
+								this.classList.remove( 'fa-toggle-off' );
+								this.classList.add( 'fa-toggle-on' );
+							}
+							
+							var n = new Module( 'system' );
+							n.onExecuted = function( e, d )
+							{
+							}
+							n.execute( 'setmetadata', {
+								key: 'application_' + extra.name,
+								valueString: strval, 
+								valueNumber: on ? '1' : '2'
+							} );
+						}
+					}
+					toggleB( visb, 'Visible' );
+					toggleB( feab, 'Featured' );
 				}
 				f.load();
 			}
