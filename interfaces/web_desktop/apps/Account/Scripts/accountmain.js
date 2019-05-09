@@ -962,13 +962,13 @@ function saveDia()
 		};
 		FriendNetworkFriends.getUniqueDeviceIdentifier( function( message ) 
 		{
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			var me = new Module( 'system' );
+			me.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
 					console.log( 'Device information saving failed.' );
 			};
-			m.execute( 'setsetting', { setting: message.identifier, data: save } );
+			me.execute( 'setsetting', { setting: message.identifier, data: save } );
 		} );
 
 		// Saves the avatar
@@ -979,13 +979,13 @@ function saveDia()
 		context = canvas.getContext( '2d' );
 		context.drawImage( image, 0, 0, 64, 64 );
 		var base64 = canvas.toDataURL();
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		var ma = new Module( 'system' );
+		ma.onExecuted = function( e, d )
 		{
 			if( e != 'ok' )
 				console.log( 'Avatar saving failed.' );
 		};
-		m.execute( 'setsetting', { setting: 'avatar', data: base64 } );
+		ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
 
 		// Save Friend Network settings...
 		var activate = ge( 'fnetActivate' );
@@ -1123,8 +1123,8 @@ function saveDia()
 						}
 					}
 					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+					var mt = new Module( 'system' );
+					mt.onExecuted = function( e, d )
 					{	
 						var mo = new Module( 'system' );
 						mo.onExecuted = function()
@@ -1133,7 +1133,7 @@ function saveDia()
 						}
 						mo.execute( 'setsetting', { setting: 'locale', data: ge( 'UserLanguage' ).value } );
 					}
-					m.execute( 'setsetting', { setting: 'language', data: voice } );
+					mt.execute( 'setsetting', { setting: 'language', data: voice } );
 				}
 				else
 				{
@@ -1152,8 +1152,8 @@ function saveDia()
 			setTimeout( function(){ updateLanguages(); }, 150 );
 		else updateLanguages();
 		
-		var m = new Module( 'system' );
-		m.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
+		var mo = new Module( 'system' );
+		mo.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
 	}
 	
 	// How do we run Friend
