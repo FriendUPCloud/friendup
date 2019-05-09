@@ -935,31 +935,9 @@ function cancelDia()
 	Application.sendMessage( { command: 'quit' } );
 }
 
+// Save settings
 function saveDia()
 {
-	// Save settings
-
-	// Save device information 
-	var image = ge( 'fnetDeviceAvatar' );
-	var canvas = document.createElement( 'canvas' );
-	canvas.width = 128;
-	canvas.height = 128;
-	var context = canvas.getContext( '2d' );
-	context.drawImage( image, 0, 0, 128, 128 );
-	var image = canvas.toDataURL();
-	var deviceName = ge( 'fnetDeviceName' ).value;
-	var deviceDescription = ge( 'fnetDeviceDescription' ).value;
-	var mountLocalDrives = ge( 'fnetMountLocalCheck' ).checked;
-
-	var save = 
-	{
-		version: 1,
-		image: image,
-		name: deviceName,
-		description: deviceDescription,
-		mountLocalDrives: mountLocalDrives
-	};
-
 	// Saves the avatar
 	var image = ge( 'Avatar' );
 	canvas = document.createElement( 'canvas' );
@@ -976,22 +954,30 @@ function saveDia()
 	};
 	ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
 
-	if ( downloadPath == '' )
-		downloadChecked = false;
-	if ( workgroup == '' ) // Empty workgroup-> global 'friend' space
-	{
-		workgroup = 'friend';
-		password = 'public';
-	}
-	if ( password.value != repeat.value )
-	{
-		Alert( i18n( 'i18n_account' ), i18n( 'i18n_passwordNoMatch' ) );
-		return;
-	}
-	
-
+	// Friend network settings
 	if( Application.friendNetwork )
 	{
+		// Save device information 
+		var image = ge( 'fnetDeviceAvatar' );
+		var canvas = document.createElement( 'canvas' );
+		canvas.width = 128;
+		canvas.height = 128;
+		var context = canvas.getContext( '2d' );
+		context.drawImage( image, 0, 0, 128, 128 );
+		var image = canvas.toDataURL();
+		var deviceName = ge( 'fnetDeviceName' ).value;
+		var deviceDescription = ge( 'fnetDeviceDescription' ).value;
+		var mountLocalDrives = ge( 'fnetMountLocalCheck' ).checked;
+
+		var save = 
+		{
+			version: 1,
+			image: image,
+			name: deviceName,
+			description: deviceDescription,
+			mountLocalDrives: mountLocalDrives
+		};
+		
 		FriendNetworkFriends.getUniqueDeviceIdentifier( function( message ) 
 		{
 			var me = new Module( 'system' );
@@ -1014,6 +1000,19 @@ function saveDia()
 		var downloadChecked = ge( 'fnetDownloadCheck' ).checked;
 		var mountDriveChecked = ge( 'fnetMountDriveCheck' ).checked;
 		var mountOnWorkspaceChecked = ge( 'fnetMountOnWorkspaceCheck' ).checked;
+		
+		if ( downloadPath == '' )
+			downloadChecked = false;
+		if ( workgroup == '' ) // Empty workgroup-> global 'friend' space
+		{
+			workgroup = 'friend';
+			password = 'public';
+		}
+		if ( password.value != repeat.value )
+		{
+			Alert( i18n( 'i18n_account' ), i18n( 'i18n_passwordNoMatch' ) );
+			return;
+		}
 	
 		var fnet = 
 		{
