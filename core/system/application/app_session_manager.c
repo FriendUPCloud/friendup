@@ -22,7 +22,7 @@
 #include <core/functions.h>
 
 /**
- * Create application session manager
+ * Create Application Session Manager
  *
  * @return AppSessionManager
  */
@@ -48,7 +48,6 @@ AppSessionManager *AppSessionManagerNew()
  *
  * @param as application session to remove
  */
-
 
 void AppSessionManagerDelete( AppSessionManager *as )
 {
