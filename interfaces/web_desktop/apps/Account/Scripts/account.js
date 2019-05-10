@@ -61,7 +61,7 @@ Application.run = function( msg, iface )
 		var modeOut = '';
 		for( var a in modes )
 		{
-			var sel = a == Application.useMode ? ' selected="selected"' : '';
+			var sel = a == Application.workspaceMode ? ' selected="selected"' : '';
 			modeOut += '<option value="' + a + '"' + sel + '>' + modes[a] + '</option>';
 		}
 		
