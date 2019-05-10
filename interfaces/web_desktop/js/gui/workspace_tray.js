@@ -243,6 +243,15 @@ function PollTray()
 							PollTray();
 							cancelBubble( e );
 						}
+						// Cancel closing
+						remAll.onmouseover = function( ev )
+						{
+							if( tray.notifications.timeout )
+							{
+								clearTimeout( tray.notifications.timeout );
+								tray.notifications.timeout  = null;
+							}
+						}
 						
 						remAll.style.bottom = h + 'px';
 					}
