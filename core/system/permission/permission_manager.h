@@ -38,9 +38,9 @@ PermissionManager *PermissionManagerNew( void *sb );
 
 void PermissionManagerDelete( PermissionManager *pm );
 
-FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key, char *appname );
+FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key,char *appname );
 
-FBOOL PermissionManagerCheckPermission( PermissionManager *pm, char *type, char *identifier );
+FBOOL PermissionManagerCheckPermission( PermissionManager *pm, char *type, char *identifier );
 
 #endif //__SYSTEM_PERMISSION_PERMISSION_MANAGER_H__
 
