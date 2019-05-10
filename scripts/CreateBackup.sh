@@ -201,6 +201,17 @@ echo "$(date +%Y-%m-%d-%T): Clean old files" >> ${log_file}
 echo "Delete old files"
 find $backup_path -mtime +7 -type f -delete
 
+#
+# Delete older backups on remote server
+#
+
+if [ -z "$storepath" ]
+then
+	echo "'storepath' is empty, cannot use empty path to remove remote data"
+else
+	SSHPASS=${password} sshpass -e ssh $port_small $user@$server "find $storepath -mtime +1 -maxdepth 1  -exec rm -rf {} \;"
+fi
+
 echo "$(date +%Y-%m-%d-%T): Backup complete" >> ${log_file}
 SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${log_file} $user@$server:$storepath$backup_file_name/log
 
