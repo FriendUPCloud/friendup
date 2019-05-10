@@ -83,7 +83,8 @@ Application.receiveMessage = function( msg )
 						avSrc.src = d.avatar;
 						avSrc.onload = function()
 						{
-							avatar.src = d.avatar;
+							var ctx = avatar.getContext( '2d' );
+							ctx.drawImage( avSrc, 0, 0, 256, 256 );
 						}
 					}
 				}
@@ -295,16 +296,10 @@ function changeAvatar()
 				var image = new Image();
 				image.onload = function()
 				{
-					// Resizes the image to 128x128
-					var canvas = document.createElement( 'canvas' );
-					canvas.width = 128;
-					canvas.height = 128;
+					// Resizes the image
+					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 128, 128 );
-					var data = canvas.toDataURL();
-
-					// Sets the image
-					ge( 'Avatar' ).src = data;				
+					context.drawImage( image, 0, 0, 256, 256 );
 				}
 				image.src = getImageUrl( item[ 0 ].Path );
 			}
@@ -945,12 +940,8 @@ function cancelDia()
 function saveDia()
 {
 	// Saves the avatar
-	var image = ge( 'Avatar' );
-	canvas = document.createElement( 'canvas' );
-	canvas.width = 256;
-	canvas.height = 256;
+	var canvas = ge( 'Avatar' );
 	context = canvas.getContext( '2d' );
-	context.drawImage( image, 0, 0, 256, 256 );
 	var base64 = canvas.toDataURL();
 	var ma = new Module( 'system' );
 	ma.onExecuted = function( e, d )
