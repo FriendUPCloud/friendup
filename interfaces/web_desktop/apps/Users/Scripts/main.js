@@ -566,7 +566,13 @@ function SaveUser( id )
 				}
 			}
 		}
-		args.workgroups = workgroupmemberships.join(',');
+		if ( workgroupmemberships.length == 0) {
+			args.workgroups = "false";
+		}
+		else
+		{
+			args.workgroups = workgroupmemberships.join(',');
+		}
 	}
 	
 	args.command ='update';

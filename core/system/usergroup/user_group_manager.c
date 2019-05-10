@@ -538,7 +538,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	if( level != NULL )
 	{
 		// if none is set then it means user removed his levels
-		if( strcmp( "none", level ) == 0 )
+		if( strcmp( "false", level ) == 0 )
 		{
 		
 		}
@@ -595,7 +595,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	{
 		UserRemoveFromGroups( usr );
 		
-		if( strcmp( "none", workgroups ) == 0 )
+		if( strcmp( "false", workgroups ) == 0 )
 		{
 		
 		}
@@ -662,7 +662,10 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 
 	BufStringAddSize( bsGroups, "]}", 2 );
 	
+	// update external services about changes
 	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
+	// update user about changes
+	UserNotifyFSEvent2( sb->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 	
 	if( bsInsert != NULL )
 	{
