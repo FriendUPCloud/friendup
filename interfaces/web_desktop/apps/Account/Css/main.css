@@ -34,6 +34,25 @@
 	margin-right: 0;
 }
 
+#AvatarArea
+{
+	position: relative;
+	display: block;
+	margin: auto auto 10px auto;
+	width: 128px;
+	height: 128px;
+	border-radius: 100%;
+	overflow: hidden;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#AvatarArea #Avatar
+{
+	width: 256px;
+	height: 256px;
+	zoom: 0.5;
+}
+
 #UserAccImage
 {
 	border: 1px dashed #3B81C2;

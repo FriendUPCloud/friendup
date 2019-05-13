@@ -226,7 +226,7 @@
 	/* Gui image elements */
 	$GuiImgWinTitle:         url(/webclient/gfx/system/window_topgradient_off.png);
 	$GuiImgWinTitleActive:   url(/themes/friendup12/gfx/window_topgradient.png);
-	$GuiImgWinLoading:       #222222 url(/themes/friendup12/gfx/loading.gif) no-repeat center center;
+	$GuiImgWinLoading:       #222222 url(/themes/friendup12/gfx/busy.png) no-repeat center center;
 
 	/* Icon set */
 	$IconSmallArrowUp:       url(/webclient/gfx/icons/16x16/actions/arrow-up.png);

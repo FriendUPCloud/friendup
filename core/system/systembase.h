@@ -87,7 +87,9 @@
 #include <communication/cluster_node.h>
 #include <config/properties.h>
 #include <websockets/websocket_apns_connector.h>
-#include <network/protocol_websocket.h>
+
+//#include <network/protocol_websocket.h>
+#include <system/permission/permission_manager.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
 
@@ -240,6 +242,7 @@ typedef struct SystemBase
 	MobileManager					*sl_MobileManager;	// Mobile Manager
 	CalendarManager					*sl_CalendarManager;	// Calendar Manager
 	NotificationManager				*sl_NotificationManager;	// Notification Manager
+	PermissionManager				*sl_PermissionManager;		// Permission Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex

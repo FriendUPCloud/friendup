@@ -346,7 +346,13 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 #if defined(LWS_HAVE_TLS_CLIENT_METHOD)
 	method = (SSL_METHOD *)TLS_client_method();
 #elif defined(LWS_HAVE_TLSV1_2_CLIENT_METHOD)
-	method = (SSL_METHOD *)TLSv1_2_client_method();
+	//method = (SSL_METHOD *)TLSv1_2_client_method();
+        #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+	     method = (SSL_METHOD *)TLSv1_2_client_method();
+	#else
+	     method = (SSL_METHOD *)TLS_client_method();
+	#endif
+
 #else
 	method = (SSL_METHOD *)SSLv23_client_method();
 #endif
