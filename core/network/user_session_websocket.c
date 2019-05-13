@@ -66,7 +66,12 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 					break;
 				}
 				sleep( 1 );
-				//pthread_yield();
+				pthread_yield();
+				
+				if( tr++ > 60 )
+				{
+					break;
+				}
 			}
 			
 			data->wsc_WebsocketsServerClient = NULL;
