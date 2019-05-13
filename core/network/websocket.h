@@ -30,8 +30,9 @@
 #include <libwebsockets.h>
 #include <core/thread.h>
 #include <time.h>
-#include <network/websocket_server_client.h>
+//#include <network/websocket_server_client.h>
 #include <util/buffered_string.h>
+#include <util/friendqueue.h>
 
 #define MAX_MESSAGE_QUEUE 64
 
@@ -77,15 +78,31 @@ typedef struct WebSocket
 //
 // FriendCoreWebsocketData structure
 //
-
+/*
 typedef struct FCWSData 
 {
-	WebsocketServerClient			*fcd_WSClient;		// if NULL then cannot send message
-	void							*fcd_SystemBase;
-	
-	struct timeval					fcd_Timer;
-	BufString						*fcd_Buffer;		//
-}FCWSData;
+//	WebsocketServerClient			*fcd_WSClient;		// if NULL then cannot send message
+//	void							*fcd_SystemBase;
+//	
+//	struct timeval					fcd_Timer;
+//	BufString						*fcd_Buffer;		//
+//}FCWSData;
+*/
+
+typedef struct WSCData
+{
+	void							*wsc_SystemBase;
+	struct lws				 		*wsc_Wsi;
+	int								wsc_InUseCounter;
+	void							*wsc_UserSession;
+	void 							*wsc_WebsocketsServerClient;
+	pthread_mutex_t					wsc_Mutex;
+	FQueue							wsc_MsgQueue;
+	//FBOOL							wsc_ToBeRemoved;
+	time_t							wsc_LastPingTime;
+	//int								wsc_Status;	//enabled=0, disabled=1
+	BufString						*wsc_Buffer;
+}WSCData;
 
 //
 //
@@ -109,19 +126,13 @@ int WebSocketStart( WebSocket *ws );
 //
 //
 
-int WebsocketWrite( void *cl, unsigned char *msgptr, int msglen, int type );
+int AttachWebsocketToSession( void *l, struct lws *wsi, const char *sessionid, const char *authid, WSCData *data );
 
 //
 //
 //
 
-int AddWebSocketConnection( void *l, struct lws *wsi, const char *sessionid, const char *authid, FCWSData *data );
-
-//
-//
-//
-
-int DeleteWebSocketConnection( void *locsb, struct lws *wsi, FCWSData *data );
+int DetachWebsocketFromSession( WSCData *data );
 
 #endif // __NETWORK_WEBSOCKET_H__
 

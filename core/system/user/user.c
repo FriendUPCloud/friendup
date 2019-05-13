@@ -547,6 +547,7 @@ void UserRemoveFromGroups( User *u )
 	
 	DEBUG("[UserRemoveFromGroups] remove start\n");
 	// remove user from group first
+	/*
 	UserGroupLink *ugl = u->u_UserGroupLinks;
 	while( ugl != NULL )
 	{
@@ -582,6 +583,7 @@ void UserRemoveFromGroups( User *u )
 		}
 		ugl = (UserGroupLink *)ugl->node.mln_Succ;
 	}
+	*/
 	
 	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
 	// remove all links to group

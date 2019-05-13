@@ -304,20 +304,25 @@ ListString *PHPCall( const char *command, int *length )
     }	// switch pipe
     */
     
-	pid_t pid;
-	int p[3];
-	
-	pid = newpopen( command, p );
-	if( pid <= 0 )
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
 	{
-		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror(errno) );
+		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror( errno ) );
 		return NULL;
 	}
 	
-	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	ListString *data = ListStringNew();
 	int errCounter = 0;
 	int size = 0;
+	
+	fd_set set;
+	struct timeval timeout;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
 	
 	//do {
     //  pid = waitpid(p->child_pid, &status, 0);
@@ -325,34 +330,53 @@ ListString *PHPCall( const char *command, int *length )
 	// p[1] - stdout p[2] - stderr
 	while( TRUE )
 	{
+			/* Initialize the file descriptor set. */
+		FD_ZERO( &set );
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		//DEBUG("[PHPFsys] in loop\n");
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
-		size = read( p[ 1 ], buf, PHP_READ_SIZE);
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			//DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
 
-		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		if( size > 0 )
 		{
+			//DEBUG( "[PHPFsys] before adding to list\n");
 			ListStringAdd( data, buf, size );
+			//DEBUG( "[PHPFsys] after adding to list\n");
 		}
 		else
 		{
 			char clo[2];
 			clo[0] = '\'';
 			clo[1] = EOF;
-			write( p[0], clo, 2 );
+			write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
 			errCounter++;
-			if( errCounter > 8 )
+			if( errCounter > 3 )
 			{
 				FERROR("Error in popen, Quit! Command: %s\n", command );
 				break;
 			}
 		}
 	}
+	//DEBUG( "[PHPFsys] after loop, memory will be released\n");
 	
 	FFree( buf );
-	DEBUG("File readed\n");
+	//DEBUG("[PHPFsys] File readed\n");
 	
 	// Free pipe if it's there
-	newpclose( pid, p );
+	newpclose( &pofd );
 	
 	ListStringJoin( data );		//we join all string into one buffer
 

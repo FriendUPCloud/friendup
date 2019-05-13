@@ -229,6 +229,7 @@ void CommServiceDelete( CommService *s )
 void *ServiceTempThread( void *d )
 {
 	CommServiceSetupOutgoing( d );
+	DEBUG("[ServiceTempThread] pthread quit\n");
 	pthread_exit(0);
 }
 
@@ -1828,6 +1829,7 @@ void *InternalPINGThread( void *d )
 	
 	con->fc_PingInProgress = FALSE;
 	
+	DEBUG("[ServiceTempThread] internal ping thread quit\n");
 	pthread_exit( 0 );
 }
 

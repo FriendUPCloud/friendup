@@ -23,6 +23,8 @@
 #include <core/thread.h>
 #include <time.h>
 
+#include <network/user_session_websocket.h>
+
 //
 //
 //
@@ -33,7 +35,14 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len );
 //
 //
 
-int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len );
+int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, ssize_t len );
+
+//
+//
+//
+
+int WebsocketWrite( UserSessionWebsocket *cl, unsigned char *msgptr, int msglen, int type );
+
 
 #endif // __NETWORK_PROTOCOL_WEBDAV_H__
 

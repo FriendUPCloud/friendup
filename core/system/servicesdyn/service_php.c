@@ -60,19 +60,19 @@ enum {
 
 typedef struct PHPInstance
 {
-	void				*pi_PHPService;
+	void						*pi_PHPService;
 	
-	pid_t				pi_PID;
+	pid_t						pi_PID;
 	
-	FULONG				pi_Ptr;
-	FBOOL				pi_TaskClosed;
-	char				*pi_Command;
-	int					pi_CommandLen;
-	int					pi_State;
-	struct lws			*pi_WSI;				// pointer to websocket connection
+	FULONG						pi_Ptr;
+	FBOOL						pi_TaskClosed;
+	char						*pi_Command;
+	int							pi_CommandLen;
+	int							pi_State;
+	UserSessionWebsocket		*pi_USW;				// pointer to websocket connection
 	
-	FThread				*pi_Thread;
-	MinNode				node;
+	FThread						*pi_Thread;
+	MinNode						node;
 }PHPInstance;
 
 //
@@ -368,9 +368,9 @@ int thread( FThread *t )
 				// This is how the total size is now
 				res += reads;
 				
-				if( si->pi_WSI != NULL )
+				if( si->pi_USW != NULL )
 				{
-					sb->WebsocketWrite( si->pi_WSI , buf, reads, LWS_WRITE_TEXT );
+					sb->WebsocketWrite( si->pi_USW , buf, reads, LWS_WRITE_TEXT );
 			
 					DEBUG1("Wrote to websockets %lu bytes\n", res );
 				}
@@ -578,7 +578,7 @@ char *ServiceCommand( struct Service *s, const char *serv, const char *cmd, Hash
 			phpi->node.mln_Succ = (MinNode *)hs->ps_Instances;
 			hs->ps_Instances = phpi;
 			
-			phpi->pi_WSI = s->s_WSI;
+			phpi->pi_USW = s->s_USW;
 			phpi->pi_PHPService = hs;
 			
 			FRIEND_MUTEX_UNLOCK( &hs->ps_Mutex );

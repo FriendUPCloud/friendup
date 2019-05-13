@@ -105,9 +105,9 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 	{
 		int s = (int)len;
 		// copy received bufffer
-		buf = FCallocAlign( s, sizeof(char) );
-		memcpy( buf, in, len );
-		buf[ len ] = 0;
+		buf = FMalloc( s+16 );
+		memcpy( buf, in, s );
+		buf[ s ] = 0;
 	}
 	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
 	
@@ -617,7 +617,6 @@ static FBOOL VerifyAuthKey( const char *keyName, const char *keyToVerify )
 {
 	DEBUG("VerifyAuthKey - keyName <%s> VerifyAuthKey - keyToVerify <%s>\n", keyName, keyToVerify );
 
-	//TODO: verify against key name 
 	if( keyName != NULL && keyToVerify != NULL )
 	{
 		int i;

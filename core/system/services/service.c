@@ -60,7 +60,8 @@ Service* ServiceOpen( void *sysbase, char* name, long version __attribute__((unu
 	void *handle = NULL;
 
 	// there is no need to multiply by sizeof(char)
-	if (getcwd( currentDirectory, sizeof ( currentDirectory ) ) == NULL){
+	if( getcwd( currentDirectory, sizeof ( currentDirectory ) ) == NULL )
+	{
 		FERROR("getcwd failed!");
 		exit(5);
 	}

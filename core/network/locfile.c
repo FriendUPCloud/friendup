@@ -127,7 +127,7 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		fclose( fp );
 		return NULL;
 	}
-	DEBUG("Read local file %s\n", path );
+	//DEBUG("Read local file %s\n", path );
 	
 	LocFile* fo = (LocFile*) FCalloc( 1, sizeof(LocFile) );
 	if( fo != NULL )
@@ -138,7 +138,7 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		
 		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
 		
-		DEBUG("PATH: %s\n", fo->lf_Path );
+		//DEBUG("PATH: %s\n", fo->lf_Path );
 		
 		memcpy(  &(fo->lf_Info),  &st, sizeof( struct stat) );
 
@@ -204,7 +204,7 @@ LocFile* LocFileNewFromBuf( char* path, BufString *bs )
 		//fo->lf_Filename = StringDuplicateN( path, fo->lf_PathLength );//StringDuplicate( GetFileNamePtr( path, len ) );
 		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
 		
-		DEBUG("PATH: %s \n", fo->lf_Path );
+		//DEBUG("PATH: %s \n", fo->lf_Path );
 
 		fo->lf_FileSize = bs->bs_Size;
 		
@@ -231,7 +231,7 @@ LocFile* LocFileNewFromBuf( char* path, BufString *bs )
  */
 int LocFileReload( LocFile *file, char *path )
 {
-	DEBUG("File %s will be reloaded\n", path );
+	//DEBUG("File %s will be reloaded\n", path );
 	
 	if( file->lf_Buffer )
 	{

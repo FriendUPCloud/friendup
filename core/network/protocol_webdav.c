@@ -924,14 +924,12 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 						sb->sl_USM->usm_Sessions = ses;
 					}
 				}
-				
+				char *err = NULL;
+				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
+				if( err != NULL )
 				{
-					char *err = NULL;
-					sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
-					if( err != NULL )
-					{
-						FFree( err );
-					}
+					FERROR("UserDeviceMount returned: %s\n", err );
+					FFree( err );
 				}
 			}
 			else
@@ -961,10 +959,11 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		else
 		{
-			char *err;
+			char *err = NULL;
 			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
 			if( err != NULL )
 			{
+				FERROR("UserDeviceMount returned: %s\n", err );
 				FFree( err );
 			}
 		}

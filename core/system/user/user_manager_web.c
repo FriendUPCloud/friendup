@@ -1348,7 +1348,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 									
 									FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 									
-									if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+									if( us->us_WSConnections != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
 									{
 										int size = 0;
 										if( pos == 0 )
@@ -1622,7 +1622,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL add = FALSE;
 						DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSClients != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSConnections != NULL )
 						{
 							add = TRUE;
 						}
@@ -1733,7 +1733,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL add = FALSE;
 						//DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %lu WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), l->sl_RemoveSessionsAfterTime, locses->us_WSClients );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSClients != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) && locses->us_WSConnections != NULL )
 						{
 							add = TRUE;
 						}

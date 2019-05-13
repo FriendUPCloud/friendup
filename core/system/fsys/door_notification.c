@@ -371,7 +371,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 		{
 			DoorNotification *rem = notification;
 			
-			DEBUG("[DoorNotificationCommunicateChanges] send door notification to: %lud\n", notification->dn_OwnerID );
+			DEBUG("[DoorNotificationCommunicateChanges] send door notification to: %lu\n", notification->dn_OwnerID );
 			
 			USMSendDoorNotification( sb->sl_USM, notification, ses, device, path );
 			

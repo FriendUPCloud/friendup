@@ -44,6 +44,8 @@
 #include <system/user/user_manager.h>
 #include <system/web_util.h>
 
+#include <util/newpopen.h>
+
 #define HTTP_REQUEST_TIMEOUT 2 * 60
 #define SHARING_BUFFER_SIZE 262144
 
@@ -65,6 +67,84 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
  */
 static inline ListString *RunPHPScript( const char *command )
 {
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[RunPHPScript] cannot open pipe: %s\n", strerror( errno ) );
+		return NULL;
+	}
+	
+#define PHP_READ_SIZE 65536	
+	
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	ListString *data = ListStringNew();
+	int errCounter = 0;
+	int size = 0;
+	
+	fd_set set;
+	struct timeval timeout;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+	
+	while( TRUE )
+	{
+			/* Initialize the file descriptor set. */
+		FD_ZERO( &set );
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		DEBUG("[RunPHPScript] in loop\n");
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
+		// Make a new buffer and read
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[RunPHPScript] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			DEBUG( "[RunPHPScript] before adding to list\n");
+			ListStringAdd( data, buf, size );
+			DEBUG( "[RunPHPScript] after adding to list\n");
+		}
+		else
+		{
+			char clo[2];
+			clo[0] = '\'';
+			clo[1] = EOF;
+			write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
+			errCounter++;
+			if( errCounter > 3 )
+			{
+				FERROR("Error in popen, Quit! Command: %s\n", command );
+				break;
+			}
+		}
+	}
+	DEBUG( "[RunPHPScript] after loop, memory will be released\n");
+	
+	FFree( buf );
+	DEBUG("[RunPHPScript] File readed\n");
+	
+	// Free pipe if it's there
+	newpclose( &pofd );
+	
+	ListStringJoin( data );		//we join all string into one buffer
+
+	DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", data->ls_Size );
+	return data;
+	
+	/*
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
@@ -97,6 +177,7 @@ static inline ListString *RunPHPScript( const char *command )
 	pclose( pipe );
 
 	return data;
+	*/
 }
 
 /**
