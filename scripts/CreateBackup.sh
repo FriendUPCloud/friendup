@@ -129,20 +129,20 @@ cfg_section_DatabaseUser
 echo "Create database backup"
 mkdir -p "${current_backup_dir}/db"
 
-mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/frienddb_backup.sql >> ${log_file} 2>&1
+mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/frienddb_backup.sql
 
 if [ -z "$friendchat_db" ]
 then
 	echo "FriendChatDB backup will be skipped"
 else
-	mysqldump -u $login -p$password --databases $friendchat_db > ${current_backup_dir}/db/friendchatdb_backup.sql >> ${log_file} 2>&1
+	mysqldump -u $login -p$password --databases $friendchat_db > ${current_backup_dir}/db/friendchatdb_backup.sql
 fi
 
 if [ -z "$presence_db" ]
 then
 	echo "PresenceDB backup will be skipped"
 else
-	mysqldump -u $login -p$password --databases $presence_db > ${current_backup_dir}/db/presencedb_backup.sql >> ${log_file} 2>&1
+	mysqldump -u $login -p$password --databases $presence_db > ${current_backup_dir}/db/presencedb_backup.sql
 fi
 
 #

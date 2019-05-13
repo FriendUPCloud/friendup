@@ -3325,8 +3325,17 @@ function apiWrapper( event, force )
 						m.execute( 'updateapppermissions', { application: msg.application, data: msg.data, permissions: JSON.stringify( msg.permissions ) } );
 						break;
 
+					// Update login and tell apps
 					case 'updatelogin':
 						Workspace.login( msg.username, msg.password, true );
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							var nmsg = {
+								command: 'userupdate',
+								applicationId: msg.applicationId
+							};
+							Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+						}
 						break;
 					case 'reloadmimetypes':
 						Workspace.reloadMimeTypes();
