@@ -112,7 +112,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 		
 			if( FRIEND_MUTEX_LOCK( &(wscdata->wsc_Mutex) ) == 0 )
 			{
-				wscdata->wsc_InUseCounter++;
+				//wscdata->wsc_InUseCounter++;
 				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
 					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -156,7 +156,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 						// callback writeable was here
 					}
 				}
-				wscdata->wsc_InUseCounter--;
+				//wscdata->wsc_InUseCounter--;
 				
 				if( wscdata->wsc_Wsi != NULL )
 				{
@@ -173,7 +173,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 	{
 		if( FRIEND_MUTEX_LOCK( &(wscdata->wsc_Mutex) ) == 0 )
 		{
-			wscdata->wsc_InUseCounter++;
+			//wscdata->wsc_InUseCounter++;
 			if( wscdata->wsc_Wsi != NULL && wscdata->wsc_UserSession != NULL )
 			{
 				int val;
@@ -196,7 +196,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 			
 			DEBUG("In use counter %d\n", wscdata->wsc_InUseCounter );
 			
-			wscdata->wsc_InUseCounter--;
+			//wscdata->wsc_InUseCounter--;
 			
 			if( wscdata->wsc_Wsi != NULL )
 			{
@@ -206,13 +206,6 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 		}
 	}
 
-	/*
-	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
-	{
-		cl->wsc_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
-	}
-	*/
 	//DEBUG("ENDclwsc_InUseCounter: %d msg: %s\n", cl->wsc_InUseCounter, msgptr );
 	
 	return result;
@@ -305,12 +298,12 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 						// callback writeable was here
 						}
 					}
-					wsi->wusc_Data->wsc_InUseCounter--;
 					
 					if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 					{
 						lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
 					}
+					wsi->wusc_Data->wsc_InUseCounter--;
 				
 					FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 				}
@@ -346,13 +339,12 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 				DEBUG("Send message to WSI, ptr: %p\n", wsi->wusc_Data->wsc_Wsi );
 
 				DEBUG("In use counter %d\n", wsi->wusc_Data->wsc_InUseCounter );
-			
-				wsi->wusc_Data->wsc_InUseCounter--;
 				
 				if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 				{
 					lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
 				}
+				wsi->wusc_Data->wsc_InUseCounter--;
 				
 				FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 			}
@@ -958,7 +950,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				//if( fcd->wsc_WebsocketsServerClient != NULL )
 				{
 					FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-					fcd->wsc_InUseCounter++;
+					//fcd->wsc_InUseCounter++;
 					fcd->wsc_LastPingTime = time( NULL );
 					DEBUG("\t\t\t\t\tRECEIVE->%d\n", fcd->wsc_InUseCounter );
 					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
@@ -1794,10 +1786,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						//UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
 						//if( wscl != NULL )
 						{
-							FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-							fcd->wsc_InUseCounter--;
-							DEBUG("\t\t\t\t\tRECEIVE END 0->%d\n", fcd->wsc_InUseCounter );
-							FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+							//FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
+							//fcd->wsc_InUseCounter--;
+							//DEBUG("\t\t\t\t\tRECEIVE END 0->%d\n", fcd->wsc_InUseCounter );
+							//FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 
 							FLUSH_QUEUE();
 						}
@@ -1818,10 +1810,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				//if( fcd->wsc_WebsocketsServerClient != NULL && login == FALSE )
 				//if( login == FALSE )
 				{
-					FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-					fcd->wsc_InUseCounter--;
-					DEBUG("\t\t\t\t\t->%d\n", fcd->wsc_InUseCounter );
-					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+					//FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
+					//fcd->wsc_InUseCounter--;
+					//DEBUG("\t\t\t\t\t->%d\n", fcd->wsc_InUseCounter );
+					//FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 				}
 			}
 			
