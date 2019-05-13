@@ -849,6 +849,12 @@ SystemBase *SystemInit( void )
 	
 	// create all managers
 	
+	l->sl_PermissionManager = PermissionManagerNew( l );
+	if( l->sl_PermissionManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize PermissionManager\n");
+	}
+	
 	l->sl_WDavTokM = WebdavTokenManagerNew( l );
 	if( l->sl_WDavTokM == NULL )
 	{
@@ -1166,6 +1172,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_DeviceManager != NULL )
 	{
 		DeviceManagerDelete( l->sl_DeviceManager );
+	}
+	if( l->sl_PermissionManager != NULL )
+	{
+		PermissionManagerDelete( l->sl_PermissionManager );
 	}
 	
 	// Remove sentinel from active memory

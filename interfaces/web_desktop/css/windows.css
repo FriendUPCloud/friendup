@@ -992,7 +992,7 @@ html .Screen > .TitleBar.ChangingScreenTitle
 
 html .Screen > .TitleBar.Busy:after
 {
-	background-image: url(/themes/friendup12/gfx/loading_corner.gif);
+	background-image: url(/themes/friendup12/gfx/busy.png);
 	clip-path: ellipse(12px 12px at 12px 12px);
 	-webkit-clip-path: ellipse(12px 12px at 12px 12px);
 }

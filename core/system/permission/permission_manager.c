@@ -58,8 +58,12 @@ void PermissionManagerDelete( PermissionManager *pm )
  * @return TRUE when access is granted, otherwise FALSE
  */
 
-FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key, char *appname )
+FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key, char *appname )
 {
+/*
+Uses: module=system&command=checkapppermission&key=%key%&appname=%appname%
+*/
+	FBOOL retVal = FALSE;
 	if( pm != NULL )
 	{
 		SystemBase *sb = (SystemBase *)pm->pm_SB;
@@ -77,7 +81,7 @@ FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key, cha
 		if( command != NULL )
 		{
 			//module=system&command=checkapppermission&key=%key%&appname=%appname%
-			snprintf( command, len, "command=checkapppermission&key=%s%&appname=\"%s\";", key, appname );
+			snprintf( command, len, "command=checkapppermission&key=%s&appname=%s;", key, appname );
 			
 			DEBUG("Run command via php: '%s'\n", command );
 			FULONG dataLength;
@@ -85,41 +89,59 @@ FBOOL PermissionManagerCheckAppPermission( PermissionManager *pm, char *key, cha
 			char *data = sb->sl_PHPModule->Run( sb->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 			if( data != NULL )
 			{
-				
+				if( strncmp( data, "ok", 2 ) == 0 )
+				{
+					retVal = TRUE;
+				}
 			}
-
 			FFree( command );
 		}
 	}
-	return FALSE;
+	return retVal;
 }
 
-FBOOL PermissionManagerCheckPermission( PermissionManager *pm, char *type, char *identifier )
+FBOOL PermissionManagerCheckPermission( PermissionManager *pm, char *type, char *identifier )
 {
-	return FALSE;
-}
-
 /*
-To save time, we need to make two wrappers that reads the PHP response through a pipe.
-
-These are the functions:
-
-int CheckAppPermission( char *key, char *appname )
-{
-  return true|false;
-}
-
-Uses: module=system&command=checkapppermission&key=%key%&appname=%appname%
-
-int CheckPermission( char *type, char *identifier )
-{
-  return true|false;
-}
-
 Uses: module=system&command=checkuserpermission&type=%type%&identifier=%identifier%
 
 Users of level Admin always gets true.
 
 Ofcourse module calls need user session id etc as standard (&sessionid=%thesession%).
 */
+	FBOOL retVal = FALSE;
+	if( pm != NULL )
+	{
+		SystemBase *sb = (SystemBase *)pm->pm_SB;
+		int len = 512;
+		if( type != NULL )
+		{
+			len += strlen( type );
+		}
+		if( identifier != NULL )
+		{
+			len += strlen( identifier );
+		}
+		
+		char *command = FMalloc( len );
+		if( command != NULL )
+		{
+			//module=system&command=checkapppermission&key=%key%&appname=%appname%
+			snprintf( command, len, "command=checkuserpermission&type=%s&identifier=%s;", type, identifier );
+			
+			DEBUG("Run command via php: '%s'\n", command );
+			FULONG dataLength;
 
+			char *data = sb->sl_PHPModule->Run( sb->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+			if( data != NULL )
+			{
+				if( strncmp( data, "ok", 2 ) == 0 )
+				{
+					retVal = TRUE;
+				}
+			}
+			FFree( command );
+		}
+	}
+	return retVal;
+}
