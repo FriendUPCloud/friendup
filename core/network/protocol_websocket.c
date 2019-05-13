@@ -990,7 +990,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						// "requestid":"fconn-req-42suyyjn-nqy2hd45-l5cuc9z8"
 						//'{"type":"msg","data":{"type":"error","requestid":"fconn-req-hx3yz407-eoux1pdy-ba1nblco"\", }}'
 						// we do want to find requestid in data
-						
+						/*
 						if( fcd != NULL && fcd->wsc_Buffer != NULL && fcd->wsc_Buffer->bs_Size > 0 )
 						{
 							// if first part of request was found then its a sign that buffer must be erased
@@ -1023,6 +1023,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							BufStringDelete( fcd->wsc_Buffer );
 							fcd->wsc_Buffer = BufStringNew();
 						}
+						*/
 					}
 
 					// Assume the top-level element is an object 
