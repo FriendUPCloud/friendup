@@ -1830,7 +1830,7 @@ void *InternalPINGThread( void *d )
 	con->fc_PingInProgress = FALSE;
 	
 	DEBUG("[ServiceTempThread] internal ping thread quit\n");
-	pthread_exit( 0 );
+	//pthread_exit( 0 );
 }
 
 /**
