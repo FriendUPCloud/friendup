@@ -1507,7 +1507,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 #if USE_WORKERS == 1
 													SystemBase *lsb = (SystemBase *)fcd->wsc_SystemBase;
 													
-													DEBUG("[WS] Message parsed, sedning\n");
+													DEBUG("[WS] Message parsed, sending\n");
 													
 													if( fcd->wsc_WebsocketsServerClient != NULL )//&& fcd->fcd_WSClient->wsc_ToBeRemoved == FALSE )
 													{
@@ -1814,7 +1814,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 					
 					FFree( t );
-				} 
+				}
+				DEBUG("Webcall finished!\n");
 				//WebsocketServerClient *wscl = fcd->fcd_WSClient;
 				//if( fcd->wsc_WebsocketsServerClient != NULL && login == FALSE )
 				//if( login == FALSE )

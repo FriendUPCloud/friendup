@@ -390,7 +390,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 		
 		Log( FLOG_INFO,"Start SSH console\n");
 		
-		fcm->fcm_SSHServer = SSHServerNew( SLIB, fcm->fcm_SSHRSAKey, fcm->fcm_SSHDSAKey );
+		//fcm->fcm_SSHServer = SSHServerNew( SLIB, fcm->fcm_SSHRSAKey, fcm->fcm_SSHDSAKey );
 		
 		fcm->fcm_Shutdown = FALSE;
 		
