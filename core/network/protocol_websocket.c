@@ -98,6 +98,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 	
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
+		DEBUG("Before encode\n");
 		char *encmsg = Base64Encode( (const unsigned char *)msgptr, msglen, &msglen );
 		if( encmsg != NULL )
 		{
@@ -112,6 +113,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 		
 			if( FRIEND_MUTEX_LOCK( &(wscdata->wsc_Mutex) ) == 0 )
 			{
+				DEBUG("lock created1\n");
 				//wscdata->wsc_InUseCounter++;
 				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
@@ -171,8 +173,10 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 	}
 	else
 	{
+		DEBUG("no encode\n");
 		if( FRIEND_MUTEX_LOCK( &(wscdata->wsc_Mutex) ) == 0 )
 		{
+			DEBUG("lock created\n");
 			//wscdata->wsc_InUseCounter++;
 			if( wscdata->wsc_Wsi != NULL && wscdata->wsc_UserSession != NULL )
 			{
@@ -227,7 +231,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 	{
 		return 0;
 	}
-	DEBUG("clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
+	DEBUG("WebsocketWrite: clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
 	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
@@ -238,9 +242,11 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 	
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
+		DEBUG("WebsocketWrite\n");
 		char *encmsg = Base64Encode( (const unsigned char *)msgptr, msglen, &msglen );
 		if( encmsg != NULL )
 		{
+			DEBUG("WebsocketWrite1\n");
 			char *msgToSend = encmsg;
 			int totalChunk = (msglen / MAX_SIZE_WS_MESSAGE)+1;
 			int actChunk = 0;
@@ -315,10 +321,12 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 	}
 	else
 	{
+		DEBUG("WebsocketWrite no chunked\n");
 		if( wsi->wusc_Data != NULL )
 		{
 			if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
 			{
+				DEBUG("WebsocketWrite no chnked 1\n");
 				wsi->wusc_Data->wsc_InUseCounter++;
 				if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_UserSession != NULL )
 				{
