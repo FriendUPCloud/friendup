@@ -227,11 +227,11 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
  */
 int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen, int type )
 {
-	if( wsi->wusc_Data->wsc_Wsi == NULL )
+	if( wsi->wusc_Data == NULL || wsi->wusc_Data->wsc_Wsi == NULL )
 	{
 		return 0;
 	}
-	DEBUG("WebsocketWrite: clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
+	//DEBUG("WebsocketWrite: clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
 	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
