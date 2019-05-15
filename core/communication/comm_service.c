@@ -1841,6 +1841,10 @@ void *InternalPINGThread( void *d )
 void CommServicePING( CommService* s )
 {
 	SystemBase *lsb = (SystemBase *)s->s_SB;
+	if( s == NULL )
+	{
+		return;
+	}
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm; //s->s_FCM;
 	
 	FRIEND_MUTEX_LOCK( &s->s_Mutex );
