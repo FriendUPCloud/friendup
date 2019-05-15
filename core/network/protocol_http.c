@@ -729,6 +729,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								//else
 								{
 									ListString *ls = RunPHPScript( command );
+									if( ls != NULL )
+									{
+										DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
+									}
 									/*
 									FILE *pipe = popen( command, "r" );
 									ListString *ls = NULL;
