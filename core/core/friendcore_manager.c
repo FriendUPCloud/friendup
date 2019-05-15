@@ -394,6 +394,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 		
 		fcm->fcm_Shutdown = FALSE;
 		
+		/*
 		fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
 		
 		if( fcm->fcm_CommService )
@@ -407,6 +408,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 		{
 			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
 		}
+		*/
 		return 0;
 }
 
