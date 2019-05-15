@@ -324,6 +324,7 @@ ListString *PHPCall( const char *command, int *length )
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
 	
+	DEBUG("xx\n");
 	//do {
     //  pid = waitpid(p->child_pid, &status, 0);
     //} while (pid =  = -1 && errno =  = EINTR);
@@ -333,7 +334,7 @@ ListString *PHPCall( const char *command, int *length )
 			/* Initialize the file descriptor set. */
 		FD_ZERO( &set );
 		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
-		//DEBUG("[PHPFsys] in loop\n");
+		DEBUG("[PHPFsys] in loop\n");
 		
 		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
