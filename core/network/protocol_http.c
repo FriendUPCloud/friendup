@@ -728,6 +728,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								//}
 								//else
 								{
+									ListString *ls = RunPHPScript( command );
+									/*
 									FILE *pipe = popen( command, "r" );
 									ListString *ls = NULL;
 									
@@ -760,6 +762,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										ListStringJoin( ls );
 									}
+									*/
 									
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
