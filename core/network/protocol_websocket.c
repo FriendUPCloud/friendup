@@ -839,6 +839,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	char *c = in;
 	if ( reason == LWS_CALLBACK_RECEIVE && len>0)
 	{
+		DEBUG("reason==receive and len>0\n");
 		// No in!
 		if( in == NULL )
 		{
@@ -852,13 +853,15 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			
 			return 0;
 		}
+		DEBUG("set end to 0\n");
 		c[len ] = '\0';
 		
 		// disabled for moment
 		//Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
-	Log( FLOG_INFO, "[WorkspaceWebsocketCall] pointer to message %p msg len %d reason %d\n", in, len, reason );
+	//Log( FLOG_INFO, "[WorkspaceWebsocketCall] pointer to message %p msg len %d reason %d\n", in, len, reason );
+	DEBUG("before switch\n");
 	
 	switch( reason )
 	{
