@@ -731,7 +731,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									ListString *ls = RunPHPScript( command );
 									if( ls != NULL )
 									{
-										DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
+										//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
+										res = ls->ls_Size;
 									}
 									/*
 									FILE *pipe = popen( command, "r" );
@@ -796,6 +797,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										ls->ls_Data = NULL;
 										ListStringDelete( ls );
 									}
+									DEBUG("Response delivered\n");
 									
 									FFree( command );
 								}
