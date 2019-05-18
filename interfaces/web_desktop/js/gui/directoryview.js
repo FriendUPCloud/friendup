@@ -763,11 +763,11 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		var selectedCount = 0;
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( !eles[a].className || !eles[a].classList.contains( 'Selected' ) )
+			if( !eles[a].classList && !eles[a].classList.contains( 'Selected' ) )
 				continue;
-
 			selectedCount++;
 		}
+		
 		Friend.iconsSelectedCount = selectedCount;
 	},
 	// -------------------------------------------------------------------------
@@ -4041,6 +4041,14 @@ FileIcon.prototype.Init = function( fileInfo )
 					_ActivateWindow( this.window.parentNode );
 			}
 		}
+		
+		// For screen icons
+		if( this.window.classList.contains( 'ScreenContent' ) )
+		{
+			if( currentMovable )
+				_DeactivateWindow( currentMovable );
+			currentMovable = null;
+		}
 
 		// This means we are adding
 		if( e.shiftKey || e.ctrlKey )
@@ -4074,6 +4082,9 @@ FileIcon.prototype.Init = function( fileInfo )
 			found = this;
 			this.selected = true;
 			this.fileInfo.selected = true;
+			
+			// Count selected icons
+			this.directoryView.windowObject.checkSelected();
 			
 			if( !window.isMobile )
 			{

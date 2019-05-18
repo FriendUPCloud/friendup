@@ -18,7 +18,7 @@ Application.run = function( msg, iface )
 		'width'     : 1290,
 		'height'    : 800,
 		'min-width' : 700,
-		'min-height': 400,
+		'min-height': 400
 	} );
 	
 	this.mainView = w;
