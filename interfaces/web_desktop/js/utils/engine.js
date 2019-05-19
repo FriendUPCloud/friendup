@@ -296,7 +296,8 @@ function hideKeyboard()
 		field.focus();
 		setTimeout( function()
 		{
-			document.body.removeChild( field );
+			if( field.parentNode == document.body )
+				document.body.removeChild( field );
 		}, 500 );
 	}, 50 );
 }

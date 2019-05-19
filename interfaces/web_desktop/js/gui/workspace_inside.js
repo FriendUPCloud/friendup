@@ -1266,7 +1266,8 @@ var WorkspaceInside = {
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
 		Workspace.closeDrivePanel();
-		Workspace.mainDock.closeDesklet();
+		if( Workspace.mainDock )
+			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
 	},
 	removeCalendarEvent: function( id )
