@@ -2689,27 +2689,24 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			if( this.mode != 'Volumes' && ( iy > display.bottom || iy < display.top ) )
 			{
 				// Increment icons after first calculated icon
-				if( iterations++ > 0 )
+				if( direction == 'vertical' )
 				{
-					if( direction == 'vertical' )
+					iy += gridY;
+
+					if( iy + gridY > windowHeight )
+					{
+						iy = marginTop;
+						ix += gridX;
+					}
+				}
+				// Left to right
+				else
+				{
+					ix += gridX;
+					if( ix + gridX > windowWidth )
 					{
 						iy += gridY;
-
-						if( iy + gridY > windowHeight )
-						{
-							iy = marginTop;
-							ix += gridX;
-						}
-					}
-					// Left to right
-					else
-					{
-						ix += gridX;
-						if( ix + gridX > windowWidth )
-						{
-							iy += gridY;
-							ix = marginLeft;
-						}
+						ix = marginLeft;
 					}
 				}
 				// Make sure we push to buffer
@@ -3985,7 +3982,8 @@ FileIcon.prototype.Init = function( fileInfo )
 			case 'TypeJPEG':
 			case 'TypePNG':
 			case 'TypeGIF':
-				iconInner.style.backgroundImage = 'url(\'' + getImageUrl( fileInfo.Path ) + '\')';
+				var ur = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path;
+				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
 				iconInner.className = 'Thumbnail';
 				break;
 		}
