@@ -1266,7 +1266,8 @@ var WorkspaceInside = {
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
 		Workspace.closeDrivePanel();
-		Workspace.mainDock.closeDesklet();
+		if( Workspace.mainDock )
+			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
 	},
 	removeCalendarEvent: function( id )
@@ -5882,6 +5883,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !c ) return false;
 
 		var ic = currentMovable.content.icons;
+		if( !ic )
+		{
+			ic = Workspace.screen.contentDiv.icons;
+		}
 		for( var a = 0; a < ic.length; a++ )
 		{
 			var t = ic[a].Filename ? ic[a].Filename : ic[a].Title;
@@ -6110,6 +6115,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( iconsSelected )
 		{
 			canUnmount = true;
+			
 			var ics = currentMovable ? currentMovable.content.icons : currentScreen.screen._screen.icons;
 			for( var a in ics )
 			{
@@ -6760,6 +6766,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			if( t.checkSelected )
 				t.checkSelected();
+			
 			Workspace.refreshMenu( true );
 			for( var z = 0; z < Workspace.menu.length; z++ )
 			{

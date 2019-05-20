@@ -244,7 +244,9 @@ Workspace = {
 							// Loading notice
 							var loading = document.createElement( 'div' );
 							loading.className = 'LoadingMessage';
-							loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
+							if( typeof( t.conf.app ) == 'undefined' )
+								loading.innerHTML = '<p>Nothing to load...</p>';
+							else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
 							document.body.appendChild( loading );
 							setTimeout( function()
 							{
