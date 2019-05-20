@@ -763,11 +763,11 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		var selectedCount = 0;
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( !eles[a].className || !eles[a].classList.contains( 'Selected' ) )
+			if( !eles[a].classList && !eles[a].classList.contains( 'Selected' ) )
 				continue;
-
 			selectedCount++;
 		}
+		
 		Friend.iconsSelectedCount = selectedCount;
 	},
 	// -------------------------------------------------------------------------
@@ -2680,6 +2680,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		var contentMode = this.window.classList.contains( 'ScreenContent' ) ? 'screen' : 'view';
 		
 		// Draw icons
+		var iterations = 0;
 		for( var a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
@@ -2687,24 +2688,28 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			// Do not draw icons out of bounds!
 			if( this.mode != 'Volumes' && ( iy > display.bottom || iy < display.top ) )
 			{
-				if( direction == 'vertical' )
+				// Increment icons after first calculated icon
+				if( iterations++ > 0 )
 				{
-					iy += gridY;
-
-					if( iy + gridY > windowHeight )
-					{
-						iy = marginTop;
-						ix += gridX;
-					}
-				}
-				// Left to right
-				else
-				{
-					ix += gridX;
-					if( ix + gridX > windowWidth )
+					if( direction == 'vertical' )
 					{
 						iy += gridY;
-						ix = marginLeft;
+
+						if( iy + gridY > windowHeight )
+						{
+							iy = marginTop;
+							ix += gridX;
+						}
+					}
+					// Left to right
+					else
+					{
+						ix += gridX;
+						if( ix + gridX > windowWidth )
+						{
+							iy += gridY;
+							ix = marginLeft;
+						}
 					}
 				}
 				// Make sure we push to buffer
@@ -4041,6 +4046,14 @@ FileIcon.prototype.Init = function( fileInfo )
 					_ActivateWindow( this.window.parentNode );
 			}
 		}
+		
+		// For screen icons
+		if( this.window.classList.contains( 'ScreenContent' ) )
+		{
+			if( currentMovable )
+				_DeactivateWindow( currentMovable );
+			currentMovable = null;
+		}
 
 		// This means we are adding
 		if( e.shiftKey || e.ctrlKey )
@@ -4074,6 +4087,9 @@ FileIcon.prototype.Init = function( fileInfo )
 			found = this;
 			this.selected = true;
 			this.fileInfo.selected = true;
+			
+			// Count selected icons
+			this.directoryView.windowObject.checkSelected();
 			
 			if( !window.isMobile )
 			{
