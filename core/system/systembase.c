@@ -112,7 +112,7 @@ SystemBase *SystemInit( void )
 	//int size = strlen ( tmp );
 	//ProcessIncomingRequest( NULL, tmp, size, NULL );
 	
-	socket_init_once();
+	//socket_init_once();
 
 	struct SystemBase *l = NULL;
 	char *tempString = FCalloc( PATH_MAX, sizeof(char) );

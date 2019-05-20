@@ -1934,6 +1934,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		FLUSH_QUEUE();
 	}
 	*/
+	DEBUG("END of callback\n");
 	
 	DECREASE_WS_THREADS();
 	
