@@ -18,18 +18,18 @@ require_once( 'php/classes/file.php' );
 $width = 56;
 $height = 48;
 
-if( !isset( $args->args->path ) )
+if( !isset( $args->path ) )
 {
 	die( 'ok<!--separate-->{"response":-1,"message":"Fail."}' );
 }
 
-if( isset( $args->args->width ) )
+if( isset( $args->width ) )
 {
-	$width = $args->args->width;
+	$width = $args->width;
 }
-if( isset( $args->args->height ) )
+if( isset( $args->height ) )
 {
-	$height = $args->args->height;
+	$height = $args->height;
 }
 
 // Sanitized username
@@ -38,13 +38,13 @@ $wname = $Config->FCUpload . $uname . '/';
 
 if( !file_exists( $wname . 'thumbnails' ) )
 {
-	makedir( $wname . 'thumbnails' );
+	mkdir( $wname . 'thumbnails' );
 }
 
-$p = urldecode( $args->args->path );
+$p = urldecode( $args->path );
 
 $ext = explode( '.', $p );
-$ext = pop( $ext );
+$ext = array_pop( $ext );
 $ext = strtolower( $ext );
 
 // Fix filename
@@ -68,25 +68,57 @@ if( file_exists( $wname . 'thumbnails/' . $fname ) )
 // Generate thumbnail
 if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 {
+	FriendHeader( 'Content-type', 'image/png' );
+	
+	if( !file_exists( '/tmp/Friendup' ) )
+		mkdir( '/tmp/Friendup' );
+	if( !file_exists( '/tmp/Friendup' ) )
+		die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
+
 	$d = new File( $p );
 
 	$source = null;
-	list( $iw, $ih, ) = getimagesize( $d->GetUrl() );
-	$x = $y = 0;
 	
-	FriendHeader( 'Content-type', 'image/png' );
+	// Get data
+	$ch = curl_init();
+	curl_setopt( $ch, CURLOPT_URL, $d->GetUrl() );
+	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+	curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+	curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+	$tmp = curl_exec( $ch );
+	curl_close( $ch );
+	
+	// Temp file
+	$smp = $fname;
+	while( file_exists( '/tmp/Friendup/' . $smp ) )
+	{
+		$smp = $fname . '_' . rand( 0,9999 ) . rand( 0,9999 );
+	}
+	
+	if( $f = fopen( '/tmp/Friendup/' . $smp, 'w+' ) )
+	{
+		fwrite( $f, $tmp );
+		fclose( $f );
+	}
+	else
+	{
+		die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
+	}
+	
+	list( $iw, $ih, ) = getimagesize( '/tmp/Friendup/' . $smp );
+	$x = $y = 0;
 	
 	switch( $ext )
 	{
 		case 'jpg':
 		case 'jpeg':
-			$source = imagecreatefromjpeg( $d->GetUrl() );
+			$source = imagecreatefromjpeg( '/tmp/Friendup/' . $smp );
 			break;
 		case 'png':
-			$source = imagecreatefrompng( $d->GetUrl() );
+			$source = imagecreatefrompng( '/tmp/Friendup/' . $smp );
 			break;
 		case 'gif':
-			$source = imagecreatefromgif( $d->GetUrl() );
+			$source = imagecreatefromgif( '/tmp/Friendup/' . $smp );
 			break;
 	}
 	
@@ -96,7 +128,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	// Output
 	$dest = imagecreatetruecolor( $width, $height );
 	
-	// Place thumbnail to the center bottom
+	// Place thumbnail to the center
 	// First try width
 	$rw = $width;
 	$rh = $ih / $iw * $width;
@@ -106,16 +138,19 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		$rh = $height;
 		$rw = $iw / $ih * $height;
 	}
-	// Center / Bottom
-	$y = $height - $rh;
+	// Center
+	$y = $height / 2 - ( $rh / 2 );
 	$x = $width / 2 - ( $rw / 2 );
 	// Resize
-	imagecopyresized( $dest, $source, $x, $y, $rw, $rh, 0, 0, $iw, $ih );
+	imagecopyresized( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
+	
 	// Save
 	imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
-	// Output
-	imagepng( $dest, 9 );
-	die();
+	
+	if( file_exists( '/tmp/Friendup/' . $smp ) )
+		unlink( '/tmp/Friendup/' . $smp );
+	
+	die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
 }
 // TODO: Support more icons
 else

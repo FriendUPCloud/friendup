@@ -31,7 +31,7 @@ class File
 		return $this->_content;
 	}
 	
-	function GetUrl( $path, $userInfo )
+	function GetUrl( $path = false, $userInfo = false )
 	{
 		global $Config, $User, $Logger;
 		
