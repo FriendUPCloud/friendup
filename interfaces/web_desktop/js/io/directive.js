@@ -56,7 +56,8 @@ function ExecuteApplication( app, args, callback )
 		Workspace.goToMobileDesktop();
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
-		Workspace.mainDock.closeDesklet();
+		if( Workspace.mainDock )
+			Workspace.mainDock.closeDesklet();
 	}
 	
 	if( args )
