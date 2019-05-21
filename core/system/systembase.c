@@ -146,7 +146,7 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 		
 		// internal
-
+/*
 		struct sigaction sa;
 		sa.sa_handler = &handle_sigchld;
 		sigemptyset(&sa.sa_mask);
@@ -155,6 +155,7 @@ SystemBase *SystemInit( void )
 		{
 			perror(0);
 		}
+		*/
 		
 		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
