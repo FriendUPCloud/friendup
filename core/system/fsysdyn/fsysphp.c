@@ -359,10 +359,10 @@ ListString *PHPCall( const char *command, int *length )
 		}
 		else
 		{
-			char clo[2];
-			clo[0] = '\'';
-			clo[1] = EOF;
-			write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
+			//char clo[2];
+			//clo[0] = '\'';
+			//clo[1] = EOF;
+			//write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
 			errCounter++;
 			if( errCounter > 3 )
 			{
