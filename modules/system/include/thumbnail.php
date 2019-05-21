@@ -127,6 +127,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		
 	// Output
 	$dest = imagecreatetruecolor( $width, $height );
+	imagesavealpha( $dest, true );
 	
 	// Place thumbnail to the center
 	// First try width
@@ -139,7 +140,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		$rw = $iw / $ih * $height;
 	}
 	// Center
-	$y = $height / 2 - ( $rh / 2 );
+	$y = $height - $rh;
 	$x = $width / 2 - ( $rw / 2 );
 	// Resize
 	imagecopyresized( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
