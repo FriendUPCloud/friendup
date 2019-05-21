@@ -125,10 +125,15 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	if( !$source )
 		die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
 		
+	imageantialias( $source, true );
+		
 	// Output
 	$dest = imagecreatetruecolor( $width, $height );
 	imageantialias( $dest, true );
+	imagealphablending( $dest , false );
 	imagesavealpha( $dest, true );
+	$transparent = imagecolorallocatealpha( $dest, 255, 255, 255, 127 );
+	imagefilledrectangle( $dest, 0, 0, $width, $height, $transparent );
 	
 	// Place thumbnail to the center
 	// First try width
