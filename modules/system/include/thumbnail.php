@@ -127,6 +127,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		
 	// Output
 	$dest = imagecreatetruecolor( $width, $height );
+	imageantialias( $dest, true );
 	imagesavealpha( $dest, true );
 	
 	// Place thumbnail to the center
