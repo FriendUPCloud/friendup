@@ -123,7 +123,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	}
 	
 	if( !$source )
-		die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
+		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 		
 	imageantialias( $source, true );
 		
