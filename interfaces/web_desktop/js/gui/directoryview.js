@@ -4447,7 +4447,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		//return cancelBubble( event );
 	}, false );
 			
-	file.ontouchmove = function( e )
+	/*file.ontouchmove = function( e )
 	{
 		if( !this.touchPos )
 			return;
@@ -4479,38 +4479,40 @@ FileIcon.prototype.Init = function( fileInfo )
 		}
 		
 		return cancelBubble( e );
-	}
-
+	}*/
 
 	file.addEventListener( 'touchend', function( event )
 	{
 		if( this.directoryView.filedialog )
 			return;
 			
-		this.touchPos = false;
-
-		// When single clicking (under a second) click the file!
-		var time = ( new Date() ).getTime() - file.clickedTime;
-		if( time < 250 && window.clickElement )
+		if( window.clickElement == this )
 		{
-			setTimeout( function()
-			{
-				if( file.ondblclick )
-					file.ondblclick();
-				else if( file.onclick )
-					file.onclick;
-			}, 100 );
-		}
+			this.touchPos = false;
 
-		if( file.menuTimeout )
-			clearTimeout( file.menuTimeout );
-		file.menuTimeout = false;
-		if( file.contextMenuTimeout )
-			clearTimeout( file.contextMenuTimeout );
-		file.contextMenuTimeout = false;
-		Workspace.closeDrivePanel();
-		window.clickElement = null;
-		return cancelBubble( event );
+			// When single clicking (under a second) click the file!
+			var time = ( new Date() ).getTime() - file.clickedTime;
+			if( time < 250 && window.clickElement )
+			{
+				setTimeout( function()
+				{
+					if( file.ondblclick )
+						file.ondblclick();
+					else if( file.onclick )
+						file.onclick;
+				}, 100 );
+			}
+
+			if( file.menuTimeout )
+				clearTimeout( file.menuTimeout );
+			file.menuTimeout = false;
+			if( file.contextMenuTimeout )
+				clearTimeout( file.contextMenuTimeout );
+			file.contextMenuTimeout = false;
+			Workspace.closeDrivePanel();
+			window.clickElement = null;
+			return cancelBubble( event );
+		}
 	} );
 }
 
