@@ -94,7 +94,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	
 	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
-	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
+	INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
 	
