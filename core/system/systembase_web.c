@@ -157,6 +157,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				add = 11;
 			}
 			
+			DEBUG("Sessptr !NULL\n");
+			
 			if( sessptr != NULL )
 			{
 				//  |  till sessionid  |  sessionid  |  after sessionid
@@ -174,6 +176,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				}
 				//add += 40; // len of sessionid
 
+				DEBUG("before while\n");
 				while( *src != 0 )
 				{
 					if( *src == '&' )
@@ -183,6 +186,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					src++;
 					add++;
 				}
+				DEBUG("After while\n");
 				
 				int restSize = fullsize - ( src-allArgs );
 				if( restSize > 0 )
@@ -201,6 +205,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			strcpy( allArgsNew, allArgs );
 		}
+		DEBUG("REquest source: %d\n", request->h_RequestSource );
 		
 		// get values from POST 
 		
@@ -218,6 +223,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				quotationFound = TRUE;
 			}
 			
+			DEBUG("Before for\n");
 			for( ; i < hm->table_size; i++ )
 			{
 				if( hm->data[ i ].inUse == TRUE && hm->data[ i ].key != NULL && hm->data[ i ].data != NULL )
@@ -248,6 +254,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					}
 				}
 			}
+			DEBUG("After for\n");
 			
 			/*
 			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
@@ -271,6 +278,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		FFree( allArgs );
 	}
 	//fclose( log );
+	DEBUG("Before fullsize>3096\n");
 	
 	if( fullsize > 3096 )
 	{
@@ -325,6 +333,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	{
 		*returnedAsFile = FALSE;
 	}
+	DEBUG("End all args new\n");
 	
 	return allArgsNew;
 }
