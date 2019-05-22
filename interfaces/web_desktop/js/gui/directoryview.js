@@ -2375,7 +2375,7 @@ DirectoryView.prototype.GetTitleBar = function ()
 	return false;
 }
 
-// -------------------------------------------------------------------------
+// Redraw the iconview mode ----------------------------------------------------
 DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, option, flags )
 {
 	var self = this;
