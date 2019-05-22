@@ -2810,13 +2810,22 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			{
 				if( icons[a].Type == 'Door' && !icons[a].Mounted ) continue;
 				
-				// Checks if the icon is
-				file = CreateIcon( icons[a], this );
-				file.directoryView = this;
+				if( icons[a].file )
+				{
+					coldom.appendChild( icons[a].file );
+					file = icons[a].file;
+				}
+				else
+				{
+					// Checks if the icon is
+					file = CreateIcon( icons[a], this );
+					file.directoryView = this;
+					icons[a].file = file;
+				}
+				
 				file.style.top = iy + 'px';
 				file.style.left = ix + 'px';
-				if( option == 'compact' )
-					file.classList.add( 'Compact' );
+				if( option == 'compact' ) file.classList.add( 'Compact' );
 				
 				coldom.appendChild( file );
 				
