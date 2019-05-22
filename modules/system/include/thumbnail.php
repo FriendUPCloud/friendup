@@ -48,15 +48,7 @@ $ext = array_pop( $ext );
 $ext = strtolower( $ext );
 
 // Fix filename
-list( , $finame ) = explode( ':', $p );
-if( strstr( $finame, '/' ) )
-{
-	$finame = explode( '/', $finame );
-	$finame = $finame[ count( $finame ) - 1 ];
-}
-$finame = str_replace( '.', '_', $finame );
-
-$fname = $width . '_' . $height . '_' . $finame . '.' . $ext;
+$fname = hash( 'ripemd160', $width . '_' . $height . '_' . $p ) . '.png';
 
 // Already here!
 if( file_exists( $wname . 'thumbnails/' . $fname ) )
@@ -68,12 +60,13 @@ if( file_exists( $wname . 'thumbnails/' . $fname ) )
 // Generate thumbnail
 if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 {
-	FriendHeader( 'Content-type', 'image/png' );
-	
 	if( !file_exists( '/tmp/Friendup' ) )
 		mkdir( '/tmp/Friendup' );
 	if( !file_exists( '/tmp/Friendup' ) )
-		die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
+	{
+		FriendHeader( 'Content-type', 'image/svg+xml' );
+		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
+	}
 
 	$d = new File( $p );
 
@@ -102,7 +95,8 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	}
 	else
 	{
-		die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
+		FriendHeader( 'Content-type', 'image/svg+xml' );
+		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 	}
 	
 	list( $iw, $ih, ) = getimagesize( '/tmp/Friendup/' . $smp );
@@ -123,7 +117,10 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	}
 	
 	if( !$source )
-		die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
+	{
+		FriendHeader( 'Content-type', 'image/svg+xml' );
+		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
+	}
 		
 	imageantialias( $source, true );
 		
@@ -132,6 +129,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	imageantialias( $dest, true );
 	imagealphablending( $dest , false );
 	imagesavealpha( $dest, true );
+	imagesetinterpolation( $dest, IMG_BICUBIC );
 	$transparent = imagecolorallocatealpha( $dest, 255, 255, 255, 127 );
 	imagefilledrectangle( $dest, 0, 0, $width, $height, $transparent );
 	
@@ -149,7 +147,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	$y = $height - $rh;
 	$x = $width / 2 - ( $rw / 2 );
 	// Resize
-	imagecopyresized( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
+	imagecopyresampled( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
 	
 	// Save
 	imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
@@ -157,13 +155,14 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	if( file_exists( '/tmp/Friendup/' . $smp ) )
 		unlink( '/tmp/Friendup/' . $smp );
 	
+	FriendHeader( 'Content-type', 'image/png' );
 	die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
 }
 // TODO: Support more icons
 else
 {
-	FriendHeader( 'Content-type', 'image/png' );
-	die( file_get_contents( 'resources/themes/friendup12/gfx/icons/icon_blank_2.png' ) );
+	FriendHeader( 'Content-type', 'image/svg+xml' );
+	die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 }
 
 
