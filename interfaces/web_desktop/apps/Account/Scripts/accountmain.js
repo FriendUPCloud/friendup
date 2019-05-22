@@ -945,19 +945,20 @@ function saveDia()
 	context = canvas.getContext( '2d' );
 	var base64 = canvas.toDataURL();
 	var ma = new Module( 'system' );
+	ma.forceHTTP = true;
 	ma.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
 		{
 			console.log( 'Avatar saving failed.' );
 		}
-		else
+		/*else
 		{
 			console.log( 'Saved avatar.' );
-		}
+		}*/
 	};
 	ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
-	console.log( 'Saving dia!' );
+	//console.log( 'Saving dia!' );
 
 	// Friend network settings -------------------------------------------------
 	
