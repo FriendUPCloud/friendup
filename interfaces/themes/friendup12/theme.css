@@ -2542,6 +2542,7 @@ html .File.Selected .Title
 {
 	-webkit-mask-image: none;
 	min-height: auto;
+	height: auto;
 	max-height: 200px !important;
 }
 
