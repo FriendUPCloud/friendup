@@ -2535,6 +2535,9 @@ html .File.Selected
 html .File .Title
 {
 	transition: height 0.2s;
+}
+html body[mobile] .File .Title
+{
 	height: 45px;
 }
 
