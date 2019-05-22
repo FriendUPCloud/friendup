@@ -939,19 +939,29 @@ function cancelDia()
 // Save settings
 function saveDia()
 {
-	// Saves the avatar
+	// Saves the avatar --------------------------------------------------------
+	
 	var canvas = ge( 'Avatar' );
 	context = canvas.getContext( '2d' );
 	var base64 = canvas.toDataURL();
 	var ma = new Module( 'system' );
+	ma.forceHTTP = true;
 	ma.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
+		{
 			console.log( 'Avatar saving failed.' );
+		}
+		/*else
+		{
+			console.log( 'Saved avatar.' );
+		}*/
 	};
 	ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
+	//console.log( 'Saving dia!' );
 
-	// Friend network settings
+	// Friend network settings -------------------------------------------------
+	
 	if( Application.friendNetwork )
 	{
 		// Save device information 
@@ -1053,6 +1063,8 @@ function saveDia()
 		m.execute( 'setsetting', { setting: 'friendNetwork', data: fnet } );
 	}
 	
+	// Credentials -------------------------------------------------------------
+	
 	// Get save object
 	var obj = {
 		fullname: htmlentities( ge( 'UserAccFullname' ).value ),
@@ -1060,7 +1072,7 @@ function saveDia()
  		email:    ge( 'UserAccEmail' ).value
 	};
 	
-	//shall we save new password
+	// Shall we save new password
 	if( ge( 'UserAccPassword' ).value != '' )
 	{
 		if( ge( 'UserAccPassword' ).value == ge( 'UserAccPasswordConfirm' ).value )
@@ -1094,9 +1106,10 @@ function saveDia()
 		Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
 
 	}
-	
-	obj.command ='update';
+	obj.command = 'update';
 	f.execute( 'user', obj );
+	
+	// Languages ---------------------------------------------------------------
 	
 	// Save language setting
 	if( ge( 'UserLanguage' ).value != Application.language )
@@ -1149,13 +1162,13 @@ function saveDia()
 		if( speechSynthesis.getVoices().length <= 0 )
 			setTimeout( function(){ updateLanguages(); }, 150 );
 		else updateLanguages();
-		
 	}
 	
 	var mo = new Module( 'system' );
 	mo.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
 	
-	// How do we run Friend
+	// How do we run Friend ----------------------------------------------------
+	
 	var workspaceMode = ge( 'UserMode' );
 	if( workspaceMode ) workspaceMode = workspaceMode.value;
 	else workspaceMode = 'normal';

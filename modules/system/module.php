@@ -273,6 +273,10 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"ping failed"}'  );
 			break;
+		// Create a thumbnail of any kind of file
+		case 'thumbnail':
+			require( 'modules/system/include/thumbnail.php' );
+			break;
 		// Get the app image from repository
 		case 'repoappimage':
 			require( 'modules/system/include/repoappimage.php' );
