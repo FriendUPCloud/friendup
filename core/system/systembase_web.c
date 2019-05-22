@@ -294,10 +294,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			// if file doesnt exist we can create new one
 			if( ( f = fopen( tmpFileName, "rb" ) ) == NULL )
 			{
+				DEBUG("File not found\n");
 				// new file created, we can store all parameters there
 				fp = fopen( tmpFileName, "wb" );
 				if( fp != NULL )
 				{
+					DEBUG("File created\n");
 					fwrite( allArgsNew, 1, strlen( allArgsNew ), fp );
 					fclose( fp );
 					FFree( allArgsNew );
@@ -309,6 +311,10 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 						snprintf( allArgsNew, len2, MODULE_FILE_CALL_STRING, tmpFileName );
 					}
 					break;
+				}
+				else
+				{
+					DEBUG("Cannot create file: %s\n", tmpFileName );
 				}
 			}
 			else
