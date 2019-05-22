@@ -2819,7 +2819,6 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				var ic = file.getElementsByClassName( 'Icon' );
 				var c = window.getComputedStyle( ic[0], null );
 				var title = file.getElementsByClassName( 'Title' );
-				title[0].style.maxHeight = ( gridY - parseInt( c.height ) ) + 'px';
 				title[0].style.overflow = 'hidden';
 
 				// Usually drawing from top to bottom
