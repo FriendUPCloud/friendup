@@ -31,7 +31,7 @@ class File
 		return $this->_content;
 	}
 	
-	function Load( $path = false, $userInfo = false )
+	function GetUrl( $path = false, $userInfo = false )
 	{
 		global $Config, $User, $Logger;
 		
@@ -51,6 +51,15 @@ class File
 			$url .= '&authid=' . $GLOBALS[ 'args' ]->authid;
 		else if( isset( $User->SessionID ) )
 			$url .= '&sessionid=' . $User->SessionID;
+
+		return $url;
+	}
+	
+	function Load( $path = false, $userInfo = false )
+	{
+		global $Config, $User, $Logger;
+		
+		$url = $this->GetUrl( $path, $userInfo );
 
 		$c = curl_init();
 		

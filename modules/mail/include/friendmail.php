@@ -81,10 +81,11 @@ function getFriendMailSettings()
 {
 	global $cypthdb, $SqlDatabase;
 
-	$rs = $SqlDatabase->FetchRow( "SELECT Data FROM FSetting s WHERE s.UserID = '-1' AND s.Type = 'mail' AND s.Key = 'friendmailsettings';" );
-	$settings = json_decode($rs['Data']);
+	$rs = $SqlDatabase->FetchRow( "SELECT s.Data FROM FSetting s WHERE s.UserID = '-1' AND s.Type = 'mail' AND s.Key = 'friendmailsettings';" );
+	$settings = json_decode( $rs[ 'Data' ] );
 	
-	if( !$settings || !isset( $settings->fileroot ) || !isset( $settings->url ) ) die('fail<!--separate-->{"response":-1,"message":"Invalid setting for FriendMail detected"}');
+	if( !$settings /*|| !isset( $settings->fileroot )*/ || !isset( $settings->url ) ) 
+		die( 'fail<!--separate-->{"response":-1,"message":"Invalid setting for FriendMail detected"}' );
 	
 	return $settings;
 }
