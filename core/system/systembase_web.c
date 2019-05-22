@@ -282,6 +282,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	
 	if( fullsize > 3096 )
 	{
+		int tr = 100;
 		*returnedAsFile = TRUE;
 		// if message is too big, allocate memory for filename
 		char *tmpFileName = FMalloc( 1024 );
@@ -294,12 +295,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			// if file doesnt exist we can create new one
 			if( ( f = fopen( tmpFileName, "rb" ) ) == NULL )
 			{
-				DEBUG("File not found\n");
+				//DEBUG("File not found\n");
 				// new file created, we can store all parameters there
 				fp = fopen( tmpFileName, "wb" );
 				if( fp != NULL )
 				{
-					DEBUG("File created\n");
+					//DEBUG("File created\n");
 					fwrite( allArgsNew, 1, strlen( allArgsNew ), fp );
 					fclose( fp );
 					FFree( allArgsNew );
@@ -315,6 +316,13 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				else
 				{
 					DEBUG("Cannot create file: %s\n", tmpFileName );
+				}
+				
+				tr--;
+				if( tr <= 0 )
+				{
+					FERROR("Cannot create file, check access\n");
+					break;
 				}
 			}
 			else
