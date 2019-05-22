@@ -1404,7 +1404,6 @@ movableListener = function( e, data )
 		Workspace.updateViewState( 'active' );
 	}
 	
-
 	mousePointer.poll();
 	mousePointer.move( e );
 	
@@ -3641,25 +3640,26 @@ function InitGuibaseEvents()
 	}
 	else
 	{
-		if ( window.attachEvent )
-			window.attachEvent ( 'onmouseup', movableMouseUp, false );
-		else window.addEventListener ( 'mouseup', movableMouseUp, false );	
+		if( window.attachEvent )
+			window.attachEvent( 'onmouseup', movableMouseUp, false );
+		else window.addEventListener( 'mouseup', movableMouseUp, false );	
 		
-		if ( window.attachEvent )
+		if( window.attachEvent )
 			window.attachEvent ( 'onmousemove', movableListener, false );
-		else window.addEventListener ( 'mousemove', movableListener, false );
-		if ( window.attachEvent )
-			window.attachEvent ( 'onmousedown', movableMouseDown, false );
-		else window.addEventListener ( 'mousedown', movableMouseDown, false );
+		else window.addEventListener( 'mousemove', movableListener, false );
+		
+		if( window.attachEvent )
+			window.attachEvent( 'onmousedown', movableMouseDown, false );
+		else window.addEventListener( 'mousedown', movableMouseDown, false );
 
-		if ( window.attachEvent )
-			window.attachEvent ( 'oncontextmenu', contextMenu, false );
-		else window.addEventListener ( 'contextmenu', contextMenu, false );
+		if( window.attachEvent )
+			window.attachEvent( 'oncontextmenu', contextMenu, false );
+		else window.addEventListener( 'contextmenu', contextMenu, false );
 	}
 	
-	if ( window.attachEvent )
-		window.attachEvent ( 'onresize', movableListener, false );
-	else window.addEventListener ( 'resize', movableListener, false );
+	if( window.attachEvent )
+		window.attachEvent( 'onresize', movableListener, false );
+	else window.addEventListener( 'resize', movableListener, false );
 
 	document.oncontextmenu = contextMenu;
 }

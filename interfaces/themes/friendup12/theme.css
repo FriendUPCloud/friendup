@@ -2554,7 +2554,7 @@ html .File.Selected .Title
 	}
 	html body .File .Icon > div
 	{
-		height: 72px;
+		max-height: 56px;
 	}
 }
 
