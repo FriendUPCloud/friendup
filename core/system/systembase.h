@@ -87,6 +87,8 @@
 #include <communication/cluster_node.h>
 #include <config/properties.h>
 #include <websockets/websocket_apns_connector.h>
+
+//#include <network/protocol_websocket.h>
 #include <system/permission/permission_manager.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
@@ -315,7 +317,7 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **err );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError );
 
 	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
 
@@ -341,7 +343,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err );
+	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
@@ -353,7 +355,7 @@ typedef struct SystemBase
 	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
-	int								(*WebsocketWrite)( void *wscl, unsigned char *msgptr, int msglen, int type );
+	int								(*WebsocketWrite)( UserSessionWebsocket *wscl, unsigned char *msgptr, int msglen, int type );
 	
 	int								(*SendProcessMessage)( Http *request, char *data, int len );
 

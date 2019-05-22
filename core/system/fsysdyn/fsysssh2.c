@@ -397,7 +397,7 @@ int UnMount( struct FHandler *s, void *f )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((unused)), char **mountError )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((unused)), char **mountError __attribute__((unused)) )
 {
 	File *dev = NULL;
 	char *path = NULL;

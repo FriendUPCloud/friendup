@@ -282,6 +282,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		while( TRUE )
 		{
 			FILE *f;
+			int tr = 100;
 			int len = snprintf( tmpFileName, 1024, "/tmp/Friendup/_phpcommand_%d%d.%lu", rand()%9999, rand()%9999, time(NULL) );
 			// if file doesnt exist we can create new one
 			if( ( f = fopen( tmpFileName, "rb" ) ) == NULL )
@@ -300,6 +301,13 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					{
 						snprintf( allArgsNew, len2, MODULE_FILE_CALL_STRING, tmpFileName );
 					}
+					break;
+				}
+				
+				tr--;
+				if( tr <= 0 )
+				{
+					FERROR("Cannot create file, check access\n");
 					break;
 				}
 			}
@@ -1248,23 +1256,25 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					if( loggedSession != NULL )
 					{
 						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
-						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
-						{
-							if( loggedSession->us_User == NULL )
+						//if( dstusrsess == NULL )
+						//{
+							if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
 							{
-								DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
-								User *lusr = l->sl_UM->um_Users;
-								while( lusr != NULL )
+								if( loggedSession->us_User == NULL )
 								{
-									if( loggedSession->us_UserID == lusr->u_ID )
+									DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
+									User *lusr = l->sl_UM->um_Users;
+									while( lusr != NULL )
 									{
-										loggedSession->us_User = lusr;
-										break;
+										if( loggedSession->us_UserID == lusr->u_ID )
+										{
+											loggedSession->us_User = lusr;
+											break;
+										}
+										lusr = (User *)lusr->node.mln_Succ;
 									}
-									lusr = (User *)lusr->node.mln_Succ;
 								}
-							}
-						
+							//}
 						//
 						// update user and session
 						//

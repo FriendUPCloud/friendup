@@ -24,6 +24,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <util/newpopen.h>
 
 #define SUFFIX "fsys"
 #define PREFIX "php"
@@ -92,9 +93,13 @@ char *FilterPHPVar( char *line )
 		}
 		// Kill unwanted stuff
 		if( line[ i ] == '`' )
+		{
 			line[ i ] = ' ';
+		}
 		else if( line[ i ] == '"' || line[ i ] == '\n' || line[ i ] == '\r' )
+		{
 			line[ i ] = ' '; // Eradicate!
+		}
 	}
 	return line;
 }
@@ -299,6 +304,90 @@ ListString *PHPCall( const char *command, int *length )
     }	// switch pipe
     */
     
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror( errno ) );
+		return NULL;
+	}
+	
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	ListString *data = ListStringNew();
+	int errCounter = 0;
+	int size = 0;
+	
+	fd_set set;
+	struct timeval timeout;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+	
+	//do {
+    //  pid = waitpid(p->child_pid, &status, 0);
+    //} while (pid =  = -1 && errno =  = EINTR);
+	// p[1] - stdout p[2] - stderr
+	while( TRUE )
+	{
+			/* Initialize the file descriptor set. */
+		FD_ZERO( &set );
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		//DEBUG("[PHPFsys] in loop\n");
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
+		// Make a new buffer and read
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			//DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			//DEBUG( "[PHPFsys] before adding to list\n");
+			ListStringAdd( data, buf, size );
+			//DEBUG( "[PHPFsys] after adding to list\n");
+		}
+		else
+		{
+			char clo[2];
+			clo[0] = '\'';
+			clo[1] = EOF;
+			write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
+			errCounter++;
+			if( errCounter > 3 )
+			{
+				FERROR("Error in popen, Quit! Command: %s\n", command );
+				break;
+			}
+		}
+	}
+	//DEBUG( "[PHPFsys] after loop, memory will be released\n");
+	
+	FFree( buf );
+	//DEBUG("[PHPFsys] File readed\n");
+	
+	// Free pipe if it's there
+	newpclose( &pofd );
+	
+	ListStringJoin( data );		//we join all string into one buffer
+
+	// Set the length
+	if( length != NULL ) *length = data->ls_Size;
+	
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
+	return data;
+	
+	
+	/*
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
@@ -353,6 +442,7 @@ ListString *PHPCall( const char *command, int *length )
 	
 	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
 	return data;
+	*/
 }
 
 //

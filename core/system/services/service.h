@@ -72,31 +72,31 @@ typedef struct Service
 {
 	MinNode node;
 	
-	char                     *s_Command;														// command
-	int                        s_State;																// status of service
+	char						*s_Command;														// command
+	int							s_State;																// status of service
 	
-	FULONG               s_Version; 															// version information
-	void                      *s_Handle;															// internal handle
-	void                      *(*ServiceNew)( void *sysbase, char *command );				// service init
-	void                      (*ServiceDelete)( struct Service* serv );						// service deinit
-	FULONG               (*GetVersion)( void );											// version of service
-	FULONG               (*GetRevision)( void );										// revision of service
-	int                        (*ServiceStart)( struct Service *s );				// start service command
-	int                        (*ServiceStop)( struct Service *s, char *data );								// stop service command
-	int                        (*ServiceInstall)( struct Service *s );							// install service
-	int                        (*ServiceUninstall)( struct Service *s );						// uninstall service
-	char                     *(*ServiceGetStatus)( struct Service *s, int *len );						// return service status
-	char                     *(*ServiceCommand)( struct Service *s, const char *serv, const char *cmd, Hashmap *params );	// command
-	char                     *(*ServiceRun)( struct Service *s );								// do your stuff, can be called remotly
-	char                     *(*ServiceGetWebGUI)( struct Service *s );		// get web gui
-	const char            *(*GetName)( void );												// get service suffix'
+	FULONG						s_Version; 															// version information
+	void						*s_Handle;															// internal handle
+	void						*(*ServiceNew)( void *sysbase, char *command );				// service init
+	void						(*ServiceDelete)( struct Service* serv );						// service deinit
+	FULONG						(*GetVersion)( void );											// version of service
+	FULONG						(*GetRevision)( void );										// revision of service
+	int							(*ServiceStart)( struct Service *s );				// start service command
+	int							(*ServiceStop)( struct Service *s, char *data );								// stop service command
+	int							(*ServiceInstall)( struct Service *s );							// install service
+	int							(*ServiceUninstall)( struct Service *s );						// uninstall service
+	char						*(*ServiceGetStatus)( struct Service *s, int *len );						// return service status
+	char						*(*ServiceCommand)( struct Service *s, const char *serv, const char *cmd, Hashmap *params );	// command
+	char						*(*ServiceRun)( struct Service *s );								// do your stuff, can be called remotly
+	char						*(*ServiceGetWebGUI)( struct Service *s );		// get web gui
+	const char					*(*GetName)( void );												// get service suffix'
 	
-	void                     *s_SpecialData;													// special data for every service
-	void                     *s_CommService;												// pointer to communication service
+	void						*s_SpecialData;													// special data for every service
+	void						*s_CommService;												// pointer to communication service
 	
-	struct lws           *s_WSI;				// pointer to websocket connection
+	UserSessionWebsocket		*s_USW;				// pointer to websocket connection
 	
-	void                     *(*CommServiceSendMsg)( void *commService, DataForm *df );		// pointer to communcation function
+	void						*(*CommServiceSendMsg)( void *commService, DataForm *df );		// pointer to communcation function
 
 }Service;
 

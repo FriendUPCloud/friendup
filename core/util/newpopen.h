@@ -8,41 +8,24 @@
 *                                                                              *
 *****************************************************************************©*/
 
-#ifndef __NETWORK_PROTOCOL_WEBSOCKET_H__
-#define __NETWORK_PROTOCOL_WEBSOCKET_H__
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include <core/types.h>
-#include <libxml2/libxml/tree.h>
-#include <libxml2/libxml/parser.h>
-#include <util/log/log.h>
-#include <network/http.h>
+enum 
+{
+	NPOPEN_INPUT = 0,
+	NPOPEN_CONSOLE,
+	NPOPEN_ERROR,
+	NOPEN_MAX
+};
 
-#include <system/systembase.h>
+typedef struct NPOpenFD{
+	pid_t			npo_PID;
+	int				np_FD[ NOPEN_MAX ];
+}NPOpenFD;
 
-#include <libwebsockets.h>
-#include <core/thread.h>
-#include <time.h>
+int newpopen(const char *cmd, NPOpenFD *po );
 
-#include <network/user_session_websocket.h>
-
-//
-//
-//
-
-Http *HandleWebDav( void *lsb, Http *req, char *data, int len );
-
-//
-//
-//
-
-int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, ssize_t len );
-
-//
-//
-//
-
-int WebsocketWrite( UserSessionWebsocket *cl, unsigned char *msgptr, int msglen, int type );
-
-
-#endif // __NETWORK_PROTOCOL_WEBDAV_H__
+int newpclose( NPOpenFD *po );
 
