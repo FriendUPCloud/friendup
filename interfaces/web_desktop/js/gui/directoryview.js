@@ -2380,6 +2380,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 {
 	var self = this;
 	
+	if( this.rendering ) return;
+	this.rendering = true;
+	
 	// Remove and clean up listview
 	if( this.viewMode != 'iconview' )
 	{
@@ -2523,7 +2526,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	{
 		display = {
 			top: this.scroller.scrollTop - this.scroller.offsetHeight,
-			bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight * 2 ),
+			bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight << 1 ),
 			width: windowWidth
 		};
 		if( isMobile )
@@ -2683,37 +2686,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		var iterations = 0;
 		for( var a = 0; a < icons.length; a++ )
 		{
+			// Special mode
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
-			// Do not draw icons out of bounds!
-			if( this.mode != 'Volumes' && ( iy > display.bottom || iy < display.top ) )
-			{
-				// Increment icons after first calculated icon
-				if( direction == 'vertical' )
-				{
-					iy += gridY;
-
-					if( iy + gridY > windowHeight )
-					{
-						iy = marginTop;
-						ix += gridX;
-					}
-				}
-				// Left to right
-				else
-				{
-					ix += gridX;
-					if( ix + gridX > windowWidth )
-					{
-						iy += gridY;
-						ix = marginLeft;
-					}
-				}
-				// Make sure we push to buffer
-				obj.icons.push( icons[a] );
-				continue;
-			}
-		
 			var r = icons[a];
 			
 			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
@@ -2755,6 +2730,36 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				}
 			}
 			if( fnd ) continue;
+			
+			// Do not draw icons out of bounds!
+			if( this.mode != 'Volumes' && ( iy > display.bottom || iy + gridY < display.top ) )
+			{
+				// Increment icons after first calculated icon
+				if( direction == 'vertical' )
+				{
+					iy += gridY;
+
+					if( iy + gridY > windowHeight )
+					{
+						iy = marginTop;
+						ix += gridX;
+					}
+				}
+				// Left to right
+				else
+				{
+					ix += gridX;
+					if( ix + gridX > windowWidth )
+					{
+						iy += gridY;
+						ix = marginLeft;
+					}
+				}
+				// Make sure we push to buffer
+				obj.icons.push( icons[a] );
+				continue;
+			}
+			
 			filenameBuf.push( fn );
 
 			// TODO: What is this? :D
@@ -2819,7 +2824,6 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				var ic = file.getElementsByClassName( 'Icon' );
 				var c = window.getComputedStyle( ic[0], null );
 				var title = file.getElementsByClassName( 'Title' );
-				title[0].style.maxHeight = ( gridY - parseInt( c.height ) ) + 'px';
 				title[0].style.overflow = 'hidden';
 
 				// Usually drawing from top to bottom
@@ -2883,8 +2887,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	this.innerHeight = iy + gridY;
 	
 	// Force scrolling
-	var d = this.scroller.getElementsByClassName( 'Placeholder' );
-	if( !d.length )
+	var d = this.scroller.querySelector( '.Placeholder' );
+	if( !d )
 	{
 		d = document.createElement( 'div' );
 		d.style.position = 'absolute';
@@ -2894,6 +2898,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		d.style.width = gridX + 'px';
 		d.className = 'Placeholder';
 		this.scroller.appendChild( d );
+	}
+	else
+	{
+		d.style.height = gridY + 'px';
 	}
 	// Done force scrolling
 
@@ -2931,6 +2939,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			self.refreshScrollTimeout = false;
 		}, 50 );
 	};
+	
+	// Ok, done
+	this.rendering = false;
 }
 
 // Try to resize
