@@ -282,6 +282,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		while( TRUE )
 		{
 			FILE *f;
+			int tr = 100;
 			int len = snprintf( tmpFileName, 1024, "/tmp/Friendup/_phpcommand_%d%d.%lu", rand()%9999, rand()%9999, time(NULL) );
 			// if file doesnt exist we can create new one
 			if( ( f = fopen( tmpFileName, "rb" ) ) == NULL )
@@ -300,6 +301,13 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					{
 						snprintf( allArgsNew, len2, MODULE_FILE_CALL_STRING, tmpFileName );
 					}
+					break;
+				}
+				
+				tr--;
+				if( tr <= 0 )
+				{
+					FERROR("Cannot create file, check access\n");
 					break;
 				}
 			}
