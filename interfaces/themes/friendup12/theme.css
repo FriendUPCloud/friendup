@@ -2539,7 +2539,7 @@ html .File .Title
 }
 html body[mobile] .File .Title
 {
-	height: 45px;
+	height: 30px;
 }
 
 html .File.Selected .Title
