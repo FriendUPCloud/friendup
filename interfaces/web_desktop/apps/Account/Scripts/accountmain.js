@@ -948,13 +948,16 @@ function saveDia()
 	ma.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
+		{
 			console.log( 'Avatar saving failed.' );
+		}
 		else
 		{
 			console.log( 'Saved avatar.' );
 		}
 	};
 	ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
+	console.log( 'Saving dia!' );
 
 	// Friend network settings -------------------------------------------------
 	
