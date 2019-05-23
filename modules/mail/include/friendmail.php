@@ -18,8 +18,8 @@ global $User, $SqlDatabase, $args, $Logger;
 // STEP 1: check that we have valid settings for FriendMail app
 $ps = getFriendMailSettings();
 
-
 /* CYPHT stuff..... */
+
 define( 'APP_PATH', $ps->fileroot . ( substr( $ps->fileroot, -1 ) == '/' ? '' : '/' ) );
 require( APP_PATH.'lib/framework.php' );
 $config = new Hm_Site_Config_File( APP_PATH . 'hm3.rc' );
@@ -32,13 +32,13 @@ if( $config->get( 'auth_type' ) != 'DB' )
 $auth = new Hm_Auth_DB( $config );
 $validuser = false;
 
-//now check if we have a user, if not try to create or update password to match users.
-if( $auth->check_credentials( $User->Name,$User->Password ) )
+// Now check if we have a user, if not try to create or update password to match users.
+if( $auth->check_credentials( $User->Name, $User->Password ) )
 {
 	$validuser = true;
 	$Logger->log('FriendMail user is valid');
 }
-else if( $auth->create( $User->Name,$User->Password ) )
+else if( $auth->create( $User->Name, $User->Password ) )
 {
 	$validuser = true;
 	$Logger->log('FriendMail user created');
@@ -50,6 +50,7 @@ else if( $auth->change_pass( $User->Name, $User->Password ) )
 }
 else
 {
+	$Logger->log( 'Could not create user in database.' );
 	die( 'fail<!--separate-->{"response":-1,"message":"Could not create/update Friend user at FriendMail end."}' );
 }
 
