@@ -116,6 +116,10 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 			break;
 	}
 	
+	// Clean up
+	if( file_exists( '/tmp/Friendup/' . $smp ) )
+		unlink( '/tmp/Friendup/' . $smp );
+	
 	if( !$source )
 	{
 		FriendHeader( 'Content-type', 'image/svg+xml' );
@@ -151,9 +155,6 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	
 	// Save
 	imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
-	
-	if( file_exists( '/tmp/Friendup/' . $smp ) )
-		unlink( '/tmp/Friendup/' . $smp );
 	
 	FriendHeader( 'Content-type', 'image/png' );
 	die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
