@@ -2598,14 +2598,14 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		
 				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
 		
-				if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+				//if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 				{
 					while( wsc != NULL )
 					{
 						if( wsc->wusc_Data != NULL )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 						{
 							//WSCData *data = (WSCData *)wsc->wusc_Data;
-							//if( data->wsc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+							if( wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 							{
 								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 							}

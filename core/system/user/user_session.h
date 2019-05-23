@@ -82,7 +82,7 @@ typedef struct UserSession
 	void					*us_DOSToken;
 	FULONG					us_MobileAppID;
 	UserMobileApp			*us_MobileApp;
-	int						us_WebSocketStatus;	// status of websocket
+	//int						us_WebSocketStatus;	// status of websocket
 }UserSession;
 
 //
