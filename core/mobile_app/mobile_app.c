@@ -1123,6 +1123,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// if there is no connection it means user cannot get message
 	// then send him notification via mobile devices
 	
+	int bytesSent = 0;
 	User *usr = UMGetUserByName( sb->sl_UM, username );
 	if( usr != NULL )
 	{
@@ -1167,14 +1168,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					
 					Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
 					
-					WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+					bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
 					FFree( sndbuffer );
 					
 					// add NotificationSent to Notification
 					lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 					notif->n_NotificationsSent = lns;
-					
-					wsMessageSent = TRUE;
 				}
 			} // locses = NULL
 			usl = (UserSessListEntry *)usl->node.mln_Succ;
@@ -1187,6 +1186,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
+	
+	if( bytesSent > 0 )
+	{
+		wsMessageSent = TRUE;
+	}
+	
 	// if message was sent via Websockets
 	// then Notification must be added to list, which will be checked before
 	if( wsMessageSent == TRUE )
