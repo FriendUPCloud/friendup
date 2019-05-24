@@ -3494,7 +3494,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				doGetMountlistHere();
 			}
-			d.execute( 'types' );
+			d.execute( 'types', { mode: 'all' } );
 		}
 		else
 		{
