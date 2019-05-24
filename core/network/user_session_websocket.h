@@ -40,7 +40,7 @@ typedef struct UserSessionWebsocket
 {
 	struct MinNode 					node;
 	WSCData							*wusc_Data;
-	int								wusc_Status;
+	int								wusc_Status;	// moved to UserSession
 }UserSessionWebsocket;
 
 

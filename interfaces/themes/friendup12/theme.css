@@ -2534,14 +2534,19 @@ html .File.Selected
 
 html .File .Title
 {
-	-webkit-mask-image: -webkit-gradient(linear, left 70%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
 	transition: height 0.2s;
+	max-height: 40px;
+}
+html body[mobile] .File .Title
+{
+	height: 30px;
 }
 
 html .File.Selected .Title
 {
 	-webkit-mask-image: none;
 	min-height: auto;
+	height: auto;
 	max-height: 200px !important;
 }
 
@@ -2554,7 +2559,7 @@ html .File.Selected .Title
 	}
 	html body .File .Icon > div
 	{
-		height: 72px;
+		max-height: 45px;
 	}
 }
 

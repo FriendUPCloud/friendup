@@ -243,8 +243,6 @@ var Application =
 	{
 		if( packet.checkDefaultMethod ) return 'yes';
 		
-		//console.log( 'receiveMessage: function( packet ): ', packet );
-		
 		if( !packet.type ) return;
 		switch( packet.type )
 		{
@@ -5529,7 +5527,15 @@ function setupMessageFunction( dataPacket, origin )
 		}
 
 		// Post the message
-		parent.postMessage( JSON.stringify( msg ), origin ? origin : dataPacket.origin );
+		var po = dataPacket.origin ? dataPacket.origin : '*';
+		try
+		{
+			parent.postMessage( JSON.stringify( msg ), origin ? origin : po );
+		}
+		catch( e )
+		{
+			console.log( 'Failed to post message to origin: ' + po );
+		}
 	}
 	return _sendMessage;
 }

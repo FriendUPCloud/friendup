@@ -1045,94 +1045,6 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		DEBUG("New connection added, umaID: %lu\n", umaID );
 		
-		/*
-		if( umaID > 0 )
-		{
-			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
-			NotificationSent *nsroot = NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( SLIB->sl_NotificationManager, NOTIFICATION_SENT_STATUS_REGISTERED, MOBILE_APP_TYPE_ANDROID, umaID );
-			DEBUG("NotificationSent ptr %p\n", nsroot );
-			NotificationSent *ns = nsroot;
-			while( ns != NULL )
-			{
-				DEBUG("Going through messages: %lu\n", ns->ns_ID );
-				Notification *notif = NotificationManagerGetDB( SLIB->sl_NotificationManager, ns->ns_NotificationID );
-				int reqLengith = 512;
-				// send notification to device
-				DEBUG("Notification pointer %p\n", notif );
-				if( notif != NULL )
-				{
-					if( notif->n_Channel != NULL )
-					{
-						reqLengith += strlen( notif->n_Channel );
-					}
-		
-					if( notif->n_Content != NULL )
-					{
-						reqLengith += strlen( notif->n_Content );
-					}
-		
-					if( notif->n_Title != NULL )
-					{
-						reqLengith += strlen( notif->n_Title );
-					}
-		
-					if( notif->n_Application != NULL )
-					{
-						reqLengith += strlen( notif->n_Application );
-					}
-		
-					if( notif->n_Extra != NULL )
-					{
-						reqLengith += strlen( notif->n_Extra );
-					}
-					
-					char *jsonMessage = FMalloc( reqLengith );
-					if( jsonMessage != NULL )
-					{
-						unsigned int jsonMessageLength = 0;
-#ifdef WEBSOCKET_SEND_QUEUE
-						if( notif->n_Extra )
-						{ //TK-1039
-							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, ns->ns_ID );
-						}
-						else
-						{
-							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, ns->ns_ID );
-						}
-						
-						DEBUG("Message will be sent through websockets\n");
-						
-						WriteMessageMA( newConnection, (unsigned char*)jsonMessage, jsonMessageLength );
-#else
-						if( notif->n_Extra )
-							{ //TK-1039
-								jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, ns->ns_ID );
-							}
-							else
-							{
-								jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, ns->ns_ID );
-							}
-						
-							if( userConnections->umac_Connection[i] != NULL && userConnections->umac_Connection[i]->mac_WebsocketPtr != NULL )
-							{
-								lws_write( userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-							}
-#endif
-						NotificationDelete( notif );
-						
-						FFree( jsonMessage );
-					}
-				}
-				else	// notification was received (it doesnt exist in database), we can remove entry
-				{
-					NotificationManagerDeleteNotificationSentDB( SLIB->sl_NotificationManager, ns->ns_ID );
-				}
-				
-				ns = (NotificationSent *)ns->node.mln_Succ;
-			}
-			NotificationSentDeleteAll( nsroot );
-		}
-		*/
 		return 0;
 	}
 	return -1;
@@ -1211,6 +1123,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// if there is no connection it means user cannot get message
 	// then send him notification via mobile devices
 	
+	int bytesSent = 0;
 	User *usr = UMGetUserByName( sb->sl_UM, username );
 	if( usr != NULL )
 	{
@@ -1255,14 +1168,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					
 					Log( FLOG_INFO, "Send notification through Websockets: '%s' len %d \n", sndbuffer, msgsize );
 					
-					WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+					bytesSent += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
 					FFree( sndbuffer );
 					
 					// add NotificationSent to Notification
 					lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 					notif->n_NotificationsSent = lns;
-					
-					wsMessageSent = TRUE;
 				}
 			} // locses = NULL
 			usl = (UserSessListEntry *)usl->node.mln_Succ;
@@ -1275,6 +1186,12 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
+	
+	if( bytesSent > 0 )
+	{
+		wsMessageSent = TRUE;
+	}
+	
 	// if message was sent via Websockets
 	// then Notification must be added to list, which will be checked before
 	if( wsMessageSent == TRUE )

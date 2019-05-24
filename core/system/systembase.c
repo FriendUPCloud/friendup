@@ -2599,17 +2599,20 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		
 				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
 		
-				while( wsc != NULL )
+				//if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 				{
-					if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+					while( wsc != NULL )
 					{
-						//WSCData *data = (WSCData *)wsc->wusc_Data;
-						//if( data->wsc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+						if( wsc->wusc_Data != NULL )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 						{
-							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+							//WSCData *data = (WSCData *)wsc->wusc_Data;
+							if( wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+							{
+								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+							}
 						}
+						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
 					}
-					wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
 				}
 		
 				FFree( buf );
