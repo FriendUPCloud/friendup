@@ -842,6 +842,17 @@ if( isset( $args->command ) )
 			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
+			// Check storage folder
+			// Sanitized username - make thumbnail cache
+			$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+			$wname = $Config->FCUpload . $uname . '/';
+			/*if( !file_exists( $wname ) )
+				mkdir( $wname );
+			if( !file_exists( $wname . 'thumbnails' ) )
+				mkdir( $wname . 'thumbnails' );*/
+			$Logger->log( 'Got mountlist, want: ' . $wname );
+			
+			// 
 			$userid = $User->ID;
 			if( $level == 'Admin' && $args->args->userid )
 			{
