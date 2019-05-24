@@ -297,6 +297,13 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					// Clear last bit
 					for( var tries = 0; tries < 2; tries++ )
 					{
+						// Remove newlines
+						if( d.indexOf( "\n" ) > 0 )
+						{
+							d = d.split( "\n" );
+							d = d.join( "\\\n" );
+						}
+						
 						try
 						{
 							parsed = JSON.parse( d );
@@ -327,7 +334,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					else
 					{
 						// Empty directory
-						console.log( 'Dir: Empty directory.' );
+						console.log( 'Dir: Empty directory.', d );
 						callback( [], t.fileInfo.Path, false );
 						this.parseQueue( [], t.fileInfo.Path, false );
 					}
