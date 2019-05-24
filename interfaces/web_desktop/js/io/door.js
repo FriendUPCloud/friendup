@@ -301,7 +301,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						if( d.indexOf( "\n" ) > 0 )
 						{
 							d = d.split( "\n" );
-							d = d.join( "\\\n" );
+							d = d.join( "\\n" );
 						}
 						
 						try
