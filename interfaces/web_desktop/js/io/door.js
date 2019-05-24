@@ -298,6 +298,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					for( var tries = 0; tries < 2; tries++ )
 					{
 						// Remove newlines
+						// TODO: Handle in server! This is a bug
 						if( d.indexOf( "\n" ) > 0 )
 						{
 							d = d.split( "\n" );
@@ -327,14 +328,12 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 								list[a].Path = deviceName + list[a].Path;
 						}
 						var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
-						console.log( 'Dir: Directory with fixed paths.' );
 						callback( list, t.fileInfo.Path, pth );
 						this.parseQueue( list, t.fileInfo.Path, pth );
 					}
 					else
 					{
 						// Empty directory
-						console.log( 'Dir: Empty directory.', d );
 						callback( [], t.fileInfo.Path, false );
 						this.parseQueue( [], t.fileInfo.Path, false );
 					}
@@ -342,7 +341,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				else
 				{
 					// Illegal directory
-					console.log( 'Dir: Illegal directory.' );
 					callback( false, t.fileInfo.Path, false );
 					this.parseQueue( false, t.fileInfo.Path, false );
 				}
