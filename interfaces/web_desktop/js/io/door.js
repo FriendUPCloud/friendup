@@ -288,8 +288,13 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						var res = callback( false, t.fileInfo.Path, false );
 						this.parseQueue( false, t.fileInfo.Path, false );
+						
+						console.log( 'Did not work.', d );
+						
 						return res;
 					}
+					
+					console.log( 'Worked ', d );
 
 					
 					var parsed = '';
