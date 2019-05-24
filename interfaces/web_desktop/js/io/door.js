@@ -241,7 +241,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			// Use cache - used for preventing identical and pending dir requests
 			if( cache[ updateurl ] )
 			{
-				console.log( 'Dir: Using history.' );
 				cache[ updateurl ].queue.push( callback );
 				return;
 			}
@@ -270,8 +269,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				delete cache[ updateurl ]; // Flush!
 			}
 			
-			console.log( 'Dir: Load dir!' );
-			
 			j.onload = function( e, d )
 			{
 				if( e )
@@ -295,9 +292,6 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						
 						return res;
 					}
-					
-					console.log( 'Dor: Worked...' );
-
 					
 					var parsed = '';
 					// Clear last bit
@@ -326,12 +320,14 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 								list[a].Path = deviceName + list[a].Path;
 						}
 						var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+						console.log( 'Dir: Directory with fixed paths.' );
 						callback( list, t.fileInfo.Path, pth );
 						this.parseQueue( list, t.fileInfo.Path, pth );
 					}
 					else
 					{
 						// Empty directory
+						console.log( 'Dir: Empty directory.' );
 						callback( [], t.fileInfo.Path, false );
 						this.parseQueue( [], t.fileInfo.Path, false );
 					}
@@ -339,6 +335,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				else
 				{
 					// Illegal directory
+					console.log( 'Dir: Illegal directory.' );
 					callback( false, t.fileInfo.Path, false );
 					this.parseQueue( false, t.fileInfo.Path, false );
 				}
