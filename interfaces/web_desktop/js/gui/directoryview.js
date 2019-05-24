@@ -2490,6 +2490,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	
 	obj.direction = direction ? direction : 'horizontal';
 	icons = icons ? icons : obj.icons;
+	
 	if ( !icons ) return;
 
 	var dummyIcon = document.createElement( 'div' );
@@ -2516,25 +2517,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	}
 	
 	// Get display frame
-	var display;
-	if( isMobile && this.cachedDisplay )
-	{
-		display = this.cachedDisplay;
-		windowWidth = display.width;
-	}
-	else
-	{
-		display = {
-			top: this.scroller.scrollTop - this.scroller.offsetHeight,
-			bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight << 1 ),
-			width: windowWidth
-		};
-		if( isMobile )
-		{
-			if( !this.cachedDisplay )
-				this.cachedDisplay = display;
-		}
-	}
+	var display = {
+		top: this.scroller.scrollTop - this.scroller.offsetHeight,
+		bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight << 1 ),
+		width: windowWidth
+	};
 	
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
