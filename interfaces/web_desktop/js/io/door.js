@@ -241,6 +241,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			// Use cache - used for preventing identical and pending dir requests
 			if( cache[ updateurl ] )
 			{
+				console.log( 'Dir: Using history.' );
 				cache[ updateurl ].queue.push( callback );
 				return;
 			}
@@ -268,6 +269,9 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				}
 				delete cache[ updateurl ]; // Flush!
 			}
+			
+			console.log( 'Dir: Load dir!' );
+			
 			j.onload = function( e, d )
 			{
 				if( e )
@@ -289,12 +293,10 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						var res = callback( false, t.fileInfo.Path, false );
 						this.parseQueue( false, t.fileInfo.Path, false );
 						
-						console.log( 'Did not work.', d );
-						
 						return res;
 					}
 					
-					console.log( 'Worked ', d );
+					console.log( 'Dor: Worked...' );
 
 					
 					var parsed = '';
