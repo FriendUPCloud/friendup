@@ -23,7 +23,9 @@ LFLAGS			+=	-lasan
 endif
 
 ifeq ($(DEBUG),1)
-CFLAGS  +=	-D__DEBUG
+CFLAGS  +=	-D__DEBUG -O2
+else
+CFLAGS	+=	-O2
 endif
 
 ifeq ($(PROFILE),1)
