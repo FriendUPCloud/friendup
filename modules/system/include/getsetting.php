@@ -9,6 +9,17 @@
 *                                                                              *
 *****************************************************************************©*/
 
+// TODO: Move this check to Friend Core when a user logs in! IMPORTANT!
+// Check storage folder
+// Sanitized username - make thumbnail cache
+$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+$wname = $Config->FCUpload . $uname . '/';
+if( !file_exists( $wname ) )
+	mkdir( $wname );
+if( !file_exists( $wname . 'thumbnails' ) )
+	mkdir( $wname . 'thumbnails' );
+// End FUGLY procedure that should be in Friend Core!
+
 $settings = new stdClass();
 $settings->Date = date( 'Y-m-d H:i:s' );
 
