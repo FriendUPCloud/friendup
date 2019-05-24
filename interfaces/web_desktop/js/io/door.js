@@ -255,6 +255,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			if( t.context ) j.context = t.context;
 
 			//changed from post to get to get more speed.
+			j.forceHTTP = true;
 			j.open( 'get', updateurl, true, true );
 			j.parseQueue = function( result, path, purePath )
 			{
