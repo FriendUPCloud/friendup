@@ -962,20 +962,18 @@ var WorkspaceInside = {
 		var mo = new Library( 'system.library' );
 		mo.onExecuted = function( rc, sessionList )
 		{
+			var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+			if( m == ge( 'DoorsScreen' ) )
+				m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+			if( !m )
+			{
+				//console.log( 'Can not find widget!' );
+				return;
+			}
+		
 			var sessions = [];
 			if( rc == 'ok' )
 			{
-				var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
-
-				if( m == ge( 'DoorsScreen' ) )
-					m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
-
-				if( !m )
-				{
-					//console.log( 'Can not find widget!' );
-					return;
-				}
-
 				if( typeof( sessionList ) == 'string' )
 					sessionList = JSON.parse( sessionList );
 
@@ -3496,7 +3494,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				doGetMountlistHere();
 			}
-			d.execute( 'types' );
+			d.execute( 'types', { mode: 'all' } );
 		}
 		else
 		{

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="52px" height="57px" viewBox="0 0 52 57" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 55 (78076) - https://sketchapp.com -->
+    <title>Disk Master</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Disk-Master" fill-rule="nonzero">
+            <g>
+                <rect id="rect5355-1-0" fill="#B1B8BB" x="0" y="0" width="52" height="56" rx="3.0000222"></rect>
+                <path d="M25.6021273,0 C25.6021273,15.2049009 25.6021273,35.8844104 25.6021273,52.3478261 C25.6021273,54.3711426 27.2586864,56 29.316413,56 L47.8878416,56 C49.9455683,56 51.6021273,54.3711426 51.6021273,52.3478261 L51.6021273,3.65217391 C51.6021273,1.62885739 49.9455683,0 47.8878416,0 L25.6021273,0 Z" id="rect5355-1-3-9-4-8-1-2-6" fill="url(#linearGradient-1)"></path>
+                <path d="M3.0000222,46 L48.9999778,46 C50.6568443,46 52,47.3431557 52,49.0000222 L52,53.9999778 C52,55.6568443 50.6568443,57 48.9999778,57 L3.0000222,57 C1.34315569,57 6.46996837e-16,55.6568443 4.4408921e-16,53.9999778 L4.4408921e-16,49.0000222 C2.41181583e-16,47.3431557 1.34315569,46 3.0000222,46 Z" id="rect5355-2-0-2" fill="#455155"></path>
+                <path d="M36.0242336,50.5 L45.9757664,50.5 C46.541435,50.5 47,50.958565 47,51.5242336 L47,51.9757664 C47,52.541435 46.541435,53 45.9757664,53 L36.0242336,53 C35.458565,53 35,52.541435 35,51.9757664 L35,51.5242336 C35,50.958565 35.458565,50.5 36.0242336,50.5 Z" id="rect5355-2-6-6-9" fill="#F2C57C"></path>
+            </g>
+        </g>
+    </g>
+</svg>
