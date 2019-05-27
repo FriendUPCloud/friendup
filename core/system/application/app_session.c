@@ -429,7 +429,7 @@ SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSessio
 
 				DEBUG("[AppSession] newsession will be added %p\n", usrses );
 
-				if( retListEntry != NULL )
+				if( retListEntry != NULL && msg != NULL )
 				{
 					char tmp[ 512 ];
 					int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );

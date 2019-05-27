@@ -294,6 +294,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param authid - (required) authentication id (provided by application)
+	* @param type - type of application session 'close'(default), 'open' for everyone
 	* @param sasid - if passed then it will be used to join already created SAS
 
 	* @return { SASID: <number> } when success, otherwise response with error code
@@ -303,6 +304,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	{
 		char *authid = NULL;
 		char *sasid = NULL;
+		int type = 0;
 		
 		/*
 		Thomas Wollburg :
@@ -329,8 +331,8 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] Register\n");
@@ -349,6 +351,22 @@ Application.checkDocumentSession = function( sasID = null )
 			sasid = UrlDecodeToMem( ( char *)el->data );
 		}
 		
+		el =  HashmapGet( request->parsedPostContent, "type" );
+		if( el != NULL )
+		{
+			if( el->data != NULL )
+			{
+				if( strcmp( ( ( char *)el->data), "close") == 0 )
+				{
+					type = SAS_TYPE_CLOSED;
+				}
+				else if( strcmp( ( ( char *)el->data), "open") == 0 )
+				{
+					type = SAS_TYPE_OPEN;
+				}
+			}
+		}
+		
 		if( authid == NULL )
 		{
 			char dictmsgbuf[ 256 ];
@@ -365,6 +383,7 @@ Application.checkDocumentSession = function( sasID = null )
 			DEBUG("SAS/register: sasid %s\n", sasid );
 			if( sasid != NULL )
 			{
+				/*
 				char *end;
 				FUQUAD asval = strtoull( sasid, &end, 0 );
 			
@@ -397,6 +416,7 @@ Application.checkDocumentSession = function( sasID = null )
 						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}
+				*/
 			}
 			else
 			{
@@ -405,6 +425,7 @@ Application.checkDocumentSession = function( sasID = null )
 				AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
 				if( as != NULL )
 				{
+					as->as_Type = type;
 					int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
 					if( err == 0 )
 					{
@@ -619,30 +640,20 @@ Application.checkDocumentSession = function( sasID = null )
 			// We found session!
 			if( as != NULL )
 			{
-				SASUList *li = as->as_UserSessionList;
 				int error = 1;
-		
-				// Find invitee user with authid from user list in allowed users
-				while( li != NULL )
+				
+				// if session is open, we can add new users to list without asking for permission
+				if( as->as_Type == SAS_TYPE_OPEN )
 				{
-					DEBUG("[ApplicationWebRequest] Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->authid, li );
-					
-					DEBUG("[ApplicationWebRequest] sessionfrom list %p loggeduser session %p\n",  li->usersession, loggedSession );
-					if( li->usersession == loggedSession )
+					SASUList *entry;
+					if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{
-						if( li->authid[ 0 ] != 0 )
-						{
-							FERROR("AUTHID IS NOT EMPTY %s!!!\n", li->authid );
-						}
+						// just accept connection
+						entry->status = SASID_US_ACCEPTED;
+						DEBUG("SAS/register Connection accepted\n");
 						
-						if( li->status == SASID_US_INVITED )
-						{
-							li->status = SASID_US_ACCEPTED;
-						}
-						
-						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", li->authid, li );
-						strcpy( li->authid, authid );
-						DEBUG("[ApplicationWebRequest] Setting authid %s user %s\n", authid, li->usersession->us_User->u_Name );
+						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", entry->authid, entry );
+						strcpy( entry->authid, authid );
 						
 						as->as_UserNumber++;
 						
@@ -652,12 +663,52 @@ Application.checkDocumentSession = function( sasID = null )
 						int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
 						if( err != 0 )
 						{
-							
+						
 						}
 						error = 0;
-						break;
 					}
-					li = ( SASUList * )li->node.mln_Succ;
+				}
+				else
+				{
+					SASUList *li = as->as_UserSessionList;
+		
+					// Find invitee user with authid from user list in allowed users
+					while( li != NULL )
+					{
+						DEBUG("[ApplicationWebRequest] Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->authid, li );
+					
+						DEBUG("[ApplicationWebRequest] sessionfrom list %p loggeduser session %p\n",  li->usersession, loggedSession );
+						if( li->usersession == loggedSession )
+						{
+							if( li->authid[ 0 ] != 0 )
+							{
+								FERROR("AUTHID IS NOT EMPTY %s!!!\n", li->authid );
+							}
+						
+							if( li->status == SASID_US_INVITED )
+							{
+								li->status = SASID_US_ACCEPTED;
+							}
+						
+							DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", li->authid, li );
+							strcpy( li->authid, authid );
+							DEBUG("[ApplicationWebRequest] Setting authid %s user %s\n", authid, li->usersession->us_User->u_Name );
+						
+							as->as_UserNumber++;
+						
+							char tmpmsg[ 255 ];
+							int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						
+							int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+							if( err != 0 )
+							{
+							
+							}
+							error = 0;
+							break;
+						}
+						li = ( SASUList * )li->node.mln_Succ;
+					}
 				}
 			
 				if( error == 0 )
