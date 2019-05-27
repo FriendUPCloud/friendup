@@ -36,6 +36,12 @@ enum {
 	SASID_US_INVALID
 };
 
+enum {
+	SAS_TYPE_CLOSED = 0,
+	SAS_TYPE_OPEN,
+	SAS_TYPE_MAX
+};
+
 //
 // Application session
 //
@@ -73,6 +79,7 @@ typedef struct AppSession
 	pthread_mutex_t			as_VariablesMut;
 	
 	void 					*as_SB;
+	int						as_Type;
 }AppSession;
 
 //
