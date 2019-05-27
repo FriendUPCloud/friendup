@@ -8082,6 +8082,7 @@ GuiDesklet = function()
 
 		var self = this;
 		self.id = conf.sasid || null;
+		self.sessiontype = conf.sessiontype || null;
 		self.onevent = conf.onevent;
 		self.callback = callback;
 
@@ -8351,6 +8352,8 @@ GuiDesklet = function()
 				authId : Application.authId,
 			},
 		};
+		if( self.sessiontype ) data.type = self.sessiontype;
+		
 		self.conn.request( reg, regBack );
 		function regBack( res ) {
 			if ( !res.SASID ) {
