@@ -362,6 +362,7 @@ Application.checkDocumentSession = function( sasID = null )
 		{
 			char buffer[ 1024 ];
 			
+			DEBUG("SAS/register: sasid %s\n", sasid );
 			if( sasid != NULL )
 			{
 				char *end;
@@ -369,6 +370,7 @@ Application.checkDocumentSession = function( sasID = null )
 			
 				// Try to fetch assid session from session list!
 				AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
+				DEBUG("SAS/register as: %p\n", as );
 		
 				// We found session!
 				if( as != NULL )
@@ -378,6 +380,7 @@ Application.checkDocumentSession = function( sasID = null )
 					{
 						// just accept connection
 						entry->status = SASID_US_ACCEPTED;
+						DEBUG("SAS/register Connection accepted\n");
 						
 						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", entry->authid, entry );
 						strcpy( entry->authid, authid );
