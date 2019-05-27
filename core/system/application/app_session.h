@@ -133,7 +133,7 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *buffer
 //
 //
 
-int AppSessionAddUser( AppSession *as, UserSession *u, char *authid );
+SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid );
 
 //
 //
@@ -145,7 +145,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 //
 //
 
-FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg );
+SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg );
 
 //
 //

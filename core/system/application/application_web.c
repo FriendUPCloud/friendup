@@ -294,6 +294,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param authid - (required) authentication id (provided by application)
+	* @param sasid - if passed then it will be used to join already created SAS
 
 	* @return { SASID: <number> } when success, otherwise response with error code
 	*/
@@ -301,6 +302,30 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "register" ) == 0 )
 	{
 		char *authid = NULL;
+		char *sasid = NULL;
+		
+		/*
+		Thomas Wollburg :
+14:44:11
+// SAS functions to connect users coeiting a document... SAS session key is the document key we use  
+// ### === # ### === # ### === # ### === # ### === # ### === # ### === # ### === #
+Application.checkDocumentSession = function( sasID = null )
+{
+	if( Application.sas !== null )
+	{
+		console.log('SAS already initialised!');
+		return;
+	}
+	
+	console.log('init SAS ID',sasID, Application.isHost );
+	var conf = {
+		sasid   : sasID,
+		onevent : Application.socketMessage
+	};
+	Application.sas = new SAS( conf, Application.sasidReady );	
+	console.log('SAS instantiated.',conf);
+}
+		 */ 
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -318,6 +343,12 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			authid = UrlDecodeToMem( ( char *)el->data );
 		}
 		
+		el =  HashmapGet( request->parsedPostContent, "sasid" );
+		if( el != NULL )
+		{
+			sasid = UrlDecodeToMem( ( char *)el->data );
+		}
+		
 		if( authid == NULL )
 		{
 			char dictmsgbuf[ 256 ];
@@ -331,34 +362,74 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		{
 			char buffer[ 1024 ];
 			
-			FERROR("[ApplicationWebRequest] User set session: %s ---------- authid ---- %s\n", loggedSession->us_User->u_Name, authid );
-			
-			AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
-			if( as != NULL )
+			if( sasid != NULL )
 			{
-				int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
-				if( err == 0 )
+				char *end;
+				FUQUAD asval = strtoull( sasid, &end, 0 );
+			
+				// Try to fetch assid session from session list!
+				AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
+		
+				// We found session!
+				if( as != NULL )
 				{
-					int size = sprintf( buffer, "{ \"SASID\": \"%lu\" }", as->as_SASID  );
-					HttpAddTextContent( response, buffer );
-				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					char dictmsgbuf1[ 196 ];
-					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
-					HttpAddTextContent( response, dictmsgbuf );
+					SASUList *entry;
+					if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", "joined to sas"  ) ) != NULL )
+					{
+						// just accept connection
+						entry->status = SASID_US_ACCEPTED;
+						
+						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", entry->authid, entry );
+						strcpy( entry->authid, authid );
+						
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\" }", as->as_SASID  );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", 99 );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
 				}
 			}
 			else
 			{
-				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
-				HttpAddTextContent( response, dictmsgbuf );
+				FERROR("[ApplicationWebRequest] User set session: %s ---------- authid ---- %s\n", loggedSession->us_User->u_Name, authid );
+			
+				AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
+				if( as != NULL )
+				{
+					int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\" }", as->as_SASID  );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
+					HttpAddTextContent( response, dictmsgbuf );
+				}
 			}
 		}
 		
+		if( sasid != NULL )
+		{
+			FFree( sasid );
+		}
 		if( authid != NULL )
 		{
 			FFree( authid );
@@ -860,7 +931,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				}
 				else if( sessid != NULL )
 				{
-					if( AppSessionAddUsersBySession( as, loggedSession, sessid, applicationName, msg  ) == TRUE )
+					if( AppSessionAddUsersBySession( as, loggedSession, sessid, applicationName, msg  ) != NULL )
 					{
 						char tmp[ 512 ];
 						snprintf( tmp, sizeof(tmp), "{ \"invited\":[\"%s\"] }", sessid );
