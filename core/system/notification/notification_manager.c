@@ -46,6 +46,8 @@ NotificationManager *NotificationManagerNew( void *sb )
 		
 		pthread_mutex_init( &(nm->nm_Mutex), NULL );
 		
+		nm->nm_APNSSandBox = FALSE;
+		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(lsb->sl_PropertiesInterface);
 		if( plib != NULL && plib->Open != NULL )
@@ -71,6 +73,7 @@ NotificationManager *NotificationManagerNew( void *sb )
 				options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 				
 				nm->nm_APNSCert = StringDuplicate( plib->ReadStringNCS( prop, "apple:cert", NULL ) );
+				nm->nm_APNSSandBox = plib->ReadBool( prop, "apple:apnssandbox", FALSE );
 		
 				nm->nm_SQLLib = (struct SQLLibrary *)LibraryOpen( lsb, lsb->sl_DefaultDBLib, 0 );
 				if( nm->nm_SQLLib != NULL )
@@ -84,8 +87,6 @@ NotificationManager *NotificationManagerNew( void *sb )
 			
 			nm->nm_TimeoutThread = ThreadNew( NotificationManagerTimeoutThread, nm, TRUE, NULL );
 		} // plib and plib->open != NULL
-		
-		nm->nm_APNSSandBox = FALSE;
 
 		//nm_APNSNotificationTimeout_expirationDate = time(NULL) + 86400; // default expiration date set to 1 day
 	}	// calloc
