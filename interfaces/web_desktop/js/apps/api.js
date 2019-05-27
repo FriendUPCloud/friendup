@@ -8352,7 +8352,7 @@ GuiDesklet = function()
 				authId : Application.authId,
 			},
 		};
-		if( self.sessiontype ) data.type = self.sessiontype;
+		if( self.sessiontype ) reg.data.type = self.sessiontype;
 		
 		self.conn.request( reg, regBack );
 		function regBack( res ) {
