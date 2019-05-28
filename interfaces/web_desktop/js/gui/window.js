@@ -4807,6 +4807,7 @@ var View = function( args )
 	
 	this.openCamera = function( flags, callback )
 	{
+		
 		var self = this;
 		
 		// Just get the available devices
@@ -4854,6 +4855,7 @@ var View = function( args )
 		
 		function setCameraMode( e )
 		{
+			console.log('setCameraMode',e);
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -4866,6 +4868,7 @@ var View = function( args )
 				self.content.appendChild( v );
 				self.content.container = v;
 				self.content.classList.add( 'HasCamera' );
+			
 			}
 			
 			// Find video devices
@@ -5005,6 +5008,13 @@ var View = function( args )
 							}
 							self.content.container.appendChild( btn );
 							self.content.container.button = btn;
+							
+							//stop the video if the view is closed!
+							self.addEvent('systemclose', function() {
+								var dd = self.content.container.camera;
+								dd.srcObject.getTracks().forEach(track => track.stop())
+								dd.srcObject = null;
+							});
 						}
 					},
 					function( err )
