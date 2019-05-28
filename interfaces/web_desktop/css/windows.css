@@ -1416,13 +1416,15 @@ body.ViewMaximized .View.TilingMode3.Tile3
 	transform: translate3d(100%,0,0);
 }
 
+.Content > .FriendCameraContainer > button.fa-refresh, 
+.Content > .FriendCameraContainer > button.fa-refresh:hover,
 .Content > .FriendCameraContainer > button.fa-camera, 
 .Content > .FriendCameraContainer > button.fa-camera:hover
 {
 	position: absolute;
 	z-index: 3;
-	top: calc(50% - 15px);
-	left: calc(50% - 15px);
+	top: calc(100% - 45px);
+	left: calc(50% - 38px);
 	width: 30px;
 	height: 30px;
 	background-color: rgba(0,0,0,0.7) !important;
@@ -1433,6 +1435,12 @@ body.ViewMaximized .View.TilingMode3.Tile3
 	margin: 0 !important;
 	border: 0 !important;
 	cursor: pointer;
+}
+
+.Content > .FriendCameraContainer > button.fa-refresh, 
+.Content > .FriendCameraContainer > button.fa-refresh:hover
+{
+	left: calc(50% + 7px);
 }
 body .Content > .FriendCameraContainer > button
 {
