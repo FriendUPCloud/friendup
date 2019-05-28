@@ -4887,7 +4887,7 @@ var View = function( args )
 					}
 					else 
 					{
-						//we overwrite on purpose here!
+						//we overwrite on purpose here! most handsets have backwards facing cameras last...
 						self.cameraOptions.potentialDevice = dev
 					}
 					devs.push( dev );
@@ -4902,7 +4902,6 @@ var View = function( args )
 			// Initial pass over, now just choose next device
 			if( !initial )
 			{
-				console.log('searchibg for other cameras...');
 				var found = nextfound = false;
 				for( var a = 0; a < devs.length; a++ )
 				{
@@ -4915,7 +4914,6 @@ var View = function( args )
 					{
 						nextfound = true;
 						self.cameraOptions.currentDevice = devs[a];
-						console.log('found another camera..',devs[a]);
 						break;
 					}
 				}
@@ -4924,9 +4922,7 @@ var View = function( args )
 				{
 					self.cameraOptions.currentDevice = devs[0];
 				}
-				console.log('done looking for another camera...');
 			}
-			console.log('we went through stuff...',initial);
 			var constraints = {
 				video: {
 					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
@@ -4935,19 +4931,7 @@ var View = function( args )
 			
 			var ue = navigator.userAgent.toLowerCase();
 
-			//stop with all that device stuff....
-			/*if( navigator.mediaDevices.getSupportedConstraints().facingMode )
-			{
 
-				if( navigator.currentFacingMode != 'environment'  ) navigator.currentFacingMode = 'environment'; else navigator.currentFacingMode = 'user';
-				
-				constraints = {
-					video: {
-						facingMode: { ideal: navigator.currentFacingMode }
-					}
-				};
-				console.log('facing the mode..2',constraints);
-			}*/
 
 			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
 			{
@@ -4958,7 +4942,20 @@ var View = function( args )
 			}
 			//clean up old one...
 			
-			if( navigator.gm ) { delete navigator.gm; console.log('found old gm and deleted it'); }
+			if( navigator.gm ) { 
+				
+				//check if we should stop stuff before we try again...
+				var dd = self.content.container.camera;
+				if(dd.srcObject)
+				{
+					dd.srcObject.getTracks().forEach(track => track.stop())
+					dd.srcObject = null;
+				}
+				if( self.content.container.camera ) self.content.container.removeChild( self.content.container.camera );
+				delete self.content.container.camera;
+				delete navigator.gm;
+				console.log('clean for new camera access 3');
+			}
 			
 			// Shortcut
 			navigator.gm = (navigator.getUserMedia ||
@@ -4974,6 +4971,7 @@ var View = function( args )
 					function( localMediaStream )
 					{
 						// Remove old video object
+						//might be too late here? at least on mobile? moved this check up a couple of lines..
 						var oldCam = self.content.container.camera;
 						if( oldCam && oldCam.srcObject )
 						{
@@ -4996,8 +4994,7 @@ var View = function( args )
 					
 						// Create an object URL for the video stream and use this 
 						// to set the video source.
-						var dd = self.content.container.camera;
-						dd.srcObject = localMediaStream;
+						self.content.container.camera.srcObject = localMediaStream;
 					
 						// Add the record + switch button
 						if( !self.content.container.button )
@@ -5006,6 +5003,8 @@ var View = function( args )
 							btn.className = 'IconButton IconSmall fa-camera';
 							btn.onclick = function( e )
 							{
+								var dd = self.content.container.camera;
+								
 								var canv = document.createElement( 'canvas' );
 								canv.setAttribute( 'width', dd.videoWidth );
 								canv.setAttribute( 'height', dd.videoHeight );
@@ -5068,10 +5067,10 @@ var View = function( args )
 						if( v )
 						{
 							v.classList.add( 'Closing' );
-							setTimeout( function()
+							/*setTimeout( function()
 							{
 								v.parentNode.removeChild( v );
-							}, 250 );
+							},  250 );*/
 						}
 					}
 				);
