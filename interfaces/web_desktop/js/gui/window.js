@@ -4917,7 +4917,7 @@ var View = function( args )
 			};
 			
 			var ue = navigator.userAgent.toLowerCase();
-			if( ue.indexOf( 'ios' ) > 0 || us.indexOf( 'ipad' ) > 0 )
+			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
 			{
 				constraints = {
 					video: true,
