@@ -4879,18 +4879,30 @@ var View = function( args )
 				var dev = self.cameraOptions.devices[ a ];
 				if( dev.kind == 'videoinput' )
 				{
-					if( !self.cameraOptions.currentDevice )
+					//we want back facing camera as default...
+					if( dev.label && dev.label.indexOf('back') > -1 && !self.cameraOptions.currentDevice ) 
 					{
 						self.cameraOptions.currentDevice = dev;
 						initial = true;
 					}
+					else 
+					{
+						//we overwrite on purpose here!
+						self.cameraOptions.potentialDevice = dev
+					}
 					devs.push( dev );
 				}
+			}
+			if( !self.cameraOptions.currentDevice && self.cameraOptions.potentialDevice )
+			{
+				self.cameraOptions.currentDevice = self.cameraOptions.potentialDevice
+				initial = true;
 			}
 			
 			// Initial pass over, now just choose next device
 			if( !initial )
 			{
+				console.log('searchibg for other cameras...');
 				var found = nextfound = false;
 				for( var a = 0; a < devs.length; a++ )
 				{
@@ -4903,6 +4915,7 @@ var View = function( args )
 					{
 						nextfound = true;
 						self.cameraOptions.currentDevice = devs[a];
+						console.log('found another camera..',devs[a]);
 						break;
 					}
 				}
@@ -4911,8 +4924,9 @@ var View = function( args )
 				{
 					self.cameraOptions.currentDevice = devs[0];
 				}
+				console.log('done looking for another camera...');
 			}
-			
+			console.log('we went through stuff...',initial);
 			var constraints = {
 				video: {
 					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
@@ -4920,6 +4934,21 @@ var View = function( args )
 			};
 			
 			var ue = navigator.userAgent.toLowerCase();
+
+			//stop with all that device stuff....
+			/*if( navigator.mediaDevices.getSupportedConstraints().facingMode )
+			{
+
+				if( navigator.currentFacingMode != 'environment'  ) navigator.currentFacingMode = 'environment'; else navigator.currentFacingMode = 'user';
+				
+				constraints = {
+					video: {
+						facingMode: { ideal: navigator.currentFacingMode }
+					}
+				};
+				console.log('facing the mode..2',constraints);
+			}*/
+
 			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
 			{
 				constraints = {
@@ -4927,6 +4956,9 @@ var View = function( args )
 					audio: false
 				}
 			}
+			//clean up old one...
+			
+			if( navigator.gm ) { delete navigator.gm; console.log('found old gm and deleted it'); }
 			
 			// Shortcut
 			navigator.gm = (navigator.getUserMedia ||
@@ -4934,7 +4966,7 @@ var View = function( args )
 				navigator.mozGetUserMedia || 
 				navigator.msGetUserMedia
 			);
-			
+
 			if( navigator.gm )
 			{
 				navigator.gm( 
@@ -5030,13 +5062,17 @@ var View = function( args )
 					},
 					function( err )
 					{
+						v = self.content;
 						// Log the error to the console.
-						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
-						v.classList.add( 'Closing' );
-						setTimeout( function()
+						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' + err } );
+						if( v )
 						{
-							v.parentNode.removeChild( v );
-						}, 250 );
+							v.classList.add( 'Closing' );
+							setTimeout( function()
+							{
+								v.parentNode.removeChild( v );
+							}, 250 );
+						}
 					}
 				);
 			}
