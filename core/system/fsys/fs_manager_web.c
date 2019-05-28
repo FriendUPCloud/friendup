@@ -1750,7 +1750,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							else if( !fileNameIsTmpPath )
 							{
-								sprintf( tmpPath, "%s%s", path, file->hf_FileName );
+								char *t = UrlDecodeToMem( file->hf_FileName );
+								if( t != NULL )
+								{
+									sprintf( tmpPath, "%s%s", path, t );
+									FFree( t );
+								}
+								else
+								{
+									sprintf( tmpPath, "%s", path );
+								}
 							}
 							else
 							{
