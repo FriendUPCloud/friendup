@@ -373,8 +373,6 @@ function EditUser( id, mode )
 			state = { mode: mode ? mode : 'edit', user: d };
 			
 			var str = ''; var ugs = '';
-			
-			
 			var dat;
 			try
 			{
@@ -386,7 +384,6 @@ function EditUser( id, mode )
 				str += '<option value="0">' + i18n( 'i18n_none' ) + '</option>';
 				
 				var set = false;
-				
 				for( k in dat.Setup )
 				{
 					if( !set && dat.Setup[k].UserID > 0 )
@@ -414,17 +411,7 @@ function EditUser( id, mode )
 				}
 			}
 			
-			/*if( dat.Workgroup && dat.Workgroup.length > 0 )
-			{
-				ugs += '<option value="0">' + i18n( 'i18n_select_workgroups' ) + '</option>';
-				
-				for( k in dat.Workgroup )
-				{
-					var s = ( dat.Workgroup[k].UserID > 0 ? ' selected="selected"' : '' );
-					
-					ugs += '<option value="' + dat.Workgroup[k].ID + '"' + s + '>' + dat.Workgroup[k].Name + '</option>';
-				}
-			}*/
+
 			
 			var f = new File( 'Progdir:Templates/user.html' );
 			f.replacements = {
@@ -452,10 +439,7 @@ function EditUser( id, mode )
 					ge( 'WorkgroupContainer' ).style.display = 'none';
 				}*/
 				
-				if( dat.Workgroup )
-				{
-					RefreshUserGroups( dat.Workgroup );
-				}
+				RefreshUserGroups( (dat.Workgroup ? dat.Workgroup : false) );
 				
 				var f = ge( 'UserGui' ).getElementsByTagName( 'option' );
 				for( var a = 0; a < f.length; a++ )
@@ -709,6 +693,7 @@ function deleteSetupWallpaper()
 
 function RefreshUserGroups( groups )
 {
+	console.log('we refresh our user groups---', groups);
 	if ( ge( 'pUserWorkgroup' ) )
 	{
 		if (!ge( 'pUserWorkgroup' ).innerHTML )
@@ -717,7 +702,7 @@ function RefreshUserGroups( groups )
 		}
 
 		var str = ''; var ugs = '';
-		
+		var skipgroups = [];
 		if ( groups )
 		{
 			var sw = 1;
@@ -728,16 +713,14 @@ function RefreshUserGroups( groups )
 			
 			for( k in groups )
 			{
-				if( groups[k].UserID > 0 )
+				if( groups[k].UserID > 0 && skipgroups.indexOf( parseInt( groups[k].ID ) ) == -1 )
 				{
 					str += '<tr itemid="' + ( 1 + k ) + '" value="' + groups[k].ID + '" class="sw' + ( sw = ( sw == 1 ? 2 : 1 ) ) + '">' +
-						   '<td>&nbsp;' + groups[k].Name + '</td>' +
+						   '<td>&nbsp;' + (groups[k].Name ? groups[k].Name : groups[k].name) + '</td>' +
 						   '<td width="24px" onclick="RemoveUserGroups(this)" class="MousePointer IconSmall fa-remove">&nbsp;&nbsp;&nbsp;</td>' +
 						   '</tr>';
-				}
-				else
-				{
-					ugs += '<option value="' + groups[k].ID + '">' + groups[k].Name + '</option>';
+						   
+    				skipgroups.push( parseInt(groups[k].ID) );
 				}
 			}
 			
@@ -748,10 +731,18 @@ function RefreshUserGroups( groups )
 		
 		ge( 'pUserWorkgroup' ).obj = ( groups ? groups : [] );
 		
-		if( ge( 'WorkgroupSelect' ) )
+		if( ge( 'WorkgroupSelect' ) && Application.workgroups )
 		{
-			if( !ugs )
+			ugs += '<option value="0">' + i18n( 'i18n_select_workgroups' ) + '</option>';
+
+			for( k in Application.workgroups )
 			{
+				if( !(skipgroups && skipgroups.indexOf(Application.workgroups[k].ID) != -1 ) ) ugs += '<option value="' + Application.workgroups[k].ID + '">' + Application.workgroups[k].name + '</option>';
+			}	
+
+			if( ugs == '<option value="0">' + i18n( 'i18n_select_workgroups' ) + '</option>' )
+			{
+
 				ge( 'WorkgroupSelect' ).style.display = 'none';
 			}
 			else
@@ -795,9 +786,9 @@ function AddUserGroup()
 {
 	if ( ge( 'Workgroup' ) && ge( 'pUserWorkgroup' ) && ge( 'pUserWorkgroup' ).obj )
 	{
-		groups = new Array();
+		groups = ge( 'pUserWorkgroup' ).obj ? ge( 'pUserWorkgroup' ).obj : [];
 		
-		var obj = ge( 'pUserWorkgroup' ).obj;
+		var obj = Application.workgroups;
 	
 		if ( obj && ge( 'Workgroup' ).value )
 		{
@@ -1675,6 +1666,7 @@ function RefreshWorkgroups()
 		try{
 			rows = JSON.parse( d );
 			rows = rows.groups;
+			Application.workgroups = rows;
 		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load workgroups!'}); return; }
 		var ml = '';
 		var sw = 1;

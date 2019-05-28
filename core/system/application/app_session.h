@@ -36,6 +36,12 @@ enum {
 	SASID_US_INVALID
 };
 
+enum {
+	SAS_TYPE_CLOSED = 0,
+	SAS_TYPE_OPEN,
+	SAS_TYPE_MAX
+};
+
 //
 // Application session
 //
@@ -73,6 +79,7 @@ typedef struct AppSession
 	pthread_mutex_t			as_VariablesMut;
 	
 	void 					*as_SB;
+	int						as_Type;
 }AppSession;
 
 //
@@ -133,7 +140,7 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *buffer
 //
 //
 
-int AppSessionAddUser( AppSession *as, UserSession *u, char *authid );
+SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid );
 
 //
 //
@@ -145,7 +152,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 //
 //
 
-FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg );
+SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg );
 
 //
 //

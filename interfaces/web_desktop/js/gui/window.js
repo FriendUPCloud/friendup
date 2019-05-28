@@ -4916,6 +4916,15 @@ var View = function( args )
 				}
 			};
 			
+			var ue = navigator.userAgent.toLowerCase();
+			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
+			{
+				constraints = {
+					video: true,
+					audio: false
+				}
+			}
+			
 			// Shortcut
 			navigator.gm = (navigator.getUserMedia ||
 				navigator.webkitGetUserMedia ||

@@ -687,6 +687,9 @@ if( isset( $args->command ) )
 			break;
 		case 'types':
 			$out = [];
+			$mode = 'default';
+			if( $args->args->mode )
+				$mode = $args->args->mode;
 			if( $dir = opendir( 'devices/DOSDrivers' ) )
 			{
 				while( $f = readdir( $dir ) )
@@ -698,9 +701,13 @@ if( isset( $args->command ) )
 					$o = file_get_contents( $fn );
 					if( !( $o = json_decode( $o ) ) ) continue;
 
-					// Admin filesystems can only be added by admin..
-					if( $o->group == 'Admin' && $level != 'Admin' )
-						continue;
+					// If we're listing all, don't check level (can't add admin file systems anyway)
+					if( $mode != 'all' )
+					{
+						// Admin filesystems can only be added by admin..
+						if( $o->group == 'Admin' && $level != 'Admin' )
+							continue;
+					}
 
 					// Find default label
 					if( file_exists( 'devices/DOSDrivers/' . $f . '/icon.svg' ) )
@@ -835,6 +842,7 @@ if( isset( $args->command ) )
 			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
+			// 
 			$userid = $User->ID;
 			if( $level == 'Admin' && $args->args->userid )
 			{

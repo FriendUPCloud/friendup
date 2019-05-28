@@ -2711,14 +2711,12 @@ html .File .Icon *
 
 html .File .Icon .File
 {
-	/*background-image: url(/themes/friendup/gfx/icons/icon_blank_1.png);*/
 	background-image: url(/iconthemes/friendup15/File_Binary.svg);
 }
 
 html .File .Icon .Drive
 {
-	/*background-image: url(/themes/friendup/gfx/icons/disk.png);*/
-	background-image: url(/iconthemes/friendup15/Disk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html body[mobile] .File .Icon .Drive > .Label
@@ -2781,14 +2779,14 @@ html .File .Icon .Arena
 html .File .Icon .SystemDisk
 {
 	height: 48px;
-	background-image: url(/iconthemes/friendup15/SystemDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 
 html .File .Icon .Home
 {
 	/*background-image: url(/themes/friendup/gfx/icons/disk_home.png);*/
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Friend_Master.svg);
 }
 
 html .File .Icon .Application
@@ -2811,22 +2809,22 @@ html .File .Icon .Door
 {
 	height: 48px;
 	filter: drop-shadow(0px 1px 4px rgba(0,0,0,0.4));
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .Door.local_fsys
 {
-	background-image: url(/iconthemes/friendup15/LinuxDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .SystemDisk
 {
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .Door.Assign
 {
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .article

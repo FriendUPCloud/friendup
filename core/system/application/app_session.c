@@ -188,10 +188,10 @@ void AppSessionDelete( AppSession *as )
  * @param as application session
  * @param u user session which will be added to application session
  * @param authid authenticationid of person which will be added to application session
- * @return 0 if success, otherwise error number
+ * @return SASUList if success, otherwise NULL
  */
 
-int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
+SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 {
 	DEBUG("[AppSession] Add user to to appsession\n");
 	FBOOL userAdded = FALSE;
@@ -224,12 +224,12 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 			{
 				as->as_Timer = time( NULL );
 				DEBUG("[AppSession] User is already invited but he did not accept previous invitation\n");
-				return 0;
+				return lali;
 			}
 			else
 			{
 				FERROR("User is already invited with session %lu\n", as->as_SASID );
-				return -1;
+				return NULL;
 			}
 		}
 		
@@ -252,8 +252,9 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		
 		as->as_Timer = time( NULL );
+		return ali;
 	}
-	return 0;
+	return NULL;
 }
 
 /**
@@ -372,10 +373,10 @@ int AppSessionRemUser( AppSession *as, User *u )
  * @param sessid invited session
  * @param appname application name string
  * @param msg message string which will appear in invitation
- * @return TRUE if session was added
+ * @return pointer to SASUList if session was added, otherwise NULL
  */
 
-FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg )
+SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg )
 {
 	// remove spaces and 'weird' chars from entry
 	unsigned int i, j=0;
@@ -383,8 +384,7 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 	unsigned int usersi  = 0;
 	char *upositions[ 128 ];
 	memset( upositions, 0, sizeof( upositions ) );
-	FBOOL uadded = FALSE;
-	
+	SASUList *retListEntry = NULL;
 	SystemBase *l = (SystemBase *)as->as_SB;
 	
 	DEBUG("[AppSession] sessid %s\n", sessid );
@@ -425,11 +425,11 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 		{
 			if( usrses != NULL )
 			{
-				int err = AppSessionAddUser( as, usrses, NULL );
+				retListEntry = AppSessionAddUser( as, usrses, NULL );
 
 				DEBUG("[AppSession] newsession will be added %p\n", usrses );
 
-				if( err == 0 )
+				if( retListEntry != NULL && msg != NULL )
 				{
 					char tmp[ 512 ];
 					int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
@@ -438,8 +438,6 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 					int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
 
 					WebSocketSendMessageInt( usrses, tmpmsg, len );
-					
-					uadded = TRUE;
 				}
 				
 			} // if( usrses != NULL )
@@ -449,7 +447,7 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 	{
 		DEBUG("[AppSession] Userlist is equal to NULL\n");
 	}
-	return uadded;
+	return retListEntry;
 }
 
 /**
@@ -589,11 +587,11 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 
 								else
 								{
-									err = AppSessionAddUser( as, usrses, NULL );
+									SASUList *sli = AppSessionAddUser( as, usrses, NULL );
 
 									DEBUG("[AppSession] newsession will be added %p\n", usrses );
 
-									if( err == 0 )
+									if( sli != NULL )
 									{
 										int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
 
