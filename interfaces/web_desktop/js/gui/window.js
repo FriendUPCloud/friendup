@@ -4946,7 +4946,7 @@ var View = function( args )
 				
 				//check if we should stop stuff before we try again...
 				var dd = self.content.container.camera;
-				if(dd.srcObject)
+				if(dd && dd.srcObject)
 				{
 					dd.srcObject.getTracks().forEach(track => track.stop())
 					dd.srcObject = null;

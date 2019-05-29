@@ -3765,6 +3765,39 @@ function apiWrapper( event, force )
 						};
 						var d = new Filedialog( flags );
 						break;
+					case 'opencamera':
+						console.log('opencamera',msg);
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						var vtitle = msg.title ? msg.title : i18n('i18n_camera');
+						var vwidth = msg.width ? msg.width : 480;
+						var vheight= msg.height ? msg.height : 320;
+						var cview = new View({ title: vtitle, width: vwidth, height: vheight });
+						cview.callback = msg.callback;
+						cview.self = cview;
+						cview.openCamera( false, function( data ) {
+							var nmsg = {'type':'callback'};
+							nmsg.data = data;
+							nmsg.callback = msg.callback;
+							
+							console.log('sending stuff back!',nmsg);
+							console.log('sending it to!',tar);
+							
+							if( tar )
+								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							else
+								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+						});
+						cview.onClose = function() {
+							var nmsg = { 'closed':true };
+							nmsg.callback = self.callback;
+							
+							if( tar )
+								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							else
+								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );	
+						};
+						break;
 				}
 				break;
 		}
