@@ -368,14 +368,17 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				int dlen =  t[3].end - t[3].start;
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
-					char reply[ 128 ];
-					int locmsglen = snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
+					static int bufferSize = LWS_PRE+256;
+					char *reply = FMalloc( bufferSize );
+					//char reply[ 128 ];
+					int locmsglen = snprintf( reply + LWS_PRE, bufferSize ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
 #ifdef WEBSOCKET_SEND_QUEUE
 					WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, locmsglen );
 #else
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
 					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );				
 #endif
+					FFree( reply );
 				}
 				else if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
