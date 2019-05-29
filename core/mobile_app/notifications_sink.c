@@ -105,7 +105,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 	{
 		int s = (int)len;
 		// copy received bufffer
-		buf = FMalloc( s+16 );
+		buf = FMalloc( s+64 );
 		memcpy( buf, in, s );
 		buf[ s ] = 0;
 	}
