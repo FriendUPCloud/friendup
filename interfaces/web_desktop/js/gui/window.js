@@ -4855,7 +4855,7 @@ var View = function( args )
 		
 		function setCameraMode( e )
 		{
-			console.log('setCameraMode',e);
+
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -4954,7 +4954,6 @@ var View = function( args )
 				if( self.content.container.camera ) self.content.container.removeChild( self.content.container.camera );
 				delete self.content.container.camera;
 				delete navigator.gm;
-				console.log('clean for new camera access 3');
 			}
 			
 			// Shortcut
