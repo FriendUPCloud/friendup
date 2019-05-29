@@ -4807,6 +4807,7 @@ var View = function( args )
 	
 	this.openCamera = function( flags, callback )
 	{
+		
 		var self = this;
 		
 		// Just get the available devices
@@ -4854,6 +4855,7 @@ var View = function( args )
 		
 		function setCameraMode( e )
 		{
+			console.log('setCameraMode',e);
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -4866,6 +4868,7 @@ var View = function( args )
 				self.content.appendChild( v );
 				self.content.container = v;
 				self.content.classList.add( 'HasCamera' );
+			
 			}
 			
 			// Find video devices
@@ -4876,13 +4879,24 @@ var View = function( args )
 				var dev = self.cameraOptions.devices[ a ];
 				if( dev.kind == 'videoinput' )
 				{
-					if( !self.cameraOptions.currentDevice )
+					//we want back facing camera as default...
+					if( dev.label && dev.label.indexOf('back') > -1 && !self.cameraOptions.currentDevice ) 
 					{
 						self.cameraOptions.currentDevice = dev;
 						initial = true;
 					}
+					else 
+					{
+						//we overwrite on purpose here! most handsets have backwards facing cameras last...
+						self.cameraOptions.potentialDevice = dev
+					}
 					devs.push( dev );
 				}
+			}
+			if( !self.cameraOptions.currentDevice && self.cameraOptions.potentialDevice )
+			{
+				self.cameraOptions.currentDevice = self.cameraOptions.potentialDevice
+				initial = true;
 			}
 			
 			// Initial pass over, now just choose next device
@@ -4909,7 +4923,6 @@ var View = function( args )
 					self.cameraOptions.currentDevice = devs[0];
 				}
 			}
-			
 			var constraints = {
 				video: {
 					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
@@ -4917,12 +4930,31 @@ var View = function( args )
 			};
 			
 			var ue = navigator.userAgent.toLowerCase();
+
+
+
 			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
 			{
 				constraints = {
 					video: true,
 					audio: false
 				}
+			}
+			//clean up old one...
+			
+			if( navigator.gm ) { 
+				
+				//check if we should stop stuff before we try again...
+				var dd = self.content.container.camera;
+				if(dd.srcObject)
+				{
+					dd.srcObject.getTracks().forEach(track => track.stop())
+					dd.srcObject = null;
+				}
+				if( self.content.container.camera ) self.content.container.removeChild( self.content.container.camera );
+				delete self.content.container.camera;
+				delete navigator.gm;
+				console.log('clean for new camera access 3');
 			}
 			
 			// Shortcut
@@ -4931,7 +4963,7 @@ var View = function( args )
 				navigator.mozGetUserMedia || 
 				navigator.msGetUserMedia
 			);
-			
+
 			if( navigator.gm )
 			{
 				navigator.gm( 
@@ -4939,6 +4971,7 @@ var View = function( args )
 					function( localMediaStream )
 					{
 						// Remove old video object
+						//might be too late here? at least on mobile? moved this check up a couple of lines..
 						var oldCam = self.content.container.camera;
 						if( oldCam && oldCam.srcObject )
 						{
@@ -4961,16 +4994,17 @@ var View = function( args )
 					
 						// Create an object URL for the video stream and use this 
 						// to set the video source.
-						var dd = self.content.container.camera;
-						dd.srcObject = localMediaStream;
+						self.content.container.camera.srcObject = localMediaStream;
 					
-						// Add the record button
+						// Add the record + switch button
 						if( !self.content.container.button )
 						{
 							var btn = document.createElement( 'button' );
 							btn.className = 'IconButton IconSmall fa-camera';
 							btn.onclick = function( e )
 							{
+								var dd = self.content.container.camera;
+								
 								var canv = document.createElement( 'canvas' );
 								canv.setAttribute( 'width', dd.videoWidth );
 								canv.setAttribute( 'height', dd.videoHeight );
@@ -5004,18 +5038,40 @@ var View = function( args )
 								}, 5 );
 							}
 							self.content.container.appendChild( btn );
+							
+							
+							var switchbtn = document.createElement( 'button' );
+							switchbtn.className = 'IconButton IconSmall fa-refresh';
+							switchbtn.onclick = function() { console.log('switch camera...'); setCameraMode() };
+							self.content.container.appendChild( switchbtn );
+
+							//stop the video if the view is closed!
+							self.addEvent('systemclose', function() {
+								var dd = self.content.container.camera;
+								if(dd && dd.srcObject )
+								{
+									dd.srcObject.getTracks().forEach(track => track.stop())
+									dd.srcObject = null;									
+								}
+							});
+							
+							//register our button in the container... to not do this twice							
 							self.content.container.button = btn;
 						}
 					},
 					function( err )
 					{
+						v = self.content;
 						// Log the error to the console.
-						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
-						v.classList.add( 'Closing' );
-						setTimeout( function()
+						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' + err } );
+						if( v )
 						{
-							v.parentNode.removeChild( v );
-						}, 250 );
+							v.classList.add( 'Closing' );
+							/*setTimeout( function()
+							{
+								v.parentNode.removeChild( v );
+							},  250 );*/
+						}
 					}
 				);
 			}
