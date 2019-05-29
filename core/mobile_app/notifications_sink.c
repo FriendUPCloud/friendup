@@ -294,6 +294,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				int p;
 				char *authKey = NULL;
 				char *authName = NULL;
+				static int LOCAL_REPLY_LEN = 512 + LWS_PRE;
+				char reply[ LOCAL_REPLY_LEN ];
 				// first check if service is already authenticated maybe?
 				
 				for( p = 5; p < 9 ; p++ )
@@ -335,8 +337,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				d->d_Authenticated = TRUE;
 				d->d_ServerName = StringDuplicate( authName );
 				
-				char reply[ 256+ LWS_PRE ];
-				int msize = snprintf( reply + LWS_PRE, sizeof(reply), "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
+				
+				int msize = snprintf( reply + LWS_PRE, LOCAL_REPLY_LEN, "{\"type\":\"authenticate\",\"data\":{ \"status\":0 }}" );
 				
 #ifdef WEBSOCKET_SEND_QUEUE
 				WriteMessageSink( d, (unsigned char *)(reply)+LWS_PRE, msize );
