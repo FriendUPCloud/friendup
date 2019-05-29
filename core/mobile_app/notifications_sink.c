@@ -281,7 +281,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 	//	}
 	//}
 	
-	json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
+	//json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
 	
 	if( t[0].type == JSMN_OBJECT ) 
 	{
@@ -371,6 +371,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 					static int bufferSize = LWS_PRE+256;
 					char *reply = FMalloc( bufferSize );
 					//char reply[ 128 ];
+					DEBUG("size: %d\n", t[4].end-t[4].start );
+					DEBUG("Data: %s\n", data + t[4].start );
 					DEBUG("received message: %s {\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
 					int locmsglen = snprintf( reply + LWS_PRE, bufferSize ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
 #ifdef WEBSOCKET_SEND_QUEUE

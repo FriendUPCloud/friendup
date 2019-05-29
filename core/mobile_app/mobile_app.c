@@ -589,7 +589,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					
 					Log( FLOG_DEBUG, "ADD APP CONNECTION Websocket pointer: %p login return error: %d\n", wsi, ret );
 					
-					int som = snprintf(response+LWS_PRE, sizeof(response), "{ \"t\":\"login\", \"status\":%d}", ret );
+					int som = snprintf(response+LWS_PRE, 64+LWS_PRE, "{ \"t\":\"login\", \"status\":%d}", ret );
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);	// bad hack
 					return ret;		// remove WS connection if login fail
 				}
