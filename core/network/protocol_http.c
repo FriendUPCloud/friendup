@@ -951,7 +951,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									if( cacheState == CACHE_FILE_CAN_BE_USED )
 									{
 										int resp = 0;
-										int dataread;
+										int dataread = 0;
 
 										cf->cf_Fp = fopen( cf->cf_StorePath, "rb" );
 										if( cf->cf_Fp != NULL )
