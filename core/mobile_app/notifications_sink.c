@@ -337,8 +337,9 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				d->d_Authenticated = TRUE;
 				d->d_ServerName = StringDuplicate( authName );
 				
-				
-				int msize = snprintf( reply + LWS_PRE, LOCAL_REPLY_LEN, "{\"type\":\"authenticate\",\"data\":{ \"status\":0 }}" );
+				int msize = strlen("{\"type\":\"authenticate\",\"data\":{\"status\":0 }}");
+				//int msize = snprintf( reply + LWS_PRE, LOCAL_REPLY_LEN, "{\"type\":\"authenticate\",\"data\":{\"status\":0 }}" );
+				strcpy( reply + LWS_PRE, "{\"type\":\"authenticate\",\"data\":{\"status\":0 }}" );
 				
 #ifdef WEBSOCKET_SEND_QUEUE
 				WriteMessageSink( d, (unsigned char *)(reply)+LWS_PRE, msize );
