@@ -9081,7 +9081,7 @@ if( window.friendApp )
 	}
 }
 
-// Receive push notification
+// Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return "mobile";
@@ -9090,19 +9090,19 @@ Workspace.receivePush = function( jsonMsg )
 	if( msg == false ) return "nomsg";
 	try
 	{
-		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
+		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
 		msg = JSON.parse( msg );
 	}
 	catch( e )
 	{
-		mobileDebug('OH OH. ERROR' + e, true);
+		//mobileDebug('OH OH. ERROR' + e, true);
 		// Do nothing for now...
 		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
 	if( !msg ) return "nomsg";
 		
-	mobileDebug( 'We received a message.' );
-	mobileDebug( JSON.stringify( msg ) );
+	/*mobileDebug( 'We received a message.' );
+	mobileDebug( JSON.stringify( msg ) );*/
 	
 	// We did a user interaction here
 	msg.clicked = true;
