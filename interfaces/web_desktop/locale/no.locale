@@ -655,4 +655,6 @@ i18n_could_not_find_app_desc            : Beskjeden kunne ikke sendes til progra
 
 i18n_camera_action_description          : Ta et bilde med ditt kamera.
 i18n_take_photo                         : Ta bildet
+i18n_camera                             : Kamera
+
 

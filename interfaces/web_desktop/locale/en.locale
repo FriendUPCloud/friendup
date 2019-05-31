@@ -710,4 +710,5 @@ i18n_could_not_find_app_desc            : Application notification did not work 
 
 i18n_camera_action_description          : Take a picture with your device.
 i18n_take_photo                         : Click to take the picture
+i18n_camera                             : Camera
 
