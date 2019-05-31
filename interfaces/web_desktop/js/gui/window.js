@@ -15,6 +15,8 @@ var FUI_MOUSEDOWN_SCROLLV = 10;
 var FUI_WINDOW_MARGIN     =  3;
 var FUI_MOUSEDOWN_PICKOBJ = 11;
 
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-forms allow-scripts allow-same-origin allow-popups';
+
 /* Make movable box --------------------------------------------------------- */
 
 Friend          = window.Friend || {};    // Friend main namespace
@@ -1050,6 +1052,20 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Activate all iframes
+	var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+	for( var a = 0; a < fr.length; a++ )
+	{
+		if( fr[ a ].oldSandbox )
+		{
+			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+		}
+		else
+		{
+			fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+		}
+	}
+	
 	if( isMobile )
 	{
 		window.focus();
@@ -1276,6 +1292,15 @@ function _DeactivateWindow( m, skipCleanUp )
 			} );
 			m.windowObject.sendMessage( msg );
 			m.notifyActivated = false;
+			
+			// Deactivate all iframes
+			var fr = m.windowObject.content.getElementsByTagName( 'iframe' );
+			for( var a = 0; a < fr.length; a++ )
+			{
+				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
+				fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
+			}
+			
 			PollTaskbar();
 		}
 		// Minimize on mobile
@@ -3910,7 +3935,7 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		iframe.sandbox = "allow-forms allow-scripts allow-same-origin allow-popups"; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
 		self._window.authId = conf.authId;
