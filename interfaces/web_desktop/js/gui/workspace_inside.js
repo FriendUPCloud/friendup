@@ -721,13 +721,16 @@ var WorkspaceInside = {
 				//console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
 		}
-		// Handle incoming push notifications and server notifications
+		
+		// Handle incoming push notifications and server notifications ---------
 		function handleNotifications( nmsg )
 		{
 			var messageRead = trash = false;
 			
 			if( isMobile )
 			{
+				// TODO: Determine if this will ever occur. If the viewstate isn't active
+				//       we will obviously not be running this Javascript?
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
 					// Cancel push notification on the server
