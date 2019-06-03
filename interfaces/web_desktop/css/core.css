@@ -2020,7 +2020,7 @@ body:not(.friendapp):not([mobile]).Loading:after
 	color: white;
 	padding: 0;
 	text-align: center;
-	border-radius: 2px;
+	border-radius: 60px;
 	animation: bodyLoading 0.1s;
 	-webkit-animation: bodyLoading 0.1s;
 }
