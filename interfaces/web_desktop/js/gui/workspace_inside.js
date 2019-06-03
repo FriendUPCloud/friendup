@@ -9104,9 +9104,6 @@ Workspace.receivePush = function( jsonMsg )
 	/*mobileDebug( 'We received a message.' );
 	mobileDebug( JSON.stringify( msg ) );*/
 	
-	// We did a user interaction here
-	msg.clicked = true;
-	
 	// Clear the notifications now... (race cond?)
 	friendApp.clear_notifications();
 	
@@ -9215,11 +9212,14 @@ Workspace.receivePush = function( jsonMsg )
 		}, 1000 );
 	}
 	
-	mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
+	if( msg.clicked )
+	{
+		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
 	
-	ExecuteApplication( msg.application, '', appMessage );
+		ExecuteApplication( msg.application, '', appMessage );
+	}
 
-	return "ok";
+	return 'ok';
 }
 
 // TODO: Remove me after test
