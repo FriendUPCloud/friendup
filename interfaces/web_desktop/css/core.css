@@ -2011,7 +2011,7 @@ body.Loading > #Screens
 body:not(.friendapp):not([mobile]).Loading:after
 {
 	content: ' ';
-	background: url(/themes/friendup12/gfx/loading.gif) no-repeat center center #222222;
+	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
 	position: absolute;
 	top: calc(50% - 30px);
 	left: calc(50% - 40px);
