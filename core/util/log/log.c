@@ -63,6 +63,7 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
     slg.ff_Size = 0;
     slg.ff_MaxSize = 0;
     slg.ff_ArchiveFiles = 0;
+	slg.ff_ToConsole = 1;
 
     if( maxSize >= 100000 )
     {
@@ -90,6 +91,7 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 
 			slg.ff_FileLevel  = ReadIntNCS( prop, "Log:fileLevel", 1 );
 			slg.ff_Fname = ReadStringNCS( prop, "Log:fileName", (char *)fname );
+			slg.ff_ToConsole = ReadIntNCS( prop, "Log:toConsole", 1 );
 
 			path = ReadStringNCS( prop, "Log:filepath", "log/" );
 			
@@ -292,7 +294,7 @@ void Log( int lev, char* fmt, ...)
     } // to file
 
 	// console output will be used for debug
-    if (lev >= slg.ff_Level)
+    if( slg.ff_ToConsole == 1 && lev >= slg.ff_Level )
     {
         printf("%ld: ", pthread_self() );
         va_list args;
@@ -302,182 +304,3 @@ void Log( int lev, char* fmt, ...)
         va_end(args);
     }
 }
-//
-// parse_config - Parse config file. Argument cfg_name is path
-// of config file name to be parsed. Function opens config file
-// and parses LOGLEVEL and LOGTOFILE flags from it.
-//
-
-
-    /*
-    char* strclr(const char* clr, char* str, ...)
-    {
-        // String buffers
-        static char output[MAXMSG];
-        char string[MAXMSG];
-
-        // Read args
-        va_list args;
-        va_start(args, str);
-        vsprintf(string, str, args);
-        va_end(args);
-
-        // Colorize string
-        sprintf(output, "%s%s%s", clr, string, CLR_RESET);
-
-        return output;
-    }
-
-
-    int LogParseConfig(const char *cfg_name)
-    {
-    	FILE *file;
-    	char line[ 1024 ];
-    	size_t len = 0;
-    	ssize_t read;
-    	int ret = 0;
-
-    	file = fopen(cfg_name, "r");
-    	if(file == NULL) return 0;
-
-    	while ((read = getline(&line, &len, file)) != -1)
-    	{
-    		if(strstr(line, "LOGLEVEL") != NULL)
-    		{
-    			slg.ff_Level = atoi(line+8);
-    			ret = 1;
-    		}
-    		if(strstr(line, "LOGFILELEVEL") != NULL)
-    		{
-    			slg.ff_Level = atoi(line+12);
-    			ret = 1;
-    		}
-    		else if(strstr(line, "LOGTOFILE") != NULL)
-    		{
-    			slg.ff_ToFile = atoi(line+9);
-    			ret = 1;
-    		}
-    		else if(strstr(line, "PRETTYLOG") != NULL)
-    		{
-    			slg.ff_Pretty = atoi(line+9);
-    			ret = 1;
-    		}
-    	}
-    	fclose(file);
-    	return ret;
-    }*/
-
-
-
-
-//
-// slog - Log exiting process. Function takes arguments and saves
-// log in file if LOGTOFILE flag is enabled from config. Otherwise
-// it just prints log without saveing in file. Argument level is
-// logging level and flag is slog flags defined in slog.h header.
-//
-
-    /*
-    void slog(int level, int flag, const char *msg, ...)
-    {
-        if (slg.td_safe)
-        {
-            if (FRIEND_MUTEX_LOCK(&slog_mutex))
-            {
-                printf("<%s:%d> %s: [ERROR] Can not lock mutex: %d\n",
-                    __FILE__, __LINE__, __FUNCTION__, errno);
-                exit(EXIT_FAILURE);
-            }
-        }
-
-
-        SlogDate mdate;
-        char string[MAXMSG];
-        char prints[MAXMSG];
-        char color[32], alarm[32];
-        char *output;
-
-        slog_get_date(&mdate);
-        bzero(string, sizeof(string));
-        bzero(prints, sizeof(prints));
-        bzero(color, sizeof(color));
-        bzero(alarm, sizeof(alarm));
-
-
-        va_list args;
-        va_start(args, msg);
-        vsprintf(string, msg, args);
-        va_end(args);
-
-        if(!level || level <= slg.level || level <= slg.file_level)
-        {
-            switch(flag)
-            {
-                case SLOG_LIVE:
-                    strncpy(color, CLR_NORMAL, sizeof(color));
-                    strncpy(alarm, "LIVE", sizeof(alarm));
-                    break;
-                case SLOG_INFO:
-                    strncpy(color, CLR_GREEN, sizeof(color));
-                    strncpy(alarm, "INFO", sizeof(alarm));
-                    break;
-                case SLOG_WARN:
-                    strncpy(color, CLR_YELLOW, sizeof(color));
-                    strncpy(alarm, "WARN", sizeof(alarm));
-                    break;
-                case SLOG_DEBUG:
-                    strncpy(color, CLR_BLUE, sizeof(color));
-                    strncpy(alarm, "DEBUG", sizeof(alarm));
-                    break;
-                case SLOG_ERROR:
-                    strncpy(color, CLR_RED, sizeof(color));
-                    strncpy(alarm, "ERROR", sizeof(alarm));
-                    break;
-                case SLOG_FATAL:
-                    strncpy(color, CLR_RED, sizeof(color));
-                    strncpy(alarm, "FATAL", sizeof(alarm));
-                    break;
-                case SLOG_PANIC:
-                    strncpy(color, CLR_WHITE, sizeof(color));
-                    strncpy(alarm, "PANIC", sizeof(alarm));
-                    break;
-                case SLOG_NONE:
-                    strncpy(prints, string, sizeof(string));
-                    break;
-                default:
-                    strncpy(prints, string, sizeof(string));
-                    flag = SLOG_NONE;
-                    break;
-            }
-
-            if (level <= slg.level || slg.pretty)
-            {
-                if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", strclr(color, alarm), string);
-                if (level <= slg.level) printf("%s", slog_get(&mdate, "%s\n", prints));
-            }
-
-            if (slg.to_file && level <= slg.file_level)
-            {
-                if (slg.pretty) output = slog_get(&mdate, "%s\n", prints);
-                else
-                {
-                    if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", alarm, string);
-                    output = slog_get(&mdate, "%s\n", prints);
-                }
-
-                slog_to_file(output, slg.fname, &mdate);
-            }
-        }
-
-        if (slg.td_safe)
-        {
-            if (FRIEND_MUTEX_UNLOCK(&slog_mutex))
-            {
-                printf("<%s:%d> %s: [ERROR] Can not deinitialize mutex: %d\n",
-                    __FILE__, __LINE__, __FUNCTION__, errno);
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
-    */
-

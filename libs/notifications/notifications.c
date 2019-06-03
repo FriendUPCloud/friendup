@@ -34,7 +34,7 @@ static NotificationsLibrary_t *_library_handle;
  */
 void *libInit( void *systembase )
 {
-	FERROR("************* library init, systembase %p", systembase);
+	DEBUG("************* library init, systembase %p", systembase);
 	NotificationsLibrary_t* l;
 
 	if( ( _library_handle = calloc( sizeof( NotificationsLibrary_t ), 1 ) ) == NULL )
@@ -54,7 +54,7 @@ void *libInit( void *systembase )
 
 void libClose( NotificationsLibrary_t *l )
 {
-	FERROR("************* library close");
+	DEBUG("************* library close");
 }
 
 long GetVersion(void)
