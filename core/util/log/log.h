@@ -70,6 +70,7 @@ typedef struct FlogFlags{
 	short				ff_FileLevel;
 	short				ff_Level;
 	short				ff_ToFile;
+	short				ff_ToConsole;
 	short				ff_Pretty;
 	short				ff_Time;
 	short				ff_TdSafe;

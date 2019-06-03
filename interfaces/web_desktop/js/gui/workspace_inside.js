@@ -721,13 +721,16 @@ var WorkspaceInside = {
 				//console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
 		}
-		// Handle incoming push notifications and server notifications
+		
+		// Handle incoming push notifications and server notifications ---------
 		function handleNotifications( nmsg )
 		{
 			var messageRead = trash = false;
 			
 			if( isMobile )
 			{
+				// TODO: Determine if this will ever occur. If the viewstate isn't active
+				//       we will obviously not be running this Javascript?
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
 					// Cancel push notification on the server
@@ -9078,7 +9081,7 @@ if( window.friendApp )
 	}
 }
 
-// Receive push notification
+// Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return "mobile";
@@ -9087,19 +9090,19 @@ Workspace.receivePush = function( jsonMsg )
 	if( msg == false ) return "nomsg";
 	try
 	{
-		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
+		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
 		msg = JSON.parse( msg );
 	}
 	catch( e )
 	{
-		mobileDebug('OH OH. ERROR' + e, true);
+		//mobileDebug('OH OH. ERROR' + e, true);
 		// Do nothing for now...
 		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
 	if( !msg ) return "nomsg";
 		
-	mobileDebug( 'We received a message.' );
-	mobileDebug( JSON.stringify( msg ) );
+	/*mobileDebug( 'We received a message.' );
+	mobileDebug( JSON.stringify( msg ) );*/
 	
 	// We did a user interaction here
 	msg.clicked = true;

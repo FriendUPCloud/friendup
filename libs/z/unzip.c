@@ -421,15 +421,15 @@ local unzFile unzOpenInternal(const void *path, zlib_filefunc64_32_def* pzlib_fi
 		return NULL;
 	}
 
-    us.filestream_with_CD = us.filestream;
-    us.isZip64 = 0;
+	us.filestream_with_CD = us.filestream;
+	us.isZip64 = 0;
 
-    /* Use unz64local_SearchCentralDir first. Only based on the result
-       is it necessary to locate the unz64local_SearchCentralDir64 */
-    central_pos = unz64local_SearchCentralDir(&us.z_filefunc, us.filestream);
-    if (central_pos)
-    {
-        if (ZSEEK64(us.z_filefunc, us.filestream, central_pos, ZLIB_FILEFUNC_SEEK_SET) != 0)
+	/* Use unz64local_SearchCentralDir first. Only based on the result
+		is it necessary to locate the unz64local_SearchCentralDir64 */
+	central_pos = unz64local_SearchCentralDir(&us.z_filefunc, us.filestream);
+	if (central_pos)
+	{
+		if (ZSEEK64(us.z_filefunc, us.filestream, central_pos, ZLIB_FILEFUNC_SEEK_SET) != 0)
             err = UNZ_ERRNO;
 
         /* the signature, already checked */
