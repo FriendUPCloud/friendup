@@ -2011,16 +2011,16 @@ body.Loading > #Screens
 body:not(.friendapp):not([mobile]).Loading:after
 {
 	content: ' ';
-	background: url(/themes/friendup12/gfx/loading.gif) no-repeat center center #222222;
+	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
 	position: absolute;
 	top: calc(50% - 30px);
-	left: calc(50% - 40px);
+	left: calc(50% - 30px);
 	height: 60px;
-	width: 80px;
+	width: 60px;
 	color: white;
-	padding: 0 10px;
+	padding: 0;
 	text-align: center;
-	border-radius: 10px;
+	border-radius: 60px;
 	animation: bodyLoading 0.1s;
 	-webkit-animation: bodyLoading 0.1s;
 }
