@@ -3995,6 +3995,12 @@ FileIcon.prototype.Init = function( fileInfo )
 				break;
 		}
 	}
+	
+	// Shared file?
+	if( fileInfo.SharedLink && fileInfo.SharedLink.length )
+	{
+		iconInner.classList.add( 'Shared' );
+	}
 
 	// Create the title
 	title = document.createElement( 'a' );
