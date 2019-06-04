@@ -8492,6 +8492,7 @@ function DoorsKeyDown( e )
 						}
 						return cancelBubble( e );
 					}
+					// Aha, F2!
 					icons[a].domNode.classList.add( 'Editing' );
 					var input = document.createElement( 'textarea' );
 					input.className = 'Title';
@@ -8528,6 +8529,8 @@ function DoorsKeyDown( e )
 					}
 					input.onmousedown = function( e )
 					{
+						this.selectionEnd = 0;
+						this.selectionStart = 0;
 						return cancelBubble( e );
 					}
 					input.onmouseup = function( e )
