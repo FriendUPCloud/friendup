@@ -2707,6 +2707,25 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	text-shadow: none;
 }
 
+/* Search */
+
+[mobile] #SearchGuiContainer
+{
+	position: absolute;
+	width: calc(100% - 20px);
+	height: 75px;
+}
+
+[mobile] #WorkspaceSearchResults
+{
+	position: absolute;
+	top: 85px;
+	width: calc(100% - 20px);
+	height: calc(100% - 95px);
+	overflow: auto;
+}
+
+
 /* Wallpapers */
 
 .WorkspaceWallpaper

@@ -7138,11 +7138,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	searchRefreshMatches: function()
 	{
+		var self = this;
+		
 		if( !ge( 'WorkspaceSearchResults' ) ) return false;
 
 		if( !this.searching ) return;
 
 		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault' );
+		
+		// Lock click buttons for 250ms when scrolling
+		if( isMobile )
+		{
+			if( typeof( this.searchScrolling ) == 'undefined' )
+				this.searchScrolling = false;
+		
+			ge( 'WorkspaceSearchResults' ).onscroll = function( e )
+			{
+				if( self.searchTimeout )
+				{
+					clearTimeout( self.searchTimeout );
+					self.searchTimeout = null;
+				}
+				self.searchTimeout = setTimeout( function()
+				{
+					self.searchTimeout = null;
+					self.searchScrolling = false;
+				}, 250 );
+				self.searchScrolling = true;
+			}
+		}
 
 		for( var a = 0; a < this.searchMatches.length; a++ )
 		{
@@ -7194,15 +7218,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			o.MetaType = o.Type; // TODO: If we use metatype, look at this
 			ge( 'WorkspaceSearchResults' ).appendChild( d );
 
+			var method = isMobile ? 'ontouchend' : 'onclick';
 			var spans = d.getElementsByTagName( 'span' );
 			spans[0].folder = o;
-			spans[0].onclick = function()
+			spans[0][ method ] = function()
 			{
+				if( self.searchScrolling )
+					return;
 				OpenWindowByFileinfo( this.folder, false );
 			}
 			spans[1].file = m;
-			spans[1].onclick = function()
+			spans[1][ method ] = function()
 			{
+				if( self.searchScrolling )
+					return;
 				OpenWindowByFileinfo( this.file, false );
 			}
 		}
