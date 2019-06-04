@@ -4133,7 +4133,7 @@ if( window.addEventListener )
 		{
 			if( Friend.currentWindowHover && Friend.canActivateWindowOnBlur )
 			{
-				_ActivateWindow( Friend.currentWindowHover );
+				_ActivateWindowOnly( Friend.currentWindowHover );
 			}
 		}
 	} );
