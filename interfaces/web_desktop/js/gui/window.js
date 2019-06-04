@@ -4687,7 +4687,9 @@ var View = function( args )
 					{
 						if( viewdiv.getAttribute( 'minimized' ) )
 							viewdiv.minimize.onclick();
-						_WindowToFront( viewdiv );
+						// Only move to front if this one is current
+						if( currentMovable == viewdiv )
+							_WindowToFront( viewdiv );
 					}
 				}
 				this.flags.minimized = value;
