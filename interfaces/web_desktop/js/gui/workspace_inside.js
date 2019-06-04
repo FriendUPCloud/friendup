@@ -6528,7 +6528,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_close_window' ),
 						command: function(){ CloseWindow( window.currentMovable ); if( isMobile ) Workspace.exitMobileMenu(); },
-						disabled: !windowsOpened
+						disabled: !windowsOpened || !window.currentMovable
 					}
 				]
 			}
