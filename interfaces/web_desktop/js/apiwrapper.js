@@ -3796,6 +3796,37 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );	
 						};
 						break;
+					case 'preparecamera':
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						
+						var nmsg = { 'command':'callback','done':true, 'data':{} };
+
+						// on mobile devices, we use a file input with specific attributes for camera access
+						if( isMobile )
+						{
+							nmsg.data.preparecameraresult = 'UPDATE';
+							nmsg.data.inputmarkup = '<input id="cameraimageFI" type="file" accept="image/*" capture />';
+							nmsg.data.inputid = 'cameraimageFI'
+							nmsg.data.inputcontainer = 'div';
+							nmsg.data.inputcontainerclass = 'FileUploadWrapper';
+						}
+						else
+						{
+							//nothing to do here really - just tell the sender that all is set...
+							nmsg.data.preparecameraresult = 'NOOP';
+						}
+
+						console.log('preparecamera',nmsg);
+
+						//send our response back						
+						nmsg.callback = msg.callback;
+						if( tar )
+							tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+						else if( app && app.contentWindow )
+							app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );	
+						
+						break; // end of 'preparecamera'
 				}
 				break;
 		}

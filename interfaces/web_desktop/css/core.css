@@ -491,6 +491,18 @@ input.Required
 	border-color     : $ColorDangerBg;
 }
 
+.FileUploadWrapper { position: relative; overflow: hidden; }
+.FileUploadWrapper input[type=file]
+{
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  z-index:2;
+
+}
+
 /* Boxes -------------------------------------------------------------------- */
 
 .Disabled
