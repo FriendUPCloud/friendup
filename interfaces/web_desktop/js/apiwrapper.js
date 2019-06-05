@@ -3261,7 +3261,7 @@ function apiWrapper( event, force )
 						break;
 					case 'getlocale':
 						var nmsg = {};
-						for( var a in msg ) nmsg[a] = msg[a];
+						for( var a in msg ) nmsg[ a ] = msg[ a ];
 						nmsg.locale = Workspace.locale;
 						var cw = GetContentWindowByAppMessage( app, msg );
 						if( cw )
@@ -3275,8 +3275,8 @@ function apiWrapper( event, force )
 						break;
 					case 'confirm':
 						var nmsg = {};
-						for( var a in msg ) nmsg[a] = msg[a];
-						console.log('we confirm...',nmsg);
+						for( var a in msg ) nmsg[ a ] = msg[ a ];
+						//console.log('we confirm...',nmsg);
 						Confirm( 
 							msg.title, 
 							msg.string, 
@@ -3299,8 +3299,8 @@ function apiWrapper( event, force )
 									if( cw ) cw.postMessage( JSON.stringify( nmsg ), '*' );
 								}
 							},
-							(nmsg.confirmok ? nmsg.confirmok : false ),
-							(nmsg.confirmcancel ? nmsg.confirmcancel : false )
+							( nmsg.confirmok ? nmsg.confirmok : false ),
+							( nmsg.confirmcancel ? nmsg.confirmcancel : false )
 						);
 						msg.callback = false;
 						break;
@@ -4133,7 +4133,7 @@ if( window.addEventListener )
 		{
 			if( Friend.currentWindowHover && Friend.canActivateWindowOnBlur )
 			{
-				_ActivateWindow( Friend.currentWindowHover );
+				_ActivateWindowOnly( Friend.currentWindowHover );
 			}
 		}
 	} );
