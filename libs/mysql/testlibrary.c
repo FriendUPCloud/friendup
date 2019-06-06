@@ -92,7 +92,7 @@ int main()
 		}
 		else
 		{
-			FERROR("User not found!\n");
+			DEBUG("User not found!\n");
 			
 			UserT luser;
 			luser.name = "wwew";
@@ -112,7 +112,7 @@ int main()
 			}
 			else
 			{
-				FERROR("Cannot store data!\n");
+				DEBUG("Cannot store data!\n");
 			}
 		}
 		

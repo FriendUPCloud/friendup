@@ -296,9 +296,9 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 								
 								DEBUG("[FileUploadFileOrDirectoryRec] UPLOAD Percentage %d count %d current %d fname %s\n", per, numberFiles, (*files), fname );
 								
-								int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, per );
+								//int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, per );
 
-								sb->SendProcessMessage( request, message, size );
+								//sb->SendProcessMessage( request, message, size );
 							}
 						}
 					}

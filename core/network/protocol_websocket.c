@@ -231,7 +231,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 	{
 		return 0;
 	}
-	DEBUG("WebsocketWrite: clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
+	//rite: clwsc_InUseCounter: %d msg: %s wsiptr %p\n", wsi->wusc_Data->wsc_InUseCounter, msgptr, wsi->wusc_Data->wsc_Wsi );
 	/*
 	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 	{
@@ -779,7 +779,7 @@ void WSThreadPing( void *p )
 	
 #if USE_PTHREAD_PING == 1
 	DEBUG("[Protocol_websocket] pthread_exit\n");
-	pthread_exit( 0 );
+	//pthread_exit( 0 );
 #endif
 	return;
 }
@@ -839,6 +839,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	char *c = in;
 	if ( reason == LWS_CALLBACK_RECEIVE && len>0)
 	{
+		DEBUG("reason==receive and len>0\n");
 		// No in!
 		if( in == NULL )
 		{
@@ -852,13 +853,15 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			
 			return 0;
 		}
+		DEBUG("set end to 0\n");
 		c[len ] = '\0';
 		
 		// disabled for moment
 		//Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
-	Log( FLOG_INFO, "[WorkspaceWebsocketCall] pointer to message %p msg len %d reason %d\n", in, len, reason );
+	//Log( FLOG_INFO, "[WorkspaceWebsocketCall] pointer to message %p msg len %d reason %d\n", in, len, reason );
+	DEBUG("before switch\n");
 	
 	switch( reason )
 	{
@@ -1931,6 +1934,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		FLUSH_QUEUE();
 	}
 	*/
+	DEBUG("END of callback\n");
 	
 	DECREASE_WS_THREADS();
 	

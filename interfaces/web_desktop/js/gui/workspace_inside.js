@@ -721,13 +721,16 @@ var WorkspaceInside = {
 				//console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
 		}
-		// Handle incoming push notifications and server notifications
+		
+		// Handle incoming push notifications and server notifications ---------
 		function handleNotifications( nmsg )
 		{
 			var messageRead = trash = false;
 			
 			if( isMobile )
 			{
+				// TODO: Determine if this will ever occur. If the viewstate isn't active
+				//       we will obviously not be running this Javascript?
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
 					// Cancel push notification on the server
@@ -6525,7 +6528,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_close_window' ),
 						command: function(){ CloseWindow( window.currentMovable ); if( isMobile ) Workspace.exitMobileMenu(); },
-						disabled: !windowsOpened
+						disabled: !windowsOpened || !window.currentMovable
 					}
 				]
 			}
@@ -7135,11 +7138,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	searchRefreshMatches: function()
 	{
+		var self = this;
+		
 		if( !ge( 'WorkspaceSearchResults' ) ) return false;
 
 		if( !this.searching ) return;
 
 		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault' );
+		
+		// Lock click buttons for 250ms when scrolling
+		if( isMobile )
+		{
+			if( typeof( this.searchScrolling ) == 'undefined' )
+				this.searchScrolling = false;
+		
+			ge( 'WorkspaceSearchResults' ).onscroll = function( e )
+			{
+				if( self.searchTimeout )
+				{
+					clearTimeout( self.searchTimeout );
+					self.searchTimeout = null;
+				}
+				self.searchTimeout = setTimeout( function()
+				{
+					self.searchTimeout = null;
+					self.searchScrolling = false;
+				}, 250 );
+				self.searchScrolling = true;
+			}
+		}
 
 		for( var a = 0; a < this.searchMatches.length; a++ )
 		{
@@ -7191,15 +7218,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			o.MetaType = o.Type; // TODO: If we use metatype, look at this
 			ge( 'WorkspaceSearchResults' ).appendChild( d );
 
+			var method = isMobile ? 'ontouchend' : 'onclick';
 			var spans = d.getElementsByTagName( 'span' );
 			spans[0].folder = o;
-			spans[0].onclick = function()
+			spans[0][ method ] = function()
 			{
+				if( self.searchScrolling )
+					return;
 				OpenWindowByFileinfo( this.folder, false );
 			}
 			spans[1].file = m;
-			spans[1].onclick = function()
+			spans[1][ method ] = function()
 			{
+				if( self.searchScrolling )
+					return;
 				OpenWindowByFileinfo( this.file, false );
 			}
 		}
@@ -8489,6 +8521,7 @@ function DoorsKeyDown( e )
 						}
 						return cancelBubble( e );
 					}
+					// Aha, F2!
 					icons[a].domNode.classList.add( 'Editing' );
 					var input = document.createElement( 'textarea' );
 					input.className = 'Title';
@@ -8525,6 +8558,8 @@ function DoorsKeyDown( e )
 					}
 					input.onmousedown = function( e )
 					{
+						this.selectionEnd = 0;
+						this.selectionStart = 0;
 						return cancelBubble( e );
 					}
 					input.onmouseup = function( e )
@@ -9078,7 +9113,7 @@ if( window.friendApp )
 	}
 }
 
-// Receive push notification
+// Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return "mobile";
@@ -9087,136 +9122,149 @@ Workspace.receivePush = function( jsonMsg )
 	if( msg == false ) return "nomsg";
 	try
 	{
-		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
+		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
 		msg = JSON.parse( msg );
 	}
 	catch( e )
 	{
-		mobileDebug('OH OH. ERROR' + e, true);
+		//mobileDebug('OH OH. ERROR' + e, true);
 		// Do nothing for now...
 		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
 	if( !msg ) return "nomsg";
 		
-	mobileDebug( 'We received a message.' );
-	mobileDebug( JSON.stringify( msg ) );
-	
-	// We did a user interaction here
-	msg.clicked = true;
+	/*mobileDebug( 'We received a message.' );
+	mobileDebug( JSON.stringify( msg ) );*/
 	
 	// Clear the notifications now... (race cond?)
 	friendApp.clear_notifications();
 	
 	var messageRead = trash = false;
 	
-	if( !msg.application ) return "noapp";
-	
-	//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
-	if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
+	// Display message
+	if( !msg.clicked )
 	{
-		if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+		// Revert to push notifications on the OS side
+		Notify( { title: msg.title, text: msg.text }, null, handleClick );
+		return 'ok';
+	}
+	// "Click"
+	else
+	{
+		handleClick();
 	}
 	
-	for( var a = 0; a < Workspace.applications.length; a++ )
+	function handleClick()
 	{
-		if( Workspace.applications[a].applicationName == msg.application )
-		{	
-			// Need a "message id" to be able to update notification
-			// on the Friend Core side
-			if( msg.id )
-			{
-				// Function to set the notification as read...
-				var l = new Library( 'system.library' );
-				l.onExecuted = function(){};
-				l.execute( 'mobile/updatenotification', { 
-					notifid: msg.id, 
-					action: 1,
-					pawel: 1
-				} );
+	
+		if( !msg.application ) return "noapp";
+	
+		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
+		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
+		{
+			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
+		}
+	
+		for( var a = 0; a < Workspace.applications.length; a++ )
+		{
+			if( Workspace.applications[a].applicationName == msg.application )
+			{	
+				// Need a "message id" to be able to update notification
+				// on the Friend Core side
+				if( msg.id )
+				{
+					// Function to set the notification as read...
+					var l = new Library( 'system.library' );
+					l.onExecuted = function(){};
+					l.execute( 'mobile/updatenotification', { 
+						notifid: msg.id, 
+						action: 1,
+						pawel: 1
+					} );
+				}
+			
+				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
+			
+				var app = Workspace.applications[a];
+				app.contentWindow.postMessage( JSON.stringify( { 
+					type: 'system',
+					method: 'pushnotification',
+					callback: false,
+					data: msg
+				} ), '*' );
+				return "ok";
 			}
-			
-			mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
-			
-			var app = Workspace.applications[a];
-			app.contentWindow.postMessage( JSON.stringify( { 
+		}
+	
+		// Function to set the notification as read...
+		function notificationRead()
+		{
+			messageRead = true;
+			var l = new Library( 'system.library' );
+			l.onExecuted = function(){};
+			l.execute( 'mobile/updatenotification', { 
+				notifid: msg.id, 
+				action: 1,
+				pawel: 2
+			} );
+		}
+	
+		// Application not found? Start it!
+		// Send message to app once it has started...
+		function appMessage()
+		{
+			var app = false;
+			var apps = Workspace.applications;
+			for( var a = 0; a < apps.length; a++ )
+			{
+				// Found the application
+				if( apps[ a ].applicationName == msg.application )
+				{
+					app = apps[ a ];
+					break;
+				}
+			}
+		
+			// No application? Alert the user
+			// TODO: Localize response!
+			if( !app )
+			{
+				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				return;
+			}
+		
+			if( !app.contentWindow ) 
+			{
+				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				return;
+			}
+		
+			var amsg = {
 				type: 'system',
 				method: 'pushnotification',
-				callback: false,
+				callback: addWrapperCallback( notificationRead ),
 				data: msg
-			} ), '*' );
-			return "ok";
-		}
-	}
-	
-	// Function to set the notification as read...
-	function notificationRead()
-	{
-		messageRead = true;
-		var l = new Library( 'system.library' );
-		l.onExecuted = function(){};
-		l.execute( 'mobile/updatenotification', { 
-			notifid: msg.id, 
-			action: 1,
-			pawel: 2
-		} );
-	}
-	
-	// Application not found? Start it!
-	// Send message to app once it has started...
-	function appMessage()
-	{
-		var app = false;
-		var apps = Workspace.applications;
-		for( var a = 0; a < apps.length; a++ )
-		{
-			// Found the application
-			if( apps[ a ].applicationName == msg.application )
+			};
+		
+			mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ) );
+		
+			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+		
+			// Delete wrapper callback if it isn't executed within 1 second
+			setTimeout( function()
 			{
-				app = apps[ a ];
-				break;
-			}
+				if( !messageRead )
+				{
+					getWrapperCallback( amsg.callback );
+				}
+			}, 1000 );
 		}
-		
-		// No application? Alert the user
-		// TODO: Localize response!
-		if( !app )
-		{
-			Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-			return;
-		}
-		
-		if( !app.contentWindow ) 
-		{
-			Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
-			return;
-		}
-		
-		var amsg = {
-			type: 'system',
-			method: 'pushnotification',
-			callback: addWrapperCallback( notificationRead ),
-			data: msg
-		};
-		
-		mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ) );
-		
-		app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-		
-		// Delete wrapper callback if it isn't executed within 1 second
-		setTimeout( function()
-		{
-			if( !messageRead )
-			{
-				getWrapperCallback( amsg.callback );
-			}
-		}, 1000 );
+	
+		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
+		ExecuteApplication( msg.application, '', appMessage );
 	}
-	
-	mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
-	
-	ExecuteApplication( msg.application, '', appMessage );
 
-	return "ok";
+	return 'ok';
 }
 
 // TODO: Remove me after test

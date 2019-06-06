@@ -356,6 +356,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 	}
 
+
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
 	var pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
@@ -4960,10 +4961,10 @@ var View = function( args )
 
 			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
 			{
-				constraints = {
-					video: true,
-					audio: false
-				}
+				//var iosbutton = document.createElement( 'div' );
+				//iosbutton.className = 'IconButton IconSmall fa-refresh';
+				//iosbutton.onclick = function() { console.log('switch camera...'); setCameraMode() };
+				//self.content.container.appendChild( iosbutton );
 			}
 			//clean up old one...
 			

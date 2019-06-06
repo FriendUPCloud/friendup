@@ -94,7 +94,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	
 	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
-	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
+	INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
 	
@@ -157,6 +157,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				add = 11;
 			}
 			
+			DEBUG("Sessptr !NULL\n");
+			
 			if( sessptr != NULL )
 			{
 				//  |  till sessionid  |  sessionid  |  after sessionid
@@ -174,6 +176,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				}
 				//add += 40; // len of sessionid
 
+				DEBUG("before while\n");
 				while( *src != 0 )
 				{
 					if( *src == '&' )
@@ -183,6 +186,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					src++;
 					add++;
 				}
+				DEBUG("After while\n");
 				
 				int restSize = fullsize - ( src-allArgs );
 				if( restSize > 0 )
@@ -201,6 +205,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			strcpy( allArgsNew, allArgs );
 		}
+		DEBUG("REquest source: %d\n", request->h_RequestSource );
 		
 		// get values from POST 
 		
@@ -218,6 +223,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				quotationFound = TRUE;
 			}
 			
+			DEBUG("Before for\n");
 			for( ; i < hm->table_size; i++ )
 			{
 				if( hm->data[ i ].inUse == TRUE && hm->data[ i ].key != NULL && hm->data[ i ].data != NULL )
@@ -248,6 +254,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					}
 				}
 			}
+			DEBUG("After for\n");
 			
 			/*
 			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
@@ -271,9 +278,11 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		FFree( allArgs );
 	}
 	//fclose( log );
+	DEBUG("Before fullsize>3096\n");
 	
 	if( fullsize > 3096 )
 	{
+		int tr = 100;
 		*returnedAsFile = TRUE;
 		// if message is too big, allocate memory for filename
 		char *tmpFileName = FMalloc( 1024 );
@@ -287,10 +296,12 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			// if file doesnt exist we can create new one
 			if( ( f = fopen( tmpFileName, "rb" ) ) == NULL )
 			{
+				//DEBUG("File not found\n");
 				// new file created, we can store all parameters there
 				fp = fopen( tmpFileName, "wb" );
 				if( fp != NULL )
 				{
+					//DEBUG("File created\n");
 					fwrite( allArgsNew, 1, strlen( allArgsNew ), fp );
 					fclose( fp );
 					FFree( allArgsNew );
@@ -302,6 +313,10 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 						snprintf( allArgsNew, len2, MODULE_FILE_CALL_STRING, tmpFileName );
 					}
 					break;
+				}
+				else
+				{
+					DEBUG("Cannot create file: %s\n", tmpFileName );
 				}
 				
 				tr--;
@@ -333,6 +348,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	{
 		*returnedAsFile = FALSE;
 	}
+	DEBUG("End all args new\n");
 	
 	return allArgsNew;
 }

@@ -3261,7 +3261,7 @@ function apiWrapper( event, force )
 						break;
 					case 'getlocale':
 						var nmsg = {};
-						for( var a in msg ) nmsg[a] = msg[a];
+						for( var a in msg ) nmsg[ a ] = msg[ a ];
 						nmsg.locale = Workspace.locale;
 						var cw = GetContentWindowByAppMessage( app, msg );
 						if( cw )
@@ -3275,8 +3275,8 @@ function apiWrapper( event, force )
 						break;
 					case 'confirm':
 						var nmsg = {};
-						for( var a in msg ) nmsg[a] = msg[a];
-						console.log('we confirm...',nmsg);
+						for( var a in msg ) nmsg[ a ] = msg[ a ];
+						//console.log('we confirm...',nmsg);
 						Confirm( 
 							msg.title, 
 							msg.string, 
@@ -3299,8 +3299,8 @@ function apiWrapper( event, force )
 									if( cw ) cw.postMessage( JSON.stringify( nmsg ), '*' );
 								}
 							},
-							(nmsg.confirmok ? nmsg.confirmok : false ),
-							(nmsg.confirmcancel ? nmsg.confirmcancel : false )
+							( nmsg.confirmok ? nmsg.confirmok : false ),
+							( nmsg.confirmcancel ? nmsg.confirmcancel : false )
 						);
 						msg.callback = false;
 						break;
@@ -3796,6 +3796,37 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );	
 						};
 						break;
+					case 'preparecamera':
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						
+						var nmsg = { 'command':'callback','done':true, 'data':{} };
+
+						// on mobile devices, we use a file input with specific attributes for camera access
+						if( isMobile )
+						{
+							nmsg.data.preparecameraresult = 'UPDATE';
+							nmsg.data.inputmarkup = '<input id="cameraimageFI" type="file" accept="image/*" capture />';
+							nmsg.data.inputid = 'cameraimageFI'
+							nmsg.data.inputcontainer = 'div';
+							nmsg.data.inputcontainerclass = 'FileUploadWrapper';
+						}
+						else
+						{
+							//nothing to do here really - just tell the sender that all is set...
+							nmsg.data.preparecameraresult = 'NOOP';
+						}
+
+						console.log('preparecamera',nmsg);
+
+						//send our response back						
+						nmsg.callback = msg.callback;
+						if( tar )
+							tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+						else if( app && app.contentWindow )
+							app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );	
+						
+						break; // end of 'preparecamera'
 				}
 				break;
 		}
@@ -4133,7 +4164,7 @@ if( window.addEventListener )
 		{
 			if( Friend.currentWindowHover && Friend.canActivateWindowOnBlur )
 			{
-				_ActivateWindow( Friend.currentWindowHover );
+				_ActivateWindowOnly( Friend.currentWindowHover );
 			}
 		}
 	} );

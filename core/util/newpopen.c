@@ -13,6 +13,17 @@
 #include <unistd.h>
 #include "newpopen.h"
 #include <core/types.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <signal.h>
+
+static void handle_sigchld( int sig )
+{
+	int saved_errno = errno;
+	DEBUG("PHP SIGCHLD handled!\n");
+	while( waitpid( (pid_t)(-1), 0, WNOHANG) > 0 ){ }
+	errno = saved_errno;
+}
 
 /**
  * Create pipe stream
@@ -75,6 +86,15 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		dup2( err[1], 2 );
 
 		// do same thing as popen
+		
+		struct sigaction sa;
+		sa.sa_handler = &handle_sigchld;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+		if( sigaction(SIGCHLD, &sa, 0) == -1 )
+		{
+			perror(0);
+		}
 		
 		execl("/bin/sh", "sh", "-c", cmd, NULL);
 		//exit( EXIT_FAILURE );

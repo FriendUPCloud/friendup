@@ -1840,6 +1840,10 @@ void *InternalPINGThread( void *d )
  */
 void CommServicePING( CommService* s )
 {
+	if( s == NULL )
+	{
+		return;
+	}
 	SystemBase *lsb = (SystemBase *)s->s_SB;
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm; //s->s_FCM;
 	

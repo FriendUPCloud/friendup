@@ -407,6 +407,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 		{
 			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
 		}
+		
 		return 0;
 }
 

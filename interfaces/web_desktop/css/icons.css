@@ -519,6 +519,20 @@ html .Launcher .File div *
 	background-size: contain;
 }
 
+.File .Icon > .Shared:after
+{
+	display: block;
+	font-family: fontawesome;
+	content: '\f064';
+	position: absolute;
+	right: 0;
+	top: 0;
+	background: rgba(255,255,255,0.8);
+	border-radius: 2px;
+	padding: 2px 4px;
+	color: black;
+}
+
 .File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
 .File .Icon .TypeGIF
 {

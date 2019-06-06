@@ -119,13 +119,14 @@ static inline ListString *RunPHPScript( const char *command )
 		}
 		else
 		{
-			char clo[2];
-			clo[0] = '\'';
-			clo[1] = EOF;
-			write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
 			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
 			if( errCounter > 3 )
 			{
+				//char clo[2];
+				//clo[0] = '\'';
+				//clo[1] = EOF;
+				//write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
 				FERROR("Error in popen, Quit! Command: %s\n", command );
 				break;
 			}
@@ -728,6 +729,13 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								//}
 								//else
 								{
+									ListString *ls = RunPHPScript( command );
+									if( ls != NULL )
+									{
+										//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
+										res = ls->ls_Size;
+									}
+									/*
 									FILE *pipe = popen( command, "r" );
 									ListString *ls = NULL;
 									
@@ -760,6 +768,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										ListStringJoin( ls );
 									}
+									*/
 									
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
@@ -789,6 +798,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										ls->ls_Data = NULL;
 										ListStringDelete( ls );
 									}
+									DEBUG("Response delivered\n");
 									
 									FFree( command );
 								}
@@ -941,7 +951,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									if( cacheState == CACHE_FILE_CAN_BE_USED )
 									{
 										int resp = 0;
-										int dataread;
+										int dataread = 0;
 
 										cf->cf_Fp = fopen( cf->cf_StorePath, "rb" );
 										if( cf->cf_Fp != NULL )

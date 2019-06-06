@@ -105,7 +105,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 	{
 		int s = (int)len;
 		// copy received bufffer
-		buf = FMalloc( s+16 );
+		buf = FMalloc( s+64 );
 		memcpy( buf, in, s );
 		buf[ s ] = 0;
 	}
@@ -281,7 +281,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 	//	}
 	//}
 	
-	json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
+	//json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
 	
 	if( t[0].type == JSMN_OBJECT ) 
 	{
@@ -294,6 +294,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				int p;
 				char *authKey = NULL;
 				char *authName = NULL;
+				static int LOCAL_REPLY_LEN = 512 + LWS_PRE;
+				char reply[ LOCAL_REPLY_LEN ];
 				// first check if service is already authenticated maybe?
 				
 				for( p = 5; p < 9 ; p++ )
@@ -335,8 +337,9 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				d->d_Authenticated = TRUE;
 				d->d_ServerName = StringDuplicate( authName );
 				
-				char reply[ 256 ];
-				int msize = snprintf( reply + LWS_PRE, sizeof(reply), "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
+				int msize = strlen("{\"type\":\"authenticate\",\"data\":{\"status\":0 }}");
+				//int msize = snprintf( reply + LWS_PRE, LOCAL_REPLY_LEN, "{\"type\":\"authenticate\",\"data\":{\"status\":0 }}" );
+				strcpy( reply + LWS_PRE, "{\"type\":\"authenticate\",\"data\":{\"status\":0 }}" );
 				
 #ifdef WEBSOCKET_SEND_QUEUE
 				WriteMessageSink( d, (unsigned char *)(reply)+LWS_PRE, msize );
@@ -365,14 +368,21 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				int dlen =  t[3].end - t[3].start;
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
-					char reply[ 128 ];
-					int locmsglen = snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
+					static int bufferSize = LWS_PRE+256;
+					char *reply = FMalloc( bufferSize );
+					//char reply[ 128 ];
+					DEBUG("size: %d\n", t[4].end-t[4].start );
+					DEBUG("Data: %s\n", (char *)(data + t[4].start));
+					//DEBUG("received message: %s {\"type\":\"pong\",\"data\":\"%.*s\"}", (int)(t[4].end-t[4].start), (char *)(data + t[4].start) );
+					//int locmsglen = snprintf( reply + LWS_PRE, bufferSize ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
+					int locmsglen = sprintf( reply + LWS_PRE ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
 #ifdef WEBSOCKET_SEND_QUEUE
 					WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, locmsglen );
 #else
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
 					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );				
 #endif
+					FFree( reply );
 				}
 				else if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{

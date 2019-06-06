@@ -2241,6 +2241,7 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 
 void HttpWrite( Http* http, Socket *sock )
 {
+	FLONG ret = 0;
 	if( http == NULL )
 	{
 		return;
@@ -2260,7 +2261,7 @@ void HttpWrite( Http* http, Socket *sock )
 			{ ID_RESP, (FULONG)0, (FULONG)0 }
 		};
 		
-		SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
+		ret = SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
 	}
 	else
 	{
@@ -2268,13 +2269,17 @@ void HttpWrite( Http* http, Socket *sock )
 		
 		if( http->h_WriteOnlyContent == TRUE )
 		{
-			SocketWrite( sock, http->content, http->sizeOfContent );
+			DEBUG("only content\n");
+			ret = SocketWrite( sock, http->content, http->sizeOfContent );
 		}
 		else
 		{
-			SocketWrite( sock, http->response, http->responseLength );
+			DEBUG("response\n");
+			ret = SocketWrite( sock, http->response, http->responseLength );
 		}
 	}
+
+	DEBUG("HttpWrite, wrote: %ld\n", ret );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
