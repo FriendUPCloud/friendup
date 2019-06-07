@@ -1191,6 +1191,11 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			// and send message to them
 			if( *curToken == 0 || *curToken == ',' )
 			{
+				if( *curToken == ',' )
+				{
+					curToken++;
+				}
+				
 				FBOOL quit = FALSE;
 				if( *curToken != 0 )
 				{
