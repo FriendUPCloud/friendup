@@ -1191,11 +1191,6 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 			// and send message to them
 			if( *curToken == 0 || *curToken == ',' )
 			{
-				if( *curToken == ',' )
-				{
-					curToken++;
-				}
-				
 				FBOOL quit = FALSE;
 				if( *curToken != 0 )
 				{
@@ -1236,6 +1231,11 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 								{
 									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
 									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+								}
+								
+								if( *startToken == ',' )
+								{
+									startToken++;
 								}
 			
 								char *tok = TokenToBinary( startToken );
