@@ -2603,12 +2603,16 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 				{
 					while( wsc != NULL )
 					{
-						if( wsc->wusc_Data != NULL )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+						//if(  )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 						{
 							//WSCData *data = (WSCData *)wsc->wusc_Data;
-							if( wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+							if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 							{
 								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+							}
+							else
+							{
+								DEBUG("Websocket is disabled, dataptr: %p\n", wsc->wusc_Data );
 							}
 						}
 						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;

@@ -227,6 +227,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
  */
 int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen, int type )
 {
+	int retval = 0;
 	if( wsi->wusc_Data == NULL || wsi->wusc_Data->wsc_Wsi == NULL )
 	{
 		return 0;
@@ -288,6 +289,8 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 							queueMsgPtr += END_CHAR_SIGNS;
 							queueMsgLen += END_CHAR_SIGNS;
 							*queueMsgPtr = 0;	//end message with NULL
+							
+							retval += msglen;
 					
 							msgToSend += copysize;
 							msglen -= MAX_SIZE_WS_MESSAGE;
@@ -341,6 +344,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 						en->fq_Size = msglen;
 			
 						FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
+						retval += msglen;
 					}
 				}
 			
@@ -359,7 +363,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 		}
 	}
 
-	return 0;
+	return retval;
 }
 
 /**
