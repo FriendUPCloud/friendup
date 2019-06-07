@@ -529,7 +529,7 @@ function Notify( message, callback, clickcallback )
 		}
 	}
 	
-	if( !message.text ) message.text = 'untexted';
+	if( !message.text ) message.text = message.body ? message.body : '';
 	if( !message.title ) message.title = 'untitled'; 
 	
 	// The notification event
