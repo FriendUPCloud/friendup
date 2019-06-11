@@ -325,12 +325,15 @@ CalendarEvent.prototype.init = function()
 	{
 		var remove = document.createElement( 'div' );
 		remove.className = 'IconSmall FloatRight MousePointer fa-remove';
-		remove.onclick = function() { Workspace.removeCalendarEvent( self.data.ID ); }
+		remove.onclick = function(){ 
+			console.log( 'Whot?' );
+			Workspace.removeCalendarEvent( self.data.ID ); 
+		}
 		self.element.appendChild( remove );
 		
 		var edit = document.createElement( 'div' );
 		edit.className = 'IconSmall FloatRight MousePointer fa-edit MarginRight';
-		remove.onclick = function(){
+		edit.onclick = function(){
 			Workspace.editCalendarEvent( self.data.ID );
 		}
 		self.element.appendChild( edit );
