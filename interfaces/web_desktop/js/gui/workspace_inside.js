@@ -1081,7 +1081,7 @@ var WorkspaceInside = {
 						calendar.eventWin = new View( {
 							title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
 							width: 500,
-							height: 405
+							height: 445
 						} );
 					
 						calendar.eventWin.onClose = function()
@@ -1331,7 +1331,7 @@ var WorkspaceInside = {
 				calendar.editWin = new View( {
 					title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
 					width: 500,
-					height: 405
+					height: 445
 				} );
 	
 				calendar.editWin.onClose = function()

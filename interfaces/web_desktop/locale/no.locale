@@ -530,6 +530,7 @@ i18n_cal_evt_time_from                  : Tid fra
 i18n_cal_evt_addday                     : Hele dagen
 i18n_cal_evt_description                : Beskriv hendelsen
 i18n_cal_btn_add                        : Lagre hendelse
+i18n_cal_btn_edit                       : Lagre hendelse
 i18n_from                               : Fra
 i18n_to                                 : Til
 

@@ -550,6 +550,7 @@ i18n_cal_evt_time_from                  : Time from
 i18n_cal_evt_addday                     : All day
 i18n_cal_evt_description                : Describe your event
 i18n_cal_btn_add                        : Save event
+i18n_cal_btn_edit                       : Save event
 i18n_from                               : From
 i18n_to                                 : To
 
