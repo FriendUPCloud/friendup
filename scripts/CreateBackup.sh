@@ -146,6 +146,44 @@ else
 fi
 
 #
+# Read additional properties from backup.cfg
+#
+
+input="backup.cfg"
+option=0
+
+if [ -f "$input" ]
+then
+	cat "${input}" | while IFS=, read f1 f2 f3 f4 f5
+	do
+		if [ "$f1" = "databases" ]
+		then
+			echo "Databases found!"
+			option=1
+		elif [ "$f1" = "directories" ]; then
+			echo "Directories found!"
+			option=2
+		else
+    
+		firstchar=${f1:0:1}
+		if [ $firstchar = '#' ]; then
+			echo "Line skipped"
+		else
+		    if [ $option = 1 ]; then
+					#database name, login, password, dbname
+					mysqldump -u $f2 -p$f3 --databases $f4 > ${current_backup_dir}/db/${f1}.sql
+				elif [ $option = 2 ]
+				then
+					#directories name, path
+					SSHPASS=${password} sshpass -e ssh $port_small $user@$server "mkdir -p $storepath$backup_file_name/$f1"
+					SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" $f2/* $user@$server:$storepath$backup_file_name/$f1/ >> ${log_file} 2>&1
+				fi
+			fi
+		fi
+	done
+fi
+
+#
 # Copy generated files
 #
 
@@ -153,9 +191,10 @@ echo "$(date +%Y-%m-%d-%T): Copy generated files" >> ${log_file}
 cfg_section_Backup
 git branch > ${current_backup_dir}/git_info
 git rev-parse HEAD >> ${current_backup_dir}/git_info
-SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/frienddb_backup.sql $user@$server:$storepath$backup_file_name/frienddb_backup.sql >> ${log_file} 2>&1
-SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/friendchatdb_backup.sql $user@$server:$storepath$backup_file_name/friendchatdb_backup.sql >> ${log_file} 2>&1
-SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/presencedb_backup.sql $user@$server:$storepath$backup_file_name/presencedb_backup.sql >> ${log_file} 2>&1
+SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/*.sql $user@$server:$storepath$backup_file_name/ >> ${log_file} 2>&1
+#SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/frienddb_backup.sql $user@$server:$storepath$backup_file_name/frienddb_backup.sql >> ${log_file} 2>&1
+#SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/friendchatdb_backup.sql $user@$server:$storepath$backup_file_name/friendchatdb_backup.sql >> ${log_file} 2>&1
+#SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/presencedb_backup.sql $user@$server:$storepath$backup_file_name/presencedb_backup.sql >> ${log_file} 2>&1
 SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/git_info $user@$server:$storepath$backup_file_name/git_info >> ${log_file} 2>&1
 
 #
@@ -214,5 +253,7 @@ fi
 
 echo "$(date +%Y-%m-%d-%T): Backup complete" >> ${log_file}
 SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${log_file} $user@$server:$storepath$backup_file_name/log
+
+
 
 
