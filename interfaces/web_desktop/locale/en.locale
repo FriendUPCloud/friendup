@@ -547,6 +547,7 @@ i18n_cal_evt_title                      : Event title
 i18n_cal_evt_title_what                 : Your event title
 i18n_cal_evt_time_to                    : Time to
 i18n_cal_evt_time_from                  : Time from
+i18n_cal_evt_addday                     : All day
 i18n_cal_evt_description                : Describe your event
 i18n_cal_btn_add                        : Save event
 i18n_from                               : From
