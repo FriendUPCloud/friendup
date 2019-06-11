@@ -1927,6 +1927,9 @@ if( isset( $args->command ) )
 		case 'getcalendarevent':
 			require( 'modules/system/include/getcalendarevent.php' );
 			break;
+		case 'savecalendarevent':
+			require( 'modules/system/include/savecalendarevent.php' );
+			break;
 		case 'addcalendarevent':
 			require( 'modules/system/include/addcalendarevent.php' );
 			break;

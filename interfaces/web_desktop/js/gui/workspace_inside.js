@@ -1328,8 +1328,6 @@ var WorkspaceInside = {
 				
 				var date = row.Date;
 				
-				console.log( 'Edit: ', row );
-	
 				calendar.editWin = new View( {
 					title: i18n( 'i18n_event_overview' ) + ' ' + date,
 					width: 500,
@@ -1349,7 +1347,8 @@ var WorkspaceInside = {
 					timedisabled: row.TimeFrom == '00:00' && time.TimeTo == '00:00' ? ' disabled="disabled"' : '',
 					title:        row.Title,
 					type:         row.Type,
-					description:  row.Description
+					description:  row.Description,
+					id:           id
 				};
 				f1.i18n();
 				f1.onLoad = function( data1 )
@@ -1360,6 +1359,45 @@ var WorkspaceInside = {
 			}
 		}
 		m.execute( 'getcalendarevent', { cid: id } );
+	},
+	saveCalendarEvent: function( id )
+	{
+		if( !Workspace.calendar.editWin ) return;
+		var w = Workspace.calendar.editWin;
+		var fields = {};
+		var inps = w.content.getElementsByTagName( 'input' );
+		for( var a = 0; a < inps.length; a++ )
+			fields[ inps[ a ].id ] = inps[ a ].value;
+		var txts = w.content.getElementsByTagName( 'textarea' );
+		for( var a = 0; a < txts.length; a++ )
+			fields[ txts[ a ].id ] = txts[ a ].value;
+		var sels = w.content.getElementsByTagName( 'select' );
+		for( var a = 0; a < txts.length; a++ )
+			fields[ sels[ a ].id ] = sels[ a ].value;
+		
+		var evt = {
+			Title: fields.calTitle,
+			TimeFrom: fields.calTimeFrom,
+			TimeTo: fields.calTimeTo,
+			Description: fields.calDescription,
+			Date: fields.calDateField
+		};
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				// Refresh
+				if( Workspace.calendar ) Workspace.calendar.render();
+				if( Workspace.calendar.editWin )
+				{
+					Workspace.calendar.editWin.close();
+				}
+				return;
+			}
+		}
+		m.execute( 'savecalendarevent', { cid: id, event: evt } );
 	},
 	loadSystemInfo: function()
 	{
