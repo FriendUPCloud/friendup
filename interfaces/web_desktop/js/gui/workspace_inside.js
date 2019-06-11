@@ -1324,12 +1324,14 @@ var WorkspaceInside = {
 		{
 			if( e == 'ok' )
 			{
-				var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
-				var dateForm = date.split( '-' );
-				dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
+				var row = JSON.parse( d );
+				
+				var date = row.Date;
+				
+				console.log( 'Edit: ', row );
 	
 				calendar.editWin = new View( {
-					title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+					title: i18n( 'i18n_event_overview' ) + ' ' + date,
 					width: 500,
 					height: 445
 				} );
@@ -1340,17 +1342,21 @@ var WorkspaceInside = {
 				}
 
 				var f1 = new File( 'System:templates/calendar_event_edit.html' );
-				f1.replacements = { date: dateForm };
+				f1.replacements = { 
+					date:         date,
+					timefrom:     row.TimeFrom,
+					timeto:       row.TimeTo,
+					timedisabled: row.TimeFrom == '00:00' && time.TimeTo == '00:00' ? ' disabled="disabled"' : '',
+					title:        row.Title,
+					type:         row.Type,
+					description:  row.Description
+				};
 				f1.i18n();
 				f1.onLoad = function( data1 )
 				{
 					calendar.editWin.setContent( data1 );
 				}
 				f1.load();
-
-				// Just close the widget
-				if( !window.isMobile && m && wid )
-					wid.hide();
 			}
 		}
 		m.execute( 'getcalendarevent', { cid: id } );

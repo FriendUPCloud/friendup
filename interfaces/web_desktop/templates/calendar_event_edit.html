@@ -4,7 +4,7 @@
 			<p class="InputHeight"><strong>{i18n_cal_evt_title}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
-			<input class="FullWidth InputHeight" value="" placeholder="{i18n_cal_evt_title_what}..." id="calTitle"/>
+			<input class="FullWidth InputHeight" value="{title}" placeholder="{i18n_cal_evt_title_what}..." id="calTitle"/>
 		</div>
 	</div>
 	<div class="HRow MarginBottom">
@@ -12,7 +12,7 @@
 			<p class="InputHeight"><strong>{i18n_cal_evt_time_from}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
-			<input type="time" class="InputHeight" size="5" placeholder="08:00" value="08:00" id="calTimeFrom"/>
+			<input type="time" class="InputHeight" size="5" placeholder="08:00" value="{timefrom}" id="calTimeFrom"{timedisabled}/>
 		</div>
 	</div>
 	<div class="HRow MarginBottom">
@@ -20,7 +20,7 @@
 			<p class="InputHeight"><strong>{i18n_cal_evt_time_to}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
-			<input type="time" class="InputHeight" size="5" placeholder="16:00" value="16:00" id="calTimeTo"/>
+			<input type="time" class="InputHeight" size="5" placeholder="16:00" value="{timeto}" id="calTimeTo"{timedisabled}/>
 		</div>
 	</div>
 	<div class="HRow MarginBottom">
@@ -28,7 +28,7 @@
 			<p class="InputHeight"><strong>{i18n_cal_evt_addday}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
-			<input type="checkbox" id="calTimeAllDay"/>
+			<input type="checkbox" id="calTimeAllDay"{wholeday}/>
 		</div>
 	</div>
 	<div class="HRow MarginBottom">
@@ -48,7 +48,7 @@
 	</div>
 	<div class="HRow">
 		<div class="HContent100 FloatLeft">
-			<textarea class="FullWidth" style="height: 160px" id="calDescription"></textarea>
+			<textarea class="FullWidth" style="height: 160px" id="calDescription">{description}</textarea>
 		</div>
 	</div>
 	<div class="HRow">
