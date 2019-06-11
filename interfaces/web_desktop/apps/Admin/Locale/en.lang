@@ -109,3 +109,11 @@ i18n_user_updated_succ                 : The user was successfully updated.
 i18n_user_update_fail                  : User update failed
 i18n_user_update_failed                : Failed to update the user.
 
+#Workgroup related
+
+i18n_workgroups                        : Workgroups
+i18n_workgroup_profile                 : Workgroup profile
+i18n_workgroup_name                    : Name
+i18n_workgroup_description             : Description
+
+

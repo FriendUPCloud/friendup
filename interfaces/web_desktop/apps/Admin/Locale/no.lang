@@ -108,4 +108,10 @@ i18n_user_updated_succ                 : Brukeren ble oppdatert i databasen.
 i18n_user_update_fail                  : Feil ved oppdatering
 i18n_user_update_failed                : Kunne ikke oppdatere brukeren.
 
+#Workgroup related
+
+i18n_workgroups                        : Arbeidsgrupper
+i18n_workgroup_profile                 : Arbeidsgruppe
+i18n_workgroup_name                    : Navn
+i18n_workgroup_description             : Beskrivelse
 
