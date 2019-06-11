@@ -1081,7 +1081,7 @@ var WorkspaceInside = {
 						calendar.eventWin = new View( {
 							title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
 							width: 500,
-							height: 405
+							height: 445
 						} );
 					
 						calendar.eventWin.onClose = function()
@@ -1311,6 +1311,49 @@ var WorkspaceInside = {
 			Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
 		}
 		m.execute( 'addcalendarevent', { event: evt } );
+	},
+	// Edit a calendar event
+	editCalendarEvent: function( id )
+	{
+		var calendar = Workspace.calendar;
+		
+		if( calendar.editWin ) return;
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
+				var dateForm = date.split( '-' );
+				dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
+	
+				calendar.editWin = new View( {
+					title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+					width: 500,
+					height: 445
+				} );
+	
+				calendar.editWin.onClose = function()
+				{
+					calendar.editWin = false;
+				}
+
+				var f1 = new File( 'System:templates/calendar_event_edit.html' );
+				f1.replacements = { date: dateForm };
+				f1.i18n();
+				f1.onLoad = function( data1 )
+				{
+					calendar.editWin.setContent( data1 );
+				}
+				f1.load();
+
+				// Just close the widget
+				if( !window.isMobile && m && wid )
+					wid.hide();
+			}
+		}
+		m.execute( 'getcalendarevent', { cid: id } );
 	},
 	loadSystemInfo: function()
 	{

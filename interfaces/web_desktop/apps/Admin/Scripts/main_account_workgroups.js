@@ -424,7 +424,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			
 			var h2 = document.createElement( 'h2' );
-			h2.innerHTML = '{i18n_workgroups}';
+			h2.innerHTML = i18n( 'i18n_workgroups' );
 			o.appendChild( h2 );
 			
 			// List headers
