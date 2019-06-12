@@ -64,8 +64,8 @@ cleanfiles:
 	rm -fr $(FRIEND_PATH)/resources/repository/
 	rm -fr $(FRIEND_PATH)/services/
 
-cleanws:
-	@echo "Cleaning Websocket lib"
+cleanlibs:
+	@echo "Cleaning external libraries"
 	make -C libs-ext clean
 
 clean:
