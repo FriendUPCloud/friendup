@@ -516,12 +516,13 @@ Application.checkDocumentSession = function( sasID = null )
 				if( as->as_Type == SAS_TYPE_OPEN )
 				{
 					int err = 0;
-					err = AppSessionRemUsersession( as, loggedSession );
+					//err = AppSessionRemUsersession( as, loggedSession );
+					err = AppSessionRemUsersessionAny( as, loggedSession );
 					
 					// if user was removed and he was last then we remove SAS
 					if( err == 0 && as->as_UserNumber <= 0 )
 					{
-						err = AppSessionRemUsersessionAny( as, loggedSession );
+						err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
 					}
 					
 					if( err == 0 )

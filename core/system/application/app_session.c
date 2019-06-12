@@ -291,6 +291,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		DEBUG("[AppSession] Session before loop\n");
 		while( ali != NULL )
 		{
+			//DEBUG("PARAM US: %p LIST US: %p\n");
 			if( u ==  ali->usersession )
 			{
 				if( ali == as->as_UserSessionList )
