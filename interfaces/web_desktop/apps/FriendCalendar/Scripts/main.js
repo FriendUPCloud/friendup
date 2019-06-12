@@ -61,6 +61,10 @@ var Calendar = {
 		
 		for( var w = -1; w < 6 && up; w++ )
 		{
+			// We're up
+			if( month != ( new Date( year, month, day ).getMonth() ) )
+				break;
+			
 			// Start header
 			if( w == -1 )
 				ml += '<div class="CalendarHeaderRow">';
