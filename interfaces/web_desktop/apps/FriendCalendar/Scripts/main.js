@@ -57,9 +57,23 @@ var Calendar = {
 		];
 		
 		var up = true;
+		var calStart = false;
 		
 		for( var w = -1; w < 6 && up; w++ )
 		{
+			// We're up
+			if( month != ( new Date( year, month, day ).getMonth() ) )
+				break;
+			
+			// Start header
+			if( w == -1 )
+				ml += '<div class="CalendarHeaderRow">';
+			else if( !calStart && w == 0 )
+			{
+				ml += '<div class="CalendarDates">';
+				calStart = true;
+			}
+			
 			ml += '<div class="CalendarRow HRow">';
 			
 			var dl = [ 1, 2, 3, 4, 5, 6, 0 ];
@@ -98,7 +112,7 @@ var Calendar = {
 							{
 								if( duplicates[p] == this.events[key][z].Name )
 								{
-									console.log( 'Found duplicate "' + duplicates[p] + '"..' );
+									//console.log( 'Found duplicate "' + duplicates[p] + '"..' );
 									found = true;
 									break;
 								}
@@ -117,14 +131,44 @@ var Calendar = {
 				}
 			}
 			ml += '</div>';
+			
+			// End header
+			if( w == -1 )
+				ml += '</div>';
 		}
+		
+		// End calendar dates
+		if( calStart )
+			ml += '</div>';
+		
 		ge( 'MainView' ).innerHTML = ml;
 		
 		ge( 'MonthName' ).innerHTML = monthNames[ month ] + ' ' + year;
+		
+		this.refresh();
+	},
+	renderWeek: function()
+	{
+	},
+	renderDay: function()
+	{
 	},
 	populate: function( data )
 	{
 		
+	},
+	refresh: function()
+	{
+		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		var ch = ge( 'MainView' ).querySelector( '.CalendarHeaderRow' );
+		if( cd && ch )
+		{
+			var scWi = cd.offsetWidth - cd.clientWidth;
+			if( scWi > 0 )
+			{
+				ch.style.width = cd.clientWidth + 'px';
+			}
+		}
 	}
 };
 
@@ -178,6 +222,11 @@ Application.run = function( msg, iface )
 	Calendar.date = new Date();
 	Calendar.render();
 }
+
+window.addEventListener( 'resize', function()
+{
+	Calendar.refresh();
+} );
 
 Application.receiveMessage = function( msg )
 {
