@@ -3462,8 +3462,15 @@ movableMouseDown = function ( e )
 		}
 		else if( clickonDesktop )
 		{
-			// Clicking from an active view to screen
-			DefaultToWorkspaceScreen( tar );
+			if( window.currentMovable && tar.classList && tar.classList.contains( 'ScreenOverlay' ) )
+			{
+				_ActivateWindow( currentMovable );
+			}
+			else
+			{
+				// Clicking from an active view to screen
+				DefaultToWorkspaceScreen( tar );
+			}
 		}
 		else 
 		{
