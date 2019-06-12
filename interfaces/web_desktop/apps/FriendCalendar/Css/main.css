@@ -29,6 +29,16 @@
 	z-index: 99;
 }
 
+#LeftCol
+{
+	width: 250px;
+}
+
+#RightCol
+{
+	width: calc(100% - 250px);
+}
+
 #GoPrevious
 {
 	left: 20px;
@@ -89,7 +99,12 @@
 
 .Week .Day
 {
-	width: 12.5%;
+	width: 8%;
+}
+
+.Week .Day + .Day
+{
+	width: 13.142%;
 }
 
 .Day.Column
