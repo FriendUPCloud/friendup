@@ -3464,6 +3464,8 @@ movableMouseDown = function ( e )
 		{
 			if( window.currentMovable && tar.classList && tar.classList.contains( 'ScreenOverlay' ) )
 			{
+				// Check if we clicked active window
+				// TODO: Cycle through all windows and check if we clicked on any, including widgets
 				var wl = GetElementLeft( currentMovable );
 				var wt = GetElementTop( currentMovable );
 				if( 
