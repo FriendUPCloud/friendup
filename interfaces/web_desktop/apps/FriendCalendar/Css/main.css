@@ -87,6 +87,11 @@
 	position: relative;
 }
 
+.Day.Column
+{
+	height: auto;
+}
+
 .Day > .Number
 {
 	position: absolute;
@@ -149,6 +154,19 @@
 {
 	background: #006350;
 	border-bottom: 1px solid #303030;
+}
+
+.Day > .TimeSlot:nth-child(odd)
+{
+	display: block;
+	background-color: rgba(0,0,0,0.2);
+	padding: 4px;
+}
+.Day > .TimeSlot:nth-child(even)
+{
+	display: block;
+	background-color: rgba(0,0,0,0.4);
+	padding: 4px;
 }
 
 .Events

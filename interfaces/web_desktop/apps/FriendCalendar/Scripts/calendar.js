@@ -94,8 +94,13 @@ Application.receiveMessage = function( msg )
 			Application.quit();
 			break;
 		case 'view_month':
+			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'month' } );
+			break;
 		case 'view_week':
+			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'week' } );
+			break;
 		case 'view_day':
+			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'day' } );
 			break;
 		case 'sources':
 			// TODO: activate window

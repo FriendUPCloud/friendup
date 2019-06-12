@@ -15,9 +15,14 @@ var Calendar = {
 	listMode: 'month',
 	render: function()
 	{
-		if( this.listMode == 'month' )
+		console.log( 'Rendering: ' + this.listMode );
+		if( this.listMode == 'week' )
 		{
-			return this.renderMonth();
+			return this.renderWeek();
+		}
+		else if( this.listMode == 'day' )
+		{
+			return this.renderDay();
 		}
 		// Catch all
 		else
@@ -149,9 +154,144 @@ var Calendar = {
 	},
 	renderWeek: function()
 	{
+		console.log( 'Rendering!' );
+		
+		// Get a date object for current month....
+		var dob = new Date();
+		
+		// Render it...
+		var ml = '';
+		
+		// Date setup
+		var month = this.date.getMonth();
+		var year = this.date.getFullYear();
+		var currentDay = this.date.getDay();
+		this.dateArray = [ year, month, currentDay ];
+		
+		var day = this.date.getDate();
+		
+		var time = this.date.getTime();
+		var findDay = new Date( time );
+		
+		// Find start of week (where monday is 1)
+		while( findDay != 1 )
+		{
+			time -= 86400000;
+			findDay = new Date( time ).getDay();
+			day--;
+		}
+		
+		var monthNames = [
+			i18n( 'month_january' ),
+			i18n( 'month_february' ),
+			i18n( 'month_march' ),
+			i18n( 'month_april' ),
+			i18n( 'month_may' ),
+			i18n( 'month_june' ),
+			i18n( 'month_july' ),
+			i18n( 'month_august' ),
+			i18n( 'month_september' ),
+			i18n( 'month_october' ),
+			i18n( 'month_november' ),
+			i18n( 'month_december' )
+		];
+		
+		var up = true;
+		var calStart = false;
+		
+		for( var w = -1; w < 1; w++ )
+		{
+			// Start header
+			if( w == -1 )
+				ml += '<div class="CalendarHeaderRow">';
+			else if( !calStart && w == 0 )
+			{
+				ml += '<div class="CalendarDates">';
+				calStart = true;
+			}
+			
+			ml += '<div class="CalendarRow HRow">';
+			
+			var dl = [ 1, 2, 3, 4, 5, 6, 0 ];
+			var dn = [ i18n('i18n_mon'), i18n('i18n_tue'), i18n('i18n_wed'), i18n('i18n_thu'), i18n('i18n_fri'), i18n('i18n_sat'), i18n('i18n_sun') ];
+			
+			for( var a = 0; a < dl.length; a++ )
+			{
+				var d = dl[a];
+				var dayName = dn[a];
+				var key = year + '-' + (month+1) + '-' + day;
+				
+				if( w >= 0 )
+				{
+					var dobj = new Date( year, month, day );
+					var dliteral = '';
+				
+					if( dobj.getDate() < day )
+						up = false;
+					
+					if( up && dobj.getDay() == d )
+					{
+						dliteral = day + '.';
+						day++;
+					}
+					
+					/*var evts = '';
+					if( dliteral.length && typeof( this.events[key] ) != 'undefined' )
+					{
+						evts += '<div class="Events">';
+						var duplicates = [];
+						for( var z = 0; z < this.events[key].length; z++ )
+						{
+							// TODO: Duplicate check should not be needed!
+							found = false;
+							for( var p = 0; p < duplicates.length; p++ )
+							{
+								if( duplicates[p] == this.events[key][z].Name )
+								{
+									//console.log( 'Found duplicate "' + duplicates[p] + '"..' );
+									found = true;
+									break;
+								}
+							}
+							if( found ) continue;
+							evts += '<div class="Event"><span class="Title">' + this.events[key][z].Name + '</span></div>';
+							duplicates.push( this.events[key][z].Name );
+						}
+						evts += '</div>';
+					}*/
+					// Generate events by time
+					var evts = '';
+					for( var t = 0; t < 24; t += 0.5 )
+					{
+						evts += '<div class="TimeSlot">&nbsp;</div>';
+					}
+					ml += '<div class="Day Column" ondblclick="AddEvent(' + day + ')">' + evts + '</div>';
+				}
+				else
+				{
+					ml += '<div class="Day Column Label"><div class="LabelText">' + dayName + '</div></div>';
+				}
+			}
+			ml += '</div>';
+			
+			// End header
+			if( w == -1 )
+				ml += '</div>';
+		}
+		
+		// End calendar dates
+		if( calStart )
+			ml += '</div>';
+		
+		ge( 'MainView' ).innerHTML = ml;
+		
+		ge( 'MonthName' ).innerHTML = monthNames[ month ] + ' ' + year;
+		
+		this.refresh();
 	},
 	renderDay: function()
 	{
+		ge( 'MainView' ).innerHTML = '';
 	},
 	populate: function( data )
 	{
@@ -233,6 +373,10 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'setcalendarmode':
+			Calendar.listMode = msg.mode;
+			Calendar.render();
+			break;
 		case 'updateEvents':
 			Calendar.events = [];
 			var tspan = 60 * 60 * 24 * 1000;
