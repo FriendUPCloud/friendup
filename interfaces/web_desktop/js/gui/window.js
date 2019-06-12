@@ -1015,6 +1015,10 @@ function _ActivateWindow( div, nopoll, e )
 {
 	if( !e ) e = window.event;
 	
+	// Remove menu on calendar
+	if( Workspace.calendarWidget )
+		Workspace.calendarWidget.hide();
+	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
@@ -3707,7 +3711,7 @@ var View = function( args )
 		
 		// Remove menu on calendar
 		if( Workspace.calendarWidget )
-				Workspace.calendarWidget.hide();
+			Workspace.calendarWidget.hide();
 		
 	}
 
