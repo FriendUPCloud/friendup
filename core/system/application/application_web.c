@@ -511,53 +511,82 @@ Application.checkDocumentSession = function( sasID = null )
 			
 			if( as != NULL )
 			{
-				DEBUG("[ApplicationWebRequest] Found appsession id %lu\n", as->as_AppID );
-				// if our session is owner session all connections must be closed
-				
-				UserSession *locus = (UserSession *)as->as_UserSessionList->usersession;
-				int err = 0;
-				
-				char tmpmsg[ 255 ];
-				
-				if( locus->us_User == loggedSession->us_User )
+				// if session is open it is allowed to quit session by the owner
+				// if AS have less users then 1 then session is removed
+				if( as->as_Type == SAS_TYPE_OPEN )
 				{
-					int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"sasid-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
-					DEBUG("[ApplicationWebRequest] As Owner I want to remove session and sasid\n");
+					int err = 0;
+					err = AppSessionRemUsersession( as, loggedSession );
 					
-					err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
-					
-					// we are not owner, we must send message to owner too
-					if( loggedSession != locus )
+					if( as->as_UserNumber <= 0 )
 					{
-						err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+						err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
 					}
 					
-					err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{\"SASID\":\"%lu\"}", asval );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS unregister", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
 				}
-				//
-				// we are not session owner, we can onlybe removed from assid
-				//
 				else
 				{
-					int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
-					
-					err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
-					
-					err = AppSessionRemUsersession( as, loggedSession );
-				}
+					DEBUG("[ApplicationWebRequest] Found appsession id %lu\n", as->as_AppID );
+					// if our session is owner session all connections must be closed
 				
-				if( err == 0 )
-				{
-					int size = sprintf( buffer, "{\"SASID\":\"%lu\"}", asval );
-					HttpAddTextContent( response, buffer );
-				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					char dictmsgbuf1[ 196 ];
-					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS unregister", err );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
-					HttpAddTextContent( response, dictmsgbuf );
+					UserSession *locus = (UserSession *)as->as_UserSessionList->usersession;
+					int err = 0;
+				
+					char tmpmsg[ 255 ];
+				
+					if( locus->us_User == loggedSession->us_User )
+					{
+						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"sasid-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						DEBUG("[ApplicationWebRequest] As Owner I want to remove session and sasid\n");
+					
+						err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
+					
+						// we are not owner, we must send message to owner too
+						if( loggedSession != locus )
+						{
+							err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+						}
+					
+						err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
+					}
+					//
+					// we are not session owner, we can onlybe removed from assid
+					//
+					else
+					{
+						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+					
+						err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+					
+						err = AppSessionRemUsersession( as, loggedSession );
+					}
+				
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{\"SASID\":\"%lu\"}", asval );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS unregister", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
 				}
 			}
 			else
@@ -1133,8 +1162,8 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
@@ -1160,7 +1189,15 @@ Application.checkDocumentSession = function( sasID = null )
 			
 			if( as != NULL )
 			{
-				int err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), usernames );
+				int err = 0;
+				if( as->as_Type == SAS_TYPE_OPEN )
+				{
+					err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), NULL );
+				}
+				else
+				{
+					err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), usernames );
+				}
 				if( err > 0 )
 				{
 					int size = sprintf( buffer, "{\"response\":\"success\"}" );
@@ -1256,9 +1293,17 @@ Application.checkDocumentSession = function( sasID = null )
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
 			{
-				char *newmsg = NULL;
-
-				int err = AppSessionSendOwnerMessage( as, loggedSession, msg, strlen(msg) );
+				int err = 0;
+				// when SAS is open, there is no need to send message to owner
+				if( as->as_Type == SAS_TYPE_OPEN )
+				{
+					err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), NULL );
+				}
+				else
+				{
+					err = AppSessionSendOwnerMessage( as, loggedSession, msg, strlen(msg) );
+				}
+				
 				FERROR("Messages sent %d\n", err );
 				if( err > 0 )
 				{
