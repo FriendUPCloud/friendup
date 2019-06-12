@@ -1015,6 +1015,10 @@ function _ActivateWindow( div, nopoll, e )
 {
 	if( !e ) e = window.event;
 	
+	// Remove menu on calendar
+	if( Workspace.calendarWidget )
+		Workspace.calendarWidget.hide();
+	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
@@ -3704,6 +3708,11 @@ var View = function( args )
 		// Move workspace to designated position	
 		if( self.workspace > 0 )
 			self.sendToWorkspace( self.workspace );
+		
+		// Remove menu on calendar
+		if( Workspace.calendarWidget )
+			Workspace.calendarWidget.hide();
+		
 	}
 
 	// Send window to different workspace

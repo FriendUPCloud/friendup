@@ -1,0 +1,38 @@
+
+	<div class="ContentFull">
+		<div class="HContentLeft BackgroundLists" id="LeftPanel">
+			<div class="FullContent ScrollArea List" id="Sources"></div>
+		</div>
+		<div class="HContentRight BorderLeft BackgroundDefault" id="RightPanel">
+			<div class="ContentFull ScrollArea" id="GUI"></div>
+		</div>
+		<div class="VContentBottom BorderTop BackgroundDefault Padding" id="BottomPanel">
+			<button type="button" class="IconSmall fa-plus" onclick="Source(false)">
+				{add_source}
+			</button>
+			<button type="button" class="IconSmall fa-close" onclick="CloseWindow()">
+				{close}
+			</button>
+		</div>
+	</div>
+	
+	<script src="Progdir:Scripts/sources.js"></script>
+	
+	<style>
+		#LeftPanel
+		{
+			width: 30%;
+			top: 0;
+			bottom: 50px;
+		}
+		#RightPanel
+		{
+			width: 70%;
+			bottom: 50px;
+			top: 0;
+		}
+		#BottomPanel
+		{
+			height: 50px;
+		}
+	</style>

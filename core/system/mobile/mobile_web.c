@@ -202,7 +202,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					char query[ 512 ];
 					
 					DEBUG("Find entry for Device: %s\n", deviceID );
-					
+					/*
 					snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );
 					//snprintf( query, sizeof(query), "SELECT ID from `FUserMobileApp` where DeviceID='%s' AND AppToken='%s' AND UserID=%lu", deviceID, apptoken, uid );
 					
@@ -226,6 +226,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					
 					// seems we have one or more devices, we can remove them and create new one
 					if( umaID > 0 )
+						*/
 					{
 						DEBUG("Delete old entries\n");
 						snprintf( query, sizeof(query), "DELETE from `FUserMobileApp` where DeviceID='%s' AND UserID=%lu", deviceID, uid );

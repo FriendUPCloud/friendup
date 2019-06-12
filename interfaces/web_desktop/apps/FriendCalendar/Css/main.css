@@ -1,0 +1,173 @@
+#TopPanel
+{
+	padding: 1px;
+	box-sizing: border-box;
+	height: 200px;
+	background: #0665A2;
+	position: relative;
+	box-shadow: inset 0px 5px 150px rgba(0,0,0,0.1);
+}
+
+#TopPanel > h1
+{
+	text-align: center;
+	font-size: 70px;
+	color: white;
+	text-shadow: 0px 2px 6px rgba(0,0,0,0.5);
+	line-height: 195px;
+	font-weight: normal;
+}
+
+#GoPrevious, #GoNext
+{
+	position: absolute;
+	width: 50px;
+	height: 50px;
+	top: 75px;
+	cursor: hand;
+	cursor: pointer;
+	z-index: 99;
+}
+
+#GoPrevious
+{
+	left: 20px;
+	background: url(Progdir:Gfx/arrow_left.png);
+}
+
+#GoNext
+{
+	right: 20px;
+	background: url(Progdir:Gfx/arrow_right.png);
+}
+
+#MainView
+{
+	top: 200px;
+	bottom: 50px;
+}
+
+#BottomPanel
+{
+	bottom: 0;
+	height: 50px;
+}
+
+
+.Day
+{
+	width: 14.285%;
+	float: left;
+	display: block;
+	height: 100px;
+	box-sizing: border-box;
+	position: relative;
+}
+
+.Day > .Number
+{
+	position: absolute;
+	right: 10px;
+	top: 10px;
+	width: 20px;
+	text-align: center;
+	color: white;
+	font-size: 16px;
+}
+
+.Day.Label
+{
+	height: 30px;
+	line-height: 30px;
+}
+
+.Day.Label .LabelText
+{
+	width: 100%;
+	color: white;
+	font-size: 16px;
+	text-align: center;
+}
+
+.CalendarRow.HRow
+{
+	padding: 0;
+}
+
+.HRow:nth-child(odd) .Day:nth-child(even),
+.HRow:nth-child(even) .Day:nth-child(odd)
+{
+	background: #222222;
+}
+.HRow:nth-child(odd) .Day:nth-child(odd),
+.HRow:nth-child(even) .Day:nth-child(even)
+{
+	background: #404040;
+}
+.HRow:nth-child(odd) .Day:nth-child(even):hover,
+.HRow:nth-child(even) .Day:nth-child(odd):hover
+{
+	background: #323232;
+}
+.HRow:nth-child(odd) .Day:nth-child(odd):hover,
+.HRow:nth-child(even) .Day:nth-child(even):hover
+{
+	background: #505050;
+}
+
+.HRow:nth-child(odd) .Day.Label:nth-child(even),
+.HRow:nth-child(even) .Day.Label:nth-child(odd)
+{
+	background: #465646;
+	border-bottom: 1px solid #363636;
+}
+.HRow:nth-child(odd) .Day.Label:nth-child(odd),
+.HRow:nth-child(even) .Day.Label:nth-child(even)
+{
+	background: #405040;
+	border-bottom: 1px solid #303030;
+}
+
+.Events
+{
+	position: absolute;
+	top: 8px;
+	left: 8px;
+}
+
+.Event
+{
+	width: 8px;
+	height: 8px;
+	border-radius: 8px;
+	box-sizing: border-box;
+	background-color: #f09020;
+	float: right;
+	margin: 0 5px 0 0;
+	position: relative;
+}
+
+.Event:hover > .Title
+{
+	display: block;
+	position: absolute;
+	top: 10px;
+	left: 0px;
+	background: rgba(255,255,255,0.8);
+	color: black;
+	border-radius: 8px;
+	padding: 8px;
+	white-space: no-wrap;
+	box-shadow: 0px 2px rgba(0,0,0,0.5);
+}
+
+.Event[nth-child:0n6]
+{
+	clear: both;
+}
+
+.Event > .Title
+{
+	display: none;
+}
+

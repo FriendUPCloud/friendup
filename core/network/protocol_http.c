@@ -628,6 +628,29 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 						
 					}
 */
+	
+					else if( strcmp( path->parts[ 0 ], "version" ) == 0 )
+					{
+						struct TagItem tags[] = {
+							{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
+							{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+							{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+							{ TAG_DONE, TAG_DONE}
+						};
+
+						response = HttpNewSimple( HTTP_200_OK, tags );
+						
+						{
+							char buf[ 128 ];
+							snprintf( buf, 128, "%s-%s", APPVERSION, APPGITVERSION );
+							HttpAddTextContent( response, buf );
+						}
+
+						HttpWrite( response, sock );
+						result = 200;
+					}
+						
+	
 					//
 					// login path file
 					//
@@ -641,78 +664,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 						
 						char *newUrl = NULL;
 						
-						/*
-						// only cluster master can switch user to another server
-						if( SLIB->fcm->fcm_ClusterMaster )
-						{
-							int minSessions = SLIB->sl_USM->usm_SessionCounter;
-							ClusterNode *clusNode = SLIB->fcm->fcm_ClusterNodes;
-						
-							while( clusNode != NULL )
-							{
-								if( clusNode->cn_Connection != NULL )
-								{
-									DEBUG("Checking sessions on node [%s] number %d\n", clusNode->cn_Address, clusNode->cn_Connection->fc_UserSessionsCount );
-									if( clusNode->cn_Connection->fc_UserSessionsCount < minSessions )
-									{
-										if( clusNode->cn_Url != NULL )	// we cannot redirect to url which do not exist
-										{
-											newUrl = clusNode->cn_Url;
-										}
-										else if( clusNode->cn_Address != NULL )
-										{
-											newUrl = clusNode->cn_Address;
-										}
-									}
-								}
-								else
-								{
-									DEBUG("Connection do not exist [%s]\n", clusNode->cn_Address );
-								}
-								clusNode = (ClusterNode *)clusNode->node.mln_Succ;
-							}
-						}
-						
-						DEBUG("[ProtocolHttp] getting login page for authmodule: %s\n", SLIB->sl_ActiveModuleName );
-						
-						//
-						//
-						//
-						
-						if( newUrl != NULL )
-						{
-							char redirect[ 512 ];
-							int redsize = 0;
 
-							if( SLIB->fcm->fcm_SSLEnabled )
-							{
-								redsize = snprintf( redirect, sizeof( redirect ), "https://%s:6502/loginprompt", newUrl );
-							}
-							else
-							{
-								redsize = snprintf( redirect, sizeof( redirect ), "http://%s:6502/loginprompt", newUrl );
-							}
-							
-							DEBUG("Redirected to: [%s]\n", redirect );
-							
-							struct TagItem tags[] = {
-								{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
-								{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-								{ HTTP_HEADER_LOCATION, (FULONG )StringDuplicateN( redirect, redsize ) },
-								{ TAG_DONE, TAG_DONE}
-							};
-
-							response = HttpNewSimple( HTTP_307_TEMPORARY_REDIRECT, tags );
-
-							HttpAddTextContent( response, "Redirection" );
-
-							// write here and set data to NULL!!!!!
-							// retusn response
-							HttpWrite( response, sock );
-							result = 200;
-						}
-						else
-							*/
 						{
 							if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
 							{

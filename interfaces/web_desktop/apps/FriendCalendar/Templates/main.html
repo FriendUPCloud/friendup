@@ -1,0 +1,29 @@
+
+	<div class="FullContent">
+		<div class="HContentLeft HContent30 BackgroundLists Padding ScrollArea">
+			<h2>
+				{i18n_find_events}
+			</h2>
+			<p>
+				<input type="text" class="InputHeight FullWidth" id="Searcher" value="" placeholder="{i18n_search_keywords}"/>
+			</p>
+			<p class="InputHeight">
+				<button type="button" class="Button IconSmall fa-magnifier"> {i18n_search}</button>
+			</p>
+			<div id="Sources" class="BorderTop PaddingTop MarginTop"></div>
+		</div>
+		<div class="HContentRight HContent70">
+			<div class="VContentTop BorderBottom" id="TopPanel">
+				<div id="GoPrevious" onmousedown="GoPrevious(); return cancelBubble( event ? event : evt );"></div>
+				<h1 id="MonthName"></h1>
+				<div id="GoNext" onmousedown="GoNext(); return cancelBubble( event ? event : evt );"></div>
+			</div>
+			<div class="VContentBottom ScrollArea BackgroundLists" id="MainView">
+			</div>
+			<div class="VContentBottom BorderTop" id="BottomPanel">
+			</div>
+		</div>
+	</div>
+	
+	<script src="Progdir:Scripts/main.js"></script>
+	<link rel="stylesheet" href="Progdir:Css/main.css"/>
