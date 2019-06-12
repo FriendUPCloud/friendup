@@ -110,6 +110,12 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u );
 //
 //
 
+int AppSessionRemUsersessionAny( AppSession *as, UserSession *u );
+
+//
+//
+//
+
 int AppSessionRemByWebSocket( AppSession *as, void *wc );
 
 //

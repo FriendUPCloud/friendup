@@ -261,6 +261,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 
 /**
  * Remove user session from application session
+ * ! This function do not allow to remove owners
  *
  * @param as application session
  * @param u user session which will be removed from application session
@@ -283,7 +284,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		
 		DEBUG("Before  as_SessionsMut lock\n");
 		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-		
+
 		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
 		SASUList *prevali = as->as_UserSessionList;
 		
@@ -314,6 +315,77 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			ali = (SASUList *) ali->node.mln_Succ;
 			DEBUG("[AppSession] Session end loop\n");
 		}
+		
+		DEBUG("[AppSession] lock end\n");
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+		as->as_Timer = time( NULL );
+		
+		if( ali == NULL )
+		{
+			DEBUG("[AppSession] user is not in SAS user session list\n");
+			return -2;
+		}
+	}
+	
+	DEBUG("[AppSession] remove user session, success\n");
+	return 0;
+}
+
+/**
+ * Remove user session from application session
+ *
+ * @param as application session
+ * @param u user session which will be removed from application session
+ * @return 0 if success, otherwise error number
+ */
+
+int AppSessionRemUsersessionAny( AppSession *as, UserSession *u )
+{
+	if( as != NULL )
+	{
+		if( u != NULL )
+		{
+			DEBUG("[AppSession] AppSessionRemUsersession %s\n", u->us_SessionID );
+		}
+		else
+		{
+			DEBUG("[AppSession] remove user session, user session is equal to NULL\n");
+			return -1;
+		}
+		
+		DEBUG("Before  as_SessionsMut lock\n");
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+		
+		SASUList *ali = (SASUList *)as->as_UserSessionList;
+		SASUList *prevali = as->as_UserSessionList;
+		DEBUG("[AppSession] Session before loop\n");
+		while( ali != NULL )
+		{
+			if( u ==  ali->usersession )
+			{
+				if( ali == as->as_UserSessionList )
+				{
+					as->as_UserSessionList =(SASUList *)ali->node.mln_Succ;
+				}
+				else
+				{
+					prevali->node.mln_Succ = ali->node.mln_Succ;
+				}
+				
+				as->as_UserNumber--;
+				DEBUG("[AppSession] Session removed, sessions %d\n", as->as_UserNumber );
+				
+				FFree( ali );
+				DEBUG("[AppSession] break\n");
+			
+				break;
+			}
+		
+			prevali = ali;
+			ali = (SASUList *) ali->node.mln_Succ;
+			DEBUG("[AppSession] Session end loop\n");
+		}
+
 		DEBUG("[AppSession] lock end\n");
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		as->as_Timer = time( NULL );
