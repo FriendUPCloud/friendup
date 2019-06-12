@@ -3464,7 +3464,19 @@ movableMouseDown = function ( e )
 		{
 			if( window.currentMovable && tar.classList && tar.classList.contains( 'ScreenOverlay' ) )
 			{
-				_ActivateWindow( currentMovable );
+				var wl = GetElementLeft( currentMovable );
+				var wt = GetElementTop( currentMovable );
+				if( 
+					windowMouseX >= wl && windowMouseX <= wl+currentMovable.offsetWidth &&
+					windowMouseY >= wt && windowMouseY <= wt+currentMovable.offsetHeight
+				)
+				{
+					_ActivateWindow( currentMovable );
+				}
+				else
+				{
+					DefaultToWorkspaceScreen( tar );
+				}
 			}
 			else
 			{
