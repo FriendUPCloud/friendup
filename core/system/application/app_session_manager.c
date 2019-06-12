@@ -33,7 +33,7 @@ AppSessionManager *AppSessionManagerNew()
 	
 	if( ( as = FCalloc( 1, sizeof( AppSessionManager ) ) ) != NULL )
 	{
-		
+		pthread_mutex_init( &(as->sl_Mutex), NULL );
 	}
 	else
 	{
@@ -55,16 +55,22 @@ void AppSessionManagerDelete( AppSessionManager *as )
 	if( as )
 	{
 		AppSession *las = as->sl_AppSessions;
-		AppSession *oas = las;
-		
-		while( las != NULL )
+		if( FRIEND_MUTEX_LOCK( &(as->sl_Mutex) ) == 0 )
 		{
-			DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
+			AppSession *oas = las;
+		
+			while( las != NULL )
+			{
+				DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
 
-			oas = las;
-			las =(AppSession  *)las->node.mln_Succ;
-			AppSessionDelete( oas );
+				oas = las;
+				las =(AppSession  *)las->node.mln_Succ;
+				AppSessionDelete( oas );
+			}
+		
+			FRIEND_MUTEX_UNLOCK( &(as->sl_Mutex) );
 		}
+		pthread_mutex_destroy( &(as->sl_Mutex) );
 		
 		FFree( as );
 	}
@@ -84,29 +90,37 @@ int AppSessionManagerAddSession( AppSessionManager *as, AppSession *nas )
 	{
 		AppSession *las = NULL;
 		
-		LIST_FOR_EACH( as->sl_AppSessions, las, AppSession * )
+		if( FRIEND_MUTEX_LOCK( &(as->sl_Mutex) ) == 0 )
 		{
-			if( nas->as_SASID == las->as_SASID )
+			LIST_FOR_EACH( as->sl_AppSessions, las, AppSession * )
 			{
-				DEBUG("[AppSessionManagerGetSession] AppSession was already added to list\n");
-				return 0;
+				if( nas->as_SASID == las->as_SASID )
+				{
+					DEBUG("[AppSessionManagerGetSession] AppSession was already added to list\n");
+					FRIEND_MUTEX_UNLOCK( &(as->sl_Mutex) );
+					return 0;
+				}
 			}
+			FRIEND_MUTEX_UNLOCK( &(as->sl_Mutex) );
 		}
 		
-		AppSession *lastone = as->sl_AppSessions;
-		if( lastone == NULL )
+		if( FRIEND_MUTEX_LOCK( &(as->sl_Mutex) ) == 0 )
 		{
-			as->sl_AppSessions = nas;
-		}
-		else
-		{
-			while( lastone->node.mln_Succ != NULL )
+			AppSession *lastone = as->sl_AppSessions;
+			if( lastone == NULL )
 			{
-				lastone = (AppSession *)lastone->node.mln_Succ;
+				as->sl_AppSessions = nas;
 			}
-			lastone->node.mln_Succ = (MinNode *)nas;
+			else
+			{
+				while( lastone->node.mln_Succ != NULL )
+				{
+					lastone = (AppSession *)lastone->node.mln_Succ;
+				}
+				lastone->node.mln_Succ = (MinNode *)nas;
+			}
+			FRIEND_MUTEX_UNLOCK( &(as->sl_Mutex) );
 		}
-		
 		return 0;
 	}
 	return -2;
@@ -125,35 +139,43 @@ int AppSessionManagerRemSession( AppSessionManager *as, AppSession *nas )
 	if( as != NULL )
 	{
 		AppSession *las = NULL;
-		AppSession *oas = as->sl_AppSessions;
 		
-		LIST_FOR_EACH( as->sl_AppSessions, las, AppSession * )
+		if( FRIEND_MUTEX_LOCK( &(as->sl_Mutex) ) == 0 )
 		{
-			if( nas->as_SASID == las->as_SASID )
+			AppSession *oas = as->sl_AppSessions;	// old application session
+		
+			LIST_FOR_EACH( as->sl_AppSessions, las, AppSession * )
 			{
-				DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
-				
-				if( nas == as->sl_AppSessions )
+				if( nas->as_SASID == las->as_SASID )
 				{
-					as->sl_AppSessions = (AppSession *) nas->node.mln_Succ;
-				}
-				else
-				{
-					oas->node.mln_Succ = (MinNode *)nas->node.mln_Succ;
-				}
+					DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
 				
-				AppSessionDelete( nas );
+					if( nas == as->sl_AppSessions )	// if session is equal to first entry, we only overwrite pointer
+					{
+						as->sl_AppSessions = (AppSession *) nas->node.mln_Succ;
+					}
+					else	// if session is not first entry then we only update next pointer in previous pointer
+					{
+						oas->node.mln_Succ = (MinNode *)nas->node.mln_Succ;
+					}
 				
-				return 0;
+					AppSessionDelete( nas );
+				
+					DEBUG("[AppSessionManagerRemSession] appsession removed\n");
+					FRIEND_MUTEX_UNLOCK( &(as->sl_Mutex) );
+					return 0;
+				}
+				oas = las;
 			}
-			
-			oas = las;
+			FRIEND_MUTEX_UNLOCK( &(as->sl_Mutex) );
 		}
 	}
 	else
 	{
+		DEBUG("[AppSessionManagerRemSession] application session do not exist!\n");
 		return -1;
 	}
+	DEBUG("[AppSessionManagerRemSession] appsession not found\n");
 	return -2;
 }
 

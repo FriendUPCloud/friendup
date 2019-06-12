@@ -30,6 +30,7 @@
 typedef struct AppSessionManager
 {
 	AppSession						*sl_AppSessions;
+	pthread_mutex_t					sl_Mutex;
 }AppSessionManager;
 
 //
