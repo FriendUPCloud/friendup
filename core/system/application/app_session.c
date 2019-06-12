@@ -290,7 +290,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		DEBUG("[AppSession] Session before loop\n");
 		while( ali != NULL )
 		{
-			if( u ==  ali->usersession  )
+			if( u ==  ali->usersession )
 			{
 				if( ali == as->as_UserSessionList )
 				{
@@ -314,7 +314,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			ali = (SASUList *) ali->node.mln_Succ;
 			DEBUG("[AppSession] Session end loop\n");
 		}
-		
+		DEBUG("[AppSession] lock end\n");
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		as->as_Timer = time( NULL );
 		
