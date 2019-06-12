@@ -3464,7 +3464,21 @@ movableMouseDown = function ( e )
 		{
 			if( window.currentMovable && tar.classList && tar.classList.contains( 'ScreenOverlay' ) )
 			{
-				_ActivateWindow( currentMovable );
+				// Check if we clicked active window
+				// TODO: Cycle through all windows and check if we clicked on any, including widgets
+				var wl = GetElementLeft( currentMovable );
+				var wt = GetElementTop( currentMovable );
+				if( 
+					windowMouseX >= wl && windowMouseX <= wl+currentMovable.offsetWidth &&
+					windowMouseY >= wt && windowMouseY <= wt+currentMovable.offsetHeight
+				)
+				{
+					_ActivateWindow( currentMovable );
+				}
+				else
+				{
+					DefaultToWorkspaceScreen( tar );
+				}
 			}
 			else
 			{
