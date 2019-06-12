@@ -3704,6 +3704,11 @@ var View = function( args )
 		// Move workspace to designated position	
 		if( self.workspace > 0 )
 			self.sendToWorkspace( self.workspace );
+		
+		// Remove menu on calendar
+		if( Workspace.calendarWidget )
+				Workspace.calendarWidget.hide();
+		
 	}
 
 	// Send window to different workspace
