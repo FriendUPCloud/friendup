@@ -45,6 +45,7 @@
 {
 	top: 200px;
 	bottom: 50px;
+	background-color: #007E65;
 }
 
 #BottomPanel
@@ -53,6 +54,28 @@
 	height: 50px;
 }
 
+
+.CalendarHeaderRow
+{
+	padding: 0 !important;
+	margin: 0 !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 30px;
+}
+.CalendarDates
+{
+	padding: 0 !important;
+	margin: 0 !important;
+	position: absolute;
+	top: 30px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 30px);
+	overflow: auto;
+}
 
 .Day
 {
@@ -118,13 +141,13 @@
 .HRow:nth-child(odd) .Day.Label:nth-child(even),
 .HRow:nth-child(even) .Day.Label:nth-child(odd)
 {
-	background: #465646;
+	background: #007E65;
 	border-bottom: 1px solid #363636;
 }
 .HRow:nth-child(odd) .Day.Label:nth-child(odd),
 .HRow:nth-child(even) .Day.Label:nth-child(even)
 {
-	background: #405040;
+	background: #006350;
 	border-bottom: 1px solid #303030;
 }
 

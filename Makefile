@@ -69,8 +69,8 @@ cleanws:
 	make -C libs-ext clean
 
 clean:
-	@echo "Cleaning Websocket lib"
-	make -C libs-ext clean
+	#@echo "Cleaning Websocket lib"
+	#make -C libs-ext clean
 	@echo "Clean process in progress."
 	make -C core clean WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C libs clean WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)

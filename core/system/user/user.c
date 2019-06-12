@@ -195,7 +195,6 @@ void UserRemoveSession( User *usr, void *ls )
 			usr->u_SessionsList = NULL;
 		}
 		
-
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
 }
