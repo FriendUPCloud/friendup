@@ -480,7 +480,7 @@ Application.checkDocumentSession = function( sasID = null )
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -518,7 +518,8 @@ Application.checkDocumentSession = function( sasID = null )
 					int err = 0;
 					err = AppSessionRemUsersession( as, loggedSession );
 					
-					if( as->as_UserNumber <= 0 )
+					// if user was removed and he was last then we remove SAS
+					if( err == 0 && as->as_UserNumber <= 0 )
 					{
 						err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
 					}
@@ -622,8 +623,8 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] accept\n");
@@ -789,8 +790,8 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] Decline\n");
@@ -1080,8 +1081,8 @@ Application.checkDocumentSession = function( sasID = null )
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );

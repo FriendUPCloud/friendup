@@ -62,11 +62,11 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_view_week' ),
 					command: 'view_week'
-				},
+				}/*,
 				{
 					name: i18n( 'menu_view_day' ),
 					command: 'view_day'
-				}
+				}*/
 			]
 		}
 	] );
@@ -94,8 +94,13 @@ Application.receiveMessage = function( msg )
 			Application.quit();
 			break;
 		case 'view_month':
+			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'month' } );
+			break;
 		case 'view_week':
+			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'week' } );
+			break;
 		case 'view_day':
+			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'day' } );
 			break;
 		case 'sources':
 			// TODO: activate window

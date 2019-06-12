@@ -142,38 +142,40 @@ void AppSessionDelete( AppSession *as )
 	DEBUG("[AppSession] Delete app session\n");
 	if( as != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+		SASUList *ali = NULL;
+		SASUList *rml = NULL;
 		
-		SASUList *ali = as->as_UserSessionList;
-		SASUList *rml = ali;
-		
-		while( ali != NULL )
+		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
+			ali = as->as_UserSessionList;
 			rml = ali;
-			ali = (SASUList *) ali->node.mln_Succ;
-			
-			FFree( rml );
-			rml = NULL;
-		}
 		
-		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+			while( ali != NULL )
+			{
+				rml = ali;
+				ali = (SASUList *) ali->node.mln_Succ;
+			
+				FFree( rml );
+				rml = NULL;
+			}
+			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+		}
 		
 		pthread_mutex_destroy( &as->as_SessionsMut );
 		
-		FRIEND_MUTEX_LOCK( &as->as_VariablesMut );
-		
-		INVAREntry *le = as->as_Variables;
-		INVAREntry *re = le;
-		while( le != NULL )
+		if( FRIEND_MUTEX_LOCK( &as->as_VariablesMut ) == 0 )
 		{
-			re = le;
-			le = (INVAREntry *) le->node.mln_Succ;
+			INVAREntry *le = as->as_Variables;
+			INVAREntry *re = le;
+			while( le != NULL )
+			{
+				re = le;
+				le = (INVAREntry *) le->node.mln_Succ;
 			
-			INVAREntryDelete( re );
+				INVAREntryDelete( re );
+			}
+			FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
 		}
-		
-		FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
-		
 		pthread_mutex_destroy( &as->as_VariablesMut );
 		
 		FFree( as );
@@ -275,6 +277,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		}
 		else
 		{
+			DEBUG("[AppSession] remove user session, user session is equal to NULL\n");
 			return -1;
 		}
 		
@@ -287,7 +290,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		DEBUG("[AppSession] Session before loop\n");
 		while( ali != NULL )
 		{
-			if( u ==  ali->usersession  )
+			if( u ==  ali->usersession )
 			{
 				if( ali == as->as_UserSessionList )
 				{
@@ -311,12 +314,19 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			ali = (SASUList *) ali->node.mln_Succ;
 			DEBUG("[AppSession] Session end loop\n");
 		}
-		
+		DEBUG("[AppSession] lock end\n");
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		as->as_Timer = time( NULL );
+		
+		if( ali == NULL )
+		{
+			DEBUG("[AppSession] user is not in SAS user session list\n");
+			return -2;
+		}
 	}
 	
-	return -1;
+	DEBUG("[AppSession] remove user session, success\n");
+	return 0;
 }
 
 #define WS_MESSAGE_TEMPLATE_USER "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": %s}}}}"

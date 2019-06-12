@@ -742,6 +742,8 @@ int DetachWebsocketFromSession( WSCData *data )
 		return 0;
 	}
 	
+	AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, data->wsc_WebsocketsServerClient );
+	
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
 		wscl->wusc_Data = NULL;
