@@ -62,11 +62,11 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_view_week' ),
 					command: 'view_week'
-				},
+				}/*,
 				{
 					name: i18n( 'menu_view_day' ),
 					command: 'view_day'
-				}
+				}*/
 			]
 		}
 	] );
