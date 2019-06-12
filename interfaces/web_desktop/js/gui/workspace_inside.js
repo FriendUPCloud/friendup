@@ -1107,7 +1107,7 @@ var WorkspaceInside = {
 					var geBtn = calendar.createButton( 'fa-wrench' );
 					geBtn.onclick = function()
 					{
-						ExecuteApplication( 'Calendar' );
+						ExecuteApplication( 'FriendCalendar' );
 					}
 					calendar.addButton( geBtn );
 

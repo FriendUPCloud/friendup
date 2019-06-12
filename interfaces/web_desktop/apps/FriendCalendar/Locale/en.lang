@@ -1,0 +1,60 @@
+
+menu_file                             : File
+menu_quit                             : Quit
+menu_settings                         : Settings
+menu_sources                          : Calendar sources
+menu_refresh_calendar                 : Sync from sources
+menu_view                             : View
+menu_view_month                       : Month overview
+menu_view_week                        : Week overview
+menu_view_day                         : Day overview
+
+i18n_close                            : Close
+i18n_add_source                       : Add a source
+i18n_desc                             : Description
+i18n_save                             : Save
+i18n_cancel                           : Cancel
+
+i18n_find_events                      : Find events
+i18n_search                           : Search
+i18n_search_keywords                  : Search keywords...
+
+i18n_your_calendar                    : Your calendar
+
+
+# Month names
+
+month_january                         : January
+month_february                        : February
+month_march                           : March
+month_april                           : April
+month_may                             : May
+month_june                            : June
+month_july                            : July
+month_august                          : August
+month_september                       : September
+month_october                         : October
+month_november                        : November
+month_december                        : December
+
+i18n_event_name                       : Event name:
+i18n_leadin                           : Leadin:
+i18n_save                             : Save
+i18n_name                             : Name:
+i18n_description                      : Description:
+i18n_type                             : Type:
+i18n_server                           : Server:
+i18n_user_pass                        : User/pass:
+i18n_your_root                        : Your root
+i18n_calendar_sources                 : Calendar sources
+i18n_reject                           : missing user / pass, check your inputs
+i18n_failed_to_get_unique_id          : failed to get uniqueId
+i18n_fetching_temp_pass               : fetching temp pass failed
+i18n_failed_to_decrypt                : failed to decrypt temp pass
+i18n_mon                              : mon
+i18n_tue                              : tue
+i18n_wed                              : wed
+i18n_thu                              : thu
+i18n_fri                              : fri
+i18n_sat                              : sat
+i18n_sun                              : sun
