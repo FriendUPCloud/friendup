@@ -203,20 +203,39 @@ var Calendar = {
 		{
 			// Start header
 			if( w == -1 )
-				ml += '<div class="CalendarHeaderRow">';
+				ml += '<div class="CalendarHeaderRow Week">';
 			else if( !calStart && w == 0 )
 			{
-				ml += '<div class="CalendarDates">';
+				ml += '<div class="CalendarDates Week">';
 				calStart = true;
 			}
 			
 			ml += '<div class="CalendarRow HRow">';
 			
-			var dl = [ 1, 2, 3, 4, 5, 6, 0 ];
-			var dn = [ i18n('i18n_mon'), i18n('i18n_tue'), i18n('i18n_wed'), i18n('i18n_thu'), i18n('i18n_fri'), i18n('i18n_sat'), i18n('i18n_sun') ];
+			var dl = [ -1, 1, 2, 3, 4, 5, 6, 0 ];
+			var dn = [ 0, i18n('i18n_mon'), i18n('i18n_tue'), i18n('i18n_wed'), i18n('i18n_thu'), i18n('i18n_fri'), i18n('i18n_sat'), i18n('i18n_sun') ];
 			
 			for( var a = 0; a < dl.length; a++ )
 			{
+				if( dl[a] == -1 )
+				{
+					if( w == -1 )
+					{
+						ml += '<div class="Day Column Label"><div class="LabelText">' + i18n( 'i18n_time' ) + '</div></div>';
+					}
+					else
+					{
+						var evtl = '';
+						for( var t = 0; t < 24; t += 0.5 )
+						{
+							var hour = StrPad( Math.floor( t ), 2, '0' );
+							var minute = StrPad( ( t - Math.floor( t ) ) * 60, 2, '0' );
+							evtl += '<div class="TimeSlot">' + hour + ':' + minute + '</div>';
+						}
+						ml += '<div class="Day Column Negative TextCenter" ondblclick="AddEvent(' + day + ')">' + evtl + '</div>';
+					}
+					continue;
+				}
 				var d = dl[a];
 				var dayName = dn[a];
 				var key = year + '-' + (month+1) + '-' + day;

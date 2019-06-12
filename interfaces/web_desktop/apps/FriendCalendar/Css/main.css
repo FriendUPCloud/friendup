@@ -87,6 +87,11 @@
 	position: relative;
 }
 
+.Week .Day
+{
+	width: 12.5%;
+}
+
 .Day.Column
 {
 	height: auto;

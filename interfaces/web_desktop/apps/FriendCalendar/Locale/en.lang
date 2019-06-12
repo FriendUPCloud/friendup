@@ -37,6 +37,7 @@ month_october                         : October
 month_november                        : November
 month_december                        : December
 
+i18n_time                             : Time
 i18n_event_name                       : Event name:
 i18n_leadin                           : Leadin:
 i18n_save                             : Save
