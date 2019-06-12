@@ -521,7 +521,7 @@ Application.checkDocumentSession = function( sasID = null )
 					// if user was removed and he was last then we remove SAS
 					if( err == 0 && as->as_UserNumber <= 0 )
 					{
-						err = AppSessionRemUsersessionAny( l->sl_AppSessionManager, as );
+						err = AppSessionRemUsersessionAny( as, loggedSession );
 					}
 					
 					if( err == 0 )
