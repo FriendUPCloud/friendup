@@ -29,6 +29,16 @@
 	z-index: 99;
 }
 
+#LeftCol
+{
+	width: 250px;
+}
+
+#RightCol
+{
+	width: calc(100% - 250px);
+}
+
 #GoPrevious
 {
 	left: 20px;
@@ -85,6 +95,21 @@
 	height: 100px;
 	box-sizing: border-box;
 	position: relative;
+}
+
+.Week .Day
+{
+	width: 8%;
+}
+
+.Week .Day + .Day
+{
+	width: 13.142%;
+}
+
+.Day.Column
+{
+	height: auto;
 }
 
 .Day > .Number
@@ -149,6 +174,19 @@
 {
 	background: #006350;
 	border-bottom: 1px solid #303030;
+}
+
+.Day > .TimeSlot:nth-child(odd)
+{
+	display: block;
+	background-color: rgba(0,0,0,0.2);
+	padding: 4px;
+}
+.Day > .TimeSlot:nth-child(even)
+{
+	display: block;
+	background-color: rgba(0,0,0,0.4);
+	padding: 4px;
 }
 
 .Events

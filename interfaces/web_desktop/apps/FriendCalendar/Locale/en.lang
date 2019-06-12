@@ -37,6 +37,7 @@ month_october                         : October
 month_november                        : November
 month_december                        : December
 
+i18n_time                             : Time
 i18n_event_name                       : Event name:
 i18n_leadin                           : Leadin:
 i18n_save                             : Save
@@ -51,10 +52,10 @@ i18n_reject                           : missing user / pass, check your inputs
 i18n_failed_to_get_unique_id          : failed to get uniqueId
 i18n_fetching_temp_pass               : fetching temp pass failed
 i18n_failed_to_decrypt                : failed to decrypt temp pass
-i18n_mon                              : mon
-i18n_tue                              : tue
-i18n_wed                              : wed
-i18n_thu                              : thu
-i18n_fri                              : fri
-i18n_sat                              : sat
-i18n_sun                              : sun
+i18n_mon                              : Mon
+i18n_tue                              : Tue
+i18n_wed                              : Wed
+i18n_thu                              : Thu
+i18n_fri                              : Fri
+i18n_sat                              : Sat
+i18n_sun                              : Sun
