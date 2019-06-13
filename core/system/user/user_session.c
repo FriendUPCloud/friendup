@@ -106,7 +106,7 @@ void UserSessionDelete( UserSession *us )
             UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
         }
-        SystemBase *lsb = (SystemBase *)us->us_SB;
+        SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
 
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
