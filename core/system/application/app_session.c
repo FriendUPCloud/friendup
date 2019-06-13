@@ -220,7 +220,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 		
 		DEBUG("[AppSession] last sessionptr %p\n", endli );
 		
-		if( userAdded  == TRUE )
+		if( userAdded == TRUE )
 		{
 			if( lali->authid[ 0 ] == 0 )
 			{
@@ -449,6 +449,69 @@ int AppSessionRemUser( AppSession *as, User *u )
 }
 
 /**
+ * Add current sesssion to SAS
+ *
+ * @param as application session
+ * @param loggedSession session of user who is adding other users to application session
+ * @return pointer to SASUList if session was added, otherwise NULL
+ */
+
+SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSession )
+{
+	// remove spaces and 'weird' chars from entry
+	unsigned int i, j=0;
+	int  pos = 0;
+	unsigned int usersi  = 0;
+	char *upositions[ 128 ];
+	memset( upositions, 0, sizeof( upositions ) );
+	SASUList *retListEntry = NULL;
+	SystemBase *l = (SystemBase *)as->as_SB;
+	
+	DEBUG("[AppSession] sessid %s\n", sessid );
+	
+	UserSession *usrses = NULL;
+
+	//
+	// we must check if  user is already in application session
+	//
+
+	FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+	
+	SASUList *curgusr = as->as_UserSessionList;
+	while( curgusr != NULL )
+	{
+		//DEBUG("[AppSession] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
+		if( loggedSession == curgusr->usersession )
+		{
+			break;
+		}
+		curgusr = (SASUList *) curgusr->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+
+	if( curgusr != NULL )
+	{
+		DEBUG("User is already on list\n");
+		return curgusr;
+	}
+
+	//
+	// user was not added  we must find it in system sessions
+	//
+
+	usrses = loggedSession;
+
+	if( usrses != NULL )
+	{
+		retListEntry = AppSessionAddUser( as, usrses, NULL );
+
+		DEBUG("[AppSession] newsession will be added %p\n", usrses );
+	} // if( usrses != NULL )
+
+	return retListEntry;
+}
+
+/**
  * Add usersession provided as string
  *
  * @param as application session
@@ -474,7 +537,7 @@ SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSessio
 	
 	if( sessid != NULL )
 	{
-		UserSession *usrses;
+		UserSession *usrses = NULL;
 
 		//
 		// we must check if  user is already in application session

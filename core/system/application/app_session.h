@@ -116,6 +116,12 @@ int AppSessionRemUsersessionAny( AppSession *as, UserSession *u );
 //
 //
 
+SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSession );
+
+//
+//
+//
+
 int AppSessionRemByWebSocket( AppSession *as, void *wc );
 
 //
