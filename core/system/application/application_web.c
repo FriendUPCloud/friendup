@@ -429,7 +429,7 @@ Application.checkDocumentSession = function( sasID = null )
 					int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
 					if( err == 0 )
 					{
-						int size = sprintf( buffer, "{ \"SASID\": \"%lu\" }", as->as_SASID  );
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->as_SASID, as->as_Type );
 						HttpAddTextContent( response, buffer );
 					}
 					else
@@ -673,10 +673,12 @@ Application.checkDocumentSession = function( sasID = null )
 			{
 				int error = 1;
 				
+				DEBUG("App session type: %d\n", as->as_Type );
 				// if session is open, we can add new users to list without asking for permission
 				if( as->as_Type == SAS_TYPE_OPEN )
 				{
 					SASUList *entry;
+					DEBUG("[ApplicationWebRequest] I will try to add session\n");
 					if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{
 						// just accept connection
