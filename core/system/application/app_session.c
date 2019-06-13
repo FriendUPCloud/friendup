@@ -1190,7 +1190,6 @@ int AppSessionSendOwnerMessage( AppSession *as, UserSession *sender, char *msg, 
 	
 	char *newmsg = NULL;
 	
-	
 	if( ( newmsg = FCalloc( length+256, sizeof(char) ) ) != NULL )
 	{
 		User *usend = sender->us_User;
