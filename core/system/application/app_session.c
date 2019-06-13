@@ -467,7 +467,7 @@ SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSessio
 	SASUList *retListEntry = NULL;
 	SystemBase *l = (SystemBase *)as->as_SB;
 	
-	DEBUG("[AppSession] sessid %s\n", sessid );
+	//DEBUG("[AppSession] sessid %s\n", sessid );
 	
 	UserSession *usrses = NULL;
 
