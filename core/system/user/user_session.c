@@ -112,9 +112,11 @@ void UserSessionDelete( UserSession *us )
 
 		// copy connection poiner to remove possibility of using it
 		UserSessionWebsocket *nwsc = us->us_WSConnections;
+		// We must do that here, becaouse lock on session is made in this function
+		AppSessionRemByWebSocket( lsb->sl_AppSessionManager->sl_AppSessions, us->us_WSConnections );
+		
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			AppSessionRemByWebSocket( lsb->sl_AppSessionManager->sl_AppSessions, us->us_WSConnections );
 			us->us_WSConnections = NULL;
 		
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSConnections );
