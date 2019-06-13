@@ -57,7 +57,7 @@ Application.receiveMessage = function( msg )
 			
 			// Avatar
 			var avatar = ge( 'Avatar' );
-			if ( avatar )
+			if( avatar )
 			{
 				var sm = new Module( 'system' );
 				sm.onExecuted = function( e, d ) 

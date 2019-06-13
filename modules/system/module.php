@@ -39,8 +39,6 @@ if( $level = $SqlDatabase->FetchObject( '
 		ug.UserGroupID = g.ID
 ' ) )
 {
-	
-	
 	$level = $level->Name;
 }
 else $level = false;

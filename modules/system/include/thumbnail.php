@@ -131,7 +131,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	// Output
 	$dest = imagecreatetruecolor( $width, $height );
 	imageantialias( $dest, true );
-	imagealphablending( $dest , false );
+	imagealphablending( $dest, false );
 	imagesavealpha( $dest, true );
 	imagesetinterpolation( $dest, IMG_BICUBIC );
 	$transparent = imagecolorallocatealpha( $dest, 255, 255, 255, 127 );
