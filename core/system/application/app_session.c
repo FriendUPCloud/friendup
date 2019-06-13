@@ -1156,8 +1156,14 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 					
 					int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->as_SASID, usend->u_Name, msg );
 					
-					msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
-					DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+					if( ali->usersession != NULL )
+					{
+						msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
+						if( ali->usersession != NULL && ali->usersession->us_User != NULL )
+						{
+							DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+						}
+					}
 					FFree( newmsg );
 				}
 				else
