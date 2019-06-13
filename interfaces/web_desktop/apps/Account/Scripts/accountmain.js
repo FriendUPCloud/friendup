@@ -57,13 +57,11 @@ Application.receiveMessage = function( msg )
 			
 			// Avatar
 			var avatar = ge( 'Avatar' );
-			if ( avatar )
+			if( avatar )
 			{
-				console.log( 'Getting avatar...' );
 				var sm = new Module( 'system' );
 				sm.onExecuted = function( e, d ) 
 				{
-					console.log( 'Result avatar: ', e, d );
 					if( e == 'ok' )
 					{
 						if( d )

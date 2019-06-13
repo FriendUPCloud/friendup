@@ -2845,6 +2845,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
 								
+									// Generate avatar
+									var sm = new Module( 'system' );
+									sm.execute( 'getsetting', { setting: 'avatar' } );
+								
 									// Remove splash screen
 									if( window.friendApp )
 									{
