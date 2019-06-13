@@ -106,11 +106,15 @@ void UserSessionDelete( UserSession *us )
             UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
         }
-	
+        SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
+
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
 		// copy connection poiner to remove possibility of using it
 		UserSessionWebsocket *nwsc = us->us_WSConnections;
+		// We must do that here, becaouse lock on session is made in this function
+		AppSessionRemByWebSocket( lsb->sl_AppSessionManager->sl_AppSessions, us->us_WSConnections );
+		
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_WSConnections = NULL;
