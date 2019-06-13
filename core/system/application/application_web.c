@@ -691,7 +691,8 @@ Application.checkDocumentSession = function( sasID = null )
 						char tmpmsg[ 255 ];
 						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
 						
-						int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+						int err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
+						//int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
 						if( err != 0 )
 						{
 						
