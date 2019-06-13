@@ -750,7 +750,16 @@ Application.checkDocumentSession = function( sasID = null )
 			
 				if( error == 0 )
 				{
-					int size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->as_UserSessionList->usersession->us_User->u_Name );
+					int size = 0;
+					
+					if( as->as_UserSessionList->usersession != NULL )
+					{
+						size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->as_UserSessionList->usersession->us_User->u_Name );
+					}
+					else
+					{
+						size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", "empty" );
+					}
 					HttpAddTextContent( response, buffer );
 				}
 				else

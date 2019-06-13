@@ -3942,7 +3942,7 @@ function CreateHelpBubble( element, text, uniqueid )
 		outListener: function( e )
 		{
 			if( helpBubble && helpBubble.widget )
-				helpBubble.widget.hide( function(){ helpBubble.widget.close(); } );
+				helpBubble.widget.hide( function(){ if( helpBubble && helpBubble.widget ) helpBubble.widget.close(); } );
 		}
 	};
 	element.helpBubble = helpBubble;

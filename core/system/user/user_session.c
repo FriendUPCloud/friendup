@@ -106,13 +106,15 @@ void UserSessionDelete( UserSession *us )
             UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
         }
-	
+        SystemBase *lsb = (SystemBase *)us->us_SB;
+
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
 		// copy connection poiner to remove possibility of using it
 		UserSessionWebsocket *nwsc = us->us_WSConnections;
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
+			AppSessionRemByWebSocket( lsb->sl_AppSessionManager->sl_AppSessions, us->us_WSConnections );
 			us->us_WSConnections = NULL;
 		
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSConnections );

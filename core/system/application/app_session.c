@@ -1008,7 +1008,6 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	
 	DEBUG("[AppSession] App session remove by WS\n");
 	
-	/*
 	FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
 	
 	while( as != NULL )
@@ -1020,7 +1019,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			if( le->usersession != NULL )
 			{
 				FRIEND_MUTEX_LOCK( &(le->usersession->us_Mutex) );
-				WebsocketClient *lws = le->usersession->us_WSClients;
+				UserSessionWebsocket *lws = le->usersession->us_WSConnections;
 				while( lws != NULL )
 				{
 					if( lws == ws )
@@ -1047,12 +1046,12 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 						
 						break;
 					}
-					if( lws->wc_UserSession == NULL )
+					if( lws->wusc_Data == NULL )
 					{
 						break;
 					}
 					
-					lws = (WebsocketClient *)lws->node.mln_Succ;
+					lws = (UserSessionWebsocket *)lws->node.mln_Succ;
 				}
 				FRIEND_MUTEX_UNLOCK( &(le->usersession->us_Mutex) );
 			}
@@ -1088,14 +1087,13 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			{
 				err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
 			}
-			* //
+			 //
 			
 			err = AppSessionRemUsersession( as, re->sasuentry->usersession );
 			
 			FFree( re );
 		}
 	}
-	*/
 	
 	if( ws->wusc_Data != NULL )
 	{
