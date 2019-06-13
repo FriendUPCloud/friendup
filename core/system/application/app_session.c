@@ -1196,9 +1196,15 @@ int AppSessionSendOwnerMessage( AppSession *as, UserSession *sender, char *msg, 
 		DEBUG("[AppSession] AS POINTER %p SENDER %p\n", as, usend );
 		int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, as->as_AuthID, as->as_SASID, usend->u_Name, msg );
 		
-		msgsndsize += WebSocketSendMessageInt( as->as_UserSessionList->usersession, newmsg, newmsgsize );
-		DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->as_UserSessionList->usersession->us_User->u_Name, msgsndsize );
-
+		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
+		{
+			if( as->as_UserSessionList != NULL )
+			{
+				msgsndsize += WebSocketSendMessageInt( as->as_UserSessionList->usersession, newmsg, newmsgsize );
+				DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->as_UserSessionList->usersession->us_User->u_Name, msgsndsize );
+			}
+			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
+		}
 		FFree( newmsg );
 	}
 	else
