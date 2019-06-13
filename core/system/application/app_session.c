@@ -1008,92 +1008,95 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	
 	DEBUG("[AppSession] App session remove by WS\n");
 	
-	FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
-	
-	while( as != NULL )
+	if( as != NULL )
 	{
-		SASUList *le = as->as_UserSessionList;
-		while( le != NULL )
+		FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
+	
+		while( as != NULL )
 		{
-			DEBUG("[AppSession] Going through User Sessions\n");
-			if( le->usersession != NULL )
+			SASUList *le = as->as_UserSessionList;
+			while( le != NULL )
 			{
-				FRIEND_MUTEX_LOCK( &(le->usersession->us_Mutex) );
-				UserSessionWebsocket *lws = le->usersession->us_WSConnections;
-				while( lws != NULL )
+				DEBUG("[AppSession] Going through User Sessions\n");
+				if( le->usersession != NULL )
 				{
-					if( lws == ws )
+					FRIEND_MUTEX_LOCK( &(le->usersession->us_Mutex) );
+					UserSessionWebsocket *lws = le->usersession->us_WSConnections;
+					while( lws != NULL )
 					{
-						RWSCon *ne = FCalloc( 1, sizeof( RWSCon ) );
-						if( ne != NULL )
+						if( lws == ws )
 						{
-							//FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-							ne->as = as;
-							ne->sasuentry = le;
+							RWSCon *ne = FCalloc( 1, sizeof( RWSCon ) );
+							if( ne != NULL )
+							{
+								//FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+								ne->as = as;
+								ne->sasuentry = le;
 							
-							if( root == NULL )
-							{
-								root = ne;
-								rwsentr = root;
+								if( root == NULL )
+								{
+									root = ne;
+									rwsentr = root;
+								}
+								else
+								{
+									rwsentr->next = ne;
+									rwsentr = ne;
+								}
 							}
-							else
-							{
-								rwsentr->next = ne;
-								rwsentr = ne;
-							}
-						}
-						//FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+							//FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 						
-						break;
-					}
-					if( lws->wusc_Data == NULL )
-					{
-						break;
-					}
+							break;
+						}
+						if( lws->wusc_Data == NULL )
+						{
+							break;
+						}
 					
-					lws = (UserSessionWebsocket *)lws->node.mln_Succ;
+						lws = (UserSessionWebsocket *)lws->node.mln_Succ;
+					}
+					FRIEND_MUTEX_UNLOCK( &(le->usersession->us_Mutex) );
 				}
-				FRIEND_MUTEX_UNLOCK( &(le->usersession->us_Mutex) );
+				le = (SASUList *)le->node.mln_Succ;
 			}
-			le = (SASUList *)le->node.mln_Succ;
+			as = (AppSession *)as->node.mln_Succ;
 		}
-		as = (AppSession *)as->node.mln_Succ;
-	}
 	
-	FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
+		FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
 	
-	rwsentr = root;
-	while( rwsentr != NULL )
-	{
-		DEBUG("[AppSession] Remove entry and spread message about that\n");
-		RWSCon *re = rwsentr;
-
-		rwsentr = rwsentr->next;
-		
-		if( re != NULL )
+		rwsentr = root;
+		while( rwsentr != NULL )
 		{
-			int err = 0;
-			// *
-			char tmpmsg[ 255 ];
-			int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->sasuentry->usersession->us_User->u_Name );
-			
-			DEBUG("[AppSession] Session found and will be removed\n");
-			
-			if( re->as->as_UserSessionList == re->sasuentry )
+			DEBUG("[AppSession] Remove entry and spread message about that\n");
+			RWSCon *re = rwsentr;
+
+			rwsentr = rwsentr->next;
+		
+			if( re != NULL )
 			{
-				err = AppSessionSendMessage( as, re->sasuentry->usersession, tmpmsg, msgsize, NULL );
-			}
-			else
-			{
-				err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
-			}
-			 //
+				int err = 0;
+				// *
+				char tmpmsg[ 255 ];
+				int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->sasuentry->usersession->us_User->u_Name );
 			
-			err = AppSessionRemUsersession( as, re->sasuentry->usersession );
+				DEBUG("[AppSession] Session found and will be removed\n");
 			
-			FFree( re );
+				if( re->as->as_UserSessionList == re->sasuentry )
+				{
+					err = AppSessionSendMessage( as, re->sasuentry->usersession, tmpmsg, msgsize, NULL );
+				}
+				else
+				{
+					err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
+				}
+				//
+			
+				err = AppSessionRemUsersession( as, re->sasuentry->usersession );
+			
+				FFree( re );
+			}
 		}
-	}
+	}	//  as == NULL
 	
 	if( ws->wusc_Data != NULL )
 	{
