@@ -1010,10 +1010,10 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	
 	if( as != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
-	
 		while( as != NULL )
 		{
+			FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
+			
 			SASUList *le = as->as_UserSessionList;
 			while( le != NULL )
 			{
@@ -1059,10 +1059,9 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 				}
 				le = (SASUList *)le->node.mln_Succ;
 			}
+			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
 			as = (AppSession *)as->node.mln_Succ;
 		}
-	
-		FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
 	
 		rwsentr = root;
 		while( rwsentr != NULL )
