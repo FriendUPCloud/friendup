@@ -1075,6 +1075,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			{
 				int err = 0;
 				// *
+				/*
 				char tmpmsg[ 255 ];
 				int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->sasuentry->usersession->us_User->u_Name );
 			
@@ -1089,6 +1090,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 					err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
 				}
 				//
+				*/
 			
 				err = AppSessionRemUsersession( as, re->sasuentry->usersession );
 			
