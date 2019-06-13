@@ -679,7 +679,10 @@ Application.checkDocumentSession = function( sasID = null )
 				{
 					SASUList *entry;
 					DEBUG("[ApplicationWebRequest] I will try to add session\n");
-					if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
+					
+					if( ( entry = AppSessionAddCurrentSession( as, loggedSession) ) != NULL )
+					
+					//if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{
 						// just accept connection
 						entry->status = SASID_US_ACCEPTED;
