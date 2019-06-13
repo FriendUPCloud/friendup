@@ -1203,7 +1203,7 @@ int AppSessionSendOwnerMessage( AppSession *as, UserSession *sender, char *msg, 
 				msgsndsize += WebSocketSendMessageInt( as->as_UserSessionList->usersession, newmsg, newmsgsize );
 				DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->as_UserSessionList->usersession->us_User->u_Name, msgsndsize );
 			}
-			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) )
+			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
 		}
 		FFree( newmsg );
 	}
