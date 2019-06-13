@@ -9,6 +9,24 @@
 *                                                                              *
 *****************************************************************************©*/
 
+// Dependency
+function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
+{
+	$rect = imagettfbbox($fontSize,$fontAngle,$fontFile,$text); 
+	$minX = min(array($rect[0],$rect[2],$rect[4],$rect[6])); 
+	$maxX = max(array($rect[0],$rect[2],$rect[4],$rect[6])); 
+	$minY = min(array($rect[1],$rect[3],$rect[5],$rect[7])); 
+	$maxY = max(array($rect[1],$rect[3],$rect[5],$rect[7])); 
+	return array( 
+	 "left"   => abs($minX) - 1, 
+	 "top"    => abs($minY) - 1, 
+	 "width"  => $maxX - $minX, 
+	 "height" => $maxY - $minY, 
+	 "box"    => $rect 
+	); 
+}
+// End dependency
+
 // TODO: Move this check to Friend Core when a user logs in! IMPORTANT!
 // Check storage folder
 // Sanitized username - make thumbnail cache
@@ -82,6 +100,67 @@ else if ( isset( $args->args->setting ) )
 		}
 		else $settings->$set = $s->Data;
 		die( 'ok<!--separate-->' . json_encode( $settings ) );
+	}
+	// Generate default avatar
+	if( $s->Key == 'avatar' )
+	{
+		if( !isset( $Config->DefaultPalette ) )
+		{
+			$palette = array( 
+				'#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 
+				'#34495E', '#E67E22', '#E74C3C', '#95A5A6' 
+			);			
+		}
+		else
+		{
+			$palette = explode( ',', $Config->DefaultPalette );
+		}
+		$hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
+		
+		$img = imagecreatetruecolor( 256, 256 );
+		imagealphablending( $img, false );
+		imagesavealpha( $img, true );
+		imageantialias( $img, true );
+		imagesetinterpolation( $img, IMG_BICUBIC );
+		
+		// Make transparentgim
+		$transparent = imagecolorallocatealpha( $img, 255, 255, 255, 127 );
+		imagefilledrectangle( $img, 0, 0, 256, 256, $transparent );
+		
+		// Draw color circle (3x the size)
+		$factor = 3 * 256;
+		$nimg = imagecreatetruecolor( $factor, $factor );
+		imageantialias( $nimg, true );
+		imagealphablending( $nimg, false );
+		imagesavealpha( $nimg, true );
+		imagefilledrectangle( $nimg, 0, 0, $factor, $factor, $transparent );
+		
+		// Get color
+		$r = hexdec( substr( $hex, 1, 2 ) );
+		$g = hexdec( substr( $hex, 3, 2 ) );
+		$b = hexdec( substr( $hex, 5, 2 ) );
+		$color = imagecolorallocate( $img, $r, $g, $b );
+		imagefilledellipse( $nimg, $factor >> 1, $factor >> 1, $factor, $factor, $color );
+		
+		// Copy resized version
+		imagecopyresampled( $img, $nimg, 0, 0, 0, 0, 256, 256, $factor, $factor );
+		
+		// Font path
+		$font = 'resources/themes/friendup12/fonts/Assistant-ExtraBold.ttf';
+		
+		// Draw letters
+		$color = imagecolorallocate( $img, 255, 255, 255 );
+		$initials = explode( ' ', $User->FullName );
+		$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
+		$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
+		imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
+		ob_start();
+		imagepng( $img );
+		$png = ob_get_clean();
+		$s->Data = 'data:image/png;base64,' . base64_encode( $png );
+		$s->Save();
+		$settings->avatar = $s->Data;
+		die( 'ok<!--separate-->' . json_encode( $settings ) );//die( $s->Data );
 	}
 	die( 'fail<!--separate-->{"response":"setting not found"}' );
 }
