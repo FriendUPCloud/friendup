@@ -131,19 +131,19 @@ mkdir -p "${current_backup_dir}/db"
 
 mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/frienddb_backup.sql
 
-if [ -z "$friendchat_db" ]
-then
-	echo "FriendChatDB backup will be skipped"
-else
-	mysqldump -u $login -p$password --databases $friendchat_db > ${current_backup_dir}/db/friendchatdb_backup.sql
-fi
+#if [ -z "$friendchat_db" ]
+#then
+#	echo "FriendChatDB backup will be skipped"
+#else
+#	mysqldump -u $login -p$password --databases $friendchat_db > ${current_backup_dir}/db/friendchatdb_backup.sql
+#fi
 
-if [ -z "$presence_db" ]
-then
-	echo "PresenceDB backup will be skipped"
-else
-	mysqldump -u $login -p$password --databases $presence_db > ${current_backup_dir}/db/presencedb_backup.sql
-fi
+#if [ -z "$presence_db" ]
+#then
+#	echo "PresenceDB backup will be skipped"
+#else
+#	mysqldump -u $login -p$password --databases $presence_db > ${current_backup_dir}/db/presencedb_backup.sql
+#fi
 
 #
 # Read additional properties from backup.cfg
@@ -183,7 +183,7 @@ then
 					elif [ $option = 2 ]; then
 						#directories name, path
 						comarray+=("SSHPASS=${password} sshpass -e ssh $port_small $user@$server 'mkdir -p $storepath$backup_file_name/${farray[0]}'")
-						comarray+=("SSHPASS=${password} sshpass -e rsync -raz -e 'ssh ${port_small}' ${f[1]}/* $user@$server:$storepath$backup_file_name/${f[0]}/")
+						comarray+=("SSHPASS=${password} sshpass -e rsync -raz -e 'ssh ${port_small}' ${farray[1]}/* $user@$server:$storepath$backup_file_name/${farray[0]}/")
 					fi
 				fi
 			fi
@@ -195,7 +195,7 @@ IFS=${OLDIFS}
 
 for line in "${comarray[@]}"; do
   #set $line
-  echo "===>${line}"
+  #echo "===>${line}"
   ${line} 
 done
 
