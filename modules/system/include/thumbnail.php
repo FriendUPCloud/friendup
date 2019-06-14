@@ -17,6 +17,7 @@ require_once( 'php/classes/file.php' );
 // Default thumbnail size
 $width = 56;
 $height = 48;
+$mode = 'crop';
 
 if( !isset( $args->path ) )
 {
@@ -30,6 +31,10 @@ if( isset( $args->width ) )
 if( isset( $args->height ) )
 {
 	$height = $args->height;
+}
+if( isset( $args->mode ) )
+{
+	$mode = $args->mode;
 }
 
 // Sanitized username
@@ -127,15 +132,6 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	}
 		
 	imageantialias( $source, true );
-		
-	// Output
-	$dest = imagecreatetruecolor( $width, $height );
-	imageantialias( $dest, true );
-	imagealphablending( $dest, false );
-	imagesavealpha( $dest, true );
-	imagesetinterpolation( $dest, IMG_BICUBIC );
-	$transparent = imagecolorallocatealpha( $dest, 255, 255, 255, 127 );
-	imagefilledrectangle( $dest, 0, 0, $width, $height, $transparent );
 	
 	// Place thumbnail to the center
 	// First try width
@@ -147,9 +143,32 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		$rh = $height;
 		$rw = $iw / $ih * $height;
 	}
-	// Center
-	$y = $height - $rh;
-	$x = $width / 2 - ( $rw / 2 );
+	
+	// Output
+	if( $mode == 'resize' )
+	{
+		$width = $rw;
+		$height = $rh;
+	}
+	$dest = imagecreatetruecolor( $width, $height );	
+	imageantialias( $dest, true );
+	imagealphablending( $dest, false );
+	imagesavealpha( $dest, true );
+	imagesetinterpolation( $dest, IMG_BICUBIC );
+	$transparent = imagecolorallocatealpha( $dest, 255, 255, 255, 127 );
+	imagefilledrectangle( $dest, 0, 0, $width, $height, $transparent );
+	
+	if( $mode == 'crop' )
+	{
+		// Center
+		$y = $height - $rh;
+		$x = $width / 2 - ( $rw / 2 );		
+	}
+	else
+	{
+		$x = $y = 0;
+	}
+
 	// Resize
 	imagecopyresampled( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
 	

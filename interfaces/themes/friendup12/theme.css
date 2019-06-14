@@ -371,8 +371,8 @@ html .Screen > .ScreenContent
 
 html body .Screen > .TitleBar.Busy:after 
 {
-    clip-path: ellipse(9px 9px at 10px 10px);
-    -webkit-clip-path: ellipse(9px 9px at 10px 10px);
+    /*clip-path: ellipse(9px 9px at 10px 10px);
+    -webkit-clip-path: ellipse(9px 9px at 10px 10px);*/
 }
 
 /* Views not activated for mobile ------------------------------------------- */
@@ -1272,6 +1272,11 @@ body[mobile] .Desklet .Launcher.MousePointer > span
 	top: 60px;
 }
 
+.Desklet .Launcher.Startmenu
+{
+	background-image: url(/themes/friendup12/gfx/AppsMenu.svg) !important;
+}
+
 html .Desklet.HasWindowlist
 {
 	background-color: rgba(0,0,0,0.4);
@@ -1538,10 +1543,10 @@ html .Screen > .TitleBar:after
 {
 	content: " ";
 	position: absolute;
-    top: 3px;
+    top: 2px;
     left: 9px;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background-size: contain;
     background-image: url(/iconthemes/friendup15/ScreenLogo.svg);
 }

@@ -3971,9 +3971,10 @@ var View = function( args )
 	// Sets rich content in a safe iframe
 	this.setRichContent = function( content )
 	{
+		if( !this._window ) return;
+		
 		// Rich content still can't have any scripts!
 		content = this.removeScriptsFromData( content );
-
 		var eles = this._window.getElementsByTagName( _viewType );
 		var ifr = false;
 		if( eles[0] )
