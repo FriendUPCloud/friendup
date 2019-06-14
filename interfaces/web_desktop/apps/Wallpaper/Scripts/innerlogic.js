@@ -109,9 +109,12 @@ Application.showImages = function()
 					fname = fname.split( '/' );
 					fname = fname[fname.length - 1];
 				}
+				
+				var ur = '/system.library/module/?module=system&command=thumbnail&width=568&height=320&sessionid=' + Workspace.sessionId + '&path=' + arr[a];
+				
 				ml += '<div class="MousePointer WPImage' + cl + '"><div class="Remove MousePointer IconSmall fa-remove" onclick="Application.removeImage(' + (a+1) + ')">&nbsp;</div><div class="Thumb" onclick="Application.setImage(' + 
 					(a+1) + ');" style="background-image: url(' + 
-					getImageUrl( arr[a] ) + ');"><div>' + fname + '</div></div></div>';
+					ur + ');"><div>' + fname + '</div></div></div>';
 			}
 		}
 		
