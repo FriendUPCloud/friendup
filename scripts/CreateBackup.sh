@@ -131,6 +131,7 @@ mkdir -p "${current_backup_dir}/db"
 
 mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/frienddb_backup.sql
 
+# disable automatic FriendChat/Presence database backup
 #if [ -z "$friendchat_db" ]
 #then
 #	echo "FriendChatDB backup will be skipped"
@@ -145,6 +146,8 @@ mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/f
 #	mysqldump -u $login -p$password --databases $presence_db > ${current_backup_dir}/db/presencedb_backup.sql
 #fi
 
+cfg_section_Backup
+
 #
 # Read additional properties from backup.cfg
 #
@@ -152,7 +155,7 @@ mysqldump -u $login -p$password --databases $dbname > ${current_backup_dir}/db/f
 input="backup.cfg"
 option=0
 
-comarray=()	#array of commands
+comarray=()     #array of commands
 
 OLDIFS=${IFS}
 
@@ -171,19 +174,22 @@ then
 			option=2
 		else
 			locvar=${farray[0]}
-			if [ ! -z "$locvar" ]
-			then
+			if [ ! -z "$locvar" ]; then
 				firstchar=${locvar:0:1}
 				if [ $firstchar = '#' ]; then
 					echo "Line skipped"
 				else
 					if [ $option = 1 ]; then
 						#database name, login, password, dbname
-						comarray+=("mysqldump -u ${farray[1]} -p${farray[2]} --databases ${farray[3]} > ${current_backup_dir}/db/${farray[0]}.sql")
+						#comarray+=("mysqldump -u ${farray[1]} -p${farray[2]} --databases ${farray[3]} > ${current_backup_dir}/db/${farray[0]}.sql")
+						mysqldump -u ${farray[1]} -p${farray[2]} --databases ${farray[3]} > ${current_backup_dir}/db/${farray[0]}.sql
 					elif [ $option = 2 ]; then
+						#echo "Line: ${farray[0]}"
 						#directories name, path
+						#SSHPASS=${password} sshpass -e ssh $port_small $user@$server 'mkdir -p $storepath$backup_file_name/${farray[0]}'
+						#SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${farray[1]}/* $user@$server:$storepath$backup_file_name/${farray[0]}/
 						comarray+=("SSHPASS=${password} sshpass -e ssh $port_small $user@$server 'mkdir -p $storepath$backup_file_name/${farray[0]}'")
-						comarray+=("SSHPASS=${password} sshpass -e rsync -raz -e 'ssh ${port_small}' ${farray[1]}/* $user@$server:$storepath$backup_file_name/${farray[0]}/")
+						comarray+=("SSHPASS=${password} sshpass -e rsync -raz -e \"ssh ${port_small}\" ${farray[1]}/* $user@$server:$storepath$backup_file_name/${farray[0]}/")
 					fi
 				fi
 			fi
@@ -194,10 +200,11 @@ fi
 IFS=${OLDIFS}
 
 for line in "${comarray[@]}"; do
-  #set $line
-  #echo "===>${line}"
-  ${line} 
+	#set $line
+	echo "===>${line}"
+	eval ${line}
 done
+
 
 
 #
@@ -205,7 +212,6 @@ done
 #
 
 echo "$(date +%Y-%m-%d-%T): Copy generated files" >> ${log_file}
-cfg_section_Backup
 git branch > ${current_backup_dir}/git_info
 git rev-parse HEAD >> ${current_backup_dir}/git_info
 SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" ${current_backup_dir}/db/*.sql $user@$server:$storepath$backup_file_name/ >> ${log_file} 2>&1
