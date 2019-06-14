@@ -152,36 +152,53 @@ fi
 input="backup.cfg"
 option=0
 
+comarray=()	#array of commands
+
+OLDIFS=${IFS}
+
+# check if backup.cfg exist
 if [ -f "$input" ]
 then
-	cat "${input}" | while IFS=, read f1 f2 f3 f4 f5
+	declare -a comarray
+
+	while IFS=, read -r -a farray
 	do
-		if [ "$f1" = "databases" ]
-		then
-			echo "Databases found!"
+		#echo "Line : ${farray[0]}  option ${option}"
+
+		if [ "${farray[0]}" = "databases" ]; then
 			option=1
-		elif [ "$f1" = "directories" ]; then
-			echo "Directories found!"
+		elif [ "${farray[0]}" = "directories" ]; then
 			option=2
 		else
-    
-		firstchar=${f1:0:1}
-		if [ $firstchar = '#' ]; then
-			echo "Line skipped"
-		else
-		    if [ $option = 1 ]; then
-					#database name, login, password, dbname
-					mysqldump -u $f2 -p$f3 --databases $f4 > ${current_backup_dir}/db/${f1}.sql
-				elif [ $option = 2 ]
-				then
-					#directories name, path
-					SSHPASS=${password} sshpass -e ssh $port_small $user@$server "mkdir -p $storepath$backup_file_name/$f1"
-					SSHPASS=${password} sshpass -e rsync -raz -e "ssh ${port_small}" $f2/* $user@$server:$storepath$backup_file_name/$f1/ >> ${log_file} 2>&1
+			locvar=${farray[0]}
+			if [ ! -z "$locvar" ]
+			then
+				firstchar=${locvar:0:1}
+				if [ $firstchar = '#' ]; then
+					echo "Line skipped"
+				else
+					if [ $option = 1 ]; then
+						#database name, login, password, dbname
+						comarray+=("mysqldump -u ${farray[1]} -p${farray[2]} --databases ${farray[3]} > ${current_backup_dir}/db/${farray[0]}.sql")
+					elif [ $option = 2 ]; then
+						#directories name, path
+						comarray+=("SSHPASS=${password} sshpass -e ssh $port_small $user@$server 'mkdir -p $storepath$backup_file_name/${farray[0]}'")
+						comarray+=("SSHPASS=${password} sshpass -e rsync -raz -e 'ssh ${port_small}' ${f[1]}/* $user@$server:$storepath$backup_file_name/${f[0]}/")
+					fi
 				fi
 			fi
 		fi
-	done
+	done < "${input}"
 fi
+
+IFS=${OLDIFS}
+
+for line in "${comarray[@]}"; do
+  #set $line
+  echo "===>${line}"
+  ${line} 
+done
+
 
 #
 # Copy generated files
