@@ -1063,6 +1063,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			as = (AppSession *)as->node.mln_Succ;
 		}
 	
+		DEBUG("Remove session from SAS, pointer %p\n", root );
 		rwsentr = root;
 		while( rwsentr != NULL )
 		{
@@ -1092,7 +1093,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 				//
 				*/
 			
-				err = AppSessionRemUsersession( as, re->sasuentry->usersession );
+				err = AppSessionRemUsersession( re->as, re->sasuentry->usersession );
 			
 				FFree( re );
 			}

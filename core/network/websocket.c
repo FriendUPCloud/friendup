@@ -742,7 +742,8 @@ int DetachWebsocketFromSession( WSCData *data )
 		return 0;
 	}
 	
-	AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, data->wsc_WebsocketsServerClient );
+	// disabled for a moment, only logout should trigger that
+	//AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, data->wsc_WebsocketsServerClient );
 	
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
