@@ -61,6 +61,12 @@ int AppSessionManagerRemSession( AppSessionManager *as, AppSession *nas );
 //
 //
 
+int AppSessionManagerRemUserSession( AppSessionManager *as, UserSession *ses );
+
+//
+//
+//
+
 AppSession *AppSessionManagerGetSession( AppSessionManager *as, FUQUAD id );
 
 #endif // __APP_SESSION_MANAGER_H__

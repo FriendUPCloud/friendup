@@ -48,10 +48,13 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 	{
 		DEBUG("[UserSessionWebsocketDelete] Close\n");
 		
+		// Disabled, connection should be removed when user session is closed
+		/*
 		if( SLIB != NULL && SLIB->sl_AppSessionManager != NULL )
 		{
 			AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
 		}
+		*/
 		
 		Log( FLOG_DEBUG, "\n[UserSessionWebsocketDelete] connection will be removed\n\n");
 		WSCData *data = (WSCData *)cl->wusc_Data;

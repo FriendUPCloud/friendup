@@ -209,3 +209,65 @@ AppSession *AppSessionManagerGetSession( AppSessionManager *as, FUQUAD id )
 	}
 	return NULL;
 }
+
+/**
+ * Remove user session from manager
+ *
+ * @param asm application session manager
+ * @param ses pointer to user session which will be removed
+ * @return 0 if success, otherwise error number
+ */
+
+int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
+{
+	AppSession *as = asm->sl_AppSessions;
+	while( as != NULL )
+	{
+		AppSession *toBeRemoved = NULL;
+		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
+		{
+			SASUList *le = as->as_UserSessionList;
+			SASUList *ple = as->as_UserSessionList;
+			
+			while( le != NULL )
+			{
+				if( le->usersession == ses )
+				{
+					// if first entry must be removed
+					if( le == as->as_UserSessionList )
+					{
+						as->as_UserSessionList = (SASUList *)le->node.mln_Succ;
+						FFree( le );
+						le = as->as_UserSessionList;
+						ple = as->as_UserSessionList;
+					}
+					else
+					{
+						ple->node.mln_Succ = (MinNode *)le->node.mln_Succ;
+						FFree( le );
+					}
+					as->as_UserNumber--;
+					if( as->as_UserNumber <= 0 )
+					{
+						toBeRemoved = as;
+					}
+				}
+				else
+				{
+					ple = le;
+				}
+				le = (SASUList *)le->node.mln_Succ;
+			}
+			
+			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
+			as = (AppSession *)as->node.mln_Succ;
+		}
+		
+		if( toBeRemoved != NULL )
+		{
+			AppSessionDelete( toBeRemoved );
+		}
+	}
+	
+	return 0;
+}
