@@ -220,6 +220,11 @@ AppSession *AppSessionManagerGetSession( AppSessionManager *as, FUQUAD id )
 
 int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 {
+	if( asm == NULL )
+	{
+		FERROR("SAS was removed\n");
+		return -1;
+	}
 	AppSession *as = asm->sl_AppSessions;
 	while( as != NULL )
 	{
