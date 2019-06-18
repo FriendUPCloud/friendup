@@ -17,6 +17,7 @@ echo "WorkingDirectory=$FRIEND_RUN_DIRECTORY" >> $TMP
 echo "ExecStart=$FRIEND_RUN_DIRECTORY/FriendCore" >> $TMP
 echo 'Restart=always' >> $TMP
 echo 'RestartSec=3' >> $TMP
+echo 'StandardOutput=null' >> $TMP
 
 echo '[Install]' >> $TMP
 echo 'WantedBy=multi-user.target' >> $TMP

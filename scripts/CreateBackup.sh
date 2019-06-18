@@ -271,7 +271,10 @@ if [ -z "$storepath" ]
 then
 	echo "'storepath' is empty, cannot use empty path to remove remote data"
 else
-	SSHPASS=${password} sshpass -e ssh $port_small $user@$server "find $storepath -mtime +7 -maxdepth 1  -exec rm -rf {} \;"
+	VALUE=$(SSHPASS=${password} sshpass -e ssh $port_small $user@$server "find $storepath  -maxdepth 1 -type f | wc -l")
+	if [ "${VALUE}" -gt "1" ]; then
+		SSHPASS=${password} sshpass -e ssh $port_small $user@$server "find $storepath -mtime +7 -maxdepth 1  -exec rm -rf {} \;"
+	fi
 fi
 
 echo "$(date +%Y-%m-%d-%T): Backup complete" >> ${log_file}

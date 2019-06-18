@@ -293,6 +293,7 @@ void Log( int lev, char* fmt, ...)
         } // file level
     } // to file
 
+#ifdef __DEBUG
 	// console output will be used for debug
     if( slg.ff_ToConsole == 1 && lev >= slg.ff_Level )
     {
@@ -303,4 +304,5 @@ void Log( int lev, char* fmt, ...)
         vprintf( fmt, args);
         va_end(args);
     }
+#endif
 }
