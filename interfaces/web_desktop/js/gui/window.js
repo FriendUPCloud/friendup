@@ -1053,7 +1053,10 @@ function _ActivateWindow( div, nopoll, e )
 		{
 			if( window.currentMovable != div )
 				window.currentMovable = div;
+			
 		}
+		if( globalConfig.focusMode == 'clicktofront' )
+			_WindowToFront( div );
 		return;
 	}
 	
