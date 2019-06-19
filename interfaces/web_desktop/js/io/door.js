@@ -624,7 +624,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 
 	// Special case for 'copy' if destination is a Dormant drive
 	var dr = this;
-	if ( ofunc == 'copy' )
+	if( ofunc == 'copy' )
 	{
 		var drive = args[ 'to' ].split( ':' )[ 0 ] + ':';
 		var doors = DormantMaster.getDoors();
