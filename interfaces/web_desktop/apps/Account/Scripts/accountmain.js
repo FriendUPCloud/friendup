@@ -1067,7 +1067,7 @@ function saveDia()
 	
 	// Get save object
 	var obj = {
-		fullname: htmlentities( ge( 'UserAccFullname' ).value ),
+		fullname: ( ge( 'UserAccFullname' ).value ),
 		name:     htmlentities( ge( 'UserAccUsername' ).value ),
  		email:    ge( 'UserAccEmail' ).value
 	};
