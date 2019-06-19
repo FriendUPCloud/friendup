@@ -202,7 +202,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *lali = (SASUList *)as->as_UserSessionList;
-		SASUList *endli =lali;
+		SASUList *endli = lali;
 		while( lali != NULL )
 		{
 			// we check if device was added
@@ -243,7 +243,14 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 			ali->ID = as->as_NumberGenerator++;
 			//ali->node.mln_Succ = (MinNode *)as->as_UserList;
 			ali->usersession = u;
-			endli->node.mln_Succ  =  (MinNode *)ali;
+			if( endli == NULL )
+			{
+				as->as_UserSessionList = endli = ali;
+			}
+			else
+			{
+				endli->node.mln_Succ  =  (MinNode *)ali;
+			}
 			//as->as_UserList = ali;
 			if( authid != NULL )
 			{
