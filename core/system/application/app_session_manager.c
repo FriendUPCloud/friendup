@@ -229,6 +229,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 	while( as != NULL )
 	{
 		AppSession *toBeRemoved = NULL;
+		DEBUG("Lock on AS set\n");
 		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
 		{
 			SASUList *le = as->as_UserSessionList;
@@ -236,8 +237,10 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 			
 			while( le != NULL )
 			{
+				DEBUG("Going through user sessions, le->session %p session %p\n", le->usersession, ses );
 				if( le->usersession == ses )
 				{
+					DEBUG("Remove entry le %p - root list %p\n", le, as->as_UserSessionList );
 					// if first entry must be removed
 					if( le == as->as_UserSessionList )
 					{
@@ -251,14 +254,18 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 						ple->node.mln_Succ = (MinNode *)le->node.mln_Succ;
 						FFree( le );
 					}
+					DEBUG("AS pointer %p\n", as );
 					as->as_UserNumber--;
+					DEBUG("Number of users: %d\n", as->as_UserNumber );
 					if( as->as_UserNumber <= 0 )
 					{
 						toBeRemoved = as;
+						DEBUG("I will remove session %p\n", toBeRemoved );
 					}
 				}
 				else
 				{
+					DEBUG("previous le = le\n");
 					ple = le;
 				}
 				le = (SASUList *)le->node.mln_Succ;
@@ -266,11 +273,11 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 			
 			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
 			as = (AppSession *)as->node.mln_Succ;
-		}
-		
-		if( toBeRemoved != NULL )
-		{
-			AppSessionDelete( toBeRemoved );
+			
+			if( toBeRemoved != NULL )
+			{
+				AppSessionDelete( toBeRemoved );
+			}
 		}
 	}
 	
