@@ -5049,7 +5049,7 @@ var View = function( args )
 								v.appendChild( canv );
 								var ctx = canv.getContext( '2d' );
 								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
-								var dt = canv.toDataURL();
+								var dt = canv.toDataURL( 'image/png', 1 );
 						
 								// Stop taking video
 								dd.srcObject.getTracks().forEach(track => track.stop())
