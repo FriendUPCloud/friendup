@@ -384,6 +384,7 @@ function AddNotificationEvent( evt )
 	).toString();
 	evt.uniqueId = uniqueId;
 	Workspace.notificationEvents.push( evt );
+	console.log( 'Added notification event.' );
 	return uniqueId;
 }
 
