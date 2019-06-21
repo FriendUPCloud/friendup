@@ -774,6 +774,7 @@ var WorkspaceInside = {
 						// Function to set the notification as read...
 						function notificationRead()
 						{
+							console.log( 'Foo bar: ', msg.notificationData );
 							if( window.friendApp && Workspace.currentViewState == 'active' )
 							{
 								if( trash )
