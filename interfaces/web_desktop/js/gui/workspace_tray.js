@@ -541,6 +541,7 @@ function Notify( message, callback, clickcallback )
 		clickCallback: clickcallback
 	};
 	var notificationId = AddNotificationEvent( nev );
+	console.log( 'What?', message );
 
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
