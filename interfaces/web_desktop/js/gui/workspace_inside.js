@@ -727,7 +727,7 @@ var WorkspaceInside = {
 		{
 			var messageRead = trash = false;
 			
-			console.log( 'Handling notifications: ', nmsg );
+			//console.log( 'Handling notifications: ', nmsg );
 			
 			if( isMobile )
 			{
@@ -744,7 +744,7 @@ var WorkspaceInside = {
 					}
 					
 					// Revert to push notifications on the OS side
-					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
+					Notify( { title: nmsg.title, text: nmsg.text, notificationId: nmsg.notificationData.id }, null, clickCallback );
 					return;
 				}
 			}
@@ -776,7 +776,7 @@ var WorkspaceInside = {
 						// Function to set the notification as read...
 						function notificationRead()
 						{
-							console.log( 'Foo bar: ', msg.notificationData );
+							//console.log( 'Foo bar: ', msg.notificationData );
 							if( Workspace.currentViewState == 'active' )
 							{
 								if( trash )
@@ -820,7 +820,7 @@ var WorkspaceInside = {
 							}
 						}
 					
-						console.log( 'Could not find application ' + appName );
+						//console.log( 'Could not find application ' + appName );
 					
 						// Application not found? Start it!
 						// Send message to app once it has started...
