@@ -296,7 +296,7 @@ Calendar.prototype.drawMonthname = function()
 CalendarEvent = function( data )
 {
 	var self = this;
-	console.log( 'CalendarEvent', data );
+	//console.log( 'CalendarEvent', data );
 	data.Type = 'CalendarEvent';
 	self.data = data;
 	return self.init();
