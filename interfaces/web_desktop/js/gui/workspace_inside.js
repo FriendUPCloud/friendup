@@ -727,6 +727,8 @@ var WorkspaceInside = {
 		{
 			var messageRead = trash = false;
 			
+			console.log( 'Handling notifications: ', nmsg );
+			
 			if( isMobile )
 			{
 				// TODO: Determine if this will ever occur. If the viewstate isn't active
@@ -751,6 +753,7 @@ var WorkspaceInside = {
 			
 			function handleNotificationData( msg )
 			{
+				console.log( 'Got notification data: ', msg );
 				// Check if we have notification data
 				if( msg.notificationData )
 				{
