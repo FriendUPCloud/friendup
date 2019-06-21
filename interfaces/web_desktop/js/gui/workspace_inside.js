@@ -777,13 +777,15 @@ var WorkspaceInside = {
 						function notificationRead()
 						{
 							console.log( 'Foo bar: ', msg.notificationData );
-							if( window.friendApp && Workspace.currentViewState == 'active' )
+							if( Workspace.currentViewState == 'active' )
 							{
 								if( trash )
 									clearTimeout( trash );
 								messageRead = true;
 								var l = new Library( 'system.library' );
-								l.onExecuted = function(){};
+								l.onExecuted = function( e, d ){
+									console.log( 'Did we tell fc that we read the notification?', e, d );
+								};
 								l.execute( 'mobile/updatenotification', { 
 									notifid: msg.notificationData.id, 
 									action: 1, 
