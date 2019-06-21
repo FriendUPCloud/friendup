@@ -753,7 +753,6 @@ var WorkspaceInside = {
 			
 			function handleNotificationData( msg )
 			{
-				console.log( 'Got notification data: ', msg );
 				// Check if we have notification data
 				if( msg.notificationData )
 				{
@@ -818,6 +817,8 @@ var WorkspaceInside = {
 								return;
 							}
 						}
+					
+						console.log( 'Could not find application ' + appName );
 					
 						// Application not found? Start it!
 						// Send message to app once it has started...
