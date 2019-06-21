@@ -426,6 +426,8 @@ function Notify( message, callback, clickcallback )
 	if( !Workspace.notifications ) return;
 	if( !message ) return;
 	
+	console.log( 'What notification?', message );
+	
 	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
 	// Not active?
