@@ -2798,8 +2798,8 @@ function apiWrapper( event, force )
 					// should be done when an application closes.
 					// - actually, this stuff should be a permission
 					var regId = Workspace.conn.registeredApps[ app.authId ];
-					if ( regId )
-						Workspace.conn.off( app.authId, regId );
+					//if ( regId )
+					//	Workspace.conn.off( app.authId, regId );
 
 					var id = Workspace.conn.on( app.authId, fconnMsg );
 					Workspace.conn.registeredApps[ app.authId ] = id;
