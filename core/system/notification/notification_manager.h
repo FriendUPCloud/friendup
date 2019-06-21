@@ -33,6 +33,8 @@
 #define APNS_HOST "gateway.push.apple.com"
 #define APNS_PORT 2195
 
+#define FIREBASE_HOST "fcm.googleapis.com"
+
 #define DEVICE_BINARY_SIZE 32
 #define MAXPAYLOAD_SIZE 4032
 
@@ -63,6 +65,8 @@ typedef struct NotificationManager
 	char						*nm_APNSCert;
 	time_t						nm_APNSNotificationTimeout;
 	FBOOL						nm_APNSSandBox;
+	char						*nm_FirebaseKey;
+	char						*nm_FirebaseHost;
 	
 	int							nm_NumberOfLaunchedThreads;
 	ExternalServerConnection	*nm_ESConnections;
@@ -101,6 +105,8 @@ int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm );
 void NotificationManagerTimeoutThread( FThread *data );
 
 int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
+
+int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 

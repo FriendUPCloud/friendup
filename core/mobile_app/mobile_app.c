@@ -1224,6 +1224,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	//unsigned int jsonMessageLength = strlen( jsonMessage + LWS_PRE);
 	// if message was already sent
 	// this means that user got msg on Workspace
+	
+	/*
 	if( userConnections != NULL )
 	{
 		//DEBUG("Send: <%s>\n", jsonMessage );
@@ -1331,6 +1333,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	// select all connections without usermobileappid and store message for them in database
 	
+	//int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notification *notif, FULONG ID, char *tokens )
+	
 	if( wsMessageSent == FALSE )
 	{
 		UserMobileApp *root = MobleManagerGetMobileAppByUserPlatformAndNotInDBm( sb->sl_MobileManager, userID , MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, bsMobileReceivedMessage->bs_Buffer );
@@ -1355,6 +1359,20 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			NotificationSentDelete( lns );
 		}
 	}
+	*/
+	
+	if( wsMessageSent == FALSE )
+	{
+		BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED );
+		if( bs != NULL )
+		{
+			NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+			Log( FLOG_INFO, "Android tokens which should get notification: %s", bs->bs_Buffer );
+			BufStringDelete( bs );
+		}
+		//UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, FALSE );
+	}
+	
 	/*				
 	// this way all of devices which were not avaiable during sending will get message
 	// they will not get them in one case, when Notification attached to it will be removed
@@ -1484,7 +1502,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		FERROR("\n\n\n\nCannot find notification!\n");
 		return 1;
 	}
-	
+	/*
 	// allocate memory for message
 	
 	char *jsonMessage = FMalloc( reqLengith );
@@ -1513,7 +1531,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		DEBUG("compare actions %d = %d\n", action, NOTIFY_ACTION_READ );
 		if( action == NOTIFY_ACTION_READ )
 		{
-			
+			*/
 			/*
 			switch( notif->n_NotificationType )
 			{
@@ -1574,6 +1592,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 				default: FERROR("**************** UNIMPLEMENTED %d\n", notif->n_NotificationType);
 			}
 			*/
+			/*
 		}
 		//
 		// seems noone readed message on desktop, we must inform all user channels that we have package for him
@@ -1581,6 +1600,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		else if( action == NOTIFY_ACTION_TIMEOUT )
 		{
 			DEBUG("modify\n");
+			
 			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 			{
 				DEBUG("[MobileAppNotifyUserUpdate]: Send to %d\n", i );
@@ -1657,7 +1677,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 				}
 				
 			}
-			
+		//UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, FALSE );
 		}
 		
 		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
@@ -1670,7 +1690,10 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	{
 		FERROR("User <%s> does not have any app WS connections\n", username);
 	}
+	*/
 	
+	
+	/*
 	// select all connections without usermobileappid and store message for them in database
 	// new messages must be created only when timeout appear
 	if( action == NOTIFY_ACTION_TIMEOUT )
@@ -1699,11 +1722,20 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 			NotificationSentDelete( lns );
 		}
 	}
-	/*				
+					
 	// this way all of devices which were not avaiable during sending will get message
 	// they will not get them in one case, when Notification attached to it will be removed
-	 */
+	 
 	BufStringDelete( bsMobileReceivedMessage );
+	*/
+	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED );
+	if( bs != NULL )
+	{
+		NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s", bs->bs_Buffer );
+		BufStringDelete( bs );
+	}
 	
 	//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	
@@ -1794,7 +1826,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		INFO("[MobileAppNotifyUserUpdate]: No A!\n");
 	}
 	
-	FFree( jsonMessage );
+	//FFree( jsonMessage );
 	
 	//NotificationDelete( notif );
 	

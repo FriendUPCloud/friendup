@@ -74,6 +74,8 @@ char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID );
 
 UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status, FBOOL logged );
 
+BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG userID, int type, int status );
+
 UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, int status, const char *ids );
 
 #endif //__SYSTEM_MOBILE_MOBILE_MANAGER_H__

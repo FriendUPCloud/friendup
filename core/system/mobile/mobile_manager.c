@@ -900,7 +900,7 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 //				lma->uma_AppToken 
 				char *qery = FMalloc( 1048 );
 				qery[ 1024 ] = 0;
-				lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu AND us.DeviceIdentity LIKE CONCAT('%', uma.AppToken, '%') AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", userID );
+				lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND us.DeviceIdentity LIKE CONCAT('%', uma.AppToken, '%') AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
 				void *res = lsqllib->Query( lsqllib, qery );
 				if( res != NULL )
 				{
@@ -952,6 +952,63 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	return uma;
+}
+
+/**
+ * Get User Mobile Connections from database by user ID and platform
+ *
+ * @param mmgr pointer to MobileManager
+ * @param userID ID of user to which mobile apps belong
+ * @param type type of mobile apps
+ * @param status status of device
+ * @return pointer to tokens in buffered string
+ */
+BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG userID, int type, int status )
+{
+	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
+	{
+		return NULL;
+	}
+	char *mobileType = NULL;
+	mobileType = MobileAppType[ type ];
+	
+	DEBUG("--------------MobleManagerAppTokensByUserPlatformDB\n");
+
+	BufString *bs = BufStringNew();
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		char *qery = FMalloc( 1048 );
+		qery[ 1024 ] = 0;
+		lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+		void *res = lsqllib->Query( lsqllib, qery );
+		if( res != NULL )
+		{
+			int pos = 0;
+			char **row;
+			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+			{
+				char temp[ 512 ];
+				int sizeAdd = 0;
+				
+				if( pos == 0 )
+				{
+					sizeAdd = snprintf( temp, sizeof(temp), "\"%s\"", row[0] );
+				}
+				else
+				{
+					sizeAdd = snprintf( temp, sizeof(temp), ",\"%s\"", row[0] );
+				}
+				pos++;
+				BufStringAddSize( bs, temp, sizeAdd );
+			}
+			lsqllib->FreeResult( lsqllib, res );
+		}
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return bs;
 }
 
 /**
