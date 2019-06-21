@@ -995,11 +995,11 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 				
 				if( pos == 0 )
 				{
-					sizeAdd = snprintf( temp, sizeof(temp), "\"%s\"", row[0] );
+					sizeAdd = snprintf( temp, sizeof(temp), "\"%s\"", row[1] );
 				}
 				else
 				{
-					sizeAdd = snprintf( temp, sizeof(temp), ",\"%s\"", row[0] );
+					sizeAdd = snprintf( temp, sizeof(temp), ",\"%s\"", row[1] );
 				}
 				pos++;
 				BufStringAddSize( bs, temp, sizeAdd );
