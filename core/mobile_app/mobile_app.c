@@ -1366,7 +1366,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED );
 		if( bs != NULL )
 		{
-			NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+			NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );
+			//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
 			Log( FLOG_INFO, "Android tokens which should get notification: %s", bs->bs_Buffer );
 			BufStringDelete( bs );
 		}
@@ -1732,7 +1733,8 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED );
 	if( bs != NULL )
 	{
-		NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
+		NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
 		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s", bs->bs_Buffer );
 		BufStringDelete( bs );
 	}
