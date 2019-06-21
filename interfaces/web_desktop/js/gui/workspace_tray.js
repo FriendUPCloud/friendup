@@ -426,6 +426,8 @@ function Notify( message, callback, clickcallback )
 	if( !Workspace.notifications ) return;
 	if( !message ) return;
 	
+	console.log( 'What notification?', message );
+	
 	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
 	// Not active?
@@ -541,7 +543,6 @@ function Notify( message, callback, clickcallback )
 		clickCallback: clickcallback
 	};
 	var notificationId = AddNotificationEvent( nev );
-	console.log( 'What?', message );
 
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
