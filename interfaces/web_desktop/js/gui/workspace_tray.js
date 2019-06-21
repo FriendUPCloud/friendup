@@ -77,7 +77,7 @@ function PollTray()
 						action: 1,
 						pawel: 10
 					} );
-					console.log( 'Cancelling notification event as we are online.', nots[ a ].notificationId );
+					//console.log( 'Cancelling notification event as we are online.', nots[ a ].notificationId );
 				}
 				
 				// Add this bubble!
@@ -384,7 +384,7 @@ function AddNotificationEvent( evt )
 	).toString();
 	evt.uniqueId = uniqueId;
 	Workspace.notificationEvents.push( evt );
-	console.log( 'Added notification event.', evt );
+	//console.log( 'Added notification event.', evt );
 	return uniqueId;
 }
 
@@ -496,7 +496,7 @@ function Notify( message, callback, clickcallback )
 				{
 					if( message.notificationId )
 					{
-						console.log( 'Showing: ', message.notificationId );
+						//console.log( 'Showing: ', message.notificationId );
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
