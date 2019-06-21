@@ -16,6 +16,8 @@ Application.run = function( msg, iface )
 {	
 	this.sources = [];
 	
+	this.date = ( new Date() );
+	
 	this.setApplicationName( 'Friend Calendar' );
 	
 	var v = new View( {
@@ -226,22 +228,28 @@ function login( src, callback )
 
 // Refresh calendar events from servers
 function executeRefresh( index )
-{
-	// Authenticate with source
-	if( !Application.sources.length )	
-		return false;
+{	
+	// Just use built-in values
+	return UpdateEvents();
 	
+	// Initial values
 	var sourceCount = 0;
+	var finalEvents = [];
 	
+	// Authenticate with source
+	if( !Application.sources.length )
+	{
+		UpdateEvents();
+		return false;
+	}
+
 	// Count how many sources we have
 	// TODO: Skip faulty / disabled ones
 	for( var a = 0; a < Application.sources.length; a++ )
 	{
 		sourceCount++;
 	}
-	
-	var finalEvents = [];
-	
+
 	// Connect
 	for( var a = 0; a < Application.sources.length; a++ )
 	{
@@ -256,9 +264,9 @@ function executeRefresh( index )
 			case 'treeroot':
 			default:
 				var pubKey = GetPubKey( src.account );
-				console.log( 'The pub key!!', pubKey );
+				//console.log( 'The pub key!!', pubKey );
 				continue;
-				
+			
 				var m = new Module( 'system' );
 				m.index = a;
 				var args = {
@@ -267,7 +275,7 @@ function executeRefresh( index )
 					Password: src.Password,
 					Source: 'FriendUP'
 				};
-				
+			
 				m.onExecuted = function( e, d )
 				{
 					var o = JSON.parse( d );
@@ -350,12 +358,52 @@ function CheckSourceCount( count, events )
 		}
 		if( fe.length )
 		{
-			Application.mainView.sendMessage( {
-				command: 'updateEvents',
-				events: fe
-			} );
+			UpdateEvents( fe );	
 		}
 	}
+}
+
+function UpdateEvents( evts )
+{
+	// First get built-in calendar sources
+	var md = new Module( 'system' );
+	md.onExecuted = function( e, d )
+	{
+		var finalEvents = [];
+	
+		try
+		{
+			// Update events
+			var eles = JSON.parse( d );
+			var outEvents = [];
+			
+			for( var a in eles )
+			{
+				var tf = eles[a].Date + ' ' + eles[a].TimeFrom + ':00';
+				var tt = eles[a].Date + ' ' + eles[a].TimeTo   + ':00';
+				finalEvents.push( {
+					DateStart: tf,
+					DateEnd: tt,
+					Name: eles[a].Title
+				} );
+			}
+		}
+		catch( e )
+		{
+		}
+		
+		if( evts && evts.length )
+		{
+			for( var a in evts )
+				finalEvents.push( evts[ a ] );
+		}
+		
+		Application.mainView.sendMessage( {
+			command: 'updateEvents',
+			events: finalEvents
+		} );
+	}
+	md.execute( 'getcalendarevents', { date: Application.date.getFullYear() + '-' + ( Application.date.getMonth() + 1 ) } );
 }
 
 function GetPubKey( account )
@@ -365,7 +413,7 @@ function GetPubKey( account )
 	// removes whitespace and grabs the pub key
 	pubKey = pubKey.split( /\s/ ).join( '' ).split('-----')[2];
 	pubKey = window.encodeURIComponent( pubKey );
-	console.log( 'This is they pub key!: ', pubKey );
+	//console.log( 'This is they pub key!: ', pubKey );
 	return pubKey;
 }
 
