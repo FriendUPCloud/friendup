@@ -382,7 +382,7 @@ function AddNotificationEvent( evt )
 		( Math.random() * 999 ) + 
 		( Math.random() * 999 ) 
 	).toString();
-	evt.notificationId = uniqueId;
+	evt.uniqueId = uniqueId;
 	Workspace.notificationEvents.push( evt );
 	return uniqueId;
 }
@@ -394,7 +394,7 @@ function RemoveNotificationEvent( uniqueId )
 	var found = false;
 	for( var a = 0; a < Workspace.notificationEvents.length; a++ )
 	{
-		if( Workspace.notificationEvents[ a ].notificationId != uniqueId )
+		if( Workspace.notificationEvents[ a ].uniqueId != uniqueId )
 		{
 			o.push( Workspace.notificationEvents[ a ] );
 		}
@@ -412,7 +412,7 @@ function GetNotificationEvent( uniqueId )
 {
 	for( var a = 0; a < Workspace.notificationEvents.length; a++ )
 	{
-		if( Workspace.notificationEvents[ a ].notificationId == uniqueId )
+		if( Workspace.notificationEvents[ a ].uniqueId == uniqueId )
 			return Workspace.notificationEvents[ a ];
 	}
 	return false;
@@ -425,8 +425,6 @@ function Notify( message, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
 	if( !message ) return;
-	
-	console.log( 'What notification?', message );
 	
 	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
@@ -497,6 +495,7 @@ function Notify( message, callback, clickcallback )
 				{
 					if( message.notificationId )
 					{
+						console.log( 'Showing: ', message.notificationId );
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
