@@ -1013,7 +1013,7 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 				// if notifID was provided then we create SQL which will store sent messages in FNotificationSent table
 				if( notifID > 0 )
 				{
-					int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO `FNotificationSent` ( `NotificationID`, `RequestID`, `UserMobileAppID`, `Target`, `Status`) VALUES ( %lu, 0, %s, 1, 0)", notifID, row[0] );
+					int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO `FNotificationSent` ( `NotificationID`, `RequestID`, `UserMobileAppID`, `Target`, `Status`) VALUES ( %lu, 0, %s, 1, 0);", notifID, row[0] );
 					BufStringAddSize( sqlInsertBs, temp2, temp2size );
 				}
 				
