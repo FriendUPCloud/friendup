@@ -365,7 +365,7 @@ User-Agent: Friend/1.0.0
 		//DEBUG("HttpClientCall response:\n%s\n", bs->bs_Buffer );
 	}
 	
-	return bs;
+	//return bs;
 client_error:
 
 	if( secured == TRUE )
@@ -382,19 +382,19 @@ client_error:
 		{
 			SSL_CTX_free( ctx );
 		}
+		if( certbio != NULL )
+		{
+			BIO_destroy_bio_pair( certbio );
+		}
+		if( outbio != NULL )
+		{
+			BIO_free( outbio );
+		}
 	}
 
 	if( sockfd != 0 )
 	{
 		close( sockfd );
-	}
-	if( certbio != NULL )
-	{
-		BIO_destroy_bio_pair( certbio );
-	}
-	if( outbio != NULL )
-	{
-		BIO_free( outbio );
 	}
 	
 	if( bs != NULL )
