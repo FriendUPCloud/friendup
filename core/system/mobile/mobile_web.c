@@ -366,8 +366,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				
 				//if( umaID == TRUE )
 				{
-					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"0\" }" );
-					HttpAddTextContent( response, buffer );
+					//snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"0\" }" );
+					//HttpAddTextContent( response, buffer );
 				}
 				/*
 				else if( err != 0 )

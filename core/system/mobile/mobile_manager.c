@@ -850,6 +850,8 @@ char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID )
 			lsqllib->FreeResult( lsqllib, res );
 		}
 		
+		
+		FFree( query );
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	
@@ -1027,6 +1029,8 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 			lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
 			BufStringDelete( sqlInsertBs );
 		}
+		
+		FFree( qery );
 		
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}

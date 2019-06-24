@@ -141,18 +141,15 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 		DEBUG("Connection will be secured: %d\n", secured );
 		if( secured == TRUE )
 		{
-			certbio = BIO_new(BIO_s_file());
-			outbio  = BIO_new_fp(stdout, BIO_NOCLOSE);
+			certbio = BIO_new( BIO_s_file() );
+			outbio  = BIO_new_fp( stdout, BIO_NOCLOSE );
 			
 			SSL_library_init();
 			
 			OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
-    SSL_load_error_strings();   /* Bring in and register error messages */
-    method = TLSv1_2_client_method();  /* Create new client-method instance */
-    //ctx = SSL_CTX_new(method);   /* Create new context */
-			
-			//method = TLSv1_2_client_method();
-			//method = SSLv23_client_method();
+			SSL_load_error_strings();   /* Bring in and register error messages */
+			method = TLSv1_2_client_method();  /* Create new client-method instance */
+
 			if ( (ctx = SSL_CTX_new(method)) == NULL)
 			{
 				BIO_destroy_bio_pair( certbio );
@@ -390,6 +387,14 @@ client_error:
 	if( sockfd != 0 )
 	{
 		close( sockfd );
+	}
+	if( certbio != NULL )
+	{
+		BIO_destroy_bio_pair( certbio );
+	}
+	if( outbio != NULL )
+	{
+		BIO_free( outbio );
 	}
 	
 	if( bs != NULL )
