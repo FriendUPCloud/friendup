@@ -1517,6 +1517,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 														LocFileReload( file, decoded );
 													}
 												}
+												
+												if( file != NULL )
+												{
+													file->lf_InUse = 1;
+												}
 											}
 											else
 											{
@@ -1589,6 +1594,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											if( freeFile == TRUE )
 											{
 												LocFileDelete( file );
+											}
+											else
+											{
+												file->lf_InUse = 0;
 											}
 										}
 										else

@@ -109,38 +109,31 @@ void CacheManagerClearCache( CacheManager *cm )
 {
 	if( cm != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
-		int i = 0;
-		
-		for( ; i < CACHE_GROUP_MAX; i++ )
+		if( FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) ) == 0 )
 		{
-			LocFile *lf = cm->cm_CacheFileGroup[ i ].cg_File;
-			while( lf != NULL )
+			int i = 0;
+		
+			for( ; i < CACHE_GROUP_MAX; i++ )
 			{
-				LocFile *rf = lf;
-				lf = (LocFile *)lf->node.mln_Succ;
+				LocFile *lf = cm->cm_CacheFileGroup[ i ].cg_File;
+				while( lf != NULL )
+				{
+					LocFile *rf = lf;
+					lf = (LocFile *)lf->node.mln_Succ;
 				
-				LocFileDelete( rf );
+					if( rf->lf_InUse <= 0 )
+					{
+						LocFileDelete( rf );
+					}
+				}
+			
+				cm->cm_CacheFileGroup[ i ].cg_File = NULL;
 			}
-			
-			cm->cm_CacheFileGroup[ i ].cg_File = NULL;
-		}
 		
-		/*
-		disabled for now
-		LocFile *lf = cm->cm_LocFileCache;
-		while( lf != NULL )
-		{
-			LocFile *rf = lf;
-			lf = (LocFile *)lf->node.mln_Succ;
-			
-			LocFileDelete( rf );
-		}
-		*/
-			
-		cm->cm_LocFileCache = NULL;
+			cm->cm_LocFileCache = NULL;
 		
-		FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+		}
 	}
 }
 
