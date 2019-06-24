@@ -253,10 +253,11 @@ var Calendar = {
 						day++;
 					}
 					
-					/*var evts = '';
+					/*var timedEvents = '';
 					if( dliteral.length && typeof( this.events[key] ) != 'undefined' )
 					{
-						evts += '<div class="Events">';
+						var eventCount = this.events[ key ].length;
+						timedEvents += '<div class="Events Count' + eventCount + '">';
 						var duplicates = [];
 						for( var z = 0; z < this.events[key].length; z++ )
 						{
@@ -272,17 +273,24 @@ var Calendar = {
 								}
 							}
 							if( found ) continue;
-							evts += '<div class="Event"><span class="Title">' + this.events[key][z].Name + '</span></div>';
+							timedEvents += '<div class="Event"><span class="Title">' + this.events[key][z].Name + '</span></div>';
 							duplicates.push( this.events[key][z].Name );
 						}
-						evts += '</div>';
+						timedEvents += '</div>';
 					}*/
+					
 					// Generate events by time
-					var evts = '';
+					/*var evts = '';
 					for( var t = 0; t < 24; t += 0.5 )
 					{
+						var events = this.events[ key ];
+						for( var b = 0; b < events.length; b++ )
+						{
+							if( events[ b ].DateStart
+						}
+						
 						evts += '<div class="TimeSlot">&nbsp;</div>';
-					}
+					}*/
 					ml += '<div class="Day Column" ondblclick="AddEvent(' + day + ')">' + evts + '</div>';
 				}
 				else
