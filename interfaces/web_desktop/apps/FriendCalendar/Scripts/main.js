@@ -15,7 +15,6 @@ var Calendar = {
 	listMode: 'month',
 	render: function()
 	{
-		console.log( 'Rendering: ' + this.listMode );
 		if( this.listMode == 'week' )
 		{
 			return this.renderWeek();
@@ -154,7 +153,7 @@ var Calendar = {
 	},
 	renderWeek: function()
 	{
-		console.log( 'Rendering!' );
+		//console.log( 'Rendering!' );
 		
 		// Get a date object for current month....
 		var dob = new Date();

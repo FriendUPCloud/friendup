@@ -725,6 +725,13 @@ Workspace = {
 			{
 				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
 			}
+			// Friend app waits some more
+			else if( window.friendApp )
+			{
+				Workspace.reloginInProgress = false;
+				return;
+			}
+			// Just exit to login screen
 			else
 			{
 				// We're exiting!

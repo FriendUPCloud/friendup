@@ -1053,7 +1053,10 @@ function _ActivateWindow( div, nopoll, e )
 		{
 			if( window.currentMovable != div )
 				window.currentMovable = div;
+			
 		}
+		if( globalConfig.focusMode == 'clicktofront' )
+			_WindowToFront( div );
 		return;
 	}
 	
@@ -5046,7 +5049,7 @@ var View = function( args )
 								v.appendChild( canv );
 								var ctx = canv.getContext( '2d' );
 								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
-								var dt = canv.toDataURL();
+								var dt = canv.toDataURL( 'image/png', 1 );
 						
 								// Stop taking video
 								dd.srcObject.getTracks().forEach(track => track.stop())
@@ -5122,7 +5125,7 @@ var View = function( args )
 				v.appendChild( fb );
 				var mediaElement = document.createElement( 'input' );
 				mediaElement.type = 'file';
-				mediaElement.accept = 'image/*';
+				mediaElement.accept = 'image/png';
 				mediaElement.className = 'FriendCameraInput';
 				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
 					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';

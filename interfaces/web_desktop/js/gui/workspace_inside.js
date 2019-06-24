@@ -727,6 +727,8 @@ var WorkspaceInside = {
 		{
 			var messageRead = trash = false;
 			
+			//console.log( 'Handling notifications: ', nmsg );
+			
 			if( isMobile )
 			{
 				// TODO: Determine if this will ever occur. If the viewstate isn't active
@@ -742,7 +744,7 @@ var WorkspaceInside = {
 					}
 					
 					// Revert to push notifications on the OS side
-					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
+					Notify( { title: nmsg.title, text: nmsg.text, notificationId: nmsg.notificationData.id }, null, clickCallback );
 					return;
 				}
 			}
@@ -774,13 +776,16 @@ var WorkspaceInside = {
 						// Function to set the notification as read...
 						function notificationRead()
 						{
-							if( window.friendApp && Workspace.currentViewState == 'active' )
+							//console.log( 'Foo bar: ', msg.notificationData );
+							if( Workspace.currentViewState == 'active' )
 							{
 								if( trash )
 									clearTimeout( trash );
 								messageRead = true;
 								var l = new Library( 'system.library' );
-								l.onExecuted = function(){};
+								l.onExecuted = function( e, d ){
+									console.log( 'Did we tell fc that we read the notification?', e, d );
+								};
 								l.execute( 'mobile/updatenotification', { 
 									notifid: msg.notificationData.id, 
 									action: 1, 
@@ -814,6 +819,8 @@ var WorkspaceInside = {
 								return;
 							}
 						}
+					
+						//console.log( 'Could not find application ' + appName );
 					
 						// Application not found? Start it!
 						// Send message to app once it has started...
@@ -9387,12 +9394,13 @@ else
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
-	debug.style.height = '80px';
+	debug.style.height = '120px';
 	debug.style.left = '0px';
 	debug.style.color = 'black';
 	debug.style.position = 'absolute';
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
+	debug.innerHTML = '<span>thomasdebug v01</span>';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
 }*/

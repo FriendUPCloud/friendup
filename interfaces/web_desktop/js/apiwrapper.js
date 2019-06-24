@@ -2797,9 +2797,11 @@ function apiWrapper( event, force )
 					// hacky check to unregister if it already exists
 					// should be done when an application closes.
 					// - actually, this stuff should be a permission
-					var regId = Workspace.conn.registeredApps[ app.authId ];
-					if ( regId )
-						Workspace.conn.off( app.authId, regId );
+					// ## removed by thomas to allow several SAS per application as many apps can have several windows/instances.
+					// ## initial tests showed no negative behaviour. cleanup must be done in a smarter way.
+					//var regId = Workspace.conn.registeredApps[ app.authId ];
+					//if ( regId )
+					//	Workspace.conn.off( app.authId, regId );
 
 					var id = Workspace.conn.on( app.authId, fconnMsg );
 					Workspace.conn.registeredApps[ app.authId ] = id;
