@@ -1134,24 +1134,13 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		NotificationManagerAddToList( sb->sl_NotificationManager, notif );
 	}
 	
-	//
-	// go through all mobile connections
-	//
-	
-	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-	{
-		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
-		DEBUG("Hashmap get: %s\n", username );
-		userConnections = CGetDataFromList( (char *)username );
-
-		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	}
 	DEBUG("NotificationRegister: get all connections by name: %s pointer: %p\n", username, userConnections );
 	
 	BufString *bsMobileReceivedMessage = BufStringNew();
 	
 	if( wsMessageSent == FALSE )
 	{
+		DEBUG("Sending messages across Android devices\n");
 		BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 		if( bs != NULL )
 		{

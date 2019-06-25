@@ -141,7 +141,8 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 		DEBUG("Connection will be secured: %d\n", secured );
 		if( secured == TRUE )
 		{
-			certbio = BIO_new( BIO_s_file() );
+			BIO_METHOD *biofile = BIO_s_file();
+			certbio = BIO_new( biofile );
 			outbio  = BIO_new_fp( stdout, BIO_NOCLOSE );
 			
 			SSL_library_init();
@@ -382,13 +383,13 @@ client_error:
 		{
 			SSL_CTX_free( ctx );
 		}
-		if( certbio != NULL )
-		{
-			BIO_destroy_bio_pair( certbio );
-		}
 		if( outbio != NULL )
 		{
 			BIO_free( outbio );
+		}
+		if( certbio != NULL )
+		{
+			BIO_destroy_bio_pair( certbio );
 		}
 	}
 

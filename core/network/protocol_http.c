@@ -254,8 +254,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				stat( completePath->raw, &attr);
 
 				// if file is new file, reload it
-
-
 				//DEBUG1("\n\n\n\n\n SIZE %lld  stat %lld\n\n\n\n",attr.st_mtime ,file->info.st_mtime );
 				if( attr.st_mtime != file->lf_Info.st_mtime )
 				{

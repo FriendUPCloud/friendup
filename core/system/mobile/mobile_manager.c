@@ -975,7 +975,7 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 	
 	DEBUG("--------------MobleManagerAppTokensByUserPlatformDB\n");
 
-	BufString *bs = BufStringNew();
+	BufString *bs = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
 
 	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
@@ -1013,11 +1013,22 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 				// if notifID was provided then we create SQL which will store sent messages in FNotificationSent table
 				if( notifID > 0 )
 				{
-					int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO `FNotificationSent` ( `NotificationID`, `RequestID`, `UserMobileAppID`, `Target`, `Status`) VALUES ( %lu, 0, %s, 1, 0);", notifID, row[0] );
+					/*
+					NOTIFICATION_SENT_STATUS_REGISTERED = 0,
+	NOTIFICATION_SENT_STATUS_RECEIVED,
+	NOTIFICATION_SENT_STATUS_READ,
+	NOTIFICATION_SENT_STATUS_END,
+	NOTIFICATION_SENT_STATUS_MAX
+					 */ 
+					int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO `FNotificationSent` ( `NotificationID`, `RequestID`, `UserMobileAppID`, `Target`, `Status`) VALUES ( %lu, 0, %s, 1, 1);", notifID, row[0] );
 					BufStringAddSize( sqlInsertBs, temp2, temp2size );
 				}
 				
 				pos++;
+				if( bs == NULL )
+				{
+					bs = BufStringNew();
+				}
 				BufStringAddSize( bs, temp, sizeAdd );
 			}
 			lsqllib->FreeResult( lsqllib, res );
@@ -1026,7 +1037,10 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 		if( notifID > 0 )
 		{
 			DEBUG("Insert NotificationSent into database\n");
-			lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
+			if( sqlInsertBs->bs_Size > 0 )
+			{
+				lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
+			}
 			BufStringDelete( sqlInsertBs );
 		}
 		
