@@ -308,7 +308,7 @@ User-Agent: Friend/1.0.0
 					bytes = SSL_read( ssl, response, sizeof(response) );
 					if( bytes > 0 )
 					{
-						DEBUG("Bytes received: \n", bytes );
+						DEBUG("Bytes received: %d\n", bytes );
 					}
 					else
 					{
