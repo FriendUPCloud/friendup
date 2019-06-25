@@ -121,10 +121,13 @@ void CacheManagerClearCache( CacheManager *cm )
 					LocFile *rf = lf;
 					lf = (LocFile *)lf->node.mln_Succ;
 				
-					if( rf->lf_InUse <= 0 )
+					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+					while( rf->lf_InUse > 0 )
 					{
 						LocFileDelete( rf );
+						usleep( 500 );
 					}
+					FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 				}
 			
 				cm->cm_CacheFileGroup[ i ].cg_File = NULL;
