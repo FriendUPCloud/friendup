@@ -309,6 +309,7 @@ User-Agent: Friend/1.0.0
 					if( bytes > 0 )
 					{
 						DEBUG("Bytes received: %d\n", bytes );
+						break;
 					}
 					else
 					{
