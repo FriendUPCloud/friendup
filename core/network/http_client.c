@@ -308,7 +308,7 @@ User-Agent: Friend/1.0.0
 					bytes = SSL_read( ssl, response, sizeof(response) );
 					if( bytes > 0 )
 					{
-						DEBUG("No more bytes\n");
+						DEBUG("Bytes received: \n", bytes );
 					}
 					else
 					{
@@ -461,8 +461,9 @@ client_error:
 		close( sockfd );
 	}
 	
-	if( bs != NULL && received <= 0 )
+	if( bs != NULL )
 	{
+		DEBUG("------------Firebase response\n %s\n", bs->bs_Buffer );
 		BufStringDelete( bs );
 		bs = NULL;
 	}
