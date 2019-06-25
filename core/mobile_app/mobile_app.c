@@ -1191,7 +1191,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	if( wsMessageSent == FALSE )
 	{
 		NotificationDelete( notif );
-		return -1;
+		//return -1;
 	}
 
 	return 0;
