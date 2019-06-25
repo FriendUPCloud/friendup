@@ -125,7 +125,7 @@ BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured )
 {
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
-	int sockfd = 0, bytes, sent, received, total;
+	int sockfd = 0, bytes, sent, received = 0, total;
 	
 	BIO              *certbio = NULL;
 	BIO               *outbio = NULL;
@@ -461,7 +461,7 @@ client_error:
 		close( sockfd );
 	}
 	
-	if( bs != NULL )
+	if( bs != NULL && received <= 0 )
 	{
 		BufStringDelete( bs );
 		bs = NULL;
