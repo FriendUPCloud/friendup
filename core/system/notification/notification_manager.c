@@ -1136,7 +1136,9 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
     
 	SSLeay_add_ssl_algorithms();
 	SSL_load_error_strings();
-	ctx = SSL_CTX_new(TLSv1_method());
+	
+	ctx = SSL_CTX_new(TLSv1_2_method());
+	//ctx = SSL_CTX_new(TLSv1_method());
 	if( !ctx )
 	{
 		FERROR("SSL_CTX_new()...failed\n");
