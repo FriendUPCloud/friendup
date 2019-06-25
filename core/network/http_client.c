@@ -308,7 +308,9 @@ User-Agent: Friend/1.0.0
 					bytes = SSL_read( ssl, response, sizeof(response) );
 					if( bytes > 0 )
 					{
-						DEBUG("Bytes received: %d\n", bytes );
+						received += bytes;
+						BufStringAddSize( bs, response, bytes );
+						DEBUG("Bytes received: %d, response: %s\n", bytes, response );
 						break;
 					}
 					else
@@ -380,8 +382,7 @@ User-Agent: Friend/1.0.0
 						break;
 					}
 					*/
-					received += bytes;
-					BufStringAddSize( bs, response, bytes );
+					
 				}
 			}
 			else // no SSL
