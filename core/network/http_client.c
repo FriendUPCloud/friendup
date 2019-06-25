@@ -306,6 +306,68 @@ User-Agent: Friend/1.0.0
 				while( TRUE ) 
 				{
 					bytes = SSL_read( ssl, response, sizeof(response) );
+					if( bytes > 0 )
+					{
+						DEBUG("No more bytes\n");
+					}
+					else
+					{
+						int err = 0;
+						err = SSL_get_error( ssl, bytes );
+
+						switch( err )
+						{
+						
+						// The TLS/SSL I/O operation completed.
+						case SSL_ERROR_NONE:
+							FERROR( "[SocketRead] Completed successfully.\n" );
+							break;;
+						
+						// The TLS/SSL connection has been closed. Goodbye!
+						case SSL_ERROR_ZERO_RETURN:
+							FERROR( "[SocketRead] The connection was closed.\n" );
+							//return SOCKET_CLOSED_STATE;
+							break;
+						
+						// The operation did not complete. Call again.
+						case SSL_ERROR_WANT_READ:
+						// NB: We used to retry 10000 times!
+							usleep( 100 );
+							continue;
+
+						// The operation did not complete. Call again.
+						case SSL_ERROR_WANT_WRITE:
+						//if( pthread_mutex_lock( &sock->mutex ) == 0 )
+							FERROR( "[SocketRead] Want write.\n" );
+							break;
+
+						case SSL_ERROR_SYSCALL:
+							if( err > 0 )
+							{
+								if( errno == 0 )
+								{
+									FERROR(" [SocketRead] Connection reset by peer.\n" );
+									break;
+								}
+								else 
+								{
+									FERROR( "[SocketRead] Error syscall error: %s\n", strerror( errno ) );
+								}
+							}
+							else if( err == 0 )
+							{
+								FERROR( "[SocketRead] Error syscall no error? return.\n" );
+								break;
+							}
+					
+							FERROR( "[SocketRead] Error syscall other error. return.\n" );
+
+					// Don't retry, just return read
+						default:
+							break;
+						}
+					}
+					/*
 					if( bytes < 0 )
 					{
 						FERROR("ERROR reading response from socket\n");
@@ -316,6 +378,7 @@ User-Agent: Friend/1.0.0
 						FERROR("ERROR reading response from socket 0\n");
 						break;
 					}
+					*/
 					received += bytes;
 					BufStringAddSize( bs, response, bytes );
 				}
