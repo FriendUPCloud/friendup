@@ -1209,7 +1209,7 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
 	FHandler *lsys = l->sl_Filesystems;
-
+/*
 	while( lsys != NULL )
 	{
 		FHandler *rems = lsys;
@@ -1217,6 +1217,7 @@ void SystemClose( SystemBase *l )
 		DEBUG("[SystemBase] Remove fsys %s\n", rems->Name );
 		FHandlerDelete( rems );
 	}
+	*/
 	
 	if( l->sl_WorkerManager != NULL )
 	{
