@@ -1021,6 +1021,9 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 	NOTIFICATION_SENT_STATUS_MAX
 					 */ 
 					int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO FNotificationSent (NotificationID,RequestID,UserMobileAppID,Target,Status) VALUES ( %lu, 0, %s, 1, 1);", notifID, row[0] );
+					
+					lsqllib->QueryWithoutResults( lsqllib, temp2 );
+					
 					BufStringAddSize( sqlInsertBs, temp2, temp2size );
 				}
 				
