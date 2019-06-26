@@ -770,11 +770,7 @@ void NotificationSendThread( FThread *data )
 	}
 	FFree( nstd );
 	
-	if( FRIEND_MUTEX_LOCK( &(nstd->sntd_NM->nm_Mutex) ) == 0 )
-	{
-		nm->nm_NumberOfLaunchedThreads--;
-		FRIEND_MUTEX_UNLOCK( &(nstd->sntd_NM->nm_Mutex) );
-	}
+	nm->nm_NumberOfLaunchedThreads--;
 }
 
 //
