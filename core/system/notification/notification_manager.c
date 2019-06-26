@@ -747,7 +747,7 @@ typedef struct SendNotifThreadData
 void NotificationSendThread( FThread *data )
 {
 	SendNotifThreadData *nstd = (SendNotifThreadData *)data->t_Data;
-	
+	NotificationManager *nm = nstd->sntd_NM;
 	DelListEntry *le = nstd->sntd_RootNotification;
 	while( le != NULL )
 	{
@@ -772,7 +772,7 @@ void NotificationSendThread( FThread *data )
 	
 	if( FRIEND_MUTEX_LOCK( &(nstd->sntd_NM->nm_Mutex) ) == 0 )
 	{
-		nstd->sntd_NM->nm_NumberOfLaunchedThreads--;
+		nm->nm_NumberOfLaunchedThreads--;
 		FRIEND_MUTEX_UNLOCK( &(nstd->sntd_NM->nm_Mutex) );
 	}
 }

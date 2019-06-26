@@ -124,9 +124,9 @@ void CacheManagerClearCache( CacheManager *cm )
 					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 					while( rf->lf_InUse > 0 )
 					{
-						LocFileDelete( rf );
 						usleep( 500 );
 					}
+					LocFileDelete( rf );
 					FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 				}
 			
