@@ -78,23 +78,14 @@ typedef struct MobileAppNotif
 	void					*man_Data;
 }MobileAppNotif;
 
-/**
- * Sends notification to a user
- *
- * @param username friend username string
- * @param channel_id this is used to replace previous notifications, if two notifications
- *                   with the same channel_id are sent, then the second one replaces the first
- * @param title title of the notification
- * @param app application name
- * @param message message string to be displayed
- * @param notification_type option flag, see MobileNotificationTypeT
- * @param extra_string additional information for workspace
- *                     (eg. launch an app, start a chat etc.), WORKSPACE-SPECIFIC, can be null
- * @param notifSentID id of notificationSent, when 0 then new notification will be created 
- * @return 0 when success, otherwise error number
- */
-//int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string, FULONG notifSentID );
+//
+//
+//
 
-int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString );
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp );
+
+//
+//
+//
 
 int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, FULONG notifSentID, int action );

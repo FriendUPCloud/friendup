@@ -997,9 +997,10 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
  * @param message message which will be send to user
  * @param notification_type type of notification
  * @param extraString additional string which will be send to user
+ * @param ctimestamp create message timestamp
  * @return true when message was send
  */
-int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString )
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
 	SystemBase *sb = (SystemBase *)lsb;
 	UserMobileAppConnections *userConnections = NULL;
@@ -1045,6 +1046,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		notif->n_NotificationType = notification_type;
 		notif->n_Status = NOTIFY_ACTION_REGISTER;
 		notif->n_Created = time(NULL);
+		notif->n_OriginalCreateT = ctimestamp;
 	}
 	
 	NotificationManagerAddNotificationDB( sb->sl_NotificationManager, notif );
