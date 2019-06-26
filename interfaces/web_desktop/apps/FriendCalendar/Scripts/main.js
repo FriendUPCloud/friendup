@@ -10,6 +10,31 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var eventPaletteBackground = [
+	'#a01507'
+];
+var eventPaletteLighter = [
+	'#e74c3c'
+];
+var eventPaletteForeground = [
+	'#ffffff'
+];
+
+// Get the users
+{
+	var you = document.createElement( 'div' );
+	you.className = 'User';
+	you.innerHTML = i18n( 'i18n_user_you' );
+	
+	var youBall = document.createElement( 'div' );
+	youBall.className = 'Ball';
+	youBall.style.backgroundColor = eventPaletteBackground[0];
+	youBall.style.borderColor = eventPaletteLighter[0];
+	you.appendChild( youBall );
+	
+	ge( 'UsersGroups' ).appendChild( you );
+}
+
 var Calendar = {
 	events: [],
 	listMode: 'month',
@@ -122,7 +147,10 @@ var Calendar = {
 								}
 							}
 							if( found ) continue;
-							evts += '<div class="Event"><span class="Title">' + this.events[key][z].Name + '</span></div>';
+							
+							var st = 'background-color: ' + eventPaletteLighter[ 0 ] + ';';
+							
+							evts += '<div class="Event" style="' + st + '"><span class="Title">' + this.events[key][z].Name + '</span></div>';
 							duplicates.push( this.events[key][z].Name );
 						}
 						evts += '</div>';
@@ -167,7 +195,7 @@ var Calendar = {
 		var currentDay = this.date.getDay();
 		this.dateArray = [ year, month, currentDay ];
 		
-		var day = this.date.getDate();
+		var startDay = this.date.getDate();
 		
 		var time = this.date.getTime();
 		var findDay = new Date( time );
@@ -177,7 +205,7 @@ var Calendar = {
 		{
 			time -= 86400000;
 			findDay = new Date( time ).getDay();
-			day--;
+			startDay--;
 		}
 		
 		var monthNames = [
@@ -197,9 +225,12 @@ var Calendar = {
 		
 		var up = true;
 		var calStart = false;
+		var queuedEventRects = [];
 		
 		for( var w = -1; w < 1; w++ )
 		{
+			var day = startDay;
+			
 			// Start header
 			if( w == -1 )
 				ml += '<div class="CalendarHeaderRow Week">';
@@ -238,56 +269,75 @@ var Calendar = {
 				var d = dl[a];
 				var dayName = dn[a];
 				var key = year + '-' + (month+1) + '-' + day;
+				var keyPadded = year + '-' + StrPad( month + 1, 2, '0' ) + '-' + StrPad( day, 2, '0' );
 				
+				var dobj = new Date( year, month, day );
+				var dliteral = '';
+			
+				if( dobj.getDate() < day )
+					up = false;
+				
+				if( up && dobj.getDay() == d )
+				{
+					dliteral = day + '.';
+					day++;
+				}
+
 				if( w >= 0 )
 				{
-					var dobj = new Date( year, month, day );
-					var dliteral = '';
-				
-					if( dobj.getDate() < day )
-						up = false;
 					
-					if( up && dobj.getDay() == d )
-					{
-						dliteral = day + '.';
-						day++;
-					}
-					
-					/*var evts = '';
-					if( dliteral.length && typeof( this.events[key] ) != 'undefined' )
-					{
-						evts += '<div class="Events">';
-						var duplicates = [];
-						for( var z = 0; z < this.events[key].length; z++ )
-						{
-							// TODO: Duplicate check should not be needed!
-							found = false;
-							for( var p = 0; p < duplicates.length; p++ )
-							{
-								if( duplicates[p] == this.events[key][z].Name )
-								{
-									//console.log( 'Found duplicate "' + duplicates[p] + '"..' );
-									found = true;
-									break;
-								}
-							}
-							if( found ) continue;
-							evts += '<div class="Event"><span class="Title">' + this.events[key][z].Name + '</span></div>';
-							duplicates.push( this.events[key][z].Name );
-						}
-						evts += '</div>';
-					}*/
 					// Generate events by time
 					var evts = '';
 					for( var t = 0; t < 24; t += 0.5 )
 					{
 						evts += '<div class="TimeSlot">&nbsp;</div>';
 					}
-					ml += '<div class="Day Column" ondblclick="AddEvent(' + day + ')">' + evts + '</div>';
+					
+					// Event rects
+					var timez = '';
+					var events = this.events[ key ];
+					if( typeof( events ) != 'undefined' )
+					{
+						for( var b = 0; b < events.length; b++ )
+						{
+							var ypos = events[ b ].DateStart.split( ' ' )[1];
+							ypos = ypos.split( ':' );
+							ypos = parseInt( ypos[0] ) + ( ypos[1] / 30 * 0.5 );
+							
+							ypos = ypos / 24 * 100;
+							
+							var height = events[ b ].DateEnd.split( ' ' )[1];
+							height = height.split( ':' );
+							height = parseInt( height[0] ) + ( height[1] / 30 * 0.5 );
+							
+							height = height / 24 * 100;
+							height = height - ypos;
+							
+							queuedEventRects.push( {
+								day: day,
+								ypos: ypos,
+								height: height,
+								event: events[ b ]
+							} );
+							
+							/*var t = 
+							if( events[ b ].DateStart == cand )
+							{
+								var str = 'top: 0px; left: 0px; width: 100%; height: 10px; background: green;';
+								timez += '<div class="TimeEvent" style="' + st + '">' + events[b].Name + '</div>';
+							}
+							else
+							{
+								console.log( 'What: ' + cand + ' == ' + events[ b ].DateStart, events[ b ] );
+							}*/
+						}
+					}
+					
+					ml += '<div class="Day Column" id="Day' + day + '" ondblclick="AddEvent(' + day + ')">' + timez + evts + '</div>';
 				}
 				else
 				{
-					ml += '<div class="Day Column Label"><div class="LabelText">' + dayName + '</div></div>';
+					ml += '<div class="Day Column Label"><div class="LabelText">' + dayName + ' ' + day + '/' + ( month + 1 ) + '</div></div>';
 				}
 			}
 			ml += '</div>';
@@ -302,6 +352,11 @@ var Calendar = {
 			ml += '</div>';
 		
 		ge( 'MainView' ).innerHTML = ml;
+		
+		for( var a = 0; a < queuedEventRects.length; a++ )
+		{
+			var eventRect = new EventRect( queuedEventRects[ a ] );
+		}
 		
 		ge( 'MonthName' ).innerHTML = monthNames[ month ] + ' ' + year;
 		
@@ -329,6 +384,28 @@ var Calendar = {
 		}
 	}
 };
+
+var EventRect = function( definition )
+{
+	this.definition = definition;
+	this.init();
+};
+EventRect.prototype.init = function()
+{
+	if( this.div ) return;
+	this.div = document.createElement( 'div' );
+	this.div.className = 'EventRect MoustPointer';
+	this.div.style.top = this.definition.ypos + '%';
+	this.div.style.height = this.definition.height + '%';
+	this.div.style.color = eventPaletteForeground[ 0 ];
+	this.div.style.backgroundColor = eventPaletteBackground[ 0 ];
+	this.div.innerHTML = this.definition.event.Name;
+	ge( 'Day' + this.definition.day ).appendChild( this.div );
+	
+	this.div.onclick = function( e )
+	{
+	}
+}
 
 function AddEvent( day )
 {

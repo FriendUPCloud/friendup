@@ -3080,9 +3080,23 @@ window.Shell = function( appObject )
 		{
 			if( args.length >= 2 )
 			{
-				function cbn( msg )
+				function cbn( msg, data )
 				{
-					callback( msg.data, msg.error );
+					if( typeof( msg ) != 'object' )
+					{
+						if( data && data.result )
+						{
+							callback( data.result, data.message );
+						}
+						else
+						{
+							callback( false, false );
+						}
+					}
+					else
+					{
+						callback( msg.data, msg.error );
+					}
 				}
 				var args2 = '';
 				for( var z = 2; z < args.length; z++ )
@@ -4340,7 +4354,6 @@ window.FriendDOS =
 								}
 								else
 								{
-									console.log( 'ALL DONE WITH DELETE!' );
 									flags._originalCallback( 'Delete completed.' );
 								}
 							} );
@@ -4488,16 +4501,13 @@ window.FriendDOS =
 					}
 				}
 			}
-			console.log( 'Looking: do we have callback? ' + callback ? 'yes' : 'no' );
 			if( callback && callback != flags._originalCallback )
 			{
-				console.log( 'We\'re using a unique callback.' );
 				callback();
 				flags._cleanup();
 			}
 			else
 			{
-				 console.log( 'We had original callback.' );
 				 return;
 				 //return callback();
 			}

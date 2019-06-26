@@ -56,6 +56,9 @@ Workspace = {
 
 	preinit: function()
 	{
+		// Go ahead and init!
+		ScreenOverlay.init();
+		
 		var img = new Image();
 		img.src = '/webclient/theme/loginimage.jpg';
 		img.onload = function()
@@ -310,7 +313,10 @@ Workspace = {
 		}
 
 		// Recall wallpaper from settings
-		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
+		this.refreshUserSettings( function(){ 
+			// Refresh desktop for the first time
+			Workspace.refreshDesktop(); 
+		} );
 
 		// Create desktop
 		this.directoryView = new DirectoryView( wbscreen.contentDiv );
@@ -1148,6 +1154,10 @@ Workspace = {
 			if( cb ) cb();
 		}
 
+		// Manipulate screen overlay
+		ScreenOverlay.setTitle( i18n( 'i18n_logging_in' ) );
+		ScreenOverlay.show();
+		
 		if( !this.userWorkspaceInitialized )
 		{
 			this.userWorkspaceInitialized = true;

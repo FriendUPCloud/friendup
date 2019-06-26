@@ -714,3 +714,12 @@ i18n_camera_action_description          : Take a picture with your device.
 i18n_take_photo                         : Click to take the picture
 i18n_camera                             : Camera
 
+#Startup -----------------------------------------------------------------------
+
+i18n_starting_your_session              : Starting your session
+i18n_status_Ok                          : OK
+i18n_status_Pending                     : Pending
+i18n_status_Error                       : FAILED
+i18n_processing                         : Processing
+i18n_logging_in                         : Logging in
+
