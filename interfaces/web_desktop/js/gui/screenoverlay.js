@@ -18,13 +18,6 @@ var ScreenOverlay = {
 		this.div = document.createElement( 'div' );
 		this.div.id = 'FriendScreenOverlay';
 		document.body.appendChild( this.div );
-		// If needed
-		this.initPrivate();		
-	},
-	
-	// Private methods ---------------------------------------------------------
-	initPrivate: function()
-	{
 	}
 };
 // Go ahead and init!
