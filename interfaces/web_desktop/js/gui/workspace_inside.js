@@ -5810,7 +5810,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		SaveWindowStorage( function()
 		{
-			//do external logout and then our internal one.
+			// Do external logout and then our internal one.
 			if( Workspace.logoutURL )
 			{
 				Workspace.externalLogout();
@@ -5827,7 +5827,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					friendApp.exit();
 					return;
 				}
-				Workspace.sessionId = ''; document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+				Workspace.sessionId = ''; 
+				document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
 			}
 			m.send();
 			Workspace.websocketsOffline = false;
@@ -5837,7 +5838,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	externalLogout: function()
 	{
 		var wl = new View( {
-			title: 'Logout!',
+			title: 'Logout',
 			width: 370,
 			'min-width': 370,
 			height: 170,
