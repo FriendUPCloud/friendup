@@ -195,7 +195,7 @@ var Calendar = {
 		var currentDay = this.date.getDay();
 		this.dateArray = [ year, month, currentDay ];
 		
-		var day = this.date.getDate();
+		var startDay = this.date.getDate();
 		
 		var time = this.date.getTime();
 		var findDay = new Date( time );
@@ -205,7 +205,7 @@ var Calendar = {
 		{
 			time -= 86400000;
 			findDay = new Date( time ).getDay();
-			day--;
+			startDay--;
 		}
 		
 		var monthNames = [
@@ -229,6 +229,8 @@ var Calendar = {
 		
 		for( var w = -1; w < 1; w++ )
 		{
+			var day = startDay;
+			
 			// Start header
 			if( w == -1 )
 				ml += '<div class="CalendarHeaderRow Week">';
@@ -269,19 +271,20 @@ var Calendar = {
 				var key = year + '-' + (month+1) + '-' + day;
 				var keyPadded = year + '-' + StrPad( month + 1, 2, '0' ) + '-' + StrPad( day, 2, '0' );
 				
+				var dobj = new Date( year, month, day );
+				var dliteral = '';
+			
+				if( dobj.getDate() < day )
+					up = false;
+				
+				if( up && dobj.getDay() == d )
+				{
+					dliteral = day + '.';
+					day++;
+				}
+
 				if( w >= 0 )
 				{
-					var dobj = new Date( year, month, day );
-					var dliteral = '';
-				
-					if( dobj.getDate() < day )
-						up = false;
-					
-					if( up && dobj.getDay() == d )
-					{
-						dliteral = day + '.';
-						day++;
-					}
 					
 					// Generate events by time
 					var evts = '';
