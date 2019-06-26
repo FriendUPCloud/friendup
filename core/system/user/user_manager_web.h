@@ -32,6 +32,6 @@
 //
 //
 
-Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result );
+Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result, FBOOL *sessionRemoved );
 
 #endif // __SYSTEM_USER_USER_MANAGER_WEB_H__

@@ -370,7 +370,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	Http *response = NULL;
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
-	FBOOL loginCalled = FALSE;
+	FBOOL loginLogoutCalled = FALSE;
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func: %s\n", urlpath[ 0 ] );
 	
@@ -404,11 +404,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
     
     if( strcmp( urlpath[ 0 ], "login" ) == 0 )
 	{
-		loginCalled = TRUE;
+		loginLogoutCalled = TRUE;
 	}
 	
 	// Check for sessionid by sessionid specificly or authid
-	if( loginCalled == FALSE && loggedSession == NULL )
+	if( loginLogoutCalled == FALSE && loggedSession == NULL )
 	{
 		HashmapElement *tst = GetHEReq( *request, "sessionid" );
 		HashmapElement *ast = GetHEReq( *request, "authid" );
@@ -837,7 +837,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 	}
 	
-	if( loginCalled == FALSE && loggedSession != NULL )
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
 	{
 		loggedSession->us_InUseCounter++;
 	}
@@ -890,7 +890,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	else if( strcmp( urlpath[ 0 ], "user" ) == 0 )
 	{
 		DEBUG("User\n");
-		response = UMWebRequest( l, urlpath, (*request), loggedSession, result );
+		response = UMWebRequest( l, urlpath, (*request), loggedSession, result, &loginLogoutCalled );
 	}
 	
 	//
@@ -1490,7 +1490,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	*/
 	/// @endcond
 	
-	else if( loginCalled == TRUE )
+	else if( loginLogoutCalled == TRUE )
 	//else if( strcmp(  urlpath[ 0 ], "login" ) == 0 )
 	{
 		struct TagItem tags[] = {
@@ -2161,7 +2161,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
-	if( loginCalled == FALSE && loggedSession != NULL )
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
 	{
 		loggedSession->us_InUseCounter--;
 	}
@@ -2171,7 +2171,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 error:
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
-	if( loginCalled == FALSE && loggedSession != NULL )
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
 	{
 		loggedSession->us_InUseCounter--;
 	}

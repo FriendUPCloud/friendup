@@ -37,9 +37,10 @@
  * @param request http request
  * @param loggedSession pointer to UserSession which called this function
  * @param result pointer to result value
+ * @param sessionRemoved pointer to FBOOL where information about logout will be stored
  * @return response as Http structure, otherwise NULL
  */
-Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedSession, int *result )
+Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedSession, int *result, FBOOL *sessionRemoved )
 {
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
@@ -1224,6 +1225,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					}
 					
 					error = USMUserSessionRemove( l->sl_USM, sess );
+					
+					*sessionRemoved = TRUE;
 				}
 				//
 				// we found user which must be removed
