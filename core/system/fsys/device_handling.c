@@ -1706,7 +1706,7 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 	if( message != NULL && u != NULL )
 	{
 		DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
-		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"path\":\"%s\"}}", evt, path );
+		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
 		
 		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 		{
