@@ -1684,23 +1684,44 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									seq = [];
 								}
 							}
-							var l = {
-								index: 0,
-								func: function()
-								{
-									var cmd = seq[ this.index++ ];
-									if( cmd && cmd.length )
+							if( seq.length )
+							{
+								ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
+								var l = {
+									index: 0,
+									func: function()
 									{
-										Workspace.shell.execute( cmd, function()
+										if( l.index < seq.length )
 										{
-											l.func();
-											if( Workspace.mainDock )
-												Workspace.mainDock.closeDesklet();
-										} );
+											var cmd = seq[ l.index++ ];
+											if( cmd && cmd.length )
+											{
+												var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );
+												Workspace.shell.execute( cmd, function( res )
+												{
+													ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+													l.func();
+													if( Workspace.mainDock )
+														Workspace.mainDock.closeDesklet();
+												} );
+												return;
+											}
+										}
+										// Hide overlay
+										ScreenOverlay.hide();
+										l.func = function()
+										{
+											//
+										}
 									}
 								}
+								l.func();
 							}
-							l.func();
+							else
+							{
+								// Hide overlay
+								ScreenOverlay.hide();
+							}
 						} );
 					}
 

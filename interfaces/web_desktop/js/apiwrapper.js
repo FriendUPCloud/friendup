@@ -1400,14 +1400,14 @@ function apiWrapper( event, force )
 					
 					// Try to execute register callback function
 					if( msg.registerCallback )
-						runWrapperCallback( msg.registerCallback );
+						runWrapperCallback( msg.registerCallback, msg.data );
 				}
 				// We got notify without a window (shell application or main app win no window)
 				else
 				{
 					// Try to execute register callback function
 					if( msg.registerCallback )
-						runWrapperCallback(msg.registerCallback);
+						runWrapperCallback(msg.registerCallback, msg.data );
 				}
 				break;
 				// Screens ---------------------------------------------------------
