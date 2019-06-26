@@ -239,7 +239,7 @@ FriendConnection.prototype.onWsMessage = function( msg )
 			}
 			else
 			{
-				console.log( 'Illegal message format.' );
+				console.log( 'Illegal message format.', msg );
 			}
 		}
 	}
