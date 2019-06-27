@@ -873,8 +873,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			char tmp[ 512 ];
 			
 			Notification *not = NotificationManagerRemoveNotification( l->sl_NotificationManager , notifid );
-			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, notifid, action );
-			Log( FLOG_INFO, "[Update notification] notifID: %lu action %d uname: %s\n", notifid, action, loggedSession->us_User->u_Name );
+			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, action );
+			Log( FLOG_INFO, "[Update notification] action %d uname: %s\n", action, loggedSession->us_User->u_Name );
 			if( not != NULL )
 			{
 				NotificationDelete( not );
