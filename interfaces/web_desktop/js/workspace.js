@@ -1155,7 +1155,6 @@ Workspace = {
 		}
 
 		// Manipulate screen overlay
-		ScreenOverlay.setTitle( i18n( 'i18n_logging_in' ) );
 		ScreenOverlay.show();
 		
 		if( !this.userWorkspaceInitialized )
