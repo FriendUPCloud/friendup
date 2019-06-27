@@ -88,4 +88,4 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 //
 //
 
-int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, FULONG notifSentID, int action );
+int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, int action );

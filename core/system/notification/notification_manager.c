@@ -759,7 +759,7 @@ void NotificationSendThread( FThread *data )
 		{
 			DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
 		
-			MobileAppNotifyUserUpdate( nstd->sntd_NM->nm_SB, dnotif->n_UserName, dnotif, 0, NOTIFY_ACTION_TIMEOUT );
+			MobileAppNotifyUserUpdate( nstd->sntd_NM->nm_SB, dnotif->n_UserName, dnotif, NOTIFY_ACTION_TIMEOUT );
 			NotificationDelete( dnotif );
 			le->dle_NotificationPtr = NULL;
 		}

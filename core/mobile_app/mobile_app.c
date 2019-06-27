@@ -1205,11 +1205,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
  *
  * @param username pointer to string with user name
  * @param notif pointer to Notfication structure
- * @param notifSentID id of NotificationSent from information is coming
  * @param action id of action
  * @return 0 when message was send, otherwise error number
  */
-int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *notif, FULONG notifSentID, int action )
+int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *notif, int action )
 {
 	if( username == NULL )
 	{
@@ -1217,8 +1216,6 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 		return 1;
 	}
 	SystemBase *sb = (SystemBase *)lsb;
-	UserMobileAppConnections *userConnections = NULL;
-	NotificationSent *notifSent = NULL;
 	
 	// get message length
 	
@@ -1236,7 +1233,9 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	}
 	else	// Notification was not provided by function, must be readed from DB
 	{
-		notif = NotificationManagerGetTreeByNotifSentDB( sb->sl_NotificationManager, notifSentID );
+		DEBUG("notif is equal to NULL\n");
+		return 1;
+		//notif = NotificationManagerGetTreeByNotifSentDB( sb->sl_NotificationManager, notifSentID );
 		// memory leak check
 		/*
 		if( notif != NULL )
