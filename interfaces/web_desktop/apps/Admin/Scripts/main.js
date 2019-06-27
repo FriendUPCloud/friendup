@@ -398,6 +398,8 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
 	
     const i = Math.floor( Math.log( bytes ) / Math.log( k ) );
 	
+	if( units === 2 ) return sizes[i];
+	
     return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( sizes[i] ) : '' );
 }
 
