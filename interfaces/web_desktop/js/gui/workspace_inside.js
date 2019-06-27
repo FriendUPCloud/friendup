@@ -1696,14 +1696,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											var cmd = seq[ l.index++ ];
 											if( cmd && cmd.length )
 											{
-												var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );
-												Workspace.shell.execute( cmd, function( res )
+												// Sanitize
+												if( cmd.indexOf( 'launch' ) == 0 )
 												{
-													ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
-													l.func();
-													if( Workspace.mainDock )
-														Workspace.mainDock.closeDesklet();
-												} );
+													var appName = cmd.split( ' ' );
+													appName = appName[ appName.length - 1 ];
+													if( !singleInstanceApps[ appName ] )
+													{
+														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );
+												
+														Workspace.shell.execute( cmd, function( res )
+														{
+															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+															l.func();
+															if( Workspace.mainDock )
+																Workspace.mainDock.closeDesklet();
+														} );
+													}
+													// Just skip
+													else
+													{
+														l.func();
+													}
+												}
 												return;
 											}
 										}
@@ -9277,7 +9292,6 @@ Workspace.receivePush = function( jsonMsg )
 	
 	function handleClick()
 	{
-	
 		if( !msg.application ) return "noapp";
 	
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
@@ -9334,6 +9348,7 @@ Workspace.receivePush = function( jsonMsg )
 		// Send message to app once it has started...
 		function appMessage()
 		{
+			
 			var app = false;
 			var apps = Workspace.applications;
 			for( var a = 0; a < apps.length; a++ )
