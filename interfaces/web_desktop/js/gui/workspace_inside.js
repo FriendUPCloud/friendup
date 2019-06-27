@@ -1719,6 +1719,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														l.func();
 													}
 												}
+												else
+												{
+													l.func();
+												}
 												return;
 											}
 										}
