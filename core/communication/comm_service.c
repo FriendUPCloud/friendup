@@ -1239,8 +1239,10 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 	{
 		if( socket != NULL )
 		{
-			if( !lsb->sl_USM )
+			if( !lsb->sl_USM || fcm->fcm_FCI == NULL || fcm->fcm_FCI->fci_City == NULL )
+			{
 				return NULL;
+			}
 
 			MsgItem tags[] = {
 				{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
