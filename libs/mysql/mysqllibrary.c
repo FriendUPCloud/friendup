@@ -281,6 +281,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					
 					case SQLT_BLOB:
 						{
+							/*
 							DEBUG("[MYSQLLibrary] Read BLOB\n");
 							ListString *ls = ListStringNew();
 							if( ls != NULL )
@@ -297,6 +298,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							// copy pointer to this list
 							memcpy( strptr + dptr[2], &ls, sizeof( ListString * ) );
 							//ListStringDelete( ls );
+							*/
 						}
 					break;
 					

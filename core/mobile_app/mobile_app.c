@@ -1230,12 +1230,15 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	{
 		if( notif->n_NotificationsSent == NULL )
 		{
-			notif->n_NotificationsSent = NotificationManagerGetNotificationsSentDB( sb->sl_NotificationManager, notif->n_ID );
+			// memory leak check
+			//notif->n_NotificationsSent = NotificationManagerGetNotificationsSentDB( sb->sl_NotificationManager, notif->n_ID );
 		}
 	}
 	else	// Notification was not provided by function, must be readed from DB
 	{
 		notif = NotificationManagerGetTreeByNotifSentDB( sb->sl_NotificationManager, notifSentID );
+		// memory leak check
+		/*
 		if( notif != NULL )
 		{
 			NotificationSent *ln = notif->n_NotificationsSent;
@@ -1249,6 +1252,7 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 				ln = (NotificationSent *)ln->node.mln_Succ;
 			}
 		}
+		*/
 	}
 	
 	if( notif != NULL )

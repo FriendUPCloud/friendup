@@ -370,19 +370,6 @@ User-Agent: Friend/1.0.0
 							break;
 						}
 					}
-					/*
-					if( bytes < 0 )
-					{
-						FERROR("ERROR reading response from socket\n");
-						break;
-					}
-					if( bytes == 0 )
-					{
-						FERROR("ERROR reading response from socket 0\n");
-						break;
-					}
-					*/
-					
 				}
 			}
 			else // no SSL
@@ -455,6 +442,7 @@ client_error:
 		if( certbio != NULL )
 		{
 			BIO_destroy_bio_pair( certbio );
+			BIO_free( certbio );
 		}
 	}
 
