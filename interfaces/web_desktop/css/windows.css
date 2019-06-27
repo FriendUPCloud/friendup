@@ -1504,6 +1504,11 @@ body .FriendCameraFallback button:before
 
 /* Screen overlay ----------------------------------------------------------- */
 
+html body.Loading #FriendScreenOverlay
+{
+	visibility: visible !important;
+}
+
 #FriendScreenOverlay
 {
 	position: absolute;
