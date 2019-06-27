@@ -1514,11 +1514,14 @@ body .FriendCameraFallback button:before
 	width: 100%;
 	height: 100%;
 	display: none;
-	transition: opacity 0.25s;
 	background-color: #222222;
 	color: white;
 	overflow: hidden;
+	font-size: 1em;
 	z-index: 9999999999;
+	opacity: 0;
+	box-sizing: border-box;
+	transition: opacity 0.25s;
 }
 
 #FriendScreenOverlay.Visible
@@ -1532,11 +1535,6 @@ body .FriendCameraFallback button:before
 	opacity: 1;
 }
 
-#FriendScreenOverlay.Hidden,
-#FriendScreenOverlay.Visible.Hiding
-{
-}
-
 #FriendScreenOverlay .Title
 {
 	position: absolute;
@@ -1544,20 +1542,34 @@ body .FriendCameraFallback button:before
 	left: calc(50% - 400px);
 	height: 40px;
 	width: 0px;
+	overflow: hidden;
+	white-space: nowrap;
 	border-bottom: 1px solid #555555;
 	line-height: 40px;
 	font-weight: bold;
-	font-size: 1em;
 	color: white;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity,width 0.5s,0.25s;
+	transition: opacity,width 0.25s,0.5s;
 }
 
-#FriendScreenOverlay .Title.Showing
+[mobile] #FriendScreenOverlay .Title
+{
+	top: 0;
+	left: 0;
+	padding-left: 10px;
+	box-sizing: border-box;
+}
+
+#FriendScreenOverlay.Visible.Showing .Title.Showing
 {
 	opacity: 1;
 	width: 800px;
+}
+
+[mobile] #FriendScreenOverlay.Visible.Showing .Title.Showing
+{
+	width: 100%;
 }
 
 #FriendScreenOverlay .StatusBox
@@ -1571,10 +1583,27 @@ body .FriendCameraFallback button:before
 	color: white;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.25s;
+	transition: opacity,width 0.5s,0.5s;
 }
 
-#FriendScreenOverlay .Title.Showing + .StatusBox
+[mobile] #FriendScreenOverlay .StatusBox
+{
+	width: calc(100% - 20px);
+	height: calc(100% - 40px);
+	left: 10px;
+}
+
+[mobile] #FriendScreenOverlay .StatusBox .HContent15
+{
+	display: none;
+}
+[mobile] #FriendScreenOverlay .StatusBox .HContent45,
+[mobile] #FriendScreenOverlay .StatusBox .HContent40
+{
+	width: 50% !important;
+}
+
+#FriendScreenOverlay.Visible.Showing .Title.Showing + .StatusBox
 {
 	opacity: 1;
 }

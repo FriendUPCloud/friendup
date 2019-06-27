@@ -74,12 +74,13 @@ var ScreenOverlay = {
 			this.div.appendChild( title );
 			this.div.stitle = title;
 		}
+		this.div.stitle.innerHTML = tt;
+		
 		var self = this;
 		setTimeout( function()
 		{
 			self.div.stitle.classList.add( 'Showing' );
 		}, 5 );
-		this.div.stitle.innerHTML = tt;
 	},
 	addStatus: function( topic, content )
 	{
