@@ -1701,7 +1701,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												{
 													var appName = cmd.split( ' ' );
 													appName = appName[ appName.length - 1 ];
-													if( !singleInstanceApps[ appName ] )
+													if( !Friend.singleInstanceApps[ appName ] )
 													{
 														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );
 												
