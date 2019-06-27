@@ -118,7 +118,8 @@ var ScreenOverlay = {
 	clearContent: function()
 	{
 		this.list = [];
-		this.div.status.innerHTML = '';
+		if( this.div && this.div.status )
+			this.div.status.innerHTML = '';
 	}
 };
 
