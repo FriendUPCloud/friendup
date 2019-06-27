@@ -1,3 +1,7 @@
+// Apps on startup
+Friend.startupApps = {};
+
+// Added to workspace
 var WorkspaceInside = {
 	// Tray icons
 	trayIcons: {},
@@ -866,11 +870,12 @@ var WorkspaceInside = {
 								}
 							}, 1000 );
 						}
-					
+						
 						// TODO: If we are here, generate a clickable Workspace notification
 						if( msg.notificationData.clicked )
 						{
 							mobileDebug( ' Startappz: ' + appName, true );
+							Friend.startupApps[ appName ] = true;
 							ExecuteApplication( appName, '', appMessage );
 						}
 						else
@@ -882,6 +887,7 @@ var WorkspaceInside = {
 							{
 								msg.notificationData.clicked = true;
 								mobileDebug( ' Startappz: ' + appName, true );
+								Friend.startupApps[ appName ] = true;
 								ExecuteApplication( appName, '', appMessage );
 							}
 						}
@@ -1701,7 +1707,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												{
 													var appName = cmd.split( ' ' );
 													appName = appName[ appName.length - 1 ];
-													if( !Friend.singleInstanceApps[ appName ] )
+													if( !Friend.startupApps[ appName ] )
 													{
 														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );
 												
