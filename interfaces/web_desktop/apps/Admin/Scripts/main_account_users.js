@@ -85,12 +85,73 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							mountlist[b].Config = {};
 						}
-						mlst += '<div class="HContent20 FloatLeft">';
+						
+						// Calculate disk usage
+						var size = ( mountlist[b].Config.DiskSize ? mountlist[b].Config.DiskSize : 0 );
+						var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+						size = parseInt( size );
+						var type = mode[0].toLowerCase();
+						if( type == 'kb' )
+						{
+							size = size * 1024;
+						}
+						else if( type == 'mb' )
+						{
+							size = size * 1024 * 1024;
+						}
+						else if( type == 'gb' )
+						{
+							size = size * 1024 * 1024 * 1024;
+						}
+						else if( type == 'tb' )
+						{
+							size = size * 1024 * 1024 * 1024 * 1024;
+						}
+						var used = parseInt( mountlist[b].StoredBytes );
+						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+						if( !used && !size ) used = 0, size = 0;
+						if( !size ) size = 536870912;
+						if( !used ) used = 0;
+						if( used > size || ( used && !size ) ) size = used;
+						
+						var storage = {
+							id   : mountlist[b].ID,
+							name : mountlist[b].Name,
+							type : mountlist[b].Type,
+							size : size, 
+							used : used, 
+							free : ( size - used ), 
+							prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+							icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
+						};
+						
+						if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+						{
+							storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+						}
+						if( storage.name == 'Home' )
+						{
+							storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+						}
+						else if( storage.name == 'System' )
+						{
+							storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+						}
+						
+						//console.log( storage );
+						
+						mlst += '<div class="HContent33 FloatLeft">';
 						mlst += '<div class="PaddingSmall Ellipsis">';
-						mlst += '<div id="Storage_' + mountlist[b].ID + '">';
-						mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
+						mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
+						mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
+						//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
 						mlst += '</div>';
-						mlst += '<div class="FloatLeft HContent100 Name Ellipsis TextCenter" title="' + mountlist[b].Name + '">' + mountlist[b].Name + '</div>';
+						mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
+						mlst += '<div class="name" title="' + storage.name + '">' + storage.name + ':</div>';
+						mlst += '<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
+						mlst += '<div class="rectangle"><div title="' + FormatBytes( storage.used, 0 ) + ' used" style="width:' + storage.prog + '%"></div></div>';
+						mlst += '<div class="bytes">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
+						mlst += '</div>';
 						mlst += '</div>';
 						mlst += '</div>';
 					}
@@ -110,7 +171,7 @@ Sections.accounts_users = function( cmd, extra )
 							continue;
 						var nod = d[a];
 						nod.setAttribute( 'width', nod.parentNode.offsetWidth );
-						nod.setAttribute( 'height', 64 );
+						nod.setAttribute( 'height', nod.parentNode.offsetHeight );
 						
 						// Calculate disk usage
 						var size = nod.getAttribute( 'size' );
@@ -220,7 +281,7 @@ Sections.accounts_users = function( cmd, extra )
 				d.onLoad = function( data )
 				{
 					ge( 'UserDetails' ).innerHTML = data;
-					initStorageGraphs();
+					//initStorageGraphs();
 					
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
@@ -466,6 +527,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							ul = null;
 						}
+						//console.log( { e:e, d:(ul?ul:d) } );
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -625,7 +687,7 @@ Sections.accounts_users = function( cmd, extra )
 			d.onLoad = function( data )
 			{
 				ge( 'UserDetails' ).innerHTML = data;
-				initStorageGraphs();
+				//initStorageGraphs();
 				
 				// Responsive framework
 				Friend.responsive.pageActive = ge( 'UserDetails' );

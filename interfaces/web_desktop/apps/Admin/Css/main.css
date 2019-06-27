@@ -102,4 +102,87 @@
 
 
 
+/* Storage ------------------------------------------------------------------ */
+
+#Admin #StorageGui .HRow > div
+{
+	min-width: 148px;
+	cursor: pointer;
+}
+
+#Admin #StorageGui .Col1
+{
+	width: 40px;
+	height: 36px;
+	overflow: hidden;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+#Admin #StorageGui .Col2
+{
+	width: calc(100% - 40px);
+	padding-left: 11px;
+	padding-right: 5px;
+	box-sizing: border-box;
+}
+
+#Admin #StorageGui .disk
+{
+	position: relative;
+	width: 100%;
+    height: 100%;
+    background-image: url(/iconthemes/friendup15/Disk.svg);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+#Admin #StorageGui .disk > .label
+{
+	position: absolute;
+    right: calc(50% - 20px);
+    top: calc(50% - 20px);
+    width: 100%;
+    height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 40%;
+}
+
+#Admin #StorageGui .name 
+{
+	color: #20374D;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 15px;
+}
+
+#Admin #StorageGui .type, 
+#Admin #StorageGui .bytes
+{
+	color: #20374D;
+	font-size: 10px;
+	line-height: 13px;
+}
+
+#Admin #StorageGui .rectangle 
+{
+	position: relative;
+	height: 6px;
+	width: 100%;
+	border: 0.5px solid #979797;
+	background-color: #D8D8D8;
+	box-sizing: border-box;
+}
+
+#Admin #StorageGui .rectangle > div 
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 4px;
+	box-sizing: border-box;
+	background-color: #3498DB;
+}
 

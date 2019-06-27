@@ -116,4 +116,27 @@ i18n_workgroup_profile                 : Workgroup profile
 i18n_workgroup_name                    : Name
 i18n_workgroup_description             : Description
 
+#Storage related
+
+i18n_SQLDrive                     : SQL drive
+i18n_Server filesystem            : Server filesystem
+i18n_Local                        : Server filesystem
+i18n_FriendStore                  : Friend Store
+i18n_Samba	                      : Samba filesystem
+i18n_DropboxDrive                 : Dropbox drive
+i18n_GoogleDrive                  : Google drive
+i18n_Wordpress                    : WordPress drive
+i18n_SQLWorkgroupDrive            : MySQL Based Filesystem for workgroups
+i18n_Treeroot                     : Treeroot drive
+i18n_ArenaCM                      : Arena CM drive
+i18n_Website                      : Website drive
+i18n_Assign                       : Assign drive
+i18n_INRam                        : INRam Drive
+i18n_FriendStoreDrive             : FriendStore Drive
+i18n_Remote                       : Remote Drive
+i18n_Node                         : Node network
+i18n_SFTP                         : SFTP
+i18n_CorvoDrive                   : Corvo Disk
+i18n_QuickNG                      : Sybase QuickNG DOS Driver
+i18n_NodeDrive                    : Node network
 
