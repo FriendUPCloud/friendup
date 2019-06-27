@@ -568,6 +568,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 								result = 500;
 							}
+							else
+							{
+								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", response->content );
+							}
 						}
 						else
 						{
