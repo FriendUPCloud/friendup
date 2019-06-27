@@ -2035,6 +2035,7 @@ body:not(.friendapp):not([mobile]).Loading:after
 	border-radius: 60px;
 	animation: bodyLoading 0.1s;
 	-webkit-animation: bodyLoading 0.1s;
+	z-index: 99999999999;
 }
 
 body[mobile].Loading:after
