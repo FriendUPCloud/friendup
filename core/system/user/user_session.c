@@ -82,16 +82,16 @@ void UserSessionDelete( UserSession *us )
 			}
 			else
 			{
-				INFO("UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
 				count++;
 				if( count > 50 )
 				{
+					Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
 					//WorkerManagerDebug( SLIB );
 					count = 0;
 					break;
 				}
 			}
-			usleep( 250 );
+			usleep( 100 );
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
