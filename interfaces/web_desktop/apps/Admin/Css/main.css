@@ -104,9 +104,9 @@
 
 /* Storage ------------------------------------------------------------------ */
 
-#Admin #StorageGui .HRow > div
+#Admin #StorageGui .HRow > .DiskContainer
 {
-	min-width: 148px;
+	min-width: 148px !important;
 	cursor: pointer;
 }
 

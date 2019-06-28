@@ -118,6 +118,10 @@ i18n_workgroup_description             : Description
 
 #Storage related
 
+i18n_name                         : Name
+i18n_type                         : Type
+i18n_size                         : Size
+
 i18n_SQLDrive                     : SQL drive
 i18n_Server filesystem            : Server filesystem
 i18n_Local                        : Server filesystem

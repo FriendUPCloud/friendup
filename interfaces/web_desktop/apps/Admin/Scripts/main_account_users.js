@@ -70,97 +70,9 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
-				// Mountlist
-				var mlst = '';
-				if( mountlist && mountlist.length )
-				{
-					mlst += '<div class="HRow">';
-					for( var b = 0; b < mountlist.length; b++ )
-					{
-						try
-						{
-							mountlist[b].Config = JSON.parse( mountlist[b].Config );
-						}
-						catch( e )
-						{
-							mountlist[b].Config = {};
-						}
-						
-						// Calculate disk usage
-						var size = ( mountlist[b].Config.DiskSize ? mountlist[b].Config.DiskSize : 0 );
-						var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
-						size = parseInt( size );
-						var type = mode[0].toLowerCase();
-						if( type == 'kb' )
-						{
-							size = size * 1024;
-						}
-						else if( type == 'mb' )
-						{
-							size = size * 1024 * 1024;
-						}
-						else if( type == 'gb' )
-						{
-							size = size * 1024 * 1024 * 1024;
-						}
-						else if( type == 'tb' )
-						{
-							size = size * 1024 * 1024 * 1024 * 1024;
-						}
-						var used = parseInt( mountlist[b].StoredBytes );
-						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
-						if( !used && !size ) used = 0, size = 0;
-						if( !size ) size = 536870912;
-						if( !used ) used = 0;
-						if( used > size || ( used && !size ) ) size = used;
-						
-						var storage = {
-							id   : mountlist[b].ID,
-							name : mountlist[b].Name,
-							type : mountlist[b].Type,
-							size : size, 
-							used : used, 
-							free : ( size - used ), 
-							prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-							icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
-						};
-						
-						if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
-						{
-							storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
-						}
-						if( storage.name == 'Home' )
-						{
-							storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
-						}
-						else if( storage.name == 'System' )
-						{
-							storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
-						}
-						
-						//console.log( storage );
-						
-						mlst += '<div class="HContent33 FloatLeft">';
-						mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(\'' + storage.name + '\',' + storage.id + ')">';
-						mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
-						mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
-						//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
-						mlst += '</div>';
-						mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
-						mlst += '<div class="name" title="' + storage.name + '">' + storage.name + ':</div>';
-						mlst += '<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
-						mlst += '<div class="rectangle"><div title="' + FormatBytes( storage.used, 0 ) + ' used" style="width:' + storage.prog + '%"></div></div>';
-						mlst += '<div class="bytes">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
-						mlst += '</div>';
-						mlst += '</div>';
-						mlst += '</div>';
-					}
-					mlst += '</div>';
-				}
-				else
-				{
-					mlst += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_mountlist_empty' ) + '</div></div>';
-				}
+				var mlst = Sections.user_disk_refresh( mountlist );
+				
+				
 				
 				function initStorageGraphs()
 				{
@@ -527,7 +439,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							ul = null;
 						}
-						//console.log( { e:e, d:(ul?ul:d) } );
+						console.log( { e:e, d:(ul?ul:d) } );
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -867,9 +779,202 @@ Sections.userrole_update = function( rid, userid, _this )
 	}
 };
 
+Sections.user_disk_save = function( did, userid )
+{
+	console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
+	
+	return;
+	
+	var p = 'd';
+	
+	var data = { Name: ge( p+'Name' ).value };
+	if( ge( p+'Server'           ) ) data.Server           = ge( p+'Server' ).value;
+	if( ge( p+'ShortDescription' ) ) data.ShortDescription = ge( p+'ShortDescription' ).value;
+	if( ge( p+'Port'             ) ) data.Port             = ge( p+'Port' ).value;
+	if( ge( p+'Username'         ) ) data.Username         = ge( p+'Username' ).value;
+	// Have password and password is not dummy
+	if( ge( p+'Password' ) && ge( p+'Password' ).value != '********' )
+	{
+		data.Password = ge( p+'Password' ).value;
+	}
+	// Have hashed password and password is not dummy
+	else if( ge( p+'HashedPassword' ) && ge( p+'HashedPassword' ).value != '********' )
+	{
+		data.Password = 'HASHED' + Sha256.hash( ge( p+'HashedPassword' ).value );
+	}
+	if( ge( p+'Path'          ) ) data.Path      = ge( p+'Path' ).value;
+	if( ge( p+'Type'          ) ) data.Type      = ge( p+'Type' ).value;
+	if( ge( p+'Workgroup'     ) ) data.Workgroup = ge( p+'Workgroup' ).value;
+	if( ge( p+'conf.Pollable' ) )
+	{
+		data.Pollable = ge( p+'conf.Pollable' ).checked ? 'yes' : 'no';
+		ge( p+'conf.Pollable' ).value = ge( p+'conf.Pollable' ).checked ? 'yes' : 'no';
+	}
+	if( ge( p+'conf.Invisible' ) )
+	{
+		data.Invisible = ge( p+'conf.Invisible' ).checked ? 'yes' : 'no';
+		ge( p+'conf.Invisible' ).value = ge( p+'conf.Invisible' ).checked ? 'yes' : 'no';
+	}
+	if( ge( p+'conf.Executable' ) )
+		data.Invisible = ge( p+'conf.Executable' ).value;
+	
+	if( ge( p+'PrivateKey'      ) )
+	{
+		data.PrivateKey = ge( p+'PrivateKey' ).value;
+	}
+	if( ge( p+'EncryptedKey'    ) )
+	{
+		data.EncryptedKey = ge( p+'EncryptedKey' ).value;
+	}
+	
+	// Custom fields
+	var inps = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+	var txts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
+	for( var a = 0; a < txts.length; a++ )
+	{
+		if( txts[a].id.substr( 0, 5 ) == 'conf.' )
+		{
+			data[txts[a].id] = txts[a].value;
+		}
+	}
+	for( var a = 0; a < inps.length; a++ )
+	{
+		if( inps[a].id.substr( 0, 5 ) == 'conf.' )
+		{
+			data[inps[a].id] = inps[a].value;
+		}
+	}
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, dat )
+	{
+		if( e != 'ok' ) 
+		{
+			Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
+			return;
+		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+		}
+		remountDrive( data.Name, function()
+		{
+			
+			var u = new Module( 'system' );
+			u.onExecuted = function( ee, dd )
+			{
+				var ul = null;
+				try
+				{
+					ul = JSON.parse( dd );
+				}
+				catch( ee )
+				{
+					ul = null;
+				}
+				
+				ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+				
+				Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+			}
+			u.execute( 'mountlist', { userid: userid } );
+			
+		} );
+	}
+	// Edit?
+	if( ge( p+'mode' ).value == 'edit' )
+	{
+		data.ID = ge( p+'diskId' ).value;
+		m.execute( 'editfilesystem', data );
+	}
+	// Add new...
+	else
+	{
+		m.execute( 'addfilesystem', data );
+	}
+	
+};
+
+Sections.user_disk_cancel = function( userid )
+{
+	console.log( 'Sections.user_disk_cancel ' + userid );
+	
+	var u = new Module( 'system' );
+	u.onExecuted = function( e, d )
+	{
+		var ul = null;
+		try
+		{
+			ul = JSON.parse( d );
+		}
+		catch( e )
+		{
+			ul = null;
+		}
+		
+		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+	}
+	u.execute( 'mountlist', { userid: userid } );
+	
+};
+
+Sections.user_disk_remove = function( devname, userid )
+{
+	console.log( 'Sections.user_disk_remove ', { devname : devname, userid : userid } );
+	
+	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove' ), function( r )
+	{
+		if( r && r.data == true )
+		{
+			unmountFilesystem( devname, function( e )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						
+						var u = new Module( 'system' );
+						u.onExecuted = function( ee, dd )
+						{
+							var ul = null;
+							try
+							{
+								ul = JSON.parse( dd );
+							}
+							catch( ee )
+							{
+								ul = null;
+							}
+							
+							ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+							
+							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						}
+						u.execute( 'mountlist', { userid: userid } );
+						
+						return;
+					}
+					try
+					{
+						var r = JSON.parse( d );						
+						Notify( { title: 'An error occured', text: r.message } );
+					}
+					catch( e )
+					{
+						Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
+					}
+					return;
+				}
+				m.execute( 'deletefilesystem', { devname: devname } );
+			} );
+		}
+	} );
+};
+
 Sections.user_disk_update = function( name, did )
 {
-	console.log( { name: name, did: did } );
+	//console.log( { name: name, did: did } );
 	
 	var n = new Module( 'system' );
 	n.onExecuted = function( ee, dat )
@@ -887,7 +992,7 @@ Sections.user_disk_update = function( name, did )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			var storage = { name : '', type : '', size : '' };
+			var storage = { id : '', name : '', type : '', size : '' };
 			
 			var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 		
@@ -968,10 +1073,17 @@ Sections.user_disk_update = function( name, did )
 			}
 		
 			var str = '';
-		
+			
+			str += '<div class="HRow">';
+			str += '<div class="Col1 FloatLeft">';
+			
+			str += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
+			
+			str += '</div><div class="Col2 FloatLeft">';
+			
 			str += '<div class="HRow MarginBottom">';
 			str += '<div class="HContent30 FloatLeft Ellipsis">';
-			str += '<strong>{i18n_name}</strong>';
+			str += '<strong>' + i18n( 'i18n_name' ) + ':</strong>';
 			str += '</div>';
 			str += '<div class="HContent70 FloatLeft Ellipsis">';
 			str += '<input type="text" class="FullWidth" id="dname" value="' + storage.name + '" placeholder="Mydisk"/>';
@@ -980,7 +1092,7 @@ Sections.user_disk_update = function( name, did )
 		
 			str += '<div class="HRow MarginBottom">';
 			str += '<div class="HContent30 FloatLeft Ellipsis">';
-			str += '<strong>{i18n_type}</strong>';
+			str += '<strong>' + i18n( 'i18n_type' ) + ':</strong>';
 			str += '</div>';
 			str += '<div class="HContent70 FloatLeft Ellipsis">';
 			str += '<select class="FullWidth" id="dtype">';
@@ -1002,18 +1114,12 @@ Sections.user_disk_update = function( name, did )
 		
 			str += '<div class="HRow MarginBottom">';
 			str += '<div class="HContent30 FloatLeft Ellipsis">';
-			str += '<strong>{i18n_size}</strong>';
+			str += '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
 			str += '</div>';
-			str += '<div class="HContent70 FloatLeft Ellipsis">';
-			str += '<input type="text" class="FullWidth" id="dsize" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="500"/>';
+			str += '<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
+			str += '<input type="text" class="FullWidth" id="dsize" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
 			str += '</div>';
-			str += '</div>';
-		
-			str += '<div class="HRow MarginBottom">';
-			str += '<div class="HContent30 FloatLeft Ellipsis">';
-			str += '<strong>{i18n_units}</strong>';
-			str += '</div>';
-			str += '<div class="HContent70 FloatLeft Ellipsis">';
+			str += '<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
 			str += '<select class="FullWidth" id="dunits">';
 			
 			if( units )
@@ -1029,10 +1135,12 @@ Sections.user_disk_update = function( name, did )
 			str += '</div>';
 			
 			str += '<div class="HRow PaddingTop">';
-			str += '<button class="IconSmall FloatRight MarginLeft">Save</button>';
-			str += '<button class="IconSmall FloatRight MarginLeft">Cancel</button>';
-			str += '<button class="IconSmall FloatRight MarginLeft">Remove disk</button>';
+			str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + storage.id + ',' + Application.userId + ')">Save</button>';
+			str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + Application.userId + ')">Cancel</button>';
+			str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + name + '\', ' + Application.userId + ')">Remove disk</button>';
 			str += '</div>';
+			
+			str += '</div></div>';
 			
 			ge( 'StorageGui' ).innerHTML = str;
 		
@@ -1045,6 +1153,106 @@ Sections.user_disk_update = function( name, did )
 		
 	}
 	n.execute( 'types' );
+};
+
+Sections.user_disk_refresh = function( mountlist )
+{
+	// Mountlist
+	var mlst = '';
+	if( mountlist && mountlist.length )
+	{
+		mlst += '<div class="HRow">';
+		for( var b = 0; b < mountlist.length; b++ )
+		{
+			try
+			{
+				mountlist[b].Config = JSON.parse( mountlist[b].Config );
+			}
+			catch( e )
+			{
+				mountlist[b].Config = {};
+			}
+			
+			// Skip the IsDeleted disks for now ...
+			if( mountlist[b].Mounted && mountlist[b].Mounted < 0 ) continue;
+			
+			// Calculate disk usage
+			var size = ( mountlist[b].Config.DiskSize ? mountlist[b].Config.DiskSize : 0 );
+			var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+			size = parseInt( size );
+			var type = mode[0].toLowerCase();
+			if( type == 'kb' )
+			{
+				size = size * 1024;
+			}
+			else if( type == 'mb' )
+			{
+				size = size * 1024 * 1024;
+			}
+			else if( type == 'gb' )
+			{
+				size = size * 1024 * 1024 * 1024;
+			}
+			else if( type == 'tb' )
+			{
+				size = size * 1024 * 1024 * 1024 * 1024;
+			}
+			var used = parseInt( mountlist[b].StoredBytes );
+			if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+			if( !used && !size ) used = 0, size = 0;
+			if( !size ) size = 536870912;
+			if( !used ) used = 0;
+			if( used > size || ( used && !size ) ) size = used;
+			
+			var storage = {
+				id   : mountlist[b].ID,
+				name : mountlist[b].Name,
+				type : mountlist[b].Type,
+				size : size, 
+				used : used, 
+				free : ( size - used ), 
+				prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+				icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
+			};
+			
+			if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+			{
+				storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+			}
+			if( storage.name == 'Home' )
+			{
+				storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+			}
+			else if( storage.name == 'System' )
+			{
+				storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+			}
+			
+			//console.log( storage );
+			
+			mlst += '<div class="HContent33 FloatLeft DiskContainer">';
+			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(\'' + storage.name + '\',' + storage.id + ')">';
+			mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
+			mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
+			//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
+			mlst += '</div>';
+			mlst += '<div class="Col2 FloatLeft HContent100 Name Ellipsis">';
+			mlst += '<div class="name" title="' + storage.name + '">' + storage.name + ':</div>';
+			mlst += '<div class="type" title="' + i18n( 'i18n_' + storage.type ) + '">' + i18n( 'i18n_' + storage.type ) + '</div>';
+			mlst += '<div class="rectangle"><div title="' + FormatBytes( storage.used, 0 ) + ' used" style="width:' + storage.prog + '%"></div></div>';
+			mlst += '<div class="bytes">' + FormatBytes( storage.free, 0 )  + ' free of ' + FormatBytes( storage.size, 0 ) + '</div>';
+			mlst += '</div>';
+			mlst += '</div>';
+			mlst += '</div>';
+		}
+		mlst += '</div>';
+	}
+	else
+	{
+		mlst += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_mountlist_empty' ) + '</div></div>';
+	}
+	
+	return mlst;
 };
 
 // Save a user
