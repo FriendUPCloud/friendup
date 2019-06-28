@@ -1846,6 +1846,7 @@ void *InternalPINGThread( void *d )
 	
 	DEBUG("[ServiceTempThread] internal ping thread quit\n");
 	//pthread_exit( 0 );
+	return NULL;
 }
 
 /**
