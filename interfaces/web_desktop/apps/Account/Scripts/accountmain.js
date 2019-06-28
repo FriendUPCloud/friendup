@@ -1240,7 +1240,7 @@ function addStorage( mode )
 	var v = new View( {
 		title: i18n( 'i18n_add_storage' ),
 		width: 460,
-		height: 450
+		height: 550
 	} );
 	
 	var f = new File( 'Progdir:Templates/storage.html' );
