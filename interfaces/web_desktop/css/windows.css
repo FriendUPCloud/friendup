@@ -1523,7 +1523,7 @@ html body.Loading #FriendScreenOverlay
 	color: white;
 	overflow: hidden;
 	font-size: 1em;
-	z-index: 9999999999;
+	z-index: 99999999999;
 	opacity: 0;
 	box-sizing: border-box;
 	transition: opacity 0.25s;
@@ -1538,6 +1538,33 @@ html body.Loading #FriendScreenOverlay
 #FriendScreenOverlay.Visible.Showing
 {
 	opacity: 1;
+}
+
+#FriendScreenOverlay:after
+{
+	opacity: 0;
+	transition: opacity 0.5s;
+}
+
+#FriendScreenOverlay.Visible.Showing:after
+{
+	opacity: 1;
+}
+
+#FriendScreenOverlay:after
+{
+	display: block;
+	content: " ";
+	position: absolute;
+	top: calc(50% + 300px);
+	left: calc(50% - 20px);
+	width: 40px;
+	height: 40px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image: url(/themes/friendup12/gfx/busy.png);
+	clip-path: ellipse(20px 20px at 20px 20px);
+	-webkit-clip-path: ellipse(20px 20px at 20px 20px);
 }
 
 #FriendScreenOverlay .Title

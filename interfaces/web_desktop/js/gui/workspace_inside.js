@@ -1671,7 +1671,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						//console.log = function(){};
 					}
-
+					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{
@@ -1707,10 +1707,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												{
 													var appName = cmd.split( ' ' );
 													appName = appName[ appName.length - 1 ];
-													if( !Friend.startupApps[ appName ] )
+													var found = false;
+													for( var b = 0; b < Workspace.applications.length; b++ )
 													{
-														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );
-												
+														if( Workspace.applications[ b ].applicationName == appName )
+														{
+															found = true;
+															break;
+														}
+													}
+													if( !found && !Friend.startupApps[ appName ] )
+													{
+														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														Workspace.shell.execute( cmd, function( res )
 														{
 															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
@@ -1738,6 +1746,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										{
 											//
 										}
+										// We are done. Empty startup apps!
+										Friend.startupApps = {};
 									}
 								}
 								l.func();

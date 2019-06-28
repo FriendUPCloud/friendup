@@ -3101,7 +3101,13 @@ window.Shell = function( appObject )
 				var args2 = '';
 				for( var z = 2; z < args.length; z++ )
 					args2 += ( z > 2 ? ' ' : '' ) + args[ z ];
-
+				
+				// Already in startup apps!
+				if( Friend.startupApps[ args[ 1 ] ] )
+				{
+					return cbn( false, false );
+				}
+				
 				return ExecuteApplication( args[ 1 ], args2, cbn );
 			}
 			return callback( true );
