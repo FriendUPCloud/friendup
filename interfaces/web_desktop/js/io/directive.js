@@ -112,6 +112,9 @@ function ExecuteApplication( app, args, callback )
 					_WindowToFront( app.windows[ z ]._window.parentNode );
 					// Clean blocker
 					RemoveFromExecutionQueue( appName );
+					
+					// Tell that we didn't launch
+					callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 					return;
 				}
 			}
