@@ -9417,6 +9417,7 @@ Workspace.receivePush = function( jsonMsg )
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
+		Friend.startupApps[ msg.application ] = true;
 		ExecuteApplication( msg.application, '', appMessage );
 	}
 
