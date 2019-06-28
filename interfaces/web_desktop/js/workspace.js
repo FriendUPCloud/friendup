@@ -1155,7 +1155,14 @@ Workspace = {
 		}
 
 		// Manipulate screen overlay
-		ScreenOverlay.show();
+		// (this will only be shown once!)
+		// TODO: Figure out if this is the right behavior in every case
+		//       implementation circumvents relogin issue
+		if( !Workspace.screenOverlayShown )
+		{
+			ScreenOverlay.show();
+			Workspace.screenOverlayShown = true;
+		}
 		
 		if( !this.userWorkspaceInitialized )
 		{
