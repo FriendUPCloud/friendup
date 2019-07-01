@@ -1209,7 +1209,6 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
 	FHandler *lsys = l->sl_Filesystems;
-
 	while( lsys != NULL )
 	{
 		FHandler *rems = lsys;

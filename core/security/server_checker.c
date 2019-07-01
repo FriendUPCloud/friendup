@@ -42,7 +42,7 @@ void CheckServerAndRestart( void* s )
 	
 	DEBUG("[CheckServerAndRestart] start\n");
 	
-	HttpClient *c = HttpClientNew( FALSE, "/webclient/index.html" );
+	HttpClient *c = HttpClientNew( FALSE, FALSE, "/webclient/index.html", NULL, NULL );
 	if( c != NULL )
 	{
 		

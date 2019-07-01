@@ -370,6 +370,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	Http *response = NULL;
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
+	FBOOL loginLogoutCalled = FALSE;
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func: %s\n", urlpath[ 0 ] );
 	
@@ -400,9 +401,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 		return response;
     }
+    
+    if( strcmp( urlpath[ 0 ], "login" ) == 0 )
+	{
+		loginLogoutCalled = TRUE;
+	}
 	
 	// Check for sessionid by sessionid specificly or authid
-	if( strcmp( urlpath[ 0 ], "login" ) != 0 && loggedSession == NULL )
+	if( loginLogoutCalled == FALSE && loggedSession == NULL )
 	{
 		HashmapElement *tst = GetHEReq( *request, "sessionid" );
 		HashmapElement *ast = GetHEReq( *request, "authid" );
@@ -687,8 +693,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	//
-		// Check dos token
-		//
+	// Check dos token
+	//
 		
 		//if( loggedSession == NULL )
 		{
@@ -831,6 +837,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 	}
 	
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
+	{
+		loggedSession->us_InUseCounter++;
+	}
+	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -871,6 +882,598 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		*result = 200;
 	}
+
+	//
+	// user function
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "user" ) == 0 )
+	{
+		DEBUG("User\n");
+		response = UMWebRequest( l, urlpath, (*request), loggedSession, result, &loginLogoutCalled );
+	}
+	
+	//
+	// usergroup function
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "group" ) == 0 )
+	{
+		DEBUG("Group\n");
+		response = UMGWebRequest( l, urlpath, (*request), loggedSession, result );
+	}
+	
+	//
+	// notification function
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "notification" ) == 0 )
+	{
+		DEBUG("Notification\n");
+		response = NMWebRequest( l, urlpath, (*request), loggedSession, result );
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/module</H2>Function allow user to call functions handled in modules
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param module - (required) module which will be used (all other params will be taken from request)
+	* @return output from modules
+	*/
+	/// @endcond
+	
+	else if( strcmp( urlpath[ 0 ], "module" ) == 0 )
+	{
+		// Now go ahead
+		struct stat f;
+		char *data = NULL;
+		unsigned long dataLength = 0;
+		DEBUG( "[MODULE] Trying modules folder...\n" );
+		FBOOL phpCalled = FALSE;
+
+		HashmapElement *he = HttpGetPOSTParameter( (*request), "module" );
+		if( he == NULL ) he = HashmapGet( (*request)->query, "module" );
+		// checking if module is in cache and use it if there is need
+		
+		if( he != NULL && he->data != NULL )
+		{
+			char *module = (char *)he->data;
+			int size = 0;
+			if( ( size = strlen( module ) ) > 4 )
+			{
+				if( module[ size-4 ] == '.' &&module[ size-3 ] == 'p'  &&module[ size-2 ] == 'h'  &&module[ size-1 ] == 'p' \
+					&& l->sl_PHPModule != NULL )
+				{
+					char runfile[ 512 ];
+					snprintf( runfile, sizeof(runfile), "modules/%s/module.php", module );
+					
+					DEBUG("Run module: '%s'\n", runfile );
+					
+					if( stat( runfile, &f ) != -1 )
+					{
+						FBOOL isFile;
+						DEBUG("MODRUNPHP %s\n", runfile );
+						char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
+						if( allArgsNew != NULL )
+						{
+							Log( FLOG_INFO, "Module called: %s : %p\n", allArgsNew, pthread_self() );
+							
+							data = l->sl_PHPModule->Run( l->sl_PHPModule, runfile, allArgsNew, &dataLength );
+							phpCalled = TRUE;
+							
+							if( isFile )
+							{
+								//"file<!--separate-->%s"
+								char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+								remove( fname );
+							}
+						}
+					}
+					else
+					{
+						FERROR("Module do not eixst %s\n", runfile );
+					}
+				}
+			}
+		}
+
+		if( phpCalled == FALSE && stat( "modules", &f ) != -1 )
+		{
+			if( S_ISDIR( f.st_mode ) )
+			{
+				// 2. Check if module folder exists in modules/
+
+				if( he != NULL )
+				{
+					char *module = ( char *)he->data;
+					char path[ 512 ];
+					snprintf( path, sizeof(path), "modules/%s", module );
+					path[ 511 ] = 0;
+					
+					if( stat( path, &f ) != -1 )
+					{
+						// 3. Determine interpreter (or native code)
+						DIR *fdir = NULL;
+						struct dirent *fdirent = NULL;
+						char *modType = NULL;
+						
+						if( ( fdir = opendir( path ) ) != NULL )
+						{
+							while( ( fdirent = readdir( fdir ) ) )
+							{
+								char component[ 10 ];
+
+								sprintf( component, "%.*s", 6, fdirent->d_name );
+
+								if( strcmp( component, "module" ) == 0 )
+								{
+									int hasExt = 0;
+									int dlen = strlen( fdirent->d_name );
+									int ie = 0;
+									for( ; ie < dlen; ie++ )
+									{
+										if( fdirent->d_name[ie] == '.' )
+										{
+											hasExt = ie;
+										}
+									}
+									// Has extension!
+									if( hasExt > 0 )
+									{
+										int extlen = dlen - 7;
+										if( modType )
+										{
+											FFree( modType );
+										}
+										modType = FCalloc( extlen + 1, sizeof( char ) );
+										ie = 0; int md = 0, typec = 0;
+										for( ; ie < dlen; ie++ )
+										{
+											if( md == 0 && fdirent->d_name[ie] == '.' )
+											{
+												md = 1;
+											}
+											else if ( md == 1 )
+											{
+												modType[typec++] = fdirent->d_name[ie];
+											}
+										}
+									}
+								}
+							}
+							closedir( fdir );
+						}
+		
+						// 4. Execute with interpreter (or execute native code)
+						if( modType != NULL )
+						{
+							DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
+							char *modulePath = FCalloc( 256, sizeof( char ) );
+							snprintf( modulePath, 256, "%s/module.%s", path, modType );
+							if( 
+								strcmp( modType, "php" ) == 0 || 
+								strcmp( modType, "jar" ) == 0 ||
+								strcmp( modType, "py" ) == 0
+							)
+							{
+								FBOOL isFile;
+								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
+								
+								DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
+
+								// Execute
+								data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
+								
+								// We don't use them now
+								if( allArgsNew != NULL )
+								{
+									if( isFile )
+									{
+										//"file<!--separate-->%s"
+										char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+										remove( fname );
+									}
+									FFree( allArgsNew );
+								}
+							}
+							if( modulePath )
+							{
+								FFree( modulePath );
+								modulePath = NULL;
+							}
+							
+							if( modType != NULL )
+							{
+								FFree( modType );
+								modType = NULL;
+							}
+						}
+					}
+				}
+			}
+		}
+		DEBUG("Module executed...\n");
+		
+		if( data != NULL )
+		{
+			// 5. Piped response will be output!
+			char *ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
+			char *length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Length" ) : NULL;
+			char *dispo  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Disposition" ) : NULL;
+			char *code = CheckEmbeddedHeaders( data, dataLength, "Status Code" );
+
+			char *datastart = strstr( data, "---http-headers-end---" );
+			if( datastart != NULL )
+			{
+				datastart += 23;
+				if( length == NULL )
+				{	
+					length = FCalloc( 64, sizeof( char ) );
+					sprintf( length, "%ld", dataLength - ( datastart - data ) );
+					char *trimmed = FCalloc( strlen( length )+1, 1 );
+					if( trimmed != NULL )
+					{
+						sprintf( trimmed, "%s", length );
+					}
+					FFree( length );
+					length = trimmed;
+				}
+			}
+
+			if( ltype != NULL && length != NULL )
+			{
+				struct TagItem tags[] = {
+					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( ltype, strlen( ltype ) ) },
+					{ HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicateN( dispo ? dispo : "inline", dispo ? strlen( dispo ) : strlen( "inline" ) ) },
+					{ HTTP_HEADER_CONTENT_LENGTH, (FULONG)StringDuplicateN( length, strlen( length ) ) },
+					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+					{ TAG_DONE, TAG_DONE }
+				};
+
+				if( response != NULL )
+				{
+					FERROR("RESPONSE ERROR ALREADY SET (freeing)\n");
+					HttpFree( response );
+				}
+				
+				if( code != NULL )
+				{
+					char *pEnd;
+					int errCode = -1;
+					
+					char *next;
+					errCode = strtol ( code, &next, 10);
+					if( ( next == code ) || ( *next != '\0' ) ) 
+					{
+						errCode = -1;
+					}
+
+					if( errCode == -1 )
+					{
+						response = HttpNewSimple( HTTP_200_OK, tags );
+					}
+					else
+					{
+						response = HttpNewSimple( errCode, tags );
+					}
+				}
+				else
+				{
+					response = HttpNewSimple( HTTP_200_OK, tags );
+				}
+
+				if( response )
+				{
+					char *next;
+					int calSize = strtol (length, &next, 10);
+					if( ( next == length ) || ( *next != '\0' ) ) 
+					{
+						FERROR( "Lenght of message == 0\n" );
+					}
+					else
+					{
+						char *returnData = FCalloc( calSize, sizeof( FBYTE ) );
+						if( returnData != NULL )
+						{
+							memcpy( returnData, datastart, calSize * sizeof( FBYTE ) );
+							HttpSetContent( response, returnData, calSize );
+						}
+					}
+				}
+				FFree( data );
+			}
+			else
+			{
+				struct TagItem tags[] = {
+					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  ( ltype != NULL ? StringDuplicateN( ltype, strlen( ltype ) ) : StringDuplicate( "text/plain" ) ) },
+					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+					{TAG_DONE, TAG_DONE}
+				};
+
+				if( response != NULL )
+				{
+					FERROR("RESPONSE ERROR ALREADY SET (freeing)\n");
+					HttpFree( response );
+				}
+				
+				if( code != NULL )
+				{
+					char *pEnd;
+					int errCode = -1;
+					
+					char *next;
+					errCode = strtol ( code, &next, 10);
+					if( ( next == code ) || ( *next != '\0' ) ) 
+					{
+						errCode = -1;
+					}
+					
+					DEBUG("1parsed %s code %d\n", code, errCode );
+					
+					if( errCode == -1 )
+					{
+						response = HttpNewSimple( HTTP_200_OK, tags );
+					}
+					else
+					{
+						response = HttpNewSimple( errCode, tags );
+					}
+				}
+				else
+				{
+					response = HttpNewSimple( HTTP_200_OK, tags );
+				}
+
+				if( response != NULL )
+				{
+					HttpSetContent( response, data, dataLength );
+				}
+				else
+				{
+					FFree( data );
+				}
+			}
+
+			if( ltype ){ FFree( ltype ); ltype = NULL;}
+			if( length ){ FFree( length ); length = NULL; }
+			if( code ){ FFree( code ); code = NULL; }
+
+			*result = 200;
+		}
+		else
+		{
+			Log( FLOG_ERROR, "[SystemWeb]: php returned NULL for request '%s'\n", (*request)->content );
+			
+			FERROR("[System.library] ERROR returned data is NULL\n");
+			*result = 404;
+		}
+		
+		Log( FLOG_INFO, "Module call end: %p\n", pthread_self() );
+	}
+	
+	//
+	// device functions
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "device" ) == 0 )
+	{
+		DEBUG("Device call\n");
+		response = DeviceMWebRequest( l, urlpath, *request, loggedSession, result );
+	}
+
+	//=================================================
+	//
+	// FILES
+	//
+	//=================================================
+	
+	else if( strcmp( urlpath[ 0 ], "file" ) == 0 )
+	{
+#ifdef ENABLE_WEBSOCKETS_THREADS
+		response = FSMWebRequest( l, urlpath, *request, loggedSession, result );
+#else
+		DEBUG("Systembase pointer %p\n", l );
+		if( detachTask == TRUE )
+		{
+			DEBUG("Ptr to request %p\n", *request );
+			FUQUAD pid = PIDThreadManagerRunThread( l->sl_PIDTM, *request, urlpath, loggedSession, FSMWebRequest );
+			
+			response = HttpNewSimpleA( HTTP_200_OK, (*request), HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
+									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+			
+			char pidtxt[ 256 ];
+			snprintf( pidtxt, sizeof(pidtxt), "ok<!--separate-->{\"PID\":\"%lu\"}", pid );
+			
+			HttpAddTextContent( response, pidtxt );
+			
+			*request = NULL;
+		}
+		else
+		{
+			response = FSMWebRequest( l, urlpath, *request, loggedSession, result );
+		}
+#endif
+	}
+	
+	//=================================================
+	//
+	// UFILES
+	//
+	//=================================================
+		
+	//
+	// ufile 
+	// user file - they works like files in every system. You  can open it and read/write till you close it
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "ufile" ) == 0 )
+	{
+		response = FSMRemoteWebRequest( l, urlpath, *request, loggedSession, result );
+	}
+	
+	//
+	// admin stuff
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "admin" ) == 0 )
+	{
+		response = AdminWebRequest( l, urlpath, request, loggedSession, result );
+		
+	}
+	
+	//
+	// connection stuff
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "connection" ) == 0 )
+	{
+		response = ConnectionWebRequest( l, urlpath, request, loggedSession, result );
+		
+	}
+
+	//
+	// network only memory
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "invar" ) == 0 )
+	{
+		INFO("INRAM called\n");
+		response = INVARManagerWebRequest( l->nm, &(urlpath[1]), *request );
+	}
+	
+	//
+	// DOS Token
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "token" ) == 0 )
+	{
+		INFO("Token called\n");
+		response = TokenWebRequest( l, urlpath, request, loggedSession, result );
+	}
+	
+	//
+	// atm we want to handle all calls to services via system.library
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "services" ) == 0 )
+	{
+		DEBUG("Services called\n");
+		FBOOL called = FALSE;
+		
+		if( l->sl_UM!= NULL )
+		{
+			if( UMUserIsAdmin( l->sl_UM, *request, loggedSession->us_User ) == TRUE )
+			{
+				response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request );
+				called = TRUE;
+			}
+		}
+		
+		if( called == FALSE )
+		{
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+				{ TAG_DONE, TAG_DONE}
+			};
+		
+			if( response != NULL )
+			{
+				HttpFree( response );
+				FERROR("RESPONSE services\n");
+			}
+			response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+
+			goto error;
+		}
+	}
+	
+	//
+	// handle application calls
+	//
+	
+	else if( strcmp(  urlpath[ 0 ], "app" ) == 0 )
+	{
+		DEBUG("Appcall Systemlibptr %p applibptr %p - logged user here: %s\n", l, l->alib, loggedSession->us_User->u_Name );
+		response = ApplicationWebRequest( l, &(urlpath[ 1 ]), *request, loggedSession );
+	}
+	
+	//
+	// Mobile
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "mobile" ) == 0 )
+	{
+		DEBUG("Mobile function %p  libptr %p\n", l, l->ilib );
+		response = MobileWebRequest( l,  urlpath, *request, loggedSession, result );
+	}
+	
+	//
+	// handle image calls
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "image" ) == 0 )
+	{
+		DEBUG("Image calls Systemlibptr %p imagelib %p\n", l, l->ilib );
+		response = l->ilib->WebRequest( l->ilib, loggedSession , &(urlpath[ 1 ]), *request );
+	}
+	
+	//
+	// clear cache
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "clearcache" ) == 0 )
+	{
+		DEBUG("Clear cache %p  libptr %p\n", l, l->ilib );
+		CacheManagerClearCache( l->cm );
+	}
+	
+	//
+	// USB
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "usb" ) == 0 )
+	{
+		DEBUG("USB function %p  libptr %p\n", l, l->ilib );
+		response = USBManagerWebRequest( l,  &(urlpath[ 1 ]), *request, loggedSession );
+	}
+	
+	//
+	// Printers
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "printer" ) == 0 )
+	{
+		DEBUG("Printer function %p  libptr %p\n", l, l->ilib );
+		response = PrinterManagerWebRequest( l,  &(urlpath[ 1 ]), *request, loggedSession );
+	}
+	
+	//
+	// PID Threads
+	//
+	else if( strcmp( urlpath[ 0 ], "pid" ) == 0 )
+	{
+		DEBUG("PIDThread functions\n");
+		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		{
+			response = PIDThreadWebRequest( l, urlpath, *request, loggedSession );
+		}
+		else
+		{
+			response = HttpNewSimpleA( HTTP_200_OK, (*request),  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
+				HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+			
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
+	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
@@ -887,7 +1490,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	*/
 	/// @endcond
 	
-	else if( strcmp(  urlpath[ 0 ], "login" ) == 0 )
+	else if( loginLogoutCalled == TRUE )
+	//else if( strcmp(  urlpath[ 0 ], "login" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -1500,598 +2104,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		*result = 200;
 	}
-
-	//
-	// user function
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "user" ) == 0 )
-	{
-		DEBUG("User\n");
-		response = UMWebRequest( l, urlpath, (*request), loggedSession, result );
-	}
-	
-	//
-	// usergroup function
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "group" ) == 0 )
-	{
-		DEBUG("Group\n");
-		response = UMGWebRequest( l, urlpath, (*request), loggedSession, result );
-	}
-	
-	//
-	// notification function
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "notification" ) == 0 )
-	{
-		DEBUG("Notification\n");
-		response = NMWebRequest( l, urlpath, (*request), loggedSession, result );
-	}
-	
-	/// @cond WEB_CALL_DOCUMENTATION
-	/**
-	*
-	* <HR><H2>system.library/module</H2>Function allow user to call functions handled in modules
-	*
-	* @param sessionid - (required) session id of logged user
-	* @param module - (required) module which will be used (all other params will be taken from request)
-	* @return output from modules
-	*/
-	/// @endcond
-	
-	else if( strcmp( urlpath[ 0 ], "module" ) == 0 )
-	{
-		// Now go ahead
-		struct stat f;
-		char *data = NULL;
-		unsigned long dataLength = 0;
-		DEBUG( "[MODULE] Trying modules folder...\n" );
-		FBOOL phpCalled = FALSE;
-
-		HashmapElement *he = HttpGetPOSTParameter( (*request), "module" );
-		if( he == NULL ) he = HashmapGet( (*request)->query, "module" );
-		// checking if module is in cache and use it if there is need
-		
-		if( he != NULL && he->data != NULL )
-		{
-			char *module = (char *)he->data;
-			int size = 0;
-			if( ( size = strlen( module ) ) > 4 )
-			{
-				if( module[ size-4 ] == '.' &&module[ size-3 ] == 'p'  &&module[ size-2 ] == 'h'  &&module[ size-1 ] == 'p' \
-					&& l->sl_PHPModule != NULL )
-				{
-					char runfile[ 512 ];
-					snprintf( runfile, sizeof(runfile), "modules/%s/module.php", module );
-					
-					DEBUG("Run module: '%s'\n", runfile );
-					
-					if( stat( runfile, &f ) != -1 )
-					{
-						FBOOL isFile;
-						DEBUG("MODRUNPHP %s\n", runfile );
-						char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
-						if( allArgsNew != NULL )
-						{
-							Log( FLOG_INFO, "Module called: %s : %p\n", allArgsNew, pthread_self() );
-							
-							data = l->sl_PHPModule->Run( l->sl_PHPModule, runfile, allArgsNew, &dataLength );
-							phpCalled = TRUE;
-							
-							if( isFile )
-							{
-								//"file<!--separate-->%s"
-								char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-								remove( fname );
-							}
-						}
-					}
-					else
-					{
-						FERROR("Module do not eixst %s\n", runfile );
-					}
-				}
-			}
-		}
-
-		if( phpCalled == FALSE && stat( "modules", &f ) != -1 )
-		{
-			if( S_ISDIR( f.st_mode ) )
-			{
-				// 2. Check if module folder exists in modules/
-
-				if( he != NULL )
-				{
-					char *module = ( char *)he->data;
-					char path[ 512 ];
-					snprintf( path, sizeof(path), "modules/%s", module );
-					path[ 511 ] = 0;
-					
-					if( stat( path, &f ) != -1 )
-					{
-						// 3. Determine interpreter (or native code)
-						DIR *fdir = NULL;
-						struct dirent *fdirent = NULL;
-						char *modType = NULL;
-						
-						if( ( fdir = opendir( path ) ) != NULL )
-						{
-							while( ( fdirent = readdir( fdir ) ) )
-							{
-								char component[ 10 ];
-
-								sprintf( component, "%.*s", 6, fdirent->d_name );
-
-								if( strcmp( component, "module" ) == 0 )
-								{
-									int hasExt = 0;
-									int dlen = strlen( fdirent->d_name );
-									int ie = 0;
-									for( ; ie < dlen; ie++ )
-									{
-										if( fdirent->d_name[ie] == '.' )
-										{
-											hasExt = ie;
-										}
-									}
-									// Has extension!
-									if( hasExt > 0 )
-									{
-										int extlen = dlen - 7;
-										if( modType )
-										{
-											FFree( modType );
-										}
-										modType = FCalloc( extlen + 1, sizeof( char ) );
-										ie = 0; int md = 0, typec = 0;
-										for( ; ie < dlen; ie++ )
-										{
-											if( md == 0 && fdirent->d_name[ie] == '.' )
-											{
-												md = 1;
-											}
-											else if ( md == 1 )
-											{
-												modType[typec++] = fdirent->d_name[ie];
-											}
-										}
-									}
-								}
-							}
-							closedir( fdir );
-						}
-		
-						// 4. Execute with interpreter (or execute native code)
-						if( modType != NULL )
-						{
-							DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
-							char *modulePath = FCalloc( 256, sizeof( char ) );
-							snprintf( modulePath, 256, "%s/module.%s", path, modType );
-							if( 
-								strcmp( modType, "php" ) == 0 || 
-								strcmp( modType, "jar" ) == 0 ||
-								strcmp( modType, "py" ) == 0
-							)
-							{
-								FBOOL isFile;
-								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
-								
-								DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
-
-								// Execute
-								data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
-								
-								// We don't use them now
-								if( allArgsNew != NULL )
-								{
-									if( isFile )
-									{
-										//"file<!--separate-->%s"
-										char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
-										remove( fname );
-									}
-									FFree( allArgsNew );
-								}
-							}
-							if( modulePath )
-							{
-								FFree( modulePath );
-								modulePath = NULL;
-							}
-							
-							if( modType != NULL )
-							{
-								FFree( modType );
-								modType = NULL;
-							}
-						}
-					}
-				}
-			}
-		}
-		DEBUG("Module executed...\n");
-		
-		if( data != NULL )
-		{
-			// 5. Piped response will be output!
-			char *ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
-			char *length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Length" ) : NULL;
-			char *dispo  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Disposition" ) : NULL;
-			char *code = CheckEmbeddedHeaders( data, dataLength, "Status Code" );
-
-			char *datastart = strstr( data, "---http-headers-end---" );
-			if( datastart != NULL )
-			{
-				datastart += 23;
-				if( length == NULL )
-				{	
-					length = FCalloc( 64, sizeof( char ) );
-					sprintf( length, "%ld", dataLength - ( datastart - data ) );
-					char *trimmed = FCalloc( strlen( length )+1, 1 );
-					if( trimmed != NULL )
-					{
-						sprintf( trimmed, "%s", length );
-					}
-					FFree( length );
-					length = trimmed;
-				}
-			}
-
-			if( ltype != NULL && length != NULL )
-			{
-				struct TagItem tags[] = {
-					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( ltype, strlen( ltype ) ) },
-					{ HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicateN( dispo ? dispo : "inline", dispo ? strlen( dispo ) : strlen( "inline" ) ) },
-					{ HTTP_HEADER_CONTENT_LENGTH, (FULONG)StringDuplicateN( length, strlen( length ) ) },
-					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-					{ TAG_DONE, TAG_DONE }
-				};
-
-				if( response != NULL )
-				{
-					FERROR("RESPONSE ERROR ALREADY SET (freeing)\n");
-					HttpFree( response );
-				}
-				
-				if( code != NULL )
-				{
-					char *pEnd;
-					int errCode = -1;
-					
-					char *next;
-					errCode = strtol ( code, &next, 10);
-					if( ( next == code ) || ( *next != '\0' ) ) 
-					{
-						errCode = -1;
-					}
-
-					if( errCode == -1 )
-					{
-						response = HttpNewSimple( HTTP_200_OK, tags );
-					}
-					else
-					{
-						response = HttpNewSimple( errCode, tags );
-					}
-				}
-				else
-				{
-					response = HttpNewSimple( HTTP_200_OK, tags );
-				}
-
-				if( response )
-				{
-					char *next;
-					int calSize = strtol (length, &next, 10);
-					if( ( next == length ) || ( *next != '\0' ) ) 
-					{
-						FERROR( "Lenght of message == 0\n" );
-					}
-					else
-					{
-						char *returnData = FCalloc( calSize, sizeof( FBYTE ) );
-						if( returnData != NULL )
-						{
-							memcpy( returnData, datastart, calSize * sizeof( FBYTE ) );
-							HttpSetContent( response, returnData, calSize );
-						}
-					}
-				}
-				FFree( data );
-			}
-			else
-			{
-				struct TagItem tags[] = {
-					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  ( ltype != NULL ? StringDuplicateN( ltype, strlen( ltype ) ) : StringDuplicate( "text/plain" ) ) },
-					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-					{TAG_DONE, TAG_DONE}
-				};
-
-				if( response != NULL )
-				{
-					FERROR("RESPONSE ERROR ALREADY SET (freeing)\n");
-					HttpFree( response );
-				}
-				
-				if( code != NULL )
-				{
-					char *pEnd;
-					int errCode = -1;
-					
-					char *next;
-					errCode = strtol ( code, &next, 10);
-					if( ( next == code ) || ( *next != '\0' ) ) 
-					{
-						errCode = -1;
-					}
-					
-					DEBUG("1parsed %s code %d\n", code, errCode );
-					
-					if( errCode == -1 )
-					{
-						response = HttpNewSimple( HTTP_200_OK, tags );
-					}
-					else
-					{
-						response = HttpNewSimple( errCode, tags );
-					}
-				}
-				else
-				{
-					response = HttpNewSimple( HTTP_200_OK, tags );
-				}
-
-				if( response != NULL )
-				{
-					HttpSetContent( response, data, dataLength );
-				}
-				else
-				{
-					FFree( data );
-				}
-			}
-
-			if( ltype ){ FFree( ltype ); ltype = NULL;}
-			if( length ){ FFree( length ); length = NULL; }
-			if( code ){ FFree( code ); code = NULL; }
-
-			*result = 200;
-		}
-		else
-		{
-			Log( FLOG_ERROR, "[SystemWeb]: php returned NULL for request '%s'\n", (*request)->content );
-			
-			FERROR("[System.library] ERROR returned data is NULL\n");
-			*result = 404;
-		}
-		
-		Log( FLOG_INFO, "Module call end: %p\n", pthread_self() );
-	}
-	
-	//
-	// device functions
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "device" ) == 0 )
-	{
-		DEBUG("Device call\n");
-		response = DeviceMWebRequest( l, urlpath, *request, loggedSession, result );
-	}
-
-	//=================================================
-	//
-	// FILES
-	//
-	//=================================================
-	
-	else if( strcmp( urlpath[ 0 ], "file" ) == 0 )
-	{
-#ifdef ENABLE_WEBSOCKETS_THREADS
-		response = FSMWebRequest( l, urlpath, *request, loggedSession, result );
-#else
-		DEBUG("Systembase pointer %p\n", l );
-		if( detachTask == TRUE )
-		{
-			DEBUG("Ptr to request %p\n", *request );
-			FUQUAD pid = PIDThreadManagerRunThread( l->sl_PIDTM, *request, urlpath, loggedSession, FSMWebRequest );
-			
-			response = HttpNewSimpleA( HTTP_200_OK, (*request), HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
-									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
-			
-			char pidtxt[ 256 ];
-			snprintf( pidtxt, sizeof(pidtxt), "ok<!--separate-->{\"PID\":\"%lu\"}", pid );
-			
-			HttpAddTextContent( response, pidtxt );
-			
-			*request = NULL;
-		}
-		else
-		{
-			response = FSMWebRequest( l, urlpath, *request, loggedSession, result );
-		}
-#endif
-	}
-	
-	//=================================================
-	//
-	// UFILES
-	//
-	//=================================================
-		
-	//
-	// ufile 
-	// user file - they works like files in every system. You  can open it and read/write till you close it
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "ufile" ) == 0 )
-	{
-		response = FSMRemoteWebRequest( l, urlpath, *request, loggedSession, result );
-	}
-	
-	//
-	// admin stuff
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "admin" ) == 0 )
-	{
-		response = AdminWebRequest( l, urlpath, request, loggedSession, result );
-		
-	}
-	
-	//
-	// connection stuff
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "connection" ) == 0 )
-	{
-		response = ConnectionWebRequest( l, urlpath, request, loggedSession, result );
-		
-	}
-
-	//
-	// network only memory
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "invar" ) == 0 )
-	{
-		INFO("INRAM called\n");
-		response = INVARManagerWebRequest( l->nm, &(urlpath[1]), *request );
-	}
-	
-	//
-	// DOS Token
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "token" ) == 0 )
-	{
-		INFO("Token called\n");
-		response = TokenWebRequest( l, urlpath, request, loggedSession, result );
-	}
-	
-	//
-	// atm we want to handle all calls to services via system.library
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "services" ) == 0 )
-	{
-		DEBUG("Services called\n");
-		FBOOL called = FALSE;
-		
-		if( l->sl_UM!= NULL )
-		{
-			if( UMUserIsAdmin( l->sl_UM, *request, loggedSession->us_User ) == TRUE )
-			{
-				response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request );
-				called = TRUE;
-			}
-		}
-		
-		if( called == FALSE )
-		{
-			struct TagItem tags[] = {
-				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ) },
-				{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
-				{TAG_DONE, TAG_DONE}
-			};
-		
-			if( response != NULL )
-			{
-				HttpFree( response );
-				FERROR("RESPONSE services\n");
-			}
-			response = HttpNewSimple( HTTP_200_OK,  tags );
-		
-			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
-			HttpAddTextContent( response, buffer );
-
-			goto error;
-		}
-	}
-	
-	//
-	// handle application calls
-	//
-	
-	else if( strcmp(  urlpath[ 0 ], "app" ) == 0 )
-	{
-		DEBUG("Appcall Systemlibptr %p applibptr %p - logged user here: %s\n", l, l->alib, loggedSession->us_User->u_Name );
-		response = ApplicationWebRequest( l, &(urlpath[ 1 ]), *request, loggedSession );
-	}
-	
-	//
-	// Mobile
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "mobile" ) == 0 )
-	{
-		DEBUG("Mobile function %p  libptr %p\n", l, l->ilib );
-		response = MobileWebRequest( l,  urlpath, *request, loggedSession, result );
-	}
-	
-	//
-	// handle image calls
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "image" ) == 0 )
-	{
-		DEBUG("Image calls Systemlibptr %p imagelib %p\n", l, l->ilib );
-		response = l->ilib->WebRequest( l->ilib, loggedSession , &(urlpath[ 1 ]), *request );
-	}
-	
-	//
-	// clear cache
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "clearcache" ) == 0 )
-	{
-		DEBUG("Clear cache %p  libptr %p\n", l, l->ilib );
-		CacheManagerClearCache( l->cm );
-	}
-	
-	//
-	// USB
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "usb" ) == 0 )
-	{
-		DEBUG("USB function %p  libptr %p\n", l, l->ilib );
-		response = USBManagerWebRequest( l,  &(urlpath[ 1 ]), *request, loggedSession );
-	}
-	
-	//
-	// Printers
-	//
-	
-	else if( strcmp( urlpath[ 0 ], "printer" ) == 0 )
-	{
-		DEBUG("Printer function %p  libptr %p\n", l, l->ilib );
-		response = PrinterManagerWebRequest( l,  &(urlpath[ 1 ]), *request, loggedSession );
-	}
-	
-	//
-	// PID Threads
-	//
-	else if( strcmp( urlpath[ 0 ], "pid" ) == 0 )
-	{
-		DEBUG("PIDThread functions\n");
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
-		{
-			response = PIDThreadWebRequest( l, urlpath, *request, loggedSession );
-		}
-		else
-		{
-			response = HttpNewSimpleA( HTTP_200_OK, (*request),  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
-				HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
-			
-			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
-			HttpAddTextContent( response, buffer );
-		}
-	}
 	
 	//
 	// error
@@ -2102,8 +2114,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		Log( FLOG_ERROR, "[SystemWeb]: Function not found '%s'\n", urlpath[ 0 ] );
 		
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		if( response != NULL )
@@ -2125,8 +2137,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		DEBUG( "Closing socket with Http404!!" );
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};	
 		
 		if( response != NULL )
@@ -2141,20 +2153,28 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		DEBUG( "Closing socket with Http 200 OK!!\n" );
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK, tags );
 	}
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
+	{
+		loggedSession->us_InUseCounter--;
+	}
 	
 	return response;
 	
 error:
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
+	{
+		loggedSession->us_InUseCounter--;
+	}
 
 	return response;
 }

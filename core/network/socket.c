@@ -2758,21 +2758,17 @@ void SocketClose( Socket* sock )
 			int optval;
 			socklen_t optlen = sizeof(optval);
 			optval = 0;
-   optlen = sizeof(optval);
-   if(setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0) {
-   }
+			optlen = sizeof(optval);
+			if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
+			{
+			}
 			
-			//FERROR( "Closing socket %d\n", sock->fd );
-			//DEBUG("shutdown socket\n");
 			int e = 0;//shutdown( sock->fd, SHUT_RDWR );
-			//DEBUG("socked erased: %d\n", e );
+
 			e = close( sock->fd );
 			DEBUG("socked closed: %d\n", sock->fd );
 			sock->fd = 0;
 		}
-		//DEBUG("[SocketClose] before unlock\n");
-		//FRIEND_MUTEX_UNLOCK( &sock->mutex );
-		//DEBUG("[SocketClose] mutex unlocked\n");
 		SocketFree( sock );
 		sock = NULL;
 	}

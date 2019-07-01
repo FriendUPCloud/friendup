@@ -109,38 +109,34 @@ void CacheManagerClearCache( CacheManager *cm )
 {
 	if( cm != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
-		int i = 0;
-		
-		for( ; i < CACHE_GROUP_MAX; i++ )
+		if( FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) ) == 0 )
 		{
-			LocFile *lf = cm->cm_CacheFileGroup[ i ].cg_File;
-			while( lf != NULL )
+			int i = 0;
+		
+			for( ; i < CACHE_GROUP_MAX; i++ )
 			{
-				LocFile *rf = lf;
-				lf = (LocFile *)lf->node.mln_Succ;
+				LocFile *lf = cm->cm_CacheFileGroup[ i ].cg_File;
+				while( lf != NULL )
+				{
+					LocFile *rf = lf;
+					lf = (LocFile *)lf->node.mln_Succ;
 				
-				LocFileDelete( rf );
+					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+					while( rf->lf_InUse > 0 )
+					{
+						usleep( 500 );
+					}
+					LocFileDelete( rf );
+					FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
+				}
+			
+				cm->cm_CacheFileGroup[ i ].cg_File = NULL;
 			}
-			
-			cm->cm_CacheFileGroup[ i ].cg_File = NULL;
-		}
 		
-		/*
-		disabled for now
-		LocFile *lf = cm->cm_LocFileCache;
-		while( lf != NULL )
-		{
-			LocFile *rf = lf;
-			lf = (LocFile *)lf->node.mln_Succ;
-			
-			LocFileDelete( rf );
-		}
-		*/
-			
-		cm->cm_LocFileCache = NULL;
+			cm->cm_LocFileCache = NULL;
 		
-		FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+		}
 	}
 }
 
@@ -176,35 +172,30 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 				}
 				*/
 				
-				FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
-				
-				if( cm->cm_CacheFileGroup != NULL )
+				if( FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) ) == 0 )
 				{
-					DEBUG("ID %d\n", id );
-					if( cm->cm_CacheFileGroup[ id ].cg_File == NULL )
+					if( cm->cm_CacheFileGroup != NULL )
 					{
-						cm->cm_CacheFileGroup[ id ].cg_File = lf;
-					}
-					else
-					{
-						lf->node.mln_Succ = (MinNode *)cm->cm_CacheFileGroup[ id ].cg_File;
-						cm->cm_CacheFileGroup[ id ].cg_File = lf;
-					}
+						DEBUG("ID %d\n", id );
+						if( cm->cm_CacheFileGroup[ id ].cg_File == NULL )
+						{
+							cm->cm_CacheFileGroup[ id ].cg_File = lf;
+						}
+						else
+						{
+							lf->node.mln_Succ = (MinNode *)cm->cm_CacheFileGroup[ id ].cg_File;
+							cm->cm_CacheFileGroup[ id ].cg_File = lf;
+						}
 				
-					//lf->node.mln_Succ = (MinNode *)cm->cm_LocFileCache;
-					//cm->cm_LocFileCache = lf;
+						//lf->node.mln_Succ = (MinNode *)cm->cm_LocFileCache;
+						//cm->cm_LocFileCache = lf;
 			
-					lf->lf_FileUsed++;
+						lf->lf_FileUsed++;
 			
-					cm->cm_CacheSize += lf->lf_FileSize;
-				}
-				else
-				{
-					FERROR("[CacheManagerFilePut] No file provided\n");
+						cm->cm_CacheSize += lf->lf_FileSize;
+					}
 					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
-					return -2;
 				}
-				FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 			}
 			else
 			{
@@ -212,6 +203,11 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 				return -1;
 			}
 		}
+	}
+	else
+	{
+		DEBUG("Cache manager do not exist!\n");
+		return -2;
 	}
 	return 0;
 }
