@@ -122,6 +122,13 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		return NULL;
 	}
 	
+	if( S_ISDIR( st.st_mode ) )
+	{
+		FERROR( "'%s' is a directory. Can not open.\n", path );
+		fclose( fp );
+		return NULL;
+	}
+	
 	LocFile* fo = (LocFile*) FCalloc( 1, sizeof(LocFile) );
 	if( fo != NULL )
 	{
