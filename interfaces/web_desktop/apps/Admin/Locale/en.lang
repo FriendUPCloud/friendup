@@ -144,3 +144,29 @@ i18n_CorvoDrive                   : Corvo Disk
 i18n_QuickNG                      : Sybase QuickNG DOS Driver
 i18n_NodeDrive                    : Node network
 
+i18n_disk_error                      : Disk error
+i18n_failed_to_edit                  : Failed to edit disk volume.
+i18n_disk_success                    : Disk edited
+i18n_disk_edited                     : Disk was edited successfully.
+
+i18n_connection_details              : Connection details
+i18n_notes                           : Notes
+i18n_directory                       : Remote directory
+i18n_login_info                      : Login info
+i18n_your_notes                      : Your notes
+i18n_username                        : Username
+i18n_password                        : Password
+i18n_host_port                       : Server port
+i18n_host_ip                         : Server address or IP
+i18n_hostname                        : Server address
+i18n_workgroup_name                  : Your workgroup
+i18n_choose_workgroup                : Choose workgroup
+i18n_workgroup                       : Workgroup
+i18n_device_name                     : Disk name
+i18n_placeholder_connection          : Mydisk
+
+i18n_add_storage                     : Add storage
+i18n_update_disk                     : Update disk
+i18n_mount_disk                      : Mount disk
+i18n_unmount_disk                    : Unmount disk
+

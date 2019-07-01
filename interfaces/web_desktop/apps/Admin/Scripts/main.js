@@ -388,6 +388,31 @@ function remountDrive( devname, callback )
 	f.execute( 'device', args );
 }
 
+function mountDisk( devname )
+{
+	var f = new Library( 'system.library' );
+	
+	f.onExecuted = function( e, d )
+	{	
+		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+		setTimeout( function()
+		{
+			// refresh button if success ...
+			
+			
+			
+		}, 5 );
+	}
+	
+	var the_mount_command = ge( 'mountedDisk' ).value == 'mounted' ? 'unmount' : 'mount'
+	var args = {
+		devname: devname,
+		sessionid: parent.Workspace.sessionid
+	};
+	
+	f.execute( 'device/' + the_mount_command, args );
+}
+
 function FieldToInput( key, data )
 {
 	var lkey = '';

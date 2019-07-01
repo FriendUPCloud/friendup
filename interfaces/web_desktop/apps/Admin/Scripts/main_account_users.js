@@ -783,114 +783,160 @@ Sections.user_disk_save = function( did, userid )
 {
 	console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
 	
-	return;
+	//return;
 	
-	var p = 'd';
+	var elems = {};
+			
+	var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
 	
-	var data = { Name: ge( p+'Name' ).value };
-	if( ge( p+'Server'           ) ) data.Server           = ge( p+'Server' ).value;
-	if( ge( p+'ShortDescription' ) ) data.ShortDescription = ge( p+'ShortDescription' ).value;
-	if( ge( p+'Port'             ) ) data.Port             = ge( p+'Port' ).value;
-	if( ge( p+'Username'         ) ) data.Username         = ge( p+'Username' ).value;
-	// Have password and password is not dummy
-	if( ge( p+'Password' ) && ge( p+'Password' ).value != '********' )
+	if( inputs.length > 0 )
 	{
-		data.Password = ge( p+'Password' ).value;
-	}
-	// Have hashed password and password is not dummy
-	else if( ge( p+'HashedPassword' ) && ge( p+'HashedPassword' ).value != '********' )
-	{
-		data.Password = 'HASHED' + Sha256.hash( ge( p+'HashedPassword' ).value );
-	}
-	if( ge( p+'Path'          ) ) data.Path      = ge( p+'Path' ).value;
-	if( ge( p+'Type'          ) ) data.Type      = ge( p+'Type' ).value;
-	if( ge( p+'Workgroup'     ) ) data.Workgroup = ge( p+'Workgroup' ).value;
-	if( ge( p+'conf.Pollable' ) )
-	{
-		data.Pollable = ge( p+'conf.Pollable' ).checked ? 'yes' : 'no';
-		ge( p+'conf.Pollable' ).value = ge( p+'conf.Pollable' ).checked ? 'yes' : 'no';
-	}
-	if( ge( p+'conf.Invisible' ) )
-	{
-		data.Invisible = ge( p+'conf.Invisible' ).checked ? 'yes' : 'no';
-		ge( p+'conf.Invisible' ).value = ge( p+'conf.Invisible' ).checked ? 'yes' : 'no';
-	}
-	if( ge( p+'conf.Executable' ) )
-		data.Invisible = ge( p+'conf.Executable' ).value;
-	
-	if( ge( p+'PrivateKey'      ) )
-	{
-		data.PrivateKey = ge( p+'PrivateKey' ).value;
-	}
-	if( ge( p+'EncryptedKey'    ) )
-	{
-		data.EncryptedKey = ge( p+'EncryptedKey' ).value;
-	}
-	
-	// Custom fields
-	var inps = ge( 'StorageGui' ).getElementsByTagName( 'input' );
-	var txts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
-	for( var a = 0; a < txts.length; a++ )
-	{
-		if( txts[a].id.substr( 0, 5 ) == 'conf.' )
+		for( var i in inputs )
 		{
-			data[txts[a].id] = txts[a].value;
-		}
-	}
-	for( var a = 0; a < inps.length; a++ )
-	{
-		if( inps[a].id.substr( 0, 5 ) == 'conf.' )
-		{
-			data[inps[a].id] = inps[a].value;
+			if( inputs[i] && inputs[i].id )
+			{
+				elems[inputs[i].id] = inputs[i];
+			}
 		}
 	}
 	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, dat )
+	var texts = ge( 'StorageGui' ).getElementsByTagName( 'textarea' );
+	
+	if( texts.length > 0 )
 	{
-		if( e != 'ok' ) 
+		for( var t in texts )
 		{
-			Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
-			return;
+			if( texts[t] && texts[t].id )
+			{
+				elems[texts[t].id] = texts[t];
+			}
 		}
+	}
+	
+	var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+	
+	if( selects.length > 0 )
+	{
+		for( var s in selects )
+		{
+			if( selects[s] && selects[s].id )
+			{
+				elems[selects[s].id] = selects[s];
+			}
+		}
+	}
+	
+	if( elems )
+	{
+		
+		// New way of setting DiskSize so overwrite old method ...
+		
+		if( elems[ 'DiskSizeA' ] && elems[ 'DiskSizeA' ].value && elems[ 'DiskSizeB' ] && elems[ 'DiskSizeB' ].value )
+		{
+			elems[ 'conf.DiskSize' ] = { id: 'conf.DiskSize', value: ( elems[ 'DiskSizeA' ].value + elems[ 'DiskSizeB' ].value ) };
+		}
+		
+		var data = { Name: elems[ 'Name' ].value };
+		if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
+		if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
+		if( elems[ 'Port'             ] ) data.Port             = elems[ 'Port'             ].value;
+		if( elems[ 'Username'         ] ) data.Username         = elems[ 'Username'         ].value;
+		// Have password and password is not dummy
+		if( elems[ 'Password' ] && elems[ 'Password' ].value != '********' )
+		{
+			data.Password = elems[ 'Password' ].value;
+		}
+		// Have hashed password and password is not dummy
+		else if( elems[ 'HashedPassword' ] && elems[ 'HashedPassword' ].value != '********' )
+		{
+			data.Password = 'HASHED' + Sha256.hash( elems[ 'HashedPassword' ].value );
+		}
+		if( elems[ 'Path'          ] ) data.Path      = elems[ 'Path'      ].value;
+		if( elems[ 'Type'          ] ) data.Type      = elems[ 'Type'      ].value;
+		if( elems[ 'Workgroup'     ] ) data.Workgroup = elems[ 'Workgroup' ].value;
+		if( elems[ 'conf.Pollable' ] )
+		{
+			data.Pollable = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
+			elems[ 'conf.Pollable' ].value = elems[ 'conf.Pollable' ].checked ? 'yes' : 'no';
+		}
+		if( elems[ 'conf.Invisible' ] )
+		{
+			data.Invisible = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
+			elems[ 'conf.Invisible' ].value = elems[ 'conf.Invisible' ].checked ? 'yes' : 'no';
+		}
+		if( elems[ 'conf.Executable' ] )
+			data.Invisible = elems[ 'conf.Executable' ].value;
+	
+		if( elems[ 'PrivateKey'      ] )
+		{
+			data.PrivateKey = elems[ 'PrivateKey' ].value;
+		}
+		if( elems[ 'EncryptedKey'    ] )
+		{
+			data.EncryptedKey = elems[ 'EncryptedKey' ].value;
+		}
+		
+		// Custom fields
+		for( var a in elems )
+		{
+			if( elems[a] && elems[a].id.substr( 0, 5 ) == 'conf.' )
+			{
+				data[elems[a].id] = elems[a].value;
+			}
+		}
+		
+		console.log( data );
+		
+		//return;
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, dat )
+		{
+			if( e != 'ok' ) 
+			{
+				Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
+				return;
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+			}
+			remountDrive( data.Name, function()
+			{
+				
+				var u = new Module( 'system' );
+				u.onExecuted = function( ee, dd )
+				{
+					var ul = null;
+					try
+					{
+						ul = JSON.parse( dd );
+					}
+					catch( ee )
+					{
+						ul = null;
+					}
+				
+					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+				
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+				}
+				u.execute( 'mountlist', { userid: userid } );
+			
+			} );
+		}
+		// Edit?
+		if( did > 0 )
+		{
+			data.ID = did;
+			m.execute( 'editfilesystem', data );
+		}
+		// Add new...
 		else
 		{
-			Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+			m.execute( 'addfilesystem', data );
 		}
-		remountDrive( data.Name, function()
-		{
-			
-			var u = new Module( 'system' );
-			u.onExecuted = function( ee, dd )
-			{
-				var ul = null;
-				try
-				{
-					ul = JSON.parse( dd );
-				}
-				catch( ee )
-				{
-					ul = null;
-				}
-				
-				ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
-				
-				Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-			}
-			u.execute( 'mountlist', { userid: userid } );
-			
-		} );
-	}
-	// Edit?
-	if( ge( p+'mode' ).value == 'edit' )
-	{
-		data.ID = ge( p+'diskId' ).value;
-		m.execute( 'editfilesystem', data );
-	}
-	// Add new...
-	else
-	{
-		m.execute( 'addfilesystem', data );
+		
 	}
 	
 };
@@ -1054,7 +1100,9 @@ Sections.user_disk_update = function( name, did )
 						used : used, 
 						free : ( size - used ), 
 						prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-						icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
+						icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+						mont : js.Mounted,
+						data : js
 					};
 				
 					if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
@@ -1071,86 +1119,98 @@ Sections.user_disk_update = function( name, did )
 					}
 				}
 			}
-		
-			var str = '';
 			
-			str += '<div class="HRow">';
-			str += '<div class="Col1 FloatLeft">';
-			
-			str += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
-			
-			str += '</div><div class="Col2 FloatLeft">';
-			
-			str += '<div class="HRow MarginBottom">';
-			str += '<div class="HContent30 FloatLeft Ellipsis">';
-			str += '<strong>' + i18n( 'i18n_name' ) + ':</strong>';
-			str += '</div>';
-			str += '<div class="HContent70 FloatLeft Ellipsis">';
-			str += '<input type="text" class="FullWidth" id="dname" value="' + storage.name + '" placeholder="Mydisk"/>';
-			str += '</div>';
-			str += '</div>';
-		
-			str += '<div class="HRow MarginBottom">';
-			str += '<div class="HContent30 FloatLeft Ellipsis">';
-			str += '<strong>' + i18n( 'i18n_type' ) + ':</strong>';
-			str += '</div>';
-			str += '<div class="HContent70 FloatLeft Ellipsis">';
-			str += '<select class="FullWidth" id="dtype">';
-			
-			if( da )
+			StorageForm( storage, function( storage )
 			{
-				for( var i in da )
+				
+				var str = '';
+				
+				str += '<div class="HRow">';
+				str += '<div class="Col1 FloatLeft">';
+			
+				str += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
+			
+				str += '</div><div class="Col2 FloatLeft">';
+			
+				str += '<div class="HRow MarginBottom">';
+				str += '<div class="HContent30 FloatLeft Ellipsis">';
+				str += '<strong>' + i18n( 'i18n_name' ) + ':</strong>';
+				str += '</div>';
+				str += '<div class="HContent70 FloatLeft Ellipsis">';
+				str += '<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" placeholder="Mydisk"/>';
+				str += '</div>';
+				str += '</div>';
+		
+				str += '<div class="HRow MarginBottom">';
+				str += '<div class="HContent30 FloatLeft Ellipsis">';
+				str += '<strong>' + i18n( 'i18n_type' ) + ':</strong>';
+				str += '</div>';
+				str += '<div class="HContent70 FloatLeft Ellipsis">';
+				str += '<select class="FullWidth" id="Type"' + ( storage.id ? ' disabled="disabled"' : '' ) + '>';
+				
+				if( da )
 				{
-					if( da[i].type )
+					for( var i in da )
 					{
-						str += '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' + i18n( 'i18n_' + da[i].type ) + '</option>';
+						if( da[i].type )
+						{
+							str += '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' + i18n( 'i18n_' + da[i].type ) + '</option>';
+						}
 					}
 				}
-			}
 			
-			str += '</select>';
-			str += '</div>';
-			str += '</div>';
+				str += '</select>';
+				str += '</div>';
+				str += '</div>';
 		
-			str += '<div class="HRow MarginBottom">';
-			str += '<div class="HContent30 FloatLeft Ellipsis">';
-			str += '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
-			str += '</div>';
-			str += '<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
-			str += '<input type="text" class="FullWidth" id="dsize" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
-			str += '</div>';
-			str += '<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
-			str += '<select class="FullWidth" id="dunits">';
-			
-			if( units )
-			{
-				for( var a in units )
+				str += '<div class="HRow MarginBottom">';
+				str += '<div class="HContent30 FloatLeft Ellipsis">';
+				str += '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
+				str += '</div>';
+				str += '<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
+				str += '<input type="text" class="FullWidth" id="DiskSizeA" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+				str += '</div>';
+				str += '<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
+				str += '<select class="FullWidth" id="DiskSizeB">';
+				
+				if( units )
 				{
-					str += '<option' + ( storage.size && FormatBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
+					for( var a in units )
+					{
+						str += '<option' + ( storage.size && FormatBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
+					}
 				}
-			}
 			
-			str += '</select>';
-			str += '</div>';
-			str += '</div>';
+				str += '</select>';
+				str += '</div>';
+				str += '</div>';
 			
-			str += '<div class="HRow PaddingTop">';
-			str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + storage.id + ',' + Application.userId + ')">Save</button>';
-			str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + Application.userId + ')">Cancel</button>';
-			str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + name + '\', ' + Application.userId + ')">Remove disk</button>';
-			str += '</div>';
+				// Insert Gui based on DosDriver
+				
+				str += '<div id="DosDriverGui"></div>';
+				
+				str += '</div>';
+				
+				str += '<div class="HRow PaddingTop">';
+				str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + storage.id + ',' + Application.userId + ')">Save</button>';
+				str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + Application.userId + ')">Cancel</button>';
+				str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + name + '\', ' + Application.userId + ')">Remove disk</button>';
+				str += '<button class="IconSmall FloatLeft MarginRight" onclick="javascript:void(0)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+				str += '</div>';
+				
+				str += '</div>';
 			
-			str += '</div></div>';
-			
-			ge( 'StorageGui' ).innerHTML = str;
-		
-			//console.log( { e:e, d:(js?js:d) } );
+				ge( 'StorageGui' ).innerHTML = str;
+				
+				//console.log( { e:e, d:(js?js:d) } );
+				
+			} );
 		}
 		m.execute( 'filesystem', {
 			userid: Application.userId,
 			devname: name
 		} );
-		
+			
 	}
 	n.execute( 'types' );
 };
@@ -1174,7 +1234,9 @@ Sections.user_disk_refresh = function( mountlist )
 			}
 			
 			// Skip the IsDeleted disks for now ...
-			if( mountlist[b].Mounted && mountlist[b].Mounted < 0 ) continue;
+			//if( mountlist[b].Mounted && mountlist[b].Mounted < 0 ) continue;
+			
+			//console.log( mountlist[b] );
 			
 			// Calculate disk usage
 			var size = ( mountlist[b].Config.DiskSize ? mountlist[b].Config.DiskSize : 0 );
@@ -1212,7 +1274,8 @@ Sections.user_disk_refresh = function( mountlist )
 				used : used, 
 				free : ( size - used ), 
 				prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-				icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
+				icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+				mont : mountlist[b].Mounted
 			};
 			
 			if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
@@ -1254,6 +1317,175 @@ Sections.user_disk_refresh = function( mountlist )
 	
 	return mlst;
 };
+
+function StorageForm( storage, callback )
+{
+	
+	var ft = new Module( 'system' );
+	ft.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			i18nAddTranslations( d )
+		}
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			// return info that this is loaded.
+			
+			if( callback ) callback( storage );
+			
+			var scripts = [];
+			
+			if( e == 'ok' )
+			{
+				// collect scripts
+				
+				var scr;
+				while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
+				{
+					d = d.split( scr[0] ).join( '' );
+					scripts.push( scr[1] );
+				}
+				
+				var mch;
+				var i = 0;
+				while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
+				{
+					d = d.split( mch[0] ).join( i18n( mch[1] ) );
+				}
+				
+				// Fix to add more space
+				d = d.split( 'HRow' ).join( 'MarginBottom HRow' );
+			}
+			else
+			{
+				d = '';
+			}
+			
+			d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
+			
+			if( ge( 'DosDriverGui' ) )
+			{
+				ge( 'DosDriverGui' ).innerHTML = d;
+				
+				if( ge( 'StorageGui' ) )
+				{
+					var data = ( storage.data ? storage.data : false );
+					
+					// We are in edit mode..
+					if( data )
+					{
+						var elems = {};
+						
+						var inputs = ge( 'StorageGui' ).getElementsByTagName( 'input' );
+					
+						if( inputs.length > 0 )
+						{
+							for( var i in inputs )
+							{
+								if( inputs[i] && inputs[i].id )
+								{
+									elems[inputs[i].id] = inputs[i];
+								}
+							}
+						}
+						
+						var selects = ge( 'StorageGui' ).getElementsByTagName( 'select' );
+						
+						if( selects.length > 0 )
+						{
+							for( var s in selects )
+							{
+								if( selects[s] && selects[s].id )
+								{
+									elems[selects[s].id] = selects[s];
+								}
+							}
+						}
+						
+						//console.log( elems );
+						
+						var fields = [
+							'Name', 'Server', 'ShortDescription', 'Port', 'Username', 
+							'Password', 'Path', 'Type', 'Workgroup', 'PrivateKey'
+						];
+						if( elems )
+						{
+							for( var a = 0; a < fields.length; a++ )
+							{
+								if( elems[ fields[ a ] ] && typeof( data[ fields[ a ] ] ) != 'undefined' )
+								{
+									elems[ fields[ a ] ].value = data[ fields[ a ] ];
+								}
+							}
+							// Do we have conf?
+							if( data.Config )
+							{
+								for( var a in data.Config )
+								{
+									if( elems[ 'conf.' + a ] )
+									{
+										elems[ 'conf.' + a ].value = data.Config[ a ];
+									}
+								}
+							}
+						}
+					}
+					
+				}
+			}
+			
+			if( ge( 'DiskSizeContainer' ) )
+			{
+				ge( 'DiskSizeContainer' ).style.display = 'none';
+			}
+			
+			// TODO: Don't know what Types and Cbutton relates to ... remove later if it doesn't serve a purpose ...
+			
+			if( ge( 'Types' ) )
+			{
+				ge( 'Types' ).classList.add( 'closed' );
+			}
+			
+			if( ge( 'CButton' ) )
+			{
+				ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_back' );
+				ge( 'CButton' ).disabled = '';
+				ge( 'CButton' ).oldOnclick = ge( 'CButton' ).onclick;
+				
+				// Return!!
+				ge( 'CButton' ).onclick = function()
+				{
+					if( ge( 'Types' ) )
+					{
+						ge( 'Types' ).classList.remove( 'closed' );
+					}
+					ge( 'Form' ).classList.remove( 'open' );
+					ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_cancel' );
+					ge( 'CButton' ).onclick = ge( 'CButton' ).oldOnclick;
+				}
+			}
+			
+			
+			
+			// Run scripts at the end ...
+			if( scripts )
+			{
+				for( var key in scripts )
+				{
+					if( scripts[key] )
+					{
+						eval( scripts[key] );
+					}
+				}
+			}
+		}
+		m.execute( 'dosdrivergui', { type: storage.type, id: storage.id } );
+	}
+	ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language } );
+	
+}
 
 // Save a user
 function saveUser( uid )
