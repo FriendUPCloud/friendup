@@ -909,10 +909,11 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			$oLogin->Filename = 'Login.jsx';
 			$oLogin->Type = 'File';
 			$oLogin->MetaType = 'File'; // TODO: Is this really needed??
-			$oLogin->Permissions = 'r*e*r*e*';
+			$oLogin->Permissions = '';
+			$oLogin->ID = '0001';
 			$oLogin->DateModified = date('Y-m-d H:i:s');
 			$oLogin->DateCreated = $oLogin->DateModified;
-			$oLogin->Filesize = 16;
+			$oLogin->Filesize = "" . strlen( file_get_contents(self::LOGINAPP) );
 			$oLogin->Path = end( explode( ':', $thePath . $oLogin->Filename ) );
 			
 			return array( $oLogin );
