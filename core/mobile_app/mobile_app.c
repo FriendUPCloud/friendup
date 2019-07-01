@@ -581,15 +581,18 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				//due to uniqueness of "t" field values only first letter has to be evaluated
 				char firstTypeLetter = msgTypeString[0];
 				DEBUG("Type letter <%c>\n", firstTypeLetter);
+				
+#define RESPONSE_SIZE (128+LWS_PRE+LWS_SEND_BUFFER_POST_PADDING)
+#define RESPONSE_SIZE_MINP 128
 
 				if( firstTypeLetter == 'l'/*login*/)
 				{
-					char response[ 64+LWS_PRE ];
+					char response[ RESPONSE_SIZE ];
 					int ret = MobileAppHandleLogin( wsi, user, &json );
 					
 					Log( FLOG_DEBUG, "ADD APP CONNECTION Websocket pointer: %p login return error: %d\n", wsi, ret );
 					
-					int som = sprintf(response+LWS_PRE, "{ \"t\":\"login\", \"status\":%d}", ret );
+					int som = snprintf( response+LWS_PRE, RESPONSE_SIZE_MINP, "{ \"t\":\"login\", \"status\":%d}", ret );
 					//int som = snprintf(response+LWS_PRE, 64+LWS_PRE, "{ \"t\":\"login\", \"status\":%d}", ret );
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);	// bad hack
 					return ret;		// remove WS connection if login fail
@@ -601,8 +604,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					if( appConnection == NULL)
 					{
 						DEBUG("Session not found for this connection\n");
-						char response[64+LWS_PRE];
-						int som = snprintf(response+LWS_PRE, sizeof(response), "{ \"t\":\"error\", \"status\":%d}", MOBILE_APP_ERR_NO_SESSION );
+						char response[ RESPONSE_SIZE ];
+						int som = snprintf( response+LWS_PRE, RESPONSE_SIZE_MINP, "{ \"t\":\"error\", \"status\":%d}", MOBILE_APP_ERR_NO_SESSION );
 						lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);	// bad hack
 						//WriteMessageMA( appConnection, (unsigned char*)response, som );
 						DEBUG("APP connection is equal to NULL!\n");
@@ -657,8 +660,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 								appConnection->mac_AppStatus = MOBILE_APP_STATUS_RESUMED;
 								appConnection->mac_MostRecentResumeTimestamp = time(NULL);
 					
-								char response[LWS_PRE+64];
-								strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
+								char response[ RESPONSE_SIZE ];
+								strcpy( response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
 								DEBUG("Response: %s\n", response+LWS_PRE);
 #ifndef WEBSOCKET_SINK_SEND_QUEUE
 								FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
