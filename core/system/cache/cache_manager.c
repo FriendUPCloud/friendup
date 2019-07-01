@@ -169,12 +169,6 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 			{
 				char *hfirstChar = (char *)lf->hash;
 				unsigned char id = (unsigned char)hfirstChar[0];		//we sort data by name
-				/*
-				if( id < 0 && id > 255 )
-				{
-					id = 0;
-				}
-				*/
 				
 				FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 				
@@ -298,58 +292,30 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath __
 		uint64_t hash[ 2 ];
 		MURMURHASH3( path, strlen(path), hash );
 		
-		char *hfirstChar = (char *)hash;
-		unsigned char id = (unsigned char)hfirstChar[0];
-		/*
-		if( id < 0 || id > 255 )
-		{
-			id = 0;
-		}
-		*/
+		//char *hfirstChar = (char *)hash;
+		unsigned char id = (unsigned char)hash[0];
 		
 		LocFile *lf = NULL;
 
 		if( FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) ) == 0 )
 		{
-			//if( cm->cm_LocFileCache != NULL )
-			{
-				CacheFileGroup *cg = &(cm->cm_CacheFileGroup[ id ]);
-				lf = cg->cg_File;
+			CacheFileGroup *cg = &(cm->cm_CacheFileGroup[ id ]);
+			lf = cg->cg_File;
 
-				while( lf != NULL )
+			while( lf != NULL )
+			{
+				if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
 				{
-					if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
-					{
-						//DEBUG("\n\n\n\n\n======================================got file\n\n\n\n\n\n\n\n\n");
-						lf->lf_FileUsed++;
-						FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
-						return lf;
-					}
-			
-					lf = (LocFile *)lf->node.mln_Succ;
+					//DEBUG("\n\n\n\n\n======================================got file\n\n\n\n\n\n\n\n\n");
+					lf->lf_FileUsed++;
+					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
+					return lf;
 				}
+			
+				lf = (LocFile *)lf->node.mln_Succ;
 			}
-		
 			FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 		}
-		
-		/*
-		LocFile *lf = cm->cm_LocFileCache;
-		while( lf != NULL )
-		{
-			char *s = (char *)hash;
-			char *d = (char *)lf->hash;
-			
-			int i;
-			FERROR("COMPARE %x-%x %x-%x\n", hash[0], lf->hash[0], hash[1], lf->hash[1] );
-			
-			if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
-			{
-				return lf;
-			}
-			lf = (LocFile *)lf->node.mln_Succ;
-		}
-		*/
 	}
 	
 	return ret;
