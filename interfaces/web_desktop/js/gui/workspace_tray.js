@@ -549,7 +549,7 @@ function Notify( message, callback, clickcallback )
 	{
 		mobileDebug( 'Showing mobile workspace notification.' );
 
-		if( window.friendApp && Workspace.currentViewState == 'active' )
+		if( Workspace.currentViewState == 'active' )
 		{
 			if( !ge( 'MobileNotifications' ) )
 			{
