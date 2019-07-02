@@ -663,7 +663,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				pthread_attr_setstacksize( &attr, stacksize );
 			
 				SystemBase *locsb = (SystemBase *)fc->fci_SB;
-				if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL ) != 0 )
+				if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "Incoming") != 0 )
 				{
 					SocketClose( incoming );
 				}
@@ -1419,7 +1419,6 @@ void FriendCoreProcess( void *fcv )
 			incoming_buffer_ptr = NULL;
 		}
 		close( tmp_file_handle );
-		//DEBUG( "Deleting temporary file %s", tmp_filename );
 		unlink( tmp_filename );
 	}
 	else 

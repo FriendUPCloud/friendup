@@ -1914,11 +1914,11 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
 		//dump_handshake_info((struct lws_tokens *)(long)user);
 		// you could return non-zero here and kill the connection 
-		Log( FLOG_INFO, "[WS] Filter protocol\n");
+		//Log( FLOG_INFO, "[WS] Filter protocol\n");
 		break;
 		
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
-		Log( FLOG_INFO, "[WS] LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
+		//Log( FLOG_INFO, "[WS] LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
 		break;
 
 	default:

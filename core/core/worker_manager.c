@@ -274,6 +274,20 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				testquit = 0;
 				//usleep( 15000 );
 				//sleep( 2 );
+				
+				Log( FLOG_DEBUG, "Workers dump!" );
+				int z;
+				for( z=0 ; z < wm->wm_MaxWorkers ; z++ )
+				{
+					if( wm->wm_Workers[ z ]->w_FunctionString[0] == 0 )
+					{
+					}
+					else
+					{
+						Log( FLOG_DEBUG, "Worker: %d func: %s", z, wm->wm_Workers[ z ]->w_FunctionString );
+					}
+				}
+				
 				return -1;
 			}
 			usleep( 100 );

@@ -1930,12 +1930,13 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 			sock->data = NULL;
 		}
 		PathFree( path );
+		Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
 
 		return response;
 	}
 	// Winter cleaning
 	HttpFreeRequest( request );
-	Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
+	Log( FLOG_DEBUG, "HTTP parsed1, returning response\n");
 	return response;
 }
 
