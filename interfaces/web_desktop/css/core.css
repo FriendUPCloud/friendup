@@ -2020,7 +2020,7 @@ body.Loading > #Screens
 	opacity: 0;
 }
 
-body:not(.friendapp):not([mobile]).Loading:after
+body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after
 {
 	content: ' ';
 	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
