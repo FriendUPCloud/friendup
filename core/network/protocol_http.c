@@ -1513,9 +1513,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 													stat( decoded, &attr);
 
 													// if file is new file, reload it
-													Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
+													
 													if( attr.st_mtime != file->lf_Info.st_mtime )
 													{
+														Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
 														LocFileReload( file, decoded );
 													}
 												}
