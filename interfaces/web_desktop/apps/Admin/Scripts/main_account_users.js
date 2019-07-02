@@ -172,6 +172,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Add all data for the template
 				d.replacements = {
+					userid:            userInfo.ID,
 					user_name:         userInfo.FullName,
 					user_fullname:     userInfo.FullName,
 					user_username:     userInfo.Name,
@@ -439,7 +440,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							ul = null;
 						}
-						console.log( { e:e, d:(ul?ul:d) } );
+						//console.log( { e:e, d:(ul?ul:d) } );
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -779,7 +780,7 @@ Sections.userrole_update = function( rid, userid, _this )
 	}
 };
 
-Sections.user_disk_save = function( did, userid )
+Sections.user_disk_save = function( userid, did )
 {
 	console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
 	
@@ -826,7 +827,9 @@ Sections.user_disk_save = function( did, userid )
 		}
 	}
 	
-	if( elems )
+	//console.log( { userid: userid, elems: elems } );
+	
+	if( userid && elems )
 	{
 		
 		// New way of setting DiskSize so overwrite old method ...
@@ -836,7 +839,22 @@ Sections.user_disk_save = function( did, userid )
 			elems[ 'conf.DiskSize' ] = { id: 'conf.DiskSize', value: ( elems[ 'DiskSizeA' ].value + elems[ 'DiskSizeB' ].value ) };
 		}
 		
-		var data = { Name: elems[ 'Name' ].value };
+		var req = { 'Name' : i18n( 'i18n_disk_name_missing' ), 'Type' : i18n( 'i18n_disk_type_missing' ) };
+		
+		for( var r in req )
+		{
+			if( elems[r] && !elems[r].value )
+			{
+				elems[r].focus();
+				
+				Notify( { title: i18n( 'i18n_disk_error' ), text: req[r] } );
+				
+				return;
+			}
+		}
+		
+		var data = { userid: userid, Name: elems[ 'Name' ].value };
+		
 		if( elems[ 'Server'           ] ) data.Server           = elems[ 'Server'           ].value;
 		if( elems[ 'ShortDescription' ] ) data.ShortDescription = elems[ 'ShortDescription' ].value;
 		if( elems[ 'Port'             ] ) data.Port             = elems[ 'Port'             ].value;
@@ -925,6 +943,9 @@ Sections.user_disk_save = function( did, userid )
 			
 			} );
 		}
+		
+		// TODO: Make sure we save for the selected user and not the loggedin user ...
+		
 		// Edit?
 		if( did > 0 )
 		{
@@ -1018,201 +1039,213 @@ Sections.user_disk_remove = function( devname, userid )
 	} );
 };
 
-Sections.user_disk_update = function( name, did )
+Sections.user_disk_update = function( userid, did = 0, name = '' )
 {
 	//console.log( { name: name, did: did } );
 	
-	var n = new Module( 'system' );
-	n.onExecuted = function( ee, dat )
+	if( userid )
 	{
-		
-		try
+		var n = new Module( 'system' );
+		n.onExecuted = function( ee, dat )
 		{
-			var da = JSON.parse( dat );
-		}
-		catch( e )
-		{
-			var da = {};
-		}
 		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			var storage = { id : '', name : '', type : '', size : '' };
-			
-			var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
-		
-			if( e == 'ok' )
+			try
 			{
-				try
-				{
-					var js = JSON.parse( d );
-				}
-				catch( e )
-				{
-					js = {};
-				}
+				var da = JSON.parse( dat );
+			}
+			catch( e )
+			{
+				var da = {};
+			}
+		
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				var storage = { id : '', name : '', type : '', size : '', user : userid };
 			
-				if( js )
+				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
+		
+				if( e == 'ok' )
 				{
 					try
 					{
-						js.Config = JSON.parse( js.Config );
+						var js = JSON.parse( d );
 					}
 					catch( e )
 					{
-						js.Config = {};
+						js = {};
 					}
-				
-					// Calculate disk usage
-					var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
-					var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
-					size = parseInt( size );
-					var type = mode[0].toLowerCase();
-					if( type == 'kb' )
-					{
-						size = size * 1024;
-					}
-					else if( type == 'mb' )
-					{
-						size = size * 1024 * 1024;
-					}
-					else if( type == 'gb' )
-					{
-						size = size * 1024 * 1024 * 1024;
-					}
-					else if( type == 'tb' )
-					{
-						size = size * 1024 * 1024 * 1024 * 1024;
-					}
-					var used = parseInt( js.StoredBytes );
-					if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
-					if( !used && !size ) used = 0, size = 0;
-					if( !size ) size = 536870912;
-					if( !used ) used = 0;
-					if( used > size || ( used && !size ) ) size = used;
-				
-					storage = {
-						id   : js.ID,
-						name : js.Name,
-						type : js.Type,
-						size : size, 
-						used : used, 
-						free : ( size - used ), 
-						prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
-						icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
-						mont : js.Mounted,
-						data : js
-					};
-				
-					if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
-					{
-						storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
-					}
-					if( storage.name == 'Home' )
-					{
-						storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
-					}
-					else if( storage.name == 'System' )
-					{
-						storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
-					}
-				}
-			}
 			
-			StorageForm( storage, function( storage )
-			{
-				
-				var str = '';
-				
-				str += '<div class="HRow">';
-				str += '<div class="Col1 FloatLeft">';
-			
-				str += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
-			
-				str += '</div><div class="Col2 FloatLeft">';
-			
-				str += '<div class="HRow MarginBottom">';
-				str += '<div class="HContent30 FloatLeft Ellipsis">';
-				str += '<strong>' + i18n( 'i18n_name' ) + ':</strong>';
-				str += '</div>';
-				str += '<div class="HContent70 FloatLeft Ellipsis">';
-				str += '<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" placeholder="Mydisk"/>';
-				str += '</div>';
-				str += '</div>';
-		
-				str += '<div class="HRow MarginBottom">';
-				str += '<div class="HContent30 FloatLeft Ellipsis">';
-				str += '<strong>' + i18n( 'i18n_type' ) + ':</strong>';
-				str += '</div>';
-				str += '<div class="HContent70 FloatLeft Ellipsis">';
-				str += '<select class="FullWidth" id="Type"' + ( storage.id ? ' disabled="disabled"' : '' ) + '>';
-				
-				if( da )
-				{
-					for( var i in da )
+					if( js )
 					{
-						if( da[i].type )
+						try
 						{
-							str += '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' + i18n( 'i18n_' + da[i].type ) + '</option>';
+							js.Config = JSON.parse( js.Config );
+						}
+						catch( e )
+						{
+							js.Config = {};
+						}
+				
+						// Calculate disk usage
+						var size = ( js.Config.DiskSize ? js.Config.DiskSize : 0 );
+						var mode = ( size && size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ] );
+						size = parseInt( size );
+						var type = mode[0].toLowerCase();
+						if( type == 'kb' )
+						{
+							size = size * 1024;
+						}
+						else if( type == 'mb' )
+						{
+							size = size * 1024 * 1024;
+						}
+						else if( type == 'gb' )
+						{
+							size = size * 1024 * 1024 * 1024;
+						}
+						else if( type == 'tb' )
+						{
+							size = size * 1024 * 1024 * 1024 * 1024;
+						}
+						var used = parseInt( js.StoredBytes );
+						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
+						if( !used && !size ) used = 0, size = 0;
+						if( !size ) size = 536870912;
+						if( !used ) used = 0;
+						if( used > size || ( used && !size ) ) size = used;
+				
+						storage = {
+							id   : js.ID,
+							user : js.UserID,
+							name : js.Name,
+							type : js.Type,
+							size : size, 
+							used : used, 
+							free : ( size - used ), 
+							prog : ( ( used / size * 100 ) > 100 ? 100 : ( used / size * 100 ) ), 
+							icon : '/iconthemes/friendup15/DriveLabels/FriendDisk.svg',
+							mont : js.Mounted,
+							data : js
+						};
+				
+						if( Friend.dosDrivers[ storage.type ] && Friend.dosDrivers[ storage.type ].iconLabel )
+						{
+							storage.icon = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ storage.type ].iconLabel;
+						}
+						if( storage.name == 'Home' )
+						{
+							storage.icon = '/iconthemes/friendup15/DriveLabels/Home.svg';
+						}
+						else if( storage.name == 'System' )
+						{
+							storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 						}
 					}
 				}
 			
-				str += '</select>';
-				str += '</div>';
-				str += '</div>';
-		
-				str += '<div class="HRow MarginBottom">';
-				str += '<div class="HContent30 FloatLeft Ellipsis">';
-				str += '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
-				str += '</div>';
-				str += '<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
-				str += '<input type="text" class="FullWidth" id="DiskSizeA" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
-				str += '</div>';
-				str += '<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
-				str += '<select class="FullWidth" id="DiskSizeB">';
-				
-				if( units )
+				StorageForm( storage, function( storage )
 				{
-					for( var a in units )
+				
+					var str = '';
+				
+					str += '<div class="HRow">';
+					str += '<div class="Col1 FloatLeft">';
+			
+					str += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
+			
+					str += '</div><div class="Col2 FloatLeft">';
+			
+					str += '<div class="HRow MarginBottom">';
+					str += '<div class="HContent30 FloatLeft Ellipsis">';
+					str += '<strong>' + i18n( 'i18n_name' ) + ':</strong>';
+					str += '</div>';
+					str += '<div class="HContent70 FloatLeft Ellipsis">';
+					str += '<input type="text" class="FullWidth" id="Name" value="' + storage.name + '" placeholder="Mydisk"/>';
+					str += '</div>';
+					str += '</div>';
+		
+					str += '<div class="HRow MarginBottom">';
+					str += '<div class="HContent30 FloatLeft Ellipsis">';
+					str += '<strong>' + i18n( 'i18n_type' ) + ':</strong>';
+					str += '</div>';
+					str += '<div class="HContent70 FloatLeft Ellipsis">';
+					str += '<select class="FullWidth" id="Type" onchange="LoadDOSDriverGUI(this)"' + ( storage.id ? ' disabled="disabled"' : '' ) + '>';
+				
+					if( da )
 					{
-						str += '<option' + ( storage.size && FormatBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
+						for( var i in da )
+						{
+							if( da[i].type )
+							{
+								str += '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' + i18n( 'i18n_' + da[i].type ) + '</option>';
+							}
+						}
 					}
-				}
 			
-				str += '</select>';
-				str += '</div>';
-				str += '</div>';
+					str += '</select>';
+					str += '</div>';
+					str += '</div>';
+		
+					str += '<div class="HRow MarginBottom">';
+					str += '<div class="HContent30 FloatLeft Ellipsis">';
+					str += '<strong>' + i18n( 'i18n_size' ) + ':</strong>';
+					str += '</div>';
+					str += '<div class="HContent35 FloatLeft Ellipsis PaddingRight">';
+					str += '<input type="text" class="FullWidth" id="DiskSizeA" value="' + FormatBytes( storage.size, 0, 0 ) + '" placeholder="512"/>';
+					str += '</div>';
+					str += '<div class="HContent35 FloatLeft Ellipsis PaddingLeft">';
+					str += '<select class="FullWidth" id="DiskSizeB">';
+				
+					if( units )
+					{
+						for( var a in units )
+						{
+							str += '<option' + ( storage.size && FormatBytes( storage.size, 0, 2 ) == units[a] ? ' selected="selected"' : '' ) + '>' + units[a] + '</option>';
+						}
+					}
 			
-				// Insert Gui based on DosDriver
-				
-				str += '<div id="DosDriverGui"></div>';
-				
-				str += '</div>';
-				
-				str += '<div class="HRow PaddingTop">';
-				str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + storage.id + ',' + Application.userId + ')">Save</button>';
-				str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + Application.userId + ')">Cancel</button>';
-				str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + name + '\', ' + Application.userId + ')">Remove disk</button>';
-				str += '<button class="IconSmall FloatLeft MarginRight" onclick="javascript:void(0)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
-				str += '</div>';
-				
-				str += '</div>';
+					str += '</select>';
+					str += '</div>';
+					str += '</div>';
 			
-				ge( 'StorageGui' ).innerHTML = str;
+					// Insert Gui based on DosDriver
 				
-				//console.log( { e:e, d:(js?js:d) } );
+					str += '<div id="DosDriverGui"></div>';
 				
+					str += '</div>';
+					
+					str += '<div class="HRow PaddingTop">';
+					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_save(' + storage.user + ',\'' + storage.id + '\')">Save</button>';
+					str += '<button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + userid + ')">Cancel</button>';
+					
+					if( storage.id )
+					{
+						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\', ' + storage.user + ')">Remove disk</button>';
+						str += '<button class="IconSmall FloatLeft MarginRight" onclick="javascript:void(0)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+					}
+					
+					str += '</div>';
+				
+					str += '</div>';
+			
+					ge( 'StorageGui' ).innerHTML = str;
+				
+					//console.log( { e:e, d:(js?js:d) } );
+				
+				} );
+			}
+		
+			// TODO: Update userid to be selected user ...
+		
+			m.execute( 'filesystem', {
+				userid: userid,
+				devname: name
 			} );
-		}
-		m.execute( 'filesystem', {
-			userid: Application.userId,
-			devname: name
-		} );
 			
+		}
+		n.execute( 'types' );
 	}
-	n.execute( 'types' );
 };
 
 Sections.user_disk_refresh = function( mountlist )
@@ -1221,9 +1254,32 @@ Sections.user_disk_refresh = function( mountlist )
 	var mlst = '';
 	if( mountlist && mountlist.length )
 	{
-		mlst += '<div class="HRow">';
-		for( var b = 0; b < mountlist.length; b++ )
+		var sorted = {};
+		
+		for( var a = 0; a < mountlist.length; a++ )
 		{
+			if( mountlist[a].Mounted <= 0 )
+			{
+				sorted['1000'+a] = mountlist[a];
+			}
+			else
+			{
+				sorted[a] = mountlist[a];
+			}
+		}
+		
+		if( sorted )
+		{
+			mountlist = sorted;
+		}
+		
+		console.log( mountlist );
+		
+		mlst += '<div class="HRow">';
+		for( var b in mountlist )
+		{
+			if( mountlist[b] && !mountlist[b].ID ) continue;
+			
 			try
 			{
 				mountlist[b].Config = JSON.parse( mountlist[b].Config );
@@ -1234,7 +1290,7 @@ Sections.user_disk_refresh = function( mountlist )
 			}
 			
 			// Skip the IsDeleted disks for now ...
-			//if( mountlist[b].Mounted && mountlist[b].Mounted < 0 ) continue;
+			//if( mountlist[b] && mountlist[b].Mounted < 0 ) continue;
 			
 			//console.log( mountlist[b] );
 			
@@ -1268,6 +1324,7 @@ Sections.user_disk_refresh = function( mountlist )
 			
 			var storage = {
 				id   : mountlist[b].ID,
+				user : mountlist[b].UserID,
 				name : mountlist[b].Name,
 				type : mountlist[b].Type,
 				size : size, 
@@ -1293,8 +1350,8 @@ Sections.user_disk_refresh = function( mountlist )
 			
 			//console.log( storage );
 			
-			mlst += '<div class="HContent33 FloatLeft DiskContainer">';
-			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(\'' + storage.name + '\',' + storage.id + ')">';
+			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
+			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\')">';
 			mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
 			mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
 			//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
@@ -1485,6 +1542,35 @@ function StorageForm( storage, callback )
 	}
 	ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language } );
 	
+}
+
+function LoadDOSDriverGUI( _this )
+{
+	var type = ( _this ? _this.value : false );
+	
+	if( type )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				i18nAddTranslations( d );
+				var f = new File();
+				f.i18n();
+				for( var a in f.replacements )
+				{
+					d = d.split( '{' + a + '}' ).join( f.replacements[a] );
+				}
+				ge( 'DosDriverGui' ).innerHTML = d;
+			}
+			else
+			{
+				ge( 'DosDriverGui' ).innerHTML = '';
+			}
+		}
+		m.execute( 'dosdrivergui', { type: type } );
+	}
 }
 
 // Save a user

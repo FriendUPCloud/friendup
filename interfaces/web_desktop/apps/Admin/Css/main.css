@@ -104,6 +104,11 @@
 
 /* Storage ------------------------------------------------------------------ */
 
+#Admin #StorageGui #DiskSizeContainer
+{
+	display: none;
+}
+
 #Admin #StorageGui .HRow > .DiskContainer
 {
 	min-width: 148px !important;

@@ -461,7 +461,7 @@ function FieldToInput( key, data )
 
 function FormatBytes( bytes, decimals = 2, units = 1 ) 
 {
-    if ( bytes === 0 ) return 0 + ( units ? 'B' : '' );
+    if ( bytes == 0 ) return ( '' + ( units ? '0B' : '' ) );
 	
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;

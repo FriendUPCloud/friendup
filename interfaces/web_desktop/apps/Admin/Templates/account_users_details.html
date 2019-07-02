@@ -128,9 +128,19 @@
 		</div>-->
 	</div>
 	
-	<h2 class="MarginTop">
+	<!--<h2 class="MarginTop">
 		{i18n_storage}
-	</h2>
+	</h2>-->
+	<div class="HRow MarginTop">
+		<div class="HContent50 FloatLeft">
+			<h2>
+				{i18n_storage}
+			</h2>
+		</div>
+		<div class="HContent50 FloatLeft Relative">
+			<button class="IconButton IconSmall FloatRight MarginRight fa-plus" onclick="Sections.user_disk_update( {userid} )"></button>
+		</div>
+	</div>
 	<div class="Box Padding" id="StorageGui">
 		{storage}
 	</div>
