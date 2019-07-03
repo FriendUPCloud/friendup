@@ -340,78 +340,7 @@ function Expand( _this, level, on )
 	}
 }
 
-// Unmount a file system
-function unmountFilesystem( devname, callback )
-{
-	var f = new Library( 'system.library' );
-	
-	f.onExecuted = function( e, d )
-	{	
-		if( callback ) callback( e );
-	}
-	
-	var args = {
-		command: 'unmount',
-		devname: devname
-	};
-	
-	f.execute( 'device', args );
-}
 
-// Unmounts partition
-function remountDrive( devname, callback )
-{
-	var f = new Library( 'system.library' );
-	
-	f.onExecuted = function( e, d )
-	{	
-		var f2 = new Library( 'system.library' );
-		
-		f2.onExecuted = function( e, d )
-		{
-			callback();
-		}
-		
-		var args = {
-			command: 'mount',
-			devname: devname
-		};
-		
-		f2.execute( 'device', args );
-	}
-	
-	var args = {
-		command: 'unmount',
-		devname: devname
-	};
-	
-	f.execute( 'device', args );
-}
-
-function mountDisk( devname )
-{
-	var f = new Library( 'system.library' );
-	
-	f.onExecuted = function( e, d )
-	{	
-		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-		setTimeout( function()
-		{
-			// refresh button if success ...
-			
-			
-			
-		}, 5 );
-	}
-	
-	var the_mount_command = ge( 'mountedDisk' ).value == 'mounted' ? 'unmount' : 'mount'
-	var args = {
-		devname: devname,
-		sessionid: parent.Workspace.sessionid
-	};
-	
-	f.execute( 'device/' + the_mount_command, args );
-}
 
 function FieldToInput( key, data )
 {

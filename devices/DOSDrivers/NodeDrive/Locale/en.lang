@@ -1,3 +1,6 @@
 i18n_NodeDrive                    : Node network
 i18n_NodeDOSDriver                : Node network database based disk driver
 
+i18n_database                     : Database
+i18n_database_name                : Database name
+

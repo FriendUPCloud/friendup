@@ -143,6 +143,9 @@ i18n_SFTP                         : SFTP
 i18n_CorvoDrive                   : Corvo Disk
 i18n_QuickNG                      : Sybase QuickNG DOS Driver
 i18n_NodeDrive                    : Node network
+i18n_SQLRODrive                   : SQL Read only disk
+i18n_IMAP                         : IMAP Disk
+i18n_IPFSDrive                    : IPFS disk
 
 i18n_disk_error                      : Disk error
 i18n_failed_to_edit                  : Failed to edit disk volume.
@@ -169,4 +172,16 @@ i18n_add_storage                     : Add storage
 i18n_update_disk                     : Update disk
 i18n_mount_disk                      : Mount disk
 i18n_unmount_disk                    : Unmount disk
+
+i18n_this_will_remove                : This will remove the disk from the system.
+i18n_are_you_sure                    : Are you sure?
+
+i18n_mounting                        : Mounting
+i18n_unmounting                      : Unmounting
+i18n_successfully_mounted            : Your device was successfully mounted.
+i18n_successfully_unmounted          : Your device was successfully unmounted.
+i18n_fail_mount                      : Failed to mount device
+i18n_fail_mount_more                 : Could not mount device.
+i18n_fail_unmount                    : Failed to unmount device
+i18n_fail_unmount_more               : Could not unmount device.
 

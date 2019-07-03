@@ -782,9 +782,7 @@ Sections.userrole_update = function( rid, userid, _this )
 
 Sections.user_disk_save = function( userid, did )
 {
-	console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
-	
-	//return;
+	//console.log( 'Sections.user_disk_save ', { did : did, userid : userid } );
 	
 	var elems = {};
 			
@@ -919,7 +917,7 @@ Sections.user_disk_save = function( userid, did )
 			{
 				Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
 			}
-			remountDrive( data.Name, function()
+			remountDrive( data.Name, data.userid, function()
 			{
 				
 				var u = new Module( 'system' );
@@ -964,7 +962,7 @@ Sections.user_disk_save = function( userid, did )
 
 Sections.user_disk_cancel = function( userid )
 {
-	console.log( 'Sections.user_disk_cancel ' + userid );
+	//console.log( 'Sections.user_disk_cancel ' + userid );
 	
 	var u = new Module( 'system' );
 	u.onExecuted = function( e, d )
@@ -985,59 +983,116 @@ Sections.user_disk_cancel = function( userid )
 	
 };
 
-Sections.user_disk_remove = function( devname, userid )
+Sections.user_disk_remove = function( devname, did, userid )
 {
-	console.log( 'Sections.user_disk_remove ', { devname : devname, userid : userid } );
+	//console.log( 'Sections.user_disk_remove ', { devname : devname, did: did, userid: userid } );
 	
-	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove' ), function( r )
+	if( devname && did && userid )
 	{
-		if( r && r.data == true )
+		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove' ), function( r )
 		{
-			unmountFilesystem( devname, function( e )
+			if( r && r.data == true )
 			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
+				// This is the hard delete method, used by admins ...
+				
+				unmountDrive( devname, userid, function()
 				{
-					if( e == 'ok' )
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+					
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
 					{
+						console.log( 'deletedoor', { id:did, e:e, d:d } );
 						
-						var u = new Module( 'system' );
-						u.onExecuted = function( ee, dd )
+						if( e == 'ok' )
 						{
-							var ul = null;
-							try
-							{
-								ul = JSON.parse( dd );
-							}
-							catch( ee )
-							{
-								ul = null;
-							}
-							
-							ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
-							
-							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-						}
-						u.execute( 'mountlist', { userid: userid } );
 						
+							var u = new Module( 'system' );
+							u.onExecuted = function( ee, dd )
+							{
+								var ul = null;
+								try
+								{
+									ul = JSON.parse( dd );
+								}
+								catch( ee )
+								{
+									ul = null;
+								}
+							
+								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+							}
+							u.execute( 'mountlist', { userid: userid } );
+						
+							return;
+						}
+						try
+						{
+							var r = JSON.parse( d );						
+							Notify( { title: 'An error occured', text: r.message } );
+						}
+						catch( e )
+						{
+							Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
+						}
+						return;
+					
+					}
+					m.execute( 'deletedoor', { id: did, userid: userid } );
+					
+				} );
+				
+			
+				// This is the soft delete method ...
+			
+				/*unmountFilesystem( devname, function( e )
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+						
+							var u = new Module( 'system' );
+							u.onExecuted = function( ee, dd )
+							{
+								var ul = null;
+								try
+								{
+									ul = JSON.parse( dd );
+								}
+								catch( ee )
+								{
+									ul = null;
+								}
+							
+								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+							
+								Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+							}
+							u.execute( 'mountlist', { userid: userid } );
+						
+							return;
+						}
+						try
+						{
+							var r = JSON.parse( d );						
+							Notify( { title: 'An error occured', text: r.message } );
+						}
+						catch( e )
+						{
+							Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
+						}
 						return;
 					}
-					try
-					{
-						var r = JSON.parse( d );						
-						Notify( { title: 'An error occured', text: r.message } );
-					}
-					catch( e )
-					{
-						Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
-					}
-					return;
-				}
-				m.execute( 'deletefilesystem', { devname: devname } );
-			} );
-		}
-	} );
+					m.execute( 'deletefilesystem', { devname: devname } );
+				} );*/
+			}
+		} );
+	}
 };
+
+// TODO: Evaluate Disk Editing Design and check what features are missing / removed based on the old app "DiskCatalog" EncryptionKey, Network Visibility, Show on Desktop, JSX Executable, Disk Cover is not included in the new design ...
 
 Sections.user_disk_update = function( userid, did = 0, name = '' )
 {
@@ -1061,7 +1116,7 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				var storage = { id : '', name : '', type : '', size : '', user : userid };
+				var storage = { id : '', name : '', type : '', size : 512, user : userid };
 			
 				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 		
@@ -1221,8 +1276,8 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 					
 					if( storage.id )
 					{
-						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\', ' + storage.user + ')">Remove disk</button>';
-						str += '<button class="IconSmall FloatLeft MarginRight" onclick="javascript:void(0)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + storage.user + ')">Remove disk</button>';
+						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + userid + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
 					}
 					
 					str += '</div>';
@@ -1273,7 +1328,7 @@ Sections.user_disk_refresh = function( mountlist )
 			mountlist = sorted;
 		}
 		
-		console.log( mountlist );
+		//console.log( mountlist );
 		
 		mlst += '<div class="HRow">';
 		for( var b in mountlist )
@@ -1374,6 +1429,89 @@ Sections.user_disk_refresh = function( mountlist )
 	
 	return mlst;
 };
+
+Sections.user_disk_mount = function( devname, userid, _this )
+{
+	if( devname && userid && _this )
+	{
+		if( _this.innerHTML.toLowerCase().indexOf( 'unmount' ) >= 0 )
+		{
+			unmountDrive( devname, userid, function( e, d )
+			{
+				console.log( 'unmountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
+				
+				if( e == 'ok' )
+				{
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+					
+					Notify( { title: i18n( 'i18n_unmounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_unmounted' ) } );
+					
+					var u = new Module( 'system' );
+					u.onExecuted = function( ee, dd )
+					{
+						var ul = null;
+						try
+						{
+							ul = JSON.parse( dd );
+						}
+						catch( ee )
+						{
+							ul = null;
+						}
+					
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+					}
+					u.execute( 'mountlist', { userid: userid } );
+				
+					return;
+				}
+				else
+				{
+					Notify( { title: i18n( 'i18n_fail_unmount' ), text: i18n( 'i18n_fail_unmount_more' ) } );
+				}
+				
+			} );
+		}
+		else
+		{
+			mountDrive( devname, userid, function( e, d )
+			{
+				console.log( 'mountDrive( '+devname+', '+userid+' ) ', { e:e, d:d } );
+				
+				if( e == 'ok' )
+				{
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+					
+					Notify( { title: i18n( 'i18n_mounting' ) + ' ' + devname + ':', text: i18n( 'i18n_successfully_mounted' ) } );
+					
+					var u = new Module( 'system' );
+					u.onExecuted = function( ee, dd )
+					{
+						var ul = null;
+						try
+						{
+							ul = JSON.parse( dd );
+						}
+						catch( ee )
+						{
+							ul = null;
+						}
+					
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+					}
+					u.execute( 'mountlist', { userid: userid } );
+				
+					return;
+				}
+				else
+				{
+					Notify( { title: i18n( 'i18n_fail_mount' ), text: i18n( 'i18n_fail_mount_more' ) } );
+				}
+				
+			} );
+		}
+	}
+}
 
 function StorageForm( storage, callback )
 {
@@ -1550,26 +1688,128 @@ function LoadDOSDriverGUI( _this )
 	
 	if( type )
 	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		var ft = new Module( 'system' );
+		ft.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
 			{
-				i18nAddTranslations( d );
-				var f = new File();
-				f.i18n();
-				for( var a in f.replacements )
-				{
-					d = d.split( '{' + a + '}' ).join( f.replacements[a] );
-				}
-				ge( 'DosDriverGui' ).innerHTML = d;
+				i18nAddTranslations( d )
 			}
-			else
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
 			{
-				ge( 'DosDriverGui' ).innerHTML = '';
+				var scripts = [];
+			
+				if( e == 'ok' )
+				{
+					// collect scripts
+				
+					var scr;
+					while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
+					{
+						d = d.split( scr[0] ).join( '' );
+						scripts.push( scr[1] );
+					}
+				
+					var mch;
+					var i = 0;
+					while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
+					{
+						d = d.split( mch[0] ).join( i18n( mch[1] ) );
+					}
+				
+					// Fix to add more space
+					d = d.split( 'HRow' ).join( 'MarginBottom HRow' );
+				
+					d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
+					
+					
+					
+					i18nAddTranslations( d );
+					var f = new File();
+					f.i18n();
+					for( var a in f.replacements )
+					{
+						d = d.split( '{' + a + '}' ).join( f.replacements[a] );
+					}
+					ge( 'DosDriverGui' ).innerHTML = d;
+				
+					// Run scripts at the end ...
+					if( scripts )
+					{
+						for( var key in scripts )
+						{
+							if( scripts[key] )
+							{
+								eval( scripts[key] );
+							}
+						}
+					}
+				}
+				else
+				{
+					ge( 'DosDriverGui' ).innerHTML = '';
+				}
 			}
+			m.execute( 'dosdrivergui', { type: type } );
+		
 		}
-		m.execute( 'dosdrivergui', { type: type } );
+		ft.execute( 'dosdrivergui', { component: 'locale', type: type, language: Application.language } );
+	}
+}
+
+// TODO: Check why it doesn't work to mount / unmount for other users as admin or with rights ...
+
+function mountDrive( devname, userid, callback )
+{
+	if( devname )
+	{
+		var f = new Library( 'system.library' );
+		
+		f.onExecuted = function( e, d )
+		{
+			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, module: 'system', e:e, d:d } );
+			
+			if( callback ) callback( e, d );
+		}
+		
+		f.execute( 'device/mount', { devname: devname, userid: userid, module: 'system' } );
+	}
+}
+
+function unmountDrive( devname, userid, callback )
+{
+	if( devname )
+	{
+		var f = new Library( 'system.library' );
+		
+		f.onExecuted = function( e, d )
+		{
+			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, module: 'system', e:e, d:d } );
+			
+			if( callback ) callback( e, d );
+		}
+		
+		f.execute( 'device/unmount', { devname: devname, userid: userid, module: 'system' } );
+	}
+}
+
+function remountDrive( devname, userid, callback )
+{
+	if( devname )
+	{
+		unmountDrive( devname, userid, function( e, d )
+		{
+			
+			mountDrive( devname, userid, function( e, d )
+			{
+				
+				if( callback ) callback( e, d );
+				
+			} );
+			
+		} );
 	}
 }
 
