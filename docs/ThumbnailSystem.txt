@@ -31,6 +31,7 @@ FThumbnail table
 `Path` varchar(255) NOT NULL,            | The user's disk path
 `Filepath` varchar(255) NOT NULL,        | The path on the server
 `DateCreated` datetime,                  | Date thumbnail is created
+`DateTouched` datetime,                  | Date thumbnail is seen/used
 `Encryption` varchar(255),               | Future support for encrypted thumbs
 
 TODO:
