@@ -51,6 +51,10 @@ else
 LFLAGS	+=	-Wl,--export-dynamic
 endif
 
+ifeq ($(LINK_STDCPP),1)
+LFLAGS	+=	-lstdc++
+endif
+
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
