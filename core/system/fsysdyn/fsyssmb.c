@@ -256,7 +256,7 @@ void deinit( struct FHandler *s )
 void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
 	FERROR("Disabled for a moment\n");
-	return NULL;
+	//return NULL;
 	
 	File *dev = NULL;
 	char *path = NULL, *ulogin = NULL, *upass = NULL;
