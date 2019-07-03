@@ -39,20 +39,20 @@ if( !file_exists( $wname . 'thumbnails' ) )
 }
 
 $p = urldecode( $args->path );
+$pure = explode( ':', $p );
+$dirnfile = $pure[ 1 ];
+$pure = $pure[ 0 ] . ':'; // Strip the disk name, will use something else
 
 $ext = explode( '.', $p );
 $ext = array_pop( $ext );
 $ext = strtolower( $ext );
-
-// Fix filename
-$fname = hash( 'ripemd160', $width . '_' . $height . '_' . $p ) . '.png';
 
 // Generate thumbnail
 if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 {
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
-	$thumb->Path = $p;
+	$thumb->Path = $door->ID . ':' . $dirnfile; // Use fs ID instead of fs name
 	$thumb->UserID = $User->ID;
 	if( $thumb->Load() )
 	{

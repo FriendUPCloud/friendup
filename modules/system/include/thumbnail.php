@@ -13,6 +13,7 @@
 global $SqlDatabase, $Logger, $User, $Config;
 
 require_once( 'php/classes/file.php' );
+require_once( 'php/classes/door.php' );
 
 // Default thumbnail size
 $width = 56;
@@ -48,13 +49,16 @@ if( !file_exists( $wname . 'thumbnails' ) )
 }
 
 $p = urldecode( $args->path );
+$pure = explode( ':', $p );
+$dirnfile = $pure[ 1 ];
+$pure = $pure[ 0 ] . ':'; // Strip the disk name, will use something else
 
 $ext = explode( '.', $p );
 $ext = array_pop( $ext );
 $ext = strtolower( $ext );
 
 // Fix filename
-$fname = hash( 'ripemd160', $width . '_' . $height . '_' . $p ) . '.png';
+$fname = hash( 'ripemd160', $width . '_' . $height . '_' . $pure . ':' . $dirnfile ) . '.png';
 
 /*
 // Deprecated old untracable functionality
@@ -82,9 +86,11 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 	}
 
+	$door = new Door( $pure );
+	
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
-	$thumb->Path = $p;
+	$thumb->Path = $door->ID . ':' . $dirnfile; // Use fs ID instead of fs name
 	$thumb->UserID = $User->ID;
 	if( $thumb->Load() )
 	{
@@ -102,7 +108,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 	}
 	else
-	{
+	{	
 		$d = new File( $p );
 
 		$source = null;
