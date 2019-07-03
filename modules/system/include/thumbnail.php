@@ -39,8 +39,9 @@ if( isset( $args->mode ) )
 
 // Sanitized username
 $uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
-$wname = $Config->FCUpload . $uname . '/';
-
+$wname = $Config->FCUpload;
+if( substr( $wname, -1, 1 ) != '/' )
+	$wname .= '/';
 if( !file_exists( $wname . 'thumbnails' ) )
 {
 	mkdir( $wname . 'thumbnails' );
