@@ -8328,7 +8328,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( this.sleepingTimeout )
 				clearTimeout( this.sleepingTimeout );
 			Workspace.sleeping = false;
-			Workspace.sleepTimeout = null;
+			Workspace.sleepingTimeout = null;
 			document.title = document.title.split( ' Sleeping' ).join( '' );
 		}
 		else
@@ -8362,7 +8362,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
 				Workspace.sleeping = true;
-				Workspace.sleepTimeout = null;
+				Workspace.sleepingTimeout = null;
 				Workspace.setViewState( 'inactive' );
 			}, 1000 * 60 * 1 );
 		}
