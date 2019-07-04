@@ -45,6 +45,7 @@ Friend = window.Friend || {};
 if( !Friend.iconCache )
 {
 	Friend.iconCache = {
+		maxCount: 1500,             // How many icons to keep in cache
 		index: 0,                   // For seenList
 		seenList: []                // List of cached icons by index
 	};
@@ -3720,12 +3721,30 @@ FileIcon.prototype.setCache = function( path, directoryview, date )
 		Friend.iconCache[ dir ] = {};
 	if( !Friend.iconCache[ dir ][ path ] )
 	{
+		var currentIndex = Friend.iconCache.index++;
+		// Wrap around
+		if( currentIndex > Friend.iconCache.maxCount )
+		{
+			currentIndex = Friend.iconCache.index = 0;
+		}
 		var i = new Image();
 		i.src = path;
 		i.date = date;
 		i.onload = function()
 		{
 			Friend.iconCache[ dir ][ path ] = i;
+			// Overwriting?
+			if( Friend.iconCache.seenList[ currentIndex ] )
+			{
+				var dd = Friend.iconCache.seenList[ currentIndex ].dir;
+				var pp = Friend.iconCache.seenList[ currentIndex ].path;
+				delete Friend.iconCache[ dd ][ pp ];
+			}
+			// Write new
+			Friend.iconCache.seenList[ currentIndex ] = {
+				dir: dir,
+				path: path
+			};
 		}
 	}
 }
