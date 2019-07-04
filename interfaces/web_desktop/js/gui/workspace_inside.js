@@ -8263,6 +8263,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( newState == 'active' )
 		{
+			document.title = document.title.split( ' Active' ).join( '' ) + ' Active';
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
@@ -8323,9 +8324,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				clearTimeout( this.sleepingTimeout );
 			Workspace.sleeping = false;
 			Workspace.sleepTimeout = null;
+			document.title = document.title.split( ' Sleeping' ).join( '' );
 		}
 		else
 		{
+			document.title = document.title.split( ' Active' ).join( '' ) ;
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
 			if( isMobile )
@@ -8344,6 +8347,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				this.sleepingTimeout = setTimeout( function()
 				{
+					document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
 					Workspace.sleeping = true;
 					Workspace.sleepTimeout = null;
 				}, 1000 * 60 * 1 );
@@ -9350,16 +9354,19 @@ Workspace.receivePush = function( jsonMsg )
 			{	
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
-				if( msg.id && !Workspace.sleeping )
+				if( msg.id )
 				{
-					// Function to set the notification as read...
-					var l = new Library( 'system.library' );
-					l.onExecuted = function(){};
-					l.execute( 'mobile/updatenotification', { 
-						notifid: msg.id, 
-						action: 1,
-						pawel: 1
-					} );
+					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+					{
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.id, 
+							action: 1,
+							pawel: 1
+						} );
+					}
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
@@ -9378,7 +9385,7 @@ Workspace.receivePush = function( jsonMsg )
 		// Function to set the notification as read...
 		function notificationRead()
 		{
-			if( !Workspace.sleeping )
+			if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 			{
 				messageRead = true;
 				var l = new Library( 'system.library' );

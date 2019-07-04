@@ -70,13 +70,16 @@ function PollTray()
 				
 				if( nots[ a ].notificationId )
 				{
-					var l = new Library( 'system.library' );
-					l.onExecuted = function(){};
-					l.execute( 'mobile/updatenotification', { 
-						notifid: nots[ a ].notificationId, 
-						action: 1,
-						pawel: 10
-					} );
+					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+					{
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: nots[ a ].notificationId, 
+							action: 1,
+							pawel: 10
+						} );
+					}
 					//console.log( 'Cancelling notification event as we are online.', nots[ a ].notificationId );
 				}
 				
@@ -496,14 +499,17 @@ function Notify( message, callback, clickcallback )
 				{
 					if( message.notificationId )
 					{
-						//console.log( 'Showing: ', message.notificationId );
-						var l = new Library( 'system.library' );
-						l.onExecuted = function(){};
-						l.execute( 'mobile/updatenotification', { 
-							notifid: message.notificationId, 
-							action: 1,
-							pawel: 10
-						} );
+						if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+						{
+							//console.log( 'Showing: ', message.notificationId );
+							var l = new Library( 'system.library' );
+							l.onExecuted = function(){};
+							l.execute( 'mobile/updatenotification', { 
+								notifid: message.notificationId, 
+								action: 1,
+								pawel: 10
+							} );
+						}
 					}
 					if( callback ) callback();
 				}
@@ -564,13 +570,16 @@ function Notify( message, callback, clickcallback )
 			// Since it is seen, then remove from server
 			if( message.notificationId )
 			{
-				var l = new Library( 'system.library' );
-				l.onExecuted = function(){};
-				l.execute( 'mobile/updatenotification', { 
-					notifid: message.notificationId, 
-					action: 1,
-					pawel: 11
-				} );
+				if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+				{
+					var l = new Library( 'system.library' );
+					l.onExecuted = function(){};
+					l.execute( 'mobile/updatenotification', { 
+						notifid: message.notificationId, 
+						action: 1,
+						pawel: 11
+					} );
+				}
 			}
 		}
 		
@@ -704,13 +713,16 @@ function Notify( message, callback, clickcallback )
 						// Function to set the notification as read...
 						if( message.notificationId )
 						{
-							var l = new Library( 'system.library' );
-							l.onExecuted = function(){};
-							l.execute( 'mobile/updatenotification', { 
-								notifid: message.notificationId, 
-								action: 1,
-								pawel: 12
-							} );
+							if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+							{
+								var l = new Library( 'system.library' );
+								l.onExecuted = function(){};
+								l.execute( 'mobile/updatenotification', { 
+									notifid: message.notificationId, 
+									action: 1,
+									pawel: 12
+								} );
+							}
 						}
 					}
 				}
