@@ -23,13 +23,13 @@
 	position: absolute;
 	width: 50px;
 	height: 50px;
-	top: 41px;
+	top: 34px;
 	cursor: hand;
 	cursor: pointer;
 	z-index: 99;
 	font-family: fontawesome;
 	color: white;
-	font-size: 1.4em;
+	font-size: 2.5em;
 	text-align: center;
 }
 
@@ -99,6 +99,7 @@
 	width: 100%;
 	height: calc(100% - 30px);
 	overflow: auto;
+	background-color: #191919;
 }
 
 .EventRect
@@ -203,7 +204,14 @@
 	width: 100%;
 	color: white;
 	font-size: 16px;
+	text-align: left;
+	margin-left: 15px;
+}
+
+.Week .Day.Label .LabelText
+{
 	text-align: center;
+	margin-left: 0;
 }
 
 .CalendarRow.HRow
@@ -304,6 +312,11 @@
 .Event[nth-child:0n6]
 {
 	clear: both;
+}
+
+.CalendarDates > .CalendarRow:last-child
+{
+	border-bottom: 1px solid #161616;
 }
 
 /* Sidebar */
