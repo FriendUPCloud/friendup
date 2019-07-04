@@ -8363,7 +8363,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
 				Workspace.sleeping = true;
 				Workspace.sleepingTimeout = null;
-				Workspace.setViewState( 'inactive' );
+				Workspace.updateViewState( 'inactive' );
 			}, 1000 * 60 * 1 );
 		}
 	},
