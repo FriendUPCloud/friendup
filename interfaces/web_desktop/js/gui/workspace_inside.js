@@ -8257,7 +8257,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
 
 		// Don't update if not changed
-		if( this.currentViewState == newState ) return;
+		if( this.currentViewState == newState )
+		{
+			this.sleepTimeout();
+			return;
+		}
 		
 		//mobileDebug( 'Starting update view state.' + newState, true );
 		
@@ -8342,18 +8346,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				dl.execute( 'mobile/setwsstate' );
 			}
 		}
+		this.sleepTimeout();
+		this.currentViewState = newState;
+	},
+	sleepTimeout: function()
+	{
 		// IMPORTANT: Only for desktops!
 		// Sleep in 15 minutes
 		if( !window.friendApp )
 		{
+			if( this.sleepingTimeout )
+				return;
 			this.sleepingTimeout = setTimeout( function()
 			{
 				document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
 				Workspace.sleeping = true;
 				Workspace.sleepTimeout = null;
+				Workspace.setViewState( 'inactive' );
 			}, 1000 * 60 * 1 );
 		}
-		this.currentViewState = newState;
 	},
 	// Execute when everything is ready
 	onReady: function()
