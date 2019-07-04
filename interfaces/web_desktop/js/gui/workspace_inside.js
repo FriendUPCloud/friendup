@@ -2978,6 +2978,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										friendApp.onWorkspaceReady();
 									}
+									Workspace.updateViewState( 'active' );
 								}
 							}, 50 );
 						}
