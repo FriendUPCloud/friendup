@@ -8346,7 +8346,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.sleeping = true;
 					Workspace.sleepTimeout = null;
-				}, 1000 * 60 * 15 );
+				}, 1000 * 60 * 1 );
 			}
 		}
 		this.currentViewState = newState;
