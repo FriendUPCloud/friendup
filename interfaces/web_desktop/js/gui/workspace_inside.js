@@ -782,7 +782,7 @@ var WorkspaceInside = {
 						function notificationRead()
 						{
 							//console.log( 'Foo bar: ', msg.notificationData );
-							if( Workspace.currentViewState == 'active' )
+							if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 							{
 								if( trash )
 									clearTimeout( trash );
@@ -8317,6 +8317,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			// IMPORTANT:
+			// Sleep in 15 minutes
+			if( this.sleepingTimeout )
+				clearTimeout( this.sleepingTimeout );
+			Workspace.sleeping = false;
+			Workspace.sleepTimeout = null;
 		}
 		else
 		{
@@ -8331,6 +8337,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					//mobileDebug( 'setwsstate inactive: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
+			}
+			// IMPORTANT: Only for desktops!
+			// Sleep in 15 minutes
+			if( !window.friendApp )
+			{
+				this.sleepingTimeout = setTimeout( function()
+				{
+					Workspace.sleeping = true;
+					Workspace.sleepTimeout = null;
+				}, 1000 * 60 * 15 );
 			}
 		}
 		this.currentViewState = newState;
@@ -8470,10 +8486,15 @@ function DoorsOutListener( e )
 	{
 		movableMouseUp( e );
 	}
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsLeaveListener( e )
 {
 	movableMouseUp( e );
+	
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsKeyUp( e )
 {
@@ -8484,6 +8505,9 @@ function DoorsKeyUp( e )
 }
 function DoorsKeyDown( e )
 {
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
+
 	var w = e.which ? e.which : e.keyCode;
 	var tar = e.target ? e.target : e.srcElement;
 	Workspace.shiftKey = e.shiftKey;
@@ -9326,7 +9350,7 @@ Workspace.receivePush = function( jsonMsg )
 			{	
 				// Need a "message id" to be able to update notification
 				// on the Friend Core side
-				if( msg.id )
+				if( msg.id && !Workspace.sleeping )
 				{
 					// Function to set the notification as read...
 					var l = new Library( 'system.library' );
@@ -9354,14 +9378,17 @@ Workspace.receivePush = function( jsonMsg )
 		// Function to set the notification as read...
 		function notificationRead()
 		{
-			messageRead = true;
-			var l = new Library( 'system.library' );
-			l.onExecuted = function(){};
-			l.execute( 'mobile/updatenotification', { 
-				notifid: msg.id, 
-				action: 1,
-				pawel: 2
-			} );
+			if( !Workspace.sleeping )
+			{
+				messageRead = true;
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.id, 
+					action: 1,
+					pawel: 2
+				} );
+			}
 		}
 	
 		// Application not found? Start it!
