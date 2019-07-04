@@ -13,6 +13,7 @@
 global $SqlDatabase, $Logger, $User, $Config;
 
 require_once( 'php/classes/file.php' );
+require_once( 'php/classes/door.php' );
 
 // Default thumbnail size
 $width = 56;
@@ -39,27 +40,31 @@ if( isset( $args->mode ) )
 
 // Sanitized username
 $uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
-$wname = $Config->FCUpload . $uname . '/';
-
+$wname = $Config->FCUpload;
+if( substr( $wname, -1, 1 ) != '/' ) $wname .= '/';
 if( !file_exists( $wname . 'thumbnails' ) )
 {
 	mkdir( $wname . 'thumbnails' );
 }
 
 $p = urldecode( $args->path );
+$pure = explode( ':', $p );
+$dirnfile = $pure[ 1 ];
+$pure = $pure[ 0 ] . ':'; // Strip the disk name, will use something else
 
 $ext = explode( '.', $p );
 $ext = array_pop( $ext );
 $ext = strtolower( $ext );
 
 // Fix filename
-$fname = hash( 'ripemd160', $width . '_' . $height . '_' . $p ) . '.png';
+$fname = hash( 'ripemd160', $width . '_' . $height . '_' . $pure . ':' . $dirnfile ) . '.png';
 
-// Already here!
-if( file_exists( $wname . 'thumbnails/' . $fname ) )
+function _file_broken()
 {
-	FriendHeader( 'Content-type', 'image/png' );
-	die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
+	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
+	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
+	FriendHeader( 'Content-Type: image/svg+xml' );
+	die( $cnt );
 }
 
 // Generate thumbnail
@@ -69,122 +74,145 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		mkdir( '/tmp/Friendup' );
 	if( !file_exists( '/tmp/Friendup' ) )
 	{
-		FriendHeader( 'Content-type', 'image/svg+xml' );
+		FriendHeader( 'Content-Type: image/svg+xml' );
 		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 	}
 
-	$d = new File( $p );
+	$door = new Door( $pure );
+	
+	// Look in the database
+	$thumb = new dbIO( 'FThumbnail' );
+	$thumb->Path = $door->ID . ':' . $dirnfile; // Use fs ID instead of fs name
+	$thumb->UserID = $User->ID;
+	if( $thumb->Load() )
+	{
+		// Check if it exists!
+		if( file_exists( $thumb->Filepath ) )
+		{
+			FriendHeader( 'Content-Type: image/png' );
+			die( file_get_contents( $thumb->Filepath ) );
+		}
+		// Clean up..
+		else
+		{
+			$thumb->delete();
+			_file_broken();
+		}
+	}
+	else
+	{	
+		$d = new File( $p );
 
-	$source = null;
+		$source = null;
 	
-	// Get data
-	$ch = curl_init();
-	curl_setopt( $ch, CURLOPT_URL, $d->GetUrl() );
-	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-	curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-	curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
-	$tmp = curl_exec( $ch );
-	curl_close( $ch );
+		// Get data
+		$ch = curl_init();
+		curl_setopt( $ch, CURLOPT_URL, $d->GetUrl() );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+		$tmp = curl_exec( $ch );
+		curl_close( $ch );
 	
-	// Temp file
-	$smp = $fname;
-	while( file_exists( '/tmp/Friendup/' . $smp ) )
-	{
-		$smp = $fname . '_' . rand( 0,9999 ) . rand( 0,9999 );
-	}
+		// Temp file
+		$smp = $fname;
+		while( file_exists( '/tmp/Friendup/' . $smp ) )
+		{
+			$smp = $fname . '_' . rand( 0,9999 ) . rand( 0,9999 );
+		}
 	
-	if( $f = fopen( '/tmp/Friendup/' . $smp, 'w+' ) )
-	{
-		fwrite( $f, $tmp );
-		fclose( $f );
-	}
-	else
-	{
-		FriendHeader( 'Content-type', 'image/svg+xml' );
-		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
-	}
+		if( $f = fopen( '/tmp/Friendup/' . $smp, 'w+' ) )
+		{
+			fwrite( $f, $tmp );
+			fclose( $f );
+		}
+		else
+		{
+			_file_broken();
+		}
 	
-	list( $iw, $ih, ) = getimagesize( '/tmp/Friendup/' . $smp );
-	$x = $y = 0;
-	
-	switch( $ext )
-	{
-		case 'jpg':
-		case 'jpeg':
-			$source = imagecreatefromjpeg( '/tmp/Friendup/' . $smp );
-			break;
-		case 'png':
-			$source = imagecreatefrompng( '/tmp/Friendup/' . $smp );
-			break;
-		case 'gif':
-			$source = imagecreatefromgif( '/tmp/Friendup/' . $smp );
-			break;
-	}
-	
-	// Clean up
-	if( file_exists( '/tmp/Friendup/' . $smp ) )
-		unlink( '/tmp/Friendup/' . $smp );
-	
-	if( !$source )
-	{
-		FriendHeader( 'Content-type', 'image/svg+xml' );
-		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
-	}
-		
-	imageantialias( $source, true );
-	
-	// Place thumbnail to the center
-	// First try width
-	$rw = $width;
-	$rh = $ih / $iw * $width;
-	// Don't fit height?
-	if( $rh > $height )
-	{
-		$rh = $height;
-		$rw = $iw / $ih * $height;
-	}
-	
-	// Output
-	if( $mode == 'resize' )
-	{
-		$width = $rw;
-		$height = $rh;
-	}
-	$dest = imagecreatetruecolor( $width, $height );	
-	imageantialias( $dest, true );
-	imagealphablending( $dest, false );
-	imagesavealpha( $dest, true );
-	imagesetinterpolation( $dest, IMG_BICUBIC );
-	$transparent = imagecolorallocatealpha( $dest, 255, 255, 255, 127 );
-	imagefilledrectangle( $dest, 0, 0, $width, $height, $transparent );
-	
-	if( $mode == 'crop' )
-	{
-		// Center
-		$y = $height - $rh;
-		$x = $width / 2 - ( $rw / 2 );		
-	}
-	else
-	{
+		list( $iw, $ih, ) = getimagesize( '/tmp/Friendup/' . $smp );
 		$x = $y = 0;
-	}
+	
+		switch( $ext )
+		{
+			case 'jpg':
+			case 'jpeg':
+				$source = imagecreatefromjpeg( '/tmp/Friendup/' . $smp );
+				break;
+			case 'png':
+				$source = imagecreatefrompng( '/tmp/Friendup/' . $smp );
+				break;
+			case 'gif':
+				$source = imagecreatefromgif( '/tmp/Friendup/' . $smp );
+				break;
+		}
+	
+		// Clean up
+		if( file_exists( '/tmp/Friendup/' . $smp ) )
+			unlink( '/tmp/Friendup/' . $smp );
+	
+		if( !$source )
+		{
+			_file_broken();
+		}
+		
+		imageantialias( $source, true );
+	
+		// Place thumbnail to the center
+		// First try width
+		$rw = $width;
+		$rh = $ih / $iw * $width;
+		// Don't fit height?
+		if( $rh > $height )
+		{
+			$rh = $height;
+			$rw = $iw / $ih * $height;
+		}
+	
+		// Output
+		if( $mode == 'resize' )
+		{
+			$width = $rw;
+			$height = $rh;
+		}
+		$dest = imagecreatetruecolor( $width, $height );	
+		imageantialias( $dest, true );
+		imagealphablending( $dest, false );
+		imagesavealpha( $dest, true );
+		imagesetinterpolation( $dest, IMG_BICUBIC );
+		$transparent = imagecolorallocatealpha( $dest, 255, 255, 255, 127 );
+		imagefilledrectangle( $dest, 0, 0, $width, $height, $transparent );
+	
+		if( $mode == 'crop' )
+		{
+			// Center
+			$y = $height - $rh;
+			$x = $width / 2 - ( $rw / 2 );		
+		}
+		else
+		{
+			$x = $y = 0;
+		}
 
-	// Resize
-	imagecopyresampled( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
+		// Resize
+		imagecopyresampled( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
 	
-	// Save
-	imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
+		$thumb->Filepath = $wname . 'thumbnails/' . $fname;
+		$thumb->DateCreated = date( 'Y-m-d H:i:s' );
+		$thumb->DateTouched = $thumb->DateCreated;
+		$thumb->Save();
+		if( $thumb->ID > 0 )
+		{
+			// Save
+			imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
 	
-	FriendHeader( 'Content-type', 'image/png' );
-	die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
+			FriendHeader( 'Content-Type: image/png' );
+			die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
+		}
+	}
 }
 // TODO: Support more icons
-else
-{
-	FriendHeader( 'Content-type', 'image/svg+xml' );
-	die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
-}
-
-
+_file_broken();
 
 ?>
