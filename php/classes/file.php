@@ -37,18 +37,22 @@ class File
 		
 		if( $path ) $this->path = urldecode( $path );
 		
-		$sessionId = $GLOBALS[ 'args' ]->sessionid;
-		$authId = $GLOBALS[ 'args' ]->authid;
+		if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+			$sessionId = $GLOBALS[ 'args' ]->sessionid;
+		else $sessionId = false;
+		if( isset( $GLOBALS[ 'args' ]->authid ) )
+			$authId = $GLOBALS[ 'args' ]->authid;
+		else $authId = false;
 		
 		$ex = '/system.library/file/read/?mode=rb&path=' . jsUrlEncode( $this->path );
 		$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
 			( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $ex;
 		if( $userInfo )
 			$url .= '&sessionid=' . $userInfo->SessionID;
-		else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
-			$url .= '&sessionid=' . $GLOBALS[ 'args' ]->sessionid;
-		else if( isset( $GLOBALS[ 'args' ]->authid ) )
-			$url .= '&authid=' . $GLOBALS[ 'args' ]->authid;
+		else if( $sessionId )
+			$url .= '&sessionid=' . $sessionId;
+		else if( $authId )
+			$url .= '&authid=' . $authId;
 		else if( isset( $User->SessionID ) )
 			$url .= '&sessionid=' . $User->SessionID;
 

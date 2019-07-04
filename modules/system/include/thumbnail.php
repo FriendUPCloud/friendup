@@ -41,8 +41,7 @@ if( isset( $args->mode ) )
 // Sanitized username
 $uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
 $wname = $Config->FCUpload;
-if( substr( $wname, -1, 1 ) != '/' )
-	$wname .= '/';
+if( substr( $wname, -1, 1 ) != '/' ) $wname .= '/';
 if( !file_exists( $wname . 'thumbnails' ) )
 {
 	mkdir( $wname . 'thumbnails' );
@@ -60,19 +59,12 @@ $ext = strtolower( $ext );
 // Fix filename
 $fname = hash( 'ripemd160', $width . '_' . $height . '_' . $pure . ':' . $dirnfile ) . '.png';
 
-/*
-// Deprecated old untracable functionality
-// Already here!
-if( file_exists( $wname . 'thumbnails/' . $fname ) )
-{
-	FriendHeader( 'Content-type', 'image/png' );
-	die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
-}*/
-
 function _file_broken()
 {
-	FriendHeader( 'Content-type', 'image/svg+xml' );
-	die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
+	$cnt = file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' );
+	FriendHeader( 'Content-Length: ' . strlen( $cnt ) );
+	FriendHeader( 'Content-Type: image/svg+xml' );
+	die( $cnt );
 }
 
 // Generate thumbnail
@@ -82,7 +74,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		mkdir( '/tmp/Friendup' );
 	if( !file_exists( '/tmp/Friendup' ) )
 	{
-		FriendHeader( 'Content-type', 'image/svg+xml' );
+		FriendHeader( 'Content-Type: image/svg+xml' );
 		die( file_get_contents( 'resources/iconthemes/friendup15/File_Broken.svg' ) );
 	}
 
@@ -97,7 +89,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		// Check if it exists!
 		if( file_exists( $thumb->Filepath ) )
 		{
-			FriendHeader( 'Content-type', 'image/png' );
+			FriendHeader( 'Content-Type: image/png' );
 			die( file_get_contents( $thumb->Filepath ) );
 		}
 		// Clean up..
@@ -136,7 +128,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		}
 		else
 		{
-			_file_broken()
+			_file_broken();
 		}
 	
 		list( $iw, $ih, ) = getimagesize( '/tmp/Friendup/' . $smp );
@@ -162,7 +154,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	
 		if( !$source )
 		{
-			_file_broken()
+			_file_broken();
 		}
 		
 		imageantialias( $source, true );
@@ -206,21 +198,21 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		// Resize
 		imagecopyresampled( $dest, $source, $x, $y, 0, 0, $rw, $rh, $iw, $ih );
 	
-		// Save
-		imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
-		
 		$thumb->Filepath = $wname . 'thumbnails/' . $fname;
 		$thumb->DateCreated = date( 'Y-m-d H:i:s' );
+		$thumb->DateTouched = $thumb->DateCreated;
 		$thumb->Save();
+		if( $thumb->ID > 0 )
+		{
+			// Save
+			imagepng( $dest, $wname . 'thumbnails/' . $fname, 9 );
 	
-		FriendHeader( 'Content-type', 'image/png' );
-		die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
+			FriendHeader( 'Content-Type: image/png' );
+			die( file_get_contents( $wname . 'thumbnails/' . $fname ) );
+		}
 	}
 }
 // TODO: Support more icons
-else
-{
-	_file_broken()
-}
+_file_broken();
 
 ?>
