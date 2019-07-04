@@ -8341,17 +8341,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
-			// IMPORTANT: Only for desktops!
-			// Sleep in 15 minutes
-			if( !window.friendApp )
+		}
+		// IMPORTANT: Only for desktops!
+		// Sleep in 15 minutes
+		if( !window.friendApp )
+		{
+			this.sleepingTimeout = setTimeout( function()
 			{
-				this.sleepingTimeout = setTimeout( function()
-				{
-					document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
-					Workspace.sleeping = true;
-					Workspace.sleepTimeout = null;
-				}, 1000 * 60 * 1 );
-			}
+				document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
+				Workspace.sleeping = true;
+				Workspace.sleepTimeout = null;
+			}, 1000 * 60 * 1 );
 		}
 		this.currentViewState = newState;
 	},
