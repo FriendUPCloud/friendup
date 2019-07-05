@@ -526,6 +526,7 @@ f.Name ASC";
 			if( foundUserInMemory == FALSE )
 			{
 				updateDatabase = TRUE;
+				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Mounted successfully.\"}" );
 			}
 			else	// usr != NULL
 			{
