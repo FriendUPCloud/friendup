@@ -429,6 +429,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 							if( sd->type ) FFree( sd->type );
 							if( dev->f_Name ) FFree( dev->f_Name );
 							if( dev->f_Path ) FFree( dev->f_Path );
+							if( dev->f_DevServer ) FFree( dev->f_DevServer );
 							FFree( sd );
 							FFree( dev );
 							
@@ -451,6 +452,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						if( sd->type ) FFree( sd->type );
 						if( dev->f_Name ) FFree( dev->f_Name );
 						if( dev->f_Path ) FFree( dev->f_Path );
+						if( dev->f_DevServer ) FFree( dev->f_DevServer );
 						FFree( sd );
 						FFree( dev );
 						
@@ -499,11 +501,6 @@ int Release( struct FHandler *s, void *f )
 			if( sd->type ){ FFree( sd->type ); }
 			FFree( lf->f_SpecialData );
 		}
-		
-		// Free up active device information
-		if( lf->f_Name ){ FFree( lf->f_Name ); lf->f_Name = NULL; }
-		if( lf->f_Path ){ FFree( lf->f_Path ); lf->f_Path = NULL; }
-		//if( lf->f_SessionID ){ FFree( lf->f_SessionID ); lf->f_SessionID = NULL; }
 	}
 	return 0;
 }
@@ -576,25 +573,6 @@ int UnMount( struct FHandler *s, void *f )
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}
-		
-		// Free up active device information
-		if( lf->f_Name )
-		{ 
-			FFree( lf->f_Name ); 
-			lf->f_Name = NULL;
-		}
-		if( lf->f_Path )
-		{ 
-			FFree( lf->f_Path ); 
-			lf->f_Path = NULL;
-		}
-		/*
-		if( lf->f_SessionID ) 
-		{
-			FFree( lf->f_SessionID ); 
-			lf->f_SessionID = NULL;
-		}
-		*/
 	}
 	return 0;
 }

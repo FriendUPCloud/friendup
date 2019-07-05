@@ -888,7 +888,6 @@ AND f.Name = '%s'",
 	if( uname != NULL ) FFree( uname );
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
-	//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	
 	return 0;
 	
@@ -901,7 +900,6 @@ merror:
 	if( uname != NULL ) FFree( uname );
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
-	//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 
 	return l->sl_Error;
 }
@@ -1247,12 +1245,15 @@ ug.UserID = '%ld' \
 				// Notify user and his sessions
 				UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
 
+				FileDelete( remdev );
 				// Free up some
+				/*
 				//if( remdev->f_SessionID ) FFree( remdev->f_SessionID );
 				if( remdev->f_Config ) FFree( remdev->f_Config );
 				if( remdev->f_FSysName ) FFree( remdev->f_FSysName );
 				if( remdev->f_Execute ) FFree( remdev->f_Execute );
 				FFree( remdev );
+				*/
 			
 				//int numberEntries = 0;
 				int unmID = 0;
@@ -1306,12 +1307,16 @@ ug.UserID = '%ld' \
 									DeviceUnMount( dm, search, usr );
 									//fsys->UnMount( search->f_FSys, search, usr );
 								
+									FileDelete( search );
+									/*
 									// Free up some
 									//if( search->f_SessionID ) FFree( search->f_SessionID );
 									if( search->f_Config ) FFree( search->f_Config );
 									if( search->f_FSysName ) FFree( search->f_FSysName );
 									if( search->f_Execute ) FFree( search->f_Execute );
+									if( search->f_DevServer ) FFree( search->f_DevServer );
 									FFree( search );
+									*/
 								
 									int doBreak = 0;
 								
