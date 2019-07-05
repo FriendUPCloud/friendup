@@ -1769,12 +1769,12 @@ function mountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, module: 'system', e:e, d:d } );
+			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/mount', { devname: devname, userid: userid, module: 'system' } );
+		f.execute( 'device/mount', { devname: devname, userid: userid } );
 	}
 }
 
@@ -1786,12 +1786,12 @@ function unmountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, module: 'system', e:e, d:d } );
+			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/unmount', { devname: devname, userid: userid, module: 'system' } );
+		f.execute( 'device/unmount', { devname: devname, userid: userid } );
 	}
 }
 
