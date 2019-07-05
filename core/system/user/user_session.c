@@ -82,16 +82,16 @@ void UserSessionDelete( UserSession *us )
 			}
 			else
 			{
-				INFO("UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
 				count++;
 				if( count > 50 )
 				{
+					Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
 					//WorkerManagerDebug( SLIB );
 					count = 0;
 					break;
 				}
 			}
-			//sleep( 1 );		// FRANCOIS: Really annoying when you force quit!
+			usleep( 100 );
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
@@ -141,11 +141,13 @@ void UserSessionDelete( UserSession *us )
 
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 
+		// first clear WebsocketReqManager and then remove it
+		WebsocketReqManager *wrm = NULL;
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			if( us->us_WSReqManager != NULL )
 			{
-				WebsocketReqManagerDelete( us->us_WSReqManager );
+				wrm = us->us_WSReqManager;
 				us->us_WSReqManager = NULL;
 			}
 		
@@ -159,6 +161,11 @@ void UserSessionDelete( UserSession *us )
 				FFree( us->us_SessionID );
 			}
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+		}
+		
+		if( wrm != NULL )
+		{
+			WebsocketReqManagerDelete( wrm );
 		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
 	

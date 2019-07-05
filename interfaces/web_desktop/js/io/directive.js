@@ -98,6 +98,7 @@ function ExecuteApplication( app, args, callback )
 		}
 		return;
 	}
+	// Only allow one app instance in mobile!
 	else if( isMobile )
 	{
 		for( var a in Workspace.applications )
@@ -111,6 +112,9 @@ function ExecuteApplication( app, args, callback )
 					_WindowToFront( app.windows[ z ]._window.parentNode );
 					// Clean blocker
 					RemoveFromExecutionQueue( appName );
+					
+					// Tell that we didn't launch
+					callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 					return;
 				}
 			}
@@ -298,13 +302,13 @@ function ExecuteApplication( app, args, callback )
 				filepath = '/webclient/apps/' + app + '/';
 
 			// Security domain
-			var applicationId = md5( app + '-' + (new Date()).getTime() );
+			var applicationId = md5( app + '-' + ( new Date() ).getTime() );
 			SubSubDomains.reserveSubSubDomain( applicationId );
 			var sdomain = GetDomainFromConf( conf, applicationId );
 			
 			// Open the Dormant drive of the application
 			var drive = null;
-			if ( conf.DormantDisc )
+			if( conf.DormantDisc )
 			{
 				var options =
 				{
@@ -511,11 +515,12 @@ function ExecuteApplication( app, args, callback )
 				// Make sure pickup items are cleared
 				mousePointer.clear();
 				
-				var cid = addWrapperCallback( function()
+				var cid = addWrapperCallback( function( data )
 				{
 					if( callback )
 					{
-						callback( "\n", { response: 'Executable has run.' } );
+						callback( "\n", { response: 'Executable has run.', result: data == 'registered' } );
+						callback = null;
 					}
 				} );
 
@@ -571,10 +576,14 @@ function ExecuteApplication( app, args, callback )
 			// Add application
 			Workspace.applications.push( ifr );
 			
-			if( callback )
+			// Five second timeout to receive a response
+			setTimeout( function()
 			{
-				callback( false );
-			}
+				if( callback )
+				{
+					callback( false );
+				}
+			}, 5000 );
 			
 			// Register this app as the last executed
 			// Register this app as the last executed

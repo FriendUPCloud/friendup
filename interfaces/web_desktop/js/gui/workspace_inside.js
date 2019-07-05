@@ -1,3 +1,7 @@
+// Apps on startup
+Friend.startupApps = {};
+
+// Added to workspace
 var WorkspaceInside = {
 	// Tray icons
 	trayIcons: {},
@@ -866,11 +870,12 @@ var WorkspaceInside = {
 								}
 							}, 1000 );
 						}
-					
+						
 						// TODO: If we are here, generate a clickable Workspace notification
 						if( msg.notificationData.clicked )
 						{
 							mobileDebug( ' Startappz: ' + appName, true );
+							Friend.startupApps[ appName ] = true;
 							ExecuteApplication( appName, '', appMessage );
 						}
 						else
@@ -882,6 +887,7 @@ var WorkspaceInside = {
 							{
 								msg.notificationData.clicked = true;
 								mobileDebug( ' Startappz: ' + appName, true );
+								Friend.startupApps[ appName ] = true;
 								ExecuteApplication( appName, '', appMessage );
 							}
 						}
@@ -1665,7 +1671,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						//console.log = function(){};
 					}
-
+					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{
@@ -1684,23 +1690,73 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									seq = [];
 								}
 							}
-							var l = {
-								index: 0,
-								func: function()
-								{
-									var cmd = seq[ this.index++ ];
-									if( cmd && cmd.length )
+							if( seq.length )
+							{
+								ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
+								var l = {
+									index: 0,
+									func: function()
 									{
-										Workspace.shell.execute( cmd, function()
+										if( l.index < seq.length )
 										{
-											l.func();
-											if( Workspace.mainDock )
-												Workspace.mainDock.closeDesklet();
-										} );
+											var cmd = seq[ l.index++ ];
+											if( cmd && cmd.length )
+											{
+												// Sanitize
+												if( cmd.indexOf( 'launch' ) == 0 )
+												{
+													var appName = cmd.split( ' ' );
+													appName = appName[ appName.length - 1 ];
+													var found = false;
+													for( var b = 0; b < Workspace.applications.length; b++ )
+													{
+														if( Workspace.applications[ b ].applicationName == appName )
+														{
+															found = true;
+															break;
+														}
+													}
+													if( !found && !Friend.startupApps[ appName ] )
+													{
+														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+														Workspace.shell.execute( cmd, function( res )
+														{
+															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+															l.func();
+															if( Workspace.mainDock )
+																Workspace.mainDock.closeDesklet();
+														} );
+													}
+													// Just skip
+													else
+													{
+														l.func();
+													}
+												}
+												else
+												{
+													l.func();
+												}
+												return;
+											}
+										}
+										// Hide overlay
+										ScreenOverlay.hide();
+										l.func = function()
+										{
+											//
+										}
+										// We are done. Empty startup apps!
+										Friend.startupApps = {};
 									}
 								}
+								l.func();
 							}
-							l.func();
+							else
+							{
+								// Hide overlay
+								ScreenOverlay.hide();
+							}
 						} );
 					}
 
@@ -5810,7 +5866,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		SaveWindowStorage( function()
 		{
-			//do external logout and then our internal one.
+			// Do external logout and then our internal one.
 			if( Workspace.logoutURL )
 			{
 				Workspace.externalLogout();
@@ -5827,7 +5883,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					friendApp.exit();
 					return;
 				}
-				Workspace.sessionId = ''; document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+				Workspace.sessionId = ''; 
+				document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
 			}
 			m.send();
 			Workspace.websocketsOffline = false;
@@ -5837,7 +5894,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	externalLogout: function()
 	{
 		var wl = new View( {
-			title: 'Logout!',
+			title: 'Logout',
 			width: 370,
 			'min-width': 370,
 			height: 170,
@@ -9255,7 +9312,6 @@ Workspace.receivePush = function( jsonMsg )
 	
 	function handleClick()
 	{
-	
 		if( !msg.application ) return "noapp";
 	
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
@@ -9312,6 +9368,7 @@ Workspace.receivePush = function( jsonMsg )
 		// Send message to app once it has started...
 		function appMessage()
 		{
+			
 			var app = false;
 			var apps = Workspace.applications;
 			for( var a = 0; a < apps.length; a++ )
@@ -9360,6 +9417,7 @@ Workspace.receivePush = function( jsonMsg )
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
+		Friend.startupApps[ msg.application ] = true;
 		ExecuteApplication( msg.application, '', appMessage );
 	}
 

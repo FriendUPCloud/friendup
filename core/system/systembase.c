@@ -1209,7 +1209,6 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
 	FHandler *lsys = l->sl_Filesystems;
-
 	while( lsys != NULL )
 	{
 		FHandler *rems = lsys;
@@ -2058,7 +2057,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin );
 
 			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 

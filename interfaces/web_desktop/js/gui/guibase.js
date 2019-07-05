@@ -3676,6 +3676,15 @@ function InitGuibaseEvents()
 		if( window.attachEvent )
 			window.attachEvent( 'oncontextmenu', contextMenu, false );
 		else window.addEventListener( 'contextmenu', contextMenu, false );
+		
+		// On blur, activate current movable
+		window.addEventListener( 'blur', function( e )
+		{
+			if( window.currentMovable )
+			{
+				_ActivateWindow( window.currentMovable );
+			}
+		} );
 	}
 	
 	if( window.attachEvent )

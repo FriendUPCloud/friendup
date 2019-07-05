@@ -251,8 +251,11 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 					}
 					else
 					{
+						SASUList *rme = le;
 						ple->node.mln_Succ = (MinNode *)le->node.mln_Succ;
+						
 						FFree( le );
+						le = (SASUList *)rme->node.mln_Succ;
 					}
 					DEBUG("AS pointer %p\n", as );
 					as->as_UserNumber--;
@@ -267,8 +270,8 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 				{
 					DEBUG("previous le = le\n");
 					ple = le;
+					le = (SASUList *)le->node.mln_Succ;
 				}
-				le = (SASUList *)le->node.mln_Succ;
 			}
 			
 			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );

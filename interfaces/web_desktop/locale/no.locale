@@ -659,4 +659,12 @@ i18n_camera_action_description          : Ta et bilde med ditt kamera.
 i18n_take_photo                         : Ta bildet
 i18n_camera                             : Kamera
 
+#Startup -----------------------------------------------------------------------
+
+i18n_starting_your_session              : Starter din økt
+i18n_status_Ok                          : OK
+i18n_status_Pending                     : Jobber
+i18n_status_Error                       : FEILET
+i18n_processing                         : Prosesserer
+i18n_logging_in                         : Logger inn
 

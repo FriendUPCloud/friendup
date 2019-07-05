@@ -357,7 +357,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 				Log( FLOG_FATAL, "Cannot launch websocket server\n");
 				return -1;
 			}
-			
+			/*
 			if( fcm->fcm_DisableMobileWS == 0 )
 			{
 				if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1, fcm->fcm_WSExtendedDebug ) ) != NULL )
@@ -370,6 +370,7 @@ int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 					return -1;
 				}
 			}
+			*/
 			
 			if( fcm->fcm_DisableExternalWS == 0 )
 			{

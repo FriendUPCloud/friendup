@@ -105,8 +105,8 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 		char tmp[ 256 ];
 		//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
 		snprintf( tmp, sizeof(tmp), "/82.177.144.226?access_key=6c03cf0550f249596f97dd9aa3203fb3" );
-		
-		HttpClient *c = HttpClientNew( FALSE, tmp );
+		// POST, HTTP2, PATH, HEADERS, CONTENT
+		HttpClient *c = HttpClientNew( FALSE, FALSE, tmp, NULL, NULL );
 		if( c != NULL )
 		{
 			//freegeoip.net/xml/

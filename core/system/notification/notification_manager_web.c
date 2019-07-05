@@ -206,7 +206,7 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		if( username == NULL || channelid == NULL || app == NULL || title == NULL || message == NULL )
 		{
-			int error = MobileAppNotifyUserRegister( l, username, channelid, app, title, message, type, extra );
+			int error = MobileAppNotifyUserRegister( l, username, channelid, app, title, message, type, extra, time(NULL) );
 		} // missing parameters
 		else
 		{

@@ -39,25 +39,23 @@
 
 typedef struct LocFile
 {
-	char			*lf_Filename; // Filename with extension
-	FULONG			lf_FilenameLength; // Filename length
-	char			*lf_Path;     // Absolute path
-	FULONG			lf_PathLength; // Path length
+	char					*lf_Filename; // Filename with extension
+	FULONG					lf_FilenameLength; // Filename length
+	char					*lf_Path;     // Absolute path
+	FULONG					lf_PathLength; // Path length
 
-	//unsigned long   filesize;
-	char			*lf_Buffer;
-	unsigned long   lf_FileSize;
+	char					*lf_Buffer;
+	unsigned long   		lf_FileSize;
 
-	//FILE*           lf_Fp;       // File pointer
-	//int             lf_Fd;       // File descriptor
-	struct stat     lf_Info;
-	time_t			lf_ModificationTimestamp;
+	struct stat				lf_Info;
+	time_t					lf_ModificationTimestamp;
 	
-	FUQUAD          lf_FileUsed;
-	struct MinNode  node;
-	uint64_t		hash[ 2 ];
+	FUQUAD          		lf_FileUsed;
+	struct MinNode  		node;
+	uint64_t				hash[ 2 ];
 	
-	char			*lf_Mime;
+	char					*lf_Mime;
+	int						lf_InUse;
 } LocFile;
 
 //

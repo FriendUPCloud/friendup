@@ -1502,3 +1502,158 @@ body .FriendCameraFallback button:before
 	margin-right: 5px;
 }
 
+/* Screen overlay ----------------------------------------------------------- */
+
+html body.Loading #FriendScreenOverlay
+{
+	visibility: visible !important;
+}
+
+#FriendScreenOverlay
+{
+	position: absolute;
+	margin: 0;
+	padding: 0;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: none;
+	background-color: #222222;
+	color: white;
+	overflow: hidden;
+	font-size: 1em;
+	z-index: 99999999999;
+	opacity: 0;
+	box-sizing: border-box;
+	transition: opacity 0.25s;
+}
+
+#FriendScreenOverlay.Visible
+{
+	display: block;
+	opacity: 0;
+}
+
+#FriendScreenOverlay.Visible.Showing
+{
+	opacity: 1;
+}
+
+#FriendScreenOverlay:after
+{
+	opacity: 0;
+	transition: opacity 0.5s;
+}
+
+#FriendScreenOverlay.Visible.Showing:after
+{
+	opacity: 1;
+}
+
+#FriendScreenOverlay:after
+{
+	display: block;
+	content: " ";
+	position: absolute;
+	top: calc(50% + 300px);
+	left: calc(50% - 20px);
+	width: 40px;
+	height: 40px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image: url(/themes/friendup12/gfx/busy.png);
+	clip-path: ellipse(20px 20px at 20px 20px);
+	-webkit-clip-path: ellipse(20px 20px at 20px 20px);
+}
+
+#FriendScreenOverlay .Title
+{
+	position: absolute;
+	top: calc(50% - 300px);
+	left: calc(50% - 400px);
+	height: 40px;
+	width: 0px;
+	overflow: hidden;
+	white-space: nowrap;
+	border-bottom: 1px solid #555555;
+	line-height: 40px;
+	font-weight: bold;
+	color: white;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity,width 0.25s,0.5s;
+}
+
+[mobile] #FriendScreenOverlay .Title
+{
+	top: 0;
+	left: 0;
+	padding-left: 10px;
+	box-sizing: border-box;
+}
+
+#FriendScreenOverlay.Visible.Showing .Title.Showing
+{
+	opacity: 1;
+	width: 800px;
+}
+
+[mobile] #FriendScreenOverlay.Visible.Showing .Title.Showing
+{
+	width: 100%;
+}
+
+#FriendScreenOverlay .StatusBox
+{
+	position: absolute;
+	top: calc(50% - 260px);
+	left: calc(50% - 400px);
+	height: 560px;
+	width: 800px;
+	line-height: 30px;
+	color: white;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity,width 0.5s,0.5s;
+}
+
+[mobile] #FriendScreenOverlay .StatusBox
+{
+	width: calc(100% - 20px);
+	height: calc(100% - 40px);
+	left: 10px;
+}
+
+[mobile] #FriendScreenOverlay .StatusBox .HContent15
+{
+	display: none;
+}
+[mobile] #FriendScreenOverlay .StatusBox .HContent45,
+[mobile] #FriendScreenOverlay .StatusBox .HContent40
+{
+	width: 50% !important;
+}
+
+#FriendScreenOverlay.Visible.Showing .Title.Showing + .StatusBox
+{
+	opacity: 1;
+}
+
+#FriendScreenOverlay .StatusBox .Status
+{
+	font-weight: bold;
+	text-transform: uppercase;
+	color: #e67e22;
+}
+
+#FriendScreenOverlay .StatusBox .Status.Ok
+{
+	color: #27ae60;
+}
+
+#FriendScreenOverlay .StatusBox .Status.Error
+{
+	color: #c92918;
+}
+

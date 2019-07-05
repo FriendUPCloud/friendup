@@ -247,7 +247,7 @@ int RescanDOSDrivers( DeviceManager *dm )
  * @return success (0) or fail value (not equal to 0)
  */
 
-int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError )
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	char *path = NULL;
@@ -279,12 +279,9 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 		File *retFile = NULL;
 		struct TagItem *ltl = tl;
 		FULONG visible = 0;
-		FBOOL isAdim = UMUserIsAdmin( l->sl_UM, NULL, usr );
 		char *sessionid = NULL;
 		FULONG dbid = 0;
 		FBOOL mount = FALSE;
-	
-		Log( FLOG_DEBUG, "Mount device\n");
 	
 		//
 		// Get FSys Type to mount
@@ -363,6 +360,8 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 			if( type != NULL ){ FFree( type );}
 			return FSys_Error_NOUser;
 		}
+		
+		Log( FLOG_DEBUG, "Mount device\n");
 		
 		// Setup the sentinel
 		Sentinel *sent = l->GetSentinelUser( l );
@@ -553,7 +552,10 @@ AND f.Name = '%s'",
 			l->LibrarySQLDrop( l, sqllib );
 		}
 		
-		 // old way when FC had control
+		//
+		// old way when FC had control
+		//
+		
 		if( type == NULL )
 		{
 			if( usr != NULL )
@@ -565,32 +567,9 @@ AND f.Name = '%s'",
 			goto merror;
 		}
 		
-		// this functionality allow admins to mount other users drives
-		
-		if( usr != NULL && userID != usr->u_ID && usr->u_IsAdmin == TRUE )
-		{
-			DEBUG("UserID %lu and usr->id %lu\n", userID, usr->u_ID );
-			
-			User *locusr = UMGetUserByID( l->sl_UM, userID );
-			if( locusr == NULL )
-			{
-				locusr = UMGetUserByIDDB( l->sl_UM, userID );
-				if( locusr != NULL )
-				{
-					Log( FLOG_INFO, "Admin ID[%lu] is mounting drive to user ID[%lu]\n", usr->u_ID, locusr->u_ID );
-					usr = locusr;
-					
-					UMAddUser( l->sl_UM, usr );
-				}
-			}
-			else
-			{
-				Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", usr->u_ID, locusr->u_ID );
-				usr = locusr;
-			}
-		}
-		
+		//
 		// do not allow to mount same drive
+		//
 		
 		int sameDevError = 0;
 		File *fentry = NULL;
@@ -610,7 +589,9 @@ AND f.Name = '%s'",
 			fentry = (File *) fentry->node.mln_Succ;
 		}
 		
+		//
 		// checking if drive is available for group
+		//
 		
 		if( sameDevError == 0 && usrgrp != NULL )
 		{
@@ -637,6 +618,8 @@ AND f.Name = '%s'",
 	
 		//
 		// Find installed filesystems by type
+		//
+		
 		DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
 		while( ddrive != NULL )
 		{
@@ -733,7 +716,7 @@ AND f.Name = '%s'",
 			//{FSys_Mount_Execute,(FULONG)execute},
 			{FSys_Mount_UserGroup, (FULONG)usrgrp},
 			{FSys_Mount_ID, (FULONG)id},
-			{FSys_Mount_AdminRights,(FULONG)isAdim},
+			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -862,24 +845,16 @@ AND f.Name = '%s'",
 						// User doesn't have this disk, add it!
 						if( search == NULL )
 						{
-							//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
-							
 							// Try to mount the device with all privileges
-							//DEBUG( "[MountFS] Doing it with session %s\n", retFile->f_SessionID );
+
 							File *dstFile = NULL;
-							if( MountFS( dm, tl, &dstFile, tmpUser, mountError ) != 0 )
+							if( MountFS( dm, tl, &dstFile, tmpUser, mountError, calledByAdmin ) != 0 )
 							{
 								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 							}
 							
 							// Tell user!
 							UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
-							
-							//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) != 0 )
-							{
-								//DEBUG("Go to error\n");
-								//goto merror;
-							}
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
 					}
@@ -1110,11 +1085,12 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
  *
  * @param dm pointer to DeviceManager
  * @param tl list to tagitems (table of attributes) like FSys_Mount_Mount, FSys_Mount_Name etc. For more details check systembase heder.
+ * @param usr pointer to User structure. If NULL will be provided user connected to UserSession will be used
  * @param usrs pointer to user session which is calling this function
  * @return success (0) or fail value (not equal to 0)
  */
 
-int UnMountFS( DeviceManager *dm, struct TagItem *tl, UserSession *usrs )
+int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *usrs )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
@@ -1170,7 +1146,11 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, UserSession *usrs )
 			return FSys_Error_UserNotLoggedIn;
 		}
 	
-		User *usr = usrs->us_User;
+		if( usr == NULL )
+		{
+			usr = usrs->us_User;
+		}
+		
 		int errors = 0;
 		File *remdev = UserRemDeviceByName( usr, name, &errors );
 		
@@ -1654,7 +1634,7 @@ WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
 				{TAG_DONE, TAG_DONE}
 			};
 
-			int err = MountFS( dm, (struct TagItem *)&tags, &device, tuser, mountError );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, tuser, mountError, tuser->u_IsAdmin );
 			if( err != 0 )
 			{
 				if( l->sl_Error == FSys_Error_DeviceAlreadyMounted )
@@ -1706,7 +1686,7 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 	if( message != NULL && u != NULL )
 	{
 		DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
-		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"path\":\"%s\"}}", evt, path );
+		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
 		
 		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 		{
@@ -2062,7 +2042,7 @@ ug.UserID = '%lu' \
 					
 							File *mountedDev = NULL;
 					
-							int lmountError = MountFS( dm, (struct TagItem *)&tags, &mountedDev, u, mountError );
+							int lmountError = MountFS( dm, (struct TagItem *)&tags, &mountedDev, u, mountError, u->u_IsAdmin );
 					
 							if( bs != NULL )
 							{
@@ -2502,7 +2482,7 @@ usrgrp->ug_ID
 
 			File *device = NULL;
 			DEBUG("[UserGroupDeviceMount] Before mounting\n");
-			int err = MountFS( dm, (struct TagItem *)&tags, &device, usr, mountError );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, usr, mountError, TRUE );
 
 			FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
 

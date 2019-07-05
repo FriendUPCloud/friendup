@@ -403,6 +403,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							char *message = NULL;
 							char *application = NULL;
 							char *extra = NULL;
+							FULONG timecreated = 0;
 							
 							UMsg *ulistroot = NULL;
 							//List *usersList = ListNew(); // list of users
@@ -481,6 +482,18 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									p++;
 									extra = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 								}
+								else if( strncmp( data + t[p].start, "timecreated", size) == 0) 
+								{
+									char *tmp;
+									p++;
+									tmp = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+									if( tmp != NULL )
+									{
+										char *end;
+										timecreated = strtoul( tmp, &end, 0);
+										FFree( tmp );
+									}
+								}
 							}
 							
 							if( notification_type >= 0 )
@@ -513,7 +526,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								{
 									if( le->usrname != NULL )
 									{
-										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
+										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra, timecreated );
 
 										char reply[256];
 										int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);

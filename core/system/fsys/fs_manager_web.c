@@ -186,7 +186,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	}
 	else
 	{
-		if( loggedSession->us_User == NULL )
+		if( loggedSession == NULL || loggedSession->us_User == NULL )
 		{
 			response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );

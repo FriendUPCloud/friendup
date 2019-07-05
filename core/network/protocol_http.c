@@ -254,8 +254,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				stat( completePath->raw, &attr);
 
 				// if file is new file, reload it
-
-
 				//DEBUG1("\n\n\n\n\n SIZE %lld  stat %lld\n\n\n\n",attr.st_mtime ,file->info.st_mtime );
 				if( attr.st_mtime != file->lf_Info.st_mtime )
 				{
@@ -569,6 +567,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								response = HttpNewSimple(  HTTP_500_INTERNAL_SERVER_ERROR,  tags );
 
 								result = 500;
+							}
+							else
+							{
+								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->content );
 							}
 						}
 						else
@@ -1511,11 +1513,17 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 													stat( decoded, &attr);
 
 													// if file is new file, reload it
-													Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
+													
 													if( attr.st_mtime != file->lf_Info.st_mtime )
 													{
+														Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
 														LocFileReload( file, decoded );
 													}
+												}
+												
+												if( file != NULL )
+												{
+													file->lf_InUse = 1;
 												}
 											}
 											else
@@ -1589,6 +1597,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											if( freeFile == TRUE )
 											{
 												LocFileDelete( file );
+											}
+											else
+											{
+												file->lf_InUse = 0;
 											}
 										}
 										else
