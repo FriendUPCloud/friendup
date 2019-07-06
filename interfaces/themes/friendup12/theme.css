@@ -1083,6 +1083,24 @@ body .View > .Snap > .SnapRight
 	background-color: rgba(41, 128, 185, 0.7);
 }
 
+.View[viewsnap=right], 
+.View[viewsnap=right] > .Title,
+.View[attach_left=attached],
+.View[attach_left=attached] > .Title
+{
+	border-top-right-radius: 0px !important;
+	border-bottom-right-radius: 0px !important;
+}
+
+.View[viewsnap=left], 
+.View[viewsnap=left] > .Title,
+.View[attach_right=attached],
+.View[attach_right=attached] > .Title
+{
+	border-top-left-radius: 0px !important;
+	border-bottom-left-radius: 0px !important;
+}
+
 /* Mobile glypths */
 
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close

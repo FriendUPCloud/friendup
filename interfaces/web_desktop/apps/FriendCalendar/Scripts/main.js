@@ -20,6 +20,23 @@ var eventPaletteForeground = [
 	'#ffffff'
 ];
 
+// Global events ---------------------------------------------------------------
+var moveListener = null;
+var upListener = null;
+var eventMode = null; // We're not in an event mode | we are in an event mode
+
+window.addEventListener( 'mouseup', function( e )
+{
+	if( upListener ) upListener( e );
+} );
+window.addEventListener( 'mousemove', function( e )
+{
+	if( moveListener ) moveListener( e );
+} );
+// End global events -----------------------------------------------------------
+
+var calendarRowHeight = 30; // <- will be overwritten below w actual height
+
 // Get the users
 {
 	var you = document.createElement( 'div' );
@@ -173,7 +190,15 @@ var Calendar = {
 		if( calStart )
 			ml += '</div>';
 		
-		ge( 'MainView' ).innerHTML = ml;
+		// Add events and add element
+		var eventDiv = document.createElement( 'div' );
+		eventDiv.className = 'MonthContainer';
+		eventDiv.addEventListener( 'mousedown', function( e )
+		{
+		} );
+		eventDiv.innerHTML = ml;
+		ge( 'MainView' ).innerHTML = '';
+		ge( 'MainView' ).appendChild( eventDiv );
 		
 		ge( 'MonthName' ).innerHTML = monthNames[ month ] + ' ' + year;
 		
@@ -302,13 +327,13 @@ var Calendar = {
 						{
 							var ypos = events[ b ].DateStart.split( ' ' )[1];
 							ypos = ypos.split( ':' );
-							ypos = parseInt( ypos[0] ) + ( ypos[1] / 30 * 0.5 );
+							ypos = parseInt( ypos[0] ) + ( ypos[1] / calendarRowHeight );
 							
 							ypos = ypos / 24 * 100;
 							
 							var height = events[ b ].DateEnd.split( ' ' )[1];
 							height = height.split( ':' );
-							height = parseInt( height[0] ) + ( height[1] / 30 * 0.5 );
+							height = parseInt( height[0] ) + ( height[1] / calendarRowHeight );
 							
 							height = height / 24 * 100;
 							height = height - ypos;
@@ -319,17 +344,6 @@ var Calendar = {
 								height: height,
 								event: events[ b ]
 							} );
-							
-							/*var t = 
-							if( events[ b ].DateStart == cand )
-							{
-								var str = 'top: 0px; left: 0px; width: 100%; height: 10px; background: green;';
-								timez += '<div class="TimeEvent" style="' + st + '">' + events[b].Name + '</div>';
-							}
-							else
-							{
-								console.log( 'What: ' + cand + ' == ' + events[ b ].DateStart, events[ b ] );
-							}*/
 						}
 					}
 					
@@ -351,7 +365,147 @@ var Calendar = {
 		if( calStart )
 			ml += '</div>';
 		
-		ge( 'MainView' ).innerHTML = ml;
+		var eventDiv = document.createElement( 'div' );
+		eventDiv.className = 'WeekContainer';
+		// Add events and add element ------------------------------------------
+		eventDiv.addEventListener( 'mousedown', function( e )
+		{
+			if( eventMode ) return;
+			// Find day element
+			var t = e.target ? e.target : e.srcElement;
+			while( t != document.body )
+			{
+				if( t.classList && t.classList.contains( 'Day' ) )
+					break;
+				t = t.parentNode;
+			}
+			// Error!
+			if( t == document.body )
+				return;
+			
+			// Correct, displayed height
+			calendarRowHeight = t.querySelector( '.TimeSlot' ).offsetHeight;
+			
+			var scrollT = ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop;
+			
+			eventDiv.data = {
+				mousedown: true,
+				mode: 0,
+				x: e.clientX,
+				y: e.clientY + scrollT,
+				dayElement: t
+			};
+		} );
+		moveListener = function( e )
+		{
+			if( eventMode ) return;
+			if( !eventDiv || !eventDiv.data || !eventDiv.data.mousedown )
+				return;
+			var scrollT = ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop;
+			var d = eventDiv.data;
+			var ymotion = ( e.clientY + scrollT ) - d.y;
+			ymotion = Math.floor( ymotion / calendarRowHeight ) * calendarRowHeight;
+			eventDiv.data.h = ymotion;
+			
+			// First clicking
+			if( d.mode == 0 && ymotion > 10 )
+			{
+				// Error!
+				if( !d.dayElement ) return;
+								
+				// Make a new event rect
+				d.mode = 1;
+				if( d.div )
+				{
+					d.div.parentNode.removeChild( d.div );
+					d.div = null;
+				}
+				d.div = document.createElement( 'div' );
+				d.div.className = 'EventRect New';
+				
+				// Add the element
+				d.dayElement.appendChild( d.div );
+				var top = GetElementTop( d.dayElement );
+				d.div.style.top = Math.floor( ( d.y - top ) / calendarRowHeight ) * calendarRowHeight + 'px';
+			}
+			// Resizing mode
+			else if( d.mode == 1 )
+			{
+				if( ymotion > 10 )
+				{
+					d.div.style.height = ymotion + 'px';
+				}
+				else
+				{
+					d.div.style.height = '';
+				}
+			}
+		};
+		upListener = function( e )
+		{
+			// Add only one event at a time
+			if( eventMode ) return;
+			
+			// Convert rect coords to time
+			var top = GetElementTop( eventDiv.data.dayElement );
+			var from = eventDiv.data.y - top;
+			var to = ( eventDiv.data.y + eventDiv.data.h ) - top;
+			var whole = eventDiv.data.dayElement.offsetHeight;
+			to = to / whole * 24;
+			from = from / whole * 24;
+			to = Math.floor( to * 2 ) / 2;
+			from = Math.floor( from * 2 ) / 2;
+			
+			// Clear event data
+			eventDiv.data = null;
+			
+			// Open new event window
+			eventMode = new View( {
+				title: i18n( 'i18n_add_new_event' ),
+				width: 500,
+				height: 700
+			} );
+			
+			var from = from + '';
+			var to = to + '';
+			from = from.split('.');
+			to = to.split('.');
+			if( from.length > 1 )
+				from = StrPad( from[0], 2, '0' ) + ':' + (parseInt(from[1])/10*60);
+			else from = StrPad( from[0], 2, '0' ) + ':00';
+			if( to.length > 1 )
+				to = StrPad( to[0], 2, '0' ) + ':' + (parseInt(to[1])/10*60);
+			else to = StrPad( to[0], 2, '0' ) + ':00';
+			to += ':00.000';
+			from += ':00.000';
+			
+			// Set replacements based on calculations and language
+			var f = new File( 'Progdir:Templates/event.html' );
+			f.replacements = {
+				timefrom: from,
+				timeto: to,
+				allday: from == 0 && to == 24 ? 'checked' : ''
+			};
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				if( eventMode )
+				{
+					eventMode.setContent( data );
+				}
+			}
+			f.load();
+			eventMode.onClose = function()
+			{
+				var de = eventDiv.data.dayElement;
+				de.parentMode.removeChild( de );
+				eventMode = null;
+			}
+		}
+		// Done events ---------------------------------------------------------
+		eventDiv.innerHTML = ml;
+		ge( 'MainView' ).innerHTML = '';
+		ge( 'MainView' ).appendChild( eventDiv );
 		
 		for( var a = 0; a < queuedEventRects.length; a++ )
 		{

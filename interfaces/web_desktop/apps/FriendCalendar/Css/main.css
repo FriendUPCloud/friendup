@@ -33,6 +33,15 @@
 	text-align: center;
 }
 
+.WeekContainer, .MonthContainer
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
 #LeftCol
 {
 	width: 250px;
@@ -111,6 +120,13 @@
 	padding: 10px 4px;
 	text-align: left;
 	font-size: 0.9em;
+	border-radius: 2px;
+}
+
+.EventRect.New
+{
+	background-color: rgba(23,98,81,0.8);
+	color: white;
 }
 
 .EventRect.Red
@@ -131,6 +147,7 @@
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
+	border-radius: 2px 2px 0 0;
 }
 
 .EventRect:before:hover
@@ -150,6 +167,7 @@
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
+	border-radius: 0 0 2px 2px;
 }
 
 .EventRect:after:hover
@@ -180,6 +198,27 @@
 .Day.Column
 {
 	height: auto;
+	border-right: 1px solid rgba(0,0,0,0.5);
+}
+
+.Day.Column:not(.Label):nth-child(odd)
+{
+	border-right: 1px solid rgba(0,0,0,0.7);
+}
+
+.Day.Column.Label:nth-child(odd)
+{
+	border-right: 1px solid rgba(0,0,0,0.5);
+}
+
+.Day.Column.Label:nth-child(even)
+{
+	border-right: 1px solid rgba(0,0,0,0.7);
+}
+
+.Day.Column:last-child
+{
+	border-right: 0;
 }
 
 .Day > .Number
