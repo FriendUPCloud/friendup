@@ -1089,6 +1089,7 @@ body .View > .Snap > .SnapRight
 .View[attach_left=attached] > .Title
 {
 	border-top-right-radius: 0px !important;
+	border-bottom-right-radius: 0px !important;
 }
 
 .View[viewsnap=left], 
@@ -1097,6 +1098,7 @@ body .View > .Snap > .SnapRight
 .View[attach_right=attached] > .Title
 {
 	border-top-left-radius: 0px !important;
+	border-bottom-left-radius: 0px !important;
 }
 
 /* Mobile glypths */
