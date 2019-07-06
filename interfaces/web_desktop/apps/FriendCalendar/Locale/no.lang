@@ -36,6 +36,7 @@ month_october                         : Oktober
 month_november                        : November
 month_december                        : Desember
 
+i18n_add_new_event                    : Ny hendelse
 i18n_time                             : Tid
 i18n_event_name                       : Hendelsesnavn:
 i18n_leadin                           : Beskrivelse:

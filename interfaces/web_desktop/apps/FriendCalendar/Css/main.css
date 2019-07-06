@@ -119,6 +119,7 @@
 	padding: 10px 4px;
 	text-align: left;
 	font-size: 0.9em;
+	border-radius: 2px;
 }
 
 .EventRect.New
@@ -145,6 +146,7 @@
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
+	border-radius: 2px 2px 0 0;
 }
 
 .EventRect:before:hover
@@ -164,6 +166,7 @@
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
+	border-radius: 0 0 2px 2px;
 }
 
 .EventRect:after:hover
