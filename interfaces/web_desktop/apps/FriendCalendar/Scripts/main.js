@@ -405,6 +405,7 @@ var Calendar = {
 			var d = eventDiv.data;
 			var ymotion = ( e.clientY + scrollT ) - d.y;
 			ymotion = Math.floor( ymotion / calendarRowHeight ) * calendarRowHeight;
+			eventDiv.data.h = ymotion;
 			
 			// First clicking
 			if( d.mode == 0 && ymotion > 10 )
@@ -445,13 +446,32 @@ var Calendar = {
 			// Add only one event at a time
 			if( eventMode ) return;
 			
+			// Convert rect coords to time
+			var top = GetElementTop( eventDiv.data.dayElement );
+			var from = eventDiv.data.y - top;
+			var to = ( eventDiv.data.y + eventDiv.data.h ) - top;
+			var whole = eventDiv.data.dayElement.offsetHeight;
+			to = to / whole * 24;
+			from = from / whole * 24;
+			to = Math.floor( to * 2 ) / 2;
+			from = Math.floor( from * 2 ) / 2;
+			
+			// Clear event data
 			eventDiv.data = null;
+			
+			// Open new event window
 			eventMode = new View( {
 				title: i18n( 'i18n_add_new_event' ),
 				width: 500,
 				height: 700
 			} );
+			// Set replacements based on calculations and language
 			var f = new File( 'Progdir:Templates/event.html' );
+			f.replacements = {
+				timefrom: from,
+				timeto: to,
+				allday: from == 0 && to == 24 ? 'checked' : ''
+			};
 			f.i18n();
 			f.onLoad = function( data )
 			{
