@@ -457,6 +457,7 @@ var Calendar = {
 			from = Math.floor( from * 2 ) / 2;
 			
 			// Clear event data
+			var da = eventDiv.data.dayElement;
 			eventDiv.data = null;
 			
 			// Open new event window
@@ -497,8 +498,7 @@ var Calendar = {
 			f.load();
 			eventMode.onClose = function()
 			{
-				var de = eventDiv.data.dayElement;
-				de.parentMode.removeChild( de );
+				da.parentNode.removeChild( da );
 				eventMode = null;
 			}
 		}
