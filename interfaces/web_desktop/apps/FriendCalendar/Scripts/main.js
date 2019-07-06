@@ -485,6 +485,7 @@ var Calendar = {
 			f.replacements = {
 				timefrom: from,
 				timeto: to,
+				date: date,
 				allday: from == 0 && to == 24 ? 'checked' : ''
 			};
 			f.i18n();

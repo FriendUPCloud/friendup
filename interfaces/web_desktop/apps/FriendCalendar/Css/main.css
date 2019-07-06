@@ -6,6 +6,8 @@
 	background: #0665A2;
 	position: relative;
 	box-shadow: inset 0px 5px 150px rgba(0,0,0,0.1);
+	box-sizing: border-box;
+	border-bottom: 1px solid rgba(0,0,0,0.4);
 }
 
 #TopPanel > h1
