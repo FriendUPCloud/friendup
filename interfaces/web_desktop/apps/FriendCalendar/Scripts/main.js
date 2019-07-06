@@ -207,6 +207,7 @@ var Calendar = {
 	renderWeek: function()
 	{
 		//console.log( 'Rendering!' );
+		var self = this;
 		
 		// Get a date object for current month....
 		var dob = new Date();
@@ -479,6 +480,8 @@ var Calendar = {
 			else to = StrPad( to[0], 2, '0' ) + ':00';
 			to += ':00.000';
 			from += ':00.000';
+			
+			var date = self.date.getFullYear() + '-' + StrPad( self.date.getMonth() + 1, 2, '0' ) + '-' + StrPad( self.date.getDate(), 2, '0' );
 			
 			// Set replacements based on calculations and language
 			var f = new File( 'Progdir:Templates/event.html' );
