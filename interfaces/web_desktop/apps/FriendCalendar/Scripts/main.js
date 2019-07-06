@@ -327,13 +327,13 @@ var Calendar = {
 						{
 							var ypos = events[ b ].DateStart.split( ' ' )[1];
 							ypos = ypos.split( ':' );
-							ypos = parseInt( ypos[0] ) + ( ypos[1] / calendarRowHeight * 0.5 );
+							ypos = parseInt( ypos[0] ) + ( ypos[1] / calendarRowHeight );
 							
 							ypos = ypos / 24 * 100;
 							
 							var height = events[ b ].DateEnd.split( ' ' )[1];
 							height = height.split( ':' );
-							height = parseInt( height[0] ) + ( height[1] / calendarRowHeight * 0.5 );
+							height = parseInt( height[0] ) + ( height[1] / calendarRowHeight );
 							
 							height = height / 24 * 100;
 							height = height - ypos;
@@ -384,7 +384,7 @@ var Calendar = {
 				return;
 			
 			// Correct, displayed height
-			calendarRowHeight = t.querySelector( '.TimeSlot' ).offsetHeight * 0.5;
+			calendarRowHeight = t.querySelector( '.TimeSlot' ).offsetHeight;
 			
 			var scrollT = ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop;
 			
@@ -465,6 +465,20 @@ var Calendar = {
 				width: 500,
 				height: 700
 			} );
+			
+			var from = from + '';
+			var to = to + '';
+			from = from.split('.');
+			to = to.split('.');
+			if( from.length > 1 )
+				from = StrPad( from[0], 2, '0' ) + ':' + (parseInt(from[1])/10*60);
+			else from = StrPad( from[0], 2, '0' ) + ':00';
+			if( to.length > 1 )
+				to = StrPad( to[0], 2, '0' ) + ':' + (parseInt(to[1])/10*60);
+			else to = StrPad( to[0], 2, '0' ) + ':00';
+			to += ':00.000';
+			from += ':00.000';
+			
 			// Set replacements based on calculations and language
 			var f = new File( 'Progdir:Templates/event.html' );
 			f.replacements = {
