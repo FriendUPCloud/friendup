@@ -497,6 +497,8 @@ var Calendar = {
 			f.load();
 			eventMode.onClose = function()
 			{
+				var de = eventDiv.data.dayElement;
+				de.parentMode.removeChild( de );
 				eventMode = null;
 			}
 		}
