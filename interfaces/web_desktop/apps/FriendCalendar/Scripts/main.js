@@ -23,6 +23,7 @@ var eventPaletteForeground = [
 // Global events ---------------------------------------------------------------
 var moveListener = null;
 var upListener = null;
+var eventMode = null; // We're not in an event mode | we are in an event mode
 
 window.addEventListener( 'mouseup', function( e )
 {
@@ -369,6 +370,7 @@ var Calendar = {
 		// Add events and add element ------------------------------------------
 		eventDiv.addEventListener( 'mousedown', function( e )
 		{
+			if( eventMode ) return;
 			// Find day element
 			var t = e.target ? e.target : e.srcElement;
 			while( t != document.body )
@@ -396,6 +398,7 @@ var Calendar = {
 		} );
 		moveListener = function( e )
 		{
+			if( eventMode ) return;
 			if( !eventDiv || !eventDiv.data || !eventDiv.data.mousedown )
 				return;
 			var scrollT = ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop;
@@ -439,7 +442,29 @@ var Calendar = {
 		};
 		upListener = function( e )
 		{
+			// Add only one event at a time
+			if( eventMode ) return;
+			
 			eventDiv.data = null;
+			eventMode = new View( {
+				title: i18n( 'i18n_add_new_event' ),
+				width: 500,
+				height: 700
+			} );
+			var f = new File( 'Progdir:Templates/event.html' );
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				if( eventMode )
+				{
+					eventMode.setContent( data );
+				}
+			}
+			f.load();
+			eventMode.onClose = function()
+			{
+				eventMode = null;
+			}
 		}
 		// Done events ---------------------------------------------------------
 		eventDiv.innerHTML = ml;
