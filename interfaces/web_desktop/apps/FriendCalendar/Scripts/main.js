@@ -173,7 +173,15 @@ var Calendar = {
 		if( calStart )
 			ml += '</div>';
 		
-		ge( 'MainView' ).innerHTML = ml;
+		// Add events and add element
+		var eventDiv = document.createElement( 'div' );
+		eventDiv.className = 'MonthContainer';
+		eventDiv.addEventListener( 'mousedown', function( e )
+		{
+		} );
+		eventDiv.innerHTML = ml;
+		ge( 'MainView' ).innerHTML = '';
+		ge( 'MainView' ).appendChild( eventDiv );
 		
 		ge( 'MonthName' ).innerHTML = monthNames[ month ] + ' ' + year;
 		
@@ -351,7 +359,15 @@ var Calendar = {
 		if( calStart )
 			ml += '</div>';
 		
-		ge( 'MainView' ).innerHTML = ml;
+		// Add events and add element
+		var eventDiv = document.createElement( 'div' );
+		eventDiv.className = 'WeekContainer';
+		eventDiv.addEventListener( 'mousedown', function( e )
+		{
+		} );
+		eventDiv.innerHTML = ml;
+		ge( 'MainView' ).innerHTML = '';
+		ge( 'MainView' ).appendChild( eventDiv );
 		
 		for( var a = 0; a < queuedEventRects.length; a++ )
 		{

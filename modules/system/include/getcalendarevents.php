@@ -15,7 +15,9 @@ $day = (int)( $date[2] );
 $date = $date[0] . '-' . str_pad( $date[1], 2, '0', STR_PAD_LEFT );
 if( $day > 0 )
 	$date .= '-' . str_pad( $day, 2, '0', STR_PAD_LEFT );
-$dateEnd = date( 'Y-m-d', strtotime( date( 'Y-m', strtotime( $date . '-01' ) + ( 60 * 60 * 24 * 33 ) ) . '-01' ) - ( 60 * 60 * 24 ) );
+// date Span = 2851200 ( 60 * 60 * 24 * 33 )
+// date Day  = 86400   ( 60 * 60 * 24 )
+$dateEnd = date( 'Y-m-d', strtotime( date( 'Y-m', strtotime( $date . '-01' ) + ( 2851200 ) ) . '-01' ) - ( 86400 ) );
 
 $os = []; // Calendar events
 
