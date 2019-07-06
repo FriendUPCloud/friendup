@@ -121,6 +121,12 @@
 	font-size: 0.9em;
 }
 
+.EventRect.New
+{
+	background-color: rgba(0,255,0,0.5);
+	color: white;
+}
+
 .EventRect.Red
 {
 	background-color: red;
@@ -188,6 +194,27 @@
 .Day.Column
 {
 	height: auto;
+	border-right: 1px solid rgba(0,0,0,0.5);
+}
+
+.Day.Column:not(.Label):nth-child(odd)
+{
+	border-right: 1px solid rgba(0,0,0,0.7);
+}
+
+.Day.Column.Label:nth-child(odd)
+{
+	border-right: 1px solid rgba(0,0,0,0.5);
+}
+
+.Day.Column.Label:nth-child(even)
+{
+	border-right: 1px solid rgba(0,0,0,0.7);
+}
+
+.Day.Column:last-child
+{
+	border-right: 0;
 }
 
 .Day > .Number
