@@ -81,5 +81,6 @@ i18n_share_with_a_workgroup_or_user   : Share with a workgroup or user
 i18n_share                            : Share
 i18n_user                             : User
 i18n_workgroup                        : Workgroup
-
+i18n_no_users_connected               : No users connected.
+i18n_no_workgroups                    : You are not a member of any workgroups.
 

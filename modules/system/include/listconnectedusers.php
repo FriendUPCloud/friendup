@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $SqlDatabase, $Logger, $User;
+
 // Get own workgroups
 if( $workgroups = $SqlDatabase->FetchObjects( '
 	SELECT ug.ID FROM FUserGroup ug, FUserToGroup fug 
@@ -34,7 +36,7 @@ if( $workgroups = $SqlDatabase->FetchObjects( '
 			)
 	' ) )
 	{
-		$Logger->log( print_r( $rows, 1 ) );
+		die( 'ok<!--separate-->' . json_encode( $rows ) );
 	}
 }
 die( 'fail<!--separate-->{"response":-1,"message":"No workgroup related users connected to you."}' );

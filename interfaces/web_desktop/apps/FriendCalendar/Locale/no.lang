@@ -81,3 +81,6 @@ i18n_share_with_a_workgroup_or_user   : Del med en bruker eller arbeidsgruppe
 i18n_share                            : Del
 i18n_user                             : Bruker
 i18n_workgroup                        : Arbeidsgruppe
+i18n_no_users_connected               : Ingen brukere er tilknyttet deg.
+i18n_no_workgroups                    : Du er ikke medlem av noen arbeidsgruppe.
+
