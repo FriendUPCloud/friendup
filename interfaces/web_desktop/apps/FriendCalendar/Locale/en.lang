@@ -79,5 +79,7 @@ i18n_user_you                         : Your events
 
 i18n_share_with_a_workgroup_or_user   : Share with a workgroup or user
 i18n_share                            : Share
+i18n_user                             : User
+i18n_workgroup                        : Workgroup
 
 

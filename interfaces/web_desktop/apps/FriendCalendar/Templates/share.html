@@ -3,9 +3,28 @@
 		<p class="Layout">
 			<strong>{i18n_share_with_a_workgroup_or_user}</strong>
 		</p>
+		<div id="sharingTabs">
+			<div class="Tab IconSmall fa-user">{i18n_user}</div>
+			<div class="Tab IconSmall fa-group">{i18n_workgroup}</div>
+			<div class="Page">
+				jkfdj
+			</div>
+			<div class="Page">
+				bhoe
+			</div>
+		</div>
 	</div>
 	<div class="VContentBottom Padding" id="bottom">
 		<button type="button" id="ShareBtn" class="Button IconSmall fa-share">
 			{i18n_share}
 		</button>
 	</div>
+	<script>
+		InitTabs( 'sharingTabs' );
+	</script>
+	<style>
+		html #sharingTabs .TabContainer
+		{
+			text-align: left;
+		}
+	</style>

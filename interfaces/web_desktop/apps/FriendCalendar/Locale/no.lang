@@ -79,4 +79,5 @@ i18n_user_you                         : Dine hendelser
 
 i18n_share_with_a_workgroup_or_user   : Del med en bruker eller arbeidsgruppe
 i18n_share                            : Del
-
+i18n_user                             : Bruker
+i18n_workgroup                        : Arbeidsgruppe
