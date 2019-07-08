@@ -54,6 +54,7 @@ var calendarRowHeight = 30; // <- will be overwritten below w actual height
 
 var Calendar = {
 	events: [],
+	weekScrollTop: 0,
 	listMode: 'month',
 	render: function()
 	{
@@ -535,6 +536,13 @@ var Calendar = {
 		eventDiv.innerHTML = ml;
 		ge( 'MainView' ).innerHTML = '';
 		ge( 'MainView' ).appendChild( eventDiv );
+		
+		ge( 'MainView' ).querySelector( '.CalendarDates' ).onscroll = function( e )
+		{
+			Calendar.weekScrollTop = this.scrollTop;
+		}
+		
+		ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop = Calendar.weekScrollTop;
 		
 		for( var a = 0; a < queuedEventRects.length; a++ )
 		{
