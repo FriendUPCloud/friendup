@@ -75,3 +75,9 @@ i18n_sun                              : Sun
 
 i18n_user_you                         : Your events
 
+# Sharing
+
+i18n_share_with_a_workgroup_or_user   : Share with a workgroup or user
+i18n_share                            : Share
+
+

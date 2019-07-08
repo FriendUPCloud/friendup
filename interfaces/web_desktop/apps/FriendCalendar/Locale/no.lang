@@ -74,3 +74,9 @@ i18n_sun                              : søn
 
 
 i18n_user_you                         : Dine hendelser
+
+# Sharing
+
+i18n_share_with_a_workgroup_or_user   : Del med en bruker eller arbeidsgruppe
+i18n_share                            : Del
+

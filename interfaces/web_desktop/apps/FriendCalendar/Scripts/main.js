@@ -896,3 +896,21 @@ function drawNow()
 }
 setTimeout( drawNow, 10000 );
 
+// Sharing ---------------------------------------------------------------------
+
+function doShare()
+{
+	var v = new View( {
+		title: i18n( 'i18n_share' ),
+		width: 500,
+		height: 500
+	} );
+	var f = new File( 'Progdir:Templates/share.html' );
+	f.onLoad = function( data )
+	{
+		if( v && v.setContent )
+			v.setContent( data );
+	}
+	f.load();
+}
+
