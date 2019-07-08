@@ -906,6 +906,7 @@ function doShare()
 		height: 500
 	} );
 	var f = new File( 'Progdir:Templates/share.html' );
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		if( v && v.setContent )
