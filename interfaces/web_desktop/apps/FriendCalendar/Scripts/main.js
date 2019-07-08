@@ -901,7 +901,7 @@ setTimeout( drawNow, 10000 );
 function doShare()
 {
 	var v = new View( {
-		title: i18n( 'i18n_share' ),
+		title: i18n( 'i18n_share_your_calendar' ),
 		width: 500,
 		height: 500
 	} );

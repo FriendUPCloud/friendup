@@ -77,7 +77,10 @@ i18n_user_you                         : Your events
 
 # Sharing
 
+i18n_share_your_calendar              : Share your calendar
 i18n_share_with_a_workgroup_or_user   : Share with a workgroup or user
+i18n_share_this_calendar              : Share this calendar
+i18n_default_calendar                 : Default Friend calendar
 i18n_share                            : Share
 i18n_user                             : User
 i18n_workgroup                        : Workgroup
