@@ -243,7 +243,7 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers',
+				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
@@ -1495,6 +1495,11 @@ if( isset( $args->command ) )
 		// Get a list of users
 		case 'listusers':
 			require( 'modules/system/include/listusers.php' );
+			break;
+
+		// List users connected to you through workgroups
+		case 'listconnectedusers':
+			require( 'modules/system/include/listconnectedusers.php' );
 			break;
 
 		// store new public key
