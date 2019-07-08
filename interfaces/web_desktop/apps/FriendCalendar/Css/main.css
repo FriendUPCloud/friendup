@@ -396,3 +396,15 @@ body button.IconButton.Active
 	color: white !important;	
 }
 
+/* Marker */
+#nowdiv
+{
+	width: calc(100% - 10%);
+    left: 8%;
+	border-top: 2px dashed rgba(255,255,255,0.15);
+	height: 1px;
+	background: transparent;
+	position: absolute;
+	z-index: 100;
+}
+

@@ -545,9 +545,16 @@ var Calendar = {
 		ge( 'MainView' ).innerHTML = '';
 		ge( 'MainView' ).appendChild( eventDiv );
 		
+		// Add nowdiv
+		nowDiv = document.createElement( 'div' );
+		nowDiv.id = 'nowdiv';
+		ge( 'MainView' ).appendChild( nowDiv );
+		drawNow();
+		
 		ge( 'MainView' ).querySelector( '.CalendarDates' ).onscroll = function( e )
 		{
 			Calendar.weekScrollTop = this.scrollTop;
+			drawNow();
 		}
 		
 		if( !firstDraw )
@@ -764,4 +771,18 @@ Application.receiveMessage = function( msg )
 			break;
 	}
 }
+
+
+var nowDiv = null;
+function drawNow()
+{
+	if( nowDiv )
+	{
+		var d = new Date();
+		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		var tint = parseInt( d.getHours() + StrPad( d.getMinutes(), 2, '0' ) );
+		nowDiv.style.top = Math.floor( ( tint / 2400 * cd.offsetHeight ) - cd.offsetTop ) - cd.scrollTop + 'px';
+	}
+}
+setTimeout( drawNow, 10000 );
 
