@@ -41,7 +41,7 @@ function GetAppPermissions( $appName, $UserID = false )
 	$UserID = ( $UserID ? $UserID : $User->ID );
 	
 	// Fetch permissions from user based on role relations
-	if( $rows = $SqlDatabase->FetchObjects( '
+	if( $rows = $SqlDatabase->FetchObjects( $q = '
 		SELECT 
 			p.*, 
 			ug.Name AS RoleName, 
@@ -62,7 +62,7 @@ function GetAppPermissions( $appName, $UserID = false )
 				)
 				OR
 				(
-					ug.ID = ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID ) 
+					ug.ID IN ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID ) 
 				) 
 			)
 			AND ug.Type = "Role" 

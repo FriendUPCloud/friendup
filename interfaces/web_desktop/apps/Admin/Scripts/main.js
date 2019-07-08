@@ -82,7 +82,8 @@ function refreshSidebar()
 			},
 			'Workgroups': {
 				icon: 'fa-users',
-				showing: isAdmin
+				showing: isAdmin,
+				permissions: [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ]
 			},
 			'Roles': {
 				icon: 'fa-user-secret',

@@ -392,128 +392,163 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function initMain()
 	{
+		var checkedGlobal = Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' );
+		var checkedWorkgr = Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' );
 		
-		// Get the user list
-		list( function( e, d )
+		if( checkedGlobal || checkedWorkgr )
 		{
-			console.log( { e:e, d:d } );
 			
-			//if( e != 'ok' ) return;
-			var userList = null;
-			try
+			// Get the user list
+			list( function( e, d )
 			{
-				userList = d;
-			}
-			catch( e )
-			{
-				//return;
-			}
+				console.log( { e:e, d:d } );
 			
+				//if( e != 'ok' ) return;
+				var userList = null;
+				try
+				{
+					userList = d;
+				}
+				catch( e )
+				{
+					//return;
+				}
+				
+				var o = ge( 'WorkgroupList' );
+				o.innerHTML = '';
+			
+				// Types of listed fields
+				var types = {
+					edit: '10',
+					name: '80'
+				};
+			
+			
+				// List by level
+				var levels = [ 'User' ];
+			
+			
+				var h2 = document.createElement( 'h2' );
+				h2.innerHTML = i18n( 'i18n_workgroups' );
+				o.appendChild( h2 );
+			
+				// List headers
+				var header = document.createElement( 'div' );
+				header.className = 'List';
+				var headRow = document.createElement( 'div' );
+				headRow.className = 'HRow sw1';
+				for( var z in types )
+				{
+					var borders = '';
+					var d = document.createElement( 'div' );
+					if( z != 'edit' )
+						borders += ' BorderRight';
+					if( a < userList.length - a )
+						borders += ' BorderBottom';
+					var d = document.createElement( 'div' );
+					d.className = 'PaddingSmall HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
+					d.innerHTML = '<strong>' + ( z != 'Edit' ? z : '' ) + '</strong>';
+					headRow.appendChild( d );
+				}
+			
+				var d = document.createElement( 'div' );
+				d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
+				d.innerHTML = '<strong>(+)</strong>';
+				d.onclick = function()
+				{
+					Sections.accounts_workgroups( 'create' );
+				};
+				headRow.appendChild( d );
+			
+				header.appendChild( headRow );
+				o.appendChild( header );
+			
+				function setROnclick( r, uid )
+				{
+					r.onclick = function()
+					{
+						Sections.accounts_workgroups( 'details', uid );
+					}
+				}
+			
+				var list = document.createElement( 'div' );
+				list.className = 'List';
+				var sw = 2;
+				for( var b = 0; b < levels.length; b++ )
+				{
+					if( userList )
+					{
+						for( var a = 0; a < userList.length; a++ )
+						{
+							// Skip irrelevant level
+							//if( userList[ a ].Level != levels[ b ] ) continue;
+							
+							// Use this way to sort the list until role permission has been implemented in FriendCore calls ...
+							if( !checkedGlobal && checkedWorkgr )
+							{
+								var found = false;
+								
+								for( var i in checkedWorkgr )
+								{
+									if( checkedWorkgr[ i ] && checkedWorkgr[ i ].Data && checkedWorkgr[i].Data == userList[ a ].parentid )
+									{
+										found = true;
+									}
+								}
+								
+								if( !found )
+								{
+									continue;
+								}
+							}
+							
+							sw = sw == 2 ? 1 : 2;
+							var r = document.createElement( 'div' );
+							setROnclick( r, userList[ a ].ID );
+							r.className = 'HRow sw' + sw;
+			
+							var icon = '<span class="IconSmall fa-user"></span>';
+							userList[ a ][ 'edit' ] = icon;
+				
+							for( var z in types )
+							{
+								var borders = '';
+								var d = document.createElement( 'div' );
+								if( z != 'edit' )
+								{
+									d.className = '';
+									borders += ' BorderRight';
+								}
+								else d.className = 'TextCenter';
+								if( a < userList.length - a )
+									borders += ' BorderBottom';
+								d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
+								d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
+								r.appendChild( d );
+							}
+			
+							// Add row
+							list.appendChild( r );
+						}
+					}
+				}
+			
+				o.appendChild( list );
+			
+				Friend.responsive.pageActive = ge( 'WorkgroupList' );
+				Friend.responsive.reinit();
+			} );
+			
+		}
+		else
+		{
 			var o = ge( 'WorkgroupList' );
 			o.innerHTML = '';
 			
-			// Types of listed fields
-			var types = {
-				edit: '10',
-				name: '80'
-			};
-			
-			
-			// List by level
-			var levels = [ 'User' ];
-			
-			
 			var h2 = document.createElement( 'h2' );
-			h2.innerHTML = i18n( 'i18n_workgroups' );
+			h2.innerHTML = '{i18n_permission_denied}';
 			o.appendChild( h2 );
-			
-			// List headers
-			var header = document.createElement( 'div' );
-			header.className = 'List';
-			var headRow = document.createElement( 'div' );
-			headRow.className = 'HRow sw1';
-			for( var z in types )
-			{
-				var borders = '';
-				var d = document.createElement( 'div' );
-				if( z != 'edit' )
-					borders += ' BorderRight';
-				if( a < userList.length - a )
-					borders += ' BorderBottom';
-				var d = document.createElement( 'div' );
-				d.className = 'PaddingSmall HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
-				d.innerHTML = '<strong>' + ( z != 'Edit' ? z : '' ) + '</strong>';
-				headRow.appendChild( d );
-			}
-			
-			var d = document.createElement( 'div' );
-			d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
-			d.innerHTML = '<strong>(+)</strong>';
-			d.onclick = function()
-			{
-				Sections.accounts_workgroups( 'create' );
-			};
-			headRow.appendChild( d );
-			
-			header.appendChild( headRow );
-			o.appendChild( header );
-			
-			function setROnclick( r, uid )
-			{
-				r.onclick = function()
-				{
-					Sections.accounts_workgroups( 'details', uid );
-				}
-			}
-			
-			var list = document.createElement( 'div' );
-			list.className = 'List';
-			var sw = 2;
-			for( var b = 0; b < levels.length; b++ )
-			{
-				if( userList )
-				{
-					for( var a = 0; a < userList.length; a++ )
-					{
-						// Skip irrelevant level
-						//if( userList[ a ].Level != levels[ b ] ) continue;
-				
-						sw = sw == 2 ? 1 : 2;
-						var r = document.createElement( 'div' );
-						setROnclick( r, userList[ a ].ID );
-						r.className = 'HRow sw' + sw;
-			
-						var icon = '<span class="IconSmall fa-user"></span>';
-						userList[ a ][ 'edit' ] = icon;
-				
-						for( var z in types )
-						{
-							var borders = '';
-							var d = document.createElement( 'div' );
-							if( z != 'edit' )
-							{
-								d.className = '';
-								borders += ' BorderRight';
-							}
-							else d.className = 'TextCenter';
-							if( a < userList.length - a )
-								borders += ' BorderBottom';
-							d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
-							d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
-							r.appendChild( d );
-						}
-			
-						// Add row
-						list.appendChild( r );
-					}
-				}
-			}
-			
-			o.appendChild( list );
-			
-			Friend.responsive.pageActive = ge( 'WorkgroupList' );
-			Friend.responsive.reinit();
-		} );
+		}
 		
 	}
 	

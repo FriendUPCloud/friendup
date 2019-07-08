@@ -66,7 +66,7 @@ if( $d->ID > 0 )
 						$p->Permission = $perm->name;
 						$p->Key        = $perm->key;
 						$p->RoleID     = $d->ID;
-						$p->Data       = $perm->data;
+						$p->Data       = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
 						if( $p->Load() )
 						{
 							$p->Delete();
@@ -78,7 +78,7 @@ if( $d->ID > 0 )
 						$p->Permission = $perm->name;
 						$p->Key        = $perm->key;
 						$p->RoleID     = $d->ID;
-						$p->Data       = $perm->data;
+						$p->Data       = ( $perm->data && !is_string( $perm->data ) ? json_encode( $perm->data ) : ( !$perm->data ? '0' : $perm->data ) );
 						$p->Load();
 						$p->Save();
 					}

@@ -352,7 +352,15 @@ Sections.removepermission = function( rid, pem, key, data, _this )
 Sections.addpermission = function( rid, key, _this )
 {
 	var pem  = ge( 'RolePermissionList_' + key ).value;
-	var data = ge( 'RoleWorkgroupList_' + key ).value;
+	
+	if( ge( 'RoleParameterInput_' + key ) && ge( 'RoleParameterInput_' + key ).style.display != 'none' )
+	{
+		var data = ge( 'RoleParameterInput_' + key ).value;
+	}
+	else
+	{
+		var data = ge( 'RoleWorkgroupList_' + key ).value;
+	}
 	
 	if( rid && key && pem && _this )
 	{

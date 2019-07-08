@@ -57,7 +57,11 @@ Sections.accounts_users = function( cmd, extra )
 				}*/
 				
 				// Roles and role adherence
-				if( uroles && uroles.length )
+				if( uroles && uroles == '404' )
+				{
+					rstr += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_roles_access_denied' ) + '</div></div>';
+				}
+				else if( uroles && uroles.length )
 				{
 					for( var a in uroles )
 					{
@@ -70,11 +74,11 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
-				var mlst = Sections.user_disk_refresh( mountlist );
+				var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID );
 				
 				
 				
-				function initStorageGraphs()
+				/*function initStorageGraphs()
 				{
 					var d = document.getElementsByTagName( 'canvas' );
 					for( var a = 0; a < d.length; a++ )
@@ -124,7 +128,7 @@ Sections.accounts_users = function( cmd, extra )
 							} 
 						);
 					}
-				}
+				}*/
 				
 				// Applications
 				var apl = '';
@@ -933,7 +937,7 @@ Sections.user_disk_save = function( userid, did )
 						ul = null;
 					}
 				
-					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+					ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 				
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 				}
@@ -977,7 +981,7 @@ Sections.user_disk_cancel = function( userid )
 			ul = null;
 		}
 		
-		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 	}
 	u.execute( 'mountlist', { userid: userid } );
 	
@@ -1020,7 +1024,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 									ul = null;
 								}
 							
-								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 							}
 							u.execute( 'mountlist', { userid: userid } );
 						
@@ -1042,51 +1046,6 @@ Sections.user_disk_remove = function( devname, did, userid )
 					
 				} );
 				
-			
-				// This is the soft delete method ...
-			
-				/*unmountFilesystem( devname, function( e )
-				{
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-						
-							var u = new Module( 'system' );
-							u.onExecuted = function( ee, dd )
-							{
-								var ul = null;
-								try
-								{
-									ul = JSON.parse( dd );
-								}
-								catch( ee )
-								{
-									ul = null;
-								}
-							
-								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
-							
-								Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-							}
-							u.execute( 'mountlist', { userid: userid } );
-						
-							return;
-						}
-						try
-						{
-							var r = JSON.parse( d );						
-							Notify( { title: 'An error occured', text: r.message } );
-						}
-						catch( e )
-						{
-							Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
-						}
-						return;
-					}
-					m.execute( 'deletefilesystem', { devname: devname } );
-				} );*/
 			}
 		} );
 	}
@@ -1226,15 +1185,32 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 					str += '</div>';
 					str += '<div class="HContent70 FloatLeft Ellipsis">';
 					str += '<select class="FullWidth" id="Type" onchange="LoadDOSDriverGUI(this)"' + ( storage.id ? ' disabled="disabled"' : '' ) + '>';
-				
+					
+					console.log( storage );
+					
 					if( da )
 					{
+						var found = false;
+						
 						for( var i in da )
 						{
 							if( da[i].type )
 							{
 								str += '<option value="' + da[i].type + '"' + ( storage.type == da[i].type ? ' selected="selected"' : '' ) + '>' + i18n( 'i18n_' + da[i].type ) + '</option>';
+								
+								if( storage.type == da[i].type )
+								{
+									found = true;
+								}
 							}
+						}
+						
+						if( storage.id && !found )
+						{
+							str  = '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
+							str += '<div class="HRow PaddingTop"><button class="IconSmall FloatRight MarginLeft" onclick="Sections.user_disk_cancel(' + userid + ')">Cancel</button></div>';
+							
+							return ge( 'StorageGui' ).innerHTML = str;
 						}
 					}
 			
@@ -1303,7 +1279,7 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 	}
 };
 
-Sections.user_disk_refresh = function( mountlist )
+Sections.user_disk_refresh = function( mountlist, userid )
 {
 	// Mountlist
 	var mlst = '';
@@ -1342,6 +1318,12 @@ Sections.user_disk_refresh = function( mountlist )
 			catch( e )
 			{
 				mountlist[b].Config = {};
+			}
+			
+			// Return access denied if the list is only the logged in Users disks
+			if( userid && userid != mountlist[b].UserID )
+			{
+				return '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
 			}
 			
 			// Skip the IsDeleted disks for now ...
@@ -1459,7 +1441,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 							ul = null;
 						}
 					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 					}
 					u.execute( 'mountlist', { userid: userid } );
 				
@@ -1497,7 +1479,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 							ul = null;
 						}
 					
-						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul );
+						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 					}
 					u.execute( 'mountlist', { userid: userid } );
 				

@@ -293,7 +293,9 @@ function initRoleDetails( info )
 						apl += '</div>';
 						//apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select class="FullWidth">';
 						apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis">';
-					
+						
+						var found = false;
+						
 						if( wgroups && wgroups.length )
 						{
 							//apl += '<option> - - - </option>';
@@ -304,11 +306,19 @@ function initRoleDetails( info )
 								if( wgroups[k].ID == data )
 								{
 									apl += '<div class="PaddingSmall">' + wgroups[k].Name + '</div>';
+									
+									found = true;
 								}
 								//apl += '<option>' + wgroups[k].Name + '</option>';
 							}
 						}
-					
+						
+						if( !found && data != 0 )
+						{
+							//apl += '<div class="PaddingSmall" title="' + data + '">' + data + '</div>';
+							apl += '<input value="' + data + '" class="FullWidth" onclick="this.select()">';
+						}
+						
 						//apl += '</select></div>';
 						apl += '</div>';
 						apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
@@ -328,7 +338,7 @@ function initRoleDetails( info )
 				
 				
 				apl += '<div class="HRow">';
-				apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select id="RolePermissionList_' + key + '" class="FullWidth">';
+				apl += '<div class="PaddingSmall HContent55 FloatLeft Ellipsis"><select id="RolePermissionList_' + key + '" class="FullWidth" onchange="checkRoleSelect(\'' + key + '\',this)">';
 				
 				apl += '<option value=""> - - - </option>';
 				
@@ -363,7 +373,8 @@ function initRoleDetails( info )
 				}
 				
 				apl += '</select></div>';
-				apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis"><select id="RoleWorkgroupList_' + key + '" class="FullWidth">';
+				apl += '<div class="PaddingSmall HContent35 FloatLeft Ellipsis">';
+				apl += '<select id="RoleWorkgroupList_' + key + '" class="FullWidth" style="display:inline">';
 				
 				if( wgroups && wgroups.length )
 				{
@@ -375,8 +386,9 @@ function initRoleDetails( info )
 					}
 				}
 				
-				apl += '</select></div>';
-				apl += '<div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
+				apl += '</select>';
+				apl += '<input id="RoleParameterInput_' + key + '" class="FullWidth" placeholder="Ex. [1,2,3] or {1:1,2:2,3:3}" style="display:none">';
+				apl += '</div><div class="PaddingSmall HContent10 TextCenter FloatLeft Ellipsis">';
 				//apl += '<button onclick="javascript:void(0)" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-off"></button>';
 				//apl += '<strong>(+)</strong>';
 				apl += '<button class="IconButton IconSmall ButtonSmall FloatRight fa-plus-circle" onclick="Sections.addpermission('+rid+',\''+key+'\',this)"></button>';
@@ -425,5 +437,19 @@ function initRoleDetails( info )
 		Friend.responsive.reinit();
 	}
 	d.load();
+}
+
+function checkRoleSelect( key, _this )
+{
+	if( !_this.value || ( _this.value && _this.value.toLowerCase().indexOf( 'workgroup' ) >= 0 && _this.value.toLowerCase().indexOf( 'global' ) <= 0 ) )
+	{
+		ge( 'RoleWorkgroupList_'  + key ).setAttribute( 'style', 'display:inline' );
+		ge( 'RoleParameterInput_' + key ).setAttribute( 'style', 'display:none'   );
+	}
+	else
+	{
+		ge( 'RoleWorkgroupList_'  + key ).setAttribute( 'style', 'display:none'   );
+		ge( 'RoleParameterInput_' + key ).setAttribute( 'style', 'display:inline' );
+	}
 }
 
