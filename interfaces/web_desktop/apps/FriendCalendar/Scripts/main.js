@@ -68,6 +68,7 @@ var Calendar = {
 	exStyles: null, // extra styles
 	render: function()
 	{
+		eventMode = null
 		if( this.listMode == 'week' )
 		{
 			return this.renderWeek();
@@ -359,13 +360,15 @@ var Calendar = {
 						{
 							var ypos = events[ b ].DateStart.split( ' ' )[1];
 							ypos = ypos.split( ':' );
-							ypos = parseInt( ypos[0] ) + ( ypos[1] / calendarRowHeight );
+							
+							ypos = parseInt( ypos[0] ) + ( ypos[1] / 60 );
 							
 							ypos = ypos / 24 * 100;
 							
+							
 							var height = events[ b ].DateEnd.split( ' ' )[1];
 							height = height.split( ':' );
-							height = parseInt( height[0] ) + ( height[1] / calendarRowHeight );
+							height = parseInt( height[0] ) + ( height[1] / 60 );
 							
 							height = height / 24 * 100;
 							height = height - ypos;
@@ -443,7 +446,8 @@ var Calendar = {
 			if( eventMode ) return;
 			if( !eventDiv || !eventDiv.data || !eventDiv.data.mousedown )
 				return;
-			var scrollT = ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop;
+			var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
+			var scrollT = cd.scrollTop;
 			var d = eventDiv.data;
 			var ymotion = ( e.clientY + scrollT ) - d.y;
 			ymotion = Math.floor( ymotion / calendarRowHeight ) * calendarRowHeight;
@@ -528,6 +532,8 @@ var Calendar = {
 			// Set replacements based on calculations and language
 			var f = new File( 'Progdir:Templates/event.html' );
 			f.replacements = {
+				title: '',
+				leadin: '',
 				timefrom: from,
 				timeto: to,
 				date: date,
@@ -636,8 +642,9 @@ var EventRect = function( definition )
 EventRect.prototype.init = function()
 {
 	if( this.div ) return;
+	var self = this;
 	this.div = document.createElement( 'div' );
-	this.div.className = 'EventRect MoustPointer';
+	this.div.className = 'EventRect MousePointer';
 	this.div.style.top = this.definition.ypos + '%';
 	this.div.style.height = this.definition.height + '%';
 	this.div.style.color = eventPaletteForeground[ 0 ];
@@ -651,6 +658,7 @@ EventRect.prototype.init = function()
 	
 	this.div.onclick = function( e )
 	{
+		EditEvent( self.definition.event.ID );
 	}
 }
 // End event rect --------------------------------------------------------------
@@ -673,6 +681,52 @@ function AddEvent( year, month, day )
 		v.setContent( data );
 	}
 	f.load();
+}
+
+function EditEvent( id )
+{
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		// TODO: Display some kind of error message
+		if( e != 'ok' )
+			return;
+		
+		var evd;
+		try
+		{
+			evd = JSON.parse( d );
+		}
+		catch( e )
+		{
+			// TODO: Display some kind of error message
+			return;
+		}
+		var v = new View( {
+			title: i18n( 'i18n_edit_event' ),
+			width: 500,
+			height: 550
+		} );
+		var f = new File( 'Progdir:Templates/event.html' );
+		f.replacements = {
+			title: evd.Title,
+			leadin: evd.Description,
+			timefrom: evd.TimeFrom,
+			timeto: evd.TimeTo,
+			date: evd.Date,
+			allday: evd.TimeFrom.substr(0,2) == '00' && evd.TimeTo.substr(0,2) == '24' ? ' checked="checked"' : '',
+			ID: id,
+			parentViewId: Application.viewId
+		};
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			v.setContent( data );
+		}
+		f.load();
+		eventMode = v;
+	}
+	m.execute( 'getcalendarevent', { cid: id } );
 }
 
 
@@ -754,6 +808,13 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'refresh':
+			if( eventMode )
+				eventMode.close();
+			self.sendMessage( {
+				command: 'refresh_calendar'
+			} );
+			break;
 		case 'saveevent':
 			var ed = msg.eventData;
 			var m = new Module( 'system' );
@@ -764,16 +825,16 @@ Application.receiveMessage = function( msg )
 				} );
 			}
 			m.execute(
-				ed.ID > 0 ? 'updatecalendarevent' : 'addcalendarevent',
+				ed.id > 0 ? 'savecalendarevent' : 'addcalendarevent',
 				{
 					event: {
 						Title: ed.title,
 						Description: ed.leadin,
 						TimeTo: ed.timeTo,
 						TimeFrom: ed.timeFrom,
-						Date: ed.date,
-						ID: ed.id
-					}
+						Date: ed.date
+					},
+					cid: ed.id > 0 ? ed.id: 0
 				}
 			);
 			if( eventMode )

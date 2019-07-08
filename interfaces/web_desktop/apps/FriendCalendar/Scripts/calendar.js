@@ -389,7 +389,8 @@ function UpdateEvents( evts )
 				finalEvents.push( {
 					DateStart: tf,
 					DateEnd: tt,
-					Name: eles[a].Title
+					Name: eles[a].Title,
+					ID: parseInt( eles[a].ID )
 				} );
 			}
 		}

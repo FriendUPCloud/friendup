@@ -37,7 +37,12 @@ month_october                         : October
 month_november                        : November
 month_december                        : December
 
+i18n_delete_event                     : Delete event
+i18n_are_you_sure                     : Are you sure?
+i18n_delete_confirm_desc              : When deleting an event you will also be removing it from anyone sharing your calendar. Do you wish to proceed?
+
 i18n_add_new_event                    : Add new event
+i18n_edit_event                       : Edit event
 i18n_add_calendar                     : Add calendar
 i18n_share_calendar                   : Share calendar
 i18n_week                             : Week
