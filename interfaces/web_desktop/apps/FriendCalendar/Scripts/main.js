@@ -398,6 +398,9 @@ var Calendar = {
 			if( t == document.body )
 				return;
 			
+			if( !t.getAttribute( 'date' ) )
+				return;
+			
 			// Correct, displayed height
 			calendarRowHeight = t.querySelector( '.TimeSlot' ).offsetHeight;
 			
@@ -521,7 +524,10 @@ var Calendar = {
 			eventMode.onClose = function()
 			{
 				var ele = da.querySelector( '.New' );
-				da.removeChild( ele );
+				if( ele )
+				{
+					da.removeChild( ele );
+				}
 				eventMode = null;
 			}
 		}
@@ -578,6 +584,10 @@ EventRect.prototype.init = function()
 	this.div.style.color = eventPaletteForeground[ 0 ];
 	this.div.style.backgroundColor = eventPaletteBackground[ 0 ];
 	this.div.innerHTML = this.definition.event.Name;
+	this.div.onmousedown = function( e )
+	{
+		return cancelBubble( e );
+	}
 	ge( 'Day' + this.definition.day ).appendChild( this.div );
 	
 	this.div.onclick = function( e )
