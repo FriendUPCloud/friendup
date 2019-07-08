@@ -8268,7 +8268,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( newState == 'active' )
 		{
-			document.title = document.title.split( ' Active' ).join( '' ) + ' Active';
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
@@ -8329,11 +8328,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				clearTimeout( this.sleepingTimeout );
 			Workspace.sleeping = false;
 			Workspace.sleepingTimeout = null;
-			document.title = document.title.split( ' Sleeping' ).join( '' );
 		}
 		else
 		{
-			document.title = document.title.split( ' Active' ).join( '' ) ;
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
 			if( isMobile )
@@ -8360,7 +8357,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			this.sleepingTimeout = setTimeout( function()
 			{
-				document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
 				Workspace.sleeping = true;
 				Workspace.sleepingTimeout = null;
 				Workspace.updateViewState( 'inactive' );
