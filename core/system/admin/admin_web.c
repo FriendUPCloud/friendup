@@ -735,16 +735,23 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	* @return function return information about uptime ok<!--separate-->{"result":1,"uptime":unixtime_number}
 	*/
 	/// @endcond
-	if( strcmp( urlpath[ 1 ], "info" ) == 0 )
+	if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
 	{
 		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			char dictmsgbuf[ 512 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"uptime\":%lu", (time( NULL ) - l->l_UptimeStart) );
 		
-		char dictmsgbuf[ 512 ];
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"uptime\":%lu", (time( NULL ) - l->l_UptimeStart) );
-		
-		HttpAddTextContent( response, dictmsgbuf );
-		*result = 200;
-
+			HttpAddTextContent( response, dictmsgbuf );
+			*result = 200;
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
 	}
 	
 		//
