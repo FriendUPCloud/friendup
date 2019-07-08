@@ -1567,15 +1567,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else 
 						{
+							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
+					}
+					else
+					{
+						document.body.classList.add( 'NoWallpaper' );
 					}
 					// Check for theme specifics
 					if( dat[ 'themedata_' + Workspace.theme ] )
