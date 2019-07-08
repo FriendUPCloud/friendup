@@ -27,11 +27,24 @@ Application.run = function( msg )
 			if( usl.length )
 			{
 				ge( 'Users' ).innerHTML = '';
+				var sw = 0;
 				for( var a = 0; a < usl.length; a++ )
 				{
+					sw = sw == 1 ? 2 : 1;
 					var r = document.createElement( 'div' );
-					r.className = 'HRow';
-					r.innerHTML = '<div class="HContent40 FloatLeft Ellipsis BorderRight BorderBottom">' + usl[ a ].Fullname + '</div><div class="HContent60 FloatLeft Ellipsis BorderBottom">' + usl[ a ].Name + ( usl[ a ].Email ? ( ', ' + usl[ a ].Email ) : '' ) + '</div>';
+					r.className = 'HRow PaddingSmall sw' + sw;
+					r.innerHTML = '<div class="HContent40 FloatLeft Ellipsis">' + usl[ a ].Fullname + '</div><div class="HContent60 FloatLeft Ellipsis">' + usl[ a ].Name + ( usl[ a ].Email ? ( ', ' + usl[ a ].Email ) : '' ) + '</div>';
+					r.onclick = function()
+					{
+						if( this.classList.contains( 'Selected' ) )
+						{
+							this.classList.remove( 'Selected' );
+						}
+						else
+						{
+							this.classList.add( 'Selected' );
+						}
+					}
 					ge( 'Users' ).appendChild( r );
 				}
 				return;
@@ -57,11 +70,24 @@ Application.run = function( msg )
 			if( wl.length )
 			{
 				ge( 'Workgroups' ).innerHTML = '';
+				var sw = 0;
 				for( var a = 0; a < wl.length; a++ )
 				{
+					sw = sw == 1 ? 2 : 1;
 					var r = document.createElement( 'div' );
-					r.className = 'HRow';
-					r.innerHTML = '<div class="HContent100 FloatLeft Ellipsis BorderBottom">' + wl[ a ].Name + '</div>';
+					r.className = 'HRow PaddingSmall sw' + sw;
+					r.innerHTML = '<div class="HContent100 FloatLeft Ellipsis">' + wl[ a ].Name + '</div>';
+					r.onclick = function()
+					{
+						if( this.classList.contains( 'Selected' ) )
+						{
+							this.classList.remove( 'Selected' );
+						}
+						else
+						{
+							this.classList.add( 'Selected' );
+						}
+					}
 					ge( 'Workgroups' ).appendChild( r );
 				}
 				return;
