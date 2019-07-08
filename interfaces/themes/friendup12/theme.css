@@ -724,7 +724,7 @@ html > body > div button, html > body > div .Button
 html body button.IconButton:not(:hover), 
 html body .Button.IconButton:not(:hover)
 {
-	border: 0 !important;
+	border: 1px solid rgba(0,0,0,0) !important;
 }
 
 html body .BigButton

@@ -24,6 +24,7 @@ var eventPaletteForeground = [
 var moveListener = null;
 var upListener = null;
 var eventMode = null; // We're not in an event mode | we are in an event mode
+var firstDraw = true;
 
 window.addEventListener( 'mouseup', function( e )
 {
@@ -74,6 +75,9 @@ var Calendar = {
 	},
 	renderMonth: function()
 	{
+		ge( 'monthoverview' ).classList.add( 'Active' );
+		ge( 'weekoverview' ).classList.remove( 'Active' );
+		
 		// Get a date object for current month....
 		var dob = new Date();
 		
@@ -207,6 +211,9 @@ var Calendar = {
 	},
 	renderWeek: function()
 	{
+		ge( 'monthoverview' ).classList.remove( 'Active' );
+		ge( 'weekoverview' ).classList.add( 'Active' );
+		
 		//console.log( 'Rendering!' );
 		var self = this;
 		
@@ -291,7 +298,8 @@ var Calendar = {
 						{
 							var hour = StrPad( Math.floor( t ), 2, '0' );
 							var minute = StrPad( ( t - Math.floor( t ) ) * 60, 2, '0' );
-							evtl += '<div class="TimeSlot">' + hour + ':' + minute + '</div>';
+							var n = ' Time' + ( t * 100 );
+							evtl += '<div class="TimeSlot' + n + '">' + hour + ':' + minute + '</div>';
 						}
 						ml += '<div class="Day Column Negative TextCenter">' + evtl + '</div>';
 					}
@@ -542,7 +550,16 @@ var Calendar = {
 			Calendar.weekScrollTop = this.scrollTop;
 		}
 		
-		ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop = Calendar.weekScrollTop;
+		if( !firstDraw )
+		{
+			ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop = Calendar.weekScrollTop;
+		}
+		else
+		{
+			var tt = ge( 'MainView' ).querySelector( '.Time800' );
+			ge( 'MainView' ).querySelector( '.CalendarDates' ).scrollTop = tt.offsetTop;
+			firstDraw = false;
+		}
 		
 		for( var a = 0; a < queuedEventRects.length; a++ )
 		{
@@ -654,6 +671,18 @@ function GoNext()
 
 Application.run = function( msg, iface )
 {
+	ge( 'monthoverview' ).onclick = function()
+	{
+		Calendar.listMode = 'month';
+		Calendar.render();
+	}
+	ge( 'weekoverview' ).onclick = function()
+	{
+		Calendar.listMode = 'week';
+		Calendar.render();
+	}
+	
+	
 	Calendar.date = new Date();
 	Calendar.render();
 }

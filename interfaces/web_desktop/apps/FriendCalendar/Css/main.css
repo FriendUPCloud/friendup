@@ -388,3 +388,11 @@
 	clear: both;
 }
 
+/* Buttons */
+
+body button.IconButton.Active
+{
+	background: #066099 !important;
+	color: white !important;	
+}
+
