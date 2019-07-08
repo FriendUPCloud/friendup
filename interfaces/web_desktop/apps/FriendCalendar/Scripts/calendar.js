@@ -171,8 +171,13 @@ Application.getSources = function( callback )
 			
 			if( callback )
 			{
-				callback();
+				callback( true ); // <- we have sources
 			}
+		}
+		else
+		{
+			if( callback )
+				callback( false ); // <- no sources
 		}
 	}
 	m.execute( 'getsetting', {

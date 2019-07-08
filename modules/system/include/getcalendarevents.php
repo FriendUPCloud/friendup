@@ -10,8 +10,21 @@
 *                                                                              *
 *****************************************************************************©*/
 
-$date = explode( '-', $args->args->date );
-$day = (int)( $date[2] );
+global $Logger;
+
+if( isset( $args->args->date ) && trim( $args->args->date ) )
+{
+	$date = explode( '-', $args->args->date );
+}
+else
+{
+	die( 'fail<!--separate-->{"response":-1,"message":"No date given."}' );
+}
+// Getting whole month?
+if( !isset( $date[2] ) )
+	$day = 0;
+else $day = (int)( $date[2] );
+
 $date = $date[0] . '-' . str_pad( $date[1], 2, '0', STR_PAD_LEFT );
 if( $day > 0 )
 	$date .= '-' . str_pad( $day, 2, '0', STR_PAD_LEFT );
@@ -65,15 +78,15 @@ if( $rows = $SqlDatabase->fetchObjects( $q = '
 	UserID=\'' . $User->ID . '\' AND 
 	`Date`' . ( $day <= 0 ? ( ' LIKE \'' . $date . '-%\'' ) : ( '=\'' . $date . '\'' ) ) . '
 ' ) )
-{	
+{
 	foreach( $rows as $row )
 	{
 		$ob = new stdClass();
 		$ob->ID = $row->ID;
 		$ob->Title = $row->Title;
 		$ob->Description = $row->Description;
-		$ob->TimeTo = $row->TimeTo;
 		$ob->TimeFrom = $row->TimeFrom;
+		$ob->TimeTo = $row->TimeTo;
 		$ob->Date = $row->Date;
 		$ob->Type = $row->Type;
 		$ob->MetaData = $row->MetaData;
