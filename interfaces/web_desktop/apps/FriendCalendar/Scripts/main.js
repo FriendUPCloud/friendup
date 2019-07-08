@@ -20,6 +20,14 @@ var eventPaletteForeground = [
 	'#ffffff'
 ];
 
+Date.prototype.getWeek = function()
+{
+	var onejan = new Date( this.getFullYear(), 0, 1 );
+	var today = new Date( this.getFullYear(), this.getMonth(), this.getDate() );
+	var dayOfYear = ( ( today - onejan + 86400000 ) / 86400000 );
+	return Math.ceil( dayOfYear / 7 );
+};
+
 // Global events ---------------------------------------------------------------
 var moveListener = null;
 var upListener = null;
@@ -244,6 +252,8 @@ var Calendar = {
 				startDay--;
 			}
 		}
+		
+		var week = ( new Date( year, month, startDay ) ).getWeek() + 1;
 		
 		var monthNames = [
 			i18n( 'month_january' ),
@@ -548,13 +558,12 @@ var Calendar = {
 		// Add nowdiv
 		nowDiv = document.createElement( 'div' );
 		nowDiv.id = 'nowdiv';
-		ge( 'MainView' ).appendChild( nowDiv );
+		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' ).appendChild( nowDiv );
 		drawNow();
 		
 		ge( 'MainView' ).querySelector( '.CalendarDates' ).onscroll = function( e )
 		{
 			Calendar.weekScrollTop = this.scrollTop;
-			drawNow();
 		}
 		
 		if( !firstDraw )
@@ -573,7 +582,7 @@ var Calendar = {
 			var eventRect = new EventRect( queuedEventRects[ a ] );
 		}
 		
-		ge( 'MonthName' ).innerHTML = monthNames[ month ] + ' ' + year;
+		ge( 'MonthName' ).innerHTML = i18n( 'i18n_week' ) + ' ' + week + ', ' + year;
 		
 		this.refresh();
 	},
@@ -656,9 +665,20 @@ function GoPrevious( e )
 	var m = Calendar.dateArray[1];
 	var d = Calendar.dateArray[2];
 	
-	if( --m < 0 ){ m = 11; y--; }
+	if( Calendar.listMode == 'month' )
+	{
+		if( --m < 0 ){ m = 11; y--; }
+		Calendar.date = new Date( y, m, 1 );
+	}
+	// Week
+	else
+	{
+		var d = new Date( y, m, d );
+		var t = d.getTime();
+		t -= 86400000 * 7; // (a week)
+		Calendar.date = new Date( t );
+	}
 	
-	Calendar.date = new Date( y, m, 1 );
 	Calendar.render();
 }
 
@@ -669,9 +689,20 @@ function GoNext()
 	var m = Calendar.dateArray[1];
 	var d = Calendar.dateArray[2];
 	
-	if( ++m > 11 ){ m = 0; y++; }
+	if( Calendar.listMode == 'month' )
+	{
+		if( ++m > 11 ){ m = 0; y++; }
+		Calendar.date = new Date( y, m, 1 );
+	}
+	// Week
+	else
+	{
+		var d = new Date( y, m, d );
+		var t = d.getTime();
+		t += 86400000 * 7; // (a week)
+		Calendar.date = new Date( t );
+	}
 	
-	Calendar.date = new Date( y, m, 1 );
 	Calendar.render();
 }
 
@@ -779,9 +810,9 @@ function drawNow()
 	if( nowDiv )
 	{
 		var d = new Date();
-		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
-		var tint = parseInt( d.getHours() + StrPad( d.getMinutes(), 2, '0' ) );
-		nowDiv.style.top = Math.floor( ( tint / 2400 * cd.offsetHeight ) - cd.offsetTop ) - cd.scrollTop + 'px';
+		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' ).querySelector( '.Day' );
+		var tint = d.getHours() + ( d.getMinutes() / 60 );
+		nowDiv.style.top = Math.floor( tint / 24 * cd.offsetHeight ) + 'px';
 	}
 }
 setTimeout( drawNow, 10000 );
