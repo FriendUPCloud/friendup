@@ -227,11 +227,14 @@ var Calendar = {
 		var findDay = new Date( time );
 		
 		// Find start of week (where monday is 1)
-		while( findDay != 1 )
+		if( ( new Date( time ).getDay() ) != 1 )
 		{
-			time -= 86400000;
-			findDay = new Date( time ).getDay();
-			startDay--;
+			while( findDay != 1 )
+			{
+				time -= 86400000;
+				findDay = new Date( time ).getDay();
+				startDay--;
+			}
 		}
 		
 		var monthNames = [
@@ -256,6 +259,7 @@ var Calendar = {
 		for( var w = -1; w < 1; w++ )
 		{
 			var day = startDay;
+			var ctime = time;
 			
 			// Start header
 			if( w == -1 )
@@ -272,7 +276,7 @@ var Calendar = {
 			var dn = [ 0, i18n('i18n_mon'), i18n('i18n_tue'), i18n('i18n_wed'), i18n('i18n_thu'), i18n('i18n_fri'), i18n('i18n_sat'), i18n('i18n_sun') ];
 			
 			for( var a = 0; a < dl.length; a++ )
-			{
+			{	
 				if( dl[a] == -1 )
 				{
 					if( w == -1 )
@@ -288,25 +292,29 @@ var Calendar = {
 							var minute = StrPad( ( t - Math.floor( t ) ) * 60, 2, '0' );
 							evtl += '<div class="TimeSlot">' + hour + ':' + minute + '</div>';
 						}
-						ml += '<div class="Day Column Negative TextCenter" ondblclick="AddEvent(' + day + ')">' + evtl + '</div>';
+						ml += '<div class="Day Column Negative TextCenter">' + evtl + '</div>';
 					}
 					continue;
 				}
+				
+				var dobj   = new Date( ctime );
+				var cday   = dobj.getDate();
+				var cmonth = dobj.getMonth() + 1;
+				var cyear  = dobj.getFullYear();
+				
 				var d = dl[a];
 				var dayName = dn[a];
-				var key = year + '-' + (month+1) + '-' + day;
-				var keyPadded = year + '-' + StrPad( month + 1, 2, '0' ) + '-' + StrPad( day, 2, '0' );
+				var key = cyear + '-' + ( cmonth ) + '-' + cday;
+				var keyPadded = cyear + '-' + StrPad( cmonth, 2, '0' ) + '-' + StrPad( cday, 2, '0' );
 				
-				var dobj = new Date( year, month, day );
 				var dliteral = '';
 			
-				if( dobj.getDate() < day )
+				if( dobj.getDate() < cday )
 					up = false;
-				
+
 				if( up && dobj.getDay() == d )
 				{
 					dliteral = day + '.';
-					day++;
 				}
 
 				if( w >= 0 )
@@ -340,7 +348,7 @@ var Calendar = {
 							height = height - ypos;
 							
 							queuedEventRects.push( {
-								day: day,
+								day: cday,
 								ypos: ypos,
 								height: height,
 								event: events[ b ]
@@ -348,11 +356,17 @@ var Calendar = {
 						}
 					}
 					
-					ml += '<div class="Day Column" id="Day' + day + '" ondblclick="AddEvent(' + day + ')">' + timez + evts + '</div>';
+					var p = cyear + '-' + StrPad( cmonth, 2, '0' ) + '-' + StrPad( cday, 2, '0' );
+					ml += '<div class="Day Column" date="' + p + '" id="Day' + 
+						cday + '" ondblclick="AddEvent(' + cyear + ',' + cmonth + ',' + cday + ')">' + 
+						timez + evts + '</div>';
+					
+					ctime += 86400000;
 				}
 				else
 				{
-					ml += '<div class="Day Column Label"><div class="LabelText">' + dayName + ' ' + day + '/' + ( month + 1 ) + '</div></div>';
+					ml += '<div class="Day Column Label"><div class="LabelText">' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
+					ctime += 86400000;
 				}
 			}
 			ml += '</div>';
@@ -394,7 +408,8 @@ var Calendar = {
 				mode: 0,
 				x: e.clientX,
 				y: e.clientY + scrollT,
-				dayElement: t
+				dayElement: t,
+				day: t.getAttribute( 'date' ).split( '/' )
 			};
 		} );
 		moveListener = function( e )
@@ -446,6 +461,7 @@ var Calendar = {
 		{
 			// Add only one event at a time
 			if( eventMode ) return;
+			if( !eventDiv.data ) return;
 			
 			// Convert rect coords to time
 			var top = GetElementTop( eventDiv.data.dayElement );
@@ -456,6 +472,8 @@ var Calendar = {
 			from = from / whole * 24;
 			to = Math.floor( to * 2 ) / 2;
 			from = Math.floor( from * 2 ) / 2;
+			
+			var date = eventDiv.data.day.join( '-' );
 			
 			// Clear event data
 			var da = eventDiv.data.dayElement;
@@ -481,8 +499,6 @@ var Calendar = {
 			to += ':00.000';
 			from += ':00.000';
 			
-			var date = self.date.getFullYear() + '-' + StrPad( self.date.getMonth() + 1, 2, '0' ) + '-' + StrPad( self.date.getDate(), 2, '0' );
-			
 			// Set replacements based on calculations and language
 			var f = new File( 'Progdir:Templates/event.html' );
 			f.replacements = {
@@ -504,7 +520,8 @@ var Calendar = {
 			f.load();
 			eventMode.onClose = function()
 			{
-				da.parentNode.removeChild( da );
+				var ele = da.querySelector( '.New' );
+				da.removeChild( ele );
 				eventMode = null;
 			}
 		}
@@ -569,7 +586,7 @@ EventRect.prototype.init = function()
 }
 // End event rect --------------------------------------------------------------
 
-function AddEvent( day )
+function AddEvent( year, month, day )
 {
 	var v = new View( {
 		title: 'Add event',
@@ -630,17 +647,36 @@ window.addEventListener( 'resize', function()
 
 Application.receiveMessage = function( msg )
 {
+	var self = this;
 	if( !msg.command ) return;
-	console.log( 'Got the message: ', msg );
 	switch( msg.command )
 	{
 		case 'saveevent':
-			console.log( msg.eventData );
+			var ed = msg.eventData;
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				self.sendMessage( {
+					command: 'refresh_calendar'
+				} );
+			}
+			m.execute(
+				ed.ID > 0 ? 'updatecalendarevent' : 'addcalendarevent',
+				{
+					event: {
+						Title: ed.title,
+						Description: ed.leadin,
+						TimeTo: ed.timeTo,
+						TimeFrom: ed.timeFrom,
+						Date: ed.date,
+						ID: ed.id
+					}
+				}
+			);
 			if( eventMode )
 			{
 				eventMode.close();
 			}
-			Calendar.render();
 			break;
 		case 'setcalendarmode':
 			Calendar.listMode = msg.mode;

@@ -6,8 +6,8 @@ Application.run = function( msg )
 	{
 		var result = {
 			id: ge( 'pID' ).value,
-			timeFrom: ge( 'pTimeTo' ).value.substr( 0, 5 ),
-			timeTo: ge( 'pTimeFrom' ).value.substr( 0, 5 ),
+			timeFrom: ge( 'pTimeFrom' ).value.substr( 0, 5 ),
+			timeTo: ge( 'pTimeTo' ).value.substr( 0, 5 ),
 			date: ge( 'pDate' ).value,
 			allDay: ge( 'pAllDay' ).checked ? true : false,
 			title: ge( 'pName' ).value,
