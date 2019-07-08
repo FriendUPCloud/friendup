@@ -15,7 +15,7 @@
 		<p class="Layout">
 			<div class="FloatRight">
 				<strong>{i18n_all_day}</strong>
-				<input type="checkbox" id="pAllDay" checked="{allday}"/>
+				<input type="checkbox" id="pAllDay"{allday}/>
 			</div>
 			<strong>{i18n_time_from}</strong>
 		</p>
@@ -36,10 +36,12 @@
 		</p>
 	</div>
 	<div class="VContentBottom Padding" id="bottom">
-		<button type="button" class="Button IconSmall fa-save">
+		<button type="button" id="SaveBtn" class="Button IconSmall fa-save">
 			{i18n_save}
 		</button>
 	</div>
+	<input type="hidden" id="pID" value="{ID}"/>
+	<input type="hidden" id="parentView" value="{parentViewId}"/>
 	
 	<style>
 		#top

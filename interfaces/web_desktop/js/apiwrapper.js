@@ -3820,9 +3820,10 @@ function apiWrapper( event, force )
 			return false;
 
 		// Sometimes we want to send to a pre determined view by id.
-		if( msg.destinationViewId )
+		if( msg.destinationViewId || msg.targetViewId )
 		{
-			var cw = GetContentWindowById( app, msg.destinationViewId );
+			var target = msg.destinationViewId ? msg.destinationViewId : msg.targetViewId;
+			var cw = GetContentWindowById( app, target );
 			if( cw )
 			{
 				cw.postMessage( JSON.stringify( msg ), '*' );

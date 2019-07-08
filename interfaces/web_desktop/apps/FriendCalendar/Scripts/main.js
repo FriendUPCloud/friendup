@@ -465,7 +465,7 @@ var Calendar = {
 			eventMode = new View( {
 				title: i18n( 'i18n_add_new_event' ),
 				width: 500,
-				height: 700
+				height: 550
 			} );
 			
 			var from = from + '';
@@ -489,7 +489,9 @@ var Calendar = {
 				timefrom: from,
 				timeto: to,
 				date: date,
-				allday: from == 0 && to == 24 ? 'checked' : ''
+				allday: from == 0 && to == 24 ? ' checked="checked"' : '',
+				ID: 0,
+				parentViewId: Application.viewId
 			};
 			f.i18n();
 			f.onLoad = function( data )
@@ -543,6 +545,7 @@ var Calendar = {
 	}
 };
 
+// An event rect! --------------------------------------------------------------
 var EventRect = function( definition )
 {
 	this.definition = definition;
@@ -564,6 +567,7 @@ EventRect.prototype.init = function()
 	{
 	}
 }
+// End event rect --------------------------------------------------------------
 
 function AddEvent( day )
 {
@@ -574,6 +578,9 @@ function AddEvent( day )
 	} );
 	
 	var f = new File( 'Progdir:Templates/event.html' );
+	f.replacements = {
+		parentViewId: Application.viewId
+	};
 	f.i18n();
 	f.onLoad = function( data )
 	{
@@ -624,8 +631,17 @@ window.addEventListener( 'resize', function()
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
+	console.log( 'Got the message: ', msg );
 	switch( msg.command )
 	{
+		case 'saveevent':
+			console.log( msg.eventData );
+			if( eventMode )
+			{
+				eventMode.close();
+			}
+			Calendar.render();
+			break;
 		case 'setcalendarmode':
 			Calendar.listMode = msg.mode;
 			Calendar.render();
