@@ -99,3 +99,9 @@ Application.run = function( msg )
 	g.execute( 'workgroups' );
 }
 
+// Verify that user wants to share calendar with these users
+function confirmShare()
+{
+	
+}
+
