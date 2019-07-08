@@ -65,6 +65,7 @@ var Calendar = {
 	events: [],
 	weekScrollTop: 0,
 	listMode: 'month',
+	exStyles: null, // extra styles
 	render: function()
 	{
 		if( this.listMode == 'week' )
@@ -122,7 +123,9 @@ var Calendar = {
 		{
 			// We're up
 			if( month != ( new Date( year, month, day ).getMonth() ) )
+			{
 				break;
+			}
 			
 			// Start header
 			if( w == -1 )
@@ -215,6 +218,7 @@ var Calendar = {
 		
 		ge( 'MonthName' ).innerHTML = monthNames[ month ] + ' ' + year;
 		
+		this.dayRows = w;
 		this.refresh();
 	},
 	renderWeek: function()
@@ -605,6 +609,20 @@ var Calendar = {
 			{
 				ch.style.width = cd.clientWidth + 'px';
 			}
+			else
+			{
+				ch.style.width = cd.clientWidth + 'px';
+			}
+		}
+		if( this.listMode == 'month' )
+		{
+			var h = ge( 'MainView' ).offsetHeight - ( ge( 'MainView' ).querySelector( '.CalendarDates' ).offsetTop );
+			if( !this.exStyles )
+			{
+				this.exStyles = document.createElement( 'style' );
+				document.body.appendChild( this.exStyles );
+			}
+			this.exStyles.innerHTML = 'html .Day { height: ' + ( ( h / this.dayRows ) - 1 ) + 'px; }';
 		}
 	}
 };
