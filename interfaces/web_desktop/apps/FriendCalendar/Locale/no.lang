@@ -79,6 +79,9 @@ i18n_user_you                         : Dine hendelser
 # Sharing
 
 i18n_sharing_settings                 : Delingsinnstillinger
+i18n_sharing_nothing                  : Du deler ingenting
+i18n_sharing_nothing_desc             : Ingen av dine kalendere er delt.
+i18n_close                            : Lukk
 
 i18n_confirm_sharing                  : Bekreft deling
 i18n_error_occured                    : Det oppsto en feil.

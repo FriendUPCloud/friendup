@@ -79,6 +79,9 @@ i18n_user_you                         : Your events
 # Sharing
 
 i18n_sharing_settings                 : Sharing settings
+i18n_sharing_nothing                  : Sharing nothing
+i18n_sharing_nothing_desc             : You have no calendars shared.
+i18n_close                            : Close
 
 i18n_confirm_sharing                  : Confirm sharing
 i18n_error_occured                    : An error occured

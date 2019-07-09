@@ -96,6 +96,12 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return false;
 	switch( msg.command )
 	{
+		case 'closesharing':
+			if( this.sharingWindow ) 
+			{
+				this.sharingWindow.close();
+			}
+			break;
 		case 'quit':
 			Application.quit();
 			break;
