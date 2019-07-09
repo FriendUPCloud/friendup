@@ -747,7 +747,20 @@ function GoPrevious( e )
 	{
 		var d = new Date( y, m, d );
 		var t = d.getTime();
-		t -= 86400000 * 7; // (a week)
+		
+		// Find start of week (where monday is 1)
+		var findDay = d.getDay();
+		console.log( 'p This is the day: ' + findDay );
+		if( ( new Date( t ).getDay() ) != 1 )
+		{
+			while( findDay != 1 )
+			{
+				t -= 86400000;
+				findDay = new Date( t ).getDay();
+			}
+		}
+		t -= 604800000; // (a week)
+		console.log( 'now p This is the day: ' + findDay );
 		Calendar.date = new Date( t );
 	}
 	
@@ -771,8 +784,21 @@ function GoNext()
 	{
 		var d = new Date( y, m, d );
 		var t = d.getTime();
-		t += 86400000 * 7; // (a week)
+		
+		// Find start of week (where monday is 1)
+		var findDay = d.getDay();
+		console.log( 'This is the day: ' + findDay );
+		if( ( new Date( t ).getDay() ) != 1 )
+		{
+			while( findDay != 1 )
+			{
+				t -= 86400000;
+				findDay = new Date( t ).getDay();
+			}
+		}
+		t += 604800000; // (a week)
 		Calendar.date = new Date( t );
+		console.log( 'now This is the day: ' + findDay + ' ' + Calendar.date.getDate() + '/' + ( Calendar.date.getMonth() + 1 ) );
 	}
 	
 	Calendar.render();

@@ -102,6 +102,7 @@ Application.run = function( msg )
 // Verify that user wants to share calendar with these users
 function confirmShare()
 {
-	
+	ge( 'top' ).classList.add( 'Hide' );
+	ge( 'ShareDone' ).classList.add( 'Show' );
 }
 

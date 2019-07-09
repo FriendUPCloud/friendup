@@ -27,6 +27,8 @@
 			{i18n_share}
 		</button>
 	</div>
+	<div id="ShareDone">
+	</div>
 	<script>
 		InitTabs( 'sharingTabs' );
 	</script>
@@ -37,7 +39,32 @@
 		}
 		#top
 		{
+			left: 0px;
 			bottom: 50px;
+			transition: left 0.25s;
+			width: 100%;
+		}
+		#bottom
+		{
+			left: 0px;
+			width: 100%;
+			transition: left 0.25s;
+		}
+		#top.Hide, #top.Hide + #bottom
+		{
+			left: -100%;
+		}
+		#ShareDone
+		{
+			position: absolute;
+			top: 0;
+			left: 100%;
+			transition: left 0.25s;
+			width: 100%;
+		}
+		#ShareDone.Show
+		{
+			left: 0px;
 		}
 	</style>
 	<script src="Progdir:Scripts/share.js"></script>
