@@ -81,6 +81,7 @@ i18n_user_you                         : Your events
 i18n_overview_over_sharing            : Overview over calendars shared
 i18n_calendar                         : Calendar
 i18n_workgroups                       : Workgroup(s)
+i18n_unshare                          : Stop sharing to selected user(s)/group(s)
 i18n_users                            : User(s)
 i18n_sharing_settings                 : Sharing settings
 i18n_sharing_nothing                  : Sharing nothing

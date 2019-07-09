@@ -81,6 +81,7 @@ i18n_user_you                         : Dine hendelser
 i18n_overview_over_sharing            : Oversikt over delte kalendre
 i18n_calendar                         : Kalender
 i18n_workgroups                       : Arbeidsgruppe(r)
+i18n_unshare                          : Stopp deling med valgte bruker(e) og gruppe(r)
 i18n_users                            : Bruker(e)
 i18n_sharing_settings                 : Delingsinnstillinger
 i18n_sharing_nothing                  : Du deler ingenting
