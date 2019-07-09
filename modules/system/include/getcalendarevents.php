@@ -59,7 +59,7 @@ if( $data = $SqlDatabase->FetchObjects( '
 				m2.Key = \'UserWorkgroupCalendarRelation\' AND
 				m2.DataTable = \'FUserGroup\' AND
 				m2.ValueString = \'friend\' AND
-				ug1.UserGroupID = m2.DataID AND
+				ug1.UserGroupID = m2.ValueNumber AND
 				ug2.UserGroupID = ug1.UserGroupID AND
 				ug2.UserID = \'' . $User->ID . '\'
 		)

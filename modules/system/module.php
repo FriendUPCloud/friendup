@@ -813,6 +813,10 @@ if( isset( $args->command ) )
 		case 'getdiskcover':
 			require( 'modules/system/include/getdiskcover.php' );
 			break;
+		// Get info about user's calendar sharing 
+		case 'calendarshareinfo':
+			require( 'modules/system/include/calendarshareinfo.php' );
+			break;
 		// Share user's calendar with user or workgroup ... 
 		case 'calendarshare':
 			require( 'modules/system/include/calendarshare.php' );

@@ -78,6 +78,10 @@ i18n_user_you                         : Dine hendelser
 
 # Sharing
 
+i18n_overview_over_sharing            : Oversikt over delte kalendre
+i18n_calendar                         : Kalender
+i18n_workgroups                       : Arbeidsgruppe(r)
+i18n_users                            : Bruker(e)
 i18n_sharing_settings                 : Delingsinnstillinger
 i18n_sharing_nothing                  : Du deler ingenting
 i18n_sharing_nothing_desc             : Ingen av dine kalendere er delt.
@@ -85,6 +89,7 @@ i18n_close                            : Lukk
 
 i18n_confirm_sharing                  : Bekreft deling
 i18n_error_occured                    : Det oppsto en feil.
+i18n_unknown_error_occured            : En ukjent eller umulig feil oppsto.
 i18n_could_not_share                  : Friend kunne ikke dele din kalender med valgte brukere/arbeidsgrupper. Har du fortsatt nettverk?
 i18n_calendar_shared                  : Kalenderen ble delt
 i18n_calendar_shared_desc             : Din kalender ble delt med valgte brukere/arbeidsgrupper.

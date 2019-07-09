@@ -78,6 +78,10 @@ i18n_user_you                         : Your events
 
 # Sharing
 
+i18n_overview_over_sharing            : Overview over calendars shared
+i18n_calendar                         : Calendar
+i18n_workgroups                       : Workgroup(s)
+i18n_users                            : User(s)
 i18n_sharing_settings                 : Sharing settings
 i18n_sharing_nothing                  : Sharing nothing
 i18n_sharing_nothing_desc             : You have no calendars shared.
@@ -85,6 +89,7 @@ i18n_close                            : Close
 
 i18n_confirm_sharing                  : Confirm sharing
 i18n_error_occured                    : An error occured
+i18n_unknown_error_occured            : An uninterpreted or unknown error occured.
 i18n_could_not_share                  : Friend could not share your calendar with your selected users and/or workgroups. Do you have a network connection?
 i18n_calendar_shared                  : Calendar was shared
 i18n_calendar_shared_desc             : Your calendar was shared with your selected users and/or workgroups.
