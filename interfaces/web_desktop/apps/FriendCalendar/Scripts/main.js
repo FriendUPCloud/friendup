@@ -740,7 +740,7 @@ function GoPrevious( e )
 	if( Calendar.listMode == 'month' )
 	{
 		if( --m < 0 ){ m = 11; y--; }
-		Calendar.date = new Date( y, m, 1 );
+		Calendar.date = new Date( y, m, d );
 	}
 	// Week
 	else
