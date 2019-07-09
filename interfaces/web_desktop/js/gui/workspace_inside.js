@@ -4557,6 +4557,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Check volume icon
 			if( icon.Type == 'Door' && ( ( !icon.Filesize && icon.Filesize != 0 ) || isNaN( icon.Filesize ) ) )
 			{
+				if( !icon.Path && icon.Volume )
+				{
+					icon.Path = icon.Volume;
+					if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+						icon.Path += ':';
+				}
+				
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
