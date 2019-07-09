@@ -77,6 +77,11 @@ i18n_user_you                         : Dine hendelser
 
 # Sharing
 
+i18n_confirm_sharing                  : Bekreft deling
+i18n_error_occured                    : Det oppsto en feil.
+i18n_could_not_share                  : Friend kunne ikke dele din kalender med valgte brukere/arbeidsgrupper. Har du fortsatt nettverk?
+i18n_calendar_shared                  : Kalenderen ble delt
+i18n_calendar_shared_desc             : Din kalender ble delt med valgte brukere/arbeidsgrupper.
 i18n_please_select                    : Vennligst gjør et valg
 i18n_please_select_desc               : Du må velge minst en bruker eller en arbeidsgruppe å dele med
 i18n_share_now                        : Bekreft deling
