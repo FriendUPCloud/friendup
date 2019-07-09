@@ -100,7 +100,7 @@ Application.run = function( msg )
 		// No connected workgroups
 		ge( 'Workgroups' ).innerHTML = '<p class="Layout">' + i18n( 'i18n_no_workgroups' ) + '</p>';
 	}
-	g.execute( 'workgroups' );
+	g.execute( 'workgroups', { connected: true } );
 	
 	ge( 'CancelButton' ).onclick = function()
 	{
