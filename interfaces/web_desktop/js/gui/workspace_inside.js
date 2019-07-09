@@ -1775,6 +1775,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
+					document.body.classList.add( 'DefaultWallpaper' );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
