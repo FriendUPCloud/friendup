@@ -77,6 +77,10 @@ i18n_user_you                         : Your events
 
 # Sharing
 
+i18n_please_select                    : Please make selections
+i18n_please_select_desc               : You need to select at least one user or workgroup to share with.
+i18n_share_now                        : Confirm sharing
+i18n_cancel                           : Cancel
 i18n_share_your_calendar              : Share your calendar
 i18n_share_with_a_workgroup_or_user   : Share with a workgroup or user
 i18n_share_this_calendar              : Share this calendar

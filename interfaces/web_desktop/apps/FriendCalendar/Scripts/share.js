@@ -97,12 +97,27 @@ Application.run = function( msg )
 		ge( 'Workgroups' ).innerHTML = '<p class="Layout">' + i18n( 'i18n_no_workgroups' ) + '</p>';
 	}
 	g.execute( 'workgroups' );
+	
+	ge( 'CancelButton' ).onclick = function()
+	{
+		ge( 'top' ).classList.remove( 'Hide' );
+		ge( 'ShareDone' ).classList.remove( 'Show' );
+	}
 }
 
 // Verify that user wants to share calendar with these users
 function confirmShare()
 {
-	ge( 'top' ).classList.add( 'Hide' );
-	ge( 'ShareDone' ).classList.add( 'Show' );
+	// Check that we actually selected somethign
+	var eles = ge( 'top' ).getElementsByClassName( 'Selected' );
+	if( eles.length )
+	{
+		ge( 'top' ).classList.add( 'Hide' );
+		ge( 'ShareDone' ).classList.add( 'Show' );
+	}
+	else
+	{
+		Alert( i18n( 'i18n_please_select' ), i18n( 'i18n_please_select_desc' ) );
+	}
 }
 
