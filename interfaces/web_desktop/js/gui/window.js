@@ -3826,6 +3826,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
 		if( this.flags.transparent )

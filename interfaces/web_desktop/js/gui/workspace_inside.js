@@ -1567,15 +1567,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else 
 						{
+							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
+					}
+					else
+					{
+						document.body.classList.add( 'NoWallpaper' );
 					}
 					// Check for theme specifics
 					if( dat[ 'themedata_' + Workspace.theme ] )
@@ -8268,7 +8277,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( newState == 'active' )
 		{
-			document.title = document.title.split( ' Active' ).join( '' ) + ' Active';
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
@@ -8329,11 +8337,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				clearTimeout( this.sleepingTimeout );
 			Workspace.sleeping = false;
 			Workspace.sleepingTimeout = null;
-			document.title = document.title.split( ' Sleeping' ).join( '' );
 		}
 		else
 		{
-			document.title = document.title.split( ' Active' ).join( '' ) ;
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
 			if( isMobile )
@@ -8360,7 +8366,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			this.sleepingTimeout = setTimeout( function()
 			{
-				document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
 				Workspace.sleeping = true;
 				Workspace.sleepingTimeout = null;
 				Workspace.updateViewState( 'inactive' );
