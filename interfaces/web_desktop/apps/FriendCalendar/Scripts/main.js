@@ -98,7 +98,7 @@ var Calendar = {
 		var month = this.date.getMonth();
 		var year = this.date.getFullYear();
 		var currentDay = this.date.getDay();
-		this.dateArray = [ year, month, currentDay ];
+		this.dateArray = [ year, month, this.date.getDate() ];
 		
 		var day = 1;
 		
@@ -240,7 +240,7 @@ var Calendar = {
 		var month = this.date.getMonth();
 		var year = this.date.getFullYear();
 		var currentDay = this.date.getDay();
-		this.dateArray = [ year, month, currentDay ];
+		this.dateArray = [ year, month, this.date.getDate() ];
 		
 		var startDay = this.date.getDate();
 		
@@ -750,7 +750,6 @@ function GoPrevious( e )
 		
 		// Find start of week (where monday is 1)
 		var findDay = d.getDay();
-		console.log( 'p This is the day: ' + findDay );
 		if( ( new Date( t ).getDay() ) != 1 )
 		{
 			while( findDay != 1 )
@@ -760,7 +759,6 @@ function GoPrevious( e )
 			}
 		}
 		t -= 604800000; // (a week)
-		console.log( 'now p This is the day: ' + findDay );
 		Calendar.date = new Date( t );
 	}
 	
@@ -787,7 +785,6 @@ function GoNext()
 		
 		// Find start of week (where monday is 1)
 		var findDay = d.getDay();
-		console.log( 'This is the day: ' + findDay );
 		if( ( new Date( t ).getDay() ) != 1 )
 		{
 			while( findDay != 1 )
@@ -798,7 +795,6 @@ function GoNext()
 		}
 		t += 604800000; // (a week)
 		Calendar.date = new Date( t );
-		console.log( 'now This is the day: ' + findDay + ' ' + Calendar.date.getDate() + '/' + ( Calendar.date.getMonth() + 1 ) );
 	}
 	
 	Calendar.render();
@@ -817,7 +813,6 @@ Application.run = function( msg, iface )
 		Calendar.listMode = 'week';
 		Calendar.render();
 	}
-	
 	
 	Calendar.date = new Date();
 	Calendar.render();
