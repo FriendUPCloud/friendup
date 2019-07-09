@@ -8,6 +8,7 @@ menu_view                             : Vis
 menu_view_month                       : Vis måned
 menu_view_week                        : Vis uke
 menu_view_day                         : Vis dag
+menu_sharing                          : Delingsinnstillinger
 
 i18n_close                            : Lukk
 i18n_add_source                       : Legg til en kilde
@@ -76,6 +77,8 @@ i18n_sun                              : søn
 i18n_user_you                         : Dine hendelser
 
 # Sharing
+
+i18n_sharing_settings                 : Delingsinnstillinger
 
 i18n_confirm_sharing                  : Bekreft deling
 i18n_error_occured                    : Det oppsto en feil.

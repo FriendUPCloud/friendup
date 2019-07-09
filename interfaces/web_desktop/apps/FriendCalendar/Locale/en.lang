@@ -8,6 +8,7 @@ menu_view                             : View
 menu_view_month                       : Month overview
 menu_view_week                        : Week overview
 menu_view_day                         : Day overview
+menu_sharing                          : Sharing settings
 
 i18n_close                            : Close
 i18n_add_source                       : Add a source
@@ -76,6 +77,8 @@ i18n_sun                              : Sun
 i18n_user_you                         : Your events
 
 # Sharing
+
+i18n_sharing_settings                 : Sharing settings
 
 i18n_confirm_sharing                  : Confirm sharing
 i18n_error_occured                    : An error occured

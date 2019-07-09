@@ -51,6 +51,10 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_sources' ),
 					command: 'sources'
+				},
+				{
+					name: i18n( 'menu_sharing' ),
+					command: 'sharing'
 				}
 			]
 		},
@@ -104,10 +108,36 @@ Application.receiveMessage = function( msg )
 		case 'view_day':
 			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'day' } );
 			break;
-		case 'sources':
-			// TODO: activate window
-			if( this.sourcesWindow )
+		case 'sharing':
+			if( this.sharingWindow ) 
+			{
+				this.sharingWindow.activate();
 				return;
+			}
+			var w = new View( {
+				title: i18n('i18n_sharing_settings'),
+				width: 600,
+				height: 500
+			} );
+			w.onClose = function()
+			{
+				Application.sharingWindow = null;
+			}
+			this.sharingWindow = w;
+			var f = new File( 'Progdir:Templates/sharing.html' );
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				w.setContent( data );
+			}
+			f.load();
+			break;
+		case 'sources':
+			if( this.sourcesWindow )
+			{
+				this.sourcesWindow.activate();
+				return;
+			}
 			var w = new View( {
 				title: i18n('i18n_calendar_sources'),
 				width: 700,
@@ -115,7 +145,7 @@ Application.receiveMessage = function( msg )
 			} );
 			w.onClose = function()
 			{
-				Application.sourcesWindow = false;
+				Application.sourcesWindow = null;
 			}
 			this.sourcesWindow = w;
 			var f = new File( 'Progdir:Templates/sources.html' );
