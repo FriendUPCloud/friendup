@@ -10,14 +10,29 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* Palette names:
+	Turquoise
+	Amethyst
+	Emerald
+	Peter River
+	Sun Flower
+	Carrot
+	Alizarin
+	Orange
+	Wet Asphalt
+*/
 var eventPaletteBackground = [
-	'#a01507'
+	'#1abc9c', '#9b59b6', '#2ecc71', '#3498db', 
+	'#f1c40f', '#e67e22', '#e74c3c', '#f39c12', '#34495e'
 ];
+
 var eventPaletteLighter = [
-	'#e74c3c'
+	'#3cc8ac', '#bd84d3', '#51d55c', '#58ade3',
+	'#f9d543', '#f49c4d', '#ff7364', '#fcb544', '#4a6075'
 ];
 var eventPaletteForeground = [
-	'#ffffff'
+	'#ffffff', '#ffffff', '#ffffff', '#ffffff',
+	'#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'
 ];
 
 Date.prototype.getWeek = function()
@@ -47,7 +62,11 @@ window.addEventListener( 'mousemove', function( e )
 var calendarRowHeight = 30; // <- will be overwritten below w actual height
 
 // Get the users
+var userList = {};
+function updateUsers()
 {
+	ge( 'UsersGroups' ).innerHTML = '';
+	
 	var you = document.createElement( 'div' );
 	you.className = 'User';
 	you.innerHTML = i18n( 'i18n_user_you' );
@@ -59,7 +78,27 @@ var calendarRowHeight = 30; // <- will be overwritten below w actual height
 	you.appendChild( youBall );
 	
 	ge( 'UsersGroups' ).appendChild( you );
+	
+	var inc = 1;
+	
+	for( var a in userList )
+	{
+		if( a == 'i18n_you' )
+			continue;
+		var y = document.createElement( 'div' );
+		y.className = 'User';
+		y.innerHTML = a;
+	
+		var yo = document.createElement( 'div' );
+		yo.className = 'Ball';
+		yo.style.backgroundColor = eventPaletteBackground[inc];
+		yo.style.borderColor = eventPaletteLighter[inc++];
+		y.appendChild( yo );
+		
+		ge( 'UsersGroups' ).appendChild( y );
+	}
 }
+updateUsers();
 
 var Calendar = {
 	events: [],
@@ -182,7 +221,10 @@ var Calendar = {
 							}
 							if( found ) continue;
 							
-							var st = 'background-color: ' + eventPaletteLighter[ 0 ] + ';';
+							var paletteSlot = this.events[key][z].Your ? 0 : 1;
+							userList[ this.events[key][z].Owner ] = this.events[key][z].Owner;
+							
+							var st = 'background-color: ' + eventPaletteBackground[ paletteSlot ] + ';';
 							
 							evts += '<div class="Event" style="' + st + '"><span class="Title">' + this.events[key][z].Name + '</span></div>';
 							duplicates.push( this.events[key][z].Name );
@@ -630,6 +672,7 @@ var Calendar = {
 			}
 			this.exStyles.innerHTML = 'html .Day { height: ' + ( ( h / this.dayRows ) - 1 ) + 'px; }';
 		}
+		updateUsers();
 	}
 };
 
@@ -647,8 +690,12 @@ EventRect.prototype.init = function()
 	this.div.className = 'EventRect MousePointer';
 	this.div.style.top = this.definition.ypos + '%';
 	this.div.style.height = this.definition.height + '%';
-	this.div.style.color = eventPaletteForeground[ 0 ];
-	this.div.style.backgroundColor = eventPaletteBackground[ 0 ];
+	
+	var paletteSlot = this.definition.event.Your ? 0 : 1;
+	userList[ this.definition.event.Owner ] = this.definition.event.Owner;
+	
+	this.div.style.color = eventPaletteForeground[ paletteSlot ];
+	this.div.style.backgroundColor = eventPaletteBackground[ paletteSlot ];
 	this.div.innerHTML = this.definition.event.Name;
 	this.div.onmousedown = function( e )
 	{

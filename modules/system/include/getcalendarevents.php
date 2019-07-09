@@ -150,7 +150,7 @@ if( $rows = $SqlDatabase->fetchObjects( $q ) )
 		$ob->TimeTo = $row->TimeTo;
 		$ob->Date = $row->Date;
 		$ob->Type = $row->Type;
-		$ob->Owner = $row->UserID == $User->ID ? 'i18n_you' : $row->Owner;
+		$ob->Owner = $row->UserID == $User->ID ? 'i18n_you' : $sharedNames->{$row->UserID};
 		$ob->Your = $row->UserID == $User->ID ? true : false;
 		$ob->MetaData = $row->MetaData;
 		$os[] = $ob;
