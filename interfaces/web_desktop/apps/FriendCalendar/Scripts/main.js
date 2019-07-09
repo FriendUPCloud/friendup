@@ -834,6 +834,12 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'closesharing':	
+			if( Application.sharing )
+			{
+				Application.sharing.close();
+			}
+			break;
 		case 'refresh':
 			if( eventMode )
 				eventMode.close();
@@ -926,12 +932,21 @@ setTimeout( drawNow, 10000 );
 
 function doShare()
 {
+	if( Application.sharing )
+	{
+		Application.sharing.activate();
+		return;
+	}
 	var v = new View( {
 		title: i18n( 'i18n_share_your_calendar' ),
 		width: 500,
 		height: 500
 	} );
+	Application.sharing = v;
 	var f = new File( 'Progdir:Templates/share.html' );
+	f.replacements = {
+		pid: Application.viewId
+	};
 	f.i18n();
 	f.onLoad = function( data )
 	{
@@ -939,5 +954,9 @@ function doShare()
 			v.setContent( data );
 	}
 	f.load();
+	v.onClose = function()
+	{
+		Application.sharing = null;
+	}
 }
 

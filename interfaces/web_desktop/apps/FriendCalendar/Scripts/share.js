@@ -168,7 +168,10 @@ function FinalShare()
 					return false;
 				}
 				Alert( i18n( 'i18n_calendar_shared' ), i18n( 'i18n_calendar_shared_desc' ) );
-				CloseWindow();
+				Application.sendMessage( {
+					command: 'closesharing',
+					destinationViewId: ge( 'parentId' ).value
+				} );
 			}
 			m.execute( 'calendarshare', { uids: uids, wids: wids } );
 		}
