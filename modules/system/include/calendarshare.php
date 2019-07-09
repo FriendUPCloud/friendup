@@ -77,7 +77,7 @@ if( $workgroups = $SqlDatabase->FetchObjects( '
 			$d->DataID = $User->ID;
 			$d->DataTable = 'FUser';
 			$d->ValueNumber = intval( $uid, 10 );
-			$d->ValueString = 'Default'; // <- Calendar type - TODO: Dynamic!
+			$d->ValueString = 'friend'; // <- Calendar type - TODO: Dynamic!
 			$d->Load();
 			$d->Save();
 		}
@@ -91,7 +91,7 @@ if( $workgroups = $SqlDatabase->FetchObjects( '
 			$d->DataID = $User->ID;
 			$d->DataTable = 'FUserGroup';
 			$d->ValueNumber = intval( $wid, 10 );
-			$d->ValueString = 'Default'; // <- Calendar type - TODO: Dynamic!
+			$d->ValueString = 'friend'; // <- Calendar type - TODO: Dynamic!
 			$d->Load();
 			$d->Save();
 		}
