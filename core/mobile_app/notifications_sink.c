@@ -403,10 +403,10 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							char *message = NULL;
 							char *application = NULL;
 							char *extra = NULL;
+							char *action = NULL;
 							FULONG timecreated = 0;
 							
 							UMsg *ulistroot = NULL;
-							//List *usersList = ListNew(); // list of users
 							
 							// 8 -> 25
 							for( p = 8 ; p < tokens_found ; p++ )
@@ -450,7 +450,6 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 												le->node.mln_Succ = (MinNode *)ulistroot;
 												ulistroot = le;
 											}
-											//ListAdd( &usersList, username );
 											p++;
 										}
 										p--;
@@ -482,6 +481,11 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									p++;
 									extra = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 								}
+								else if( strncmp( data + t[p].start, "action", size) == 0) 
+								{
+									p++;
+									action = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+								}
 								else if( strncmp( data + t[p].start, "timecreated", size) == 0) 
 								{
 									char *tmp;
@@ -498,47 +502,107 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							
 							if( notification_type >= 0 )
 							{
-								if( ulistroot == NULL || channel_id == NULL || title == NULL || message == NULL )
+								if( action != NULL && strcmp( action, "remove" ) == 0 )
 								{
-									DEBUG( "channel_id: %s title: %s message: %s\n", channel_id, title , message );
+									int status = 0;
+									// go through all users which should get message
 									UMsg *le = ulistroot;
 									while( le != NULL )
 									{
-										UMsg *dme = le;
-										le = (UMsg *)le->node.mln_Succ;
-								
-										if( dme->usrname != NULL )
+										if( le->usrname != NULL )
 										{
-											FFree( dme->usrname );
+											FULONG notificationID = 0;
+											
+											// get notification ID from DB by channel_id
+											
+											SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
+											if( sqllib != NULL )
+											{
+												char *qery = FMalloc( 1048 );
+												qery[ 1024 ] = 0;
+												sqllib->SNPrintF( sqllib, qery, 1024, "SELECT ID FROM FNotification WHERE `UserName`='%s' AND `Channel`='%s'", le->usrname, channel_id );
+												void *res = sqllib->Query( sqllib, qery );
+												if( res != NULL )
+												{
+													char **row;
+													while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+													{
+														
+													}
+													sqllib->FreeResult( sqllib, res );
+												}
+												FFree( qery );
+											}
+											
+											int locstat = MobileAppNotifyUserDelete( SLIB, (char *)le->usrname, notificationID );
+											if( locstat != 0 )
+											{
+												status = locstat;
+											}
 										}
-										FFree( dme );
-									}
-									if( channel_id != NULL ) FFree( channel_id );
-									if( title != NULL ) FFree( title );
-									if( message != NULL ) FFree( message );
-									if( application != NULL ) FFree( application );
-									if( extra != NULL ) FFree( extra );
-									return ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
-								}
-								
-								UMsg *le = ulistroot;
-								while( le != NULL )
-								{
-									if( le->usrname != NULL )
-									{
-										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra, timecreated );
-
-										char reply[256];
-										int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
-#ifdef WEBSOCKET_SEND_QUEUE
-										WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
-#else
-										unsigned int json_message_length = strlen( reply + LWS_PRE );
-										lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-#endif
+										le = (UMsg *)le->node.mln_Succ;
 									}
 									
-									le = (UMsg *)le->node.mln_Succ;
+									char reply[256];
+									int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status );
+#ifdef WEBSOCKET_SEND_QUEUE
+									WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
+#else
+									unsigned int json_message_length = strlen( reply + LWS_PRE );
+									lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
+#endif
+								}
+								else	//	 action != NULL && strcmp( action, "remove" ) == 0 
+									// default action which means that notification must be registered
+								{
+									if( ulistroot == NULL || channel_id == NULL || title == NULL || message == NULL )
+									{
+										DEBUG( "channel_id: %s title: %s message: %s\n", channel_id, title , message );
+										UMsg *le = ulistroot;
+										while( le != NULL )
+										{
+											UMsg *dme = le;
+											le = (UMsg *)le->node.mln_Succ;
+								
+											if( dme->usrname != NULL )
+											{
+												FFree( dme->usrname );
+											}
+											FFree( dme );
+										}
+										if( channel_id != NULL ) FFree( channel_id );
+										if( title != NULL ) FFree( title );
+										if( message != NULL ) FFree( message );
+										if( application != NULL ) FFree( application );
+										if( extra != NULL ) FFree( extra );
+										if( action != NULL ) FFree( action );
+										return ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
+									}
+								
+									int status = 0;
+									UMsg *le = ulistroot;
+									while( le != NULL )
+									{
+										if( le->usrname != NULL )
+										{
+											int locstat = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra, timecreated );
+											
+											if( locstat != 0 )
+											{
+												status = locstat;
+											}
+										}
+										le = (UMsg *)le->node.mln_Succ;
+									}
+									
+									char reply[256];
+									int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status );
+#ifdef WEBSOCKET_SEND_QUEUE
+									WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
+#else
+									unsigned int json_message_length = strlen( reply + LWS_PRE );
+									lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
+#endif
 								}
 							}
 							else
@@ -565,6 +629,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							if( message != NULL ) FFree( message );
 							if( application != NULL ) FFree( application );
 							if( extra != NULL ) FFree( extra );
+							if( action != NULL ) FFree( action );
 						}
 					}
 				}	// is authenticated

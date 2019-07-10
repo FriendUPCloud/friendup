@@ -1202,16 +1202,14 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	return 0;
 }
 
-
 /**
  * Notify user update
  *
  * @param username pointer to string with user name
  * @param notif pointer to Notfication structure
- * @param action id of action
  * @return 0 when message was send, otherwise error number
  */
-int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *notif, int action )
+int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *notif )//, int action )
 {
 	if( username == NULL )
 	{
@@ -1238,23 +1236,6 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	{
 		DEBUG("notif is equal to NULL\n");
 		return 1;
-		//notif = NotificationManagerGetTreeByNotifSentDB( sb->sl_NotificationManager, notifSentID );
-		// memory leak check
-		/*
-		if( notif != NULL )
-		{
-			NotificationSent *ln = notif->n_NotificationsSent;
-			while( ln != NULL )
-			{
-				if( notifSentID == ln->ns_ID )
-				{
-					notifSent = ln;
-					break;
-				}
-				ln = (NotificationSent *)ln->node.mln_Succ;
-			}
-		}
-		*/
 	}
 	
 	if( notif != NULL )
@@ -1325,32 +1306,28 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, FALSE );
 			UserMobileApp *lma = lmaroot;
 			
-			if( action == NOTIFY_ACTION_TIMEOUT )
+			while( lma != NULL )
 			{
-				while( lma != NULL )
-				{
-					NotificationSent *lns = NotificationSentNew();
-					lns->ns_NotificationID = notif->n_ID;
-					lns->ns_UserMobileAppID = lma->uma_ID;
-					lns->ns_RequestID = (FULONG)lma;
-					lns->ns_Target = MOBILE_APP_TYPE_IOS;
-					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
-					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-					
-					Log( FLOG_INFO, "Send notification (update) through Mobile App: IOS '%s' iostoken: %s\n", notif->n_Content, lma->uma_AppToken );
-					
-					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
-					/*
-					int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
-			
+				NotificationSent *lns = NotificationSentNew();
+				lns->ns_NotificationID = notif->n_ID;
+				lns->ns_UserMobileAppID = lma->uma_ID;
+				lns->ns_RequestID = (FULONG)lma;
+				lns->ns_Target = MOBILE_APP_TYPE_IOS;
+				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
+				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+				
+				Log( FLOG_INFO, "Send notification (update) through Mobile App: IOS '%s' iostoken: %s\n", notif->n_Content, lma->uma_AppToken );
+				
+				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
+				/*
+				int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
 					WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, jsonMessageIOS, msgsize );
-					*/
-					
-					NotificationSentDelete( lns );
+				*/
+				
+				NotificationSentDelete( lns );
 
-					lma = (UserMobileApp *)lma->node.mln_Succ;
-				}
-			} // notifSentID == 0
+				lma = (UserMobileApp *)lma->node.mln_Succ;
+			}
 			
 			UserMobileAppDeleteAll( lmaroot );
 
@@ -1360,6 +1337,80 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	else
 	{
 		INFO("[MobileAppNotifyUserUpdate]: No A!\n");
+	}
+	
+	return 0;
+}
+
+/**
+ * Delete notification in mobile app
+ *
+ * @param username pointer to string with user name
+ * @param id notification ID
+ * @return 0 when message was send, otherwise error number
+ */
+int MobileAppNotifyUserDelete( void *lsb, const char *username, FULONG id )
+{
+	if( username == NULL )
+	{
+		Log( FLOG_ERROR, "[MobileAppNotifyUserDelete]: Username is NULL!\n");
+		return 1;
+	}
+	SystemBase *sb = (SystemBase *)lsb;
+	
+	// get message length
+	
+	unsigned int reqLengith = LWS_PRE + 512;
+	
+	DEBUG("[MobileAppNotifyUserDelete] start\n");
+
+	FULONG userID = UMGetUserIDByName( sb->sl_UM, username );
+	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, id );
+	if( bs != NULL )
+	{
+		NotificationManagerNotificationDeleteAndroidNotification( sb->sl_NotificationManager, id, bs->bs_Buffer );
+
+		Log( FLOG_INFO, "Android (remove) tokens which should get notification: %s", bs->bs_Buffer );
+		BufStringDelete( bs );
+	}
+	
+	DEBUG("[MobileAppNotifyUserDelete]: send message to other mobile apps\n");
+	
+	char *jsonMessageIOS;
+	int jsonMessageIosLength = reqLengith+512;
+
+	if( sb->sl_NotificationManager->nm_APNSCert != NULL )
+	{
+		FULONG userID = 0;
+		User *usr = UMGetUserByName( sb->sl_UM, username );
+		if( usr != NULL )
+		{
+			userID = usr->u_ID;
+			//UserDelete( usr );	// user cannot be deleted from list!
+		}
+		
+		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
+		{
+			UserMobileApp *lmaroot = MobleManagerGetMobileAppByUserPlatformDBm( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_IOS, USER_MOBILE_APP_STATUS_APPROVED, FALSE );
+			UserMobileApp *lma = lmaroot;
+			
+			while( lma != NULL )
+			{
+				Log( FLOG_INFO, "Send notification (remove) through Mobile App: IOS token: %s\n", lma->uma_AppToken );
+				
+				NotificationManagerNotificationDeleteIOS( sb->sl_NotificationManager, id, lma->uma_AppToken );
+
+				lma = (UserMobileApp *)lma->node.mln_Succ;
+			}
+			
+			UserMobileAppDeleteAll( lmaroot );
+
+			FFree( jsonMessageIOS );
+		}
+	}
+	else
+	{
+		INFO("[MobileAppNotifyUserDelete]: No A!\n");
 	}
 	
 	return 0;

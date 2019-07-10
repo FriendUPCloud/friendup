@@ -759,7 +759,7 @@ void NotificationSendThread( FThread *data )
 		{
 			DEBUG1("Msg will be sent! ID: %lu content: %s and deleted\n", dnotif->n_ID, dnotif->n_Content );
 		
-			MobileAppNotifyUserUpdate( nstd->sntd_NM->nm_SB, dnotif->n_UserName, dnotif, NOTIFY_ACTION_TIMEOUT );
+			MobileAppNotifyUserUpdate( nstd->sntd_NM->nm_SB, dnotif->n_UserName, dnotif );
 			NotificationDelete( dnotif );
 			le->dle_NotificationPtr = NULL;
 		}
@@ -1299,7 +1299,199 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	{
 		FFree( encmsg );
 	}
+	return 0;
+}
+
+/**
+ * Send notification to APNS server
+ * 
+ * @param nm pointer to NotificationManager
+ * @param id Notification ID
+ * @param tokens device tokens separated by coma
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerNotificationDeleteIOS( NotificationManager *nm, FULONG id, char *tokens )
+{
+	char *startToken = tokens;
+	char *curToken = tokens+1;
+	SSL_CTX *ctx;
+	SSL *ssl;
+	int sockfd;
+	struct hostent *he;
+	struct sockaddr_in sa;
 	
+	if( tokens == NULL || strlen( tokens ) < 6 )
+	{
+		return 21;
+	}
+	
+	DEBUG("Send notifications IOS, cert path >%s<\n", nm->nm_APNSCert );
+	
+	int pushContentLen = 0;
+	int extrasSize = 0; 
+	
+	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
+    
+	SSLeay_add_ssl_algorithms();
+	SSL_load_error_strings();
+	
+	ctx = SSL_CTX_new(TLSv1_2_method());
+	//ctx = SSL_CTX_new(TLSv1_method());
+	if( !ctx )
+	{
+		FERROR("SSL_CTX_new()...failed\n");
+		return 1;
+	}
+    
+	if( SSL_CTX_load_verify_locations( ctx, NULL, ".") <= 0 )
+	{
+		SSL_CTX_free( ctx );
+		ERR_print_errors_fp( stderr );
+		return 2;
+	}
+    
+	if( SSL_CTX_use_certificate_file(ctx, nm->nm_APNSCert, SSL_FILETYPE_PEM) <= 0)
+	{
+		SSL_CTX_free( ctx );
+		ERR_print_errors_fp( stderr );
+		return 3;
+	}
+    
+	if( SSL_CTX_use_PrivateKey_file(ctx, nm->nm_APNSCert, SSL_FILETYPE_PEM ) <= 0)
+	{
+		SSL_CTX_free( ctx );
+		ERR_print_errors_fp( stderr );
+		return 4;
+	}
+    
+	if( SSL_CTX_check_private_key( ctx ) <= 0 )
+	{
+		SSL_CTX_free( ctx );
+		ERR_print_errors_fp( stderr );
+		return 5;
+	}
+	
+	if( nm->nm_APNSSandBox )
+	{
+		he = gethostbyname( APNS_SANDBOX_HOST );
+	}
+	else
+	{
+		he = gethostbyname( APNS_HOST );
+	}
+    
+	if( !he )
+	{
+		SSL_CTX_free( ctx );
+		return 7;
+	}
+	
+	in_port_t sinPort;
+	if( nm->nm_APNSSandBox )
+	{
+		sinPort = htons(APNS_SANDBOX_PORT);
+	}
+	else
+	{
+		sinPort = htons(APNS_PORT);
+	}
+	
+	int successNumber = 0;
+	int failedNumber = 0;		
+			
+	char *pushContent = FMalloc( MAXPAYLOAD_SIZE );
+	if( pushContent != NULL )
+	{
+		while( TRUE )
+		{
+			// go through all tokens separated by , (coma)
+			// and send message to them
+			if( *curToken == 0 || *curToken == ',' )
+			{
+				FBOOL quit = FALSE;
+				if( *curToken != 0 )
+				{
+					*curToken = 0;
+				}
+				else
+				{
+					quit = TRUE;
+				}
+			
+				DEBUG("Send message to : >%s<\n", startToken );
+				
+				sockfd = socket( AF_INET, SOCK_STREAM, 0 );
+				if( sockfd > -1 )
+				{
+					sa.sin_family = AF_INET;
+					memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
+					//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
+	
+					sa.sin_port = sinPort;
+
+					if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) != -1 )
+					{
+						DEBUG("Connected to APNS server\n");
+    
+						ssl = SSL_new( ctx );
+						if( ssl != NULL )
+						{
+							SSL_set_fd( ssl, sockfd );
+							if( SSL_connect( ssl ) != -1 )
+							{
+								
+//{"aps": {"content-available": 1}, "del-id": "1234"}
+
+									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"content-available\":\"1\",\"mutable-content\":1},\"notifid\":\"%lu\"}", id );
+								
+								if( *startToken == ',' )
+								{
+									startToken++;
+								}
+			
+								char *tok = TokenToBinary( startToken );
+								DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
+								if( tok != NULL )
+								{
+									if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
+									{
+										failedNumber++;
+									}
+									else
+									{
+										successNumber++;
+									}
+									FFree( tok );
+								}
+							} // SSL_connect
+							SSL_shutdown( ssl );
+							SSL_free( ssl );
+						} // SSLNew
+					} // connect
+					close( sockfd );
+				}	// sockfd == -1
+
+				startToken = curToken+1;
+			
+				if( quit == TRUE )
+				{
+					break;
+				}
+				curToken++;
+			}
+			else
+			{
+				curToken++;
+			}
+		} // while, sending message
+		FFree( pushContent );
+	}
+	
+	DEBUG("Notifications sent: %d fail: %d\n", successNumber, failedNumber );
+	
+	SSL_CTX_free( ctx );
 	return 0;
 }
 
@@ -1372,6 +1564,66 @@ int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notific
 		DEBUG("Cannot allocate memory for message\n");
 		return -1;
 	}
+	return 0;
+}
+
+
+/**
+ * Send notification to Firebase server
+ * 
+ * @param nm pointer to NotificationManager
+ * @param ID Notification ID
+ * @param tokens device tokens separated by coma
+ * @return 0 when success, otherwise error number
+ */
+
+int NotificationManagerNotificationDeleteAndroidNotification( NotificationManager *nm, FULONG ID, char *tokens )
+{
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+	char *host = FIREBASE_HOST;
 	
+	char tmp[ 256 ];
+	snprintf( tmp, sizeof(tmp), "/fcm/send" );
+	
+	char headers[ 512 ];
+	
+	snprintf( headers, sizeof(headers), "Content-type: application/json\nAuthorization: key=%s", nm->nm_FirebaseKey );
+	int msgSize = 512;
+	
+	if( tokens != NULL ){ msgSize += strlen( tokens ); }
+	
+	char *msg = FMalloc( msgSize );
+	if( msg != NULL )
+	{
+		snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"notifid\":%lu,\"action\":\"remove\"},\"android\":{\"priority\":\"high\"}}", tokens, ID );
+	
+		HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, msg );
+		if( c != NULL )
+		{
+			DEBUG("Client created\n");
+			BufString *bs = HttpClientCall( c, host, 443, TRUE );
+			if( bs != NULL )
+			{
+				DEBUG("Call done\n");
+				char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
+				if( pos != NULL )
+				{
+					DEBUG("Response: %s\n", pos );
+				}
+				BufStringDelete( bs );
+			}
+			HttpClientDelete( c );
+		}
+		else
+		{
+			FERROR("Cannot create client!\n");
+		}
+		FFree( msg );
+	}
+	else
+	{
+		DEBUG("Cannot allocate memory for message\n");
+		return -1;
+	}
 	return 0;
 }

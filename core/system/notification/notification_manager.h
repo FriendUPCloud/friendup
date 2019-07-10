@@ -106,7 +106,11 @@ void NotificationManagerTimeoutThread( FThread *data );
 
 int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
 
+int NotificationManagerNotificationDeleteIOS( NotificationManager *nm, FULONG id, char *tokens );
+
 int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
+
+int NotificationManagerNotificationDeleteAndroidNotification( NotificationManager *nm, FULONG ID, char *tokens );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 

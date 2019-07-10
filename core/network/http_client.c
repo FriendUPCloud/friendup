@@ -244,7 +244,7 @@ User-Agent: Friend/1.0.0
 				message = FMalloc( messageSize );
 				
 				//conlen = 546;
-				printf("--->headerlen %d conlen %d\n\n\n\n\n\n", strlen( c->hc_Headers ), strlen( c->hc_Content ) );
+				DEBUG("--->headerlen %lu conlen %lu\n\n\n\n\n\n", strlen( c->hc_Headers ), strlen( c->hc_Content ) );
 				addsize = snprintf( message, messageSize, "%sHost: %s\nAccept: */*\nContent-Length: %d\nUser-Agent: curl/7.63.0\n%s\r\n\r\n%s", c->hc_MainLine, host, conlen, c->hc_Headers, c->hc_Content );
 			}
 			//int addsize = snprintf( message, sizeof(message), "GET /xml/ HTTP/1.1\nHost: freegeoip.net\nUser-Agent: curl/7.52.1\nAccept: */*\r\n\r\n" );
