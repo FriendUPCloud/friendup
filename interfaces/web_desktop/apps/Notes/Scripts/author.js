@@ -25,24 +25,11 @@ Application.run = function( msg, iface )
 	
 	w.onClose = function( closeWindow )
 	{
-		/*if( !w.saved )
-		{
-			Confirm( 'Are you sure?', 'By closing the application you may lose unsaved data.', function( res )
-			{
-				if( res.data )
-				{
-					Application.quit();
-				}
-				else
-				{
-					closeWindow( false );
-				}
-			} );
-		}*/
 		Application.quit();
 		return false;
 	}
 	
+	// Set up the main menu items ----------------------------------------------
 	w.setMenuItems( [
 		{
 			name: i18n( 'menu_file' ),
@@ -67,10 +54,6 @@ Application.run = function( msg, iface )
 					name: i18n( 'menu_print' ),
 					command: 'print'
 				},
-				/*{
-					name: i18n( 'menu_print_remote' ),
-					command: 'print_remote'
-				},*/
 				{
 					name: i18n( 'menu_quit' ),
 					command: 'quit'
@@ -96,11 +79,7 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_preferences' ),
 					command: 'showprefs'
-				}/*,
-				{
-					name: i18n( 'menu_vr_features' ),
-					command: 'togglevr'
-				}*/
+				}
 			]
 		}
 	] );
@@ -118,16 +97,19 @@ Application.run = function( msg, iface )
 			// Open by path
 			if( msg.args && typeof( msg.args ) != 'undefined' )
 			{
-				//console.log( 'What happens: ', msg.args );
+				console.log( 'What happens: ', msg.args );
 				w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
 			}
 			else if( Application.sessionObject && Application.sessionObject.content )
 			{
 				if( Application.sessionObject.currentDocument )
 				{
+					console.log( 'Loading from session object.' );
 					w.sendMessage( { command: 'loadfiles', files: [ { Path: Application.sessionObject.currentDocument } ] } );
 					return;
 				}
+				
+				console.log( 'Making a new document.' );
 				
 				var msng = { 
 					command: 'newdocument',
