@@ -97,19 +97,15 @@ Application.run = function( msg, iface )
 			// Open by path
 			if( msg.args && typeof( msg.args ) != 'undefined' )
 			{
-				console.log( 'What happens: ', msg.args );
 				w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
 			}
 			else if( Application.sessionObject && Application.sessionObject.content )
 			{
 				if( Application.sessionObject.currentDocument )
 				{
-					console.log( 'Loading from session object.' );
 					w.sendMessage( { command: 'loadfiles', files: [ { Path: Application.sessionObject.currentDocument } ] } );
 					return;
 				}
-				
-				console.log( 'Making a new document.' );
 				
 				var msng = { 
 					command: 'newdocument',
