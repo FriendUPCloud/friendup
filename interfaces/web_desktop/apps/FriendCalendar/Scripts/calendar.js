@@ -100,6 +100,7 @@ Application.receiveMessage = function( msg )
 			if( this.sharingWindow ) 
 			{
 				this.sharingWindow.close();
+				this.getSources( executeRefresh );
 			}
 			break;
 		case 'quit':
@@ -269,7 +270,13 @@ function login( src, callback )
 
 // Refresh calendar events from servers
 function executeRefresh( index )
-{	
+{
+	// Do a refresh!
+	Application.sendMessage( {
+		type: 'calendar',
+		method: 'calendarrefresh'
+	} );
+	
 	// Just use built-in values
 	return UpdateEvents();
 	

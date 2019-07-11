@@ -132,6 +132,9 @@ Application.run = function( msg )
 						{
 							if( e == 'ok' )
 							{
+								Application.sendMessage( {
+									command: 'closesharing'
+								} );
 							}
 							else
 							{
