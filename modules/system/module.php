@@ -821,6 +821,10 @@ if( isset( $args->command ) )
 		case 'calendarshare':
 			require( 'modules/system/include/calendarshare.php' );
 			break;
+		// Unshare user's calendar with user or workgroup ... 
+		case 'calendarunshare':
+			require( 'modules/system/include/calendarunshare.php' );
+			break;
 		// Available calendar modules
 		case 'calendarmodules':
 			$modules = [];

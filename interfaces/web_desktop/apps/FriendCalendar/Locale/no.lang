@@ -81,12 +81,17 @@ i18n_user_you                         : Dine hendelser
 i18n_overview_over_sharing            : Oversikt over delte kalendre
 i18n_calendar                         : Kalender
 i18n_workgroups                       : Arbeidsgruppe(r)
-i18n_unshare                          : Stopp deling med valgte bruker(e) og gruppe(r)
+i18n_unshare                          : Stopp deling
+i18n_unshare_desc                     : Velg arbeidsgrupper eller brukere enkeltvis som du ønsker å avslutte kalender deling med.
 i18n_users                            : Bruker(e)
 i18n_sharing_settings                 : Delingsinnstillinger
 i18n_sharing_nothing                  : Du deler ingenting
 i18n_sharing_nothing_desc             : Ingen av dine kalendere er delt.
 i18n_close                            : Lukk
+i18n_will_unshare                     : Dette vil stoppe å dele dine valgte kalendre med valgte brukere og arbeidsgrupper.
+i18n_no_selections                    : Du har ikke valgt noe
+i18n_you_need_to_select_unshare       : Vennligst velg arbeidsgrupper eller brukere enkeltvis som du ønsker å avslutte kalender deling med.
+i18n_could_not_unshare                : Kunne ikke stoppe delingen med valgte brukere eller arbeidsgrupper. Er du online?
 
 i18n_confirm_sharing                  : Bekreft deling
 i18n_error_occured                    : Det oppsto en feil.

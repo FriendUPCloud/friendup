@@ -81,12 +81,17 @@ i18n_user_you                         : Your events
 i18n_overview_over_sharing            : Overview over calendars shared
 i18n_calendar                         : Calendar
 i18n_workgroups                       : Workgroup(s)
-i18n_unshare                          : Stop sharing to selected user(s)/group(s)
+i18n_unshare                          : Unshare
+i18n_unshare_desc                     : Please choose workgroups or invidivual users who you wish to stop sharing your calendar with.
 i18n_users                            : User(s)
 i18n_sharing_settings                 : Sharing settings
 i18n_sharing_nothing                  : Sharing nothing
 i18n_sharing_nothing_desc             : You have no calendars shared.
 i18n_close                            : Close
+i18n_will_unshare                     : This will unshare your calendar(s) with the selected workgroups or users.
+i18n_no_selections                    : No selections
+i18n_you_need_to_select_unshare       : Please select workgroups or individual users who you wish to stop sharing your calendar with.
+i18n_could_not_unshare                : Could not unshare your calendar with your selected users or workgroups. Are you online?
 
 i18n_confirm_sharing                  : Confirm sharing
 i18n_error_occured                    : An error occured
