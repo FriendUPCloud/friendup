@@ -195,6 +195,8 @@ var Calendar = {
 					if( dobj.getDate() < day )
 						up = false;
 					
+					var thisDay = day;
+					
 					if( up && dobj.getDay() == d )
 					{
 						dliteral = day + '.';
@@ -231,7 +233,7 @@ var Calendar = {
 						}
 						evts += '</div>';
 					}
-					ml += '<div class="Day" ondblclick="AddEvent(' + day + ')">' + evts + '<div class="Number">' + dliteral + '</div></div>';
+					ml += '<div class="Day" onclick="AddEvent(' + year + ',' + ( month + 1 ) + ',' + thisDay + ')">' + evts + '<div class="Number">' + dliteral + '</div></div>';
 				}
 				else
 				{
@@ -425,8 +427,7 @@ var Calendar = {
 					}
 					
 					var p = cyear + '-' + StrPad( cmonth, 2, '0' ) + '-' + StrPad( cday, 2, '0' );
-					ml += '<div class="Day Column" date="' + p + '" id="Day' + 
-						cday + '" ondblclick="AddEvent(' + cyear + ',' + cmonth + ',' + cday + ')">' + 
+					ml += '<div class="Day Column" date="' + p + '" id="Day' + cday + '">' + 
 						timez + evts + '</div>';
 					
 					ctime += 86400000;
@@ -482,6 +483,7 @@ var Calendar = {
 				dayElement: t,
 				day: t.getAttribute( 'date' ).split( '/' )
 			};
+			return cancelBubble( e );
 		} );
 		moveListener = function( e )
 		{
@@ -601,6 +603,8 @@ var Calendar = {
 				}
 				eventMode = null;
 			}
+			
+			return cancelBubble( e );
 		}
 		// Done events ---------------------------------------------------------
 		eventDiv.innerHTML = ml;
@@ -706,6 +710,7 @@ EventRect.prototype.init = function()
 	this.div.onclick = function( e )
 	{
 		EditEvent( self.definition.event.ID );
+		return cancelBubble( e );
 	}
 }
 // End event rect --------------------------------------------------------------
@@ -718,8 +723,21 @@ function AddEvent( year, month, day )
 		height: 500
 	} );
 	
+	eventMode = v;
+	
+	var date = year + '-' + 
+		StrPad( month, 2, '0' ) + '-' +
+		StrPad( day, 2, '0' );
+
 	var f = new File( 'Progdir:Templates/event.html' );
 	f.replacements = {
+		title: '',
+		leadin: '',
+		timefrom: '',
+		timeto: '',
+		date: date,
+		allday: '',
+		ID: 0,
 		parentViewId: Application.viewId
 	};
 	f.i18n();
