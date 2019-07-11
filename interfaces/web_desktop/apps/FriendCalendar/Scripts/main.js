@@ -10,14 +10,29 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* Palette names:
+	Turquoise
+	Amethyst
+	Emerald
+	Peter River
+	Sun Flower
+	Carrot
+	Alizarin
+	Orange
+	Wet Asphalt
+*/
 var eventPaletteBackground = [
-	'#a01507'
+	'#1abc9c', '#9b59b6', '#2ecc71', '#3498db', 
+	'#f1c40f', '#e67e22', '#e74c3c', '#f39c12', '#34495e'
 ];
+
 var eventPaletteLighter = [
-	'#e74c3c'
+	'#3cc8ac', '#bd84d3', '#51d55c', '#58ade3',
+	'#f9d543', '#f49c4d', '#ff7364', '#fcb544', '#4a6075'
 ];
 var eventPaletteForeground = [
-	'#ffffff'
+	'#ffffff', '#ffffff', '#ffffff', '#ffffff',
+	'#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff'
 ];
 
 Date.prototype.getWeek = function()
@@ -47,7 +62,11 @@ window.addEventListener( 'mousemove', function( e )
 var calendarRowHeight = 30; // <- will be overwritten below w actual height
 
 // Get the users
+var userList = {};
+function updateUsers()
 {
+	ge( 'UsersGroups' ).innerHTML = '';
+	
 	var you = document.createElement( 'div' );
 	you.className = 'User';
 	you.innerHTML = i18n( 'i18n_user_you' );
@@ -59,7 +78,27 @@ var calendarRowHeight = 30; // <- will be overwritten below w actual height
 	you.appendChild( youBall );
 	
 	ge( 'UsersGroups' ).appendChild( you );
+	
+	var inc = 1;
+	
+	for( var a in userList )
+	{
+		if( a == 'i18n_you' )
+			continue;
+		var y = document.createElement( 'div' );
+		y.className = 'User';
+		y.innerHTML = a;
+	
+		var yo = document.createElement( 'div' );
+		yo.className = 'Ball';
+		yo.style.backgroundColor = eventPaletteBackground[inc];
+		yo.style.borderColor = eventPaletteLighter[inc++];
+		y.appendChild( yo );
+		
+		ge( 'UsersGroups' ).appendChild( y );
+	}
 }
+updateUsers();
 
 var Calendar = {
 	events: [],
@@ -98,7 +137,7 @@ var Calendar = {
 		var month = this.date.getMonth();
 		var year = this.date.getFullYear();
 		var currentDay = this.date.getDay();
-		this.dateArray = [ year, month, currentDay ];
+		this.dateArray = [ year, month, this.date.getDate() ];
 		
 		var day = 1;
 		
@@ -156,6 +195,8 @@ var Calendar = {
 					if( dobj.getDate() < day )
 						up = false;
 					
+					var thisDay = day;
+					
 					if( up && dobj.getDay() == d )
 					{
 						dliteral = day + '.';
@@ -182,14 +223,17 @@ var Calendar = {
 							}
 							if( found ) continue;
 							
-							var st = 'background-color: ' + eventPaletteLighter[ 0 ] + ';';
+							var paletteSlot = this.events[key][z].Your ? 0 : 1;
+							userList[ this.events[key][z].Owner ] = this.events[key][z].Owner;
+							
+							var st = 'background-color: ' + eventPaletteBackground[ paletteSlot ] + ';';
 							
 							evts += '<div class="Event" style="' + st + '"><span class="Title">' + this.events[key][z].Name + '</span></div>';
 							duplicates.push( this.events[key][z].Name );
 						}
 						evts += '</div>';
 					}
-					ml += '<div class="Day" ondblclick="AddEvent(' + day + ')">' + evts + '<div class="Number">' + dliteral + '</div></div>';
+					ml += '<div class="Day" onclick="AddEvent(' + year + ',' + ( month + 1 ) + ',' + thisDay + ')">' + evts + '<div class="Number">' + dliteral + '</div></div>';
 				}
 				else
 				{
@@ -240,7 +284,7 @@ var Calendar = {
 		var month = this.date.getMonth();
 		var year = this.date.getFullYear();
 		var currentDay = this.date.getDay();
-		this.dateArray = [ year, month, currentDay ];
+		this.dateArray = [ year, month, this.date.getDate() ];
 		
 		var startDay = this.date.getDate();
 		
@@ -383,8 +427,7 @@ var Calendar = {
 					}
 					
 					var p = cyear + '-' + StrPad( cmonth, 2, '0' ) + '-' + StrPad( cday, 2, '0' );
-					ml += '<div class="Day Column" date="' + p + '" id="Day' + 
-						cday + '" ondblclick="AddEvent(' + cyear + ',' + cmonth + ',' + cday + ')">' + 
+					ml += '<div class="Day Column" date="' + p + '" id="Day' + cday + '">' + 
 						timez + evts + '</div>';
 					
 					ctime += 86400000;
@@ -440,6 +483,7 @@ var Calendar = {
 				dayElement: t,
 				day: t.getAttribute( 'date' ).split( '/' )
 			};
+			return cancelBubble( e );
 		} );
 		moveListener = function( e )
 		{
@@ -559,6 +603,8 @@ var Calendar = {
 				}
 				eventMode = null;
 			}
+			
+			return cancelBubble( e );
 		}
 		// Done events ---------------------------------------------------------
 		eventDiv.innerHTML = ml;
@@ -630,6 +676,7 @@ var Calendar = {
 			}
 			this.exStyles.innerHTML = 'html .Day { height: ' + ( ( h / this.dayRows ) - 1 ) + 'px; }';
 		}
+		updateUsers();
 	}
 };
 
@@ -647,8 +694,12 @@ EventRect.prototype.init = function()
 	this.div.className = 'EventRect MousePointer';
 	this.div.style.top = this.definition.ypos + '%';
 	this.div.style.height = this.definition.height + '%';
-	this.div.style.color = eventPaletteForeground[ 0 ];
-	this.div.style.backgroundColor = eventPaletteBackground[ 0 ];
+	
+	var paletteSlot = this.definition.event.Your ? 0 : 1;
+	userList[ this.definition.event.Owner ] = this.definition.event.Owner;
+	
+	this.div.style.color = eventPaletteForeground[ paletteSlot ];
+	this.div.style.backgroundColor = eventPaletteBackground[ paletteSlot ];
 	this.div.innerHTML = this.definition.event.Name;
 	this.div.onmousedown = function( e )
 	{
@@ -659,6 +710,7 @@ EventRect.prototype.init = function()
 	this.div.onclick = function( e )
 	{
 		EditEvent( self.definition.event.ID );
+		return cancelBubble( e );
 	}
 }
 // End event rect --------------------------------------------------------------
@@ -671,8 +723,21 @@ function AddEvent( year, month, day )
 		height: 500
 	} );
 	
+	eventMode = v;
+	
+	var date = year + '-' + 
+		StrPad( month, 2, '0' ) + '-' +
+		StrPad( day, 2, '0' );
+
 	var f = new File( 'Progdir:Templates/event.html' );
 	f.replacements = {
+		title: '',
+		leadin: '',
+		timefrom: '',
+		timeto: '',
+		date: date,
+		allday: '',
+		ID: 0,
 		parentViewId: Application.viewId
 	};
 	f.i18n();
@@ -740,14 +805,25 @@ function GoPrevious( e )
 	if( Calendar.listMode == 'month' )
 	{
 		if( --m < 0 ){ m = 11; y--; }
-		Calendar.date = new Date( y, m, 1 );
+		Calendar.date = new Date( y, m, d );
 	}
 	// Week
 	else
 	{
 		var d = new Date( y, m, d );
 		var t = d.getTime();
-		t -= 86400000 * 7; // (a week)
+		
+		// Find start of week (where monday is 1)
+		var findDay = d.getDay();
+		if( ( new Date( t ).getDay() ) != 1 )
+		{
+			while( findDay != 1 )
+			{
+				t -= 86400000;
+				findDay = new Date( t ).getDay();
+			}
+		}
+		t -= 604800000; // (a week)
 		Calendar.date = new Date( t );
 	}
 	
@@ -771,7 +847,18 @@ function GoNext()
 	{
 		var d = new Date( y, m, d );
 		var t = d.getTime();
-		t += 86400000 * 7; // (a week)
+		
+		// Find start of week (where monday is 1)
+		var findDay = d.getDay();
+		if( ( new Date( t ).getDay() ) != 1 )
+		{
+			while( findDay != 1 )
+			{
+				t -= 86400000;
+				findDay = new Date( t ).getDay();
+			}
+		}
+		t += 604800000; // (a week)
 		Calendar.date = new Date( t );
 	}
 	
@@ -792,7 +879,6 @@ Application.run = function( msg, iface )
 		Calendar.render();
 	}
 	
-	
 	Calendar.date = new Date();
 	Calendar.render();
 }
@@ -808,6 +894,12 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'closesharing':	
+			if( Application.sharing )
+			{
+				Application.sharing.close();
+			}
+			break;
 		case 'refresh':
 			if( eventMode )
 				eventMode.close();
@@ -895,4 +987,36 @@ function drawNow()
 	}
 }
 setTimeout( drawNow, 10000 );
+
+// Sharing ---------------------------------------------------------------------
+
+function doShare()
+{
+	if( Application.sharing )
+	{
+		Application.sharing.activate();
+		return;
+	}
+	var v = new View( {
+		title: i18n( 'i18n_share_your_calendar' ),
+		width: 500,
+		height: 500
+	} );
+	Application.sharing = v;
+	var f = new File( 'Progdir:Templates/share.html' );
+	f.replacements = {
+		pid: Application.viewId
+	};
+	f.i18n();
+	f.onLoad = function( data )
+	{
+		if( v && v.setContent )
+			v.setContent( data );
+	}
+	f.load();
+	v.onClose = function()
+	{
+		Application.sharing = null;
+	}
+}
 
