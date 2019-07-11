@@ -138,14 +138,6 @@ Application.run = function( msg, iface )
 		} );
 	}
 	f.load();
-	
-	/*var noti = new View( { title: 'Notice', width: 300, height: 300 } );
-	var cf = new File( 'Progdir:Templates/notice.html' );
-	cf.onLoad = function( data )
-	{
-		noti.setContent( data );
-	}
-	cf.load();*/
 }
 
 // Return the current state of the application
