@@ -1814,14 +1814,16 @@ function CloseView( win, delayed )
 		
 	}
 
-	// Check window
-	CheckScreenTitle();
-	
 	if( !window.currentMovable )
 	{
 		if( Workspace.screen && Workspace.screen.getFlag )
+		{
 			document.title = Workspace.screen.getFlag( 'title' );
+		}
 	}
+
+	// Check window
+	CheckScreenTitle();
 	
 	if( isMobile )
 		Workspace.redrawIcons();
