@@ -2440,7 +2440,11 @@ function CheckScreenTitle( screen )
 	function setTitleAndMoveMenu( obj, tit )
 	{
 		if( obj && tit )
+		{
 			obj.setFlag( 'title', tit );
+			document.title = tit;
+		}
+		
 		// Enable the global menu
 		if( Workspace && Workspace.menuMode == 'pear' )
 		{
