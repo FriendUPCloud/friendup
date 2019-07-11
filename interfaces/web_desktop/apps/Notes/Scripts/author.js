@@ -123,7 +123,6 @@ Application.run = function( msg, iface )
 				if( Application.sessionObject.currentDocument )
 				{
 					Application.wholeFilename = Application.sessionObject.currentDocument;
-					this.setCorrectTitle();
 				}
 			}
 			else
@@ -133,7 +132,9 @@ Application.run = function( msg, iface )
 					content: '',
 					browserPath: 'Home:Notes/'
 				} );
+				Application.wholeFilename = false;
 			}
+			Application.setCorrectTitle();
 		} );
 	}
 	f.load();
@@ -354,7 +355,7 @@ Application.showPrefs = function()
 
 function sanitizeFilename( data )
 {
-	if( !data ) return '';
+	if( !data ) return i18n( 'i18n_new_document' );
 	var filename = data.split( ':' )[1];
 	if( filename.indexOf( '/' ) > 0 )
 		filename = filename.split( '/' ).pop();
