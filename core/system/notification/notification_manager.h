@@ -104,7 +104,7 @@ int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm );
 
 void NotificationManagerTimeoutThread( FThread *data );
 
-int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
+int NotificationManagerNotificationSendIOS( NotificationManager *nm, FULONG notifid, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
 
 int NotificationManagerNotificationDeleteIOS( NotificationManager *nm, FULONG id, char *tokens );
 

@@ -1092,6 +1092,7 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
  * Send notification to APNS server
  * 
  * @param nm pointer to NotificationManager
+ * @param notifid notification ID
  * @param title title
  * @param content content of message
  * @param sound sound name
@@ -1102,7 +1103,7 @@ FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary
  * @return 0 when success, otherwise error number
  */
 
-int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
+int NotificationManagerNotificationSendIOS( NotificationManager *nm, FULONG notifid, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
 {
 	char *startToken = tokens;
 	char *curToken = tokens+1;
@@ -1240,12 +1241,12 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 								if( encmsg != NULL )
 								{
 									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
-									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
+									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\",\"notifid\":%lu}", title, content, badge, sound, app, encmsg, notifid );
 								}
 								else
 								{
 									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
+									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\",\"notifid\":%lu}", title, content, badge, sound, app, extras, notifid );
 								}
 								
 								if( *startToken == ',' )
@@ -1444,7 +1445,7 @@ int NotificationManagerNotificationDeleteIOS( NotificationManager *nm, FULONG id
 //{"aps": {"content-available": 1}, "del-id": "1234"}
 
 									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"content-available\":\"1\",\"mutable-content\":1},\"notifid\":\"%lu\"}", id );
+									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"content-available\":\"1\",\"mutable-content\":1},\"action\":\"remove\",\"notifid\":\"%lu\"}", id );
 								
 								if( *startToken == ',' )
 								{
