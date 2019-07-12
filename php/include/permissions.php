@@ -179,4 +179,425 @@ function CheckPermission( $type, $identifier, $permission = false )
 	return false;
 }
 
+
+
+
+
+function Permissions( $type, $context, $name, $data = false, $object = false, $objectid = 0 )
+{
+	global $SqlDatabase, $User;	
+	
+	// Seems we only have two different specifications of permissions GLOBAL and WORKGROUP for now, but for example many different apps within the Admin app that needs to be more specified.
+	
+	// Get user level
+	if( $level = $SqlDatabase->FetchObject( '
+		SELECT g.Name FROM FUserGroup g, FUserToGroup ug
+		WHERE
+			g.Type = \'Level\' AND
+			ug.UserID=\'' . $User->ID . '\' AND
+			ug.UserGroupID = g.ID
+	' ) )
+	{
+		$level = $level->Name;
+	}
+	else $level = false;
+	
+	$pem = new stdClass(); $arr = [];
+	
+	// If Permission data is set filter only the requested permissions.
+	if( $data && $data->permission )
+	{
+		$data->permission = ( strstr( $data->permission, '","' ) ? explode( ',', $data->permission ) : $data->permission );
+		
+		if( is_object( $data->permission ) || is_array( $data->permission ) )
+		{
+			foreach( $data->permission as $str )
+			{
+				$arr[$str] = true; 
+				
+				$pem->{ $str } = false;
+			}
+		}
+		else if( is_string( $data->permission ) )
+		{
+			$arr[$data->permission] = true; 
+			
+			$pem->{ $data->permission } = false;
+		}
+		
+	}
+	
+	// TODO: If we need some data output for permissions we might have to move this further down, but more data will have to be specified first.
+	
+	if( $level == 'Admin' )
+	{
+		$out = new stdClass();
+		$out->response = 1;
+		$out->message = 'Permission granted.';
+		$out->data = new stdClass();
+		
+		if( $data && $data->permission )
+		{
+			foreach( $pem as $k=>$v )
+			{
+				$pem->{ $k } = true;
+			}
+			
+			$out->data->permissions = $pem;
+		}
+		
+		$out->data->workgroups = '*';
+		$out->data->users = '*';
+		
+		return $out;
+	}
+	
+	
+	
+	switch( $context )
+	{
+		
+		// App Permission Handler ...
+		
+		case 'application':
+			
+			if( $name )
+			{
+				
+				// Fetch permissions from user based on role relations
+				if( $rows = $SqlDatabase->FetchObjects( $q = '
+					SELECT 
+						p.*, 
+						ug.Name AS RoleName, 
+						ug2.ID AS GroupID, 
+						ug2.Type AS GroupType, 
+						ug2.Name AS GroupName 
+					FROM 
+						FUserToGroup fug,
+						FUserGroup ug, 
+						FUserGroup ug2, 
+						FUserRolePermission p 
+					WHERE 
+							fug.UserID = ' . $User->ID . ' 
+						AND 
+						(
+							(	
+								ug.ID = fug.UserGroupID 
+							)
+							OR
+							(
+								ug.ID IN ( SELECT fgg.ToGroupID FROM FGroupToGroup fgg WHERE fgg.FromGroupID = fug.UserGroupID ) 
+							) 
+						)
+						AND ug.Type = "Role" 
+						AND ug2.ID = fug.UserGroupID 
+						And p.RoleID = ug.ID 
+						AND p.Key ' . ( strstr( $name, '","' ) ? 'IN (' . $name . ')' : '= "' . $name . '"' ) . ' 
+					ORDER BY 
+						p.ID 
+				' ) )
+				{
+					$found = false; 
+					
+					// TODO: Make support for hirarkial workgroups with many parentid levels ...
+					
+					$workgroups = []; 
+					
+					$sysadmin = [ 
+						'PERM_USER_GLOBAL'      => false, 
+						'PERM_WORKGROUP_GLOBAL' => false
+					];
+					
+					// TODO: Are we missing the loggedin users own UserID and Workgroups in the list ???
+					
+					// Go through all roles and set permissions
+					foreach( $rows as $v )
+					{
+						if( $v->Permission )
+						{
+							
+							// If Permission listed doesn't match requested Permission skip to the next in the list. 
+							if( $data && $data->permission && !isset( $arr[$v->Permission] ) )
+							{
+								continue;
+							}
+							
+							// If this key is already set
+							if( isset( $pem->{ $v->Permission } ) )
+							{
+								$pem->{ $v->Permission }[] = $v;
+							}
+							// Just set key with value
+							else
+							{
+								$pem->{ $v->Permission } = array( $v );
+							}
+							
+							// Workgroups that this User has access to ...
+							
+							if( strstr( $v->Permission, '_WORKGROUP' ) && $v->Data )
+							{
+								$workgroups[$v->Data] = $v->Data;
+							}
+							
+							// If we find a global sett wildcard
+							
+							if( isset( $sysadmin[ $v->Permission ] ) )
+							{
+								$sysadmin[ $v->Permission ] = true;
+							}
+							
+							$found = true;
+						}
+					}
+					
+					// UserID's that this User has access to ...
+					
+					if( $workgroups && is_array( $workgroups ) )
+					{
+						if( $rows = $SqlDatabase->FetchObjects( '
+							SELECT 
+								ug.UserID, g.Name AS Workgroup 
+							FROM 
+								`FUserGroup` g, 
+								`FUserToGroup` ug 
+							WHERE 
+									g.ID IN (' . implode( ',', $workgroups ) . ') 
+								AND g.Type = "Workgroup" 
+								AND ug.UserGroupID = g.ID 
+							ORDER BY 
+								ug.UserID ASC 
+						' ) )
+						{
+							$users = [];
+			
+							foreach( $rows as $v )
+							{
+								$users[$v->UserID] = $v->UserID;
+							}
+			
+						}
+					}
+					
+					
+					
+					if( $sysadmin[ 'PERM_WORKGROUP_GLOBAL' ] )
+					{
+						$workgroups = '*';
+					}
+					
+					if( $sysadmin[ 'PERM_USER_GLOBAL' ] )
+					{
+						$users = '*';
+					}
+					
+					
+					
+					// TODO: This must be specified ...
+					
+					switch( $type )
+					{
+						
+						
+						
+						case 'owner':
+							
+							
+							
+							break;
+						
+						
+						
+						case 'admin':
+							
+							
+							
+							break;
+						
+						
+						
+						case 'read':
+							
+							
+							
+							break;
+						
+						
+						
+						case 'execute':
+							
+							
+							
+							break;
+							
+							
+						
+						case 'write':
+							
+							
+							
+							break;
+						
+						
+						
+						case 'delete':
+							
+							
+							
+							break;
+						
+						
+						// List all ( owner, admin, read, execute, write, delete ) ...
+						
+						case 'get':
+						default:
+							
+							
+							
+							break;
+							
+					}
+					
+					
+					
+					// This is only used if it's a specific workgroup or user ...
+					if( $object )
+					{
+						switch( $object )
+						{
+							case 'workgroup':
+								
+								if( isset( $workgroups[$objectid] ) )
+								{
+									$out = new stdClass();
+									$out->response = 1;
+									$out->message = 'Permission granted.';
+									
+									// TODO: Might have to add some more data here ... need a usecase ...
+									
+									$out->data = new stdClass();
+									$out->data->workgroups = (string)$objectid;
+									
+									return $out;
+								}
+								
+								break;
+								
+							case 'user':
+								
+								if( isset( $users[$objectid] ) )
+								{
+									$out = new stdClass();
+									$out->response = 1;
+									$out->message = 'Permission granted.';
+									
+									// TODO: Might have to add some more data here ... need a usecase ...
+									
+									$out->data = new stdClass();
+									$out->data->users = (string)$objectid;
+									
+									return $out;
+								}
+								
+								break;
+								
+							default:
+								
+								$out = new stdClass();
+								$out->response = -1;
+								$out->message = 'Permission denied.';
+								$out->reason = 'Supported object missing ...';
+								
+								return $out;
+								
+								break;
+						}
+						
+						if( !$objectid )
+						{
+							$out = new stdClass();
+							$out->response = -1;
+							$out->message = 'Permission denied.';
+							$out->reason = 'Required objectid missing ...';
+						}
+						else
+						{
+							$out = new stdClass();
+							$out->response = -1;
+							$out->message = 'Permission denied.';
+							$out->reason = 'You don\'t have access ...';
+						}
+						
+						return $out;
+					}
+					
+					
+					
+					if( $found && $pem )
+					{
+						$out = new stdClass();
+						$out->response = 1;
+						$out->message = 'Permission granted.';
+						$out->data = new stdClass();
+						$out->data->permissions = $pem;
+						
+						if( $workgroups )
+						{
+							$out->data->workgroups = ( is_array( $workgroups ) ? implode( ',', $workgroups ) : $workgroups );
+						}
+						
+						if( $users )
+						{
+							$out->data->users = ( is_array( $users ) ? implode( ',', $users ) : $users );
+						}
+						
+						return $out;
+					}
+						
+				}
+				
+				$out = new stdClass();
+				$out->response = -1;
+				$out->message = 'Permission denied.';
+				$out->reason = 'You don\'t have access ...';
+				
+				return $out;
+				
+			}
+			
+			$out = new stdClass();
+			$out->response = -1;
+			$out->message = 'Permission denied.';
+			$out->reason = 'Required name missing ...';
+			
+			return $out;
+			
+			break;
+			
+		// Default to error message about missing context ...
+		
+		default:
+			
+			$out = new stdClass();
+			$out->response = -1;
+			$out->message = 'Permission denied.';
+			$out->reason = 'Required context missing ...';
+			
+			return $out;
+			
+			break;
+			
+	}
+	
+	$out = new stdClass();
+	$out->response = -1;
+	$out->message = 'Permission denied.';
+	$out->reason = 'Something went very wrong ...';
+	
+	return $out;
+	
+}
+
+
+
 ?>

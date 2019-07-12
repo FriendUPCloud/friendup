@@ -5931,7 +5931,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											{
 												try
 												{
-													permissions = JSON.parse( dd );
+													var result = JSON.parse( dd );
+													
+													if( result && result.data && result.data.permissions )
+													{
+														permissions = result.data.permissions;
+													}
 												}
 												catch( e ) {  }
 											}
@@ -5945,7 +5950,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												return callback( false );
 											}
 										}
-										mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+										mm.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : nn ) } );
 									}
 								}
 								
@@ -5953,14 +5958,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								{
 									try
 									{
-										permissions = JSON.parse( d );
+										var result = JSON.parse( d );
+										
+										if( result && result.data && result.data.permissions )
+										{
+											permissions = result.data.permissions;
+										}
+										
+										//console.log( '[1] permissions', permissions );
 									}
 									catch( e ) {  }
 								}
 								
+								//console.log( '[1] Application.checkAppPermission', {e:e,d:d} );
+								
 								runNow();
 							}
-							m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+							m.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : n ) } );
 						}
 						else runNow();
 						
@@ -6027,7 +6041,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												{
 													try
 													{
-														permissions = JSON.parse( dd );
+														var result = JSON.parse( dd );
+														
+														if( result && result.data && result.data.permissions )
+														{
+															permissions = result.data.permissions;
+														}
 													}
 													catch( e ) {  }
 												}
@@ -6041,7 +6060,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													return callback( false );
 												}
 											}
-											mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+											mm.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : nn ) } );
 										}
 									}
 									
@@ -6049,14 +6068,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										try
 										{
-											permissions = JSON.parse( d );
+											var result = JSON.parse( d );
+											
+											if( result && result.data && result.data.permissions )
+											{
+												permissions = result.data.permissions;
+											}
+											
+											//console.log( '[2] permissions', permissions );
 										}
 										catch( e ) {  }
 									}
 									
+									//console.log( '[2] Application.checkAppPermission', {e:e,d:d} );
+									
 									runNow();
 								}
-								m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+								m.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : n ) } );
 							}
 							else runNow();
 							

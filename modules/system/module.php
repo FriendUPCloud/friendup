@@ -253,7 +253,7 @@ if( isset( $args->command ) )
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
 				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey', 
 				'userroleget', 'checkpermission', 'userroleadd', 'userroleupdate', 'userroledelete',
-				'getsystempermissions' 
+				'getsystempermissions', 'permissions'
 			);
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
@@ -2186,6 +2186,11 @@ if( isset( $args->command ) )
 			
 			die( 'fail<!--separate-->{"response":"getserverkey fatal error"}' );
 			
+			break;
+			
+		// System permissions handling go here
+		case 'permissions':
+			require( 'modules/system/permissions/index.php' );
 			break;
 		
 		// NATIVE version commands ---------------------------------------------

@@ -12,7 +12,7 @@
 require_once( 'php/include/permissions.php' );
 
 
-// TODO: Permissions!!! Only list out when you have users below your
+/*// TODO: Permissions!!! Only list out when you have users below your
 //                      level, unless you are Admin
 
 $permission = false;
@@ -71,7 +71,36 @@ else if( $pobj = CheckAppPermission( 'PERM_USER_WORKGROUP', 'Admin' ) )
 if( !$permission && $level != 'Admin' )
 {
 	die('fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
+}*/
+
+if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+{
+	if( is_object( $perm ) )
+	{
+		// Permission denied.
+		
+		if( $perm->response == -1 )
+		{
+			die( 'fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
+		}
+		
+		// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+		if( $perm->response == 1 && isset( $perm->data->users ) && $perm->data->users != '*' )
+		{
+			// UserID's in the Workgroups this user has access to ...
+			
+			if( $args->args == false || $args->args == 'false' )
+			{
+				$args->args = new stdClass();
+			}
+			
+			$args->args->userid = $perm->data->users;
+		}
+	}
 }
+
+
 
 if( $users = $SqlDatabase->FetchObjects( '
 	SELECT u.*, g.Name AS `Level` FROM 

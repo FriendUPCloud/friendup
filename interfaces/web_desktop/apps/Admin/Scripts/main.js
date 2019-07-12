@@ -9,7 +9,7 @@
 *****************************************************************************©*/
 
 // Start!
-Application.run = function( msg ){ initGui(); }
+Application.run = function( msg ){ initGui(); initTest(); }
 
 // Just initialize the GUI!
 function initGui()
@@ -402,5 +402,80 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
 	if( units === 2 ) return sizes[i];
 	
     return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( sizes[i] ) : '' );
+}
+
+
+
+function initTest()
+{
+	
+	// Permission testing
+	
+	var args = [ 
+		// 0
+		{ 
+			type     : 'read', 
+			context  : 'application', 
+			name     : 'Admin',
+			data     : { permission : [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] } 
+		},
+		// 1
+		{ 
+			type     : 'read',
+			context  : 'application', 
+			name     : 'Admin',
+			data     : { permission : 'PERM_USER_GLOBAL' } 
+		},
+		// 2
+		{ 
+			type     : 'read',
+			context  : 'application', 
+			name     : 'Admin',
+			data     : { permission : 'PERM_USER_WORKGROUP' } 
+		}, 
+		// 3
+		{ 
+			type     : 'read', 
+			context  : 'application', 
+			name     : 'Admin' 
+		}, 
+		// 4
+		{ 
+			type     : 'read', 
+			context  : 'application', 
+			name     : 'Admin',
+			object   : 'user',
+			objectid : 21
+		}, 
+		// 5
+		{ 
+			type     : 'read', 
+			context  : 'application', 
+			name     : 'Admin',
+			object   : 'workgroup',
+			objectid : 2000
+		}
+	];
+	
+	for( var i in args )
+	{
+		var m = new Module( 'system' );
+		m.i = i;
+		m.onExecuted = function( e, d )
+		{
+			if( d )
+			{
+				try
+				{
+					d = JSON.parse( d );
+				}
+				catch( e ){  }
+			}
+		
+			console.log( 'initTest('+this.i+') ' + "\r\n" + JSON.stringify( args[this.i] ) + "\r\n", { e:e, result:d } );
+		}
+		m.execute( 'permissions', args[i] );
+	}
+	
 }
 
