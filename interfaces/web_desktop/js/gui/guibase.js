@@ -2442,6 +2442,8 @@ function CheckScreenTitle( screen )
 		if( obj && tit )
 		{
 			obj.setFlag( 'title', tit );
+			if( tit.indexOf( 'Friend Workspace' ) < 0 )
+				tit += ' - Friend Workspace';
 			document.title = tit;
 		}
 		
