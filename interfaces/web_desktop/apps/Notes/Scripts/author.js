@@ -184,7 +184,6 @@ Application.handleKeys = function( k, e )
 			this.closeFile();
 			return true;
 		}
-		//console.log( k );
 	}
 	return false;
 }
@@ -349,10 +348,23 @@ function sanitizeFilename( data )
 	if( !data ) return i18n( 'i18n_new_document' );
 	var filename = data.split( ':' )[1];
 	if( filename.indexOf( '/' ) > 0 )
-		filename = filename.split( '/' ).pop();
+		filename = filename.split( '/' ).join( ' - ' );
+	
+	filename = filename.split( ' - ' );
+	
+	// Special for notes, remove first folder
+	var ar = [];
+	for( var a = 1; a < filename.length; a++ )
+	{
+		ar.push( filename[ a ] );
+	}
+	filename = ar.join( ' - ' );
+	
+	// Join
 	filename = filename.split( '.' );
 	filename.pop();
 	filename = filename.join( '.' );
+	
 	return filename;
 }
 
@@ -448,7 +460,6 @@ Application.receiveMessage = function( msg )
 			this.fileName = msg.filename;
 			this.path = msg.path;
 			this.wholeFilename = msg.path + msg.filename;
-			console.log( '[author.js] currentfile > Here we go: ', this.wholeFilename );
 			this.setCorrectTitle();
 			break;
 		case 'openfile':
@@ -478,7 +489,6 @@ Application.receiveMessage = function( msg )
 			if( msg.path )
 			{
 				this.wholeFilename = msg.path;
-				console.log( '[author.js] remembercontent > ..: ', this.wholeFilename );
 				this.setCorrectTitle();
 			}
 			break;
@@ -487,7 +497,6 @@ Application.receiveMessage = function( msg )
 			{
 				this.wholeFilename = msg.filename;
 				this.setCorrectTitle();
-				console.log( '[author.js] syncload > Here we go: ', this.wholeFilename );
 			}
 			break;
 		case 'load':
