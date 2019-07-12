@@ -94,37 +94,32 @@ Application.run = function( msg, iface )
 	{
 		w.setContent( data, function()
 		{
-			// Open by path
+			// Open by path ----------------------------------------------------
 			if( msg.args && typeof( msg.args ) != 'undefined' )
 			{
 				w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
 			}
+			// We have a session object ----------------------------------------
 			else if( Application.sessionObject && Application.sessionObject.content )
 			{
+				// Load previously active document -----------------------------
 				if( Application.sessionObject.currentDocument )
 				{
 					w.sendMessage( { command: 'loadfiles', files: [ { Path: Application.sessionObject.currentDocument } ] } );
-					return;
 				}
-				
-				var msng = { 
-					command: 'newdocument',
-					content: Application.sessionObject.content,
-					scrollTop: Application.sessionObject.scrollTop,
-					browserPath: 'Home:Notes/'
-				};
-				w.sendMessage( msng );
-				
-				if( Application.sessionObject.currentDocument )
+				else
 				{
-					Application.wholeFilename = Application.sessionObject.currentDocument;
-				}
-				
-				if( Application.sessionObject.currentDocument )
-				{
-					Application.wholeFilename = Application.sessionObject.currentDocument;
+					// Create instead a new document with content from session -----
+					var msng = { 
+						command: 'newdocument',
+						content: Application.sessionObject.content,
+						scrollTop: Application.sessionObject.scrollTop,
+						browserPath: 'Home:Notes/'
+					};
+					w.sendMessage( msng );
 				}
 			}
+			// Create a new, empty document ------------------------------------
 			else
 			{
 				w.sendMessage( { 
@@ -140,11 +135,15 @@ Application.run = function( msg, iface )
 	f.load();
 }
 
-// Return the current state of the application
+// Return the current state of the application (overloaded function)
 Application.sessionStateGet = function()
 {
 	if( this.sessionObject && this.sessionObject.content )
 	{
+		if( !this.sessionObject.currentDocument )
+		{
+			this.sessionObject.currentDocument = this.wholeFilename;
+		}
 		return JSON.stringify( {
 			currentDocument: this.wholeFilename,
 			content: this.sessionObject.content,
@@ -449,6 +448,7 @@ Application.receiveMessage = function( msg )
 			this.fileName = msg.filename;
 			this.path = msg.path;
 			this.wholeFilename = msg.path + msg.filename;
+			console.log( '[author.js] currentfile > Here we go: ', this.wholeFilename );
 			this.setCorrectTitle();
 			break;
 		case 'openfile':
@@ -478,6 +478,7 @@ Application.receiveMessage = function( msg )
 			if( msg.path )
 			{
 				this.wholeFilename = msg.path;
+				console.log( '[author.js] remembercontent > ..: ', this.wholeFilename );
 				this.setCorrectTitle();
 			}
 			break;
@@ -486,6 +487,7 @@ Application.receiveMessage = function( msg )
 			{
 				this.wholeFilename = msg.filename;
 				this.setCorrectTitle();
+				console.log( '[author.js] syncload > Here we go: ', this.wholeFilename );
 			}
 			break;
 		case 'load':
