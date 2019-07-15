@@ -54,28 +54,38 @@ var filebrowserCallbacks = {
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		
+		if( e )
 		{
-			currentViewMode = 'files';
-			Application.updateViewMode();
-		} );
-		cancelBubble( e );
+			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+			{
+				currentViewMode = 'files';
+				Application.updateViewMode();
+			} );
+			cancelBubble( e );
+		}
 	},
 	folderClose( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		
 		Application.currentDocument = null;
 		Application.browserPath = ele;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		
+		if( e )
 		{
-			currentViewMode = 'files';
-			Application.updateViewMode();
-		} );	
-		cancelBubble( e );
+			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+			{
+				currentViewMode = 'files';
+				Application.updateViewMode();
+			} );	
+			cancelBubble( e );
+		}
 	}
 };
 
@@ -602,6 +612,14 @@ Application.initCKE = function()
 		.then( editor => {
 		
 			Application.editor = editor;
+			
+			// Check if there was a race condition
+			if( Application.loadedContentInQueue )
+			{
+				Application.editor.setData( Application.loadedContentInQueue );
+				Application.loadedContentInQueue = null;
+			}
+			
 			Application.initializeToolbar();
 			
 			editor.keystrokes.set( 'Ctrl+S', ( data, stop ) => {
@@ -1394,7 +1412,14 @@ Application.newDocument = function( args )
 			}
 		}
 		
-		Application.editor.setData( args.content );
+		if( Application.editor )
+		{
+			Application.editor.setData( args.content );
+		}
+		else
+		{
+			Application.loadedContentInQueue = args.content;
+		}
 
 		if( args.scrollTop )
 		{
