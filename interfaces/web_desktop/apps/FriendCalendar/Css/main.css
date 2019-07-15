@@ -80,7 +80,6 @@
 {
 	top: 100px;
 	bottom: 50px;
-	background-color: #007E65;
 }
 
 #BottomPanel
@@ -367,7 +366,7 @@
 	content: " ";
 	display: block;
 	float: left;
-	margin: 0 8px 0 0;
+	margin: 0 8px 8px 0;
 	border-width: 4px;
 	border-style: solid;
 	width: 20px;
@@ -407,4 +406,5 @@ body button.IconButton.Active
 	position: absolute;
 	z-index: 100;
 }
+
 

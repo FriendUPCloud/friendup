@@ -2447,8 +2447,8 @@ function checkMobileBrowser()
 			}
 		}
 	}
-	// Ipads are always mobiles
-	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 )
+	// Ipads are always mobiles for apple users at least
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 && Workspace && Workspace.loginUsername == 'applereview' )
 	{
 		//console.log( 'IPAD! ' + navigator.userAgent );
 		window.isMobile = true;

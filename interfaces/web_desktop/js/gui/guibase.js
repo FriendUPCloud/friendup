@@ -2440,7 +2440,13 @@ function CheckScreenTitle( screen )
 	function setTitleAndMoveMenu( obj, tit )
 	{
 		if( obj && tit )
+		{
 			obj.setFlag( 'title', tit );
+			if( tit.indexOf( 'Friend Workspace' ) < 0 )
+				tit += ' - Friend Workspace';
+			document.title = tit;
+		}
+		
 		// Enable the global menu
 		if( Workspace && Workspace.menuMode == 'pear' )
 		{

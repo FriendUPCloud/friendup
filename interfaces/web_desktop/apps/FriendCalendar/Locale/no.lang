@@ -8,6 +8,7 @@ menu_view                             : Vis
 menu_view_month                       : Vis måned
 menu_view_week                        : Vis uke
 menu_view_day                         : Vis dag
+menu_sharing                          : Delingsinnstillinger
 
 i18n_close                            : Lukk
 i18n_add_source                       : Legg til en kilde
@@ -74,3 +75,41 @@ i18n_sun                              : søn
 
 
 i18n_user_you                         : Dine hendelser
+
+# Sharing
+
+i18n_overview_over_sharing            : Oversikt over delte kalendre
+i18n_calendar                         : Kalender
+i18n_workgroups                       : Arbeidsgruppe(r)
+i18n_unshare                          : Stopp deling
+i18n_unshare_desc                     : Velg arbeidsgrupper eller brukere enkeltvis som du ønsker å avslutte kalender deling med.
+i18n_users                            : Bruker(e)
+i18n_sharing_settings                 : Delingsinnstillinger
+i18n_sharing_nothing                  : Du deler ingenting
+i18n_sharing_nothing_desc             : Ingen av dine kalendere er delt.
+i18n_close                            : Lukk
+i18n_will_unshare                     : Dette vil stoppe å dele dine valgte kalendre med valgte brukere og arbeidsgrupper.
+i18n_no_selections                    : Du har ikke valgt noe
+i18n_you_need_to_select_unshare       : Vennligst velg arbeidsgrupper eller brukere enkeltvis som du ønsker å avslutte kalender deling med.
+i18n_could_not_unshare                : Kunne ikke stoppe delingen med valgte brukere eller arbeidsgrupper. Er du online?
+
+i18n_confirm_sharing                  : Bekreft deling
+i18n_error_occured                    : Det oppsto en feil.
+i18n_unknown_error_occured            : En ukjent eller umulig feil oppsto.
+i18n_could_not_share                  : Friend kunne ikke dele din kalender med valgte brukere/arbeidsgrupper. Har du fortsatt nettverk?
+i18n_calendar_shared                  : Kalenderen ble delt
+i18n_calendar_shared_desc             : Din kalender ble delt med valgte brukere/arbeidsgrupper.
+i18n_please_select                    : Vennligst gjør et valg
+i18n_please_select_desc               : Du må velge minst en bruker eller en arbeidsgruppe å dele med
+i18n_share_now                        : Bekreft deling
+i18n_cancel                           : Avbryt
+i18n_share_your_calendar              : Del kalenderen din
+i18n_share_with_a_workgroup_or_user   : Del med en bruker eller arbeidsgruppe
+i18n_share_this_calendar              : Del denne kalenderen
+i18n_default_calendar                 : Standard Friend kalender
+i18n_share                            : Del
+i18n_user                             : Bruker
+i18n_workgroup                        : Arbeidsgruppe
+i18n_no_users_connected               : Ingen brukere er tilknyttet deg.
+i18n_no_workgroups                    : Du er ikke medlem av noen arbeidsgruppe.
+

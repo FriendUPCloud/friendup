@@ -1814,14 +1814,16 @@ function CloseView( win, delayed )
 		
 	}
 
-	// Check window
-	CheckScreenTitle();
-	
 	if( !window.currentMovable )
 	{
 		if( Workspace.screen && Workspace.screen.getFlag )
+		{
 			document.title = Workspace.screen.getFlag( 'title' );
+		}
 	}
+
+	// Check window
+	CheckScreenTitle();
 	
 	if( isMobile )
 		Workspace.redrawIcons();
@@ -4970,17 +4972,6 @@ var View = function( args )
 			};
 			
 			var ue = navigator.userAgent.toLowerCase();
-
-
-
-			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
-			{
-				//var iosbutton = document.createElement( 'div' );
-				//iosbutton.className = 'IconButton IconSmall fa-refresh';
-				//iosbutton.onclick = function() { console.log('switch camera...'); setCameraMode() };
-				//self.content.container.appendChild( iosbutton );
-			}
-			//clean up old one...
 			
 			if( navigator.gm ) { 
 				

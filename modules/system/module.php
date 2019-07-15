@@ -243,7 +243,7 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers',
+				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
@@ -812,6 +812,18 @@ if( isset( $args->command ) )
 			break;
 		case 'getdiskcover':
 			require( 'modules/system/include/getdiskcover.php' );
+			break;
+		// Get info about user's calendar sharing 
+		case 'calendarshareinfo':
+			require( 'modules/system/include/calendarshareinfo.php' );
+			break;
+		// Share user's calendar with user or workgroup ... 
+		case 'calendarshare':
+			require( 'modules/system/include/calendarshare.php' );
+			break;
+		// Unshare user's calendar with user or workgroup ... 
+		case 'calendarunshare':
+			require( 'modules/system/include/calendarunshare.php' );
 			break;
 		// Available calendar modules
 		case 'calendarmodules':
@@ -1495,6 +1507,11 @@ if( isset( $args->command ) )
 		// Get a list of users
 		case 'listusers':
 			require( 'modules/system/include/listusers.php' );
+			break;
+
+		// List users connected to you through workgroups
+		case 'listconnectedusers':
+			require( 'modules/system/include/listconnectedusers.php' );
 			break;
 
 		// store new public key

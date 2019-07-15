@@ -1147,8 +1147,12 @@ Application.setCurrentDocument = function( pth )
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
 	
+	// Store the path also for the browser
+	Application.browserPath = this.path;
+
 	// Update filebrowser
 	this.fileBrowser.setPath( this.path );
+	
 	
 	Application.refreshFilePane();
 	
