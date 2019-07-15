@@ -73,6 +73,8 @@ if( !$permission && $level != 'Admin' )
 	die('fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
 }*/
 
+// TODO: Have to look into not being to specific if this module call is used other places for listing users then the Admin app ...
+
 if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
 {
 	if( is_object( $perm ) )

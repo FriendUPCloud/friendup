@@ -9,7 +9,7 @@
 *****************************************************************************©*/
 
 // Start!
-Application.run = function( msg ){ initGui(); initTest(); }
+Application.run = function( msg ){ initGui(); /*initTest();*/ }
 
 // Just initialize the GUI!
 function initGui()
@@ -454,6 +454,12 @@ function initTest()
 			name     : 'Admin',
 			object   : 'workgroup',
 			objectid : 2000
+		},
+		// 6
+		{ 
+			type     : 'read', 
+			context  : 'application', 
+			name     : 'Users' 
 		}
 	];
 	
