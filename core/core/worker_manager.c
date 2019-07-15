@@ -309,16 +309,20 @@ void WorkerManagerDebug( void *sb )
 	WorkerManager *wm = (WorkerManager *)locsb->sl_WorkerManager;
 	int i;
 	
-	for( i=0 ; i < wm->wm_MaxWorkers ; i++ )
+	if( FRIEND_MUTEX_LOCK( &wm->wm_Mutex ) == 0 )
 	{
-		if( wm->wm_Workers[ i ] != NULL )
+		for( i=0 ; i < wm->wm_MaxWorkers ; i++ )
 		{
-			Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
-			if( request != NULL )
+			if( wm->wm_Workers[ i ] != NULL )
 			{
-				DEBUG("[WorkerManager] %s pointer to session %p\n", request->content, request->h_UserSession );
+				Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
+				if( request != NULL )
+				{
+					Log( FLOG_ERROR, "[WorkerManager] worker: %d content: %s pointer to session: %p rawrequest: %s\n", i, request->content, request->h_UserSession, request->rawRequestPath );
+				}
 			}
 		}
+		FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 	}
 }
 

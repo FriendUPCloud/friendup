@@ -114,7 +114,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 			if( FRIEND_MUTEX_LOCK( &(wscdata->wsc_Mutex) ) == 0 )
 			{
 				DEBUG("lock created1\n");
-				//wscdata->wsc_InUseCounter++;
+
 				for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
 				{
 					unsigned char *queueMsg = FMalloc( WS_PROTOCOL_BUFFER_SIZE );
@@ -158,7 +158,6 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 						// callback writeable was here
 					}
 				}
-				//wscdata->wsc_InUseCounter--;
 				
 				if( wscdata->wsc_Wsi != NULL )
 				{
@@ -177,7 +176,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 		if( FRIEND_MUTEX_LOCK( &(wscdata->wsc_Mutex) ) == 0 )
 		{
 			DEBUG("lock created\n");
-			//wscdata->wsc_InUseCounter++;
+
 			if( wscdata->wsc_Wsi != NULL && wscdata->wsc_UserSession != NULL )
 			{
 				int val;
@@ -199,8 +198,6 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 			struct lws *wsi = wscdata->wsc_Wsi;
 			
 			DEBUG("In use counter %d\n", wscdata->wsc_InUseCounter );
-			
-			//wscdata->wsc_InUseCounter--;
 			
 			if( wscdata->wsc_Wsi != NULL )
 			{
@@ -889,9 +886,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			Log( FLOG_DEBUG, "[WS] Callback session before closed, in use: %d\n", fcd->wsc_InUseCounter );
 			//if( fcd->fcd_WSClient != NULL )
 			{
-				//fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
-				//usleep( 2000 );
-				
 				fcd->wsc_Wsi = NULL;
 				int val = 0;
 				while( TRUE )
@@ -918,10 +912,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				
 				FQDeInitFree( &(fcd->wsc_MsgQueue) );
 				pthread_mutex_destroy( &(fcd->wsc_Mutex) );
-				
-				//DeleteWebSocketConnection( SLIB, wsi, fcd );
-				//FFree( fcd->fcd_WSClient );
-				//fcd->wsc_WebsocketsServerClient = NULL;
 			}
 			INFO("[WS] Callback session closed\n");
 
@@ -955,21 +945,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				FBOOL login = FALSE;
 				
 				UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
-				/*
-				if( fcd->fcd_WSClient == NULL )
-				{
-					DECREASE_WS_THREADS();
-					return 0;
-				}
-				*/
-				//if( fcd->wsc_WebsocketsServerClient != NULL )
-				{
-					FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-					//fcd->wsc_InUseCounter++;
-					fcd->wsc_LastPingTime = time( NULL );
-					DEBUG("\t\t\t\t\tRECEIVE->%d\n", fcd->wsc_InUseCounter );
-					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-				}
+
+				FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
+				fcd->wsc_LastPingTime = time( NULL );
+				DEBUG("\t\t\t\t\tRECEIVE->%d\n", fcd->wsc_InUseCounter );
+				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+				
 				// if we want to move full calls to WS threads
 				
 //				Socket *sock = SocketWSOpen( wsi );
@@ -1798,17 +1779,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						
 						DECREASE_WS_THREADS();
 						FFree( t );
-						
-						//UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
-						//if( wscl != NULL )
-						{
-							//FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-							//fcd->wsc_InUseCounter--;
-							//DEBUG("\t\t\t\t\tRECEIVE END 0->%d\n", fcd->wsc_InUseCounter );
-							//FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 
-							FLUSH_QUEUE();
-						}
+						FLUSH_QUEUE();
 						
 						if( in != NULL )
 						{
@@ -1823,15 +1795,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					FFree( t );
 				}
 				DEBUG("Webcall finished!\n");
-				//WebsocketServerClient *wscl = fcd->fcd_WSClient;
-				//if( fcd->wsc_WebsocketsServerClient != NULL && login == FALSE )
-				//if( login == FALSE )
-				{
-					//FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
-					//fcd->wsc_InUseCounter--;
-					//DEBUG("\t\t\t\t\t->%d\n", fcd->wsc_InUseCounter );
-					//FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-				}
 			}
 			
 			if( len > 0 )

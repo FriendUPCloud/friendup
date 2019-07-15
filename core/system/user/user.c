@@ -166,28 +166,6 @@ void UserRemoveSession( User *usr, void *ls )
 					}
 				}
 			}
-			/*
-		while( actus != NULL )
-		{
-			prevus = actus;
-			actus = (UserSessListEntry *)actus->node.mln_Succ;
-			
-			if( prevus->us == remses )
-			{
-				if( prevus == usr->u_SessionsList )
-				{
-					usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
-				}
-				else
-				{
-					prevus->node.mln_Succ = (MinNode *)actus;
-				}
-				usr->u_SessionsNr--;
-				removed = TRUE;
-				break;
-			}
-		}
-		*/
 		}
 		
 		if( usr->u_SessionsNr <= 0 )

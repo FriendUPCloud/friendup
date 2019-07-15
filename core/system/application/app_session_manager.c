@@ -234,6 +234,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		{
 			SASUList *le = as->as_UserSessionList;
 			SASUList *ple = as->as_UserSessionList;
+			DEBUG("mutex locked\n");
 			
 			while( le != NULL )
 			{
@@ -274,11 +275,13 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 				}
 			}
 			
+			DEBUG("Mutex unlocked\n");
 			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
 			as = (AppSession *)as->node.mln_Succ;
 			
 			if( toBeRemoved != NULL )
 			{
+				DEBUG("App session will be delted\n");
 				AppSessionDelete( toBeRemoved );
 			}
 		}
