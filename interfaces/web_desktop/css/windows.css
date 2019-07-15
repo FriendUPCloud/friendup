@@ -1623,6 +1623,7 @@ html body.Loading #FriendScreenOverlay
 	width: calc(100% - 20px);
 	height: calc(100% - 40px);
 	left: 10px;
+	top: 40px;
 }
 
 [mobile] #FriendScreenOverlay .StatusBox .HContent15

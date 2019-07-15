@@ -45,7 +45,8 @@ if( $rows = $SqlDatabase->FetchObjects( '
 			// For repositories
 			if( $path == 'repository/' )
 			{
-				if( file_exists( $path . $file . '/Signature.sig' ) )
+				// TODO: implement dir listing with $file
+				/*if( file_exists( $path . $file . '/Signature.sig' ) )
 				{
 					if( !( $d = file_get_contents( 'repository/' . $file . '/Signature.sig' ) ) )
 						continue;
@@ -53,7 +54,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 						continue;
 					if( !isset( $js->validated ) )
 						continue;
-				}
+				}*/
 			}
 			if( file_exists( $path . '/' . $v->Name . '/preview.png' ) )
 			{

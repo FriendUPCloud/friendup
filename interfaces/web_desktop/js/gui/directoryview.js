@@ -8,8 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// DirectoryView class ---------------------------------------------------------
-
 // Name fix
 function _nameFix( wt )
 {
@@ -32,6 +30,28 @@ function _nameFix( wt )
 	return wt;
 }
 
+function _getBase64Image( img )
+{
+	var canvas = document.createElement( 'canvas' );
+	canvas.width = img.width; canvas.height = img.height;
+	var ctx = canvas.getContext( '2d' );
+	ctx.drawImage( img, 0, 0 );
+	return canvas.toDataURL( 'image/png' );
+}
+
+Friend = window.Friend || {};
+
+// Setup icon cache
+if( !Friend.iconCache )
+{
+	Friend.iconCache = {
+		maxCount: 1500,             // How many icons to keep in cache
+		index: 0,                   // For seenList
+		seenList: []                // List of cached icons by index
+	};
+}
+
+// DirectoryView class ---------------------------------------------------------
 DirectoryView = function( winobj, extra )
 {	
 	var ws = GetWindowStorage( winobj.uniqueId );
@@ -3688,11 +3708,60 @@ function DirectoryContainsFile( filename, directoryContents )
 // Icon class ------------------------------------------------------------------
 // -------------------------------------------------------------------------
 
-var FileIconCache = {};
-
 FileIcon = function( fileInfo )
 {
 	this.Init ( fileInfo );
+}
+
+// Put in cache
+FileIcon.prototype.setCache = function( path, directoryview, date )
+{
+	var dir = directoryview.window.fileInfo.Path;
+	if( !Friend.iconCache[ dir ] )
+		Friend.iconCache[ dir ] = {};
+	if( !Friend.iconCache[ dir ][ path ] )
+	{
+		var currentIndex = Friend.iconCache.index++;
+		// Wrap around
+		if( currentIndex > Friend.iconCache.maxCount )
+		{
+			currentIndex = Friend.iconCache.index = 0;
+		}
+		var i = new Image();
+		i.src = path;
+		i.date = date;
+		i.onload = function()
+		{
+			Friend.iconCache[ dir ][ path ] = i;
+			// Overwriting?
+			if( Friend.iconCache.seenList[ currentIndex ] )
+			{
+				var dd = Friend.iconCache.seenList[ currentIndex ].dir;
+				var pp = Friend.iconCache.seenList[ currentIndex ].path;
+				delete Friend.iconCache[ dd ][ pp ];
+			}
+			// Write new
+			Friend.iconCache.seenList[ currentIndex ] = {
+				dir: dir,
+				path: path
+			};
+		}
+	}
+}
+
+// Get image from cache
+FileIcon.prototype.getCache = function( path, directoryview, date )
+{
+	var dir = directoryview.window.fileInfo.Path;
+	if( !Friend.iconCache[ dir ] ) return false;
+	if( !Friend.iconCache[ dir ][ path ] ) return false;
+	var i = Friend.iconCache[ dir ][ path ];
+	if( i.date != date )
+	{
+		Friend.iconCache[ dir ][ path ] = null;
+		return false;
+	}
+	return _getBase64Image( i );
 }
 
 // -----------------------------------------------------------------------------
@@ -3990,8 +4059,22 @@ FileIcon.prototype.Init = function( fileInfo )
 			case 'TypePNG':
 			case 'TypeGIF':
 				var ur = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path;
+				
+				// Get from cache
+				var tmp = false;
+				if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
+				{
+					ur = tmp;
+				}
+				
 				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
 				iconInner.className = 'Thumbnail';
+				
+				// Put in cache
+				if( !tmp )
+				{
+					this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
+				}
 				break;
 		}
 	}

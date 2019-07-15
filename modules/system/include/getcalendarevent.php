@@ -9,7 +9,7 @@
 * General Public License, found in the file license_lgpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
-if( $row = $SqlDatabase->fetchObject( $q = '
+if( $row = $SqlDatabase->fetchObject( '
 	SELECT * FROM FCalendar WHERE 
 	UserID=\'' . $User->ID . '\' AND 
 	`ID` = \'' . intval( $args->args->cid, 10 ) . '\'

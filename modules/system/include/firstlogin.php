@@ -83,7 +83,7 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 }
 
 // Prevent wizard for user
-if( $Config->preventwizard == 1 )
+if( isset( $Config ) && isset( $Config->preventwizard ) && $Config->preventwizard == 1 )
 {
 	$s = new dbIO( 'FSetting' );
 	$s->UserID = $User->ID;

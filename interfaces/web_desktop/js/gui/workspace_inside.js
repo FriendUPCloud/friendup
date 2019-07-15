@@ -782,7 +782,7 @@ var WorkspaceInside = {
 						function notificationRead()
 						{
 							//console.log( 'Foo bar: ', msg.notificationData );
-							if( Workspace.currentViewState == 'active' )
+							if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 							{
 								if( trash )
 									clearTimeout( trash );
@@ -1567,15 +1567,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else 
 						{
+							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
+					}
+					else
+					{
+						document.body.classList.add( 'NoWallpaper' );
 					}
 					// Check for theme specifics
 					if( dat[ 'themedata_' + Workspace.theme ] )
@@ -1766,6 +1775,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
+					document.body.classList.add( 'DefaultWallpaper' );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -2978,6 +2988,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										friendApp.onWorkspaceReady();
 									}
+									Workspace.updateViewState( 'active' );
 								}
 							}, 50 );
 						}
@@ -4546,6 +4557,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Check volume icon
 			if( icon.Type == 'Door' && ( ( !icon.Filesize && icon.Filesize != 0 ) || isNaN( icon.Filesize ) ) )
 			{
+				if( !icon.Path && icon.Volume )
+				{
+					icon.Path = icon.Volume;
+					if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+						icon.Path += ':';
+				}
+				
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -8257,7 +8275,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
 
 		// Don't update if not changed
-		if( this.currentViewState == newState ) return;
+		if( this.currentViewState == newState )
+		{
+			this.sleepTimeout();
+			return;
+		}
 		
 		//mobileDebug( 'Starting update view state.' + newState, true );
 		
@@ -8317,6 +8339,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			// IMPORTANT:
+			// Sleep in 15 minutes
+			if( this.sleepingTimeout )
+				clearTimeout( this.sleepingTimeout );
+			Workspace.sleeping = false;
+			Workspace.sleepingTimeout = null;
 		}
 		else
 		{
@@ -8333,7 +8361,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				dl.execute( 'mobile/setwsstate' );
 			}
 		}
+		this.sleepTimeout();
 		this.currentViewState = newState;
+	},
+	sleepTimeout: function()
+	{
+		// IMPORTANT: Only for desktops!
+		// Sleep in 15 minutes
+		if( !window.friendApp )
+		{
+			if( this.sleepingTimeout )
+				return;
+			this.sleepingTimeout = setTimeout( function()
+			{
+				Workspace.sleeping = true;
+				Workspace.sleepingTimeout = null;
+				Workspace.updateViewState( 'inactive' );
+			}, 1000 * 60 * 1 );
+		}
 	},
 	// Execute when everything is ready
 	onReady: function()
@@ -8470,10 +8515,15 @@ function DoorsOutListener( e )
 	{
 		movableMouseUp( e );
 	}
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsLeaveListener( e )
 {
 	movableMouseUp( e );
+	
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsKeyUp( e )
 {
@@ -8484,6 +8534,9 @@ function DoorsKeyUp( e )
 }
 function DoorsKeyDown( e )
 {
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
+
 	var w = e.which ? e.which : e.keyCode;
 	var tar = e.target ? e.target : e.srcElement;
 	Workspace.shiftKey = e.shiftKey;
@@ -9328,14 +9381,17 @@ Workspace.receivePush = function( jsonMsg )
 				// on the Friend Core side
 				if( msg.id )
 				{
-					// Function to set the notification as read...
-					var l = new Library( 'system.library' );
-					l.onExecuted = function(){};
-					l.execute( 'mobile/updatenotification', { 
-						notifid: msg.id, 
-						action: 1,
-						pawel: 1
-					} );
+					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+					{
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.id, 
+							action: 1,
+							pawel: 1
+						} );
+					}
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
@@ -9354,14 +9410,17 @@ Workspace.receivePush = function( jsonMsg )
 		// Function to set the notification as read...
 		function notificationRead()
 		{
-			messageRead = true;
-			var l = new Library( 'system.library' );
-			l.onExecuted = function(){};
-			l.execute( 'mobile/updatenotification', { 
-				notifid: msg.id, 
-				action: 1,
-				pawel: 2
-			} );
+			if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+			{
+				messageRead = true;
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.id, 
+					action: 1,
+					pawel: 2
+				} );
+			}
 		}
 	
 		// Application not found? Start it!

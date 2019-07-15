@@ -6,14 +6,15 @@
 	background: #0665A2;
 	position: relative;
 	box-shadow: inset 0px 5px 150px rgba(0,0,0,0.1);
+	box-sizing: border-box;
+	border-bottom: 1px solid rgba(0,0,0,0.4);
 }
 
 #TopPanel > h1
 {
 	text-align: center;
-	font-size: 70px;
+	font-size: 45px;
 	color: white;
-	text-shadow: 0px 2px 6px rgba(0,0,0,0.5);
 	line-height: 95px;
 	font-weight: normal;
 }
@@ -23,10 +24,24 @@
 	position: absolute;
 	width: 50px;
 	height: 50px;
-	top: 25px;
+	top: 34px;
 	cursor: hand;
 	cursor: pointer;
 	z-index: 99;
+	font-family: fontawesome;
+	color: white;
+	font-size: 2.5em;
+	text-align: center;
+}
+
+.WeekContainer, .MonthContainer
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
 }
 
 #LeftCol
@@ -42,20 +57,29 @@
 #GoPrevious
 {
 	left: 20px;
-	background: url(Progdir:Gfx/arrow_left.png);
 }
 
 #GoNext
 {
 	right: 20px;
-	background: url(Progdir:Gfx/arrow_right.png);
+}
+
+#GoPrevious:after
+{
+	content: "\f0a8";
+	display: block;
+}
+
+#GoNext:after
+{
+	content: "\f0a9";
+	display: block;
 }
 
 #MainView
 {
 	top: 100px;
 	bottom: 50px;
-	background-color: #007E65;
 }
 
 #BottomPanel
@@ -85,6 +109,7 @@
 	width: 100%;
 	height: calc(100% - 30px);
 	overflow: auto;
+	background-color: #191919;
 }
 
 .EventRect
@@ -96,6 +121,13 @@
 	padding: 10px 4px;
 	text-align: left;
 	font-size: 0.9em;
+	border-radius: 2px;
+}
+
+.EventRect.New
+{
+	background-color: rgba(23,98,81,0.8);
+	color: white;
 }
 
 .EventRect.Red
@@ -116,6 +148,7 @@
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
+	border-radius: 2px 2px 0 0;
 }
 
 .EventRect:before:hover
@@ -135,6 +168,7 @@
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
+	border-radius: 0 0 2px 2px;
 }
 
 .EventRect:after:hover
@@ -165,6 +199,27 @@
 .Day.Column
 {
 	height: auto;
+	border-right: 1px solid rgba(0,0,0,0.5);
+}
+
+.Day.Column:not(.Label):nth-child(odd)
+{
+	border-right: 1px solid rgba(0,0,0,0.7);
+}
+
+.Day.Column.Label:nth-child(odd)
+{
+	border-right: 1px solid rgba(0,0,0,0.5);
+}
+
+.Day.Column.Label:nth-child(even)
+{
+	border-right: 1px solid rgba(0,0,0,0.7);
+}
+
+.Day.Column:last-child
+{
+	border-right: 0;
 }
 
 .Day > .Number
@@ -189,7 +244,14 @@
 	width: 100%;
 	color: white;
 	font-size: 16px;
+	text-align: left;
+	margin-left: 15px;
+}
+
+.Week .Day.Label .LabelText
+{
 	text-align: center;
+	margin-left: 0;
 }
 
 .CalendarRow.HRow
@@ -292,6 +354,11 @@
 	clear: both;
 }
 
+.CalendarDates > .CalendarRow:last-child
+{
+	border-bottom: 1px solid #161616;
+}
+
 /* Sidebar */
 
 .User .Ball
@@ -299,7 +366,7 @@
 	content: " ";
 	display: block;
 	float: left;
-	margin: 0 8px 0 0;
+	margin: 0 8px 8px 0;
 	border-width: 4px;
 	border-style: solid;
 	width: 20px;
@@ -319,4 +386,25 @@
 {
 	clear: both;
 }
+
+/* Buttons */
+
+body button.IconButton.Active
+{
+	background: #066099 !important;
+	color: white !important;	
+}
+
+/* Marker */
+#nowdiv
+{
+	width: calc(100% - 10%);
+    left: 8%;
+	border-top: 2px dashed rgba(255,255,255,0.15);
+	height: 1px;
+	background: transparent;
+	position: absolute;
+	z-index: 100;
+}
+
 

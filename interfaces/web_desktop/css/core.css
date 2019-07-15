@@ -342,9 +342,8 @@ button, .Button
 body button.IconButton:not(:hover),
 body .Button.IconButton:not(:hover)
 {
-	background: none !important;
-	background-color: none !important;
-	border: 1px solid transparent !important;
+	background-color: transparent !important;
+	border: 1px solid rgba(0,0,0,0) !important;
 	padding: 5px 5px;
 }
 
@@ -2020,7 +2019,7 @@ body.Loading > #Screens
 	opacity: 0;
 }
 
-body:not(.friendapp):not([mobile]).Loading:after
+body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after
 {
 	content: ' ';
 	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
