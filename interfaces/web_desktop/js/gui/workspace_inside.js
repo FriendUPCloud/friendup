@@ -8377,7 +8377,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.sleeping = true;
 				Workspace.sleepingTimeout = null;
 				Workspace.updateViewState( 'inactive' );
-			}, 1000 * 60 * 1 );
+			}, 1000 * 60 * 5 );
 		}
 	},
 	// Execute when everything is ready

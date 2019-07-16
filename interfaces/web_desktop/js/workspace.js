@@ -34,7 +34,7 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	websocketsOffline: true,
-	lastfileSystemChangeMessage:false,
+	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
 		{
