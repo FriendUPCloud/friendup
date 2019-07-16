@@ -970,6 +970,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				{
 					BufStringAddSize( fcd->wsc_Buffer, in, len );
 					FFree( in );
+					DECREASE_WS_THREADS();
 					return 0;
 				}
 				
