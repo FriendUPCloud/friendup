@@ -444,7 +444,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							ul = null;
 						}
-						//console.log( { e:e, d:(ul?ul:d) } );
+						console.log( { e:e, d:(ul?ul:d) } );
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -1071,7 +1071,8 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 			{
 				var da = {};
 			}
-		
+			
+			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{

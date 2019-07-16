@@ -1,12 +1,58 @@
 <?php
 
+/*©lgpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
+require_once( 'php/include/permissions.php' );
+
 $obj = $args->args;
 
 $userid = $User->ID;
-if( $level == 'Admin' && $args->args->userid )
+
+/*if( $level == 'Admin' && $args->args->userid )
 {
 	$userid = $args->args->userid;
+}*/
+
+if( $perm = Permissions( 'write', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', $args->args->userid ) )
+{
+	if( is_object( $perm ) )
+	{
+		// Permission denied.
+		
+		if( $perm->response == -1 )
+		{
+			die('fail<!--separate-->{"response":"0","message":"unauthorised access attempt"}');
+		}
+		
+		// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+		if( $perm->response == 1 )
+		{
+			// If user has GLOBAL or WORKGROUP access to this user
+			
+			if( isset( $args->args->userid ) && $args->args->userid )
+			{
+				$userid = intval( $args->args->userid );
+			}
+			
+			// If we have GLOBAL Access
+			
+			if( isset( $perm->data->users ) && $perm->data->users == '*' )
+			{
+				$level = 'Admin';
+			}
+		}
+	}
 }
+
 
 // some checks for correctness of request before we do stuff...
 if( !isset( $obj->Type ) ) die('fail<!--separate-->{"response":"edit filesystem failed"}' );

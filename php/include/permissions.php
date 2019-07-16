@@ -205,8 +205,19 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	$pem = new stdClass(); $arr = [];
 	
 	// If Permission data is set filter only the requested permissions.
-	if( $data && $data->permission )
+	if( $data )
 	{
+		
+		// Hackypatchy ...
+		
+		if( !isset( $data->permission ) && !is_object( $data ) )
+		{
+			$obj = new stdClass();
+			$obj->permission = $data;
+			
+			$data = $obj;
+		}
+		
 		$data->permission = ( strstr( $data->permission, '","' ) ? explode( ',', $data->permission ) : $data->permission );
 		
 		if( is_object( $data->permission ) || is_array( $data->permission ) )
@@ -303,9 +314,10 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 					
 					$workgroups = []; 
 					
+					// TODO: Have to look at this, it's to specific ...
 					$sysadmin = [ 
-						'PERM_USER_GLOBAL'      => false, 
-						'PERM_WORKGROUP_GLOBAL' => false
+						'USER_GLOBAL'      => false, 
+						'WORKGROUP_GLOBAL' => false
 					];
 					
 					// TODO: Are we missing the loggedin users own UserID and Workgroups in the list ???
@@ -342,9 +354,13 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							
 							// If we find a global sett wildcard
 							
-							if( isset( $sysadmin[ $v->Permission ] ) )
+							if( strstr( $v->Permission, '_WORKGROUP' ) && !$v->Data )
 							{
-								$sysadmin[ $v->Permission ] = true;
+								$sysadmin[ 'WORKGROUP_GLOBAL' ] = true;
+							}
+							else if( strstr( $v->Permission, '_GLOBAL' ) && !$v->Data )
+							{
+								$sysadmin[ 'USER_GLOBAL' ] = true;
 							}
 							
 							$found = true;
@@ -380,13 +396,13 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 					}
 					
 					
-					
-					if( $sysadmin[ 'PERM_WORKGROUP_GLOBAL' ] )
+					// TODO: Have to look at this, it's to specific ...
+					if( $sysadmin[ 'WORKGROUP_GLOBAL' ] )
 					{
 						$workgroups = '*';
 					}
 					
-					if( $sysadmin[ 'PERM_USER_GLOBAL' ] )
+					if( $sysadmin[ 'USER_GLOBAL' ] )
 					{
 						$users = '*';
 					}
@@ -467,7 +483,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 						{
 							case 'workgroup':
 								
-								if( isset( $workgroups[$objectid] ) )
+								if( isset( $workgroups[$objectid] ) || $workgroups == '*' )
 								{
 									$out = new stdClass();
 									$out->response = 1;
@@ -485,7 +501,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								
 							case 'user':
 								
-								if( isset( $users[$objectid] ) )
+								if( isset( $users[$objectid] ) || $users == '*' )
 								{
 									$out = new stdClass();
 									$out->response = 1;
