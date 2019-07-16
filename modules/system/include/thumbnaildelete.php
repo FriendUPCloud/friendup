@@ -13,6 +13,7 @@
 global $SqlDatabase, $Logger, $User, $Config;
 
 require_once( 'php/classes/file.php' );
+require_once( 'php/classes/door.php' );
 
 $Logger->log( 'Starting thumbnail delete.' );
 
@@ -51,6 +52,8 @@ $ext = strtolower( $ext );
 // Generate thumbnail
 if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 {
+	$door = new Door( $pure );
+	
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
 	$thumb->Path = $door->ID . ':' . $dirnfile; // Use fs ID instead of fs name

@@ -21,7 +21,7 @@ if( !isset( $User ) || ( $User && ( !isset( $User->ID ) || !$User->ID ) ) || !is
 }
 
 // We might come here by mistage (direct calling of file by phpfs)
-if( $args->module && $args->module != 'system' && $args->module != '(null)' )
+if( isset( $args->module ) && $args->module != 'system' && $args->module != '(null)' )
 {
 	if( file_exists( $f = ( 'modules/' . $args->module . '/module.php' ) ) )
 	{
