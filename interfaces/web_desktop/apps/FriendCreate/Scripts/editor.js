@@ -112,6 +112,7 @@ var filebrowserCallbacks = {
 	}
 };
 
+// When everything has loaded --------------------------------------------------
 Application.run = function( msg )
 {	
 	InitTabs( ge( 'EditorTabs' ) );
