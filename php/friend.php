@@ -213,7 +213,9 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				if( isset( $key ) && isset( $value ) )
 				{
 					if( substr( $value, 0, 13 ) == '<!--base64-->' )
+					{
 						$value = trim( base64_decode( substr( $value, 13, strlen( $value ) - 13 ) ) );
+					}
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
 					{
 						$value = rawurldecode( $value );

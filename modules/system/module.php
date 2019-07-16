@@ -277,6 +277,7 @@ if( isset( $args->command ) )
 			break;
 		// Delete a thumbnail
 		case 'thumbnaildelete':
+			$Logger->log( 'Thumbnaildelete..' );
 			require( 'modules/system/include/thumbnaildelete.php' );
 			break;
 		// Get the app image from repository
