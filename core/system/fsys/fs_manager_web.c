@@ -722,11 +722,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
 							
 							int len = 512;
-							len += strlen( path );
+							len += strlen( origDecodedPath );
 							char *command = FMalloc( len );
 							if( command != NULL )
 							{
-								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s;", path, loggedSession->us_SessionID );
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s;", origDecodedPath, loggedSession->us_SessionID );
 			
 								DEBUG("Run command via php: '%s'\n", command );
 								FULONG dataLength;
@@ -810,11 +810,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
 							
 							int len = 512;
-							len += strlen( path );
+							len += strlen( origDecodedPath );
 							char *command = FMalloc( len );
 							if( command != NULL )
 							{
-								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s;", path, loggedSession->us_SessionID );
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s;", origDecodedPath, loggedSession->us_SessionID );
 			
 								DEBUG("Run command via php: '%s'\n", command );
 								FULONG dataLength;
