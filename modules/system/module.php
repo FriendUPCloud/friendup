@@ -275,6 +275,10 @@ if( isset( $args->command ) )
 		case 'thumbnail':
 			require( 'modules/system/include/thumbnail.php' );
 			break;
+		// Delete a thumbnail
+		case 'thumbnaildelete':
+			require( 'modules/system/include/thumbnaildelete.php' );
+			break;
 		// Get the app image from repository
 		case 'repoappimage':
 			require( 'modules/system/include/repoappimage.php' );
