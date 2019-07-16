@@ -944,12 +944,34 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				FBOOL login = FALSE;
 				
-				UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
+				//UserSessionWebsocket *wscl = fcd->wsc_WebsocketsServerClient;
 
 				FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 				fcd->wsc_LastPingTime = time( NULL );
 				DEBUG("\t\t\t\t\tRECEIVE->%d\n", fcd->wsc_InUseCounter );
 				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+				
+				const size_t remaining = lws_remaining_packet_payload( wsi );
+				if( !remaining && lws_is_final_fragment( wsi ) )
+				{
+					if( fcd->wsc_Buffer != NULL && fcd->wsc_Buffer->bs_Size > 0 )
+					{
+						BufStringAddSize( fcd->wsc_Buffer, in, len );
+						FFree( in );
+						in = fcd->wsc_Buffer->bs_Buffer;
+						len = fcd->wsc_Buffer->bs_Size;
+						fcd->wsc_Buffer->bs_Buffer = NULL;
+							
+						BufStringDelete( fcd->wsc_Buffer );
+						fcd->wsc_Buffer = BufStringNew();
+					}
+				}
+				else	// only fragment was received
+				{
+					BufStringAddSize( fcd->wsc_Buffer, in, len );
+					FFree( in );
+					return 0;
+				}
 				
 				// if we want to move full calls to WS threads
 				
