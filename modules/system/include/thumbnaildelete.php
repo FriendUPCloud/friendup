@@ -64,14 +64,14 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		{
 			unlink( $thumb->Filepath );
 			$thumb->delete();
-			$Logger->log( 'Deleted thumbnail ' . $thumb->Path . '..' );
+			//$Logger->log( 'Deleted thumbnail ' . $thumb->Path . '..' );
 			die( 'ok<!--separate-->{"message":"Thumbnail was deleted by path.", "response":1}' );
 		}
-		$Logger->log( 'Thumbnail ' . $thumb->Path . ' not found..' );
+		//$Logger->log( 'Thumbnail ' . $thumb->Path . ' not found..' );
 	}
 }
 
-$Logger->log( 'Could not delete thumbnail.' );
+//$Logger->log( 'Could not delete thumbnail.' );
 
 // Fail
 die( 'fail<!--separate-->{"message":"Could not delete thumbnail file by path.","response":-1}' );
