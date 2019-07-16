@@ -501,7 +501,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								
 							case 'user':
 								
-								if( isset( $users[$objectid] ) || $users == '*' )
+								if( isset( $users[$objectid] ) || $users == '*' || ( $objectid && $User->ID == $objectid ) )
 								{
 									$out = new stdClass();
 									$out->response = 1;

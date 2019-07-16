@@ -19,7 +19,7 @@ $userid = $User->ID;
 	$userid = $args->args->userid;
 }*/
 
-if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', $args->args->userid ) )
+if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
 {
 	if( is_object( $perm ) )
 	{
