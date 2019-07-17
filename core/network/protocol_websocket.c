@@ -1004,6 +1004,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 					jsmn_init( &p );
 					r = jsmn_parse( &p, in, len, t, 128 );
+					/*
 					if( r < 0 ) 
 					{
 						// "requestid":"fconn-req-42suyyjn-nqy2hd45-l5cuc9z8"
@@ -1043,6 +1044,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 							fcd->wsc_Buffer = BufStringNew();
 						}
 					}
+					*/
 
 					// Assume the top-level element is an object 
 					if (r > 1 && t[0].type == JSMN_OBJECT) 
