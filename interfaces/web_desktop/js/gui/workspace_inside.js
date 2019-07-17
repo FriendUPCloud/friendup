@@ -643,6 +643,21 @@ var WorkspaceInside = {
 			{
 				Workspace.filesystemChangeTimeouts = {};
 			}
+			
+			// Clear cache
+			if( msg && msg.devname && msg.path )
+			{
+				var ext4 = msg.path.substr( msg.path.length - 5, 5 );
+				var ext3 = msg.path.substr( msg.path.length - 4, 4 );
+				ext4 = ext4.toLowerCase();
+				ext3 = ext3.toLowerCase();
+				if( ext4 == '.jpeg' || ext3 == '.jpg' || ext3 == '.gif' || ext3 == '.png' )
+				{
+					var ic = new FileIcon();
+					ic.delCache( msg.devname + ':' + msg.path );
+				}
+			}
+			
 			var t = msg.devname + ( msg.path ? msg.path : '' );
 			if( Workspace.filesystemChangeTimeouts[ t ] )
 			{
