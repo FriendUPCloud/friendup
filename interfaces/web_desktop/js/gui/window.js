@@ -4910,6 +4910,8 @@ var View = function( args )
 				self.content.appendChild( v );
 				self.content.container = v;
 				self.content.classList.add( 'HasCamera' );
+				
+				
 			
 			}
 			
@@ -5041,7 +5043,7 @@ var View = function( args )
 								v.appendChild( canv );
 								var ctx = canv.getContext( '2d' );
 								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
-								var dt = canv.toDataURL( 'image/png', 1 );
+								var dt = canv.toDataURL( 'image/jpeg', 0.95 );
 						
 								// Stop taking video
 								dd.srcObject.getTracks().forEach(track => track.stop())
@@ -5133,6 +5135,7 @@ var View = function( args )
 					var reader = new FileReader();
 					reader.onload = function( e )
 					{
+						
 						var dataURL = e.target.result;
 						v.classList.remove( 'Showing' );
 						setTimeout( function()
@@ -5145,9 +5148,14 @@ var View = function( args )
 				}
 			}
 		}
-		
-		// Execute async operation
-		getAvailableDevices( function( e ){ setCameraMode( e.data ) } );
+
+		// prepare for us to use to external libs. // good quality resize + EXIF data reader
+		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
+		Include( '/webclient/3rdparty/load-image.all.min.js', function()
+		{
+			// Execute async operation
+			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+		});
 	}
 	
 	// Add a child window to this window
