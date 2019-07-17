@@ -55,7 +55,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 {
 	Log( FLOG_DEBUG, "ApplicationWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
 	
-	AppSession *was = l->sl_AppSessionManager->sl_AppSessions;
+	// DEBUG disabled
+	/*
+	AppSession *was = l->sl_AppSessionManager->asm_AppSessions;
 	while( was != NULL )
 	{
 		DEBUG("[ApplicationWebRequest] SASID: %lu\n", was->as_SASID );
@@ -74,6 +76,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		}
 		was = (AppSession *)was->node.mln_Succ;
 	}
+	*/
 	
 	Http* response = NULL;
 	
