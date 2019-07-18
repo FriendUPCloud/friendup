@@ -1703,6 +1703,26 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 							
 									dstrootf->f_Operations--;
+									
+									int len = 512;
+									len += strlen( topath );
+									char *command = FMalloc( len );
+									if( command != NULL )
+									{
+										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s;", topath, loggedSession->us_SessionID );
+			
+										DEBUG("Run command via php: '%s'\n", command );
+										FULONG dataLength;
+
+										char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+										if( data != NULL )
+										{
+											if( strncmp( data, "ok", 2 ) == 0 )
+											{
+											}
+										}
+										FFree( command );
+									}
 								}
 								else
 								{
