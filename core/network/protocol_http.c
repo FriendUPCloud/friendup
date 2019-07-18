@@ -224,7 +224,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 	FBOOL freeFile = FALSE;
 
 	LocFile* file = NULL;
-	if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 	{
 		if( SLIB->sl_CacheFiles == 1 )
 		{
@@ -275,7 +275,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				freeFile = TRUE;
 			}
 		}
-		FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
+		//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 	}
 
 	// Send reply
@@ -1483,7 +1483,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										LocFile* file = NULL;
 
-										if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
+										//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 										{
 											char *decoded = UrlDecodeToMem( completePath->raw );
 											if( SLIB->sl_CacheFiles == 1 )
@@ -1537,7 +1537,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											}
 											FFree( decoded );
 											DEBUG("Resource mutex released\n");
-											FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
+											//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
 										Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p\n", file );
 
@@ -1930,12 +1930,13 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 			sock->data = NULL;
 		}
 		PathFree( path );
+		Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
 
 		return response;
 	}
 	// Winter cleaning
 	HttpFreeRequest( request );
-	Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
+	Log( FLOG_DEBUG, "HTTP parsed1, returning response\n");
 	return response;
 }
 

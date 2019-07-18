@@ -1895,10 +1895,7 @@ function receiveEvent( event, queued )
 						f( dataPacket );
 					}
 				}
-				catch( e )
-				{
-					console.log( e, f );
-				}
+				catch( e ){}
 				return true;
 			}
 			// Aha, we have a window to send to (see if it's at this level)
@@ -1921,10 +1918,7 @@ function receiveEvent( event, queued )
 								f( dataPacket );
 							}
 						}
-						catch( e )
-						{
-							console.log( e, f );
-						}
+						catch( e ){}
 						return true;
 					}
 				}

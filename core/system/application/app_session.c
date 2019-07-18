@@ -139,12 +139,13 @@ AppSession *AppSessionNew( void *sb, const char *authid, FUQUAD appid, UserSessi
 
 void AppSessionDelete( AppSession *as )
 {
-	DEBUG("[AppSession] Delete app session\n");
+	DEBUG("[AppSessionDelete] Delete app session\n");
 	if( as != NULL )
 	{
 		SASUList *ali = NULL;
 		SASUList *rml = NULL;
 		
+		DEBUG("[AppSessionDelete] locking as sessionmut\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			ali = as->as_UserSessionList;
@@ -163,6 +164,8 @@ void AppSessionDelete( AppSession *as )
 		
 		pthread_mutex_destroy( &as->as_SessionsMut );
 		
+		DEBUG("[AppSessionDelete] locking as variable mutex\n");
+		
 		if( FRIEND_MUTEX_LOCK( &as->as_VariablesMut ) == 0 )
 		{
 			INVAREntry *le = as->as_Variables;
@@ -177,6 +180,8 @@ void AppSessionDelete( AppSession *as )
 			FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
 		}
 		pthread_mutex_destroy( &as->as_VariablesMut );
+		
+		DEBUG("[AppSessionDelete] app session released\n");
 		
 		FFree( as );
 		as = NULL;

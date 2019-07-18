@@ -51,6 +51,10 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_sources' ),
 					command: 'sources'
+				},
+				{
+					name: i18n( 'menu_sharing' ),
+					command: 'sharing'
 				}
 			]
 		},
@@ -92,6 +96,13 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return false;
 	switch( msg.command )
 	{
+		case 'closesharing':
+			if( this.sharingWindow ) 
+			{
+				this.sharingWindow.close();
+				this.getSources( executeRefresh );
+			}
+			break;
 		case 'quit':
 			Application.quit();
 			break;
@@ -104,10 +115,36 @@ Application.receiveMessage = function( msg )
 		case 'view_day':
 			this.mainView.sendMessage( { command: 'setcalendarmode', mode: 'day' } );
 			break;
-		case 'sources':
-			// TODO: activate window
-			if( this.sourcesWindow )
+		case 'sharing':
+			if( this.sharingWindow ) 
+			{
+				this.sharingWindow.activate();
 				return;
+			}
+			var w = new View( {
+				title: i18n('i18n_sharing_settings'),
+				width: 600,
+				height: 500
+			} );
+			w.onClose = function()
+			{
+				Application.sharingWindow = null;
+			}
+			this.sharingWindow = w;
+			var f = new File( 'Progdir:Templates/sharing.html' );
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				w.setContent( data );
+			}
+			f.load();
+			break;
+		case 'sources':
+			if( this.sourcesWindow )
+			{
+				this.sourcesWindow.activate();
+				return;
+			}
 			var w = new View( {
 				title: i18n('i18n_calendar_sources'),
 				width: 700,
@@ -115,7 +152,7 @@ Application.receiveMessage = function( msg )
 			} );
 			w.onClose = function()
 			{
-				Application.sourcesWindow = false;
+				Application.sourcesWindow = null;
 			}
 			this.sourcesWindow = w;
 			var f = new File( 'Progdir:Templates/sources.html' );
@@ -171,8 +208,13 @@ Application.getSources = function( callback )
 			
 			if( callback )
 			{
-				callback();
+				callback( true ); // <- we have sources
 			}
+		}
+		else
+		{
+			if( callback )
+				callback( false ); // <- no sources
 		}
 	}
 	m.execute( 'getsetting', {
@@ -228,7 +270,13 @@ function login( src, callback )
 
 // Refresh calendar events from servers
 function executeRefresh( index )
-{	
+{
+	// Do a refresh!
+	Application.sendMessage( {
+		type: 'calendar',
+		method: 'calendarrefresh'
+	} );
+	
 	// Just use built-in values
 	return UpdateEvents();
 	
@@ -384,7 +432,10 @@ function UpdateEvents( evts )
 				finalEvents.push( {
 					DateStart: tf,
 					DateEnd: tt,
-					Name: eles[a].Title
+					Your: eles[a].Your,
+					Owner: eles[a].Owner,
+					Name: eles[a].Title,
+					ID: parseInt( eles[a].ID )
 				} );
 			}
 		}

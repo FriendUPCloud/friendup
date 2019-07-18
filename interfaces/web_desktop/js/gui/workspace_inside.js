@@ -643,6 +643,21 @@ var WorkspaceInside = {
 			{
 				Workspace.filesystemChangeTimeouts = {};
 			}
+			
+			// Clear cache
+			if( msg && msg.devname && msg.path )
+			{
+				var ext4 = msg.path.substr( msg.path.length - 5, 5 );
+				var ext3 = msg.path.substr( msg.path.length - 4, 4 );
+				ext4 = ext4.toLowerCase();
+				ext3 = ext3.toLowerCase();
+				if( ext4 == '.jpeg' || ext3 == '.jpg' || ext3 == '.gif' || ext3 == '.png' )
+				{
+					var ic = new FileIcon();
+					ic.delCache( msg.devname + ':' + msg.path );
+				}
+			}
+			
 			var t = msg.devname + ( msg.path ? msg.path : '' );
 			if( Workspace.filesystemChangeTimeouts[ t ] )
 			{
@@ -1567,15 +1582,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else 
 						{
+							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
+					}
+					else
+					{
+						document.body.classList.add( 'NoWallpaper' );
 					}
 					// Check for theme specifics
 					if( dat[ 'themedata_' + Workspace.theme ] )
@@ -1766,6 +1790,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
+					document.body.classList.add( 'DefaultWallpaper' );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -4547,6 +4572,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Check volume icon
 			if( icon.Type == 'Door' && ( ( !icon.Filesize && icon.Filesize != 0 ) || isNaN( icon.Filesize ) ) )
 			{
+				if( !icon.Path && icon.Volume )
+				{
+					icon.Path = icon.Volume;
+					if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+						icon.Path += ':';
+				}
+				
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -8268,7 +8300,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		if( newState == 'active' )
 		{
-			document.title = document.title.split( ' Active' ).join( '' ) + ' Active';
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
@@ -8329,11 +8360,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				clearTimeout( this.sleepingTimeout );
 			Workspace.sleeping = false;
 			Workspace.sleepingTimeout = null;
-			document.title = document.title.split( ' Sleeping' ).join( '' );
 		}
 		else
 		{
-			document.title = document.title.split( ' Active' ).join( '' ) ;
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
 			if( isMobile )
@@ -8360,11 +8389,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				return;
 			this.sleepingTimeout = setTimeout( function()
 			{
-				document.title = document.title.split( ' Sleeping' ).join( '' ) + ' Sleeping';
 				Workspace.sleeping = true;
 				Workspace.sleepingTimeout = null;
 				Workspace.updateViewState( 'inactive' );
-			}, 1000 * 60 * 1 );
+			}, 1000 * 60 * 5 );
 		}
 	},
 	// Execute when everything is ready

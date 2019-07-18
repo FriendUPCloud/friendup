@@ -34,7 +34,7 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	websocketsOffline: true,
-	lastfileSystemChangeMessage:false,
+	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
 		{
@@ -156,7 +156,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-			title: 'Workspace',
+			title: 'Friend Workspace',
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,

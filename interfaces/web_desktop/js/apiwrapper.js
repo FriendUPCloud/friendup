@@ -2734,42 +2734,49 @@ function apiWrapper( event, force )
 			// 1 can app read events?
 			// 2 can app set events?
 			case 'calendar' :
-				var action = msg.data;
-				if ( 'add' !== action.type ) {
-					done( false, 'unknown type: ' + action.type , action.data.cid );
-					return;
+				if( msg.method == 'calendarrefresh' )
+				{
+					Workspace.refreshExtraWidgetContents();
 				}
-
-				var data = action.data;
-				var title = app.applicationName + ' wants to add a calendar event';
-				Confirm( title, data.message, confirmBack );
-				function confirmBack( accept ) {
-					if ( accept )
-						addCalendarEvent( data.event );
-					else {
-						done( false, 'event denied', data.cid );
-					}
-				}
-
-				function addCalendarEvent( event ) {
-					var mod = new Module( 'system' );
-					mod.onExecuted = eventAdded;
-					mod.execute( 'addcalendarevent', { event : event });
-					function eventAdded( ok, res ) {
-						done( 'ok' === ok, res, data.cid );
-					}
-				}
-
-				function done( ok, res, cid ) {
-					if ( !cid )
+				else
+				{
+					var action = msg.data;
+					if ( 'add' !== action.type ) {
+						done( false, 'unknown type: ' + action.type , action.data.cid );
 						return;
+					}
 
-					var res = {
-						ok       : ok,
-						res      : res,
-						callback : cid,
-					};
-					app.contentWindow.postMessage( res, '*' );
+					var data = action.data;
+					var title = app.applicationName + ' wants to add a calendar event';
+					Confirm( title, data.message, confirmBack );
+					function confirmBack( accept ) {
+						if ( accept )
+							addCalendarEvent( data.event );
+						else {
+							done( false, 'event denied', data.cid );
+						}
+					}
+
+					function addCalendarEvent( event ) {
+						var mod = new Module( 'system' );
+						mod.onExecuted = eventAdded;
+						mod.execute( 'addcalendarevent', { event : event });
+						function eventAdded( ok, res ) {
+							done( 'ok' === ok, res, data.cid );
+						}
+					}
+
+					function done( ok, res, cid ) {
+						if ( !cid )
+							return;
+
+						var res = {
+							ok       : ok,
+							res      : res,
+							callback : cid,
+						};
+						app.contentWindow.postMessage( res, '*' );
+					}
 				}
 				break;
 
@@ -3820,9 +3827,10 @@ function apiWrapper( event, force )
 			return false;
 
 		// Sometimes we want to send to a pre determined view by id.
-		if( msg.destinationViewId )
+		if( msg.destinationViewId || msg.targetViewId )
 		{
-			var cw = GetContentWindowById( app, msg.destinationViewId );
+			var target = msg.destinationViewId ? msg.destinationViewId : msg.targetViewId;
+			var cw = GetContentWindowById( app, target );
 			if( cw )
 			{
 				cw.postMessage( JSON.stringify( msg ), '*' );
