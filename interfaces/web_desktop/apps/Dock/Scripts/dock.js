@@ -119,11 +119,16 @@ function LoadApplications( win, currentItemId, callback )
 			sw = sw == 1 ? 2 : 1;
 			cl += ' sw' + sw;
 			
+			var appy
+			if( eles[a].DisplayName == '' )
+				appy = eles[a].Name;
+			else appy = eles[a].DisplayName;
+
 			ele += '\
 			<div class="Padding' + cl + '" id="dockEdit'+ eles[a].Id +'" onclick="Application.sendMessage( { command: \'select\', id: \'' + eles[a].Id + '\' } )">\
 				<div class="HRow">\
 					<div class="FloatRight" style="width: 60px">' + im + '</div>\
-					<div class="FloatLeft PaddingLeft" style="width: calc(100%-60px)">' + eles[a].Name + '</div>\
+					<div class="FloatLeft PaddingLeft" style="width: calc(100%-60px)">' + appy + '</div>\
 				</div>\
 			</div>\
 			';
