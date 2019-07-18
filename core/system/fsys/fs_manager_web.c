@@ -130,6 +130,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		char *tmpPath = UrlDecodeToMem( path );
 		if( tmpPath != NULL )
 		{
+			Log( FLOG_INFO, "File operation, path: %s\n", tmpPath );
 			if( ColonPosition( tmpPath ) <= 0 )
 			{
 				path = NULL;
@@ -160,6 +161,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		UrlDecode( ntp, targetPath );
 		targetPath = ntp;
 		freeTargetPath = TRUE; // this one needs to be freed
+		
+		Log( FLOG_INFO, "File operation, target path: %s\n", targetPath );
 	}
 	
 	DEBUG( "[FSMWebRequest] Checking path: %s\n", path );
@@ -1906,7 +1909,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					char tbuffer[ SHARING_BUFFER_SIZE ];
 					char userid[ 512 ];
 					char name[ 256 ];
 					char dstfield[10];
@@ -1932,105 +1934,116 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					FHandler *actFS = (FHandler *)actDev->f_FSys;
 					FBOOL sharedFile = FALSE;
 					FBOOL alreadyExist = FALSE;
+					char hashmap[ 512 ];
+					hashmap[ 0 ] = 0;
 
-					char *checkquery = NULL;
+					//char *checkquery = NULL;
 					char *fortestpurp = FMalloc( 2048 ); //[ 2048 ];
 					snprintf( fortestpurp, 2048, "%s:%s", devname, path );
 					
-					FileShared *tmpfs = FileSharedNew( fortestpurp, name );
-					char hashmap[ 512 ];
+					char *dest = UrlDecodeToMem( path );
 					
-					if( tmpfs != NULL )
+					SQLLibrary *sqllib = l->LibrarySQLGet( l );
+					if( sqllib != NULL )
 					{
-						tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
-						
-						tmpfs->fs_DeviceName = StringDuplicate( devname );
-						
-						tmpfs->fs_DstUsers = StringDuplicate( dstfield );
-						
-						// Make a unique hash
-						char tmp[ 512 ];
-						snprintf( tmp, sizeof(tmp), "%s%d%d%d", path, rand() % 999, rand() % 999, rand() % 999 );
-						StrToMD5Str( hashmap, 512, tmp, strlen( tmp ) );
-						tmpfs->fs_Hash = StringDuplicate( hashmap );
-						
-						checkquery = FMalloc( 2048 );//[ 2048 ];
-						char dest[ 512 ]; 
-						
-						UrlDecode( dest, path );
-						// TODO: Check on device ID..
-						sprintf( checkquery, " FFileShared where `UserID`='%ld' AND `Path`='%s:%s'", loggedSession->us_User->u_ID, devname, dest );
-						
-						SQLLibrary *sqllib = l->LibrarySQLGet( l );
-						tmpfs->fs_CreatedTime = time( NULL );
-						if( sqllib != NULL )
+						int qsize = 512 + strlen( dest );
+
+						char *qery = FMalloc( qsize );
+						//qery[ 1024 ] = 0;
+						sqllib->SNPrintF( sqllib, qery, qsize, "SELECT Hash FROM FFileShared where `UserID`='%ld' AND `Path`='%s:%s'", loggedSession->us_User->u_ID, devname, dest );
+						void *res = sqllib->Query( sqllib, qery );
+						if( res != NULL )
 						{
-							int numR = sqllib->NumberOfRecords( sqllib, FileSharedTDesc, checkquery );
-							DEBUG( "[FSMWebRequest] Number of records is: %d (%s)\n", numR, checkquery );
-						
-							struct tm* ti;
-							ti = localtime( &(tmpfs->fs_CreatedTime) );
-							tmpfs->fs_CreateTimeTM.tm_year = ti->tm_year + 1900;
-							tmpfs->fs_CreateTimeTM.tm_mon = ti->tm_mon;
-							tmpfs->fs_CreateTimeTM.tm_mday = ti->tm_mday;
-							
-							tmpfs->fs_CreateTimeTM.tm_hour = ti->tm_hour;
-							tmpfs->fs_CreateTimeTM.tm_min = ti->tm_min;
-							tmpfs->fs_CreateTimeTM.tm_sec = ti->tm_sec;
-							
+							char **row;
+							if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 							{
+								if( row[ 0 ] != NULL )
+								{
+									strcpy( hashmap, row[ 0 ] );
+								}
+							}
+							sqllib->FreeResult( sqllib, res );
+						}
+						
+						// if entry do not exist in database
+						if( hashmap[ 0 ] == 0 )
+						{
+							FileShared *tmpfs = FileSharedNew( fortestpurp, name );
+
+							if( tmpfs != NULL )
+							{
+								tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
+						
+								tmpfs->fs_DeviceName = StringDuplicate( devname );
+						
+								tmpfs->fs_DstUsers = StringDuplicate( dstfield );
+						
+								// Make a unique hash
+								char tmp[ 512 ];
+								snprintf( tmp, sizeof(tmp), "%s%d%d%d", path, rand() % 999, rand() % 999, rand() % 999 );
+								StrToMD5Str( hashmap, 512, tmp, strlen( tmp ) );
+								tmpfs->fs_Hash = StringDuplicate( hashmap );
+								tmpfs->fs_CreatedTime = time( NULL );
+								
+								struct tm* ti;
+								ti = localtime( &(tmpfs->fs_CreatedTime) );
+								tmpfs->fs_CreateTimeTM.tm_year = ti->tm_year + 1900;
+								tmpfs->fs_CreateTimeTM.tm_mon = ti->tm_mon;
+								tmpfs->fs_CreateTimeTM.tm_mday = ti->tm_mday;
+							
+								tmpfs->fs_CreateTimeTM.tm_hour = ti->tm_hour;
+								tmpfs->fs_CreateTimeTM.tm_min = ti->tm_min;
+								tmpfs->fs_CreateTimeTM.tm_sec = ti->tm_sec;
+							
 								if( sqllib->Save( sqllib, FileSharedTDesc, tmpfs ) == 0 )
 								{
 									sharedFile = TRUE;
 								}
+								else
+								{
+									Log( FLOG_ERROR, "Cannot store hash in FFileShared. Hash: %s Path %s\n", hashmap, path );
+								}
+								
+								FileSharedDeleteAll( tmpfs );
 							}
-						
-						/*
-						 *						else
-						 *						{
-						 *							FileSharedDelete( tmpfs );
-						 *							
-						 *							int entries = 0;
-						 *							if( ( tmpfs = sqllib->Load( sqllib, FileSharedTDesc, check, &entries ) ) )
-						 *							{
-						 *								sprintf( hashmap, "%s", tmpfs->fs_Hash );
-					}
-					alreadyExist = TRUE;
-					}*/
-						
-							l->LibrarySQLDrop( l, sqllib );
-						}
-						
-						FileSharedDeleteAll( tmpfs );
-					}
-					else
-					{
-						FERROR("Cannot allocate memory for shared file!\n");
-					}
-					
-					{
-						int size = 0;
-						char *tmp = FMalloc( 2048 );
-						if( sharedFile == TRUE )
-						{
-							size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
-						}
-						else if( alreadyExist )
-						{
-							size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
+							else
+							{
+								FERROR("Cannot allocate memory for shared file!\n");
+							}
 						}
 						else
 						{
-							size = snprintf( tmp, 2048, "fail<!--separate-->{ \"response\": \"%s\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_SHARE_FILE] );
+							alreadyExist = TRUE;
 						}
 						
-						DEBUG("RESPONSE : '%s'\n", tmp );
-						
-						HttpSetContent( response, tmp, size );
-						*result = 200;
+						l->LibrarySQLDrop( l, sqllib );
+						FFree( qery );
+					}
+
+					int size = 0;
+					char *tmp = FMalloc( 2048 );
+					if( sharedFile == TRUE )
+					{
+						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
+					}
+					else if( alreadyExist == TRUE )
+					{
+						size = snprintf( tmp, 2048, "ok<!--separate-->{\"hash\":\"%s\", \"name\":\"%s\" }", hashmap, name );
+					}
+					else
+					{
+						size = snprintf( tmp, 2048, "fail<!--separate-->{ \"response\": \"%s\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_SHARE_FILE] );
 					}
 					
-					FFree( checkquery );
+					DEBUG("RESPONSE : '%s'\n", tmp );
+					
+					HttpSetContent( response, tmp, size );
+					*result = 200;
+					
+					if( dest != NULL )
+					{
+						FFree( dest );
+					}
 					FFree( fortestpurp );
 				}
 				
