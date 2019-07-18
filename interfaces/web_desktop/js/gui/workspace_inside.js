@@ -4397,6 +4397,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		ic.delCache( icon.Path );
 		ic.delCache( target );
+		console.log( 'Removing cache of ' + iconPath + ' and ' + target );
 		
 		if ( icon.Dormant )
 		{
