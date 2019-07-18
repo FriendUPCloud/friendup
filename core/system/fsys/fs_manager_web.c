@@ -1709,7 +1709,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									char *command = FMalloc( len );
 									if( command != NULL )
 									{
-										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s;", topath, loggedSession->us_SessionID );
+										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
 			
 										DEBUG("Run command via php: '%s'\n", command );
 										FULONG dataLength;
