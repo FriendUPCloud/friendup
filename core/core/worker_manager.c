@@ -299,7 +299,8 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 	return 0;
 }
 
-/**
+/*
+*
 * For debug
 *
 */
@@ -315,10 +316,14 @@ void WorkerManagerDebug( void *sb )
 		{
 			if( wm->wm_Workers[ i ] != NULL )
 			{
-				Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
-				if( request != NULL )
+				if( FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ i ]->w_Mut) ) == 0 )
 				{
-					Log( FLOG_ERROR, "[WorkerManager] worker: %d content: %s pointer to session: %p rawrequest: %s\n", i, request->content, request->h_UserSession, request->rawRequestPath );
+					Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
+					if( request != NULL )
+					{
+						Log( FLOG_ERROR, "[WorkerManager] worker: %d content: %s pointer to session: %p rawrequest: %s\n", i, request->content, request->h_UserSession, request->rawRequestPath );
+					}
+					FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ i ]->w_Mut) );
 				}
 			}
 		}
