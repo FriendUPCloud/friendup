@@ -13,6 +13,7 @@
 global $SqlDatabase, $Logger, $User, $Config;
 
 require_once( 'php/classes/file.php' );
+require_once( 'php/classes/door.php' );
 
 $Logger->log( 'Starting thumbnail delete.' );
 
@@ -51,6 +52,8 @@ $ext = strtolower( $ext );
 // Generate thumbnail
 if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 {
+	$door = new Door( $pure );
+	
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
 	$thumb->Path = $door->ID . ':' . $dirnfile; // Use fs ID instead of fs name
@@ -61,14 +64,14 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 		{
 			unlink( $thumb->Filepath );
 			$thumb->delete();
-			$Logger->log( 'Deleted thumbnail ' . $thumb->Path .'..' );
+			//$Logger->log( 'Deleted thumbnail ' . $thumb->Path . '..' );
 			die( 'ok<!--separate-->{"message":"Thumbnail was deleted by path.", "response":1}' );
 		}
-		$Logger->log( 'Thumbnail ' . $thumb->Path .' not found..' );
+		//$Logger->log( 'Thumbnail ' . $thumb->Path . ' not found..' );
 	}
 }
 
-$Logger->log( 'Could not delete thumbnail.' );
+//$Logger->log( 'Could not delete thumbnail.' );
 
 // Fail
 die( 'fail<!--separate-->{"message":"Could not delete thumbnail file by path.","response":-1}' );

@@ -219,7 +219,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							{
 								// Add volume name to entry if it's not there
 								// TODO: Make sure its always there!
-								if( !strstr( $entry->Path, ':' ) )
+								if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
 									$entry->Path = $volume . $entry->Path;
 								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
 								{
