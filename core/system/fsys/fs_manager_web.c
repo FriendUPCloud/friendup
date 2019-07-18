@@ -201,7 +201,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		
 		DEBUG("[FSMWebRequest] Checking mounted devices\n");
 		
-		File *lDev = loggedSession->us_User->u_MountedDevs;
+		//File *lDev = loggedSession->us_User->u_MountedDevs;
 		
 		File *actDev = NULL;
 		char devname[ 256 ];
@@ -236,8 +236,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		// Should never happen
 		else
 		{
-			if( locpath ) FFree( locpath ); locpath = NULL;
-			if( originalPath ) FFree( originalPath ); originalPath = NULL;
+			if( locpath ){ FFree( locpath ); locpath = NULL; }
+			if( originalPath ){ FFree( originalPath ); originalPath = NULL; }
 		}
 		//
 		
@@ -717,6 +717,29 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 						
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+							
+							// delete Thumbnails
+							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
+							
+							int len = 512;
+							len += strlen( origDecodedPath );
+							char *command = FMalloc( len );
+							if( command != NULL )
+							{
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+			
+								DEBUG("Run command via php: '%s'\n", command );
+								FULONG dataLength;
+
+								char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+								if( data != NULL )
+								{
+									if( strncmp( data, "ok", 2 ) == 0 )
+									{
+									}
+								}
+								FFree( command );
+							}
 						}
 						else
 						{
@@ -778,9 +801,33 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								actDev->f_BytesStored = 0;
 							}
 							sprintf( tmp, "ok<!--separate-->{\"response\":\"%ld\"}", bytes );
+							// send information about changes on disk
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
-							
+							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
+							
+							// delete Thumbnails
+							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
+							
+							int len = 512;
+							len += strlen( origDecodedPath );
+							char *command = FMalloc( len );
+							if( command != NULL )
+							{
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+			
+								DEBUG("Run command via php: '%s'\n", command );
+								FULONG dataLength;
+
+								char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+								if( data != NULL )
+								{
+									if( strncmp( data, "ok", 2 ) == 0 )
+									{
+									}
+								}
+								FFree( command );
+							}
 						}
 						else
 						{

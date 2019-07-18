@@ -1200,8 +1200,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				{
 					while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
 					{
-						//DEBUG("Readed %d\n", dataread );
-						//BufStringAddSize( bs, dataBuffer, dataread );
 						ListStringAdd( ls, dataBuffer, dataread );
 					}
 				}
