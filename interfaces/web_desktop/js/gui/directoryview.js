@@ -1290,7 +1290,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 							console.log( 'Posting file: ', itm.file );
 							itm.file( function( f )
 							{
-								var ic = new FileIcon(); ic.delCache(  itm.fullPath );
+								var ic = new FileIcon(); ic.delCache( itm.fullPath );
 								uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
 							} );
 						}
@@ -2270,8 +2270,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
 
 								// Delete in reverse
+								var ic = new FileIcon();
 								for( var b = fob.files.length - 1; b >= 0; b-- )
 								{
+									ic.delCache( fob.files[b].fileInfo.Path );
 									d.dosAction( 'delete', { path: fob.files[b].fileInfo.Path }, function( result )
 									{
 										w.deletable--;

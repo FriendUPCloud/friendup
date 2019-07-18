@@ -7738,9 +7738,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								doDeleteFiles( files, index + 1 ); 
 							}
 							
+							var ic = new FileIcon();
+							
 							// Database ID
 							if( file.fileInfo.ID )
-							{
+							{	
 								file.door.dosAction( 'delete', { 
 									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
 								}, nextFile );
@@ -7749,13 +7751,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( info.substr( info.length - 1, 1 ) == '/' )
 								info = info.substr( 0, info.length - 1 );
 								// Try to kill the info file!
+								ic.delCache( fob.files[b].fileInfo.Path );
 								file.door.dosAction( 'delete', { path: info + '.info' } );
 								
+								ic.delCache( file.fileInfo.Path );
+								ic.delCache( info + '.info' );
 							}
 							// Dormant?
 							else if ( file.fileInfo.Dormant )
 							{
 								file.fileInfo.Dormant.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+								
+								ic.delCache( file.fileInfo.Path );
 							}
 							// Path
 							else
@@ -7766,6 +7773,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
 								// Try to kill the info file!
 								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+								
+								ic.delCache( file.fileInfo.Path );
+								ic.delCache( info + '.info' );
 							}
 						}
 						doDeleteFiles( files, 0 );
