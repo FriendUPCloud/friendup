@@ -139,42 +139,49 @@ AppSession *AppSessionNew( void *sb, const char *authid, FUQUAD appid, UserSessi
 
 void AppSessionDelete( AppSession *as )
 {
-	DEBUG("[AppSession] Delete app session\n");
+	DEBUG("[AppSessionDelete] Delete app session\n");
 	if( as != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+		SASUList *ali = NULL;
+		SASUList *rml = NULL;
 		
-		SASUList *ali = as->as_UserSessionList;
-		SASUList *rml = ali;
-		
-		while( ali != NULL )
+		DEBUG("[AppSessionDelete] locking as sessionmut\n");
+		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
+			ali = as->as_UserSessionList;
 			rml = ali;
-			ali = (SASUList *) ali->node.mln_Succ;
-			
-			FFree( rml );
-			rml = NULL;
-		}
 		
-		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+			while( ali != NULL )
+			{
+				rml = ali;
+				ali = (SASUList *) ali->node.mln_Succ;
+			
+				FFree( rml );
+				rml = NULL;
+			}
+			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+		}
 		
 		pthread_mutex_destroy( &as->as_SessionsMut );
 		
-		FRIEND_MUTEX_LOCK( &as->as_VariablesMut );
+		DEBUG("[AppSessionDelete] locking as variable mutex\n");
 		
-		INVAREntry *le = as->as_Variables;
-		INVAREntry *re = le;
-		while( le != NULL )
+		if( FRIEND_MUTEX_LOCK( &as->as_VariablesMut ) == 0 )
 		{
-			re = le;
-			le = (INVAREntry *) le->node.mln_Succ;
+			INVAREntry *le = as->as_Variables;
+			INVAREntry *re = le;
+			while( le != NULL )
+			{
+				re = le;
+				le = (INVAREntry *) le->node.mln_Succ;
 			
-			INVAREntryDelete( re );
+				INVAREntryDelete( re );
+			}
+			FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
 		}
-		
-		FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
-		
 		pthread_mutex_destroy( &as->as_VariablesMut );
+		
+		DEBUG("[AppSessionDelete] app session released\n");
 		
 		FFree( as );
 		as = NULL;
@@ -188,10 +195,10 @@ void AppSessionDelete( AppSession *as )
  * @param as application session
  * @param u user session which will be added to application session
  * @param authid authenticationid of person which will be added to application session
- * @return 0 if success, otherwise error number
+ * @return SASUList if success, otherwise NULL
  */
 
-int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
+SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 {
 	DEBUG("[AppSession] Add user to to appsession\n");
 	FBOOL userAdded = FALSE;
@@ -200,7 +207,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *lali = (SASUList *)as->as_UserSessionList;
-		SASUList *endli =lali;
+		SASUList *endli = lali;
 		while( lali != NULL )
 		{
 			// we check if device was added
@@ -218,18 +225,18 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 		
 		DEBUG("[AppSession] last sessionptr %p\n", endli );
 		
-		if( userAdded  == TRUE )
+		if( userAdded == TRUE )
 		{
 			if( lali->authid[ 0 ] == 0 )
 			{
 				as->as_Timer = time( NULL );
 				DEBUG("[AppSession] User is already invited but he did not accept previous invitation\n");
-				return 0;
+				return lali;
 			}
 			else
 			{
 				FERROR("User is already invited with session %lu\n", as->as_SASID );
-				return -1;
+				return NULL;
 			}
 		}
 		
@@ -241,7 +248,14 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 			ali->ID = as->as_NumberGenerator++;
 			//ali->node.mln_Succ = (MinNode *)as->as_UserList;
 			ali->usersession = u;
-			endli->node.mln_Succ  =  (MinNode *)ali;
+			if( endli == NULL )
+			{
+				as->as_UserSessionList = endli = ali;
+			}
+			else
+			{
+				endli->node.mln_Succ  =  (MinNode *)ali;
+			}
 			//as->as_UserList = ali;
 			if( authid != NULL )
 			{
@@ -252,12 +266,14 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		
 		as->as_Timer = time( NULL );
+		return ali;
 	}
-	return 0;
+	return NULL;
 }
 
 /**
  * Remove user session from application session
+ * ! This function do not allow to remove owners
  *
  * @param as application session
  * @param u user session which will be removed from application session
@@ -274,19 +290,21 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		}
 		else
 		{
+			DEBUG("[AppSession] remove user session, user session is equal to NULL\n");
 			return -1;
 		}
 		
 		DEBUG("Before  as_SessionsMut lock\n");
 		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-		
+
 		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
 		SASUList *prevali = as->as_UserSessionList;
 		
 		DEBUG("[AppSession] Session before loop\n");
 		while( ali != NULL )
 		{
-			if( u ==  ali->usersession  )
+			//DEBUG("PARAM US: %p LIST US: %p\n");
+			if( u ==  ali->usersession )
 			{
 				if( ali == as->as_UserSessionList )
 				{
@@ -311,11 +329,89 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			DEBUG("[AppSession] Session end loop\n");
 		}
 		
+		DEBUG("[AppSession] lock end\n");
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		as->as_Timer = time( NULL );
+		
+		if( ali == NULL )
+		{
+			DEBUG("[AppSession] user is not in SAS user session list\n");
+			return -2;
+		}
 	}
 	
-	return -1;
+	DEBUG("[AppSession] remove user session, success\n");
+	return 0;
+}
+
+/**
+ * Remove user session from application session
+ *
+ * @param as application session
+ * @param u user session which will be removed from application session
+ * @return 0 if success, otherwise error number
+ */
+
+int AppSessionRemUsersessionAny( AppSession *as, UserSession *u )
+{
+	if( as != NULL )
+	{
+		if( u != NULL )
+		{
+			DEBUG("[AppSession] AppSessionRemUsersession %s\n", u->us_SessionID );
+		}
+		else
+		{
+			DEBUG("[AppSession] remove user session, user session is equal to NULL\n");
+			return -1;
+		}
+		
+		DEBUG("Before  as_SessionsMut lock\n");
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+		
+		SASUList *ali = (SASUList *)as->as_UserSessionList;
+		SASUList *prevali = as->as_UserSessionList;
+		DEBUG("[AppSession] Session before loop\n");
+		while( ali != NULL )
+		{
+			if( u ==  ali->usersession )
+			{
+				if( ali == as->as_UserSessionList )
+				{
+					as->as_UserSessionList =(SASUList *)ali->node.mln_Succ;
+				}
+				else
+				{
+					prevali->node.mln_Succ = ali->node.mln_Succ;
+				}
+				
+				as->as_UserNumber--;
+				DEBUG("[AppSession] Session removed, sessions %d\n", as->as_UserNumber );
+				
+				FFree( ali );
+				DEBUG("[AppSession] break\n");
+			
+				break;
+			}
+		
+			prevali = ali;
+			ali = (SASUList *) ali->node.mln_Succ;
+			DEBUG("[AppSession] Session end loop\n");
+		}
+
+		DEBUG("[AppSession] lock end\n");
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+		as->as_Timer = time( NULL );
+		
+		if( ali == NULL )
+		{
+			DEBUG("[AppSession] user is not in SAS user session list\n");
+			return -2;
+		}
+	}
+	
+	DEBUG("[AppSession] remove user session, success\n");
+	return 0;
 }
 
 #define WS_MESSAGE_TEMPLATE_USER "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": %s}}}}"
@@ -365,17 +461,14 @@ int AppSessionRemUser( AppSession *as, User *u )
 }
 
 /**
- * Add usersession provided as string
+ * Add current sesssion to SAS
  *
  * @param as application session
  * @param loggedSession session of user who is adding other users to application session
- * @param sessid invited session
- * @param appname application name string
- * @param msg message string which will appear in invitation
- * @return TRUE if session was added
+ * @return pointer to SASUList if session was added, otherwise NULL
  */
 
-FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg )
+SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSession )
 {
 	// remove spaces and 'weird' chars from entry
 	unsigned int i, j=0;
@@ -383,15 +476,80 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 	unsigned int usersi  = 0;
 	char *upositions[ 128 ];
 	memset( upositions, 0, sizeof( upositions ) );
-	FBOOL uadded = FALSE;
+	SASUList *retListEntry = NULL;
+	SystemBase *l = (SystemBase *)as->as_SB;
 	
+	//DEBUG("[AppSession] sessid %s\n", sessid );
+	
+	UserSession *usrses = NULL;
+
+	//
+	// we must check if  user is already in application session
+	//
+
+	FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+	
+	SASUList *curgusr = as->as_UserSessionList;
+	while( curgusr != NULL )
+	{
+		//DEBUG("[AppSession] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
+		if( loggedSession == curgusr->usersession )
+		{
+			break;
+		}
+		curgusr = (SASUList *) curgusr->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+
+	if( curgusr != NULL )
+	{
+		DEBUG("User is already on list\n");
+		return curgusr;
+	}
+
+	//
+	// user was not added  we must find it in system sessions
+	//
+
+	usrses = loggedSession;
+
+	if( usrses != NULL )
+	{
+		retListEntry = AppSessionAddUser( as, usrses, NULL );
+
+		DEBUG("[AppSession] newsession will be added %p\n", usrses );
+	} // if( usrses != NULL )
+
+	return retListEntry;
+}
+
+/**
+ * Add usersession provided as string
+ *
+ * @param as application session
+ * @param loggedSession session of user who is adding other users to application session
+ * @param sessid invited session
+ * @param appname application name string
+ * @param msg message string which will appear in invitation
+ * @return pointer to SASUList if session was added, otherwise NULL
+ */
+
+SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg )
+{
+	// remove spaces and 'weird' chars from entry
+	unsigned int i, j=0;
+	int  pos = 0;
+	unsigned int usersi  = 0;
+	char *upositions[ 128 ];
+	memset( upositions, 0, sizeof( upositions ) );
+	SASUList *retListEntry = NULL;
 	SystemBase *l = (SystemBase *)as->as_SB;
 	
 	DEBUG("[AppSession] sessid %s\n", sessid );
 	
 	if( sessid != NULL )
 	{
-		UserSession *usrses;
+		UserSession *usrses = NULL;
 
 		//
 		// we must check if  user is already in application session
@@ -425,11 +583,11 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 		{
 			if( usrses != NULL )
 			{
-				int err = AppSessionAddUser( as, usrses, NULL );
+				retListEntry = AppSessionAddUser( as, usrses, NULL );
 
 				DEBUG("[AppSession] newsession will be added %p\n", usrses );
 
-				if( err == 0 )
+				if( retListEntry != NULL && msg != NULL )
 				{
 					char tmp[ 512 ];
 					int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
@@ -438,8 +596,6 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 					int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
 
 					WebSocketSendMessageInt( usrses, tmpmsg, len );
-					
-					uadded = TRUE;
 				}
 				
 			} // if( usrses != NULL )
@@ -449,7 +605,7 @@ FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, c
 	{
 		DEBUG("[AppSession] Userlist is equal to NULL\n");
 	}
-	return uadded;
+	return retListEntry;
 }
 
 /**
@@ -571,7 +727,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 								int err = 0;
 								char tmp[ 512 ];
 
-								if( usrses->us_WSClients == NULL )
+								if( usrses->us_WSConnections == NULL )
 								{
 									int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
 									if( pos > 0  )
@@ -589,11 +745,11 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 
 								else
 								{
-									err = AppSessionAddUser( as, usrses, NULL );
+									SASUList *sli = AppSessionAddUser( as, usrses, NULL );
 
 									DEBUG("[AppSession] newsession will be added %p\n", usrses );
 
-									if( err == 0 )
+									if( sli != NULL )
 									{
 										int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
 
@@ -628,9 +784,9 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 				{
 					UserSession *ses = (UserSession *)curgusr->usersession;
 					
-					DEBUG("[AppSession] Found user session %p wscon %p\n", ses, ses->us_WSClients );
+					DEBUG("[AppSession] Found user session %p wscon %p\n", ses, ses->us_WSConnections );
 					
-					if( ses != NULL && ses->us_WSClients != NULL && ses != loggedSession )
+					if( ses != NULL && ses->us_WSConnections != NULL && ses != loggedSession )
 					{
 						char tmp[ 512 ];
 						int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", ses->us_User->u_Name, ses->us_DeviceIdentity );
@@ -858,102 +1014,109 @@ typedef struct RWSCon
 
 int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 {
-	WebsocketServerClient *ws = (WebsocketServerClient *) lwsc;
+	UserSessionWebsocket *ws = (UserSessionWebsocket *) lwsc;
 	RWSCon *root = NULL;
 	RWSCon *rwsentr = NULL;
 	
 	DEBUG("[AppSession] App session remove by WS\n");
 	
-	/*
-	FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
-	
-	while( as != NULL )
+	if( as != NULL )
 	{
-		SASUList *le = as->as_UserSessionList;
-		while( le != NULL )
+		while( as != NULL )
 		{
-			DEBUG("[AppSession] Going through User Sessions\n");
-			if( le->usersession != NULL )
+			FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
+			
+			SASUList *le = as->as_UserSessionList;
+			while( le != NULL )
 			{
-				FRIEND_MUTEX_LOCK( &(le->usersession->us_Mutex) );
-				WebsocketClient *lws = le->usersession->us_WSClients;
-				while( lws != NULL )
+				DEBUG("[AppSession] Going through User Sessions\n");
+				if( le->usersession != NULL )
 				{
-					if( lws == ws )
+					FRIEND_MUTEX_LOCK( &(le->usersession->us_Mutex) );
+					UserSessionWebsocket *lws = le->usersession->us_WSConnections;
+					while( lws != NULL )
 					{
-						RWSCon *ne = FCalloc( 1, sizeof( RWSCon ) );
-						if( ne != NULL )
+						if( lws == ws )
 						{
-							//FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-							ne->as = as;
-							ne->sasuentry = le;
+							RWSCon *ne = FCalloc( 1, sizeof( RWSCon ) );
+							if( ne != NULL )
+							{
+								//FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+								ne->as = as;
+								ne->sasuentry = le;
 							
-							if( root == NULL )
-							{
-								root = ne;
-								rwsentr = root;
+								if( root == NULL )
+								{
+									root = ne;
+									rwsentr = root;
+								}
+								else
+								{
+									rwsentr->next = ne;
+									rwsentr = ne;
+								}
 							}
-							else
-							{
-								rwsentr->next = ne;
-								rwsentr = ne;
-							}
-						}
-						//FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+							//FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 						
-						break;
-					}
-					if( lws->wc_UserSession == NULL )
-					{
-						break;
-					}
+							break;
+						}
+						if( lws->wusc_Data == NULL )
+						{
+							break;
+						}
 					
-					lws = (WebsocketClient *)lws->node.mln_Succ;
+						lws = (UserSessionWebsocket *)lws->node.mln_Succ;
+					}
+					FRIEND_MUTEX_UNLOCK( &(le->usersession->us_Mutex) );
 				}
-				FRIEND_MUTEX_UNLOCK( &(le->usersession->us_Mutex) );
+				le = (SASUList *)le->node.mln_Succ;
 			}
-			le = (SASUList *)le->node.mln_Succ;
+			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
+			as = (AppSession *)as->node.mln_Succ;
 		}
-		as = (AppSession *)as->node.mln_Succ;
-	}
 	
-	FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
-	
-	rwsentr = root;
-	while( rwsentr != NULL )
-	{
-		DEBUG("[AppSession] Remove entry and spread message about that\n");
-		RWSCon *re = rwsentr;
-
-		rwsentr = rwsentr->next;
-		
-		if( re != NULL )
+		DEBUG("Remove session from SAS, pointer %p\n", root );
+		rwsentr = root;
+		while( rwsentr != NULL )
 		{
-			int err = 0;
-			// *
-			char tmpmsg[ 255 ];
-			int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->sasuentry->usersession->us_User->u_Name );
-			
-			DEBUG("[AppSession] Session found and will be removed\n");
-			
-			if( re->as->as_UserSessionList == re->sasuentry )
+			DEBUG("[AppSession] Remove entry and spread message about that\n");
+			RWSCon *re = rwsentr;
+
+			rwsentr = rwsentr->next;
+		
+			if( re != NULL )
 			{
-				err = AppSessionSendMessage( as, re->sasuentry->usersession, tmpmsg, msgsize, NULL );
-			}
-			else
-			{
-				err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
-			}
-			* //
+				int err = 0;
+				// *
+				/*
+				char tmpmsg[ 255 ];
+				int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->sasuentry->usersession->us_User->u_Name );
 			
-			err = AppSessionRemUsersession( as, re->sasuentry->usersession );
+				DEBUG("[AppSession] Session found and will be removed\n");
 			
-			FFree( re );
+				if( re->as->as_UserSessionList == re->sasuentry )
+				{
+					err = AppSessionSendMessage( as, re->sasuentry->usersession, tmpmsg, msgsize, NULL );
+				}
+				else
+				{
+					err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
+				}
+				//
+				*/
+			
+				err = AppSessionRemUsersession( re->as, re->sasuentry->usersession );
+			
+				FFree( re );
+			}
 		}
-	}
-	*/
+	}	//  as == NULL
 	
-	int err = AppSessionRemUsersession( as, ws->wsc_UserSession );
+	if( ws->wusc_Data != NULL )
+	{
+		WSCData *data = (WSCData *)ws->wusc_Data;
+		int err = AppSessionRemUsersession( as, data->wsc_UserSession );
+	}
 	DEBUG("[AppSession] App session remove by WS END\n");
 	
 	return 0;
@@ -1008,8 +1171,14 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 					
 					int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->as_SASID, usend->u_Name, msg );
 					
-					msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
-					DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+					if( ali->usersession != NULL )
+					{
+						msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
+						if( ali->usersession != NULL && ali->usersession->us_User != NULL )
+						{
+							DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+						}
+					}
 					FFree( newmsg );
 				}
 				else
@@ -1111,9 +1280,15 @@ int AppSessionSendOwnerMessage( AppSession *as, UserSession *sender, char *msg, 
 		DEBUG("[AppSession] AS POINTER %p SENDER %p\n", as, usend );
 		int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, as->as_AuthID, as->as_SASID, usend->u_Name, msg );
 		
-		msgsndsize += WebSocketSendMessageInt( as->as_UserSessionList->usersession, newmsg, newmsgsize );
-		DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->as_UserSessionList->usersession->us_User->u_Name, msgsndsize );
-
+		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
+		{
+			if( as->as_UserSessionList != NULL )
+			{
+				msgsndsize += WebSocketSendMessageInt( as->as_UserSessionList->usersession, newmsg, newmsgsize );
+				DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->as_UserSessionList->usersession->us_User->u_Name, msgsndsize );
+			}
+			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
+		}
 		FFree( newmsg );
 	}
 	else

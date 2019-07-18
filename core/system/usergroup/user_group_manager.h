@@ -102,7 +102,7 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr );
 // Assign groups to User
 //
 
-int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *groups );
+int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level, char *workgroups );
 
 //
 //

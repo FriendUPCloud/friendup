@@ -166,28 +166,6 @@ void UserRemoveSession( User *usr, void *ls )
 					}
 				}
 			}
-			/*
-		while( actus != NULL )
-		{
-			prevus = actus;
-			actus = (UserSessListEntry *)actus->node.mln_Succ;
-			
-			if( prevus->us == remses )
-			{
-				if( prevus == usr->u_SessionsList )
-				{
-					usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
-				}
-				else
-				{
-					prevus->node.mln_Succ = (MinNode *)actus;
-				}
-				usr->u_SessionsNr--;
-				removed = TRUE;
-				break;
-			}
-		}
-		*/
 		}
 		
 		if( usr->u_SessionsNr <= 0 )
@@ -195,7 +173,6 @@ void UserRemoveSession( User *usr, void *ls )
 			usr->u_SessionsList = NULL;
 		}
 		
-
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
 }
@@ -547,41 +524,51 @@ void UserRemoveFromGroups( User *u )
 	
 	DEBUG("[UserRemoveFromGroups] remove start\n");
 	// remove user from group first
+	/*
 	UserGroupLink *ugl = u->u_UserGroupLinks;
 	while( ugl != NULL )
 	{
 		if( ugl->ugl_Group != NULL )
 		{
-			UserGroupAUser *au = ugl->ugl_Group->ug_UserList;
-			UserGroupAUser *auprev = ugl->ugl_Group->ug_UserList;
-	
-			while( au != NULL )
+			if( FRIEND_MUTEX_LOCK( &ugl->ugl_Group->ug_Mutex ) == 0 )
 			{
-				// user is added, no need to add it second time
-				if( au->ugau_User != NULL && u == au->ugau_User )
+				GroupUserLink *au = ugl->ugl_Group->ug_UserList;
+				GroupUserLink *auprev = ugl->ugl_Group->ug_UserList;
+	
+				while( au != NULL )
 				{
-					if( au == ugl->ugl_Group->ug_UserList )
+					// user is added, no need to add it second time
+					if( au->ugau_User != NULL && u == au->ugau_User )
 					{
-						ugl->ugl_Group->ug_UserList = (UserGroupAUser *) au->node.mln_Succ;
+						if( au == ugl->ugl_Group->ug_UserList )
+						{
+							ugl->ugl_Group->ug_UserList = (GroupUserLink *) au->node.mln_Succ;
+						}
+						else
+						{
+							auprev->node.mln_Succ = au->node.mln_Succ;
+						}
+						FFree( au );
+						break;
 					}
-					else
-					{
-						auprev->node.mln_Succ = au->node.mln_Succ;
-					}
-					FFree( au );
-					break;
-				}
 
-				auprev = au;
-				au = (UserGroupAUser *)au->node.mln_Succ;
+					auprev = au;
+					au = (GroupUserLink *)au->node.mln_Succ;
+				}
+				FRIEND_MUTEX_UNLOCK( &ugl->ugl_Group->ug_Mutex );
 			}
 		}
 		ugl = (UserGroupLink *)ugl->node.mln_Succ;
 	}
+	*/
 	
 	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
 	// remove all links to group
-	UserDeleteGroupLinkAll( u->u_UserGroupLinks );
-	u->u_UserGroupLinks = NULL;
+	if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
+	{
+		UserDeleteGroupLinkAll( u->u_UserGroupLinks );
+		u->u_UserGroupLinks = NULL;
+		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
+	}
 	DEBUG("[UserRemoveFromGroups] remove end\n");
 }

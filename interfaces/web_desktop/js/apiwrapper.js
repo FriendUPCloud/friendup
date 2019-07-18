@@ -1400,14 +1400,14 @@ function apiWrapper( event, force )
 					
 					// Try to execute register callback function
 					if( msg.registerCallback )
-						runWrapperCallback( msg.registerCallback );
+						runWrapperCallback( msg.registerCallback, msg.data );
 				}
 				// We got notify without a window (shell application or main app win no window)
 				else
 				{
 					// Try to execute register callback function
 					if( msg.registerCallback )
-						runWrapperCallback(msg.registerCallback);
+						runWrapperCallback(msg.registerCallback, msg.data );
 				}
 				break;
 				// Screens ---------------------------------------------------------
@@ -2396,6 +2396,11 @@ function apiWrapper( event, force )
 				var f = new Module( msg.module );
 				f.application = app;
 
+				if( msg.forceHTTP )
+				{
+					f.forceHTTP = msg.forceHTTP;
+				}
+
 				// Add variables
 				if( msg.vars )
 				{
@@ -2456,14 +2461,16 @@ function apiWrapper( event, force )
 									if( icons )
 										msg.data = JSON.stringify( jsonSafeObject( icons ) );
 									else msg.data = false;
-									app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+									if( app && app.contentWindow )
+										app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 								} );
 								return;
 							}
 						}
 						// Give negative response - works as it should...
 						msg.data = false;
-						app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+						if( app && app.contentWindow )
+							app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 						return;
 				}
 				break;
@@ -2727,42 +2734,49 @@ function apiWrapper( event, force )
 			// 1 can app read events?
 			// 2 can app set events?
 			case 'calendar' :
-				var action = msg.data;
-				if ( 'add' !== action.type ) {
-					done( false, 'unknown type: ' + action.type , action.data.cid );
-					return;
+				if( msg.method == 'calendarrefresh' )
+				{
+					Workspace.refreshExtraWidgetContents();
 				}
-
-				var data = action.data;
-				var title = app.applicationName + ' wants to add a calendar event';
-				Confirm( title, data.message, confirmBack );
-				function confirmBack( accept ) {
-					if ( accept )
-						addCalendarEvent( data.event );
-					else {
-						done( false, 'event denied', data.cid );
-					}
-				}
-
-				function addCalendarEvent( event ) {
-					var mod = new Module( 'system' );
-					mod.onExecuted = eventAdded;
-					mod.execute( 'addcalendarevent', { event : event });
-					function eventAdded( ok, res ) {
-						done( 'ok' === ok, res, data.cid );
-					}
-				}
-
-				function done( ok, res, cid ) {
-					if ( !cid )
+				else
+				{
+					var action = msg.data;
+					if ( 'add' !== action.type ) {
+						done( false, 'unknown type: ' + action.type , action.data.cid );
 						return;
+					}
 
-					var res = {
-						ok       : ok,
-						res      : res,
-						callback : cid,
-					};
-					app.contentWindow.postMessage( res, '*' );
+					var data = action.data;
+					var title = app.applicationName + ' wants to add a calendar event';
+					Confirm( title, data.message, confirmBack );
+					function confirmBack( accept ) {
+						if ( accept )
+							addCalendarEvent( data.event );
+						else {
+							done( false, 'event denied', data.cid );
+						}
+					}
+
+					function addCalendarEvent( event ) {
+						var mod = new Module( 'system' );
+						mod.onExecuted = eventAdded;
+						mod.execute( 'addcalendarevent', { event : event });
+						function eventAdded( ok, res ) {
+							done( 'ok' === ok, res, data.cid );
+						}
+					}
+
+					function done( ok, res, cid ) {
+						if ( !cid )
+							return;
+
+						var res = {
+							ok       : ok,
+							res      : res,
+							callback : cid,
+						};
+						app.contentWindow.postMessage( res, '*' );
+					}
 				}
 				break;
 
@@ -2790,9 +2804,11 @@ function apiWrapper( event, force )
 					// hacky check to unregister if it already exists
 					// should be done when an application closes.
 					// - actually, this stuff should be a permission
-					var regId = Workspace.conn.registeredApps[ app.authId ];
-					if ( regId )
-						Workspace.conn.off( app.authId, regId );
+					// ## removed by thomas to allow several SAS per application as many apps can have several windows/instances.
+					// ## initial tests showed no negative behaviour. cleanup must be done in a smarter way.
+					//var regId = Workspace.conn.registeredApps[ app.authId ];
+					//if ( regId )
+					//	Workspace.conn.off( app.authId, regId );
 
 					var id = Workspace.conn.on( app.authId, fconnMsg );
 					Workspace.conn.registeredApps[ app.authId ] = id;
@@ -3254,7 +3270,7 @@ function apiWrapper( event, force )
 						break;
 					case 'getlocale':
 						var nmsg = {};
-						for( var a in msg ) nmsg[a] = msg[a];
+						for( var a in msg ) nmsg[ a ] = msg[ a ];
 						nmsg.locale = Workspace.locale;
 						var cw = GetContentWindowByAppMessage( app, msg );
 						if( cw )
@@ -3268,8 +3284,8 @@ function apiWrapper( event, force )
 						break;
 					case 'confirm':
 						var nmsg = {};
-						for( var a in msg ) nmsg[a] = msg[a];
-						console.log('we confirm...',nmsg);
+						for( var a in msg ) nmsg[ a ] = msg[ a ];
+						//console.log('we confirm...',nmsg);
 						Confirm( 
 							msg.title, 
 							msg.string, 
@@ -3292,8 +3308,8 @@ function apiWrapper( event, force )
 									if( cw ) cw.postMessage( JSON.stringify( nmsg ), '*' );
 								}
 							},
-							(nmsg.confirmok ? nmsg.confirmok : false ),
-							(nmsg.confirmcancel ? nmsg.confirmcancel : false )
+							( nmsg.confirmok ? nmsg.confirmok : false ),
+							( nmsg.confirmcancel ? nmsg.confirmcancel : false )
 						);
 						msg.callback = false;
 						break;
@@ -3318,8 +3334,17 @@ function apiWrapper( event, force )
 						m.execute( 'updateapppermissions', { application: msg.application, data: msg.data, permissions: JSON.stringify( msg.permissions ) } );
 						break;
 
+					// Update login and tell apps
 					case 'updatelogin':
 						Workspace.login( msg.username, msg.password, true );
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							var nmsg = {
+								command: 'userupdate',
+								applicationId: msg.applicationId
+							};
+							Workspace.applications[a].contentWindow.postMessage( nmsg, '*' );
+						}
 						break;
 					case 'reloadmimetypes':
 						Workspace.reloadMimeTypes();
@@ -3512,9 +3537,12 @@ function apiWrapper( event, force )
 									'applicationexecuted' : 
 									'applicationnotexecuted';
 								
-								app.contentWindow.postMessage( 
-									JSON.stringify( nmsg ), '*' 
-								);
+								if( app && app.contentWindow )
+								{
+									app.contentWindow.postMessage( 
+										JSON.stringify( nmsg ), '*' 
+									);
+								}
 
 								if( nmsg.callback )
 								{
@@ -3698,6 +3726,30 @@ function apiWrapper( event, force )
 							}
 						}
 						break;
+					// Print dialogs -------------------------------------------
+					case 'printdialog':
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						var triggerFunc = null;
+						if( msg.callbackId )
+						{
+							triggerFunc = function( data )
+							{
+								var nmsg = {
+									command: 'printdialog',
+									applicationId: msg.applicationId,
+									viewId: msg.viewId,
+									targetViewId: msg.targetViewId,
+									callbackId: msg.callbackId,
+									data: data
+								};
+								if( tar )
+									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						}
+						var d = new Printdialog( msg.flags, triggerFunc );
+						break;
 					// File dialogs --------------------------------------------
 					case 'filedialog':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
@@ -3722,6 +3774,37 @@ function apiWrapper( event, force )
 						};
 						var d = new Filedialog( flags );
 						break;
+					case 'opencamera':
+						var win = app.windows ? app.windows[ msg.viewId ] : false;
+						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						var vtitle = msg.title ? msg.title : ( msg.flags.title ? msg.flags.title : i18n('i18n_camera') );
+						var vwidth = msg.width ? msg.width : ( msg.flags.width ? msg.flags.width : 480 );
+						var vheight= msg.height ? msg.height : ( msg.flags.height ? msg.flags.height : 320 );
+						var cview = new View({ title: vtitle, width: vwidth, height: vheight });
+						cview.callback = msg.callback;
+						cview.self = cview;
+						cview.openCamera( false, function( data ) {
+							var nmsg = {'command':'callback'};
+							nmsg.data = data;
+							nmsg.callback = msg.callback;
+							
+							if( tar )
+								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							else if( app && app.contentWindow )
+								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								
+							cview.close();
+						});
+						cview.onClose = function() {
+							var nmsg = { 'command':'callback','closed':true, 'data':{} };
+							nmsg.callback = msg.callback;
+							
+							if( tar )
+								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							else if(app && app.contentWindow)
+								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );	
+						};
+						break;
 				}
 				break;
 		}
@@ -3744,9 +3827,10 @@ function apiWrapper( event, force )
 			return false;
 
 		// Sometimes we want to send to a pre determined view by id.
-		if( msg.destinationViewId )
+		if( msg.destinationViewId || msg.targetViewId )
 		{
-			var cw = GetContentWindowById( app, msg.destinationViewId );
+			var target = msg.destinationViewId ? msg.destinationViewId : msg.targetViewId;
+			var cw = GetContentWindowById( app, target );
 			if( cw )
 			{
 				cw.postMessage( JSON.stringify( msg ), '*' );
@@ -4059,7 +4143,7 @@ if( window.addEventListener )
 		{
 			if( Friend.currentWindowHover && Friend.canActivateWindowOnBlur )
 			{
-				_ActivateWindow( Friend.currentWindowHover );
+				_ActivateWindowOnly( Friend.currentWindowHover );
 			}
 		}
 	} );

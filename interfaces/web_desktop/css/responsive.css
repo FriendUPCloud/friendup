@@ -324,7 +324,7 @@ html body .Screen .MobileAppMenu:after
 
 [mobile] #WorkspaceMenu.Open
 {
-	height: calc(100% + 5px);
+	height: calc(100% - 40px);
 	width: 70%;
 	transform: translate3d(-100%,0,0);
 	overflow: visible;
@@ -1139,6 +1139,11 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	margin: auto;
 	float: none;
 	display: block;
+}
+
+[mobile] .Busy button.FloatRight.IconSmall.fa-upload 
+{
+	display: none !important;
 }
 
 

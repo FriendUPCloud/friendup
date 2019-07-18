@@ -473,15 +473,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						{
 						//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
 						//sqllib->Update( sqllib, UserGroupDesc, fg );
-						
-						
-							{
-								char msg[ 512 ];
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
-								UGMRemoveGroup( l->sl_UGM, fg );
+
+							char msg[ 512 ];
+							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
+							UGMRemoveGroup( l->sl_UGM, fg );
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
-							}
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
 						
 							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
 
@@ -686,8 +683,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						}
 						
 						// group was created, its time to add users to it
-				
 						// go through all elements and find proper users
+						// this part is called when user is assigned to at least one group
 					
 						if( strcmp( users, "false" ) != 0 )
 						{
@@ -704,7 +701,15 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								User *usr = UMGetUserByID( l->sl_UM, (FULONG)rmEntry->i_Data );
 								if( usr != NULL )
 								{
+									char *mountError = 0;
 									UserGroupAddUser( fg, usr );
+									RefreshUserDrives( l->sl_DeviceManager, usr, NULL, &mountError );
+									if( mountError != NULL )
+									{
+										FERROR("Error while mounting drives!");
+										FFree( mountError );
+									}
+									DEBUG("User was assigned to groups and refreshed\n");
 								}
 
 								UGMAddUserToGroupDB( l->sl_UGM, groupID, rmEntry->i_Data );

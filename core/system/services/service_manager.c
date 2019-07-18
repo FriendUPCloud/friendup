@@ -40,7 +40,8 @@ ServiceManager *ServiceManagerNew( void *fcm )
 
 		smgr->sm_FCM = fcm;
 		
-		if (getcwd( tempString, sizeof ( tempString ) ) == NULL){
+		if( getcwd( tempString, sizeof ( tempString ) ) == NULL )
+		{
 			FERROR("getcwd failed!");
 			exit(5);
 		}

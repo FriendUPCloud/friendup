@@ -16,6 +16,194 @@ Application.run = function( msg, iface )
 	reloadSoftware();
 	reloadServices();
 	reloadApplicationPermissions();
+	reloadGlobals();
+}
+
+
+// Server globals
+function reloadGlobals()
+{
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		var replacements = {
+			logoImage: '',
+			backgroundImage: '',
+			eulaLong: '',
+			eulaShort: '',
+			rand: 'ra' + ( Math.random() * 999 ) + ( new Date() ).getTime()
+		};
+		if( e == 'ok' )
+		{
+			try
+			{
+				d = JSON.parse( d );
+				for( var a in d )
+				{
+					replacements[ a ] = d[ a ];
+				}
+			}
+			catch( e )
+			{
+				console.log( 'Failed to load json.' );
+			}
+		}
+		
+		var f = new File( 'Progdir:Templates/globals.html' );
+		f.replacements = replacements;
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			ge( 'ServerGlobals' ).innerHTML = data;
+			ge( 'eula_short_check' ).checked = d.useEulaShort === '1' ? 'checked' : '';
+			ge( 'eula_long_check' ).checked = d.useEulaLong === '1' ? 'checked' : '';
+			ge( 'logo_image_check' ).checked = d.useLogoImage === '1' ? 'checked' : '';
+			ge( 'background_image_check' ).checked = d.useBackgroundImage === '1' ? 'checked' : '';
+			ge( 'about_template' ).value = d.aboutTemplate ? d.aboutTemplate : '';
+			ge( 'extra_about_template_check' ).checked = d.useAboutTemplate === '1' ? 'checked' : '';
+			ge( 'extra_login_css' ).value = d.extraLoginCSS ? d.extraLoginCSS : '';
+			ge( 'extra_login_css_check' ).checked = d.useExtraLoginCSS === '1' ? 'checked' : '';
+		}
+		f.load();
+	}
+	m.execute( 'getserverglobals', { test: 'test' } );
+}
+
+function changeGlobalsLogoImage()
+{
+	var flags = {
+		type: 'load',
+		title: i18n( 'i18n_select_a_logo_image' ),
+		path: 'Mountlist:',
+		suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+		multiple: false,
+		triggerFunction: function( items )
+		{
+			if( items.length )
+			{
+				ge( 'theLogoImage' ).src = getWebUrl( items[ 0 ].Path );
+				ge( 'theLogoImage' ).setAttribute( 'friendUrl', items[ 0 ].Path );
+			}
+		}
+	};
+	( new Filedialog( flags ) );
+}
+
+function changeGlobalsLoginCSS()
+{
+	var flags = {
+		type: 'load',
+		title: i18n( 'i18n_select_a_css_file' ),
+		path: 'Mountlist:',
+		suffix: [ 'css' ],
+		multiple: false,
+		triggerFunction: function( items )
+		{
+			if( items.length )
+			{
+				ge( 'extra_login_css' ).value = items[ 0 ].Path;
+			}
+		}
+	};
+	( new Filedialog( flags ) );
+}
+
+function changeAboutTemplate()
+{
+	var flags = {
+		type: 'load',
+		title: i18n( 'i18n_change_about_template' ),
+		path: 'Mountlist:',
+		suffix: [ 'html', 'htm' ],
+		multiple: false,
+		triggerFunction: function( items )
+		{
+			if( items.length )
+			{
+				ge( 'about_template' ).value = items[ 0 ].Path;
+			}
+		}
+	};
+	( new Filedialog( flags ) );
+}
+
+function changeGlobalsBackgroundImage()
+{
+	var flags = {
+		type: 'load',
+		title: i18n( 'i18n_select_a_background_image' ),
+		path: 'Mountlist:',
+		suffix: [ 'jpg', 'jpeg' ],
+		multiple: false,
+		triggerFunction: function( items )
+		{
+			if( items.length )
+			{
+				ge( 'theBackgroundImage' ).src = getWebUrl( items[ 0 ].Path );
+				ge( 'theBackgroundImage' ).setAttribute( 'friendUrl', items[ 0 ].Path );
+			}
+		}
+	};
+	( new Filedialog( flags ) );
+}
+
+// Save the server globals
+function saveGlobals()
+{
+	var eulaShortText   = ge( 'eula_short_text' ).value;
+	var eulaLongText    = ge( 'eula_long_text' ).value;
+	var logoImage       = false;
+	var backgroundImage = false;
+	var extraLoginCSS   = ge( 'extra_login_css' ).value;
+	var aboutTemplate   = ge( 'about_template' ).value;
+	var useEulaShort    = useEulaLong = useLogoImage = useBackgroundImage = useExtraLoginCSS = useAboutTemplate = false;
+	useEulaShort        = ge( 'eula_short_check' ).checked ? '1' : '0';
+	useEulaLong         = ge( 'eula_long_check' ).checked ? '1' : '0';
+	useLogoImage        = ge( 'logo_image_check' ).checked ? '1' : '0';
+	useBackgroundImage  = ge( 'background_image_check' ).checked ? '1' : '0';
+	useExtraLoginCSS    = ge( 'extra_login_css_check' ).checked ? '1' : '0';
+	useAboutTemplate    = ge( 'extra_about_template_check' ).checked ? '1' : '0';
+	
+	// Convert image
+	var png = ge( 'theLogoImage' ).getAttribute( 'friendUrl' );
+	var jpg = ge( 'theBackgroundImage' ).getAttribute( 'friendUrl' );
+	
+	function doSave()
+	{
+		var mdata = { 
+			eulaShortText:      eulaShortText, 
+			eulaLongText:       eulaLongText, 
+			logoImage:          png,
+			backgroundImage:    jpg,
+			extraLoginCSS:      extraLoginCSS,
+			aboutTemplate:      aboutTemplate,
+			useEulaShort:       useEulaShort,
+			useEulaLong:        useEulaLong,
+			useLogoImage:       useLogoImage,
+			useBackgroundImage: useBackgroundImage,
+			useExtraLoginCSS:   useExtraLoginCSS,
+			useAboutTemplate:   useAboutTemplate
+		};
+		
+		var m = new Module( 'system' );
+		m.forceHTTP = true;
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				Notify( { title: i18n( 'i18n_server_globals_saved' ), text: i18n( 'i18n_please_refresh_to_see_results' ) } );
+			}
+			var sl = new Library( 'system.library' );
+			sl.onExecuted = function( e, d )
+			{
+				console.log( 'Library call: ', e, d );
+			}
+			sl.execute( 'clearcache' );
+		}
+		m.execute( 'setserverglobals', mdata );
+	}
+	
+	doSave();
 }
 
 function reloadServices()
@@ -137,17 +325,17 @@ function redrawSettings()
 		if( settings[a].Data )
 		{
 			setting = JSON.parse( ('' + settings[a].Data).replace(/\r/g,'\\r').replace(/\n/g,'\\n') );
-			for( var c = 0; c < setting.length; c++ )
+			/*for( var c = 0; c < setting.length; c++ )
 			{
 				pout += setting[c][0] + ( ( setting[c][1] && setting[c][1].length ) ? ( '(' + setting[c][1] + ')' ) : '' ) + ( ( c < setting.length - 1 ) ? ', ' : '' );
-			}
+			}*/
 		}
 		var btn1 = '<button type="button" class="FullWidth Button IconSmall fa-pencil" onclick="ServerSettingEdit( \'' + settings[a].ID + '\' )">&nbsp;' + i18n( 'i18n_edit' ) + '</button>';
 		var btn2 = '<button type="button" class="FullWidth Button IconSmall fa-remove" onclick="ServerSettingDelete( \'' + settings[a].ID + '\' )">&nbsp;' + i18n( 'i18n_delete' ) + '</button>';
 		sw = sw == 2 ? 1 : 2;
 		str += '<div class="GuiContainer"><div class="HRow BackgroundDefault sw' + sw + '">';
-		str += '<div class="HContent25 FloatLeft Padding LineHeight2x"><strong>' + settings[a].Type + '/' + settings[a].Key + '</strong></div>';
-		str += '<div class="HContent45 FloatLeft Padding LineHeight2x" title="' + pout + '"><em>' + pout + '</em></div>';
+		str += '<div class="HContent65 FloatLeft Padding LineHeight2x"><strong>' + settings[a].Type + '/' + settings[a].Key + '</strong></div>';
+		//str += '<div class="HContent45 FloatLeft Padding LineHeight2x" title="' + pout + '"><em>' + pout + '</em></div>';
 		str += '<div class="HContent15 FloatLeft Padding">' + btn1 + '</div>';
 		str += '<div class="HContent15 FloatLeft Padding">' + btn2 + '</div>';
 		str += '</div></div>';

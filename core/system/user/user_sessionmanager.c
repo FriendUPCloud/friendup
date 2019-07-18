@@ -481,7 +481,16 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			
 			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
 			{
-				DEBUG("Session locked\n");
+				DEBUG("Session locked, compare: %s vs %s\n", us->us_SessionID, ses->us_SessionID );
+				
+				if( us->us_SessionID != NULL && ses->us_SessionID != NULL && strncmp( us->us_SessionID, ses->us_SessionID, 256 ) == 0 )
+				{
+					DEBUG("Found session with same sessionID, return!\n");
+					FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+					FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
+					return ses;
+				}
+				
 				if( ses->us_DeviceIdentity != NULL )
 				{
 					if( us->us_UserID == ses->us_UserID && strcmp( us->us_DeviceIdentity, ses->us_DeviceIdentity ) ==  0 )
@@ -988,7 +997,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
     // Go through logged users
     //
     
-    DEBUG("CHECK11\n");
+    //DEBUG("CHECK11\n");
     FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
@@ -1000,7 +1009,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 			char *uname = usr->u_Name;
 			int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
-			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
+			//DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
 			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			
@@ -1014,13 +1023,6 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 					
 					// do not send message to sender
 					FBOOL sendNotif = TRUE;
-					if( ses != NULL )
-					{
-						if( ses->us_ID == uses->us_ID )
-						{
-							sendNotif = FALSE;
-						}
-					}
 					if( uses == NULL )
 					{
 						sendNotif = FALSE;
@@ -1031,9 +1033,9 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 						DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
 						
-						//FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 						WebSocketSendMessage( sb, uses, tmpmsg, len );
-						//FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
+						FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 
 						// send message to all remote users
 						RemoteUser *ruser = usr->u_RemoteUsers;
@@ -1132,14 +1134,17 @@ void USMCloseUnusedWebSockets( UserSessionManager *usm )
 		UserSession *ses = usm->usm_Sessions;
 		while( ses != NULL )
 		{
-			WebsocketServerClient *cl = ses->us_WSClients;
+			UserSessionWebsocket *cl = ses->us_WSConnections;
 			if( cl != NULL )
 			{
+				//TODO check maybe ws connections should be removed?
+				/*
 				if( ( actTime - cl->wsc_LastPingTime ) < 150 )		// if last call was done 150 secs ago, we can close it
 				{
 					lws_close_reason( cl->wsc_Wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char *)"CLOSE", 5 );
 					DEBUG("[USMCloseUnusedWebSockets] close WS connection\n");
 				}
+				*/
 			}
 			ses = (UserSession *)ses->node.mln_Succ;
 		}

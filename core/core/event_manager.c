@@ -156,6 +156,7 @@ void EventLaunch( CoreEvent *ptr )
 	threadsNo--;
 	ptr->ce_Launched = FALSE;
 	
+	DEBUG("[EventLaunch] quit\n");
 	pthread_exit( 0 );
 }
 
@@ -274,7 +275,7 @@ int EventAdd( EventManager *em, char *name, void *function, void *data, time_t n
 	CoreEvent *nce = FCalloc( sizeof( CoreEvent ), 1 );
 	if( nce != NULL )
 	{
-		//FThread *nth = ThreadNew( function, em->em_SB, FALSE );
+		//FThread *nth = ThreadNew( function, em->em_SB, FALSE, NULL );
 		//CoreEvent *retEv = NULL;
 		//nce->ce_Thread = thread;
 		nce->ce_Function = function;

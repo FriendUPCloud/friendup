@@ -924,7 +924,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 						sb->sl_USM->usm_Sessions = ses;
 					}
 				}
-				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE );
+				char *err = NULL;
+				sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
+				if( err != NULL )
+				{
+					FERROR("UserDeviceMount returned: %s\n", err );
+					FFree( err );
+				}
 			}
 			else
 			{
@@ -953,7 +959,13 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		else
 		{
-			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE );
+			char *err = NULL;
+			sb->UserDeviceMount( sb, sqll, usr, 0, TRUE, &err );
+			if( err != NULL )
+			{
+				FERROR("UserDeviceMount returned: %s\n", err );
+				FFree( err );
+			}
 		}
 		sb->LibrarySQLDrop( sb, sqll );
 	}
@@ -1188,8 +1200,6 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 				{
 					while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
 					{
-						//DEBUG("Readed %d\n", dataread );
-						//BufStringAddSize( bs, dataBuffer, dataread );
 						ListStringAdd( ls, dataBuffer, dataread );
 					}
 				}

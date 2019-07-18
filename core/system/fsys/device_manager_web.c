@@ -91,8 +91,9 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
+		char *error = NULL;
 		BufString *bs = BufStringNew();
-		if( ( resperr = RefreshUserDrives( l->sl_DeviceManager, loggedSession->us_User, bs ) ) == 0 )
+		if( ( resperr = RefreshUserDrives( l->sl_DeviceManager, loggedSession->us_User, bs, &error ) ) == 0 )
 		{
 			HttpSetContent( response, bs->bs_Buffer, bs->bs_Bufsize );
 			bs->bs_Buffer = NULL;
@@ -106,6 +107,10 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			HttpAddTextContent( response, dictmsgbuf );
 		}
 		BufStringDelete( bs );
+		if( error != NULL )
+		{
+			FFree( error );
+		}
 		
 		*result = 200;
 	}
@@ -516,40 +521,55 @@ f.Name ASC";
 				};
 				
 				File *mountedDev = NULL;
+				char *error = NULL;
 				
-				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, loggedSession->us_User );
+				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, loggedSession->us_User, &error );
 				
 				// This is ok!
 				if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
 				{
-					char dictmsgbuf[ 256 ];
+					char dictmsgbuf[ 512 ];
 					switch( mountError )
 					{
 						case FSys_Error_NOFSAvaiable:
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
-							HttpAddTextContent( response, dictmsgbuf );
-							//HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"Could not locate file system.\"}" );
+							if( error != NULL )
+							{
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\",\"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND, error );
+							}
+							else
+							{
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+							}
 							break;
 						case FSys_Error_NOFSType:
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
-							HttpAddTextContent( response, dictmsgbuf );
-							//HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"No disk type specified or disk does not exist.\"}" );
+							if( error != NULL )
+							{
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND, error );
+							}
+							else
+							{
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+							}
 							break;
 						case FSys_Error_NOName:
 						case FSys_Error_SelectFail:
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK );
-							HttpAddTextContent( response, dictmsgbuf );
-							//HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"No disk name specified or disk does not exist.\"}" );
+							if( error != NULL )
+							{
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\",\"error\":\"%s\"}", l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK, error );
+							}
+							else
+							{
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK );
+							}
 							break;
 						default:
 						{
-							char tmp[ 100 ];
-							snprintf( tmp, sizeof( tmp ), "ok<!--separate-->Mouting error: %d\n", l->GetError( l ) );
-							HttpAddTextContent( response, tmp );
-							
+							snprintf( dictmsgbuf, sizeof( dictmsgbuf ), "fail<!--separate-->Mouting error: %d, %s\n", l->GetError( l ), error );
 							break;
 						}
 					}
+					HttpAddTextContent( response, dictmsgbuf );
+					
 					mountError = 1;
 				}
 				else
@@ -564,6 +584,11 @@ f.Name ASC";
 					}
 					
 				}	// mount failed
+				
+				if( error != NULL )
+				{
+					FFree( error );
+				}
 				
 				// we must check if dvice should be moutned
 				// NB: ALWAYS mount when asked to and allowed to
@@ -1117,6 +1142,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 				
 				if( user != NULL )
 				{
+					char *error = NULL;
 					DEBUG("[DeviceMWebRequest] Sharing device in progress\n");
 				
 					if( user->u_InitialDevMount == FALSE )
@@ -1126,7 +1152,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 						if( sqllib != NULL )
 						{
-							UserDeviceMount( l, sqllib, user, 0, TRUE );
+							UserDeviceMount( l, sqllib, user, 0, TRUE, &error );
 							l->LibrarySQLDrop( l, sqllib );
 						}
 						else
@@ -1153,7 +1179,14 @@ AND LOWER(f.Name) = LOWER('%s')",
 							FERROR("[DeviceMWebRequest] Cannot share device, error %d\n", err );
 							char dictmsgbuf[ 256 ];
 							char dictmsgbuf1[ 196 ];
-							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_CANNOT_BE_SHARED], err );
+							if( error != NULL )
+							{
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), error, err );
+							}
+							else
+							{
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_CANNOT_BE_SHARED], err );
+							}
 							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DEVICE_CANNOT_BE_SHARED );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
@@ -1162,6 +1195,11 @@ AND LOWER(f.Name) = LOWER('%s')",
 							INFO("[DeviceMWebRequest] Device %s shared successfully\n", devname );
 							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Device shared successfully\"}" );
 						}
+					}
+					
+					if( error != NULL )
+					{
+						FFree( error );
 					}
 				}
 			}

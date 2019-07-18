@@ -33,7 +33,8 @@ Workspace = {
 	menuState: '',
 	themeOverride: false,
 	systemInfo: false,
-	lastfileSystemChangeMessage:false,
+	websocketsOffline: true,
+	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
 		{
@@ -55,6 +56,9 @@ Workspace = {
 
 	preinit: function()
 	{
+		// Go ahead and init!
+		ScreenOverlay.init();
+		
 		var img = new Image();
 		img.src = '/webclient/theme/loginimage.jpg';
 		img.onload = function()
@@ -76,7 +80,7 @@ Workspace = {
 		// Preload some images
 		var imgs = [
 			'/webclient/gfx/system/offline_16px.png',
-			'/themes/friendup12/gfx/loading.gif'
+			'/themes/friendup12/gfx/busy.png'
 		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
@@ -152,7 +156,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-			title: 'Workspace',
+			title: 'Friend Workspace',
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,
@@ -309,7 +313,10 @@ Workspace = {
 		}
 
 		// Recall wallpaper from settings
-		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
+		this.refreshUserSettings( function(){ 
+			// Refresh desktop for the first time
+			Workspace.refreshDesktop(); 
+		} );
 
 		// Create desktop
 		this.directoryView = new DirectoryView( wbscreen.contentDiv );
@@ -680,7 +687,7 @@ Workspace = {
 			height: 480,
 			'min-height': 280,
 			'resize': false,
-			title: 'Login to FriendUP',
+			title: 'Login to FriendOS',
 			close: false,
 			login: true,
 			theme: 'login'
@@ -710,7 +717,7 @@ Workspace = {
 			{
 				try
 				{
-					Workspace.conn.close();
+					Workspace.conn.ws.close();
 				}
 				catch( e )
 				{
@@ -724,6 +731,13 @@ Workspace = {
 			{
 				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
 			}
+			// Friend app waits some more
+			else if( window.friendApp )
+			{
+				Workspace.reloginInProgress = false;
+				return;
+			}
+			// Just exit to login screen
 			else
 			{
 				// We're exiting!
@@ -801,7 +815,6 @@ Workspace = {
 			m.addVar( 'deviceid', this.deviceid );
 			m.onExecuted = function( json, serveranswer )
 			{
-
 				if( typeof( json ) != 'object' )
 				{
 					try
@@ -830,9 +843,9 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
-
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
+				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
@@ -987,8 +1000,8 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
@@ -1121,10 +1134,36 @@ Workspace = {
 				} );
 			}
 
+			// Make sure we have a public key for this user (depending on login interface)
+			// TODO: See if we actually need this (and it doesn't work properly)
+			/*if( window.friendApp )
+			{
+				var credentials = friendApp.getCredentials();
+				var info = Workspace.generateKeys( credentials.username, credentials.password );
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					// Call back!
+					if( cb ) cb();
+				}
+				m.execute( 'setuserpublickey', { publickey: info.publickey } );
+				return;
+			}*/
+
 			// Call back!
 			if( cb ) cb();
 		}
 
+		// Manipulate screen overlay
+		// (this will only be shown once!)
+		// TODO: Figure out if this is the right behavior in every case
+		//       implementation circumvents relogin issue
+		if( !Workspace.screenOverlayShown )
+		{
+			ScreenOverlay.show();
+			Workspace.screenOverlayShown = true;
+		}
+		
 		if( !this.userWorkspaceInitialized )
 		{
 			this.userWorkspaceInitialized = true;
@@ -1161,6 +1200,7 @@ Workspace = {
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/deepestfield.js;' +
 				'webclient/js/gui/filedialog.js;' +
+				'webclient/js/gui/printdialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
 				'webclient/js/gui/colorpicker.js;' +
@@ -1287,7 +1327,7 @@ Workspace = {
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{	
-							var m = new Module( 'system' );
+							/*var m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{
 						        if( ee != 'ok' )
@@ -1298,7 +1338,8 @@ Workspace = {
 							}
 							m.execute( 'getsetting', {
 								setting: 'accepteula'
-							} );
+							} );*/
+							afterEula( 'ok' );
 							
 							// When eula is displayed or not
 							function afterEula( e )

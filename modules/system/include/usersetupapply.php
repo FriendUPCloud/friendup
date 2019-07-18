@@ -19,7 +19,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
-global $SqlDatabase;
+global $SqlDatabase, $Config, $Logger;
+
+require_once( 'php/classes/dbio.php' );
+require_once( 'php/classes/door.php' );
+require_once( 'php/classes/file.php' );
 
 if( !function_exists( 'findInSearchPaths' ) )
 {
@@ -44,7 +48,7 @@ if( $args->args->id > 0 )
 {
 	if( $ug = $SqlDatabase->FetchObject( '
 		SELECT 
-			g.*, s.Data 
+			g.*, s.Data
 		FROM 
 			`FUserGroup` g, 
 			`FSetting` s 
@@ -66,10 +70,34 @@ if( $args->args->id > 0 )
 		
 		$ug->Data = ( $ug->Data ? json_decode( $ug->Data ) : false );
 		
+		// Try to get wallpaper
+		$wallpaper = new dbIO( 'FMetaData' );
+		$wallpaper->DataID = $ug->ID;
+		$wallpaper->DataTable = 'FSetting';
+		$wallpaper->Key = 'UserTemplateSetupWallpaper';
+		$wallpaperContent = false;
+		if( !$wallpaper->Load() )
+		{
+			$wallpaper = false;
+		}
+		else
+		{
+			if( !( $wallpaperContent = file_get_contents( $wallpaper->ValueString ) ) )
+			{
+				$wallpaper = false;
+			}
+		}
+		
 		if( $users )
 		{
 			foreach( $users as $uid )
 			{
+				// Make sure the user exists!
+				$theUser = new dbIO( 'FUser' );
+				$theUser->load( $uid );
+				if( !$theUser->ID ) continue;
+				
+				// Great, we have a user
 				if( $ug->Data && $uid )
 				{
 					// Language ----------------------------------------------------------------------------------------
@@ -87,6 +115,93 @@ if( $args->args->id > 0 )
 						$lang->Save();
 					}
 		
+					// Wallpaper -----------------------------------------------
+					// TODO: Support other filesystems than SQLDrive! (right now, not possible!)
+					
+					if( $wallpaper )
+					{
+						$fnam = $wallpaper->ValueString;
+						$fnam = explode( '/', $fnam );
+						$fnam = end( $fnam );
+						
+						$f = new dbIO( 'Filesystem' );
+						$f->UserID = $uid;
+						$f->Name = 'Home';
+						if( $f->Load() )
+						{
+							// Make sure we have wallpaper folder
+							$fl = new dbIO( 'FSFolder' );
+							$fl->FilesystemID = $f->ID;
+							$fl->UserID = $uid;
+							$fl->Name = 'Wallpaper';
+							$fl->FolderID = 0;
+							if( !$fl->Load() )
+							{
+								$fl->Save();
+							}
+							
+							$fi = new dbIO( 'FSFile' );
+							$fi->FilesystemID = $f->ID;
+							$fi->UserID = $uid;
+							$fi->FolderID = $fl->ID;
+							$fi->Filename = $fnam;
+							$num = 1;
+							// Unique file
+							while( $fi->Load() )
+							{
+								$fnam = ( $num++ ) . $fnam;
+							}
+							$fi->Filesize = filesize( $wallpaper->ValueString );
+							$fi->DateCreated = date( 'Y-m-d H:i:s' );
+							$fi->DateModified = $fi->DateCreated;
+							$fi->Save();
+							
+							if( $fi->ID )
+							{
+								// Find disk filename
+								$uname = str_replace( array( '..', '/', ' ' ), '_', $theUser->Name );
+								if( !file_exists( $Config->FCUpload . $uname ) )
+								{
+									mkdir( $Config->FCUpload . $uname );
+								}
+							
+								// Unique name
+								$temp = $fnam;
+								$num = 1;
+								while( file_exists( $Config->FCUpload . $uname . '/' . $temp ) )
+								{
+									$temp = ( $num++ ) . $fnam;
+								}
+							
+								// Write the wallpaper file
+								if( $fp = fopen( $Config->FCUpload . $uname . '/' . $temp, 'w+' ) )
+								{
+									fwrite( $fp, $wallpaperContent );
+									fclose( $fp );
+									$fi->DiskFilename = $uname . '/' . $temp;
+									$fi->Save();
+							
+									// Set the wallpaper in config
+									$s = new dbIO( 'FSetting' );
+									$s->UserID = $uid;
+									$s->Type = 'system';
+									$s->Key = 'wallpaperdoors';
+									$s->Load();
+									$s->Data = '"Home:Wallpaper/' . $fi->Filename . '"';
+									$s->Save();
+								}
+								else
+								{
+									$fi->Delete();
+								}
+							}	
+							else
+							{
+							}						
+							// All done!
+						}
+					}
+					
 					// Startup -----------------------------------------------------------------------------------------
 		
 					if( isset( $ug->Data->startups ) )

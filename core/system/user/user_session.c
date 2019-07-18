@@ -70,6 +70,7 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
+		Log( FLOG_DEBUG, "\nUserSessionDelete will be removed: %s\n\n", us->us_SessionID );
 		int count = 0;
 
 		// we must wait till all tasks will be finished
@@ -81,16 +82,16 @@ void UserSessionDelete( UserSession *us )
 			}
 			else
 			{
-				INFO("UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
 				count++;
 				if( count > 50 )
 				{
-					//WorkerManagerDebug( SLIB );
+					Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
+					WorkerManagerDebug( SLIB );
 					count = 0;
 					break;
 				}
 			}
-			//sleep( 1 );		// FRANCOIS: Really annoying when you force quit!
+			usleep( 100 );
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
@@ -100,20 +101,36 @@ void UserSessionDelete( UserSession *us )
 			dosToken->ct_UserSessionID = 0;
 		}
 		
-        if( us->us_User != NULL )
-        {
-            UserRemoveSession( us->us_User, us );
+		if( count > 50 )
+		{
+			Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
+		}
+		
+		if( us->us_User != NULL )
+		{
+			UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
         }
-	
+        SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
+
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
-		WebsocketServerClient *nwsc = us->us_WSClients;
+		// copy connection poiner to remove possibility of using it
+		UserSessionWebsocket *nwsc = us->us_WSConnections;
+		// We must do that here, becaouse lock on session is made in this function
+		
+		if( count > 50 )
+		{
+			Log( FLOG_DEBUG, "AppSessionManager will be called\n");
+		}
+		
+		AppSessionManagerRemUserSession( lsb->sl_AppSessionManager, us );
+		
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
-			us->us_WSClients = NULL;
+			us->us_WSConnections = NULL;
 		
-			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSClients );
+			Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSConnections );
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
 		
@@ -121,33 +138,27 @@ void UserSessionDelete( UserSession *us )
 		{
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl != NULL\n");
 
-			WebsocketServerClient *rws = nwsc;
+			UserSessionWebsocket *rws = nwsc;
 			Log( FLOG_DEBUG, "[UserSessionDelete] nwsc %p\n", nwsc );
 			while( nwsc != NULL )
 			{
 				rws = nwsc;
-				
-				FRIEND_MUTEX_LOCK( &(rws->wsc_Mutex) );
-				nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
+				nwsc = (UserSessionWebsocket *)nwsc->node.mln_Succ;
 
-				Log( FLOG_DEBUG, "[UserSessionDelete] Remove websockets ptr %p from usersession %p\n", rws, us );
-
-				rws->wsc_InUseCounter = 0;
-				rws->wsc_UserSession = NULL;
-				
-				FRIEND_MUTEX_UNLOCK( &(rws->wsc_Mutex) );
-				WebsocketServerClientDelete( rws );
-				
+				UserSessionWebsocketDelete( rws );
+				//rws->wusc_Data = NULL;
 			}
 		}
 
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 
+		// first clear WebsocketReqManager and then remove it
+		WebsocketReqManager *wrm = NULL;
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			if( us->us_WSReqManager != NULL )
 			{
-				WebsocketReqManagerDelete( us->us_WSReqManager );
+				wrm = us->us_WSReqManager;
 				us->us_WSReqManager = NULL;
 			}
 		
@@ -162,9 +173,19 @@ void UserSessionDelete( UserSession *us )
 			}
 			FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		}
+		
+		if( wrm != NULL )
+		{
+			WebsocketReqManagerDelete( wrm );
+		}
 		pthread_mutex_destroy( &(us->us_Mutex) );
 	
 		FFree( us );
+		
+		if( count > 50 )
+		{
+			Log( FLOG_DEBUG, "Session removed\n");
+		}
 	}
 }
 
@@ -175,12 +196,13 @@ void UserSessionDelete( UserSession *us )
  * @param wscl pointer to WebsocketServerClient connection which will be detached from connections list
  * @return pointer to removed connection when success or NULL when connection was not on the list
  */
-WebsocketServerClient *UserSessionRemoveConnection( UserSession *us, WebsocketServerClient *wscl )
+UserSessionWebsocket *UserSessionRemoveConnection( UserSession *us, UserSessionWebsocket *wscl )
 {
 	if( us == NULL )
 	{
 		return NULL;
 	}
+	/*
 	DEBUG("[UserSessionRemoveConnection] Set NULL to WSI\n");
 	if( FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) ) == 0 )
 	{
@@ -231,7 +253,7 @@ WebsocketServerClient *UserSessionRemoveConnection( UserSession *us, WebsocketSe
 	{
 		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
 	}
-	
+	*/
 	DEBUG("[UserSessionRemoveConnection] Remove Queue\n");
 
 	return NULL;

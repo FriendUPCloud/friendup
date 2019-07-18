@@ -15,172 +15,6 @@ Sections.accounts_roles = function( cmd, extra )
 	{
 		if( cmd == 'edit' )
 		{
-			// Show the form
-			function initRoleDetails( info )
-			{
-				
-				//System
-				//Modules
-				//Apps
-				
-				var data = info.permission;
-				
-				if( data && data.Apps )
-				{
-					var perm = data.Apps;
-					
-					if( info.role.Permissions )
-					{
-						var roleperm = info.role.Permissions;
-						
-						for( var i in perm )
-						{
-							for( var ii in perm[i].permissions )
-							{
-								for( var r in roleperm )
-								{
-									if( roleperm[r].Key && roleperm[r].Key == perm[i].app && roleperm[r].Permission == perm[i].permissions[ii].permission )
-									{
-										console.log( perm[i] );
-										console.log( roleperm[r] );
-										
-										perm[i].permissions[ii].data = roleperm[r].Data;
-									}
-								}
-							}
-						}
-					}
-				}
-				else
-				{
-					// Will be removed ... just for testing purposes ...
-					
-					var perm = [
-						{ 
-							app : "Users", name : "Users", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: "Activated" 
-								}
-							] 
-						},
-						{ 
-							app : "Liberator", name : "Liberator", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: "Activated" 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
-								}
-							] 
-						},
-						{ 
-							app : "Server", name : "Server", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
-								}
-							] 
-						},
-						{ 
-							app : "Mimetypes", name : "Mimetypes", description : "", permissions : [
-								{ 
-									permission : "USERS_READ", name : "Read", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_WRITE", name : "Write", description : "", data: false 
-								},
-								{ 
-									permission : "USERS_DELETE", name : "Delete", description : "", data: false 
-								}
-							] 
-						}
-					];
-				}
-				
-				console.log( perm );
-				
-				apl = '';
-				
-				if( perm )
-				{
-					for( var a in perm )
-					{
-						var sw = 2;
-						
-						apl += '<div class="Wrapper collapse">';
-						
-						apl += '<div class="HRow">';
-						apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis"><strong>' + perm[a].name + '</strong></div>';
-						apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-						apl += '<button onclick="Expand(this,3)" class="IconButton IconSmall ButtonSmall FloatRight fa-chevron-right"></button>';
-						apl += '</div>';
-						apl += '</div>';
-						
-						apl += '<div class="List">';
-						
-						for( var k in perm[a].permissions )
-						{
-							sw = sw == 2 ? 1 : 2;
-							
-							var rid = info.role.ID;
-							var pem = perm[a].permissions[k].permission;
-							var key = perm[a].app;
-							
-							apl += '<div class="HRow">';
-							apl += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + perm[a].permissions[k].name + '</div>';
-							apl += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
-							apl += '<button onclick="Sections.updatepermission('+rid+',\''+pem+'\',\''+key+'\','+null+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( perm[a].permissions[k].data ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
-							apl += '</div>';
-							apl += '</div>';
-						}
-						
-						apl += '</div>';
-						
-						apl += '</div>';
-					}
-				}
-				
-				
-				
-				
-				// Get the user details template
-				var d = new File( 'Progdir:Templates/account_role_details.html' );
-				
-				// Add all data for the template
-				d.replacements = {
-					id: info.role.ID,
-					role_name: info.role.Name,
-					role_description: ( info.role.Description ? info.role.Description : '' ),
-					permissions: apl
-				};
-				
-				// Add translations
-				d.i18n();
-				d.onLoad = function( data )
-				{
-					ge( 'RoleDetails' ).innerHTML = data;
-					
-					// Responsive framework
-					Friend.responsive.pageActive = ge( 'RoleDetails' );
-					Friend.responsive.reinit();
-				}
-				d.load();
-			}
-			
 			var info = {};
 			
 			// Go through all data gathering until stop
@@ -205,12 +39,13 @@ Sections.accounts_roles = function( cmd, extra )
 						{
 							return;
 						}
+						
 						loadingList[ ++loadingSlot ]( info );
-			
 					}
 					u.execute( 'userroleget', { id: extra } );
 				},
 				
+				// Load system permissions
 				function()
 				{
 					var m = new Module( 'system' );
@@ -232,9 +67,32 @@ Sections.accounts_roles = function( cmd, extra )
 					m.execute( 'getsystempermissions' );
 				},
 				
+				// Load workgroups
+				function()
+				{
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						info.workgroups = null;
+						//if( e != 'ok' ) return;
+						
+						try
+						{
+							info.workgroups = JSON.parse( d );
+						}
+						catch( e )
+						{
+							return;
+						}
+						loadingList[ ++loadingSlot ]( info );
+					}
+					u.execute( 'workgroups' );
+				},
+				
+				// Then, finally, show role details
 				function( info )
 				{
-					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' ) return;
+					if( typeof info.role == 'undefined' && typeof info.permission == 'undefined' && typeof info.workgroups == 'undefined' ) return;
 					
 					initRoleDetails( info );
 				}
@@ -250,17 +108,18 @@ Sections.accounts_roles = function( cmd, extra )
 	
 	
 	
-	// Get the user list
+	// Get the user list -------------------------------------------------------
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		console.log( { e:e, d:d } );
+		//console.log( { e:e, d:d } );
 		
 		//if( e != 'ok' ) return;
-		var userList = null;
+		var roleList = null;
 		try
 		{
-			userList = JSON.parse( d );
+			roleList = JSON.parse( d );
 		}
 		catch( e )
 		{
@@ -282,7 +141,7 @@ Sections.accounts_roles = function( cmd, extra )
 		
 		
 		var h2 = document.createElement( 'h2' );
-		h2.innerHTML = '{i18n_roles}';
+		h2.innerHTML = i18n( 'i18n_roles' );
 		o.appendChild( h2 );
 		
 		// List headers
@@ -296,7 +155,7 @@ Sections.accounts_roles = function( cmd, extra )
 			var d = document.createElement( 'div' );
 			if( z != 'Edit' )
 				borders += ' BorderRight';
-			if( a < userList.length - a )
+			if( a < roleList.length - a )
 				borders += ' BorderBottom';
 			var d = document.createElement( 'div' );
 			d.className = 'PaddingSmall HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
@@ -306,7 +165,11 @@ Sections.accounts_roles = function( cmd, extra )
 		
 		var d = document.createElement( 'div' );
 		d.className = 'PaddingSmall HContent' + '10' + ' TextCenter FloatLeft Ellipsis';
-		d.innerHTML = '<strong>(+)</strong>';
+		
+		d.innerHTML = '<button type="button" class="FullWidth IconSmall fa-plus NoBorders NoPadding IconButton Negative"> </button>';
+		
+		//d.innerHTML = '<button class="IconButton IconSmall ButtonSmall fa-plus-circle"></button>';
+		
 		d.onclick = function(){ Sections.userroleadd( 'Unnamed role' ) };
 		headRow.appendChild( d );
 		
@@ -321,25 +184,24 @@ Sections.accounts_roles = function( cmd, extra )
 			}
 		}
 		
+		// List out roles
+		
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		var sw = 2;
 		for( var b = 0; b < levels.length; b++ )
 		{
-			if( userList )
+			if( roleList )
 			{
-				for( var a = 0; a < userList.length; a++ )
+				for( var a = 0; a < roleList.length; a++ )
 				{
-					// Skip irrelevant level
-					//if( userList[ a ].Level != levels[ b ] ) continue;
-				
 					sw = sw == 2 ? 1 : 2;
 					var r = document.createElement( 'div' );
-					setROnclick( r, userList[ a ].ID );
+					setROnclick( r, roleList[ a ].ID );
 					r.className = 'HRow sw' + sw;
 			
 					var icon = '<span class="IconSmall fa-user"></span>';
-					userList[ a ][ 'Edit' ] = icon;
+					roleList[ a ][ 'Edit' ] = icon;
 				
 					for( var z in types )
 					{
@@ -351,10 +213,10 @@ Sections.accounts_roles = function( cmd, extra )
 							borders += ' BorderRight';
 						}
 						else d.className = 'TextCenter';
-						if( a < userList.length - a )
+						if( a < roleList.length - a )
 							borders += ' BorderBottom';
 						d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
-						d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
+						d.innerHTML = ( roleList[a][ z ] ? roleList[a][ z ] : '-' );
 						r.appendChild( d );
 					}
 			
@@ -422,7 +284,7 @@ Sections.userroleadd = function( input )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		
 			// refresh
 			Sections.accounts_roles();
@@ -438,7 +300,7 @@ Sections.userroledelete = function( rid )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		
 			// refresh
 			Sections.accounts_roles();
@@ -447,19 +309,56 @@ Sections.userroledelete = function( rid )
 	}
 };
 
-Sections.userroleupdate = function( rid, input, perms )
+Sections.userroleupdate = function( rid, input, perms, refresh )
 {
 	if( rid )
 	{
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 			
 			// refresh
 			Sections.accounts_roles();
+			
+			// refresh details also ...
+			if( refresh )
+			{
+				Sections.accounts_roles( 'edit', rid );
+			}
 		}
 		m.execute( 'userroleupdate', { id: rid, name: ( input ? input : null ), permissions: ( perms ? perms : null ) } );
+	}
+};
+
+Sections.removepermission = function( rid, pem, key, data, _this )
+{
+	if( rid && pem && key && _this )
+	{
+		var perms = [ { command: 'delete', name: pem, key: key, data: data } ];
+		
+		Confirm( i18n( 'i18n_deleting_permission' ), i18n( 'i18n_deleting_permission_verify' ), function( result )
+		{
+			// Confirmed!
+			if( result && result.data && result.data == true )
+			{
+				Sections.userroleupdate( rid, null, perms, true );
+			}
+			
+		} );
+	}
+};
+
+Sections.addpermission = function( rid, key, _this )
+{
+	var pem  = ge( 'RolePermissionList_' + key ).value;
+	var data = ge( 'RoleWorkgroupList_' + key ).value;
+	
+	if( rid && key && pem && _this )
+	{
+		var perms = [ { name: pem, key: key, data: data } ];
+		
+		Sections.userroleupdate( rid, null, perms, true );
 	}
 };
 
@@ -488,15 +387,11 @@ Sections.checkpermission = function( input )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			//console.log( { e:e, d:d } );
 		}
 		m.execute( 'checkpermission', { permission: input } );
 	}
 };
 
-//console.log( 'Sections.userroleadd =', Sections.userroleadd );
-//console.log( 'Sections.userroledelete =', Sections.userroledelete );
-//console.log( 'Sections.userroleupdate =', Sections.userroleupdate );
-//console.log( 'Sections.accounts_roles =', Sections.accounts_roles );
-//console.log( 'Sections.checkpermission =', Sections.checkpermission );
+
 

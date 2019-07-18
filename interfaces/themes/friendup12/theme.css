@@ -226,7 +226,7 @@
 	/* Gui image elements */
 	$GuiImgWinTitle:         url(/webclient/gfx/system/window_topgradient_off.png);
 	$GuiImgWinTitleActive:   url(/themes/friendup12/gfx/window_topgradient.png);
-	$GuiImgWinLoading:       #222222 url(/themes/friendup12/gfx/loading.gif) no-repeat center center;
+	$GuiImgWinLoading:       #222222 url(/themes/friendup12/gfx/busy.png) no-repeat center center;
 
 	/* Icon set */
 	$IconSmallArrowUp:       url(/webclient/gfx/icons/16x16/actions/arrow-up.png);
@@ -267,12 +267,14 @@ html
 {
 	height: 100vh;
 	width: 100vw;
+	-webkit-text-size-adjust: 100%;
 }
 
 html body
 {
 	font-size: 0.9em;
 	color: #333333;
+	-webkit-font-smoothing:antialiased;
 }
 
 html body[mobile=mobile]
@@ -369,8 +371,8 @@ html .Screen > .ScreenContent
 
 html body .Screen > .TitleBar.Busy:after 
 {
-    clip-path: ellipse(9px 9px at 10px 10px);
-    -webkit-clip-path: ellipse(9px 9px at 10px 10px);
+    /*clip-path: ellipse(9px 9px at 10px 10px);
+    -webkit-clip-path: ellipse(9px 9px at 10px 10px);*/
 }
 
 /* Views not activated for mobile ------------------------------------------- */
@@ -611,6 +613,7 @@ html #Screens .File.Selected .Title
 	box-shadow: none;
 	color: #444444;
 	border-radius: 2px;
+	resize: none;
 }
 
 html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
@@ -710,12 +713,18 @@ html > body > div button, html > body > div .Button
 	background-repeat: repeat-x;
 	background-position: top left;
 	background-color: #e3e7e8;
-	border: 1px solid #e3e7e8;
+	border: 0;
 	border-radius: 3px;
 	box-shadow: 0;
 	transition: background-color 0.25s;
 	color: #2a2a2a;
 	padding: 5px 10px;
+}
+
+html body button.IconButton:not(:hover), 
+html body .Button.IconButton:not(:hover)
+{
+	border: 1px solid rgba(0,0,0,0) !important;
 }
 
 html body .BigButton
@@ -737,7 +746,7 @@ html > body > div button:hover, html > body > div .Button:hover
 
 html .BubbleInfo > div, html .PopInfo > div
 {
-	max-width: 320px;
+	max-width: 170px;
 	min-width: 170px;
 }
 
@@ -892,6 +901,28 @@ html .DockMenu .DockMenuItem
 html .DockMenu .DockMenuItem:hover
 {
 	background: rgba(52,73,94,0.5);
+}
+
+html .DockMenu .DockMenuItem > span:first-child
+{
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem > span + span
+{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: calc(100% - 28px);
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem.Directory > span + span
+{
+	width: calc(100% - 40px);
 }
 
 /* Extra styling just for this theme ---------------------------------------- */
@@ -1050,6 +1081,24 @@ body .View > .Snap > .SnapLeft,
 body .View > .Snap > .SnapRight
 {
 	background-color: rgba(41, 128, 185, 0.7);
+}
+
+.View[viewsnap=right], 
+.View[viewsnap=right] > .Title,
+.View[attach_left=attached],
+.View[attach_left=attached] > .Title
+{
+	border-top-right-radius: 0px !important;
+	border-bottom-right-radius: 0px !important;
+}
+
+.View[viewsnap=left], 
+.View[viewsnap=left] > .Title,
+.View[attach_right=attached],
+.View[attach_right=attached] > .Title
+{
+	border-top-left-radius: 0px !important;
+	border-bottom-left-radius: 0px !important;
 }
 
 /* Mobile glypths */
@@ -1225,7 +1274,7 @@ html .Desklet #DockWindowList
 
 .Desklet .Launcher
 {
-	background-size: 90% !important;
+	background-size: 89% !important;
 	box-shadow: none;
 	filter: none !important;
 }
@@ -1239,6 +1288,11 @@ body[mobile] .Desklet .Launcher.MousePointer
 body[mobile] .Desklet .Launcher.MousePointer > span
 {
 	top: 60px;
+}
+
+.Desklet .Launcher.Startmenu
+{
+	background-image: url(/themes/friendup12/gfx/AppsMenu.svg) !important;
 }
 
 html .Desklet.HasWindowlist
@@ -1413,8 +1467,6 @@ html .View.Scrolling > .Resize
 html body:not([mobile]) .View > .Resize
 {
     background-color: transparent !important;
-    cursor: hand;
-    cursor: pointer;
     right: 2px;
     bottom: 2px;
     width: 20px !important;
@@ -1423,36 +1475,6 @@ html body:not([mobile]) .View > .Resize
     position: relative;
     overflow: hidden;
     background-image: none;
-}
-
-html body:not([mobile]) .View > .Resize:after
-{
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	width: 24px;
-	height: 24px;
-	content: " ";
-	display: block;
-    background: transparent !important;
-    z-index: 2;
-    opacity: 0.5;
-    transition: opacity 0.25s;
-}
-
-html body:not([mobile]) .View > .Resize:before
-{
-	content: " ";
-	display: block;
-	width: 16px;
-	height: 16px;
-	transform: rotateZ(45deg);
-	position: absolute;
-	z-index: 1;
-	top: 60%;
-	left: 60%;
-	transition: background-color 0.25s;
-	border-radius: 5px;
 }
 
 html body:not([mobile]) .View:not(.Active) > .Resize:before
@@ -1539,10 +1561,10 @@ html .Screen > .TitleBar:after
 {
 	content: " ";
 	position: absolute;
-    top: 3px;
+    top: 2px;
     left: 9px;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background-size: contain;
     background-image: url(/iconthemes/friendup15/ScreenLogo.svg);
 }
@@ -2535,14 +2557,19 @@ html .File.Selected
 
 html .File .Title
 {
-	-webkit-mask-image: -webkit-gradient(linear, left 70%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
 	transition: height 0.2s;
+	max-height: 40px;
+}
+html body[mobile] .File .Title
+{
+	height: 30px;
 }
 
 html .File.Selected .Title
 {
 	-webkit-mask-image: none;
 	min-height: auto;
+	height: auto;
 	max-height: 200px !important;
 }
 
@@ -2555,7 +2582,7 @@ html .File.Selected .Title
 	}
 	html body .File .Icon > div
 	{
-		height: 72px;
+		max-height: 45px;
 	}
 }
 
@@ -2707,14 +2734,12 @@ html .File .Icon *
 
 html .File .Icon .File
 {
-	/*background-image: url(/themes/friendup/gfx/icons/icon_blank_1.png);*/
 	background-image: url(/iconthemes/friendup15/File_Binary.svg);
 }
 
 html .File .Icon .Drive
 {
-	/*background-image: url(/themes/friendup/gfx/icons/disk.png);*/
-	background-image: url(/iconthemes/friendup15/Disk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html body[mobile] .File .Icon .Drive > .Label
@@ -2777,14 +2802,14 @@ html .File .Icon .Arena
 html .File .Icon .SystemDisk
 {
 	height: 48px;
-	background-image: url(/iconthemes/friendup15/SystemDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 
 html .File .Icon .Home
 {
 	/*background-image: url(/themes/friendup/gfx/icons/disk_home.png);*/
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Friend_Master.svg);
 }
 
 html .File .Icon .Application
@@ -2807,22 +2832,22 @@ html .File .Icon .Door
 {
 	height: 48px;
 	filter: drop-shadow(0px 1px 4px rgba(0,0,0,0.4));
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .Door.local_fsys
 {
-	background-image: url(/iconthemes/friendup15/LinuxDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .SystemDisk
 {
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .Door.Assign
 {
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .article
@@ -3067,6 +3092,7 @@ html .File .Icon .TypeMOV, html .File .Icon .TypeMP4
 }
 
 html .File .Icon .Devs_Drawer_DOSDrivers,
+html .File .Icon .Devs_Drawer_Printers,
 html .File .Icon .Devs_Drawer_Cores,
 html .File .Icon .Devs_Drawer_Sessions
 {
@@ -3087,6 +3113,17 @@ html .File .Icon .Devs_Drawer_Cores:after
 html .File .Icon .Devs_Drawer_DOSDrivers:after
 {
 	content: "\f277";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .Devs_Drawer_Printers:after
+{
+	content: "\f02f";
 	font-family: FontAwesome;
 	display: block;
 	position: absolute;
@@ -3125,6 +3162,11 @@ html .File.Selected .Icon .Devs_Drawer_DOSDrivers
 html .File .Icon .DOSDriver
 {
 	background-image: url(/iconthemes/friendup15/File_DosDriver.svg);
+}
+
+html .File .Icon .Printer
+{
+	background-image: url(/iconthemes/friendup15/File_Printer.svg);
 }
 
 html .File .Icon .MetaFile
@@ -3474,7 +3516,6 @@ html #Statusbar .Task,
 html .View > .Title > div > .Zoom,
 html .View > .Title > div > .Depth,
 html .View > .Title > div > .Close,
-html .View > .Resize,
 html .View > .Title,
 html .View > .Title *,
 html .View > .Title > div > span,

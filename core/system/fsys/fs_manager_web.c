@@ -186,7 +186,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	}
 	else
 	{
-		if( loggedSession->us_User == NULL )
+		if( loggedSession == NULL || loggedSession->us_User == NULL )
 		{
 			response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
@@ -201,7 +201,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		
 		DEBUG("[FSMWebRequest] Checking mounted devices\n");
 		
-		File *lDev = loggedSession->us_User->u_MountedDevs;
+		//File *lDev = loggedSession->us_User->u_MountedDevs;
 		
 		File *actDev = NULL;
 		char devname[ 256 ];
@@ -236,8 +236,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 		// Should never happen
 		else
 		{
-			if( locpath ) FFree( locpath ); locpath = NULL;
-			if( originalPath ) FFree( originalPath ); originalPath = NULL;
+			if( locpath ){ FFree( locpath ); locpath = NULL; }
+			if( originalPath ){ FFree( originalPath ); originalPath = NULL; }
 		}
 		//
 		
@@ -717,6 +717,29 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 						
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+							
+							// delete Thumbnails
+							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
+							
+							int len = 512;
+							len += strlen( origDecodedPath );
+							char *command = FMalloc( len );
+							if( command != NULL )
+							{
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+			
+								DEBUG("Run command via php: '%s'\n", command );
+								FULONG dataLength;
+
+								char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+								if( data != NULL )
+								{
+									if( strncmp( data, "ok", 2 ) == 0 )
+									{
+									}
+								}
+								FFree( command );
+							}
 						}
 						else
 						{
@@ -778,9 +801,33 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								actDev->f_BytesStored = 0;
 							}
 							sprintf( tmp, "ok<!--separate-->{\"response\":\"%ld\"}", bytes );
+							// send information about changes on disk
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
-							
+							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
+							
+							// delete Thumbnails
+							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
+							
+							int len = 512;
+							len += strlen( origDecodedPath );
+							char *command = FMalloc( len );
+							if( command != NULL )
+							{
+								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+			
+								DEBUG("Run command via php: '%s'\n", command );
+								FULONG dataLength;
+
+								char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+								if( data != NULL )
+								{
+									if( strncmp( data, "ok", 2 ) == 0 )
+									{
+									}
+								}
+								FFree( command );
+							}
 						}
 						else
 						{
@@ -1656,6 +1703,26 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 							
 									dstrootf->f_Operations--;
+									
+									int len = 512;
+									len += strlen( topath );
+									char *command = FMalloc( len );
+									if( command != NULL )
+									{
+										snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", topath, loggedSession->us_SessionID );
+			
+										DEBUG("Run command via php: '%s'\n", command );
+										FULONG dataLength;
+
+										char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+										if( data != NULL )
+										{
+											if( strncmp( data, "ok", 2 ) == 0 )
+											{
+											}
+										}
+										FFree( command );
+									}
 								}
 								else
 								{
@@ -1750,7 +1817,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							else if( !fileNameIsTmpPath )
 							{
-								sprintf( tmpPath, "%s%s", path, file->hf_FileName );
+								char *t = UrlDecodeToMem( file->hf_FileName );
+								if( t != NULL )
+								{
+									sprintf( tmpPath, "%s%s", path, t );
+									FFree( t );
+								}
+								else
+								{
+									sprintf( tmpPath, "%s", path );
+								}
 							}
 							else
 							{
@@ -1766,6 +1842,27 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							else
 							{
 								dstPath =  &tmpPath[ dpos + 1 ] ;
+							}
+							
+							// if there is upload to not existing Downloads folder, FriendCore must create it
+							// https://app.yodiz.com/plan/pages/board.vz?cid=33486#/app/tk-1465
+							DEBUG("original path: %s\n", originalPath );
+							if( strncmp( originalPath, "Home:Downloads/", 15 ) == 0 )
+							{
+								BufString *bs = NULL;
+								DEBUG("User want to upload file into Home:Downloads\n");
+								bs = actFS->Info( actDev, originalPath );
+								if( bs != NULL )
+								{
+									DEBUG("Got response from file system: %s response: %s\n", tmpPath, bs->bs_Buffer );
+									// seems directory do not exist, FriendCore must create it
+									if( strncmp( bs->bs_Buffer, "fail", 4 ) == 0 )
+									{
+										int err = actFS->MakeDir( actDev, "Downloads" );
+										DEBUG("Makedir called, response: %d\n", err );
+									}
+									BufStringDelete( bs );
+								}
 							}
 							
 							DEBUG( "[FSMWebRequest] Trying to save file %s (path: %s, devname: %s)\n", dstPath, path, devname );

@@ -92,6 +92,8 @@ i18n_update_disk                  : Mettre à jour
 i18_account2                      : Compte
 i18n_settings_saved               : Préférences sauvegardées
 
+i18n_admin_managed_drive          : This drive is managed by your administrator.
+
 i18n_key_password_confirm         : Confirm password
 i18n_pass_mis_desc                : The passwords need to match.
 i18n_password_mismatch            : Password mismatch!

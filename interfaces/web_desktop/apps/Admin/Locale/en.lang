@@ -30,9 +30,90 @@ i18n_name                              : Name
 i18n_category                          : Category
 i18n_dock                              : In dock
 
+i18n_user_mountlist_empty              : User mountlist empty.
+
+i18n_save_changes                      : Save changes
+
 i18n_no_applications_available         : No applications available.
 
 i18n_role_profile                      : Role Profile
 i18n_role_name                         : Role Name
 i18n_role_description                  : Description
 i18n_permissions                       : Permissions
+
+i18n_yes                               : Yes
+i18n_no                                : No
+i18n_col_name                          : Name
+i18n_col_visible                       : Visible
+i18n_col_featured                      : Featured
+i18n_col_date                          : Date
+
+i18n_application_visible               : Visible
+i18n_application_featured              : Featured
+
+#application related
+
+i18n_application_list                  : Application list
+i18n_application_profile               : Application profile
+i18n_app_marketplace_info              : Marketplace information
+i18n_application_graphics              : Graphics
+i18n_application_information           : Information
+i18n_applications                      : Applications
+i18n_find_applications                 : Find apps
+
+
+#permissions related
+
+i18n_PERM_USER_GLOBAL                  : Edit users globally
+i18n_PERM_USER_WORKGROUP               : Edit users per workgroup
+i18n_PERM_WORKGROUP_GLOBAL             : Edit workgroups globally
+i18n_PERM_WORKGROUP_WORKGROUP          : Edit sub-workgroups
+i18n_PERM_TEMPLATE_GLOBAL              : Edit templates globally
+i18n_PERM_TEMPLATE_WORKGROUP           : Edit templates below a workgroup
+
+i18n_deleting_permission               : Deleting permission
+i18n_deleting_permission_verify        : Please confirm that you want to delete this permission.
+
+#printers related
+
+i18n_save                              : Save
+i18n_delete                            : Delete
+i18n_cancel                            : Cancel
+
+i18n_printers                          : Printers
+i18n_printer_profile                   : Printer profile
+
+i18n_printer_name                      : Name
+i18n_printer_type                      : Type
+i18n_printer_host                      : Host
+i18n_printer_ip                        : IP
+i18n_printer_port                      : Port
+i18n_printer_ip_port                   : IP/Port
+i18n_requires_confirmation_to_print    : Requires confirmation to print
+
+i18n_deleting_printer                  : Deleting printer
+i18n_deleting_printer_verify           : Are you sure?
+
+#User related
+
+i18n_users                             : Users
+i18n_find_users                        : Find users...
+
+i18n_header_FullName                   : Name
+i18n_header_Name                       : Username
+i18n_header_Level                      : Level
+
+i18n_user_updated                      : User updated
+i18n_user_updated_succ                 : The user was successfully updated.
+
+i18n_user_update_fail                  : User update failed
+i18n_user_update_failed                : Failed to update the user.
+
+#Workgroup related
+
+i18n_workgroups                        : Workgroups
+i18n_workgroup_profile                 : Workgroup profile
+i18n_workgroup_name                    : Name
+i18n_workgroup_description             : Description
+
+

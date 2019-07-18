@@ -1464,6 +1464,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 #define MINIMUMRETRY 30000
 		int retryCount = expectedLength > 0 ? MINIMUMRETRY : 3000;
 		if( expectedLength > 0 && length > expectedLength ) length = expectedLength;
+		int startTime = time( NULL );
 
 		//DEBUG("SOCKREAD %p\n", sock );
 
@@ -1561,6 +1562,9 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 				FERROR("[SocketRead] want write everything read....\n");
 				return read;
 				case SSL_ERROR_SYSCALL:
+
+					//DEBUG("SSLERR : err : %d res: %d\n", err, res );
+					
 					FERROR("[SocketRead] Error syscall, bufsize = %d.\n", buf );
 					if( err > 0 )
 					{
@@ -1570,13 +1574,17 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 							return -1;
 							//return SOCKET_CLOSED_STATE;
 						}
-						else FERROR( "[SocketRead] Error syscall error: %s\n", strerror( errno ) );
+						else 
+						{
+							FERROR( "[SocketRead] Error syscall error: %s\n", strerror( errno ) );
+						}
 					}
 					else if( err == 0 )
 					{
 						FERROR( "[SocketRead] Error syscall no error? return.\n" );
 						return read;
 					}
+					
 					FERROR( "[SocketRead] Error syscall other error. return.\n" );
 					return read;
 					// Don't retry, just return read
@@ -2750,21 +2758,17 @@ void SocketClose( Socket* sock )
 			int optval;
 			socklen_t optlen = sizeof(optval);
 			optval = 0;
-   optlen = sizeof(optval);
-   if(setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0) {
-   }
+			optlen = sizeof(optval);
+			if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
+			{
+			}
 			
-			//FERROR( "Closing socket %d\n", sock->fd );
-			//DEBUG("shutdown socket\n");
 			int e = 0;//shutdown( sock->fd, SHUT_RDWR );
-			//DEBUG("socked erased: %d\n", e );
+
 			e = close( sock->fd );
 			DEBUG("socked closed: %d\n", sock->fd );
 			sock->fd = 0;
 		}
-		//DEBUG("[SocketClose] before unlock\n");
-		//FRIEND_MUTEX_UNLOCK( &sock->mutex );
-		//DEBUG("[SocketClose] mutex unlocked\n");
 		SocketFree( sock );
 		sock = NULL;
 	}

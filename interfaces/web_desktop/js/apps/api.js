@@ -243,8 +243,6 @@ var Application =
 	{
 		if( packet.checkDefaultMethod ) return 'yes';
 		
-		//console.log( 'receiveMessage: function( packet ): ', packet );
-		
 		if( !packet.type ) return;
 		switch( packet.type )
 		{
@@ -1362,6 +1360,7 @@ function receiveEvent( event, queued )
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
 			Application.username      = dataPacket.username;
+			Application.workspaceMode = dataPacket.workspaceMode;
 			Application.applicationName = dataPacket.applicationName;
 			Application.sendMessage   = setupMessageFunction( dataPacket, window.origin );
 			
@@ -1780,6 +1779,30 @@ function receiveEvent( event, queued )
 				}
 			}
 			break;
+		// Response from the print dialog
+		case 'printdialog':
+			// Handle the callback
+			if( dataPacket.callbackId && typeof( Application.callbacks[dataPacket.callbackId] ) != 'undefined' )
+			{
+				var f = extractCallback( dataPacket.callbackId );
+				if( f )
+				{
+					try
+					{
+						f( dataPacket.data );
+					}
+					catch( e )
+					{
+						//console.log( 'Error running callback function.' );
+					}
+				}
+			}
+			// We don't have the callback? Check the view window
+			else if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
+			{
+				Application.windows[dataPacket.viewId].sendMessage( dataPacket );
+			}
+			break;
 		// Response from the file dialog
 		case 'filedialog':
 			// Handle the callback
@@ -1872,10 +1895,7 @@ function receiveEvent( event, queued )
 						f( dataPacket );
 					}
 				}
-				catch( e )
-				{
-					console.log( e, f );
-				}
+				catch( e ){}
 				return true;
 			}
 			// Aha, we have a window to send to (see if it's at this level)
@@ -1898,10 +1918,7 @@ function receiveEvent( event, queued )
 								f( dataPacket );
 							}
 						}
-						catch( e )
-						{
-							console.log( e, f );
-						}
+						catch( e ){}
 						return true;
 					}
 				}
@@ -3595,14 +3612,22 @@ function Module( module )
 	this.execute = function( method, args )
 	{
 		var fid = addCallback( this );
-		Application.sendMessage( {
+		
+		var ms = {
 			type:    'module',
 			module:  module,
 			method:  method,
 			args:    args,
 			vars:    this.vars,
 			fileId:  fid
-		} );
+		};
+		
+		if( this.forceHTTP )
+		{
+			ms.forceHTTP = this.forceHTTP;
+		}
+		
+		Application.sendMessage( ms );
 	}
 	this.addVar = function( key, value )
 	{
@@ -5216,6 +5241,26 @@ function Door( path )
 	}
 }
 
+// Print dialogs ---------------------------------------------------------------
+
+function Printdialog( flags, triggerfunction )
+{
+	var cid = triggerfunction ? addCallback( triggerfunction ) : false;
+	
+	if( flags && flags.triggerFunction )
+	{
+		cid = addCallback( flags.triggerFunction );
+		flags.triggerFunction = null;
+	}
+	
+	Application.sendMessage( {
+		type:               'system',
+		command:            'printdialog',
+		callbackId:         cid,
+		flags:              flags
+	} );
+}
+
 // File dialogs ----------------------------------------------------------------
 
 function Filedialog( object, triggerFunction, path, type, filename, title )
@@ -5447,6 +5492,10 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			msg.username = dataPacket.username;
 		}
+		if( !msg.userLevel )
+		{
+			msg.userLevel = dataPacket.userLevel;
+		}
 		if( !msg.viewId )
 		{
 			if( dataPacket.viewId )
@@ -5472,7 +5521,15 @@ function setupMessageFunction( dataPacket, origin )
 		}
 
 		// Post the message
-		parent.postMessage( JSON.stringify( msg ), origin ? origin : dataPacket.origin );
+		var po = dataPacket.origin ? dataPacket.origin : '*';
+		try
+		{
+			parent.postMessage( JSON.stringify( msg ), origin ? origin : po );
+		}
+		catch( e )
+		{
+			console.log( 'Failed to post message to origin: ' + po );
+		}
 	}
 	return _sendMessage;
 }
@@ -5542,6 +5599,11 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
 		console.log = function(){};
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
+
+	if( packet.userLevel )
+	{
+		Application.getUserLevel = function(){ return packet.userLevel; };
+	}
 
 	// Don't do this twice
 	document.body.style.opacity = '0';
@@ -5820,12 +5882,91 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					// If we can run, then run!
 					if( Application.run && !window.applicationStarted )
-					{
-						window.applicationStarted = true;
-						Application.run( packet );
-						if( packet.state ) Application.sessionStateSet( packet.state );
-						window.loaded = true;
-						Friend.application.doneLoading();
+					{	
+						// Fetch application permissions
+						if( !Application.checkAppPermission )
+						{
+							var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+							if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
+							
+							var m = new Module( 'system' );
+							m.onExecuted = function( e, d )
+							{
+								var permissions = {};
+								
+								Application.checkAppPermission = function( key, callback )
+								{
+									// Admins always can!
+									if( Application.getUserLevel() == 'admin' )
+									{
+										if( callback )
+										{
+											callback( true );
+										}
+										return true;
+									}
+									
+									if( key && !callback )
+									{
+										if( permissions[ key ] )
+										{
+											return permissions[ key ];
+										}
+										return false;
+									}
+									else
+									{
+										var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+										
+										var mm = new Module( 'system' );
+										mm.onExecuted = function( ee, dd )
+										{
+											if( ee == 'ok' )
+											{
+												try
+												{
+													permissions = JSON.parse( dd );
+												}
+												catch( e ) {  }
+											}
+											
+											if( callback )
+											{
+												if( permissions[ key ] )
+												{
+													return callback( permissions[ key ] );
+												}
+												return callback( false );
+											}
+										}
+										mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+									}
+								}
+								
+								if( e == 'ok' )
+								{
+									try
+									{
+										permissions = JSON.parse( d );
+									}
+									catch( e ) {  }
+								}
+								
+								runNow();
+							}
+							m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+						}
+						else runNow();
+						
+						function runNow()
+						{
+							if( window.applicationStarted ) return;
+							window.applicationStarted = true;
+							Application.run( packet );
+							if( packet.state ) Application.sessionStateSet( packet.state );
+							window.loaded = true;
+							Friend.application.doneLoading();
+						}
 					}
 					for( var a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
@@ -5838,10 +5979,89 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( Application.run && !window.applicationStarted )
 						{
-							window.applicationStarted = true;
-							Application.run( packet );
-							if( packet.state ) Application.sessionStateSet( packet.state );
-							Friend.application.doneLoading();
+							// Fetch application permissions
+							if( !Application.checkAppPermission )
+							{
+								var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+								if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
+								
+								var m = new Module( 'system' );
+								m.onExecuted = function( e, d )
+								{
+									var permissions = {};
+									
+									Application.checkAppPermission = function( key, callback )
+									{
+										// Admins always can!
+										if( Application.getUserLevel() == 'admin' )
+										{
+											if( callback )
+											{
+												callback( true );
+											}
+											return true;
+										}
+										
+										if( key && !callback )
+										{
+											if( permissions[ key ] )
+											{
+												return permissions[ key ];
+											}
+											return false;
+										}
+										else
+										{
+											var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+											
+											var mm = new Module( 'system' );
+											mm.onExecuted = function( ee, dd )
+											{
+												if( ee == 'ok' )
+												{
+													try
+													{
+														permissions = JSON.parse( dd );
+													}
+													catch( e ) {  }
+												}
+												
+												if( callback )
+												{
+													if( permissions[ key ] )
+													{
+														return callback( permissions[ key ] );
+													}
+													return callback( false );
+												}
+											}
+											mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+										}
+									}
+									
+									if( e == 'ok' )
+									{
+										try
+										{
+											permissions = JSON.parse( d );
+										}
+										catch( e ) {  }
+									}
+									
+									runNow();
+								}
+								m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+							}
+							else runNow();
+							
+							function runNow()
+							{
+								if( window.applicationStarted ) return;
+								window.applicationStarted = true;
+								Application.run( packet );
+								if( packet.state ) Application.sessionStateSet( packet.state );
+								Friend.application.doneLoading();
+							}
 						}
 						// Could be wr don't have any application, run scripts
 						for( var a = 0; a < activat.length; a++ )
@@ -6034,6 +6254,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	Application.applicationId = packet.applicationId;
 	Application.userId        = packet.userId;
 	Application.username      = packet.username;
+	Application.workspaceMode = packet.workspaceMode;
 	Application.authId        = packet.authId;
 	Application.sessionId     = packet.sessionId != undefined ? packet.sessionId : false;
 	Application.theme         = packet.theme;
@@ -7855,6 +8076,7 @@ GuiDesklet = function()
 
 		var self = this;
 		self.id = conf.sasid || null;
+		self.sessiontype = conf.sessiontype || null;
 		self.onevent = conf.onevent;
 		self.callback = callback;
 
@@ -8124,6 +8346,8 @@ GuiDesklet = function()
 				authId : Application.authId,
 			},
 		};
+		if( self.sessiontype ) reg.data.type = self.sessiontype;
+		
 		self.conn.request( reg, regBack );
 		function regBack( res ) {
 			if ( !res.SASID ) {

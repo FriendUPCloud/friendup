@@ -21,14 +21,12 @@ if( $o->group == 'Admin' && $level != 'Admin' )
 
 if( isset( $obj->ID ) && $obj->ID > 0 )
 {
-	// Support workgroups (that we are member of)!
+	// Support workgroups
 	$groupID = '0';
 	if( $group = $SqlDatabase->FetchObject( '
-		SELECT ug.* FROM FUserGroup ug, FUserToGroup tg
+		SELECT ug.* FROM FUserGroup ug
 			WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
 			AND ug.Type = "Workgroup"
-			AND tg.UserGroupID = ug.ID
-			AND tg.UserID = \'' . $userid . '\'
 	' ) )
 	{
 		$groupID = $group->ID;

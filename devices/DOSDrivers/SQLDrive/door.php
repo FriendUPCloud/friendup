@@ -26,7 +26,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			$defaultDiskspace = 536870912;
-			if( $this->Config )
+			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
 				if( isset( $this->configObject->DiskSize ) )
@@ -219,7 +219,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							{
 								// Add volume name to entry if it's not there
 								// TODO: Make sure its always there!
-								if( !strstr( $entry->Path, ':' ) )
+								if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
 									$entry->Path = $volume . $entry->Path;
 								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
 								{
@@ -574,7 +574,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$mime = $info['mime'];
 					
 						// Try to guess the mime type
-						if( !$mime && $ext = end( explode( '.', $fname ) ) )
+						$ext = explode( '.', $fname );
+						if( !$mime && $ext = end( $ext ) )
 						{
 							switch( strtolower( $ext ) )
 							{
@@ -768,6 +769,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									else
 									{
 										$f->Filename = $args->newname;
+										$f->DateModified = date( 'Y-m-d H:i:s' );
 										$f->Save();
 										die( 'ok<!--separate-->{"response":1,"message":"Renamed the file."}' );
 									}

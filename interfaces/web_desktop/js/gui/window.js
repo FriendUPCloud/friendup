@@ -15,6 +15,8 @@ var FUI_MOUSEDOWN_SCROLLV = 10;
 var FUI_WINDOW_MARGIN     =  3;
 var FUI_MOUSEDOWN_PICKOBJ = 11;
 
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-forms allow-scripts allow-same-origin allow-popups';
+
 /* Make movable box --------------------------------------------------------- */
 
 Friend          = window.Friend || {};    // Friend main namespace
@@ -353,6 +355,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 			break;
 		}
 	}
+
 
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
@@ -1012,6 +1015,10 @@ function _ActivateWindow( div, nopoll, e )
 {
 	if( !e ) e = window.event;
 	
+	// Remove menu on calendar
+	if( Workspace.calendarWidget )
+		Workspace.calendarWidget.hide();
+	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
@@ -1046,8 +1053,25 @@ function _ActivateWindow( div, nopoll, e )
 		{
 			if( window.currentMovable != div )
 				window.currentMovable = div;
+			
 		}
+		if( globalConfig.focusMode == 'clicktofront' )
+			_WindowToFront( div );
 		return;
+	}
+	
+	// Activate all iframes
+	var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+	for( var a = 0; a < fr.length; a++ )
+	{
+		if( fr[ a ].oldSandbox )
+		{
+			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+		}
+		else
+		{
+			fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+		}
 	}
 	
 	if( isMobile )
@@ -1159,7 +1183,7 @@ function _ActivateWindow( div, nopoll, e )
 		if( changedActiveWindow )
 		{
 			var clear = true;
-			var t = e.target;
+			var t = e ? e.target : false;
 			if( t )
 			{
 				while( t && t != document.body && !t.fileInfo )
@@ -1276,6 +1300,15 @@ function _DeactivateWindow( m, skipCleanUp )
 			} );
 			m.windowObject.sendMessage( msg );
 			m.notifyActivated = false;
+			
+			// Deactivate all iframes
+			var fr = m.windowObject.content.getElementsByTagName( 'iframe' );
+			for( var a = 0; a < fr.length; a++ )
+			{
+				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
+				fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
+			}
+			
 			PollTaskbar();
 		}
 		// Minimize on mobile
@@ -1402,9 +1435,9 @@ function _WindowToFront( div, flags )
 	{
 		for( var b in movableWindows )
 		{
-			if( div != movableWindows[b] && movableWindows[b].viewContainer.style.zIndex == a )
+			if( div != movableWindows[ b ] && movableWindows[ b ].viewContainer.style.zIndex == a )
 			{
-				sorted.push( movableWindows[b] );
+				sorted.push( movableWindows[ b ] );
 			}
 		}
 	}
@@ -1413,8 +1446,8 @@ function _WindowToFront( div, flags )
 	var sortedInd = 100;
 	for( var a = 0; a < sorted.length; a++ )
 	{
-		sorted[a].viewContainer.style.zIndex = sortedInd++;
-		sorted[a].style.zIndex = sorted[a].viewContainer.style.zIndex;
+		sorted[ a ].viewContainer.style.zIndex = sortedInd++;
+		sorted[ a ].style.zIndex = sorted[ a ].viewContainer.style.zIndex;
 	}
 
 	// 4. now apply the one we want to front to the front
@@ -1426,12 +1459,14 @@ function _WindowToFront( div, flags )
 	{
 		flags.sourceElements = [];
 	}
+	
 	// Don't check snap objects etc if we're already affected
 	for( var a = 0; a < flags.sourceElements.length; a++ )
 	{
-		if( flags.sourceElements[a] == div )
+		if( flags.sourceElements[ a ] == div )
 			return;
 	}
+	
 	if( flags.source != 'attachment' )
 	{
 		if( div.snap && div.snapObject )
@@ -1442,6 +1477,7 @@ function _WindowToFront( div, flags )
 			_WindowToFront( div.snapObject, { source: 'attachment', sourceElements: flags.sourceElements } );
 		}
 	}
+	
 	if( flags.source != 'snapobject' )
 	{
 		if( div.attached )
@@ -1778,13 +1814,16 @@ function CloseView( win, delayed )
 		
 	}
 
-	// Check window
-	CheckScreenTitle();
-	
 	if( !window.currentMovable )
 	{
-		document.title = Workspace.screen.getFlag( 'title' );
+		if( Workspace.screen && Workspace.screen.getFlag )
+		{
+			document.title = Workspace.screen.getFlag( 'title' );
+		}
 	}
+
+	// Check window
+	CheckScreenTitle();
 	
 	if( isMobile )
 		Workspace.redrawIcons();
@@ -3487,7 +3526,10 @@ var View = function( args )
 						e.clientY = e.touches[0].clientY;
 						e.button = 0;
 						window.mouseDown = 1; // Window mode
-						title.onmousedown( e );
+						if( title.onmousedown )
+						{
+							title.onmousedown( e );
+						}
 						_ActivateWindow( div );
 					} );
 				}
@@ -3503,51 +3545,52 @@ var View = function( args )
 			// Resize touch events.... -----------------------------------------
 			var winTouchStart = [ 0, 0 ];
 			var winTouchDowned = winTouchEnd = 0;
-			resize.addEventListener('touchstart', function(evt) {
+			resize.addEventListener('touchstart', function( evt )
+			{
 				cancelBubble( evt );
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
 				winTouchDowned = evt.timeStamp;
-			});
-			resize.addEventListener('touchmove', function(evt)
+			} );
+			resize.addEventListener('touchmove', function( evt )
 			{
 				cancelBubble( evt );
-
 				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
 				touchResizeWindow(evt);
-			});
-
+			} );
 			resize.addEventListener( 'touchend', function( evt )
 			{
 				cancelBubble( evt );
-			});
+			} );
 
-			bottombar.addEventListener('touchstart', function(evt)
+			bottombar.addEventListener('touchstart', function( evt )
 			{
 				cancelBubble( evt );
 
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
 				winTouchDowned = evt.timeStamp;
-			});
+			} );
 
-			bottombar.addEventListener('touchmove', function(evt)
+			bottombar.addEventListener('touchmove', function( evt )
 			{
 				cancelBubble( evt );
 
 				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
 				touchResizeWindow(evt);
-			});
+			} );
 
-			bottombar.addEventListener( 'touchend', function(evt) {
+			bottombar.addEventListener( 'touchend', function( evt )
+			{
 				cancelBubble( evt );
-			});
+			} );
 
 			//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
-			close.addEventListener('touchstart', function( evt ) {
+			close.addEventListener( 'touchstart', function( evt )
+			{
 				cancelBubble( evt );
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
 				winTouchEnd = winTouchStart;
 				winTouchDowned = evt.timeStamp;
-			});
+			} );
 		}
 		// Ok, if no window position is remembered.. place it somewhere
 		else if( !wp )
@@ -3670,6 +3713,11 @@ var View = function( args )
 		// Move workspace to designated position	
 		if( self.workspace > 0 )
 			self.sendToWorkspace( self.workspace );
+		
+		// Remove menu on calendar
+		if( Workspace.calendarWidget )
+			Workspace.calendarWidget.hide();
+		
 	}
 
 	// Send window to different workspace
@@ -3695,10 +3743,11 @@ var View = function( args )
 	}
 
 	// Set content on window
-	this.setContent = function( content )
+	this.setContent = function( content, cbk )
 	{
 		// Safe content without any scripts or styles!
 		SetWindowContent( this._window, this.cleanHTMLData( content ) );
+		if( cbk ) cbk();
 	}
 	this.fullscreen = function( val )
 	{
@@ -3779,6 +3828,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
 		if( this.flags.transparent )
@@ -3901,7 +3951,7 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		iframe.sandbox = "allow-forms allow-scripts allow-same-origin allow-popups"; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
 		self._window.authId = conf.authId;
@@ -3927,9 +3977,10 @@ var View = function( args )
 	// Sets rich content in a safe iframe
 	this.setRichContent = function( content )
 	{
+		if( !this._window ) return;
+		
 		// Rich content still can't have any scripts!
 		content = this.removeScriptsFromData( content );
-
 		var eles = this._window.getElementsByTagName( _viewType );
 		var ifr = false;
 		if( eles[0] )
@@ -4798,152 +4849,305 @@ var View = function( args )
 	
 	this.openCamera = function( flags, callback )
 	{
-		// TODO: Parse the flags! E.g. facingMode should be user or environment
 		
-		// Set up elements
-		var d = document.createElement( 'video' );
-		d.setAttribute( 'autoplay', 'autoplay' );
-		d.setAttribute( 'playinline', 'playinline' );
-		d.className = 'FriendCameraElement';
+		var self = this;
 		
-		var v = document.createElement( 'div' );
-		v.className = 'FriendCameraContainer';
-		v.camera = v;
-		v.appendChild( d );
-		
-		// Add to content
-		this.content.appendChild( v );
-		this.content.classList.add( 'HasCamera' );
-		
-		// Just get the available camera
-		// Normalize the various vendor prefixed versions of getUserMedia.
-		// TODO: Perhaps place this in a central location once and for all...
-		navigator.gm = (navigator.getUserMedia ||
-			navigator.webkitGetUserMedia ||
-			navigator.mozGetUserMedia || 
-			navigator.msGetUserMedia
-		);
-		if( navigator.gm )
+		// Just get the available devices
+		function getAvailableDevices( cbk )
 		{
-			// Request the camera.
-			var constraints = { 
-				video: {
-					facingMode: flags.facingMode ? flags.facingMode : 'environment'
-				} 
-			};
-			// We know which device we want..
-			if( flags.deviceId )
+			if( !navigator.mediaDevices )
 			{
-				constraints = { video: { deviceId: info.deviceId } };
+				return cbk( { response: -1, message: 'Could not get any devices.' } );
+			}
+			navigator.mediaDevices.enumerateDevices().then( function( devs ) {
+				cbk( { response: 1, message: 'Success', data: devs } );
+			} ).catch( function( err ) {
+				return cbk( { response: -1, message: err } );
+			} );
+		}
+		
+		function setCameraEvents( ele )
+		{
+			ele.ontouchstart = function( e )
+			{
+				this.offX = e.touches[0].clientX;
+				this.timeStamp = ( new Date() ).getTime();
 			}
 		
-			if( d && d.srcObject )
+			ele.ontouchend = function( e )
 			{
-				d.srcObject.getTracks().forEach( track => track.stop() );
-			}
-			 
-			// Now get the media!
-			navigator.gm(
-				constraints,
-				// Success Callback
-				function( localMediaStream ) 
+				var diff = e.changedTouches[0].clientX - this.offX;
+				var difftime = ( new Date() ).getTime() - this.timeStamp;
+				if( difftime > 200 )
 				{
-					// Create an object URL for the video stream and use this 
-					// to set the video source.
-					d.srcObject = localMediaStream;
-					// Add the record button
-					var btn = document.createElement( 'button' );
-					btn.className = 'IconButton IconSmall fa-camera';
-					btn.onclick = function( e )
+					return;
+				}
+				// Swipe right
+				if( diff < 127 )
+				{
+					setCameraMode();
+				}
+				// Swipe left
+				else if( diff > 127 )
+				{
+					setCameraMode();
+				}	
+			}
+		}
+		
+		function setCameraMode( e )
+		{
+
+			if( !self.cameraOptions )
+			{
+				self.cameraOptions = {
+					devices: e,
+					currentDevice: false
+				};
+				// Add container
+				var v = document.createElement( 'div' );
+				v.className = 'FriendCameraContainer';
+				self.content.appendChild( v );
+				self.content.container = v;
+				self.content.classList.add( 'HasCamera' );
+			
+			}
+			
+			// Find video devices
+			var initial = false;
+			var devs = [];
+			for( var a in self.cameraOptions.devices )
+			{
+				var dev = self.cameraOptions.devices[ a ];
+				if( dev.kind == 'videoinput' )
+				{
+					//we want back facing camera as default...
+					if( dev.label && dev.label.indexOf('back') > -1 && !self.cameraOptions.currentDevice ) 
 					{
-						var canv = document.createElement( 'canvas' );
-						canv.setAttribute( 'width', d.offsetWidth );
-						canv.setAttribute( 'height', d.offsetHeight );
-						v.appendChild( canv );
-						var ctx = canv.getContext( '2d' );
-						ctx.drawImage( d, 0, 0, d.offsetWidth, d.offsetHeight );
-						var dt = canv.toDataURL();
-						
-						// Stop taking video
-						d.srcObject.getTracks().forEach(track => track.stop())
-						d.srcObject = null;
-						
-						// FLASH!
-						v.classList.add( 'Flash' );
-						setTimeout( function()
+						self.cameraOptions.currentDevice = dev;
+						initial = true;
+					}
+					else 
+					{
+						//we overwrite on purpose here! most handsets have backwards facing cameras last...
+						self.cameraOptions.potentialDevice = dev
+					}
+					devs.push( dev );
+				}
+			}
+			if( !self.cameraOptions.currentDevice && self.cameraOptions.potentialDevice )
+			{
+				self.cameraOptions.currentDevice = self.cameraOptions.potentialDevice
+				initial = true;
+			}
+			
+			// Initial pass over, now just choose next device
+			if( !initial )
+			{
+				var found = nextfound = false;
+				for( var a = 0; a < devs.length; a++ )
+				{
+					if( devs[a].deviceId == self.cameraOptions.currentDevice.deviceId )
+					{
+						found = true;
+					}
+					// We found stuff
+					else if( found )
+					{
+						nextfound = true;
+						self.cameraOptions.currentDevice = devs[a];
+						break;
+					}
+				}
+				// Wrap around
+				if( !nextfound )
+				{
+					self.cameraOptions.currentDevice = devs[0];
+				}
+			}
+			var constraints = {
+				video: {
+					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
+				}
+			};
+			
+			var ue = navigator.userAgent.toLowerCase();
+			
+			if( navigator.gm ) { 
+				
+				//check if we should stop stuff before we try again...
+				var dd = self.content.container.camera;
+				if(dd && dd.srcObject)
+				{
+					dd.srcObject.getTracks().forEach(track => track.stop())
+					dd.srcObject = null;
+				}
+				if( self.content.container.camera ) self.content.container.removeChild( self.content.container.camera );
+				delete self.content.container.camera;
+				delete navigator.gm;
+			}
+			
+			// Shortcut
+			navigator.gm = (navigator.getUserMedia ||
+				navigator.webkitGetUserMedia ||
+				navigator.mozGetUserMedia || 
+				navigator.msGetUserMedia
+			);
+
+			if( navigator.gm )
+			{
+				navigator.gm( 
+					constraints, 
+					function( localMediaStream )
+					{
+						// Remove old video object
+						//might be too late here? at least on mobile? moved this check up a couple of lines..
+						var oldCam = self.content.container.camera;
+						if( oldCam && oldCam.srcObject )
 						{
-							v.classList.add( 'Flashing' );
-							setTimeout( function()
+							oldCam.srcObject.getTracks().forEach( track => track.stop() );
+							oldCam.srcObject = localMediaStream;
+						}
+						else
+						{
+							// New element!
+							var vi = document.createElement( 'video' );
+							vi.setAttribute( 'autoplay', 'autoplay' );
+							vi.setAttribute( 'playinline', 'playinline' );
+							vi.className = 'FriendCameraElement';
+							vi.srcObject = localMediaStream;
+							self.content.container.appendChild( vi );
+							self.content.container.camera = vi;
+					
+							setCameraEvents( vi );
+						}
+					
+						// Create an object URL for the video stream and use this 
+						// to set the video source.
+						self.content.container.camera.srcObject = localMediaStream;
+					
+						// Add the record + switch button
+						if( !self.content.container.button )
+						{
+							var btn = document.createElement( 'button' );
+							btn.className = 'IconButton IconSmall fa-camera';
+							btn.onclick = function( e )
 							{
-								v.classList.remove( 'Flashing' );
+								var dd = self.content.container.camera;
+								
+								var canv = document.createElement( 'canvas' );
+								canv.setAttribute( 'width', dd.videoWidth );
+								canv.setAttribute( 'height', dd.videoHeight );
+								v.appendChild( canv );
+								var ctx = canv.getContext( '2d' );
+								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
+								var dt = canv.toDataURL( 'image/png', 1 );
+						
+								// Stop taking video
+								dd.srcObject.getTracks().forEach(track => track.stop())
+								dd.srcObject = null;
+						
+								// FLASH!
+								v.classList.add( 'Flash' );
 								setTimeout( function()
 								{
-									v.classList.add( 'Closing' );
+									v.classList.add( 'Flashing' );
 									setTimeout( function()
 									{
-										callback( { response: 1, message: 'Image captured', data: dt } );
-										v.parentNode.removeChild( v );
+										v.classList.remove( 'Flashing' );
+										setTimeout( function()
+										{
+											v.classList.add( 'Closing' );
+											setTimeout( function()
+											{
+												callback( { response: 1, message: 'Image captured', data: dt } );
+												v.parentNode.removeChild( v );
+											}, 250 );
+										}, 250 );
 									}, 250 );
-								}, 250 );
-							}, 250 );
-						}, 5 );
+								}, 5 );
+							}
+							self.content.container.appendChild( btn );
+							
+							
+							var switchbtn = document.createElement( 'button' );
+							switchbtn.className = 'IconButton IconSmall fa-refresh';
+							switchbtn.onclick = function() { console.log('switch camera...'); setCameraMode() };
+							self.content.container.appendChild( switchbtn );
+
+							//stop the video if the view is closed!
+							self.addEvent('systemclose', function() {
+								var dd = self.content.container.camera;
+								if(dd && dd.srcObject )
+								{
+									dd.srcObject.getTracks().forEach(track => track.stop())
+									dd.srcObject = null;									
+								}
+							});
+							
+							//register our button in the container... to not do this twice							
+							self.content.container.button = btn;
+						}
+					},
+					function( err )
+					{
+						v = self.content;
+						// Log the error to the console.
+						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' + err } );
+						if( v )
+						{
+							v.classList.add( 'Closing' );
+							/*setTimeout( function()
+							{
+								v.parentNode.removeChild( v );
+							},  250 );*/
+						}
 					}
-					v.appendChild( btn );
-				},
-				// Error Callback
-				function( err )
-				{
-					// Log the error to the console.
-					callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' } );
-					v.classList.add( 'Closing' );
-					setTimeout( function()
-					{
-						callback( { response: 1, message: 'Image captured', data: dt } );
-						v.parentNode.removeChild( v );
-					}, 250 );
-				}
-			);
-		}
-		// We failed! Try to use the fallback
-		else
-		{
-			// TODO: Hogne
-			// Remove video
-			v.removeChild( d );
-			
-			// Add fallback
-			var fb = document.createElement( 'div' );
-			fb.className = 'FriendCameraFallback';
-			v.appendChild( fb );
-			var mediaElement = document.createElement( 'input' );
-			mediaElement.type = 'file';
-			mediaElement.accept = 'image/*';
-			mediaElement.className = 'FriendCameraInput';
-			fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
-				'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
-			fb.appendChild( mediaElement );
-			
-			setTimeout( function()
+				);
+			}
+			else
 			{
-				fb.classList.add( 'Showing' );
-			}, 5 );
+				// TODO: Hogne
+				// Remove video
+				v.removeChild( d );
 			
-			mediaElement.onchange = function( e )
-			{
-				var reader = new FileReader();
-				reader.onload = function( e )
+				// Add fallback
+				var fb = document.createElement( 'div' );
+				fb.className = 'FriendCameraFallback';
+				v.appendChild( fb );
+				var mediaElement = document.createElement( 'input' );
+				mediaElement.type = 'file';
+				mediaElement.accept = 'image/png';
+				mediaElement.className = 'FriendCameraInput';
+				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
+					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
+				fb.appendChild( mediaElement );
+			
+				setTimeout( function()
 				{
-					var dataURL = e.target.result;
-					v.classList.remove( 'Showing' );
-					setTimeout( function()
+					fb.classList.add( 'Showing' );
+				}, 5 );
+			
+				mediaElement.onchange = function( e )
+				{
+					var reader = new FileReader();
+					reader.onload = function( e )
 					{
-						callback( { response: 1, message: 'Image captured', data: dataURL } );
-						v.parentNode.removeChild( v );
-					}, 250 );
+						var dataURL = e.target.result;
+						v.classList.remove( 'Showing' );
+						setTimeout( function()
+						{
+							callback( { response: 1, message: 'Image captured', data: dataURL } );
+							v.parentNode.removeChild( v );
+						}, 250 );
+					}
+					reader.readAsDataURL( mediaElement.files[0] );
 				}
-				reader.readAsDataURL( mediaElement.files[0] );
 			}
 		}
+		
+		// Execute async operation
+		getAvailableDevices( function( e ){ setCameraMode( e.data ) } );
 	}
 	
 	// Add a child window to this window
@@ -5358,6 +5562,8 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	var curr = window.currentMovable;
+
 	var v = new View( {
 		title: title,
 		width: 400,
@@ -5365,6 +5571,18 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 		height: d.offsetHeight + 75,
 		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+
+	v.onClose = function()
+	{
+		if( curr && isMobile )
+		{
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
+		}
+	}
 
 	v.setSticky();
 
@@ -5423,6 +5641,9 @@ function Alert( title, string, cancelstring, callback )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	// Register current movable
+	var curr = window.currentMovable;
+
 	var minContentHeight = 100;
 	if( d.offsetHeight > minContentHeight )
 		minContentHeight = d.offsetHeight;
@@ -5437,6 +5658,18 @@ function Alert( title, string, cancelstring, callback )
 		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
 		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+	
+	v.onClose = function()
+	{
+		if( curr && isMobile )
+		{
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
+		}
+	}
 	
 	v.setSticky();
 

@@ -253,7 +253,7 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
+void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
 	FERROR("Disabled for a moment\n");
 	return NULL;

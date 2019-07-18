@@ -190,7 +190,18 @@ if( isset( $argv ) && isset( $argv[1] ) )
 	if( $args = explode( '&', $argv[1] ) )
 	{
 		//include_once( 'classes/logger.php' );
-		//$Logger->log( 'Here are the received args: ' . $argv[1]  . print_r( $args, 1 ) );
+		//$Logger->log( 'Here are the received args: ' . $argv[1]  .' __ ' . count( $args ) . '::' . print_r( $args, 1 ) );
+
+		/*
+			special case for large amount of data in request; Friend Core creates a file for us to read and parse here
+		*/
+		if( count( $args ) == 1 && array_shift( explode('=',$args[0]) ) == 'friendrequestparameters')
+		{
+			$dataset = file_get_contents( end( explode( '=' , $args[0] ) ) );
+			$args = explode( '&', $dataset );
+			//$Logger->log( 'Date from that file: ' . print_r($newargs,1) );
+		}
+
 		$num = 0;
 		$kvdata = new stdClass();
 		foreach ( $args as $arg )
@@ -202,7 +213,9 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				if( isset( $key ) && isset( $value ) )
 				{
 					if( substr( $value, 0, 13 ) == '<!--base64-->' )
+					{
 						$value = trim( base64_decode( substr( $value, 13, strlen( $value ) - 13 ) ) );
+					}
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
 					{
 						$value = rawurldecode( $value );
@@ -234,10 +247,10 @@ if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
 // No sessionid!!
 if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
 {
-	die( '404' );
+	die( '404 NO SEESION' );
 }
 if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
-	die( '404' );
+	die( '404 NO SESSION 2' );
 
 // Setup mysql abstraction
 if( file_exists( 'cfg/cfg.ini' ) )

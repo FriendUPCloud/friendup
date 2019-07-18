@@ -191,6 +191,8 @@ cAjax = function()
 								// Drop these (don't retry!) because of remote fs disconnect
 								if( jax.url.indexOf( 'file/info' ) > 0 )
 									return;
+								console.log( '[cAjax 2] Doing a relogin (no user session)' );
+								console.trace();
 								// Add to queue
 								AddToCajaxQueue( jax );
 								Workspace.flushSession();
@@ -202,11 +204,8 @@ cAjax = function()
 					{
 						if( !jax.rawData )
 						{
-							if( Workspace )
-							{
-								AddToCajaxQueue( jax );
-								return Workspace.relogin();
-							}
+							console.log( '[cAjax] Can not understand server response: ', jax.rawData );
+							return;
 						}
 					}
 				}
@@ -219,6 +218,9 @@ cAjax = function()
 						var res = r ? r.response.toLowerCase() : '';
 						if( res == 'user session not found' )
 						{
+							console.log( '[cAjax 3] Doing a relogin (no user session)' );
+							console.trace();
+							// Add to queue
 							AddToCajaxQueue( jax );
 							Workspace.flushSession();
 							return Workspace.relogin();
@@ -349,10 +351,10 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		!Workspace.websocketsOffline && 
+		Workspace.websocketState == 'open' &&
 		typeof( url ) == 'string' && 
-		url.indexOf( 'system.library' ) >= 0 &&
-		url.indexOf( '/file/write' ) < 0 &&
-		url.indexOf( '/file/read' ) < 0
+		url.indexOf( 'system.library' ) >= 0 && 
+		url.indexOf( '/file' ) < 0 
 	)
 	{
 		this.mode = 'websocket';
@@ -360,7 +362,6 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.hasReturnCode = hasReturnCode;
 		return true;
 	}
-	
 	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )
@@ -797,6 +798,9 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( Workspace )
 				{
 					// Add to queue
+					console.log( '[cAjax 2] Doing a relogin (no user session)' );
+					console.trace();
+					// Add to queue
 					AddToCajaxQueue( self );
 					Workspace.flushSession();
 					return Workspace.relogin();
@@ -807,12 +811,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			if( !self.rawData )
 			{
-				if( Workspace )
-				{
-					AddToCajaxQueue( self );
-					Workspace.flushSession();
-					return Workspace.relogin();
-				}
+				console.log( '[cAjax] Could not understand server response: ', self.returnData );
+				return;
 			}
 		}
 	}
@@ -824,6 +824,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			var r = JSON.parse( self.returnData );
 			if( r.response == 'user session not found' )
 			{
+				console.log( '[cAjax] Doing a relogin (no user session)' );
+				console.trace();
 				AddToCajaxQueue( self );
 				Workspace.flushSession();
 				return Workspace.relogin();

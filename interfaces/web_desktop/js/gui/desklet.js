@@ -196,6 +196,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.openDesklet = function( e )
 	{
+		if( this.openLock ) return;
 		var self = this;
 		if( !this.open && !this.opening )
 		{
@@ -714,8 +715,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				var ws = ap.windows[w].workspace;
 				if( st || ws != globalConfig.workspaceCurrent )
 				{
+					_ActivateWindow( ap.windows[w]._window );
 					_WindowToFront( ap.windows[w]._window );
-					_ActivateWindowOnly( ap.windows[w]._window.parentNode );
 					ele.classList.remove( 'Minimized' );
 					Workspace.switchWorkspace( ws );
 					ap.windows[w].setFlag( 'hidden', false );
@@ -910,11 +911,22 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
 			
-				// If not a single instance app, execute (or mobile)
-				if( isMobile || ( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 ) )
+				// If not mobile OR not ( docked AND ( NOT single instyance OR with arguments ) )
+				if( 
+					isMobile || 
+					( 
+						!docked && 
+						!( 
+							Friend.singleInstanceApps[ executable ] || 
+							o.exe.indexOf( ' ' ) > 0 
+						)	
+					)
+				)
 				{
 					if( !Friend.singleInstanceApps[ executable ] )				
+					{
 						ExecuteApplication( executable, args );
+					}
 					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
 					{
 						_ActivateWindow( rememberCurrent );
@@ -1081,7 +1093,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		var keep = []; // elements to keep
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( eles[a].className == 'ViewList' )
+			// Close help bubbles
+			if( eles[ a ].helpBubble )
+			{
+				eles[ a ].helpBubble.close();
+			}
+			if( eles[ a ].className == 'ViewList' )
 			{
 				keep.push( eles[a] );
 			}
@@ -1089,7 +1106,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		this.dom.innerHTML = '';
 		for( var a = 0; a < keep.length; a++ )
 		{
-			this.dom.appendChild( keep[a] );
+			this.dom.appendChild( keep[ a ] );
 		}
 	}
 	// Standard refresh function

@@ -296,7 +296,8 @@ function hideKeyboard()
 		field.focus();
 		setTimeout( function()
 		{
-			document.body.removeChild( field );
+			if( field.parentNode == document.body )
+				document.body.removeChild( field );
 		}, 500 );
 	}, 50 );
 }
@@ -2446,8 +2447,8 @@ function checkMobileBrowser()
 			}
 		}
 	}
-	// Ipads are always mobiles
-	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 )
+	// Ipads are always mobiles for apple users at least
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 && Workspace && Workspace.loginUsername == 'applereview' )
 	{
 		//console.log( 'IPAD! ' + navigator.userAgent );
 		window.isMobile = true;
@@ -2471,10 +2472,12 @@ function checkMobileBrowser()
 		document.body.setAttribute( 'settopbox', 'playstation' );
 		window.isSettopBox = 'playstation';
 		if (typeof console  != "undefined") 
+		{
 			if (typeof console.log != 'undefined')
 				console.olog = console.log;
 			else
 				console.olog = function() {};
+		}
 		console.log = function(message) {
 			console.olog(message);
 			Notify( { title: 'Playstation error', text: message } );

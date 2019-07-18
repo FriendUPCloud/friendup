@@ -390,7 +390,7 @@ Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 	
 	DEBUG("[ServiceManagerWebRequest] ---------------------------------%s----servicename %s servicename from service %s\n", urlpath[0], serviceName, selService->GetName() );
 	
-	selService->s_WSI = request->h_WSocket;
+	selService->s_USW = request->h_WSocket;
 	
 	DEBUG( "[ServiceManagerWebRequest]  Command OK %s !\n", urlpath[ ELEMENT_COMMAND ] );
 	

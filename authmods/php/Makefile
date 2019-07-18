@@ -2,7 +2,7 @@
 
 GCC		=	gcc
 OUTPUT		=	bin/php.authmod
-CFLAGS		+=	-I../../core/ -I../../libs/properties/ -I../../libs/application/ -I../../libs/ -fPIC -I../../libs-ext/libwebsockets/build/include/
+CFLAGS		+=	-I../../core/ -I../../libs/properties/ -I../../libs/application/ -I../../libs/ -fPIC -I../../libs-ext/libwebsockets/build/include/ -I/usr/include/libxml2/ 
 LFLAGS		=	-shared -fPIC -Wl,--no-as-needed -lz -lpthread -lrt -lcrypt -lssl $(shell mysql_config --libs)
 DFLAGS		=	-M $(CFLAGS)  
 FPATH		=	$(shell pwd)

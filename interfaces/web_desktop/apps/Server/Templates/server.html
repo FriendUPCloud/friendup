@@ -13,6 +13,9 @@
 				<div class="Tab IconSmall fa-certificate">
 					{i18n_app_permissions}
 				</div>
+				<div class="Tab IconSmall fa-globe">
+					{i18n_server_globals}
+				</div>
 				<div class="Page">
 					<div id="SystemSettings" class="PageScroll ContentFull Padding ScrollArea">
 					</div>
@@ -31,21 +34,51 @@
 					<div id="SoftwarePermissions" class="PageScroll ContentFull Padding ScrollArea">
 					</div>
 				</div>
+				<div class="Page">
+					<div id="ServerGlobals" class="PageScroll ContentFull Padding ScrollArea">
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="VContentBottom Padding BackgroundDefault BorderTop" id="Bottom">
-			<button type="button" class="Button fa-plus IconSmall" onclick="addItem()">
+			<button type="button" id="button-fa-wrench" class="FloatLeft RelatedToTabs Button fa-plus IconSmall" onclick="addItem()">
 				{i18n_additem}
 			</button>
-			<button type="button" class="Button FloatRight fa-close IconSmall" onclick="closeWin()">
-				{i18n_cancel}
+			<button type="button" id="button-fa-globe" class="FloatLeft RelatedToTabs IconSmall fa-save" onclick="saveGlobals()">
+				{i18n_save_globals}
 			</button>
+			<div id="button-fa-archive"></div>
+			<div id="button-fa-server"></div>
+			<div id="button-fa-certificate"></div>
 		</div>
 	</div>
 	
 	<link rel="stylesheet" href="Progdir:Css/server.css"/>
 	<script src="Progdir:Scripts/serverwindow.js"></script>
 	<script>
-		InitTabs( 'STabs' );
+		InitTabs( 'STabs', function( e )
+		{
+			// Let's just show those buttons related to tabs =)
+			if( !e ) return;
+			var cl = e.className.match( /fa\-[a-z]*/i );
+			if( ge( 'button-' + cl[0] ) )
+			{
+				var par = ge( 'button-' + cl[0] ).parentNode;
+				for( var a = 0; a < par.childNodes.length; a++ )
+				{
+					if( par.childNodes[a].classList && par.childNodes[a].classList.contains( 'RelatedToTabs' ) )
+					{
+						if( par.childNodes[a].id != 'button-' + cl[0] )
+						{
+							par.childNodes[a].style.display = 'none';
+						}
+						else
+						{
+							par.childNodes[a].style.display = 'block';
+						}
+					}
+				}
+			}
+		} );
 	</script>
 

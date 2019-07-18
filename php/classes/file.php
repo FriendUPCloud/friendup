@@ -31,21 +31,39 @@ class File
 		return $this->_content;
 	}
 	
-	function Load( $path = false )
+	function GetUrl( $path = false, $userInfo = false )
 	{
 		global $Config, $User, $Logger;
 		
 		if( $path ) $this->path = urldecode( $path );
 		
+		if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+			$sessionId = $GLOBALS[ 'args' ]->sessionid;
+		else $sessionId = false;
+		if( isset( $GLOBALS[ 'args' ]->authid ) )
+			$authId = $GLOBALS[ 'args' ]->authid;
+		else $authId = false;
+		
 		$ex = '/system.library/file/read/?mode=rb&path=' . jsUrlEncode( $this->path );
 		$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
 			( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $ex;
-		if( isset( $GLOBALS[ 'args' ]->sessionid ) )
-			$url .= '&sessionid=' . $GLOBALS[ 'args' ]->sessionid;
-		else if( isset( $GLOBALS[ 'args' ]->authid ) )
-			$url .= '&authid=' . $GLOBALS[ 'args' ]->authid;
+		if( $userInfo )
+			$url .= '&sessionid=' . $userInfo->SessionID;
+		else if( $sessionId )
+			$url .= '&sessionid=' . $sessionId;
+		else if( $authId )
+			$url .= '&authid=' . $authId;
 		else if( isset( $User->SessionID ) )
 			$url .= '&sessionid=' . $User->SessionID;
+
+		return $url;
+	}
+	
+	function Load( $path = false, $userInfo = false )
+	{
+		global $Config, $User, $Logger;
+		
+		$url = $this->GetUrl( $path, $userInfo );
 
 		$c = curl_init();
 		
@@ -61,7 +79,8 @@ class File
 			$this->_content = $r;
 			$this->_filesize = strlen( $r );
 			
-			$ex = end( explode( ':', $this->path ) );
+			$ex = explode( ':', $this->path );
+			$ex = end( $ex );
 			if( strstr( $ex, '/' ) )
 			{
 				$ex = explode( '/', $ex );

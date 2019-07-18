@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
-#include <network/websocket_server_client.h>
+#include <network/user_session_websocket.h>
 #include <system/fsys/device_handling.h>
 #include <core/functions.h>
 #include <util/md5.h>
@@ -57,6 +57,7 @@
 #include <sys/wait.h>
 #include <security/server_checker.h>
 #include <network/websocket_client.h>
+#include <network/protocol_websocket.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -111,7 +112,7 @@ SystemBase *SystemInit( void )
 	//int size = strlen ( tmp );
 	//ProcessIncomingRequest( NULL, tmp, size, NULL );
 	
-	socket_init_once();
+	//socket_init_once();
 
 	struct SystemBase *l = NULL;
 	char *tempString = FCalloc( PATH_MAX, sizeof(char) );
@@ -145,7 +146,7 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 		
 		// internal
-
+/*
 		struct sigaction sa;
 		sa.sa_handler = &handle_sigchld;
 		sigemptyset(&sa.sa_mask);
@@ -154,6 +155,7 @@ SystemBase *SystemInit( void )
 		{
 			perror(0);
 		}
+		*/
 		
 		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
@@ -849,6 +851,12 @@ SystemBase *SystemInit( void )
 	
 	// create all managers
 	
+	l->sl_PermissionManager = PermissionManagerNew( l );
+	if( l->sl_PermissionManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize PermissionManager\n");
+	}
+	
 	l->sl_WDavTokM = WebdavTokenManagerNew( l );
 	if( l->sl_WDavTokM == NULL )
 	{
@@ -946,6 +954,8 @@ SystemBase *SystemInit( void )
 	{
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
+	
+	FriendCoreManagerInitServices( l->fcm );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
@@ -1165,6 +1175,10 @@ void SystemClose( SystemBase *l )
 	{
 		DeviceManagerDelete( l->sl_DeviceManager );
 	}
+	if( l->sl_PermissionManager != NULL )
+	{
+		PermissionManagerDelete( l->sl_PermissionManager );
+	}
 	
 	// Remove sentinel from active memory
 	if( l->sl_Sentinel != NULL )
@@ -1195,7 +1209,6 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
 	FHandler *lsys = l->sl_Filesystems;
-
 	while( lsys != NULL )
 	{
 		FHandler *rems = lsys;
@@ -1616,8 +1629,14 @@ int SystemInitExternal( SystemBase *l )
 		User *tmpUser = l->sl_UM->um_Users;
 		while( tmpUser != NULL )
 		{
+			char *err = NULL;
 			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE );
+			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE, &err );
+			if( err != NULL )
+			{
+				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
+				FFree( err );
+			}
 			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
@@ -1953,10 +1972,11 @@ void CheckAndUpdateDB( struct SystemBase *l )
  * @param usr pointer to user to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
+ * @param mountError pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail )
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	
@@ -1972,9 +1992,12 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FB
 		return 0;
 	}
 	
+	FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
+	
 	char temptext[ 1024 ];
+	//char *temptext = FCalloc( 1024, 1 );
 
-	sqllib->SNPrintF( sqllib, temptext, sizeof(temptext) ,"\
+	sqllib->SNPrintF( sqllib, temptext, 1024 ,"\
 SELECT \
 `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
 FROM `Filesystem` f \
@@ -2000,9 +2023,10 @@ usr->u_ID , usr->u_ID, usr->u_ID
 	}
 	DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
 	{
 		char **row;
+
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
@@ -2032,15 +2056,18 @@ usr->u_ID , usr->u_ID, usr->u_ID
 
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr );
+			
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError );
 
 			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
 				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
-				if( mount == 1 && unmountIfFail == TRUE )
+				if( mount == 1 && unmountIfFail == TRUE && err != FSys_Error_CustomError )
 				{
+					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
+					
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
 UPDATE Filesystem f SET `Mounted` = '0' \
 WHERE \
@@ -2070,16 +2097,17 @@ AND LOWER(f.Name) = LOWER('%s')",
 			else
 			{
 				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", row[0] );
-			}	
+			}
+			
+			//FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 		}	// going through all rows
 		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
 		sqllib->FreeResult( sqllib, res );
 
 		usr->u_InitialDevMount = TRUE;
-
-		FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 	}
+	FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 	
 	return 0;
 }
@@ -2507,14 +2535,14 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 				
 				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 				{
-					WebsocketServerClient *wsc = usersession->us_WSClients;
+					UserSessionWebsocket *wsc = usersession->us_WSConnections;
 					while( wsc != NULL )
 					{
-						DEBUG("[SystemBase] Writing to websockets, pointer to ws %p, ptr to ws: %p wscptr: %p\n", wsc->wsc_Wsi, usersession, wsc );
+						DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
 
 					//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
 					
-						if( wsc->wsc_Wsi != NULL && wsc->wsc_UserSession != NULL )
+						if( wsc->wusc_Data != NULL )
 						{
 							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 						}
@@ -2522,7 +2550,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 						{
 							FERROR("Cannot write to WS, WSI is NULL!\n");
 						}
-						wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
 					}
 					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 				}
@@ -2566,14 +2594,28 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 
 			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 			{
-				WebsocketServerClient *wsc = usersession->us_WSClients;
+				UserSessionWebsocket *wsc = usersession->us_WSConnections;
 		
 				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
 		
-				while( wsc != NULL )
+				//if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 				{
-					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-					wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+					while( wsc != NULL )
+					{
+						//if(  )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+						{
+							//WSCData *data = (WSCData *)wsc->wusc_Data;
+							if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+							{
+								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+							}
+							else
+							{
+								DEBUG("Websocket is disabled, dataptr: %p\n", wsc->wusc_Data );
+							}
+						}
+						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
+					}
 				}
 		
 				FFree( buf );

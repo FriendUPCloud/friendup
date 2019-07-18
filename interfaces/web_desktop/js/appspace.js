@@ -179,6 +179,7 @@ Workspace = {
 						'webclient/js/gui/workspace_menu.js;' +
 						'webclient/js/gui/deepestfield.js;' +
 						'webclient/js/gui/filedialog.js;' +
+						'webclient/js/gui/printdialog.js;' +
 						'webclient/js/gui/desklet.js;' +
 						'webclient/js/gui/calendar.js;' +
 						'webclient/js/gui/colorpicker.js;' +
@@ -243,7 +244,9 @@ Workspace = {
 							// Loading notice
 							var loading = document.createElement( 'div' );
 							loading.className = 'LoadingMessage';
-							loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
+							if( typeof( t.conf.app ) == 'undefined' )
+								loading.innerHTML = '<p>Nothing to load...</p>';
+							else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
 							document.body.appendChild( loading );
 							setTimeout( function()
 							{

@@ -14,7 +14,13 @@ $o->UserID = $User->ID;
 $o->Type = 'system';
 $o->Key = $args->args->setting;
 $o->Load();
-$o->Data = json_encode( $args->args->data );
+
+$d = $args->args->data{0};
+if( $d == '{' || $d == '[' )
+	$d = json_encode( $args->args->data );
+else $d = $args->args->data;
+
+$o->Data = $d;
 $o->Save();
 
 die( 'ok' );

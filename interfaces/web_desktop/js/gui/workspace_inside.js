@@ -1,18 +1,25 @@
+// Apps on startup
+Friend.startupApps = {};
+
+// Added to workspace
 var WorkspaceInside = {
 	// Tray icons
 	trayIcons: {},
 	workspaceInside: true,
 	refreshDesktopIconsRetries: 0,
 	websocketDisconnectTime: 0,
-	currentViewState: 'active',
+	websocketState: null,
+	currentViewState: 'inactive',
 	serverIsThere: true, // Assume we have a server!
 	// Did we load the wallpaper?
 	wallpaperLoaded: false,
 	// We only initialize once
 	insideInitialized: false,
+	readyToRun: false,
 	// Onready functions
 	onReadyList: [],
 	// Switch to workspace
+	getReadyToRun: function() { return ( this.readyToRun ? "true" : "false" ); },
 	switchWorkspace: function( num )
 	{
 		if( this.mode == 'vr' ) return;
@@ -375,6 +382,10 @@ var WorkspaceInside = {
 					w.ind = a;
 					w.onmousedown = function( e )
 					{
+						// No need for change
+						if( this.ind == globalConfig.workspaceCurrent )
+							return;
+							
 						var cnt = 0;
 						for( var z = 0; z < d.childNodes.length; z++ )
 						{
@@ -395,6 +406,7 @@ var WorkspaceInside = {
 						for( var c in movableWindows )
 						{
 							if( !movableWindows[c].windowObject ) continue;
+							
 							if( movableWindows[c].windowObject.workspace == this.ind )
 							{
 								if( movableWindows[c].getAttribute( 'minimized' ) != 'minimized' )
@@ -476,9 +488,17 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	getWebSocketsState: function()
+	{
+		if( Workspace.readyToRun ) return Workspace.websocketState;
+		return "false";
+	},
 	initWebSocket: function()
 	{	
-		if( Workspace.reloginInProgress || Workspace.connectingWebsocket )
+		// We're already open
+		if( Workspace.websocketState == 'open' ) return;
+		
+		if( Workspace.reloginInProgress || Workspace.websocketState == 'connecting' )
 			return;
 		
 		if( !Workspace.sessionId && Workspace.userLevel )
@@ -491,7 +511,9 @@ var WorkspaceInside = {
 			setTimeout( Workspace.initWebSocket, 1000 );
 		}
 
-		Workspace.connectingWebsocket = true;
+		// Force connecting ws state (we will close it!)
+		Workspace.websocketState = 'connecting';
+		Workspace.websocketsOffline = false;
 
 		var conf = {
 			onstate: onState,
@@ -528,7 +550,7 @@ var WorkspaceInside = {
 		
 		if( typeof FriendConnection == 'undefined' )
 		{
-			setTimeout(Workspace.initWebSocket, 250);
+			setTimeout( Workspace.initWebSocket, 250 );
 			return;
 		}
 		
@@ -536,9 +558,10 @@ var WorkspaceInside = {
 		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 		this.conn.on( 'server-notice', handleServerNotice );
 		this.conn.on( 'server-msg', handleServerMessage );
-		this.conn.on( 'refresh', function( e )
+		this.conn.on( 'refresh', function( msg )
 		{
-			Workspace.refreshDesktop();
+			// Do a deep refresh
+			Workspace.refreshDesktop( false, true );
 		} );
 		this.conn.on( 'icon-change', handleIconChange );
 		this.conn.on( 'filesystem-change', handleFilesystemChange );
@@ -547,30 +570,38 @@ var WorkspaceInside = {
 		// Reference for handler
 		var selfConn = this.conn;
 
-
 		function onState( e )
 		{
 			//console.log( 'Worspace.conn.onState', e );
 			if( e.type == 'error' || e.type == 'close' )
 			{
-				if( !Workspace.httpCheckConnectionInterval )
+				if( e.type == 'close' )
 				{
-					Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 7000 );
-					Workspace.websocketsOffline = true;
+					console.log( '[onState] The ws closed.' );
+					Workspace.websocketState = 'closed';
 				}
+				else if( e.type == 'error' )
+				{
+					console.log( '[onState] We got an error.' );
+					Workspace.websocketState = 'error';
+				}
+				// After such an error, always try reconnect
+				if( Workspace.httpCheckConnectionInterval )
+				{
+					clearInterval( Workspace.httpCheckConnectionInterval );
+				}
+				Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 3000 );
 			}
 			else if( e.type == 'ping' )
 			{
 				//if we get a ping we have a websocket.... no need to do the http server check
 				clearInterval( Workspace.httpCheckConnectionInterval );
 				Workspace.httpCheckConnectionInterval = false;
-				if( Workspace.websocketsOffline )
+				if( Workspace.websocketState != 'open' )
 				{
 					// Refresh mountlist
 					Workspace.refreshDesktop( false, true );
 				}
-				Workspace.websocketsOffline = false;
-				Workspace.connectingWebsocket = false;
 
 				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
 				document.body.classList.remove( 'Offline' );
@@ -585,6 +616,14 @@ var WorkspaceInside = {
 			}
 			else
 			{
+				if( e.type == 'open' )
+				{
+					Workspace.websocketState = 'open';
+				}
+				else if( e.type == 'connecting' )
+				{
+					Workspace.websocketState = 'connecting';
+				}
 				if( e.type != 'connecting' && e.type != 'open' ) console.log( e );
 			}
 		}
@@ -592,7 +631,7 @@ var WorkspaceInside = {
 		function onEnd( e )
 		{
 			console.log( 'Workspace.conn.onEnd', e );
-			Workspace.websocketsOffline = true;
+			Workspace.websocketState = 'closed';
 		}
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
@@ -604,6 +643,21 @@ var WorkspaceInside = {
 			{
 				Workspace.filesystemChangeTimeouts = {};
 			}
+			
+			// Clear cache
+			if( msg && msg.devname && msg.path )
+			{
+				var ext4 = msg.path.substr( msg.path.length - 5, 5 );
+				var ext3 = msg.path.substr( msg.path.length - 4, 4 );
+				ext4 = ext4.toLowerCase();
+				ext3 = ext3.toLowerCase();
+				if( ext4 == '.jpeg' || ext3 == '.jpg' || ext3 == '.gif' || ext3 == '.png' )
+				{
+					var ic = new FileIcon();
+					ic.delCache( msg.devname + ':' + msg.path );
+				}
+			}
+			
 			var t = msg.devname + ( msg.path ? msg.path : '' );
 			if( Workspace.filesystemChangeTimeouts[ t ] )
 			{
@@ -687,13 +741,18 @@ var WorkspaceInside = {
 				//console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
 		}
-		// Handle incoming push notifications and server notifications
+		
+		// Handle incoming push notifications and server notifications ---------
 		function handleNotifications( nmsg )
 		{
 			var messageRead = trash = false;
 			
+			//console.log( 'Handling notifications: ', nmsg );
+			
 			if( isMobile )
 			{
+				// TODO: Determine if this will ever occur. If the viewstate isn't active
+				//       we will obviously not be running this Javascript?
 				if( window.friendApp && Workspace.currentViewState != 'active' )
 				{
 					// Cancel push notification on the server
@@ -705,7 +764,7 @@ var WorkspaceInside = {
 					}
 					
 					// Revert to push notifications on the OS side
-					Notify( { title: nmsg.title, text: nmsg.text }, null, clickCallback );
+					Notify( { title: nmsg.title, text: nmsg.text, notificationId: nmsg.notificationData.id }, null, clickCallback );
 					return;
 				}
 			}
@@ -737,16 +796,22 @@ var WorkspaceInside = {
 						// Function to set the notification as read...
 						function notificationRead()
 						{
-							if( trash )
-								clearTimeout( trash );
-							messageRead = true;
-							var l = new Library( 'system.library' );
-							l.onExecuted = function(){};
-							l.execute( 'mobile/updatenotification', { 
-								notifid: msg.notificationData.id, 
-								action: 1, 
-								pawel: 3
-							} );
+							//console.log( 'Foo bar: ', msg.notificationData );
+							if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+							{
+								if( trash )
+									clearTimeout( trash );
+								messageRead = true;
+								var l = new Library( 'system.library' );
+								l.onExecuted = function( e, d ){
+									console.log( 'Did we tell fc that we read the notification?', e, d );
+								};
+								l.execute( 'mobile/updatenotification', { 
+									notifid: msg.notificationData.id, 
+									action: 1, 
+									pawel: 3
+								} );
+							}
 						}
 					
 						var appName = msg.notificationData.application;
@@ -774,6 +839,8 @@ var WorkspaceInside = {
 								return;
 							}
 						}
+					
+						//console.log( 'Could not find application ' + appName );
 					
 						// Application not found? Start it!
 						// Send message to app once it has started...
@@ -818,11 +885,12 @@ var WorkspaceInside = {
 								}
 							}, 1000 );
 						}
-					
+						
 						// TODO: If we are here, generate a clickable Workspace notification
 						if( msg.notificationData.clicked )
 						{
 							mobileDebug( ' Startappz: ' + appName, true );
+							Friend.startupApps[ appName ] = true;
 							ExecuteApplication( appName, '', appMessage );
 						}
 						else
@@ -834,6 +902,7 @@ var WorkspaceInside = {
 							{
 								msg.notificationData.clicked = true;
 								mobileDebug( ' Startappz: ' + appName, true );
+								Friend.startupApps[ appName ] = true;
 								ExecuteApplication( appName, '', appMessage );
 							}
 						}
@@ -925,20 +994,18 @@ var WorkspaceInside = {
 		var mo = new Library( 'system.library' );
 		mo.onExecuted = function( rc, sessionList )
 		{
+			var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
+			if( m == ge( 'DoorsScreen' ) )
+				m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
+			if( !m )
+			{
+				//console.log( 'Can not find widget!' );
+				return;
+			}
+		
 			var sessions = [];
 			if( rc == 'ok' )
 			{
-				var m = Workspace.widget ? Workspace.widget.target : ge( 'DoorsScreen' );
-
-				if( m == ge( 'DoorsScreen' ) )
-					m = ge( 'DoorsScreen' ).screenTitle.getElementsByClassName( 'Extra' )[0];
-
-				if( !m )
-				{
-					//console.log( 'Can not find widget!' );
-					return;
-				}
-
 				if( typeof( sessionList ) == 'string' )
 					sessionList = JSON.parse( sessionList );
 
@@ -1043,7 +1110,7 @@ var WorkspaceInside = {
 						calendar.eventWin = new View( {
 							title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
 							width: 500,
-							height: 405
+							height: 445
 						} );
 					
 						calendar.eventWin.onClose = function()
@@ -1069,7 +1136,7 @@ var WorkspaceInside = {
 					var geBtn = calendar.createButton( 'fa-wrench' );
 					geBtn.onclick = function()
 					{
-						ExecuteApplication( 'Calendar' );
+						ExecuteApplication( 'FriendCalendar' );
 					}
 					calendar.addButton( geBtn );
 
@@ -1186,6 +1253,8 @@ var WorkspaceInside = {
 			Workspace.screen.contentDiv.parentNode.appendChild( appMenu );
 			appMenu.onclick = function()
 			{
+				// Turn off openlock
+				Workspace.mainDock.openLock = false;
 				window.focus();
 				
 				if( ge( 'WorkspaceMenu' ) )
@@ -1205,13 +1274,30 @@ var WorkspaceInside = {
 			}
 		}
 	},
+	zapMobileAppMenu: function()
+	{
+		// Turn on openlock
+		Workspace.mainDock.openLock = true;
+		if( document.body.classList.contains( 'AppsShowing' ) )
+		{
+			Workspace.mainDock.dom.style.display = 'none';
+			setTimeout( function()
+			{
+				Workspace.mainDock.dom.style.display = '';
+			}, 400 );
+			Workspace.mainDock.closeDesklet();
+			Workspace.mainDock.dom.classList.remove( 'Open' );
+		}
+		
+	},
 	// Close widgets and return to desktop..
 	goToMobileDesktop: function()
 	{
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
 		Workspace.closeDrivePanel();
-		Workspace.mainDock.closeDesklet();
+		if( Workspace.mainDock )
+			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
 	},
 	removeCalendarEvent: function( id )
@@ -1254,6 +1340,93 @@ var WorkspaceInside = {
 			Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
 		}
 		m.execute( 'addcalendarevent', { event: evt } );
+	},
+	// Edit a calendar event
+	editCalendarEvent: function( id )
+	{
+		var calendar = Workspace.calendar;
+		
+		if( calendar.editWin ) return;
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				var row = JSON.parse( d );
+				
+				var date = row.Date;
+				
+				calendar.editWin = new View( {
+					title: i18n( 'i18n_event_overview' ) + ' ' + date,
+					width: 500,
+					height: 445
+				} );
+	
+				calendar.editWin.onClose = function()
+				{
+					calendar.editWin = false;
+				}
+
+				var f1 = new File( 'System:templates/calendar_event_edit.html' );
+				f1.replacements = { 
+					date:         date,
+					timefrom:     row.TimeFrom,
+					timeto:       row.TimeTo,
+					timedisabled: row.TimeFrom == '00:00' && time.TimeTo == '00:00' ? ' disabled="disabled"' : '',
+					title:        row.Title,
+					type:         row.Type,
+					description:  row.Description,
+					id:           id
+				};
+				f1.i18n();
+				f1.onLoad = function( data1 )
+				{
+					calendar.editWin.setContent( data1 );
+				}
+				f1.load();
+			}
+		}
+		m.execute( 'getcalendarevent', { cid: id } );
+	},
+	saveCalendarEvent: function( id )
+	{
+		if( !Workspace.calendar.editWin ) return;
+		var w = Workspace.calendar.editWin;
+		var fields = {};
+		var inps = w.content.getElementsByTagName( 'input' );
+		for( var a = 0; a < inps.length; a++ )
+			fields[ inps[ a ].id ] = inps[ a ].value;
+		var txts = w.content.getElementsByTagName( 'textarea' );
+		for( var a = 0; a < txts.length; a++ )
+			fields[ txts[ a ].id ] = txts[ a ].value;
+		var sels = w.content.getElementsByTagName( 'select' );
+		for( var a = 0; a < txts.length; a++ )
+			fields[ sels[ a ].id ] = sels[ a ].value;
+		
+		var evt = {
+			Title: fields.calTitle,
+			TimeFrom: fields.calTimeFrom,
+			TimeTo: fields.calTimeTo,
+			Description: fields.calDescription,
+			Date: fields.calDateField
+		};
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				// Refresh
+				if( Workspace.calendar ) Workspace.calendar.render();
+				if( Workspace.calendar.editWin )
+				{
+					Workspace.calendar.editWin.close();
+				}
+				return;
+			}
+		}
+		m.execute( 'savecalendarevent', { cid: id, event: evt } );
 	},
 	loadSystemInfo: function()
 	{
@@ -1409,15 +1582,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else 
 						{
+							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
+					}
+					else
+					{
+						document.body.classList.add( 'NoWallpaper' );
 					}
 					// Check for theme specifics
 					if( dat[ 'themedata_' + Workspace.theme ] )
@@ -1513,7 +1695,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						//console.log = function(){};
 					}
-
+					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{
@@ -1532,24 +1714,73 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									seq = [];
 								}
 							}
-							var l = {
-								index: 0,
-								func: function()
-								{
-									var cmd = seq[ this.index++ ];
-									console.log( 'This is it: ', cmd );
-									if( cmd && cmd.length )
+							if( seq.length )
+							{
+								ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
+								var l = {
+									index: 0,
+									func: function()
 									{
-										Workspace.shell.execute( cmd, function()
+										if( l.index < seq.length )
 										{
-											l.func();
-											if( Workspace.mainDock )
-												Workspace.mainDock.closeDesklet();
-										} );
+											var cmd = seq[ l.index++ ];
+											if( cmd && cmd.length )
+											{
+												// Sanitize
+												if( cmd.indexOf( 'launch' ) == 0 )
+												{
+													var appName = cmd.split( ' ' );
+													appName = appName[ appName.length - 1 ];
+													var found = false;
+													for( var b = 0; b < Workspace.applications.length; b++ )
+													{
+														if( Workspace.applications[ b ].applicationName == appName )
+														{
+															found = true;
+															break;
+														}
+													}
+													if( !found && !Friend.startupApps[ appName ] )
+													{
+														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+														Workspace.shell.execute( cmd, function( res )
+														{
+															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+															l.func();
+															if( Workspace.mainDock )
+																Workspace.mainDock.closeDesklet();
+														} );
+													}
+													// Just skip
+													else
+													{
+														l.func();
+													}
+												}
+												else
+												{
+													l.func();
+												}
+												return;
+											}
+										}
+										// Hide overlay
+										ScreenOverlay.hide();
+										l.func = function()
+										{
+											//
+										}
+										// We are done. Empty startup apps!
+										Friend.startupApps = {};
 									}
 								}
+								l.func();
 							}
-							l.func();
+							else
+							{
+								// Hide overlay
+								ScreenOverlay.hide();
+							}
 						} );
 					}
 
@@ -1559,6 +1790,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
+					document.body.classList.add( 'DefaultWallpaper' );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -1760,8 +1992,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
 
-							var nam = eles[b].getAttribute('data-displayname') ? eles[b].getAttribute('data-displayname') : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
-							var exe = eles[b].getAttribute('data-exename') ? eles[b].getAttribute('data-exename') : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							var nam = eles[b].getAttribute( 'data-displayname' ) ? eles[b].getAttribute( 'data-displayname' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							var exe = eles[b].getAttribute( 'data-exename' ) ? eles[b].getAttribute( 'data-exename' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
 							
 							var im = eles[b].style.backgroundImage ? 
 								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
@@ -1864,6 +2096,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						s.className = 'DockMenuItem MousePointer ' + data[a].Type;
 						s.addEventListener( 'mouseover', function( e )
 						{
+							var self = this;
 							this.classList.add( 'Over' );
 							var eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
 							for( var z = 0; z < eles.length; z++ )
@@ -1895,13 +2128,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							data[a].IconFile = '/iconthemes/friendup15/File_Binary.svg';
 	
 						if( data[a].Icon )
-							s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="' + data[a].Icon + '" alt="' + s.innerHTML + '"/> ' + s.innerHTML;
+							s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="' + data[a].Icon + '"/></span><span>' + s.innerHTML + '</span>';
 						else if( data[a].IconFile )
 						{
 							var i = data[a].IconFile;
 							if( i.indexOf( 'resources/' ) == 0 )
 								i = i.substr( 9, i.length - 9 );
-							s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="' + i + '" alt="' + s.innerHTML + '"/> ' + s.innerHTML;
+							s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="' + i + '"/></span><span>' + s.innerHTML + '</span>';
 							data[a].Icon = i;
 						}
 						
@@ -1923,6 +2156,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							buildMenu( data[a].Path, s, depth + 1 );
 							s.onclick = function( e )
 							{
+								var self = this;
 								this.classList.add( 'Over' );
 								var eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
 								for( var z = 0; z < eles.length; z++ )
@@ -2075,7 +2309,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						var s = document.createElement( 'div' );
 						s.className = 'DockMenuItem MousePointer Executable';
-						s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg" alt="' + s.innerHTML + '"/> ' + i18n( 'menu_run_command' );
+						s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
 						s.onclick = function()
 						{
 							Workspace.toggleStartMenu( false );
@@ -2651,23 +2885,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.refreshUserSettings( function() 
 			{
 				CheckScreenTitle();
-			
-				// We only allow two mobile themes
-				/*if( isMobile )
-				{
-					switch( themeName )
-					{
-						case 'friendup':
-						case 'friendup_twilight':
-						case 'friendup_dreamy':
-						case 'friendup_green':
-						case 'friendup_pink':
-							break;
-						default:
-							Workspace.theme = themeName = 'friendup12';
-							break;
-					}
-				}*/
 
 				var h = document.getElementsByTagName( 'head' );
 				if( h )
@@ -2702,9 +2919,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						// We are inside (wait for wallpaper) - watchdog
 						if( !Workspace.insideInterval )
 						{
+							var retries = 0;
 							Workspace.insideInterval = setInterval( function()
 							{
-								if( Workspace.wallpaperLoaded )
+								// If we're in VR, just immediately go in, or when wallpaper loaded or when we waited 5 secs
+								if( Workspace.mode == 'vr' || Workspace.wallpaperLoaded || retries++ > 100 )
 								{
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
@@ -2714,6 +2933,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.add( 'Loaded' );
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
+								
+									// Generate avatar
+									var sm = new Module( 'system' );
+									sm.execute( 'getsetting', { setting: 'avatar' } );
 								
 									// Remove splash screen
 									if( window.friendApp )
@@ -2733,7 +2956,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Redraw now
 									DeepestField.redraw();
 									
-									if( location.hash && location.hash.indexOf("clean") ) Workspace.goDialogShown = true;
+									if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
+									
 									// Show about dialog
 									if( !isMobile && window.go && !Workspace.goDialogShown )
 									{
@@ -2770,10 +2994,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// We are ready!
+									Workspace.readyToRun = true;
 									if( !window.friendApp )
 									{
 										Workspace.onReady();
 									}
+									else if( typeof( window.friendApp.onWorkspaceReady ) == 'function' )
+									{
+										friendApp.onWorkspaceReady();
+									}
+									Workspace.updateViewState( 'active' );
 								}
 							}, 50 );
 						}
@@ -3448,7 +3678,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				doGetMountlistHere();
 			}
-			d.execute( 'types' );
+			d.execute( 'types', { mode: 'all' } );
 		}
 		else
 		{
@@ -4151,21 +4381,50 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Use a door and execute a filesystem function, rename
 	executeRename: function( nam, icon, win )
 	{	
+		var ic = new FileIcon();
+		
+		var target = icon.Path;
+		if( target.indexOf( '/' ) > 0 )
+		{
+			target = target.split( '/' );
+			target.pop();
+			target = target.join( '/' ) + '/' + nam;
+		}
+		else
+		{
+			target = target.split( ':' )[0] + ':' + nam;
+		}
+		
+		ic.delCache( icon.Path );
+		ic.delCache( target );
+		
 		if ( icon.Dormant )
 		{
 			if ( icon.Dormant.dosAction )
 			{
 				icon.Dormant.dosAction( 'rename', 
-				{
-					newname: nam,
-					path: icon.Path
-				}, function( result, data )
-				{
-					if( win && win.content.refresh )
-						win.content.refresh();
-					if( Workspace.renameWindow )
-						Workspace.renameWindow.close();
-				} );
+					{
+						newname: nam,
+						path: icon.Path
+					}, 
+					function( result, data )
+					{
+						// Try to rename .info file
+						icon.Dormant.dosAction( 'rename', 
+							{
+								newname: nam + '.info',
+								path: icon.Path + '.info'
+							},
+							function( rr, dd )
+							{
+								if( win && win.content.refresh )
+									win.content.refresh();
+								if( Workspace.renameWindow )
+									Workspace.renameWindow.close();
+							} 
+						);
+					} 
+				);
 			}
 			else
 			{
@@ -4176,15 +4435,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return;
 		}
 		var d = new Door( icon.Path );
-		d.dosAction( 'rename', {
-			newname: nam,
-			path: icon.Path
-		}, function( result, data)
+		d.dosAction( 'rename', 
 			{
-				if( win && win.content.refresh )
-					win.content.refresh();
-				if( Workspace.renameWindow )
-					Workspace.renameWindow.close();
+				newname: nam,
+				path: icon.Path
+			},
+			function( result, data)
+			{
+				// Try to rename .info file
+				d.dosAction( 'rename',
+					{
+						newname: nam + '.info',
+						path: icon.Path + '.info'
+					},
+					function( rr, dd )
+					{
+						if( win && win.content.refresh )
+							win.content.refresh();
+						if( Workspace.renameWindow )
+							Workspace.renameWindow.close();
+					}
+				);
 			}
 		);
 	},
@@ -4318,6 +4589,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Check volume icon
 			if( icon.Type == 'Door' && ( ( !icon.Filesize && icon.Filesize != 0 ) || isNaN( icon.Filesize ) ) )
 			{
+				if( !icon.Path && icon.Volume )
+				{
+					icon.Path = icon.Volume;
+					if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+						icon.Path += ':';
+				}
+				
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -5495,14 +5773,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
 			{
+				// We are busy!
+				if( form.classList.contains( 'Busy' ) )
+				{
+					return;
+				}
+				ge( 'uploadFeedback' ).parentNode.classList.add( 'Busy' );
 				form.submit();
+				form.classList.add( 'Busy' );
 				var f = function( e )
 				{
+					form.classList.remove( 'Busy' );
+					ge( 'uploadFeedback' ).parentNode.classList.remove( 'Busy' );
 					var res = resultfr.contentDocument.body.innerHTML;
 					res = res.split( '<!--separate-->' );
 					if( res[0] == 'ok' )
 					{
-						ge( 'uploadFeedback' ).innerHTML = i18n( 'i18n_upload_completed' );
 						for( var a in movableWindows )
 						{
 							var w = movableWindows[a];
@@ -5523,14 +5809,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					else
 					{
 						Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
-						
-						ge( 'uploadFeedback' ).innerHTML = i18n( 'i18n_upload_failed' );
 					}
-					
-					setTimeout( function()
-					{
-						ge( 'uploadFeedback' ).innerHTML = '';
-					}, 1500 );
 					
 					resultfr.removeEventListener( 'load', f );
 					
@@ -5594,22 +5873,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.sessionId ) return;
 
 		if( this.fupdialog ) return;
-		this.fupdialog = new Filedialog( false, function( arr )
-		{
-			if( Workspace.fupdialog )
+		var flags = {
+			path: 'Home:Downloads/',
+			triggerFunction: function( arr )
 			{
-				var fu = ge( 'fileUpload' );
-				if( fu )
+				if( Workspace.fupdialog )
 				{
-					if( arr == 'Mountlist:' || !arr )
+					var fu = ge( 'fileUpload' );
+					if( fu )
 					{
-						arr = 'Home:';
+						if( arr == 'Mountlist:' || !arr )
+						{
+							arr = 'Home:';
+						}
+						fu.path.value = arr;
 					}
-					fu.path.value = arr;
+					Workspace.fupdialog = false;
 				}
-				Workspace.fupdialog = false;
-			}
-		}, 'Mountlist:', 'path' );
+			},
+			type: 'path',
+			mainView: window.currentMovable ? currentMovable.windowObject : null
+		};
+		this.fupdialog = new Filedialog( flags );
 		return;
 	},
 	// Simple logout..
@@ -5631,7 +5916,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		SaveWindowStorage( function()
 		{
-			//do external logout and then our internal one.
+			// Do external logout and then our internal one.
 			if( Workspace.logoutURL )
 			{
 				Workspace.externalLogout();
@@ -5648,7 +5933,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					friendApp.exit();
 					return;
 				}
-				Workspace.sessionId = ''; document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
+				Workspace.sessionId = ''; 
+				document.location.href = window.location.href.split( '?' )[0]; //document.location.reload();
 			}
 			m.send();
 			Workspace.websocketsOffline = false;
@@ -5658,7 +5944,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	externalLogout: function()
 	{
 		var wl = new View( {
-			title: 'Logout!',
+			title: 'Logout',
 			width: 370,
 			'min-width': 370,
 			height: 170,
@@ -5804,6 +6090,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !c ) return false;
 
 		var ic = currentMovable.content.icons;
+		if( !ic )
+		{
+			ic = Workspace.screen.contentDiv.icons;
+		}
 		for( var a = 0; a < ic.length; a++ )
 		{
 			var t = ic[a].Filename ? ic[a].Filename : ic[a].Title;
@@ -6032,6 +6322,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( iconsSelected )
 		{
 			canUnmount = true;
+			
 			var ics = currentMovable ? currentMovable.content.icons : currentScreen.screen._screen.icons;
 			for( var a in ics )
 			{
@@ -6116,7 +6407,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				items:
 				[
 					{
-						name:	i18n( 'menu_about_friendup' ),
+						name:	i18n( 'menu_about' ),
 						command: function(){ AboutFriendUP(); }
 					},
 					{
@@ -6336,7 +6627,34 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},
 					{
 						name:	i18n( 'menu_download' ),
-						command: function() { Workspace.download( downloadIcon.Path ); },
+						command: function() { 
+							// Find icon for download
+							if( currentMovable )
+							{
+								var selPath = false;
+								var dv = currentMovable.content;
+								if( dv )
+								{
+									for( var a = 0; a < dv.icons.length; a++ )
+									{
+										var ic = dv.icons[a];
+										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.domNode.fileInfo.selected )
+										{
+											selPath = ic.domNode.fileInfo.Path;
+											break;
+										}
+									}
+								}
+								if( selPath )
+								{
+									Workspace.download( selPath ); 
+								}
+								else
+								{
+									Notify( { title: i18n( 'i18n_could_not_download' ), text: i18n( 'i18n_file_cannot_be_downloaded' ) } );
+								}
+							}
+						},
 						disabled: ( !iconsSelected || volumeIcon || systemDrive || dormant || directoryIcon )
 					}
 				]
@@ -6416,7 +6734,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name:	i18n( 'menu_close_window' ),
 						command: function(){ CloseWindow( window.currentMovable ); if( isMobile ) Workspace.exitMobileMenu(); },
-						disabled: !windowsOpened
+						disabled: !windowsOpened || !window.currentMovable
 					}
 				]
 			}
@@ -6655,6 +6973,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			if( t.checkSelected )
 				t.checkSelected();
+			
 			Workspace.refreshMenu( true );
 			for( var z = 0; z < Workspace.menu.length; z++ )
 			{
@@ -6738,29 +7057,32 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( thisicon.fileInfo )
 					{
-						var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
-						if( ext )
+						if( thisicon.fileInfo.Filename )
 						{
-							switch( ext.toLowerCase() )
+							var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
+							if( ext )
 							{
-								case 'jpg':
-								case 'jpeg':
-								case 'png':
-								case 'gif':
-									menu.push( {
-										name: i18n( 'menu_set_as_wallpaper' ),
-										command: function()
-										{
-											var m = new Module( 'system' );
-											m.onExecuted = function()
+								switch( ext.toLowerCase() )
+								{
+									case 'jpg':
+									case 'jpeg':
+									case 'png':
+									case 'gif':
+										menu.push( {
+											name: i18n( 'menu_set_as_wallpaper' ),
+											command: function()
 											{
-												Workspace.wallpaperImage = thisicon.fileInfo.Path;
-												Workspace.refreshDesktop();
+												var m = new Module( 'system' );
+												m.onExecuted = function()
+												{
+													Workspace.wallpaperImage = thisicon.fileInfo.Path;
+													Workspace.refreshDesktop();
+												}
+												m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
 											}
-											m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
-										}
-									} );
-									break;
+										} );
+										break;
+								}
 							}
 						}
 					}
@@ -7022,11 +7344,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	searchRefreshMatches: function()
 	{
+		var self = this;
+		
 		if( !ge( 'WorkspaceSearchResults' ) ) return false;
 
 		if( !this.searching ) return;
 
 		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault' );
+		
+		// Lock click buttons for 250ms when scrolling
+		if( isMobile )
+		{
+			if( typeof( this.searchScrolling ) == 'undefined' )
+				this.searchScrolling = false;
+		
+			ge( 'WorkspaceSearchResults' ).onscroll = function( e )
+			{
+				if( self.searchTimeout )
+				{
+					clearTimeout( self.searchTimeout );
+					self.searchTimeout = null;
+				}
+				self.searchTimeout = setTimeout( function()
+				{
+					self.searchTimeout = null;
+					self.searchScrolling = false;
+				}, 250 );
+				self.searchScrolling = true;
+			}
+		}
 
 		for( var a = 0; a < this.searchMatches.length; a++ )
 		{
@@ -7078,15 +7424,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			o.MetaType = o.Type; // TODO: If we use metatype, look at this
 			ge( 'WorkspaceSearchResults' ).appendChild( d );
 
+			var method = isMobile ? 'ontouchend' : 'onclick';
 			var spans = d.getElementsByTagName( 'span' );
 			spans[0].folder = o;
-			spans[0].onclick = function()
+			spans[0][ method ] = function()
 			{
+				if( self.searchScrolling )
+					return;
 				OpenWindowByFileinfo( this.folder, false );
 			}
 			spans[1].file = m;
-			spans[1].onclick = function()
+			spans[1][ method ] = function()
 			{
+				if( self.searchScrolling )
+					return;
 				OpenWindowByFileinfo( this.file, false );
 			}
 		}
@@ -7181,7 +7532,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( e != 'ok' ) return;
+			if( e != 'ok' ) 
+			{
+				ExecuteApplication( app, args, cbk );
+				return;
+			}
 			try
 			{
 				var js = JSON.parse( d );
@@ -7400,9 +7755,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								doDeleteFiles( files, index + 1 ); 
 							}
 							
+							var ic = new FileIcon();
+							
 							// Database ID
 							if( file.fileInfo.ID )
-							{
+							{	
 								file.door.dosAction( 'delete', { 
 									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
 								}, nextFile );
@@ -7413,11 +7770,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								// Try to kill the info file!
 								file.door.dosAction( 'delete', { path: info + '.info' } );
 								
+								ic.delCache( file.fileInfo.Path );
+								ic.delCache( info + '.info' );
 							}
 							// Dormant?
 							else if ( file.fileInfo.Dormant )
 							{
 								file.fileInfo.Dormant.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+								
+								ic.delCache( file.fileInfo.Path );
 							}
 							// Path
 							else
@@ -7428,6 +7789,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
 								// Try to kill the info file!
 								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+								
+								ic.delCache( file.fileInfo.Path );
+								ic.delCache( info + '.info' );
 							}
 						}
 						doDeleteFiles( files, 0 );
@@ -7528,7 +7892,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
-	{
+	{	
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -7549,6 +7913,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		var inactiveTimeout = false;
 		var m = new Module('system');
+		m.forceHTTP = true;
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -7573,24 +7938,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			//console.log( 'Response from connection checker: ', e, d );
 			if( e == 'fail' ) 
 			{
-				if( d == false ) 
-				{
-					Workspace.serverIsThere = false;
-					Workspace.workspaceIsDisconnected = true;
-					Workspace.flushSession(); 
-					Workspace.relogin();
-					return;
-				}
+				console.log( '[getsetting] Got "fail" response.' );
+				//console.trace();
 			}
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
 			
 			// If we have no conn, and we have waited five cycles, force reconnect
 			// the websocket...
-			if( !Workspace.conn && Workspace.websocketDisconnectTime++ > 3 )
+			if( Workspace.websocketState != 'open' )
 			{
-				Workspace.connectingWebsocket = false;
-				Workspace.websocketDisconnectTime = 0;
 				Workspace.initWebSocket();
 			}
 		}
@@ -7707,7 +8064,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		var updateurl = '/system.library/file/dir?wr=1'
 		updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
-		updateurl += '&sessionid= ' + encodeURIComponent( Workspace.sessionId );
+		updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 		
 		j.open( 'get', updateurl, true, true );
 		j.onload = function ()
@@ -7753,9 +8110,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						newfilename += '_' + i;
 					}
-					if( i > 100 )
+					if( i > 10000 )
 					{
-						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files.'});
+						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files. Please cleanup your Home:Download directory.'});
 						break; // no endless loop please	
 					}
 				}
@@ -7774,6 +8131,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		// Setup a file copying worker
 		var uworker = new Worker( 'js/io/filetransfer.js' );
+
+		// Remember current window
+		var curr = window.currentMovable;
 
 		// Open window
 		var w = new View( {
@@ -7796,7 +8156,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			w.connectedworker = this.connectedworker;
 			w.onClose = function()
 			{
-				if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
+				if( this.connectedworker ) this.connectedworker.postMessage( {'terminate':1} );
+				
+				// If we have prev current
+				if( curr )
+				{
+					_ActivateWindow( curr );
+					_WindowToFront( curr );
+				}
 			}
 
 			uprogress.myview = w;
@@ -7946,42 +8313,113 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
-		if( !Workspace.sessionId ) { setTimeout(Workspace.updateViewState, 1000); return; }
+		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
 
 		// Don't update if not changed
-		if( this.currentViewState == newState ) return;
+		if( this.currentViewState == newState )
+		{
+			this.sleepTimeout();
+			return;
+		}
+		
+		//mobileDebug( 'Starting update view state.' + newState, true );
 		
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
 			if( isMobile )
 			{
+				//mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
 
+				var setwsstate = setTimeout( function()
+				{
+					if( Workspace.conn && Workspace.conn.ws )
+						Workspace.conn.ws.close();
+				}, 1500 );
 				var dl = new FriendLibrary( 'system.library' );
 				dl.addVar( 'status', 0 );
 				dl.onExecuted = function(e,d)
 				{
-					//console.log( 'Sockets.', e, d );
+					clearTimeout( setwsstate );
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
+			// Tell all windows
+			if( window.friendApp )
+			{
+				var appsNotified = {};
+				for( var a in movableWindows )
+				{
+					var win = movableWindows[ a ];
+					if( win.applicationId )
+					{
+						// Notify window
+						win.windowObject.sendMessage( {
+							command: 'notify',
+							method: 'wakeup',
+							value: 'active'
+						} );
+						// Notify application too
+						if( !appsNotified[ win.applicationId ] )
+						{
+							for( var b = 0; b < Workspace.applications.length; b++ )
+							{
+								if( Workspace.applications[ b ].applicationId == win.applicationId )
+								{
+									Workspace.applications[ b ].sendMessage( {
+										command: 'notify',
+										method: 'wakeup',
+										value: 'active'
+									} );
+									appsNotified[ win.applicationId ] = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			// IMPORTANT:
+			// Sleep in 15 minutes
+			if( this.sleepingTimeout )
+				clearTimeout( this.sleepingTimeout );
+			Workspace.sleeping = false;
+			Workspace.sleepingTimeout = null;
 		}
 		else
 		{
 			document.body.classList.remove( 'ViewStateActive' );
+			document.body.classList.remove( 'Activating' );
 			if( isMobile )
 			{
 				var dl = new FriendLibrary( 'system.library' );
 				dl.addVar( 'status', 1 );
 				dl.onExecuted = function(e,d)
 				{
-					//console.log( 'Sockets.', e, d );
+					//mobileDebug( 'setwsstate inactive: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
 			}
 		}
+		this.sleepTimeout();
 		this.currentViewState = newState;
+	},
+	sleepTimeout: function()
+	{
+		// IMPORTANT: Only for desktops!
+		// Sleep in 15 minutes
+		if( !window.friendApp )
+		{
+			if( this.sleepingTimeout )
+				return;
+			this.sleepingTimeout = setTimeout( function()
+			{
+				Workspace.sleeping = true;
+				Workspace.sleepingTimeout = null;
+				Workspace.updateViewState( 'inactive' );
+			}, 1000 * 60 * 5 );
+		}
 	},
 	// Execute when everything is ready
 	onReady: function()
@@ -7993,6 +8431,54 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				this.onReadyList[ a ]();
 			}
 			this.onReadyList = [];
+		}
+
+		//
+		//if we dont have a sessionid we will need to wait a bit here...
+		//
+
+		if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
+		{
+			// if this is mobile app we must register it
+			// if its already registered FC will not do it again
+			var version = null;
+			var platform = null;
+			var appToken = null;
+			var deviceID = null;
+			//var appToken = friendApp.appToken ? friendApp.appToken : false;
+
+			if( typeof friendApp.get_version == 'function' )
+			{
+				version = friendApp.get_version();
+			}
+			if( typeof friendApp.get_platform == 'function' )
+			{
+				platform = friendApp.get_platform();
+			}
+			if( typeof friendApp.get_app_token == 'function' )
+			{
+				appToken = friendApp.get_app_token();
+			}
+			if( typeof friendApp.get_deviceid == 'function' )
+			{
+				deviceID = friendApp.get_deviceid();
+			}
+
+			console.log('onReady called a bunch of friendApp functions with our sessionid ' + Workspace.sessionId );
+
+			if( appToken != null )	// old applications which do not have appToken will skip this part
+			{
+				var l = new Library( 'system.library' );
+				l.forceHTTP = true;
+				l.onExecuted = function( e, d )
+				{
+					if( e != 'ok' )
+					{
+						console.log( 'Failed to create uma.' );
+					}
+				}
+				l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
+			}
 		}
 	}
 };
@@ -8070,10 +8556,15 @@ function DoorsOutListener( e )
 	{
 		movableMouseUp( e );
 	}
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsLeaveListener( e )
 {
 	movableMouseUp( e );
+	
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsKeyUp( e )
 {
@@ -8084,6 +8575,9 @@ function DoorsKeyUp( e )
 }
 function DoorsKeyDown( e )
 {
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
+
 	var w = e.which ? e.which : e.keyCode;
 	var tar = e.target ? e.target : e.srcElement;
 	Workspace.shiftKey = e.shiftKey;
@@ -8277,6 +8771,7 @@ function DoorsKeyDown( e )
 						}
 						return cancelBubble( e );
 					}
+					// Aha, F2!
 					icons[a].domNode.classList.add( 'Editing' );
 					var input = document.createElement( 'textarea' );
 					input.className = 'Title';
@@ -8297,15 +8792,34 @@ function DoorsKeyDown( e )
 							Workspace.executeRename( this.value, this.ico, currentMovable );
 							this.ico.editField = null;
 							this.dom.input = null;
-							try
+							var s = this;
+							setTimeout( function()
 							{
-								this.dom.removeChild( this );
-							}
-							catch( e )
-							{
-								/* .. */
-							}
+								try
+								{
+									s.dom.removeChild( s );
+								}
+								catch( error )
+								{
+									/* .. */
+								}
+							}, 5 );
 						}
+					}
+					input.onmousedown = function( e )
+					{
+						this.selectionEnd = 0;
+						this.selectionStart = 0;
+						return cancelBubble( e );
+					}
+					input.onmouseup = function( e )
+					{
+						return cancelBubble( e );
+					}
+					input.onblur = function()
+					{
+						this.onkeydown( { which: 13 } );
+						return;
 					}
 					setTimeout( function()
 					{
@@ -8547,7 +9061,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_friendup' ) + ' v1.2rc1',
+		title: i18n( 'about_system' ) + ' v1.2rc1',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -8563,28 +9077,67 @@ function AboutFriendUP()
 			token = '<div class="item"><span class="label">App token</span><span class="value"> ' + token + '</span></div>';
 		}
 	}
-
-	v.setRichContentUrl( '/webclient/templates/about.html', false, null, null, function()
+	
+	var s = new Module( 'system' );
+	s.onExecuted = function( e, d )
 	{
-		var buildInfo = '<div id="buildInfo">no build information available</div>';
-		if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
+		if( e == 'ok' )
 		{
-			buildInfo = '<div id="buildInfo">';
-			buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
-			if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
-			if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
-
-			// Add app token
-			if( token ) buildInfo += token;
-
-			buildInfo += '<div style="clear: both"></div></div>';
+			var json = false;
+			try
+			{
+				json = JSON.parse( d );
+			}
+			catch( e ){};
+			if( json && json.useAboutTemplate === '1' )
+			{
+				setData( json.liveAboutTemplate );
+				return;
+			}
 		}
+		setData();
+	}
+	s.execute( 'getserverglobals' );
 
-		var aboutFrame = ge('about_friendup').getElementsByTagName('iframe')[0];
-		aboutFrame.contentWindow.document.getElementById('fc-info').innerHTML = buildInfo;
-		aboutFrame.setAttribute('scrolling', 'yes');
+	function setData( str )
+	{
+		if( !str ) str = false;
+		
+		v.setRichContentUrl( str ? str : '/webclient/templates/about.html', false, null, null, function()
+		{
+			var buildInfo = '<div id="buildInfo">no build information available</div>';
+			if( Workspace.systemInfo && Workspace.systemInfo.FriendCoreBuildDate )
+			{
+				buildInfo = '<div id="buildInfo">';
+				buildInfo += '	<div class="item"><span class="label">Build date</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuildDate +'</span></div>';
+				if( Workspace.systemInfo.FriendCoreBuildDate ) buildInfo += '	<div class="item"><span class="label">Version</span><span class="value">'+ Workspace.systemInfo.FriendCoreVersion +'</span></div>';
+				if( Workspace.systemInfo.FriendCoreBuild ) buildInfo += '	<div class="item"><span class="label">Build</span><span class="value">'+ Workspace.systemInfo.FriendCoreBuild +'</span></div>';
 
-	} );
+				// Add app token
+				if( token ) buildInfo += token;
+			
+				// Add device ID
+				if( window.friendApp )
+				{
+					var devId = friendApp.get_deviceid();
+					if( devId )
+					{
+						buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ devId +'</span></div>';
+					}
+				}
+
+				buildInfo += '<div style="clear: both"></div></div>';
+			}
+
+			var aboutFrame = ge( 'about_friendup' ).getElementsByTagName( 'iframe' )[ 0 ];
+			if( aboutFrame.contentWindow.document.getElementById( 'fc-info' ) )
+			{
+				aboutFrame.contentWindow.document.getElementById( 'fc-info' ).innerHTML = buildInfo;
+			}
+			aboutFrame.setAttribute( 'scrolling', 'yes' );
+
+		} );
+	}
 }
 
 // Clear cache
@@ -8603,7 +9156,7 @@ function ClearCache()
 
 // Shows eula
 
-function ShowEula( accept )
+function ShowEula( accept, cbk )
 {
 	if( accept )
 	{
@@ -8810,38 +9363,57 @@ if( window.friendApp )
 	}
 }
 
-// Receive push notification
+// Receive push notification (when a user clicks native push notification on phone)
 Workspace.receivePush = function( jsonMsg )
 {
-	if( !isMobile ) return;
+	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
 
-	if( msg == false ) return;
+	if( msg == false ) return "nomsg";
 	try
 	{
-		mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
+		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
 		msg = JSON.parse( msg );
-		if( !msg ) return;
+	}
+	catch( e )
+	{
+		//mobileDebug('OH OH. ERROR' + e, true);
+		// Do nothing for now...
+		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
+	}
+	if( !msg ) return "nomsg";
 		
-		mobileDebug( 'We received a message.' );
-		mobileDebug( JSON.stringify( msg ) );
-		
-		// We did a user interaction here
-		msg.clicked = true;
-		
-		// Clear the notifications now... (race cond?)
-		friendApp.clear_notifications();
-		
-		var messageRead = trash = false;
-		
-		if( !msg.application ) return;
-		
+	/*mobileDebug( 'We received a message.' );
+	mobileDebug( JSON.stringify( msg ) );*/
+	
+	// Clear the notifications now... (race cond?)
+	friendApp.clear_notifications();
+	
+	var messageRead = trash = false;
+	
+	// Display message
+	if( !msg.clicked )
+	{
+		// Revert to push notifications on the OS side
+		Notify( { title: msg.title, text: msg.text }, null, handleClick );
+		return 'ok';
+	}
+	// "Click"
+	else
+	{
+		handleClick();
+	}
+	
+	function handleClick()
+	{
+		if( !msg.application ) return "noapp";
+	
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
 		{
 			if( msg.extras ) msg.extra = JSON.parse( atob( msg.extras ).split(String.fromCharCode(92)).join("") );
 		}
-		
+	
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
 			if( Workspace.applications[a].applicationName == msg.application )
@@ -8850,18 +9422,21 @@ Workspace.receivePush = function( jsonMsg )
 				// on the Friend Core side
 				if( msg.id )
 				{
-					// Function to set the notification as read...
-					var l = new Library( 'system.library' );
-					l.onExecuted = function(){};
-					l.execute( 'mobile/updatenotification', { 
-						notifid: msg.id, 
-						action: 1,
-						pawel: 1
-					} );
+					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+					{
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.id, 
+							action: 1,
+							pawel: 1
+						} );
+					}
 				}
-				
+			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
-				
+			
 				var app = Workspace.applications[a];
 				app.contentWindow.postMessage( JSON.stringify( { 
 					type: 'system',
@@ -8869,27 +9444,31 @@ Workspace.receivePush = function( jsonMsg )
 					callback: false,
 					data: msg
 				} ), '*' );
-				return;
+				return "ok";
 			}
 		}
-		
+	
 		// Function to set the notification as read...
 		function notificationRead()
 		{
-			messageRead = true;
-			var l = new Library( 'system.library' );
-			l.onExecuted = function(){};
-			l.execute( 'mobile/updatenotification', { 
-				notifid: msg.id, 
-				action: 1,
-				pawel: 2
-			} );
+			if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+			{
+				messageRead = true;
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.id, 
+					action: 1,
+					pawel: 2
+				} );
+			}
 		}
-		
+	
 		// Application not found? Start it!
 		// Send message to app once it has started...
 		function appMessage()
 		{
+			
 			var app = false;
 			var apps = Workspace.applications;
 			for( var a = 0; a < apps.length; a++ )
@@ -8901,7 +9480,7 @@ Workspace.receivePush = function( jsonMsg )
 					break;
 				}
 			}
-			
+		
 			// No application? Alert the user
 			// TODO: Localize response!
 			if( !app )
@@ -8909,24 +9488,24 @@ Workspace.receivePush = function( jsonMsg )
 				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 				return;
 			}
-			
+		
 			if( !app.contentWindow ) 
 			{
 				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 				return;
 			}
-			
+		
 			var amsg = {
 				type: 'system',
 				method: 'pushnotification',
 				callback: addWrapperCallback( notificationRead ),
 				data: msg
 			};
-			
-			mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ), true );
-			
+		
+			mobileDebug( ' Sendtoapp: ' + JSON.stringify( msg ) );
+		
 			app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
-			
+		
 			// Delete wrapper callback if it isn't executed within 1 second
 			setTimeout( function()
 			{
@@ -8936,17 +9515,13 @@ Workspace.receivePush = function( jsonMsg )
 				}
 			}, 1000 );
 		}
-		
-		mobileDebug( 'Start app ' + msg.application, true );
-		
-		ExecuteApplication( msg.application, '', appMessage )
+	
+		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
+		Friend.startupApps[ msg.application ] = true;
+		ExecuteApplication( msg.application, '', appMessage );
 	}
-	catch( e )
-	{
-		mobileDebug('OH OH. ERROR' + e, true);
-                // Do nothing for now...
-		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
-	}
+
+	return 'ok';
 }
 
 // TODO: Remove me after test
@@ -8965,25 +9540,26 @@ document.addEventListener( 'visibilitychange' , function(){
 if( document.hidden )
 {
 	Workspace.updateViewState( 'inactive' );
-} 
+}
 else 
 {
 	Workspace.updateViewState( 'active' );
 }
 
-/*  Debug blob:
-if( isMobile  )
+/*  Debug blob: */
+/*if( isMobile  )
 {
 	var debug = document.createElement( 'div' );
 	debug.style.backgroundColor = 'rgba(255,255,255,0.5)';
 	debug.style.bottom = '0px';
 	debug.style.width = '100%';
-	debug.style.height = '80px';
+	debug.style.height = '120px';
 	debug.style.left = '0px';
 	debug.style.color = 'black';
 	debug.style.position = 'absolute';
 	debug.style.zIndex = 10000000;
 	debug.style.pointerEvents = 'none';
+	debug.innerHTML = '<span>thomasdebug v01</span>';
 	window.debugDiv = debug;
 	document.body.appendChild( debug );
 }*/
@@ -8998,6 +9574,7 @@ function mobileDebug( str, clear )
 	{
 		window.debugDiv.innerHTML = '';
 	}
+	console.log( '[mobileDebug] ' + str );
 	window.debugDiv.innerHTML += str + '<br>';
 	mobileDebugTime = setTimeout( function()
 	{

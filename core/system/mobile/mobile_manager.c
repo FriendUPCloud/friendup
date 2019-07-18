@@ -114,12 +114,12 @@ void MobileManagerDelete( MobileManager *mmgr )
 {
 	if( mmgr != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+		if( FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) ) == 0 )
+		{
+			UserMobileAppDeleteAll( mmgr->mm_UMApps );
 		
-		UserMobileAppDeleteAll( mmgr->mm_UMApps );
-		
-		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
-		
+			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+		}
 		pthread_mutex_destroy( &(mmgr->mm_Mutex) );
 		
 		FFree( mmgr );
@@ -407,6 +407,42 @@ UserMobileApp *GetMobileAppByUserName( MobileManager *mmgr, SQLLibrary *sqllib, 
 }
 
 /**
+ * Get User Mobile App ID by deviceID
+ *
+ * @param mmgr pointer to MobileManager
+ * @param sqllib pointer to SQLLibrary
+ * @param userID user ID
+ * @param deviceid deviceid
+ * @return ID of UMA or 0 when function fail
+ */
+FULONG MobileManagerGetUMAIDByDeviceIDAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *deviceid )
+{
+	UserMobileApp *root = NULL;
+	char query[ 256 ];
+	FULONG tokID = 0;
+	
+	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE UserID=%lu AND DeviceID='%s'", userID, deviceid );
+
+	void *res = sqllib->Query( sqllib, query );
+	
+	if( res != NULL )
+	{
+		char **row;
+
+		while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+		{
+			if( row[ 0 ] != NULL ){		// ID
+				char *end;
+				tokID = strtoul( row[0], &end, 0 );
+			}
+		}
+		sqllib->FreeResult( sqllib, res );
+	}
+	
+	return tokID;
+}
+
+/**
  * Get User Mobile App ID by token
  *
  * @param mmgr pointer to MobileManager
@@ -421,7 +457,7 @@ FULONG MobileManagerGetUMAIDByTokenAndUserName( MobileManager *mmgr, SQLLibrary 
 	char query[ 256 ];
 	FULONG tokID = 0;
 	
-	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE UserID=%lu AND AppToken = '%s'", userID, token );
+	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE UserID=%lu AND AppToken='%s'", userID, token );
 
 	void *res = sqllib->Query( sqllib, query );
 	
@@ -722,7 +758,6 @@ void MobileManagerRefreshCache( MobileManager *mmgr )
 			
 			FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
 		}
-		
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 }
@@ -770,7 +805,68 @@ int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
 }
 
 /**
- * Get User Mobile Connections from database by user name and platform
+ * Get User Mobile AppTokens from database by user
+ *
+ * @param mmgr pointer to MobileManager
+ * @param userID ID of user to which mobile apps belong
+ * @return comma separated app tokens
+ */
+char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID )
+{
+	char *results = NULL;
+	BufString *bs = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		char *query = FMalloc( 1048 );
+		query[ 1024 ] = 0;
+		lsqllib->SNPrintF( lsqllib, query, 1024, "select uma.AppToken from FUserMobileApp uma where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu", userID );
+		void *res = lsqllib->Query( lsqllib, query );
+		if( res != NULL )
+		{
+			char **row;
+			
+			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+			{
+				if( row[0] != NULL )
+				{
+					if( bs == NULL )
+					{
+						bs = BufStringNew();
+						BufStringAdd( bs, row[0] );
+					}
+					else
+					{
+						if( strlen( row[0] ) > 0 )
+						{
+							BufStringAddSize( bs, ",", 1 );
+							BufStringAdd( bs, row[0] );
+						}
+					}
+				} // row[0] != NULL
+			}
+			lsqllib->FreeResult( lsqllib, res );
+		}
+		
+		
+		FFree( query );
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	
+	if( bs != NULL )
+	{
+		results = bs->bs_Buffer;
+		bs->bs_Buffer = NULL;
+		BufStringDelete( bs );
+	}
+	
+	return results;	
+}
+
+/**
+ * Get User Mobile Connections from database by user ID and platform
  *
  * @param mmgr pointer to MobileManager
  * @param userID ID of user to which mobile apps belong
@@ -800,37 +896,37 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 		if( logged == TRUE )
 		{
 // required
-//				lns->ns_UserMobileAppID = lma->uma_ID;
-//				lma->uma_AppToken 
-				char *qery = FMalloc( 1048 );
-				qery[ 1024 ] = 0;
-				lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='iOS' AND uma.Status=0 AND uma.UserID=%lu AND us.DeviceIdentity LIKE CONCAT('%', uma.AppToken, '%') AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", userID );
-				void *res = lsqllib->Query( lsqllib, qery );
-				if( res != NULL )
+//			lns->ns_UserMobileAppID = lma->uma_ID;
+//			lma->uma_AppToken 
+			char *qery = FMalloc( 1048 );
+			qery[ 1024 ] = 0;
+			lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND us.DeviceIdentity LIKE CONCAT('%', uma.AppToken, '%') AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+			void *res = lsqllib->Query( lsqllib, qery );
+			if( res != NULL )
+			{
+				char **row;
+				while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
 				{
-					char **row;
-					while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+					DEBUG("ROW\n");
+					UserMobileApp *local = FCalloc( 1, sizeof(UserMobileApp) );
+					if( local != NULL )
 					{
-						DEBUG("ROW\n");
-						UserMobileApp *local = FCalloc( 1, sizeof(UserMobileApp) );
-						if( local != NULL )
+						if( row[ 0 ] != NULL )
 						{
-							if( row[ 0 ] != NULL )
-							{
-								char *end;
-								local->uma_ID = strtoul( row[0], &end, 0 );
-							}
-
-							local->uma_AppToken = StringDuplicate( row[ 1 ] );
-							DEBUG("ADDED: %s ID: %lu\n", local->uma_AppToken, local->uma_ID );
-
-							// add entry to list
-							local->node.mln_Succ = (MinNode *) uma;
-							uma = local;
+							char *end;
+							local->uma_ID = strtoul( row[0], &end, 0 );
 						}
+
+						local->uma_AppToken = StringDuplicate( row[ 1 ] );
+						DEBUG("ADDED: %s ID: %lu\n", local->uma_AppToken, local->uma_ID );
+
+						// add entry to list
+						local->node.mln_Succ = (MinNode *) uma;
+						uma = local;
 					}
-					lsqllib->FreeResult( lsqllib, res );
 				}
+				lsqllib->FreeResult( lsqllib, res );
+			}
 
 			// select * from FUserMobileApp where UserID = XX AND Platform = Ios AND status = 0
 			// FUserSession DeviceIdentity = touch_ios_app_5dca3266e489bfb672bba0aa86cc993a459f63dd65a4237514c75206444619f9
@@ -856,6 +952,116 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, F
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	return uma;
+}
+
+/**
+ * Get User Mobile Connections from database by user ID and platform
+ *
+ * @param mmgr pointer to MobileManager
+ * @param userID ID of user to which mobile apps belong
+ * @param type type of mobile apps
+ * @param status status of device
+ * @param notifID Notification ID, if provided (>0) then NotificationSent will be stored which every message
+ * @return pointer to tokens in buffered string
+ */
+BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG userID, int type, int status, FULONG notifID )
+{
+	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
+	{
+		return NULL;
+	}
+	char *mobileType = NULL;
+	mobileType = MobileAppType[ type ];
+	
+	DEBUG("--------------MobleManagerAppTokensByUserPlatformDB\n");
+
+	BufString *bs = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		BufString *sqlInsertBs = NULL;
+		char *qery = FMalloc( 1048 );
+		qery[ 1024 ] = 0;
+		lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+		void *res = lsqllib->Query( lsqllib, qery );
+		if( res != NULL )
+		{
+			if( notifID > 0 )
+			{
+				sqlInsertBs = BufStringNew();
+			}
+
+			int pos = 0;
+			char **row;
+			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) )
+			{
+				char temp[ 512 ];
+				char temp2[ 512 ];
+				int sizeAdd = 0;
+				int temp2size = 0;
+				
+				if( pos == 0 )
+				{
+					sizeAdd = snprintf( temp, sizeof(temp), "\"%s\"", row[1] );
+					if( notifID > 0 )
+					{
+						temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO FNotificationSent (NotificationID,RequestID,UserMobileAppID,Target,Status) VALUES ( %lu, 0, %s, 1, 1)", notifID, row[0] );
+					}
+				}
+				else
+				{
+					sizeAdd = snprintf( temp, sizeof(temp), ",\"%s\"", row[1] );
+					if( notifID > 0 )
+					{
+						temp2size = snprintf( temp2, sizeof(temp2), ",( %lu, 0, %s, 1, 1)", notifID, row[0] );
+					}
+				}
+				
+				// if notifID was provided then we create SQL which will store sent messages in FNotificationSent table
+				if( notifID > 0 )
+				{
+					/*
+					NOTIFICATION_SENT_STATUS_REGISTERED = 0,
+	NOTIFICATION_SENT_STATUS_RECEIVED,
+	NOTIFICATION_SENT_STATUS_READ,
+	NOTIFICATION_SENT_STATUS_END,
+	NOTIFICATION_SENT_STATUS_MAX
+					 */ 
+					//int temp2size = snprintf( temp2, sizeof(temp2), "INSERT INTO FNotificationSent (NotificationID,RequestID,UserMobileAppID,Target,Status) VALUES ( %lu, 0, %s, 1, 1);", notifID, row[0] );
+					
+					//lsqllib->QueryWithoutResults( lsqllib, temp2 );
+					
+					BufStringAddSize( sqlInsertBs, temp2, temp2size );
+				}
+				
+				pos++;
+				if( bs == NULL )
+				{
+					bs = BufStringNew();
+				}
+				BufStringAddSize( bs, temp, sizeAdd );
+			}
+			lsqllib->FreeResult( lsqllib, res );
+		}
+		
+		if( notifID > 0 )
+		{
+			DEBUG("Insert NotificationSent into database\n");
+			if( sqlInsertBs->bs_Size > 0 )
+			{
+				BufStringAddSize( sqlInsertBs, ";", 1 );
+				lsqllib->QueryWithoutResults( lsqllib, sqlInsertBs->bs_Buffer );
+			}
+			BufStringDelete( sqlInsertBs );
+		}
+		
+		FFree( qery );
+		
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return bs;
 }
 
 /**

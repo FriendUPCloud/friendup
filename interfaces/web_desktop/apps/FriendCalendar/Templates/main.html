@@ -1,0 +1,38 @@
+
+	<div class="FullContent">
+		<div class="HContentLeft BackgroundLists Padding ScrollArea" id="LeftCol">
+			<h2>
+				{i18n_find_events}
+			</h2>
+			<p>
+				<input type="text" class="InputHeight FullWidth" id="Searcher" value="" placeholder="{i18n_search_keywords}"/>
+			</p>
+			<p class="InputHeight">
+				<button type="button" class="Button IconSmall fa-search"> {i18n_search}</button>
+			</p>
+			<div id="Sources" class="BorderTop PaddingTop MarginTop"></div>
+			<div id="UsersGroups" class="BorderTop PaddingTop MarginTop"></div>
+		</div>
+		<div class="HContentRight" id="RightCol">
+			<div class="VContentTop BorderBottom" id="TopPanel">
+				<div id="GoPrevious" onmousedown="GoPrevious(); return cancelBubble( event ? event : evt );"></div>
+				<h1 id="MonthName"></h1>
+				<div id="GoNext" onmousedown="GoNext(); return cancelBubble( event ? event : evt );"></div>
+			</div>
+			<div class="VContentBottom ScrollArea BackgroundLists" id="MainView">
+			</div>
+			<div class="VContentBottom BorderTop" id="BottomPanel">
+				<div class="HRow Padding">
+					<div class="FloatRight">
+						<button class="IconButton MarginRight IconSmall fa-calendar" id="monthoverview"> {menu_view_month}</button>
+						<button class="IconButton IconSmall fa-th-list" id="weekoverview"> {menu_view_week}</button>
+					</div>
+					<!--<button class="IconButton MarginRight IconSmall fa-plus"> {i18n_add_calendar}</button>-->
+					<button class="IconButton MarginRight IconSmall fa-share" onclick="doShare()"> {i18n_share_calendar}</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script src="Progdir:Scripts/main.js"></script>
+	<link rel="stylesheet" href="Progdir:Css/main.css"/>

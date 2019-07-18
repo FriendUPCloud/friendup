@@ -74,7 +74,10 @@ struct linkedCharArray
 
 char *FilterPHPVar( char *line )
 {
-	if( !line ) return NULL;
+	if( !line )
+	{
+		return NULL;
+	}
 	
 	int len = strlen( line ) + 1;
 	int i = 0; for( ; i < len; i++ )
@@ -87,9 +90,13 @@ char *FilterPHPVar( char *line )
 		}
 		// Kill unwanted stuff
 		if( line[ i ] == '`' )
+		{
 			line[ i ] = ' ';
+		}
 		else if( line[ i ] == '"' || line[ i ] == '\n' || line[ i ] == '\r' )
+		{
 			line[ i ] = ' '; // Eradicate!
+		}
 	}
 	return line;
 }
@@ -131,10 +138,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	FilterPHPVar( earg );
 	FilterPHPVar( epath );
 
-	sprintf( command, "php \"%s\" \"%s\";", path, args != NULL ? args : "" );
+	sprintf( command, "php '%s' '%s'", path, args != NULL ? args : "" );
 	
 	// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-	int cx = snprintf( command, escapedSize, "php \"%s\" \"%s\";", epath, earg );
+	int cx = snprintf( command, escapedSize, "php '%s' '%s'", epath, earg );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
 		FERROR( "[PHPmod] snprintf\n" );
@@ -245,11 +252,11 @@ const char *GetSuffix()
 	
 	//DEBUG( "[PHP mod] run with arglength: %d (max length is %d)\n", eargLen, (int)ARG_MAX );
 
-//	sprintf( command, "php \"%s\" \"%s\";", epath, earg );
-	sprintf( command, "php \"%s\" \"%s\";", path, args != NULL ? args : "" );
+//	sprintf( command, "php \"%s\" \"%s\"", epath, earg );
+	sprintf( command, "php \"%s\" \"%s\"", path, args != NULL ? args : "" );
 	
 	// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-	int cx = snprintf( command, escapedSize, "php \"%s\" \"%s\";", epath, earg );
+	int cx = snprintf( command, escapedSize, "php \"%s\" \"%s\"", epath, earg );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
 		FERROR( "[PHP mod] snprintf\n" );

@@ -83,6 +83,7 @@ i18n_host_port                       : Server port
 i18n_host_ip                         : Server adresse eller IP
 i18n_hostname                        : Server adresse
 i18n_workgroup_name                  : Din arbeidsgruppe
+i18n_choose_workgroup                : Velg arbeidsgruppe
 i18n_workgroup                       : Arbeidsgruppe
 i18n_device_name                     : Disk navn
 i18n_placeholder_connection          : Mindisk
@@ -93,6 +94,8 @@ i18n_mount_disk                      : Monter disk
 i18n_unmount_disk                    : Avmonter disk
 i18_account2                         : Konto
 i18n_settings_saved                  : Instillinger lagret
+
+i18n_admin_managed_drive             : Denne disken er styrt av din administrator.
 
 i18n_key_password_confirm            : Bekreft passord
 i18n_pass_mis_desc                   : Passordene må stemme overens.

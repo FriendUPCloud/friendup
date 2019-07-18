@@ -24,6 +24,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <util/newpopen.h>
 
 #define SUFFIX "fsys"
 #define PREFIX "php"
@@ -37,14 +38,13 @@
 
 typedef struct SpecialData
 {
-	FILE *fp;
-	char *type;
-	char *module;
-	//char *SessionID;
-	char *fname;
-	char *path;
-	int mode;
-	SystemBase *sb;
+	FILE				*fp;
+	char				*type;
+	char				*module;
+	char				*fname;
+	char				*path;
+	int					mode;
+	SystemBase			*sb;
 } SpecialData;
 
 
@@ -59,10 +59,7 @@ const char *GetSuffix()
 
 FBOOL PathHasColon( char *string )
 {
-	// No literal colon
-	int size = strlen( string ) + 1;
-	char *dec = FCalloc( size, sizeof( char ) );
-	UrlDecode( dec, (const char *)string );
+	char *dec = UrlDecodeToMem( string );
 	DEBUG( "[fsysphp] Decoded string for path: %s\n", dec );
 	if( strchr( dec, ':' ) != NULL )
 	{
@@ -79,8 +76,32 @@ FBOOL PathHasColon( char *string )
 
 char *FilterPHPVar( char *line )
 {
-	if( !line ) return NULL;
+	if( line == NULL )
+	{
+		return NULL;
+	}
 	
+	char *ptr = line;
+	while( *ptr != 0 )
+	{
+		if( *ptr == '\\' )
+		{
+			ptr++;
+		}
+		else
+		{
+			if( *ptr == '`' )
+			{
+				*ptr = ' ';
+			}
+			else if( *ptr == '"' || *ptr == '\n' || *ptr == '\r' )
+			{
+				*ptr = ' '; // Eradicate!
+			}
+		}
+		ptr++;
+	}
+	/*
 	int len = strlen( line ) + 1;
 	int i = 0; for( ; i < len; i++ )
 	{
@@ -92,10 +113,15 @@ char *FilterPHPVar( char *line )
 		}
 		// Kill unwanted stuff
 		if( line[ i ] == '`' )
+		{
 			line[ i ] = ' ';
+		}
 		else if( line[ i ] == '"' || line[ i ] == '\n' || line[ i ] == '\r' )
+		{
 			line[ i ] = ' '; // Eradicate!
+		}
 	}
+	*/
 	return line;
 }
 
@@ -112,7 +138,6 @@ const char *GetPrefix()
 // additional stuff
 //
 
-// TODO: We already have StringDuplicate()
 char* StringDup( const char* str )
 {
 	if( str == NULL)
@@ -156,201 +181,72 @@ char *GetFileName( const char *path )
 // php call, send request, read answer
 //
 
-ListString *PHPCall( const char *command, int *length )
+ListString *PHPCall( const char *command )
 {
 	DEBUG("[PHPFsys] run app: '%s'\n", command );
-	//Log( FLOG_INFO, "[PHPFsys] run app: '%s'\n", command );
-	/*
-	int p[2];
-	int pipeNr;
-	int timeout = 10;
-	time_t lastTime = 0;
-
-	printf("-------------------------------------------------\n");
-	printf("Makeing call: >%s< timeout: %d\n", command, timeout );
-	printf("-------------------------------------------------\n");
-	
-	ListString *data = ListStringNew();
-
-	if( pipe( p ) < 0 )
-	{
-		printf("pipe < 0\n"); 
-		return data;
-	}
-
-	if( fcntl( p[0], F_SETFL, O_NONBLOCK) < 0 )
-   	{
-   	    printf("cannot set nonblock option\n");
-		return data;
-   	}
-
-	pipeNr = fork();
-	switch( pipeNr )
-	{ 
-	    // error 
-	    case -1:
-	        printf("fork -1\n");
-	        break;
-  
-		// 0 for child process 
-		case 0:
-			{
-				printf("process created write\n");
-				FILE *pipe = popen( command, "r" );
-				if( pipe != NULL )
-				{
-					//printf("process opened\n");
-					close( p[0] ); 
-					char *buf = FMalloc( PHP_READ_SIZE );
-					if( buf != NULL )
-					{
-						//printf("buffer allocated\n");
-						while( !feof( pipe ) )
-						{
-							// Make a new buffer and read
-							int size = fread( buf, 1, PHP_READ_SIZE, pipe );
-							//printf("Readed: %d\n", size );
-							if( size <= 0 )
-							{
-								break;
-							}
-							else
-							{
-								write( p[1], buf, size );
-							}
-						}
-						close( p[1] );
-						FFree( buf );
-					}
-					fclose( pipe );
-				}
-			}
-        break; 
-  
-    default: 
-		{
-			int times = 0;
-			close( p[1] ); 
-        	//printf("parent read\n");
-			char *buf = FMalloc( PHP_READ_SIZE );
-			if( buf != NULL )
-			{
-				int quit = 0;
-				lastTime = time( NULL );
-				//printf("read buffer allocated\n");
-				while( 1 )
-				{
-					usleep( 1000 );
-					int nread = read( p[0], buf, PHP_READ_SIZE ); 
-					//printf("read got bytes %d\n", nread );
-        			switch( nread )
-					{ 
-						case -1: 
-						// case -1 means pipe is empty and errono 
-						// set EAGAIN 
-						if( errno == EAGAIN )
-						{
-							if( timeout > 0 && (time( NULL ) - lastTime) > timeout )
-							{
-								//printf("Timeout!\n");
-								close( p[0] ); 
-								//kill( pipeNr , SIGKILL );
-								quit = 1;
-							}
-							//printf("(pipe empty)\n"); 
-							//sleep(1); 
-							//if( times++ > 40 )
-							{
-								//kill( pipeNr , SIGKILL );
-							}
-							break; 
-						} 
-						else
-					logut	{ 
-							//printf("read -1"); 
-							quit = 1;
-							break;
-						}
-					
-						// case 0 means all bytes are read and EOF(end of conv.) 
-						case 0: 
-							printf("End of conversation\n"); 
-  
-							// read link 
-							//close( p[0] ); 
-			  				quit = 1;
-							break;
-						default: 
-							lastTime = time( NULL );
-							//printf(">>>>>>>>>>>>>>>>>>>>>>%s<<<<<<<<<<<<<<<<", buf); 
-							ListStringAdd( data, buf, nread );
-					}
-					if( quit == 1 )
-					{
-						printf("quit in progress!\n");
-						break;
-					}
-				}
-				FFree( buf );
-			}
-
-        	break; 
-		}
-    }	// switch pipe
-    */
     
-	FILE *pipe = popen( command, "r" );
-	if( !pipe )
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
 	{
-		//free( command );
-		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror(errno) );
+		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror( errno ) );
 		return NULL;
 	}
 	
-	char *temp = NULL, *result = NULL, *gptr = NULL;
-	int size = 0, res = 0, sch = sizeof( char );
-	
-	//DEBUG("[PHPFsys] command launched\n");
-
-	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	ListString *data = ListStringNew();
 	int errCounter = 0;
+	int size = 0;
 	
-	while( !feof( pipe ) )
+	fd_set set;
+	struct timeval timeout;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+
+	while( TRUE )
 	{
+		/* Initialize the file descriptor set. */
+		FD_ZERO( &set );
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		DEBUG("[PHPFsys] in loop\n");
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
 		// Make a new buffer and read
-		size = fread( buf, sch, PHP_READ_SIZE, pipe );
-		DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			//DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
 		if( size > 0 )
 		{
 			ListStringAdd( data, buf, size );
 		}
 		else
 		{
-			if( ferror( pipe ) )
-			{
-				FERROR("Cannot read from popen!\n");
-			}
 			errCounter++;
-			if( errCounter > 16 )
+			if( errCounter > 3 )
 			{
 				FERROR("Error in popen, Quit! Command: %s\n", command );
 				break;
 			}
 		}
 	}
-	
 	FFree( buf );
-	DEBUG("File readed\n");
-	
+
 	// Free pipe if it's there
-	pclose( pipe );
+	newpclose( &pofd );
 	
 	ListStringJoin( data );		//we join all string into one buffer
 
-	// Set the length
-	if( length != NULL ) *length = data->ls_Size;
-	
 	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
 	return data;
 }
@@ -377,7 +273,7 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountError )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -512,18 +408,18 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 						path ? path : "", 
 						module ? module : "files", 
 						usr->u_MainSessionID ? usr->u_MainSessionID : ""  );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					// Execute!
-					int answerLength = 0;
-					ListString *result = PHPCall( command, &answerLength );
+					//int answerLength = 0;
+					ListString *result = PHPCall( command );
 					FFree( command );
 			
 					if( result && result->ls_Size >= 0 )
 					{
 
-						DEBUG( "[fsysphp] Return was \"%s\"\n", result->ls_Data );
+						DEBUG( "[fsysphp] Return was '%s'\n", result->ls_Data );
 						if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 						{
 							DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
@@ -535,9 +431,15 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 							if( dev->f_Path ) FFree( dev->f_Path );
 							FFree( sd );
 							FFree( dev );
+							
+							if( *mountError == NULL )
+							{
+								*mountError = StringDup( result->ls_Data );
+							}
 					
 							// Free up buffer
 							ListStringDelete( result );
+							
 							return NULL;
 						}
 					}
@@ -551,6 +453,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 						if( dev->f_Path ) FFree( dev->f_Path );
 						FFree( sd );
 						FFree( dev );
+						
+						if( *mountError == NULL )
+						{
+							*mountError = StringDup( "PHP returned empty string" );
+						}
 				
 						// Free up buffer
 						if( result ) ListStringDelete( result );
@@ -638,11 +545,10 @@ int UnMount( struct FHandler *s, void *f )
 				{
 					snprintf( commandCnt, cmdLength, "command=dosaction&action=unmount&devname=%s&module=%s&sessionid=%s",
 						lf->f_Name ? lf->f_Name : "", sd->module ? sd->module : "files", lf->f_SessionIDPTR ? lf->f_SessionIDPTR : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
-					int answerLength = 0;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = PHPCall( command );
 					
 					FFree( command );
 					
@@ -751,7 +657,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=read&authkey=false&sessionid=%s&path=%s&mode=%s",
 				sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encodedcomm ? encodedcomm : "", mode ? mode : "" );
-			sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+			sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 			FFree( commandCnt );
 		}
 	}
@@ -866,9 +772,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 		DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
 		DEBUG( "[fsysphp] %s\n", command );
-
-		int answerLength = 0;			
-		ListString *result = PHPCall( command, &answerLength );
+		
+		ListString *result = PHPCall( command );
 
 		// Open a file pointer
 		if( result )
@@ -1102,15 +1007,10 @@ int FileClose( struct File *s, void *fp )
 					{
 						snprintf( commandCnt, cmdLength, "module=files&command=write&sessionid=%s&path=%s&tmpfile=%s",
 							lfp->f_SessionIDPTR ? lfp->f_SessionIDPTR : "", encPath ? encPath : "", sd->fname ? sd->fname : "" );
-						sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+						sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 						FFree( commandCnt );
 				
-						//INFO("Call write command %s\n", command );
-						//INFO("\nSDPATH %s\nlf main name %s\n\n", sd->path, s->f_Name ); 
-	
-						int answerLength = 0;
-		
-						ListString *result = PHPCall( command, &answerLength );
+						ListString *result = PHPCall( command );
 						if( result != NULL )
 						{
 							if( result->ls_Data[0] == 'f' && result->ls_Data[1] == 'a' && result->ls_Data[2] == 'i' && result->ls_Data[3] == 'l' )
@@ -1278,11 +1178,10 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 			{
 				snprintf( commandCnt, cmdLength, "command=infoget&path=%s&module=files&sessionid=%s&key=%s",
 					urlPath ? urlPath : "", lf->f_SessionIDPTR ? lf->f_SessionIDPTR : "", urlKey == NULL ? "*" : urlKey );
-				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 				FFree( commandCnt );
 	
-				int answerLength = 0;
-				ListString *result = PHPCall( command, &answerLength );
+				ListString *result = PHPCall( command );
 				
 				FFree( command );
 				
@@ -1371,31 +1270,27 @@ int MakeDir( struct File *f, const char *path )
 		// Calculate length of variables in string
 		int cmdLength = strlen( "module=files&command=dosaction&action=makedir&sessionid=&path=" ) +
 			( f->f_SessionIDPTR ? strlen( f->f_SessionIDPTR ) : 0 ) +
-			( comm ? strlen( comm ) : 0 ) + 1;
+			( comm ? strlen( comm ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 		
 		// Whole command
-		char *command = FCalloc(
-			strlen( "php \"modules/system/module.php\" \"\";" ) +
-			cmdLength + 1, sizeof( char ) );
+		char *command = FMalloc( cmdLength );
 		
 		if( command != NULL )
 		{	
 			// Just get vars
-			char *commandCnt = FCalloc( cmdLength + 1, sizeof( char ) );
+			char *commandCnt = FMalloc( cmdLength + 1 );
 		
 			// Generate command string
 			if( commandCnt != NULL )
 			{
 				snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=makedir&sessionid=%s&path=%s",
 					f->f_SessionIDPTR ? f->f_SessionIDPTR : "", comm ? comm : "" );
-				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 				FFree( commandCnt );
 			
 				DEBUG("[fsysphp] MAKEDIR %s\n", command );
 	
-				int answerLength = 0;
-		
-				ListString *result = PHPCall( command, &answerLength );
+				ListString *result = PHPCall( command );
 		
 				if( result && result->ls_Size >= 0 )
 				{
@@ -1473,17 +1368,14 @@ FLONG Delete( struct File *s, const char *path )
 		// Calculate length of variables in string
 		int cmdLength = strlen( "module=files&command=dosaction&action=delete&sessionid=&path=" ) +
 			( s->f_SessionIDPTR ? strlen( s->f_SessionIDPTR ) : 0 ) +
-			( comm ? strlen( comm ) : 0 ) + 10;
+			( comm ? strlen( comm ) : 0 ) + 128;
 	
 		// Whole command
-		char *command = FCalloc(
-			strlen( "php \"modules/system/module.php\" \"\";" ) +
-			cmdLength + 10, sizeof( char ) );
-
+		char *command = FMalloc( cmdLength );
 		if( command != NULL )
 		{
 			// Just get vars
-			char *commandCnt = FCalloc( cmdLength + 1, sizeof( char ) );
+			char *commandCnt = FMalloc( cmdLength + 1 );
 
 			// Generate command string
 			if( commandCnt != NULL )
@@ -1491,12 +1383,9 @@ FLONG Delete( struct File *s, const char *path )
 				snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=delete&sessionid=%s&path=%s",
 					s->f_SessionIDPTR ? s->f_SessionIDPTR : "", comm ? comm : "" );
 				DEBUG("PATH %s\n", commandCnt );
-				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
-				SpecialData *sd = (SpecialData *)s->f_SpecialData;
-		
-				int answerLength = 0;
-				ListString *result = PHPCall( command, &answerLength );
+				ListString *result = PHPCall( command );
 		
 				// TODO: we should parse result to get information about success
 				if( result != NULL )
@@ -1507,14 +1396,14 @@ FLONG Delete( struct File *s, const char *path )
 						snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=delete&sessionid=%s&path=%s",
 							s->f_SessionIDPTR ? s->f_SessionIDPTR : "", commSlash ? commSlash : "" );
 						DEBUG("PATH1 %s\n", commandCnt );
-						sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+						snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 						if( result != NULL )
 						{
 							ListStringDelete( result );
 							result = NULL;
 						}
-						result = PHPCall( command, &answerLength );
+						result = PHPCall( command );
 						DEBUG("Delete res 1: %s\n", result->ls_Data );
 					}
 
@@ -1549,7 +1438,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 	{
 		char *comm = NULL;
 	
-		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 10, sizeof(char) ) ) != NULL )
+		if( ( comm = FMalloc( strlen( path ) + strlen( s->f_Name ) + 16 ) ) != NULL )
 		{
 			strcpy( comm, s->f_Name );
 			strcat( comm, ":" );
@@ -1558,9 +1447,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 			{
 				strcat( comm, path ); 
 			}
-		
-			SpecialData *sd = (SpecialData *)s->f_SpecialData;
-	
+
 			char *encPath = MarkAndBase64EncodeString( comm );
 			
 			strcat( comm, "/" );
@@ -1568,18 +1455,14 @@ int Rename( struct File *s, const char *path, const char *nname )
 			
 			char *newName = MarkAndBase64EncodeString( nname );
 			
-	
 			// Calculate length of variables in string
 			int cmdLength = strlen( "module=files&command=dosaction&action=rename&sessionid=&path=&newname=" ) +
 				( s->f_SessionIDPTR ? strlen( s->f_SessionIDPTR ) : 0 ) +
 				( encPath ? strlen( encPath ) : 0 ) + 
-				( newName ? strlen( newName ) : 0 ) + 2;
+				( newName ? strlen( newName ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
-			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
-				cmdLength + 10, sizeof( char ) );
-
+			char *command = FMalloc( cmdLength );
 			if( command != NULL )
 			{
 				// Just get vars
@@ -1592,10 +1475,9 @@ int Rename( struct File *s, const char *path, const char *nname )
 					
 					snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
 						s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "", newName ? newName : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
-					
-					int answerLength = 0;
-					ListString *result = PHPCall( command, &answerLength );
+					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
+
+					ListString *result = PHPCall( command );
 		
 					if( result != NULL )
 					{
@@ -1603,14 +1485,14 @@ int Rename( struct File *s, const char *path, const char *nname )
 						{
 							snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
 								s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "", newName ? newName : "" );
-							sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 							if( result != NULL )
 							{
 								ListStringDelete( result );
 								result = NULL;
 							}
-							result = PHPCall( command, &answerLength );
+							result = PHPCall( command );
 						}
 						// TODO: we should parse result to get information about success
 						if( result != NULL )
@@ -1682,20 +1564,21 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 
 BufString *Info( File *s, const char *path )
 {
-	char *comm = NULL;
 	DEBUG("[PHPFS] Info\n");
 	
 	if( s != NULL )
 	{
 		char *comm = NULL;
 	
-		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 8, sizeof(char) ) ) != NULL )
+		if( ( comm = FMalloc( strlen( path ) + strlen( s->f_Name ) + 64 ) ) != NULL )
 		{
 			strcpy( comm, s->f_Name );
 			strcat( comm, ":" );
 		
 			if( path != NULL )
-				strcat( comm, path ); 
+			{
+				strcat( comm, path );
+			}
 		
 			SpecialData *sd = (SpecialData *)s->f_SpecialData;
 			
@@ -1710,29 +1593,26 @@ BufString *Info( File *s, const char *path )
 			int cmdLength = strlen( "type=&module=files&args=false&command=info&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) + 
 				( s->f_SessionIDPTR ? strlen( s->f_SessionIDPTR ) : 0 ) + 
-				( encPath ? strlen( encPath ) : 0 ) + 16;
+				( encPath ? strlen( encPath ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
-			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
-				cmdLength + 1, sizeof( char ) );
+			char *command = FMalloc( cmdLength );
 				
 			if( command != NULL )
 			{
 				// Just get vars
-				char *commandCnt = FCalloc( cmdLength + 1, sizeof( char ) );
+				char *commandCnt = FMalloc( cmdLength );
 			
 				// Generate command string
 				if( commandCnt != NULL )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 			
 					// Execute!
-					int answerLength = 0;
 					BufString *bs = NULL;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = PHPCall( command );
 					if( result != NULL )
 					{
 						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
@@ -1741,9 +1621,9 @@ BufString *Info( File *s, const char *path )
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
-							sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
-							result = PHPCall( command, &answerLength );
+							result = PHPCall( command );
 						}
 						
 						bs = BufStringNewSize( result->ls_Size );
@@ -1815,12 +1695,11 @@ BufString *Call( File *s, const char *path, char *args )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&command=call&authkey=false&sessionid=%s&path=%s&args=%s",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encComm ? encComm : "", args ? args : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
-					int answerLength = 0;
 					BufString *bs = NULL;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = PHPCall( command );
 					if( result != NULL )
 					{
 						bs =BufStringNewSize( result->ls_Size );
@@ -1875,28 +1754,25 @@ BufString *Dir( File *s, const char *path )
 			int cmdLength = strlen( "type=&module=files&args=false&command=directory&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) +
 				( s->f_SessionIDPTR ? strlen( s->f_SessionIDPTR ) : 0 ) +
-				( encComm ? strlen( encComm ) : 0 ) + 16;
+				( encComm ? strlen( encComm ) : 0 ) + 128 + strlen( "php \"modules/system/module.php\" \"\";" );
 			
 			// Whole command
-			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
-				cmdLength + 1, sizeof( char ) );
+			char *command = FMalloc(cmdLength );
 			
 			if( command != NULL )
 			{
 				// Just get vars
-				char *commandCnt = FCalloc( cmdLength + 1, sizeof( char ) );
+				char *commandCnt = FMalloc( cmdLength + 1 );
 			
 				// Generate command string
 				if( commandCnt != NULL )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encComm ? encComm : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
-					int answerLength;
 					BufString *bs  = NULL;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = PHPCall( command );
 					if( result != NULL )
 					{
 						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
@@ -1905,9 +1781,9 @@ BufString *Dir( File *s, const char *path )
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
-							sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
-							result = PHPCall( command, &answerLength );
+							result = PHPCall( command );
 						}
 						
 						bs =BufStringNewSize( result->ls_Size );

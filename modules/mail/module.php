@@ -19,12 +19,10 @@ $cypthdb = false;
 if( isset( $args->command ) )
 {
 	switch( $args->command )
-	{
-		
-					
-		// make sure we have what we need to run Pat app that uses Cypth 
-		case 'initpat':
-			include( 'modules/mail/include/pat.php' );
+	{				
+		// make sure we have what we need to run FriendMail app that uses Cypth 
+		case 'initfriendmail':
+			include( 'modules/mail/include/friendmail.php' );
 			break;			
 
 		

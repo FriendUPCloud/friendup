@@ -281,6 +281,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					
 					case SQLT_BLOB:
 						{
+							/*
 							DEBUG("[MYSQLLibrary] Read BLOB\n");
 							ListString *ls = ListStringNew();
 							if( ls != NULL )
@@ -297,6 +298,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							// copy pointer to this list
 							memcpy( strptr + dptr[2], &ls, sizeof( ListString * ) );
 							//ListStringDelete( ls );
+							*/
 						}
 					break;
 					
@@ -1053,6 +1055,7 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 	MYSQL_RES *result = NULL;
 	if( sel == NULL )
 	{
+		FERROR("Sel is empty!\n");
 		return NULL;
 	}
 	
@@ -1070,7 +1073,7 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 		return NULL;
 	}
 	
-	DEBUG("[MYSQLLibrary] SELECT QUERY %s\n", sel );
+	DEBUG("[MYSQLLibrary] SELECT QUERY: >%s<\n", sel );
 
 	result = mysql_store_result( l->con.sql_Con );
 

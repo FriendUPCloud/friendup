@@ -60,13 +60,28 @@ if( $d->ID > 0 )
 			{
 				if( $perm->name && $perm->key )
 				{
-					$p = new dbIO( 'FUserRolePermission' );
-					$p->Permission = $perm->name;
-					$p->Key = $perm->key;
-					$p->RoleID = $d->ID;
-					$p->Load();
-					$p->Data = $perm->data;
-					$p->Save();
+					if( isset( $perm->command ) && $perm->command == 'delete' )
+					{
+						$p = new dbIO( 'FUserRolePermission' );
+						$p->Permission = $perm->name;
+						$p->Key        = $perm->key;
+						$p->RoleID     = $d->ID;
+						$p->Data       = $perm->data;
+						if( $p->Load() )
+						{
+							$p->Delete();
+						}
+					}
+					else
+					{
+						$p = new dbIO( 'FUserRolePermission' );
+						$p->Permission = $perm->name;
+						$p->Key        = $perm->key;
+						$p->RoleID     = $d->ID;
+						$p->Data       = $perm->data;
+						$p->Load();
+						$p->Save();
+					}
 				}
 			}
 		}
@@ -79,6 +94,96 @@ if( $d->ID > 0 )
 		{
 			die( 'ok<!--separate-->{"message":"Role updated. Permissions saved.","response":2}' );
 		}
+	}
+	else if( isset( $args->args->userid ) )
+	{
+		// Built out support for setting user to a Role ...
+		// TODO: Review code and update documentation ...
+		
+		// TODO: Add support for adding specific Workgroup ID in addition ...
+		
+		if( $args->args->userid )
+		{
+			// Set user on role if data has activate value
+			
+			if( isset( $args->args->data ) && $args->args->data )
+			{
+				if( !$SqlDatabase->FetchObject( '
+					SELECT * FROM FUserToGroup 
+					WHERE UserID = \'' . $args->args->userid . '\' AND UserGroupID = \'' . $d->ID . '\' 
+				' ) )
+				{
+					$SqlDatabase->query( '
+					INSERT INTO FUserToGroup 
+						( UserID, UserGroupID ) 
+						VALUES 
+						( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->userid ) . '\', \'' . $d->ID . '\' )
+					' );
+				}
+			}
+			
+			// Remove user on role if data has no activate value
+			
+			else
+			{
+				$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $args->args->userid . '\' AND UserGroupID=\'' . $d->ID . '\'' );
+			}
+			
+			if( $namechange )
+			{
+				die( 'ok<!--separate-->{"message":"User on role updated. Role name changed.","response":5}' );
+			}
+			else
+			{
+				die( 'ok<!--separate-->{"message":"User on role updated.","response":4}' );
+			}
+		}
+		
+		die( 'fail<!--separate-->{"message":"Missing parameters.","response":-1}' );
+	}
+	else if( isset( $args->args->groupid ) )
+	{
+		// Built out support for setting group to a Role ...
+		// TODO: Review code and update documentation ...
+		
+		if( $args->args->groupid )
+		{
+			// Set user on role if data has activate value
+			
+			if( isset( $args->args->data ) && $args->args->data )
+			{
+				if( !$SqlDatabase->FetchObject( '
+					SELECT * FROM FGroupToGroup 
+					WHERE FromGroupID = \'' . $args->args->groupid . '\' AND ToGroupID = \'' . $d->ID . '\' 
+				' ) )
+				{
+					$SqlDatabase->query( '
+					INSERT INTO FGroupToGroup 
+						( FromGroupID, ToGroupID ) 
+						VALUES 
+						( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->groupid ) . '\', \'' . $d->ID . '\' )
+					' );
+				}
+			}
+			
+			// Remove group on role if data has no activate value
+			
+			else
+			{
+				$SqlDatabase->query( 'DELETE FROM FGroupToGroup WHERE FromGroupID=\'' . $args->args->groupid . '\' AND ToGroupID=\'' . $d->ID . '\'' );
+			}
+			
+			if( $namechange )
+			{
+				die( 'ok<!--separate-->{"message":"Workgroup on role updated. Role name changed.","response":7}' );
+			}
+			else
+			{
+				die( 'ok<!--separate-->{"message":"Workgroup on role updated.","response":6}' );
+			}
+		}
+		
+		die( 'fail<!--separate-->{"message":"Missing parameters.","response":-1}' );
 	}
 	else if( $namechange )
 	{

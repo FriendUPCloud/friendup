@@ -59,6 +59,9 @@ Workspace = {
 
 	preinit: function()
 	{
+		// Go ahead and init!
+		ScreenOverlay.init();
+		
 		var img = new Image();
 		img.src = '/webclient/theme/loginimage.jpg';
 		img.onload = function()
@@ -80,7 +83,7 @@ Workspace = {
 		// Preload some images
 		var imgs = [
 			'/webclient/gfx/system/offline_16px.png',
-			'/themes/friendup12/gfx/loading.gif'
+			'/themes/friendup12/gfx/busy.png'
 		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
@@ -1188,6 +1191,7 @@ Workspace = {
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/deepestfield.js;' +
 				'webclient/js/gui/filedialog.js;' +
+				'webclient/js/gui/printdialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
 				'webclient/js/gui/colorpicker.js;' +

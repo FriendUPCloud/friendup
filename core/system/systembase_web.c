@@ -69,7 +69,7 @@
 //
 //
 
-extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail );
+extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err );
 
 
 /**
@@ -77,11 +77,13 @@ extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int fo
  *
  * @param request Http request
  * @param loggedSession pointer to logged user session
+ * @param returnedAsFile pointer to boolean value with information if parameter is passed via FILE instead of argument
  * @return pointer to memory where arguments are stored
  */
 
-char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
+char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL *returnedAsFile )
 {
+	//FILE *log = fopen( "debugfile.txt", "wb" );
 	// Send both get and post
 	int size = 0;
 
@@ -90,7 +92,9 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
 	char *allArgsNew = NULL;
 	
-	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
+	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
+	
+	INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
 	
@@ -133,62 +137,75 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 	
 		// application/json are used to communicate with another tools like onlyoffce
 		char *sessptr = NULL;
-		if( request->h_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON && ( sessptr = strstr( allArgs, "sessionid" ) ) != NULL )
+		if( request->h_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
 		{
-			int i=0;
-			int j=0;
-		
-			int startpos = (sessptr - allArgs);
-		
-			FBOOL overwrite = FALSE;
-			int fumin = fullsize - 1;
-			for( i = 0; i < fullsize; i++ )
+			int add = 0;
+			// Check in the middle of the query
+			sessptr = strstr( allArgs, "&sessionid=" );
+			
+			// If not check first part of the query
+			if( sessptr == NULL )
 			{
-				if( i >= startpos && overwrite == FALSE )
+				sessptr = strstr( allArgs, "sessionid=" );
+				if( sessptr != NULL )
 				{
-					char tmp[ 255 ];
-					
-					if( loggedSession != NULL && loggedSession->us_User != NULL )
-					{
-						if( allArgs[ i ] == '&' )
-						{
-							j += sprintf( tmp, "sessionid=%s&", loggedSession->us_User->u_MainSessionID );
-							strcat( allArgsNew, tmp );
-							overwrite = TRUE;
-						}
-						if( i == fumin )
-						{
-							j += sprintf( tmp, "sessionid=%s", loggedSession->us_User->u_MainSessionID );
-							strcat( allArgsNew, tmp );
-							overwrite = TRUE;
-						}
-					}
-					
-					/*
-					if( allArgs[ i ] == '&' )
-					{
-						j += sprintf( tmp, "sessionid=%lu&", loggedSession->us_User->u_ID );
-						strcat( allArgsNew, tmp );
-						overwrite = TRUE;
-					}
-					if( i == fullsize - 1 )
-					{
-						j += sprintf( tmp, "sessionid=%lu", loggedSession->us_User->u_ID );
-						strcat( allArgsNew, tmp );
-						overwrite = TRUE;
-					}*/
-				}
-				else
-				{
-					allArgsNew[ j ] = allArgs[ i ];
-					j++;
+					add = 10;
 				}
 			}
+			else
+			{
+				add = 11;
+			}
+			
+			DEBUG("Sessptr !NULL\n");
+			
+			if( sessptr != NULL )
+			{
+				//  |  till sessionid  |  sessionid  |  after sessionid
+				int size = (sessptr-allArgs)+add;
+				char *src = allArgs + size;
+				char *dst = allArgsNew + size;
+				add += sessptr-allArgs;
+				memcpy( allArgsNew, allArgs, add );
+				
+				//fprintf( log, "First add: %d - %c\n", add, allArgsNew[ add - 1 ] );
+				if( loggedSession != NULL && loggedSession->us_User != NULL )
+				{
+					strcat( dst, loggedSession->us_User->u_MainSessionID );
+					dst += strlen( loggedSession->us_User->u_MainSessionID );
+				}
+				//add += 40; // len of sessionid
+
+				DEBUG("before while\n");
+				while( *src != 0 )
+				{
+					if( *src == '&' )
+					{
+						break;
+					}
+					src++;
+					add++;
+				}
+				DEBUG("After while\n");
+				
+				int restSize = fullsize - ( src-allArgs );
+				if( restSize > 0 )
+				{
+					memcpy( dst, src, restSize );
+				}
+			}
+			else
+			{
+				memcpy( allArgsNew, allArgs, fullsize );
+			}
+			
+			//fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
 		}
 		else
 		{
 			strcpy( allArgsNew, allArgs );
 		}
+		DEBUG("REquest source: %d\n", request->h_RequestSource );
 		
 		// get values from POST 
 		
@@ -197,14 +214,16 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 			Hashmap *hm = request->parsedPostContent;
 			unsigned int i = 0;
 			FBOOL quotationFound = FALSE;
-			DEBUG("AllAgrsNews : '%s' after parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
-			DEBUG("Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
+			//fprintf( log, "AllAgrsNew : '%s'\n\n fter parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
+			//fprintf( log, "AllAgrs : '%s'\n", allArgs );
+			//fprintf( log, "Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
 			
 			if( strstr( allArgsNew, "?" ) != NULL )
 			{
 				quotationFound = TRUE;
 			}
 			
+			DEBUG("Before for\n");
 			for( ; i < hm->table_size; i++ )
 			{
 				if( hm->data[ i ].inUse == TRUE && hm->data[ i ].key != NULL && hm->data[ i ].data != NULL )
@@ -235,6 +254,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 					}
 				}
 			}
+			DEBUG("After for\n");
 			
 			/*
 			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
@@ -255,9 +275,81 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 			}
 			*/
 		}
-		
 		FFree( allArgs );
 	}
+	//fclose( log );
+	DEBUG("Before fullsize>3096\n");
+	
+	if( fullsize > 3096 )
+	{
+		int tr = 100;
+		*returnedAsFile = TRUE;
+		// if message is too big, allocate memory for filename
+		char *tmpFileName = FMalloc( 1024 );
+		FILE *fp;
+		
+		while( TRUE )
+		{
+			FILE *f;
+			int tr = 100;
+			int len = snprintf( tmpFileName, 1024, "/tmp/Friendup/_phpcommand_%d%d.%lu", rand()%9999, rand()%9999, time(NULL) );
+			// if file doesnt exist we can create new one
+			if( ( f = fopen( tmpFileName, "rb" ) ) == NULL )
+			{
+				//DEBUG("File not found\n");
+				// new file created, we can store all parameters there
+				fp = fopen( tmpFileName, "wb" );
+				if( fp != NULL )
+				{
+					//DEBUG("File created\n");
+					fwrite( allArgsNew, 1, strlen( allArgsNew ), fp );
+					fclose( fp );
+					FFree( allArgsNew );
+					int len2 = len + 128;
+					// we are returning now name of the file which contain all parameters
+					allArgsNew = FMalloc( len2 );
+					if( allArgsNew != NULL )
+					{
+						snprintf( allArgsNew, len2, MODULE_FILE_CALL_STRING, tmpFileName );
+					}
+					break;
+				}
+				else
+				{
+					DEBUG("Cannot create file: %s\n", tmpFileName );
+				}
+				
+				tr--;
+				if( tr <= 0 )
+				{
+					FERROR("Cannot create file, check access\n");
+					break;
+				}
+			}
+			else
+			{
+				fclose( f );
+			}
+		}
+		
+		FFree( tmpFileName );
+		
+		/*
+		int len = strlen( "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}" );
+		allArgsNew = FMalloc( len+16 );
+		if( allArgsNew != NULL )
+		{
+			strncpy( allArgsNew, "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}", len );
+		}
+		return allArgsNew;
+		*/
+	}
+	else
+	{
+		*returnedAsFile = FALSE;
+	}
+	DEBUG("End all args new\n");
+	
 	return allArgsNew;
 }
 
@@ -278,6 +370,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	Http *response = NULL;
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
+	FBOOL loginLogoutCalled = FALSE;
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func: %s\n", urlpath[ 0 ] );
 	
@@ -308,9 +401,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 		return response;
     }
+    
+    if( strcmp( urlpath[ 0 ], "login" ) == 0 )
+	{
+		loginLogoutCalled = TRUE;
+	}
 	
 	// Check for sessionid by sessionid specificly or authid
-	if( strcmp( urlpath[ 0 ], "login" ) != 0 && loggedSession == NULL )
+	if( loginLogoutCalled == FALSE && loggedSession == NULL )
 	{
 		HashmapElement *tst = GetHEReq( *request, "sessionid" );
 		HashmapElement *ast = GetHEReq( *request, "authid" );
@@ -595,8 +693,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	}
 	
 	//
-		// Check dos token
-		//
+	// Check dos token
+	//
 		
 		//if( loggedSession == NULL )
 		{
@@ -739,6 +837,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 	}
 	
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
+	{
+		loggedSession->us_InUseCounter++;
+	}
+	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -779,562 +882,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		*result = 200;
 	}
-	
-	/// @cond WEB_CALL_DOCUMENTATION
-	/**
-	*
-	* <HR><H2>system.library/login</H2>Function allow user to login and get user session id
-	*
-	* @param username (required) - name of user
-	* @param password (required) - user password
-	* @param deviceid (required) - id which recognize device which is used to login
-	* @param encryptedblob - used by keys which allow to login
-	* @param appname - is an application name which is trying to connect to our server (used by remotefs)
-	* @param sessionid - session id of logged user
-	* @return information about login process "{result:-1,response: success/fail, code:error code }
-	*/
-	/// @endcond
-	
-	else if( strcmp(  urlpath[ 0 ], "login" ) == 0 )
-	{
-		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{ TAG_DONE, TAG_DONE}
-		};
-		
-		response = HttpNewSimple( HTTP_200_OK,  tags );
-	
-		if( (*request)->parsedPostContent != NULL )
-		{
-			char *usrname = NULL;
-			char *pass = NULL;
-			char *appname = NULL;
-			char *deviceid = NULL;
-			char *encryptedBlob = NULL; // If the user sends publickey
-			char *locsessionid = NULL;
-			FULONG blockedTime = 0;
-			
-			HashmapElement *el = HttpGetPOSTParameter( *request, "username" );
-			if( el != NULL )
-			{
-				//usrname = (char *)el->data;
-				if( el->data != NULL )
-				{
-					//if( strcmp( (char *)el->data, "apiuser" ) != 0 )
-					{
-						usrname = UrlDecodeToMem( (char *)el->data );
-					}
-				}
-			}
-			
-			// Fetch public key
-			el = HttpGetPOSTParameter( *request, "encryptedblob" );
-			if( el != NULL )
-			{
-				encryptedBlob = ( char *)el->data;
-			}
-			
-			el = HttpGetPOSTParameter( *request, "password" );
-			if( el != NULL )
-			{
-				pass = ( char *)el->data;
-			}
-			
-			el = HttpGetPOSTParameter( *request, "appname" );
-			if( el != NULL )
-			{
-				appname = ( char *)el->data;
-			}
-			
-			el = HttpGetPOSTParameter( *request, "deviceid" );
-			if( el != NULL )
-			{
-				deviceid = (char *)el->data;
-			}
-			
-			el = HttpGetPOSTParameter( *request, "sessionid" );
-			if( el != NULL )
-			{
-				locsessionid = ( char *)el->data;
-			}
-			
-			if( locsessionid != NULL && deviceid != NULL )
-			{
-				UserSession *us = USMGetSessionBySessionID( l->sl_USM, locsessionid );
-				
-				if( us == NULL )
-				{
-					us = USMGetSessionBySessionIDFromDB( l->sl_USM, locsessionid );
-				}
-				
-				if( us != NULL )
-				{
-					loggedSession = us;
-					
-					DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
-					if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
-					{
-						if( loggedSession->us_User == NULL )
-						{
-							User *lusr = l->sl_UM->um_Users;
-							while( lusr != NULL )
-							{
-								if( loggedSession->us_UserID == lusr->u_ID )
-								{
-									loggedSession->us_User = lusr;
-									break;
-								}
-								lusr = (User *)lusr->node.mln_Succ;
-							}
-						}
-						
-						//
-						// update user and session
-						//
-						
-						char tmpQuery[ 512 ];
-						
-						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
-						if( sqlLib != NULL )
-						{
-							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, DeviceIdentity='%s' WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid,  loggedSession->us_SessionID );
-							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-							{ 
-								
-							}
-							
-							//
-							// update user
-							//
-							
-							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-							{ 
-								
-							}
-							
-							UMAddUser( l->sl_UM, loggedSession->us_User );
-							
-							DEBUG("New user and session added\n");
-							
-							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE );
-							
-							DEBUG("Devices mounted\n");
-							userAdded = TRUE;
-							l->LibrarySQLDrop( l, sqlLib );
-						}
-						else
-						{
-							loggedSession = NULL;
-						}
-						DEBUG("Library dropped\n");
-					}
-					else
-					{
-						loggedSession = NULL;
-						FERROR("Cannot  add session\n");
-					}
-				}
-				
-				char tmp[ 1024 ];
-				
-				if( loggedSession != NULL && loggedSession->us_User != NULL )
-				{
-					snprintf( tmp, sizeof(tmp),
-						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
-						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
-					);
-				}
-				else
-				{
-					FERROR("[ERROR] User session or User not found\n" );
-
-					snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"result\":\"-1\",\"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
-				}
-				
-				HttpAddTextContent( response, tmp );
-			}
-			// Public key mode
-			// TODO: Implement this! Ask Chris and Hogne!
-			else if( usrname != NULL && encryptedBlob != NULL && deviceid != NULL )
-			{
-				FERROR("[ERROR] Authentication by using public key not suported\n" );
-				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "{\"result\":\"-1\",\"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED] , DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED );
-				HttpAddTextContent( response, buffer );
-			}
-			// standard username and password mode
-			else if( usrname != NULL && pass != NULL && deviceid != NULL )
-			{
-				DEBUG("Found logged user under address uanem %s pass %s deviceid %s\n", usrname, pass, deviceid );
-				
-				if( strcmp( usrname, "apiuser" ) == 0 )
-				{
-					if( strcmp( deviceid, "loving-crotch-grabbing-espen" ) == 0 )
-					{
-						
-					}
-					else // if its not our apiuser, do not allow him to login!!
-					{
-						if( usrname != NULL )
-						{
-							FFree( usrname );
-						}
-						
-						*result = 200;
-						return NULL;
-					}
-					//FERROR("\n\n\nUSERNAME %s\nPASS %s\nDEVICE %s\n\n\n", usrname, pass, deviceid );
-				}
-				
-				//
-				// first we must find user
-				// if sessionid is not provided we must create new session
-				//
-				
-				if( l->sl_ActiveAuthModule != NULL )
-				{
-					UserSession *dstusrsess = NULL;
-					UserSession *tusers = NULL;
-					
-					FBOOL isUserSentinel = FALSE;
-					
-					DEBUG("CHECK2\n");
-					FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
-					
-					tusers = l->sl_USM->usm_Sessions;
-					
-					if( deviceid == NULL )
-					{
-						while( tusers != NULL )
-						{
-							User *tuser = tusers->us_User;
-							// Check both username and password
-
-							if( strcmp(tuser->u_Name, usrname ) == 0 )
-							{
-								FBOOL isUserSentinel = FALSE;
-							
-								Sentinel *sent = l->GetSentinelUser( l );
-								if( sent != NULL )
-								{
-									if( tuser == sent->s_User )
-									{
-										isUserSentinel = TRUE;
-									}
-								}
-								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
-								{
-									dstusrsess = tusers;
-									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-									break;
-								}
-							}
-							tusers = (UserSession *)tusers->node.mln_Succ;
-						}
-					}
-					else	// deviceid != NULL
-					{
-						while( tusers != NULL )
-						{
-							User *tuser = tusers->us_User;
-							// Check both username and password
-
-							if( tusers->us_DeviceIdentity != NULL && tuser != NULL )
-							{
-								if( strcmp( tusers->us_DeviceIdentity, deviceid ) == 0 && strcmp( tuser->u_Name, usrname ) == 0 )
-								{
-									Sentinel *sent = l->GetSentinelUser( l );
-									if( sent != NULL )
-									{
-										if( tuser == sent->s_User )
-										{
-											isUserSentinel = TRUE;
-										}
-										DEBUG("Same identity, same user name, is sentinel %d  userptr %p sentinelptr %p\n", isUserSentinel, tuser, sent->s_User );
-									}
-
-									if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
-									{
-										dstusrsess = tusers;
-										DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-										
-										//UMStoreLoginAttempt( l->sl_UM, usrname,  "Login success: on list or Sentinel", NULL );
-										break;
-									}
-								}
-							}
-							tusers = (UserSession *)tusers->node.mln_Succ;
-						}
-					}
-					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
-					DEBUG("CHECK2END\n");
-					
-					if( dstusrsess == NULL )
-					{
-						Sentinel *sent = l->GetSentinelUser( l );
-						if( sent != NULL && sent->s_User != NULL )
-						{
-							DEBUG("Sent %p\n", sent->s_User );
-							if( strcmp( sent->s_User->u_Name, usrname ) == 0 )
-							{
-								isUserSentinel = TRUE;
-							}
-						}
-						
-						DEBUG("Authenticate dstusrsess == NULL is user sentinel %d\n", isUserSentinel );
-						if( isUserSentinel == TRUE && strcmp( deviceid, "remote" ) == 0 )
-						{
-							User *tmpusr = UMUserGetByNameDB( l->sl_UM, usrname );
-							if( tmpusr != NULL )
-							{
-								loggedSession = UserSessionNew( "remote", deviceid );
-								if( loggedSession != NULL )
-								{
-									loggedSession->us_UserID = tmpusr->u_ID;
-								}
-								
-								UserDelete( tmpusr );
-							}
-						}
-						else
-						{
-							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
-						}
-						
-						//
-						// user not logged in previously, we must add it to list
-						// 
-						
-						if( loggedSession != NULL )
-						{
-							loggedSession->us_LoggedTime = time( NULL );
-							USMSessionSaveDB( l->sl_USM, loggedSession );
-						}
-						else
-						{
-							FERROR( "[SysWebRequest] Failed to login user and authenticate.\n" );
-						}
-					}
-					
-					//
-					// session found, there is no need to load user
-					//
-					
-					else
-					{
-						DEBUG("Call authenticate by %s\n", l->sl_ActiveAuthModule->am_Name );
-
-						if( isUserSentinel == TRUE )
-						{
-							loggedSession = dstusrsess;
-						}
-						else
-						{
-							if( appname == NULL )
-							{
-								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, NULL, &blockedTime );
-							}
-							else
-							{
-								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, "remote", &blockedTime );
-							}
-						}
-					}
-					
-					//
-					// last checks if session is ok
-					//
-					
-					if( loggedSession != NULL )
-					{
-						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
-						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
-						{
-							if( loggedSession->us_User == NULL )
-							{
-								DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
-								User *lusr = l->sl_UM->um_Users;
-								while( lusr != NULL )
-								{
-									if( loggedSession->us_UserID == lusr->u_ID )
-									{
-										loggedSession->us_User = lusr;
-										break;
-									}
-									lusr = (User *)lusr->node.mln_Succ;
-								}
-							}
-						
-						//
-						// update user and session
-						//
-							
-							char tmpQuery[ 512 ];
-							
-							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
-							if( sqlLib != NULL )
-							{
-								FULONG umaID = 0;
-								if( deviceid != NULL )
-								{
-									int len = strlen( deviceid );
-									int i, lpos = 0;
-									for( i=0 ; i < len ; i++ )
-									{
-										if( deviceid[ i ] == '_' )
-										{
-											lpos = i+1;
-										}
-									}
-									if( lpos > 0 && lpos < len )
-									{
-										umaID = MobileManagerGetUMAIDByTokenAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_ID, &(deviceid[ lpos ] ) );
-									}
-								}
-								
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-								{ 
-									
-								}
-
-								//
-								// update user
-								//
-							
-								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-								{ 
-
-								}
-								DEBUG("[SystembaseWeb] user login\n");
-
-								loggedSession->us_MobileAppID = umaID;
-								UMAddUser( l->sl_UM, loggedSession->us_User );
-
-								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE );
-
-								userAdded = TRUE;
-								l->LibrarySQLDrop( l, sqlLib );
-							}
-						}
-						else
-						{
-							FERROR("Cannot  add session\n");
-						}
-
-						char tmp[ 512 ];
-						User *loggedUser = NULL;
-						if( loggedSession != NULL )
-						{
-							DoorNotificationRemoveEntriesByUser( l, loggedSession->us_ID );
-							
-							// since we introduced deviceidentities with random number, we must remove also old entries
-							DoorNotificationRemoveEntries( l );
-						
-							User *loggedUser = loggedSession->us_User;
-						
-							Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
-						
-							if( appname == NULL )
-							{
-								snprintf( tmp, sizeof(tmp) ,
-									"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
-									loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
-							}
-							else
-							{
-								SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-
-								// Get authid from mysql
-								if( sqllib != NULL )
-								{
-									char authid[ 512 ];
-									authid[ 0 ] = 0;
-								
-									char qery[ 1024 ];
-									sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
-								
-									void *res = sqllib->Query( sqllib, qery );
-									if( res != NULL )
-									{
-										char **row;
-										if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-										{
-											snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
-										}
-										sqllib->FreeResult( sqllib, res );
-									}
-
-									l->LibrarySQLDrop( l, sqllib );
-
-									snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
-									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
-									);
-								}
-							}	// else to appname
-						} //else to logginsession == NULL
-						else
-						{
-							FERROR("[ERROR] User session was not added to list!\n" );
-							char buffer[ 256 ];
-							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
-						}
-						HttpAddTextContent( response, tmp );
-					}
-					else
-					{
-						char temp[ 1024 ];
-						char buffer[ 256 ];
-						
-						snprintf( buffer, sizeof(buffer), l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED], blockedTime );
-						FERROR("[ERROR] User account '%s' will be blocked until: %lu seconds\n", usrname, blockedTime );
-
-						snprintf( temp, sizeof(temp), "fail<!--separate-->{\"result\":\"-1\",\"response\":\"%s\", \"code\":\"%d\"}", buffer , DICT_ACCOUNT_BLOCKED );
-						HttpAddTextContent( response, temp );
-					}
-				}
-				else
-				{
-					FERROR("[ERROR] Authentication module not selected\n" );
-					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
-					HttpAddTextContent( response, buffer );
-				}
-			}
-			else
-			{
-				FERROR("[ERROR] username,password,deviceid parameters not found\n" );
-				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_PASS_DEV_REQUIRED] , DICT_USER_PASS_DEV_REQUIRED );
-				HttpAddTextContent( response, buffer );
-			}
-			
-			if( usrname != NULL )
-			{
-				FFree( usrname );
-			}
-		}
-		else
-		{
-			FERROR("[ERROR] no data in POST\n");
-			
-			struct TagItem tags[] = {
-				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-				{ TAG_DONE, TAG_DONE}
-			};
-		
-			response = HttpNewSimple( HTTP_200_OK,  tags );
-		
-			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_POST_MODE_PARAMETERS_REQUIRED] , DICT_POST_MODE_PARAMETERS_REQUIRED );
-			HttpAddTextContent( response, buffer );
-		}
-		*result = 200;
-	}
 
 	//
 	// user function
@@ -1343,7 +890,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	else if( strcmp( urlpath[ 0 ], "user" ) == 0 )
 	{
 		DEBUG("User\n");
-		response = UMWebRequest( l, urlpath, (*request), loggedSession, result );
+		response = UMWebRequest( l, urlpath, (*request), loggedSession, result, &loginLogoutCalled );
 	}
 	
 	//
@@ -1406,14 +953,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					
 					if( stat( runfile, &f ) != -1 )
 					{
+						FBOOL isFile;
 						DEBUG("MODRUNPHP %s\n", runfile );
-						char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession );
+						char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
 						if( allArgsNew != NULL )
 						{
 							Log( FLOG_INFO, "Module called: %s : %p\n", allArgsNew, pthread_self() );
 							
 							data = l->sl_PHPModule->Run( l->sl_PHPModule, runfile, allArgsNew, &dataLength );
 							phpCalled = TRUE;
+							
+							if( isFile )
+							{
+								//"file<!--separate-->%s"
+								char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+								remove( fname );
+							}
 						}
 					}
 					else
@@ -1503,7 +1058,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								strcmp( modType, "py" ) == 0
 							)
 							{
-								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession );
+								FBOOL isFile;
+								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession, &isFile );
 								
 								DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
 
@@ -1513,6 +1069,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								// We don't use them now
 								if( allArgsNew != NULL )
 								{
+									if( isFile )
+									{
+										//"file<!--separate-->%s"
+										char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+										remove( fname );
+									}
 									FFree( allArgsNew );
 								}
 							}
@@ -1813,8 +1375,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		{
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ) },
-				{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
-				{TAG_DONE, TAG_DONE}
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
+				{ TAG_DONE, TAG_DONE}
 			};
 		
 			if( response != NULL )
@@ -1913,6 +1475,636 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 	}
 	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/login</H2>Function allow user to login and get user session id
+	*
+	* @param username (required) - name of user
+	* @param password (required) - user password
+	* @param deviceid (required) - id which recognize device which is used to login
+	* @param encryptedblob - used by keys which allow to login
+	* @param appname - is an application name which is trying to connect to our server (used by remotefs)
+	* @param sessionid - session id of logged user
+	* @return information about login process "{result:-1,response: success/fail, code:error code }
+	*/
+	/// @endcond
+	
+	else if( loginLogoutCalled == TRUE )
+	//else if( strcmp(  urlpath[ 0 ], "login" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+	
+		if( (*request)->parsedPostContent != NULL )
+		{
+			char *usrname = NULL;
+			char *pass = NULL;
+			char *appname = NULL;
+			char *deviceid = NULL;
+			char *encryptedBlob = NULL; // If the user sends publickey
+			char *locsessionid = NULL;
+			FULONG blockedTime = 0;
+			
+			HashmapElement *el = HttpGetPOSTParameter( *request, "username" );
+			if( el != NULL )
+			{
+				//usrname = (char *)el->data;
+				if( el->data != NULL )
+				{
+					//if( strcmp( (char *)el->data, "apiuser" ) != 0 )
+					{
+						usrname = UrlDecodeToMem( (char *)el->data );
+					}
+				}
+			}
+			
+			// Fetch public key
+			el = HttpGetPOSTParameter( *request, "encryptedblob" );
+			if( el != NULL )
+			{
+				encryptedBlob = ( char *)el->data;
+			}
+			
+			el = HttpGetPOSTParameter( *request, "password" );
+			if( el != NULL )
+			{
+				pass = ( char *)el->data;
+			}
+			
+			el = HttpGetPOSTParameter( *request, "appname" );
+			if( el != NULL )
+			{
+				appname = ( char *)el->data;
+			}
+			
+			el = HttpGetPOSTParameter( *request, "deviceid" );
+			if( el != NULL )
+			{
+				deviceid = (char *)el->data;
+			}
+			
+			el = HttpGetPOSTParameter( *request, "sessionid" );
+			if( el != NULL )
+			{
+				locsessionid = ( char *)el->data;
+			}
+			
+			if( locsessionid != NULL && deviceid != NULL )
+			{
+				// get user session from memory
+				// if it doesnt exist, load it from database
+				UserSession *us = USMGetSessionBySessionID( l->sl_USM, locsessionid );
+				
+				if( us == NULL )
+				{
+					us = USMGetSessionBySessionIDFromDB( l->sl_USM, locsessionid );
+				}
+				
+				if( us != NULL )
+				{
+					loggedSession = us;
+					
+					// add session to global users session listt
+					
+					DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
+					if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
+					{
+						if( loggedSession->us_User == NULL )
+						{
+							User *lusr = l->sl_UM->um_Users;
+							while( lusr != NULL )
+							{
+								if( loggedSession->us_UserID == lusr->u_ID )
+								{
+									loggedSession->us_User = lusr;
+									break;
+								}
+								lusr = (User *)lusr->node.mln_Succ;
+							}
+						}
+						
+						//
+						// update user and session
+						//
+						
+						char tmpQuery[ 512 ];
+						
+						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+						if( sqlLib != NULL )
+						{
+							DEBUG("Try to get mobileappid from DeviceID: %s\n", deviceid );
+							FULONG umaID = 0;
+							if( deviceid != NULL )
+							{
+								int len = strlen( deviceid );
+								int i, lpos = 0;
+								for( i=0 ; i < len ; i++ )
+								{
+									if( deviceid[ i ] == '_' )
+									{
+										lpos = i+1;
+									}
+								}
+								if( lpos > 0 && lpos < len )
+								{
+									umaID = MobileManagerGetUMAIDByDeviceIDAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
+								}
+							}
+							loggedSession->us_MobileAppID = umaID;
+							
+							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, loggedSession->us_SessionID );
+							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+							{ 
+								
+							}
+							
+							//
+							// update user
+							//
+							
+							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+							{ 
+								
+							}
+							
+							UMAddUser( l->sl_UM, loggedSession->us_User );
+							
+							DEBUG("New user and session added\n");
+							
+							char *err = NULL;
+							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err );
+							if( err != NULL )
+							{
+								Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
+								FFree( err );
+							}
+							
+							DEBUG("Devices mounted\n");
+							userAdded = TRUE;
+							l->LibrarySQLDrop( l, sqlLib );
+						}
+						else
+						{
+							loggedSession = NULL;
+						}
+						DEBUG("Library dropped\n");
+					}
+					else
+					{
+						loggedSession = NULL;
+						FERROR("Cannot  add session\n");
+					}
+				}
+				
+				char tmp[ 1024 ];
+				
+				if( loggedSession != NULL && loggedSession->us_User != NULL )
+				{
+					snprintf( tmp, sizeof(tmp),
+						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
+						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
+					);
+				}
+				else
+				{
+					FERROR("[ERROR] User session or User not found\n" );
+
+					snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"result\":\"-1\",\"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
+				}
+				
+				HttpAddTextContent( response, tmp );
+			}
+			// Public key mode
+			// TODO: Implement this! Ask Chris and Hogne!
+			else if( usrname != NULL && encryptedBlob != NULL && deviceid != NULL )
+			{
+				FERROR("[ERROR] Authentication by using public key not suported\n" );
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), "{\"result\":\"-1\",\"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED] , DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED );
+				HttpAddTextContent( response, buffer );
+			}
+			// standard username and password mode
+			else if( usrname != NULL && pass != NULL && deviceid != NULL )
+			{
+				DEBUG("Found logged user under address uanem %s pass %s deviceid %s\n", usrname, pass, deviceid );
+				
+				if( strcmp( usrname, "apiuser" ) == 0 )
+				{
+					if( strcmp( deviceid, "loving-crotch-grabbing-espen" ) == 0 )
+					{
+						
+					}
+					else // if its not our apiuser, do not allow him to login!!
+					{
+						if( usrname != NULL )
+						{
+							FFree( usrname );
+						}
+						
+						*result = 200;
+						return NULL;
+					}
+					//FERROR("\n\n\nUSERNAME %s\nPASS %s\nDEVICE %s\n\n\n", usrname, pass, deviceid );
+				}
+				
+				//
+				// first we must find user
+				// if sessionid is not provided we must create new session
+				//
+				
+				if( l->sl_ActiveAuthModule != NULL )
+				{
+					UserSession *dstusrsess = NULL;
+					UserSession *tusers = NULL;
+					
+					FBOOL isUserSentinel = FALSE;
+					
+					DEBUG("CHECK2\n");
+					FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
+					
+					tusers = l->sl_USM->usm_Sessions;
+					
+					if( deviceid == NULL )
+					{
+						while( tusers != NULL )
+						{
+							User *tuser = tusers->us_User;
+							// Check both username and password
+
+							if( strcmp(tuser->u_Name, usrname ) == 0 )
+							{
+								FBOOL isUserSentinel = FALSE;
+							
+								Sentinel *sent = l->GetSentinelUser( l );
+								if( sent != NULL )
+								{
+									if( tuser == sent->s_User )
+									{
+										isUserSentinel = TRUE;
+									}
+								}
+								if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
+								{
+									dstusrsess = tusers;
+									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
+									break;
+								}
+							}
+							tusers = (UserSession *)tusers->node.mln_Succ;
+						}
+					}
+					else	// deviceid != NULL
+					{
+						while( tusers != NULL )
+						{
+							User *tuser = tusers->us_User;
+							// Check both username and password
+
+							if( tusers->us_DeviceIdentity != NULL && tuser != NULL )
+							{
+								if( strcmp( tusers->us_DeviceIdentity, deviceid ) == 0 && strcmp( tuser->u_Name, usrname ) == 0 )
+								{
+									Sentinel *sent = l->GetSentinelUser( l );
+									if( sent != NULL )
+									{
+										if( tuser == sent->s_User )
+										{
+											isUserSentinel = TRUE;
+										}
+										DEBUG("Same identity, same user name, is sentinel %d  userptr %p sentinelptr %p\n", isUserSentinel, tuser, sent->s_User );
+									}
+
+									if( isUserSentinel == TRUE || l->sl_ActiveAuthModule->CheckPassword( l->sl_ActiveAuthModule, *request, tuser, pass, &blockedTime ) == TRUE )
+									{
+										dstusrsess = tusers;
+										DEBUG("Found user session  id %s\n", tusers->us_SessionID );
+										
+										//UMStoreLoginAttempt( l->sl_UM, usrname,  "Login success: on list or Sentinel", NULL );
+										break;
+									}
+								}
+							}
+							tusers = (UserSession *)tusers->node.mln_Succ;
+						}
+					}
+					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+					DEBUG("CHECK2END\n");
+					
+					if( dstusrsess == NULL )
+					{
+						Sentinel *sent = l->GetSentinelUser( l );
+						if( sent != NULL && sent->s_User != NULL )
+						{
+							DEBUG("Sent %p\n", sent->s_User );
+							if( strcmp( sent->s_User->u_Name, usrname ) == 0 )
+							{
+								isUserSentinel = TRUE;
+							}
+						}
+						
+						DEBUG("Authenticate dstusrsess == NULL is user sentinel %d\n", isUserSentinel );
+						if( isUserSentinel == TRUE && strcmp( deviceid, "remote" ) == 0 )
+						{
+							User *tmpusr = UMUserGetByNameDB( l->sl_UM, usrname );
+							if( tmpusr != NULL )
+							{
+								loggedSession = UserSessionNew( "remote", deviceid );
+								if( loggedSession != NULL )
+								{
+									loggedSession->us_UserID = tmpusr->u_ID;
+								}
+								
+								UserDelete( tmpusr );
+							}
+						}
+						else
+						{
+							loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, NULL, usrname, pass, deviceid, NULL, &blockedTime );
+						}
+						
+						//
+						// user not logged in previously, we must add it to list
+						// 
+						
+						if( loggedSession != NULL )
+						{
+							loggedSession->us_LoggedTime = time( NULL );
+							USMSessionSaveDB( l->sl_USM, loggedSession );
+						}
+						else
+						{
+							FERROR( "[SysWebRequest] Failed to login user and authenticate.\n" );
+						}
+					}
+					
+					//
+					// session found, there is no need to load user
+					//
+					
+					else
+					{
+						DEBUG("Call authenticate by %s\n", l->sl_ActiveAuthModule->am_Name );
+
+						if( isUserSentinel == TRUE )
+						{
+							loggedSession = dstusrsess;
+						}
+						else
+						{
+							if( appname == NULL )
+							{
+								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, NULL, &blockedTime );
+							}
+							else
+							{
+								loggedSession = l->sl_ActiveAuthModule->Authenticate( l->sl_ActiveAuthModule, *request, dstusrsess, usrname, pass, deviceid, "remote", &blockedTime );
+							}
+						}
+					}
+					
+					//
+					// last checks if session is ok
+					//
+					
+					if( loggedSession != NULL )
+					{
+						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
+						//if( dstusrsess == NULL )
+						//{
+							if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
+							{
+								if( loggedSession->us_User == NULL )
+								{
+									DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
+									User *lusr = l->sl_UM->um_Users;
+									while( lusr != NULL )
+									{
+										if( loggedSession->us_UserID == lusr->u_ID )
+										{
+											loggedSession->us_User = lusr;
+											break;
+										}
+										lusr = (User *)lusr->node.mln_Succ;
+									}
+								}
+							//}
+						//
+						// update user and session
+						//
+							
+							char tmpQuery[ 512 ];
+							int lpos = 0;
+							
+							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+							if( sqlLib != NULL )
+							{
+								//
+								// get UserMobileApp ID if possible
+								//
+								FULONG umaID = 0;
+								if( deviceid != NULL )
+								{
+									int len = strlen( deviceid );
+									int i;
+									for( i=0 ; i < len ; i++ )
+									{
+										if( deviceid[ i ] == '_' )
+										{
+											lpos = i+1;
+										}
+									}
+									if( lpos > 0 && lpos < len )
+									{
+										umaID = MobileManagerGetUMAIDByDeviceIDAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
+									}
+								}
+								
+								DEBUG("UMAID %lu\n", umaID );
+								//
+								// no usermobileapp is signed to session/user
+								//
+								/*
+								if( umaID == 0 )
+								{
+									// if device is mobile device, we must create it
+									// entry will be deleted when user will logout
+									if( deviceid != NULL && ( (strstr( deviceid, "_ios_" ) != NULL ) || (strstr( deviceid, "_android_" ) != NULL ) ) )
+									{
+										UserMobileApp *ma = UserMobileAppNew();
+										if( ma != NULL )
+										{
+											ma->uma_AppToken = &(deviceid[ lpos ] );
+											ma->uma_UserID = loggedSession->us_UserID;
+					
+											int err = sqlLib->Save( sqlLib, UserMobileAppDesc, ma );
+											ma->uma_AppToken = NULL;
+											umaID = ma->uma_ID;
+											
+											UserMobileAppDelete( ma );
+										}
+									}
+								}
+								*/
+								
+								//
+								// update UserSession
+								//
+								
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime=%lld,SessionID='%s',UMA_ID=%lu WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, umaID, deviceid,  loggedSession->us_UserID );
+								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+								{ 
+									
+								}
+
+								//
+								// update user
+								//
+							
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+								{ 
+
+								}
+								DEBUG("[SystembaseWeb] user login\n");
+
+								loggedSession->us_MobileAppID = umaID;
+								UMAddUser( l->sl_UM, loggedSession->us_User );
+
+								char *err = NULL;
+								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err );
+								if( err != NULL )
+								{
+									Log( FLOG_ERROR, "Login1 mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
+									FFree( err );
+								}
+
+								userAdded = TRUE;
+								l->LibrarySQLDrop( l, sqlLib );
+							}
+						}
+						else
+						{
+							FERROR("Cannot  add session\n");
+						}
+
+						char tmp[ 512 ];
+						User *loggedUser = NULL;
+						if( loggedSession != NULL )
+						{
+							DoorNotificationRemoveEntriesByUser( l, loggedSession->us_ID );
+							
+							// since we introduced deviceidentities with random number, we must remove also old entries
+							DoorNotificationRemoveEntries( l );
+						
+							User *loggedUser = loggedSession->us_User;
+						
+							Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
+						
+							if( appname == NULL )
+							{
+								snprintf( tmp, sizeof(tmp) ,
+									"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
+									loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+							}
+							else
+							{
+								SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+
+								// Get authid from mysql
+								if( sqllib != NULL )
+								{
+									char authid[ 512 ];
+									authid[ 0 ] = 0;
+								
+									char qery[ 1024 ];
+									sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
+								
+									void *res = sqllib->Query( sqllib, qery );
+									if( res != NULL )
+									{
+										char **row;
+										if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+										{
+											snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
+										}
+										sqllib->FreeResult( sqllib, res );
+									}
+
+									l->LibrarySQLDrop( l, sqllib );
+
+									snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
+									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
+									);
+								}
+							}	// else to appname
+						} //else to logginsession == NULL
+						else
+						{
+							FERROR("[ERROR] User session was not added to list!\n" );
+							char buffer[ 256 ];
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+						}
+						HttpAddTextContent( response, tmp );
+					}
+					else
+					{
+						char temp[ 1024 ];
+						char buffer[ 256 ];
+						
+						snprintf( buffer, sizeof(buffer), l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED], blockedTime );
+						FERROR("[ERROR] User account '%s' will be blocked until: %lu seconds\n", usrname, blockedTime );
+
+						snprintf( temp, sizeof(temp), "fail<!--separate-->{\"result\":\"-1\",\"response\":\"%s\", \"code\":\"%d\"}", buffer , DICT_ACCOUNT_BLOCKED );
+						HttpAddTextContent( response, temp );
+					}
+				}
+				else
+				{
+					FERROR("[ERROR] Authentication module not selected\n" );
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+					HttpAddTextContent( response, buffer );
+				}
+			}
+			else
+			{
+				FERROR("[ERROR] username,password,deviceid parameters not found\n" );
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_PASS_DEV_REQUIRED] , DICT_USER_PASS_DEV_REQUIRED );
+				HttpAddTextContent( response, buffer );
+			}
+			
+			if( usrname != NULL )
+			{
+				FFree( usrname );
+			}
+		}
+		else
+		{
+			FERROR("[ERROR] no data in POST\n");
+			
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+				{ TAG_DONE, TAG_DONE}
+			};
+		
+			response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_POST_MODE_PARAMETERS_REQUIRED] , DICT_POST_MODE_PARAMETERS_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
+		*result = 200;
+	}
+	
 	//
 	// error
 	//
@@ -1922,8 +2114,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		Log( FLOG_ERROR, "[SystemWeb]: Function not found '%s'\n", urlpath[ 0 ] );
 		
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		if( response != NULL )
@@ -1945,8 +2137,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		DEBUG( "Closing socket with Http404!!" );
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};	
 		
 		if( response != NULL )
@@ -1961,20 +2153,28 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		DEBUG( "Closing socket with Http 200 OK!!\n" );
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK, tags );
 	}
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
+	{
+		loggedSession->us_InUseCounter--;
+	}
 	
 	return response;
 	
 error:
 	
 	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
+	if( loginLogoutCalled == FALSE && loggedSession != NULL )
+	{
+		loggedSession->us_InUseCounter--;
+	}
 
 	return response;
 }

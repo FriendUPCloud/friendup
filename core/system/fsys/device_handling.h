@@ -67,19 +67,19 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
 //
 //
 
-int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr );
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError );
 
 //
 //
 //
 
-int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr );
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
 
 //
 //
 //
 
-int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile );
+int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **mountError );
 
 //
 //
@@ -97,7 +97,7 @@ int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount );
 //
 //
 
-File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname );
+File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError );
 
 //
 //
@@ -127,7 +127,7 @@ int CheckAndMountWorkgroupDrive( DeviceManager *dm, char *type, User *usr, FUQUA
 //
 //
 
-int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs );
+int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **mountError );
 
 //
 //
@@ -148,8 +148,9 @@ int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr );
 static inline int ColonPosition( const char *c )
 {
 	int res = 0;
+	unsigned int i;
 	
-	for( unsigned int i=0 ; i < strlen( c ) ; i++ )
+	for( i=0 ; i < strlen( c ) ; i++ )
 	{
 		if( c[ i ] == ':' )
 		{

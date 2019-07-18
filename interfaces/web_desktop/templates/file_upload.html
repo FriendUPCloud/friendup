@@ -25,11 +25,15 @@
 			</div>
 		</form>
 	</div>
-	<div class="HRow MarginTop BorderTop Padding">
+	<div class="HRow BorderTop Padding UploadFeedbackContainer">
 		<div class="FloatLeft MarginRight" id="uploadFeedback"></div>
 		<button type="button" class="FloatRight IconSmall fa-upload" onclick="Workspace.uploadFile('fileUpload')">
 			&nbsp;{i18n_upload_the_file}
 		</button>
+		<div class="ProgressReport">
+			<div class="Progress">
+			</div>
+		</div>
 	</div>
 	<iframe id="fileUploadFrame" style="visibility: hidden; top: -800px; position: absolute; width: 1px; height: 1px" name="uploadFrame"></iframe>
 </div>

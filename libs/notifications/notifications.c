@@ -34,7 +34,7 @@ static NotificationsLibrary_t *_library_handle;
  */
 void *libInit( void *systembase )
 {
-	FERROR("************* library init, systembase %p", systembase);
+	DEBUG("************* library init, systembase %p", systembase);
 	NotificationsLibrary_t* l;
 
 	if( ( _library_handle = calloc( sizeof( NotificationsLibrary_t ), 1 ) ) == NULL )
@@ -54,7 +54,7 @@ void *libInit( void *systembase )
 
 void libClose( NotificationsLibrary_t *l )
 {
-	FERROR("************* library close");
+	DEBUG("************* library close");
 }
 
 long GetVersion(void)
@@ -89,6 +89,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 		HashmapElement *session_element = GetHEReq(request, "sessionid");
 		HashmapElement *extra_element = GetHEReq(request, "extra");
 		HashmapElement *app_element = GetHEReq(request, "application");
+		HashmapElement *ctimestamp = GetHEReq(request, "ctimestamp");
 
 		DEBUG("Notify: message_element %p title_element %p session_element %p extra_element %p\n", message_element, title_element,  session_element, extra_element );
 		
@@ -102,6 +103,9 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 				char *extra = UrlDecodeToMem( extra_element->data );
 				char *app = NULL;
 				char *username = user->u_Name;
+				char *end;
+				
+				FULONG ctime = strtoul( (char *)ctimestamp->data, &end, 0 );
 				
 				if( app_element != NULL )
 				{
@@ -116,7 +120,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 				 */
 				title[strlen(title)-1] = '\0';
 
-				int status = MobileAppNotifyUserRegister( l->sb, username, "lib", app, title, message, MN_force_all_devices, extra );
+				int status = MobileAppNotifyUserRegister( l->sb, username, "lib", app, title, message, MN_force_all_devices, extra, ctime );
 
 				if( message != NULL ) FFree( message );
 				if( title != NULL ) FFree( title );

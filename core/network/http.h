@@ -30,6 +30,7 @@
 #include "network/socket.h"
 #include <util/tagitem.h>
 #include <libwebsockets.h>
+#include <network/user_session_websocket.h>
 
 #define DEFAULT_CONTENT_TYPE "text/html; charset=utf-8"
 
@@ -333,7 +334,7 @@ typedef struct Http
 	HttpFile			*h_FileList;
 	
 	FBOOL				h_Stream;			// stream
-	void				*h_WSocket;				// websocket context, if provided data should be delivered here
+	UserSessionWebsocket *h_WSocket;				// websocket context, if provided data should be delivered here
 	Socket				*h_Socket;		// socket,  if != NULL  data should be delivered here
 	
 	int					h_WriteType;

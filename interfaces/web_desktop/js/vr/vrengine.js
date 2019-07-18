@@ -75,12 +75,15 @@ var FriendVR = {
 		this.renderer.setPixelRatio( window.devicePixelRatio );
 		this.renderer.setSize( window.innerWidth, window.innerHeight );
 		this.renderer.vr.enabled = true;
+		this.renderer.vr.standing = true;
 		
 		// Enable nice shadows
 		this.renderer.shadowMapType = 0;
 		this.renderer.shadowMap.enabled = false;
 		/*this.renderer.shadowMapSoft = true;
 		this.renderer.shadowMapType = THREE.PCFSoftShadowMap;*/
+		
+		this.renderer.gammaOutput = true;
 		
 		this.renderer.setClearColor( 0x202050 );
 		this.renderer.sortObjects = true;
@@ -146,6 +149,57 @@ var FriendVR = {
 			window.addEventListener( 'keyup', function( e ){ FriendVR.onKeyUp( e ); }, false );
 			window.addEventListener( 'mousemove', function( e ){ FriendVR.onMouseMove( e ); }, false );
 		}
+		
+		// Controller	
+		window.addEventListener( 'vr controller connected', function( event )
+		{
+			//  Here it is, your VR controller instance.
+			
+			//  It’s really a THREE.Object3D so you can just add it to your scene:
+			var controller = event.detail;
+			FriendVR.scene.add( controller );
+			
+			// Standing pos
+			controller.standingMatrix = FriendVR.renderer.vr.getStandingMatrix();
+			
+			// 3DOF controller
+			controller.head = FriendVR.camera;
+			
+			// Controller color
+			var meshColorOff = 0xDB3236;//  Red.
+			var meshColorOn  = 0xF4C20D;//  Yellow.
+			var controllerMaterial = new THREE.MeshStandardMaterial({
+				color: meshColorOff
+			});
+			var controllerMesh = new THREE.Mesh(
+				new THREE.CylinderGeometry( 0.005, 0.05, 0.1, 6 ),
+				controllerMaterial
+			);
+			var handleMesh = new THREE.Mesh(
+				new THREE.BoxGeometry( 0.03, 0.1, 0.03 ),
+				controllerMaterial
+			);
+			controllerMaterial.flatShading = true;
+			controllerMesh.rotation.x = -Math.PI / 2;
+			handleMesh.position.y = -0.05;
+			controllerMesh.add( handleMesh );
+			controller.userData.mesh = controllerMesh; //  So we can change the color later.
+			controller.add( controllerMesh );
+		
+			// Easy buttons on
+			controller.addEventListener( 'primary press began', function( event ){
+				event.target.userData.mesh.material.color.setHex( meshColorOn );
+			} );
+			// Off
+			controller.addEventListener( 'primary press ended', function( event ){
+				event.target.userData.mesh.material.color.setHex( meshColorOff );
+			} );
+		
+			// Disconnections
+			controller.addEventListener( 'disconnected', function( event ){
+				controller.parent.remove( controller );
+			} );
+		} );
 		
 		// Add some events
 		window.addEventListener( 'vrdisplaypointerrestricted', function( e ){ FriendVR.onPointerRestricted( e ); }, false );
@@ -308,7 +362,9 @@ var FriendVR = {
 	// Just setup how to animate / render
 	animate: function()
 	{
-		FriendVR.renderer.setAnimationLoop( function(){ FriendVR.render(); } );
+		FriendVR.renderer.setAnimationLoop( function(){ 
+			FriendVR.render(); 
+		} );
 	},
 	hideObjects: function( arr )
 	{
@@ -582,11 +638,14 @@ var FriendVR = {
 			}
 		}
 
-		// Update controls and render
-		//this.controls.update();
+		// Update controls
+		if( THREE.VRController )
+			THREE.VRController.update();
+		// Render
 		this.renderer.render( this.scene, this.camera );
 		
-		// Now we don't need this.
+		// Now we don't need this. It is for dynamic shadows. Better wait
+		// for Ray Tracing
 		//this.renderer.shadowMap.needsUpdate = false;
 	}
 }
@@ -596,3 +655,4 @@ FriendVR.buffers = {
 	user90Deg: 90 * ( 180 / Math.PI ),
 	user45Deg: 45 * ( 180 / Math.PI )
 };
+

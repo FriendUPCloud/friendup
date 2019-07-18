@@ -109,24 +109,23 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 		array( 'Wallpaper', 'Select wallpapers' ),
 		array( 'Astray', 'A labyrinth ball game in 3D' ),
 		array( 'Calculator', 'Do some math' )
-		);
-		$i = 0;
-		foreach( $dockItems as $r )
-		{
-			$d = new dbIO( 'DockItem' );
-			$d->Application = $r[0];
-			$d->ShortDescription = $r[1];
-			$d->UserID = $User->ID;
-			$d->SortOrder = $i++;
-			$d->Parent = 0;
-			$d->Save();
-		}
+	);
+	$i = 0;
+	foreach( $dockItems as $r )
+	{
+		$d = new dbIO( 'DockItem' );
+		$d->Application = $r[0];
+		$d->ShortDescription = $r[1];
+		$d->UserID = $User->ID;
+		$d->SortOrder = $i++;
+		$d->Parent = 0;
+		$d->Save();
+	}
 }
 
 // 2. Check if we never logged in before..
 if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $User->ID . '\'' ) ) )
 {
-
 	$Logger->log( 'Creating home dir' );
 	
 	// 3. Setup a standard disk
@@ -138,9 +137,26 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 	$o->ShortDescription = 'My data volume';
 	$o->Server = 'localhost';
 	$o->Mounted = '1';
-
+	
 	if( $o->Save() )
 	{
+
+	
+		// 3b. Mount the thing
+		$u = $Config->SSLEnable ? 'https://' : 'http://';
+		$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+		$c = curl_init();
+		curl_setopt( $c, CURLOPT_URL, $u . '/system.library/device/mount/?devname=Home&sessionid=' . $User->SessionID );
+		curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
+		if( $Config->SSLEnable )
+		{
+			curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
+			curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
+		}
+		$ud = curl_exec( $c );
+		curl_close( $c );
+
+
 		// 4. Wallpaper images directory
 		$f2 = new dbIO( 'FSFolder' );
 		$f2->FilesystemID = $o->ID;
@@ -163,6 +179,17 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f->DateCreated = date( 'Y-m-d H:i:s' );
 			$f->DateModified = $f->DateCreated;
 			$f->Save();
+		}
+
+		$fdownloadfolder = new dbIO( 'FSFolder' );
+		$fdownloadfolder->FilesystemID = $o->ID;
+		$fdownloadfolder->UserID = $User->ID;
+		$fdownloadfolder->Name = 'Downloads';
+		if( !$fdownloadfolder->Load() )
+		{
+			$fdownloadfolder->DateCreated = date( 'Y-m-d H:i:s' );
+			$fdownloadfolder->DateModified = $f->DateCreated;
+			$fdownloadfolder->Save();
 		}
 
 		$f1 = new dbIO( 'FSFolder' );

@@ -50,6 +50,7 @@ typedef struct UserMobileApp
 	FULONG			uma_UserID;
 	User			*uma_User;
 	char			*uma_AppToken;
+	char			*uma_DeviceID;
 	char			*uma_AppVersion;
 	char			*uma_Platform;
 	char			*uma_PlatformVersion;
@@ -90,6 +91,7 @@ CREATE TABLE IF NOT EXISTS `FUserMobileApp` (
   `ID` bigint(32) NOT NULL AUTO_INCREMENT,
   `UserID` bigint(32) NOT NULL,
   `AppToken` varchar(255) DEFAULT NULL,
+  `DeviceID` varchar(255) DEFAULT NULL,
   `AppVersion` varchar(255) DEFAULT NULL,
   `Platform` varchar(255) DEFAULT NULL,
   `PlatformVersion` varchar(255) DEFAULT NULL,
@@ -107,6 +109,7 @@ static FULONG UserMobileAppDesc[] = {
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserMobileApp, uma_ID ), 
 	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserMobileApp, uma_UserID ),
 	SQLT_STR,     (FULONG)"AppToken",       offsetof( struct UserMobileApp, uma_AppToken ),
+	SQLT_STR,     (FULONG)"DeviceID",       offsetof( struct UserMobileApp, uma_DeviceID ),
 	SQLT_STR,     (FULONG)"AppVersion",   offsetof( struct UserMobileApp, uma_AppVersion ),
 	SQLT_STR,     (FULONG)"Platform",   offsetof( struct UserMobileApp, uma_Platform ),
 	SQLT_STR,     (FULONG)"PlatformVersion",   offsetof( struct UserMobileApp, uma_PlatformVersion ),

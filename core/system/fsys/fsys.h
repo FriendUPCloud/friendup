@@ -26,7 +26,7 @@
 #include <util/base64.h>
 #include <util/buffered_string.h>
 #include <system/fsys/file.h>
-#include <network/websocket_server_client.h>
+#include <network/user_session_websocket.h>
 #include <system/user/user_session.h>
 
 //
@@ -75,7 +75,7 @@ typedef struct FHandler
 	char                    *(*GetSuffix)();
 	char                    *(*GetPrefix)();
 	
-	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti, User *us );
+	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti, User *us, char **mountError );
 	int                     (*UnMount)( struct FHandler *s, void *f, User *usr );
 	int                     (*Release)( struct FHandler *s, void *f );
 
@@ -88,7 +88,7 @@ typedef struct FHandler
 	int                     (*MakeDir)( struct File *s, const char *path );
 	int64_t                 (*Delete)( struct File *s, const char *path );
 	int                     (*Rename)( struct File *s, const char *path, const char *nname );
-	char                    *(*Execute)( struct File *s, const char *path, const char *args, WebsocketServerClient *wsc );
+	char                    *(*Execute)( struct File *s, const char *path, const char *args, UserSessionWebsocket *wsc );
 	int64_t                 (*Copy)( struct File *s, const char *dst, const char *src );
 	int                     (*GetDiskInfo)( struct File *s, int64_t *used, int64_t *size );
 	

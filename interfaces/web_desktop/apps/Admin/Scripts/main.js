@@ -29,46 +29,64 @@ function initGui()
 // Side bar being refreshed
 function refreshSidebar()
 {
+	var isAdmin = Application.getUserLevel() == 'admin' ? true : false;
+
 	Application.mods = {
 		'Server': {
 			'Status': {
-				icon: 'fa-info-circle'
+				icon: 'fa-info-circle',
+				showing: isAdmin
 			},
 			'Configuration': {
-				icon: 'fa-gear'
+				icon: 'fa-gear',
+				showing: isAdmin
 			},
 			'Certificates': {
-				icon: 'fa-certificate'
+				icon: 'fa-certificate',
+				showing: isAdmin
+			},
+			'Printers': {
+				icon: 'fa-print',
+				showing: isAdmin
 			},
 			'Backup': {
-				icon: 'fa-cloud-download'
+				icon: 'fa-cloud-download',
+				showing: isAdmin
 			},
 			'Logs': {
-				icon: 'fa-list-alt'
+				icon: 'fa-list-alt',
+				showing: isAdmin
 			}
 		},
 		'Services': {
 			'Status': {
-				icon: 'fa-info-circle'
+				icon: 'fa-info-circle',
+				showing: isAdmin
 			}
 		},
 		'Applications': {
-			'Status': {
-				icon: 'fa-info-circle'
+			'Applications': {
+				icon: 'fa-info-circle',
+				showing: isAdmin
 			}
 		},
 		'Accounts': {
 			'Status': {
-				icon: 'fa-info-circle'
+				icon: 'fa-info-circle',
+				condition: isAdmin
 			},
 			'Users': {
-				icon: 'fa-user'
+				icon: 'fa-user',
+				showing: isAdmin,
+				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ]
 			},
 			'Workgroups': {
-				icon: 'fa-users'
+				icon: 'fa-users',
+				showing: isAdmin
 			},
 			'Roles': {
-				icon: 'fa-user-secret'
+				icon: 'fa-user-secret',
+				showing: isAdmin
 			}
 		}
 	};
@@ -77,6 +95,8 @@ function refreshSidebar()
 	var eles = container.getElementsByClassName( 'DashboardHeading' );
 	var headings = {};
 	var mods = Application.mods;
+	
+	// Go through all modules
 	for( var a in mods )
 	{
 		var found = false;
@@ -89,10 +109,11 @@ function refreshSidebar()
 				break;
 			}
 		}
+		
+		// Create header
 		if( !found )
 		{
 			headings[ a ] = document.createElement( 'div' );
-			container.appendChild( headings[ a ] );
 			headings[ a ].innerHTML = '<h2>' + a + '</h2>';
 			var elements = document.createElement( 'div' );
 			elements.className = 'Elements';
@@ -100,8 +121,9 @@ function refreshSidebar()
 		}
 		
 		// Clear elements
-		// TODO: Gracefully!
 		headings[ a ].elements.innerHTML = '';
+		
+		var heading_children = 0;
 		
 		// Populate children
 		for( var b in mods[ a ] )
@@ -111,6 +133,26 @@ function refreshSidebar()
 			var atag = document.createElement( 'a' );
 			atag.innerHTML = b;
 			ptag.appendChild( atag );
+			
+			// If we have no showing check permissions
+			if( !ch.showing )
+			{
+				if( ch.permissions )
+				{
+					var access = false;
+				
+					for( var i in ch.permissions )
+					{
+						if( ch.permissions[i] && Application.checkAppPermission( ch.permissions[i] ) )
+						{
+							access = true;
+						}
+					}
+				
+					if( !access ) continue;
+				}
+				else continue;
+			}
 			if( ch.icon )
 			{
 				atag.classList.add( 'IconSmall', ch.icon );
@@ -119,11 +161,22 @@ function refreshSidebar()
 				{
 					ele.onclick = function()
 					{
-						setGUISection( module, sect );
+						// Update latest changes to permissions before showing page ...
+						Application.checkAppPermission( false, function()
+						{
+							setGUISection( module, sect );
+						} );
 					}
 				} )( a, b, atag );
 			}
 			headings[ a ].elements.appendChild( ptag );
+			heading_children++;
+		}
+		
+		// Add header with contents
+		if( !found && heading_children > 0 )
+		{
+			container.appendChild( headings[ a ] );
 		}
 	}
 }

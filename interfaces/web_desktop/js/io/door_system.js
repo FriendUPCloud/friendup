@@ -156,7 +156,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						//'Screens'      : i18n( 'i18n_screens' ),
 						'Software'     : i18n( 'i18n_software' ),
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
-						//'Printers'     : i18n( 'i18n_printers' ),
+						/*'Printers'     : i18n( 'i18n_printers' ),*/
 						//'Network'      : i18n( 'i18n_network' ),
 						//'Language'     : i18n( 'i18n_language' ),
 						'DiskCatalog'    : i18n( 'i18n_disk_catalog' ),
@@ -191,7 +191,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						//'Screens'      : 'devices/video-display.png',
 						'Software'     : 'categories/applications-accessories.png',
 						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
-						//'Printers'     : 'devices/printer-laser.png',
+						/*'Printers'     : 'devices/printer-laser.png',*/
 						//'Network'      : 'places/network-workgroup.png',
 						//'Language'     : 'apps/lokalize.png',
 						'DiskCatalog'    : 'mimetypes/x-office-address-book.png',
@@ -263,14 +263,14 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			var devs = {
 				dosdrivers     : i18n( 'i18n_dosdrivers' ),
 				cores        : i18n( 'i18n_cores' ),
-				sessions       : i18n( 'i18n_sessions' )/*,
-				printers       : i18n( 'i18n_printers' )*/
+				sessions       : i18n( 'i18n_sessions' ),
+				printers       : i18n( 'i18n_printers' )
 			};
 			var icons = {
 				dosdrivers     : 'places/folder-grey.png',
 				cores        : 'places/folder-grey.png',
-				sessions       : 'places/folder-grey.png'/*,
-				printers       : 'places/folder-print.png'*/
+				sessions       : 'places/folder-grey.png',
+				printers       : 'places/folder-print.png'
 			};
 			var types = [
 				'DOSDrivers',

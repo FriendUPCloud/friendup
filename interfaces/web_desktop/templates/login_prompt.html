@@ -5,6 +5,7 @@
 		<script onload="" src="/webclient/js/apps/api.js"></script>
 	</head>
 	<body class="Loading" onload="">
+		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
 				<div class="Logo" style="cursor: pointer" onclick="document.location.reload()">
@@ -20,7 +21,7 @@
 								<label id="UsernameLabel" for="Username">Login</label>
 							</p>
 							<p>
-								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" />
+								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" tabindex="1" />
 							</p>
 						</div>
 						<div class="HRow MarginTop HideForPass">
@@ -28,17 +29,17 @@
 								<label id="PasswordLabel" for="Password">Password</label>
 							</p>
 							<p>
-								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
 							</p>
 						</div>
 						<div class="HRow MarginTop HideForPass">
 							<p>
-								<a id="forgotPassword" href="javascript:Application.forgotPassword()">Forgot password</a>
+								<a id="forgotPassword" href="javascript:Application.forgotPassword()" tabindex="-1000">Forgot password</a>
 							</p>
 						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
-								<button id="loginButton" type="submit" class="IconSmall fa-unlock" onclick="Application.doLogin(event)">
+								<button id="loginButton" type="submit" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin(event)">
 									Sign in
 								</button>
 								<div id="RememberMe">
@@ -46,7 +47,7 @@
 										<label id="rememberLabel" for="remember">Remember me</label>
 									</p>
 									<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
-										<input type="checkbox" id="remember"/>
+										<input type="checkbox" id="remember" tabindex="3"/>
 									</p>
 								</div>
 								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>

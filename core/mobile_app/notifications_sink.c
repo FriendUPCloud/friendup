@@ -95,17 +95,27 @@ int WriteMessageToServers( DataQWSIM *d, unsigned char *msg, int len )
  * @param len size of provided message
  * @return 0 when everything is ok, otherwise return different value
  */
-int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user, void *in, size_t len )
+int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, void* in, ssize_t len)
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
-	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p lenasint %d\n", reason, len, wsi, (int) len);
+	DEBUG("notifications websocket callback, reason %d, len %ld, wsi %p lenasint %d is bigger then 0: %d\n", reason, len, wsi, (int) len,  (len > 0)  );
+	char *buf = NULL;
+	if( in != NULL && (len > 0) )
+	{
+		int s = (int)len;
+		// copy received bufffer
+		buf = FMalloc( s+64 );
+		memcpy( buf, in, s );
+		buf[ s ] = 0;
+	}
+	Log( FLOG_INFO, "[WebsocketNotificationsSinkCallback] incoming msg, reason: %d msg len: %d\n", reason, len );
 	
 	switch( reason )
 	{
 		case LWS_CALLBACK_PROTOCOL_INIT:
 		{
 
-			return 0;
 		}
 		break;
 	
@@ -124,7 +134,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 					man->man_Data = locd;
 				}
 			}
-			return 0;
 		}
 		break;
 	
@@ -150,7 +159,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 				}	
 				man->man_Data = NULL;
 			}
-			return 0;
 		}
 		break;
 		
@@ -173,7 +181,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 					unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 					t[ e->fq_Size+1 ] = 0;
 
-					INFO("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size );
+					//INFO("\t\t\t\t\t\t\t\t\t\t\tSENDMESSSAGE\n<%s> size: %d\n\n\n\n", e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size );
 					int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
 					//DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
 
@@ -212,10 +220,15 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, int reason, void *user,
 			if( man != NULL && man->man_Data != NULL )
 			{
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
-				int ret = ProcessIncomingRequest( d, (char*)in, len, user );
+				int ret = ProcessIncomingRequest( d, buf, len, user );
 			}
 		}
 		break;
+	}
+	
+	if( buf != NULL )
+	{
+		FFree( buf );
 	}
 	
 	return 0;
@@ -238,7 +251,7 @@ typedef struct UMsg
 
 int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 {
-	DEBUG("Incoming notification request: <%*s>\n", (unsigned int)len, data);
+	Log( FLOG_INFO, "[NotificationSink] Incoming notification request: <%*s>\n", (unsigned int)len, data);
 
 	jsmn_parser parser;
 	jsmn_init( &parser );
@@ -268,7 +281,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 	//	}
 	//}
 	
-	json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
+	//json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
 	
 	if( t[0].type == JSMN_OBJECT ) 
 	{
@@ -281,6 +294,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				int p;
 				char *authKey = NULL;
 				char *authName = NULL;
+				static int LOCAL_REPLY_LEN = 512 + LWS_PRE;
+				char reply[ LOCAL_REPLY_LEN ];
 				// first check if service is already authenticated maybe?
 				
 				for( p = 5; p < 9 ; p++ )
@@ -322,8 +337,9 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				d->d_Authenticated = TRUE;
 				d->d_ServerName = StringDuplicate( authName );
 				
-				char reply[ 256 ];
-				int msize = snprintf( reply + LWS_PRE, sizeof(reply), "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
+				int msize = strlen("{\"type\":\"authenticate\",\"data\":{\"status\":0 }}");
+				//int msize = snprintf( reply + LWS_PRE, LOCAL_REPLY_LEN, "{\"type\":\"authenticate\",\"data\":{\"status\":0 }}" );
+				strcpy( reply + LWS_PRE, "{\"type\":\"authenticate\",\"data\":{\"status\":0 }}" );
 				
 #ifdef WEBSOCKET_SEND_QUEUE
 				WriteMessageSink( d, (unsigned char *)(reply)+LWS_PRE, msize );
@@ -352,16 +368,21 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				int dlen =  t[3].end - t[3].start;
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
-					DEBUG( "do Ping things\n" );
-
-					char reply[ 128 ];
-					int locmsglen = snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
+					static int bufferSize = LWS_PRE+256;
+					char *reply = FMalloc( bufferSize );
+					//char reply[ 128 ];
+					DEBUG("size: %d\n", t[4].end-t[4].start );
+					DEBUG("Data: %s\n", (char *)(data + t[4].start));
+					//DEBUG("received message: %s {\"type\":\"pong\",\"data\":\"%.*s\"}", (int)(t[4].end-t[4].start), (char *)(data + t[4].start) );
+					//int locmsglen = snprintf( reply + LWS_PRE, bufferSize ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
+					int locmsglen = sprintf( reply + LWS_PRE ,"{\"type\":\"pong\",\"data\":\"%.*s\"}", t[4].end-t[4].start,data + t[4].start );
 #ifdef WEBSOCKET_SEND_QUEUE
 					WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, locmsglen );
 #else
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
 					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );				
 #endif
+					FFree( reply );
 				}
 				else if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
@@ -382,6 +403,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							char *message = NULL;
 							char *application = NULL;
 							char *extra = NULL;
+							FULONG timecreated = 0;
 							
 							UMsg *ulistroot = NULL;
 							//List *usersList = ListNew(); // list of users
@@ -460,6 +482,18 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									p++;
 									extra = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 								}
+								else if( strncmp( data + t[p].start, "timecreated", size) == 0) 
+								{
+									char *tmp;
+									p++;
+									tmp = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+									if( tmp != NULL )
+									{
+										char *end;
+										timecreated = strtoul( tmp, &end, 0);
+										FFree( tmp );
+									}
+								}
 							}
 							
 							if( notification_type >= 0 )
@@ -492,7 +526,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								{
 									if( le->usrname != NULL )
 									{
-										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
+										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra, timecreated );
 
 										char reply[256];
 										int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
@@ -606,7 +640,6 @@ static FBOOL VerifyAuthKey( const char *keyName, const char *keyToVerify )
 {
 	DEBUG("VerifyAuthKey - keyName <%s> VerifyAuthKey - keyToVerify <%s>\n", keyName, keyToVerify );
 
-	//TODO: verify against key name 
 	if( keyName != NULL && keyToVerify != NULL )
 	{
 		int i;

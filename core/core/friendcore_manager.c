@@ -27,8 +27,6 @@
 #include <system/systembase.h>
 #include <hardware/machine_info.h>
 
-extern pthread_mutex_t WSThreadMutex;
-
 //
 // currently Friend can create only one core
 //
@@ -121,8 +119,6 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_DisableMobileWS = 0;
 		fcm->fcm_DisableExternalWS = 0;
 		fcm->fcm_WSExtendedDebug = 0;
-		
-		pthread_mutex_init( &WSThreadMutex, NULL );
 		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
@@ -279,6 +275,7 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		
 		fcm->fcm_Shutdown = FALSE;
 		
+		/*
 		if( fcm->fcm_DisableWS != TRUE )
 		{
 			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
@@ -340,10 +337,79 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 		{
 			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
 		}
+		*/
 	}
 	Log( FLOG_INFO,"FriendCoreManager Initialized\n");
 	
 	return 0;
+}
+
+int FriendCoreManagerInitServices( FriendCoreManager *fcm )
+{
+	if( fcm->fcm_DisableWS != TRUE )
+		{
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, 0, fcm->fcm_WSExtendedDebug ) ) != NULL )
+			{
+				WebSocketStart( fcm->fcm_WebSocket );
+			}
+			else
+			{
+				Log( FLOG_FATAL, "Cannot launch websocket server\n");
+				return -1;
+			}
+			/*
+			if( fcm->fcm_DisableMobileWS == 0 )
+			{
+				if( ( fcm->fcm_WebSocketMobile = WebSocketNew( SLIB, fcm->fcm_WSMobilePort, fcm->fcm_WSSSLEnabled, 1, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				{
+					WebSocketStart( fcm->fcm_WebSocketMobile );
+				}
+				else
+				{
+					Log( FLOG_FATAL, "Cannot launch websocket server\n");
+					return -1;
+				}
+			}
+			*/
+			
+			if( fcm->fcm_DisableExternalWS == 0 )
+			{
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, fcm->fcm_WSSSLEnabled, 2, fcm->fcm_WSExtendedDebug ) ) != NULL )
+				{
+					WebSocketStart( fcm->fcm_WebSocketNotification );
+				}
+				else
+				{
+					Log( FLOG_FATAL, "Cannot launch websocket server\n");
+					return -1;
+				}
+			}
+		}
+
+		SLIB->fcm = fcm;
+		fcm->fcm_SB = SLIB;
+		
+		Log( FLOG_INFO,"Start SSH console\n");
+		
+		//fcm->fcm_SSHServer = SSHServerNew( SLIB, fcm->fcm_SSHRSAKey, fcm->fcm_SSHDSAKey );
+		
+		fcm->fcm_Shutdown = FALSE;
+		
+		fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
+		
+		if( fcm->fcm_CommService )
+		{
+			CommServiceStart( fcm->fcm_CommService );
+		}
+		
+		fcm->fcm_CommServiceRemote = CommServiceRemoteNew( fcm->fcm_ComRemotePort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpComRemote );
+		
+		if( fcm->fcm_CommServiceRemote )
+		{
+			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
+		}
+		
+		return 0;
 }
 
 /**
@@ -370,7 +436,7 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 			fcm->fcm_CommService = NULL;
 		}
 		
-		DEBUG("[FriendCoreManager] Closing websockets\n");
+		DEBUG("[FriendCoreManager] Closing websockets notification channel\n");
 		
 		if( fcm->fcm_WebSocketNotification != NULL )
 		{
@@ -432,9 +498,7 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 			ClusterNodeDeleteAll( fcm->fcm_ClusterNodes );
 			fcm->fcm_ClusterNodes = NULL;
 		}
-		
-		pthread_mutex_destroy( &WSThreadMutex );
-		
+
 		if( fcm->fcm_SSHRSAKey != NULL )
 		{
 			FFree( fcm->fcm_SSHRSAKey );
