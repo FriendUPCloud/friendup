@@ -5119,7 +5119,7 @@ var View = function( args )
 				v.appendChild( fb );
 				var mediaElement = document.createElement( 'input' );
 				mediaElement.type = 'file';
-				mediaElement.accept = 'image/png';
+				mediaElement.accept = 'image/jpeg';
 				mediaElement.className = 'FriendCameraInput';
 				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
 					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
