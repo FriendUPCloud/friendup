@@ -4381,6 +4381,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Use a door and execute a filesystem function, rename
 	executeRename: function( nam, icon, win )
 	{	
+		var ic = new FileIcon();
+		
+		var target = icon.Path;
+		if( target.indexOf( '/' ) > 0 )
+		{
+			target = target.split( '/' );
+			target.pop();
+			target = target.join( '/' ) + '/' + nam;
+		}
+		else
+		{
+			target = target.split( ':' )[0] + ':' + nam;
+		}
+		
+		ic.delCache( icon.Path );
+		ic.delCache( target );
+		
 		if ( icon.Dormant )
 		{
 			if ( icon.Dormant.dosAction )
@@ -7751,7 +7768,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( info.substr( info.length - 1, 1 ) == '/' )
 								info = info.substr( 0, info.length - 1 );
 								// Try to kill the info file!
-								ic.delCache( fob.files[b].fileInfo.Path );
 								file.door.dosAction( 'delete', { path: info + '.info' } );
 								
 								ic.delCache( file.fileInfo.Path );
