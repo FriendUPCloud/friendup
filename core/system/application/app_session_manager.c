@@ -234,6 +234,14 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 	{
 		AppSession *toBeRemoved = NULL;
 		
+		// Try to get the lock
+		// TODO: Later, replace with macro!
+		if( pthread_mutex_trylock( &( as->as_SessionsMut ) ) != 0 )
+		{
+			// TODO: Assert here to debug later!
+			break;
+		}
+		
 		//DEBUG("Lock on AS set\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
