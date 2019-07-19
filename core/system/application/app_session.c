@@ -127,6 +127,7 @@ AppSession *AppSessionNew( void *sb, const char *authid, FUQUAD appid, UserSessi
 	{
 		FERROR("Cannot allocate memory for AppSession\n");
 	}
+	DEBUG("[AppSessionNew] End\n");
 	
 	return las;
 }

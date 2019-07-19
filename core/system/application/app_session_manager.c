@@ -226,7 +226,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 {
 	if( asm == NULL )
 	{
-		//FERROR("SAS was removed\n");
+		FERROR("SAS was removed\n");
 		return -1;
 	}
 	AppSession *as = asm->asm_AppSessions;
@@ -236,11 +236,13 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		
 		// Try to get the lock
 		// TODO: Later, replace with macro!
+		/*
 		if( pthread_mutex_trylock( &( as->as_SessionsMut ) ) != 0 )
 		{
 			// TODO: Assert here to debug later!
 			break;
 		}
+		*/
 		
 		//DEBUG("Lock on AS set\n");
 		
