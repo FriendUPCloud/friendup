@@ -105,19 +105,8 @@ int AppSessionManagerAddSession( AppSessionManager *asm, AppSession *nas )
 		
 		if( FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) ) == 0 )
 		{
-			AppSession *lastone = asm->asm_AppSessions;
-			if( lastone == NULL )
-			{
-				asm->asm_AppSessions = nas;
-			}
-			else
-			{
-				while( lastone->node.mln_Succ != NULL )
-				{
-					lastone = (AppSession *)lastone->node.mln_Succ;
-				}
-				lastone->node.mln_Succ = (MinNode *)nas;
-			}
+			nas->node.mln_Succ = (MinNode *)asm->asm_AppSessions;
+			asm->asm_AppSessions = nas;
 			FRIEND_MUTEX_UNLOCK( &(asm->asm_Mutex) );
 		}
 		return 0;
@@ -151,7 +140,7 @@ int AppSessionManagerRemSession( AppSessionManager *asm, AppSession *nas )
 				
 					if( nas == asm->asm_AppSessions )	// if session is equal to first entry, we only overwrite pointer
 					{
-						asm->asm_AppSessions = (AppSession *) nas->node.mln_Succ;
+						asm->asm_AppSessions = (AppSession *) asm->asm_AppSessions->node.mln_Succ;
 					}
 					else	// if session is not first entry then we only update next pointer in previous pointer
 					{
@@ -236,11 +225,13 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		
 		// Try to get the lock
 		// TODO: Later, replace with macro!
+		/*
 		if( pthread_mutex_trylock( &( as->as_SessionsMut ) ) != 0 )
 		{
 			// TODO: Assert here to debug later!
 			break;
 		}
+		*/
 		
 		//DEBUG("Lock on AS set\n");
 		
