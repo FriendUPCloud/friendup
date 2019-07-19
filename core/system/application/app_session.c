@@ -358,59 +358,63 @@ int AppSessionRemUsersessionAny( AppSession *as, UserSession *u )
 	{
 		if( u != NULL )
 		{
-			DEBUG("[AppSession] AppSessionRemUsersession %s\n", u->us_SessionID );
+			DEBUG("[AppSessionRemUsersessionAny] AppSessionRemUsersession %s\n", u->us_SessionID );
 		}
 		else
 		{
-			DEBUG("[AppSession] remove user session, user session is equal to NULL\n");
+			DEBUG("[AppSessionRemUsersessionAny] remove user session, user session is equal to NULL\n");
 			return -1;
 		}
 		
-		DEBUG("Before  as_SessionsMut lock\n");
-		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+		DEBUG("[AppSessionRemUsersessionAny] Before  as_SessionsMut lock\n");
 		
-		SASUList *ali = (SASUList *)as->as_UserSessionList;
-		SASUList *prevali = as->as_UserSessionList;
-		DEBUG("[AppSession] Session before loop\n");
-		while( ali != NULL )
+		SASUList *ali = NULL;
+		SASUList *prevali = NULL;
+		
+		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
-			if( u ==  ali->usersession )
+			ali = (SASUList *)as->as_UserSessionList;
+			prevali = as->as_UserSessionList;
+			DEBUG("[AppSessionRemUsersessionAny] Session before loop\n");
+			while( ali != NULL )
 			{
-				if( ali == as->as_UserSessionList )
+				if( u ==  ali->usersession )
 				{
-					as->as_UserSessionList =(SASUList *)ali->node.mln_Succ;
-				}
-				else
-				{
-					prevali->node.mln_Succ = ali->node.mln_Succ;
-				}
+					if( ali == as->as_UserSessionList )
+					{
+						as->as_UserSessionList =(SASUList *)ali->node.mln_Succ;
+					}
+					else
+					{
+						prevali->node.mln_Succ = ali->node.mln_Succ;
+					}
 				
-				as->as_UserNumber--;
-				DEBUG("[AppSession] Session removed, sessions %d\n", as->as_UserNumber );
+					as->as_UserNumber--;
+					DEBUG("[AppSessionRemUsersessionAny] Session removed, sessions %d\n", as->as_UserNumber );
 				
-				FFree( ali );
-				DEBUG("[AppSession] break\n");
+					FFree( ali );
+					DEBUG("[AppSessionRemUsersessionAny] break\n");
 			
-				break;
+					break;
+				}
+				prevali = ali;
+				ali = (SASUList *) ali->node.mln_Succ;
+				DEBUG("[AppSessionRemUsersessionAny] Session end loop\n");
 			}
-		
-			prevali = ali;
-			ali = (SASUList *) ali->node.mln_Succ;
-			DEBUG("[AppSession] Session end loop\n");
-		}
 
-		DEBUG("[AppSession] lock end\n");
-		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+			DEBUG("[AppSessionRemUsersessionAny] lock end\n");
+			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+		}
 		as->as_Timer = time( NULL );
 		
 		if( ali == NULL )
 		{
-			DEBUG("[AppSession] user is not in SAS user session list\n");
+			DEBUG("[AppSessionRemUsersessionAny] user is not in SAS user session list\n");
 			return -2;
 		}
 	}
 	
-	DEBUG("[AppSession] remove user session, success\n");
+	DEBUG("[AppSessionRemUsersessionAny] remove user session, success\n");
 	return 0;
 }
 
@@ -1142,7 +1146,7 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 	}
 
 	time_t ntime = time( NULL );
-	DEBUG("[AppSession] OLD TIME %lld NEW TIME %lld\n", (long long)as->as_Timer, (long long)ntime );
+	DEBUG("[AppSessionSendMessage] OLD TIME %lld NEW TIME %lld\n", (long long)as->as_Timer, (long long)ntime );
 	if( ( ntime - as->as_Timer ) > TIMEOUT_APP_SESSION )
 	{
 		as->as_Obsolete = TRUE;
@@ -1157,7 +1161,7 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 			if( ali->usersession == sender )
 			{
 				// sender should receive response
-				DEBUG("[AppSession] SENDER AUTHID %s\n", ali->authid );
+				DEBUG("[AppSessionSendMessage] SENDER AUTHID %s\n", ali->authid );
 			}
 			else
 			{
@@ -1167,7 +1171,7 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 				{
 					User *usend = sender->us_User;
 					
-					DEBUG("[AppSession] Sendmessage AUTHID %s\n", ali->authid );
+					DEBUG("[AppSessionSendMessage] Sendmessage AUTHID %s\n", ali->authid );
 					
 					int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->as_SASID, usend->u_Name, msg );
 					
@@ -1176,7 +1180,7 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 						msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
 						if( ali->usersession != NULL && ali->usersession->us_User != NULL )
 						{
-							DEBUG("[AppSession] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+							DEBUG("[AppSessionSendMessage] FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
 						}
 					}
 					FFree( newmsg );
@@ -1186,8 +1190,10 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 					FERROR("Cannot allocate memory for message\n");
 				}
 			}
+			DEBUG("[AppSessionSendMessage] in loop \n");
 			ali = (SASUList *) ali->node.mln_Succ;
 		}
+		DEBUG("[AppSessionSendMessage] SENDER\n");
 	}
 	else  // dstusers != NULL
 	{
@@ -1200,7 +1206,7 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 			if( ali->usersession == sender )
 			{
 				// sender should receive response
-				DEBUG("[AppSession] SENDER AUTHID %s\n", ali->authid );
+				DEBUG("[AppSessionSendMessage] SENDER AUTHID %s\n", ali->authid );
 			}
 			else
 			{
@@ -1239,7 +1245,7 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 		
 		FFree( quotaName );
 	}
-	
+	DEBUG("[AppSessionSendMessage] end\n");
 	return msgsndsize;
 }
 
