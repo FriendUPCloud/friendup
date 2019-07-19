@@ -252,6 +252,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			
 			WorkerRunCommand( wrk, foo, d );
 			testquit = 0;
+			wrk->w_Request = NULL;
 			
 			break;
 		}
