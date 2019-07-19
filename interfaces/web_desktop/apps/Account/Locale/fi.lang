@@ -39,6 +39,7 @@ i18n_publickey                       : Julkinen avain
 
 i18n_key_information                 : Avain tiedot
 i18n_your_apps                       : Ohjelmasi
+i18n_available_storage_overview      : Ystävä yhdistävä foorumi tarjoaa monenlaisia ??tallennusratkaisuja, kuten Google Drive, DropBox, Samba ja paljon muuta.
 i18n_available_storage               : Käytettävissä oleva tallennustila
 
 i18n_no_apps                         : Tilanne

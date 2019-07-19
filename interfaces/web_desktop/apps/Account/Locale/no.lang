@@ -41,6 +41,7 @@ i18n_publickey                       : Fellesnøkkel
 
 i18n_key_information                 : Nøkkel informasjon
 
+i18n_available_storage_overview      : Friend Unifying Platform gir tilgang til flere typer lagringsløsninger, for eksempel Google Disk, DropBox, Samba, og mye mer.
 i18n_available_storage               : Tilgjengelige disker
 i18n_unmounted_storage               : Frakoblede disker
 i18n_your_apps                       : Dine applikasjoner

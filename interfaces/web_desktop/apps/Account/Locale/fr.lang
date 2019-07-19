@@ -39,6 +39,7 @@ i18n_publickey                       : Clé publique
 
 i18n_key_information                 : Information sur la clé
 i18n_your_apps                       : Vos apps
+i18n_available_storage_overview      : La plate-forme Friend Unifying permet d'accéder à plusieurs types de solutions de stockage, telles que Google Drive, DropBox, Samba et bien plus encore.
 i18n_available_storage               : Espace disponible
 
 i18n_no_apps                         : Statut
