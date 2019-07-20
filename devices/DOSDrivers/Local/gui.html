@@ -1,28 +1,31 @@
-			
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="Layout InputHeight">
-						<strong>
-							{i18n_notes}:
-						</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout InputHeight">
-						<input type="text" id="ShortDescription" class="FullWidth" value="" placeholder="{i18n_your_notes}..."/>
-					</p>
-				</div>
-			</div>
-			<div class="HRow">
-				<p class="Layout">
-					<strong>
-						{i18n_directory}:
-					</strong>
-				</p>
-			</div>
-			<div class="HRow">
-				<p class="Layout">
-					<input type="text" id="Path" class="FullWidth" value="" placeholder="/"/>
-				</p>
-			</div>
+<!-----------------------------------------------------------------------------	
+Local
+------------------------------------------------------------------------------>			
+		
+	<div class="HRow"><p class="Layout">
+		<br>{i18n_connection_description}<br><br>
+		<font size="+2">{i18n_configuration_details}</font></p>
+	</div>
+
+<!----------------------------------------------------------------------------->				
+	<div class="HRow MarginTop">
+		<p class="Layout">
+				<br><br><strong><u>{i18n_directory}:</u></strong></p>
+		</div>
+		<div class="HContent100 FloatLeft"><p class="Layout InputHeight">
+			<input type="text" id="Path" class="FullWidth" value="" placeholder="{i18n_path}..."/></p>
+		</div>
+	</div>
+
+<!----------------------------------------------------------------------------->
+	<div class="HRow MarginBottom">
+		<p class="Layout">
+				<br><br><strong><u>{i18n_notes}:</u></strong></p>
+		</div>
+		<div class="HContent100 FloatLeft"><p class="Layout InputHeight">
+			<input type="text" id="ShortDescription" class="FullWidth" value="" placeholder="{i18n_your_notes}..."/></p>
+		</div>
+	</div>
+
+<!----------------------------------------------------------------------------->
 

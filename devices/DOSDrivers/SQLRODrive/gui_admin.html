@@ -1,70 +1,64 @@
-			
-			<!-- comment in when we can access remove friend cores!
-			<div class="HRow">
-				<p class="Layout">
-					<strong>
-						{i18n_connection_details}:
-					</strong>
-				</p>
-			</div>
-			<div class="HRow">
-				<div class="HContent70 FloatLeft">
-					<p class="Layout">
-						<input type="text" id="Server" class="FullWidth" value="" placeholder="Server address/IP..."/>
-					</p>
-				</div>
-				<div class="HContent30 FloatLeft" style="padding-left: 10px">
-					<p class="Layout">
-						<input type="text" id="Port" class="FullWidth" value="" placeholder="Port..."/>
-					</p>
-				</div>
-			</div>-->
-			<!-- Comment back in when we're allowing other friend cores
-			<div class="HRow">
-				<p class="Layout">
-					<strong>
-						{i18n_login_info}:
-					</strong>
-				</p>
-			</div>
-			<div class="HRow">
-				<div class="HContent35 FloatLeft">
-					<p class="Layout">
-						<input type="text" id="Username" class="FullWidth" style="width: 95%" value="" placeholder="{i18n_username}"/>
-					</p>
-				</div>
-				<div class="HContent35 FloatLeft">
-					<p class="Layout">
-						<input type="password" id="Password" class="FullWidth" value="" placeholder="Password"/>
-					</p>
-				</div>
-			</div>-->
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="Layout InputHeight">
-						<strong>
-							{i18n_disksize}:
-						</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout InputHeight">
-						<input type="text" id="conf.DiskSize" class="FullWidth" value="" placeholder="500MB"/>
-					</p>
-				</div>
-			</div>
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="Layout InputHeight">
-						<strong>
-							{i18n_notes}:
-						</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout InputHeight">
-						<input type="text" id="ShortDescription" class="FullWidth" value="" placeholder="{i18n_your_notes}..."/>
-					</p>
-				</div>
-			</div>
+<!-----------------------------------------------------------------------------	
+SQL Read Only Drive - ADMIN
+------------------------------------------------------------------------------>			
+	
+	<div class="HRow"><p class="Layout">
+		<br>{i18n_connection_description}<br><br>
+		<font size="+2">{i18n_configuration_details}</font><br></p>
+	</div>
 
+<!----------------------------------------------------------------------------->	
+<!-- comment in when we can access remove friend cores!
+	<div class="HRow"><p class="Layout">
+			<strong><u>{i18n_server_configuration}:</strong></u></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_host}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" id="Server" class="FullWidth" value="" placeholder="{i18n_host_ip}..."/></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_port}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" id="Port" class="FullWidth" value="" placeholder="{i18n_host_port}..."/></p>
+		</div>
+	</div>-->
+	
+<!----------------------------------------------------------------------------->	
+<!-- Comment back in when we're allowing other friend cores
+	<div class="HRow MarginBottom">
+		<p class="Layout">
+				<br><strong><u>{i18n_login_information}:</u></strong></p>
+		</div>
+	
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_username}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" id="Username" class="FullWidth" value="" placeholder="{i18n_username}..."/></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_password}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="password" id="Password" class="FullWidth" value="" placeholder="{i18n_password}..."/></p>
+		</div>
+	</div>-->
+	
+<!----------------------------------------------------------------------------->	
+	<div class="HRow MarginBottom">
+		<p class="Layout">
+				<br><strong><u>{i18n_misc}:</u></strong></p>
+		</div>
+	
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_disksize}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+			<input type="text" id="conf.DiskSize" class="FullWidth" value="" placeholder="500MB"/>
+		</div>
+		
+<!----------------------------------------------------------------------------->
+	<div class="HRow MarginBottom">
+		<p class="Layout">
+				<br><br><strong><u>{i18n_notes}:</u></strong></p>
+		</div>
+		<div class="HContent100 FloatLeft"><p class="Layout InputHeight">
+			<input type="text" id="ShortDescription" class="FullWidth" value="" placeholder="{i18n_your_notes}..."/></p>
+		</div>
+	</div>

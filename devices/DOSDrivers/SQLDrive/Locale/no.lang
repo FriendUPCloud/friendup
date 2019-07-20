@@ -1,1 +1,49 @@
-i18n_disksize : Disk størrelse
+# Egendefinerte innlegg er spesifikke for den bestemte stasjonen / disken
+# Merk at {i18n_connection_description} må skrives som en kontinuerlig tekststreng med html-formatering. Det kan ikke inneholde returrapportering
+i18n_drivename                     : SQL Drive
+i18n_connection_description        : SQLDrive DOS-driveren lar deg abstrahere en SQL-database som et filsystem med diskbasert binær lagring. SQL-stasjonen gir deg muligheten til å programmere oppførselen til filsystemet ditt slik at det passer dine behov, og er derfor en god mal for intelligente, dynamiske filsystemer.
+
+# Hovedbeskrivelse Emner
+i18n_configuration_details         : Konfigurasjonsdetaljer
+i18n_connection_details            : Tilkoblingsdetaljer
+i18n_server_configuration          : Serverkonfigurasjon
+i18n_login_information             : Login informasjon
+i18n_database_configuration 	   : Database konfigurasjon
+i18n_vendor_configuration          : Leverandørkonfigurasjon
+i18n_device_configuration          : Konfigurasjon av serverenhet
+i18n_no_configuration              : Denne driveren har ingen konfigurasjonsalternativer tilgjengelig.
+i18n_misc                          : Diverse
+i18n_notes                         : Merknader
+
+# Elementer
+i18n_host                          : Vert
+i18n_port                          : Havn
+i18n_path                          : Sti
+i18n_username                      : Brukernavn
+i18n_password                      : Passord
+i18n_database                      : Database
+i18n_vendor                        : Leverandørinformasjon
+i18n_directory                     : Directory
+i18n_public_key                    : Offentlig nøkkel
+i18n_private_key                   : Privat nøkkel
+i18n_workgroup                     : arbeidsgruppe
+i18n_keys                          : Keys
+i18n_disksize                      : Diskstørrelse
+
+# Plassholdere (Stuff i postkasser)
+i18n_host_ip                       : Serveradresse eller IP
+i18n_host_port                     : Serverportnummer
+i18n_your_notes                    : Dine notater
+i18n_remotedirectory               : Fjernkatalog
+i18n_host_database_name            : Vertsdatabasenavn
+i18n_vendor_ID                     : Ditt registrerte leverandør ID
+i18n_device_name                   : Enhetsnavn
+i18n_server_id                     : Server ID
+i18n_workgroup_name                : Din arbeidsgruppe
+i18n_key                           : Nøkkel
+
+# Fra doshandlinger
+i18n_cannotcreate_deep_directory   : Du kan bare opprette prosjektkataloger (ett nivå).
+
+
+########################################################################

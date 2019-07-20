@@ -1,94 +1,74 @@
-			
-			<div class="HRow">
-				<h3>
-					{i18n_connection_details}:
-				</h3>
-			</div>
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="InputHeight">
-						<strong>IP/FC ID:</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout">
-						<input type="text" id="Server" class="FullWidth" value="" placeholder="{i18n_hostname}..."/>
-					</p>
-				</div>
-			</div>
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="InputHeight">
-						<strong>Server device:</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout">
-						<input type="text" id="Path" class="FullWidth" value="" placeholder="{i18n_device_name}..."/>
-					</p>
-				</div>
-			</div>
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="InputHeight">
-						<strong>Username:</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout">
-						<input type="text" id="Username" class="FullWidth" value="" placeholder="{i18n_username}..."/>
-					</p>
-				</div>
-			</div>
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="InputHeight">
-						<strong>Password:</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout">
-						<input type="password" id="HashedPassword" class="FullWidth" value="" placeholder="{i18n_password}..."/>
-					</p>
-				</div>
-			</div>
-			<div class="HRow MarginBottom">
-				<div class="HContent30 FloatLeft">
-					<p class="InputHeight">
-						<strong>{i18n_server_id}:</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="InputHeight">
-						<input type="text" optional="optional" id="conf.ServerID" class="InputHeight FullWidth" value="" placeholder="{i18n_server_id}..."/>
-					</p>
-				</div>
-			</div>
-			<div class="HRow">
-				<div class="HContent30 FloatLeft">
-					<p class="InputHeight">
-						<strong>{i18n_public_key}:</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="InputHeight">
-						<textarea id="conf.PublicKey" optional="optional" class="FullWidth"></textarea>
-					</p>
-				</div>
-			</div>
-			<div class="HRow MarginTop">
-				<div class="HContent30 FloatLeft">
-					<p class="Layout InputHeight">
-						<strong>
-							{i18n_notes}:
-						</strong>
-					</p>
-				</div>
-				<div class="HContent70 FloatLeft">
-					<p class="Layout InputHeight">
-						<input type="text" id="ShortDescription" optional="optional" class="FullWidth" value="" placeholder="{i18n_your_notes}..."/>
-					</p>
-				</div>
-			</div>
+<!-----------------------------------------------------------------------------	
+Remote
+------------------------------------------------------------------------------>			
+		
+	<div class="HRow"><p class="Layout">
+		<br>{i18n_connection_description}<br><br>
+		<font size="+2">{i18n_configuration_details}</font></p>
+	</div>
 
+<!----------------------------------------------------------------------------->	
+	<div class="HRow"><p class="Layout">
+			<br><strong><u>{i18n_server_configuration}:</strong></u></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_host}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" id="Server" class="FullWidth" value="" placeholder="{i18n_host_ip}..."/></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_port}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" id="Port" class="FullWidth" value="" placeholder="{i18n_host_port}..."/></p>
+		</div>
+	</div>
 
+<!----------------------------------------------------------------------------->
+	<div class="HRow MarginBottom">
+		<p class="Layout">
+				<br><strong><u>{i18n_login_information}:</u></strong></p>
+		</div>
+	
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_username}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" id="Username" class="FullWidth" value="" placeholder="{i18n_username}..."/></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_password}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="password" id="Password" class="FullWidth" value="" placeholder="{i18n_password}..."/></p>
+		</div>
+	</div>
+	
+<!----------------------------------------------------------------------------->
+	<div class="HRow"><p class="Layout">
+			<br><strong><u>{i18n_device_configuration}:</strong></u></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_device_name}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" id="Path" class="FullWidth" value="" placeholder="{i18n_device_name}..."/></p>
+		</div>
+		
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_server_id}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<input type="text" optional="optional" id="conf.ServerID" class="InputHeight FullWidth" value="" placeholder="{i18n_server_id}..."/></p>
+		</div>
+
+		<div class="HContent30 FloatLeft"><p class="Layout InputHeight"><strong>{i18n_public_key}:</strong></p></div>
+		<div class="HContent50 FloatLeft"><p class="Layout InputHeight">
+				<textarea id="conf.PublicKey" optional="optional" class="FullWidth"></textarea></p>
+		</div>
+	</div>
+
+<!----------------------------------------------------------------------------->
+	<div class="HRow MarginBottom">
+		<p class="Layout">
+				<br><br><strong><u>{i18n_notes}:</u></strong></p>
+		</div>
+		<div class="HContent100 FloatLeft"><p class="Layout InputHeight">
+			<input type="text" id="ShortDescription" class="FullWidth" value="" placeholder="{i18n_your_notes}..."/></p>
+		</div>
+	</div>
+
+<!----------------------------------------------------------------------------->

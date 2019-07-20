@@ -1,7 +1,14 @@
+# Jest to domyślny szablon en.lang sterownika DOS.
+# Wszelkie nowe wpisy należy dodać tutaj, jeśli są to wpisy ogólnego przeznaczenia.
+# Ma to na celu ułatwienie wdrażania nowych urządzeń DOS Driver przy użyciu standardu
+# plik językowy szablonu. Są one używane przez plik gui.html w ramach konkretnego
+# Folder DOS Driver. Gui.html może uzyskać dostęp do dowolnego lub żadnego z tych wpisów w zależności
+# na aplikacji.
+
 # Niestandardowe wpisy są specyficzne dla konkretnego dysku / dysku
 # Zauważ, że {i18n_connection_description} musi być wpisany jako ciągły ciąg tekstowy z formatowaniem HTML. Nie może zawierać zwrotów carrage
-i18n_drivename                     : Assign
-i18n_connection_description        : Sterownik Assign DOS umożliwia łączenie różnych ścieżek systemu plików w jeden wirtualny system plików. Jest to przydatne do tworzenia dynamicznych dysków, które łączą kilka katalogów w jeden. Można go również użyć do aliasowania ścieżek, aby były łatwiejsze w dostępie. <br> <br> Przypisz sterownik DOS jest uruchamiany przez polecenie DOS „assign”. <br> Przeczytaj więcej o tym poleceniu w dokumentacji DOS znajomego.
+i18n_drivename                     : (przykład) => SFTP
+i18n_connection_description        : (przykład) => Protokół transferu plików SSH (<strong> SFTP </strong>) jest protokołem sieciowym, który zapewnia dostęp do plików, transfer plików i zarządzanie plikami w dowolnym niezawodnym strumieniu danych.
 
 # Główne tematy opisu
 i18n_configuration_details         : Szczegóły konfiguracji

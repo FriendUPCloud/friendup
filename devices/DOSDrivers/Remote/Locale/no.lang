@@ -1,10 +1,49 @@
+# Egendefinerte innlegg er spesifikke for den bestemte stasjonen / disken
+# Merk at {i18n_connection_description} må skrives som en kontinuerlig tekststreng med html-formatering. Det kan ikke inneholde returrapportering
+i18n_drivename                     : Remote Drive
+i18n_connection_description        : DOS-driveren på DOS-stasjonen lar deg koble til eksterne vennekjerner og montere diskstasjonene som er funnet der. Remote Drive støtter anonyme stasjoner samt godkjente stasjoner. Autentisering kan gjøres ved bruk av brukernavn og passord eller offentlige nøkler.
 
-i18n_Remote                       : Remote Drive
-i18n_RemoteDOSdriver              : Remote DOS driver
-i18n_public_key                   : Offentlig nøkkel
-i18n_hostname                     : Server
-i18n_device_name                  : Disknavn
-i18n_server_id                    : Server ID
+# Hovedbeskrivelse Emner
+i18n_configuration_details         : Konfigurasjonsdetaljer
+i18n_connection_details            : Tilkoblingsdetaljer
+i18n_server_configuration          : Serverkonfigurasjon
+i18n_login_information             : Login informasjon
+i18n_database_configuration 	   : Database konfigurasjon
+i18n_vendor_configuration          : Leverandørkonfigurasjon
+i18n_device_configuration          : Konfigurasjon av serverenhet
+i18n_no_configuration              : Denne driveren har ingen konfigurasjonsalternativer tilgjengelig.
+i18n_misc                          : Diverse
+i18n_notes                         : Merknader
 
-#From dos actions
+# Elementer
+i18n_host                          : Vert
+i18n_port                          : Havn
+i18n_path                          : Sti
+i18n_username                      : Brukernavn
+i18n_password                      : Passord
+i18n_database                      : Database
+i18n_vendor                        : Leverandørinformasjon
+i18n_directory                     : Directory
+i18n_public_key                    : Offentlig nøkkel
+i18n_private_key                   : Privat nøkkel
+i18n_workgroup                     : arbeidsgruppe
+i18n_keys                          : Keys
+i18n_disksize                      : Diskstørrelse
 
+# Plassholdere (Stuff i postkasser)
+i18n_host_ip                       : Serveradresse eller IP
+i18n_host_port                     : Serverportnummer
+i18n_your_notes                    : Dine notater
+i18n_remotedirectory               : Fjernkatalog
+i18n_host_database_name            : Vertsdatabasenavn
+i18n_vendor_ID                     : Ditt registrerte leverandør ID
+i18n_device_name                   : Enhetsnavn
+i18n_server_id                     : Server ID
+i18n_workgroup_name                : Din arbeidsgruppe
+i18n_key                           : Nøkkel
+
+# Fra doshandlinger
+i18n_cannotcreate_deep_directory   : Du kan bare opprette prosjektkataloger (ett nivå).
+
+
+########################################################################

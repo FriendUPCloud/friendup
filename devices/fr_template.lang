@@ -1,7 +1,14 @@
+# Ceci est le modèle en.lang du pilote DOS par défaut.
+# Toute nouvelle entrée doit être ajoutée ici s'il s'agit d'une entrée générique.
+# Ceci est fait pour faciliter la mise en place de nouveaux périphériques de pilotes DOS en utilisant un standard
+# fichier de langue de modèle. Ceux-ci sont utilisés par le fichier gui.html sous le
+# Dossier du pilote DOS. Le fichier gui.html peut accéder à ces entrées ou à aucune d’elles, selon
+# sur l'application.
+
 # Les entrées personnalisées sont spécifiques au lecteur / disque particulier
 # Notez que {i18n_connection_description} doit être saisi sous forme de chaîne de texte continue avec le formatage HTML. Il ne peut pas contenir de retour de carrossage
-i18n_drivename                     : SFTP
-i18n_connection_description        : Le protocole de transfert de fichiers SSH (<strong> SFTP </ strong>) est un protocole réseau fournissant un accès, un transfert et une gestion de fichiers via un flux de données fiable.
+i18n_drivename                     : (Exemple) => SFTP
+i18n_connection_description        : (Exemple) => Le protocole de transfert de fichiers SSH (<strong> SFTP </ strong>) est un protocole réseau fournissant un accès, un transfert et une gestion de fichiers via un flux de données fiable.
 
 # Description principale Sujets
 i18n_configuration_details         : Détails de la configuration

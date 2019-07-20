@@ -1,5 +1,51 @@
+# Custom Entries are specific to the particular drive / disk
+# Note that {i18n_connection_description} needs to be typed as a continuous text string with html formating. It cannot contain carrage returns
+i18n_drivename                     : Treeroot
+i18n_connection_description        : Mount Treeroot servers as doors
+
+#Main Description Topics
+i18n_configuration_details         : Configuration Details
+i18n_connection_details            : Connection details
+i18n_server_configuration          : Server configuration
+i18n_login_information             : Login information
+i18n_database_configuration        : Database configuration
+i18n_vendor_configuration          : Vendor configuration
+i18n_device_configuration          : Server Device configuration
+i18n_no_configuration              : This Driver has no configuration options available.
+i18n_misc                          : Miscellaneous
+i18n_notes                         : Notes
+
+#Items
+i18n_host                          : Host
+i18n_port                          : Port
+i18n_path                          : Path
+i18n_username                      : Username
+i18n_password                      : Password
+i18n_database                      : Database
+i18n_vendor                        : Vendor info
+i18n_directory                     : Directory
+i18n_public_key                    : Public key
+i18n_private_key                   : Private key
+i18n_workgroup                     : Workgroup
+i18n_keys                          : Keys
+i18n_directory                     : Directory
+i18n_disksize                      : Disk size
+
+#Placeholders (Stuff in entry boxes)
+i18n_host_ip                       : Server address or IP
+i18n_host_port                     : Server port number
+i18n_your_notes                    : Your notes
+i18n_remotedirectory               : Remote directory
+i18n_host_database_name            : Host Database name
+i18n_vendor_ID                     : Your registered vendor id
+i18n_device_name                   : Device name
+i18n_server_id                     : Server ID
+i18n_workgroup_name                : Your workgroup
+i18n_key                           : Key
+i18n_choose_workgroup              : Choose workgroup
+
+#From dos actions
+i18n_cannotcreate_deep_directory   : You can only create project directories (one level).
 
 
-i18n_key : Key
-i18n_port : Port
-
+########################################################################

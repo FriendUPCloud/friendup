@@ -1,10 +1,50 @@
+# Les entrées personnalisées sont spécifiques au lecteur / disque particulier
+# Notez que {i18n_connection_description} doit être saisi sous forme de chaîne de texte continue avec le formatage HTML. Il ne peut pas contenir de retour de carrossage
+i18n_drivename                     : Disque Distant
+i18n_connection_description        : Le pilote DOS du lecteur distant vous permet de vous connecter à des cœurs d'amis distants et de monter les lecteurs de disque qui s'y trouvent. Remote Drive prend en charge les lecteurs anonymes ainsi que les lecteurs authentifiés. L'authentification peut être effectuée à l'aide du nom d'utilisateur et du mot de passe ou des clés publiques.
 
-i18n_Remote                       : Disque distant
-i18n_RemoteDOSdriver              : Driver DOS distant
-i18n_public_key                   : Clé publique
-i18n_hostname                     : Nom hôte
-i18n_device_name                  : Nom disque
-i18n_server_id                    : ID serveur
+# Description principale Sujets
+i18n_configuration_details         : Détails de la configuration
+i18n_connection_details            : Détails de la connexion
+i18n_server_configuration          : Configuration du serveur
+i18n_login_information             : Informations de connexion
+i18n_database_configuration        : Configuration de la base de données
+i18n_vendor_configuration          : configuration du fournisseur
+i18n_device_configuration          : Configuration du périphérique serveur
+i18n_no_configuration              : Ce pilote n'a aucune option de configuration disponible.
+i18n_misc                          : Divers
+i18n_notes                         : Notes
 
-#From dos actions
+# Articles
+i18n_host                          : Hôte
+i18n_port                          : Port
+i18n_path                          : Chemin
+i18n_username                      : Nom d'utilisateur
+i18n_password                      : Mot de passe
+i18n_database                      : Base de données
+i18n_vendor                        : Informations sur le vendeur
+i18n_directory                     : Répertoire
+i18n_public_key                    : Clé publique
+i18n_private_key                   : Clé privée
+i18n_workgroup                     : Groupe de travail
+i18n_keys                          : Clés
+i18n_disksize                      : Taille du disque
 
+# Espaces réservés (éléments dans les zones de saisie)
+i18n_host_ip                       : Adresse du serveur ou IP
+i18n_host_port                     : Numéro de port du serveur
+i18n_votre_notes                   : Vos notes
+i18n_remotedirectory               : Répertoire distant
+i18n_host_database_name            : Nom de la base de données d'hôte
+i18n_vendor_ID                     : Votre identifiant de fournisseur enregistré
+i18n_device_name                   : Nom du périphérique
+i18n_server_id                     : ID du serveur
+i18n_workgroup_name                : Cotre groupe de travail
+i18n_key                           : Clé
+i18n_choose_workgroup              : Choisir un groupe de travail
+
+# De dos actions
+i18n_cannotcreate_deep_directory   : Vous ne pouvez créer que des répertoires de projet (un niveau).
+
+
+########################################################################

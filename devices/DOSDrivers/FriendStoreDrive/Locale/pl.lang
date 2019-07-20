@@ -1,11 +1,50 @@
-i18n_configuration_details       : Szczegó?y konfiguracji
-i18n_FriendStoreDrive            : Dysk FriendStore
-i18n_FriendStoreDOSdriver        : Sterownik FriendStore dla dostawców
-i18n_vendor                      : Informacje o dostawcy
-i18n_vendor_ID                   : Twój zarejestrowany identyfikator dostawcy
+# Niestandardowe wpisy są specyficzne dla konkretnego dysku / dysku
+# Zauważ, że {i18n_connection_description} musi być wpisany jako ciągły ciąg tekstowy z formatowaniem HTML. Nie może zawierać zwrotów carrage
+i18n_drivename                     : Dysk FriendStore
+i18n_connection_description        : Sterownik FriendStore DOS umożliwia abstrakcyjne połączenie z kontem dostawcy Friend Store. Dysk umożliwia przesyłanie i pobieranie pakietów aplikacji, zarządzanie wersjami i aktualizowanie treści. <br> <br> Musisz mieć konto dostawcy, aby używać tego sterownika DOS.
 
-#From dos actions
+# Główne tematy opisu
+i18n_configuration_details         : Szczegóły konfiguracji
+i18n_connection_details            : Szczegóły połączenia
+i18n_server_configuration          : Konfiguracja serwera
+i18n_login_information             : Dane logowania
+i18n_database_configuration        : Konfiguracja bazy danych
+i18n_vendor_configuration          : Konfiguracja dostawcy
+i18n_device_configuration          : Konfiguracja urządzenia serwera
+i18n_no_configuration              : Ten sterownik nie ma dostępnych opcji konfiguracji.
+i18n_misc                          : Różne
+i18n_notes                         : Uwagi
 
-i18n_cannotcreate_deep_directory : Możesz tworzyć tylko katalogi projektów (jeden poziom).
+# Przedmiotów
+i18n_host                          : Gospodarz
+i18n_port                          : Port
+i18n_path                          : Ścieżka
+i18n_username                      : Nazwa Użytkownika
+i18n_password                      : Hasło
+i18n_database                      : Baza danych
+i18n_vendor                        : Informacje o dostawcy
+i18n_directory                     : Informator
+i18n_public_key                    : Klucz publiczny
+i18n_private_key                   : Prywatny klucz
+i18n_workgroup                     : Grupa robocza
+i18n_keys                          : Klawiatura
+i18n_disksize                      : Rozmiar dysku
 
-i18n_connection_description      : The FriendStore DOS driver allows you to abstractly connect to your Friend Store vendor account. The drive gives you the ability to upload and download app packages, managing versions and updating your content. You need to have a vendor account to use this DOS driver.
+# Symbole zastępcze (rzeczy w polach wprowadzania)
+i18n_host_ip                       : Adres serwera lub adres IP
+i18n_host_port                     : Numer portu serwera
+i18n_your_notes                    : Twoje notatki
+i18n_remotedirectory               : Katalog zdalny
+i18n_host_database_name            : Nazwa bazy danych hosta
+i18n_vendor_ID                     : Twój zarejestrowany identyfikator dostawcy
+i18n_device_name                   : Nazwa urządzenia
+i18n_server_id                     : ID serwera
+i18n_workgroup_name                : Twoja grupa robocza
+i18n_key                           : Klawisz
+i18n_choose_workgroup              : Wybierz grupę roboczą
+
+# Od działań dos
+i18n_cannotcreate_deep_directory   : Możesz tworzyć tylko katalogi projektu (jeden poziom).
+
+
+########################################################################

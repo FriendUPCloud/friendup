@@ -1,7 +1,14 @@
+# Dette er standard DOS-driveren en.lang-mal.
+# Eventuelle nye oppføringer bør legges til her hvis de er generelle oppføringer.
+# Dette er gjort for å legge til rette for å implementere nye DOS Driver-enheter ved å benytte en standard
+# mal språkfil. Disse brukes av gui.html-filen under bestemt
+# DOS Driver-mappen. Gui.html kan få tilgang til noen eller ingen av disse oppføringene, avhengig
+# på søknaden.
+
 # Egendefinerte innlegg er spesifikke for den bestemte stasjonen / disken
 # Merk at {i18n_connection_description} må skrives som en kontinuerlig tekststreng med html-formatering. Det kan ikke inneholde returrapportering
-i18n_drivename                     : IPFS disk
-i18n_connection_description        : Det interplanetære filsystemet (<strong> IPFS </ strong>) er en protokoll og et nettverk designet for å lage en innholdsrettbar, peer-to-peer-metode for lagring og deling av hypermedier i et distribuert filsystem.
+i18n_drivename                     : (Eksempel) => SFTP
+i18n_connection_description        : (Eksempel) => SSH-filoverføringsprotokollen (<strong> SFTP </ strong>) er en nettverksprotokoll som gir filtilgang, filoverføring og filbehandling over en pålitelig datastrøm.
 
 # Hovedbeskrivelse Emner
 i18n_configuration_details         : Konfigurasjonsdetaljer
