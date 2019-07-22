@@ -122,7 +122,7 @@ AppSession *AppSessionNew( void *sb, const char *authid, FUQUAD appid, UserSessi
 			pthread_mutex_init( &las->as_SessionsMut, NULL );
 			pthread_mutex_init( &las->as_VariablesMut, NULL );
 			
-			DEBUG("[AppSessionNew] SAS created: %lu\n", as->as_SASID );
+			DEBUG("[AppSessionNew] SAS created: %lu\n", las->as_SASID );
 		}
 	}
 	else
