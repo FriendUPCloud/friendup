@@ -301,7 +301,6 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 					{
 						toBeRemoved = as;
 						DEBUG("I will remove session %p\n", toBeRemoved );
-						ListAdd( &delList, as );
 					}
 				}
 				else
@@ -321,7 +320,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 			{
 				//DEBUG("App session will be delted\n");
 				
-				//AppSessionDelete( toBeRemoved );
+				ListAdd( &delList, toBeRemoved );
 			}
 		}
 		as = (AppSession *)as->node.mln_Succ;
