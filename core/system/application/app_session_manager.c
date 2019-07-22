@@ -105,6 +105,10 @@ int AppSessionManagerAddSession( AppSessionManager *asm, AppSession *nas )
 		
 		if( FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) ) == 0 )
 		{
+			nas->node.mln_Succ = (MinNode *)asm->asm_AppSessions;
+			asm->asm_AppSessions = nas;
+			
+			/*
 			AppSession *lastone = asm->asm_AppSessions;
 			if( lastone == NULL )
 			{
@@ -118,6 +122,7 @@ int AppSessionManagerAddSession( AppSessionManager *asm, AppSession *nas )
 				}
 				lastone->node.mln_Succ = (MinNode *)nas;
 			}
+			*/
 			FRIEND_MUTEX_UNLOCK( &(asm->asm_Mutex) );
 		}
 		return 0;
@@ -303,8 +308,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 			DEBUG("Mutex unlocked\n");
 			
 			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
-			as = (AppSession *)as->node.mln_Succ;
-			
+
 			if( toBeRemoved != NULL )
 			{
 				//DEBUG("App session will be delted\n");
@@ -312,6 +316,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 				AppSessionDelete( toBeRemoved );
 			}
 		}
+		as = (AppSession *)as->node.mln_Succ;
 	}
 	
 	return 0;
