@@ -154,6 +154,7 @@ void AppSessionDelete( AppSession *as )
 		
 			while( ali != NULL )
 			{
+				DEBUG("[AppSession] Remove session\n");
 				rml = ali;
 				ali = (SASUList *) ali->node.mln_Succ;
 			

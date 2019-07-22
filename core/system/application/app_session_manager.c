@@ -234,6 +234,9 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		FERROR("SAS was removed\n");
 		return -1;
 	}
+	
+	FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) );
+	
 	AppSession *as = asm->asm_AppSessions;
 	while( as != NULL )
 	{
@@ -256,7 +259,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 			SASUList *le = as->as_UserSessionList;
 			SASUList *ple = as->as_UserSessionList;
 			
-			DEBUG("mutex locked\n");
+			DEBUG("mutex locked %p\n", le );
 			
 			while( le != NULL )
 			{
@@ -305,9 +308,9 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 				}
 			}
 			
-			DEBUG("Mutex unlocked\n");
-			
+			DEBUG("Mutex will be unlocked\n");
 			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
+			DEBUG("Mutex unlocked\n");
 
 			if( toBeRemoved != NULL )
 			{
@@ -318,6 +321,9 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		}
 		as = (AppSession *)as->node.mln_Succ;
 	}
+	DEBUG("Done on session\n");
+	FRIEND_MUTEX_UNLOCK( &(asm->asm_Mutex) );
+	DEBUG("Application session manager unlocked\n");
 	
 	return 0;
 }
