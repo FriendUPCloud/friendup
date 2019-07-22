@@ -140,7 +140,7 @@ int AppSessionManagerAddSession( AppSessionManager *asm, AppSession *nas )
 
 int AppSessionManagerRemSession( AppSessionManager *asm, AppSession *nas )
 {
-	if( asm != NULL )
+	if( asm != NULL && nas != NULL )
 	{
 		AppSession *las = NULL;
 		
