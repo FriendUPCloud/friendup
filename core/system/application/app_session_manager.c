@@ -244,7 +244,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		}
 		*/
 		
-		//DEBUG("Lock on AS set\n");
+		DEBUG("Lock on AS set\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
 		{
