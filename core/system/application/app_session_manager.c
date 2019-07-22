@@ -237,6 +237,8 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		return -1;
 	}
 	
+	List *delList = ListNew();
+	
 	FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) );
 	
 	AppSession *as = asm->asm_AppSessions;
@@ -299,6 +301,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 					{
 						toBeRemoved = as;
 						DEBUG("I will remove session %p\n", toBeRemoved );
+						ListAdd( &delList, as );
 					}
 				}
 				else
@@ -318,7 +321,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 			{
 				//DEBUG("App session will be delted\n");
 				
-				AppSessionDelete( toBeRemoved );
+				//AppSessionDelete( toBeRemoved );
 			}
 		}
 		as = (AppSession *)as->node.mln_Succ;
@@ -326,6 +329,17 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 	DEBUG("Done on session\n");
 	FRIEND_MUTEX_UNLOCK( &(asm->asm_Mutex) );
 	DEBUG("Application session manager unlocked\n");
+	
+	List *l = delList;
+	while( l != NULL )
+	{
+		AppSession *astorem = (AppSession *)l->data;
+		l = l->next;
+		
+		AppSessionDelete( astorem );
+	}
+	ListFree( delList );
+	DEBUG("del end\n");
 	
 	return 0;
 }
