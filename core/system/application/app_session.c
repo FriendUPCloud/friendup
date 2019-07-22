@@ -224,10 +224,11 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 				}
 				lali = (SASUList *) lali->node.mln_Succ;
 			}
-			DEBUG("[AppSession] unlocking as sessionmut1\n");
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+			DEBUG("[AppSession] unlocking as sessionmut1\n");
 		}
 		
+		DEBUG("User was added: %d\n", userAdded );
 		if( userAdded == TRUE )
 		{
 			if( lali->authid[ 0 ] == 0 )
@@ -264,10 +265,11 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 					strcpy( ali->authid, authid );
 				}
 			}
-			DEBUG("[AppSession] locking as sessionmut2\n");
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+			DEBUG("[AppSession] locking as sessionmut2\n");
 		}
 		as->as_Timer = time( NULL );
+		DEBUG("[AppSessionAddUser] return %p\n", ali );
 		return ali;
 	}
 	return NULL;
@@ -538,6 +540,7 @@ SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSessio
 
 		DEBUG("[AppSession] newsession will be added %p\n", usrses );
 	} // if( usrses != NULL )
+	DEBUG("[AppSessionAddCurrentSession] return %p\n", retListEntry );
 
 	return retListEntry;
 }

@@ -707,6 +707,7 @@ Application.checkDocumentSession = function( sasID = null )
 						}
 						error = 0;
 					}
+					DEBUG("[ApplicationWebRequest] looks like app session was not created\n");
 				}
 				else
 				{
