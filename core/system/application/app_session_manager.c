@@ -258,6 +258,17 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		
 		DEBUG("Lock on AS set\n");
 		
+		int err = AppSessionRemUsersessionAny( as, ses );
+		if( err == 0 )
+		{
+			if( as->as_UserNumber <= 0 )
+			{
+				toBeRemoved = as;
+				DEBUG("I will remove session %p\n", toBeRemoved );
+				ListAdd( &delList, toBeRemoved );
+			}
+		}
+		/*
 		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
 		{
 			SASUList *le = as->as_UserSessionList;
@@ -323,6 +334,7 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 				ListAdd( &delList, toBeRemoved );
 			}
 		}
+		*/
 		as = (AppSession *)as->node.mln_Succ;
 	}
 	DEBUG("Done on session\n");
