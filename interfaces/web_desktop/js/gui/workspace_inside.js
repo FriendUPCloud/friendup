@@ -1559,6 +1559,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( Workspace.mode != 'vr' && !Workspace.screen.contentDiv )
 					if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						return setTimeout( initFriendWorkspace, 50 );
+						
 				if( e == 'ok' && d )
 				{
 					var dat = JSON.parse( d );

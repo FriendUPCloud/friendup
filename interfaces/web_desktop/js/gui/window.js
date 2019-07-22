@@ -4898,6 +4898,7 @@ var View = function( args )
 		function setCameraMode( e )
 		{
 
+			console.log('setting camera mode!',e);
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -5036,7 +5037,6 @@ var View = function( args )
 							btn.onclick = function( e )
 							{
 								var dd = self.content.container.camera;
-								
 								var canv = document.createElement( 'canvas' );
 								canv.setAttribute( 'width', dd.videoWidth );
 								canv.setAttribute( 'height', dd.videoHeight );
@@ -5119,7 +5119,7 @@ var View = function( args )
 				v.appendChild( fb );
 				var mediaElement = document.createElement( 'input' );
 				mediaElement.type = 'file';
-				mediaElement.accept = 'image/jpeg';
+				mediaElement.accept = 'image/*';
 				mediaElement.className = 'FriendCameraInput';
 				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
 					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
