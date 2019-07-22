@@ -2431,7 +2431,15 @@ function checkMobileBrowser()
 	window.isTablet = checkTablet();
 	
 
-	if( window.isTablet ) window.isMobile = false;
+	if( window.isMobile && ( window.innerWidth <= 760 || window.innerHeight <= 760 ) )
+	{
+		window.isTablet = false;
+	}
+	else if( window.isTablet )
+	{
+		window.isMobile = false;
+	}
+	
 	if( !window.isMobile && !window.isTablet )
 	{
 		if( window.isTouch || !document.getElementsByTagName( 'head' )[0].getAttribute( 'touchdesktop' ) )
