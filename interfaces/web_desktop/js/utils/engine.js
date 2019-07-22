@@ -2429,7 +2429,9 @@ function checkMobileBrowser()
 	if( !document.body ) return setTimeout( checkMobileBrowser, 50 );
 	window.isMobile = checkMobile();
 	window.isTablet = checkTablet();
-	if( window.isMobile ) window.isTablet = false;
+	
+
+	if( window.isTablet ) window.isMobile = false;
 	if( !window.isMobile && !window.isTablet )
 	{
 		if( window.isTouch || !document.getElementsByTagName( 'head' )[0].getAttribute( 'touchdesktop' ) )
@@ -2447,8 +2449,9 @@ function checkMobileBrowser()
 			}
 		}
 	}
+	
 	// Ipads are always mobiles for apple users at least
-	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 && Workspace && Workspace.loginUsername == 'applereview' )
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 && typeof(Workspace) != 'undefined' && Workspace.loginUsername == 'applereview' )
 	{
 		//console.log( 'IPAD! ' + navigator.userAgent );
 		window.isMobile = true;
