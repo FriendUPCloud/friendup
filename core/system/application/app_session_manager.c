@@ -336,7 +336,8 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		AppSession *astorem = (AppSession *)l->data;
 		l = l->next;
 		
-		AppSessionDelete( astorem );
+		AppSessionManagerRemSession( asm, astorem );
+		//AppSessionDelete( astorem );
 	}
 	ListFree( delList );
 	DEBUG("del end\n");
