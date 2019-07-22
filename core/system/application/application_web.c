@@ -522,6 +522,7 @@ Application.checkDocumentSession = function( sasID = null )
 					//err = AppSessionRemUsersession( as, loggedSession );
 					err = AppSessionRemUsersessionAny( as, loggedSession );
 					
+					DEBUG("AS will be removed? %d number of users on sas %d\n", err, as->as_UserNumber );
 					// if user was removed and he was last then we remove SAS
 					if( err == 0 && as->as_UserNumber <= 0 )
 					{
@@ -683,7 +684,7 @@ Application.checkDocumentSession = function( sasID = null )
 					SASUList *entry;
 					DEBUG("[ApplicationWebRequest] I will try to add session\n");
 					
-					if( ( entry = AppSessionAddCurrentSession( as, loggedSession) ) != NULL )
+					if( ( entry = AppSessionAddCurrentUserSession( as, loggedSession) ) != NULL )
 					
 					//if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{

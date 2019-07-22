@@ -144,6 +144,8 @@ int AppSessionManagerRemSession( AppSessionManager *asm, AppSession *nas )
 	{
 		AppSession *las = NULL;
 		
+		DEBUG("[AppSessionManagerRemSession] AppSession will be removed\n");
+		
 		if( FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) ) == 0 )
 		{
 			AppSession *oas = asm->asm_AppSessions;	// old application session
@@ -152,7 +154,7 @@ int AppSessionManagerRemSession( AppSessionManager *asm, AppSession *nas )
 			{
 				if( nas->as_SASID == las->as_SASID )
 				{
-					DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
+					DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list: %lu\n", nas->as_SASID );
 				
 					if( nas == asm->asm_AppSessions )	// if session is equal to first entry, we only overwrite pointer
 					{

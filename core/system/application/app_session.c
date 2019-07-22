@@ -121,6 +121,8 @@ AppSession *AppSessionNew( void *sb, const char *authid, FUQUAD appid, UserSessi
 			
 			pthread_mutex_init( &las->as_SessionsMut, NULL );
 			pthread_mutex_init( &las->as_VariablesMut, NULL );
+			
+			DEBUG("[AppSessionNew] SAS created: %lu\n", as->as_SASID );
 		}
 	}
 	else
@@ -146,7 +148,7 @@ void AppSessionDelete( AppSession *as )
 		SASUList *ali = NULL;
 		SASUList *rml = NULL;
 		
-		DEBUG("[AppSession] AS %lu\n", as->as_AppID );
+		DEBUG("[AppSession] AS %lu\n", as->as_SASID );
 		
 		DEBUG("[AppSession] locking as sessionmut\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
@@ -211,7 +213,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 	{
 		SASUList *lali = NULL;
 		
-		DEBUG("[AppSessionAddUser] AS %lu\n", as->as_AppID );
+		DEBUG("[AppSessionAddUser] AS %lu\n", as->as_SASID );
 		
 		DEBUG("[AppSession] locking as sessionmut1\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
@@ -295,7 +297,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 	{
 		SASUList *ali = NULL;
 		
-		DEBUG("[AppSessionRemUsersession] AS %lu\n", as->as_AppID );
+		DEBUG("[AppSessionRemUsersession] AS %lu\n", as->as_SASID );
 		
 		if( u != NULL )
 		{
@@ -389,7 +391,7 @@ int AppSessionRemUsersessionAny( AppSession *as, UserSession *u )
 		SASUList *ali = NULL;
 		SASUList *prevali = NULL;
 		
-		DEBUG("[AppSessionRemUsersessionAny] AS %lu\n", as->as_AppID );
+		DEBUG("[AppSessionRemUsersessionAny] AS %lu\n", as->as_SASID );
 		
 		DEBUG("[AppSession] locking as sessionmut4\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
@@ -453,7 +455,7 @@ int AppSessionRemUser( AppSession *as, User *u )
 {
 	if( as != NULL )
 	{
-		DEBUG("[AppSessionRemUser] AS %lu\n", as->as_AppID );
+		DEBUG("[AppSessionRemUser] AS %lu\n", as->as_SASID );
 		
 		DEBUG("[AppSession] locking as sessionmut5\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
@@ -496,7 +498,7 @@ int AppSessionRemUser( AppSession *as, User *u )
  * @return pointer to SASUList if session was added, otherwise NULL
  */
 
-SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSession )
+SASUList *AppSessionAddCurrentUserSession( AppSession *as, UserSession *loggedSession )
 {
 	// remove spaces and 'weird' chars from entry
 	unsigned int i, j=0;
@@ -515,7 +517,7 @@ SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSessio
 	// we must check if  user is already in application session
 	//
 
-	DEBUG("[AppSessionAddCurrentSession] AS %lu\n", as->as_AppID );
+	DEBUG("[AppSessionAddCurrentSession] AS %lu\n", as->as_SASID );
 	DEBUG("[AppSession] locking as sessionmut94\n");
 	SASUList *curgusr = NULL;
 	if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
@@ -579,7 +581,7 @@ SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSessio
 	SASUList *retListEntry = NULL;
 	SystemBase *l = (SystemBase *)as->as_SB;
 	
-	DEBUG("[AppSessionAddUsersBySession] AS %lu\n", as->as_AppID );
+	DEBUG("[AppSessionAddUsersBySession] AS %lu\n", as->as_SASID );
 	DEBUG("[AppSession] sessid %s\n", sessid );
 	
 	if( sessid != NULL )
@@ -670,7 +672,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 	
 	SystemBase *l = (SystemBase *)as->as_SB;
 	
-	DEBUG("[AppSessionAddUsersByName] AS %lu\n", as->as_AppID );
+	DEBUG("[AppSessionAddUsersByName] AS %lu\n", as->as_SASID );
 	DEBUG("[AppSession] user list %s\n", userlist );
 	
 	if( userlist != NULL )
@@ -889,7 +891,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 	char *upositions[ 128 ];
 	memset( upositions, 0, sizeof( upositions ) );
 	
-	DEBUG("[AppSessionRemUserByNames] AS %lu\n", as->as_AppID );
+	DEBUG("[AppSessionRemUserByNames] AS %lu\n", as->as_SASID );
 
 	if( as != NULL )
 	{
@@ -1071,7 +1073,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	
 	if( as != NULL )
 	{
-		DEBUG("[AppSessionRemByWebSocket] AS %lu\n", as->as_AppID );
+		DEBUG("[AppSessionRemByWebSocket] AS %lu\n", as->as_SASID );
 		
 		//while( as != NULL )
 		//{
@@ -1199,7 +1201,7 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 		return -1;
 	}
 
-	DEBUG("[AppSessionSendMessage] AS %lu\n", as->as_AppID );
+	DEBUG("[AppSessionSendMessage] AS %lu\n", as->as_SASID );
 	time_t ntime = time( NULL );
 	DEBUG("[AppSessionSendMessage] OLD TIME %lld NEW TIME %lld\n", (long long)as->as_Timer, (long long)ntime );
 	if( ( ntime - as->as_Timer ) > TIMEOUT_APP_SESSION )
@@ -1323,7 +1325,7 @@ int AppSessionSendOwnerMessage( AppSession *as, UserSession *sender, char *msg, 
 		return -1;
 	}
 	
-	DEBUG("[AppSessionSendOwnerMessage] AS %lu\n", as->as_AppID );
+	DEBUG("[AppSessionSendOwnerMessage] AS %lu\n", as->as_SASID );
 	time_t ntime = time( NULL );
 	DEBUG("[AppSession] OLD TIME %lld NEW TIME %lld\n", (long long)as->as_Timer, (long long)ntime );
 	if( ( ntime - as->as_Timer ) > TIMEOUT_APP_SESSION )
@@ -1413,7 +1415,7 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *msg, i
 
 SASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
 {
-	DEBUG("[GetListEntryBySession] AS %lu\n", as->as_AppID );
+	DEBUG("[GetListEntryBySession] AS %lu\n", as->as_SASID );
 	DEBUG("[AppSession] locking as sessionmut99\n");
 	FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 	SASUList *li = as->as_UserSessionList;
