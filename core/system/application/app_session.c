@@ -146,7 +146,7 @@ void AppSessionDelete( AppSession *as )
 		SASUList *ali = NULL;
 		SASUList *rml = NULL;
 		
-		DEBUG("[AppSessionDelete] locking as sessionmut\n");
+		DEBUG("[AppSession] locking as sessionmut\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			ali = as->as_UserSessionList;
@@ -161,6 +161,7 @@ void AppSessionDelete( AppSession *as )
 				rml = NULL;
 			}
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+			DEBUG("[AppSession] unlocking as sessionmut\n");
 		}
 		
 		pthread_mutex_destroy( &as->as_SessionsMut );
@@ -207,6 +208,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 	{
 		SASUList *lali = NULL;
 		
+		DEBUG("[AppSession] locking as sessionmut1\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			lali = (SASUList *)as->as_UserSessionList;
@@ -221,7 +223,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 				}
 				lali = (SASUList *) lali->node.mln_Succ;
 			}
-			DEBUG("[AppSession] last sessionptr\n" );
+			DEBUG("[AppSession] unlocking as sessionmut1\n");
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		}
 		
@@ -242,6 +244,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 		
 		SASUList *ali = NULL;
 		
+		DEBUG("[AppSession] locking as sessionmut2\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			ali = FCalloc( 1, sizeof( SASUList ) );
@@ -260,6 +263,7 @@ SASUList *AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 					strcpy( ali->authid, authid );
 				}
 			}
+			DEBUG("[AppSession] locking as sessionmut2\n");
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		}
 		as->as_Timer = time( NULL );
@@ -293,7 +297,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			return -1;
 		}
 		
-		DEBUG("Before  as_SessionsMut lock\n");
+		DEBUG("[AppSession] locking as sessionmut3\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			if( as->as_Type == SAS_TYPE_OPEN )
@@ -334,7 +338,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 				DEBUG("[AppSession] Session end loop\n");
 			}
 		
-			DEBUG("[AppSession] lock end\n");
+			DEBUG("[AppSession] locking as sessionmut3\n");
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		}
 		as->as_Timer = time( NULL );
@@ -372,11 +376,10 @@ int AppSessionRemUsersessionAny( AppSession *as, UserSession *u )
 			return -1;
 		}
 		
-		DEBUG("[AppSessionRemUsersessionAny] Before  as_SessionsMut lock\n");
-		
 		SASUList *ali = NULL;
 		SASUList *prevali = NULL;
 		
+		DEBUG("[AppSession] locking as sessionmut4\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			ali = (SASUList *)as->as_UserSessionList;
@@ -408,7 +411,7 @@ int AppSessionRemUsersessionAny( AppSession *as, UserSession *u )
 				DEBUG("[AppSessionRemUsersessionAny] Session end loop\n");
 			}
 
-			DEBUG("[AppSessionRemUsersessionAny] lock end\n");
+			DEBUG("[AppSession] locking as sessionmut4\n");
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		}
 		as->as_Timer = time( NULL );
@@ -438,6 +441,7 @@ int AppSessionRemUser( AppSession *as, User *u )
 {
 	if( as != NULL )
 	{
+		DEBUG("[AppSession] locking as sessionmut5\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
@@ -462,6 +466,7 @@ int AppSessionRemUser( AppSession *as, User *u )
 				prevali = ali;
 				ali = (SASUList *) ali->node.mln_Succ;
 			}
+			DEBUG("[AppSession] unlocking as sessionmut5\n");
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		}
 	}
@@ -496,6 +501,7 @@ SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSessio
 	// we must check if  user is already in application session
 	//
 
+	DEBUG("[AppSession] locking as sessionmut94\n");
 	SASUList *curgusr = NULL;
 	if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 	{
@@ -510,6 +516,7 @@ SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSessio
 			curgusr = (SASUList *) curgusr->node.mln_Succ;
 		}
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+		DEBUG("[AppSession] unlocking as sessionmut94\n");
 	}
 
 	if( curgusr != NULL )
@@ -567,6 +574,7 @@ SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSessio
 		// we must check if  user is already in application session
 		//
 
+		DEBUG("[AppSession] locking as sessionmut95\n");
 		if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 		{
 			curgusr = as->as_UserSessionList;
@@ -584,6 +592,7 @@ SASUList *AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSessio
 				curgusr = (SASUList *) curgusr->node.mln_Succ;
 			}
 			FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+			DEBUG("[AppSession] unlocking as sessionmut95\n");
 		}
 
 		usrses = USMGetSessionBySessionID( l->sl_USM, sessid );
@@ -702,7 +711,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 				//
 
 				SASUList *curgusr = NULL;
-				
+				DEBUG("[AppSession] locking as sessionmut96\n");
 				if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 				{
 					SASUList *curgusr = as->as_UserSessionList;
@@ -720,6 +729,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 						curgusr = (SASUList *) curgusr->node.mln_Succ;
 					}
 					FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+					DEBUG("[AppSession] unlocking as sessionmut96\n");
 				}
 				
 				//
@@ -921,6 +931,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 	// find user sessions by username
 	// and send message
 	
+	DEBUG("[AppSession] locking as sessionmut97\n");
 	if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 	{
 		asul = as->as_UserSessionList;
@@ -968,6 +979,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 			}
 		}
 		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+		DEBUG("[AppSession] unlocking as sessionmut97\n");
 	}
 	
 	//
@@ -1041,6 +1053,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	{
 		//while( as != NULL )
 		//{
+			DEBUG("[AppSession] locking as sessionmut98\n");
 			FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
 			
 			SASUList *le = as->as_UserSessionList;
@@ -1093,6 +1106,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 				le = (SASUList *)le->node.mln_Succ;
 			}
 			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
+			DEBUG("[AppSession] unlocking as sessionmut98\n");
 			//as = (AppSession *)as->node.mln_Succ;
 		//}
 	
@@ -1375,6 +1389,7 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *msg, i
 
 SASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
 {
+	DEBUG("[AppSession] locking as sessionmut99\n");
 	FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 	SASUList *li = as->as_UserSessionList;
 		
@@ -1389,6 +1404,7 @@ SASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
 		li = ( SASUList * )li->node.mln_Succ;
 	}
 	FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+	DEBUG("[AppSession] unlocking as sessionmut99\n");
 	
 	return li;
 }
