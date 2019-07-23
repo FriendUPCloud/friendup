@@ -716,14 +716,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						char tmp[ 256 ];
 						
-						FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "--W---" );
+						FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "--W---" );
 						if( have == TRUE )
 						{
 							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
-							int error = actFS->Rename( actDev, path, tmpname );
+							int error = actFS->Rename( actDev, origDecodedPath, tmpname );
 							sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 						
-							DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+							DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 							
 							// delete Thumbnails
 							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
@@ -794,12 +794,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					}
 					else
 					{
-						have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "----D-" );
+						have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "----D-" );
 					}
 					
 					if( have == TRUE )
 					{
-						FLONG bytes = actFS->Delete( actDev, path );
+						FLONG bytes = actFS->Delete( actDev, origDecodedPath );
 						if( bytes >= 0 )
 						{
 							actDev->f_BytesStored -= bytes;
@@ -809,7 +809,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 							sprintf( tmp, "ok<!--separate-->{\"response\":\"%ld\"}", bytes );
 							// send information about changes on disk
-							DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+							DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
 							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
 							
