@@ -6,7 +6,7 @@ CPP			=	g++
 OUTPUT			=	bin/FriendCore
 
 CFLAGS			=	$(GLOBAL_CFLAGS) -I. -I../libs/ -I../$(LIBWS_INCLUDE_DIR) $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
+LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssl -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -17,6 +17,10 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
+
+ifeq ($(USE_SSH_THREADS_LIB),1)
+LFLAGS                           +=      -lssh_threads
+endif
 
 ifeq ($(USE_SANITIZER),1)
 LFLAGS			+=	-lasan
