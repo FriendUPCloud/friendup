@@ -7,6 +7,8 @@ NO_VALGRIND				=	0
 CYGWIN_BUILD				=	0
 DEBUG					=	1
 USE_SANITIZER				=	0
+USE_WEBP_LOADER				=	0
+LINK_STDCPP				=	0
 GLOBAL_BUILD_DATE			=	$(shell date +"%Y%m%d_%H%M%S")
 ENABLE_SSL				=	-DENABLE_SSL
 ENABLE_SSH				=	-DENABLE_SSH
@@ -27,6 +29,10 @@ GLOBAL_LFLAGS				=	-lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -l
 ifeq ($(USE_SANITIZER),1)
 GLOBAL_CFLAGS				+=	-fsanitize=address 
 GLOBAL_LFLAGS				+=	-lasan
+endif
+
+ifeq ($(USE_WEBP_LOADER),1)
+GLOBAL_CFLAGS				+=	-DUSE_WEBP_LOADER
 endif
 
 GLOBAL_CFLAGS				+=	-g

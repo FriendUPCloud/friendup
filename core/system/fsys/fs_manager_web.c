@@ -428,10 +428,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 																img = gdImageCreateFromGif( dstFp );
 																if( img == NULL )
 																{
+#ifdef USE_WEBP_LOADER
 																	fseek( dstFp, 0, SEEK_SET );
 																	img = gdImageCreateFromWebp( dstFp );
 																	if( img == NULL )
 																	{
+#endif
 																		fseek( dstFp, 0, SEEK_SET );
 																		img = gdImageCreateFromTga( dstFp );
 																		if( img == NULL )
@@ -444,7 +446,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 																				img = gdImageCreateFromWBMP( dstFp );
 																			}
 																		}
+#ifdef USE_WEBP_LOADER
 																	}
+#endif
 																}
 															}
 														}
