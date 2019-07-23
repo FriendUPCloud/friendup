@@ -255,7 +255,11 @@ void deinit( struct FHandler *s )
 
 void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
+<<<<<<< HEAD
 	FERROR("Disabled for a moment\n");
+=======
+	//FERROR("Disabled for a moment\n");
+>>>>>>> patch/newline_problems
 	//return NULL;
 	
 	File *dev = NULL;
