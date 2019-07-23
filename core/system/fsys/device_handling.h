@@ -61,13 +61,13 @@ int RescanDOSDrivers( DeviceManager *dm );
 //
 //
 
-int UnMountFS( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
+int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *usrs );
 
 //
 //
 //
 
-int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError );
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin );
 
 //
 //

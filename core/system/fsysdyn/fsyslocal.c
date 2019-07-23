@@ -258,10 +258,6 @@ int Release( struct FHandler *s, void *f )
 			
 			FFree( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
-
 		return 0;
 	}
 	return -1;
@@ -284,15 +280,6 @@ int UnMount( struct FHandler *s, void *f )
 			
 			FFree( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); lf->f_Name = NULL;}
-		if( lf->f_Path ){ FFree( lf->f_Path ); lf->f_Path = NULL; }
-		
-		//if( lf->d_Host ){ free( lf->d_Host ); }
-		//if( lf->d_LoginUser ){ free( lf->d_LoginUser ); }
-		//if( lf->d_LoginPass ){ free( lf->d_LoginPass ); }
-		
-		//free( f );
 		return 0;
 	}
 	return -1;
