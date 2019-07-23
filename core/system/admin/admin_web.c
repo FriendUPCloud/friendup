@@ -696,7 +696,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "restartws" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			Log( FLOG_INFO, "Websocket thread will be restarted\n");
 			
@@ -717,6 +717,34 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			{
 				Log( FLOG_FATAL, "Cannot launch websocket server\n");
 			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/uptime</H2>Function return FriendCore uptime information (unix timestamp)
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return function return information about uptime ok<!--separate-->{"result":1,"uptime":unixtime_number}
+	*/
+	/// @endcond
+	if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
+	{
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			char dictmsgbuf[ 512 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"uptime\":%lu", (time( NULL ) - l->l_UptimeStart) );
+		
+			HttpAddTextContent( response, dictmsgbuf );
+			*result = 200;
 		}
 		else
 		{

@@ -210,6 +210,7 @@ typedef struct SQLConPool
 
 typedef struct SystemBase
 {
+	time_t							l_UptimeStart;	// FriendCore start time
 	char							*l_Name;	// library name
 	FULONG							l_Version;		// version information
 	void							*handle;
