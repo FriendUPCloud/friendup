@@ -112,27 +112,41 @@ FULONG DoorNotificationStartDB( SQLLibrary *sqllib, File *device, UserSession *s
 	lck.dn_OwnerID = ses->us_UserID;
 	lck.dn_DeviceID = device->f_ID;
 	
-	if( sqllib->Save( sqllib, DoorNotificationDesc, &lck ) != 0 )
+	char *buffer;
+	int len = 512;
+	if( lck.dn_Path != NULL )
 	{
-
+		len += strlen( lck.dn_Path );
 	}
+	buffer = FMalloc( len );
+	snprintf( buffer, len, "SELECT ID FROM `FDoorNotification` WHERE UserID=%lu AND Path='%s' AND DeviceID=%lu", lck.dn_OwnerID, lck.dn_Path, lck.dn_DeviceID );
+	
+	
+	if( sqllib->NumberOfRecordsCustomQuery( sqllib, buffer) < 1 )
+	{
+		if( sqllib->Save( sqllib, DoorNotificationDesc, &lck ) != 0 )
+		{
+
+		}
+	}
+	FFree( buffer );
 
 	if( lck.dn_Path != NULL )
 	{
 		FFree( lck.dn_Path );
 	}
-	
+
 	/*
 	char *query = FCalloc( (pathsize*2)+2048, sizeof(char) );
 	if( query != NULL )
 	{
-		sqllib->SNPrintF( query, (pathsize*2)+2048, "INSERT INTO `FDoorNotification` (`OwnerID`, `DeviceID`, `Path`, `Type`, `Time`) VALUES ( %lu, %lu, %s, %d, %lu)", ses->us_ID, device->f_ID, path, type, time(NULL) );
+		sqllib->SNPrintF( query, (pathsize*2)+2048, "INSERT INTO `FDoorNotification` (`OwnerID`, `DeviceID`, `Path`, `Type`, `Time`) VALUES ( %lu, %lu, %s, %d, %lu)", ses->us_UserID, device->f_ID, path, type, time(NULL) );
 		sqllib->SimpleQuery( sqllib, query );
 		FFree( query );
 	}
 	//INSERT INTO `FriendMaster`.`FDoorNotification` (`ID`, `OwnerID`, `DeviceID`, `Path`, `Type`, `Time`) VALUES (NULL, '1', '2', 'data/drive', '3', '4');
+	FULONG uid = mysql_insert_id( l->con.sql_Con );
 	*/
-	
 	/*
 	switch( type )	// write locks should also notify read users to read
 	{
