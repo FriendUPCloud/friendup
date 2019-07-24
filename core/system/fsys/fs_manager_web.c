@@ -703,61 +703,81 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el == NULL ) el = HashmapGet( request->query, "newname" );
 					if( el != NULL )
 					{
-						nname = (char *)el->data;
+						nname = UrlDecodeToMem( (char *)el->data );
 					}
 					
 					if( nname != NULL )
 					{
-						char tmpname[ 512 ];
-						UrlDecode( tmpname, nname );
-						
-						FHandler *actFS = (FHandler *)actDev->f_FSys;
-						DEBUG("[FSMWebRequest] Filesystem RENAME\n");
-						
-						char tmp[ 256 ];
-						
-						FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "--W---" );
-						if( have == TRUE )
+						// check if its allowed to use char
+						int i;
+						FBOOL badCharFound = FALSE;
+						for( i = 0 ; i < strlen( nname ) ; i++ )
 						{
-							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
-							int error = actFS->Rename( actDev, origDecodedPath, tmpname );
-							sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
-						
-							DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
-							
-							// delete Thumbnails
-							// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
-							
-							int len = 512;
-							len += strlen( origDecodedPath );
-							char *command = FMalloc( len );
-							if( command != NULL )
+							if( nname[ i ] == '/' || nname[ i ] == ':' )
 							{
-								snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
-			
-								DEBUG("Run command via php: '%s'\n", command );
-								FULONG dataLength;
-
-								char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
-								if( data != NULL )
+								badCharFound = TRUE;
+								break;
+							}
+						}
+						
+						if( badCharFound == FALSE )
+						{
+							FHandler *actFS = (FHandler *)actDev->f_FSys;
+							DEBUG("[FSMWebRequest] Filesystem RENAME\n");
+						
+							char tmp[ 256 ];
+						
+							FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "--W---" );
+							if( have == TRUE )
+							{
+								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								int error = actFS->Rename( actDev, origDecodedPath, nname );
+								sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
+						
+								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+							
+								// delete Thumbnails
+								// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
+							
+								int len = 512;
+								len += strlen( origDecodedPath );
+								char *command = FMalloc( len );
+								if( command != NULL )
 								{
-									if( strncmp( data, "ok", 2 ) == 0 )
+									snprintf( command, len, "command=thumbnaildelete&path=%s&sessionid=%s", origDecodedPath, loggedSession->us_SessionID );
+			
+									DEBUG("Run command via php: '%s'\n", command );
+									FULONG dataLength;
+
+									char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+									if( data != NULL )
 									{
+										if( strncmp( data, "ok", 2 ) == 0 )
+										{
+										}
 									}
+									FFree( command );
 								}
-								FFree( command );
+							}
+							else
+							{
+								char dictmsgbuf1[ 196 ];
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
+								snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_NO_ACCESS_TO );
 							}
 						}
 						else
 						{
 							char dictmsgbuf1[ 196 ];
-							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
-							snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_NO_ACCESS_TO );
+							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_BAD_CHARS_USED], path );
+							snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_BAD_CHARS_USED );
 						}
 						
 						DEBUG("[FSMWebRequest] info command on FSYS: %s RENAME\n", actFS->GetPrefix() );
 						
 						HttpAddTextContent( response, tmp );
+						
+						FFree( nname );
 					}
 					else
 					{
