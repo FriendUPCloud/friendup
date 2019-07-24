@@ -1,7 +1,7 @@
 Friend Unifying Platform version 1.2-RC2
 ========================================
 
-*NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs)
+*NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
 ---
 
@@ -197,7 +197,7 @@ We invite everybody to join our Discord developer community at https://discord.g
 Demo server
 -----------
 
-For those that just want to test our Workspace, you can try our demo after registering at https://friendup.cloud/try-the-friendup-demo/.
+For those that just want to test our Workspace, you can try our demo after registering at [https://go.friendup.cloud/](https://go.friendup.cloud/)
 
 List of dependencies
 ====================
