@@ -192,7 +192,7 @@ The contributor agreement is our vehicle for ensuring that this project can enjo
 Developer Community
 ===================
 
-We invite everybody to join our developer community at https://developers.friendup.cloud/.
+We invite everybody to join our Discord developer community at https://discord.gg/GREj9Gv.
 
 Demo server
 -----------
