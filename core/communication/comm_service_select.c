@@ -132,7 +132,7 @@ int CommServiceThreadConnection( FThread *ptr )
 					}
 				}
 				
-				DEBUG2("[COMMSERV-s] PROCESSING RECEIVED CALL, DATA READED %d\n", (int)count );
+				DEBUG2("[COMMSERV-s] PROCESSING RECEIVED CALL, DATA READ %d\n", (int)count );
 				int dcount = count;
 				DataForm *df = (DataForm *)bs->bs_Buffer;
 				
@@ -418,7 +418,6 @@ int CommServiceThreadServerSelect( FThread *ptr )
 				
 				if( count > 0 )
 				{
-					//INFO("C1DATA READED %d\n", (int)count );
 					DataForm *df = (DataForm *)buffer;
 					
 					if( df->df_ID == ID_FCRE )
@@ -439,7 +438,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 						if( con != NULL )
 						{
 							con->cfcc_Data = service;
-							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE );
+							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE, NULL );
 							
 							service->s_NumberConnections++;
 							FFree( lfcm );
@@ -520,7 +519,7 @@ int CommServiceRegisterEvent( CommFCConnection *con, Socket *socket )
 	CommService *cserv = (CommService *)con->cfcc_Service;
 	// add event
 
-	con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE );
+	con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE, NULL );
 
 	return 0;
 }

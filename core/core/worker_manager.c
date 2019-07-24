@@ -128,13 +128,12 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 				{
 					break;
 				}
-				DEBUG("[WorkerRunCommand] --------waiting for running state: %d\n", wait++ );
+				DEBUG("[WorkerRunCommand] --------waiting for running state: %d, wait: %d\n", w->w_State, wait++ );
 				usleep( 10 );
 			}
 		}
 		else
 		{
-			//pthread_mutex_unlock( &(w->w_Mut) );
 			FERROR("[WorkerRunCommand] Thread not initalized\n");
 			return 1;
 		}
@@ -177,6 +176,40 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 	
 	while( TRUE )
 	{
+		/*
+		wrk = NULL;
+
+		FRIEND_MUTEX_LOCK( &wm->wm_Mutex );
+		max++; wm->wm_LastWorker++;
+		if( wm->wm_LastWorker >= wm->wm_MaxWorkers )
+		{ 
+			wm->wm_LastWorker = 0; 
+		}
+		FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
+		
+		FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ wm->wm_LastWorker ])->w_Mut );
+		
+		if( wm->w_AverageWorkSeconds == 0 )
+		{
+			wm->w_AverageWorkSeconds = wm->wm_Workers[ wm->wm_LastWorker ]->w_WorkSeconds;
+		}
+		else
+		{
+			wm->w_AverageWorkSeconds += wm->wm_Workers[ wm->wm_LastWorker ]->w_WorkSeconds;
+			wm->w_AverageWorkSeconds /= 2;
+		}
+		wm->wm_Workers[ wm->wm_LastWorker ]->w_Request = wrkinfo;
+		
+		strncpy( wm->wm_Workers[ wm->wm_LastWorker ]->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
+		wm->wm_Workers[ wm->wm_LastWorker ]->w_State = W_STATE_RUNNING;
+		//FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
+		//FRIEND_MUTEX_UNLOCK( &wrk->w_Mut );
+		
+		WorkerRunCommand( wm->wm_Workers[ wm->wm_LastWorker ], foo, d );
+		testquit = 0;
+		
+		FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ wm->wm_LastWorker ])->w_Mut );
+		*/
 		wrk = NULL;
 
 		FRIEND_MUTEX_LOCK( &wm->wm_Mutex );
@@ -187,7 +220,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		}
 
 		// Safely test the state of the worker
-		//if( pthread_mutex_trylock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut ) == 0 )
 		{
 			int lw = wm->wm_LastWorker;
 			Worker *w1 = wm->wm_Workers[ lw ];
@@ -199,7 +231,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				//struct SocketThreadData *td = ( struct SocketThreadData *)d;
 				//td->workerIndex = wm->wm_LastWorker;
 			}
-			//pthread_mutex_unlock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut );
 		}
 	
 		if( wrk != NULL )
@@ -216,10 +247,12 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			wrk->w_Request = wrkinfo;
 			
 			strncpy( wrk->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
+			wrk->w_State = W_STATE_RUNNING;
+			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 			
 			WorkerRunCommand( wrk, foo, d );
 			testquit = 0;
-			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
+			wrk->w_Request = NULL;
 			
 			break;
 		}
@@ -227,21 +260,35 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		{
 			FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 			Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
-			usleep( 100 );
+			usleep( 1000 );
 		}
 		
 		if( max > wm->wm_MaxWorkers )
 		{
 			//Log( FLOG_INFO, "[WorkManagerRun] All workers are busy, waiting\n");
 
-			if( testquit++ > 10 )
+			if( testquit++ > 30 )
 			{
 				Log( FLOG_ERROR, "[WorkManagerRun] Worker dispatch timeout, dropping client\n");
-				
+				pthread_yield();	// try to finish other tasks
 				//exit( 0 ); // <- die! only for debug
 				testquit = 0;
 				//usleep( 15000 );
 				//sleep( 2 );
+				
+				Log( FLOG_DEBUG, "Workers dump!" );
+				int z;
+				for( z=0 ; z < wm->wm_MaxWorkers ; z++ )
+				{
+					if( wm->wm_Workers[ z ]->w_FunctionString[0] == 0 )
+					{
+					}
+					else
+					{
+						Log( FLOG_DEBUG, "Worker: %d func: %s", z, wm->wm_Workers[ z ]->w_FunctionString );
+					}
+				}
+				
 				return -1;
 			}
 			usleep( 100 );
@@ -253,7 +300,8 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 	return 0;
 }
 
-/**
+/*
+*
 * For debug
 *
 */
@@ -263,16 +311,24 @@ void WorkerManagerDebug( void *sb )
 	WorkerManager *wm = (WorkerManager *)locsb->sl_WorkerManager;
 	int i;
 	
-	for( i=0 ; i < wm->wm_MaxWorkers ; i++ )
+	if( FRIEND_MUTEX_LOCK( &wm->wm_Mutex ) == 0 )
 	{
-		if( wm->wm_Workers[ i ] != NULL )
+		for( i=0 ; i < wm->wm_MaxWorkers ; i++ )
 		{
-			Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
-			if( request != NULL )
+			if( wm->wm_Workers[ i ] != NULL )
 			{
-				DEBUG("[WorkerManager] %s pointer to session %p\n", request->content, request->h_UserSession );
+				if( FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ i ]->w_Mut) ) == 0 )
+				{
+					Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
+					if( request != NULL )
+					{
+						Log( FLOG_ERROR, "[WorkerManager] worker: %d content: %s pointer to session: %p rawrequest: %s\n", i, request->content, request->h_UserSession, request->rawRequestPath );
+					}
+					FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ i ]->w_Mut) );
+				}
 			}
 		}
+		FRIEND_MUTEX_UNLOCK( &wm->wm_Mutex );
 	}
 }
 

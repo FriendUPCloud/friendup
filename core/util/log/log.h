@@ -70,6 +70,7 @@ typedef struct FlogFlags{
 	short				ff_FileLevel;
 	short				ff_Level;
 	short				ff_ToFile;
+	short				ff_ToConsole;
 	short				ff_Pretty;
 	short				ff_Time;
 	short				ff_TdSafe;
@@ -149,9 +150,15 @@ extern FlogFlags slg;
 
 #define LOG( LEV, ...)  Log( LEV,  "(" __FILE__ " " STR(__LINE__ ) ") " FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
+#ifdef __DEBUG
 #define FERROR(...) printf( "\x1B[31m (%s:%d) %ld ", __FILE__, __LINE__, (long int)pthread_self()  ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
 
 #define INFO(...) printf( "\x1B[34m (%s:%d) %ld ", __FILE__, __LINE__, (long int)pthread_self()  ); printf( FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) )
+#else
+#define FERROR(...)
+
+#define INFO(...)
+#endif
 
 //#define INFO( ...) printf( "\x1B[31m (%s:%d) ", __FILE__, __LINE__ );  Log( 1, FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) ) 
 

@@ -153,6 +153,8 @@ enum {
 	DICT_NO_MEMORY_FOR_DOSTOKEN,
 	DICT_CANNOT_ADD_DOSTOKEN,
 	DICT_CANNOT_REMOVE_DOSTOKEN,
+	DICT_USER_GROUP_ALREADY_EXIST,
+	DICT_BAD_CHARS_USED,
 	DICT_MAX
 };
 /*
@@ -239,6 +241,10 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot allocate memory for DOSToken', 'ENG', '65');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot add token to list', 'ENG', '66');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove token from list', 'ENG', '67');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Group already exist', 'ENG', '68');
+
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Bad chars used', 'ENG', '69');
 */
 
 // Load dictionary from DB

@@ -8,8 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// DirectoryView class ---------------------------------------------------------
-
 // Name fix
 function _nameFix( wt )
 {
@@ -32,9 +30,32 @@ function _nameFix( wt )
 	return wt;
 }
 
-DirectoryView = function( winobj )
+function _getBase64Image( img )
+{
+	var canvas = document.createElement( 'canvas' );
+	canvas.width = img.width; canvas.height = img.height;
+	var ctx = canvas.getContext( '2d' );
+	ctx.drawImage( img, 0, 0 );
+	return canvas.toDataURL( 'image/png' );
+}
+
+Friend = window.Friend || {};
+
+// Setup icon cache
+if( !Friend.iconCache )
+{
+	Friend.iconCache = {
+		maxCount: 1500,             // How many icons to keep in cache
+		index: 0,                   // For seenList
+		seenList: []                // List of cached icons by index
+	};
+}
+
+// DirectoryView class ---------------------------------------------------------
+DirectoryView = function( winobj, extra )
 {	
 	var ws = GetWindowStorage( winobj.uniqueId );
+	
 	// Initial values
 	this.listMode = ws && ws.listMode ? ws.listMode : 'iconview';
 	this.sortColumn = 'filename';
@@ -43,6 +64,78 @@ DirectoryView = function( winobj )
 	this.navMode = globalConfig.navigationMode == 'spacial' ? globalConfig.navigationMode : 'toolbar'; // default is now using toolbar
 	this.pathHistory = [];
 	this.pathHistoryIndex = 0;
+	this.ignoreFiles = false;
+	this.filearea = winobj;
+	this.bookmarks = null;
+	this.sidebarbackground = true;
+	this.toolbararea = false;
+	this.doubleclickfiles = false;
+	this.clickfile = false;
+	this.multiple = true;
+	this.mountlist = false;
+	this.filedialog = false;
+	this.suffix = false;
+	this.keyboardNavigation = true;
+	this.startPath = false;
+	
+	// Read in extra stuff
+	if( extra )
+	{
+		if( extra.startPath )
+			this.startPath = extra.startPath;
+		if( extra.filedialog )
+		{
+			this.filedialog = true;
+		}
+		if( extra.hasSidebar )
+		{
+			this.hasSidebar = true;
+		}
+		if( extra.rightpanel )
+		{
+			this.filearea = extra.rightpanel;
+		}
+		if( extra.leftpanel )
+		{
+			this.bookmarks = extra.leftpanel;
+		}
+		if( extra.ignoreFiles )
+		{
+			this.ignoreFiles = true;
+		}
+		if( extra.nosidebarbackground )
+		{
+			this.sidebarbackground = false;
+		}
+		if( extra.toolbararea )
+		{
+			this.toolbararea = extra.toolbararea;
+		}
+		if( extra.doubleclickfiles )
+		{
+			this.doubleclickfiles = extra.doubleclickfiles;
+		}
+		if( extra.clickfile )
+		{
+			this.clickfile = extra.clickfile;
+		}
+		if( extra.multiple === false )
+		{
+			this.multiple = false;
+		}
+		if( extra.mountlist )
+		{
+			this.mountlist = extra.mountlist;
+		}
+		if( extra.suffix )
+		{
+			this.suffix = extra.suffix;
+		}
+		if( extra.keyboardNavigation === false || extra.keyboardNavigation )
+		{
+			this.keyboardNavigation = extra.keyboardNavigation;
+		}
+	}
 
 	// File notification
 	if( winobj )
@@ -77,44 +170,140 @@ DirectoryView = function( winobj )
 							ff.execute( 'file/notificationremove' );
 						} );
 					}
-					console.log( 'File notification start result: ' + e, d );
+					//console.log( 'File notification start result: ' + e, d );
 				}
 				f.execute( 'file/notificationstart' );
-				console.log('notification start ' + path);
+				//console.log('notification start ' + path);
 			}
 			this.addToHistory( winobj.fileInfo );
 		}
 
 		this.InitWindow( winobj );
-		winobj.parentNode.className = winobj.parentNode.className.split ( ' IconWindow' ).join ( '' ) + ' IconWindow';
+		winobj.parentNode.classList.add( 'IconWindow' );
+		if( this.toolbararea )
+			winobj.parentNode.classList.add( 'CustomToolbarArea' );
 	}
 
 	this.window = winobj;
 }
 
-DirectoryView.prototype.addToHistory = function( ele )
+DirectoryView.prototype.checkSuffix = function( fn )
 {
-	if( this.pathHistory.length == 0 )
+	if( !this.suffix ) return true;
+	if( !fn ) return true;
+	if( typeof( fn ) == 'object' && fn.Filename )
+		fn = fn.Filename;
+	if( typeof( this.suffix ) == 'string' )
+	{
+		var suf = '.' + this.suffix;
+		if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) != suf )
+			return false;
+	}
+	else
+	{
+		var found = false;
+		for( var a in this.suffix )
+		{
+			var suf = '.' + this.suffix[a];
+			if( fn.toLowerCase().substr( fn.length - suf.length, suf.length ) == suf )
+			{
+				found = true;
+				break;
+			}
+		}
+		return found;
+	}
+	return true;
+}
+
+DirectoryView.prototype.addToHistory = function( info )
+{
+	// Don't do it twice
+	if( !this.window ) return;
+	
+	// Make a copy
+	var ele = {};
+	for( var a in info ) ele[ a ] = info[ a ];
+	
+	
+	var his = [];
+	for( var a = 0; a < this.pathHistory.length; a++ )
+	{
+		var el = {};
+		for( var b in this.pathHistory[ a ] )
+			el[ b ] = this.pathHistory[ a ];
+		his.push( el );
+	}
+	
+	if( !this.pathHistory.length )
 	{
 		this.pathHistory = [ ele ];
 		this.pathHistoryIndex = 0;
-		return;
 	}
-	this.pathHistory.push( ele );
-	this.pathHistoryIndex = this.pathHistory.length - 1;
+	else if( this.pathHistoryIndex == this.pathHistory.length - 1 )
+	{
+		// Check duplicate
+		if( this.pathHistory[ this.pathHistory.length - 1 ].Path != ele.Path )
+		{
+			this.pathHistory.push( ele );
+			this.pathHistoryIndex = this.pathHistory.length - 1;
+		}
+		// Do not add duplicate
+		else
+		{
+			this.pathHistoryIndex = this.pathHistory.length - 1;
+			var el = this.pathHistory[ this.pathHistoryIndex];
+			var f = {};
+			for( var a in el ) f[ a ] = el[ a ];
+			ele = f;
+		}
+	}
+	// Insert into path history (cuts history)
+	else
+	{
+		var out = [];
+		for( var a = 0; a < this.pathHistory.length; a++ )
+		{
+			out.push( this.pathHistory[ a ] );
+			if( a == this.pathHistoryIndex )
+			{
+				// Check duplicate
+				if( this.pathHistory[ a ].Path != ele.Path )
+				{
+					out.push( ele );
+				}
+				break;
+			}
+		}
+		this.pathHistory = out;
+		this.pathHistoryIndex = out.length - 1;
+	}
 	this.window.fileInfo = ele;
+	return true;
 }
 
-DirectoryView.prototype.setHistoryCurrent = function( ele )
+// Rewind to previous path history item
+DirectoryView.prototype.pathHistoryRewind = function()
 {
-	this.pathHistory[ this.pathHistoryIndex ] = ele;
-	var out = [];
-	for( var a = 0; a <= this.pathHistoryIndex; a++ )
+	// Previous
+	if( this.pathHistoryIndex > 0 )
 	{
-		out.push( this.pathHistory[a] );
+		return this.pathHistory[ --this.pathHistoryIndex ];
 	}
-	this.pathHistory = out;
-	this.window.fileInfo = ele;
+	// Start
+	return this.pathHistory[ 0 ];
+}
+
+// Rewind to next path history item
+DirectoryView.prototype.pathHistoryForward = function()
+{
+	// Next
+	if( this.pathHistoryIndex < this.pathHistory.length - 1 )
+	{
+		return this.pathHistory[ ++this.pathHistoryIndex ];
+	}
+	// End of the line
+	return this.pathHistory[ this.pathHistory.length - 1 ];
 }
 
 // Generate toolbar
@@ -127,14 +316,24 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 	var t = document.createElement( 'div' );
 	t.className = 'DirectoryToolbar';
-	t.style.top = winobj.parentNode.titleBar.offsetHeight + 'px';
-	t.style.left = GetElementWidth( winobj.parentNode.leftbar ) + 'px';
-	t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
 
 	// Assign it so we remember
 	winobj.parentNode.toolbar = t;
 	this.toolbar = t;
-	winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
+	
+	if( this.toolbararea )
+	{
+		this.toolbararea.appendChild( t );
+		t.style.left = 0;
+		t.style.right = 0;
+	}
+	else
+	{
+		winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
+		t.style.top = winobj.parentNode.titleBar.offsetHeight + 'px';
+		t.style.left = GetElementWidth( winobj.parentNode.leftbar ) + 'px';
+		t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
+	}
 
 	var rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 	if ( rpath.indexOf( ':' < 0 ) )
@@ -143,63 +342,58 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	var lmode = this.listMode;
 
 	var buttons = [
-		/*{
-			element: 'button',
-			className: 'Home IconSmall fa-home',
-			content: i18n( 'i18n_dir_btn_root' ),
-			onclick: function( e )
-			{
-				var path = winobj.fileInfo.Volume.split( ':' );
-				var fin = {
-					Volume: path[0] + ':',
-					Path: path[0] + ':',
-					Title: path[0],
-					Type: winobj.fileInfo.Type,
-					Door: Workspace.getDoorByPath( path.join( ':' ) )
-				}
-
-				// Set current ele
-				dw.setHistoryCurrent( fin );
-
-				winobj.refresh();
-			}
-		},*/
 		// Go up a level
 		{
 			element: 'button',
-			className: 'Up IconSmall fa-arrow-up',
+			className: 'Up IconSmall ' + ( isMobile ? 'fa-arrow-left' : 'fa-arrow-up' ),
 			content: i18n( 'i18n_dir_btn_up' ),
 			onclick: function( e )
 			{
-				// Fetch path again
-				var rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
-
-				if ( rpath2.indexOf( ':' < 0 ) )
-					rpath2 += ':';
-				var path = rpath2.split( ':' );
-
-				var volu = path[0];
-				var path = path[1];
-				if( path.substr( path.length - 1, 1 ) == '/' )
-					path = path.substr( 0, path.length - 1 );
-				var fnam = '';
-
-				if( path.indexOf( '/' ) > 0 )
+				var test = winobj.fileInfo.Path;
+				if( ( !winobj.directoryview.hasSidebar && !winobj.directoryview.filedialog ) && test.substr( test.length - 1, 1 ) == ':' )
 				{
-					path = path.split( '/' );
-					path.pop();
-					fnam = path[ path.length - 1 ]; // filename
-					path = path.join( '/' );
+					return;
+				}
+				
+				var volu = path = '';
+				
+				if( ( winobj.directoryview.hasSidebar || winobj.directoryview.filedialog ) && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
+				{
+					path = 'Mountlist:';
+					volu = 'Mountlist';
 				}
 				else
 				{
-					path = '';
-					fnam = volu;
-				}
-				path = volu + ':' + path;
+					// Fetch path again
+					var rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 
-				var lp = path.substr( path.length - 1, 1 )
-				if( lp != ':' && lp != '/' ) path += '/';
+					if ( rpath2.indexOf( ':' < 0 ) )
+						rpath2 += ':';
+					var path = rpath2.split( ':' );
+
+					volu = path[0];
+					path = path[1];
+					if( path.substr( path.length - 1, 1 ) == '/' )
+						path = path.substr( 0, path.length - 1 );
+					var fnam = '';
+
+					if( path.indexOf( '/' ) > 0 )
+					{
+						path = path.split( '/' );
+						path.pop();
+						fnam = path[ path.length - 1 ]; // filename
+						path = path.join( '/' );
+					}
+					else
+					{
+						path = '';
+						fnam = volu;
+					}
+					path = volu + ':' + path;
+
+					var lp = path.substr( path.length - 1, 1 )
+					if( lp != ':' && lp != '/' ) path += '/';
+				}
 
 				var fin = {
 					Volume: volu + ':',
@@ -211,11 +405,50 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 				// Set as current history element at end of list
 				dw.addToHistory( fin );
-
-				winobj.refresh();
+				
+				// Animation for going to next folder
+				if( isMobile )
+				{
+					// Remove previous one
+					if( winobj.slideAnimation )
+						winobj.slideAnimation.parentNode.removeChild( winobj.slideAnimation );
+					
+					var n = document.createElement( 'div' );
+					n.className = 'Content SlideAnimation';
+					n.style.willChange = 'transform';
+					n.style.transition = 'transform 0.4s';
+					n.innerHTML = winobj.innerHTML;
+					n.scrollTop = winobj.scrollTop;
+					n.style.zIndex = 10;
+					winobj.parentNode.appendChild( n );
+					winobj.slideAnimation = n;
+					
+					winobj.parentNode.classList.add( 'Redrawing' );
+					
+					// Refresh and animate
+					winobj.refresh( function()
+					{
+						n.style.transform = 'translate3d(100%,0,0)';
+						setTimeout( function()
+						{
+							if( n.parentNode )
+							{
+								n.parentNode.removeChild( n );
+								if( winobj.parentNode )
+									winobj.parentNode.classList.remove( 'Redrawing' );
+							}
+							winobj.slideAnimation = null;
+						}, 400 );
+					} );
+					
+				}
+				else
+				{
+					winobj.refresh();
+				}
 			}
 		},
-		{
+		!isMobile ? {
 			element: 'button',
 			className: 'Back IconSmall fa-arrow-left',
 			content: i18n( 'i18n_dir_btn_back' ),
@@ -224,13 +457,20 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the top of the history array, go back
 				if( dw.pathHistoryIndex > 0 )
 				{
-					var fin = dw.pathHistory[--dw.pathHistoryIndex];
-					winobj.fileInfo = fin;
-					winobj.refresh();
+					var fin = dw.pathHistoryRewind();
+					
+					if( !isMobile && winobj.fileBrowser )
+					{
+						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+					}
+					else
+					{
+						winobj.refresh();
+					}
 				}
 			}
-		},
-		{
+		}: false,
+		!isMobile ? {
 			element: 'button',
 			className: 'Forward IconSmall fa-arrow-right',
 			content: i18n( 'i18n_dir_btn_forward' ),
@@ -239,12 +479,18 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				// If we're not at the end of the history array, go forward
 				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
 				{
-					var fin = dw.pathHistory[++dw.pathHistoryIndex];
-					winobj.fileInfo = fin;
-					winobj.refresh();
+					var fin = dw.pathHistoryForward();
+					if( !isMobile && winobj.fileBrowser )
+					{
+						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+					}
+					else
+					{
+						winobj.refresh();
+					}
 				}
 			}
-		},
+		}: false,
 		{
 			element: 'button',
 			className: 'Reload IconSmall fa-refresh',
@@ -304,12 +550,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		}
 	];
 
+	this.buttonUp = buttons[0];
+
 	// Non System gets makedir
 	if( rpath.substr( 0, 7 ) != 'System:' )
 	{
 		buttons.push( {
 			element: 'button',
-			className: 'Makedir FloatRight IconSmall fa-plus',
+			className: 'Makedir FloatRight IconSmall',
 			content: i18n( 'i18n_create_container' ),
 			onclick: function( e )
 			{
@@ -334,9 +582,11 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	// Process!
 	for( var a in buttons )
 	{
+		if( !buttons[a] ) continue;
 		if( buttons[a].element == 'toggle-group' )
 		{
 			var ele = document.createElement( 'div' );
+			buttons[a].domElement = ele;
 			ele.className = 'ToggleGroup';
 			ele.className += ' ' + buttons[a].align;
 			ele.checkActive = function( value )
@@ -375,7 +625,17 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 DirectoryView.prototype.ShowFileBrowser = function()
 {
-	if( window.isMobile ) return;
+	if( this.windowObject.fileInfo && (
+		this.windowObject.fileInfo.Path.indexOf( 'System:' ) == 0 ||
+		this.windowObject.fileInfo.Dormant ||
+		( this.windowObject.fileInfo.Door && this.windowObject.fileInfo.Door.dormantDoor )
+	) )
+	{
+		return;
+	}
+	
+	var self = this;
+	
 	// Create the file browser
 	var winobj = this.windowObject;
 	
@@ -384,29 +644,73 @@ DirectoryView.prototype.ShowFileBrowser = function()
 	if( !isShowing && winobj.classList.contains( 'Content' ) )
 	{
 		var d = document.createElement( 'div' );
-		d.className = 'FileBrowserContainer BackgroundHeavier';
+		if( this.sidebarbackground )
+		{
+			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall';
+		}
+		else 
+		{
+			d.className = 'FileBrowserContainer ScrollBarSmall';
+			d.style.background = 'none';
+		}
 		
-		winobj.appendChild( d );
+		// Figure out where to place the bookmarks
+		var bm = this.bookmarks;
+		if( !bm )
+		{
+			bm = winobj;
+		}
+		bm.appendChild( d );
+		
+		// Register where the bookmarks are placed
 		winobj.fileBrowserDom = d;
-		winobj.fileBrowser = new Friend.FileBrowser( d, { displayFiles: false }, {
+		if( !self.bookmarks )
+			self.bookmarks = d;
+			
+		// Go instantiate!
+		winobj.fileBrowser = new Friend.FileBrowser( d, {
+			path: winobj.fileInfo.Path, 
+			displayFiles: false, 
+			justPaths: self.filedialog || self.hasSidebar, 
+			filedialog: self.filedialog 
+		}, 
+		{
 			checkFile( filepath, fileextension )
 			{
-				console.log( filepath + ' on ' + fileextension );
+				//console.log( filepath + ' on ' + fileextension );
 			},
-			loadFile( filepath )
+			loadFile( filepath, event, flags )
 			{
 				// 
 			},
-			folderOpen( path )
+			folderOpen( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
-				winobj.fileInfo.Path = path;
+				winobj.fileInfo = {
+					Path: path,
+					Volume: vol + ':',
+					Door: ( new Door( vol + ':' ) )
+				};
+				var lockH = flags && flags.lockHistory;
+				if( !lockH )
+				{
+					var vol = path.split( ':' )[0];
+					self.addToHistory( winobj.fileInfo );
+				}
 				winobj.refresh();
 			},
-			folderClose( path )
+			folderClose( path, event, flags )
 			{
-				var vol = path.split( ':' )[0];
-				winobj.fileInfo.Path = path;
+				winobj.fileInfo = {
+					Path: path,
+					Volume: vol + ':',
+					Door: ( new Door( vol + ':' ) )
+				};
+				var lockH = flags && flags.lockHistory;
+				if( !lockH )
+				{
+					var vol = path.split( ':' )[0];
+					self.addToHistory( winobj.fileInfo );
+				}
 				winobj.refresh();
 			}
 		} );
@@ -423,6 +727,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	this.windowObject = winobj;
 	winobj.parentNode.classList.add( 'IconWindow' );
 	winobj.redrawtimeouts = [];
+	
+	if( winobj.fileInfo )
+	{
+		// Initial path
+		this.pathHistory = [ winobj.fileInfo ];
+	}
 	
 	// Add context menu
 	if( !winobj.oldContextMenuEvent ) winobj.oldContextMenuEvent = winobj.oncontextmenu;
@@ -473,16 +783,128 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		var selectedCount = 0;
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( !eles[a].className || !eles[a].classList.contains( 'Selected' ) )
+			if( !eles[a].classList && !eles[a].classList.contains( 'Selected' ) )
 				continue;
-
 			selectedCount++;
 		}
+		
 		Friend.iconsSelectedCount = selectedCount;
 	},
 	// -------------------------------------------------------------------------
+	winobj.completeRedraw = function()
+	{
+		if( this.redrawing )
+		{
+			this.redrawing = false;
+			if( this.queuedRedraw )
+			{
+				this.queuedRedraw();
+				this.queuedRedraw = null;
+			}
+		}
+	}
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
+		var dirv = this.directoryview;
+		
+		// When we have a toolbar and no file browser, remove up on root paths
+		
+		var dormantDrive = winobj.fileInfo && (
+			winobj.fileInfo.Path.indexOf( 'System:' ) == 0 ||
+			winobj.fileInfo.Dormant ||
+			( winobj.fileInfo.Door && winobj.fileInfo.Door.dormantDoor )
+		);
+		
+		if( dirv.toolbar && dormantDrive )
+		{
+			var upb = dirv.toolbar.querySelector( '.Up' );
+			if( upb )
+			{
+				if( winobj.fileInfo && winobj.fileInfo.Path.substr( winobj.fileInfo.Path.length - 1, 1 ) == ':' )
+				{
+					upb.style.display = 'none';
+				}
+				else
+				{
+					upb.style.display = '';
+				}
+			}
+		}
+		
+		// Start with a path
+		if( dirv.startPath )
+		{
+			winobj.fileInfo.Path = dirv.startPath;
+			dirv.startPath = false;
+		}
+		
+		// Mobile animations
+		if( isMobile )
+		{
+			// Enforce icon view for mobile
+			dirv.listMode = 'iconview';
+			var changed = false;
+			if( !this._redrawPath || !winobj.fileInfo || this._redrawPath != winobj.fileInfo.Path )
+			{
+				changed = true;
+				this._redrawPath = winobj.fileInfo ? winobj.fileInfo.Path : null;
+			}
+			
+			if( changed )
+			{
+				if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
+				{
+					// Bookmarks
+					if( !dirv.animationsSet )
+					{
+						dirv.bookmarks.style.width = '100%';
+						dirv.bookmarks.style.left = '0';
+						dirv.bookmarks.style.transition = 'transform 0.4s';
+						
+						// Filearea is always put in a container
+					
+						dirv.filearea.parentNode.style.left = '0';
+						dirv.filearea.parentNode.style.width = '100%';
+						dirv.filearea.parentNode.style.transition = 'transform 0.4s';
+						dirv.filearea.style.transition = 'transform 0.4s';
+						
+						dirv.animationsSet = true;
+					}
+				
+					if( winobj.fileInfo.Path == 'Mountlist:' )
+					{
+						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+						{
+							dirv.filearea.style.transform = 'translate3d(100%,0,0)';
+						}
+						else
+						{
+							dirv.filearea.parentNode.style.transform = 'translate3d(100%,0,0)';
+						}
+						dirv.bookmarks.style.transform = 'translate3d(0%,0,0)';
+						winobj.parentNode.classList.add( 'Mountlist' );
+						dirv.ShowFileBrowser();
+						winobj.windowObject.setFlag( 'title', i18n( 'i18n_mountlist' ) );
+						return;
+					}
+					else
+					{
+						if( dirv.filearea.parentNode.classList.contains( 'View' ) )
+						{
+							dirv.filearea.style.transform = 'translate3d(0%,0,0)';
+						}
+						else 
+						{
+							dirv.filearea.parentNode.style.transform = 'translate3d(0%,0,0)';
+						}
+						dirv.bookmarks.style.transform = 'translate3d(-100%,0,0)';
+						winobj.parentNode.classList.remove( 'Mountlist' );
+					}
+				}
+			}
+		}
+		
+		// For screen icons
 		if( winobj.classList && winobj.classList.contains( 'ScreenContent' ) )
 		{
 			this.directoryview.mode = 'Volumes';
@@ -498,6 +920,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.directoryview.mode = 'Files';
 		}
 
+		// TODO: Check if this is used or remove!
 		if( this.running )
 		{
 			return;
@@ -506,22 +929,11 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// Blocking? Wait with call
 		if( this.redrawing )
 		{
-			//if we have odler stuff, stop it
-			if( this.redrawtimeouts.length > 0 )
-			{
-				for( var i = 0; i < this.redrawtimeouts.length; i++)
-				{
-					clearTimeout( this.redrawtimeouts[i] );
-				}
-				// Clear after having run
-				this.redrawtimeouts = [];
-			}
-
-			// lets us wait a bit and try redrawing then
-			this.redrawtimeouts.push( setTimeout( function()
+			// This will overwrite the queued redraw with updated data
+			this.queuedRedraw = function()
 			{
 				winobj.redrawIcons( icons, direction );
-			}, 250 ) );
+			};
 			return;
 		}
 
@@ -543,6 +955,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.noRun = 0;
 			this.noRunPath = '';
 		}
+		
+		// Filter icons
 		if( this.icons )
 		{
 			for( var a = 0; a < this.icons.length; a++ )
@@ -590,22 +1004,29 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			var self = this;
 			var handle;
 			var timeOfStart = new Date().getTime();
-			if ( loaded == 0 )
+			
+			if( loaded == 0 )
 				handle = setInterval( checkIcons, 500 );
+		 	
 		 	checkIcons();
+			
 			function checkIcons()
 			{
-				if ( loaded == 0 )
+				if( loaded == 0 )
 				{
 					if ( new Date().getTime() < timeOfStart + 1000 )
+					{
+						self.completeRedraw();
 						return;
+					}
 				}
-				if ( handle )
+				
+				if( handle )
 					clearInterval( handle );
 
-				if ( loaded <= 0 )
+				if( loaded <= 0 )
 				{
-					self.redrawing = false;
+					self.completeRedraw();
 					return;
 				}
 
@@ -661,25 +1082,25 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					case 'compact':
 					case 'iconview':
 					{
-						setTimeout( function(){ self.redrawing = false; }, 250 );
+						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawIconView( self, self.icons, direction, lm );
+						var res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
 						if( callback ) callback();
 						checkScrl();
 						return res;
 					}
 					case 'listview':
 					{
-						setTimeout( function(){ self.redrawing = false; }, 25 ); // to help with column resizing, lower resize timeout
+						setTimeout( function(){ self.completeRedraw(); }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawListView( self, self.icons, direction );
+						var res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
 						if( callback ) callback();
 						checkScrl();
 						return res;
 					}
 					case 'columnview':
 					{
-						setTimeout( function(){ self.redrawing = false; }, 250 );
+						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						var res = self.directoryview.RedrawColumnView( self, self.icons, direction );
 						if( callback ) callback();
@@ -687,7 +1108,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						return res;
 					}
 				}
-				self.redrawing = false;
+				self.completeRedraw();
 			}
 		}
 		return false;
@@ -697,14 +1118,14 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	winobj.parentNode.rollOver = function ( eles )
 	{
 		//SetOpacity ( this, 0.8 );
-		this.classList.add('DragTarget');
+		this.classList.add( 'DragTarget' );
 		window.targetMovable = this;
 	}
 
 	// -------------------------------------------------------------------------
 	winobj.parentNode.rollOut = function ( eles )
 	{
-		this.classList.remove('DragTarget');
+		this.classList.remove( 'DragTarget' );
 		//SetOpacity ( this, 1 );
 	}
 
@@ -725,191 +1146,394 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.classList.remove( 'DragTarget' );
 		}
 
+		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
-		{
-			var files = e.dataTransfer.files || e.target.files;
-
-			if( files.length < 1 ) return;
-
+		{	
+			var hasDownload = false;
+			
+			function makeTransferDirectory()
+			{
+				// Check the destination
+				var d = new Door( 'Home:' );
+				d.getIcons( 'Home:', function( items )
+				{
+					for( var a = 0; a < items.length; a++ )
+					{
+						if( items[a].Path == 'Home:Downloads/' )
+						{
+							hasDownload = true;
+							return;
+						}
+					}
+					if( !hasDownload )
+					{
+						d.dosAction( 'makedir', { path: 'Home:Downloads/' }, function( result )
+						{
+							if( result.substr( 0, 3 ) == 'ok<' )
+							{
+								hasDownload = true;
+							}
+							else
+							{
+								Alert( 'Error uploading', 'The Home:Downloads/ folder could not be created.' );
+								hasDownload = 'aborted';
+							}
+						} );
+					}
+				} );
+			}
+			
+			// Make sure we have it
+			makeTransferDirectory();
+			// Do the actual transfer
+			doTheTransfer();
+			
+			// Prevent default behavior
 			e.stopPropagation();
 			e.preventDefault();
-
-			if( files && this.content && this.content.fileInfo && this.content.fileInfo.Volume )
+			
+			// When everything is ready start the transfer
+			function doTheTransfer()
 			{
-				// TODO: to detect read only filesystem!
-				if( this.content.fileInfo.Volume == 'System:' || this.content.fileInfo.Path.split( ':' )[0] == 'System' )
-				{
-					Alert( i18n( 'i18n_read_only_filesystem' ), i18n( 'i18n_read_only_fs_desc' ) );
-					return false;
-				}
+				var permItems = e.dataTransfer ? e.dataTransfer.items : null;
+				var files = e.dataTransfer.files || e.target.files;
 
+				if( files.length < 1 ) 
+				{
+					Notify( { title: 'Nothing to upload', text: 'The upload data was incomplete.' } );
+					return;
+				}
+			
+				var di = winobj;
+			
+				var info = false;
+				if( files && !di.content && ( di.classList.contains( 'Screen' ) || di.classList.contains( 'ScreenContent' ) ) )
+				{
+					info = {
+						'session': Workspace.sessionId,
+						'targetPath': 'Home:Downloads/',
+						'targetVolume': 'Home:',
+						'files': files
+					};
+				}
+				else if( files && winobj.fileInfo && winobj.fileInfo.Volume )
+				{
+					info = {
+						'session': Workspace.sessionId,
+						'targetPath': winobj.fileInfo.Path,
+						'targetVolume': winobj.fileInfo.Volume,
+						'files': files
+					};
+				}
+				else
+				{
+					Notify( { title: 'Illegal upload target', text: 'Please upload to the desktop or a disk or folder.' } );
+					return;
+				}
+			
 				// Setup a file copying worker
 				var uworker = new Worker( 'js/io/filetransfer.js' );
-
-				// Open window
-				var w = new View( {
-					title:  i18n( 'i18n_copying_files' ),
-					width:  320,
-					height: 100,
-					id:     'fileops'
-				} );
-
-				var uprogress = new File( 'templates/file_operation.html' );
-
-				uprogress.connectedworker = uworker;
-
-				uprogress.onLoad = function( data )
+			
+				// Try recursion!
+				// TODO: Enable again when safe!!
+				if( permItems )
 				{
-					data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
-					w.setContent( data );
-
-					w.connectedworker = this.connectedworker;
-					w.onClose = function()
+					info.files = [];
+					info.queued = true;
+				
+					var num = 0;
+					var finalElements = [];
+				
+					// Wait till the elements are all counted
+					var isBusy = true;
+					var busyTimeout = null;
+					function busyChecker()
 					{
-						Workspace.diskNotification( [ winobj ], 'refresh' );
-						if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
+						if( busyTimeout || hasDownload == false || hasDownload == 'aborted' )
+							clearTimeout( busyTimeout );
+						// Aborted
+						if( hasDownload == 'aborted' )
+							return;
+						busyTimeout = setTimeout( function()
+						{
+							if( isBusy )
+							{
+								isBusy = false;
+								uworker.postMessage( { 
+									recursiveUpdate: true, 
+									executeQueue: true, 
+									session: info.session, 
+									targetPath: info.targetPath, 
+									targetVolume: info.targetVolume 
+								} );
+							}
+						}, 500 );
+					}
+			
+					function toArray( list )
+					{
+						return Array.prototype.slice.call( list || [], 0 );
 					}
 
-					uprogress.myview = w;
-
-					// Setup progress bar
-					var eled = w.getWindowElement().getElementsByTagName( 'div' );
-					var groove = false, bar = false, frame = false, progressbar = false;
-					for( var a = 0; a < eled.length; a++ )
+					function countItems( items )
 					{
-						if( eled[a].className )
+						for ( var i = 0, l = items.length; i < l; i++ )
 						{
-							var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
-							for( var b = 0; b < types.length; b++ )
+							countItem( items[ i ] );
+						}
+					}
+
+					function sendItem( itm )
+					{
+						if( itm.file )
+						{
+							console.log( 'Posting file: ', itm.file );
+							itm.file( function( f )
 							{
-								if( eled[a].className.indexOf( types[b] ) == 0 )
+								var ic = new FileIcon(); ic.delCache( itm.fullPath );
+								uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
+							} );
+						}
+						else
+						{
+							console.log( 'Making directory: ', itm.fullPath );
+							uworker.postMessage( { recursiveUpdate: true, item: 'directory', fullPath: itm.fullPath, session: Workspace.sessionId } );
+						}
+						busyChecker();
+					}
+
+					function countEntry( entry )
+					{
+						if( entry.isDirectory )
+						{
+							var dirReader = entry.createReader();
+							var num = 0;
+							var readEntries = function()
+							{
+								dirReader.readEntries( function( results )
 								{
-									switch( types[b] )
+									sendItem( entry, 'directory' );
+									if( results.length )
 									{
-										case 'ProgressBar': progressbar    = eled[a]; break;
-										case 'Groove':      groove         = eled[a]; break;
-										case 'Frame':       frame          = eled[a]; break;
-										case 'Bar':         bar            = eled[a]; break;
-										case 'Info':		uprogress.info = eled[a]; break;
+										for( var a = 0; a < results.length; a++ )
+										{
+											countEntry( results[ a ] );
+										}
 									}
-									break;
+								} );
+							};
+							readEntries();
+						} 
+						else 
+						{
+							sendItem( entry );
+						}
+					}
+
+					function countItem( item )
+					{
+						var entry = item.getAsEntry || item.webkitGetAsEntry();
+						if( entry.isDirectory )
+						{
+							var dirReader = entry.createReader();
+							var num = 0;
+							var readEntries = function()
+							{
+								dirReader.readEntries( function( results )
+								{
+									sendItem( entry, 'directory' );
+									if( results.length )
+									{
+										for( var a = 0; a < results.length; a++ )
+										{
+											countEntry( results[ a ] );
+										}
+									}
+								} );
+							};
+							readEntries();
+						} 
+						else 
+						{
+							sendItem( entry );
+						}
+					}
+					countItems( permItems );
+				}
+
+				if( info )
+				{
+					// TODO: to detect read only filesystem!
+					if( info.targetVolume == 'System:' || info.targetPath.split( ':' )[0] == 'System' )
+					{
+						Alert( i18n( 'i18n_read_only_filesystem' ), i18n( 'i18n_read_only_fs_desc' ) );
+						return false;
+					}
+
+					// Open window
+					var w = new View( {
+						title:  i18n( 'i18n_copying_files' ),
+						width:  320,
+						height: 100
+					} );
+
+					var uprogress = new File( 'templates/file_operation.html' );
+
+					uprogress.connectedworker = uworker;
+
+					uprogress.onLoad = function( data )
+					{
+						data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
+						w.setContent( data );
+
+						w.connectedworker = this.connectedworker;
+						w.onClose = function()
+						{
+							Workspace.diskNotification( [ winobj ], 'refresh' );
+							if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
+						}
+
+						uprogress.myview = w;
+
+						// Setup progress bar
+						var eled = w.getWindowElement().getElementsByTagName( 'div' );
+						var groove = false, bar = false, frame = false, progressbar = false;
+						for( var a = 0; a < eled.length; a++ )
+						{
+							if( eled[a].className )
+							{
+								var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
+								for( var b = 0; b < types.length; b++ )
+								{
+									if( eled[a].className.indexOf( types[b] ) == 0 )
+									{
+										switch( types[b] )
+										{
+											case 'ProgressBar': progressbar    = eled[a]; break;
+											case 'Groove':      groove         = eled[a]; break;
+											case 'Frame':       frame          = eled[a]; break;
+											case 'Bar':         bar            = eled[a]; break;
+											case 'Info':		uprogress.info = eled[a]; break;
+										}
+										break;
+									}
 								}
 							}
 						}
-					}
 
 
-					//activate cancel button... we assume we only hav eone button in the template
-					var cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
+						//activate cancel button... we assume we only hav eone button in the template
+						var cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
 
-					cb.mywindow = w;
-					cb.onclick = function( e )
-					{
-						uworker.terminate(); // End the copying process
-						this.mywindow.close();
-					}
-
-					// Only continue if we have everything
-					if( progressbar && groove && frame && bar )
-					{
-						progressbar.style.position = 'relative';
-						frame.style.width = '100%';
-						frame.style.height = '40px';
-						groove.style.position = 'absolute';
-						groove.style.width = '100%';
-						groove.style.height = '30px';
-						groove.style.top = '0';
-						groove.style.left = '0';
-						bar.style.position = 'absolute';
-						bar.style.width = '2px';
-						bar.style.height = '30px';
-						bar.style.top = '0';
-						bar.style.left = '0';
-
-						// Preliminary progress bar
-						bar.total = files.length;
-						bar.items = files.length;
-						uprogress.bar = bar;
-					}
-					uprogress.loaded = true;
-					uprogress.setProgress( 0 );
-				}
-
-				// For the progress bar
-				uprogress.setProgress = function( percent )
-				{
-					// only update display if we are loaded...
-					// otherwise just drop and wait for next call to happen ;)
-					if( uprogress.loaded )
-					{
-						uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
-						uprogress.bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
-						Math.floor( percent ) + '%</div>';
-					}
-				};
-
-				// show notice that we are transporting files to the server....
-				uprogress.setUnderTransport = function()
-				{
-					uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
-						'Transferring files to target volume...</div>';
-					uprogress.myview.setFlag( 'height', 125 );
-				}
-
-				// An error occurred
-				uprogress.displayError = function( msg )
-				{
-					uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
-					uprogress.myview.setFlag( 'height', 140 );
-				}
-
-				// Error happened!
-				uworker.onerror = function( err )
-				{
-					console.log( 'Upload worker error #######' );
-					console.log( err );
-					console.log( '###########################' );
-				};
-				uworker.onmessage = function( e )
-				{
-					if( e.data['progressinfo'] == 1 )
-					{
-						if( e.data['uploadscomplete'] == 1 )
+						cb.mywindow = w;
+						cb.onclick = function( e )
 						{
-							w.close();
-							winobj.refresh();
-
-							return true;
+							uworker.terminate(); // End the copying process
+							this.mywindow.close();
 						}
-						else if( e.data['progress'] )
+
+						// Only continue if we have everything
+						if( progressbar && groove && frame && bar )
 						{
-							uprogress.setProgress( e.data['progress'] );
-							if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
+							progressbar.style.position = 'relative';
+							frame.style.width = '100%';
+							frame.style.height = '40px';
+							groove.style.position = 'absolute';
+							groove.style.width = '100%';
+							groove.style.height = '30px';
+							groove.style.top = '0';
+							groove.style.left = '0';
+							bar.style.position = 'absolute';
+							bar.style.width = '2px';
+							bar.style.height = '30px';
+							bar.style.top = '0';
+							bar.style.left = '0';
+
+							// Preliminary progress bar
+							bar.total = files.length;
+							bar.items = files.length;
+							uprogress.bar = bar;
+						}
+						uprogress.loaded = true;
+						uprogress.setProgress( 0 );
+					}
+
+					// For the progress bar
+					uprogress.setProgress = function( percent )
+					{
+						// only update display if we are loaded...
+						// otherwise just drop and wait for next call to happen ;)
+						if( uprogress.loaded )
+						{
+							uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
+							uprogress.bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
+							Math.floor( percent ) + '%</div>';
+						}
+					};
+
+					// show notice that we are transporting files to the server....
+					uprogress.setUnderTransport = function()
+					{
+						uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+							'Transferring files to target volume...</div>';
+						uprogress.myview.setFlag( 'height', 125 );
+					}
+
+					// An error occurred
+					uprogress.displayError = function( msg )
+					{
+						uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
+						uprogress.myview.setFlag( 'height', 140 );
+					}
+
+					// Error happened!
+					uworker.onerror = function( err )
+					{
+						console.log( 'Upload worker error #######' );
+						console.log( err );
+						console.log( '###########################' );
+					};
+					uworker.onmessage = function( e )
+					{
+						if( e.data['progressinfo'] == 1 )
+						{
+							if( e.data['uploadscomplete'] == 1 )
 							{
-								uprogress.setUnderTransport();
+								w.close();
+								if( winobj && winobj.refresh )
+									winobj.refresh();
+
+								Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
+								{
+									OpenWindowByFileinfo( { Title: 'Downloads', Path: 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
+								} );
+								return true;
 							}
+							else if( e.data['progress'] )
+							{
+								uprogress.setProgress( e.data['progress'] );
+								if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
+								{
+									uprogress.setUnderTransport();
+								}
+							}
+
+						}
+						else if( e.data['error'] == 1 )
+						{
+							uprogress.displayError(e.data['errormessage']);
 						}
 
 					}
-					else if( e.data['error'] == 1 )
-					{
-						uprogress.displayError(e.data['errormessage']);
-					}
 
+					uprogress.load();
+
+					uworker.postMessage( info );
 				}
-
-				uprogress.load();
-
-				uworker.postMessage( {
-					'session': Workspace.sessionId,
-					'targetPath': this.content.fileInfo.Path,
-					'targetVolume': this.content.fileInfo.Volume,
-					'files': files
-				} );
-			}
-			else
-			{
-				console.log( 'We got nothing.', this.content );
+				else
+				{
+					console.log( 'We got nothing.', this );
+				}
 			}
 		}
 
@@ -934,6 +1558,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
 	var dview = this;
 	var mode = 'view';
+	
 	var a;
 
 	// Function to use for installing application packages
@@ -975,16 +1600,23 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// We are operating on a file directory icon?
 	else if( this.object && this.object.file )
 	{
+		// Ok, tell function we're operating on a FileIcon
+		mode = 'directory';
+		
 		if( !this.object.file.directoryView )
 		{
 			return false;
 		}
 		if( !this.object.file.fileInfo || ( this.object.file.fileInfo.Type != 'Directory' && this.object.file.fileInfo.Type != 'Door' ) )
 		{
-			return false;
+			if( this.object.file.fileInfo.Type == 'File' )
+			{
+				mode = 'view';
+				// Redirect to view mode
+				dview = this.object.file.directoryView.window.parentNode;
+			}
 		}
-		// Ok, tell function we're operating on a FileIcon
-		mode = 'directory';
+		
 	}
 
 
@@ -1004,9 +1636,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// Window is the target
 	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 
+	var dragFromWindow = eles[0].window;
+
 	// Can't drop stuff on myself!
 	if( mode == 'view' && dview.content == eles[0].window )
 	{
+		// The icon to drop on
 		cfo = false;
 
 		// Check if we're dropping on a folder icon
@@ -1023,6 +1658,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				var ic = divs[a];
 				icons.push( ic );
 				// Check if the mouse entered here
+				
 				if( !cfo && mx >= ic.offsetLeft && my >= ic.offsetTop && mx < ic.offsetLeft + ic.offsetWidth && my < ic.offsetTop + ic.offsetHeight )
 				{
 					// We found a better target!
@@ -1038,19 +1674,16 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		if( !cfo )
 		{
 			dview.content.refresh();
-			eles[0].window.refresh();
+			dragFromWindow.refresh();
 			return;
 		}
 	}
 
 	// Immediately refresh source!
 	var winobj = mode == 'view' ? this.windowObject : dview.directoryView.windowObject;
-	Workspace.diskNotification( [ winobj, eles[0].window ], 'refresh' );
+	Workspace.diskNotification( [ winobj, dragFromWindow ], 'refresh' );
 
 	// Sanitize input... no folder to be dropped into themselves or their children....
-	// HOGNE: Bug! If a window title contains the path of the icon to be dropped
-	// you close it (example: FriendBrowser showing index.html, and drag&drop of index.html)! :) 
-	// Maybe you should check if the window is a directoryView?
 	var clean = [];
 	for( var i = 0; i < eles.length; i++ )
 	{
@@ -1066,10 +1699,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			{
 				if(
 					movableWindows[j] && movableWindows[j].titleString &&
-					('' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) != -1
+					( '' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) != -1
 				)
 				{
-					movableWindows[j].windowObject.close();
+					if( movableWindows[ j ].content && movableWindows[ j ].content.directoryview )
+					{
+						movableWindows[j].windowObject.close();
+					}
 				}
 			}
 		}
@@ -1124,7 +1760,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false; // <- dropped path
 
 	// We can't copy to self!
-	if( sPath == dPath )
+	if( sPath == dPath && !e.paste )
 	{
 		if( mode == 'view' ) dview.content.refresh();
 		else if( dview.directoryView.content ) dview.directoryView.content.refresh();
@@ -1165,6 +1801,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		dview.fileoperations[ dview.operationcounter ].sPath = sPath;
 		dview.fileoperations[ dview.operationcounter ].dPath = dPath;
 
+		// Register current open window
+		var curr = window.currentMovable;
 
 		// Open window
 		dview.fileoperations[ dview.operationcounter ].view = new View( {
@@ -1475,10 +2113,16 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 						initNextBatch = false;
 
+						var ic = new FileIcon(); 
+						
 						for( i = 0; i < stopAt; i++ )
 						{
 							fl = this.files[ i ];
-							toPath = cfo.Path + p + fl.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
+							
+							// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
+							var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
+							
+							toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
 							door = Workspace.getDoorByPath( fl.fileInfo.Path );
 
 							// Sanitation
@@ -1489,6 +2133,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
 
 							// Do the copy - we have files here only...
+							ic.delCache( toPath );
 							door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
@@ -1625,8 +2270,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
 
 								// Delete in reverse
+								var ic = new FileIcon();
 								for( var b = fob.files.length - 1; b >= 0; b-- )
 								{
+									ic.delCache( fob.files[b].fileInfo.Path );
 									d.dosAction( 'delete', { path: fob.files[b].fileInfo.Path }, function( result )
 									{
 										w.deletable--;
@@ -1715,8 +2362,17 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				// On close, stop copying
 				w.onClose = function()
 				{
-					console.log( 'Stopping the copy process.' );
 					fileCopyObject.stop = true;
+					
+					// If we have prev current
+					if( curr && isMobile )
+					{
+						setTimeout( function()
+						{
+							_ActivateWindow( curr );
+							_WindowToFront( curr );
+						}, 550 );
+					}
 				}
 
 			}
@@ -1745,10 +2401,13 @@ DirectoryView.prototype.GetTitleBar = function ()
 	return false;
 }
 
-// -------------------------------------------------------------------------
+// Redraw the iconview mode ----------------------------------------------------
 DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, option, flags )
 {
 	var self = this;
+	
+	if( this.rendering ) return;
+	this.rendering = true;
 	
 	// Remove and clean up listview
 	if( this.viewMode != 'iconview' )
@@ -1812,6 +2471,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		this.scroller = sc;
 	}
 	
+	// Remove loading animation
 	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
 	{
 		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
@@ -1856,6 +2516,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	
 	obj.direction = direction ? direction : 'horizontal';
 	icons = icons ? icons : obj.icons;
+	
 	if ( !icons ) return;
 
 	var dummyIcon = document.createElement( 'div' );
@@ -1884,7 +2545,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Get display frame
 	var display = {
 		top: this.scroller.scrollTop - this.scroller.offsetHeight,
-		bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight * 2 )
+		bottom: this.scroller.scrollTop + ( this.scroller.offsetHeight << 1 ),
+		width: windowWidth
 	};
 	
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
@@ -1901,7 +2563,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Calculate marginLeft to center icons on mobile
 	if( isMobile )
 	{
-		var whWidth = this.scroller.offsetWidth;
+		var whWidth = windowWidth;
 		var columns = Math.floor( whWidth / mobIW );
 		marginLeft = Math.floor( whWidth - ( mobIW * columns ) ) >> 1;
 	}
@@ -1926,6 +2588,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		obj.appendChild( o );
 		this.scroller = o;
 	}
+	
+	// Turn off smooth scrolling on redraw
+	this.scroller.style.scrollBehavior = 'unset';
 	
 	// Add the placeholder real fast
 	if( flags && flags.addPlaceholderFirst )
@@ -1956,10 +2621,13 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		// TODO: Lets try to make directories first optional
 		var dirs = [];
 		var files = [];
+		
 		var orphanInfoFile = {};
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			if( icons[a].Type == 'Directory' ) 
 				dirs.push( icons[a] );
 			else 
@@ -1997,8 +2665,14 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		for( var a = 0; a < icons.length; a++ )
 		{
 			var fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
+			
 			// Skip dot files
 			if( !self.showHiddenFiles && fn.substr( 0, 1 ) == '.' ) continue;
+			// Skip files with wrong suffix
+			else if( icons[a].Type == 'File' && self.suffix && !self.checkSuffix( fn ) )
+			{
+				continue;
+			}
 			// Skip backup files
 			else if( !self.showHiddenFiles && fn.substr( fn.length - 4, 4 ) == '.bak' )
 				continue;
@@ -2019,12 +2693,61 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			}
 		}
 		
+		var contentMode = this.window.classList.contains( 'ScreenContent' ) ? 'screen' : 'view';
+		
 		// Draw icons
+		var iterations = 0;
 		for( var a = 0; a < icons.length; a++ )
 		{
-			// Do not draw icons out of bounds!
-			if( this.mode != 'Volumes' && ( iy > display.bottom || iy < display.top ) )
+			// Special mode
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
+			var r = icons[a];
+			
+			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
+				continue;
+
+			// TODO: Show hidden files if we _must_
+		 	var fn = {
+		 		Filename: icons[a].Filename ? icons[a].Filename : icons[a].Title,
+		 		Type: icons[a].Type
+		 	};
+		 	// Skip dot files
+			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
+			
+			// Skip files with wrong suffix
+			else if( icons[a].Type == 'File' && self.suffix && !self.checkSuffix( fn ) )
 			{
+				continue;
+			}
+			
+			// Skip backup files
+			else if( !self.showHiddenFiles && fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
+				continue;
+
+			// Only show orphan .info files
+			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
+			{
+				if( !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
+					continue;
+			}
+
+			// Skip duplicates
+			var fnd = false;
+			for( var z = 0; z < filenameBuf.length; z++ )
+			{
+				if( filenameBuf[z].Filename == fn.Filename && filenameBuf[z].Type == fn.Type )
+				{
+					fnd = true;
+					break;
+				}
+			}
+			if( fnd ) continue;
+			
+			// Do not draw icons out of bounds!
+			if( this.mode != 'Volumes' && ( iy > display.bottom || iy + gridY < display.top ) )
+			{
+				// Increment icons after first calculated icon
 				if( direction == 'vertical' )
 				{
 					iy += gridY;
@@ -2049,41 +2772,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				obj.icons.push( icons[a] );
 				continue;
 			}
-		
-			var r = icons[a];
 			
-			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
-				continue;
-
-			// TODO: Show hidden files if we _must_
-		 	var fn = {
-		 		Filename: icons[a].Filename ? icons[a].Filename : icons[a].Title,
-		 		Type: icons[a].Type
-		 	};
-		 	// Skip dot files
-			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
-			// Skip backup files
-			else if( !self.showHiddenFiles && fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
-				continue;
-
-			// Only show orphan .info files
-			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
-			{
-				if( !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
-					continue;
-			}
-
-			// Skip duplicates
-			var fnd = false;
-			for( var z = 0; z < filenameBuf.length; z++ )
-			{
-				if( filenameBuf[z].Filename == fn.Filename && filenameBuf[z].Type == fn.Type )
-				{
-					fnd = true;
-					break;
-				}
-			}
-			if( fnd ) continue;
 			filenameBuf.push( fn );
 
 			// TODO: What is this? :D
@@ -2134,13 +2823,22 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			{
 				if( icons[a].Type == 'Door' && !icons[a].Mounted ) continue;
 				
-				// Checks if the icon is
-				file = CreateIcon( icons[a], this );
-				file.directoryView = this;
+				if( icons[a].file )
+				{
+					coldom.appendChild( icons[a].file );
+					file = icons[a].file;
+				}
+				else
+				{
+					// Checks if the icon is
+					file = CreateIcon( icons[a], this );
+					file.directoryView = this;
+					icons[a].file = file;
+				}
+				
 				file.style.top = iy + 'px';
 				file.style.left = ix + 'px';
-				if( option == 'compact' )
-					file.classList.add( 'Compact' );
+				if( option == 'compact' ) file.classList.add( 'Compact' );
 				
 				coldom.appendChild( file );
 				
@@ -2148,13 +2846,19 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				var ic = file.getElementsByClassName( 'Icon' );
 				var c = window.getComputedStyle( ic[0], null );
 				var title = file.getElementsByClassName( 'Title' );
-				title[0].style.maxHeight = ( gridY - parseInt( c.height ) ) + 'px';
 				title[0].style.overflow = 'hidden';
 
 				// Usually drawing from top to bottom
 				if( direction == 'vertical' )
 				{
-					iy += gridY;
+					if( contentMode == 'screen' )
+					{
+						iy += file.offsetHeight + marginTop;
+					}
+					else
+					{
+						iy += gridY;
+					}
 
 					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && iy + gridY > windowHeight )
 					{
@@ -2205,8 +2909,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	this.innerHeight = iy + gridY;
 	
 	// Force scrolling
-	var d = this.scroller.getElementsByClassName( 'Placeholder' );
-	if( !d.length )
+	var d = this.scroller.querySelector( '.Placeholder' );
+	if( !d )
 	{
 		d = document.createElement( 'div' );
 		d.style.position = 'absolute';
@@ -2216,6 +2920,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		d.style.width = gridX + 'px';
 		d.className = 'Placeholder';
 		this.scroller.appendChild( d );
+	}
+	else
+	{
+		d.style.height = gridY + 'px';
 	}
 	// Done force scrolling
 
@@ -2227,6 +2935,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	
 	// We are loaded!
 	this.scroller.classList.add( 'Loaded' );
+	
+	// Normal scrolling again
+	this.scroller.style.scrollBehavior = '';
 	
 	// Handle scrolling
 	this.refreshScrollTimeout = false;
@@ -2250,6 +2961,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			self.refreshScrollTimeout = false;
 		}, 50 );
 	};
+	
+	// Ok, done
+	this.rendering = false;
 }
 
 // Try to resize
@@ -2271,13 +2985,20 @@ DirectoryView.prototype.ResizeToFit = function( obj )
 // Select all
 DirectoryView.prototype.SelectAll = function()
 {
-	var ics = this.window.icons;
-	for( var a = 0; a < ics.length; a++ )
+	if( this.multiple )
 	{
-		ics[a].domNode.classList.add( 'Selected' );
-		ics[a].domNode.selected = true;
-		if( ics[a].fileInfo )
-			ics[a].fileInfo.selected = true;
+		var ics = this.window.icons;
+		for( var a = 0; a < ics.length; a++ )
+		{
+			if( ics[a].domNode )
+			{
+				ics[a].domNode.classList.add( 'Selected' );
+				ics[a].domNode.selected = 'multiple';
+			}
+			ics[a].selected = 'multiple';
+			if( ics[a].fileInfo )
+				ics[a].fileInfo.selected = 'multiple';
+		}
 	}
 }
 
@@ -2295,7 +3016,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	}
 	
 	this.viewMode = 'listview';
-	
+
+	var self = this;
 	
 	// TODO: Direction not needed here
 	obj.direction = direction ? direction : 'horizontal';
@@ -2340,6 +3062,13 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 		this.changed = false;
+	}
+
+	// Remove loading animation
+	if( obj.getElementsByClassName( 'LoadingAnimation' ).length )
+	{
+		var la = obj.getElementsByClassName( 'LoadingAnimation' )[0];
+		la.parentNode.removeChild( la );
 	}
 
 	// Make sure we have a listview columns header bar
@@ -2434,6 +3163,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			obj.scroller.innerHTML = '';
 		}
 		
+		// Turn off smooth scrolling on redraw
+		obj.scroller.style.scrollBehavior = 'unset';
+		
 		var icnt = obj.scroller;
 		var bts = 0;
 		var foot = this.listView.foot;
@@ -2441,11 +3173,73 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 		obj.iconsCache = icons;
 		obj.icons = [];
+		
+		var orphanInfoFile = {};
 
 		for( var a = 0; a < icons.length; a++ )
 		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
+			if( icons[a].Type == 'Directory' ) 
+				dirs.push( icons[a] );
+			else 
+				files.push( icons[a] );
+
+			var i = icons[a];
+			if( i.Filename )
+			{
+				// Check .info
+				var mInfoname = i.Filename.toLowerCase().indexOf( '.info' ) > 0 ?
+					i.Filename.substr( 0, i.Filename.length - 5 ) : false;
+				// Check .dirinfo
+				if( !mInfoname )
+				{
+					mInfoname = i.Filename.toLowerCase().indexOf( '.dirinfo' ) > 0 ?
+						i.Filename.substr( 0, i.Filename.length - 8 ) : false;
+				}
+				if( mInfoname )
+				{
+					if( typeof( orphanInfoFile[ mInfoname ] ) == 'undefined' )
+						orphanInfoFile[ mInfoname ] = true;
+					else orphanInfoFile[ mInfoname ] = false;
+				}
+				else
+				{
+					orphanInfoFile[ i.Filename ] = false;
+				}
+			}
+		}
+		
+		var swi = 2;
+
+		for( var a = 0; a < icons.length; a++ )
+		{
+			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
+			
 			var t = icons[a].Title ? icons[a].Title : icons[a].Filename;
 			var ic = icons[a];
+
+			// Skipping
+			// Skip dot files
+			if( !self.showHiddenFiles && t.substr( 0, 1 ) == '.' ) continue;
+			
+			// Skip files with wrong suffix
+			else if( ic.Type == 'File' && self.suffix && !self.checkSuffix( t ) )
+			{
+				continue;
+			}
+			
+			// Skip backup files
+			else if( !self.showHiddenFiles && t.substr( t.length - 4, 4 ) == '.bak' )
+				continue;
+				
+			// Only show orphan .info files
+			if( t.indexOf( '.info' ) > 0 || t.indexOf( '.dirinfo' ) > 0 )
+			{
+				if( !orphanInfoFile[ t.substr( 0, t.length - 5 ) ] )
+					continue;
+			}
+			// Dont skipping
 
 			if( t.split ( ' ' ).join ( '' ).length == 0 ) t = 'Unnamed';
 
@@ -2457,25 +3251,25 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				switch( b )
 				{
 					case 'filename':
-						if( icons[a].Type == 'Directory' )
+						if( ic.Type == 'Directory' )
 							c.innerHTML = t;
 						else c.innerHTML = t;
 						r.primaryDom = c;
 						break;
 					case 'size':
-						c.innerHTML = icons[a].Filesize > 0 ? humanFilesize ( icons[a].Filesize ) : '&nbsp;';
+						c.innerHTML = ic.Filesize > 0 ? humanFilesize ( ic.Filesize ) : '&nbsp;';
 						c.style.textAlign = 'right';
 						break;
 					case 'date':
-						c.innerHTML = icons[a].DateModified;
+						c.innerHTML = ic.DateModified;
 						c.style.textAlign = 'right';
 						break;
 					case 'type':
 						/*var fn = icons[a].Title ? icons[a].Title : icons[a].Filename;
 						var ext = fn.split( '.' ); ext = ext[ext.length-1].toLowerCase();
 						ext = ext.split( '#' ).join( '' );*/
-						var ext = icons[a].Extension.split( '#' )[0];
-						var tp = i18n( icons[a].Type == 'Directory' ? 'i18n_directory' : 'i18n_filetype_' + ext );
+						var ext = ic.Extension.split( '#' )[0];
+						var tp = i18n( ic.Type == 'Directory' ? 'i18n_directory' : 'i18n_filetype_' + ext );
 						if( tp.substr( 0, 5 ) == 'i18n_' )
 							tp = i18n( 'i18n_driver_handled' );
 						c.innerHTML = tp;
@@ -2483,9 +3277,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						break;
 					case 'permissions':
 						var pr = '-rwed';
-						if( icons[a].Permissions )
+						if( ic.Permissions )
 						{
-							var p = icons[a].Permissions.split( ',' );
+							var p = ic.Permissions.split( ',' );
 							var perms = ['-','-','-','-','-'];
 							for( var b = 0; b < p.length; b++ )
 							{
@@ -2510,19 +3304,34 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				c.style.width = defwidths[b];
 				r.appendChild( c );
 			}
-			bts += icons[a].Filesize ? parseInt( icons[a].Filesize ) : 0;
-			if ( a % 2 == 0 ) r.className += ' Odd';
+			bts += ic.Filesize ? parseInt( ic.Filesize ) : 0;
+			
+			swi = swi == 2 ? 1 : 2;
+			if ( swi == 1 ) r.className += ' Odd';
 
 			// Create icon object to extract FileInfo
-			var f = CreateIcon( icons[a], this );
+			var f = CreateIcon( ic, this );
 			f.directoryView = this;
 			r.className += ' File';
-			RemoveIconEvents( f ); // Strip events
+			//RemoveIconEvents( f ); // Strip events
 			r.file = f;
-			r.ondblclick = function( e )
+			
+			// Overwrite doubleclick
+			if( ic.Type == 'File' && this.doubleclickfiles )
 			{
-				Notify( { title: 'Double clicked', text: 'dlci' } );
-				this.file.ondblclick( e );
+				var cl = this.doubleclickfiles;
+				r.ondblclick = function( e )
+				{
+					cl( this.file, e );
+				}
+			}
+			else
+			{
+				r.ondblclick = function( e )
+				{
+					//Notify( { title: 'Double clicked', text: 'dlci' } );
+					this.file.ondblclick( e );
+				}
 			}
 
 			// Create the icon..
@@ -2534,115 +3343,99 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.appendChild( icon );
 			
 			// Single click
-			r.onclick = function( e )
-			{
-				var p = icnt;
-
-				// Range
-				if( e.shiftKey )
-				{
-					var other = self = false;
-					var top = bottom = false;
-
-					// Find range from to
-					if( dv.lastListItem && dv.lastListItem.classList.contains( 'Selected' ) )
-					{
-						for( var c = 0; c < p.childNodes.length; c++ )
-						{
-							if( p.childNodes[c] == dv.lastListItem )
-							{
-								other = c;
-							}
-							else if( p.childNodes[c] == this )
-							{
-								self = c;
-							}
-						}
-					}
-					top = self > other ? other : self;
-					bottom = self > other ? self : other;
-
-					if( other >= 0 && self >= 0 )
-					{
-						for( var b = top; b <= bottom; b++ )
-						{
-							if( !p.childNodes[b] ) continue;
-							p.childNodes[b].classList.add( 'Selected' );
-							p.childNodes[b].selected = true;
-							p.childNodes[b].fileInfo.selected = true;
-						}
-					}
-					dv.lastListItem = this;
-				}
-				// Toggle only
-				else if( e.ctrlKey )
-				{
-					if( this.classList.contains( 'Selected' ) )
-					{
-						this.classList.remove( 'Selected' );
-						this.selected = false;
-						this.fileInfo.selected = false;
-						dv.lastListItem = false;
-					}
-					else
-					{
-						this.classList.add( 'Selected' );
-						this.selected = true;
-						this.fileInfo.selected = true;
-						dv.lastListItem = this;
-					}
-				}
-				else
-				{
-					for( var c = 0; c < p.childNodes.length; c++ )
-					{
-						p.childNodes[c].classList.remove( 'Selected' );
-						p.childNodes[c].selected = false;
-						p.childNodes[c].fileInfo.selected = false;
-					}
-					if( this.classList.contains( 'Selected' ) )
-					{
-						this.classList.remove( 'Selected' );
-						this.selected = false;
-						this.fileInfo.selected = false;
-						dv.lastListItem = false;
-					}
-					else
-					{
-						this.classList.add( 'Selected' );
-						this.selected = true;
-						this.fileInfo.selected = true;
-						dv.lastListItem = this;
-					}
-				}
-
-				return cancelBubble( e );
-			}
-			
 			r.onmousedown = function( e )
 			{
+				if( !e ) e = window.event ? window.event : {};
+			
+				// This means we are adding
+				if( e.shiftKey || e.ctrlKey )
+				{
+					convertIconsToMultiple();
+				}
+				
 				// Right mouse button
 				if( e.button == 2 )
 				{
-					var p = icnt;
-
-					var fnd = false;
-					for( var c = 0; c < p.childNodes.length; c++ )
+					// check icons
+					clearRegionIcons( { exception: this } );
+					this.classList.add( 'Selected' );
+					this.fileInfo.selected = true;
+					this.selected = true;
+					found = this;
+			
+					if( !window.isMobile )
 					{
-						if( p.childNodes[c].classList.contains( 'Selected' ) )
-						{
-							fnd = true;
-							break;
-						}
+						Workspace.showContextMenu( false, e );
 					}
-					if( !fnd )
+					return cancelBubble( e );
+				}
+				else
+				{
+					// Use override if possible
+					if( this.file.directoryView.filedialog && isMobile )
 					{
-						for( var c = 0; c < p.childNodes.length; c++ )
+						if( this.file.directoryView.doubleclickfiles )
 						{
-							p.childNodes[c].classList.remove( 'Selected' );
-							p.childNodes[c].selected = false;
-							p.childNodes[c].fileInfo.selected = false;
+							if( this.fileInfo.Type == 'File' )
+							{
+								this.file.directoryView.doubleclickfiles( this, e );
+							}
+							else if( this.fileInfo.Type == 'Directory' )
+							{
+								launchIcon( e, this );
+							}
+							return cancelBubble( e );
 						}
+						return;
+					}
+					
+					var p = icnt;
+				
+					// We have an external event
+					if( dv.clickfile )
+					{
+						dv.clickfile( this.file, e );
+					}
+				
+					// Range
+					if( dv.multiple && e.shiftKey )
+					{
+						var other = self = false;
+						var top = bottom = false;
+
+						// Find range from to
+						if( dv.lastListItem && dv.lastListItem.classList.contains( 'Selected' ) )
+						{
+							for( var c = 0; c < p.childNodes.length; c++ )
+							{
+								if( p.childNodes[c] == dv.lastListItem )
+								{
+									other = c;
+								}
+								else if( p.childNodes[c] == this )
+								{
+									self = c;
+								}
+							}
+						}
+						top = self > other ? other : self;
+						bottom = self > other ? self : other;
+
+						if( other >= 0 && self >= 0 )
+						{
+							for( var b = top; b <= bottom; b++ )
+							{
+								if( !p.childNodes[b] ) continue;
+								p.childNodes[b].classList.add( 'Selected' );
+								p.childNodes[b].selected = 'multiple';
+								p.childNodes[b].fileInfo.selected = 'multiple';
+							}
+						}
+						dv.lastListItem = this;
+					}
+					// Toggle only
+					else if( dv.multiple && e.ctrlKey )
+					{
 						if( this.classList.contains( 'Selected' ) )
 						{
 							this.classList.remove( 'Selected' );
@@ -2653,29 +3446,41 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						else
 						{
 							this.classList.add( 'Selected' );
-							this.selected = true;
-							this.fileInfo.selected = true;
+							this.selected = 'multiple';
+							this.fileInfo.selected = 'multiple';
 							dv.lastListItem = this;
 						}
 					}
+					else
+					{
+						var sh = e.shiftKey || e.ctrlKey;
+						if( !sh ) 
+						{
+							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+							{
+								clearRegionIcons( { exception: this } );
+							}
+						}
+						
+						if( this.classList.contains( 'Selected' ) )
+						{
+							this.classList.remove( 'Selected' );
+							this.selected = false;
+							this.fileInfo.selected = false;
+						}
+						else
+						{
+							this.classList.add( 'Selected' );
+							this.selected = sh ? 'multiple' : true;
+							this.fileInfo.selected = sh ? 'multiple' : true;
+						}
+						dv.lastListItem = this;
+					}
 
-					dv.window.checkSelected();
-					Workspace.refreshMenu();
-					
-					// check icons
-					var sels = dv.windowObject.getElementsByClassName( 'File' );
-					var found = false;
-					for( var y = 0; y < sels.length; y++ )
+					if( window.isSettopBox )
 					{
-						if( sels[y] == this && sels[y].classList.contains( 'Selected' ) )
-							found = true;
+						return cancelBubble( e );
 					}
-					
-					if( !window.isMobile )
-					{
-						Workspace.showContextMenu( false, { target: this.parentNode } );
-					}
-					return cancelBubble( e );
 				}
 			}
 
@@ -2717,12 +3522,11 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						self.click = false;
 						if( self.classList.contains( 'Selected' ) )
 						{
-							self.classList.remove( 'Selected' );
-							self.selected = false;
-							self.fileInfo.selected = false;
+							clearRegionIcons();
 						}
 						else
 						{
+							clearRegionIcons();
 							self.classList.add( 'Selected' );
 							self.selected = true;
 							self.fileInfo.selected = true;
@@ -2809,11 +3613,20 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				r.onclick = null;
 				r.onmousedown = null;
 			}
+			
+			// Releasing
+			r.onmouseup = function( e )
+			{
+				if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
+				{
+					clearRegionIcons( { exception: this, force: true } );
+				}
+			}
 
 			// For clicks
-			icons[a].domNode = r;
+			ic.domNode = r;
 
-			obj.icons.push( icons[a] );
+			obj.icons.push( ic );
 		}
 
 		// Position the rows
@@ -2873,13 +3686,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	
 	// We are loaded!
 	icnt.classList.add( 'Loaded' );
+	
+	obj.scroller.style.scrollBehavior = '';
 }
 
 // -------------------------------------------------------------------------
 // Create a directoryview on a div / Window (shortcut func (deprecated?))
-function CreateDirectoryView( winobj )
+function CreateDirectoryView( winobj, extra )
 {
-	var w = new DirectoryView( winobj );
+	var w = new DirectoryView( winobj, extra );
 	return w;
 }
 
@@ -2899,11 +3714,82 @@ function DirectoryContainsFile( filename, directoryContents )
 // Icon class ------------------------------------------------------------------
 // -------------------------------------------------------------------------
 
-var FileIconCache = {};
-
 FileIcon = function( fileInfo )
 {
 	this.Init ( fileInfo );
+}
+
+// Put in cache
+// TODO: Clean cache when sessionid change
+FileIcon.prototype.setCache = function( path, directoryview, date )
+{
+	var dir = directoryview.window.fileInfo.Path;
+	if( !Friend.iconCache[ dir ] )
+		Friend.iconCache[ dir ] = {};
+	if( !Friend.iconCache[ dir ][ path ] )
+	{
+		var currentIndex = Friend.iconCache.index++;
+		// Wrap around
+		if( currentIndex > Friend.iconCache.maxCount )
+		{
+			currentIndex = Friend.iconCache.index = 0;
+		}
+		var i = new Image();
+		i.src = path;
+		i.date = date;
+		i.onload = function()
+		{
+			Friend.iconCache[ dir ][ path ] = i;
+			// Overwriting?
+			if( Friend.iconCache.seenList[ currentIndex ] )
+			{
+				var dd = Friend.iconCache.seenList[ currentIndex ].dir;
+				var pp = Friend.iconCache.seenList[ currentIndex ].path;
+				delete Friend.iconCache[ dd ][ pp ];
+			}
+			// Write new
+			Friend.iconCache.seenList[ currentIndex ] = {
+				dir: dir,
+				path: path
+			};
+		}
+	}
+}
+
+// Get image from cache
+FileIcon.prototype.getCache = function( path, directoryview, date )
+{
+	var dir = directoryview.window.fileInfo.Path;
+	if( !Friend.iconCache[ dir ] ) return false;
+	if( !Friend.iconCache[ dir ][ path ] ) return false;
+	var i = Friend.iconCache[ dir ][ path ];
+	if( i.date != date )
+	{
+		Friend.iconCache[ dir ][ path ] = null;
+		return false;
+	}
+	return _getBase64Image( i );
+}
+
+// Remove an image from cache
+FileIcon.prototype.delCache = function( dir )
+{
+	var path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + dir;
+	// remove filename from subpath
+	if( dir.indexOf( '/' ) > 0 )
+	{
+		dir = dir.split( '/' );
+		dir.pop();
+		dir = dir.join( '/' ) + '/';
+	}
+	// remove filename from rootpath
+	else
+	{
+		dir = dir.split( ':' )[0] + ':';
+	}
+	if( !Friend.iconCache[ dir ] ) return false;
+	if( !Friend.iconCache[ dir ][ path ] ) return false;
+	delete Friend.iconCache[ dir ][ path ];
 }
 
 // -----------------------------------------------------------------------------
@@ -2921,6 +3807,9 @@ FileIcon.prototype.Init = function( fileInfo )
 	file.style.position = 'absolute';
 
 	// Selected in buffer
+	if( !fileInfo )
+		return;
+		
 	if( fileInfo.selected ) this.file.classList.add( 'Selected' );
 
 	// Attach this object to dom element
@@ -2956,7 +3845,35 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	iconInner = document.createElement ( 'div' );
 	file.iconInner = iconInner;
-	if( fileInfo.Icon )
+	
+	if( !Friend.dosDrivers[ 'Dormant' ] )
+	{
+		Friend.dosDrivers[ 'Dormant' ] = {
+			iconLabel: '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
+		};
+	}
+	
+	if( ( fileInfo.Type == 'Dormant' || fileInfo.Type == 'Door' ) && Friend.dosDrivers && Friend.dosDrivers[ fileInfo.Driver ] )
+	{
+		var driver = Friend.dosDrivers[ fileInfo.Driver ];
+							
+		// Find correct image
+		var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
+		
+		if( Friend.dosDrivers[ driver.type ] && Friend.dosDrivers[ driver.type ].iconLabel )
+			img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver.type ].iconLabel;
+		if( fileInfo.Title == 'Home' )
+			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+		else if( fileInfo.Title == 'System' )
+			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+	
+		iconInner.className = 'Drive';
+		var label = document.createElement( 'div' );
+		label.className = 'Label';
+		label.style.backgroundImage = 'url("' + img + '")';
+		iconInner.appendChild( label );
+	}
+	else if( fileInfo.Icon )
 	{
 		iconInner.className = fileInfo.Icon;
 	}
@@ -3172,10 +4089,32 @@ FileIcon.prototype.Init = function( fileInfo )
 			case 'TypeJPEG':
 			case 'TypePNG':
 			case 'TypeGIF':
-				iconInner.style.backgroundImage = 'url(\'' + getImageUrl( fileInfo.Path ) + '\')';
+				var r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
+				var ur = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
+				
+				// Get from cache
+				var tmp = false;
+				if( tmp = this.getCache( ur, fileInfo.directoryview, fileInfo.DateModified ) )
+				{
+					ur = tmp;
+				}
+				
+				iconInner.style.backgroundImage = 'url(\'' + ur + '\')';
 				iconInner.className = 'Thumbnail';
+				
+				// Put in cache
+				if( !tmp )
+				{
+					this.setCache( ur, fileInfo.directoryview, fileInfo.DateModified );
+				}
 				break;
 		}
+	}
+	
+	// Shared file?
+	if( fileInfo.SharedLink && fileInfo.SharedLink.length )
+	{
+		iconInner.classList.add( 'Shared' );
 	}
 
 	// Create the title
@@ -3207,13 +4146,15 @@ FileIcon.prototype.Init = function( fileInfo )
 	// -------------------------------------------------------------------------
 	file.rollOut = function ( eles )
 	{
-		this.classList.remove('DragTarget');
+		this.classList.remove( 'DragTarget' );
 	}
 
 	// -------------------------------------------------------------------------
 	// Attach events
 	file.onmousedown = function( e )
 	{
+		if( !e ) e = window.event ? window.event : {};
+	
 		// Activate screen on click
 		if( this.window )
 		{
@@ -3225,12 +4166,30 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 				clearRegionIcons();
 			}
-
 			if( this.window.parentNode.classList.contains( 'View' ) )
-				_ActivateWindow( this.window.parentNode );
+			{
+				if( !this.window.parentNode.classList.contains( 'Active' ) )
+					_ActivateWindow( this.window.parentNode );
+			}
+		}
+		
+		// For screen icons
+		if( this.window.classList.contains( 'ScreenContent' ) )
+		{
+			if( currentMovable )
+				_DeactivateWindow( currentMovable );
+			currentMovable = null;
+		}
+
+		// This means we are adding
+		if( e.shiftKey || e.ctrlKey )
+		{
+			convertIconsToMultiple();
 		}
 
 		if( !e ) e = window.event;
+		if( !e ) e = {};
+		
 		if( this.window )
 		{
 			var rc = 0;
@@ -3238,7 +4197,10 @@ FileIcon.prototype.Init = function( fileInfo )
 			else if( e.button ) rc = ( e.button == 2 );
 			if( !rc )
 			{
-				window.mouseDown = this;
+				if( e.button === 0 || e.button === 3 || e.button === 2 )
+				{
+					window.mouseDown = this;
+				}
 			}
 		}
 
@@ -3246,23 +4208,85 @@ FileIcon.prototype.Init = function( fileInfo )
 		if( e.button == 2 )
 		{
 			// check icons
-			var sels = file.directoryView.windowObject.getElementsByClassName( 'File' );
-			var found = false;
-			for( var y = 0; y < sels.length; y++ )
-			{
-				if( sels[y] == this && sels[y].classList.contains( 'Selected' ) )
-					found = true;
-			}
-			if( !found )
-				this.onclick();
+			clearRegionIcons();
+			this.classList.add( 'Selected' );
+			found = this;
+			this.selected = true;
+			this.fileInfo.selected = true;
+			
+			// Count selected icons
+			this.directoryView.windowObject.checkSelected();
+			
 			if( !window.isMobile )
 			{
 				Workspace.showContextMenu( false, e );
 			}
 			return cancelBubble( e );
 		}
+		else
+		{
+			// Use override if possible
+			if( this.directoryView.filedialog )
+			{
+				if( this.directoryView.doubleclickfiles )
+				{
+					if( this.fileInfo.Type == 'File' )
+					{
+						this.directoryView.doubleclickfiles( this, e );
+					}
+					else if( this.fileInfo.Type == 'Directory' )
+					{
+						launchIcon( e, this );
+					}
+					return cancelBubble( e );
+				}
+				return;
+			}
+		
+			if( window.isSettopBox && this.selected )
+			{
+				launchIcon( e, this );
+				this.classList.remove( 'Selected' );
+				this.selected = false;
+				this.fileInfo.selected = false;
+				return cancelBubble( e );
+			}
 
-		e.stopPropagation();
+			var sh = e.shiftKey || e.ctrlKey;
+			if( !sh ) 
+			{
+				if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+				{
+					clearRegionIcons( { exception: this } );
+				}
+			}
+
+			// Toggle
+			if( this.classList.contains( 'Selected' ) && !( !sh && this.selected == 'multiple' ) )
+			{
+				this.classList.remove( 'Selected' );
+				this.selected = false;
+				this.fileInfo.selected = false;
+			}
+			else
+			{
+				this.classList.add( 'Selected' );
+				this.selected = sh ? 'multiple' : true;
+				this.fileInfo.selected = sh ? 'multiple' : true;
+			}
+
+
+			// Refresh the menu based on selected icons
+			WorkspaceMenu.show();
+			CheckScreenTitle();
+			if( window.isSettopBox )
+			{
+				return cancelBubble( e );
+			}
+		}
+
+		if( e && e.stopPropagation )
+			e.stopPropagation();
 	}
 
 	// -------------------------------------------------------------------------
@@ -3284,6 +4308,10 @@ FileIcon.prototype.Init = function( fileInfo )
 			else
 			{
 			}
+		}
+		if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
+		{
+			clearRegionIcons( { exception: this, force: true } );
 		}
 		window.targetMovable = false;
 	}
@@ -3309,7 +4337,8 @@ FileIcon.prototype.Init = function( fileInfo )
 					var mt = Workspace.mimeTypes[a];
 					for( var b in mt.types )
 					{
-						if( ext == mt.types[b].toLowerCase() )
+						// Make sure we have a valid executable
+						if( ext == mt.types[b].toLowerCase() && mt.executable.length )
 						{
 							return ExecuteApplication( mt.executable, obj.fileInfo.Path );
 						}
@@ -3326,7 +4355,8 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Normal folders etc
 		// Open unique windows if we're in toolbar mode and are double clicking a disk
 		var uniqueView = false;
-		if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && obj.directoryView.navMode == 'toolbar' )
+		var dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
+		if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
 		{
 			uniqueView = true;
 			if( obj.fileInfo.Path != obj.fileInfo.Volume )
@@ -3339,14 +4369,15 @@ FileIcon.prototype.Init = function( fileInfo )
 			return window.isMobile ? Workspace.closeDrivePanel() : false;
 		}
 		// Just change directory
-		else if( obj.fileInfo.Type == 'Directory' && obj.directoryView.navMode == 'toolbar' )
+		else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
 		{
 			// Set a new path and record the old one!
-			var we = obj.directoryView.windowObject;
-			var dw = obj.directoryView;
+			var we = dv.windowObject;
+			var dw = dv;
 
 			// Add current and set it to end of history
 			var path = obj.fileInfo.Path.split( ':' );
+			
 			var fin = {
 				Volume: path[0] + ':',
 				Path: obj.fileInfo.Path,
@@ -3356,12 +4387,8 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 			dw.addToHistory( fin );
 
-			obj.fileInfo.Volume = obj.fileInfo.Path.split( ':' )[0] + ':'; // TODO: Should not be needed!
-			we.fileInfo = obj.fileInfo;
-
 			// Update on notifications
 			var ppath = obj.fileInfo.Path;
-
 			if( !Workspace.diskNotificationList[ ppath ] )
 			{
 				Workspace.diskNotificationList[ ppath ] = {
@@ -3373,39 +4400,76 @@ FileIcon.prototype.Init = function( fileInfo )
 				f.addVar( 'path', ppath );
 				f.onExecuted = function( e, d )
 				{
-					if( e == 'ok' )
+					if( e != 'ok' )
+						return;
+					
+					var j;
+					try
 					{
-						var j;
-						try
-						{
-							j = JSON.parse( d );
-						}
-						catch( e )
-						{
-							console.log( 'Error in JSON format: ', d );
-							return;
-						}
-						we.windowObject.addEvent( 'systemclose', function()
-						{
-							var ff = new Library( 'system.library' );
-							ff.addVar( 'sessionid', Workspace.sessionId );
-							ff.addVar( 'path', ppath );
-							ff.addVar( 'id', j.Result );
-							ff.onExecuted = function( es, ds )
-							{
-								// TODO: Clear it?
-								Workspace.diskNotificationList[ ppath ] = false;
-							}
-							ff.execute( 'file/notificationremove' );
-						} );
+						j = JSON.parse( d );
 					}
-					console.log( 'File notification start result: ' + e, d );
+					catch( e )
+					{
+						console.log( 'Error in JSON format: ', d );
+						return;
+					}
+					we.windowObject.addEvent( 'systemclose', function()
+					{
+						var ff = new Library( 'system.library' );
+						ff.addVar( 'sessionid', Workspace.sessionId );
+						ff.addVar( 'path', ppath );
+						ff.addVar( 'id', j.Result );
+						ff.onExecuted = function( es, ds )
+						{
+							// TODO: Clear it?
+							Workspace.diskNotificationList[ ppath ] = false;
+						}
+						ff.execute( 'file/notificationremove' );
+					} );
 				}
 				f.execute( 'file/notificationstart' );
 			}
 
 			// Open unique window!
-			we.refresh();
+			// Animation for going to next folder
+			if( isMobile )
+			{
+				// Remove previous one
+				if( dv.windowObject.slideAnimation )
+					dv.windowObject.slideAnimation.parentNode.removeChild( dv.windowObject.slideAnimation );
+				
+				var n = document.createElement( 'div' );
+				n.className = 'Content SlideAnimation';
+				n.style.willChange = 'transform';
+				n.style.transition = 'transform 0.4s';
+				n.innerHTML = dv.windowObject.innerHTML;
+				n.scrollTop = dv.windowObject.scrollTop;
+				n.style.zIndex = 10;
+				dv.windowObject.parentNode.appendChild( n );
+				dv.windowObject.slideAnimation = n;
+				dv.windowObject.parentNode.classList.add( 'Redrawing' );
+				
+				// Refresh and add animation
+				we.refresh( function()
+				{
+					n.style.transform = 'translate3d(-100%,0,0)';
+					setTimeout( function()
+					{
+						if( n.parentNode )
+						{
+							n.parentNode.removeChild( n );
+							if( dv.windowObject.parentNode.classList )
+								dv.windowObject.parentNode.classList.remove( 'Redrawing' );
+						}
+						dv.windowObject.slideAnimation = null;
+					}, 400 );
+				} );
+			}
+			// Desktop mode, just refresh
+			else 
+			{
+				we.refresh();
+			}
 			return window.isMobile ? Workspace.closeDrivePanel() : false;
 		}
 		else
@@ -3437,67 +4501,6 @@ FileIcon.prototype.Init = function( fileInfo )
 	}
 
 	// -------------------------------------------------------------------------
-	file.onclick = function( e )
-	{
-		if( !e ) e = window.event;
-		if( !e ) e = {};
-		var sh = e.shiftKey || e.ctrlKey;
-		if( !sh ) clearRegionIcons();
-
-		if( this.window && this.window.classList.contains( 'Content' ) )
-		{
-			// when changing from one directoryview to another, clear region icons
-			if(
-				window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
-				this.window.parentNode != window.currentMovable
-			)
-			{
-				clearRegionIcons();
-			}
-
-			var ev = {
-				shiftKey: e.shiftKey,
-				ctrlKeu: e.ctrlKey
-			};
-			if( e )
-			{
-				_ActivateWindow( this.window.parentNode, false, e );
-			}
-		}
-		// Ah, it's a screen content element!
-		else
-		{
-			// Set current screen!
-			if( this.window )
-				window.currentScreen = this.window.parentNode;
-			_DeactivateWindows();
-		}
-
-
-		if( window.isSettopBox && this.selected )
-		{
-			launchIcon( e, this );
-			this.classList.remove( 'Selected' );
-			this.selected = false;
-			this.fileInfo.selected = false;
-			return cancelBubble( e );
-		}
-
-		this.classList.add( 'Selected' );
-		this.selected = true;
-		this.fileInfo.selected = true;
-
-
-		// Refresh the menu based on selected icons
-		WorkspaceMenu.show();
-		CheckScreenTitle();
-		if( window.isSettopBox )
-		{
-			return cancelBubble( e );
-		}
-	}
-
-	// -------------------------------------------------------------------------
 	file.onselectstart = function( e )
 	{
 		return cancelBubble( e );
@@ -3509,7 +4512,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		if ( !e ) e = window.event;
 		if ( window.mouseDown == this )
 		{
-			mousePointer.pickup ( this );
+			mousePointer.pickup( this );
 			window.mouseDown = 4;
 			return cancelBubble ( e );
 		}
@@ -3538,6 +4541,9 @@ FileIcon.prototype.Init = function( fileInfo )
 	// Let's make it possible also for touch interfaces -----------------------
 	file.addEventListener( 'touchstart', function( event )
 	{
+		if( this.directoryView.filedialog )
+			return;
+			
 		window.fileMenuElement = file;
 		window.clickElement = file;
 
@@ -3553,7 +4559,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		{
 			if( window.fileMenuElement )
 			{
-				file.onclick();
+				file.onmousedown();
 				window.fileMenuElement = null;
 				window.clickElement = null;
 			}
@@ -3569,7 +4575,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		//return cancelBubble( event );
 	}, false );
 			
-	file.ontouchmove = function( e )
+	/*file.ontouchmove = function( e )
 	{
 		if( !this.touchPos )
 			return;
@@ -3587,7 +4593,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		);
 	
 		if( distance > 15 )
-		{
+		{			
 			obj.iconsCache = [];
 			this.classList.add( 'Selected' );
 			this.selected = true;
@@ -3601,39 +4607,47 @@ FileIcon.prototype.Init = function( fileInfo )
 		}
 		
 		return cancelBubble( e );
-	}
-
+	}*/
 
 	file.addEventListener( 'touchend', function( event )
 	{
-		this.touchPos = false;
-		
-		file.onclick();
-
-		// When single clicking (under a second) click the file!
-		var time = ( new Date() ).getTime() - file.clickedTime;
-		if( time < 250 && window.clickElement )
+		if( this.directoryView.filedialog )
+			return;
+			
+		if( window.clickElement == this )
 		{
-			setTimeout( function()
-			{
-				file.ondblclick();
-			}, 100 );
-		}
+			this.touchPos = false;
 
-		if( file.menuTimeout )
-			clearTimeout( file.menuTimeout );
-		file.menuTimeout = false;
-		if( file.contextMenuTimeout )
-			clearTimeout( file.contextMenuTimeout );
-		file.contextMenuTimeout = false;
-		Workspace.closeDrivePanel();
-		window.clickElement = null;
+			// When single clicking (under a second) click the file!
+			var time = ( new Date() ).getTime() - file.clickedTime;
+			if( time < 250 && window.clickElement )
+			{
+				setTimeout( function()
+				{
+					if( file.ondblclick )
+						file.ondblclick();
+					else if( file.onclick )
+						file.onclick;
+				}, 100 );
+			}
+
+			if( file.menuTimeout )
+				clearTimeout( file.menuTimeout );
+			file.menuTimeout = false;
+			if( file.contextMenuTimeout )
+				clearTimeout( file.contextMenuTimeout );
+			file.contextMenuTimeout = false;
+			Workspace.closeDrivePanel();
+			window.clickElement = null;
+			return cancelBubble( event );
+		}
 	} );
 }
 
 // -----------------------------------------------------------------------------
 function RefreshWindowGauge( win, finfo )
 {
+	if( isMobile ) return;
 	if( win.content ) win = win.content;
 	if( !win.fileInfo && finfo ) win.fileInfo = finfo;
 	if( !win.fileInfo ) return;
@@ -3641,63 +4655,71 @@ function RefreshWindowGauge( win, finfo )
 	var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
 	if( isVolume )
 	{
-		if( win.vinfoTimeout ) clearTimeout( win.vinfoTimeout );
-		win.vinfoTimeout = setTimeout( function()
+		if( 1 == 2 )
 		{
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			if( win.vinfoTimeout ) clearTimeout( win.vinfoTimeout );
+			win.vinfoTimeout = setTimeout( function()
 			{
-				if( e == 'ok' )
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
 				{
-					var dj, fl;
-					try
+					if( e == 'ok' )
 					{
-						dj = JSON.parse( d );
-						fl = dj.Used / dj.Filesize;
-					}
-					catch( e )
-					{
-						fl = 1;
-					}
-					// Multiply by 100
-					fl *= 100;
-					if( win.parentNode && win.parentNode.volumeGauge )
-					{
-						win.parentNode.volumeGauge.style.height = fl + '%';
-					}
-
-					var eles = win.parentNode.getElementsByClassName( 'DriveGauge' );
-					if( eles )
-					{
-						var factor = 1;
+						var dj, fl;
 						try
 						{
 							dj = JSON.parse( d );
-							if( !isNaN( dj.Used ) || isNaN( dj.Filesize ) )
-							{
-								factor = dj.Used / dj.Filesize;
-								if( isNaN( factor ) ) factor = 1;
-							}
+							fl = dj.Used / dj.Filesize;
 						}
 						catch( e )
 						{
+							fl = 1;
 						}
-						eles[0].classList.add( 'Size' + Math.floor( factor * 10 ) );
-						eles[0].setAttribute( 'title', Math.ceil( factor * 100 ) + '% ' + i18n( 'i18n_full' ) );
+						// Multiply by 100
+						fl *= 100;
+						if( win.parentNode && win.parentNode.volumeGauge )
+						{
+							win.parentNode.volumeGauge.style.height = fl + '%';
+						}
+
+						var eles = win.parentNode.getElementsByClassName( 'DriveGauge' );
+						if( eles )
+						{
+							var factor = 1;
+							try
+							{
+								dj = JSON.parse( d );
+								if( !isNaN( dj.Used ) || isNaN( dj.Filesize ) )
+								{
+									factor = dj.Used / dj.Filesize;
+									if( isNaN( factor ) ) factor = 1;
+								}
+							}
+							catch( e )
+							{
+							}
+							eles[0].classList.add( 'Size' + Math.floor( factor * 10 ) );
+							eles[0].setAttribute( 'title', Math.ceil( factor * 100 ) + '% ' + i18n( 'i18n_full' ) );
+						}
 					}
 				}
-			}
-			var pth = wt.indexOf( ':' ) > 0 ? wt : ( wt + ':' );
-			m.execute( 'volumeinfo', { path: pth } );
-			clearTimeout( win.vinfoTimeout );
-			win.vinfoTimeout = false;
-		}, 250 );
+				var pth = wt.indexOf( ':' ) > 0 ? wt : ( wt + ':' );
+				m.execute( 'volumeinfo', { path: pth } );
+				clearTimeout( win.vinfoTimeout );
+				win.vinfoTimeout = false;
+			}, 250 );
+		}
 	}
 }
 
 // Opens a window based on the fileInfo (type etc) -----------------------------
-function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
+function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 {
+	// Make a copy of fileinfo
+	var fileInfo = {};
+	for( var a in oFileInfo )
+		fileInfo[ a ] = oFileInfo[ a ];
+
 	//console.log('OpenWindowByFileinfo fileInfo is ',fileInfo);
 	if( !iconObject )
 	{
@@ -3714,6 +4736,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			window: false
 		};
 	}
+	
 	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
@@ -3741,28 +4764,47 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			'volume'   : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
 
-		fileInfo.Dormant.addWindow( win );
+		if( fileInfo.Dormant && fileInfo.Dormant.addWindow )
+		{
+			fileInfo.Dormant.addWindow( win );
+		}
+		else
+		{
+			console.log( '[Directoryview] Expected fileInfo.Dormant.addWindow - which doesn\'t exist...' );
+		}
 
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>' );
+		
 		var we = win.getWindowElement();
 		we.parentFile = iconObject;
 		we.parentWindow = iconObject.window;
 		we.fileInfo = fileInfo;
+		
 		CreateDirectoryView( we );
 
 		we.win = win;
+		
 		we.refresh = function( callback )
 		{
+			// Run previous callback
+			if( callback )
+			{
+				if( this.refreshCallback ) this.refreshCallback( false );
+				this.refreshCallback = callback;
+			}
+			
+			win.refreshing = true;
 			var self = this;
 			
 			var fi = this.fileInfo ? this.fileInfo : iconObject;
 			var wt = fi.Path ? fi.Path : ( fi.Title ? fi.Title : fi.Volume );
-
+			
 			this.windowObject.setFlag( 'title', _nameFix( wt ) );
 
 			var t = fi && fi.Path ? fi.Path : ( fi.Volume ? fi.Volume : fi.Title );
 
 			if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
+			
 			this.refreshTimeout = setTimeout( function()
 			{
 				fileInfo.Dormant.getDirectory( t, function( icons, data )
@@ -3773,13 +4815,12 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					{
 						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
-					if( callback ) callback();
 					RefreshWindowGauge( self.win );
 					self.refreshTimeout = null;
+					self.win.refreshing = false;
+					if( callback ) callback();
 				} );
 			}, 250 );
-
-
 		}
 		we.refresh ();
 		
@@ -3840,113 +4881,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
-		var rr = iconObject;
-
-		var win = new View ( {
-			title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
-			width    : 650,
-			height   : 512,
-			memorize : true,
-			fullscreenenabled : true
-		} );
-
-		var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
-
-		var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
-		/*console.log( '[7] you are here ... directoryview.js ||| ' + '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '\'); background-position: center; background-size: contain; background-repeat: no-repeat; background-color: black"></div>' );*/
-		var owin = win;
-		if( iconObject.extension.toLowerCase() == 'pdf' )
-		{
-			GetURLFromPath( fileInfo.Path, function( imageUrl )
-			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
-				
-				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
-			} );
-		}
-		else
-		{
-			GetURLFromPath( fileInfo.Path, function( imageUrl )
-			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
-				
-				owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-			} );
-		}
-		win._window.addEventListener( 'mousedown', function( e )
-		{
-			var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
-			var dir = 0;
-			if( factor <= 0.2 )
-			{
-				dir = -1;
-			}
-			else if( factor >= 0.8 )
-			{
-				dir = 1;
-			}
-			if( dir != 0 )
-			{
-				var d = new Door().get( fileInfo.Path );
-				if( !d || !d.getIcons )
-				{
-					return;
-				}
-				var path = fileInfo.Path.substr( 0, fileInfo.Path.length - fileInfo.Filename.length );
-				var f = {}; for( var a in fileInfo ) f[a] = fileInfo[a];
-				f.Path = path;
-				d.getIcons( f, function( data )
-				{
-					var prev = '';
-					var curr = '';
-					var prevPath = currPath = '';
-					for( var a = 0; a < data.length; a++ )
-					{
-						// Skip directories
-						if( data[ a ].Type == 'Directory' ) continue;
-						
-						// Skip non-image files
-						var last = data[a].Filename.split( '.' );
-						var ext = last[ last.length - 1 ].toLowerCase();
-						if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
-							continue;
-							
-						prev = curr;
-						prevPath = currPath;
-						curr = data[a].Filename;
-						currPath = data[a].Path;
-						
-						// Load the image if it lays on a Dormant door
-						if( prev && dir == -1 && prev != curr && curr == fileInfo.Filename )
-						{							
-							fileInfo.Filename = prev;
-							fileInfo.Path = prevPath;
-							GetURLFromPath( prevPath, function( imageUrl )
-							{
-								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-								owin.setFlag( 'title', prev );
-							} );
-							return;
-						}
-						if( curr && dir == 1 && curr != prev && prev == fileInfo.Filename )
-						{
-							fileInfo.Filename = curr;
-							fileInfo.Path = currPath;
-							GetURLFromPath( currPath, function( imageUrl )
-							{
-								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-								owin.setFlag( 'title', curr );
-							} );
-							return;
-						}
-					}
-				} );
-			}
-		} );
-		function doImage( path, title )
-		{
-		}
-		win = null;
+		Friend.startImageViewer( iconObject, { parentView: currentMovable } );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -4011,13 +4946,8 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	}
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' )
-	{
-		// Add the volume to the path if it isn't there
-		if( fileInfo.Path.indexOf( ':' ) < 0 && fileInfo.Volume )
-		{
-			fileInfo.Path = fileInfo.Volume + fileInfo.Path;
-		}
-
+	{	
+		var extra = null;
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		var id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4034,7 +4964,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
 
 		var stored = GetWindowStorage( id );
-
+		
 		var w = new View ( {
 			'title'    : wt,
 			'width'    : stored && stored.width ? stored.width : 800,
@@ -4063,10 +4993,29 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 
 		// Get legacy win element
 		var win = w.getWindowElement();
+		
+		// Special case - a mobile opens a mountlist
+		if( isMobile && fileInfo.Path == 'Mountlist:' )
+		{
+			extra = {};
+			fileInfo.Path = 'Home:';
+			iconObject.Path = 'Home:';
+			var t = document.createElement( 'div' );
+			t.className = 'MobileFileBrowser BackgroundDefault ScrollArea ScrollBarSmall';
+			win.parentNode.appendChild( t );
+			extra.leftpanel = t;
+			extra.startPath = 'Mountlist:';
+			extra.hasSidebar = true;
+			extra.filedialog = false;
+			extra.nosidebarbackground = true;
+			w.setFlag( 'title', i18n( 'i18n_mountlist' ) );
+		}
+		
 		win.innerHTML = '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" class="LoadingAnimation"></div>';
 		win.parentFile = iconObject;
 		win.parentWindow = iconObject.window;
 		win.fileInfo = fileInfo;
+		
 		if( !win.fileInfo.Volume )
 		{
 			if( win.fileInfo.Path )
@@ -4076,7 +5025,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		}
 
 		// Create a directory view on window
-		CreateDirectoryView( win );
+		CreateDirectoryView( win, extra );
 		w.setFlag( 'hidden', false );
 
 		// Special case - the fileInfo object has a door!
@@ -4097,6 +5046,15 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			
 			win.refresh = function( callback )
 			{
+				// Run previous callback
+				if( callback )
+				{
+					if( this.refreshCallback ) this.refreshCallback( false );
+					this.refreshCallback = callback;
+				}
+				
+				w.refreshing = true;
+				
 				var self = this;
 				
 				var timer = 0;
@@ -4112,6 +5070,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
+					
 					dr.getIcons( fi, function( icons )
 					{
 						if( icons )
@@ -4141,6 +5100,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 									self.redrawIcons( self.icons, self.direction, cbk );
 								} );
 								RefreshWindowGauge( self );
+								
 							}
 						}
 						// empty
@@ -4164,6 +5124,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 						
 						// Release refresh timeout
 						self.refreshTimeout = null;
+						w.refreshing = false;
 					} );
 				}, timer );
 			}
@@ -4173,23 +5134,39 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		{
 			win.refresh = function ( callback )
 			{
+				// Run previous callback
+				if( callback )
+				{
+					if( this.refreshCallback ) this.refreshCallback( false );
+					this.refreshCallback = callback;
+				}
+				
 				var self = this;
+				w.refreshing = true;
 				
 				var wt = this.fileInfo.Path ? this.fileInfo.Path : ( this.fileInfo.Title ? this.fileInfo.Title : this.fileInfo.Volume );
 				
 				w.setFlag( 'title', _nameFix( wt ) );
+				
+				if( isMobile && wt == 'Mountlist:' )
+				{
+					w.content.redrawIcons( '', w.content.direction );
+					if( callback ) callback();
+					return;
+				}
+				
 				var j = new cAjax ();
 
 				var updateurl = '/system.library/file/dir?wr=1'
 				updateurl += '&path=' + encodeURIComponent( this.fileInfo.Path );
-				updateurl += '&sessionid= ' + encodeURIComponent( Workspace.sessionId );
+				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 
 				j.open( 'get', updateurl, true, true );
 
 				j.fileInfo = this.fileInfo;
 				j.file = iconObject;
 				j.win = this;
-				j.onload = function ()
+				j.onload = function()
 				{
 					if( this.win.refreshTimeout )
 					{
@@ -4199,11 +5176,11 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 
 					var content;
 					// New mode
-					if ( this.returnCode == 'ok' )
+					if( this.returnCode == 'ok' )
 					{
 						try
 						{
-							content = JSON.parse(this.returnData||"null");
+							content = JSON.parse( this.returnData || "null" );
 						}
 						catch ( e ){};
 					}
@@ -4213,14 +5190,25 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					{
 						try
 						{
-							content = JSON.parse(this.responseText() || "null");
+							content = JSON.parse( this.responseText() || "null" );
 						}
 						catch ( e ){}
 					}
 
 					if( content )
 					{
+						// Fix missing path! Paths come back with "[missing volume:]Documents/file.txt"
+						// TODO: This is wrong at the call level
+						for( var a = 0; a < content.length; a++ )
+						{
+							if( content[ a ].Path.indexOf( ':' ) < 0 )
+							{
+								content[ a ].Path = this.fileInfo.Path.split( ':' )[0] + ':' + content[ a ].Path;
+							}
+						}
+					
 						var ww = this.win;
+
 						ww.redrawIcons( content, ww.direction );
 						ww.file = this.file;
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
@@ -4231,8 +5219,9 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					}
 					if( callback ) callback();
 					RefreshWindowGauge( this.win );
+					w.refreshing = false;
 				}
-				j.send ();
+				j.send();
 			}
 		}
 
@@ -4272,14 +5261,25 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			
 			if( cmd == 'file' )
 			{
-				
 				var dliframe = document.createElement('iframe');
 				dliframe.setAttribute('class', 'hidden');
 				dliframe.setAttribute('src', fileInfo.downloadhref );
 				dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
+				dliframe.onload = function()
+				{
+					document.body.removeChild( dliframe );
+					dliframe = null;
+				}
 				document.body.appendChild( dliframe );
 				
-				setTimeout( 'document.body.removeChild( document.getElementById(\'downloadFrame'+ fileInfo.ID +'\') );', 3000 );
+				// Just in case, if it takes more than 15 seconds, remove the iframe
+				setTimeout( function()
+				{
+					if( dliframe )
+					{
+						document.body.removeChild( dliframe );
+					}
+				}, 15000 );
 				return;
 			}
 			
@@ -4309,7 +5309,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	else if ( fileInfo.MetaType == 'DiskHandled' )
 	{
 		var tmp = fileInfo.Path.split(':');
-		ExecuteJSXByPath(tmp[0] + ':index.jsx',fileInfo.Path);
+		ExecuteJSXByPath( tmp[0] + ':index.jsx', fileInfo.Path );
 	}
 
 	cancelBubble( event );
@@ -4343,66 +5343,152 @@ function CheckDoorsKeys( e )
 {
 	if ( !e ) e = window.event;
 	var k = e.which | e.keyCode;
-	switch( k )
+	var cycle = false;
+	
+	if( !Workspace.editing )
 	{
-		// TODO: Implement confirm dialog!
-		case 46:
-			if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
-			{
-				Workspace.deleteFile();
-			}
-			break;
-		case 13:
-			if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
-			{
-				for( var a = 0; a < window.regionWindow.icons.length; a++ )
+		// No normal dirmode when editing a filename
+		var dirMode = window.regionWindow && window.regionWindow.directoryview && window.regionWindow.windowObject &&
+			( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing );
+		
+		switch( k )
+		{
+			// TODO: Implement confirm dialog!
+			case 46:
+				if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
 				{
-					if( window.regionWindow.icons[a].selected )
+					Workspace.deleteFile();
+				}
+				break;
+			case 13:
+				if( dirMode )
+				{
+					for( var a = 0; a < window.regionWindow.icons.length; a++ )
 					{
-						window.regionWindow.icons[a].domNode.ondblclick();
-						return;
+						if( window.regionWindow.icons[a].selected )
+						{
+							window.regionWindow.icons[a].domNode.ondblclick();
+							return;
+						}
 					}
 				}
-			}
-			break;
+				break;
+			case 86:
+				if( e.ctrlKey || e.command )
+				{
+					if( dirMode )
+					{
+						Workspace.pasteFiles( e );
+						return cancelBubble( e );
+					}
+				}
+				break;
+			case 67:
+				if( e.ctrlKey || e.command )
+				{
+					if( dirMode )
+					{
+						// Find active
+						for( var a = 0; a < window.regionWindow.icons.length; a++ )
+						{
+							if( window.regionWindow.icons[a].selected )
+							{
+								Workspace.copyFiles( e );
+								return cancelBubble( e );
+							}
+						}
+					
+					}
+				}
+				break;
+			case 9:
+				cycle = true;
+				break;
+			default:
+				
+				break;
+		}
 	}
 	// Do the thing! Keyboard navigation
 	if( 
+		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
-		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) 
+		( window.regionWindow.windowObject && ( !window.regionWindow.windowObject.flags || !window.regionWindow.windowObject.flags.editing ) ) &&
+		window.regionWindow.directoryview.keyboardNavigation &&
+		!e.ctrlKey
 	)
 	{
 		var rw = window.regionWindow.icons;
-		var out = [];
-		var found = false;
-		for( var a = 0; a < rw.length; a++ )
+		if( rw )
 		{
-			var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
-			if( f.toUpperCase().charCodeAt(0) == k )
+			// cycle!
+			if( cycle )
 			{
-				out.push( rw[a] );
-				if( rw[a].selected )
+				var scroll = false;
+				var found = false;
+				for( var a = 0; a < rw.length; a++ )
 				{
-					found = true;
+					if( rw[ a ].selected )
+					{
+						found = true;
+						if( a == rw.length - 1 )
+						{
+							rw[ 0 ].domNode.onmousedown( e );
+							scroll = rw[ 0 ].domNode.offsetTop - 100;
+						}
+						else
+						{
+							rw[ a + 1 ].domNode.onmousedown( e );
+							scroll = rw[ a + 1 ].domNode.offsetTop - 100;
+						}
+						break;
+					}
+				}
+				if( !found )
+				{
+					rw[ 0 ].domNode.onmousedown( e );
+					scroll = rw[ 0 ].domNode.offsetTop - 100;
+				}
+				if( scroll )
+				{
+					window.regionWindow.directoryview.scroller.scrollTop = scroll;
+				}
+				return cancelBubble( e );
+			}
+			else
+			{
+				var out = [];
+				var found = false;
+				for( var a = 0; a < rw.length; a++ )
+				{
+					var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
+					if( f.toUpperCase().charCodeAt(0) == k )
+					{
+						out.push( rw[a] );
+						if( rw[a].selected )
+						{
+							found = true;
+						}
+					}
+				}
+				if( out.length )
+				{
+					if( !found )
+					{
+						out[0].domNode.onmousedown( e );
+						return;
+					}
+					for( var a = 0; a < out.length; a++ )
+					{
+						if( out[a].selected && a < out.length - 1 )
+						{
+							out[ a + 1 ].domNode.onmousedown( e );
+							return;
+						}
+					}
+					out[ 0 ].domNode.onmousedown( e );
 				}
 			}
-		}
-		if( out.length )
-		{
-			if( !found )
-			{
-				out[0].domNode.click();
-				return;
-			}
-			for( var a = 0; a < out.length; a++ )
-			{
-				if( out[a].selected && a < out.length - 1 )
-				{
-					out[a+1].domNode.click();
-					return;
-				}
-			}
-			out[0].domNode.click();
 		}
 	}
 }
@@ -4506,6 +5592,358 @@ if( typeof noEvent == 'undefined' )
 	}
 }
 
+// The Friend image viewer! ----------------------------------------------------
+Friend.startImageViewer = function( iconObject, extra )
+{
+	if( !extra ) extra = false;
+	
+	var win = new View ( {
+		title            : iconObject.Title ? iconObject.Title : iconObject.Filename,
+		width            : 650,
+		height           : 512,
+		memorize         : true,
+		fullscreenenabled: true
+	} );
+	
+	win.parentView = extra.parentView;
+	
+	win.onClose = function()
+	{
+		if( extra && extra.parentView )
+		{
+			_ActivateWindow( extra.parentView );
+		}
+	}
+	
+	// Use system default
+	win.content.defaultContextMenu = true;
+	
+	var owin = win;
+
+	var zoomLevel = 1;
+	var zoomImage = null;
+	var position = 'centered';
+	var zoomSet = false;
+
+	var checkers = '<div class="DefaultContextMenu" style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
+
+	function repositionElement( win, pos, extra )
+	{		
+		var image = win._window.getElementsByTagName( 'img' );
+		if( !image.length )
+			return;
+		
+		image = image[0];
+		if( !image.originalDims || extra )
+		{
+			if( extra )
+			{
+				image.originalDims = {
+					w: extra.w,
+					h: extra.h
+				};
+			}
+			else
+			{
+				image.originalDims = {
+					w: image.width,
+					h: image.height
+				};
+			}
+		}
+		
+		// Fullscreen mode
+		if( document.body.classList.contains( 'Fullscreen' ) )
+		{
+			if( image.offsetWidth > image.offsetHeight )
+			{
+				var h = Math.round( image.originalDims.h / image.originalDims.w * window.innerWidth );
+				image.style.height = h + 'px';
+				image.style.width = window.innerWidth + 'px';
+				image.style.top = ( document.body.offsetHeight >> 1 ) - Math.round( h >> 1 ) + 'px';
+				image.style.left = 0;
+			}
+			else
+			{
+				var w = Math.round( image.originalDims.w / image.originalDims.h * window.innerHeight );
+				image.style.width = w + 'px';
+				image.style.height = window.innerHeight + 'px';
+				image.style.top = 0;
+				image.style.left = ( document.body.offsetWidth >> 1 ) - Math.round( w >> 1 ) + 'px';
+			}
+			return;
+		}
+		
+		if( !zoomSet )
+		{
+			var w = image.originalDims.w;
+			var h = image.originalDims.h;
+
+			var winWidth = win.getFlag( 'width' );
+			var winHeight = win.getFlag( 'height' );
+
+			if( w > h )
+			{
+				if( w > winWidth )
+				{
+					zoomLevel = winWidth / w;
+				}
+			}
+			else
+			{
+				if( h > winHeight - 100 )
+				{
+					zoomLevel = ( winHeight - 100 ) / h;
+				}
+			}
+		}
+
+		if( !pos ) pos = position;
+		
+		var container = image.parentNode;		
+		
+		if( pos == 'centered' || pos == 'default' )
+		{
+			var width = image.originalDims.w * zoomLevel;
+			var height = image.originalDims.h * zoomLevel;
+			
+			
+			var ileft = ( container.offsetWidth >> 1 ) - ( width >> 1 ) + 'px';
+			var itop  = ( container.offsetHeight >> 1 ) - ( height >> 1 ) + 'px';
+			image.style.top = itop;
+			image.style.left = ileft;
+			image.style.width = width + 'px';
+			image.style.height = height + 'px';
+			position = pos;
+		}
+	}
+	
+	owin.addEvent( 'resize', function()
+	{
+		repositionElement( owin, position );
+	} );
+	
+	// Handle back
+	win.showBackButton( true, function( e )
+	{
+		Workspace.handleBackButton();
+	} );
+	
+
+	function renderToolbar( eparent )
+	{
+		if( eparent.toolbar ) return;
+		var d = document.createElement( 'div' );
+		d.className = 'ImageViewerToolbar';
+		d.innerHTML = '\
+			<div class="ArrowLeft MousePointer"><span class="IconSmall fa-angle-left"></span></div>\
+			<div class="Fullscreen MousePointer"><span class="IconSmall fa-arrows-alt"></span></div>\
+			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
+			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
+			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
+		';
+		eparent.appendChild( d );
+		var eles = d.getElementsByTagName( 'div' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			if( eles[a].classList.contains( 'Fullscreen' ) )
+			{
+				eles[a].onclick = function()
+				{
+					Workspace.fullscreen( eparent.content );
+					setTimeout( function()
+					{
+						repositionElement( owin );
+					}, 250 );
+				}
+			}
+			else if( eles[a].classList.contains( 'ArrowLeft' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					zoomSet = false;
+					goDirection( -1, e );
+				}
+			}
+			else if( eles[a].classList.contains( 'ArrowRight' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					zoomSet = false;
+					goDirection( 1, e );
+				}
+			}
+			else if( eles[a].classList.contains( 'ZoomIn' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					zoomSet = true;
+					zoomLevel *= 2;
+					if( zoomLevel > 10 )
+						zoomLevel = 10;
+					repositionElement( owin );
+				}
+			}
+			else if( eles[a].classList.contains( 'ZoomOut' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					zoomSet = true;
+					zoomLevel /= 2;
+					if( zoomLevel < 0.1 )
+						zoomLevel = 0.1;
+					repositionElement( owin );
+				}
+			}
+		}
+	}
+
+	var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
+	
+	if( iconObject.extension.toLowerCase() == 'pdf' )
+	{
+		// Remove toolbar..
+		if( win._window.parentNode.toolbar )
+		{
+			win._window.parentNode.removeChild( win._window.parentNode.toolbar );
+			win._window.parentNode.toolbar = null;
+		}
+		
+		GetURLFromPath( iconObject.Path, function( imageUrl )
+		{
+			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			owin.setContent( '<iframe class="DefaultContextMenu ImageViewerContent" src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+		} );
+	}
+	else
+	{
+		// Set the toolbar on the window
+		renderToolbar( win._window.parentNode );
+	
+		GetURLFromPath( iconObject.Path, function( imageUrl )
+		{
+			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			
+			owin.setContent( '<div class="ImageViewerContent" style="white-space: nowrap; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; z-index: 1;">' + checkers + '</div>' );
+			var i = new Image();
+			i.src = imageUrl;
+			i.className = 'DefaultContextMenu';
+			owin._window.getElementsByClassName( 'ImageViewerContent' )[0].appendChild( i );
+			i.onload = function()
+			{
+				repositionElement( owin, 'default' );
+			}
+			zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+		} );
+	}
+	win._window.addEventListener( 'mousedown', function( e )
+	{
+		var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
+		var dir = 0;
+		if( factor <= 0.2 )
+		{
+			dir = -1;
+		}
+		else if( factor >= 0.8 )
+		{
+			dir = 1;
+		}
+		goDirection( dir, e );
+	} );
+	function goDirection( dir, e )
+	{
+		if( dir != 0 )
+		{
+			var d = new Door().get( iconObject.Path );
+			if( !d || !d.getIcons )
+			{
+				return;
+			}
+			var path = iconObject.Path.substr( 0, iconObject.Path.length - iconObject.Filename.length );
+			var f = {}; for( var a in iconObject ) f[a] = iconObject[a];
+			f.Path = path;
+			d.getIcons( f, function( data )
+			{
+				var prev = '';
+				var curr = '';
+				var prevPath = currPath = '';
+				for( var a = 0; a < data.length; a++ )
+				{
+					// Skip directories
+					if( data[ a ].Type == 'Directory' ) continue;
+					
+					// Skip non-image files
+					var last = data[a].Filename.split( '.' );
+					var ext = last[ last.length - 1 ].toLowerCase();
+					if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
+						continue;
+						
+					prev = curr;
+					prevPath = currPath;
+					curr = data[a].Filename;
+					currPath = data[a].Path;
+					zoomLevel = 1;
+					
+					// Load the image if it lays on a Dormant door
+					if( prev && dir == -1 && prev != curr && curr == iconObject.Filename )
+					{							
+						iconObject.Filename = prev;
+						iconObject.Path = prevPath;
+						GetURLFromPath( prevPath, function( imageUrl )
+						{
+							var imgElement = owin._window.getElementsByTagName( 'img' )[0];
+							var i = new Image();
+							i.src = imageUrl;
+							i.onload = function()
+							{ 
+								var extra = {
+									w: i.width,
+									h: i.height
+								};
+								imgElement.src = i.src; 
+								imgElement.width = this.width; imgElement.height = this.height; 
+								repositionElement( owin, 'default', extra ); 
+							}
+							owin.setFlag( 'title', curr );
+							zoomImage = imgElement;
+						} );
+						return;
+					}
+					if( curr && dir == 1 && curr != prev && prev == iconObject.Filename )
+					{
+						iconObject.Filename = curr;
+						iconObject.Path = currPath;
+						GetURLFromPath( currPath, function( imageUrl )
+						{
+							var imgElement = owin._window.getElementsByTagName( 'img' )[0];
+							var i = new Image();
+							i.src = imageUrl;
+							i.onload = function()
+							{ 
+								var extra = {
+									w: i.width,
+									h: i.height
+								};
+								imgElement.src = i.src; 
+								imgElement.width = this.width; imgElement.height = this.height; 
+								repositionElement( owin, 'default', extra ); 
+							}
+							owin.setFlag( 'title', curr );
+							zoomImage = imgElement;
+						} );
+						return;
+					}
+				}
+			} );
+		}
+	};
+	function doImage( path, title )
+	{
+	}
+	win = null;
+};
+
+// End Friend Image Viewer! ----------------------------------------------------
 
 
 // -----------------------------------------------------------------------------

@@ -52,7 +52,14 @@ i18n_startup_sequence                : Oppstartsekvens
 i18n_cancel                          : Avbryt
 i18n_accept                          : Aksepter
 i18n_understood                      : Forstått
-i18n_your_devices                    : Dine enheter
+i18n_your_devices                    : Disker
+i18n_quit                            : Avslutt
+i18n_menuback                        : <
+i18n_create_folder                   : Lag mappe
+
+i18n_mountlist                       : Disker
+
+i18n_message_from                    : Melding fra
 
 i18n_full                            : full.
 i18n_disk_icon                       : Diskikon
@@ -76,6 +83,7 @@ i18n_notification_archive               : Varselsarkiv
 i18n_sure_remove_notification           : Ønsker du virkelig å gjerne varsel?
 i18n_sure_remove_notification_desc      : Dette er arkiverte varsler. Når du fjerner dem, fjernes de også fra minnet.
 i18n_system_message                     : Systemmelding
+i18n_remove_all                         : Fjern alle
 
 #Tools
 i18n_processmgr                         : Prosesser
@@ -126,7 +134,7 @@ i18n_your_command                       : Din kommando
 i18n_door_home                          : Hjem
 
 please_choose_an_icon                   : Vennligst velg et ikon.
-about_friendup                          : Om FriendUP
+about_system                            : Om systemet
 information                             : Info og oppdateringer
 documentation_central                   : Dokumentasjonssentralen
 software_catalog                        : Programvarekatalog
@@ -168,7 +176,17 @@ i18n_cores                              : Kjerner
 i18n_clients                            : Økter
 i18n_printers                           : Printere
 
+i18n_print_failed                       : Utskriften feilet
+i18n_system_administrator_no_printers   : Din systemadministrator har ikke satt opp printere.
+i18n_print                              : Skriv ut
+i18n_print_sent                         : Utskriften ble sendt
+i18n_print_sent_to_printer              : Ditt dokument ble sendt til printeren.
+i18n_print_error                        : Utskriftsfeil
+i18n_print_error_desc                   : En feil oppsto under dokumentforsendelsen.
+
 #Menu
+
+i18n_your_apps                          : Programmer
 
 i18n_favorites                          : Favoritter
 i18n_menu                               : Meny
@@ -178,7 +196,7 @@ i18n_close_menu                         : Lukk meny
 menu_workspace                          : Workspace
 menu_system                             : System
 menu_new_shell                          : Ny terminal
-menu_about_friendup                     : Om Friend UP
+menu_about                              : Om systemet
 menu_examine_system                     : Utførsk systemet
 menu_refresh_desktop                    : Frisk opp
 menu_add_storage                        : Tilføy disk
@@ -186,7 +204,7 @@ menu_run_command                        : Kjør kommando
 menu_show_launcher                      : Vis Launcher
 menu_hide_launcher                      : Gjem Launcher
 menu_log_out                            : Logg ut
-menu_exit								: Avslutt FriendUP
+menu_exit								: Logg ut
 menu_execute_command                    : Kjør kommando
 menu_upload_file                        : Last opp fil
 menu_snapshot                           : Memoriser
@@ -205,12 +223,15 @@ menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
 menu_share				: Del
 menu_download                           : Last ned
+i18n_could_not_download                 : Kunne ikke laste ned
+i18n_file_cannot_be_downloaded          : Filen er ikke av rett type for nedlastning
 menu_close_idle_connections             : Fjern nettverksprosesser
 menu_hide_hidden_files                  : Gjem skjulbare filer
 menu_show_hidden_files                  : Vis skjulte filer
 menu_new_window                         : Nytt vindu
 
 menu_edit_wallpaper                     : Endre skrivebordsbakgrunn
+menu_set_as_wallpaper                   : Bruk som skrivebordsbakgrunn
 i18n_edit_dock                          : Rediger docken
 i18n_remove_from_dock                   : Fjern fra docken
 
@@ -224,6 +245,7 @@ i18n_upload_completed                   : Opplasting fullført.
 i18n_upload_failed                      : Opplastning feilet.
 i18n_upload_completed_description       : Din fil ble lastet opp til målmappen.
 i18n_upload_failed_description          : Din fil kunne ikke lastes opp.
+i18n_select_local_files                 : Velg lokale filer
 
 
 i18n_unzip_completed                    : Ferdig å pakke ut.
@@ -255,6 +277,8 @@ menu_show_as_list                       : Liste
 menu_show_as_columns                    : Kolonner
 menu_close_window                       : Lukk
 menu_fullscreen                         : Fullskjerm
+
+i18n_swipe_down_to_close                : Skyv ned for å lukke
 
 i18n_create_web_link                    : Create a new web link
 i18n_link                               : Lenke
@@ -350,10 +374,10 @@ i18n_open_with                          : Åpne med
 
 #File dialogs ------------------------------------------------------------------
 
-file_load                               : Last inn
+file_load                               : Åpne
 file_abort                              : Lukk
 file_save                               : Lagre
-file_open_title                         : Last inn en fil
+file_open_title                         : Åpne fil
 file_open_path                          : Velg sti
 file_save_title                         : Lagre en fil
 file_unknown_title                      : Ukjent filoperasjon
@@ -372,6 +396,9 @@ rename_file                             : Endre filnavn
 new_name                                : Nytt navn
 i18n_read_only_filesystem               : Kan ikke skrive til filsystemet
 i18n_read_only_fs_desc                  : Filsystemet du prøver å skrive til er skrivebeskyttet eller støtter ikke skriving.
+i18n_overwriting_file                   : Overskriver eksisterende fil
+i18n_do_you_want_overwrite              : Ønsker du virkelig å overskrive den eksisterende filen?
+i18n_overwrite                          : Overskriv filen
 
 #File operations ---------------------------------------------------------------
 
@@ -397,6 +424,10 @@ i18n_could_not_make_dir                 : Kunne ikke opprette mappen.
 i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
+
+#Colorpicker -------------------------------------------------------------------
+
+i18n_color_picker                       : Fargevelger
 
 #Misc --------------------------------------------------------------------------
 
@@ -438,6 +469,10 @@ i18n_what_you_share_with                : Hva du deler med
 i18n_mark_as_read                       : Merk som lest
 i18n_messages_sent                      : Meldingene ble sendt...
 i18n_notifications_sent                 : Varslene ble sendt...
+
+i18n_pasted_file                        : Limer inn innhold
+i18n_pasted_to_downloads                : Ditt innhold ble limt inn i Downloads
+i18n_uploaded                           : Fil(ene) er lastet opp.
 
 #Locale ------------------------------------------------------------------------
 
@@ -492,8 +527,10 @@ i18n_cal_evt_title                      : Hendelse tittel
 i18n_cal_evt_title_what                 : Din tittel
 i18n_cal_evt_time_to                    : Tid til
 i18n_cal_evt_time_from                  : Tid fra
+i18n_cal_evt_addday                     : Hele dagen
 i18n_cal_evt_description                : Beskriv hendelsen
 i18n_cal_btn_add                        : Lagre hendelse
+i18n_cal_btn_edit                       : Lagre hendelse
 i18n_from                               : Fra
 i18n_to                                 : Til
 
@@ -614,3 +651,20 @@ menu_move_view_to_workspace_10          : Flytt til arbeidsbord 10
 
 i18n_minimize_all_windows               : Gjem alle vinduer
 i18n_show_all_windows                   : Vis alle vinduer
+
+i18n_could_not_find_application         : Kunne ikke finne programmet
+i18n_could_not_find_app_desc            : Beskjeden kunne ikke sendes til programmet fordi det ikke startet.
+
+i18n_camera_action_description          : Ta et bilde med ditt kamera.
+i18n_take_photo                         : Ta bildet
+i18n_camera                             : Kamera
+
+#Startup -----------------------------------------------------------------------
+
+i18n_starting_your_session              : Starter din økt
+i18n_status_Ok                          : OK
+i18n_status_Pending                     : Jobber
+i18n_status_Error                       : FEILET
+i18n_processing                         : Prosesserer
+i18n_logging_in                         : Logger inn
+

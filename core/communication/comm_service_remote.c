@@ -653,7 +653,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 				
 				if( count > 0 )
 				{
-					//INFO("C1DATA READED %d\n", (int)count );
+					//INFO("C1DATA READ %d\n", (int)count );
 					DataForm *df = (DataForm *)buffer;
 					
 					if( df->df_ID == ID_FCRE )
@@ -674,7 +674,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						if( con != NULL )
 						{
 							con->cfcc_Data = service;
-							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE );
+							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE, NULL );
 							
 							service->s_NumberConnections++;
 							FFree( lfcm );
@@ -920,7 +920,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						{
 							count = (int)bs->bs_Size;
 							
-							DEBUG2("[CommServiceRemote] PROCESSING RECEIVED CALL, DATA READED %d\n", (int)count );
+							DEBUG2("[CommServiceRemote] PROCESSING RECEIVED CALL, DATA READ %d\n", (int)count );
 							int dcount = count;
 							DataForm *df = (DataForm *)bs->bs_Buffer;
 							

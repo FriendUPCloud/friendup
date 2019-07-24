@@ -1,0 +1,52 @@
+
+menu_file                             : Fichier
+menu_quit                             : Quitter
+menu_settings                         : Préférences
+menu_sources                          : Sources de calendrier
+menu_refresh_calendar                 : Synchroniser sources
+
+i18n_close                            : Fermer
+i18n_add_source                       : Ajouter une source
+i18n_desc                             : Description
+i18n_save                             : Sauver
+i18n_cancel                           : Annuler
+
+
+# Month names
+
+month_january                         : Janvier
+month_february                        : Février
+month_march                           : Mars
+month_april                           : Avril
+month_may                             : Mai
+month_june                            : Juin
+month_july                            : Juillet
+month_august                          : Août
+month_september                       : Septembre
+month_october                         : Octobre
+month_november                        : Novembre
+month_december                        : Décembre
+
+i18n_event_name                       : Nom événement:
+i18n_leadin                           : Description:
+i18n_save                             : Sauver
+i18n_name                             : Nom:
+i18n_description                      : Description:
+i18n_type                             : Type:
+i18n_server                           : Serveur:
+i18n_user_pass                        : Nom utilisateur / mot de passe:
+i18n_your_root                        : Racine
+i18n_calendar_sources                 : Sources de calendriers
+i18n_reject                           : utilisateur / mot de passe manquant, vérifiez vos données
+i18n_failed_to_get_unique_id          : Id unique impossible à retrouver
+i18n_fetching_temp_pass               : Mot de passe temporaire impossible à retrouver
+i18n_failed_to_decrypt                : Mot de passe temporaire impossible à décrypter
+i18n_mon                              : lun
+i18n_tue                              : mar
+i18n_wed                              : mer
+i18n_thu                              : jeu
+i18n_fri                              : ven
+i18n_sat                              : sam
+i18n_sun                              : dim
+
+

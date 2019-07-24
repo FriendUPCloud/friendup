@@ -30,8 +30,9 @@
 #include <libwebsockets.h>
 #include <core/thread.h>
 #include <time.h>
-#include <network/websocket_server_client.h>
+//#include <network/websocket_server_client.h>
 #include <util/buffered_string.h>
+#include <util/friendqueue.h>
 
 #define MAX_MESSAGE_QUEUE 64
 
@@ -43,51 +44,71 @@
 
 typedef struct WebSocket
 {
-	char                                            *ws_CertPath;
-	char                                            *ws_KeyPath;
-	int                                             ws_Port;
-	FBOOL                                           ws_UseSSL;
-	FBOOL                                           ws_AllowNonSSL;
+	char								*ws_CertPath;
+	char								*ws_KeyPath;
+	int									ws_Port;
+	FBOOL								ws_UseSSL;
+	FBOOL								ws_AllowNonSSL;
 
-	struct lws_context                              *ws_Context;
-	char                                            ws_InterfaceName[128];
-	char                                            *ws_Interface;
-	struct lws_context_creation_info                ws_Info;
-	int                                             ws_DebugLevel;
-	int                                             ws_OldTime;
-	int                                             ws_Opts;
+	struct lws_context					*ws_Context;
+	char								ws_InterfaceName[128];
+	char								*ws_Interface;
+	struct lws_context_creation_info	ws_Info;
+	int									ws_DebugLevel;
+	int									ws_OldTime;
+	int									ws_Opts;
 	
-	unsigned char                                   ws_Buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 + LWS_SEND_BUFFER_POST_PADDING];
+	unsigned char						ws_Buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 + LWS_SEND_BUFFER_POST_PADDING];
 						  
 	// connection epoll
-	struct lws_pollfd                               ws_Pollfds[ MAX_POLL_ELEMENTS ];
-	int                                             ws_CountPollfds;
+	struct lws_pollfd					ws_Pollfds[ MAX_POLL_ELEMENTS ];
+	int									ws_CountPollfds;
 	
-	FThread                                         *ws_Thread;
+	FThread								*ws_Thread;
 	
-	FBOOL                                           ws_Quit;
-	void                                            *ws_FCM;
+	FBOOL								ws_Quit;
+	FBOOL								ws_ExtendedDebug;
+	void								*ws_FCM;
+	
+	int									ws_NumberCalls;
+	pthread_mutex_t						ws_Mutex;
 } WebSocket;
 
 
 //
 // FriendCoreWebsocketData structure
 //
-
+/*
 typedef struct FCWSData 
 {
-	WebsocketServerClient			*fcd_WSClient;		// if NULL then cannot send message
-	void							*fcd_SystemBase;
-	
-	struct timeval					fcd_Timer;
-	BufString						*fcd_Buffer;		//
-}FCWSData;
+//	WebsocketServerClient			*fcd_WSClient;		// if NULL then cannot send message
+//	void							*fcd_SystemBase;
+//	
+//	struct timeval					fcd_Timer;
+//	BufString						*fcd_Buffer;		//
+//}FCWSData;
+*/
+
+typedef struct WSCData
+{
+	void							*wsc_SystemBase;
+	struct lws				 		*wsc_Wsi;
+	int								wsc_InUseCounter;
+	void							*wsc_UserSession;
+	void 							*wsc_WebsocketsServerClient;
+	pthread_mutex_t					wsc_Mutex;
+	FQueue							wsc_MsgQueue;
+	//FBOOL							wsc_ToBeRemoved;
+	time_t							wsc_LastPingTime;
+	//int								wsc_Status;	//enabled=0, disabled=1
+	BufString						*wsc_Buffer;
+}WSCData;
 
 //
 //
 //
 
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL useSSL );
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto, FBOOL extDebug );
 
 //
 //
@@ -105,19 +126,13 @@ int WebSocketStart( WebSocket *ws );
 //
 //
 
-int WebsocketWrite( void *cl, unsigned char *msgptr, int msglen, int type );
+int AttachWebsocketToSession( void *l, struct lws *wsi, const char *sessionid, const char *authid, WSCData *data );
 
 //
 //
 //
 
-int AddWebSocketConnection( void *l, struct lws *wsi, const char *sessionid, const char *authid, FCWSData *data );
-
-//
-//
-//
-
-int DeleteWebSocketConnection( void *locsb, struct lws *wsi, FCWSData *data );
+int DetachWebsocketFromSession( WSCData *data );
 
 #endif // __NETWORK_WEBSOCKET_H__
 

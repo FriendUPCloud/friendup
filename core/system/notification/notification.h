@@ -27,7 +27,7 @@
 
 enum {
 	NOTIFY_ACTION_REGISTER = 0,
-	NOTIFY_ACTION_READED,
+	NOTIFY_ACTION_READ,
 	NOTIFY_ACTION_TIMEOUT,
 	NOTIFY_MAX
 };
@@ -52,6 +52,7 @@ static char *NotifyActionType[] =
    `Created` bigint(20) NOT NULL,
    `Type` bigint(6) NOT NULL,
    `Status` bigint(6) NOT NULL,
+   `OriginalCTimestamp` bigint(20),
    PRIMARY KEY (`ID`)
  ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -70,6 +71,7 @@ typedef struct Notification
 	time_t					n_Created;			// date created
 	int						n_Status;			// status of notification
 	int						n_NotificationType;	// type of notification
+	FULONG					n_OriginalCreateT;	// original date of creation
 	NotificationSent		*n_NotificationsSent;	// pointer to list of notificationssent structures 
 }Notification;
 
@@ -106,7 +108,9 @@ static FULONG NotificationDesc[] = { SQLT_TABNAME, (FULONG)"FNotification", SQLT
 	SQLT_INT, (FULONG)"Created", offsetof( Notification, n_Created ),
 	SQLT_INT, (FULONG)"Status", offsetof( Notification, n_Status ),
 	SQLT_INT, (FULONG)"Type", offsetof( Notification, n_NotificationType ),
+	SQLT_INT, (FULONG)"OriginalCTimestamp", offsetof( Notification, n_OriginalCreateT ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&NotificationInit,
+	SQLT_NODE, (FULONG)"node", offsetof( Notification, node ),
 	SQLT_END };
 
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_H__

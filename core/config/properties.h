@@ -54,7 +54,8 @@ double               ReadDouble( Props *p, const char *name, double def );
 int                  ReadBool( Props *p, const char *name, int def );
 // get configuration directory
 const char           *GetConfigDirectory( );
-
+// get all keys and values in section. Return number of entries and keys + values in ptrs
+int                  ReadGroupEntries( Props *p, const char *name, char ***keys, char ***values );
 // 
 
 #endif	// __CONFIG_PROPERTIES_H_

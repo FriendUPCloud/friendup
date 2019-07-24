@@ -20,13 +20,14 @@
 #include <system/user/user_manager.h>
 #include <system/user/user_manager_remote.h>
 #include <system/user/user_manager_web.h>
+#include <system/usergroup/user_group_manager.h>
 
 typedef struct UserManagerInterface
 {
 	UserManager			*(*UMNew)( void *sb );
 	void				(*UMDelete)( UserManager *smgr );
-	int					(*UMAssignGroupToUser)( UserManager *smgr, User *usr );
-	int					(*UMAssignGroupToUserByStringDB)( UserManager *smgr, User *usr, char *groups );
+	int					(*UMAssignGroupToUser)( UserGroupManager *smgr, User *usr );
+	int					(*UMAssignGroupToUserByStringDB)( UserGroupManager *smgr, User *usr, char *level, char *workgroups );
 	int					(*UMUserUpdateDB)( UserManager *um, User *usr );
 	int					(*UMAssignApplicationsToUser)( UserManager *smgr, User *usr );
 	User				*(*UMUserGetByNameDB)( UserManager *smgr, const char *name );
@@ -47,7 +48,7 @@ typedef struct UserManagerInterface
 	FULONG				(*UMGetAllowedLoginTime)( UserManager *um, const char *name );
 	FBOOL				(*UMGetLoginPossibilityLastLogins)( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime );
 	int					(*UMStoreLoginAttempt)( UserManager *um, const char *name, const char *info, const char *failReason );
-	Http				*(*UMWebRequest)( void *m, char **urlpath, Http* request, UserSession *session, int *result );
+	Http				*(*UMWebRequest)( void *m, char **urlpath, Http* request, UserSession *session, int *result, FBOOL *logoutCalled );
 	int					(*UMAddGlobalRemoteUser)( UserManager *um, const char *name, const char *sessid, const char *hostname );
 	int					(*UMRemoveGlobalRemoteUser)( UserManager *um, const char *name, const char *hostname );
 	int					(*UMAddGlobalRemoteDrive)( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid  );
@@ -62,8 +63,8 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 {
 	si->UMNew = UMNew;
 	si->UMDelete = UMDelete;
-	si->UMAssignGroupToUser = UMAssignGroupToUser;
-	si->UMAssignGroupToUserByStringDB = UMAssignGroupToUserByStringDB;
+	si->UMAssignGroupToUser = UGMAssignGroupToUser;	//TODO we should provide other interface
+	si->UMAssignGroupToUserByStringDB = UGMAssignGroupToUserByStringDB;	//TODO we should provide other interface
 	si->UMUserUpdateDB = UMUserUpdateDB;
 	si->UMAssignApplicationsToUser = UMAssignApplicationsToUser;
 	si->UMUserGetByNameDB = UMUserGetByNameDB;

@@ -55,7 +55,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 {
 	Log( FLOG_DEBUG, "ApplicationWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
 	
-	AppSession *was = l->sl_AppSessionManager->sl_AppSessions;
+	// DEBUG disabled
+	/*
+	AppSession *was = l->sl_AppSessionManager->asm_AppSessions;
 	while( was != NULL )
 	{
 		DEBUG("[ApplicationWebRequest] SASID: %lu\n", was->as_SASID );
@@ -74,6 +76,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		}
 		was = (AppSession *)was->node.mln_Succ;
 	}
+	*/
 	
 	Http* response = NULL;
 	
@@ -294,6 +297,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param authid - (required) authentication id (provided by application)
+	* @param type - type of application session 'close'(default), 'open' for everyone
+	* @param sasid - if passed then it will be used to join already created SAS
 
 	* @return { SASID: <number> } when success, otherwise response with error code
 	*/
@@ -301,11 +306,36 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	else if( strcmp( urlpath[ 0 ], "register" ) == 0 )
 	{
 		char *authid = NULL;
+		char *sasid = NULL;
+		int type = 0;
+		
+		/*
+		Thomas Wollburg :
+14:44:11
+// SAS functions to connect users coeiting a document... SAS session key is the document key we use  
+// ### === # ### === # ### === # ### === # ### === # ### === # ### === # ### === #
+Application.checkDocumentSession = function( sasID = null )
+{
+	if( Application.sas !== null )
+	{
+		console.log('SAS already initialised!');
+		return;
+	}
+	
+	console.log('init SAS ID',sasID, Application.isHost );
+	var conf = {
+		sasid   : sasID,
+		onevent : Application.socketMessage
+	};
+	Application.sas = new SAS( conf, Application.sasidReady );	
+	console.log('SAS instantiated.',conf);
+}
+		 */ 
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] Register\n");
@@ -316,6 +346,28 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		if( el != NULL )
 		{
 			authid = UrlDecodeToMem( ( char *)el->data );
+		}
+		
+		el =  HashmapGet( request->parsedPostContent, "sasid" );
+		if( el != NULL )
+		{
+			sasid = UrlDecodeToMem( ( char *)el->data );
+		}
+		
+		el =  HashmapGet( request->parsedPostContent, "type" );
+		if( el != NULL )
+		{
+			if( el->data != NULL )
+			{
+				if( strcmp( ( ( char *)el->data), "close") == 0 )
+				{
+					type = SAS_TYPE_CLOSED;
+				}
+				else if( strcmp( ( ( char *)el->data), "open") == 0 )
+				{
+					type = SAS_TYPE_OPEN;
+				}
+			}
 		}
 		
 		if( authid == NULL )
@@ -331,34 +383,80 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		{
 			char buffer[ 1024 ];
 			
-			FERROR("[ApplicationWebRequest] User set session: %s ---------- authid ---- %s\n", loggedSession->us_User->u_Name, authid );
-			
-			AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
-			if( as != NULL )
+			DEBUG("SAS/register: sasid %s\n", sasid );
+			if( sasid != NULL )
 			{
-				int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
-				if( err == 0 )
+				/*
+				char *end;
+				FUQUAD asval = strtoull( sasid, &end, 0 );
+			
+				// Try to fetch assid session from session list!
+				AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
+				DEBUG("SAS/register as: %p\n", as );
+		
+				// We found session!
+				if( as != NULL )
 				{
-					int size = sprintf( buffer, "{ \"SASID\": \"%lu\" }", as->as_SASID  );
-					HttpAddTextContent( response, buffer );
+					SASUList *entry;
+					if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", "joined to sas"  ) ) != NULL )
+					{
+						// just accept connection
+						entry->status = SASID_US_ACCEPTED;
+						DEBUG("SAS/register Connection accepted\n");
+						
+						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", entry->authid, entry );
+						strcpy( entry->authid, authid );
+						
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\" }", as->as_SASID  );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", 99 );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+				}
+				*/
+			}
+			else
+			{
+				FERROR("[ApplicationWebRequest] User set session: %s ---------- authid ---- %s\n", loggedSession->us_User->u_Name, authid );
+			
+				AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
+				if( as != NULL )
+				{
+					as->as_Type = type;
+					int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{ \"SASID\": \"%lu\",\"type\":%d }", as->as_SASID, as->as_Type );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
 				}
 				else
 				{
 					char dictmsgbuf[ 256 ];
-					char dictmsgbuf1[ 196 ];
-					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS register", err );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
-			else
-			{
-				char dictmsgbuf[ 256 ];
-				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CREATE_SAS], DICT_CANNOT_CREATE_SAS );
-				HttpAddTextContent( response, dictmsgbuf );
-			}
 		}
 		
+		if( sasid != NULL )
+		{
+			FFree( sasid );
+		}
 		if( authid != NULL )
 		{
 			FFree( authid );
@@ -385,7 +483,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -416,53 +514,85 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			
 			if( as != NULL )
 			{
-				DEBUG("[ApplicationWebRequest] Found appsession id %lu\n", as->as_AppID );
-				// if our session is owner session all connections must be closed
-				
-				UserSession *locus = (UserSession *)as->as_UserSessionList->usersession;
-				int err = 0;
-				
-				char tmpmsg[ 255 ];
-				
-				if( locus->us_User == loggedSession->us_User )
+				// if session is open it is allowed to quit session by the owner
+				// if AS have less users then 1 then session is removed
+				if( as->as_Type == SAS_TYPE_OPEN )
 				{
-					int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"sasid-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
-					DEBUG("[ApplicationWebRequest] As Owner I want to remove session and sasid\n");
+					int err = 0;
+					//err = AppSessionRemUsersession( as, loggedSession );
+					err = AppSessionRemUsersessionAny( as, loggedSession );
 					
-					err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
-					
-					// we are not owner, we must send message to owner too
-					if( loggedSession != locus )
+					DEBUG("AS will be removed? %d number of users on sas %d\n", err, as->as_UserNumber );
+					// if user was removed and he was last then we remove SAS
+					if( err == 0 && as->as_UserNumber <= 0 )
 					{
-						err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+						err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
 					}
 					
-					err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{\"SASID\":\"%lu\"}", asval );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS unregister", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
 				}
-				//
-				// we are not session owner, we can onlybe removed from assid
-				//
 				else
 				{
-					int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
-					
-					err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
-					
-					err = AppSessionRemUsersession( as, loggedSession );
-				}
+					DEBUG("[ApplicationWebRequest] Found appsession id %lu\n", as->as_AppID );
+					// if our session is owner session all connections must be closed
 				
-				if( err == 0 )
-				{
-					int size = sprintf( buffer, "{\"SASID\":\"%lu\"}", asval );
-					HttpAddTextContent( response, buffer );
-				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					char dictmsgbuf1[ 196 ];
-					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS unregister", err );
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
-					HttpAddTextContent( response, dictmsgbuf );
+					UserSession *locus = (UserSession *)as->as_UserSessionList->usersession;
+					int err = 0;
+				
+					char tmpmsg[ 255 ];
+				
+					if( locus->us_User == loggedSession->us_User )
+					{
+						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"sasid-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						DEBUG("[ApplicationWebRequest] As Owner I want to remove session and sasid\n");
+					
+						err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
+					
+						// we are not owner, we must send message to owner too
+						if( loggedSession != locus )
+						{
+							err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+						}
+					
+						err = AppSessionManagerRemSession( l->sl_AppSessionManager, as );
+					}
+					//
+					// we are not session owner, we can onlybe removed from assid
+					//
+					else
+					{
+						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+					
+						err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+					
+						err = AppSessionRemUsersession( as, loggedSession );
+					}
+				
+					if( err == 0 )
+					{
+						int size = sprintf( buffer, "{\"SASID\":\"%lu\"}", asval );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS unregister", err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
 				}
 			}
 			else
@@ -498,8 +628,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] accept\n");
@@ -545,50 +675,96 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			// We found session!
 			if( as != NULL )
 			{
-				SASUList *li = as->as_UserSessionList;
 				int error = 1;
-		
-				// Find invitee user with authid from user list in allowed users
-				while( li != NULL )
+				
+				DEBUG("App session type: %d\n", as->as_Type );
+				// if session is open, we can add new users to list without asking for permission
+				if( as->as_Type == SAS_TYPE_OPEN )
 				{
-					DEBUG("[ApplicationWebRequest] Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->authid, li );
+					SASUList *entry;
+					DEBUG("[ApplicationWebRequest] I will try to add session\n");
 					
-					DEBUG("[ApplicationWebRequest] sessionfrom list %p loggeduser session %p\n",  li->usersession, loggedSession );
-					if( li->usersession == loggedSession )
+					if( ( entry = AppSessionAddCurrentUserSession( as, loggedSession) ) != NULL )
+					
+					//if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{
-						if( li->authid[ 0 ] != 0 )
-						{
-							FERROR("AUTHID IS NOT EMPTY %s!!!\n", li->authid );
-						}
+						// just accept connection
+						entry->status = SASID_US_ACCEPTED;
+						DEBUG("SAS/register Connection accepted\n");
 						
-						if( li->status == SASID_US_INVITED )
-						{
-							li->status = SASID_US_ACCEPTED;
-						}
-						
-						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", li->authid, li );
-						strcpy( li->authid, authid );
-						DEBUG("[ApplicationWebRequest] Setting authid %s user %s\n", authid, li->usersession->us_User->u_Name );
+						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", entry->authid, entry );
+						strcpy( entry->authid, authid );
 						
 						as->as_UserNumber++;
 						
 						char tmpmsg[ 255 ];
 						int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
 						
-						int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+						int err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
+						//int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
 						if( err != 0 )
 						{
-							
+						
 						}
 						error = 0;
-						break;
 					}
-					li = ( SASUList * )li->node.mln_Succ;
+					DEBUG("[ApplicationWebRequest] looks like app session was not created\n");
+				}
+				else
+				{
+					SASUList *li = as->as_UserSessionList;
+		
+					// Find invitee user with authid from user list in allowed users
+					while( li != NULL )
+					{
+						DEBUG("[ApplicationWebRequest] Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->authid, li );
+					
+						DEBUG("[ApplicationWebRequest] sessionfrom list %p loggeduser session %p\n",  li->usersession, loggedSession );
+						if( li->usersession == loggedSession )
+						{
+							if( li->authid[ 0 ] != 0 )
+							{
+								FERROR("AUTHID IS NOT EMPTY %s!!!\n", li->authid );
+							}
+						
+							if( li->status == SASID_US_INVITED )
+							{
+								li->status = SASID_US_ACCEPTED;
+							}
+						
+							DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", li->authid, li );
+							strcpy( li->authid, authid );
+							DEBUG("[ApplicationWebRequest] Setting authid %s user %s\n", authid, li->usersession->us_User->u_Name );
+						
+							as->as_UserNumber++;
+						
+							char tmpmsg[ 255 ];
+							int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-accept\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
+						
+							int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
+							if( err != 0 )
+							{
+							
+							}
+							error = 0;
+							break;
+						}
+						li = ( SASUList * )li->node.mln_Succ;
+					}
 				}
 			
 				if( error == 0 )
 				{
-					int size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->as_UserSessionList->usersession->us_User->u_Name );
+					int size = 0;
+					
+					if( as->as_UserSessionList->usersession != NULL )
+					{
+						size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", as->as_UserSessionList->usersession->us_User->u_Name );
+					}
+					else
+					{
+						size = sprintf( buffer,"{\"response\":\"%s\",\"identity\":\"%s\"}", "success", "empty" );
+					}
 					HttpAddTextContent( response, buffer );
 				}
 				else
@@ -635,8 +811,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] Decline\n");
@@ -860,7 +1036,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				}
 				else if( sessid != NULL )
 				{
-					if( AppSessionAddUsersBySession( as, loggedSession, sessid, applicationName, msg  ) == TRUE )
+					if( AppSessionAddUsersBySession( as, loggedSession, sessid, applicationName, msg  ) != NULL )
 					{
 						char tmp[ 512 ];
 						snprintf( tmp, sizeof(tmp), "{ \"invited\":[\"%s\"] }", sessid );
@@ -926,8 +1102,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1008,8 +1184,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		DEBUG("[ApplicationWebRequest] app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
@@ -1035,7 +1211,15 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			
 			if( as != NULL )
 			{
-				int err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), usernames );
+				int err = 0;
+				if( as->as_Type == SAS_TYPE_OPEN )
+				{
+					err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), NULL );
+				}
+				else
+				{
+					err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), usernames );
+				}
 				if( err > 0 )
 				{
 					int size = sprintf( buffer, "{\"response\":\"success\"}" );
@@ -1131,9 +1315,17 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
 			{
-				char *newmsg = NULL;
-
-				int err = AppSessionSendOwnerMessage( as, loggedSession, msg, strlen(msg) );
+				int err = 0;
+				// when SAS is open, there is no need to send message to owner
+				if( as->as_Type == SAS_TYPE_OPEN )
+				{
+					err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), NULL );
+				}
+				else
+				{
+					err = AppSessionSendOwnerMessage( as, loggedSession, msg, strlen(msg) );
+				}
+				
 				FERROR("Messages sent %d\n", err );
 				if( err > 0 )
 				{
@@ -1231,59 +1423,57 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{
 				// finding our current session on list
 				
-				FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-				
-				SASUList *srcli = as->as_UserSessionList;
-				while( srcli != NULL )
+				if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 				{
-					if( srcli->usersession == loggedSession )
+					SASUList *srcli = as->as_UserSessionList;
+					while( srcli != NULL )
 					{
-						break;
+						if( srcli->usersession == loggedSession )
+						{
+							break;
+						}
+						srcli = (SASUList *) srcli->node.mln_Succ;
 					}
-						
-					srcli = (SASUList *) srcli->node.mln_Succ;
-				}
 				
-				// finding session to which we want migrate
+					// finding session to which we want migrate
 				
-				SASUList *dstli = as->as_UserSessionList;
-				while( dstli != NULL )
-				{
-					UserSession *locses = (UserSession *) dstli->usersession;
-					if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && strcmp( username, locses->us_User->u_Name ) == 0 )
+					SASUList *dstli = as->as_UserSessionList;
+					while( dstli != NULL )
 					{
-						break;
+						UserSession *locses = (UserSession *) dstli->usersession;
+						if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && strcmp( username, locses->us_User->u_Name ) == 0 )
+						{
+							break;
+						}
+						dstli = (SASUList *) dstli->node.mln_Succ;
 					}
-						
-					dstli = (SASUList *) dstli->node.mln_Succ;
-				}
 				
-				if( dstli != NULL && srcli->usersession != NULL )
-				{
-					char  tmpauthid[ 255 ];
-					strcpy( tmpauthid, srcli->authid );
-					UserSession *tmpses = srcli->usersession;
-					int tmpstatus = srcli->status;
+					if( dstli != NULL && srcli->usersession != NULL )
+					{
+						char  tmpauthid[ 255 ];
+						strcpy( tmpauthid, srcli->authid );
+						UserSession *tmpses = srcli->usersession;
+						int tmpstatus = srcli->status;
 
-					char tmp[ 1024 ];
-					//int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"client-decline\",\"data\":\"%s\"}\"}}}}}", le->authid, as->as_ASSID, loggedSession->us_User->u_Name, assid, tmpses->us_User->u_Name );
-					//int msgsndsize += WebSocketSendMessageInt( le->usersession, tmp, len );
+						char tmp[ 1024 ];
+						//int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"client-decline\",\"data\":\"%s\"}\"}}}}}", le->authid, as->as_ASSID, loggedSession->us_User->u_Name, assid, tmpses->us_User->u_Name );
+						//int msgsndsize += WebSocketSendMessageInt( le->usersession, tmp, len );
 					
-					strcpy( dstli->authid, tmpauthid );
-					dstli->usersession = tmpses;
-					dstli->status = tmpstatus;
+						strcpy( dstli->authid, tmpauthid );
+						dstli->usersession = tmpses;
+						dstli->status = tmpstatus;
 					
-					int size = sprintf( buffer, "{\"response\":\"success\"}" );
-					HttpAddTextContent( response, buffer );
+						int size = sprintf( buffer, "{\"response\":\"success\"}" );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+					FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
-					HttpAddTextContent( response, dictmsgbuf );
-				}
-				
-				FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 			}
 			else
 			{
@@ -1362,80 +1552,79 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
 			{
-				FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-				// finding our current session on list
-				
-				SASUList *srcli = as->as_UserSessionList;
-				while( srcli != NULL )
+				if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 				{
-					if( srcli->usersession == loggedSession )
-					{
-						break;
-					}
-						
-					srcli = (SASUList *) srcli->node.mln_Succ;
-				}
+					// finding our current session on list
 				
-				// finding session to which we want migrate
-				
-				SASUList *dstli = as->as_UserSessionList;
-				while( dstli != NULL )
-				{
-					UserSession *locses = (UserSession *) dstli->usersession;
-					if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && loggedSession->us_ID == locses->us_ID )
+					SASUList *srcli = as->as_UserSessionList;
+					while( srcli != NULL )
 					{
-						break;
+						if( srcli->usersession == loggedSession )
+						{
+							break;
+						}
+						srcli = (SASUList *) srcli->node.mln_Succ;
 					}
-						
+				
+					// finding session to which we want migrate
+				
+					SASUList *dstli = as->as_UserSessionList;
+					while( dstli != NULL )
+					{
+						UserSession *locses = (UserSession *) dstli->usersession;
+						if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && loggedSession->us_ID == locses->us_ID )
+						{
+							break;
+						}
 						dstli = (SASUList *) dstli->node.mln_Succ;
-				}
+					}
 				
-				if( dstli != NULL && srcli->usersession != NULL )
-				{
-					DEBUG("[ApplicationWebRequest] Switching sessions\n");
-					
-					char  tmpauthid[ 255 ];
-					if( srcli->authid[ 0 ] == 0 )
+					if( dstli != NULL && srcli->usersession != NULL )
 					{
-						tmpauthid[ 0 ] = 0;
+						DEBUG("[ApplicationWebRequest] Switching sessions\n");
+					
+						char  tmpauthid[ 255 ];
+						if( srcli->authid[ 0 ] == 0 )
+						{
+							tmpauthid[ 0 ] = 0;
+						}
+						else
+						{
+							strcpy( tmpauthid, srcli->authid );
+						}
+						void *tmpses = srcli->usersession;
+						int tmpstatus = srcli->status;
+					
+						if( dstli->authid[ 0 ] == 0 )
+						{
+							srcli->authid[ 0 ] = 0;
+						}
+						else
+						{
+							strcpy( srcli->authid, dstli->authid );
+						}
+						srcli->usersession = dstli->usersession;
+						srcli->status = dstli->status;
+					
+						if( tmpauthid[ 0 ] == 0 )
+						{
+							dstli->authid[ 0 ] = 0;
+						}
+						else
+						{
+							strcpy( dstli->authid, tmpauthid );
+						}
+						dstli->usersession = tmpses;
+						dstli->status = tmpstatus;
 					}
 					else
 					{
-						strcpy( tmpauthid, srcli->authid );
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
+						HttpAddTextContent( response, dictmsgbuf );
 					}
-					void *tmpses = srcli->usersession;
-					int tmpstatus = srcli->status;
-					
-					if( dstli->authid[ 0 ] == 0 )
-					{
-						srcli->authid[ 0 ] = 0;
-					}
-					else
-					{
-						strcpy( srcli->authid, dstli->authid );
-					}
-					srcli->usersession = dstli->usersession;
-					srcli->status = dstli->status;
-					
-					if( tmpauthid[ 0 ] == 0 )
-					{
-						dstli->authid[ 0 ] = 0;
-					}
-					else
-					{
-						strcpy( dstli->authid, tmpauthid );
-					}
-					dstli->usersession = tmpses;
-					dstli->status = tmpstatus;
+					FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
-					HttpAddTextContent( response, dictmsgbuf );
-				}
-				
-				FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 			}
 			else
 			{

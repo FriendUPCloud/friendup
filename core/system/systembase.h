@@ -36,6 +36,7 @@
 #include <core/friendcore_manager.h>
 
 #include <system/fsys/fsys.h>
+#include <system/fsys/device_handling.h>
 #include <util/buffered_string.h>
 #include <db/sqllib.h>
 #include <application/applicationlibrary.h>
@@ -53,6 +54,7 @@
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
 #include <system/user/user_manager.h>
+#include <system/usergroup/user_group_manager.h>
 #include <system/user/remote_user.h>
 #include <system/fsys/fs_manager.h>
 #include <hardware/usb/usb_manager.h>
@@ -86,7 +88,17 @@
 #include <config/properties.h>
 #include <websockets/websocket_apns_connector.h>
 
+//#include <network/protocol_websocket.h>
+#include <system/permission/permission_manager.h>
+
 #define DEFAULT_SESSION_ID_SIZE 256
+
+//
+// Module file call string
+//
+
+#define MODULE_FILE_CALL_STRING "friendrequestparameters=%s"
+#define MODULE_FILE_CALL_STRING_LEN 24
 
 //
 // Exit code list
@@ -198,6 +210,7 @@ typedef struct SQLConPool
 
 typedef struct SystemBase
 {
+	time_t							l_UptimeStart;	// FriendCore start time
 	char							*l_Name;	// library name
 	FULONG							l_Version;		// version information
 	void							*handle;
@@ -210,10 +223,12 @@ typedef struct SystemBase
 	DOSDriver						*sl_DOSDrivers;         // avaiable DOSDrivers
 	File 							*sl_INRAM;						// INRAM filesystem drive, avaiable for all users
 
+	DeviceManager					*sl_DeviceManager;	// DeviceManager
 	WorkerManager					*sl_WorkerManager; ///< Worker Manager
 	AppSessionManager				*sl_AppSessionManager;		// application sessions
 	UserSessionManager				*sl_USM;			// user session manager
-	UserManager						*sl_UM;		// user database manager
+	UserManager						*sl_UM;		// user manager
+	UserGroupManager				*sl_UGM;	// user group manager
 	FSManager						*sl_FSM;		// filesystem manager
 	USBManager						*sl_USB;		// usb manager
 	PrinterManager					*sl_PrinterM;		// printer manager
@@ -228,6 +243,7 @@ typedef struct SystemBase
 	MobileManager					*sl_MobileManager;	// Mobile Manager
 	CalendarManager					*sl_CalendarManager;	// Calendar Manager
 	NotificationManager				*sl_NotificationManager;	// Notification Manager
+	PermissionManager				*sl_PermissionManager;		// Permission Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -240,6 +256,7 @@ typedef struct SystemBase
 	char							*sl_DefaultDBLib;		// default DB library name
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
 	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
+	char							*sl_MasterServer;		// FriendCore master server
 	
 	//
 	// 60 seconds
@@ -301,9 +318,9 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( struct SystemBase *l, struct TagItem *tl, File **mfile, User *usr );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin );
 
-	int								(*UnMountFS)( struct SystemBase *l, struct TagItem *tl, UserSession *usr );
+	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
 
 // "Global" functions
 
@@ -327,7 +344,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail  );
+	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
@@ -339,7 +356,7 @@ typedef struct SystemBase
 	
 	int								(*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
-	int								(*WebsocketWrite)( void *wscl, unsigned char *msgptr, int msglen, int type );
+	int								(*WebsocketWrite)( UserSessionWebsocket *wscl, unsigned char *msgptr, int msglen, int type );
 	
 	int								(*SendProcessMessage)( Http *request, char *data, int len );
 
@@ -365,8 +382,10 @@ typedef struct SystemBase
 	// apple
 	char							*l_AppleServerHost;
 	int								l_AppleServerPort;
-	char							*l_AppleKeyAPI;
-	char							*l_PresenceKey;
+
+	char							**l_ServerKeys;
+	char							**l_ServerKeyValues;
+	int								l_ServerKeysNum;
 	
 	WebsocketAPNSConnector			*l_APNSConnection;
 } SystemBase;
@@ -490,7 +509,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail );
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **err );
 
 //
 //

@@ -69,11 +69,21 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 				$s->Save();
 			}
 		}
+		
+		// Check post login for this workgroup
+		if( file_exists( 'cfg/postlogin_' . $wkey . '.php' ) )
+		{
+			// Variables used for post login
+			$postLogin = new stdClass();
+			$postLogin->Workgroup = str_replace( ' ', '_', $wgroup->Name );
+			$postLogin->FriendUser = $User->Name;
+			require( 'cfg/postlogin_' . $wkey . '.php' );
+		}
 	}
 }
 
 // Prevent wizard for user
-if( $Config->preventwizard == 1 )
+if( isset( $Config ) && isset( $Config->preventwizard ) && $Config->preventwizard == 1 )
 {
 	$s = new dbIO( 'FSetting' );
 	$s->UserID = $User->ID;

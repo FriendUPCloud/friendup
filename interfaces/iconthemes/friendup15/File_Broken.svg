@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   id="svg2"
+   viewBox="0 0 48.00087 56.000871"
+   height="15.80469mm"
+   width="13.546912mm">
+  <defs
+     id="defs4">
+    <linearGradient
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="scale(0.9258201,1.0801234)"
+       x1="3.3845344"
+       y1="51.845924"
+       x2="51.845924"
+       y2="0"
+       id="linearGradient-1">
+      <stop
+         stop-color="#FFFFFF"
+         stop-opacity="0"
+         offset="0%"
+         id="stop4145" />
+      <stop
+         stop-color="#FFFFFF"
+         stop-opacity="0.2"
+         offset="100%"
+         id="stop4147" />
+    </linearGradient>
+    <linearGradient
+       y2="0"
+       x2="51.845924"
+       y1="51.845924"
+       x1="3.3845344"
+       gradientTransform="matrix(0.9258201,0,0,1.0801234,227.4286,464.3622)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient4239"
+       xlink:href="#linearGradient-1" />
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-227.42773,-464.36133)"
+     id="layer1">
+    <path
+       style="fill:#ecf0f1;fill-rule:nonzero;stroke:none;stroke-width:1"
+       d="m 228.4286,464.3622 46,0 c 0.55228,0 1,0.44772 1,1 l 0,54 c 0,0.55229 -0.44772,1 -1,1 l -46,0 c -0.55228,0 -1,-0.44771 -1,-1 l 0,-54 c 0,-0.55228 0.44772,-1 1,-1 z"
+       id="rect4177-7" />
+    <path
+       id="Rectangle"
+       d="m 227.42773,464.36133 0,56 47,0 c 0.55228,0 1,-0.44771 1,-1 l 0,-54 c 0,-0.55228 -0.44772,-1 -1,-1 l -47,0 z"
+       style="fill:url(#linearGradient4239);fill-rule:evenodd;stroke:none;stroke-width:1" />
+    <path
+       id="rect4175-5-6-6-4-8"
+       d="m 239.06738,478.41699 -1.58399,1.58399 12.36133,12.36133 -12.36133,12.35937 1.58399,1.58399 12.35937,-12.36133 12.36133,12.36133 1.58399,-1.58399 -12.35938,-12.35937 12.35938,-12.36133 -1.58399,-1.58399 -12.36133,12.35938 -12.35937,-12.35938 z"
+       style="opacity:0.8;fill:#4d4d4d;fill-rule:nonzero;stroke:none;stroke-width:1" />
+  </g>
+</svg>

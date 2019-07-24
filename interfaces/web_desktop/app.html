@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
-	<head mobile="mobile" sharedapp="sharedapp">
+	<head>
 		<title>Friend Workspace</title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+		<meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 		<link rel="stylesheet" href="css/friendup.css;/themes/borderless/scrollbars.css;/themes/borderless/theme_compiled.css;/webclient/css/sharedapp.css"/>
 		<style>
 			html body.Loading * { visibility: hidden; }
@@ -12,6 +12,7 @@
 		</style>
 		<script src="
 			/webclient/js/namespace.js;
+			webclient/js/api/friendapi.js;
 			webclient/js/utils/json.js;
 			webclient/js/utils/engine.js;
 			webclient/js/utils/cssparser.js;
@@ -31,11 +32,13 @@
 			webclient/js/gui/window.js;
 			webclient/js/gui/screen.js;
 			webclient/js/gui/filebrowser.js;
+			webclient/js/gui/screenoverlay.js;
 			webclient/js/apiwrapper.js;
-			webclient/js/appspace.js" type="text/javascript"></script>
+			webclient/js/appspace.js" type="text/javascript">
+		</script>
 		<meta name="apple-mobile-web-app-capable" content="yes">
 	</head>
-	<body onload="Workspace.init( 'api' );">
+	<body onload="Workspace.init( 'api' );" mobile="mobile" sharedapp="sharedapp">
 		<div id="Screens"></div>
 		<div id="Tasks"></div>
 		<div id="MobileMenu"></div>

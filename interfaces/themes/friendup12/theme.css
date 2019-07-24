@@ -50,8 +50,8 @@
 	$ColorListSw2:           #030303;
 	$ColorTdListSw1:         #333333;
 	$ColorTdListSw2:         #030303;
-	$ColorBgThListSw1:       #e4e4e4;
-	$ColorBgThListSw2:       #ededed;
+	$ColorBgThListSw1:       #fefefe;
+	$ColorBgThListSw2:       #f5f5f5;
 	$ColorThListSw1:         #333333;
 	$ColorThListSw2:         #333333;
 	$ColorNegativeListSw1:   #f0f0f0;
@@ -116,7 +116,6 @@
 	$ColorDangerButtonHoverBg: #da5f5f;
 	$ColorAvailable:           #333333;
 	$ColorAvailableBg:         #94c6e0;
-	$Color
 	$ColorAction:              #333333;
 	$ColorActionBg:            #c362ff;
 	$ColorWarning:             #333333;
@@ -155,7 +154,7 @@
 	$MarginVerticalRuler:    0 8px 0 0;
 	$MarginTabs:             0 5px 0 0;
 	$MarginBox:              0;
-	$MarginWindowTop:        35px;
+	$MarginWindowTop:        40px;
 	$MarginWindowTopVBars:   34px;
 	$MarginWindowLeft:       0px;
 	$MarginWindowRight:      0px;
@@ -227,7 +226,7 @@
 	/* Gui image elements */
 	$GuiImgWinTitle:         url(/webclient/gfx/system/window_topgradient_off.png);
 	$GuiImgWinTitleActive:   url(/themes/friendup12/gfx/window_topgradient.png);
-	$GuiImgWinLoading:       #222222 url(/themes/friendup12/gfx/loading.gif) no-repeat center center;
+	$GuiImgWinLoading:       #222222 url(/themes/friendup12/gfx/busy.png) no-repeat center center;
 
 	/* Icon set */
 	$IconSmallArrowUp:       url(/webclient/gfx/icons/16x16/actions/arrow-up.png);
@@ -258,16 +257,24 @@
 }
 /* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
 
+::selection
+{
+	background: #1F2D39;
+	color: #E7B66F;
+}
+
 html 
 {
 	height: 100vh;
 	width: 100vw;
+	-webkit-text-size-adjust: 100%;
 }
 
 html body
 {
 	font-size: 0.9em;
 	color: #333333;
+	-webkit-font-smoothing:antialiased;
 }
 
 html body[mobile=mobile]
@@ -352,8 +359,8 @@ html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
-	top: 32px !important;
-	height: calc(100% - 32px) !important;
+	top: 40px !important;
+	height: calc(100% - 40px) !important;
 }
 
 html .Screen > .ScreenContent
@@ -364,8 +371,107 @@ html .Screen > .ScreenContent
 
 html body .Screen > .TitleBar.Busy:after 
 {
-    clip-path: ellipse(9px 9px at 10px 10px);
-    -webkit-clip-path: ellipse(9px 9px at 10px 10px);
+    /*clip-path: ellipse(9px 9px at 10px 10px);
+    -webkit-clip-path: ellipse(9px 9px at 10px 10px);*/
+}
+
+/* Views not activated for mobile ------------------------------------------- */
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):not(.OnWorkspace)
+{
+	position: absolute;
+	clear: none;
+	border-radius: 8px;
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
+{
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.0);
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelauedDeactivation) > .View
+{
+	border-radius: 8px 8px 0 0;
+	height: 100% !important;
+	max-height: 100%;
+	overflow: visible;
+	background: none;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation):after
+{
+	content: " ";
+	position: absolute;
+	width: 100%;
+	left: 0;
+	top: 40px;
+	bottom: 0;
+	z-index: 2;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) .Content
+{
+	display: none;
+}
+
+html .ViewContainer[childview].Active > .MobileBack, 
+html .ViewContainer.Active > .MobileBack.Showing
+{
+	color: white;
+}
+
+html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title > div > .Close
+{
+	top: 3px;
+	left: auto;
+	right: 0;
+}
+
+html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active):not(.DelayedDeactivation) .View > .Title,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title
+{
+	top: 0;
+	border-radius: 8px 8px 0 0;
+	background: none;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .View > .Title > div > span
+{
+	position: absolute;
+	width: 94%;
+	left: 2%;
+	text-align: center;
+	top: 60px;
+	z-index: 2;
+	color: white;
+	text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+	font-size: 0.9em;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.DelayedDeactivation) > .ViewIcon
+{
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: calc(100% + 20px);
+	z-index: 1;
+	background-size: 45%;
+	background-color: rgba(100,100,100,0.3);
+	background-position: center 20px;
+	background-repeat: no-repeat;
+	pointer-events: none;
+	border-radius: 8px;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
+{
+	width: 0%;
+	height: 0%;
+	top: 0%;
+	left: 0%;
 }
 
 /* 3D is for later ---------------------------------------------------------- */
@@ -507,6 +613,7 @@ html #Screens .File.Selected .Title
 	box-shadow: none;
 	color: #444444;
 	border-radius: 2px;
+	resize: none;
 }
 
 html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
@@ -606,12 +713,18 @@ html > body > div button, html > body > div .Button
 	background-repeat: repeat-x;
 	background-position: top left;
 	background-color: #e3e7e8;
-	border: 1px solid #e3e7e8;
+	border: 0;
 	border-radius: 3px;
 	box-shadow: 0;
 	transition: background-color 0.25s;
 	color: #2a2a2a;
 	padding: 5px 10px;
+}
+
+html body button.IconButton:not(:hover), 
+html body .Button.IconButton:not(:hover)
+{
+	border: 1px solid rgba(0,0,0,0) !important;
 }
 
 html body .BigButton
@@ -633,7 +746,7 @@ html > body > div button:hover, html > body > div .Button:hover
 
 html .BubbleInfo > div, html .PopInfo > div
 {
-	max-width: 320px;
+	max-width: 170px;
 	min-width: 170px;
 }
 
@@ -755,6 +868,13 @@ html .TrayElement.PopNotification .PopInfo
 .IconHeightMedium { height: 36px; padding: 4px; box-sizing: border-box; }
 .IconHeightLarge { height: 44px; padding: 4px; box-sizing: border-box; }
 
+/* Menu items --------------------------------------------------------------- */
+
+.Widget .MenuItems .MenuItem.Disabled
+{
+	display: none;
+}
+
 /* Dock menu ---------------------------------------------------------------- */
 
 html .DockMenu .DockSubMenu
@@ -783,6 +903,28 @@ html .DockMenu .DockMenuItem:hover
 	background: rgba(52,73,94,0.5);
 }
 
+html .DockMenu .DockMenuItem > span:first-child
+{
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem > span + span
+{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: calc(100% - 28px);
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+html .DockMenu .DockMenuItem.Directory > span + span
+{
+	width: calc(100% - 40px);
+}
+
 /* Extra styling just for this theme ---------------------------------------- */
 
 html .View
@@ -795,9 +937,6 @@ html .View
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	transition: transform 0.25s;
-	-moz-transition: transform 0.25s;
-	-webkit-transition: transform 0.25s;
 }
 
 html .View.Active
@@ -805,19 +944,6 @@ html .View.Active
 	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
 	-webkit-box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
-	transition: transform 0.25s;
-	-moz-transition: transform 0.25s;
-	-webkit-transition: transform 0.25s;
-}
-
-body[mobile=mobile] #Screens .View
-{
-	transition: none !important;
-	-webkit-transition: none !important;
-	transition-property: none !important;
-	-webkit-transition-property: none !important;
-	transition-duration: 0s !important;
-	-webkit-transition-duration: 0s !important;
 }
 
 html .View.Active > .Title
@@ -833,7 +959,7 @@ html .View > .Title
 {
 	border-top: none;
 	border-bottom: 1px solid rgba(0,0,0,0);
-	height: 26px;
+	height: 26.6px; /* .6 because of rounding bug in browsers */
 	background-image: none;
 	border-radius: 2px 2px 0 0;
 	background-color: #4A6075;
@@ -869,7 +995,7 @@ html body[mobile=mobile] .View > .Content,
 html body[mobile=mobile] .View > .LeftBar, 
 html body[mobile=mobile] .View > .RightBar
 {
-	top: 35px;
+	top: 40px;
 }
 
 html .View > .LeftBar,
@@ -893,7 +1019,8 @@ html .View.Active > .BottomBar
 	background-color: #455155;
 }
 
-html .View.Active > .Title
+html .View.Active > .Title,
+html body[mobile] .View > .Title
 {
 	background-color: #34495E;
 }
@@ -956,22 +1083,58 @@ body .View > .Snap > .SnapRight
 	background-color: rgba(41, 128, 185, 0.7);
 }
 
+.View[viewsnap=right], 
+.View[viewsnap=right] > .Title,
+.View[attach_left=attached],
+.View[attach_left=attached] > .Title
+{
+	border-top-right-radius: 0px !important;
+	border-bottom-right-radius: 0px !important;
+}
+
+.View[viewsnap=left], 
+.View[viewsnap=left] > .Title,
+.View[attach_right=attached],
+.View[attach_right=attached] > .Title
+{
+	border-top-left-radius: 0px !important;
+	border-bottom-left-radius: 0px !important;
+}
+
 /* Mobile glypths */
 
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
 {
+	background: rgba(200,200,200,1);
 	position: absolute;
 	margin: 0;
-	top: 3px;
-	width: 33px;
-	height: 33px;
-	background-image: url(/iconthemes/friendup15/close.svg);
-	background-repeat: no-repeat;
-	background-size: 35%;
-	right: 0;
+	top: -2px;
+	right: -2px;
+	width: 27px;
+	height: 30px;
+	border-radius: 100%;
 	left: auto;
 	background-position: center;
+	padding: 0;
 }
+
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:after
+{
+	content: "\f011";
+	display: block;
+	font-family: fontawesome;
+	font-weight: normal;
+	font-size: 0.9em;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	color: white;
+	text-align: center;
+	line-height: 28px;
+}
+
 .View.Active > .Title > div > .MobileClose:before,
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:before
 {
@@ -1007,18 +1170,6 @@ body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close:before
 	background-position: center;
 }
 
-body:not([tablet])[mobile=mobile] #WorkspaceMenu
-{
-	text-align: center;
-}
-
-body:not([tablet])[mobile=mobile] #WorkspaceMenu .Menu
-{
-	float: none;
-	font-size: 1em;
-	display: inline-block;
-}
-
 body:not([tablet])[mobile=mobile] .Calendar.MonthName
 {
 	padding: 6px 10px;
@@ -1027,7 +1178,7 @@ body:not([tablet])[mobile=mobile] .Calendar.MonthName
 
 body:not([tablet])[mobile=mobile]:not(.WidgetSlideDown) #CalendarWidget
 {
-	height: 32px !important;
+	height: 40px !important;
 }
 
 /* Window menu */
@@ -1087,8 +1238,7 @@ body.WindowMenu #Screens .View:before
 	top: 30px; left: 0; width: 100%; height: calc(100% - 3px);
 	background: rgba(0,0,0,0.5);
 }
-body.WindowMenu .Widget, body.WindowMenu #Statusbar,
-body.WindowMenu .Desklet, body.WindowMenu .Screen .ScreenContent .Scroller:before
+body.WindowMenu .Widget, body.WindowMenu #Statusbar
 {
 	opacity: 0;
 	pointer-events: none;
@@ -1124,7 +1274,7 @@ html .Desklet #DockWindowList
 
 .Desklet .Launcher
 {
-	background-size: 90% !important;
+	background-size: 89% !important;
 	box-shadow: none;
 	filter: none !important;
 }
@@ -1138,6 +1288,11 @@ body[mobile] .Desklet .Launcher.MousePointer
 body[mobile] .Desklet .Launcher.MousePointer > span
 {
 	top: 60px;
+}
+
+.Desklet .Launcher.Startmenu
+{
+	background-image: url(/themes/friendup12/gfx/AppsMenu.svg) !important;
 }
 
 html .Desklet.HasWindowlist
@@ -1240,6 +1395,11 @@ html .View > .Content
 	left: 0 !important;
 	right: 0;
 }
+ 
+html body:not([mobile]) .View > .Content
+{
+	border-radius: 0 0 3px 3px;
+}
 
 html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View > .Content
 {
@@ -1247,564 +1407,11 @@ html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View
 	border-radius: 0 0 2px 2px;
 }
 
-/* Dark theme */
-
-html body.Dark a, html body a.Dark:visited
-{
-	color: #6DC5FF;
-}
-
-html [mobile=mobile].Dark.ViewMaximized.HasMenu #WorkspaceMenu,
-html [mobile=mobile].Dark.WidgetSlideDown.HasMenu #WorkspaceMenu
-{
-	background: #455155;
-}
-
-body.Dark .SliderElement .SliderGroove
-{
-	background: rgba(0,0,0,0.5);
-	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.5);
-}
-
-html body.Dark .Screen > .TitleBar > .Left .Extra .Offline
-{
-	filter: invert(1);
-}
-
-body.Dark input[type=text], body.Dark input[type=range], body.Dark input[type=number], body.Dark input[type=date],
-body.Dark input[type=email], body.Dark input[type=username],
-body.Dark input[type=datetime-local], body.Dark input[type=password], 
-html body.Dark textarea, html body.Dark select, html body.Dark select:hover
-{
-    border-radius: 2px;
-    border: 1px solid #19242e;
-    background: #1b2732;
-    color: #e0e0e0;
-}
-
-html body.Dark .View, html body.Dark .View.Active
-{
-	box-shadow: 0px 1px 15px 1px rgba(0,0,0,0.3);
-}
-
-html > body:not(.Inside):not(.Loading).Dark, html body.Dark .View:not([transparent]) .View > .Content,
-html body.Dark .View > .Content,
-html body.Dark
-{
-	background-color: #233240 !important;
-	color: #e0e0e0;
-}
-
-html > body.Dark > div button, html > body.Dark > div .Button
-{
-	background-color: #34495e;
-    border: 1px solid #34495e;
-    color: #e0e0e0;
-}
-
-html body.Dark .View > .DirectoryToolbar,
-html body.Dark .View.Active > .DirectoryToolbar 
-{
-	background-color: #34495e;
-	color: #e0e0e0;
-}
-
-html body.Dark .View > .DirectoryToolbar button,
-html body.Dark .View > .DirectoryToolbar .Button
-{
-	color: #e0e0e0;
-	background-color: none;
-}
-
-html body.Dark .View > .DirectoryToolbar > .ToggleGroup > button:hover:before, 
-html body.Dark .View > .DirectoryToolbar > button:hover:before
-{
-	color: #e0e0e0;
-}
-html > body.Dark .View > .DirectoryToolbar button:before, 
-html > body.Dark .View > .DirectoryToolbar button:after
-{
-	color: rgba(224,224,224,170);
-}
-
-html body.Dark .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
-{
-	color: white;
-}
-
-html body.Dark .BackgroundNegative,
-html body.Dark .Box.BackgroundNegative,
-html body.Dark .BoxBlue.BackgroundNegative
-{
-	background-color: #808080;
-}
-
-html body.Dark .Negative,
-html body.Dark .Box.Negative,
-html body.Dark .BoxBlue.Negative
+html .ViewContainer[childview].Active > .MobileBack:before
 {
 	color: #ffffff;
+	font-size: 1.4em;
 }
-
-html body.Dark .File a
-{
-	color: #e0e0e0;
-}
-
-html body.Dark .File .Icon > *:after
-{
-	color: #233240;
-}
-
-html body.Dark .PageActive, html body.Dark .PageActive .PageScroll
-{
-	background-color: rgba(0,0,0,0.05);
-	border: 1px solid rgba(0,0,0,0.1);
-}
-
-html body.Dark .Tab.TabActive
-{
-	background-color: #34495e;
-	color: #e0e0e0;
-	border: 1px solid #34495e;
-}
-
-html body.Dark .Tab
-{
-	border: 1px solid #4A6075; 
-	background-color: #4A6075;
-	color: #b1c0ce;
-	margin-right: 1px;
-}
-
-html body.Dark .Tab:last-child
-{
-	margin-right: 0;
-}
-
-html body.Dark .BackgroundDefault,
-html body.Dark .Dialog,
-html body.Dark .WindowBackground, 
-html body.Dark .Dialog > .DialogHeader, 
-html body.Dark .Dialog > .DialogButtons,
-html body.Dark .ToolbarBackground,
-html body.Dark div.Listview > .Footer,
-html body.Dark .List,
-html body.Dark div.Listview > .Icons,
-html body.Dark .Box, 
-html body.Dark .BoxBlue
-{
-	background-color: #233240;
-	color: #e0e0e0;
-}
-
-html body.Dark .PadBorder {
-	border-color : #233240;
-}
-
-html body.Dark .BackgroundLists
-{
-	background-color: #19242e;
-}
-
-html body.Dark .BackgroundLists .sw1,
-body.Dark .List tr.sw1, 
-body.Dark .List div.sw1,
-html body.Dark div.Listview > .Icons > .Scroller > .Row.Odd .Column, 
-html body.Dark div.ColumnView .Row.Odd .Column, 
-html body.Dark #MousePointer .Row.Odd .Column,
-html body.Dark .ZebraList > tr, 
-html body.Dark .ZebraList > div
-{
-	background-color: #364c63;
-	color: #e0e0e0;
-}
-
-html body.Dark .ZebraList > tr.PadBorder, 
-html body.Dark .ZebraList > div .PadBorder
-{
-	border-color : #364c63;
-}
-
-html body.Dark .ZebraList.Interactive > tr:hover, 
-html body.Dark .ZebraList.Interactive > div:hover
-{
-	background-color: #44607D;
-}
-
-html body.Dark .ZebraList.Interactive > tr:hover .PadBorder, 
-html body.Dark .ZebraList.Interactive > div:hover .PadBorder
-{
-	border-color : #44607D;
-}
-
-html body.Dark .BackgroundLists .sw2,
-body.Dark .List tr.sw2, 
-body.Dark .List div.sw2,
-html body.Dark div.Listview > .Headers > .Header:nth-child(odd), 
-html body.Dark div.Listview > .Headers > .Header:nth-child(even),
-html body.Dark div.Listview > .Icons > .Scroller > .Row .Column, 
-html body.Dark div.ColumnView .Row .Column, 
-html body.Dark #MousePointer .Row .Column,
-html body.Dark .ZebraList > tr:nth-child(odd), 
-html body.Dark .ZebraList > div:nth-child(odd)
-{
-	background-color: #34495e;
-	color: #e0e0e0;
-}
-
-html body.Dark .ZebraList > tr:nth-child(odd) .PadBorder, 
-html body.Dark .ZebraList > div:nth-child(odd) .PadBorder
-{
-	border-color : #34495e;
-}
-
-html body.Dark .ZebraList.Interactive > tr:nth-child(odd):hover, 
-html body.Dark .ZebraList.Interactive > div:nth-child(odd):hover
-{
-	background-color: #44607D;
-}
-
-html body.Dark div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
-html body.Dark div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
-html body.Dark #MousePointer .Row.Selected .Column,
-html body.Dark #MousePointer .Row.Odd.Selected .Column
-{
-	background: #233240;
-	color: white;
-}
-
-html body.Dark .List tr.sw1.Selected, 
-html body.Dark .List div.sw1.Selected
-{
-	background-color: #233240;
-}
-html body.Dark .List tr.sw2.Selected, 
-html body.Dark .List div.sw2.Selected
-{
-	background-color: #1F2C38;
-}
-
-html body.Dark .VertTab
-{
-	background-color: #364c63;
-	color: #e0e0e0;
-}
-
-html body.Dark .VertTab.Active
-{
-	background-color: #2980B9;
-}
-
-html body.Dark .Screen > .TitleBar
-{
-	background: #19242e;
-	color: #e0e0e0;
-}
-
-html body.Dark #WorkspaceMenu > ul > li,
-html body.Dark #WorkspaceMenu .Menu,
-html body.Dark #WorkspaceMenu .Menu:hover,
-html body.Dark .Screen > .TitleBar > .Left *
-{
-	color: #e0e0e0;
-}
-
-body.Dark #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
-{
-	border: 1px solid #455155;
-}
-
-html body.Dark .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
-}
-
-/* End dark theme */
-
-/* Charcoal theme */
-
-html body.Charcoal a, html body a.Charcoal:visited
-{
-	color: #ffbe85;
-}
-
-html [mobile=mobile].Charcoal.ViewMaximized.HasMenu #WorkspaceMenu,
-html [mobile=mobile].Charcoal.WidgetSlideDown.HasMenu #WorkspaceMenu
-{
-	background: #303030;
-}
-
-body.Charcoal .SliderElement .SliderGroove
-{
-	background: rgba(0,0,0,0.5);
-	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.5);
-}
-
-html body.Charcoal .Screen > .TitleBar > .Left .Extra .Offline
-{
-	filter: invert(1);
-}
-
-body.Charcoal input[type=text], body.Charcoal input[type=range], body.Charcoal input[type=number], body.Charcoal input[type=date],
-body.Charcoal input[type=email], body.Charcoal input[type=username],
-body.Charcoal input[type=datetime-local], body.Charcoal input[type=password], 
-html body.Charcoal textarea, html body.Charcoal select, html body.Charcoal select:hover
-{
-    border-radius: 2px;
-    border: 1px solid #202020;
-    background: #242424;
-    color: #e0e0e0;
-}
-
-html body.Charcoal .View, html body.Charcoal .View.Active
-{
-	box-shadow: 0px 1px 15px 1px rgba(0,0,0,0.3);
-}
-
-html > body.Charcoal .View.Active > .Title
-{
-	background-color: #303030;
-}
-
-html > body.Charcoal .View > .Title
-{
-	background-color: #404040;
-}
-
-html > body:not(.Inside):not(.Loading).Charcoal, html body.Charcoal .View:not([transparent]) .View > .Content,
-html body.Charcoal .View > .Content,
-html body.Charcoal
-{
-	background-color: #2b2b2b !important;
-	color: #e0e0e0;
-}
-
-html > body.Charcoal > div button, html > body.Charcoal > div .Button
-{
-	background-color: #3c3c3c;
-    border: 1px solid #3c3c3c;
-    color: #e0e0e0;
-}
-
-html body.Charcoal .View > .DirectoryToolbar,
-html body.Charcoal .View.Active > .DirectoryToolbar 
-{
-	background-color: #3c3c3c;
-	color: #e0e0e0;
-}
-
-html body.Charcoal .View > .DirectoryToolbar button,
-html body.Charcoal .View > .DirectoryToolbar .Button
-{
-	color: #e0e0e0;
-	background-color: none;
-}
-
-html body.Charcoal .View > .DirectoryToolbar > .ToggleGroup > button:hover:before, 
-html body.Charcoal .View > .DirectoryToolbar > button:hover:before
-{
-	color: #e0e0e0;
-}
-html > body.Charcoal .View > .DirectoryToolbar button:before, 
-html > body.Charcoal .View > .DirectoryToolbar button:after
-{
-	color: rgba(224,224,224,170);
-}
-
-html body.Charcoal .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
-{
-	color: white;
-}
-
-html body.Charcoal .BackgroundNegative,
-html body.Charcoal .Box.BackgroundNegative,
-html body.Charcoal .BoxBlue.BackgroundNegative
-{
-	background-color: #808080;
-}
-
-html body.Charcoal .Negative,
-html body.Charcoal .Box.Negative,
-html body.Charcoal .BoxBlue.Negative
-{
-	color: #ffffff;
-}
-
-html body.Charcoal .File a
-{
-	color: #e0e0e0;
-}
-
-html body.Charcoal .File .Icon > *:after
-{
-	color: #303030;
-}
-
-html body.Charcoal .PageActive, html body.Charcoal .PageActive .PageScroll
-{
-	background-color: rgba(0,0,0,0.05);
-	border: 1px solid rgba(0,0,0,0.1);
-}
-
-html body.Charcoal .Tab.TabActive
-{
-	background-color: #3c3c3c;
-	color: #e0e0e0;
-	border: 1px solid #3c3c3c;
-}
-
-html body.Charcoal .Tab
-{
-	border: 1px solid #505050; 
-	background-color: #505050;
-	color: #b1c0ce;
-	margin-right: 1px;
-}
-html body.Charcoal .Tab:last-child
-{
-	margin-right: 0;
-}
-
-html body.Charcoal .BackgroundDefault,
-html body.Charcoal .Dialog,
-html body.Charcoal .WindowBackground, 
-html body.Charcoal .Dialog > .DialogHeader, 
-html body.Charcoal .Dialog > .DialogButtons,
-html body.Charcoal .ToolbarBackground,
-html body.Charcoal div.Listview > .Footer,
-html body.Charcoal .List,
-html body.Charcoal div.Listview > .Icons,
-html body.Charcoal .Box, 
-html body.Charcoal .BoxBlue
-{
-	background-color: #2b2b2b;
-	color: #e0e0e0;
-}
-
-html body.Charcoal .PadBorder {
-	border-color : #303030;
-}
-
-html body.Charcoal .BackgroundLists
-{
-	background-color: #202020;
-}
-
-html body.Charcoal .BackgroundLists .sw1,
-body.Charcoal .List tr.sw1, 
-body.Charcoal .List div.sw1,
-html body.Charcoal div.Listview > .Icons > .Scroller > .Row.Odd .Column, 
-html body.Charcoal div.ColumnView .Row.Odd .Column, 
-html body.Charcoal #MousePointer .Row.Odd .Column,
-html body.Charcoal .ZebraList > tr, 
-html body.Charcoal .ZebraList > div
-{
-	background-color: #282828;
-	color: #e0e0e0;
-}
-
-html body.Charcoal .ZebraList > tr .PadBorder, 
-html body.Charcoal .ZebraList > div .PadBorder
-{
-	border-color: #282828;
-}
-
-html body.Charcoal .ZebraList.Interactive > tr:hover, 
-html body.Charcoal .ZebraList.Interactive > div:hover
-{
-	background-color: #303030;
-}
-
-html body.Charcoal .ZebraList.Interactive > tr:hover .PadBorder, 
-html body.Charcoal .ZebraList.Interactive > div:hover .PadBorder
-{
-	border-color: #303030;
-}
-
-html body.Charcoal .BackgroundLists .sw2,
-body.Charcoal .List tr.sw2, 
-body.Charcoal .List div.sw2,
-html body.Charcoal div.Listview > .Headers > .Header:nth-child(odd), 
-html body.Charcoal div.Listview > .Headers > .Header:nth-child(even),
-html body.Charcoal div.Listview > .Icons > .Scroller > .Row .Column, 
-html body.Charcoal div.ColumnView .Row .Column, 
-html body.Charcoal #MousePointer .Row .Column,
-html body.Charcoal .ZebraList > tr:nth-child(odd), 
-html body.Charcoal .ZebraList > div:nth-child(odd)
-{
-	background-color: #202020;
-	color: #e0e0e0;
-}
-
-html body.Charcoal .ZebraList > tr:nth-child(odd) .PadBorder, 
-html body.Charcoal .ZebraList > div:nth-child(odd) .PadBorder
-{
-	border-color: #202020;
-}
-
-html body.Charcoal .ZebraList.Interactive > tr:nth-child(odd):hover, 
-html body.Charcoal .ZebraList.Interactive > div:nth-child(odd):hover
-{
-	background-color: #282828;
-}
-
-html body.Charcoal div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
-html body.Charcoal div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
-html body.CharCoal #MousePointer .Row.Selected .Column,
-html body.CharCoal #MousePointer .Row.Odd.Selected .Column
-{
-	background: #282828;
-	color: white;
-}
-
-html body.Charcoal .List tr.sw1.Selected, 
-html body.Charcoal .List div.sw1.Selected
-{
-	background-color: #096EB0;
-}
-html body.Charcoal .List tr.sw2.Selected, 
-html body.Charcoal .List div.sw2.Selected
-{
-	background-color: #085C94;
-}
-
-html body.Charcoal .VertTab
-{
-	background-color: #404040;
-	color: #e0e0e0;
-}
-
-html body.Charcoal .VertTab.Active
-{
-	background-color: #303030;
-}
-
-html body.Charcoal .Screen > .TitleBar
-{
-	background: #202020;
-	color: #e0e0e0;
-}
-
-html body.Charcoal #WorkspaceMenu > ul > li,
-html body.Charcoal #WorkspaceMenu .Menu,
-html body.Charcoal #WorkspaceMenu .Menu:hover,
-html body.Charcoal .Screen > .TitleBar > .Left *
-{
-	color: #e0e0e0;
-}
-
-body.Charcoal #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
-{
-	border: 1px solid #505050;
-}
-
-html body.Charcoal .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
-}
-
-/* End charcoal theme */
 
 /* MSW mode of window glyphs */
 
@@ -1857,26 +1464,33 @@ html .View.Scrolling > .Resize
 	background-color: transparent !important;
 }
 
-html .View > .Resize
+html body:not([mobile]) .View > .Resize
 {
     background-color: transparent !important;
-    background-position: 5px 1px;
-    background-image: url(/themes/friendup12/gfx/win_resizewin_active.png);
-    background-repeat: no-repeat;
-    background-color: transparent !important;
-    cursor: hand;
-    opacity: 0.5;
-    cursor: pointer;
-    right: 0px;
-    bottom: 0px;
-    width: 13px !important;
-    height: 9px !important;
-    transition: opacity 0.25s;
+    right: 2px;
+    bottom: 2px;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 0 0 5px 0;
+    position: relative;
+    overflow: hidden;
+    background-image: none;
 }
 
-html .View > .Resize:hover
+html body:not([mobile]) .View:not(.Active) > .Resize:before
 {
-	opacity: 0.7;
+	background-color: #34495E;
+}
+
+html body:not([mobile]) .View.Active > .Resize:before
+{
+	background-color: #34495E;
+}
+
+html body:not([mobile]) .View > .Resize:hover:before,
+html body:not([mobile]) .View > .Resize:active:before
+{
+	background-color: #455155;
 }
 
 .Screen > .TitleBar .ScreenList > img
@@ -1906,7 +1520,7 @@ html body[mobile] .Screen > .TitleBar .ScreenList
 
 html .Screen > .TitleBar > .Left
 {
-	padding: 0 35px 0 0;
+	padding: 0 40px 0 0;
 	line-height: 26px;
 }
 
@@ -1947,10 +1561,10 @@ html .Screen > .TitleBar:after
 {
 	content: " ";
 	position: absolute;
-    top: 3px;
+    top: 2px;
     left: 9px;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     background-size: contain;
     background-image: url(/iconthemes/friendup15/ScreenLogo.svg);
 }
@@ -1997,21 +1611,6 @@ html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu,
 html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
 {
 	background: #34495E;
-}
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu > div:first-line
-{
-	background: none;
-	color: white;
-	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
-}
-
-[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li + li,
-[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li + li
-{
-	color: white;
 }
 
 html #WorkspaceMenu ul
@@ -2079,13 +1678,13 @@ html #WorkspaceMenu .Menu
 
 html body[mobile=mobile] #WorkspaceMenu
 {
-	height: 32px;
+	height: 40px;
 }
 
 html body[mobile=mobile] #WorkspaceMenu .Menu
 {
-	line-height: 32px;
-	height: 32px;
+	line-height: 40px;
+	height: 40px;
 }
 
 html [mobile=mobile] #WorkspaceMenu .Menu
@@ -2123,10 +1722,18 @@ html #WorkspaceMenu .Open ul > li[divider]:hover
 	background: none;
 }
 
-html body:not([mobile]) #WorkspaceMenu .Open ul > li:not([divider]):hover,
-html body:not([mobile]) #WorkspaceMenu .Open ul > li:not([divider]).Open
+html body:not([mobile]) #WorkspaceMenu .Open ul > li:not([divider]):hover
 {
 	background: rgba(0,0,0,0.6);
+	color: white;
+	text-shadow: none;
+}
+
+html body #WorkspaceMenu .Open ul > li:hover, 
+html body #WorkspaceMenu .Open ul > li.Open
+{
+	text-shadow: none;
+	color: inherit;
 }
 
 html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
@@ -2154,80 +1761,19 @@ html #WorkspaceMenu
 	transition: background,width 0.25s;
 }
 
-html [mobile=mobile].ViewMaximized #WorkspaceMenu
-{
-	z-index: 6 !important;
-	width: 34px !important;
-    height: 32px !important;
-	overflow: hidden;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open
-{
-	width: 100% !important;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open > div
-{
-	opacity: 1;
-	pointer-events: all;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu:after,
-html [mobile=mobile].HasMenu #WorkspaceMenu:after
-{
-	content: "\f0c9";
-	font-weight: bold;
-	font-family: fontawesome;
-	display: block;
-	position: absolute;
-	top: 8px;
-    left: 1px;
-    width: 32px !important;
-    height: 18px !important;
-    font-size: 1.0em;
-	color: white;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open:after,
-html [mobile=mobile]:not(.ViewMaximized).HasMenu #WorkspaceMenu:after
-{
-	content: "\f104";
-}
 
 /* Mobile popup menu fixes */
 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	font-size: 1em;
-}
-
-html > body[mobile=mobile] > .MobileMenuClose:before, 
-html > body #WorkspaceMenu .Open ul > li.CloseButton:before
+html > body[mobile=mobile] > .MobileMenuClose:before
 {
 	top: 2px;
 }
 
 html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
-html body .MobileMenuClose,
-html body #WorkspaceMenu .Open ul > li.CloseButton
+html body .MobileMenuClose
 {
 	font-size: 1em !important;
 	line-height: 46px !important;
-}
-
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	z-index: 100;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu > div
-{
-	opacity: 0;
-	transition: opacity 0.25s;
-	pointer-events: none;
 }
 
 /* Done popup menu fixes */
@@ -2264,29 +1810,33 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View
 	overflow: visible;
 }
 
-html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Title
 {
-	top: -35px;
+	top: -40px;
 }
 
-html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content,
+html [mobile=mobile] #Screens .ScreenContent .Closing .View > .Content
 {
 	top: 0px !important;
 }
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow > .Content
 {
-	top: 32px !important;
+	top: 40px !important;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow.CustomToolbarArea > .Content
+{
+	top: 0 !important;
 }
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title > div > span
 {
-	text-align: left;
+	text-align: center;
 	text-shadow: none;
 }
-
-
-
 
 html body[mobile=mobile] > .MobileMenu div li .IconText
 {
@@ -2584,7 +2134,7 @@ html .TabActive
     border: 1px solid #e3e7e8;
 }
 
-html div.TabActive:first-child, html div.Tab:first-child
+html div.Tab:first-child
 {
 	border-radius: 3px 0 0 3px;
 }
@@ -2592,6 +2142,11 @@ html div.TabActive:first-child, html div.Tab:first-child
 html div.TabActive:last-child, html div.Tab:last-child
 {
 	border-radius: 0 3px 3px 0;
+}
+
+html div.Tab:first-child:last-child
+{
+	border-radius: 3px;
 }
 
 html .Pages > .Tab, html .Pages > .TabActive
@@ -2623,7 +2178,7 @@ a:active, a:hover
 
 /* Directory views ---------------------------------------------------------- */
 
-html .View > .DirectoryToolbar
+html .View .DirectoryToolbar
 {
 	background-color: #e0e0e0;
 	box-shadow: none;
@@ -2634,92 +2189,92 @@ html .View > .DirectoryToolbar
 	color: #455155;
 	border-bottom: 1px solid rgba(0,0,0,0.02);
 }
-html .View > .DirectoryToolbar .DriveGauge,
-html body[mobile] .View > .DirectoryToolbar
+html .View .DirectoryToolbar .DriveGauge,
+html body[mobile] .View .DirectoryToolbar
 {
 	display: none;
 }
 
-html body[mobile=mobile] .View.Active > .DirectoryToolbar
+html body[mobile=mobile] .View.Active .DirectoryToolbar
 {
 	display: block;
 	top: 0px !important;
-	height: 32px !important;
+	height: 40px !important;
 }
 
-html body[mobile=mobile] .View > .DirectoryToolbar button
+html body[mobile=mobile] .View .DirectoryToolbar button
 {
-	height: 30px;
+	height: 40px;
 }
 
-html > body[mobile=mobile] .View > .DirectoryToolbar button:before, 
-html > body[mobile=mobile] .View > .DirectoryToolbar button:after
+html > body[mobile=mobile] .View .DirectoryToolbar button:before, 
+html > body[mobile=mobile] .View .DirectoryToolbar button:after
 {
-	line-height: 27px;
+	line-height: 35px;
 }
 
-html .View.Active > .DirectoryToolbar
+html .View.Active .DirectoryToolbar
 {
 	background-color: #e0e0e0;
 }
 
-html > body .View > .DirectoryToolbar button:before, 
-html > body .View > .DirectoryToolbar button:after
+html > body .View .DirectoryToolbar button:before, 
+html > body .View .DirectoryToolbar button:after
 {
 	position: relative;
 	color: #455155;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup
+html .View .DirectoryToolbar > .ToggleGroup
 {
 	top: 0px;
 	left: calc(50% - 54px);
 }
 
-html body .View > .DirectoryToolbar > .ToggleGroup > button:hover:before,
-html body .View > .DirectoryToolbar > button:hover:before
+html body .View .DirectoryToolbar > .ToggleGroup > button:hover:before,
+html body .View .DirectoryToolbar > button:hover:before
 {
 	color: black;
 }
 
-html body .View > .DirectoryToolbar > button:before
+html body .View .DirectoryToolbar > button:before
 {
 	transition: color 0.25s;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button
+html .View .DirectoryToolbar > .ToggleGroup > button
 {
 	height: 26px;
 	top: 0;
 	line-height: 26px;
 }
-html .View > .DirectoryToolbar > .ToggleGroup > button.Active
+html .View .DirectoryToolbar > .ToggleGroup > button.Active
 {
 	background: none;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:before
+html .View .DirectoryToolbar > .ToggleGroup > button:before
 {
 	color: #45515599;
 	transition: color 0.25s;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:hover:before
+html .View .DirectoryToolbar > .ToggleGroup > button:hover:before
 {
 	color: #45515555;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
+html .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
 	color: #455155;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:before
+html .View .DirectoryToolbar > .ToggleGroup > button:before
 {
 	margin-top: 0;
 }
 
-html .View > .DirectoryToolbar .DriveGauge:before
+html .View .DirectoryToolbar .DriveGauge:before
 {
     content: " ";
     display: block;
@@ -2733,7 +2288,7 @@ html .View > .DirectoryToolbar .DriveGauge:before
     background: transparent;
 }
 
-html .View > .DirectoryToolbar .DriveGauge:after
+html .View .DirectoryToolbar .DriveGauge:after
 {
 	content: " ";
 	display: block;
@@ -2748,23 +2303,23 @@ html .View > .DirectoryToolbar .DriveGauge:after
 	transition: width 0.5s;
 }
 
-html .View > .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
-html .View > .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
-html .View > .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
-html .View > .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
-html .View > .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
-html .View > .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
-html .View > .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
-html .View > .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
-html .View > .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
-html .View > .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
-html .View > .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
+html .View .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
+html .View .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
+html .View .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
+html .View .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
+html .View .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
+html .View .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
+html .View .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
+html .View .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
+html .View .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
+html .View .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
+html .View .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
 
-html .View > .DirectoryToolbar button
+html .View .DirectoryToolbar button
 {
 	color: rgba(0,0,0,0);
 	height: 24px;
-	width: 32px;
+	width: 40px;
 	overflow: hidden;
 	text-shadow: none;
 	position: relative;
@@ -2772,32 +2327,32 @@ html .View > .DirectoryToolbar button
 	border-radius: 0;
 }
 
-html .View > .DirectoryToolbar button:before
+html .View .DirectoryToolbar button:before
 {
 	margin-top: 2px;
 }
 
-html .View > .DirectoryToolbar button:before
+html .View .DirectoryToolbar button:before
 {
 	z-index: 2;
 }
 
-html .View > .DirectoryToolbar button:after
+html .View .DirectoryToolbar button:after
 {
 	z-index: 1;
 }
 
-html .View > .DirectoryToolbar button:after:hover
+html .View .DirectoryToolbar button:after:hover
 {
 	background-color: rgba(90,90,90,0.1);
 }
 
-html .View > .DirectoryToolbar button.Active
+html .View .DirectoryToolbar button.Active
 {
 	background-color: rgb(175,175,175);
 }
 
-html .View > .DirectoryToolbar button.Active:before
+html .View .DirectoryToolbar button.Active:before
 {
 	color: white;
 }
@@ -2835,8 +2390,8 @@ html body .List tr.sw1.Selected, html body .List div.sw1.Selected
 
 .Toolbar .IconSmall
 {
-	width: 32px;
-	height: 32px;
+	width: 40px;
+	height: 40px;
 	box-sizing: border-box;
 	position: relative;
 }
@@ -2997,20 +2552,24 @@ html .File .Icon
 
 html .File.Selected
 {
-	z-index: 3;
+	z-index: 3; 
 }
 
 html .File .Title
 {
-	-webkit-mask-image: -webkit-gradient(linear, left 70%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
-	min-height: 50px;
 	transition: height 0.2s;
+	max-height: 40px;
+}
+html body[mobile] .File .Title
+{
+	height: 30px;
 }
 
 html .File.Selected .Title
 {
 	-webkit-mask-image: none;
 	min-height: auto;
+	height: auto;
 	max-height: 200px !important;
 }
 
@@ -3023,7 +2582,7 @@ html .File.Selected .Title
 	}
 	html body .File .Icon > div
 	{
-		height: 72px;
+		max-height: 45px;
 	}
 }
 
@@ -3032,6 +2591,33 @@ html body[mobile=mobile] .File .Icon
 	filter: none;
 	-ms-filter: none;
 	-webkit-filter: none;
+}
+
+.FileBrowser > div
+{
+	font-size: 0.95em;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
+{
+	color: black;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:active,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:active
+{
+	background-color: rgba(67,82,96,0.4);
+	border-radius: 3px;
+}
+
+[mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name:after,
+[mobile] .View .FileDialog .FileBrowser .DiskItem > .Name:after
+{
+	content: "\f105";
+	font-family: fontawesome;
+	display: block;
+	float: right;
 }
 
 html .File
@@ -3043,7 +2629,7 @@ html .File .Title
 {
 	width: calc(100% + 26px);
 	left: -13px;
-	font-size: 1em;
+	font-size: 0.95em;
 }
 
 html .File .Icon > div
@@ -3148,14 +2734,20 @@ html .File .Icon *
 
 html .File .Icon .File
 {
-	/*background-image: url(/themes/friendup/gfx/icons/icon_blank_1.png);*/
 	background-image: url(/iconthemes/friendup15/File_Binary.svg);
 }
 
 html .File .Icon .Drive
 {
-	/*background-image: url(/themes/friendup/gfx/icons/disk.png);*/
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
+}
+
+html body[mobile] .File .Icon .Drive > .Label
+{
+	top: calc(50% - 10px);
+	right: calc(50% - 8px);
+	width: 16px !important;
+	height: 16px !important;
 }
 
 html .File .Icon .Directory
@@ -3210,14 +2802,14 @@ html .File .Icon .Arena
 html .File .Icon .SystemDisk
 {
 	height: 48px;
-	background-image: url(/iconthemes/friendup15/SystemDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 
 html .File .Icon .Home
 {
 	/*background-image: url(/themes/friendup/gfx/icons/disk_home.png);*/
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Friend_Master.svg);
 }
 
 html .File .Icon .Application
@@ -3240,22 +2832,22 @@ html .File .Icon .Door
 {
 	height: 48px;
 	filter: drop-shadow(0px 1px 4px rgba(0,0,0,0.4));
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .Door.local_fsys
 {
-	background-image: url(/iconthemes/friendup15/LinuxDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .SystemDisk
 {
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .Door.Assign
 {
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk_Master.svg);
 }
 
 html .File .Icon .article
@@ -3500,6 +3092,7 @@ html .File .Icon .TypeMOV, html .File .Icon .TypeMP4
 }
 
 html .File .Icon .Devs_Drawer_DOSDrivers,
+html .File .Icon .Devs_Drawer_Printers,
 html .File .Icon .Devs_Drawer_Cores,
 html .File .Icon .Devs_Drawer_Sessions
 {
@@ -3520,6 +3113,17 @@ html .File .Icon .Devs_Drawer_Cores:after
 html .File .Icon .Devs_Drawer_DOSDrivers:after
 {
 	content: "\f277";
+	font-family: FontAwesome;
+	display: block;
+	position: absolute;
+	top: calc(50% - 1px);
+	left: calc(50% - 7px);
+	opacity: 0.7;
+}
+
+html .File .Icon .Devs_Drawer_Printers:after
+{
+	content: "\f02f";
 	font-family: FontAwesome;
 	display: block;
 	position: absolute;
@@ -3558,6 +3162,11 @@ html .File.Selected .Icon .Devs_Drawer_DOSDrivers
 html .File .Icon .DOSDriver
 {
 	background-image: url(/iconthemes/friendup15/File_DosDriver.svg);
+}
+
+html .File .Icon .Printer
+{
+	background-image: url(/iconthemes/friendup15/File_Printer.svg);
 }
 
 html .File .Icon .MetaFile
@@ -3907,7 +3516,6 @@ html #Statusbar .Task,
 html .View > .Title > div > .Zoom,
 html .View > .Title > div > .Depth,
 html .View > .Title > div > .Close,
-html .View > .Resize,
 html .View > .Title,
 html .View > .Title *,
 html .View > .Title > div > span,
@@ -3941,6 +3549,11 @@ html .View:active, html .View[moving=moving], html .View[moving=moving] *,
 html .View > .MoveOverlay, html .Screen > .MoveOverlay
 {
 	cursor: move;
+}
+
+html body[windowcount] #WorkspaceMenu .Menu li.Disabled
+{
+	display: none;
 }
 
 html .MouseRestricted,
@@ -4073,7 +3686,8 @@ body:not([tablet]) .View:not(.Active)[mobile=mobile][maximized=true] > .Content
 body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
 {
 	left: 40px;
-	width: calc(100% - 105px);
+	width: calc(100% - 80px);
+	text-align: center;
 }
 body:not([tablet])[mobile=mobile] #Screens .View
 body:not([tablet])[mobile=mobile] #Screens .View.Active
@@ -4083,12 +3697,12 @@ body:not([tablet])[mobile=mobile] #Screens .View.Active
 body:not([tablet])[mobile=mobile] #Screens .View > .Title,
 body:not([tablet])[mobile=mobile] #Screens .View.Active > .Title
 {
-	height: 35px;
-	border-top: 1px solid rgba(0,0,0,0.1);
+	height: 40px;
+	border-top: 0;
 }
 body:not([tablet])[mobile=mobile] #Screens .View > .Title > div > span
 {
-	line-height: 35px;
+	line-height: 40px;
 }
 body:not([tablet])[mobile=mobile] #Screens .View .BottomBar,
 body:not([tablet])[mobile=mobile] #Screens .View .Resize,
@@ -4133,10 +3747,38 @@ body:not([tablet])[mobile=mobile] .IconWindow .File > .Title
 
 /* Mobile menu */
 
-html body[mobile=mobile] > #MobileMenu.Visible
+html [mobile=mobile] > #MobileMenu.Visible
 {
-	background: #222222;
+	background: #f4f4f4;
+	color: #303030;
+}
+
+html body[mobile] #WorkspaceMenu.Open ul
+{
+	background: #34495E;
+}
+
+[mobile] #WorkspaceMenu:before
+{
 	color: white;
+}
+
+html [mobile=mobile] > #MobileMenu.Visible > div
+{
+	font-size: 1em;
+}
+
+html body[mobile=mobile] > .MobileMenu div li .IconText
+{
+	line-height: 30px;
+	font-size: 1.1em;
+}
+
+html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body .MobileMenuClose, body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body #WorkspaceMenu .Open ul > li.CloseButton
+{
+	border-top: 2px solid rgba(0,0,0,0.1);
 }
 
 @media (max-device-width: 768px)
@@ -4173,23 +3815,22 @@ body[mobile=mobile].AppsShowing #DoorsScreen .Scroller:before
 
 body[mobile=mobile] .Desklet.Open.Opened
 {
-	height: calc(100% - 57px) !important;
+	height: calc(100% - 97px) !important;
 }
 
-body .Desklet.Open:before
+html > body[mobile] > div button.IconButton,
+html > body[mobile] > div button.IconButton:hover,
+html > body[mobile] > div .Button.IconButton,
+html > body[mobile] > div .Button.IconButton:hover
 {
-	top: calc(100%);
+	background-color: transparent !important;
+	outline: 0px !important;
+	border: 0 !important;
 }
 
-body[mobile=mobile] #DoorsScreen > .ScreenContent > .Scroller:before 
-{
-    font-size: 20px;
-    width: 50px;
-    height: 50px;
-    line-height: 50px;
-    color: #ffffff;
-    border-radius: 100%;
-}
-
+/* Flavors of the theme */
+@append url(System:../themes/friendup12/flavors_dark.css);
+@append url(System:../themes/friendup12/flavors_charcoal.css);
+@append url(System:../themes/friendup12/flavors_synthwave.css);
 
 

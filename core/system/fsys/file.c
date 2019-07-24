@@ -19,6 +19,7 @@
 #include <system/user/user_session.h>
 #include <system/fsys/device_handling.h>
 #include <system/json/jsmn.h>
+#include <system/systembase.h>
 
 /**
  * Create new File
@@ -52,15 +53,27 @@ void FileDelete( File *f )
 {
 	if( f!= NULL )
 	{
-		if( f->f_Execute != NULL )
+		if( f->f_Name != NULL )
+		{
+			FFree( f->f_Name );
+		}
+		
+		if( f->f_Path != NULL)
+		{
+			FFree( f->f_Path );
+		}
+		
+		/*  THIS IS POINTER ONLY, SHOULD NEVER BE RELEASED HERE
+		if( f->f_SessionIDPTR != NULL)
+		{
+			FFree( f->f_SessionIDPTR );
+		}
+		*/
+		
+		if( f->f_Execute != NULL)
 		{
 			FFree( f->f_Execute );
 		}
-		
-		//if( f->f_SessionID != NULL)
-		//{
-		//	FFree( f->f_SessionID );
-		//}
 		
 		if( f->f_Config != NULL )
 		{
@@ -295,9 +308,9 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 								
 								DEBUG("[FileUploadFileOrDirectoryRec] UPLOAD Percentage %d count %d current %d fname %s\n", per, numberFiles, (*files), fname );
 								
-								int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, per );
+								//int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, per );
 
-								sb->SendProcessMessage( request, message, size );
+								//sb->SendProcessMessage( request, message, size );
 							}
 						}
 					}

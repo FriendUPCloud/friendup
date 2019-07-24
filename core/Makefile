@@ -6,7 +6,7 @@ CPP			=	g++
 OUTPUT			=	bin/FriendCore
 
 CFLAGS			=	$(GLOBAL_CFLAGS) -I. -I../libs/ -I../$(LIBWS_INCLUDE_DIR) $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg
+LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssl -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -18,37 +18,55 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
 
+ifeq ($(LINK_LIB_STDCPP),1)
+LFLAGS					+=	-lstdc++
+endif
+
+ifeq ($(USE_SSH_THREADS_LIB),1)
+LFLAGS					+=      -lssh_threads
+endif
+
+ifeq ($(USE_SANITIZER),1)
+LFLAGS					+=	-lasan
+endif
+
 ifeq ($(DEBUG),1)
-CFLAGS  +=	-D__DEBUG
+CFLAGS					+=	-D__DEBUG -O2
+else
+CFLAGS					+=	-O2
 endif
 
 ifeq ($(PROFILE),1)
-CFLAGS  +=	-pg -DPROFILE=1
+CFLAGS 					+=	-pg -DPROFILE=1
 endif
 
 ifeq ($(WEBSOCKETS_THREADS),1)
-CFLAGS	+=	-DENABLE_WEBSOCKETS_THREADS=1
+CFLAGS					+=	-DENABLE_WEBSOCKETS_THREADS=1
 endif
 
 ifeq ($(USE_SELECT),1)
-CFLAGS  +=	-DUSE_SELECT
+CFLAGS					+=	-DUSE_SELECT
 endif
 
 ifeq ($(NO_VALGRIND),1)
-CFLAGS  +=	-DNO_VALGRIND_STUFF
+CFLAGS					+=	-DNO_VALGRIND_STUFF
 endif
 
 ifeq ($(CYGWIN_BUILD),1)
-CFLAGS  +=	-DCYGWIN_BUILD
-LFLAGS	+=	-Wl,--export-dynamic,--heap,200000000,--stack,8000000
+CFLAGS					+=	-DCYGWIN_BUILD
+LFLAGS					+=	-Wl,--export-dynamic,--heap,200000000,--stack,8000000
 else
-LFLAGS	+=	-Wl,--export-dynamic
+LFLAGS					+=	-Wl,--export-dynamic
+endif
+
+ifeq ($(LINK_STDCPP),1)
+LFLAGS					+=	-lstdc++
 endif
 
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
-			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c )
+			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c mutex/*.c system/usa/*.c system/mobile/*.c system/calendar/*.c config/*.c system/notification/*.c system/usergroup/*.c system/permission/*.c )
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
@@ -64,9 +82,9 @@ fsyslocal: system/fsysdyn/fsyslocal.c obj/buffered_string.o system/fsysdyn/fsysl
 
 fsysssh2: system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o system/fsysdyn/fsysssh2.d
 	@echo "\033[34mCompile FSYSssh2 ...\033[0m"
-	$(CC) -D__DEBUG -I. -I../core/ -Iproperties/ -I/usr/include/mysql/ -Isystem/ -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I../$(LIBSSH2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR) -fPIC --std=c11 -Wall -Wno-unused-variable -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/ system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o -o system/bin/fsys/ssh2.fsys -shared -I ../$(LIBSSH2_INCLUDE_DIR)/ ../$(LIBSSH2_LIB_DIR)libssh2.a -lssl -lgcrypt
+	$(CC) $(CFLAGS) -D__DEBUG -I. -I../core/ -Iproperties/ -I/usr/include/mysql/ -Isystem/ -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I../$(LIBSSH2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR) -fPIC --std=c11 -Wall -Wno-unused-variable -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/ system/fsysdyn/fsysssh2.c ../core/obj/buffered_string.o -o system/bin/fsys/ssh2.fsys -shared -I ../$(LIBSSH2_INCLUDE_DIR)/ ../$(LIBSSH2_LIB_DIR)libssh2.a -lssl -lgcrypt
 
-fsysphp: system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o system/fsysdyn/fsysphp.d
+fsysphp: system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/newpopen.o ../core/obj/list.o system/fsysdyn/fsysphp.d
 	@echo "\033[34mCompile FSYSphp ...\033[0m"
 	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../core/  system/fsysdyn/fsysphp.c ../core/obj/buffered_string.o ../core/obj/string.o ../core/obj/list_string.o ../core/obj/list.o -o system/bin/fsys/php.fsys -shared -fPIC -lcrypto
 
@@ -226,6 +244,10 @@ obj/%.o: system/user/%.c system/user/*.h system/user/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+obj/%.o: system/usergroup/%.c system/usergroup/*.h system/usergroup/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
+	
 obj/%.o: system/inram/%.c system/inram/*.h system/inram/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -313,6 +335,10 @@ obj/%.o: config/%.c config/*.h config/%.d
 obj/%.o: system/notification/%.c system/notification/*.h system/notification/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/permission/%.c system/permission/*.h system/permission/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # build/install
 
@@ -334,7 +360,7 @@ clean:
 	@rm -f *.d*
 	@rm -f $(C_FILES:%.c=%.d)
 	@rm -rf system/obj/* system/*.d*
-	@rm -f system/fsysdyn/*.d* system/moduledyn/*.d* system/servicesdyn/*.d* system/log/*.d* system/log/loggers/*.d*
+	@rm -f system/fsysdyn/*.d* system/moduledyn/*.d* system/servicesdyn/*.d* system/log/*.d* system/log/loggers/*.d* system/user/*.d system/usergroup/*.d
 	@rm -rf system/bin/emod/*
 	@rm -rf system/bin/fsys/*
 	@rm -rf system/bin/loggers/*

@@ -35,12 +35,13 @@
 typedef struct EventManager
 {
 	FUQUAD lastID;							///< last available event ID
-	//struct List 			*eventTList;	// list of events , by types
-	CoreEvent				*em_EventList;		///< pointer to the list of events
-	FThread 				*em_EventThread;	///< pointer to the list of associated Friend threads
-	FUQUAD				em_IDGenerator;		// ID generator
+	//struct List 				*eventTList;	// list of events , by types
+	CoreEvent					*em_EventList;		///< pointer to the list of events
+	FThread 					*em_EventThread;	///< pointer to the list of associated Friend threads
+	FUQUAD						em_IDGenerator;		// ID generator
 	void						*em_SB;
 	void						*em_Function;
+	pthread_mutex_t				em_Mutex;
 }EventManager;
 
 //
@@ -66,7 +67,7 @@ FUQUAD EventGetNewID( EventManager *em );
 // add new event
 //
 
-int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat );
+int EventAdd( EventManager *em, char *name, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat );
 
 //
 // check event

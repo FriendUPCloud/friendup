@@ -21,6 +21,43 @@
 #include <system/fsys/dosdriver.h>
 #include <system/systembase.h>
 
+/**
+ * Init DeviceManager
+ *
+ * @param sb pointer to SystemBase
+ * @return new allocated DeviceManager structure when success, otherwise NULL
+ */
+
+DeviceManager *DeviceManagerNew( void *sb )
+{
+	DeviceManager *dm;
+	if( ( dm = FCalloc( 1, sizeof(DeviceManager) ) ) != NULL )
+	{
+		dm->dm_SB = sb;
+		pthread_mutex_init( &dm->dm_Mutex, NULL );
+	}
+	return dm;
+}
+
+/**
+ * Delete DeviceManager
+ *
+ * @param dm pointer to DeviceManager
+ */
+
+void DeviceManagerDelete( DeviceManager *dm )
+{
+	if( dm != NULL )
+	{
+		pthread_mutex_destroy( &dm->dm_Mutex );
+		FFree( dm );
+	}
+}
+
+//
+//
+//
+
 DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name );
 
 void DOSDriverDelete( DOSDriver *ddrive );
@@ -32,9 +69,10 @@ void DOSDriverDelete( DOSDriver *ddrive );
  * @return success (0) or fail value (-1)
  */
 
-int RescanHandlers( SystemBase *l )
+int RescanHandlers( DeviceManager *dm )
 {
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		char tempString[ PATH_MAX ];
 		DIR           *d;
@@ -52,7 +90,7 @@ int RescanHandlers( SystemBase *l )
 			FHandlerDelete( fh );
 		}
 	
-		if (getcwd( tempString, sizeof ( tempString ) ) == NULL)
+		if( getcwd( tempString, sizeof ( tempString ) ) == NULL )
 		{
 			FERROR("getcwd failed!");
 			exit(5);
@@ -66,7 +104,7 @@ int RescanHandlers( SystemBase *l )
 		if( l->sl_FSysPath == NULL )
 		{
 			FFree( l );
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return 1;
 		}
 
@@ -109,7 +147,7 @@ int RescanHandlers( SystemBase *l )
 
 			closedir( d );
 		}
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	}
 	return 0;
 }
@@ -117,13 +155,15 @@ int RescanHandlers( SystemBase *l )
 /**
  * Scan DOSDriver directory
  *
- * @param l pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @return success (0) or fail value (-1)
  */
 
-int RescanDOSDrivers( SystemBase *l )
+int RescanDOSDrivers( DeviceManager *dm )
 {
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	
+	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		char *fhome = getenv( "FRIEND_HOME");
 		char ddrivedirectory[ 1024 ];
@@ -160,10 +200,9 @@ int RescanDOSDrivers( SystemBase *l )
 		if( d == NULL )
 		{
 			FERROR("RescanDOSDrivers: Cannot open directory %s\n", ddrivedirectory );
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return 1;
 		}
-	
 	
 		while( ( dir = readdir( d ) ) != NULL )
 		{
@@ -172,9 +211,9 @@ int RescanDOSDrivers( SystemBase *l )
 				continue;
 			}
 			
-			char tempString[ 1024 ];
+			char *tempString = FCalloc( 1024, sizeof(char) );
 		
-			sprintf( tempString, "%s%s", ddrivedirectory, dir->d_name );
+			snprintf( tempString, 1024, "%s%s", ddrivedirectory, dir->d_name );
 
 			DEBUG("[RescanDOSDrivers] %s DOSDriver %s\n", dir->d_name, tempString );
 
@@ -189,9 +228,10 @@ int RescanDOSDrivers( SystemBase *l )
 			{
 				DEBUG("[RescanDOSDrivers] Cannot load DOSDriver %s\n", dir->d_name );
 			}
+			FFree( tempString );
 		}
 		closedir( d );
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	}	
 	return 0;
 }
@@ -199,15 +239,17 @@ int RescanDOSDrivers( SystemBase *l )
 /**
  * Mount door in FC
  *
- * @param l pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @param tl list to tagitems (table of attributes) like FSys_Mount_Mount, FSys_Mount_Name etc. For more details check systembase heder.
  * @param mfile pointer to pointer where new created door will be stored
  * @param usr pointer to user which call this function
+ * @param mountError pointer where error will be stored if any
  * @return success (0) or fail value (not equal to 0)
  */
 
-int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin )
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
 	char *path = NULL;
 	char *name = NULL;
 	char *server = NULL;
@@ -230,19 +272,16 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 		DEBUG("[MountFS] %s: Start - MountFS before lock for user..\n", usr->u_Name );
 	}
 	
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		FHandler *filesys = NULL;
 		DOSDriver *filedd = NULL;
 		File *retFile = NULL;
 		struct TagItem *ltl = tl;
 		FULONG visible = 0;
-		FBOOL isAdim = UMUserIsAdmin( l->sl_UM, NULL, usr );
 		char *sessionid = NULL;
 		FULONG dbid = 0;
 		FBOOL mount = FALSE;
-	
-		Log( FLOG_DEBUG, "Mount device\n");
 	
 		//
 		// Get FSys Type to mount
@@ -308,7 +347,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 				FERROR("[ERROR]: %s - No name passed\n", usr->u_Name );
 			}
 			l->sl_Error = FSys_Error_NOName;
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			if( type != NULL ){ FFree( type );}
 			return FSys_Error_NOName;
 		}
@@ -317,10 +356,12 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 		{
 			FERROR("[ERROR]: No user or usergroup passed, cannot put device on mountlist\n" );
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			if( type != NULL ){ FFree( type );}
 			return FSys_Error_NOUser;
 		}
+		
+		Log( FLOG_DEBUG, "Mount device\n");
 		
 		// Setup the sentinel
 		Sentinel *sent = l->GetSentinelUser( l );
@@ -416,7 +457,7 @@ AND f.Name = '%s'",
 					}
 					if( ( res = sqllib->Query( sqllib, temptext ) ) == NULL )
 					{
-						FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+						//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 						if( type != NULL ){ FFree( type );}
 						l->sl_Error = FSys_Error_SelectFail;
 						l->LibrarySQLDrop( l, sqllib );
@@ -427,7 +468,7 @@ AND f.Name = '%s'",
 				else
 				{
 					sqllib->FreeResult( sqllib, res );
-					FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+					//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
 					l->LibrarySQLDrop( l, sqllib );
@@ -511,7 +552,10 @@ AND f.Name = '%s'",
 			l->LibrarySQLDrop( l, sqllib );
 		}
 		
-		 // old way when FC had control
+		//
+		// old way when FC had control
+		//
+		
 		if( type == NULL )
 		{
 			if( usr != NULL )
@@ -523,32 +567,9 @@ AND f.Name = '%s'",
 			goto merror;
 		}
 		
-		// this functionality allow admins to mount other users drives
-		
-		if( usr != NULL && userID != usr->u_ID && usr->u_IsAdmin == TRUE )
-		{
-			DEBUG("UserID %lu and usr->id %lu\n", userID, usr->u_ID );
-			
-			User *locusr = UMGetUserByID( l->sl_UM, userID );
-			if( locusr == NULL )
-			{
-				locusr = UMGetUserByIDDB( l->sl_UM, userID );
-				if( locusr != NULL )
-				{
-					Log( FLOG_INFO, "Admin ID[%lu] is mounting drive to user ID[%lu]\n", usr->u_ID, locusr->u_ID );
-					usr = locusr;
-					
-					UMAddUser( l->sl_UM, usr );
-				}
-			}
-			else
-			{
-				Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", usr->u_ID, locusr->u_ID );
-				usr = locusr;
-			}
-		}
-		
+		//
 		// do not allow to mount same drive
+		//
 		
 		int sameDevError = 0;
 		File *fentry = NULL;
@@ -568,7 +589,9 @@ AND f.Name = '%s'",
 			fentry = (File *) fentry->node.mln_Succ;
 		}
 		
+		//
 		// checking if drive is available for group
+		//
 		
 		if( sameDevError == 0 && usrgrp != NULL )
 		{
@@ -595,6 +618,8 @@ AND f.Name = '%s'",
 	
 		//
 		// Find installed filesystems by type
+		//
+		
 		DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
 		while( ddrive != NULL )
 		{
@@ -609,6 +634,7 @@ AND f.Name = '%s'",
 
 		File *f = NULL;
 	
+		FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
 		// super user feauture	
 		if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
 		{
@@ -641,10 +667,12 @@ AND f.Name = '%s'",
 
 					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					
+					FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 					goto merror;
 				}
 			}
 		}
+		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 		//
 		// If FHandler not found return NULL
 	
@@ -688,11 +716,11 @@ AND f.Name = '%s'",
 			//{FSys_Mount_Execute,(FULONG)execute},
 			{FSys_Mount_UserGroup, (FULONG)usrgrp},
 			{FSys_Mount_ID, (FULONG)id},
-			{FSys_Mount_AdminRights,(FULONG)isAdim},
+			{FSys_Mount_AdminRights,(FULONG)calledByAdmin},
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	
 		// Using sentinel?
 		User *mountUser = usr;
@@ -703,22 +731,22 @@ AND f.Name = '%s'",
 		
 		DEBUG( "[MountFS] Filesystem to mount now.\n" );
 	
-		retFile = filesys->Mount( filesys, tags, mountUser );
+		retFile = filesys->Mount( filesys, tags, mountUser, mountError );
 		
 		DEBUG( "[MountFS] Filesystem mounted. Pointer to returned device: %p.\n", retFile );
 		
 		if( usrgrp != NULL )
 		{
-			UserGroupAUser * ugu = usrgrp->ug_UserList;
+			GroupUserLink * ugu = usrgrp->ug_UserList;
 			while( ugu != NULL )
 			{
-				UserNotifyFSEvent2( l, ugu->ugau_User, "refresh", "Mountlist:" );
+				UserNotifyFSEvent2( dm, ugu->ugau_User, "refresh", "Mountlist:" );
 				
-				ugu = (UserGroupAUser *)ugu->node.mln_Succ;
+				ugu = (GroupUserLink *)ugu->node.mln_Succ;
 			}
 		}
 		
-		if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+		//if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 		{
 			if( retFile != NULL )
 			{
@@ -817,24 +845,16 @@ AND f.Name = '%s'",
 						// User doesn't have this disk, add it!
 						if( search == NULL )
 						{
-							FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
-							
 							// Try to mount the device with all privileges
-							//DEBUG( "[MountFS] Doing it with session %s\n", retFile->f_SessionID );
+
 							File *dstFile = NULL;
-							if( MountFS( l, tl, &dstFile, tmpUser ) != 0 )
+							if( MountFS( dm, tl, &dstFile, tmpUser, mountError, calledByAdmin ) != 0 )
 							{
 								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 							}
 							
 							// Tell user!
-							UserNotifyFSEvent2( l, tmpUser, "refresh", "Mountlist:" );
-							
-							if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) != 0 )
-							{
-								DEBUG("Go to error\n");
-								goto merror;
-							}
+							UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
 					}
@@ -851,11 +871,11 @@ AND f.Name = '%s'",
 			}
 		}
 		
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		//FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 		// Send notify to user and all his sessions
-		UserNotifyFSEvent2( l, usr, "refresh", "Mountlist:" );
+		UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
 		
-		FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
+		//FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
 		
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}
@@ -868,7 +888,6 @@ AND f.Name = '%s'",
 	if( uname != NULL ) FFree( uname );
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
-	FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	
 	return 0;
 	
@@ -881,7 +900,6 @@ merror:
 	if( uname != NULL ) FFree( uname );
 	if( config != NULL ) FFree( config );
 	if( execute != NULL ) FFree( execute );
-	FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 
 	return l->sl_Error;
 }
@@ -890,14 +908,16 @@ merror:
  * Mount door in FC
  * This function do not need User. It is used for example by file sharing.
  *
- * @param l pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @param tl list to tagitems (table of attributes) like FSys_Mount_Mount, FSys_Mount_Name etc. For more details check systembase heder.
  * @param mfile pointer to pointer where new created door will be stored
+ * @param mountError pointer where error will be stored if any
  * @return success (0) or fail value (not equal to 0)
  */
-int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
+int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **mountError )
 {
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		FHandler *filesys = NULL;
 		DOSDriver *filedd = NULL;
@@ -939,7 +959,7 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 		{
 			FERROR("[ERROR]: No type passed\n");
 			l->sl_Error = FSys_Error_NOFSType;
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return FSys_Error_NOFSType;
 		}
 	
@@ -947,7 +967,7 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 		{
 			FERROR("[ERROR]: No name passed\n");
 			l->sl_Error = FSys_Error_NOName;
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return FSys_Error_NOName;
 		}
 
@@ -992,7 +1012,7 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 					// Set structure to caller
 					if( mfile ) *mfile = f;
 					// Return no error
-					FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+					FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 					return 0;
 				}
 			}
@@ -1005,13 +1025,13 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 		{
 			FERROR("[ERROR]: Cannot find FSys: %s\n", name );
 			l->sl_Error = FSys_Error_NOFSAvaiable;
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return FSys_Error_NOFSAvaiable;
 		}
 	
 		INFO("[MountFSNoUser] Localtype %s DDriverType %s\n", type, filedd->dd_Type );
 	
-		retFile = filesys->Mount( filesys, tl, NULL );
+		retFile = filesys->Mount( filesys, tl, NULL, mountError );
 	
 		if( retFile != NULL )
 		{
@@ -1049,11 +1069,11 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 		{
 			l->sl_Error = FSys_Error_NOFSAvaiable;
 			FERROR("Device not mounted name %s type %s\n", name, type );
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return FSys_Error_NOFSAvaiable;
 		}
 
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	}
 	return 0;
 }
@@ -1061,15 +1081,17 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 /**
  * Unmount door in FC
  *
- * @param l pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @param tl list to tagitems (table of attributes) like FSys_Mount_Mount, FSys_Mount_Name etc. For more details check systembase heder.
+ * @param usr pointer to User structure. If NULL will be provided user connected to UserSession will be used
  * @param usrs pointer to user session which is calling this function
  * @return success (0) or fail value (not equal to 0)
  */
 
-int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
+int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *usrs )
 {
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		int result = 0;
 	
@@ -1100,7 +1122,7 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 	
 		if( name == NULL )
 		{
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return FSys_Error_NOName;
 		}
 	
@@ -1108,22 +1130,25 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 		if( usrs == NULL )
 		{
 			INFO("Device will be unmounted, but not removed from user mounted device list\n");
-			//pthread_mutex_unlock( &l->mutex );
 			//return FSys_Error_NOUser;
 		}*/
 	
 		DEBUG("[UnMountFS] Unmount before checking users\n");
 	
-		USMLogUsersAndDevices( l->sl_USM );
+		//USMLogUsersAndDevices( l->sl_USM );
 
 		if( usrs == NULL )
 		{
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			FERROR("[UnMountFS] User session is null\n");
 			return FSys_Error_UserNotLoggedIn;
 		}
 	
-		User *usr = usrs->us_User;
+		if( usr == NULL )
+		{
+			usr = usrs->us_User;
+		}
+		
 		int errors = 0;
 		File *remdev = UserRemDeviceByName( usr, name, &errors );
 		
@@ -1132,35 +1157,50 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 		if( remdev == NULL )
 		{
 			int i;
-			DEBUG("--remdevNULL, name : %s\n", name );
+			DEBUG("[UnMountFS] --remdevNULL, name : %s\n", name );
 			
+			UserGroupLink *ugl = usr->u_UserGroupLinks;
+			while( ugl != NULL )
+			{
+				DEBUG("[UnMountFS] --remdev grpname %s\n", ugl->ugl_Group->ug_Name );
+				UserGroup *ug = ugl->ugl_Group;
+				if( ugl->ugl_Group != NULL )
+				{
+					File *f = ugl->ugl_Group->ug_MountedDevs;
+					File *fprev = ugl->ugl_Group->ug_MountedDevs;
+			/*
 			for( i=0 ; i < usr->u_GroupsNr ; i++ )
 			{
-				DEBUG("--remdev grpname %s\n", usr->u_Groups[ i ]->ug_Name );
-				
-				File *f = usr->u_Groups[ i ]->ug_MountedDevs;
-				File *fprev = usr->u_Groups[ i ]->ug_MountedDevs;
-				
-				while( f != NULL )
+				if( usr->u_Groups[ i ] != NULL )
 				{
-					DEBUG("--file\n");
-					if( strcmp( f->f_Name, name ) == 0 )
+					DEBUG("[UnMountFS] --remdev grpname %s\n", usr->u_Groups[ i ]->ug_Name );
+				
+					File *f = usr->u_Groups[ i ]->ug_MountedDevs;
+					File *fprev = usr->u_Groups[ i ]->ug_MountedDevs;
+					UserGroup *ug = usr->u_Groups[ i ];
+					*/
+					while( f != NULL )
 					{
-						DEBUG("Device: '%s' removed from usergroup\n", name );
-						if( f == usr->u_Groups[ i ]->ug_MountedDevs )
+						DEBUG("[UnMountFS] --file\n");
+						if( strcmp( f->f_Name, name ) == 0 )
 						{
-							usr->u_Groups[ i ]->ug_MountedDevs = (File *)f->node.mln_Succ;
-						}
-						else
-						{
-							fprev->node.mln_Succ = f->node.mln_Succ;
-						}
+							DEBUG("[UnMountFS] Device: '%s' removed from usergroup\n", name );
+							if( f == ug->ug_MountedDevs )
+							{
+								ug->ug_MountedDevs = (File *)f->node.mln_Succ;
+							}
+							else
+							{
+								fprev->node.mln_Succ = f->node.mln_Succ;
+							}
 						
-						break;
+							break;
+						}
+						fprev = f;
+						f = (File *)f->node.mln_Succ;
 					}
-					fprev = f;
-					f = (File *)f->node.mln_Succ;
-				}
+				}	// != NULL
+				ugl = (UserGroupLink *) ugl->node.mln_Succ;
 			}
 		}
 		
@@ -1192,27 +1232,30 @@ ug.UserID = '%ld' \
 )\
 ", name, usrs->us_User->u_ID, usrs->us_User->u_ID );
 
-				if( DeviceUnMount( l, remdev, usr ) != 0 )
+				if( DeviceUnMount( dm, remdev, usr ) != 0 )
 				//if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
 				{
 					FERROR("[UnMountFS] ERROR: Cannot unmount device\n");
 			
 					FFree( tmp );
-					FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+					FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 					return FSys_Error_CannotUnmountDevice;
 				}
 			
 				// Notify user and his sessions
-				UserNotifyFSEvent2( l, usr, "refresh", "Mountlist:" );
+				UserNotifyFSEvent2( dm, usr, "refresh", "Mountlist:" );
 
+				FileDelete( remdev );
 				// Free up some
+				/*
 				//if( remdev->f_SessionID ) FFree( remdev->f_SessionID );
 				if( remdev->f_Config ) FFree( remdev->f_Config );
 				if( remdev->f_FSysName ) FFree( remdev->f_FSysName );
 				if( remdev->f_Execute ) FFree( remdev->f_Execute );
 				FFree( remdev );
+				*/
 			
-				int numberEntries = 0;
+				//int numberEntries = 0;
 				int unmID = 0;
 				char *unmType = NULL;
 				
@@ -1261,15 +1304,19 @@ ug.UserID = '%ld' \
 								
 									DEBUG( "[UnMountFS] Freeing this defunct device: %s (%s)\n", name, tmpUser->u_Name );
 								
-									DeviceUnMount( l, search, usr );
+									DeviceUnMount( dm, search, usr );
 									//fsys->UnMount( search->f_FSys, search, usr );
 								
+									FileDelete( search );
+									/*
 									// Free up some
 									//if( search->f_SessionID ) FFree( search->f_SessionID );
 									if( search->f_Config ) FFree( search->f_Config );
 									if( search->f_FSysName ) FFree( search->f_FSysName );
 									if( search->f_Execute ) FFree( search->f_Execute );
+									if( search->f_DevServer ) FFree( search->f_DevServer );
 									FFree( search );
+									*/
 								
 									int doBreak = 0;
 								
@@ -1307,7 +1354,7 @@ ug.UserID = '%ld' \
 									if( doBreak == 1 )
 									{
 										// Tell user!
-										UserNotifyFSEvent2( l, tmpUser, "refresh", "Mountlist:" );
+										UserNotifyFSEvent2( dm, tmpUser, "refresh", "Mountlist:" );
 										break;
 									}
 								}
@@ -1322,78 +1369,24 @@ ug.UserID = '%ld' \
 			}
 			else
 			{
-				FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+				FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 				
-				// device was not found on user device list
-				UserGroup *ug = l->sl_UM->um_UserGroups;
-				while( ug != NULL )
-				{
-					File *lf = ug->ug_MountedDevs;
-					File *lastone = lf;
-					while( lf != NULL )
-					{
-						DEBUG( "[UnMountFS] Checking fs in list %s == %s...\n", lf->f_Name, name );
-						if( strcmp( lf->f_Name, name ) == 0 )
-						{
-							DEBUG( "[UnMountFS] Found one (%s == %s)\n", lf->f_Name, name );
-							remdev = lf;
-							break;
-						}
-						lastone = lf;
-						lf = (File *)lf->node.mln_Succ;
-					}
-					
-					// remove drive
-					
-					if( remdev != NULL )
-					{
-						if( remdev->f_Operations <= 0 )
-						{
-							DEBUG("[UserRemDeviceByName] Remove device from list\n");
-			
-							if( ug->ug_MountedDevs == remdev )		// checking if its our first entry
-							{
-								File *next = (File*)remdev->node.mln_Succ;
-								ug->ug_MountedDevs = (File *)next;
-								if( next != NULL )
-								{
-									next->node.mln_Pred = NULL;
-								}
-							}
-							else
-							{
-								File *next = (File *)remdev->node.mln_Succ;
-								//next->node.mln_Pred = (struct MinNode *)prev;
-								if( lastone != NULL )
-								{
-									lastone->node.mln_Succ = (struct MinNode *)next;
-								}
-							}
-						}
-						else
-						{
-							//*error = FSys_Error_OpsInProgress;
-							//return remdev;
-						}
-					}
-					
-					ug = (UserGroup *)ug->node.mln_Succ;
-				}
+				remdev = UGMRemoveDrive( l->sl_UGM, name );
 
 				return FSys_Error_OpsInProgress;
 			}
 		}
 		else
 		{
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return FSys_Error_DeviceNotFound;
 		}
 	
 		DEBUG("[UnMountFS] UnMount device END\n");
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 		return result;
 	}
-	FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+	FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	return -1; // Need to make error case for this..
 }
 
@@ -1436,16 +1429,22 @@ File *GetFileByPath( User *usr, char **dstpath, const char *path )
 	*dstpath = (char *)&path[ dpos + 1 ];
 	DEBUG("[GetFileByPath] Get handle by path!\n");
 
-	File *ldr = usr->u_MountedDevs;
-	while( ldr != NULL )
-	{ 
-		if( strcmp( ldr->f_Name, ddrivename ) == 0 )
+	if( usr != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex) == 0 )
 		{
-			fhand = ldr;
-			break;
+			File *ldr = usr->u_MountedDevs;
+			while( ldr != NULL )
+			{ 
+				if( strcmp( ldr->f_Name, ddrivename ) == 0 )
+				{
+					fhand = ldr;
+					break;
+				}
+				ldr = (File *) ldr->node.mln_Succ;
+			}
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 		}
-	
-		ldr = (File *) ldr->node.mln_Succ;
 	}
 	return fhand;
 }
@@ -1453,22 +1452,23 @@ File *GetFileByPath( User *usr, char **dstpath, const char *path )
 /**
  * Mount door in database
  *
- * @param l pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @param rootDev pointer to device (root file)
  * @param mount if device didnt fail during mounting value must be set to 1, otherwise 0
  * @return success (0) or fail value (not equal to 0)
  */
 
-int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount )
+int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount )
 {
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 		
 		if( sqllib == NULL )
 		{
 			FERROR("Cannot get mysql.library slot!\n");
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			return -10;
 		}
 		Filesystem *filesys = NULL;
@@ -1535,6 +1535,7 @@ AND LOWER(f.Name) = LOWER('%s') \
 				FFree( filesys );
 			}
 		}
+		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	
 		char temptext[ 1024 ];
 		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), "SELECT * FROM `Filesystem` f \
@@ -1562,7 +1563,6 @@ ug.UserID = '%ld' \
 		sqllib->FreeResult( sqllib, res );
 
 		l->LibrarySQLDrop( l, sqllib );
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	}	
 	return 0;
 }
@@ -1570,15 +1570,17 @@ ug.UserID = '%ld' \
 /**
  * Get device by userid
  *
- * @param l pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @param sqllib pointer to sql.library
  * @param uid user ID to which device is assigned
  * @param devname device name
+ * @param mountError pointer to place where error string will be stored
  * @return when device exist and its avaiable then pointer to it is returned
  */
 
-File *GetUserDeviceByUserID( SystemBase *l, SQLLibrary *sqllib, FULONG uid, const char *devname )
+File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError )
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
 	File *device = NULL;
 	char temptext[ 512 ];
 	
@@ -1637,7 +1639,7 @@ WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
 				{TAG_DONE, TAG_DONE}
 			};
 
-			int err = MountFS( l, (struct TagItem *)&tags, &device, tuser );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, tuser, mountError, tuser->u_IsAdmin );
 			if( err != 0 )
 			{
 				if( l->sl_Error == FSys_Error_DeviceAlreadyMounted )
@@ -1670,15 +1672,16 @@ WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
 /**
  * Send notification to users when filesystem event will happen
  *
- * @param sb pointer to SystemBase
- * @param user user
+ * @param dm pointer to DeviceManager
+ * @param u user
  * @param evt event type (char *)
  * @param path path to file
- * @return nothing
  */
 
-void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
+void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	//return; //test
 	DEBUG("[UserNotifyFSEvent2] start\n");
 	// Produce message
 	char *prototype = "{\"type\":\"msg\",\"data\":{\"type\":\"\",\"path\":\"\"}}";
@@ -1687,27 +1690,29 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 
 	if( message != NULL && u != NULL )
 	{
-		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"path\":\"%s\"}}", evt, path );
+		DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
+		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
 		
-		//FRIEND_MUTEX_LOCK( &(u->u_Mutex) );
-		
-		UserSessListEntry *list = u->u_SessionsList;
-		while( list != NULL )
+		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 		{
-			if( list->us != NULL )
+			UserSessListEntry *list = u->u_SessionsList;
+			while( list != NULL )
 			{
 				if( list->us != NULL )
 				{
-					WebSocketSendMessage( sb, list->us, message, strlen( message ) );
+					if( list->us != NULL )
+					{
+						WebSocketSendMessage( l, list->us, message, strlen( message ) );
+					}
+					else
+					{
+						INFO("Cannot send WS message: %s\n", message );
+					}
 				}
-				else
-				{
-					INFO("Cannot send WS message: %s\n", message );
-				}
+				list = (UserSessListEntry *)list->node.mln_Succ;
 			}
-			list = (UserSessListEntry *)list->node.mln_Succ;
+			FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
 		}
-		//FRIEND_MUTEX_UNLOCK( &(u->u_Mutex) );
 	}
 	
 	if( message != NULL )
@@ -1721,14 +1726,16 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 /**
  * Send notification to users when filesystem event will happen
  *
- * @param sb pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @param evt event type (char *)
  * @param path path to file
- * @return nothing
  */
 
-void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
+void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path )
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
+	//return; //test
+	
 	// Find the devname of path
 	int pass = 0, i = 0;
 	char *devName = NULL;
@@ -1769,7 +1776,7 @@ void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
 				{
 					if( !userlist[i] ) break;
 					UserSession *u = userlist[i];
-					WebSocketSendMessage( sb, u, message, strlen( message ) );
+					WebSocketSendMessage( l, u, message, strlen( message ) );
 				}
 			}
 			FFree( message );
@@ -1781,15 +1788,15 @@ void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
 /**
  * Mount door in FC by table row
  *
- * @param l pointer to systembase
+ * @param dm pointer to DeviceManager
  * @param usr pointer to user which call this function
  * @param row database row entryf
  * @param mountUser pointer to user which is mounting device
- * @param param to user session which called function
  * @return success (0) or fail value (not equal to 0)
  */
-int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attribute__((unused)))
+int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser __attribute__((unused)))
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
 	l->sl_Error = 0;
 	
 	if( usr != NULL && row != NULL )
@@ -1809,19 +1816,12 @@ int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attr
 		FBOOL visible = TRUE;
 		
 		if( row[ 0 ] != NULL ) { type = StringDuplicate( row[ 0 ] ); }
-		
 		if( row[ 1 ] != NULL ){ server = StringDuplicate( row[  1 ] ); }
-		
 		if( row[ 2 ] != NULL ){ path = StringDuplicate( row[  2 ] ); }
-		
 		if( row[ 3 ] != NULL ){ port = StringDuplicate( row[  3 ] ); }
-		
 		if( row[ 4 ] != NULL ){ uname = StringDuplicate( row[  4 ] ); }
-		
 		if( row[ 5 ] != NULL ){ passwd = StringDuplicate( row[  5 ] ); }
-
 		if( row[ 6 ] != NULL ){ config = StringDuplicate( row[ 6 ] ); }
-
 		if( row[ 7 ] != NULL )
 		{
 			char *end;
@@ -1829,7 +1829,6 @@ int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attr
 		}
 		
 		if( row[ 8 ] != NULL ){ name = StringDuplicate( row[ 8 ] ); }
-		
 		if( row[ 9 ] != NULL ){ execute = StringDuplicate( row[ 9 ] ); }
 		
 		if( type !=NULL && id != 0 )
@@ -1911,9 +1910,7 @@ int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attr
 				{FSys_Mount_ID, (FULONG)id},
 				{TAG_DONE, TAG_DONE}
 			};
-			
-			pthread_mutex_unlock( &l->sl_InternalMutex );
-			
+
 			// Using sentinel?
 			/*
 			User *mountUser = usr;
@@ -1946,13 +1943,15 @@ int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attr
 /**
  * Refresh user disk (difference between DB and FC)
  *
- * @param l pointer to systembase
+ * @param dm pointer to DeviceManager
  * @param u pointer to user which call this function
  * @param bs pointer to BufferString when results will be stored
+ * @param mountError pointer to place where error will be stored
  * @return success (0) or fail value (not equal to 0)
  */
-int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
+int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **mountError )
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
 	FULONG *ids = FCalloc( 512, sizeof( FULONG ) );
 	int idsEntries = 0;
 	
@@ -2048,18 +2047,18 @@ ug.UserID = '%lu' \
 					
 							File *mountedDev = NULL;
 					
-							int mountError = MountFS( l, (struct TagItem *)&tags, &mountedDev, u );
+							int lmountError = MountFS( dm, (struct TagItem *)&tags, &mountedDev, u, mountError, u->u_IsAdmin );
 					
 							if( bs != NULL )
 							{
 								int size = 0;
 								if( pos == 0 )
 								{
-									size = snprintf( temp, sizeof(temp), "{\"name\":\"%s\", \"error\":%d }", row[ 8 ], mountError );
+									size = snprintf( temp, sizeof(temp), "{\"name\":\"%s\", \"error\":%d }", row[ 8 ], lmountError );
 								}
 								else
 								{
-									size = snprintf( temp, sizeof(temp), ",{\"name\":\"%s\", \"error\":%d }", row[ 8 ], mountError );
+									size = snprintf( temp, sizeof(temp), ",{\"name\":\"%s\", \"error\":%d }", row[ 8 ], lmountError );
 								}
 					
 								DEBUG("[RefreshUserDrives] Device mounted %s\n", temp );
@@ -2085,36 +2084,39 @@ ug.UserID = '%lu' \
 					
 					if( removeDisk == TRUE )
 					{
-						File *tmpdev = u->u_MountedDevs;
-						File *olddev = tmpdev;
+						File *tmpdev = NULL;
+						File *olddev = NULL;
 						
-						while( tmpdev != NULL )
+						if( FRIEND_MUTEX_LOCK(&u->u_Mutex) == 0 )
 						{
-							if( id == tmpdev->f_ID )
-							{
-								if( tmpdev == u->u_MountedDevs )
-								{
-									u->u_MountedDevs = (File *)tmpdev->node.mln_Succ;
-								}
-								else
-								{
-									olddev->node.mln_Succ = tmpdev->node.mln_Succ;
-								}
-								DeviceRelease( l, tmpdev );
-								/*
-								FHandler *remfs = tmpdev->f_FSys;
-								if( remfs != NULL )
-								{
-									remfs->Release( remfs, tmpdev );
-								}
-								*/
-								FileDelete( tmpdev );
-								tmpdev = NULL;
-								
-								break;
-							}
+							tmpdev = u->u_MountedDevs;
 							olddev = tmpdev;
-							tmpdev = (File *) tmpdev->node.mln_Succ;
+						
+							while( tmpdev != NULL )
+							{
+								if( id == tmpdev->f_ID )
+								{
+									if( tmpdev == u->u_MountedDevs )
+									{
+										u->u_MountedDevs = (File *)tmpdev->node.mln_Succ;
+									}
+									else
+									{
+										olddev->node.mln_Succ = tmpdev->node.mln_Succ;
+									}
+									break;
+								}
+								olddev = tmpdev;
+								tmpdev = (File *) tmpdev->node.mln_Succ;
+							}
+							FRIEND_MUTEX_UNLOCK(&u->u_Mutex);
+						}
+						
+						if( tmpdev != NULL )
+						{
+							DeviceRelease( dm, tmpdev );
+							FileDelete( tmpdev );
+							tmpdev = NULL;
 						}
 					}
 					
@@ -2176,7 +2178,7 @@ ug.UserID = '%lu' \
 				olddev->node.mln_Succ = tmpdev->node.mln_Succ;
 			}
 			
-			DeviceRelease( l, tmpdev );
+			DeviceRelease( dm, tmpdev );
 
 			FileDelete( tmpdev );
 			tmpdev = NULL;
@@ -2197,12 +2199,13 @@ ug.UserID = '%lu' \
 /**
  * Release device resources
  *
- * @param l pointer to systembase
+ * @param dm pointer to DeviceManager
  * @param rootDev pointer to device root file
  * @return success (0) or fail value (not equal to 0)
  */
-int DeviceRelease( SystemBase *l, File *rootDev )
+int DeviceRelease( DeviceManager *dm, File *rootDev )
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
 	
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -2238,13 +2241,14 @@ int DeviceRelease( SystemBase *l, File *rootDev )
 /**
  * UnMount device resources
  *
- * @param l pointer to systembase
+ * @param dm pointer to DeviceManager
  * @param rootDev pointer to device root file
  * @param usr pointer to User structure (device owner)
  * @return success (0) or fail value (not equal to 0)
  */
-int DeviceUnMount( SystemBase *l, File *rootDev, User *usr )
+int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr )
 {
+	SystemBase *l = (SystemBase *)dm->dm_SB;
 	int errRet = 0;
 	
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -2300,60 +2304,72 @@ File *GetRootDeviceByName( User *usr, char *devname )
 		return NULL;
 	}
 
-	File *lDev = usr->u_MountedDevs;
+	File *lDev = NULL;
 	File *actDev = NULL;
-	
-	if( !usr->u_MountedDevs )
+	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 	{
-		FERROR( "Looks like we have NO mounted devs..\n" );
-	}
+		lDev = usr->u_MountedDevs;
 	
-	while( lDev != NULL )
-	{
-		if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
+		if( usr->u_MountedDevs == NULL )
 		{
-			if( lDev->f_SharedFile == NULL )
-			//if( usr == lDev->f_User )		// if its our current user then we compare name
-			{
-				actDev = lDev;
-			}
-			else
-			{
-				actDev = lDev->f_SharedFile;
-			}
-			INFO("Found file name '%s' path '%s' (%s)\n", actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
-			break;
+			FERROR( "Looks like we have NO mounted devs..\n" );
 		}
-		lDev = (File *)lDev->node.mln_Succ;
+	
+		while( lDev != NULL )
+		{
+			if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
+			{
+				if( lDev->f_SharedFile == NULL )
+				//if( usr == lDev->f_User )		// if its our current user then we compare name
+				{
+					actDev = lDev;
+				}
+				else
+				{
+					actDev = lDev->f_SharedFile;
+				}
+				INFO("Found file name '%s' path '%s' (%s)\n", actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
+				break;
+			}
+			lDev = (File *)lDev->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 	}
 	
 	if( actDev == NULL )
 	{
-		int i;
-		for( i=0 ; i < usr->u_GroupsNr ; i++ )
+		//int i;
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		//for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
-			lDev = usr->u_Groups[ i ]->ug_MountedDevs;
-			while( lDev != NULL )
+			//if( usr->u_Groups[ i ] != NULL )
+			if( ugl->ugl_Group != NULL )
 			{
-				if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
+				lDev = ugl->ugl_Group->ug_MountedDevs;
+				//lDev = usr->u_Groups[ i ]->ug_MountedDevs;
+				while( lDev != NULL )
 				{
-					if( lDev->f_SharedFile == NULL )
+					if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
 					{
-						actDev = lDev;
+						if( lDev->f_SharedFile == NULL )
+						{
+							actDev = lDev;
+						}
+						else
+						{
+							actDev = lDev->f_SharedFile;
+						}
+						break;
 					}
-					else
-					{
-						actDev = lDev->f_SharedFile;
-					}
+					lDev = (File *)lDev->node.mln_Succ;
+				}
+				if( actDev != NULL )
+				{
 					break;
 				}
-				lDev = (File *)lDev->node.mln_Succ;
-			}
-			if( actDev != NULL )
-			{
-				break;
-			}
-			
+			} // usr->u_Groups[ i ] != NULL
+			ugl = (UserGroupLink *)ugl->node.mln_Succ;
 		}
 	}
 	
@@ -2368,15 +2384,17 @@ File *GetRootDeviceByName( User *usr, char *devname )
 /**
  * Load and mount all usergroup doors
  *
- * @param l pointer to SystemBase
+ * @param dm pointer to DeviceManager
  * @param sqllib pointer to sql.library
  * @param usrgrp pointer to usergroup to which doors belong
  * @param usr pointer to User. If user is not in FC list it will be added
+ * @param mountError pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserGroupDeviceMount( SystemBase *l, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr )
-{	
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError )
+{
+	SystemBase *l = (SystemBase *)dm->dm_SB;
 	Log( FLOG_INFO,  "[UserGroupDeviceMount] Mount user device from Database\n");
 	
 	if( usrgrp == NULL )
@@ -2413,7 +2431,7 @@ usrgrp->ug_ID
 	}
 	DEBUG("[UserGroupDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
 	{
 		char **row;
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
@@ -2465,13 +2483,13 @@ usrgrp->ug_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 
 			File *device = NULL;
 			DEBUG("[UserGroupDeviceMount] Before mounting\n");
-			int err = MountFS( l, (struct TagItem *)&tags, &device, usr );
+			int err = MountFS( dm, (struct TagItem *)&tags, &device, usr, mountError, TRUE );
 
-			FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_LOCK( &dm->dm_Mutex );
 
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
@@ -2494,7 +2512,7 @@ usrgrp->ug_ID
 
 		sqllib->FreeResult( sqllib, res );
 
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+		FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 	}
 	
 	return 0;

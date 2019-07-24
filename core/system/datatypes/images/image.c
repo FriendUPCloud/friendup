@@ -158,7 +158,7 @@ int ImageCleanComments( FImage *img )
 //
 //
 
-gdImagePtr ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
+gdImagePtr ImageRead( File *rootDev, const char *path )
 {
 	gdImagePtr img = NULL;
 	FHandler *fh = rootDev->f_FSys;
@@ -195,10 +195,12 @@ gdImagePtr ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
 								if( img == NULL )
 								{
 									img = gdImageCreateFromWBMPPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+#ifdef USE_WEBP_LOADER
 									if( img == NULL )
 									{
 										img = gdImageCreateFromWebpPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
 									}
+#endif
 								}
 							}
 						}

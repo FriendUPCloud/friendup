@@ -253,8 +253,11 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
+void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
+	//FERROR("Disabled for a moment\n");
+	//return NULL;
+	
 	File *dev = NULL;
 	char *path = NULL, *ulogin = NULL, *upass = NULL;
 	char *name = NULL, *host = NULL;
@@ -443,9 +446,6 @@ int Release( struct FHandler *s, void *f )
 			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
 			SDDelete( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
 
 		return 0;
 	}
@@ -469,10 +469,6 @@ int UnMount( struct FHandler *s, void *f )
 			
 			SDDelete( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); lf->f_Name = NULL;}
-		if( lf->f_Path ){ FFree( lf->f_Path ); lf->f_Path = NULL; }
-		
 		return 0;
 	}
 	return -1;
@@ -1144,6 +1140,9 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
 	snprintf( tmp, 1023, "\"DateModified\": \"%s\",", timeStr );
 	BufStringAdd( bs, tmp );
+	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_ctime ) );
+	snprintf( tmp, 1023, "\"DateCreated\": \"%s\",", timeStr );
+	BufStringAdd( bs, tmp );
 	FFree( timeStr );
 	
 	if( S_ISDIR( s->st_mode ) )
@@ -1250,8 +1249,9 @@ BufString *Info( File *s, const char *path )
 	int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
+	int globlen = rspath + spath + 512;
 	
-	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( globlen, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 
@@ -1280,10 +1280,16 @@ BufString *Info( File *s, const char *path )
 			SystemBase *l = (SystemBase *)locsd->sb;
 			DEBUG("[SAMBA] file stat FAIL %s\n", comm );
 			
-			char buffer[ 256 ];
-			int size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST );
+			globlen += 512;
+			char *buffer = FMalloc( globlen );
+			int size = 0;
+			if( buffer != NULL )
+			{
+				size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, comm );
 			
-			BufStringAddSize( bs, buffer, size );
+				BufStringAddSize( bs, buffer, size );
+				FFree( buffer );
+			}
 			//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 		}
 		

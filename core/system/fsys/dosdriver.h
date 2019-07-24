@@ -21,11 +21,11 @@
 #include <core/types.h>
 #include <core/nodes.h>
 #include <system/fsys/fsys.h>
-#include <system/systembase.h>
+//#include <system/systembase.h>
 
 typedef struct DOSDriver{
-	MinNode 						node;
-	FHandler						*dd_Handler;
+	MinNode 							node;
+	FHandler							*dd_Handler;
 	char								*dd_Name;
 	char								*dd_Type;
 }DOSDriver;

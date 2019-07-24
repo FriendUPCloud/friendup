@@ -36,8 +36,8 @@ FriendWebSocket = function( conf )
 		length / size check: if str.length is above maxStrLength, its turned into a blob and rechecked.
 		If the blob byte size is above maxFCBytes, the event is chunked before sending.
 	*/
-	//self.maxFCBytes = 0xffff; // FriendCore ws packet max bytes - set to 65535 because of unknown problem!
-	self.maxFCBytes = 8192;
+	self.maxFCBytes = 0xffff; // FriendCore ws packet max bytes - set to 65535 because of unknown problem!
+	//self.maxFCBytes = 8192;
 	self.metaReserve = 512;
 	self.maxStrLength = ( Math.floor( self.maxFCBytes / 4 )) - self.metaReserve;
 		// worst case scenario its all 4 byte unicode
@@ -89,6 +89,9 @@ FriendWebSocket.prototype.close = function( code, reason )
 	self.sessionId = null;
 	self.authId = null;
 	self.onmessage = null;
+	// Tell we are closing
+	if( self.onstate )
+		self.onstate( { type: 'close' }, true );
 	self.onstate = null;
 	self.onend = null;
 	self.wsClose( code, reason );
@@ -701,7 +704,7 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	var now = Date.now();
 	var pingTime = now - timeSent;
 
-	if( self.pingCheck ) { clearTimeout( self.pingCheck); self.pingCheck = 0 }
+	if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
 	self.setState( 'ping', pingTime );
 }
 
@@ -785,7 +788,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 FriendWebSocket.prototype.cleanup = function()
 {
 	var self = this;
-	self.ready = false;
+	this.conn = false;
 	self.stopKeepAlive();
 	self.clearHandlers();
 	self.wsClose();

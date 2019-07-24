@@ -7,5 +7,6 @@
 		"secret": "",
 		"dropboxhandler":"https://friendup.cloud/dropbox/dropbox.php"
 	},
-	"group":   "User"
+	"group":   "User",
+	"icon": "icon.png"
 }

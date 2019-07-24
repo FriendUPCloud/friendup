@@ -510,6 +510,7 @@ Application.saveFile = function( filename, content, mode )
 				data:    ''
 			} );
 			Application.masterView.sendMessage( { command: 'checkfileinproject' } );
+			Application.masterView.sendMessage( { command: 'donesaving' } );
 		};
 		f.save( ( content.length === 0 ? ' ' : content ), filename );
 	});
@@ -665,6 +666,11 @@ Application.receiveMessage = function( msg )
 			for( var a in this.project.Files )
 			{
 				var fn = this.project.Files[a];
+				var ext = fn.Path.split( '.' ); ext = ext[ ext.length - 1 ];
+				ext = ext.toLowerCase();
+				// Skip images
+				if( ext == 'jpg' || ext == 'png' || ext == 'jpeg' || ext == 'bmp' || ext == 'gif' )
+					continue;
 				if( fn.Path.indexOf( ':' ) < 0 )
 				{
 					var f = {};
@@ -898,6 +904,9 @@ Application.receiveMessage = function( msg )
 				Application.prwin.sendMessage( msg );
 			}
 			break;
+		case 'project_create':
+			createProject( msg );
+			break;
 		case 'project_package':
 			if( !this.projectFilename )
 			{
@@ -949,6 +958,9 @@ Application.receiveMessage = function( msg )
 				}
 			}
 			j.execute( 'installpackage', { filename: this.projectFilename } );
+			break;
+		case 'project_wizard':
+			projectWizard();
 			break;
 		case 'project_new':
 			this.projectFilename = false;
@@ -1206,6 +1218,9 @@ Application.showPrefs = function()
 };
 
 // Check if we support the filetype --------------------------------------------
+/* If a file is (Currently) un-supported, return true anyway. The file's extension
+   will still be recorded and then can be opened as a standard text file.
+*/
 Application.checkFileType = function( path )
 {
 	if( !path || ( path && !path.split ) ) return;
@@ -1245,7 +1260,7 @@ Application.checkFileType = function( path )
 		case 'conf':
 			return true;
 		default:
-			return false;
+			return true;	// no reason to reject a file. just force to a .txt syntax
 	}
 };
 
@@ -1297,7 +1312,7 @@ Application.setMenuItems = function( w )
 		items : [
 			{
 				name:    i18n( 'i18n_project_new' ),
-				command: 'project_new'
+				command: 'project_wizard'
 			},
 			{
 				name:    i18n( 'i18n_project_fromweb' ),
@@ -2119,4 +2134,41 @@ function bindHostEvents()
 }
 // Done Shared application sessions --------------------------------------------
 
+// Project wizard
 
+var projectWin = false;
+
+function projectWizard()
+{
+	if( projectWin )
+	{
+		return projectWin.activate();
+	}
+	projectWin = new View( {
+		title: i18n( 'i18n_project_wizard' ),
+		width: 600,
+		height: 600
+	} );
+	projectWin.onClose = function()
+	{
+		projectWin = null;
+	}
+	
+	var f = new File( 'Progdir:Templates/project_wizard.html' );
+	f.onLoad = function( data )
+	{
+		projectWin.setContent( data );
+	}
+	f.load();
+}
+
+// Creates the project based on data.type!
+function createProject( data )
+{
+	console.log( 'Creating project directory.' );
+	var dos = new Shell();
+	dos.execute( 'makedir ' + data.path + 'NewProject', function( e )
+	{
+		console.log( 'The project directory was made: ', e );
+	} );
+}

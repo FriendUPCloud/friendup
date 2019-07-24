@@ -1,0 +1,80 @@
+
+	<div class="VContentTop BorderBottom ScrollArea Padding" id="top">
+		<p class="Layout">
+			<strong>{i18n_share_this_calendar}:</strong>
+		</p>
+		<p>
+			<select id="cal">
+				<option value="default">{i18n_default_calendar}</option>
+			</select>
+		</p>
+		<p>
+			<strong>{i18n_share_with_a_workgroup_or_user}:</strong>
+		</p>
+		<div id="sharingTabs">
+			<div class="Tab IconSmall fa-user">{i18n_user}</div>
+			<div class="Tab IconSmall fa-group">{i18n_workgroup}</div>
+			<div class="Page NoPadding">
+				<div id="Users" class="List"></div>
+			</div>
+			<div class="Page NoPadding">
+				<div id="Workgroups" class="List"></div>
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom Padding" id="bottom">
+		<button type="button" id="ShareBtn" class="Button IconSmall fa-share" onclick="confirmShare()">
+			{i18n_share}
+		</button>
+	</div>
+	<div class="VContentTop ScrollArea Padding" id="ShareDone">
+		<p class="Layout">
+			<strong id="ShareHeading"></strong>
+		</p>
+		<p class="Layout" id="ShareMessage"></p>
+		<hr class="Divider"/>
+		<p class="Layout">
+			<button type="button" class="IconSmall fa-check" id="ConfirmButton" onclick="FinalShare()"> {i18n_share_now}</button>
+			<button type="button" class="IconSmall fa-remove" id="CancelButton"> {i18n_cancel}</button>
+		</p>
+	</div>
+	<input type="hidden" id="parentId" value="{pid}"/>
+	<script>
+		InitTabs( 'sharingTabs' );
+	</script>
+	<style>
+		html #sharingTabs .TabContainer
+		{
+			text-align: left;
+		}
+		#top
+		{
+			left: 0px;
+			bottom: 50px;
+			transition: left 0.25s;
+			width: 100%;
+		}
+		#bottom
+		{
+			left: 0px;
+			width: 100%;
+			transition: left 0.25s;
+		}
+		#top.Hide, #top.Hide + #bottom
+		{
+			left: -100%;
+		}
+		#ShareDone
+		{
+			position: absolute;
+			top: 0;
+			left: 100%;
+			transition: left 0.25s;
+			width: 100%;
+		}
+		#ShareDone.Show
+		{
+			left: 0px;
+		}
+	</style>
+	<script src="Progdir:Scripts/share.js"></script>

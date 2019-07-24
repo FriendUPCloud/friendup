@@ -1,0 +1,54 @@
+
+	<div class="ContentFull">
+		<div class="VContentTop BackgroundToolbar BorderBottom BrowserToolbar" style="height: 50px">
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td width="32px">
+						<button type="button" class="IconButton IconSmall fa-arrow-left" onclick="back()"></button>
+					</td>
+					<td width="32px">
+						<button type="button" class="IconButton IconSmall fa-arrow-right" onclick="forward()"></button>
+					</td>
+					<td width="32px">
+						<button type="button" class="IconButton IconSmall fa-refresh" onclick="reload()"></button>
+					</td>
+					<td>
+						<input class="FullWidth" type="text" id="uri" placeholder="friend://" value="about:blank" onchange="setUrl(this.value)"/>
+					</td>
+					<td width="42px" class="Icon">
+						<img src="/webclient/apps/FriendBrowser/icon.png" width="24" height="24"/>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="VContentTop" style="top: 50px; bottom: 0px" id="SiteContent">
+			<iframe src="" id="BrowserBox" onload="try{ Application.registerUrl(this.src) } catch( e ){ console.log('Cannot reg url.', Application, Application.registerUrl); }" class="Browser" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+		</div>
+	</div>
+
+	<style>
+	
+		.BrowserToolbar
+		{
+			padding: 10px 5px 10px 5px;
+		}
+	
+		.Browser
+		{
+			position: absolute;
+			top: 0; left: 0; border: 0; width: 100%; height: 100%;
+		}
+		
+		td.Icon
+		{
+			text-align: center;
+		}
+		
+		td.Icon img
+		{
+			margin: 3px 0 0 5px;
+			border-radius: 100%;
+		}
+		
+	</style>
+	<script src="Progdir:Scripts/logic.js"></script>

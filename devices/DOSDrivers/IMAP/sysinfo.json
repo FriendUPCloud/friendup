@@ -1,7 +1,7 @@
 {
 	"type":    "IMAP",
 	"literal": "IMAP File system",
-	"group":   "User",
+	"group":   "Admin",
 	"sharing": "1",
 	"icon": "logo.png"
 }

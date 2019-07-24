@@ -116,7 +116,7 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
+void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -258,10 +258,6 @@ int Release( struct FHandler *s, void *f )
 			
 			FFree( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
-
 		return 0;
 	}
 	return -1;
@@ -284,15 +280,6 @@ int UnMount( struct FHandler *s, void *f )
 			
 			FFree( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); lf->f_Name = NULL;}
-		if( lf->f_Path ){ FFree( lf->f_Path ); lf->f_Path = NULL; }
-		
-		//if( lf->d_Host ){ free( lf->d_Host ); }
-		//if( lf->d_LoginUser ){ free( lf->d_LoginUser ); }
-		//if( lf->d_LoginPass ){ free( lf->d_LoginPass ); }
-		
-		//free( f );
 		return 0;
 	}
 	return -1;
@@ -768,8 +755,10 @@ FLONG RemoveDirectoryLocal(const char *path)
 					else
 					{
 						r += statbuf.st_size;
-						unlink( buf );
-						remove( buf );
+						if( unlink( buf ) != 0 )
+						{
+							remove( buf );
+						}
 					}
 				}
 				FFree(buf);
@@ -1178,6 +1167,9 @@ void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 	strftime( timeStr, 54, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
 	ls = snprintf( tmp, TMP_SIZEM1, "\"DateModified\": \"%s\",", timeStr );
 	BufStringAddSize( bs, tmp, ls );
+	strftime( timeStr, 54, "%Y-%m-%d %H:%M:%S", localtime( &s->st_ctime ) );
+	ls = snprintf( tmp, TMP_SIZEM1, "\"DateCreated\": \"%s\",", timeStr );
+	BufStringAddSize( bs, tmp, ls );
 	FFree( timeStr );
 	
 	//DEBUG( "FILLSTAT filesize set\n");
@@ -1239,8 +1231,9 @@ BufString *Info( File *s, const char *path )
 	int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
+	int globlen = rspath + spath + 512;
 	
-	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( globlen, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 
@@ -1262,13 +1255,20 @@ BufString *Info( File *s, const char *path )
 		}
 		else
 		{
+			
 			SpecialData *locsd = (SpecialData *)s->f_SpecialData;
 			SystemBase *l = (SystemBase *)locsd->sb;
 			
-			char buffer[ 256 ];
-			int size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST );
-			
-			BufStringAddSize( bs, buffer, size );
+			globlen += 512;
+			char *buffer = FMalloc( globlen );
+			int size = 0;
+			if( buffer != NULL )
+			{
+				size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, comm );
+				
+				BufStringAddSize( bs, buffer, size );
+				FFree( buffer );
+			}
 			//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 		}
 		
@@ -1358,6 +1358,21 @@ BufString *Dir( File *s, const char *path )
 			{
 				if( !(strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 ) )
 				{
+					/*
+					strcpy( tempString, comm );
+					int dpos = strlen( tempString );
+					char *strptr = dir->d_name;
+					if( dir->d_name[ 0 ] == '/' )
+					{
+						strptr++;
+					}
+					while( *strptr != 0 )
+					{
+						tempString[ dpos++ ] = *strptr;
+						strptr++;
+					}
+					tempString[ dpos ] = 0;
+					*/
 					if( dir->d_name[ 0 ] == '/' )
 					{
 						snprintf( tempString, rspath, "%s%s", comm, &(dir->d_name[1]) );

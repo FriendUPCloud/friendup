@@ -24,7 +24,7 @@
 #include <core/nodes.h>
 
 #include "user_session.h"
-#include "user_group.h"
+#include <system/usergroup/user_group.h>
 #include "user.h"
 #include "remote_user.h"
 
@@ -32,6 +32,6 @@
 //
 //
 
-Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result );
+Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result, FBOOL *sessionRemoved );
 
 #endif // __SYSTEM_USER_USER_MANAGER_WEB_H__

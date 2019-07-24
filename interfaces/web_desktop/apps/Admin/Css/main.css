@@ -1,0 +1,105 @@
+
+#Admin
+{
+	/*background-color: #20374D;*/
+	background-color: #34495E;
+	font-weight: normal;
+	/*font-size: 20px;*/
+}
+
+#Admin .collapse > .List
+{
+	display: none;
+}
+
+#Admin .BackgroundHeavier
+{
+	background-color: transparent;
+}
+
+#Admin input
+{
+	/*font-size: 20px;*/
+	padding: 5px;
+	border-radius: 0;
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid #979797;
+}
+
+#Admin textarea
+{
+	/*font-size: 20px;*/
+	padding: 5px;
+	border-radius: 0;
+	background: transparent;
+	border: 1px solid #979797;
+}
+
+#Admin #GuiSidebar
+{
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a
+{
+	color: #FFFFFF;
+	font-weight: normal;
+	/*font-size: 20px;*/
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
+{
+	padding-right: 10px;
+}
+
+#Admin #GuiSidebar h2
+{
+	font-weight: bold;
+	/*font-size: 18px;*/
+}
+
+#Admin #GuiContent
+{
+	background-color: #ECF0F1;
+	color: #34495E;
+}
+
+#Admin #GuiContent > div
+{
+	padding: 20px;
+}
+
+#Admin #GuiContent h1
+{
+	background-color: #34495E;
+	color: #FFFFFF;
+	text-align: center;
+	padding: 10px;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+#Admin #GuiContent .FullContent > div.List > .HRow
+{
+	background-color: #34495E;
+	color: #FFFFFF;
+}
+
+#Admin #GuiContent .FullContent > div.List + div.List > .HRow
+{
+	background-color: #FFFFFF;
+	color: #34495E;
+}
+
+#Admin #GuiContent div
+{
+	border: 0;
+}
+
+/* Server printers ---------------------------------------------------------- */
+
+
+
+

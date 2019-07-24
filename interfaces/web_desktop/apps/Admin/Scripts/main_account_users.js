@@ -22,10 +22,11 @@ Sections.accounts_users = function( cmd, extra )
 				var userInfo = info.userInfo;
 				var settings = info.settings;
 				var workspaceSettings = info.workspaceSettings;
-				var wgroups = info.workgroups;
+				var wgroups = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : [ userInfo.Workgroup ];
+				var uroles = info.roles;
 				var mountlist = info.mountlist;
 				var apps = info.applications;
-									
+						
 				var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 				if( !themeData )
 					themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
@@ -36,15 +37,42 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					for( var b = 0; b < wgroups.length; b++ )
 					{
+						if( !wgroups[b].Name ) continue;
 						wstr += '<div class="HRow">';
 						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
 						wstr += '</div>';
 					}
 				}
 				
+				// Roles
+				var rstr = '';
+				/*if( uroles && uroles.length )
+				{
+					for( var b = 0; b < uroles.length; b++ )
+					{
+						rstr += '<div class="HRow">';
+						rstr += '<div class="HContent100">' + uroles[b].Name + '</div>';
+						rstr += '</div>';
+					}
+				}*/
+				
+				// Roles and role adherence
+				if( uroles && uroles.length )
+				{
+					for( var a in uroles )
+					{
+						rstr += '<div class="HRow">';
+						rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + uroles[a].Name + '</div>';
+						rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+						rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+						rstr += '</div>';
+						rstr += '</div>';
+					}
+				}
+				
 				// Mountlist
 				var mlst = '';
-				if( mountlist.length )
+				if( mountlist && mountlist.length )
 				{
 					mlst += '<div class="HRow">';
 					for( var b = 0; b < mountlist.length; b++ )
@@ -68,6 +96,11 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					mlst += '</div>';
 				}
+				else
+				{
+					mlst += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_mountlist_empty' ) + '</div></div>';
+				}
+				
 				function initStorageGraphs()
 				{
 					var d = document.getElementsByTagName( 'canvas' );
@@ -97,7 +130,7 @@ Sections.accounts_users = function( cmd, extra )
 							size = size * 1024 * 1024 * 1024;
 						}
 						var used = parseInt( nod.getAttribute( 'used' ) );
-						if( isNaN( size ) ) size = 500 * 1024;
+						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
 						if( !used && !size ) used = 0, size = 1;
 						if( !used ) used = 0;
 						if( used > size || ( used && !size ) ) size = used;
@@ -120,6 +153,7 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
+				// Applications
 				var apl = '';
 				var types = [ i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
 				var keyz  = [ 'Name', 'Category', 'Dock' ];
@@ -165,20 +199,22 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Add all data for the template
 				d.replacements = {
-					user_name: userInfo.FullName,
-					user_fullname: userInfo.FullName,
-					user_username: userInfo.Name,
-					user_email: userInfo.Email,
-					theme_name: settings.Theme,
-					theme_dark: themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
-					wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
-					workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
+					user_name:         userInfo.FullName,
+					user_fullname:     userInfo.FullName,
+					user_username:     userInfo.Name,
+					user_email:        userInfo.Email,
+					theme_name:        settings.Theme,
+					theme_dark:        themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+					theme_style:       themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
+					wallpaper_name:    workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
+					workspace_count:   workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
 					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					storage: mlst,
-					workgroups: wstr,
-					applications: apl
+					storage:           mlst,
+					workgroups:        wstr,
+					roles:             rstr,
+					applications:      apl
 				};
+				
 				// Add translations
 				d.i18n();
 				d.onLoad = function( data )
@@ -189,6 +225,111 @@ Sections.accounts_users = function( cmd, extra )
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
 					Friend.responsive.reinit();
+					
+					// Events --------------------------------------------------
+					
+					// Editing basic details
+					
+					var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+					var bge  = ge( 'UserBasicEdit' );
+					for( var a = 0; a < inps.length; a++ )
+					{
+						( function( i ) {
+							i.onkeyup = function( e )
+							{
+								bge.innerHTML = ' ' + i18n( 'i18n_save_changes' );
+							}
+						} )( inps[ a ] );
+					}
+					bge.onclick = function( e )
+					{
+						saveUser( userInfo.ID );
+					}
+					
+					// Editing workgroups
+					
+					var wge = ge( 'WorkgroupEdit' );
+					if( wge ) wge.onclick = function( e )
+					{
+						// Show
+						if( !this.activated )
+						{
+							this.activated = true;
+							this.oldML = ge( 'WorkgroupGui' ).innerHTML;
+							
+							var str = '';
+							for( var a = 0; a < info.workgroups.length; a++ )
+							{
+								var found = false;
+								for( var c = 0; c < wgroups.length; c++ )
+								{
+									if( info.workgroups[a].Name == wgroups[c].Name )
+									{
+										found = true;
+										break;
+									}
+								}
+								str += '<div class="HRow">\
+									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
+									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+										<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+									</div>\
+								</div>';
+							}
+							ge( 'WorkgroupGui' ).innerHTML = str;
+							
+							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							for( var a = 0; a < workBtns.length; a++ )
+							{
+								// Toggle user relation to workgroup
+								( function( b ) {
+									b.onclick = function( e )
+									{
+										var enabled = false;
+										if( this.classList.contains( 'fa-toggle-off' ) )
+										{
+											this.classList.remove( 'fa-toggle-off' );
+											this.classList.add( 'fa-toggle-on' );
+											enabled = true;
+										}
+										else
+										{
+											this.classList.remove( 'fa-toggle-on' );
+											this.classList.add( 'fa-toggle-off' );
+										}
+										var args = { command: 'update', id: userInfo.ID };
+										args.workgroups = [];
+										
+										for( var c = 0; c < workBtns.length; c++ )
+										{
+											if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+											{
+												args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+											}
+										}
+										args.workgroups = args.workgroups.join( ',' );
+										
+										// Reload user gui now
+										var f = new Library( 'system.library' );
+										f.onExecuted = function( e, d )
+										{
+											// Do nothing
+										}
+										f.execute( 'user', args );
+									}
+								} )( workBtns[ a ] );
+							}
+							
+						}
+						// Hide
+						else
+						{
+							this.activated = false;
+							ge( 'WorkgroupGui' ).innerHTML = this.oldML;
+						}
+					}
+					
+					// End events ----------------------------------------------
 				}
 				d.load();
 			}
@@ -215,7 +356,7 @@ Sections.accounts_users = function( cmd, extra )
 						loadingList[ ++loadingSlot ]( userInfo );
 			
 					}
-					u.execute( 'userinfoget', { id: extra } );
+					u.execute( 'userinfoget', { id: extra, mode: 'all' } );
 				},
 				// Load user settings
 				function( userInfo )
@@ -223,7 +364,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var settings = null;
 						try
 						{
@@ -243,7 +384,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var workspacesettings = null;
 						try
 						{
@@ -270,7 +411,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var wgroups = null;
 						try
 						{
@@ -285,13 +426,37 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					u.execute( 'workgroups' );
 				},
+				// Get user's roles
+				function( info )
+				{
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						var uroles = null;
+						console.log( { e:e, d:d } );
+						if( e == 'ok' )
+						{
+							try
+							{
+								uroles = JSON.parse( d );
+							}
+							catch( e )
+							{
+								uroles = null;
+							}
+							info.roles = uroles;
+						}
+						loadingList[ ++loadingSlot ]( info );
+					}
+					u.execute( 'userroleget', { userid: info.userInfo.ID } );
+				},
 				// Get storage
 				function( info )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						var ul = null;
 						try
 						{
@@ -313,7 +478,7 @@ Sections.accounts_users = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						var apps = null;
-						if( e != 'ok' ) return;
+						//if( e != 'ok' ) return;
 						try
 						{
 							apps = JSON.parse( d );
@@ -339,35 +504,72 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
-	// Get the user list
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	var checkedGlobal = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
+	var checkedWorkgr = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
+	
+	function doListUsers( userList, clearFilter )
 	{
-		if( e != 'ok' ) return;
-		var userList = null;
-		try
-		{
-			userList = JSON.parse( d );
-		}
-		catch( e )
-		{
-			return;
-		}
 		var o = ge( 'UserList' );
 		o.innerHTML = '';
-		
+
+		// Add the main heading
+		( function( ol ) {
+			var tr = document.createElement( 'div' );
+			tr.className = 'HRow';
+			
+			var extr = '';
+			if( clearFilter )
+			{
+				extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconButton IconSmall fa-remove"/>&nbsp;</button>';
+			}
+			
+			tr.innerHTML = '\
+				<div class="HContent50 FloatLeft">\
+					<h2>' + i18n( 'i18n_users' ) + '</h2>\
+				</div>\
+				<div class="HContent50 FloatLeft Relative">\
+					' + extr + '\
+					<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+				</div>\
+			';
+					
+			var inp = tr.getElementsByTagName( 'input' )[0];
+			inp.onkeyup = function( e )
+			{
+				if( e.which == 13 )
+				{
+					filterUsers( this.value );
+				}
+			}
+			
+			if( clearFilter )
+			{
+				inp.value = clearFilter;
+			}
+			
+			var bt = tr.getElementsByTagName( 'button' )[0];
+			if( bt )
+			{
+				bt.onclick = function()
+				{
+					filterUsers( false );
+				}
+			}
+					
+			ol.appendChild( tr );
+		} )( o );
+
 		// Types of listed fields
 		var types = {
 			Edit: '10',
 			FullName: '30',
-			Name: '30',
-			Level: '30'
+			Name: '25',
+			Level: '25'
 		};
-		
-		
+
 		// List by level
 		var levels = [ 'Admin', 'User', 'Guest', 'API' ];
-		
+
 		// List headers
 		var header = document.createElement( 'div' );
 		header.className = 'List';
@@ -383,12 +585,59 @@ Sections.accounts_users = function( cmd, extra )
 				borders += ' BorderBottom';
 			var d = document.createElement( 'div' );
 			d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-			d.innerHTML = '<strong>' + z + '</strong>';
+			if( z == 'Edit' ) z = '';
+			d.innerHTML = '<strong>' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
 			headRow.appendChild( d );
 		}
+		
+		// New user button
+		var l = document.createElement( 'div' );
+		l.className = 'HContent10 FloatLeft BorderBottom';
+		var b = document.createElement( 'button' );
+		b.className = 'IconButton IconSmall fa-plus Negative';
+		b.innerHTML = '&nbsp;';
+		l.appendChild( b );		
+		headRow.appendChild( l );
+		b.onclick = function( e )
+		{
+			var d = new File( 'Progdir:Templates/account_users_details.html' );
+			// Add all data for the template
+			d.replacements = {
+				user_name:         '',
+				user_fullname:     '',
+				user_username:     '',
+				user_email:        '',
+				theme_name:        '',
+				theme_dark:        '',
+				theme_style:       '',
+				theme_preview:     '',
+				wallpaper_name:    '',
+				workspace_count:   '',
+				system_disk_state: '',
+				storage:           '',
+				workgroups:        '',
+				roles:             '',
+				applications:      ''
+			};
+			
+			// Add translations
+			d.i18n();
+			d.onLoad = function( data )
+			{
+				ge( 'UserDetails' ).innerHTML = data;
+				initStorageGraphs();
+				
+				// Responsive framework
+				Friend.responsive.pageActive = ge( 'UserDetails' );
+				Friend.responsive.reinit();
+			}
+			d.load();
+		}
+		
+		// Add header columns
 		header.appendChild( headRow );
 		o.appendChild( header );
-		
+
 		function setROnclick( r, uid )
 		{
 			r.onclick = function()
@@ -396,7 +645,7 @@ Sections.accounts_users = function( cmd, extra )
 				Sections.accounts_users( 'edit', uid );
 			}
 		}
-		
+
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		var sw = 2;
@@ -406,15 +655,15 @@ Sections.accounts_users = function( cmd, extra )
 			{
 				// Skip irrelevant level
 				if( userList[ a ].Level != levels[ b ] ) continue;
-				
+
 				sw = sw == 2 ? 1 : 2;
 				var r = document.createElement( 'div' );
 				setROnclick( r, userList[ a ].ID );
 				r.className = 'HRow sw' + sw;
-			
+
 				var icon = '<span class="IconSmall fa-user"></span>';
 				userList[ a ][ 'Edit' ] = icon;
-			
+
 				for( var z in types )
 				{
 					var borders = '';
@@ -431,15 +680,174 @@ Sections.accounts_users = function( cmd, extra )
 					d.innerHTML = userList[a][ z ];
 					r.appendChild( d );
 				}
-			
+
 				// Add row
 				list.appendChild( r );
 			}
 		}
 		o.appendChild( list );
-		
+
 		Friend.responsive.pageActive = ge( 'UserList' );
 		Friend.responsive.reinit();
 	}
-	m.execute( 'listusers' );
+	
+	function filterUsers( filter )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var userList = null;
+			
+			try
+			{
+				userList = JSON.parse( d );
+			}
+			catch( e )
+			{
+				return;
+			}
+			
+			doListUsers( userList, filter ? filter : false );
+		}
+		if( filter )
+		{
+			m.execute( 'listusers', { query: filter } );
+		}
+		else
+		{
+			m.execute( 'listusers' );
+		}
+	}
+	
+	if( checkedGlobal || checkedWorkgr )
+	{
+		// Get the user list
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{			
+			var userList = null;
+			
+			try
+			{
+				userList = JSON.parse( d );
+			}
+			catch( e )
+			{
+				return;
+			}
+			
+			doListUsers( userList );
+		}
+		m.execute( 'listusers' );
+		
+	}
+	else
+	{
+		var o = ge( 'UserList' );
+		o.innerHTML = '';
+		
+		var h2 = document.createElement( 'h2' );
+		h2.innerHTML = '{i18n_permission_denied}';
+		o.appendChild( h2 );
+	}
 };
+
+
+Sections.userrole_edit = function( userid, _this )
+{
+	
+	var pnt = _this.parentNode;
+	
+	var edit = pnt.innerHTML;
+	
+	var buttons = [  
+		{ 'name' : 'Cancel', 'icon' : '', 'func' : function()
+			{ 
+				pnt.innerHTML = edit 
+			} 
+		}
+	];
+	
+	pnt.innerHTML = '';
+	
+	for( var i in buttons )
+	{
+		var b = document.createElement( 'button' );
+		b.className = 'IconSmall FloatRight';
+		b.innerHTML = buttons[i].name;
+		b.onclick = buttons[i].func;
+		
+		pnt.appendChild( b );
+	}
+	
+}
+
+Sections.userrole_update = function( rid, userid, _this )
+{
+	var data = '';
+	
+	if( _this )
+	{
+		Toggle( _this, function( on )
+		{
+			data = ( on ? 'Activated' : '' );
+		} );
+	}
+	
+	if( rid && userid )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( { e:e, d:d } );
+		}
+		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data } );
+	}
+};
+
+// Save a user
+function saveUser( uid )
+{
+	if( !uid ) return;
+	
+	var args = { command: 'update' };
+	args.id = uid;
+	var mapping = {
+		usFullname: 'fullname',
+		usEmail:    'email',
+		usUsername: 'username',
+		usPassword: 'password'
+	};
+	for( var a in mapping )
+	{
+		var k = mapping[ a ];
+		
+		// Skip nonchanged passwords
+		if( a == 'usPassword' && ge( a ).value == '********' )
+			continue;
+		
+		args[ k ] = Trim( ge( a ).value );
+		
+		// Special case, hashed password
+		if( a == 'usPassword' )
+		{
+			args[ k ] = '{S6}' + Sha256.hash( 'HASHED' + Sha256.hash( args[ k ] ) );
+		}
+	}
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+			Sections.accounts_users( 'edit', uid );
+		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
+		}
+	}
+	f.execute( 'user', args );
+}
+

@@ -47,7 +47,6 @@ Application.run = function( msg )
 		
 		// Go on!
 		var f = new File( 'Progdir:Templates/main.html' );
-
 		f.replacements = {
 			'cancel'           : i18n('i18n_cancel'),
 			'close'            : i18n('i18n_close'),
@@ -71,10 +70,8 @@ Application.run = function( msg )
 	}
 	m.execute( 'getsetting', { settings: [ 'imagesdoors', 'imageswindows' ] } );
 
-
 	// Set app in single mode
 	this.setSingleInstance( true );
-
 }
 
 // Handle messages
@@ -114,6 +111,7 @@ Application.receiveMessage = function( msg )
 		case 'getimages':
 			if( this.settings )
 			{
+				console.log( 'Getting imagesdoors', Application.settings.imagesdoors );
 				this.mainView.sendMessage ( { command: 'setimages', mode: 'doors', images: Application.settings.imagesdoors } );
 			}
 			break;

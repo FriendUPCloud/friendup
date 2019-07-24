@@ -284,6 +284,10 @@ int HashmapRehash( Hashmap* in )
 
 int HashmapPut( Hashmap* in, char* key, void* value )
 {
+	if( in == NULL )
+	{
+		return MAP_OMEM;
+	}
 	// Find a place to put our value
 	int index = HashmapHash( in, key );
 	while( index == MAP_FULL )
@@ -301,12 +305,15 @@ int HashmapPut( Hashmap* in, char* key, void* value )
 	if( in->data[index].data )
 	{
 		FFree( in->data[index].data );
+		in->data[index].data = NULL;
 	}
 	in->data[index].data = value;
 	if( in->data[index].key )
 	{
 		FFree( in->data[index].key );
+		in->data[index].key = NULL;
 	}
+	
 	in->data[index].key = key;
 	in->data[index].inUse = TRUE;
 	in->size++; 
@@ -488,6 +495,10 @@ int HashmapRemove( Hashmap *in, char* key  )
 	int i;
 	int curr;
 	Hashmap* m;
+	if( in == NULL )
+	{
+		return MAP_MISSING;
+	}
 	
 	m = (Hashmap *) in;
 

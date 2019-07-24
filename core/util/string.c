@@ -916,6 +916,11 @@ char *EscapeStringToJSON( char *str )
 					*dst = '\\';
 					dst++;
 				}
+				else if( *src == '\n' )
+				{
+					*dst = '\\';
+					dst++;
+				}
 				
 				*dst = *src;
 				src++;

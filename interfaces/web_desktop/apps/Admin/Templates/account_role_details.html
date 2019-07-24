@@ -1,0 +1,37 @@
+
+	<h2>
+		{i18n_role_profile}
+	</h2>
+	
+	<h1 class="ImageHeading">
+		{role_name}
+	</h1>
+	<div class="Box Padding">
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_role_name}</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<input id="RoleName" type="text" class="FullWidth" value="{role_name}"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft Ellipsis">
+				<strong>{i18n_role_description}</strong>
+			</div>
+			<div class="HContent70 FloatLeft Ellipsis">
+				<textarea class="FullWidth">{role_description}</textarea>
+			</div>
+		</div>
+		<div class="HRow">
+			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.role_edit({id},this)"></button>
+		</div>
+	</div>
+
+	<h2 class="MarginTop">
+		{i18n_permissions}
+	</h2>
+	<div class="Box Padding">
+		{permissions}
+	</div>
+	

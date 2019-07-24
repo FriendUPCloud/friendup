@@ -11,12 +11,541 @@
 var Config = {
 };
 
+Application.lastSaved = 0;
+
+// Don't scroll out of view
+document.body.addEventListener( 'scroll', function()
+{
+	document.body.scroll( 0, 0 );
+	document.body.parentNode.scroll( 0, 0 );
+}, false );
+window.addEventListener( 'scroll', function()
+{
+	document.body.scroll( 0, 0 );
+	document.body.parentNode.scroll( 0, 0 );
+}, false );
+// End scroll watcher
+
+var currentViewMode = 'default';
+
+if( isMobile )
+{
+	ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+	ge( 'LeftBar' ).style.width = '100%';
+	ge( 'LeftBar' ).style.transition = 'transform 0.25s';
+	ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
+	ge( 'FileBar' ).style.width = '100%';
+	ge( 'FileBar' ).style.transition = 'transform 0.25s';
+	ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
+	ge( 'RightBar' ).style.width = '100%';
+	ge( 'RightBar' ).style.transition = 'transform 0.25s';
+}
+var filebrowserCallbacks = {
+	// Check a file on file extension
+	checkFile( path, extension )
+	{
+		
+	},
+	// Load a file
+	loadFile( path )
+	{
+		
+	},
+	folderOpen( ele, e )
+	{
+		if( isMobile && currentViewMode != 'root' ) return;
+		
+		Application.browserPath = ele;
+		Application.fileSaved = false;
+		Application.lastSaved = 0;
+		Application.currentDocument = null;
+		
+		if( e )
+		{
+			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+			{
+				currentViewMode = 'files';
+				Application.updateViewMode();
+			} );
+			cancelBubble( e );
+		}
+	},
+	folderClose( ele, e )
+	{
+		if( isMobile && currentViewMode != 'root' ) return;
+		
+		Application.currentDocument = null;
+		Application.browserPath = ele;
+		
+		if( e )
+		{
+			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+			{
+				currentViewMode = 'files';
+				Application.updateViewMode();
+			} );	
+			cancelBubble( e );
+		}
+	}
+};
+
+Application.checkFileType = function( p )
+{
+	if( p.indexOf( '/' ) > 0 )
+	{
+		p = p.split( '/' );
+		p.pop();
+		p = p.join( '/' ) + '/';
+	}
+	else if( p.indexOf( ':' ) > 0 )
+	{
+		p = p.split( ':' );
+		p = p[0] + ':';
+	}
+	if( Application.browserPath != p )
+	{
+		Application.browserPath = p;
+	}
+}
+
+Application.handleBack = function()
+{
+	if( !isMobile ) return;
+	switch( currentViewMode )
+	{
+		case 'root':
+			currentViewMode = 'root';
+			break;
+		case 'files':
+			currentViewMode = 'root';
+			break;
+		default:
+			currentViewMode = 'files';
+			break;
+	}
+	this.updateViewMode();
+}
+
+Application.updateViewMode = function()
+{
+	if( !isMobile ) return;
+	
+	switch( currentViewMode )
+	{
+		case 'root':
+			ge( 'LeftBar' ).style.transform = 'translate3d(0,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'root',
+				browserPath: this.browserPath
+			} );
+			break;
+		case 'files':
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'files',
+				browserPath: this.browserPath
+			} );
+			break;
+		default:
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'notes',
+				browserPath: this.browserPath
+			} );
+			break;
+	}
+}
+
+Application.refreshFilePane = function( method, force, callback )
+{
+	if( !method ) method = false;
+	
+	var d = new Door( Application.browserPath );
+	
+	var self = this;
+	
+	// Already showing (mobile only)!
+	if( isMobile && Application.path == Application.browserPath && !force ) return;
+	
+	Application.path = Application.browserPath;
+	var p = Application.path;
+	
+	d.getIcons( function( items )
+	{
+		if( ge( 'FileBar' ).contents )
+		{
+			ge( 'FileBar' ).contents.innerHTML = '';
+		}
+		
+		// Something changed in transit. Do nothing
+		if( p != Application.path ) return;
+	
+		Application._toBeSaved = null;
+		
+		var byDate = [];
+		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
+		items.reverse();
+		
+		var fBar = ge( 'FileBar' );
+		if( !fBar.contents )
+		{
+			fBar.contents = document.createElement( 'div' );
+			fBar.appendChild( fBar.contents );
+			
+			// Make an "add new note" button
+			fBar.add = document.createElement( 'div' );
+			fBar.add.className = 'NewItem';
+			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
+			fBar.add.onclick = function()
+			{
+				var testFile = 'unnamed';
+				var nextTest = testFile;
+				var d = new Door( Application.browserPath );
+				d.getIcons( function( icons )
+				{
+					if( icons )
+					{
+						var found = false;
+						var tries = 1;
+						
+						do
+						{
+							found = false;
+							for( var a = 0; a < icons.length; a++ )
+							{
+								if( icons[ a ].Filename == nextTest + '.html' )
+								{
+									nextTest = testFile + '_' + ( ++tries );
+									found = true;
+									break;
+								}
+							}
+						}
+						while( found );
+					}
+					
+					var f = new File();
+					f.save( "\n", Application.browserPath + nextTest + '.html' );
+					f.onSave = function()
+					{
+						Application.currentDocument = Application.browserPath + nextTest + '.html';
+						Application.sendMessage( {
+							command: 'setfilename',
+							data: Application.currentDocument
+						} );
+						Application.refreshFilePane( false, true );
+						Application.loadFile( Application.browserPath + nextTest + '.html', function()
+						{
+							if( isMobile )
+							{
+								currentViewMode = 'default';
+								Application.updateViewMode();
+							}
+						} );
+					}
+				} );
+			}
+			fBar.appendChild( fBar.add );
+		}
+		fBar.contents.innerHTML = '';
+		fBar.contents.className = 'ContentFull List ScrollArea ScrollBarSmall BorderRight';
+		
+		var sw = 2;
+		var firstFileNum = 0;
+		var foundFile = false;
+
+		for( var a = 0; a < items.length; a++ )
+		{
+			var num = items[ a ];
+			var ext = num.Filename.split( '.' );
+			ext = ext.pop().toLowerCase();
+			if( ext != 'html' && ext != 'htm' ) continue;
+			
+			if( firstFileNum++ == 0 )
+			{
+				if( method == 'findFirstFile' && !foundFile )
+				{
+					Application.loadFile( items[ a ].Path );
+					Application.currentDocument = items[ a ].Path;
+					fouldFile = true;
+				}
+			}
+			
+			sw = sw == 2 ? 1 : 2;
+			
+			var d = document.createElement( 'div' );
+			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
+			
+			( function( p, o ){
+				o.path = p;
+			} )( items[ a ].Path, d );
+			
+			if( Application.currentDocument && Application.currentDocument == num.Path )
+			{
+				d.classList.add( 'Selected' );
+			}
+			else
+			{
+				d.onmouseover = function()
+				{
+					this.classList.add( 'Selected' );
+				}
+				d.onmouseout = function()
+				{
+					this.classList.remove( 'Selected' );
+				}
+			}
+			
+			// No listing here
+			var fn = num.Filename.split( '.' );
+			fn.pop();
+			fn = fn.join( '.' );
+			
+			d.innerHTML = '<p class="Layout"><strong>' + fn + '</strong></p><p class="Layout"><em>' + num.DateModified + '</em></p>';
+			
+			// File permissions are given
+			// TODO: Check permissions
+			var rem = false;
+			if( 1 == 1 )
+			{
+				( function( dd, path ){
+					rem = document.createElement( 'div' );
+					rem.className = 'IconButton fa-remove IconSmall FloatRight';
+					rem.onclick = function( e )
+					{
+						Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_delete_note' ), function( result )
+						{
+							if( result.data )
+							{
+								var l = new Library( 'system.library' );
+								l.onExecuted = function( e, mess )
+								{
+									if( e == 'ok' )
+									{
+										if( Application.currentDocument == path )
+										{
+											Application.newDocument( { just: 'makenew' } );
+										}
+										Application.refreshFilePane();
+									}
+								}
+								l.execute( 'file/delete', { path: path } );
+							}
+						} );
+						return cancelBubble( e );
+					}
+					if( isMobile )
+					{
+						rem.ontouchstart = rem.onclick;
+					}
+					d.insertBefore( rem, d.firstChild );
+				} )( d, num.Path );
+			}
+			
+			fBar.contents.appendChild( d );
+			
+			d.clicker = function( e )
+			{
+				var s = this;
+				if( this.tm )
+				{
+					clearTimeout( this.tm );
+				}
+				this.tm = 'block';
+			
+				var p = this.getElementsByTagName( 'p' )[0];
+				var ml = p.innerHTML;
+				var inp = document.createElement( 'input' );
+				inp.type = 'text';
+				inp.className = 'NoMargins';
+				inp.style.width = 'calc(100% - 32px)';
+				inp.value = p.innerText;
+				p.innerHTML = '';
+				p.appendChild( inp );
+				inp.select();
+				inp.focus();
+				function renameNow()
+				{
+					var val = inp.value;
+					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+						val += '.html';
+					var l = new Library( 'system.library' );
+					l.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.sendMessage( {
+								command: 'setfilename',
+								data: Application.path + val
+							} );
+							Application.currentDocument = Application.path + val;
+							Application.refreshFilePane( false, true );
+						}
+						// Perhaps give error - file exists
+						else
+						{
+							inp.select();
+						}
+					}
+					l.execute( 'file/rename', { path: s.path, newname: val } );
+				}
+				p.onkeydown = function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					// Abort
+					if( k == 27 )
+					{
+						if( p && p.parentNode )
+							p.innerHTML = ml;
+						s.tm = null;
+					}
+					// Rename
+					else if( k == 13 )
+					{
+						renameNow();
+					}
+				}
+				inp.onblur = function()
+				{
+					p.innerHTML = ml;
+					s.tm = null;
+				}
+				cancelBubble( e );
+			}
+			
+			// Selected files can be renamed
+			if( d.classList.contains( 'Selected' ) )
+			{
+				if( isMobile )
+				{
+					( function( dd ) {
+						dd.ontouchstart = function( e )
+						{
+							var f = dd;
+							this.editTimeout = setTimeout( function()
+							{
+								f.editTimeout = null;
+								f.clicker();
+							}, 750 );
+							return cancelBubble( e );
+						}
+						dd.ontouchend = function()
+						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								return;
+							}
+							var f = this;
+							if( f.editTimeout )
+							{
+								clearTimeout( f.editTimeout );
+								f.editTimeout = null;
+								Application.currentDocument = f.path;
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
+								} );
+							}
+						}
+					} )( d );
+				}
+				else
+				{
+					d.onclick = d.clicker;
+				}
+			}
+			// Others are activated
+			else
+			{
+				if( isMobile )
+				{
+					( function( dd ){ 
+						dd.ontouchstart = function( e )
+						{
+							dd.classList.add( 'Selected' );
+							var eles = dd.parentNode.childNodes;
+							for( var a = 0; a < eles.length; a++ )
+							{
+								if( eles[a].tagName == 'DIV' && eles[a] != dd )
+									eles[a].classList.remove( 'Selected' );
+							}
+							var f = dd;
+							this.editTimeout = setTimeout( function()
+							{
+								f.editTimeout = null;
+								f.clicker();
+							}, 750 );
+							return cancelBubble( e );
+						}
+						dd.ontouchend = function()
+						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								return;
+							}
+							var f = this;
+							if( f.editTimeout )
+							{
+								clearTimeout( f.editTimeout );
+								f.editTimeout = null;
+								Application.currentDocument = f.path;
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
+								} );
+							}
+						}
+					} )( d );
+				}
+				else
+				{
+					( function( dl ){
+						dl.onclick = function()
+						{
+							Application.currentDocument = dl.path;
+							Application.loadFile( dl.path, function()
+							{
+								currentViewMode = 'default';
+								Application.updateViewMode();
+							} );
+							Application.refreshFilePane();
+						}
+					} )( d );
+				}
+			}
+		}
+		
+		if( !foundFile && method == 'findFirstFile' )
+		{
+			Application.newDocument( { just: 'makenew' } );
+		}
+		
+		if( callback )
+			callback();
+	} );
+}
+
 Application.run = function( msg, iface )
 {
+	var self = this;
+	
 	// To tell about ck
 	this.ckinitialized = false;
 	this.newLine = true;
 	this.initCKE();
+	
+	this.browserPath = 'Mountlist:';
 	
 	this.sessionObject.currentZoom = '100%';
 	
@@ -34,187 +563,190 @@ Application.run = function( msg, iface )
 		{
 			Application.sendMessage( { 
 				command: 'remembercontent', 
-				data: CKEDITOR.instances.Editor.getData(),
-				scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+				data: Application.editor.getData(),
+				scrollTop: Application.editor.element.scrollTop
 			} );
 			Application.contentTimeout = false;
 		}, 250 );
-	}	
+	}
+	
+	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true }, filebrowserCallbacks );
+	FileBrowser.render();
+	this.fileBrowser = FileBrowser;
+	
+	
+	Application.updateViewMode();
 }
 
 Application.checkWidth = function()
 {
 	var ww = window.innerWidth;
-	//console.log( ww );
-	/*if( ww <= 540 )
+	if( ww < 840 )
 	{
-		editorCommand( 'keepWidth' );
-	}
-	else if( ww < 640 )
-	{
-		editorCommand( 'zoom60%' );
-	}
-	else if( ww < 740 )
-	{
-		editorCommand( 'zoom70%' );
-	}
-	else*/ if( ww < 840 )
-	{
-		//editorCommand( 'zoom80%' );
 		editorCommand( 'staticWidth' );
-		//console.log( 'Static width!' );
 	}
 	else
 	{
 		editorCommand( 'dynamicWidth' );
-		//console.log( 'Dynamic width' );
 	}
 }
 
 Application.initCKE = function()
 {
-	if( typeof( CKEDITOR ) == 'undefined' )
+	if( typeof( ClassicEditor ) == 'undefined' )
 		return setTimeout( 'Application.initCKE()', 50 );
 	
 	if( Application.ckinitialized ) return;
 	Application.ckinitialized = true;
-	CKEDITOR.replace( ge( 'Editor' ), { 
-		on: { 
-			instanceReady: function( evt )
-			{ 
-				var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
-				//evt.editor.execCommand( 'maximize' ); 
-				var eles = document.getElementsByTagName( 'link' );
-				for( var a = 0; a < eles.length; a++ )
+	
+	ClassicEditor.create( ge( 'Editor' ), {
+			fontFamily: {
+				options: [
+					'default',
+					'Ubuntu, Arial, sans-serif',
+					'Ubuntu Mono, Courier New, Courier, monospace',
+					'Assistant'
+				]
+		    }
+		} )
+		.then( editor => {
+		
+			Application.editor = editor;
+			
+			// Check if there was a race condition
+			if( Application.loadedContentInQueue )
+			{
+				Application.editor.setData( Application.loadedContentInQueue );
+				Application.loadedContentInQueue = null;
+			}
+			
+			Application.initializeToolbar();
+			
+			editor.keystrokes.set( 'Ctrl+S', ( data, stop ) => {
+				Application.lastSaved = ( new Date() ).getTime();
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 83,
+					ctrlKey: true
+				} );
+				stop();
+			} );
+			
+			// Load
+			editor.keystrokes.set( 'Ctrl+L', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 79,
+					ctrlKey: true
+				} );
+				stop();
+			} );
+			
+			editor.keystrokes.set( 'Ctrl+Shift+S', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'save_as'
+				} );
+				stop();
+			} );
+			
+			editor.keystrokes.set( 'Ctrl+Q', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 81,
+					ctrlKey: true
+				} );
+				stop();
+			} );
+			
+			// Close
+			editor.keystrokes.set( 'Ctrl+W', ( data, stop ) => {
+				Application.sendMessage( {
+					command: 'keydown',
+					key: 73,
+					ctrlKey: true
+				} );
+				stop();
+			} );
+			
+			// Other keys...
+			editor.editing.view.document.on( 'keyup', ( evt, data ) => {
+			
+				// Create temporary file "to be saved"
+				if( !Application.currentDocument )
 				{
-					var n = d.createElement( 'link' );
-					n.rel = eles[a].rel;
-					n.href = eles[a].href;
-					d.getElementsByTagName( 'head' )[0].appendChild( n );
-				}
-				d.body.classList.add( 'MouseCursor' );
-				d.body.classList.add( 'ScrollArea' );
-				
-				// We want our cursor!
-				var computed = window.getComputedStyle( document.body, null );
-				d.body.parentNode.style.cursor = computed.cursor;
-				
-				Application.initializeToolbar();
-				
-				/*if( isMobile )
-				{
-					d.body.onmousedown = function( e )
+					if( !Application._toBeSaved )
 					{
-						if( this == d.activeElement )
+						var fb = ge( 'FileBar' );
+						if( fb )
 						{
-							ge( 'AuthorToolbar' ).className = 'Hidden';
-							ge( 'cke_1_contents' ).className = 'Hidden';
-						}
-						else
-						{
-							ge( 'AuthorToolbar' ).className = '';
-							ge( 'cke_1_contents' ).className = '';
+							var d = fb.getElementsByClassName( 'List' );
+							if( d.length )
+							{
+								var el = document.createElement( 'div' );
+								el.className = 'NotesFileItem Padding BorderBottom MousePointer New';
+								d[0].insertBefore( el, d[0].firstChild );
+								Application._toBeSaved = el;
+							}
 						}
 					}
-					d.body.onthouchdown = d.body.onmousedown;
-				}*/
-			},
-			contentDom: function( e )
-			{
-				var editable = e.editor.editable();
-				editable.$.addEventListener( 'keydown', function( e )
+					var data = Application.editor.element.innerText.split( "\n" )[0].substr( 0, 32 );
+					data = data.split( /[^ a-z0-9]/i ).join( '' );
+					if( !data.length )
+						data = 'unnamed';
+					if( Application._toBeSaved )
+						Application._toBeSaved.innerHTML = '<p class="Layout"><strong>' + data + '</strong></p><p class="Layout"><em>' + i18n( 'i18n_unsaved' ) + '...</em></p>';
+					Application.sendMessage( {
+						command: 'setfilename',
+						data: Application.path + data + '.html'
+					} );
+				}
+				// Remove "to be saved"
+				else if( Application._toBeSaved )
 				{
-					var wh = e.which ? e.which : e.keyCode;
-					var ctrl = e.ctrlKey;
-					if( !ctrl ) return;
-					// Don't trap irrelevant keys
-					switch( wh )
+					Application._toBeSaved.parentNode.removeChild( Application._toBeSaved );
+					Application._toBeSaved = null;
+				}
+			
+				if( Application.contentTimeout )
+					clearTimeout( Application.contentTimeout );
+				Application.contentTimeout = setTimeout( function()
+				{
+					Application.sendMessage( { 
+						command: 'remembercontent', 
+						data: Application.editor.getData(),
+						scrollTop: Application.editor.element.scrollTop
+					} );
+					// Save again
+					if( Application.fileSaved )
 					{
-						case 73:
-							editorCommand( 'italic' );
-							break;
-						case 66:
-							editorCommand( 'bold' );
-							break;
-						case 85:
-							editorCommand( 'underline' );
-							break;
-						case 83:
-						case 78:
-						case 79:
-						case 80:
+						var test = ( new Date() ).getTime();
+						if( test - Application.lastSaved > 1000 )
+						{
 							Application.sendMessage( {
 								command: 'keydown',
-								key: wh,
-								ctrlKey: ctrl
+								key: 83,
+								ctrlKey: true
 							} );
-							cancelBubble( e );
-							return false;
-					}
-					return false;
-				}, false );
-				/*editable.attachListener( e.editor.document, 'keyup', function( evt ) 
-				{
-					if( evt.data.$.ctrlKey )
-					{
-						// Don't trap irrelevant keys
-						switch( evt.data.$.which )
-						{
-							case 73:
-								editorCommand( 'italic' );
-								break;
-							case 66:
-								editorCommand( 'bold' );
-								break;
-							case 85:
-								editorCommand( 'underline' );
-								break;
-							case 83:
-							case 78:
-							case 79:
-							case 80:
-								Application.sendMessage( {
-									command: 'keydown',
-									key: evt.data.$.which,
-									ctrlKey: evt.data.$.ctrlKey
-								} );
-								cancelBubble( evt );
-								return false;
 						}
-						return false;
 					}
-					else console.log( evt.data.$.which );
-				} );*/
-				editable.attachListener( e.editor.document, 'keydown', function( evt ) 
-				{
-					if( Application.contentTimeout )
-						clearTimeout( Application.contentTimeout );
-					Application.contentTimeout = setTimeout( function()
-					{
-						Application.sendMessage( { 
-							command: 'remembercontent', 
-							data: CKEDITOR.instances.Editor.getData(),
-							scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
-						} );
-						Application.contentTimeout = false;
-					}, 250 );
-				} );
-				editable.attachListener( e.editor.document, 'mousedown', function( evt )
-				{
-					Application.sendMessage( {
-						command: 'activate'
-					} );
-				} );
-			}
-		}
-	} );
-	CKEDITOR.config.height = '100%';
-	CKEDITOR.config.extraAllowedContent = 'img[src,alt,width,height];h1;h2;h3;h4;h5;h6;p';
+					Application.contentTimeout = false;
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
+				}, 750 );
+			} );
+		} )
+		.catch( error => {
+			console.error( error );
+		} );
+	
+	return;
+	
+	//CKEDITOR.config.extraAllowedContent = 'img[src,alt,width,height];h1;h2;h3;h4;h5;h6;p';
 }
 
 Application.resetToolbar = function()
 {
 	// ..
+
 	SelectOption( ge( 'ToolFormat' ), 0 );
 }
 
@@ -282,10 +814,13 @@ function MyMouseListener( e )
 			fs = fs.parentNode;
 		}
 		
-		if( fs.parentNode && fs.style.fontFamily )
+		/*if( fs.parentNode && fs.style.fontFamily )
 		{
 			// TODO: Dynamically load font list!
-			var fonts = [ 'times new roman', 'lato', 'verdana', 'sans serif', 'sans', 'monospace', 'courier' ];
+			var fonts = [ 'default',
+					'Ubuntu, Arial, sans-serif',
+					'Ubuntu Mono, Courier New, Courier, monospace',
+					'Assistant' ];
 			var current = Trim( fs.style.fontFamily.toLowerCase().split( '\'' ).join( '' ) );
 			var found = false;
 			for( var a = 0; a < fonts.length; a++ )
@@ -305,7 +840,7 @@ function MyMouseListener( e )
 		else
 		{
 			SelectOption( ge( 'FontSelector' ), 0 );
-		}
+		}*/
 		
 		// Check for lineheight
 		var fs = e.target;
@@ -362,8 +897,8 @@ function MyMouseListener( e )
 	{
 		Application.sendMessage( { 
 			command: 'remembercontent', 
-			data: CKEDITOR.instances.Editor.getData(),
-			scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+			data: Application.editor.getData(),
+			scrollTop: Application.editor.element.scrollTop
 		} );
 		Application.contentTimeout = false;
 	}, 250 );
@@ -445,7 +980,7 @@ function CleanSpeecher( textHere )
 	{
 		textHere = 'I ' + textHere.substr( 2, textHere.length - 2 );
 	}
-	CKEDITOR.instances.Editor.setData( CKEDITOR.instances.Editor.getData() + textHere );
+	Application.editor.setData( Application.editor.getData() + textHere );
 	
 	ge( 'Speecher' ).value = '';
 	ge( 'Speecher' ).blur();
@@ -467,16 +1002,64 @@ Application.initializeToolbar = function()
 		d.id = 'AuthorToolbar';
 		d.className = 'BackgroundDefault ColorDefault BorderTop';
 		this.toolbar = d;
-		document.body.appendChild( d );
+		ge( 'RightBar' ).insertBefore( d, ge( 'RightBar' ).firstChild );
 		
 		var f = new File( 'Progdir:Templates/toolbar.html' );
 		f.onLoad = function( data )
 		{
 			d.innerHTML = data;
-			if( window.innerWidth < 600 )
+			if( isMobile )
 			{
-				ge( 'zoom' ).style.display = 'none';
-				ge( 'zoomd' ).style.display = 'none';
+				var menuContents = ge( 'MobileMenu' ).getElementsByClassName( 'MenuContents' )[0];
+				ge( 'MobileMenu' ).classList.add( 'ScrollBarSmall', 'Button', 'ImageButton', 'IconSmall', 'fa-navicon' );
+				ge( 'MobileMenu' ).onclick = function()
+				{
+					if( this.classList.contains( 'Open' ) )
+					{
+						this.classList.remove( 'Open' );
+					}
+					else
+					{
+						this.classList.add( 'Open' );
+					}
+				}
+				
+				function _gtn( p, tags )
+				{
+					var eles = [];
+					for( var a = 0; a < tags.length; a++ )
+					{
+						var els = p.getElementsByTagName( tags[a] );
+						if( els.length )
+						{
+							var makeAr = [];
+							for( var b = 0; b < els.length; b++ )
+								makeAr.push( els[b] );
+							eles = eles.concat( makeAr );
+						}
+					}
+					return eles;
+				}
+				
+				var eles = _gtn( ge( 'MobileMenu' ), [ 'div', 'input', 'select' ] );
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( eles[a].title && eles[a].title.length )
+					{	
+						if( eles[a].style.display == 'none' ) continue;
+						var span = document.createElement( 'label' );
+						if( !eles[a].id )
+							eles[a].id = 'test_' + Math.floor( Math.random() * 100000 );
+						span.for = eles[a].id;
+						span.classList.add( 'PaddingSmall', 'MarginTop', 'PaddingTop' );
+						span.innerHTML = eles[a].title + ':';
+						span.ontouchstart = function( e )
+						{
+							return cancelBubble( e );
+						}
+						eles[a].parentNode.insertBefore( span, eles[a] );
+					}
+				}
 			}
 		}
 		f.i18n();
@@ -493,45 +1076,8 @@ Application.initializeToolbar = function()
 
 Application.initializeBody = function()
 {
-	var pageUrl = getImageUrl( 'Progdir:Gfx/page.png' );
-	// On click events for our toolbar
-	var f = document.getElementsByTagName( 'iframe' )[0];
-	f = f.contentWindow;
-	f.document.body.parentNode.style.background = '#444444';
-	f.document.body.parentNode.style.padding = '0';
-	f.document.body.parentNode.style.margin = '0';
-	f.document.body.style.position = 'relative';
-	f.document.body.style.backgroundColor = '#ffffff';
-	f.document.body.style.backgroundImage = 'url(' + pageUrl + ')';
-	f.document.body.style.backgroundSize = '595pt 842pt';
-	f.document.body.style.backgroundPosition = 'top left';
-	f.document.body.style.backgroundRepeat = 'repeat';
-	f.document.body.style.padding = '20pt 20pt';
-	f.document.body.style.borderRadius = '3px';
-	if( window.innerWidth < 600 )
-	{
-	}
-	else
-	{
-		f.document.body.style.width = '595pt';
-		f.document.body.style.minHeight = '842pt';
-	}
-	f.document.body.style.boxSizing = 'border-box';
-	f.document.body.style.margin = '20pt 0 20pt 0';
-	f.document.body.style.fontSize = '12pt';
-	f.document.body.style.color = 'black';
-	f.document.body.classList.add( 'activated' );
-	editorCommand( 'zoom100%', 'store' );
-	AddEvent( 'onmouseup', MyMouseListener, f );
-	AddEvent( 'onkeyup', MyKeyListener, f );
-	if( isMobile )
-	{
-		AddEvent( 'onblur', function( e )
-		{
-			ge( 'AuthorToolbar' ).className = 'BackgroundDefault ColorDefault BorderTop';
-			ge( 'cke_1_contents' ).className = '';
-		}, f );
-	}
+	AddEvent( 'onmouseup', MyMouseListener );
+	AddEvent( 'onkeyup', MyKeyListener );
 }
 
 var _repag = 0;
@@ -545,95 +1091,6 @@ function MyKeyListener( e )
 		return;
 	}
 	if( _repag ) return;
-	_repag = true;
-	
-	var f = document.getElementsByTagName( 'iframe' )[0];
-	f = f.contentWindow.document.body;
-	
-	if( !f.pageBreaks ) f.pageBreaks = [];
-	
-	var pages = Math.ceil( f.offsetHeight / _a4pageHeightPx );
-	_lastPageCnt = _pageCount;
-	_pageCount = pages;
-	var lastInd = 0;
-	
-	if( _lastPageCnt != _pageCount )
-	{
-		// Clear redundant!
-		var lastPage = false;
-		var o = [];
-		for( var a = 0; a < f.pageBreaks.length; a++ )
-		{
-			if( a > pages - 1 )
-			{
-				f.removeChild( f.pageBreaks[a] );
-			}
-			// Within scope!
-			else 
-			{
-				o.push( f.pageBreaks[a] );
-				lastInd = a;
-			}
-		}
-		
-		// No aproximate
-		var ph = Math.floor( pages * _a4pageHeightPx );
-		if( ph <= _a4pageHeightPx ) ph = _a4pageHeightPx;
-		f.style.minHeight = ph + 'px';
-		
-		
-		// Create new array with correct pages
-		f.pageBreaks = o;
-		if( f.pageBreaks.length )
-		{
-			lastPage = f.pageBreaks[f.pageBreaks.length-1];
-			if( lastPage && lastPage.parentNode != f )
-				lastPage = false;
-		}
-		
-		// Potentially add pages
-		for( var a = lastInd; a < pages; a++ )
-		{
-			var d = document.createElement( 'img' );
-			d.src = getImageUrl( 'Progdir:Gfx/pagebreak.png' );
-			d.style.width = '595pt';
-			d.style.height = '842pt';
-			d.style.margin = '0 0 0 -20pt';
-			d.style.float = 'left';
-			d.style.clear = 'both';
-			d.style.shapeOutside = 'url(' + getImageUrl( 'Progdir:Gfx/pagebreak.png' ) + ')';
-			d.style.shapeMargin = '0';
-			d.style.pointerEvents = 'none';
-			if( lastPage || f.firstChild && f.firstChild.parentNode == f )
-			{
-				f.insertBefore( d, lastPage ? lastPage : f.firstChild );
-			}
-			else
-			{
-				f.appendChild( d );
-			}
-			f.pageBreaks.push( d );
-			lastPage = d;
-		}
-		
-		// Fix the last page
-		if( f.pageBreaks.length )
-		{
-			if( lastPage != f.pageBreaks[f.pageBreaks.length-1] )
-				lastPage.src = getImageUrl( 'Progdir:Gfx/pagebreak.png' );
-			f.pageBreaks[f.pageBreaks.length-1].src = getImageUrl( 'Progdir:Gfx/pagebreaklast.png' );
-		}
-		
-		/*if( f.offsetHeight > ph )
-		{
-			// No aproximate
-			var ph = Math.floor( pages * _a4pageHeightPx );
-			if( ph <= _a4pageHeightPx ) ph = _a4pageHeightPx ;
-			f.style.minHeight = ph + 'px';
-		}*/
-		
-	}
-	_repag = false;
 }
 
 Application.setCurrentDocument = function( pth )
@@ -650,7 +1107,18 @@ Application.setCurrentDocument = function( pth )
 		fname = fname[fname.length-1];
 		this.fileName = fname;
 	}
+	
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
+	this.currentDocument = pth;
+	
+	// Store the path also for the browser
+	Application.browserPath = this.path;
+
+	// Update filebrowser
+	this.fileBrowser.setPath( this.path );
+	
+	
+	Application.refreshFilePane();
 	
 	this.sendMessage( {
 		command: 'currentfile',
@@ -659,9 +1127,14 @@ Application.setCurrentDocument = function( pth )
 	} );
 }
 
-Application.loadFile = function( path )
+Application.loadFile = function( path, cbk )
 {
-	ge( 'Status' ).innerHTML = i18n( 'i18n_status_loading' );
+	this.loading = true;
+	
+	Application.statusMessage( i18n( 'i18n_status_loading' ) );
+	
+	Application.lastSaved = ( new Date() ).getTime();
+	Application.fileSaved = true;
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
 	
@@ -675,16 +1148,15 @@ Application.loadFile = function( path )
 			m.onExecuted = function( e, data )
 			{
 				if( e == 'ok' )
-				{
-					Application.setCurrentDocument( path );
-					
-					ge( 'Status' ).innerHTML = 'Loaded';
-					CKEDITOR.instances.Editor.setData( data,
+				{					
+					Application.statusMessage( i18n( 'i18n_loaded' ) );
+					Application.editor.setData( data,
 						function()
 						{
 							Application.initializeBody();
 						}
 					);
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -694,21 +1166,15 @@ Application.loadFile = function( path )
 						scrollTop: 0
 					} );
 					
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 500 );
+					Application.setCurrentDocument( path );
 				}
+				
 				// We got an error...
 				else
 				{
-					ge( 'Status' ).innerHTML = i18n('i18n_failed_to_load_document');
-					
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 1000 );
+					Application.statusMessage( i18n('i18n_failed_to_load_document') );
 				}	
+				Application.loading = false
 			}
 			m.execute( 'convertfile', { path: path, format: 'html', returnData: true } );
 			break;
@@ -716,17 +1182,12 @@ Application.loadFile = function( path )
 			var f = new File( path );
 			f.onLoad = function( data )
 			{
-				ge( 'Status' ).innerHTML = i18n('i18n_loaded');
+				Application.statusMessage( i18n('i18n_loaded') );
 				
 				// Let's fix authid paths and sessionid paths
 				var m = false;
 				data = data.split( /authid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 				data = data.split( /sessionid\=[^&]+/i ).join ( 'authid=' + Application.authId );
-				
-				setTimeout( function()
-				{
-					ge( 'Status' ).innerHTML = '';
-				}, 500 );
 		
 				var bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
 				if( bdata && bdata[1] )
@@ -735,15 +1196,15 @@ Application.loadFile = function( path )
 					{
 						if( !num ) num = 0;
 						if( num > 2 ) return; // <- failed
-						var f = document.getElementsByTagName( 'iframe' )[0];
+						var f = Application.editor;
 						
 						// retry
-						if( !f || ( f && !f.contentWindow.document.body ) )
+						if( !f || ( f && !f.element ) )
 						{
 							return setTimeout( function(){ loader( num+1 ); }, 150 );
 						}
-						f.contentWindow.document.body.innerHTML = bdata[1];
-						f.contentWindow.document.body.style.overflow = 'auto';
+						Application.editor.setData( bdata[1] );
+						ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 						// Remember content and top scroll
 						Application.sendMessage( { 
@@ -752,6 +1213,10 @@ Application.loadFile = function( path )
 							path: path,
 							scrollTop: 0
 						} );
+						
+						Application.setCurrentDocument( path );
+						
+						if( cbk ) cbk();
 					}
 					loader();
 					
@@ -759,9 +1224,8 @@ Application.loadFile = function( path )
 				// This is not a compliant HTML document
 				else
 				{
-					var f = document.getElementsByTagName( 'iframe' )[0];
-					f.contentWindow.document.body.innerHTML = data;
-					f.contentWindow.document.body.style.overflow = 'auto';
+					Application.editor.setData( data );
+					ge( 'Printable' ).innerHTML = Application.editor.getData();
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -770,16 +1234,50 @@ Application.loadFile = function( path )
 						data: data,
 						scrollTop: 0
 					} );
+					
+					Application.refreshFilePane();
+					
+					if( cbk ) cbk();
 				}
+				Application.loading = false;
 			}
 			f.load();
 			break;
 	}
 }
 
+Application.statusMessage = function( msg )
+{
+	var s = ge( 'Status' );
+	if( s.timeout )
+	{
+		clearTimeout( s.timeout );
+		s.style.transition = '';
+		s.style.transform = 'translate3d(0,0,0)';
+	}
+	s.innerHTML = msg;
+	s.timeout = setTimeout( function()
+	{
+		s.style.transition = 'left,opacity 0.25s,0.25s';
+		s.style.transform = 'translate3d(0,0,0)';
+		s.style.opacity = 1;
+		s.timeout = setTimeout( function()
+		{
+			s.style.transform = 'translate3d(20px,0,0)';
+			s.style.opacity = 0;
+			s.timeout = setTimeout( function()
+			{
+				s.innerHTML = '';
+				s.style.transform = 'translate3d(0,0,0)';
+				s.style.opacity = 1;
+			}, 250 );
+		}, 250 );
+	}, 1000 );
+}
+
 Application.saveFile = function( path, content )
 {
-	ge( 'Status' ).innerHTML = i18n( 'i18n_status_saving' );
+	Application.statusMessage( i18n( 'i18n_status_saving' ) );
 	
 	var extension = path.split( '.' ); extension = extension[extension.length-1];
 	
@@ -789,28 +1287,25 @@ Application.saveFile = function( path, content )
 		case 'docx':
 		case 'odt':
 		case 'rtf':
-			ge( 'Status' ).innerHTML = i18n('i18n_converting');
+			Application.statusMessage( i18n('i18n_converting') );
 					
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, data )
 			{
 				if( e == 'ok' )
 				{
-					ge( 'Status' ).innerHTML = i18n('i18n_written');
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 500 );
+					Application.fileSaved = true;
+					Application.lastSaved = ( new Date() ).getTime();
+					Application.statusMessage( i18n('i18n_written') );
+					Application.currentDocument = path;
+					Application.refreshFilePane();
 				}
 				// We got an error...
 				else
 				{
-					ge( 'Status' ).innerHTML = data;
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 1000 );
+					Application.statusMessage( data );
 				}
+				Application.refreshFilePane();
 			}
 			m.execute( 'convertfile', { path: path, data: content, dataFormat: 'html', format: extension } );
 			break;
@@ -818,11 +1313,11 @@ Application.saveFile = function( path, content )
 			var f = new File();
 			f.onSave = function()
 			{
-				ge( 'Status' ).innerHTML = i18n('i18n_written');
-				setTimeout( function()
-				{
-					ge( 'Status' ).innerHTML = '';
-				}, 500 );
+				Application.fileSaved = true;
+				Application.lastSaved = ( new Date() ).getTime();
+				Application.statusMessage(  i18n('i18n_written') );
+				Application.currentDocument = path;
+				Application.refreshFilePane();
 			}
 			f.save( content, path );
 			break;
@@ -831,8 +1326,8 @@ Application.saveFile = function( path, content )
 	// Save state
 	Application.sendMessage( { 
 		command: 'remembercontent', 
-		data: CKEDITOR.instances.Editor.getData(),
-		scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+		data: Application.editor.getData(),
+		scrollTop: Application.editor.element.scrollTop
 	} );
 }
 
@@ -845,11 +1340,7 @@ Application.print = function( path, content, callback )
 	{
 		if( e == 'ok' )
 		{
-			ge( 'Status' ).innerHTML = i18n('i18n_print_ready');
-			setTimeout( function()
-			{
-				ge( 'Status' ).innerHTML = '';
-			}, 500 );
+			Application.statusMessage( i18n('i18n_print_ready') );
 			
 			v.close();
 			
@@ -861,11 +1352,7 @@ Application.print = function( path, content, callback )
 		// We got an error...
 		else
 		{
-			ge( 'Status' ).innerHTML = data;
-			setTimeout( function()
-			{
-				ge( 'Status' ).innerHTML = '';
-			}, 1000 );
+			Application.statusMessage( data );
 		}
 	}
 	m.execute( 'convertfile', { path: path, format: 'pdf' } );
@@ -873,15 +1360,17 @@ Application.print = function( path, content, callback )
 
 Application.newDocument = function( args )
 {
-	// So async!
-	var hasBodyOnFrame = document.getElementsByTagName( 'iframe' );
-	hasBodyOnFrame = hasBodyOnFrame.length ? hasBodyOnFrame[0] : false;
-	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.contentWindow;
-	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.document;
-	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.body;
-
+	// Don't make new document while loading..
+	if( this.loading )
+		return;
+	
+	this.fileSaved = false;
+	this.lastSaved = 0;
+	
+	var self = this;
+	
 	// Wait till ready
-	if( typeof( CKEDITOR ) == 'undefined' || !hasBodyOnFrame )
+	if( typeof( ClassicEditor ) == 'undefined' )
 	{
 		return setTimeout( function()
 		{
@@ -900,38 +1389,85 @@ Application.newDocument = function( args )
 		} );
 	}
 	
-	if( args.content )
+	if( args && args.content )
 	{
 		var f = document.getElementsByTagName( 'iframe' )[0];
-		f.contentWindow.document.body.innerHTML = args.content;
+		
+		
+		if( args.path )
+		{
+			this.setCurrentDocument( args.path );
+			this.lastSaved = ( new Date() ).getTime();
+		}
+		else
+		{
+			if( args.browserPath )
+			{
+				this.browserPath = args.browserPath;
+				this.path = args.browserPath;
+				if( !args.content )
+				{
+					this.fileBrowser.setPath( args.browserPath );
+				}
+			}
+		}
+		
+		if( Application.editor )
+		{
+			Application.editor.setData( args.content );
+		}
+		else
+		{
+			Application.loadedContentInQueue = args.content;
+		}
+
 		if( args.scrollTop )
 		{
 			setTimeout( function()
 			{
 				var i = document.getElementsByTagName( 'iframe' )[0];
-				i.contentWindow.document.body.scrollTop = args.scrollTop;
+				Application.editor.element.scrollTop = args.scrollTop;
 				Application.initializeBody();
 			}, 50 );
 		}
 	}
 	else
 	{
-		CKEDITOR.instances.Editor.setData( '', function()
-		{
-			Application.initializeBody();
+		// Blank document
+		Application.sendMessage( {
+			command: 'newdocument'
 		} );
+		
+		// TODO: Check why we have no editor
+		if( Application.editor )
+		{
+			Application.editor.setData( '', function()
+			{
+				Application.initializeBody();
+			} );
+		}
+		
+		if( args.browserPath )
+		{
+			this.browserPath = args.browserPath;
+			this.path = args.browserPath;
+			if( this.fileBrowser )
+			{
+				this.fileBrowser.setPath( args.browserPath );
+			}
+			// Try again
+			else
+			{
+				setTimeout( function()
+				{
+					if( self.fileBrowser )
+					{
+						self.fileBrowser.setPath( args.browserPath );
+					}
+				}, 5000 );
+			}
+		}
 	}
-}
-
-// TODO: This won't work
-Application.handleKeys = function( k, e )
-{
-	if( e.ctrlKey )
-	{
-		this.sendMessage( { command: 'keydown', key: k, ctrlKey: e.ctrlKey } );
-		return true;
-	}
-	return false;
 }
 
 // Do a meta search on all connected systems
@@ -953,8 +1489,7 @@ function ApplyStyle( styleObject, depth )
 	if( !styleElement )
 	{
 		styleElement = document.createElement( 'style' );
-		var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
-		d.getElementsByTagName( 'head' )[0].appendChild( styleElement );
+		// TODO: Add this
 	}
 	var style = '';
 	for( var a in styleObject )
@@ -1038,6 +1573,13 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'updateViewMode':
+			currentViewMode = msg.mode;
+			Application.updateViewMode();
+			break;
+		case 'mobilebackbutton':
+			Application.handleBack();
+			break;
 		case 'applystyle':
 			if( msg.style )
 			{
@@ -1045,9 +1587,7 @@ Application.receiveMessage = function( msg )
 			}
 			break;
 		case 'print_iframe':
-			var f = document.getElementsByTagName( 'iframe' )[0];
-			f.contentWindow.document.title = 'Document';
-			f.contentWindow.print();
+			window.print();
 			break;
 		case 'makeinlineimages':
 			/*var eles = ge( 'Editor' ).getElementsByTagName( 'img' );
@@ -1057,25 +1597,20 @@ Application.receiveMessage = function( msg )
 			}*/
 			break;
 		case 'insertimage':
-			/*var f = new File( msg.path );
-			f.onLoad = function( data )
-			{
-				var i = '<img src="data:image/jpeg;base64,' + Base64.encode( data ) + '"/>';
-				CKEDITOR.instances.Editor.insertHtml( i );
-			}
-			f.load();*/
-			var i = '<img src="' + getImageUrl( msg.path ) + '" width="100%" height="auto"/>';
-			//console.log( i );
-			CKEDITOR.instances.Editor.insertHtml( i );
+			const i = '<img src="' + getImageUrl( msg.path ) + '" width="100%" height="auto"/>';
+			const viewFragment = Application.editor.data.processor.toView( i );
+			const modelFragment = Application.editor.data.toModel( viewFragment );
+			Application.editor.model.insertContent( modelFragment );
 			break;
 		case 'loadfiles':
 			for( var a = 0; a < msg.files.length; a++ )
 			{
 				this.loadFile( msg.files[a].Path );
+				break;
 			}
 			break;
 		case 'print':
-			this.print( msg.path, '<!doctype html><html><head><title></title></head><body>' + CKEDITOR.instances.Editor.getData() + '</body></html>', function( data )
+			this.print( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>', function( data )
 			{
 				var w = new View( {
 					title: i18n('i18n_print_preview') + ' ' + msg.path,
@@ -1086,13 +1621,14 @@ Application.receiveMessage = function( msg )
 			} );
 			break;
 		case 'savefile':
-			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + CKEDITOR.instances.Editor.getData() + '</body></html>' );
+			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>' );
 			break;
 		case 'newdocument':
 			var o = {
 				content: msg.content ? msg.content : '', 
 				scrollTop: msg.scrollTop >= 0 ? msg.scrollTop : 0,
-				path: msg.path ? msg.path : ''
+				path: msg.path ? msg.path : '',
+				browserPath: msg.browserPath ? msg.browserPath : false
 			};
 			this.newDocument( o );
 			break;
@@ -1110,16 +1646,18 @@ Application.receiveMessage = function( msg )
 	}
 }
 
-// FROM DOCU: FCKeditorAPI.GetInstance('data').Commands.GetCommand('Bold').GetState()
-
 // Set some styles
 function editorCommand( command, value )
 {
-	var f = document.getElementsByTagName( 'iframe' )[0];
-	f = f.contentWindow.document;
-	var editor = CKEDITOR.instances.Editor;
+	var editor = Application.editor;
+	
+	var f = {};
+	f.execCommand = function( cmd, val )
+	{
+		return Application.editor.execute( cmd, val ? { value: val } : false );
+	}
+
 	var defWidth = 640;
-	var ed = ge( 'cke_1_contents' );
 	
 	if( command.substr( 0, 4 ) == 'zoom' )
 	{
@@ -1144,182 +1682,73 @@ function editorCommand( command, value )
 	}
 	else if( command == 'olbullets' )
 	{
-		f.execCommand( 'insertOrderedList', false, false );
+		f.execCommand( 'bulletedList', false, false );
 	}
 	else if( command == 'ulbullets' )
 	{
-		f.execCommand( 'insertUnorderedList', false, false );
+		f.execCommand( 'numberedList', false, false );
 	}
 	else if( command == 'align-left' )
 	{
-		f.execCommand( 'justifyLeft', false, false );
+		f.execCommand( 'alignment', 'left', false );
 	}
 	else if( command == 'align-right' )
 	{
-		f.execCommand( 'justifyRight', false, false );
+		f.execCommand( 'alignment', 'right', false );
 	}
 	else if( command == 'align-center' )
 	{
-		f.execCommand( 'justifyCenter', false, false );
+		f.execCommand( 'alignment', 'center', false );
 	}
 	else if( command == 'align-justify' )
 	{
-		f.execCommand( 'justifyFull', false, false );
+		f.execCommand( 'alignment', 'justify', false );
 	}
-	else if( command == 'line-height' )
+	else if( command == 'fontType' )
+	{
+		f.execCommand( 'fontFamily', value, false );
+	}
+	/*else if( command == 'line-height' )
 	{
 		var st = !Application.elementHasLineHeight ? '2em' : '';
 		var s = new CKEDITOR.style( { attributes: { style: 'line-height: ' + st } } );
 		editor.applyStyle( s );
-	}
-	else if( command == 'formath1' )
-	{
-		var s = new CKEDITOR.style( { element: 'h1' } );
-		editor.applyStyle( s );
-	}
+	}*/
 	else if( command == 'formath2' )
 	{
-		var s = new CKEDITOR.style( { element: 'h2' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading1' );
 	}
 	else if( command == 'formath3' )
 	{
-		var s = new CKEDITOR.style( { element: 'h3' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading2' );
 	}
 	else if( command == 'formath4' )
 	{
-		var s = new CKEDITOR.style( { element: 'h4' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading3' );
 	}
 	else if( command == 'formath5' )
 	{
-		var s = new CKEDITOR.style( { element: 'h5' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading4' );
 	}
 	else if( command == 'formath6' )
 	{
-		var s = new CKEDITOR.style( { element: 'h6' } );
-		editor.applyStyle( s );
+		f.execCommand( 'heading', 'heading5' );
 	}
 	else if( command == 'formatp' )
 	{
-		var s = new CKEDITOR.style( { element: 'p' } );
-		editor.applyStyle( s );
+		f.execCommand( 'removeformat', false, false );
 	}
 	else if( command == 'formatdefault' )
 	{
 		f.execCommand( 'removeformat', false, false );
 	}
-	/*else if( command == 'zoom30%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.3;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom40%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.4;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom50%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.5;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom60%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.6;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}*/
-	else if( command == 'zoom75%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth ) + 'px';
-			f.body.style.zoom = 0.75;
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}/*
-	else if( command == 'zoom80%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.8;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom90%' )
-	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.9;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}*/
-	else if( command == 'zoom100%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth ) + 'px';
-			f.body.style.zoom = 1;
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'zoom125%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth * 1.25 ) + 'px';
-			f.body.style.zoom = 1.25;
-			var c = Math.floor( defWidth * 1.25 * 0.5 );
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'zoom150%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth * 1.5 ) + 'px';
-			f.body.style.zoom = 1.5;
-			var c = Math.floor( defWidth * 1.5 * 0.5 );
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'zoom200%' )
-	{
-		if( window.innerWidth >= 600 )
-		{
-			ed.style.width = Math.floor( defWidth * 2 ) + 'px';
-			f.body.style.zoom = 2;
-			var c = Math.floor( defWidth * 2 * 0.5 );
-			f.body.style.left = 'calc(50% - 297.5pt)';
-		}
-	}
-	else if( command == 'staticWidth' )
-	{
-		ed.style.width = '100%';
-		f.body.style.width = 'calc(100% - 40px)';
-		f.body.style.left = '20px';
-		//console.log( 'We are using static width!' );
-	}
-	else if( command == 'dynamicWidth' )
-	{
-		var z = Application.sessionObject.currentZoom;
-		ed.style.width = Math.floor( defWidth * z ) + 'px';
-		f.body.style.zoom = z;
-		var c = Math.floor( defWidth * z * 0.5 );
-		f.body.style.left = 'calc(50% - 297.5pt)';
-		f.body.style.width = '595pt'; // default
-	}
 	else if( command == 'fontType' )
 	{
-		var s = new CKEDITOR.style( { attributes: { 'style': 'font-family: ' + value } } );
-		editor.applyStyle( s );
+		f.execCommand( 'fontFamily', value, false );
 	}
 	else if( command == 'fontSize' )
 	{
-		var s = new CKEDITOR.style( { attributes: { 'style': 'font-size: ' + value } } );
-		editor.applyStyle( s );
+		f.execCommand( 'fontSize', value, false );
 	}
 }
 

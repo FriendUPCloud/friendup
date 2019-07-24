@@ -94,6 +94,8 @@ i18n_unmount_disk                    : Odmontuj dysk
 i18_account2                         : Konto
 i18n_settings_saved                  : Ustawienia zapisane
 
+i18n_admin_managed_drive             : This drive is managed by your administrator.
+
 i18n_key_password_confirm            : Potwierdź hasło
 i18n_pass_mis_desc                   : Hasła muszą się zgadzać.
 i18n_password_mismatch               : Hasła różnią się!

@@ -178,11 +178,11 @@ local void unz64local_DosDateToTmuDate (ZPOS64_T ulDosDate, tm_unz* ptm)
     ptm->tm_sec  = (uInt)(2*(ulDosDate&0x1f));
 
 #define unz64local_in_range(min, max, value) ((min) <= (value) && (value) <= (max))
-    if (!unz64local_in_range(0, 11, ptm->tm_mon) ||
+    if (!unz64local_in_range(0, 11, (int)ptm->tm_mon) ||
         !unz64local_in_range(1, 31, ptm->tm_mday) ||
-        !unz64local_in_range(0, 23, ptm->tm_hour) ||
-        !unz64local_in_range(0, 59, ptm->tm_min) ||
-        !unz64local_in_range(0, 59, ptm->tm_sec))
+        !unz64local_in_range(0, 23, (int)ptm->tm_hour) ||
+        !unz64local_in_range(0, 59, (int)ptm->tm_min) ||
+        !unz64local_in_range(0, 59, (int)ptm->tm_sec))
       /* Invalid date stored, so don't return it. */
       memset(ptm, 0, sizeof(tm_unz));
 #undef unz64local_in_range
@@ -405,9 +405,13 @@ local unzFile unzOpenInternal(const void *path, zlib_filefunc64_32_def* pzlib_fi
     us.z_filefunc.zseek32_file = NULL;
     us.z_filefunc.ztell32_file = NULL;
     if (pzlib_filefunc64_32_def == NULL)
+	{
         fill_fopen64_filefunc(&us.z_filefunc.zfile_func64);
+	}
     else
+	{
         us.z_filefunc = *pzlib_filefunc64_32_def;
+	}
 
 	us.filestream = ZOPEN64(us.z_filefunc, path, ZLIB_FILEFUNC_MODE_READ | ZLIB_FILEFUNC_MODE_EXISTING);
 
@@ -417,15 +421,15 @@ local unzFile unzOpenInternal(const void *path, zlib_filefunc64_32_def* pzlib_fi
 		return NULL;
 	}
 
-    us.filestream_with_CD = us.filestream;
-    us.isZip64 = 0;
+	us.filestream_with_CD = us.filestream;
+	us.isZip64 = 0;
 
-    /* Use unz64local_SearchCentralDir first. Only based on the result
-       is it necessary to locate the unz64local_SearchCentralDir64 */
-    central_pos = unz64local_SearchCentralDir(&us.z_filefunc, us.filestream);
-    if (central_pos)
-    {
-        if (ZSEEK64(us.z_filefunc, us.filestream, central_pos, ZLIB_FILEFUNC_SEEK_SET) != 0)
+	/* Use unz64local_SearchCentralDir first. Only based on the result
+		is it necessary to locate the unz64local_SearchCentralDir64 */
+	central_pos = unz64local_SearchCentralDir(&us.z_filefunc, us.filestream);
+	if (central_pos)
+	{
+		if (ZSEEK64(us.z_filefunc, us.filestream, central_pos, ZLIB_FILEFUNC_SEEK_SET) != 0)
             err = UNZ_ERRNO;
 
         /* the signature, already checked */

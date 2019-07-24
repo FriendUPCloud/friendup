@@ -70,7 +70,7 @@ void ListStringDelete( ListString *ls )
 FLONG ListStringAdd( ListString *ls, char *data, FLONG size )
 {
 	ListString *nls = FCalloc( 1, sizeof( ListString ) );
-	if( nls != NULL )
+	if( ls != NULL && size > 0 && nls != NULL )
 	{
 		if( ( nls->ls_Data = FCalloc( size + 1, sizeof( char ) ) ) != NULL )
 		{

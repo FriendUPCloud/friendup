@@ -76,7 +76,7 @@ int64_t DataFormWriteGroup( FBYTE **data, MsgItem **mi )
 				}
 				else
 				{
-					if( (*mi)->mi_Size > 0 && (*mi)->mi_Data != NULL )
+					if( (*mi)->mi_Size > 0 && (*mi)->mi_Data != 0 ) // != 0 before
 					{
 						//INFO("STORE DATA %ld  entry size %ld  TEXT %.100s\n", res, (*mi)->mi_Size,(char *)((*mi)->mi_Data ) );
 						memcpy( (void *)(*data), (const void *)((*mi)->mi_Data), (*mi)->mi_Size );

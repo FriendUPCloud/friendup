@@ -73,30 +73,41 @@ int UserInit( User *u )
  */
 int UserAddSession( User *usr, void *ls )
 {
+	if( usr == NULL || ls == NULL )
+	{
+		FERROR("User %p or session %p are empty\n", usr, ls );
+		return 1;
+	}
 	UserSession *s = (UserSession *)ls;
 	UserSessListEntry *us = NULL;
 	
-	UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
-	while( exses != NULL )
+	if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 	{
-		if( exses->us == ls )
+		UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
+		while( exses != NULL )
 		{
-			DEBUG("Session was already added to user\n");
-			return 0;
+			if( exses != NULL && exses->us == ls )
+			{
+				DEBUG("Session was already added to user\n");
+				FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+				return 0;
+			}
+			exses = (UserSessListEntry *) exses->node.mln_Succ;
 		}
-		exses = (UserSessListEntry *) exses->node.mln_Succ;
-	}
 	
-	if( ( us = FCalloc( 1, sizeof( UserSessListEntry ) ) ) != NULL )
-	{
-		us->us = s;
-		s->us_User = usr;	// assign user to session
-		s->us_UserID = usr->u_ID;
+		if( ( us = FCalloc( 1, sizeof( UserSessListEntry ) ) ) != NULL )
+		{
+			us->us = s;
+			s->us_User = usr;	// assign user to session
+			s->us_UserID = usr->u_ID;
 		
-		us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
-		usr->u_SessionsList = us;
+			us->node.mln_Succ = (MinNode *)usr->u_SessionsList;
+			usr->u_SessionsList = us;
+			DEBUG("LIST OVERWRITEN: %p\n", usr->u_SessionsList );
 		
-		usr->u_SessionsNr++;
+			usr->u_SessionsNr++;
+		}
+		FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 	}
 	
 	return 0;
@@ -117,61 +128,53 @@ void UserRemoveSession( User *usr, void *ls )
 		return;
 	}
 	
-	FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
-	
-	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
-	UserSessListEntry *prev = us;
-	FBOOL removed = FALSE;
-	
-	if( us != NULL )
+	if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 	{
-		// first entry
-		if( remses == us->us )
+		UserSessListEntry *actus = (UserSessListEntry *)usr->u_SessionsList;
+		UserSessListEntry *prevus = actus;
+		FBOOL removed = FALSE;
+	
+		if( usr->u_SessionsList != NULL )
 		{
-			usr->u_SessionsList = (UserSessListEntry *) us->node.mln_Succ;
-			if( usr->u_SessionsList != NULL )
+			if( usr->u_SessionsList->us == remses )
 			{
-				usr->u_SessionsList->node.mln_Pred = NULL;
-			}
-			
-			usr->u_SessionsNr--;
-			removed = TRUE;
-		}
-		else
-		{
-			prev = us;
-			us = (UserSessListEntry *)us->node.mln_Succ;
-			
-			while( us != NULL )
-			{
-				if( remses == us->us )
+				usr->u_SessionsList = (UserSessListEntry *)usr->u_SessionsList->node.mln_Succ;
+				if( prevus != NULL )
 				{
-					prev->node.mln_Succ = (MinNode *)us->node.mln_Succ;
-					UserSessListEntry *nexts = (UserSessListEntry *)us->node.mln_Succ;
-					if( nexts != NULL )
-					{
-						nexts->node.mln_Pred = (MinNode *)prev;
-					}
-					usr->u_SessionsNr--;
-					removed = TRUE;
-					break;
+					FFree( actus );
 				}
-				
-				prev = us;
-				us = (UserSessListEntry *)us->node.mln_Succ;
+			}
+			else
+			{
+				while( actus != NULL )
+				{
+					prevus = actus;
+					actus = (UserSessListEntry *)actus->node.mln_Succ;
+			
+					if( actus != NULL && actus->us == remses )
+					{
+						prevus->node.mln_Succ = actus->node.mln_Succ;
+					
+						usr->u_SessionsNr--;
+						removed = TRUE;
+					
+						if( prevus != NULL )
+						{
+							FFree( actus );
+						}
+						break;
+					}
+				}
 			}
 		}
 		
-		if( us != NULL )
+		if( usr->u_SessionsNr <= 0 )
 		{
-			if( usr->u_SessionsNr <= 0 )
-			{
-				usr->u_SessionsList = NULL;
-			}
-			FFree( us );
+			usr->u_SessionsList = NULL;
 		}
+		
+		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 }
 
 /**
@@ -184,84 +187,80 @@ void UserDelete( User *usr )
 	if( usr != NULL )
 	{
 		int i;
-		FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
-		
-		if( usr->u_Printers != NULL )
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
-			usr->u_Printers = PrinterDeleteAll( usr->u_Printers );
-		}
+			if( usr->u_Printers != NULL )
+			{
+				usr->u_Printers = PrinterDeleteAll( usr->u_Printers );
+			}
 		
-		if( usr->u_Applications != NULL )
-		{
-			UserAppDeleteAll( usr->u_Applications );
-			usr->u_Applications = NULL;
-		}
+			if( usr->u_Applications != NULL )
+			{
+				UserAppDeleteAll( usr->u_Applications );
+				usr->u_Applications = NULL;
+			}
 		
-		if( usr->u_FileCache != NULL )
-		{
-			CacheUserFilesDelete( usr->u_FileCache );
-			usr->u_FileCache = NULL;
-		}
+			if( usr->u_FileCache != NULL )
+			{
+				CacheUserFilesDelete( usr->u_FileCache );
+				usr->u_FileCache = NULL;
+			}
 		
-		// remove all sessions connected to user
+			// remove all sessions connected to user
 		
-		UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
-		UserSessListEntry *delus = us;
-		while( us != NULL )
-		{
-			delus = us;
-			us = (UserSessListEntry *)us->node.mln_Succ;
+			UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+			UserSessListEntry *delus = us;
+			while( us != NULL )
+			{
+				delus = us;
+				us = (UserSessListEntry *)us->node.mln_Succ;
 			
-			FFree( delus );
+				FFree( delus );
+			}
+			usr->u_SessionsList = NULL;
+		
+			// remove all remote users and drives
+		
+			RemoteUserDeleteAll( usr->u_RemoteUsers );
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		}
-		usr->u_SessionsList = NULL;
-		
-		// remove all remote users and drives
-		
-		RemoteUserDeleteAll( usr->u_RemoteUsers );
-		
-		for( i=0 ; i < usr->u_GroupsNr ; i++ )
+			
+		UserGroupLink *ugl = usr->u_UserGroupLinks;
+		while( ugl != NULL )
+		//for( i=0 ; i < usr->u_GroupsNr ; i++ )
 		{
-			UserGroupRemoveUser( usr->u_Groups[ i ], usr );
+			UserGroupLink *n = (UserGroupLink *)ugl->node.mln_Succ;
+			//UserGroupRemoveUser( usr->u_Groups[i], usr );
+			UserGroupRemoveUser( ugl->ugl_Group, usr );
+			ugl = n;
 		}
 
+		UserDeleteGroupLinkAll( usr->u_UserGroupLinks );
+		usr->u_UserGroupLinks = NULL;
+		/*
 		if( usr->u_Groups != NULL )
 		{
 			FFree( usr->u_Groups );
 			usr->u_Groups = NULL;
 		}
+		*/
 		
-		if( usr->u_Email )
+		if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
 		{
-			FFree( usr->u_Email );
-		}
+			if( usr->u_Email ){ FFree( usr->u_Email );}
 		
-		if( usr->u_FullName )
-		{
-			FFree( usr->u_FullName );
-		}
+			if( usr->u_FullName ){ FFree( usr->u_FullName );}
 		
-		if( usr->u_Name )
-		{
-			FFree( usr->u_Name );
-		}
+			if( usr->u_Name ){ FFree( usr->u_Name );}
 		
-		if( usr->u_Password )
-		{
-			FFree( usr->u_Password );
-		}
+			if( usr->u_Password ){ FFree( usr->u_Password );}
 		
-		if( usr->u_MainSessionID )
-		{
-			FFree( usr->u_MainSessionID );
-		}
+			if( usr->u_MainSessionID ){ FFree( usr->u_MainSessionID );}
 		
-		if( usr->u_UUID )
-		{
-			FFree( usr->u_UUID );
-		}
+			if( usr->u_UUID ){ FFree( usr->u_UUID );}
 		
-		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+		}
 		
 		pthread_mutex_destroy( &(usr->u_Mutex) );
 		
@@ -301,31 +300,36 @@ int UserAddDevice( User *usr, File *file )
 {
 	if( usr != NULL && file != NULL )
 	{
-		File *lfile = usr->u_MountedDevs;
-		
-		while( lfile != NULL )
+		if( FRIEND_MUTEX_LOCK(&usr->u_Mutex) == 0 )
 		{
-			if( file->f_ID == lfile->f_ID )
+			File *lfile = usr->u_MountedDevs;
+		
+			while( lfile != NULL )
 			{
-				DEBUG("Device is already in the list\n");
-				return 2;
+				if( file->f_ID == lfile->f_ID )
+				{
+					DEBUG("Device is already in the list\n");
+					FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
+					return 2;
+				}
+				lfile = (File *)lfile->node.mln_Succ;
 			}
-			lfile = (File *)lfile->node.mln_Succ;
-		}
 		
-		lfile = usr->u_MountedDevs;
-		// Without macro
-		if( usr->u_MountedDevs != NULL )
-		{
-			usr->u_MountedDevs = file;
-			lfile->node.mln_Pred = (MinNode *)file;
-			file->node.mln_Succ = (MinNode *)lfile;
+			lfile = usr->u_MountedDevs;
+			// Without macro
+			if( usr->u_MountedDevs != NULL )
+			{
+				usr->u_MountedDevs = file;
+				lfile->node.mln_Pred = (MinNode *)file;
+				file->node.mln_Succ = (MinNode *)lfile;
+			}
+			else
+			{
+				usr->u_MountedDevs = file;
+			}
+			usr->u_MountedDevsNr++;
+			FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 		}
-		else
-		{
-			usr->u_MountedDevs = file;
-		}
-		usr->u_MountedDevsNr++;
 	}
 	else
 	{
@@ -347,26 +351,26 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 {
 	if( usr != NULL && name != NULL )
 	{
-		File *lf = usr->u_MountedDevs;
-		File *lastone = NULL;
 		File *remdev = NULL;
-		if( lf == NULL )
+		File *lastone = NULL;
+		
+		if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
 		{
-			FERROR( "[UserRemDeviceByName] Seems we have NO mounted devs for user %s!\n", usr->u_Name );
-			return NULL;
-		}
-
-		while( lf != NULL )
-		{
-			DEBUG( "[UserRemDeviceByName] Checking fs in list %s == %s...\n", lf->f_Name, name );
-			if( strcmp( lf->f_Name, name ) == 0 )
+			File *lf = usr->u_MountedDevs;
+			
+			while( lf != NULL )
 			{
-				DEBUG( "[UserRemDeviceByName] Found one (%s == %s)\n", lf->f_Name, name );
-				remdev = lf;
-				break;
+				DEBUG( "[UserRemDeviceByName] Checking fs in list %s == %s...\n", lf->f_Name, name );
+				if( strcmp( lf->f_Name, name ) == 0 )
+				{
+					DEBUG( "[UserRemDeviceByName] Found one (%s == %s)\n", lf->f_Name, name );
+					remdev = lf;
+					break;
+				}
+				lastone = lf;
+				lf = (File *)lf->node.mln_Succ;
 			}
-			lastone = lf;
-			lf = (File *)lf->node.mln_Succ;
+			FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 		}
 		
 		if( remdev != NULL )
@@ -374,27 +378,31 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 			if( remdev->f_Operations <= 0 )
 			{
 				DEBUG("[UserRemDeviceByName] Remove device from list\n");
-				usr->u_MountedDevsNr--;
+				
+				if( FRIEND_MUTEX_LOCK( &usr->u_Mutex ) == 0 )
+				{
+					usr->u_MountedDevsNr--;
 			
-				if( usr->u_MountedDevs == remdev )		// checking if its our first entry
-				{
-					File *next = (File*)remdev->node.mln_Succ;
-					usr->u_MountedDevs = (File *)next;
-					if( next != NULL )
+					if( usr->u_MountedDevs == remdev )		// checking if its our first entry
 					{
-						next->node.mln_Pred = NULL;
+						File *next = (File*)remdev->node.mln_Succ;
+						usr->u_MountedDevs = (File *)next;
+						if( next != NULL )
+						{
+							next->node.mln_Pred = NULL;
+						}
 					}
-				}
-				else
-				{
-					File *next = (File *)remdev->node.mln_Succ;
-					//next->node.mln_Pred = (struct MinNode *)prev;
-					if( lastone != NULL )
+					else
 					{
-						lastone->node.mln_Succ = (struct MinNode *)next;
+						File *next = (File *)remdev->node.mln_Succ;
+						//next->node.mln_Pred = (struct MinNode *)prev;
+						if( lastone != NULL )
+						{
+							lastone->node.mln_Succ = (struct MinNode *)next;
+						}
 					}
+					FRIEND_MUTEX_UNLOCK(&usr->u_Mutex);
 				}
-
 				return remdev;
 			}
 			else
@@ -471,3 +479,96 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 	return 0;
 }
 
+/**
+ * Delete UserGRoupLinkEntry
+ *
+ * @param ugl pointer to UserGroupLink
+ */
+
+void UserDeleteGroupLink( UserGroupLink *ugl )
+{
+	if( ugl != NULL )
+	{
+		FFree( ugl );
+	}
+}
+
+/**
+ * Delete All UserGRoupLinkEntry's
+ *
+ * @param ugl pointer to UserGroupLink root entry
+ */
+void UserDeleteGroupLinkAll( UserGroupLink *ugl )
+{
+	while( ugl != NULL )
+	{
+		UserGroupLink *re = ugl;
+		ugl = (UserGroupLink *)ugl->node.mln_Succ;
+		
+		UserDeleteGroupLink( re );
+	}
+}
+
+/**
+ * Remove user from all groups
+ * 
+ * @param u pointer to User
+ */
+
+void UserRemoveFromGroups( User *u )
+{
+	if( u == NULL )
+	{
+		return;
+	}
+	
+	DEBUG("[UserRemoveFromGroups] remove start\n");
+	// remove user from group first
+	/*
+	UserGroupLink *ugl = u->u_UserGroupLinks;
+	while( ugl != NULL )
+	{
+		if( ugl->ugl_Group != NULL )
+		{
+			if( FRIEND_MUTEX_LOCK( &ugl->ugl_Group->ug_Mutex ) == 0 )
+			{
+				GroupUserLink *au = ugl->ugl_Group->ug_UserList;
+				GroupUserLink *auprev = ugl->ugl_Group->ug_UserList;
+	
+				while( au != NULL )
+				{
+					// user is added, no need to add it second time
+					if( au->ugau_User != NULL && u == au->ugau_User )
+					{
+						if( au == ugl->ugl_Group->ug_UserList )
+						{
+							ugl->ugl_Group->ug_UserList = (GroupUserLink *) au->node.mln_Succ;
+						}
+						else
+						{
+							auprev->node.mln_Succ = au->node.mln_Succ;
+						}
+						FFree( au );
+						break;
+					}
+
+					auprev = au;
+					au = (GroupUserLink *)au->node.mln_Succ;
+				}
+				FRIEND_MUTEX_UNLOCK( &ugl->ugl_Group->ug_Mutex );
+			}
+		}
+		ugl = (UserGroupLink *)ugl->node.mln_Succ;
+	}
+	*/
+	
+	DEBUG("[UserRemoveFromGroups] remove before links delete\n");
+	// remove all links to group
+	if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
+	{
+		UserDeleteGroupLinkAll( u->u_UserGroupLinks );
+		u->u_UserGroupLinks = NULL;
+		FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
+	}
+	DEBUG("[UserRemoveFromGroups] remove end\n");
+}

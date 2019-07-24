@@ -10,21 +10,26 @@
 
 Application.run = function( msg, iface )
 {
+	var nd = new Library( 'system.library' );
+	nd.execute( 'file/makedir', { path: 'Home:Documents' } );
+	
 	var w = new View( {
-		'title'     : 'Author',
-		'width'     : 960,
-		'height'    : 600,
-		'min-width' : 640,
-		'min-height': 400,
+		'title'     : 'Author - BETA',
+		'width'     : 1290,
+		'height'    : 800,
+		'min-width' : 700,
+		'min-height': 400
 	} );
 	
 	this.mainView = w;
 	
-	w.onClose = function()
+	w.onClose = function( closeWindow )
 	{
 		Application.quit();
+		return false;
 	}
 	
+	// Set up the main menu items ----------------------------------------------
 	w.setMenuItems( [
 		{
 			name: i18n( 'menu_file' ),
@@ -49,10 +54,10 @@ Application.run = function( msg, iface )
 					name: i18n( 'menu_print' ),
 					command: 'print'
 				},
-				{
+				/*{
 					name: i18n( 'menu_print_remote' ),
 					command: 'print_remote'
-				},
+				},*/
 				{
 					name: i18n( 'menu_quit' ),
 					command: 'quit'
@@ -78,11 +83,11 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_preferences' ),
 					command: 'showprefs'
-				},
+				}/*,
 				{
 					name: i18n( 'menu_vr_features' ),
 					command: 'togglevr'
-				}
+				}*/
 			]
 		}
 	] );
@@ -97,46 +102,56 @@ Application.run = function( msg, iface )
 	{
 		w.setContent( data, function()
 		{
+			// Open by path ----------------------------------------------------
 			if( msg.args && typeof( msg.args ) != 'undefined' )
 			{
-				//console.log( 'What happens: ', msg.args );
 				w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
 			}
+			// We have a session object ----------------------------------------
 			else if( Application.sessionObject && Application.sessionObject.content )
+			{
+				// Load previously active document -----------------------------
+				if( Application.sessionObject.currentDocument )
+				{
+					w.sendMessage( { command: 'loadfiles', files: [ { Path: Application.sessionObject.currentDocument } ] } );
+				}
+				else
+				{
+					// Create instead a new document with content from session -----
+					var msng = { 
+						command: 'newdocument',
+						content: Application.sessionObject.content,
+						scrollTop: Application.sessionObject.scrollTop,
+						browserPath: 'Home:Notes/'
+					};
+					w.sendMessage( msng );
+				}
+			}
+			// Create a new, empty document ------------------------------------
+			else
 			{
 				w.sendMessage( { 
 					command: 'newdocument',
-					content: Application.sessionObject.content, 
-					path: Application.sessionObject.currentDocument,
-					scrollTop: Application.sessionObject.scrollTop 
+					content: '',
+					browserPath: 'Home:Notes/'
 				} );
-				
-				if( Application.sessionObject.currentDocument )
-					Application.wholeFilename = Application.sessionObject.currentDocument;
-				
-				if( Application.sessionObject.currentDocument )
-				{
-					Application.mainView.setFlag( 'title', 'Author - ' + Application.sessionObject.currentDocument );
-				}
+				Application.wholeFilename = false;
 			}
+			Application.setCorrectTitle();
 		} );
 	}
 	f.load();
-	
-	/*var noti = new View( { title: 'Notice', width: 300, height: 300 } );
-	var cf = new File( 'Progdir:Templates/notice.html' );
-	cf.onLoad = function( data )
-	{
-		noti.setContent( data );
-	}
-	cf.load();*/
 }
 
-// Return the current state of the application
+// Return the current state of the application (overloaded function)
 Application.sessionStateGet = function()
 {
 	if( this.sessionObject && this.sessionObject.content )
 	{
+		if( !this.sessionObject.currentDocument )
+		{
+			this.sessionObject.currentDocument = this.wholeFilename;
+		}
 		return JSON.stringify( {
 			currentDocument: this.wholeFilename,
 			content: this.sessionObject.content,
@@ -177,7 +192,6 @@ Application.handleKeys = function( k, e )
 			this.closeFile();
 			return true;
 		}
-		//console.log( k );
 	}
 	return false;
 }
@@ -224,31 +238,42 @@ Application.print = function()
 Application.load = function()
 {
 	if( this.fileDialog ) return;
-	var f = new Filedialog( this.mainView, function( arr )
-	{
-		if( arr )
+	
+	var flags = {
+		multiSelect: false,
+		suffix: 'html',
+		triggerFunction: function( arr )
 		{
-			Application.mainView.sendMessage( {
-				command: 'loadfiles',
-				files: arr
-			} );
-			Application.wholeFilename = arr[0].Path;
-			Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
-		}
-		Application.fileDialog = false;
-	}, false, 'load' );
+			if( arr )
+			{
+				Application.mainView.sendMessage( {
+					command: 'loadfiles',
+					files: arr
+				} );
+				Application.wholeFilename = arr[0].Path;
+				Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
+			}
+			Application.fileDialog = false;
+		},
+		path: false,
+		mainView: this.mainView,
+		type: 'load',
+		suffix: [ 'html', 'htm' ]	
+	};
+	
+	var f = new Filedialog( flags );
 	this.fileDialog = f;
 }
 
-Application.saveAs = function(_)
+Application.saveAs = function()
 {
 	this.prevFilename = this.wholeFilename;
 	this.wholeFilename = false;
-	this.save();
+	this.save( 'saveas' );
 }
 
 // Saves current file
-Application.save = function()
+Application.save = function( mode )
 {
 	if( this.wholeFilename )
 	{
@@ -259,27 +284,35 @@ Application.save = function()
 	}
 	else
 	{
-		var f = new Filedialog( this.mainView, function( fname )
-		{
-			if( !fname || !fname.length )
+		var flags = {
+			type: 'save',
+			triggerFunction: function( fname )
 			{
-				if( Application.prevFilename )
+				if( !fname || !fname.length )
 				{
-					Application.wholeFilename = Application.prevFilename;
-					Application.prevFilename = false;
+					if( Application.prevFilename )
+					{
+						Application.wholeFilename = Application.prevFilename;
+						Application.prevFilename = false;
+					}
+					return;
 				}
-				return;
-			}
 				
-			if( fname.indexOf( '.' ) < 0 )
-				fname += '.html';
-			Application.mainView.sendMessage( {
-				command: 'savefile',
-				path: fname
-			} );
-			Application.wholeFilename = fname;
-			Application.mainView.setFlag( 'title', 'Author - ' + fname );
-		}, '', 'save' );
+				if( fname.indexOf( '.' ) < 0 )
+					fname += '.html';
+				Application.mainView.sendMessage( {
+					command: 'savefile',
+					path: fname
+				} );
+				Application.wholeFilename = fname;
+				Application.mainView.setFlag( 'title', 'Author - ' + fname );
+			},
+			mainView: this.mainView,
+			title: mode == 'saveas' ? i18n( 'i18n_save_as' ) : i18n( 'i18n_save' ),
+			suffix: [ 'html', 'htm' ]
+		};
+	
+		var f = new Filedialog( flags );
 	}
 }
 
@@ -293,7 +326,10 @@ Application.insertImage = function( file )
 
 Application.showPrefs = function()
 {
-	if( this.pwin ) return;
+	if( this.pwin ) 
+	{
+		return this.pwin.activate();
+	}
 	this.pwin = new View( {
 		title: i18n('i18n_preferences'),
 		width: 800,
@@ -315,11 +351,109 @@ Application.showPrefs = function()
 	f.load();
 }
 
+function sanitizeFilename( data )
+{
+	if( !data ) return i18n( 'i18n_new_document' );
+	var filename = data.split( ':' )[1];
+	if( filename.indexOf( '/' ) > 0 )
+		filename = filename.split( '/' ).join( ' - ' );
+	
+	filename = filename.split( ' - ' );
+	
+	// Special for notes, remove first folder
+	var ar = [];
+	for( var a = 1; a < filename.length; a++ )
+	{
+		ar.push( filename[ a ] );
+	}
+	filename = ar.join( ' - ' );
+	
+	// Join
+	filename = filename.split( '.' );
+	filename.pop();
+	filename = filename.join( '.' );
+	
+	return filename;
+}
+
+Application.setCorrectTitle = function()
+{
+	if( this.currentViewMode == 'files' )
+	{
+		var cand = '';
+		if( this.browserPath )
+		{
+			cand = this.browserPath;
+			if( cand.indexOf( '/' ) > 0 )
+			{
+				cand = cand.split( '/' );
+				cand.pop();
+				cand = cand.join( '/' );
+				if( cand.indexOf( '/' ) > 0 )
+				{
+					cand = cand.split( '/' ).pop();
+				}
+				else
+				{
+					cand = cand.split( ':' ).pop();
+				}
+				if( cand == 'Author' )
+					cand = i18n( 'i18n_uncategorized' );
+			}
+			else
+			{
+				cand = i18n( 'i18n_uncategorized' );
+			}
+		}
+		else
+		{
+			cand = i18n( 'i18n_uncategorized' );
+		}
+		Application.mainView.setFlag( 'title', 'Notes - ' + cand );
+	}
+	else if( this.currentViewMode == 'root' )
+	{
+		Application.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_categories' ) );
+	}
+	else
+	{
+		Application.mainView.setFlag( 'title', 'Notes - ' + sanitizeFilename( Application.wholeFilename ) );
+	}
+}
+
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'updateViewMode':
+			this.currentViewMode = msg.mode;
+			if( isMobile )
+			{
+				var mode = msg.mode;
+				if( mode == 'notes' || mode == 'files' )
+				{
+					var v = this.mainView;
+					v.showBackButton( true, function()
+					{
+						v.sendMessage( { command: 'mobilebackbutton' } );
+					} );
+				}
+				else
+				{
+					this.mainView.showBackButton( false );
+				}
+			}
+			this.browserPath = msg.browserPath;
+			this.setCorrectTitle();
+			break;
+		case 'setfilename':
+			this.wholeFilename = msg.data;
+			this.setCorrectTitle();
+			break;
+		case 'newdocument':
+			this.wholeFilename = '';
+			break;
 		case 'applystyle':
 			this.mainView.sendMessage( msg );
 			break;
@@ -334,7 +468,7 @@ Application.receiveMessage = function( msg )
 			this.fileName = msg.filename;
 			this.path = msg.path;
 			this.wholeFilename = msg.path + msg.filename;
-			this.mainView.setFlag( 'title', 'Author - ' + this.wholeFilename );
+			this.setCorrectTitle();
 			break;
 		case 'openfile':
 			this.load();
@@ -349,7 +483,10 @@ Application.receiveMessage = function( msg )
 			this.newDocument();
 			break;
 		case 'print':
-			this.mainView.sendMessage( { command: 'print_iframe' } );
+			var p = new Printdialog( {
+				path: this.wholeFilename
+			} );
+			//this.mainView.sendMessage( { command: 'print_iframe' } );
 			break;
 		case 'print_remote':
 			this.print();
@@ -360,14 +497,14 @@ Application.receiveMessage = function( msg )
 			if( msg.path )
 			{
 				this.wholeFilename = msg.path;
-				this.mainView.setFlag( 'title', 'Author - ' + msg.path );
+				this.setCorrectTitle();
 			}
 			break;
 		case 'syncload':
 			if( msg.filename )
 			{
 				this.wholeFilename = msg.filename;
-				this.mainView.setFlag( 'title', 'Author - ' + this.wholeFilename );
+				this.setCorrectTitle();
 			}
 			break;
 		case 'load':

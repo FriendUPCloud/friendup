@@ -98,6 +98,12 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 	{
 		//these statuses give us access to update file contents
 		case '2':
+			/* 
+				status 2 is only called by document server when all active users have closed a file
+				as we warn for unsaved changes and notify once file has been saved, we just will drop the file here and tell document server "everything is fine dave"	
+			*/
+			die( '{"error":0}' );
+			break;
 		case '3':
 		case '6':
 			// Check if this is just a callback on an as of yet not saved file
@@ -105,7 +111,7 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $w
 			{
 				//we pretend everything is ok to the Document server but send a message to the app to open a save as dialog at the same time - that forces
 				// the user to choose a location which in return will result in a proper save :)
-				faLog('new file... do we have a windowid ? ' . $windowid );
+				//faLog('new file... do we have a windowid ? ' . $windowid );
 				if( $windowid )
 				{
 					tellApplication( 'open_save_as', $user, $windowid, $authid );
@@ -341,7 +347,7 @@ function saveUserFile( $username, $filePath, $json, $windowid = false, $authid =
 			$result = $file->Save( $fc );
 			if( $result )
 			{
-				//faLog( 'File saved :) ' . $filePath . '!' . $result );
+				faLog( 'File saved :) ' . $filePath . '!' . $result );
 				if( !$Config ) faConnectDB( $username );		
 				if( $windowid )
 				{

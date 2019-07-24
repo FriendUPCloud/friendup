@@ -198,7 +198,7 @@ function _addMobileMenuClose( ele )
 		var d = document.createElement( 'span' );
 		d.id = 'MobileMenuClose';
 		d.className = 'MobileMenuClose Close IconMedium fa-close';
-		d.style.top = '-50px';
+		d.style.top = '-52px';
 		d.innerHTML = i18n( 'i18n_close_menu' );
 		d.onclick = function()
 		{
@@ -226,7 +226,7 @@ function _mobileMenuClose( ele )
 	var d = ge( 'MobileMenuClose' );
 	if( d )
 	{
-		d.style.top = '-50px';
+		d.style.top = '-52px';
 		ele.closeMenu = false;
 		setTimeout( function(){ if( d && d.parentNode ) d.parentNode.removeChild( d ); }, 500 );
 	}

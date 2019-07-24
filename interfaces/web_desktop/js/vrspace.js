@@ -45,6 +45,7 @@ Workspace = {
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
+	notificationEvents: [],
 	applications: [],
 	importWindow: false,
 	menuState: '',
@@ -73,6 +74,9 @@ Workspace = {
 
 	preinit: function( mode )
 	{
+		// Go ahead and init!
+		ScreenOverlay.init();
+		
 		var img = new Image();
 		img.src = '/webclient/theme/loginimage.jpg';
 		img.onload = function()
@@ -99,7 +103,6 @@ Workspace = {
 	// Ready after init
 	postInit: function()
 	{
-
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' || !document.body.classList.contains( 'Inside' ) )
 		{
@@ -379,6 +382,25 @@ Workspace = {
 			return false;
 		}
 	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
+		}
+	},
 	showLoginPrompt: function()
 	{
 		// No loginprompt when we are inside
@@ -402,7 +424,7 @@ Workspace = {
 			height: 480,
 			'min-height': 280,
 			'resize': false,
-			title: 'Login to FriendUP',
+			title: 'Login to FriendOS',
 			close: false,
 			login: true,
 			theme: 'login'
@@ -432,7 +454,7 @@ Workspace = {
 			{
 				try
 				{
-					Workspace.conn.close();
+					Workspace.conn.ws.close();
 				}
 				catch( e )
 				{
@@ -474,7 +496,7 @@ Workspace = {
 					var js = JSON.parse( d );
 					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
-						Workspace.flushSession() = null;
+						Workspace.flushSession();
 					}
 				}
 				catch( n )
@@ -551,9 +573,9 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
-
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
+				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
@@ -613,7 +635,7 @@ Workspace = {
 			// Login by url vars
 			if( GetUrlVar( 'username' ) && GetUrlVar( 'password' ) )
 			{
-				return Workspace.login( GetUrlVar( 'username' ), GetUrlVar( 'password' ) );
+				return Workspace.login( decodeURIComponent( GetUrlVar( 'username' ) ), decodeURIComponent( GetUrlVar( 'password' ) ) );
 			}
 			else if( GetUrlVar( 'sessionid' ) )
 			{
@@ -708,11 +730,11 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
-				{	
+				{
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
@@ -881,8 +903,11 @@ Workspace = {
 				'webclient/js/gui/menufactory.js;' +
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/filedialog.js;' +
+				'webclient/js/gui/printdialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/colorpicker.js;' +
+				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/vr/vrengine.js;' +
 				'webclient/js/vr/vrwrapper.js;' +
 				'webclient/js/media/audio.js;' +
@@ -893,7 +918,8 @@ Workspace = {
 				'webclient/js/io/connection.js;' +
 				'webclient/js/friendmind.js;' +
 				'webclient/js/frienddos.js;' +
-				'webclient/js/oo.js';
+				'webclient/js/oo.js;' + 
+				'webclient/js/api/friendAPIv1_2.js';
 			s.onload = function()
 			{
 				// Start with expanding the workspace object
@@ -1006,7 +1032,7 @@ Workspace = {
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{	
-							var m = new Module( 'system' );
+							/*var m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{
 						        if( ee != 'ok' )
@@ -1017,7 +1043,8 @@ Workspace = {
 							}
 							m.execute( 'getsetting', {
 								setting: 'accepteula'
-							} );
+							} );*/
+							afterEula( 'ok' );
 							
 							// When eula is displayed or not
 							function afterEula( e )

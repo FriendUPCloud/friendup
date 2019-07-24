@@ -8,7 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// App space version of workspace!
+/*******************************************************************************
+*                                                                              *
+* The FriendUP Desktop Environment interface. For use on workstations and      *
+* other places. This is the app space version of workspace!                    *
+*                                                                              *
+*******************************************************************************/
 var _protocol = document.location.href.split( '://' )[0];
 
 /* just make the needed functions available without enven doing stuff in deepestfield */
@@ -22,6 +27,30 @@ DeepestField = {
 
 Workspace = {
 	locale: 'en',
+	theme: 'friendup12',
+	themeData: {
+		buttonSchemeText: "windows",
+		colorSchemeText: "default"
+	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
+		}
+	},
 	init: function( mode )
 	{
 		// Add locale
@@ -141,6 +170,7 @@ Workspace = {
 						'webclient/js/io/friendnetworkextension.js;' +
 						'webclient/js/io/friendnetworkdoor.js;' +
 						'webclient/js/io/friendnetworkapps.js;' +
+						'webclient/js/io/DOS.js;' +
 						'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 						'webclient/js/gui/widget.js;' +
 						'webclient/js/gui/listview.js;' +
@@ -149,8 +179,11 @@ Workspace = {
 						'webclient/js/gui/workspace_menu.js;' +
 						'webclient/js/gui/deepestfield.js;' +
 						'webclient/js/gui/filedialog.js;' +
+						'webclient/js/gui/printdialog.js;' +
 						'webclient/js/gui/desklet.js;' +
 						'webclient/js/gui/calendar.js;' +
+						'webclient/js/gui/colorpicker.js;' +
+						'webclient/js/gui/workspace_tray.js;' +
 						'webclient/js/media/audio.js;' +
 						'webclient/js/io/p2p.js;' +
 						'webclient/js/io/request.js;' +
@@ -159,7 +192,8 @@ Workspace = {
 						'webclient/js/io/connection.js;' +
 						'webclient/js/friendmind.js;' +
 						'webclient/js/frienddos.js;' +
-						'webclient/js/oo.js';
+						'webclient/js/oo.js;' + 
+						'webclient/js/api/friendAPIv1_2.js';
 					s.onload = function()
 					{
 						// Register no Workspace object
@@ -206,32 +240,72 @@ Workspace = {
 								}
 							}, true );
 
-
 							document.body.style.visibility = 'visible';
+							// Loading notice
+							var loading = document.createElement( 'div' );
+							loading.className = 'LoadingMessage';
+							if( typeof( t.conf.app ) == 'undefined' )
+								loading.innerHTML = '<p>Nothing to load...</p>';
+							else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
+							document.body.appendChild( loading );
+							setTimeout( function()
+							{
+								loading.classList.add( 'Loaded' );
+							}, 25 );
 							
 							if( t.conf.app )
 							{
 								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 								{
-									setTimeout( function()
+									// Prevent loading twice...
+									if( document.body.loaded ) return;
+									document.body.loaded = true;
+									
+									// Remove loading notice
+									if( loading )
 									{
-										var jo = new cAjax();
-										jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
-										jo.onload = function()
+										loading.classList.remove( 'Loaded' );
+										setTimeout( function()
 										{
-											var ele = document.createElement( 'div' );
-											ele.className = 'ThankYou Padding';
-											ele.innerHTML = this.responseText();
-											var s = GeByClass( 'ScreenContent' );
-											if( s )
+											if( loading )
 											{
-												if( s.length ) s = s[0];
-												s.appendChild( ele );
+												loading.parentNode.removeChild( loading );
+												loading = null;
 											}
-											else document.body.appendChild( s );
+										}, 500 );
+									}
+									function showThankyou()
+									{
+										if( !ge( 'Thanks' ) )
+										{
+											// Wait till we have windows!
+											var count = 0;
+											for( var a in window.movableWindows ){ count++; }
+											if( count <= 0 )
+												return setTimeout( showThankyou, 500 );
+											
+											// Open the thank you template
+											var jo = new cAjax();
+											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
+											jo.onload = function()
+											{
+												if( ge( 'Thanks' ) ) return;
+												var ele = document.createElement( 'div' );
+												ele.id = 'Thanks';
+												ele.className = 'ThankYou Padding';
+												ele.innerHTML = this.responseText();
+												var s = GeByClass( 'ScreenContent' );
+												if( s )
+												{
+													if( s.length ) s = s[0];
+													s.appendChild( ele );
+												}
+												else document.body.appendChild( s );
+											}
+											jo.send();
 										}
-										jo.send();
-									}, 2000 );
+									}
+									showThankyou();
 								} );
 							}
 						} );

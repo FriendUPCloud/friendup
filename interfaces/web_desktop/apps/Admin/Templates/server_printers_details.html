@@ -1,0 +1,68 @@
+
+	<h2>
+		{i18n_printer_profile}
+	</h2>
+	
+	<h1 class="ImageHeading">
+		{printer_name}
+	</h1>
+	<div class="Box Padding">
+		<div class="HRow MarginBottom">
+			<div class="HContent20 FloatLeft Ellipsis">
+				<strong>{i18n_printer_name}</strong>
+			</div>
+			<div class="HContent80 FloatLeft Ellipsis">
+				<input id="PrinterName" type="text" class="FullWidth" value="{printer_name}"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent20 FloatLeft Ellipsis">
+				<strong>{i18n_printer_type}</strong>
+			</div>
+			<div class="HContent80 FloatLeft Ellipsis">
+				<select id="PrinterType" class="FullWidth">{printer_type}</select>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent20 FloatLeft Ellipsis">
+				<strong>{i18n_printer_host}</strong>
+			</div>
+			<div class="HContent80 FloatLeft Ellipsis">
+				<input id="PrinterHost" type="text" class="FullWidth" value="{printer_host}"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent20 FloatLeft Ellipsis">
+				<strong>{i18n_printer_ip_port}</strong>
+			</div>
+			<div class="HContent65 FloatLeft Ellipsis">
+				<input id="PrinterIP" type="text" class="FullWidth" value="{printer_ip}"/>
+			</div>
+			<div class="HContent15 FloatLeft Ellipsis" style="box-sizing:border-box;padding-left:20px;">
+				<input id="PrinterPort" type="text" class="FullWidth" value="{printer_port}"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent20 FloatLeft Ellipsis">
+				<strong>{i18n_requires_confirmation_to_print}</strong>
+			</div>
+			<div class="HContent80 FloatLeft Ellipsis">
+				<input type="checkbox"{confirmation_checked} id="RequiresConfirmation" />
+			</div>
+		</div>
+		<div class="HRow">
+			<div class="FloatRight">
+				<!--<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.server_printers('edit',{id:{id},_this:this})"></button>-->
+				<button type="button" class="IconSmall fa-save" onclick="Sections.server_printers('update',{id})">
+					{i18n_save}
+				</button>
+				<button type="button" class="IconSmall fa-trash" onclick="Sections.server_printers('remove',{id})">
+					{i18n_delete}
+				</button>
+				<button type="button" class="IconSmall fa-close" onclick="Sections.server_printers('cancel')">
+					{i18n_cancel}
+				</button>
+			</div>
+		</div>
+	</div>
+	

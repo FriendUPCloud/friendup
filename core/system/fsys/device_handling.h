@@ -19,39 +19,67 @@
 
 #include <core/types.h>
 #include <core/library.h>
-#include <system/systembase.h>
-
-int RescanHandlers( SystemBase *l );
-
-//
-//
-//
-
-int RescanDOSDrivers( SystemBase *l );
+#include <system/user/user_session.h>
+#include <system/fsys/dosdriver.h>
+//#include <system/systembase.h>
 
 //
-//
+// Device Manager
 //
 
-int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usr );
+typedef struct DeviceManager
+{
+	void				*dm_SB;
+	pthread_mutex_t		dm_Mutex;
+}DeviceManager;
 
 //
 //
 //
 
-int MountFS( struct SystemBase *l, struct TagItem *tl, File **mfile, User *usr );
+DeviceManager *DeviceManagerNew( void *sb );
 
 //
 //
 //
 
-int UserGroupDeviceMount( SystemBase *l, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr );
+void DeviceManagerDelete( DeviceManager *dm );
 
 //
 //
 //
 
-int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile );
+int RescanHandlers( DeviceManager *dm );
+
+//
+//
+//
+
+int RescanDOSDrivers( DeviceManager *dm );
+
+//
+//
+//
+
+int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *usrs );
+
+//
+//
+//
+
+int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin );
+
+//
+//
+//
+
+int UserGroupDeviceMount( DeviceManager *dm, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr, char **mountError );
+
+//
+//
+//
+
+int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **mountError );
 
 //
 //
@@ -63,55 +91,55 @@ File *GetFileByPath( User *usr, char **dstpath, const char *path );
 //
 //
 
-int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount );
+int DeviceMountDB( DeviceManager *dm, File *rootDev, FBOOL mount );
 
 //
 //
 //
 
-File *GetUserDeviceByUserID( SystemBase *l, SQLLibrary *sqllib, FULONG uid, const char *devname );
+File *GetUserDeviceByUserID( DeviceManager *dm, SQLLibrary *sqllib, FULONG uid, const char *devname, char **mountError );
 
 //
 //
 //
 
-void UserNotifyFSEvent( struct SystemBase *b, char *evt, char *path );
+void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path );
 
 //
 //
 //
 
-void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path );
+void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path );
 
 //
 //
 //
 
-int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser );
+int MountDoorByRow( DeviceManager *dm, User *usr, char **row, User *mountUser );
 
 //
 //
 //
 
-int CheckAndMountWorkgroupDrive( SystemBase *l, char *type, User *usr, FUQUAD id, int mounted );
+int CheckAndMountWorkgroupDrive( DeviceManager *dm, char *type, User *usr, FUQUAD id, int mounted );
 
 //
 //
 //
 
-int RefreshUserDrives( SystemBase *l, User *u, BufString *bs );
+int RefreshUserDrives( DeviceManager *dm, User *u, BufString *bs, char **mountError );
 
 //
 //
 //
 
-int DeviceRelease( SystemBase *l, File *rootDev );
+int DeviceRelease( DeviceManager *dm, File *rootDev );
 
 //
 //
 //
 
-int DeviceUnMount( SystemBase *l, File *rootDev, User *usr );
+int DeviceUnMount( DeviceManager *dm, File *rootDev, User *usr );
 
 //
 // find comma and return position
@@ -120,8 +148,9 @@ int DeviceUnMount( SystemBase *l, File *rootDev, User *usr );
 static inline int ColonPosition( const char *c )
 {
 	int res = 0;
+	unsigned int i;
 	
-	for( unsigned int i=0 ; i < strlen( c ) ; i++ )
+	for( i=0 ; i < strlen( c ) ; i++ )
 	{
 		if( c[ i ] == ':' )
 		{

@@ -31,6 +31,7 @@ Workspace = {
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
+	notificationEvents: [],
 	applications: [],
 	importWindow: false,
 	menuState: '',
@@ -58,6 +59,9 @@ Workspace = {
 
 	preinit: function()
 	{
+		// Go ahead and init!
+		ScreenOverlay.init();
+		
 		var img = new Image();
 		img.src = '/webclient/theme/loginimage.jpg';
 		img.onload = function()
@@ -79,7 +83,7 @@ Workspace = {
 		// Preload some images
 		var imgs = [
 			'/webclient/gfx/system/offline_16px.png',
-			'/themes/friendup12/gfx/loading.gif'
+			'/themes/friendup12/gfx/busy.png'
 		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
@@ -390,71 +394,86 @@ Workspace = {
 
 		// Add desklet to dock
 		this.mainDock = mainDesklet;
-		this.mainDock.dom.oncontextmenu = function( e )
+		if( !isMobile )
 		{
-			var tar = e.target ? e.target : e.srcElement;
-			if( tar.classList && tar.classList.contains( 'Task' ) )
+			this.mainDock.dom.oncontextmenu = function( e )
 			{
-				return Workspace.showContextMenu( false, e );
-			}
-
-			var men = [
+				var tar = e.target ? e.target : e.srcElement;
+				if( tar.classList && tar.classList.contains( 'Task' ) )
 				{
-					name: i18n( 'i18n_edit_dock' ),
-					command: function()
-					{
-						ExecuteApplication( 'Dock' );
-					}
+					return Workspace.showContextMenu( false, e );
 				}
-			];
 
-			if( tar.classList && tar.classList.contains( 'Launcher' ) )
-			{
-				men.push( {
-					name: i18n( 'i18n_remove_from_dock' ),
-					command: function()
+				var men = [
 					{
-						Workspace.removeFromDock( tar.executable );
+						name: i18n( 'i18n_edit_dock' ),
+						command: function()
+						{
+							ExecuteApplication( 'Dock' );
+						}
 					}
-				} );
-			}
+				];
+
+				if( tar.classList && tar.classList.contains( 'Launcher' ) )
+				{
+					men.push( {
+						name: i18n( 'i18n_remove_from_dock' ),
+						command: function()
+						{
+							Workspace.removeFromDock( tar.executable );
+						}
+					} );
+				}
 			
-			if( movableWindowCount > 0 )
-			{
-				men.push( {
-					name: i18n( 'i18n_minimize_all_windows' ),
-					command: function( e )
-					{
-						var t = GetTaskbarElement();
-						var lW = null;
-						for( var a = 0; a < t.childNodes.length; a++ )
+				if( movableWindowCount > 0 )
+				{
+					men.push( {
+						name: i18n( 'i18n_minimize_all_windows' ),
+						command: function( e )
 						{
-							if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+							var t = GetTaskbarElement();
+							var lW = null;
+							for( var a = 0; a < t.childNodes.length; a++ )
 							{
-								t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+								if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+								{
+									t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+								}
 							}
+							_DeactivateWindows();
 						}
-						_DeactivateWindows();
-					}
-				} );
-				men.push( {
-					name: i18n( 'i18n_show_all_windows' ),
-					command: function( e )
-					{
-						var t = GetTaskbarElement();
-						for( var a = 0; a < t.childNodes.length; a++ )
+					} );
+					men.push( {
+						name: i18n( 'i18n_show_all_windows' ),
+						command: function( e )
 						{
-							if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+							var t = GetTaskbarElement();
+							for( var a = 0; a < t.childNodes.length; a++ )
 							{
-								t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+								if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+								{
+									t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+								}
 							}
+							_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
 						}
-						_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
-					}
-				} );
-			}
+					} );
+				}
 
-			Workspace.showContextMenu( men, e );
+				Workspace.showContextMenu( men, e );
+			}
+		}
+		// For mobiles
+		else
+		{
+			this.mainDock.dom.oncontextmenu = function( e )
+			{
+				var tar = e.target ? e.target : e.srcElement;
+				if( window.MobileContextMenu )
+				{
+					MobileContextMenu.show( tar );
+				}
+			}
 		}
 		this.reloadDocks();
 
@@ -693,6 +712,25 @@ Workspace = {
 			return false;
 		}
 	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
+		}
+	},
 	showLoginPrompt: function()
 	{
 		// Show it
@@ -884,7 +922,7 @@ Workspace = {
 			// Login by url vars
 			if( GetUrlVar( 'username' ) && GetUrlVar( 'password' ) )
 			{
-				return Workspace.login( GetUrlVar( 'username' ), GetUrlVar( 'password' ) );
+				return Workspace.login( decodeURIComponent( GetUrlVar( 'username' ) ), decodeURIComponent( GetUrlVar( 'password' ) ) );
 			}
 			else if( GetUrlVar( 'sessionid' ) )
 			{
@@ -909,9 +947,9 @@ Workspace = {
 
 		if( this.loginUsername && this.loginPassword )
 		{
-
+			// FIXME: Speed this up for the Edge browser
 			this.encryption.setKeys( this.loginUsername, this.loginPassword );
-
+			
 			/*
 				r = remember me set....
 			*/
@@ -925,16 +963,6 @@ Workspace = {
 						recoverykey : this.encryption.keys.client.recovery
 					},
 					{ applicationName : 'Workspace' } );
-
-					//console.log( '--- localStorage --- ', window.localStorage );
-				}
-
-				// TODO: Do we need to store anything in cookie, this is unsafe??? use localStorage instead, works the same way but only for client storing, remove this ...
-
-				if( this.loginUsername && this.loginPassword )
-				{
-					SetCookie( 'loginUsername', this.loginUsername );
-					SetCookie( 'loginPassword', this.loginPassword );
 				}
 			}
 
@@ -998,6 +1026,13 @@ Workspace = {
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
 
+					// Store username and password in local storage
+					if( r && self.loginUsername && self.loginPassword )
+					{
+						window.localStorage.setItem( 'WorkspaceUsername', self.loginUsername );
+						window.localStorage.setItem( 'WorkspacePassword', self.loginPassword );
+					}
+
 					Workspace.reloginInProgress = false;
 					Workspace.serverIsThere = true;
 					Workspace.workspaceIsDisconnected = false;
@@ -1011,6 +1046,10 @@ Workspace = {
 				}
 				else
 				{
+					// Remove from localstorage
+					window.localStorage.removeItem( 'WorkspaceUsername' );
+					window.localStorage.removeItem( 'WorkspacePassword' );
+					
 					Workspace.reloginInProgress = false;
 					if( t.loginPrompt )
 						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
@@ -1152,8 +1191,11 @@ Workspace = {
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/deepestfield.js;' +
 				'webclient/js/gui/filedialog.js;' +
+				'webclient/js/gui/printdialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/colorpicker.js;' +
+				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/media/audio.js;' +
 				'webclient/js/io/p2p.js;' +
 				'webclient/js/io/request.js;' +
@@ -1162,7 +1204,8 @@ Workspace = {
 				'webclient/js/io/connection.js;' +
 				'webclient/js/friendmind.js;' +
 				'webclient/js/frienddos.js;' +
-				'webclient/js/oo.js';
+				'webclient/js/oo.js;' + 
+				'webclient/js/api/friendAPIv1_2.js';
 			s.onload = function()
 			{
 				// Start with expanding the workspace object

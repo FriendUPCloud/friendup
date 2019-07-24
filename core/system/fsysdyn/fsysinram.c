@@ -115,7 +115,7 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountError )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -193,12 +193,6 @@ int Release( struct FHandler *s, void *f )
 			
 			free( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ free( lf->f_Name ); }
-		if( lf->f_Path ){ free( lf->f_Path ); }
-
-		
-		//free( f );
 		return 0;
 	}
 	return -1;
@@ -223,10 +217,6 @@ int UnMount( struct FHandler *s, void *f )
 			
 			free( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ free( lf->f_Name ); }
-		if( lf->f_Path ){ free( lf->f_Path ); }
-		
 		return 0;
 	}
 	return -1;
@@ -680,10 +670,16 @@ BufString *Info( File *s, const char *path )
 		SpecialData *locsd = (SpecialData *)s->f_SpecialData;
 		SystemBase *l = (SystemBase *)locsd->sb;
 		
-		char buffer[ 256 ];
-		int size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST );
-		
-		BufStringAddSize( bs, buffer, size );
+		int globlen = strlen( path ) + 512;
+		char *buffer = FMalloc( globlen );
+		int size = 0;
+		if( buffer != NULL )
+		{
+			size = snprintf( buffer, globlen, "{ \"response\": \"%s\", \"code\":\"%d\",\"path\":\"%s\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST, path );
+			
+			BufStringAddSize( bs, buffer, size );
+			FFree( buffer );
+		}
 		//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 	}
 	

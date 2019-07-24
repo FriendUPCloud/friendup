@@ -64,11 +64,13 @@ cleanfiles:
 	rm -fr $(FRIEND_PATH)/resources/repository/
 	rm -fr $(FRIEND_PATH)/services/
 
-cleanws:
-	@echo "Cleaning Websocket lib"
+cleanlibs:
+	@echo "Cleaning external libraries"
 	make -C libs-ext clean
 
 clean:
+	#@echo "Cleaning Websocket lib"
+	#make -C libs-ext clean
 	@echo "Clean process in progress."
 	make -C core clean WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C libs clean WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
@@ -167,6 +169,7 @@ install:
 	make -C libs install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C authmods install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	cp scripts/*.sh $(FRIEND_PATH)/
+	cp scripts/bash-ini-parser $(FRIEND_PATH)/
 
 goinstall: install
 	rm -f build/resources/webclient/index.html
@@ -183,3 +186,4 @@ internaldoc:
 	@echo "Documentation ready in docs/core/webcalls/"
 	doxygen docs/doxygen/core/coreInternal
 	@echo "Documentation ready in docs/core/internal/"
+

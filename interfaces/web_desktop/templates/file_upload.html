@@ -5,27 +5,35 @@
 			<input type="hidden" name="module" value="files"/>
 			<input type="hidden" name="command" value="uploadfile"/>
 			<div class="HRow MarginBottom">
-				<div class="HContent33 FloatLeft">
-					<p class="InputHeight"><label for="path"><strong>{i18n_upload_target}:</strong></label></p>
-				</div>
-				<div class="HContent33 FloatLeft"><input class="InputHeight FullWidth" type="text" name="path" value="Home:"/></div>
+				<div class="HContent66 FloatLeft"><input class="InputHeight FullWidth" type="text" name="path" value="Home:"/></div>
 				<div class="HContent33 FloatLeft">
 					<div class="HContent5 FloatLeft">&nbsp;</div>
 					<div class="HContent95 FloatLeft">
-						<button class="Button FullWidth IconSmall fa-search" type="button" onclick="Doors.findUploadPath()">&nbsp;{i18n_browse}</button>
+						<button class="InputHeight NoPadding Button FullWidth IconSmall fa-search" type="button" onclick="Doors.findUploadPath()">&nbsp;{i18n_browse}</button>
 					</div>
 				</div>
 			</div>
 			<div class="HRow">
-				<input type="file" id="uploadFileField" class="FullWidth" name="file"/>
+				<div class="FileUpload MousePointer">
+					<input type="file" id="uploadFileField" class="FullWidth" name="file"/>
+					<div class="UploadButton">
+						<button class="Button IconSmall fa-cloud-upload">
+							{i18n_select_local_files}
+						</button>
+					</div>
+				</div>
 			</div>
 		</form>
 	</div>
-	<div class="HRow MarginTop BorderTop Padding">
-		<button type="button" class="FloatLeft IconSmall fa-upload" onclick="Doors.uploadFile('fileUpload')">
+	<div class="HRow BorderTop Padding UploadFeedbackContainer">
+		<div class="FloatLeft MarginRight" id="uploadFeedback"></div>
+		<button type="button" class="FloatRight IconSmall fa-upload" onclick="Workspace.uploadFile('fileUpload')">
 			&nbsp;{i18n_upload_the_file}
 		</button>
-		<div class="FloatLeft MarginLeft" id="uploadFeedback"></div>
+		<div class="ProgressReport">
+			<div class="Progress">
+			</div>
+		</div>
 	</div>
 	<iframe id="fileUploadFrame" style="visibility: hidden; top: -800px; position: absolute; width: 1px; height: 1px" name="uploadFrame"></iframe>
 </div>

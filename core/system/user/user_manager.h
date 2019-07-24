@@ -22,7 +22,7 @@
 
 #include <core/types.h>
 #include "user_session.h"
-#include "user_group.h"
+#include <system/usergroup/user_group.h>
 #include "user_sessionmanager.h"
 #include "user.h"
 #include "remote_user.h"
@@ -36,7 +36,7 @@ typedef struct UserManager
 	void								*um_SB;
 	
 	User								*um_Users; 						// logged users with mounted devices
-	UserGroup							*um_UserGroups;			// all user groups
+	//UserGroup							*um_UserGroups;			// all user groups
 	void 								*um_USM;
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
 	User								*um_APIUser;	// API user
@@ -85,6 +85,12 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr );
 //
 
 User * UMUserGetByName( UserManager *um, const char *name );
+
+//
+//
+//
+
+User *UMGetUserByNameDBCon( UserManager *um, SQLLibrary *sqlLib, const char *name );
 
 //
 //

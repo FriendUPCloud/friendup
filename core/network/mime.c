@@ -35,7 +35,7 @@ const char* MimeFromExtension( char* extension )
 	}
 	extension[ i ] = 0;
 	
-	DEBUG("Check mime for extension: '%s'\n", extCopy );
+	//DEBUG("Check mime for extension: '%s'\n", extCopy );
 	MurmurHash3_32( extCopy, strlen( extCopy ), 0, &hash );
 	/*
 #ifdef IS_BIG_ENDIAN

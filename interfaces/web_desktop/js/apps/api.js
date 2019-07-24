@@ -243,8 +243,6 @@ var Application =
 	{
 		if( packet.checkDefaultMethod ) return 'yes';
 		
-		//console.log( 'receiveMessage: function( packet ): ', packet );
-		
 		if( !packet.type ) return;
 		switch( packet.type )
 		{
@@ -362,6 +360,61 @@ var Application =
 			el.fullscreenEnabled = false;
 		}
 	},
+	// Application messaging ---------------------------------------------------
+	sendApplicationMessage: function( appFilter, msg, cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'sendtoapp',
+			filter: appFilter,
+			message: msg
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	getApplicationsByName: function( appName, cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'getapplications',
+			application: appName
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// Opens
+	openMessagePort: function( cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'open'
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// Close the port!
+	closeMessagePort: function( cbk )
+	{
+		var msg = {
+			type: 'applicationmessaging',
+			method: 'close'
+		};
+		if( cbk )
+		{
+			msg.callback = addCallback( cbk );
+		}
+		Application.sendMessage( msg );
+	},
+	// End application messaging -----------------------------------------------
 	// Send quit up in hierarchy
 	quit: function( skipSendMessage )
 	{
@@ -394,7 +447,7 @@ var Application =
 		}
 
 		// Close all widgets
-		if (Application.widgets)
+		if( Application.widgets )
 		{
 			for (var a in Application.widgets )
 			{
@@ -737,7 +790,6 @@ function receiveEvent( event, queued )
 {
 	// TODO: Do security stuff...
 	//
-	
 	if( !window.eventQueue )
 		window.eventQueue = [];
 
@@ -1097,6 +1149,28 @@ function receiveEvent( event, queued )
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
 							var w = Application.windows[dataPacket.viewId];
+							if( w.onClose )
+							{
+								var onc = w.onClose;
+								w.onClose = null;
+								var res = onc( function( flag )
+								{
+									if( ( flag || !flag ) && flag !== false )
+									{
+										w.close();
+									}
+									// We aborted, reset onclose
+									else
+									{
+										w.onClose = onc;
+									}
+								} );
+								if( res === false )
+								{
+									w.onClose = onc;
+									return;
+								}
+							}
 							w.close();
 						}
 						// Ah, sub window! Channel to all sub windows then (unknown id?)
@@ -1162,6 +1236,7 @@ function receiveEvent( event, queued )
 			document.body.classList.add( 'Loading' );
 
 			// We need to set these if possible
+			Friend.dosDrivers         = dataPacket.dosDrivers;
 			Application.authId        = dataPacket.authId;
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
@@ -1278,12 +1353,14 @@ function receiveEvent( event, queued )
 		case 'register':
 			window.origin = event.origin;
 			// A function to send a message
+			Friend.dosDrivers         = dataPacket.dosDrivers;
 			Application.domain        = dataPacket.domain;
 			Application.authId        = dataPacket.authId;
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
 			Application.username      = dataPacket.username;
+			Application.workspaceMode = dataPacket.workspaceMode;
 			Application.applicationName = dataPacket.applicationName;
 			Application.sendMessage   = setupMessageFunction( dataPacket, window.origin );
 			
@@ -1702,6 +1779,30 @@ function receiveEvent( event, queued )
 				}
 			}
 			break;
+		// Response from the print dialog
+		case 'printdialog':
+			// Handle the callback
+			if( dataPacket.callbackId && typeof( Application.callbacks[dataPacket.callbackId] ) != 'undefined' )
+			{
+				var f = extractCallback( dataPacket.callbackId );
+				if( f )
+				{
+					try
+					{
+						f( dataPacket.data );
+					}
+					catch( e )
+					{
+						//console.log( 'Error running callback function.' );
+					}
+				}
+			}
+			// We don't have the callback? Check the view window
+			else if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
+			{
+				Application.windows[dataPacket.viewId].sendMessage( dataPacket );
+			}
+			break;
 		// Response from the file dialog
 		case 'filedialog':
 			// Handle the callback
@@ -1761,10 +1862,10 @@ function receiveEvent( event, queued )
 	done();
 
 	function done()
-	{
+	{	
 		// Run callbacks and clean up
 		if( dataPacket.callback )
-		{	
+		{
 			// Ok, we will try to execute the callback we found here!
 			var f;
 			if( dataPacket.resp && ( f = extractCallback( dataPacket.callback ) ) )
@@ -1780,8 +1881,9 @@ function receiveEvent( event, queued )
 					return true;
 				}
 			}
+			// Try to extract here
 			else if( ( f = extractCallback( dataPacket.callback ) ) )
-			{	
+			{
 				try
 				{
 					if ( dataPacket.isFriendAPI )
@@ -1789,26 +1891,51 @@ function receiveEvent( event, queued )
 						f( dataPacket.response, dataPacket.data, dataPacket.extra );
 					}
 					else
+					{
 						f( dataPacket );
+					}
 				}
-				catch( e )
-				{
-					console.log( e, f );
-				}
+				catch( e ){}
 				return true;
 			}
 			// Aha, we have a window to send to (see if it's at this level)
 			else if( dataPacket.viewId )
 			{
+				// At this level allright
+				if( dataPacket.viewId == Application.viewId )
+				{
+					if( f = extractCallback( dataPacket.callback ) )
+					{
+						// It's us!
+						try
+						{
+							if ( dataPacket.isFriendAPI )
+							{
+								f( dataPacket.response, dataPacket.data, dataPacket.extra );
+							}
+							else
+							{
+								f( dataPacket );
+							}
+						}
+						catch( e ){}
+						return true;
+					}
+				}
 				// Search for our callback!
 				if( Application.windows )
 				{
 					for( var a in Application.windows )
 					{
-						Application.windows[a].sendMessage( dataPacket );
+						if( a == dataPacket.viewId )
+						{
+							Application.windows[a].sendMessage( dataPacket );
+							return true;
+						}
 					}
-					return true;
 				}
+				
+				return false;
 			}
 		}
 		// Clean up callbacks unless they are to be kept
@@ -1920,6 +2047,73 @@ function RemoveFilesystemEvent( path, event, callback )
 	return false;
 }
 
+// Color picker ----------------------------------------------------------------
+var ColorPicker = function( succcbk, failcbk )
+{
+	var self = this;
+	var amsg = {
+		type: 'system',
+		command: 'colorpicker',
+		method: 'new',
+		successCallback: succcbk ? addCallback( succcbk ) : false,
+		failCallback: failcbk ? addCallback( failcbk ) : false,
+		createCallback: addCallback( function( uniqueId )
+		{
+			self.uniqueId = uniqueId;
+			if( self.onReady )
+			{
+				self.onReady( {
+					uniqueId: self.uniqueId
+				} );
+			}
+		} )
+	};
+	Application.sendMessage( amsg );
+}
+// Activate the colorpicker window
+ColorPicker.prototype.activate = function()
+{
+	var self = this;
+	if( this.uniqueId )
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'colorpicker',
+			method: 'activate',
+			uniqueId: this.uniqueId,
+			callback: addCallback( function( state )
+			{
+				if( self.onActivated )
+				{
+					self.onActivated( state );
+				}
+			} )
+		} );
+	}
+}
+
+// Activate the colorpicker window
+ColorPicker.prototype.close = function()
+{
+	var self = this;
+	if( this.uniqueId )
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'colorpicker',
+			method: 'close',
+			uniqueId: this.uniqueId,
+			callback: addCallback( function( state )
+			{
+				if( self.onClosed )
+				{
+					self.onClosed( state );
+				}
+			} )
+		} );
+	}
+}
+
 // Open a new widget -----------------------------------------------------------
 function Widget( flags )
 {
@@ -1968,6 +2162,7 @@ function Widget( flags )
 			callback: cid,
 			data:     data
 		};
+		
 		// Take this in your hand if it's there
 		if( Application.sessionId ) o.sessionId = Application.sessionId;
 		// Todo: App path or file path? synonymous!?
@@ -2121,6 +2316,43 @@ function View( flags )
 		};
 		Application.sendMessage( o );
 	}
+	
+	// Show the camera
+	this.openCamera = function( flags, callback )
+	{
+		var cid = addCallback( function( msg )
+		{
+			callback( msg.data );
+		} );
+		var o = {
+			type: 'view',
+			method: 'opencamera',
+			viewId: viewId,
+			// Right scope!
+			targetViewId: Application.viewId ? Application.viewId : null,
+			flags: flags,
+			callback: cid
+		};
+		Application.sendMessage( o );
+	}
+	
+	// Show the mobile back button
+	this.showBackButton = function( visible, callback )
+	{
+		if( !isMobile ) return;
+		var cid = addCallback( callback );
+		var o = {
+			type: 'view',
+			method: 'showbackbutton',
+			viewId: viewId,
+			// Right scope!
+			targetViewId: Application.viewId ? Application.viewId : null,
+			visible: visible,
+			callback: cid
+		};
+		Application.sendMessage( o );
+	}
+	
 	// Set window content
 	this.setContent = function( data, callback )
 	{
@@ -2136,6 +2368,7 @@ function View( flags )
 			callback: cid,
 			data:     data
 		};
+		
 		// Take this in your hand if it's there
 		if( Application.sessionId ) o.sessionId = Application.sessionId;
 		// Todo: App path or file path? synonymous!?
@@ -3379,14 +3612,22 @@ function Module( module )
 	this.execute = function( method, args )
 	{
 		var fid = addCallback( this );
-		Application.sendMessage( {
+		
+		var ms = {
 			type:    'module',
 			module:  module,
 			method:  method,
 			args:    args,
 			vars:    this.vars,
 			fileId:  fid
-		} );
+		};
+		
+		if( this.forceHTTP )
+		{
+			ms.forceHTTP = this.forceHTTP;
+		}
+		
+		Application.sendMessage( ms );
 	}
 	this.addVar = function( key, value )
 	{
@@ -4938,7 +5179,36 @@ function Door( path )
 		);
 	}
 	this.init();
+	
+	// Re-set path
+	this.setPath = function( path )
+	{
+		Application.sendMessage( 
+			{
+				type: 'door',
+				method: 'init',
+				path: path,
+				handler: this.handler
+			},
+			function( data )
+			{
+				if( data.handler && data.handler != 'void' )
+				{
+					door.initialized = true;
+					door.handler = data.handler;
+				}
+			}
+		);
+	}
+	
+	// Gets the files and subdirectories inside of a directory
+	this.getDirectory = function( callback )
+	{
+		return this.getIcons( callback );
+	}
+	
 	// Get files on current dir
+	// Deprecated
 	this.getIcons = function( callback )
 	{
 		Application.sendMessage(
@@ -4971,13 +5241,35 @@ function Door( path )
 	}
 }
 
+// Print dialogs ---------------------------------------------------------------
+
+function Printdialog( flags, triggerfunction )
+{
+	var cid = triggerfunction ? addCallback( triggerfunction ) : false;
+	
+	if( flags && flags.triggerFunction )
+	{
+		cid = addCallback( flags.triggerFunction );
+		flags.triggerFunction = null;
+	}
+	
+	Application.sendMessage( {
+		type:               'system',
+		command:            'printdialog',
+		callbackId:         cid,
+		flags:              flags
+	} );
+}
+
 // File dialogs ----------------------------------------------------------------
 
 function Filedialog( object, triggerFunction, path, type, filename, title )
 {
 	var mainview = false;
 	var targetview = false;
+	var suffix = false;
 	var multiSelect = true; // Select multiple files
+	var keyboardNavigation = false;
 	
 	// We have a view
 	if( object && object.getViewId )
@@ -4985,7 +5277,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 		mainview = object;
 	}
 	// We have flags
-	else if( object )
+	if( object )
 	{
 		for( var a in object )
 		{
@@ -5015,11 +5307,18 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 				case 'targetView':
 					targetview = object[a];
 					break;
+				case 'suffix':
+					suffix = object[a];
+					break;
+				case 'keyboardNavigation':
+					keyboardNavigation = object[a];
+					break;
 			}
 		}
 	}
 
 	if ( !triggerFunction ) return;
+	
 	if ( !type ) type = 'open';
 
 	var dialog = this;
@@ -5034,19 +5333,23 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	{
 		targetview = targetview.getViewId ? targetview.getViewId() : false;
 	}
+	
+	dialog.suffix = suffix;
 
 	Application.sendMessage( {
-		type:        'system',
-		command:     'filedialog',
-		method:       type,
-		callbackId:   cid,
-		dialogType:   type,
-		path:         path,
-		filename:     filename,
-		multiSelect:  multiSelect,
-		title:        title,
-		viewId:       mainview,
-		targetViewId: targetview
+		type:               'system',
+		command:            'filedialog',
+		method:             type,
+		callbackId:         cid,
+		dialogType:         type,
+		path:               path,
+		filename:           filename,
+		multiSelect:        multiSelect,
+		title:              title,
+		viewId:             mainview,
+		targetViewId:       targetview,
+		suffix:             suffix,
+		keyboardNavigation: keyboardNavigation
 	} );
 }
 
@@ -5189,6 +5492,10 @@ function setupMessageFunction( dataPacket, origin )
 		{
 			msg.username = dataPacket.username;
 		}
+		if( !msg.userLevel )
+		{
+			msg.userLevel = dataPacket.userLevel;
+		}
 		if( !msg.viewId )
 		{
 			if( dataPacket.viewId )
@@ -5214,7 +5521,15 @@ function setupMessageFunction( dataPacket, origin )
 		}
 
 		// Post the message
-		parent.postMessage( JSON.stringify( msg ), origin ? origin : dataPacket.origin );
+		var po = dataPacket.origin ? dataPacket.origin : '*';
+		try
+		{
+			parent.postMessage( JSON.stringify( msg ), origin ? origin : po );
+		}
+		catch( e )
+		{
+			console.log( 'Failed to post message to origin: ' + po );
+		}
 	}
 	return _sendMessage;
 }
@@ -5284,6 +5599,11 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
 		console.log = function(){};
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
+
+	if( packet.userLevel )
+	{
+		Application.getUserLevel = function(){ return packet.userLevel; };
+	}
 
 	// Don't do this twice
 	document.body.style.opacity = '0';
@@ -5378,7 +5698,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	// TODO: Move to a proper theme parser
 	function ApplyThemeConfig( themeData )
 	{
-		if( !themeData ) return;
+		if( !themeData || typeof( themeData ) == 'undefined' ) return;
 		
 		if( themeData && typeof( themeData ) == 'string' )
 		{
@@ -5401,7 +5721,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			document.getElementsByTagName( 'head' )[0].appendChild( Friend.themeStyleElement );
 		}
 		
-		var shades = [ 'dark', 'charcoal' ];
+		var shades = [ 'dark', 'charcoal', 'synthwave' ];
 		for( var c in shades )
 		{
 			var uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
@@ -5562,12 +5882,91 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					// If we can run, then run!
 					if( Application.run && !window.applicationStarted )
-					{
-						window.applicationStarted = true;
-						Application.run( packet );
-						if( packet.state ) Application.sessionStateSet( packet.state );
-						window.loaded = true;
-						Friend.application.doneLoading();
+					{	
+						// Fetch application permissions
+						if( !Application.checkAppPermission )
+						{
+							var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+							if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
+							
+							var m = new Module( 'system' );
+							m.onExecuted = function( e, d )
+							{
+								var permissions = {};
+								
+								Application.checkAppPermission = function( key, callback )
+								{
+									// Admins always can!
+									if( Application.getUserLevel() == 'admin' )
+									{
+										if( callback )
+										{
+											callback( true );
+										}
+										return true;
+									}
+									
+									if( key && !callback )
+									{
+										if( permissions[ key ] )
+										{
+											return permissions[ key ];
+										}
+										return false;
+									}
+									else
+									{
+										var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+										
+										var mm = new Module( 'system' );
+										mm.onExecuted = function( ee, dd )
+										{
+											if( ee == 'ok' )
+											{
+												try
+												{
+													permissions = JSON.parse( dd );
+												}
+												catch( e ) {  }
+											}
+											
+											if( callback )
+											{
+												if( permissions[ key ] )
+												{
+													return callback( permissions[ key ] );
+												}
+												return callback( false );
+											}
+										}
+										mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+									}
+								}
+								
+								if( e == 'ok' )
+								{
+									try
+									{
+										permissions = JSON.parse( d );
+									}
+									catch( e ) {  }
+								}
+								
+								runNow();
+							}
+							m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+						}
+						else runNow();
+						
+						function runNow()
+						{
+							if( window.applicationStarted ) return;
+							window.applicationStarted = true;
+							Application.run( packet );
+							if( packet.state ) Application.sessionStateSet( packet.state );
+							window.loaded = true;
+							Friend.application.doneLoading();
+						}
 					}
 					for( var a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
@@ -5580,10 +5979,89 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( Application.run && !window.applicationStarted )
 						{
-							window.applicationStarted = true;
-							Application.run( packet );
-							if( packet.state ) Application.sessionStateSet( packet.state );
-							Friend.application.doneLoading();
+							// Fetch application permissions
+							if( !Application.checkAppPermission )
+							{
+								var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+								if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
+								
+								var m = new Module( 'system' );
+								m.onExecuted = function( e, d )
+								{
+									var permissions = {};
+									
+									Application.checkAppPermission = function( key, callback )
+									{
+										// Admins always can!
+										if( Application.getUserLevel() == 'admin' )
+										{
+											if( callback )
+											{
+												callback( true );
+											}
+											return true;
+										}
+										
+										if( key && !callback )
+										{
+											if( permissions[ key ] )
+											{
+												return permissions[ key ];
+											}
+											return false;
+										}
+										else
+										{
+											var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+											
+											var mm = new Module( 'system' );
+											mm.onExecuted = function( ee, dd )
+											{
+												if( ee == 'ok' )
+												{
+													try
+													{
+														permissions = JSON.parse( dd );
+													}
+													catch( e ) {  }
+												}
+												
+												if( callback )
+												{
+													if( permissions[ key ] )
+													{
+														return callback( permissions[ key ] );
+													}
+													return callback( false );
+												}
+											}
+											mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+										}
+									}
+									
+									if( e == 'ok' )
+									{
+										try
+										{
+											permissions = JSON.parse( d );
+										}
+										catch( e ) {  }
+									}
+									
+									runNow();
+								}
+								m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+							}
+							else runNow();
+							
+							function runNow()
+							{
+								if( window.applicationStarted ) return;
+								window.applicationStarted = true;
+								Application.run( packet );
+								if( packet.state ) Application.sessionStateSet( packet.state );
+								Friend.application.doneLoading();
+							}
 						}
 						// Could be wr don't have any application, run scripts
 						for( var a = 0; a < activat.length; a++ )
@@ -5716,30 +6194,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
 
 	var js = [
-		[
-			'js/utils/engine.js',
-			'js/io/cajax.js',
-			'js/utils/tool.js',
-			'js/utils/json.js',
-			'js/gui/treeview.js',
-			'js/io/appConnection.js',
-			'js/io/coreSocket.js',
-			'js/oo.js',
-			'js/api/friendappapi.js'
-		]
+		'js/oo.js',
+		'js/api/friendappapi.js',
+		'js/utils/engine.js',
+		'js/utils/tool.js',
+		'js/utils/json.js',
+		'js/io/cajax.js',
+		'js/io/appConnection.js',
+		'js/io/coreSocket.js',
+		'js/gui/treeview.js'
 	];
-
+	
 	var elez = [];
 	for ( var a = 0; a < js.length; a++ )
 	{
-		var s = document.createElement( 'script' );
+		//var s = document.createElement( 'script' );
 		// Set src with some rules whether it's an app or a Workspace component
-		var path = js[ a ].join( ';/webclient/' );
-		s.src = '/webclient/' + path;
-		s.async = false;
-		elez.push( s );
+		elez.push( js[ a ] );
 
-		// When last javascript loads, parse css, setup translations and say:
+		/*// When last javascript loads, parse css, setup translations and say:
 		// We are now registered..
 		if( a == js.length-1 )
 		{
@@ -5774,19 +6247,105 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				this.isLoaded = true;
 			}
 		}
-		head.appendChild( s );
+		head.appendChild( s );*/
 	}
 
 	// Setup application id from message
 	Application.applicationId = packet.applicationId;
 	Application.userId        = packet.userId;
 	Application.username      = packet.username;
+	Application.workspaceMode = packet.workspaceMode;
 	Application.authId        = packet.authId;
 	Application.sessionId     = packet.sessionId != undefined ? packet.sessionId : false;
 	Application.theme         = packet.theme;
 
 	// Autogenerate this
 	Application.sendMessage   = setupMessageFunction( packet, eventOrigin ? eventOrigin : packet.origin );
+	
+	if( Application.sessionId )
+	{
+		Application.sendMessage( {
+			type: 'file',
+			command: 'getapidefaultscripts',
+			data: '/webclient/' + elez.join( ';webclient/' ),
+			callback: addCallback( function( msg )
+			{
+				window.eval( msg.data ? msg.data : msg );
+				//eval( msg.data );
+				if( typeof( Workspace ) == 'undefined' )
+				{
+					if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+					if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+				}
+				onLoaded();
+			} )
+		} );
+	}
+	// Slow way for now session
+	else
+	{
+		var js = [
+			[
+				'js/utils/engine.js',
+				'js/io/cajax.js',
+				'js/utils/tool.js',
+				'js/utils/json.js',
+				'js/gui/treeview.js',
+				'js/io/appConnection.js',
+				'js/io/coreSocket.js',
+				'js/oo.js',
+				'js/api/friendappapi.js'
+			]
+		];
+
+		var elez = [];
+		for ( var a = 0; a < js.length; a++ )
+		{
+			var s = document.createElement( 'script' );
+			// Set src with some rules whether it's an app or a Workspace component
+			var path = js[ a ].join( ';/webclient/' );
+			s.src = '/webclient/' + path;
+			s.async = false;
+			elez.push( s );
+
+			// When last javascript loads, parse css, setup translations and say:
+			// We are now registered..
+			if( a == js.length-1 )
+			{
+				function fl()
+				{
+					if( this ) this.isLoaded = true;
+					var allLoaded = true;
+					for( var b = 0; b < elez.length; b++ )
+					{
+						if( !elez[b].isLoaded ) allLoaded = false;
+					}
+					if( allLoaded )
+					{
+						if( typeof( Workspace ) == 'undefined' )
+						{
+							if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+							if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+						}
+						onLoaded();
+					}
+					else
+					{
+						setTimeout( fl, 50 );
+					}
+				}
+				s.onload = fl;
+			}
+			else
+			{
+				s.onload = function()
+				{
+					this.isLoaded = true;
+				}
+			}
+			head.appendChild( s );
+		}
+	}
 }
 
 // Register clicks as default:
@@ -6067,9 +6626,17 @@ if( typeof( Say ) == 'undefined' )
 // Handle keys in iframes too!
 if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
 {
+	function _kfocus( e )
+	{
+		//console.log( 'Focusing: ', e.target, document.activeElement );
+	}
+
 	function _kmousedown( e )
 	{
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
+		
+		// Check if an input element has focus
+		Friend.GUI.checkInputFocus();
 	}
 	function _kmouseup( e )
 	{
@@ -6078,7 +6645,10 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
 		
 		// Check if an input element has focus
-		Friend.GUI.checkInputFocus();
+		setTimeout( function()
+		{
+			Friend.GUI.checkInputFocus();
+		}, 250 );
 	}
 	
 	// Handle keys
@@ -6186,6 +6756,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.addEventListener( 'keyup',   _kresponseup, false );
 		window.addEventListener( 'mousedown', _kmousedown, false );
 		window.addEventListener( 'mouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 	else
 	{
@@ -6193,6 +6764,7 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		window.attachEvent( 'onkeyup',  _kresponseup, false );
 		window.attachEvent( 'onmousedown', _kmousedown, false );
 		window.attachEvent( 'onmouseup', _kmouseup, false );
+		window.addEventListener( 'focus', _kfocus, false );
 	}
 
 	window._keysAdded = true;
@@ -7504,6 +8076,7 @@ GuiDesklet = function()
 
 		var self = this;
 		self.id = conf.sasid || null;
+		self.sessiontype = conf.sessiontype || null;
 		self.onevent = conf.onevent;
 		self.callback = callback;
 
@@ -7773,6 +8346,8 @@ GuiDesklet = function()
 				authId : Application.authId,
 			},
 		};
+		if( self.sessiontype ) reg.data.type = self.sessiontype;
+		
 		self.conn.request( reg, regBack );
 		function regBack( res ) {
 			if ( !res.SASID ) {
@@ -8272,14 +8847,23 @@ Friend.GUI.checkInputFocus = function()
 {
 	var focused = document.activeElement;
 	if( !focused || focused == document.body )
-		focused = null;
-	else if( document.querySelector )
-		focused = document.querySelector( ':focus' );
-	var response = false;
-	if( focused && ( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' ) )
 	{
-		response = true;
+		focused = false;
 	}
+	if( document.querySelector )
+	{
+		var cand = document.querySelector( ':focus' );
+		if( cand && cand != focused ) focused = cand;
+	}
+	var response = false;
+	if( focused )
+	{
+		if( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' || focused.getAttribute( 'contenteditable' ) )
+		{
+			response = true;
+		}
+	}
+	// Send the message
 	Application.sendMessage( {
 		type: 'view',
 		method: 'windowstate',

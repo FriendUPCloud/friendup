@@ -99,6 +99,13 @@ if( $app->ID )
 		<script src="/webclient/js/apps/api.js"></script>' . $scripts . '
 		<script>
 			' . $scrp . '
+			Application.checkAppPermission = function( key )
+			{
+				var permissions = {}; // <- inject user specific permissions here
+				if( permissions[ key ] )
+					return permissions[ key ];
+				return false;
+			}
 		</script>
 	</head>
 	<body>
@@ -114,7 +121,7 @@ if( $app->ID )
 else
 {
 	// TODO: Actually send it
-	die( 'fail' );
+	die( 'fail<!--separate-->{"response":"fatal error in launch"}' );
 }
 
 ?>

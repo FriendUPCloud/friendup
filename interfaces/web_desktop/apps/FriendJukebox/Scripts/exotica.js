@@ -72,7 +72,6 @@ Application.addPlaylist = function ( fname )
 	f.load();
 }
 
-
 // Handle files by path
 Application.handleFiles = function( args )
 {
@@ -120,6 +119,10 @@ Application.redrawMenu = function()
 					command: 'about_exotica'
 				},
 				{
+					name: i18n( 'i18n_add_songs' ),
+					command: 'add_songs'
+				},
+				{
 					name: i18n( 'i18n_quit' ),
 					command: 'quit'
 				}
@@ -137,6 +140,10 @@ Application.redrawMenu = function()
 					command: 'edit_playlist'
 				},
 				{
+					name: i18n( 'i18n_add_source' ),
+					command: 'add_source'
+				},
+				{
 					name: i18n( 'i18n_toggle_mini_playlist' + ( this.miniplaylist ? '_hide' : '_show' ) ),
 					command: 'toggle_miniplaylist',
 					playlist: this.playlist,
@@ -150,7 +157,7 @@ Application.redrawMenu = function()
 // About exotica view window
 Application.openAbout = function()
 {
-	if( this.aboutWindow ) return;
+	if( this.aboutWindow ) return this.aboutWindow.activate();
 	this.aboutWindow = new View( {
 		title: i18n( 'i18n_about_exotica' ),
 		width: 400,
@@ -173,7 +180,7 @@ Application.openAbout = function()
 // Shows the playlist editor
 Application.editPlaylist = function()
 {
-	if( this.playlistWindow ) return;
+	if( this.playlistWindow ) return this.playlistWindow.activate();
 	this.playlistWindow = new View( {
 		title: i18n( 'i18n_edit_playlist' ),
 		width: 900,
@@ -235,7 +242,7 @@ Application.editPlaylist = function()
 // Opens a playlist using a file dialog
 Application.openPlaylist = function()
 {
-	if( this.of ) return;
+	if( this.of ) return this.of.activate();
 	this.of = new Filedialog( this.playlistWindow, function( arr )
 	{
 		Application.of = false;
@@ -248,7 +255,7 @@ Application.addToPlaylist = function( items )
 {
 	if( !items )
 	{
-		if( this.af ) return;
+		if( this.af ) return this.af.activate();
 		this.af = new Filedialog( this.playlistWindow, function( arr )
 		{
 			if( arr.length )
@@ -282,6 +289,42 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'add_songs':
+			new Filedialog( {
+				type: 'load',
+				path: 'Mountlist:',
+				title: i18n( 'i18n_add_songs' ),
+				triggerFunction: function( files )
+				{
+					if( files )
+					{
+						if( files.length )
+						{
+							for( var a = 0; a < files.length; a++ )
+							{
+								Application.playlist.push( {
+									Filename: files[a].Filename,
+									Path: files[a].Path
+								} );
+							}
+						}
+						else
+						{
+							var pth = files;
+							var fn = files.split( ':' )[1];
+							if( fn.indexOf( '/' ) > 0 )
+								fn = fn.split( '/' ).pop();
+							Application.playlist.push( {
+								Filename: fn,
+								Path: pth
+							} );
+						}
+						Application.receiveMessage( { command: 'playsong' } );
+					}
+				}
+			} );
+			break;
+			
 		case 'add_source':
 			if( this.playlistWindow )
 				this.playlistWindow.sendMessage( msg );

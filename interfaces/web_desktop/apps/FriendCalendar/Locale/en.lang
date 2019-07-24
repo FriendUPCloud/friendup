@@ -1,0 +1,115 @@
+
+menu_file                             : File
+menu_quit                             : Quit
+menu_settings                         : Settings
+menu_sources                          : Calendar sources
+menu_refresh_calendar                 : Sync from sources
+menu_view                             : View
+menu_view_month                       : Month overview
+menu_view_week                        : Week overview
+menu_view_day                         : Day overview
+menu_sharing                          : Sharing settings
+
+i18n_close                            : Close
+i18n_add_source                       : Add a source
+i18n_desc                             : Description
+i18n_save                             : Save
+i18n_cancel                           : Cancel
+
+i18n_find_events                      : Find events
+i18n_search                           : Search
+i18n_search_keywords                  : Search keywords...
+
+i18n_your_calendar                    : Your calendar
+
+
+# Month names
+
+month_january                         : January
+month_february                        : February
+month_march                           : March
+month_april                           : April
+month_may                             : May
+month_june                            : June
+month_july                            : July
+month_august                          : August
+month_september                       : September
+month_october                         : October
+month_november                        : November
+month_december                        : December
+
+i18n_delete_event                     : Delete event
+i18n_are_you_sure                     : Are you sure?
+i18n_delete_confirm_desc              : When deleting an event you will also be removing it from anyone sharing your calendar. Do you wish to proceed?
+
+i18n_add_new_event                    : Add new event
+i18n_edit_event                       : Edit event
+i18n_add_calendar                     : Add calendar
+i18n_share_calendar                   : Share calendar
+i18n_week                             : Week
+i18n_date                             : Date
+i18n_time                             : Time
+i18n_time_from                        : Time from
+i18n_time_to                          : Time to
+i18n_all_day                          : All day
+i18n_event_name                       : Event name:
+i18n_leadin                           : Leadin:
+i18n_save                             : Save
+i18n_name                             : Name:
+i18n_description                      : Description:
+i18n_type                             : Type:
+i18n_server                           : Server:
+i18n_user_pass                        : User/pass:
+i18n_your_root                        : Your root
+i18n_calendar_sources                 : Calendar sources
+i18n_reject                           : missing user / pass, check your inputs
+i18n_failed_to_get_unique_id          : failed to get uniqueId
+i18n_fetching_temp_pass               : fetching temp pass failed
+i18n_failed_to_decrypt                : failed to decrypt temp pass
+i18n_mon                              : Mon
+i18n_tue                              : Tue
+i18n_wed                              : Wed
+i18n_thu                              : Thu
+i18n_fri                              : Fri
+i18n_sat                              : Sat
+i18n_sun                              : Sun
+
+i18n_user_you                         : Your events
+
+# Sharing
+
+i18n_overview_over_sharing            : Overview over calendars shared
+i18n_calendar                         : Calendar
+i18n_workgroups                       : Workgroup(s)
+i18n_unshare                          : Unshare
+i18n_unshare_desc                     : Please choose workgroups or invidivual users who you wish to stop sharing your calendar with.
+i18n_users                            : User(s)
+i18n_sharing_settings                 : Sharing settings
+i18n_sharing_nothing                  : Sharing nothing
+i18n_sharing_nothing_desc             : You have no calendars shared.
+i18n_close                            : Close
+i18n_will_unshare                     : This will unshare your calendar(s) with the selected workgroups or users.
+i18n_no_selections                    : No selections
+i18n_you_need_to_select_unshare       : Please select workgroups or individual users who you wish to stop sharing your calendar with.
+i18n_could_not_unshare                : Could not unshare your calendar with your selected users or workgroups. Are you online?
+
+i18n_confirm_sharing                  : Confirm sharing
+i18n_error_occured                    : An error occured
+i18n_unknown_error_occured            : An uninterpreted or unknown error occured.
+i18n_could_not_share                  : Friend could not share your calendar with your selected users and/or workgroups. Do you have a network connection?
+i18n_calendar_shared                  : Calendar was shared
+i18n_calendar_shared_desc             : Your calendar was shared with your selected users and/or workgroups.
+i18n_please_select                    : Please make selections
+i18n_please_select_desc               : You need to select at least one user or workgroup to share with.
+i18n_share_now                        : Confirm sharing
+i18n_cancel                           : Cancel
+i18n_share_your_calendar              : Share your calendar
+i18n_share_with_a_workgroup_or_user   : Share with a workgroup or user
+i18n_share_this_calendar              : Share this calendar
+i18n_default_calendar                 : Default Friend calendar
+i18n_share                            : Share
+i18n_user                             : User
+i18n_workgroup                        : Workgroup
+i18n_no_users_connected               : No users connected.
+i18n_no_workgroups                    : You are not a member of any workgroups.
+

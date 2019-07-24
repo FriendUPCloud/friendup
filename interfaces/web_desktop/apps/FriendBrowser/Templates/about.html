@@ -1,0 +1,99 @@
+<html>
+	<head>
+		<title></title>
+	</head>
+	<body>
+		<div class="ContentFull ScrollArea">
+			<div class="HRow">
+				<div class="Padding LeftColumn">
+					<div class="MenuBox">
+						Documentation
+					</div>
+					<div class="MenuBox">
+						Store
+					</div>
+					<div class="MenuBox">
+						Search
+					</div>
+				</div>
+				<div class="Padding RightColumn">
+					<h2>Welcome to the Friend Network!</h2>
+					<p>
+						The Friend Browser is your gateway to the Friend Network, an interconnected
+						network of Friend nodes. This is not a web browser, in a normal sense, as
+						the Friend Network is separate from the world wide web. Here, you will only
+						be able to access content available in the Friend main net, or any subnets
+						you or your administrator have preconfigured.
+					</p>
+					<p>
+						To read more about Friend Browser, please refer to the documentation.
+					</p>
+					<p>
+						Enjoy a new world of networked content using Friend Browser!
+					</p>
+				</div>
+			</div>
+		</div>
+		<style>
+			body
+			{
+				background: #112233;
+				color: white;
+				font-family: raleway, lato, helvetica;
+				font-size: 0.9em;
+			}
+			
+			.MenuBox
+			{
+				height: 70px;
+				width: 100%;
+				box-sizing: border-box;
+				border-radius: 5px;
+				background: #223344;
+				margin: 0 0 10px;
+			}
+			
+			@media (max-width: 760px)
+			{
+				.LeftColumn
+				{
+					width: 100%;
+					padding: 0;
+				}
+				.RightColumn
+				{
+					width: 100%;
+					padding: 0;
+				}
+			}
+			
+			@media (min-width: 760px)
+			{
+				.RightColumn
+				{
+					position: absolute;
+					left: 300px;
+					right: 20px;
+					bottom: 0;
+					top: 0;
+					box-sizing: border-box;
+					scroll-behavior: smooth;
+					background: #223344;
+					padding: 40px;
+					overflow: auto;
+				}
+				.LeftColumn
+				{
+					position: absolute;
+					left: 0;
+					width: 270px;
+					top: 20px;
+					bottom: 20px;
+					box-sizing: border-box;
+					padding: 40px;
+				}
+			}
+			
+		</style>
+	</body>
+</html>

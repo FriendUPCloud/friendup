@@ -25,7 +25,7 @@
 
 #include <db/sql_defs.h>
 #include <system/user/user_application.h>
-#include "user_group.h"
+#include <system/usergroup/user_group.h>
 #include <system/fsys/file.h>
 #include <libwebsockets.h>
 #include <network/websocket_client.h>
@@ -88,6 +88,7 @@ typedef struct UserGroupLink
 {
 	MinNode				node;
 	UserGroup 			*ugl_Group;
+	FULONG				ugl_GroupID;
 }UserGroupLink;
 
 /*
@@ -109,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
 
 typedef struct UserSessListEntry
 {
-	void 					*us;
+	void 			*us;
 	MinNode			node;
 }UserSessListEntry;
 
@@ -126,6 +127,7 @@ typedef struct User
 	char						*u_FullName;
 	char						*u_Email;
 	int							u_Error;            // if error
+	UserSessListEntry			*u_SessionsList;
 
 	char						*u_MainSessionID;       // session id ,  generated only when user is taken from db
 	time_t						u_LoggedTime;       // last action time
@@ -137,15 +139,15 @@ typedef struct User
 	File						*u_WebDAVDevs;		// shared webdav resources 
 	int							u_WebDAVDevsNr;		// number of mounted webdav drives
 	
-	UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
-	int							u_GroupsNr;		// number of assigned groups
+	UserGroupLink				*u_UserGroupLinks;		// user groups
+	//UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
+	//int							u_GroupsNr;		// number of assigned groups
 	UserApplication				*u_Applications;   // pointer to application settings
 	FPrinter					*u_Printers;		// user printers
 	
 	FBOOL						u_InitialDevMount;
 	FBOOL						u_Anonymous;		// if user is anonymous
 	
-	UserSessListEntry			*u_SessionsList;
 	int							u_SessionsNr;		// number of sessions
 	int							u_NumberOfBadLogins;	// number of bad logins
 	
@@ -221,6 +223,24 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error );
 //
 
 int UserRegenerateSessionID( User *usr, char *newsess );
+
+//
+//
+//
+
+void UserDeleteGroupLink( UserGroupLink *ugl );
+
+//
+//
+//
+
+void UserDeleteGroupLinkAll( UserGroupLink *ugl );
+
+//
+//
+//
+
+void UserRemoveFromGroups( User *u );
 
 //
 // SQL structure

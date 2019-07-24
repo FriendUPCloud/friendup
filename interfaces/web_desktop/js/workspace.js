@@ -27,12 +27,14 @@ Workspace = {
 	menu: [],
 	diskNotificationList: [],
 	notifications: [],
+	notificationEvents: [],
 	applications: [],
 	importWindow: false,
 	menuState: '',
 	themeOverride: false,
 	systemInfo: false,
-	lastfileSystemChangeMessage:false,
+	websocketsOffline: true,
+	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
 		{
@@ -54,6 +56,9 @@ Workspace = {
 
 	preinit: function()
 	{
+		// Go ahead and init!
+		ScreenOverlay.init();
+		
 		var img = new Image();
 		img.src = '/webclient/theme/loginimage.jpg';
 		img.onload = function()
@@ -75,7 +80,7 @@ Workspace = {
 		// Preload some images
 		var imgs = [
 			'/webclient/gfx/system/offline_16px.png',
-			'/themes/friendup12/gfx/loading.gif'
+			'/themes/friendup12/gfx/busy.png'
 		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
@@ -103,6 +108,7 @@ Workspace = {
 		this.login();
 	},
 	// Ready after init
+	// NB: This is where we go towards workspace_inside.js
 	postInit: function()
 	{
 		// Everything must be ready
@@ -150,7 +156,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-			title: 'Workspace',
+			title: 'Friend Workspace',
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,
@@ -251,131 +257,66 @@ Workspace = {
 				return cancelBubble( e );
 			}
 		}
-		// Widget for mobile mode!
-		else if( !this.widget )
-		{
-			o = {
-				width: window.innerWidth,
-				height: 32,
-				valign: 'top',
-				halign: 'center',
-				scrolling: false,
-				autosize: false,
-				animate: true
-			};
-			this.widget = new Widget( o, ge( 'DeepestField' ) );
-			this.widget.showWidget = function()
-			{
-				ge( 'DoorsScreen' ).classList.add( 'HasWidget' );
-				Workspace.refreshExtraWidgetContents();
-				this.raise();
-				this.show();
-				CoverScreens();
-			}
-			this.widget.hideWidget = function()
-			{
-				ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
-				this.showing = false;
-				this.hide();
-				this.lower();
-				ExposeScreens();
-			}
-			this.refreshExtraWidgetContents();
-			this.widget.showWidget();
-			this.widget.slideUp = function()
-			{
-				ge( 'DoorsScreen' ).classList.remove( 'WidgetSlideDown' );
-				document.body.classList.remove( 'WidgetSlideDown' );
-				Workspace.widget.setFlag( 'height', 32 );
-				Workspace.widget.touchDown = false;
-				clearTimeout( Workspace.widget.tdtimeout );
-				Workspace.widget.tdtimeout = false;
-			}
-			this.widget.dom.addEventListener( 'touchstart', function( evt )
-			{
-				if( Workspace.mainDock )
-					Workspace.mainDock.closeDesklet();
-
-				ge( 'DoorsScreen' ).classList.add( 'WidgetSlideDown' );
-				document.body.classList.add( 'WidgetSlideDown' );
-				Workspace.widget.setFlag( 'height', window.innerHeight - 112 );
-				Workspace.widget.touchDown = { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
-				
-				// Timeout for slide
-				Workspace.widget.tdtimeout = setTimeout( function()
-				{
-					Workspace.widget.touchDown = false;
-					Workspace.widget.tdtimeout = false;
-				}, 500 );
-				hideKeyboard();
-				cancelBubble( evt );
-			} );
-			this.widget.dom.addEventListener( 'touchmove', function( evt )
-			{
-				if( Workspace.widget.touchDown )
-				{
-					if( Workspace.widget.touchDown.y - evt.touches[0].clientY > 10 )
-					{
-						Workspace.widget.slideUp();
-						cancelBubble( evt );
-					}
-				}
-			} );
-		}
 
 		// Setup clock
-		var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
-		ex = ex.getElementsByClassName( 'Extra' )[0];
-		function clock()
+		if( !isMobile )
 		{
-			var d = new Date();
-			if( !ex.time )
+			var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
+			ex = ex.getElementsByClassName( 'Extra' )[0];
+			function clock()
 			{
-				var t = document.createElement( 'div' );
-				t.className = 'Time';
-				ex.appendChild( t );
-				ex.time = t;
-			}
-			if( Workspace.workspaceIsDisconnected )
-			{
-				if( !ex.offline )
+				var d = new Date();
+				if( !ex.time )
 				{
-					var o = document.createElement( 'div' );
-					o.className = 'Offline';
-					o.innerHTML = i18n( 'i18n_ws_disconnected' );
-					if( ex.time )
-					{
-						ex.insertBefore( o, ex.time );
-					}
-					else
-					{
-						ex.appendChild( o );
-					}
-					ex.offline = o;
+					var t = document.createElement( 'div' );
+					t.className = 'Time';
+					ex.appendChild( t );
+					ex.time = t;
 				}
-			}
-			else if( ex.offline )
-			{
-				ex.removeChild( ex.offline );
-				ex.offline = null;
-			}
+				if( Workspace.workspaceIsDisconnected )
+				{
+					if( !ex.offline )
+					{
+						var o = document.createElement( 'div' );
+						o.className = 'Offline';
+						o.innerHTML = i18n( 'i18n_ws_disconnected' );
+						if( ex.time )
+						{
+							ex.insertBefore( o, ex.time );
+						}
+						else
+						{
+							ex.appendChild( o );
+						}
+						ex.offline = o;
+					}
+				}
+				else if( ex.offline )
+				{
+					ex.removeChild( ex.offline );
+					ex.offline = null;
+				}
 
-			// Set the clock
-			var e = '';
-			e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
-					   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
-					   StrPad( d.getSeconds(), 2, '0' );*/
-			/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
-					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
-			ex.time.innerHTML = e;
+				// Set the clock
+				var e = '';
+				e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
+						   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
+						   StrPad( d.getSeconds(), 2, '0' );*/
+				/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
+						   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
+				ex.time.innerHTML = e;
 
-			// Realign workspaces
-			Workspace.nudgeWorkspacesWidget();
+				// Realign workspaces
+				Workspace.nudgeWorkspacesWidget();
+			}
+			this.clockInterval = setInterval( clock, 1000 );
 		}
-		this.clockInterval = setInterval( clock, 1000 );
 
 		// Recall wallpaper from settings
-		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
+		this.refreshUserSettings( function(){ 
+			// Refresh desktop for the first time
+			Workspace.refreshDesktop(); 
+		} );
 
 		// Create desktop
 		this.directoryView = new DirectoryView( wbscreen.contentDiv );
@@ -386,71 +327,86 @@ Workspace = {
 
 		// Add desklet to dock
 		this.mainDock = mainDesklet;
-		this.mainDock.dom.oncontextmenu = function( e )
+		if( !isMobile )
 		{
-			var tar = e.target ? e.target : e.srcElement;
-			if( tar.classList && tar.classList.contains( 'Task' ) )
+			this.mainDock.dom.oncontextmenu = function( e )
 			{
-				return Workspace.showContextMenu( false, e );
-			}
-
-			var men = [
+				var tar = e.target ? e.target : e.srcElement;
+				if( tar.classList && tar.classList.contains( 'Task' ) )
 				{
-					name: i18n( 'i18n_edit_dock' ),
-					command: function()
-					{
-						ExecuteApplication( 'Dock' );
-					}
+					return Workspace.showContextMenu( false, e );
 				}
-			];
 
-			if( tar.classList && tar.classList.contains( 'Launcher' ) )
-			{
-				men.push( {
-					name: i18n( 'i18n_remove_from_dock' ),
-					command: function()
+				var men = [
 					{
-						Workspace.removeFromDock( tar.executable );
+						name: i18n( 'i18n_edit_dock' ),
+						command: function()
+						{
+							ExecuteApplication( 'Dock' );
+						}
 					}
-				} );
-			}
+				];
+
+				if( tar.classList && tar.classList.contains( 'Launcher' ) )
+				{
+					men.push( {
+						name: i18n( 'i18n_remove_from_dock' ),
+						command: function()
+						{
+							Workspace.removeFromDock( tar.executable );
+						}
+					} );
+				}
 			
-			if( movableWindowCount > 0 )
-			{
-				men.push( {
-					name: i18n( 'i18n_minimize_all_windows' ),
-					command: function( e )
-					{
-						var t = GetTaskbarElement();
-						var lW = null;
-						for( var a = 0; a < t.childNodes.length; a++ )
+				if( movableWindowCount > 0 )
+				{
+					men.push( {
+						name: i18n( 'i18n_minimize_all_windows' ),
+						command: function( e )
 						{
-							if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+							var t = GetTaskbarElement();
+							var lW = null;
+							for( var a = 0; a < t.childNodes.length; a++ )
 							{
-								t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+								if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+								{
+									t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+								}
 							}
+							_DeactivateWindows();
 						}
-						_DeactivateWindows();
-					}
-				} );
-				men.push( {
-					name: i18n( 'i18n_show_all_windows' ),
-					command: function( e )
-					{
-						var t = GetTaskbarElement();
-						for( var a = 0; a < t.childNodes.length; a++ )
+					} );
+					men.push( {
+						name: i18n( 'i18n_show_all_windows' ),
+						command: function( e )
 						{
-							if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+							var t = GetTaskbarElement();
+							for( var a = 0; a < t.childNodes.length; a++ )
 							{
-								t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+								if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+								{
+									t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+								}
 							}
+							_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
 						}
-						_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
-					}
-				} );
-			}
+					} );
+				}
 
-			Workspace.showContextMenu( men, e );
+				Workspace.showContextMenu( men, e );
+			}
+		}
+		// For mobiles
+		else
+		{
+			this.mainDock.dom.oncontextmenu = function( e )
+			{
+				var tar = e.target ? e.target : e.srcElement;
+				if( window.MobileContextMenu )
+				{
+					MobileContextMenu.show( tar );
+				}
+			}
 		}
 		this.reloadDocks();
 
@@ -689,6 +645,25 @@ Workspace = {
 			return false;
 		}
 	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
+		}
+	},
 	showLoginPrompt: function()
 	{
 		// No loginprompt when we are inside
@@ -712,7 +687,7 @@ Workspace = {
 			height: 480,
 			'min-height': 280,
 			'resize': false,
-			title: 'Login to FriendUP',
+			title: 'Login to FriendOS',
 			close: false,
 			login: true,
 			theme: 'login'
@@ -742,7 +717,7 @@ Workspace = {
 			{
 				try
 				{
-					Workspace.conn.close();
+					Workspace.conn.ws.close();
 				}
 				catch( e )
 				{
@@ -756,6 +731,13 @@ Workspace = {
 			{
 				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
 			}
+			// Friend app waits some more
+			else if( window.friendApp )
+			{
+				Workspace.reloginInProgress = false;
+				return;
+			}
+			// Just exit to login screen
 			else
 			{
 				// We're exiting!
@@ -861,9 +843,9 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
-
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
+				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
@@ -1018,11 +1000,11 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
-				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
-				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
-				{	
+				{
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
@@ -1152,10 +1134,36 @@ Workspace = {
 				} );
 			}
 
+			// Make sure we have a public key for this user (depending on login interface)
+			// TODO: See if we actually need this (and it doesn't work properly)
+			/*if( window.friendApp )
+			{
+				var credentials = friendApp.getCredentials();
+				var info = Workspace.generateKeys( credentials.username, credentials.password );
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					// Call back!
+					if( cb ) cb();
+				}
+				m.execute( 'setuserpublickey', { publickey: info.publickey } );
+				return;
+			}*/
+
 			// Call back!
 			if( cb ) cb();
 		}
 
+		// Manipulate screen overlay
+		// (this will only be shown once!)
+		// TODO: Figure out if this is the right behavior in every case
+		//       implementation circumvents relogin issue
+		if( !Workspace.screenOverlayShown )
+		{
+			ScreenOverlay.show();
+			Workspace.screenOverlayShown = true;
+		}
+		
 		if( !this.userWorkspaceInitialized )
 		{
 			this.userWorkspaceInitialized = true;
@@ -1192,8 +1200,11 @@ Workspace = {
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/deepestfield.js;' +
 				'webclient/js/gui/filedialog.js;' +
+				'webclient/js/gui/printdialog.js;' +
 				'webclient/js/gui/desklet.js;' +
 				'webclient/js/gui/calendar.js;' +
+				'webclient/js/gui/colorpicker.js;' +
+				'webclient/js/gui/workspace_tray.js;' +
 				'webclient/js/media/audio.js;' +
 				'webclient/js/io/p2p.js;' +
 				'webclient/js/io/request.js;' +
@@ -1316,7 +1327,7 @@ Workspace = {
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{	
-							var m = new Module( 'system' );
+							/*var m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{
 						        if( ee != 'ok' )
@@ -1327,7 +1338,8 @@ Workspace = {
 							}
 							m.execute( 'getsetting', {
 								setting: 'accepteula'
-							} );
+							} );*/
+							afterEula( 'ok' );
 							
 							// When eula is displayed or not
 							function afterEula( e )

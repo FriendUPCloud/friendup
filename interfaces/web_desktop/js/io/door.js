@@ -209,7 +209,11 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	this.checkDormantDoors( t.fileInfo.Path ? t.fileInfo.Path : false, function( dirs )
 	{
 		if( !t.fileInfo.Path && t.path )
-			t.fileInfo.Path = t.deviceName + ':' + t.path;
+		{
+			if( t.deviceName.indexOf( ':' ) < 0 )
+				t.deviceName += ':';
+			t.fileInfo.Path = t.path.indexOf( ':' ) > 0 ? t.path : ( t.deviceName + t.path );
+		}
 
 		var fname = t.fileInfo.Path.split( ':' )[1];
 		if( fname && fname.indexOf( '/' ) > 0 ){ fname = fname.split( '/' ); fname = fname[fname.length-1]; }
@@ -251,6 +255,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			if( t.context ) j.context = t.context;
 
 			//changed from post to get to get more speed.
+			j.forceHTTP = true;
 			j.open( 'get', updateurl, true, true );
 			j.parseQueue = function( result, path, purePath )
 			{
@@ -263,6 +268,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				}
 				delete cache[ updateurl ]; // Flush!
 			}
+			
 			j.onload = function( e, d )
 			{
 				if( e )
@@ -283,14 +289,22 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						var res = callback( false, t.fileInfo.Path, false );
 						this.parseQueue( false, t.fileInfo.Path, false );
+						
 						return res;
 					}
-
 					
 					var parsed = '';
 					// Clear last bit
 					for( var tries = 0; tries < 2; tries++ )
 					{
+						// Remove newlines
+						// TODO: Handle in server! This is a bug
+						if( d.indexOf( "\n" ) > 0 )
+						{
+							d = d.split( "\n" );
+							d = d.join( "\\n" );
+						}
+						
 						try
 						{
 							parsed = JSON.parse( d );
@@ -610,7 +624,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 
 	// Special case for 'copy' if destination is a Dormant drive
 	var dr = this;
-	if ( ofunc == 'copy' )
+	if( ofunc == 'copy' )
 	{
 		var drive = args[ 'to' ].split( ':' )[ 0 ] + ':';
 		var doors = DormantMaster.getDoors();
@@ -800,6 +814,16 @@ function IsPathOnDormantDoor( path )
 }
 function GetURLFromPath( path, callback, type, toAdd )
 {
+	// Http links
+	if( path.substr( 0, 5 ) == 'http:' || path.substr( 0, 6 ) == 'https:' )
+	{
+		// Evaluate external links
+		//var r = document.location.href.split( /\/[^\/]?*/ );
+		//r = r[0] + '//' + r[1];	
+		//if( path.substr( 0, r.length ) != r )
+			return callback( path );
+	}
+		
 	if ( IsPathOnDormantDoor( path ) )
 	{
 		// Type not defined, get type from file extension

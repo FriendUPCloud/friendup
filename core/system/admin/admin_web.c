@@ -555,6 +555,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					User *usr = l->sl_UM->um_Users;
 					while( usr != NULL )
 					{
+						FRIEND_MUTEX_LOCK( &usr->u_Mutex );
 						UserSessListEntry  *usl = usr->u_SessionsList;
 						while( usl != NULL )
 						{
@@ -596,6 +597,8 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							}
 							usl = (UserSessListEntry *)usl->node.mln_Succ;
 						}
+						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
+						
 						usr = (User *)usr->node.mln_Succ;
 					}
 					FFree( sndbuffer );
@@ -613,29 +616,34 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					char *sndbuffer = FCalloc( msgsize, sizeof(char) );
 				
 					User *usr = (User *)loggedSession->us_User;
-					UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
-					int msgsndsize = 0;
-					while( usle != NULL )
+					if( usr != NULL )
 					{
-						UserSession *ls = (UserSession *)usle->us;
-						if( ls != NULL )
+						FRIEND_MUTEX_LOCK( &usr->u_Mutex );
+						UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+						int msgsndsize = 0;
+						while( usle != NULL )
 						{
-							DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
-							if( strcmp( usersession, ls->us_SessionID ) == 0 )
+							UserSession *ls = (UserSession *)usle->us;
+							if( ls != NULL )
 							{
-								DEBUG("Found same session, sending msg\n");
-								char tmp[ 512 ];
-								int tmpsize = 0;
+								DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
+								if( strcmp( usersession, ls->us_SessionID ) == 0 )
+								{
+									DEBUG("Found same session, sending msg\n");
+									char tmp[ 512 ];
+									int tmpsize = 0;
 						
-								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+									tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
 							
-								int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
-								loggedSession->us_User->u_Name , msg );
+									int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+									loggedSession->us_User->u_Name , msg );
 						
-								msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
+									msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
+								}
 							}
+							usle = (UserSessListEntry *)usle->node.mln_Succ;
 						}
-						usle = (UserSessListEntry *)usle->node.mln_Succ;
+						FRIEND_MUTEX_UNLOCK( &usr->u_Mutex );
 					}
 					
 					//int status = MobileAppNotifyUser( SLIB, usr->u_Name, "test_app", "app_name", "title", "test message", MN_all_devices, NULL/*no extras*/, 0 );
@@ -688,7 +696,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "restartws" ) == 0 )
 	{
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
 		{
 			Log( FLOG_INFO, "Websocket thread will be restarted\n");
 			
@@ -700,7 +708,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 			Log( FLOG_INFO, "Websocket stopped\n");
 			
-			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled ) ) != NULL )
+			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled, 0, l->fcm->fcm_WSExtendedDebug ) ) != NULL )
 			{
 				WebSocketStart( l->fcm->fcm_WebSocket );
 				Log( FLOG_INFO, "Websocket thread will started\n");
@@ -709,6 +717,34 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			{
 				Log( FLOG_FATAL, "Cannot launch websocket server\n");
 			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/uptime</H2>Function return FriendCore uptime information (unix timestamp)
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return function return information about uptime ok<!--separate-->{"result":1,"uptime":unixtime_number}
+	*/
+	/// @endcond
+	if( strcmp( urlpath[ 1 ], "uptime" ) == 0 )
+	{
+		//ok<!--separate-->{"result":1,"uptime":unixtime_number}
+		if( loggedSession->us_User->u_IsAdmin == TRUE )
+		{
+			char dictmsgbuf[ 512 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{\"result\":1,\"uptime\":%lu", (time( NULL ) - l->l_UptimeStart) );
+		
+			HttpAddTextContent( response, dictmsgbuf );
+			*result = 200;
 		}
 		else
 		{

@@ -296,7 +296,8 @@ function hideKeyboard()
 		field.focus();
 		setTimeout( function()
 		{
-			document.body.removeChild( field );
+			if( field.parentNode == document.body )
+				document.body.removeChild( field );
 		}, 500 );
 	}, 50 );
 }
@@ -2103,6 +2104,8 @@ function InitTabs( pdiv, tabCallback )
 	
 	var hasContainer = tabContainer;
 	
+	var setPageState = true;
+	
 	for( var a = 0; a < divs.length; a++ )
 	{
 		// Skip orphan tabs and out of bounds subelements
@@ -2123,8 +2126,14 @@ function InitTabs( pdiv, tabCallback )
 			divs[a].tabs = tabs; 
 			divs[a].pages = pages;
 			divs[a].index = tabs.length - 1;
-			divs[a].onclick = function ()
+			divs[a].onclick = function()
 			{
+				// Already active? Just return
+				if( this.classList.contains( 'TabActive' ) ) return;
+				
+				// Assume it is ok to activate this tab
+				var result = true;
+				
 				SetCookie ( 'Tabs' + this.pdiv.id, this.index );
 				this.classList.add( 'TabActive' );
 				var ind;
@@ -2136,11 +2145,14 @@ function InitTabs( pdiv, tabCallback )
 					}
 					else ind = b;
 				}
-				var result = true;
+				
 				if( tabCallback )
 				{
-					result = tabCallback( this, this.pages );
+					var r = tabCallback( this, this.pages );
+					if( r === false || r === true )
+						result = r;
 				}
+				
 				// Only continue if the tab callback has a positive result or doesn't exist
 				if( result )
 				{
@@ -2171,6 +2183,8 @@ function InitTabs( pdiv, tabCallback )
 						}
 					}
 				}
+				
+				// Do magic with resize
 				if( typeof ( AutoResizeWindow ) != 'undefined' )
 				{
 					var pdiv = this.pdiv;
@@ -2425,7 +2439,7 @@ function checkMobileBrowser()
 				navigator.userAgent.toLowerCase().indexOf( 'phone' ) > 0 ||
 				navigator.userAgent.toLowerCase().indexOf( 'pad' ) > 0 ||
 				navigator.userAgent.toLowerCase().indexOf( 'bowser' ) > 0 );
-	
+			
 			if( ( window.isMobile || navigator.userAgent.indexOf( 'Mobile' ) > 0 ) && window.innerWidth >= 1024 )
 			{
 				window.isTablet = true;
@@ -2433,6 +2447,13 @@ function checkMobileBrowser()
 			}
 		}
 	}
+	// Ipads are always mobiles for apple users at least
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 && Workspace && Workspace.loginUsername == 'applereview' )
+	{
+		//console.log( 'IPAD! ' + navigator.userAgent );
+		window.isMobile = true;
+	}
+	
 	window.isTouch = !!('ontouchstart' in window);
 	if( window.isMobile )
 	{
@@ -2451,10 +2472,12 @@ function checkMobileBrowser()
 		document.body.setAttribute( 'settopbox', 'playstation' );
 		window.isSettopBox = 'playstation';
 		if (typeof console  != "undefined") 
+		{
 			if (typeof console.log != 'undefined')
 				console.olog = console.log;
 			else
 				console.olog = function() {};
+		}
 		console.log = function(message) {
 			console.olog(message);
 			Notify( { title: 'Playstation error', text: message } );

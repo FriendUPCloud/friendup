@@ -41,6 +41,12 @@
 #ifndef WEBSOCKET_PORT
 #define WEBSOCKET_PORT	6500
 #endif
+#ifndef WEBSOCKET_MOBILE_PORT
+#define WEBSOCKET_MOBILE_PORT	6499
+#endif
+#ifndef WEBSOCKET_NOTIFICATION_PORT
+#define WEBSOCKET_NOTIFICATION_PORT	6498
+#endif
 #ifndef FRIEND_COMMUNICATION_PORT
 #define FRIEND_COMMUNICATION_PORT 6503
 #endif
@@ -99,6 +105,8 @@ typedef struct FriendCoreManager
 	
 	ServiceManager				*fcm_ServiceManager;							///< Service Manager
 	WebSocket					*fcm_WebSocket;                                 ///< WebSocket Manager
+	WebSocket					*fcm_WebSocketMobile;                           ///< WebSocket Mobile Manager
+	WebSocket					*fcm_WebSocketNotification;                     ///< WebSocket Notification Manager
 	
 	FriendcoreInfo				*fcm_FCI;										///< Friend Core Information
 	void						*fcm_SB;  ///<Pointer to SystemBase
@@ -107,6 +115,8 @@ typedef struct FriendCoreManager
 	int							fcm_ComPort; // communication port
 	int							fcm_ComRemotePort; // remote communication port
 	int							fcm_WSPort; // websockets internet port
+	int							fcm_WSMobilePort; // websockets internet port
+	int							fcm_WSNotificationPort; // notification service port
 	int							fcm_Maxp; // number of connections in epoll for http
 	int							fcm_Bufsize;  // FC buffer size
 	int							fcm_MaxpCom; // number of connections in epoll for communication
@@ -127,6 +137,9 @@ typedef struct FriendCoreManager
 	//ConnectionInfo				*fcm_ConnectionsInformation;					// connection information
 	ClusterNode					*fcm_ClusterNodes;								// cluster node information
 																				// first Node is always current FC node
+	FBOOL						fcm_DisableMobileWS;
+	FBOOL						fcm_DisableExternalWS;
+	FBOOL						fcm_WSExtendedDebug;
 }FriendCoreManager;
 
 //
@@ -164,6 +177,12 @@ int FriendCoreManagerServicesRun( FriendCoreManager *fcm );
 //
 
 void FriendCoreManagerShutdown( FriendCoreManager *fcm );
+
+//
+//
+//
+
+int FriendCoreManagerInitServices( FriendCoreManager *fcm );
 
 
 

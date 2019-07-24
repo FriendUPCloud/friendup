@@ -1,5 +1,10 @@
 /* Base setup */
 
+body *
+{
+	-webkit-tap-highlight-color: transparent;
+}
+
 :-webkit-full-screen-ancestor>:not(:-webkit-full-screen-ancestor):not(:-webkit-full-screen)
 {
  display:none!important
@@ -17,6 +22,28 @@
 	display:none!important
 }
 
+/* TEMPORARY TESThtml body.ViewStateActive:after,
+html body:not(.ViewStateActive):after 
+{
+    position: absolute;
+    display: block;
+    content: " ";
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-top: 2px solid green;
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 9999;
+}
+
+html body:not(.ViewStateActive):after 
+{
+	border-top: 2px solid red;
+}
+ */
+
 html
 {
 	position: absolute;
@@ -28,6 +55,7 @@ html
 	padding: 0;
 	user-select: none;
 	-webkit-user-select: none;
+	overflow: hidden;
 }
 
 body
@@ -46,6 +74,14 @@ body
    -ms-transform: rotateZ(0deg);
  	transform: rotateZ(0deg);*/
 	overflow: hidden;
+}
+
+/* Preload images */
+body > img
+{
+	visibility: hidden;
+	position: absolute;
+	pointer-events: none;
 }
 
 iframe.hidden
@@ -89,6 +125,11 @@ body > #FocusGrabber
 {
 	position: fixed;
 	top: 100%;
+}
+
+.NoEvents
+{
+	pointer-events: none;
 }
 
 /* Some backgrounds and colors */
@@ -205,6 +246,12 @@ select
 	cursor: pointer;
 }
 
+#MousePointer .MousePointer
+{
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .MouseCrosshair
 {
 	cursor: crosshair;
@@ -262,6 +309,11 @@ button::-moz-focus-inner
 	padding:0;
 }
 
+.ButtonHeight
+{
+	height: 28px;
+}
+
 button, .Button
 {
 	display: inline;
@@ -284,14 +336,14 @@ button, .Button
 	cursor: pointer;
 	position: relative;
 	outline: 0 !important;
+	font-size: inherit;
 }
 
 body button.IconButton:not(:hover),
 body .Button.IconButton:not(:hover)
 {
-	background: none !important;
-	background-color: none !important;
-	border: 1px solid transparent !important;
+	background-color: transparent !important;
+	border: 1px solid rgba(0,0,0,0) !important;
 	padding: 5px 5px;
 }
 
@@ -432,6 +484,24 @@ textarea
 	font-size: $FontSizeButton;
 }
 
+textarea.Required,
+input.Required
+{
+	border-color     : $ColorDangerBg;
+}
+
+.FileUploadWrapper { position: relative; overflow: hidden; }
+.FileUploadWrapper input[type=file]
+{
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  z-index:2;
+
+}
+
 /* Boxes -------------------------------------------------------------------- */
 
 .Disabled
@@ -463,6 +533,12 @@ textarea
 	background: #C3CFD4;
 	border-color: #A9B3B8;
 	border-bottom: 1px solid #9BA4A8;
+}
+
+.BoxSelected
+{
+	box-sizing: border-box;
+	box-shadow: 0px 0px 1px $ColorLightBorder;
 }
 
 .Recessed
@@ -1015,6 +1091,17 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 
 /* Screen menu -------------------------------------------------------------- */
 
+.SmoothScrolling
+{
+	scroll-behavior: smooth;
+	-webkit-scroll-behavior: smooth;
+	-webkit-overflow-scrolling: touch;
+}
+[mobile] .SmoothScrolling
+{
+	overflow-y: scroll;
+}
+
 #WorkspaceMenu
 {
 	position: absolute;
@@ -1302,6 +1389,11 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 .Danger {
 	color : $ColorDanger;
 	background-color : $ColorDangerBg;
+}
+
+.DangerText {
+	color : $ColorDangerBg;
+	background-color : transparent;
 }
 
 .Warning {
@@ -1756,6 +1848,28 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	color: white;
 	border-radius: 3px;
 }
+
+.Widget.Fadable
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+.Widget.Faded
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadeout
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadein
+{
+	opacity: 1;
+}
+
 html body .Widget.Raised
 {
 	z-index: 2147483643;
@@ -1764,6 +1878,11 @@ html body .Widget.Raised
 html body[mobile=mobile] .Widget.Raised
 {
 	
+}
+
+.Widget.Faded
+{
+	opacity: 0;
 }
 
 html body.WindowMenu .Widget
@@ -1812,6 +1931,53 @@ html body.WindowMenu .Widget
 	border-radius: 0 0 3px 3px;
 }
 
+.Widget.HelpBubble:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 100%;
+	height: 30px;
+	left: calc(50% - 10px);
+	width: 20px;
+	background-image: url(/webclient/gfx/system/triangle_high.svg);
+	background-size: cover;
+	background-position: top center;
+	background-repeat: no-repeat;
+	opacity: 0.6;
+}
+
+.Widget.HelpBubble
+{
+	border-radius: 25px;
+}
+
+.Widget.HelpBubble.Fadable,
+.Widget.HelpBubble.Fadable:after
+{
+	transition: margin-top,height 0.25s,0.25s;
+}
+
+.Widget.HelpBubble.Fadable
+{
+	margin-top: 0;
+}
+
+.Widget.HelpBubble.Fadable.Fadein
+{
+	margin-top: -10px;
+}
+
+.Widget.HelpBubble.Fadable.Fadein:after
+{
+	height: 10px;
+}
+
+.Widget.HelpBubble.Fadable:after
+{
+	height: 5px;
+}
+
 /* Formerly doors.css ------------------------------------------------------- */
 
 /* Non logged in state */
@@ -1853,21 +2019,27 @@ body.Loading > #Screens
 	opacity: 0;
 }
 
-body:not(.friendapp).Loading:after
+body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after
 {
 	content: ' ';
-	background: url(/themes/friendup12/gfx/loading.gif) no-repeat center center #222222;
+	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
 	position: absolute;
 	top: calc(50% - 30px);
-	left: calc(50% - 40px);
+	left: calc(50% - 30px);
 	height: 60px;
-	width: 80px;
+	width: 60px;
 	color: white;
-	padding: 0 10px;
+	padding: 0;
 	text-align: center;
-	border-radius: 10px;
+	border-radius: 60px;
 	animation: bodyLoading 0.1s;
 	-webkit-animation: bodyLoading 0.1s;
+	z-index: 99999999999;
+}
+
+body[mobile].Loading:after
+{
+	display: none;
 }
 
 @-webkit-keyframes bodyLoading
@@ -2036,6 +2208,24 @@ html body .PopInfo + .BubbleInfo
 	line-height: 20px
 }
 
+.TrayElement.Blink:before
+{
+	animation: blinking 1s infinite;
+}
+
+@keyframes blinking
+{
+	0% { opacity: 0.5; }
+	50% { opacity: 1; }
+	100% { opacity: 0.5; }
+}
+
+.TrayElement.Hidden,
+html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
+{
+	display: none;
+}
+
 .TrayElement.Notification .BubbleInfo,
 .TrayElement.PopNotification .PopInfo
 {
@@ -2050,6 +2240,28 @@ html body .PopInfo + .BubbleInfo
 {
 	max-height: initial;
 	padding: 8px;
+}
+
+#Tray .Notification .BubbleInfo p.Layout
+{
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+
+#Tray > .Notification > .TrayInformation
+{
+	position: absolute;
+	display: block;
+	width: 300px;
+	bottom: 40px;
+	right: 0px;
+	background: rgba(0,0,0,0.8);
+	color: white;
+	text-align: left;
+}
+#Tray > .Notification > .TrayInformation *
+{
+	color: white;
 }
 
 .PopInfo:before,
@@ -2078,6 +2290,12 @@ html body .PopInfo + .BubbleInfo
 	bottom: 0;
 	height: 30px;
 	opacity: 0;
+	pointer-events: none;
+}
+
+.TrayElement:hover .BubbleInfo:after
+{
+	pointer-events: all;
 }
 
 .TrayElement:hover .BubbleInfo:before, 
@@ -2359,6 +2577,7 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	margin: 5px auto;
 	text-align: center;
 	position: relative;
+	pointer-events: none;
 }
 .Desklet .Launcher.Minimized .ElementCount > span
 {
@@ -2499,6 +2718,25 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	text-align: center;
 	text-shadow: none;
 }
+
+/* Search */
+
+[mobile] #SearchGuiContainer
+{
+	position: absolute;
+	width: calc(100% - 20px);
+	height: 75px;
+}
+
+[mobile] #WorkspaceSearchResults
+{
+	position: absolute;
+	top: 85px;
+	width: calc(100% - 20px);
+	height: calc(100% - 95px);
+	overflow: auto;
+}
+
 
 /* Wallpapers */
 
@@ -2760,6 +2998,25 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	-moz-box-sizing: border-box;
 	box-shadow: inset 0px 2px 8px rgba(0,0,0,0.3);
 	overflow: hidden;
+}
+
+html .DirectoryToolbar button.Makedir:before
+{
+	content: " ";
+	width: 16px;
+	height: 26px;
+	margin-top: 0;
+	display: inline-block;
+	background-image: url(/iconthemes/friendup15/AddFolder.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-color: transparent;
+}
+
+html .DirectoryToolbar button.Makedir
+{
+	color: transparent;
 }
 
 .Active .DirectoryToolbar
@@ -3365,7 +3622,7 @@ html #DockWindowList .Task.Directory
 	margin-right: 5px;
 }
 
-.DockMenu .DockMenuItem.Directory img
+.DockMenu .DockMenuItem.Directory > img
 {
 	position: relative;
 	top: -2px;
@@ -3419,12 +3676,15 @@ html #DockWindowList .Task.Directory
 	top: 0;
 	width: 220px;
 	background: rgba(0,0,0,0.8);
+	transition: opacity 0.25s;
+	opacity: 0;
 }
 
 .DockMenu .DockMenuItem.Directory.Over > .DockSubMenu,
 .DockMenu .DockMenuItem.Directory.Active > .DockSubMenu
 {
 	pointer-events: all;
+	opacity: 1;
 	visibility: visible;
 }
 
@@ -3478,47 +3738,6 @@ html #DockWindowList .Task.Directory
 	background: #2F669F;
 }
 
-#Screens .View
-{
-	position: absolute;
-	transition: opacity 0.2s;
-	opacity: 1;
-}
-
-#Screens .View[moving]
-{
-	transition: none;
-}
-
-#Screens .View:not([moving]):not(.Opening):not(.Opened)
-{
-	transition: opacity,width,height 0.2s,0.2s,0.2s;
-}
-
-#Screens .View.Opening
-{
-	opacity: 0;
-}
-
-#Screens .View > .Content > iframe
-{
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	border: 0;
-	margin: 0;
-	outline: none;
-	transition: opacity 0.2s ease-in;
-	opacity: 1;
-}
-
-#Screens .View > .Content > iframe.Loading
-{
-	opacity: 0;
-}
-
 .Screen > div
 {
 	z-index: 1;
@@ -3529,8 +3748,8 @@ html #DockWindowList .Task.Directory
 	position: absolute;
 	top: 50%; 
 	left: 50%;
-	-webkit-transform: translateX(-50%) translateY(-50%);
-	transform: translateX(-50%) translateY(-50%);
+	-webkit-transform: translate3d(-50%,-50%,0);
+	transform: translate3d(-50%,-50%,0);
 	min-width: 100%; 
 	min-height: 100%; 
 	width: auto; 
@@ -3911,6 +4130,54 @@ textarea.InputHeight, input.InputHeight
 	padding: 6px;
 }
 
+/* Color picker ------------------------------------------------------------- */
+
+
+.ColorPickerGUI .ColorPickerController
+{
+	width: 30px;
+	height: 30px;
+	border-radius: 30px;
+	border: 2px solid white;
+	background-color: transparent;
+	position: absolute;
+	top: -15px;
+	left: -15px;
+}
+
+.ColorPickerGUI .DiaColors
+{
+	overflow: hidden;
+}
+
+.ColorPickerGUI .ColorPickerController:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 14px;
+	left: 14px;
+	width: 2px;
+	height: 2px;
+	border-radius: 4px;
+	background-color: white;
+}
+
+
+.ColorPickerGUI .ColorPickerShadeControl
+{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 30px;
+	height: 15px;
+	border-radius: 3px;
+	border: 0;
+	background-color: white;
+	filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.5));
+}
+
+
 /* Ho hoe ------------------------------------------------------------------- */
 
 blockquote.Code
@@ -4103,6 +4370,107 @@ div.Orange, button.Orange
     text-align: justify;
     font-size: 10px;
     overflow: hidden;
+}
+
+/* File upload adjustments */
+
+#fileUpload .FileUpload
+{
+	position: relative;
+}
+
+.UploadFeedbackContainer.Busy input,
+.UploadFeedbackContainer.Busy button
+{
+	pointer-events: none;
+	opacity: 0.8;
+	cursor: not-allowed;
+}
+
+.UploadFeedbackContainer.Busy input[type=file]
+{
+	display: none;
+}
+
+.UploadFeedbackContainer button.fa-upload
+{
+	transition: opacity 0.2s;
+	opacity: 1;
+}
+
+.UploadFeedbackContainer.Busy button.fa-upload
+{
+	opacity: 0.5;
+}
+
+.UploadFeedbackContainer.Busy button.fa-upload
+{
+	display: none;
+}
+
+.ProgressReport
+{
+	display: none;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.UploadFeedbackContainer.Busy .ProgressReport
+{
+	display: block;
+	opacity: 1;
+	position: relative;
+	width: 60px;
+	margin: auto;
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+	left: 15px;
+}
+
+.ProgressReport .Progress
+{
+	position: absolute;
+	display: block;
+	font-size: 30px;
+	animation: uprotate 2s infinite linear;
+}
+
+.ProgressReport .Progress:after
+{
+	content: "\f1ce";
+	font-family: fontawesome;
+	display: block;
+}
+
+@keyframes uprotate
+{
+	0% { transform: rotateZ(0deg); }
+	100% { transform: rotateZ(360deg); }
+}
+
+.FileUpload > input
+{
+	opacity: 0;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.FileUpload .UploadButton 
+{
+	width: 100%;
+	height: 32px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+}
+
+.FileUpload .UploadButton > .Button
+{
+	pointer-events: none;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 /* Responsive page layout */

@@ -57,7 +57,7 @@ Application.receiveMessage = function( msg )
 			
 			// Avatar
 			var avatar = ge( 'Avatar' );
-			if ( avatar )
+			if( avatar )
 			{
 				var sm = new Module( 'system' );
 				sm.onExecuted = function( e, d ) 
@@ -76,9 +76,16 @@ Application.receiveMessage = function( msg )
 							}
 						}
 					}
-					if ( d )
+					if( d )
 					{
-						avatar.src = d.avatar;
+						// Only update the avatar if it exists..
+						var avSrc = new Image();
+						avSrc.src = d.avatar;
+						avSrc.onload = function()
+						{
+							var ctx = avatar.getContext( '2d' );
+							ctx.drawImage( avSrc, 0, 0, 256, 256 );
+						}
 					}
 				}
 				sm.execute( 'getsetting', { setting: 'avatar' } );
@@ -234,10 +241,10 @@ Application.receiveMessage = function( msg )
 					}
 					if ( infos )
 					{
-						ge( 'fnetDeviceName' ).value = infos.name;
-						ge( 'fnetDeviceDescription' ).value = infos.description;
-						ge( 'fnetMountLocalCheck' ).checked = infos.mountLocalDrives;
-						ge( 'fnetDeviceAvatar' ).src = infos.image;
+						if(ge( 'fnetDeviceName' ) ) ge( 'fnetDeviceName' ).value = infos.name;
+						if(ge( 'fnetDeviceDescription' ) ) ge( 'fnetDeviceDescription' ).value = infos.description;
+						if(ge( 'fnetMountLocalCheck' ) ) ge( 'fnetMountLocalCheck' ).checked = infos.mountLocalDrives;
+						if(ge( 'fnetDeviceAvatar' ) ) ge( 'fnetDeviceAvatar' ).src = infos.image;
 					}
 					else
 					{
@@ -245,17 +252,20 @@ Application.receiveMessage = function( msg )
 						{
 							var infos = message.information;
 
-							if ( infos.name )
+							if ( infos.name && ge( 'fnetDeviceName' ))
 								ge( 'fnetDeviceName' ).value = infos.name;
-							else
+							else if( ge( 'fnetDeviceName' ) )
 								ge( 'fnetDeviceName' ).value = infos.os;
-							if ( infos.description )
+								
+							if ( infos.description && ge( 'fnetDeviceDescription' ) )
 								ge( 'fnetDeviceDescription' ).value = infos.description ? infos.description : '';
-							if ( infos.mountLocalDrives )
+
+							if ( infos.mountLocalDrives && ge( 'fnetMountLocalCheck' ) )
 								ge( 'fnetMountLocalCheck' ).checked = infos.mountLocalDrives;
-							else
+							else if( ge( 'fnetMountLocalCheck' ) )
 								ge( 'fnetMountLocalCheck' ).checked = true;
-							ge( 'fnetDeviceAvatar' ).src = infos.icon;
+
+							if( ge( 'fnetDeviceAvatar' ) ) ge( 'fnetDeviceAvatar' ).src = infos.icon;
 						} );
 					}
 				};
@@ -286,16 +296,10 @@ function changeAvatar()
 				var image = new Image();
 				image.onload = function()
 				{
-					// Resizes the image to 128x128
-					var canvas = document.createElement( 'canvas' );
-					canvas.width = 128;
-					canvas.height = 128;
+					// Resizes the image
+					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 128, 128 );
-					var data = canvas.toDataURL();
-
-					// Sets the image
-					ge( 'Avatar' ).src = data;				
+					context.drawImage( image, 0, 0, 256, 256 );
 				}
 				image.src = getImageUrl( item[ 0 ].Path );
 			}
@@ -620,7 +624,7 @@ function generateKey()
 	{
 		Application.encryption.generateKeys( args.data, args.type, function( e, d )
 		{
-			console.log( 'Return on callback: ', { e:e, d:d } );
+			//console.log( 'Return on callback: ', { e:e, d:d } );
 			
 			if( e == 'ok' && d )
 			{
@@ -932,10 +936,33 @@ function cancelDia()
 	Application.sendMessage( { command: 'quit' } );
 }
 
+// Save settings
 function saveDia()
 {
-	// Save Friend Network
-	if ( Application.friendNetwork )
+	// Saves the avatar --------------------------------------------------------
+	
+	var canvas = ge( 'Avatar' );
+	context = canvas.getContext( '2d' );
+	var base64 = canvas.toDataURL();
+	var ma = new Module( 'system' );
+	ma.forceHTTP = true;
+	ma.onExecuted = function( e, d )
+	{
+		if( e != 'ok' )
+		{
+			console.log( 'Avatar saving failed.' );
+		}
+		/*else
+		{
+			console.log( 'Saved avatar.' );
+		}*/
+	};
+	ma.execute( 'setsetting', { setting: 'avatar', data: base64 } );
+	//console.log( 'Saving dia!' );
+
+	// Friend network settings -------------------------------------------------
+	
+	if( Application.friendNetwork )
 	{
 		// Save device information 
 		var image = ge( 'fnetDeviceAvatar' );
@@ -957,33 +984,18 @@ function saveDia()
 			description: deviceDescription,
 			mountLocalDrives: mountLocalDrives
 		};
+		
 		FriendNetworkFriends.getUniqueDeviceIdentifier( function( message ) 
 		{
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			var me = new Module( 'system' );
+			me.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
 					console.log( 'Device information saving failed.' );
 			};
-			m.execute( 'setsetting', { setting: message.identifier, data: save } );
+			me.execute( 'setsetting', { setting: message.identifier, data: save } );
 		} );
-
-		// Saves the avatar
-		var image = ge( 'Avatar' );
-		canvas = document.createElement( 'canvas' );
-		canvas.width = 64;
-		canvas.height = 64;
-		context = canvas.getContext( '2d' );
-		context.drawImage( image, 0, 0, 64, 64 );
-		var base64 = canvas.toDataURL();
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e != 'ok' )
-				console.log( 'Avatar saving failed.' );
-		};
-		m.execute( 'setsetting', { setting: 'avatar', data: base64 } );
-
+		
 		// Save Friend Network settings...
 		var activate = ge( 'fnetActivate' );
 		var workgroup = ge( 'fnetWorkgroup' );
@@ -995,10 +1007,10 @@ function saveDia()
 		var downloadChecked = ge( 'fnetDownloadCheck' ).checked;
 		var mountDriveChecked = ge( 'fnetMountDriveCheck' ).checked;
 		var mountOnWorkspaceChecked = ge( 'fnetMountOnWorkspaceCheck' ).checked;
-
+		
 		if ( downloadPath == '' )
 			downloadChecked = false;
-		if ( workgroup == '' )								// Empty workgroup-> global 'friend' space
+		if ( workgroup == '' ) // Empty workgroup-> global 'friend' space
 		{
 			workgroup = 'friend';
 			password = 'public';
@@ -1008,7 +1020,7 @@ function saveDia()
 			Alert( i18n( 'i18n_account' ), i18n( 'i18n_passwordNoMatch' ) );
 			return;
 		}
-		
+	
 		var fnet = 
 		{
 			configVersion: FriendNetworkFriends.configVersion,
@@ -1034,7 +1046,6 @@ function saveDia()
 				askOnlyToFriends: ge( 'fnetAskOnlyToFriends' ).checked
 			}
 		};
-
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -1052,14 +1063,16 @@ function saveDia()
 		m.execute( 'setsetting', { setting: 'friendNetwork', data: fnet } );
 	}
 	
+	// Credentials -------------------------------------------------------------
+	
 	// Get save object
 	var obj = {
-		fullname: htmlentities( ge( 'UserAccFullname' ).value ),
+		fullname: ( ge( 'UserAccFullname' ).value ),
 		name:     htmlentities( ge( 'UserAccUsername' ).value ),
  		email:    ge( 'UserAccEmail' ).value
 	};
 	
-	//shall we save new password
+	// Shall we save new password
 	if( ge( 'UserAccPassword' ).value != '' )
 	{
 		if( ge( 'UserAccPassword' ).value == ge( 'UserAccPasswordConfirm' ).value )
@@ -1093,9 +1106,10 @@ function saveDia()
 		Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
 
 	}
-	
-	obj.command ='update';
+	obj.command = 'update';
 	f.execute( 'user', obj );
+	
+	// Languages ---------------------------------------------------------------
 	
 	// Save language setting
 	if( ge( 'UserLanguage' ).value != Application.language )
@@ -1120,8 +1134,8 @@ function saveDia()
 						}
 					}
 					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+					var mt = new Module( 'system' );
+					mt.onExecuted = function( e, d )
 					{	
 						var mo = new Module( 'system' );
 						mo.onExecuted = function()
@@ -1130,7 +1144,7 @@ function saveDia()
 						}
 						mo.execute( 'setsetting', { setting: 'locale', data: ge( 'UserLanguage' ).value } );
 					}
-					m.execute( 'setsetting', { setting: 'language', data: voice } );
+					mt.execute( 'setsetting', { setting: 'language', data: voice } );
 				}
 				else
 				{
@@ -1148,12 +1162,13 @@ function saveDia()
 		if( speechSynthesis.getVoices().length <= 0 )
 			setTimeout( function(){ updateLanguages(); }, 150 );
 		else updateLanguages();
-		
-		var m = new Module( 'system' );
-		m.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
 	}
 	
-	// How do we run Friend
+	var mo = new Module( 'system' );
+	mo.execute( 'setsetting', { setting: 'workspacemode', data: ge( 'UserMode' ).value } );
+	
+	// How do we run Friend ----------------------------------------------------
+	
 	var workspaceMode = ge( 'UserMode' );
 	if( workspaceMode ) workspaceMode = workspaceMode.value;
 	else workspaceMode = 'normal';
@@ -1216,9 +1231,14 @@ function getStorage()
 		{
 			var js = JSON.parse( d );
 			var str = '';
+			var userLevel = parent.Workspace.userLevel.toLowerCase();
 			for( var a = 0; a < js.length; a++ )
 			{
-				if( js[a].Mounted != '0' )
+				//console.log('storage device', JSON.stringify(js[a]));
+				//dont let non-admins manage workgroup drives.
+				if( js[a].Type == 'SQLWorkgroupDrive' && userLevel != 'admin')
+					str += '<div class="FloatLeft Disk MousePointer NonEditableDisk" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+				else if( js[a].Mounted != '0' )
 					str += '<div class="FloatLeft Disk MousePointer" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 			}
 			str += '<div onclick="addStorage()" class="MousePointer FloatLeft BigButton IconSmall fa-plus"><div class="Label Ellipsis">' + i18n( 'i18n_add_storage' ) + '</div></div>';

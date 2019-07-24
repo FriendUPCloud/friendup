@@ -7,3 +7,64 @@
 {
 	display: block;
 }
+
+.View, .View.Active
+{
+	border-bottom: 0;
+	border-radius: 0;
+}
+
+#DoorsScreen > .ScreenContent
+{
+	overflow: hidden;
+}
+
+
+body #Thanks
+{
+	opacity: 1;
+	transition: opacity 0.5s;
+}
+
+body[windowcount] #Thanks
+{
+	opacity: 0;
+}
+
+.LoadingMessage
+{
+	position: absolute;
+	top: calc(50% - 80px);
+	left: calc(50% - 200px);
+	width: 0px;
+	height: 80px;
+	text-align: center;
+	color: white;
+	opacity: 0;
+	transition: opacity,width 0.5s;
+	white-space: nowrap;
+}
+
+.LoadingMessage.Loaded
+{
+	opacity: 1;
+	width: 400px;
+}
+
+
+[mobile]:not([sharedapp]) .LoadingMessage
+{
+	left: 20px;
+}
+
+[mobile]:not([sharedapp]) .LoadingMessage.Loaded
+{
+	width: calc(100% - 20px);
+}
+
+.LoadingMessage *
+{
+	font-size: 24px;
+	line-height: 80px;
+}
+

@@ -98,7 +98,7 @@ Application.showImages = function()
 			if( si - 1 == a || ( si < -2 && arr[a] == current ) )
 			{
 				Application.selectedImage = a + 1;
-				cl = ' Selected';
+				cl = ' Selected BoxSelected';
 				found = true;
 			}
 			var fname = arr[a].split(':')[1];
@@ -109,9 +109,12 @@ Application.showImages = function()
 					fname = fname.split( '/' );
 					fname = fname[fname.length - 1];
 				}
+				
+				var ur = '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + arr[a];
+				
 				ml += '<div class="MousePointer WPImage' + cl + '"><div class="Remove MousePointer IconSmall fa-remove" onclick="Application.removeImage(' + (a+1) + ')">&nbsp;</div><div class="Thumb" onclick="Application.setImage(' + 
 					(a+1) + ');" style="background-image: url(' + 
-					getImageUrl( arr[a] ) + ');"><div>' + fname + '</div></div></div>';
+					ur + ');"><div>' + fname + '</div></div></div>';
 			}
 		}
 		
@@ -125,27 +128,31 @@ Application.showImages = function()
 		
 		cl = '';
 		if( !found && Application.selectedImage == -1 )
-			cl = ' Selected';
+			cl = ' Selected BoxSelected';
 		ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: ' + ( Application.mode == 'doors' ? '#2F669F' : '#ffffff' ) + ';"><div>Use background color.</div></div></div>';
 		
 		if( Application.mode == 'doors' )
 		{
 			cl = '';
 			if( !found && Application.selectedImage == -2 )
-				cl = ' Selected';
+				cl = ' Selected BoxSelected';
 			ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-image: url(/webclient/gfx/theme/default_login_screen.jpg); background-size: cover"><div>Use system default.</div></div></div>';
 		}
 		
 		ge( 'Images' ).innerHTML = ml;
 	
 		// Store these
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
+		if( d )
 		{
-			//console.log( e );
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				//console.log( e, d );
+			}
+			m.execute( 'setsetting', { setting: 'images' + Application.mode, data: JSON.stringify( arr ) } );
 		}
-		m.execute( 'setsetting', { setting: 'images' + Application.mode, data: arr } );
 	}
+	// Get just the wallpaper
 	sm.execute( 'getsetting', { setting: 'wallpaper' + this.mode } );
 	
 }

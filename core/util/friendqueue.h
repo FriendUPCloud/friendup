@@ -71,7 +71,7 @@ typedef struct FQueue
  * @param qroot pointer to main FQueue structure
  * @param q poitner to data which will be placed in FriendQueue
  */
-#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } printf("Added: %d\n", q->fq_Size );
+#define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 
 
 FQEntry *FQPop( FQueue *qroot );
 
