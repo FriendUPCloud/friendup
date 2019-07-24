@@ -698,6 +698,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
+					char tmp[ 256 ];
 					char *nname = NULL;
 					el = HttpGetPOSTParameter( request, "newname" );
 					if( el == NULL ) el = HashmapGet( request->query, "newname" );
@@ -708,8 +709,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( nname != NULL )
 					{
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
 						// check if its allowed to use char
-						int i;
+						unsigned int i;
 						FBOOL badCharFound = FALSE;
 						for( i = 0 ; i < strlen( nname ) ; i++ )
 						{
@@ -722,10 +724,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						if( badCharFound == FALSE )
 						{
-							FHandler *actFS = (FHandler *)actDev->f_FSys;
 							DEBUG("[FSMWebRequest] Filesystem RENAME\n");
-						
-							char tmp[ 256 ];
 						
 							FBOOL have = FSManagerCheckAccess( l->sl_FSM, origDecodedPath, actDev->f_ID, loggedSession->us_User, "--W---" );
 							if( have == TRUE )
