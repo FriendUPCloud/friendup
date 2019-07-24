@@ -9,8 +9,38 @@
 *                                                                              *
 *****************************************************************************©*/
 
-$userid = $level == 'Admin' && isset( $args->args->userid ) ? 
-	$args->args->userid : $User->ID;
+require_once( 'php/include/permissions.php' );
+
+//$userid = ( $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
+
+if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_APPLICATION_GLOBAL', 'PERM_APPLICATION_WORKGROUP' ] ) )
+{
+	if( is_object( $perm ) )
+	{
+		// Permission denied.
+		
+		if( $perm->response == -1 )
+		{
+			//
+		}
+		
+		// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+		if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+		{
+			
+			// If user has GLOBAL or WORKGROUP access to this user
+			
+			if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+			{
+				$userid = intval( $args->args->userid );
+			}
+			
+		}
+	}
+}
+
 
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT

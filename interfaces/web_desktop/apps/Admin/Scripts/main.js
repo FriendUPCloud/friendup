@@ -87,7 +87,8 @@ function refreshSidebar()
 			},
 			'Roles': {
 				icon: 'fa-user-secret',
-				showing: isAdmin
+				showing: isAdmin,
+				permissions: [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ]
 			}
 		}
 	};

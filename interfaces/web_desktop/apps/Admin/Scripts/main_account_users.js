@@ -399,10 +399,11 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							wgroups = null;
 						}
+						console.log( { e:e, d:d } );
 						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'workgroups' );
+					u.execute( 'workgroups', { userid: info.userInfo.ID } );
 				},
 				// Get user's roles
 				function( info )
