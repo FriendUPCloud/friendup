@@ -28,7 +28,7 @@ Getting started
 
 Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
 
-Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern Linux distributions. Post to the [Developer Community](https://developers.friendup.cloud/) if you run into any problems here.
+Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern Linux distributions. Post to the [Developer Community](https://discord.gg/GREj9Gv) if you run into any problems here.
 
 The below script has been tested on Ubuntu 16. You might need to install MySQL or MariaDB first.
 
