@@ -93,9 +93,9 @@
 
 	/* Special colors */
 	$ColorBgStError:         #A01507;
-	$ColorStError:           #FF7364;
+	$ColorStError:           #ffc66d;
 	$ColorBgStGreenLight:    #51D88C;
-	$ColorStGreenLight:      #027936;
+	$ColorStGreenLight:      #0C2032;
 	$ColorBgStBlueLight:     #3498DB;
 	$ColorStBlueLight:       #0C2032;
 	$ColorBgStGrayLight:     #BDC3C7;
@@ -104,23 +104,23 @@
 	/* Context colors */
 	$ColorAccept:              #ECF0F1;
 	$ColorAcceptBg:            #0B9A49;
-	$ColorAcceptButton:        #e0e0e0;
+	$ColorAcceptButton:        #ECF0F1;
 	$ColorAcceptButtonBg:      #519039;
-	$ColorAcceptButtonHover:   #f0f0f0;
+	$ColorAcceptButtonHover:   #FFFFFF;
 	$ColorAcceptButtonHoverBg: #97d137;
 	$ColorDanger:              #FFE26C;
 	$ColorDangerBg:            #C92918;
 	$ColorDangerButton:        #FFE26C;
 	$ColorDangerButtonBg:      #C92918;
-	$ColorDangerButtonHover:   #FFE26C;
+	$ColorDangerButtonHover:   #FFFFFF;
 	$ColorDangerButtonHoverBg: #E74C3C;
-	$ColorAvailable:           #85C4ED;
+	$ColorAvailable:           #F7F7F7;
 	$ColorAvailableBg:         #0F85D1;
-	$ColorAction:              #DDB9EB;
+	$ColorAction:              #f7f7f7;
 	$ColorActionBg:            #8E44AD;
-	$ColorWarning:             #A01507;
+	$ColorWarning:             #720B00;
 	$ColorWarningBg:           #F9D543;
-	$ColorNotify:              #ECF0F1;
+	$ColorNotify:              #0C2032;
 	$ColorNotifyBg:            #E67E22;
 
 	$ColorIconBlinkStart:      #444444;
