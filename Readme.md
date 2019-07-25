@@ -94,12 +94,12 @@ Password: securefassword
 ```
 The first thing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
 
-FriendNetwork
+Friend Network
 -------------
 
-FriendNetwork is included in this project, but must be installed separately. It can only be installed on an already installed Friend Core.
+Friend Network is included in this project, but must be installed separately. It can only be installed on an already installed Friend Core.
 
-To install FriendNetwork, enter the following command in a shell:
+To install Friend Network, enter the following command in a shell:
 ```
 cd myfriend
 ./installFriendNetwork.sh
@@ -166,15 +166,6 @@ Documentation
 
 You can find the developer documentation in the docs folder. An administration guide will be added soon.
 
-Chat room
----------
-
-You will find many of our developers and users on our IRC channel / chat room. Please choose a unique nick and join using the link below.
-
-https://friendup.cloud/community/irc-channel/
-
-If you have chosen to install Friend Chat, the application will automatically open the friendup IRC channel upon starting.
-
 Licensing
 =========
 
@@ -189,8 +180,8 @@ New developers joining the project needs to sign our contributor agreement befor
 
 The contributor agreement is our vehicle for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
 
-Developer Community
-===================
+Developer Community / Chat rooms
+================================
 
 We invite everybody to join our Discord developer community at https://discord.gg/GREj9Gv.
 
