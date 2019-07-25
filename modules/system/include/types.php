@@ -12,7 +12,7 @@
 
 require_once( 'php/include/permissions.php' );
 
-if( $perm = Permissions( 'admin', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ] ) )
+if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ] ) )
 {
 	if( is_object( $perm ) )
 	{
@@ -21,6 +21,11 @@ if( $perm = Permissions( 'admin', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL
 		if( $perm->response == -1 )
 		{
 			//
+			
+			if( isset( $args->args->userid ) && $User->ID != $args->args->userid )
+			{
+				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
 		}
 		
 		// Permission granted. GLOBAL or WORKGROUP specific ...
@@ -29,7 +34,7 @@ if( $perm = Permissions( 'admin', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL
 		{			
 			// If we have GLOBAL Access || TODO: Look at this when do we list admin filesystems only GLOBAL?
 			
-			if( $perm->data->users == '*' || $perm->data->users )
+			if( $perm->data->users == '*' )
 			{
 				$level = 'Admin';
 			}

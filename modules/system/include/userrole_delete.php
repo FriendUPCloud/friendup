@@ -13,8 +13,28 @@
 global $SqlDatabase, $Logger, $User;
 
 // Must be admin
-if( $level != 'Admin' )
-	die( '404' );
+//if( $level != 'Admin' )
+//	die( '404' );
+
+require_once( 'php/include/permissions.php' );
+
+if( $perm = Permissions( 'delete', 'application', 'Admin', [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ] ) )
+{
+	if( is_object( $perm ) )
+	{
+		// Permission denied.
+		
+		if( $perm->response == -1 )
+		{
+			//
+			
+			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+		}
+		
+	}
+}
+
+
 
 if( !isset( $args->args->name ) && !isset( $args->args->id ) )
 {

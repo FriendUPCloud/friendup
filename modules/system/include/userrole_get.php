@@ -26,7 +26,7 @@ if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_ROLE_GLOBAL', '
 		
 		if( $perm->response == -1 )
 		{
-			die( '404' );
+			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
 		}
 		
 		// Permission granted. GLOBAL or WORKGROUP specific ...

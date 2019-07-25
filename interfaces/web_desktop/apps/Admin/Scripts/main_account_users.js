@@ -46,15 +46,6 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Roles
 				var rstr = '';
-				/*if( uroles && uroles.length )
-				{
-					for( var b = 0; b < uroles.length; b++ )
-					{
-						rstr += '<div class="HRow">';
-						rstr += '<div class="HContent100">' + uroles[b].Name + '</div>';
-						rstr += '</div>';
-					}
-				}*/
 				
 				// Roles and role adherence
 				if( uroles && uroles == '404' )
@@ -143,7 +134,11 @@ Sections.accounts_users = function( cmd, extra )
 				
 				apl += '<div class="List">';
 				var sw = 2;
-				if( apps )
+				if( apps && apps == '404' )
+				{
+					apl += i18n( 'i18n_applications_available_access_denied' );
+				}
+				else if( apps )
 				{
 					for( var a = 0; a < apps.length; a++ )
 					{
@@ -236,66 +231,78 @@ Sections.accounts_users = function( cmd, extra )
 							this.oldML = ge( 'WorkgroupGui' ).innerHTML;
 							
 							var str = '';
-							for( var a = 0; a < info.workgroups.length; a++ )
+							
+							if( info.workgroups && info.workgroups == '404' )
 							{
-								var found = false;
-								for( var c = 0; c < wgroups.length; c++ )
+								str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_workgroups_access_denied' ) + '</div></div>';
+							}
+							else if( info.workgroups )
+							{
+								for( var a = 0; a < info.workgroups.length; a++ )
 								{
-									if( info.workgroups[a].Name == wgroups[c].Name )
+									var found = false;
+									for( var c = 0; c < wgroups.length; c++ )
 									{
-										found = true;
-										break;
+										if( info.workgroups[a].Name == wgroups[c].Name )
+										{
+											found = true;
+											break;
+										}
 									}
+									str += '<div class="HRow">\
+										<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
+										<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+											<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+										</div>\
+									</div>';
 								}
-								str += '<div class="HRow">\
-									<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
-									<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-										<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-									</div>\
-								</div>';
 							}
 							ge( 'WorkgroupGui' ).innerHTML = str;
 							
 							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
-							for( var a = 0; a < workBtns.length; a++ )
+							
+							if( workBtns )
 							{
-								// Toggle user relation to workgroup
-								( function( b ) {
-									b.onclick = function( e )
-									{
-										var enabled = false;
-										if( this.classList.contains( 'fa-toggle-off' ) )
+								for( var a = 0; a < workBtns.length; a++ )
+								{
+									// Toggle user relation to workgroup
+									( function( b ) {
+										b.onclick = function( e )
 										{
-											this.classList.remove( 'fa-toggle-off' );
-											this.classList.add( 'fa-toggle-on' );
-											enabled = true;
-										}
-										else
-										{
-											this.classList.remove( 'fa-toggle-on' );
-											this.classList.add( 'fa-toggle-off' );
-										}
-										var args = { command: 'update', id: userInfo.ID };
-										args.workgroups = [];
-										
-										for( var c = 0; c < workBtns.length; c++ )
-										{
-											if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+											var enabled = false;
+											if( this.classList.contains( 'fa-toggle-off' ) )
 											{
-												args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+												this.classList.remove( 'fa-toggle-off' );
+												this.classList.add( 'fa-toggle-on' );
+												enabled = true;
 											}
-										}
-										args.workgroups = args.workgroups.join( ',' );
+											else
+											{
+												this.classList.remove( 'fa-toggle-on' );
+												this.classList.add( 'fa-toggle-off' );
+											}
+											var args = { command: 'update', id: userInfo.ID };
+											args.workgroups = [];
 										
-										// Reload user gui now
-										var f = new Library( 'system.library' );
-										f.onExecuted = function( e, d )
-										{
-											// Do nothing
+											for( var c = 0; c < workBtns.length; c++ )
+											{
+												if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+												{
+													args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+												}
+											}
+											args.workgroups = args.workgroups.join( ',' );
+										
+											// Reload user gui now
+											var f = new Library( 'system.library' );
+											f.onExecuted = function( e, d )
+											{
+												// Do nothing
+											}
+											f.execute( 'user', args );
 										}
-										f.execute( 'user', args );
-									}
-								} )( workBtns[ a ] );
+									} )( workBtns[ a ] );
+								}
 							}
 							
 						}
@@ -321,6 +328,7 @@ Sections.accounts_users = function( cmd, extra )
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
+						
 						if( e != 'ok' ) return;
 						var userInfo = null;
 						try
@@ -331,6 +339,8 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							return;
 						}
+						console.log( { e:e, d:userInfo } );
+						if( e != 'ok' ) userInfo = '404';
 						loadingList[ ++loadingSlot ]( userInfo );
 			
 					}
@@ -352,6 +362,8 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							settings = null;
 						}
+						console.log( { e:e, d:settings } );
+						if( e != 'ok' ) settings = '404';
 						loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
 					}
 					u.execute( 'usersettings', { userid: userInfo.ID } );
@@ -372,7 +384,8 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							workspacesettings = null;
 						}
-						
+						console.log( { e:e, d:workspacesettings } );
+						if( e != 'ok' ) workspacesettings = '404';
 						loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
 					}
 					u.execute( 'getsetting', { settings: [ 
@@ -400,6 +413,7 @@ Sections.accounts_users = function( cmd, extra )
 							wgroups = null;
 						}
 						console.log( { e:e, d:d } );
+						if( e != 'ok' ) wgroups = '404';
 						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -425,6 +439,7 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							info.roles = uroles;
 						}
+						if( e != 'ok' ) info.roles = '404';
 						loadingList[ ++loadingSlot ]( info );
 					}
 					u.execute( 'userroleget', { userid: info.userInfo.ID } );
@@ -446,6 +461,7 @@ Sections.accounts_users = function( cmd, extra )
 							ul = null;
 						}
 						console.log( { e:e, d:(ul?ul:d) } );
+						if( e != 'ok' ) ul = '404';
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -458,7 +474,7 @@ Sections.accounts_users = function( cmd, extra )
 					u.onExecuted = function( e, d )
 					{
 						var apps = null;
-						//if( e != 'ok' ) return;
+						
 						try
 						{
 							apps = JSON.parse( d );
@@ -467,6 +483,8 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							apps = null;
 						}
+						console.log( { e:e, d:apps } );
+						if( e != 'ok' ) apps = '404';
 						info.applications = apps;
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -1073,10 +1091,13 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 				var da = {};
 			}
 			
+			if( !da.length ) return;
 			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
+				console.log( { e:e, d:d } );
+				
 				var storage = { id : '', name : '', type : '', size : 512, user : userid };
 			
 				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
@@ -1277,7 +1298,7 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 			} );
 			
 		}
-		n.execute( 'types' );
+		n.execute( 'types', { userid: userid } );
 	}
 };
 
@@ -1511,6 +1532,8 @@ function StorageForm( storage, callback )
 		m.onExecuted = function( e, d )
 		{
 			// return info that this is loaded.
+			
+			console.log( { e:e, d:d } );
 			
 			if( callback ) callback( storage );
 			

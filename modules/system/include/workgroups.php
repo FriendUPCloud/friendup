@@ -25,7 +25,7 @@ if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBA
 		{
 			//
 			
-			die( 'fail<!--separate-->{"message":"Permission denied.","response":-1}' );
+			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
 		}
 		
 		// Permission granted. GLOBAL or WORKGROUP specific ...

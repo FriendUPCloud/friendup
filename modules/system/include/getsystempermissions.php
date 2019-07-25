@@ -1,6 +1,34 @@
 <?php
 
-if( $level != 'Admin' ) die( '404' );
+/*©lgpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
+*                                                                              *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
+*                                                                              *
+*****************************************************************************©*/
+
+//if( $level != 'Admin' ) die( '404' );
+
+require_once( 'php/include/permissions.php' );
+
+if( $perm = Permissions( 'read', 'application', 'Admin', 'PERM_ROLE_GLOBAL' ) )
+{
+	if( is_object( $perm ) )
+	{
+		// Permission denied.
+		
+		if( $perm->response == -1 )
+		{
+			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+		}
+		
+	}
+}
+
+
 
 if( !file_exists( 'cfg/system_permissions.json' ) || !filesize( 'cfg/system_permissions.json' ) )
 {

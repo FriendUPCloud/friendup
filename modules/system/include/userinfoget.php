@@ -17,9 +17,42 @@ if( isset( $args->args->id ) )
 	$uid = $args->args->id;
 else $uid = $User->ID;
 
-$rolePermission = CheckPermission( 'user', $uid, 'edit' );
+//$rolePermission = CheckPermission( 'user', $uid, 'edit' );
 
-if( $rolePermission || $level == 'Admin' || $uid == $User->ID )
+$workgroups = false;
+
+if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ], 'user', $uid ) )
+{
+	if( is_object( $perm ) )
+	{
+		// Permission denied.
+		
+		if( $perm->response == -1 )
+		{
+			//
+			
+			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+		}
+		
+		// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+		if( $perm->response == 1 && isset( $perm->data->workgroups ) )
+		{
+			
+			// If user has GLOBAL or WORKGROUP access to these workgroups
+			
+			if( $perm->data->workgroups && $perm->data->workgroups != '*' )
+			{
+				$workgroups = $perm->data->workgroups;
+			}
+			
+		}
+	}
+}
+
+
+
+if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 {
 	// Create FKeys table for storing encrypted keys connected to user
 	$t = new dbTable( 'FKeys' );
@@ -127,7 +160,7 @@ if( $rolePermission || $level == 'Admin' || $uid == $User->ID )
 								ug.UserID = \'' . $uid . '\'
 							AND g.ID = ug.UserGroupID
 						)
-					WHERE g.Type = "Workgroup" 
+					WHERE g.Type = "Workgroup"' . ( $workgroups ? 'AND ( g.ParentID IN (' . $workgroups . ') OR g.ID IN (' . $workgroups . ') ) ' : '' ) . ' 
 					ORDER BY g.Name ASC 
 				' ) )
 				{
