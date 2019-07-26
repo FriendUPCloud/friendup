@@ -41,7 +41,42 @@ if( !file_exists( $wname . 'thumbnails' ) )
 $settings = new stdClass();
 $settings->Date = date( 'Y-m-d H:i:s' );
 
-$userid = $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID;
+require_once( 'php/include/permissions.php' );
+
+//$userid = $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID;
+$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
+
+if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_LOOKNFEEL_GLOBAL', 'PERM_LOOKNFEEL_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
+{
+	if( is_object( $perm ) )
+	{
+		// Permission denied.
+		
+		if( $perm->response == -1 )
+		{
+			//
+			
+			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+		}
+		
+		// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+		if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+		{
+			
+			// If user has GLOBAL or WORKGROUP access to this user
+			
+			if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+			{
+				$userid = intval( $args->args->userid );
+			}
+			
+		}
+		
+	}
+}
+
+
 
 if( isset( $args->args->settings ) )
 {

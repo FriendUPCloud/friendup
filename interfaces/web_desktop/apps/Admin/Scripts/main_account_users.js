@@ -315,6 +315,35 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					
 					// End events ----------------------------------------------
+					
+					// Check Permissions
+					
+					if( !Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) && !Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
+					{
+						ge( 'LooknfeelContainer' ).style.display = 'none';
+					}
+					
+					if( !Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) && !Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
+					{
+						ge( 'WorkgroupContainer' ).style.display = 'none';
+					}
+					
+					if( !Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) && !Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
+					{
+						ge( 'RoleContainer' ).style.display = 'none';
+					}
+					
+					if( !Application.checkAppPermission( 'PERM_STORAGE_GLOBAL' ) && !Application.checkAppPermission( 'PERM_STORAGE_WORKGROUP' ) )
+					{
+						ge( 'StorageContainer' ).style.display = 'none';
+					}
+					
+					if( !Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) && !Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+					{
+						ge( 'ApplicationContainer' ).style.display = 'none';
+					}
+					
+					
 				}
 				d.load();
 			}
@@ -339,7 +368,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							return;
 						}
-						console.log( { e:e, d:userInfo } );
+						console.log( 'userinfoget ', { e:e, d:userInfo } );
 						if( e != 'ok' ) userInfo = '404';
 						loadingList[ ++loadingSlot ]( userInfo );
 			
@@ -362,7 +391,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							settings = null;
 						}
-						console.log( { e:e, d:settings } );
+						console.log( 'usersettings ', { e:e, d:settings } );
 						if( e != 'ok' ) settings = '404';
 						loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
 					}
@@ -384,7 +413,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							workspacesettings = null;
 						}
-						console.log( { e:e, d:workspacesettings } );
+						console.log( 'getsetting ', { e:e, d:workspacesettings } );
 						if( e != 'ok' ) workspacesettings = '404';
 						loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
 					}
@@ -412,7 +441,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							wgroups = null;
 						}
-						console.log( { e:e, d:d } );
+						console.log( 'workgroups ', { e:e, d:d } );
 						if( e != 'ok' ) wgroups = '404';
 						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
@@ -439,6 +468,7 @@ Sections.accounts_users = function( cmd, extra )
 							}
 							info.roles = uroles;
 						}
+						console.log( 'userroleget ', { e:e, d:uroles } );
 						if( e != 'ok' ) info.roles = '404';
 						loadingList[ ++loadingSlot ]( info );
 					}
@@ -460,7 +490,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							ul = null;
 						}
-						console.log( { e:e, d:(ul?ul:d) } );
+						console.log( 'mountlist ', { e:e, d:(ul?ul:d) } );
 						if( e != 'ok' ) ul = '404';
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
@@ -483,7 +513,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							apps = null;
 						}
-						console.log( { e:e, d:apps } );
+						console.log( 'listuserapplications ', { e:e, d:apps } );
 						if( e != 'ok' ) apps = '404';
 						info.applications = apps;
 						loadingList[ ++loadingSlot ]( info );
