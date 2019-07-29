@@ -84,7 +84,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 	}
 
 	DEBUG("WSCDATAptr %p clwsc_InUseCounter: %d msg: %s\n", wscdata, wscdata->wsc_InUseCounter, msgptr );
-	if( wscdata->wsc_InUseCounter > 0 )
+	if( wscdata->wsc_InUseCounter > 1 )	// ++ on this variable is called before this function thats why we cannot check >0
 	{
 		Log( FLOG_INFO, "Previous WS call was not closed properly, ptr: %p couner : %d\n", wscdata, wscdata->wsc_InUseCounter );
 	}
