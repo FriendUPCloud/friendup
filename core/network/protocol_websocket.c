@@ -326,35 +326,38 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 		{
 			if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
 			{
+				// double check
 				DEBUG("WebsocketWrite no chnked 1\n");
-				wsi->wusc_Data->wsc_InUseCounter++;
-				if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_UserSession != NULL )
+				if( wsi->wusc_Data != NULL )
 				{
-					int val;
-			
-					UserSession *us = ( UserSession *)wsi->wusc_Data->wsc_UserSession;
-					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-					if( en != NULL )
+					wsi->wusc_Data->wsc_InUseCounter++;
+					if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_UserSession != NULL )
 					{
-						en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
-						en->fq_Size = msglen;
+						int val;
 			
-						FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
-						retval += msglen;
+						UserSession *us = ( UserSession *)wsi->wusc_Data->wsc_UserSession;
+						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+						if( en != NULL )
+						{
+							en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+							memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
+							en->fq_Size = msglen;
+			
+							FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
+							retval += msglen;
+						}
 					}
-				}
 			
-				DEBUG("Send message to WSI, ptr: %p\n", wsi->wusc_Data->wsc_Wsi );
+					DEBUG("Send message to WSI, ptr: %p\n", wsi->wusc_Data->wsc_Wsi );
 
-				DEBUG("In use counter %d\n", wsi->wusc_Data->wsc_InUseCounter );
+					DEBUG("In use counter %d\n", wsi->wusc_Data->wsc_InUseCounter );
 				
-				if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
-				{
-					lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+					if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
+					{
+						lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+					}
+					wsi->wusc_Data->wsc_InUseCounter--;
 				}
-				wsi->wusc_Data->wsc_InUseCounter--;
-				
 				FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
 			}
 		}
