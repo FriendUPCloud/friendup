@@ -1,7 +1,7 @@
 /*
  * lws-minimal-dbus-ws-proxy-testclient
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -259,10 +259,19 @@ bail:
 static int
 remote_method_call(struct lws_dbus_ctx_wsproxy_client *dcwc)
 {
-	const char *uri = "wss://libwebsockets.org/?mirror=dbt";
-	const char *subprotocol = "lws-mirror-protocol";
+	char _uri[96];
+	const char *subprotocol = "lws-mirror-protocol", *uri = _uri;
 	DBusMessage *msg;
 	int ret = 1;
+
+	/*
+	 * make our own private mirror session... because others may run this
+	 * at the same time against libwebsockets.org... as happened 2019-03-14
+	 * and broke travis tests :-)
+	 */
+
+	lws_snprintf(_uri, sizeof(_uri), "wss://libwebsockets.org/?mirror=dbt-%d",
+			(int)getpid());
 
 	msg = dbus_message_new_method_call(
 			/* dest */	  THIS_BUSNAME,
@@ -410,6 +419,9 @@ int main(int argc, const char **argv)
 		lwsl_err("lws init failed\n");
 		return 1;
 	}
+
+	info.options |=
+		LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
 
 	vh = lws_create_vhost(context, &info);
 	if (!vh)

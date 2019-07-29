@@ -1,7 +1,7 @@
 /*
  * ws protocol handler plugin for "POST demo"
  *
- * Copyright (C) 2010-2016 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -36,7 +36,7 @@
 
 struct per_session_data__post_demo {
 	struct lws_spa *spa;
-	char result[LWS_PRE + 2048];
+	char result[LWS_PRE + LWS_RECOMMENDED_MIN_HEADER_SPACE];
 	char filename[64];
 	long file_length;
 #if !defined(LWS_WITH_ESP32)
@@ -106,6 +106,8 @@ file_upload_cb(void *data, const char *name, const char *filename,
 		close((int)(long long)pss->fd);
 		pss->fd = LWS_INVALID_FILE;
 #endif
+		break;
+	case LWS_UFS_CLOSE:
 		break;
 	}
 

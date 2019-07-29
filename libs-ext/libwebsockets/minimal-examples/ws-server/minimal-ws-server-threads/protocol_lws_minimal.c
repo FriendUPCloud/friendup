@@ -1,7 +1,7 @@
 /*
  * ws protocol handler plugin for "lws-minimal" demonstrating multithread
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -50,6 +50,10 @@ struct per_vhost_data__minimal {
 	const char *config;
 	char finished;
 };
+
+#if defined(WIN32)
+static void usleep(unsigned long l) { Sleep(l / 1000); }
+#endif
 
 /*
  * This runs under both lws service and "spam threads" contexts.
@@ -126,6 +130,8 @@ wait:
 	lwsl_notice("thread_spam %p exiting\n", (void *)pthread_self());
 
 	pthread_exit(NULL);
+
+	return NULL;
 }
 
 /* this runs under the lws service thread context only */
@@ -254,6 +260,8 @@ init_fail:
 		break;
 
 	case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
+		if (!vhd)
+			break;
 		/*
 		 * When the "spam" threads add a message to the ringbuffer,
 		 * they create this event in the lws service thread context

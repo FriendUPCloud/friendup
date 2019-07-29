@@ -79,8 +79,8 @@ rops_handle_POLLIN_listen(struct lws_context_per_thread *pt, struct lws *wsi,
 		 * block the connect queue for other legit peers.
 		 */
 
-		accept_fd  = accept((int)pollfd->fd,
-				    (struct sockaddr *)&cli_addr, &clilen);
+		accept_fd = accept((int)pollfd->fd,
+				   (struct sockaddr *)&cli_addr, &clilen);
 		lws_latency(context, wsi, "listener accept",
 			    (int)accept_fd, accept_fd != LWS_SOCK_INVALID);
 		if (accept_fd == LWS_SOCK_INVALID) {
@@ -88,9 +88,13 @@ rops_handle_POLLIN_listen(struct lws_context_per_thread *pt, struct lws *wsi,
 			    LWS_ERRNO == LWS_EWOULDBLOCK) {
 				break;
 			}
-			lwsl_err("ERROR on accept: %s\n",
-				 strerror(LWS_ERRNO));
-			break;
+			lwsl_err("accept: %s\n", strerror(LWS_ERRNO));
+			return LWS_HPI_RET_HANDLED;
+		}
+
+		if (context->being_destroyed) {
+			compatible_close(accept_fd);
+			return LWS_HPI_RET_PLEASE_CLOSE_ME;
 		}
 
 		lws_plat_set_socket_options(wsi->vhost, accept_fd, 0);
@@ -102,9 +106,13 @@ rops_handle_POLLIN_listen(struct lws_context_per_thread *pt, struct lws *wsi,
 			ntohs(((struct sockaddr_in *) &cli_addr)->sin_port)),
 			accept_fd);
 #else
+		{
+		struct sockaddr_in sain;
+		memcpy(&sain, &cli_addr, sizeof(sain));
 		lwsl_debug("accepted new conn port %u on fd=%d\n",
-			   ntohs(((struct sockaddr_in *) &cli_addr)->sin_port),
+			   ntohs(sain.sin_port),
 			   accept_fd);
+		}
 #endif
 
 		/*
@@ -119,29 +127,33 @@ rops_handle_POLLIN_listen(struct lws_context_per_thread *pt, struct lws *wsi,
 				(void *)(lws_intptr_t)accept_fd, 0)) {
 			lwsl_debug("Callback denied net connection\n");
 			compatible_close(accept_fd);
-			break;
+			return LWS_HPI_RET_PLEASE_CLOSE_ME;
 		}
 
-		if (!(wsi->vhost->options & LWS_SERVER_OPTION_ONLY_RAW))
+		if (!(wsi->vhost->options &
+			LWS_SERVER_OPTION_ADOPT_APPLY_LISTEN_ACCEPT_CONFIG))
 			opts |= LWS_ADOPT_HTTP;
-		else
-			opts = LWS_ADOPT_SOCKET;
 
 		fd.sockfd = accept_fd;
 		cwsi = lws_adopt_descriptor_vhost(wsi->vhost, opts, fd,
 						  NULL, NULL);
-		if (!cwsi)
+		if (!cwsi) {
+			lwsl_err("%s: lws_adopt_descriptor_vhost failed\n",
+					__func__);
 			/* already closed cleanly as necessary */
 			return LWS_HPI_RET_WSI_ALREADY_DIED;
-
+		}
+/*
 		if (lws_server_socket_service_ssl(cwsi, accept_fd)) {
 			lws_close_free_wsi(cwsi, LWS_CLOSE_STATUS_NOSTATUS,
 					   "listen svc fail");
 			return LWS_HPI_RET_WSI_ALREADY_DIED;
 		}
 
-		lwsl_info("%s: new wsi %p: wsistate 0x%x, role_ops %s\n",
-			    __func__, cwsi, cwsi->wsistate, cwsi->role_ops->name);
+		lwsl_info("%s: new wsi %p: wsistate 0x%lx, role_ops %s\n",
+			    __func__, cwsi, (unsigned long)cwsi->wsistate,
+			    cwsi->role_ops->name);
+*/
 
 	} while (pt->fds_count < context->fd_limit_per_thread - 1 &&
 		 wsi->position_in_fds_table != LWS_NO_FDS_POS &&
@@ -178,6 +190,8 @@ struct lws_role_ops role_ops_listen = {
 	/* destroy_role */		NULL,
 	/* adoption_bind */		NULL,
 	/* client_bind */		NULL,
+	/* adoption_cb clnt, srv */	{ 0, 0 },
+	/* rx_cb clnt, srv */		{ 0, 0 },
 	/* writeable cb clnt, srv */	{ 0, 0 },
 	/* close cb clnt, srv */	{ 0, 0 },
 	/* protocol_bind_cb c,s */	{ 0, 0 },
