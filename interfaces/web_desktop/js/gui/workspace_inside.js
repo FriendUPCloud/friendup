@@ -1697,12 +1697,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						//console.log = function(){};
 					}
 					
-					// Remove splash screen
-					if( window.friendApp )
-					{
-						window.friendApp.hide_splash_screen();
-					}
-					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{
@@ -8317,7 +8311,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
-		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
+		var self = this;
+		if( !Workspace.sessionId )
+		{ 
+			if( this.updateViewStateTM )
+				clearTimeout( this.updateViewStateTM );
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			return; 
+		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )
@@ -9375,7 +9379,7 @@ if( window.friendApp )
 Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return "mobile";
-	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
+	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
 	if( msg == false ) return "nomsg";
 	try
@@ -9395,7 +9399,8 @@ Workspace.receivePush = function( jsonMsg )
 	mobileDebug( JSON.stringify( msg ) );*/
 	
 	// Clear the notifications now... (race cond?)
-	friendApp.clear_notifications();
+	if( window.friendApp )
+		friendApp.clear_notifications();
 	
 	var messageRead = trash = false;
 	
