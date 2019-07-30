@@ -1556,7 +1556,7 @@ html body.Loading #FriendScreenOverlay
 	display: block;
 	content: " ";
 	position: absolute;
-	top: calc(50% + 300px);
+	top: calc(100% - 50px);
 	left: calc(50% - 20px);
 	width: 40px;
 	height: 40px;
