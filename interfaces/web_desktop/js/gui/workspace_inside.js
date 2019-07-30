@@ -346,7 +346,7 @@ var WorkspaceInside = {
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
-		if( this.mode == 'vr' ) return;
+		if( this.mode == 'vr' || isMobile ) return;
 		
 		if( globalConfig.workspacesInitialized )
 		{
