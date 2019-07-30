@@ -2938,10 +2938,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
 								
-									// Check connectino to server on interval
-									if( Workspace.httpCheckConnectionInterval )
-										clearInterval( Workspace.httpCheckConnectionInterval );
-									Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 5000 );
+									// Init the websocket etc
+									InitWorkspaceNetwork();
 									
 									// Generate avatar
 									var sm = new Module( 'system' );
@@ -3019,9 +3017,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Flush theme info
 						themeInfo.loaded = false;
-		
-						// Init the websocket etc
-						InitWorkspaceNetwork();
 					
 						// Reload the docks
 						Workspace.reloadDocks();
@@ -9045,6 +9040,11 @@ function InitWorkspaceNetwork()
 	{
 		wsp.initWebSocket();
 	}
+	
+	// After such an error, always try reconnect
+	if( Workspace.httpCheckConnectionInterval )
+		clearInterval( Workspace.httpCheckConnectionInterval );
+	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 5000 );
 
 	wsp.checkFriendNetwork();
 	
