@@ -64,7 +64,6 @@ Workspace = {
 		{
 			document.body.classList.add( 'friendapp' );
 		}
-
 	},
 	init: function()
 	{
@@ -89,6 +88,8 @@ Workspace = {
 		{
 			return setTimeout( 'Workspace.init()', 50 );
 		}
+		
+		this.initialized = true;
 
 		checkMobileBrowser();
 		if( !this.addedMobileCSS && window.isMobile )
@@ -105,7 +106,7 @@ Workspace = {
 	// NB: This is where we go towards workspace_inside.js
 	postInit: function()
 	{
-		if( this.initialized ) return;
+		if( this.postInitialized ) return;
 		
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' )
@@ -117,7 +118,7 @@ Workspace = {
 		}
 
 		// We passed!
-		this.initialized = true;
+		this.postInitialized = true;
 
 		// Do the init!
 		window.addEventListener( 'beforeunload', Workspace.leave, true );
