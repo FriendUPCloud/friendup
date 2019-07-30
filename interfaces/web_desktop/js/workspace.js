@@ -111,6 +111,8 @@ Workspace = {
 	// NB: This is where we go towards workspace_inside.js
 	postInit: function()
 	{
+		if( this.initialized ) return;
+		
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' )
 		{
