@@ -44,6 +44,55 @@
 		</div>
 	</div>
 	
+	<div id="WorkgroupContainer">
+		<h2 class="MarginTop">
+			{i18n_workgroups}
+		</h2>
+		<div class="Box Padding" id="WorkgroupGui">
+			{workgroups}
+			<div class="HRow">
+				<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="WorkgroupEdit"></button>
+			</div>
+		</div>
+	</div>
+	
+	<div id="RoleContainer">
+		<h2 class="MarginTop">
+			{i18n_roles}
+		</h2>
+		<div class="Box Padding">
+			{roles}
+		</div>
+	</div>
+	
+	<div id="StorageContainer">
+		<div class="HRow MarginTop">
+			<div class="HContent50 FloatLeft">
+				<h2>
+					{i18n_storage}
+				</h2>
+			</div>
+			<div class="HContent50 FloatLeft Relative">
+				<button class="IconButton IconSmall FloatRight MarginRight fa-plus" onclick="Sections.user_disk_update( {userid} )"></button>
+			</div>
+		</div>
+		<div class="Box Padding" id="StorageGui">
+			{storage}
+		</div>
+	</div>
+	
+	<div id="ApplicationContainer">
+		<h2 class="MarginTop">
+			{i18n_applications}
+		</h2>
+		<div class="Box Padding">
+			{applications}
+			<!--<div class="HRow">
+				<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
+			</div>-->
+		</div>
+	</div>
+	
 	<div id="LooknfeelContainer">
 		<h2 class="MarginTop">
 			{i18n_looknfeel}
@@ -100,62 +149,11 @@
 						</div>
 					</div>
 				</div>
-				<div class="HContent50 FloatLeft">
-					{theme_preview}
-				</div>			
+				<div class="HContent50 FloatLeft" style="position: relative; min-height:110px; border-radius: 2px; background: black; border: 1px solid rgba(0,0,0,0.5)" id="ThemePreview"></div>			
 			</div>
-			<div class="HRow">
+			<!--<div class="HRow">
 				<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.user_edit( {userid} )"></button>
-			</div>
-		</div>
-	</div>
-	
-	<div id="WorkgroupContainer">
-		<h2 class="MarginTop">
-			{i18n_workgroups}
-		</h2>
-		<div class="Box Padding" id="WorkgroupGui">
-			{workgroups}
-			<div class="HRow">
-				<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="WorkgroupEdit"></button>
-			</div>
-		</div>
-	</div>
-	
-	<div id="RoleContainer">
-		<h2 class="MarginTop">
-			{i18n_roles}
-		</h2>
-		<div class="Box Padding">
-			{roles}
-		</div>
-	</div>
-	
-	<div id="StorageContainer">
-		<div class="HRow MarginTop">
-			<div class="HContent50 FloatLeft">
-				<h2>
-					{i18n_storage}
-				</h2>
-			</div>
-			<div class="HContent50 FloatLeft Relative">
-				<button class="IconButton IconSmall FloatRight MarginRight fa-plus" onclick="Sections.user_disk_update( {userid} )"></button>
-			</div>
-		</div>
-		<div class="Box Padding" id="StorageGui">
-			{storage}
-		</div>
-	</div>
-	
-	<div id="ApplicationContainer">
-		<h2 class="MarginTop">
-			{i18n_applications}
-		</h2>
-		<div class="Box Padding">
-			{applications}
-			<div class="HRow">
-				<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
-			</div>
+			</div>-->
 		</div>
 	</div>
 	

@@ -28,7 +28,7 @@ i18n_default                           : Default
 
 i18n_name                              : Name
 i18n_category                          : Category
-i18n_dock                              : In dock
+i18n_dock                              : Dock
 
 i18n_user_mountlist_empty              : User mountlist empty.
 

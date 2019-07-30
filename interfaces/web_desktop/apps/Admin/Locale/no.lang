@@ -28,7 +28,7 @@ i18n_default                           : Standard
 
 i18n_name                              : Navn
 i18n_category                          : Kategori
-i18n_dock                              : I dock
+i18n_dock                              : Dock
 
 i18n_user_mountlist_empty              : Disklisten er tom.
 

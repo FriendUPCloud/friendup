@@ -27,6 +27,8 @@ Sections.accounts_users = function( cmd, extra )
 				var mountlist = info.mountlist;
 				var apps = info.applications;
 						
+				console.log( info.applications );		
+				
 				var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 				if( !themeData )
 					themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
@@ -123,16 +125,25 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Applications
 				var apl = '';
-				var types = [ i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
-				var keyz  = [ 'Name', 'Category', 'Dock' ];
+				var types = [ '', i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
+				var keyz  = [ 'Icon', 'Name', 'Category', 'Dock' ];
 				apl += '<div class="HRow">';
 				for( var a = 0; a < types.length; a++ )
 				{
-					apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis">' + types[ a ] + '</div>';
+					var ex = ''; var st = '';
+					if( keyz[ a ] == 'Icon' )
+					{
+						st = ' style="width:10%"';
+					}
+					if( keyz[ a ] == 'Dock' )
+					{
+						ex = ' TextRight';
+					}
+					apl += '<div class="PaddingSmall HContent30 FloatLeft Ellipsis' + ex + '"' + st + '>' + types[ a ] + '</div>';
 				}
 				apl += '</div>';
 				
-				apl += '<div class="List">';
+				apl += '<div>';
 				var sw = 2;
 				if( apps && apps == '404' )
 				{
@@ -146,16 +157,28 @@ Sections.accounts_users = function( cmd, extra )
 						apl += '<div class="HRow sw' + sw + '">';
 						for( var k = 0; k < keyz.length; k++ )
 						{
-							var ex = '';
-							var value = apps[ a ][ keyz[ k ] ];
+							var ex = ''; var st = '';
+							if( keyz[ k ] == 'Icon' )
+							{
+								st = ' style="width:10%"';
+								var img = ( !apps[ a ].Preview ? '/iconthemes/friendup15/File_Binary.svg' : '/system.library/module/?module=system&command=getapplicationpreview&application=' + apps[ a ].Name + '&authid=' + Application.authId );
+								var value = '<div style="background-image:url(' + img + ');background-size:contain;width:24px;height:24px;"></div>';
+							}
+							else
+							{
+								var value = apps[ a ][ keyz[ k ] ];
+							}
+							if( keyz[ k ] == 'Name' )
+								value = '<strong>' + apps[ a ][ keyz[ k ] ] + '</strong>';
 							if( keyz[ k ] == 'Category' )
 								value = apps[ a ].Config.Category;
 							if( keyz[ k ] == 'Dock' )
 							{
-								value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
+								value = '<button class="IconButton IconSmall ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								//value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
 								ex = ' TextCenter';
 							}
-							apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis' + ex + '">' + value + '</div>';
+							apl += '<div class="PaddingSmall HContent30 FloatLeft Ellipsis' + ex + '"' + st + '>' + value + '</div>';
 						}
 						apl += '</div>';
 					}
@@ -179,7 +202,7 @@ Sections.accounts_users = function( cmd, extra )
 					theme_name:        settings.Theme,
 					theme_dark:        themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
 					theme_style:       themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
-					wallpaper_name:    workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
+					wallpaper_name:    workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ),
 					workspace_count:   workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
 					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
 					storage:           mlst,
@@ -198,6 +221,21 @@ Sections.accounts_users = function( cmd, extra )
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
 					Friend.responsive.reinit();
+					
+					// Theme ---------------------------------------------------
+					
+					if( ge( 'ThemePreview' ) && workspaceSettings.wallpaperdoors )
+					{
+						console.log( workspaceSettings );
+						var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + workspaceSettings.wallpaperdoors : '' );
+						var st = ge( 'ThemePreview' ).style
+						st.backgroundImage = 'url(\'' + ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' ) + '\')';
+						st.backgroundSize = 'cover';
+						st.backgroundPosition = 'center';
+						st.backgroundRepeat = 'no-repeat';
+					}
+					
+					
 					
 					// Events --------------------------------------------------
 					
