@@ -3498,7 +3498,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
 								
-								if( globalConfig.workspacecount > 1 )
+								// Mobile is not using multiple workspaces
+								if( !isMobile && globalConfig.workspacecount > 1 )
 								{
 									// Check series of wallpaper elements
 									Workspace.checkWorkspaceWallpapers( true );
