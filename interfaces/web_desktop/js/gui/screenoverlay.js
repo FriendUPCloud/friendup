@@ -12,6 +12,7 @@
 var ScreenOverlay = {
 	visibility: false,
 	mode: false,
+	done: false,
 	list: [],
 	// Public methods ----------------------------------------------------------
 	init: function()
@@ -49,6 +50,7 @@ var ScreenOverlay = {
 				self.div.classList.remove( 'Visible' );
 				self.visibility = false; // Done hiding!
 				self.clearContent();
+				self.done = true;
 			}, 250 );
 		}, 250 );
 	},
@@ -81,6 +83,23 @@ var ScreenOverlay = {
 		{
 			self.div.stitle.classList.add( 'Showing' );
 		}, 5 );
+	},
+	enableDebug: function()
+	{
+		var self = this;
+		if( !this.div.sdebug )
+		{
+			var deb = document.createElement( 'div' );
+			deb.className = 'Debug';
+			this.div.appendChild( deb );
+			this.div.sdebug = deb;
+		}
+		this.div.sdebug.innerHTML = i18n( 'i18n_debug_skip' );
+		this.div.sdebug.onclick = function()
+		{
+			self.hide();
+			Friend.startupApps = {};
+		}
 	},
 	addStatus: function( topic, content )
 	{

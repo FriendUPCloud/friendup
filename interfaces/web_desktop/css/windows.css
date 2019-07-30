@@ -1599,6 +1599,17 @@ html body.Loading #FriendScreenOverlay
 	width: 800px;
 }
 
+#FriendScreenOverlay .Debug
+{
+	position: absolute;
+	bottom: 40px;
+	right: 10px;
+	width: calc(100% - 10px);
+	text-align: right;
+	font-weight: bold;
+	color: $ColorLEDOn;
+}
+
 [mobile] #FriendScreenOverlay.Visible.Showing .Title.Showing
 {
 	width: 100%;
