@@ -437,7 +437,6 @@ Workspace = {
 				if( !keys || ( keys && !keys.privatekey ) || ( keys && seed && keys.recoverykey != seed ) )
 				{
 					this.keyobject = this.fcrypt.generateKeys( false, false, false, seed );
-
 					keys = this.fcrypt.getKeys( this.keyobject );
 				}
 
@@ -897,6 +896,7 @@ Workspace = {
 		{
 			u = ru;
 			p = rp;
+			r = true;
 		}
 
 		// Require username and pw to login
@@ -943,7 +943,7 @@ Workspace = {
 					ApplicationStorage.save( {
 						privatekey  : this.encryption.keys.client.privatekey,
 						publickey   : this.encryption.keys.client.publickey,
-						recoverykey : this.encryption.keys.client.recovery
+						recoverykey : this.encryption.keys.client.recoverykey
 					},
 					{ applicationName : 'Workspace' } );
 				}
