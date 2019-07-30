@@ -13,6 +13,7 @@ var ScreenOverlay = {
 	visibility: false,
 	mode: false,
 	done: false,
+	debug: false,
 	list: [],
 	// Public methods ----------------------------------------------------------
 	init: function()
@@ -86,6 +87,7 @@ var ScreenOverlay = {
 	},
 	enableDebug: function()
 	{
+		this.debug = true;
 		var self = this;
 		if( !this.div.sdebug )
 		{
@@ -98,6 +100,8 @@ var ScreenOverlay = {
 		this.div.sdebug.onclick = function()
 		{
 			self.hide();
+			Workspace.lastListStatus = self.list;
+			self.list = {};
 			Friend.startupApps = {};
 		}
 	},
