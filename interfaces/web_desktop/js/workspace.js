@@ -116,7 +116,7 @@ Workspace = {
 		{
 			if( this.initTimeout )
 				clearTimeout( this.initTimeout );
-			this.initTimeout = setTimeout ( 'Workspace.postInit()', 5 );
+			this.initTimeout = setTimeout ( 'Workspace.postInit()', 25 );
 			return;
 		}
 
