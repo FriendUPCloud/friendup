@@ -1603,11 +1603,24 @@ html body.Loading #FriendScreenOverlay
 {
 	position: absolute;
 	bottom: 40px;
-	right: 10px;
-	width: calc(100% - 10px);
-	text-align: right;
+	left: 10px;
+	width: calc(100% - 20px);
+	text-align: center;
 	font-weight: bold;
 	color: $ColorLEDOn;
+}
+
+#FriendScreenOverlay .Debug .DebugLine
+{
+	display: block;
+	color: $ColorLEDNotify;
+	font-weight: normal;
+	width: 100%;
+	position: relative;
+	height: 25px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 [mobile] #FriendScreenOverlay.Visible.Showing .Title.Showing

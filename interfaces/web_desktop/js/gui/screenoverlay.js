@@ -105,6 +105,14 @@ var ScreenOverlay = {
 			Friend.startupApps = {};
 		}
 	},
+	addDebug: function( str )
+	{
+		if( !this.div.sdebug ) return;
+		var s = document.createElement( 'div' );
+		s.className = 'DebugLine';
+		s.innerHTML = str;
+		this.div.sdebug.appendChild( s );
+	},
 	addStatus: function( topic, content )
 	{
 		if( !this.div.status )

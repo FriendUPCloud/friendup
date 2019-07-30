@@ -1745,9 +1745,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													if( !found && !Friend.startupApps[ appName ] )
 													{
 														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+														ScreenOverlay.addDebug( 'Executing ' + cmd );
 														Workspace.shell.execute( cmd, function( res )
 														{
 															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+															ScreenOverlay.addDebug( 'Done ' + cmd );
 															l.func();
 															if( Workspace.mainDock )
 																Workspace.mainDock.closeDesklet();
