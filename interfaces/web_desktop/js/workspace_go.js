@@ -138,7 +138,9 @@ Workspace = {
 		document.getElementsByTagName( 'head' )[0].appendChild( dapis );
 
 		// Init the deepest field
-		DeepestField.init();
+		if( !isMobile )
+			DeepestField.init();
+		else DeepestField = false;
 
 		// Add event listeners
 		for( var a = 0; a < this.runLevels.length; a++ )
