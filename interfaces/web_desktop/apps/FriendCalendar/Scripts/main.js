@@ -105,6 +105,7 @@ var Calendar = {
 	weekScrollTop: 0,
 	listMode: 'month',
 	exStyles: null, // extra styles
+	// TODO: Add refreshing of actual calendar dates! Add busy loader
 	render: function()
 	{
 		eventMode = null
