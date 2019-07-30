@@ -17,14 +17,18 @@ if( isset( $args->args->timestamp ) )
 {
 	$date = date( 'Y-m-d', intval( $args->args->timestamp, 10 ) );
 	$date = explode( '-', $date );
+	foreach( $date as $k=>$v ) $date[ $k ] = intval( $v, 10 );
+	ob_end_clean();
 }
 // Normal date
 else if( isset( $args->args->date ) && trim( $args->args->date ) )
 {
 	$date = explode( '-', $args->args->date );
+	foreach( $date as $k=>$v ) $date[ $k ] = intval( $v, 10 );
 }
 else
 {
+	$Logger->log( 'Nothing..' );
 	die( 'fail<!--separate-->{"response":-1,"message":"No date or timestamp given."}' );
 }
 
@@ -128,14 +132,29 @@ if( $s->Load() )
 
 // Get all including shared calendars
 // TODO: Support other calendar entries than "friend" for shared calendars
+
+// Normal date
+$dateQuery = '';
+// Timestamp date
+if( isset( $args->args->timestamp ) ) 
+{
+	$dateQuery = '`Date` >= \'' . $dateFrm . '\' AND `Date` <= \'' . $dateEnd . '\'';
+}
+// Normal date
+else
+{
+	$dateQuery = '`Date`' . ( $day <= 0 ? ( ' LIKE \'' . $date . '-%\'' ) : ( '=\'' . $date . '\'' ) );
+}
+
 if( $sharedNames )
 {
 	$uids[] = $User->ID;
+		
 	$q = '
 		SELECT * FROM FCalendar WHERE 
 		UserID IN (' . implode( ',', $uids ) . ') AND 
 		( UserID = \'' . $User->ID . '\' OR `Type` = \'friend\' ) AND
-		`Date`' . ( $day <= 0 ? ( ' LIKE \'' . $date . '-%\'' ) : ( '=\'' . $date . '\'' ) ) . '
+		' . $dateQuery . '
 	';
 }
 // Just get own
@@ -144,7 +163,7 @@ else
 	$q = '
 		SELECT * FROM FCalendar WHERE 
 		UserID = \'' . $User->ID . '\' AND 
-		`Date`' . ( $day <= 0 ? ( ' LIKE \'' . $date . '-%\'' ) : ( '=\'' . $date . '\'' ) ) . '
+		' . $dateQuery . '
 	';
 }
 
