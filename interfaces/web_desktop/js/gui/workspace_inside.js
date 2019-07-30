@@ -8401,6 +8401,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
+			/*
+			TODO: Remove. But check with pawel. Not required anymore
 			if( isMobile )
 			{
 				var dl = new FriendLibrary( 'system.library' );
@@ -8410,7 +8412,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					//mobileDebug( 'setwsstate inactive: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
-			}
+			}*/
 		}
 		this.sleepTimeout();
 		this.currentViewState = newState;
