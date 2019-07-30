@@ -61,13 +61,7 @@ Workspace = {
 	{
 		// Go ahead and init!
 		ScreenOverlay.init();
-		
-		var img = new Image();
-		img.src = '/webclient/theme/loginimage.jpg';
-		img.onload = function()
-		{
-			Workspace.init();
-		}
+		Workspace.init();
 		
 		if( window.friendApp )
 		{
