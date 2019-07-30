@@ -38,6 +38,7 @@ var ScreenOverlay = {
 	// Hide self
 	hide: function()
 	{
+		if( this.debug ) return;
 		var self = this;
 		if( !this.visibility ) return;
 		this.div.classList.add( 'Hiding' );
@@ -99,6 +100,7 @@ var ScreenOverlay = {
 		this.div.sdebug.innerHTML = i18n( 'i18n_debug_skip' );
 		this.div.sdebug.onclick = function()
 		{
+			self.debug = false;
 			self.hide();
 			Workspace.lastListStatus = self.list;
 			self.list = {};
