@@ -112,11 +112,12 @@ Workspace = {
 	postInit: function()
 	{
 		// Everything must be ready
-		if( typeof( ge ) == 'undefined' || !document.body.classList.contains( 'Inside' ) )
+		if( typeof( ge ) == 'undefined' )
 		{
 			if( this.initTimeout )
 				clearTimeout( this.initTimeout );
-			this.initTimeout = setTimeout ( 'Workspace.init()', 5 );
+			this.initTimeout = setTimeout ( 'Workspace.postInit()', 5 );
+			return;
 		}
 
 		// We passed!
@@ -136,7 +137,9 @@ Workspace = {
 		document.getElementsByTagName( 'head' )[0].appendChild( dapis );
 
 		// Init the deepest field
-		DeepestField.init();
+		if( !isMobile )
+			DeepestField.init();
+		else DeepestField = false;
 
 		// Add event listeners
 		for( var a = 0; a < this.runLevels.length; a++ )

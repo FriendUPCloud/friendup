@@ -1571,7 +1571,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			function initFriendWorkspace()
 			{
 				// Make sure we have loaded
-				if( Workspace.mode != 'vr' && !Workspace.screen.contentDiv )
+				if( Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						return setTimeout( initFriendWorkspace, 50 );
 						
@@ -2955,7 +2955,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									Workspace.refreshExtraWidgetContents();
 								
 									// Redraw now
-									DeepestField.redraw();
+									if( !isMobile )
+										DeepestField.redraw();
 									
 									if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
 									
@@ -6617,7 +6618,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							}
 						},
-						disabled: _cajax_process_count <= 0
+						disabled: isMobile || _cajax_process_count <= 0
 					},
 					{
 						name:	i18n( 'menu_share' ),
@@ -7837,7 +7838,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Deepest field population
 	updateTasks: function()
 	{
-		DeepestField.redraw();
+		if( !isMobile )
+			DeepestField.redraw();
 	},
 	fullscreen: function( ele, e )
 	{
