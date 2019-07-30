@@ -1697,6 +1697,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						//console.log = function(){};
 					}
 					
+					// Remove splash screen
+					if( window.friendApp )
+					{
+						window.friendApp.hide_splash_screen();
+					}
+					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{
@@ -2944,12 +2950,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Generate avatar
 									var sm = new Module( 'system' );
 									sm.execute( 'getsetting', { setting: 'avatar' } );
-								
-									// Remove splash screen
-									if( window.friendApp )
-									{
-										window.friendApp.hide_splash_screen();
-									}
 									
 									document.title = Friend.windowBaseString;
 									
