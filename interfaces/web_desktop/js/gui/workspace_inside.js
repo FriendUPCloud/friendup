@@ -590,7 +590,7 @@ var WorkspaceInside = {
 				{
 					clearInterval( Workspace.httpCheckConnectionInterval );
 				}
-				Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 3000 );
+				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 3000 );
 			}
 			else if( e.type == 'ping' )
 			{
@@ -2938,6 +2938,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
 								
+									// Check connectino to server on interval
+									if( Workspace.httpCheckConnectionInterval )
+										clearInterval( Workspace.httpCheckConnectionInterval );
+									Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 5000 );
+									
 									// Generate avatar
 									var sm = new Module( 'system' );
 									sm.execute( 'getsetting', { setting: 'avatar' } );
@@ -9035,9 +9040,6 @@ function InitWorkspaceNetwork()
 	if( wsp.workspaceNetworkInitialized ) return;
 	wsp.workspaceNetworkInitialized = true;
 	
-	//check for server....
-	wsp.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 5000 );
-
 	// Establish a websocket connection to the core
 	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
 	{
