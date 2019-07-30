@@ -2996,7 +2996,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									
 									// We are ready!
 									Workspace.readyToRun = true;
-									Workspace.onReady();
+									if( window.friendApp && friendApp.onWorkspaceReady )
+									{
+										friendApp.onWorkspaceReady();
+									}
+									else
+									{
+										Workspace.onReady();
+									}
 									Workspace.updateViewState( 'active' );
 								}
 							}, 50 );
