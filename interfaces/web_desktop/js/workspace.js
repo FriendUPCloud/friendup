@@ -1321,54 +1321,51 @@ Workspace = {
 				// See if we have some theme settings
 				else
 				{
-					// As for body.Inside screens, use > 0.2secs
-					setTimeout( function()
-					{
-						var m = new Module( 'system' );
-						m.onExecuted = function( e, d )
-						{	
-							/*var m = new Module( 'system' );
-							m.onExecuted = function( ee, dd )
-							{
-						        if( ee != 'ok' )
-						        {
-						            ShowEula();
-								}
-					            afterEula( e );								
+					// Previously this was timeouted for 400 ms...
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{	
+						/*var m = new Module( 'system' );
+						m.onExecuted = function( ee, dd )
+						{
+					        if( ee != 'ok' )
+					        {
+					            ShowEula();
 							}
-							m.execute( 'getsetting', {
-								setting: 'accepteula'
-							} );*/
-							afterEula( 'ok' );
-							
-							// When eula is displayed or not
-							function afterEula( e )
-							{
-								if( e == 'ok' )
-								{
-									var s = JSON.parse( d );
-									if( s.Theme && s.Theme.length )
-									{
-										_this.refreshTheme( s.Theme.toLowerCase(), false );
-									}
-									else
-									{
-										_this.refreshTheme( false, false );
-									}
-									_this.mimeTypes = s.Mimetypes;
-								}
-								else _this.refreshTheme( false, false );
-
-								if( _this.loginPrompt )
-								{
-									_this.loginPrompt.close();
-									_this.loginPrompt = false;
-								}
-								_this.init();
-							}
+				            afterEula( e );								
 						}
-						m.execute( 'usersettings' );
-					}, 400 );
+						m.execute( 'getsetting', {
+							setting: 'accepteula'
+						} );*/
+						afterEula( 'ok' );
+						
+						// When eula is displayed or not
+						function afterEula( e )
+						{
+							if( e == 'ok' )
+							{
+								var s = JSON.parse( d );
+								if( s.Theme && s.Theme.length )
+								{
+									_this.refreshTheme( s.Theme.toLowerCase(), false );
+								}
+								else
+								{
+									_this.refreshTheme( false, false );
+								}
+								_this.mimeTypes = s.Mimetypes;
+							}
+							else _this.refreshTheme( false, false );
+
+							if( _this.loginPrompt )
+							{
+								_this.loginPrompt.close();
+								_this.loginPrompt = false;
+							}
+							_this.init();
+						}
+					}
+					m.execute( 'usersettings' );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 				Workspace.postInit();
