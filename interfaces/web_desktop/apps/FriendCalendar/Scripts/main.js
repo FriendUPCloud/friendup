@@ -547,6 +547,7 @@ var Calendar = {
 			to = Math.floor( to * 2 ) / 2;
 			from = Math.floor( from * 2 ) / 2;
 			
+			
 			var date = eventDiv.data.day.join( '-' );
 			
 			// Clear event data
