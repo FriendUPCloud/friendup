@@ -8331,7 +8331,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
-			if( isMobile )
+			// TODO: Remove the uncommented thing, it isn't working
+			// TODO: Check with pawel..
+			/*if( isMobile )
 			{
 				//mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
@@ -8348,7 +8350,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					clearTimeout( setwsstate );
 				};
 				dl.execute( 'mobile/setwsstate' );
-			}
+			}*/
 			// Tell all windows
 			if( window.friendApp )
 			{
