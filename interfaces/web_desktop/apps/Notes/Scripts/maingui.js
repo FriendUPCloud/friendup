@@ -1253,21 +1253,20 @@ Application.statusMessage = function( msg )
 		s.style.transition = '';
 		s.style.transform = 'translate3d(0,0,0)';
 	}
+	s.classList.add( 'Showing' );
 	s.innerHTML = msg;
 	s.timeout = setTimeout( function()
 	{
 		s.style.transition = 'left,opacity 0.25s,0.25s';
 		s.style.transform = 'translate3d(0,0,0)';
-		s.style.opacity = 1;
 		s.timeout = setTimeout( function()
 		{
 			s.style.transform = 'translate3d(20px,0,0)';
-			s.style.opacity = 0;
+			s.classList.remove( 'Showing' );
 			s.timeout = setTimeout( function()
 			{
 				s.innerHTML = '';
 				s.style.transform = 'translate3d(0,0,0)';
-				s.style.opacity = 1;
 			}, 250 );
 		}, 250 );
 	}, 1000 );
