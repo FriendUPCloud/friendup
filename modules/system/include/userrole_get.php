@@ -53,18 +53,27 @@ function getPermissionsForRole( $role )
 	
 	if( $perms = $SqlDatabase->FetchObjects( '
 		SELECT 
-			p.ID, p.Permission, p.Key, p.Data
+			p.ID, 
+			p.Permission, 
+			p.Key, 
+			p.Data, 
+			g.Type AS GroupType, 
+			g.Name AS GroupName 
 		FROM 
 			FUserRolePermission p 
+				LEFT JOIN FUserGroup g ON 
+				(
+					g.ID = p.Data 
+				)
 		WHERE 
-			p.RoleID = ' . $role->ID . ' 
+			p.RoleID = ' . $role->ID . '
 		ORDER BY 
 			p.ID 
 	' ) )
 	{
 		// Create clean permission objects without database crap
 		$permissions = array();
-		$keys = array( 'ID', 'Permission', 'Key', 'Data' );
+		$keys = array( 'ID', 'Permission', 'Key', 'Data', 'GroupType', 'GroupName' );
 		foreach( $perms as $perm )
 		{
 			$co = new stdClass();

@@ -41,7 +41,7 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						if( !wgroups[b].Name ) continue;
 						wstr += '<div class="HRow">';
-						wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
+						wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
 						wstr += '</div>';
 					}
 				}
@@ -56,11 +56,32 @@ Sections.accounts_users = function( cmd, extra )
 				}
 				else if( uroles && uroles.length )
 				{
+					
 					for( var a in uroles )
 					{
 						rstr += '<div class="HRow">';
-						rstr += '<div class="PaddingSmall HContent80 FloatLeft Ellipsis">' + uroles[a].Name + '</div>';
-						rstr += '<div class="PaddingSmall HContent20 FloatLeft Ellipsis">';
+						rstr += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis"><strong>' + uroles[a].Name + '</strong></div>';
+						
+						var title = '';
+						
+						if( uroles[a].Permissions.length )
+						{
+							var wgrs = [];
+							
+							for( var b in uroles[a].Permissions )
+							{
+								if( uroles[a].Permissions[b].GroupType == 'Workgroup' && wgrs.indexOf( uroles[a].Permissions[b].GroupName ) < 0 )
+								{
+									wgrs.push( uroles[a].Permissions[b].GroupName );
+								}
+							}
+							
+							title = wgrs.join( ',' );
+						}
+						
+						rstr += '<div class="PaddingSmall HContent40 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
+						
+						rstr += '<div class="PaddingSmall HContent15 FloatLeft Ellipsis">';
 						rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 						rstr += '</div>';
 						rstr += '</div>';
