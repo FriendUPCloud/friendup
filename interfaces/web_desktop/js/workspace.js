@@ -480,11 +480,13 @@ Workspace = {
 
 			return false;
 		},
-
 		generateKeys: function( u, p )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
 			{
+				if( window.ScreenOverlay )
+					ScreenOverlay.addDebug( 'Generating keys' );
+				
 				var pass = ( u && p ? u + ':' : '' ) + ( p ? p : '' );
 
 				var keyobject = this.fcrypt.generateKeys( pass );
@@ -514,7 +516,6 @@ Workspace = {
 
 			return false;
 		},
-
 		getKeys: function()
 		{
 			if( typeof( this.fcrypt ) != 'undefined' && this.keys.client )
@@ -539,7 +540,6 @@ Workspace = {
 
 			return false;
 		},
-
 		getServerKey: function( callback )
 		{
 			var k = new Module( 'system' );
@@ -559,7 +559,6 @@ Workspace = {
 			}
 			k.execute( 'getserverkey' );
 		},
-
 		encryptRSA: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -569,7 +568,6 @@ Workspace = {
 
 			return false;
 		},
-
 		decryptRSA: function( cipher, privatekey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -579,7 +577,6 @@ Workspace = {
 
 			return false;
 		},
-
 		encryptAES: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -589,7 +586,6 @@ Workspace = {
 
 			return false;
 		},
-
 		decryptAES: function( cipher, privatekey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -599,7 +595,6 @@ Workspace = {
 
 			return false;
 		},
-
 		encrypt: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -614,7 +609,6 @@ Workspace = {
 
 			return false;
 		},
-
 		decrypt: function( cipher, privatekey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -629,7 +623,6 @@ Workspace = {
 
 			return false;
 		},
-
 		sha256: function( str )
 		{
 			if( !str && typeof( this.fcrypt ) != 'undefined' )
@@ -644,7 +637,6 @@ Workspace = {
 
 			return false;
 		},
-
 		md5: function( str )
 		{
 			if( !str && typeof( this.fcrypt ) != 'undefined' )
