@@ -4147,6 +4147,11 @@ var View = function( args )
 		if( !( friendU && ( friendU == targetU || !targetU ) ) )
 		{
 			ifr.sandbox = 'allow-same-origin allow-forms allow-scripts';
+			console.log( 'Sandbox: ' + ifr.sandbox );
+		}
+		else
+		{
+			console.log( 'Sandbox denied: ', friendU, targetU );
 		}
 
 		// Allow sandbox flags

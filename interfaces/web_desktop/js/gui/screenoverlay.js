@@ -34,6 +34,10 @@ var ScreenOverlay = {
 		{
 			self.div.classList.add( 'Showing' );
 		}, 5 );
+		if( this.debug )
+		{
+			this.enableDebug();
+		}
 	},
 	// Hide self
 	hide: function()
