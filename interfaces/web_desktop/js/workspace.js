@@ -436,8 +436,19 @@ Workspace = {
 
 				if( !keys || ( keys && !keys.privatekey ) || ( keys && seed && keys.recoverykey != seed ) )
 				{
+					if( window.ScreenOverlay )
+					{
+						ScreenOverlay.addDebug( 'Generating encryption keys' );
+					}
 					this.keyobject = this.fcrypt.generateKeys( false, false, false, seed );
 					keys = this.fcrypt.getKeys( this.keyobject );
+				}
+				else
+				{
+					if( window.ScreenOverlay )
+					{
+						ScreenOverlay.addDebug( 'Loaded encryption keys' );
+					}
 				}
 
 				if( keys )
@@ -449,6 +460,8 @@ Workspace = {
 							publickey   : this.fcrypt.encodeKeyHeader( keys.publickey ),
 							recoverykey : keys.recoverykey
 						};
+						if( window.ScreenOverlay )
+							ScreenOverlay.addDebug( 'Keys stored encoded' );
 					}
 					else
 					{
@@ -457,6 +470,8 @@ Workspace = {
 							publickey   : keys.publickey,
 							recoverykey : keys.recoverykey
 						};
+						if( window.ScreenOverlay )
+							ScreenOverlay.addDebug( 'Keys stored raw' );
 					}
 				}
 				return this.keys;
