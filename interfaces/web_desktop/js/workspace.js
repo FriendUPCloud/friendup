@@ -1070,13 +1070,21 @@ Workspace = {
 		if( this.encryption.keys.client )
 		{
 			console.log( 'Remembering.' );
-			ApplicationStorage.save( {
-				privatekey  : this.encryption.keys.client.privatekey,
-				publickey   : this.encryption.keys.client.publickey,
-				recoverykey : this.encryption.keys.client.recoverykey
-			},
-			{ applicationName : 'Workspace' } );
+			ApplicationStorage.save( 
+				{
+					privatekey  : this.encryption.keys.client.privatekey,
+					publickey   : this.encryption.keys.client.publickey,
+					recoverykey : this.encryption.keys.client.recoverykey
+				},
+				{
+					applicationName : 'Workspace' 
+				} 
+			);
+			if( window.ScreenOverlay )
+				ScreenOverlay.addDebug( 'Keys remembered' );
+			return true;
 		}
+		return false;
 	},
 	showDesktop: function()
 	{
