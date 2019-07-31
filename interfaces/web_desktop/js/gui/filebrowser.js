@@ -594,6 +594,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Click the click element for path
 				if( clickElement )
 				{
+					self.lastClickElement = clickElement; // store it
 					setTimeout( function()
 					{
 						clickElement.onclick( { mode: 'open' } );
@@ -795,6 +796,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			// Click the click element for path
 			if( clickElement )
 			{
+				self.lastClickElement = clickElement; // Store it
 				setTimeout( function()
 				{
 					clickElement.onclick();

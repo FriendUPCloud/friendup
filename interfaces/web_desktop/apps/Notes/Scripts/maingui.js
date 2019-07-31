@@ -120,6 +120,8 @@ Application.updateViewMode = function()
 {
 	if( !isMobile ) return;
 	
+	console.log( 'Which view mode?', currentViewMode );
+	
 	switch( currentViewMode )
 	{
 		case 'root':
@@ -138,6 +140,11 @@ Application.updateViewMode = function()
 			this.fld.style.transform = 'translate3d(-100%,0,0)';
 			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
 			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
+			if( isMobile )
+			{
+				// Force update
+				Application.refreshFilePane( false, true );
+			}
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'files',
@@ -162,6 +169,8 @@ Application.refreshFilePane = function( method, force, callback )
 {
 	if( !method ) method = false;
 	
+	console.log( 'Refreshing now!' );
+	
 	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
 	{
 		Application.fld.classList.add( 'Hidden' );
@@ -183,13 +192,18 @@ Application.refreshFilePane = function( method, force, callback )
 	
 	d.getIcons( function( items )
 	{
+		console.log( 'We got items!', items );
+		
 		if( ge( 'FileBar' ).contents )
 		{
 			ge( 'FileBar' ).contents.innerHTML = '';
 		}
 		
 		// Something changed in transit. Do nothing
-		if( p != Application.path ) return;
+		if( p != Application.path )
+		{
+			return;
+		}
 	
 		Application._toBeSaved = null;
 		
@@ -1152,7 +1166,6 @@ Application.setCurrentDocument = function( pth )
 
 	// Update filebrowser
 	this.fileBrowser.setPath( this.path );
-	
 	
 	Application.refreshFilePane();
 	
