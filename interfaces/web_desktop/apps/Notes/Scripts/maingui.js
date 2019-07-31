@@ -606,7 +606,7 @@ Application.run = function( msg, iface )
 				var l = new Library( 'system.library' );
 				l.onExecuted = function()
 				{
-					self.fileBrowser.refresh( Application.browserPath );
+					self.fileBrowser.refresh();
 				}
 				l.execute( 'file/makedir', { path: Application.path + this.value } );
 			}
