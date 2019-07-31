@@ -13,7 +13,7 @@ var ScreenOverlay = {
 	visibility: false,
 	mode: false,
 	done: false,
-	debug: true,
+	debug: false,
 	list: [],
 	// Public methods ----------------------------------------------------------
 	init: function()
