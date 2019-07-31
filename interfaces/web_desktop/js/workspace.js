@@ -430,6 +430,9 @@ Workspace = {
 			{
 				p = ( !p || p.indexOf('HASHED') == 0 ? p : ( 'HASHED' + Sha256.hash( p ) ) );
 
+				if( window.ScreenOverlay )
+					ScreenOverlay.addDebug( 'Generating sha256 keys' );
+
 				var seed = ( u && p ? this.fcrypt.generateKey( ( u + ':' + p ), 32, 256, 'sha256' ) : false );
 
 				var keys = ApplicationStorage.load( { applicationName : 'Workspace' } );
@@ -437,9 +440,7 @@ Workspace = {
 				if( !keys || ( keys && !keys.privatekey ) || ( keys && seed && keys.recoverykey != seed ) )
 				{
 					if( window.ScreenOverlay )
-					{
 						ScreenOverlay.addDebug( 'Generating encryption keys' );
-					}
 					this.keyobject = this.fcrypt.generateKeys( false, false, false, seed );
 					keys = this.fcrypt.getKeys( this.keyobject );
 				}
