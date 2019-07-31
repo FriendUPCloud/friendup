@@ -1989,9 +1989,6 @@ body.Inside
 
 body #Screens
 {
-	background-image: url(/webclient/theme/loginimage.jpg);
-	background-position: center center;
-	background-size: cover;
 }
 
 body.Login > img

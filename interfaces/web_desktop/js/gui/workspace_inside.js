@@ -346,7 +346,7 @@ var WorkspaceInside = {
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
-		if( this.mode == 'vr' ) return;
+		if( this.mode == 'vr' || isMobile ) return;
 		
 		if( globalConfig.workspacesInitialized )
 		{
@@ -590,7 +590,7 @@ var WorkspaceInside = {
 				{
 					clearInterval( Workspace.httpCheckConnectionInterval );
 				}
-				Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 3000 );
+				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 3000 );
 			}
 			else if( e.type == 'ping' )
 			{
@@ -1571,7 +1571,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			function initFriendWorkspace()
 			{
 				// Make sure we have loaded
-				if( Workspace.mode != 'vr' && !Workspace.screen.contentDiv )
+				if( Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						return setTimeout( initFriendWorkspace, 50 );
 						
@@ -1718,11 +1718,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( seq.length )
 							{
 								ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
+								//ScreenOverlay.enableDebug();
 								var l = {
 									index: 0,
 									func: function()
 									{
-										if( l.index < seq.length )
+										if( !ScreenOverlay.done && l.index < seq.length )
 										{
 											var cmd = seq[ l.index++ ];
 											if( cmd && cmd.length )
@@ -1744,9 +1745,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													if( !found && !Friend.startupApps[ appName ] )
 													{
 														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+														ScreenOverlay.addDebug( 'Executing ' + cmd );
 														Workspace.shell.execute( cmd, function( res )
 														{
 															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+															ScreenOverlay.addDebug( 'Done ' + cmd );
 															l.func();
 															if( Workspace.mainDock )
 																Workspace.mainDock.closeDesklet();
@@ -2935,15 +2938,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
 								
+									// Init the websocket etc
+									InitWorkspaceNetwork();
+									
 									// Generate avatar
 									var sm = new Module( 'system' );
 									sm.execute( 'getsetting', { setting: 'avatar' } );
-								
-									// Remove splash screen
-									if( window.friendApp )
-									{
-										window.friendApp.hide_splash_screen();
-									}
 									
 									document.title = Friend.windowBaseString;
 									
@@ -2955,7 +2955,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									Workspace.refreshExtraWidgetContents();
 								
 									// Redraw now
-									DeepestField.redraw();
+									if( !isMobile )
+										DeepestField.redraw();
 									
 									if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
 									
@@ -2996,13 +2997,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									
 									// We are ready!
 									Workspace.readyToRun = true;
-									if( !window.friendApp )
-									{
-										Workspace.onReady();
-									}
-									else if( typeof( window.friendApp.onWorkspaceReady ) == 'function' )
+									if( window.friendApp && friendApp.onWorkspaceReady )
 									{
 										friendApp.onWorkspaceReady();
+									}
+									else
+									{
+										Workspace.onReady();
 									}
 									Workspace.updateViewState( 'active' );
 								}
@@ -3011,9 +3012,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 						// Flush theme info
 						themeInfo.loaded = false;
-		
-						// Init the websocket etc
-						InitWorkspaceNetwork();
 					
 						// Reload the docks
 						Workspace.reloadDocks();
@@ -3501,7 +3499,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
 								
-								if( globalConfig.workspacecount > 1 )
+								// Mobile is not using multiple workspaces
+								if( !isMobile && globalConfig.workspacecount > 1 )
 								{
 									// Check series of wallpaper elements
 									Workspace.checkWorkspaceWallpapers( true );
@@ -6619,7 +6618,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							}
 						},
-						disabled: _cajax_process_count <= 0
+						disabled: isMobile || _cajax_process_count <= 0
 					},
 					{
 						name:	i18n( 'menu_share' ),
@@ -7839,7 +7838,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Deepest field population
 	updateTasks: function()
 	{
-		DeepestField.redraw();
+		if( !isMobile )
+			DeepestField.redraw();
 	},
 	fullscreen: function( ele, e )
 	{
@@ -8314,7 +8314,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
-		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
+		var self = this;
+		if( !Workspace.sessionId )
+		{ 
+			if( this.updateViewStateTM )
+				clearTimeout( this.updateViewStateTM );
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			return; 
+		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )
@@ -8328,7 +8338,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
-			if( isMobile )
+			// TODO: Remove the uncommented thing, it isn't working
+			// TODO: Check with pawel..
+			/*if( isMobile )
 			{
 				//mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
@@ -8345,7 +8357,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					clearTimeout( setwsstate );
 				};
 				dl.execute( 'mobile/setwsstate' );
-			}
+			}*/
 			// Tell all windows
 			if( window.friendApp )
 			{
@@ -8392,6 +8404,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
+			/*
+			TODO: Remove. But check with pawel. Not required anymore
 			if( isMobile )
 			{
 				var dl = new FriendLibrary( 'system.library' );
@@ -8401,7 +8415,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					//mobileDebug( 'setwsstate inactive: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
-			}
+			}*/
 		}
 		this.sleepTimeout();
 		this.currentViewState = newState;
@@ -9032,14 +9046,16 @@ function InitWorkspaceNetwork()
 	if( wsp.workspaceNetworkInitialized ) return;
 	wsp.workspaceNetworkInitialized = true;
 	
-	//check for server....
-	wsp.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 5000 );
-
 	// Establish a websocket connection to the core
 	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
 	{
 		wsp.initWebSocket();
 	}
+	
+	// After such an error, always try reconnect
+	if( Workspace.httpCheckConnectionInterval )
+		clearInterval( Workspace.httpCheckConnectionInterval );
+	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 5000 );
 
 	wsp.checkFriendNetwork();
 	
@@ -9368,7 +9384,7 @@ if( window.friendApp )
 Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return "mobile";
-	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
+	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
 	if( msg == false ) return "nomsg";
 	try
@@ -9388,7 +9404,8 @@ Workspace.receivePush = function( jsonMsg )
 	mobileDebug( JSON.stringify( msg ) );*/
 	
 	// Clear the notifications now... (race cond?)
-	friendApp.clear_notifications();
+	if( window.friendApp )
+		friendApp.clear_notifications();
 	
 	var messageRead = trash = false;
 	

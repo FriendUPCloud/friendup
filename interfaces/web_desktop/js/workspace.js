@@ -58,19 +58,12 @@ Workspace = {
 	{
 		// Go ahead and init!
 		ScreenOverlay.init();
-		
-		var img = new Image();
-		img.src = '/webclient/theme/loginimage.jpg';
-		img.onload = function()
-		{
-			Workspace.init();
-		}
+		Workspace.init();
 		
 		if( window.friendApp )
 		{
 			document.body.classList.add( 'friendapp' );
 		}
-
 	},
 	init: function()
 	{
@@ -95,6 +88,8 @@ Workspace = {
 		{
 			return setTimeout( 'Workspace.init()', 50 );
 		}
+		
+		this.initialized = true;
 
 		checkMobileBrowser();
 		if( !this.addedMobileCSS && window.isMobile )
@@ -111,16 +106,19 @@ Workspace = {
 	// NB: This is where we go towards workspace_inside.js
 	postInit: function()
 	{
+		if( this.postInitialized ) return;
+		
 		// Everything must be ready
-		if( typeof( ge ) == 'undefined' || !document.body.classList.contains( 'Inside' ) )
+		if( typeof( ge ) == 'undefined' )
 		{
 			if( this.initTimeout )
 				clearTimeout( this.initTimeout );
-			this.initTimeout = setTimeout ( 'Workspace.init()', 5 );
+			this.initTimeout = setTimeout ( 'Workspace.postInit()', 25 );
+			return;
 		}
 
 		// We passed!
-		this.initialized = true;
+		this.postInitialized = true;
 
 		// Do the init!
 		window.addEventListener( 'beforeunload', Workspace.leave, true );
@@ -136,7 +134,9 @@ Workspace = {
 		document.getElementsByTagName( 'head' )[0].appendChild( dapis );
 
 		// Init the deepest field
-		DeepestField.init();
+		if( !isMobile )
+			DeepestField.init();
+		else DeepestField = false;
 
 		// Add event listeners
 		for( var a = 0; a < this.runLevels.length; a++ )
@@ -437,7 +437,6 @@ Workspace = {
 				if( !keys || ( keys && !keys.privatekey ) || ( keys && seed && keys.recoverykey != seed ) )
 				{
 					this.keyobject = this.fcrypt.generateKeys( false, false, false, seed );
-
 					keys = this.fcrypt.getKeys( this.keyobject );
 				}
 
@@ -897,6 +896,7 @@ Workspace = {
 		{
 			u = ru;
 			p = rp;
+			r = true;
 		}
 
 		// Require username and pw to login
@@ -938,15 +938,7 @@ Workspace = {
 			*/
 			if( r )
 			{
-				if( this.encryption.keys.client )
-				{
-					ApplicationStorage.save( {
-						privatekey  : this.encryption.keys.client.privatekey,
-						publickey   : this.encryption.keys.client.publickey,
-						recoverykey : this.encryption.keys.client.recovery
-					},
-					{ applicationName : 'Workspace' } );
-				}
+				Workspace.rememberKeys();
 			}
 
 			// Avoid queue!
@@ -1064,6 +1056,19 @@ Workspace = {
 		this.showDesktop();
 
 		return 0;
+	},
+	rememberKeys: function()
+	{
+		if( this.encryption.keys.client )
+		{
+			console.log( 'Remembering.' );
+			ApplicationStorage.save( {
+				privatekey  : this.encryption.keys.client.privatekey,
+				publickey   : this.encryption.keys.client.publickey,
+				recoverykey : this.encryption.keys.client.recoverykey
+			},
+			{ applicationName : 'Workspace' } );
+		}
 	},
 	showDesktop: function()
 	{
@@ -1321,54 +1326,51 @@ Workspace = {
 				// See if we have some theme settings
 				else
 				{
-					// As for body.Inside screens, use > 0.2secs
-					setTimeout( function()
-					{
-						var m = new Module( 'system' );
-						m.onExecuted = function( e, d )
-						{	
-							/*var m = new Module( 'system' );
-							m.onExecuted = function( ee, dd )
-							{
-						        if( ee != 'ok' )
-						        {
-						            ShowEula();
-								}
-					            afterEula( e );								
+					// Previously this was timeouted for 400 ms...
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{	
+						/*var m = new Module( 'system' );
+						m.onExecuted = function( ee, dd )
+						{
+					        if( ee != 'ok' )
+					        {
+					            ShowEula();
 							}
-							m.execute( 'getsetting', {
-								setting: 'accepteula'
-							} );*/
-							afterEula( 'ok' );
-							
-							// When eula is displayed or not
-							function afterEula( e )
-							{
-								if( e == 'ok' )
-								{
-									var s = JSON.parse( d );
-									if( s.Theme && s.Theme.length )
-									{
-										_this.refreshTheme( s.Theme.toLowerCase(), false );
-									}
-									else
-									{
-										_this.refreshTheme( false, false );
-									}
-									_this.mimeTypes = s.Mimetypes;
-								}
-								else _this.refreshTheme( false, false );
-
-								if( _this.loginPrompt )
-								{
-									_this.loginPrompt.close();
-									_this.loginPrompt = false;
-								}
-								_this.init();
-							}
+				            afterEula( e );								
 						}
-						m.execute( 'usersettings' );
-					}, 400 );
+						m.execute( 'getsetting', {
+							setting: 'accepteula'
+						} );*/
+						afterEula( 'ok' );
+						
+						// When eula is displayed or not
+						function afterEula( e )
+						{
+							if( e == 'ok' )
+							{
+								var s = JSON.parse( d );
+								if( s.Theme && s.Theme.length )
+								{
+									_this.refreshTheme( s.Theme.toLowerCase(), false );
+								}
+								else
+								{
+									_this.refreshTheme( false, false );
+								}
+								_this.mimeTypes = s.Mimetypes;
+							}
+							else _this.refreshTheme( false, false );
+
+							if( _this.loginPrompt )
+							{
+								_this.loginPrompt.close();
+								_this.loginPrompt = false;
+							}
+							_this.init();
+						}
+					}
+					m.execute( 'usersettings' );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 				Workspace.postInit();

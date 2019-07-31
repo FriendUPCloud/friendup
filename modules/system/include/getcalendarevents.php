@@ -12,13 +12,24 @@
 
 global $Logger, $SqlDatabase, $User;
 
-if( isset( $args->args->date ) && trim( $args->args->date ) )
+// Time stamp
+if( isset( $args->args->timestamp ) )
+{
+	$date = date( 'Y-m-d', intval( $args->args->timestamp, 10 ) );
+	$date = explode( '-', $date );
+	foreach( $date as $k=>$v ) $date[ $k ] = intval( $v, 10 );
+	ob_end_clean();
+}
+// Normal date
+else if( isset( $args->args->date ) && trim( $args->args->date ) )
 {
 	$date = explode( '-', $args->args->date );
+	foreach( $date as $k=>$v ) $date[ $k ] = intval( $v, 10 );
 }
 else
 {
-	die( 'fail<!--separate-->{"response":-1,"message":"No date given."}' );
+	$Logger->log( 'Nothing..' );
+	die( 'fail<!--separate-->{"response":-1,"message":"No date or timestamp given."}' );
 }
 
 // Getting whole month?
@@ -31,6 +42,8 @@ if( $day > 0 )
 	$date .= '-' . str_pad( $day, 2, '0', STR_PAD_LEFT );
 // date Span = 2851200 ( 60 * 60 * 24 * 33 )
 // date Day  = 86400   ( 60 * 60 * 24 )
+// From to date (with a day plus and minus for a month)
+$dateFrm = date( 'Y-m-d', strtotime( date( 'Y-m', strtotime( $date . '-01' ) - ( 2851200 ) ) . '-01' ) - ( 86400 ) );
 $dateEnd = date( 'Y-m-d', strtotime( date( 'Y-m', strtotime( $date . '-01' ) + ( 2851200 ) ) . '-01' ) - ( 86400 ) );
 
 
@@ -76,7 +89,7 @@ if( $data = $SqlDatabase->FetchObjects( '
 
 // End share data --------------------------------------------------------------
 
-$os = []; // Calendar events
+$os = array(); // Calendar events
 
 $s = new dbIO( 'FSetting' );
 $s->Type = 'system';
@@ -119,14 +132,29 @@ if( $s->Load() )
 
 // Get all including shared calendars
 // TODO: Support other calendar entries than "friend" for shared calendars
+
+// Normal date
+$dateQuery = '';
+// Timestamp date
+if( isset( $args->args->timestamp ) ) 
+{
+	$dateQuery = '`Date` >= \'' . $dateFrm . '\' AND `Date` <= \'' . $dateEnd . '\'';
+}
+// Normal date
+else
+{
+	$dateQuery = '`Date`' . ( $day <= 0 ? ( ' LIKE \'' . $date . '-%\'' ) : ( '=\'' . $date . '\'' ) );
+}
+
 if( $sharedNames )
 {
 	$uids[] = $User->ID;
+		
 	$q = '
 		SELECT * FROM FCalendar WHERE 
 		UserID IN (' . implode( ',', $uids ) . ') AND 
 		( UserID = \'' . $User->ID . '\' OR `Type` = \'friend\' ) AND
-		`Date`' . ( $day <= 0 ? ( ' LIKE \'' . $date . '-%\'' ) : ( '=\'' . $date . '\'' ) ) . '
+		' . $dateQuery . '
 	';
 }
 // Just get own
@@ -135,7 +163,7 @@ else
 	$q = '
 		SELECT * FROM FCalendar WHERE 
 		UserID = \'' . $User->ID . '\' AND 
-		`Date`' . ( $day <= 0 ? ( ' LIKE \'' . $date . '-%\'' ) : ( '=\'' . $date . '\'' ) ) . '
+		' . $dateQuery . '
 	';
 }
 
@@ -160,7 +188,7 @@ if( $rows = $SqlDatabase->fetchObjects( $q ) )
 		$os[] = $ob;
 	}
 }
-if( !count( $os ) )
+if( !$os || !count( $os ) )
 {
 	die( 'fail<!--separate-->' );
 }

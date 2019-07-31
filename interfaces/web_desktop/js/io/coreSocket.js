@@ -18,6 +18,7 @@ FriendWebSocket = function( conf )
 	var self = this;
 	
 	// REQUIRED CONFIG
+	self.pConf = conf;
 	self.url = conf.url;
 	self.sessionId = conf.sessionId;
 	self.authId = conf.authId;
@@ -136,6 +137,12 @@ FriendWebSocket.prototype.connect = function()
 	if ( !self.url || !self.url.length )
 	{
 		console.log( 'socket.url', self.url );
+		if( self.pConf )
+		{
+			console.log( 'We have a previous config. Trying the url there.', self.pConf.url );
+			self.url = self.pConf.url;
+			return self.connect();
+		}
 		throw new Error( 'no url provided for socket' );
 	}
 	

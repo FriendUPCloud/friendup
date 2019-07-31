@@ -1609,9 +1609,14 @@ window.Shell = function( appObject )
 	// Parse a command
 	this.execute = function( cmd, ecallback )
 	{
-		if( !cmd ) return false;
+		if( !cmd ) 
+		{
+			ecallback( false );
+			return false;
+		}
 		
-		console.log( 'this.execute = function( cmd, ecallback )', cmd );
+		//console.log( 'this.execute = function( cmd, ecallback )', cmd );
+		
 		// References
 		// TODO: Remove dosobj and replace with t
 		var dosobj = t = this;
