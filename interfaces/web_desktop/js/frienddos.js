@@ -3347,7 +3347,17 @@ window.Shell = function( appObject )
 					{
 						var cfg = false;
 						if( rows[a].Config && rows[a].Config.indexOf( '{' ) >= 0 )
-							cfg = JSON.parse( rows[a].Config );
+						{
+							// See if we can parse
+							try
+							{
+								cfg = JSON.parse( rows[a].Config );
+							}
+							catch( e )
+							{
+								cfg = { error: 'Could not parse filesystem configuration.' };
+							}
+						}
 						if( rows[a].Mounted == '1' ) continue;
 						disks += '<div class="Container">' +
 						    PadList( rows[a].Name + ':', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
