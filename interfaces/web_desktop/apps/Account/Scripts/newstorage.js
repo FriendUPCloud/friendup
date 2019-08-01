@@ -15,7 +15,6 @@ Application.run = function( msg )
 	
 	if( ge( 'mountedDisk' ).value == 'mounted' )
 	{
-		console.log( 'Unmount disk!' );
 		ge( 'mounter' ).innerHTML = '&nbsp;' + i18n( 'i18n_unmount_disk' );
 	}
 	
