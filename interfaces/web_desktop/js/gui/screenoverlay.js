@@ -34,6 +34,10 @@ var ScreenOverlay = {
 		{
 			self.div.classList.add( 'Showing' );
 		}, 5 );
+		if( this.debug )
+		{
+			this.enableDebug();
+		}
 	},
 	// Hide self
 	hide: function()
@@ -97,7 +101,10 @@ var ScreenOverlay = {
 			this.div.appendChild( deb );
 			this.div.sdebug = deb;
 		}
-		this.div.sdebug.innerHTML = i18n( 'i18n_debug_skip' );
+		var transl = i18n( 'i18n_debug_skip' );
+		if( transl.substr( 0, 5 ) == 'i18n_' ) // translations race cond
+			transl = 'Skip';
+		this.div.sdebug.innerHTML = transl;
 		this.div.sdebug.onclick = function()
 		{
 			self.debug = false;

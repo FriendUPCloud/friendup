@@ -147,6 +147,9 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 // Supported flags ( { lockHistory: true|false } )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags )
 {
+	// Already set
+	if( this.flags.path && this.flags.path == target ) return;
+	
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;
@@ -182,9 +185,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	var targetPath = false;
 	if( this.flags.path )
 	{
-		var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
+		targetPath = this.flags.path;
+		/*var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
 		b.pop();
 		targetPath = '';
+		
 		for( var a = 0; a < depth; a++ )
 		{
 			if( b[a] )
@@ -192,6 +197,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				targetPath += b[a] + ( a == 0 ? ':' : '/' );
 			}
 		}
+		console.log( 'Looking: ' + targetPath + ' (' + this.flags.path + ') - ' + depth + ' ' + path );*/
 	}
 	
 	function createOnclickAction( ele, ppath, type, depth )
@@ -588,6 +594,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Click the click element for path
 				if( clickElement )
 				{
+					self.lastClickElement = clickElement; // store it
 					setTimeout( function()
 					{
 						clickElement.onclick( { mode: 'open' } );
@@ -789,6 +796,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			// Click the click element for path
 			if( clickElement )
 			{
+				self.lastClickElement = clickElement; // Store it
 				setTimeout( function()
 				{
 					clickElement.onclick();

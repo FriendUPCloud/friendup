@@ -1067,7 +1067,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 
 		// Load application into a sandboxed iframe
 		var ifr = document.createElement( 'iframe' );
-		ifr.setAttribute( 'sandbox', 'allow-same-origin allow-forms allow-scripts' );
+		ifr.setAttribute( 'sandbox', 'allow-forms allow-scripts' );
 		ifr.path = '/webclient/jsx/';
 
 		args = typeof( args ) != 'string' ? '' : args;
@@ -1271,7 +1271,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 						appPath:          dpath ? dpath : '',
 						authId:           ifr.authId, // JSX may have authid
 						sessionId:        ifr.sessionId, // or JSX has sessionid
-						origin:           document.location.href,
+						origin:           '*',//document.location.href,
 						viewId:           false,
 						registerCallback: cid,
 						clipboard:        Friend.clipboard,

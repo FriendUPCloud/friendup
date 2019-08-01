@@ -795,6 +795,10 @@ function receiveEvent( event, queued )
 
 	var dataPacket;
 	
+	// TODO: Stop overwriting origin (security)
+	if( event.origin )
+		event.origin = '*';
+	
 	if( 'string' === typeof( event.data ) )
 	{
 		try
@@ -5452,6 +5456,9 @@ function AddCSSByUrl( csspath, callback )
 _sendMessage = function(){};
 function setupMessageFunction( dataPacket, origin )
 {
+	// TODO: Resolve correct origin
+	origin = '*';
+	
 	// Initialize the Application callback buffer
 	if( typeof( Application.callbacks ) == 'undefined' )
 		Application.callbacks = [];
@@ -5589,6 +5596,9 @@ function OpenLibrary( path, id, div )
 
 function initApplicationFrame( packet, eventOrigin, initcallback )
 {
+	// TODO: Setup correct origin
+	eventOrigin = '*';
+	
 	if( window.frameInitialized )
 	{
 		if( initcallback ) initcallback();
@@ -6258,6 +6268,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	Application.authId        = packet.authId;
 	Application.sessionId     = packet.sessionId != undefined ? packet.sessionId : false;
 	Application.theme         = packet.theme;
+	Application.origin        = eventOrigin;
 
 	// Autogenerate this
 	Application.sendMessage   = setupMessageFunction( packet, eventOrigin ? eventOrigin : packet.origin );

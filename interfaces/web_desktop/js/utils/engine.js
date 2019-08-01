@@ -213,11 +213,18 @@ function UniqueId ()
 // set a cookie
 function SetCookie( key, value, expiry )
 {
-	var t = new Date ();
-	if ( !expiry ) expiry = 1;
-	expiry = new Date( t.getTime() + ( expiry*1000*60*60*24 ) );
-	document.cookie = key + '=' + escape ( value ) + ';expires='+expiry.toGMTString();
-	return;
+	try
+	{
+		var t = new Date ();
+		if ( !expiry ) expiry = 1;
+		expiry = new Date( t.getTime() + ( expiry*1000*60*60*24 ) );
+		document.cookie = key + '=' + escape ( value ) + ';expires='+expiry.toGMTString();
+		return;
+	}
+	catch( e )
+	{
+	}
+	return false;
 }
 function DelCookie ( key ) { document.cookie = key + '=;'; }
 
@@ -225,15 +232,22 @@ function DelCookie ( key ) { document.cookie = key + '=;'; }
 function GetCookie( key )
 {
 	if ( !key ) return false;
-	var c = document.cookie.split ( ';' );
-	for ( var a = 0; a < c.length; a++ )
+	try
 	{
-		c[a] = c[a].split ( /^\s+|\s+$/g ).join ( '' ); // rm whitespace
-		var v = c[a].split ( '=' );
-		if ( v[0] == key )
+		var c = document.cookie.split ( ';' );
+		for ( var a = 0; a < c.length; a++ )
 		{
-			return unescape ( v[1] );
+			c[a] = c[a].split ( /^\s+|\s+$/g ).join ( '' ); // rm whitespace
+			var v = c[a].split ( '=' );
+			if ( v[0] == key )
+			{
+				return unescape ( v[1] );
+			}
 		}
+		return false;
+	}
+	catch( e )
+	{
 	}
 	return false;
 }

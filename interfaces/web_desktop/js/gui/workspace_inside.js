@@ -1718,7 +1718,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( seq.length )
 							{
 								ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
-								//ScreenOverlay.enableDebug();
 								var l = {
 									index: 0,
 									func: function()

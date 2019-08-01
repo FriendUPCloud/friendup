@@ -430,14 +430,26 @@ Workspace = {
 			{
 				p = ( !p || p.indexOf('HASHED') == 0 ? p : ( 'HASHED' + Sha256.hash( p ) ) );
 
+				if( window.ScreenOverlay )
+					ScreenOverlay.addDebug( 'Generating sha256 keys' );
+
 				var seed = ( u && p ? this.fcrypt.generateKey( ( u + ':' + p ), 32, 256, 'sha256' ) : false );
 
 				var keys = ApplicationStorage.load( { applicationName : 'Workspace' } );
 
 				if( !keys || ( keys && !keys.privatekey ) || ( keys && seed && keys.recoverykey != seed ) )
 				{
+					if( window.ScreenOverlay )
+						ScreenOverlay.addDebug( 'Generating encryption keys' );
 					this.keyobject = this.fcrypt.generateKeys( false, false, false, seed );
 					keys = this.fcrypt.getKeys( this.keyobject );
+				}
+				else
+				{
+					if( window.ScreenOverlay )
+					{
+						ScreenOverlay.addDebug( 'Loaded encryption keys' );
+					}
 				}
 
 				if( keys )
@@ -449,6 +461,8 @@ Workspace = {
 							publickey   : this.fcrypt.encodeKeyHeader( keys.publickey ),
 							recoverykey : keys.recoverykey
 						};
+						if( window.ScreenOverlay )
+							ScreenOverlay.addDebug( 'Keys stored encoded' );
 					}
 					else
 					{
@@ -457,6 +471,8 @@ Workspace = {
 							publickey   : keys.publickey,
 							recoverykey : keys.recoverykey
 						};
+						if( window.ScreenOverlay )
+							ScreenOverlay.addDebug( 'Keys stored raw' );
 					}
 				}
 				return this.keys;
@@ -464,11 +480,13 @@ Workspace = {
 
 			return false;
 		},
-
 		generateKeys: function( u, p )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
 			{
+				if( window.ScreenOverlay )
+					ScreenOverlay.addDebug( 'Generating keys' );
+				
 				var pass = ( u && p ? u + ':' : '' ) + ( p ? p : '' );
 
 				var keyobject = this.fcrypt.generateKeys( pass );
@@ -498,7 +516,6 @@ Workspace = {
 
 			return false;
 		},
-
 		getKeys: function()
 		{
 			if( typeof( this.fcrypt ) != 'undefined' && this.keys.client )
@@ -523,7 +540,6 @@ Workspace = {
 
 			return false;
 		},
-
 		getServerKey: function( callback )
 		{
 			var k = new Module( 'system' );
@@ -543,7 +559,6 @@ Workspace = {
 			}
 			k.execute( 'getserverkey' );
 		},
-
 		encryptRSA: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -553,7 +568,6 @@ Workspace = {
 
 			return false;
 		},
-
 		decryptRSA: function( cipher, privatekey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -563,7 +577,6 @@ Workspace = {
 
 			return false;
 		},
-
 		encryptAES: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -573,7 +586,6 @@ Workspace = {
 
 			return false;
 		},
-
 		decryptAES: function( cipher, privatekey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -583,7 +595,6 @@ Workspace = {
 
 			return false;
 		},
-
 		encrypt: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -598,7 +609,6 @@ Workspace = {
 
 			return false;
 		},
-
 		decrypt: function( cipher, privatekey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -613,7 +623,6 @@ Workspace = {
 
 			return false;
 		},
-
 		sha256: function( str )
 		{
 			if( !str && typeof( this.fcrypt ) != 'undefined' )
@@ -628,7 +637,6 @@ Workspace = {
 
 			return false;
 		},
-
 		md5: function( str )
 		{
 			if( !str && typeof( this.fcrypt ) != 'undefined' )
@@ -1062,13 +1070,21 @@ Workspace = {
 		if( this.encryption.keys.client )
 		{
 			console.log( 'Remembering.' );
-			ApplicationStorage.save( {
-				privatekey  : this.encryption.keys.client.privatekey,
-				publickey   : this.encryption.keys.client.publickey,
-				recoverykey : this.encryption.keys.client.recoverykey
-			},
-			{ applicationName : 'Workspace' } );
+			ApplicationStorage.save( 
+				{
+					privatekey  : this.encryption.keys.client.privatekey,
+					publickey   : this.encryption.keys.client.publickey,
+					recoverykey : this.encryption.keys.client.recoverykey
+				},
+				{
+					applicationName : 'Workspace' 
+				} 
+			);
+			if( window.ScreenOverlay )
+				ScreenOverlay.addDebug( 'Keys remembered' );
+			return true;
 		}
+		return false;
 	},
 	showDesktop: function()
 	{
