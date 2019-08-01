@@ -34,6 +34,24 @@
 	margin-right: 0;
 }
 
+#ClearAvatar
+{
+	position: absolute;
+	top: 0px;
+	left: calc(50% - 50px);
+	width: 100px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.25s;
+}
+
+#AvatarArea:hover + #ClearAvatar,
+#ClearAvatar:hover
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
 #AvatarArea
 {
 	position: relative;

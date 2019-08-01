@@ -15,6 +15,17 @@ Application.run = function( msg, iface )
 		getStorage();
 		getUnmounted();
 	} );
+	
+	// Clear / autoregenerate avatar
+	ge( 'ClearAvatar' ).onclick = function( e )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			
+		}
+		m.execute( );
+	}
 }
 
 Application.receiveMessage = function( msg )
