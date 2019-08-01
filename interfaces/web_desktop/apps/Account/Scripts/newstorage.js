@@ -31,6 +31,11 @@ Application.run = function( msg )
 				var js = JSON.parse( d );
 				return storageForm( js.Type, js.id, js );
 			}
+			else
+			{
+				console.log( 'This is not ok: ', e, d );
+			}
+			
 			// Oops!
 			Application.sendMessage( { command: 'closewindow' } );
 		}
