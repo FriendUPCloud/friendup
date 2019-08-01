@@ -311,6 +311,7 @@ function changeAvatar()
 	}
 	var d = new Filedialog( description );
 }
+
 function changeDeviceAvatar()
 {
 	var self = this;
@@ -345,6 +346,7 @@ function changeDeviceAvatar()
 	}
 	var d = new Filedialog( description );
 }
+
 function activateFriendNetwork()
 {
 	var activate = ge( 'fnetActivate' );
@@ -356,6 +358,7 @@ function activateFriendNetwork()
 	ge( 'fnetDownloadCheck' ).disabled = !activate.checked;
 	this.downloadCheck( !activate.checked );
 }
+
 function downloadCheck( disable )
 {
 	var disabled = ( !ge( 'fnetDownloadCheck' ).checked ) || disable;
@@ -364,12 +367,14 @@ function downloadCheck( disable )
 	if ( disabled )
 		ge( 'fnetDownloadPath' ).value = '';
 }
+
 function mountDriveCheck( disable )
 {
 	var checked = ge( 'fnetMountDriveCheck' ).checked;
 	if ( !checked )
 		ge( 'fnetMountOnWorkspaceCheck' ).checked = false;
 }
+
 function downloadButton( disable )
 {
 	new Filedialog( false, function( path )
@@ -400,6 +405,7 @@ function clickFriendNetworkPower()
 	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
 	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
 }
+
 function clickShareThisDevice()
 {
 	var enabled = !ge( 'fnetShareThisDevice' ).checked;
@@ -408,6 +414,7 @@ function clickShareThisDevice()
 	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
 	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
 }
+
 function clickAllowPowerApplications()
 {
 	var enabled = !ge( 'fnetAllowPowerApplications' ).checked;
@@ -417,6 +424,7 @@ function clickAllowPowerApplications()
 	ge( 'fnetAskOnlyToCommunity' ).disabled = enabled;
 	ge( 'fnetAskOnlyToFriends' ).disabled = enabled;
 }
+
 function drawKeyList( list )
 {
 	var str = '';
