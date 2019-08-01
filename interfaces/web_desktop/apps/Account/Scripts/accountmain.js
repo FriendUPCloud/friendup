@@ -1292,6 +1292,7 @@ function addStorage( mode )
 function editStorage( name, mode, mounted )
 {
 	if( !mounted ) mounted = '-';
+	
 	// Only one view window
 	if( Application.editView ) return;
 	

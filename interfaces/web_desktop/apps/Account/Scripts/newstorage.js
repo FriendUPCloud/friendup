@@ -20,6 +20,9 @@ Application.run = function( msg )
 	
 	if( typeof( mode ) != 'undefined' && mode == 'edit' )
 	{
+		// Don't show unloaded form
+		document.body.classList.add( 'LoadingForm' );
+		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -205,6 +208,9 @@ function storageForm( type, id, data )
 					}
 				}
 			}
+			
+			// Show loaded form
+			document.body.classList.remove( 'LoadingForm' );
 		}
 		m.execute( 'dosdrivergui', { type: type, id: id } );
 	}
