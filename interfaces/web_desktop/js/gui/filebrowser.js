@@ -269,7 +269,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}
 				}
 			}
-			else if( type == 'Directory' )
+			else if( type == 'Directory' || type == 'volume' )
 			{
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
