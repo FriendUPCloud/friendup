@@ -257,16 +257,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					return cancelBubble( e );
 				}
 				
-				var subitems = ele.getElementsByClassName( 'SubItems' );
-				if( subitems.length )
+				if( doClick )
 				{
-					if( doClick )
+					if( self.callbacks && self.callbacks.folderOpen )
 					{
-						if( self.callbacks && self.callbacks.folderOpen )
-						{
-							console.log( ppath + ' was clicked.' );
-							self.callbacks.folderOpen( ppath, e, self.tempFlags );
-						}
+						self.callbacks.folderOpen( ppath, e, self.tempFlags );
 					}
 				}
 				
