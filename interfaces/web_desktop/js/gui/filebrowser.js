@@ -283,7 +283,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}
 				}
 				// Only close folders if they are active and clicked
-				else if( nam.length && e && e.button >= 0 )
+				else if( nam.length && e && ( ( !isMobile && e.button >= 0 ) || ( isMobile && doClick ) ) )
 				{
 					// Only close active
 					if( nam[0].classList.contains( 'Active' ) )

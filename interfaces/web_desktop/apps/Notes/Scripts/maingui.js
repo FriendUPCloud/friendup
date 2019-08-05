@@ -59,8 +59,16 @@ var filebrowserCallbacks = {
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function( items )
 		{
+			for( var a = 0; a < items.length; a++ )
+			{
+				// If it has directory, just wait
+				if( isMobile && items[a].Type == 'Directory' )
+				{
+					return;
+				}
+			}
 			currentViewMode = 'files';
 			Application.updateViewMode();
 		} );
@@ -171,8 +179,6 @@ Application.refreshFilePane = function( method, force, callback )
 {
 	if( !method ) method = false;
 	
-	console.log( 'Refreshing now!' );
-	
 	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
 	{
 		Application.fld.classList.add( 'Hidden' );
@@ -186,16 +192,11 @@ Application.refreshFilePane = function( method, force, callback )
 	
 	var self = this;
 	
-	// Already showing (mobile only)!
-	if( isMobile && Application.path == Application.browserPath && !force ) return;
-	
 	Application.path = Application.browserPath;
 	var p = Application.path;
 	
 	d.getIcons( function( items )
 	{
-		console.log( 'We got items!', items );
-		
 		if( ge( 'FileBar' ).contents )
 		{
 			ge( 'FileBar' ).contents.innerHTML = '';
@@ -550,7 +551,7 @@ Application.refreshFilePane = function( method, force, callback )
 		}
 		
 		if( callback )
-			callback();
+			callback( items );
 	} );
 }
 
