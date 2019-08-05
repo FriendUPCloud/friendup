@@ -54,7 +54,6 @@ var filebrowserCallbacks = {
 	// Click to open a folder
 	folderOpen( ele, e )
 	{
-		console.log( 'Opening folder: ' + ele );
 		if( isMobile && currentViewMode != 'root' ) return;
 		
 		Application.browserPath = ele;
@@ -65,7 +64,6 @@ var filebrowserCallbacks = {
 		{
 			// Are we refreshing the root dir?
 			var isRootDir = Application.fileBrowser.rootPath == ele;
-			console.log( 'Checking out what is happening in: ' + ( isRootDir ? 'rootdir' : 'normal dir' ) );
 			for( var a = 0; a < items.length; a++ )
 			{
 				// If it has directory, just wait
