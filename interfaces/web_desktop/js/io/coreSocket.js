@@ -75,7 +75,6 @@ FriendWebSocket.prototype.send = function( msgObj )
 
 FriendWebSocket.prototype.reconnect = function()
 {
-	console.log( 'FriendWebSocket.reconnect' );
 	var self = this;
 	self.allowReconnect = true;
 	self.doReconnect();
@@ -86,7 +85,6 @@ FriendWebSocket.prototype.reconnect = function()
 FriendWebSocket.prototype.close = function( code, reason )
 {
 	var self = this;
-	console.log( 'FriendWebSocket.close', reason );
 	self.allowReconnect = false;
 	self.url = null;
 	self.sessionId = null;
@@ -136,13 +134,8 @@ FriendWebSocket.prototype.init = function()
 FriendWebSocket.prototype.connect = function()
 {
 	var self = this;
-	console.log( 'FriendWebSocket.connect', self );
 	if ( !self.url || !self.url.length )
 	{
-		console.log( 'socket.url - no url found', {
-			url   : self.url,
-			pconf : self.pConf,
-		});
 		if( self.pConf )
 		{
 			console.log( 'We have a previous config. Trying the url there.', self.pConf.url );
@@ -208,7 +201,6 @@ FriendWebSocket.prototype.clearHandlers = function()
 FriendWebSocket.prototype.doReconnect = function()
 {
 	var self = this;
-	console.log( 'FriendWebSocket.doReconnect', self );
 	if ( !reconnectAllowed() ) {
 		if ( self.onend )
 			self.onend();
@@ -234,8 +226,6 @@ FriendWebSocket.prototype.doReconnect = function()
 	{
 		self.reconnectTimer = null;
 		self.reconnectAttempt += 1;
-		
-        console.log( 'ws reconnect' );
 		self.connect();
 	}
 	
@@ -312,7 +302,6 @@ FriendWebSocket.prototype.handleOpen = function( e )
 
 FriendWebSocket.prototype.handleClose = function( e )
 {
-	console.log( 'FriendWebSocket.handleClose' );
 	this.cleanup();
 	this.setState( 'close' );
 	this.doReconnect();
@@ -338,14 +327,14 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 	var msg = friendUP.tool.objectify( e.data );
 	if( !msg )
 	{
-		console.log( 'FriendWebSocket.handleSocketMessage - invalid data, could not parse JSON' );
+		console.log( 'FriendWebSocket.handleSocketMessage - invalid data, could not parse JSON',
+			e.data );
 		return;
 	}
 	
 	// Handle server notices with session timeout / death
 	if( msg.data && msg.data.type == 'server-notice' )
 	{
-		console.log( 'FriendWebSocket.handleSocketMessage - special msg thingie', msg );
 		if( msg.data.data == 'session killed' )
 		{
 			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
@@ -422,7 +411,6 @@ FriendWebSocket.prototype.handleAuth = function( data )
 
 FriendWebSocket.prototype.handleSession = function( sessionId )
 {
-	console.log( 'FriendWebSocket.handleSession', sessionId );
 	if ( this.sessionId === sessionId )
 	{
 		this.setReady();
@@ -494,7 +482,6 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	
 	if ( !wsReady())
 	{
-		console.log( 'FriendWebSocket.sendOnSocket - ws not ready' );
 		queue( msg );
 		self.doReconnect();
 		return;
@@ -538,7 +525,6 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 		if ( !self.ws )
 			return false;
 		
-		console.log( 'wsReady', self.ws.readyState );
 		if ( 1 !== self.ws.readyState )
 			return false;
 		
@@ -668,7 +654,6 @@ FriendWebSocket.prototype.chunkSend = function( str )
 FriendWebSocket.prototype.wsSend = function( str )
 {
 	var self = this;
-	console.log( 'FriendWebSocket.wsSend', self.ws.readyState );
 	try
 	{
 		self.ws.send( str );
@@ -831,7 +816,6 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 FriendWebSocket.prototype.cleanup = function()
 {
 	var self = this;
-	console.log( 'FriendWebSocket.cleanup', self );
 	this.conn = false;
 	self.stopKeepAlive();
 	self.clearHandlers();
