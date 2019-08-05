@@ -264,6 +264,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					{
 						if( self.callbacks && self.callbacks.folderOpen )
 						{
+							console.log( ppath + ' was clicked.' );
 							self.callbacks.folderOpen( ppath, e, self.tempFlags );
 						}
 					}
