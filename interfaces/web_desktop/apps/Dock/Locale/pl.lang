@@ -1,0 +1,51 @@
+i18n_file                             : Plik
+i18n_quit                             : Wyjdz
+i18n_application                      : Aplikacja
+i18n_description                      : Opis
+i18n_icon                             : Ikona
+i18n_sort_order                       : Sortowanie
+i18n_add_dock_item                    : Dodaj element dokowania
+i18n_quit                             : Zapisz
+i18n_remove                           : Uzuń
+i18n_you_sure                         : Jesteś pewien?
+i18n_you_sure_text                    : Czy na pewno chcesz usunąć ten element z paska?
+i18n_item_exists                      : Ikona na pasku już istnieje
+i18n_item_exists_desc                 : Ta ikona już istnieje. Ikony na pasku nie mogą być dodane dwukrotnie.
+i18n_standard_dock                    : Standardy pasek zadań
+i18n_dock_list                        : Lista pasków zadań
+i18n_dock_layout                      : Układ
+i18n_dock_position                    : Pozycja
+i18n_dock_coords                      : Współrzędne X / Y
+i18n_save_dock                        : Zapisz pasek zadań
+i18n_add_dock                         : Dodaj pasek zadań
+i18n_dock_size                        : Wielkość paska zadań
+i18n_standard_dock                    : Standardowy pasek zadań
+i18n_left_top                         : Lewa góra
+i18n_left_center                      : Lewa środek
+i18n_left_bottom                      : Lewa dół
+i18n_right_top                        : Prawa góra
+i18n_right_center                     : Prawa środek
+i18n_right_bottom                     : Prawa dół
+i18n_top_left                         : Góra lewa
+i18n_top_center                       : Góra środek
+i18n_top_right                        : Góra Prawa
+i18n_bottom_left                      : Dół lewa
+i18n_bottom_center                    : Dół środek
+i18n_bottom_right                     : Dół prawa
+i18n_aligned                          : Wyrównany
+i18n_fixed                            : Fixed
+i18n_extra_large                      : Bardzo duży
+i18n_large                            : Duży
+i18n_medium                           : Średni
+i18n_small                            : Mały
+i18n_dock_editor                      : Edytor paska zadań
+i18n_close                            : Zamknij
+i18n_abort                            : Anuluj
+i18n_select_application               : Wybierz aplikację
+i18n_display_name                     : Wyświetl nazwę
+i18n_dock_layout_settings             : Ustawienia układu
+
+i18n_preferred_workspace              : Preferowany obszar roboczy
+
+i18n_item_saved                       : Element został zapisany
+i18n_item_saved_text                  : Twoje zmiany w elemencie paska zadań zostały zapisane.

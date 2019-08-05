@@ -250,7 +250,7 @@ body.Login:before
 	opacity: 1;
 	position: fixed;
 	z-index: 999999999;
-	background: white;
+	background: #222222;
 	top: 0;
 	left: 0;
 	width: 100%;

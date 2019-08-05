@@ -51,6 +51,7 @@ var filebrowserCallbacks = {
 	{
 		
 	},
+	// Click to open a folder
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
@@ -65,6 +66,7 @@ var filebrowserCallbacks = {
 		} );
 		cancelBubble( e );
 	},
+	// Click to close a folder
 	folderClose( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
@@ -120,6 +122,8 @@ Application.updateViewMode = function()
 {
 	if( !isMobile ) return;
 	
+	console.log( 'Which view mode?', currentViewMode );
+	
 	switch( currentViewMode )
 	{
 		case 'root':
@@ -138,6 +142,11 @@ Application.updateViewMode = function()
 			this.fld.style.transform = 'translate3d(-100%,0,0)';
 			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
 			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
+			if( isMobile )
+			{
+				// Force update
+				Application.refreshFilePane( false, true );
+			}
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'files',
@@ -162,6 +171,8 @@ Application.refreshFilePane = function( method, force, callback )
 {
 	if( !method ) method = false;
 	
+	console.log( 'Refreshing now!' );
+	
 	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
 	{
 		Application.fld.classList.add( 'Hidden' );
@@ -183,13 +194,18 @@ Application.refreshFilePane = function( method, force, callback )
 	
 	d.getIcons( function( items )
 	{
+		console.log( 'We got items!', items );
+		
 		if( ge( 'FileBar' ).contents )
 		{
 			ge( 'FileBar' ).contents.innerHTML = '';
 		}
 		
 		// Something changed in transit. Do nothing
-		if( p != Application.path ) return;
+		if( p != Application.path )
+		{
+			return;
+		}
 	
 		Application._toBeSaved = null;
 		
@@ -606,7 +622,7 @@ Application.run = function( msg, iface )
 				var l = new Library( 'system.library' );
 				l.onExecuted = function()
 				{
-					self.fileBrowser.refresh( Application.browserPath );
+					self.fileBrowser.refresh();
 				}
 				l.execute( 'file/makedir', { path: Application.path + this.value } );
 			}
@@ -1153,7 +1169,6 @@ Application.setCurrentDocument = function( pth )
 	// Update filebrowser
 	this.fileBrowser.setPath( this.path );
 	
-	
 	Application.refreshFilePane();
 	
 	this.sendMessage( {
@@ -1253,21 +1268,20 @@ Application.statusMessage = function( msg )
 		s.style.transition = '';
 		s.style.transform = 'translate3d(0,0,0)';
 	}
+	s.classList.add( 'Showing' );
 	s.innerHTML = msg;
 	s.timeout = setTimeout( function()
 	{
 		s.style.transition = 'left,opacity 0.25s,0.25s';
 		s.style.transform = 'translate3d(0,0,0)';
-		s.style.opacity = 1;
 		s.timeout = setTimeout( function()
 		{
 			s.style.transform = 'translate3d(20px,0,0)';
-			s.style.opacity = 0;
+			s.classList.remove( 'Showing' );
 			s.timeout = setTimeout( function()
 			{
 				s.innerHTML = '';
 				s.style.transform = 'translate3d(0,0,0)';
-				s.style.opacity = 1;
 			}, 250 );
 		}, 250 );
 	}, 1000 );

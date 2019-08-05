@@ -107,7 +107,6 @@ void handle_sigchld( int sig )
 
 SystemBase *SystemInit( void )
 {
-	
 	//char *tmp = "{\"type\":\"authenticate\",\"data\":{\"serviceKey\":\"qwerty123456789\",\"serviceName\":\"presence\"}}";
 	//int size = strlen ( tmp );
 	//ProcessIncomingRequest( NULL, tmp, size, NULL );
@@ -125,6 +124,8 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		return NULL;
 	}
+	// uptime
+	l->l_UptimeStart = time( NULL );
 	
 	PropertiesInterfaceInit( &(l->sl_PropertiesInterface) );
 	
@@ -2057,7 +2058,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin );
 
 			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 

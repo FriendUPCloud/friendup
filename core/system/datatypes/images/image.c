@@ -195,10 +195,12 @@ gdImagePtr ImageRead( File *rootDev, const char *path )
 								if( img == NULL )
 								{
 									img = gdImageCreateFromWBMPPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+#ifdef USE_WEBP_LOADER
 									if( img == NULL )
 									{
 										img = gdImageCreateFromWebpPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
 									}
+#endif
 								}
 							}
 						}

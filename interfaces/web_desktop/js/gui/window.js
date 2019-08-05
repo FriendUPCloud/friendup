@@ -15,7 +15,7 @@ var FUI_MOUSEDOWN_SCROLLV = 10;
 var FUI_WINDOW_MARGIN     =  3;
 var FUI_MOUSEDOWN_PICKOBJ = 11;
 
-var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-forms allow-scripts allow-same-origin allow-popups';
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-forms allow-scripts allow-popups';
 
 /* Make movable box --------------------------------------------------------- */
 
@@ -3915,10 +3915,9 @@ var View = function( args )
 			if( self.flags.screen )
 				msg.screenId = self.flags.screen.externScreenId;
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
-			if( !msg.origin ) msg.origin = document.location.href;
+			if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
 			
-			ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
-			ifr.body = ifr.contentWindow.document.body;
+			ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 		}
 		c.appendChild( ifr );
 	}
@@ -3939,7 +3938,7 @@ var View = function( args )
 	{
 		var self = this;
 		var appName = self.applicationName;
-		var origin = Doors.runLevels[ 0 ].domain;
+		var origin = '*'; // TODO: Should be this Doors.runLevels[ 0 ].domain;
 		var domain = Doors.runLevels[ 1 ].domain;
 		domain = domain.split( '://' )[1];
 		var appBase = '/webclient/apps/' + appName + '/';
@@ -4060,7 +4059,7 @@ var View = function( args )
 				base:          '/',
 				applicationId: ifr.applicationId,
 				filePath:      '/webclient/jsx/',
-				origin:        document.location.href,
+				origin:        '*', // TODO: Should be this - document.location.href,
 				viewId:      w.externViewId ? w.externViewId : w.viewId,
 				clipboard:     Friend.clipboard
 			};
@@ -4147,7 +4146,12 @@ var View = function( args )
 		// We're on a road trip..
 		if( !( friendU && ( friendU == targetU || !targetU ) ) )
 		{
-			ifr.sandbox = 'allow-same-origin allow-forms allow-scripts';
+			ifr.sandbox = 'allow-forms allow-scripts';
+			console.log( 'Sandbox: ' + ifr.sandbox );
+		}
+		else
+		{
+			console.log( 'Sandbox denied: ', friendU, targetU );
 		}
 
 		// Allow sandbox flags
@@ -4176,7 +4180,7 @@ var View = function( args )
 					base              : base,
 					applicationId     : appId,
 					filePath          : filePath,
-					origin            : document.location.href,
+					origin            : '*', // TODO: Should be this - document.location.href,
 					viewId            : w.externViewId,
 					authId            : self.authId,
 					theme             : Workspace.theme,
@@ -4255,7 +4259,9 @@ var View = function( args )
 				this.iframe.src.split( '//' )[1].split( '/' )[0];
 			
 			var origin = event && 
-				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : u;
+				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
+			// TODO: Fix this with security
+			origin = '*';
 			
 			if( !dataObject.applicationId && this.iframe.applicationId )
 			{

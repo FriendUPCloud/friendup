@@ -47,7 +47,7 @@
 #include <websockets/websocket_req_manager.h>
 #include <network/protocol_websocket.h>
 #include <mobile_app/mobile_app.h>
-#define ENABLE_MOBILE_APP_NOTIFICATIONS 1
+#define ENABLE_MOBILE_APP_NOTIFICATIONS 0
 #define ENABLE_NOTIFICATIONS_SINK 1
 
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
@@ -168,10 +168,10 @@ static struct lws_protocols protocols1[] = {
 static struct lws_protocols protocols2[] = {
 	// first protocol must always be HTTP handler 
 	{
-		"http-only",		/* name */
-		callback_http,		/* callback */
-		sizeof (struct per_session_data__http),	/* per_session_data_size */
-		0,			/* max frame size / rx buffer */
+		"http-only",		//
+		callback_http,		// callback 
+		sizeof (struct per_session_data__http),	// per_session_data_size 
+		0,			// max frame size / rx buffer 
 		1,
 		NULL,
 		0
@@ -189,7 +189,6 @@ static struct lws_protocols protocols2[] = {
 		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
 	}
 };
-
 
 void hand(int s )
 {

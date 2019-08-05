@@ -15,12 +15,14 @@ Application.run = function( msg )
 	
 	if( ge( 'mountedDisk' ).value == 'mounted' )
 	{
-		console.log( 'Unmount disk!' );
 		ge( 'mounter' ).innerHTML = '&nbsp;' + i18n( 'i18n_unmount_disk' );
 	}
 	
 	if( typeof( mode ) != 'undefined' && mode == 'edit' )
 	{
+		// Don't show unloaded form
+		document.body.classList.add( 'LoadingForm' );
+		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -29,8 +31,9 @@ Application.run = function( msg )
 				var js = JSON.parse( d );
 				return storageForm( js.Type, js.id, js );
 			}
+			
 			// Oops!
-			Application.sendMessage( { command: 'closewindow' } );
+			CloseView();
 		}
 		m.execute( 'filesystem', {
 			userid: Application.userId,
@@ -206,6 +209,9 @@ function storageForm( type, id, data )
 					}
 				}
 			}
+			
+			// Show loaded form
+			document.body.classList.remove( 'LoadingForm' );
 		}
 		m.execute( 'dosdrivergui', { type: type, id: id } );
 	}

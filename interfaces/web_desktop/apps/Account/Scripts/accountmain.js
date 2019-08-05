@@ -15,6 +15,17 @@ Application.run = function( msg, iface )
 		getStorage();
 		getUnmounted();
 	} );
+	
+	// Clear / autoregenerate avatar
+	ge( 'ClearAvatar' ).onclick = function( e )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			
+		}
+		m.execute( );
+	}
 }
 
 Application.receiveMessage = function( msg )
@@ -42,9 +53,9 @@ Application.receiveMessage = function( msg )
 			
 			this.id = msg.ID;
 			
-			ge( 'UserAccFullname' ).value        = html_entity_decode( ( msg.FullName ? msg.FullName : '')  );
+			ge( 'UserAccFullname' ).value        = html_entity_decode( msg.FullName ? msg.FullName : '' );
 			ge( 'UserAccUsername' ).value        = html_entity_decode( msg.Name );
-			ge( 'UserAccEmail' ).value           = ( msg.Email ? msg.Email : '' );
+			ge( 'UserAccEmail'    ).value        = msg.Email ? msg.Email : '';
 			
 			if( ge( 'PublicKeyContainer' ) )
 			{
@@ -123,26 +134,26 @@ Application.receiveMessage = function( msg )
 								}
 							}
 						}
-						var activate = ge( 'fnetActivate' );
-						var workgroup = ge( 'fnetWorkgroup' );
-						var password = ge( 'fnetPassword' );
-						var repeat = ge( 'fnetRepeatPassword' );
-						var description = ge( 'fnetDescription' );
-						var any = ge( 'fnetAcceptAny' );
-						var downloadCheck = ge( 'fnetDownloadCheck' );
-						var downloadPath = ge( 'fnetDownloadPath' );
-						var mountDriveCheck = ge( 'fnetMountDriveCheck' );
-						var mountOnWorkspace = ge( 'fnetMountOnWorkspaceCheck' );
-						var fnetActivatePower = ge( 'fnetActivatePower' );
-						var fnetShareThisDevice = ge( 'fnetShareThisDevice' );
-						var fnetMaximumPercentage = ge( 'fnetMaximumPercentage' );
-						var fnetAllowPowerApplications = ge( 'fnetAllowPowerApplications' );
+						var activate                    = ge( 'fnetActivate' );
+						var workgroup                   = ge( 'fnetWorkgroup' );
+						var password                    = ge( 'fnetPassword' );
+						var repeat                      = ge( 'fnetRepeatPassword' );
+						var description                 = ge( 'fnetDescription' );
+						var any                         = ge( 'fnetAcceptAny' );
+						var downloadCheck               = ge( 'fnetDownloadCheck' );
+						var downloadPath                = ge( 'fnetDownloadPath' );
+						var mountDriveCheck             = ge( 'fnetMountDriveCheck' );
+						var mountOnWorkspace            = ge( 'fnetMountOnWorkspaceCheck' );
+						var fnetActivatePower           = ge( 'fnetActivatePower' );
+						var fnetShareThisDevice         = ge( 'fnetShareThisDevice' );
+						var fnetMaximumPercentage       = ge( 'fnetMaximumPercentage' );
+						var fnetAllowPowerApplications  = ge( 'fnetAllowPowerApplications' );
 						var fnetOptimalNumberOfMachines = ge( 'fnetOptimalNumberOfMachines' );
 						var fnetMinimalNumberOfMachines = ge( 'fnetMinimalNumberOfMachines' );
-						var fnetShareOnlyWithCommunity = ge( 'fnetShareOnlyWithCommunity' );
-						var fnetShareOnlyWithFriends = ge( 'fnetShareOnlyWithFriends' );
-						var fnetAskOnlyToFriends = ge( 'fnetAskOnlyToFriends' );
-						var fnetAskOnlyToCommunity = ge( 'fnetAskOnlyToCommunity' );
+						var fnetShareOnlyWithCommunity  = ge( 'fnetShareOnlyWithCommunity' );
+						var fnetShareOnlyWithFriends    = ge( 'fnetShareOnlyWithFriends' );
+						var fnetAskOnlyToFriends        = ge( 'fnetAskOnlyToFriends' );
+						var fnetAskOnlyToCommunity      = ge( 'fnetAskOnlyToCommunity' );
 						
 						var pass = fnet ? fnet.password : '';
 						if ( pass == 'public' || ( fnet && fnet.workgroup == 'friend' ) )
@@ -283,6 +294,7 @@ Application.receiveMessage = function( msg )
 			break;
 	}
 }
+
 function changeAvatar()
 {
 	var self = this;
@@ -311,6 +323,7 @@ function changeAvatar()
 	}
 	var d = new Filedialog( description );
 }
+
 function changeDeviceAvatar()
 {
 	var self = this;
@@ -345,6 +358,7 @@ function changeDeviceAvatar()
 	}
 	var d = new Filedialog( description );
 }
+
 function activateFriendNetwork()
 {
 	var activate = ge( 'fnetActivate' );
@@ -356,6 +370,7 @@ function activateFriendNetwork()
 	ge( 'fnetDownloadCheck' ).disabled = !activate.checked;
 	this.downloadCheck( !activate.checked );
 }
+
 function downloadCheck( disable )
 {
 	var disabled = ( !ge( 'fnetDownloadCheck' ).checked ) || disable;
@@ -364,12 +379,14 @@ function downloadCheck( disable )
 	if ( disabled )
 		ge( 'fnetDownloadPath' ).value = '';
 }
+
 function mountDriveCheck( disable )
 {
 	var checked = ge( 'fnetMountDriveCheck' ).checked;
 	if ( !checked )
 		ge( 'fnetMountOnWorkspaceCheck' ).checked = false;
 }
+
 function downloadButton( disable )
 {
 	new Filedialog( false, function( path )
@@ -400,6 +417,7 @@ function clickFriendNetworkPower()
 	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
 	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
 }
+
 function clickShareThisDevice()
 {
 	var enabled = !ge( 'fnetShareThisDevice' ).checked;
@@ -408,6 +426,7 @@ function clickShareThisDevice()
 	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
 	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
 }
+
 function clickAllowPowerApplications()
 {
 	var enabled = !ge( 'fnetAllowPowerApplications' ).checked;
@@ -417,6 +436,7 @@ function clickAllowPowerApplications()
 	ge( 'fnetAskOnlyToCommunity' ).disabled = enabled;
 	ge( 'fnetAskOnlyToFriends' ).disabled = enabled;
 }
+
 function drawKeyList( list )
 {
 	var str = '';
@@ -1283,6 +1303,7 @@ function addStorage( mode )
 function editStorage( name, mode, mounted )
 {
 	if( !mounted ) mounted = '-';
+	
 	// Only one view window
 	if( Application.editView ) return;
 	

@@ -454,7 +454,8 @@ function UpdateEvents( evts )
 			events: finalEvents
 		} );
 	}
-	md.execute( 'getcalendarevents', { date: Application.date.getFullYear() + '-' + ( Application.date.getMonth() + 1 ) } );
+	var radius = 60 * 60 * 24 * 31; // One month radius
+	md.execute( 'getcalendarevents', { timestamp: Math.floor( Application.date.getTime() / 1000 ), radius: radius } );
 }
 
 function GetPubKey( account )

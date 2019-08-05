@@ -210,6 +210,7 @@ typedef struct SQLConPool
 
 typedef struct SystemBase
 {
+	time_t							l_UptimeStart;	// FriendCore start time
 	char							*l_Name;	// library name
 	FULONG							l_Version;		// version information
 	void							*handle;
@@ -317,7 +318,7 @@ typedef struct SystemBase
 
 	int								(*InitSystem)( struct SystemBase *l );
 
-	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError );
+	int								(*MountFS)( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, char **mountError, FBOOL calledByAdmin );
 
 	int								(*UnMountFS)( DeviceManager *dm, struct TagItem *tl, UserSession *usr );
 

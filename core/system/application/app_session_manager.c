@@ -105,6 +105,10 @@ int AppSessionManagerAddSession( AppSessionManager *asm, AppSession *nas )
 		
 		if( FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) ) == 0 )
 		{
+			nas->node.mln_Succ = (MinNode *)asm->asm_AppSessions;
+			asm->asm_AppSessions = nas;
+
+			/*
 			AppSession *lastone = asm->asm_AppSessions;
 			if( lastone == NULL )
 			{
@@ -118,6 +122,7 @@ int AppSessionManagerAddSession( AppSessionManager *asm, AppSession *nas )
 				}
 				lastone->node.mln_Succ = (MinNode *)nas;
 			}
+			*/
 			FRIEND_MUTEX_UNLOCK( &(asm->asm_Mutex) );
 		}
 		return 0;
@@ -135,9 +140,11 @@ int AppSessionManagerAddSession( AppSessionManager *asm, AppSession *nas )
 
 int AppSessionManagerRemSession( AppSessionManager *asm, AppSession *nas )
 {
-	if( asm != NULL )
+	if( asm != NULL && nas != NULL )
 	{
 		AppSession *las = NULL;
+		
+		DEBUG("[AppSessionManagerRemSession] AppSession will be removed\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) ) == 0 )
 		{
@@ -147,11 +154,11 @@ int AppSessionManagerRemSession( AppSessionManager *asm, AppSession *nas )
 			{
 				if( nas->as_SASID == las->as_SASID )
 				{
-					DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
+					DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list: %lu\n", nas->as_SASID );
 				
 					if( nas == asm->asm_AppSessions )	// if session is equal to first entry, we only overwrite pointer
 					{
-						asm->asm_AppSessions = (AppSession *) nas->node.mln_Succ;
+						asm->asm_AppSessions = (AppSession *) asm->asm_AppSessions->node.mln_Succ;
 					}
 					else	// if session is not first entry then we only update next pointer in previous pointer
 					{
@@ -226,9 +233,14 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 {
 	if( asm == NULL )
 	{
-		//FERROR("SAS was removed\n");
+		FERROR("SAS was removed\n");
 		return -1;
 	}
+	
+	List *delList = ListNew();
+	
+	FRIEND_MUTEX_LOCK( &(asm->asm_Mutex) );
+	
 	AppSession *as = asm->asm_AppSessions;
 	while( as != NULL )
 	{
@@ -236,29 +248,42 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 		
 		// Try to get the lock
 		// TODO: Later, replace with macro!
+		/*
 		if( pthread_mutex_trylock( &( as->as_SessionsMut ) ) != 0 )
 		{
 			// TODO: Assert here to debug later!
 			break;
 		}
+		*/
 		
-		//DEBUG("Lock on AS set\n");
+		DEBUG("Lock on AS set\n");
 		
+		int err = AppSessionRemUsersessionAny( as, ses );
+		if( err == 0 )
+		{
+			if( as->as_UserNumber <= 0 )
+			{
+				toBeRemoved = as;
+				DEBUG("I will remove session %p\n", toBeRemoved );
+				ListAdd( &delList, toBeRemoved );
+			}
+		}
+		/*
 		if( FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) ) == 0 )
 		{
 			SASUList *le = as->as_UserSessionList;
 			SASUList *ple = as->as_UserSessionList;
 			
-			//DEBUG("mutex locked\n");
+			DEBUG("mutex locked %p\n", le );
 			
 			while( le != NULL )
 			{
-				//DEBUG("Going through user sessions, le->session %p session %p\n", le->usersession, ses );
+				DEBUG("Going through user sessions, le->session %p session %p\n", le->usersession, ses );
 				
 				// If list user session is what we are looking for
 				if( le->usersession == ses )
 				{
-					//DEBUG("Remove entry le %p - root list %p\n", le, as->as_UserSessionList );
+					DEBUG("Remove entry le %p - root list %p\n", le, as->as_UserSessionList );
 					
 					// if first entry must be removed
 					if( le == as->as_UserSessionList )
@@ -277,40 +302,56 @@ int AppSessionManagerRemUserSession( AppSessionManager *asm, UserSession *ses )
 						le = (SASUList *)rme->node.mln_Succ;
 					}
 					
-					//DEBUG("AS pointer %p\n", as );
+					DEBUG("AS pointer %p\n", as );
 					
 					as->as_UserNumber--;
 					
-					//DEBUG("Number of users: %d\n", as->as_UserNumber );
+					DEBUG("Number of users: %d\n", as->as_UserNumber );
 					
 					if( as->as_UserNumber <= 0 )
 					{
 						toBeRemoved = as;
-						//DEBUG("I will remove session %p\n", toBeRemoved );
+						DEBUG("I will remove session %p\n", toBeRemoved );
 					}
 				}
 				else
 				{
-					//DEBUG("previous le = le\n");
+					DEBUG("previous le = le\n");
 					
 					ple = le;
 					le = (SASUList *)le->node.mln_Succ;
 				}
 			}
 			
-			//DEBUG("Mutex unlocked\n");
-			
+			DEBUG("Mutex will be unlocked\n");
 			FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
-			as = (AppSession *)as->node.mln_Succ;
-			
+			DEBUG("Mutex unlocked\n");
+
 			if( toBeRemoved != NULL )
 			{
 				//DEBUG("App session will be delted\n");
 				
-				AppSessionDelete( toBeRemoved );
+				ListAdd( &delList, toBeRemoved );
 			}
 		}
+		*/
+		as = (AppSession *)as->node.mln_Succ;
 	}
+	DEBUG("Done on session\n");
+	FRIEND_MUTEX_UNLOCK( &(asm->asm_Mutex) );
+	DEBUG("Application session manager unlocked\n");
+	
+	List *l = delList;
+	while( l != NULL )
+	{
+		AppSession *astorem = (AppSession *)l->data;
+		l = l->next;
+		
+		AppSessionManagerRemSession( asm, astorem );
+		//AppSessionDelete( astorem );
+	}
+	ListFree( delList );
+	DEBUG("del end\n");
 	
 	return 0;
 }

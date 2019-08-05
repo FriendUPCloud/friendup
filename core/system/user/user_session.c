@@ -126,6 +126,8 @@ void UserSessionDelete( UserSession *us )
 		
 		AppSessionManagerRemUserSession( lsb->sl_AppSessionManager, us );
 		
+		DEBUG("[UserSessionDelete] User removed from app session\n");
+		
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
 			us->us_WSConnections = NULL;

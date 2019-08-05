@@ -661,6 +661,7 @@ i18n_camera                             : Kamera
 
 #Startup -----------------------------------------------------------------------
 
+i18n_debug_skip                         : Hopp over
 i18n_starting_your_session              : Starter din økt
 i18n_status_Ok                          : OK
 i18n_status_Pending                     : Jobber
