@@ -706,7 +706,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			// Create metadirectory "root"
 			if( depth == 1 )
 			{
-				var itm = [ { Type: 'Directory', Filename: 'Root', Path: Application.browserPath, Title: i18n( 'i18n_root_directory' ), MetaType: 'RootDirectory' } ];
+				var itm = [ { Type: 'Directory', Filename: i18n( 'i18n_root_directory' ), Path: Application.browserPath, Title: i18n( 'i18n_root_directory' ), MetaType: 'RootDirectory' } ];
 				msg.list = itm.concat( msg.list );
 			}
 
