@@ -489,6 +489,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	var self = this;
 	if ( !socketReady( force )) {
 		queue( msg );
+		return;
 	}
 	
 	if ( !wsReady())
