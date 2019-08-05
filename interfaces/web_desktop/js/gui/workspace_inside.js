@@ -8494,6 +8494,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
 			}
 		}
+		return true;
 	}
 };
 

@@ -51,6 +51,7 @@ var filebrowserCallbacks = {
 	{
 		
 	},
+	// Click to open a folder
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
@@ -65,6 +66,7 @@ var filebrowserCallbacks = {
 		} );
 		cancelBubble( e );
 	},
+	// Click to close a folder
 	folderClose( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;

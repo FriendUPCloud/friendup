@@ -2668,7 +2668,7 @@ function CloseView( id )
 	else if( Application.viewId )
 	{
 		// Asking a specific view to close this one by id.
-		Application.sendMessage( { command: 'notify', method: 'closeview', targetViewId: Application.viewId, viewId: id } );
+		Application.sendMessage( { command: 'notify', method: 'closeview', viewId: Application.viewId } );
 	}
 	else
 	{

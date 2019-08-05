@@ -12,18 +12,18 @@
 // Dependency
 function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 {
-	$rect = imagettfbbox($fontSize,$fontAngle,$fontFile,$text); 
-	$minX = min(array($rect[0],$rect[2],$rect[4],$rect[6])); 
-	$maxX = max(array($rect[0],$rect[2],$rect[4],$rect[6])); 
-	$minY = min(array($rect[1],$rect[3],$rect[5],$rect[7])); 
-	$maxY = max(array($rect[1],$rect[3],$rect[5],$rect[7])); 
-	return array( 
-	 "left"   => abs($minX) - 1, 
-	 "top"    => abs($minY) - 1, 
-	 "width"  => $maxX - $minX, 
-	 "height" => $maxY - $minY, 
-	 "box"    => $rect 
-	); 
+	$rect = imagettfbbox( $fontSize, $fontAngle, $fontFile, $text );
+	$minX = min( array( $rect[ 0 ], $rect[ 2 ], $rect[ 4 ], $rect[ 6 ] ) );
+	$maxX = max( array( $rect[ 0 ], $rect[ 2 ], $rect[ 4 ], $rect[ 6 ] ) );
+	$minY = min( array( $rect[ 1 ], $rect[ 3 ], $rect[ 5 ], $rect[ 7 ] ) );
+	$maxY = max( array( $rect[ 1 ], $rect[ 3 ], $rect[ 5 ], $rect[ 7 ] ) );
+	return array(
+		"left"   => abs( $minX ) - 1,
+		"top"    => abs( $minY ) - 1,
+		"width"  => $maxX - $minX,
+		"height" => $maxY - $minY,
+		"box"    => $rect
+	);
 }
 // End dependency
 
@@ -101,7 +101,7 @@ else if ( isset( $args->args->setting ) )
 		else $settings->$set = $s->Data;
 		die( 'ok<!--separate-->' . json_encode( $settings ) );
 	}
-	// Generate default avatar
+	// Generate default avatar -------------------------------------------------
 	if( $s->Key == 'avatar' )
 	{
 		if( !isset( $Config->DefaultPalette ) )
@@ -160,8 +160,11 @@ else if ( isset( $args->args->setting ) )
 		$s->Data = 'data:image/png;base64,' . base64_encode( $png );
 		$s->Save();
 		$settings->avatar = $s->Data;
-		die( 'ok<!--separate-->' . json_encode( $settings ) );//die( $s->Data );
+		die( 'ok<!--separate-->' . json_encode( $settings ) );
 	}
+	// Done generating avatar --------------------------------------------------
+	
+	// Fallback
 	die( 'fail<!--separate-->{"response":"setting not found"}' );
 }
 

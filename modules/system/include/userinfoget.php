@@ -107,7 +107,8 @@ if( $rolePermission || $level == 'Admin' || $uid == $User->ID )
 	{
 		$gds = '';
 		
-		switch( $args->args->mode )
+		$amode = isset( $args->args->mode ) ? $args->args->mode : false;
+		switch( $amode )
 		{
 			// All data
 			case 'all':

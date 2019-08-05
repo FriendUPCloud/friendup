@@ -254,8 +254,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
 					self.callbacks.folderOpen( ppath, e, self.tempFlags );
-					return  cancelBubble( e );
+					return cancelBubble( e );
 				}
+				
+				var nam = ele.getElementsByClassName( 'Name' );
 				
 				// Normal operation
 				if( !this.classList.contains( 'Open' ) || ( e && e.mode == 'open' ) )
@@ -263,44 +265,45 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					var subitems = ele.getElementsByClassName( 'SubItems' );
 					if( subitems.length )
 					{
+						this.classList.add( 'Open' );
+
 						// Only refresh at final destination
 						if( doClick )
 						{
 							self.refresh( ppath, subitems[0], callback, depth );
-						}
-						this.classList.add( 'Open' );
-						if( self.callbacks && self.callbacks.folderOpen )
-						{
-							if( doClick)
+							if( self.callbacks && self.callbacks.folderOpen )
 							{
 								self.callbacks.folderOpen( ppath, e, self.tempFlags );
-								cancelBubble( e );
 							}
 						}
-						var nam = ele.getElementsByClassName( 'Name' );
 						if( nam.length )
 						{
 							nam[0].classList.add( 'Open' );
 						}
 					}
 				}
-				else
+				// Only close folders if they are active and clicked
+				else if( nam.length && e && e.button >= 0 )
 				{
-					this.classList.remove( 'Open' );
-					var nam = ele.getElementsByClassName( 'Name' );
-					if( nam.length )
+					// Only close active
+					if( nam[0].classList.contains( 'Active' ) )
 					{
+						this.classList.remove( 'Open' );
 						nam[0].classList.remove( 'Open' );
+					
 						if( self.callbacks && self.callbacks.folderClose )
 						{
-							if( doClick )
-							{
-								self.callbacks.folderClose( ppath, e, self.tempFlags );
-								cancelBubble( e );
-							}
+							self.callbacks.folderClose( ppath, e, self.tempFlags );
 						}
 					}
+					// Again clicking (like open...)
+					else if( self.callbacks && self.callbacks.folderOpen )
+					{
+						self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					}
 				}
+				
+				// Set this to active
 				var eles = self.dom.getElementsByTagName( 'div' );
 				for( var a = 0; a < eles.length; a++ )
 				{
