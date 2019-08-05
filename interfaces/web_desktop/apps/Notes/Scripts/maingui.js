@@ -54,6 +54,7 @@ var filebrowserCallbacks = {
 	// Click to open a folder
 	folderOpen( ele, e )
 	{
+		console.log( 'Opening folder: ' + ele );
 		if( isMobile && currentViewMode != 'root' ) return;
 		
 		Application.browserPath = ele;
