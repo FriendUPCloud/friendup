@@ -732,7 +732,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						// Special case - isn't really a directory (uses path without filename)
 						if( msg.list[b].MetaType == 'RootDirectory' )
 						{
-							createOnclickAction( eles[a], path, msg.list[b].Type, depth + 1 );
+							createOnclickAction( eles[a], path, 'RootDirectory', depth + 1 );
 						}
 						else
 						{
