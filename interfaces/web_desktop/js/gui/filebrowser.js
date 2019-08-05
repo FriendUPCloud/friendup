@@ -248,7 +248,28 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					self.callbacks.loadFile( ppath, e, self.tempFlags );
 				}
 			}
-			else
+			else if( type == 'RootDirectory' )
+			{
+				// Are we in a file dialog?
+				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
+				{
+					self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					return cancelBubble( e );
+				}
+				
+				var subitems = ele.getElementsByClassName( 'SubItems' );
+				if( subitems.length )
+				{
+					if( doClick )
+					{
+						if( self.callbacks && self.callbacks.folderOpen )
+						{
+							self.callbacks.folderOpen( ppath, e, self.tempFlags );
+						}
+					}
+				}
+			}
+			else if( type == 'Directory' || type == 'volume' )
 			{
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
@@ -283,7 +304,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					}
 				}
 				// Only close folders if they are active and clicked
-				else if( nam.length && e && e.button >= 0 )
+				else if( nam.length && e && ( ( !isMobile && e.button >= 0 ) || ( isMobile && doClick ) ) )
 				{
 					// Only close active
 					if( nam[0].classList.contains( 'Active' ) )
@@ -673,6 +694,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		{
 			if( !msg || !msg.list ) return;
 			
+			// Create metadirectory "root"
+			if( depth == 1 )
+			{
+				var itm = [ { Type: 'Directory', Filename: 'Root', Path: Application.browserPath, Title: i18n( 'i18n_root_directory' ), MetaType: 'RootDirectory' } ];
+				msg.list = itm.concat( msg.list );
+			}
+
 			if( callback ) callback();
 			
 			// Get existing
@@ -691,7 +719,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						var fn = msg.list[b].Filename;
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
+						
 						createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
+						
 						// Don't add twice
 						if( !found.find( function( ele ){ ele == msg.list[b].Filename } ) )
 						{
@@ -711,6 +741,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			{
 				rootElement.removeChild( removers[a] );
 			}
+			
 			delete removers;
 			
 			// Precalc
@@ -748,6 +779,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( msg.list[a].Type == 'Directory' )
 							fn += '/';
 						d.path = path + fn;
+						
+						if( msg.list[a].MetaType == 'RootDirectory' )
+						{
+							d.path = self.rootPath;
+							msg.list[a].Type = 'RootDirectory';
+						}
+						
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
 						
 						// We have an incoming path
@@ -766,13 +804,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					// Existing items
 					if( foundItem.classList.contains( 'Open' ) )
 					{
-						var s = foundItem.getElementsByClassName( 'SubItems' );
-						if( s && s.length )
+						if( msg.list[a].MetaType && msg.list[a].MetaType != 'RootDirectory' )
 						{
-							var fn = msg.list[a].Filename;
-							if( msg.list[a].Type == 'Directory' )
-								fn += '/';
-							self.refresh( path + fn, s[0], false, depth + 1 );
+							var s = foundItem.getElementsByClassName( 'SubItems' );
+							if( s && s.length )
+							{
+								var fn = msg.list[a].Filename;
+								if( msg.list[a].Type == 'Directory' )
+									fn += '/';
+								self.refresh( path + fn, s[0], false, depth + 1 );
+							}
 						}
 					}
 					// We have an incoming path
