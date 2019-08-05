@@ -55,16 +55,19 @@ var filebrowserCallbacks = {
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
 		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function( items )
 		{
+			// Are we refreshing the root dir?
+			var isRootDir = Application.fileBrowser.rootPath == ele;
 			for( var a = 0; a < items.length; a++ )
 			{
 				// If it has directory, just wait
-				if( isMobile && items[a].Type == 'Directory' )
+				if( !isRootDir && isMobile && items[a].Type == 'Directory' )
 				{
 					return;
 				}
@@ -129,8 +132,6 @@ Application.handleBack = function()
 Application.updateViewMode = function()
 {
 	if( !isMobile ) return;
-	
-	console.log( 'Which view mode?', currentViewMode );
 	
 	switch( currentViewMode )
 	{
@@ -1330,7 +1331,7 @@ Application.newDocument = function( args )
 	var self = this;
 	
 	// Wait till ready
-	if( typeof( ClassicEditor ) == 'undefined' )
+	if( typeof( ClassicEditor ) == 'undefined' || !Application.editor )
 	{
 		return setTimeout( function()
 		{
