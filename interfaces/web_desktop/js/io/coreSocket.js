@@ -209,7 +209,7 @@ FriendWebSocket.prototype.doReconnect = function()
 {
 	var self = this;
 	console.log( 'FriendWebSocket.doReconnect', self );
-	if ( !reconnectAllowed() ){
+	if ( !reconnectAllowed() ) {
 		if ( self.onend )
 			self.onend();
 		return false;
@@ -241,9 +241,6 @@ FriendWebSocket.prototype.doReconnect = function()
 	
 	function reconnectAllowed()
 	{
-		return true;
-		
-		//
 		var checks = {
 			allow        : self.allowReconnect,
 			hasTriesLeft : !tooManyTries(),
@@ -490,15 +487,21 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	var self = this;
-	if ( !wsReady() && !socketReady( force ) )
-	{
+	if ( !socketReady( force )) {
 		queue( msg );
+	}
+	
+	if ( !wsReady())
+	{
+		console.log( 'FriendWebSocket.sendOnSocket - ws not ready' );
+		queue( msg );
+		self.doReconnect();
 		return;
 	}
 	
 	if ( 'con' !== msg.type )
 	{
-		//console.log( 'FriendWebSocket.sendOnSocket', msg );
+		//console.log( 'FriendWebSocket.sendOnSocket - type con:', msg );
 	}
 	
 	var msgStr = friendUP.tool.stringify( msg );
