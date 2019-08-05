@@ -268,6 +268,19 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						}
 					}
 				}
+				
+				// Set this to active
+				// Set this to active
+				var eles = self.dom.getElementsByTagName( 'div' );
+				for( var a = 0; a < eles.length; a++ )
+				{
+					eles[a].classList.remove( 'Active' );
+				}
+				var nam = ele.getElementsByClassName( 'Name' );
+				if( nam.length )
+				{
+					nam[0].classList.add( 'Active' );
+				}
 			}
 			else if( type == 'Directory' || type == 'volume' )
 			{
