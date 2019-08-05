@@ -68,7 +68,7 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 				{
 					break;
 				}
-				sleep( 1 );
+				usleep( 500 );
 				pthread_yield();
 				
 				if( tr++ > 60 )
@@ -77,8 +77,13 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 				}
 			}
 			
-			data->wsc_WebsocketsServerClient = NULL;
-			data->wsc_UserSession = NULL;
+			if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
+			{
+				data->wsc_WebsocketsServerClient = NULL;
+				data->wsc_UserSession = NULL;
+				
+				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+			}
 			cl->wusc_Data = NULL;
 		}
 

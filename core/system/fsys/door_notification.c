@@ -119,7 +119,7 @@ FULONG DoorNotificationStartDB( SQLLibrary *sqllib, File *device, UserSession *s
 		len += strlen( lck.dn_Path );
 	}
 	buffer = FMalloc( len );
-	snprintf( buffer, len, "SELECT ID FROM `FDoorNotification` WHERE UserID=%lu AND Path='%s' AND DeviceID=%lu", lck.dn_OwnerID, lck.dn_Path, lck.dn_DeviceID );
+	snprintf( buffer, len, "SELECT ID FROM `FDoorNotification` WHERE OwnerID=%lu AND Path='%s' AND DeviceID=%lu", lck.dn_OwnerID, lck.dn_Path, lck.dn_DeviceID );
 	
 	
 	if( sqllib->NumberOfRecordsCustomQuery( sqllib, buffer) < 1 )

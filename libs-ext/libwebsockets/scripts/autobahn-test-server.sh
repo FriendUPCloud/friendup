@@ -10,7 +10,7 @@
 
 set -u
 
-PARALLEL=8
+PARALLEL=2
 N=1
 OS=`uname`
 
@@ -29,23 +29,8 @@ killall wstest 2>/dev/null
 
 #
 # 2.10 / 2.11:      There is no requirement to handle multiple PING / PONG
-#                   in flight in RFC6455.  lws doesn't waste memory on it
-#                   since it is useless.
-#
-# 12.3.1 / 12.3.2
-# 12.4.* / 12.5.*:  Autobahn has been broken for these tests since Aug 2017
-#                   https://github.com/crossbario/autobahn-testsuite/issues/71
-
-
-cat << EOF >fuzzingserver.json
-{
-   "url": "ws://127.0.0.1:9001",
-   "outdir": "./reports/clients",
-   "cases": ["*"],
-   "exclude-cases": [ "2.10", "2.11", "12.3.1", "12.3.2", "12.4.*", "12.5.*"],
-   "exclude-agent-cases": {}
-}
-EOF
+#                   in flight on a single connection in RFC6455.  lws doesn't
+#		    waste memory on supporting it since it is useless.
 
 cat << EOF >fuzzingclient.json
 { 
@@ -55,8 +40,8 @@ cat << EOF >fuzzingclient.json
          "url": "ws://127.0.0.1:9001"
       }
    ],
-   "cases": ["*"],
-   "exclude-cases": ["2.10", "2.11", "12.3.1", "12.3.2", "12.4.*", "12.5.*" ],
+   "cases": [ "12.2.13" ],
+   "exclude-cases": ["2.10", "2.11" ],
    "exclude-agent-cases": {}
 }
 EOF
@@ -66,7 +51,7 @@ echo "----------------------------------------------"
 echo "-------   tests: autobahn as server"
 echo
 
-$SERV -p 9001 -d7 &
+$SERV -p 9001 -d3 &
 wstest -m fuzzingclient
 R=$?
 echo "Autobahn client exit $R"

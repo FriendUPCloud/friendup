@@ -1,7 +1,7 @@
 /*
  * lws-minimal-http-server-multivhost
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -107,7 +107,8 @@ int main(int argc, const char **argv)
 	signal(SIGINT, sigint_handler);
 
 	memset(&info, 0, sizeof info); /* otherwise uninitialized garbage */
-	info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
+	info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS |
+		LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
 
 	/*
 	 * Because of LWS_SERVER_OPTION_EXPLICIT_VHOSTS, this only creates

@@ -160,7 +160,7 @@ struct lws_fts {
 	unsigned char agg[128];
 };
 
-/* since the kernel case allocates >2GB, no point keeping this too low */
+/* since the kernel case allocates >300MB, no point keeping this too low */
 
 #define TRIE_LWSAC_BLOCK_SIZE (1024 * 1024)
 
@@ -261,7 +261,8 @@ lws_fts_create(int fd)
 
 	t->fd = fd;
 	t->lwsac_head = lwsac_head;
-	t->root = lwsac_use(&lwsac_head, sizeof(*t->root), TRIE_LWSAC_BLOCK_SIZE);
+	t->root = lwsac_use(&lwsac_head, sizeof(*t->root),
+			    TRIE_LWSAC_BLOCK_SIZE);
 	if (!t->root)
 		goto unwind;
 
@@ -349,7 +350,7 @@ lws_fts_file_index(struct lws_fts *t, const char *filepath, int filepath_len,
 
 static struct lws_fts_entry *
 lws_fts_entry_child_add(struct lws_fts *t, unsigned char c,
-			 struct lws_fts_entry *parent)
+			struct lws_fts_entry *parent)
 {
 	struct lws_fts_entry *e, **pe;
 
@@ -457,7 +458,7 @@ finalize_per_input(struct lws_fts *t)
 
 	spill(0, 1);
 
-	assert(lseek(t->fd, 0, SEEK_END) == t->c);
+	assert(lseek(t->fd, 0, SEEK_END) == (off_t)t->c);
 
 	if (t->lwsac_input_head) {
 		lwsac_input_size = lwsac_total_alloc(t->lwsac_input_head);
@@ -537,7 +538,7 @@ name_entry(struct lws_fts_entry *e1, char *s, int len)
 
 int
 lws_fts_fill(struct lws_fts *t, uint32_t file_index, const char *buf,
-	      size_t len)
+	     size_t len)
 {
 	unsigned long long tf = lws_time_in_microseconds();
 	unsigned char c, linetable[256], vlibuf[8];
@@ -900,7 +901,7 @@ seal:
 
 				e = lws_fts_entry_child_add(t, c, t->parser);
 				if (!e) {
-					lwsl_err("%s: lws_fts_entry_child_add fail2\n",
+					lwsl_err("%s: child_add fail2\n",
 						 __func__);
 					return 1;
 				}
@@ -1066,7 +1067,7 @@ after:
 		return 1;
 	}
 
-	assert(lseek(t->fd, 0, SEEK_END) == t->c);
+	assert(lseek(t->fd, 0, SEEK_END) == (off_t)t->c);
 
 	if (lseek(t->fd, t->c, SEEK_SET) < 0) {
 		lwsl_err("%s: end seek failed\n", __func__);
@@ -1330,7 +1331,7 @@ lws_fts_serialize(struct lws_fts *t)
 
 	spill(0, 1);
 
-	assert(lseek(t->fd, 0, SEEK_END) == t->c);
+	assert(lseek(t->fd, 0, SEEK_END) == (off_t)t->c);
 
 	/* drop the correct root trie offset + file length into the header */
 

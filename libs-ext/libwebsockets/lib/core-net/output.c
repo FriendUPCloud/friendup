@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,7 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 	unsigned int n, m;
 
 	// lwsl_notice("%s: len %d\n", __func__, (int)len);
+	// lwsl_hexdump_level(LLL_NOTICE, buf, len);
 
 	/*
 	 * Detect if we got called twice without going through the
@@ -41,10 +42,10 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 	if (0 && buf && wsi->could_have_pending) {
 		lwsl_hexdump_level(LLL_INFO, buf, len);
 		lwsl_info("** %p: vh: %s, prot: %s, role %s: "
-			 "Inefficient back-to-back write of %lu detected...\n",
-			 wsi, wsi->vhost->name, wsi->protocol->name,
-			 wsi->role_ops->name,
-			 (unsigned long)len);
+			  "Inefficient back-to-back write of %lu detected...\n",
+			  wsi, wsi->vhost ? wsi->vhost->name : "no vhost",
+			  wsi->protocol->name, wsi->role_ops->name,
+			  (unsigned long)len);
 	}
 
 	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_API_WRITE, 1);
@@ -60,8 +61,8 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 
 	if (buf && lws_has_buffered_out(wsi)) {
 		lwsl_info("** %p: vh: %s, prot: %s, incr buflist_out by %lu\n",
-			 wsi, wsi->vhost->name, wsi->protocol->name,
-			 (unsigned long)len);
+			  wsi, wsi->vhost ? wsi->vhost->name : "no vhost",
+			  wsi->protocol->name, (unsigned long)len);
 
 		/*
 		 * already buflist ahead of this, add it on the tail of the
@@ -69,7 +70,8 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 		 * the buflist...
 		 */
 
-		lws_buflist_append_segment(&wsi->buflist_out, buf, len);
+		if (lws_buflist_append_segment(&wsi->buflist_out, buf, len))
+			return -1;
 
 		buf = NULL;
 		len = 0;
@@ -127,6 +129,9 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 		break;
 	}
 
+	if ((int)m < 0)
+		m = 0;
+
 	/*
 	 * we were sending this from buflist_out?  Then not sending everything
 	 * is a small matter of advancing ourselves only by the amount we did
@@ -145,8 +150,13 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 
 			m = (int)real_len;
 			if (lwsi_state(wsi) == LRS_FLUSHING_BEFORE_CLOSE) {
-				lwsl_info("** %p signalling to close now\n", wsi);
+				lwsl_info("*%p signalling to close now\n", wsi);
 				return -1; /* retry closing now */
+			}
+
+			if (wsi->close_when_buffered_out_drained) {
+				wsi->close_when_buffered_out_drained = 0;
+				return -1;
 			}
 
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
@@ -186,12 +196,15 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 	lwsl_debug("%p new partial sent %d from %lu total\n", wsi, m,
 		    (unsigned long)real_len);
 
-	lws_buflist_append_segment(&wsi->buflist_out, buf + m, real_len - m);
+	if (lws_buflist_append_segment(&wsi->buflist_out, buf + m,
+				       real_len - m) < 0)
+		return -1;
 
 	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITE_PARTIALS, 1);
-	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_B_PARTIALS_ACCEPTED_PARTS, m);
+	lws_stats_atomic_bump(wsi->context, pt,
+			      LWSSTATS_B_PARTIALS_ACCEPTED_PARTS, m);
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
 	if (lws_wsi_is_udp(wsi)) {
 		/* stash original destination for fulfilling UDP partials */
 		wsi->udp->sa_pending = wsi->udp->sa;
@@ -242,8 +255,9 @@ lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 
 	lws_stats_atomic_bump(context, pt, LWSSTATS_C_API_READ, 1);
 
+	errno = 0;
 	if (lws_wsi_is_udp(wsi)) {
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
 		wsi->udp->salen = sizeof(wsi->udp->sa);
 		n = recvfrom(wsi->desc.sockfd, (char *)buf, len, 0,
 			     &wsi->udp->sa, &wsi->udp->salen);
@@ -254,6 +268,13 @@ lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 	if (n >= 0) {
 
 		if (!n && wsi->unix_skt)
+			return LWS_SSL_CAPABLE_ERROR;
+
+		/*
+		 * See https://libwebsockets.org/
+		 * pipermail/libwebsockets/2019-March/007857.html
+		 */
+		if (!n)
 			return LWS_SSL_CAPABLE_ERROR;
 
 		if (wsi->vhost)
@@ -268,7 +289,7 @@ lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 	    LWS_ERRNO == LWS_EINTR)
 		return LWS_SSL_CAPABLE_MORE_SERVICE;
 
-	lwsl_notice("error on reading from skt : %d\n", LWS_ERRNO);
+	lwsl_info("error on reading from skt : %d\n", LWS_ERRNO);
 	return LWS_SSL_CAPABLE_ERROR;
 }
 
@@ -276,9 +297,12 @@ LWS_VISIBLE int
 lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 {
 	int n = 0;
+#if defined(LWS_PLAT_OPTEE)
+	ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+#endif
 
 	if (lws_wsi_is_udp(wsi)) {
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
 		if (lws_has_buffered_out(wsi))
 			n = sendto(wsi->desc.sockfd, (const char *)buf,
 				   len, 0, &wsi->udp->sa_pending,
@@ -304,7 +328,7 @@ lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 	}
 
 	lwsl_debug("ERROR writing len %d to skt fd %d err %d / errno %d\n",
-			len, wsi->desc.sockfd, n, LWS_ERRNO);
+		   len, wsi->desc.sockfd, n, LWS_ERRNO);
 
 	return LWS_SSL_CAPABLE_ERROR;
 }

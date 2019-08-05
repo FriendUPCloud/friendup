@@ -24,7 +24,13 @@
 #define MSG_NOSIGNAL 0
 #define SOMAXCONN 3
 
+#if defined(LWS_AMAZON_RTOS)
+ int
+ open(const char *path, int oflag, ...);
+#else
  #include <fcntl.h>
+#endif
+
  #include <strings.h>
  #include <unistd.h>
  #include <sys/stat.h>
@@ -37,12 +43,23 @@
  #endif
  #include <netdb.h>
  #include <signal.h>
+#if defined(LWS_AMAZON_RTOS)
+const char *
+gai_strerror(int);
+#else
  #include <sys/socket.h>
+#endif
 
-#include "freertos/timers.h"
-#include <esp_attr.h>
-#include <esp_system.h>
-#include <esp_task_wdt.h>
+#if defined(LWS_AMAZON_RTOS)
+ #include "FreeRTOS.h"
+ #include "timers.h"
+ #include <esp_attr.h>
+#else
+ #include "freertos/timers.h"
+ #include <esp_attr.h>
+ #include <esp_system.h>
+ #include <esp_task_wdt.h>
+#endif
 
 #include "lwip/apps/sntp.h"
 
@@ -60,10 +77,9 @@
  #define LWS_EISCONN EISCONN
  #define LWS_ENOTCONN ENOTCONN
  #define LWS_EWOULDBLOCK EWOULDBLOCK
+ #define LWS_EADDRINUSE EADDRINUSE
 
  #define lws_set_blocking_send(wsi)
-
- #define LWS_SOCK_INVALID (-1)
 
  #ifndef LWS_NO_FORK
   #ifdef LWS_HAVE_SYS_PRCTL_H
@@ -74,9 +90,12 @@
 #define compatible_close(x) close(x)
 #define lws_plat_socket_offset() LWIP_SOCKET_OFFSET
 #define wsi_from_fd(A,B)  A->lws_lookup[B - lws_plat_socket_offset()]
-#define insert_wsi(A,B)   assert(A->lws_lookup[B->desc.sockfd - \
-				  lws_plat_socket_offset()] == 0); \
-				 A->lws_lookup[B->desc.sockfd - \
-				  lws_plat_socket_offset()] = B
+
+struct lws_context;
+struct lws;
+
+int
+insert_wsi(const struct lws_context *context, struct lws *wsi);
+
 #define delete_from_fd(A,B) A->lws_lookup[B - lws_plat_socket_offset()] = 0
 

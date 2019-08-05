@@ -60,6 +60,7 @@ lws_create_new_server_wsi(struct lws_vhost *vhost, int fixed_tsi)
 		return NULL;
 	}
 
+	new_wsi->wsistate |= LWSIFR_SERVER;
 	new_wsi->tsi = n;
 	lwsl_debug("new wsi %p joining vhost %s, tsi %d\n", new_wsi,
 		   vhost->name, new_wsi->tsi);
@@ -95,8 +96,8 @@ lws_create_new_server_wsi(struct lws_vhost *vhost, int fixed_tsi)
 	 * outermost create notification for wsi
 	 * no user_space because no protocol selection
 	 */
-	vhost->protocols[0].callback(new_wsi, LWS_CALLBACK_WSI_CREATE,
-				       NULL, NULL, 0);
+	vhost->protocols[0].callback(new_wsi, LWS_CALLBACK_WSI_CREATE, NULL,
+				     NULL, 0);
 
 	return new_wsi;
 }
@@ -110,8 +111,8 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
 			   struct lws *parent)
 {
 	struct lws_context *context = vh->context;
-	struct lws *new_wsi;
 	struct lws_context_per_thread *pt;
+	struct lws *new_wsi;
 	int n;
 
 #if defined(LWS_WITH_PEER_LIMITS)
@@ -131,6 +132,12 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
 		}
 	}
 #endif
+
+	/*
+	 * Notice that in SMP case, the wsi may be being created on an
+	 * entirely different pt / tsi for load balancing.  In that case as
+	 * we initialize it, it may become "live" concurrently unexpectedly...
+	 */
 
 	n = -1;
 	if (parent)
@@ -154,6 +161,24 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
 		parent->child_list = new_wsi;
 	}
 
+	/* enforce that every fd is nonblocking */
+
+	if (type & LWS_ADOPT_SOCKET) {
+		if (lws_plat_set_nonblocking(fd.sockfd)) {
+			lwsl_err("%s: unable to set sockfd nonblocking\n",
+				 __func__);
+			goto bail;
+		}
+	}
+#if !defined(WIN32)
+	else
+		if (lws_plat_set_nonblocking(fd.filefd)) {
+			lwsl_err("%s: unable to set filefd nonblocking\n",
+				 __func__);
+			goto bail;
+		}
+#endif
+
 	new_wsi->desc = fd;
 
 	if (vh_prot_name) {
@@ -174,7 +199,7 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
 		type &= ~LWS_ADOPT_ALLOW_SSL;
 
 	if (lws_role_call_adoption_bind(new_wsi, type, vh_prot_name)) {
-		lwsl_err("Unable to find a role that can adopt descriptor\n");
+		lwsl_err("Unable to find a role that can adopt descriptor type 0x%x\n", type);
 		goto bail;
 	}
 
@@ -184,19 +209,25 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
 	 * selected yet so we issue this to the vhosts's default protocol,
 	 * itself by default protocols[0]
 	 */
+	new_wsi->wsistate |= LWSIFR_SERVER;
 	n = LWS_CALLBACK_SERVER_NEW_CLIENT_INSTANTIATED;
-	if (!(type & LWS_ADOPT_HTTP)) {
-		if (!(type & LWS_ADOPT_SOCKET))
-			n = LWS_CALLBACK_RAW_ADOPT_FILE;
-		else
-			n = LWS_CALLBACK_RAW_ADOPT;
-	}
+	if (new_wsi->role_ops->adoption_cb[lwsi_role_server(new_wsi)])
+		n = new_wsi->role_ops->adoption_cb[lwsi_role_server(new_wsi)];
 
-	lwsl_debug("new wsi wsistate 0x%x\n", new_wsi->wsistate);
-
+#if !defined(LWS_AMAZON_RTOS)
 	if (context->event_loop_ops->accept)
 		if (context->event_loop_ops->accept(new_wsi))
 			goto fail;
+#endif
+
+#if LWS_MAX_SMP > 1
+	/*
+	 * Caution: after this point the wsi is live on its service thread
+	 * which may be concurrent to this.  We mark the wsi as still undergoing
+	 * init in another pt so the assigned pt leaves it alone.
+	 */
+	new_wsi->undergoing_init_from_other_pt = 1;
+#endif
 
 	if (!(type & LWS_ADOPT_ALLOW_SSL)) {
 		lws_pt_lock(pt, __func__);
@@ -206,24 +237,33 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
 			goto fail;
 		}
 		lws_pt_unlock(pt);
-	} else
+	}
+#if !defined(LWS_WITHOUT_SERVER)
+	 else
 		if (lws_server_socket_service_ssl(new_wsi, fd.sockfd)) {
 			lwsl_info("%s: fail ssl negotiation\n", __func__);
 			goto fail;
 		}
+#endif
 
 	/*
 	 *  by deferring callback to this point, after insertion to fds,
 	 * lws_callback_on_writable() can work from the callback
 	 */
-	if ((new_wsi->protocol->callback)(
-			new_wsi, n, new_wsi->user_space, NULL, 0))
+	if ((new_wsi->protocol->callback)(new_wsi, n, new_wsi->user_space,
+					  NULL, 0))
 		goto fail;
 
 	/* role may need to do something after all adoption completed */
 
 	lws_role_call_adoption_bind(new_wsi, type | _LWS_ADOPT_FINISH,
 				    vh_prot_name);
+
+#if LWS_MAX_SMP > 1
+	/* its actual pt can service it now */
+
+	new_wsi->undergoing_init_from_other_pt = 0;
+#endif
 
 	lws_cancel_service_pt(new_wsi);
 
@@ -293,7 +333,7 @@ adopt_socket_readbuf(struct lws *wsi, const char *readbuf, size_t len)
 	if (n < 0)
 		goto bail;
 	if (n)
-		lws_dll_lws_add_front(&wsi->dll_buflist, &pt->dll_head_buflist);
+		lws_dll2_add_head(&wsi->dll_buflist, &pt->dll_buflist_owner);
 
 	/*
 	 * we can't process the initial read data until we can attach an ah.
@@ -309,7 +349,8 @@ adopt_socket_readbuf(struct lws *wsi, const char *readbuf, size_t len)
 
 		lwsl_notice("%s: calling service on readbuf ah\n", __func__);
 
-		/* unlike a normal connect, we have the headers already
+		/*
+		 * unlike a normal connect, we have the headers already
 		 * (or the first part of them anyway).
 		 * libuv won't come back and service us without a network
 		 * event, so we need to do the header service right here.
@@ -338,6 +379,7 @@ LWS_EXTERN struct lws *
 lws_create_adopt_udp(struct lws_vhost *vhost, int port, int flags,
 		     const char *protocol_name, struct lws *parent_wsi)
 {
+#if !defined(LWS_PLAT_OPTEE)
 	lws_sock_file_fd_type sock;
 	struct addrinfo h, *r, *rp;
 	struct lws *wsi = NULL;
@@ -348,13 +390,19 @@ lws_create_adopt_udp(struct lws_vhost *vhost, int port, int flags,
 	h.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
 	h.ai_socktype = SOCK_DGRAM;
 	h.ai_protocol = IPPROTO_UDP;
-	h.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
+	h.ai_flags = AI_PASSIVE;
+#ifdef AI_ADDRCONFIG
+	h.ai_flags |= AI_ADDRCONFIG;
+#endif
 
 	lws_snprintf(buf, sizeof(buf), "%u", port);
 	n = getaddrinfo(NULL, buf, &h, &r);
 	if (n) {
-		lwsl_info("%s: getaddrinfo error: %s\n", __func__,
-			  gai_strerror(n));
+#ifndef LWS_WITH_ESP32
+		lwsl_info("%s: getaddrinfo error: %s\n", __func__, gai_strerror(n));
+#else
+        lwsl_info("%s: getaddrinfo error: %s\n", __func__, strerror(n));
+#endif
 		goto bail;
 	}
 
@@ -393,6 +441,9 @@ bail1:
 
 bail:
 	return wsi;
+#else
+	return NULL;
+#endif
 }
 
 LWS_VISIBLE struct lws *
@@ -400,7 +451,7 @@ lws_adopt_socket_readbuf(struct lws_context *context, lws_sockfd_type accept_fd,
 			 const char *readbuf, size_t len)
 {
         return adopt_socket_readbuf(lws_adopt_socket(context, accept_fd),
-				     readbuf, len);
+				    readbuf, len);
 }
 
 LWS_VISIBLE struct lws *
@@ -409,5 +460,5 @@ lws_adopt_socket_vhost_readbuf(struct lws_vhost *vhost,
 			       const char *readbuf, size_t len)
 {
         return adopt_socket_readbuf(lws_adopt_socket_vhost(vhost, accept_fd),
-				     readbuf, len);
+				    readbuf, len);
 }
