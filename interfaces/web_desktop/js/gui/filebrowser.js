@@ -729,8 +729,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
 						
-						console.log( 'What is this ' + path + fn + ' or ' + msg.list[b].MetaType );
-						createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
+						// Special case - isn't really a directory (uses path without filename)
+						if( msg.list[b].MetaType == 'RootDirectory' )
+						{
+							createOnclickAction( eles[a], path, msg.list[b].Type, depth + 1 );
+						}
+						else
+						{
+							createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
+						}
 						
 						// Don't add twice
 						if( !found.find( function( ele ){ ele == msg.list[b].Filename } ) )
