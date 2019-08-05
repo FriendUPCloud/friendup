@@ -35,7 +35,11 @@ lws_get_random(struct lws_context *context, void *buf, int len)
 	uint8_t *pb = buf;
 
 	while (len) {
+#if defined(LWS_AMAZON_RTOS)
+		uint32_t r = rand();
+#else
 		uint32_t r = esp_random();
+#endif
 		uint8_t *p = (uint8_t *)&r;
 		int b = 4;
 
@@ -57,9 +61,10 @@ LWS_VISIBLE void lwsl_emit_syslog(int level, const char *line)
 	lwsl_emit_stderr(level, line);
 }
 
-void
-lws_plat_drop_app_privileges(const struct lws_context_creation_info *info)
+int
+lws_plat_drop_app_privileges(struct lws_context *context, int actually_init)
 {
+	return 0;
 }
 
 int

@@ -1,7 +1,7 @@
 /*
  * libwebsockets web server application
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -21,7 +21,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#if defined(LWS_HAS_GETOPT_LONG) || defined(WIN32)
 #include <getopt.h>
+#endif
 #include <signal.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -75,12 +77,14 @@ static const char * const plugin_dirs[] = {
 	NULL
 };
 
+#if defined(LWS_HAS_GETOPT_LONG) || defined(WIN32)
 static struct option options[] = {
 	{ "help",	no_argument,		NULL, 'h' },
 	{ "debug",	required_argument,	NULL, 'd' },
 	{ "configdir",  required_argument,	NULL, 'c' },
 	{ NULL, 0, 0, 0 }
 };
+#endif
 
 void signal_cb(uv_signal_t *watcher, int signum)
 {
@@ -216,7 +220,11 @@ int main(int argc, char **argv)
 
 	strcpy(config_dir, "/etc/lwsws");
 	while (n >= 0) {
+#if defined(LWS_HAS_GETOPT_LONG) || defined(WIN32)
 		n = getopt_long(argc, argv, "hd:c:", options, NULL);
+#else
+		n = getopt(argc, argv, "hd:c:");
+#endif
 		if (n < 0)
 			continue;
 		switch (n) {
@@ -256,7 +264,6 @@ int main(int argc, char **argv)
 			if (n > 0)
 				for (m = 0; m < (int)LWS_ARRAY_SIZE(pids); m++)
 					if (!pids[m]) {
-						// fprintf(stderr, "added child pid %d\n", n);
 						pids[m] = n;
 						break;
 					}
@@ -268,7 +275,6 @@ int main(int argc, char **argv)
 		if (n > 0)
 			for (m = 0; m < (int)LWS_ARRAY_SIZE(pids); m++)
 				if (pids[m] == n) {
-					// fprintf(stderr, "reaped child pid %d\n", pids[m]);
 					pids[m] = 0;
 					break;
 				}
@@ -279,13 +285,7 @@ int main(int argc, char **argv)
 #endif
 	/* child process */
 
-#ifndef _WIN32
-	/* we will only try to log things according to our debug_level */
-//	setlogmask(LOG_UPTO (LOG_DEBUG));
-//	openlog("lwsws", syslog_options, LOG_DAEMON);
-#endif
-
-	lws_set_log_level(debug_level, NULL); // lwsl_emit_syslog);
+	lws_set_log_level(debug_level, lwsl_emit_stderr_notimestamp);
 
 	lwsl_notice("lwsws libwebsockets web server - license CC0 + LGPL2.1\n");
 	lwsl_notice("(C) Copyright 2010-2018 Andy Green <andy@warmcat.com>\n");

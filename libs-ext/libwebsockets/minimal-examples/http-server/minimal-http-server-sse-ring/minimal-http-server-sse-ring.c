@@ -1,7 +1,7 @@
 /*
  * lws-minimal-http-server-sse
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <pthread.h>
+#include <time.h>
 
 /* one of these created for each message in the ringbuffer */
 
@@ -55,6 +56,11 @@ struct vhd {
 };
 
 static int interrupted;
+
+#if defined(WIN32)
+static void usleep(unsigned long l) { Sleep(l / 1000); }
+#endif
+
 
 /* destroys the message when everyone has had a copy of it */
 
@@ -128,6 +134,8 @@ wait:
 	lwsl_notice("thread_spam %p exiting\n", (void *)pthread_self());
 
 	pthread_exit(NULL);
+
+	return NULL;
 }
 
 
@@ -138,7 +146,8 @@ callback_sse(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 	struct pss *pss = (struct pss *)user;
 	struct vhd *vhd = (struct vhd *)lws_protocol_vh_priv_get(
 			lws_get_vhost(wsi), lws_get_protocol(wsi));
-	uint8_t buf[LWS_PRE + 256], *start = &buf[LWS_PRE], *p = start,
+	uint8_t buf[LWS_PRE + LWS_RECOMMENDED_MIN_HEADER_SPACE],
+		*start = &buf[LWS_PRE], *p = start,
 		*end = &buf[sizeof(buf) - 1];
 	const struct msg *pmsg;
 	void *retval;
@@ -214,10 +223,14 @@ callback_sse(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		pss->tail = lws_ring_get_oldest_tail(vhd->ring);
 		pss->wsi = wsi;
 
-		/* Unlike a normal http connection, we don't want any specific
-		 * timeout.  We want to stay up until the client drops us */
-
-		lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
+		/*
+		 * This tells lws we are no longer a normal http stream,
+		 * but are an "immortal" (plus or minus whatever timeout you
+		 * set on it afterwards) SSE stream.  In http/2 case that also
+		 * stops idle timeouts being applied to the network connection
+		 * while this wsi is still open.
+		 */
+		lws_http_mark_sse(wsi);
 
 		/* write the body separately */
 
@@ -266,6 +279,8 @@ callback_sse(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		return 0;
 
 	case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
+		if (!vhd)
+			break;
 		/*
 		 * let everybody know we want to write something on them
 		 * as soon as they are ready
@@ -362,6 +377,8 @@ int main(int argc, const char **argv)
 	info.port = 7681;
 	info.protocols = protocols;
 	info.mounts = &mount;
+	info.options =
+		LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
 
 	context = lws_create_context(&info);
 	if (!context) {

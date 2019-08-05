@@ -36,16 +36,16 @@
 
 /* SHA-1 binary and hexified versions */
 /** typedef struct lwsgw_hash_bin */
-typedef struct { unsigned char bin[20]; /**< binary representation of hash */} lwsgw_hash_bin;
+typedef struct { unsigned char bin[32]; /**< binary representation of hash */} lwsgw_hash_bin;
 /** typedef struct lwsgw_hash */
-typedef struct { char id[41]; /**< ascii hex representation of hash */ } lwsgw_hash;
+typedef struct { char id[65]; /**< ascii hex representation of hash */ } lwsgw_hash;
 
 /** enum lwsgs_auth_bits */
 enum lwsgs_auth_bits {
-	LWSGS_AUTH_LOGGED_IN = 1, /**< user is logged in as somebody */
-	LWSGS_AUTH_ADMIN = 2,	/**< logged in as the admin user */
-	LWSGS_AUTH_VERIFIED = 4,  /**< user has verified his email */
-	LWSGS_AUTH_FORGOT_FLOW = 8,	/**< he just completed "forgot password" flow */
+	LWSGS_AUTH_LOGGED_IN	= 1, /**< user is logged in as somebody */
+	LWSGS_AUTH_ADMIN	= 2, /**< logged in as the admin user */
+	LWSGS_AUTH_VERIFIED	= 4, /**< user has verified his email */
+	LWSGS_AUTH_FORGOT_FLOW	= 8, /**< just completed "forgot password" */
 };
 
 /** struct lws_session_info - information about user session status */

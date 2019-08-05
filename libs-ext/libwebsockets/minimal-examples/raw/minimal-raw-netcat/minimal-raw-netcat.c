@@ -1,7 +1,7 @@
 /*
  * lws-minimal-raw-netcat
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -16,16 +16,18 @@
 #include <libwebsockets.h>
 #include <string.h>
 #include <signal.h>
+#if !defined(WIN32)
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <arpa/inet.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <arpa/inet.h>
 
 static struct lws *raw_wsi, *stdin_wsi;
 static uint8_t buf[LWS_PRE + 4096];
@@ -141,13 +143,7 @@ int main(int argc, const char **argv)
 	struct addrinfo h, *r, *rp;
 	struct lws_vhost *vhost;
 	const char *p;
-	int n = 0, logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE
-			/* for LLL_ verbosity above NOTICE to be built into lws,
-			 * lws must have been configured and built with
-			 * -DCMAKE_BUILD_TYPE=DEBUG instead of =RELEASE */
-			/* | LLL_INFO */ /* | LLL_PARSER */ /* | LLL_HEADER */
-			/* | LLL_EXT */ /* | LLL_CLIENT */ /* | LLL_LATENCY */
-			/* | LLL_DEBUG */;
+	int n = 0, logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
 
 	signal(SIGINT, sigint_handler);
 
@@ -208,7 +204,7 @@ int main(int argc, const char **argv)
 	for (rp = r; rp; rp = rp->ai_next) {
 		sock.sockfd = socket(rp->ai_family, rp->ai_socktype,
 				     rp->ai_protocol);
-		if (sock.sockfd >= 0)
+		if (sock.sockfd != LWS_SOCK_INVALID)
 			break;
 	}
 	if (!rp) {

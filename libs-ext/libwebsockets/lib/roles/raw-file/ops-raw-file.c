@@ -52,7 +52,7 @@ rops_handle_POLLIN_raw_file(struct lws_context_per_thread *pt, struct lws *wsi,
 	return LWS_HPI_RET_HANDLED;
 }
 
-#if !defined(LWS_NO_SERVER)
+//#if !defined(LWS_NO_SERVER)
 static int
 rops_adoption_bind_raw_file(struct lws *wsi, int type, const char *vh_prot_name)
 {
@@ -63,13 +63,18 @@ rops_adoption_bind_raw_file(struct lws *wsi, int type, const char *vh_prot_name)
 
 	lws_role_transition(wsi, 0, LRS_ESTABLISHED, &role_ops_raw_file);
 
-	if (!vh_prot_name)
+	if (!vh_prot_name) {
+		if (wsi->vhost->default_protocol_index >=
+		    wsi->vhost->count_protocols)
+			return 0;
+
 		wsi->protocol = &wsi->vhost->protocols[
 					wsi->vhost->default_protocol_index];
+	}
 
 	return 1; /* bound */
 }
-#endif
+//#endif
 
 struct lws_role_ops role_ops_raw_file = {
 	/* role name */			"raw-file",
@@ -92,14 +97,20 @@ struct lws_role_ops role_ops_raw_file = {
 	/* close_role */		NULL,
 	/* close_kill_connection */	NULL,
 	/* destroy_role */		NULL,
-#if !defined(LWS_NO_SERVER)
+//#if !defined(LWS_NO_SERVER)
 	/* adoption_bind */		rops_adoption_bind_raw_file,
-#else
-					NULL,
-#endif
+//#else
+//					NULL,
+//#endif
 	/* client_bind */		NULL,
-	/* writeable cb clnt, srv */	{ LWS_CALLBACK_RAW_WRITEABLE_FILE, 0 },
-	/* close cb clnt, srv */	{ LWS_CALLBACK_RAW_CLOSE_FILE, 0 },
+	/* adoption_cb clnt, srv */	{ LWS_CALLBACK_RAW_ADOPT_FILE,
+					  LWS_CALLBACK_RAW_ADOPT_FILE },
+	/* rx_cb clnt, srv */		{ LWS_CALLBACK_RAW_RX_FILE,
+					  LWS_CALLBACK_RAW_RX_FILE },
+	/* writeable cb clnt, srv */	{ LWS_CALLBACK_RAW_WRITEABLE_FILE,
+					  LWS_CALLBACK_RAW_WRITEABLE_FILE},
+	/* close cb clnt, srv */	{ LWS_CALLBACK_RAW_CLOSE_FILE,
+					  LWS_CALLBACK_RAW_CLOSE_FILE},
 	/* protocol_bind cb c, srv */	{ LWS_CALLBACK_RAW_FILE_BIND_PROTOCOL,
 					  LWS_CALLBACK_RAW_FILE_BIND_PROTOCOL },
 	/* protocol_unbind cb c, srv */	{ LWS_CALLBACK_RAW_FILE_DROP_PROTOCOL,

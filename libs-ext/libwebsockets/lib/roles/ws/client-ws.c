@@ -66,29 +66,53 @@ lws_create_client_ws_object(const struct lws_client_connect_info *i,
 int
 lws_ws_handshake_client(struct lws *wsi, unsigned char **buf, size_t len)
 {
+	unsigned char *bufin = *buf;
+
 	if ((lwsi_state(wsi) != LRS_WAITING_PROXY_REPLY) &&
 	    (lwsi_state(wsi) != LRS_H1C_ISSUE_HANDSHAKE) &&
 	    (lwsi_state(wsi) != LRS_WAITING_SERVER_REPLY) &&
 	    !lwsi_role_client(wsi))
 		return 0;
 
-	// lwsl_notice("%s: hs client gets %d in\n", __func__, (int)len);
+	lwsl_debug("%s: hs client feels it has %d in\n", __func__, (int)len);
 
 	while (len) {
 		/*
 		 * we were accepting input but now we stopped doing so
 		 */
 		if (lws_is_flowcontrolled(wsi)) {
-			//lwsl_notice("%s: caching %ld\n", __func__, (long)len);
-			lws_rxflow_cache(wsi, *buf, 0, (int)len);
-			*buf += len;
+			lwsl_debug("%s: caching %ld\n", __func__, (long)len);
+			/*
+			 * Since we cached the remaining available input, we
+			 * can say we "consumed" it.
+			 *
+			 * But what about the case where the available input
+			 * came out of the rxflow cache already?  If we are
+			 * effectively "putting it back in the cache", we have
+			 * to place it at the cache head, not the tail as usual.
+			 */
+			if (lws_rxflow_cache(wsi, *buf, 0, (int)len) ==
+							LWSRXFC_TRIMMED) {
+				/*
+				 * we dealt with it by trimming the existing
+				 * rxflow cache HEAD to account for what we used.
+				 *
+				 * indicate we didn't use anything to the caller
+				 * so he doesn't do any consumed processing
+				 */
+				lwsl_info("%s: trimming inside rxflow cache\n",
+						__func__);
+				*buf = bufin;
+			} else
+				*buf += len;
+
 			return 0;
 		}
 #if !defined(LWS_WITHOUT_EXTENSIONS)
 		if (wsi->ws->rx_draining_ext) {
 			int m;
 
-			//lwsl_notice("%s: draining ext\n", __func__);
+			lwsl_info("%s: draining ext\n", __func__);
 			if (lwsi_role_client(wsi))
 				m = lws_ws_client_rx_sm(wsi, 0);
 			else
@@ -98,7 +122,10 @@ lws_ws_handshake_client(struct lws *wsi, unsigned char **buf, size_t len)
 			continue;
 		}
 #endif
-		/* caller will account for buflist usage */
+		/*
+		 * caller will account for buflist usage by studying what
+		 * happened to *buf
+		 */
 
 		if (lws_ws_client_rx_sm(wsi, *(*buf)++)) {
 			lwsl_notice("%s: client_rx_sm exited, DROPPING %d\n",
@@ -217,8 +244,8 @@ lws_client_ws_upgrade(struct lws *wsi, const char **cce)
 	const struct lws_extension *ext;
 	char ext_name[128];
 	const char *c, *a;
-	char ignore;
 	int more = 1;
+	char ignore;
 #endif
 
 	if (wsi->client_h2_substream) {/* !!! client ws-over-h2 not there yet */
@@ -276,15 +303,17 @@ lws_client_ws_upgrade(struct lws *wsi, const char **cce)
 		e = lws_tokenize(&ts);
 		switch (e) {
 		case LWS_TOKZE_TOKEN:
-			if (!strcasecmp(ts.token, "upgrade"))
+			if (!strncasecmp(ts.token, "upgrade", ts.token_len))
 				e = LWS_TOKZE_ENDED;
 			break;
 
 		case LWS_TOKZE_DELIMITER:
 			break;
 
-		default: /* includes ENDED */
+		default: /* includes ENDED found by the tokenizer itself */
 bad_conn_format:
+			lwsl_info("%s: malfored connection '%s'\n",
+				  __func__, buf);
 			*cce = "HS: UPGRADE malformed";
 			goto bail3;
 		}
@@ -305,9 +334,17 @@ bad_conn_format:
 	if (!len) {
 		lwsl_info("%s: WSI_TOKEN_PROTOCOL is null\n", __func__);
 		/*
-		 * no protocol name to work from,
+		 * no protocol name to work from, if we don't already have one
 		 * default to first protocol
 		 */
+
+		if (wsi->protocol) {
+			p = (char *)wsi->protocol->name;
+			goto identify_protocol;
+		}
+
+		/* no choice but to use the default protocol */
+
 		n = 0;
 		wsi->protocol = &wsi->vhost->protocols[0];
 		goto check_extensions;
@@ -333,6 +370,13 @@ bad_conn_format:
 		*cce = "HS: PROTOCOL malformed";
 		goto bail2;
 	}
+
+identify_protocol:
+
+#if defined(LWS_WITH_HTTP_PROXY)
+	lws_strncpy(wsi->ws->actual_protocol, p,
+		    sizeof(wsi->ws->actual_protocol));
+#endif
 
 	/*
 	 * identify the selected protocol struct and set it
@@ -377,6 +421,7 @@ bad_conn_format:
 						wsi->protocol->name);
 			else
 				lwsl_err("No protocol on client\n");
+			*cce = "ws protocol no match";
 			goto bail2;
 		}
 	}
@@ -469,7 +514,8 @@ check_extensions:
 
 			if (ext->callback(lws_get_context(wsi), ext, wsi,
 				   LWS_EXT_CB_CLIENT_CONSTRUCT,
-				   (void *)&wsi->ws->act_ext_user[wsi->ws->count_act_ext],
+				   (void *)&wsi->ws->act_ext_user[
+				                        wsi->ws->count_act_ext],
 				   (void *)&opts, 0)) {
 				lwsl_info(" ext %s failed construction\n",
 					  ext_name);
@@ -491,8 +537,10 @@ check_extensions:
 			}
 
 			if (ext_name[0] &&
-			    lws_ext_parse_options(ext, wsi, wsi->ws->act_ext_user[
-						  wsi->ws->count_act_ext], opts, ext_name,
+			    lws_ext_parse_options(ext, wsi,
+					          wsi->ws->act_ext_user[
+						        wsi->ws->count_act_ext],
+					          opts, ext_name,
 						  (int)strlen(ext_name))) {
 				lwsl_err("%s: unable to parse user defaults '%s'",
 					 __func__, ext_name);
@@ -504,7 +552,8 @@ check_extensions:
 			 * give the extension the server options
 			 */
 			if (a && lws_ext_parse_options(ext, wsi,
-					wsi->ws->act_ext_user[wsi->ws->count_act_ext],
+					wsi->ws->act_ext_user[
+					                wsi->ws->count_act_ext],
 					opts, a, lws_ptr_diff(c, a))) {
 				lwsl_err("%s: unable to parse remote def '%s'",
 					 __func__, a);

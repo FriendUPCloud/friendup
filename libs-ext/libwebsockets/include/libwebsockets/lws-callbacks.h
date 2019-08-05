@@ -311,6 +311,20 @@ enum lws_callback_reasons {
 	 * do something different now.  Any protocol allocation related
 	 * to the http transaction processing should be destroyed. */
 
+	LWS_CALLBACK_HTTP_CONFIRM_UPGRADE			= 86,
+	/**< This is your chance to reject an HTTP upgrade action.  The
+	 * name of the protocol being upgraded to is in 'in', and the ah
+	 * is still bound to the wsi, so you can look at the headers.
+	 *
+	 * The default of returning 0 (ie, also if not handled) means the
+	 * upgrade may proceed.  Return <0 to just hang up the connection,
+	 * or >0 if you have rejected the connection by returning http headers
+	 * and response code yourself.
+	 *
+	 * There is no need for you to call transaction_completed() as the
+	 * caller will take care of it when it sees you returned >0.
+	 */
+
 	/* ---------------------------------------------------------------------
 	 * ----- Callbacks related to HTTP Client  -----
 	 */
@@ -669,6 +683,42 @@ enum lws_callback_reasons {
 	 */
 
 	/* ---------------------------------------------------------------------
+	 * ----- Callbacks related to RAW PROXY -----
+	 */
+
+	LWS_CALLBACK_RAW_PROXY_CLI_RX				= 89,
+	/**< RAW mode client (outgoing) RX */
+
+	LWS_CALLBACK_RAW_PROXY_SRV_RX				= 90,
+	/**< RAW mode server (listening) RX */
+
+	LWS_CALLBACK_RAW_PROXY_CLI_CLOSE			= 91,
+	/**< RAW mode client (outgoing) is closing */
+
+	LWS_CALLBACK_RAW_PROXY_SRV_CLOSE			= 92,
+	/**< RAW mode server (listening) is closing */
+
+	LWS_CALLBACK_RAW_PROXY_CLI_WRITEABLE			= 93,
+	/**< RAW mode client (outgoing) may be written */
+
+	LWS_CALLBACK_RAW_PROXY_SRV_WRITEABLE			= 94,
+	/**< RAW mode server (listening) may be written */
+
+	LWS_CALLBACK_RAW_PROXY_CLI_ADOPT			= 95,
+	/**< RAW mode client (onward) accepted socket was adopted
+	 *   (equivalent to 'wsi created') */
+
+	LWS_CALLBACK_RAW_PROXY_SRV_ADOPT			= 96,
+	/**< RAW mode server (listening) accepted socket was adopted
+	 *   (equivalent to 'wsi created') */
+
+	LWS_CALLBACK_RAW_PROXY_CLI_BIND_PROTOCOL		= 97,
+	LWS_CALLBACK_RAW_PROXY_SRV_BIND_PROTOCOL		= 98,
+	LWS_CALLBACK_RAW_PROXY_CLI_DROP_PROTOCOL		= 99,
+	LWS_CALLBACK_RAW_PROXY_SRV_DROP_PROTOCOL		= 100,
+
+
+	/* ---------------------------------------------------------------------
 	 * ----- Callbacks related to RAW sockets -----
 	 */
 
@@ -683,6 +733,9 @@ enum lws_callback_reasons {
 
 	LWS_CALLBACK_RAW_ADOPT					= 62,
 	/**< RAW mode connection was adopted (equivalent to 'wsi created') */
+
+	LWS_CALLBACK_RAW_CONNECTED				= 101,
+	/**< outgoing client RAW mode connection was connected */
 
 	LWS_CALLBACK_RAW_SKT_BIND_PROTOCOL			= 81,
 	LWS_CALLBACK_RAW_SKT_DROP_PROTOCOL			= 82,
