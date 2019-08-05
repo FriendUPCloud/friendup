@@ -729,6 +729,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
 						
+						console.log( 'What is this ' + path + fn + ' or ' + msg.list[b].MetaType );
 						createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
 						
 						// Don't add twice
