@@ -2431,7 +2431,7 @@ function checkMobileBrowser()
 	window.isTablet = checkTablet();
 	
 
-	if( window.isMobile && ( window.innerWidth <= 760 || window.innerHeight <= 760 ) )
+	if( window.isMobile && ( window.innerWidth <= 760 || window.innerHeight <= 500 ) )
 	{
 		window.isTablet = false;
 	}

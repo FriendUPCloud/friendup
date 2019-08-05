@@ -8446,6 +8446,7 @@ GuiDesklet = function()
 			var updateurl = '/system.library/file/dir?wr=1'
 			updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
 			updateurl += '&authid=' + encodeURIComponent( Application.authId );
+			updateurl += '&cachekiller=' + ( new Date() ).getTime();
 			
 			var wholePath = 'Home:Downloads/';
 			
