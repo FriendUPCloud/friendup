@@ -508,7 +508,12 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 		return;
 	}
 	
-	self.wsSend( msgStr );
+	const success = self.wsSend( msgStr );
+	if ( !success ) {
+		queue( msg );
+		self.reconnect();
+		return;
+	}
 	
 	function queue( msg )
 	{
@@ -526,8 +531,14 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	
 	function wsReady()
 	{
-		var ready = !!( self.ws && ( self.ws.readyState === 1 ));
-		return ready;
+		if ( !self.ws )
+			return false;
+		
+		console.log( 'wsReady', self.ws.readyState );
+		if ( 1 !== self.ws.readyState )
+			return false;
+		
+		return true;
 	}
 	
 	function checkMustChunk( str )
@@ -653,6 +664,7 @@ FriendWebSocket.prototype.chunkSend = function( str )
 FriendWebSocket.prototype.wsSend = function( str )
 {
 	var self = this;
+	console.log( 'FriendWebSocket.wsSend', self.ws.readyState );
 	try
 	{
 		self.ws.send( str );
@@ -663,7 +675,10 @@ FriendWebSocket.prototype.wsSend = function( str )
 			e   : e,
 			str : str,
 		});
+		return false;
 	}
+	
+	return true;
 }
 
 FriendWebSocket.prototype.executeSendQueue = function()
