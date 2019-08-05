@@ -75,6 +75,7 @@ FriendWebSocket.prototype.send = function( msgObj )
 
 FriendWebSocket.prototype.reconnect = function()
 {
+	console.log( 'FriendWebSocket.reconnect' );
 	var self = this;
 	self.allowReconnect = true;
 	self.doReconnect();
@@ -85,6 +86,7 @@ FriendWebSocket.prototype.reconnect = function()
 FriendWebSocket.prototype.close = function( code, reason )
 {
 	var self = this;
+	console.log( 'FriendWebSocket.close', reason );
 	self.allowReconnect = false;
 	self.url = null;
 	self.sessionId = null;
@@ -134,9 +136,13 @@ FriendWebSocket.prototype.init = function()
 FriendWebSocket.prototype.connect = function()
 {
 	var self = this;
+	console.log( 'FriendWebSocket.connect', self );
 	if ( !self.url || !self.url.length )
 	{
-		console.log( 'socket.url', self.url );
+		console.log( 'socket.url - no url found', {
+			url   : self.url,
+			pconf : self.pConf,
+		});
 		if( self.pConf )
 		{
 			console.log( 'We have a previous config. Trying the url there.', self.pConf.url );
@@ -146,7 +152,11 @@ FriendWebSocket.prototype.connect = function()
 		throw new Error( 'no url provided for socket' );
 	}
 	
-	if( self.state == 'connecting' ) { console.log('ongoing connect. we will wait for this to finish.'); return; }
+	if( self.state == 'connecting' ) {
+		console.log('ongoing connect. we will wait for this to finish.');
+		return;
+	}
+	
 	self.setState( 'connecting' );
 	try {
 		if( self.ws )
@@ -198,7 +208,8 @@ FriendWebSocket.prototype.clearHandlers = function()
 FriendWebSocket.prototype.doReconnect = function()
 {
 	var self = this;
-	if ( !reconnectAllowed() ){
+	console.log( 'FriendWebSocket.doReconnect', self );
+	if ( !reconnectAllowed() ) {
 		if ( self.onend )
 			self.onend();
 		return false;
@@ -231,9 +242,9 @@ FriendWebSocket.prototype.doReconnect = function()
 	function reconnectAllowed()
 	{
 		var checks = {
-			allow : self.allowReconnect,
+			allow        : self.allowReconnect,
 			hasTriesLeft : !tooManyTries(),
-			hasSession : !!self.sessionId,
+			hasSession   : !!self.sessionId,
 		};
 		
 		var allow = !!( true
@@ -301,6 +312,7 @@ FriendWebSocket.prototype.handleOpen = function( e )
 
 FriendWebSocket.prototype.handleClose = function( e )
 {
+	console.log( 'FriendWebSocket.handleClose' );
 	this.cleanup();
 	this.setState( 'close' );
 	this.doReconnect();
@@ -333,6 +345,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 	// Handle server notices with session timeout / death
 	if( msg.data && msg.data.type == 'server-notice' )
 	{
+		console.log( 'FriendWebSocket.handleSocketMessage - special msg thingie', msg );
 		if( msg.data.data == 'session killed' )
 		{
 			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
@@ -409,6 +422,7 @@ FriendWebSocket.prototype.handleAuth = function( data )
 
 FriendWebSocket.prototype.handleSession = function( sessionId )
 {
+	console.log( 'FriendWebSocket.handleSession', sessionId );
 	if ( this.sessionId === sessionId )
 	{
 		this.setReady();
@@ -473,15 +487,22 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	var self = this;
-	if ( !wsReady() && !socketReady( force ) )
-	{
+	if ( !socketReady( force )) {
 		queue( msg );
+		return;
+	}
+	
+	if ( !wsReady())
+	{
+		console.log( 'FriendWebSocket.sendOnSocket - ws not ready' );
+		queue( msg );
+		self.doReconnect();
 		return;
 	}
 	
 	if ( 'con' !== msg.type )
 	{
-		//console.log( 'FriendWebSocket.sendOnSocket', msg );
+		//console.log( 'FriendWebSocket.sendOnSocket - type con:', msg );
 	}
 	
 	var msgStr = friendUP.tool.stringify( msg );
@@ -491,7 +512,12 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 		return;
 	}
 	
-	self.wsSend( msgStr );
+	const success = self.wsSend( msgStr );
+	if ( !success ) {
+		queue( msg );
+		self.reconnect();
+		return;
+	}
 	
 	function queue( msg )
 	{
@@ -509,8 +535,14 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	
 	function wsReady()
 	{
-		var ready = !!( self.ws && ( self.ws.readyState === 1 ));
-		return ready;
+		if ( !self.ws )
+			return false;
+		
+		console.log( 'wsReady', self.ws.readyState );
+		if ( 1 !== self.ws.readyState )
+			return false;
+		
+		return true;
 	}
 	
 	function checkMustChunk( str )
@@ -636,6 +668,7 @@ FriendWebSocket.prototype.chunkSend = function( str )
 FriendWebSocket.prototype.wsSend = function( str )
 {
 	var self = this;
+	console.log( 'FriendWebSocket.wsSend', self.ws.readyState );
 	try
 	{
 		self.ws.send( str );
@@ -646,7 +679,10 @@ FriendWebSocket.prototype.wsSend = function( str )
 			e   : e,
 			str : str,
 		});
+		return false;
 	}
+	
+	return true;
 }
 
 FriendWebSocket.prototype.executeSendQueue = function()
@@ -795,6 +831,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 FriendWebSocket.prototype.cleanup = function()
 {
 	var self = this;
+	console.log( 'FriendWebSocket.cleanup', self );
 	this.conn = false;
 	self.stopKeepAlive();
 	self.clearHandlers();
