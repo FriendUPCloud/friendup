@@ -1075,7 +1075,7 @@ var WorkspaceInside = {
 				var wid = Workspace.widget ? Workspace.widget : m.widget;
 				if( wid )
 				{
-					wid.showing = true;
+					wid.shown = true;
 				}
 
 				if( wid && !wid.initialized )

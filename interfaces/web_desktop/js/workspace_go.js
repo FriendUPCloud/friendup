@@ -185,7 +185,7 @@ Workspace = {
 			var wd = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].widget;
 			if( wd )
 			{
-				if( wd.showing )
+				if( wd.shown )
 				{
 					wd.hideWidget();
 				}
@@ -232,16 +232,16 @@ Workspace = {
 					ex.widget.hideWidget = function()
 					{
 						ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
-						if( this.showing )
+						if( this.shown )
 						{
-							this.showing = false;
+							this.shown = false;
 							this.hide();
 							this.lower();
 							ExposeScreens();
 						}
 					}
 				}
-				if( !ex.widget.showing )
+				if( !ex.widget.shown )
 					ex.widget.showWidget();
 				return cancelBubble( e );
 			}
@@ -280,7 +280,7 @@ Workspace = {
 			this.widget.hideWidget = function()
 			{
 				ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
-				this.showing = false;
+				this.shown = false;
 				this.hide();
 				this.lower();
 				ExposeScreens();
