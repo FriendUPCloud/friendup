@@ -186,7 +186,7 @@ Workspace = {
 			var wd = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].widget;
 			if( wd )
 			{
-				if( wd.showing )
+				if( wd.shown )
 				{
 					wd.hideWidget();
 				}
@@ -223,26 +223,33 @@ Workspace = {
 					ex.widget.dom.style.transition = 'height 0.25s';
 					ex.widget.showWidget = function()
 					{
-						ge( 'DoorsScreen' ).classList.add( 'HasWidget' );
+						var self = this;
+						this.dom.style.height = '0px';
 						Workspace.refreshExtraWidgetContents();
-						this.raise();
-						this.show();
-						if( isMobile )
-							CoverScreens();
+						CoverScreens();
+						ge( 'DoorsScreen' ).classList.add( 'HasWidget' );
+						setTimeout( function()
+						{
+							self.show();
+							self.raise();
+						}, 100 );
 					}
 					ex.widget.hideWidget = function()
 					{
-						ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
-						if( this.showing )
+						var self = this;
+						ge( 'DoorsScreen' ).classList.add( 'HidingCalendar' );
+						setTimeout( function()
 						{
-							this.showing = false;
-							this.hide();
-							this.lower();
+							ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
+							ge( 'DoorsScreen' ).classList.remove( 'HidingCalendar' );
+							self.shown = false;
+							self.hide();
+							self.lower();
 							ExposeScreens();
-						}
+						}, 250 );
 					}
 				}
-				if( !ex.widget.showing )
+				if( !ex.widget.shown )
 					ex.widget.showWidget();
 				return cancelBubble( e );
 			}

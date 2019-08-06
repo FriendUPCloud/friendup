@@ -1075,7 +1075,7 @@ var WorkspaceInside = {
 				var wid = Workspace.widget ? Workspace.widget : m.widget;
 				if( wid )
 				{
-					wid.showing = true;
+					wid.shown = true;
 				}
 
 				if( wid && !wid.initialized )
@@ -1085,17 +1085,6 @@ var WorkspaceInside = {
 					var calendar = new Calendar( wid.dom );
 					wid.dom.id = 'CalendarWidget';
 				
-					// Mobile hider
-					if( window.isMobile )
-					{
-						var hider = document.createElement( 'div' );
-						hider.className = 'Hider';
-						hider.onclick = function()
-						{
-							Workspace.widget.slideUp();
-						}
-						wid.dom.appendChild( hider );
-					}
 					Workspace.calendarWidget = wid;
 
 					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
@@ -1128,7 +1117,7 @@ var WorkspaceInside = {
 						f1.load();
 
 						// Just close the widget
-						if( !window.isMobile && m && wid )
+						if( m && wid )
 							wid.hide();
 					}
 					calendar.addButton( newBtn );
