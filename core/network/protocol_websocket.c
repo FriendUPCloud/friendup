@@ -333,9 +333,6 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 					wsi->wusc_Data->wsc_InUseCounter++;
 					if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_UserSession != NULL )
 					{
-						int val;
-			
-						UserSession *us = ( UserSession *)wsi->wusc_Data->wsc_UserSession;
 						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 						if( en != NULL )
 						{
