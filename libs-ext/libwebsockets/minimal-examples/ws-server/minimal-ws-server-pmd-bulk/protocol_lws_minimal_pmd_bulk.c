@@ -1,7 +1,7 @@
 /*
  * ws protocol handler plugin for "lws-minimal-pmd-bulk"
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -161,7 +161,7 @@ callback_minimal_pmd_bulk(struct lws *wsi, enum lws_callback_reasons reason,
 		m = lws_write(wsi, start, n, flags);
 		lwsl_user("LWS_CALLBACK_SERVER_WRITEABLE: wrote %d\n", n);
 		if (m < n) {
-			lwsl_err("ERROR %d writing ws\n", n);
+			lwsl_err("ERROR %d / %d writing ws\n", m, n);
 			return -1;
 		}
 		if (pss->position_tx != MESSAGE_SIZE) /* if more to do... */

@@ -993,128 +993,128 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, UserSession
 		return FALSE;
 	}
     
-    //
-    // Go through logged users
-    //
+	//
+	// Go through logged users
+	//
     
-    //DEBUG("CHECK11\n");
-    FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
-	User *usr = sb->sl_UM->um_Users;
-	while( usr != NULL )
+	//DEBUG("CHECK11\n");
+	if( FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) ) == 0 )
 	{
-		// if notification should be addressed to user
-		//DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
-		if( usr->u_ID == notification->dn_OwnerID )
+		User *usr = sb->sl_UM->um_Users;
+		while( usr != NULL )
 		{
-			char *uname = usr->u_Name;
-			int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
-			
-			//DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
-			
-			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-			
-			if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+			// if notification should be addressed to user
+			//DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
+			if( usr->u_ID == notification->dn_OwnerID )
 			{
-				// go through all User Sessions and send message
-				UserSessListEntry *le = usr->u_SessionsList;
-				while( le != NULL )
-				{
-					UserSession *uses = (UserSession *)le->us;
-					
-					// do not send message to sender
-					FBOOL sendNotif = TRUE;
-					if( uses == NULL )
-					{
-						sendNotif = FALSE;
-					}
+				char *uname = usr->u_Name;
+				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
-					if( sendNotif == TRUE )
+				//DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
+			
+				FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			
+				if( FRIEND_MUTEX_LOCK( &(usr->u_Mutex) ) == 0 )
+				{
+					// go through all User Sessions and send message
+					UserSessListEntry *le = usr->u_SessionsList;
+					while( le != NULL )
 					{
-						DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
+						UserSession *uses = (UserSession *)le->us;
+					
+						// do not send message to sender
+						FBOOL sendNotif = TRUE;
+						if( uses == NULL )
+						{
+							sendNotif = FALSE;
+						}
+			
+						if( sendNotif == TRUE )
+						{
+							DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
 						
-						FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-						WebSocketSendMessage( sb, uses, tmpmsg, len );
-						FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
+							FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+							WebSocketSendMessage( sb, uses, tmpmsg, len );
+							FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 
-						// send message to all remote users
-						RemoteUser *ruser = usr->u_RemoteUsers;
-						while( ruser != NULL )
-						{
-							//DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
-							RemoteDrive *rdrive = ruser->ru_RemoteDrives;
-				
-							while( rdrive != NULL )
+							// send message to all remote users
+							RemoteUser *ruser = usr->u_RemoteUsers;
+							while( ruser != NULL )
 							{
+								//DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
+								RemoteDrive *rdrive = ruser->ru_RemoteDrives;
+				
+								while( rdrive != NULL )
+								{
 								//DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
 					
-								if( rdrive->rd_DriveID == device->f_ID )
-								{
-									char devid[ 128 ];
-						
-									int fnamei;
-									int fpathi;
-									int funamei;
-									int fdriveid;
-						
-									char *fname =  createParameter( "devname", rdrive->rd_RemoteName, &fnamei );
-									char *fpath =  createParameter( "path", path, &fpathi );
-									char *funame =  createParameter( "usrname", ruser->ru_Name, &funamei );
-									char *fdeviceid = createParameterFULONG( "deviceid", rdrive->rd_RemoteID, &fdriveid );
-						
-									MsgItem tags[] = {
-										{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-										{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
-										{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
-										{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
-										{ ID_FNOT, (FULONG)0 , MSG_INTEGER_VALUE },
-										{ ID_PARM, (FULONG)0, MSG_GROUP_START },
-										{ ID_PRMT, (FULONG) fnamei, (FULONG)fname },
-										{ ID_PRMT, (FULONG) fpathi, (FULONG)fpath },
-										{ ID_PRMT, (FULONG) funamei, (FULONG)funame },
-										{ ID_PRMT, (FULONG) fdriveid, (FULONG)fdeviceid },
-										{ MSG_GROUP_END, 0,  0 },
-										{ TAG_DONE, TAG_DONE, TAG_DONE }
-									};
-						
-									DataForm *df = DataFormNew( tags );
-									if( df != NULL )
+									if( rdrive->rd_DriveID == device->f_ID )
 									{
-										//DEBUG("[USMSendDoorNotification] Register device, send notification\n");
-							
-										BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
-										if( result != NULL )
-										{
-											//DEBUG("[USMSendDoorNotification] Received response\n");
-											BufStringDelete( result );
-										}
-										DataFormDelete( df );
-									}
+										int fnamei;
+										int fpathi;
+										int funamei;
+										int fdriveid;
 						
-									FFree( fdeviceid );
-									FFree( fname );
-									FFree( fpath );
-									FFree( funame );
-									break;
-								} // if driveID = deviceID
-								rdrive = (RemoteDrive *)rdrive->node.mln_Succ;
-							} // while remote drives
-							ruser = (RemoteUser *)ruser->node.mln_Succ;
-						} // while remote users
-					} // sendNotif == TRUE
+										char *fname =  createParameter( "devname", rdrive->rd_RemoteName, &fnamei );
+										char *fpath =  createParameter( "path", path, &fpathi );
+										char *funame =  createParameter( "usrname", ruser->ru_Name, &funamei );
+										char *fdeviceid = createParameterFULONG( "deviceid", rdrive->rd_RemoteID, &fdriveid );
+						
+										MsgItem tags[] = {
+											{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+											{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
+											{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+											{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+											{ ID_FNOT, (FULONG)0 , MSG_INTEGER_VALUE },
+											{ ID_PARM, (FULONG)0, MSG_GROUP_START },
+											{ ID_PRMT, (FULONG) fnamei, (FULONG)fname },
+											{ ID_PRMT, (FULONG) fpathi, (FULONG)fpath },
+											{ ID_PRMT, (FULONG) funamei, (FULONG)funame },
+											{ ID_PRMT, (FULONG) fdriveid, (FULONG)fdeviceid },
+											{ MSG_GROUP_END, 0,  0 },
+											{ TAG_DONE, TAG_DONE, TAG_DONE }
+										};
+						
+										DataForm *df = DataFormNew( tags );
+										if( df != NULL )
+										{
+											//DEBUG("[USMSendDoorNotification] Register device, send notification\n");
+							
+											BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
+											if( result != NULL )
+											{
+												//DEBUG("[USMSendDoorNotification] Received response\n");
+												BufStringDelete( result );
+											}
+											DataFormDelete( df );
+										}
+						
+										FFree( fdeviceid );
+										FFree( fname );
+										FFree( fpath );
+										FFree( funame );
+										break;
+									} // if driveID = deviceID
+									rdrive = (RemoteDrive *)rdrive->node.mln_Succ;
+								} // while remote drives
+								ruser = (RemoteUser *)ruser->node.mln_Succ;
+							} // while remote users
+						} // sendNotif == TRUE
 				
-					le = (UserSessListEntry *)le->node.mln_Succ;
-				} // while loop, session
-				//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
-				FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
-			} // mutex lock
+						le = (UserSessListEntry *)le->node.mln_Succ;
+					} // while loop, session
+					//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
+				} // mutex lock
 			
-			DEBUG("CHECK12\n");
-			FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+				DEBUG("CHECK12\n");
+				FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+			}
+			usr = (User *)usr->node.mln_Succ;
 		}
-		usr = (User *)usr->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	}
-	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	
 	FFree( tmpmsg );
 	return TRUE;

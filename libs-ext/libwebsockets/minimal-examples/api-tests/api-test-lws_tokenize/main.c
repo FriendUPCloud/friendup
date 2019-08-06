@@ -1,7 +1,7 @@
 /*
  * lws-api-test-lws_tokenize
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -15,6 +15,7 @@
 
 #include <libwebsockets.h>
 #include <string.h>
+#include <stdio.h>
 
 struct expected {
 	lws_tokenize_elem e;
@@ -135,6 +136,39 @@ struct expected expected1[] = {
 		{ LWS_TOKZE_TOKEN, "퟿", 3 },
 		{ LWS_TOKZE_DELIMITER, ",", 1 },
 		{ LWS_TOKZE_ERR_BROKEN_UTF8, "", 0 },
+	},
+	expected11[] = {
+		{ LWS_TOKZE_TOKEN, "1.myserver", 10 },
+		{ LWS_TOKZE_DELIMITER, ".", 1 },
+		{ LWS_TOKZE_TOKEN, "com", 3 },
+		{ LWS_TOKZE_ENDED, "", 0 },
+	},
+	expected12[] = {
+		{ LWS_TOKZE_TOKEN, "1.myserver.com", 14 },
+		{ LWS_TOKZE_ENDED, "", 0 },
+	},
+	expected13[] = {
+		{ LWS_TOKZE_TOKEN, "1.myserver.com", 14 },
+		{ LWS_TOKZE_ENDED, "", 0 },
+	},
+	expected14[] = {
+		{ LWS_TOKZE_INTEGER, "1", 1 },
+		{ LWS_TOKZE_DELIMITER, ".", 1 },
+		{ LWS_TOKZE_TOKEN, "myserver", 8 },
+		{ LWS_TOKZE_DELIMITER, ".", 1 },
+		{ LWS_TOKZE_TOKEN, "com", 3 },
+		{ LWS_TOKZE_ENDED, "", 0 },
+	},
+	expected15[] = {
+		{ LWS_TOKZE_TOKEN, "close", 5 },
+		{ LWS_TOKZE_DELIMITER, ",", 1 },
+		{ LWS_TOKZE_TOKEN, "Upgrade", 7 },
+		{ LWS_TOKZE_ENDED, "", 0 },
+	},
+	expected16[] = {
+		{ LWS_TOKZE_TOKEN_NAME_EQUALS, "a", 1 },
+		{ LWS_TOKZE_TOKEN, "5", 1 },
+		{ LWS_TOKZE_ENDED, "", 0 },
 	}
 
 ;
@@ -183,6 +217,35 @@ struct tests tests[] = {
 		"badutf8-2 \xed\x9f\xbf,\x80...",
 		expected10, LWS_ARRAY_SIZE(expected10),
 		LWS_TOKENIZE_F_MINUS_NONTERM | LWS_TOKENIZE_F_RFC7230_DELIMS
+	},
+	{
+		"1.myserver.com",
+		expected11, LWS_ARRAY_SIZE(expected11),
+		0
+	},
+	{
+		"1.myserver.com",
+		expected12, LWS_ARRAY_SIZE(expected12),
+		LWS_TOKENIZE_F_DOT_NONTERM
+	},
+	{
+		"1.myserver.com",
+		expected13, LWS_ARRAY_SIZE(expected13),
+		LWS_TOKENIZE_F_DOT_NONTERM | LWS_TOKENIZE_F_NO_FLOATS
+	},
+	{
+		"1.myserver.com",
+		expected14, LWS_ARRAY_SIZE(expected14),
+		LWS_TOKENIZE_F_NO_FLOATS
+	},
+	{
+		"close,  Upgrade",
+		expected15, LWS_ARRAY_SIZE(expected15),
+		LWS_TOKENIZE_F_COMMA_SEP_LIST
+	},
+	{
+		"a=5", expected16, LWS_ARRAY_SIZE(expected16),
+		LWS_TOKENIZE_F_NO_INTEGERS
 	},
 };
 
@@ -265,7 +328,8 @@ int main(int argc, const char **argv)
 			if (e > 0 &&
 			    (ts.token_len != exp->len ||
 			     memcmp(exp->value, ts.token, exp->len))) {
-				lwsl_notice("fail token mismatch\n");
+				lwsl_notice("fail token mismatch %d %d %.*s\n",
+						ts.token_len, exp->len, ts.token_len, ts.token);
 				fail++;
 				break;
 			}
@@ -309,7 +373,16 @@ int main(int argc, const char **argv)
 					printf(" | ");
 				printf("LWS_TOKENIZE_F_RFC7230_DELIMS");
 			}
-
+			if (flags & LWS_TOKENIZE_F_DOT_NONTERM) {
+				if (flags & 15)
+					printf(" | ");
+				printf("LWS_TOKENIZE_F_DOT_NONTERM");
+			}
+			if (flags & LWS_TOKENIZE_F_NO_FLOATS) {
+				if (flags & 31)
+					printf(" | ");
+				printf("LWS_TOKENIZE_F_NO_FLOATS");
+			}
 			printf("\n\t},\n");
 		}
 

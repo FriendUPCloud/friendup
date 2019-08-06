@@ -1,7 +1,7 @@
 /*
  * lws-api-test-lwsac
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -39,6 +39,8 @@ int main(int argc, const char **argv)
 
 	for (n = 0; n < 1000; n++) {
 		m = lwsac_use(&lwsac, sizeof(*m), 0);
+		if (!m)
+			return -1;
 		m->payload = n;
 
 		lws_list_ptr_insert(&list_head, &m->list_next, NULL);

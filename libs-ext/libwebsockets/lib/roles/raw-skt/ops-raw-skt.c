@@ -45,6 +45,22 @@ rops_handle_POLLIN_raw_skt(struct lws_context_per_thread *pt, struct lws *wsi,
 		return LWS_HPI_RET_HANDLED;
 	}
 
+
+#if !defined(LWS_NO_SERVER)
+	if (!lwsi_role_client(wsi) &&  lwsi_state(wsi) != LRS_ESTABLISHED) {
+
+		lwsl_debug("%s: %p: wsistate 0x%x\n", __func__, wsi,
+			   wsi->wsistate);
+
+		if (lwsi_state(wsi) != LRS_SSL_INIT)
+			if (lws_server_socket_service_ssl(wsi,
+							  LWS_SOCK_INVALID))
+				return LWS_HPI_RET_PLEASE_CLOSE_ME;
+
+		return LWS_HPI_RET_HANDLED;
+	}
+#endif
+
 	if ((pollfd->revents & pollfd->events & LWS_POLLIN) &&
 	    /* any tunnel has to have been established... */
 	    lwsi_state(wsi) != LRS_SSL_ACK_PENDING &&
@@ -56,7 +72,8 @@ rops_handle_POLLIN_raw_skt(struct lws_context_per_thread *pt, struct lws *wsi,
 		case 0:
 			lwsl_info("%s: read 0 len\n", __func__);
 			wsi->seen_zero_length_recv = 1;
-			lws_change_pollfd(wsi, LWS_POLLIN, 0);
+			if (lws_change_pollfd(wsi, LWS_POLLIN, 0))
+				goto fail;
 
 			/*
 			 * we need to go to fail here, since it's the only
@@ -91,10 +108,13 @@ rops_handle_POLLIN_raw_skt(struct lws_context_per_thread *pt, struct lws *wsi,
 
 try_pollout:
 
-	/* this handles POLLOUT for http serving fragments */
-
 	if (!(pollfd->revents & LWS_POLLOUT))
 		return LWS_HPI_RET_HANDLED;
+
+#if !defined(LWS_WITHOUT_CLIENT)
+	if (lwsi_state(wsi) == LRS_WAITING_CONNECT)
+		lws_client_connect_3(wsi, NULL, 0);
+#endif
 
 	/* one shot */
 	if (lws_change_pollfd(wsi, LWS_POLLOUT, 0)) {
@@ -144,7 +164,7 @@ rops_adoption_bind_raw_skt(struct lws *wsi, int type, const char *vh_prot_name)
 	    (type & _LWS_ADOPT_FINISH))
 		return 0; /* no match */
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
 	if (type & LWS_ADOPT_FLAG_UDP)
 		/*
 		 * these can be >128 bytes, so just alloc for UDP
@@ -223,8 +243,14 @@ struct lws_role_ops role_ops_raw_skt = {
 #else
 					NULL,
 #endif
-	/* writeable cb clnt, srv */	{ LWS_CALLBACK_RAW_WRITEABLE, 0 },
-	/* close cb clnt, srv */	{ LWS_CALLBACK_RAW_CLOSE, 0 },
+	/* adoption_cb clnt, srv */	{ LWS_CALLBACK_RAW_CONNECTED,
+					  LWS_CALLBACK_RAW_ADOPT },
+	/* rx_cb clnt, srv */		{ LWS_CALLBACK_RAW_RX,
+					  LWS_CALLBACK_RAW_RX },
+	/* writeable cb clnt, srv */	{ LWS_CALLBACK_RAW_WRITEABLE,
+					  LWS_CALLBACK_RAW_WRITEABLE},
+	/* close cb clnt, srv */	{ LWS_CALLBACK_RAW_CLOSE,
+					  LWS_CALLBACK_RAW_CLOSE },
 	/* protocol_bind cb c, srv */	{ LWS_CALLBACK_RAW_SKT_BIND_PROTOCOL,
 					  LWS_CALLBACK_RAW_SKT_BIND_PROTOCOL },
 	/* protocol_unbind cb c, srv */	{ LWS_CALLBACK_RAW_SKT_DROP_PROTOCOL,

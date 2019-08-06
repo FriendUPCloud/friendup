@@ -54,26 +54,31 @@ lws_ext_parse_options(const struct lws_extension *ext, struct lws *wsi,
 			n = 0;
 			pending_close_quote = 0;
 			while (m) {
-				if (m & 1) {
-					lwsl_ext("    m=%d, n=%d, w=%d\n", m, n, w);
+				if (!(m & 1)) {
+					m >>= 1;
+					n++;
+					continue;
+				}
+				lwsl_ext("    m=%d, n=%d, w=%d\n", m, n, w);
 
-					if (*in == opts[n].name[w]) {
-						if (!opts[n].name[w + 1]) {
-							oa.option_index = n;
-							lwsl_ext("hit %d\n", oa.option_index);
-							leap = LEAPS_SEEK_VAL;
-							if (len == 1)
-								goto set_arg;
-							break;
-						}
-					} else {
-						match_map &= ~(1 << n);
-						if (!match_map) {
-							lwsl_ext("empty match map\n");
-							return -1;
-						}
+				if (*in == opts[n].name[w]) {
+					if (!opts[n].name[w + 1]) {
+						oa.option_index = n;
+						lwsl_ext("hit %d\n",
+							 oa.option_index);
+						leap = LEAPS_SEEK_VAL;
+						if (len == 1)
+							goto set_arg;
+						break;
+					}
+				} else {
+					match_map &= ~(1 << n);
+					if (!match_map) {
+						lwsl_ext("empty match map\n");
+						return -1;
 					}
 				}
+
 				m >>= 1;
 				n++;
 			}
@@ -167,9 +172,9 @@ int lws_ext_cb_active(struct lws *wsi, int reason, void *arg, int len)
 		return 0;
 
 	for (n = 0; n < wsi->ws->count_act_ext; n++) {
-		m = wsi->ws->active_extensions[n]->callback(lws_get_context(wsi),
-			wsi->ws->active_extensions[n], wsi, reason,
-			wsi->ws->act_ext_user[n], arg, len);
+		m = wsi->ws->active_extensions[n]->callback(
+			lws_get_context(wsi), wsi->ws->active_extensions[n],
+			wsi, reason, wsi->ws->act_ext_user[n], arg, len);
 		if (m < 0) {
 			lwsl_ext("Ext '%s' failed to handle callback %d!\n",
 				 wsi->ws->active_extensions[n]->name, reason);
@@ -220,7 +225,7 @@ lws_issue_raw_ext_access(struct lws *wsi, unsigned char *buf, size_t len)
 	struct lws_tokens ebuf;
 	int ret, m, n = 0;
 
-	ebuf.token = (char *)buf;
+	ebuf.token = buf;
 	ebuf.len = (int)len;
 
 	/*
@@ -236,14 +241,14 @@ lws_issue_raw_ext_access(struct lws *wsi, unsigned char *buf, size_t len)
 		ret = 0;
 
 		/* show every extension the new incoming data */
-		m = lws_ext_cb_active(wsi,
-			       LWS_EXT_CB_PACKET_TX_PRESEND, &ebuf, 0);
+		m = lws_ext_cb_active(wsi, LWS_EXT_CB_PACKET_TX_PRESEND,
+				      &ebuf, 0);
 		if (m < 0)
 			return -1;
 		if (m) /* handled */
 			ret = 1;
 
-		if ((char *)buf != ebuf.token)
+		if (buf != ebuf.token)
 			/*
 			 * extension recreated it:
 			 * need to buffer this if not all sent
@@ -253,8 +258,7 @@ lws_issue_raw_ext_access(struct lws *wsi, unsigned char *buf, size_t len)
 		/* assuming they left us something to send, send it */
 
 		if (ebuf.len) {
-			n = lws_issue_raw(wsi, (unsigned char *)ebuf.token,
-							    ebuf.len);
+			n = lws_issue_raw(wsi, ebuf.token, ebuf.len);
 			if (n < 0) {
 				lwsl_info("closing from ext access\n");
 				return -1;
@@ -348,7 +352,8 @@ lws_set_extension_option(struct lws *wsi, const char *ext_name,
 	oa.start = opt_val;
 	oa.len = 0;
 
-	return wsi->ws->active_extensions[idx]->callback(
-			wsi->context, wsi->ws->active_extensions[idx], wsi,
-			LWS_EXT_CB_NAMED_OPTION_SET, wsi->ws->act_ext_user[idx], &oa, 0);
+	return wsi->ws->active_extensions[idx]->callback(wsi->context,
+			wsi->ws->active_extensions[idx], wsi,
+			LWS_EXT_CB_NAMED_OPTION_SET, wsi->ws->act_ext_user[idx],
+			&oa, 0);
 }

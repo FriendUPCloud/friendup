@@ -1,7 +1,7 @@
 /*
  * libwebsockets - client-related ssl code independent of backend
  *
- * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -89,14 +89,20 @@ lws_ssl_client_connect2(struct lws *wsi, char *errbuf, int len)
 int lws_context_init_client_ssl(const struct lws_context_creation_info *info,
 				struct lws_vhost *vhost)
 {
-	const char *ca_filepath = info->ssl_ca_filepath;
-	const char *cipher_list = info->ssl_cipher_list;
 	const char *private_key_filepath = info->ssl_private_key_filepath;
 	const char *cert_filepath = info->ssl_cert_filepath;
+	const char *ca_filepath = info->ssl_ca_filepath;
+	const char *cipher_list = info->ssl_cipher_list;
 	struct lws wsi;
 
-	if (vhost->options & LWS_SERVER_OPTION_ONLY_RAW)
+	if (vhost->options & LWS_SERVER_OPTION_ADOPT_APPLY_LISTEN_ACCEPT_CONFIG)
 		return 0;
+
+	if (vhost->tls.ssl_ctx) {
+		cert_filepath = NULL;
+		private_key_filepath = NULL;
+		ca_filepath = NULL;
+	}
 
 	/*
 	 *  for backwards-compatibility default to using ssl_... members, but
@@ -128,7 +134,12 @@ int lws_context_init_client_ssl(const struct lws_context_creation_info *info,
 	}
 
 	if (lws_tls_client_create_vhost_context(vhost, info, cipher_list,
-						ca_filepath, info->client_ssl_ca_mem, info->client_ssl_ca_mem_len, cert_filepath,
+						ca_filepath,
+						info->client_ssl_ca_mem,
+						info->client_ssl_ca_mem_len,
+						cert_filepath,
+						info->client_ssl_cert_mem,
+						info->client_ssl_cert_mem_len,
 						private_key_filepath))
 		return 1;
 
@@ -144,7 +155,7 @@ int lws_context_init_client_ssl(const struct lws_context_creation_info *info,
 
 	vhost->protocols[0].callback(&wsi,
 			LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS,
-				       vhost->tls.ssl_client_ctx, NULL, 0);
+				     vhost->tls.ssl_client_ctx, NULL, 0);
 
 	return 0;
 }

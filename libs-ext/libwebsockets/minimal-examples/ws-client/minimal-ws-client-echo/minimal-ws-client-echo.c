@@ -1,7 +1,7 @@
 /*
  * lws-minimal-ws-client-echo
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -24,12 +24,19 @@ static struct lws_protocols protocols[] = {
 
 static struct lws_context *context;
 static int interrupted, port = 7681, options = 0;
-static const char *url = "/", *ads = "localhost";
+static const char *url = "/", *ads = "localhost", *iface = NULL;
 
 /* pass pointers to shared vars to the protocol */
 
-static const struct lws_protocol_vhost_options pvo_ads = {
+static const struct lws_protocol_vhost_options pvo_iface = {
 	NULL,
+	NULL,
+	"iface",		/* pvo name */
+	(void *)&iface	/* pvo value */
+};
+
+static const struct lws_protocol_vhost_options pvo_ads = {
+	&pvo_iface,
 	NULL,
 	"ads",		/* pvo name */
 	(void *)&ads	/* pvo value */
@@ -89,7 +96,7 @@ int main(int argc, const char **argv)
 {
 	struct lws_context_creation_info info;
 	const char *p;
-	int logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE
+	int n, logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE
 			/* for LLL_ verbosity above NOTICE to be built into lws,
 			 * lws must have been configured and built with
 			 * -DCMAKE_BUILD_TYPE=DEBUG instead of =RELEASE */
@@ -113,8 +120,14 @@ int main(int argc, const char **argv)
 	if (lws_cmdline_option(argc, argv, "-o"))
 		options |= 1;
 
+	if (lws_cmdline_option(argc, argv, "--ssl"))
+		options |= 2;
+
 	if ((p = lws_cmdline_option(argc, argv, "-s")))
 		ads = p;
+
+	if ((p = lws_cmdline_option(argc, argv, "-i")))
+		iface = p;
 
 	lwsl_user("options %d, ads %s\n", options, ads);
 
@@ -127,6 +140,14 @@ int main(int argc, const char **argv)
 	info.pt_serv_buf_size = 32 * 1024;
 	info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT |
 		       LWS_SERVER_OPTION_VALIDATE_UTF8;
+	/*
+	 * since we know this lws context is only ever going to be used with
+	 * one client wsis / fds / sockets at a time, let lws know it doesn't
+	 * have to use the default allocations for fd tables up to ulimit -n.
+	 * It will just allocate for 1 internal and 1 (+ 1 http2 nwsi) that we
+	 * will use.
+	 */
+	info.fd_limit_per_thread = 1 + 1 + 1;
 
 	if (lws_cmdline_option(argc, argv, "--libuv"))
 		info.options |= LWS_SERVER_OPTION_LIBUV;
@@ -144,7 +165,8 @@ int main(int argc, const char **argv)
 
 	lws_context_destroy(context);
 
-	lwsl_user("Completed %s\n", interrupted == 2 ? "OK" : "failed");
+	n = (options & 1) ? interrupted != 2 : interrupted == 3;
+	lwsl_user("Completed %d %s\n", interrupted, !n ? "OK" : "failed");
 
-	return interrupted != 2;
+	return n;
 }

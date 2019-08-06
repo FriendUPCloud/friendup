@@ -179,7 +179,7 @@ read:
 	// lws_buflist_describe(&wsi->buflist, wsi);
 
 	ebuf.len = (int)lws_buflist_next_segment_len(&wsi->buflist,
-						(uint8_t **)&ebuf.token);
+						&ebuf.token);
 	if (ebuf.len) {
 		lwsl_info("draining buflist (len %d)\n", ebuf.len);
 		buffered = 1;
@@ -194,9 +194,9 @@ read:
 	      (lwsi_state(wsi) != LRS_ESTABLISHED &&
 	       lwsi_state(wsi) != LRS_H2_WAITING_TO_SEND_HEADERS))) {
 
-		ebuf.token = (char *)pt->serv_buf;
+		ebuf.token = pt->serv_buf;
 		ebuf.len = lws_ssl_capable_read(wsi,
-					(unsigned char *)ebuf.token,
+					ebuf.token,
 					wsi->context->pt_serv_buf_size);
 		switch (ebuf.len) {
 		case 0:
@@ -235,7 +235,8 @@ drain:
 		 * and turn off our POLLIN
 		 */
 		wsi->client_rx_avail = 1;
-		lws_change_pollfd(wsi, LWS_POLLIN, 0);
+		if (lws_change_pollfd(wsi, LWS_POLLIN, 0))
+			return LWS_HPI_RET_PLEASE_CLOSE_ME;
 
 		/* let user code know, he'll usually ask for writeable
 		 * callback and drain / re-enable it there
@@ -256,12 +257,11 @@ drain:
 
 	if (ebuf.len) {
 		n = 0;
-		if (lwsi_role_h2(wsi) && lwsi_state(wsi) != LRS_BODY)
-			n = lws_read_h2(wsi, (unsigned char *)ebuf.token,
-				        ebuf.len);
+		if (lwsi_role_h2(wsi) && lwsi_state(wsi) != LRS_BODY &&
+		    lwsi_state(wsi) != LRS_DISCARD_BODY)
+			n = lws_read_h2(wsi, ebuf.token, ebuf.len);
 		else
-			n = lws_read_h1(wsi, (unsigned char *)ebuf.token,
-				        ebuf.len);
+			n = lws_read_h1(wsi, ebuf.token, ebuf.len);
 
 		if (n < 0) {
 			/* we closed wsi */
@@ -269,39 +269,51 @@ drain:
 			return LWS_HPI_RET_WSI_ALREADY_DIED;
 		}
 
-		if (buffered) {
+		if (n && buffered) {
 			m = lws_buflist_use_segment(&wsi->buflist, n);
 			lwsl_info("%s: draining rxflow: used %d, next %d\n",
 				    __func__, n, m);
 			if (!m) {
 				lwsl_notice("%s: removed %p from dll_buflist\n",
 					    __func__, wsi);
-				lws_dll_lws_remove(&wsi->dll_buflist);
+				lws_dll2_remove(&wsi->dll_buflist);
 			}
 		} else
-			if (n != ebuf.len) {
+			if (n && n != ebuf.len) {
 				m = lws_buflist_append_segment(&wsi->buflist,
-						(uint8_t *)ebuf.token + n,
+						ebuf.token + n,
 						ebuf.len - n);
 				if (m < 0)
 					return LWS_HPI_RET_PLEASE_CLOSE_ME;
 				if (m) {
 					lwsl_debug("%s: added %p to rxflow list\n",
 							__func__, wsi);
-					lws_dll_lws_add_front(&wsi->dll_buflist,
-							&pt->dll_head_buflist);
+					lws_dll2_add_head(&wsi->dll_buflist,
+							 &pt->dll_buflist_owner);
 				}
 			}
 	}
 
 	// lws_buflist_describe(&wsi->buflist, wsi);
 
+#if 0
+
+	/*
+	 * This seems to be too aggressive... we don't want the ah stuck
+	 * there but eg, WINDOW_UPDATE may come and detach it if we leave
+	 * it like that... it will get detached at stream close
+	 */
+
 	if (wsi->http.ah
 #if !defined(LWS_NO_CLIENT)
 			&& !wsi->client_h2_alpn
 #endif
-			)
+			) {
+		lwsl_err("xxx\n");
+
 		lws_header_table_detach(wsi, 0);
+	}
+#endif
 
 	pending = lws_ssl_pending(wsi);
 	if (pending) {
@@ -491,11 +503,11 @@ rops_check_upgrades_h2(struct lws *wsi)
 	wsi->vhost->conn_stats.ws_upg++;
 	lwsl_info("Upgrade h2 to ws\n");
 	wsi->h2_stream_carries_ws = 1;
-	nwsi->ws_over_h2_count++;
+	nwsi->immortal_substream_count++;
 	if (lws_process_ws_upgrade(wsi))
 		return LWS_UPG_RET_BAIL;
 
-	if (nwsi->ws_over_h2_count == 1)
+	if (nwsi->immortal_substream_count == 1)
 		lws_set_timeout(nwsi, NO_PENDING_TIMEOUT, 0);
 
 	lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
@@ -585,8 +597,9 @@ rops_close_kill_connection_h2(struct lws *wsi, enum lws_close_status reason)
 
 		wsi->http.proxy_clientside = 0;
 
-		if (user_callback_handle_rxflow(wsi_eff->protocol->callback, wsi_eff,
-						LWS_CALLBACK_COMPLETED_CLIENT_HTTP,
+		if (user_callback_handle_rxflow(wsi_eff->protocol->callback,
+						wsi_eff,
+					    LWS_CALLBACK_COMPLETED_CLIENT_HTTP,
 						wsi_eff->user_space, NULL, 0))
 			wsi->http.proxy_clientside = 0;
 	}
@@ -605,7 +618,11 @@ rops_close_kill_connection_h2(struct lws *wsi, enum lws_close_status reason)
 		} lws_end_foreach_llp(w, h2.sibling_list);
 	}
 
-	if (wsi->upgraded_to_http2 || wsi->http2_substream || wsi->client_h2_substream) {
+	if (wsi->upgraded_to_http2 || wsi->http2_substream
+#if !defined(LWS_NO_CLIENT)
+			|| wsi->client_h2_substream
+#endif
+	) {
 		lwsl_info("closing %p: parent %p\n", wsi, wsi->h2.parent_wsi);
 
 		if (wsi->h2.child_list && lwsl_visible(LLL_INFO)) {
@@ -645,7 +662,11 @@ rops_close_kill_connection_h2(struct lws *wsi, enum lws_close_status reason)
 		wsi->h2.h2n->pps = NULL;
 	}
 
-	if ((wsi->client_h2_substream || wsi->http2_substream) &&
+	if ((
+#if !defined(LWS_NO_CLIENT)
+			wsi->client_h2_substream ||
+#endif
+			wsi->http2_substream) &&
 	     wsi->h2.parent_wsi) {
 		lwsl_info("  %p: disentangling from siblings\n", wsi);
 		lws_start_foreach_llp(struct lws **, w,
@@ -666,12 +687,12 @@ rops_close_kill_connection_h2(struct lws *wsi, enum lws_close_status reason)
 			lws_free_set_NULL(wsi->h2.pending_status_body);
 	}
 
-	if (wsi->h2_stream_carries_ws) {
+	if (wsi->h2_stream_carries_ws || wsi->h2_stream_carries_sse) {
 		struct lws *nwsi = lws_get_network_wsi(wsi);
 
-		nwsi->ws_over_h2_count++;
+		nwsi->immortal_substream_count--;
 		/* if no ws, then put a timeout on the parent wsi */
-		if (!nwsi->ws_over_h2_count)
+		if (!nwsi->immortal_substream_count)
 			__lws_set_timeout(nwsi,
 				PENDING_TIMEOUT_HTTP_KEEPALIVE_IDLE, 31);
 	}
@@ -731,10 +752,10 @@ rops_callback_on_writable_h2(struct lws *wsi)
 
 	/* for network action, act only on the network wsi */
 
-	wsi = network_wsi;
-	if (already && !wsi->client_h2_alpn
+	if (already
 #if !defined(LWS_NO_CLIENT)
-			&& !wsi->client_h2_substream
+			&& !network_wsi->client_h2_alpn
+			&& !network_wsi->client_h2_substream
 #endif
 			)
 		return 1;
@@ -969,6 +990,9 @@ rops_perform_user_POLLOUT_h2(struct lws *wsi)
 
 			lwsl_info("  h2 action start...\n");
 			n = lws_http_action(w);
+			if (n < 0)
+				lwsl_info ("   h2 action result %d\n", n);
+			else
 			lwsl_info("  h2 action result %d "
 				  "(wsi->http.rx_content_remain %lld)\n",
 				  n, w->http.rx_content_remain);
@@ -979,13 +1003,16 @@ rops_perform_user_POLLOUT_h2(struct lws *wsi)
 			 * states.  In those cases we will hear about
 			 * END_STREAM going out in the POLLOUT handler.
 			 */
-			if (!w->h2.pending_status_body &&
+			if (n >= 0 && !w->h2.pending_status_body &&
 			    (n || w->h2.send_END_STREAM)) {
 				lwsl_info("closing stream after h2 action\n");
 				lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS,
 						   "h2 end stream");
 				wa = &wsi->h2.child_list;
 			}
+
+			if (n < 0)
+				wa = &wsi->h2.child_list;
 
 			goto next_child;
 		}
@@ -1029,7 +1056,8 @@ rops_perform_user_POLLOUT_h2(struct lws *wsi)
 
 		/* Notify peer that we decided to close */
 
-		if (lwsi_role_ws(w) && lwsi_state(w) == LRS_WAITING_TO_SEND_CLOSE) {
+		if (lwsi_role_ws(w) &&
+		    lwsi_state(w) == LRS_WAITING_TO_SEND_CLOSE) {
 			lwsl_debug("sending close packet\n");
 			w->waiting_to_send_close_frame = 0;
 			n = lws_write(w, &w->ws->ping_payload_buf[LWS_PRE],
@@ -1066,7 +1094,7 @@ rops_perform_user_POLLOUT_h2(struct lws *wsi)
 			w->ws->ping_pending_flag = 0;
 			if (w->ws->payload_is_close) {
 				/* oh... a close frame... then we are done */
-				lwsl_debug("Acknowledged peer's close packet\n");
+				lwsl_debug("Ack'd peer's close packet\n");
 				w->ws->payload_is_close = 0;
 				lwsi_set_state(w, LRS_RETURNED_CLOSE);
 				lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS,
@@ -1078,7 +1106,7 @@ rops_perform_user_POLLOUT_h2(struct lws *wsi)
 			lws_callback_on_writable(w);
 			(w)->h2.requested_POLLOUT = 1;
 
-			/* otherwise for PING, leave POLLOUT active either way */
+			/* otherwise for PING, leave POLLOUT active both ways */
 			goto next_child;
 		}
 #endif
@@ -1101,7 +1129,8 @@ next_child:
 	wsi2a = wsi->h2.child_list;
 	while (wsi2a) {
 		if (wsi2a->h2.requested_POLLOUT) {
-			lws_change_pollfd(wsi, 0, LWS_POLLOUT);
+			if (lws_change_pollfd(wsi, 0, LWS_POLLOUT))
+				return -1;
 			break;
 		}
 		wsi2a = wsi2a->h2.sibling_list;
@@ -1132,34 +1161,33 @@ rops_alpn_negotiated_h2(struct lws *wsi, const char *alpn)
 	}
 #endif
 
-		wsi->upgraded_to_http2 = 1;
-		wsi->vhost->conn_stats.h2_alpn++;
+	wsi->upgraded_to_http2 = 1;
+	wsi->vhost->conn_stats.h2_alpn++;
 
-		/* adopt the header info */
+	/* adopt the header info */
 
-		ah = wsi->http.ah;
+	ah = wsi->http.ah;
 
-		lws_role_transition(wsi, LWSIFR_SERVER, LRS_H2_AWAIT_PREFACE,
-				    &role_ops_h2);
+	lws_role_transition(wsi, LWSIFR_SERVER, LRS_H2_AWAIT_PREFACE,
+			    &role_ops_h2);
 
-		/* http2 union member has http union struct at start */
-		wsi->http.ah = ah;
+	/* http2 union member has http union struct at start */
+	wsi->http.ah = ah;
 
-		if (!wsi->h2.h2n)
-			wsi->h2.h2n = lws_zalloc(sizeof(*wsi->h2.h2n), "h2n");
-		if (!wsi->h2.h2n)
-			return 1;
+	if (!wsi->h2.h2n)
+		wsi->h2.h2n = lws_zalloc(sizeof(*wsi->h2.h2n), "h2n");
+	if (!wsi->h2.h2n)
+		return 1;
 
-		lws_h2_init(wsi);
+	lws_h2_init(wsi);
 
-		/* HTTP2 union */
+	/* HTTP2 union */
 
-		lws_hpack_dynamic_size(wsi,
-				       wsi->h2.h2n->set.s[H2SET_HEADER_TABLE_SIZE]);
-		wsi->h2.tx_cr = 65535;
+	lws_hpack_dynamic_size(wsi,
+			   wsi->h2.h2n->set.s[H2SET_HEADER_TABLE_SIZE]);
+	wsi->h2.tx_cr = 65535;
 
-		lwsl_info("%s: wsi %p: configured for h2\n", __func__, wsi);
-
+	lwsl_info("%s: wsi %p: configured for h2\n", __func__, wsi);
 
 	return 0;
 }
@@ -1187,6 +1215,10 @@ struct lws_role_ops role_ops_h2 = {
 	/* destroy_role */		rops_destroy_role_h2,
 	/* adoption_bind */		NULL,
 	/* client_bind */		NULL,
+	/* adoption_cb clnt, srv */	{ LWS_CALLBACK_SERVER_NEW_CLIENT_INSTANTIATED,
+					  LWS_CALLBACK_SERVER_NEW_CLIENT_INSTANTIATED },
+	/* rx cb clnt, srv */		{ LWS_CALLBACK_RECEIVE_CLIENT_HTTP,
+					  0 /* may be POST, etc */ },
 	/* writeable cb clnt, srv */	{ LWS_CALLBACK_CLIENT_HTTP_WRITEABLE,
 					  LWS_CALLBACK_HTTP_WRITEABLE },
 	/* close cb clnt, srv */	{ LWS_CALLBACK_CLOSED_CLIENT_HTTP,

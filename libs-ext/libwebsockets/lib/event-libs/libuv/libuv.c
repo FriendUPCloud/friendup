@@ -162,8 +162,8 @@ lws_libuv_stop(struct lws_context *context)
 			if (!wsi)
 				continue;
 			lws_close_free_wsi(wsi,
-				LWS_CLOSE_STATUS_NOSTATUS_CONTEXT_DESTROY, __func__
-				/* no protocol close */);
+				LWS_CLOSE_STATUS_NOSTATUS_CONTEXT_DESTROY,
+				__func__ /* no protocol close */);
 			n--;
 		}
 	}
@@ -323,8 +323,8 @@ lws_libuv_check_watcher_active(struct lws *wsi)
 
 #if defined(LWS_WITH_PLUGINS) && (UV_VERSION_MAJOR > 0)
 
-LWS_VISIBLE int
-lws_plat_plugins_init(struct lws_context *context, const char * const *d)
+int
+lws_uv_plugins_init(struct lws_context *context, const char * const *d)
 {
 	struct lws_plugin_capability lcaps;
 	struct lws_plugin *plugin;
@@ -425,8 +425,8 @@ bail:
 	return ret;
 }
 
-LWS_VISIBLE int
-lws_plat_plugins_destroy(struct lws_context *context)
+int
+lws_uv_plugins_destroy(struct lws_context *context)
 {
 	struct lws_plugin *plugin = context->plugin_list, *p;
 	lws_plugin_destroy_func func;
@@ -434,8 +434,6 @@ lws_plat_plugins_destroy(struct lws_context *context)
 	int pofs = 0;
 	void *v;
 	int m;
-
-//	return 0;
 
 #if  defined(__MINGW32__) || !defined(WIN32)
 	pofs = 3;
@@ -503,7 +501,7 @@ static int
 elops_destroy_context1_uv(struct lws_context *context)
 {
 	struct lws_context_per_thread *pt;
-	int n, m;
+	int n, m = 0;
 
 	for (n = 0; n < context->count_threads; n++) {
 		int budget = 10000;
@@ -563,7 +561,8 @@ elops_wsi_logical_close_uv(struct lws *wsi)
 	if (wsi->listener || wsi->event_pipe) {
 		lwsl_debug("%s: %p: %d %d stop listener / pipe poll\n",
 			   __func__, wsi, wsi->listener, wsi->event_pipe);
-		uv_poll_stop(wsi->w_read.uv.pwatcher);
+		if (wsi->w_read.uv.pwatcher)
+			uv_poll_stop(wsi->w_read.uv.pwatcher);
 	}
 	lwsl_debug("%s: lws_libuv_closehandle: wsi %p\n", __func__, wsi);
 	/*
@@ -614,6 +613,7 @@ elops_close_handle_manually_uv(struct lws *wsi)
 
 	wsi->desc.sockfd = LWS_SOCK_INVALID;
 	wsi->w_read.uv.pwatcher = NULL;
+	wsi->told_event_loop_closed = 1;
 
 	uv_close(h, lws_libuv_closewsi_m);
 }
@@ -635,8 +635,8 @@ elops_accept_uv(struct lws *wsi)
 			     (int)(long long)wsi->desc.filefd);
 	else
 		uv_poll_init_socket(pt->uv.io_loop,
-				      wsi->w_read.uv.pwatcher,
-				      wsi->desc.sockfd);
+				    wsi->w_read.uv.pwatcher,
+				    wsi->desc.sockfd);
 
 	((uv_handle_t *)wsi->w_read.uv.pwatcher)->data = (void *)wsi;
 
@@ -663,6 +663,12 @@ elops_io_uv(struct lws *wsi, int flags)
 	      (flags & (LWS_EV_READ | LWS_EV_WRITE)))) {
 		lwsl_err("%s: assert: flags %d", __func__, flags);
 		assert(0);
+	}
+
+	if (!w->uv.pwatcher || wsi->told_event_loop_closed) {
+		lwsl_err("%s: no watcher\n", __func__);
+
+		return;
 	}
 
 	if (flags & LWS_EV_START) {
@@ -869,7 +875,9 @@ lws_libuv_closewsi(uv_handle_t* handle)
 	struct lws *wsi = (struct lws *)handle->data;
 	struct lws_context *context = lws_get_context(wsi);
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
-	int lspd = 0, m;
+#if !defined(LWS_WITHOUT_SERVER)
+	int lspd = 0;
+#endif
 
 	lwsl_info("%s: %p\n", __func__, wsi);
 
@@ -877,12 +885,14 @@ lws_libuv_closewsi(uv_handle_t* handle)
 	 * We get called back here for every wsi that closes
 	 */
 
+#if !defined(LWS_WITHOUT_SERVER)
 	if (wsi->role_ops == &role_ops_listen && wsi->context->deprecated) {
 		lspd = 1;
 		context->deprecation_pending_listen_close_count--;
 		if (!context->deprecation_pending_listen_close_count)
 			lspd = 2;
 	}
+#endif
 
 	lws_pt_lock(pt, __func__);
 	__lws_close_free_wsi_final(wsi);
@@ -891,10 +901,12 @@ lws_libuv_closewsi(uv_handle_t* handle)
 	/* it's our job to close the handle finally */
 	lws_free(handle);
 
+#if !defined(LWS_WITHOUT_SERVER)
 	if (lspd == 2 && context->deprecation_cb) {
 		lwsl_notice("calling deprecation callback\n");
 		context->deprecation_cb();
 	}
+#endif
 
 	lwsl_info("%s: sa left %d: dyn left: %d (rk %d)\n", __func__,
 		    context->count_event_loop_static_asset_handles,
@@ -906,6 +918,7 @@ lws_libuv_closewsi(uv_handle_t* handle)
 
 	if (context->requested_kill && !context->count_wsi_allocated) {
 		struct lws_vhost *vh = context->vhost_list;
+		int m;
 
 		/*
 		 * Start Closing Phase 2: close of static handles
@@ -941,7 +954,7 @@ lws_libuv_closehandle(struct lws *wsi)
 		return;
 
 	if (wsi->told_event_loop_closed) {
-		assert(0);
+	//	assert(0);
 		return;
 	}
 

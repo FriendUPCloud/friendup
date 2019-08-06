@@ -1,7 +1,7 @@
 /*
  * lws-minimal-ws-client-tx
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -49,6 +49,10 @@ struct per_vhost_data__minimal {
 	char finished;
 	char established;
 };
+
+#if defined(WIN32)
+static void usleep(unsigned long l) { Sleep(l / 1000); }
+#endif
 
 static void
 __minimal_destroy_message(void *_msg)
@@ -113,6 +117,8 @@ wait:
 	lwsl_notice("thread_spam %p exiting\n", (void *)pthread_self());
 
 	pthread_exit(NULL);
+
+	return NULL;
 }
 
 static int
@@ -249,7 +255,7 @@ skip:
 		 * We respond by scheduling a writable callback for the
 		 * connected client, if any.
 		 */
-		if (vhd->client_wsi && vhd->established)
+		if (vhd && vhd->client_wsi && vhd->established)
 			lws_callback_on_writable(vhd->client_wsi);
 		break;
 
@@ -311,6 +317,14 @@ int main(int argc, const char **argv)
 	memset(&info, 0, sizeof info); /* otherwise uninitialized garbage */
 	info.port = CONTEXT_PORT_NO_LISTEN; /* we do not run any server */
 	info.protocols = protocols;
+	/*
+	 * since we know this lws context is only ever going to be used with
+	 * one client wsis / fds / sockets at a time, let lws know it doesn't
+	 * have to use the default allocations for fd tables up to ulimit -n.
+	 * It will just allocate for 1 internal and 1 (+ 1 http2 nwsi) that we
+	 * will use.
+	 */
+	info.fd_limit_per_thread = 1 + 1 + 1;
 
 	context = lws_create_context(&info);
 	if (!context) {
