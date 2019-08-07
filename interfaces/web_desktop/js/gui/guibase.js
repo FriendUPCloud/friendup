@@ -8,6 +8,18 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* Some important flags for GUI elements ------------------------------------ */
+
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups';
+var FUI_MOUSEDOWN_RESIZE  =  2;
+var FUI_MOUSEDOWN_WINDOW  =  1;
+var FUI_MOUSEDOWN_SCREEN  =  3;
+var FUI_MOUSEDOWN_SCROLLV = 10;
+var FUI_WINDOW_MARGIN     =  3;
+var FUI_MOUSEDOWN_PICKOBJ = 11;
+
+/* Done important flags for GUI elements ------------------------------------ */
+
 var movableHighestZindex = 99;
 var movableWindowCount = 0;
 var movableWindows = [];

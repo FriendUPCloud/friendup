@@ -8,15 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var FUI_MOUSEDOWN_RESIZE  =  2;
-var FUI_MOUSEDOWN_WINDOW  =  1;
-var FUI_MOUSEDOWN_SCREEN  =  3;
-var FUI_MOUSEDOWN_SCROLLV = 10;
-var FUI_WINDOW_MARGIN     =  3;
-var FUI_MOUSEDOWN_PICKOBJ = 11;
-
-var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-forms allow-scripts allow-popups';
-
 /* Make movable box --------------------------------------------------------- */
 
 Friend          = window.Friend || {};    // Friend main namespace
