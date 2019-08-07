@@ -893,11 +893,11 @@ Screen = function ( flags, initObject )
 		// We're on a road trip..
 		if( !( friendU && ( friendU == targetU || !targetU ) ) )
 		{
-			ifr.sandbox = 'allow-forms allow-scripts';
+			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 		}
 		
 		// Allow sandbox flags
-		var sbx = ifr.getAttribute('sandbox') ? ifr.getAttribute('sandbox') : '';
+		var sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
 		sbx = ('' + sbx).split( ' ' );
 		if( this.flags && this.flags.allowPopups )
 		{
