@@ -2321,7 +2321,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						dd.appendChild( s );
 					}
 
-					setTimeout( function()
+					function repositionStartMenu()
 					{
 						if( delayedBuildTime )
 						{
@@ -2384,10 +2384,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								dd.style.top = s.offsetHeight - dd.offsetHeight - 1 + 'px';
+								dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 							}
 						}
-					}, 5 );
+					}
+					setTimeout( repositionStartMenu, 250 );
 				} );
 			}
 
