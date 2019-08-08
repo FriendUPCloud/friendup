@@ -55,12 +55,23 @@ var filebrowserCallbacks = {
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function( items )
 		{
+			// Are we refreshing the root dir?
+			var isRootDir = Application.fileBrowser.rootPath == ele;
+			for( var a = 0; a < items.length; a++ )
+			{
+				// If it has directory, just wait
+				if( !isRootDir && isMobile && items[a].Type == 'Directory' )
+				{
+					return;
+				}
+			}
 			currentViewMode = 'files';
 			Application.updateViewMode();
 		} );
@@ -122,8 +133,6 @@ Application.updateViewMode = function()
 {
 	if( !isMobile ) return;
 	
-	console.log( 'Which view mode?', currentViewMode );
-	
 	switch( currentViewMode )
 	{
 		case 'root':
@@ -171,8 +180,6 @@ Application.refreshFilePane = function( method, force, callback )
 {
 	if( !method ) method = false;
 	
-	console.log( 'Refreshing now!' );
-	
 	if( Application.fileBrowser.flags.path.split( '/' ).length > 2 )
 	{
 		Application.fld.classList.add( 'Hidden' );
@@ -186,16 +193,11 @@ Application.refreshFilePane = function( method, force, callback )
 	
 	var self = this;
 	
-	// Already showing (mobile only)!
-	if( isMobile && Application.path == Application.browserPath && !force ) return;
-	
 	Application.path = Application.browserPath;
 	var p = Application.path;
 	
 	d.getIcons( function( items )
 	{
-		console.log( 'We got items!', items );
-		
 		if( ge( 'FileBar' ).contents )
 		{
 			ge( 'FileBar' ).contents.innerHTML = '';
@@ -550,7 +552,7 @@ Application.refreshFilePane = function( method, force, callback )
 		}
 		
 		if( callback )
-			callback();
+			callback( items );
 	} );
 }
 
@@ -1329,7 +1331,7 @@ Application.newDocument = function( args )
 	var self = this;
 	
 	// Wait till ready
-	if( typeof( ClassicEditor ) == 'undefined' )
+	if( typeof( ClassicEditor ) == 'undefined' || !Application.editor )
 	{
 		return setTimeout( function()
 		{

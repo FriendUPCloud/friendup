@@ -2598,6 +2598,13 @@ html body[mobile=mobile] .File .Icon
 	font-size: 0.95em;
 }
 
+/* File browser */
+
+[mobile] .FileBrowser .Name.IconFolder
+{
+	font-size: 1.1em;
+}
+
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
 [mobile] .View .FileDialog .FileBrowser .DiskItem > .Name
 {
