@@ -22,9 +22,48 @@ Application.run = function( msg, iface )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			
+			refreshAvatar();
 		}
-		m.execute( );
+		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
+	}
+}
+
+function refreshAvatar()
+{
+	// Avatar
+	var avatar = ge( 'Avatar' );
+	if( avatar )
+	{
+		var sm = new Module( 'system' );
+		sm.onExecuted = function( e, d ) 
+		{
+			if( e == 'ok' )
+			{
+				if( d )
+				{
+					try
+					{
+						d = JSON.parse( d );
+					}
+					catch( e )
+					{
+						d = null;
+					}
+				}
+			}
+			if( d )
+			{
+				// Only update the avatar if it exists..
+				var avSrc = new Image();
+				avSrc.src = d.avatar;
+				avSrc.onload = function()
+				{
+					var ctx = avatar.getContext( '2d' );
+					ctx.drawImage( avSrc, 0, 0, 256, 256 );
+				}
+			}
+		}
+		sm.execute( 'getsetting', { setting: 'avatar' } );
 	}
 }
 
@@ -66,41 +105,7 @@ Application.receiveMessage = function( msg )
 			// TODO: Add support for unlocking key to display the actual key decrypted for use other places or just decrypted as default
 			drawKeyList( msg.Keys );
 			
-			// Avatar
-			var avatar = ge( 'Avatar' );
-			if( avatar )
-			{
-				var sm = new Module( 'system' );
-				sm.onExecuted = function( e, d ) 
-				{
-					if( e == 'ok' )
-					{
-						if( d )
-						{
-							try
-							{
-								d = JSON.parse( d );
-							}
-							catch( e )
-							{
-								d = null;
-							}
-						}
-					}
-					if( d )
-					{
-						// Only update the avatar if it exists..
-						var avSrc = new Image();
-						avSrc.src = d.avatar;
-						avSrc.onload = function()
-						{
-							var ctx = avatar.getContext( '2d' );
-							ctx.drawImage( avSrc, 0, 0, 256, 256 );
-						}
-					}
-				}
-				sm.execute( 'getsetting', { setting: 'avatar' } );
-			}
+			refreshAvatar();
 
 			// Friend Network settings
 			var self = this;
