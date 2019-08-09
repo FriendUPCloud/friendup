@@ -176,6 +176,8 @@ DirectoryView = function( winobj, extra )
 				//console.log('notification start ' + path);
 			}
 			this.addToHistory( winobj.fileInfo );
+			
+			console.log( 'Whe: ' + winobj.fileInfo.Volume );
 		}
 
 		this.InitWindow( winobj );
@@ -278,7 +280,9 @@ DirectoryView.prototype.addToHistory = function( info )
 		this.pathHistory = out;
 		this.pathHistoryIndex = out.length - 1;
 	}
+	
 	this.window.fileInfo = ele;
+	
 	return true;
 }
 
@@ -394,6 +398,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					var lp = path.substr( path.length - 1, 1 )
 					if( lp != ':' && lp != '/' ) path += '/';
 				}
+
+				console.log( 'Adding volume: ' + volu );
 
 				var fin = {
 					Volume: volu + ':',
@@ -685,6 +691,8 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
+				var vol = path.split( ':' )[0];
+			
 				winobj.fileInfo = {
 					Path: path,
 					Volume: vol + ':',
@@ -700,11 +708,14 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderClose( path, event, flags )
 			{
+				var vol = path.split( ':' )[0];
+				
 				winobj.fileInfo = {
 					Path: path,
 					Volume: vol + ':',
 					Door: ( new Door( vol + ':' ) )
 				};
+				
 				var lockH = flags && flags.lockHistory;
 				if( !lockH )
 				{
@@ -1216,6 +1227,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						'files': files
 					};
 				}
+				// TODO: Fix here
 				else if( files && winobj.fileInfo && winobj.fileInfo.Volume )
 				{
 					info = {
@@ -3485,6 +3497,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 
 			r.fileInfo = f.fileInfo;
+			
 			r.window = obj.window;
 
 			icnt.appendChild( r );
@@ -4649,7 +4662,10 @@ function RefreshWindowGauge( win, finfo )
 {
 	if( isMobile ) return;
 	if( win.content ) win = win.content;
-	if( !win.fileInfo && finfo ) win.fileInfo = finfo;
+	if( !win.fileInfo && finfo )
+	{
+		win.fileInfo = finfo;
+	}
 	if( !win.fileInfo ) return;
 	var wt = win.fileInfo.Path ? win.fileInfo.Path : win.fileInfo.Title;
 	var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
