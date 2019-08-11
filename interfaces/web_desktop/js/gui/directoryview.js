@@ -176,8 +176,6 @@ DirectoryView = function( winobj, extra )
 				//console.log('notification start ' + path);
 			}
 			this.addToHistory( winobj.fileInfo );
-			
-			console.log( 'Whe: ' + winobj.fileInfo.Volume );
 		}
 
 		this.InitWindow( winobj );
