@@ -135,7 +135,7 @@ self.checkVolume = function()
 	data.push( self.session ? ( 'sessionid=' + encodeURIComponent( self.session ) ) : ( 'authid=' + self.authid ) );
 	data.push( 'module=system' );
 	data.push( 'command=volumeinfo' );
-	data.push( 'args=' + encodeURIComponent( '{"path":"' + self.volume + ':"}' ) );
+	data.push( 'args=' + encodeURIComponent( '{"path":"' + self.volume + '"}' ) );
 	
 	//console.log( 'Here: ' + data.join( '&' ) );
 

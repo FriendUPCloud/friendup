@@ -89,7 +89,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		dirDocApps: 'System:' + i18n( 'i18n_directory_DocApps' ) + '/',
 		dirLibraries: 'System:' + i18n( 'i18n_directory_Libraries' ) + '/',
 		dirDevices: 'System:' + i18n( 'i18n_directory_Devices' ) + '/',
-		dirDocumentation: 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',
+		/*dirDocumentation: 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',*/
 		dirRepositories: 'System:' + i18n( 'i18n_directory_Repositories' ) + '/',
 		dirFunctions: 'System:' + i18n( 'i18n_directory_Functions' ) + '/'
 	};
@@ -303,7 +303,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				return callback( output, translations.dirDevices );
 			return output;
 		},
-		'System:Documentation/': function()
+		/*'System:Documentation/': function()
 		{
 			var files = [ 'Documentation.pdf', 'Programmer\'s Manual.pdf', 'Friend DOS and CLI Manual.pdf', 'FriendUP API Manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
 //			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
@@ -344,7 +344,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				} );
 			}
 			return callback( eles, translations.dirDocumentation );
-		},
+		},*/
 		'System:Repositories/': function()
 		{
 			var output = [
@@ -415,7 +415,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	// Aliases
 	dirList[ 'System:' + i18n( 'i18n_directory_Functions' ) + '/' ]     = dirList[ 'System:Functions/' ];
 	dirList[ 'System:' + i18n( 'i18n_directory_DocApps' ) + '/' ]       = dirList[ 'System:DocApps/' ];
-	dirList[ 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' ] = dirList[ 'System:Documentation/' ];
+	/*dirList[ 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' ] = dirList[ 'System:Documentation/' ];*/
 	dirList[ 'System:' + i18n( 'i18n_directory_Prefs' ) + '/' ]         = dirList[ 'System:Preferences/' ];
 	dirList[ 'System:' + i18n( 'i18n_directory_Repositories' ) + '/' ]  = dirList[ 'System:Repositories/' ];
 	dirList[ 'System:' + i18n( 'i18n_directory_Modules' ) + '/' ]       = dirList[ 'System:Modules/' ];
@@ -547,7 +547,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				IconClass: 'System_Software',
 				Door     : new DoorSystem( 'System:Software/' )
 			},
-			{
+			/*{
 				MetaType : 'Directory',
 				Title    : i18n( 'i18n_directory_Documentation' ),
 				Permissions: '-r-e-,-r-e-,-r-e-',
@@ -558,7 +558,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				Type     : 'Directory',
 				IconClass: 'System_Documentation',
 				Door     : new DoorSystem( 'System:Documentation/' )
-			},
+			},*/
 			{
 				MetaType : 'Directory',
 				Title    : i18n( 'i18n_directory_Functions' ),
