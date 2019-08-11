@@ -1556,7 +1556,7 @@ html body.Loading #FriendScreenOverlay
 	display: block;
 	content: " ";
 	position: absolute;
-	top: calc(50% + 300px);
+	top: calc(100% - 50px);
 	left: calc(50% - 20px);
 	width: 40px;
 	height: 40px;
@@ -1597,6 +1597,30 @@ html body.Loading #FriendScreenOverlay
 {
 	opacity: 1;
 	width: 800px;
+}
+
+#FriendScreenOverlay .Debug
+{
+	position: absolute;
+	bottom: 40px;
+	left: 10px;
+	width: calc(100% - 20px);
+	text-align: center;
+	font-weight: bold;
+	color: $ColorLEDOn;
+}
+
+#FriendScreenOverlay .Debug .DebugLine
+{
+	display: block;
+	color: $ColorLEDNotify;
+	font-weight: normal;
+	width: 100%;
+	position: relative;
+	height: 25px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 [mobile] #FriendScreenOverlay.Visible.Showing .Title.Showing

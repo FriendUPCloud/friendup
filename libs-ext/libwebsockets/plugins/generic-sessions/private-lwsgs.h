@@ -62,24 +62,28 @@ struct lwsgs_user {
 };
 
 struct per_vhost_data__gs {
-	struct lws_email email;
+	lws_abs_t *smtp_client;
 	struct lwsgs_user u;
+	lws_token_map_t transport_tokens[3];
+	lws_token_map_t protocol_tokens[2];
+	char helo[64], ip[64];
 	struct lws_context *context;
 	char session_db[256];
 	char admin_user[32];
+	char urlroot[48];
 	char confounder[32];
 	char email_contact_person[128];
 	char email_title[128];
 	char email_template[128];
 	char email_confirm_url[128];
-	lwsgw_hash admin_password_sha1;
+	char email_from[128];
+	lwsgw_hash admin_password_sha256;
 	sqlite3 *pdb;
 	int timeout_idle_secs;
 	int timeout_absolute_secs;
 	int timeout_anon_absolute_secs;
 	int timeout_email_secs;
 	time_t last_session_expire;
-	char email_inited;
 };
 
 struct per_session_data__gs {
@@ -119,7 +123,7 @@ int
 lwsgs_check_credentials(struct per_vhost_data__gs *vhd,
 			const char *username, const char *password);
 void
-sha1_to_lwsgw_hash(unsigned char *hash, lwsgw_hash *shash);
+sha256_to_lwsgw_hash(unsigned char *hash, lwsgw_hash *shash);
 unsigned int
 lwsgs_now_secs(void);
 int
@@ -151,7 +155,7 @@ lwsgs_handler_forgot(struct per_vhost_data__gs *vhd, struct lws *wsi,
 		     struct per_session_data__gs *pss);
 int
 lwsgs_handler_check(struct per_vhost_data__gs *vhd, struct lws *wsi,
-		      struct per_session_data__gs *pss);
+		      struct per_session_data__gs *pss, const char *in);
 int
 lwsgs_handler_change_password(struct per_vhost_data__gs *vhd, struct lws *wsi,
 			      struct per_session_data__gs *pss);

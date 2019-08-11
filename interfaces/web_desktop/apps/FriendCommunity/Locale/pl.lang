@@ -1,0 +1,20 @@
+i18n_fullscreen                      : Pełny ekran
+i18n_window                          : Okno
+i18n_logout                          : Wyloguj się
+i18n_quit                            : Wyjdź
+i18n_file                            : Plik
+i18n_bookmarks                       : Zakładki
+i18n_bm_add                          : Dodaj
+
+i18n_account                         : Konto
+i18n_edit_profile                    : Edytuj profil
+i18n_account_settings                : Ustawienia konta
+i18n_global_settings                 : Ustawienia globalne
+
+i18n_navigation                      : Nawigacja
+i18n_nav_newsfeed                    : Kanał wiadomości
+i18n_nav_messages                    : Wiadomości
+i18n_nav_calendar                    : Kalendarz
+i18n_nav_library                     : Biblioteka
+i18n_nav_browse                      : Przeglądaj
+i18n_nav_bookmarks                   : Zakładki

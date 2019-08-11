@@ -213,11 +213,18 @@ function UniqueId ()
 // set a cookie
 function SetCookie( key, value, expiry )
 {
-	var t = new Date ();
-	if ( !expiry ) expiry = 1;
-	expiry = new Date( t.getTime() + ( expiry*1000*60*60*24 ) );
-	document.cookie = key + '=' + escape ( value ) + ';expires='+expiry.toGMTString();
-	return;
+	try
+	{
+		var t = new Date ();
+		if ( !expiry ) expiry = 1;
+		expiry = new Date( t.getTime() + ( expiry*1000*60*60*24 ) );
+		document.cookie = key + '=' + escape ( value ) + ';expires='+expiry.toGMTString();
+		return;
+	}
+	catch( e )
+	{
+	}
+	return false;
 }
 function DelCookie ( key ) { document.cookie = key + '=;'; }
 
@@ -225,15 +232,22 @@ function DelCookie ( key ) { document.cookie = key + '=;'; }
 function GetCookie( key )
 {
 	if ( !key ) return false;
-	var c = document.cookie.split ( ';' );
-	for ( var a = 0; a < c.length; a++ )
+	try
 	{
-		c[a] = c[a].split ( /^\s+|\s+$/g ).join ( '' ); // rm whitespace
-		var v = c[a].split ( '=' );
-		if ( v[0] == key )
+		var c = document.cookie.split ( ';' );
+		for ( var a = 0; a < c.length; a++ )
 		{
-			return unescape ( v[1] );
+			c[a] = c[a].split ( /^\s+|\s+$/g ).join ( '' ); // rm whitespace
+			var v = c[a].split ( '=' );
+			if ( v[0] == key )
+			{
+				return unescape ( v[1] );
+			}
 		}
+		return false;
+	}
+	catch( e )
+	{
 	}
 	return false;
 }
@@ -2429,7 +2443,17 @@ function checkMobileBrowser()
 	if( !document.body ) return setTimeout( checkMobileBrowser, 50 );
 	window.isMobile = checkMobile();
 	window.isTablet = checkTablet();
-	if( window.isMobile ) window.isTablet = false;
+	
+
+	if( window.isMobile && ( window.innerWidth <= 760 || window.innerHeight <= 500 ) )
+	{
+		window.isTablet = false;
+	}
+	else if( window.isTablet )
+	{
+		window.isMobile = false;
+	}
+	
 	if( !window.isMobile && !window.isTablet )
 	{
 		if( window.isTouch || !document.getElementsByTagName( 'head' )[0].getAttribute( 'touchdesktop' ) )
@@ -2447,8 +2471,9 @@ function checkMobileBrowser()
 			}
 		}
 	}
+	
 	// Ipads are always mobiles for apple users at least
-	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 && Workspace && Workspace.loginUsername == 'applereview' )
+	if( navigator.userAgent.toLowerCase().indexOf( 'ipad' ) > 0 && typeof(Workspace) != 'undefined' && Workspace.loginUsername == 'applereview' )
 	{
 		//console.log( 'IPAD! ' + navigator.userAgent );
 		window.isMobile = true;

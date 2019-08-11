@@ -19,8 +19,7 @@ around structures in the on-disk index file.
 
 Function|Related Link
 ---|---
-Public API|[include/libwebsockets/lws-fts.h](
-https://libwebsockets.org/git/libwebsockets/tree/include/libwebsockets/lws-fts.h)
+Public API|[include/libwebsockets/lws-fts.h](https://libwebsockets.org/git/libwebsockets/tree/include/libwebsockets/lws-fts.h)
 CI test app|[minimal-examples/api-tests/api-test-fts](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/api-tests/api-test-fts)
 Demo minimal example|[minimal-examples/http-server/minimal-http-server-fulltext-search](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/http-server/minimal-http-server-fulltext-search)
 Live Demo|[https://libwebsockets.org/ftsdemo/](https://libwebsockets.org/ftsdemo/)
@@ -135,9 +134,7 @@ Indexing time|123ms
 Peak alloc|3MiB
 Serialization time|1ms
 Trie File size|1.4MiB
- 
-So the peak memory requirement to generate the whole trie in memory for that
-first is around 4x the size of the final output file.
+
 
 Once it's generated, querying the trie file is very inexpensive, even when there
 are lots of results.

@@ -1,7 +1,7 @@
 /*
  * lws-minimal-ws-client-pmd-bulk
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -105,6 +105,15 @@ int main(int argc, const char **argv)
 
 	if (lws_cmdline_option(argc, argv, "-c"))
 		options |= 1;
+
+	/*
+	 * since we know this lws context is only ever going to be used with
+	 * one client wsis / fds / sockets at a time, let lws know it doesn't
+	 * have to use the default allocations for fd tables up to ulimit -n.
+	 * It will just allocate for 1 internal and 1 (+ 1 http2 nwsi) that we
+	 * will use.
+	 */
+	info.fd_limit_per_thread = 1 + 1 + 1;
 
 	context = lws_create_context(&info);
 	if (!context) {

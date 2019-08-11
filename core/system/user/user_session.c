@@ -86,7 +86,7 @@ void UserSessionDelete( UserSession *us )
 				if( count > 50 )
 				{
 					Log( FLOG_INFO, "UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
-					//WorkerManagerDebug( SLIB );
+					WorkerManagerDebug( SLIB );
 					count = 0;
 					break;
 				}
@@ -101,9 +101,14 @@ void UserSessionDelete( UserSession *us )
 			dosToken->ct_UserSessionID = 0;
 		}
 		
-        if( us->us_User != NULL )
-        {
-            UserRemoveSession( us->us_User, us );
+		if( count > 50 )
+		{
+			Log( FLOG_DEBUG, "UserRemoveSession will be called\n");
+		}
+		
+		if( us->us_User != NULL )
+		{
+			UserRemoveSession( us->us_User, us );
 			us->us_User = NULL;
         }
         SystemBase *lsb = SLIB;//(SystemBase *)us->us_SB;
@@ -113,7 +118,15 @@ void UserSessionDelete( UserSession *us )
 		// copy connection poiner to remove possibility of using it
 		UserSessionWebsocket *nwsc = us->us_WSConnections;
 		// We must do that here, becaouse lock on session is made in this function
+		
+		if( count > 50 )
+		{
+			Log( FLOG_DEBUG, "AppSessionManager will be called\n");
+		}
+		
 		AppSessionManagerRemUserSession( lsb->sl_AppSessionManager, us );
+		
+		DEBUG("[UserSessionDelete] User removed from app session\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 		{
@@ -170,6 +183,11 @@ void UserSessionDelete( UserSession *us )
 		pthread_mutex_destroy( &(us->us_Mutex) );
 	
 		FFree( us );
+		
+		if( count > 50 )
+		{
+			Log( FLOG_DEBUG, "Session removed\n");
+		}
 	}
 }
 

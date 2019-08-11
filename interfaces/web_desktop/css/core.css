@@ -1989,9 +1989,6 @@ body.Inside
 
 body #Screens
 {
-	background-image: url(/webclient/theme/loginimage.jpg);
-	background-position: center center;
-	background-size: cover;
 }
 
 body.Login > img
@@ -2019,7 +2016,13 @@ body.Loading > #Screens
 	opacity: 0;
 }
 
-body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after
+body.LoadingForm > div
+{
+	display: none;
+}
+
+body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after,
+body:not([viewlist]):not(.friendapp):not([mobile]).LoadingForm:after
 {
 	content: ' ';
 	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
@@ -2037,7 +2040,7 @@ body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after
 	z-index: 99999999999;
 }
 
-body[mobile].Loading:after
+body[mobile].Loading:after, body[mobile].LoadingForm:after
 {
 	display: none;
 }

@@ -4,7 +4,7 @@
 	<head>
 		<script onload="" src="/webclient/js/apps/api.js"></script>
 	</head>
-	<body class="Loading" onload="">
+	<body class="Loading" onload="loginNow()">
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
@@ -242,7 +242,6 @@
 					document.getElementById('Username').focus(); 
 				}
 			}
-			setTimeout( loginNow, 150 );
 		</script>
 		<script>
 			if( document.location.href.indexOf( 'friendsky.cloud' ) >= 0 )

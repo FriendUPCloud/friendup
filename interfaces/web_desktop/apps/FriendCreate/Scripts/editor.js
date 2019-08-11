@@ -434,6 +434,15 @@ Application.handleKeys = function( k, e )
 // Set correct syntax highlighting
 Application.applySyntaxHighlighting = function ()
 {
+	// Too early?
+	if( !this.editor )
+	{
+		return setTimeout( function()
+		{
+			Application.applySyntaxHighlighting();
+		}, 50 );
+	}
+	
 	var cf = this.files[ this.currentFile ];
 	if( !cf ) return;
 	if( !cf.filetype || ( cf.filetype && cf.filetype.indexOf( ' ' ) > 0 && cf.filename ) )

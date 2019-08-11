@@ -180,12 +180,15 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 
 	if( fc != NULL )
 	{
+		char buffer[ 256 ];
 		fc->fci_Port = port;
 		fc->fci_MaxPoll = maxp;
 		fc->fci_BufferSize = bufsiz;
 		fc->fci_SSLEnabled = ssl;
 		fc->fci_SB = sb;
-		snprintf( fc->fci_CoreID, 32, "%032d", id );
+		snprintf( buffer, 256, "%032d", id );
+		memcpy( fc->fci_CoreID, buffer, 32 );
+		//snprintf( fc->fci_CoreID, 32, "%032d", id );
 		strncpy( fc->fci_IP, hostname, 256 );
 	}
 	else
@@ -663,7 +666,7 @@ void *FriendCoreAcceptPhase2( void *d )
 				pthread_attr_setstacksize( &attr, stacksize );
 			
 				SystemBase *locsb = (SystemBase *)fc->fci_SB;
-				if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL ) != 0 )
+				if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "Incoming") != 0 )
 				{
 					SocketClose( incoming );
 				}
@@ -1056,7 +1059,7 @@ void FriendCoreProcess( void *fcv )
 							break; //drop the connection, rest of this function will do the cleanup
 						}
 						//write already received chunk
-						write( tmp_file_handle, resultString->bs_Buffer, resultString->bs_Size );
+						int wrote = write( tmp_file_handle, resultString->bs_Buffer, resultString->bs_Size );
 						BufStringDelete( resultString );
 					}
 				}
@@ -1070,7 +1073,7 @@ void FriendCoreProcess( void *fcv )
 				{
 					if( tmp_file_handle >= 0 )
 					{
-						write( tmp_file_handle, locBuffer, res );
+						int wrote = write( tmp_file_handle, locBuffer, res );
 					}
 					else
 					{
@@ -1419,7 +1422,6 @@ void FriendCoreProcess( void *fcv )
 			incoming_buffer_ptr = NULL;
 		}
 		close( tmp_file_handle );
-		//DEBUG( "Deleting temporary file %s", tmp_filename );
 		unlink( tmp_filename );
 	}
 	else 

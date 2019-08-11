@@ -53,15 +53,27 @@ void FileDelete( File *f )
 {
 	if( f!= NULL )
 	{
-		if( f->f_Execute != NULL )
+		if( f->f_Name != NULL )
+		{
+			FFree( f->f_Name );
+		}
+		
+		if( f->f_Path != NULL)
+		{
+			FFree( f->f_Path );
+		}
+		
+		/*  THIS IS POINTER ONLY, SHOULD NEVER BE RELEASED HERE
+		if( f->f_SessionIDPTR != NULL)
+		{
+			FFree( f->f_SessionIDPTR );
+		}
+		*/
+		
+		if( f->f_Execute != NULL)
 		{
 			FFree( f->f_Execute );
 		}
-		
-		//if( f->f_SessionID != NULL)
-		//{
-		//	FFree( f->f_SessionID );
-		//}
 		
 		if( f->f_Config != NULL )
 		{

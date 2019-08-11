@@ -19,6 +19,8 @@ Commandline option|Meaning
 -p port|Port to connect to
 -u url|URL path part to connect to
 -o|Finish after one connection
+--ssl|Open client connection with ssl
+-i <iface>|Bind the client connection to interface iface
 
 ```
  $ ./lws-minimal-ws-client-echo

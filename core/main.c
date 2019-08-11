@@ -160,6 +160,7 @@ int main( int argc __attribute__((unused)), char *argv[])
 	}
 	else
 	{
+		unsetenv("FRIEND_HOME");
 		Log( FLOG_PANIC, "Cannot open 'system.library'\n");
 		FFree( envvar );
 		FFree( cwd );
@@ -167,6 +168,7 @@ int main( int argc __attribute__((unused)), char *argv[])
 		return 1;
 	}
 
+	unsetenv("FRIEND_HOME");
 	if( envvar != NULL )
 	{
 		FFree( envvar );

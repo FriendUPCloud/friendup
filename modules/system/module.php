@@ -21,7 +21,7 @@ if( !isset( $User ) || ( $User && ( !isset( $User->ID ) || !$User->ID ) ) || !is
 }
 
 // We might come here by mistage (direct calling of file by phpfs)
-if( $args->module && $args->module != 'system' && $args->module != '(null)' )
+if( isset( $args->module ) && $args->module != 'system' && $args->module != '(null)' )
 {
 	if( file_exists( $f = ( 'modules/' . $args->module . '/module.php' ) ) )
 	{
@@ -274,6 +274,11 @@ if( isset( $args->command ) )
 		// Create a thumbnail of any kind of file
 		case 'thumbnail':
 			require( 'modules/system/include/thumbnail.php' );
+			break;
+		// Delete a thumbnail
+		case 'thumbnaildelete':
+			$Logger->log( 'Thumbnaildelete..' );
+			require( 'modules/system/include/thumbnaildelete.php' );
 			break;
 		// Get the app image from repository
 		case 'repoappimage':
@@ -854,7 +859,7 @@ if( isset( $args->command ) )
 		case 'mountlist':
 			// 
 			$userid = $User->ID;
-			if( $level == 'Admin' && $args->args->userid )
+			if( $level == 'Admin' && isset( $args->args->userid ) )
 			{
 				$userid = $args->args->userid;
 			}

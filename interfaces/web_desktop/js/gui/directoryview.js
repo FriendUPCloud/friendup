@@ -1290,6 +1290,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 							console.log( 'Posting file: ', itm.file );
 							itm.file( function( f )
 							{
+								var ic = new FileIcon(); ic.delCache( itm.fullPath );
 								uworker.postMessage( { recursiveUpdate: true, item: f, fullPath: itm.fullPath, size: f.size, session: Workspace.sessionId } );
 							} );
 						}
@@ -2112,6 +2113,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 						initNextBatch = false;
 
+						var ic = new FileIcon(); 
+						
 						for( i = 0; i < stopAt; i++ )
 						{
 							fl = this.files[ i ];
@@ -2130,6 +2133,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
 
 							// Do the copy - we have files here only...
+							ic.delCache( toPath );
 							door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
@@ -2266,8 +2270,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
 
 								// Delete in reverse
+								var ic = new FileIcon();
 								for( var b = fob.files.length - 1; b >= 0; b-- )
 								{
+									ic.delCache( fob.files[b].fileInfo.Path );
 									d.dosAction( 'delete', { path: fob.files[b].fileInfo.Path }, function( result )
 									{
 										w.deletable--;
@@ -3714,6 +3720,7 @@ FileIcon = function( fileInfo )
 }
 
 // Put in cache
+// TODO: Clean cache when sessionid change
 FileIcon.prototype.setCache = function( path, directoryview, date )
 {
 	var dir = directoryview.window.fileInfo.Path;
@@ -3764,6 +3771,27 @@ FileIcon.prototype.getCache = function( path, directoryview, date )
 	return _getBase64Image( i );
 }
 
+// Remove an image from cache
+FileIcon.prototype.delCache = function( dir )
+{
+	var path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + dir;
+	// remove filename from subpath
+	if( dir.indexOf( '/' ) > 0 )
+	{
+		dir = dir.split( '/' );
+		dir.pop();
+		dir = dir.join( '/' ) + '/';
+	}
+	// remove filename from rootpath
+	else
+	{
+		dir = dir.split( ':' )[0] + ':';
+	}
+	if( !Friend.iconCache[ dir ] ) return false;
+	if( !Friend.iconCache[ dir ][ path ] ) return false;
+	delete Friend.iconCache[ dir ][ path ];
+}
+
 // -----------------------------------------------------------------------------
 FileIcon.prototype.Init = function( fileInfo )
 {
@@ -3779,6 +3807,9 @@ FileIcon.prototype.Init = function( fileInfo )
 	file.style.position = 'absolute';
 
 	// Selected in buffer
+	if( !fileInfo )
+		return;
+		
 	if( fileInfo.selected ) this.file.classList.add( 'Selected' );
 
 	// Attach this object to dom element
@@ -4058,7 +4089,8 @@ FileIcon.prototype.Init = function( fileInfo )
 			case 'TypeJPEG':
 			case 'TypePNG':
 			case 'TypeGIF':
-				var ur = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path;
+				var r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
+				var ur = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
 				
 				// Get from cache
 				var tmp = false;

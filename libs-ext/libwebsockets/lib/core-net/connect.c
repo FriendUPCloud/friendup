@@ -53,7 +53,8 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 		return NULL;
 
 	if (!i->context->protocol_init_done)
-		lws_protocol_init(i->context);
+		if (lws_protocol_init(i->context))
+			return NULL;
 	/*
 	 * If we have .local_protocol_name, use it to select the local protocol
 	 * handler to bind to.  Otherwise use .protocol if http[s].
@@ -69,6 +70,7 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 
 	wsi->context = i->context;
 	wsi->desc.sockfd = LWS_SOCK_INVALID;
+	wsi->seq = i->seq;
 
 	wsi->vhost = NULL;
 	if (!i->vhost)
@@ -88,8 +90,8 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	 */
 
 #if LWS_MAX_SMP > 1
-	tid = wsi->vhost->protocols[0].callback(wsi,
-				     LWS_CALLBACK_GET_THREAD_ID, NULL, NULL, 0);
+	tid = wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_GET_THREAD_ID,
+						NULL, NULL, 0);
 
 	lws_context_lock(i->context, "client find tsi");
 
@@ -116,7 +118,12 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	 * we may want ws, but first we have to go through h1 to get that
 	 */
 
-	lws_role_call_client_bind(wsi, i);
+	if (lws_role_call_client_bind(wsi, i) < 0) {
+		lwsl_err("%s: unable to bind to role\n", __func__);
+
+		goto bail;
+	}
+	lwsl_info("%s: role binding to %s\n", __func__, wsi->role_ops->name);
 
 	/*
 	 * PHASE 4: fill up the wsi with stuff from the connect_info as far as
@@ -189,6 +196,7 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	wsi->stash->address = lws_strdup(i->address);
 	wsi->stash->path = lws_strdup(i->path);
 	wsi->stash->host = lws_strdup(i->host);
+	wsi->stash->opaque_user_data = i->opaque_user_data;
 
 	if (!wsi->stash->address || !wsi->stash->path || !wsi->stash->host)
 		goto bail1;
@@ -262,6 +270,15 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	if (i->pwsi)
 		*i->pwsi = wsi;
 
+	/* PHASE 8: notify protocol with role-specific connected callback */
+
+	lwsl_debug("%s: wsi %p: cb %d to %s %s\n", __func__,
+			wsi, wsi->role_ops->adoption_cb[0],
+			wsi->role_ops->name, wsi->protocol->name);
+
+	wsi->protocol->callback(wsi,
+			wsi->role_ops->adoption_cb[0],
+			wsi->user_space, NULL, 0);
 
 #if defined(LWS_WITH_HUBBUB)
 	if (i->uri_replace_to)
@@ -269,6 +286,9 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 					     i->uri_replace_from,
 					     i->uri_replace_to);
 #endif
+
+	if (i->method && !strcmp(i->method, "RAW"))
+		lws_http_client_connect_via_info2(wsi);
 
 	return wsi;
 

@@ -14,7 +14,7 @@ Application.run = function( msg, iface )
 	nd.execute( 'file/makedir', { path: 'Home:Documents' } );
 	
 	var w = new View( {
-		'title'     : 'Author',
+		'title'     : 'Author - BETA',
 		'width'     : 1290,
 		'height'    : 800,
 		'min-width' : 700,

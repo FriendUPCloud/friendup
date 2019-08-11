@@ -9,12 +9,14 @@ if( $level == 'Admin' && $args->args->userid )
 // Find by ID
 if( isset( $args->args->id ) )
 {
+	$aid = intval( $args->args->id );
+	
 	if( $row = $SqlDatabase->FetchObject( '
 		SELECT f . * , u.Name AS Workgroup
 		FROM Filesystem f
 		LEFT JOIN FUserGroup u ON ( u.ID = f.GroupID AND u.Type =  "Workgroup" )
 		WHERE
-			f.UserID=\'' . $userid . '\' AND f.ID=\'' . intval( $args->args->id ) . '\'
+			f.UserID=\'' . $userid . '\' AND f.ID=\'' . $aid . '\'
 		LIMIT 1
 	' ) )
 	{
@@ -25,7 +27,7 @@ if( isset( $args->args->id ) )
 			WHERE
 					k.UserID = \'' . $userid . '\'
 				AND k.RowType = "Filesystem"
-				AND k.RowID = \'' . intval( $args->args->id ) . '\'
+				AND k.RowID = \'' . $aid . '\'
 				AND k.IsDeleted = "0"
 			ORDER
 				BY k.ID DESC

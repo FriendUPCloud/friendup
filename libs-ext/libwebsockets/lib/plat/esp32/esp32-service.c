@@ -27,7 +27,9 @@ lws_plat_service(struct lws_context *context, int timeout_ms)
 	int n = _lws_plat_service_tsi(context, timeout_ms, 0);
 
 	lws_service_fd_tsi(context, NULL, 0);
+#if !defined(LWS_AMAZON_RTOS)
 	esp_task_wdt_reset();
+#endif
 
 	return n;
 }
@@ -52,14 +54,23 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 
 		if (m > context->time_last_state_dump) {
 			context->time_last_state_dump = m;
+#if defined(LWS_AMAZON_RTOS)
+			n = xPortGetFreeHeapSize();
+#else
 			n = esp_get_free_heap_size();
-			if (n != context->last_free_heap) {
-				if (n > context->last_free_heap)
-					lwsl_notice(" heap :%d (+%d)\n", n,
-						    n - context->last_free_heap);
+#endif
+			if ((unsigned int)n != context->last_free_heap) {
+				if ((unsigned int)n > context->last_free_heap)
+					lwsl_notice(" heap :%ld (+%ld)\n",
+						    (unsigned long)n,
+						    (unsigned long)(n -
+						      context->last_free_heap));
 				else
-					lwsl_notice(" heap :%d (-%d)\n", n,
-						    context->last_free_heap - n);
+					lwsl_notice(" heap :%ld (-%ld)\n",
+						    (unsigned long)n,
+						    (unsigned long)(
+						      context->last_free_heap -
+						      n));
 				context->last_free_heap = n;
 			}
 		}
@@ -71,6 +82,8 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	if (!pt->service_tid_detected) {
 		struct lws *_lws = lws_zalloc(sizeof(*_lws), "tid probe");
 
+		if (!_lws)
+			return 1;
 		_lws->context = context;
 
 		pt->service_tid = context->vhost_list->protocols[0].callback(
@@ -111,7 +124,7 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 		FD_ZERO(&writefds);
 		FD_ZERO(&errfds);
 
-		for (n = 0; n < pt->fds_count; n++) {
+		for (n = 0; n < (int)pt->fds_count; n++) {
 			pt->fds[n].revents = 0;
 			if (pt->fds[n].fd >= max_fd)
 				max_fd = pt->fds[n].fd;
@@ -124,7 +137,7 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 
 		n = select(max_fd + 1, &readfds, &writefds, &errfds, ptv);
 		n = 0;
-		for (m = 0; m < pt->fds_count; m++) {
+		for (m = 0; m < (int)pt->fds_count; m++) {
 			c = 0;
 			if (FD_ISSET(pt->fds[m].fd, &readfds)) {
 				pt->fds[m].revents |= LWS_POLLIN;
@@ -174,7 +187,7 @@ faked_service:
 			c = n;
 
 	/* any socket with events to service? */
-	for (n = 0; n < pt->fds_count && c; n++) {
+	for (n = 0; n < (int)pt->fds_count && c; n++) {
 		if (!pt->fds[n].revents)
 			continue;
 

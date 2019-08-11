@@ -1,13 +1,13 @@
 Friend Unifying Platform version 1.2-RC2
 ========================================
 
-**NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch* after proper testing. Check this out for more information on [commit guidelines](https://github.com/FriendUPCloud/friendup/wiki/4.-Developer-Commit-Guidelines). Bleeding edge *users* should check out the *friendup-1.2-rc2* branch. 
-
-For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs)
+*NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
 ---
 
-Friend is THE Internet Operating System for everyone, that runs on everything.
+The Friend OS leverages the computing power of the Internet to offer many of the features and functionalities of Chrome OS, Windows, Linux, Android, macOS or iOS, without the need to choose a specific hardware platform or proprietary software package. If you have a device that is connected to the Internet, you can use the Friend OS.
+
+The FriendOS liberates you from Big Tech:  It gives you control to create, collaborate, store and share information, data and content across all your devices in a secure private environment and access it anywhere on any device.
 
 ![FriendUP Workspace](https://cdn-images-1.medium.com/max/800/1*Ma4ZrbNC2aWsuU18NRc7LA.png "FriendUP Workspace")
 
@@ -28,7 +28,7 @@ Getting started
 
 Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
 
-Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern Linux distributions. Post to the [Developer Community](https://developers.friendup.cloud/) if you run into any problems here.
+Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern Linux distributions. Post to the [Developer Community](https://discord.gg/GREj9Gv) if you run into any problems here.
 
 The below script has been tested on Ubuntu 16. You might need to install MySQL or MariaDB first.
 
@@ -94,12 +94,12 @@ Password: securefassword
 ```
 The first thing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
 
-FriendNetwork
+Friend Network
 -------------
 
-FriendNetwork is included in this project, but must be installed separately. It can only be installed on an already installed Friend Core.
+Friend Network is included in this project, but must be installed separately. It can only be installed on an already installed Friend Core.
 
-To install FriendNetwork, enter the following command in a shell:
+To install Friend Network, enter the following command in a shell:
 ```
 cd myfriend
 ./installFriendNetwork.sh
@@ -166,15 +166,6 @@ Documentation
 
 You can find the developer documentation in the docs folder. An administration guide will be added soon.
 
-Chat room
----------
-
-You will find many of our developers and users on our IRC channel / chat room. Please choose a unique nick and join using the link below.
-
-https://friendup.cloud/community/irc-channel/
-
-If you have chosen to install Friend Chat, the application will automatically open the friendup IRC channel upon starting.
-
 Licensing
 =========
 
@@ -189,15 +180,15 @@ New developers joining the project needs to sign our contributor agreement befor
 
 The contributor agreement is our vehicle for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
 
-Developer Community
-===================
+Developer Community / Chat rooms
+================================
 
-We invite everybody to join our developer community at https://developers.friendup.cloud/.
+We invite everybody to join our Discord developer community at https://discord.gg/GREj9Gv.
 
 Demo server
 -----------
 
-For those that just want to test our Workspace, you can try our demo after registering at https://friendup.cloud/try-the-friendup-demo/.
+For those that just want to test our Workspace, you can try our demo after registering at [https://go.friendup.cloud/](https://go.friendup.cloud/)
 
 List of dependencies
 ====================

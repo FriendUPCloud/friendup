@@ -14,7 +14,7 @@ the URL space using mounts, the dummy http callback will do the right thing.
 It's much preferred to use the "automated" v2.0 type scheme, because it's less
 code and it's easier to support.
 
-You can see an example of the new way in test-server-v2.0.c.
+The minimal examples all use the modern, recommended way.
 
 If you just need generic serving capability, without the need to integrate lws
 to some other app, consider not writing any server code at all, and instead use
@@ -94,7 +94,7 @@ if it met network conditions where it had to buffer your send data internally.
 
 So your code for `LWS_CALLBACK_CLIENT_WRITEABLE` needs to own the decision
 about what to send, it can't assume that just because the writeable callback
-came it really is time to send something.
+came something is ready to send.
 
 It's quite possible you get an 'extra' writeable callback at any time and
 just need to `return 0` and wait for the expected callback later.
@@ -142,7 +142,7 @@ all the server resources.
 @section evtloop Libwebsockets is singlethreaded
 
 Libwebsockets works in a serialized event loop, in a single thread.  It supports
-not only the default poll() backend, but libuv, libev, and libevent event loop
+the default poll() backend, and libuv, libev, and libevent event loop
 libraries that also take this locking-free, nonblocking event loop approach that
 is not threadsafe.  There are several advantages to this technique, but one
 disadvantage, it doesn't integrate easily if there are multiple threads that
@@ -305,8 +305,7 @@ Clients with limited storage and RAM will find this useful; the memory needed
 for the inflate case is constrained so that only one input buffer at a time
 is ever in memory.
 
-To use this feature, ensure LWS_WITH_ZIP_FOPS is enabled at CMake (it is by
-default).
+To use this feature, ensure LWS_WITH_ZIP_FOPS is enabled at CMake.
 
 `libwebsockets-test-server-v2.0` includes a mount using this technology
 already, run that test server and navigate to http://localhost:7681/ziptest/candide.html
@@ -379,7 +378,19 @@ If you are not building with _DEBUG defined, ie, without this
 
 then log levels below notice do not actually get compiled in.
 
+@section asan Building with ASAN
 
+Under GCC you can select for the build to be instrumented with the Address
+Sanitizer, using `cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DLWS_WITH_ASAN=1`.  LWS is routinely run during development with valgrind, but ASAN is capable of finding different issues at runtime, like operations which are not strictly defined in the C
+standard and depend on platform behaviours.
+
+Run your application like this
+
+```
+	$ sudo ASAN_OPTIONS=verbosity=2:halt_on_error=1  /usr/local/bin/lwsws
+```
+
+and attach gdb to catch the place it halts.
 
 @section extpoll External Polling Loop support
 
@@ -766,7 +777,8 @@ HTTP[s] and WS[s].  If the first bytes written on the connection are not a
 valid HTTP method, then the connection switches to RAW mode.
 
 This is disabled by default, you enable it by setting the `.options` flag
-LWS_SERVER_OPTION_FALLBACK_TO_RAW when creating the vhost.
+LWS_SERVER_OPTION_FALLBACK_TO_APPLY_LISTEN_ACCEPT_CONFIG, and setting
+`.listen_accept_role` to `"raw-skt"` when creating the vhost.
 
 RAW mode socket connections receive the following callbacks
 
@@ -778,16 +790,8 @@ RAW mode socket connections receive the following callbacks
 ```
 
 You can control which protocol on your vhost handles these RAW mode
-incoming connections by marking the selected protocol with a pvo `raw`, eg
-
-```
-        "protocol-lws-raw-test": {
-                 "status": "ok",
-                 "raw": "1"
-        },
-```
-
-The "raw" pvo marks this protocol as being used for RAW connections.
+incoming connections by setting the vhost info struct's `.listen_accept_protocol`
+to the vhost protocol name to use.
 
 `protocol-lws-raw-test` plugin provides a method for testing this with
 `libwebsockets-test-server-v2.0`:
@@ -1338,3 +1342,20 @@ also add this to your own html easily
  - in your ws onClose(), reapply the dimming
  
    lws_gray_out(true,{'zindex':'499'});
+
+@section errstyle Styling http error pages
+
+In the code, http errors should be handled by `lws_return_http_status()`.
+
+There are basically two ways... the vhost can be told to redirect to an "error
+page" URL in response to specifically a 404... this is controlled by the
+context / vhost info struct (`struct lws_context_creation_info`) member
+`.error_document_404`... if non-null the client is redirected to this string.
+
+If it wasn't redirected, then the response code html is synthesized containing
+the user-selected text message and attempts to pull in `/error.css` for styling.
+
+If this file exists, it can be used to style the error page.  See 
+https://libwebsockets.org/git/badrepo for an example of what can be done (
+and https://libwebsockets.org/error.css for the corresponding css).
+

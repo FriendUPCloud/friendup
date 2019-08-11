@@ -131,19 +131,18 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 			_file_broken();
 		}
 	
-		list( $iw, $ih, ) = getimagesize( '/tmp/Friendup/' . $smp );
+		list( $iw, $ih, $type ) = getimagesize( '/tmp/Friendup/' . $smp );
 		$x = $y = 0;
 	
-		switch( $ext )
+		switch( $type )
 		{
-			case 'jpg':
-			case 'jpeg':
+			case 2:
 				$source = imagecreatefromjpeg( '/tmp/Friendup/' . $smp );
 				break;
-			case 'png':
+			case 3:
 				$source = imagecreatefrompng( '/tmp/Friendup/' . $smp );
 				break;
-			case 'gif':
+			case 1:
 				$source = imagecreatefromgif( '/tmp/Friendup/' . $smp );
 				break;
 		}

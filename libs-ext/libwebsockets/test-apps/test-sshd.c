@@ -1,7 +1,7 @@
 /*
  * Example embedded sshd server using libwebsockets sshd plugin
  *
- * Copyright (C) 2017 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -342,7 +342,7 @@ ssh_ops_is_pubkey_authorized(const char *username, const char *type,
 	 * <len32>E<len32>N that the peer sends us
 	 */
 
-	if (memcmp(peer, ps, peer_len)) {
+	if (lws_timingsafe_bcmp(peer, ps, peer_len)) {
 		lwsl_info("factors mismatch\n");
 		goto bail;
 	}

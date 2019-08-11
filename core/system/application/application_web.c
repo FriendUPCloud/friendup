@@ -55,7 +55,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 {
 	Log( FLOG_DEBUG, "ApplicationWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
 	
-	AppSession *was = l->sl_AppSessionManager->sl_AppSessions;
+	// DEBUG disabled
+	/*
+	AppSession *was = l->sl_AppSessionManager->asm_AppSessions;
 	while( was != NULL )
 	{
 		DEBUG("[ApplicationWebRequest] SASID: %lu\n", was->as_SASID );
@@ -74,6 +76,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		}
 		was = (AppSession *)was->node.mln_Succ;
 	}
+	*/
 	
 	Http* response = NULL;
 	
@@ -519,6 +522,7 @@ Application.checkDocumentSession = function( sasID = null )
 					//err = AppSessionRemUsersession( as, loggedSession );
 					err = AppSessionRemUsersessionAny( as, loggedSession );
 					
+					DEBUG("AS will be removed? %d number of users on sas %d\n", err, as->as_UserNumber );
 					// if user was removed and he was last then we remove SAS
 					if( err == 0 && as->as_UserNumber <= 0 )
 					{
@@ -680,7 +684,7 @@ Application.checkDocumentSession = function( sasID = null )
 					SASUList *entry;
 					DEBUG("[ApplicationWebRequest] I will try to add session\n");
 					
-					if( ( entry = AppSessionAddCurrentSession( as, loggedSession) ) != NULL )
+					if( ( entry = AppSessionAddCurrentUserSession( as, loggedSession) ) != NULL )
 					
 					//if( ( entry = AppSessionAddUsersBySession( as, loggedSession, loggedSession->us_SessionID, "system", NULL ) ) != NULL )
 					{
@@ -704,6 +708,7 @@ Application.checkDocumentSession = function( sasID = null )
 						}
 						error = 0;
 					}
+					DEBUG("[ApplicationWebRequest] looks like app session was not created\n");
 				}
 				else
 				{
@@ -1418,59 +1423,57 @@ Application.checkDocumentSession = function( sasID = null )
 			{
 				// finding our current session on list
 				
-				FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-				
-				SASUList *srcli = as->as_UserSessionList;
-				while( srcli != NULL )
+				if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 				{
-					if( srcli->usersession == loggedSession )
+					SASUList *srcli = as->as_UserSessionList;
+					while( srcli != NULL )
 					{
-						break;
+						if( srcli->usersession == loggedSession )
+						{
+							break;
+						}
+						srcli = (SASUList *) srcli->node.mln_Succ;
 					}
-						
-					srcli = (SASUList *) srcli->node.mln_Succ;
-				}
 				
-				// finding session to which we want migrate
+					// finding session to which we want migrate
 				
-				SASUList *dstli = as->as_UserSessionList;
-				while( dstli != NULL )
-				{
-					UserSession *locses = (UserSession *) dstli->usersession;
-					if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && strcmp( username, locses->us_User->u_Name ) == 0 )
+					SASUList *dstli = as->as_UserSessionList;
+					while( dstli != NULL )
 					{
-						break;
+						UserSession *locses = (UserSession *) dstli->usersession;
+						if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && strcmp( username, locses->us_User->u_Name ) == 0 )
+						{
+							break;
+						}
+						dstli = (SASUList *) dstli->node.mln_Succ;
 					}
-						
-					dstli = (SASUList *) dstli->node.mln_Succ;
-				}
 				
-				if( dstli != NULL && srcli->usersession != NULL )
-				{
-					char  tmpauthid[ 255 ];
-					strcpy( tmpauthid, srcli->authid );
-					UserSession *tmpses = srcli->usersession;
-					int tmpstatus = srcli->status;
+					if( dstli != NULL && srcli->usersession != NULL )
+					{
+						char  tmpauthid[ 255 ];
+						strcpy( tmpauthid, srcli->authid );
+						UserSession *tmpses = srcli->usersession;
+						int tmpstatus = srcli->status;
 
-					char tmp[ 1024 ];
-					//int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"client-decline\",\"data\":\"%s\"}\"}}}}}", le->authid, as->as_ASSID, loggedSession->us_User->u_Name, assid, tmpses->us_User->u_Name );
-					//int msgsndsize += WebSocketSendMessageInt( le->usersession, tmp, len );
+						char tmp[ 1024 ];
+						//int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"client-decline\",\"data\":\"%s\"}\"}}}}}", le->authid, as->as_ASSID, loggedSession->us_User->u_Name, assid, tmpses->us_User->u_Name );
+						//int msgsndsize += WebSocketSendMessageInt( le->usersession, tmp, len );
 					
-					strcpy( dstli->authid, tmpauthid );
-					dstli->usersession = tmpses;
-					dstli->status = tmpstatus;
+						strcpy( dstli->authid, tmpauthid );
+						dstli->usersession = tmpses;
+						dstli->status = tmpstatus;
 					
-					int size = sprintf( buffer, "{\"response\":\"success\"}" );
-					HttpAddTextContent( response, buffer );
+						int size = sprintf( buffer, "{\"response\":\"success\"}" );
+						HttpAddTextContent( response, buffer );
+					}
+					else
+					{
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
+						HttpAddTextContent( response, dictmsgbuf );
+					}
+					FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
-					HttpAddTextContent( response, dictmsgbuf );
-				}
-				
-				FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 			}
 			else
 			{
@@ -1549,80 +1552,79 @@ Application.checkDocumentSession = function( sasID = null )
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
 			{
-				FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
-				// finding our current session on list
-				
-				SASUList *srcli = as->as_UserSessionList;
-				while( srcli != NULL )
+				if( FRIEND_MUTEX_LOCK( &as->as_SessionsMut ) == 0 )
 				{
-					if( srcli->usersession == loggedSession )
-					{
-						break;
-					}
-						
-					srcli = (SASUList *) srcli->node.mln_Succ;
-				}
+					// finding our current session on list
 				
-				// finding session to which we want migrate
-				
-				SASUList *dstli = as->as_UserSessionList;
-				while( dstli != NULL )
-				{
-					UserSession *locses = (UserSession *) dstli->usersession;
-					if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && loggedSession->us_ID == locses->us_ID )
+					SASUList *srcli = as->as_UserSessionList;
+					while( srcli != NULL )
 					{
-						break;
+						if( srcli->usersession == loggedSession )
+						{
+							break;
+						}
+						srcli = (SASUList *) srcli->node.mln_Succ;
 					}
-						
+				
+					// finding session to which we want migrate
+				
+					SASUList *dstli = as->as_UserSessionList;
+					while( dstli != NULL )
+					{
+						UserSession *locses = (UserSession *) dstli->usersession;
+						if( strcmp( devid, locses->us_DeviceIdentity ) == 0 && loggedSession->us_ID == locses->us_ID )
+						{
+							break;
+						}
 						dstli = (SASUList *) dstli->node.mln_Succ;
-				}
+					}
 				
-				if( dstli != NULL && srcli->usersession != NULL )
-				{
-					DEBUG("[ApplicationWebRequest] Switching sessions\n");
-					
-					char  tmpauthid[ 255 ];
-					if( srcli->authid[ 0 ] == 0 )
+					if( dstli != NULL && srcli->usersession != NULL )
 					{
-						tmpauthid[ 0 ] = 0;
+						DEBUG("[ApplicationWebRequest] Switching sessions\n");
+					
+						char  tmpauthid[ 255 ];
+						if( srcli->authid[ 0 ] == 0 )
+						{
+							tmpauthid[ 0 ] = 0;
+						}
+						else
+						{
+							strcpy( tmpauthid, srcli->authid );
+						}
+						void *tmpses = srcli->usersession;
+						int tmpstatus = srcli->status;
+					
+						if( dstli->authid[ 0 ] == 0 )
+						{
+							srcli->authid[ 0 ] = 0;
+						}
+						else
+						{
+							strcpy( srcli->authid, dstli->authid );
+						}
+						srcli->usersession = dstli->usersession;
+						srcli->status = dstli->status;
+					
+						if( tmpauthid[ 0 ] == 0 )
+						{
+							dstli->authid[ 0 ] = 0;
+						}
+						else
+						{
+							strcpy( dstli->authid, tmpauthid );
+						}
+						dstli->usersession = tmpses;
+						dstli->status = tmpstatus;
 					}
 					else
 					{
-						strcpy( tmpauthid, srcli->authid );
+						char dictmsgbuf[ 256 ];
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
+						HttpAddTextContent( response, dictmsgbuf );
 					}
-					void *tmpses = srcli->usersession;
-					int tmpstatus = srcli->status;
-					
-					if( dstli->authid[ 0 ] == 0 )
-					{
-						srcli->authid[ 0 ] = 0;
-					}
-					else
-					{
-						strcpy( srcli->authid, dstli->authid );
-					}
-					srcli->usersession = dstli->usersession;
-					srcli->status = dstli->status;
-					
-					if( tmpauthid[ 0 ] == 0 )
-					{
-						dstli->authid[ 0 ] = 0;
-					}
-					else
-					{
-						strcpy( dstli->authid, tmpauthid );
-					}
-					dstli->usersession = tmpses;
-					dstli->status = tmpstatus;
+					FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 				}
-				else
-				{
-					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
-					HttpAddTextContent( response, dictmsgbuf );
-				}
-				
-				FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 			}
 			else
 			{

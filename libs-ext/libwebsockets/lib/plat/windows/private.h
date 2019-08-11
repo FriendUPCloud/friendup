@@ -25,7 +25,7 @@
   #define WIN32_LEAN_AND_MEAN
  #endif
 
- #if (WINVER < 0x0501)
+ #if defined(WINVER) && (WINVER < 0x0501)
   #undef WINVER
   #undef _WIN32_WINNT
   #define WINVER 0x0501
@@ -41,6 +41,7 @@
  #define LWS_EISCONN WSAEISCONN
  #define LWS_ENOTCONN WSAENOTCONN
  #define LWS_EWOULDBLOCK WSAEWOULDBLOCK
+ #define LWS_EADDRINUSE WSAEADDRINUSE
  #define MSG_NOSIGNAL 0
  #define SHUT_RDWR SD_BOTH
  #define SOL_TCP IPPROTO_TCP
@@ -48,7 +49,6 @@
 
  #define compatible_close(fd) closesocket(fd)
  #define lws_set_blocking_send(wsi) wsi->sock_send_blocking = 1
- #define LWS_SOCK_INVALID (INVALID_SOCKET)
 
  #include <winsock2.h>
  #include <ws2tcpip.h>

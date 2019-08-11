@@ -408,7 +408,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						path ? path : "", 
 						module ? module : "files", 
 						usr->u_MainSessionID ? usr->u_MainSessionID : ""  );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					// Execute!
@@ -419,7 +419,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 					if( result && result->ls_Size >= 0 )
 					{
 
-						DEBUG( "[fsysphp] Return was \"%s\"\n", result->ls_Data );
+						DEBUG( "[fsysphp] Return was '%s'\n", result->ls_Data );
 						if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 						{
 							DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
@@ -429,6 +429,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 							if( sd->type ) FFree( sd->type );
 							if( dev->f_Name ) FFree( dev->f_Name );
 							if( dev->f_Path ) FFree( dev->f_Path );
+							if( dev->f_DevServer ) FFree( dev->f_DevServer );
 							FFree( sd );
 							FFree( dev );
 							
@@ -451,6 +452,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						if( sd->type ) FFree( sd->type );
 						if( dev->f_Name ) FFree( dev->f_Name );
 						if( dev->f_Path ) FFree( dev->f_Path );
+						if( dev->f_DevServer ) FFree( dev->f_DevServer );
 						FFree( sd );
 						FFree( dev );
 						
@@ -499,11 +501,6 @@ int Release( struct FHandler *s, void *f )
 			if( sd->type ){ FFree( sd->type ); }
 			FFree( lf->f_SpecialData );
 		}
-		
-		// Free up active device information
-		if( lf->f_Name ){ FFree( lf->f_Name ); lf->f_Name = NULL; }
-		if( lf->f_Path ){ FFree( lf->f_Path ); lf->f_Path = NULL; }
-		//if( lf->f_SessionID ){ FFree( lf->f_SessionID ); lf->f_SessionID = NULL; }
 	}
 	return 0;
 }
@@ -545,7 +542,7 @@ int UnMount( struct FHandler *s, void *f )
 				{
 					snprintf( commandCnt, cmdLength, "command=dosaction&action=unmount&devname=%s&module=%s&sessionid=%s",
 						lf->f_Name ? lf->f_Name : "", sd->module ? sd->module : "files", lf->f_SessionIDPTR ? lf->f_SessionIDPTR : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					ListString *result = PHPCall( command );
@@ -576,25 +573,6 @@ int UnMount( struct FHandler *s, void *f )
 			FFree( lf->f_SpecialData );
 			lf->f_SpecialData = NULL;
 		}
-		
-		// Free up active device information
-		if( lf->f_Name )
-		{ 
-			FFree( lf->f_Name ); 
-			lf->f_Name = NULL;
-		}
-		if( lf->f_Path )
-		{ 
-			FFree( lf->f_Path ); 
-			lf->f_Path = NULL;
-		}
-		/*
-		if( lf->f_SessionID ) 
-		{
-			FFree( lf->f_SessionID ); 
-			lf->f_SessionID = NULL;
-		}
-		*/
 	}
 	return 0;
 }
@@ -657,7 +635,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=read&authkey=false&sessionid=%s&path=%s&mode=%s",
 				sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encodedcomm ? encodedcomm : "", mode ? mode : "" );
-			sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+			sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 			FFree( commandCnt );
 		}
 	}
@@ -1007,7 +985,7 @@ int FileClose( struct File *s, void *fp )
 					{
 						snprintf( commandCnt, cmdLength, "module=files&command=write&sessionid=%s&path=%s&tmpfile=%s",
 							lfp->f_SessionIDPTR ? lfp->f_SessionIDPTR : "", encPath ? encPath : "", sd->fname ? sd->fname : "" );
-						sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+						sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 						FFree( commandCnt );
 				
 						ListString *result = PHPCall( command );
@@ -1178,7 +1156,7 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 			{
 				snprintf( commandCnt, cmdLength, "command=infoget&path=%s&module=files&sessionid=%s&key=%s",
 					urlPath ? urlPath : "", lf->f_SessionIDPTR ? lf->f_SessionIDPTR : "", urlKey == NULL ? "*" : urlKey );
-				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 				FFree( commandCnt );
 	
 				ListString *result = PHPCall( command );
@@ -1285,7 +1263,7 @@ int MakeDir( struct File *f, const char *path )
 			{
 				snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=makedir&sessionid=%s&path=%s",
 					f->f_SessionIDPTR ? f->f_SessionIDPTR : "", comm ? comm : "" );
-				snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 				FFree( commandCnt );
 			
 				DEBUG("[fsysphp] MAKEDIR %s\n", command );
@@ -1383,7 +1361,7 @@ FLONG Delete( struct File *s, const char *path )
 				snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=delete&sessionid=%s&path=%s",
 					s->f_SessionIDPTR ? s->f_SessionIDPTR : "", comm ? comm : "" );
 				DEBUG("PATH %s\n", commandCnt );
-				snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 				ListString *result = PHPCall( command );
 		
@@ -1396,7 +1374,7 @@ FLONG Delete( struct File *s, const char *path )
 						snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=delete&sessionid=%s&path=%s",
 							s->f_SessionIDPTR ? s->f_SessionIDPTR : "", commSlash ? commSlash : "" );
 						DEBUG("PATH1 %s\n", commandCnt );
-						snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+						snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 						if( result != NULL )
 						{
@@ -1475,7 +1453,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 					
 					snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
 						s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "", newName ? newName : "" );
-					snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 
 					ListString *result = PHPCall( command );
 		
@@ -1485,7 +1463,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 						{
 							snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
 								s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "", newName ? newName : "" );
-							snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 							if( result != NULL )
 							{
@@ -1608,7 +1586,7 @@ BufString *Info( File *s, const char *path )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
-					snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 			
 					// Execute!
 					BufString *bs = NULL;
@@ -1621,7 +1599,7 @@ BufString *Info( File *s, const char *path )
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
-							snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 							result = PHPCall( command );
 						}
@@ -1695,7 +1673,7 @@ BufString *Call( File *s, const char *path, char *args )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&command=call&authkey=false&sessionid=%s&path=%s&args=%s",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encComm ? encComm : "", args ? args : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					BufString *bs = NULL;
@@ -1769,7 +1747,7 @@ BufString *Dir( File *s, const char *path )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encComm ? encComm : "" );
-					snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 					BufString *bs  = NULL;
 					ListString *result = PHPCall( command );
@@ -1781,7 +1759,7 @@ BufString *Dir( File *s, const char *path )
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
-							snprintf( command, cmdLength, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 		
 							result = PHPCall( command );
 						}

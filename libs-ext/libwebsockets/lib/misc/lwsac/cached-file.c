@@ -19,6 +19,8 @@
  *  MA  02110-1301  USA
  */
 
+#if !defined(LWS_PLAT_OPTEE) && !defined(OPTEE_DEV_KIT)
+
 #include "core/private.h"
 #include "misc/lwsac/private.h"
 
@@ -34,8 +36,8 @@
  *  - the file is already in memory
  *
  * it just returns with *cache left alone; this costs very little.  You should
- * call `lwsac_use_cached_file_start()` and `lwsac_use_cached_file_end()` to lock
- * the cache against deletion while you are using it.
+ * call `lwsac_use_cached_file_start()` and `lwsac_use_cached_file_end()`
+ * to lock the cache against deletion while you are using it.
  *
  * If it's
  *
@@ -200,3 +202,5 @@ bail:
 
 	return 1;
 }
+
+#endif

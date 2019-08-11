@@ -78,50 +78,50 @@
 	$ColorBgRecessed:        #666666;
 	$ColorRecessed:          #f0f0f0;
 	$ColorOverlayBg:         rgba(239,239,239,0.7);
-	$ColorLEDOn:             #87ca33;
-	$ColorLEDAvailable:      #2980B9;
-	$ColorLEDWarning:        #f5f141;
-	$ColorLEDNotify:         #f4a01f;
-	$ColorLEDNotifyFrom:     #f4a01f;
-	$ColorLEDNotifyTo:       #ffd055;
-	$ColorLEDAlert:          #ff5308;
-	$ColorLEDOff:            #e2e2e2;
+	$ColorLEDOn:             #0AC25A;
+	$ColorLEDAvailable:      #0F85D1;
+	$ColorLEDWarning:        #F9D543;
+	$ColorLEDNotify:         #F39C12;
+	$ColorLEDNotifyFrom:     #F39C12;
+	$ColorLEDNotifyTo:       #FFC66D;
+	$ColorLEDAlert:          #D35400;
+	$ColorLEDOff:            #ECF0F1;
 	$ColorLEDText:           #ffffff;
 	$BackgroundHeavy:        rgba(0,0,0,0.01);
 	$BackgroundHeavier:      rgba(0,0,0,0.1);
 	$BackgroundHeaviest:     rgba(0,0,0,0.25);
 
 	/* Special colors */
-	$ColorBgStError:         #990000;
-	$ColorStError:           #ff6666;
-	$ColorBgStGreenLight:    #A4D472;
-	$ColorStGreenLight:      #222200;
-	$ColorBgStBlueLight:     #448FDA;
-	$ColorStBlueLight:       #333333;
-	$ColorBgStGrayLight:     #BFBFBF;
-	$ColorStGrayLight:       #333333;
+	$ColorBgStError:         #A01507;
+	$ColorStError:           #ffc66d;
+	$ColorBgStGreenLight:    #51D88C;
+	$ColorStGreenLight:      #0C2032;
+	$ColorBgStBlueLight:     #3498DB;
+	$ColorStBlueLight:       #0C2032;
+	$ColorBgStGrayLight:     #BDC3C7;
+	$ColorStGrayLight:       #0C2032;
 
 	/* Context colors */
-	$ColorAccept:              #333333;
-	$ColorAcceptBg:            #92b376;
-	$ColorAcceptButton:        #e0e0e0;
+	$ColorAccept:              #ECF0F1;
+	$ColorAcceptBg:            #0B9A49;
+	$ColorAcceptButton:        #ECF0F1;
 	$ColorAcceptButtonBg:      #519039;
-	$ColorAcceptButtonHover:   #f0f0f0;
+	$ColorAcceptButtonHover:   #FFFFFF;
 	$ColorAcceptButtonHoverBg: #97d137;
-	$ColorDanger:              #f0f0f0;
-	$ColorDangerBg:            #ae4343;
-	$ColorDangerButton:        #e0e0e0;
-	$ColorDangerButtonBg:      #983b25;
-	$ColorDangerButtonHover:   #f0f0f0;
-	$ColorDangerButtonHoverBg: #da5f5f;
-	$ColorAvailable:           #333333;
-	$ColorAvailableBg:         #94c6e0;
-	$ColorAction:              #333333;
-	$ColorActionBg:            #c362ff;
-	$ColorWarning:             #333333;
-	$ColorWarningBg:           #e6e660;
-	$ColorNotify:              #333333;
-	$ColorNotifyBg:            #ff9d4a;
+	$ColorDanger:              #FFE26C;
+	$ColorDangerBg:            #C92918;
+	$ColorDangerButton:        #FFE26C;
+	$ColorDangerButtonBg:      #C92918;
+	$ColorDangerButtonHover:   #FFFFFF;
+	$ColorDangerButtonHoverBg: #E74C3C;
+	$ColorAvailable:           #F7F7F7;
+	$ColorAvailableBg:         #0F85D1;
+	$ColorAction:              #f7f7f7;
+	$ColorActionBg:            #8E44AD;
+	$ColorWarning:             #720B00;
+	$ColorWarningBg:           #F9D543;
+	$ColorNotify:              #0C2032;
+	$ColorNotifyBg:            #E67E22;
 
 	$ColorIconBlinkStart:      #444444;
 	$ColorIconBlinkEnd:        grey;
@@ -2596,6 +2596,13 @@ html body[mobile=mobile] .File .Icon
 .FileBrowser > div
 {
 	font-size: 0.95em;
+}
+
+/* File browser */
+
+[mobile] .FileBrowser .Name.IconFolder
+{
+	font-size: 1.1em;
 }
 
 [mobile] .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
