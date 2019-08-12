@@ -176,8 +176,6 @@ DirectoryView = function( winobj, extra )
 				//console.log('notification start ' + path);
 			}
 			this.addToHistory( winobj.fileInfo );
-			
-			console.log( 'Whe: ' + winobj.fileInfo.Volume );
 		}
 
 		this.InitWindow( winobj );
@@ -5174,14 +5172,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				var j = new cAjax ();
 
 				var updateurl = '/system.library/file/dir?wr=1'
-				updateurl += '&path=' + encodeURIComponent( this.fileInfo.Path );
+				updateurl += '&path=' + encodeURIComponent( self.fileInfo.Path );
 				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 
 				j.open( 'get', updateurl, true, true );
 
-				j.fileInfo = this.fileInfo;
+				j.fileInfo = self.fileInfo;
 				j.file = iconObject;
-				j.win = this;
+				j.win = self;
 				j.onload = function()
 				{
 					if( this.win.refreshTimeout )
@@ -5191,14 +5189,21 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					}
 
 					var content;
+					
 					// New mode
 					if( this.returnCode == 'ok' )
 					{
 						try
 						{
+							// TODO: Fix this bug with null
+							var iterations = 0;
+							while( this.returnData.charCodeAt( this.returnData.length - 1 ) == 0 && iterations++ < 10 )
+								this.returnData = this.returnData.substr( 0, this.returnData.length - 1 );
 							content = JSON.parse( this.returnData || "null" );
 						}
-						catch ( e ){};
+						catch ( e ){
+							console.log( 'Error in directory listing data.. Ask stefkos!' );
+						};
 					}
 					// Legacy mode..
 					// TODO: REMOVE FROM ALL PLUGINS AND MODS!
@@ -5233,7 +5238,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 							ww.redrawIcons( content, ww.direction, cbk );
 						} );
 					}
-					if( callback ) callback();
+					else
+					{
+						console.log( 'No content.' );
+					}
+					if( callback )
+					{
+						callback();
+					}
 					RefreshWindowGauge( this.win );
 					w.refreshing = false;
 				}
