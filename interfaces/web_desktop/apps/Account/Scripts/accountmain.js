@@ -83,7 +83,7 @@ function refreshPalette( col )
 	{
 		var p = document.createElement( 'div' );
 		p.className = 'Color';
-		if( palette[ a ].toLowerCase() == col.toLowerCase() )
+		if( col && palette[ a ].toLowerCase() == col.toLowerCase() )
 		{
 			p.classList.add( 'Active' );
 		}
