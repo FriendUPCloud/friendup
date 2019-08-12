@@ -66,15 +66,16 @@ function setFocusMode( mode )
 
 function getWindowListMode()
 {
-	if( ge( 'windowlistDocked' ).checked )
+	// TODO: Reenable later
+	/*if( ge( 'windowlistDocked' ).checked )
 	{
 		return 'docked';
 	}
 	else if( ge( 'windowlistDockedlist' ).checked )
 	{
 		return 'dockedlist';
-	}
-	return 'separate';
+	}*/
+	return 'dockedlist';
 }
 
 function setWindowListMode( mode )
