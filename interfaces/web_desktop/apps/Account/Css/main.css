@@ -34,6 +34,18 @@
 	margin-right: 0;
 }
 
+.AvatarRect
+{
+	width: 320px;
+}
+
+.PaletteRect
+{
+	width: 192px;
+	padding-left: 20px;
+	box-sizing: border-box;
+}
+
 #ClearAvatar
 {
 	position: absolute;
@@ -43,13 +55,6 @@
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.25s;
-}
-
-#AvatarArea:hover + #ClearAvatar,
-#ClearAvatar:hover
-{
-	opacity: 1;
-	pointer-events: all;
 }
 
 #AvatarArea
