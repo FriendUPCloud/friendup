@@ -118,7 +118,9 @@ else if ( isset( $args->args->setting ) )
 		{
 			$palette = explode( ',', $Config->DefaultPalette );
 		}
-		$hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
+		if( $args->args->color )
+			$hex = $args->args->color;
+		else $hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
 		
 		$img = imagecreatetruecolor( 256, 256 );
 		imagealphablending( $img, false );

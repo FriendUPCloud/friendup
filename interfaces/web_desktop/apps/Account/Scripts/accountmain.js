@@ -14,6 +14,28 @@ Application.run = function( msg, iface )
 	{
 		getStorage();
 		getUnmounted();
+		
+		var d = new Module( 'system' );
+		d.onExecuted = function( r, c )
+		{
+			if( r == 'ok' )
+			{
+				try
+				{
+					var data = JSON.parse( c );
+					refreshPalette( data.avatar_color );
+				}
+				catch( e )
+				{
+					refreshPalette();
+				}
+			}
+			else
+			{
+				refreshPalette();
+			}
+		}
+		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
 	// Clear / autoregenerate avatar
@@ -22,27 +44,94 @@ Application.run = function( msg, iface )
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			refreshAvatar();
+			var d = new Module( 'system' );
+			d.onExecuted = function( r, c )
+			{
+				refreshAvatar();
+				if( r == 'ok' )
+				{
+					try
+					{
+						var data = JSON.parse( c );
+						refreshPalette( data.avatar_color );
+					}
+					catch( e )
+					{
+						refreshPalette();
+					}
+				}
+				else
+				{
+					refreshPalette();
+				}
+			}
+			d.execute( 'getsetting', { setting: 'avatar_color' } );
 		}
 		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
 	}
-	refreshPalette();
 }
 
 var palette = [ '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 
 				'#34495E', '#E67E22', '#E74C3C', '#95A5A6' ];
 
-function refreshPalette()
+function refreshPalette( col )
 {
 	var d = document.createElement( 'div' );
 	for( var a = 0; a < palette.length; a++ )
 	{
 		var p = document.createElement( 'div' );
 		p.className = 'Color';
+		if( palette[ a ].toLowerCase() == col.toLowerCase() )
+		{
+			p.classList.add( 'Active' );
+		}
+		p.setAttribute( 'hex', palette[ a ] );
+		p.onclick = function( e )
+		{
+			this.classList.add( 'Active' );
+			for( var c = 0; c < this.parentNode.childNodes.length; c++ )
+			{
+				if( this.parentNode.childNodes[ c ] == this ) continue;
+				else this.parentNode.childNodes[ c ].classList.remove( 'Active' );
+			}
+			var hex = this.getAttribute( 'hex' );
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				var d = new Module( 'system' );
+				d.onExecuted = function( r, c )
+				{
+					refreshAvatar();
+					if( r == 'ok' )
+					{
+						try
+						{
+							var data = JSON.parse( c );
+							refreshPalette( data.avatar_color );
+						}
+						catch( e )
+						{
+							refreshPalette();
+						}
+					}
+					else
+					{
+						refreshPalette();
+					}
+				}
+				d.execute( 'getsetting', { setting: 'avatar_color' } );
+			}
+			m.execute( 'getsetting', { setting: 'avatar', color: hex, mode: 'reset' } );
+		}
 		p.style.backgroundColor = palette[ a ];
 		d.appendChild( p );
 	}
 	d.className = 'PaletteContainer';
+	if( !ge( 'UserPalette' ).querySelector( 'Color' ) )
+	{
+		ge( 'UserPalette' ).classList.add( 'Hidden' );
+		setTimeout( function(){ ge( 'UserPalette' ).classList.remove( 'Hidden' ); ge( 'UserPalette' ).classList.add( 'Shown' ); }, 5 );
+	}
 	ge( 'UserPalette' ).innerHTML = '';
 	ge( 'UserPalette' ).appendChild( d );
 }
