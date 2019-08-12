@@ -74,6 +74,8 @@ Application.run = function( msg, iface )
 var palette = [ '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 
 				'#34495E', '#E67E22', '#E74C3C', '#95A5A6' ];
 
+var userCredentials = null;
+
 function refreshPalette( col )
 {
 	var d = document.createElement( 'div' );
@@ -203,6 +205,24 @@ Application.receiveMessage = function( msg )
 			ge( 'UserAccFullname' ).value        = html_entity_decode( msg.FullName ? msg.FullName : '' );
 			ge( 'UserAccUsername' ).value        = html_entity_decode( msg.Name );
 			ge( 'UserAccEmail'    ).value        = msg.Email ? msg.Email : '';
+			
+			userCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
+			var m = 0;
+			for( var c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
+			{
+				if( ge( 'UserAccFullname' ).value.substr( c, 1 ) == ' ' )
+				{
+					m = 1;
+					continue;
+				}
+				if( m == 1 )
+				{
+					userCredentials += ge( 'UserAccFullname' ).value.substr( c, 1 );
+					break;
+				}
+			}
+			userCredentials = userCredentials.toUpperCase();
+			
 			
 			if( ge( 'PublicKeyContainer' ) )
 			{
@@ -1205,6 +1225,23 @@ function saveDia()
  		email:    ge( 'UserAccEmail' ).value
 	};
 	
+	var nuserCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
+	var m = 0;
+	for( var c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
+	{
+		if( ge( 'UserAccFullname' ).value.substr( c, 1 ) == ' ' )
+		{
+			m = 1;
+			continue;
+		}
+		if( m == 1 )
+		{
+			nuserCredentials += ge( 'UserAccFullname' ).value.substr( c, 1 );
+			break;
+		}
+	}
+	nuserCredentials = nuserCredentials.toUpperCase();
+	
 	// Shall we save new password
 	if( ge( 'UserAccPassword' ).value != '' )
 	{
@@ -1237,7 +1274,12 @@ function saveDia()
 	{
 		ge( 'UserAccPasswordConfirm' ).value = ge( 'UserAccPassword' ).value = ge( 'UserCurrentPassword' ).value = '';
 		Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
-
+		
+		if( nuserCredentials != userCredentials )
+		{
+			userCredentials = nuserCredentials;
+			ge( 'ClearAvatar' ).click();
+		}
 	}
 	obj.command = 'update';
 	f.execute( 'user', obj );
