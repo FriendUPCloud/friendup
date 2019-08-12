@@ -26,6 +26,25 @@ Application.run = function( msg, iface )
 		}
 		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
 	}
+	refreshPalette();
+}
+
+var palette = [ '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 
+				'#34495E', '#E67E22', '#E74C3C', '#95A5A6' ];
+
+function refreshPalette()
+{
+	var d = document.createElement( 'div' );
+	for( var a = 0; a < palette.length; a++ )
+	{
+		var p = document.createElement( 'div' );
+		p.className = 'Color';
+		p.style.backgroundColor = palette[ a ];
+		d.appendChild( p );
+	}
+	d.className = 'PaletteContainer';
+	ge( 'UserPalette' ).innerHTML = '';
+	ge( 'UserPalette' ).appendChild( d );
 }
 
 function refreshAvatar()
