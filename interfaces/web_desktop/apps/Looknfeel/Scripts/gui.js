@@ -36,8 +36,8 @@ function setMenuMode( mode )
 
 function getNavigationMode()
 {
-	if( ge( 'navigationSpacial' ).checked )
-		return 'spacial';
+	/*if( ge( 'navigationSpacial' ).checked )
+		return 'spacial';*/
 	return 'browser';
 }
 
