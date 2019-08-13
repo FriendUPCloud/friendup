@@ -597,7 +597,7 @@ cAjax.prototype.send = function( data )
 	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
 	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
 	{
-        // console.log( 'Test2: Sending ajax call with websockets.' );
+		console.log( 'Test2: Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
         var wsdata = ( data ? data : {} );
         if( self.vars )
@@ -763,7 +763,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	var self = this;
 	
-	//console.log( 'Test3: Handling websocket response: ', wsdata );
+	console.log( 'Test3: Handling websocket response: ', wsdata );
 	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
