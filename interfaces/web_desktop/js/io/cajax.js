@@ -221,7 +221,7 @@ cAjax = function()
 						var res = r ? r.response.toLowerCase() : '';
 						if( res == 'user session not found' )
 						{
-							console.log( '[cAjax 3] Doing a relogin (no user session)' );
+							console.log( '[cAjax 3] Doing a relogin (no user session: ' + Workspace.sessionId + ')', jax.vars );
 							console.trace();
 							// Add to queue
 							AddToCajaxQueue( jax );
