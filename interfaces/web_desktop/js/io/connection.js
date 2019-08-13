@@ -45,7 +45,7 @@ FriendConnection.prototype.request = function( conf, callback )
 		data : conf.data,
 	};
 	req = self.setId( req, conf );
-	console.log( 'Test3: Sending: ', self.sendMessage( req ) );
+	self.sendMessage( req );
 	return reqId;
 }
 
@@ -294,17 +294,18 @@ FriendConnection.prototype.sendMessage = function( msg )
 	if ( !self.ws )
 	{
 		console.log( 'FriendConnection.sendMessage - no ws found, sending async', msg );
-		self.sendAsync( msg );
-		return;
+		return self.sendAsync( msg );
 	}
 	
 	return self.ws.send( msg );
 }
 
+// TODO: Implement
 FriendConnection.prototype.sendAsync = function( msg )
 {
 	var self = this;
 	console.log( 'sendAsync - NYI', msg );
+	return false;
 }
 
 FriendConnection.prototype.setRequestCallback = function( callback )
