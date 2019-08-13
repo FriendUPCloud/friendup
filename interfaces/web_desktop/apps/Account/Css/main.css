@@ -34,23 +34,63 @@
 	margin-right: 0;
 }
 
-#ClearAvatar
+.AvatarRect
 {
-	position: absolute;
-	top: 0px;
-	left: calc(50% - 50px);
-	width: 100px;
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 0.25s;
+	max-width: 320px;
+	margin: auto;
 }
 
-#AvatarArea:hover + #ClearAvatar,
-#ClearAvatar:hover
+.PaletteRect
+{
+	padding-left: 20px;
+	box-sizing: border-box;
+}
+
+#UserPalette
+{
+	width: 100%;
+	height: 134px;
+	margin-bottom: 4px;
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+#UserPalette.Hidden
+{
+	opacity: 0;
+}
+
+#UserPalette.Shown
 {
 	opacity: 1;
-	pointer-events: all;
 }
+
+#UserPalette:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+}
+
+.PaletteContainer .Color
+{
+	width: calc(50% - 4px);
+	height: 25px;
+	float: left;
+	border-radius: 5px;
+	box-sizing: border-box;
+	border: 1px solid rgba(0,0,0,0.3);
+	margin: 2px 2px;
+	cursor: pointer;
+	transition: border 0.25s;
+}
+
+.PaletteContainer .Color.Active
+{
+	border: 1px solid white;
+}
+
+
 
 #AvatarArea
 {

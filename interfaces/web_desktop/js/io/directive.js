@@ -328,7 +328,7 @@ function ExecuteApplication( app, args, callback )
 			var ifr = document.createElement( 'iframe' );
 			// Only sandbox when it's on another domain
 			if( document.location.href.indexOf( sdomain ) != 0 )
-				ifr.setAttribute( 'sandbox', 'allow-forms allow-scripts' );
+				ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 			ifr.path = conf.Path;
 
 			// Set the conf
@@ -1067,7 +1067,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 
 		// Load application into a sandboxed iframe
 		var ifr = document.createElement( 'iframe' );
-		ifr.setAttribute( 'sandbox', 'allow-forms allow-scripts' );
+		ifr.setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 		ifr.path = '/webclient/jsx/';
 
 		args = typeof( args ) != 'string' ? '' : args;

@@ -20,16 +20,22 @@
 							
 								<br/>
 							
-								<div style="text-align: center" class="MarginTop MarginBottom Relative">
-									<div id="AvatarArea">
-										<canvas id="Avatar" width="256" height="256"></canvas>
+								<div class="AvatarRect MarginTop MarginBottom HRow">
+									<div class="FloatLeft TextCenter Relative HContent50">
+										<div id="AvatarArea">
+											<canvas id="Avatar" width="256" height="256"></canvas>
+										</div>
+										<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
+											{i18n_changeavatar}
+										</button>
 									</div>
-									<button type="button" id="ClearAvatar" class="fa-trash Button IconSmall">
-										{i18n_reset}
-									</button>
-									<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
-										{i18n_changeavatar}
-									</button>
+									<div class="PaletteRect FloatLeft TextCenter Relative HContent50">
+										<div id="UserPalette">
+										</div>
+										<button type="button" id="ClearAvatar" class="fa-trash Button IconSmall">
+											{i18n_reset}
+										</button>
+									</div>
 								</div>
 								
 								<br/>

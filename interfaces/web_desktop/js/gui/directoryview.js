@@ -278,7 +278,9 @@ DirectoryView.prototype.addToHistory = function( info )
 		this.pathHistory = out;
 		this.pathHistoryIndex = out.length - 1;
 	}
+	
 	this.window.fileInfo = ele;
+	
 	return true;
 }
 
@@ -394,6 +396,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					var lp = path.substr( path.length - 1, 1 )
 					if( lp != ':' && lp != '/' ) path += '/';
 				}
+
+				console.log( 'Adding volume: ' + volu );
 
 				var fin = {
 					Volume: volu + ':',
@@ -685,6 +689,8 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderOpen( path, event, flags )
 			{
+				var vol = path.split( ':' )[0];
+			
 				winobj.fileInfo = {
 					Path: path,
 					Volume: vol + ':',
@@ -700,11 +706,14 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			},
 			folderClose( path, event, flags )
 			{
+				var vol = path.split( ':' )[0];
+				
 				winobj.fileInfo = {
 					Path: path,
 					Volume: vol + ':',
 					Door: ( new Door( vol + ':' ) )
 				};
+				
 				var lockH = flags && flags.lockHistory;
 				if( !lockH )
 				{
@@ -1216,6 +1225,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						'files': files
 					};
 				}
+				// TODO: Fix here
 				else if( files && winobj.fileInfo && winobj.fileInfo.Volume )
 				{
 					info = {
@@ -3485,6 +3495,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 
 			r.fileInfo = f.fileInfo;
+			
 			r.window = obj.window;
 
 			icnt.appendChild( r );
@@ -4649,7 +4660,10 @@ function RefreshWindowGauge( win, finfo )
 {
 	if( isMobile ) return;
 	if( win.content ) win = win.content;
-	if( !win.fileInfo && finfo ) win.fileInfo = finfo;
+	if( !win.fileInfo && finfo )
+	{
+		win.fileInfo = finfo;
+	}
 	if( !win.fileInfo ) return;
 	var wt = win.fileInfo.Path ? win.fileInfo.Path : win.fileInfo.Title;
 	var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
@@ -5158,14 +5172,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				var j = new cAjax ();
 
 				var updateurl = '/system.library/file/dir?wr=1'
-				updateurl += '&path=' + encodeURIComponent( this.fileInfo.Path );
+				updateurl += '&path=' + encodeURIComponent( self.fileInfo.Path );
 				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 
 				j.open( 'get', updateurl, true, true );
 
-				j.fileInfo = this.fileInfo;
+				j.fileInfo = self.fileInfo;
 				j.file = iconObject;
-				j.win = this;
+				j.win = self;
 				j.onload = function()
 				{
 					if( this.win.refreshTimeout )
@@ -5175,14 +5189,21 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 					}
 
 					var content;
+					
 					// New mode
 					if( this.returnCode == 'ok' )
 					{
 						try
 						{
+							// TODO: Fix this bug with null
+							var iterations = 0;
+							while( this.returnData.charCodeAt( this.returnData.length - 1 ) == 0 && iterations++ < 10 )
+								this.returnData = this.returnData.substr( 0, this.returnData.length - 1 );
 							content = JSON.parse( this.returnData || "null" );
 						}
-						catch ( e ){};
+						catch ( e ){
+							console.log( 'Error in directory listing data.. Ask stefkos!' );
+						};
 					}
 					// Legacy mode..
 					// TODO: REMOVE FROM ALL PLUGINS AND MODS!
@@ -5217,7 +5238,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 							ww.redrawIcons( content, ww.direction, cbk );
 						} );
 					}
-					if( callback ) callback();
+					else
+					{
+						console.log( 'No content.' );
+					}
+					if( callback )
+					{
+						callback();
+					}
 					RefreshWindowGauge( this.win );
 					w.refreshing = false;
 				}

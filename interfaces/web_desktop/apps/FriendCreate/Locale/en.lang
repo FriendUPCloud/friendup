@@ -25,6 +25,9 @@ i18n_autosaved                      : Autosaved.
 i18n_no_project                     : Could not find project
 i18n_cant_project_filename          : Found no project filename.
 
+i18n_loading_project                : Loading project
+i18n_loading_project_desc           : Do you want to load this project? If you click cancel, Friend Create will just load the project file.
+
 tb_newfile                          : New file
 tb_open                             : Open file
 tb_save                             : Save file

@@ -86,7 +86,7 @@ i18n_choose_workgroup                : Choose workgroup
 i18n_workgroup                       : Workgroup
 i18n_device_name                     : Disk name
 i18n_placeholder_connection          : Mydisk
-i18n_reset                           : Reset
+i18n_reset                           : Remove
 
 i18n_add_storage                     : Add storage
 i18n_update_disk                     : Update disk

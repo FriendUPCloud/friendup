@@ -1981,11 +1981,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var out = [];
 						for( var b = 0; b < eles.length; b++ )
 						{
-
 							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
 
 							var nam = eles[b].getAttribute( 'data-displayname' ) ? eles[b].getAttribute( 'data-displayname' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
 							var exe = eles[b].getAttribute( 'data-exename' ) ? eles[b].getAttribute( 'data-exename' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							
+							// Skip erroneous elements
+							if( !exe || typeof( exe ) == 'undefined' || exe == 'undefined' ) continue;
 							
 							var im = eles[b].style.backgroundImage ? 
 								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
@@ -2310,7 +2312,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						dd.appendChild( s );
 					}
 
-					setTimeout( function()
+					function repositionStartMenu()
 					{
 						if( delayedBuildTime )
 						{
@@ -2373,10 +2375,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								dd.style.top = s.offsetHeight - dd.offsetHeight - 1 + 'px';
+								dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 							}
 						}
-					}, 5 );
+					}
+					setTimeout( repositionStartMenu, 250 );
 				} );
 			}
 
