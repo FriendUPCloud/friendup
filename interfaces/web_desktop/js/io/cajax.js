@@ -714,6 +714,13 @@ cAjax.prototype.send = function( data )
 		else
 		{
 			console.log( 'Test3: This is the result: ', res );
+			// This may mean that we're dead!
+			if( typeof( res ) == 'undefined' )
+			{
+				AddToCajaxQueue( self );
+				Workspace.flushSession();
+				return Workspace.relogin();
+			}
 		}
 		return;
 	}
@@ -752,13 +759,15 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	var self = this;
 	
+	//console.log( 'Test3: Handling websocket response: ', wsdata );
+	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
 	{
 		if( Workspace )
 		{
 			// Add to queue
-			console.log( '[cAjax 5] Doing a relogin (no user session)' );
+			//console.log( '[cAjax 5] Doing a relogin (no user session)' );
 			//console.trace();
 			// Add to queue
 			AddToCajaxQueue( self );
@@ -775,7 +784,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.proxy.responseText = self.rawData;
 		self.returnCode = 'fail';
 		self.destroy();
-		console.log( 'Test3: Failed', wsdata );
+		//console.log( 'Test3: Failed', wsdata );
 		return false;
 	}
 	
