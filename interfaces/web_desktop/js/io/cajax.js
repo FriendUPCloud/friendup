@@ -752,7 +752,22 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	var self = this;
 	
-	console.log( 'Test3: Handle websocket response', wsdata );
+	// The data just failed - which means the websocket went away!
+	if( typeof( wsdata ) == 'undefined' )
+	{
+		if( Workspace )
+		{
+			// Add to queue
+			console.log( '[cAjax 2] Doing a relogin (no user session)' );
+			console.trace();
+			// Add to queue
+			AddToCajaxQueue( self );
+			Workspace.flushSession();
+			return Workspace.relogin();
+		}
+		self.destroy();
+		return;
+	}
 	
 	if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
