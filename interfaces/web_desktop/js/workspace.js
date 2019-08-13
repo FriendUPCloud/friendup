@@ -817,7 +817,8 @@ Workspace = {
 	renewAllSessionIds: function( session )
 	{
 		// Clean this up
-		Workspace.conn.ws.close();
+		if( Workspace.conn && Workspace.conn.ws )
+			Workspace.conn.ws.close();
 		
 		if( session )
 			this.sessionId = session;
