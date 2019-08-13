@@ -711,11 +711,12 @@ cAjax.prototype.send = function( data )
 				}, 500 );
 			}
 		}
-		else if( window.Workspace )
+		else
 		{
 			console.log( 'Test3: This is the result: ', res );
+			
 			// This may mean that we're dead!
-			if( typeof( res ) == 'undefined' )
+			if( Workspace.postInitialized && typeof( res ) == 'undefined' )
 			{
 				AddToCajaxQueue( self );
 				Workspace.flushSession();
