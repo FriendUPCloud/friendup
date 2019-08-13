@@ -967,6 +967,7 @@ Workspace = {
 		// Require username and pw to login
 		if( !u || !p || typeof( u ) == 'undefined' )
 		{
+			console.log( 'Test3: Doing the login test.' );
 			// Login by url vars
 			var gu = GetUrlVar( 'username' );
 			var gp = GetUrlVar( 'password' );
