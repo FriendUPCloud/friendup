@@ -836,6 +836,8 @@ Workspace = {
 	{
 		if( sessionid )
 		{
+			console.log( 'Test2: Logging in with sessionid.' );
+			
 			var _this = this;
 
 			var m = new FriendLibrary( 'system' );
@@ -876,6 +878,12 @@ Workspace = {
 				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
+					Workspace.reloginInProgress = false;
+					Workspace.loginCall = false;
+					Workspace.renewAllSessionIds();
+				
+					console.log( 'Test2: Success! Logged in with sessionid.' );
+					
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
 				}
 				else
@@ -901,6 +909,8 @@ Workspace = {
 	login: function( u, p, r, callback, ev )
 	{
 		var self = this;
+		
+		console.log( 'Test2: Normal login.' );
 		
 		// Test if we have a stored session
 		var sess = localStorage.getItem( 'WorkspaceSessionID' );
