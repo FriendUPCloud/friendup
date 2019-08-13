@@ -713,7 +713,7 @@ cAjax.prototype.send = function( data )
 		}
 		else
 		{
-			// console.log( 'Test3: This is the result: ', res );
+			console.log( 'Test3: This is the result: ', res );
 		}
 		return;
 	}
@@ -775,7 +775,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.proxy.responseText = self.rawData;
 		self.returnCode = 'fail';
 		self.destroy();
-		// console.log( 'Test3: Failed', wsdata );
+		console.log( 'Test3: Failed', wsdata );
 		return false;
 	}
 	
@@ -847,7 +847,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			}
 			else
 			{
-				// console.log( 'Test3: Impossible server response: ', self.returnData );
+				console.log( 'Test3: Impossible server response: ', self.returnData );
 			}
 		}
 	}
@@ -868,7 +868,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		}
 		catch( e )
 		{
-			// console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
+			console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
 		}
 	}
 
@@ -877,7 +877,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		if( self.returnData.length > 0 && !self.returnCode )
 		{
-			// console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
+			console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
 			self.returnCode = 'ok';
 		}
 	}
