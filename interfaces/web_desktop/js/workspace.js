@@ -746,7 +746,7 @@ Workspace = {
 			}
 			Workspace.flushSession();
 			
-			if( Workspace.loginUsername && Workspace.loginPassword )
+			if( typeof( Workspace.loginUsername ) != 'undefined' && Workspace.loginUsername && Workspace.loginPassword )
 			{
 				// // console.log( 'Test2: Regular login with user and pass' );
 				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
@@ -993,7 +993,7 @@ Workspace = {
 			this.loginPassword = 'HASHED' + Sha256.hash( p );
 		}
 
-		if( this.loginUsername && this.loginPassword )
+		if( typeof( this.loginUsername ) != 'undefined' && this.loginUsername && this.loginPassword )
 		{
 			// FIXME: Speed this up for the Edge browser
 			this.encryption.setKeys( this.loginUsername, this.loginPassword );
@@ -1072,7 +1072,7 @@ Workspace = {
 						FriendBook.init();
 					
 					// Store username and password in local storage
-					if( r && self.loginUsername && self.loginPassword )
+					if( r && typeof( self.loginUsername ) != 'undefined' && self.loginUsername && self.loginPassword )
 					{
 						// // console.log( 'Test2: Setting localstorage username/pass' );
 						
