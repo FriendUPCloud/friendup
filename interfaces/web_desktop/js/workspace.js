@@ -877,7 +877,7 @@ Workspace = {
 				{
 					Workspace.reloginInProgress = false;
 					Workspace.loginCall = false;
-					Workspace.renewAllSessionIds( json.sessionid );
+					Workspace.renewAllSessionIds( hasSessionID ? json.sessionid : false );
 				
 					console.log( 'Test2: Success! Logged in with sessionid.' );
 					
@@ -1053,7 +1053,7 @@ Workspace = {
 					Workspace.reloginInProgress = false;
 					Workspace.serverIsThere = true;
 					Workspace.workspaceIsDisconnected = false;
-					Workspace.renewAllSessionIds(); // YAY!
+					Workspace.renewAllSessionIds( hasSessionID ? json.sessionid : false ); // YAY!
 					
 					
 					var cl = function()
