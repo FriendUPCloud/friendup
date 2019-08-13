@@ -197,6 +197,8 @@ function ExecuteApplication( app, args, callback )
 		}
 		else if( r != 'ok' )
 		{
+			console.log( 'Test2: Executing app Was not ok.' );
+			
 			// Clean blocker
 			RemoveFromExecutionQueue( appName );
 			
@@ -269,6 +271,17 @@ function ExecuteApplication( app, args, callback )
 				Ac2Alert( i18n( 'application_not_found' ) );
 			}
 			if( callback ) callback( false );
+			console.log( 'Test2: Dead.' );
+			
+			// Clean up single instance
+			var o = {};
+			for( var a in Friend.singleInstanceApps )
+				if( a != appName )
+					o[ a ] = Friend.singleInstanceApps[ a ];
+			Friend.singleInstanceApps = o;
+			// Kill app if it is there
+			KillApplication( appName );
+			
 			return false;
 		}
 

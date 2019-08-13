@@ -46,8 +46,10 @@ function AddToCajaxQueue( ele )
 	{
 		if( ele.onload )
 		{
+			console.log( 'Test2: Just fail!' );
 			ele.onload( false );
 		}
+		console.log( 'Test2: Destroy ajax object.' );
 		return ele.destroy();
 	}
 	
@@ -62,6 +64,7 @@ function AddToCajaxQueue( ele )
 		// Already there
 		if( Friend.cajax[a] == ele ) return false;
 	}
+	console.log( 'Test2: Add ajax element to queue.' );
 	Friend.cajax.push( ele );
 }
 

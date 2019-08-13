@@ -753,8 +753,7 @@ Workspace = {
 			{
 				console.log( 'Test1: Just return - we have nothing to go on. Try executing normal login' );
 				Workspace.reloginInProgress = false;
-				Workspace.login();
-				return;
+				return Workspace.login();
 			}
 			// Just exit to login screen
 			else
