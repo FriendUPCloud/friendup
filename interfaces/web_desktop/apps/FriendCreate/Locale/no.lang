@@ -25,6 +25,9 @@ i18n_autosaved                      : Autolagret.
 i18n_no_project                     : Fant ikke prosjektet
 i18n_cant_project_filename          : Fant ikke et filnavn for prosjektet.
 
+i18n_loading_project                : Åpner prosjekt
+i18n_loading_project_desc           : Ønsker du å åpne dette prosjektet? Hvis du avbryter vil Friend Create kun åpne prosjektfilen som tekst.
+
 tb_newfile                          : Ny fil
 tb_open                             : Åpne fil
 tb_save                             : Lagre fil
