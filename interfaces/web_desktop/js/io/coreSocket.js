@@ -668,8 +668,8 @@ FriendWebSocket.prototype.wsSend = function( str )
 	var self = this;
 	try
 	{
-		self.ws.send( str );
-		console.log( 'Test3: Successfully sent;', str );
+		var res = self.ws.send( str );
+		console.log( 'Test3: Successfully sent;', str, res );
 	}
 	catch( e )
 	{
