@@ -966,7 +966,9 @@ Workspace = {
 		if( !u || !p )
 		{
 			// Login by url vars
-			if( GetUrlVar( 'username' ) && GetUrlVar( 'password' ) )
+			var gu = GetUrlVar( 'username' );
+			var gp = GetUrlVar( 'password' );
+			if( gu && gp && typeof( gu ) != 'undefined' )
 			{
 				return Workspace.login( decodeURIComponent( GetUrlVar( 'username' ) ), decodeURIComponent( GetUrlVar( 'password' ) ) );
 			}
@@ -1014,11 +1016,12 @@ Workspace = {
 			var m = new FriendLibrary( 'system' );
 			this.loginCall = m;
 
-			if( this.loginUsername )
+			if( this.loginUsername && typeof( this.loginUsername ) != 'undefined' )
 			{
 				m.addVar( 'username', this.loginUsername );
 				m.addVar( 'password', this.loginPassword );
 			}
+			
 			m.addVar( 'deviceid', GetDeviceId() );
 			if( this.sessionId )
 			{
