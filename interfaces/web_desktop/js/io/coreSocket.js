@@ -338,6 +338,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 		if( msg.data.data == 'session killed' )
 		{
 			//Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
+			console.log( 'Test3: Session was killed!' );
 			this.handleClose();
 			/*
 			setTimeout( function()
