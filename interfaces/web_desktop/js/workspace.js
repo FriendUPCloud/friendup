@@ -833,6 +833,7 @@ Workspace = {
 			{
 				Friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
 				Friend.cajax[a].open();
+				Friend.cajax[a].forceHTTP = true;
 				Friend.cajax[a].send();
 			}
 			Friend.cajax = [];
