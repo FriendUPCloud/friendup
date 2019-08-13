@@ -847,8 +847,6 @@ Workspace = {
 	{
 		if( sessionid )
 		{
-			this.reloginInProgress = true;
-			
 			console.log( 'Test2: Logging in with sessionid.' );
 			
 			var _this = this;
