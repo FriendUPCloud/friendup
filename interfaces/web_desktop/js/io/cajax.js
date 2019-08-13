@@ -46,10 +46,10 @@ function AddToCajaxQueue( ele )
 	{
 		if( ele.onload )
 		{
-			console.log( 'Test2: Just fail!' );
+			// console.log( 'Test2: Just fail!' );
 			ele.onload( false );
 		}
-		console.log( 'Test2: Destroy ajax object.' );
+		// console.log( 'Test2: Destroy ajax object.' );
 		return ele.destroy();
 	}
 	
@@ -64,7 +64,7 @@ function AddToCajaxQueue( ele )
 		// Already there
 		if( Friend.cajax[a] == ele ) return false;
 	}
-	console.log( 'Test2: Add ajax element to queue.' );
+	// console.log( 'Test2: Add ajax element to queue.' );
 	Friend.cajax.push( ele );
 }
 
@@ -582,7 +582,7 @@ cAjax.prototype.send = function( data )
 	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
 	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
 	{
-        console.log( 'Test2: Sending with websockets.' );
+        // console.log( 'Test2: Sending with websockets.' );
         var u = self.url.split( '?' );
         var wsdata = ( data ? data : {} );
         if( self.vars )
@@ -666,7 +666,7 @@ cAjax.prototype.send = function( data )
 				for( var a in this.vars )
 					out.push( a + '=' + this.vars[a] );
 				res = this.proxy.send( out.join ( '&' ) );
-				console.log( 'Test2: Here u: ' + out.join( '&' ) );
+				// console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}
 			// All else fails?
 			else
@@ -683,7 +683,7 @@ cAjax.prototype.send = function( data )
 			var u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
-			console.log( 'Test2: Here: ' + u );
+			// console.log( 'Test2: Here: ' + u );
 			try 
 			{ 
 				res = this.proxy.send( null ); 
