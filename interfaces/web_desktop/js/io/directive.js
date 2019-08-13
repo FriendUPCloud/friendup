@@ -164,6 +164,7 @@ function ExecuteApplication( app, args, callback )
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
 		// Remove from execution queue
+		RemoveFromExecutionQueue( appName );
 		return ExecuteJSXByPath( app, args, callback, undefined );
 	}
 	else if( app.indexOf( ':' ) > 0 )
@@ -186,21 +187,19 @@ function ExecuteApplication( app, args, callback )
 			//
 		}
 
+		// Remove blocker
+		RemoveFromExecutionQueue( appName );
+		
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
 			if( callback ) callback( false );
 			
-			// Clean blocker
-			RemoveFromExecutionQueue( appName );
 			return false;
 		}
 		else if( r != 'ok' )
 		{
-			console.log( 'Test2: Executing app Was not ok.' );
-			
-			// Clean blocker
-			RemoveFromExecutionQueue( appName );
+			// console.log( 'Test2: Executing app Was not ok.' );
 			
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
@@ -271,7 +270,7 @@ function ExecuteApplication( app, args, callback )
 				Ac2Alert( i18n( 'application_not_found' ) );
 			}
 			if( callback ) callback( false );
-			console.log( 'Test2: Dead.' );
+			// console.log( 'Test2: Dead.' );
 			
 			// Clean up single instance
 			var o = {};
@@ -297,8 +296,6 @@ function ExecuteApplication( app, args, callback )
 				Ac2Alert( 'Can not run v0 applications.' );
 				if( callback ) callback( false );
 				
-				// Clean blocker
-				RemoveFromExecutionQueue( appName );
 				return false;
 			}
 
