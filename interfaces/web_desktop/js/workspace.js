@@ -955,7 +955,7 @@ Workspace = {
 		// Check local storage
 		var ru = window.localStorage.getItem( 'WorkspaceUsername' );
 		var rp = window.localStorage.getItem( 'WorkspacePassword' );
-		if( ru && rp )
+		if( ru && rp && typeof( ru ) != 'undefined' )
 		{
 			u = ru;
 			p = rp;
@@ -963,7 +963,7 @@ Workspace = {
 		}
 
 		// Require username and pw to login
-		if( !u || !p )
+		if( !u || !p || typeof( u ) == 'undefined' )
 		{
 			// Login by url vars
 			var gu = GetUrlVar( 'username' );
