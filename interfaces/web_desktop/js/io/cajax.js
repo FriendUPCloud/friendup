@@ -300,7 +300,7 @@ cAjax = function()
 		}
 		else
 		{
-			//console.log( '* Idling ajax: ' + this.readyState + ' ' + this.status );
+			console.log( '* Idling ajax: ' + this.readyState + ' ' + this.status, this.response );
 		}
 	}
 }
