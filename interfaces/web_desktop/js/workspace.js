@@ -725,10 +725,6 @@ Workspace = {
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
 		
-		// Clean this up
-		if( Workspace.conn && Workspace.conn.ws )
-			Workspace.conn.ws.close();
-		
 		console.log( 'Test1: Relogin in progress' );
 		
 		var self = this;
@@ -920,10 +916,6 @@ Workspace = {
 	{
 		var self = this;
 		
-		// Clean this up
-		if( Workspace.conn && Workspace.conn.ws )
-			Workspace.conn.ws.close();
-		
 		console.log( 'Test2: Normal login.' );
 		
 		// Test if we have a stored session
@@ -940,6 +932,20 @@ Workspace = {
 			if( callback && typeof( callback ) == 'function' ) callback( true );
 			Workspace.reloginInProgress = false;
 			return true;
+		}
+		
+		// Close conn here
+		if( Workspace.conn )
+		{
+			try
+			{
+				Workspace.conn.ws.close();
+			}
+			catch( e )
+			{
+				console.log( 'Could not close conn.' );
+			}
+			delete Workspace.conn;
 		}
 		
 		// Check local storage
