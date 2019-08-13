@@ -1649,6 +1649,11 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 
 /* Calendar ----------------------------------------------------------------- */
 
+.HidingCalendar #CalendarWidget
+{
+	height: 0px !important;
+}
+
 .Calendar.MonthName
 {
 	padding: 8px;
