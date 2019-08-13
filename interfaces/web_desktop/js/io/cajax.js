@@ -711,7 +711,7 @@ cAjax.prototype.send = function( data )
 				}, 500 );
 			}
 		}
-		else
+		else if( window.Workspace )
 		{
 			console.log( 'Test3: This is the result: ', res );
 			// This may mean that we're dead!
