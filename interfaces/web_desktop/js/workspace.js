@@ -725,6 +725,10 @@ Workspace = {
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
 		
+		// Clean this up
+		if( Workspace.conn && Workspace.conn.ws )
+			Workspace.conn.ws.close();
+		
 		console.log( 'Test1: Relogin in progress' );
 		
 		var self = this;
@@ -823,10 +827,6 @@ Workspace = {
 	// Renews session ids for cajax!
 	renewAllSessionIds: function( session )
 	{
-		// Clean this up
-		if( Workspace.conn && Workspace.conn.ws )
-			Workspace.conn.ws.close();
-		
 		if( session )
 			this.sessionId = session;
 		
@@ -919,6 +919,10 @@ Workspace = {
 	login: function( u, p, r, callback, ev )
 	{
 		var self = this;
+		
+		// Clean this up
+		if( Workspace.conn && Workspace.conn.ws )
+			Workspace.conn.ws.close();
 		
 		console.log( 'Test2: Normal login.' );
 		
@@ -1171,6 +1175,7 @@ Workspace = {
 		function setupWorkspaceData( json, cb )
 		{
 			console.log( 'Test2: Set it up.', json );
+			
 			// Ok, we're in
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
