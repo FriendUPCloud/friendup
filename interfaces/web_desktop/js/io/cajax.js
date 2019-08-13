@@ -643,6 +643,10 @@ cAjax.prototype.send = function( data )
 			Workspace.flushSession();
 			return Workspace.relogin();
         }
+        else
+        {
+        	console.log( 'Test3: We got requestID: ' + reqID );
+        }
         
         self.wsRequestID = reqID;
 		

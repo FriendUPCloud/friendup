@@ -46,7 +46,10 @@ FriendConnection.prototype.request = function( conf, callback )
 	};
 	req = self.setId( req, conf );
 	var result = self.sendMessage( req );
-	if( result ) return reqId;
+	if( result ) 
+	{
+		return reqId;
+	}
 	return false;
 }
 
