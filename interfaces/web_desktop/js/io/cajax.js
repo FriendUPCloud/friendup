@@ -142,7 +142,7 @@ cAjax = function()
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
 		{	
-			console.log( 'Test3: onreadystatechange 200 - Here we go: ', jax.url, this.response );
+			// console.log( 'Test3: onreadystatechange 200 - Here we go: ', jax.url, this.response );
 			
 			if( this.responseType == 'arraybuffer' )
 			{
@@ -297,7 +297,7 @@ cAjax = function()
 			Friend.cajax = o;
 			// End clean queue
 
-			console.log( 'Test3: ' + this.readyState + ' ' + this.status, this.response );
+			// console.log( 'Test3: ' + this.readyState + ' ' + this.status, this.response );
 
 			// tell our caller...
 			if( jax.onload ) jax.onload( 'fail', false );
@@ -428,7 +428,7 @@ cAjax.prototype.addVar = function( key, val )
 {
 	if( typeof( val ) == 'undefined' )
 	{
-		//console.log( 'Test3: Trying to add undefined var.', key, val );
+		//// console.log( 'Test3: Trying to add undefined var.', key, val );
 		return;
 	}
 	if( typeof( this.vars[ key ] ) == 'undefined' )
@@ -645,7 +645,7 @@ cAjax.prototype.send = function( data )
         }
         else
         {
-        	console.log( 'Test3: We got requestID: ' + reqID );
+        	// console.log( 'Test3: We got requestID: ' + reqID );
         }
         
         self.wsRequestID = reqID;
@@ -779,7 +779,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	var self = this;
 	
-	console.log( 'Test3: Handling websocket response: ', wsdata );
+	// console.log( 'Test3: Handling websocket response: ', wsdata );
 	
 	// The data just failed - which means the websocket went away!
 	if( typeof( wsdata ) == 'undefined' )
@@ -804,7 +804,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.proxy.responseText = self.rawData;
 		self.returnCode = 'fail';
 		self.destroy();
-		//console.log( 'Test3: Failed', wsdata );
+		//// console.log( 'Test3: Failed', wsdata );
 		return false;
 	}
 	
@@ -876,7 +876,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			}
 			else
 			{
-				console.log( 'Test3: Impossible server response: ', self.returnData );
+				// console.log( 'Test3: Impossible server response: ', self.returnData );
 			}
 		}
 	}
@@ -897,7 +897,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		}
 		catch( e )
 		{
-			console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
+			// console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
 		}
 	}
 
@@ -906,7 +906,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		if( self.returnData.length > 0 && !self.returnCode )
 		{
-			console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
+			// console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
 			self.returnCode = 'ok';
 		}
 	}

@@ -340,7 +340,7 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 		if( msg.data.data == 'session killed' )
 		{
 			//Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
-			console.log( 'Test3: Session was killed!' );
+			// console.log( 'Test3: Session was killed!' );
 			this.handleClose();
 			/*
 			setTimeout( function()
@@ -500,7 +500,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	var msgStr = friendUP.tool.stringify( msg );
 	if( checkMustChunk( msgStr ))
 	{
-		console.log( 'Test3: Sending chuked.' );
+		// console.log( 'Test3: Sending chuked.' );
 		return self.chunkSend( msgStr );
 	}
 	
@@ -669,7 +669,7 @@ FriendWebSocket.prototype.wsSend = function( str )
 	try
 	{
 		var res = self.ws.send( str );
-		console.log( 'Test3: Successfully sent;', str );
+		// console.log( 'Test3: Successfully sent;', str );
 	}
 	catch( e )
 	{
