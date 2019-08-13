@@ -858,7 +858,10 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	if( typeof( self.returnData ) == 'string' )
 	{
 		if( self.returnData.length > 0 && !self.returnCode )
+		{
+			console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
 			self.returnCode = 'ok';
+		}
 	}
 	if( self.onload )
 	{
