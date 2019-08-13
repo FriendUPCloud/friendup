@@ -780,6 +780,7 @@ Workspace = {
 			
 			if( e == 'ok' )
 			{
+				// We have a successful login. Clear call blockers and update sessions, execute ajax queue
 				Workspace.reloginInProgress = false;
 				Workspace.loginCall = false;
 				Workspace.renewAllSessionIds();
@@ -821,7 +822,7 @@ Workspace = {
 		m.execute( 'usersettings' );
 		// // console.log( 'Test2: Getting usersettings.' );
 	},
-	// Renews session ids for cajax!
+	// Renews session ids for cajax and executes ajax queue!
 	renewAllSessionIds: function( session )
 	{
 		if( session )
@@ -886,6 +887,7 @@ Workspace = {
 				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
+					// Successful login, clear blockers and execute ajax queue
 					Workspace.reloginInProgress = false;
 					Workspace.loginCall = false;
 					Workspace.renewAllSessionIds( hasSessionID ? json.sessionid : false );
@@ -936,7 +938,7 @@ Workspace = {
 			return true;
 		}
 		
-		// Close conn here
+		// Close conn here - new login regenerates sessionid
 		if( Workspace.conn )
 		{
 			try
@@ -1108,7 +1110,7 @@ Workspace = {
 					}
 					else
 					{
-						Alert( 'Test1: We are dead in the water.', 'Dead dead dead.' );
+						//Alert( 'Test1: We are dead in the water.', 'Dead dead dead.' );
 					}
 					
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
@@ -1219,6 +1221,7 @@ Workspace = {
 				}
 				// console.log( 'Test2: Renewing all sessions.' );
 				
+				// We have renewed our session, make sure to set it and run ajax queue
 				_this.renewAllSessionIds( _this.sessionId );
 
 				// Call back!
@@ -1325,7 +1328,7 @@ Workspace = {
 				// TODO: This block is only for already initialized workspace
 				if( _this.sessionId && _this.postInitialized )
 				{
-					console.log( 'This is the session.:', _this.sessionId );
+					//console.log( 'This is the session.:', _this.sessionId );
 					if( callback && typeof( callback ) == 'function' ) callback( true );
 					return true;
 				}
