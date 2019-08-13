@@ -1297,6 +1297,7 @@ Workspace = {
 			{
 				// Start with expanding the workspace object
 				// TODO: If we have sessionid - verify it through ajax.
+				// TODO: This block is only for already initialized workspace
 				if( _this.sessionId && _this.postInitialized )
 				{
 					console.log( 'This is the session.:', _this.sessionId );
