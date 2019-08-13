@@ -757,6 +757,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.proxy.responseText = self.rawData;
 		self.returnCode = 'fail';
 		self.destroy();
+		console.log( 'Test3: Failed', wsdata );
 		return false;
 	}
 	
@@ -826,6 +827,10 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				console.log( '[cAjax] Could not understand server response: ', self.returnData );
 				return;
 			}
+			else
+			{
+				console.log( 'Test3: Impossible server response: ', self.returnData );
+			}
 		}
 	}
 	// Respond to old expired sessions!
@@ -845,6 +850,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		}
 		catch( e )
 		{
+			console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
 		}
 	}
 
