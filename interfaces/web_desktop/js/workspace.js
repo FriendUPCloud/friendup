@@ -419,6 +419,8 @@ Workspace = {
 
 		// Init security subdomains
 		SubSubDomains.initSubSubDomains();
+		
+		console.log( 'Test2: Done post init.' );
 	},
 	encryption: {
 
@@ -952,7 +954,7 @@ Workspace = {
 			}
 			else if( GetUrlVar( 'sessionid' ) )
 			{
-				return Workspace.loginSessionId( GetUrlVar( 'sessionid' ) );
+				return Workspace.loginSessionId( GetUrlVar( 'sessionid' ), callback, ev );
 			}
 			Workspace.reloginInProgress = false;
 			if( callback && typeof( callback ) == 'function' ) callback( false );
@@ -1060,11 +1062,10 @@ Workspace = {
 					Workspace.reloginInProgress = false;
 					Workspace.serverIsThere = true;
 					Workspace.workspaceIsDisconnected = false;
-					Workspace.renewAllSessionIds( hasSessionID ? json.sessionid : false ); // YAY!
-					
 					
 					var cl = function()
 					{
+						console.log( 'Test2: Running callback.' );
 						t.loginCall = null;
 						if( callback && typeof( callback ) == 'function' )
 							callback( true, serveranswer );
@@ -1158,11 +1159,14 @@ Workspace = {
 	},
 	initUserWorkspace: function( json, callback, ev )
 	{
+		console.log( 'Test2: Init user workspace.' );
+		
 		var _this = Workspace;
 
 		// Once we are done
 		function setupWorkspaceData( json, cb )
 		{
+			console.log( 'Test2: Set it up.' );
 			// Ok, we're in
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
@@ -1196,7 +1200,8 @@ Workspace = {
 				{
 					document.body.removeChild( ge( 'SessionBlock' ) );
 				}
-				_this.renewAllSessionIds();
+				console.log( 'Test2: Renewing all sessions.' );
+				_this.renewAllSessionIds( _this.sessionId );
 
 				// Call back!
 				if( cb ) cb();
@@ -1245,6 +1250,7 @@ Workspace = {
 		
 		if( !this.userWorkspaceInitialized )
 		{
+			console.log( 'Test2: Doing the initialization.' );
 			this.userWorkspaceInitialized = true;
 
 			// Loading remaining scripts
@@ -1300,11 +1306,16 @@ Workspace = {
 				// TODO: If we have sessionid - verify it through ajax.
 				if( _this.sessionId )
 				{
+					console.log( 'This is the session.:', _this.sessionId );
 					if( callback && typeof( callback ) == 'function' ) callback( true );
 					return true;
 				}
 
-				if( !json || !json.sessionid ) return false;
+				if( !json || !json.sessionid ) 
+				{
+					console.log( 'Test2: Got in sessionid error.', json );
+					return false;
+				}
 
 				// Reset some options
 				if( ev && ev.shiftKey )
