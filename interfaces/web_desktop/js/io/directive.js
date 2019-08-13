@@ -615,7 +615,7 @@ function ExecuteApplication( app, args, callback )
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
 	m.execute( 'friendapplication', eo );
-	console.log( 'Test3: Executing application: ' + app );
+	// console.log( 'Test3: Executing application: ' + app );
 }
 
 function FlushSingleApplicationLock( app )
