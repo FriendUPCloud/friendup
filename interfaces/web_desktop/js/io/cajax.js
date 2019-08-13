@@ -223,13 +223,16 @@ cAjax = function()
 						
 						if( res == 'user not found' || res == 'user session not found' )
 						{
-							console.log( '[cAjax 3] Doing a relogin (no user session: ' + Workspace.sessionId + ')', jax.vars );
-							console.trace();
+							if( Workspace.postInitialized )
+							{
+								console.log( '[cAjax 3] Doing a relogin (no user session: ' + Workspace.sessionId + ')', jax.vars );
+								console.trace();
 							
-							// Add to queue
-							AddToCajaxQueue( jax );
-							Workspace.flushSession();
-							return Workspace.relogin();
+								// Add to queue
+								AddToCajaxQueue( jax );
+								Workspace.flushSession();
+								return Workspace.relogin();
+							}
 						}
 					}
 					catch( e )
