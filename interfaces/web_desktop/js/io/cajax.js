@@ -139,6 +139,8 @@ cAjax = function()
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
 		{	
+			console.log( 'Test3: onreadystatechange 200 - Here we go: ', jax.url, this.response );
+			
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
@@ -421,7 +423,7 @@ cAjax.prototype.addVar = function( key, val )
 {
 	if( typeof( val ) == 'undefined' )
 	{
-		console.log( 'Test3: Trying to add undefined var.', key, val );
+		//console.log( 'Test3: Trying to add undefined var.', key, val );
 		return;
 	}
 	if( typeof( this.vars[ key ] ) == 'undefined' )
