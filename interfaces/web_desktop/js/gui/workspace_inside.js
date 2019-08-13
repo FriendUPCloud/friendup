@@ -7886,7 +7886,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	checkServerConnectionHTTP: function()
 	{	
 		// Too early
-		if( !Workspace.postInitialized || !Workspace.sessionId ) return;
+		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
 		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
