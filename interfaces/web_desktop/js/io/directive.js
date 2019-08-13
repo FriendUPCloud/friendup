@@ -189,6 +189,7 @@ function ExecuteApplication( app, args, callback )
 
 		// Remove blocker
 		RemoveFromExecutionQueue( appName );
+		console.log( 'Test3: Executed. Removing appqueue: ' + appName );
 		
 		if( r == 'activate' )
 		{
