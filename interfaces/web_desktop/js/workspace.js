@@ -746,15 +746,12 @@ Workspace = {
 			}
 			Workspace.flushSession();
 			
-			if( typeof( Workspace.loginUsername ) != 'undefined' && Workspace.loginUsername && Workspace.loginPassword )
+			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
 				// // console.log( 'Test2: Regular login with user and pass' );
-				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
-			}
-			// Standard
-			else
-			{
-				Workspace.login( false, false, false, Workspace.initWebSocket );
+				var u = typeof( Workspace.loginUsername ) == 'undefined' ? false : Workspace.loginUsername;
+				var p = typeof( Workspace.loginPassword ) == 'undefined' ? false : Workspace.loginPassword;
+				Workspace.login( u, p, false, Workspace.initWebSocket );
 			}
 			// Friend app waits some more
 			else if( window.friendApp )
