@@ -1039,7 +1039,9 @@ Workspace = {
 					Workspace.reloginInProgress = false;
 					
 					if( t.loginPrompt )
+					{
 						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
+					}
 					else
 					{
 						Alert( 'We are dead in the water.', 'Dead dead dead.' );
