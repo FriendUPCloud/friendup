@@ -69,7 +69,7 @@ FriendWebSocket.prototype.send = function( msgObj )
 {
 	return this.sendOnSocket( {
 		type: 'msg',
-		data: msgObj,
+		data: msgObj
 	} );
 }
 
@@ -151,7 +151,9 @@ FriendWebSocket.prototype.connect = function()
 	}
 	
 	self.setState( 'connecting' );
-	try {
+	
+	try
+	{
 		if( self.ws )
 		{
 			self.cleanup();
@@ -477,31 +479,34 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	var self = this;
-	if ( !socketReady( force )) {
+	if( !socketReady( force ) )
+	{
 		queue( msg );
 		return false;
 	}
 	
-	if ( !wsReady())
+	if ( !wsReady() )
 	{
 		queue( msg );
 		self.doReconnect();
 		return false;
 	}
 	
-	if ( 'con' !== msg.type )
+	if( 'con' !== msg.type )
 	{
 		//console.log( 'FriendWebSocket.sendOnSocket - type con:', msg );
 	}
 	
 	var msgStr = friendUP.tool.stringify( msg );
-	if ( checkMustChunk( msgStr ))
+	if( checkMustChunk( msgStr ))
 	{
+		console.log( 'Test3: Sending chuked.' );
 		return self.chunkSend( msgStr );
 	}
 	
 	const success = self.wsSend( msgStr );
-	if ( !success ) {
+	if( !success )
+	{
 		queue( msg );
 		self.reconnect();
 		return false;
@@ -536,7 +541,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	
 	function checkMustChunk( str )
 	{
-		if ( str.length < self.maxStrLength )
+		if( str.length < self.maxStrLength )
 		{
 			//console.log( 'No need to chunk this one: ' + str.length );
 			return false;
@@ -546,10 +551,14 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 		
 		var realString = new String( str );
 		strBlob = new Blob( realString );
-		if ( strBlob.size >= self.maxFCBytes )
+		if( strBlob.size >= self.maxFCBytes )
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 }
 
@@ -660,6 +669,7 @@ FriendWebSocket.prototype.wsSend = function( str )
 	try
 	{
 		self.ws.send( str );
+		console.log( 'Test3: Successfully sent;', str );
 	}
 	catch( e )
 	{
