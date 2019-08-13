@@ -823,6 +823,9 @@ Workspace = {
 	// Renews session ids for cajax!
 	renewAllSessionIds: function( session )
 	{
+		// Clean this up
+		Workspace.conn.ws.close();
+		
 		if( session )
 			this.sessionId = session;
 		
@@ -1166,7 +1169,7 @@ Workspace = {
 		// Once we are done
 		function setupWorkspaceData( json, cb )
 		{
-			console.log( 'Test2: Set it up.' );
+			console.log( 'Test2: Set it up.', json );
 			// Ok, we're in
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
@@ -1201,6 +1204,7 @@ Workspace = {
 					document.body.removeChild( ge( 'SessionBlock' ) );
 				}
 				console.log( 'Test2: Renewing all sessions.' );
+				
 				_this.renewAllSessionIds( _this.sessionId );
 
 				// Call back!
