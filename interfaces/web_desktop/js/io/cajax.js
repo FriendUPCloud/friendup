@@ -617,6 +617,9 @@ cAjax.prototype.send = function( data )
         };
         
         var reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
+        
+        console.log( 'Test3: Getting reqID: ', reqID );
+        
         self.wsRequestID = reqID;
 		
 		// Add cancellable network connection
