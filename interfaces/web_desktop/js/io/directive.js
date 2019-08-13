@@ -189,7 +189,7 @@ function ExecuteApplication( app, args, callback )
 
 		// Remove blocker
 		RemoveFromExecutionQueue( appName );
-		console.log( 'Test3: Executed. Removing appqueue: ' + appName );
+		// console.log( 'Test3: Executed. Removing appqueue: ' + appName );
 		
 		if( r == 'activate' )
 		{
@@ -622,7 +622,7 @@ function ExecuteApplication( app, args, callback )
 	}
 	m.forceHTTP = true;
 	m.execute( 'friendapplication', eo );
-	console.log( 'Test3: Executing application: ' + app );
+	// console.log( 'Test3: Executing application: ' + app );
 }
 
 function FlushSingleApplicationLock( app )
