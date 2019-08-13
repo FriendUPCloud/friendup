@@ -139,7 +139,6 @@ cAjax = function()
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
 		{	
-			console.log( 'Test3: Response: ', this.readyState, this.status, this.response );
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
@@ -219,8 +218,9 @@ cAjax = function()
 					try
 					{
 						var r = JSON.parse( jax.returnData );
+						console.log( 'Hey: ', r );
 						var res = r ? r.response.toLowerCase() : '';
-						if( res == 'user session not found' )
+						if( res == 'user session not found' || res == 'user not found' )
 						{
 							console.log( '[cAjax 3] Doing a relogin (no user session: ' + Workspace.sessionId + ')', jax.vars );
 							console.trace();
