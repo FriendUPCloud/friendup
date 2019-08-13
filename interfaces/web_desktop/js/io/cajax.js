@@ -633,6 +633,14 @@ cAjax.prototype.send = function( data )
         
         var reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
         
+        if( !reqID )
+        {
+        	console.log( 'Test: Request failed ', reqId );
+        	AddToCajaxQueue( self );
+			Workspace.flushSession();
+			return Workspace.relogin();
+        }
+        
         self.wsRequestID = reqID;
 		
 		// Add cancellable network connection
