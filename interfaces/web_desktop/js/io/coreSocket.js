@@ -669,14 +669,14 @@ FriendWebSocket.prototype.wsSend = function( str )
 	try
 	{
 		var res = self.ws.send( str );
-		console.log( 'Test3: Successfully sent;', str, res );
+		console.log( 'Test3: Successfully sent;', str );
 	}
 	catch( e )
 	{
 		console.log( 'FriendWebSocket.sendOnSocket failed', {
-			e   : e,
-			str : str,
-		});
+			e  : e,
+			str: str
+		} );
 		return false;
 	}
 	
