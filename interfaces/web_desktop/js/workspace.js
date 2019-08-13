@@ -772,6 +772,7 @@ Workspace = {
 			{
 				Workspace.reloginInProgress = false;
 				Workspace.loginCall = false;
+				Workspace.renewAllSessionIds();
 				console.log( 'Test1: Yeah! All good!' );
 				return;
 			}
@@ -1038,6 +1039,9 @@ Workspace = {
 					Workspace.reloginInProgress = false;
 					Workspace.serverIsThere = true;
 					Workspace.workspaceIsDisconnected = false;
+					Workspace.renewAllSessionIds(); // YAY!
+					
+					
 					var cl = function()
 					{
 						t.loginCall = null;
