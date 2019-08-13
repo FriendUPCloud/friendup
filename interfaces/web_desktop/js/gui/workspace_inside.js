@@ -7885,6 +7885,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
+		// Too early
+		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
+		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
