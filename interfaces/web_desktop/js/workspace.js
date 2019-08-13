@@ -768,6 +768,7 @@ Workspace = {
 			
 			if( e == 'ok' )
 			{
+				console.log( 'Test1: Yeah! All good!' );
 				return;
 			}
 			else
