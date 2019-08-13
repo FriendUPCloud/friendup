@@ -763,6 +763,8 @@ Workspace = {
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			console.log( 'Test1: Got back: ', e, d );
+			
 			self.reloginAttempts = false;
 			Workspace.reloginInProgress = true;
 			
@@ -804,6 +806,7 @@ Workspace = {
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'usersettings' );
+		console.log( 'Test1: Getting usersettings.' );
 	},
 	renewAllSessionIds: function()
 	{
