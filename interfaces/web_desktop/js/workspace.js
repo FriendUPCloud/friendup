@@ -825,8 +825,8 @@ Workspace = {
 			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
 				Friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
-				Friend.cajax[a].open();
 				Friend.cajax[a].forceHTTP = true;
+				Friend.cajax[a].open();
 				Friend.cajax[a].send();
 			}
 			Friend.cajax = [];
