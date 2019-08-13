@@ -46,10 +46,10 @@ function AddToCajaxQueue( ele )
 	{
 		if( ele.onload )
 		{
-			// console.log( 'Test2: Just fail!' );
+			// // console.log( 'Test2: Just fail!' );
 			ele.onload( false );
 		}
-		// console.log( 'Test2: Destroy ajax object.' );
+		// // console.log( 'Test2: Destroy ajax object.' );
 		return ele.destroy();
 	}
 	
@@ -64,7 +64,7 @@ function AddToCajaxQueue( ele )
 		// Already there
 		if( Friend.cajax[a] == ele ) return false;
 	}
-	// console.log( 'Test2: Add ajax element to queue.' );
+	// // console.log( 'Test2: Add ajax element to queue.' );
 	Friend.cajax.push( ele );
 }
 
@@ -582,7 +582,7 @@ cAjax.prototype.send = function( data )
 	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
 	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
 	{
-        console.log( 'Test2: Sending ajax call with websockets.' );
+        // console.log( 'Test2: Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
         var wsdata = ( data ? data : {} );
         if( self.vars )
@@ -639,7 +639,7 @@ cAjax.prototype.send = function( data )
 		return;
 	}
 
-	console.log( 'Test2: Sending ajax request with standard sockets.' );
+	// console.log( 'Test2: Sending ajax request with standard sockets.' );
 
 	// standard HTTP way....
 	// Now
@@ -669,7 +669,7 @@ cAjax.prototype.send = function( data )
 				for( var a in this.vars )
 					out.push( a + '=' + this.vars[a] );
 				res = this.proxy.send( out.join ( '&' ) );
-				// console.log( 'Test2: Here u: ' + out.join( '&' ) );
+				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}
 			// All else fails?
 			else
@@ -686,7 +686,7 @@ cAjax.prototype.send = function( data )
 			var u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
-			// console.log( 'Test2: Here: ' + u );
+			// // console.log( 'Test2: Here: ' + u );
 			try 
 			{ 
 				res = this.proxy.send( null ); 
@@ -713,7 +713,7 @@ cAjax.prototype.send = function( data )
 		}
 		else
 		{
-			console.log( 'Test3: This is the result: ', res );
+			// console.log( 'Test3: This is the result: ', res );
 		}
 		return;
 	}
@@ -758,8 +758,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		if( Workspace )
 		{
 			// Add to queue
-			console.log( '[cAjax 2] Doing a relogin (no user session)' );
-			console.trace();
+			console.log( '[cAjax 5] Doing a relogin (no user session)' );
+			//console.trace();
 			// Add to queue
 			AddToCajaxQueue( self );
 			Workspace.flushSession();
@@ -775,7 +775,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		self.proxy.responseText = self.rawData;
 		self.returnCode = 'fail';
 		self.destroy();
-		console.log( 'Test3: Failed', wsdata );
+		// console.log( 'Test3: Failed', wsdata );
 		return false;
 	}
 	
@@ -847,7 +847,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			}
 			else
 			{
-				console.log( 'Test3: Impossible server response: ', self.returnData );
+				// console.log( 'Test3: Impossible server response: ', self.returnData );
 			}
 		}
 	}
@@ -868,7 +868,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		}
 		catch( e )
 		{
-			console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
+			// console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
 		}
 	}
 
@@ -877,7 +877,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		if( self.returnData.length > 0 && !self.returnCode )
 		{
-			console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
+			// console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
 			self.returnCode = 'ok';
 		}
 	}
