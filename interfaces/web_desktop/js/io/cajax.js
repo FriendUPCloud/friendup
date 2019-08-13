@@ -139,6 +139,7 @@ cAjax = function()
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
 		{	
+			console.log( 'Test3: Response: ', this.readyState, this.status, this.response );
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
@@ -709,18 +710,6 @@ cAjax.prototype.send = function( data )
 				{
 					self.df.addConnection( self.connectionId, self.url, self );
 				}, 500 );
-			}
-		}
-		else
-		{
-			console.log( 'Test3: This is the result: ', res );
-			
-			// This may mean that we're dead!
-			if( Workspace.postInitialized && typeof( res ) == 'undefined' )
-			{
-				AddToCajaxQueue( self );
-				Workspace.flushSession();
-				return Workspace.relogin();
 			}
 		}
 		return;
