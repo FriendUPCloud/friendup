@@ -419,6 +419,11 @@ cAjax.prototype.close = function()
 // Add a variable to ajax query
 cAjax.prototype.addVar = function( key, val )
 {
+	if( typeof( val ) == 'undefined' )
+	{
+		console.log( 'Test3: Trying to add undefined var.', key, val );
+		return;
+	}
 	if( typeof( this.vars[ key ] ) == 'undefined' )
 		this.varcount++;
 	this.vars[ key ] = encodeURIComponent( val );
