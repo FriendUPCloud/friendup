@@ -294,13 +294,15 @@ cAjax = function()
 			Friend.cajax = o;
 			// End clean queue
 
+			console.log( 'Test3: ' + this.readyState + ' ' + this.status, this.response );
+
 			// tell our caller...
 			if( jax.onload ) jax.onload( 'fail', false );
 			jax.destroy();
 		}
 		else
 		{
-			console.log( '* Idling ajax: ' + this.readyState + ' ' + this.status, this.response );
+			//console.log( '* Idling ajax: ' + this.readyState + ' ' + this.status );
 		}
 	}
 }
