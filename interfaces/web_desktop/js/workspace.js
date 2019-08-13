@@ -723,7 +723,7 @@ Workspace = {
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
 		
-		console.log( 'Test1: Relogin in progress', json, serveranswer );
+		console.log( 'Test1: Relogin in progress' );
 		
 		var self = this;
 		
