@@ -232,6 +232,7 @@ Workspace = {
 						{
 							self.show();
 							self.raise();
+							ExposeScreens();
 						}, 100 );
 					}
 					ex.widget.hideWidget = function()
