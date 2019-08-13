@@ -337,8 +337,9 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 	{
 		if( msg.data.data == 'session killed' )
 		{
-			/*Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
+			//Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
 			this.handleClose();
+			/*
 			setTimeout( function()
 			{
 				Workspace.logout();
