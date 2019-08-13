@@ -67,7 +67,7 @@ FriendWebSocket = function( conf )
 
 FriendWebSocket.prototype.send = function( msgObj )
 {
-	this.sendOnSocket( {
+	return this.sendOnSocket( {
 		type: 'msg',
 		data: msgObj,
 	} );
@@ -477,14 +477,14 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	var self = this;
 	if ( !socketReady( force )) {
 		queue( msg );
-		return;
+		return false;
 	}
 	
 	if ( !wsReady())
 	{
 		queue( msg );
 		self.doReconnect();
-		return;
+		return false;
 	}
 	
 	if ( 'con' !== msg.type )
@@ -495,16 +495,17 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	var msgStr = friendUP.tool.stringify( msg );
 	if ( checkMustChunk( msgStr ))
 	{
-		self.chunkSend( msgStr );
-		return;
+		return self.chunkSend( msgStr );
 	}
 	
 	const success = self.wsSend( msgStr );
 	if ( !success ) {
 		queue( msg );
 		self.reconnect();
-		return;
+		return false;
 	}
+	
+	return success;
 	
 	function queue( msg )
 	{
