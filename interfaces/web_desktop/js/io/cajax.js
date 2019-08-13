@@ -223,7 +223,7 @@ cAjax = function()
 						
 						if( res == 'user not found' || res == 'user session not found' )
 						{
-							if( Workspace.postInitialized && Workspace.sessionId )
+							if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
 							{
 								console.log( '[cAjax 3] Doing a relogin (no user session: ' + Workspace.sessionId + ')', jax.vars );
 								console.trace();
