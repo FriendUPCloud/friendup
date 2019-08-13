@@ -582,7 +582,7 @@ cAjax.prototype.send = function( data )
 	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
 	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
 	{
-        // console.log( 'Test2: Sending with websockets.' );
+        console.log( 'Test2: Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
         var wsdata = ( data ? data : {} );
         if( self.vars )
@@ -637,6 +637,8 @@ cAjax.prototype.send = function( data )
 		successfulSend( addBusy );
 		return;
 	}
+
+	console.log( 'Test2: Sending ajax request with standard sockets.' );
 
 	// standard HTTP way....
 	// Now
@@ -707,6 +709,10 @@ cAjax.prototype.send = function( data )
 					self.df.addConnection( self.connectionId, self.url, self );
 				}, 500 );
 			}
+		}
+		else
+		{
+			console.log( 'Test3: This is the result: ', res );
 		}
 		return;
 	}
