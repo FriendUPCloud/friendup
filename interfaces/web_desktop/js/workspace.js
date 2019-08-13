@@ -1297,7 +1297,7 @@ Workspace = {
 			{
 				// Start with expanding the workspace object
 				// TODO: If we have sessionid - verify it through ajax.
-				if( _this.sessionId )
+				if( _this.sessionId && _this.postInitialized )
 				{
 					console.log( 'This is the session.:', _this.sessionId );
 					if( callback && typeof( callback ) == 'function' ) callback( true );
