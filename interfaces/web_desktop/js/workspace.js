@@ -744,8 +744,9 @@ Workspace = {
 			// Friend app waits some more
 			else if( window.friendApp )
 			{
-				console.log( 'Test1: Just return - we have nothing to go on' );
+				console.log( 'Test1: Just return - we have nothing to go on. Try executing normal login' );
 				Workspace.reloginInProgress = false;
+				Workspace.login();
 				return;
 			}
 			// Just exit to login screen
