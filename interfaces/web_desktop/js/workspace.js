@@ -777,6 +777,8 @@ Workspace = {
 			
 			if( e == 'ok' )
 			{
+				Workspace.reloginInProgress = false;
+				Workspace.loginCall = false;
 				console.log( 'Test1: Yeah! All good!' );
 				return;
 			}
