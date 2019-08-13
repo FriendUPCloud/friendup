@@ -745,6 +745,7 @@ Workspace = {
 			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
+				console.log( 'Test1: Regular login with user and pass' );
 				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
 			}
 			// Friend app waits some more
@@ -783,6 +784,7 @@ Workspace = {
 					var js = JSON.parse( d );
 					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
+						console.log( 'Test1: Flush session' );
 						Workspace.flushSession();
 					}
 				}
@@ -792,6 +794,7 @@ Workspace = {
 			}
 			if( Workspace.serverIsThere )
 			{
+				console.log( 'Test1: Clean relogin' );
 				executeCleanRelogin();
 			}
 			else
