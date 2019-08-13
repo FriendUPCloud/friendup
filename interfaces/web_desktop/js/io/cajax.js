@@ -41,6 +41,9 @@ function KillcAjaxByContext( context )
 
 function AddToCajaxQueue( ele )
 {
+	// If we're queueing it
+	if( ele.onQueue ) ele.onQueue();
+	
 	// Don't add to queue if we are offline
 	if( !Workspace.serverIsThere || Workspace.workspaceIsDisconnected )
 	{
