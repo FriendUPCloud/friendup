@@ -1027,15 +1027,24 @@ Workspace = {
 					}
 					return Workspace.initUserWorkspace( json, cl, ev );
 				}
+				// Could not log in
 				else
 				{
+					console.log( 'Removing WorkspaceUsername/Password from local storage.' );
+					
 					// Remove from localstorage
 					window.localStorage.removeItem( 'WorkspaceUsername' );
 					window.localStorage.removeItem( 'WorkspacePassword' );
 					
 					Workspace.reloginInProgress = false;
+					
 					if( t.loginPrompt )
 						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
+					else
+					{
+						Alert( 'We are dead in the water.', 'Dead dead dead.' );
+					}
+					
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
 
 				}
