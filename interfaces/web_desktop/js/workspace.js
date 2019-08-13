@@ -847,10 +847,10 @@ Workspace = {
 	{
 		if( sessionid )
 		{
-			// console.log( 'Test2: Logging in with sessionid.' );
+			console.log( 'Test2: Logging in with sessionid.' );
 			
 			var _this = this;
-
+			
 			var m = new FriendLibrary( 'system' );
 			m.addVar( 'sessionid', sessionid );
 			m.addVar( 'deviceid', this.deviceid );
