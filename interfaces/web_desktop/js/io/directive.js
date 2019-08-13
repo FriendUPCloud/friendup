@@ -615,12 +615,13 @@ function ExecuteApplication( app, args, callback )
 	var eo = { application: app, args: args };
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
-	m.execute( 'friendapplication', eo );
 	m.onQueue = function()
 	{
 		// Clean blocker
 		RemoveFromExecutionQueue( appName );
 	}
+	m.forceHTTP = true;
+	m.execute( 'friendapplication', eo );
 	console.log( 'Test3: Executing application: ' + app );
 }
 
