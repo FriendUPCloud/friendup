@@ -818,8 +818,12 @@ Workspace = {
 		m.execute( 'usersettings' );
 		console.log( 'Test1: Getting usersettings.' );
 	},
-	renewAllSessionIds: function()
+	// Renews session ids for cajax!
+	renewAllSessionIds: function( session )
 	{
+		if( session )
+			this.sessionId = session;
+		
 		// Check if there's a queue of objects waiting to run
 		if( Friend.cajax && Friend.cajax.length )
 		{
@@ -880,7 +884,7 @@ Workspace = {
 				{
 					Workspace.reloginInProgress = false;
 					Workspace.loginCall = false;
-					Workspace.renewAllSessionIds();
+					Workspace.renewAllSessionIds( json.sessionid );
 				
 					console.log( 'Test2: Success! Logged in with sessionid.' );
 					
