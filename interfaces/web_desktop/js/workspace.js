@@ -723,6 +723,8 @@ Workspace = {
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
 		
+		console.log( 'Test1: Relogin in progress', json, serveranswer );
+		
 		var self = this;
 		
 		function executeCleanRelogin()
@@ -748,6 +750,7 @@ Workspace = {
 			// Friend app waits some more
 			else if( window.friendApp )
 			{
+				console.log( 'Test1: Just return - we have nothing to go on' );
 				Workspace.reloginInProgress = false;
 				return;
 			}
@@ -979,6 +982,8 @@ Workspace = {
 
 			m.onExecuted = function( json, serveranswer )
 			{
+				console.log( 'Test1: We executed a login query', json, serveranswer );
+				
 				if( typeof( json ) != 'object' )
 				{
 					try
@@ -1012,13 +1017,17 @@ Workspace = {
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
+					console.log( 'Test1: We got a login.' );
+					
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
-
+					
 					// Store username and password in local storage
 					if( r && self.loginUsername && self.loginPassword )
 					{
+						console.log( 'Test1: Setting localstorage username/pass' );
+						
 						window.localStorage.setItem( 'WorkspaceUsername', self.loginUsername );
 						window.localStorage.setItem( 'WorkspacePassword', self.loginPassword );
 					}
@@ -1032,12 +1041,15 @@ Workspace = {
 						if( callback && typeof( callback ) == 'function' )
 							callback( true, serveranswer );
 					}
+					
+					console.log( 'Test1: Initializing user workspace.' );
+					
 					return Workspace.initUserWorkspace( json, cl, ev );
 				}
 				// Could not log in
 				else
 				{
-					console.log( 'Removing WorkspaceUsername/Password from local storage.' );
+					console.log( 'Test1: Removing WorkspaceUsername/Password from local storage.' );
 					
 					// Remove from localstorage
 					window.localStorage.removeItem( 'WorkspaceUsername' );
@@ -1051,7 +1063,7 @@ Workspace = {
 					}
 					else
 					{
-						Alert( 'We are dead in the water.', 'Dead dead dead.' );
+						Alert( 'Test1: We are dead in the water.', 'Dead dead dead.' );
 					}
 					
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
