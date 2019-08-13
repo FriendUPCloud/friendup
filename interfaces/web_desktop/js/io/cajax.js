@@ -220,7 +220,11 @@ cAjax = function()
 						var r = JSON.parse( jax.returnData );
 						console.log( 'Hey: ', r );
 						var res = r ? r.response.toLowerCase() : '';
-						if( res == 'user session not found' || res == 'user not found' )
+						if( res == 'user not found' )
+						{
+							console.log( 'User not found... ' + jax.url );
+						}
+						if( res == 'user session not found' )
 						{
 							console.log( '[cAjax 3] Doing a relogin (no user session: ' + Workspace.sessionId + ')', jax.vars );
 							console.trace();
