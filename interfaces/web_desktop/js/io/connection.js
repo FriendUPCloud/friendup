@@ -45,7 +45,7 @@ FriendConnection.prototype.request = function( conf, callback )
 		data : conf.data,
 	};
 	req = self.setId( req, conf );
-	self.sendMessage( req );
+	console.log( 'Test3: Sending: ', self.sendMessage( req ) );
 	return reqId;
 }
 
@@ -298,7 +298,7 @@ FriendConnection.prototype.sendMessage = function( msg )
 		return;
 	}
 	
-	self.ws.send( msg );
+	return self.ws.send( msg );
 }
 
 FriendConnection.prototype.sendAsync = function( msg )

@@ -651,6 +651,7 @@ cAjax.prototype.send = function( data )
 			addBusy = false;
 		}
 		successfulSend( addBusy );
+		
 		return;
 	}
 
