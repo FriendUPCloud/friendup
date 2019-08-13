@@ -718,7 +718,7 @@ Workspace = {
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
 		
-		// // console.log( 'Test2: Relogin in progress' );
+		console.log( 'Test2: Relogin in progress' );
 		
 		var self = this;
 		
@@ -910,7 +910,7 @@ Workspace = {
 	{
 		var self = this;
 		
-		// console.log( 'Test2: Normal login.' );
+		console.log( 'Test2: Normal login.' );
 		
 		// Test if we have a stored session
 		var sess = localStorage.getItem( 'WorkspaceSessionID' );
