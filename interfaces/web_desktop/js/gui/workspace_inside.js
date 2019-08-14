@@ -6728,6 +6728,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						disabled: !windowsOpened || !window.currentMovable
 					}
 				]
+			},
+			{
+				name: i18n( 'menu_help' ),
+				items: [
+					{
+						name: i18n( 'menu_help_bug' ),
+						command: function(){ window.open( 'https://github.com/FriendUPCloud/friendup/issues', '', '' ); }
+					},
+					{
+						name: i18n( 'menu_help_manual' ),
+						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+					}
+				]
 			}
 			/*,
 			{

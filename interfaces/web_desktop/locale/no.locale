@@ -230,6 +230,10 @@ menu_hide_hidden_files                  : Gjem skjulbare filer
 menu_show_hidden_files                  : Vis skjulte filer
 menu_new_window                         : Nytt vindu
 
+menu_help                               : Hjelp
+menu_help_bug                           : Rapporter feil
+menu_help_manual                        : Brukerveiledning
+
 menu_edit_wallpaper                     : Endre skrivebordsbakgrunn
 menu_set_as_wallpaper                   : Bruk som skrivebordsbakgrunn
 i18n_edit_dock                          : Rediger docken
