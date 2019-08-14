@@ -108,7 +108,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					prefs = {
 						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
 						//'Screens'      : i18n( 'i18n_screens' ),
-						'Software'     : i18n( 'i18n_software' ),
+						/*'Software'     : i18n( 'i18n_software' ),*/
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
 						//'Language'     : i18n( 'i18n_language' ),
 						//'Desklets'     : i18n( 'i18n_desklets' ),
@@ -154,7 +154,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					prefs = {
 						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
 						//'Screens'      : i18n( 'i18n_screens' ),
-						'Software'     : i18n( 'i18n_software' ),
+						/*'Software'     : i18n( 'i18n_software' ),*/
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
 						/*'Printers'     : i18n( 'i18n_printers' ),*/
 						//'Network'      : i18n( 'i18n_network' ),
@@ -175,7 +175,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					};
 					locales = {
 						'Looknfeel'    : 'i18n_looknfeel',
-						'Software'     : 'i18n_software',
+						/*'Software'     : 'i18n_software',*/
 						'Wallpaper'    : 'i18n_wallpaper',
 						'DiskCatalog'  : 'i18n_disk_catalog',
 						'Users'        : 'i18n_useraccounts',
@@ -189,7 +189,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					icons = {
 						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
 						//'Screens'      : 'devices/video-display.png',
-						'Software'     : 'categories/applications-accessories.png',
+						/*'Software'     : 'categories/applications-accessories.png',*/
 						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
 						/*'Printers'     : 'devices/printer-laser.png',*/
 						//'Network'      : 'places/network-workgroup.png',
