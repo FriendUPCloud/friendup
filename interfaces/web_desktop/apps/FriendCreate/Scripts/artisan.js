@@ -10,7 +10,8 @@
 
 document.title = 'Friend Create';
 
-settings = {
+// Settings for Friend Create
+window.settings = {
 	wordWrap: true,
 	wordWrapWidth: 80,
 	codeFolding: true,
@@ -18,9 +19,9 @@ settings = {
 	theme: 'twilight'
 };
 
+// Read the config
 function loadConfig( callback )
 {
-	// Read the config
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -47,6 +48,7 @@ function loadConfig( callback )
 
 var appConn = null;
 
+// Start Friend Create ---------------------------------------------------------
 Application.run = function( msg )
 {
 	var f = new File( 'Progdir:Templates/search.html' );
