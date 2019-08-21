@@ -9131,6 +9131,11 @@ function AboutFriendUP()
 				// Add device ID
 				if( window.friendApp )
 				{
+					var ver = friendApp.get_version();
+					if( ver )
+					{
+						buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ ver +'</span></div>';
+					}
 					var devId = friendApp.get_deviceid();
 					if( devId )
 					{
