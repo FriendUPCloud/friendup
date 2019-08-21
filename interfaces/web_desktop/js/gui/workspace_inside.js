@@ -9134,7 +9134,7 @@ function AboutFriendUP()
 					var ver = friendApp.get_version();
 					if( ver )
 					{
-						buildInfo += '    <div class="item"><span class="label">DeviceID</span><span class="value">'+ ver +'</span></div>';
+						buildInfo += '    <div class="item"><span class="label">Mobile App Version</span><span class="value">'+ ver +'</span></div>';
 					}
 					var devId = friendApp.get_deviceid();
 					if( devId )
