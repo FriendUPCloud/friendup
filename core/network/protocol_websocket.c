@@ -948,7 +948,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				FQDeInitFree( &(fcd->wsc_MsgQueue) );
 				pthread_mutex_destroy( &(fcd->wsc_Mutex) );
 			}
-			INFO("[WS] Callback session closed\n");
+			Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 
 		break;
 		
