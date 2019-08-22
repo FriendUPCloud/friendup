@@ -4374,6 +4374,12 @@ var View = function( args )
 	{
 		_ActivateWindow( this._window.parentNode );
 	}
+	// Move window to front
+	this.toFront = function()
+	{
+		_ActivateWindow( this._window.parentNode );
+		_WindowToFront( this._window.parentNode );
+	}
 	// Close a view window
 	this.close = function ( force )
 	{
@@ -4722,6 +4728,10 @@ var View = function( args )
 				{
 					viewdiv.setAttribute( 'transparent', value ? 'transparent': '' );
 				}
+				break;
+			// Allow for dropping files in a secure manner
+			case 'securefiledrop':
+				this.flags.securefiledrop = value;
 				break;
 			// Takes all flags
 			default:

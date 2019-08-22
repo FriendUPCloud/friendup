@@ -547,7 +547,17 @@ var mousePointer =
 					}
 					if( dropper.windowObject )
 					{
-						dropper.windowObject.sendMessage( { command: 'drop', data: objs } );
+						var hasSecure = dropper.windowObject.getFlag( 'securefiledrop' ) ? true : false;
+						// Create secure drop widget for the window
+						if( hasSecure )
+						{
+							addSecureDropWidget( dropper.windowObject, objs );
+						}
+						// Just handle the drop objects
+						else
+						{
+							dropper.windowObject.sendMessage( { command: 'drop', data: objs } );
+						}
 					}
 				}
 			}
@@ -721,6 +731,48 @@ html .View.SnapRight
 		}
 	}
 };
+
+// Secure drop widget for apps
+function addSecureDropWidget( windowobject, objects )
+{
+	var w = new Widget( {
+		top: windowMouseY - 180,
+		left: windowMouseX - 150,
+		width: 300,
+		height: 230,
+		raised: true,
+		rounded: true
+	} );
+	
+	windowobject.toFront();
+	
+	var f = new File( 'System:templates/securefiledrop.html' );
+	f.onLoad = function( data )
+	{
+		w.setContent( data, function()
+		{
+			for( var a = 0; a < objects.length; a++ )
+			{
+				var url = getImageUrl( objects[ a ].Path );
+				var ic = new FileIcon( objects[ a ], { nativeDraggable: true } );
+				//ic.file.href = url;
+				ic.file.id = 'test_draggable_' + a;
+				ic.file.style.position = 'relative';
+				ic.file.style.float = 'left';
+				ic.file.style.display = 'block';
+				ic.file.style.marginLeft = '10px';
+				ic.file.addEventListener( 'dragstart', function( e )
+				{
+					e.dataTransfer.setData( 'DownloadURL', url );
+				}, false );
+				w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
+			}
+		} );
+	}
+	f.load();
+	
+	window.mouseDown = null;
+}
 
 //check if we run inside an app and do some magic
 function checkForFriendApp()
