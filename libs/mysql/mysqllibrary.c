@@ -607,6 +607,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 {
 	char *finalQuery = NULL;
+	int retValue = 0;
 	BufString *tablequerybs = BufStringNew();
 	BufString *dataquerybs = BufStringNew();
 	
@@ -863,6 +864,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			if ( mysql_stmt_execute(stmt) )
 			{
 				FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
+				retValue = 1;
 			}
 		
 			// Free up!
@@ -881,7 +883,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 	BufStringDelete( tablequerybs );
 	BufStringDelete( dataquerybs );
 	
-	return 0;
+	return retValue;
 }
 
 /**
