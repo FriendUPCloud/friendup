@@ -753,25 +753,51 @@ function addSecureDropWidget( windowobject, objects )
 		{
 			for( var a = 0; a < objects.length; a++ )
 			{
-				var url = getImageUrl( objects[ a ].Path );
-				var ic = new FileIcon( objects[ a ], { type: 'A', nativeDraggable: true } );
-				var fn = GetFilename( objects[ a ].Path );
-				//ic.file.href = url;
-				ic.file.id = 'directoryfile_draggable_' + a;
-				ic.file.href = url;
-				ic.file.style.position = 'relative';
-				ic.file.style.float = 'left';
-				ic.file.style.display = 'block';
-				ic.file.style.marginLeft = '10px';
-				ic.file.addEventListener( 'dragstart', function( e )
-				{
-					e.dataTransfer.setData( 'DownloadURL', [ 'application/octet-stream:' + fn + ':' + url ] );
-				}, false );
-				ic.file.addEventListener( 'dragend', function( e )
-				{
-					//return e.dataTransfer.getData( 'DownloadUrl' );
-				}, false );
-				w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
+				/*var f = new File( objects[ a ].Path );
+				f.onLoad = function( data )
+				{*/
+					var url = getImageUrl( objects[ a ].Path );
+					var ic = new FileIcon( objects[ a ], { type: 'A', nativeDraggable: true } );
+					var fn = GetFilename( objects[ a ].Path );
+					//ic.file.href = url;
+					ic.file.id = 'directoryfile_draggable_' + a;
+					ic.file.href = url;
+					ic.file.style.position = 'relative';
+					ic.file.style.float = 'left';
+					ic.file.style.display = 'block';
+					ic.file.style.marginLeft = '10px';
+					ic.file.setAttribute( 'download', url );
+					ic.file.addEventListener( 'dragstart', e => {
+						e.dataTransfer.dropEffect = 'copy';
+						e.dataTransfer.effectAllowed = 'copy';
+						var ext = 'bin';
+						if( fn.indexOf( '.' ) >= 0 )
+							ext = fn.split( '.' )[1].toUpperCase();
+						var ctype = 'application/octet-stream';
+						switch( ctype )
+						{
+							case 'jpg':
+							case 'jpeg':
+								ctype = 'image/jpeg';
+								break;
+							case 'png':
+							case 'bmp':
+							case 'gif':
+								ctype = 'image/' + ext;
+								break;
+							default:
+								break;
+						}
+						
+						e.dataTransfer.setData( 'DownloadURL', [ ctype + ':' + fn + ':' + url ] );
+					} );
+					ic.file.addEventListener( 'dragend', function( e )
+					{
+						w.close();
+					}, false );
+					w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
+				/*}
+				f.load();*/
 			}
 		} );
 	}
