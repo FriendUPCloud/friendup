@@ -754,16 +754,22 @@ function addSecureDropWidget( windowobject, objects )
 			for( var a = 0; a < objects.length; a++ )
 			{
 				var url = getImageUrl( objects[ a ].Path );
-				var ic = new FileIcon( objects[ a ], { nativeDraggable: true } );
+				var ic = new FileIcon( objects[ a ], { type: 'A', nativeDraggable: true } );
+				var fn = GetFilename( objects[ a ].Path );
 				//ic.file.href = url;
-				ic.file.id = 'test_draggable_' + a;
+				ic.file.id = 'directoryfile_draggable_' + a;
+				ic.file.href = url;
 				ic.file.style.position = 'relative';
 				ic.file.style.float = 'left';
 				ic.file.style.display = 'block';
 				ic.file.style.marginLeft = '10px';
 				ic.file.addEventListener( 'dragstart', function( e )
 				{
-					e.dataTransfer.setData( 'DownloadURL', url );
+					e.dataTransfer.setData( 'DownloadURL', [ 'application/octet-stream:' + fn + ':' + url ] );
+				}, false );
+				ic.file.addEventListener( 'dragend', function( e )
+				{
+					//return e.dataTransfer.getData( 'DownloadUrl' );
 				}, false );
 				w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
 			}
