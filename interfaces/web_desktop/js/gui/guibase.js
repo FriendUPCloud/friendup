@@ -756,11 +756,12 @@ function addSecureDropWidget( windowobject, objects )
 				/*var f = new File( objects[ a ].Path );
 				f.onLoad = function( data )
 				{*/
-					var url = getImageUrl( objects[ a ].Path );
+					var url = getImageUrl( objects[ a ].Path )
 					var ic = new FileIcon( objects[ a ], { type: 'A', nativeDraggable: true } );
 					var fn = GetFilename( objects[ a ].Path );
-					//ic.file.href = url;
+					url = url.split( '/read' ).join( '/read/' + fn );
 					ic.file.id = 'directoryfile_draggable_' + a;
+					ic.file.setAttribute( 'data-downloadurl', url );
 					ic.file.href = url;
 					ic.file.style.position = 'relative';
 					ic.file.style.float = 'left';
@@ -788,7 +789,6 @@ function addSecureDropWidget( windowobject, objects )
 							default:
 								break;
 						}
-						
 						e.dataTransfer.setData( 'DownloadURL', [ ctype + ':' + fn + ':' + url ] );
 					} );
 					ic.file.addEventListener( 'dragend', function( e )
