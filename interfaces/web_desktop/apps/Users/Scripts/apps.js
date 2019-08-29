@@ -37,7 +37,7 @@ Application.run = function( msg, iface )
 			ge( 'Apps' ).innerHTML = str;
 		}
 	}
-	m.execute( 'software' );
+	m.execute( 'software', {'mode':'showall'} );
 }
 
 // Add selected
