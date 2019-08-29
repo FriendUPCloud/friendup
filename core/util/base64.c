@@ -144,7 +144,11 @@ char *MarkAndBase64EncodeString( const char *chr )
 char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 {
 	//if( decoding_table == NULL ) build_decoding_table();
-
+	if( length <= 0 )
+	{
+		return NULL;
+	}
+	
 	if( length % 4 != 0 )
 	{
 		FERROR("Cannot decode entry, beacouse size is incorect: %d\n", length );
