@@ -229,6 +229,10 @@ menu_hide_hidden_files                  : Hide hidden files
 menu_show_hidden_files                  : Show hidden files
 menu_new_window                         : New window
 
+menu_help                               : Help
+menu_help_bug                           : Report a bug
+menu_help_manual                        : User manual
+
 menu_edit_wallpaper                     : Edit wallpaper
 menu_set_as_wallpaper                   : Set as wallpaper
 menu_look_and_feel			: Personalize Look and feel
