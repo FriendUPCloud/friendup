@@ -1197,6 +1197,7 @@ Workspace = {
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
 			_this.fullName  = json.fullname;
+			_this.loginUsername = json.username ? json.username : null;
 
 			// Relogin fix
 			document.body.classList.remove( 'Loading' );
@@ -1213,6 +1214,7 @@ Workspace = {
 			{
 				userdata.sessionId = _this.sessionId;
 				userdata.userId    = _this.userId;
+				userdata.loginUsername    = _this.loginUsername;
 				userdata.fullName  = _this.fullName;
 
 				ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );
