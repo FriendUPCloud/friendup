@@ -1075,7 +1075,7 @@ var WorkspaceInside = {
 				var wid = Workspace.widget ? Workspace.widget : m.widget;
 				if( wid )
 				{
-					wid.showing = true;
+					wid.shown = true;
 				}
 
 				if( wid && !wid.initialized )
@@ -1085,17 +1085,6 @@ var WorkspaceInside = {
 					var calendar = new Calendar( wid.dom );
 					wid.dom.id = 'CalendarWidget';
 				
-					// Mobile hider
-					if( window.isMobile )
-					{
-						var hider = document.createElement( 'div' );
-						hider.className = 'Hider';
-						hider.onclick = function()
-						{
-							Workspace.widget.slideUp();
-						}
-						wid.dom.appendChild( hider );
-					}
 					Workspace.calendarWidget = wid;
 
 					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
@@ -1128,7 +1117,7 @@ var WorkspaceInside = {
 						f1.load();
 
 						// Just close the widget
-						if( !window.isMobile && m && wid )
+						if( m && wid )
 							wid.hide();
 					}
 					calendar.addButton( newBtn );
@@ -6739,6 +6728,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						disabled: !windowsOpened || !window.currentMovable
 					}
 				]
+			},
+			{
+				name: i18n( 'menu_help' ),
+				items: [
+					{
+						name: i18n( 'menu_help_bug' ),
+						command: function(){ window.open( 'https://github.com/FriendUPCloud/friendup/issues', '', '' ); }
+					},
+					{
+						name: i18n( 'menu_help_manual' ),
+						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+					}
+				]
 			}
 			/*,
 			{
@@ -7896,6 +7898,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
+		// Too early
+		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
+		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )

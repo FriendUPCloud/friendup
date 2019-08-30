@@ -67,9 +67,9 @@ FriendWebSocket = function( conf )
 
 FriendWebSocket.prototype.send = function( msgObj )
 {
-	this.sendOnSocket( {
+	return this.sendOnSocket( {
 		type: 'msg',
-		data: msgObj,
+		data: msgObj
 	} );
 }
 
@@ -151,7 +151,9 @@ FriendWebSocket.prototype.connect = function()
 	}
 	
 	self.setState( 'connecting' );
-	try {
+	
+	try
+	{
 		if( self.ws )
 		{
 			self.cleanup();
@@ -337,12 +339,14 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 	{
 		if( msg.data.data == 'session killed' )
 		{
-			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
+			//Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
+			// console.log( 'Test3: Session was killed!' );
 			this.handleClose();
+			/*
 			setTimeout( function()
 			{
 				Workspace.logout();
-			}, 500 );
+			}, 500 );*/
 			return;
 		}
 		else if( msg.data.data == 'session timeout' )
@@ -475,36 +479,40 @@ FriendWebSocket.prototype.sendCon = function( msg )
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 {
 	var self = this;
-	if ( !socketReady( force )) {
+	if( !socketReady( force ) )
+	{
 		queue( msg );
-		return;
+		return false;
 	}
 	
-	if ( !wsReady())
+	if ( !wsReady() )
 	{
 		queue( msg );
 		self.doReconnect();
-		return;
+		return false;
 	}
 	
-	if ( 'con' !== msg.type )
+	if( 'con' !== msg.type )
 	{
 		//console.log( 'FriendWebSocket.sendOnSocket - type con:', msg );
 	}
 	
 	var msgStr = friendUP.tool.stringify( msg );
-	if ( checkMustChunk( msgStr ))
+	if( checkMustChunk( msgStr ))
 	{
-		self.chunkSend( msgStr );
-		return;
+		// console.log( 'Test3: Sending chuked.' );
+		return self.chunkSend( msgStr );
 	}
 	
 	const success = self.wsSend( msgStr );
-	if ( !success ) {
+	if( !success )
+	{
 		queue( msg );
 		self.reconnect();
-		return;
+		return false;
 	}
+	
+	return success;
 	
 	function queue( msg )
 	{
@@ -533,7 +541,7 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	
 	function checkMustChunk( str )
 	{
-		if ( str.length < self.maxStrLength )
+		if( str.length < self.maxStrLength )
 		{
 			//console.log( 'No need to chunk this one: ' + str.length );
 			return false;
@@ -543,10 +551,14 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 		
 		var realString = new String( str );
 		strBlob = new Blob( realString );
-		if ( strBlob.size >= self.maxFCBytes )
+		if( strBlob.size >= self.maxFCBytes )
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 }
 
@@ -656,14 +668,15 @@ FriendWebSocket.prototype.wsSend = function( str )
 	var self = this;
 	try
 	{
-		self.ws.send( str );
+		var res = self.ws.send( str );
+		// console.log( 'Test3: Successfully sent;', str );
 	}
 	catch( e )
 	{
 		console.log( 'FriendWebSocket.sendOnSocket failed', {
-			e   : e,
-			str : str,
-		});
+			e  : e,
+			str: str
+		} );
 		return false;
 	}
 	
