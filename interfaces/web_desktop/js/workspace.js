@@ -883,6 +883,7 @@ Workspace = {
 				}
 
 				Workspace.userLevel = json.level;
+				if( !Workspace.loginUsername && json.username ) Workspace.loginUsername = json.username;
 
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
