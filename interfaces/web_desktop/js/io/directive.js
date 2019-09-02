@@ -164,6 +164,7 @@ function ExecuteApplication( app, args, callback )
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
 		// Remove from execution queue
+		RemoveFromExecutionQueue( appName );
 		return ExecuteJSXByPath( app, args, callback, undefined );
 	}
 	else if( app.indexOf( ':' ) > 0 )
@@ -186,19 +187,20 @@ function ExecuteApplication( app, args, callback )
 			//
 		}
 
+		// Remove blocker
+		RemoveFromExecutionQueue( appName );
+		// console.log( 'Test3: Executed. Removing appqueue: ' + appName );
+		
 		if( r == 'activate' )
 		{
 			ActivateApplication( app, conf );
 			if( callback ) callback( false );
 			
-			// Clean blocker
-			RemoveFromExecutionQueue( appName );
 			return false;
 		}
 		else if( r != 'ok' )
 		{
-			// Clean blocker
-			RemoveFromExecutionQueue( appName );
+			// console.log( 'Test2: Executing app Was not ok.' );
 			
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
@@ -269,6 +271,17 @@ function ExecuteApplication( app, args, callback )
 				Ac2Alert( i18n( 'application_not_found' ) );
 			}
 			if( callback ) callback( false );
+			// console.log( 'Test2: Dead.' );
+			
+			// Clean up single instance
+			var o = {};
+			for( var a in Friend.singleInstanceApps )
+				if( a != appName )
+					o[ a ] = Friend.singleInstanceApps[ a ];
+			Friend.singleInstanceApps = o;
+			// Kill app if it is there
+			KillApplication( appName );
+			
 			return false;
 		}
 
@@ -284,8 +297,6 @@ function ExecuteApplication( app, args, callback )
 				Ac2Alert( 'Can not run v0 applications.' );
 				if( callback ) callback( false );
 				
-				// Clean blocker
-				RemoveFromExecutionQueue( appName );
 				return false;
 			}
 
@@ -604,7 +615,14 @@ function ExecuteApplication( app, args, callback )
 	var eo = { application: app, args: args };
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
+	m.onQueue = function()
+	{
+		// Clean blocker
+		RemoveFromExecutionQueue( appName );
+	}
+	m.forceHTTP = true;
 	m.execute( 'friendapplication', eo );
+	// console.log( 'Test3: Executing application: ' + app );
 }
 
 function FlushSingleApplicationLock( app )
