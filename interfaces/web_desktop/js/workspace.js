@@ -1197,7 +1197,7 @@ Workspace = {
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
 			_this.fullName  = json.fullname;
-			_this.loginUsername = json.username ? json.username : null;
+			if( json.username ) _this.loginUsername = json.username;
 
 			// Relogin fix
 			document.body.classList.remove( 'Loading' );
