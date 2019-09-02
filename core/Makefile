@@ -349,8 +349,27 @@ compile: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
 compileprof: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
 	@echo "\033[34mDebug compilation\033[0m"
 
-release:  $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
+release: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
 	@echo "\033[34mRelease compilation\033[0m"
+
+UNITTESTSRC = $(wildcard unittests/*.c)
+UNITTESTOBJ = $(addprefix unittests/bin/,$(notdir $(UNITTESTSRC:.c=.ut.bin)))
+LUNITFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a $(LFLAGS)
+
+.PHONY: FORCE
+
+PREPAREUT:
+	@echo "\033[34mPrepareing unit tests\033[0m"
+	cp obj/* unittests/obj
+	$(CC) $(CFLAGS) -c unittests/main/main.c -o unittests/obj/main.o
+
+$(UNITTESTOBJ): $(UNITTESTSRC)
+	@echo "\033[34mCompile unit tests\033[0m"
+	$(CC) $(CFLAGS) -o $@ $< unittests/obj/*.o $(LUNITFLAGS)
+	cp $@ $(FRIEND_PATH)/
+
+unittest: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
+	make PREPAREUT $(UNITTESTOBJ)
 
 clean:
 	@echo "\033[34mCleaning\033[0m"
@@ -379,6 +398,7 @@ setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
 	mkdir -p obj bin
 	mkdir -p obj system/bin system/bin/emod system/bin/fsys system/bin/loggers system/bin/services
+	mkdir -p unittests/obj unittests/bin
 
 # dependency system
 
