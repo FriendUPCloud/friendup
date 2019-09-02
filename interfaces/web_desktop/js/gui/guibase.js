@@ -753,12 +753,15 @@ function addSecureDropWidget( windowobject, objects )
 		{
 			for( var a = 0; a < objects.length; a++ )
 			{
-				/*var f = new File( objects[ a ].Path );
-				f.onLoad = function( data )
-				{*/
-					var url = getImageUrl( objects[ a ].Path )
-					var ic = new FileIcon( objects[ a ], { type: 'A', nativeDraggable: true } );
-					var fn = GetFilename( objects[ a ].Path );
+				var url = getImageUrl( objects[ a ].Path )
+				var im = new Image();
+				var o = objects[ a ];
+				fetch( url )
+				.then( res => res.blob() )
+				.then( blob => {
+					var fn = GetFilename( o.Path );
+					var fil = new File( [ blob ], fn, blob );
+					var ic = new FileIcon( o, { type: 'A', nativeDraggable: true } );
 					url = url.split( '/read' ).join( '/read/' + fn );
 					ic.file.id = 'directoryfile_draggable_' + a;
 					ic.file.setAttribute( 'data-downloadurl', url );
@@ -789,15 +792,17 @@ function addSecureDropWidget( windowobject, objects )
 							default:
 								break;
 						}
+						// TODO: Make items.add work
+						//e.dataTransfer.items.add( [ fil ], ctype, { type: 'custom' } );
 						e.dataTransfer.setData( 'DownloadURL', [ ctype + ':' + fn + ':' + url ] );
 					} );
 					ic.file.addEventListener( 'dragend', function( e )
 					{
 						w.close();
+						//console.log( e );
 					}, false );
 					w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
-				/*}
-				f.load();*/
+				} );
 			}
 		} );
 	}
