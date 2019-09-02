@@ -438,6 +438,8 @@ Workspace = {
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
 			{
+				if( u && !Workspace.loginUsername ) Workspace.loginUsername = u;
+				
 				p = ( !p || p.indexOf('HASHED') == 0 ? p : ( 'HASHED' + Sha256.hash( p ) ) );
 
 				if( window.ScreenOverlay )
