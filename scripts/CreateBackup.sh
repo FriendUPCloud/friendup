@@ -271,7 +271,7 @@ if [ -z "$storepath" ]
 then
 	echo "'storepath' is empty, cannot use empty path to remove remote data"
 else
-	VALUE=$(SSHPASS=${password} sshpass -e ssh $port_small $user@$server "find $storepath  -maxdepth 1 -type f | wc -l")
+	VALUE=$(SSHPASS=${password} sshpass -e ssh $port_small $user@$server "find $storepath  -maxdepth 1 -type d | wc -l")
 	if [ "${VALUE}" -gt "1" ]; then
 		SSHPASS=${password} sshpass -e ssh $port_small $user@$server "find $storepath -mtime +7 -maxdepth 1  -exec rm -rf {} \;"
 	fi
