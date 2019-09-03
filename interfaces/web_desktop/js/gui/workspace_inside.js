@@ -6776,6 +6776,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	download: function( path )
 	{
+		var lastChar = path.substr( path.length - 1, 1 );
+		if( lastChar == ':' || lastChar == '/' )
+		{
+			return Alert( i18n( 'i18n_could_not_download' ), i18n( 'i18n_download_wrong_type' ) );
+		}
 		var fn = path.split( ':' )[1];
 		if( fn.indexOf( '/' ) > 0 )
 			fn = fn.split( '/' ).pop();
