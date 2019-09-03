@@ -722,6 +722,87 @@ html .View.SnapRight
 	}
 };
 
+// Secure drop widget for apps
+// TODO: Complete this one once the browser is ready for it. Not used now.
+// This one is connected to the "securefiledrop" flag on windows
+function addSecureDropWidget( windowobject, objects )
+{
+	var w = new Widget( {
+		top: windowMouseY - 180,
+		left: windowMouseX - 150,
+		width: 300,
+		height: 230,
+		raised: true,
+		rounded: true
+	} );
+	
+	windowobject.toFront();
+	
+	var f = new File( 'System:templates/securefiledrop.html' );
+	f.onLoad = function( data )
+	{
+		w.setContent( data, function()
+		{
+			for( var a = 0; a < objects.length; a++ )
+			{
+				var url = getImageUrl( objects[ a ].Path )
+				var im = new Image();
+				var o = objects[ a ];
+				fetch( url )
+				.then( res => res.blob() )
+				.then( blob => {
+					var fn = GetFilename( o.Path );
+					var fil = new File( [ blob ], fn, blob );
+					var ic = new FileIcon( o, { type: 'A', nativeDraggable: true } );
+					url = url.split( '/read' ).join( '/read/' + fn );
+					ic.file.id = 'directoryfile_draggable_' + a;
+					ic.file.setAttribute( 'data-downloadurl', url );
+					ic.file.href = url;
+					ic.file.style.position = 'relative';
+					ic.file.style.float = 'left';
+					ic.file.style.display = 'block';
+					ic.file.style.marginLeft = '10px';
+					ic.file.setAttribute( 'download', url );
+					ic.file.addEventListener( 'dragstart', e => {
+						e.dataTransfer.dropEffect = 'copy';
+						e.dataTransfer.effectAllowed = 'copy';
+						var ext = 'bin';
+						if( fn.indexOf( '.' ) >= 0 )
+							ext = fn.split( '.' )[1].toUpperCase();
+						var ctype = 'application/octet-stream';
+						switch( ctype )
+						{
+							case 'jpg':
+							case 'jpeg':
+								ctype = 'image/jpeg';
+								break;
+							case 'png':
+							case 'bmp':
+							case 'gif':
+								ctype = 'image/' + ext;
+								break;
+							default:
+								break;
+						}
+						// TODO: Make items.add work
+						//e.dataTransfer.items.add( [ fil ], ctype, { type: 'custom' } );
+						e.dataTransfer.setData( 'DownloadURL', [ ctype + ':' + fn + ':' + url ] );
+					} );
+					ic.file.addEventListener( 'dragend', function( e )
+					{
+						w.close();
+						//console.log( e );
+					}, false );
+					w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
+				} );
+			}
+		} );
+	}
+	f.load();
+	
+	window.mouseDown = null;
+}
+
 //check if we run inside an app and do some magic
 function checkForFriendApp()
 {

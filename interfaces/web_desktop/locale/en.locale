@@ -430,6 +430,7 @@ i18n_could_not_make_dir                 : Could not create new directory.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
+i18n_drag_files_to_download             : Drop files to download.
 
 #Colorpicker -------------------------------------------------------------------
 

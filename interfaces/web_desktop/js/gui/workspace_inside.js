@@ -2961,6 +2961,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Make sure we update icons...
 									Workspace.redrawIcons();
 									
+									// Update locale for download applet
+									ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )
 									{
@@ -9086,7 +9089,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2rc1',
+		title: i18n( 'about_system' ) + ' v1.2rc2',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
