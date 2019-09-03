@@ -2335,6 +2335,15 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 
 /* Various built-in icons */
 
+.TrayElement.Download:before
+{
+	font-family: fontawesome;
+	content: "\f0ed";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
+}
+
 .TrayElement.Tasks:before
 {
 	background-image: url(/graphics/tasks.png);

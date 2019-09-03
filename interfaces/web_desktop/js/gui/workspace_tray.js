@@ -37,6 +37,7 @@ function PollTray()
 	}
 	else
 	{
+		// Add task applet
 		tray.tasks = document.createElement( 'div' );
 		tray.tasks.className = 'Tasks TrayElement IconSmall';
 		tray.tasks.poll = function()
@@ -45,6 +46,22 @@ function PollTray()
 			this.innerHTML = '<div class="BubbleInfo"><div>' + taskn + ' ' + ( taskn == 1 ? i18n( 'i18n_task_running' ) : i18n( 'i18n_tasks_running' ) ) + '.</div></div>';
 		}
 		tray.appendChild( tray.tasks );
+		
+		// Add download applet
+		// TODO: Remove this from native friend book interface
+		var da = tray.downloadApplet = document.createElement( 'div' );
+		da.className = 'Download TrayElement IconSmall';
+		da.poll = function()
+		{
+		}
+		da.ondrop = function( e )
+		{
+			for( var a = 0; a < e.length; a++ )
+			{
+				Workspace.download( e[ a ].Path ); 
+			}
+		}
+		tray.appendChild( da );
 	}
 	
 	// Check for notifications in history

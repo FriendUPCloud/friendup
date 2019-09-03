@@ -428,6 +428,7 @@ i18n_could_not_make_dir                 : Kunne ikke opprette mappen.
 i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
+i18n_drag_files_to_download             : Slipp filer for nedlastning.
 
 #Colorpicker -------------------------------------------------------------------
 

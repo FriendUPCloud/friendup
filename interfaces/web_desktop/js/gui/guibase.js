@@ -547,17 +547,7 @@ var mousePointer =
 					}
 					if( dropper.windowObject )
 					{
-						var hasSecure = dropper.windowObject.getFlag( 'securefiledrop' ) ? true : false;
-						// Create secure drop widget for the window
-						if( hasSecure )
-						{
-							addSecureDropWidget( dropper.windowObject, objs );
-						}
-						// Just handle the drop objects
-						else
-						{
-							dropper.windowObject.sendMessage( { command: 'drop', data: objs } );
-						}
+						dropper.windowObject.sendMessage( { command: 'drop', data: objs } );
 					}
 				}
 			}
@@ -733,6 +723,8 @@ html .View.SnapRight
 };
 
 // Secure drop widget for apps
+// TODO: Complete this one once the browser is ready for it. Not used now.
+// This one is connected to the "securefiledrop" flag on windows
 function addSecureDropWidget( windowobject, objects )
 {
 	var w = new Widget( {

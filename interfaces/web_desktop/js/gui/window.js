@@ -4729,6 +4729,7 @@ var View = function( args )
 					viewdiv.setAttribute( 'transparent', value ? 'transparent': '' );
 				}
 				break;
+			// TODO: Use it when ready
 			// Allow for dropping files in a secure manner
 			case 'securefiledrop':
 				this.flags.securefiledrop = value;
