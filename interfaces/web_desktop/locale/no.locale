@@ -430,6 +430,9 @@ i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
 i18n_drag_files_to_download             : Slipp filer for nedlastning.
 
+i18n_could_not_download                 : Kunne ikke laste ned
+i18n_download_wrong_type                : Kun filer kan lastes ned.
+
 #Colorpicker -------------------------------------------------------------------
 
 i18n_color_picker                       : Fargevelger
