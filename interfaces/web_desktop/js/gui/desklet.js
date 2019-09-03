@@ -1114,7 +1114,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	{
 		this.render( true );
 	}
-	this.dom.drop = function( eles )
+	this.dom.drop = function( eles, e )
 	{
 		var dropped = 0;
 		
@@ -1174,6 +1174,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			else
 			{
 				Notify( { title: i18n( 'i18n_object_not_supported' ), text: i18n( 'i18n_only_executables_can_drop' ) } );
+				cancelBubble( e );
+				return;
 			}
 		}
 		return false;
