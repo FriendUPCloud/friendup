@@ -72,13 +72,44 @@ int RunTest( SystemBase *SLIB )
 	DEBUG("\nTEST WEBREQ STARTED\n");
 	DEBUG("\n----------------------------------------------\n");
 
+	DEBUG("\n----------------------------------------------\n");
+	DEBUG("\nTEST 1\n");
+	DEBUG("\n----------------------------------------------\n");
+	
 	WebsocketReqManager *man = WebsocketReqManagerNew();
 	WebsocketReq *wsreq = NULL;
 
 	int i;
 	for( i=0 ; i < 5; i++ )
 	{
-		wsreq = WebsocketReqManagerPutChunk( man, (char *)"IDC", i, 5, data[i], strlen( data[i] ) );
+		wsreq = WebsocketReqManagerPutChunk( man, (char *)"ID1", i, 5, data[i], strlen( data[i] ) );
+		if( wsreq != NULL )
+		{
+			if( wsreq->wr_Message != NULL && wsreq->wr_MessageSize > 0 && wsreq->wr_IsBroken == 0 )
+			{
+				DEBUG("Callback will be called again!\n");
+				//ParseAndCall( fcd, wsreq->wr_Message, wsreq->wr_MessageSize );
+				DEBUG("Callback was called again!\n");
+			}
+			else
+			{
+				if( wsreq->wr_IsBroken )
+				{
+					FERROR( "Message is broken: '%s'\n", wsreq->wr_Message );
+				}
+				DEBUG( "No message!\n" );
+			}						
+			WebsocketReqDelete( wsreq );
+		}
+	}
+	
+	DEBUG("\n----------------------------------------------\n");
+	DEBUG("\nTEST 2\n");
+	DEBUG("\n----------------------------------------------\n");
+	
+	for( i=0 ; i < 5; i++ )
+	{
+		wsreq = WebsocketReqManagerPutChunk( man, (char *)"ID2", i, 5, NULL, 0 );
 		if( wsreq != NULL )
 		{
 			if( wsreq->wr_Message != NULL && wsreq->wr_MessageSize > 0 && wsreq->wr_IsBroken == 0 )

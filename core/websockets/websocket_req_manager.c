@@ -76,6 +76,10 @@ void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
  */
 WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, int chunk, int total, char *data, int datasize )
 {
+	if( data == NULL )
+	{
+		return NULL;
+	}
 	if( wrm != NULL )
 	{
 		WebsocketReq *req = NULL;
