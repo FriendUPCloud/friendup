@@ -493,7 +493,7 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		FFree( l->sqlpool );
 		FFree( l );
-		LogDelete();
+		//LogDelete();
 		return NULL;
 	}
 	
