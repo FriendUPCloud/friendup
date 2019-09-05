@@ -364,6 +364,34 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 }
 
 /**
+ * Release WSThread data
+ **/
+
+inline void releaseWSData( WSThreadData *data )
+{
+	Http *http = data->http;
+	BufString *queryrawbs = data->queryrawbs;
+	if( http != NULL )
+	{
+		UriFree( http->uri );
+		
+		if( http->rawRequestPath != NULL )
+		{
+			FFree( http->rawRequestPath );
+			http->rawRequestPath = NULL;
+		}
+		HttpFree( http );
+	}
+	
+	FFree( data->requestid );
+	FFree( data->path );
+	
+	BufStringDelete( queryrawbs );
+	
+	FFree( data );
+}
+
+/**
  * Websocket request thread
  *
  * @param d pointer to WSThreadData
@@ -385,6 +413,7 @@ void WSThread( void *d )
 	WSCData *fcd = data->fcd;
 	if( fcd->wsc_Wsi == NULL )
 	{
+		releaseWSData( data );
 		return;
 	}
 	
@@ -398,24 +427,7 @@ void WSThread( void *d )
 	if( fcd->wsc_Wsi == NULL || fcd->wsc_UserSession == NULL )
 	{
 		FERROR("Error session is NULL\n");
-		if( http != NULL )
-		{
-			UriFree( http->uri );
-			
-			if( http->rawRequestPath != NULL )
-			{
-				FFree( http->rawRequestPath );
-				http->rawRequestPath = NULL;
-			}
-			HttpFree( http );
-		}
-		
-		FFree( data->requestid );
-		FFree( data->path );
-		
-		BufStringDelete( queryrawbs );
-		
-		FFree( data );
+		releaseWSData( data );
 		
 		//DECREASE_WS_THREADS();
 		
@@ -451,24 +463,8 @@ void WSThread( void *d )
 		if( respcode == -666 )
 		{
 			INFO("Logout function called.");
-			if( http != NULL )
-			{
-				UriFree( http->uri );
+			releaseWSData( data );
 			
-				if( http->rawRequestPath != NULL )
-				{
-					FFree( http->rawRequestPath );
-					http->rawRequestPath = NULL;
-				}
-			}
-			
-			FFree( data->requestid );
-			FFree( data->path );
-
-			HttpFree( http );
-			BufStringDelete( queryrawbs );
-	
-			FFree( data );
 			HttpFree( response );
 			
 			DECREASE_WS_THREADS();
@@ -683,6 +679,8 @@ void WSThread( void *d )
 		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
+	releaseWSData( data );
+	/*
 	if( http != NULL )
 	{
 		UriFree( http->uri );
@@ -701,6 +699,7 @@ void WSThread( void *d )
 	BufStringDelete( queryrawbs );
 	
 	FFree( data );
+	*/
     
 	//DECREASE_WS_THREADS();
 	
