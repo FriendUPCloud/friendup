@@ -851,6 +851,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									if( strncmp( data, "ok", 2 ) == 0 )
 									{
 									}
+									FFree( data );
 								}
 								FFree( command );
 							}
