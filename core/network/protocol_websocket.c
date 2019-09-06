@@ -1649,6 +1649,10 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 											WorkerManagerRun( lsb->sl_WorkerManager,  WSThread, wstdata, http, "ProtocolWebsocket.c: line 1220" );
 										}
 									}
+									else
+									{
+										releaseWSData( wstdata );
+									}
 #endif
 
 
