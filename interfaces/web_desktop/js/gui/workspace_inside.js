@@ -3942,8 +3942,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		wb.onselectstart = function( e ) { return cancelBubble ( e ); };
 		wb.ondragstart = function( e ) { return cancelBubble ( e ); };
 		wb.redrawIcons( this.getIcons(), 'vertical' );
+		
 		if ( RefreshDesklets ) RefreshDesklets();
-
+		
 		// Check dormant too
 		var dormants = DormantMaster.getDoors();
 
@@ -6774,6 +6775,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			]
 		} );*/
 	},
+	// Downloads a file by path to the client computer
 	download: function( path )
 	{
 		var lastChar = path.substr( path.length - 1, 1 );
