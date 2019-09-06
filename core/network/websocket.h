@@ -78,16 +78,11 @@ typedef struct WebSocket
 //
 // FriendCoreWebsocketData structure
 //
-/*
-typedef struct FCWSData 
-{
-//	WebsocketServerClient			*fcd_WSClient;		// if NULL then cannot send message
-//	void							*fcd_SystemBase;
-//	
-//	struct timeval					fcd_Timer;
-//	BufString						*fcd_Buffer;		//
-//}FCWSData;
-*/
+
+#ifndef WS_CALLS_LOG
+#define WS_CALLS_LOG
+#define WS_CALLS_MAX 10
+#endif
 
 typedef struct WSCData
 {
@@ -102,6 +97,11 @@ typedef struct WSCData
 	time_t							wsc_LastPingTime;
 	//int								wsc_Status;	//enabled=0, disabled=1
 	BufString						*wsc_Buffer;
+	
+#ifdef WS_CALLS_LOG
+	int								wsc_DebugPos;
+	char							wsc_DebugCalls[ WS_CALLS_MAX ][ 256 ];
+#endif
 }WSCData;
 
 //

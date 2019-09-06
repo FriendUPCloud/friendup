@@ -36,8 +36,8 @@ function setMenuMode( mode )
 
 function getNavigationMode()
 {
-	if( ge( 'navigationSpacial' ).checked )
-		return 'spacial';
+	/*if( ge( 'navigationSpacial' ).checked )
+		return 'spacial';*/
 	return 'browser';
 }
 
@@ -66,15 +66,16 @@ function setFocusMode( mode )
 
 function getWindowListMode()
 {
-	if( ge( 'windowlistDocked' ).checked )
+	// TODO: Reenable later
+	/*if( ge( 'windowlistDocked' ).checked )
 	{
 		return 'docked';
 	}
 	else if( ge( 'windowlistDockedlist' ).checked )
 	{
 		return 'dockedlist';
-	}
-	return 'separate';
+	}*/
+	return 'dockedlist';
 }
 
 function setWindowListMode( mode )

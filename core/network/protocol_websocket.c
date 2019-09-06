@@ -67,7 +67,7 @@ static int MAX_SIZE_WS_MESSAGE = WS_PROTOCOL_BUFFER_SIZE-2048;
  * Write data to websockets, inline function
  * If message is bigger then WS buffer then message is encoded, splitted and send
  *
- * @param wsi pointer to websocket structure
+ * @param wscdata pointer to websocket structure
  * @param msgptr pointer to message
  * @param msglen length of the messsage
  * @param type type of websocket message which will be send
@@ -305,13 +305,27 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 						}
 					}
 					
+					/*
 					if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 					{
 						lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
 					}
+					*/
 					wsi->wusc_Data->wsc_InUseCounter--;
 				
 					FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
+					
+					if( wsi->wusc_Data != NULL )
+					{
+						if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
+						{
+							if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
+							{
+								lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+							}
+							FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
+						}
+					}
 				}
 			}
 			
@@ -349,13 +363,27 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 
 					DEBUG("In use counter %d\n", wsi->wusc_Data->wsc_InUseCounter );
 				
+					/*
 					if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 					{
 						lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
 					}
+					*/
 					wsi->wusc_Data->wsc_InUseCounter--;
 				}
 				FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
+				
+				if( wsi->wusc_Data != NULL )
+				{
+					if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
+					{
+						if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
+						{
+							lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
+						}
+						FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
+					}
+				}
 			}
 		}
 	}
@@ -898,8 +926,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					}
 					if( val++ > 15 )
 					{
-						//break;
+						int i;
+						for( i=0 ; i < WS_CALLS_MAX ; i++ )
+						{
+							Log( FLOG_INFO, "POS: %d req: %s\n", fcd->wsc_DebugPos, fcd->wsc_DebugCalls[i] );
+						}
 						Log( FLOG_INFO, "Closeing WS connection\n");
+						break;
 					}
 					pthread_yield();
 					sleep( 1 );
