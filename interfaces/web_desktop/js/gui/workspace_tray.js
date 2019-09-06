@@ -56,10 +56,18 @@ function PollTray()
 		}
 		da.ondrop = function( e )
 		{
+			var num = 0;
 			for( var a = 0; a < e.length; a++ )
 			{
-				Workspace.download( e[ a ].Path ); 
+				if( Workspace.download( e[ a ].Path ) )
+				{
+					num++;
+				}
 			}
+			// Successful drop
+			if( num > 0 ) return true;
+			// Unsuccessful drop
+			return false;
 		}
 		tray.appendChild( da );
 	}

@@ -1170,12 +1170,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					m.execute( 'additem', o );
 					dropped++;
 				}
+				return dropped > 0 ? true : false;
 			}
 			else
 			{
 				Notify( { title: i18n( 'i18n_object_not_supported' ), text: i18n( 'i18n_only_executables_can_drop' ) } );
 				cancelBubble( e );
-				return;
+				return false;
 			}
 		}
 		return false;
@@ -1192,7 +1193,7 @@ function RefreshDesklets()
 {
 	for ( var a = 0; a < __desklets.length; a++ )
 	{
-		__desklets[a].render ( true );
+		__desklets[a].render( true );
 	}
 }
 

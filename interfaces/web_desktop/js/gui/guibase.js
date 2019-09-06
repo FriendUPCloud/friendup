@@ -381,7 +381,7 @@ var mousePointer =
 					}
 				}
 			}
-
+			
 			if( !skipDropCheck )
 			{
 				// Find what we dropped on
@@ -506,19 +506,22 @@ var mousePointer =
 			
 			if( dropper )
 			{
+				// Assume the drop was handled correctly
+				var dropResult = true;
+				
 				// Check if dropper object has a drop method, and execute it
 				// with the supplied elements
 				if( dropper.drop )
 				{
-					dropped = dropper.drop( this.elements, e, dropWin.content );
+					dropResult = dropped = dropper.drop( this.elements, e, dropWin.content );
 				}
 				else if( dropper.domNode && dropper.domNode.drop )
 				{
-					dropper.domNode.drop( this.elements, e );
+					dropResult = dropper.domNode.drop( this.elements, e );
 				}
 				else if( dropper.domNode && dropper.domNode.file && dropper.domNode.file.drop )
 				{
-					dropper.domNode.file.drop( this.elements, e );
+					dropResult = dropper.domNode.file.drop( this.elements, e );
 				}
 				else
 				{
@@ -562,7 +565,9 @@ var mousePointer =
 				}
 			}
 			
-			Workspace.redrawIcons();
+			// Only redraw icons if we have a non false drop result
+			if( dropResult !== false )
+				Workspace.redrawIcons();
 			
 			// Place back again
 			if( !dropped || !dropper )
