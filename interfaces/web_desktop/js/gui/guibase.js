@@ -3508,7 +3508,9 @@ movableMouseDown = function ( e )
 		 }
 	}
 	
-	if( Workspace.iconContextMenu )
+	var clickOnMenuItem = tar && tar.classList.contains( 'MenuItem' ) ? true : false;
+	
+	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
 	}
