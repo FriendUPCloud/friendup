@@ -692,6 +692,7 @@ var mousePointer =
 		}
 		else if ( this.dom && this.dom.firstChild )
 		{
+			console.log( this.dom.firstChild );
 			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
 			this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
 			window.mouseDown = 5;
