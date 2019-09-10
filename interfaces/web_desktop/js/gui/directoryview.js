@@ -2968,6 +2968,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		}
 		self.refreshScrollTimeout = setTimeout( function()
 		{
+			// Don't redraw icon view if we have elements
 			if( !( mousePointer.elements && mousePointer.dom && mousePointer.dom.firstChild ) )
 			{
 				self.RedrawIconView( obj, icons, direction, option, { addPlaceholderFirst: iy } );
