@@ -690,7 +690,7 @@ var mousePointer =
 				this.dom.parentNode.removeChild ( this.dom );
 			this.dom = false;
 		}
-		else if ( this.dom && this.dom.firstChild )
+		else if ( this.dom )
 		{
 			console.log( this.dom.firstChild );
 			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
