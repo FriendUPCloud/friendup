@@ -1,5 +1,6 @@
 
 -include ../Makefile.defs
+-include ../Config
 
 CC			=	gcc
 CPP			=	g++
