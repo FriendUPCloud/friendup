@@ -684,17 +684,19 @@ var mousePointer =
 	},
 	'poll': function ( e )
 	{
-		if ( !this.elements || !this.elements.length )
+		if( !this.elements || !this.elements.length )
 		{
-			if ( this.dom )
+			if( this.dom )
 				this.dom.parentNode.removeChild ( this.dom );
 			this.dom = false;
 		}
-		else if ( this.dom )
+		else if( this.dom )
 		{
-			console.log( 'Dragons!: ', this.dom, this.dom.firstChild );
-			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
-			this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			if( this.dom.firstChild )
+			{
+				this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
+				this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			}
 			window.mouseDown = 5;
 			ClearSelectRegion();
 		}
