@@ -568,6 +568,9 @@ var mousePointer =
 			// Redraw icons
 			Workspace.redrawIcons();
 			
+			if( window.currentMovable && currentMovable.content && currentMovable.content.refresh )
+				currentMovable.content.refresh();
+			
 			// Place back again
 			if( !dropped || !dropper )
 			{
