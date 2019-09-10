@@ -692,7 +692,7 @@ var mousePointer =
 		}
 		else if ( this.dom )
 		{
-			console.log( this.dom.firstChild );
+			console.log( 'Dragons!: ', this.dom, this.dom.firstChild );
 			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
 			this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
 			window.mouseDown = 5;
