@@ -2148,12 +2148,6 @@ html #Tray.Size16
 	background-size: contain;
 }
 
-#Tray > div:hover
-{
-    color: #ffee00;
-    text-shadow: 0px 0px 5px rgba(255,255,255,0.5);
-}
-
 .SpeechResponse
 {
 	position: absolute;
