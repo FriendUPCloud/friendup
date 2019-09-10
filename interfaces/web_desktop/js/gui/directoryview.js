@@ -2968,7 +2968,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		}
 		self.refreshScrollTimeout = setTimeout( function()
 		{
-			self.RedrawIconView( obj, icons, direction, option, { addPlaceholderFirst: iy } );
+			if( !( mousePointer.elements && mousePointer.dom && mousePointer.dom.firstChild ) )
+			{
+				self.RedrawIconView( obj, icons, direction, option, { addPlaceholderFirst: iy } );
+			}
 			self.refreshScrollTimeout = false;
 		}, 50 );
 	};

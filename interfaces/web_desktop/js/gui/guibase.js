@@ -29,9 +29,9 @@ var mousePointer =
 {
 	prevMouseX: -1,
 	prevMouseY: -1,
-	'elements': [],
-	'dom': false,
-	'testPointer': function ()
+	elements: [],
+	dom: false,
+	testPointer: function ()
 	{
 		if( !ge( 'MousePointer' ) )
 		{
@@ -45,7 +45,7 @@ var mousePointer =
 			this.dom = d;
 		}
 	},
-	'move': function( e )
+	move: function( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -259,7 +259,7 @@ var mousePointer =
 			this.candidate.condition( e );
 		}
 	},
-	'stopMove': function ( e )
+	stopMove: function ( e )
 	{
 		for ( var a in window.movableWindows )
 		{
@@ -267,12 +267,12 @@ var mousePointer =
 			if ( wn.rollOut ) wn.rollOut ( e );
 		}
 	},
-	'clear': function()
+	clear: function()
 	{
 		this.elements = [];
 		this.dom.innerHTML = '';	
 	},
-	'drop': function ( e )
+	drop: function ( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -615,11 +615,11 @@ var mousePointer =
 		}
 		this.mover = false;
 	},
-	'clone': function ( ele )
+	clone: function ( ele )
 	{
 		this.testPointer ();
 	},
-	'pickup': function ( ele, e )
+	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
 		if( window.isMobile ) return;
@@ -682,7 +682,7 @@ var mousePointer =
 			this.elements.push( ele );
 		}
 	},
-	'poll': function ( e )
+	poll: function ( e )
 	{
 		if( !this.elements || !this.elements.length )
 		{

@@ -1838,19 +1838,19 @@ function CancelWindowScrolling ( e )
 	return true;
 }
 if ( window.addEventListener )
-	window.addEventListener ( 'scroll', CancelWindowScrolling, true );
-else window.attachEvent ( 'onscroll', CancelWindowScrolling, true );
+	window.addEventListener( 'scroll', CancelWindowScrolling, true );
+else window.attachEvent( 'onscroll', CancelWindowScrolling, true );
 
 // Support scrolling in windows
-function WindowScrolling ( e )
+function WindowScrolling( e )
 {
-	if ( !e ) e = window.event;
+	if( !e ) e = window.event;
 	var dlt = e.detail ? (e.detail*-120) : e.wheelDelta;
 	var tr = e.srcElement ? e.srcElement : e.target;
 	var win = false;
-	while ( tr != document.body )
+	while( tr != document.body )
 	{
-		if ( tr.className && tr.className.indexOf ( 'View' ) > 0 )
+		if( tr.className && tr.className.indexOf ( 'View' ) > 0 )
 		{
 			win = tr;
 			break;
