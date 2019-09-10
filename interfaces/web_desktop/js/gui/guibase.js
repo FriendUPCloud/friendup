@@ -2618,6 +2618,10 @@ pollingTaskbar = false;
 function PollTaskbar( curr )
 {
 	if( pollingTaskbar ) return;
+	
+	if( !document.body || !document.body.classList.contains( 'Inside' ) ) return;
+	if( ge( 'FriendScreenOverlay' ) && ge( 'FriendScreenOverlay' ).classList.contains( 'Visible' ) )
+		return;
 		
 	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
 	{
@@ -2748,6 +2752,7 @@ function PollTaskbar( curr )
 			
 			if( baseElement.scrollFunc )
 				baseElement.removeEventListener( 'mousemove', baseElement.scrollFunc );
+			
 			baseElement.scrollFunc = function( e )
 			{
 				var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
@@ -2810,6 +2815,7 @@ function PollTaskbar( curr )
 				// If the window doesn't exist, remove the DOM element from tasbkar
 				else t.removeChild( t.tasks[ b ].dom );
 			}
+			
 			t.tasks = cleaner; // Set cleaned task list
 			
 			for( var a in movableWindows )

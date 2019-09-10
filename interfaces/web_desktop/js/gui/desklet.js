@@ -621,6 +621,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 		}
+		
 		PollTaskbar();
 	}
 	// End render --------------------------------------------------------------
