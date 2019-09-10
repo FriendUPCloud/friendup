@@ -565,8 +565,7 @@ var mousePointer =
 				}
 			}
 			
-			// Only redraw icons if we have a non false drop result
-			//if( dropResult !== false )
+			// Redraw icons
 			Workspace.redrawIcons();
 			
 			// Place back again
