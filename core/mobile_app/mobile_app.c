@@ -1127,6 +1127,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
 	
+	Log( FLOG_INFO, "User: %s userid: %lu will get message: %s\n", username, userID, message );
+	
 	if( bytesSent > 0 )
 	{
 		wsMessageSent = TRUE;
@@ -1146,7 +1148,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	if( wsMessageSent == FALSE )
 	{
 		DEBUG("Sending messages across Android devices\n");
-		BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 		if( bs != NULL )
 		{
 			NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );

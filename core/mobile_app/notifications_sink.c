@@ -441,7 +441,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 										p++;
 										for( j=0 ; j < locsize ; j++ )
 										{
-											char *username = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+											char *username = StringDuplicateN( data + t[p].start, (int)(t[p].end - t[p].start) );
 											DEBUG("This user will get message: %s\n", username );
 											UMsg *le = FCalloc( 1, sizeof(UMsg) );
 											if( le != NULL )
@@ -455,7 +455,6 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 										}
 										p--;
 									}
-									
 								}
 								else if( strncmp( data + t[p].start, "channel_id", size) == 0) 
 								{
@@ -521,7 +520,27 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									return ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 								}
 								
+								// debug purpose
+								BufString *debugUserList = BufStringNew();
 								UMsg *le = ulistroot;
+								while( le != NULL )
+								{
+									char temp[ 256 ];
+									int size = snprintf( temp, sizeof(temp), " User: %s", le->usrname );
+									BufStringAddSize( debugUserList, temp, size );
+									le = (UMsg *)le->node.mln_Succ;
+								}
+								if( debugUserList->bs_Size > 0 )
+								{
+									Log( FLOG_INFO, "This users will get notifications: %s\n", debugUserList->bs_Buffer );
+								}
+								else
+								{
+									Log( FLOG_ERROR, "Notification Error! No users in recipients list\n");
+								}
+								BufStringDelete( debugUserList );
+								
+								le = ulistroot;
 								while( le != NULL )
 								{
 									if( le->usrname != NULL )
@@ -537,7 +556,6 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 										lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
 #endif
 									}
-									
 									le = (UMsg *)le->node.mln_Succ;
 								}
 							}
