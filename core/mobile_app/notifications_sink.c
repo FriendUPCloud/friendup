@@ -540,6 +540,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 								}
 								BufStringDelete( debugUserList );
 								
+								int returnStatus = 0;
 								le = ulistroot;
 								while( le != NULL )
 								{
@@ -547,17 +548,22 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									{
 										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra, timecreated );
 
-										char reply[256];
-										int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
-#ifdef WEBSOCKET_SEND_QUEUE
-										WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
-#else
-										unsigned int json_message_length = strlen( reply + LWS_PRE );
-										lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-#endif
+										if( status != 0 )
+										{
+											returnStatus = status;
+										}
 									}
 									le = (UMsg *)le->node.mln_Succ;
 								}
+								
+								char reply[256];
+								int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", returnStatus );
+#ifdef WEBSOCKET_SEND_QUEUE
+								WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
+#else
+								unsigned int json_message_length = strlen( reply + LWS_PRE );
+								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
+#endif
 							}
 							else
 							{

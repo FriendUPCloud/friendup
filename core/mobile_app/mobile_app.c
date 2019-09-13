@@ -1172,7 +1172,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	char *jsonMessageIOS = NULL;
 	int jsonMessageIosLength = reqLengith+512;
-	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )//&& sb->l_APNSConnection != NULL && sb->l_APNSConnection->wapns_Connection != NULL )
+	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )
 	{
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
@@ -1184,6 +1184,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : tokens %s\n", notif->n_Content, tokens );
 				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
 				FFree( tokens );
+			}
+			else
+			{
+				Log( FLOG_ERROR, "[MobileAppNotifyUserRegister] tokens are equal to NULL for user: %lu\n", userID );
 			}
 			FFree( jsonMessageIOS );
 		}
