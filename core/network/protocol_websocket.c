@@ -855,7 +855,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	
 	char *in = NULL;
 	
-	if( len > 0 )
+	if( tin != NULL && len > 0 )
 	{
 		DEBUG("Len: %lu\n", len );
 		if( ( in = FMalloc( len+128 ) ) != NULL )	// 16 should be ok
