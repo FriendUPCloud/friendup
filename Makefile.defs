@@ -28,10 +28,6 @@ MUTEX_TIMEOUT_TIME			=	500000
 GLOBAL_CFLAGS				=	-DMUTEX_TIMEOUT_NUMBER_TRIES=$(MUTEX_TIMEOUT_NUMBER_TRIES) -DFRIENDUP=1 -DMUTEX_TIMEOUT_TIME=$(MUTEX_TIMEOUT_TIME) -D_POSIX_C_SOURCE=199309L -D__need_timespec -D__USE_XOPEN2K -DAPPDATE=\"$(GLOBAL_BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -fPIC -Wno-unused -Wno-unused-parameter $(shell mysql_config --cflags) -D__USE_POSIX $(ENABLE_SSH) $(ENABLE_SSL) -I$(LIBXML2_INCLUDE_DIR)
 GLOBAL_LFLAGS				=	-lcrypto -lm -lpthread -ldl -lssh -lrt -lssl -lmagic -lxml2 `mysql_config --libs` -lpng -lz
 
-ifeq ($(USE_SSH_THREADS_LIB),1)
-GLOBAL_LFLAGS				+=	-lssh_threads
-endif
-
 ifeq ($(USE_SANITIZER),1)
 GLOBAL_CFLAGS				+=	-fsanitize=address 
 GLOBAL_LFLAGS				+=	-lasan

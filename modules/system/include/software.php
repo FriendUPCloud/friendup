@@ -92,7 +92,7 @@ foreach( $paths as $path )
 			
 			$f = json_decode( file_get_contents( $path . $file . '/Config.conf' ) );
 			if( !$f ) continue;
-			if( isset( $f->HideInCatalog ) && $f->HideInCatalog == 'yes' ) continue;
+			if( $mode != 'showall' && isset( $f->HideInCatalog ) && $f->HideInCatalog == 'yes' ) continue;
 			
 		
 			$o = new stdClass();

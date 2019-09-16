@@ -754,6 +754,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										if( strncmp( data, "ok", 2 ) == 0 )
 										{
 										}
+										FFree( data );
 									}
 									FFree( command );
 								}
@@ -851,6 +852,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									if( strncmp( data, "ok", 2 ) == 0 )
 									{
 									}
+									FFree( data );
 								}
 								FFree( command );
 							}
@@ -1746,6 +1748,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											if( strncmp( data, "ok", 2 ) == 0 )
 											{
 											}
+											FFree( data );
 										}
 										FFree( command );
 									}
@@ -2074,7 +2077,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								StrToMD5Str( hashmap, 512, tmp, strlen( tmp ) );
 								tmpfs->fs_Hash = StringDuplicate( hashmap );
 								tmpfs->fs_CreatedTime = time( NULL );
-								
+								/*
 								struct tm* ti;
 								ti = localtime( &(tmpfs->fs_CreatedTime) );
 								tmpfs->fs_CreateTimeTM.tm_year = ti->tm_year + 1900;
@@ -2084,7 +2087,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								tmpfs->fs_CreateTimeTM.tm_hour = ti->tm_hour;
 								tmpfs->fs_CreateTimeTM.tm_min = ti->tm_min;
 								tmpfs->fs_CreateTimeTM.tm_sec = ti->tm_sec;
-							
+								*/
 								if( sqllib->Save( sqllib, FileSharedTDesc, tmpfs ) == 0 )
 								{
 									sharedFile = TRUE;

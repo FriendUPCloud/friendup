@@ -4129,7 +4129,8 @@ if( window.addEventListener )
 				Workspace.loginSessionId( args.sessionid, args.callbac, args.event );
 			}
 
-			Workspace.login( args.username, args.password, args.remember, args.callback, args.event );
+			if( typeof( args.username ) != 'undefined' )
+				Workspace.login( args.username, args.password, args.remember, args.callback, args.event );
 		}
 	});
 	
