@@ -395,7 +395,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
  * Release WSThread data
  **/
 
-inline void releaseWSData( WSThreadData *data )
+void releaseWSData( WSThreadData *data )
 {
 	Http *http = data->http;
 	BufString *queryrawbs = data->queryrawbs;
@@ -1686,6 +1686,10 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										{
 											WorkerManagerRun( lsb->sl_WorkerManager,  WSThread, wstdata, http, "ProtocolWebsocket.c: line 1220" );
 										}
+									}
+									else
+									{
+										releaseWSData( wstdata );
 									}
 #endif
 

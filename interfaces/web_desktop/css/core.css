@@ -2148,12 +2148,6 @@ html #Tray.Size16
 	background-size: contain;
 }
 
-#Tray > div:hover
-{
-    color: #ffee00;
-    text-shadow: 0px 0px 5px rgba(255,255,255,0.5);
-}
-
 .SpeechResponse
 {
 	position: absolute;
@@ -2334,6 +2328,15 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 }
 
 /* Various built-in icons */
+
+.TrayElement.Download:before
+{
+	font-family: fontawesome;
+	content: "\f0ed";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
+}
 
 .TrayElement.Tasks:before
 {

@@ -239,6 +239,9 @@ menu_set_as_wallpaper                   : Bruk som skrivebordsbakgrunn
 i18n_edit_dock                          : Rediger docken
 i18n_remove_from_dock                   : Fjern fra docken
 
+i18n_object_not_supported               : Feil object
+i18n_only_executables_can_drop          : Kun kjørbare objekter kan slippes på docken
+
 i18n_choose_file_to_upload              : Velg en fil for opplasting
 i18n_upload_target                      : Målsti
 i18n_upload_completed                   : Opplastning fullførte.
@@ -428,6 +431,10 @@ i18n_could_not_make_dir                 : Kunne ikke opprette mappen.
 i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
+i18n_drag_files_to_download             : Slipp filer for nedlastning.
+
+i18n_could_not_download                 : Kunne ikke laste ned
+i18n_download_wrong_type                : Kun filer kan lastes ned.
 
 #Colorpicker -------------------------------------------------------------------
 
