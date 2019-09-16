@@ -153,6 +153,12 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			MobileAppNotif *man = (MobileAppNotif *)user;
 			if( man != NULL && man->man_Data != NULL )
 			{
+				while( man->man_InUse > 0 )
+				{
+					
+					usleep( 500 );
+				}
+				
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
 				if( d != NULL )
 				{
@@ -282,11 +288,19 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 
 void ProcessSinkMessage( void *locd )
 {
-	pthread_detach( pthread_self() );
 	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
+	pthread_detach( pthread_self() );
+	
 	if( spm == NULL )
 	{
 		return;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
+	{
+		MobileAppNotif *man = (MobileAppNotif *)spm->udata;
+		man->man_InUse++;
+		FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
 	}
 	
 	DataQWSIM *d = spm->d;
@@ -565,7 +579,7 @@ void ProcessSinkMessage( void *locd )
 									if( application != NULL ) FFree( application );
 									if( extra != NULL ) FFree( extra );
 									ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
-									return;
+									goto error_point;
 								}
 								
 								UMsg *le = ulistroot;
@@ -632,6 +646,13 @@ void ProcessSinkMessage( void *locd )
 	}	// JSON OBJECT
 	
 error_point:
+
+	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
+	{
+		MobileAppNotif *man = (MobileAppNotif *)spm->udata;
+		man->man_InUse--;
+		FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
+	}
 
 	if( spm->data != NULL )
 	{
