@@ -30,6 +30,17 @@ static int ReplyError( DataQWSIM *d, int error_code);
 
 int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata );
 
+//
+// Information used by threads
+//
+
+typedef struct SinkProcessMessage{
+	DataQWSIM *d;
+	char *data;
+	size_t len;
+	void *udata;
+}SinkProcessMessage;
+
 int globalServerEntriesNr = 0;
 char **globalServerEntries = NULL;
 
@@ -142,6 +153,12 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			MobileAppNotif *man = (MobileAppNotif *)user;
 			if( man != NULL && man->man_Data != NULL )
 			{
+				while( man->man_InUse > 0 )
+				{
+					
+					usleep( 500 );
+				}
+				
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
 				if( d != NULL )
 				{
@@ -221,6 +238,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			{
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
 				int ret = ProcessIncomingRequest( d, buf, len, user );
+				buf = NULL;
 			}
 		}
 		break;
@@ -249,8 +267,47 @@ typedef struct UMsg
  * @return 0 when success, otherwise error number
  */
 
+// definition
+void ProcessSinkMessage( void *locd );
+
 int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 {
+	SinkProcessMessage *spm = FCalloc( 1, sizeof( SinkProcessMessage ) );
+	if( spm != NULL )
+	{
+		spm->d = d;
+		spm->data = data;
+		spm->len = len;
+		spm->udata = udata;
+		
+		pthread_t tmpThread;
+		pthread_create( &tmpThread, NULL, (void *)( void * )ProcessSinkMessage, spm );
+	}
+	return 0;
+}
+
+void ProcessSinkMessage( void *locd )
+{
+	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
+	pthread_detach( pthread_self() );
+	
+	if( spm == NULL )
+	{
+		return;
+	}
+	
+	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
+	{
+		MobileAppNotif *man = (MobileAppNotif *)spm->udata;
+		man->man_InUse++;
+		FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
+	}
+	
+	DataQWSIM *d = spm->d;
+	char *data = spm->data;
+	size_t len = spm->len;
+	void *udata = spm->udata;
+	
 	Log( FLOG_INFO, "[NotificationSink] Incoming notification request: <%*s>\n", (unsigned int)len, data);
 
 	jsmn_parser parser;
@@ -262,7 +319,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 	DEBUG( "Token found: %d", tokens_found );
 	if( tokens_found < 1 )
 	{
-		return ReplyError( d, WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND );
+		ReplyError( d, WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND );
+		goto error_point;
 	}
 	
 	//
@@ -324,14 +382,16 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				{
 					if( authKey != NULL ){ FFree( authKey ); }
 					if( authName != NULL ){ FFree( authName ); }
-					return ReplyError( d, WS_NOTIF_SINK_ERROR_NO_AUTH_ELEMENTS );
+					ReplyError( d, WS_NOTIF_SINK_ERROR_NO_AUTH_ELEMENTS );
+					goto error_point;
 				}
 				
 				if( VerifyAuthKey( authName, authKey ) == FALSE )
 				{
 					FFree( authKey );
 					FFree( authName );
-					return ReplyError( d, WS_NOTIF_SINK_ERROR_AUTH_FAILED );
+					ReplyError( d, WS_NOTIF_SINK_ERROR_AUTH_FAILED );
+					goto error_point;
 				}
 				
 				d->d_Authenticated = TRUE;
@@ -360,7 +420,7 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, "service", "group", "list", bs->bs_Buffer );
 				BufStringDelete( bs );
 				
-				return 0;
+				goto error_point;
 			}
 			else if( d->d_Authenticated ) 
 			{
@@ -518,7 +578,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 									if( message != NULL ) FFree( message );
 									if( application != NULL ) FFree( application );
 									if( extra != NULL ) FFree( extra );
-									return ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
+									ReplyError( d, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
+									goto error_point;
 								}
 								
 								UMsg *le = ulistroot;
@@ -543,7 +604,8 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 							}
 							else
 							{
-								return ReplyError( d, WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND );
+								ReplyError( d, WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND );
+								goto error_point;
 							}
 							
 							UMsg *le = ulistroot;
@@ -571,17 +633,34 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 				else
 				{
 					DEBUG( "Not authenticated! omg!!!" );
-					return ReplyError( d, WS_NOTIF_SINK_ERROR_WS_NOT_AUTHENTICATED );
+					ReplyError( d, WS_NOTIF_SINK_ERROR_WS_NOT_AUTHENTICATED );
+					goto error_point;
 				}
 			}
 		}	// "type" in json
 		else
 		{
-			return ReplyError( d, WS_NOTIF_SINK_ERROR_BAD_JSON );
+			ReplyError( d, WS_NOTIF_SINK_ERROR_BAD_JSON );
+			goto error_point;
 		}
 	}	// JSON OBJECT
+	
+error_point:
 
-	return 0;
+	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
+	{
+		MobileAppNotif *man = (MobileAppNotif *)spm->udata;
+		man->man_InUse--;
+		FRIEND_MUTEX_UNLOCK( &spm->d->d_Mutex );
+	}
+
+	if( spm->data != NULL )
+	{
+		FFree( spm->data );
+	}
+	FFree( spm );
+	
+	return;
 }
 
 /**
