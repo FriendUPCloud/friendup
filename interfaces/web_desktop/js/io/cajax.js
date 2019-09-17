@@ -636,12 +636,16 @@ cAjax.prototype.send = function( data )
         
         var reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
         
-        if( !reqID )
+        if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	console.log( 'Test: Request failed ', reqId );
         	AddToCajaxQueue( self );
 			Workspace.flushSession();
 			return Workspace.relogin();
+        }
+        else if( typeof( reqID ) == 'undefined' )
+        {
+        	console.log( 'cAjax: Request was undefined.' );
         }
         else
         {
