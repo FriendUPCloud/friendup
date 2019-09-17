@@ -621,6 +621,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 		}
+		
 		PollTaskbar();
 	}
 	// End render --------------------------------------------------------------
@@ -1114,7 +1115,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	{
 		this.render( true );
 	}
-	this.dom.drop = function( eles )
+	this.dom.drop = function( eles, e )
 	{
 		var dropped = 0;
 		
@@ -1150,18 +1151,33 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 			
 			// Add to launcher
-			if( self.addLauncher( element ) )
+			var extension = element.exe ? element.exe.split( '.' ) : false;
+			if( extension && extension.length > 1 )
+				extension = extension[1].toLowerCase();
+			else extension = false;
+			
+			if( element.type == 'executable' || ( element.type == 'file' && extension == 'jsx' ) )
 			{
-				var m = new Module( 'dock' );
-				var w = this.view;
-				m.onExecuted = function( r, dat )
+				if( self.addLauncher( element ) )
 				{
-					// Refresh dock noe more time
-					Workspace.reloadDocks();
+					var m = new Module( 'dock' );
+					var w = this.view;
+					m.onExecuted = function( r, dat )
+					{
+						// Refresh dock noe more time
+						Workspace.reloadDocks();
+					}
+					var o = { type: element.type, application: element.application, icon: element.src, shortdescription: '' };
+					m.execute( 'additem', o );
+					dropped++;
 				}
-				var o = { type: element.type, application: element.application, icon: element.src, shortdescription: '' };
-				m.execute( 'additem', o );
-				dropped++;
+				return dropped > 0 ? true : false;
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_object_not_supported' ), text: i18n( 'i18n_only_executables_can_drop' ) } );
+				cancelBubble( e );
+				return false;
 			}
 		}
 		return false;
@@ -1178,7 +1194,7 @@ function RefreshDesklets()
 {
 	for ( var a = 0; a < __desklets.length; a++ )
 	{
-		__desklets[a].render ( true );
+		__desklets[a].render( true );
 	}
 }
 

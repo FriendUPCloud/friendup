@@ -30,13 +30,14 @@ function _nameFix( wt )
 	return wt;
 }
 
-function _getBase64Image( img )
+function _getBase64Image( img, type )
 {
+	if( !type ) type = 'image/png';
 	var canvas = document.createElement( 'canvas' );
 	canvas.width = img.width; canvas.height = img.height;
 	var ctx = canvas.getContext( '2d' );
 	ctx.drawImage( img, 0, 0 );
-	return canvas.toDataURL( 'image/png' );
+	return canvas.toDataURL( type );
 }
 
 Friend = window.Friend || {};
@@ -2967,7 +2968,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		}
 		self.refreshScrollTimeout = setTimeout( function()
 		{
-			self.RedrawIconView( obj, icons, direction, option, { addPlaceholderFirst: iy } );
+			// Don't redraw icon view if we have elements
+			if( !( mousePointer.elements && mousePointer.dom && mousePointer.dom.firstChild ) )
+			{
+				self.RedrawIconView( obj, icons, direction, option, { addPlaceholderFirst: iy } );
+			}
 			self.refreshScrollTimeout = false;
 		}, 50 );
 	};
@@ -3725,9 +3730,9 @@ function DirectoryContainsFile( filename, directoryContents )
 // Icon class ------------------------------------------------------------------
 // -------------------------------------------------------------------------
 
-FileIcon = function( fileInfo )
+FileIcon = function( fileInfo, flags )
 {
-	this.Init ( fileInfo );
+	this.Init ( fileInfo, flags );
 }
 
 // Put in cache
@@ -3804,18 +3809,31 @@ FileIcon.prototype.delCache = function( dir )
 }
 
 // -----------------------------------------------------------------------------
-FileIcon.prototype.Init = function( fileInfo )
+FileIcon.prototype.Init = function( fileInfo, flags )
 {
+	var self = this;
+	
 	function _createIconTitle( str )
 	{
 		return '<span>' + str.split( ' ' ).join( '</span><span>' ) + '</span>';
 	}
 
+
+	this.flags = flags ? flags : {};
+	
+	var type = 'div';
+	if( flags && flags.type ) type = flags.type;
+	
 	// Create the file icon div
-	this.file = document.createElement( 'div' );
+	this.file = document.createElement( type );
 	var file = this.file;
 	file.className = 'File';
 	file.style.position = 'absolute';
+
+	if( flags && flags.nativeDraggable )
+	{
+		file.setAttribute( 'draggable', true );
+	}
 
 	// Selected in buffer
 	if( !fileInfo )
@@ -3877,7 +3895,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
 		else if( fileInfo.Title == 'System' )
 			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
-	
+		
 		iconInner.className = 'Drive';
 		var label = document.createElement( 'div' );
 		label.className = 'Label';
@@ -4162,370 +4180,373 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	// -------------------------------------------------------------------------
 	// Attach events
-	file.onmousedown = function( e )
+	if( !( self.flags && self.flags.nativeDraggable ) )
 	{
-		if( !e ) e = window.event ? window.event : {};
+		file.onmousedown = function( e )
+		{
+			if( !e ) e = window.event ? window.event : {};
 	
-		// Activate screen on click
-		if( this.window )
-		{
-			// when changing from one directoryview to another, clear region icons
-			if(
-				window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
-				this.window.parentNode != window.currentMovable
-			)
+			// Activate screen on click
+			if( this.window )
 			{
-				clearRegionIcons();
-			}
-			if( this.window.parentNode.classList.contains( 'View' ) )
-			{
-				if( !this.window.parentNode.classList.contains( 'Active' ) )
-					_ActivateWindow( this.window.parentNode );
-			}
-		}
-		
-		// For screen icons
-		if( this.window.classList.contains( 'ScreenContent' ) )
-		{
-			if( currentMovable )
-				_DeactivateWindow( currentMovable );
-			currentMovable = null;
-		}
-
-		// This means we are adding
-		if( e.shiftKey || e.ctrlKey )
-		{
-			convertIconsToMultiple();
-		}
-
-		if( !e ) e = window.event;
-		if( !e ) e = {};
-		
-		if( this.window )
-		{
-			var rc = 0;
-			if( e.which ) rc = ( e.which == 3 );
-			else if( e.button ) rc = ( e.button == 2 );
-			if( !rc )
-			{
-				if( e.button === 0 || e.button === 3 || e.button === 2 )
+				// when changing from one directoryview to another, clear region icons
+				if(
+					window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
+					this.window.parentNode != window.currentMovable
+				)
 				{
-					window.mouseDown = this;
+					clearRegionIcons();
+				}
+				if( this.window.parentNode.classList.contains( 'View' ) )
+				{
+					if( !this.window.parentNode.classList.contains( 'Active' ) )
+						_ActivateWindow( this.window.parentNode );
 				}
 			}
-		}
-
-		// Right mouse button
-		if( e.button == 2 )
-		{
-			// check icons
-			clearRegionIcons();
-			this.classList.add( 'Selected' );
-			found = this;
-			this.selected = true;
-			this.fileInfo.selected = true;
-			
-			// Count selected icons
-			this.directoryView.windowObject.checkSelected();
-			
-			if( !window.isMobile )
+		
+			// For screen icons
+			if( this.window.classList.contains( 'ScreenContent' ) )
 			{
-				Workspace.showContextMenu( false, e );
+				if( currentMovable )
+					_DeactivateWindow( currentMovable );
+				currentMovable = null;
 			}
-			return cancelBubble( e );
-		}
-		else
-		{
-			// Use override if possible
-			if( this.directoryView.filedialog )
+
+			// This means we are adding
+			if( e.shiftKey || e.ctrlKey )
 			{
-				if( this.directoryView.doubleclickfiles )
+				convertIconsToMultiple();
+			}
+
+			if( !e ) e = window.event;
+			if( !e ) e = {};
+		
+			if( this.window )
+			{
+				var rc = 0;
+				if( e.which ) rc = ( e.which == 3 );
+				else if( e.button ) rc = ( e.button == 2 );
+				if( !rc )
 				{
-					if( this.fileInfo.Type == 'File' )
+					if( e.button === 0 || e.button === 3 || e.button === 2 )
 					{
-						this.directoryView.doubleclickfiles( this, e );
+						window.mouseDown = this;
 					}
-					else if( this.fileInfo.Type == 'Directory' )
+				}
+			}
+
+			// Right mouse button
+			if( e.button == 2 )
+			{
+				// check icons
+				clearRegionIcons();
+				this.classList.add( 'Selected' );
+				found = this;
+				this.selected = true;
+				this.fileInfo.selected = true;
+			
+				// Count selected icons
+				this.directoryView.windowObject.checkSelected();
+			
+				if( !window.isMobile )
+				{
+					Workspace.showContextMenu( false, e );
+				}
+				return cancelBubble( e );
+			}
+			else
+			{
+				// Use override if possible
+				if( this.directoryView.filedialog )
+				{
+					if( this.directoryView.doubleclickfiles )
 					{
-						launchIcon( e, this );
+						if( this.fileInfo.Type == 'File' )
+						{
+							this.directoryView.doubleclickfiles( this, e );
+						}
+						else if( this.fileInfo.Type == 'Directory' )
+						{
+							launchIcon( e, this );
+						}
+						return cancelBubble( e );
 					}
+					return;
+				}
+		
+				if( window.isSettopBox && this.selected )
+				{
+					launchIcon( e, this );
+					this.classList.remove( 'Selected' );
+					this.selected = false;
+					this.fileInfo.selected = false;
 					return cancelBubble( e );
 				}
-				return;
-			}
-		
-			if( window.isSettopBox && this.selected )
-			{
-				launchIcon( e, this );
-				this.classList.remove( 'Selected' );
-				this.selected = false;
-				this.fileInfo.selected = false;
-				return cancelBubble( e );
-			}
 
-			var sh = e.shiftKey || e.ctrlKey;
-			if( !sh ) 
-			{
-				if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+				var sh = e.shiftKey || e.ctrlKey;
+				if( !sh ) 
 				{
-					clearRegionIcons( { exception: this } );
-				}
-			}
-
-			// Toggle
-			if( this.classList.contains( 'Selected' ) && !( !sh && this.selected == 'multiple' ) )
-			{
-				this.classList.remove( 'Selected' );
-				this.selected = false;
-				this.fileInfo.selected = false;
-			}
-			else
-			{
-				this.classList.add( 'Selected' );
-				this.selected = sh ? 'multiple' : true;
-				this.fileInfo.selected = sh ? 'multiple' : true;
-			}
-
-
-			// Refresh the menu based on selected icons
-			WorkspaceMenu.show();
-			CheckScreenTitle();
-			if( window.isSettopBox )
-			{
-				return cancelBubble( e );
-			}
-		}
-
-		if( e && e.stopPropagation )
-			e.stopPropagation();
-	}
-
-	// -------------------------------------------------------------------------
-	// This one driggers dropping icons! (believe it or not)
-	file.onmouseup = function( e )
-	{
-		if( mousePointer && mousePointer.elements.length )
-		{
-			// Drop on an icon on a workbench icon
-			if( window.targetMovable == ge( 'Doors' ) )
-			{
-				// TODO: Implement desktop dropping!
-			}
-			// Drop an icon on top of another normal window icon
-			else if( window.targetMovable && window.targetMovable.id )
-			{
-				// TODO: Implement icon dropping!
-			}
-			else
-			{
-			}
-		}
-		if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
-		{
-			clearRegionIcons( { exception: this, force: true } );
-		}
-		window.targetMovable = false;
-	}
-
-	// Do tha thang
-	launchIcon = function( event, ele )
-	{
-		if( !event ) event = window.event;
-		
-		obj = ele ? ele : file;
-		
-		// File extension
-		if( obj.fileInfo && obj.fileInfo.Path && obj.fileInfo.Path.indexOf( '.' ) > 0 )
-		{
-			var ext = obj.fileInfo.Path.split( '.' );
-			if( ext.length > 1 )
-			{
-				ext = '.' + ext[ext.length-1].toLowerCase();
-
-				// Check mimetypes
-				for( var a in Workspace.mimeTypes )
-				{
-					var mt = Workspace.mimeTypes[a];
-					for( var b in mt.types )
+					if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
 					{
-						// Make sure we have a valid executable
-						if( ext == mt.types[b].toLowerCase() && mt.executable.length )
-						{
-							return ExecuteApplication( mt.executable, obj.fileInfo.Path );
-						}
+						clearRegionIcons( { exception: this } );
 					}
 				}
-				// Execute jsx!
-				if( ext == '.jsx' )
-				{
-					return ExecuteApplication( obj.fileInfo.Path );
-				}
-			}
-		}
 
-		// Normal folders etc
-		// Open unique windows if we're in toolbar mode and are double clicking a disk
-		var uniqueView = false;
-		var dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
-		if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
-		{
-			uniqueView = true;
-			if( obj.fileInfo.Path != obj.fileInfo.Volume )
-			{
-				obj.fileInfo.Path = obj.fileInfo.Volume;
-			}
-			
-			// Open unique window!
-			OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-			return window.isMobile ? Workspace.closeDrivePanel() : false;
-		}
-		// Just change directory
-		else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
-		{
-			// Set a new path and record the old one!
-			var we = dv.windowObject;
-			var dw = dv;
-
-			// Add current and set it to end of history
-			var path = obj.fileInfo.Path.split( ':' );
-			
-			var fin = {
-				Volume: path[0] + ':',
-				Path: obj.fileInfo.Path,
-				Title: path[0],
-				Type: obj.fileInfo.Type,
-				Door: Workspace.getDoorByPath( path.join( ':' ) )
-			}
-			dw.addToHistory( fin );
-
-			// Update on notifications
-			var ppath = obj.fileInfo.Path;
-			if( !Workspace.diskNotificationList[ ppath ] )
-			{
-				Workspace.diskNotificationList[ ppath ] = {
-					type: 'directory',
-					view: we
-				};
-				var f = new Library( 'system.library' );
-				f.addVar( 'sessionid', Workspace.sessionId );
-				f.addVar( 'path', ppath );
-				f.onExecuted = function( e, d )
+				// Toggle
+				if( this.classList.contains( 'Selected' ) && !( !sh && this.selected == 'multiple' ) )
 				{
-					if( e != 'ok' )
-						return;
-					
-					var j;
-					try
-					{
-						j = JSON.parse( d );
-					}
-					catch( e )
-					{
-						console.log( 'Error in JSON format: ', d );
-						return;
-					}
-					we.windowObject.addEvent( 'systemclose', function()
-					{
-						var ff = new Library( 'system.library' );
-						ff.addVar( 'sessionid', Workspace.sessionId );
-						ff.addVar( 'path', ppath );
-						ff.addVar( 'id', j.Result );
-						ff.onExecuted = function( es, ds )
-						{
-							// TODO: Clear it?
-							Workspace.diskNotificationList[ ppath ] = false;
-						}
-						ff.execute( 'file/notificationremove' );
-					} );
-				}
-				f.execute( 'file/notificationstart' );
-			}
-
-			// Open unique window!
-			// Animation for going to next folder
-			if( isMobile )
-			{
-				// Remove previous one
-				if( dv.windowObject.slideAnimation )
-					dv.windowObject.slideAnimation.parentNode.removeChild( dv.windowObject.slideAnimation );
-				
-				var n = document.createElement( 'div' );
-				n.className = 'Content SlideAnimation';
-				n.style.willChange = 'transform';
-				n.style.transition = 'transform 0.4s';
-				n.innerHTML = dv.windowObject.innerHTML;
-				n.scrollTop = dv.windowObject.scrollTop;
-				n.style.zIndex = 10;
-				dv.windowObject.parentNode.appendChild( n );
-				dv.windowObject.slideAnimation = n;
-				dv.windowObject.parentNode.classList.add( 'Redrawing' );
-				
-				// Refresh and add animation
-				we.refresh( function()
-				{
-					n.style.transform = 'translate3d(-100%,0,0)';
-					setTimeout( function()
-					{
-						if( n.parentNode )
-						{
-							n.parentNode.removeChild( n );
-							if( dv.windowObject.parentNode.classList )
-								dv.windowObject.parentNode.classList.remove( 'Redrawing' );
-						}
-						dv.windowObject.slideAnimation = null;
-					}, 400 );
-				} );
-			}
-			// Desktop mode, just refresh
-			else 
-			{
-				we.refresh();
-			}
-			return window.isMobile ? Workspace.closeDrivePanel() : false;
-		}
-		else
-		{	
-			// No mime type? Ask Friend Core
-			var mim = new Module( 'system' );
-			mim.onExecuted = function( me, md )
-			{
-				var js = null;
-				try
-				{
-					js = JSON.parse( md );
-				}
-				catch( e ){};
-				
-				if( me == 'ok' && js )
-				{
-					ExecuteApplication( js.executable, obj.fileInfo.Path );
+					this.classList.remove( 'Selected' );
+					this.selected = false;
+					this.fileInfo.selected = false;
 				}
 				else
 				{
-					// Open unique window!
-					OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-					return window.isMobile ? Workspace.closeDrivePanel() : false;
+					this.classList.add( 'Selected' );
+					this.selected = sh ? 'multiple' : true;
+					this.fileInfo.selected = sh ? 'multiple' : true;
+				}
+
+
+				// Refresh the menu based on selected icons
+				WorkspaceMenu.show();
+				CheckScreenTitle();
+				if( window.isSettopBox )
+				{
+					return cancelBubble( e );
 				}
 			}
-			mim.execute( 'checkmimeapplication', { path: obj.fileInfo.Path } );
+
+			if( e && e.stopPropagation )
+				e.stopPropagation();
 		}
-	}
 
-	// -------------------------------------------------------------------------
-	file.onselectstart = function( e )
-	{
-		return cancelBubble( e );
-	}
-
-	// -------------------------------------------------------------------------
-	file.onmouseout = function( e )
-	{
-		if ( !e ) e = window.event;
-		if ( window.mouseDown == this )
+		// -------------------------------------------------------------------------
+		// This one driggers dropping icons! (believe it or not)
+		file.onmouseup = function( e )
 		{
-			mousePointer.pickup( this );
-			window.mouseDown = 4;
-			return cancelBubble ( e );
+			if( mousePointer && mousePointer.elements.length )
+			{
+				// Drop on an icon on a workbench icon
+				if( window.targetMovable == ge( 'Doors' ) )
+				{
+					// TODO: Implement desktop dropping!
+				}
+				// Drop an icon on top of another normal window icon
+				else if( window.targetMovable && window.targetMovable.id )
+				{
+					// TODO: Implement icon dropping!
+				}
+				else
+				{
+				}
+			}
+			if( !e.ctrlKey && !e.shiftKey && !e.command && !ge( 'RegionSelector' ) )
+			{
+				clearRegionIcons( { exception: this, force: true } );
+			}
+			window.targetMovable = false;
+		}
+
+		// Do tha thang
+		launchIcon = function( event, ele )
+		{
+			if( !event ) event = window.event;
+		
+			obj = ele ? ele : file;
+		
+			// File extension
+			if( obj.fileInfo && obj.fileInfo.Path && obj.fileInfo.Path.indexOf( '.' ) > 0 )
+			{
+				var ext = obj.fileInfo.Path.split( '.' );
+				if( ext.length > 1 )
+				{
+					ext = '.' + ext[ext.length-1].toLowerCase();
+
+					// Check mimetypes
+					for( var a in Workspace.mimeTypes )
+					{
+						var mt = Workspace.mimeTypes[a];
+						for( var b in mt.types )
+						{
+							// Make sure we have a valid executable
+							if( ext == mt.types[b].toLowerCase() && mt.executable.length )
+							{
+								return ExecuteApplication( mt.executable, obj.fileInfo.Path );
+							}
+						}
+					}
+					// Execute jsx!
+					if( ext == '.jsx' )
+					{
+						return ExecuteApplication( obj.fileInfo.Path );
+					}
+				}
+			}
+
+			// Normal folders etc
+			// Open unique windows if we're in toolbar mode and are double clicking a disk
+			var uniqueView = false;
+			var dv = obj.directoryView ? obj.directoryView : obj.fileInfo.directoryview;
+			if( ( obj.fileInfo.Type == 'Door' || obj.fileInfo.Type == 'Dormant' ) && dv.navMode == 'toolbar' )
+			{
+				uniqueView = true;
+				if( obj.fileInfo.Path != obj.fileInfo.Volume )
+				{
+					obj.fileInfo.Path = obj.fileInfo.Volume;
+				}
+			
+				// Open unique window!
+				OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
+				return window.isMobile ? Workspace.closeDrivePanel() : false;
+			}
+			// Just change directory
+			else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
+			{
+				// Set a new path and record the old one!
+				var we = dv.windowObject;
+				var dw = dv;
+
+				// Add current and set it to end of history
+				var path = obj.fileInfo.Path.split( ':' );
+			
+				var fin = {
+					Volume: path[0] + ':',
+					Path: obj.fileInfo.Path,
+					Title: path[0],
+					Type: obj.fileInfo.Type,
+					Door: Workspace.getDoorByPath( path.join( ':' ) )
+				}
+				dw.addToHistory( fin );
+
+				// Update on notifications
+				var ppath = obj.fileInfo.Path;
+				if( !Workspace.diskNotificationList[ ppath ] )
+				{
+					Workspace.diskNotificationList[ ppath ] = {
+						type: 'directory',
+						view: we
+					};
+					var f = new Library( 'system.library' );
+					f.addVar( 'sessionid', Workspace.sessionId );
+					f.addVar( 'path', ppath );
+					f.onExecuted = function( e, d )
+					{
+						if( e != 'ok' )
+							return;
+					
+						var j;
+						try
+						{
+							j = JSON.parse( d );
+						}
+						catch( e )
+						{
+							console.log( 'Error in JSON format: ', d );
+							return;
+						}
+						we.windowObject.addEvent( 'systemclose', function()
+						{
+							var ff = new Library( 'system.library' );
+							ff.addVar( 'sessionid', Workspace.sessionId );
+							ff.addVar( 'path', ppath );
+							ff.addVar( 'id', j.Result );
+							ff.onExecuted = function( es, ds )
+							{
+								// TODO: Clear it?
+								Workspace.diskNotificationList[ ppath ] = false;
+							}
+							ff.execute( 'file/notificationremove' );
+						} );
+					}
+					f.execute( 'file/notificationstart' );
+				}
+
+				// Open unique window!
+				// Animation for going to next folder
+				if( isMobile )
+				{
+					// Remove previous one
+					if( dv.windowObject.slideAnimation )
+						dv.windowObject.slideAnimation.parentNode.removeChild( dv.windowObject.slideAnimation );
+				
+					var n = document.createElement( 'div' );
+					n.className = 'Content SlideAnimation';
+					n.style.willChange = 'transform';
+					n.style.transition = 'transform 0.4s';
+					n.innerHTML = dv.windowObject.innerHTML;
+					n.scrollTop = dv.windowObject.scrollTop;
+					n.style.zIndex = 10;
+					dv.windowObject.parentNode.appendChild( n );
+					dv.windowObject.slideAnimation = n;
+					dv.windowObject.parentNode.classList.add( 'Redrawing' );
+				
+					// Refresh and add animation
+					we.refresh( function()
+					{
+						n.style.transform = 'translate3d(-100%,0,0)';
+						setTimeout( function()
+						{
+							if( n.parentNode )
+							{
+								n.parentNode.removeChild( n );
+								if( dv.windowObject.parentNode.classList )
+									dv.windowObject.parentNode.classList.remove( 'Redrawing' );
+							}
+							dv.windowObject.slideAnimation = null;
+						}, 400 );
+					} );
+				}
+				// Desktop mode, just refresh
+				else 
+				{
+					we.refresh();
+				}
+				return window.isMobile ? Workspace.closeDrivePanel() : false;
+			}
+			else
+			{	
+				// No mime type? Ask Friend Core
+				var mim = new Module( 'system' );
+				mim.onExecuted = function( me, md )
+				{
+					var js = null;
+					try
+					{
+						js = JSON.parse( md );
+					}
+					catch( e ){};
+				
+					if( me == 'ok' && js )
+					{
+						ExecuteApplication( js.executable, obj.fileInfo.Path );
+					}
+					else
+					{
+						// Open unique window!
+						OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
+						return window.isMobile ? Workspace.closeDrivePanel() : false;
+					}
+				}
+				mim.execute( 'checkmimeapplication', { path: obj.fileInfo.Path } );
+			}
+		}
+
+		// -------------------------------------------------------------------------
+		file.onselectstart = function( e )
+		{
+			return cancelBubble( e );
+		}
+
+		// -------------------------------------------------------------------------
+		file.onmouseout = function( e )
+		{
+			if ( !e ) e = window.event;
+			if ( window.mouseDown == this )
+			{
+				mousePointer.pickup( this );
+				window.mouseDown = 4;
+				return cancelBubble ( e );
+			}
 		}
 	}
 
@@ -4533,11 +4554,18 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	// -------------------------------------------------------------------------
 	// Notice: Door and Dormant with isMobile overwrites onclick
-	file[ ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick' ] = launchIcon;
+	if( !self.flags || ( self.flags && !self.flags.nativeDraggable ) )
+	{
+		var eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
+		file[ eventName ] = launchIcon;
+	}
 	
 	// -------------------------------------------------------------------------
 	file.associateWithElement = function ( div )
 	{
+		if( self.flags && self.flags.nativeDraggable )
+			return;
+		
 		var t = this;
 		div.onclick = function( e ) { t.onclick( e ); };
 		div.onmouseup = function( e ) { t.onmouseup( e ); };
@@ -4550,109 +4578,112 @@ FileIcon.prototype.Init = function( fileInfo )
 	var obj = fileInfo.directoryview;
 
 	// Let's make it possible also for touch interfaces -----------------------
-	file.addEventListener( 'touchstart', function( event )
+	if( !( self.flags && self.flags.nativeDraggable ) )
 	{
-		if( this.directoryView.filedialog )
-			return;
-			
-		window.fileMenuElement = file;
-		window.clickElement = file;
-
-		this.touchPos = {
-			x: event.touches[0].pageX,
-			y: event.touches[0].pageY
-		};
-
-		file.clickedTime = ( new Date() ).getTime();
-
-		// Hold down for a while
-		file.menuTimeout = setTimeout( function()
+		file.addEventListener( 'touchstart', function( event )
 		{
-			if( window.fileMenuElement )
-			{
-				file.onmousedown();
-				window.fileMenuElement = null;
-				window.clickElement = null;
-			}
-		}, 100 );
-
-		if( !window.isMobile )
-		{		
-			file.contextMenuTimeout = setTimeout( function()
-			{
-				Workspace.showContextMenu( false, event );
-			}, 800 );
-		}
-		//return cancelBubble( event );
-	}, false );
+			if( this.directoryView.filedialog )
+				return;
 			
-	/*file.ontouchmove = function( e )
-	{
-		if( !this.touchPos )
-			return;
-		
-		var current = {
-			x: e.touches[0].pageX,
-			y: e.touches[0].pageY
-		};
+			window.fileMenuElement = file;
+			window.clickElement = file;
 
-		var diffx = current.x - this.touchPos.x;
-		var diffy = current.y - this.touchPos.y;
+			this.touchPos = {
+				x: event.touches[0].pageX,
+				y: event.touches[0].pageY
+			};
 
-		var distance = Math.sqrt(
-			Math.pow( diffx, 2 ) + Math.pow( diffy, 2 )
-		);
-	
-		if( distance > 15 )
-		{			
-			obj.iconsCache = [];
-			this.classList.add( 'Selected' );
-			this.selected = true;
-			this.fileInfo.selected = true;
-			mousePointer.pickup( obj );
-			this.touchPos = false;
-			
-			if( file.contextMenuTimeout )
-				clearTimeout( file.contextMenuTimeout );
-			file.contextMenuTimeout = false;
-		}
-		
-		return cancelBubble( e );
-	}*/
+			file.clickedTime = ( new Date() ).getTime();
 
-	file.addEventListener( 'touchend', function( event )
-	{
-		if( this.directoryView.filedialog )
-			return;
-			
-		if( window.clickElement == this )
-		{
-			this.touchPos = false;
-
-			// When single clicking (under a second) click the file!
-			var time = ( new Date() ).getTime() - file.clickedTime;
-			if( time < 250 && window.clickElement )
+			// Hold down for a while
+			file.menuTimeout = setTimeout( function()
 			{
-				setTimeout( function()
+				if( window.fileMenuElement )
 				{
-					if( file.ondblclick )
-						file.ondblclick();
-					else if( file.onclick )
-						file.onclick;
-				}, 100 );
-			}
+					file.onmousedown();
+					window.fileMenuElement = null;
+					window.clickElement = null;
+				}
+			}, 100 );
 
-			if( file.menuTimeout )
-				clearTimeout( file.menuTimeout );
-			file.menuTimeout = false;
-			if( file.contextMenuTimeout )
-				clearTimeout( file.contextMenuTimeout );
-			file.contextMenuTimeout = false;
-			Workspace.closeDrivePanel();
-			window.clickElement = null;
-			return cancelBubble( event );
-		}
-	} );
+			if( !window.isMobile )
+			{		
+				file.contextMenuTimeout = setTimeout( function()
+				{
+					Workspace.showContextMenu( false, event );
+				}, 800 );
+			}
+			//return cancelBubble( event );
+		}, false );
+			
+		/*file.ontouchmove = function( e )
+		{
+			if( !this.touchPos )
+				return;
+		
+			var current = {
+				x: e.touches[0].pageX,
+				y: e.touches[0].pageY
+			};
+
+			var diffx = current.x - this.touchPos.x;
+			var diffy = current.y - this.touchPos.y;
+
+			var distance = Math.sqrt(
+				Math.pow( diffx, 2 ) + Math.pow( diffy, 2 )
+			);
+	
+			if( distance > 15 )
+			{			
+				obj.iconsCache = [];
+				this.classList.add( 'Selected' );
+				this.selected = true;
+				this.fileInfo.selected = true;
+				mousePointer.pickup( obj );
+				this.touchPos = false;
+			
+				if( file.contextMenuTimeout )
+					clearTimeout( file.contextMenuTimeout );
+				file.contextMenuTimeout = false;
+			}
+		
+			return cancelBubble( e );
+		}*/
+
+		file.addEventListener( 'touchend', function( event )
+		{
+			if( this.directoryView.filedialog )
+				return;
+			
+			if( window.clickElement == this )
+			{
+				this.touchPos = false;
+
+				// When single clicking (under a second) click the file!
+				var time = ( new Date() ).getTime() - file.clickedTime;
+				if( time < 250 && window.clickElement )
+				{
+					setTimeout( function()
+					{
+						if( file.ondblclick )
+							file.ondblclick();
+						else if( file.onclick )
+							file.onclick;
+					}, 100 );
+				}
+
+				if( file.menuTimeout )
+					clearTimeout( file.menuTimeout );
+				file.menuTimeout = false;
+				if( file.contextMenuTimeout )
+					clearTimeout( file.contextMenuTimeout );
+				file.contextMenuTimeout = false;
+				Workspace.closeDrivePanel();
+				window.clickElement = null;
+				return cancelBubble( event );
+			}
+		} );
+	}
 }
 
 // -----------------------------------------------------------------------------

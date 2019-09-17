@@ -239,6 +239,9 @@ menu_look_and_feel			: Personalize Look and feel
 i18n_edit_dock                          : Edit dock
 i18n_remove_from_dock                   : Remove from dock
 
+i18n_object_not_supported               : Dropped object not supported
+i18n_only_executables_can_drop          : Only executables can be dropped on the dock
+
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target
 i18n_browse                             : Browse
@@ -430,6 +433,11 @@ i18n_could_not_make_dir                 : Could not create new directory.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
+i18n_drag_files_to_download             : Drop files to download.
+
+i18n_could_not_download                 : Could not download
+i18n_download_wrong_type                : Only files can be downloaded.
+
 
 #Colorpicker -------------------------------------------------------------------
 

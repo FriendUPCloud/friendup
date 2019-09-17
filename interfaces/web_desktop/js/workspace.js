@@ -438,6 +438,8 @@ Workspace = {
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
 			{
+				if( u && !Workspace.loginUsername ) Workspace.loginUsername = u;
+				
 				p = ( !p || p.indexOf('HASHED') == 0 ? p : ( 'HASHED' + Sha256.hash( p ) ) );
 
 				if( window.ScreenOverlay )
@@ -883,6 +885,7 @@ Workspace = {
 				}
 
 				Workspace.userLevel = json.level;
+				if( !Workspace.loginUsername && json.username ) Workspace.loginUsername = json.username;
 
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
@@ -1196,6 +1199,7 @@ Workspace = {
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
 			_this.fullName  = json.fullname;
+			if( json.username ) _this.loginUsername = json.username;
 
 			// Relogin fix
 			document.body.classList.remove( 'Loading' );
@@ -1212,6 +1216,7 @@ Workspace = {
 			{
 				userdata.sessionId = _this.sessionId;
 				userdata.userId    = _this.userId;
+				userdata.loginUsername    = _this.loginUsername;
 				userdata.fullName  = _this.fullName;
 
 				ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );

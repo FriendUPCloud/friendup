@@ -29,9 +29,9 @@ var mousePointer =
 {
 	prevMouseX: -1,
 	prevMouseY: -1,
-	'elements': [],
-	'dom': false,
-	'testPointer': function ()
+	elements: [],
+	dom: false,
+	testPointer: function ()
 	{
 		if( !ge( 'MousePointer' ) )
 		{
@@ -45,7 +45,7 @@ var mousePointer =
 			this.dom = d;
 		}
 	},
-	'move': function( e )
+	move: function( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -259,7 +259,7 @@ var mousePointer =
 			this.candidate.condition( e );
 		}
 	},
-	'stopMove': function ( e )
+	stopMove: function ( e )
 	{
 		for ( var a in window.movableWindows )
 		{
@@ -267,12 +267,12 @@ var mousePointer =
 			if ( wn.rollOut ) wn.rollOut ( e );
 		}
 	},
-	'clear': function()
+	clear: function()
 	{
 		this.elements = [];
 		this.dom.innerHTML = '';	
 	},
-	'drop': function ( e )
+	drop: function ( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -381,7 +381,7 @@ var mousePointer =
 					}
 				}
 			}
-
+			
 			if( !skipDropCheck )
 			{
 				// Find what we dropped on
@@ -506,19 +506,22 @@ var mousePointer =
 			
 			if( dropper )
 			{
+				// Assume the drop was handled correctly
+				var dropResult = true;
+				
 				// Check if dropper object has a drop method, and execute it
 				// with the supplied elements
 				if( dropper.drop )
 				{
-					dropped = dropper.drop( this.elements, e, dropWin.content );
+					dropResult = dropped = dropper.drop( this.elements, e, dropWin.content );
 				}
 				else if( dropper.domNode && dropper.domNode.drop )
 				{
-					dropper.domNode.drop( this.elements, e );
+					dropResult = dropper.domNode.drop( this.elements, e );
 				}
 				else if( dropper.domNode && dropper.domNode.file && dropper.domNode.file.drop )
 				{
-					dropper.domNode.file.drop( this.elements, e );
+					dropResult = dropper.domNode.file.drop( this.elements, e );
 				}
 				else
 				{
@@ -562,7 +565,11 @@ var mousePointer =
 				}
 			}
 			
+			// Redraw icons
 			Workspace.redrawIcons();
+			
+			if( window.currentMovable && currentMovable.content && currentMovable.content.refresh )
+				currentMovable.content.refresh();
 			
 			// Place back again
 			if( !dropped || !dropper )
@@ -608,11 +615,11 @@ var mousePointer =
 		}
 		this.mover = false;
 	},
-	'clone': function ( ele )
+	clone: function ( ele )
 	{
 		this.testPointer ();
 	},
-	'pickup': function ( ele, e )
+	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
 		if( window.isMobile ) return;
@@ -675,18 +682,21 @@ var mousePointer =
 			this.elements.push( ele );
 		}
 	},
-	'poll': function ( e )
+	poll: function ( e )
 	{
-		if ( !this.elements || !this.elements.length )
+		if( !this.elements || !this.elements.length )
 		{
-			if ( this.dom )
+			if( this.dom )
 				this.dom.parentNode.removeChild ( this.dom );
 			this.dom = false;
 		}
-		else
+		else if( this.dom )
 		{
-			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
-			this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			if( this.dom.firstChild )
+			{
+				this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
+				this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			}
 			window.mouseDown = 5;
 			ClearSelectRegion();
 		}
@@ -721,6 +731,87 @@ html .View.SnapRight
 		}
 	}
 };
+
+// Secure drop widget for apps
+// TODO: Complete this one once the browser is ready for it. Not used now.
+// This one is connected to the "securefiledrop" flag on windows
+function addSecureDropWidget( windowobject, objects )
+{
+	var w = new Widget( {
+		top: windowMouseY - 180,
+		left: windowMouseX - 150,
+		width: 300,
+		height: 230,
+		raised: true,
+		rounded: true
+	} );
+	
+	windowobject.toFront();
+	
+	var f = new File( 'System:templates/securefiledrop.html' );
+	f.onLoad = function( data )
+	{
+		w.setContent( data, function()
+		{
+			for( var a = 0; a < objects.length; a++ )
+			{
+				var url = getImageUrl( objects[ a ].Path )
+				var im = new Image();
+				var o = objects[ a ];
+				fetch( url )
+				.then( res => res.blob() )
+				.then( blob => {
+					var fn = GetFilename( o.Path );
+					var fil = new File( [ blob ], fn, blob );
+					var ic = new FileIcon( o, { type: 'A', nativeDraggable: true } );
+					url = url.split( '/read' ).join( '/read/' + fn );
+					ic.file.id = 'directoryfile_draggable_' + a;
+					ic.file.setAttribute( 'data-downloadurl', url );
+					ic.file.href = url;
+					ic.file.style.position = 'relative';
+					ic.file.style.float = 'left';
+					ic.file.style.display = 'block';
+					ic.file.style.marginLeft = '10px';
+					ic.file.setAttribute( 'download', url );
+					ic.file.addEventListener( 'dragstart', e => {
+						e.dataTransfer.dropEffect = 'copy';
+						e.dataTransfer.effectAllowed = 'copy';
+						var ext = 'bin';
+						if( fn.indexOf( '.' ) >= 0 )
+							ext = fn.split( '.' )[1].toUpperCase();
+						var ctype = 'application/octet-stream';
+						switch( ctype )
+						{
+							case 'jpg':
+							case 'jpeg':
+								ctype = 'image/jpeg';
+								break;
+							case 'png':
+							case 'bmp':
+							case 'gif':
+								ctype = 'image/' + ext;
+								break;
+							default:
+								break;
+						}
+						// TODO: Make items.add work
+						//e.dataTransfer.items.add( [ fil ], ctype, { type: 'custom' } );
+						e.dataTransfer.setData( 'DownloadURL', [ ctype + ':' + fn + ':' + url ] );
+					} );
+					ic.file.addEventListener( 'dragend', function( e )
+					{
+						w.close();
+						//console.log( e );
+					}, false );
+					w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
+				} );
+			}
+		} );
+	}
+	f.load();
+	
+	window.mouseDown = null;
+}
 
 //check if we run inside an app and do some magic
 function checkForFriendApp()
@@ -2532,6 +2623,10 @@ pollingTaskbar = false;
 function PollTaskbar( curr )
 {
 	if( pollingTaskbar ) return;
+	
+	if( !document.body || !document.body.classList.contains( 'Inside' ) ) return;
+	if( ge( 'FriendScreenOverlay' ) && ge( 'FriendScreenOverlay' ).classList.contains( 'Visible' ) )
+		return;
 		
 	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
 	{
@@ -2662,6 +2757,7 @@ function PollTaskbar( curr )
 			
 			if( baseElement.scrollFunc )
 				baseElement.removeEventListener( 'mousemove', baseElement.scrollFunc );
+			
 			baseElement.scrollFunc = function( e )
 			{
 				var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
@@ -2724,6 +2820,7 @@ function PollTaskbar( curr )
 				// If the window doesn't exist, remove the DOM element from tasbkar
 				else t.removeChild( t.tasks[ b ].dom );
 			}
+			
 			t.tasks = cleaner; // Set cleaned task list
 			
 			for( var a in movableWindows )
@@ -3416,7 +3513,9 @@ movableMouseDown = function ( e )
 		 }
 	}
 	
-	if( Workspace.iconContextMenu )
+	var clickOnMenuItem = tar && tar.classList.contains( 'MenuItem' ) ? true : false;
+	
+	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
 	}
