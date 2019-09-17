@@ -968,6 +968,7 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 {
 	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
 	{
+		Log( FLOG_ERROR, "Cannot get tokens where type < 0 || type >= MOBILE_APP_TYPE_MAX" );
 		return NULL;
 	}
 	char *mobileType = NULL;
@@ -984,7 +985,7 @@ BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG us
 		BufString *sqlInsertBs = NULL;
 		char *qery = FMalloc( 1048 );
 		qery[ 1024 ] = 0;
-		lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma inner join FUserSession us on uma.UserID=us.UserID where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
+		lsqllib->SNPrintF( lsqllib, qery, 1024, "select uma.ID,uma.AppToken from FUserMobileApp uma where uma.Platform='%s' AND uma.Status=0 AND uma.UserID=%lu AND LENGTH( uma.AppToken ) > 0 GROUP BY uma.ID", mobileType, userID );
 		void *res = lsqllib->Query( lsqllib, qery );
 		if( res != NULL )
 		{

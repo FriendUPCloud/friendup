@@ -501,7 +501,7 @@ void ProcessSinkMessage( void *locd )
 										p++;
 										for( j=0 ; j < locsize ; j++ )
 										{
-											char *username = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+											char *username = StringDuplicateN( data + t[p].start, (int)(t[p].end - t[p].start) );
 											DEBUG("This user will get message: %s\n", username );
 											UMsg *le = FCalloc( 1, sizeof(UMsg) );
 											if( le != NULL )
@@ -515,7 +515,6 @@ void ProcessSinkMessage( void *locd )
 										}
 										p--;
 									}
-									
 								}
 								else if( strncmp( data + t[p].start, "channel_id", size) == 0) 
 								{
@@ -582,25 +581,50 @@ void ProcessSinkMessage( void *locd )
 									goto error_point;
 								}
 								
+								// debug purpose
+								BufString *debugUserList = BufStringNew();
 								UMsg *le = ulistroot;
+								while( le != NULL )
+								{
+									char temp[ 256 ];
+									int size = snprintf( temp, sizeof(temp), " User: %s", le->usrname );
+									BufStringAddSize( debugUserList, temp, size );
+									le = (UMsg *)le->node.mln_Succ;
+								}
+								if( debugUserList->bs_Size > 0 )
+								{
+									Log( FLOG_INFO, "This users will get notifications: %s\n", debugUserList->bs_Buffer );
+								}
+								else
+								{
+									Log( FLOG_ERROR, "Notification Error! No users in recipients list\n");
+								}
+								BufStringDelete( debugUserList );
+								
+								int returnStatus = 0;
+								le = ulistroot;
 								while( le != NULL )
 								{
 									if( le->usrname != NULL )
 									{
 										int status = MobileAppNotifyUserRegister( SLIB, (char *)le->usrname, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra, timecreated );
 
-										char reply[256];
-										int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
-#ifdef WEBSOCKET_SEND_QUEUE
-										WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
-#else
-										unsigned int json_message_length = strlen( reply + LWS_PRE );
-										lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-#endif
+										if( status != 0 )
+										{
+											returnStatus = status;
+										}
 									}
-									
 									le = (UMsg *)le->node.mln_Succ;
 								}
+								
+								char reply[256];
+								int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", returnStatus );
+#ifdef WEBSOCKET_SEND_QUEUE
+								WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
+#else
+								unsigned int json_message_length = strlen( reply + LWS_PRE );
+								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
+#endif
 							}
 							else
 							{

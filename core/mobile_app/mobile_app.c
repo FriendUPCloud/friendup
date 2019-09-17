@@ -1127,6 +1127,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		userID = UMGetUserIDByName( sb->sl_UM, username );
 	}
 	
+	Log( FLOG_INFO, "User: %s userid: %lu will get message: %s\n", username, userID, message );
+	
 	if( bytesSent > 0 )
 	{
 		wsMessageSent = TRUE;
@@ -1146,7 +1148,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	if( wsMessageSent == FALSE )
 	{
 		DEBUG("Sending messages across Android devices\n");
-		BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
+		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 		if( bs != NULL )
 		{
 			NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );
@@ -1170,7 +1172,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	
 	char *jsonMessageIOS = NULL;
 	int jsonMessageIosLength = reqLengith+512;
-	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )//&& sb->l_APNSConnection != NULL && sb->l_APNSConnection->wapns_Connection != NULL )
+	if( wsMessageSent == FALSE && sb->sl_NotificationManager->nm_APNSCert != NULL )
 	{
 		if( ( jsonMessageIOS = FMalloc( jsonMessageIosLength ) ) != NULL )
 		{
@@ -1182,6 +1184,10 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : tokens %s\n", notif->n_Content, tokens );
 				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
 				FFree( tokens );
+			}
+			else
+			{
+				Log( FLOG_ERROR, "[MobileAppNotifyUserRegister] tokens are equal to NULL for user: %lu\n", userID );
 			}
 			FFree( jsonMessageIOS );
 		}
