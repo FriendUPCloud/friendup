@@ -46,6 +46,10 @@ var FriendLibrary = function ( library, encryption )
 		var data = '';
 		
 		var j = new cAjax ();	
+		
+		if( this.onQueue )
+			j.onQueue = this.onQueue;
+		
 		this.currentRequest = j;	
 		
 		if( this.forceHTTP )

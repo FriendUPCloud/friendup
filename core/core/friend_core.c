@@ -221,7 +221,7 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 	while( fc->fci_Closed != TRUE )
 	{
 		LOG( FLOG_INFO, "[FriendCoreShutdown] Waiting for close\n" );
-		usleep( 5000 );
+		sleep( 1 );
 	}
 	
 	if( ssl_mutex_buf != NULL )

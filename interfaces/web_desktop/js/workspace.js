@@ -186,7 +186,7 @@ Workspace = {
 			var wd = wbscreen.div.screenTitle.getElementsByClassName( 'Extra' )[0].widget;
 			if( wd )
 			{
-				if( wd.showing )
+				if( wd.shown )
 				{
 					wd.hideWidget();
 				}
@@ -223,26 +223,34 @@ Workspace = {
 					ex.widget.dom.style.transition = 'height 0.25s';
 					ex.widget.showWidget = function()
 					{
-						ge( 'DoorsScreen' ).classList.add( 'HasWidget' );
+						var self = this;
+						this.dom.style.height = '0px';
 						Workspace.refreshExtraWidgetContents();
-						this.raise();
-						this.show();
-						if( isMobile )
-							CoverScreens();
+						CoverScreens();
+						ge( 'DoorsScreen' ).classList.add( 'HasWidget' );
+						setTimeout( function()
+						{
+							self.show();
+							self.raise();
+							ExposeScreens();
+						}, 100 );
 					}
 					ex.widget.hideWidget = function()
 					{
-						ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
-						if( this.showing )
+						var self = this;
+						ge( 'DoorsScreen' ).classList.add( 'HidingCalendar' );
+						setTimeout( function()
 						{
-							this.showing = false;
-							this.hide();
-							this.lower();
+							ge( 'DoorsScreen' ).classList.remove( 'HasWidget' );
+							ge( 'DoorsScreen' ).classList.remove( 'HidingCalendar' );
+							self.shown = false;
+							self.hide();
+							self.lower();
 							ExposeScreens();
-						}
+						}, 250 );
 					}
 				}
-				if( !ex.widget.showing )
+				if( !ex.widget.shown )
 					ex.widget.showWidget();
 				return cancelBubble( e );
 			}
@@ -412,6 +420,8 @@ Workspace = {
 
 		// Init security subdomains
 		SubSubDomains.initSubSubDomains();
+		
+		// console.log( 'Test2: Done post init.' );
 	},
 	encryption: {
 
@@ -428,6 +438,8 @@ Workspace = {
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
 			{
+				if( u && !Workspace.loginUsername ) Workspace.loginUsername = u;
+				
 				p = ( !p || p.indexOf('HASHED') == 0 ? p : ( 'HASHED' + Sha256.hash( p ) ) );
 
 				if( window.ScreenOverlay )
@@ -716,6 +728,8 @@ Workspace = {
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
 		
+		console.log( 'Test2: Relogin in progress' );
+		
 		var self = this;
 		
 		function executeCleanRelogin()
@@ -736,13 +750,17 @@ Workspace = {
 			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
-				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
+				// // console.log( 'Test2: Regular login with user and pass' );
+				var u = typeof( Workspace.loginUsername ) == 'undefined' ? false : Workspace.loginUsername;
+				var p = typeof( Workspace.loginPassword ) == 'undefined' ? false : Workspace.loginPassword;
+				Workspace.login( u, p, false, Workspace.initWebSocket );
 			}
 			// Friend app waits some more
 			else if( window.friendApp )
 			{
+				// // console.log( 'Test2: Just return - we have nothing to go on. Try executing normal login' );
 				Workspace.reloginInProgress = false;
-				return;
+				return Workspace.login();
 			}
 			// Just exit to login screen
 			else
@@ -759,11 +777,18 @@ Workspace = {
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			// // console.log( 'Test2: Got back: ', e, d );
+			
 			self.reloginAttempts = false;
 			Workspace.reloginInProgress = true;
 			
 			if( e == 'ok' )
 			{
+				// We have a successful login. Clear call blockers and update sessions, execute ajax queue
+				Workspace.reloginInProgress = false;
+				Workspace.loginCall = false;
+				Workspace.renewAllSessionIds();
+				// // console.log( 'Test2: Yeah! All good!' );
 				return;
 			}
 			else
@@ -773,6 +798,7 @@ Workspace = {
 					var js = JSON.parse( d );
 					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
+						// // console.log( 'Test2: Flush session' );
 						Workspace.flushSession();
 					}
 				}
@@ -782,10 +808,12 @@ Workspace = {
 			}
 			if( Workspace.serverIsThere )
 			{
+				// // console.log( 'Test2: Clean relogin' );
 				executeCleanRelogin();
 			}
 			else
 			{
+				// // console.log( 'Test2: Wait a second before you can log in again.' );
 				// Wait a second before trying again
 				setTimeout( function()
 				{
@@ -796,15 +824,21 @@ Workspace = {
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'usersettings' );
+		// // console.log( 'Test2: Getting usersettings.' );
 	},
-	renewAllSessionIds: function()
+	// Renews session ids for cajax and executes ajax queue!
+	renewAllSessionIds: function( session )
 	{
+		if( session )
+			this.sessionId = session;
+		
 		// Check if there's a queue of objects waiting to run
 		if( Friend.cajax && Friend.cajax.length )
 		{
 			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
 				Friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
+				Friend.cajax[a].forceHTTP = true;
 				Friend.cajax[a].open();
 				Friend.cajax[a].send();
 			}
@@ -815,8 +849,10 @@ Workspace = {
 	{
 		if( sessionid )
 		{
+			console.log( 'Test2: Logging in with sessionid.' );
+			
 			var _this = this;
-
+			
 			var m = new FriendLibrary( 'system' );
 			m.addVar( 'sessionid', sessionid );
 			m.addVar( 'deviceid', this.deviceid );
@@ -849,12 +885,20 @@ Workspace = {
 				}
 
 				Workspace.userLevel = json.level;
+				if( !Workspace.loginUsername && json.username ) Workspace.loginUsername = json.username;
 
 				var hasSessionID = ( typeof( json.sessionid ) != 'undefined' && json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( typeof( json.loginid ) != 'undefined' && json.loginid && json.loginid.length > 1 );
 				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
+					// Successful login, clear blockers and execute ajax queue
+					Workspace.reloginInProgress = false;
+					Workspace.loginCall = false;
+					Workspace.renewAllSessionIds( hasSessionID ? json.sessionid : false );
+				
+					// console.log( 'Test2: Success! Logged in with sessionid.' );
+					
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
 				}
 				else
@@ -881,6 +925,8 @@ Workspace = {
 	{
 		var self = this;
 		
+		console.log( 'Test2: Normal login.' );
+		
 		// Test if we have a stored session
 		var sess = localStorage.getItem( 'WorkspaceSessionID' );
 		if( sess && sess.length )
@@ -897,10 +943,24 @@ Workspace = {
 			return true;
 		}
 		
+		// Close conn here - new login regenerates sessionid
+		if( Workspace.conn )
+		{
+			try
+			{
+				Workspace.conn.ws.close();
+			}
+			catch( e )
+			{
+				console.log( 'Could not close conn.' );
+			}
+			delete Workspace.conn;
+		}
+		
 		// Check local storage
 		var ru = window.localStorage.getItem( 'WorkspaceUsername' );
 		var rp = window.localStorage.getItem( 'WorkspacePassword' );
-		if( ru && rp )
+		if( ru && rp && typeof( ru ) != 'undefined' )
 		{
 			u = ru;
 			p = rp;
@@ -908,16 +968,19 @@ Workspace = {
 		}
 
 		// Require username and pw to login
-		if( !u || !p )
+		if( !u || !p || typeof( u ) == 'undefined' )
 		{
+			// console.log( 'Test3: Doing the login test.' );
 			// Login by url vars
-			if( GetUrlVar( 'username' ) && GetUrlVar( 'password' ) )
+			var gu = GetUrlVar( 'username' );
+			var gp = GetUrlVar( 'password' );
+			if( gu && gp && typeof( gu ) != 'undefined' )
 			{
 				return Workspace.login( decodeURIComponent( GetUrlVar( 'username' ) ), decodeURIComponent( GetUrlVar( 'password' ) ) );
 			}
 			else if( GetUrlVar( 'sessionid' ) )
 			{
-				return Workspace.loginSessionId( GetUrlVar( 'sessionid' ) );
+				return Workspace.loginSessionId( GetUrlVar( 'sessionid' ), callback, ev );
 			}
 			Workspace.reloginInProgress = false;
 			if( callback && typeof( callback ) == 'function' ) callback( false );
@@ -936,7 +999,7 @@ Workspace = {
 			this.loginPassword = 'HASHED' + Sha256.hash( p );
 		}
 
-		if( this.loginUsername && this.loginPassword )
+		if( typeof( this.loginUsername ) != 'undefined' && this.loginUsername && this.loginPassword )
 		{
 			// FIXME: Speed this up for the Edge browser
 			this.encryption.setKeys( this.loginUsername, this.loginPassword );
@@ -959,11 +1022,12 @@ Workspace = {
 			var m = new FriendLibrary( 'system' );
 			this.loginCall = m;
 
-			if( this.loginUsername )
+			if( this.loginUsername && typeof( this.loginUsername ) != 'undefined' )
 			{
 				m.addVar( 'username', this.loginUsername );
 				m.addVar( 'password', this.loginPassword );
 			}
+			
 			m.addVar( 'deviceid', GetDeviceId() );
 			if( this.sessionId )
 			{
@@ -972,6 +1036,8 @@ Workspace = {
 
 			m.onExecuted = function( json, serveranswer )
 			{
+				// // console.log( 'Test2: We executed a login query', json, serveranswer );
+				
 				if( typeof( json ) != 'object' )
 				{
 					try
@@ -1005,13 +1071,17 @@ Workspace = {
 
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
+					// // console.log( 'Test2: We got a login.' );
+					
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
-
+					
 					// Store username and password in local storage
-					if( r && self.loginUsername && self.loginPassword )
+					if( r && typeof( self.loginUsername ) != 'undefined' && self.loginUsername && self.loginPassword )
 					{
+						// // console.log( 'Test2: Setting localstorage username/pass' );
+						
 						window.localStorage.setItem( 'WorkspaceUsername', self.loginUsername );
 						window.localStorage.setItem( 'WorkspacePassword', self.loginPassword );
 					}
@@ -1019,23 +1089,39 @@ Workspace = {
 					Workspace.reloginInProgress = false;
 					Workspace.serverIsThere = true;
 					Workspace.workspaceIsDisconnected = false;
+					
 					var cl = function()
 					{
+						// console.log( 'Test2: Running callback.' );
 						t.loginCall = null;
 						if( callback && typeof( callback ) == 'function' )
 							callback( true, serveranswer );
 					}
+					
+					// // console.log( 'Test2: Initializing user workspace.' );
+					
 					return Workspace.initUserWorkspace( json, cl, ev );
 				}
+				// Could not log in
 				else
 				{
+					// // console.log( 'Test2: Removing WorkspaceUsername/Password from local storage.' );
+					
 					// Remove from localstorage
 					window.localStorage.removeItem( 'WorkspaceUsername' );
 					window.localStorage.removeItem( 'WorkspacePassword' );
 					
 					Workspace.reloginInProgress = false;
+					
 					if( t.loginPrompt )
+					{
 						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
+					}
+					else
+					{
+						//Alert( 'Test1: We are dead in the water.', 'Dead dead dead.' );
+					}
+					
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
 
 				}
@@ -1100,15 +1186,20 @@ Workspace = {
 	},
 	initUserWorkspace: function( json, callback, ev )
 	{
+		// console.log( 'Test2: Init user workspace.' );
+		
 		var _this = Workspace;
 
 		// Once we are done
 		function setupWorkspaceData( json, cb )
 		{
+			// console.log( 'Test2: Set it up.', json );
+			
 			// Ok, we're in
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
 			_this.fullName  = json.fullname;
+			if( json.username ) _this.loginUsername = json.username;
 
 			// Relogin fix
 			document.body.classList.remove( 'Loading' );
@@ -1125,6 +1216,7 @@ Workspace = {
 			{
 				userdata.sessionId = _this.sessionId;
 				userdata.userId    = _this.userId;
+				userdata.loginUsername    = _this.loginUsername;
 				userdata.fullName  = _this.fullName;
 
 				ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );
@@ -1138,7 +1230,10 @@ Workspace = {
 				{
 					document.body.removeChild( ge( 'SessionBlock' ) );
 				}
-				_this.renewAllSessionIds();
+				// console.log( 'Test2: Renewing all sessions.' );
+				
+				// We have renewed our session, make sure to set it and run ajax queue
+				_this.renewAllSessionIds( _this.sessionId );
 
 				// Call back!
 				if( cb ) cb();
@@ -1187,6 +1282,7 @@ Workspace = {
 		
 		if( !this.userWorkspaceInitialized )
 		{
+			// console.log( 'Test2: Doing the initialization.' );
 			this.userWorkspaceInitialized = true;
 
 			// Loading remaining scripts
@@ -1240,13 +1336,19 @@ Workspace = {
 			{
 				// Start with expanding the workspace object
 				// TODO: If we have sessionid - verify it through ajax.
-				if( _this.sessionId )
+				// TODO: This block is only for already initialized workspace
+				if( _this.sessionId && _this.postInitialized )
 				{
+					//console.log( 'This is the session.:', _this.sessionId );
 					if( callback && typeof( callback ) == 'function' ) callback( true );
 					return true;
 				}
 
-				if( !json || !json.sessionid ) return false;
+				if( !json || !json.sessionid ) 
+				{
+					// console.log( 'Test2: Got in sessionid error.', json );
+					return false;
+				}
 
 				// Reset some options
 				if( ev && ev.shiftKey )

@@ -99,11 +99,16 @@ if( $row = $SqlDatabase->FetchObject( '
 			$v->Filesize = $nn;
 			die( 'ok<!--separate-->' . json_encode( $v ) );
 		}
-		else if( ( $res = @file_get_contents( ( $Config->SSLEnabled ? 'https://' : 'http://' ) .
-				$Config->FCHost . ':' . $Config->FCPort . '/system.library/file/diskinfo?path=' .
-				urlencode($args->args->path) . '&sessionid=' . urlencode($sessionid))
-				) )
+		else 
 		{
+			$flags = new stdClass();
+			$flags->{CURLOPT_FOLLOWLOCATION} = false;
+			
+			$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
+				$Config->FCHost . ':' . $Config->FCPort . '/system.library/file/diskinfo/?sessionid=' . $sessionid .
+				'&path=' . urlencode( $args->args->path );
+			
+			$res = FriendCall( $url, $flags );
 			if( $sep = explode( '<!--separate-->', $res ) )
 			{
 				if( $sep[0] == 'ok' )
@@ -112,7 +117,16 @@ if( $row = $SqlDatabase->FetchObject( '
 					$d->Volume = $row->Name;
 					die( 'ok<!--separate-->' . json_encode( $d ) );
 				}
+				else
+				{
+					die( 'fail<!--separate-->' . $res . ' -- ' . $url );
+				}
 			}
+			else
+			{
+				die( 'fail<!--separate-->' . $url );
+			}
+			die( 'fail<!--separate-->{"response":"0","message":"Unknown filesystem","details":"Bad url response"}' );
 		}
 		//--------------- end of TK-634 ----------------------
 

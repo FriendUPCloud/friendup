@@ -36,8 +36,8 @@ function setMenuMode( mode )
 
 function getNavigationMode()
 {
-	if( ge( 'navigationSpacial' ).checked )
-		return 'spacial';
+	/*if( ge( 'navigationSpacial' ).checked )
+		return 'spacial';*/
 	return 'browser';
 }
 
@@ -66,15 +66,16 @@ function setFocusMode( mode )
 
 function getWindowListMode()
 {
-	if( ge( 'windowlistDocked' ).checked )
+	// TODO: Reenable later
+	/*if( ge( 'windowlistDocked' ).checked )
 	{
 		return 'docked';
 	}
 	else if( ge( 'windowlistDockedlist' ).checked )
 	{
 		return 'dockedlist';
-	}
-	return 'separate';
+	}*/
+	return 'dockedlist';
 }
 
 function setWindowListMode( mode )
@@ -176,12 +177,12 @@ function refreshThemes()
 				ml += '<div class="sw' + sw + cl + ' Padding" onclick="setActive(' + a + ')">' + ex + j[a].Name.split( '_' ).join( ' ' ) + '</div>';
 			}
 			ml += '</div>';
-			ge( 'ThemeList' ).innerHTML = ml;
+			/*ge( 'ThemeList' ).innerHTML = ml;
 			var st = ge( 'ThemePreview' ).style
 			st.backgroundImage = 'url(\'' + img + '\')';
 			st.backgroundSize = 'contain';
 			st.backgroundPosition = 'center';
-			st.backgroundRepeat = 'no-repeat';
+			st.backgroundRepeat = 'no-repeat';*/
 		}
 	}
 	m.execute( 'listthemes' );

@@ -31,7 +31,9 @@ var filebrowserCallbacks = {
 	{
 		if( extension == 'apf' )
 		{
-			Confirm( 'Loading project', 'Do you want to load this project? If you click cancel, Friend Create will just load the project file.', function( info )
+			Confirm( 
+				i18n( 'i18n_loading_project' ), 
+				i18n( 'i18n_loading_project_desc' ), function( info )
 			{
 				if( info.data == true )
 				{
@@ -110,6 +112,7 @@ var filebrowserCallbacks = {
 	}
 };
 
+// When everything has loaded --------------------------------------------------
 Application.run = function( msg )
 {	
 	InitTabs( ge( 'EditorTabs' ) );

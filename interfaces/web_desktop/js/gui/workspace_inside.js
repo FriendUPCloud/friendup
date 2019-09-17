@@ -1075,7 +1075,7 @@ var WorkspaceInside = {
 				var wid = Workspace.widget ? Workspace.widget : m.widget;
 				if( wid )
 				{
-					wid.showing = true;
+					wid.shown = true;
 				}
 
 				if( wid && !wid.initialized )
@@ -1085,17 +1085,6 @@ var WorkspaceInside = {
 					var calendar = new Calendar( wid.dom );
 					wid.dom.id = 'CalendarWidget';
 				
-					// Mobile hider
-					if( window.isMobile )
-					{
-						var hider = document.createElement( 'div' );
-						hider.className = 'Hider';
-						hider.onclick = function()
-						{
-							Workspace.widget.slideUp();
-						}
-						wid.dom.appendChild( hider );
-					}
 					Workspace.calendarWidget = wid;
 
 					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
@@ -1128,7 +1117,7 @@ var WorkspaceInside = {
 						f1.load();
 
 						// Just close the widget
-						if( !window.isMobile && m && wid )
+						if( m && wid )
 							wid.hide();
 					}
 					calendar.addButton( newBtn );
@@ -1315,7 +1304,7 @@ var WorkspaceInside = {
 						if( Workspace.calendar ) Workspace.calendar.render();
 						return;
 					}
-					Alert( i18n( 'i18n_evt_delete_failed' ), i18n( 'i18n_evt_delete_failed_desc' ) );
+					Notify( { title: i18n( 'i18n_evt_delete_failed' ), text: i18n( 'i18n_evt_delete_failed_desc' ) } );
 				}
 				m.execute( 'deletecalendarevent', { id: id } );
 			}
@@ -1992,11 +1981,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var out = [];
 						for( var b = 0; b < eles.length; b++ )
 						{
-
 							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
 
 							var nam = eles[b].getAttribute( 'data-displayname' ) ? eles[b].getAttribute( 'data-displayname' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
 							var exe = eles[b].getAttribute( 'data-exename' ) ? eles[b].getAttribute( 'data-exename' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							
+							// Skip erroneous elements
+							if( !exe || typeof( exe ) == 'undefined' || exe == 'undefined' ) continue;
 							
 							var im = eles[b].style.backgroundImage ? 
 								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
@@ -2321,7 +2312,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						dd.appendChild( s );
 					}
 
-					setTimeout( function()
+					function repositionStartMenu()
 					{
 						if( delayedBuildTime )
 						{
@@ -2384,10 +2375,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								dd.style.top = s.offsetHeight - dd.offsetHeight - 1 + 'px';
+								dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 							}
 						}
-					}, 5 );
+					}
+					setTimeout( repositionStartMenu, 250 );
 				} );
 			}
 
@@ -2968,6 +2960,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									
 									// Make sure we update icons...
 									Workspace.redrawIcons();
+									
+									// Update locale for download applet
+									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
+									{
+										ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									}
 									
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )
@@ -3947,8 +3945,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		wb.onselectstart = function( e ) { return cancelBubble ( e ); };
 		wb.ondragstart = function( e ) { return cancelBubble ( e ); };
 		wb.redrawIcons( this.getIcons(), 'vertical' );
+		
 		if ( RefreshDesklets ) RefreshDesklets();
-
+		
 		// Check dormant too
 		var dormants = DormantMaster.getDoors();
 
@@ -4427,7 +4426,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			else
 			{
-				Alert( i18n( 'i18n_cannotRename' ), i18n( 'i18n_noWritePermission' ) );
+				Notify( { title: i18n( 'i18n_cannotRename' ), text: i18n( 'i18n_noWritePermission' ) } );
 				if( Workspace.renameWindow )
 					Workspace.renameWindow.close();
 			}
@@ -6736,6 +6735,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						disabled: !windowsOpened || !window.currentMovable
 					}
 				]
+			},
+			{
+				name: i18n( 'menu_help' ),
+				items: [
+					{
+						name: i18n( 'menu_help_bug' ),
+						command: function(){ window.open( 'https://github.com/FriendUPCloud/friendup/issues', '', '' ); }
+					},
+					{
+						name: i18n( 'menu_help_manual' ),
+						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+					}
+				]
 			}
 			/*,
 			{
@@ -6766,8 +6778,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			]
 		} );*/
 	},
+	// Downloads a file by path to the client computer
 	download: function( path )
 	{
+		var lastChar = path.substr( path.length - 1, 1 );
+		if( lastChar == ':' || lastChar == '/' )
+		{
+			return Notify( { title: i18n( 'i18n_could_not_download' ), text: i18n( 'i18n_download_wrong_type' ) } );
+		}
 		var fn = path.split( ':' )[1];
 		if( fn.indexOf( '/' ) > 0 )
 			fn = fn.split( '/' ).pop();
@@ -7893,6 +7911,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
+		// Too early
+		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
+		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -8037,7 +8058,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Failed - alert user
 									else
 									{
-										Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_could_not_create_downloads')});
+										Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_could_not_create_downloads' ) } );
 										return;
 									}
 								});
@@ -8045,7 +8066,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_no_home_drive')});
+								Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_no_home_drive' ) } );
 								return;
 							}
 						};						
@@ -9078,7 +9099,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2rc1',
+		title: i18n( 'about_system' ) + ' v1.2rc2',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -9136,6 +9157,11 @@ function AboutFriendUP()
 				// Add device ID
 				if( window.friendApp )
 				{
+					var ver = friendApp.get_version();
+					if( ver )
+					{
+						buildInfo += '    <div class="item"><span class="label">Mobile App Version</span><span class="value">'+ ver +'</span></div>';
+					}
 					var devId = friendApp.get_deviceid();
 					if( devId )
 					{

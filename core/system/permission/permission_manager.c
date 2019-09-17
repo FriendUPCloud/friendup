@@ -93,6 +93,7 @@ Uses: module=system&command=checkapppermission&key=%key%&appname=%appname%
 				{
 					retVal = TRUE;
 				}
+				FFree( data );
 			}
 			FFree( command );
 		}
@@ -139,6 +140,7 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 				{
 					retVal = TRUE;
 				}
+				FFree( data );
 			}
 			FFree( command );
 		}

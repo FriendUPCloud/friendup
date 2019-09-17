@@ -87,7 +87,7 @@ i18n_choose_workgroup                : Velg arbeidsgruppe
 i18n_workgroup                       : Arbeidsgruppe
 i18n_device_name                     : Disk navn
 i18n_placeholder_connection          : Mindisk
-i18n_reset                           : Nullstill
+i18n_reset                           : Fjern
 
 i18n_add_storage                     : Tilføy disk
 i18n_update_disk                     : Oppdater
