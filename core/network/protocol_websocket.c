@@ -915,11 +915,16 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			Log( FLOG_DEBUG, "[WS] Callback session before closed, in use: %d\n", fcd->wsc_InUseCounter );
 			//if( fcd->fcd_WSClient != NULL )
 			{
-				fcd->wsc_Wsi = NULL;
+				if( FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) ) == 0 )
+				{
+					fcd->wsc_Wsi = NULL;
+					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+				}
+				
 				int val = 0;
 				while( TRUE )
 				{
-					DEBUG("PROTOCOL_WS: Check in use %d wsiptr %p fcws ptr %p\n", fcd->wsc_InUseCounter, wsi, fcd );
+					Log( FLOG_DEBUG, "PROTOCOL_WS: Check in use %d wsiptr %p fcws ptr %p\n", fcd->wsc_InUseCounter, wsi, fcd );
 					if( fcd->wsc_InUseCounter <= 0 )
 					{
 						break;
@@ -934,8 +939,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						Log( FLOG_INFO, "Closeing WS connection\n");
 						break;
 					}
-					pthread_yield();
 					sleep( 1 );
+					pthread_yield();
 				}
 				DetachWebsocketFromSession( fcd );
 				
@@ -947,7 +952,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				FQDeInitFree( &(fcd->wsc_MsgQueue) );
 				pthread_mutex_destroy( &(fcd->wsc_Mutex) );
 			}
-			INFO("[WS] Callback session closed\n");
+			Log( FLOG_DEBUG, "[WS] Callback session closed\n");
 
 		break;
 		
