@@ -25,6 +25,8 @@
 #include <system/user/user_sessionmanager.h>
 #include <system/user/user.h>
 #include <system/user/user_mobile_app.h>
+#include <util/friendqueue.h>
+#include <network/http_client.h>
 #include "notification.h"
 
 #define APNS_SANDBOX_HOST "gateway.sandbox.push.apple.com"
@@ -62,6 +64,20 @@ typedef struct NotificationManager
 	FThread						*nm_TimeoutThread;
 	Notification				*nm_Notifications;
 	pthread_mutex_t				nm_Mutex;
+	
+	FThread						*nm_IOSSendThread;
+	pthread_mutex_t				nm_IOSSendMutex;
+	pthread_cond_t				nm_IOSSendCond;
+	FQueue						nm_IOSSendMessages;
+	int							nm_IOSSendInUse;
+	
+	FThread						*nm_AndroidSendThread;
+	pthread_mutex_t				nm_AndroidSendMutex;
+	pthread_cond_t				nm_AndroidSendCond;
+	FQueue						nm_AndroidSendMessages;
+	int							nm_AndroidSendInUse;
+	HttpClient					*nm_AndroidSendHttpClient;
+	
 	char						*nm_APNSCert;
 	time_t						nm_APNSNotificationTimeout;
 	FBOOL						nm_APNSSandBox;
@@ -106,7 +122,11 @@ void NotificationManagerTimeoutThread( FThread *data );
 
 int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
 
+int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens );
+
 int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
+
+int NotificationManagerNotificationSendAndroidQueue( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens );
 
 NotificationSent *NotificationManagerGetNotificationsSentByStatusPlatformAndUMAIDDB( NotificationManager *nm, int status, int platform, FULONG umaID );
 
@@ -117,6 +137,10 @@ int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *
 int NotificationManagerSendInformationToConnections( NotificationManager *nm, char *sername, char *msg, int len );
 
 int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *sertype, const char *func, const char *action, char *msg );
+
+void NotificationIOSSendingThread( FThread *data );
+
+void NotificationAndroidSendingThread( FThread *data );
 
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__
 

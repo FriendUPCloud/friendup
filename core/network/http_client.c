@@ -66,7 +66,10 @@ HttpClient *HttpClientNew( FBOOL post, FBOOL http2, char *param, char *headers, 
 		
 		c->hc_MainLine = StringDuplicateN( temp, size );
 		c->hc_Headers = StringDuplicate( headers );
-		c->hc_Content = StringDuplicate( content );
+		if( content != NULL )
+		{
+			c->hc_Content = StringDuplicate( content );
+		}
 	}
 	
 	return c;
