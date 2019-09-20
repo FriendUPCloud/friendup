@@ -83,6 +83,7 @@ void NotificationAndroidSendingThread( FThread *data )
 		}
 	}
 	
+	nm->nm_AndroidSendHttpClient->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
 	HttpClientDelete( nm->nm_AndroidSendHttpClient );
 	
 	data->t_Launched = FALSE;
