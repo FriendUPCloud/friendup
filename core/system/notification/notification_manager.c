@@ -132,7 +132,26 @@ void NotificationManagerDelete( NotificationManager *nm )
 	DEBUG("[NotificationManagerDelete]\n");
 	if( nm != NULL )
 	{
-		DEBUG("[NotificationManagerDelete] remove threads\n");
+		// stop getting messages
+		
+		DEBUG("[NotificationManagerDelete] kill main thread\n");
+		
+		// kill main notification thread
+		if( nm->nm_TimeoutThread != NULL )
+		{
+			nm->nm_TimeoutThread->t_Quit = TRUE;
+			while( TRUE )
+			{
+				if( nm->nm_TimeoutThread->t_Launched == FALSE )
+				{
+					break;
+				}
+				sleep( 1 );
+			}
+			DEBUG2("[NotificationManagerDelete]  close thread\n");
+		
+			ThreadDelete( nm->nm_TimeoutThread );
+		}
 		
 		// remove Android sending thread
 		
@@ -195,25 +214,6 @@ void NotificationManagerDelete( NotificationManager *nm )
 		pthread_cond_destroy( &(nm->nm_IOSSendCond) );
 		pthread_mutex_destroy( &(nm->nm_IOSSendMutex) );
 		FQDeInit( &(nm->nm_IOSSendMessages) );
-		
-		DEBUG("[NotificationManagerDelete] kill main thread\n");
-		
-		// kill main notification thread
-		if( nm->nm_TimeoutThread != NULL )
-		{
-			nm->nm_TimeoutThread->t_Quit = TRUE;
-			while( TRUE )
-			{
-				if( nm->nm_TimeoutThread->t_Launched == FALSE )
-				{
-					break;
-				}
-				sleep( 1 );
-			}
-			DEBUG2("[NotificationManagerDelete]  close thread\n");
-		
-			ThreadDelete( nm->nm_TimeoutThread );
-		}
 		
 		DEBUG("[NotificationManagerDelete] all threads deleted\n");
 		

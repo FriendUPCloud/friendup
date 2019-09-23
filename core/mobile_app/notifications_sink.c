@@ -267,7 +267,7 @@ typedef struct UMsg
  * @return 0 when success, otherwise error number
  */
 
-#define DISABLE_NOTIFICATION_THREADING
+//#define DISABLE_NOTIFICATION_THREADING
 
 // definition
 void ProcessSinkMessage( void *locd );
