@@ -218,7 +218,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 			$data = $obj;
 		}
 		
-		$data->permission = ( strstr( $data->permission, '","' ) ? explode( ',', $data->permission ) : $data->permission );
+		$data->permission = ( is_string( $data->permission ) && strstr( $data->permission, '","' ) ? explode( ',', $data->permission ) : $data->permission );
 		
 		if( is_object( $data->permission ) || is_array( $data->permission ) )
 		{
