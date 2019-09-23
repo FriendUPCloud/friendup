@@ -685,23 +685,37 @@ var Calendar = {
 
 // An event rect! --------------------------------------------------------------
 
+// Standard global events
 var eventRectMouseDown = null;
-
-window.addEventListener( 'mouseup', function(){ eventRectMouseDown = null; } );
+window.addEventListener( 'mouseup', function(){ 
+	eventRectMouseDown = null;
+} );
 window.addEventListener( 'mousemove', function( e ){
 	
+	// Where do we click?
 	var cx = e.clientX;
 	var cy = e.clientY;
 	
 	if( eventRectMouseDown )
 	{
+		// Get some data (scrollable element of clicked event node)
+		var pnode = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		
+		// Scroll info
+		var st = pnode.scrollTop;
+		var sl = pnode.scrollLeft;
+		
+		// Where do we click in absolute coordinates
+		var cy = ( e.clientY + st ) - GetElementTop( pnode );
+		var cx = ( e.clientX + sl ) - GetElementLeft( pnode );
+		
 		var ele = eventRectMouseDown.element;
-		var l = eventRectMouseDown.l;
-		var t = eventRectMouseDown.t;
-		var w = eventRectMouseDown.w;
-		var h = eventRectMouseDown.h;
-		var x = eventRectMouseDown.x;
-		var y = eventRectMouseDown.y;
+		var l   = eventRectMouseDown.l;
+		var t   = eventRectMouseDown.t;
+		var w   = eventRectMouseDown.w;
+		var h   = eventRectMouseDown.h;
+		var x   = eventRectMouseDown.x;
+		var y   = eventRectMouseDown.y;
 		
 		var offy = y - cy;
 		
@@ -727,6 +741,7 @@ EventRect.prototype.init = function()
 	if( this.div ) return;
 	var self = this;
 	this.div = document.createElement( 'div' );
+	this.div.event = self;
 	this.div.className = 'EventRect MousePointer';
 	this.div.style.top = this.definition.ypos + '%';
 	this.div.style.height = this.definition.height + '%';
@@ -737,17 +752,33 @@ EventRect.prototype.init = function()
 	this.div.style.color = eventPaletteForeground[ paletteSlot ];
 	this.div.style.backgroundColor = eventPaletteBackground[ paletteSlot ];
 	this.div.innerHTML = this.definition.event.Name;
+	
+	// Pressing the left mouse button down
 	this.div.onmousedown = function( e )
 	{
-		// Where do we click?
-		var cy = e.clientY;
-		var cx = e.clientX;
+		if( e.button != 0 ) return;
+		
+		// Get some data (scrollable element of clicked event node)
+		var pnode = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		
+		// Scroll info
+		var st = pnode.scrollTop;
+		var sl = pnode.scrollLeft;
+		
+		
+		// Where do we click in absolute coordinates
+		var cy = ( e.clientY + st ) - GetElementTop( pnode );
+		var cx = ( e.clientX + sl ) - GetElementLeft( pnode );
+		
+		// Assume nothing was clicked
 		var cp = null;
-		if( cy < GetElementTop( this ) + 10 )
+		
+		// Coordinate 
+		if( cy < this.offsetTop + 10 )
 		{
 			cp = 'top';
 		}
-		else if( cy > GetElementTop( this ) + this.offsetHeight - 10 )
+		else if( cy > this.offsetTop + this.offsetHeight - 10 )
 		{
 			cp = 'bottom';
 		}
@@ -758,8 +789,8 @@ EventRect.prototype.init = function()
 			eventRectMouseDown = {
 				clickPosition: cp,
 				element: this,
-				t: GetElementTop( this ),
-				l: GetElementLeft( this ),
+				t: this.offsetTop,
+				l: this.offsetLeft,
 				w: this.offsetWidth,
 				h: this.offsetHeight,
 				x: cx,
@@ -774,7 +805,7 @@ EventRect.prototype.init = function()
 	}
 	ge( 'Day' + this.definition.day ).appendChild( this.div );
 	
-	this.div.onclick = function( e )
+	this.div.ondblclick = function( e )
 	{
 		EditEvent( self.definition.event.ID );
 		return cancelBubble( e );
