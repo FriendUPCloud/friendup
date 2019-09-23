@@ -1435,7 +1435,9 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			// Return access denied if the list is only the logged in Users disks
 			if( userid && userid != mountlist[b].UserID )
 			{
-				return '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
+				// Skip if user doesn't have access to this disk ...
+				//continue;
+				//return '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
 			}
 			
 			// Skip the IsDeleted disks for now ...
