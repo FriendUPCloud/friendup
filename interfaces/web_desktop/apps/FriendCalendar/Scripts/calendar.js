@@ -146,7 +146,7 @@ Application.receiveMessage = function( msg )
 				return;
 			}
 			var w = new View( {
-				title: i18n('i18n_calendar_sources'),
+				title: i18n( 'i18n_calendar_sources' ),
 				width: 700,
 				height: 500
 			} );

@@ -456,6 +456,7 @@ var Calendar = {
 		eventDiv.addEventListener( 'mousedown', function( e )
 		{
 			if( eventMode ) return;
+			
 			// Find day element
 			var t = e.target ? e.target : e.srcElement;
 			while( t != document.body )
@@ -683,6 +684,39 @@ var Calendar = {
 };
 
 // An event rect! --------------------------------------------------------------
+
+var eventRectMouseDown = null;
+
+window.addEventListener( 'mouseup', function(){ eventRectMouseDown = null; } );
+window.addEventListener( 'mousemove', function( e ){
+	
+	var cx = e.clientX;
+	var cy = e.clientY;
+	
+	if( eventRectMouseDown )
+	{
+		var ele = eventRectMouseDown.element;
+		var l = eventRectMouseDown.l;
+		var t = eventRectMouseDown.t;
+		var w = eventRectMouseDown.w;
+		var h = eventRectMouseDown.h;
+		var x = eventRectMouseDown.x;
+		var y = eventRectMouseDown.y;
+		
+		var offy = y - cy;
+		
+		if( eventRectMouseDown.clickPosition == 'bottom' )
+		{
+			ele.style.height = h - offy + 'px';
+		}
+		else
+		{
+			ele.style.top = t - offy + 'px';
+			ele.style.height = h + offy + 'px';
+		}
+	}
+} );
+
 var EventRect = function( definition )
 {
 	this.definition = definition;
@@ -705,6 +739,37 @@ EventRect.prototype.init = function()
 	this.div.innerHTML = this.definition.event.Name;
 	this.div.onmousedown = function( e )
 	{
+		// Where do we click?
+		var cy = e.clientY;
+		var cx = e.clientX;
+		var cp = null;
+		if( cy < GetElementTop( this ) + 10 )
+		{
+			cp = 'top';
+		}
+		else if( cy > GetElementTop( this ) + this.offsetHeight - 10 )
+		{
+			cp = 'bottom';
+		}
+		
+		// Register click
+		if( cp != null )
+		{
+			eventRectMouseDown = {
+				clickPosition: cp,
+				element: this,
+				t: GetElementTop( this ),
+				l: GetElementLeft( this ),
+				w: this.offsetWidth,
+				h: this.offsetHeight,
+				x: cx,
+				y: cy
+			};
+		}
+		else
+		{
+			eventRectMouseDown = null;
+		}
 		return cancelBubble( e );
 	}
 	ge( 'Day' + this.definition.day ).appendChild( this.div );
