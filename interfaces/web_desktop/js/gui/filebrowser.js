@@ -147,6 +147,9 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 // Supported flags ( { lockHistory: true|false } )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags )
 {
+	// Already set
+	if( this.flags.path && this.flags.path == target ) return;
+	
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;
@@ -182,9 +185,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	var targetPath = false;
 	if( this.flags.path )
 	{
-		var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
+		targetPath = this.flags.path;
+		/*var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
 		b.pop();
 		targetPath = '';
+		
 		for( var a = 0; a < depth; a++ )
 		{
 			if( b[a] )
@@ -192,6 +197,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				targetPath += b[a] + ( a == 0 ? ':' : '/' );
 			}
 		}
+		console.log( 'Looking: ' + targetPath + ' (' + this.flags.path + ') - ' + depth + ' ' + path );*/
 	}
 	
 	function createOnclickAction( ele, ppath, type, depth )
@@ -242,14 +248,46 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					self.callbacks.loadFile( ppath, e, self.tempFlags );
 				}
 			}
-			else
+			else if( type == 'RootDirectory' )
 			{
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
 					self.callbacks.folderOpen( ppath, e, self.tempFlags );
-					return  cancelBubble( e );
+					return cancelBubble( e );
 				}
+				
+				if( doClick )
+				{
+					if( self.callbacks && self.callbacks.folderOpen )
+					{
+						self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					}
+				}
+				
+				// Set this to active
+				// Set this to active
+				var eles = self.dom.getElementsByTagName( 'div' );
+				for( var a = 0; a < eles.length; a++ )
+				{
+					eles[a].classList.remove( 'Active' );
+				}
+				var nam = ele.getElementsByClassName( 'Name' );
+				if( nam.length )
+				{
+					nam[0].classList.add( 'Active' );
+				}
+			}
+			else if( type == 'Directory' || type == 'volume' )
+			{
+				// Are we in a file dialog?
+				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
+				{
+					self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					return cancelBubble( e );
+				}
+				
+				var nam = ele.getElementsByClassName( 'Name' );
 				
 				// Normal operation
 				if( !this.classList.contains( 'Open' ) || ( e && e.mode == 'open' ) )
@@ -257,44 +295,45 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					var subitems = ele.getElementsByClassName( 'SubItems' );
 					if( subitems.length )
 					{
+						this.classList.add( 'Open' );
+
 						// Only refresh at final destination
 						if( doClick )
 						{
 							self.refresh( ppath, subitems[0], callback, depth );
-						}
-						this.classList.add( 'Open' );
-						if( self.callbacks && self.callbacks.folderOpen )
-						{
-							if( doClick)
+							if( self.callbacks && self.callbacks.folderOpen )
 							{
 								self.callbacks.folderOpen( ppath, e, self.tempFlags );
-								cancelBubble( e );
 							}
 						}
-						var nam = ele.getElementsByClassName( 'Name' );
 						if( nam.length )
 						{
 							nam[0].classList.add( 'Open' );
 						}
 					}
 				}
-				else
+				// Only close folders if they are active and clicked
+				else if( nam.length && e && ( ( !isMobile && e.button >= 0 ) || ( isMobile && doClick ) ) )
 				{
-					this.classList.remove( 'Open' );
-					var nam = ele.getElementsByClassName( 'Name' );
-					if( nam.length )
+					// Only close active
+					if( nam[0].classList.contains( 'Active' ) )
 					{
+						this.classList.remove( 'Open' );
 						nam[0].classList.remove( 'Open' );
+					
 						if( self.callbacks && self.callbacks.folderClose )
 						{
-							if( doClick )
-							{
-								self.callbacks.folderClose( ppath, e, self.tempFlags );
-								cancelBubble( e );
-							}
+							self.callbacks.folderClose( ppath, e, self.tempFlags );
 						}
 					}
+					// Again clicking (like open...)
+					else if( self.callbacks && self.callbacks.folderOpen )
+					{
+						self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					}
 				}
+				
+				// Set this to active
 				var eles = self.dom.getElementsByTagName( 'div' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -588,6 +627,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Click the click element for path
 				if( clickElement )
 				{
+					self.lastClickElement = clickElement; // store it
 					setTimeout( function()
 					{
 						clickElement.onclick( { mode: 'open' } );
@@ -663,6 +703,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		{
 			if( !msg || !msg.list ) return;
 			
+			// Create metadirectory "root"
+			if( depth == 1 )
+			{
+				var itm = [ { Type: 'Directory', Filename: i18n( 'i18n_root_directory' ), Path: Application.browserPath, Title: i18n( 'i18n_root_directory' ), MetaType: 'RootDirectory' } ];
+				msg.list = itm.concat( msg.list );
+			}
+
 			if( callback ) callback();
 			
 			// Get existing
@@ -681,7 +728,17 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						var fn = msg.list[b].Filename;
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
-						createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
+						
+						// Special case - isn't really a directory (uses path without filename)
+						if( msg.list[b].MetaType == 'RootDirectory' )
+						{
+							createOnclickAction( eles[a], path, 'RootDirectory', depth + 1 );
+						}
+						else
+						{
+							createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
+						}
+						
 						// Don't add twice
 						if( !found.find( function( ele ){ ele == msg.list[b].Filename } ) )
 						{
@@ -701,6 +758,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			{
 				rootElement.removeChild( removers[a] );
 			}
+			
 			delete removers;
 			
 			// Precalc
@@ -738,6 +796,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( msg.list[a].Type == 'Directory' )
 							fn += '/';
 						d.path = path + fn;
+						
+						if( msg.list[a].MetaType == 'RootDirectory' )
+						{
+							d.path = self.rootPath;
+							msg.list[a].Type = 'RootDirectory';
+						}
+						
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
 						
 						// We have an incoming path
@@ -756,13 +821,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					// Existing items
 					if( foundItem.classList.contains( 'Open' ) )
 					{
-						var s = foundItem.getElementsByClassName( 'SubItems' );
-						if( s && s.length )
+						if( msg.list[a].MetaType && msg.list[a].MetaType != 'RootDirectory' )
 						{
-							var fn = msg.list[a].Filename;
-							if( msg.list[a].Type == 'Directory' )
-								fn += '/';
-							self.refresh( path + fn, s[0], false, depth + 1 );
+							var s = foundItem.getElementsByClassName( 'SubItems' );
+							if( s && s.length )
+							{
+								var fn = msg.list[a].Filename;
+								if( msg.list[a].Type == 'Directory' )
+									fn += '/';
+								self.refresh( path + fn, s[0], false, depth + 1 );
+							}
 						}
 					}
 					// We have an incoming path
@@ -789,6 +857,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			// Click the click element for path
 			if( clickElement )
 			{
+				self.lastClickElement = clickElement; // Store it
 				setTimeout( function()
 				{
 					clickElement.onclick();

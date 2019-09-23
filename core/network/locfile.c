@@ -33,7 +33,7 @@
 #include <util/murmurhash3.h>
 #include <errno.h>
 
-#if LOCFILE_USE_MMAP == 1
+#if LOCFILE_USE_MMAP == 0
 #include <sys/mman.h>
 #endif
 

@@ -12,18 +12,18 @@
 // Dependency
 function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 {
-	$rect = imagettfbbox($fontSize,$fontAngle,$fontFile,$text); 
-	$minX = min(array($rect[0],$rect[2],$rect[4],$rect[6])); 
-	$maxX = max(array($rect[0],$rect[2],$rect[4],$rect[6])); 
-	$minY = min(array($rect[1],$rect[3],$rect[5],$rect[7])); 
-	$maxY = max(array($rect[1],$rect[3],$rect[5],$rect[7])); 
-	return array( 
-	 "left"   => abs($minX) - 1, 
-	 "top"    => abs($minY) - 1, 
-	 "width"  => $maxX - $minX, 
-	 "height" => $maxY - $minY, 
-	 "box"    => $rect 
-	); 
+	$rect = imagettfbbox( $fontSize, $fontAngle, $fontFile, $text );
+	$minX = min( array( $rect[ 0 ], $rect[ 2 ], $rect[ 4 ], $rect[ 6 ] ) );
+	$maxX = max( array( $rect[ 0 ], $rect[ 2 ], $rect[ 4 ], $rect[ 6 ] ) );
+	$minY = min( array( $rect[ 1 ], $rect[ 3 ], $rect[ 5 ], $rect[ 7 ] ) );
+	$maxY = max( array( $rect[ 1 ], $rect[ 3 ], $rect[ 5 ], $rect[ 7 ] ) );
+	return array(
+		"left"   => abs( $minX ) - 1,
+		"top"    => abs( $minY ) - 1,
+		"width"  => $maxX - $minX,
+		"height" => $maxY - $minY,
+		"box"    => $rect
+	);
 }
 // End dependency
 
@@ -120,23 +120,26 @@ else if ( isset( $args->args->setting ) )
 	$s->UserID = $userid;
 	if( $s->Load() )
 	{
-		$json = false;
-		if( substr( $s->Data, 0, 1 ) == '"' && substr( $s->Data, -1, 1 ) == '"' )
+		if( !isset( $args->args->mode ) || $args->args->mode != 'reset' )
 		{
-			$json = substr( $s->Data, 1, strlen( $s->Data ) - 2 );
+			$json = false;
+			if( substr( $s->Data, 0, 1 ) == '"' && substr( $s->Data, -1, 1 ) == '"' )
+			{
+				$json = substr( $s->Data, 1, strlen( $s->Data ) - 2 );
+			}
+			if( $json && $d = json_decode( $json ) )
+			{
+				$settings->$set = $d;
+			}
+			else if( $d = json_decode( $s->Data ) )
+			{
+				$settings->$set = $d;
+			}
+			else $settings->$set = $s->Data;
+			die( 'ok<!--separate-->' . json_encode( $settings ) );
 		}
-		if( $json && $d = json_decode( $json ) )
-		{
-			$settings->$set = $d;
-		}
-		else if( $d = json_decode( $s->Data ) )
-		{
-			$settings->$set = $d;
-		}
-		else $settings->$set = $s->Data;
-		die( 'ok<!--separate-->' . json_encode( $settings ) );
 	}
-	// Generate default avatar
+	// Generate default avatar -------------------------------------------------
 	if( $s->Key == 'avatar' )
 	{
 		if( !isset( $Config->DefaultPalette ) )
@@ -150,7 +153,9 @@ else if ( isset( $args->args->setting ) )
 		{
 			$palette = explode( ',', $Config->DefaultPalette );
 		}
-		$hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
+		if( $args->args->color )
+			$hex = $args->args->color;
+		else $hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
 		
 		$img = imagecreatetruecolor( 256, 256 );
 		imagealphablending( $img, false );
@@ -194,9 +199,22 @@ else if ( isset( $args->args->setting ) )
 		$png = ob_get_clean();
 		$s->Data = 'data:image/png;base64,' . base64_encode( $png );
 		$s->Save();
+		
+		// Save avatar color for later use
+		$c = new dbIO( 'FSetting' );
+		$c->UserID = $s->UserID;
+		$c->Key = 'avatar_color';
+		$c->Type = 'system';
+		$c->Load();
+		$c->Data = $hex;
+		$c->Save();
+		
 		$settings->avatar = $s->Data;
-		die( 'ok<!--separate-->' . json_encode( $settings ) );//die( $s->Data );
+		die( 'ok<!--separate-->' . json_encode( $settings ) );
 	}
+	// Done generating avatar --------------------------------------------------
+	
+	// Fallback
 	die( 'fail<!--separate-->{"response":"setting not found"}' );
 }
 

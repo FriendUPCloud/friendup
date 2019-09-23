@@ -1358,6 +1358,21 @@ BufString *Dir( File *s, const char *path )
 			{
 				if( !(strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 ) )
 				{
+					/*
+					strcpy( tempString, comm );
+					int dpos = strlen( tempString );
+					char *strptr = dir->d_name;
+					if( dir->d_name[ 0 ] == '/' )
+					{
+						strptr++;
+					}
+					while( *strptr != 0 )
+					{
+						tempString[ dpos++ ] = *strptr;
+						strptr++;
+					}
+					tempString[ dpos ] = 0;
+					*/
 					if( dir->d_name[ 0 ] == '/' )
 					{
 						snprintf( tempString, rspath, "%s%s", comm, &(dir->d_name[1]) );

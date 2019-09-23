@@ -52,13 +52,23 @@ function jsUrlEncode( $in )
 }
 
 // Connects to friend core! You must build the whole query after the fc path
-function FriendCall( $queryString )
+function FriendCall( $queryString = false, $flags = false )
 {
 	global $Config;
 	$ch = curl_init();
-	curl_setopt( $ch, CURLOPT_URL, ($Config->SSLEnable?'https://':'http://') . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort );
+	if( !$queryString )
+		$queryString = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+	curl_setopt( $ch, CURLOPT_URL, $queryString );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-	if( $Config->SSLEnable == 1 )
+	
+	if( isset( $flags ) && $flags )
+	{
+		foreach( $flags as $k=>$v )
+		{
+			curl_setopt( $ch, $k, $v );
+		}
+	}
+	if( $Config->SSLEnable )
 	{
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
@@ -213,7 +223,9 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				if( isset( $key ) && isset( $value ) )
 				{
 					if( substr( $value, 0, 13 ) == '<!--base64-->' )
+					{
 						$value = trim( base64_decode( substr( $value, 13, strlen( $value ) - 13 ) ) );
+					}
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
 					{
 						$value = rawurldecode( $value );

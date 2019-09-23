@@ -43,6 +43,9 @@ var Module = function( mod )
 		
 		var j = new cAjax ();
 		
+		if( this.onQueue )
+			j.onQueue = this.onQueue;
+		
 		// Force http!
 		if( this.forceHTTP )
 		{

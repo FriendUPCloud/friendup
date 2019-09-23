@@ -1,4 +1,5 @@
 /* Themable nice'o css ------------------------------------------------------ */
+html, body {min-height:100%;}
 
 body
 {
@@ -16,12 +17,20 @@ body
 	visibility: hidden;
 }
 
+
 body.Login
 {
-	background-image: url(/graphics/dew.jpg);
+	background-image: url('/graphics/dew.jpg');
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* we dont need no background iamge on mobile, dont load it! */
+html body[mobile].Login
+{
+	background-image: none;
 }
 
 body.Login .View
@@ -250,7 +259,7 @@ body.Login:before
 	opacity: 1;
 	position: fixed;
 	z-index: 999999999;
-	background: white;
+	background: #222222;
 	top: 0;
 	left: 0;
 	width: 100%;

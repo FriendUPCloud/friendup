@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -116,14 +116,15 @@ lws_add_http_header_by_token(struct lws *wsi, enum lws_token_indexes token,
 	return lws_add_http_header_by_name(wsi, name, value, length, p, end);
 }
 
-int lws_add_http_header_content_length(struct lws *wsi,
-				       lws_filepos_t content_length,
-				       unsigned char **p, unsigned char *end)
+int
+lws_add_http_header_content_length(struct lws *wsi,
+				   lws_filepos_t content_length,
+				   unsigned char **p, unsigned char *end)
 {
 	char b[24];
 	int n;
 
-	n = sprintf(b, "%llu", (unsigned long long)content_length);
+	n = snprintf(b, sizeof(b) - 1, "%llu", (unsigned long long)content_length);
 	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH,
 					 (unsigned char *)b, n, p, end))
 		return 1;
@@ -200,7 +201,8 @@ lws_add_http_common_headers(struct lws *wsi, unsigned int code,
 		}
 #endif
 		if (!wsi->http2_substream) {
-			if (lws_add_http_header_by_token(wsi, WSI_TOKEN_CONNECTION,
+			if (lws_add_http_header_by_token(wsi,
+						 WSI_TOKEN_CONNECTION,
 						 (unsigned char *)ka[t],
 						 (int)strlen(ka[t]), p, end))
 				return 1;
@@ -241,6 +243,26 @@ static const char * const err500[] = {
 	"Gateway Timeout",
 	"HTTP Version Not Supported"
 };
+
+/* security best practices from Mozilla Observatory */
+
+static const
+struct lws_protocol_vhost_options pvo_hsbph[] = {{
+	NULL, NULL, "referrer-policy:", "no-referrer"
+}, {
+	&pvo_hsbph[0], NULL, "x-frame-options:", "deny"
+}, {
+	&pvo_hsbph[1], NULL, "x-xss-protection:", "1; mode=block"
+}, {
+	&pvo_hsbph[2], NULL, "x-content-type-options:", "nosniff"
+}, {
+	&pvo_hsbph[3], NULL, "content-security-policy:",
+	"default-src 'none'; img-src 'self' data: ; "
+		"script-src 'self'; font-src 'self'; "
+		"style-src 'self'; connect-src 'self'; "
+		"frame-ancestors 'none'; base-uri 'none';"
+		"form-action 'self';"
+}};
 
 int
 lws_add_http_header_status(struct lws *wsi, unsigned int _code,
@@ -287,7 +309,7 @@ lws_add_http_header_status(struct lws *wsi, unsigned int _code,
 		else
 			p1 = hver[0];
 
-		n = sprintf((char *)code_and_desc, "%s %u %s", p1, code,
+		n = snprintf((char *)code_and_desc, sizeof(code_and_desc) - 1, "%s %u %s", p1, code,
 			    description);
 
 		if (lws_add_http_header_by_name(wsi, NULL, code_and_desc, n, p,
@@ -304,6 +326,20 @@ lws_add_http_header_status(struct lws *wsi, unsigned int _code,
 			return 1;
 
 		headers = headers->next;
+	}
+
+	if (wsi->vhost->options &
+	    LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE) {
+		headers = &pvo_hsbph[LWS_ARRAY_SIZE(pvo_hsbph) - 1];
+		while (headers) {
+			if (lws_add_http_header_by_name(wsi,
+					(const unsigned char *)headers->name,
+					(unsigned char *)headers->value,
+					(int)strlen(headers->value), p, end))
+				return 1;
+
+			headers = headers->next;
+		}
 	}
 
 	if (wsi->context->server_string &&
@@ -381,7 +417,7 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 		"</head><body><h1>%u</h1>%s</body></html>", code, html_body);
 
 
-	n = sprintf(slen, "%d", len);
+	n = snprintf(slen, 12, "%d", len);
 	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH,
 					 (unsigned char *)slen, n, &p, end))
 		return 1;
@@ -490,4 +526,8 @@ lws_http_compression_apply(struct lws *wsi, const char *name,
 }
 #endif
 
-
+int
+lws_http_headers_detach(struct lws *wsi)
+{
+	return lws_header_table_detach(wsi, 0);
+}

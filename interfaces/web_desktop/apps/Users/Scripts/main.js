@@ -1010,7 +1010,7 @@ function RefreshSoftware( apps )
 			
 			ge( 'pSetupApplications' ).obj = ( apps ? apps : false );
 		}
-		m.execute( 'software' );
+		m.execute( 'software', {'mode':'showall'} );
 	}
 }
 

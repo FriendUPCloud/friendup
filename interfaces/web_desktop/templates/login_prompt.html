@@ -4,7 +4,7 @@
 	<head>
 		<script onload="" src="/webclient/js/apps/api.js"></script>
 	</head>
-	<body class="Loading" onload="">
+	<body class="Loading" onload="loginNow()">
 		<link rel="stylesheet" href="/webclient/css/extraLoginCSS.css"/>
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
@@ -39,7 +39,7 @@
 						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
-								<button id="loginButton" type="submit" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin(event)">
+								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
 									Sign in
 								</button>
 								<div id="RememberMe">
@@ -58,7 +58,7 @@
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
 						<p><strong>Compatibility information:</strong></p>
-						<p>Please use Google Chrome or Samsung Internet. Experimental support for Safari, Opera, Firefox and MS Edge.</p>
+						<p>Please use Google Chrome, Firefox or Samsung Internet. Experimental support for Safari, Operax and MS Edge.</p>
 					</div>
 				</div>
 			</div>
@@ -242,7 +242,6 @@
 					document.getElementById('Username').focus(); 
 				}
 			}
-			setTimeout( loginNow, 150 );
 		</script>
 		<script>
 			if( document.location.href.indexOf( 'friendsky.cloud' ) >= 0 )

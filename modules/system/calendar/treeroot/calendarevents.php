@@ -31,26 +31,29 @@ $p = getByPost(
 // Add the events
 if( $xml = simplexml_load_string( $p ) )
 {
-	foreach( $xml->items->object->weeks as $weeks )
+	if( isset( $xml->items ) && isset( $xml->items->object ) )
 	{
-		foreach( $weeks->array as $week )
+		foreach( $xml->items->object->weeks as $weeks )
 		{
-			foreach( $week->days->array as $day )
+			foreach( $weeks->array as $week )
 			{
-				//$Logger->log( 'Daya: ' . print_r( $day, 1 ) );
-				if( isset( $day->events ) && isset( $day->events->array ) )
+				foreach( $week->days->array as $day )
 				{
-					foreach( $day->events->array as $evt )
+					//$Logger->log( 'Daya: ' . print_r( $day, 1 ) );
+					if( isset( $day->events ) && isset( $day->events->array ) )
 					{
-						$ob = new stdClass();
-						$ob->ID = $evt->EventID . '_treeroot';
-						$ob->Title = $evt->EventName .'';
-						$ob->Description = '<strong>Location:</strong> '. $evt->EventPlace . '<br>' . $evt->EventDetails;
-						$ob->TimeTo = date( 'H:i:s', strtotime( $evt->EventDateEnd ) );
-						$ob->TimeFrom = date( 'H:i:s', strtotime( $evt->EventDateStart ) );
-						$ob->Date = date( 'Y-m-d', strtotime( $evt->EventDateEnd ) );
-						$ob->Type = 'treeroot';
-						$os[] = $ob;
+						foreach( $day->events->array as $evt )
+						{
+							$ob = new stdClass();
+							$ob->ID = $evt->EventID . '_treeroot';
+							$ob->Title = $evt->EventName .'';
+							$ob->Description = '<strong>Location:</strong> '. $evt->EventPlace . '<br>' . $evt->EventDetails;
+							$ob->TimeTo = date( 'H:i:s', strtotime( $evt->EventDateEnd ) );
+							$ob->TimeFrom = date( 'H:i:s', strtotime( $evt->EventDateStart ) );
+							$ob->Date = date( 'Y-m-d', strtotime( $evt->EventDateEnd ) );
+							$ob->Type = 'treeroot';
+							$os[] = $ob;
+						}
 					}
 				}
 			}

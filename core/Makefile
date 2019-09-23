@@ -1,12 +1,13 @@
 
 -include ../Makefile.defs
+-include ../Config
 
 CC			=	gcc
 CPP			=	g++
 OUTPUT			=	bin/FriendCore
 
 CFLAGS			=	$(GLOBAL_CFLAGS) -I. -I../libs/ -I../$(LIBWS_INCLUDE_DIR) $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
+LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssl -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -18,37 +19,49 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
 
+ifeq ($(LINK_LIB_STDCPP),1)
+LFLAGS					+=	-lstdc++
+endif
+
+ifeq ($(USE_SSH_THREADS_LIB),1)
+LFLAGS					+=      -lssh_threads
+endif
+
 ifeq ($(USE_SANITIZER),1)
-LFLAGS			+=	-lasan
+LFLAGS					+=	-lasan
 endif
 
 ifeq ($(DEBUG),1)
-CFLAGS  +=	-D__DEBUG -O2
+CFLAGS					+=	-D__DEBUG -O2
 else
-CFLAGS	+=	-O2
+CFLAGS					+=	-O2
 endif
 
 ifeq ($(PROFILE),1)
-CFLAGS  +=	-pg -DPROFILE=1
+CFLAGS 					+=	-pg -DPROFILE=1
 endif
 
 ifeq ($(WEBSOCKETS_THREADS),1)
-CFLAGS	+=	-DENABLE_WEBSOCKETS_THREADS=1
+CFLAGS					+=	-DENABLE_WEBSOCKETS_THREADS=1
 endif
 
 ifeq ($(USE_SELECT),1)
-CFLAGS  +=	-DUSE_SELECT
+CFLAGS					+=	-DUSE_SELECT
 endif
 
 ifeq ($(NO_VALGRIND),1)
-CFLAGS  +=	-DNO_VALGRIND_STUFF
+CFLAGS					+=	-DNO_VALGRIND_STUFF
 endif
 
 ifeq ($(CYGWIN_BUILD),1)
-CFLAGS  +=	-DCYGWIN_BUILD
-LFLAGS	+=	-Wl,--export-dynamic,--heap,200000000,--stack,8000000
+CFLAGS					+=	-DCYGWIN_BUILD
+LFLAGS					+=	-Wl,--export-dynamic,--heap,200000000,--stack,8000000
 else
-LFLAGS	+=	-Wl,--export-dynamic
+LFLAGS					+=	-Wl,--export-dynamic
+endif
+
+ifeq ($(LINK_STDCPP),1)
+LFLAGS					+=	-lstdc++
 endif
 
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
@@ -336,8 +349,27 @@ compile: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
 compileprof: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
 	@echo "\033[34mDebug compilation\033[0m"
 
-release:  $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
+release: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
 	@echo "\033[34mRelease compilation\033[0m"
+
+UNITTESTSRC = $(wildcard unittests/*.c)
+UNITTESTOBJ = $(addprefix unittests/bin/,$(notdir $(UNITTESTSRC:.c=.ut.bin)))
+LUNITFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a $(LFLAGS)
+
+.PHONY: FORCE
+
+PREPAREUT:
+	@echo "\033[34mPrepareing unit tests\033[0m"
+	cp obj/* unittests/obj
+	$(CC) $(CFLAGS) -c unittests/main/main.c -o unittests/obj/main.o
+
+$(UNITTESTOBJ): $(UNITTESTSRC)
+	@echo "\033[34mCompile unit tests\033[0m"
+	$(CC) $(CFLAGS) -o $@ $< unittests/obj/*.o $(LUNITFLAGS)
+	cp $@ $(FRIEND_PATH)/
+
+unittest: $(OBJ_FILES) $(OUTPUT) $(MODS) $(FSYS) $(LOGGERS) $(SERVICES)
+	make PREPAREUT $(UNITTESTOBJ)
 
 clean:
 	@echo "\033[34mCleaning\033[0m"
@@ -366,6 +398,7 @@ setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
 	mkdir -p obj bin
 	mkdir -p obj system/bin system/bin/emod system/bin/fsys system/bin/loggers system/bin/services
+	mkdir -p unittests/obj unittests/bin
 
 # dependency system
 

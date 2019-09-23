@@ -1,0 +1,75 @@
+
+
+menu_new                          : Nowy dokument
+menu_save                         : Zapisz
+menu_save_as                      : Zapisz jako
+menu_load                         : Załaduj
+menu_quit                         : Wyjdź
+menu_preferences                  : Preferencjew
+menu_file                         : Plik
+menu_print                        : Drukuj
+menu_document                     : Dokument
+menu_insert_image                 : Wstaw obraz
+menu_convert_images_inline        : Obrazy do wstawienia
+menu_vr_features                  : Przełącz funkcje VR
+
+#Style editor
+i18n_edit_styles                  : Edytuj style
+i18n_apply                        : Zastosuj
+
+i18n_status_loading               : Wczytywanie...
+i18n_status_saving                : Zapisywanie...
+
+i18n_find                         : Znajdź
+i18n_select                       : Wybierz
+i18n_search                       : Szukaj
+
+edit_image                        : Edytuj obrazek
+insert_image                      : Wstaw obraz
+
+i18n_print_alert                  : Powiadomienia o drukowaniu
+i18n_not_saved_cant_print         : Dokument nie został zapisany. Najpierw zapisz, a następnie spróbuj ponownie.
+
+i18n_close                        : Zamknij
+i18n_accept                       : Zaakceptuj
+
+i18n_set_bold                     : Pogrubienie
+i18n_set_italic                   : Kursywa
+i18n_set_underline                : Podkreślenie
+i18n_default_style                : Domyślny styl
+i18n_header_1                     : Nagłówek 1
+i18n_header_2                     : Nagłówek 2
+i18n_header_3                     : Nagłówek 3
+i18n_header_4                     : Nagłówek 4
+i18n_header_5                     : Nagłówek 5
+i18n_header_6                     : Nagłówek 6
+i18n_paragraph                    : Paragraf
+i18n_select_zoom                  : Wybierz zoom
+i18n_select_font                  : Wybierz czcionkę
+i18n_font_size                    : Rozmiar czcionki
+i18n_insert_image                 : Wstaw obraz
+i18n_align_left                   : Wyrównaj do lewej
+i18n_align_center                 : Wyrównaj do środka
+i18n_align_right                  : Wyrównaj do prawej
+i18n_align_justify                : Wyjustuj
+i18n_unordered_bullet_points      : Lista wypunktowana
+i18n_ordered_bullet_point         : Lista numerowana
+i18n_set_document_zoom            : Ustaw zoom dokumentu
+i18n_set_block_format             : Ustaw format bloku
+
+i18n_cancel                       : Anuluj
+i18n_keywords                     : słowa kluczowe...
+i18n_path                         : ścieżka...
+i18n_preferences                  : Preferencje
+i18n_failed_to_load_document      : Nie udało się załadować dokumentu...
+i18n_loaded                       : Załadowany
+i18n_converting                   : Konwersja...
+i18n_written                      : Zapisany
+menu_print_remote                 : Zdalny druk
+i18n_print_preview                : Podgląd wydruku
+i18n_generating_print_preview     : Generowanie podglądu wydruku...
+i18n_print_ready                  : Wydruk gotowy
+i18n_language                     : Język
+i18n_language_settings            : Ustawienia języka
+i18n_features                     : Funkcje
+i18n_feature_settings             : Ustawienia funkcji

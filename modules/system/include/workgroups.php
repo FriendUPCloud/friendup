@@ -63,12 +63,20 @@ if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBA
 
 
 
-if( $rows = $SqlDatabase->FetchObjects( $q = '
+$userConn = 'LEFT'; // <- show all workgroups
+
+// Just show connected groups?
+if( isset( $args->args->connected ) )
+{
+	$userConn = 'RIGHT';
+}
+
+if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT 
 		g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
 	FROM 
 		FUserGroup g 
-			LEFT JOIN FUserToGroup u ON 
+			' . $userConn . ' JOIN FUserToGroup u ON 
 			( 
 					u.UserID = \'' . $userid . '\' 
 				AND u.UserGroupID = g.ID 

@@ -53,8 +53,11 @@ enum lws_context_options {
 	LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT		= (1 << 3) |
 								  (1 << 12),
 	/**< (VH) Allow non-SSL (plaintext) connections on the same
-	 * port as SSL is listening... undermines the security of SSL;
-	 * provides  LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT */
+	 * port as SSL is listening.  If combined with
+	 * LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS it will try to
+	 * force http connections on an https listener (eg, http://x.com:443) to
+	 * redirect to an explicit https connection (eg, https://x.com)
+	 */
 	LWS_SERVER_OPTION_LIBEV					= (1 << 4),
 	/**< (CTX) Use libev event loop */
 	LWS_SERVER_OPTION_DISABLE_IPV6				= (1 << 5),
@@ -73,7 +76,14 @@ enum lws_context_options {
 	/**< (CTX)  Use libuv event loop */
 	LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS		= (1 << 11) |
 								  (1 << 12),
-	/**< (VH) Use http redirect to force http to https
+	/**< (VH) Use an http redirect to force the client to ask for https.
+	 * Notice if your http server issues the STS header and the client has
+	 * ever seen that, the client will fail the http connection before it
+	 * can actually do the redirect.
+	 *
+	 * Combine with LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS to handle, eg,
+	 * http://x.com:443 -> https://x.com
+	 *
 	 * (deprecated: use mount redirection) */
 	LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT			= (1 << 12),
 	/**< (CTX) Initialize the SSL library at all */
@@ -102,19 +112,42 @@ enum lws_context_options {
 	 * the context, only the string you give in the client connect
 	 * info for .origin (if any) will be used directly.
 	 */
-	LWS_SERVER_OPTION_FALLBACK_TO_RAW			= (1 << 20),
-	/**< (VH) if invalid http is coming in the first line,  */
+	LWS_SERVER_OPTION_FALLBACK_TO_RAW /* use below name */	= (1 << 20),
+	LWS_SERVER_OPTION_FALLBACK_TO_APPLY_LISTEN_ACCEPT_CONFIG= (1 << 20),
+	/**< (VH) if invalid http is coming in the first line, then abandon
+	 * trying to treat the connection as http, and belatedly apply the
+	 * .listen_accept_role / .listen_accept_protocol info struct members to
+	 * the connection.  If they are NULL, for backwards-compatibility the
+	 * connection is bound to "raw-skt" role, and in order of priority:
+	 * 1) the vh protocol with a pvo named "raw", 2) the vh protocol with a
+	 * pvo named "default", or 3) protocols[0].
+	 *
+	 * Must be combined with LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT
+	 * to work with a socket listening with tls.
+	 */
+
 	LWS_SERVER_OPTION_LIBEVENT				= (1 << 21),
 	/**< (CTX) Use libevent event loop */
-	LWS_SERVER_OPTION_ONLY_RAW				= (1 << 22),
-	/**< (VH) All connections to this vhost / port are RAW as soon as
-	 * the connection is accepted, no HTTP is going to be coming.
+
+	LWS_SERVER_OPTION_ONLY_RAW /* Use below name instead */	= (1 << 22),
+	LWS_SERVER_OPTION_ADOPT_APPLY_LISTEN_ACCEPT_CONFIG	= (1 << 22),
+	/**< (VH) All connections to this vhost / port are bound to the
+	 * role and protocol given in .listen_accept_role /
+	 * .listen_accept_protocol.
+	 *
+	 * If those explicit user-controlled names are NULL, for backwards-
+	 * compatibility the connection is bound to "raw-skt" role, and in order
+	 * of priority: 1) the vh protocol with a pvo named "raw", 2) the vh
+	 * protocol with a pvo named "default", or 3) protocols[0].
+	 *
+	 * It's much preferred to specify the role + protocol using the
+	 * .listen_accept_role and .listen_accept_protocol in the info struct.
 	 */
 	LWS_SERVER_OPTION_ALLOW_LISTEN_SHARE			= (1 << 23),
 	/**< (VH) Set to allow multiple listen sockets on one interface +
 	 * address + port.  The default is to strictly allow only one
 	 * listen socket at a time.  This is automatically selected if you
-	 * have multiple service threads.
+	 * have multiple service threads.  Linux only.
 	 */
 	LWS_SERVER_OPTION_CREATE_VHOST_SSL_CTX			= (1 << 24),
 	/**< (VH) Force setting up the vhost SSL_CTX, even though the user
@@ -134,6 +167,50 @@ enum lws_context_options {
 	 * example the ACME plugin was configured to fetch a cert, this lets
 	 * you bootstrap your vhost from having no cert to start with.
 	 */
+	LWS_SERVER_OPTION_VHOST_UPG_STRICT_HOST_CHECK		= (1 << 27),
+	/**< (VH) On this vhost, if the connection is being upgraded, insist
+	 * that there's a Host: header and that the contents match the vhost
+	 * name + port (443 / 80 are assumed if no :port given based on if the
+	 * connection is using TLS).
+	 *
+	 * By default, without this flag, on upgrade lws just checks that the
+	 * Host: header was given without checking the contents... this is to
+	 * allow lax hostname mappings like localhost / 127.0.0.1, and CNAME
+	 * mappings like www.mysite.com / mysite.com
+	 */
+	LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE	= (1 << 28),
+	/**< (VH) Send lws default HTTP headers recommended by Mozilla
+	 * Observatory for security.  This is a helper option that sends canned
+	 * headers on each http response enabling a VERY strict Content Security
+	 * Policy.  The policy is so strict, for example it won't let the page
+	 * run its own inline JS nor show images or take CSS from a different
+	 * server.  In many cases your JS only comes from your server as do the
+	 * image sources and CSS, so that is what you want... attackers hoping
+	 * to inject JS into your DOM are completely out of luck since even if
+	 * they succeed, it will be rejected for execution by the browser
+	 * according to the strict CSP.  In other cases you have to deviate from
+	 * the complete strictness, in which case don't use this flag: use the
+	 * .headers member in the vhost init described in struct
+	 * lws_context_creation_info instead to send the adapted headers
+	 * yourself.
+	 */
+
+	LWS_SERVER_OPTION_ALLOW_HTTP_ON_HTTPS_LISTENER		= (1 << 29),
+	/**< (VH) If you really want to allow HTTP connections on a tls
+	 * listener, you can do it with this combined with
+	 * LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT.  But this is allowing
+	 * accidental loss of the security assurances provided by tls depending
+	 * on the client using http when he meant https... it's not
+	 * recommended.
+	 */
+	LWS_SERVER_OPTION_FAIL_UPON_UNABLE_TO_BIND		= (1 << 30),
+	/**< (VH) When instantiating a new vhost and the specified port is
+	 * already in use, a null value shall be return to signal the error.
+	 */
+
+	LWS_SERVER_OPTION_H2_JUST_FIX_WINDOW_UPDATE_OVERFLOW	= (1 << 31),
+	/**< (VH) Indicates the connections using this vhost should ignore
+	 * h2 WINDOW_UPDATE from broken peers and fix them up */
 
 	/****** add new things just above ---^ ******/
 };
@@ -169,15 +246,17 @@ struct lws_context_creation_info {
 	 * sockets in abstract namespace, by prepending an at symbol to the
 	 * socket name. */
 	const struct lws_protocols *protocols;
-	/**< VHOST: Array of structures listing supported protocols and a protocol-
-	 * specific callback for each one.  The list is ended with an
-	 * entry that has a NULL callback pointer. */
+	/**< VHOST: Array of structures listing supported protocols and a
+	 * protocol-specific callback for each one.  The list is ended with an
+	 * entry that has a NULL callback pointer.  SEE ALSO .pprotocols below,
+	 * which gives an alternative way to provide an array of pointers to
+	 * protocol structs. */
 	const struct lws_extension *extensions;
 	/**< VHOST: NULL or array of lws_extension structs listing the
 	 * extensions this context supports. */
 	const struct lws_token_limits *token_limits;
-	/**< CONTEXT: NULL or struct lws_token_limits pointer which is initialized
-	 * with a token length limit for each possible WSI_TOKEN_ */
+	/**< CONTEXT: NULL or struct lws_token_limits pointer which is
+	 * initialized with a token length limit for each possible WSI_TOKEN_ */
 	const char *ssl_private_key_password;
 	/**< VHOST: NULL or the passphrase needed for the private key. (For
 	 * backwards compatibility, this can also be used to pass the client
@@ -189,7 +268,12 @@ struct lws_context_creation_info {
 	 * server cert from, otherwise NULL for unencrypted.  (For backwards
 	 * compatibility, this can also be used to pass the client certificate
 	 * when setting up a vhost client SSL context, but it is preferred to
-	 * use .client_ssl_cert_filepath for that.) */
+	 * use .client_ssl_cert_filepath for that.)
+	 *
+	 * Notice you can alternatively set a single DER or PEM from a memory
+	 * buffer as the vhost tls cert using \p server_ssl_cert_mem and
+	 * \p server_ssl_cert_mem_len.
+	 */
 	const char *ssl_private_key_filepath;
 	/**<  VHOST: filepath to private key if wanting SSL mode;
 	 * if this is set to NULL but ssl_cert_filepath is set, the
@@ -198,28 +282,43 @@ struct lws_context_creation_info {
 	 * library calls.   (For backwards compatibility, this can also be used
 	 * to pass the client cert private key filepath when setting up a
 	 * vhost client SSL context, but it is preferred to use
-	 * .client_ssl_private_key_filepath for that.) */
+	 * .client_ssl_private_key_filepath for that.)
+	 *
+	 * Notice you can alternatively set a DER or PEM private key from a
+	 * memory buffer as the vhost tls private key using
+	 * \p server_ssl_private_key_mem and \p server_ssl_private_key_mem_len.
+	 */
 	const char *ssl_ca_filepath;
 	/**< VHOST: CA certificate filepath or NULL.  (For backwards
 	 * compatibility, this can also be used to pass the client CA
 	 * filepath when setting up a vhost client SSL context,
-	 * but it is preferred to use .client_ssl_ca_filepath for that.) */
+	 * but it is preferred to use .client_ssl_ca_filepath for that.)
+	 *
+	 * Notice you can alternatively set a DER or PEM CA cert from a memory
+	 * buffer using \p server_ssl_ca_mem and \p server_ssl_ca_mem_len.
+	 */
 	const char *ssl_cipher_list;
-	/**< VHOST: List of valid ciphers to use (eg,
+	/**< VHOST: List of valid ciphers to use ON TLS1.2 AND LOWER ONLY (eg,
 	 * "RC4-MD5:RC4-SHA:AES128-SHA:AES256-SHA:HIGH:!DSS:!aNULL"
 	 * or you can leave it as NULL to get "DEFAULT" (For backwards
 	 * compatibility, this can also be used to pass the client cipher
 	 * list when setting up a vhost client SSL context,
-	 * but it is preferred to use .client_ssl_cipher_list for that.)*/
+	 * but it is preferred to use .client_ssl_cipher_list for that.)
+	 * SEE .tls1_3_plus_cipher_list and .client_tls_1_3_plus_cipher_list
+	 * for the equivalent for tls1.3.
+	 */
 	const char *http_proxy_address;
 	/**< VHOST: If non-NULL, attempts to proxy via the given address.
-	 * If proxy auth is required, use format "username:password\@server:port" */
+	 * If proxy auth is required, use format
+	 * "username:password\@server:port" */
 	unsigned int http_proxy_port;
 	/**< VHOST: If http_proxy_address was non-NULL, uses this port */
 	int gid;
-	/**< CONTEXT: group id to change to after setting listen socket, or -1. */
+	/**< CONTEXT: group id to change to after setting listen socket,
+	 *   or -1. See also .username below. */
 	int uid;
-	/**< CONTEXT: user id to change to after setting listen socket, or -1. */
+	/**< CONTEXT: user id to change to after setting listen socket,
+	 *   or -1.  See also .groupname below. */
 	unsigned int options;
 	/**< VHOST + CONTEXT: 0, or LWS_SERVER_OPTION_... bitfields */
 	void *user;
@@ -267,14 +366,27 @@ struct lws_context_creation_info {
 	unsigned int fd_limit_per_thread;
 	/**< CONTEXT: nonzero means restrict each service thread to this
 	 * many fds, 0 means the default which is divide the process fd
-	 * limit by the number of threads. */
+	 * limit by the number of threads.
+	 *
+	 * Note if this is nonzero, and fd_limit_per_thread multiplied by the
+	 * number of service threads is less than the process ulimit, then lws
+	 * restricts internal lookup table allocation to the smaller size, and
+	 * switches to a less efficient lookup scheme.  You should use this to
+	 * trade off speed against memory usage if you know the lws context
+	 * will only use a handful of fds.
+	 *
+	 * Bear in mind lws may use some fds internally, for example for the
+	 * cancel pipe, so you may need to allow for some extras for normal
+	 * operation.
+	 */
 	unsigned int timeout_secs;
 	/**< VHOST: various processes involving network roundtrips in the
 	 * library are protected from hanging forever by timeouts.  If
 	 * nonzero, this member lets you set the timeout used in seconds.
 	 * Otherwise a default timeout is used. */
 	const char *ecdh_curve;
-	/**< VHOST: if NULL, defaults to initializing server with "prime256v1" */
+	/**< VHOST: if NULL, defaults to initializing server with
+	 *   "prime256v1" */
 	const char *vhost_name;
 	/**< VHOST: name of vhost, must match external DNS name used to
 	 * access the site, like "warmcat.com" as it's used to match
@@ -308,9 +420,9 @@ struct lws_context_creation_info {
 	 * like this for compatibility with the original short version,
 	 * this is unsigned int length. */
 	long ssl_options_set;
-	/**< VHOST: Any bits set here will be set as SSL options */
+	/**< VHOST: Any bits set here will be set as server SSL options */
 	long ssl_options_clear;
-	/**< VHOST: Any bits set here will be cleared as SSL options */
+	/**< VHOST: Any bits set here will be cleared as server SSL options */
 	unsigned short ws_ping_pong_interval;
 	/**< CONTEXT: 0 for none, else interval in seconds between sending
 	 * PINGs on idle websocket connections.  When the PING is sent,
@@ -346,21 +458,28 @@ struct lws_context_creation_info {
 	/**< VHOST: Client SSL context init: NULL or the passphrase needed
 	 * for the private key */
 	const char *client_ssl_cert_filepath;
-	/**< VHOST: Client SSL context init:T he certificate the client
+	/**< VHOST: Client SSL context init: The certificate the client
 	 * should present to the peer on connection */
+	const void *client_ssl_cert_mem;
+	/**< VHOST: Client SSL context init: client certificate memory buffer or
+	 * NULL... use this to load client cert from memory instead of file */
+	unsigned int client_ssl_cert_mem_len;
+	/**< VHOST: Client SSL context init: length of client_ssl_cert_mem in
+	 * bytes */
 	const char *client_ssl_private_key_filepath;
 	/**<  VHOST: Client SSL context init: filepath to client private key
 	 * if this is set to NULL but client_ssl_cert_filepath is set, you
 	 * can handle the LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS
 	 * callback of protocols[0] to allow setting of the private key directly
-	 * via openSSL library calls */
+	 * via tls library calls */
 	const char *client_ssl_ca_filepath;
 	/**< VHOST: Client SSL context init: CA certificate filepath or NULL */
 	const void *client_ssl_ca_mem;
-	/**< VHOST: Client SSL context init: CA certificate memory buffer or NULL
-	 * use this to load CA cert from memory instead of file */
+	/**< VHOST: Client SSL context init: CA certificate memory buffer or
+	 * NULL... use this to load CA cert from memory instead of file */
 	unsigned int client_ssl_ca_mem_len;
-	/**< VHOST: Client SSL context init: length of client_ssl_ca_mem in bytes */
+	/**< VHOST: Client SSL context init: length of client_ssl_ca_mem in
+	 * bytes */
 
 	const char *client_ssl_cipher_list;
 	/**< VHOST: Client SSL context init: List of valid ciphers to use (eg,
@@ -375,10 +494,12 @@ struct lws_context_creation_info {
 	 * backwards compatibility.
 	 */
 	int simultaneous_ssl_restriction;
-	/**< CONTEXT: 0 (no limit) or limit of simultaneous SSL sessions possible.*/
+	/**< CONTEXT: 0 (no limit) or limit of simultaneous SSL sessions
+	 * possible.*/
 	const char *socks_proxy_address;
 	/**< VHOST: If non-NULL, attempts to proxy via the given address.
-	 * If proxy auth is required, use format "username:password\@server:port" */
+	 * If proxy auth is required, use format
+	 * "username:password\@server:port" */
 	unsigned int socks_proxy_port;
 	/**< VHOST: If socks_proxy_address was non-NULL, uses this port */
 #if defined(LWS_HAVE_SYS_CAPABILITY_H) && defined(LWS_HAVE_LIBCAP)
@@ -485,6 +606,73 @@ struct lws_context_creation_info {
 	 * is nonzero, this will be used in place of the default.  It's
 	 * like this for compatibility with the original short version:
 	 * this is unsigned int length. */
+
+	long ssl_client_options_set;
+	/**< VHOST: Any bits set here will be set as CLIENT SSL options */
+	long ssl_client_options_clear;
+	/**< VHOST: Any bits set here will be cleared as CLIENT SSL options */
+
+	const char *tls1_3_plus_cipher_list;
+	/**< VHOST: List of valid ciphers to use for incoming server connections
+	 * ON TLS1.3 AND ABOVE (eg, "TLS_CHACHA20_POLY1305_SHA256" on this vhost
+	 * or you can leave it as NULL to get "DEFAULT".
+	 * SEE .client_tls_1_3_plus_cipher_list to do the same on the vhost
+	 * client SSL_CTX.
+	 */
+	const char *client_tls_1_3_plus_cipher_list;
+	/**< VHOST: List of valid ciphers to use for outgoing client connections
+	 * ON TLS1.3 AND ABOVE on this vhost (eg,
+	 * "TLS_CHACHA20_POLY1305_SHA256") or you can leave it as NULL to get
+	 * "DEFAULT".
+	 */
+	const char *listen_accept_role;
+	/**< VHOST: NULL for default, or force accepted incoming connections to
+	 * bind to this role.  Uses the role names from their ops struct, eg,
+	 * "raw-skt".
+	 */
+	const char *listen_accept_protocol;
+	/**< VHOST: NULL for default, or force accepted incoming connections to
+	 * bind to this vhost protocol name.
+	 */
+	const struct lws_protocols **pprotocols;
+	/**< VHOST: NULL: use .protocols, otherwise ignore .protocols and use
+	 * this array of pointers to protocols structs.  The end of the array
+	 * is marked by a NULL pointer.
+	 *
+	 * This is preferred over .protocols, because it allows the protocol
+	 * struct to be opaquely defined elsewhere, with just a pointer to it
+	 * needed to create the context with it.  .protocols requires also
+	 * the type of the user data to be known so its size can be given.
+	 */
+
+	const void *server_ssl_cert_mem;
+	/**< VHOST: Alternative for \p ssl_cert_filepath that allows setting
+	 * from memory instead of from a file.  At most one of
+	 * \p ssl_cert_filepath or \p server_ssl_cert_mem should be non-NULL. */
+	unsigned int server_ssl_cert_mem_len;
+	/**< VHOST: Server SSL context init: length of server_ssl_cert_mem in
+	 * bytes */
+	const void *server_ssl_private_key_mem;
+	/**<  VHOST: Alternative for \p ssl_private_key_filepath allowing
+	 * init from a private key in memory instead of a file.  At most one
+	 * of \p ssl_private_key_filepath or \p server_ssl_private_key_mem
+	 * should be non-NULL. */
+	unsigned int server_ssl_private_key_mem_len;
+	/**< VHOST: length of \p server_ssl_private_key_mem in memory */
+	const void *server_ssl_ca_mem;
+	/**< VHOST: Alternative for \p ssl_ca_filepath allowing
+	 * init from a CA cert in memory instead of a file.  At most one
+	 * of \p ssl_ca_filepath or \p server_ssl_ca_mem should be non-NULL. */
+	unsigned int server_ssl_ca_mem_len;
+	/**< VHOST: length of \p server_ssl_ca_mem in memory */
+	const char *username; /**< CONTEXT: string username for post-init
+	 * permissions.  Like .uid but takes a string username. */
+	const char *groupname; /**< CONTEXT: string groupname for post-init
+	 * permissions.  Like .gid but takes a string groupname. */
+	const char *unix_socket_perms; /**< VHOST: if your vhost is listening
+	 * on a unix socket, you can give a "username:groupname" string here
+	 * to control the owner:group it's created with.  It's always created
+	 * with 0660 mode. */
 
 	/* Add new things just above here ---^
 	 * This is part of the ABI, don't needlessly break compatibility
@@ -689,10 +877,6 @@ LWS_VISIBLE LWS_EXTERN int
 lwsws_get_config_vhosts(struct lws_context *context,
 			struct lws_context_creation_info *info, const char *d,
 			char **config_strings, int *len);
-
-/** lws_vhost_get() - \deprecated deprecated: use lws_get_vhost() */
-LWS_VISIBLE LWS_EXTERN struct lws_vhost *
-lws_vhost_get(struct lws *wsi) LWS_WARN_DEPRECATED;
 
 /**
  * lws_get_vhost() - return the vhost a wsi belongs to

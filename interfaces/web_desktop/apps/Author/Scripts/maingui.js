@@ -54,28 +54,38 @@ var filebrowserCallbacks = {
 	folderOpen( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		
+		if( e )
 		{
-			currentViewMode = 'files';
-			Application.updateViewMode();
-		} );
-		cancelBubble( e );
+			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+			{
+				currentViewMode = 'files';
+				Application.updateViewMode();
+			} );
+			cancelBubble( e );
+		}
 	},
 	folderClose( ele, e )
 	{
 		if( isMobile && currentViewMode != 'root' ) return;
+		
 		Application.currentDocument = null;
 		Application.browserPath = ele;
-		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		
+		if( e )
 		{
-			currentViewMode = 'files';
-			Application.updateViewMode();
-		} );	
-		cancelBubble( e );
+			Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+			{
+				currentViewMode = 'files';
+				Application.updateViewMode();
+			} );	
+			cancelBubble( e );
+		}
 	}
 };
 
@@ -602,6 +612,14 @@ Application.initCKE = function()
 		.then( editor => {
 		
 			Application.editor = editor;
+			
+			// Check if there was a race condition
+			if( Application.loadedContentInQueue )
+			{
+				Application.editor.setData( Application.loadedContentInQueue );
+				Application.loadedContentInQueue = null;
+			}
+			
 			Application.initializeToolbar();
 			
 			editor.keystrokes.set( 'Ctrl+S', ( data, stop ) => {
@@ -1093,8 +1111,12 @@ Application.setCurrentDocument = function( pth )
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
 	
+	// Store the path also for the browser
+	Application.browserPath = this.path;
+
 	// Update filebrowser
 	this.fileBrowser.setPath( this.path );
+	
 	
 	Application.refreshFilePane();
 	
@@ -1345,6 +1367,8 @@ Application.newDocument = function( args )
 	this.fileSaved = false;
 	this.lastSaved = 0;
 	
+	var self = this;
+	
 	// Wait till ready
 	if( typeof( ClassicEditor ) == 'undefined' )
 	{
@@ -1388,7 +1412,14 @@ Application.newDocument = function( args )
 			}
 		}
 		
-		Application.editor.setData( args.content );
+		if( Application.editor )
+		{
+			Application.editor.setData( args.content );
+		}
+		else
+		{
+			Application.loadedContentInQueue = args.content;
+		}
 
 		if( args.scrollTop )
 		{
@@ -1407,16 +1438,34 @@ Application.newDocument = function( args )
 			command: 'newdocument'
 		} );
 		
-		Application.editor.setData( '', function()
+		// TODO: Check why we have no editor
+		if( Application.editor )
 		{
-			Application.initializeBody();
-		} );
+			Application.editor.setData( '', function()
+			{
+				Application.initializeBody();
+			} );
+		}
 		
 		if( args.browserPath )
 		{
 			this.browserPath = args.browserPath;
 			this.path = args.browserPath;
-			this.fileBrowser.setPath( args.browserPath );
+			if( this.fileBrowser )
+			{
+				this.fileBrowser.setPath( args.browserPath );
+			}
+			// Try again
+			else
+			{
+				setTimeout( function()
+				{
+					if( self.fileBrowser )
+					{
+						self.fileBrowser.setPath( args.browserPath );
+					}
+				}, 5000 );
+			}
 		}
 	}
 }

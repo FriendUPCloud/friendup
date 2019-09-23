@@ -599,9 +599,9 @@ else
 fi
 
 # Installation complete, launch?
-temp="http://$friendCoreDomain:6502"
+temp="http://$friendCoreDomain:6502/webclient/index.html"
 if [ "$TLS" -eq "1" ]; then
-    temp="https://$friendCoreDomain:6502"
+    temp="https://$friendCoreDomain:6502/webclient/index.html"
 fi
 dialog --backtitle "Friend Installer" --yesno "Installation complete.\n\n\
 Once Friend Core is launched, you can access your local machine at:\n\

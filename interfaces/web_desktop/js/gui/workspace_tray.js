@@ -37,6 +37,7 @@ function PollTray()
 	}
 	else
 	{
+		// Add task applet
 		tray.tasks = document.createElement( 'div' );
 		tray.tasks.className = 'Tasks TrayElement IconSmall';
 		tray.tasks.poll = function()
@@ -45,6 +46,30 @@ function PollTray()
 			this.innerHTML = '<div class="BubbleInfo"><div>' + taskn + ' ' + ( taskn == 1 ? i18n( 'i18n_task_running' ) : i18n( 'i18n_tasks_running' ) ) + '.</div></div>';
 		}
 		tray.appendChild( tray.tasks );
+		
+		// Add download applet
+		// TODO: Remove this from native friend book interface
+		var da = tray.downloadApplet = document.createElement( 'div' );
+		da.className = 'Download TrayElement IconSmall';
+		da.poll = function()
+		{
+		}
+		da.ondrop = function( e )
+		{
+			var num = 0;
+			for( var a = 0; a < e.length; a++ )
+			{
+				if( Workspace.download( e[ a ].Path ) )
+				{
+					num++;
+				}
+			}
+			// Successful drop
+			if( num > 0 ) return true;
+			// Unsuccessful drop
+			return false;
+		}
+		tray.appendChild( da );
 	}
 	
 	// Check for notifications in history
@@ -56,11 +81,25 @@ function PollTray()
 			tray.notifications = document.createElement( 'div' );
 			tray.appendChild( tray.notifications );
 		}
-		tray.notifications.className = 'Notification TrayElement IconSmall';
-		tray.notifications.innerHTML = '';
-		tray.notificationPopup = null;
-		
+		// hot
 		var nots = Workspace.notificationEvents;
+		
+		tray.notifications.className = 'Notification TrayElement IconSmall';
+		
+		var toClear = true;
+		for( var a = 0; a < nots.length; a++ )
+		{
+			if( ( new Date() ).getTime() - nots[ a ].time < 250 )
+			{
+				toClear = false;
+			}
+		}
+		if( toClear )
+		{
+			tray.notifications.innerHTML = '';
+			tray.notificationPopup = null;
+		}
+		
 		for( var a = 0; a < nots.length; a++ )
 		{
 			// Unseen notification!
@@ -70,13 +109,16 @@ function PollTray()
 				
 				if( nots[ a ].notificationId )
 				{
-					var l = new Library( 'system.library' );
-					l.onExecuted = function(){};
-					l.execute( 'mobile/updatenotification', { 
-						notifid: nots[ a ].notificationId, 
-						action: 1,
-						pawel: 10
-					} );
+					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+					{
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: nots[ a ].notificationId, 
+							action: 1,
+							pawel: 10
+						} );
+					}
 					//console.log( 'Cancelling notification event as we are online.', nots[ a ].notificationId );
 				}
 				
@@ -435,51 +477,6 @@ function Notify( message, callback, clickcallback )
 		// Use native app
 		if( window.friendApp )
 		{
-			/*if( !message.text ) message.text = 'message: ' + JSON.stringify( message );
-			if( !message.title ) message.title = 'untitled 2';
-			
-			// Add click callback if any
-			var extra = false;
-			if( clickcallback )
-			{
-				extra = {
-					clickCallback: addWrapperCallback( function()
-					{
-						clickcallback();
-						
-						// Clear old click callbacks
-						for( var a = 0; a < _oldNotifyClickCallbacks.length; a++ )
-						{
-							getWrapperCallback( _oldNotifyClickCallbacks[ a ] );
-						}
-						_oldNotifyClickCallbacks = [];
-						// Done clearing
-					} )
-				};
-				_oldNotifyClickCallbacks.push( extra.clickCallback );
-				extra = JSON.stringify( extra );
-			}
-			
-			// Since it is seen, then remove from server
-			if( message.notificationId )
-			{
-				var l = new Library( 'system.library' );
-				l.onExecuted = function(){};
-				l.execute( 'mobile/updatenotification', { 
-					notifid: message.notificationId, 
-					action: 1
-				} );
-			}
-			
-			// Show the notification
-			mobileDebug( 'friendApp.show_notification: ' + JSON.stringify( message ), true );
-			friendApp.show_notification( message.title, message.text, extra );
-			
-			// The "show" callback is run immediately
-			if( callback )
-			{
-				callback();
-			}*/
 			return;
 		}
 		if( window.Notification )
@@ -496,14 +493,17 @@ function Notify( message, callback, clickcallback )
 				{
 					if( message.notificationId )
 					{
-						//console.log( 'Showing: ', message.notificationId );
-						var l = new Library( 'system.library' );
-						l.onExecuted = function(){};
-						l.execute( 'mobile/updatenotification', { 
-							notifid: message.notificationId, 
-							action: 1,
-							pawel: 10
-						} );
+						if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+						{
+							//console.log( 'Showing: ', message.notificationId );
+							var l = new Library( 'system.library' );
+							l.onExecuted = function(){};
+							l.execute( 'mobile/updatenotification', { 
+								notifid: message.notificationId, 
+								action: 1,
+								pawel: 10
+							} );
+						}
 					}
 					if( callback ) callback();
 				}
@@ -539,6 +539,7 @@ function Notify( message, callback, clickcallback )
 		title: message.title,
 		text: message.text,
 		seen: false,
+		time: ( new Date() ).getTime(),
 		showCallback: callback,
 		clickCallback: clickcallback
 	};
@@ -564,13 +565,16 @@ function Notify( message, callback, clickcallback )
 			// Since it is seen, then remove from server
 			if( message.notificationId )
 			{
-				var l = new Library( 'system.library' );
-				l.onExecuted = function(){};
-				l.execute( 'mobile/updatenotification', { 
-					notifid: message.notificationId, 
-					action: 1,
-					pawel: 11
-				} );
+				if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+				{
+					var l = new Library( 'system.library' );
+					l.onExecuted = function(){};
+					l.execute( 'mobile/updatenotification', { 
+						notifid: message.notificationId, 
+						action: 1,
+						pawel: 11
+					} );
+				}
 			}
 		}
 		
@@ -704,13 +708,16 @@ function Notify( message, callback, clickcallback )
 						// Function to set the notification as read...
 						if( message.notificationId )
 						{
-							var l = new Library( 'system.library' );
-							l.onExecuted = function(){};
-							l.execute( 'mobile/updatenotification', { 
-								notifid: message.notificationId, 
-								action: 1,
-								pawel: 12
-							} );
+							if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+							{
+								var l = new Library( 'system.library' );
+								l.onExecuted = function(){};
+								l.execute( 'mobile/updatenotification', { 
+									notifid: message.notificationId, 
+									action: 1,
+									pawel: 12
+								} );
+							}
 						}
 					}
 				}
@@ -754,66 +761,4 @@ function CloseNotification( notification )
 
 // Buffer for click callbacks
 var _oldNotifyClickCallbacks = [];
-
-
-/*// Render all notifications on the deepest field
-	renderNotifications: function()
-	{
-		// Don't render these on mobile
-		if( window.isMobile ) return;
-
-		// Only add the ones that aren't in!
-		for( var a = 0; a < this.notifications.length; a++ )
-		{
-			var no = this.notifications[a];
-			if( !no.dom )
-			{
-				var d = ( new Date( no.date ) );
-				var d = d.getFullYear() + '-' + StrPad( d.getMonth(), 2, '0' ) + '-' +
-					StrPad( d.getDate(), 2, '0' ) + ' ' + StrPad( d.getHours(), 2, '0' ) +
-					':' + StrPad( d.getMinutes(), 2, '0' ); // + ':' + StrPad( d.getSeconds(), 2, '0' );
-				var n = document.createElement( 'div' );
-				n.className = 'MarginBottom';
-				n.innerHTML = '\
-				<div class="FloatRight IconSmall fa-remove MousePointer" onclick="Workspace.removeNotification(this.parentNode.index)"></div>\
-				<p class="Layout">' + ( no.application ? ( no.application + ': ' ) : ( i18n( 'i18n_system_message' ) + ': ' ) ) + d + '</p>\
-				<p class="Layout"><strong>' + no.msg.title + '</strong></p>\
-				<p class="Layout">' + no.msg.text + '</strong></p>';
-				no.dom = n;
-				ge( 'Notifications' ).appendChild( n );
-			}
-			no.dom.index = a + 1;
-		}
-		if( DeepestField.updateNotificationInformation )
-			DeepestField.updateNotificationInformation();
-		ge( 'Notifications' ).scrollTop = ge( 'Notifications' ).innerHeight + 50;
-	},
-	// TODO: Reenable notifications when the windows can open on the deepest field...
-	removeNotification: function( index )
-	{
-		// Not on mobile
-		if( window.isMobile ) return;
-		if( Workspace.notifications.length <= 0 ) return;
-
-		var nots = Workspace.notifications;
-
-		// Remove by index
-		var out = [];
-		for( var a = 0; a < nots.length; a++ )
-		{
-			if( index == a+1 )
-			{
-				if( nots[a].dom )
-				{
-					nots[a].dom.parentNode.removeChild( nots[a].dom );
-				}
-				continue;
-			}
-			else out.push( nots[a] );
-		}
-		for( var a = 0; a < out.length; a++ ) out[a].dom.index = a+1;
-		Workspace.notifications = out;
-		if( DeepestField.updateNotificationInformation )
-			DeepestField.updateNotificationInformation();
-	},*/
 

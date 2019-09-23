@@ -1,7 +1,7 @@
 /*
  * lws-minimal-ws-client-ping
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -19,7 +19,7 @@ static struct lws_context *context;
 static struct lws *client_wsi;
 static int interrupted, zero_length_ping, port = 443,
 	   ssl_connection = LCCSCF_USE_SSL;
-static const char *server_address = "libwebsockets.org", *pro = "lws-ping-test";
+static const char *server_address = "libwebsockets.org", *pro = "lws-mirror-protocol";
 
 struct pss {
 	int send_a_ping;
@@ -40,7 +40,7 @@ connect_client(void)
 	i.origin = i.address;
 	i.ssl_connection = ssl_connection;
 	i.protocol = pro;
-	i.local_protocol_name = pro;
+	i.local_protocol_name = "lws-ping-test";
 	i.pwsi = &client_wsi;
 
 	return !lws_client_connect_via_info(&i);
@@ -185,6 +185,9 @@ int main(int argc, const char **argv)
 	if (lws_cmdline_option(argc, argv, "-z"))
 		zero_length_ping = 1;
 
+	if ((p = lws_cmdline_option(argc, argv, "--protocol")))
+		pro = p;
+
 	if ((p = lws_cmdline_option(argc, argv, "--server"))) {
 		server_address = p;
 		pro = "lws-minimal";
@@ -193,6 +196,15 @@ int main(int argc, const char **argv)
 
 	if ((p = lws_cmdline_option(argc, argv, "--port")))
 		port = atoi(p);
+
+	/*
+	 * since we know this lws context is only ever going to be used with
+	 * one client wsis / fds / sockets at a time, let lws know it doesn't
+	 * have to use the default allocations for fd tables up to ulimit -n.
+	 * It will just allocate for 1 internal and 1 (+ 1 http2 nwsi) that we
+	 * will use.
+	 */
+	info.fd_limit_per_thread = 1 + 1 + 1;
 
 	context = lws_create_context(&info);
 	if (!context) {

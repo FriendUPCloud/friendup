@@ -825,7 +825,7 @@ Screen = function ( flags, initObject )
 			else msg.data = content;
 			if( msg.data && msg.data.split )
 				msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
-			if( !msg.origin ) msg.origin = document.location.href;
+			if( !msg.origin ) msg.origin = '*'; // TODO: should be this - document.location.href;
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 			if( callback ) callback();
 			
@@ -893,11 +893,11 @@ Screen = function ( flags, initObject )
 		// We're on a road trip..
 		if( !( friendU && ( friendU == targetU || !targetU ) ) )
 		{
-			ifr.sandbox = 'allow-same-origin allow-forms allow-scripts';
+			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 		}
 		
 		// Allow sandbox flags
-		var sbx = ifr.getAttribute('sandbox') ? ifr.getAttribute('sandbox') : '';
+		var sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
 		sbx = ('' + sbx).split( ' ' );
 		if( this.flags && this.flags.allowPopups )
 		{
@@ -922,7 +922,7 @@ Screen = function ( flags, initObject )
 					base:          base,
 					applicationId: appId,
 					filePath:      filePath,
-					origin:        document.location.href,
+					origin:        '*', // TODO: should be this - document.location.href,
 					screenId:      w.externScreenId,
 					theme:         Workspace.theme,
 					clipboard:     Friend.clipboard

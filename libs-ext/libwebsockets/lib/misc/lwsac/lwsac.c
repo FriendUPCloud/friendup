@@ -131,10 +131,35 @@ lwsac_use(struct lwsac **head, size_t ensure, size_t chunk_size)
 	return (char *)(*head)->curr + ofs;
 }
 
+void *
+lwsac_use_zero(struct lwsac **head, size_t ensure, size_t chunk_size)
+{
+	void *p = lwsac_use(head, ensure, chunk_size);
+
+	if (p)
+		memset(p, 0, ensure);
+
+	return p;
+}
+
+void *
+lwsac_use_zeroed(struct lwsac **head, size_t ensure, size_t chunk_size)
+{
+	void *r = lwsac_use(head, ensure, chunk_size);
+
+	if (r)
+		memset(r, 0, ensure);
+
+	return r;
+}
+
 void
 lwsac_free(struct lwsac **head)
 {
 	struct lwsac *it = *head;
+
+	*head = NULL;
+	lwsl_debug("%s: head %p\n", __func__, *head);
 
 	while (it) {
 		struct lwsac *tmp = it->next;
@@ -142,15 +167,16 @@ lwsac_free(struct lwsac **head)
 		free(it);
 		it = tmp;
 	}
-
-	*head = NULL;
 }
 
 void
 lwsac_info(struct lwsac *head)
 {
-	lwsl_notice("%s: lac %p: %dKiB in %d blocks\n", __func__, head,
-		    (int)(head->total_alloc_size >> 10), head->total_blocks);
+	if (!head)
+		lwsl_debug("%s: empty\n", __func__);
+	else
+		lwsl_debug("%s: lac %p: %dKiB in %d blocks\n", __func__, head,
+		   (int)(head->total_alloc_size >> 10), head->total_blocks);
 }
 
 uint64_t
@@ -163,20 +189,38 @@ void
 lwsac_reference(struct lwsac *head)
 {
 	head->refcount++;
+	lwsl_debug("%s: head %p: (det %d) refcount -> %d\n",
+		    __func__, head, head->detached, head->refcount);
 }
 
 void
 lwsac_unreference(struct lwsac **head)
 {
+	if (!(*head))
+		return;
+
+	if (!(*head)->refcount)
+		lwsl_warn("%s: refcount going below zero\n", __func__);
+
 	(*head)->refcount--;
-	if ((*head)->detached && !(*head)->refcount)
+
+	lwsl_debug("%s: head %p: (det %d) refcount -> %d\n",
+		    __func__, *head, (*head)->detached, (*head)->refcount);
+
+	if ((*head)->detached && !(*head)->refcount) {
+		lwsl_debug("%s: head %p: FREED\n", __func__, *head);
 		lwsac_free(head);
+	}
 }
 
 void
 lwsac_detach(struct lwsac **head)
 {
 	(*head)->detached = 1;
-	if (!(*head)->refcount)
+	if (!(*head)->refcount) {
+		lwsl_debug("%s: head %p: FREED\n", __func__, *head);
 		lwsac_free(head);
+	} else
+		lwsl_debug("%s: head %p: refcount %d: Marked as detached\n",
+			    __func__, *head, (*head)->refcount);
 }

@@ -346,7 +346,7 @@ var WorkspaceInside = {
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
-		if( this.mode == 'vr' ) return;
+		if( this.mode == 'vr' || isMobile ) return;
 		
 		if( globalConfig.workspacesInitialized )
 		{
@@ -590,7 +590,7 @@ var WorkspaceInside = {
 				{
 					clearInterval( Workspace.httpCheckConnectionInterval );
 				}
-				Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 3000 );
+				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 3000 );
 			}
 			else if( e.type == 'ping' )
 			{
@@ -643,6 +643,21 @@ var WorkspaceInside = {
 			{
 				Workspace.filesystemChangeTimeouts = {};
 			}
+			
+			// Clear cache
+			if( msg && msg.devname && msg.path )
+			{
+				var ext4 = msg.path.substr( msg.path.length - 5, 5 );
+				var ext3 = msg.path.substr( msg.path.length - 4, 4 );
+				ext4 = ext4.toLowerCase();
+				ext3 = ext3.toLowerCase();
+				if( ext4 == '.jpeg' || ext3 == '.jpg' || ext3 == '.gif' || ext3 == '.png' )
+				{
+					var ic = new FileIcon();
+					ic.delCache( msg.devname + ':' + msg.path );
+				}
+			}
+			
 			var t = msg.devname + ( msg.path ? msg.path : '' );
 			if( Workspace.filesystemChangeTimeouts[ t ] )
 			{
@@ -782,7 +797,7 @@ var WorkspaceInside = {
 						function notificationRead()
 						{
 							//console.log( 'Foo bar: ', msg.notificationData );
-							if( Workspace.currentViewState == 'active' )
+							if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 							{
 								if( trash )
 									clearTimeout( trash );
@@ -1060,7 +1075,7 @@ var WorkspaceInside = {
 				var wid = Workspace.widget ? Workspace.widget : m.widget;
 				if( wid )
 				{
-					wid.showing = true;
+					wid.shown = true;
 				}
 
 				if( wid && !wid.initialized )
@@ -1070,17 +1085,6 @@ var WorkspaceInside = {
 					var calendar = new Calendar( wid.dom );
 					wid.dom.id = 'CalendarWidget';
 				
-					// Mobile hider
-					if( window.isMobile )
-					{
-						var hider = document.createElement( 'div' );
-						hider.className = 'Hider';
-						hider.onclick = function()
-						{
-							Workspace.widget.slideUp();
-						}
-						wid.dom.appendChild( hider );
-					}
 					Workspace.calendarWidget = wid;
 
 					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
@@ -1113,7 +1117,7 @@ var WorkspaceInside = {
 						f1.load();
 
 						// Just close the widget
-						if( !window.isMobile && m && wid )
+						if( m && wid )
 							wid.hide();
 					}
 					calendar.addButton( newBtn );
@@ -1300,7 +1304,7 @@ var WorkspaceInside = {
 						if( Workspace.calendar ) Workspace.calendar.render();
 						return;
 					}
-					Alert( i18n( 'i18n_evt_delete_failed' ), i18n( 'i18n_evt_delete_failed_desc' ) );
+					Notify( { title: i18n( 'i18n_evt_delete_failed' ), text: i18n( 'i18n_evt_delete_failed_desc' ) } );
 				}
 				m.execute( 'deletecalendarevent', { id: id } );
 			}
@@ -1556,9 +1560,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			function initFriendWorkspace()
 			{
 				// Make sure we have loaded
-				if( Workspace.mode != 'vr' && !Workspace.screen.contentDiv )
+				if( Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						return setTimeout( initFriendWorkspace, 50 );
+						
 				if( e == 'ok' && d )
 				{
 					var dat = JSON.parse( d );
@@ -1567,15 +1572,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( dat.wallpaperdoors.substr(0,5) == 'color' )
 						{
 							Workspace.wallpaperImage = 'color';
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else if( dat.wallpaperdoors.length )
 						{
 							Workspace.wallpaperImage = dat.wallpaperdoors;
+							document.body.classList.remove( 'NoWallpaper' );
+							document.body.classList.remove( 'DefaultWallpaper' );
 						}
 						else 
 						{
+							document.body.classList.add( 'DefaultWallpaper' );
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 						}
+					}
+					else
+					{
+						document.body.classList.add( 'NoWallpaper' );
 					}
 					// Check for theme specifics
 					if( dat[ 'themedata_' + Workspace.theme ] )
@@ -1697,7 +1711,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									index: 0,
 									func: function()
 									{
-										if( l.index < seq.length )
+										if( !ScreenOverlay.done && l.index < seq.length )
 										{
 											var cmd = seq[ l.index++ ];
 											if( cmd && cmd.length )
@@ -1719,9 +1733,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													if( !found && !Friend.startupApps[ appName ] )
 													{
 														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+														ScreenOverlay.addDebug( 'Executing ' + cmd );
 														Workspace.shell.execute( cmd, function( res )
 														{
 															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+															ScreenOverlay.addDebug( 'Done ' + cmd );
 															l.func();
 															if( Workspace.mainDock )
 																Workspace.mainDock.closeDesklet();
@@ -1766,6 +1782,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					Workspace.windowWallpaperImage = '';
+					document.body.classList.add( 'DefaultWallpaper' );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
 			}
@@ -1964,11 +1981,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var out = [];
 						for( var b = 0; b < eles.length; b++ )
 						{
-
 							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
 
 							var nam = eles[b].getAttribute( 'data-displayname' ) ? eles[b].getAttribute( 'data-displayname' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
 							var exe = eles[b].getAttribute( 'data-exename' ) ? eles[b].getAttribute( 'data-exename' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							
+							// Skip erroneous elements
+							if( !exe || typeof( exe ) == 'undefined' || exe == 'undefined' ) continue;
 							
 							var im = eles[b].style.backgroundImage ? 
 								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
@@ -2293,7 +2312,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						dd.appendChild( s );
 					}
 
-					setTimeout( function()
+					function repositionStartMenu()
 					{
 						if( delayedBuildTime )
 						{
@@ -2356,10 +2375,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								dd.style.top = s.offsetHeight - dd.offsetHeight - 1 + 'px';
+								dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 							}
 						}
-					}, 5 );
+					}
+					setTimeout( repositionStartMenu, 250 );
 				} );
 			}
 
@@ -2909,15 +2929,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
 								
+									// Init the websocket etc
+									InitWorkspaceNetwork();
+									
 									// Generate avatar
 									var sm = new Module( 'system' );
 									sm.execute( 'getsetting', { setting: 'avatar' } );
-								
-									// Remove splash screen
-									if( window.friendApp )
-									{
-										window.friendApp.hide_splash_screen();
-									}
 									
 									document.title = Friend.windowBaseString;
 									
@@ -2929,7 +2946,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									Workspace.refreshExtraWidgetContents();
 								
 									// Redraw now
-									DeepestField.redraw();
+									if( !isMobile )
+										DeepestField.redraw();
 									
 									if( location.hash && location.hash.indexOf( 'clean' ) ) Workspace.goDialogShown = true;
 									
@@ -2942,6 +2960,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									
 									// Make sure we update icons...
 									Workspace.redrawIcons();
+									
+									// Update locale for download applet
+									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
+									{
+										ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									}
 									
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )
@@ -2970,23 +2994,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									
 									// We are ready!
 									Workspace.readyToRun = true;
-									if( !window.friendApp )
-									{
-										Workspace.onReady();
-									}
-									else if( typeof( window.friendApp.onWorkspaceReady ) == 'function' )
+									if( window.friendApp && friendApp.onWorkspaceReady )
 									{
 										friendApp.onWorkspaceReady();
 									}
+									else
+									{
+										Workspace.onReady();
+									}
+									Workspace.updateViewState( 'active' );
 								}
 							}, 50 );
 						}
 					
 						// Flush theme info
 						themeInfo.loaded = false;
-		
-						// Init the websocket etc
-						InitWorkspaceNetwork();
 					
 						// Reload the docks
 						Workspace.reloadDocks();
@@ -3474,7 +3496,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
 								
-								if( globalConfig.workspacecount > 1 )
+								// Mobile is not using multiple workspaces
+								if( !isMobile && globalConfig.workspacecount > 1 )
 								{
 									// Check series of wallpaper elements
 									Workspace.checkWorkspaceWallpapers( true );
@@ -3922,8 +3945,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		wb.onselectstart = function( e ) { return cancelBubble ( e ); };
 		wb.ondragstart = function( e ) { return cancelBubble ( e ); };
 		wb.redrawIcons( this.getIcons(), 'vertical' );
+		
 		if ( RefreshDesklets ) RefreshDesklets();
-
+		
 		// Check dormant too
 		var dormants = DormantMaster.getDoors();
 
@@ -4355,6 +4379,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Use a door and execute a filesystem function, rename
 	executeRename: function( nam, icon, win )
 	{	
+		var ic = new FileIcon();
+		
+		var target = icon.Path;
+		if( target.indexOf( '/' ) > 0 )
+		{
+			target = target.split( '/' );
+			target.pop();
+			target = target.join( '/' ) + '/' + nam;
+		}
+		else
+		{
+			target = target.split( ':' )[0] + ':' + nam;
+		}
+		
+		ic.delCache( icon.Path );
+		ic.delCache( target );
+		
 		if ( icon.Dormant )
 		{
 			if ( icon.Dormant.dosAction )
@@ -4385,7 +4426,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			else
 			{
-				Alert( i18n( 'i18n_cannotRename' ), i18n( 'i18n_noWritePermission' ) );
+				Notify( { title: i18n( 'i18n_cannotRename' ), text: i18n( 'i18n_noWritePermission' ) } );
 				if( Workspace.renameWindow )
 					Workspace.renameWindow.close();
 			}
@@ -4546,6 +4587,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Check volume icon
 			if( icon.Type == 'Door' && ( ( !icon.Filesize && icon.Filesize != 0 ) || isNaN( icon.Filesize ) ) )
 			{
+				if( !icon.Path && icon.Volume )
+				{
+					icon.Path = icon.Volume;
+					if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+						icon.Path += ':';
+				}
+				
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -6568,7 +6616,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							}
 						},
-						disabled: _cajax_process_count <= 0
+						disabled: isMobile || _cajax_process_count <= 0
 					},
 					{
 						name:	i18n( 'menu_share' ),
@@ -6687,6 +6735,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						disabled: !windowsOpened || !window.currentMovable
 					}
 				]
+			},
+			{
+				name: i18n( 'menu_help' ),
+				items: [
+					{
+						name: i18n( 'menu_help_bug' ),
+						command: function(){ window.open( 'https://github.com/FriendUPCloud/friendup/issues', '', '' ); }
+					},
+					{
+						name: i18n( 'menu_help_manual' ),
+						command: function(){ window.open( 'https://docs.friendup.tech/en-US/docs/FriendUser/End_user_guide', '', '' ); }
+					}
+				]
 			}
 			/*,
 			{
@@ -6717,8 +6778,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			]
 		} );*/
 	},
+	// Downloads a file by path to the client computer
 	download: function( path )
 	{
+		var lastChar = path.substr( path.length - 1, 1 );
+		if( lastChar == ':' || lastChar == '/' )
+		{
+			return Notify( { title: i18n( 'i18n_could_not_download' ), text: i18n( 'i18n_download_wrong_type' ) } );
+		}
 		var fn = path.split( ':' )[1];
 		if( fn.indexOf( '/' ) > 0 )
 			fn = fn.split( '/' ).pop();
@@ -7705,9 +7772,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								doDeleteFiles( files, index + 1 ); 
 							}
 							
+							var ic = new FileIcon();
+							
 							// Database ID
 							if( file.fileInfo.ID )
-							{
+							{	
 								file.door.dosAction( 'delete', { 
 									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
 								}, nextFile );
@@ -7718,11 +7787,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								// Try to kill the info file!
 								file.door.dosAction( 'delete', { path: info + '.info' } );
 								
+								ic.delCache( file.fileInfo.Path );
+								ic.delCache( info + '.info' );
 							}
 							// Dormant?
 							else if ( file.fileInfo.Dormant )
 							{
 								file.fileInfo.Dormant.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+								
+								ic.delCache( file.fileInfo.Path );
 							}
 							// Path
 							else
@@ -7733,6 +7806,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
 								// Try to kill the info file!
 								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+								
+								ic.delCache( file.fileInfo.Path );
+								ic.delCache( info + '.info' );
 							}
 						}
 						doDeleteFiles( files, 0 );
@@ -7779,7 +7855,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Deepest field population
 	updateTasks: function()
 	{
-		DeepestField.redraw();
+		if( !isMobile )
+			DeepestField.redraw();
 	},
 	fullscreen: function( ele, e )
 	{
@@ -7834,6 +7911,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{	
+		// Too early
+		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
+		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -7978,7 +8058,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Failed - alert user
 									else
 									{
-										Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_could_not_create_downloads')});
+										Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_could_not_create_downloads' ) } );
 										return;
 									}
 								});
@@ -7986,7 +8066,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_no_home_drive')});
+								Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_no_home_drive' ) } );
 								return;
 							}
 						};						
@@ -8254,17 +8334,33 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	updateViewState: function( newState )
 	{
-		if( !Workspace.sessionId ) { setTimeout( function(){ Workspace.updateViewState( newState ); }, 250 ); return; }
+		var self = this;
+		if( !Workspace.sessionId )
+		{ 
+			if( this.updateViewStateTM )
+				clearTimeout( this.updateViewStateTM );
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			return; 
+		}
 
 		// Don't update if not changed
-		if( this.currentViewState == newState ) return;
+		if( this.currentViewState == newState )
+		{
+			this.sleepTimeout();
+			return;
+		}
 		
 		//mobileDebug( 'Starting update view state.' + newState, true );
 		
 		if( newState == 'active' )
 		{
 			document.body.classList.add( 'ViewStateActive' );
-			if( isMobile )
+			// TODO: Remove the uncommented thing, it isn't working
+			// TODO: Check with pawel..
+			/*if( isMobile )
 			{
 				//mobileDebug( 'Trying to init websocket.' );
 				Workspace.initWebSocket();
@@ -8281,7 +8377,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					clearTimeout( setwsstate );
 				};
 				dl.execute( 'mobile/setwsstate' );
-			}
+			}*/
 			// Tell all windows
 			if( window.friendApp )
 			{
@@ -8317,11 +8413,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			// IMPORTANT:
+			// Sleep in 15 minutes
+			if( this.sleepingTimeout )
+				clearTimeout( this.sleepingTimeout );
+			Workspace.sleeping = false;
+			Workspace.sleepingTimeout = null;
 		}
 		else
 		{
 			document.body.classList.remove( 'ViewStateActive' );
 			document.body.classList.remove( 'Activating' );
+			/*
+			TODO: Remove. But check with pawel. Not required anymore
 			if( isMobile )
 			{
 				var dl = new FriendLibrary( 'system.library' );
@@ -8331,9 +8435,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					//mobileDebug( 'setwsstate inactive: ' + e );
 				};
 				dl.execute( 'mobile/setwsstate' );
-			}
+			}*/
 		}
+		this.sleepTimeout();
 		this.currentViewState = newState;
+	},
+	sleepTimeout: function()
+	{
+		// IMPORTANT: Only for desktops!
+		// Sleep in 15 minutes
+		if( !window.friendApp )
+		{
+			if( this.sleepingTimeout )
+				return;
+			this.sleepingTimeout = setTimeout( function()
+			{
+				Workspace.sleeping = true;
+				Workspace.sleepingTimeout = null;
+				Workspace.updateViewState( 'inactive' );
+			}, 1000 * 60 * 5 );
+		}
 	},
 	// Execute when everything is ready
 	onReady: function()
@@ -8394,6 +8515,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
 			}
 		}
+		return true;
 	}
 };
 
@@ -8470,10 +8592,15 @@ function DoorsOutListener( e )
 	{
 		movableMouseUp( e );
 	}
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsLeaveListener( e )
 {
 	movableMouseUp( e );
+	
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
 }
 function DoorsKeyUp( e )
 {
@@ -8484,6 +8611,9 @@ function DoorsKeyUp( e )
 }
 function DoorsKeyDown( e )
 {
+	// Keep alive!
+	Workspace.updateViewState( 'active' );
+
 	var w = e.which ? e.which : e.keyCode;
 	var tar = e.target ? e.target : e.srcElement;
 	Workspace.shiftKey = e.shiftKey;
@@ -8937,14 +9067,16 @@ function InitWorkspaceNetwork()
 	if( wsp.workspaceNetworkInitialized ) return;
 	wsp.workspaceNetworkInitialized = true;
 	
-	//check for server....
-	wsp.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 5000 );
-
 	// Establish a websocket connection to the core
 	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
 	{
 		wsp.initWebSocket();
 	}
+	
+	// After such an error, always try reconnect
+	if( Workspace.httpCheckConnectionInterval )
+		clearInterval( Workspace.httpCheckConnectionInterval );
+	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 5000 );
 
 	wsp.checkFriendNetwork();
 	
@@ -8967,7 +9099,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_system' ) + ' v1.2rc1',
+		title: i18n( 'about_system' ) + ' v1.2rc2',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -9025,6 +9157,11 @@ function AboutFriendUP()
 				// Add device ID
 				if( window.friendApp )
 				{
+					var ver = friendApp.get_version();
+					if( ver )
+					{
+						buildInfo += '    <div class="item"><span class="label">Mobile App Version</span><span class="value">'+ ver +'</span></div>';
+					}
 					var devId = friendApp.get_deviceid();
 					if( devId )
 					{
@@ -9273,7 +9410,7 @@ if( window.friendApp )
 Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return "mobile";
-	var msg = jsonMsg ? jsonMsg : friendApp.get_notification();
+	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
 	if( msg == false ) return "nomsg";
 	try
@@ -9293,7 +9430,8 @@ Workspace.receivePush = function( jsonMsg )
 	mobileDebug( JSON.stringify( msg ) );*/
 	
 	// Clear the notifications now... (race cond?)
-	friendApp.clear_notifications();
+	if( window.friendApp )
+		friendApp.clear_notifications();
 	
 	var messageRead = trash = false;
 	
@@ -9328,14 +9466,17 @@ Workspace.receivePush = function( jsonMsg )
 				// on the Friend Core side
 				if( msg.id )
 				{
-					// Function to set the notification as read...
-					var l = new Library( 'system.library' );
-					l.onExecuted = function(){};
-					l.execute( 'mobile/updatenotification', { 
-						notifid: msg.id, 
-						action: 1,
-						pawel: 1
-					} );
+					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+					{
+						// Function to set the notification as read...
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							notifid: msg.id, 
+							action: 1,
+							pawel: 1
+						} );
+					}
 				}
 			
 				mobileDebug( ' Sendtoapp2: ' + JSON.stringify( msg ), true );
@@ -9354,14 +9495,17 @@ Workspace.receivePush = function( jsonMsg )
 		// Function to set the notification as read...
 		function notificationRead()
 		{
-			messageRead = true;
-			var l = new Library( 'system.library' );
-			l.onExecuted = function(){};
-			l.execute( 'mobile/updatenotification', { 
-				notifid: msg.id, 
-				action: 1,
-				pawel: 2
-			} );
+			if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
+			{
+				messageRead = true;
+				var l = new Library( 'system.library' );
+				l.onExecuted = function(){};
+				l.execute( 'mobile/updatenotification', { 
+					notifid: msg.id, 
+					action: 1,
+					pawel: 2
+				} );
+			}
 		}
 	
 		// Application not found? Start it!

@@ -1,0 +1,44 @@
+
+
+
+********************************************************************************
+*                                                                              *
+*                         THE FRIEND THUMBNAIL SYSTEM                          *
+*                                                                              *
+********************************************************************************
+
+Introduction
+------------
+
+The Friend Thumbnail  system is used to cache  preview images of file content in
+the database. This allows us  to track thumbnails, save bandwidth  and generally
+make users happy.
+
+
+How it works
+------------
+
+When a user asks for a thumbnail, a path is provided. If the file isn't found by
+path + userid, the system attempts to create a thumbnail. Then it  is registered
+with the current date and time. The next time the system is asked, the thumbnail
+is retrieved by referencing the file path from the database.
+
+FThumbnail table
+----------------
+
+`ID` bigint(20) NOT NULL AUTO_INCREMENT, | Unique, incremental ID
+`UserID` bigint(20) NOT NULL,            | The user who asks for thumbnail 
+`Path` varchar(255) NOT NULL,            | The user's disk path
+`Filepath` varchar(255) NOT NULL,        | The path on the server
+`DateCreated` datetime,                  | Date thumbnail is created
+`DateTouched` datetime,                  | Date thumbnail is seen/used
+`Encryption` varchar(255),               | Future support for encrypted thumbs
+
+TODO:
+-----
+
+ * Configurable autocleaning of thumbnails that are older than XX days
+ * Elegant cleanup of nonexistent files (ganitor function)
+ * Encrypted thumbnails for decryption on the client side
+
+

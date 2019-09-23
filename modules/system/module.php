@@ -21,7 +21,7 @@ if( !isset( $User ) || ( $User && ( !isset( $User->ID ) || !$User->ID ) ) || !is
 }
 
 // We might come here by mistage (direct calling of file by phpfs)
-if( $args->module && $args->module != 'system' && $args->module != '(null)' )
+if( isset( $args->module ) && $args->module != 'system' && $args->module != '(null)' )
 {
 	if( file_exists( $f = ( 'modules/' . $args->module . '/module.php' ) ) )
 	{
@@ -243,7 +243,7 @@ if( isset( $args->command ) )
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers',
+				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
@@ -274,6 +274,11 @@ if( isset( $args->command ) )
 		// Create a thumbnail of any kind of file
 		case 'thumbnail':
 			require( 'modules/system/include/thumbnail.php' );
+			break;
+		// Delete a thumbnail
+		case 'thumbnaildelete':
+			$Logger->log( 'Thumbnaildelete..' );
+			require( 'modules/system/include/thumbnaildelete.php' );
 			break;
 		// Get the app image from repository
 		case 'repoappimage':
@@ -766,6 +771,18 @@ if( isset( $args->command ) )
 		case 'getdiskcover':
 			require( 'modules/system/include/getdiskcover.php' );
 			break;
+		// Get info about user's calendar sharing 
+		case 'calendarshareinfo':
+			require( 'modules/system/include/calendarshareinfo.php' );
+			break;
+		// Share user's calendar with user or workgroup ... 
+		case 'calendarshare':
+			require( 'modules/system/include/calendarshare.php' );
+			break;
+		// Unshare user's calendar with user or workgroup ... 
+		case 'calendarunshare':
+			require( 'modules/system/include/calendarunshare.php' );
+			break;
 		// Available calendar modules
 		case 'calendarmodules':
 			$modules = [];
@@ -1209,6 +1226,11 @@ if( isset( $args->command ) )
 		// Get a list of users
 		case 'listusers':
 			require( 'modules/system/include/listusers.php' );
+			break;
+
+		// List users connected to you through workgroups
+		case 'listconnectedusers':
+			require( 'modules/system/include/listconnectedusers.php' );
 			break;
 
 		// store new public key

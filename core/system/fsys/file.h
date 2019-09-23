@@ -157,7 +157,7 @@ static const FULONG FileSharedTDesc[] = {
 	SQLT_STR, (FULONG)"Path",            offsetof( struct FileShared, fs_Path ), 
 	SQLT_INT, (FULONG)"UserID",          offsetof( struct FileShared, fs_IDUser ), 
 	SQLT_STR, (FULONG)"DstUserSID",      offsetof( struct FileShared, fs_DstUsers ), 
-	SQLT_DATETIME, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreateTimeTM ),
+	SQLT_DATETIME, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreatedTime ),
 	SQLT_STR, (FULONG)"Hash",            offsetof( struct FileShared, fs_Hash ), 
 	SQLT_INT, (FULONG)"AppID",           offsetof( struct FileShared, fs_AppID ), 
 	SQLT_BLOB, (FULONG)"FileData",       offsetof( struct FileShared, fs_Data ), 

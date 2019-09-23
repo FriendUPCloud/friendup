@@ -14,7 +14,167 @@ Application.run = function( msg, iface )
 	{
 		getStorage();
 		getUnmounted();
+		
+		var d = new Module( 'system' );
+		d.onExecuted = function( r, c )
+		{
+			if( r == 'ok' )
+			{
+				try
+				{
+					var data = JSON.parse( c );
+					refreshPalette( data.avatar_color );
+				}
+				catch( e )
+				{
+					refreshPalette();
+				}
+			}
+			else
+			{
+				refreshPalette();
+			}
+		}
+		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
+	
+	// Clear / autoregenerate avatar
+	ge( 'ClearAvatar' ).onclick = function( e )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var d = new Module( 'system' );
+			d.onExecuted = function( r, c )
+			{
+				refreshAvatar();
+				if( r == 'ok' )
+				{
+					try
+					{
+						var data = JSON.parse( c );
+						refreshPalette( data.avatar_color );
+					}
+					catch( e )
+					{
+						refreshPalette();
+					}
+				}
+				else
+				{
+					refreshPalette();
+				}
+			}
+			d.execute( 'getsetting', { setting: 'avatar_color' } );
+		}
+		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
+	}
+}
+
+var palette = [ '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', 
+				'#34495E', '#E67E22', '#E74C3C', '#95A5A6' ];
+
+var userCredentials = null;
+
+function refreshPalette( col )
+{
+	var d = document.createElement( 'div' );
+	for( var a = 0; a < palette.length; a++ )
+	{
+		var p = document.createElement( 'div' );
+		p.className = 'Color';
+		if( col && palette[ a ].toLowerCase() == col.toLowerCase() )
+		{
+			p.classList.add( 'Active' );
+		}
+		p.setAttribute( 'hex', palette[ a ] );
+		p.onclick = function( e )
+		{
+			this.classList.add( 'Active' );
+			for( var c = 0; c < this.parentNode.childNodes.length; c++ )
+			{
+				if( this.parentNode.childNodes[ c ] == this ) continue;
+				else this.parentNode.childNodes[ c ].classList.remove( 'Active' );
+			}
+			var hex = this.getAttribute( 'hex' );
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				var d = new Module( 'system' );
+				d.onExecuted = function( r, c )
+				{
+					refreshAvatar();
+					if( r == 'ok' )
+					{
+						try
+						{
+							var data = JSON.parse( c );
+							refreshPalette( data.avatar_color );
+						}
+						catch( e )
+						{
+							refreshPalette();
+						}
+					}
+					else
+					{
+						refreshPalette();
+					}
+				}
+				d.execute( 'getsetting', { setting: 'avatar_color' } );
+			}
+			m.execute( 'getsetting', { setting: 'avatar', color: hex, mode: 'reset' } );
+		}
+		p.style.backgroundColor = palette[ a ];
+		d.appendChild( p );
+	}
+	d.className = 'PaletteContainer';
+	if( !ge( 'UserPalette' ).querySelector( 'Color' ) )
+	{
+		ge( 'UserPalette' ).classList.add( 'Hidden' );
+		setTimeout( function(){ ge( 'UserPalette' ).classList.remove( 'Hidden' ); ge( 'UserPalette' ).classList.add( 'Shown' ); }, 5 );
+	}
+	ge( 'UserPalette' ).innerHTML = '';
+	ge( 'UserPalette' ).appendChild( d );
+}
+
+function refreshAvatar()
+{
+	// Avatar
+	var avatar = ge( 'Avatar' );
+	if( avatar )
+	{
+		var sm = new Module( 'system' );
+		sm.onExecuted = function( e, d ) 
+		{
+			if( e == 'ok' )
+			{
+				if( d )
+				{
+					try
+					{
+						d = JSON.parse( d );
+					}
+					catch( e )
+					{
+						d = null;
+					}
+				}
+			}
+			if( d )
+			{
+				// Only update the avatar if it exists..
+				var avSrc = new Image();
+				avSrc.src = d.avatar;
+				avSrc.onload = function()
+				{
+					var ctx = avatar.getContext( '2d' );
+					ctx.drawImage( avSrc, 0, 0, 256, 256 );
+				}
+			}
+		}
+		sm.execute( 'getsetting', { setting: 'avatar' } );
+	}
 }
 
 Application.receiveMessage = function( msg )
@@ -42,9 +202,27 @@ Application.receiveMessage = function( msg )
 			
 			this.id = msg.ID;
 			
-			ge( 'UserAccFullname' ).value        = html_entity_decode( ( msg.FullName ? msg.FullName : '')  );
+			ge( 'UserAccFullname' ).value        = html_entity_decode( msg.FullName ? msg.FullName : '' );
 			ge( 'UserAccUsername' ).value        = html_entity_decode( msg.Name );
-			ge( 'UserAccEmail' ).value           = ( msg.Email ? msg.Email : '' );
+			ge( 'UserAccEmail'    ).value        = msg.Email ? msg.Email : '';
+			
+			userCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
+			var m = 0;
+			for( var c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
+			{
+				if( ge( 'UserAccFullname' ).value.substr( c, 1 ) == ' ' )
+				{
+					m = 1;
+					continue;
+				}
+				if( m == 1 )
+				{
+					userCredentials += ge( 'UserAccFullname' ).value.substr( c, 1 );
+					break;
+				}
+			}
+			userCredentials = userCredentials.toUpperCase();
+			
 			
 			if( ge( 'PublicKeyContainer' ) )
 			{
@@ -55,41 +233,7 @@ Application.receiveMessage = function( msg )
 			// TODO: Add support for unlocking key to display the actual key decrypted for use other places or just decrypted as default
 			drawKeyList( msg.Keys );
 			
-			// Avatar
-			var avatar = ge( 'Avatar' );
-			if( avatar )
-			{
-				var sm = new Module( 'system' );
-				sm.onExecuted = function( e, d ) 
-				{
-					if( e == 'ok' )
-					{
-						if( d )
-						{
-							try
-							{
-								d = JSON.parse( d );
-							}
-							catch( e )
-							{
-								d = null;
-							}
-						}
-					}
-					if( d )
-					{
-						// Only update the avatar if it exists..
-						var avSrc = new Image();
-						avSrc.src = d.avatar;
-						avSrc.onload = function()
-						{
-							var ctx = avatar.getContext( '2d' );
-							ctx.drawImage( avSrc, 0, 0, 256, 256 );
-						}
-					}
-				}
-				sm.execute( 'getsetting', { setting: 'avatar' } );
-			}
+			refreshAvatar();
 
 			// Friend Network settings
 			var self = this;
@@ -123,26 +267,26 @@ Application.receiveMessage = function( msg )
 								}
 							}
 						}
-						var activate = ge( 'fnetActivate' );
-						var workgroup = ge( 'fnetWorkgroup' );
-						var password = ge( 'fnetPassword' );
-						var repeat = ge( 'fnetRepeatPassword' );
-						var description = ge( 'fnetDescription' );
-						var any = ge( 'fnetAcceptAny' );
-						var downloadCheck = ge( 'fnetDownloadCheck' );
-						var downloadPath = ge( 'fnetDownloadPath' );
-						var mountDriveCheck = ge( 'fnetMountDriveCheck' );
-						var mountOnWorkspace = ge( 'fnetMountOnWorkspaceCheck' );
-						var fnetActivatePower = ge( 'fnetActivatePower' );
-						var fnetShareThisDevice = ge( 'fnetShareThisDevice' );
-						var fnetMaximumPercentage = ge( 'fnetMaximumPercentage' );
-						var fnetAllowPowerApplications = ge( 'fnetAllowPowerApplications' );
+						var activate                    = ge( 'fnetActivate' );
+						var workgroup                   = ge( 'fnetWorkgroup' );
+						var password                    = ge( 'fnetPassword' );
+						var repeat                      = ge( 'fnetRepeatPassword' );
+						var description                 = ge( 'fnetDescription' );
+						var any                         = ge( 'fnetAcceptAny' );
+						var downloadCheck               = ge( 'fnetDownloadCheck' );
+						var downloadPath                = ge( 'fnetDownloadPath' );
+						var mountDriveCheck             = ge( 'fnetMountDriveCheck' );
+						var mountOnWorkspace            = ge( 'fnetMountOnWorkspaceCheck' );
+						var fnetActivatePower           = ge( 'fnetActivatePower' );
+						var fnetShareThisDevice         = ge( 'fnetShareThisDevice' );
+						var fnetMaximumPercentage       = ge( 'fnetMaximumPercentage' );
+						var fnetAllowPowerApplications  = ge( 'fnetAllowPowerApplications' );
 						var fnetOptimalNumberOfMachines = ge( 'fnetOptimalNumberOfMachines' );
 						var fnetMinimalNumberOfMachines = ge( 'fnetMinimalNumberOfMachines' );
-						var fnetShareOnlyWithCommunity = ge( 'fnetShareOnlyWithCommunity' );
-						var fnetShareOnlyWithFriends = ge( 'fnetShareOnlyWithFriends' );
-						var fnetAskOnlyToFriends = ge( 'fnetAskOnlyToFriends' );
-						var fnetAskOnlyToCommunity = ge( 'fnetAskOnlyToCommunity' );
+						var fnetShareOnlyWithCommunity  = ge( 'fnetShareOnlyWithCommunity' );
+						var fnetShareOnlyWithFriends    = ge( 'fnetShareOnlyWithFriends' );
+						var fnetAskOnlyToFriends        = ge( 'fnetAskOnlyToFriends' );
+						var fnetAskOnlyToCommunity      = ge( 'fnetAskOnlyToCommunity' );
 						
 						var pass = fnet ? fnet.password : '';
 						if ( pass == 'public' || ( fnet && fnet.workgroup == 'friend' ) )
@@ -283,6 +427,7 @@ Application.receiveMessage = function( msg )
 			break;
 	}
 }
+
 function changeAvatar()
 {
 	var self = this;
@@ -311,6 +456,7 @@ function changeAvatar()
 	}
 	var d = new Filedialog( description );
 }
+
 function changeDeviceAvatar()
 {
 	var self = this;
@@ -345,6 +491,7 @@ function changeDeviceAvatar()
 	}
 	var d = new Filedialog( description );
 }
+
 function activateFriendNetwork()
 {
 	var activate = ge( 'fnetActivate' );
@@ -356,6 +503,7 @@ function activateFriendNetwork()
 	ge( 'fnetDownloadCheck' ).disabled = !activate.checked;
 	this.downloadCheck( !activate.checked );
 }
+
 function downloadCheck( disable )
 {
 	var disabled = ( !ge( 'fnetDownloadCheck' ).checked ) || disable;
@@ -364,12 +512,14 @@ function downloadCheck( disable )
 	if ( disabled )
 		ge( 'fnetDownloadPath' ).value = '';
 }
+
 function mountDriveCheck( disable )
 {
 	var checked = ge( 'fnetMountDriveCheck' ).checked;
 	if ( !checked )
 		ge( 'fnetMountOnWorkspaceCheck' ).checked = false;
 }
+
 function downloadButton( disable )
 {
 	new Filedialog( false, function( path )
@@ -400,6 +550,7 @@ function clickFriendNetworkPower()
 	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
 	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
 }
+
 function clickShareThisDevice()
 {
 	var enabled = !ge( 'fnetShareThisDevice' ).checked;
@@ -408,6 +559,7 @@ function clickShareThisDevice()
 	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
 	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
 }
+
 function clickAllowPowerApplications()
 {
 	var enabled = !ge( 'fnetAllowPowerApplications' ).checked;
@@ -417,6 +569,7 @@ function clickAllowPowerApplications()
 	ge( 'fnetAskOnlyToCommunity' ).disabled = enabled;
 	ge( 'fnetAskOnlyToFriends' ).disabled = enabled;
 }
+
 function drawKeyList( list )
 {
 	var str = '';
@@ -1072,6 +1225,23 @@ function saveDia()
  		email:    ge( 'UserAccEmail' ).value
 	};
 	
+	var nuserCredentials = ge( 'UserAccFullname' ).value.substr( 0, 1 );
+	var m = 0;
+	for( var c = 1; c < ge( 'UserAccFullname' ).value.length; c++ )
+	{
+		if( ge( 'UserAccFullname' ).value.substr( c, 1 ) == ' ' )
+		{
+			m = 1;
+			continue;
+		}
+		if( m == 1 )
+		{
+			nuserCredentials += ge( 'UserAccFullname' ).value.substr( c, 1 );
+			break;
+		}
+	}
+	nuserCredentials = nuserCredentials.toUpperCase();
+	
 	// Shall we save new password
 	if( ge( 'UserAccPassword' ).value != '' )
 	{
@@ -1104,7 +1274,12 @@ function saveDia()
 	{
 		ge( 'UserAccPasswordConfirm' ).value = ge( 'UserAccPassword' ).value = ge( 'UserCurrentPassword' ).value = '';
 		Application.sendMessage( { command: 'saveresult', result: e, data: obj } );		
-
+		
+		if( nuserCredentials != userCredentials )
+		{
+			userCredentials = nuserCredentials;
+			ge( 'ClearAvatar' ).click();
+		}
 	}
 	obj.command = 'update';
 	f.execute( 'user', obj );
@@ -1283,6 +1458,7 @@ function addStorage( mode )
 function editStorage( name, mode, mounted )
 {
 	if( !mounted ) mounted = '-';
+	
 	// Only one view window
 	if( Application.editView ) return;
 	

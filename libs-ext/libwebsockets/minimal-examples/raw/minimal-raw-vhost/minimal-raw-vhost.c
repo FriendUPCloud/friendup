@@ -1,7 +1,7 @@
 /*
  * lws-minimal-raw-vhost
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -74,6 +74,7 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_RAW_RX:
+		lwsl_user("LWS_CALLBACK_RAW_RX: %d\n", (int)len);
 		vhd->len = len;
 		if (vhd->len > (int)sizeof(vhd->buf))
 			vhd->len = sizeof(vhd->buf);
@@ -95,7 +96,7 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 	}
 
-	return 0;
+	return lws_callback_http_dummy(wsi, reason, user, in, len);
 }
 
 static struct lws_protocols protocols[] = {
@@ -135,6 +136,12 @@ int main(int argc, const char **argv)
 	info.port = 7681;
 	info.protocols = protocols;
 	info.options = LWS_SERVER_OPTION_ONLY_RAW; /* vhost accepts RAW */
+
+	if (lws_cmdline_option(argc, argv, "-s")) {
+		info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+		info.ssl_cert_filepath = "localhost-100y.cert";
+		info.ssl_private_key_filepath = "localhost-100y.key";
+	}
 
 	context = lws_create_context(&info);
 	if (!context) {

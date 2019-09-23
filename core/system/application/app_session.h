@@ -116,7 +116,7 @@ int AppSessionRemUsersessionAny( AppSession *as, UserSession *u );
 //
 //
 
-SASUList *AppSessionAddCurrentSession( AppSession *as, UserSession *loggedSession );
+SASUList *AppSessionAddCurrentUserSession( AppSession *as, UserSession *loggedSession );
 
 //
 //

@@ -127,15 +127,20 @@
 #define LWS_EISCONN EISCONN
 #define LWS_ENOTCONN ENOTCONN
 #define LWS_EWOULDBLOCK EWOULDBLOCK
+#define LWS_EADDRINUSE EADDRINUSE
 #define lws_set_blocking_send(wsi)
 #define LWS_SOCK_INVALID (-1)
 
-#define wsi_from_fd(A,B)  A->lws_lookup[B - lws_plat_socket_offset()]
-#define insert_wsi(A,B)   assert(A->lws_lookup[B->desc.sockfd - \
-				  lws_plat_socket_offset()] == 0); \
-				 A->lws_lookup[B->desc.sockfd - \
-				  lws_plat_socket_offset()] = B
-#define delete_from_fd(A,B) A->lws_lookup[B - lws_plat_socket_offset()] = 0
+struct lws_context;
+
+struct lws *
+wsi_from_fd(const struct lws_context *context, int fd);
+
+int
+insert_wsi(const struct lws_context *context, struct lws *wsi);
+
+void
+delete_from_fd(const struct lws_context *context, int fd);
 
 #ifndef LWS_NO_FORK
 #ifdef LWS_HAVE_SYS_PRCTL_H

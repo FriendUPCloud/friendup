@@ -179,19 +179,24 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/notification/notify-clients</H2>Delete user. Function require admin rights.
+	* <HR><H2>system.library/notification/notify-clients</H2>Send mobile notification to user.
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param id - (required) id of user which you want to delete
-	* @return { Result: success} when success, otherwise error with code
+	* @param username - (required) user name which will receive notification
+	* @param channelid - (required) channel id which is kind of unique source id
+	* @param app - (required) application name
+	* @param title - (required) title of message
+	* @param message - (required) message
+	* @param extra - additional data
+	* @return { result: 0 }  when success, otherwise error with code
 	*/
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "notify-clients" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -204,15 +209,55 @@ Http *NMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		char *extra = NULL;
 		int type = 0;
 		
+		HashmapElement *el = HttpGetPOSTParameter( request, "username" );
+		if( el != NULL )
+		{
+			username = UrlDecodeToMem( el->data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "channelid" );
+		if( el != NULL )
+		{
+			channelid = UrlDecodeToMem( el->data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "app" );
+		if( el != NULL )
+		{
+			app = UrlDecodeToMem( el->data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "title" );
+		if( el != NULL )
+		{
+			title = UrlDecodeToMem( el->data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "message" );
+		if( el != NULL )
+		{
+			message = UrlDecodeToMem( el->data );
+		}
+		
+		el = HttpGetPOSTParameter( request, "extra" );
+		if( el != NULL )
+		{
+			extra = UrlDecodeToMem( el->data );
+		}
+		
 		if( username == NULL || channelid == NULL || app == NULL || title == NULL || message == NULL )
 		{
 			int error = MobileAppNotifyUserRegister( l, username, channelid, app, title, message, type, extra, time(NULL) );
+			
+			char buf[ 256 ];
+			snprintf( buf, sizeof(buf), "ok<!--separate-->{ \"result\":%d }", error );
+			HttpAddTextContent( response, buf );
 		} // missing parameters
 		else
 		{
 			char buffer[ 256 ];
 			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, " );
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, channelid, app, title, message" );
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, buffer );
 		}

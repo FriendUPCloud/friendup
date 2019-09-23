@@ -107,7 +107,6 @@ void handle_sigchld( int sig )
 
 SystemBase *SystemInit( void )
 {
-	
 	//char *tmp = "{\"type\":\"authenticate\",\"data\":{\"serviceKey\":\"qwerty123456789\",\"serviceName\":\"presence\"}}";
 	//int size = strlen ( tmp );
 	//ProcessIncomingRequest( NULL, tmp, size, NULL );
@@ -125,6 +124,8 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		return NULL;
 	}
+	// uptime
+	l->l_UptimeStart = time( NULL );
 	
 	PropertiesInterfaceInit( &(l->sl_PropertiesInterface) );
 	
@@ -492,7 +493,7 @@ SystemBase *SystemInit( void )
 		FFree( tempString );
 		FFree( l->sqlpool );
 		FFree( l );
-		LogDelete();
+		//LogDelete();
 		return NULL;
 	}
 	
@@ -2521,41 +2522,32 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 {
 	unsigned char *buf;
 	int bytes = 0;
-	
+	buf = (unsigned char *)FCalloc( len + 128, sizeof( unsigned char ) );
+	if( buf != NULL )
 	{
-		buf = (unsigned char *)FCalloc( len + 128, sizeof( unsigned char ) );
-		if( buf != NULL )
+		memcpy( buf, msg, len );
+	
+		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
+		if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 		{
-			memcpy( buf, msg, len );
-		
-			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
-
-		//	if( FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) ) == 0 )
+			UserSessionWebsocket *wsc = usersession->us_WSConnections;
+			while( wsc != NULL )
 			{
-				
-				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
-				{
-					UserSessionWebsocket *wsc = usersession->us_WSConnections;
-					while( wsc != NULL )
-					{
-						DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
+				DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
 
-					//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
-					
-						if( wsc->wusc_Data != NULL )
-						{
-							bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-						}
-						else
-						{
-							FERROR("Cannot write to WS, WSI is NULL!\n");
-						}
-						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
-					}
-					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
+				
+				if( wsc->wusc_Data != NULL )
+				{
+					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 				}
-				//FRIEND_MUTEX_UNLOCK( &(wsc->wsc_Mutex) );
-	//			FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
+				else
+				{
+					FERROR("Cannot write to WS, WSI is NULL!\n");
+				}
+				wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
+				}
+				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 			}
 			DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
 			
@@ -2566,7 +2558,6 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
 			return 0;
 		}
-	}
 	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
 	
 	return bytes;

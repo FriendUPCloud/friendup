@@ -8,15 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var FUI_MOUSEDOWN_RESIZE  =  2;
-var FUI_MOUSEDOWN_WINDOW  =  1;
-var FUI_MOUSEDOWN_SCREEN  =  3;
-var FUI_MOUSEDOWN_SCROLLV = 10;
-var FUI_WINDOW_MARGIN     =  3;
-var FUI_MOUSEDOWN_PICKOBJ = 11;
-
-var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-forms allow-scripts allow-same-origin allow-popups';
-
 /* Make movable box --------------------------------------------------------- */
 
 Friend          = window.Friend || {};    // Friend main namespace
@@ -1814,14 +1805,16 @@ function CloseView( win, delayed )
 		
 	}
 
-	// Check window
-	CheckScreenTitle();
-	
 	if( !window.currentMovable )
 	{
 		if( Workspace.screen && Workspace.screen.getFlag )
+		{
 			document.title = Workspace.screen.getFlag( 'title' );
+		}
 	}
+
+	// Check window
+	CheckScreenTitle();
 	
 	if( isMobile )
 		Workspace.redrawIcons();
@@ -1845,19 +1838,19 @@ function CancelWindowScrolling ( e )
 	return true;
 }
 if ( window.addEventListener )
-	window.addEventListener ( 'scroll', CancelWindowScrolling, true );
-else window.attachEvent ( 'onscroll', CancelWindowScrolling, true );
+	window.addEventListener( 'scroll', CancelWindowScrolling, true );
+else window.attachEvent( 'onscroll', CancelWindowScrolling, true );
 
 // Support scrolling in windows
-function WindowScrolling ( e )
+function WindowScrolling( e )
 {
-	if ( !e ) e = window.event;
+	if( !e ) e = window.event;
 	var dlt = e.detail ? (e.detail*-120) : e.wheelDelta;
 	var tr = e.srcElement ? e.srcElement : e.target;
 	var win = false;
-	while ( tr != document.body )
+	while( tr != document.body )
 	{
-		if ( tr.className && tr.className.indexOf ( 'View' ) > 0 )
+		if( tr.className && tr.className.indexOf ( 'View' ) > 0 )
 		{
 			win = tr;
 			break;
@@ -3826,6 +3819,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
 		if( this.flags.transparent )
@@ -3912,10 +3906,9 @@ var View = function( args )
 			if( self.flags.screen )
 				msg.screenId = self.flags.screen.externScreenId;
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
-			if( !msg.origin ) msg.origin = document.location.href;
+			if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
 			
-			ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
-			ifr.body = ifr.contentWindow.document.body;
+			ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 		}
 		c.appendChild( ifr );
 	}
@@ -3936,7 +3929,7 @@ var View = function( args )
 	{
 		var self = this;
 		var appName = self.applicationName;
-		var origin = Doors.runLevels[ 0 ].domain;
+		var origin = '*'; // TODO: Should be this Doors.runLevels[ 0 ].domain;
 		var domain = Doors.runLevels[ 1 ].domain;
 		domain = domain.split( '://' )[1];
 		var appBase = '/webclient/apps/' + appName + '/';
@@ -4057,7 +4050,7 @@ var View = function( args )
 				base:          '/',
 				applicationId: ifr.applicationId,
 				filePath:      '/webclient/jsx/',
-				origin:        document.location.href,
+				origin:        '*', // TODO: Should be this - document.location.href,
 				viewId:      w.externViewId ? w.externViewId : w.viewId,
 				clipboard:     Friend.clipboard
 			};
@@ -4144,7 +4137,12 @@ var View = function( args )
 		// We're on a road trip..
 		if( !( friendU && ( friendU == targetU || !targetU ) ) )
 		{
-			ifr.sandbox = 'allow-same-origin allow-forms allow-scripts';
+			ifr.sandbox = 'allow-forms allow-scripts';
+			console.log( 'Sandbox: ' + ifr.sandbox );
+		}
+		else
+		{
+			console.log( 'Sandbox denied: ', friendU, targetU );
 		}
 
 		// Allow sandbox flags
@@ -4173,7 +4171,7 @@ var View = function( args )
 					base              : base,
 					applicationId     : appId,
 					filePath          : filePath,
-					origin            : document.location.href,
+					origin            : '*', // TODO: Should be this - document.location.href,
 					viewId            : w.externViewId,
 					authId            : self.authId,
 					theme             : Workspace.theme,
@@ -4252,7 +4250,9 @@ var View = function( args )
 				this.iframe.src.split( '//' )[1].split( '/' )[0];
 			
 			var origin = event && 
-				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : u;
+				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
+			// TODO: Fix this with security
+			origin = '*';
 			
 			if( !dataObject.applicationId && this.iframe.applicationId )
 			{
@@ -4373,6 +4373,12 @@ var View = function( args )
 	this.activate = function ()
 	{
 		_ActivateWindow( this._window.parentNode );
+	}
+	// Move window to front
+	this.toFront = function()
+	{
+		_ActivateWindow( this._window.parentNode );
+		_WindowToFront( this._window.parentNode );
 	}
 	// Close a view window
 	this.close = function ( force )
@@ -4723,6 +4729,11 @@ var View = function( args )
 					viewdiv.setAttribute( 'transparent', value ? 'transparent': '' );
 				}
 				break;
+			// TODO: Use it when ready
+			// Allow for dropping files in a secure manner
+			case 'securefiledrop':
+				this.flags.securefiledrop = value;
+				break;
 			// Takes all flags
 			default:
 				this.flags[ flag ] = value;
@@ -4895,6 +4906,7 @@ var View = function( args )
 		function setCameraMode( e )
 		{
 
+			console.log('setting camera mode!',e);
 			if( !self.cameraOptions )
 			{
 				self.cameraOptions = {
@@ -4907,6 +4919,8 @@ var View = function( args )
 				self.content.appendChild( v );
 				self.content.container = v;
 				self.content.classList.add( 'HasCamera' );
+				
+				
 			
 			}
 			
@@ -4969,17 +4983,6 @@ var View = function( args )
 			};
 			
 			var ue = navigator.userAgent.toLowerCase();
-
-
-
-			if( ue.indexOf( 'ios' ) > 0 || ue.indexOf( 'ipad' ) > 0 )
-			{
-				//var iosbutton = document.createElement( 'div' );
-				//iosbutton.className = 'IconButton IconSmall fa-refresh';
-				//iosbutton.onclick = function() { console.log('switch camera...'); setCameraMode() };
-				//self.content.container.appendChild( iosbutton );
-			}
-			//clean up old one...
 			
 			if( navigator.gm ) { 
 				
@@ -5042,14 +5045,13 @@ var View = function( args )
 							btn.onclick = function( e )
 							{
 								var dd = self.content.container.camera;
-								
 								var canv = document.createElement( 'canvas' );
 								canv.setAttribute( 'width', dd.videoWidth );
 								canv.setAttribute( 'height', dd.videoHeight );
 								v.appendChild( canv );
 								var ctx = canv.getContext( '2d' );
 								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
-								var dt = canv.toDataURL( 'image/png', 1 );
+								var dt = canv.toDataURL( 'image/jpeg', 0.95 );
 						
 								// Stop taking video
 								dd.srcObject.getTracks().forEach(track => track.stop())
@@ -5125,7 +5127,7 @@ var View = function( args )
 				v.appendChild( fb );
 				var mediaElement = document.createElement( 'input' );
 				mediaElement.type = 'file';
-				mediaElement.accept = 'image/png';
+				mediaElement.accept = 'image/*';
 				mediaElement.className = 'FriendCameraInput';
 				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
 					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
@@ -5141,6 +5143,7 @@ var View = function( args )
 					var reader = new FileReader();
 					reader.onload = function( e )
 					{
+						
 						var dataURL = e.target.result;
 						v.classList.remove( 'Showing' );
 						setTimeout( function()
@@ -5153,9 +5156,14 @@ var View = function( args )
 				}
 			}
 		}
-		
-		// Execute async operation
-		getAvailableDevices( function( e ){ setCameraMode( e.data ) } );
+
+		// prepare for us to use to external libs. // good quality resize + EXIF data reader
+		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
+		Include( '/webclient/3rdparty/load-image.all.min.js', function()
+		{
+			// Execute async operation
+			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+		});
 	}
 	
 	// Add a child window to this window

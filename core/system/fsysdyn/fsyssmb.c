@@ -255,8 +255,8 @@ void deinit( struct FHandler *s )
 
 void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
-	FERROR("Disabled for a moment\n");
-	return NULL;
+	//FERROR("Disabled for a moment\n");
+	//return NULL;
 	
 	File *dev = NULL;
 	char *path = NULL, *ulogin = NULL, *upass = NULL;
@@ -367,11 +367,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **m
 
 		smbc_setOptionUserData( locsd->ctx, locsd );
 		smbc_setFunctionAuthDataWithContext( locsd->ctx, get_auth_data_fn );
-
+		DEBUG("[SAMBA] Before samba init\n");
 		if( smbc_init( NULL, 0 ) < 0 )
 		{
 			SDDelete( locsd );
 			FFree( dev );
+			FERROR("[SAMBA] init fail\n");
 			return NULL;
 		}
 		
