@@ -44,6 +44,8 @@
 #include <system/user/user_manager.h>
 #include <system/web_util.h>
 
+#include <util/newpopen.h>
+
 #define HTTP_REQUEST_TIMEOUT 2 * 60
 #define SHARING_BUFFER_SIZE 262144
 
@@ -51,7 +53,7 @@ extern SystemBase *SLIB;
 
 // external
 
-char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession );
+char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL *arg );
 
 // 
 //	TODO: This should be moved
@@ -65,6 +67,85 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession );
  */
 static inline ListString *RunPHPScript( const char *command )
 {
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[RunPHPScript] cannot open pipe: %s\n", strerror( errno ) );
+		return NULL;
+	}
+	
+#define PHP_READ_SIZE 65536	
+	
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	ListString *data = ListStringNew();
+	int errCounter = 0;
+	int size = 0;
+	
+	fd_set set;
+	struct timeval timeout;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+	
+	while( TRUE )
+	{
+			/* Initialize the file descriptor set. */
+		FD_ZERO( &set );
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		DEBUG("[RunPHPScript] in loop\n");
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
+		// Make a new buffer and read
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[RunPHPScript] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			DEBUG( "[RunPHPScript] before adding to list\n");
+			ListStringAdd( data, buf, size );
+			DEBUG( "[RunPHPScript] after adding to list\n");
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+			if( errCounter > 3 )
+			{
+				//char clo[2];
+				//clo[0] = '\'';
+				//clo[1] = EOF;
+				//write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
+				FERROR("Error in popen, Quit! Command: %s\n", command );
+				break;
+			}
+		}
+	}
+	DEBUG( "[RunPHPScript] after loop, memory will be released\n");
+	
+	FFree( buf );
+	DEBUG("[RunPHPScript] File readed\n");
+	
+	// Free pipe if it's there
+	newpclose( &pofd );
+	
+	ListStringJoin( data );		//we join all string into one buffer
+
+	DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", data->ls_Size );
+	return data;
+	
+	/*
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
@@ -97,6 +178,7 @@ static inline ListString *RunPHPScript( const char *command )
 	pclose( pipe );
 
 	return data;
+	*/
 }
 
 /**
@@ -142,13 +224,11 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 	FBOOL freeFile = FALSE;
 
 	LocFile* file = NULL;
-	if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 	{
 		if( SLIB->sl_CacheFiles == 1 )
 		{
 			file = CacheManagerFileGet( SLIB->cm, completePath->raw, FALSE );
-
-			//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
 
 			if( file == NULL )
 			{
@@ -158,13 +238,9 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 
 				if( file != NULL )
 				{
-					//if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
+					if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
 					{
-						if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
-						{
-							freeFile = TRUE;
-						}
-						//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
+						freeFile = TRUE;
 					}
 				}
 				else
@@ -178,8 +254,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				stat( completePath->raw, &attr);
 
 				// if file is new file, reload it
-
-
 				//DEBUG1("\n\n\n\n\n SIZE %lld  stat %lld\n\n\n\n",attr.st_mtime ,file->info.st_mtime );
 				if( attr.st_mtime != file->lf_Info.st_mtime )
 				{
@@ -189,8 +263,6 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 		}
 		else
 		{
-			//pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
-
 			char *decoded = UrlDecodeToMem( completePath->raw );
 			file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
 			FFree( decoded );
@@ -203,7 +275,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				freeFile = TRUE;
 			}
 		}
-		FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
+		//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 	}
 
 	// Send reply
@@ -380,7 +452,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 	// Request parsed without errors!
 	else if( result == 1 && request->uri->path != NULL )
 	{
-		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without errors.\n");
+		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->uri;
 		Path *path = NULL;
 		if( uri->path->raw )
@@ -496,6 +568,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 								result = 500;
 							}
+							else
+							{
+								Log( FLOG_INFO, "[HTTP] SysWebRequest response: '%.*s'\n", 200, response->content );
+							}
 						}
 						else
 						{
@@ -554,6 +630,29 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 						
 					}
 */
+	
+					else if( strcmp( path->parts[ 0 ], "version" ) == 0 )
+					{
+						struct TagItem tags[] = {
+							{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
+							{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+							{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+							{ TAG_DONE, TAG_DONE}
+						};
+
+						response = HttpNewSimple( HTTP_200_OK, tags );
+						
+						{
+							char buf[ 128 ];
+							snprintf( buf, 128, "%s-%s", APPVERSION, APPGITVERSION );
+							HttpAddTextContent( response, buf );
+						}
+
+						HttpWrite( response, sock );
+						result = 200;
+					}
+						
+	
 					//
 					// login path file
 					//
@@ -567,95 +666,34 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 						
 						char *newUrl = NULL;
 						
-						/*
-						// only cluster master can switch user to another server
-						if( SLIB->fcm->fcm_ClusterMaster )
-						{
-							int minSessions = SLIB->sl_USM->usm_SessionCounter;
-							ClusterNode *clusNode = SLIB->fcm->fcm_ClusterNodes;
-						
-							while( clusNode != NULL )
-							{
-								if( clusNode->cn_Connection != NULL )
-								{
-									DEBUG("Checking sessions on node [%s] number %d\n", clusNode->cn_Address, clusNode->cn_Connection->fc_UserSessionsCount );
-									if( clusNode->cn_Connection->fc_UserSessionsCount < minSessions )
-									{
-										if( clusNode->cn_Url != NULL )	// we cannot redirect to url which do not exist
-										{
-											newUrl = clusNode->cn_Url;
-										}
-										else if( clusNode->cn_Address != NULL )
-										{
-											newUrl = clusNode->cn_Address;
-										}
-									}
-								}
-								else
-								{
-									DEBUG("Connection do not exist [%s]\n", clusNode->cn_Address );
-								}
-								clusNode = (ClusterNode *)clusNode->node.mln_Succ;
-							}
-						}
-						
-						DEBUG("[ProtocolHttp] getting login page for authmodule: %s\n", SLIB->sl_ActiveModuleName );
-						
-						//
-						//
-						//
-						
-						if( newUrl != NULL )
-						{
-							char redirect[ 512 ];
-							int redsize = 0;
 
-							if( SLIB->fcm->fcm_SSLEnabled )
-							{
-								redsize = snprintf( redirect, sizeof( redirect ), "https://%s:6502/loginprompt", newUrl );
-							}
-							else
-							{
-								redsize = snprintf( redirect, sizeof( redirect ), "http://%s:6502/loginprompt", newUrl );
-							}
-							
-							DEBUG("Redirected to: [%s]\n", redirect );
-							
-							struct TagItem tags[] = {
-								{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
-								{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-								{ HTTP_HEADER_LOCATION, (FULONG )StringDuplicateN( redirect, redsize ) },
-								{ TAG_DONE, TAG_DONE}
-							};
-
-							response = HttpNewSimple( HTTP_307_TEMPORARY_REDIRECT, tags );
-
-							HttpAddTextContent( response, "Redirection" );
-
-							// write here and set data to NULL!!!!!
-							// retusn response
-							HttpWrite( response, sock );
-							result = 200;
-						}
-						else
-							*/
 						{
 							if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
 							{
 								FULONG res = 0;
 
-								char command[ 1024 ];
+#define MAX_LEN_PHP_INT_COMMAND 1024
+								char *command = FMalloc( MAX_LEN_PHP_INT_COMMAND );
 
 								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-								int cx = snprintf( command, sizeof(command), "php \"%s\" \"%s\" \"%s\" \"%s\";", "php/login.php", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
-								if( !( cx >= 0 ) )
+								int cx = snprintf( command, MAX_LEN_PHP_INT_COMMAND-1, "php \"php/login.php\" \"%s\" \"%s\" \"%s\"; 2>&1", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
+								//if( !( cx >= 0 ) )
+								//{
+								//	FERROR( "[ProtocolHttp] snprintf\n" );;
+								//}
+								//else
 								{
-									FERROR( "[ProtocolHttp] snprintf\n" );;
-								}
-								else
-								{
+									ListString *ls = RunPHPScript( command );
+									if( ls != NULL )
+									{
+										//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
+										res = ls->ls_Size;
+									}
+									/*
 									FILE *pipe = popen( command, "r" );
 									ListString *ls = NULL;
+									
+									Log( FLOG_INFO, "Sending php command: %s < pipe: %p\n", command, pipe );
 
 									if( pipe != NULL )
 									{
@@ -673,11 +711,18 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										}
 										pclose( pipe );
 									}
+									else
+									{
+										Log( FLOG_ERROR, "Cannot open pipe!\n");
+									}
+									
+									Log( FLOG_INFO, "End of PHP loop\n");
 
 									if( ls != NULL )
 									{
 										ListStringJoin( ls );
 									}
+									*/
 									
 									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
@@ -707,6 +752,9 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										ls->ls_Data = NULL;
 										ListStringDelete( ls );
 									}
+									DEBUG("Response delivered\n");
+									
+									FFree( command );
 								}
 							}
 
@@ -782,6 +830,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 							if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
 							{
+								char *error = NULL;
 								// Immediately drop here..
 								SLIB->LibrarySQLDrop( SLIB, sqllib );
 
@@ -789,7 +838,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 								char *mime = NULL;
 
-								File *rootDev = GetUserDeviceByUserID( SLIB, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
+								File *rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs->fs_IDUser, fs->fs_DeviceName, &error );
+								
+								if( error != NULL )
+								{
+									FFree( error );
+								}
 
 								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs->fs_DeviceName );
 
@@ -851,7 +905,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									if( cacheState == CACHE_FILE_CAN_BE_USED )
 									{
 										int resp = 0;
-										int dataread;
+										int dataread = 0;
 
 										cf->cf_Fp = fopen( cf->cf_StorePath, "rb" );
 										if( cf->cf_Fp != NULL )
@@ -1308,6 +1362,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											BufStringDelete( bs );
 										}
 										FFree( multipath );
+										DEBUG("multipath released\n");
 									}
 								}	// file not found in cache
 							}
@@ -1428,8 +1483,8 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										LocFile* file = NULL;
 
-										if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
-										{	
+										//if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
+										{
 											char *decoded = UrlDecodeToMem( completePath->raw );
 											if( SLIB->sl_CacheFiles == 1 )
 											{
@@ -1458,11 +1513,17 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 													stat( decoded, &attr);
 
 													// if file is new file, reload it
-													Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
+													
 													if( attr.st_mtime != file->lf_Info.st_mtime )
 													{
+														Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
 														LocFileReload( file, decoded );
 													}
+												}
+												
+												if( file != NULL )
+												{
+													file->lf_InUse = 1;
 												}
 											}
 											else
@@ -1475,13 +1536,15 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												freeFile = TRUE;
 											}
 											FFree( decoded );
-											FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
+											DEBUG("Resource mutex released\n");
+											//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
 										Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p\n", file );
 
 										// Send reply
 										if( file != NULL )
 										{
+											DEBUG("Check mime\n");
 											char *mime = NULL;
 
 											if(  file->lf_Buffer == NULL )
@@ -1489,24 +1552,30 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
 											}
 
-											DEBUG("GET single file : extension '%s'\n", completePath->extension );
-											if( completePath->extension )
+											if( file->lf_Mime == NULL )
 											{
-												mime = StringDuplicate( MimeFromExtension( completePath->extension ) );
+												DEBUG("GET single file : extension '%s'\n", completePath->extension );
+												if( completePath->extension )
+												{
+													const char *t = MimeFromExtension( completePath->extension );
+													mime = StringDuplicate( t );
+												}
+												else
+												{
+													mime = StringDuplicate( "text/plain" );
+												}
+												file->lf_Mime = StringDuplicate( mime );
 											}
 											else
 											{
-												mime = StringDuplicate( "text/plain" );
+												mime = StringDuplicate( file->lf_Mime );
 											}
-
 											struct TagItem tags[] = {
-												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( mime ) },
+												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) mime },
 												{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 												{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
 												{ TAG_DONE, TAG_DONE }
 											};
-
-											file->lf_Mime = mime;
 
 											response = HttpNewSimple( HTTP_200_OK, tags );
 
@@ -1528,6 +1597,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											if( freeFile == TRUE )
 											{
 												LocFileDelete( file );
+											}
+											else
+											{
+												file->lf_InUse = 0;
 											}
 										}
 										else
@@ -1663,11 +1736,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 													*/
 													
 													DEBUG("MODRUNPHP %s\n", "php/catch_all.php" );
-													char *allArgsNew = GetArgsAndReplaceSession( request, NULL );
+													FBOOL isFile;
+													char *allArgsNew = GetArgsAndReplaceSession( request, NULL, &isFile );
 													if( allArgsNew != NULL )
 													{
 														int argssize = strlen( allArgsNew );
-														char *runFile = FCalloc( ( argssize * 2 ) + 512 + strlen( uri->path->raw ), sizeof(char) );
+														char *runFile = FCalloc( ( argssize << 1 ) + 512 + strlen( uri->path->raw ), sizeof(char) );
 														if( runFile != NULL )
 														{
 															int rawLength = strlen( uri->path->raw );
@@ -1703,6 +1777,14 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 															FFree( runFile );
 														}
 													}
+													
+													if( isFile )
+													{
+														//"file<!--separate-->%s"
+														char *fname = allArgsNew + MODULE_FILE_CALL_STRING_LEN;
+														remove( fname );
+													}
+													
 													FFree( allArgsNew );
 												}
 												
@@ -1848,12 +1930,13 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 			sock->data = NULL;
 		}
 		PathFree( path );
+		Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
 
 		return response;
 	}
 	// Winter cleaning
 	HttpFreeRequest( request );
-	Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
+	Log( FLOG_DEBUG, "HTTP parsed1, returning response\n");
 	return response;
 }
 

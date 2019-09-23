@@ -27,7 +27,7 @@ typedef struct UserManagerInterface
 	UserManager			*(*UMNew)( void *sb );
 	void				(*UMDelete)( UserManager *smgr );
 	int					(*UMAssignGroupToUser)( UserGroupManager *smgr, User *usr );
-	int					(*UMAssignGroupToUserByStringDB)( UserGroupManager *smgr, User *usr, char *groups );
+	int					(*UMAssignGroupToUserByStringDB)( UserGroupManager *smgr, User *usr, char *level, char *workgroups );
 	int					(*UMUserUpdateDB)( UserManager *um, User *usr );
 	int					(*UMAssignApplicationsToUser)( UserManager *smgr, User *usr );
 	User				*(*UMUserGetByNameDB)( UserManager *smgr, const char *name );
@@ -48,7 +48,7 @@ typedef struct UserManagerInterface
 	FULONG				(*UMGetAllowedLoginTime)( UserManager *um, const char *name );
 	FBOOL				(*UMGetLoginPossibilityLastLogins)( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime );
 	int					(*UMStoreLoginAttempt)( UserManager *um, const char *name, const char *info, const char *failReason );
-	Http				*(*UMWebRequest)( void *m, char **urlpath, Http* request, UserSession *session, int *result );
+	Http				*(*UMWebRequest)( void *m, char **urlpath, Http* request, UserSession *session, int *result, FBOOL *logoutCalled );
 	int					(*UMAddGlobalRemoteUser)( UserManager *um, const char *name, const char *sessid, const char *hostname );
 	int					(*UMRemoveGlobalRemoteUser)( UserManager *um, const char *name, const char *hostname );
 	int					(*UMAddGlobalRemoteDrive)( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid  );

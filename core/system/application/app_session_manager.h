@@ -29,7 +29,8 @@
 
 typedef struct AppSessionManager
 {
-	AppSession						*sl_AppSessions;
+	AppSession						*asm_AppSessions;
+	pthread_mutex_t					asm_Mutex;
 }AppSessionManager;
 
 //
@@ -42,24 +43,30 @@ AppSessionManager *AppSessionManagerNew();
 //
 //
 
-void AppSessionManagerDelete( AppSessionManager *as );
+void AppSessionManagerDelete( AppSessionManager *asmm );
 
 //
 //
 //
 
-int AppSessionManagerAddSession( AppSessionManager *as, AppSession *nas );
+int AppSessionManagerAddSession( AppSessionManager *asmm, AppSession *nas );
 
 //
 //
 //
 
-int AppSessionManagerRemSession( AppSessionManager *as, AppSession *nas );
+int AppSessionManagerRemSession( AppSessionManager *asmm, AppSession *nas );
 
 //
 //
 //
 
-AppSession *AppSessionManagerGetSession( AppSessionManager *as, FUQUAD id );
+int AppSessionManagerRemUserSession( AppSessionManager *asmm, UserSession *ses );
+
+//
+//
+//
+
+AppSession *AppSessionManagerGetSession( AppSessionManager *asmm, FUQUAD id );
 
 #endif // __APP_SESSION_MANAGER_H__

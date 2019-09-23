@@ -62,13 +62,19 @@ MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG 
 
 MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULONG user_id, char *userName, int type );
 
+FULONG MobileManagerGetUMAIDByDeviceIDAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *deviceid );
+
 FULONG MobileManagerGetUMAIDByTokenAndUserName( MobileManager *mmgr, SQLLibrary *sqllib, FULONG userID, const char *token );
 
 void MobileManagerRefreshCache( MobileManager *mmgr );
 
 int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );
 
-UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status );
+char *MobleManagerGetIOSAppTokensDBm( MobileManager *mmgr, FULONG userID );
+
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, FULONG userID, int type, int status, FBOOL logged );
+
+BufString *MobleManagerAppTokensByUserPlatformDB( MobileManager *mmgr, FULONG userID, int type, int status, FULONG notifID );
 
 UserMobileApp *MobleManagerGetMobileAppByUserPlatformAndNotInDBm( MobileManager *mmgr, FULONG userID, int type, int status, const char *ids );
 

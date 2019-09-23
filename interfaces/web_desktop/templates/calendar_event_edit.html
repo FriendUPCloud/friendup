@@ -1,0 +1,61 @@
+<div class="ContentFull Padding ScrollArea">
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_title}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input class="FullWidth InputHeight" value="{title}" placeholder="{i18n_cal_evt_title_what}..." id="calTitle"/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_time_from}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="time" class="InputHeight" size="5" placeholder="08:00" value="{timefrom}" id="calTimeFrom"{timedisabled}/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_time_to}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="time" class="InputHeight" size="5" placeholder="16:00" value="{timeto}" id="calTimeTo"{timedisabled}/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_addday}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="checkbox" id="calTimeAllDay"{wholeday}/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_type}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<select class="InputHeight" id="calType">
+				<option value="built-in">{i18n_cal_private_calendar}</option>
+			</select>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="HContent100 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_description}:</strong></p>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="HContent100 FloatLeft">
+			<textarea class="FullWidth" style="height: 160px" id="calDescription">{description}</textarea>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="HContent100 FloatLeft">
+			<p class="InputHeight FloatRight"><button type="button" class="Button IconSmall fa-remove" onclick="CloseView()"> {i18n_cancel}</button></p>
+			<p class="InputHeight"><button type="button" class="Button IconSmall fa-calendar-plus-o" onclick="Workspace.saveCalendarEvent({id})"> {i18n_cal_btn_add}</button></p>
+		</div>
+	</div>
+	<input type="hidden" value="{date}" id="calDateField" value="{date}"/>
+</div>

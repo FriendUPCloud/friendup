@@ -105,8 +105,8 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 		char tmp[ 256 ];
 		//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
 		snprintf( tmp, sizeof(tmp), "/82.177.144.226?access_key=6c03cf0550f249596f97dd9aa3203fb3" );
-		
-		HttpClient *c = HttpClientNew( FALSE, tmp );
+		// POST, HTTP2, PATH, HEADERS, CONTENT
+		HttpClient *c = HttpClientNew( FALSE, FALSE, tmp, NULL, NULL );
 		if( c != NULL )
 		{
 			//freegeoip.net/xml/
@@ -241,14 +241,14 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 	
 		BufStringAdd( bs, "\"FriendCores\" : " );
 		FriendCoreInstance *fc = fcm->fcm_FriendCores;
+		
 		int i = 0, j =0;
-	
 		char coreid[ 33 ];
 		
 		while( fc != NULL )
 		{
-			strncpy( coreid, fc->fci_CoreID, 32 );
-			
+			//strncpy( coreid, fc->fci_CoreID, 32 );
+			/*
 			if( i == 0 )
 			{
 				sprintf( temp, "{ \"ThreadID\":\"%s\" ,\"Port\":\"%d\",\"Workers\":", coreid, fc->fci_Port );
@@ -257,9 +257,20 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 			{
 				sprintf( temp, ", { \"ThreadID\":\"%s\" ,\"Port\":\"%d\",\"Workers\":", coreid, fc->fci_Port );
 			}
+			*/
+			if( i == 0 )
+			{
+				sprintf( temp, "{ \"ThreadID\":\"%d\" ,\"Port\":\"%d\",\"Workers\":", i, fc->fci_Port );
+			}
+			else
+			{
+				sprintf( temp, ", { \"ThreadID\":\"%d\" ,\"Port\":\"%d\",\"Workers\":", i, fc->fci_Port );
+			}
+			
 			BufStringAdd( bs, temp );
 		
-			strcpy( temp, "\"0\"" );
+			snprintf( temp, 2048, "%d", sb->sl_WorkerManager->wm_MaxWorkers );
+			//strcpy( temp, "\"0\"" );
 			BufStringAdd( bs, temp );
 			
 			if( sb->sl_WorkerManager != NULL )

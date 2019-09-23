@@ -45,12 +45,13 @@ WebsocketReq *WebsocketReqNew( char *id, int chunk __attribute__((unused)), int 
 		req->wr_Total = total;
 		req->wr_Chunks = 1;
 		req->wr_ChunkSize = datasize;
-		req->wr_TotalSize = req->wr_ChunkSize * total;
+		req->wr_TotalSize = WS_PROTOCOL_BUFFER_SIZE * total;// req->wr_ChunkSize * total;
 		req->wr_MessageSize = datasize;
 		req->wr_CreatedTime = time( NULL );
 		
-		if( ( req->wr_Message = FMalloc( req->wr_TotalSize+1 ) ) != NULL )
+		if( ( req->wr_Message = FMalloc( req->wr_TotalSize+256 ) ) != NULL )
 		{
+			DEBUG("[WebsocketReqNew] Memory for data allocated at: %p\n", req->wr_Message );
 			memcpy( req->wr_Message, data, datasize );
 			req->wr_Message[ req->wr_TotalSize ] = 0; // This allow us to see messages by using %s
 		}
@@ -135,25 +136,35 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 	if( req != NULL )
 	{
 		int pos = 0;
+		int maxToCopy = datasize;
 		req->wr_Chunks++;
 		
 		if( datasize > WS_PROTOCOL_BUFFER_SIZE )
 		{
 			req->wr_IsBroken = 1;
+			maxToCopy = WS_PROTOCOL_BUFFER_SIZE;
+			FERROR("Package is broken!\n");
 		}
 		else
 		{
 			pos = chunk * req->wr_ChunkSize;
-
-			memcpy( &(req->wr_Message[ pos ]), data, datasize );
+			int ptrPos = ((&(req->wr_Message[ pos ] ) ) - req->wr_Message );
+			if( maxToCopy > (req->wr_TotalSize - ptrPos ) )
+			{
+				DEBUG("Cannot copy more then buffer!\n");
+				maxToCopy = req->wr_ChunkSize;
+			}
+			
+			memcpy( &(req->wr_Message[ pos ]), data, maxToCopy );
 			
 			INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
 		}
-		req->wr_MessageSize += datasize;
+		req->wr_MessageSize += maxToCopy;
 		
 		if( req->wr_Chunks == req->wr_Total )
 		{
 			int len = 0;
+			INFO("[WebsocketReqAddChunk] Decode at pointer: %p\n", req->wr_Message );
 			char *dst = Base64Decode( (const unsigned char *)req->wr_Message, req->wr_MessageSize, &len );
 			if( dst != NULL )
 			{
@@ -161,7 +172,7 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 				
 				FFree( req->wr_Message );
 				req->wr_Message = dst;
-				req->wr_MessageSize = len;
+				req->wr_MessageSize = len;		
 			}
 			else
 			{

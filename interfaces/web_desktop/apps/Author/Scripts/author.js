@@ -14,35 +14,22 @@ Application.run = function( msg, iface )
 	nd.execute( 'file/makedir', { path: 'Home:Documents' } );
 	
 	var w = new View( {
-		'title'     : 'Author',
+		'title'     : 'Author - BETA',
 		'width'     : 1290,
 		'height'    : 800,
 		'min-width' : 700,
-		'min-height': 400,
+		'min-height': 400
 	} );
 	
 	this.mainView = w;
 	
 	w.onClose = function( closeWindow )
 	{
-		/*if( !w.saved )
-		{
-			Confirm( 'Are you sure?', 'By closing the application you may lose unsaved data.', function( res )
-			{
-				if( res.data )
-				{
-					Application.quit();
-				}
-				else
-				{
-					closeWindow( false );
-				}
-			} );
-		}*/
 		Application.quit();
 		return false;
 	}
 	
+	// Set up the main menu items ----------------------------------------------
 	w.setMenuItems( [
 		{
 			name: i18n( 'menu_file' ),
@@ -115,62 +102,56 @@ Application.run = function( msg, iface )
 	{
 		w.setContent( data, function()
 		{
-			// Open by path
+			// Open by path ----------------------------------------------------
 			if( msg.args && typeof( msg.args ) != 'undefined' )
 			{
-				//console.log( 'What happens: ', msg.args );
 				w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
 			}
+			// We have a session object ----------------------------------------
 			else if( Application.sessionObject && Application.sessionObject.content )
 			{
+				// Load previously active document -----------------------------
 				if( Application.sessionObject.currentDocument )
 				{
 					w.sendMessage( { command: 'loadfiles', files: [ { Path: Application.sessionObject.currentDocument } ] } );
-					return;
 				}
-				
-				var msng = { 
-					command: 'newdocument',
-					content: Application.sessionObject.content,
-					scrollTop: Application.sessionObject.scrollTop,
-					browserPath: 'Mountlist:'
-				};
-				w.sendMessage( msng );
-				
-				if( Application.sessionObject.currentDocument )
-					Application.wholeFilename = Application.sessionObject.currentDocument;
-				
-				if( Application.sessionObject.currentDocument )
+				else
 				{
-					Application.mainView.setFlag( 'title', 'Author - ' + Application.sessionObject.currentDocument );
+					// Create instead a new document with content from session -----
+					var msng = { 
+						command: 'newdocument',
+						content: Application.sessionObject.content,
+						scrollTop: Application.sessionObject.scrollTop,
+						browserPath: 'Home:Notes/'
+					};
+					w.sendMessage( msng );
 				}
 			}
+			// Create a new, empty document ------------------------------------
 			else
 			{
 				w.sendMessage( { 
 					command: 'newdocument',
 					content: '',
-					browserPath: 'Mountlist:'
+					browserPath: 'Home:Notes/'
 				} );
+				Application.wholeFilename = false;
 			}
+			Application.setCorrectTitle();
 		} );
 	}
 	f.load();
-	
-	/*var noti = new View( { title: 'Notice', width: 300, height: 300 } );
-	var cf = new File( 'Progdir:Templates/notice.html' );
-	cf.onLoad = function( data )
-	{
-		noti.setContent( data );
-	}
-	cf.load();*/
 }
 
-// Return the current state of the application
+// Return the current state of the application (overloaded function)
 Application.sessionStateGet = function()
 {
 	if( this.sessionObject && this.sessionObject.content )
 	{
+		if( !this.sessionObject.currentDocument )
+		{
+			this.sessionObject.currentDocument = this.wholeFilename;
+		}
 		return JSON.stringify( {
 			currentDocument: this.wholeFilename,
 			content: this.sessionObject.content,
@@ -211,7 +192,6 @@ Application.handleKeys = function( k, e )
 			this.closeFile();
 			return true;
 		}
-		//console.log( k );
 	}
 	return false;
 }
@@ -371,17 +351,108 @@ Application.showPrefs = function()
 	f.load();
 }
 
+function sanitizeFilename( data )
+{
+	if( !data ) return i18n( 'i18n_new_document' );
+	var filename = data.split( ':' )[1];
+	if( filename.indexOf( '/' ) > 0 )
+		filename = filename.split( '/' ).join( ' - ' );
+	
+	filename = filename.split( ' - ' );
+	
+	// Special for notes, remove first folder
+	var ar = [];
+	for( var a = 1; a < filename.length; a++ )
+	{
+		ar.push( filename[ a ] );
+	}
+	filename = ar.join( ' - ' );
+	
+	// Join
+	filename = filename.split( '.' );
+	filename.pop();
+	filename = filename.join( '.' );
+	
+	return filename;
+}
+
+Application.setCorrectTitle = function()
+{
+	if( this.currentViewMode == 'files' )
+	{
+		var cand = '';
+		if( this.browserPath )
+		{
+			cand = this.browserPath;
+			if( cand.indexOf( '/' ) > 0 )
+			{
+				cand = cand.split( '/' );
+				cand.pop();
+				cand = cand.join( '/' );
+				if( cand.indexOf( '/' ) > 0 )
+				{
+					cand = cand.split( '/' ).pop();
+				}
+				else
+				{
+					cand = cand.split( ':' ).pop();
+				}
+				if( cand == 'Author' )
+					cand = i18n( 'i18n_uncategorized' );
+			}
+			else
+			{
+				cand = i18n( 'i18n_uncategorized' );
+			}
+		}
+		else
+		{
+			cand = i18n( 'i18n_uncategorized' );
+		}
+		Application.mainView.setFlag( 'title', 'Notes - ' + cand );
+	}
+	else if( this.currentViewMode == 'root' )
+	{
+		Application.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_categories' ) );
+	}
+	else
+	{
+		Application.mainView.setFlag( 'title', 'Notes - ' + sanitizeFilename( Application.wholeFilename ) );
+	}
+}
+
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'updateViewMode':
+			this.currentViewMode = msg.mode;
+			if( isMobile )
+			{
+				var mode = msg.mode;
+				if( mode == 'notes' || mode == 'files' )
+				{
+					var v = this.mainView;
+					v.showBackButton( true, function()
+					{
+						v.sendMessage( { command: 'mobilebackbutton' } );
+					} );
+				}
+				else
+				{
+					this.mainView.showBackButton( false );
+				}
+			}
+			this.browserPath = msg.browserPath;
+			this.setCorrectTitle();
+			break;
 		case 'setfilename':
 			this.wholeFilename = msg.data;
-			this.mainView.setFlag( 'title', 'Author - ' + msg.data );
+			this.setCorrectTitle();
 			break;
 		case 'newdocument':
-			this.mainView.setFlag( 'title', 'Author - ' + i18n( 'i18n_new_document' ) );
+			this.wholeFilename = '';
 			break;
 		case 'applystyle':
 			this.mainView.sendMessage( msg );
@@ -397,7 +468,7 @@ Application.receiveMessage = function( msg )
 			this.fileName = msg.filename;
 			this.path = msg.path;
 			this.wholeFilename = msg.path + msg.filename;
-			this.mainView.setFlag( 'title', 'Author - ' + this.wholeFilename );
+			this.setCorrectTitle();
 			break;
 		case 'openfile':
 			this.load();
@@ -412,7 +483,10 @@ Application.receiveMessage = function( msg )
 			this.newDocument();
 			break;
 		case 'print':
-			this.mainView.sendMessage( { command: 'print_iframe' } );
+			var p = new Printdialog( {
+				path: this.wholeFilename
+			} );
+			//this.mainView.sendMessage( { command: 'print_iframe' } );
 			break;
 		case 'print_remote':
 			this.print();
@@ -423,14 +497,14 @@ Application.receiveMessage = function( msg )
 			if( msg.path )
 			{
 				this.wholeFilename = msg.path;
-				this.mainView.setFlag( 'title', 'Author - ' + msg.path );
+				this.setCorrectTitle();
 			}
 			break;
 		case 'syncload':
 			if( msg.filename )
 			{
 				this.wholeFilename = msg.filename;
-				this.mainView.setFlag( 'title', 'Author - ' + this.wholeFilename );
+				this.setCorrectTitle();
 			}
 			break;
 		case 'load':

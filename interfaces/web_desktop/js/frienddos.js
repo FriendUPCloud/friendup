@@ -857,7 +857,15 @@ window.Shell = function( appObject )
 		if( input[index] )
 		{
 			rawLine = input[index];
-			cmd = rawLine.split( /<[^>]*?>/i ).join( '' );
+			
+			// Fix newline support ...
+			cmd = rawLine.split( "\\n" ).join( "\n" );
+			
+			// Fix tab support ...
+			cmd = cmd.split( "\\t" ).join( "\t" );
+			
+			// Remove html tags ...
+			cmd = cmd.split( /<[^>]*?>/i ).join( '' );
 		}
 		else
 		{
@@ -1601,9 +1609,14 @@ window.Shell = function( appObject )
 	// Parse a command
 	this.execute = function( cmd, ecallback )
 	{
-		if( !cmd ) return false;
+		if( !cmd ) 
+		{
+			ecallback( false );
+			return false;
+		}
 		
-		console.log( 'this.execute = function( cmd, ecallback )', cmd );
+		//console.log( 'this.execute = function( cmd, ecallback )', cmd );
+		
 		// References
 		// TODO: Remove dosobj and replace with t
 		var dosobj = t = this;
@@ -1659,7 +1672,13 @@ window.Shell = function( appObject )
 		cmd = Trim( EntityDecode( cmd.split( '<!--semicolon-->' ).join( ';' ) ) );
 		
 		var rawLine = cmd + '';
-
+		
+		// Fix newline support ...
+		cmd = cmd.split( "\\n" ).join( "\n" );
+		
+		// Fix tab support ...
+		cmd = cmd.split( "\\t" ).join( "\t" );
+		
 		// Setup proxy caller we can add some things to
 		var dcallback;
 		if( !ecallback )
@@ -3075,18 +3094,54 @@ window.Shell = function( appObject )
 			} ) } );
 			return callback( false, { response: 'Killed ' + args[ 1 ] + '.' } );
 		},		
+		'surpress': function( args, callback )
+		{
+			if( args.length >= 2 )
+			{
+				switch( args[ 1 ] )
+				{
+					case 'menu':
+						if( isMobile )
+						{
+							Workspace.zapMobileAppMenu();
+						}
+						break;
+				}
+			}
+			return callback( true );
+		},
 		'launch': function( args, callback )
 		{
 			if( args.length >= 2 )
 			{
-				function cbn( msg )
+				function cbn( msg, data )
 				{
-					callback( msg.data, msg.error );
+					if( typeof( msg ) != 'object' )
+					{
+						if( data && data.result )
+						{
+							callback( data.result, data.message );
+						}
+						else
+						{
+							callback( false, false );
+						}
+					}
+					else
+					{
+						callback( msg.data, msg.error );
+					}
 				}
 				var args2 = '';
 				for( var z = 2; z < args.length; z++ )
 					args2 += ( z > 2 ? ' ' : '' ) + args[ z ];
-
+				
+				// Already in startup apps!
+				if( Friend.startupApps[ args[ 1 ] ] )
+				{
+					return cbn( false, false );
+				}
+				
 				return ExecuteApplication( args[ 1 ], args2, cbn );
 			}
 			return callback( true );
@@ -3292,7 +3347,17 @@ window.Shell = function( appObject )
 					{
 						var cfg = false;
 						if( rows[a].Config && rows[a].Config.indexOf( '{' ) >= 0 )
-							cfg = JSON.parse( rows[a].Config );
+						{
+							// See if we can parse
+							try
+							{
+								cfg = JSON.parse( rows[a].Config );
+							}
+							catch( e )
+							{
+								cfg = { error: 'Could not parse filesystem configuration.' };
+							}
+						}
 						if( rows[a].Mounted == '1' ) continue;
 						disks += '<div class="Container">' +
 						    PadList( rows[a].Name + ':', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
@@ -4339,7 +4404,6 @@ window.FriendDOS =
 								}
 								else
 								{
-									console.log( 'ALL DONE WITH DELETE!' );
 									flags._originalCallback( 'Delete completed.' );
 								}
 							} );
@@ -4487,16 +4551,13 @@ window.FriendDOS =
 					}
 				}
 			}
-			console.log( 'Looking: do we have callback? ' + callback ? 'yes' : 'no' );
 			if( callback && callback != flags._originalCallback )
 			{
-				console.log( 'We\'re using a unique callback.' );
 				callback();
 				flags._cleanup();
 			}
 			else
 			{
-				 console.log( 'We had original callback.' );
 				 return;
 				 //return callback();
 			}

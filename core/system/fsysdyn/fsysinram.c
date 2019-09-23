@@ -115,7 +115,7 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountError )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -193,12 +193,6 @@ int Release( struct FHandler *s, void *f )
 			
 			free( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ free( lf->f_Name ); }
-		if( lf->f_Path ){ free( lf->f_Path ); }
-
-		
-		//free( f );
 		return 0;
 	}
 	return -1;
@@ -223,10 +217,6 @@ int UnMount( struct FHandler *s, void *f )
 			
 			free( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ free( lf->f_Name ); }
-		if( lf->f_Path ){ free( lf->f_Path ); }
-		
 		return 0;
 	}
 	return -1;

@@ -67,6 +67,11 @@ void UserMobileAppDelete( UserMobileApp *app )
 			FFree( app->uma_Core );
 		}
 		
+		if( app->uma_DeviceID != NULL )
+		{
+			FFree( app->uma_DeviceID );
+		}
+		
 		if( app->uma_Platform != NULL )
 		{
 			FFree( app->uma_Platform );

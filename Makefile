@@ -7,6 +7,7 @@ FRIEND_CORE_BIN			= core/bin/FriendCore
 # include custom configuration
 -include Config
 -include Makefile.defs
+-include Config
 
 #compilation
 all: compile
@@ -64,11 +65,13 @@ cleanfiles:
 	rm -fr $(FRIEND_PATH)/resources/repository/
 	rm -fr $(FRIEND_PATH)/services/
 
-cleanws:
-	@echo "Cleaning Websocket lib"
+cleanlibs:
+	@echo "Cleaning external libraries"
 	make -C libs-ext clean
 
 clean:
+	#@echo "Cleaning Websocket lib"
+	#make -C libs-ext clean
 	@echo "Clean process in progress."
 	make -C core clean WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C libs clean WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
@@ -122,10 +125,14 @@ setup: #cleanws
 
 compile:
 	@echo "Making default compilation with debug."
-	make -C core DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C core DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) USE_SSH_THREADS_LIB=$(USE_SSH_THREADS_LIB)
 	make -C libs DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C libs-ext DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C authmods DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+
+unittest:
+	@echo "Unit tests build in progress."
+	make -C core unittest DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 
 compileprof:
 	@echo "Making default compilation with debug and profiling settings."
@@ -136,7 +143,7 @@ compileprof:
 
 release:
 	@echo "Making release version without debug."
-	make -C core DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C core DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) USE_SSH_THREADS_LIB=$(USE_SSH_THREADS_LIB)
 	make -C libs DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C authmods DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
@@ -167,6 +174,7 @@ install:
 	make -C libs install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C authmods install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	cp scripts/*.sh $(FRIEND_PATH)/
+	cp scripts/bash-ini-parser $(FRIEND_PATH)/
 
 goinstall: install
 	rm -f build/resources/webclient/index.html
@@ -183,3 +191,4 @@ internaldoc:
 	@echo "Documentation ready in docs/core/webcalls/"
 	doxygen docs/doxygen/core/coreInternal
 	@echo "Documentation ready in docs/core/internal/"
+

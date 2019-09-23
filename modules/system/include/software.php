@@ -92,7 +92,7 @@ foreach( $paths as $path )
 			
 			$f = json_decode( file_get_contents( $path . $file . '/Config.conf' ) );
 			if( !$f ) continue;
-			if( isset( $f->HideInCatalog ) && $f->HideInCatalog == 'yes' ) continue;
+			if( $mode != 'showall' && isset( $f->HideInCatalog ) && $f->HideInCatalog == 'yes' ) continue;
 			
 		
 			$o = new stdClass();
@@ -104,7 +104,7 @@ foreach( $paths as $path )
 			$stat = stat( $path . $file . '/Config.conf' );
 			$o->DateModifiedUnix = $stat[9];
 			$o->DateModified = date( 'Y-m-d H:i:s', $stat[9] );
-			$o->Visible = $f->Visible == 'true' ? true : false;
+			$o->Visible = isset( $f->Visible ) == 'true' ? true : false;
 			
 			// If this application is associated with a workgroup
 			$o->Workgroups = isset( $organizedWorkgroups[ $file ] ) ? $organizedWorkgroups[ $file ] : '';
@@ -119,6 +119,17 @@ foreach( $paths as $path )
 		closedir( $dir );
 	}
 }
+
+// Sorting
+$byName = [];
+foreach( $apps as $a )
+{
+	$byName[ $a->Name ] = $a;
+}
+ksort( $byName );
+$apps = [];
+foreach( $byName as $k=>$v )
+	$apps[] = $v;
 
 die( 'ok<!--separate-->' . json_encode( $apps ) );
 

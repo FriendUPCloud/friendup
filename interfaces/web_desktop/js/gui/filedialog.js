@@ -17,6 +17,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var multiSelect = true;
 	var defaultPath = 'Home:';
 	var keyboardNavigation = false;
+	var ignoreFiles = false;
 	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
@@ -39,6 +40,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					break;
 				case 'multiSelect':
 					multiSelect = object[a];
+					break;
+				case 'ignoreFiles':
+					ignoreFiles = object[a];
 					break;
 				case 'path':
 					path = object[a];
@@ -63,6 +67,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					break;
 			}
 		}
+	}
+	
+	// Special case, just looking for folders
+	if( type == 'path' )
+	{
+		ignoreFiles = true;
 	}
 
 	// Save never has multiselect
@@ -182,6 +192,23 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			return false;
 		}
 		
+		// No element, try to find it
+		if( !ele )
+		{
+			if( w.content.icons )
+			{
+				// TODO: Check multiple
+				for( var a = 0; a < w.content.icons.length; a++ )
+				{
+					if( w.content.icons[a].selected )
+					{
+						ele = w.content.icons[a];
+						break;
+					}
+				}
+			}
+		}
+		
 		// Save dialog uses current path and written filename
 		if( dialog.type == 'save' )
 		{
@@ -249,12 +276,30 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			return;
 		}
 		
-		if( ele && ele.obj )
+		// Get the file object
+		var fobj = ele && ele.obj ? ele.obj : false;
+		
+		// Try to recreate the file object from the file info
+		if( ele && !fobj )
 		{
-			triggerfunction ( [ ele.obj ] );
+			if( ele.fileInfo )
+			{
+				fobj = {
+					Type: ele.fileInfo.Type,
+					Filename: ele.fileInfo.Filename,
+					Path: ele.fileInfo.Path,
+					Volume: ele.fileInfo.Volume
+				};
+			}
+		}
+		
+		if( ele && fobj )
+		{
+			triggerfunction( [ fobj ] );
 			w.close ();
 			return;
 		}
+		
 		var cont = this.getContainer();
 		var eles = cont.getElementsByTagName ( 'div' );
 		var out = [];
@@ -274,7 +319,14 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 		if( out.length )
 		{
-			triggerfunction( out );
+			if( dialog.type == 'path' )
+			{
+				triggerfunction( out[0].Path );
+			}
+			else
+			{
+				triggerfunction( out );
+			}
 		}
 		else
 		{
@@ -557,6 +609,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			rightpanel:          dialog.contentbox,
 			leftpanel:           dialog.sidebar,
 			multiple:            multiSelect,
+			ignoreFiles:         ignoreFiles,
 			nosidebarbackground: true,
 			toolbararea:         dialog.toolbararea,
 			mountlist:           true,

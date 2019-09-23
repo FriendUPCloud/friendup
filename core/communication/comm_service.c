@@ -229,6 +229,7 @@ void CommServiceDelete( CommService *s )
 void *ServiceTempThread( void *d )
 {
 	CommServiceSetupOutgoing( d );
+	DEBUG("[ServiceTempThread] pthread quit\n");
 	pthread_exit(0);
 }
 
@@ -249,7 +250,7 @@ int CommServiceStart( CommService *s )
 		pthread_mutex_init( &InitMutex, NULL );
 
 #ifdef USE_SELECT
-		s->s_Thread = ThreadNew( CommServiceThreadServerSelect, s, TRUE );
+		s->s_Thread = ThreadNew( CommServiceThreadServerSelect, s, TRUE, NULL );
 #else
 		s->s_Thread = ThreadNew( CommServiceThreadServer, s, TRUE, NULL );
 #endif
@@ -1238,9 +1239,24 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 	{
 		if( socket != NULL )
 		{
-			if( !lsb->sl_USM )
+			if( !lsb->sl_USM || fcm->fcm_FCI == NULL || fcm->fcm_FCI->fci_City == NULL )
+			{
 				return NULL;
-
+			}
+			char *city = "none";
+			char *ccode = "none";
+			if( fcm->fcm_FCI != NULL )
+			{
+				if( fcm->fcm_FCI->fci_City != NULL )
+				{
+					city = fcm->fcm_FCI->fci_City;
+				}
+				if( fcm->fcm_FCI->fci_CountryCode[0] != 0 )
+				{
+					ccode = fcm->fcm_FCI->fci_CountryCode;
+				}
+			}
+			
 			MsgItem tags[] = {
 				{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
 				{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)fcm->fcm_ID },
@@ -1248,8 +1264,8 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 				{ ID_CLID, (FULONG)cluster, MSG_INTEGER_VALUE },
 				{ ID_FINF, (uint64_t)0, (uint64_t)MSG_GROUP_START },
 					{ ID_WSES, (uint64_t)lsb->sl_USM->usm_SessionCounter , MSG_INTEGER_VALUE },
-					{ ID_COUN, strlen( fcm->fcm_FCI->fci_CountryCode ) + 1, (FULONG)fcm->fcm_FCI->fci_CountryCode },
-					{ ID_CITY, strlen( fcm->fcm_FCI->fci_City ) + 1, (FULONG)fcm->fcm_FCI->fci_City },
+					{ ID_COUN, strlen( ccode ) + 1, (FULONG)ccode },
+					{ ID_CITY, strlen( city ) + 1, (FULONG)city },
 				{ MSG_GROUP_END, 0,  0 },
 				{ TAG_DONE, TAG_DONE, TAG_DONE }
 			};
@@ -1374,7 +1390,14 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 			
 			//cfcn->fc_ConnectionsNumber++;
 		
-			INFO("[CommServiceAddConnection] INCOMING Connection added %s %s number of connections %d type %d\n", addr, recvfcid, cfcn->fc_ConnectionsNumber, type );
+			if( strlen( recvfcid ) > 0 )
+			{
+				INFO("[CommServiceAddConnection] INCOMING Connection added addr: %s recvfcid: %s number of connections %d type %d\n", addr, recvfcid, cfcn->fc_ConnectionsNumber, type );
+			}
+			else
+			{
+				INFO("[CommServiceAddConnection] INCOMING Connection added addr: %s number of connections %d type %d\n", addr, cfcn->fc_ConnectionsNumber, type );
+			}
 
 			cfcn->node.mln_Succ = (MinNode *) s->s_Connections;
 			s->s_Connections = cfcn;
@@ -1821,7 +1844,9 @@ void *InternalPINGThread( void *d )
 	
 	con->fc_PingInProgress = FALSE;
 	
-	pthread_exit( 0 );
+	DEBUG("[ServiceTempThread] internal ping thread quit\n");
+	//pthread_exit( 0 );
+	return NULL;
 }
 
 /**
@@ -1831,6 +1856,10 @@ void *InternalPINGThread( void *d )
  */
 void CommServicePING( CommService* s )
 {
+	if( s == NULL )
+	{
+		return;
+	}
 	SystemBase *lsb = (SystemBase *)s->s_SB;
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm; //s->s_FCM;
 	

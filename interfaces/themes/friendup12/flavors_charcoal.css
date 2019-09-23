@@ -1,5 +1,11 @@
 /* Charcoal ----------------------------------------------------------------- */
 
+html > body.Charcoal,
+html > body.Charcoal.Inside
+{
+	background: #303030;
+}
+
 body.Charcoal .AppsShowingTitle
 {
 	background: #303030;
@@ -408,3 +414,4 @@ html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	background-color: #404040 !important;
 	border-color: #383838;
 }
+

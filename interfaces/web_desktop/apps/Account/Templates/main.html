@@ -20,11 +20,22 @@
 							
 								<br/>
 							
-								<div style="text-align: center" class="MarginTop MarginBottom">
-									<img src="Progdir:iconAvatar.png" style="width:160px; height:160px;" id="Avatar"><br/>
-									<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
-										{i18n_changeavatar}
-									</button>
+								<div class="AvatarRect MarginTop MarginBottom HRow">
+									<div class="FloatLeft TextCenter Relative HContent50">
+										<div id="AvatarArea">
+											<canvas id="Avatar" width="256" height="256"></canvas>
+										</div>
+										<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
+											{i18n_changeavatar}
+										</button>
+									</div>
+									<div class="PaletteRect FloatLeft TextCenter Relative HContent50">
+										<div id="UserPalette">
+										</div>
+										<button type="button" id="ClearAvatar" class="fa-trash Button IconSmall">
+											{i18n_reset}
+										</button>
+									</div>
 								</div>
 								
 								<br/>
@@ -221,6 +232,12 @@
 			width: calc(100% + 40px);
 			text-align: center;
 			text-overflow: ellipsis;
+		}
+		
+		@media only screen and (max-width: 480px)
+		{
+			.FloatLeft.HContent45,
+			.FloatLeft.HContent55 { float:none; margin:0; padding:0; width:100%; }
 		}
 		
 	</style>

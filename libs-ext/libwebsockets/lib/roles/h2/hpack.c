@@ -1,7 +1,7 @@
 /*
  * lib/hpack.c
  *
- * Copyright (C) 2014-2017 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2014-2019 Andy Green <andy@warmcat.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -536,7 +536,8 @@ lws_dynamic_token_insert(struct lws *wsi, int hdr_len,
 	if (lws_hdr_index != LWS_HPACK_IGNORE_ENTRY) {
 		if (dyn->entries[new_index].value)
 			lws_free_set_NULL(dyn->entries[new_index].value);
-		dyn->entries[new_index].value = lws_malloc(len + 1, "hpack dyn");
+		dyn->entries[new_index].value =
+				lws_malloc(len + 1, "hpack dyn");
 		if (!dyn->entries[new_index].value)
 			return 1;
 
@@ -596,6 +597,11 @@ lws_hpack_dynamic_size(struct lws *wsi, int size)
 		  (int)dyn->num_entries, size,
 		  nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
 
+	if (!size) {
+		size = dyn->num_entries * 8;
+		lws_hpack_destroy_dynamic_header(wsi);
+	}
+
 	if (size > (int)nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]) {
 		lwsl_info("rejecting hpack dyn size %u vs %u\n", size,
 				nwsi->vhost->h2.set.s[H2SET_HEADER_TABLE_SIZE]);
@@ -644,7 +650,8 @@ lws_hpack_dynamic_size(struct lws *wsi, int size)
 
 	if (dyn->entries) {
 		for (n = 0; n < min; n++) {
-			m = (dyn->pos - dyn->used_entries + n) % dyn->num_entries;
+			m = (dyn->pos - dyn->used_entries + n) %
+						dyn->num_entries;
 			if (m < 0)
 				m += dyn->num_entries;
 			dte[n] = dyn->entries[m];
@@ -859,7 +866,7 @@ int lws_hpack_interpret(struct lws *wsi, unsigned char c)
 			}
 			/* indexed header */
 			h2n->hpack_type = HPKT_INDEXED_HDR_6_VALUE_INCR;
-			lwsl_header("   HPKT_INDEXED_HDR_6_VALUE_INCR (hdr %d)\n",
+			lwsl_header(" HPKT_INDEXED_HDR_6_VALUE_INCR (hdr %d)\n",
 				   c & 0x3f);
 			h2n->hdr_idx = c & 0x3f;
 			if ((c & 0x3f) == 0x3f) {
@@ -894,7 +901,7 @@ int lws_hpack_interpret(struct lws *wsi, unsigned char c)
 			}
 			if (c == 0x10) { /* literal name NEVER */
 				h2n->hpack_type = HPKT_LITERAL_HDR_VALUE_NEVER;
-				lwsl_header("   HPKT_LITERAL_HDR_VALUE_NEVER\n");
+				lwsl_header("  HPKT_LITERAL_HDR_VALUE_NEVER\n");
 				h2n->hpack = HPKS_HLEN;
 				h2n->value = 0;
 				break;
@@ -903,7 +910,7 @@ int lws_hpack_interpret(struct lws *wsi, unsigned char c)
 			/* indexed name */
 			if (c & 0x10) {
 				h2n->hpack_type = HPKT_INDEXED_HDR_4_VALUE_NEVER;
-				lwsl_header("   HPKT_LITERAL_HDR_4_VALUE_NEVER\n");
+				lwsl_header("HPKT_LITERAL_HDR_4_VALUE_NEVER\n");
 			} else {
 				h2n->hpack_type = HPKT_INDEXED_HDR_4_VALUE;
 				lwsl_header("   HPKT_INDEXED_HDR_4_VALUE\n");
@@ -1035,7 +1042,8 @@ pre_data:
 		default:
 			if (n != -1 && n != LWS_HPACK_IGNORE_ENTRY &&
 			    lws_frag_start(wsi, n)) {
-				lwsl_header("%s: frag start failed\n", __func__);
+				lwsl_header("%s: frag start failed\n",
+					    __func__);
 				return 1;
 			}
 			break;
@@ -1114,7 +1122,8 @@ pre_data:
 						}
 					}
 					if (lws_frag_append(wsi, c1)) {
-						lwsl_notice("%s: frag app fail\n",
+						lwsl_notice(
+							"%s: frag app fail\n",
 							    __func__);
 						return 1;
 					}
@@ -1186,6 +1195,9 @@ swallow:
 			}
 
 			if (ah->parser_state == WSI_TOKEN_NAME_PART ||
+#if defined(LWS_WITH_CUSTOM_HEADERS)
+			    ah->parser_state == WSI_TOKEN_UNKNOWN_VALUE_PART ||
+#endif
 			    ah->parser_state == WSI_TOKEN_SKIPPING) {
 				h2n->unknown_header = 1;
 				ah->parser_state = -1;

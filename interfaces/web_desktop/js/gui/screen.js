@@ -452,6 +452,7 @@ Screen = function ( flags, initObject )
 		window.currentScreen = this.parentNode;
 		CheckScreenTitle();
 	}
+	
 	// Alias clicking the screen
 	div.onmouseup = function( e )
 	{ 
@@ -565,7 +566,7 @@ Screen = function ( flags, initObject )
 				}, 500 );
 				Friend.GUI.responsiveViewPage++;
 				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
-				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+				scrn.contentDiv.style.transform = 'translate3d(' + px + ',0,0)';
 			}
 		}
 		else if( isMobile && diffx > 100 && !scrn.moving )
@@ -579,7 +580,7 @@ Screen = function ( flags, initObject )
 				}, 500 );
 				Friend.GUI.responsiveViewPage--;
 				var px = Math.round( scrn.contentDiv.parentNode.offsetWidth * -( Friend.GUI.responsiveViewPage ) ) + 'px';
-				scrn.contentDiv.style.transform = 'translateX(' + px + ')';
+				scrn.contentDiv.style.transform = 'translate3d(' + px + ',0,0)';
 			}
 		}
 		// Show the dock!
@@ -824,7 +825,7 @@ Screen = function ( flags, initObject )
 			else msg.data = content;
 			if( msg.data && msg.data.split )
 				msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
-			if( !msg.origin ) msg.origin = document.location.href;
+			if( !msg.origin ) msg.origin = '*'; // TODO: should be this - document.location.href;
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 			if( callback ) callback();
 			
@@ -892,11 +893,11 @@ Screen = function ( flags, initObject )
 		// We're on a road trip..
 		if( !( friendU && ( friendU == targetU || !targetU ) ) )
 		{
-			ifr.sandbox = 'allow-same-origin allow-forms allow-scripts';
+			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 		}
 		
 		// Allow sandbox flags
-		var sbx = ifr.getAttribute('sandbox') ? ifr.getAttribute('sandbox') : '';
+		var sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
 		sbx = ('' + sbx).split( ' ' );
 		if( this.flags && this.flags.allowPopups )
 		{
@@ -921,7 +922,7 @@ Screen = function ( flags, initObject )
 					base:          base,
 					applicationId: appId,
 					filePath:      filePath,
-					origin:        document.location.href,
+					origin:        '*', // TODO: should be this - document.location.href,
 					screenId:      w.externScreenId,
 					theme:         Workspace.theme,
 					clipboard:     Friend.clipboard
@@ -986,7 +987,7 @@ Screen = function ( flags, initObject )
 		if( this.iframe && this.iframe.contentWindow )
 		{
 			var u = Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0];
-			var origin = event.origin && event.origin != 'null' ? event.origin : u;
+			var origin = u;
 			if( !dataObject.applicationId && this._screen.applicationId )
 			{
 				dataObject.applicationId = this._screen.applicationId;

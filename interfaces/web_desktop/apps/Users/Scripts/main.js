@@ -12,14 +12,13 @@ var state = { mode: null, user: null };
 
 var startlimit = 0;
 var maxlimit = 50;
-
 var nothingnew = false;
-
 var limit = ( maxlimit ? ( startlimit + ', ' + maxlimit ) : '' );
-
 var updateuserlist = true;
-
 var searchQuery = {};
+
+Application.totalUserCount = 0;
+Application.workgroupUserListChanged = false;
 
 Application.run = function( msg, iface )
 {
@@ -82,7 +81,7 @@ Application.receiveMessage = function( msg )
 		case 'addmembers':
 			if( msg.members )
 			{
-				var exist = ge( 'pMembers' ).value.split( ',' );
+				var exist = ge( 'pMembers' ).value ? ge( 'pMembers' ).value.split( ',' ) : [];
 				var newst = msg.members.split( ',' );
 				for( var a = 0; a < newst.length; a++ )
 				{
@@ -96,11 +95,15 @@ Application.receiveMessage = function( msg )
 							break;
 						}
 					}
-					if( !found ) exist.push( newst[a] );
+					if( !found )
+					{
+						Application.workgroupUserListChanged = true;
+						exist.push( newst[a] );
+					}
 				}
 				ge( 'pMembers' ).value = exist.join( ',' );
 			}
-			saveWorkgroup( refreshMembers );
+			if( Application.workgroupUserListChanged ) saveWorkgroup( refreshMembers );
 			break;
 		case 'savestartup':
 			if( msg.value )
@@ -114,6 +117,10 @@ Application.receiveMessage = function( msg )
 				SaveSoftware( msg.apps );
 			}
 			break;
+		case 'editnewworkgroup':
+			RefreshWorkgroups();
+			EditWorkgroup( msg.workgroupid );
+			break;
 	}
 }
 
@@ -122,16 +129,14 @@ Application.listUsers = function( current, mode )
 	// Open system module
 	// TODO: Use user.library
 	var m = new Module( 'system' );
-	
 	updateuserlist = false;
 	
 	var query = ( ge( 'UserFilterInput' ).value ? ge( 'UserFilterInput' ).value : '' );
-	
+		
 	// What happens when we've executed?
 	m.onExecuted = function( e, d )
 	{
 		var users; var i = 0;
-		
 		if( e == 'ok' )
 		{
 			try
@@ -140,22 +145,20 @@ Application.listUsers = function( current, mode )
 			}
 			catch(e)
 			{
-				console.log( '<h4 style="#F00">ERROR!</h4><p>Could not parse user list!</p><p>' + e + ' :: ' + d + '</p>' );
+     			console.log( ' ERROR! Users listUser function ' + e + ' :: ' + d + '</p>' );
 				Notify({'title':'ERROR in Users app','text':'Could not parse user list!'});
-				//ge( 'UserList' ).innerHTML = '<h4 style="#F00">ERROR!</h4><p>Could not parse user list!</p><p>' + e + ' :: ' + d + '</p>';
 				return;
 			}
 			
 			var ml = '';
-			
 			var sw = 1;
 		
-			console.log('users',users);
-			
 			if( ge( 'UsersCount' ) && users['Count'] )
 			{
 				ge( 'UsersCount' ).innerHTML = ' (' + users['Count'] + ')';
 			}
+			
+			if( users['Count'] ) Application.totalUserCount = users['Count'];
 			
 			for( var a in users )
 			{
@@ -205,7 +208,7 @@ Application.listUsers = function( current, mode )
 		
 		updateuserlist = true;
 		
-		console.log( 'listusers result: ', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query, res: e, num: i } );
+		//console.log( 'listusers result: ', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query, res: e, num: i } );
 	}
 	// Execute the "get user list"
 	m.execute( 'listusers', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query } );
@@ -342,17 +345,16 @@ function CheckUserList( ele )
 	
 	if( maxlimit > 0 && !query && !nothingnew && updateuserlist && check && check >= 50 )
 	{
-		// 
-		
+		// maxlimit startlimit and limit are GLOBAL variables our app scope !!!
+
 		startlimit = ( startlimit + maxlimit );
+		if( startlimit > Application.totalUserCount ) startlimit = Math.max( 0, Application.totalUserCount - maxlimit);
+
 		
-		
-		
-		//console.log( 'limit [' + check + '] ' + limit );
+		var listAmount = ( startlimit + maxlimit > Application.totalUserCount ? maxlimit : 2 * maxlimit);
+		limit = ''+ startlimit +','+ Math.min( maxlimit, Application.totalUserCount - startlimit - 1)  +'';
 		
 		Application.listUsers();
-		//RefreshSessions();
-		
 	}
 }
 
@@ -371,8 +373,6 @@ function EditUser( id, mode )
 			state = { mode: mode ? mode : 'edit', user: d };
 			
 			var str = ''; var ugs = '';
-			
-			
 			var dat;
 			try
 			{
@@ -384,7 +384,6 @@ function EditUser( id, mode )
 				str += '<option value="0">' + i18n( 'i18n_none' ) + '</option>';
 				
 				var set = false;
-				
 				for( k in dat.Setup )
 				{
 					if( !set && dat.Setup[k].UserID > 0 )
@@ -412,17 +411,7 @@ function EditUser( id, mode )
 				}
 			}
 			
-			/*if( dat.Workgroup && dat.Workgroup.length > 0 )
-			{
-				ugs += '<option value="0">' + i18n( 'i18n_select_workgroups' ) + '</option>';
-				
-				for( k in dat.Workgroup )
-				{
-					var s = ( dat.Workgroup[k].UserID > 0 ? ' selected="selected"' : '' );
-					
-					ugs += '<option value="' + dat.Workgroup[k].ID + '"' + s + '>' + dat.Workgroup[k].Name + '</option>';
-				}
-			}*/
+
 			
 			var f = new File( 'Progdir:Templates/user.html' );
 			f.replacements = {
@@ -445,15 +434,12 @@ function EditUser( id, mode )
 					ge( 'SetupContainer' ).style.display = 'none';
 				}
 				
-				if( ge( 'WorkgroupContainer' ) && !dat.Workgroup.length )
+				/*if( ge( 'WorkgroupContainer' ) && !dat.Workgroup.length )
 				{
 					ge( 'WorkgroupContainer' ).style.display = 'none';
-				}
+				}*/
 				
-				if( dat.Workgroup )
-				{
-					RefreshUserGroups( dat.Workgroup );
-				}
+				RefreshUserGroups( (dat.Workgroup ? dat.Workgroup : false) );
 				
 				var f = ge( 'UserGui' ).getElementsByTagName( 'option' );
 				for( var a = 0; a < f.length; a++ )
@@ -539,11 +525,6 @@ function SaveUser( id )
 				EditUser( id );
 			}
 			
-			if( ge( 'pUserWorkgroup' ) )
-			{
-				ApplyUserGroups( id );
-			}
-			
 			Application.listUsers( id );
 		}
 		else
@@ -551,6 +532,31 @@ function SaveUser( id )
 			console.log('Error during user update',e,d);
 		}
 		//RefreshSessions( id )	
+	}
+
+	if( ge( 'pUserWorkgroup' ) )
+	{
+		var workgroupmemberships = [];
+
+		var obj = ge( 'pUserWorkgroup' ).obj;
+		
+		if( obj )
+		{
+			for( k in obj )
+			{
+				if( obj[k].ID > 0 && obj[k].UserID > 0 )
+				{
+					workgroupmemberships.push( obj[k].ID );
+				}
+			}
+		}
+		if ( workgroupmemberships.length == 0) {
+			args.workgroups = "false";
+		}
+		else
+		{
+			args.workgroups = workgroupmemberships.join(',');
+		}
 	}
 	
 	args.command ='update';
@@ -582,7 +588,6 @@ function DeleteUser( id )
 				    
 				    ge( 'UserList' ).innerHTML = '';
 				    Application.listUsers();
-				    console.log('User deleted. List refreshed?');
 				}
 				else
 				{
@@ -596,8 +601,99 @@ function DeleteUser( id )
 	} );
 }
 
+function selectSetupUploadImage()
+{
+	if( !ge( 'pSetupID' ).value ) 
+	{
+		Notify( { title: 'No template ID', text: 'Please save your user template before selecting default wallpaper.' } );
+		return;
+	}
+	var flags = {
+		type: 'load',
+		path: 'Home:',
+		suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+		triggerFunction: function( items )
+		{
+			if( items && items.length && items[ 0 ].Path )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						refreshSetupWallpaper();
+					}
+				}
+				m.execute( 'usersetupwallpaperset', { path: items[ 0 ].Path, setupId: ge( 'pSetupID' ).value } );
+			}
+		}
+	};
+	// Execute
+	( new Filedialog( flags ) );
+}
+
+// Refresh the preview of the user template wallpaper
+function refreshSetupWallpaper()
+{
+	if( !ge( 'pSetupID' ).value ) return;
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			var i = new Image();
+			i.src = '/system.library/module/?module=system&command=usersetupwallpaperget&setupId=' + ge( 'pSetupID' ).value + '&authid=' + Application.authId + '&random=' + ( Math.random() * 999999 + Math.random() * 909999 );
+			i.onload = function()
+			{
+				i.style.width = '320px';
+				i.style.height = 'auto';
+				i.className = 'FloatLeft';
+				ge( 'DefaultWallpaperPreview' ).innerHTML = '';
+				ge( 'DefaultWallpaperPreview' ).appendChild( i );
+				
+				var dele = document.createElement( 'button' );
+				dele.className = 'FloatRight IconSmall fa-remove';
+				dele.innerHTML = ' Remove image';
+				dele.onclick = function( e )
+				{
+					Confirm( 'Are you sure?', 'This will delete the wallpaper from this template.', function( r )
+					{
+						if( r.data == true )
+						{
+							deleteSetupWallpaper();
+						}
+					} );
+				}
+				ge( 'DefaultWallpaperPreview' ).appendChild( dele );
+				var b = document.createElement( 'br' );
+				b.style.clear = 'both';
+				ge( 'DefaultWallpaperPreview' ).appendChild( b );
+			}
+			if( i.width || i.height )
+				i.onload();
+		}
+	}
+	m.execute( 'usersetupwallpaperexists', { setupId: ge( 'pSetupID' ).value } );
+}
+
+// For cleaning out the wallpaper for the user template
+function deleteSetupWallpaper()
+{
+	if( !ge( 'pSetupID' ).value ) return;
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		ge( 'DefaultWallpaperPreview' ).innerHTML = '';
+	}
+	m.execute( 'usersetupwallpaperdelete', { setupId: ge( 'pSetupID' ).value } );
+}
+
+
 function RefreshUserGroups( groups )
 {
+	console.log('we refresh our user groups---', groups);
 	if ( ge( 'pUserWorkgroup' ) )
 	{
 		if (!ge( 'pUserWorkgroup' ).innerHTML )
@@ -606,7 +702,7 @@ function RefreshUserGroups( groups )
 		}
 
 		var str = ''; var ugs = '';
-		
+		var skipgroups = [];
 		if ( groups )
 		{
 			var sw = 1;
@@ -617,16 +713,14 @@ function RefreshUserGroups( groups )
 			
 			for( k in groups )
 			{
-				if( groups[k].UserID > 0 )
+				if( groups[k].UserID > 0 && skipgroups.indexOf( parseInt( groups[k].ID ) ) == -1 )
 				{
 					str += '<tr itemid="' + ( 1 + k ) + '" value="' + groups[k].ID + '" class="sw' + ( sw = ( sw == 1 ? 2 : 1 ) ) + '">' +
-						   '<td>&nbsp;' + groups[k].Name + '</td>' +
+						   '<td>&nbsp;' + (groups[k].Name ? groups[k].Name : groups[k].name) + '</td>' +
 						   '<td width="24px" onclick="RemoveUserGroups(this)" class="MousePointer IconSmall fa-remove">&nbsp;&nbsp;&nbsp;</td>' +
 						   '</tr>';
-				}
-				else
-				{
-					ugs += '<option value="' + groups[k].ID + '">' + groups[k].Name + '</option>';
+						   
+    				skipgroups.push( parseInt(groups[k].ID) );
 				}
 			}
 			
@@ -637,10 +731,18 @@ function RefreshUserGroups( groups )
 		
 		ge( 'pUserWorkgroup' ).obj = ( groups ? groups : [] );
 		
-		if( ge( 'WorkgroupSelect' ) )
+		if( ge( 'WorkgroupSelect' ) && Application.workgroups )
 		{
-			if( !ugs )
+			ugs += '<option value="0">' + i18n( 'i18n_select_workgroups' ) + '</option>';
+
+			for( k in Application.workgroups )
 			{
+				if( !(skipgroups && skipgroups.indexOf(Application.workgroups[k].ID) != -1 ) ) ugs += '<option value="' + Application.workgroups[k].ID + '">' + Application.workgroups[k].name + '</option>';
+			}	
+
+			if( ugs == '<option value="0">' + i18n( 'i18n_select_workgroups' ) + '</option>' )
+			{
+
 				ge( 'WorkgroupSelect' ).style.display = 'none';
 			}
 			else
@@ -684,9 +786,9 @@ function AddUserGroup()
 {
 	if ( ge( 'Workgroup' ) && ge( 'pUserWorkgroup' ) && ge( 'pUserWorkgroup' ).obj )
 	{
-		groups = new Array();
+		groups = ge( 'pUserWorkgroup' ).obj ? ge( 'pUserWorkgroup' ).obj : [];
 		
-		var obj = ge( 'pUserWorkgroup' ).obj;
+		var obj = Application.workgroups;
 	
 		if ( obj && ge( 'Workgroup' ).value )
 		{
@@ -850,6 +952,7 @@ function EditSetup( id )
 			RefreshStartup( data.startups );
 			RefreshLanguages( data.language );
 			RefreshThemes( data.theme );
+			refreshSetupWallpaper();
 		}
 		f.load();
 	}
@@ -907,7 +1010,7 @@ function RefreshSoftware( apps )
 			
 			ge( 'pSetupApplications' ).obj = ( apps ? apps : false );
 		}
-		m.execute( 'software' );
+		m.execute( 'software', {'mode':'showall'} );
 	}
 }
 
@@ -926,12 +1029,7 @@ function AddSoftware()
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		v.setContent( data, function()
-		{
-			var o = { command: 'apps', viewid: ge( 'viewId' ).value, guiview: v.getViewId() };
-			
-			v.sendMessage( o );
-		} );
+		v.setContent( data );
 	}
 	f.load();
 }
@@ -1058,6 +1156,7 @@ function AddStartup()
 	{
 		v.setContent( data, function()
 		{
+
 			var o = { command: 'item', viewid: ge( 'viewId' ).value, guiview: v.getViewId() };
 			
 			v.sendMessage( o );
@@ -1298,44 +1397,9 @@ function ApplySetup( id )
 		m.onExecuted = function( e, d )
 		{
 			try { d = JSON.parse( d ) } catch( e ) {}
-			
-			console.log( { e: e, d: d, id: ( ge( 'Setup' ).value ? ge( 'Setup' ).value : '0' ), userid: id } );
-			
 			EditUser( id );
 		}
 		m.execute( 'usersetupapply', { id: ( ge( 'Setup' ).value ? ge( 'Setup' ).value : '0' ), userid: id } );
-	}
-}
-
-function ApplyUserGroups( id )
-{
-	if( id && ge( 'pUserWorkgroup' ) )
-	{
-		var opt = [];
-		
-		var obj = ge( 'pUserWorkgroup' ).obj;
-		
-		if( obj )
-		{
-			for( k in obj )
-			{
-				if( obj[k].ID > 0 && obj[k].UserID > 0 )
-				{
-					opt.push( obj[k].ID );
-				}
-			}
-		}
-		
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			try { d = JSON.parse( d ) } catch( e ) {}
-			
-			console.log( { e: e, d: d, workgroups: ( opt ? opt : '0' ), userid: id } );
-			
-			EditUser( id );
-		}
-		m.execute( 'workgroupupdate', { workgroups: ( opt ? opt : '0' ), userid: id } );
 	}
 }
 
@@ -1348,10 +1412,7 @@ function ApplyGroupSetup( id )
 		{
 			try { d = JSON.parse( d ) } catch( e ) {}
 			
-			console.log( { e: e, d: d, id: ( ge( 'pWorkgroupSetup' ).value ? ge( 'pWorkgroupSetup' ).value : '0' ), members: ( ge( 'pMembers' ).value ? ge( 'pMembers' ).value : '0' ), group: id } );
-			
 			RefreshWorkgroups();
-			//EditWorkgroup( id );
 		}
 		m.execute( 'usersetupapply', { id: ( ge( 'pWorkgroupSetup' ).value ? ge( 'pWorkgroupSetup' ).value : '0' ), members: ( ge( 'pMembers' ).value ? ge( 'pMembers' ).value : '0' ), group: id } );
 	}
@@ -1383,32 +1444,42 @@ function AddWorkgroup()
 		width: 320,
 		height: 300
 	} );
-	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var ff = new Library( 'system.library' );
+	ff.onExecuted = function( ee, dd )
 	{
 		var wg = '<option value="0">none</option>';
 		
 		try
 		{
-			if( e == 'ok' && d )
+			if( ee == 'ok' && dd )
 			{
-				d = JSON.parse( d );
-				
-				if( d )
+				if(typeof dd != 'object') dd = JSON.parse( dd );
+			}
+		}
+		catch( error ){ 
+			Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+			return;
+		}		
+
+		if( dd.groups )
+		{
+			dd = dd.groups;
+			for( var i in dd )
+			{
+				if( dd[i].ID )
 				{
-					for( var i in d )
-					{
-						if( d[i].ID )
-						{
-							wg += '<option value="' + d[i].ID + '">' + d[i].Name + '</option>';
-						}
-					}
+					wg += '<option value="' + dd[i].ID + '">' + dd[i].name + '</option>';
 				}
 			}
 		}
-		catch( e ){  }
-		
+		else
+		{
+			Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+			return;
+
+		}
+
 		var f = new File( 'Progdir:Templates/workgroup.html' );
 		f.replacements = {
 			'id': '',
@@ -1424,157 +1495,167 @@ function AddWorkgroup()
 			v.setContent( data );
 		}
 		f.load();
-	}	
-	m.execute( 'workgroups' );
+		
+		
+		
+	}
+	ff.execute('group',{'command':'list'});
+
 }
 
 function EditWorkgroup( id )
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	if( !id ) return;
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
-		var ele;
-		
-		try{
-			ele = JSON.parse( d );
-		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'}); return; }
-		
-		var str = '';
-		
-		if( ele.Setup && ele.Setup.length > 0 )
+		if( e == 'ok' )
 		{
-			str += '<option value="0">none</option>';
-			
-			for( k in ele.Setup )
-			{
-				var s = ( ele.Setup[k].UserID > 0 ? ' selected="selected"' : '' );
-				
-				str += '<option value="' + ele.Setup[k].ID + '"' + s + '>' + ele.Setup[k].Name + '</option>';
+			var ele;
+
+			Application.workgroupUserListChanged = false;
+			try{
+				ele = JSON.parse( d );
+			} catch(e) {
+				console.log('error during loading workgroup... ',e,d);
+				Notify({'title':'ERROR in Users app','text':'Could not load workgroup data! Did not find workgroup details here ' + d});
+				return;
 			}
-		}
-		
-		var mm = new Module( 'system' );
-		mm.onExecuted = function( ee, dd )
-		{
-			var wg = '<option value="0">none</option>';
 			
-			try
+			//now load all workgroups anew for the damn dropdown for parent???
+			var ff = new Library( 'system.library' );
+			ff.onExecuted = function( ee, dd )
 			{
-				if( ee == 'ok' && dd )
+				var wg = '<option value="0">none</option>';
+				
+				try
 				{
-					dd = JSON.parse( dd );
-					
-					if( dd )
+					if( ee == 'ok' && dd )
 					{
-						for( var i in dd )
+						if(typeof dd != 'object') dd = JSON.parse( dd );
+					}
+				}
+				catch( error ){ 
+					Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+					return;
+				}		
+
+				if( dd.groups )
+				{
+					dd = dd.groups;
+					for( var i in dd )
+					{
+						if( dd[i].ID )
 						{
-							if( dd[i].ID )
+							if( dd[i].ID == ele.groupid || dd[i].parentid == ele.groupid )
 							{
-								if( dd[i].ID == ele.ID || dd[i].ParentID == ele.ID )
-								{
-									continue;
-								}
-								
-								wg += '<option value="' + dd[i].ID + '"' + ( ele.ParentID && dd[i].ID == ele.ParentID ? ' Selected="Selected"' : '' ) + '>' + dd[i].Name + '</option>';
+								continue;
 							}
+
+							wg += '<option value="' + dd[i].ID + '"' + ( ele.parentid && dd[i].ID == ele.parentid ? ' Selected="Selected"' : '' ) + '>' + dd[i].name + '</option>';
 						}
 					}
 				}
-			}
-			catch( e ){  }
-			
-			var f = new File( 'Progdir:Templates/workgroup.html' );
-			f.replacements = {
-				'id': ele.ID,
-				'name': ele.Name,
-				'parent': wg,
-				'members': ele.Members,
-				'setup': str,
-				'viewId': ge( 'viewId' ).value,
-				'parentViewId': ge( 'viewId' ).value,
-				'delCss': ''
-			};
-			f.i18n();
-			f.onLoad = function( data )
-			{
-				ge( 'WorkgroupGui' ).innerHTML = data;
-			
-				if( ge( 'SetupGroupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'SetupGroupContainer' ).value )
+				else
 				{
-					ge( 'SetupGroupContainer' ).style.display = 'none';
+					Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'});
+					return;
+
 				}
-			
-				refreshMembers( ele.ID );
+
+				var t = new File( 'Progdir:Templates/workgroup.html' );
+				t.replacements = {
+					'id': ele.groupid,
+					'name': ele.name,
+					'parent': wg,
+					'members': ele.users,
+					'setup': '',
+					'viewId': ge( 'viewId' ).value,
+					'parentViewId': ge( 'viewId' ).value,
+					'delCss': ''
+				};
+				t.i18n();
+				t.onLoad = function( data )
+				{
+					ge( 'WorkgroupGui' ).innerHTML = data;
+				
+					if( ge( 'SetupGroupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'SetupGroupContainer' ).value )
+					{
+						ge( 'SetupGroupContainer' ).style.display = 'none';
+					}
+				
+					refreshMembers( ele.groupid );
+				}
+				t.load();
+				
+				
+				
 			}
-			f.load();
-		}	
-		mm.execute( 'workgroups' );
-	}	
-	m.execute( 'workgroupget', { id: id } );
+			ff.execute('group',{'command':'list'});
+					
+			
+		}
+	}
+	f.execute( 'group', {'command':'listdetails','id':id} );
 }
 
 // Save a workgroup
 function saveWorkgroup( callback, tmp )
 {
-	var o = {
-		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
-		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
-		Name: ge( 'pWorkgroupName' ).value,
-		Setup: ( ge( 'pWorkgroupSetup' ) ? ge( 'pWorkgroupSetup' ).value : '' ),
-		Members: ge( 'pMembers' ).value
+
+	var args = {
+		id: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
+		parentid: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+		groupname: ge( 'pWorkgroupName' ).value,
 	};
-	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	if( Application.workgroupUserListChanged ) args.users = ge( 'pMembers' ).value ? ge( 'pMembers' ).value : 'false';
+	Application.workgroupUserListChanged = false;
+		
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
-			ge( 'pWorkgroupID' ).value = d;
+			Notify({'title':'Users','text':'Workgroup changes saved.'});
 		}
-		//update all members mount points...
-		var members = ge( 'pMembers' ).value.split(',');
-		var calls = [];
-		if( members.length > 0 )
+		else
 		{
-			for(var i = 0; i < members.length; i++)
-			{
-				calls[i] = new Library('system.library');
-				calls[i].onExecuted = function( e,d ) {  };
-				
-				calls[i].uindex = i;
-				calls[i].execute('user/update?id=' + members[i]);
-			}
+			console.log('Error during workgroup update',e,d);
 		}
-		
-		
+	
 		if( callback ) callback();
 		
-		if( o.ID > 0 && tmp )
+		if( args.id > 0 && tmp )
 		{
-			ApplyGroupSetup( o.ID );
+			ApplyGroupSetup( args.id );
 		}
 		else
 		{
 			RefreshWorkgroups();
 		}
+		
 	}
 	
-	console.log( o );
-	
-	if( o.ID > 0 )
-	{
-		m.execute( 'workgroupupdate', o );
-	}
+
+	//console.log('sending this for saving',args);
+	if( args.id > 0  )
+		args.command ='update';
 	else
-	{
-		m.execute( 'workgroupadd', o );
-	}
+		args.command ='create';
+		
+	f.execute( 'group', args );
+
+
+
 }
 
 function RefreshWorkgroups()
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e != 'ok' )
 		{
@@ -1584,17 +1665,21 @@ function RefreshWorkgroups()
 		var rows;
 		try{
 			rows = JSON.parse( d );
+			rows = rows.groups;
+			Application.workgroups = rows;
 		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load workgroups!'}); return; }
 		var ml = '';
 		var sw = 1;
+		
 		for( var a in rows )
 		{
-			ml += '<div workgroupId="' + rows[a].ID + '" class="sw' + sw + ' HRow BorderBottom Padding" onclick="EditWorkgroup(' + rows[a].ID + ')" onmouseover="SwitchRow(this, \'over\')" onmouseout="SwitchRow(this, \'out\')"><div class="IconMedium fa-group FloatLeft"></div><div class="FloatLeft LineHeight2x MarginLeft">' + rows[a].Name + '</div></div>';
+			ml += '<div workgroupId="' + rows[a].ID + '" class="sw' + sw + ' HRow BorderBottom Padding" onclick="EditWorkgroup(' + rows[a].ID + ')" onmouseover="SwitchRow(this, \'over\')" onmouseout="SwitchRow(this, \'out\')"><div class="IconMedium fa-group FloatLeft"></div><div class="FloatLeft LineHeight2x MarginLeft">' + rows[a].name + '</div></div>';
 			sw = sw == 1 ? 2 : 1;
 		}
 		ge( 'WorkgroupList' ).innerHTML = ml;
 	}
-	m.execute( 'workgroups' );
+	f.execute('group',{'command':'list'});
+
 }
 
 // Add members to workgroup
@@ -1627,32 +1712,29 @@ function cancelWorkgroup()
 
 function refreshMembers( id )
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
-			var re;
-			try
-			{
-				re = JSON.parse( d );
-			} catch( e ) { Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'}); return; }
-			
-			var exist = re.Members;
+			var re = JSON.parse( d );
+			var exist = re.users;
 			ge( 'pMembersListed' ).innerHTML = '';
 			var out  = [];
 			for( var a = 0; a < exist.length; a++ )
 			{
 				var o = document.createElement( 'option' );
-				o.value = exist[a].ID;
-				o.innerHTML = exist[a].FullName;
+				o.value = exist[a].id;
+				o.innerHTML = exist[a].fullname; // we need some form of name to display here :)
 				ge( 'pMembersListed' ).appendChild( o );
-				out.push( exist[a].ID );
+				out.push( exist[a].id );
 			}
 			ge( 'pMembers' ).value = out.join( ',' );
 		}
 	}
-	m.execute( 'workgroupget', { id: ge( 'pWorkgroupID' ).value } );
+	f.execute( 'group', {'command':'listdetails','id':ge( 'pWorkgroupID' ).value} );
+
 }
 
 // Remove users from workgroup
@@ -1670,20 +1752,34 @@ function removeFromGroup()
 		else idstr.push( opts[a].value );
 	}
 	ge( 'pMembers' ).value = idstr.join( ',' );
+	
 	for( var a = 0; a < ids.length; a++ )
 		ids[a].parentNode.removeChild( ids[a] );
+
+	Application.workgroupUserListChanged = true;
 	saveWorkgroup();
 }
+
 
 // Remove a workgroup outright
 function deleteWorkgroup()
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	Confirm( i18n( 'i18n_deleting_workgroup' ), i18n( 'i18n_deleting_workgroup_verify' ), function( result )
 	{
-		RefreshWorkgroups();
-	}
-	m.execute( 'workgroupdelete', { id: ge( 'pWorkgroupID' ).value } );
+		// Confirmed!
+		if( result && result.data && result.data == true )
+		{
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				RefreshWorkgroups();
+			}
+			f.execute( 'group', {'command':'delete','id':ge( 'pWorkgroupID' ).value} );		
+			ge( 'pWorkgroupID' ).value = 0;
+			ge( 'WorkgroupGui' ).innerHTML = '';
+		}
+	} );	
+
 }
 
 /* Sessions --------------------------------------------------------------- */
@@ -1769,3 +1865,5 @@ function TogglePasswordField( inputid )
 			finput.setAttribute('type','text')
 	}
 }
+
+

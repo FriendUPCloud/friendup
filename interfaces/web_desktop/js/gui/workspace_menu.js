@@ -126,7 +126,7 @@ var WorkspaceMenu =
 					
 					return cancelBubble( e );
 				}
-				else
+				else if( !this.classList.contains( 'Open' ) )
 				{
 					var ts = this;
 					this.style.willChange = 'content transform';
@@ -727,19 +727,33 @@ var WorkspaceMenu =
 						// Add back key
 						if( isMobile )
 						{
+							// Set the back button on menu if possible
 							if( !WorkspaceMenu.back )
 							{
-								var b = document.createElement( 'div' );
-								b.className = 'MenuBack';
-								b.target = this;
-								b.onclick = function( e )
+								var wsp = ge( 'WorkspaceMenu' );
+								var isOpen = false;
+								for( var c = 0; c < wsp.childNodes.length; c++ )
 								{
-									this.target.classList.remove( 'Open' );
-									if( this.parentNode )
-										this.parentNode.removeChild( this );
-									return cancelBubble( e );
+									var ele = wsp.childNodes[ c ];
+									if( ele.classList && ele.classList.contains( 'HasSubMenu' ) && ele.classList.contains( 'Open' ) )
+									{
+										isOpen = true;
+									}
 								}
-								ge( 'WorkspaceMenu' ).appendChild( b );
+								if( !isOpen )
+								{
+									var b = document.createElement( 'div' );
+									b.className = 'MenuBack';
+									b.target = this;
+									b.onclick = function( e )
+									{
+										this.target.classList.remove( 'Open' );
+										if( this.parentNode )
+											this.parentNode.removeChild( this );
+										return cancelBubble( e );
+									}
+									wsp.appendChild( b );
+								}
 							}
 						}
 						var ts = this;
@@ -833,3 +847,9 @@ var WorkspaceMenu =
 	}
 }
 
+// The mobile context menu
+var MobileContextMenu = {
+	show: function( target )
+	{
+	}
+};

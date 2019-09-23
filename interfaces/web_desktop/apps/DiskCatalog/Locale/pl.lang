@@ -1,0 +1,113 @@
+i18n_mountlist                    : Lista montowania
+i18n_disk_catalog                 : Katalog dysków
+edit_connection                   : Edytuj połączenie
+i18n_edit_connection              : Edytuj połączenie
+i18n_new_connection               : Nowe połączenie
+new_connection                    : Nowe połączenie
+i18n_shared_drive                 : Współdzielony dysk
+i18n_pollable                     : Sieć udostępniona
+i18n_short_desc                   : Krótki opis
+i18n_publisher                    : Wydawca
+i18n_visible                      : Pokaż na pulpicie
+i18n_select_user                  : Wybierz użytkownika
+
+i18n_storage_disks                : Dyski pamięci masowej
+i18n_software_disks               : Dyski z oprogramowaniem
+
+i18n_disk_cover                   : Okładka dysku
+i18n_choose_disk_cover            : Wybierz okładki dysku
+i18n_browse                       : Przeglądaj...
+i18n_cant_show_disk_cover         : Nie można ustawić okładki dysku
+i18n_cant_show_disk_desc          : Nie można załadować okładki dysku do bazy danych.
+
+i18n_sure_delete                  : Jesteś pewien?
+i18n_sure_delete_desc             : Usunięcie dysku spowoduje usunięcie go z katalogu.
+
+i18n_select_dos_driver            : Wybierz sterownik DOS
+i18n_select_encryption_key        : Wybierz klucz szyfrowania
+i18n_placeholder_connection       : Moje urządzenie
+i18n_choose_type                  : Wybierz typ
+i18n_loading                      : Ładowanie
+i18n_device_name                  : Nazwa urządzenia
+i18n_encryption_key               : Klucz szyfrowania
+
+i18n_mounting                     : Montowanie
+i18n_unmounting                   : Odmontowanie
+i18n_executable                   : plik wykonywalny JSX
+i18n_successfully_mounted         : Twoje urządzenie zostało pomyślnie zamontowane.
+i18n_successfully_unmounted       : Twoje urządzenie zostało pomyślnie odmontowane.
+i18n_fail_mount                   : Nie można podłączyć urządzenia
+i18n_fail_mount_more              : Nie można podłączyć urządzenia.
+i18n_fail_unmount                 : Nie można odmontować urządzenia
+i18n_fail_unmount_more            : Nie można odmontować urządzenia.
+
+i18n_save                         : Zapisz
+i18n_cancel                       : Anuluj
+
+i18n_connection_details           : Szczegóły połączenia
+i18n_notes                        : Notatki
+i18n_directory                    : Katalog zdalny
+i18n_login_info                   : Dane logowania
+i18n_your_notes                   : Twoje notatki
+i18n_username                     : Nazwa użytkownika
+i18n_password                     : Hasło
+i18n_host_port                    : Port serwera
+i18n_host_ip                      : Adres serwera lub adres IP
+i18n_workgroup_name               : Twoja grupa robocza
+i18n_workgroup                    : Grupa robocza
+
+i18n_key                   		  : Klucz
+
+i18n_MySQL Based Filesystem       : dysk SQL
+i18n_SQLDrive                     : dysk SQL
+
+i18n_Server filesystem            : System plików serwera
+i18n_Local                        : System plików serwera
+
+i18n_Friend Store                 : Sklep Friend
+i18n_FriendStore                  : Sklep Friend
+
+i18n_Samba	                      : System plików Samby
+
+i18n_Dropbox Based Filesystem     : Dysk Dropbox
+i18n_DropboxDrive                 : Dysk Dropbox
+
+i18n_GoogleDrive                  : Dysk Google
+i18n_Google Drive Based Filesystem: Dysk Google
+
+i18n_Mount Wordpress sites as doors : Dysk Wordpress
+i18n_Wordpress                    : Dysk Wordpress
+
+i18n_MySQL Based Filesystem for workgroups : System plików oparty na MySQL dla grup roboczych
+i18n_SQLWorkgroupDrive            : System plików oparty na MySQL dla grup roboczych
+
+i18n_Mount Treeroot servers as doors : Dysk Treeroot
+i18n_Treeroot                     : Dysk Treeroot
+
+i18n_Mount ARENA sites as doors   : Dysk Arena CM
+i18n_ArenaCM                      : Dysk Arena CM
+
+i18n_Mount websites as doors      : Website drive
+i18n_Website                      : Website drive
+
+i18n_Assign                       : Przypisz dysk
+i18n_AssignDOSDriver              : Zagregowany wirtualny system plików
+
+i18n_INRam                        : Dysk INRam
+i18n_INRamDOSdriver               : Sterownik INRam DOS dla wielu użytkowników
+
+i18n_FriendStoreDrive             : Dysk FriendStore
+i18n_FriendStoreDOSdriver         : Dysk FriendStore dla dostawców
+
+i18n_Remote                       : Remote Drive
+i18n_RemoteDOSdriver              : Remote DOS driver
+
+i18n_Node                         : Sień Node
+i18n_NodeDOSDriver                : Sterownik dysku sieciowego oparty na bazie danych Node
+
+i18n_SFTP                         : SFTP
+
+i18n_successfully_unmounted       : Pomyślnie odmontowano urządzenie
+i18n_your_device_was              : Twoje urządzenie zostało pomyślnie zamontowane.
+i18n_failed_to_unmount            : Nie można odmontować urządzenia
+i18n_could_not_unmount            : Nie można odmontować urządzenia. Zmiany <b>NIE zapisano</b>!

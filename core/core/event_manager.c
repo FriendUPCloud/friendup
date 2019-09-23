@@ -33,6 +33,8 @@
 #include <core/thread.h>
 #include <time.h>
 #include <unistd.h>
+#include <util/string.h>
+#include <mutex/mutex_manager.h>
 
 void *EventManagerLoopThread( FThread *ptr );
 
@@ -52,6 +54,7 @@ EventManager *EventManagerNew( void *sb )
 	{
 		em->lastID = 0xf;
 		em->em_SB = sb;
+		pthread_mutex_init( &(em->em_Mutex), NULL );
 		em->em_EventThread = ThreadNew( EventManagerLoopThread, em, TRUE, NULL );
 	}
 	else
@@ -108,8 +111,14 @@ void EventManagerDelete( EventManager *em )
 			CoreEvent *rem = locnce;
 			locnce = (CoreEvent *)locnce->node.mln_Succ;
 
+			if( rem->ce_Name != NULL )
+			{
+				FFree( rem->ce_Name );
+			}
 			FFree( rem );
 		}
+		
+		pthread_mutex_destroy( &(em->em_Mutex) );
 		
 		FFree( em );
 	}
@@ -147,6 +156,7 @@ void EventLaunch( CoreEvent *ptr )
 	threadsNo--;
 	ptr->ce_Launched = FALSE;
 	
+	DEBUG("[EventLaunch] quit\n");
 	pthread_exit( 0 );
 }
 
@@ -180,7 +190,11 @@ void *EventManagerLoopThread( FThread *ptr )
 		CoreEvent *locnce = ce->em_EventList;
 		while( locnce != NULL )
 		{
-			EventCheck( ce, locnce, stime );
+			if( FRIEND_MUTEX_LOCK( &(ce->em_Mutex) ) == 0 )
+			{
+				EventCheck( ce, locnce, stime );
+				FRIEND_MUTEX_UNLOCK( &(ce->em_Mutex) );
+			}
 			
 			locnce = (CoreEvent *) locnce->node.mln_Succ;
 		}
@@ -249,18 +263,19 @@ void *EventManagerLoopThread( FThread *ptr )
  * Add a new event to the list of events to handle
  *
  * @param em pointer to the event manager structure
- * @param id ID of the event returned by EventGetNewID
- * @param thread pointer to the thread to send the message to
+ * @param name name of event
+ * @param function pointer to function which will be called
+ * @param data pointer to data which will be provided to function
  * @param nextCall delay before sending the message
  * @param repeat number of repetitions
  * @return 0 when success, otherwise error number
  */
-int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat )
+int EventAdd( EventManager *em, char *name, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat )
 {
 	CoreEvent *nce = FCalloc( sizeof( CoreEvent ), 1 );
 	if( nce != NULL )
 	{
-		//FThread *nth = ThreadNew( function, em->em_SB, FALSE );
+		//FThread *nth = ThreadNew( function, em->em_SB, FALSE, NULL );
 		//CoreEvent *retEv = NULL;
 		//nce->ce_Thread = thread;
 		nce->ce_Function = function;
@@ -269,6 +284,7 @@ int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, tim
 		nce->ce_RepeatTime = repeat;
 		nce->ce_TimeDelta = deltaTime;
 		nce->ce_Data = data;
+		nce->ce_Name = StringDuplicate( name );
 
 		DEBUG("[EventManager] Add new event, ID: %lu\n", nce->ce_ID );
 
@@ -294,7 +310,11 @@ int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, tim
 CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 {
 	FBOOL removeEvent = FALSE;
-	
+	if( ev == NULL )
+	{
+		FERROR("Cannot do anything with empty event\n");
+		return NULL;
+	}
 	//DEBUG("Check event: time %lu eventTime %lu\n", ti, ev->ce_Time );
 	
 	if( ti >= ev->ce_Time  )
@@ -315,7 +335,7 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 			ev->ce_RepeatTime--;
 		}
 		
-		DEBUG("[EventManager] Start thread %p  SB ptr %p\n", ev->ce_Function, em->em_SB );
+		DEBUG("[EventManager] Start thread %p  SB ptr %p event name: %s\n", ev->ce_Function, em->em_SB, ev->ce_Name );
 		//ThreadStart( ev->ce_Thread );
 		//ev->ce_Data = em->em_SB;
 		//ev->ce_Thread = ThreadNew( EventLaunch, ev, TRUE, NULL );

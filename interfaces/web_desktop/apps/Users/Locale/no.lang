@@ -92,6 +92,9 @@ i18n_none                            : Ingen
 i18n_select_template                 : Velg mal
 i18n_select_workgroups               : Velg brukergrupper
 
+i18n_default_wallpaper               : Standard skrivebordsbakgrunn
+i18n_select_wallpaper_image          : Velg skrivebords bakgrunn
+
 #Locale ------------------------------------------------------------------------
 
 i18n_locale_no                          : Norsk

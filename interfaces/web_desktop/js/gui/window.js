@@ -8,13 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var FUI_MOUSEDOWN_RESIZE  =  2;
-var FUI_MOUSEDOWN_WINDOW  =  1;
-var FUI_MOUSEDOWN_SCREEN  =  3;
-var FUI_MOUSEDOWN_SCROLLV = 10;
-var FUI_WINDOW_MARGIN     =  3;
-var FUI_MOUSEDOWN_PICKOBJ = 11;
-
 /* Make movable box --------------------------------------------------------- */
 
 Friend          = window.Friend || {};    // Friend main namespace
@@ -354,6 +347,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 		}
 	}
 
+
 	// TODO: Let a central resize code handle this (this one?)
 	// Maximum dimensions
 	var pheight = div.parentNode ? div.parentNode.offsetHeight : GetWindowHeight();
@@ -684,6 +678,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 	if( !flagMaxHeight || flagMaxHeight > maxHeight )
 	{
 		div.style.maxHeight = maxHeight + 'px';
+		div.parentNode.style.maxHeight = maxHeight + 'px';
 	}
 
 	var mt = margins.top;
@@ -897,13 +892,21 @@ function _ActivateWindowOnly( div )
 				( function( dd ) {
 					function deal()
 					{
+						if( currentMovable && ( 
+							currentMovable.parentNode.classList.contains( 'Redrawing' ) || 
+							currentMovable.parentNode.classList.contains( 'DoneActivating' ) || 
+							currentMovable.parentNode.classList.contains( 'Activated' ) 
+						) )
+						{
+							return setTimeout( function(){ deal() }, 300 );
+						}
 						dd.parentNode.classList.remove( 'DelayedDeactivation' );
 						_DeactivateWindow( dd );
 					}
 					if( delayedDeactivation && div.applicationId == dd.applicationId )
 					{
 						dd.parentNode.classList.add( 'DelayedDeactivation' );
-						setTimeout( function(){ deal() }, 500 );
+						setTimeout( function(){ deal() }, 300 );
 					}
 					else deal();
 				} )( m );
@@ -969,24 +972,29 @@ function _ActivateWindowOnly( div )
 				m.viewContainer.removeAttribute( 'minimized' );
 				m.minimized = false;
 			}
-
-			if( div.windowObject && !div.notifyActivated )
-			{
-				var iftest = div.getElementsByTagName( _viewType );
-				var msg = {
-					type:    'system',
-					command: 'notify',
-					method:  'activateview',
-					viewId: div.windowObject.viewId
-				};
-				if( iftest && iftest[0] )
+			
+			if( div.windowObject )
+			{	
+				if( !div.notifyActivated )
 				{
-					msg.applicationId = iftest[0].applicationId;
-					msg.authId = iftest[0].authId;
+					var iftest = div.getElementsByTagName( _viewType );
+					var msg = {
+						type:    'system',
+						command: 'notify',
+						method:  'activateview',
+						viewId: div.windowObject.viewId
+					};
+					if( iftest && iftest[0] )
+					{
+						msg.applicationId = iftest[0].applicationId;
+						msg.authId = iftest[0].authId;
+					}
+					div.notifyActivated = true;
+					div.windowObject.sendMessage( msg );
 				}
-				div.notifyActivated = true;
-				div.windowObject.sendMessage( msg );
 			}
+			
+			CheckMaximizedView();
 		}
 	}
 	// Check window
@@ -996,6 +1004,18 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	if( !e ) e = window.event;
+	
+	// Remove menu on calendar
+	if( Workspace.calendarWidget )
+		Workspace.calendarWidget.hide();
+	
+	// Already activating
+	if( div.parentNode.classList.contains( 'Activating' ) )
+	{
+		return;
+	}
+	
 	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
 	{
 		div.windowObject.lastActiveView.parentNode.classList.remove( 'OnWorkspace' );
@@ -1003,6 +1023,20 @@ function _ActivateWindow( div, nopoll, e )
 		div.windowObject.lastActiveView = null;
 		return;
 	}
+	
+	// Set currently displayed view on app
+	if( isMobile )
+	{
+		if( window._getAppByAppId )
+		{
+			var app = _getAppByAppId( this.applicationId );
+			if( app )
+			{
+				app.displayedView = div;
+			}
+		}
+	}
+	
 	// Don't reactivate
 	if( div.classList.contains( 'Active' ) ) 
 	{
@@ -1010,15 +1044,41 @@ function _ActivateWindow( div, nopoll, e )
 		{
 			if( window.currentMovable != div )
 				window.currentMovable = div;
+			
 		}
+		if( globalConfig.focusMode == 'clicktofront' )
+			_WindowToFront( div );
 		return;
 	}
 	
+	// Activate all iframes
+	var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+	for( var a = 0; a < fr.length; a++ )
+	{
+		if( fr[ a ].oldSandbox )
+		{
+			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+		}
+		else
+		{
+			fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+		}
+	}
+	
+	if( isMobile )
+	{
+		window.focus();
+		if( Workspace.mainDock )
+			Workspace.mainDock.closeDesklet();
+	}
+	
 	// Blur previous window
+	var changedActiveWindow = false;
 	if( window.currentMovable )
 	{
 		if( currentMovable != div )
 		{
+			changedActiveWindow = true;
 			currentMovable.windowObject.sendMessage( { type: 'view', command: 'blur' } );
 		}
 	}
@@ -1043,41 +1103,36 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Tell window manager we are activating window
-	if( isMobile )
-	{
-		document.body.classList.add( 'WindowActivating' );
-	}
-	div.classList.add( 'Activating' );
-	div.parentNode.classList.add( 'Activating' );
+	var pn = div.parentNode;
+	
+	document.body.classList.add( 'Activating' );
+	pn.classList.add( 'Activating' );
 	setTimeout( function()
 	{
 		if( div )
 		{
-			if( isMobile )
-			{
-				document.body.classList.remove( 'WindowActivating' );
-			}
-			div.classList.add( 'Activated' );
-			div.classList.remove( 'Activating' );
+			pn.classList.add( 'Activated' );
+			pn.classList.remove( 'Activating' );
 			setTimeout( function()
 			{
 				if( div )
 				{
 					// Finally
-					div.classList.add( 'DoneActivating' );
-					div.classList.remove( 'Activated' );
+					pn.classList.add( 'DoneActivating' );
+					pn.classList.remove( 'Activated' );
 					setTimeout( function()
 					{
 						if( div && div.parentNode )
 						{
-							div.classList.remove( 'DoneActivating' );
-							div.parentNode.classList.remove( 'Activating' );
+							pn.classList.remove( 'DoneActivating' );
+							pn.classList.remove( 'Activating' );
+							document.body.classList.remove( 'Activating' );
 						}
-					}, 250 );
+					}, 300 );
 				}
-			}, 250 );
+			}, 600 );
 		}
-	}, 250 );
+	}, 300 );
 
 	// Don't do it again, but notify!
 	if( div.classList && div.classList.contains( 'Active' ) )
@@ -1110,15 +1165,101 @@ function _ActivateWindow( div, nopoll, e )
 	// Set screen
 	SetScreenByWindowElement( div );
 
+	_setWindowTiles( div );
+
 	// When activating for the first time, deselect selected icons
 	if( div.classList && !div.classList.contains( 'Screen' ) )
-		clearRegionIcons();
-
-	if( e && ( !e.shiftKey && !e.ctrlKey ) ) clearRegionIcons();
+	{
+		// Make sure!
+		if( changedActiveWindow )
+		{
+			var clear = true;
+			var t = e ? e.target : false;
+			if( t )
+			{
+				while( t && t != document.body && !t.fileInfo )
+					t = t.parentNode;
+				if( t && t.fileInfo )
+					clear = false;
+			}
+			if( !clear )
+			{
+				clearRegionIcons( { exception: t } );
+			}
+			else
+			{
+				clearRegionIcons();
+			}
+		}
+	}
+	else if( e && ( !e.shiftKey && !e.ctrlKey ) ) clearRegionIcons();
 
 	_ActivateWindowOnly( div );
 
 	if( !nopoll ) PollTaskbar( div );
+}
+
+// Activate tiling system
+function _setWindowTiles( div )
+{
+	if( isMobile ) return;
+	
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		if( div.className.indexOf( 'TilingMode' ) >= 0 )
+		{
+			_removeWindowTiles( div );
+		}
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		div.classList.add( 'TilingMode' + attachedCount );
+		var tile = 2;
+		for( var a in div.attached )
+		{
+			div.attached[a].classList.add( 'Tile' + tile++, 'TilingMode' + attachedCount );
+		}
+	}
+}
+
+// Remove tiling system
+function _removeWindowTiles( div )
+{
+	if( isMobile ) return;
+	// Check if we have windows attached
+	if( div.attached )
+	{
+		var attachedCount = 1;
+		for( var a in div.attached )
+		{
+			attachedCount++;
+		}
+		while( div.className.indexOf( 'Til' ) >= 0 )
+		{
+			var ind = div.className.indexOf( 'Til' );
+			if( ind >= 0 )
+			{
+				for( var b = ind; div.className[b] != ' ' && b < div.className.length; b++ ){}
+				div.className = div.className.split( div.className.substr( ind, b - ind ) ).join( ' ' );
+			}
+		}
+		for( var a in div.attached )
+		{
+			var d = div.attached[ a ]
+			while( d.className.indexOf( 'Til' ) >= 0 )
+			{
+				var ind = d.className.indexOf( 'Til' );
+				if( ind >= 0 )
+				{
+					for( var b = ind; d.className[b] != ' ' && b < d.className.length; b++ ){}
+					d.className = d.className.split( d.className.substr( ind, b - ind ) ).join( ' ' );
+				}
+			}
+		}
+	}
 }
 
 function _DeactivateWindow( m, skipCleanUp )
@@ -1126,9 +1267,11 @@ function _DeactivateWindow( m, skipCleanUp )
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
-	{
+	{	
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
+
+		CheckMaximizedView();
 		
 		if( m.windowObject && m.notifyActivated )
 		{
@@ -1148,6 +1291,15 @@ function _DeactivateWindow( m, skipCleanUp )
 			} );
 			m.windowObject.sendMessage( msg );
 			m.notifyActivated = false;
+			
+			// Deactivate all iframes
+			var fr = m.windowObject.content.getElementsByTagName( 'iframe' );
+			for( var a = 0; a < fr.length; a++ )
+			{
+				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
+				fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
+			}
+			
 			PollTaskbar();
 		}
 		// Minimize on mobile
@@ -1161,6 +1313,11 @@ function _DeactivateWindow( m, skipCleanUp )
 	if( window.isMobile && !window.isTablet )
 	{
 		m.style.height = '35px';
+	}
+	
+	if( isMobile )
+	{
+		_removeMobileCloseButtons();
 	}
 	
 	// If we will not skip cleanup then do this
@@ -1177,6 +1334,20 @@ function _DeactivateWindow( m, skipCleanUp )
 	}
 	
 	return ret;
+}
+
+function _removeMobileCloseButtons()
+{
+	for( var a in movableWindows )
+	{
+		var f = movableWindows[ a ];
+		if( f.viewIcon )
+		{
+			f.viewIcon.classList.remove( 'Remove' );
+			f.classList.remove( 'Remove' );
+			f.classList.remove( 'Dragging' );
+		}
+	}
 }
 
 function _DeactivateWindows()
@@ -1255,9 +1426,9 @@ function _WindowToFront( div, flags )
 	{
 		for( var b in movableWindows )
 		{
-			if( div != movableWindows[b] && movableWindows[b].viewContainer.style.zIndex == a )
+			if( div != movableWindows[ b ] && movableWindows[ b ].viewContainer.style.zIndex == a )
 			{
-				sorted.push( movableWindows[b] );
+				sorted.push( movableWindows[ b ] );
 			}
 		}
 	}
@@ -1266,8 +1437,8 @@ function _WindowToFront( div, flags )
 	var sortedInd = 100;
 	for( var a = 0; a < sorted.length; a++ )
 	{
-		sorted[a].viewContainer.style.zIndex = sortedInd++;
-		sorted[a].style.zIndex = sorted[a].viewContainer.style.zIndex;
+		sorted[ a ].viewContainer.style.zIndex = sortedInd++;
+		sorted[ a ].style.zIndex = sorted[ a ].viewContainer.style.zIndex;
 	}
 
 	// 4. now apply the one we want to front to the front
@@ -1279,12 +1450,14 @@ function _WindowToFront( div, flags )
 	{
 		flags.sourceElements = [];
 	}
+	
 	// Don't check snap objects etc if we're already affected
 	for( var a = 0; a < flags.sourceElements.length; a++ )
 	{
-		if( flags.sourceElements[a] == div )
+		if( flags.sourceElements[ a ] == div )
 			return;
 	}
+	
 	if( flags.source != 'attachment' )
 	{
 		if( div.snap && div.snapObject )
@@ -1295,6 +1468,7 @@ function _WindowToFront( div, flags )
 			_WindowToFront( div.snapObject, { source: 'attachment', sourceElements: flags.sourceElements } );
 		}
 	}
+	
 	if( flags.source != 'snapobject' )
 	{
 		if( div.attached )
@@ -1420,8 +1594,12 @@ function CloseView( win, delayed )
 			window.regionWindow = null;
 		if( window.currentMovable && window.currentMovable == win )
 			window.currentMovable = null;
-			
-		win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+		
+		if( !win.parentNode.parentNode ) return;
+		if( win.parentNode.classList.contains( 'View' ) )
+		{
+			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
+		}
 			
 		var count = 0;
 
@@ -1463,12 +1641,18 @@ function CloseView( win, delayed )
 		if ( window.regionWindow == div.content )
 			window.regionWindow = false;
 
-		if ( !isGroupMember && div.parentNode )
+		var app = false;
+		if( div.applicationId )
+			app = _getAppByAppId( div.applicationId );
+
+		if( app && div == app.displayedView )
+			app.displayedView = null;
+
+		if( !isGroupMember && div.parentNode )
 		{
 			// Immediately kill child views for mobile!
 			if( isMobile && window._getAppByAppId )
 			{
-				var app = _getAppByAppId( div.applicationId );
 				if( app.mainView == div.windowObject )
 				{
 					for( var a in app.windows )
@@ -1484,7 +1668,9 @@ function CloseView( win, delayed )
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
+				{
 					div.viewContainer.parentNode.removeChild( div.viewContainer );
+				}
 				else if( div.parentNode )
 				{
 					div.parentNode.removeChild( div );
@@ -1493,6 +1679,7 @@ function CloseView( win, delayed )
 				{
 					console.log( 'Nothing to remove..' );
 				}
+				CheckMaximizedView();
 			}, isMobile ? 750 : 500 );
 
 			if( !isMobile )
@@ -1511,6 +1698,7 @@ function CloseView( win, delayed )
 		}
 
 		// Activate latest activated view (not on mobile)
+		var nextActive = false;
 		if( div.classList.contains( 'Active' ) )
 		{
 			if( Friend.GUI.view.viewHistory.length )
@@ -1523,8 +1711,11 @@ function CloseView( win, delayed )
 						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
 							// Only activate non minimized views
-							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -1536,8 +1727,11 @@ function CloseView( win, delayed )
 						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
 							// Only activate non minimized views
-							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							if( Friend.GUI.view.viewHistory[a].viewContainer && !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+							{
 								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
+								nextActive = true;
+							}
 							break;
 						}
 					}
@@ -1598,15 +1792,29 @@ function CloseView( win, delayed )
 				document.body.removeAttribute( 'windowcount' );
 			}, 400 );
 		}
+		
+		if( app && isMobile && app.mainView )
+		{
+			app.mainView.activate();
+		}
+		// We have a parent view
+		else if( win.parentView )
+		{
+			win.parentView.activate();
+		}
+		
+	}
+
+	if( !window.currentMovable )
+	{
+		if( Workspace.screen && Workspace.screen.getFlag )
+		{
+			document.title = Workspace.screen.getFlag( 'title' );
+		}
 	}
 
 	// Check window
 	CheckScreenTitle();
-	
-	if( !window.currentMovable )
-	{
-		document.title = Workspace.screen.getFlag( 'title' );
-	}
 	
 	if( isMobile )
 		Workspace.redrawIcons();
@@ -1630,19 +1838,19 @@ function CancelWindowScrolling ( e )
 	return true;
 }
 if ( window.addEventListener )
-	window.addEventListener ( 'scroll', CancelWindowScrolling, true );
-else window.attachEvent ( 'onscroll', CancelWindowScrolling, true );
+	window.addEventListener( 'scroll', CancelWindowScrolling, true );
+else window.attachEvent( 'onscroll', CancelWindowScrolling, true );
 
 // Support scrolling in windows
-function WindowScrolling ( e )
+function WindowScrolling( e )
 {
-	if ( !e ) e = window.event;
+	if( !e ) e = window.event;
 	var dlt = e.detail ? (e.detail*-120) : e.wheelDelta;
 	var tr = e.srcElement ? e.srcElement : e.target;
 	var win = false;
-	while ( tr != document.body )
+	while( tr != document.body )
 	{
-		if ( tr.className && tr.className.indexOf ( 'View' ) > 0 )
+		if( tr.className && tr.className.indexOf ( 'View' ) > 0 )
 		{
 			win = tr;
 			break;
@@ -1766,6 +1974,19 @@ var View = function( args )
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
+		
+		var app = false;
+		if( window._getAppByAppId )
+		{
+			var app = _getAppByAppId( div.applicationId );
+		}
+		
+		// Set a parent relation to main view
+		if( app && app.mainView	)
+		{
+			self.parentView = app.mainView;
+		}
+		
 		// Set initial workspace
 		if( flags.workspace && flags.workspace > 0 )
 		{
@@ -1847,6 +2068,7 @@ var View = function( args )
 							iconSpan = document.createElement( 'span' );
 							iconSpan.classList.add( 'ViewIcon' );
 							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
+							self.viewIcon = iconSpan;
 							viewContainer.appendChild( iconSpan );
 						}
 					}
@@ -1857,7 +2079,8 @@ var View = function( args )
 				{
 					var md = document.createElement( 'div' );
 					md.className = 'MobileBack';
-					md.addEventListener( 'touchstart', function( e )
+					self.mobileBack = md;
+					md.ontouchstart =function( e )
 					{
 						if( window._getAppByAppId )
 						{
@@ -1866,10 +2089,12 @@ var View = function( args )
 							{
 								FocusOnNothing();
 								_ActivateWindow( app.mainView.content.parentNode );
+								self.close();
+								return cancelBubble( e );
 							}
 						}
 						return cancelBubble( e );
-					} );
+					};
 					viewContainer.appendChild( md );
 				}
 			}
@@ -1877,8 +2102,34 @@ var View = function( args )
 			{
 				iconSpan = document.createElement( 'span' );
 				iconSpan.classList.add( 'ViewIcon' );
+				self.viewIcon = iconSpan;
 				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
 				viewContainer.appendChild( iconSpan );
+				
+				// Add mobile back button
+				if( isMobile )
+				{
+					var md = document.createElement( 'div' );
+					md.className = 'MobileBack';
+					self.mobileBack = md;
+					md.ontouchstart =function( e )
+					{
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( div.applicationId );
+							if( app.mainView )
+							{
+								FocusOnNothing();
+								_ActivateWindow( app.mainView.content.parentNode );
+								self.close();
+								return cancelBubble( e );
+							}
+						}
+						return cancelBubble( e );
+					};
+					viewContainer.appendChild( md );
+				}
+				
 			}
 			
 			if( div == 'CREATE' )
@@ -1974,6 +2225,7 @@ var View = function( args )
 		}
 
 		// Tell it's opening
+		viewContainer.classList.add( 'Opening' );
 		div.classList.add( 'Opening' );
 		setTimeout( function()
 		{
@@ -1986,6 +2238,7 @@ var View = function( args )
 				div.classList.add( 'Redrawing' );
 				setTimeout( function()
 				{
+					viewContainer.classList.remove( 'Opening' );
 					div.classList.remove( 'Redrawing' );
 				}, 250 );
 			}, 250 );
@@ -2221,8 +2474,25 @@ var View = function( args )
 		{
 			if( e.button == 0 )
 			{
-				_ActivateWindow( this, false, e );
-				this.setAttribute( 'moving', 'moving' );
+				if( !this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					if( isMobile )
+					{
+						var target = this;
+						if( window._getAppByAppId )
+						{
+							var app = _getAppByAppId( this.applicationId );
+							if( app && app.displayedView )
+							{
+								target = app.displayedView;
+							}
+						}
+						_ActivateWindow( target, false, e );
+						return;
+					}
+					_ActivateWindow( this, false, e );
+					this.setAttribute( 'moving', 'moving' );
+				}
 			}
 		}
 
@@ -2230,6 +2500,10 @@ var View = function( args )
 		div.ontouchstart = function( e )
 		{
 			var self = this;
+			
+			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
+				return;
+			
 			if( !isMobile )
 			{
 				this.setAttribute( 'moving', 'moving' );
@@ -2242,13 +2516,14 @@ var View = function( args )
 					time: ( new Date() ).getTime()
 				};
 			}
+			// Start jiggling on longpress
 			// Only removable after 300 ms
 			this.touchInterval = setInterval( function()
 			{
 				var t = ( new Date() ).getTime();
 				if( self.clickOffset )
 				{
-					if( t - self.clickOffset.time > 150 )
+					if( t - self.clickOffset.time > 100 )
 					{
 						// Update time
 						self.clickOffset.removable = true;
@@ -2256,8 +2531,8 @@ var View = function( args )
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
 					
-						Workspace.screen.bufferedTitle = Workspace.screen.getFlag( 'title' );
-						Workspace.screen.setFlag( 'title', i18n( 'i18n_swipe_down_to_close' ) );
+						self.viewIcon.classList.add( 'Remove' );
+						self.classList.add( 'Remove' );
 					}
 				}
 			}, 150 );
@@ -2266,7 +2541,7 @@ var View = function( args )
 		// Remove window on drag
 		if( isMobile )
 		{
-			div.ontouchmove = function( e )
+			/*div.ontouchmove = function( e )
 			{
 				if( !this.clickOffset )
 					return;
@@ -2281,33 +2556,26 @@ var View = function( args )
 					if( diffy > 50 )
 					{
 						this.viewIcon.classList.add( 'Remove' );
+						this.classList.add( 'Remove' );
 					}
 					else
 					{
 						this.viewIcon.classList.remove( 'Remove' );
+						this.classList.remove( 'Remove' );
 					}
 				}
-			}
+			}*/
 			div.ontouchend = function( e )
 			{
-				if( Workspace.screen.bufferedTitle )
-				{
-					Workspace.screen.setFlag( 'title', Workspace.screen.bufferedTitle );
-					Workspace.screen.bufferedTitle = null;
-				}
-				if( this.viewIcon.classList.contains( 'Dragging' ) )
-				{
-					this.viewIcon.classList.remove( 'Dragging' );
-				}
-				if( this.viewIcon.classList.contains( 'Remove' ) )
-				{
-					this.viewIcon.classList.remove( 'Remove' );
-					this.close.click();
-				}
 				if( this.touchInterval )
 				{
 					clearInterval( this.touchInterval );
 					this.touchInterval = null;
+				}
+				// Only cancel bubble if view icon is jiggling on mobile
+				if( this.viewIcon.classList.contains( 'Remove' ) )
+				{
+					return cancelBubble( e );
 				}
 			}
 		}
@@ -2419,6 +2687,9 @@ var View = function( args )
 
 					this.window.setAttribute( 'maximized', 'true' );
 					
+					// Check tiling
+					_setWindowTiles( div );
+					
 					// Tell app
 					if( window._getAppByAppId )
 					{
@@ -2461,12 +2732,14 @@ var View = function( args )
 						}
 						ResizeWindow( this.window, wid, hei );
 					}
-					this.mode = 'maximized';
+					this.mode = 'maximized';					
 				}
 				else
 				{
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
+					
+					_removeWindowTiles( div );
 					
 					// Store it just in case
 					var d = GetWindowStorage( div.id );
@@ -2508,6 +2781,10 @@ var View = function( args )
 						}
 					}
 				}
+				
+				// Check maximized
+				CheckMaximizedView();
+				
 				return cancelBubble( e );
 			}
 			zoom.addEventListener( 'touchstart', zoom.onclick, false );
@@ -2559,6 +2836,11 @@ var View = function( args )
 				d.left = this.offsetLeft;
 				d.width = wenable && wwi ? wwi : d.width;
 				d.height = wenable && hhe ? hhe : d.width;
+			}
+			
+			if( div.content.directoryview )
+			{
+				d.listMode = div.content.directoryview.listMode;
 			}
 
 			SetWindowStorage( this.uniqueId, d );
@@ -3235,7 +3517,10 @@ var View = function( args )
 						e.clientY = e.touches[0].clientY;
 						e.button = 0;
 						window.mouseDown = 1; // Window mode
-						title.onmousedown( e );
+						if( title.onmousedown )
+						{
+							title.onmousedown( e );
+						}
 						_ActivateWindow( div );
 					} );
 				}
@@ -3251,51 +3536,52 @@ var View = function( args )
 			// Resize touch events.... -----------------------------------------
 			var winTouchStart = [ 0, 0 ];
 			var winTouchDowned = winTouchEnd = 0;
-			resize.addEventListener('touchstart', function(evt) {
+			resize.addEventListener('touchstart', function( evt )
+			{
 				cancelBubble( evt );
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
 				winTouchDowned = evt.timeStamp;
-			});
-			resize.addEventListener('touchmove', function(evt)
+			} );
+			resize.addEventListener('touchmove', function( evt )
 			{
 				cancelBubble( evt );
-
 				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
 				touchResizeWindow(evt);
-			});
-
+			} );
 			resize.addEventListener( 'touchend', function( evt )
 			{
 				cancelBubble( evt );
-			});
+			} );
 
-			bottombar.addEventListener('touchstart', function(evt)
+			bottombar.addEventListener('touchstart', function( evt )
 			{
 				cancelBubble( evt );
 
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
 				winTouchDowned = evt.timeStamp;
-			});
+			} );
 
-			bottombar.addEventListener('touchmove', function(evt)
+			bottombar.addEventListener('touchmove', function( evt )
 			{
 				cancelBubble( evt );
 
 				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
 				touchResizeWindow(evt);
-			});
+			} );
 
-			bottombar.addEventListener( 'touchend', function(evt) {
+			bottombar.addEventListener( 'touchend', function( evt )
+			{
 				cancelBubble( evt );
-			});
+			} );
 
 			//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
-			close.addEventListener('touchstart', function( evt ) {
+			close.addEventListener( 'touchstart', function( evt )
+			{
 				cancelBubble( evt );
 				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
 				winTouchEnd = winTouchStart;
 				winTouchDowned = evt.timeStamp;
-			});
+			} );
 		}
 		// Ok, if no window position is remembered.. place it somewhere
 		else if( !wp )
@@ -3418,6 +3704,11 @@ var View = function( args )
 		// Move workspace to designated position	
 		if( self.workspace > 0 )
 			self.sendToWorkspace( self.workspace );
+		
+		// Remove menu on calendar
+		if( Workspace.calendarWidget )
+			Workspace.calendarWidget.hide();
+		
 	}
 
 	// Send window to different workspace
@@ -3443,10 +3734,11 @@ var View = function( args )
 	}
 
 	// Set content on window
-	this.setContent = function( content )
+	this.setContent = function( content, cbk )
 	{
 		// Safe content without any scripts or styles!
 		SetWindowContent( this._window, this.cleanHTMLData( content ) );
+		if( cbk ) cbk();
 	}
 	this.fullscreen = function( val )
 	{
@@ -3527,6 +3819,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
+		ifr.view = this._window;
 		ifr.className = 'Content Loading';
 		
 		if( this.flags.transparent )
@@ -3613,8 +3906,9 @@ var View = function( args )
 			if( self.flags.screen )
 				msg.screenId = self.flags.screen.externScreenId;
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
-			if( !msg.origin ) msg.origin = document.location.href;
-			ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
+			if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
+			
+			ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 		}
 		c.appendChild( ifr );
 	}
@@ -3635,7 +3929,7 @@ var View = function( args )
 	{
 		var self = this;
 		var appName = self.applicationName;
-		var origin = Doors.runLevels[ 0 ].domain;
+		var origin = '*'; // TODO: Should be this Doors.runLevels[ 0 ].domain;
 		var domain = Doors.runLevels[ 1 ].domain;
 		domain = domain.split( '://' )[1];
 		var appBase = '/webclient/apps/' + appName + '/';
@@ -3647,7 +3941,7 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		iframe.sandbox = "allow-forms allow-scripts allow-same-origin allow-popups"; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
 		self._window.authId = conf.authId;
@@ -3673,9 +3967,10 @@ var View = function( args )
 	// Sets rich content in a safe iframe
 	this.setRichContent = function( content )
 	{
+		if( !this._window ) return;
+		
 		// Rich content still can't have any scripts!
 		content = this.removeScriptsFromData( content );
-
 		var eles = this._window.getElementsByTagName( _viewType );
 		var ifr = false;
 		if( eles[0] )
@@ -3755,7 +4050,7 @@ var View = function( args )
 				base:          '/',
 				applicationId: ifr.applicationId,
 				filePath:      '/webclient/jsx/',
-				origin:        document.location.href,
+				origin:        '*', // TODO: Should be this - document.location.href,
 				viewId:      w.externViewId ? w.externViewId : w.viewId,
 				clipboard:     Friend.clipboard
 			};
@@ -3842,7 +4137,12 @@ var View = function( args )
 		// We're on a road trip..
 		if( !( friendU && ( friendU == targetU || !targetU ) ) )
 		{
-			ifr.sandbox = 'allow-same-origin allow-forms allow-scripts';
+			ifr.sandbox = 'allow-forms allow-scripts';
+			console.log( 'Sandbox: ' + ifr.sandbox );
+		}
+		else
+		{
+			console.log( 'Sandbox denied: ', friendU, targetU );
 		}
 
 		// Allow sandbox flags
@@ -3871,7 +4171,7 @@ var View = function( args )
 					base              : base,
 					applicationId     : appId,
 					filePath          : filePath,
-					origin            : document.location.href,
+					origin            : '*', // TODO: Should be this - document.location.href,
 					viewId            : w.externViewId,
 					authId            : self.authId,
 					theme             : Workspace.theme,
@@ -3914,6 +4214,29 @@ var View = function( args )
 		if( !eles[0] ) this._window.appendChild( ifr );
 
 	}
+	
+	this.showBackButton = function( visible, cbk )
+	{
+		if( !isMobile ) return;
+		if( visible )
+		{
+			self.mobileBack.classList.add( 'Showing' );
+			self.viewIcon.classList.add( 'MobileBackHidesIt' );
+			
+			if( cbk )
+			{
+				self.mobileBack.ontouchstart = function( e )
+				{
+					cbk( e );
+				}
+			}
+		}
+		else 
+		{
+			self.mobileBack.classList.remove( 'Showing' );
+			self.viewIcon.classList.remove( 'MobileBackHidesIt' );
+		}
+	}
 
 	// Send a message
 	this.sendMessage = function( dataObject, event )
@@ -3927,7 +4250,9 @@ var View = function( args )
 				this.iframe.src.split( '//' )[1].split( '/' )[0];
 			
 			var origin = event && 
-				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : u;
+				event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
+			// TODO: Fix this with security
+			origin = '*';
 			
 			if( !dataObject.applicationId && this.iframe.applicationId )
 			{
@@ -4048,6 +4373,12 @@ var View = function( args )
 	this.activate = function ()
 	{
 		_ActivateWindow( this._window.parentNode );
+	}
+	// Move window to front
+	this.toFront = function()
+	{
+		_ActivateWindow( this._window.parentNode );
+		_WindowToFront( this._window.parentNode );
 	}
 	// Close a view window
 	this.close = function ( force )
@@ -4312,6 +4643,12 @@ var View = function( args )
 				ResizeWindow( viewdiv );
 				RefreshWindow( viewdiv );
 				break;
+			case 'loadinganimation':
+				if( value == true )
+				{
+					this.loadingAnimation();
+				}
+				break;
 			case 'hidden':
 			case 'invisible':
 				if( viewdiv )
@@ -4391,6 +4728,11 @@ var View = function( args )
 				{
 					viewdiv.setAttribute( 'transparent', value ? 'transparent': '' );
 				}
+				break;
+			// TODO: Use it when ready
+			// Allow for dropping files in a secure manner
+			case 'securefiledrop':
+				this.flags.securefiledrop = value;
 				break;
 			// Takes all flags
 			default:
@@ -4512,8 +4854,320 @@ var View = function( args )
 		}
 		return false;
 	}
+	
+	this.openCamera = function( flags, callback )
+	{
+		
+		var self = this;
+		
+		// Just get the available devices
+		function getAvailableDevices( cbk )
+		{
+			if( !navigator.mediaDevices )
+			{
+				return cbk( { response: -1, message: 'Could not get any devices.' } );
+			}
+			navigator.mediaDevices.enumerateDevices().then( function( devs ) {
+				cbk( { response: 1, message: 'Success', data: devs } );
+			} ).catch( function( err ) {
+				return cbk( { response: -1, message: err } );
+			} );
+		}
+		
+		function setCameraEvents( ele )
+		{
+			ele.ontouchstart = function( e )
+			{
+				this.offX = e.touches[0].clientX;
+				this.timeStamp = ( new Date() ).getTime();
+			}
+		
+			ele.ontouchend = function( e )
+			{
+				var diff = e.changedTouches[0].clientX - this.offX;
+				var difftime = ( new Date() ).getTime() - this.timeStamp;
+				if( difftime > 200 )
+				{
+					return;
+				}
+				// Swipe right
+				if( diff < 127 )
+				{
+					setCameraMode();
+				}
+				// Swipe left
+				else if( diff > 127 )
+				{
+					setCameraMode();
+				}	
+			}
+		}
+		
+		function setCameraMode( e )
+		{
+
+			console.log('setting camera mode!',e);
+			if( !self.cameraOptions )
+			{
+				self.cameraOptions = {
+					devices: e,
+					currentDevice: false
+				};
+				// Add container
+				var v = document.createElement( 'div' );
+				v.className = 'FriendCameraContainer';
+				self.content.appendChild( v );
+				self.content.container = v;
+				self.content.classList.add( 'HasCamera' );
+				
+				
+			
+			}
+			
+			// Find video devices
+			var initial = false;
+			var devs = [];
+			for( var a in self.cameraOptions.devices )
+			{
+				var dev = self.cameraOptions.devices[ a ];
+				if( dev.kind == 'videoinput' )
+				{
+					//we want back facing camera as default...
+					if( dev.label && dev.label.indexOf('back') > -1 && !self.cameraOptions.currentDevice ) 
+					{
+						self.cameraOptions.currentDevice = dev;
+						initial = true;
+					}
+					else 
+					{
+						//we overwrite on purpose here! most handsets have backwards facing cameras last...
+						self.cameraOptions.potentialDevice = dev
+					}
+					devs.push( dev );
+				}
+			}
+			if( !self.cameraOptions.currentDevice && self.cameraOptions.potentialDevice )
+			{
+				self.cameraOptions.currentDevice = self.cameraOptions.potentialDevice
+				initial = true;
+			}
+			
+			// Initial pass over, now just choose next device
+			if( !initial )
+			{
+				var found = nextfound = false;
+				for( var a = 0; a < devs.length; a++ )
+				{
+					if( devs[a].deviceId == self.cameraOptions.currentDevice.deviceId )
+					{
+						found = true;
+					}
+					// We found stuff
+					else if( found )
+					{
+						nextfound = true;
+						self.cameraOptions.currentDevice = devs[a];
+						break;
+					}
+				}
+				// Wrap around
+				if( !nextfound )
+				{
+					self.cameraOptions.currentDevice = devs[0];
+				}
+			}
+			var constraints = {
+				video: {
+					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
+				}
+			};
+			
+			var ue = navigator.userAgent.toLowerCase();
+			
+			if( navigator.gm ) { 
+				
+				//check if we should stop stuff before we try again...
+				var dd = self.content.container.camera;
+				if(dd && dd.srcObject)
+				{
+					dd.srcObject.getTracks().forEach(track => track.stop())
+					dd.srcObject = null;
+				}
+				if( self.content.container.camera ) self.content.container.removeChild( self.content.container.camera );
+				delete self.content.container.camera;
+				delete navigator.gm;
+			}
+			
+			// Shortcut
+			navigator.gm = (navigator.getUserMedia ||
+				navigator.webkitGetUserMedia ||
+				navigator.mozGetUserMedia || 
+				navigator.msGetUserMedia
+			);
+
+			if( navigator.gm )
+			{
+				navigator.gm( 
+					constraints, 
+					function( localMediaStream )
+					{
+						// Remove old video object
+						//might be too late here? at least on mobile? moved this check up a couple of lines..
+						var oldCam = self.content.container.camera;
+						if( oldCam && oldCam.srcObject )
+						{
+							oldCam.srcObject.getTracks().forEach( track => track.stop() );
+							oldCam.srcObject = localMediaStream;
+						}
+						else
+						{
+							// New element!
+							var vi = document.createElement( 'video' );
+							vi.setAttribute( 'autoplay', 'autoplay' );
+							vi.setAttribute( 'playinline', 'playinline' );
+							vi.className = 'FriendCameraElement';
+							vi.srcObject = localMediaStream;
+							self.content.container.appendChild( vi );
+							self.content.container.camera = vi;
+					
+							setCameraEvents( vi );
+						}
+					
+						// Create an object URL for the video stream and use this 
+						// to set the video source.
+						self.content.container.camera.srcObject = localMediaStream;
+					
+						// Add the record + switch button
+						if( !self.content.container.button )
+						{
+							var btn = document.createElement( 'button' );
+							btn.className = 'IconButton IconSmall fa-camera';
+							btn.onclick = function( e )
+							{
+								var dd = self.content.container.camera;
+								var canv = document.createElement( 'canvas' );
+								canv.setAttribute( 'width', dd.videoWidth );
+								canv.setAttribute( 'height', dd.videoHeight );
+								v.appendChild( canv );
+								var ctx = canv.getContext( '2d' );
+								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
+								var dt = canv.toDataURL( 'image/jpeg', 0.95 );
+						
+								// Stop taking video
+								dd.srcObject.getTracks().forEach(track => track.stop())
+								dd.srcObject = null;
+						
+								// FLASH!
+								v.classList.add( 'Flash' );
+								setTimeout( function()
+								{
+									v.classList.add( 'Flashing' );
+									setTimeout( function()
+									{
+										v.classList.remove( 'Flashing' );
+										setTimeout( function()
+										{
+											v.classList.add( 'Closing' );
+											setTimeout( function()
+											{
+												callback( { response: 1, message: 'Image captured', data: dt } );
+												v.parentNode.removeChild( v );
+											}, 250 );
+										}, 250 );
+									}, 250 );
+								}, 5 );
+							}
+							self.content.container.appendChild( btn );
+							
+							
+							var switchbtn = document.createElement( 'button' );
+							switchbtn.className = 'IconButton IconSmall fa-refresh';
+							switchbtn.onclick = function() { console.log('switch camera...'); setCameraMode() };
+							self.content.container.appendChild( switchbtn );
+
+							//stop the video if the view is closed!
+							self.addEvent('systemclose', function() {
+								var dd = self.content.container.camera;
+								if(dd && dd.srcObject )
+								{
+									dd.srcObject.getTracks().forEach(track => track.stop())
+									dd.srcObject = null;									
+								}
+							});
+							
+							//register our button in the container... to not do this twice							
+							self.content.container.button = btn;
+						}
+					},
+					function( err )
+					{
+						v = self.content;
+						// Log the error to the console.
+						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' + err } );
+						if( v )
+						{
+							v.classList.add( 'Closing' );
+							/*setTimeout( function()
+							{
+								v.parentNode.removeChild( v );
+							},  250 );*/
+						}
+					}
+				);
+			}
+			else
+			{
+				// TODO: Hogne
+				// Remove video
+				v.removeChild( d );
+			
+				// Add fallback
+				var fb = document.createElement( 'div' );
+				fb.className = 'FriendCameraFallback';
+				v.appendChild( fb );
+				var mediaElement = document.createElement( 'input' );
+				mediaElement.type = 'file';
+				mediaElement.accept = 'image/*';
+				mediaElement.className = 'FriendCameraInput';
+				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
+					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
+				fb.appendChild( mediaElement );
+			
+				setTimeout( function()
+				{
+					fb.classList.add( 'Showing' );
+				}, 5 );
+			
+				mediaElement.onchange = function( e )
+				{
+					var reader = new FileReader();
+					reader.onload = function( e )
+					{
+						
+						var dataURL = e.target.result;
+						v.classList.remove( 'Showing' );
+						setTimeout( function()
+						{
+							callback( { response: 1, message: 'Image captured', data: dataURL } );
+							v.parentNode.removeChild( v );
+						}, 250 );
+					}
+					reader.readAsDataURL( mediaElement.files[0] );
+				}
+			}
+		}
+
+		// prepare for us to use to external libs. // good quality resize + EXIF data reader
+		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
+		Include( '/webclient/3rdparty/load-image.all.min.js', function()
+		{
+			// Execute async operation
+			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+		});
+	}
+	
 	// Add a child window to this window
-	this.addChildWindow = function ( ele )
+	this.addChildWindow = function( ele )
 	{
 		if ( ele.tagName && ele.windowObject )
 			return this.childWindows.push ( ele.windowObject );
@@ -4673,10 +5327,14 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 {
 	if( !isMobile ) return;
 	if( !Workspace.screen || !Workspace.screen.contentDiv ) return;
+	
+	// Check if we have a maximized window
+	CheckMaximizedView();
+	
 	if( document.body.classList.contains( 'ViewMaximized' ) )
 	{
 		// Here is the first screen
-		Workspace.screen.contentDiv.style.transform = 'translateX(0px)';
+		Workspace.screen.contentDiv.style.transform = 'translate3d(0,0,0)';
 		return;
 	}
 	
@@ -4767,7 +5425,7 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	{
 		Friend.GUI.responsiveViewPage = page;
 	}
-	Workspace.screen.contentDiv.style.transform = 'translateX(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px)';
+	Workspace.screen.contentDiv.style.transform = 'translate3d(' + ( pageW * ( -Friend.GUI.responsiveViewPage ) ) + 'px,0,0)';
 }
 
 // Intermediate anchor for code that uses new Window()
@@ -4867,9 +5525,13 @@ function _kresponseup( e )
 }
 
 // Resize all screens
-function _kresize( e )
+function _kresize( e, depth )
 {
+	if( !depth ) depth = 0;
+	
 	checkMobileBrowser();
+	
+	forceScreenMaxHeight();	
 	
 	// Resize screens
 	if( Workspace && Workspace.screenList )
@@ -4882,10 +5544,28 @@ function _kresize( e )
 		Workspace.checkWorkspaceWallpapers();
 	}
 	
+	if( isMobile && depth > 0 )
+	{
+		return ConstrainWindow( currentMovable );
+	}
+	
 	// Resize windows
 	for( var a in movableWindows )
 	{
 		ConstrainWindow( movableWindows[a] );
+	}
+	
+	if( depth == 0 )
+	{
+		// ios fix
+		var nav = navigator.userAgent.toLowerCase();
+		if( nav.indexOf( 'iphone' ) >= 0 || nav.indexOf( 'ipad' ) >= 0 )
+		{
+			setTimeout( function()
+			{
+				_kresize( e, 1 );
+			}, 500 );
+		}
 	}
 }
 
@@ -4898,6 +5578,8 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	var curr = window.currentMovable;
+
 	var v = new View( {
 		title: title,
 		width: 400,
@@ -4905,6 +5587,18 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 		height: d.offsetHeight + 75,
 		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+
+	v.onClose = function()
+	{
+		if( curr && isMobile )
+		{
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
+		}
+	}
 
 	v.setSticky();
 
@@ -4963,6 +5657,9 @@ function Alert( title, string, cancelstring, callback )
 	d.innerHTML = string;
 	document.body.appendChild( d );
 
+	// Register current movable
+	var curr = window.currentMovable;
+
 	var minContentHeight = 100;
 	if( d.offsetHeight > minContentHeight )
 		minContentHeight = d.offsetHeight;
@@ -4977,6 +5674,18 @@ function Alert( title, string, cancelstring, callback )
 		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
 		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
+	
+	v.onClose = function()
+	{
+		if( curr && isMobile )
+		{
+			setTimeout( function()
+			{
+				_ActivateWindow( curr );
+				_WindowToFront( curr );
+			}, 550 );
+		}
+	}
 	
 	v.setSticky();
 

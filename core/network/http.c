@@ -364,6 +364,12 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	//
 	// https://www.ietf.org/rfc/rfc2616.txt
 	// http://tools.ietf.org/html/rfc7230 <- Better!
+	
+	if( request == NULL )
+	{
+		FERROR("Cannot parse header, request is empty!\n");
+		return 1;
+	}
 
 	char* r = (char *)request;
 
@@ -379,7 +385,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	unsigned int i = 0, i1 = 0;
 	FBOOL copyValue = TRUE;
 	
-	DEBUG("HttpParseHeader\n" );
+	//DEBUG("HttpParseHeader\n" );
 	
 	http->h_ResponseHeadersRelease = FALSE;
 
@@ -905,7 +911,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 		i++; // In case we ended on a proper \r\n note, we need to adjust i by 1 to get to the beginning of the content (if any)
 	}
 
-	return 1;
+	return 0;
 }
 
 /**
@@ -1077,7 +1083,7 @@ Content-Type: application/octet-stream
 					
 				}
 				
-				DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
+				//DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
 				
 				int pos = ( int )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
@@ -1130,7 +1136,7 @@ static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsign
 	
 	if( http->gotHeader && http->expectBody && http->content )
 	{
-		DEBUG("[HttpParsePartialRequestChunk] RECEIVE DATA, length %d\n", length );
+		//DEBUG("[HttpParsePartialRequestChunk] RECEIVE DATA, length %d\n", length );
 		
 		// If we have null data, just purge!
 		if( length > 0 )
@@ -1188,11 +1194,11 @@ static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsign
 				}
 			}
 // file                                                  1074791064 
-			DEBUG("stored in file %lu  should be 1073741824, numberChunks %d\n", total, numberChunks );
+			//DEBUG("stored in file %lu  should be 1073741824, numberChunks %d\n", total, numberChunks );
 			
 			//fclose( dfp );
 			
-			DEBUG("Data stored TOTAL %ld\n", total );
+			//DEBUG("Data stored TOTAL %ld\n", total );
 		  
 			//memcpy( http->content, data, length );
 			
@@ -1281,7 +1287,7 @@ int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
 				HttpParseHeader( http, data, length );
 			}
 			
-			DEBUG("content length %ld\n", http->h_ContentLength );
+			//DEBUG("content length %ld\n", http->h_ContentLength );
 			//if( (content = HttpGetHeaderFromTable( http, HTTP_HEADER_CONTENT_LENGTH ) ) )
 			//if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
 			if( http->h_ContentLength > 0 )
@@ -1296,7 +1302,7 @@ int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
 					if( size > 0 )
 					{
 						http->expectBody = TRUE;
-						DEBUG("Size %d\n", size );
+						//DEBUG("Size %d\n", size );
 				
 						if( http->content )
 						{
@@ -1625,12 +1631,18 @@ void HttpFree( Http* http )
 {
 	//DEBUG("Free HashMap\n");
 	int i;
-	for( i = 0; i < HTTP_HEADER_END ; i++ )
+	//if( http->h_RequestSource == HTTP_SOURCE_HTTP )
 	{
-		if( (http->h_RespHeaders[ i ] != NULL) && (i != HTTP_HEADER_X_FRAME_OPTIONS) )
+		for( i = 0; i < HTTP_HEADER_END ; i++ )
 		{
-			FFree( http->h_RespHeaders[ i ]  );
-			http->h_RespHeaders[ i ] = NULL;
+			if( (i != HTTP_HEADER_X_FRAME_OPTIONS) )
+			{
+				if( http->h_RespHeaders[ i ] != NULL)
+				{
+					FFree( http->h_RespHeaders[ i ]  );
+					http->h_RespHeaders[ i ] = NULL;
+				}
+			}
 		}
 	}
 	
@@ -2229,6 +2241,7 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 
 void HttpWrite( Http* http, Socket *sock )
 {
+	FLONG ret = 0;
 	if( http == NULL )
 	{
 		return;
@@ -2248,7 +2261,7 @@ void HttpWrite( Http* http, Socket *sock )
 			{ ID_RESP, (FULONG)0, (FULONG)0 }
 		};
 		
-		SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
+		ret = SocketWrite( sock, (char *) tags, (FLONG)sizeof(tags) );
 	}
 	else
 	{
@@ -2256,13 +2269,17 @@ void HttpWrite( Http* http, Socket *sock )
 		
 		if( http->h_WriteOnlyContent == TRUE )
 		{
-			SocketWrite( sock, http->content, http->sizeOfContent );
+			DEBUG("only content\n");
+			ret = SocketWrite( sock, http->content, http->sizeOfContent );
 		}
 		else
 		{
-			SocketWrite( sock, http->response, http->responseLength );
+			DEBUG("response\n");
+			ret = SocketWrite( sock, http->response, http->responseLength );
 		}
 	}
+
+	DEBUG("HttpWrite, wrote: %ld\n", ret );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

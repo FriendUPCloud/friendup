@@ -196,6 +196,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.openDesklet = function( e )
 	{
+		if( this.openLock ) return;
 		var self = this;
 		if( !this.open && !this.opening )
 		{
@@ -620,6 +621,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 		}
+		
 		PollTaskbar();
 	}
 	// End render --------------------------------------------------------------
@@ -714,8 +716,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				var ws = ap.windows[w].workspace;
 				if( st || ws != globalConfig.workspaceCurrent )
 				{
+					_ActivateWindow( ap.windows[w]._window );
 					_WindowToFront( ap.windows[w]._window );
-					_ActivateWindowOnly( ap.windows[w]._window.parentNode );
 					ele.classList.remove( 'Minimized' );
 					Workspace.switchWorkspace( ws );
 					ap.windows[w].setFlag( 'hidden', false );
@@ -848,8 +850,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( dk.toggleViewVisibility( this ) ) return;
 				}
 
+				var rememberCurrent = false;
 				if( currentMovable )
+				{
+					rememberCurrent = currentMovable;
 					_DeactivateWindow( currentMovable );
+				}
 			
 				var args = '';
 				var executable = o.exe + '';
@@ -906,10 +912,46 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
 			
-				// If not a single instance app, execute (or mobile)
-				if( isMobile || ( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 ) )
+				// If not mobile OR not ( docked AND ( NOT single instyance OR with arguments ) )
+				if( 
+					isMobile || 
+					( 
+						!docked && 
+						!( 
+							Friend.singleInstanceApps[ executable ] || 
+							o.exe.indexOf( ' ' ) > 0 
+						)	
+					)
+				)
 				{
-					ExecuteApplication( executable, args );
+					if( !Friend.singleInstanceApps[ executable ] )				
+					{
+						ExecuteApplication( executable, args );
+					}
+					else if( rememberCurrent && rememberCurrent.windowObject.applicationName == executable )
+					{
+						_ActivateWindow( rememberCurrent );
+					}
+					else
+					{
+						// Find application window
+						// TODO: Find the last active
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							if( Workspace.applications[a].applicationName == executable )
+							{
+								if( Workspace.applications[a].windows )
+								{
+									for( var c in Workspace.applications[a].windows )
+									{
+										Workspace.applications[a].windows[ c ].activate();
+										break;
+									}
+									break;
+								}
+							}
+						}
+					}
 				}
 				// Just minimize apps if you find them, if not execute
 				else
@@ -975,61 +1017,64 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			
-			div.onmouseover = function( e )
+			if( !isMobile )
 			{
-				if( this.clickDown )
-					this.clickDown = null;
-			}
+				div.onmouseover = function( e )
+				{
+					if( this.clickDown )
+						this.clickDown = null;
+				}
 			
-			div.onmousedown = function( e )
-			{
-				if( mousePointer.candidate ) return;
-				if( e.button != 0 )
-					return;
-				// Add candidate and rules
-				var self = this;
-				var px = e.clientX;
-				var py = e.clientY;
-				mousePointer.candidate = {
-					condition: function( e )
-					{
-						var dx = windowMouseX;
-						var dy = windowMouseY;
-						var dfx = dx - px;
-						var dfy = dy - py;
-						var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
-						if( dist > 30 )
+				div.onmousedown = function( e )
+				{
+					if( mousePointer.candidate ) return;
+					if( e.button != 0 )
+						return;
+					// Add candidate and rules
+					var self = this;
+					var px = e.clientX;
+					var py = e.clientY;
+					mousePointer.candidate = {
+						condition: function( e )
 						{
-							mousePointer.candidate = null;
-							self.removeChild( self.getElementsByTagName( 'span' )[0] );
-							self.ondrop = function( target )
+							var dx = windowMouseX;
+							var dy = windowMouseY;
+							var dfx = dx - px;
+							var dfy = dy - py;
+							var dist = Math.sqrt( ( dfx * dfx ) + ( dfy * dfy ) );
+							if( dist > 30 )
 							{
-								if( target && target.classList )
+								mousePointer.candidate = null;
+								self.removeChild( self.getElementsByTagName( 'span' )[0] );
+								self.ondrop = function( target )
 								{
-									if( target.classList.contains( 'ScreenContent' ) )
+									if( target && target.classList )
 									{
-										var m = new Module( 'dock' );
-										m.onExecuted = function()
+										if( target.classList.contains( 'ScreenContent' ) )
 										{
-											Workspace.reloadDocks();
+											var m = new Module( 'dock' );
+											m.onExecuted = function()
+											{
+												Workspace.reloadDocks();
+											}
+											m.execute( 'removefromdock', { name: o.exe } );
+											return;
 										}
-										m.execute( 'removefromdock', { name: o.exe } );
-										return;
 									}
+									Workspace.reloadDocks();
 								}
-								Workspace.reloadDocks();
+								mousePointer.pickup( self );
 							}
-							mousePointer.pickup( self );
 						}
-					}
-				};
-			}
+					};
+				}
 
-			var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
+				var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
 			
-			if( bubbletext )
-			{
-				CreateHelpBubble( div, bubbletext );
+				if( bubbletext )
+				{
+					CreateHelpBubble( div, bubbletext );
+				}
 			}
 			this.dom.appendChild( div );
 			this.refresh ();
@@ -1049,7 +1094,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		var keep = []; // elements to keep
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( eles[a].className == 'ViewList' )
+			// Close help bubbles
+			if( eles[ a ].helpBubble )
+			{
+				eles[ a ].helpBubble.close();
+			}
+			if( eles[ a ].className == 'ViewList' )
 			{
 				keep.push( eles[a] );
 			}
@@ -1057,7 +1107,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		this.dom.innerHTML = '';
 		for( var a = 0; a < keep.length; a++ )
 		{
-			this.dom.appendChild( keep[a] );
+			this.dom.appendChild( keep[ a ] );
 		}
 	}
 	// Standard refresh function
@@ -1065,7 +1115,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	{
 		this.render( true );
 	}
-	this.dom.drop = function( eles )
+	this.dom.drop = function( eles, e )
 	{
 		var dropped = 0;
 		
@@ -1101,18 +1151,33 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 			
 			// Add to launcher
-			if( self.addLauncher( element ) )
+			var extension = element.exe ? element.exe.split( '.' ) : false;
+			if( extension && extension.length > 1 )
+				extension = extension[1].toLowerCase();
+			else extension = false;
+			
+			if( element.type == 'executable' || ( element.type == 'file' && extension == 'jsx' ) )
 			{
-				var m = new Module( 'dock' );
-				var w = this.view;
-				m.onExecuted = function( r, dat )
+				if( self.addLauncher( element ) )
 				{
-					// Refresh dock noe more time
-					Workspace.reloadDocks();
+					var m = new Module( 'dock' );
+					var w = this.view;
+					m.onExecuted = function( r, dat )
+					{
+						// Refresh dock noe more time
+						Workspace.reloadDocks();
+					}
+					var o = { type: element.type, application: element.application, icon: element.src, shortdescription: '' };
+					m.execute( 'additem', o );
+					dropped++;
 				}
-				var o = { type: element.type, application: element.application, icon: element.src, shortdescription: '' };
-				m.execute( 'additem', o );
-				dropped++;
+				return dropped > 0 ? true : false;
+			}
+			else
+			{
+				Notify( { title: i18n( 'i18n_object_not_supported' ), text: i18n( 'i18n_only_executables_can_drop' ) } );
+				cancelBubble( e );
+				return false;
 			}
 		}
 		return false;
@@ -1129,7 +1194,7 @@ function RefreshDesklets()
 {
 	for ( var a = 0; a < __desklets.length; a++ )
 	{
-		__desklets[a].render ( true );
+		__desklets[a].render( true );
 	}
 }
 

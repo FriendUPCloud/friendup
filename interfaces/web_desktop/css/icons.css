@@ -53,6 +53,9 @@
 .FileBrowser div.Name
 {
 	padding: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .FileBrowserItemImage
@@ -70,7 +73,7 @@
 
 .Active > .FileBrowserItemImage
 {
-	filter: brightness(100);
+	filter: invert(1);
 }
 
 .FileBrowser div.Name.Active, 
@@ -170,9 +173,20 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	webkit-transition: transform,opacity 0.25s;
 }
 
-.File.Editing a.Title
+.File.Editing a.Title,
+.File.Editing .Column
 {
 	display: none;
+}
+
+.Listview .File.Editing textarea
+{
+	text-align: left;
+	padding: 0 0 0 48px;
+	width: 100%;
+	box-sizing: border-box;
+	height: 28px;
+	line-height: 28px;
 }
 
 .File.Selected
@@ -505,6 +519,20 @@ html .Launcher .File div *
 	background-size: contain;
 }
 
+.File .Icon > .Shared:after
+{
+	display: block;
+	font-family: fontawesome;
+	content: '\f064';
+	position: absolute;
+	right: 0;
+	top: 0;
+	background: rgba(255,255,255,0.8);
+	border-radius: 2px;
+	padding: 2px 4px;
+	color: black;
+}
+
 .File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
 .File .Icon .TypeGIF
 {
@@ -597,4 +625,24 @@ html .Launcher .File div *
 {
 	background-size: contain;
 }
+
+/* Compact icons ------------------------------------------------------------ */
+
+html .File.Compact
+{
+	width: 170px;
+}
+
+html .File.Compact > .Title
+{
+	min-height: 35px;
+}
+
+
+html .File.Compact > .Icon
+{
+	height: 35px;
+}
+
+
 

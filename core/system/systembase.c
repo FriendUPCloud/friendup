@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
-#include <network/websocket_server_client.h>
+#include <network/user_session_websocket.h>
 #include <system/fsys/device_handling.h>
 #include <core/functions.h>
 #include <util/md5.h>
@@ -57,6 +57,7 @@
 #include <sys/wait.h>
 #include <security/server_checker.h>
 #include <network/websocket_client.h>
+#include <network/protocol_websocket.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -106,23 +107,25 @@ void handle_sigchld( int sig )
 
 SystemBase *SystemInit( void )
 {
-	
 	//char *tmp = "{\"type\":\"authenticate\",\"data\":{\"serviceKey\":\"qwerty123456789\",\"serviceName\":\"presence\"}}";
 	//int size = strlen ( tmp );
 	//ProcessIncomingRequest( NULL, tmp, size, NULL );
 	
-	socket_init_once();
+	//socket_init_once();
 
 	struct SystemBase *l = NULL;
-	char tempString[ PATH_MAX ];
+	char *tempString = FCalloc( PATH_MAX, sizeof(char) );
 	Log( FLOG_INFO,  "SystemBase Init\n");
 	
 	mkdir( DEFAULT_TMP_DIRECTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 	
 	if( ( l = FCalloc( 1, sizeof( struct SystemBase ) ) ) == NULL )
 	{
+		FFree( tempString );
 		return NULL;
 	}
+	// uptime
+	l->l_UptimeStart = time( NULL );
 	
 	PropertiesInterfaceInit( &(l->sl_PropertiesInterface) );
 	
@@ -144,7 +147,7 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 		
 		// internal
-
+/*
 		struct sigaction sa;
 		sa.sa_handler = &handle_sigchld;
 		sigemptyset(&sa.sa_mask);
@@ -153,8 +156,9 @@ SystemBase *SystemInit( void )
 		{
 			perror(0);
 		}
+		*/
 		
-		if( getcwd( l->sl_AutotaskPath, sizeof ( tempString ) ) == NULL )
+		if( getcwd( l->sl_AutotaskPath, PATH_MAX ) == NULL )
 		{
 			FERROR("getcwd failed!");
 			exit(5);
@@ -170,7 +174,7 @@ SystemBase *SystemInit( void )
 				if( asdir->d_name[0] == '.' ) continue;
 				Log( FLOG_INFO,  "[SystemBase] Reading autostart scripts:  %s\n", asdir->d_name );
 			
-				snprintf( tempString, sizeof(tempString), "%s%s", l->sl_AutotaskPath, asdir->d_name );
+				snprintf( tempString, PATH_MAX, "%s%s", l->sl_AutotaskPath, asdir->d_name );
 				
 				Autotask *loctask = AutotaskNew( "/bin/bash", tempString );
 				if( loctask != NULL )
@@ -201,8 +205,9 @@ SystemBase *SystemInit( void )
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
 	pthread_mutex_init( &l->sl_ResourceMutex, NULL );
 
-	if( getcwd( tempString, sizeof ( tempString ) ) == NULL )
+	if( getcwd( tempString, PATH_MAX ) == NULL )
 	{
+		FFree( tempString );
 		FERROR("getcwd failed!");
 		exit(5);
 	}
@@ -485,9 +490,10 @@ SystemBase *SystemInit( void )
 	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqllib == NULL )
 	{
 		FERROR("Cannot open 'mysql.library' in first slot\n");
+		FFree( tempString );
 		FFree( l->sqlpool );
 		FFree( l );
-		LogDelete();
+		//LogDelete();
 		return NULL;
 	}
 	
@@ -566,6 +572,11 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
+	l->sl_NotificationManager = NotificationManagerNew( l );
+	if( l->sl_NotificationManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
+	}
 	
 	l->fcm = FriendCoreManagerNew();
 
@@ -613,7 +624,7 @@ SystemBase *SystemInit( void )
 	CommServiceInterfaceInit( &(l->sl_CommServiceInterface) );
 	CommServiceRemoteInterfaceInit( &(l->sl_CommServiceRemoteInterface) );
 
-	l->alib = (struct ApplicationLibrary *)LibraryOpen( l, "application.library", 0 ); //l->LibraryApplicationGet( l );
+	//l->alib = (struct ApplicationLibrary *)LibraryOpen( l, "application.library", 0 ); //l->LibraryApplicationGet( l );
 
 	l->ilib = l->LibraryImageGet( l );
 	
@@ -650,7 +661,7 @@ SystemBase *SystemInit( void )
 	{
 		while( ( dir = readdir( d ) ) != NULL )
 		{
-			sprintf( tempString, "%s%s", l->sl_ModPath, dir->d_name );
+			snprintf( tempString, PATH_MAX, "%s%s", l->sl_ModPath, dir->d_name );
 
 			Log( FLOG_INFO,  "Reading modules:  %s fullmodpath %s\n", dir->d_name, tempString );
 			if( dir->d_name[0] == '.' ) continue;
@@ -701,8 +712,9 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create authentication modules\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	if (getcwd( tempString, sizeof ( tempString ) ) == NULL)
+	if (getcwd( tempString, PATH_MAX ) == NULL)
 	{
+		FFree( tempString );
 		FERROR("getcwd failed!");
 		exit(5);
 	}
@@ -772,7 +784,20 @@ SystemBase *SystemInit( void )
 	else
 	{
 		FERROR("Authentication module not provided\n");
+		FFree( tempString );
 		return NULL;	
+	}
+	
+	l->sl_UM = UMNew( l );
+	if( l->sl_UM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
+	}
+	
+	l->sl_DeviceManager = DeviceManagerNew( l );
+	if( l->sl_DeviceManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize DeviceManager\n");
 	}
 	
 	Log( FLOG_INFO, "AUTHOD master set to %s\n", l->sl_ActiveAuthModule->am_Name );
@@ -785,7 +810,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	RescanHandlers( l );
+	RescanHandlers( l->sl_DeviceManager );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers END\n");
@@ -795,7 +820,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create DOSDrivers\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	RescanDOSDrivers( l );
+	RescanDOSDrivers( l->sl_DeviceManager );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create DOSDrivers END\n");
@@ -826,6 +851,12 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	// create all managers
+	
+	l->sl_PermissionManager = PermissionManagerNew( l );
+	if( l->sl_PermissionManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize PermissionManager\n");
+	}
 	
 	l->sl_WDavTokM = WebdavTokenManagerNew( l );
 	if( l->sl_WDavTokM == NULL )
@@ -865,12 +896,6 @@ SystemBase *SystemInit( void )
 	
 	l->sl_UGM = UGMNew( l );
 	if( l->sl_UGM == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
-	}
-	
-	l->sl_UM = UMNew( l );
-	if( l->sl_UM == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
 	}
@@ -931,12 +956,7 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
 	
-	l->sl_NotificationManager = NotificationManagerNew( l );
-	if( l->sl_NotificationManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
-	}
-	
+	FriendCoreManagerInitServices( l->fcm );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
@@ -960,26 +980,26 @@ SystemBase *SystemInit( void )
 	#define DAYS1 24*MINS60
 	#define DAYS5 5*24*MINS60
 
-	EventAdd( l->sl_EventManager, DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "DoorNotificationRemoveEntries", DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
+	EventAdd( l->sl_EventManager, "USMRemoveOldSessions", USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
 	// test, to remove
-	EventAdd( l->sl_EventManager, PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
-	EventAdd( l->sl_EventManager, CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
+	EventAdd( l->sl_EventManager, "PIDThreadManagerRemoveThreads", PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
+	EventAdd( l->sl_EventManager, "CacheUFManagerRefresh", CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
 	
-	EventAdd( l->sl_EventManager, WebdavTokenManagerDeleteOld, l->sl_WDavTokM, time( NULL )+MINS360, MINS360, -1 );
+	EventAdd( l->sl_EventManager, "WebdavTokenManagerDeleteOld", WebdavTokenManagerDeleteOld, l->sl_WDavTokM, time( NULL )+MINS360, MINS360, -1 );
 	
-	EventAdd( l->sl_EventManager, CommServicePING, l->fcm->fcm_CommService, time( NULL )+MINS1, MINS1, -1 );
+	EventAdd( l->sl_EventManager, "CommServicePING", CommServicePING, l->fcm->fcm_CommService, time( NULL )+MINS1, MINS1, -1 );
 	
-	EventAdd( l->sl_EventManager, DOSTokenManagerAutoDelete, l->sl_DOSTM, time( NULL )+MINS5, MINS5, -1 );
+	EventAdd( l->sl_EventManager, "DOSTokenManagerAutoDelete", DOSTokenManagerAutoDelete, l->sl_DOSTM, time( NULL )+MINS5, MINS5, -1 );
 	
-	EventAdd( l->sl_EventManager, RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
+	EventAdd( l->sl_EventManager, "RemoveOldLogs", RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
 	//@BG-678 
 	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
 	if( l->l_EnableHTTPChecker == 1 )
 	{
-		EventAdd( l->sl_EventManager, CheckServerAndRestart, l, time( NULL )+30, 30, -1 );
+		EventAdd( l->sl_EventManager, "CheckServerAndRestart", CheckServerAndRestart, l, time( NULL )+30, 30, -1 );
 	}
 	
 	l->sl_USM->usm_UM = l->sl_UM;
@@ -992,6 +1012,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO,  "[SystemBase] base initialized properly\n");
 	
 	// we cannot open libs inside another init
+	FFree( tempString );
 
 	return ( void *)l;
 }
@@ -1151,6 +1172,14 @@ void SystemClose( SystemBase *l )
 	{
 		DOSTokenManagerDelete( l->sl_DOSTM );
 	}
+	if( l->sl_DeviceManager != NULL )
+	{
+		DeviceManagerDelete( l->sl_DeviceManager );
+	}
+	if( l->sl_PermissionManager != NULL )
+	{
+		PermissionManagerDelete( l->sl_PermissionManager );
+	}
 	
 	// Remove sentinel from active memory
 	if( l->sl_Sentinel != NULL )
@@ -1181,7 +1210,6 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
 	FHandler *lsys = l->sl_Filesystems;
-
 	while( lsys != NULL )
 	{
 		FHandler *rems = lsys;
@@ -1226,10 +1254,10 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Closing application.library\n");
 	// Application lib
 	
-	if( l->alib != NULL )
-	{
-		LibraryClose( l->alib );
-	}
+	//if( l->alib != NULL )
+	//{
+	//	LibraryClose( l->alib );
+	//}
 	
 	if( l->zlib != NULL )
 	{
@@ -1602,8 +1630,14 @@ int SystemInitExternal( SystemBase *l )
 		User *tmpUser = l->sl_UM->um_Users;
 		while( tmpUser != NULL )
 		{
+			char *err = NULL;
 			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE );
+			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE, &err );
+			if( err != NULL )
+			{
+				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
+				FFree( err );
+			}
 			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
@@ -1939,10 +1973,11 @@ void CheckAndUpdateDB( struct SystemBase *l )
  * @param usr pointer to user to which doors belong
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
+ * @param mountError pointer to error message
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail )
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	
@@ -1958,9 +1993,12 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FB
 		return 0;
 	}
 	
+	FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
+	
 	char temptext[ 1024 ];
+	//char *temptext = FCalloc( 1024, 1 );
 
-	sqllib->SNPrintF( sqllib, temptext, sizeof(temptext) ,"\
+	sqllib->SNPrintF( sqllib, temptext, 1024 ,"\
 SELECT \
 `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
 FROM `Filesystem` f \
@@ -1986,9 +2024,10 @@ usr->u_ID , usr->u_ID, usr->u_ID
 	}
 	DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex ) == 0 )
 	{
 		char **row;
+
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
@@ -2014,19 +2053,22 @@ usr->u_ID , usr->u_ID, usr->u_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
-			int err = MountFS( l, (struct TagItem *)&tags, &device, usr );
+			
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin );
 
-			FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
+			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
 				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
-				if( mount == 1 && unmountIfFail == TRUE )
+				if( mount == 1 && unmountIfFail == TRUE && err != FSys_Error_CustomError )
 				{
+					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
+					
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
 UPDATE Filesystem f SET `Mounted` = '0' \
 WHERE \
@@ -2056,16 +2098,17 @@ AND LOWER(f.Name) = LOWER('%s')",
 			else
 			{
 				Log( FLOG_ERROR, "[UserDeviceMount] \tCannot set device mounted state. Device = NULL (%s).\n", row[0] );
-			}	
+			}
+			
+			//FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 		}	// going through all rows
 		DEBUG( "[UserDeviceMount] Device mounted for user %s\n\n", usr->u_Name );
 
 		sqllib->FreeResult( sqllib, res );
 
 		usr->u_InitialDevMount = TRUE;
-
-		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	}
+	FRIEND_MUTEX_UNLOCK( &l->sl_DeviceManager->dm_Mutex );
 	
 	return 0;
 }
@@ -2094,7 +2137,7 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
-				DeviceUnMount( l, remdev, usr );
+				DeviceUnMount( l->sl_DeviceManager, remdev, usr );
 				
 				FFree( remdev );
 			}
@@ -2479,36 +2522,34 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 {
 	unsigned char *buf;
 	int bytes = 0;
-	
+	buf = (unsigned char *)FCalloc( len + 128, sizeof( unsigned char ) );
+	if( buf != NULL )
 	{
-		buf = (unsigned char *)FCalloc( len + 128, sizeof( unsigned char ) );
-		if( buf != NULL )
+		memcpy( buf, msg, len );
+	
+		DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
+		if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 		{
-			memcpy( buf, msg, len );
-		
-			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
-
-			WebsocketServerClient *wsc = usersession->us_WSClients;
+			UserSessionWebsocket *wsc = usersession->us_WSConnections;
 			while( wsc != NULL )
 			{
-				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
+				DEBUG("[SystemBase] Writing to websockets, pointer to wsdata %p, ptr to ws: %p wscptr: %p\n", wsc->wusc_Data, usersession, wsc );
 
-				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+				//if( FRIEND_MUTEX_LOCK( &(wsc->wsc_Mutex) ) == 0 )
+				
+				if( wsc->wusc_Data != NULL )
 				{
-					if( wsc->wsc_Wsi != NULL )
-					{
-						bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-					}
-					else
-					{
-						FERROR("Cannot write to WS, WSI is NULL!\n");
-					}
-
-					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 				}
-
-				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
+				else
+				{
+					FERROR("Cannot write to WS, WSI is NULL!\n");
+				}
+				wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
+				}
+				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 			}
+			DEBUG("[SystemBase] Writing to websockets done, stuff released\n");
 			
 			FFree( buf );
 		}
@@ -2517,7 +2558,6 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
 			return 0;
 		}
-	}
 	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
 	
 	return bytes;
@@ -2543,17 +2583,35 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			memcpy( buf, msg,  len );
 
-			WebsocketServerClient *wsc = usersession->us_WSClients;
-		
-			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
-		
-			while( wsc != NULL )
+			if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
 			{
-				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
-			}
+				UserSessionWebsocket *wsc = usersession->us_WSConnections;
 		
-			FFree( buf );
+				DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
+		
+				//if( usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+				{
+					while( wsc != NULL )
+					{
+						//if(  )//&& wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+						{
+							//WSCData *data = (WSCData *)wsc->wusc_Data;
+							if( wsc->wusc_Data != NULL && wsc->wusc_Status == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
+							{
+								bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+							}
+							else
+							{
+								DEBUG("Websocket is disabled, dataptr: %p\n", wsc->wusc_Data );
+							}
+						}
+						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
+					}
+				}
+		
+				FFree( buf );
+				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+			}
 		}
 		else
 		{

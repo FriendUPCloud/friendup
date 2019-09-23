@@ -1,0 +1,76 @@
+
+	<div>
+		<div class="HRow BorderBottom MarginBottom PaddingBottom">
+			<div class="HContent50 FloatLeft">
+				<p class="Layout">
+					<strong>{i18n_login_logo_image}</strong> &nbsp; <input type="checkbox" id="logo_image_check"/> {i18n_use_image}
+				</p>
+				<div id="LoginLogoImage" class="MarginBottom Padding Margins">
+					<img id="theLogoImage" src="{logoImage}?rand={rand}"/>
+				</div>
+				<p>
+					<button type="button" class="IconSmall fa-upload" onclick="changeGlobalsLogoImage()">
+						{i18n_change_logo_image}
+					</button>
+				</p>
+			</div>
+			<div class="HContent50">		
+				<p class="Layout">
+					<strong>{i18n_login_background_image}</strong> &nbsp; <input type="checkbox" id="background_image_check"/> {i18n_use_image}
+				</p>
+				<div id="LoginBackgroundImage" class="MarginBottom Padding Margins">
+					<img id="theBackgroundImage" src="{backgroundImage}?rand={rand}"/>
+				</div>
+				<p>
+					<button type="button" class="IconSmall fa-upload" onclick="changeGlobalsBackgroundImage()">
+						{i18n_change_background_image}
+					</button>
+				</p>
+			</div>
+		</div>
+		<div class="HRow BorderBottom MarginBottom PaddingBottom">
+			<div class="HContent50 FloatLeft">
+		
+				<p class="Layout">
+					<strong>{i18n_extra_login_css}</strong> &nbsp; <input type="checkbox" id="extra_login_css_check"/> {i18n_use_data}
+				</p>
+				<div id="LoginBackgroundImage MarginBottom Padding Margins">
+					<p class="Layout"><input type="text" id="extra_login_css"/></p>
+				</div>
+				<p>
+					<button type="button" class="IconSmall fa-upload" onclick="changeGlobalsLoginCSS()">
+						{i18n_change_extra_login_css}
+					</button>
+				</p>
+			</div>
+			<div class="HContent50 FloatLeft">
+		
+				<p class="Layout">
+					<strong>{i18n_about_template}</strong> &nbsp; <input type="checkbox" id="extra_about_template_check"/> {i18n_use_data}
+				</p>
+				<div id="LoginBackgroundImage MarginBottom Padding Margins">
+					<p class="Layout"><input type="text" id="about_template"/></p>
+				</div>
+				<p>
+					<button type="button" class="IconSmall fa-upload" onclick="changeAboutTemplate()">
+						{i18n_change_about_template}
+					</button>
+				</p>
+			</div>
+		</div>
+		<div class="HRow">
+			<div class="HContent50 FloatLeft">
+				<p class="Layout">
+					<strong>{i18n_eula_short}</strong> &nbsp; <input type="checkbox" id="eula_short_check"/> {i18n_use_text}
+				</p>
+				<textarea size="8" class="FullWidth MarginBottom" id="eula_short_text" style="height: 100px">{eulaShort}</textarea>
+			</div>
+			<div class="HContent50 FloatLeft">
+				<p class="Layout">
+					<strong>{i18n_eula_long}</strong> &nbsp; <input type="checkbox" id="eula_long_check"/> {i18n_use_text}
+				</p>
+				<textarea class="FullWidth MarginBottom" id="eula_long_text" style="height: 250px">{eulaLong}</textarea>
+			</div>
+		</div>
+	</div>
+	

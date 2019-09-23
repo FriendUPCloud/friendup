@@ -22,8 +22,8 @@ body *
 	display:none!important
 }
 
-/* TEMPORARY TEST */
-/*html body.ViewStateActive:after 
+/* TEMPORARY TESThtml body.ViewStateActive:after,
+html body:not(.ViewStateActive):after 
 {
     position: absolute;
     display: block;
@@ -32,11 +32,17 @@ body *
     height: 100%;
     top: 0;
     left: 0;
-    border: 2px solid green;
+    border-top: 2px solid green;
     pointer-events: none;
     box-sizing: border-box;
     z-index: 9999;
-}*/
+}
+
+html body:not(.ViewStateActive):after 
+{
+	border-top: 2px solid red;
+}
+ */
 
 html
 {
@@ -240,6 +246,12 @@ select
 	cursor: pointer;
 }
 
+#MousePointer .MousePointer
+{
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .MouseCrosshair
 {
 	cursor: crosshair;
@@ -330,9 +342,8 @@ button, .Button
 body button.IconButton:not(:hover),
 body .Button.IconButton:not(:hover)
 {
-	background: none !important;
-	background-color: none !important;
-	border: 1px solid transparent !important;
+	background-color: transparent !important;
+	border: 1px solid rgba(0,0,0,0) !important;
 	padding: 5px 5px;
 }
 
@@ -477,6 +488,18 @@ textarea.Required,
 input.Required
 {
 	border-color     : $ColorDangerBg;
+}
+
+.FileUploadWrapper { position: relative; overflow: hidden; }
+.FileUploadWrapper input[type=file]
+{
+  font-size: 100px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  z-index:2;
+
 }
 
 /* Boxes -------------------------------------------------------------------- */
@@ -1626,6 +1649,11 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 
 /* Calendar ----------------------------------------------------------------- */
 
+.HidingCalendar #CalendarWidget
+{
+	height: 0px !important;
+}
+
 .Calendar.MonthName
 {
 	padding: 8px;
@@ -1825,6 +1853,28 @@ html .Calendar div.HRow > .Current.Day:nth-child(even):hover
 	color: white;
 	border-radius: 3px;
 }
+
+.Widget.Fadable
+{
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+.Widget.Faded
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadeout
+{
+	opacity: 0;
+}
+
+.Widget.Fadable.Fadein
+{
+	opacity: 1;
+}
+
 html body .Widget.Raised
 {
 	z-index: 2147483643;
@@ -1833,6 +1883,11 @@ html body .Widget.Raised
 html body[mobile=mobile] .Widget.Raised
 {
 	
+}
+
+.Widget.Faded
+{
+	opacity: 0;
 }
 
 html body.WindowMenu .Widget
@@ -1881,6 +1936,53 @@ html body.WindowMenu .Widget
 	border-radius: 0 0 3px 3px;
 }
 
+.Widget.HelpBubble:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 100%;
+	height: 30px;
+	left: calc(50% - 10px);
+	width: 20px;
+	background-image: url(/webclient/gfx/system/triangle_high.svg);
+	background-size: cover;
+	background-position: top center;
+	background-repeat: no-repeat;
+	opacity: 0.6;
+}
+
+.Widget.HelpBubble
+{
+	border-radius: 25px;
+}
+
+.Widget.HelpBubble.Fadable,
+.Widget.HelpBubble.Fadable:after
+{
+	transition: margin-top,height 0.25s,0.25s;
+}
+
+.Widget.HelpBubble.Fadable
+{
+	margin-top: 0;
+}
+
+.Widget.HelpBubble.Fadable.Fadein
+{
+	margin-top: -10px;
+}
+
+.Widget.HelpBubble.Fadable.Fadein:after
+{
+	height: 10px;
+}
+
+.Widget.HelpBubble.Fadable:after
+{
+	height: 5px;
+}
+
 /* Formerly doors.css ------------------------------------------------------- */
 
 /* Non logged in state */
@@ -1892,9 +1994,6 @@ body.Inside
 
 body #Screens
 {
-	background-image: url(/webclient/theme/loginimage.jpg);
-	background-position: center center;
-	background-size: cover;
 }
 
 body.Login > img
@@ -1922,21 +2021,33 @@ body.Loading > #Screens
 	opacity: 0;
 }
 
-body:not(.friendapp).Loading:after
+body.LoadingForm > div
+{
+	display: none;
+}
+
+body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after,
+body:not([viewlist]):not(.friendapp):not([mobile]).LoadingForm:after
 {
 	content: ' ';
-	background: url(/themes/friendup12/gfx/loading.gif) no-repeat center center #222222;
+	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;
 	position: absolute;
 	top: calc(50% - 30px);
-	left: calc(50% - 40px);
+	left: calc(50% - 30px);
 	height: 60px;
-	width: 80px;
+	width: 60px;
 	color: white;
-	padding: 0 10px;
+	padding: 0;
 	text-align: center;
-	border-radius: 10px;
+	border-radius: 60px;
 	animation: bodyLoading 0.1s;
 	-webkit-animation: bodyLoading 0.1s;
+	z-index: 99999999999;
+}
+
+body[mobile].Loading:after, body[mobile].LoadingForm:after
+{
+	display: none;
 }
 
 @-webkit-keyframes bodyLoading
@@ -2037,12 +2148,6 @@ html #Tray.Size16
 	background-size: contain;
 }
 
-#Tray > div:hover
-{
-    color: #ffee00;
-    text-shadow: 0px 0px 5px rgba(255,255,255,0.5);
-}
-
 .SpeechResponse
 {
 	position: absolute;
@@ -2139,6 +2244,12 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	padding: 8px;
 }
 
+#Tray .Notification .BubbleInfo p.Layout
+{
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+
 #Tray > .Notification > .TrayInformation
 {
 	position: absolute;
@@ -2181,6 +2292,12 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	bottom: 0;
 	height: 30px;
 	opacity: 0;
+	pointer-events: none;
+}
+
+.TrayElement:hover .BubbleInfo:after
+{
+	pointer-events: all;
 }
 
 .TrayElement:hover .BubbleInfo:before, 
@@ -2211,6 +2328,15 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 }
 
 /* Various built-in icons */
+
+.TrayElement.Download:before
+{
+	font-family: fontawesome;
+	content: "\f0ed";
+	font-size: 135%;
+	text-align: center;
+	line-height: 24px;
+}
 
 .TrayElement.Tasks:before
 {
@@ -2603,6 +2729,25 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	text-align: center;
 	text-shadow: none;
 }
+
+/* Search */
+
+[mobile] #SearchGuiContainer
+{
+	position: absolute;
+	width: calc(100% - 20px);
+	height: 75px;
+}
+
+[mobile] #WorkspaceSearchResults
+{
+	position: absolute;
+	top: 85px;
+	width: calc(100% - 20px);
+	height: calc(100% - 95px);
+	overflow: auto;
+}
+
 
 /* Wallpapers */
 
@@ -3488,7 +3633,7 @@ html #DockWindowList .Task.Directory
 	margin-right: 5px;
 }
 
-.DockMenu .DockMenuItem.Directory img
+.DockMenu .DockMenuItem.Directory > img
 {
 	position: relative;
 	top: -2px;
@@ -3542,12 +3687,15 @@ html #DockWindowList .Task.Directory
 	top: 0;
 	width: 220px;
 	background: rgba(0,0,0,0.8);
+	transition: opacity 0.25s;
+	opacity: 0;
 }
 
 .DockMenu .DockMenuItem.Directory.Over > .DockSubMenu,
 .DockMenu .DockMenuItem.Directory.Active > .DockSubMenu
 {
 	pointer-events: all;
+	opacity: 1;
 	visibility: visible;
 }
 
@@ -3611,8 +3759,8 @@ html #DockWindowList .Task.Directory
 	position: absolute;
 	top: 50%; 
 	left: 50%;
-	-webkit-transform: translateX(-50%) translateY(-50%);
-	transform: translateX(-50%) translateY(-50%);
+	-webkit-transform: translate3d(-50%,-50%,0);
+	transform: translate3d(-50%,-50%,0);
 	min-width: 100%; 
 	min-height: 100%; 
 	width: auto; 
@@ -4240,6 +4388,76 @@ div.Orange, button.Orange
 #fileUpload .FileUpload
 {
 	position: relative;
+}
+
+.UploadFeedbackContainer.Busy input,
+.UploadFeedbackContainer.Busy button
+{
+	pointer-events: none;
+	opacity: 0.8;
+	cursor: not-allowed;
+}
+
+.UploadFeedbackContainer.Busy input[type=file]
+{
+	display: none;
+}
+
+.UploadFeedbackContainer button.fa-upload
+{
+	transition: opacity 0.2s;
+	opacity: 1;
+}
+
+.UploadFeedbackContainer.Busy button.fa-upload
+{
+	opacity: 0.5;
+}
+
+.UploadFeedbackContainer.Busy button.fa-upload
+{
+	display: none;
+}
+
+.ProgressReport
+{
+	display: none;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.UploadFeedbackContainer.Busy .ProgressReport
+{
+	display: block;
+	opacity: 1;
+	position: relative;
+	width: 60px;
+	margin: auto;
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+	left: 15px;
+}
+
+.ProgressReport .Progress
+{
+	position: absolute;
+	display: block;
+	font-size: 30px;
+	animation: uprotate 2s infinite linear;
+}
+
+.ProgressReport .Progress:after
+{
+	content: "\f1ce";
+	font-family: fontawesome;
+	display: block;
+}
+
+@keyframes uprotate
+{
+	0% { transform: rotateZ(0deg); }
+	100% { transform: rotateZ(360deg); }
 }
 
 .FileUpload > input

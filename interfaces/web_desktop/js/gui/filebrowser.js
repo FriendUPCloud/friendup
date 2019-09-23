@@ -65,16 +65,29 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	}
 	if( this.flags.rootPath )
 		this.rootPath = this.flags.rootPath;
+	
+	// If we don't have a rootPath the default is Mountlist:
+	if( !this.rootPath ) this.rootPath = 'Mountlist:';
+	
 	// Clicking the pane
 	this.dom.onclick = function( e )
 	{
 		var t = e.target ? e.target : e.srcElement;
 		if( t == this )
 		{
-			self.setPath( self.rootPath, function()
+			var cb = function()
 			{
-				self.callbacks.folderOpen( self.rootPath );
-			} );
+				if( t )
+				{
+					self.callbacks.folderOpen( self.rootPath, e );
+				}
+				t = null;
+			};
+			// Can't set icon listing path to mountlist..
+			if( self.rootPath != 'Mountlist:' )
+			{
+				self.setPath( self.rootPath, cb );
+			}
 		}
 		return cancelBubble( e );
 	}
@@ -119,18 +132,27 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 				}
 			}
 		}
-		if( win )
+		if( win && drop == 0 )
 		{
-			if( win.refresh ) win.refresh();
+			if( win.refresh )
+			{
+				win.refresh();
+			}
 		}
 	}
 	return drop;
 };
 
 // Set an active path
-Friend.FileBrowser.prototype.setPath = function( target, cbk )
+// Supported flags ( { lockHistory: true|false } )
+Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags )
 {
+	// Already set
+	if( this.flags.path && this.flags.path == target ) return;
+	
+	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
+	if( tempFlags ) this.tempFlags = tempFlags;
 	this.refresh( this.rootPath, this.dom, cbk, 0 );
 }
 
@@ -138,7 +160,7 @@ Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
 };
-Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth )
+Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags )
 {
 	var self = this;
 	
@@ -159,30 +181,42 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	}
 	
 	// What are we looking for at this level?
+	// Keeps the whole target path, but searches on each level recursively..
 	var targetPath = false;
 	if( this.flags.path )
 	{
-		var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
+		targetPath = this.flags.path;
+		/*var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
 		b.pop();
 		targetPath = '';
-		var pad = '';
+		
 		for( var a = 0; a < depth; a++ )
 		{
-			targetPath += b[a] + ( a == 0 ? ':' : '/' );
-			pad += ' ';
+			if( b[a] )
+			{
+				targetPath += b[a] + ( a == 0 ? ':' : '/' );
+			}
 		}
+		console.log( 'Looking: ' + targetPath + ' (' + this.flags.path + ') - ' + depth + ' ' + path );*/
 	}
 	
 	function createOnclickAction( ele, ppath, type, depth )
 	{
 		ele.onclick = function( e )
 		{
+			// Real click removes temp flags
+			if( e && e.button >= 0 )
+				self.tempFlags = false;
+				
 			if( !ppath ) 
 			{
 				return cancelBubble( e );
 			}
 			if ( ppath.indexOf( ':' ) < 0 )
 				ppath += ':';
+
+			// Real click or entering target path
+			var doClick = ( ppath == self.flags.path ) || ( e && e.button >= 0 );
 
 			if( type == 'File' )
 			{
@@ -211,52 +245,28 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				if( !treated && self.callbacks.loadFile )
 				{
-					self.callbacks.loadFile( ppath );
+					self.callbacks.loadFile( ppath, e, self.tempFlags );
 				}
 			}
-			else
+			else if( type == 'RootDirectory' )
 			{
-				// Set the current target path
-				self.flags.path = ppath;
-				
 				// Are we in a file dialog?
 				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
 				{
-					self.callbacks.folderOpen( ppath );
-					return  cancelBubble( e );
+					self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					return cancelBubble( e );
 				}
-				// Normal operation
-				if( !this.classList.contains( 'Open' ) )
+				
+				if( doClick )
 				{
-					var subitems = ele.getElementsByClassName( 'SubItems' );
-					if( subitems.length )
+					if( self.callbacks && self.callbacks.folderOpen )
 					{
-						self.refresh( ppath, subitems[0], callback, depth );
-						this.classList.add( 'Open' );
-						if( self.callbacks && self.callbacks.folderOpen )
-						{
-							self.callbacks.folderOpen( ppath );
-						}
-						var nam = ele.getElementsByClassName( 'Name' );
-						if( nam.length )
-						{
-							nam[0].classList.add( 'Open' );
-						}
+						self.callbacks.folderOpen( ppath, e, self.tempFlags );
 					}
 				}
-				else
-				{
-					this.classList.remove( 'Open' );
-					var nam = ele.getElementsByClassName( 'Name' );
-					if( nam.length )
-					{
-						nam[0].classList.remove( 'Open' );
-						if( self.callbacks && self.callbacks.folderClose )
-						{
-							self.callbacks.folderClose( ppath );
-						}
-					}
-				}
+				
+				// Set this to active
+				// Set this to active
 				var eles = self.dom.getElementsByTagName( 'div' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -268,10 +278,83 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					nam[0].classList.add( 'Active' );
 				}
 			}
+			else if( type == 'Directory' || type == 'volume' )
+			{
+				// Are we in a file dialog?
+				if( isMobile && ( self.flags.filedialog || self.flags.justPaths ) )
+				{
+					self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					return cancelBubble( e );
+				}
+				
+				var nam = ele.getElementsByClassName( 'Name' );
+				
+				// Normal operation
+				if( !this.classList.contains( 'Open' ) || ( e && e.mode == 'open' ) )
+				{
+					var subitems = ele.getElementsByClassName( 'SubItems' );
+					if( subitems.length )
+					{
+						this.classList.add( 'Open' );
+
+						// Only refresh at final destination
+						if( doClick )
+						{
+							self.refresh( ppath, subitems[0], callback, depth );
+							if( self.callbacks && self.callbacks.folderOpen )
+							{
+								self.callbacks.folderOpen( ppath, e, self.tempFlags );
+							}
+						}
+						if( nam.length )
+						{
+							nam[0].classList.add( 'Open' );
+						}
+					}
+				}
+				// Only close folders if they are active and clicked
+				else if( nam.length && e && ( ( !isMobile && e.button >= 0 ) || ( isMobile && doClick ) ) )
+				{
+					// Only close active
+					if( nam[0].classList.contains( 'Active' ) )
+					{
+						this.classList.remove( 'Open' );
+						nam[0].classList.remove( 'Open' );
+					
+						if( self.callbacks && self.callbacks.folderClose )
+						{
+							self.callbacks.folderClose( ppath, e, self.tempFlags );
+						}
+					}
+					// Again clicking (like open...)
+					else if( self.callbacks && self.callbacks.folderOpen )
+					{
+						self.callbacks.folderOpen( ppath, e, self.tempFlags );
+					}
+				}
+				
+				// Set this to active
+				var eles = self.dom.getElementsByTagName( 'div' );
+				for( var a = 0; a < eles.length; a++ )
+				{
+					eles[a].classList.remove( 'Active' );
+				}
+				var nam = ele.getElementsByClassName( 'Name' );
+				if( nam.length )
+				{
+					nam[0].classList.add( 'Active' );
+				}
+				
+				var fnam = ppath.split( ':' )[1];
+				if( fnam.indexOf( '/' ) > 0 )
+					fnam = fnam.split( '/' ).pop();
+			}
 			return cancelBubble( e );
 		}
 		ele.oncontextmenu = function( e )
 		{
+			if( isMobile ) return;
+			
 			var men = cmd = '';
 			var cf = false; // create file
 			if( type == 'File' )
@@ -312,7 +395,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				} );
 			}
 			if( cf ) menu.push( cf );
-			ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
+			if( window.ShowContextMenu )
+			{
+				ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
+			}
+			else if( window.Workspace )
+				Workspace.showContextMenu( menu, e );
 			return cancelBubble( e );
 		}
 	}
@@ -325,6 +413,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	{
 		var func = function( flags, cb )
 		{
+			// For Workspace scope
 			if( window.Workspace )
 			{
 				Friend.DOS.getDisks( flags, function( response, msg )
@@ -334,11 +423,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					} : false );
 				} );
 			}
+			// For application scope
 			else
 			{
 				Friend.DOS.getDisks( flags, cb );
 			}
 		}
+		// Check from off mountlist
 		func( { sort: true }, function( msg )
 		{	
 			if( !msg || !msg.list ) return;
@@ -364,12 +455,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
 							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
+							
 							// Don't add twice
 							if( !found.find( function( ele ){ ele == msg.list[b].Title } ) )
 							{
-								found.push( msg.list[b].Title );
-								foundElements.push( eles[a] );
-								foundStructures.push( msg.list[ b ] );
+								found.push( msg.list[b].Title ); // Found item titles
+								foundElements.push( eles[a] ); // Found dom nodes
+								foundStructures.push( msg.list[ b ] ); // Found dos structures
 							}
 							elFound = true;
 						}
@@ -392,6 +484,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Iterate through the resulting list
 				for( var a = 0; a < msg.list.length; a++ )
 				{
+					// Skip system drive
 					if( msg.list[a].Volume == 'System:' ) continue;
 					
 					// Add the bookmark header if it doesn't exist
@@ -415,6 +508,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							break;
 						}
 					}
+					
+					// Didn't already exist, make it
 					if( !foundItem )
 					{
 						var d = document.createElement( 'div' );
@@ -424,13 +519,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						var nm = document.createElement( 'div' );
 						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
-						nm.innerHTML = ' ' + msg.list[a].Title;
+						nm.innerHTML = '<span> ' + msg.list[a].Title + '</span>';
 						
 						// We have an incoming path
 						if( !clickElement && self.flags.path && targetPath == d.path )
 						{
 							clickElement = d;
-						}							
+						}				
 						
 						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
@@ -454,6 +549,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						}
 						
 						d.appendChild( nm );
+						
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
 							// Set nice folder icon
@@ -489,6 +585,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								nm.appendChild( ex );
 							} )( msg.list[a] );
 						}
+						
 						var s = document.createElement( 'div' );
 						s.className = 'SubItems';
 						d.appendChild( s );
@@ -506,6 +603,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							{
 								self.refresh( msg.list[a].Volume, s[0], false, depth + 1 );
 							}
+						}
+						
+						if( !clickElement && self.flags.path && targetPath == foundItem.path )
+						{
+							clickElement = foundItem;
 						}
 					}
 				}
@@ -525,9 +627,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				// Click the click element for path
 				if( clickElement )
 				{
+					self.lastClickElement = clickElement; // store it
 					setTimeout( function()
 					{
-						clickElement.onclick();
+						clickElement.onclick( { mode: 'open' } );
 					}, 5 );
 				}
 			}
@@ -600,6 +703,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		{
 			if( !msg || !msg.list ) return;
 			
+			// Create metadirectory "root"
+			if( depth == 1 )
+			{
+				var itm = [ { Type: 'Directory', Filename: i18n( 'i18n_root_directory' ), Path: Application.browserPath, Title: i18n( 'i18n_root_directory' ), MetaType: 'RootDirectory' } ];
+				msg.list = itm.concat( msg.list );
+			}
+
 			if( callback ) callback();
 			
 			// Get existing
@@ -618,7 +728,17 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						var fn = msg.list[b].Filename;
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
-						createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
+						
+						// Special case - isn't really a directory (uses path without filename)
+						if( msg.list[b].MetaType == 'RootDirectory' )
+						{
+							createOnclickAction( eles[a], path, 'RootDirectory', depth + 1 );
+						}
+						else
+						{
+							createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
+						}
+						
 						// Don't add twice
 						if( !found.find( function( ele ){ ele == msg.list[b].Filename } ) )
 						{
@@ -638,6 +758,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			{
 				rootElement.removeChild( removers[a] );
 			}
+			
 			delete removers;
 			
 			// Precalc
@@ -669,12 +790,19 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						var ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						var icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
 						d.id = 'fileitem_' + msg.list[a].Filename.split( ' ' ).join( '' );
-						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"> ' + msg.list[a].Filename + '</div><div class="SubItems"></div>';
+						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"><span> ' + msg.list[a].Filename + '</span></div><div class="SubItems"></div>';
 						rootElement.appendChild( d );
 						var fn = msg.list[a].Filename;
 						if( msg.list[a].Type == 'Directory' )
 							fn += '/';
 						d.path = path + fn;
+						
+						if( msg.list[a].MetaType == 'RootDirectory' )
+						{
+							d.path = self.rootPath;
+							msg.list[a].Type = 'RootDirectory';
+						}
+						
 						createOnclickAction( d, d.path, msg.list[a].Type, depth + 1 );
 						
 						// We have an incoming path
@@ -693,14 +821,22 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					// Existing items
 					if( foundItem.classList.contains( 'Open' ) )
 					{
-						var s = foundItem.getElementsByClassName( 'SubItems' );
-						if( s && s.length )
+						if( msg.list[a].MetaType && msg.list[a].MetaType != 'RootDirectory' )
 						{
-							var fn = msg.list[a].Filename;
-							if( msg.list[a].Type == 'Directory' )
-								fn += '/';
-							self.refresh( path + fn, s[0], false, depth + 1 );
+							var s = foundItem.getElementsByClassName( 'SubItems' );
+							if( s && s.length )
+							{
+								var fn = msg.list[a].Filename;
+								if( msg.list[a].Type == 'Directory' )
+									fn += '/';
+								self.refresh( path + fn, s[0], false, depth + 1 );
+							}
 						}
+					}
+					// We have an incoming path
+					if( !clickElement && self.flags.path && targetPath == foundItem.path )
+					{
+						clickElement = foundItem;
 					}
 				}
 			}
@@ -721,6 +857,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			// Click the click element for path
 			if( clickElement )
 			{
+				self.lastClickElement = clickElement; // Store it
 				setTimeout( function()
 				{
 					clickElement.onclick();

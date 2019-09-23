@@ -14,8 +14,8 @@ Application.run = function( msg, iface )
 	
 	var v = new View( {
 		title: i18n( 'i18n_users_title' ),
-		width: 'max',
-		height: 'max'
+		width: 1024,
+		height: 640
 	} );
 	this.mainView = v;
 	
@@ -120,7 +120,11 @@ messageFunctions = {
 	},
 	renewedsessions( msg )
 	{
-		return this.mainView.sendMessage( msg );
+		return Application.mainView.sendMessage( msg );
+	},
+	editnewworkgroup(msg)
+	{
+		return Application.mainView.sendMessage( msg );
 	}
 };
 

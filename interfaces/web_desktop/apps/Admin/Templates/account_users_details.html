@@ -6,13 +6,13 @@
 	<h1 class="ImageHeading">
 		{user_name}
 	</h1>
-	<div class="Box Padding">
+	<div class="Box Padding" id="UserBasicDetails">
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
 				<strong>{i18n_user_fullname}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" value="{user_fullname}"/>
+				<input type="text" class="FullWidth" id="usFullname" value="{user_fullname}"/>
 			</div>
 		</div>
 		<div class="HRow MarginBottom">
@@ -20,7 +20,7 @@
 				<strong>{i18n_user_username}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" value="{user_username}"/>
+				<input type="text" class="FullWidth" id="usUsername" value="{user_username}"/>
 			</div>
 		</div>
 		<div class="HRow MarginBottom">
@@ -28,7 +28,7 @@
 				<strong>{i18n_user_email}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="text" class="FullWidth" value="{user_email}"/>
+				<input type="text" class="FullWidth" id="usEmail" value="{user_email}"/>
 			</div>
 		</div>
 		<div class="HRow MarginBottom">
@@ -36,11 +36,11 @@
 				<strong>{i18n_user_password}</strong>
 			</div>
 			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="password" class="FullWidth" value="********"/>
+				<input type="password" class="FullWidth" id="usPassword" value="********"/>
 			</div>
 		</div>
 		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
+			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="UserBasicEdit"></button>
 		</div>
 	</div>
 
@@ -111,10 +111,10 @@
 	<h2 class="MarginTop">
 		{i18n_workgroups}
 	</h2>
-	<div class="Box Padding">
+	<div class="Box Padding" id="WorkgroupGui">
 		{workgroups}
 		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
+			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="WorkgroupEdit"></button>
 		</div>
 	</div>
 	
@@ -123,9 +123,9 @@
 	</h2>
 	<div class="Box Padding">
 		{roles}
-		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
-		</div>
+		<!--<div class="HRow">
+			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" onclick="Sections.userrole_edit({userid},this)"></button>
+		</div>-->
 	</div>
 	
 	<h2 class="MarginTop">
@@ -133,9 +133,6 @@
 	</h2>
 	<div class="Box Padding">
 		{storage}
-		<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit"></button>
-		</div>
 	</div>
 	
 	<h2 class="MarginTop">

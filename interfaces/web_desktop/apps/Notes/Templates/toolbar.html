@@ -13,9 +13,9 @@
 			<div class="ButtonHeight Button IconButton IconSmall fa-italic" id="tItalic" title="{i18n_set_italic}" onclick="editorCommand('italic')">
 				<em>I</em>
 			</div>
-			<div class="ButtonHeight Button IconButton IconSmall fa-underline" id="tUnderline" title="{i18n_set_underline}" onclick="editorCommand('underline')">
+			<!--<div class="ButtonHeight Button IconButton IconSmall fa-underline" id="tUnderline" title="{i18n_set_underline}" onclick="editorCommand('underline')">
 				<em>U</em>
-			</div>
+			</div>-->
 			<div class="ToolDivider Divider1"></div>
 			<select id="ToolFormat" title="{i18n_set_block_format}" class="ButtonHeight ToolSelect" onchange="editorCommand( 'format' + this.value )">
 				<option value="">{i18n_headers}</option>
@@ -54,25 +54,12 @@
 					<div class="Button ButtonHeight IconButton IconSmall fa-align-justify" id="tAlignJustify" title="{i18n_align_justify}" onclick="editorCommand('align-justify')">
 						<em>IMG</em>
 					</div>
-					<div class="Button ButtonHeight IconButton IconSmall fa-list-ul" id="tUnorderedBulletList" title="{i18n_unordered_bullet_points}" onclick="editorCommand('ulbullets')">
+					<div class="Button ButtonHeight IconButton IconSmall fa-list-ul" id="tUnorderedBulletList" title="{i18n_unordered_bullet_points}" onclick="editorCommand('olbullets')">
 						<em>IMG</em>
 					</div>
-					<div class="Button ButtonHeight IconButton IconSmall fa-list-ol" id="tOrderedBulletList" title="{i18n_ordered_bullet_point}" onclick="editorCommand('olbullets')">
+					<div class="Button ButtonHeight IconButton IconSmall fa-list-ol" id="tOrderedBulletList" title="{i18n_ordered_bullet_point}" onclick="editorCommand('ulbullets')">
 						<em>IMG</em>
 					</div>
-					<!--<div class="ToolDivider Divider5"></div>
-					<div class="ButtonLabel IconSmall fa-text-height" id="tTextHeight" title="Line height" onclick="ge('tTextHeight').focus()">
-						<em>IMG</em>
-					</div>
-					<select class="ToolSelect" id="tTextHeight" title="Line height" onchange="editorCommand('line-height', this.value)">
-						<option value="1pt">1pt</option>
-						<option value="1.5pt">1.5pt</option>
-						<option value="2pt">2pt</option>
-						<option value="2.5pt">2.5pt</option>
-					</select>-->
-					<!--<div class="Button" id="tStrikethrough">
-						<em>S</em>
-					</div>-->
 				</div>
 			</div>
 		</div>

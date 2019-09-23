@@ -45,7 +45,7 @@ if( $dir = opendir( 'repository' ) )
 			{
 				$s = json_decode( $c->Signature );
 				$c->Signature = $s->signature;
-				$c->Validated = $s->validated;
+				$c->Validated = isset( $s->validated ) ? $s->validated : false;
 			}
 		}
 		else $c->Signature = 'Unsigned';

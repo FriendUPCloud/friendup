@@ -34,6 +34,83 @@
 	margin-right: 0;
 }
 
+.AvatarRect
+{
+	max-width: 320px;
+	margin: auto;
+}
+
+.PaletteRect
+{
+	padding-left: 20px;
+	box-sizing: border-box;
+}
+
+#UserPalette
+{
+	width: 100%;
+	height: 134px;
+	margin-bottom: 4px;
+	transition: opacity 0.25s;
+	opacity: 0;
+}
+
+#UserPalette.Hidden
+{
+	opacity: 0;
+}
+
+#UserPalette.Shown
+{
+	opacity: 1;
+}
+
+#UserPalette:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+}
+
+.PaletteContainer .Color
+{
+	width: calc(50% - 4px);
+	height: 25px;
+	float: left;
+	border-radius: 5px;
+	box-sizing: border-box;
+	border: 1px solid rgba(0,0,0,0.3);
+	margin: 2px 2px;
+	cursor: pointer;
+	transition: border 0.25s;
+}
+
+.PaletteContainer .Color.Active
+{
+	border: 1px solid white;
+}
+
+
+
+#AvatarArea
+{
+	position: relative;
+	display: block;
+	margin: auto auto 10px auto;
+	width: 128px;
+	height: 128px;
+	border-radius: 100%;
+	overflow: hidden;
+	background-color: rgba(0,0,0,0.5);
+}
+
+#AvatarArea #Avatar
+{
+	width: 256px;
+	height: 256px;
+	zoom: 0.5;
+}
+
 #UserAccImage
 {
 	border: 1px dashed #3B81C2;

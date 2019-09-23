@@ -117,11 +117,19 @@ struct allocated_headers {
 #ifndef LWS_NO_CLIENT
 	char initial_handshake_hash_base64[30];
 #endif
-
-	uint32_t pos;
-	uint32_t http_response;
-	uint32_t current_token_limit;
 	int hdr_token_idx;
+
+	ah_data_idx_t pos;
+	ah_data_idx_t http_response;
+	ah_data_idx_t current_token_limit;
+
+#if defined(LWS_WITH_CUSTOM_HEADERS)
+	ah_data_idx_t unk_pos; /* to undo speculative unknown header */
+	ah_data_idx_t unk_value_pos;
+
+	ah_data_idx_t unk_ll_head;
+	ah_data_idx_t unk_ll_tail;
+#endif
 
 	int16_t lextable_pos;
 
@@ -204,9 +212,11 @@ struct _lws_http_mode_related {
 
 	unsigned char *pending_return_headers;
 	size_t pending_return_headers_len;
+	size_t prh_content_length;
 
 #if defined(LWS_WITH_HTTP_PROXY)
 	struct lws_rewrite *rw;
+	struct lws_buflist *buflist_post_body;
 #endif
 	struct allocated_headers *ah;
 	struct lws *ah_wait_list;
@@ -267,6 +277,18 @@ enum lws_parse_urldecode_results {
 	LPUR_EXCESSIVE,
 };
 
+enum lws_check_basic_auth_results {
+	LCBA_CONTINUE,
+	LCBA_FAILED_AUTH,
+	LCBA_END_TRANSACTION,
+};
+
+enum lws_check_basic_auth_results
+lws_check_basic_auth(struct lws *wsi, const char *basic_auth_login_file);
+
+int
+lws_unauthorised_basic_auth(struct lws *wsi);
+
 int
 lws_read_h1(struct lws *wsi, unsigned char *buf, lws_filepos_t len);
 
@@ -275,3 +297,7 @@ _lws_header_table_reset(struct allocated_headers *ah);
 
 LWS_EXTERN int
 _lws_destroy_ah(struct lws_context_per_thread *pt, struct allocated_headers *ah);
+
+int
+lws_http_proxy_start(struct lws *wsi, const struct lws_http_mount *hit,
+		     char *uri_ptr, char ws);

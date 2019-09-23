@@ -1,7 +1,7 @@
 /*
  * ws protocol handler plugin for "generic sessions"
  *
- * Copyright (C) 2010-2016 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,138 +51,6 @@ struct lwsgs_fill_args {
 
 static const struct lws_protocols protocols[];
 
-static int
-lwsgs_lookup_callback_email(void *priv, int cols, char **col_val,
-			    char **col_name)
-{
-	struct lwsgs_fill_args *a = (struct lwsgs_fill_args *)priv;
-	int n;
-
-	for (n = 0; n < cols; n++) {
-		if (!strcmp(col_name[n], "content")) {
-			lws_strncpy(a->buf, col_val[n], a->len);
-			continue;
-		}
-	}
-	return 0;
-}
-
-static int
-lwsgs_email_cb_get_body(struct lws_email *email, char *buf, int len)
-{
-	struct per_vhost_data__gs *vhd = (struct per_vhost_data__gs *)email->data;
-	struct lwsgs_fill_args a;
-	char ss[150], esc[50];
-
-	a.buf = buf;
-	a.len = len;
-
-	lws_snprintf(ss, sizeof(ss) - 1,
-		 "select content from email where username='%s';",
-		 lws_sql_purify(esc, vhd->u.username, sizeof(esc) - 1));
-
-	lws_strncpy(buf, "failed", len);
-	if (sqlite3_exec(vhd->pdb, ss, lwsgs_lookup_callback_email, &a,
-			 NULL) != SQLITE_OK) {
-		lwsl_err("Unable to lookup email: %s\n",
-			 sqlite3_errmsg(vhd->pdb));
-
-		return 1;
-	}
-
-	return 0;
-}
-
-static int
-lwsgs_email_cb_sent(struct lws_email *email)
-{
-	struct per_vhost_data__gs *vhd = (struct per_vhost_data__gs *)email->data;
-	char s[200], esc[50];
-
-	/* mark the user as having sent the verification email */
-	lws_snprintf(s, sizeof(s) - 1,
-		 "update users set verified=1 where username='%s' and verified==0;",
-		 lws_sql_purify(esc, vhd->u.username, sizeof(esc) - 1));
-	if (sqlite3_exec(vhd->pdb, s, NULL, NULL, NULL) != SQLITE_OK) {
-		lwsl_err("%s: Unable to update user: %s\n", __func__,
-			 sqlite3_errmsg(vhd->pdb));
-		return 1;
-	}
-
-	lws_snprintf(s, sizeof(s) - 1,
-		 "delete from email where username='%s';",
-		 lws_sql_purify(esc, vhd->u.username, sizeof(esc) - 1));
-	if (sqlite3_exec(vhd->pdb, s, NULL, NULL, NULL) != SQLITE_OK) {
-		lwsl_err("%s: Unable to delete email text: %s\n", __func__,
-			 sqlite3_errmsg(vhd->pdb));
-		return 1;
-	}
-
-	return 0;
-}
-
-static int
-lwsgs_email_cb_on_next(struct lws_email *email)
-{
-	struct per_vhost_data__gs *vhd = lws_container_of(email,
-			struct per_vhost_data__gs, email);
-	char s[LWSGS_EMAIL_CONTENT_SIZE], esc[50];
-	time_t now = lws_now_secs();
-
-	/*
-	 * users not verified in 24h get deleted
-	 */
-	lws_snprintf(s, sizeof(s) - 1, "delete from users where ((verified != %d)"
-		 " and (creation_time <= %lu));", LWSGS_VERIFIED_ACCEPTED,
-		 (unsigned long)now - vhd->timeout_email_secs);
-	if (sqlite3_exec(vhd->pdb, s, NULL, NULL, NULL) != SQLITE_OK) {
-		lwsl_err("Unable to expire users: %s\n",
-			 sqlite3_errmsg(vhd->pdb));
-		return 1;
-	}
-
-	lws_snprintf(s, sizeof(s) - 1, "update users set token_time=0 where "
-		 "(token_time <= %lu);",
-		 (unsigned long)now - vhd->timeout_email_secs);
-	if (sqlite3_exec(vhd->pdb, s, NULL, NULL, NULL) != SQLITE_OK) {
-		lwsl_err("Unable to expire users: %s\n",
-			 sqlite3_errmsg(vhd->pdb));
-		return 1;
-	}
-
-	vhd->u.username[0] = '\0';
-	lws_snprintf(s, sizeof(s) - 1, "select username from email limit 1;");
-	if (sqlite3_exec(vhd->pdb, s, lwsgs_lookup_callback_user, &vhd->u,
-			 NULL) != SQLITE_OK) {
-		lwsl_err("Unable to lookup user: %s\n", sqlite3_errmsg(vhd->pdb));
-		return 1;
-	}
-
-	lws_snprintf(s, sizeof(s) - 1,
-		 "select username, creation_time, email, ip, verified, token"
-		 " from users where username='%s' limit 1;",
-		 lws_sql_purify(esc, vhd->u.username, sizeof(esc) - 1));
-	if (sqlite3_exec(vhd->pdb, s, lwsgs_lookup_callback_user, &vhd->u,
-			 NULL) != SQLITE_OK) {
-		lwsl_err("Unable to lookup user: %s\n",
-			 sqlite3_errmsg(vhd->pdb));
-		return 1;
-	}
-
-	if (!vhd->u.username[0])
-		/*
-		 * nothing to do, we are idle and no suitable
-		 * accounts waiting for verification.  When a new user
-		 * is added we will get kicked to try again.
-		 */
-		return 1;
-
-	lws_strncpy(email->email_to, vhd->u.email, sizeof(email->email_to));
-
-	return 0;
-}
-
-
 struct lwsgs_subst_args
 {
 	struct per_session_data__gs *pss;
@@ -196,7 +64,7 @@ lwsgs_subst(void *data, int index)
 	struct lwsgs_subst_args *a = (struct lwsgs_subst_args *)data;
 	struct lwsgs_user u;
 	lwsgw_hash sid;
-	char esc[50], s[100];
+	char esc[96], s[100];
 	int n;
 
 	a->pss->result[0] = '\0';
@@ -238,6 +106,21 @@ lwsgs_subst(void *data, int index)
 }
 
 static int
+lws_get_effective_host(struct lws *wsi, char *buf, size_t buflen)
+{
+	/* h2 */
+	if (lws_hdr_copy(wsi, buf, buflen - 1,
+			 WSI_TOKEN_HTTP_COLON_AUTHORITY) > 0)
+		return 0;
+
+	/* h1 */
+	if (lws_hdr_copy(wsi, buf, buflen - 1,  WSI_TOKEN_HOST) > 0)
+		return 0;
+
+	return 1;
+}
+
+static int
 callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			  void *user, void *in, size_t len)
 {
@@ -245,23 +128,25 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 	const struct lws_protocol_vhost_options *pvo;
 	struct per_vhost_data__gs *vhd = (struct per_vhost_data__gs *)
 			lws_protocol_vh_priv_get(lws_get_vhost(wsi),
-					&protocols[0]);
+				lws_vhost_name_to_protocol(lws_get_vhost(wsi),
+						"protocol-generic-sessions"));
 	char cookie[1024], username[32], *pc = cookie;
 	unsigned char buffer[LWS_PRE + LWSGS_EMAIL_CONTENT_SIZE];
-	struct lws_process_html_args *args;
+	struct lws_process_html_args *args = in;
 	struct lws_session_info *sinfo;
 	char s[LWSGS_EMAIL_CONTENT_SIZE];
 	unsigned char *p, *start, *end;
+	const char *cp, *cp1;
 	sqlite3_stmt *sm;
 	lwsgw_hash sid;
-	const char *cp;
+	lws_abs_t abs;
 	int n;
 
 	switch (reason) {
 	case LWS_CALLBACK_PROTOCOL_INIT: /* per vhost */
 
 		vhd = lws_protocol_vh_priv_zalloc(lws_get_vhost(wsi),
-			&protocols[0], sizeof(struct per_vhost_data__gs));
+			lws_get_protocol(wsi), sizeof(struct per_vhost_data__gs));
 		if (!vhd)
 			return 1;
 		vhd->context = lws_get_context(wsi);
@@ -271,24 +156,25 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 		vhd->timeout_absolute_secs = 36000;
 		vhd->timeout_anon_absolute_secs = 1200;
 		vhd->timeout_email_secs = 24 * 3600;
-		strcpy(vhd->email.email_helo, "unconfigured.com");
-		strcpy(vhd->email.email_from, "noreply@unconfigured.com");
-		strcpy(vhd->email_title, "Registration Email from unconfigured");
-		strcpy(vhd->email.email_smtp_ip, "127.0.0.1");
 
-		vhd->email.on_next = lwsgs_email_cb_on_next;
-		vhd->email.on_get_body = lwsgs_email_cb_get_body;
-		vhd->email.on_sent = lwsgs_email_cb_sent;
-		vhd->email.data = (void *)vhd;
+
+		strcpy(vhd->helo, "unconfigured.com");
+		strcpy(vhd->ip, "127.0.0.1");
+		strcpy(vhd->email_from, "noreply@unconfigured.com");
+		strcpy(vhd->email_title, "Registration Email from unconfigured");
+		vhd->urlroot[0] = '\0';
 
 		pvo = (const struct lws_protocol_vhost_options *)in;
 		while (pvo) {
 			if (!strcmp(pvo->name, "admin-user"))
 				lws_strncpy(vhd->admin_user, pvo->value,
 					sizeof(vhd->admin_user));
-			if (!strcmp(pvo->name, "admin-password-sha1"))
-				lws_strncpy(vhd->admin_password_sha1.id, pvo->value,
-					sizeof(vhd->admin_password_sha1.id));
+			if (!strcmp(pvo->name, "urlroot"))
+				lws_strncpy(vhd->urlroot, pvo->value,
+					sizeof(vhd->urlroot));
+			if (!strcmp(pvo->name, "admin-password-sha256"))
+				lws_strncpy(vhd->admin_password_sha256.id, pvo->value,
+					sizeof(vhd->admin_password_sha256.id));
 			if (!strcmp(pvo->name, "session-db"))
 				lws_strncpy(vhd->session_db, pvo->value,
 					sizeof(vhd->session_db));
@@ -296,11 +182,10 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 				lws_strncpy(vhd->confounder, pvo->value,
 					sizeof(vhd->confounder));
 			if (!strcmp(pvo->name, "email-from"))
-				lws_strncpy(vhd->email.email_from, pvo->value,
-					sizeof(vhd->email.email_from));
+				lws_strncpy(vhd->email_from, pvo->value,
+					sizeof(vhd->email_from));
 			if (!strcmp(pvo->name, "email-helo"))
-				lws_strncpy(vhd->email.email_helo, pvo->value,
-					sizeof(vhd->email.email_helo));
+				lws_strncpy(vhd->helo, pvo->value, sizeof(vhd->helo));
 			if (!strcmp(pvo->name, "email-template"))
 				lws_strncpy(vhd->email_template, pvo->value,
 					sizeof(vhd->email_template));
@@ -314,8 +199,7 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 				lws_strncpy(vhd->email_confirm_url, pvo->value,
 					sizeof(vhd->email_confirm_url));
 			if (!strcmp(pvo->name, "email-server-ip"))
-				lws_strncpy(vhd->email.email_smtp_ip, pvo->value,
-					sizeof(vhd->email.email_smtp_ip));
+				lws_strncpy(vhd->ip, pvo->value, sizeof(vhd->ip));
 
 			if (!strcmp(pvo->name, "timeout-idle-secs"))
 				vhd->timeout_idle_secs = atoi(pvo->value);
@@ -328,18 +212,17 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			pvo = pvo->next;
 		}
 		if (!vhd->admin_user[0] ||
-		    !vhd->admin_password_sha1.id[0] ||
+		    !vhd->admin_password_sha256.id[0] ||
 		    !vhd->session_db[0]) {
 			lwsl_err("generic-sessions: "
 				 "You must give \"admin-user\", "
-				 "\"admin-password-sha1\", "
+				 "\"admin-password-sha256\", "
 				 "and \"session_db\" per-vhost options\n");
 			return 1;
 		}
 
-		if (sqlite3_open_v2(vhd->session_db, &vhd->pdb,
-				    SQLITE_OPEN_READWRITE |
-				    SQLITE_OPEN_CREATE, NULL) != SQLITE_OK) {
+		if (lws_struct_sq3_open(lws_get_context(wsi),
+					vhd->session_db, &vhd->pdb)) {
 			lwsl_err("Unable to open session db %s: %s\n",
 				 vhd->session_db, sqlite3_errmsg(vhd->pdb));
 
@@ -348,7 +231,7 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 
 		if (sqlite3_prepare(vhd->pdb,
 				    "create table if not exists sessions ("
-				    " name char(40),"
+				    " name char(65),"
 				    " username varchar(32),"
 				    " expire integer"
 				    ");",
@@ -373,10 +256,10 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 				 " creation_time integer,"
 				 " ip varchar(46),"
 				 " email varchar(100),"
-				 " pwhash varchar(42),"
-				 " pwsalt varchar(42),"
+				 " pwhash varchar(65),"
+				 " pwsalt varchar(65),"
 				 " pwchange_time integer,"
-				 " token varchar(42),"
+				 " token varchar(65),"
 				 " verified integer,"
 				 " token_time integer,"
 				 " last_forgot_validated integer,"
@@ -389,22 +272,38 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			return 1;
 		}
 
-		sprintf(s, "create table if not exists email ("
-				 " username varchar(32),"
-				 " content blob,"
-				 " primary key (username)"
-				 ");");
-		if (sqlite3_exec(vhd->pdb, s, NULL, NULL, NULL) != SQLITE_OK) {
-			lwsl_err("Unable to create user table: %s\n",
-				 sqlite3_errmsg(vhd->pdb));
+		memset(&abs, 0, sizeof(abs));
+		abs.vh = lws_get_vhost(wsi);
 
+		/* select the protocol and bind its tokens */
+
+		abs.ap = lws_abs_protocol_get_by_name("smtp");
+		if (!abs.ap)
 			return 1;
-		}
 
-		lws_email_init(&vhd->email, lws_uv_getloop(vhd->context, 0),
-				LWSGS_EMAIL_CONTENT_SIZE);
+		vhd->protocol_tokens[0].name_index = LTMI_PSMTP_V_HELO;
+		vhd->protocol_tokens[0].u.value = vhd->helo;
 
-		vhd->email_inited = 1;
+		abs.ap_tokens = vhd->protocol_tokens;
+
+		/* select the transport and bind its tokens */
+
+		abs.at = lws_abs_transport_get_by_name("raw_skt");
+		if (!abs.at)
+			return 1;
+
+		vhd->transport_tokens[0].name_index = LTMI_PEER_V_DNS_ADDRESS;
+		vhd->transport_tokens[0].u.value = vhd->ip;
+		vhd->transport_tokens[1].name_index = LTMI_PEER_LV_PORT;
+		vhd->transport_tokens[1].u.lvalue = 25;
+
+		abs.at_tokens = vhd->transport_tokens;
+
+		vhd->smtp_client = lws_abs_bind_and_create_instance(&abs);
+		if (!vhd->smtp_client)
+			return 1;
+
+		lwsl_notice("%s: created SMTP client\n", __func__);
 		break;
 
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
@@ -413,80 +312,119 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			sqlite3_close(vhd->pdb);
 			vhd->pdb = NULL;
 		}
-		if (vhd->email_inited) {
-			lws_email_destroy(&vhd->email);
-			vhd->email_inited = 0;
-		}
+		if (vhd->smtp_client)
+			lws_abs_destroy_instance(&vhd->smtp_client);
 		break;
 
 	case LWS_CALLBACK_HTTP_WRITEABLE:
                 if (!pss->check_response)
                         break;
-		n = lws_write(wsi, (unsigned char *)&pss->check_response_value, 1, LWS_WRITE_HTTP_FINAL);
+                pss->check_response = 0;
+		n = lws_write(wsi, (unsigned char *)&pss->check_response_value,
+				1, LWS_WRITE_HTTP | LWS_WRITE_H2_STREAM_END);
 		if (n != 1)
 			return -1;
 		goto try_to_reuse;
 
 	case LWS_CALLBACK_HTTP:
-		lwsl_info("LWS_CALLBACK_HTTP: %s\n", (const char *)in);
+		if (!pss) {
+			lwsl_err("%s: no valid pss\n", __func__);
+			return 1;
+		}
 
 		pss->login_session.id[0] = '\0';
 		pss->phs.pos = 0;
-		lws_strncpy(pss->onward, (char *)in, sizeof(pss->onward));
 
-		if (!strcmp((const char *)in, "/lwsgs-forgot")) {
+		cp = in;
+		if ((*(const char *)in == '/'))
+			cp++;
+
+		if (lws_get_effective_host(wsi, cookie, sizeof(cookie))) {
+			lwsl_err("%s: HTTP: no effective host\n", __func__);
+			return 1;
+		}
+
+		lwsl_notice("LWS_CALLBACK_HTTP: %s, HOST '%s'\n",
+				(const char *)in, cookie);
+
+		n = strlen(cp);
+
+		lws_snprintf(pss->onward, sizeof(pss->onward),
+			     "%s%s", vhd->urlroot, (const char *)in);
+
+		if (n >= 12 &&
+		    !strcmp(cp + n - 12, "lwsgs-forgot")) {
 			lwsgs_handler_forgot(vhd, wsi, pss);
 			goto redirect_with_cookie;
 		}
 
-		if (!strcmp((const char *)in, "/lwsgs-confirm")) {
+		if (n >= 13 &&
+		    !strcmp(cp + n - 13, "lwsgs-confirm")) {
 			lwsgs_handler_confirm(vhd, wsi, pss);
 			goto redirect_with_cookie;
 		}
-		if (!strcmp((const char *)in, "/lwsgs-check")) {
-			lwsgs_handler_check(vhd, wsi, pss);
+		cp = strstr(cp, "lwsgs-check/");
+		if (cp) {
+			lwsgs_handler_check(vhd, wsi, pss, cp + 12);
 			/* second, async part will complete transaction */
 			break;
 		}
 
-		if (!strcmp((const char *)in, "/lwsgs-login"))
+		if (n >= 11 && !strcmp(cp + n - 11, "lwsgs-login"))
 			break;
-		if (!strcmp((const char *)in, "/lwsgs-logout"))
+		if (n >= 12 && !strcmp(cp + n - 12, "lwsgs-logout"))
 			break;
-		if (!strcmp((const char *)in, "/lwsgs-forgot"))
+		if (n >= 12 && !strcmp(cp + n - 12, "lwsgs-forgot"))
 			break;
-		if (!strcmp((const char *)in, "/lwsgs-change"))
+		if (n >= 12 && !strcmp(cp + n - 12, "lwsgs-change"))
 			break;
 
 		/* if no legitimate url for GET, return 404 */
 
-		lwsl_err("http doing 404 on %s\n", (const char *)in);
+		lwsl_err("http doing 404 on %s\n", cp);
 		lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL);
+
 		return -1;
 		//goto try_to_reuse;
 
+	case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
+		args = (struct lws_process_html_args *)in;
+		if (!args->chunked)
+			break;
 	case LWS_CALLBACK_CHECK_ACCESS_RIGHTS:
 		n = 0;
 		username[0] = '\0';
 		sid.id[0] = '\0';
 		args = (struct lws_process_html_args *)in;
-		lwsl_debug("LWS_CALLBACK_CHECK_ACCESS_RIGHTS\n");
+		lwsl_notice("%s: LWS_CALLBACK_CHECK_ACCESS_RIGHTS: need 0x%x\n",
+				__func__, args->max_len);
 		if (!lwsgs_get_sid_from_wsi(wsi, &sid)) {
-			if (lwsgs_lookup_session(vhd, &sid, username, sizeof(username))) {
-				static const char * const oprot[] = {
-					"http://", "https://"
-				};
-				lwsl_notice("session lookup for %s failed, probably expired\n", sid.id);
+			if (lwsgs_lookup_session(vhd, &sid, username,
+						 sizeof(username))) {
+
+				/*
+				 * if we're authenticating for ws, we don't
+				 * want to redirect it or gain a cookie on that,
+				 * he'll need to get the cookie from http
+				 * interactions outside of this.
+				 */
+				if (args->chunked) {
+					lwsl_notice("%s: ws auth failed\n",
+							__func__);
+
+					return 1;
+				}
+
+				lwsl_notice("session lookup for %s failed, "
+					    "probably expired\n", sid.id);
 				pss->delete_session = sid;
 				args->final = 1; /* signal we dealt with it */
-				if (lws_hdr_copy(wsi, cookie, sizeof(cookie) - 1,
-					     WSI_TOKEN_HOST) < 0)
-					return 1;
 				lws_snprintf(pss->onward, sizeof(pss->onward) - 1,
-					 "%s%s%s", oprot[!!lws_is_ssl(wsi)],
-					    cookie, args->p);
-				lwsl_notice("redirecting to ourselves with cookie refresh\n");
-				/* we need a redirect to ourselves, session cookie is expired */
+					 "%s%s", vhd->urlroot, args->p);
+				lwsl_notice("redirecting to ourselves with "
+					    "cookie refresh\n");
+				/* we need a redirect to ourselves,
+				 * session cookie is expired */
 				goto redirect_with_cookie;
 			}
 		} else
@@ -585,10 +523,18 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 		if (!pss->spa)
 			break;
 
-		lwsl_info("LWS_CALLBACK_HTTP_BODY_COMPLETION: %s\n", pss->onward);
-		lws_spa_finalize(pss->spa);
+		cp1 = (const char *)pss->onward;
+		if (*cp1 == '/')
+			cp1++;
 
-		if (!strcmp((char *)pss->onward, "/lwsgs-change")) {
+
+		lws_spa_finalize(pss->spa);
+		n = strlen(cp1);
+
+		if (lws_get_effective_host(wsi, cookie, sizeof(cookie)))
+			return 1;
+
+		if (!strcmp(cp1 + n - 12, "lwsgs-change")) {
 			if (!lwsgs_handler_change_password(vhd, wsi, pss)) {
 				cp = lws_spa_get_string(pss->spa, FGS_GOOD);
 				goto pass;
@@ -597,12 +543,15 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			cp = lws_spa_get_string(pss->spa, FGS_BAD);
 			lwsl_notice("user/password no good %s\n",
 				lws_spa_get_string(pss->spa, FGS_USERNAME));
-			lws_strncpy(pss->onward, cp, sizeof(pss->onward) - 1);
+			lws_snprintf(pss->onward, sizeof(pss->onward),
+				     "%s%s", vhd->urlroot, cp);
+
 			pss->onward[sizeof(pss->onward) - 1] = '\0';
 			goto completion_flow;
 		}
 
-		if (!strcmp((char *)pss->onward, "/lwsgs-login")) {
+		if (!strcmp(cp1 + n - 11, "lwsgs-login")) {
+			lwsl_err("%s: lwsgs-login\n", __func__);
 			if (lws_spa_get_string(pss->spa, FGS_FORGOT) &&
 			    lws_spa_get_string(pss->spa, FGS_FORGOT)[0]) {
 				if (lwsgs_handler_forgot_pw_form(vhd, wsi, pss)) {
@@ -610,7 +559,7 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 					goto reg_done;
 				}
 				/* get the email monitor to take a look */
-				lws_email_check(&vhd->email);
+				lws_smtp_client_kick(vhd->smtp_client);
 				n = FGS_FORGOT_GOOD;
 				goto reg_done;
 			}
@@ -618,8 +567,8 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 			if (!lws_spa_get_string(pss->spa, FGS_USERNAME) ||
 			    !lws_spa_get_string(pss->spa, FGS_PASSWORD)) {
 				lwsl_notice("username '%s' or pw '%s' missing\n",
-						lws_spa_get_string(pss->spa, FGS_USERNAME),
-						lws_spa_get_string(pss->spa, FGS_PASSWORD));
+					lws_spa_get_string(pss->spa, FGS_USERNAME),
+					lws_spa_get_string(pss->spa, FGS_PASSWORD));
 				return -1;
 			}
 
@@ -632,11 +581,13 @@ callback_generic_sessions(struct lws *wsi, enum lws_callback_reasons reason,
 					n = FGS_REG_GOOD;
 
 					/* get the email monitor to take a look */
-					lws_email_check(&vhd->email);
+					lws_smtp_client_kick(vhd->smtp_client);
 				}
 reg_done:
-				lws_strncpy(pss->onward, lws_spa_get_string(pss->spa, n),
-					    sizeof(pss->onward));
+				lws_snprintf(pss->onward, sizeof(pss->onward),
+					     "%s%s", vhd->urlroot,
+					     lws_spa_get_string(pss->spa, n));
+
 				pss->login_expires = 0;
 				pss->logging_out = 1;
 				goto completion_flow;
@@ -660,28 +611,32 @@ reg_done:
 
 			/* check users in database */
 
-			if (!lwsgs_check_credentials(vhd, lws_spa_get_string(pss->spa, FGS_USERNAME),
-						     lws_spa_get_string(pss->spa, FGS_PASSWORD))) {
-				lwsl_info("pw hash check met\n");
+			if (!lwsgs_check_credentials(vhd,
+					lws_spa_get_string(pss->spa, FGS_USERNAME),
+					lws_spa_get_string(pss->spa, FGS_PASSWORD))) {
+				lwsl_notice("pw hash check met\n");
 				cp = lws_spa_get_string(pss->spa, FGS_GOOD);
 				goto pass;
 			} else
-				lwsl_notice("user/password no good %s\n",
-						lws_spa_get_string(pss->spa, FGS_USERNAME));
+				lwsl_notice("user/password no good %s %s\n",
+						lws_spa_get_string(pss->spa, FGS_USERNAME),
+						lws_spa_get_string(pss->spa, FGS_PASSWORD));
 
 			if (!lws_spa_get_string(pss->spa, FGS_BAD)) {
 				lwsl_info("No admin or good target url in form\n");
 				return -1;
 			}
 
-			lws_strncpy(pss->onward, lws_spa_get_string(pss->spa, FGS_BAD),
-				    sizeof(pss->onward));
-			lwsl_debug("failed\n");
+			lws_snprintf(pss->onward, sizeof(pss->onward),
+				     "%s%s", vhd->urlroot,
+				     lws_spa_get_string(pss->spa, FGS_BAD));
+
+			lwsl_notice("failed: %s\n", pss->onward);
 
 			goto completion_flow;
 		}
 
-		if (!strcmp((char *)pss->onward, "/lwsgs-logout")) {
+		if (!strcmp(cp1 + n - 12, "lwsgs-logout")) {
 
 			lwsl_notice("/logout\n");
 
@@ -690,6 +645,11 @@ reg_done:
 				return 1;
 			}
 
+			/*
+			 * We keep the same session, but mark it as not
+			 * being associated to any authenticated user
+			 */
+
 			lwsgw_update_session(vhd, &pss->login_session, "");
 
 			if (!lws_spa_get_string(pss->spa, FGS_GOOD)) {
@@ -697,8 +657,9 @@ reg_done:
 				return -1;
 			}
 
-			lws_strncpy(pss->onward, lws_spa_get_string(pss->spa, FGS_GOOD),
-				    sizeof(pss->onward));
+			lws_snprintf(pss->onward, sizeof(pss->onward),
+				     "%s%s", vhd->urlroot,
+				     lws_spa_get_string(pss->spa, FGS_GOOD));
 
 			pss->login_expires = 0;
 			pss->logging_out = 1;
@@ -709,7 +670,8 @@ reg_done:
 		break;
 
 pass:
-		lws_strncpy(pss->onward, cp, sizeof(pss->onward));
+		lws_snprintf(pss->onward, sizeof(pss->onward),
+			     "%s%s", vhd->urlroot, cp);
 
 		if (lwsgs_get_sid_from_wsi(wsi, &sid))
 			sid.id[0] = '\0';
@@ -721,18 +683,18 @@ pass:
 			/* we need to create a new, authorized session */
 
 			if (lwsgs_new_session_id(vhd, &pss->login_session,
-						 lws_spa_get_string(pss->spa, FGS_USERNAME),
-						 pss->login_expires))
+					lws_spa_get_string(pss->spa, FGS_USERNAME),
+					pss->login_expires))
 				goto try_to_reuse;
 
-			lwsl_info("Creating new session: %s\n",
+			lwsl_notice("Creating new session: %s\n",
 				    pss->login_session.id);
 		} else {
 			/*
 			 * we can just update the existing session to be
 			 * authorized
 			 */
-			lwsl_info("Authorizing existing session %s", sid.id);
+			lwsl_notice("Authorizing existing session %s", sid.id);
 			lwsgw_update_session(vhd, &sid,
 				lws_spa_get_string(pss->spa, FGS_USERNAME));
 			pss->login_session = sid;
@@ -752,6 +714,8 @@ completion_flow:
 	case LWS_CALLBACK_ADD_HEADERS:
 		lwsgw_expire_old_sessions(vhd);
 
+		lwsl_warn("ADD_HEADERS\n");
+
 		args = (struct lws_process_html_args *)in;
 		if (!pss)
 			return 1;
@@ -760,7 +724,7 @@ completion_flow:
 			lwsgw_cookie_from_session(&pss->delete_session, 0, &pc,
 						  cookie + sizeof(cookie) - 1);
 
-			lwsl_info("deleting cookie '%s'\n", cookie);
+			lwsl_notice("deleting cookie '%s'\n", cookie);
 
 			if (lws_add_http_header_by_name(wsi,
 					(unsigned char *)"set-cookie:",
@@ -806,13 +770,24 @@ redirect_with_cookie:
 	start = p;
 	end = p + sizeof(buffer) - LWS_PRE;
 
+	lwsl_warn("%s: redirect_with_cookie\n", __func__);
+
 	if (lws_add_http_header_status(wsi, HTTP_STATUS_SEE_OTHER, &p, end))
 		return 1;
 
-	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_LOCATION,
-			(unsigned char *)pss->onward,
-			strlen(pss->onward), &p, end))
-		return 1;
+	{
+		char loc[1024], uria[128];
+
+		uria[0] = '\0';
+		lws_hdr_copy_fragment(wsi, uria, sizeof(uria),
+					  WSI_TOKEN_HTTP_URI_ARGS, 0);
+		n = lws_snprintf(loc, sizeof(loc), "%s?%s",
+				pss->onward, uria);
+		lwsl_notice("%s: redirect to '%s'\n", __func__, loc);
+		if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_LOCATION,
+				(unsigned char *)loc, n, &p, end))
+			return 1;
+	}
 
 	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CONTENT_TYPE,
 			(unsigned char *)"text/html", 9, &p, end))
@@ -829,16 +804,20 @@ redirect_with_cookie:
 		if (lws_add_http_header_by_name(wsi,
 				(unsigned char *)"set-cookie:",
 				(unsigned char *)cookie, pc - cookie,
-				&p, end))
+				&p, end)) {
+			lwsl_err("fail0\n");
 			return 1;
+		}
 	}
 
 	if (!pss->login_session.id[0]) {
 		pss->login_expires = lws_now_secs() +
 				     vhd->timeout_anon_absolute_secs;
 		if (lwsgs_new_session_id(vhd, &pss->login_session, "",
-					 pss->login_expires))
+					 pss->login_expires)) {
+			lwsl_err("fail1\n");
 			return 1;
+		}
 	} else
 		pss->login_expires = lws_now_secs() +
 				     vhd->timeout_absolute_secs;
@@ -854,21 +833,26 @@ redirect_with_cookie:
 					  pss->login_expires, &pc,
 					  cookie + sizeof(cookie) - 1);
 
-		lwsl_info("setting cookie '%s'\n", cookie);
+		lwsl_err("%s: setting cookie '%s'\n", __func__, cookie);
 
 		pss->logging_out = 0;
 
 		if (lws_add_http_header_by_name(wsi,
 				(unsigned char *)"set-cookie:",
 				(unsigned char *)cookie, pc - cookie,
-				&p, end))
+				&p, end)) {
+			lwsl_err("fail2\n");
 			return 1;
+		}
 	}
 
 	if (lws_finalize_http_header(wsi, &p, end))
 		return 1;
 
-	n = lws_write(wsi, start, p - start, LWS_WRITE_HTTP_HEADERS);
+	// lwsl_hexdump_notice(start, p - start);
+
+	n = lws_write(wsi, start, p - start, LWS_WRITE_H2_STREAM_END |
+					     LWS_WRITE_HTTP_HEADERS);
 	if (n < 0)
 		return 1;
 

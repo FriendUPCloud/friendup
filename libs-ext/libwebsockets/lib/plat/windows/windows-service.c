@@ -92,7 +92,10 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 		if (n < 0)
 			return -1;
 
-		/* Force WSAWaitForMultipleEvents() to check events and then return immediately. */
+		/*
+		 * Force WSAWaitForMultipleEvents() to check events
+		 * and then return immediately.
+		 */
 		timeout_ms = 0;
 
 		/* if something closed, retry this slot */
@@ -124,25 +127,45 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 		lws_pt_unlock(pt);
 	}
 
+	for (n = 0; n < (int)pt->fds_count; n++)
+		WSAEventSelect(pt->fds[n].fd, pt->events,
+		       FD_READ | (!!(pt->fds[n].events & LWS_POLLOUT) * FD_WRITE) |
+		       FD_OOB | FD_ACCEPT |
+		       FD_CONNECT | FD_CLOSE | FD_QOS |
+		       FD_ROUTING_INTERFACE_CHANGE |
+		       FD_ADDRESS_LIST_CHANGE);
+
 	ev = WSAWaitForMultipleEvents(1, &pt->events, FALSE, timeout_ms, FALSE);
 	if (ev == WSA_WAIT_EVENT_0) {
+		EnterCriticalSection(&pt->interrupt_lock);
+		const int interrupt_requested = pt->interrupt_requested;
+		pt->interrupt_requested = 0;
+		LeaveCriticalSection(&pt->interrupt_lock);
+		if(interrupt_requested) {
+			lws_broadcast(context, LWS_CALLBACK_EVENT_WAIT_CANCELLED, NULL, 0);
+			return 0;
+		}
+
 		unsigned int eIdx;
 
-		WSAResetEvent(pt->events);
-
+#if defined(LWS_WITH_TLS)
 		if (pt->context->tls_ops &&
 		    pt->context->tls_ops->fake_POLLIN_for_buffered)
 			pt->context->tls_ops->fake_POLLIN_for_buffered(pt);
+#endif
 
 		for (eIdx = 0; eIdx < pt->fds_count; ++eIdx) {
 			unsigned int err;
 
-			if (WSAEnumNetworkEvents(pt->fds[eIdx].fd, 0,
+			if (WSAEnumNetworkEvents(pt->fds[eIdx].fd, pt->events,
 					&networkevents) == SOCKET_ERROR) {
 				lwsl_err("WSAEnumNetworkEvents() failed "
 					 "with error %d\n", LWS_ERRNO);
 				return -1;
 			}
+
+			if (!networkevents.lNetworkEvents)
+				networkevents.lNetworkEvents = LWS_POLLOUT;
 
 			pfd = &pt->fds[eIdx];
 			pfd->revents = (short)networkevents.lNetworkEvents;
@@ -171,10 +194,10 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 				lws_service_fd_tsi(context, pfd, tsi);
 			}
 		}
-	}
-
-	if (ev == WSA_WAIT_TIMEOUT)
+	} else if (ev == WSA_WAIT_TIMEOUT) {
 		lws_service_fd(context, NULL);
+	} else if (ev == WSA_WAIT_FAILED)
+		return 0;
 
 	return 0;
 }

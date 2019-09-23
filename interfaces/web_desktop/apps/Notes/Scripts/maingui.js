@@ -26,46 +26,69 @@ window.addEventListener( 'scroll', function()
 }, false );
 // End scroll watcher
 
+var currentViewMode = 'default';
+
+if( isMobile )
+{
+	ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+	ge( 'LeftBar' ).style.width = '100%';
+	ge( 'LeftBar' ).style.transition = 'transform 0.25s';
+	ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
+	ge( 'FileBar' ).style.width = '100%';
+	ge( 'FileBar' ).style.transition = 'transform 0.25s';
+	ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
+	ge( 'RightBar' ).style.width = '100%';
+	ge( 'RightBar' ).style.transition = 'transform 0.25s';
+}
 var filebrowserCallbacks = {
 	// Check a file on file extension
 	checkFile( path, extension )
 	{
-		var ext = extension.toLowerCase();
-		if( ext == 'html' || ext == 'htm' )
-		{
-			Application.loadFile( path );
-		}
-		else
-		{
-			return;
-		}
+		
 	},
 	// Load a file
 	loadFile( path )
 	{
-		var pp = path.toLowerCase();
-		if( pp.substr( pp.length - 4, 4 ) == '.htm' || pp.substr( pp.length - 5, 5 ) == '.html' )
-		{
-			Application.loadFile( path );
-		}
-		else
-		{
-			return;
-		}
+		
 	},
-	folderOpen( ele )
+	// Click to open a folder
+	folderOpen( ele, e )
 	{
+		if( isMobile && currentViewMode != 'root' ) return;
+		
 		Application.browserPath = ele;
 		Application.fileSaved = false;
 		Application.lastSaved = 0;
 		Application.currentDocument = null;
-		Application.refreshFilePane( 'findFirstFile' );
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function( items )
+		{
+			// Are we refreshing the root dir?
+			var isRootDir = Application.fileBrowser.rootPath == ele;
+			for( var a = 0; a < items.length; a++ )
+			{
+				// If it has directory, just wait
+				if( !isRootDir && isMobile && items[a].Type == 'Directory' )
+				{
+					return;
+				}
+			}
+			currentViewMode = 'files';
+			Application.updateViewMode();
+		} );
+		cancelBubble( e );
 	},
-	folderClose( ele )
+	// Click to close a folder
+	folderClose( ele, e )
 	{
+		if( isMobile && currentViewMode != 'root' ) return;
 		Application.currentDocument = null;
 		Application.browserPath = ele;
-		Application.refreshFilePane( 'findFirstFile' );
+		Application.refreshFilePane( isMobile ? false : 'findFirstFile', false, function()
+		{
+			currentViewMode = 'files';
+			Application.updateViewMode();
+		} );	
+		cancelBubble( e );
 	}
 };
 
@@ -88,7 +111,72 @@ Application.checkFileType = function( p )
 	}
 }
 
-Application.refreshFilePane = function( method )
+Application.handleBack = function()
+{
+	if( !isMobile ) return;
+	switch( currentViewMode )
+	{
+		case 'root':
+			currentViewMode = 'root';
+			break;
+		case 'files':
+			currentViewMode = 'root';
+			break;
+		default:
+			currentViewMode = 'files';
+			break;
+	}
+	this.updateViewMode();
+}
+
+Application.updateViewMode = function()
+{
+	if( !isMobile ) return;
+	
+	switch( currentViewMode )
+	{
+		case 'root':
+			ge( 'LeftBar' ).style.transform = 'translate3d(0,0,0)';
+			this.fld.style.transform = 'translate3d(0,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'root',
+				browserPath: this.browserPath
+			} );
+			break;
+		case 'files':
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
+			if( isMobile )
+			{
+				// Force update
+				Application.refreshFilePane( false, true );
+			}
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'files',
+				browserPath: this.browserPath
+			} );
+			break;
+		default:
+			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
+			ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
+			this.sendMessage( {
+				command: 'updateViewMode',
+				mode: 'notes',
+				browserPath: this.browserPath
+			} );
+			break;
+	}
+}
+
+Application.refreshFilePane = function( method, force, callback )
 {
 	if( !method ) method = false;
 	
@@ -106,16 +194,23 @@ Application.refreshFilePane = function( method )
 	var self = this;
 	
 	Application.path = Application.browserPath;
+	var p = Application.path;
 	
 	d.getIcons( function( items )
 	{
-		Application._toBeSaved = null;
-		
-		if( !items )
+		if( ge( 'FileBar' ).contents )
 		{
-			ge( 'FileBar' ).innerHTML = '';
+			ge( 'FileBar' ).contents.innerHTML = '';
+		}
+		
+		// Something changed in transit. Do nothing
+		if( p != Application.path )
+		{
 			return;
 		}
+	
+		Application._toBeSaved = null;
+		
 		var byDate = [];
 		items = items.sort( function( a, b ){ return ( new Date( a.DateModified ) ).getTime() - ( new Date( b.DateModified ) ).getTime(); } );
 		items.reverse();
@@ -167,8 +262,15 @@ Application.refreshFilePane = function( method )
 							command: 'setfilename',
 							data: Application.currentDocument
 						} );
-						Application.refreshFilePane();
-						Application.loadFile( Application.browserPath + nextTest + '.html' );
+						Application.refreshFilePane( false, true );
+						Application.loadFile( Application.browserPath + nextTest + '.html', function()
+						{
+							if( isMobile )
+							{
+								currentViewMode = 'default';
+								Application.updateViewMode();
+							}
+						} );
 					}
 				} );
 			}
@@ -202,7 +304,10 @@ Application.refreshFilePane = function( method )
 			
 			var d = document.createElement( 'div' );
 			d.className = 'NotesFileItem Padding BorderBottom MousePointer sw' + sw;
-			d.path = items[ a ].Path;
+			
+			( function( p, o ){
+				o.path = p;
+			} )( items[ a ].Path, d );
 			
 			if( Application.currentDocument && Application.currentDocument == num.Path )
 			{
@@ -258,92 +363,186 @@ Application.refreshFilePane = function( method )
 						} );
 						return cancelBubble( e );
 					}
+					if( isMobile )
+					{
+						rem.ontouchstart = rem.onclick;
+					}
 					d.insertBefore( rem, d.firstChild );
 				} )( d, num.Path );
 			}
 			
 			fBar.contents.appendChild( d );
 			
+			d.clicker = function( e )
+			{
+				var s = this;
+				if( this.tm )
+				{
+					clearTimeout( this.tm );
+				}
+				this.tm = 'block';
+			
+				var p = this.getElementsByTagName( 'p' )[0];
+				var ml = p.innerHTML;
+				var inp = document.createElement( 'input' );
+				inp.type = 'text';
+				inp.className = 'NoMargins';
+				inp.style.width = 'calc(100% - 32px)';
+				inp.value = p.innerText;
+				p.innerHTML = '';
+				p.appendChild( inp );
+				inp.select();
+				inp.focus();
+				function renameNow()
+				{
+					var val = inp.value;
+					if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
+						val += '.html';
+					var l = new Library( 'system.library' );
+					l.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.sendMessage( {
+								command: 'setfilename',
+								data: Application.path + val
+							} );
+							Application.currentDocument = Application.path + val;
+							Application.refreshFilePane( false, true );
+						}
+						// Perhaps give error - file exists
+						else
+						{
+							inp.select();
+						}
+					}
+					l.execute( 'file/rename', { path: s.path, newname: val } );
+				}
+				p.onkeydown = function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					// Abort
+					if( k == 27 )
+					{
+						if( p && p.parentNode )
+							p.innerHTML = ml;
+						s.tm = null;
+					}
+					// Rename
+					else if( k == 13 )
+					{
+						renameNow();
+					}
+				}
+				inp.onblur = function()
+				{
+					p.innerHTML = ml;
+					s.tm = null;
+				}
+				cancelBubble( e );
+			}
+			
 			// Selected files can be renamed
 			if( d.classList.contains( 'Selected' ) )
 			{
-				d.onclick = function()
+				if( isMobile )
 				{
-					var s = this;
-					if( this.tm )
-					{
-						clearTimeout( this.tm );
-					}
-					this.tm = 'block';
-				
-					var p = this.getElementsByTagName( 'p' )[0];
-					var ml = p.innerHTML;
-					var inp = document.createElement( 'input' );
-					inp.type = 'text';
-					inp.className = 'NoMargins';
-					inp.style.width = 'calc(100% - 32px)';
-					inp.value = p.innerText;
-					p.innerHTML = '';
-					p.appendChild( inp );
-					inp.select();
-					inp.focus();
-					function renameNow()
-					{
-						var val = inp.value;
-						if( val.substr( val.length - 4, 4 ) != '.htm' && val.substr( val.length - 5, 5 ) != '.html' )
-							val += '.html';
-						var l = new Library( 'system.library' );
-						l.onExecuted = function( e, d )
+					( function( dd ) {
+						dd.ontouchstart = function( e )
 						{
-							if( e == 'ok' )
+							var f = dd;
+							this.editTimeout = setTimeout( function()
 							{
-								Application.sendMessage( {
-									command: 'setfilename',
-									data: Application.path + val
+								f.editTimeout = null;
+								f.clicker();
+							}, 750 );
+							return cancelBubble( e );
+						}
+						dd.ontouchend = function()
+						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								return;
+							}
+							var f = this;
+							if( f.editTimeout )
+							{
+								clearTimeout( f.editTimeout );
+								f.editTimeout = null;
+								Application.currentDocument = f.path;
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
 								} );
-								Application.currentDocument = Application.path + val;
-								Application.refreshFilePane();
-							}
-							// Perhaps give error - file exists
-							else
-							{
-								inp.select();
 							}
 						}
-						l.execute( 'file/rename', { path: s.path, newname: val } );
-					}
-					p.onkeydown = function( e )
-					{
-						var k = e.which ? e.which : e.keyCode;
-						// Abort
-						if( k == 27 )
-						{
-							this.innerHTML = ml;
-							s.tm = null;
-						}
-						// Rename
-						else if( k == 13 )
-						{
-							renameNow();
-						}
-					}
-					inp.onblur = function()
-					{
-						p.innerHTML = ml;
-						s.tm = null;
-					}
+					} )( d );
+				}
+				else
+				{
+					d.onclick = d.clicker;
 				}
 			}
 			// Others are activated
 			else
 			{
-				( function( dl, path ){
-					dl.onclick = function()
-					{
-						Application.currentDocument = path;
-						Application.loadFile( path );
-					}
-				} )( d, num.Path );
+				if( isMobile )
+				{
+					( function( dd ){ 
+						dd.ontouchstart = function( e )
+						{
+							dd.classList.add( 'Selected' );
+							var eles = dd.parentNode.childNodes;
+							for( var a = 0; a < eles.length; a++ )
+							{
+								if( eles[a].tagName == 'DIV' && eles[a] != dd )
+									eles[a].classList.remove( 'Selected' );
+							}
+							var f = dd;
+							this.editTimeout = setTimeout( function()
+							{
+								f.editTimeout = null;
+								f.clicker();
+							}, 750 );
+							return cancelBubble( e );
+						}
+						dd.ontouchend = function()
+						{
+							if( dd.getElementsByTagName( 'input' ).length ) 
+							{
+								return;
+							}
+							var f = this;
+							if( f.editTimeout )
+							{
+								clearTimeout( f.editTimeout );
+								f.editTimeout = null;
+								Application.currentDocument = f.path;
+								Application.loadFile( f.path, function()
+								{
+									currentViewMode = 'default';
+									Application.updateViewMode();
+								} );
+							}
+						}
+					} )( d );
+				}
+				else
+				{
+					( function( dl ){
+						dl.onclick = function()
+						{
+							Application.currentDocument = dl.path;
+							Application.loadFile( dl.path, function()
+							{
+								currentViewMode = 'default';
+								Application.updateViewMode();
+							} );
+							Application.refreshFilePane();
+						}
+					} )( d );
+				}
 			}
 		}
 		
@@ -351,6 +550,9 @@ Application.refreshFilePane = function( method )
 		{
 			Application.newDocument( { just: 'makenew' } );
 		}
+		
+		if( callback )
+			callback( items );
 	} );
 }
 
@@ -394,6 +596,11 @@ Application.run = function( msg, iface )
 	
 	// Make an "add new folder" button
 	this.fld = document.createElement( 'div' );
+	if( isMobile )
+	{
+		this.fld.style.transform = '-100%';
+		this.fld.style.transition = 'transform 0.25s';
+	}
 	this.fld.className = 'NewFolder BackgroundHeavier';
 	this.fld.innerHTML = '<div class="Button IconButton IconSmall fa-folder">&nbsp;' + i18n( 'i18n_add_folder' ) + '</div>';
 	this.fld.onclick = function( e )
@@ -417,7 +624,7 @@ Application.run = function( msg, iface )
 				var l = new Library( 'system.library' );
 				l.onExecuted = function()
 				{
-					self.fileBrowser.refresh( 'Home:Notes/' );
+					self.fileBrowser.refresh();
 				}
 				l.execute( 'file/makedir', { path: Application.path + this.value } );
 			}
@@ -429,6 +636,8 @@ Application.run = function( msg, iface )
 		return cancelBubble( e );
 	}
 	ge( 'LeftBar' ).parentNode.appendChild( this.fld );
+	
+	Application.updateViewMode();
 }
 
 Application.checkWidth = function()
@@ -956,6 +1165,9 @@ Application.setCurrentDocument = function( pth )
 	this.path = pth.substr( 0, pth.length - this.fileName.length );
 	this.currentDocument = pth;
 	
+	// Store the path also for the browser
+	Application.browserPath = this.path;
+
 	// Update filebrowser
 	this.fileBrowser.setPath( this.path );
 	
@@ -968,11 +1180,11 @@ Application.setCurrentDocument = function( pth )
 	} );
 }
 
-Application.loadFile = function( path )
+Application.loadFile = function( path, cbk )
 {
 	this.loading = true;
 	
-	Application.statusMessage( 'i18n_status_loading' );
+	Application.statusMessage( i18n( 'i18n_status_loading' ) );
 	
 	Application.lastSaved = ( new Date() ).getTime();
 	Application.fileSaved = true;
@@ -981,44 +1193,6 @@ Application.loadFile = function( path )
 	
 	switch( extension )
 	{
-		case 'doc':
-		case 'docx':
-		case 'odt':
-		case 'rtf':
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, data )
-			{
-				if( e == 'ok' )
-				{					
-					Application.statusMessage( i18n( 'i18n_loaded' ) );
-					Application.editor.setData( data,
-						function()
-						{
-							Application.initializeBody();
-						}
-					);
-					ge( 'Printable' ).innerHTML = Application.editor.getData();
-					
-					// Remember content and top scroll
-					Application.sendMessage( { 
-						command: 'remembercontent', 
-						data: data,
-						path: path,
-						scrollTop: 0
-					} );
-					
-					Application.setCurrentDocument( path );
-				}
-				
-				// We got an error...
-				else
-				{
-					Application.statusMessage( i18n('i18n_failed_to_load_document') );
-				}	
-				Application.loading = false
-			}
-			m.execute( 'convertfile', { path: path, format: 'html', returnData: true } );
-			break;
 		default:
 			var f = new File( path );
 			f.onLoad = function( data )
@@ -1056,6 +1230,8 @@ Application.loadFile = function( path )
 						} );
 						
 						Application.setCurrentDocument( path );
+						
+						if( cbk ) cbk();
 					}
 					loader();
 					
@@ -1075,6 +1251,8 @@ Application.loadFile = function( path )
 					} );
 					
 					Application.refreshFilePane();
+					
+					if( cbk ) cbk();
 				}
 				Application.loading = false;
 			}
@@ -1090,23 +1268,22 @@ Application.statusMessage = function( msg )
 	{
 		clearTimeout( s.timeout );
 		s.style.transition = '';
-		s.style.transform = 'translateX(0)';
+		s.style.transform = 'translate3d(0,0,0)';
 	}
+	s.classList.add( 'Showing' );
 	s.innerHTML = msg;
 	s.timeout = setTimeout( function()
 	{
 		s.style.transition = 'left,opacity 0.25s,0.25s';
-		s.style.transform = 'translateX(0)';
-		s.style.opacity = 1;
+		s.style.transform = 'translate3d(0,0,0)';
 		s.timeout = setTimeout( function()
 		{
-			s.style.transform = 'translateX(20px)';
-			s.style.opacity = 0;
+			s.style.transform = 'translate3d(20px,0,0)';
+			s.classList.remove( 'Showing' );
 			s.timeout = setTimeout( function()
 			{
 				s.innerHTML = '';
-				s.style.transform = 'translateX(0)';
-				s.style.opacity = 1;
+				s.style.transform = 'translate3d(0,0,0)';
 			}, 250 );
 		}, 250 );
 	}, 1000 );
@@ -1120,32 +1297,6 @@ Application.saveFile = function( path, content )
 	
 	switch( extension )
 	{
-		case 'doc':
-		case 'docx':
-		case 'odt':
-		case 'rtf':
-			Application.statusMessage( i18n('i18n_converting') );
-					
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, data )
-			{
-				if( e == 'ok' )
-				{
-					Application.fileSaved = true;
-					Application.lastSaved = ( new Date() ).getTime();
-					Application.statusMessage( i18n('i18n_written') );
-					Application.currentDocument = path;
-					Application.refreshFilePane();
-				}
-				// We got an error...
-				else
-				{
-					Application.statusMessage( data );
-				}
-				Application.refreshFilePane();
-			}
-			m.execute( 'convertfile', { path: path, data: content, dataFormat: 'html', format: extension } );
-			break;
 		default:
 			var f = new File();
 			f.onSave = function()
@@ -1168,33 +1319,6 @@ Application.saveFile = function( path, content )
 	} );
 }
 
-Application.print = function( path, content, callback )
-{
-	var v = new View( { title: i18n('i18n_print_preview'), width: 200, height: 100 } );
-	v.setContent( '<div class="Padding"><p><strong>' + i18n('i18n_generating_print_preview') + '</strong></p></div>' );
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, data )
-	{
-		if( e == 'ok' )
-		{
-			Application.statusMessage( i18n('i18n_print_ready') );
-			
-			v.close();
-			
-			if( callback )
-			{
-				callback( data );
-			}
-		}
-		// We got an error...
-		else
-		{
-			Application.statusMessage( data );
-		}
-	}
-	m.execute( 'convertfile', { path: path, format: 'pdf' } );
-}
-
 Application.newDocument = function( args )
 {
 	// Don't make new document while loading..
@@ -1204,8 +1328,10 @@ Application.newDocument = function( args )
 	this.fileSaved = false;
 	this.lastSaved = 0;
 	
+	var self = this;
+	
 	// Wait till ready
-	if( typeof( ClassicEditor ) == 'undefined' )
+	if( typeof( ClassicEditor ) == 'undefined' || !Application.editor )
 	{
 		return setTimeout( function()
 		{
@@ -1266,16 +1392,34 @@ Application.newDocument = function( args )
 			command: 'newdocument'
 		} );
 		
-		Application.editor.setData( '', function()
+		// TODO: Check why we have no editor
+		if( Application.editor )
 		{
-			Application.initializeBody();
-		} );
+			Application.editor.setData( '', function()
+			{
+				Application.initializeBody();
+			} );
+		}
 		
 		if( args.browserPath )
 		{
 			this.browserPath = args.browserPath;
 			this.path = args.browserPath;
-			this.fileBrowser.setPath( args.browserPath );
+			if( this.fileBrowser )
+			{
+				this.fileBrowser.setPath( args.browserPath );
+			}
+			// Try again
+			else
+			{
+				setTimeout( function()
+				{
+					if( self.fileBrowser )
+					{
+						self.fileBrowser.setPath( args.browserPath );
+					}
+				}, 5000 );
+			}
 		}
 	}
 }
@@ -1383,6 +1527,13 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'updateViewMode':
+			currentViewMode = msg.mode;
+			Application.updateViewMode();
+			break;
+		case 'mobilebackbutton':
+			Application.handleBack();
+			break;
 		case 'applystyle':
 			if( msg.style )
 			{
@@ -1411,17 +1562,6 @@ Application.receiveMessage = function( msg )
 				this.loadFile( msg.files[a].Path );
 				break;
 			}
-			break;
-		case 'print':
-			this.print( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>', function( data )
-			{
-				var w = new View( {
-					title: i18n('i18n_print_preview') + ' ' + msg.path,
-					width: 700,
-					height: 800
-				} );
-				w.setContent( '<iframe style="margin: 0; width: 100%; height: 100%; position: absolute; top: 0; left: 0; border: 0" src="/system.library/file/read/?path=' + data + '&authid=' + Application.authId + '&mode=rb"></iframe><style>html, body{padding:0;margin:0}</style>' );
-			} );
 			break;
 		case 'savefile':
 			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + Application.editor.getData() + '</body></html>' );
@@ -1485,11 +1625,11 @@ function editorCommand( command, value )
 	}
 	else if( command == 'olbullets' )
 	{
-		f.execCommand( 'insertOrderedList', false, false );
+		f.execCommand( 'bulletedList', false, false );
 	}
 	else if( command == 'ulbullets' )
 	{
-		f.execCommand( 'insertUnorderedList', false, false );
+		f.execCommand( 'numberedList', false, false );
 	}
 	else if( command == 'align-left' )
 	{

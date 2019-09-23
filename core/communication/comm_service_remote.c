@@ -674,7 +674,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						if( con != NULL )
 						{
 							con->cfcc_Data = service;
-							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE );
+							con->cfcc_Thread = ThreadNew( CommServiceThreadConnection, con, TRUE, NULL );
 							
 							service->s_NumberConnections++;
 							FFree( lfcm );

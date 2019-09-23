@@ -102,7 +102,7 @@ int UGMAssignGroupToUser( UserGroupManager *smgr, User *usr );
 // Assign groups to User
 //
 
-int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *groups );
+int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level, char *workgroups );
 
 //
 //
@@ -133,6 +133,12 @@ FBOOL UGMUserToGroupISConnectedByUNameDB( UserGroupManager *um, FULONG ugroupid,
 //
 
 FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, FULONG uid );
+
+//
+//
+//
+
+int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type );
 
 
 #endif //__SYSTEM_USER_USER_GROUP_MANAGER_H__

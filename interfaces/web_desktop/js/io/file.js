@@ -612,7 +612,7 @@ function getImageUrl( path )
 
 	var sid = Workspace.sessionId && Workspace.sessionId != 'undefined';
 	var type = sid ? 'sessionid' : 'authid';
-	var valu = sid ? Workspace.sessionId : ( Workspace.conf ? Workspace.conf.authid : '' );
+	var valu = sid ? Workspace.sessionId : ( Workspace.conf && Workspace.conf.authid ? Workspace.conf.authid : '' );
 	var auth = type + '=' + valu;
 	var u = '/system.library/file/read?' + auth + '&path=' + encodeURIComponent( path ) + '&mode=rs';
 	return u;

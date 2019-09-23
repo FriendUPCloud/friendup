@@ -33,6 +33,11 @@ lws_send_pipe_choked(struct lws *wsi)
 	struct lws_pollfd fds;
 	struct lws *wsi_eff;
 
+#if !defined(LWS_WITHOUT_EXTENSIONS)
+	if (wsi->ws && wsi->ws->tx_draining_ext)
+		return 1;
+#endif
+
 #if defined(LWS_WITH_HTTP2)
 	wsi_eff = lws_get_network_wsi(wsi);
 #else
@@ -66,6 +71,11 @@ lws_send_pipe_choked(struct lws *wsi)
 	return 0;
 }
 
+int
+lws_plat_set_nonblocking(int fd)
+{
+	return fcntl(fd, F_SETFL, O_NONBLOCK) < 0;
+}
 
 int
 lws_plat_set_socket_options(struct lws_vhost *vhost, int fd, int unix_skt)
@@ -156,11 +166,7 @@ lws_plat_set_socket_options(struct lws_vhost *vhost, int fd, int unix_skt)
 		return 1;
 #endif
 
-	/* We are nonblocking... */
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-		return 1;
-
-	return 0;
+	return lws_plat_set_nonblocking(fd);
 }
 
 
@@ -202,13 +208,14 @@ lws_interface_to_sa(int ipv6, const char *ifname, struct sockaddr_in *addr,
 #ifdef LWS_WITH_IPV6
 			if (ipv6) {
 				/* map IPv4 to IPv6 */
-				bzero((char *)&addr6->sin6_addr,
+				memset((char *)&addr6->sin6_addr, 0,
 						sizeof(struct in6_addr));
 				addr6->sin6_addr.s6_addr[10] = 0xff;
 				addr6->sin6_addr.s6_addr[11] = 0xff;
 				memcpy(&addr6->sin6_addr.s6_addr[12],
 				       &((struct sockaddr_in *)ifc->ifa_addr)->sin_addr,
 							sizeof(struct in_addr));
+				lwsl_debug("%s: uplevelling ipv4 bind to ipv6\n", __func__);
 			} else
 #endif
 				memcpy(addr,

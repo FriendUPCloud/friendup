@@ -253,8 +253,11 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
+void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs, char **mountError )
 {
+	//FERROR("Disabled for a moment\n");
+	//return NULL;
+	
 	File *dev = NULL;
 	char *path = NULL, *ulogin = NULL, *upass = NULL;
 	char *name = NULL, *host = NULL;
@@ -364,11 +367,12 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
 
 		smbc_setOptionUserData( locsd->ctx, locsd );
 		smbc_setFunctionAuthDataWithContext( locsd->ctx, get_auth_data_fn );
-
+		DEBUG("[SAMBA] Before samba init\n");
 		if( smbc_init( NULL, 0 ) < 0 )
 		{
 			SDDelete( locsd );
 			FFree( dev );
+			FERROR("[SAMBA] init fail\n");
 			return NULL;
 		}
 		
@@ -443,9 +447,6 @@ int Release( struct FHandler *s, void *f )
 			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
 			SDDelete( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
 
 		return 0;
 	}
@@ -469,10 +470,6 @@ int UnMount( struct FHandler *s, void *f )
 			
 			SDDelete( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); lf->f_Name = NULL;}
-		if( lf->f_Path ){ FFree( lf->f_Path ); lf->f_Path = NULL; }
-		
 		return 0;
 	}
 	return -1;
@@ -1143,6 +1140,9 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	char *timeStr = FCalloc( 40, sizeof( char ) );
 	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
 	snprintf( tmp, 1023, "\"DateModified\": \"%s\",", timeStr );
+	BufStringAdd( bs, tmp );
+	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_ctime ) );
+	snprintf( tmp, 1023, "\"DateCreated\": \"%s\",", timeStr );
 	BufStringAdd( bs, tmp );
 	FFree( timeStr );
 	

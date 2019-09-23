@@ -24,6 +24,7 @@
 #include <util/list_string.h>
 #include "file_permissions.h"
 #include "fsys_activity.h"
+#include <network/user_session_websocket.h>
 
 //
 //
@@ -91,7 +92,7 @@ typedef struct File
 	
 	FBOOL						f_Stream;			// is file streamed
 	Socket						*f_Socket;			// != NULL then data should be streamed
-	void						*f_WSocket;			// websocket context, if provided data should be delivered here
+	UserSessionWebsocket		*f_WSocket;			// websocket context, if provided data should be delivered here
 	int							f_Operations;		// operation counter
 	
 	int							f_OperationMode;	// read, write, etc.
@@ -156,7 +157,7 @@ static const FULONG FileSharedTDesc[] = {
 	SQLT_STR, (FULONG)"Path",            offsetof( struct FileShared, fs_Path ), 
 	SQLT_INT, (FULONG)"UserID",          offsetof( struct FileShared, fs_IDUser ), 
 	SQLT_STR, (FULONG)"DstUserSID",      offsetof( struct FileShared, fs_DstUsers ), 
-	SQLT_DATETIME, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreateTimeTM ),
+	SQLT_DATETIME, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreatedTime ),
 	SQLT_STR, (FULONG)"Hash",            offsetof( struct FileShared, fs_Hash ), 
 	SQLT_INT, (FULONG)"AppID",           offsetof( struct FileShared, fs_AppID ), 
 	SQLT_BLOB, (FULONG)"FileData",       offsetof( struct FileShared, fs_Data ), 

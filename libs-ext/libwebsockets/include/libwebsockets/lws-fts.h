@@ -211,14 +211,4 @@ lws_fts_search(struct lws_fts_file *jtf, struct lws_fts_search_params *ftsp);
 LWS_VISIBLE LWS_EXTERN void
 lws_fts_close(struct lws_fts_file *jtf);
 
-/**
- * lws_fts_results_dump() - Debug helper
- *
- * \param result: The result pointer returned from lws_fts_search()
- *
- * Sanity-check dumper to log of results struct useful for development.
- */
-LWS_VISIBLE LWS_EXTERN int
-lws_fts_results_dump(struct lws_fts_result *result);
-
 ///@}

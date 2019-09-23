@@ -21,7 +21,7 @@ if( !isset( $User ) || ( $User && ( !isset( $User->ID ) || !$User->ID ) ) || !is
 }
 
 // We might come here by mistage (direct calling of file by phpfs)
-if( $args->module && $args->module != 'system' && $args->module != '(null)' )
+if( isset( $args->module ) && $args->module != 'system' && $args->module != '(null)' )
 {
 	if( file_exists( $f = ( 'modules/' . $args->module . '/module.php' ) ) )
 	{
@@ -238,12 +238,12 @@ if( isset( $args->command ) )
 				'languages', 'types', 'keys', 'events', 'news', 'setdiskcover', 'getdiskcover', 'calendarmodules',
 				'mountlist', 'mountlist_list', 'deletedoor', 'fileinfo',
 				'addfilesystem', 'editfilesystem', 'status', 'makedir', 'mount',
-				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions',
+				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions', 'getapppermissions',
 				'installapplication',  'uninstallapplication', 'package',  'updateappdata',
 				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
 				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
 				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers',
+				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
@@ -251,7 +251,9 @@ if( isset( $args->command ) )
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
-				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey' 
+				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey', 
+				'userroleget', 'checkpermission', 'userroleadd', 'userroleupdate', 'userroledelete',
+				'getsystempermissions' 
 			);
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
@@ -268,6 +270,15 @@ if( isset( $args->command ) )
 				die( 'ok' );
 			}
 			die( 'fail<!--separate-->{"response":"ping failed"}'  );
+			break;
+		// Create a thumbnail of any kind of file
+		case 'thumbnail':
+			require( 'modules/system/include/thumbnail.php' );
+			break;
+		// Delete a thumbnail
+		case 'thumbnaildelete':
+			$Logger->log( 'Thumbnaildelete..' );
+			require( 'modules/system/include/thumbnaildelete.php' );
 			break;
 		// Get the app image from repository
 		case 'repoappimage':
@@ -293,6 +304,10 @@ if( isset( $args->command ) )
 			break;
 		case 'getmetadata':
 			require( 'modules/system/include/getmetadata.php' );
+			break;
+		// Get server logs
+		case 'getlogs':
+			require( 'modules/system/include/getlogs.php' );
 			break;
 		case 'resetguisettings':
 			require( 'modules/system/include/resetguisettings.php' );
@@ -480,6 +495,10 @@ if( isset( $args->command ) )
 
 		case 'getconfiginijson':
 			require( 'modules/system/include/getconfiginijson.php' );
+			break;
+			
+		case 'getsystempermissions':
+			require( 'modules/system/include/getsystempermissions.php' );
 			break;
 
 		// Save f.eg from photopea
@@ -671,6 +690,9 @@ if( isset( $args->command ) )
 			break;
 		case 'types':
 			$out = [];
+			$mode = 'default';
+			if( $args->args->mode )
+				$mode = $args->args->mode;
 			if( $dir = opendir( 'devices/DOSDrivers' ) )
 			{
 				while( $f = readdir( $dir ) )
@@ -682,9 +704,13 @@ if( isset( $args->command ) )
 					$o = file_get_contents( $fn );
 					if( !( $o = json_decode( $o ) ) ) continue;
 
-					// Admin filesystems can only be added by admin..
-					if( $o->group == 'Admin' && $level != 'Admin' )
-						continue;
+					// If we're listing all, don't check level (can't add admin file systems anyway)
+					if( $mode != 'all' )
+					{
+						// Admin filesystems can only be added by admin..
+						if( $o->group == 'Admin' && $level != 'Admin' )
+							continue;
+					}
 
 					// Find default label
 					if( file_exists( 'devices/DOSDrivers/' . $f . '/icon.svg' ) )
@@ -792,6 +818,18 @@ if( isset( $args->command ) )
 		case 'getdiskcover':
 			require( 'modules/system/include/getdiskcover.php' );
 			break;
+		// Get info about user's calendar sharing 
+		case 'calendarshareinfo':
+			require( 'modules/system/include/calendarshareinfo.php' );
+			break;
+		// Share user's calendar with user or workgroup ... 
+		case 'calendarshare':
+			require( 'modules/system/include/calendarshare.php' );
+			break;
+		// Unshare user's calendar with user or workgroup ... 
+		case 'calendarunshare':
+			require( 'modules/system/include/calendarunshare.php' );
+			break;
 		// Available calendar modules
 		case 'calendarmodules':
 			$modules = [];
@@ -819,8 +857,9 @@ if( isset( $args->command ) )
 			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
+			// 
 			$userid = $User->ID;
-			if( $level == 'Admin' && $args->args->userid )
+			if( $level == 'Admin' && isset( $args->args->userid ) )
 			{
 				$userid = $args->args->userid;
 			}
@@ -862,11 +901,11 @@ if( isset( $args->command ) )
 		case 'mountlist_list':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"mountlist_list failed"}' );
 
-			if( !isset($args->args->userids) ) die('fail<!--seperate-->no userids given');
+			if( !isset( $args->args->userids ) ) die('fail<!--seperate-->no userids given');
 			$sql = '';
 			if( isset($args->args->path) )
 			{
-				$type = ( isset($args->args->type) ? ' AND f.Type=\''. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) .'\'' : '' );
+				$type = ( isset( $args->args->type ) ? ' AND f.Type=\''. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) .'\'' : '' );
 				$sql = '
 					SELECT f.* FROM Filesystem f
 					WHERE
@@ -878,7 +917,7 @@ if( isset( $args->command ) )
 
 			if( $sql == '' ) die('fail<!--seperate-->no filter given');
 
-			$Logger->log( 'mounstlist list ' . $sql );
+			//$Logger->log( 'mounstlist list ' . $sql );
 
 			if( $rows = $SqlDatabase->FetchObjects( $sql ) )
 			{
@@ -1019,11 +1058,9 @@ if( isset( $args->command ) )
 				if( isset( $args->args->Workgroup ) )
 				{
 					if( $group = $SqlDatabase->FetchObject( '
-						SELECT ug.* FROM FUserGroup ug, FUserToGroup tg
+						SELECT ug.* FROM FUserGroup ug
 							WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
 							AND ug.Type = "Workgroup"
-							AND tg.UserGroupID = ug.ID
-							AND tg.UserID = \'' . $userid . '\'
 					' ) )
 					{
 						$groupID = $group->ID;
@@ -1274,6 +1311,9 @@ if( isset( $args->command ) )
 		case 'updateapppermissions':
 			require( 'modules/system/include/updateapppermissions.php' );
 			break;
+		case 'getapppermissions':
+			require( 'modules/system/include/getapppermissions.php' );
+			break;
 		// Get a repository resource
 		case 'resource':
 			require( 'modules/system/include/resource.php' );
@@ -1319,6 +1359,16 @@ if( isset( $args->command ) )
 		case 'systemmail':
 			require( 'modules/system/include/systemmail.php' );
 			break;
+			
+		// Set/get the system global settings
+		case 'setserverglobals':
+			require( 'modules/system/include/setserverglobals.php' );
+			break;
+		
+		case 'getserverglobals':
+			require( 'modules/system/include/getserverglobals.php' );
+			break;
+			
 		// Remove a bookmark
 		case 'removebookmark':
 			$s = new dbIO( 'FSetting' );
@@ -1458,292 +1508,26 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->' );
 			break;
+			
 		// Get a list of users
-		// TODO: Permissions!!! Only list out when you have users below your
-		//                      level, unless you are Admin
 		case 'listusers':
-			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"list users failed Error 1"}' );
+			require( 'modules/system/include/listusers.php' );
+			break;
 
-			if( $users = $SqlDatabase->FetchObjects( '
-				SELECT u.*, g.Name AS `Level` FROM 
-					`FUser` u, `FUserGroup` g, `FUserToGroup` ug 
-				WHERE 
-					    u.ID = ug.UserID 
-					AND g.ID = ug.UserGroupID 
-					AND g.Type = "Level" 
-					' . ( isset( $args->args->userid ) && $args->args->userid ? '
-					AND u.ID IN (' . $args->args->userid . ') 
-					' : '' ) . '
-					' . ( isset( $args->args->query ) && $args->args->query ? '
-					AND 
-					(
-						( 
-							u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
-						) 
-						OR 
-						( 
-							u.Name LIKE "' . trim( $args->args->query ) . '%" 
-						) 
-						OR 
-						( 
-							u.Email LIKE "' . trim( $args->args->query ) . '%" 
-						) 
-					)' : '' ) . '
-				GROUP 
-					BY u.ID, g.Name 
-				ORDER BY 
-					u.FullName ASC 
-				' . ( isset( $args->args->limit ) && $args->args->limit ? '
-				LIMIT ' . $args->args->limit . ' 
-				' : '' ) . '
-			' ) )
-			{
-				$out = [];
-				foreach( $users as $u )
-				{
-					$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'Level' ];
-					$o = new stdClass();
-					foreach( $keys as $key )
-					{
-						$o->$key = $u->$key;
-					}
-					$out[] = $o;
-				}
-				
-				if( isset( $args->args->count ) && $args->args->count )
-				{
-					$count = $SqlDatabase->FetchObject( 'SELECT COUNT( ID ) AS Num FROM FUser ' );
-					$out['Count'] = ( $count ? $count->Num : 0 );
-				}
-				
-				die( 'ok<!--separate-->' . json_encode( $out ) );
-			}
-			die( 'fail<!--separate-->{"response":"list users failed Error 2"}'  );
+		// List users connected to you through workgroups
+		case 'listconnectedusers':
+			require( 'modules/system/include/listconnectedusers.php' );
+			break;
+
+		// store new public key
+		case 'setuserpublickey':
+			require( 'modules/system/include/setuserpublickey.php' );
 			break;
 
 		// Get detailed info about a user
 		// TODO: Permissions!!! Only access users if you are admin!
 		case 'userinfoget':
-			if( isset($args->args->id) )
-				$uid = $args->args->id;
-			else
-				$uid = $User->ID;
-			if( $level == 'Admin' || $uid == $User->ID )
-			{
-				// Create FKeys table for storing encrypted keys connected to user
-				$t = new dbTable( 'FKeys' );
-				if( !$t->LoadTable() )
-				{
-					$SqlDatabase->Query( '
-					CREATE TABLE IF NOT EXISTS `FKeys` (
-					 `ID` bigint(20) NOT NULL AUTO_INCREMENT,
-					 `UserID` bigint(20) NOT NULL,
-					 `ApplicationID` bigint(20) NOT NULL,
-					 `UniqueID` varchar(255) NOT NULL,
-					 `RowID` bigint(20) NOT NULL,
-					 `RowType` varchar(255) NOT NULL,
-					 `Name` varchar(255) NOT NULL,
-					 `Type` varchar(255) NOT NULL,
-					 `Blob` longblob,
-					 `Data` text,
-					 `PublicKey` text,
-					 `Signature` text,
-					 `DateModified` datetime NOT NULL,
-					 `DateCreated` datetime NOT NULL,
-					 `IsDeleted` tinyint(4) NOT NULL,
-					 PRIMARY KEY (`ID`)
-					)
-					' );
-				}
-				else
-				{
-					$name = false;
-					$signature = false;
-					$applicationid = false;
-					if ( isset ( $t->_fieldnames ) )
-					{
-						foreach ( $t->_fieldnames as $f )
-						{
-							if ( $f == 'Name' )
-							{
-								$name = true;
-							}
-							if ( $f == 'Signature' )
-							{
-								$signature = true;
-							}
-							if ( $f == 'ApplicationID' )
-							{
-								$applicationid = true;
-							}
-						}
-						if ( !$name )
-						{
-							$t->AddField ( 'Name', 'varchar', array ( 'after'=>'RowType' ) );
-						}
-						if ( !$signature )
-						{
-							$t->AddField ( 'Signature', 'text', array ( 'after'=>'PublicKey' ) );
-						}
-						if ( !$applicationid )
-						{
-							$t->AddField ( 'ApplicationID', 'bigint', array ( 'after'=>'UserID' ) );
-						}
-					}
-				}
-
-				if( $userinfo = $SqlDatabase->FetchObject( '
-					SELECT
-						u.*,
-						g.Name AS `Level`,
-						wg.Name AS `Workgroup`
-					FROM
-						`FUser` u,
-						`FUserGroup` g,
-						`FUserToGroup` ug
-							LEFT JOIN `FUserGroup` wg ON
-							(
-									ug.UserID = \'' . $uid . '\'
-								AND wg.ID = ug.UserGroupID
-								AND wg.Type = "Workgroup"
-							)
-					WHERE
-							u.ID = ug.UserID
-						AND g.ID = ug.UserGroupID
-						AND u.ID = \'' . $uid . '\'
-						AND g.Type = \'Level\'
-				' ) )
-				{
-					$gds = '';
-					
-					switch( $args->args->mode )
-					{
-						case 'all':
-							
-							$userinfo->Workgroup = '';
-							
-							if( $wgs = $SqlDatabase->FetchObjects( '
-								SELECT 
-									g.ID, 
-									g.ParentID, 
-									g.Name, 
-									ug.UserID 
-								FROM 
-									`FUserGroup` g 
-										LEFT JOIN `FUserToGroup` ug ON 
-										(
-												ug.UserID = \'' . $uid . '\'
-											AND g.ID = ug.UserGroupID
-										)
-								WHERE g.Type = "Workgroup" 
-								ORDER BY g.Name ASC 
-							' ) )
-							{
-								$ugs = array();
-
-								foreach( $wgs as $wg )
-								{
-									if( $wg->UserID > 0 )
-									{
-										$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );
-									}
-								}
-								
-								$userinfo->Workgroup = $wgs;
-							}
-							
-							break;
-							
-						default:
-							
-							// TODO: Fix this sql code to work with workgroup, code under is temporary
-							if( !$userinfo->Workgroup && ( $wgs = $SqlDatabase->FetchObjects( '
-								SELECT
-									g.ID, 
-									g.ParentID, 
-									g.Name AS `Workgroup`
-								FROM
-									`FUserGroup` g,
-									`FUserToGroup` ug
-								WHERE
-										ug.UserID = \'' . $uid . '\'
-									AND g.ID = ug.UserGroupID
-									AND g.Type = "Workgroup"
-							' ) ) )
-							{
-								$ugs = array();
-
-								foreach( $wgs as $wg )
-								{
-									$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );
-									$ugs[] = $wg->Workgroup;
-								}
-						
-								$userinfo->Workgroup = $wgs;
-								
-								if( $ugs )
-								{
-									$userinfo->Workgroup = implode( ', ', $ugs );
-								}
-							}
-							
-							break;
-					}
-					
-					$gds = false;
-
-					if( $sts = $SqlDatabase->FetchObjects( '
-						SELECT g.ID, g.Name, ug.UserID' . ( $gds ? ', wg.UserID AS SetupGroup' : '' ) . '
-						FROM
-							`FUserGroup` g
-								' . ( $gds ? '
-								LEFT JOIN `FUserGroup` wg ON
-								(
-										wg.Name = g.ID
-									AND wg.Type = \'SetupGroup\'
-									AND wg.UserID IN (' . $gds . ')
-								)
-								' : '' ) . '
-								LEFT JOIN `FUserToGroup` ug ON
-								(
-										g.ID = ug.UserGroupID
-									AND g.Type = \'Setup\'
-									AND ug.UserID = \'' . $uid . '\'
-								)
-						WHERE g.Type = \'Setup\'
-						ORDER BY g.Name ASC
-					' ) )
-					{
-						$userinfo->Setup = $sts;
-					}
-
-					if( $uid > 0 && ( $keys = $SqlDatabase->FetchObjects( '
-						SELECT k.*, a.Name AS Application, u.AuthID AS ApplicationAuthID 
-						FROM 
-							`FKeys` k 
-								LEFT JOIN `FApplication` a ON 
-								( 
-									a.ID = k.ApplicationID 
-								) 
-								LEFT JOIN `FUserApplication` u ON 
-								( 
-										u.ApplicationID = k.ApplicationID 
-									AND u.UserID = \'' . $uid . '\' 
-								)
-						WHERE 
-								k.UserID = \'' . $uid . '\' 
-							AND k.IsDeleted = "0" 
-						ORDER 
-							BY k.ID ASC 
-					' ) ) )
-					{
-						$userinfo->Keys = $keys;
-					}
-
-					die( 'ok<!--separate-->' . json_encode( $userinfo ) );
-				}
-			}
-			die( 'fail<!--separate-->{"response":"user info get failed"}'  );
+			require( 'modules/system/include/userinfoget.php' );
 			break;
 		case 'userkeysupdate':
 			if( $User->ID )
@@ -1764,7 +1548,7 @@ if( isset( $args->command ) )
 				{
 					if( !$key->Load( $args->args->id ) )
 					{
-						die( 'fail' );
+						die( 'fail<!--separate-->{"response":"no user key found"}' );
 					}
 					
 					$found = true;
@@ -1798,7 +1582,7 @@ if( isset( $args->command ) )
 					}
 					else
 					{
-						die( 'fail' );
+						die( 'fail<!--separate-->{"response":"no application key found"}' );
 					}					
 				}
 				else if( isset( $args->args->appPath ) && $args->args->appPath )
@@ -1857,7 +1641,7 @@ if( isset( $args->command ) )
 					}
 					else
 					{
-						die( 'fail' );
+						die( 'fail<!--separate-->{"response":"no filesystem key found"}' );
 					}					
 				}
 				/*else
@@ -2030,6 +1814,23 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"checkuserbyname failed"}'  );
 			break;
+		/* Roles */
+		case 'userroleadd':
+			require( 'modules/system/include/userrole_add.php' );
+			break;
+		case 'userroledelete':
+			require( 'modules/system/include/userrole_delete.php' );
+			break;
+		case 'userroleupdate':
+			require( 'modules/system/include/userrole_update.php' );
+			break;
+		case 'userroleget':
+			require( 'modules/system/include/userrole_get.php' );
+			break;
+		case 'checkpermission':
+			require( 'modules/system/include/checkpermission.php' );
+			break;
+		/* End roles */
 		case 'userbetamail':
 		case 'listbetausers':
 			require( 'modules/system/include/betaimport.php' );
@@ -2048,7 +1849,7 @@ if( isset( $args->command ) )
 			{
 				require( 'modules/system/include/usersetupapply.php' );
 			}
-			die( 'fail' );
+			die( 'fail<!--separate-->{"response":"unauthorized access to usersetupapply"}' );
 			break;
 		// Save setup
 		case 'usersetupsave':
@@ -2057,6 +1858,18 @@ if( isset( $args->command ) )
 		// Delete setup
 		case 'usersetupdelete':
 			require( 'modules/system/include/usersetupdelete.php' );
+			break;
+		case 'usersetupwallpaperdelete':
+			require( 'modules/system/include/usersetupwallpaperdelete.php' );
+			break;
+		case 'usersetupwallpaperexists':
+			require( 'modules/system/include/usersetupwallpaperexists.php' );
+			break;
+		case 'usersetupwallpaperget':
+			require( 'modules/system/include/usersetupwallpaperget.php' );
+			break;
+		case 'usersetupwallpaperset':
+			require( 'modules/system/include/usersetupwallpaperset.php' );
 			break;
 		// Get setup
 		case 'usersetupget':
@@ -2113,6 +1926,12 @@ if( isset( $args->command ) )
 		case 'setmimetypes':
 			require( 'modules/system/include/setmimetypes.php' );
 			break;
+		case 'checkuserpermission':
+			require( 'modules/system/include/checkuserpermission.php' );
+			break;
+		case 'checkapppermission':
+			require( 'modules/system/include/checkapppermission.php' );
+			break;
 		case 'checkmimeapplication':
 			require( 'modules/system/include/checkmimeapplication.php' );
 			break;
@@ -2124,6 +1943,12 @@ if( isset( $args->command ) )
 			break;
 		case 'getcalendarevents':
 			require( 'modules/system/include/getcalendarevents.php' );
+			break;
+		case 'getcalendarevent':
+			require( 'modules/system/include/getcalendarevent.php' );
+			break;
+		case 'savecalendarevent':
+			require( 'modules/system/include/savecalendarevent.php' );
 			break;
 		case 'addcalendarevent':
 			require( 'modules/system/include/addcalendarevent.php' );
@@ -2157,25 +1982,7 @@ if( isset( $args->command ) )
 			if( $o->ID > 0 )
 				die( 'ok' );
 			die( 'fail<!--separate-->{"response":"set theme failed"}'  );
-//-------------------------------------- DEPRECATED ---------------------------------------------
-/* This piece of code handled user deletion, however it did not clear current sessions
- * (because they are stored in the core). This in turn lead to problems if a user was deleted
- * and re-created with the same username. The core was confused and the new account has seen
- * incomplete workspace. User removal is now handled in user_manager_web.c
- */
-//
-// 		case 'userdelete':
-// 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"user delete failed"}' );
-// 			$u = new dbIO( 'FUser' );
-// 			if( $u->Load( $args->args->id ) )
-// 			{
-// 				$SqlDatabase->query( 'DELETE FROM `FSetting` WHERE UserID=\'' . $u->ID . '\'' );
-// 				$SqlDatabase->query( 'DELETE FROM `DockItem` WHERE UserID=\'' . $u->ID . '\'' );
-// 				$u->Delete();
-// 				die( 'ok' );
-// 			}
-// 			die( 'fail<!--separate-->{"response":"user delete failed"}'  );
-//-----------------------------------------------------------------------------------------------
+
 		case 'userunblock':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"userunblock failed"}' );
 			$u = new dbIO( 'FUser' );
@@ -2346,7 +2153,7 @@ if( isset( $args->command ) )
 			{
 				require( 'modules/system/include/getservices.php' );
 			}
-			die( 'fail' );
+			die( 'fail<!--separate-->{"response":"unauthorized access to getservices"}' );
 			break;
 		
 		// get server publickey, create keypairs if not found
@@ -2399,7 +2206,7 @@ if( isset( $args->command ) )
 				die( 'ok<!--separate-->' . $publickey );
 			}
 			
-			die( 'fail' );
+			die( 'fail<!--separate-->{"response":"getserverkey fatal error"}' );
 			
 			break;
 		

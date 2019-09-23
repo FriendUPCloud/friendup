@@ -8,6 +8,18 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/* Some important flags for GUI elements ------------------------------------ */
+
+var DEFAULT_SANDBOX_ATTRIBUTES = 'allow-same-origin allow-forms allow-scripts allow-popups';
+var FUI_MOUSEDOWN_RESIZE  =  2;
+var FUI_MOUSEDOWN_WINDOW  =  1;
+var FUI_MOUSEDOWN_SCREEN  =  3;
+var FUI_MOUSEDOWN_SCROLLV = 10;
+var FUI_WINDOW_MARGIN     =  3;
+var FUI_MOUSEDOWN_PICKOBJ = 11;
+
+/* Done important flags for GUI elements ------------------------------------ */
+
 var movableHighestZindex = 99;
 var movableWindowCount = 0;
 var movableWindows = [];
@@ -17,9 +29,9 @@ var mousePointer =
 {
 	prevMouseX: -1,
 	prevMouseY: -1,
-	'elements': [],
-	'dom': false,
-	'testPointer': function ()
+	elements: [],
+	dom: false,
+	testPointer: function ()
 	{
 		if( !ge( 'MousePointer' ) )
 		{
@@ -33,7 +45,7 @@ var mousePointer =
 			this.dom = d;
 		}
 	},
-	'move': function( e )
+	move: function( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -62,7 +74,7 @@ var mousePointer =
 			
 			// Skew them
 			if( ge( 'DoorsScreen' ).screenOffsetTop )
-				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;			
+				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;
 			
 			// Check move on window
 			var z = 0;
@@ -134,23 +146,32 @@ var mousePointer =
 		
 			for( var c in ars )
 			{
-				var isListview = false;
+				var isListView = false;
 				var isScreen = false;
 				var w = ars[c].icons ? ars[c] : ars[c].content;
 				if( !w || !w.icons ) continue; // No icons? Skip!
 				
 				var sctop = 0;
-				if( !w.classList.contains( 'ScreenContent' ) )
+
+				// Listview counts from a different element
+				var iconArea = w;
+				if( w.directoryview && w.directoryview.listMode == 'listview' )
 				{
-					sctop = w.getElementsByClassName( 'Scroller' );
-					isListview = w.getElementsByClassName( 'Listview' );
-					if( !sctop ) sctop = isListview;
-					isListview = isListview.length ? true : false;
+					iconArea = w.querySelector( '.ScrollArea' );
+					sctop = [ iconArea ];
+					isListView = true;
 				}
-				// We're checking screen icons
 				else
 				{
-					isScreen = true;
+					if( !w.classList.contains( 'ScreenContent' ) )
+					{
+						sctop = w.getElementsByClassName( 'Scroller' );
+					}
+					// We're checking screen icons
+					else
+					{
+						isScreen = true;
+					}
 				}
 				
 				var scleft = 0;
@@ -161,11 +182,11 @@ var mousePointer =
 				}
 				else sctop = 0;
 			
-				var my = windowMouseY - w.offsetTop - w.parentNode.offsetTop + sctop;
-				var mx = windowMouseX - w.offsetLeft - w.parentNode.offsetLeft + scleft;
+				var my = windowMouseY - GetElementTop( iconArea ) + sctop;
+				var mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
 				
 				// Add file browser offset
-				if( w.fileBrowser )
+				if( w.fileBrowser && !isListView )
 				{
 					if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
 					{
@@ -174,11 +195,7 @@ var mousePointer =
 					}
 				}
 				
-				
-				if( isListview )
-				{
-					my -= 56;
-				}
+				var hoverIcon = false;
 				
 				for( var a = 0; a < w.icons.length; a++ )
 				{
@@ -198,11 +215,10 @@ var mousePointer =
 					}
 					// Done exclude
 					
-					// Don't rotate icon on listviews
-					
 					if( ic )
 					{
 						if( 
+							!hoverIcon && 
 							!mover &&
 							( isScreen || ( moveWin && w == moveWin.content ) ) &&
 							ic.offsetTop < my && ic.offsetLeft < mx &&
@@ -210,6 +226,7 @@ var mousePointer =
 							ic.offsetLeft + ic.offsetWidth > mx
 						)
 						{
+							hoverIcon = true;
 							ic.classList.add( 'Selected' );
 							ic.selected = true;
 							ic.fileInfo.selected = true;
@@ -228,7 +245,7 @@ var mousePointer =
 			{
 				var wd = window.movableWindows[a];
 				if( ( !mover && wd.rollOut ) || ( wd != moveWin && wd.rollOut ) )
-					wd.rollOut ( e );
+					wd.rollOut( e );
 			}
 			
 			// Assign!
@@ -242,7 +259,7 @@ var mousePointer =
 			this.candidate.condition( e );
 		}
 	},
-	'stopMove': function ( e )
+	stopMove: function ( e )
 	{
 		for ( var a in window.movableWindows )
 		{
@@ -250,12 +267,12 @@ var mousePointer =
 			if ( wn.rollOut ) wn.rollOut ( e );
 		}
 	},
-	'clear': function()
+	clear: function()
 	{
 		this.elements = [];
 		this.dom.innerHTML = '';	
 	},
-	'drop': function ( e )
+	drop: function ( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -347,6 +364,7 @@ var mousePointer =
 				}
 				if( dropWin )
 				{
+					if( dropWin.content && dropWin.content.windowObject && dropWin.content.windowObject.refreshing ) return;
 					// Did we drop on a file browser?
 					if( dropWin.content && dropWin.content.fileBrowser )
 					{
@@ -363,12 +381,14 @@ var mousePointer =
 					}
 				}
 			}
-
+			
 			if( !skipDropCheck )
 			{
 				// Find what we dropped on
 				for( var c in ars )
 				{
+					var isListView = false;
+					var isScreen = false;
 					var w = ars[c].icons ? ars[c] : ars[c].content;
 					if( !w || !w.icons ) continue; // No icons? Skip!
 				
@@ -376,8 +396,29 @@ var mousePointer =
 					if( dropper && ( w != dropper.content && w != dropper ) )
 						continue;
 				
-					// Add scroll top!
-					var sctop = w.getElementsByClassName( 'Scroller' );
+					var sctop = 0;
+
+					// Listview counts from a different element
+					var iconArea = w;
+					if( w.directoryview && w.directoryview.listMode == 'listview' )
+					{
+						iconArea = w.querySelector( '.ScrollArea' );
+						sctop = [ iconArea ];
+						isListView = true;
+					}
+					else
+					{
+						if( !w.classList.contains( 'ScreenContent' ) )
+						{
+							sctop = w.getElementsByClassName( 'Scroller' );
+						}
+						// We're checking screen icons
+						else
+						{
+							isScreen = true;
+						}
+					}
+				
 					var scleft = 0;
 					if( sctop && sctop.length ) 
 					{
@@ -385,12 +426,12 @@ var mousePointer =
 						sctop = sctop[0].scrollTop;
 					}
 					else sctop = 0;
-				
-					var my = windowMouseY - w.offsetTop - w.parentNode.offsetTop + sctop;
-					var mx = windowMouseX - w.offsetLeft - w.parentNode.offsetLeft + scleft;
+					
+					var my = windowMouseY - GetElementTop( iconArea ) + sctop;
+					var mx = windowMouseX - GetElementLeft( iconArea ) + scleft;
 				
 					// Add file browser offset
-					if( w.fileBrowser )
+					if( w.fileBrowser && !isListView )
 					{
 						if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
 						{
@@ -415,9 +456,11 @@ var mousePointer =
 							}
 							if( found ) continue;
 							// Done exclude
-				
+							
 							var icon = w.icons[a];
-							if ( 
+							
+							// Hit icon!
+							if( 
 								ic.offsetTop < my && ic.offsetLeft < mx &&
 								ic.offsetTop + ic.offsetHeight > my &&
 								ic.offsetLeft + ic.offsetWidth > mx
@@ -463,15 +506,22 @@ var mousePointer =
 			
 			if( dropper )
 			{
+				// Assume the drop was handled correctly
+				var dropResult = true;
+				
 				// Check if dropper object has a drop method, and execute it
 				// with the supplied elements
 				if( dropper.drop )
 				{
-					dropped = dropper.drop( this.elements, e, dropWin.content );
+					dropResult = dropped = dropper.drop( this.elements, e, dropWin.content );
 				}
 				else if( dropper.domNode && dropper.domNode.drop )
 				{
-					dropper.domNode.drop( this.elements, e );
+					dropResult = dropper.domNode.drop( this.elements, e );
+				}
+				else if( dropper.domNode && dropper.domNode.file && dropper.domNode.file.drop )
+				{
+					dropResult = dropper.domNode.file.drop( this.elements, e );
 				}
 				else
 				{
@@ -515,7 +565,11 @@ var mousePointer =
 				}
 			}
 			
+			// Redraw icons
 			Workspace.redrawIcons();
+			
+			if( window.currentMovable && currentMovable.content && currentMovable.content.refresh )
+				currentMovable.content.refresh();
 			
 			// Place back again
 			if( !dropped || !dropper )
@@ -561,25 +615,33 @@ var mousePointer =
 		}
 		this.mover = false;
 	},
-	'clone': function ( ele )
+	clone: function ( ele )
 	{
 		this.testPointer ();
 	},
-	'pickup': function ( ele )
+	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
 		if( window.isMobile ) return;
+		
+		if( !e ) e = window.event;
+		var ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
+		
+		var target = false;
+		if( e ) target = e.target || e.srcElement;
 		
 		this.testPointer ();
 		// Check multiple (pickup multiple)
 		var multiple = false;
 		if ( ele.window )
 		{
+			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
 			_ActivateWindowOnly( ele.window.parentNode );
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				var ic = ele.window.icons[a];
 				if( !ic.domNode ) continue;
+				
 				if( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
 				{
 					var el = ic.domNode;
@@ -620,18 +682,21 @@ var mousePointer =
 			this.elements.push( ele );
 		}
 	},
-	'poll': function ( e )
+	poll: function ( e )
 	{
-		if ( !this.elements || !this.elements.length )
+		if( !this.elements || !this.elements.length )
 		{
-			if ( this.dom )
+			if( this.dom )
 				this.dom.parentNode.removeChild ( this.dom );
 			this.dom = false;
 		}
-		else
+		else if( this.dom )
 		{
-			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
-			this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			if( this.dom.firstChild )
+			{
+				this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
+				this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			}
 			window.mouseDown = 5;
 			ClearSelectRegion();
 		}
@@ -667,9 +732,92 @@ html .View.SnapRight
 	}
 };
 
+// Secure drop widget for apps
+// TODO: Complete this one once the browser is ready for it. Not used now.
+// This one is connected to the "securefiledrop" flag on windows
+function addSecureDropWidget( windowobject, objects )
+{
+	var w = new Widget( {
+		top: windowMouseY - 180,
+		left: windowMouseX - 150,
+		width: 300,
+		height: 230,
+		raised: true,
+		rounded: true
+	} );
+	
+	windowobject.toFront();
+	
+	var f = new File( 'System:templates/securefiledrop.html' );
+	f.onLoad = function( data )
+	{
+		w.setContent( data, function()
+		{
+			for( var a = 0; a < objects.length; a++ )
+			{
+				var url = getImageUrl( objects[ a ].Path )
+				var im = new Image();
+				var o = objects[ a ];
+				fetch( url )
+				.then( res => res.blob() )
+				.then( blob => {
+					var fn = GetFilename( o.Path );
+					var fil = new File( [ blob ], fn, blob );
+					var ic = new FileIcon( o, { type: 'A', nativeDraggable: true } );
+					url = url.split( '/read' ).join( '/read/' + fn );
+					ic.file.id = 'directoryfile_draggable_' + a;
+					ic.file.setAttribute( 'data-downloadurl', url );
+					ic.file.href = url;
+					ic.file.style.position = 'relative';
+					ic.file.style.float = 'left';
+					ic.file.style.display = 'block';
+					ic.file.style.marginLeft = '10px';
+					ic.file.setAttribute( 'download', url );
+					ic.file.addEventListener( 'dragstart', e => {
+						e.dataTransfer.dropEffect = 'copy';
+						e.dataTransfer.effectAllowed = 'copy';
+						var ext = 'bin';
+						if( fn.indexOf( '.' ) >= 0 )
+							ext = fn.split( '.' )[1].toUpperCase();
+						var ctype = 'application/octet-stream';
+						switch( ctype )
+						{
+							case 'jpg':
+							case 'jpeg':
+								ctype = 'image/jpeg';
+								break;
+							case 'png':
+							case 'bmp':
+							case 'gif':
+								ctype = 'image/' + ext;
+								break;
+							default:
+								break;
+						}
+						// TODO: Make items.add work
+						//e.dataTransfer.items.add( [ fil ], ctype, { type: 'custom' } );
+						e.dataTransfer.setData( 'DownloadURL', [ ctype + ':' + fn + ':' + url ] );
+					} );
+					ic.file.addEventListener( 'dragend', function( e )
+					{
+						w.close();
+						//console.log( e );
+					}, false );
+					w.dom.querySelector( '.Iconlist' ).appendChild( ic.file );
+				} );
+			}
+		} );
+	}
+	f.load();
+	
+	window.mouseDown = null;
+}
+
 //check if we run inside an app and do some magic
 function checkForFriendApp()
 {
+// just disabled to do not loose compatybility
+/*
 	//if we dont have a sessionid we will need to wait a bit here...
 	if( !Workspace.sessionId )
 	{
@@ -685,6 +833,7 @@ function checkForFriendApp()
 		var version = null;
 		var platform = null;
 		var appToken = null;
+		var deviceID = null;
 		//var appToken = friendApp.appToken ? friendApp.appToken : false;
 
 		if( typeof friendApp.get_version == 'function' )
@@ -701,6 +850,10 @@ function checkForFriendApp()
 		{
 			appToken = friendApp.get_app_token();
 		}
+		if( typeof friendApp.get_deviceid == 'function' )
+		{
+			deviceID = friendApp.get_deviceid();
+		}
 
 		console.log('call ' + Workspace.sessionId );
 
@@ -714,9 +867,10 @@ function checkForFriendApp()
 		}
 		if( appToken != null )	// old applications which do not have appToken will skip this part
 		{
-			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, appversion: version, platform: platform } );
+			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
 		}
 	}
+*/
 }
 
 // Refresh programmatic classes
@@ -1254,8 +1408,17 @@ function _NewSelectBoxCheck ( pid, ele )
 	}
 }
 
+// Rules for forcing screen dimensions
+function forceScreenMaxHeight()
+{
+	if( isMobile )
+	{
+		// Nothing yet
+	}
+}
+
 // Gets values from a SelectBox - multiple select returns array, otherwise string
-function GetSelectBoxValue ( pel )
+function GetSelectBoxValue( pel )
 {
 	if ( !pel ) return false;
 	var inputs = pel.getElementsByTagName ( 'input' );
@@ -1337,7 +1500,13 @@ movableListener = function( e, data )
 	
 	windowMouseX = x;
 	windowMouseY = y;
-
+	
+	// Keep alive!
+	if( window.Workspace )
+	{
+		Workspace.updateViewState( 'active' );
+	}
+	
 	mousePointer.poll();
 	mousePointer.move( e );
 	
@@ -1417,6 +1586,7 @@ movableListener = function( e, data )
 							{
 								var mw = movableWindows[ z ];
 
+								if( mw.snapObject ) continue; // Can't snap to snapped windows
 								if( mw == currentMovable ) continue;
 								if( mw.parentNode && mw.parentNode && mw.parentNode.getAttribute( 'minimized' ) == 'minimized' ) 
 									continue;
@@ -1564,7 +1734,17 @@ movableListener = function( e, data )
 									}
 									else
 									{
-										mw.attached.push( currentMovable );
+										var found = false;
+										for( var a in mw.attached )
+										{
+											if( mw.attached[ a ] == currentMovable )
+											{
+												found = true;
+												break;
+											}
+										}
+										if( !found )
+											mw.attached.push( currentMovable );
 									}
 									mw.setAttribute( 'attach_' + direction, 'attached' );
 									
@@ -1639,7 +1819,7 @@ movableListener = function( e, data )
 						{
 							lockX = true;
 						
-							if( ( dir == 'left' && dragDistanceX > 150 ) || ( dir == 'right' && dragDistanceX < -150 ) )
+							if( ( dir == 'left' /*&& dragDistanceX > 150*/ ) || ( dir == 'right' /*&& dragDistanceX < -150*/ ) )
 							{
 								currentMovable.style.top = currentMovable.snapObject.style.top;
 								currentMovable.style.height = currentMovable.snapObject.style.height;
@@ -1655,7 +1835,7 @@ movableListener = function( e, data )
 						{
 							lockY = true;
 						
-							if( ( dir == 'up' && dragDistanceY > 150 ) || ( dir == 'down' && dragDistanceY < -150 ) )
+							if( ( dir == 'up' /*&& dragDistanceY > 150 */) || ( dir == 'down' /*&& dragDistanceY < -150 */) )
 							{
 								currentMovable.style.left = currentMovable.snapObject.style.left;
 								currentMovable.style.width = currentMovable.snapObject.style.width;
@@ -2082,12 +2262,14 @@ function DrawRegionSelector( e )
 					if ( overlapping || intersecting )
 					{
 						ics.classList.add( 'Selected' );
-						ics.fileInfo.selected = true;
+						ics.fileInfo.selected = 'multiple';
+						ics.selected = 'multiple';
 					}
 					else if ( !sh )
 					{
 						ics.classList.remove( 'Selected' );
 						ics.fileInfo.selected = false;
+						ics.selected = false;
 					}
 				}
 			}
@@ -2169,6 +2351,18 @@ movableMouseUp = function( e )
 	
 	var target = e.target ? e.target : e.srcElement;
 	
+	// For mobile
+	if( isMobile )
+	{
+		if( 
+			!( target.classList && target.classList.contains( 'View' ) ) &&
+			!( target.classList && target.classList.contains( 'ViewIcon' ) )
+		)
+		{
+			_removeMobileCloseButtons();
+		}
+	}
+
 	window.fileMenuElement = null;
 	window.mouseDown = false;
 	if( window.currentMovable ) currentMovable.snapping = false;
@@ -2263,6 +2457,7 @@ function RemoveDragTargets()
 	}
 }
 
+var _screenTitleTimeout = null;
 
 // Check the screen title of active window/screen and check menu
 function CheckScreenTitle( screen )
@@ -2272,62 +2467,148 @@ function CheckScreenTitle( screen )
 	
 	Friend.GUI.reorganizeResponsiveMinimized();
 	
-	// Tell system we are maximized
-	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
-	{
-		document.body.classList.add( 'ViewMaximized' );
-	}
-	else
-	{
-		document.body.classList.remove( 'ViewMaximized' );
-	}
-	
 	// Set screen title
 	var csc = testObject.screenObject;
 	if( !csc ) return;
 	
 	// Set the screen title if we have a window with application name
 	var wo = window.currentMovable ? window.currentMovable.windowObject : false;
-	if( wo && wo.screen && wo.screen != csc ) wo = false; // Only movables on current screen
+	// Fix screen
+	if( wo && !wo.screen && wo.flags.screen ) wo.screen = wo.flags.screen;
+	// Check screen
+	if( wo && wo.screen && wo.screen != csc )
+	{
+		wo = false; // Only movables on current screen
+	}
+	
+	var hasScreen = ( !csc || testObject.screenObject == wo.screen || ( !wo.screen && isDoorsScreen ) );
 	
 	var isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
-	if( wo && wo.applicationName && ( !csc || testObject == wo.screen || ( !wo.screen && isDoorsScreen ) ) )
+	// Clear the delayed action
+	if( _screenTitleTimeout )
+	{
+		clearTimeout( _screenTitleTimeout );
+		csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+		_screenTitleTimeout = null;
+	}
+	
+	// Get app title
+	if( wo && wo.applicationName && hasScreen )
 	{
 		var wnd = wo.applicationDisplayName ? wo.applicationDisplayName : wo.applicationName;
 		if( !csc.originalTitle )
 		{
 			csc.originalTitle = csc.getFlag( 'title' );
 		}
-		csc.setFlag( 'title', wnd );
+		
+		// Don't do it twice
+		if( wnd != csc.getFlag( 'title' ) )
+		{
+			csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+			_screenTitleTimeout = setTimeout( function()
+			{
+				setTitleAndMoveMenu( csc, wnd );
+				_screenTitleTimeout = setTimeout( function()
+				{
+					csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+				}, 70 );
+			}, 70 );
+		}
+		else
+		{
+			setTitleAndMoveMenu( csc, wnd );
+		}
 	}
-	// Just use the screen
-	else if( csc.originalTitle )
+	// Just use the screen (don't do it twice)
+	else if( csc.originalTitle && csc.getFlag( 'title' ) != csc.originalTitle )
 	{
-		csc.setFlag( 'title', csc.originalTitle );
+		csc.contentDiv.parentNode.classList.add( 'ChangingScreenTitle' );
+		var titl = csc.originalTitle;
+		_screenTitleTimeout = setTimeout( function()
+		{
+			setTitleAndMoveMenu( csc, titl );
+			_screenTitleTimeout = setTimeout( function()
+			{
+				csc.contentDiv.parentNode.classList.remove( 'ChangingScreenTitle' );
+			}, 70 );
+		}, 70 );	
+	}
+	else
+	{
+		setTitleAndMoveMenu();
 	}
 
-	// Enable the global menu
-	if( Workspace && Workspace.menuMode == 'pear' )
+	// Delayed
+	function setTitleAndMoveMenu( obj, tit )
 	{
-		if( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen )
+		if( obj && tit )
 		{
-			WorkspaceMenu.show();
-			WorkspaceMenu.currentView = currentMovable;
-			WorkspaceMenu.currentScreen = currentScreen;
+			obj.setFlag( 'title', tit );
+			if( tit.indexOf( 'Friend Workspace' ) < 0 )
+				tit += ' - Friend Workspace';
+			document.title = tit;
 		}
-		// Nudge workspace menu to right side of screen title 
-		if( !isMobile && ge( 'WorkspaceMenu' ) )
+		
+		// Enable the global menu
+		if( Workspace && Workspace.menuMode == 'pear' )
 		{
-			var t = currentScreen.screen._titleBar.getElementsByClassName( 'Info' );
-			if( t ) 
+			if( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen )
 			{
-				t = t[0];
-				ge( 'WorkspaceMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
+				WorkspaceMenu.show();
+				WorkspaceMenu.currentView = currentMovable;
+				WorkspaceMenu.currentScreen = currentScreen;
+			}
+			// Nudge workspace menu to right side of screen title 
+			if( !isMobile && ge( 'WorkspaceMenu' ) )
+			{
+				var t = currentScreen.screen._titleBar.querySelector( '.Info' );
+				if( t ) 
+				{
+					ge( 'WorkspaceMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
+				}
 			}
 		}
 	}
 	
+}
+
+// Indicator that we have a maximized view
+function CheckMaximizedView()
+{
+	if( isMobile )
+	{
+		if( window.currentMovable && currentMovable.classList.contains( 'Active' ) )
+		{
+			document.body.classList.add( 'ViewMaximized' );
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
+	else
+	{
+		if( window.currentMovable )
+		{
+			if( currentMovable.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else if( currentMovable.snapObject && currentMovable.snapObject.getAttribute( 'maximized' ) == 'true' )
+			{
+				document.body.classList.add( 'ViewMaximized' );
+			}
+			else
+			{
+				document.body.classList.remove( 'ViewMaximized' );
+			}
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewMaximized' );
+		}
+	}
 }
 
 // Get the taskbar element
@@ -2343,14 +2624,20 @@ function PollTaskbar( curr )
 {
 	if( pollingTaskbar ) return;
 	
+	if( !document.body || !document.body.classList.contains( 'Inside' ) ) return;
+	if( ge( 'FriendScreenOverlay' ) && ge( 'FriendScreenOverlay' ).classList.contains( 'Visible' ) )
+		return;
+		
+	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
+	{
+		PollDockedTaskbar(); // <- we are using the dock
+		if( globalConfig.viewList == 'docked' )
+			return;
+	}
+
 	// Abort if we have a premature element
 	if( curr && !curr.parentNode )
 		return;
-	
-	if( globalConfig.viewList == 'docked' )
-	{
-		return PollDockedTaskbar(); // <- we are using the dock
-	}
 	
 	var doorsScreen = ge( 'DoorsScreen' );
 	if( !doorsScreen ) return;
@@ -2470,6 +2757,7 @@ function PollTaskbar( curr )
 			
 			if( baseElement.scrollFunc )
 				baseElement.removeEventListener( 'mousemove', baseElement.scrollFunc );
+			
 			baseElement.scrollFunc = function( e )
 			{
 				var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
@@ -2532,6 +2820,7 @@ function PollTaskbar( curr )
 				// If the window doesn't exist, remove the DOM element from tasbkar
 				else t.removeChild( t.tasks[ b ].dom );
 			}
+			
 			t.tasks = cleaner; // Set cleaned task list
 			
 			for( var a in movableWindows )
@@ -2924,178 +3213,185 @@ function PollDockedTaskbar()
 		}
 		
 		// Go through all movable view windows and check!
-		for( var b in movableWindows )
+		// Buty only for docked mode.
+		if( globalConfig.viewList == 'docked' )
 		{
-			if( movableWindows[ b ].windowObject )
+			for( var b in movableWindows )
 			{
-				// Skip hidden and invisible windows
-				if( movableWindows[ b ].windowObject.flags.hidden )
+				if( movableWindows[ b ].windowObject )
 				{
-					continue;
-				}
-				if( movableWindows[ b ].windowObject.flags.invisible )
-				{
-					continue;
-				}
-				
-				var app = movableWindows[ b ].windowObject.applicationName;
-				var win = b;
-				var wino = movableWindows[ b ];
-				var found = false;
-				
-				// Try to find view in viewlist
-				for( var c = 0; c < desklet.viewList.childNodes.length; c++ )
-				{
-					var cn = desklet.viewList.childNodes[ c ];
-					if( cn.viewId == win )
+					// Skip hidden and invisible windows
+					if( movableWindows[ b ].windowObject.flags.hidden )
 					{
-						found = wino;
-						
-						// Check if it is a directory
-						if( found.content.directoryview )
-						{
-							cn.classList.add( 'Directory' );
-						}
-						else if( found.applicationId )
-						{
-							cn.classList.add( 'Running' );
-						}
-						break;
+						continue;
 					}
-				}
-				
-				// Try to find the application if it is an application window
-				if( !found && app )
-				{
-					for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+					if( movableWindows[ b ].windowObject.flags.invisible )
 					{
-						var dof = desklet.dom.childNodes[ c ];
-						if( dof.executable == app )
+						continue;
+					}
+				
+					var app = movableWindows[ b ].windowObject.applicationName;
+					var win = b;
+					var wino = movableWindows[ b ];
+					var found = false;
+				
+					// Try to find view in viewlist
+					for( var c = 0; c < desklet.viewList.childNodes.length; c++ )
+					{
+						var cn = desklet.viewList.childNodes[ c ];
+						if( cn.viewId == win )
 						{
-							found = dof.executable;
-							dof.classList.add( 'Running' );
-							dof.running = true;
+							found = wino;
+						
+							// Check if it is a directory
+							if( found.content.directoryview )
+							{
+								cn.classList.add( 'Directory' );
+							}
+							else if( found.applicationId )
+							{
+								cn.classList.add( 'Running' );
+							}
 							break;
 						}
 					}
-				}
 				
-				// If it's a found app, check if it isn't a single instance app
-				if( found && typeof( found ) == 'string' )
-				{
-					// Single instance apps handle themselves
-					if( !Friend.singleInstanceApps[ found ] )
+					// Try to find the application if it is an application window
+					if( !found && app )
 					{
 						for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 						{
-							var d = desklet.dom.childNodes[ c ];
-							if( !d.classList.contains( 'Launcher' ) ) continue;
-							if( d.executable == found )
+							var dof = desklet.dom.childNodes[ c ];
+							if( dof.executable == app )
 							{
-								if( !d.views ) d.views = [];
-								if( !d.views[ win ] ) d.views[ win ] = wino;
-								
-								// Clear non existing
-								var out = [];
-								for( var i in d.views )
-									if( movableWindows[ i ] ) out[ i ] = d.views[ i ];
-								d.views = out;
+								found = dof.executable;
+								dof.classList.add( 'Running' );
+								dof.running = true;
+								break;
 							}
 						}
 					}
-				}
 				
-				// Check for an app icon
-				var labelIcon = false;
-				if( app && ge( 'Tasks' ) )
-				{
-					var tk = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-					for( var a1 = 0; a1 < tk.length; a1++ )
+					// If it's a found app, check if it isn't a single instance app
+					if( found && typeof( found ) == 'string' )
 					{
-						if( tk[a1].applicationName != app ) continue;
-						var f = tk[ a1 ].parentNode;
-						if( f.className && f.className == 'AppSandbox' )
+						// Single instance apps handle themselves
+						if( !Friend.singleInstanceApps[ found ] )
 						{
-							var img = f.getElementsByTagName( 'div' );
-							for( var b1 = 0; b1 < img.length; b1++ )
+							for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 							{
-								if( img[ b1 ].style.backgroundImage )
+								var d = desklet.dom.childNodes[ c ];
+								if( !d.classList.contains( 'Launcher' ) ) continue;
+								if( d.executable == found )
 								{
-									labelIcon = document.createElement( 'div' );
-									labelIcon.style.backgroundImage = img[ b1 ].style.backgroundImage;
-									labelIcon.className = 'LabelIcon';
-									break;
+									if( !d.views ) d.views = [];
+									if( !d.views[ win ] ) d.views[ win ] = wino;
+								
+									// Clear non existing
+									var out = [];
+									for( var i in d.views )
+										if( movableWindows[ i ] ) out[ i ] = d.views[ i ];
+									d.views = out;
 								}
 							}
 						}
 					}
-				}
 				
-				// Add the window list item into the desklet
-				if( !found )
-				{
-					var viewRep = document.createElement( 'div' );
-					viewRep.className = 'Launcher View MousePointer';
-					
-					if( labelIcon ) viewRep.appendChild( labelIcon );
-					if( app ) viewRep.classList.add( app );
-					viewRep.style.backgroundSize = 'contain';
-					viewRep.state = 'visible';
-					viewRep.viewId = win;
-					viewRep.setAttribute( 'title', movableWindows[win].titleString );
-					viewRep.onclick = function( e )
+					// Check for an app icon
+					var labelIcon = false;
+					if( app && ge( 'Tasks' ) )
 					{
-						// TODO: Make sure we also have touch
-						if( !e || e.button != '0' ) return;
+						var tk = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+						for( var a1 = 0; a1 < tk.length; a1++ )
+						{
+							if( tk[a1].applicationName != app ) continue;
+							var f = tk[ a1 ].parentNode;
+							if( f.className && f.className == 'AppSandbox' )
+							{
+								var img = f.getElementsByTagName( 'div' );
+								for( var b1 = 0; b1 < img.length; b1++ )
+								{
+									if( img[ b1 ].style.backgroundImage )
+									{
+										labelIcon = document.createElement( 'div' );
+										labelIcon.style.backgroundImage = img[ b1 ].style.backgroundImage;
+										labelIcon.className = 'LabelIcon';
+										break;
+									}
+								}
+							}
+						}
+					}
+				
+					// Add the window list item into the desklet
+					if( !found )
+					{
+						var viewRep = document.createElement( 'div' );
+						viewRep.className = 'Launcher View MousePointer';
+					
+						if( labelIcon ) viewRep.appendChild( labelIcon );
+						if( app ) viewRep.classList.add( app );
+						viewRep.style.backgroundSize = 'contain';
+						viewRep.state = 'visible';
+						viewRep.viewId = win;
+						viewRep.setAttribute( 'title', movableWindows[win].titleString );
+						viewRep.onclick = function( e )
+						{
+							// TODO: Make sure we also have touch
+							if( !e || e.button != '0' ) return;
 						
-						this.state = this.state == 'visible' ? 'hidden' : 'visible';
-						var wsp = movableWindows[ this.viewId ].windowObject.workspace;
-						if( wsp != globalConfig.workspaceCurrent )
-						{
-							Workspace.switchWorkspace( wsp );
-							this.state = 'visible';
-						}
-						if( this.state == 'hidden' )
-						{
-							this.viewContainer.classList.add( 'Minimized' );
-							
-						}
-						else
-						{
-							this.viewContainer.classList.remove( 'Minimized' );
-						}
-						var mv = movableWindows[ this.viewId ];
-						if( mv && mv.windowObject )
-						{
-							movableWindows[ this.viewId ].windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+							var theView = movableWindows[ this.viewId ];
+						
+							this.state = this.state == 'visible' ? 'hidden' : 'visible';
+							var wsp = theView.windowObject.workspace;
+							if( wsp != globalConfig.workspaceCurrent )
+							{
+								Workspace.switchWorkspace( wsp );
+								this.state = 'visible';
+							}
 							if( this.state == 'hidden' )
 							{
-								if( !this.elementCount )
-								{
-									var d = document.createElement( 'div' );
-									d.className = 'ElementCount';
-									this.elementCount = d;
-									this.appendChild( d );
-								}
-								this.elementCount.innerHTML = '<span>' + 1 + '</span>';
+								theView.viewContainer.classList.add( 'Minimized' );
+							
 							}
 							else
 							{
-								if( this.elementCount ) 
+								theView.viewContainer.classList.remove( 'Minimized' );
+								_WindowToFront( theView );
+							}
+							var mv = theView;
+							if( mv && mv.windowObject )
+							{
+								theView.windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+								if( this.state == 'hidden' )
 								{
-									this.removeChild( this.elementCount );
-									this.elementCount = null;	
+									if( !this.elementCount )
+									{
+										var d = document.createElement( 'div' );
+										d.className = 'ElementCount';
+										this.elementCount = d;
+										this.appendChild( d );
+									}
+									this.elementCount.innerHTML = '<span>' + 1 + '</span>';
+								}
+								else
+								{
+									if( this.elementCount ) 
+									{
+										this.removeChild( this.elementCount );
+										this.elementCount = null;	
+									}
 								}
 							}
+							_WindowToFront( theView );
 						}
-						_WindowToFront( movableWindows[ this.viewId ] );
+						desklet.viewList.appendChild( viewRep );
+						changed++;
 					}
-					desklet.viewList.appendChild( viewRep );
-					changed++;
-				}
-				else
-				{
+					else
+					{
 					
+					}
 				}
 			}
 		}
@@ -3200,14 +3496,7 @@ movableMouseDown = function ( e )
 	// TODO: Allow context menus!
 	if( !window.isMobile && !window.isTablet && ( rc || e.button != 0 ) )
 	{
-		try
-		{
-			return cancelBubble ( e );
-		}
-		catch( e )
-		{
-			return;
-		}
+		return;
 	}
 	
 	// Remove menu on calendar slide and menu click
@@ -3224,7 +3513,9 @@ movableMouseDown = function ( e )
 		 }
 	}
 	
-	if( Workspace.iconContextMenu )
+	var clickOnMenuItem = tar && tar.classList.contains( 'MenuItem' ) ? true : false;
+	
+	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
 	}
@@ -3235,12 +3526,18 @@ movableMouseDown = function ( e )
 	window.regionScrollLeft = 0;
 	window.regionScrollTop = 0;
 	
-	// Clicking inside content
+	// Clicking inside content (listview or normal)
 	if ( 
-		tar.classList && tar.classList.contains( 'Scroller' ) &&
 		( 
-			tar.parentNode.classList.contains( 'Content' ) || 
-			tar.parentNode.classList.contains( 'ScreenContent' ) 
+			tar.classList && tar.classList.contains( 'Scroller' ) &&
+			( 
+				tar.parentNode.classList.contains( 'Content' ) || 
+				tar.parentNode.classList.contains( 'ScreenContent' ) 
+			)
+		) ||
+		(
+			tar.classList && tar.classList.contains( 'ScrollArea' ) &&
+			tar.parentNode.classList.contains( 'Listview' )
 		)
 	)
 	{
@@ -3253,18 +3550,21 @@ movableMouseDown = function ( e )
 	);
 	
 	var clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
+	// Listview
+	if( !clickOnView && tar.classList.contains( 'Listview' ) )
+		clickOnView = true;
 	
 	// Desktop / view selection 
 	if(
 		!isMobile && ( clickonDesktop || clickOnView )
 	)
 	{
-		if( !sh )
+		if( !sh && e.button === 0 )
 		{
 			// Don't count scrollbar
 			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
 			{
-				clearRegionIcons();
+				clearRegionIcons( { force: true } );
 			}
 		}
 		
@@ -3279,8 +3579,29 @@ movableMouseDown = function ( e )
 		}
 		else if( clickonDesktop )
 		{
-			// Clicking from an active view to screen
-			DefaultToWorkspaceScreen( tar );
+			if( window.currentMovable && tar.classList && tar.classList.contains( 'ScreenOverlay' ) )
+			{
+				// Check if we clicked active window
+				// TODO: Cycle through all windows and check if we clicked on any, including widgets
+				var wl = GetElementLeft( currentMovable );
+				var wt = GetElementTop( currentMovable );
+				if( 
+					windowMouseX >= wl && windowMouseX <= wl+currentMovable.offsetWidth &&
+					windowMouseY >= wt && windowMouseY <= wt+currentMovable.offsetHeight
+				)
+				{
+					_ActivateWindow( currentMovable );
+				}
+				else
+				{
+					DefaultToWorkspaceScreen( tar );
+				}
+			}
+			else
+			{
+				// Clicking from an active view to screen
+				DefaultToWorkspaceScreen( tar );
+			}
 		}
 		else 
 		{
@@ -3304,10 +3625,37 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 	WorkspaceMenu.close();
 }
 
-function clearRegionIcons()
+function convertIconsToMultiple()
+{
+	if( currentMovable && currentMovable && currentMovable.content.icons )
+	{
+		var ics = currentMovable.content.icons;
+		for( var a = 0; a < ics.length; a++ )
+		{
+			if( ics[a].selected )
+			{
+				ics[a].selected = 'multiple';
+				ics[a].domNode.selected = 'multiple';
+				if( ics[a].fileInfo )
+					ics[a].fileInfo.selected = 'multiple';
+			}
+		}
+	}
+}
+
+function clearRegionIcons( flags )
 {
 	// No icons selected now..
 	Friend.iconsSelectedCount = 0;
+
+	// Exception for icon deselection
+	var exception = null;
+	if( flags && flags.exception )
+	{
+		exception = flags.exception;
+	}
+
+	var multipleCheck = flags && flags.force ? 'none' : 'multiple';
 
 	// Clear all icons
 	for( var a in movableWindows )
@@ -3322,7 +3670,11 @@ function clearRegionIcons()
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
-					ic.classList.remove( 'Selected' );
+					if( exception != ic && ic.selected != multipleCheck )
+					{
+						ic.classList.remove( 'Selected' );
+						w.icons[a].selected = false;
+					}
 					ic.classList.remove( 'Editing' );
 					if( ic.input )
 					{
@@ -3332,7 +3684,6 @@ function clearRegionIcons()
 						}
 						ic.input = null;
 					}
-					w.icons[a].selected = false;
 				}
 			}
 		}
@@ -3345,8 +3696,11 @@ function clearRegionIcons()
 			var icon = Doors.screen.contentDiv.icons[a];
 			var ic = icon.domNode;
 			if( !ic ) continue;
-			ic.className = ic.className.split ( ' Selected' ).join ( '' );
-			icon.selected = false;
+			if( exception != ic && ic.selected != multipleCheck )
+			{
+				ic.classList.remove( 'Selected' );
+				icon.selected = false;
+			}
 		}
 	}
 }
@@ -3357,6 +3711,7 @@ function contextMenu( e )
 	if ( !e ) e = window.event;
 	var tar = e.target ? e.target : e.srcEvent;
 	if ( !tar ) return;
+	
 	var mov, mov2, mov3;
 	var mdl = GetTitleBarG ();
 	if ( tar.parentNode )
@@ -3378,7 +3733,14 @@ function contextMenu( e )
 	)
 	{
 		window.mouseDown = false;
-		WorkspaceMenu.show();
+		if( isMobile )
+		{
+			MobileContextMenu.show( tar );
+		}
+		else
+		{
+			WorkspaceMenu.show();
+		}
 	}
 	return cancelBubble( e );
 }
@@ -3416,25 +3778,48 @@ function InitGuibaseEvents()
 	}
 	else
 	{
-		if ( window.attachEvent )
-			window.attachEvent ( 'onmouseup', movableMouseUp, false );
-		else window.addEventListener ( 'mouseup', movableMouseUp, false );	
+		if( window.attachEvent )
+			window.attachEvent( 'onmouseup', movableMouseUp, false );
+		else window.addEventListener( 'mouseup', movableMouseUp, false );	
 		
-		if ( window.attachEvent )
+		if( window.attachEvent )
 			window.attachEvent ( 'onmousemove', movableListener, false );
-		else window.addEventListener ( 'mousemove', movableListener, false );
-		if ( window.attachEvent )
-			window.attachEvent ( 'onmousedown', movableMouseDown, false );
-		else window.addEventListener ( 'mousedown', movableMouseDown, false );
+		else window.addEventListener( 'mousemove', movableListener, false );
+		
+		if( window.attachEvent )
+			window.attachEvent( 'onmousedown', movableMouseDown, false );
+		else window.addEventListener( 'mousedown', movableMouseDown, false );
 
-		if ( window.attachEvent )
-			window.attachEvent ( 'oncontextmenu', contextMenu, false );
-		else window.addEventListener ( 'contextmenu', contextMenu, false );
+		if( window.attachEvent )
+			window.attachEvent( 'oncontextmenu', contextMenu, false );
+		else window.addEventListener( 'contextmenu', contextMenu, false );
+		
+		// On blur, activate current movable (don't put it to front)
+		window.addEventListener( 'blur', function( e )
+		{
+			
+			var viewObject = null;
+			if( document.activeElement )
+			{
+				viewObject = document.activeElement;
+			}
+			if( window.currentMovable )
+			{
+				if( window.currentMovable.content == viewObject.view )
+				{
+					_WindowToFront( window.currentMovable );
+				}
+				else
+				{
+					_ActivateWindowOnly( window.currentMovable );
+				}
+			}
+		} );
 	}
 	
-	if ( window.attachEvent )
-		window.attachEvent ( 'onresize', movableListener, false );
-	else window.addEventListener ( 'resize', movableListener, false );
+	if( window.attachEvent )
+		window.attachEvent( 'onresize', movableListener, false );
+	else window.addEventListener( 'resize', movableListener, false );
 
 	document.oncontextmenu = contextMenu;
 }
@@ -3642,7 +4027,7 @@ function CreateHelpBubble( element, text, uniqueid )
 			}
 			var mx = windowMouseX;
 			var my = windowMouseY;
-			var mt = GetElementTop( element ) - 50;
+			var mt = GetElementTop( element ) - ( 50 + 10 );
 			
 			var c = document.createElement( 'canvas' );
 			var d = c.getContext( '2d' );
@@ -3659,13 +4044,13 @@ function CreateHelpBubble( element, text, uniqueid )
 				if( attr.indexOf( 'right' ) == 0 )
 				{
 					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) - ( textWidth.width + 20 );
+					mx = GetElementLeft( element ) - ( textWidth.width + 40 );
 					posset = true;
 				}
 				else if( attr.indexOf( 'left' ) == 0 )
 				{
 					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode );
+					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode ) + 30;
 					posset = true;
 				}
 				else if( attr.indexOf( 'top' ) == 0 )
@@ -3680,20 +4065,23 @@ function CreateHelpBubble( element, text, uniqueid )
 				width: 200,
 				height: 40,
 				'border-radius': 20,
-				above: true
+				above: true,
+				fadeOut: true,
+				fadeIn: true
 			} );
 			
 			d.innerHTML = text;
 			v.setFlag( 'width', textWidth.width + 60 );
 			v.setContent( '<div class="TextCenter Padding Ellipsis">' + text + '</div>' );
 			v.dom.addEventListener( 'mouseout', element.helpBubble.outListener );
+			v.dom.classList.add( 'HelpBubble' );
 			v.show();
 			element.helpBubble.widget = v;
 		},
 		outListener: function( e )
 		{
 			if( helpBubble && helpBubble.widget )
-				helpBubble.widget.hide( function(){ helpBubble.widget.close(); } );
+				helpBubble.widget.hide( function(){ if( helpBubble && helpBubble.widget ) helpBubble.widget.close(); } );
 		}
 	};
 	element.helpBubble = helpBubble;

@@ -59,7 +59,7 @@
 
 #define h_addr h_addr_list[0]
 
-//int UnMount( struct FHandler *s, void *f, User *usr );
+//int UnMount( struct FHandler *s, void *f, User *usr, char **error  );
 
 //
 // Special SSH data
@@ -385,9 +385,6 @@ int UnMount( struct FHandler *s, void *f )
 			
 			FFree( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
 	}
 	
 	return 0;
@@ -397,7 +394,7 @@ int UnMount( struct FHandler *s, void *f )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((unused)) )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((unused)), char **mountError __attribute__((unused)) )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -541,9 +538,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		struct timeval timeout;      
 		timeout.tv_sec = 4; // 4 secs!
 		timeout.tv_usec = 0;
+		DEBUG("Socket timeout will be set\n");
 		setsockopt( sdat->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof( timeout) );
 		setsockopt( sdat->sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof( timeout ) );
 		
+		DEBUG("Before connect\n");
 		if( connect( sdat->sock, (struct sockaddr *)&(sdat->sin), sizeof(sdat->sin) ) != 0 ) 
 		{
 			close( sdat->sock );
@@ -555,6 +554,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		// banners, exchange keys, and setup crypto, compression, and MAC layers
 		// 
 		
+		DEBUG("SSH init\n");
 		sdat->session = libssh2_session_init();
 		
 		if( sdat->session == NULL )
@@ -562,6 +562,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 			FERROR("Cannot create ssh2 session\n");
 			goto shutdown;
 		}
+		DEBUG("SSH timeout set\n");
 		libssh2_session_set_timeout( sdat->session, 5000 );
 		
 		DEBUG("SSH2 timeout, sessptr %p socknr %d\n", sdat->session, sdat->sock );
@@ -863,9 +864,6 @@ int Release( struct FHandler *s, void *f )
 			
 			FFree( lf->f_SpecialData );
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
 	}
 	
 	return 0;
@@ -1799,8 +1797,10 @@ BufString *Info( File *s, const char *path )
 				strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.mtime) ) );
 				sprintf( tmp, "\"DateModified\": \"%s\",", timeStr );
 				BufStringAdd( bs, tmp );
+				strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( (const time_t *)&(attrs.atime) ) );
+				sprintf( tmp, "\"DateAccessed\": \"%s\",", timeStr );
+				BufStringAdd( bs, tmp );
 				FFree( timeStr );
-				//BufStringAdd( bs, "\"DateModified\": \"\"," );
 				
 				if( isDir )
 				{

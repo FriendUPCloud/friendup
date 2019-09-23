@@ -3,7 +3,7 @@
 i18n_account                         : My account
 
 i18n_basic_information               : General
-i18n_full_name                       : Your full name
+i18n_full_name                       : Full name
 i18n_username                        : Username
 i18n_change_password                 : Change password
 i18n_current_password                : Current password
@@ -82,9 +82,11 @@ i18n_host_port                       : Server port
 i18n_host_ip                         : Server address or IP
 i18n_hostname                        : Server address
 i18n_workgroup_name                  : Your workgroup
+i18n_choose_workgroup                : Choose workgroup
 i18n_workgroup                       : Workgroup
 i18n_device_name                     : Disk name
 i18n_placeholder_connection          : Mydisk
+i18n_reset                           : Remove
 
 i18n_add_storage                     : Add storage
 i18n_update_disk                     : Update disk
@@ -92,6 +94,8 @@ i18n_mount_disk                      : Mount disk
 i18n_unmount_disk                    : Unmount disk
 i18_account2                         : Account
 i18n_settings_saved                  : Settings saved
+
+i18n_admin_managed_drive             : This drive is managed by your administrator.
 
 i18n_key_password_confirm            : Confirm password
 i18n_pass_mis_desc                   : The passwords need to match.

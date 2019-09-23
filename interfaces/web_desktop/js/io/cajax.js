@@ -41,13 +41,18 @@ function KillcAjaxByContext( context )
 
 function AddToCajaxQueue( ele )
 {
+	// If we're queueing it
+	if( ele.onQueue ) ele.onQueue();
+	
 	// Don't add to queue if we are offline
 	if( !Workspace.serverIsThere || Workspace.workspaceIsDisconnected )
 	{
 		if( ele.onload )
 		{
+			// // console.log( 'Test2: Just fail!' );
 			ele.onload( false );
 		}
+		// // console.log( 'Test2: Destroy ajax object.' );
 		return ele.destroy();
 	}
 	
@@ -62,6 +67,7 @@ function AddToCajaxQueue( ele )
 		// Already there
 		if( Friend.cajax[a] == ele ) return false;
 	}
+	// // console.log( 'Test2: Add ajax element to queue.' );
 	Friend.cajax.push( ele );
 }
 
@@ -136,6 +142,8 @@ cAjax = function()
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
 		{	
+			// console.log( 'Test3: onreadystatechange 200 - Here we go: ', jax.url, this.response );
+			
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
@@ -191,6 +199,8 @@ cAjax = function()
 								// Drop these (don't retry!) because of remote fs disconnect
 								if( jax.url.indexOf( 'file/info' ) > 0 )
 									return;
+								console.log( '[cAjax 2] Doing a relogin (no user session)' );
+								console.trace();
 								// Add to queue
 								AddToCajaxQueue( jax );
 								Workspace.flushSession();
@@ -202,11 +212,8 @@ cAjax = function()
 					{
 						if( !jax.rawData )
 						{
-							if( Workspace )
-							{
-								AddToCajaxQueue( jax );
-								return Workspace.relogin();
-							}
+							console.log( '[cAjax] Can not understand server response: ', jax.rawData );
+							return;
 						}
 					}
 				}
@@ -216,12 +223,21 @@ cAjax = function()
 					try
 					{
 						var r = JSON.parse( jax.returnData );
+						
 						var res = r ? r.response.toLowerCase() : '';
-						if( res == 'user session not found' )
+						
+						if( res == 'user not found' || res == 'user session not found' )
 						{
-							AddToCajaxQueue( jax );
-							Workspace.flushSession();
-							return Workspace.relogin();
+							if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
+							{
+								console.log( '[cAjax 3] Doing a relogin (no user session: ' + Workspace.sessionId + ')', jax.vars );
+								console.trace();
+							
+								// Add to queue
+								AddToCajaxQueue( jax );
+								Workspace.flushSession();
+								return Workspace.relogin();
+							}
 						}
 					}
 					catch( e )
@@ -280,6 +296,8 @@ cAjax = function()
 			}
 			Friend.cajax = o;
 			// End clean queue
+
+			// console.log( 'Test3: ' + this.readyState + ' ' + this.status, this.response );
 
 			// tell our caller...
 			if( jax.onload ) jax.onload( 'fail', false );
@@ -349,10 +367,10 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		!Workspace.websocketsOffline && 
+		Workspace.websocketState == 'open' &&
 		typeof( url ) == 'string' && 
-		url.indexOf( 'system.library' ) >= 0 &&
-		url.indexOf( '/file/write' ) < 0 &&
-		url.indexOf( '/file/read' )
+		url.indexOf( 'system.library' ) >= 0 && 
+		url.indexOf( '/file' ) < 0 
 	)
 	{
 		this.mode = 'websocket';
@@ -408,9 +426,14 @@ cAjax.prototype.close = function()
 // Add a variable to ajax query
 cAjax.prototype.addVar = function( key, val )
 {
-	if( typeof( this.vars[key] ) == 'undefined' )
+	if( typeof( val ) == 'undefined' )
+	{
+		//// console.log( 'Test3: Trying to add undefined var.', key, val );
+		return;
+	}
+	if( typeof( this.vars[ key ] ) == 'undefined' )
 		this.varcount++;
-	this.vars[key] = encodeURIComponent( val );
+	this.vars[ key ] = encodeURIComponent( val );
 	return true;
 }
 
@@ -577,6 +600,7 @@ cAjax.prototype.send = function( data )
 	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
 	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
 	{
+		//console.log( 'Test2: Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
         var wsdata = ( data ? data : {} );
         if( self.vars )
@@ -611,6 +635,23 @@ cAjax.prototype.send = function( data )
         };
         
         var reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
+        
+        if( typeof( reqID ) != 'undefined' && !reqID )
+        {
+        	console.log( 'Test: Request failed ', reqId );
+        	AddToCajaxQueue( self );
+			Workspace.flushSession();
+			return Workspace.relogin();
+        }
+        else if( typeof( reqID ) == 'undefined' )
+        {
+        	console.log( 'cAjax: Request was undefined.' );
+        }
+        else
+        {
+        	// console.log( 'Test3: We got requestID: ' + reqID );
+        }
+        
         self.wsRequestID = reqID;
 		
 		// Add cancellable network connection
@@ -629,8 +670,11 @@ cAjax.prototype.send = function( data )
 			addBusy = false;
 		}
 		successfulSend( addBusy );
+		
 		return;
 	}
+
+	// console.log( 'Test2: Sending ajax request with standard sockets.' );
 
 	// standard HTTP way....
 	// Now
@@ -660,6 +704,7 @@ cAjax.prototype.send = function( data )
 				for( var a in this.vars )
 					out.push( a + '=' + this.vars[a] );
 				res = this.proxy.send( out.join ( '&' ) );
+				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}
 			// All else fails?
 			else
@@ -676,6 +721,7 @@ cAjax.prototype.send = function( data )
 			var u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
+			// // console.log( 'Test2: Here: ' + u );
 			try 
 			{ 
 				res = this.proxy.send( null ); 
@@ -737,12 +783,32 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	var self = this;
 	
+	// console.log( 'Test3: Handling websocket response: ', wsdata );
+	
+	// The data just failed - which means the websocket went away!
+	if( typeof( wsdata ) == 'undefined' )
+	{
+		if( Workspace )
+		{
+			// Add to queue
+			//console.log( '[cAjax 5] Doing a relogin (no user session)' );
+			//console.trace();
+			// Add to queue
+			AddToCajaxQueue( self );
+			Workspace.flushSession();
+			return Workspace.relogin();
+		}
+		self.destroy();
+		return;
+	}
+	
 	if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
 		self.rawData = 'fail';
 		self.proxy.responseText = self.rawData;
 		self.returnCode = 'fail';
 		self.destroy();
+		//// console.log( 'Test3: Failed', wsdata );
 		return false;
 	}
 	
@@ -796,6 +862,9 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( Workspace )
 				{
 					// Add to queue
+					console.log( '[cAjax 2] Doing a relogin (no user session)' );
+					console.trace();
+					// Add to queue
 					AddToCajaxQueue( self );
 					Workspace.flushSession();
 					return Workspace.relogin();
@@ -806,12 +875,12 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			if( !self.rawData )
 			{
-				if( Workspace )
-				{
-					AddToCajaxQueue( self );
-					Workspace.flushSession();
-					return Workspace.relogin();
-				}
+				console.log( '[cAjax] Could not understand server response: ', self.returnData );
+				return;
+			}
+			else
+			{
+				// console.log( 'Test3: Impossible server response: ', self.returnData );
 			}
 		}
 	}
@@ -823,6 +892,8 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			var r = JSON.parse( self.returnData );
 			if( r.response == 'user session not found' )
 			{
+				console.log( '[cAjax] Doing a relogin (no user session)' );
+				console.trace();
 				AddToCajaxQueue( self );
 				Workspace.flushSession();
 				return Workspace.relogin();
@@ -830,6 +901,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		}
 		catch( e )
 		{
+			// console.log( 'Test3: Impossible server response: ', self.returnData, self.returnData );
 		}
 	}
 
@@ -837,7 +909,10 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	if( typeof( self.returnData ) == 'string' )
 	{
 		if( self.returnData.length > 0 && !self.returnCode )
+		{
+			// console.log( 'Test3: What was assumed ok: ', self.returnData, self.returnData );
 			self.returnCode = 'ok';
+		}
 	}
 	if( self.onload )
 	{

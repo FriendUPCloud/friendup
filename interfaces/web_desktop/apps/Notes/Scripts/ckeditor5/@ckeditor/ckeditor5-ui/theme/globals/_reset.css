@@ -1,0 +1,13 @@
+/*
+ * Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
+ * For licensing, see LICENSE.md.
+ */
+
+.ck.ck-reset,
+.ck.ck-reset_all,
+.ck.ck-reset_all * {
+	box-sizing: border-box;
+	width: auto;
+	height: auto;
+	position: static;
+}

@@ -51,6 +51,7 @@ i18n_understood                      : Understood
 i18n_your_devices                    : Disks
 i18n_quit                            : Quit
 i18n_menuback                        : <
+i18n_create_folder                   : Create folder
 
 i18n_mountlist                       : Disks
 
@@ -82,6 +83,7 @@ i18n_notification_archive               : Notification archive
 i18n_sure_remove_notification           : Are you sure you want to remove this notification?
 i18n_sure_remove_notification_desc      : These are archived notifications. When you remove them, they are erased from memory.
 i18n_system_message                     : System message
+i18n_remove_all                         : Clear all
 
 #Tools
 i18n_processmgr                         : Process manager
@@ -132,7 +134,7 @@ i18n_your_command                       : Your command
 i18n_door_home                          : Home
 
 please_choose_an_icon                   : Please choose icon(s).
-about_friendup                          : About FriendUP
+about_system                            : About system
 information                             : Information & updates
 documentation_central                   : Documentation central
 software_catalog                        : Software catalog
@@ -164,7 +166,7 @@ i18n_directory_Modules                  : Modules
 i18n_directory_Plugins                  : Plugins
 i18n_directory_Prefs                    : Settings
 i18n_directory_Repositories             : Repositories
-i18n_directory_Devices                  : Disks
+i18n_directory_Devices                  : Devices
 i18n_directory_Libraries                : Libraries
 
 #Devices
@@ -173,6 +175,14 @@ i18n_dosdrivers                         : DOS Drivers
 i18n_cores                              : Cores
 i18n_sessions                           : Sessions
 i18n_printers                           : Printers
+
+i18n_print_failed                       : Printing failed
+i18n_system_administrator_no_printers   : Your system administrator has not set up any printers.
+i18n_print                              : Print
+i18n_print_sent                         : Print job sent
+i18n_print_sent_to_printer              : Your document was sent to the printer successfully.
+i18n_print_error                        : Printer error
+i18n_print_error_desc                   : An error occured while connecting to the printer.
 
 #Menu
 
@@ -186,7 +196,7 @@ i18n_close_menu                         : Close menu
 menu_workspace                          : Workspace
 menu_system                             : System
 menu_new_shell                          : New shell
-menu_about_friendup                     : About FriendUP
+menu_about                              : About
 menu_examine_system                     : Explore system
 menu_refresh_desktop                    : Refresh desktop
 menu_add_storage                        : Add storage
@@ -194,7 +204,7 @@ menu_run_command                        : Run command
 menu_show_launcher                      : Show Launcher
 menu_hide_launcher                      : Hide Launcher
 menu_log_out                            : Log out
-menu_exit								: Quit FriendUP
+menu_exit								: Log out
 menu_execute_command                    : Execute command
 menu_upload_file                        : Upload file
 menu_snapshot                           : Snapshot
@@ -212,14 +222,25 @@ menu_looknfeel                          : Look and feel
 menu_backdrop                           : Show overview
 menu_share								: Share
 menu_download                           : Download
+i18n_could_not_download                 : Could not download
+i18n_file_cannot_be_downloaded          : The file is not of the correct type to download
 menu_close_idle_connections             : Close idle connections
 menu_hide_hidden_files                  : Hide hidden files
 menu_show_hidden_files                  : Show hidden files
 menu_new_window                         : New window
 
+menu_help                               : Help
+menu_help_bug                           : Report a bug
+menu_help_manual                        : User manual
+
 menu_edit_wallpaper                     : Edit wallpaper
+menu_set_as_wallpaper                   : Set as wallpaper
+menu_look_and_feel			: Personalize Look and feel
 i18n_edit_dock                          : Edit dock
 i18n_remove_from_dock                   : Remove from dock
+
+i18n_object_not_supported               : Dropped object not supported
+i18n_only_executables_can_drop          : Only executables can be dropped on the dock
 
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target
@@ -412,6 +433,11 @@ i18n_could_not_make_dir                 : Could not create new directory.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
+i18n_drag_files_to_download             : Drop files to download.
+
+i18n_could_not_download                 : Could not download
+i18n_download_wrong_type                : Only files can be downloaded.
+
 
 #Colorpicker -------------------------------------------------------------------
 
@@ -474,6 +500,7 @@ i18n_could_not_create_downloads:        : Could not create Downloads folder in y
 i18n_no_home_drive                      : Could not find your Home: drive
 i18n_pasted_file                        : Paste your content
 i18n_pasted_to_downloads                : Your clipboard contents have been pasted to Downloads
+i18n_uploaded                           : Your file(s) have been uploaded.
 
 #Locale ------------------------------------------------------------------------
 
@@ -532,8 +559,10 @@ i18n_cal_evt_title                      : Event title
 i18n_cal_evt_title_what                 : Your event title
 i18n_cal_evt_time_to                    : Time to
 i18n_cal_evt_time_from                  : Time from
+i18n_cal_evt_addday                     : All day
 i18n_cal_evt_description                : Describe your event
 i18n_cal_btn_add                        : Save event
+i18n_cal_btn_edit                       : Save event
 i18n_from                               : From
 i18n_to                                 : To
 
@@ -692,4 +721,18 @@ i18n_show_all_windows                   : Show all windows
 
 i18n_could_not_find_application         : Could not find application
 i18n_could_not_find_app_desc            : Application notification did not work because the application did not start.
+
+i18n_camera_action_description          : Take a picture with your device.
+i18n_take_photo                         : Click to take the picture
+i18n_camera                             : Camera
+
+#Startup -----------------------------------------------------------------------
+
+i18n_debug_skip                         : Skip process
+i18n_starting_your_session              : Starting your session
+i18n_status_Ok                          : OK
+i18n_status_Pending                     : Pending
+i18n_status_Error                       : FAILED
+i18n_processing                         : Processing
+i18n_logging_in                         : Logging in
 

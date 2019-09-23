@@ -562,7 +562,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountError )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -891,10 +891,6 @@ int Release( struct FHandler *s, void *f )
 				FFree( lf->f_SpecialData );
 			}
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
-
 		return 0;
 	}
 	return -1;
@@ -978,10 +974,6 @@ int UnMount( struct FHandler *s, void *f )
 				FFree( lf->f_SpecialData );
 			}
 		}
-		
-		if( lf->f_Name ){ FFree( lf->f_Name ); }
-		if( lf->f_Path ){ FFree( lf->f_Path ); }
-
 		return 0;
 	}
 	return -1;

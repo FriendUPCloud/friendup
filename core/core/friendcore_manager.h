@@ -137,6 +137,9 @@ typedef struct FriendCoreManager
 	//ConnectionInfo				*fcm_ConnectionsInformation;					// connection information
 	ClusterNode					*fcm_ClusterNodes;								// cluster node information
 																				// first Node is always current FC node
+	FBOOL						fcm_DisableMobileWS;
+	FBOOL						fcm_DisableExternalWS;
+	FBOOL						fcm_WSExtendedDebug;
 }FriendCoreManager;
 
 //
@@ -174,6 +177,12 @@ int FriendCoreManagerServicesRun( FriendCoreManager *fcm );
 //
 
 void FriendCoreManagerShutdown( FriendCoreManager *fcm );
+
+//
+//
+//
+
+int FriendCoreManagerInitServices( FriendCoreManager *fcm );
 
 
 

@@ -6,8 +6,8 @@ html body ::-webkit-scrollbar-track,
 .View.IconWindow ::-webkit-scrollbar-track,
 html body.activated ::-webkit-scrollbar-track
 {
-	width: 8px;
-	height: 8px;
+	width: 6px;
+	height: 6px;
 	background-color: rgba(255,255,255,0.5);
 }
 
@@ -50,7 +50,7 @@ html body div .View.Active.IconWindow ::-webkit-scrollbar-track
 .View.Scrolling ::-webkit-scrollbar-track-piece,
 body.Scrolling ::-webkit-scrollbar-track-piece
 {
-	margin-bottom: 14px;
+	
 }
 /* addresses the draggable scrolling element that resizes depending on the size of the scrollable element */
 ::-webkit-scrollbar-thumb
@@ -61,7 +61,7 @@ body.Scrolling ::-webkit-scrollbar-track-piece
 	background-image: none;
 	background-position: center center;
 	background-repeat: no-repeat;
-	border-radius: 6px;
+	border-radius: 0px;
 	border: 0;
 }
 html body .View.Active ::-webkit-scrollbar-thumb,

@@ -79,26 +79,8 @@ void UMDelete( UserManager *smgr )
 				
 				if( remdev != NULL )
 				{
-					DeviceRelease( smgr->um_SB, remdev );
-					/*
-					FHandler *fsys = (FHandler *)remdev->f_FSys;
-
-					if( fsys != NULL && fsys->UnMount != NULL )
-					{
-						//
-						// we are releasing device memory
-						//
-						
-						if( fsys->Release( fsys, remdev ) != 0 )
-						{
-							DEBUG("[UMDelete] Device released\n");
-						}
-					}
-					else
-					{
-						FERROR("Cannot free FSYS (null)\n");
-					}
-					*/
+					SystemBase *sb = (SystemBase *)smgr->um_SB;
+					DeviceRelease( sb->sl_DeviceManager, remdev );
 				
 					FileDelete( remdev );
 					remdev = NULL;
@@ -642,12 +624,12 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	
 	if( sqlLib != NULL )
 	{
-		char where[ 256 ];
-		where[ 0 ] = 0;
+		int len = strlen(name)+128;
+		char *where = FMalloc( len );
 	
 		DEBUG("[UMGetUserByNameDB] start\n");
 
-		sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `Name` = '%s'", name );
+		sqlLib->SNPrintF( sqlLib, where, len, " `Name`='%s'", name );
 	
 		int entries;
 	
@@ -662,6 +644,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 		
 			tmp = (User *)tmp->node.mln_Succ;
 		}
+		FFree( where );
 	}
 	
 	DEBUG("[UMGetUserByNameDB] end\n");
@@ -754,7 +737,11 @@ FULONG UMGetUserIDByName( UserManager *um, const char *name )
 		}
 	}
 
-	return usr->u_ID;
+	if( usr != NULL )
+	{
+		return usr->u_ID;
+	}
+	return 0;
 }
 
 /**

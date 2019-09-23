@@ -26,7 +26,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			$defaultDiskspace = 536870912;
-			if( $this->Config )
+			if( isset( $this->Config ) && strlen( $this->Config) > 3 )
 			{
 				$this->configObject = json_decode( $this->Config );
 				if( isset( $this->configObject->DiskSize ) )
@@ -219,7 +219,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							{
 								// Add volume name to entry if it's not there
 								// TODO: Make sure its always there!
-								if( !strstr( $entry->Path, ':' ) )
+								if( isset( $entry->Path ) && !strstr( $entry->Path, ':' ) )
 									$entry->Path = $volume . $entry->Path;
 								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
 								{
@@ -233,6 +233,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 						}
 					}
+					
 					// List files
 					foreach( $entries as $entry )
 					{
@@ -349,7 +350,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				die( 'fail<!--separate-->Could not find file!' );
 			}
 			else if( $args->command == 'write' )
-			{	
+			{
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -378,6 +379,11 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				// Can we get sub folder?
 				$fo = false;
 				
+				// Get by path (subfolder)
+				$subPath = $testPath = false;
+				if( is_string( $path ) && strstr( $path, ':' ) )
+					$testPath = $subPath = end( explode( ':', $path ) );
+				
 				// Remove filename
 				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
 				{
@@ -387,116 +393,135 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				}
 				
 				if( $fo = $this->getSubFolder( $subPath ) )
-					$f->FolderID = $fo->ID;
-				
-				// Overwrite existing and catch object
-				if( $f->Load() )
 				{
-					$deletable = $Config->FCUpload . $f->DiskFilename;
-					$fn = $f->DiskFilename;
+					$Logger->log( '[SQLDRIVE] Found folder by path: ' . $subPath );
+					$f->FolderID = $fo->ID;
 				}
 				else
 				{
-					$fn = $f->Filename;
-					$f->DiskFilename = '';
+					$Logger->log( '[SQLDRIVE] Could not find folder by path: ' . $subPath );
 				}
 				
-				// Sanitize!
-				if( strstr( $fn, '/' ) )
-				{
-					$fn = explode( '/', $fn );
-					$fn = $fn[1];
-				}
-	
-				// Write the file
+				if( substr( $testPath, -1, 1 ) == '/' )
+					$testPath = substr( $testPath, 0, strlen( $testPath ) - 1 );
+				$pathLen = explode( '/', $testPath );
+				$pathLen = count( $pathLen );
 				
-				// The file is new, make sure we don't overwrite any existing file
-				if( $f->ID <= 0 )
+				if( $pathLen == 1 || ( $pathLen > 1 && $fo ) )
 				{
-					$ofn = $fn;
-					$fna = explode( '.', $ofn ); $fna = end( $fna );
-					if( !is_dir( $wname ) ) mkdir( $wname );
-					while( file_exists( $wname . $fn ) )
+				
+					// Overwrite existing and catch object
+					if( $f->Load() )
 					{
-						// Keep extension last
-						if( $fna )
-						{
-							$fn = substr( $ofn, 0, strlen( $ofn ) - 1 - strlen( $fna ) ) . rand(0,9999) . rand(0,9999) . rand(0,9999) . '.' . $fna;
-						}
-						// Has no extension
-						else $fn .= rand(0,99999); 
-					}
-				}
-				
-				if( $file = fopen( $wname . $fn, 'w+' ) )
-				{
-					// Delete existing file
-					if( $deletable ) unlink( $deletable );
-					
-					if( isset( $args->tmpfile ) )
-					{
-						if( file_exists( $args->tmpfile ) )
-						{
-							fclose( $file );
-							$len = filesize( $args->tmpfile );
-							
-							// TODO: UGLY WORKAROUND, FIX IT!
-							//       We need to support base64 streams
-							if( $fr = fopen( $args->tmpfile, 'r' ) )
-							{
-								$string = fread( $fr, 32 );
-								fclose( $fr );
-								if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
-								{
-									$fr = file_get_contents( $args->tmpfile );
-									$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
-									if( $fo = fopen( $args->tmpfile, 'w' ) )
-									{
-										fwrite( $fo, $fr );
-										fclose( $fo );
-									}
-								}
-							}
-							
-							if( $total + $len < SQLDRIVE_FILE_LIMIT )
-							{
-								rename( $args->tmpfile, $wname . $fn );
-							}
-							else
-							{
-								$Logger->log( 'fail<!--separate-->Limit broken' );
-								die( 'fail<!--separate-->Limit broken' );
-							}
-						}
-						else
-						{
-							$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
-							die( 'fail<!--separate-->Tempfile does not exist!' );
-						}
+						$deletable = $Config->FCUpload . $f->DiskFilename;
+						$fn = $f->DiskFilename;
 					}
 					else
 					{
-						if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
+						$fn = $f->Filename;
+						$f->DiskFilename = '';
+					}
+				
+					// Sanitize!
+					if( strstr( $fn, '/' ) )
+					{
+						$fn = explode( '/', $fn );
+						$fn = $fn[1];
+					}
+	
+					// Write the file
+				
+					// The file is new, make sure we don't overwrite any existing file
+					if( $f->ID <= 0 )
+					{
+						$ofn = $fn;
+						$fna = explode( '.', $ofn ); $fna = end( $fna );
+						if( !is_dir( $wname ) ) mkdir( $wname );
+						while( file_exists( $wname . $fn ) )
 						{
-							$len = fwrite( $file, $args->data );
-							fclose( $file );
+							// Keep extension last
+							if( $fna )
+							{
+								$fn = substr( $ofn, 0, strlen( $ofn ) - 1 - strlen( $fna ) ) . rand(0,9999) . rand(0,9999) . rand(0,9999) . '.' . $fna;
+							}
+							// Has no extension
+							else $fn .= rand(0,99999); 
+						}
+					}
+				
+					if( $file = fopen( $wname . $fn, 'w+' ) )
+					{
+						// Delete existing file
+						if( $deletable ) unlink( $deletable );
+					
+						if( isset( $args->tmpfile ) )
+						{
+							if( file_exists( $args->tmpfile ) )
+							{
+								fclose( $file );
+								$len = filesize( $args->tmpfile );
+							
+								// TODO: UGLY WORKAROUND, FIX IT!
+								//       We need to support base64 streams
+								if( $fr = fopen( $args->tmpfile, 'r' ) )
+								{
+									$string = fread( $fr, 32 );
+									fclose( $fr );
+									if( substr( urldecode( $string ), 0, strlen( '<!--BASE64-->' ) ) == '<!--BASE64-->' )
+									{
+										$fr = file_get_contents( $args->tmpfile );
+										$fr = base64_decode( end( explode( '<!--BASE64-->', urldecode( $fr ) ) ) );
+										if( $fo = fopen( $args->tmpfile, 'w' ) )
+										{
+											fwrite( $fo, $fr );
+											fclose( $fo );
+										}
+									}
+								}
+
+								if( $total + $len < SQLDRIVE_FILE_LIMIT )
+								{
+									rename( $args->tmpfile, $wname . $fn );
+								}
+								else
+								{
+									$Logger->log( 'fail<!--separate-->Limit broken' );
+									die( 'fail<!--separate-->Limit broken' );
+								}
+							}
+							else
+							{
+								$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
+								die( 'fail<!--separate-->Tempfile does not exist!' );
+							}
 						}
 						else
 						{
-							fclose( $file );
-							$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
-							die( 'fail<!--separate-->Limit broken' );
+							if( $total + strlen( $args->data ) < SQLDRIVE_FILE_LIMIT )
+							{
+								$len = fwrite( $file, $args->data );
+								fclose( $file );
+							}
+							else
+							{
+								fclose( $file );
+								$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
+								die( 'fail<!--separate-->Limit broken' );
+							}
 						}
-					}
 					
-					// Sanitize username
-					$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
-					$f->DiskFilename = $uname . '/' . $fn;
-					$f->Filesize = filesize( $wname. $fn );
-					if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
-					$f->DateModified = date( 'Y-m-d H:i:s' );
-					$f->Save();
-					return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
+						// Sanitize username
+						$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+					
+						$Logger->log( '[SQLDRIVE] WRITING ' . $uname . '/' . $fn . ' -> ' . $f->Filename . ' in ' . $subPath );
+					
+						$f->DiskFilename = $uname . '/' . $fn;
+						$f->Filesize = filesize( $wname. $fn );
+						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
+						$f->DateModified = date( 'Y-m-d H:i:s' );
+						$f->Save();
+						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
+					}
 				}
 				$Logger->log( 'fail<!--separate-->Could not write file: ' . $wname . $fn );
 				return 'fail<!--separate-->Could not write file: ' . $wname . $fn;
@@ -549,7 +574,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$mime = $info['mime'];
 					
 						// Try to guess the mime type
-						if( !$mime && $ext = end( explode( '.', $fname ) ) )
+						$ext = explode( '.', $fname );
+						if( !$mime && $ext = end( $ext ) )
 						{
 							switch( strtolower( $ext ) )
 							{
@@ -743,6 +769,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 									else
 									{
 										$f->Filename = $args->newname;
+										$f->DateModified = date( 'Y-m-d H:i:s' );
 										$f->Save();
 										die( 'ok<!--separate-->{"response":1,"message":"Renamed the file."}' );
 									}
@@ -762,9 +789,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							$f = new DbIO( 'FSFolder' );
 		
 							// Get by path (subfolder)
-							$subPath = false;
+							$subPath = $testPath = false;
 							if( is_string( $path ) && strstr( $path, ':' ) )
-								$subPath = end( explode( ':', $path ) );
+								$testPath = $subPath = end( explode( ':', $path ) );
 						
 							// Remove filename
 							$fo = false;
@@ -782,36 +809,47 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								$fo = $this->getSubFolder( $subPath );
 							}
 				
-							// Do it
-							$name = end( explode( ':', $path ) );
-							if( substr( $name, -1, 1 ) == '/' )
-								$name = substr( $name, 0, strlen( $name ) - 1 );
-							if( strstr( $name, '/' ) )
-								$name = end( explode( '/', $name ) );
+							if( substr( $testPath, -1, 1 ) == '/' )
+								$testPath = substr( $testPath, 0, strlen( $testPath ) - 1 );
+							$pathLen = explode( '/', $testPath );
+							$pathLen = count( $pathLen );
 							
-							if( trim( $name ) )
+							if( $pathLen == 1 || ( $pathLen > 1 && $fo ) )
 							{
-								$name = trim( $name );
+								// Do it
+								$name = explode( ':', $path );
+								$name = end( $name );
 								if( substr( $name, -1, 1 ) == '/' )
 									$name = substr( $name, 0, strlen( $name ) - 1 );
-								$newFolder = end( explode( '/', $name ) );
-								$f->FilesystemID = $this->ID;
-								$f->Name = $newFolder;
-								$f->UserID = $User->ID;
-								$f->FolderID = $fo ? $fo->ID : '0';
-								
-								// Make sure the folder does not already exist!
-								if( $f->Load() )
+								if( strstr( $name, '/' ) )
+									$name = end( explode( '/', $name ) );
+						
+								if( trim( $name ) )
 								{
-									die( 'ok<!--separate-->{"message":"Directory already exists","response":-2}' );
+									$name = trim( $name );
+									if( substr( $name, -1, 1 ) == '/' )
+										$name = substr( $name, 0, strlen( $name ) - 1 );
+									$newFolder = end( explode( '/', $name ) );
+									$f->FilesystemID = $this->ID;
+									$f->Name = $newFolder;
+									$f->UserID = $User->ID;
+									$f->FolderID = $fo ? $fo->ID : '0';
+							
+									// Make sure the folder does not already exist!
+									if( $f->Load() )
+									{
+										die( 'ok<!--separate-->{"message":"Directory already exists","response":-2}' );
+									}
+									$f->DateModified = date( 'Y-m-d H:i:s' );
+									$f->DateCreated = $f->DateModified;
+									$f->Save();
+									//$Logger->log( '[SQLDRIVE] Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
+									if( $f->ID > 0 )
+										return 'ok<!--separate-->' . $f->ID;
 								}
-								$f->DateModified = date( 'Y-m-d H:i:s' );
-								$f->DateCreated = $f->DateModified;
-								$f->Save();
-								//$Logger->log( 'Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
-								return 'ok<!--separate-->' . $f->ID;
 							}
 						}
+						//$Logger->log( '[SQLDRIVE] Could not make directory.' . $path . ' ' . $subPath );
 						die( 'fail<!--separate-->' ); //why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':
@@ -1136,10 +1174,12 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		public function deleteFolder( $path, $recursive = true )
 		{
 			global $Config, $User, $Logger;
-		
+
 			// By ID
+			$Logger->log( '[SQLDRIVE] Deleting folder ' . $path );
 			if( preg_match( '/.*?\#\?([0-9]+)/i', $path, $m ) )
 			{
+				$Logger->log( '[SQLDRIVE] > Trying by ID ' . $m[1] );
 				$fo = new dbIO( 'FSFolder' );
 				if( $fo->Load( $m[1] ) )
 				{
@@ -1155,11 +1195,15 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			array_pop( $subPath );
 			$subPath = implode( '/', $subPath ) . '/';
 	
+			$Logger->log( '[SQLDRIVE] > Deleting folder by subfolder: ' . $subPath );
+	
 			if( $fo = $this->getSubFolder( $subPath ) )
 			{
-				//$Logger->log( 'Delete folder in subpath ' . $subPath . ' in fs ' . $this->Name . ': ---' );
+				$Logger->log( '[SQLDRIVE] > > Delete folder in subpath ' . $subPath . ' in fs ' . $this->Name . ': ---' );
 				return $this->_deleteFolder( $fo, $recursive );
 			}
+		
+			$Logger->log( '[SQLDRIVE] > Could not delete.' );
 		
 			return false;
 		}
@@ -1178,24 +1222,28 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		
 			// If it's a folder
 			if( substr( $path, -1, 1 ) == '/' )
+			{
+				$Logger->log( '[SQLDRIVE] Deleting a folder.' );
 				return $this->deleteFolder( $path, $recursive );
+			}
 		
 			$fi = $this->getFileByPath( $path );
 		
+			$Logger->log( '[SQLDRIVE] Found deletable file. ' . $fi->ID );
+		
+			$fileExists = false;
 			if( $fi->ID > 0 )
 			{
 				if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
 				{
+					$Logger->log( '[SQLDRIVE] Deleting physical file.' );
+					$fileExists = true;
 					unlink( $Config->FCUpload . $fi->DiskFilename );
-					$fi->Delete();
-					return true;
 				}
-				else 
-				{
-					$fi->Delete();
-				}
+				$Logger->log( '[SQLDRIVE] Deleting file entry.' );
+				$fi->Delete();
 			}
-			return false;
+			return $fileExists;
 		}
 		
 		// Private functions
@@ -1225,6 +1273,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 	
 				$fo = $this->getSubFolder( $subPath );
 		
+				$fi = new dbIO( 'FSFile' );
 				$fi->UserID = $User->ID;
 				$fi->FilesystemID = $this->ID;
 				$fi->FolderID = $fo ? $fo->ID : '0';

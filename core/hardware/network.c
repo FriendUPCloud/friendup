@@ -170,7 +170,7 @@ int getPrimaryIp( char* buffer, size_t buflen )
 int getLocalIP( char* buffer, size_t buflen )
 {
 	FILE *f;
-	char line[100] , *p , *c;
+	char line[100] , *p = NULL, *c;
      
 	f = fopen("/proc/net/route" , "r");
 	
@@ -211,7 +211,7 @@ int getLocalIP( char* buffer, size_t buflen )
  
 		family = ifa->ifa_addr->sa_family;
  
-		if(strcmp( ifa->ifa_name , p) == 0)
+		if( p != NULL && strcmp( ifa->ifa_name , p ) == 0)
 		{
 			if (family == fm) 
 			{

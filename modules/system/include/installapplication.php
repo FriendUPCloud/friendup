@@ -44,6 +44,48 @@ if( $path = findInSearchPaths( $args->args->application ) )
 		$a->Save();
 		if( $a->ID > 0 )
 		{
+			
+			// Update cfg/system_permissions.json on app install
+			
+			if( $a->Config && $a->Name )
+			{
+				if( file_exists( 'cfg/system_permissions.json' ) && filesize( 'cfg/system_permissions.json' ) )
+				{
+					if( $f = @file_get_contents( 'cfg/system_permissions.json' ) )
+					{
+						if( !$json = json_decode( trim( $f ) ) )
+						{
+							die( 'fail<!--separate-->malformed json in cfg/system_permissions.json contact system admin!' );
+						}
+					}
+					else
+					{
+						die( 'fail<!--separate-->malformed json in cfg/system_permissions.json contact system admin!' );
+					}
+				}
+				else
+				{
+					$json = new stdClass();
+				}
+				
+				if( $fp = @fopen( 'cfg/system_permissions.json', 'w' ) )
+				{
+					$conf = json_decode( trim( $a->Config ) );
+					
+					if( $conf && $json )
+					{
+						$json->{ trim( $a->Name ) } = $conf;
+						
+						if( $data = json_encode( $json, JSON_PRETTY_PRINT ) )
+						{
+							fwrite( $fp, $data );
+						}
+						
+						fclose( $fp );
+					}
+				}
+			}
+			
 			die( 'ok<!--separate-->' . $a->ID );
 		}
 	}

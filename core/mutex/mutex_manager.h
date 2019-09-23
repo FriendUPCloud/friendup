@@ -99,6 +99,7 @@ inline void MutexManagerRelease( MutexManager *mm __attribute__((unused)), void 
 #endif
 */
 
+
 #ifndef FRIEND_MUTEX_LOCK
 #define FRIEND_MUTEX_LOCK( mutPointer ) \
 	pthread_mutex_lock( mutPointer )

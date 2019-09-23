@@ -281,6 +281,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					
 					case SQLT_BLOB:
 						{
+							/*
 							DEBUG("[MYSQLLibrary] Read BLOB\n");
 							ListString *ls = ListStringNew();
 							if( ls != NULL )
@@ -297,6 +298,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							// copy pointer to this list
 							memcpy( strptr + dptr[2], &ls, sizeof( ListString * ) );
 							//ListStringDelete( ls );
+							*/
 						}
 					break;
 					
@@ -411,7 +413,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 					primaryId = tmpint;
 					primaryIdName = ( char *)dptr[ 1 ];
 					
-					DEBUG("[MYSQLLibrary] : we dont update PRIMARY KEY %d\n", primaryId );
+					//DEBUG("[MYSQLLibrary] : we dont update PRIMARY KEY %d\n", primaryId );
 				}
 				break;
 				
@@ -434,7 +436,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 					BufStringAddSize( querybs, tmp, sprintfsize );
 					cols++;
 
-					DEBUG("[MYSQLLibrary] update set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
+					//DEBUG("[MYSQLLibrary] update set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
 				}
 				break;
 				
@@ -443,7 +445,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 					char tmp[ 256 ];
 					char *tmpchar;
 					memcpy( &tmpchar, strptr + dptr[ 2 ], sizeof( char *) );
-					DEBUG("[MYSQLLibrary] update, pointer %p\n", tmpchar );
+					//DEBUG("[MYSQLLibrary] update, pointer %p\n", tmpchar );
 					int sprintfsize = 0;
 					
 					if( tmpchar != NULL )
@@ -475,7 +477,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 							FFree( ttext );
 						}
 						
-						DEBUG("[MYSQLLibrary] update set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
+						//DEBUG("[MYSQLLibrary] update set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
 						
 						cols++;
 					}
@@ -516,7 +518,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
 						
-						DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
+						//DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
 					
 						if( cols == 0 )
 						{
@@ -548,7 +550,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 						sprintf( date, "%04d-%02d-%02d", tp->tm_year, tp->tm_mon, tp->tm_mday );
 						
-						DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
+						//DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
 					
 						if( cols == 0 )
 						{
@@ -605,6 +607,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 {
 	char *finalQuery = NULL;
+	int retValue = 0;
 	BufString *tablequerybs = BufStringNew();
 	BufString *dataquerybs = BufStringNew();
 	
@@ -861,6 +864,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 			if ( mysql_stmt_execute(stmt) )
 			{
 				FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
+				retValue = 1;
 			}
 		
 			// Free up!
@@ -879,7 +883,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 	BufStringDelete( tablequerybs );
 	BufStringDelete( dataquerybs );
 	
-	return 0;
+	return retValue;
 }
 
 /**
@@ -1053,6 +1057,7 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 	MYSQL_RES *result = NULL;
 	if( sel == NULL )
 	{
+		FERROR("Sel is empty!\n");
 		return NULL;
 	}
 	
@@ -1070,7 +1075,7 @@ MYSQL_RES *Query( struct SQLLibrary *l, const char *sel )
 		return NULL;
 	}
 	
-	DEBUG("[MYSQLLibrary] SELECT QUERY %s\n", sel );
+	DEBUG("[MYSQLLibrary] SELECT QUERY: >%s<\n", sel );
 
 	result = mysql_store_result( l->con.sql_Con );
 
@@ -1265,7 +1270,8 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 			int alternateForm = 0, forceSign = 0;
 			int spaceForPositive = 1; 
 			char lengthModifier = '\0'; 
-			char tmp[ 32 ];
+			//char tmp[ 32 ];
+			char *tmp = FMalloc( 64 );
 			
 			const char *stringArg;
 			size_t stringArgSize;
@@ -1451,7 +1457,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 									escapedString = NULL;
 								}
 								
-								if( ( escapedString = FCalloc( (stringArgSize << 1 ) + 1, sizeof(char) ) ) != NULL )
+								if( ( escapedString = FCalloc( (stringArgSize *4 ) + 1, sizeof(char) ) ) != NULL )
 								{
 									stringArgSize = mysql_real_escape_string( l->con.sql_Con, escapedString, stringArg, stringArgSize );
 									stringArg = escapedString;
@@ -1785,6 +1791,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 					retStringSize += n;
 				}
 			}
+			FFree( tmp );
 		}
 	}
 	

@@ -10,7 +10,8 @@
 
 document.title = 'Friend Create';
 
-settings = {
+// Settings for Friend Create
+window.settings = {
 	wordWrap: true,
 	wordWrapWidth: 80,
 	codeFolding: true,
@@ -18,9 +19,9 @@ settings = {
 	theme: 'twilight'
 };
 
+// Read the config
 function loadConfig( callback )
 {
-	// Read the config
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -47,6 +48,7 @@ function loadConfig( callback )
 
 var appConn = null;
 
+// Start Friend Create ---------------------------------------------------------
 Application.run = function( msg )
 {
 	var f = new File( 'Progdir:Templates/search.html' );
@@ -666,6 +668,11 @@ Application.receiveMessage = function( msg )
 			for( var a in this.project.Files )
 			{
 				var fn = this.project.Files[a];
+				var ext = fn.Path.split( '.' ); ext = ext[ ext.length - 1 ];
+				ext = ext.toLowerCase();
+				// Skip images
+				if( ext == 'jpg' || ext == 'png' || ext == 'jpeg' || ext == 'bmp' || ext == 'gif' )
+					continue;
 				if( fn.Path.indexOf( ':' ) < 0 )
 				{
 					var f = {};
@@ -1213,6 +1220,9 @@ Application.showPrefs = function()
 };
 
 // Check if we support the filetype --------------------------------------------
+/* If a file is (Currently) un-supported, return true anyway. The file's extension
+   will still be recorded and then can be opened as a standard text file.
+*/
 Application.checkFileType = function( path )
 {
 	if( !path || ( path && !path.split ) ) return;
@@ -1252,7 +1262,7 @@ Application.checkFileType = function( path )
 		case 'conf':
 			return true;
 		default:
-			return false;
+			return true;	// no reason to reject a file. just force to a .txt syntax
 	}
 };
 

@@ -43,12 +43,12 @@ CREATE TABLE `FUserGroup` (
 
 */
 
-typedef struct UserGroupAUser
+typedef struct GroupUserLink
 {
 	MinNode				node;
 	void				*ugau_User;
 	FULONG				ugau_UserID;
-}UserGroupAUser;
+}GroupUserLink;
 
 //
 
@@ -60,12 +60,15 @@ typedef struct UserGroup
 	FULONG 				ug_UserID;
 	FULONG				ug_ParentID;
 	char 				*ug_Type;
+	struct UserGroup	*ug_ParentGroup;
 	
-	UserGroupAUser		*ug_UserList;		// users assigned to group 
+	GroupUserLink		*ug_UserList;		// users assigned to group 
 	File				*ug_MountedDevs;	// root file
 	int					ug_Status;
 	FBOOL				ug_IsAdmin;
 	FBOOL				ug_IsAPI;
+	
+	pthread_mutex_t		ug_Mutex;
 	// this is list of UserGroupDevices, all devices are shared to users by group
 	// if we want to share this device across another groups we must share it
 }UserGroup;
@@ -74,21 +77,13 @@ typedef struct UserGroup
 //
 //
 
-static FULONG UserGroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUCTSIZE, sizeof( struct UserGroup ), 
-	SQLT_IDINT, (FULONG)"ID", offsetof( struct UserGroup, ug_ID ), 
-	SQLT_INT, (FULONG)"UserID", offsetof( struct UserGroup, ug_UserID ),
-	SQLT_STR, (FULONG)"Name", offsetof( struct UserGroup, ug_Name ),
-	SQLT_STR, (FULONG)"Type", offsetof( struct UserGroup, ug_Type ),
-	SQLT_INT, (FULONG)"Status", offsetof( struct UserGroup, ug_Status ),
-	SQLT_INT, (FULONG)"ParentID", offsetof( struct UserGroup, ug_ParentID ),
-	SQLT_NODE, (FULONG)"node", offsetof( struct UserGroup, node ),
-	SQLT_END };
-
-//
-//
-//
-
 UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type );
+
+//
+//
+//
+
+void UserGroupInit( UserGroup *ug );
 
 //
 //
@@ -119,5 +114,21 @@ int UserGroupAddUser( UserGroup *ug, void *u );
 //
 
 int UserGroupRemoveUser( UserGroup *ug, void *u );
+
+//
+//
+//
+
+static FULONG UserGroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUCTSIZE, sizeof( struct UserGroup ), 
+	SQLT_IDINT, (FULONG)"ID", offsetof( struct UserGroup, ug_ID ), 
+	SQLT_INT, (FULONG)"UserID", offsetof( struct UserGroup, ug_UserID ),
+	SQLT_STR, (FULONG)"Name", offsetof( struct UserGroup, ug_Name ),
+	SQLT_STR, (FULONG)"Type", offsetof( struct UserGroup, ug_Type ),
+	SQLT_INT, (FULONG)"Status", offsetof( struct UserGroup, ug_Status ),
+	SQLT_INT, (FULONG)"ParentID", offsetof( struct UserGroup, ug_ParentID ),
+	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserGroupInit,
+	SQLT_NODE, (FULONG)"node", offsetof( struct UserGroup, node ),
+	SQLT_END };
+
 
 #endif // __USER_GROUP_H__

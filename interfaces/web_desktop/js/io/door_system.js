@@ -89,7 +89,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		dirDocApps: 'System:' + i18n( 'i18n_directory_DocApps' ) + '/',
 		dirLibraries: 'System:' + i18n( 'i18n_directory_Libraries' ) + '/',
 		dirDevices: 'System:' + i18n( 'i18n_directory_Devices' ) + '/',
-		dirDocumentation: 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',
+		/*dirDocumentation: 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',*/
 		dirRepositories: 'System:' + i18n( 'i18n_directory_Repositories' ) + '/',
 		dirFunctions: 'System:' + i18n( 'i18n_directory_Functions' ) + '/'
 	};
@@ -108,7 +108,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					prefs = {
 						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
 						//'Screens'      : i18n( 'i18n_screens' ),
-						'Software'     : i18n( 'i18n_software' ),
+						/*'Software'     : i18n( 'i18n_software' ),*/
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
 						//'Language'     : i18n( 'i18n_language' ),
 						//'Desklets'     : i18n( 'i18n_desklets' ),
@@ -154,9 +154,9 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					prefs = {
 						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
 						//'Screens'      : i18n( 'i18n_screens' ),
-						'Software'     : i18n( 'i18n_software' ),
+						/*'Software'     : i18n( 'i18n_software' ),*/
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
-						//'Printers'     : i18n( 'i18n_printers' ),
+						/*'Printers'     : i18n( 'i18n_printers' ),*/
 						//'Network'      : i18n( 'i18n_network' ),
 						//'Language'     : i18n( 'i18n_language' ),
 						'DiskCatalog'    : i18n( 'i18n_disk_catalog' ),
@@ -175,7 +175,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					};
 					locales = {
 						'Looknfeel'    : 'i18n_looknfeel',
-						'Software'     : 'i18n_software',
+						/*'Software'     : 'i18n_software',*/
 						'Wallpaper'    : 'i18n_wallpaper',
 						'DiskCatalog'  : 'i18n_disk_catalog',
 						'Users'        : 'i18n_useraccounts',
@@ -189,9 +189,9 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					icons = {
 						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
 						//'Screens'      : 'devices/video-display.png',
-						'Software'     : 'categories/applications-accessories.png',
+						/*'Software'     : 'categories/applications-accessories.png',*/
 						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
-						//'Printers'     : 'devices/printer-laser.png',
+						/*'Printers'     : 'devices/printer-laser.png',*/
 						//'Network'      : 'places/network-workgroup.png',
 						//'Language'     : 'apps/lokalize.png',
 						'DiskCatalog'    : 'mimetypes/x-office-address-book.png',
@@ -263,14 +263,14 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			var devs = {
 				dosdrivers     : i18n( 'i18n_dosdrivers' ),
 				cores        : i18n( 'i18n_cores' ),
-				sessions       : i18n( 'i18n_sessions' )/*,
-				printers       : i18n( 'i18n_printers' )*/
+				sessions       : i18n( 'i18n_sessions' ),
+				printers       : i18n( 'i18n_printers' )
 			};
 			var icons = {
 				dosdrivers     : 'places/folder-grey.png',
 				cores        : 'places/folder-grey.png',
-				sessions       : 'places/folder-grey.png'/*,
-				printers       : 'places/folder-print.png'*/
+				sessions       : 'places/folder-grey.png',
+				printers       : 'places/folder-print.png'
 			};
 			var types = [
 				'DOSDrivers',
@@ -303,9 +303,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				return callback( output, translations.dirDevices );
 			return output;
 		},
-		'System:Documentation/': function()
+		/*'System:Documentation/': function()
 		{
-			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+			var files = [ 'Documentation.pdf', 'Programmer\'s Manual.pdf', 'Friend DOS and CLI Manual.pdf', 'FriendUP API Manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+//			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
 				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
 			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Repositories', 'Devices' ];
 			var eles = [];
@@ -343,7 +344,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				} );
 			}
 			return callback( eles, translations.dirDocumentation );
-		},
+		},*/
 		'System:Repositories/': function()
 		{
 			var output = [
@@ -414,7 +415,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	// Aliases
 	dirList[ 'System:' + i18n( 'i18n_directory_Functions' ) + '/' ]     = dirList[ 'System:Functions/' ];
 	dirList[ 'System:' + i18n( 'i18n_directory_DocApps' ) + '/' ]       = dirList[ 'System:DocApps/' ];
-	dirList[ 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' ] = dirList[ 'System:Documentation/' ];
+	/*dirList[ 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' ] = dirList[ 'System:Documentation/' ];*/
 	dirList[ 'System:' + i18n( 'i18n_directory_Prefs' ) + '/' ]         = dirList[ 'System:Preferences/' ];
 	dirList[ 'System:' + i18n( 'i18n_directory_Repositories' ) + '/' ]  = dirList[ 'System:Repositories/' ];
 	dirList[ 'System:' + i18n( 'i18n_directory_Modules' ) + '/' ]       = dirList[ 'System:Modules/' ];
@@ -546,7 +547,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				IconClass: 'System_Software',
 				Door     : new DoorSystem( 'System:Software/' )
 			},
-			{
+			/*{
 				MetaType : 'Directory',
 				Title    : i18n( 'i18n_directory_Documentation' ),
 				Permissions: '-r-e-,-r-e-,-r-e-',
@@ -557,7 +558,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				Type     : 'Directory',
 				IconClass: 'System_Documentation',
 				Door     : new DoorSystem( 'System:Documentation/' )
-			},
+			},*/
 			{
 				MetaType : 'Directory',
 				Title    : i18n( 'i18n_directory_Functions' ),

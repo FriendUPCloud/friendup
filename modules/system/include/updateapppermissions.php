@@ -29,6 +29,6 @@ if( $row = $SqlDatabase->FetchObject( '
 		}
 	}
 }
-die( 'fail' );
+die( 'fail<!--separate-->{"response":"fatal error in updateapppermissions"}' );
 
 ?>

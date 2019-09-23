@@ -5,3 +5,54 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
+input[type=checkbox]
+{
+	vertical-align: middle;
+}
+
+#eula_short_text, #eula_long_text
+{
+	overflow: hidden;
+}
+
+#eula_short_text:focus, #eula_long_text:focus
+{
+	overflow: auto;
+}
+
+#LoginBackgroundImage,
+#LoginLogoImage
+{
+	height: 250px;
+}
+
+#LoginBackgroundImage img,
+#LoginLogoImage img
+{
+	max-width: 320px;
+	height: auto;
+}
+
+@media (min-width: 640px)
+{
+	.HRow > .HContent50
+	{
+		padding-right: 10px;
+	}
+	
+	.HRow > .HContent50
+	{
+		padding-left: 10px;
+	}
+}
+
+@media (max-width: 639px)
+{
+	.HRow > .HContent50
+	{
+		width: 100%;
+		clear: both;
+	}
+}
+

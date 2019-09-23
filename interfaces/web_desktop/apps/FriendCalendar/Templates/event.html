@@ -1,0 +1,62 @@
+
+	<div class="VContentTop BorderBottom ScrollArea Padding" id="top">
+		<p class="Layout">
+			<strong>{i18n_event_name}</strong>
+		</p>
+		<p class="Layout">
+			<input type="text" class="FullWidth" id="pName" value="{title}"/>
+		</p>
+		<p class="Layout">
+			<strong>{i18n_date}</strong>
+		</p>
+		<p class="Layout">
+			<input type="date" class="FullWidth" id="pDate" value="{date}"/>
+		</p>
+		<p class="Layout">
+			<div class="FloatRight">
+				<strong>{i18n_all_day}</strong>
+				<input type="checkbox" id="pAllDay"{allday}/>
+			</div>
+			<strong>{i18n_time_from}</strong>
+		</p>
+		<p class="Layout">
+			<input type="time" class="FullWidth" id="pTimeFrom" value="{timefrom}"/>
+		</p>
+		<p class="Layout">
+			<strong>{i18n_time_to}</strong>
+		</p>
+		<p class="Layout">
+			<input type="time" class="FullWidth" id="pTimeTo" value="{timeto}"/>
+		</p>
+		<p class="Layout">
+			<strong>{i18n_leadin}</strong>
+		</p>
+		<p class="Layout">
+			<textarea class="FullWidth" id="pDescription">{leadin}</textarea>
+		</p>
+	</div>
+	<div class="VContentBottom Padding" id="bottom">
+		<button type="button" id="SaveBtn" class="Button IconSmall fa-save">
+			{i18n_save}
+		</button>
+	</div>
+	<input type="hidden" id="pID" value="{ID}"/>
+	<input type="hidden" id="parentView" value="{parentViewId}"/>
+	
+	<style>
+		#top
+		{
+			bottom: 50px;
+		}
+		#bottom
+		{
+			height: 50px;
+		}
+		#pDescription
+		{
+			height: 100px;
+		}
+	</style>
+	
+	<script src="Progdir:Scripts/event.js"></script>
+

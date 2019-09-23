@@ -25,6 +25,14 @@
 	</div>
 	<div class="HRow MarginBottom">
 		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_addday}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="checkbox" id="calTimeAllDay"/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
 			<p class="InputHeight"><strong>{i18n_cal_evt_type}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
@@ -45,8 +53,8 @@
 	</div>
 	<div class="HRow">
 		<div class="HContent100 FloatLeft">
-			<p class="InputHeight FloatRight"><button type="button" class="Button IconSmall fa-remove" onclick="CloseView()">{i18n_cancel}</button></p>
-			<p class="InputHeight"><button type="button" class="Button IconSmall fa-calendar-plus-o" onclick="Workspace.addCalendarEvent()">{i18n_cal_btn_add}</button></p>
+			<p class="InputHeight FloatRight"><button type="button" class="Button IconSmall fa-remove" onclick="CloseView()"> {i18n_cancel}</button></p>
+			<p class="InputHeight"><button type="button" class="Button IconSmall fa-calendar-plus-o" onclick="Workspace.addCalendarEvent()"> {i18n_cal_btn_edit}</button></p>
 		</div>
 	</div>
 	<input type="hidden" value="{date}" id="calDateField"/>

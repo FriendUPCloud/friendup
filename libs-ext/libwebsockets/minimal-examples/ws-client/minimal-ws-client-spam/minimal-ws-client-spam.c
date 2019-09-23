@@ -1,7 +1,7 @@
 /*
  * lws-minimal-ws-client-spam
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Written in 2010-2019 by Andy Green <andy@warmcat.com>
  *
  * This file is made available under the Creative Commons CC0 1.0
  * Universal Public Domain Dedication.
@@ -32,7 +32,7 @@ static struct client clients[200];
 static int interrupted, port = 443, ssl_connection = LCCSCF_USE_SSL;
 static const char *server_address = "libwebsockets.org",
 		  *pro = "lws-mirror-protocol";
-static int concurrent = 10, conn, tries, est, errors, closed, limit = 100;
+static int concurrent = 10, conn, tries, est, errors, closed, sent,  limit = 100;
 
 struct pss {
 	int conn;
@@ -122,8 +122,8 @@ callback_minimal_spam(struct lws *wsi, enum lws_callback_reasons reason,
 		if (tries == closed + errors)
 			interrupted = 1;
 		if (tries == limit) {
-			lwsl_user("%s: leaving CLOSED (try %d, est %d, closed %d, err %d)\n",
-					__func__, tries, est, closed, errors);
+			lwsl_user("%s: leaving CLOSED (try %d, est %d, sent %d, closed %d, err %d)\n",
+					__func__, tries, est, sent, closed, errors);
 			break;
 		}
 
@@ -140,7 +140,7 @@ callback_minimal_spam(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_CLIENT_WRITEABLE:
-		n = lws_snprintf((char *)ping, sizeof(ping) - LWS_PRE,
+		n = lws_snprintf((char *)ping + LWS_PRE, sizeof(ping) - LWS_PRE,
 					  "hello %d", pss->conn);
 
 		m = lws_write(wsi, ping + LWS_PRE, n, LWS_WRITE_TEXT);
@@ -232,6 +232,15 @@ int main(int argc, const char **argv)
 
 		return 1;
 	}
+
+	/*
+	 * since we know this lws context is only ever going to be used with
+	 * one client wsis / fds / sockets at a time, let lws know it doesn't
+	 * have to use the default allocations for fd tables up to ulimit -n.
+	 * It will just allocate for 1 internal and n (+ 1 http2 nwsi) that we
+	 * will use.
+	 */
+	info.fd_limit_per_thread = 1 + concurrent + 1;
 
 	context = lws_create_context(&info);
 	if (!context) {

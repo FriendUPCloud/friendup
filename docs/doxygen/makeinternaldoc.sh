@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd core
-doxygen coreInternal
-doxygen coreWebCalls
+doxygen -g coreInternal
+doxygen -g coreWebCalls
 cd ..
 
