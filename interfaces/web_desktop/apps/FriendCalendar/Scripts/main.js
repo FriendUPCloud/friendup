@@ -59,7 +59,7 @@ window.addEventListener( 'mousemove', function( e )
 } );
 // End global events -----------------------------------------------------------
 
-var calendarRowHeight = 30; // <- will be overwritten below w actual height
+var calendarRowHeight = 27; // <- will be overwritten below w actual height
 
 // Get the users
 var userList = {};
@@ -266,6 +266,29 @@ var Calendar = {
 		
 		this.dayRows = w;
 		this.refresh();
+	},
+	// Just neatly reposition stuff
+	repositionEvents: function()
+	{
+		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		var eles = cd.getElementsByClassName( 'EventRect' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			eles[a].classList.add( 'Animated' );
+			( function( element ) {
+				setTimeout( function()
+				{
+					var t = element.offsetTop;
+					var h = element.offsetHeight;
+					element.style.top = Math.round( t / calendarRowHeight ) * calendarRowHeight + 'px';
+					element.style.height = Math.round( h / calendarRowHeight ) * calendarRowHeight + 'px';
+					setTimeout( function()
+					{
+						element.classList.remove( 'Animated' );
+					}, 250 );
+				}, 5 );
+			} )( eles[ a ] );
+		}
 	},
 	renderWeek: function()
 	{
@@ -689,6 +712,7 @@ var Calendar = {
 var eventRectMouseDown = null;
 window.addEventListener( 'mouseup', function(){ 
 	eventRectMouseDown = null;
+	Calendar.repositionEvents();
 } );
 window.addEventListener( 'mousemove', function( e ){
 	

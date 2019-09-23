@@ -34,6 +34,11 @@
 	text-align: center;
 }
 
+.Animated
+{
+	transition: height,top 0.25s,0.25s;
+}
+
 .WeekContainer, .MonthContainer
 {
 	position: absolute;
