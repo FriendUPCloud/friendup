@@ -142,6 +142,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			nm->nm_TimeoutThread->t_Quit = TRUE;
 			while( TRUE )
 			{
+				DEBUG("[NotificationManagerDelete] killing main thread\n");
 				if( nm->nm_TimeoutThread->t_Launched == FALSE )
 				{
 					break;
@@ -165,6 +166,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			}
 			while( TRUE )
 			{
+				DEBUG("[NotificationManagerDelete] killing android\n");
 				if( nm->nm_AndroidSendInUse <= 0 )
 				{
 					break;
@@ -176,7 +178,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 				}
 			}
-		
+			DEBUG("[NotificationManagerDelete] delete android thread\n");
 			ThreadDelete( nm->nm_AndroidSendThread );
 		}
 		pthread_cond_destroy( &(nm->nm_AndroidSendCond) );
@@ -197,6 +199,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			}
 			while( TRUE )
 			{
+				DEBUG("[NotificationManagerDelete] killing ios\n");
 				if( nm->nm_IOSSendInUse <= 0 )
 				{
 					break;
@@ -209,6 +212,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 				}
 			}
 		
+			DEBUG("[NotificationManagerDelete] delete IOS thread\n");
 			ThreadDelete( nm->nm_IOSSendThread );
 		}
 		pthread_cond_destroy( &(nm->nm_IOSSendCond) );
@@ -222,6 +226,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			NotificationDeleteAll( nm->nm_Notifications );
 			FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 		}
+		DEBUG("[NotificationManagerDelete] all notifications removed\n");
 
 		pthread_mutex_destroy( &(nm->nm_Mutex) );
 		
