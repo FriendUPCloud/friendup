@@ -1003,8 +1003,75 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
  * @param ctimestamp create message timestamp
  * @return true when message was send
  */
+
+#define REGISTER_IN_THREAD
+
+#ifdef REGISTER_IN_THREAD
+
+typedef struct NotifRegMsg
+{
+	void *lsb;
+	char *username;
+	char *channel_id;
+	char *app;
+	char *title;
+	char *message;
+	MobileNotificationTypeT notification_type;
+	char *extraString;
+	FULONG ctimestamp;
+}NotifRegMsg;
+
+#endif
+
+
+#ifdef REGISTER_IN_THREAD
+
+void ProcessMobileRegister( void *locd );
+
 int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
+	NotifRegMsg *nrm = FCalloc( 1, sizeof(NotifRegMsg) );
+	if( nrm != NULL )
+	{
+		nrm->lsb = lsb;
+		nrm->username = StringDuplicate( username );
+		nrm->channel_id = StringDuplicate( channel_id );
+		nrm->app = StringDuplicate( app );
+		nrm->title = StringDuplicate( title );
+		nrm->message = StringDuplicate( message );
+		nrm->notification_type = notification_type;
+		nrm->extraString = StringDuplicate( extraString );
+		nrm->ctimestamp = ctimestamp;
+		pthread_t tmpThread;
+		pthread_create( &tmpThread, NULL, (void *)( void * )ProcessMobileRegister, nrm );
+	}
+	return 0;
+}
+
+
+void ProcessMobileRegister( void *locd )
+{
+	NotifRegMsg *notregmsg = (NotifRegMsg *)locd;
+	if( notregmsg == NULL )
+	{
+		return;
+	}
+	void *lsb = notregmsg->lsb;
+	char *username = notregmsg->username;
+	char *channel_id = notregmsg->channel_id;
+	char *app = notregmsg->app;
+	char *title = notregmsg->title;
+	char *message = notregmsg->message;
+	MobileNotificationTypeT notification_type = notregmsg->notification_type;
+	char *extraString = notregmsg->extraString;
+	FULONG ctimestamp = notregmsg->ctimestamp;
+	
+	pthread_detach( pthread_self() );
+	
+#else
+void MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
+{
+#endif
 	SystemBase *sb = (SystemBase *)lsb;
 	UserMobileAppConnections *userConnections = NULL;
 	MobileManager *mm = sb->sl_MobileManager;
@@ -1207,7 +1274,16 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		//return -1;
 	}
 
+#ifdef REGISTER_IN_THREAD
+	if( username != NULL ) FFree( username );
+	if( channel_id != NULL ) FFree( channel_id );
+	if( app != NULL ) FFree( app );
+	if( title != NULL ) FFree( title );
+	if( message != NULL ) FFree( message );
+	if( extraString != NULL ) FFree( extraString );
+#else
 	return 0;
+#endif
 }
 
 
