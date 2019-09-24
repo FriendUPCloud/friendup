@@ -267,6 +267,8 @@ typedef struct UMsg
  * @return 0 when success, otherwise error number
  */
 
+#define DISABLE_NOTIFICATION_THREADING
+
 // definition
 void ProcessSinkMessage( void *locd );
 
@@ -280,8 +282,12 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 		spm->len = len;
 		spm->udata = udata;
 		
+#ifdef DISABLE_NOTIFICATION_THREADING
+		ProcessSinkMessage( spm );
+#else
 		pthread_t tmpThread;
 		pthread_create( &tmpThread, NULL, (void *)( void * )ProcessSinkMessage, spm );
+#endif
 	}
 	return 0;
 }
@@ -289,7 +295,9 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 void ProcessSinkMessage( void *locd )
 {
 	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
+#ifndef DISABLE_NOTIFICATION_THREADING
 	pthread_detach( pthread_self() );
+#endif
 	
 	if( spm == NULL )
 	{
