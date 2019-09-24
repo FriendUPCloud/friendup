@@ -46,7 +46,6 @@ void NotificationAndroidSendingThread( FThread *data )
 		DEBUG("NotificationAndroidSendingThread: Before condition\n");
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 		{
-			nm->nm_AndroidSendInUse++;
 			pthread_cond_wait( &(nm->nm_AndroidSendCond), &(nm->nm_AndroidSendMutex) );
 			FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			DEBUG("NotificationAndroidSendingThread: Got cond call\n");
@@ -62,6 +61,8 @@ void NotificationAndroidSendingThread( FThread *data )
 			{
 				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 				{
+					nm->nm_AndroidSendInUse++;
+					
 					FQueue *q = &(nm->nm_AndroidSendMessages);
 					if( ( e = FQPop( q ) ) != NULL )
 					{
@@ -93,14 +94,14 @@ void NotificationAndroidSendingThread( FThread *data )
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 						break;
 					}
+					
+					if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+					{
+						nm->nm_AndroidSendInUse--;
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+					}
 				} // if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 			}	// while TRUE
-			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
-			{
-				nm->nm_AndroidSendInUse--;
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
-			}
 		}
 	}	// while( data->t_Quit != TRUE )
 	

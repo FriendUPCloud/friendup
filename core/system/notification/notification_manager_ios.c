@@ -430,6 +430,7 @@ void NotificationIOSSendingThread( FThread *data )
 		return;
 	}
 	
+	/*
 	if( nm->nm_APNSSandBox )
 	{
 		he = gethostbyname( APNS_SANDBOX_HOST );
@@ -454,13 +455,13 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		sinPort = htons(APNS_PORT);
 	}
+	*/
 	
 	DEBUG("NotificationIOSSendingThread: starting main loop\n");
 	while( data->t_Quit != TRUE )
 	{
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 		{
-			nm->nm_IOSSendInUse++;
 			DEBUG("NotificationIOSSendingThread: Before condition\n");
 			pthread_cond_wait( &(nm->nm_IOSSendCond), &(nm->nm_IOSSendMutex) );
 			FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
@@ -479,6 +480,7 @@ void NotificationIOSSendingThread( FThread *data )
 			{
 				if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 				{
+					nm->nm_IOSSendInUse++;
 					FQueue *q = &(nm->nm_IOSSendMessages);
 					if( ( e = FQPop( q ) ) != NULL )
 					{
@@ -486,6 +488,30 @@ void NotificationIOSSendingThread( FThread *data )
 						// send message
 						
 						DEBUG("SENDING IOS\n\n\n");
+						
+						if( nm->nm_APNSSandBox )
+	{
+		he = gethostbyname( APNS_SANDBOX_HOST );
+	}
+	else
+	{
+		he = gethostbyname( APNS_HOST );
+	}
+    
+	if( !he )
+	{
+		SSL_CTX_free( ctx );
+		FERROR("NotificationIOSSendingThread: get host fail\n");
+	}
+	
+	if( nm->nm_APNSSandBox )
+	{
+		sinPort = htons(APNS_SANDBOX_PORT);
+	}
+	else
+	{
+		sinPort = htons(APNS_PORT);
+	}
 				
 						sockfd = socket( AF_INET, SOCK_STREAM, 0 );
 						DEBUG("socket: %d\n", sockfd );
@@ -548,14 +574,14 @@ void NotificationIOSSendingThread( FThread *data )
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
 						break;
 					}
+					
+					if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+					{
+						nm->nm_IOSSendInUse--;
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+					}
 				} // if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 			}	// while != TRUE
-			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
-			{
-				nm->nm_IOSSendInUse--;
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
-			}
 		}
 	}
 	

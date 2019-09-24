@@ -1250,8 +1250,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			if( tokens != NULL )
 			{
 				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : tokens %s\n", notif->n_Content, tokens );
-				//NotificationManagerNotificationSendIOSQueue( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
-				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
+				NotificationManagerNotificationSendIOSQueue( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
+				//NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
 				FFree( tokens );
 			}
 			else
