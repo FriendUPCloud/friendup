@@ -394,7 +394,7 @@ void NotificationIOSSendingThread( FThread *data )
 	//ctx = SSL_CTX_new(TLSv1_method());
 	if( !ctx )
 	{
-		FERROR("SSL_CTX_new()...failed\n");
+		FERROR("NotificationIOSSendingThread: SSL_CTX_new()...failed\n");
 		return;
 	}
     
@@ -402,6 +402,7 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: verify location fail\n");
 		return;
 	}
     
@@ -409,6 +410,7 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: use certyficate fail\n");
 		return;
 	}
     
@@ -416,6 +418,7 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: use private key fail\n");
 		return;
 	}
     
@@ -423,6 +426,7 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: check private key\n");
 		return;
 	}
 	
@@ -438,6 +442,7 @@ void NotificationIOSSendingThread( FThread *data )
 	if( !he )
 	{
 		SSL_CTX_free( ctx );
+		FERROR("NotificationIOSSendingThread: get host fail\n");
 		return;
 	}
 	
@@ -450,6 +455,7 @@ void NotificationIOSSendingThread( FThread *data )
 		sinPort = htons(APNS_PORT);
 	}
 	
+	DEBUG("NotificationIOSSendingThread: starting main loop\n");
 	while( data->t_Quit != TRUE )
 	{
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
