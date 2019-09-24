@@ -200,7 +200,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	{
 		$level = $level->Name;
 	}
-	else $level = false;
+	else $level = 'User';
 	
 	$pem = new stdClass(); $arr = [];
 	
@@ -238,6 +238,15 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 		
 	}
 	
+	$debug = new stdClass();
+	$debug->type     = $type;
+	$debug->context  = $context;
+	$debug->name     = $name;
+	$debug->data     = $data;
+	$debug->object   = $object;
+	$debug->objectid = $objectid;
+	$debug->level    = $level;
+	
 	// TODO: If we need some data output for permissions we might have to move this further down, but more data will have to be specified first.
 	
 	if( $level == 'Admin' )
@@ -260,10 +269,13 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 		$out->data->workgroups = '*';
 		$out->data->users = '*';
 		
+		$out->debug = $debug;
+		
 		return $out;
 	}
 	
-	
+	// TODO: Create support for checking permissions based on what app the request was sent from, as fallback use an argument like authid, if not defined fallback to ignore permissions
+	//if( !$authid ) return false;
 	
 	switch( $context )
 	{
@@ -494,6 +506,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 									$out->data = new stdClass();
 									$out->data->workgroups = (string)$objectid;
 									
+									$out->debug = $debug;
+									
 									return $out;
 								}
 								
@@ -512,6 +526,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 									$out->data = new stdClass();
 									$out->data->users = (string)$objectid;
 									
+									$out->debug = $debug;
+									
 									return $out;
 								}
 								
@@ -524,6 +540,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								$out->message = 'Permission denied.';
 								$out->reason = 'Supported object missing ...';
 								
+								$out->debug = $debug;
+								
 								return $out;
 								
 								break;
@@ -535,6 +553,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							$out->response = -1;
 							$out->message = 'Permission denied.';
 							$out->reason = 'Required objectid missing ...';
+							
+							$out->debug = $debug;
 						}
 						else
 						{
@@ -542,6 +562,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							$out->response = -1;
 							$out->message = 'Permission denied.';
 							$out->reason = 'You don\'t have access ...';
+							
+							$out->debug = $debug;
 						}
 						
 						return $out;
@@ -567,6 +589,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							$out->data->users = ( is_array( $users ) ? implode( ',', $users ) : $users );
 						}
 						
+						$out->debug = $debug;
+						
 						return $out;
 					}
 						
@@ -577,6 +601,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 				$out->message = 'Permission denied.';
 				$out->reason = 'You don\'t have access ...';
 				
+				$out->debug = $debug;
+				
 				return $out;
 				
 			}
@@ -585,6 +611,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 			$out->response = -1;
 			$out->message = 'Permission denied.';
 			$out->reason = 'Required name missing ...';
+			
+			$out->debug = $debug;
 			
 			return $out;
 			
@@ -599,6 +627,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 			$out->message = 'Permission denied.';
 			$out->reason = 'Required context missing ...';
 			
+			$out->debug = $debug;
+			
 			return $out;
 			
 			break;
@@ -609,6 +639,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	$out->response = -1;
 	$out->message = 'Permission denied.';
 	$out->reason = 'Something went very wrong ...';
+	
+	$out->debug = $debug;
 	
 	return $out;
 	
