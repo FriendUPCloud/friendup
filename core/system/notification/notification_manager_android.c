@@ -58,39 +58,43 @@ void NotificationAndroidSendingThread( FThread *data )
 			
 			FQEntry *e = NULL;
 			
-			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			while( TRUE )
 			{
-				FQueue *q = &(nm->nm_AndroidSendMessages);
-				if( ( e = FQPop( q ) ) != NULL )
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 				{
-					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+					FQueue *q = &(nm->nm_AndroidSendMessages);
+					if( ( e = FQPop( q ) ) != NULL )
+					{
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 					
-					// send message
-					nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
-					BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
-					if( bs != NULL )
-					{
-						DEBUG("Call done\n");
-						char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
-						if( pos != NULL )
+						// send message
+						nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
+						BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
+						if( bs != NULL )
 						{
-							DEBUG("Response: %s\n", pos );
+							DEBUG("Call done\n");
+							char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
+							if( pos != NULL )
+							{
+								DEBUG("Response: %s\n", pos );
+							}
+							BufStringDelete( bs );
 						}
-						BufStringDelete( bs );
-					}
-					// release data
+						// release data
 				
-					if( e != NULL )
+						if( e != NULL )
+						{
+							FFree( e->fq_Data );
+							FFree( e );
+						}
+					} // if( ( e = FQPop( q ) ) != NULL )
+					else
 					{
-						FFree( e->fq_Data );
-						FFree( e );
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+						break;
 					}
-				} // if( ( e = FQPop( q ) ) != NULL )
-				else
-				{
-					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
-				}
-			}
+				} // if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			}	// while TRUE
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 			{

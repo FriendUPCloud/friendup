@@ -457,71 +457,81 @@ void NotificationIOSSendingThread( FThread *data )
 			nm->nm_IOSSendInUse++;
 			DEBUG("NotificationIOSSendingThread: Before condition\n");
 			pthread_cond_wait( &(nm->nm_IOSSendCond), &(nm->nm_IOSSendMutex) );
+			FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+			
 			DEBUG("NotificationIOSSendingThread: Got cond call\n");
 			
 			if( data->t_Quit == TRUE )
 			{
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+				
 				break;
 			}
 
 			FQEntry *e = NULL;
-			FQueue *q = &(nm->nm_IOSSendMessages);
-			if( ( e = FQPop( q ) ) != NULL )
+		
+			while( TRUE )
 			{
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
-				// send message
-				
-				sockfd = socket( AF_INET, SOCK_STREAM, 0 );
-				if( sockfd > -1 )
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 				{
-					sa.sin_family = AF_INET;
-					memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
-					//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
-	
-					sa.sin_port = sinPort;
-
-					if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) != -1 )
+					FQueue *q = &(nm->nm_IOSSendMessages);
+					if( ( e = FQPop( q ) ) != NULL )
 					{
-						DEBUG("Connected to APNS server\n");
-    
-						ssl = SSL_new( ctx );
-						if( ssl != NULL )
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+						// send message
+				
+						sockfd = socket( AF_INET, SOCK_STREAM, 0 );
+						if( sockfd > -1 )
 						{
-							SSL_set_fd( ssl, sockfd );
-							if( SSL_connect( ssl ) != -1 )
+							sa.sin_family = AF_INET;
+							memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
+							//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
+	
+							sa.sin_port = sinPort;
+
+							if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) != -1 )
 							{
-								int result = SSL_write( ssl, e->fq_Data, e->fq_Size );
-								if( result > 0 )
+								DEBUG("Connected to APNS server\n");
+    
+								ssl = SSL_new( ctx );
+								if( ssl != NULL )
 								{
-									DEBUG("Msg sent\n");
-								}
-								else
-								{
-									int errorCode = SSL_get_error( ssl, result );
-									DEBUG( "Failed to write in SSL, error code: %d\n", errorCode );
-								}
-								// send message
-							} // SSL_connect
-							SSL_shutdown( ssl );
-							SSL_free( ssl );
-						} // SSLNew
-					} // connect
-					close( sockfd );
-				}	// sockfd == -1
+									SSL_set_fd( ssl, sockfd );
+									if( SSL_connect( ssl ) != -1 )
+									{
+										int result = SSL_write( ssl, e->fq_Data, e->fq_Size );
+										if( result > 0 )
+										{
+											DEBUG("Msg sent\n");
+										}
+										else
+										{
+											int errorCode = SSL_get_error( ssl, result );
+											DEBUG( "Failed to write in SSL, error code: %d\n", errorCode );
+										}
+										// send message
+									} // SSL_connect
+									SSL_shutdown( ssl );
+									SSL_free( ssl );
+								} // SSLNew
+							} // connect
+							close( sockfd );
+						}	// sockfd == -1
 				
-				// release data
+						// release data
 				
-				if( e != NULL )
-				{
-					FFree( e->fq_Data );
-					FFree( e );
-				}
-			} // if( ( e = FQPop( q ) ) != NULL )
-			else
-			{
-				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
-			}
+						if( e != NULL )
+						{
+							FFree( e->fq_Data );
+							FFree( e );
+						}
+					} // if( ( e = FQPop( q ) ) != NULL )
+					else
+					{
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+						break;
+					}
+				} // if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+			}	// while != TRUE
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 			{
