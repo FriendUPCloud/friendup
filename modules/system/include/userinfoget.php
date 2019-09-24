@@ -31,7 +31,7 @@ if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', '
 		{
 			//
 			
-			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
 		}
 		
 		// Permission granted. GLOBAL or WORKGROUP specific ...
