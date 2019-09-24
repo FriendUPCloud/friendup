@@ -478,8 +478,11 @@ void NotificationIOSSendingThread( FThread *data )
 					{
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
 						// send message
+						
+						DEBUG("SENDING IOS\n\n\n");
 				
 						sockfd = socket( AF_INET, SOCK_STREAM, 0 );
+						DEBUG("socket: %d\n", sockfd );
 						if( sockfd > -1 )
 						{
 							sa.sin_family = AF_INET;
@@ -527,6 +530,7 @@ void NotificationIOSSendingThread( FThread *data )
 					} // if( ( e = FQPop( q ) ) != NULL )
 					else
 					{
+						DEBUG("All messages sent\n");
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
 						break;
 					}
@@ -580,8 +584,6 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 		extrasSize = strlen( extras ); 
 		encmsg = Base64Encode( (const unsigned char *)extras, extrasSize, &extrasSize );
 	}
-	
-	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
     
 	int successNumber = 0;
 	int failedNumber = 0;
@@ -604,6 +606,8 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 				{
 					quit = TRUE;
 				}
+				
+				nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
 			
 				DEBUG("Send message to IOS: >%s<\n", startToken );
 				

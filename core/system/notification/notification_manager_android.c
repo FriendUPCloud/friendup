@@ -43,10 +43,10 @@ void NotificationAndroidSendingThread( FThread *data )
 
 	while( data->t_Quit != TRUE )
 	{
+		DEBUG("NotificationAndroidSendingThread: Before condition\n");
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 		{
 			nm->nm_AndroidSendInUse++;
-			DEBUG("NotificationAndroidSendingThread: Before condition\n");
 			pthread_cond_wait( &(nm->nm_AndroidSendCond), &(nm->nm_AndroidSendMutex) );
 			FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			DEBUG("NotificationAndroidSendingThread: Got cond call\n");
