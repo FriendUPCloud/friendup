@@ -181,9 +181,11 @@ void NotificationManagerDelete( NotificationManager *nm )
 			DEBUG("[NotificationManagerDelete] delete android thread\n");
 			ThreadDelete( nm->nm_AndroidSendThread );
 		}
+		DEBUG("[NotificationManagerDelete] delete done\n");
 		pthread_cond_destroy( &(nm->nm_AndroidSendCond) );
 		pthread_mutex_destroy( &(nm->nm_AndroidSendMutex) );
 		FQDeInit( &(nm->nm_AndroidSendMessages) );
+		DEBUG("[NotificationManagerDelete] delete android all stuff released\n");
 		
 		// remove IOS sending thread
 		
@@ -191,12 +193,14 @@ void NotificationManagerDelete( NotificationManager *nm )
 		
 		if( nm->nm_IOSSendThread != NULL )
 		{
+			DEBUG("[NotificationManagerDelete] set quit to IOS thread\n");
 			nm->nm_IOSSendThread->t_Quit = TRUE;
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 			{
 				pthread_cond_signal( &(nm->nm_IOSSendCond) ); // <- wake up!!
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
 			}
+			DEBUG("[NotificationManagerDelete] before while\n");
 			while( TRUE )
 			{
 				DEBUG("[NotificationManagerDelete] killing ios\n");

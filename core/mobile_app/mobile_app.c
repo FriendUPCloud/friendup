@@ -1004,7 +1004,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
  * @return true when message was send
  */
 
-#define REGISTER_IN_THREAD
+//#define REGISTER_IN_THREAD
 
 #ifdef REGISTER_IN_THREAD
 
@@ -1069,7 +1069,7 @@ void ProcessMobileRegister( void *locd )
 	pthread_detach( pthread_self() );
 	
 #else
-void MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
 #endif
 	SystemBase *sb = (SystemBase *)lsb;
