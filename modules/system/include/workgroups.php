@@ -37,7 +37,8 @@ if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBA
 			
 			if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
 			{
-				$userid = intval( $args->args->userid );
+				// TODO: Look at this, It's commented out because of FriendChat / Presence.
+				//$userid = intval( $args->args->userid );
 			}
 			
 		}

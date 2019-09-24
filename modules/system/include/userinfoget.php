@@ -43,7 +43,8 @@ if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', '
 			
 			if( $perm->data->workgroups && $perm->data->workgroups != '*' )
 			{
-				$workgroups = $perm->data->workgroups;
+				// TODO: Look at this, It's commented out because of FriendChat / Presence.
+				//$workgroups = $perm->data->workgroups;
 			}
 			
 		}
