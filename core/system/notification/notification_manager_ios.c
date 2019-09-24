@@ -501,6 +501,7 @@ void NotificationIOSSendingThread( FThread *data )
 									SSL_set_fd( ssl, sockfd );
 									if( SSL_connect( ssl ) != -1 )
 									{
+										DEBUG("Send message to APNS: %s\n", e->fq_Data );
 										int result = SSL_write( ssl, e->fq_Data, e->fq_Size );
 										if( result > 0 )
 										{
@@ -517,9 +518,16 @@ void NotificationIOSSendingThread( FThread *data )
 									SSL_free( ssl );
 								} // SSLNew
 							} // connect
+							else
+							{
+								FERROR("Connection to APNS fail!\n");
+							}
 							close( sockfd );
 						}	// sockfd == -1
-				
+						else
+						{
+							DEBUG("Cannot create socket\n");
+						}
 						// release data
 				
 						if( e != NULL )
