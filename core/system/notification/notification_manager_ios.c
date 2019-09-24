@@ -458,11 +458,18 @@ void NotificationIOSSendingThread( FThread *data )
 			DEBUG("NotificationIOSSendingThread: Before condition\n");
 			pthread_cond_wait( &(nm->nm_IOSSendCond), &(nm->nm_IOSSendMutex) );
 			DEBUG("NotificationIOSSendingThread: Got cond call\n");
+			
+			if( data->t_Quit == TRUE )
+			{
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+				break;
+			}
 
 			FQEntry *e = NULL;
 			FQueue *q = &(nm->nm_IOSSendMessages);
 			if( ( e = FQPop( q ) ) != NULL )
 			{
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
 				// send message
 				
 				sockfd = socket( AF_INET, SOCK_STREAM, 0 );
@@ -511,9 +518,16 @@ void NotificationIOSSendingThread( FThread *data )
 					FFree( e );
 				}
 			} // if( ( e = FQPop( q ) ) != NULL )
+			else
+			{
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+			}
 			
-			nm->nm_IOSSendInUse--;
-			FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+			{
+				nm->nm_IOSSendInUse--;
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+			}
 		}
 	}
 	
@@ -581,7 +595,7 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 					quit = TRUE;
 				}
 			
-				DEBUG("Send message to : >%s<\n", startToken );
+				DEBUG("Send message to IOS: >%s<\n", startToken );
 				
 				if( encmsg != NULL )
 				{
@@ -650,6 +664,7 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 				
 								FQPushFIFO( &(nm->nm_IOSSendMessages), en );
 
+								successNumber++;
 								//FFree( binaryMessageBuff ); // do not release when message is going to queue
 							}
 						} //if( pushContent, pushContentLen )
