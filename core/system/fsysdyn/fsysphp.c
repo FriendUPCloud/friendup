@@ -235,7 +235,7 @@ ListString *PHPCall( const char *command )
 			errCounter++;
 			if( errCounter > 3 )
 			{
-				FERROR("Error in popen, Quit! Command: %s\n", command );
+				//FERROR("Error in popen, Quit! Command: %s\n", command );
 				break;
 			}
 		}
