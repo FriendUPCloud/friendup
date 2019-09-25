@@ -394,7 +394,7 @@ void NotificationIOSSendingThread( FThread *data )
 	//ctx = SSL_CTX_new(TLSv1_method());
 	if( !ctx )
 	{
-		FERROR("SSL_CTX_new()...failed\n");
+		FERROR("NotificationIOSSendingThread: SSL_CTX_new()...failed\n");
 		return;
 	}
     
@@ -402,6 +402,7 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: verify location fail\n");
 		return;
 	}
     
@@ -409,6 +410,7 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: use certyficate fail\n");
 		return;
 	}
     
@@ -416,6 +418,7 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: use private key fail\n");
 		return;
 	}
     
@@ -423,9 +426,11 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		SSL_CTX_free( ctx );
 		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: check private key\n");
 		return;
 	}
 	
+	/*
 	if( nm->nm_APNSSandBox )
 	{
 		he = gethostbyname( APNS_SANDBOX_HOST );
@@ -438,6 +443,7 @@ void NotificationIOSSendingThread( FThread *data )
 	if( !he )
 	{
 		SSL_CTX_free( ctx );
+		FERROR("NotificationIOSSendingThread: get host fail\n");
 		return;
 	}
 	
@@ -449,71 +455,133 @@ void NotificationIOSSendingThread( FThread *data )
 	{
 		sinPort = htons(APNS_PORT);
 	}
+	*/
 	
+	DEBUG("NotificationIOSSendingThread: starting main loop\n");
 	while( data->t_Quit != TRUE )
 	{
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 		{
-			nm->nm_IOSSendInUse++;
 			DEBUG("NotificationIOSSendingThread: Before condition\n");
 			pthread_cond_wait( &(nm->nm_IOSSendCond), &(nm->nm_IOSSendMutex) );
+			FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+			
 			DEBUG("NotificationIOSSendingThread: Got cond call\n");
+			
+			if( data->t_Quit == TRUE )
+			{
+				
+				break;
+			}
 
 			FQEntry *e = NULL;
-			FQueue *q = &(nm->nm_IOSSendMessages);
-			if( ( e = FQPop( q ) ) != NULL )
+		
+			while( TRUE )
 			{
-				// send message
-				
-				sockfd = socket( AF_INET, SOCK_STREAM, 0 );
-				if( sockfd > -1 )
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
 				{
-					sa.sin_family = AF_INET;
-					memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
-					//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
-	
-					sa.sin_port = sinPort;
-
-					if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) != -1 )
+					nm->nm_IOSSendInUse++;
+					FQueue *q = &(nm->nm_IOSSendMessages);
+					if( ( e = FQPop( q ) ) != NULL )
 					{
-						DEBUG("Connected to APNS server\n");
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+						// send message
+						
+						DEBUG("SENDING IOS\n\n\n");
+						
+						if( nm->nm_APNSSandBox )
+	{
+		he = gethostbyname( APNS_SANDBOX_HOST );
+	}
+	else
+	{
+		he = gethostbyname( APNS_HOST );
+	}
     
-						ssl = SSL_new( ctx );
-						if( ssl != NULL )
+	if( !he )
+	{
+		SSL_CTX_free( ctx );
+		FERROR("NotificationIOSSendingThread: get host fail\n");
+	}
+	
+	if( nm->nm_APNSSandBox )
+	{
+		sinPort = htons(APNS_SANDBOX_PORT);
+	}
+	else
+	{
+		sinPort = htons(APNS_PORT);
+	}
+				
+						sockfd = socket( AF_INET, SOCK_STREAM, 0 );
+						DEBUG("socket: %d\n", sockfd );
+						if( sockfd > -1 )
 						{
-							SSL_set_fd( ssl, sockfd );
-							if( SSL_connect( ssl ) != -1 )
+							sa.sin_family = AF_INET;
+							memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
+							//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
+	
+							sa.sin_port = sinPort;
+
+							if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) != -1 )
 							{
-								int result = SSL_write( ssl, e->fq_Data, e->fq_Size );
-								if( result > 0 )
+								DEBUG("Connected to APNS server\n");
+    
+								ssl = SSL_new( ctx );
+								if( ssl != NULL )
 								{
-									DEBUG("Msg sent\n");
-								}
-								else
-								{
-									int errorCode = SSL_get_error( ssl, result );
-									DEBUG( "Failed to write in SSL, error code: %d\n", errorCode );
-								}
-								// send message
-							} // SSL_connect
-							SSL_shutdown( ssl );
-							SSL_free( ssl );
-						} // SSLNew
-					} // connect
-					close( sockfd );
-				}	// sockfd == -1
+									SSL_set_fd( ssl, sockfd );
+									if( SSL_connect( ssl ) != -1 )
+									{
+										DEBUG("Send message to APNS: %s\n", e->fq_Data );
+										int result = SSL_write( ssl, e->fq_Data, e->fq_Size );
+										if( result > 0 )
+										{
+											DEBUG("Msg sent\n");
+										}
+										else
+										{
+											int errorCode = SSL_get_error( ssl, result );
+											DEBUG( "Failed to write in SSL, error code: %d\n", errorCode );
+										}
+										// send message
+									} // SSL_connect
+									SSL_shutdown( ssl );
+									SSL_free( ssl );
+								} // SSLNew
+							} // connect
+							else
+							{
+								FERROR("Connection to APNS fail!\n");
+							}
+							close( sockfd );
+						}	// sockfd == -1
+						else
+						{
+							DEBUG("Cannot create socket\n");
+						}
+						// release data
 				
-				// release data
-				
-				if( e != NULL )
-				{
-					FFree( e->fq_Data );
-					FFree( e );
-				}
-			} // if( ( e = FQPop( q ) ) != NULL )
-			
-			nm->nm_IOSSendInUse--;
-			FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+						if( e != NULL )
+						{
+							FFree( e->fq_Data );
+							FFree( e );
+						}
+					} // if( ( e = FQPop( q ) ) != NULL )
+					else
+					{
+						DEBUG("All messages sent\n");
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+						break;
+					}
+					
+					if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+					{
+						nm->nm_IOSSendInUse--;
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+					}
+				} // if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+			}	// while != TRUE
 		}
 	}
 	
@@ -556,8 +624,6 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 		extrasSize = strlen( extras ); 
 		encmsg = Base64Encode( (const unsigned char *)extras, extrasSize, &extrasSize );
 	}
-	
-	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
     
 	int successNumber = 0;
 	int failedNumber = 0;
@@ -580,8 +646,10 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 				{
 					quit = TRUE;
 				}
+				
+				nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
 			
-				DEBUG("Send message to : >%s<\n", startToken );
+				DEBUG("Send message to IOS: >%s<\n", startToken );
 				
 				if( encmsg != NULL )
 				{
@@ -650,6 +718,7 @@ int NotificationManagerNotificationSendIOSQueue( NotificationManager *nm, const 
 				
 								FQPushFIFO( &(nm->nm_IOSSendMessages), en );
 
+								successNumber++;
 								//FFree( binaryMessageBuff ); // do not release when message is going to queue
 							}
 						} //if( pushContent, pushContentLen )

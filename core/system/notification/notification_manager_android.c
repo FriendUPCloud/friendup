@@ -43,45 +43,67 @@ void NotificationAndroidSendingThread( FThread *data )
 
 	while( data->t_Quit != TRUE )
 	{
+		DEBUG("NotificationAndroidSendingThread: Before condition\n");
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
 		{
-			nm->nm_AndroidSendInUse++;
-			DEBUG("NotificationAndroidSendingThread: Before condition\n");
 			pthread_cond_wait( &(nm->nm_AndroidSendCond), &(nm->nm_AndroidSendMutex) );
+			FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 			DEBUG("NotificationAndroidSendingThread: Got cond call\n");
 
-			FQEntry *e = NULL;
-			FQueue *q = &(nm->nm_AndroidSendMessages);
-			if( ( e = FQPop( q ) ) != NULL )
+			if( data->t_Quit == TRUE )
 			{
-				// send message
-
-				nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
-				BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
-				if( bs != NULL )
-				{
-					DEBUG("Call done\n");
-					char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
-					if( pos != NULL )
-					{
-						DEBUG("Response: %s\n", pos );
-					}
-					BufStringDelete( bs );
-				}
-
-				// release data
-				
-				if( e != NULL )
-				{
-					FFree( e->fq_Data );
-					FFree( e );
-				}
-			} // if( ( e = FQPop( q ) ) != NULL )
+				break;
+			}
 			
-			nm->nm_AndroidSendInUse--;
-			FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			FQEntry *e = NULL;
+			
+			while( TRUE )
+			{
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+				{
+					nm->nm_AndroidSendInUse++;
+					
+					FQueue *q = &(nm->nm_AndroidSendMessages);
+					if( ( e = FQPop( q ) ) != NULL )
+					{
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+					
+						// send message
+						nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
+						BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
+						if( bs != NULL )
+						{
+							DEBUG("Call done\n");
+							char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
+							if( pos != NULL )
+							{
+								DEBUG("Response: %s\n", pos );
+							}
+							BufStringDelete( bs );
+						}
+						// release data
+				
+						if( e != NULL )
+						{
+							FFree( e->fq_Data );
+							FFree( e );
+						}
+					} // if( ( e = FQPop( q ) ) != NULL )
+					else
+					{
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+						break;
+					}
+					
+					if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+					{
+						nm->nm_AndroidSendInUse--;
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+					}
+				} // if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			}	// while TRUE
 		}
-	}
+	}	// while( data->t_Quit != TRUE )
 	
 	nm->nm_AndroidSendHttpClient->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
 	HttpClientDelete( nm->nm_AndroidSendHttpClient );
