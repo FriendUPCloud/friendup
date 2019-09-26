@@ -1687,7 +1687,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					// Make sure iOS has the correct information
-					if( window.friendApp && window.webkit && window.webkit.messageHandlers )
+					if( window.friendApp && window.webkit && window.friendApp.setBackgroundColor )
 					{
 						if( window.webkit.messageHandlers.setBackgroundColor )
 						{
@@ -1702,6 +1702,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
 						}
+<<<<<<< HEAD
+=======
+						window.friendApp.setBackgroundColor( col );
+						//window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
+>>>>>>> f4ea73938160f70235a68e9ba84b32245620647c
 					}
 					
 					// Do the startup sequence in sequence (only once)
