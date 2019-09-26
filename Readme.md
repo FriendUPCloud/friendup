@@ -193,9 +193,9 @@ For those that just want to test our Workspace, you can try our demo after regis
 Tested - a lot
 ==============
 
-We extensively test our platform and use https://www.browserstack.com/ for crosss browser testing.
+We extensively test our platform and use https://www.browserstack.com/ for cross browser testing.
 
-![Browserstack](https://friendos.com/wp-content/uploads/2019/09/Browserstack-logo.png "Browserstack")
+<a href="https://www.browserstack.com/"><img src="https://friendos.com/wp-content/uploads/2019/09/Browserstack-logo.png" style="max-width:320px;" /></a>
 
 List of dependencies
 ====================
