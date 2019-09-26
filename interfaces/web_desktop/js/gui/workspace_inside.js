@@ -1686,6 +1686,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						//console.log = function(){};
 					}
 					
+					// Make sure iOS has the correct information
+					if( window.friendApp && window.webkit && window.webkit.messageHandlers )
+					{
+						var col = '#34495E';
+						switch( Workspace.themeData.colorSchemeText )
+						{
+							case 'charcoal':
+								col = '#3b3b3b';
+								break;
+							default:
+								break;
+						}
+						window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
+					}
+					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{
