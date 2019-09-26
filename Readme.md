@@ -190,6 +190,13 @@ Demo server
 
 For those that just want to test our Workspace, you can try our demo after registering at [https://go.friendup.cloud/](https://go.friendup.cloud/)
 
+Tested - a lot
+==============
+
+We extensively test our platform and use https://www.browserstack.com/ for crosss browser testing.
+
+![Browserstack](https://friendos.com/wp-content/uploads/2019/09/Browserstack-logo.png "Browserstack")
+
 List of dependencies
 ====================
 
