@@ -282,6 +282,18 @@ var Calendar = {
 					var h = element.offsetHeight;
 					element.style.top = Math.round( t / calendarRowHeight ) * calendarRowHeight + 'px';
 					element.style.height = Math.round( h / calendarRowHeight ) * calendarRowHeight + 'px';
+					
+					// Convert rect coords to time
+					var from = t;
+					var to = t + h
+					var whole = cd.offsetHeight;
+					to = to / whole * 24;
+					from = from / whole * 24;
+					to = Math.floor( to * 2 ) / 2;
+					from = Math.floor( from * 2 ) / 2;
+					
+					console.log( 'This is the time span: ' + from + ' - ' + to );
+					
 					setTimeout( function()
 					{
 						element.classList.remove( 'Animated' );
