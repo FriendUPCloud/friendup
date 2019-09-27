@@ -744,12 +744,14 @@ int DetachWebsocketFromSession( WSCData *data )
 	// disabled for a moment, only logout should trigger that
 	//AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, data->wsc_WebsocketsServerClient );
 	
+	Log( FLOG_DEBUG, "Lock DetachWebsocketFromSession\n");
 	if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 	{
 		wscl->wusc_Data = NULL;
 		data->wsc_WebsocketsServerClient = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
+	Log( FLOG_DEBUG, "UnLock DetachWebsocketFromSession\n");
 	/*
 	//
 	UserSession *us = NULL;

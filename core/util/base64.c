@@ -144,7 +144,11 @@ char *MarkAndBase64EncodeString( const char *chr )
 char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 {
 	//if( decoding_table == NULL ) build_decoding_table();
-
+	if( length <= 0 )
+	{
+		return NULL;
+	}
+	
 	if( length % 4 != 0 )
 	{
 		FERROR("Cannot decode entry, beacouse size is incorect: %d\n", length );
@@ -154,7 +158,7 @@ char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 	// Length / 4 * 3
 	//int output_length = ( ( ( length >> 4 ) + ( length >> 4 ) ) );
 	//output_length += output_length << 1;
-	int output_length = ((length + 3) / 4) * 3;
+	unsigned int output_length = ((length + 3) / 4) * 3;
     
 	if( data[ length - 1 ] == '=' ) ( output_length )--;
 	if( data[ length - 2 ] == '=' ) ( output_length )--;
@@ -167,8 +171,10 @@ char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 		return NULL;
 	}
 
-	for( int i = 0, j = 0; i < length; )
+	unsigned int i, j;
+	for( i = 0, j = 0; i < length; )
 	{
+		//DEBUG(" i : %d dataptr %p\n", i, data );
 		unsigned long long sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
 		unsigned long long sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
 		unsigned long long sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];

@@ -1838,19 +1838,19 @@ function CancelWindowScrolling ( e )
 	return true;
 }
 if ( window.addEventListener )
-	window.addEventListener ( 'scroll', CancelWindowScrolling, true );
-else window.attachEvent ( 'onscroll', CancelWindowScrolling, true );
+	window.addEventListener( 'scroll', CancelWindowScrolling, true );
+else window.attachEvent( 'onscroll', CancelWindowScrolling, true );
 
 // Support scrolling in windows
-function WindowScrolling ( e )
+function WindowScrolling( e )
 {
-	if ( !e ) e = window.event;
+	if( !e ) e = window.event;
 	var dlt = e.detail ? (e.detail*-120) : e.wheelDelta;
 	var tr = e.srcElement ? e.srcElement : e.target;
 	var win = false;
-	while ( tr != document.body )
+	while( tr != document.body )
 	{
-		if ( tr.className && tr.className.indexOf ( 'View' ) > 0 )
+		if( tr.className && tr.className.indexOf ( 'View' ) > 0 )
 		{
 			win = tr;
 			break;
@@ -5569,7 +5569,7 @@ function _kresize( e, depth )
 	}
 }
 
-function Confirm( title, string, okcallback, oktext, canceltext )
+function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext, extrabuttonreturn )
 {
 	var d = document.createElement( 'div' );
 	d.style.position = 'absolute';
@@ -5606,10 +5606,18 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 
 	var f = new File( 'System:templates/confirm.html' );
 	
+	var thirdbutton = '';
+	/* check for third button values */
+	if( extrabuttontext && extrabuttonreturn )
+	{
+		thirdbutton = '<div style="float:left;"><button id="thirdbutton" data-returnvalue="'+ extrabuttonreturn +'">'+ extrabuttontext +'</button></div>'
+	}
+	
 	f.replacements = {
-		'string': string,
-		'okbutton' : ( oktext ? oktext : i18n('i18n_affirmative') ),
-		'cancelbutton' : ( canceltext ? canceltext : i18n('i18n_cancel') )
+		'string'       : string,
+		'okbutton'     : ( oktext ? oktext : i18n('i18n_affirmative') ),
+		'cancelbutton' : ( canceltext ? canceltext : i18n('i18n_cancel') ),
+		'thirdbutton'  : thirdbutton
 	};
 	
 	f.i18n();
@@ -5636,6 +5644,17 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 				{
 					v.close();
 					okcallback( false );
+				}
+			}
+			else
+			{
+				eles[ e ].onclick = function(e)
+				{
+					if(e && e.target && e.target.hasAttribute('data-returnvalue') )
+						okcallback( e.target.getAttribute('data-returnvalue') );
+					else
+						okcallback( e );
+						v.close();
 				}
 			}
 		}		

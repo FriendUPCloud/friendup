@@ -1304,7 +1304,7 @@ var WorkspaceInside = {
 						if( Workspace.calendar ) Workspace.calendar.render();
 						return;
 					}
-					Alert( i18n( 'i18n_evt_delete_failed' ), i18n( 'i18n_evt_delete_failed_desc' ) );
+					Notify( { title: i18n( 'i18n_evt_delete_failed' ), text: i18n( 'i18n_evt_delete_failed_desc' ) } );
 				}
 				m.execute( 'deletecalendarevent', { id: id } );
 			}
@@ -2962,7 +2962,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									Workspace.redrawIcons();
 									
 									// Update locale for download applet
-									ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
+									{
+										ge( 'Tray' ).downloadApplet.innerHTML = '<div class="BubbleInfo"><div>' + i18n( 'i18n_drag_files_to_download' ) + '.</div></div>';
+									}
 									
 									// New version of Friend?
 									if( Workspace.loginUsername != 'go' )
@@ -4423,7 +4426,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 			else
 			{
-				Alert( i18n( 'i18n_cannotRename' ), i18n( 'i18n_noWritePermission' ) );
+				Notify( { title: i18n( 'i18n_cannotRename' ), text: i18n( 'i18n_noWritePermission' ) } );
 				if( Workspace.renameWindow )
 					Workspace.renameWindow.close();
 			}
@@ -6781,7 +6784,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var lastChar = path.substr( path.length - 1, 1 );
 		if( lastChar == ':' || lastChar == '/' )
 		{
-			return Alert( i18n( 'i18n_could_not_download' ), i18n( 'i18n_download_wrong_type' ) );
+			return Notify( { title: i18n( 'i18n_could_not_download' ), text: i18n( 'i18n_download_wrong_type' ) } );
 		}
 		var fn = path.split( ':' )[1];
 		if( fn.indexOf( '/' ) > 0 )
@@ -8055,7 +8058,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Failed - alert user
 									else
 									{
-										Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_could_not_create_downloads')});
+										Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_could_not_create_downloads' ) } );
 										return;
 									}
 								});
@@ -8063,7 +8066,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_no_home_drive')});
+								Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_no_home_drive' ) } );
 								return;
 							}
 						};						

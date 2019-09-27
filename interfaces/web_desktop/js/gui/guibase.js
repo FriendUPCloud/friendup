@@ -29,9 +29,9 @@ var mousePointer =
 {
 	prevMouseX: -1,
 	prevMouseY: -1,
-	'elements': [],
-	'dom': false,
-	'testPointer': function ()
+	elements: [],
+	dom: false,
+	testPointer: function ()
 	{
 		if( !ge( 'MousePointer' ) )
 		{
@@ -45,7 +45,7 @@ var mousePointer =
 			this.dom = d;
 		}
 	},
-	'move': function( e )
+	move: function( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -259,7 +259,7 @@ var mousePointer =
 			this.candidate.condition( e );
 		}
 	},
-	'stopMove': function ( e )
+	stopMove: function ( e )
 	{
 		for ( var a in window.movableWindows )
 		{
@@ -267,12 +267,12 @@ var mousePointer =
 			if ( wn.rollOut ) wn.rollOut ( e );
 		}
 	},
-	'clear': function()
+	clear: function()
 	{
 		this.elements = [];
 		this.dom.innerHTML = '';	
 	},
-	'drop': function ( e )
+	drop: function ( e )
 	{
 		if ( !e ) e = window.event;
 		var tar = e.target ? e.target : e.srcElement;
@@ -565,9 +565,11 @@ var mousePointer =
 				}
 			}
 			
-			// Only redraw icons if we have a non false drop result
-			if( dropResult !== false )
-				Workspace.redrawIcons();
+			// Redraw icons
+			Workspace.redrawIcons();
+			
+			if( window.currentMovable && currentMovable.content && currentMovable.content.refresh )
+				currentMovable.content.refresh();
 			
 			// Place back again
 			if( !dropped || !dropper )
@@ -613,11 +615,11 @@ var mousePointer =
 		}
 		this.mover = false;
 	},
-	'clone': function ( ele )
+	clone: function ( ele )
 	{
 		this.testPointer ();
 	},
-	'pickup': function ( ele, e )
+	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
 		if( window.isMobile ) return;
@@ -680,18 +682,21 @@ var mousePointer =
 			this.elements.push( ele );
 		}
 	},
-	'poll': function ( e )
+	poll: function ( e )
 	{
-		if ( !this.elements || !this.elements.length )
+		if( !this.elements || !this.elements.length )
 		{
-			if ( this.dom )
+			if( this.dom )
 				this.dom.parentNode.removeChild ( this.dom );
 			this.dom = false;
 		}
-		else
+		else if( this.dom )
 		{
-			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
-			this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			if( this.dom.firstChild )
+			{
+				this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
+				this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
+			}
 			window.mouseDown = 5;
 			ClearSelectRegion();
 		}
@@ -2618,6 +2623,10 @@ pollingTaskbar = false;
 function PollTaskbar( curr )
 {
 	if( pollingTaskbar ) return;
+	
+	if( !document.body || !document.body.classList.contains( 'Inside' ) ) return;
+	if( ge( 'FriendScreenOverlay' ) && ge( 'FriendScreenOverlay' ).classList.contains( 'Visible' ) )
+		return;
 		
 	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
 	{
@@ -2748,6 +2757,7 @@ function PollTaskbar( curr )
 			
 			if( baseElement.scrollFunc )
 				baseElement.removeEventListener( 'mousemove', baseElement.scrollFunc );
+			
 			baseElement.scrollFunc = function( e )
 			{
 				var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
@@ -2810,6 +2820,7 @@ function PollTaskbar( curr )
 				// If the window doesn't exist, remove the DOM element from tasbkar
 				else t.removeChild( t.tasks[ b ].dom );
 			}
+			
 			t.tasks = cleaner; // Set cleaned task list
 			
 			for( var a in movableWindows )
@@ -3502,7 +3513,9 @@ movableMouseDown = function ( e )
 		 }
 	}
 	
-	if( Workspace.iconContextMenu )
+	var clickOnMenuItem = tar && tar.classList.contains( 'MenuItem' ) ? true : false;
+	
+	if( !clickOnMenuItem && Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
 	}

@@ -600,7 +600,7 @@ cAjax.prototype.send = function( data )
 	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
 	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
 	{
-		console.log( 'Test2: Sending ajax call with websockets.' );
+		//console.log( 'Test2: Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
         var wsdata = ( data ? data : {} );
         if( self.vars )
@@ -636,12 +636,16 @@ cAjax.prototype.send = function( data )
         
         var reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
         
-        if( !reqID )
+        if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	console.log( 'Test: Request failed ', reqId );
         	AddToCajaxQueue( self );
 			Workspace.flushSession();
 			return Workspace.relogin();
+        }
+        else if( typeof( reqID ) == 'undefined' )
+        {
+        	console.log( 'cAjax: Request was undefined.' );
         }
         else
         {

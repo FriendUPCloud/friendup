@@ -45,12 +45,13 @@ WebsocketReq *WebsocketReqNew( char *id, int chunk __attribute__((unused)), int 
 		req->wr_Total = total;
 		req->wr_Chunks = 1;
 		req->wr_ChunkSize = datasize;
-		req->wr_TotalSize = req->wr_ChunkSize * total;
+		req->wr_TotalSize = WS_PROTOCOL_BUFFER_SIZE * total;// req->wr_ChunkSize * total;
 		req->wr_MessageSize = datasize;
 		req->wr_CreatedTime = time( NULL );
 		
 		if( ( req->wr_Message = FMalloc( req->wr_TotalSize+256 ) ) != NULL )
 		{
+			DEBUG("[WebsocketReqNew] Memory for data allocated at: %p\n", req->wr_Message );
 			memcpy( req->wr_Message, data, datasize );
 			req->wr_Message[ req->wr_TotalSize ] = 0; // This allow us to see messages by using %s
 		}
@@ -163,6 +164,7 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 		if( req->wr_Chunks == req->wr_Total )
 		{
 			int len = 0;
+			INFO("[WebsocketReqAddChunk] Decode at pointer: %p\n", req->wr_Message );
 			char *dst = Base64Decode( (const unsigned char *)req->wr_Message, req->wr_MessageSize, &len );
 			if( dst != NULL )
 			{
@@ -170,7 +172,7 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 				
 				FFree( req->wr_Message );
 				req->wr_Message = dst;
-				req->wr_MessageSize = len;
+				req->wr_MessageSize = len;		
 			}
 			else
 			{
