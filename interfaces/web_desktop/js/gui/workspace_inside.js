@@ -1689,17 +1689,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Make sure iOS has the correct information
 					if( typeof window.friendApp != 'undefined' && window.friendApp.setBackgroundColor == 'functioon' )
 					{
-						var col = '#34495E';
-						switch( Workspace.themeData.colorSchemeText )
+						if( window.webkit.messageHandlers.setBackgroundColor )
 						{
-							case 'charcoal':
-								col = '#3b3b3b';
-								break;
-							default:
-								break;
+							var col = '#34495E';
+							switch( Workspace.themeData.colorSchemeText )
+							{
+								case 'charcoal':
+									col = '#3b3b3b';
+									break;
+								default:
+									break;
+							}
+							window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
 						}
+<<<<<<< HEAD
+=======
 						window.friendApp.setBackgroundColor( col );
 						//window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
+>>>>>>> f4ea73938160f70235a68e9ba84b32245620647c
 					}
 					
 					// Do the startup sequence in sequence (only once)
