@@ -1687,7 +1687,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					// Make sure iOS has the correct information
-					if( window.friendApp && window.webkit && window.friendApp.setBackgroundColor )
+					if( typeof window.friendApp != 'undefined' && window.friendApp.setBackgroundColor == 'functioon' )
 					{
 						var col = '#34495E';
 						switch( Workspace.themeData.colorSchemeText )
