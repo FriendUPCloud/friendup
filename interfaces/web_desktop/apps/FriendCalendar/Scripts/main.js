@@ -280,19 +280,48 @@ var Calendar = {
 				{
 					var t = element.offsetTop;
 					var h = element.offsetHeight;
+
 					element.style.top = Math.round( t / calendarRowHeight ) * calendarRowHeight + 'px';
 					element.style.height = Math.round( h / calendarRowHeight ) * calendarRowHeight + 'px';
 					
-					// Convert rect coords to time
-					var from = t;
-					var to = t + h
-					var whole = cd.offsetHeight;
-					to = to / whole * 24;
-					from = from / whole * 24;
-					to = Math.floor( to * 2 ) / 2;
-					from = Math.floor( from * 2 ) / 2;
+					// Update rounded numbers
+					t = element.offsetTop;
+					h = element.offsetHeight;
 					
-					console.log( 'This is the time span: ' + from + ' - ' + to );
+					// Convert rect coords to time
+					var wh = cd.querySelector( '.CalendarRow' );
+					var from = t;
+					var to = t + h;
+					var whole = wh.offsetHeight;
+					to   = to / whole * 24;
+					from = from / whole * 24;
+					to   = Math.floor( to * 100 );
+					from = Math.floor( from * 100 );
+					from = StrPad( from + '', 4, '0' );
+					to   = StrPad( to + '',   4, '0' );
+					var toHr = to.substr( 0, 2 );
+					var toMn = to.substr( 2, 2 ); toMn = Math.round( parseInt( toMn ) / 100 ) * 30;
+					toMn = StrPad( toMn + '', 2, '0' );
+					var frHr = from.substr( 0, 2 );
+					var frMn = from.substr( 2, 2 ); frMn = Math.round( parseInt( frMn ) / 100 ) * 30;
+					frMn = StrPad( frMn + '', 2, '0' );
+					
+					// Finally the conversion to time
+					from = frHr + ':' + frMn;
+					to   = toHr + ':' + toMn;
+					
+					if( element.timeout )
+						clearTimeout( element.timeout );
+					element.timeout = setTimeout( function()
+					{
+						var m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							// Nothing to do here...
+						}
+						m.execute( );
+						element.timeout = null;
+					}, 250 );
 					
 					setTimeout( function()
 					{
