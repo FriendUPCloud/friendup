@@ -89,6 +89,27 @@ NotificationManager *NotificationManagerNew( void *sb )
 				plib->Close( prop );
 			}
 			
+			//
+			// run android send thread
+			
+			pthread_mutex_init( &(nm->nm_AndroidSendMutex), NULL );
+			pthread_cond_init( &(nm->nm_AndroidSendCond), NULL );
+			FQInit( &(nm->nm_AndroidSendMessages) );
+			
+			nm->nm_AndroidSendThread = ThreadNew( NotificationAndroidSendingThread, nm, TRUE, NULL );
+			
+			//
+			// run ios send thread
+			
+			pthread_mutex_init( &(nm->nm_IOSSendMutex), NULL );
+			pthread_cond_init( &(nm->nm_IOSSendCond), NULL );
+			FQInit( &(nm->nm_IOSSendMessages) );
+			
+			nm->nm_IOSSendThread = ThreadNew( NotificationIOSSendingThread, nm, TRUE, NULL );
+			
+			//
+			// run main thread
+			
 			nm->nm_TimeoutThread = ThreadNew( NotificationManagerTimeoutThread, nm, TRUE, NULL );
 			
 			// test
@@ -111,17 +132,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 	DEBUG("[NotificationManagerDelete]\n");
 	if( nm != NULL )
 	{
-		DEBUG("[NotificationManagerDelete] remove threads\n");
-		// kill launched thread with messages to be send
-		
-		while( TRUE )
-		{
-			if( nm->nm_NumberOfLaunchedThreads <= 0 )
-			{
-				break;
-			}
-			sleep( 1 );
-		}
+		// stop getting messages
 		
 		DEBUG("[NotificationManagerDelete] kill main thread\n");
 		
@@ -131,6 +142,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			nm->nm_TimeoutThread->t_Quit = TRUE;
 			while( TRUE )
 			{
+				DEBUG("[NotificationManagerDelete] killing main thread\n");
 				if( nm->nm_TimeoutThread->t_Launched == FALSE )
 				{
 					break;
@@ -142,6 +154,78 @@ void NotificationManagerDelete( NotificationManager *nm )
 			ThreadDelete( nm->nm_TimeoutThread );
 		}
 		
+		// remove Android sending thread
+		
+		if( nm->nm_AndroidSendThread != NULL )
+		{
+			int tr = 0;
+			nm->nm_AndroidSendThread->t_Quit = TRUE;
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+			{
+				pthread_cond_signal( &(nm->nm_AndroidSendCond) ); // <- wake up!!
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+			}
+			while( TRUE )
+			{
+				DEBUG("[NotificationManagerDelete] killing android in use: %d\n", nm->nm_AndroidSendInUse );
+				if( nm->nm_AndroidSendInUse <= 0 || ((tr++)> 30 ) )
+				{
+					break;
+				}
+				usleep( 500 );
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )
+				{
+					nm->nm_AndroidSendThread->t_Quit = TRUE;
+					pthread_cond_signal( &(nm->nm_AndroidSendCond) ); // <- wake up!!
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
+				}
+			}
+			DEBUG("[NotificationManagerDelete] delete android thread\n");
+			ThreadDelete( nm->nm_AndroidSendThread );
+		}
+		DEBUG("[NotificationManagerDelete] delete done\n");
+		pthread_cond_destroy( &(nm->nm_AndroidSendCond) );
+		pthread_mutex_destroy( &(nm->nm_AndroidSendMutex) );
+		FQDeInit( &(nm->nm_AndroidSendMessages) );
+		DEBUG("[NotificationManagerDelete] delete android all stuff released\n");
+		
+		// remove IOS sending thread
+		
+		// kill launched thread with messages to be send
+		
+		if( nm->nm_IOSSendThread != NULL )
+		{
+			int tr = 0;
+			DEBUG("[NotificationManagerDelete] set quit to IOS thread\n");
+			nm->nm_IOSSendThread->t_Quit = TRUE;
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+			{
+				pthread_cond_signal( &(nm->nm_IOSSendCond) ); // <- wake up!!
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+			}
+			DEBUG("[NotificationManagerDelete] before while\n");
+			while( TRUE )
+			{
+				DEBUG("[NotificationManagerDelete] killing ios in use: %d\n", nm->nm_IOSSendInUse );
+				if( nm->nm_IOSSendInUse <= 0 || ((tr++)> 30 ) )
+				{
+					break;
+				}
+				usleep( 500 );
+				if( FRIEND_MUTEX_LOCK( &(nm->nm_IOSSendMutex) ) == 0 )
+				{
+					pthread_cond_signal( &(nm->nm_IOSSendCond) ); // <- wake up!!
+					FRIEND_MUTEX_UNLOCK( &(nm->nm_IOSSendMutex) );
+				}
+			}
+		
+			DEBUG("[NotificationManagerDelete] delete IOS thread\n");
+			ThreadDelete( nm->nm_IOSSendThread );
+		}
+		pthread_cond_destroy( &(nm->nm_IOSSendCond) );
+		pthread_mutex_destroy( &(nm->nm_IOSSendMutex) );
+		FQDeInit( &(nm->nm_IOSSendMessages) );
+		
 		DEBUG("[NotificationManagerDelete] all threads deleted\n");
 		
 		if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
@@ -149,6 +233,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			NotificationDeleteAll( nm->nm_Notifications );
 			FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 		}
+		DEBUG("[NotificationManagerDelete] all notifications removed\n");
 
 		pthread_mutex_destroy( &(nm->nm_Mutex) );
 		
@@ -924,454 +1009,4 @@ void NotificationManagerTimeoutThread( FThread *data )
 	}
 	
 	data->t_Launched = FALSE;
-}
-
-//
-//
-//
-
-#define APN_TOKEN_BINARY_SIZE 32
-#define APN_TOKEN_LENGTH 64
-
-//
-//
-//
-
-int hex2int(char ch)
-{
-    if (ch >= '0' && ch <= '9')
-        return ch - '0';
-    if (ch >= 'A' && ch <= 'F')
-        return ch - 'A' + 10;
-    if (ch >= 'a' && ch <= 'f')
-        return ch - 'a' + 10;
-    return -1;
-}
-
-char *TokenToBinary( const char *token )
-{
-	char inputCharVector[ 256 ];
-	memset( inputCharVector, 0, sizeof(inputCharVector) );
-	int len = strlen( token );
-    int i, j;
-	
-	//Convert the string to the hex vector string
-
-	/*converting str character into Hex and adding into strH*/
-    for( i=0 ; i<len ;i++ )
-    { 
-		char val = 0;
-        val = hex2int( token[ i ] );
-		inputCharVector[i] = val;
-    }
-    
-	char *buffer = (char *)malloc( 34 );
-	int location = 0;
-	memset( buffer, 0, 34 );
-    
-	unsigned value;
-	unsigned data[4];
-
-	for( i = 0; i < len; i += 8)
-	{
-		memset(data, 0, 4);
-		data[0] = (inputCharVector[i] << 4) | (inputCharVector[i + 1]);
-		data[1] = (inputCharVector[i + 2] << 4) | (inputCharVector[i + 3]);
-		data[2] = (inputCharVector[i + 4] << 4) | (inputCharVector[i + 5]);
-		data[3] = (inputCharVector[i + 6] << 4) | (inputCharVector[i + 7]);
-        
-		value = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-        
-		value = htonl(value);
-
-		memcpy( &buffer[location], &value, sizeof(unsigned) );
-		
-		location += sizeof(unsigned);
-	}
-
-	buffer[ 32 ] = '0';
-	buffer[ 33 ] = 0;
-
-	return buffer;
-}
-/*
-char *TokenToBinary( const char *token )
-{
-	if( token == NULL )
-	{
-		return NULL;
-	}
-
-	char *binaryToken = malloc( APN_TOKEN_BINARY_SIZE );
-	if( !binaryToken )
-	{
-		errno = ENOMEM;
-		return NULL;
-	}
-    memset( binaryToken, 0, APN_TOKEN_BINARY_SIZE);
-
-	uint16_t j = 0;
-	uint16_t i = 0;
-	for( ; i < APN_TOKEN_BINARY_SIZE * 2; i += 2, j++ )
-	{
-		char tmp[3] = {token[i], token[i + 1], '\0'};
-		uint32_t tmp_binary = 0;
-		sscanf(tmp, "%x", &tmp_binary);
-		binaryToken[j] = (uint8_t) tmp_binary;
-	}
-    return binaryToken;
-}
-*/
-
-#define IOS_MAX_MSG_SIZE sizeof (uint8_t) + sizeof (uint32_t) + sizeof (uint32_t) + sizeof (uint16_t) + DEVICE_BINARY_SIZE + sizeof (uint16_t) + MAXPAYLOAD_SIZE
-
-// Source: https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/LegacyFormat.html
-FBOOL SendPayload( NotificationManager *nm, SSL *sslPtr, char *deviceTokenBinary, char *payloadBuff, size_t payloadLength )
-{
-	DEBUG("Send payload\n");
-	FBOOL rtn = FALSE;
-	if( sslPtr && deviceTokenBinary && payloadBuff && payloadLength )
-	{
-		uint8_t command = 1; /* command number */
-		char *binaryMessageBuff;
-		if( ( binaryMessageBuff = FMalloc( IOS_MAX_MSG_SIZE ) ) != NULL )
-		{
-			// message format is, |COMMAND|ID|EXPIRY|TOKENLEN|TOKEN|PAYLOADLEN|PAYLOAD|
-			char *binaryMessagePt = binaryMessageBuff;
-			uint32_t whicheverOrderIWantToGetBackInAErrorResponse_ID = 1234;
-			uint32_t networkOrderExpiryEpochUTC = htonl( nm->nm_APNSNotificationTimeout );
-			uint16_t networkOrderTokenLength = htons(DEVICE_BINARY_SIZE);
-			uint16_t networkOrderPayloadLength = htons(payloadLength);
-        
-			// command
-			*binaryMessagePt++ = command;
-        
-			// provider preference ordered ID 
-			memcpy(binaryMessagePt, &whicheverOrderIWantToGetBackInAErrorResponse_ID, sizeof (uint32_t));
-			binaryMessagePt += sizeof (uint32_t);
-        
-			// expiry date network order 
-			memcpy(binaryMessagePt, &networkOrderExpiryEpochUTC, sizeof (uint32_t));
-			binaryMessagePt += sizeof (uint32_t);
-        
-			// token length network order
-			memcpy(binaryMessagePt, &networkOrderTokenLength, sizeof (uint16_t));
-			binaryMessagePt += sizeof (uint16_t);
-        
-			// device token
-			memcpy(binaryMessagePt, deviceTokenBinary, DEVICE_BINARY_SIZE);
-			binaryMessagePt += DEVICE_BINARY_SIZE;
-        
-			// payload length network order 
-			memcpy(binaryMessagePt, &networkOrderPayloadLength, sizeof (uint16_t));
-			binaryMessagePt += sizeof (uint16_t);
-        
-			// payload 
-			memcpy(binaryMessagePt, payloadBuff, payloadLength);
-			binaryMessagePt += payloadLength;
-        
-			int result = SSL_write(sslPtr, binaryMessageBuff, (binaryMessagePt - binaryMessageBuff));
-			if( result > 0 )
-			{
-				DEBUG("Msg sent\n");
-				rtn = true;
-				//cout<< "SSL_write():" << result<< endl;
-			}
-			else
-			{
-				int errorCode = SSL_get_error(sslPtr, result);
-				DEBUG( "Failed to write in SSL, error code: %d\n", errorCode );
-			}
-			FFree( binaryMessageBuff );
-		}
-    }
-    return rtn;
-}
-
-/**
- * Send notification to APNS server
- * 
- * @param nm pointer to NotificationManager
- * @param title title
- * @param content content of message
- * @param sound sound name
- * @param badge badge
- * @param app application name
- * @param extras user data
- * @param tokens device tokens separated by coma
- * @return 0 when success, otherwise error number
- */
-
-int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char *title, const char *content, const char *sound, int badge, const char *app, const char *extras, char *tokens )
-{
-	char *startToken = tokens;
-	char *curToken = tokens+1;
-	SSL_CTX *ctx;
-	SSL *ssl;
-	int sockfd;
-	struct hostent *he;
-	struct sockaddr_in sa;
-	
-	if( tokens == NULL || strlen( tokens ) < 6 )
-	{
-		return 21;
-	}
-	
-	DEBUG("Send notifications IOS, cert path >%s< - content %s title: %s\n", nm->nm_APNSCert, content, title );
-	
-	int pushContentLen = 0;
-	int extrasSize = 0; 
-	char *encmsg = NULL;
-	if( extras != NULL && strlen( extras ) > 0 )
-	{
-		extrasSize = strlen( extras ); 
-		encmsg = Base64Encode( (const unsigned char *)extras, extrasSize, &extrasSize );
-	}
-	
-	nm->nm_APNSNotificationTimeout = time(NULL) + 86400; // default expiration date set to 1 day
-    
-	SSLeay_add_ssl_algorithms();
-	SSL_load_error_strings();
-	
-	ctx = SSL_CTX_new(TLSv1_2_method());
-	//ctx = SSL_CTX_new(TLSv1_method());
-	if( !ctx )
-	{
-		FERROR("SSL_CTX_new()...failed\n");
-		return 1;
-	}
-    
-	if( SSL_CTX_load_verify_locations( ctx, NULL, ".") <= 0 )
-	{
-		SSL_CTX_free( ctx );
-		ERR_print_errors_fp( stderr );
-		return 2;
-	}
-    
-	if( SSL_CTX_use_certificate_file(ctx, nm->nm_APNSCert, SSL_FILETYPE_PEM) <= 0)
-	{
-		SSL_CTX_free( ctx );
-		ERR_print_errors_fp( stderr );
-		return 3;
-	}
-    
-	if( SSL_CTX_use_PrivateKey_file(ctx, nm->nm_APNSCert, SSL_FILETYPE_PEM ) <= 0)
-	{
-		SSL_CTX_free( ctx );
-		ERR_print_errors_fp( stderr );
-		return 4;
-	}
-    
-	if( SSL_CTX_check_private_key( ctx ) <= 0 )
-	{
-		SSL_CTX_free( ctx );
-		ERR_print_errors_fp( stderr );
-		return 5;
-	}
-	
-	if( nm->nm_APNSSandBox )
-	{
-		he = gethostbyname( APNS_SANDBOX_HOST );
-	}
-	else
-	{
-		he = gethostbyname( APNS_HOST );
-	}
-    
-	if( !he )
-	{
-		SSL_CTX_free( ctx );
-		return 7;
-	}
-	
-	in_port_t sinPort;
-	if( nm->nm_APNSSandBox )
-	{
-		sinPort = htons(APNS_SANDBOX_PORT);
-	}
-	else
-	{
-		sinPort = htons(APNS_PORT);
-	}
-	
-	int successNumber = 0;
-	int failedNumber = 0;		
-			
-	char *pushContent = FMalloc( MAXPAYLOAD_SIZE );
-	if( pushContent != NULL )
-	{
-		while( TRUE )
-		{
-			// go through all tokens separated by , (coma)
-			// and send message to them
-			if( *curToken == 0 || *curToken == ',' )
-			{
-				FBOOL quit = FALSE;
-				if( *curToken != 0 )
-				{
-					*curToken = 0;
-				}
-				else
-				{
-					quit = TRUE;
-				}
-			
-				DEBUG("Send message to : >%s<\n", startToken );
-				
-				sockfd = socket( AF_INET, SOCK_STREAM, 0 );
-				if( sockfd > -1 )
-				{
-					sa.sin_family = AF_INET;
-					memcpy( &sa.sin_addr.s_addr, he->h_addr_list[0], he->h_length );
-					//sa.sin_addr.s_addr = inet_addr( inet_ntoa(*((struct in_addr *) he->h_addr_list[0])));
-	
-					sa.sin_port = sinPort;
-
-					if( connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) != -1 )
-					{
-						DEBUG("Connected to APNS server\n");
-    
-						ssl = SSL_new( ctx );
-						if( ssl != NULL )
-						{
-							SSL_set_fd( ssl, sockfd );
-							if( SSL_connect( ssl ) != -1 )
-							{
-								if( encmsg != NULL )
-								{
-									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
-									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, encmsg );
-								}
-								else
-								{
-									//pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\"},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-									pushContentLen = snprintf( pushContent, MAXPAYLOAD_SIZE-1, "{\"aps\":{\"alert\":\"%s\",\"body\":\"%s\",\"badge\":%d,\"sound\":\"%s\",\"category\":\"FriendUP\",\"mutable-content\":1},\"application\":\"%s\",\"extras\":\"%s\" }", title, content, badge, sound, app, extras );
-								}
-								
-								if( *startToken == ',' )
-								{
-									startToken++;
-								}
-			
-								char *tok = TokenToBinary( startToken );
-								DEBUG("Send payload, token pointer %p token '%s' payload: %s\n", tok, startToken, pushContent );
-								if( tok != NULL )
-								{
-									if( !SendPayload( nm, ssl, tok, pushContent, pushContentLen ) )
-									{
-										failedNumber++;
-									}
-									else
-									{
-										successNumber++;
-									}
-									FFree( tok );
-								}
-							} // SSL_connect
-							SSL_shutdown( ssl );
-							SSL_free( ssl );
-						} // SSLNew
-					} // connect
-					close( sockfd );
-				}	// sockfd == -1
-
-				startToken = curToken+1;
-			
-				if( quit == TRUE )
-				{
-					break;
-				}
-				curToken++;
-			}
-			else
-			{
-				curToken++;
-			}
-		} // while, sending message
-		FFree( pushContent );
-	}
-	
-	DEBUG("Notifications sent: %d fail: %d\n", successNumber, failedNumber );
-	
-	SSL_CTX_free( ctx );
-	
-	if( encmsg != NULL )
-	{
-		FFree( encmsg );
-	}
-	
-	return 0;
-}
-
-/**
- * Send notification to Firebase server
- * 
- * @param nm pointer to NotificationManager
- * @param notif Notification structure
- * @param ID NotificationSent  ID
- * @param action actions after which messages were sent
- * @param tokens device tokens separated by coma
- * @return 0 when success, otherwise error number
- */
-
-int NotificationManagerNotificationSendAndroid( NotificationManager *nm, Notification *notif, FULONG ID, char *action, char *tokens )
-{
-	SystemBase *sb = (SystemBase *)nm->nm_SB;
-	char *host = FIREBASE_HOST;
-	
-	char tmp[ 256 ];
-	snprintf( tmp, sizeof(tmp), "/fcm/send" );
-	
-	//char *headers = "Content-type: application/json\nAuthorization: key=AAAAlbHMs9M:APA91bGlr6dtUg9USN_fEtT6x9HBtq2kAxuu8sZIMC7SlrXD4rUS9-6d3STODGJKunA08uWknKvwPotD2N-RK9aD9IKEhpbUJ7CwqkEmkW7Zp2qN9wUJKRy-cyivnvkOaq1XuDqNz21Q";
-	
-	char headers[ 512 ];
-	
-	snprintf( headers, sizeof(headers), "Content-type: application/json\nAuthorization: key=%s", nm->nm_FirebaseKey );
-	int msgSize = 512;
-	
-	if( tokens != NULL ){ msgSize += strlen( tokens ); }
-	if( notif->n_Channel != NULL ){ msgSize += strlen( notif->n_Channel ); }
-	if( notif->n_Content != NULL ){ msgSize += strlen( notif->n_Content ); }
-	if( notif->n_Title != NULL ){ msgSize += strlen( notif->n_Title ); }
-	if( notif->n_Extra != NULL ){ msgSize += strlen( notif->n_Extra ); }
-	if( notif->n_Application != NULL ){ msgSize += strlen( notif->n_Application ); }
-	
-	//jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\"}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID, notif->n_ID );
-	
-	//char *con = "{\"registration_ids\":[\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"cont-65e9c8ad-1424-4c51-ad17-bde621feb283\",\"content\":\"wfwefwef\",\"title\":\"ztest50\",\"extra\":\"{\\\\\\\"roomId\\\\\\\":\\\\\\\"acc-b5de9510-8115-4ed6-bbf0-09a05c14645f\\\\\\\",\\\\\\\"msgId\\\\\\\":\\\\\\\"msg-0087bc36-3429-47b6-acc4-bf8f208f0d2c\\\\\\\"}\",\"application\":\"FriendChat\",\"action\":\"register\",\"id\":70,\"notifid\":1724,\"source\":\"notification\"}}";
-	char *msg = FMalloc( msgSize );
-	if( msg != NULL )
-	{
-		snprintf( msg, msgSize, "{\"registration_ids\":[%s],\"notification\": {},\"data\":{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"%s\",\"id\":%lu,\"notifid\":%lu,\"source\":\"notification\",\"createtime\":%lu},\"android\":{\"priority\":\"high\"}}", tokens, notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, action, ID , notif->n_ID, notif->n_OriginalCreateT );
-	
-		HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, msg );
-		if( c != NULL )
-		{
-			DEBUG("Client created\n");
-			BufString *bs = HttpClientCall( c, host, 443, TRUE );
-			if( bs != NULL )
-			{
-				DEBUG("Call done\n");
-				char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
-				if( pos != NULL )
-				{
-					DEBUG("Response: %s\n", pos );
-				}
-				BufStringDelete( bs );
-			}
-			HttpClientDelete( c );
-		}
-		else
-		{
-			FERROR("Cannot create client!\n");
-		}
-		FFree( msg );
-	}
-	else
-	{
-		DEBUG("Cannot allocate memory for message\n");
-		return -1;
-	}
-	
-	return 0;
 }
