@@ -3309,7 +3309,9 @@ function apiWrapper( event, force )
 								}
 							},
 							( nmsg.confirmok ? nmsg.confirmok : false ),
-							( nmsg.confirmcancel ? nmsg.confirmcancel : false )
+							( nmsg.confirmcancel ? nmsg.confirmcancel : false ),
+							( nmsg.thirdButtonText ? nmsg.thirdButtonText : false ),
+							( nmsg.thirdButtonReturn ? nmsg.thirdButtonReturn : false )
 						);
 						msg.callback = false;
 						break;

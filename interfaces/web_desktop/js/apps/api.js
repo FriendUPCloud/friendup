@@ -6827,7 +6827,7 @@ if( typeof( windowMouseX ) == 'undefined' )
 
 // Confirm view ----------------------------------------------------------------
 
-function Confirm( title, string, callb, confirmOKText, confirmCancelText )
+function Confirm( title, string, callb, confirmOKText, confirmCancelText, thirdButtonText, thirdButtonReturn )
 {
 	var cb = addCallback( callb );
 	var msg = {
@@ -6839,6 +6839,8 @@ function Confirm( title, string, callb, confirmOKText, confirmCancelText )
 	};
 	if( confirmOKText ) msg.confirmok = confirmOKText;
 	if( confirmCancelText ) msg.confirmcancel = confirmCancelText;
+	if( thirdButtonText ) msg.thirdButtonText = thirdButtonText;
+	if( thirdButtonReturn ) msg.thirdButtonReturn = thirdButtonReturn;
 	
 	Application.sendMessage( msg  );
 }
