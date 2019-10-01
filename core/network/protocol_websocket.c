@@ -71,9 +71,10 @@ static int MAX_SIZE_WS_MESSAGE = WS_PROTOCOL_BUFFER_SIZE-2048;
  * @param msgptr pointer to message
  * @param msglen length of the messsage
  * @param type type of websocket message which will be send
+ * @param prio priority of message
  * @return number of bytes sent
  */
-int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, int type )
+int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, int type, int prio )
 {
 	//Log( FLOG_DEBUG, "WSwriteinline pointer: %p\n", wsi );
 	int result = 0;
@@ -151,9 +152,12 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 						en->fq_Data = queueMsg;
 						en->fq_Size = queueMsgLen;
+						en->fq_Priority = prio;
 				
 						//DEBUG("FQPush: %p\n 
-						FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+						//FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+						
+						FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
 
 						// callback writeable was here
 					}
@@ -188,6 +192,7 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
 					en->fq_Size = msglen;
+					en->fq_Priority = prio;
 			
 					FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
 				}
@@ -297,6 +302,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 							en->fq_Data = queueMsg;
 							en->fq_Size = queueMsgLen;
+							en->fq_Priority = 3;	// default priority
 				
 							//DEBUG("FQPush: %p\n 
 							FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
@@ -305,12 +311,6 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 						}
 					}
 					
-					/*
-					if( wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
-					{
-						lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
-					}
-					*/
 					wsi->wusc_Data->wsc_InUseCounter--;
 				
 					FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
@@ -328,8 +328,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 					}
 				}
 			}
-			
-			//lws_callback_on_writable( wscdata->wc_Wsi );
+
 			FFree( encmsg );
 		}
 	}
@@ -353,6 +352,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 							en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 							memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
 							en->fq_Size = msglen;
+							en->fq_Priority = 3;	// default priority
 			
 							FQPushFIFO( &(wsi->wusc_Data->wsc_MsgQueue), en );
 							retval += msglen;
@@ -363,12 +363,6 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 
 					DEBUG("In use counter %d\n", wsi->wusc_Data->wsc_InUseCounter );
 				
-					/*
-					if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
-					{
-						lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
-					}
-					*/
 					wsi->wusc_Data->wsc_InUseCounter--;
 				}
 				FRIEND_MUTEX_UNLOCK( &(wsi->wusc_Data->wsc_Mutex) );
@@ -616,7 +610,7 @@ void WSThread( void *d )
 					if( fcd->wsc_UserSession != NULL )
 					{
 						//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
-						WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT, 5 );
 					}
 					
 					FFree( buf );
@@ -645,7 +639,7 @@ void WSThread( void *d )
 						
 						//if( fcd->fcd_WSClient != NULL )
 						{
-							WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT, 5 );
 						}
 						FFree( buf );
 					}
@@ -664,7 +658,7 @@ void WSThread( void *d )
 						
 						if( fcd->wsc_UserSession != NULL )//&& fcd->fcd_WSClient != NULL )
 						{
-							WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT, 5 );
 						}
 						FFree( buf );
 					}
@@ -700,7 +694,7 @@ void WSThread( void *d )
 			
 			if( fcd->wsc_UserSession != NULL && fcd->wsc_WebsocketsServerClient != NULL )
 			{
-				WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+				WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT, 4 );
 			}
 			FFree( buf );
 		}
@@ -708,28 +702,6 @@ void WSThread( void *d )
 	}
 	
 	releaseWSData( data );
-	/*
-	if( http != NULL )
-	{
-		UriFree( http->uri );
-		
-		if( http->rawRequestPath != NULL )
-		{
-			FFree( http->rawRequestPath );
-			http->rawRequestPath = NULL;
-		}
-	}
-	
-	FFree( data->requestid );
-	FFree( data->path );
-
-	HttpFree( http );
-	BufStringDelete( queryrawbs );
-	
-	FFree( data );
-	*/
-    
-	//DECREASE_WS_THREADS();
 	
 	FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 	fcd->wsc_InUseCounter--;
@@ -790,7 +762,7 @@ void WSThreadPing( void *p )
 	
 			if( fcd->wsc_UserSession != NULL && fcd->wsc_WebsocketsServerClient != NULL )
 			{
-				WebsocketWriteInline( fcd, answer, answersize, LWS_WRITE_TEXT );
+				WebsocketWriteInline( fcd, answer, answersize, LWS_WRITE_TEXT, 1 );
 			}
 		}
 	
@@ -885,20 +857,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		}
 		DEBUG("set end to 0\n");
 		c[len ] = '\0';
-		
-		// disabled for moment
-		//Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
-	//Log( FLOG_INFO, "[WorkspaceWebsocketCall] pointer to message %p msg len %d reason %d\n", in, len, reason );
 	DEBUG("before switch\n");
 	
 	switch( reason )
 	{
 		case LWS_CALLBACK_ESTABLISHED:
-			//pss->fcd_Number = 0;
-			//INFO("[WS] Callback estabilished %p %p\n", fcd->fcd_SystemBase, fcd->we );
-			
 			pthread_mutex_init( &(fcd->wsc_Mutex), NULL );
 		
 			FQInit( &(fcd->wsc_MsgQueue) );
@@ -906,8 +871,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 		
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
-			//Log( FLOG_INFO, "[WS] LWS_CALLBACK_WS_PEER_INITIATED_CLOSE\n");
-			
 			INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
 		break;
 		
@@ -1062,8 +1025,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			//lws_rx_flow_control( fcd->fcd_WSClient->wc_Wsi, 0 );
 			
 			FQEntry *e = NULL;
-			while( TRUE )
-			{
+			//while( TRUE )
+			//{
 				FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 				FQueue *q = &(fcd->wsc_MsgQueue);
 				if( ( e = FQPop( q ) ) != NULL )
@@ -1089,7 +1052,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 					break;
 				}
-			}
+			//}
 			DEBUG("WS Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
 			
 			FLUSH_QUEUE();
@@ -1360,7 +1323,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										INFO("[WS] Writeline %p\n", fcd->wsc_WebsocketsServerClient );
 										if( fcd->wsc_WebsocketsServerClient != NULL )
 										{
-											WebsocketWriteInline( fcd, buf, len, LWS_WRITE_TEXT );
+											WebsocketWriteInline( fcd, buf, len, LWS_WRITE_TEXT, 2 );
 										}
 										FFree( buf );
 									}
@@ -1393,7 +1356,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 										DEBUG("[WS] Writeline1 %p\n", fcd->wsc_WebsocketsServerClient );
 										if( fcd->wsc_WebsocketsServerClient != NULL )
 										{
-											WebsocketWriteInline( fcd, buf, len, LWS_WRITE_TEXT );
+											WebsocketWriteInline( fcd, buf, len, LWS_WRITE_TEXT, 2 );
 										}
 									FFree( buf );
 									}
@@ -1959,7 +1922,7 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 		
 		if( fcd->wsc_WebsocketsServerClient != NULL && fcd->wsc_UserSession != NULL ) //ORDER IS IMPORTANT
 		{
-			WebsocketWriteInline( fcd, buf, locmsgsize, LWS_WRITE_TEXT );
+			WebsocketWriteInline( fcd, buf, locmsgsize, LWS_WRITE_TEXT, 3 );
 		}
 		
 		//DECREASE_WS_THREADS();
