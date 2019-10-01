@@ -182,9 +182,6 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 
 			if( wscdata->wsc_Wsi != NULL && wscdata->wsc_UserSession != NULL )
 			{
-				int val;
-			
-				UserSession *us = ( UserSession *)wscdata->wsc_UserSession;
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
 				{
