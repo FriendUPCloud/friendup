@@ -9076,7 +9076,7 @@ function InitWorkspaceNetwork()
 	// After such an error, always try reconnect
 	if( Workspace.httpCheckConnectionInterval )
 		clearInterval( Workspace.httpCheckConnectionInterval );
-	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 5000 );
+	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 15000 );
 
 	wsp.checkFriendNetwork();
 	
