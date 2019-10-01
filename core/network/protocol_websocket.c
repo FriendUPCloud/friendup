@@ -155,9 +155,8 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 						en->fq_Priority = prio;
 				
 						//DEBUG("FQPush: %p\n 
-						//FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
-						
-						FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
+						FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+						//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
 
 						// callback writeable was here
 					}
@@ -183,9 +182,6 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 
 			if( wscdata->wsc_Wsi != NULL && wscdata->wsc_UserSession != NULL )
 			{
-				int val;
-			
-				UserSession *us = ( UserSession *)wscdata->wsc_UserSession;
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
 				{
@@ -194,8 +190,8 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 					en->fq_Size = msglen;
 					en->fq_Priority = prio;
 			
-					//FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
-					FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
+					FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+					//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
 				}
 			}
 			
@@ -1051,7 +1047,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				else
 				{
 					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-					break;
+					//break;
 				}
 			//}
 			DEBUG("WS Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
