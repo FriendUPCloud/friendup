@@ -155,9 +155,8 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 						en->fq_Priority = prio;
 				
 						//DEBUG("FQPush: %p\n 
-						//FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
-						
-						FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
+						FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+						//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
 
 						// callback writeable was here
 					}
@@ -194,8 +193,8 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 					en->fq_Size = msglen;
 					en->fq_Priority = prio;
 			
-					//FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
-					FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
+					FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+					//FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
 				}
 			}
 			
