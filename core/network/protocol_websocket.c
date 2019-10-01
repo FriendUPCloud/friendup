@@ -194,7 +194,8 @@ int WebsocketWriteInline( WSCData *wscdata, unsigned char *msgptr, int msglen, i
 					en->fq_Size = msglen;
 					en->fq_Priority = prio;
 			
-					FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+					//FQPushFIFO( &(wscdata->wsc_MsgQueue), en );
+					FQPushWithPriority( &(wscdata->wsc_MsgQueue), en );
 				}
 			}
 			
