@@ -127,6 +127,8 @@
 	text-align: left;
 	font-size: 0.9em;
 	border-radius: 2px;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .EventRect.New
@@ -180,6 +182,55 @@
 {
 	background: rgba(255,255,255,0.5);
 }
+
+/* Sizes horizontally */
+
+.EventRect.Intersecting.Width2
+{
+	width: 50%;
+}
+
+.EventRect.Intersecting.Width2 + .EventRect.Intersecting.Width2
+{
+	left: 50%;
+}
+
+.EventRect.Intersecting.Width3
+{
+	width: 33.3%;
+}
+
+.EventRect.Intersecting.Width3 + .EventRect.Intersecting.Width3
+{
+	left: 33.3%;
+}
+
+.EventRect.Intersecting.Width3 + .EventRect.Intersecting.Width3 + .EventRect.Intersecting.Width3
+{
+	left: 66.6%;
+}
+
+.EventRect.Intersecting.Width4
+{
+	width: 25%;
+}
+
+.EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4
+{
+	left: 25%;
+}
+
+.EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4
+{
+	left: 50%;
+}
+
+.EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4
+{
+	left: 75%;
+}
+
+/* Done sizes horizontally */
 
 .Day
 {

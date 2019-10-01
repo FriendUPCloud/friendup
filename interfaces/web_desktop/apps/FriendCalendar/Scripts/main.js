@@ -645,6 +645,7 @@ var Calendar = {
 		ge( 'MonthName' ).innerHTML = i18n( 'i18n_week' ) + ' ' + week + ', ' + year;
 		
 		this.refresh();
+		this.repositionEvents();
 	},
 	renderDay: function()
 	{
@@ -657,6 +658,14 @@ var Calendar = {
 		var eles = cd.getElementsByClassName( 'EventRect' );
 		for( var a = 0; a < eles.length; a++ )
 		{
+			// Reset intersection info in this pass
+			eles[a].intersecting = null;
+			eles[a].classList.remove( 'Intersecting' );
+			for( var c = 1; c <= 10; c++ )
+			{
+				eles[a].classList.remove( 'Width' + c );
+			}
+			// Animate reposition
 			eles[a].classList.add( 'Animated' );
 			( function( element ) {
 				setTimeout( function()
@@ -718,11 +727,35 @@ var Calendar = {
 				}, 5 );
 			} )( eles[ a ] );
 		}
+		// Find intersecting
+		console.log( 'Testing intersections' );
+		var cr = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		var days = cr.getElementsByClassName( 'Day' );
+		for( var a = 0; a < days.length; a++ )
+		{
+			var evs = days[ a ].getElementsByClassName( 'EventRect' );
+			for( var b = 0; b < evs.length; b++ )
+			{
+				if( evs[ b ].intersecting )
+				{
+					continue;
+				}
+				var out = this.getIntersectingEvents( a, evs[ b ] );
+				if( out )
+				{
+					evs[ b ].classList.add( 'Intersecting', 'Width' + ( out.length + 1 ) );
+					for( var c = 0; c < out.length; c++ )
+					{
+						out[ c ].classList.add( 'Intersecting', 'Width' + ( out.length + 1 ) );
+					}
+				}
+			}
+		}
 	},
 	// Get events that are graphically intersecting by day, top, height
 	getIntersectingEvents: function( day, ele )
 	{
-		var cd = ge( 'MainView' ).querySelector( '.CalendarRow' );
+		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
 		var days = cd.getElementsByClassName( 'Day' );
 		var eles = days[ day ].getElementsByClassName( 'EventRect' );
 		var out = [];
