@@ -691,8 +691,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 			sd->address = StringDuplicate( conname );
 			
 			FriendCoreManager *fcm = sb->fcm;
-			sd->csr = fcm->fcm_CommServiceRemote;
-			sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
+			if( fcm->fcm_CommServiceRemote != NULL )
+			{
+				sd->csr = fcm->fcm_CommServiceRemote;
+				sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
+			}
 			sd->port = sd->csr->csr_port;
 			//sd->port = 6503;
 			
