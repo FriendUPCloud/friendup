@@ -267,75 +267,6 @@ var Calendar = {
 		this.dayRows = w;
 		this.refresh();
 	},
-	// Just neatly reposition stuff
-	repositionEvents: function()
-	{
-		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
-		var eles = cd.getElementsByClassName( 'EventRect' );
-		for( var a = 0; a < eles.length; a++ )
-		{
-			eles[a].classList.add( 'Animated' );
-			( function( element ) {
-				setTimeout( function()
-				{
-					var t = element.offsetTop;
-					var h = element.offsetHeight;
-
-					element.style.top = Math.round( t / calendarRowHeight ) * calendarRowHeight + 'px';
-					element.style.height = Math.round( h / calendarRowHeight ) * calendarRowHeight + 'px';
-					
-					// Update rounded numbers
-					t = element.offsetTop;
-					h = element.offsetHeight;
-					
-					// Convert rect coords to time
-					var wh = cd.querySelector( '.CalendarRow' );
-					var from = t;
-					var to = t + h;
-					var whole = wh.offsetHeight;
-					to   = to / whole * 24;
-					from = from / whole * 24;
-					to   = Math.floor( to * 100 );
-					from = Math.floor( from * 100 );
-					from = StrPad( from + '', 4, '0' );
-					to   = StrPad( to + '',   4, '0' );
-					var toHr = to.substr( 0, 2 );
-					var toMn = to.substr( 2, 2 ); toMn = Math.round( parseInt( toMn ) / 100 ) * 30;
-					toMn = StrPad( toMn + '', 2, '0' );
-					var frHr = from.substr( 0, 2 );
-					var frMn = from.substr( 2, 2 ); frMn = Math.round( parseInt( frMn ) / 100 ) * 30;
-					frMn = StrPad( frMn + '', 2, '0' );
-					
-					// Finally the conversion to time
-					from = frHr + ':' + frMn;
-					to   = toHr + ':' + toMn;
-					
-					if( element.timeout )
-						clearTimeout( element.timeout );
-					element.timeout = setTimeout( function()
-					{
-						var m = new Module( 'system' );
-						m.execute( 
-							'savecalendarevent', 
-							{
-								event: {
-									TimeTo: to,
-									TimeFrom: from
-								},
-								cid: element.event.definition.event.ID 
-							}
-						);
-						element.timeout = null;
-					}, 250 );
-					
-					setTimeout( function()
-					{
-						element.classList.remove( 'Animated' );
-					}, 250 );
-				}, 5 );
-			} )( eles[ a ] );
-		}
-	},
 	renderWeek: function()
 	{
 		ge( 'monthoverview' ).classList.remove( 'Active' );
@@ -718,6 +649,108 @@ var Calendar = {
 	renderDay: function()
 	{
 		ge( 'MainView' ).innerHTML = '';
+	},
+	// Just neatly reposition stuff
+	repositionEvents: function()
+	{
+		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
+		var eles = cd.getElementsByClassName( 'EventRect' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			eles[a].classList.add( 'Animated' );
+			( function( element ) {
+				setTimeout( function()
+				{
+					var t = element.offsetTop;
+					var h = element.offsetHeight;
+
+					element.style.top = Math.round( t / calendarRowHeight ) * calendarRowHeight + 'px';
+					element.style.height = Math.round( h / calendarRowHeight ) * calendarRowHeight + 'px';
+					
+					// Update rounded numbers
+					t = element.offsetTop;
+					h = element.offsetHeight;
+					
+					// Convert rect coords to time
+					var wh = cd.querySelector( '.CalendarRow' );
+					var from = t;
+					var to = t + h;
+					var whole = wh.offsetHeight;
+					to   = to / whole * 24;
+					from = from / whole * 24;
+					to   = Math.floor( to * 100 );
+					from = Math.floor( from * 100 );
+					from = StrPad( from + '', 4, '0' );
+					to   = StrPad( to + '',   4, '0' );
+					var toHr = to.substr( 0, 2 );
+					var toMn = to.substr( 2, 2 ); toMn = Math.round( parseInt( toMn ) / 100 ) * 30;
+					toMn = StrPad( toMn + '', 2, '0' );
+					var frHr = from.substr( 0, 2 );
+					var frMn = from.substr( 2, 2 ); frMn = Math.round( parseInt( frMn ) / 100 ) * 30;
+					frMn = StrPad( frMn + '', 2, '0' );
+					
+					// Finally the conversion to time
+					from = frHr + ':' + frMn;
+					to   = toHr + ':' + toMn;
+					
+					if( element.timeout )
+						clearTimeout( element.timeout );
+					element.timeout = setTimeout( function()
+					{
+						var m = new Module( 'system' );
+						m.execute( 
+							'savecalendarevent', 
+							{
+								event: {
+									TimeTo: to,
+									TimeFrom: from
+								},
+								cid: element.event.definition.event.ID 
+							}
+						);
+						element.timeout = null;
+					}, 250 );
+					
+					setTimeout( function()
+					{
+						element.classList.remove( 'Animated' );
+					}, 250 );
+				}, 5 );
+			} )( eles[ a ] );
+		}
+	},
+	// Get events that are graphically intersecting by day, top, height
+	getIntersectingEvents: function( day, ele )
+	{
+		var cd = ge( 'MainView' ).querySelector( '.CalendarRow' );
+		var days = cd.getElementsByClassName( 'Day' );
+		var eles = days[ day ].getElementsByClassName( 'EventRect' );
+		var out = [];
+		var t = ele.offsetTop;
+		var b = t + ele.offsetHeight;
+		for( var a = 0; a < eles.length; a++ )
+		{
+			var elt = eles[ a ].offsetTop;
+			var elb = eles[ a ].offsetTop + eles[ a ].offsetHeight;
+			
+			// Find intersecting rects
+			if(
+				( elt <= t && elb > t ) ||
+				( elt < b && elb > b ) ||
+				( elt >= t && elb <= b ) ||
+				( elt < t && elb > b )
+			)
+			{
+				if( eles[ a ] != ele )
+				{
+					eles[ a ].intersecting = ele;
+					out.push( eles[ a ] );
+				}
+			}
+		}
+		// Return intersecting or false
+		if( out.length > 0 ) return out;
+		return false;
 	},
 	populate: function( data )
 	{
