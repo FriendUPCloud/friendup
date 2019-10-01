@@ -162,10 +162,12 @@ FriendConnection.prototype.connectWebSocket = function()
 	var url = self.wsProtocol + self.host;
 	if ( self.wsPort )
 		url += ':' + self.wsPort;
-	
-	
+
+
 	url += '/fcws';
-	
+
+console.log("Connect : " + url );
+
 	var conf = {
 		url : url,
 		sessionId : Workspace.sessionId,
@@ -194,6 +196,8 @@ FriendConnection.prototype.setId = function( event, conf )
 FriendConnection.prototype.onWsMessage = function( msg )
 {
 	var self = this;
+
+	console.log("Message came: " + msg );
 	
 	if ( 'response' === msg.type )
 	{
@@ -268,7 +272,7 @@ FriendConnection.prototype.onWsMessage = function( msg )
 FriendConnection.prototype.onWsState = function( e )
 {
 	var self = this;
-	//console.log( 'onWsState', e );
+	console.log( 'onWsState', e );
 	if ( self.onstate )
 		self.onstate( e );
 }
@@ -276,7 +280,7 @@ FriendConnection.prototype.onWsState = function( e )
 FriendConnection.prototype.onWsEnd = function( e )
 {
 	var self = this;
-	//console.log( 'onWsEnd', e );
+	console.log( 'onWsEnd', e );
 	self.releaseWebSocket();
 	if ( self.onend )
 		self.onend( e );
