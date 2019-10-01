@@ -1003,8 +1003,75 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
  * @param ctimestamp create message timestamp
  * @return true when message was send
  */
+
+//#define REGISTER_IN_THREAD
+
+#ifdef REGISTER_IN_THREAD
+
+typedef struct NotifRegMsg
+{
+	void *lsb;
+	char *username;
+	char *channel_id;
+	char *app;
+	char *title;
+	char *message;
+	MobileNotificationTypeT notification_type;
+	char *extraString;
+	FULONG ctimestamp;
+}NotifRegMsg;
+
+#endif
+
+
+#ifdef REGISTER_IN_THREAD
+
+void ProcessMobileRegister( void *locd );
+
 int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
 {
+	NotifRegMsg *nrm = FCalloc( 1, sizeof(NotifRegMsg) );
+	if( nrm != NULL )
+	{
+		nrm->lsb = lsb;
+		nrm->username = StringDuplicate( username );
+		nrm->channel_id = StringDuplicate( channel_id );
+		nrm->app = StringDuplicate( app );
+		nrm->title = StringDuplicate( title );
+		nrm->message = StringDuplicate( message );
+		nrm->notification_type = notification_type;
+		nrm->extraString = StringDuplicate( extraString );
+		nrm->ctimestamp = ctimestamp;
+		pthread_t tmpThread;
+		pthread_create( &tmpThread, NULL, (void *)( void * )ProcessMobileRegister, nrm );
+	}
+	return 0;
+}
+
+
+void ProcessMobileRegister( void *locd )
+{
+	NotifRegMsg *notregmsg = (NotifRegMsg *)locd;
+	if( notregmsg == NULL )
+	{
+		return;
+	}
+	void *lsb = notregmsg->lsb;
+	char *username = notregmsg->username;
+	char *channel_id = notregmsg->channel_id;
+	char *app = notregmsg->app;
+	char *title = notregmsg->title;
+	char *message = notregmsg->message;
+	MobileNotificationTypeT notification_type = notregmsg->notification_type;
+	char *extraString = notregmsg->extraString;
+	FULONG ctimestamp = notregmsg->ctimestamp;
+	
+	pthread_detach( pthread_self() );
+	
+#else
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString, FULONG ctimestamp )
+{
+#endif
 	SystemBase *sb = (SystemBase *)lsb;
 	UserMobileAppConnections *userConnections = NULL;
 	MobileManager *mm = sb->sl_MobileManager;
@@ -1151,7 +1218,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		BufString *bs = MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 		if( bs != NULL )
 		{
-			NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );
+			NotificationManagerNotificationSendAndroidQueue( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );
+			//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", bs->bs_Buffer );
 			//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "register", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
 			Log( FLOG_INFO, "Android tokens which should get notification: %s", bs->bs_Buffer );
 			BufStringDelete( bs );
@@ -1182,7 +1250,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			if( tokens != NULL )
 			{
 				Log( FLOG_INFO, "Send notification through Mobile App: IOS '%s' : tokens %s\n", notif->n_Content, tokens );
-				NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
+				NotificationManagerNotificationSendIOSQueue( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
+				//NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, tokens );
 				FFree( tokens );
 			}
 			else
@@ -1205,7 +1274,16 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 		//return -1;
 	}
 
+#ifdef REGISTER_IN_THREAD
+	if( username != NULL ) FFree( username );
+	if( channel_id != NULL ) FFree( channel_id );
+	if( app != NULL ) FFree( app );
+	if( title != NULL ) FFree( title );
+	if( message != NULL ) FFree( message );
+	if( extraString != NULL ) FFree( extraString );
+#else
 	return 0;
+#endif
 }
 
 
@@ -1300,7 +1378,8 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 	BufString *bs= MobleManagerAppTokensByUserPlatformDB( sb->sl_MobileManager, userID, MOBILE_APP_TYPE_ANDROID, USER_MOBILE_APP_STATUS_APPROVED, notif->n_ID );
 	if( bs != NULL )
 	{
-		NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		NotificationManagerNotificationSendAndroidQueue( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
+		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", bs->bs_Buffer );
 		//NotificationManagerNotificationSendAndroid( sb->sl_NotificationManager, notif, 1, "update", "\"fVpPVyTb6OY:APA91bGhIvzwL2kFEdjwQa1ToI147uydLdw0hsauNUtqDx7NoV1EJ6CWjwSCmHDeDw6C4GsZV3jEpnTwk8asplawkCdAmC1NfmVE7GSp-H4nk_HDoYtBrhNz3es2uq-1bHiYqg2punIg\"" );
 		Log( FLOG_INFO, "Android (update) tokens which should get notification: %s", bs->bs_Buffer );
 		BufStringDelete( bs );
@@ -1345,7 +1424,8 @@ int MobileAppNotifyUserUpdate( void *lsb, const char *username, Notification *no
 					
 					Log( FLOG_INFO, "Send notification (update) through Mobile App: IOS '%s' iostoken: %s\n", notif->n_Content, lma->uma_AppToken );
 					
-					NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
+					NotificationManagerNotificationSendIOSQueue( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
+					//NotificationManagerNotificationSendIOS( sb->sl_NotificationManager, notif->n_Title, notif->n_Content, "default", 1, notif->n_Application, notif->n_Extra, lma->uma_AppToken );
 					/*
 					int msgsize = snprintf( jsonMessageIOS, jsonMessageIosLength, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", sb->l_AppleKeyAPI, notif->n_Content, lma->uma_AppToken, notif->n_Application, lns->ns_ID );
 			
