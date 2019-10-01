@@ -318,11 +318,10 @@ FriendWebSocket.prototype.handleError = function( e )
 
 FriendWebSocket.prototype.handleSocketMessage = function( e )
 {	
-	if( this.pingCheck )
-	{ 
-		clearTimeout( this.pingCheck ); 
-		this.pingCheck = null; 
-	}
+	var self = this;
+	
+	//we received data... good. dont let some delayed ping create panic.
+	if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
 	
 	// TODO: Debug why some data isn't encapsulated
 	// console.log( e.data );
@@ -752,6 +751,10 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 FriendWebSocket.prototype.handleChunk = function( chunk )
 {	
 	var self = this;
+	
+	//we received data... good. dont let some delayed ping create panic.
+	if( self.pingCheck ) { clearTimeout( self.pingCheck ); self.pingCheck = 0 }
+	
 	chunk.total = parseInt( chunk.total, 10 );
 	chunk.part = parseInt( chunk.part, 10 );
 	var cid = chunk.id;
