@@ -315,11 +315,16 @@ var Calendar = {
 					element.timeout = setTimeout( function()
 					{
 						var m = new Module( 'system' );
-						m.onExecuted = function( e, d )
-						{
-							// Nothing to do here...
-						}
-						m.execute( );
+						m.execute( 
+							'savecalendarevent', 
+							{
+								event: {
+									TimeTo: to,
+									TimeFrom: from
+								},
+								cid: element.event.definition.event.ID 
+							}
+						);
 						element.timeout = null;
 					}, 250 );
 					
@@ -700,6 +705,7 @@ var Calendar = {
 			firstDraw = false;
 		}
 		
+		// Add queued events
 		for( var a = 0; a < queuedEventRects.length; a++ )
 		{
 			var eventRect = new EventRect( queuedEventRects[ a ] );

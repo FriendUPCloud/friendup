@@ -15,16 +15,20 @@ if( is_object( $args->args->event ) )
 	$o->UserID = $User->ID;
 	if( $o->Load( $args->args->cid ) )
 	{
-		$o->Title = $args->args->event->Title;
-		$o->Description = $args->args->event->Description;
-		$o->TimeTo = $args->args->event->TimeTo;
-		$o->TimeFrom = $args->args->event->TimeFrom;
-		$o->Date = $args->args->event->Date;
+		if( $args->args->event->Title )
+			$o->Title = $args->args->event->Title;
+		if( $args->args->event->Description )
+			$o->Description = $args->args->event->Description;
+		if( $args->args->event->TimeTo )
+			$o->TimeTo = $args->args->event->TimeTo;
+		if( $args->args->event->TimeFrom )
+			$o->TimeFrom = $args->args->event->TimeFrom;
+		if( $args->args->event->Date )
+			$o->Date = $args->args->event->Date;
 		$o->Type = 'friend';
 		$o->Source = 'friend';
 		$o->Save();
 	}
-
 	if( $o->ID > 0 ) die( 'ok<!--separate-->{"ID":"' . $o->ID . '"}' );
 }
 die( 'fail' );
