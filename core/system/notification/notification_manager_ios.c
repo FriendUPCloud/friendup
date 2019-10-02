@@ -490,28 +490,28 @@ void NotificationIOSSendingThread( FThread *data )
 						DEBUG("SENDING IOS\n\n\n");
 						
 						if( nm->nm_APNSSandBox )
-	{
-		he = gethostbyname( APNS_SANDBOX_HOST );
-	}
-	else
-	{
-		he = gethostbyname( APNS_HOST );
-	}
+						{
+							he = gethostbyname( APNS_SANDBOX_HOST );
+						}
+						else
+						{
+							he = gethostbyname( APNS_HOST );
+						}
     
-	if( !he )
-	{
-		SSL_CTX_free( ctx );
-		FERROR("NotificationIOSSendingThread: get host fail\n");
-	}
+						if( !he )
+						{
+							SSL_CTX_free( ctx );
+							FERROR("NotificationIOSSendingThread: get host fail\n");
+						}
 	
-	if( nm->nm_APNSSandBox )
-	{
-		sinPort = htons(APNS_SANDBOX_PORT);
-	}
-	else
-	{
-		sinPort = htons(APNS_PORT);
-	}
+						if( nm->nm_APNSSandBox )
+						{
+							sinPort = htons(APNS_SANDBOX_PORT);
+						}
+						else
+						{
+							sinPort = htons(APNS_PORT);
+						}
 				
 						sockfd = socket( AF_INET, SOCK_STREAM, 0 );
 						DEBUG("socket: %d\n", sockfd );
@@ -533,7 +533,7 @@ void NotificationIOSSendingThread( FThread *data )
 									SSL_set_fd( ssl, sockfd );
 									if( SSL_connect( ssl ) != -1 )
 									{
-										DEBUG("Send message to APNS: %s\n", e->fq_Data );
+										//DEBUG("Send message to APNS: %s\n", e->fq_Data );
 										int result = SSL_write( ssl, e->fq_Data, e->fq_Size );
 										if( result > 0 )
 										{
