@@ -36,7 +36,7 @@
 
 .Animated
 {
-	transition: height,top 0.25s,0.25s;
+	transition: height,top,left,width 0.25s,0.25s,0s,0s;
 }
 
 .WeekContainer, .MonthContainer

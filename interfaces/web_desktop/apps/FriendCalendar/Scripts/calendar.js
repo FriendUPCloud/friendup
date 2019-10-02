@@ -21,7 +21,7 @@ Application.run = function( msg, iface )
 	this.setApplicationName( 'Friend Calendar' );
 	
 	var v = new View( {
-		title: i18n('i18n_your_calendar'),
+		title: i18n( 'i18n_your_calendar' ),
 		width: 960,
 		height: 720
 	} );
