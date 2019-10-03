@@ -109,7 +109,7 @@ fsyssmb: system/fsysdyn/fsyssmb.c ../core/obj/buffered_string.o system/fsysdyn/f
 #	EXECUTE MODULES
 #
 
-phpmod: system/moduledyn/phpmod.c ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o system/moduledyn/phpmod.d
+phpmod: system/moduledyn/phpmod.c ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/newpopen.o ../core/obj/library.o system/moduledyn/phpmod.d
 	@echo "\033[34mCompile php.emod ...\033[0m"
 	$(CC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -Isystem ../core/obj/log.o ../core/obj/string.o ../core/obj/list.o ../core/obj/list_string.o ../core/obj/library.o system/moduledyn/phpmod.c -o system/bin/emod/php.emod -shared -fPIC -lcrypto
 
