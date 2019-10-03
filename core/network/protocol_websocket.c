@@ -1139,7 +1139,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	}
 
 	
-	if( user != NULL && fcd->wsc_Wsi != NULL )//&& fcd != NULL && reason != LWS_CALLBACK_CLOSED )
+	if( user != NULL && fcd != NULL && fcd->wsc_Wsi != NULL && reason != LWS_CALLBACK_CLOSED )
 	{
 		DEBUG("fcd->wsc_Wsi %p\n", fcd->wsc_Wsi );
 		FLUSH_QUEUE();
