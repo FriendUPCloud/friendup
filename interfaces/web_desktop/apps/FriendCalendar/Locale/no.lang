@@ -113,3 +113,8 @@ i18n_workgroup                        : Arbeidsgruppe
 i18n_no_users_connected               : Ingen brukere er tilknyttet deg.
 i18n_no_workgroups                    : Du er ikke medlem av noen arbeidsgruppe.
 
+# Misc
+
+i18n_weekly_events                    : Ukens hendelser
+i18n_expired_events                   : Utgåtte hendelser
+

@@ -266,6 +266,7 @@ var Calendar = {
 		
 		this.dayRows = w;
 		this.refresh();
+		this.refreshRoster( 'month' );
 	},
 	renderWeek: function()
 	{
@@ -435,7 +436,7 @@ var Calendar = {
 				}
 				else
 				{
-					ml += '<div class="Day Column Label"><div class="LabelText">' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
+					ml += '<div class="Day Column Label"><div class="LabelText">' + dayName + ' ' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
 					ctime += 86400000;
 				}
 			}
@@ -646,10 +647,60 @@ var Calendar = {
 		
 		this.refresh();
 		this.repositionEvents();
+		this.refreshRoster( 'week' );
 	},
 	renderDay: function()
 	{
 		ge( 'MainView' ).innerHTML = '';
+	},
+	refreshRoster: function( mode )
+	{
+		if( !mode ) mode = 'week';
+		
+		if( mode == 'week' )
+		{
+			var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
+			var eles = cd.getElementsByClassName( 'EventRect' );
+			var hstr = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_weekly_events' ) + '</strong></p>';
+			var pstr = '';
+			var nstr = '';
+			var now = ( new Date() ).getTime();
+			var currdate = null;
+			for( var a = 0; a < eles.length; a++ )
+			{
+				var event = eles[ a ].event;
+				if( !event ) continue;
+				var timestamp = ( new Date( event.definition.event.DateEnd ) ).getTime();
+				var cl = '';
+				if( now > timestamp )
+					cl = ' Expired';
+				var dst = event.definition.event.DateStart.split( ' ' )[0];
+				if( currdate != dst )
+				{
+					currdate = dst;
+					var s = '<p class="Date' + cl + '"><strong>' + currdate + '</strong></p>';
+					if( cl ) pstr += s;
+					else nstr += s;
+				}
+				var time = event.definition.event.DateStart.split( ' ' )[1];
+				time = time.split( ':' );
+				time = time[0] + ':' + time[1];
+				var s = '<p class="RosterEvent' + cl + '">' + time + ': ' + event.definition.event.Name + '</p>';
+				if( cl ) pstr += s;
+				else nstr += s;
+			}
+			var ph = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_expired_events' ) + '</strong></p>';
+			if( !pstr ) ph = '';
+			
+			// Update roster
+			ge( 'Roster' ).innerHTML = hstr + nstr + ph + pstr;
+		}
+		else if( mode == 'month' )
+		{
+		}
+		else if( mode == 'day' )
+		{
+		}
 	},
 	// Just neatly reposition stuff
 	repositionEvents: function()
@@ -706,17 +757,20 @@ var Calendar = {
 						clearTimeout( element.timeout );
 					element.timeout = setTimeout( function()
 					{
-						var m = new Module( 'system' );
-						m.execute( 
-							'savecalendarevent', 
-							{
-								event: {
-									TimeTo: to,
-									TimeFrom: from
-								},
-								cid: element.event.definition.event.ID 
-							}
-						);
+						if( element.event )
+						{
+							var m = new Module( 'system' );
+							m.execute( 
+								'savecalendarevent', 
+								{
+									event: {
+										TimeTo: to,
+										TimeFrom: from
+									},
+									cid: element.event.definition.event.ID 
+								}
+							);
+						}
 						element.timeout = null;
 					}, 250 );
 					
@@ -728,7 +782,6 @@ var Calendar = {
 			} )( eles[ a ] );
 		}
 		// Find intersecting
-		console.log( 'Testing intersections' );
 		var cr = ge( 'MainView' ).querySelector( '.CalendarDates' );
 		var days = cr.getElementsByClassName( 'Day' );
 		for( var a = 0; a < days.length; a++ )

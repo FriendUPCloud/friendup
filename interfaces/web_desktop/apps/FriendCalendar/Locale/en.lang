@@ -113,3 +113,10 @@ i18n_workgroup                        : Workgroup
 i18n_no_users_connected               : No users connected.
 i18n_no_workgroups                    : You are not a member of any workgroups.
 
+# Misc
+
+i18n_weekly_events                    : This week's events
+i18n_expired_events                   : Expired events
+
+
+

@@ -36,7 +36,8 @@
 
 .Animated
 {
-	transition: height,top,left,width 0.25s,0.25s,0s,0s;
+	transition-property: height, top, left, width;
+	transition-duration: 0.25s, 0.25s, 0s, 0s;
 }
 
 .WeekContainer, .MonthContainer
@@ -115,6 +116,11 @@
 	height: calc(100% - 30px);
 	overflow: auto;
 	background-color: #191919;
+}
+
+#Roster .Date.Expired, #Roster .RosterEvent.Expired
+{
+	opacity: 0.6;
 }
 
 .EventRect
