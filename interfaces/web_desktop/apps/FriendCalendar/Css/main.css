@@ -128,25 +128,43 @@
 	width: calc(92% - 5px);
 	left: calc(8% - 1px);
 	position: relative;
+	background-color: rgba(0,0,0,0.2);
 }
 
 .LongEvent.Week
 {
 	display: block;
 	box-sizing: border-box;
-	border: 1px solid rgba(0,0,0,0.2);
 	position: absolute;
+	width: 100%;
+	left: 0;
+	border-bottom: 1px solid rgba(0,0,0,0.4);
 }
 
 .LongEvent.Day
 {
+	position: absolute;
+	height: 100%;
+}
+
+.LongEvent.Week:last-child
+{
+	border-bottom: none;
+}
+
+.LongEvent.Day > div
+{
+	border-right: 1px solid rgba(0,0,0,0.4);
+	border-bottom: 1px solid rgba(0,0,0,0.4);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	box-sizing: border-box;
-	border: 1px solid rgba(0,0,0,0.2);
-	border-radius: 3px;
-	position: absolute;
+}
+
+.LongEvent.Day:nth-child(even)
+{
+	background-color: rgba(0,0,0,0.2);
 }
 
 .EventRect

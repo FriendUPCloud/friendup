@@ -413,6 +413,7 @@ var Calendar = {
 							
 							ypos = ypos / 24 * 100;
 							
+							var day = ( new Date( events[ b ].DateStart ) ).getDay();
 							
 							var height = events[ b ].DateEnd.split( ' ' )[1];
 							height = height.split( ':' );
@@ -436,7 +437,9 @@ var Calendar = {
 								// All day event
 								if( md.AllDay )
 								{
-									allDayEvents.push( events[ b ] );
+									if( !allDayEvents[ day ] )
+										allDayEvents[ day ] = [];
+									allDayEvents[ day ].push( events[ b ] );
 									continue;
 								}
 								// All week event
@@ -484,34 +487,48 @@ var Calendar = {
 		
 		// Long events
 		ge( 'LongEvents' ).innerHTML = '';
-		var eventCount = 0;
-		if( allDayEvents.length )
+		
+		var eventCount = len = maxDayslotLength = 0;
+		if( allDayEvents )
+			for( var a in allDayEvents ) len++;
+		
+		if( len > 0 )
 		{
-			for( var a = 0; a < allDayEvents.length; a++ )
+			for( var b = 0; b <= 6; b++ )
 			{
-				var ev = allDayEvents[ a ];
-				var l = document.createElement( 'div' );
+				var daySlot = document.createElement( 'div' );
+				daySlot.className = 'LongEvent Day';
+				daySlot.style.width = 100 / 7 + '%';
+				daySlot.style.left = 100 / 7 * ( b - 1 ) + '%';
+				ge( 'LongEvents' ).appendChild( daySlot );
 				
-				var d = new Date( ev.DateStart );
-				d = d.getDay();
+				var ade = allDayEvents[ b ];
+				if( !ade ) continue;
 				
-				l.className = 'LongEvent MousePointer Day PaddingSmall';
-				l.innerHTML = ev.Name;
-				l.style.width = 100 / 7 + '%';
-				l.style.left = 100 / 7 * ( d - 1 ) + '%';
-				l.style.top = a * calendarRowHeight + 'px';
-				l.style.height = calendarRowHeight + 'px';
-				l.style.backgroundColor = eventPaletteBackground[ 0 ];
-				l.style.color = eventPaletteForeground[ 0 ];
-				( function( evt, ele ) {
-					ele.ondblclick = function( e )
-					{
-						EditEvent( evt.ID );
-					}
-				} )( ev, l );
-				ge( 'LongEvents' ).appendChild( l );
+				for( var a = 0; a < ade.length; a++ )
+				{
+					var ev = ade[ a ];
+					var l = document.createElement( 'div' );
+				
+					l.className = 'MousePointer PaddingSmall';
+					l.innerHTML = ev.Name;
+					l.style.height = calendarRowHeight + 'px';
+					l.style.backgroundColor = eventPaletteBackground[ 0 ];
+					l.style.color = eventPaletteForeground[ 0 ];
+					( function( evt, ele ) {
+						ele.ondblclick = function( e )
+						{
+							EditEvent( evt.ID );
+						}
+					} )( ev, l );
+					
+					daySlot.appendChild( l );
+				}
+				
+				if( ade.length > maxDayslotLength )
+					maxDayslotLength = ade.length;
 			}
-			eventCount += allDayEvents.length;
+			eventCount += maxDayslotLength;
 		}
 		if( allWeekEvents.length )
 		{
