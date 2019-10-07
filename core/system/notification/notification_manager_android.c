@@ -70,6 +70,9 @@ void NotificationAndroidSendingThread( FThread *data )
 					
 						// send message
 						nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
+						
+						Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
+						
 						BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
 						if( bs != NULL )
 						{
@@ -77,7 +80,7 @@ void NotificationAndroidSendingThread( FThread *data )
 							char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
 							if( pos != NULL )
 							{
-								DEBUG("Response: %s\n", pos );
+								Log( FLOG_INFO, "Response from firebase : %s\n", pos );
 							}
 							BufStringDelete( bs );
 						}
