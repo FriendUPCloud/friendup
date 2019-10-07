@@ -24,6 +24,8 @@
 #include <core/types.h>
 #include <util/buffered_string.h>
 
+#define GEO_LOCATION_FILE "cfg/geolocation"
+
 /**
  * Structure containing information to locate the Friend Core to query
  */
