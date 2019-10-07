@@ -324,6 +324,8 @@ var Calendar = {
 		var up = true;
 		var calStart = false;
 		var queuedEventRects = [];
+		var allDayEvents = [];
+		var allWeekEvents = [];
 		
 		for( var w = -1; w < 1; w++ )
 		{
@@ -419,6 +421,32 @@ var Calendar = {
 							height = height / 24 * 100;
 							height = height - ypos;
 							
+							// Check metadata
+							var md = false;
+							try
+							{
+								md = JSON.parse( events[ b ].MetaData );
+							}
+							catch( e )
+							{
+								md = false;
+							}
+							if( md )
+							{
+								// All day event
+								if( md.AllDay )
+								{
+									allDayEvents.push( events[ b ] );
+									continue;
+								}
+								// All week event
+								else if( md.AllWeek )
+								{
+									allWeekEvents.push( events[ b ] );
+									continue;
+								}
+							}
+							
 							queuedEventRects.push( {
 								day: cday,
 								ypos: ypos,
@@ -453,6 +481,72 @@ var Calendar = {
 		
 		var eventDiv = document.createElement( 'div' );
 		eventDiv.className = 'WeekContainer';
+		
+		// Long events
+		ge( 'LongEvents' ).innerHTML = '';
+		var eventCount = 0;
+		if( allDayEvents.length )
+		{
+			for( var a = 0; a < allDayEvents.length; a++ )
+			{
+				var ev = allDayEvents[ a ];
+				var l = document.createElement( 'div' );
+				
+				var d = new Date( ev.DateStart );
+				d = d.getDay();
+				
+				l.className = 'LongEvent MousePointer Day PaddingSmall';
+				l.innerHTML = ev.Name;
+				l.style.width = 100 / 7 + '%';
+				l.style.left = 100 / 7 * ( d - 1 ) + '%';
+				l.style.top = a * calendarRowHeight + 'px';
+				l.style.height = calendarRowHeight + 'px';
+				l.style.backgroundColor = eventPaletteBackground[ 0 ];
+				l.style.color = eventPaletteForeground[ 0 ];
+				( function( evt, ele ) {
+					ele.ondblclick = function( e )
+					{
+						EditEvent( evt.ID );
+					}
+				} )( ev, l );
+				ge( 'LongEvents' ).appendChild( l );
+			}
+			eventCount += allDayEvents.length;
+		}
+		if( allWeekEvents.length )
+		{
+			for( var a = 0; a < allWeekEvents.length; a++ )
+			{
+				var ev = allWeekEvents[ a ];
+				var l = document.createElement( 'div' );
+				
+				l.className = 'LongEvent MousePointer Week PaddingSmall';
+				l.innerHTML = ev.Name;
+				l.style.top = ( a + eventCount ) * calendarRowHeight + 'px';
+				l.style.height = calendarRowHeight + 'px';
+				l.style.backgroundColor = eventPaletteBackground[ 0 ];
+				l.style.color = eventPaletteForeground[ 0 ];
+				( function( evt, ele ) {
+					ele.ondblclick = function( e )
+					{
+						EditEvent( evt.ID );
+					}
+				} )( ev, l );
+				ge( 'LongEvents' ).appendChild( l );
+			}
+			eventCount += allWeekEvents.length;
+		}
+		if( eventCount > 0 )
+		{
+			var leHeight = calendarRowHeight * eventCount;
+			ge( 'LongEvents' ).style.height = leHeight + 1 + 'px';
+			ge( 'MainView' ).style.top = ge( 'TopPanel' ).offsetHeight + leHeight + 1 + 'px';
+		}
+		else
+		{
+			ge( 'MainView' ).style.top = '';
+			ge( 'LongEvents' ).style.height = '0';
+		}
 		
 		// Add events and add element ------------------------------------------
 		eventDiv.addEventListener( 'mousedown', function( e )
@@ -1067,8 +1161,10 @@ function EditEvent( id )
 			height: 550
 		} );
 		
-		var allDay = evd.TimeFrom.substr(0,2) == '00' && evd.TimeTo.substr(0,2) == '24' ? ' checked="checked"' : '';
-		var allWeek = '';
+		evd.MetaData = JSON.parse( evd.MetaData );
+		
+		var allDay = evd.MetaData.AllDay;
+		var allWeek = evd.MetaData.AllWeek;
 		
 		var f = new File( 'Progdir:Templates/event.html' );
 		f.replacements = {
@@ -1078,8 +1174,8 @@ function EditEvent( id )
 			timeto: evd.TimeTo,
 			date: evd.Date,
 			time: !allWeek && !allDay ? ' checked="checked"' : '',
-			allday: allDay,
-			allweek: allWeek,
+			allday: allDay ? ' checked="checked"' : '',
+			allweek: allWeek ? ' checked="checked"' : '',
 			ID: id,
 			parentViewId: Application.viewId
 		};
@@ -1224,6 +1320,8 @@ Application.receiveMessage = function( msg )
 						Description: ed.leadin,
 						TimeTo: ed.timeTo,
 						TimeFrom: ed.timeFrom,
+						AllDay: ed.allDay,
+						AllWeek: ed.allWeek,
 						Date: ed.date
 					},
 					cid: ed.id > 0 ? ed.id: 0

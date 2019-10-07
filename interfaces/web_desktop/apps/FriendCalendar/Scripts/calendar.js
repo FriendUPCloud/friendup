@@ -434,6 +434,7 @@ function UpdateEvents( evts )
 					DateEnd: tt,
 					Your: eles[a].Your,
 					Owner: eles[a].Owner,
+					MetaData: eles[a].MetaData,
 					Name: eles[a].Title,
 					ID: parseInt( eles[a].ID )
 				} );

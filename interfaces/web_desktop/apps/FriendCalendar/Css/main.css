@@ -123,6 +123,32 @@
 	opacity: 0.6;
 }
 
+#LongEvents
+{
+	width: calc(92% - 5px);
+	left: calc(8% - 1px);
+	position: relative;
+}
+
+.LongEvent.Week
+{
+	display: block;
+	box-sizing: border-box;
+	border: 1px solid rgba(0,0,0,0.2);
+	position: absolute;
+}
+
+.LongEvent.Day
+{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	box-sizing: border-box;
+	border: 1px solid rgba(0,0,0,0.2);
+	border-radius: 3px;
+	position: absolute;
+}
+
 .EventRect
 {
 	position: absolute;

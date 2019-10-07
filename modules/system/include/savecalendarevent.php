@@ -15,6 +15,13 @@ if( is_object( $args->args->event ) )
 	$o->UserID = $User->ID;
 	if( $o->Load( $args->args->cid ) )
 	{
+		if( !( $metaData = json_decode( $o->MetaData ) ) )
+		{
+			$metaData = new stdClass();
+			$metaData->AllDay = false;
+			$metaData->AllWeek = false;
+		}
+		
 		if( isset( $args->args->event->Title ) )
 			$o->Title = $args->args->event->Title;
 		if( isset( $args->args->event->Description ) )
@@ -25,6 +32,12 @@ if( is_object( $args->args->event ) )
 			$o->TimeFrom = $args->args->event->TimeFrom;
 		if( isset( $args->args->event->Date ) )
 			$o->Date = $args->args->event->Date;
+		if( isset( $args->args->event->AllDay ) )
+			$metaData->AllDay = $args->args->event->AllDay;
+		if( isset( $args->args->event->AllWeek ) )
+			$metaData->AllWeek = $args->args->event->AllWeek;
+			
+		$o->MetaData = json_encode( $metaData );
 		$o->Type = 'friend';
 		$o->Source = 'friend';
 		$o->Save();
