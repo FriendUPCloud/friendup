@@ -13,11 +13,21 @@
 			<input type="date" class="FullWidth" id="pDate" value="{date}"/>
 		</p>
 		<p class="Layout">
-			<div class="FloatRight">
-				<strong>{i18n_all_day}</strong>
-				<input type="checkbox" id="pAllDay"{allday}/>
-			</div>
-			<strong>{i18n_time_from}</strong>
+			<form name="dateSpanType">
+				<div class="FloatRight">
+					<strong><label for="pTime">{i18n_timeslot}</label></strong>
+					<input type="radio" name="type" id="pTime"{timeslot}/>
+				</div>
+				<div class="FloatRight">
+					<strong><label for="pAllDay">{i18n_all_day}</label></strong>
+					<input type="radio" name="type" id="pAllDay"{allday}/>
+				</div>
+				<div class="FloatRight">
+					<strong><label for="pAllWeek">{i18n_all_week}</label></strong>
+					<input type="radio" name="type" id="pAllWeek"{allweek}/>
+				</div>
+				<strong>{i18n_time_from}</strong>
+			</form>
 		</p>
 		<p class="Layout">
 			<input type="time" class="FullWidth" id="pTimeFrom" value="{timefrom}"/>

@@ -51,7 +51,9 @@ i18n_date                             : Date
 i18n_time                             : Time
 i18n_time_from                        : Time from
 i18n_time_to                          : Time to
+i18n_timeslot                         : Time
 i18n_all_day                          : All day
+i18n_all_week                         : All week
 i18n_event_name                       : Event name:
 i18n_leadin                           : Leadin:
 i18n_save                             : Save

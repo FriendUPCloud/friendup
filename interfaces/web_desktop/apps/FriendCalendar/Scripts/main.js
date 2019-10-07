@@ -453,6 +453,7 @@ var Calendar = {
 		
 		var eventDiv = document.createElement( 'div' );
 		eventDiv.className = 'WeekContainer';
+		
 		// Add events and add element ------------------------------------------
 		eventDiv.addEventListener( 'mousedown', function( e )
 		{
@@ -585,7 +586,9 @@ var Calendar = {
 				timefrom: from,
 				timeto: to,
 				date: date,
-				allday: from == 0 && to == 24 ? ' checked="checked"' : '',
+				timeslot: ' checked="checked"',
+				allweek: '',
+				allday: '',
 				ID: 0,
 				parentViewId: Application.viewId
 			};
@@ -611,6 +614,7 @@ var Calendar = {
 			return cancelBubble( e );
 		}
 		// Done events ---------------------------------------------------------
+		
 		eventDiv.innerHTML = ml;
 		ge( 'MainView' ).innerHTML = '';
 		ge( 'MainView' ).appendChild( eventDiv );
@@ -1024,6 +1028,8 @@ function AddEvent( year, month, day )
 		timefrom: '',
 		timeto: '',
 		date: date,
+		timeslot: ' checked="checked"',
+		allweek: '',
 		allday: '',
 		ID: 0,
 		parentViewId: Application.viewId
@@ -1060,6 +1066,10 @@ function EditEvent( id )
 			width: 500,
 			height: 550
 		} );
+		
+		var allDay = evd.TimeFrom.substr(0,2) == '00' && evd.TimeTo.substr(0,2) == '24' ? ' checked="checked"' : '';
+		var allWeek = '';
+		
 		var f = new File( 'Progdir:Templates/event.html' );
 		f.replacements = {
 			title: evd.Title,
@@ -1067,7 +1077,9 @@ function EditEvent( id )
 			timefrom: evd.TimeFrom,
 			timeto: evd.TimeTo,
 			date: evd.Date,
-			allday: evd.TimeFrom.substr(0,2) == '00' && evd.TimeTo.substr(0,2) == '24' ? ' checked="checked"' : '',
+			time: !allWeek && !allDay ? ' checked="checked"' : '',
+			allday: allDay,
+			allweek: allWeek,
 			ID: id,
 			parentViewId: Application.viewId
 		};
@@ -1266,6 +1278,10 @@ Application.receiveMessage = function( msg )
 var nowDiv = null;
 function drawNow()
 {
+	if( ge( 'nowdiv' ) )
+	{
+		nowDiv = ge( 'nowdiv' );
+	}
 	if( nowDiv )
 	{
 		var d = new Date();
@@ -1274,7 +1290,7 @@ function drawNow()
 		nowDiv.style.top = Math.floor( tint / 24 * cd.offsetHeight ) + 'px';
 	}
 }
-setTimeout( drawNow, 10000 );
+setInterval( drawNow, 10000 );
 
 // Sharing ---------------------------------------------------------------------
 

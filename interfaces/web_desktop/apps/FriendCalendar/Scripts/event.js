@@ -22,6 +22,8 @@ Application.run = function( msg )
 			timeTo: ge( 'pTimeTo' ).value.substr( 0, 5 ),
 			date: ge( 'pDate' ).value,
 			allDay: ge( 'pAllDay' ).checked ? true : false,
+			allWeek: ge( 'pAllWeek' ).checked ? true : false,
+			time: ge( 'pTime' ).checked ? true : false,
 			title: ge( 'pName' ).value,
 			leadin: ge( 'pDescription' ).value
 		};

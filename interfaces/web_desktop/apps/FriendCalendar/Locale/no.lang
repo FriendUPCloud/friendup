@@ -50,7 +50,9 @@ i18n_date                             : Dato
 i18n_time                             : Tid
 i18n_time_from                        : Tid fra
 i18n_time_to                          : Tid til
+i18n_timeslot                         : Tid
 i18n_all_day                          : Hele dagen
+i18n_all_week                         : Hele uken
 i18n_event_name                       : Hendelsesnavn:
 i18n_leadin                           : Beskrivelse:
 i18n_save                             : Lagre
