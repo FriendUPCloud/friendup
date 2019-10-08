@@ -102,6 +102,8 @@ char *FilterPHPVar( char *line )
 	return line;
 }
 
+#define USE_NPOPEN
+
 /**
  * @brief Run a PHP module with arguments
  *
@@ -119,7 +121,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	unsigned int epathLen = strlen( epath );
 	int escapedSize = eargLen + epathLen + 1024;
 
-	int siz = eargLen + epathLen + 128;
+	//int siz = eargLen + epathLen + 128;
 	
 	char *command = NULL;
 	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
@@ -152,38 +154,26 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	DEBUG( "[PHPmod] run app: %s\n", command );
 	
+	#define PHP_READ_SIZE 65536	
+	
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	
+	ListString *ls = ListStringNew();
+	
+#ifdef USE_NPOPEN
+	
 	NPOpenFD pofd;
 	int err = newpopen( command, &pofd );
 	if( err != 0 )
 	{
 		FERROR("[PHPmod] cannot open pipe: %s\n", strerror( errno ) );
+		ListStringDelete( ls );
+		FFree( buf );
 		return NULL;
 	}
-	/*
-	FILE *pipe = popen( command, "r" );
-	if( !pipe )
-	{
-		FERROR("[PHPmod] cannot open pipe\n");
-		free( command ); free( epath ); free( earg );
-		return NULL;
-	}
-	*/
-	
-	//char *buffer = NULL;
-	char *temp = NULL;
-	char *result = NULL;
-	char *gptr = NULL;
 	
 	DEBUG("[PHPmod] command launched\n");
-	int errors = 0;
-	int lbufcall = LBUFFER_SIZE + 1;
-	
-	ListString *ls = ListStringNew();
-	//char buffer[ LBUFFER_SIZE ];
-#define PHP_READ_SIZE 65536	
-	
-	char *buf = FMalloc( PHP_READ_SIZE+16 );
-	
+
 	//printf("<=<=<=<=%s\n", command );
 	fd_set set;
 	struct timeval timeout;
@@ -233,28 +223,37 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 			}
 		}
 	}
-	/*
-	while( !feof( pipe ) )
-	{
-		int reads = fread( buffer, sizeof( char ), LBUFFER_SIZE, pipe );
-		if( reads > 0 )
-		{
-			ListStringAdd( ls, buffer, reads );
-			res += reads;
-		}
-	}
-	*/
-	//printf("<=<=<=<=%s\n", command );
-	 
-	//DEBUG("[PHPmod] received bytes %d  : %100s\n", bs->bs_Size, bs->bs_Buffer );
 	
-	// Free buffer if it's there
-	//pclose( pipe );
-	FFree( buf );
 	DEBUG("[PHPmod] File readed\n");
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
+
+#else // USE_NPOPEN
+
+	FILE *pipe = popen( command, "r" );
+	if( !pipe )
+	{
+		FERROR("[PHPmod] cannot open pipe\n");
+		free( command ); free( epath ); free( earg );
+		return NULL;
+	}
+	
+	while( !feof( pipe ) )
+	{
+		int reads = fread( buf, sizeof( char ), LBUFFER_SIZE, pipe );
+		if( reads > 0 )
+		{
+			ListStringAdd( ls, buf, reads );
+			res += reads;
+		}
+	}
+	
+	pclose( pipe );
+#endif
+	
+	// Free buffer if it's there
+	FFree( buf );
 	
 	// Set the length
 	if( length != NULL )
@@ -270,7 +269,20 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	//DEBUG("Final string %s\n", final );
 	
 	//DEBUG( "[PHPmod] We are now complete.. %s\n", final );
-	free( command ); free( epath ); free( earg );
+	if( command != NULL )
+	{
+		free( command );
+	}
+	
+	if( epath != NULL )
+	{
+		free( epath );
+	}
+	
+	if( earg != NULL )
+	{
+		free( earg );
+	}
 	return final;
 }
 
