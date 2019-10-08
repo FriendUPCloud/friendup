@@ -114,9 +114,22 @@
 	top: 0px;
 	left: 0;
 	width: 100%;
-	height: calc(100% - 30px);
+	height: 100%;
 	overflow: auto;
 	background-color: #191919;
+}
+
+.WeekContainer:after, .MonthContainer:after
+{
+	content: " ";
+	position: absolute;
+	top: 0; 
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 10;
+	pointer-events: none;
+	box-shadow: inset 0px 0px 40px rgba(0,0,0,0.5);
 }
 
 /* Position left column */
