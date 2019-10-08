@@ -576,6 +576,7 @@ void *FriendCoreAcceptPhase2( void *d )
 
 			while( 1 )
 			{
+				DEBUG("before accept\n");
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
 				{
 					break;
