@@ -102,7 +102,7 @@ char *FilterPHPVar( char *line )
 	return line;
 }
 
-#define USE_NPOPEN
+//#define USE_NPOPEN
 
 /**
  * @brief Run a PHP module with arguments
