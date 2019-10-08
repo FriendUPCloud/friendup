@@ -800,7 +800,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					List* list = CreateList();
 
 					// Do not split Set-Cookie field
-					if( strcmp( currentToken, "set-cookie" ) == 0 )
+					if( currentToken != NULL && strcmp( currentToken, "set-cookie" ) == 0 )
 					{
 						AddToList( list, value );
 					}
