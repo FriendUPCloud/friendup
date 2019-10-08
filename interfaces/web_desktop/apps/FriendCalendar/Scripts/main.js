@@ -125,6 +125,11 @@ var Calendar = {
 	},
 	renderMonth: function()
 	{
+		// Flush "long events"
+		ge( 'LongEvents' ).innerHTML = '';
+		ge( 'MainView' ).style.top = '';
+		ge( 'LongEvents' ).style.height = '0';
+		
 		ge( 'monthoverview' ).classList.add( 'Active' );
 		ge( 'weekoverview' ).classList.remove( 'Active' );
 		
@@ -266,7 +271,7 @@ var Calendar = {
 		
 		this.dayRows = w;
 		this.refresh();
-		this.refreshRoster( 'month' );
+		this.refreshRoster( 'week' );
 	},
 	renderWeek: function()
 	{
@@ -778,7 +783,6 @@ var Calendar = {
 		
 		if( mode == 'week' )
 		{
-			var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
 			var eles = Calendar.events;
 			var hstr = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_weekly_events' ) + '</strong></p>';
 			var pstr = '';
