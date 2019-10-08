@@ -1052,7 +1052,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			//}
 			DEBUG("WS Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
 			
-			FLUSH_QUEUE();
+			//FLUSH_QUEUE();
 			
 			break;
 		
@@ -1098,13 +1098,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 	}
 
-	/*
-	if( user != NULL && fcd->wsc_Wsi != NULL )//&& fcd != NULL && reason != LWS_CALLBACK_CLOSED )
+	
+	if( user != NULL && fcd != NULL && fcd->wsc_Wsi != NULL && reason != LWS_CALLBACK_CLOSED )
 	{
 		DEBUG("fcd->wsc_Wsi %p\n", fcd->wsc_Wsi );
 		FLUSH_QUEUE();
 	}
-	*/
+	
 	DEBUG("END of callback\n");
 	
 	DECREASE_WS_THREADS();
