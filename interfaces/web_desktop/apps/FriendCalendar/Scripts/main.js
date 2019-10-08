@@ -467,7 +467,10 @@ var Calendar = {
 				}
 				else
 				{
-					ml += '<div class="Day Column Label"><div class="LabelText">' + dayName + ' ' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
+					var cl = '';
+					if( a == currentDay )
+						cl = ' Today';
+					ml += '<div class="Day Column Label' + cl + '"><div class="LabelText">' + dayName + ' ' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
 					ctime += 86400000;
 				}
 			}
@@ -697,6 +700,7 @@ var Calendar = {
 				timefrom: from,
 				timeto: to,
 				date: date,
+				dateTo: date,
 				timeslot: ' checked="checked"',
 				allweek: '',
 				allday: '',
@@ -1139,6 +1143,7 @@ function AddEvent( year, month, day )
 		timefrom: '',
 		timeto: '',
 		date: date,
+		dateTo: date,
 		timeslot: ' checked="checked"',
 		allweek: '',
 		allday: '',
@@ -1190,6 +1195,7 @@ function EditEvent( id )
 			timefrom: evd.TimeFrom,
 			timeto: evd.TimeTo,
 			date: evd.Date,
+			dateTo: evd.DateTo,
 			time: !allWeek && !allDay ? ' checked="checked"' : '',
 			allday: allDay ? ' checked="checked"' : '',
 			allweek: allWeek ? ' checked="checked"' : '',
@@ -1339,7 +1345,8 @@ Application.receiveMessage = function( msg )
 						TimeFrom: ed.timeFrom,
 						AllDay: ed.allDay,
 						AllWeek: ed.allWeek,
-						Date: ed.date
+						Date: ed.date,
+						DateTo: ed.dateTo
 					},
 					cid: ed.id > 0 ? ed.id: 0
 				}

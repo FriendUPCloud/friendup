@@ -25,7 +25,8 @@ Application.run = function( msg )
 			allWeek: ge( 'pAllWeek' ).checked ? true : false,
 			time: ge( 'pTime' ).checked ? true : false,
 			title: ge( 'pName' ).value,
-			leadin: ge( 'pDescription' ).value
+			leadin: ge( 'pDescription' ).value,
+			dateTo: ge( 'pDateTo' ).value
 		};
 		self.sendMessage( {
 			command: 'saveevent',
