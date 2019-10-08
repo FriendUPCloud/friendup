@@ -47,6 +47,7 @@ i18n_add_calendar                     : Legg til kalender
 i18n_share_calendar                   : Del kalender
 i18n_week                             : Uke
 i18n_date                             : Dato
+i18n_date_to                          : Sluttdato
 i18n_time                             : Tid
 i18n_time_from                        : Tid fra
 i18n_time_to                          : Tid til

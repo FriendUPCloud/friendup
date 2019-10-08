@@ -48,6 +48,7 @@ i18n_add_calendar                     : Add calendar
 i18n_share_calendar                   : Share calendar
 i18n_week                             : Week
 i18n_date                             : Date
+i18n_date_to                          : Ends date
 i18n_time                             : Time
 i18n_time_from                        : Time from
 i18n_time_to                          : Time to

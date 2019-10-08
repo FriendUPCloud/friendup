@@ -779,34 +779,107 @@ var Calendar = {
 		if( mode == 'week' )
 		{
 			var cd = ge( 'MainView' ).querySelector( '.CalendarDates' );
-			var eles = cd.getElementsByClassName( 'EventRect' );
+			var eles = Calendar.events;
 			var hstr = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_weekly_events' ) + '</strong></p>';
 			var pstr = '';
 			var nstr = '';
 			var now = ( new Date() ).getTime();
 			var currdate = null;
-			for( var a = 0; a < eles.length; a++ )
+			
+			var time = this.date.getTime();
+			var time2 = this.date.getTime();
+			var findDay = new Date( time );
+			var startDay = this.date.getDay();
+			var endDay = this.date.getDay();
+			var dateFrom = dateTo = '';
+		
+			// Find start of week (where monday is 1)
+			// And find date span for the week
+			if( ( new Date( time ).getDay() ) != 1 )
 			{
-				var event = eles[ a ].event;
-				if( !event ) continue;
-				var timestamp = ( new Date( event.definition.event.DateEnd ) ).getTime();
-				var cl = '';
-				if( now > timestamp )
-					cl = ' Expired';
-				var dst = event.definition.event.DateStart.split( ' ' )[0];
-				if( currdate != dst )
+				while( findDay != 1 )
 				{
-					currdate = dst;
-					var s = '<p class="Date' + cl + '"><strong>' + currdate + '</strong></p>';
-					if( cl ) pstr += s;
-					else nstr += s;
+					time -= 86400000;
+					var t1 = new Date( time );
+					findDay = t1.getDay();
+					startDay--;
+					dateFrom = t1.getFullYear() + '-' + StrPad( t1.getMonth() + 1, 2, '0' ) + '-' + StrPad( t1.getDate(), 2, '0' ) + ' 00:00:00';
 				}
-				var time = event.definition.event.DateStart.split( ' ' )[1];
-				time = time.split( ':' );
-				time = time[0] + ':' + time[1];
-				var s = '<p class="RosterEvent' + cl + '">' + time + ': ' + event.definition.event.Name + '</p>';
-				if( cl ) pstr += s;
-				else nstr += s;
+				while( endDay < 7 )
+				{
+					time2 += 86400000;
+					var t2 = new Date( time2 );
+					findDay = t2.getDay();
+					endDay++;
+					dateTo = t2.getFullYear() + '-' + StrPad( t2.getMonth() + 1, 2, '0' ) + '-' + StrPad( t2.getDate(), 2, '0' ) + ' 23:59:59';
+				}
+			}
+			
+			// Time values for span
+			dateFrom = ( new Date( dateFrom ) ).getTime();
+			dateTo = ( new Date( dateTo ) ).getTime();
+			
+			for( var a in eles )
+			{
+				var eventList = eles[ a ];
+				if( !eventList || !eventList.length ) continue;
+				for( var b = 0; b < eventList.length; b++ )
+				{
+					var event = eventList[ b ];
+					if( !event ) continue;
+					
+					var eventTime = new Date( event.DateStart ).getTime();
+					var eventStop = false; 
+					
+					var md = false;
+					try
+					{
+						md = JSON.parse( event.MetaData );
+					}
+					catch( e ){ md = false; }
+					
+					if( md && md.DateTo )
+					{
+						eventStop = new Date( md.DateTo ).getTime();
+					}
+					
+					// Are we within time span?
+					var within = eventTime >= dateFrom && eventTime <= dateTo;
+					var within2 = eventStop ? 
+						(
+							( eventTime <= dateFrom && eventStop <= dateTo )
+							||
+							( eventTime >= dateFrom && eventStop <= dateTo )
+							||
+							( eventTime <= dateFrom && eventStop >= dateTo )
+						) :
+						false;
+					// Done time span rules
+					
+					if( within || within2 )
+					{
+						var timestamp = ( new Date( event.DateEnd ) ).getTime();
+					
+						var cl = '';
+						if( now > timestamp )
+							cl = ' Expired';
+						var dst = event.DateStart.split( ' ' )[0];
+						if( currdate != dst )
+						{
+							currdate = dst;
+							var s = '<p class="Date' + cl + '"><strong>' + currdate + '</strong></p>';
+							if( cl ) pstr += s;
+							else nstr += s;
+						}
+					
+						var time = event.DateStart.split( ' ' )[1];
+						time = time.split( ':' );
+						time = time[0] + ':' + time[1];
+						var s = '<p class="RosterEvent' + cl + '">' + time + ': ' + event.Name + '</p>';
+						if( cl ) pstr += s;
+						else nstr += s;
+					}
+				}
 			}
 			var ph = '<p class="Heading BorderBottom PaddingBottom MarginBottom"><strong>' + i18n( 'i18n_expired_events' ) + '</strong></p>';
 			if( !pstr ) ph = '';
@@ -1195,7 +1268,7 @@ function EditEvent( id )
 			timefrom: evd.TimeFrom,
 			timeto: evd.TimeTo,
 			date: evd.Date,
-			dateTo: evd.DateTo,
+			dateTo: evd.MetaData.DateTo,
 			time: !allWeek && !allDay ? ' checked="checked"' : '',
 			allday: allDay ? ' checked="checked"' : '',
 			allweek: allWeek ? ' checked="checked"' : '',

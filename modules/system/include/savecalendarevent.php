@@ -20,6 +20,7 @@ if( is_object( $args->args->event ) )
 			$metaData = new stdClass();
 			$metaData->AllDay = false;
 			$metaData->AllWeek = false;
+			$metaData->DateTo = '';
 		}
 		
 		if( isset( $args->args->event->Title ) )
@@ -36,6 +37,8 @@ if( is_object( $args->args->event ) )
 			$metaData->AllDay = $args->args->event->AllDay;
 		if( isset( $args->args->event->AllWeek ) )
 			$metaData->AllWeek = $args->args->event->AllWeek;
+		if( isset( $args->args->event->DateTo ) )
+			$metaData->DateTo = $args->args->event->DateTo;
 			
 		$o->MetaData = json_encode( $metaData );
 		$o->Type = 'friend';
