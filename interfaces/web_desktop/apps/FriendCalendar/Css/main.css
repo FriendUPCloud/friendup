@@ -110,7 +110,7 @@
 	padding: 0 !important;
 	margin: 0 !important;
 	position: absolute;
-	top: 30px;
+	top: 0px;
 	left: 0;
 	width: 100%;
 	height: calc(100% - 30px);
@@ -123,11 +123,20 @@
 	opacity: 0.6;
 }
 
+#DayHeading
+{
+	position: absolute;
+	top: 100px;
+	width: calc(100% - 6px);
+	height: 27px;
+}
+
 #LongEvents
 {
+	top: 128px;
 	width: calc(92% - 5px);
 	left: calc(8% - 1px);
-	position: relative;
+	position: absolute;
 	background-color: rgba(0,0,0,0.2);
 }
 

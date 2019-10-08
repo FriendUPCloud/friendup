@@ -285,7 +285,7 @@ var Calendar = {
 		var dob = new Date();
 		
 		// Render it...
-		var ml = '';
+		var ml = lt = '';
 		
 		// Date setup
 		var month = this.date.getMonth();
@@ -339,14 +339,17 @@ var Calendar = {
 			
 			// Start header
 			if( w == -1 )
-				ml += '<div class="CalendarHeaderRow Week">';
+			{
+				lt += '<div class="CalendarHeaderRow Week">';
+				lt += '<div class="CalendarRow HRow">';
+			}
 			else if( !calStart && w == 0 )
 			{
 				ml += '<div class="CalendarDates Week">';
+				ml += '<div class="CalendarRow HRow">';
 				calStart = true;
 			}
 			
-			ml += '<div class="CalendarRow HRow">';
 			
 			var dl = [ -1, 1, 2, 3, 4, 5, 6, 0 ];
 			var dn = [ 0, i18n('i18n_mon'), i18n('i18n_tue'), i18n('i18n_wed'), i18n('i18n_thu'), i18n('i18n_fri'), i18n('i18n_sat'), i18n('i18n_sun') ];
@@ -357,7 +360,7 @@ var Calendar = {
 				{
 					if( w == -1 )
 					{
-						ml += '<div class="Day Column Label"><div class="LabelText">' + i18n( 'i18n_time' ) + '</div></div>';
+						lt += '<div class="Day Column Label"><div class="LabelText">' + i18n( 'i18n_time' ) + '</div></div>';
 					}
 					else
 					{
@@ -474,15 +477,21 @@ var Calendar = {
 					var cl = '';
 					if( a == currentDay )
 						cl = ' Today';
-					ml += '<div class="Day Column Label' + cl + '"><div class="LabelText">' + dayName + ' ' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
+					lt += '<div class="Day Column Label' + cl + '"><div class="LabelText">' + dayName + ' ' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
 					ctime += 86400000;
 				}
 			}
-			ml += '</div>';
 			
 			// End header
 			if( w == -1 )
+			{
+				lt += '</div>';
+				lt += '</div>';
+			}
+			else
+			{
 				ml += '</div>';
+			}
 		}
 		
 		// End calendar dates
@@ -564,13 +573,15 @@ var Calendar = {
 		{
 			var leHeight = calendarRowHeight * eventCount;
 			ge( 'LongEvents' ).style.height = leHeight + 1 + 'px';
-			ge( 'MainView' ).style.top = ge( 'TopPanel' ).offsetHeight + leHeight + 1 + 'px';
+			ge( 'MainView' ).style.top = ge( 'TopPanel' ).offsetHeight + calendarRowHeight + leHeight + 1 + 'px';
 		}
 		else
 		{
 			ge( 'MainView' ).style.top = '';
 			ge( 'LongEvents' ).style.height = '0';
 		}
+		
+		ge( 'DayHeading' ).innerHTML = lt;
 		
 		// Add events and add element ------------------------------------------
 		eventDiv.addEventListener( 'mousedown', function( e )
