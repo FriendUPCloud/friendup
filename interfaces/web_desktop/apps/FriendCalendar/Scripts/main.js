@@ -396,7 +396,6 @@ var Calendar = {
 
 				if( w >= 0 )
 				{
-					
 					// Generate events by time
 					var evts = '';
 					for( var t = 0; t < 24; t += 0.5 )
@@ -411,18 +410,18 @@ var Calendar = {
 					{
 						for( var b = 0; b < events.length; b++ )
 						{
-							var ypos = events[ b ].DateStart.split( ' ' )[1];
+							var ypos = events[ b ].DateStart.split( ' ' )[ 1 ];
 							ypos = ypos.split( ':' );
 							
-							ypos = parseInt( ypos[0] ) + ( ypos[1] / 60 );
+							ypos = parseInt( ypos[0] ) + ( ypos[ 1 ] / 60 );
 							
 							ypos = ypos / 24 * 100;
 							
 							var day = ( new Date( events[ b ].DateStart ) ).getDay();
 							
-							var height = events[ b ].DateEnd.split( ' ' )[1];
+							var height = events[ b ].DateEnd.split( ' ' )[ 1 ];
 							height = height.split( ':' );
-							height = parseInt( height[0] ) + ( height[1] / 60 );
+							height = parseInt( height[ 0 ] ) + ( height[ 1 ] / 60 );
 							
 							height = height / 24 * 100;
 							height = height - ypos;
@@ -493,7 +492,7 @@ var Calendar = {
 		var eventDiv = document.createElement( 'div' );
 		eventDiv.className = 'WeekContainer';
 		
-		// Long events
+		// Long events ---------------------------------------------------------
 		ge( 'LongEvents' ).innerHTML = '';
 		
 		var eventCount = len = maxDayslotLength = 0;
@@ -1265,12 +1264,19 @@ function EditEvent( id )
 		var allDay = evd.MetaData.AllDay;
 		var allWeek = evd.MetaData.AllWeek;
 		
+		evd.TimeFrom = evd.TimeFrom.split( ':' );
+		evd.TimeTo = evd.TimeTo.split( ':' );
+		if( evd.TimeFrom[ 0 ] == '24' ) evd.TimeFrom[ 0 ] = '00';
+		if( evd.TimeTo[   0 ] == '24' ) evd.TimeTo[   0 ] = '00';
+		evd.TimeFrom = evd.TimeFrom.join( ':' );
+		evd.TimeTo = evd.TimeTo.join( ':' );
+		
 		var f = new File( 'Progdir:Templates/event.html' );
 		f.replacements = {
 			title: evd.Title,
 			leadin: evd.Description,
-			timefrom: evd.TimeFrom,
-			timeto: evd.TimeTo,
+			timefrom: evd.TimeFrom + ':00',
+			timeto: evd.TimeTo + ':00',
 			date: evd.Date,
 			dateTo: evd.MetaData.DateTo,
 			time: !allWeek && !allDay ? ' checked="checked"' : '',
