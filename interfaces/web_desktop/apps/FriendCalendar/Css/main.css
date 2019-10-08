@@ -105,6 +105,7 @@
 	width: 100%;
 	height: 30px;
 }
+
 .CalendarDates
 {
 	padding: 0 !important;
@@ -117,6 +118,40 @@
 	overflow: auto;
 	background-color: #191919;
 }
+
+/* Position left column */
+
+#Find
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 130px;
+}
+
+#UsersGroups
+{
+	position: absolute;
+	top: 130px;
+	left: 0;
+	width: 100%;
+	height: 130px;
+	overflow: autp;
+}
+
+#Roster
+{
+	position: absolute;
+	top: 260px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 260px);
+	overflow: auto;
+}
+
+
+/* End positioning on left column */
 
 #Roster .Date.Expired, #Roster .RosterEvent.Expired
 {

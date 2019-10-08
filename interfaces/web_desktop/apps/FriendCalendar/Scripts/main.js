@@ -222,7 +222,6 @@ var Calendar = {
 							{
 								if( duplicates[p] == this.events[key][z].Name )
 								{
-									//console.log( 'Found duplicate "' + duplicates[p] + '"..' );
 									found = true;
 									break;
 								}
