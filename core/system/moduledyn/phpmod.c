@@ -160,7 +160,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	DEBUG( "[PHPmod] run app: %s\n", command );
 	
-	#define PHP_READ_SIZE 65536	
+#define PHP_READ_SIZE 8192	
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	
@@ -247,7 +247,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	while( !feof( pipe ) )
 	{
-		int reads = fread( buf, sizeof( char ), LBUFFER_SIZE, pipe );
+		int reads = fread( buf, sizeof( char ), PHP_READ_SIZE, pipe );
 		if( reads > 0 )
 		{
 			ListStringAdd( ls, buf, reads );
