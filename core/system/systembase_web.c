@@ -1167,8 +1167,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( response )
 				{
 					char *next;
-					int calSize = strtol (length, &next, 10);
-					if( ( next == length ) || ( *next != '\0' ) ) 
+					int calSize = strtol ( length, &next, 10);
+					if( ( next == length ) || ( *next != '\0' ) || calSize <= 0 ) 
 					{
 						FERROR( "Lenght of message == 0\n" );
 					}
