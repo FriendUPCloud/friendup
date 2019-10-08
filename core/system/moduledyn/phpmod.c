@@ -75,7 +75,7 @@ struct linkedCharArray
 
 char *FilterPHPVar( char *line )
 {
-	if( !line )
+	if( line == NULL )
 	{
 		return NULL;
 	}
@@ -142,9 +142,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	FilterPHPVar( epath );
 
 	sprintf( command, "php '%s' '%s'", path, args != NULL ? args : "" );
-	
+	DEBUG("First command: %s\n", command );
 	// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
 	int cx = snprintf( command, escapedSize, "php '%s' '%s'", epath, earg );
+	DEBUG("Second command: %s\n", command );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
 		FERROR( "[PHPmod] snprintf\n" );
