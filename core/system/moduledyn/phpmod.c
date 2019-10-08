@@ -102,7 +102,7 @@ char *FilterPHPVar( char *line )
 	return line;
 }
 
-//#define USE_NPOPEN
+#define USE_NPOPEN
 
 /**
  * @brief Run a PHP module with arguments
@@ -164,8 +164,8 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
 	
-	//ListString *ls = ListStringNew();
-	BufString *bs = BufStringNew();
+	ListString *ls = ListStringNew();
+	//BufString *bs = BufStringNew();
 	
 #ifdef USE_NPOPEN
 	
@@ -251,8 +251,8 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		int reads = fread( buf, sizeof( char ), PHP_READ_SIZE, pipe );
 		if( reads > 0 )
 		{
-			BufStringAddSize( bs, buf, reads );
-			//ListStringAdd( ls, buf, reads );
+			//BufStringAddSize( bs, buf, reads );
+			ListStringAdd( ls, buf, reads );
 			res += reads;
 		}
 	}
@@ -269,13 +269,13 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		*length = ( unsigned long int )res;
 	}
 
-	//ListStringJoin( ls );
-	//char *final = ls->ls_Data;
-	//ls->ls_Data = NULL;
-	//ListStringDelete( ls );
-	char *final = bs->bs_Buffer;
-	bs->bs_Buffer = NULL;
-	BufStringDelete( bs );
+	ListStringJoin( ls );
+	char *final = ls->ls_Data;
+	ls->ls_Data = NULL;
+	ListStringDelete( ls );
+	//char *final = bs->bs_Buffer;
+	//bs->bs_Buffer = NULL;
+	//BufStringDelete( bs );
 	
 	//DEBUG("Final string %s\n", final );
 	
