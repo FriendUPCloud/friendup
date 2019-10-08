@@ -111,6 +111,11 @@ char *FilterPHPVar( char *line )
 char *Run( struct EModule *mod, const char *path, const char *args, FULONG *length )
 {
 	DEBUG("[PHPmod] call run\n");
+	if( path == NULL || args == NULL )
+	{
+		DEBUG("[PHPmod] path or args = NULL\n");
+		return NULL;
+	}
 
 	FULONG res = 0;
 
