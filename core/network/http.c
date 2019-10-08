@@ -868,8 +868,11 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 						FFree( value );
 					}
 
-					HashmapPut( http->headers, currentToken, list );
-					currentToken = NULL; // It's gone!
+					if( currentToken != NULL )
+					{
+						HashmapPut( http->headers, currentToken, list );
+						currentToken = NULL; // It's gone!
+					}
 				}
 			}
 		}
