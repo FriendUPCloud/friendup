@@ -417,6 +417,7 @@ var Calendar = {
 							
 							ypos = parseInt( ypos[0] ) + ( ypos[ 1 ] / 60 );
 							
+							// parted on 24 hours * 100%
 							ypos = ypos / 24 * 100;
 							
 							var day = ( new Date( events[ b ].DateStart ) ).getDay();
@@ -450,6 +451,11 @@ var Calendar = {
 								}
 								// All week event
 								else if( md.AllWeek )
+								{
+									allWeekEvents.push( events[ b ] );
+									continue;
+								}
+								else if( md.DateTo )
 								{
 									allWeekEvents.push( events[ b ] );
 									continue;
@@ -551,6 +557,24 @@ var Calendar = {
 			{
 				var ev = allWeekEvents[ a ];
 				var l = document.createElement( 'div' );
+				
+				// Parse metadata and find intersecting date spans
+				// These could start/stop outside of the current week
+				var md = false;
+				try
+				{
+					md = JSON.parse( ev.MetaData );
+				}
+				catch( e )
+				{
+					md = false;
+				}
+				if( md )
+				{
+					var timeFrom = ev.DateStart;
+					var timeTo = md.DateTo;
+					// TODO: Finish this!
+				}
 				
 				l.className = 'LongEvent MousePointer Week PaddingSmall';
 				l.innerHTML = ev.Name;
