@@ -50,9 +50,10 @@ void ListStringDelete( ListString *ls )
 	if( ls != NULL )
 	{
 		ListString *cur = ls->ls_Next;
+		ListString *rm = NULL;
 		while( cur != NULL )
 		{
-			ListString *rm = cur;
+			rm = cur;
 			cur = cur->ls_Next;
 
 			if( rm->ls_Data != NULL )
@@ -61,6 +62,7 @@ void ListStringDelete( ListString *ls )
 			}
 			FFree( rm );
 		}
+		
 		if( ls->ls_Data != NULL )
 		{
 			FFree( ls->ls_Data );
