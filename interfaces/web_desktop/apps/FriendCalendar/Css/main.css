@@ -7,7 +7,6 @@
 	position: relative;
 	box-shadow: inset 0px 5px 150px rgba(0,0,0,0.1);
 	box-sizing: border-box;
-	border-bottom: 1px solid rgba(0,0,0,0.4);
 }
 
 #TopPanel > h1
@@ -57,6 +56,7 @@
 
 #RightCol
 {
+	overflow: hidden;
 	width: calc(100% - 250px);
 }
 
@@ -164,6 +164,8 @@
 	top: 100px;
 	width: calc(100% - 6px);
 	height: 27px;
+	border-top: 1px solid rgba(0,0,0,0.2);
+	border-bottom: 1px solid rgba(0,0,0,0.2);
 }
 
 #LongEvents
@@ -173,6 +175,11 @@
 	left: calc(8% - 1px);
 	position: absolute;
 	background-color: rgba(0,0,0,0.2);
+}
+
+#LongEvents > div
+{
+	box-shadow: inset 0px 0px 40px rgba(0,0,0,0.5);
 }
 
 .LongEvent.Week
@@ -198,7 +205,7 @@
 
 .LongEvent.Day > div
 {
-	border-right: 1px solid rgba(0,0,0,0.4);
+	border-right: 1px solid rgba(0,0,0,0.6);
 	border-bottom: 1px solid rgba(0,0,0,0.4);
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -371,22 +378,22 @@ html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
 .Day.Column
 {
 	height: auto;
-	border-right: 1px solid rgba(0,0,0,0.5);
+	border-right: 1px solid rgba(0,0,0,0.2);
 }
 
 .Day.Column:not(.Label):nth-child(odd)
 {
-	border-right: 1px solid rgba(0,0,0,0.7);
+	border-right: 1px solid rgba(0,0,0,0.2);
 }
 
 .Day.Column.Label:nth-child(odd)
 {
-	border-right: 1px solid rgba(0,0,0,0.5);
+	border-right: 1px solid rgba(0,0,0,0.2);
 }
 
 .Day.Column.Label:nth-child(even)
 {
-	border-right: 1px solid rgba(0,0,0,0.7);
+	border-right: 1px solid rgba(0,0,0,0.2);
 }
 
 .Day.Column:last-child
@@ -407,8 +414,8 @@ html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
 
 .Day.Label
 {
-	height: 30px;
-	line-height: 30px;
+	height: 27px;
+	line-height: 27px;
 }
 
 .Day.Label .LabelText
@@ -456,13 +463,11 @@ html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
 .HRow:nth-child(even) .Day.Label:nth-child(odd)
 {
 	background: #007E65;
-	border-bottom: 1px solid #363636;
 }
 .HRow:nth-child(odd) .Day.Label:nth-child(odd),
 .HRow:nth-child(even) .Day.Label:nth-child(even)
 {
 	background: #006350;
-	border-bottom: 1px solid #303030;
 }
 
 .Day > .TimeSlot:nth-child(odd)
