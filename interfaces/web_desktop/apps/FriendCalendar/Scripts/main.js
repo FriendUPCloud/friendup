@@ -497,6 +497,7 @@ var Calendar = {
 									for( var c = 1; c <= 7; c++ )
 									{
 										// Got it!
+										// TODO: Could be that start date doesn't need to check day before..
 										if( st >= t - 86400000 && st <= e )
 										{
 											var d = ( new Date( st ) ).getDate();

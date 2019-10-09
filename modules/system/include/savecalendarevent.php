@@ -23,6 +23,7 @@ if( is_object( $args->args->event ) )
 			$metaData->DateTo = '';
 		}
 		
+		// Set all values
 		if( isset( $args->args->event->Title ) )
 			$o->Title = $args->args->event->Title;
 		if( isset( $args->args->event->Description ) )
@@ -38,7 +39,14 @@ if( is_object( $args->args->event ) )
 		if( isset( $args->args->event->AllWeek ) )
 			$metaData->AllWeek = $args->args->event->AllWeek;
 		if( isset( $args->args->event->DateTo ) )
-			$metaData->DateTo = $args->args->event->DateTo;
+		{
+			// End date needs to be larger than date
+			if( $args->args->event->DateTo != $args->args->event->Date )
+			{
+				if( strtotime( $args->args->event->Date ) < strtotime( $args->args->event->DateTo  ) )
+					$metaData->DateTo = $args->args->event->DateTo;
+			}
+		}
 			
 		$o->MetaData = json_encode( $metaData );
 		$o->Type = 'friend';
