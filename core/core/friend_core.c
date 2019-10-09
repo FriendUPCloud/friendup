@@ -576,6 +576,7 @@ void *FriendCoreAcceptPhase2( void *d )
 
 			while( 1 )
 			{
+				DEBUG("before accept\n");
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
 				{
 					break;
@@ -1225,7 +1226,9 @@ void FriendCoreProcess( void *fcv )
 					request->gotHeader = TRUE;
 					content = HttpGetHeaderFromTable( request, HTTP_HEADER_CONTENT_LENGTH );
 
+#ifdef USE_SOCKET_REAPER
 					socket_update_state(th->sock, socket_state_got_header);
+#endif
 
 					//DEBUG("CONT LENGTH %ld\n", request->h_ContentLength );
 
