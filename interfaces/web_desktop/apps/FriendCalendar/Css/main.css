@@ -89,6 +89,11 @@
 	border-top: 1px solid rgba(0,0,0,0.4);
 }
 
+#MainView.Week
+{
+	top: 128px;
+}
+
 #BottomPanel
 {
 	bottom: 0;

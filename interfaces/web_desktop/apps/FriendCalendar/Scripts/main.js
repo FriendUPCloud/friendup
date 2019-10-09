@@ -125,6 +125,9 @@ var Calendar = {
 	},
 	renderMonth: function()
 	{
+		ge( 'MainView' ).classList.add( 'Month' );
+		ge( 'MainView' ).classList.remove( 'Week', 'Day' );
+		
 		// Flush "long events"
 		ge( 'LongEvents' ).innerHTML = '';
 		ge( 'MainView' ).style.top = '';
@@ -274,6 +277,9 @@ var Calendar = {
 	},
 	renderWeek: function()
 	{
+		ge( 'MainView' ).classList.add( 'Week' );
+		ge( 'MainView' ).classList.remove( 'Month', 'Day' );
+		
 		ge( 'monthoverview' ).classList.remove( 'Active' );
 		ge( 'weekoverview' ).classList.add( 'Active' );
 		
