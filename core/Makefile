@@ -6,8 +6,8 @@ CC			=	gcc
 CPP			=	g++
 OUTPUT			=	bin/FriendCore
 
-CFLAGS			=	$(GLOBAL_CFLAGS) -I. -I../libs/ -I../$(LIBWS_INCLUDE_DIR) $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssl -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
+CFLAGS			=	$(GLOBAL_CFLAGS) -I../libs-ext/openssl/include/ -I. -I../libs/ -I../$(LIBWS_INCLUDE_DIR) $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
+LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lpthread -lssh -lrt -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv ../libs-ext/openssl/libssl.a ../libs-ext/openssl/libcrypto.a -ldl 
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
