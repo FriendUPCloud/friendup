@@ -40,6 +40,7 @@ if( is_object( $args->args->event ) )
 			$metaData->AllWeek = $args->args->event->AllWeek;
 		if( isset( $args->args->event->DateTo ) )
 		{
+			$metaData->DateTo = '';
 			// End date needs to be larger than date
 			if( $args->args->event->DateTo != $args->args->event->Date )
 			{

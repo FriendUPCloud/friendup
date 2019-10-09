@@ -26,7 +26,7 @@ Application.run = function( msg )
 			time: ge( 'pTime' ).checked ? true : false,
 			title: ge( 'pName' ).value,
 			leadin: ge( 'pDescription' ).value,
-			dateTo: ge( 'pDateTo' ).value
+			dateTo: ( new Date( ge( 'pDateTo' ).value ) ).getTime() > ( new Date( ge( 'pDate' ).value ) ).getTime() ? ge( 'pDateTo' ).value : ''
 		};
 		self.sendMessage( {
 			command: 'saveevent',
