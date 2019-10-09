@@ -487,20 +487,26 @@ var Calendar = {
 								else if( md.DateTo )
 								{
 									var timeFrom = events[ b ].DateStart;
-									var timeTo = md.DateTo;
+									var timeTo = md.DateTo + ' ' + timeFrom.split( ' ' )[1];
 									
-									// Add the days
+									// Get intelligeble timestamps for the span
 									var t = ( new Date( timeFrom ) ).getTime();
 									var e = ( new Date( timeTo ) ).getTime();
 									
-									var st = time;
+									// Check for time 
+									var st = new Date( time );
+									st = ( new Date( st.getFullYear() + '-' + ( st.getMonth() + 1 ) + '-' + st.getDate() + ' ' + timeFrom.split( ' ' )[1] ) ).getTime();
+									
+									// Add the days
 									for( var c = 1; c <= 7; c++ )
 									{
 										// Got it!
 										// TODO: Could be that start date doesn't need to check day before..
-										if( st >= t - 86400000 && st <= e )
+										
+										if( st >= t && st <= e )
 										{
 											var d = ( new Date( st ) ).getDate();
+											
 											var found = false;
 											for( var f in allDayEvents[ c ] )
 											{
@@ -1362,7 +1368,14 @@ function EditEvent( id )
 			height: 550
 		} );
 		
-		evd.MetaData = JSON.parse( evd.MetaData );
+		try
+		{
+			var md = JSON.parse( evd.MetaData );
+			evd.MetaData = md;
+		}
+		catch( e )
+		{
+		}
 		
 		var allDay = evd.MetaData.AllDay;
 		var allWeek = evd.MetaData.AllWeek;
