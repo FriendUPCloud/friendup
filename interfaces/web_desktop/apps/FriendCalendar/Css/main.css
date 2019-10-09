@@ -227,6 +227,11 @@
 	box-sizing: border-box;
 }
 
+.LongEvent.Day > div.Spanned
+{
+	border-right: 0;
+}
+
 .LongEvent.Day:nth-child(even)
 {
 	background-color: rgba(0,0,0,0.2);

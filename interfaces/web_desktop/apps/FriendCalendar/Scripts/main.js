@@ -292,6 +292,10 @@ var Calendar = {
 		var currentDay = this.date.getDay();
 		this.dateArray = [ year, month, this.date.getDate() ];
 		
+		var todayY = ( new Date() ).getFullYear();
+		var todayM = ( new Date() ).getMonth();
+		var todayD = ( new Date() ).getDate();
+		
 		var startDay = this.date.getDate();
 		
 		var time = this.date.getTime();
@@ -407,11 +411,35 @@ var Calendar = {
 					
 					// Event rects
 					var timez = '';
-					var events = this.events[ key ];
+					var events = [];
+					for( var z in this.events[ key ] )
+						events.push( this.events[ key ][ z ] );
+					
+					// Find range events
+					for( var z in this.events )
+					{
+						for( var bb = 0; bb < this.events[ z ].length; bb++ )
+						{
+							if( this.events[ z ][ bb ].MetaData )
+							{
+								try
+								{
+									var md = JSON.parse( this.events[ z ][ bb ].MetaData );
+									if( md.DateTo )
+									{
+										events.push( this.events[ z ][ bb ] );
+									}
+								}
+								catch( e ){};
+								
+							}
+						}
+					}
+					
 					if( typeof( events ) != 'undefined' )
 					{
 						for( var b = 0; b < events.length; b++ )
-						{
+						{	
 							var ypos = events[ b ].DateStart.split( ' ' )[ 1 ];
 							ypos = ypos.split( ':' );
 							
@@ -455,9 +483,41 @@ var Calendar = {
 									allWeekEvents.push( events[ b ] );
 									continue;
 								}
+								// Add all day events for whole span
 								else if( md.DateTo )
 								{
-									allWeekEvents.push( events[ b ] );
+									var timeFrom = events[ b ].DateStart;
+									var timeTo = md.DateTo;
+									
+									// Add the days
+									var t = ( new Date( timeFrom ) ).getTime();
+									var e = ( new Date( timeTo ) ).getTime();
+									
+									var st = time;
+									for( var c = 1; c <= 7; c++ )
+									{
+										// Got it!
+										if( st >= t - 86400000 && st <= e )
+										{
+											var d = ( new Date( st ) ).getDate();
+											var found = false;
+											for( var f in allDayEvents[ c ] )
+											{
+												if( allDayEvents[ c ][ f ].ID == events[ b ].ID )
+												{
+													found = true;
+													break;
+												}
+											}
+											if( !found )
+											{
+												if( !allDayEvents[ c ] )
+													allDayEvents[ c ] = [];
+												allDayEvents[ c ].push( events[ b ] );
+											}
+										}
+										st += 86400000;
+									}
 									continue;
 								}
 							}
@@ -480,7 +540,12 @@ var Calendar = {
 				else
 				{
 					var cl = '';
-					if( a == currentDay )
+					
+					var y = new Date( ctime ).getFullYear();
+					var m = new Date( ctime ).getMonth();
+					var d = new Date( ctime ).getDate();
+					
+					if( m == todayM && y == todayY && d == todayD )
 						cl = ' Today';
 					lt += '<div class="Day Column Label' + cl + '"><div class="LabelText">' + dayName + ' ' + StrPad( cday, 2, '0' ) + '/' + StrPad( cmonth, 2, '0' ) + '</div></div>';
 					ctime += 86400000;
@@ -515,7 +580,7 @@ var Calendar = {
 		
 		if( len > 0 )
 		{
-			for( var b = 0; b <= 6; b++ )
+			for( var b = 1; b <= 7; b++ )
 			{
 				var daySlot = document.createElement( 'div' );
 				daySlot.className = 'LongEvent Day';
@@ -532,6 +597,17 @@ var Calendar = {
 					var l = document.createElement( 'div' );
 				
 					l.className = 'MousePointer PaddingSmall';
+					
+					try
+					{
+						var md = JSON.parse( allDayEvents[ b ][ a ].MetaData );
+						if( md.DateTo )
+						{
+							l.classList.add( 'Spanned' );
+						}
+					}
+					catch( e ){};
+					
 					l.innerHTML = ev.Name;
 					l.style.height = calendarRowHeight + 'px';
 					l.style.backgroundColor = eventPaletteBackground[ 0 ];
@@ -557,24 +633,6 @@ var Calendar = {
 			{
 				var ev = allWeekEvents[ a ];
 				var l = document.createElement( 'div' );
-				
-				// Parse metadata and find intersecting date spans
-				// These could start/stop outside of the current week
-				var md = false;
-				try
-				{
-					md = JSON.parse( ev.MetaData );
-				}
-				catch( e )
-				{
-					md = false;
-				}
-				if( md )
-				{
-					var timeFrom = ev.DateStart;
-					var timeTo = md.DateTo;
-					// TODO: Finish this!
-				}
 				
 				l.className = 'LongEvent MousePointer Week PaddingSmall';
 				l.innerHTML = ev.Name;
