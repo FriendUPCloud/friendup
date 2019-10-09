@@ -7,7 +7,6 @@
 	position: relative;
 	box-shadow: inset 0px 5px 150px rgba(0,0,0,0.1);
 	box-sizing: border-box;
-	border-bottom: 1px solid rgba(0,0,0,0.4);
 }
 
 #TopPanel > h1
@@ -34,6 +33,12 @@
 	text-align: center;
 }
 
+.Animated
+{
+	transition-property: height, top, left, width;
+	transition-duration: 0.25s, 0.25s, 0s, 0s;
+}
+
 .WeekContainer, .MonthContainer
 {
 	position: absolute;
@@ -51,6 +56,7 @@
 
 #RightCol
 {
+	overflow: hidden;
 	width: calc(100% - 250px);
 }
 
@@ -80,6 +86,7 @@
 {
 	top: 100px;
 	bottom: 50px;
+	border-top: 1px solid rgba(0,0,0,0.4);
 }
 
 #BottomPanel
@@ -99,17 +106,135 @@
 	width: 100%;
 	height: 30px;
 }
+
 .CalendarDates
 {
 	padding: 0 !important;
 	margin: 0 !important;
 	position: absolute;
-	top: 30px;
+	top: 0px;
 	left: 0;
 	width: 100%;
-	height: calc(100% - 30px);
+	height: 100%;
 	overflow: auto;
 	background-color: #191919;
+}
+
+.WeekContainer:after, .MonthContainer:after
+{
+	content: " ";
+	position: absolute;
+	top: 0; 
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 10;
+	pointer-events: none;
+	box-shadow: inset 0px 0px 40px rgba(0,0,0,0.5);
+}
+
+/* Position left column */
+
+#Find
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 130px;
+}
+
+#UsersGroups
+{
+	position: absolute;
+	top: 130px;
+	left: 0;
+	width: 100%;
+	height: 130px;
+	overflow: autp;
+}
+
+#Roster
+{
+	position: absolute;
+	top: 260px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 260px);
+	overflow: auto;
+}
+
+
+/* End positioning on left column */
+
+#Roster .Date.Expired, #Roster .RosterEvent.Expired
+{
+	opacity: 0.6;
+}
+
+#DayHeading
+{
+	position: absolute;
+	top: 100px;
+	width: calc(100% - 6px);
+	height: 27px;
+	border-top: 1px solid rgba(0,0,0,0.2);
+	border-bottom: 1px solid rgba(0,0,0,0.2);
+}
+
+#LongEvents
+{
+	top: 128px;
+	width: calc(92% - 5px);
+	left: calc(8% - 1px);
+	position: absolute;
+	background-color: rgba(0,0,0,0.2);
+}
+
+#LongEvents > div
+{
+	box-shadow: inset 0px 0px 40px rgba(0,0,0,0.5);
+}
+
+.LongEvent.Week
+{
+	display: block;
+	box-sizing: border-box;
+	position: absolute;
+	width: 100%;
+	left: 0;
+	border-bottom: 1px solid rgba(0,0,0,0.4);
+}
+
+.LongEvent.Day
+{
+	position: absolute;
+	height: 100%;
+}
+
+.LongEvent.Week:last-child
+{
+	border-bottom: none;
+}
+
+.LongEvent.Day > div
+{
+	border-right: 1px solid rgba(0,0,0,0.6);
+	border-bottom: 1px solid rgba(0,0,0,0.4);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	box-sizing: border-box;
+}
+
+.LongEvent.Day > div.Spanned
+{
+	border-right: 0;
+}
+
+.LongEvent.Day:nth-child(even)
+{
+	background-color: rgba(0,0,0,0.2);
 }
 
 .EventRect
@@ -118,10 +243,12 @@
 	left: 0;
 	width: 100%;
 	box-sizing: border-box;
-	padding: 10px 4px;
+	padding: 5px 4px;
 	text-align: left;
 	font-size: 0.9em;
 	border-radius: 2px;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .EventRect.New
@@ -144,7 +271,7 @@
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 8px;
+	height: 5px;
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
@@ -161,10 +288,10 @@
 	display: block;
 	content: " ";
 	position: absolute;
-	top: calc(100% - 8px);
+	top: calc(100% - 5px);
 	left: 0;
 	width: 100%;
-	height: 8px;
+	height: 5px;
 	background: rgba(255,255,255,0.2);
 	cursor: row-resize;
 	transition: background 0.25s;
@@ -176,6 +303,55 @@
 	background: rgba(255,255,255,0.5);
 }
 
+/* Sizes horizontally */
+
+.EventRect.Intersecting.Width2
+{
+	width: 50%;
+}
+
+.EventRect.Intersecting.Width2 + .EventRect.Intersecting.Width2
+{
+	left: 50%;
+}
+
+.EventRect.Intersecting.Width3
+{
+	width: 33.3%;
+}
+
+.EventRect.Intersecting.Width3 + .EventRect.Intersecting.Width3
+{
+	left: 33.3%;
+}
+
+.EventRect.Intersecting.Width3 + .EventRect.Intersecting.Width3 + .EventRect.Intersecting.Width3
+{
+	left: 66.6%;
+}
+
+.EventRect.Intersecting.Width4
+{
+	width: 25%;
+}
+
+.EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4
+{
+	left: 25%;
+}
+
+.EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4
+{
+	left: 50%;
+}
+
+.EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4 + .EventRect.Intersecting.Width4
+{
+	left: 75%;
+}
+
+/* Done sizes horizontally */
+
 .Day
 {
 	width: 14.285%;
@@ -184,6 +360,28 @@
 	height: 100px;
 	box-sizing: border-box;
 	position: relative;
+}
+
+html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today
+{
+	background: #065f99;
+}
+
+html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	background-color: rgba(255,255,255,0.5);
+}
+
+html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
+{
+	color: white;
 }
 
 .Week .Day
@@ -199,22 +397,22 @@
 .Day.Column
 {
 	height: auto;
-	border-right: 1px solid rgba(0,0,0,0.5);
+	border-right: 1px solid rgba(0,0,0,0.4);
 }
 
 .Day.Column:not(.Label):nth-child(odd)
 {
-	border-right: 1px solid rgba(0,0,0,0.7);
+	border-right: 1px solid rgba(0,0,0,0.4);
 }
 
 .Day.Column.Label:nth-child(odd)
 {
-	border-right: 1px solid rgba(0,0,0,0.5);
+	border-right: 1px solid rgba(0,0,0,0.4);
 }
 
 .Day.Column.Label:nth-child(even)
 {
-	border-right: 1px solid rgba(0,0,0,0.7);
+	border-right: 1px solid rgba(0,0,0,0.4);
 }
 
 .Day.Column:last-child
@@ -235,8 +433,8 @@
 
 .Day.Label
 {
-	height: 30px;
-	line-height: 30px;
+	height: 27px;
+	line-height: 27px;
 }
 
 .Day.Label .LabelText
@@ -284,13 +482,11 @@
 .HRow:nth-child(even) .Day.Label:nth-child(odd)
 {
 	background: #007E65;
-	border-bottom: 1px solid #363636;
 }
 .HRow:nth-child(odd) .Day.Label:nth-child(odd),
 .HRow:nth-child(even) .Day.Label:nth-child(even)
 {
 	background: #006350;
-	border-bottom: 1px solid #303030;
 }
 
 .Day > .TimeSlot:nth-child(odd)

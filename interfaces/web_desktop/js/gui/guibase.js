@@ -3031,6 +3031,7 @@ function PollTaskbar( curr )
 											}
 										}
 									}
+									CheckMaximizedView();
 								}
 							}
 							else
@@ -3352,7 +3353,6 @@ function PollDockedTaskbar()
 							if( this.state == 'hidden' )
 							{
 								theView.viewContainer.classList.add( 'Minimized' );
-							
 							}
 							else
 							{
@@ -3384,6 +3384,7 @@ function PollDockedTaskbar()
 								}
 							}
 							_WindowToFront( theView );
+							 CheckMaximizedView();
 						}
 						desklet.viewList.appendChild( viewRep );
 						changed++;

@@ -48,10 +48,13 @@ i18n_add_calendar                     : Add calendar
 i18n_share_calendar                   : Share calendar
 i18n_week                             : Week
 i18n_date                             : Date
+i18n_date_to                          : Ends date
 i18n_time                             : Time
 i18n_time_from                        : Time from
 i18n_time_to                          : Time to
+i18n_timeslot                         : Time
 i18n_all_day                          : All day
+i18n_all_week                         : All week
 i18n_event_name                       : Event name:
 i18n_leadin                           : Leadin:
 i18n_save                             : Save
@@ -112,4 +115,12 @@ i18n_user                             : User
 i18n_workgroup                        : Workgroup
 i18n_no_users_connected               : No users connected.
 i18n_no_workgroups                    : You are not a member of any workgroups.
+
+# Misc
+
+i18n_weekly_events                    : This week's events
+i18n_expired_events                   : Expired events
+i18n_you                              : You
+
+
 
