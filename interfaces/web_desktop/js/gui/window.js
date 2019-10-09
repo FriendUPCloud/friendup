@@ -5569,7 +5569,7 @@ function _kresize( e, depth )
 	}
 }
 
-function Confirm( title, string, okcallback, oktext, canceltext )
+function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext, extrabuttonreturn )
 {
 	var d = document.createElement( 'div' );
 	d.style.position = 'absolute';
@@ -5606,10 +5606,18 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 
 	var f = new File( 'System:templates/confirm.html' );
 	
+	var thirdbutton = '';
+	/* check for third button values */
+	if( extrabuttontext && extrabuttonreturn )
+	{
+		thirdbutton = '<div style="float:left;"><button id="thirdbutton" data-returnvalue="'+ extrabuttonreturn +'">'+ extrabuttontext +'</button></div>'
+	}
+	
 	f.replacements = {
-		'string': string,
-		'okbutton' : ( oktext ? oktext : i18n('i18n_affirmative') ),
-		'cancelbutton' : ( canceltext ? canceltext : i18n('i18n_cancel') )
+		'string'       : string,
+		'okbutton'     : ( oktext ? oktext : i18n('i18n_affirmative') ),
+		'cancelbutton' : ( canceltext ? canceltext : i18n('i18n_cancel') ),
+		'thirdbutton'  : thirdbutton
 	};
 	
 	f.i18n();
@@ -5636,6 +5644,17 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 				{
 					v.close();
 					okcallback( false );
+				}
+			}
+			else
+			{
+				eles[ e ].onclick = function(e)
+				{
+					if(e && e.target && e.target.hasAttribute('data-returnvalue') )
+						okcallback( e.target.getAttribute('data-returnvalue') );
+					else
+						okcallback( e );
+						v.close();
 				}
 			}
 		}		

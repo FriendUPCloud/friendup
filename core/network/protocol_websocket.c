@@ -1059,32 +1059,36 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 				return 0;
 			}
 				
-			FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 			//lws_rx_flow_control( fcd->fcd_WSClient->wc_Wsi, 0 );
 			
 			FQEntry *e = NULL;
-			FQueue *q = &(fcd->wsc_MsgQueue);
-			if( ( e = FQPop( q ) ) != NULL )
+			while( TRUE )
 			{
-				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
-				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
-				t[ e->fq_Size+1 ] = 0;
-
-				lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-
-				int errret = lws_send_pipe_choked( wsi );
-				
-				//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
-				if( e != NULL )
+				FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
+				FQueue *q = &(fcd->wsc_MsgQueue);
+				if( ( e = FQPop( q ) ) != NULL )
 				{
-					DEBUG("Release: %p\n", e->fq_Data );
-					FFree( e->fq_Data );
-					FFree( e );
+					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+					unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
+					t[ e->fq_Size+1 ] = 0;
+
+					lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
+
+					int errret = lws_send_pipe_choked( wsi );
+				
+					//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+					if( e != NULL )
+					{
+						DEBUG("Release: %p\n", e->fq_Data );
+						FFree( e->fq_Data );
+						FFree( e );
+					}
 				}
-			}
-			else
-			{
-				FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+				else
+				{
+					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
+					break;
+				}
 			}
 			DEBUG("WS Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
 			
