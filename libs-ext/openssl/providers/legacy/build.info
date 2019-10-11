@@ -1,0 +1,8 @@
+SUBDIRS=digests
+IF[{- $disabled{module} -}]
+  $GOAL=../../libcrypto
+ELSE
+  $GOAL=../legacy
+ENDIF
+
+SOURCE[$GOAL]=legacyprov.c

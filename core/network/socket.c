@@ -2656,7 +2656,7 @@ void SocketClose( Socket* sock )
 		//DEBUG("[SocketClose] locked\n");
 		if( sock->s_SSLEnabled == TRUE )
 		{
-			//DEBUG("[SocketClose] ssl\n");
+			DEBUG("[SocketClose] ssl\n");
 			if( sock->s_Ssl )
 			{
 				/*
@@ -2726,6 +2726,11 @@ void SocketClose( Socket* sock )
 						}
 						break;
 					}
+					
+					SSL *sl = sock->s_Ssl;
+					SSL_clear( sl );
+					SSL_free( sl );
+					sock->s_Ssl = NULL;
 				}
 				//int ret;
 				//SSL_shutdown( sock->s_Ssl );
@@ -2742,9 +2747,7 @@ void SocketClose( Socket* sock )
 				}*/
 
 				//DEBUG("[SocketClose] before ssl clear\n");
-				SSL_clear( sock->s_Ssl );
-				SSL_free( sock->s_Ssl );
-				sock->s_Ssl = NULL;
+				
 				//DEBUG("[SocketClose] ssl released\n");
 			}
 
