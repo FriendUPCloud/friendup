@@ -18,6 +18,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var defaultPath = 'Home:';
 	var keyboardNavigation = false;
 	var ignoreFiles = false;
+	var rememberPath = false;
+	
 	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
@@ -64,6 +66,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					break;
 				case 'keyboardNavigation':
 					keyboardNavigation = object[a];
+					break;
+				case 'rememberPath':
+					rememberPath = object[ a ] ? true : false
 					break;
 			}
 		}
