@@ -74,6 +74,41 @@ FBOOL PathHasColon( char *string )
 // Remove dangerous stuff from strings
 //
 
+char *FilterPHPVarLen( char *line, int len )
+{
+	if( line == NULL )
+	{
+		return NULL;
+	}
+	
+	int pos = 0;
+	char *ptr = line;
+	while( *ptr != 0 )
+	{
+		if( *ptr == '\\' )
+		{
+			ptr++;
+		}
+		else
+		{
+			if( *ptr == '`' )
+			{
+				*ptr = ' ';
+			}
+			else if( *ptr == '"' || *ptr == '\n' || *ptr == '\r' )
+			{
+				*ptr = ' '; // Eradicate!
+			}
+		}
+		ptr++;
+		if( (++pos) > len )
+		{
+			break;
+		}
+	}
+	return line;
+}
+
 char *FilterPHPVar( char *line )
 {
 	if( line == NULL )
@@ -101,27 +136,6 @@ char *FilterPHPVar( char *line )
 		}
 		ptr++;
 	}
-	/*
-	int len = strlen( line ) + 1;
-	int i = 0; for( ; i < len; i++ )
-	{
-		// Skip escaped characters
-		if( i < len - 1 && line[ i ] == '\\' )
-		{
-			i++;
-			continue;
-		}
-		// Kill unwanted stuff
-		if( line[ i ] == '`' )
-		{
-			line[ i ] = ' ';
-		}
-		else if( line[ i ] == '"' || line[ i ] == '\n' || line[ i ] == '\r' )
-		{
-			line[ i ] = ' '; // Eradicate!
-		}
-	}
-	*/
 	return line;
 }
 
@@ -1547,8 +1561,18 @@ BufString *Info( File *s, const char *path )
 	if( s != NULL )
 	{
 		char *comm = NULL;
+		int len = 64;
+		if( path != NULL )
+		{
+			len += strlen( path );
+		}
+		
+		if( s != NULL && s->f_Name != NULL )
+		{
+			len += strlen( s->f_Name );
+		}
 	
-		if( ( comm = FMalloc( strlen( path ) + strlen( s->f_Name ) + 64 ) ) != NULL )
+		if( ( comm = FMalloc( len ) ) != NULL )
 		{
 			strcpy( comm, s->f_Name );
 			strcat( comm, ":" );
@@ -1586,7 +1610,10 @@ BufString *Info( File *s, const char *path )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPath ? encPath : "" );
-					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
+					
+					FilterPHPVar( commandCnt );
+					
+					snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 			
 					// Execute!
 					BufString *bs = NULL;
@@ -1599,7 +1626,10 @@ BufString *Info( File *s, const char *path )
 							
 							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 								sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encPathSlash ? encPathSlash : "" );
-							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
+							
+							FilterPHPVar( commandCnt );
+							
+							snprintf( command, cmdLength, "php 'modules/system/module.php' '%s';", commandCnt );
 		
 							result = PHPCall( command );
 						}
@@ -1656,12 +1686,12 @@ BufString *Call( File *s, const char *path, char *args )
 				( sd->type ? strlen( sd->type ) : 0 ) + 
 				( s->f_SessionIDPTR ? strlen( s->f_SessionIDPTR ) : 0 ) + 
 				( encComm ? strlen( encComm ) : 0 ) +
-				( args ? strlen( args ) : 0 ) + 1;
+				( args ? strlen( args ) : 0 ) + 128;
 			
 			// Whole command
 			char *command = FCalloc(
 				strlen( "php \"modules/system/module.php\" \"\";" ) +
-				cmdLength + 1, sizeof( char ) );
+				cmdLength + 128, sizeof( char ) );
 			
 			if( command != NULL )
 			{
@@ -1673,7 +1703,8 @@ BufString *Call( File *s, const char *path, char *args )
 				{
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&command=call&authkey=false&sessionid=%s&path=%s&args=%s",
 						sd->type ? sd->type : "", s->f_SessionIDPTR ? s->f_SessionIDPTR : "", encComm ? encComm : "", args ? args : "" );
-					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
+					FilterPHPVar( commandCnt );
+					sprintf( command, "php 'modules/system/module.php' '%s';", commandCnt );
 					FFree( commandCnt );
 			
 					BufString *bs = NULL;

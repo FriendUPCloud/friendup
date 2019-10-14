@@ -192,3 +192,6 @@ internaldoc:
 	doxygen docs/doxygen/core/coreInternal
 	@echo "Documentation ready in docs/core/internal/"
 
+dump:
+	objdump -d build/FriendCore >FriendCore.dump
+

@@ -1256,7 +1256,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 			}
 			else
 			{
-				Log( FLOG_ERROR, "[MobileAppNotifyUserRegister] tokens are equal to NULL for user: %lu\n", userID );
+				Log( FLOG_ERROR, "[MobileAppNotifyUserRegister] IOS tokens are equal to NULL for user: %lu\n", userID );
 			}
 			FFree( jsonMessageIOS );
 		}
