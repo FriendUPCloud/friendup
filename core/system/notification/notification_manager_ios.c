@@ -202,8 +202,8 @@ int NotificationManagerNotificationSendIOS( NotificationManager *nm, const char 
 	SSLeay_add_ssl_algorithms();
 	SSL_load_error_strings();
 	
-	ctx = SSL_CTX_new( TLS_client_method() );
-	//ctx = SSL_CTX_new(TLSv1_2_method());
+	//ctx = SSL_CTX_new( TLS_client_method() );
+	ctx = SSL_CTX_new(TLSv1_2_method());
 	//ctx = SSL_CTX_new(TLSv1_method());
 	if( !ctx )
 	{
@@ -391,8 +391,8 @@ void NotificationIOSSendingThread( FThread *data )
 	SSLeay_add_ssl_algorithms();
 	SSL_load_error_strings();
 	
-	ctx = SSL_CTX_new( TLS_client_method() );
-	//ctx = SSL_CTX_new(TLSv1_2_method());
+	//ctx = SSL_CTX_new( TLS_client_method() );
+	ctx = SSL_CTX_new(TLSv1_2_method());
 	//ctx = SSL_CTX_new(TLSv1_method());
 	if( !ctx )
 	{
