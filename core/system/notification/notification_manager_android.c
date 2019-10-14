@@ -69,11 +69,12 @@ void NotificationAndroidSendingThread( FThread *data )
 						FRIEND_MUTEX_UNLOCK( &(nm->nm_AndroidSendMutex) );
 					
 						// send message
-						nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
+						//nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
 						
 						Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
 						
 						HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
+						c->hc_Content = (char *)e->fq_Data;
 						BufString *bs = HttpClientCall( c, FIREBASE_HOST, 443, TRUE );
 						//BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
 						if( bs != NULL )
