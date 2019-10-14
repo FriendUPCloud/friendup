@@ -24,6 +24,7 @@ var resizeColumn = {
 
 var sasActive = false;
 var FileBrowser;
+Application.editorInitialized = false;
 
 var filebrowserCallbacks = {
 	// Check a file on file extension
@@ -356,7 +357,10 @@ Application.setupAce = function()
 	this.editor.focus();
 
 	// Make a new file
-	this.newFile();
+	this.newFile( function()
+	{
+		Application.editorInitialized = true;
+	} );
 };
 
 Application.handleKeys = function( k, e )
@@ -796,7 +800,7 @@ Application.save = function( mode, specificFile )
 }
 
 // Add a new file
-Application.newFile = function()
+Application.newFile = function( cb )
 {
 	var self = this;
 	if( !this.files ) this.files = {};
@@ -821,6 +825,8 @@ Application.newFile = function()
 			command: 'receivefilesync',
 			files: self.files
 		} );
+		
+		if( cb ) cb();
 	} );
 };
 
@@ -1833,33 +1839,44 @@ Application.receiveMessage = function( msg )
 				} );
 				break;
 			case 'drop':
-				var paths = [];
-				var project = false;
-				for( var a = 0; a < msg.data.length; a++ )
+				function dropNow( ms )
 				{
-					// Filter
-					var path = msg.data[a].Path;
-					if( this.checkFileType( path ) )
+					if( Application.editorInitialized )
 					{
-						paths.push( path );
+						var paths = [];
+						var project = false;
+						for( var a = 0; a < ms.data.length; a++ )
+						{
+							// Filter
+							var path = ms.data[a].Path;
+							if( Application.checkFileType( path ) )
+							{
+								paths.push( path );
+							}
+							if( path && path.substr && path.substr( path.length - 4, 4 ).toLowerCase() == '.apf' )
+							{
+								project = path;
+							}
+						}
+						if( project )
+						{
+							Application.sendMessage( {
+								command: 'project_load',
+								path: project
+							} );
+						}
+						// Files
+						else
+						{
+							Application.sendMessage( { command: 'loadfiles', paths: paths } );
+						}
 					}
-					if( path && path.substr && path.substr( path.length - 4, 4 ).toLowerCase() == '.apf' )
+					else
 					{
-						project = path;
+						setTimeout( function(){ dropNow( ms ); }, 50 );
 					}
 				}
-				if( project )
-				{
-					this.sendMessage( {
-						command: 'project_load',
-						path: project
-					} );
-				}
-				// Files
-				else
-				{
-					Application.sendMessage( { command: 'loadfiles', paths: paths } );
-				}
+				dropNow( msg );
 				break;
 			case 'updateStatus':
 				ge( 'status' ).innerHTML = msg.data ? msg.data : '';
