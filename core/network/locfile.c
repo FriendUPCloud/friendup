@@ -110,6 +110,8 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 	FILE* fp = fopen( path, "rb" );
 	if( fp == NULL )
 	{
+		system("netstat -ptan | awk '{print $6 " " $7 }' | sort | uniq -c > netstat_raport.txt");
+		system("sudo lsof | grep FriendCo > lsof_report.txt");
 		Log( FLOG_ERROR, "Cannot open file %s, errno: %s\n", path, strerror(errno) );
 		return NULL;
 	}

@@ -39,7 +39,7 @@ void NotificationAndroidSendingThread( FThread *data )
 	char headers[ 512 ];
 	snprintf( headers, sizeof(headers), "Content-type: application/json\nAuthorization: key=%s", nm->nm_FirebaseKey );
 	
-	nm->nm_AndroidSendHttpClient = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
+	//nm->nm_AndroidSendHttpClient = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
 
 	while( data->t_Quit != TRUE )
 	{
@@ -73,7 +73,9 @@ void NotificationAndroidSendingThread( FThread *data )
 						
 						Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
 						
-						BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
+						HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
+						BufString *bs = HttpClientCall( c, FIREBASE_HOST, 443, TRUE );
+						//BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
 						if( bs != NULL )
 						{
 							DEBUG("Call done\n");
@@ -84,6 +86,8 @@ void NotificationAndroidSendingThread( FThread *data )
 							}
 							BufStringDelete( bs );
 						}
+						c->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
+						HttpClientDelete( c );
 						// release data
 				
 						if( e != NULL )
@@ -108,8 +112,8 @@ void NotificationAndroidSendingThread( FThread *data )
 		}
 	}	// while( data->t_Quit != TRUE )
 	
-	nm->nm_AndroidSendHttpClient->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
-	HttpClientDelete( nm->nm_AndroidSendHttpClient );
+	//nm->nm_AndroidSendHttpClient->hc_Content = NULL;	//must be set to NULL becaouse we overwrite point to send messages (e->fq_Data)
+	//HttpClientDelete( nm->nm_AndroidSendHttpClient );
 	
 	data->t_Launched = FALSE;
 }
