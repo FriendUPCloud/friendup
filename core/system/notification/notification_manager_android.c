@@ -71,10 +71,11 @@ void NotificationAndroidSendingThread( FThread *data )
 						// send message
 						//nm->nm_AndroidSendHttpClient->hc_Content = (char *)e->fq_Data;
 						
-						Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
+						//Log( FLOG_INFO, "Send message to android device: %s<\n", nm->nm_AndroidSendHttpClient->hc_Content );
 						
 						HttpClient *c = HttpClientNew( TRUE, FALSE, tmp, headers, NULL );// msg );
 						c->hc_Content = (char *)e->fq_Data;
+						Log( FLOG_INFO, "Send message to android device: %s<\n", c->hc_Content );
 						BufString *bs = HttpClientCall( c, FIREBASE_HOST, 443, TRUE );
 						//BufString *bs = HttpClientCall( nm->nm_AndroidSendHttpClient, FIREBASE_HOST, 443, TRUE );
 						if( bs != NULL )
