@@ -153,9 +153,11 @@ typedef struct Socket
 	MinNode						node;
 } Socket;
 
+#ifdef USE_SOCKET_REAPER
 void socket_init_once(void);
 
 void socket_update_state(Socket *sock, socket_state_t state);
+#endif
 
 //
 // Open a new socket

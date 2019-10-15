@@ -615,8 +615,10 @@ void WSThread( void *d )
 
 					if( fcd->wsc_UserSession != NULL )
 					{
+						//fcd->wsc_WebsocketsServerClient;
 						//Log( FLOG_INFO, "[WS] NO JSON - WRITING..\n" );
-						WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						//WebsocketWriteInline( fcd, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+						WebsocketWrite( fcd->wsc_WebsocketsServerClient, buf, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
 					}
 					
 					FFree( buf );
@@ -643,9 +645,10 @@ void WSThread( void *d )
 						memcpy( buf+jsonsize, response->content, response->sizeOfContent );
 						memcpy( buf+jsonsize+response->sizeOfContent, end, END_CHAR_SIGNS );
 						
-						//if( fcd->fcd_WSClient != NULL )
+						if( fcd->wsc_UserSession != NULL && fcd->wsc_WebsocketsServerClient != NULL )
 						{
-							WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							//WebsocketWriteInline( fcd, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							WebsocketWrite( fcd->wsc_WebsocketsServerClient, buf , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
 						}
 						FFree( buf );
 					}
@@ -662,9 +665,10 @@ void WSThread( void *d )
 						memcpy( buf, jsontemp, jsonsize );
 						memcpy( buf+jsonsize, end, END_CHAR_SIGNS );
 						
-						if( fcd->wsc_UserSession != NULL )//&& fcd->fcd_WSClient != NULL )
+						if( fcd->wsc_UserSession != NULL && fcd->wsc_WebsocketsServerClient != NULL )
 						{
-							WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							//WebsocketWriteInline( fcd, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+							WebsocketWrite( fcd->wsc_WebsocketsServerClient, buf, jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
 						}
 						FFree( buf );
 					}
@@ -700,7 +704,8 @@ void WSThread( void *d )
 			
 			if( fcd->wsc_UserSession != NULL && fcd->wsc_WebsocketsServerClient != NULL )
 			{
-				WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+				//WebsocketWriteInline( fcd, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
+				WebsocketWrite( fcd->wsc_WebsocketsServerClient, buf, resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
 			}
 			FFree( buf );
 		}

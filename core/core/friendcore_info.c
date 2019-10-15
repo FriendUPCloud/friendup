@@ -59,6 +59,7 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 	PropertiesInterface *plib = &(sb->sl_PropertiesInterface);
 	char *geoProvider = NULL;
 	char *geoFormat = NULL;
+	int geoFunction = 0;		// 0 - disabled 1 - enabled/store to file 2 - enabled call everytime
 
 	if( plib != NULL && plib->Open != NULL )
 	{
@@ -84,46 +85,85 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 			{
 				geoFormat = StringDuplicate( loctmp );
 			}
+			
+			//
+			loctmp = plib->ReadStringNCS( prop, "Global:GEOCall", "off" );
+			if( loctmp != NULL )
+			{
+				if( strcmp( "onauto", loctmp ) == 0 )
+				{
+					geoFunction = 1;
+				}
+				else if( strcmp( "on", loctmp ) == 0 )
+				{
+					geoFunction = 2;
+				}
+				else
+				{
+					geoFunction = 0;
+				}
+				DEBUG("GEO: %s\n", loctmp );
+			}
 		}
 		
 		if( prop ) plib->Close( prop );
 	}
 	
-	if( geoProvider == NULL )
-	{
-		geoProvider = StringDuplicate( "api.ipstack.com" );
-	}
-	
-	if( geoFormat == NULL )
-	{
-		geoFormat = StringDuplicate( "json" );
-	}
-	
 	if( ( fci = FCalloc( 1, sizeof( FriendcoreInfo ) ) ) != NULL )
 	{
 		fci->fci_SLIB = slib;
-		char tmp[ 256 ];
-		//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
-		snprintf( tmp, sizeof(tmp), "/82.177.144.226?access_key=6c03cf0550f249596f97dd9aa3203fb3" );
-		// POST, HTTP2, PATH, HEADERS, CONTENT
-		HttpClient *c = HttpClientNew( FALSE, FALSE, tmp, NULL, NULL );
-		if( c != NULL )
+		
+		if( geoFunction >= 1 )
 		{
-			//freegeoip.net/xml/
+			BufString *bs = NULL;
 			
-			BufString *bs = HttpClientCall( c, geoProvider, 80, FALSE );
+			if( geoProvider == NULL )
+			{
+				geoProvider = StringDuplicate( "api.ipstack.com" );
+			}
+	
+			if( geoFormat == NULL )
+			{
+				geoFormat = StringDuplicate( "json" );
+			}
+			
+			if( geoFunction == 1 )
+			{
+				bs = BufStringRead( GEO_LOCATION_FILE );
+			}
+		
+			if( bs == NULL || geoFunction == 2 )
+			{
+				char tmp[ 256 ];
+				//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
+				snprintf( tmp, sizeof(tmp), "/82.177.144.226?access_key=6c03cf0550f249596f97dd9aa3203fb3" );
+				// POST, HTTP2, PATH, HEADERS, CONTENT
+				HttpClient *c = HttpClientNew( FALSE, FALSE, tmp, NULL, NULL );
+				if( c != NULL )
+				{
+					//freegeoip.net/xml/
+			
+					bs = HttpClientCall( c, geoProvider, 80, FALSE );
+					HttpClientDelete( c );
+				}
+			}
+			
 			if( bs != NULL )
 			{
+				if( geoFunction == 1 )
+				{
+					BufStringWrite( bs, GEO_LOCATION_FILE );
+				}
+				
 				char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
 				if( pos != NULL )
 				{
 					pos+=4;
 					fci->fci_LocalisationJSON = StringDuplicate( pos );
-					
+				
 					if( fci->fci_LocalisationJSON != NULL )
 					{
 						char *sptr = NULL;
-						
 						if( ( sptr = strstr( fci->fci_LocalisationJSON, "time_zone" ) ) != NULL )
 						{
 							// 12 = time_zone":"
@@ -136,7 +176,7 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 							}
 							fci->fci_TimeZone = StringDuplicateN( sptr, eptr-sptr );
 						}
-						
+					
 						if( ( sptr = strstr( fci->fci_LocalisationJSON, "city" ) ) != NULL )
 						{
 							// 7 = city":"
@@ -149,7 +189,7 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 							}
 							fci->fci_City = StringDuplicateN( sptr, eptr-sptr );
 						}
-						
+					
 						if( ( sptr = strstr( fci->fci_LocalisationJSON, "country_code" ) ) != NULL )
 						{
 							// 15 = country_code":"
@@ -168,8 +208,13 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 				}
 				BufStringDelete( bs );
 			}
-			
-			HttpClientDelete( c );
+		}	
+		else // geoFunction, disabled
+		{
+			DEBUG("Geolocation disabled\n");
+			fci->fci_TimeZone = StringDuplicate("none");
+			fci->fci_City = StringDuplicate("none");
+			strcpy( fci->fci_CountryCode, "none" );
 		}
 	}
 	else

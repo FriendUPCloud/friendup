@@ -67,4 +67,20 @@ unsigned int BufStringAdd(BufString *bs, const char *string_to_append);
  */
 unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsigned int string_to_append_length);
 
+
+/**
+ * Read file to buffered string
+ * @param path path to file
+ * @return BufString object in file inside or NULL when error appear
+ */
+BufString *BufStringRead(const char *path );
+
+/**
+ * Write buffered string into file
+ * @param bs pointer to BufString object
+ * @param path path to file
+ * @return 0 when success otherwise error number
+ */
+int BufStringWrite( BufString *bs, const char *path );
+
 #endif //__BUFFERED_STRING_H__

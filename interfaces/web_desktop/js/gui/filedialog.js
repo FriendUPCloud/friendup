@@ -165,7 +165,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	}
 	else
 	{
-		console.log( 'Load: ' + rememberPath + ' ', ds );
+		console.log( 'Load: ' + rememberPath + ' ' + ds.path );
 	}
 
 	// Block main view while this dialog is open!

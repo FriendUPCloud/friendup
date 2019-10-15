@@ -685,17 +685,45 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		SpecialData *sd = FCalloc( 1, sizeof( SpecialData ) );
 		if( sd != NULL )
 		{
+			int tr = 20;
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
 
 			sd->address = StringDuplicate( conname );
 			
 			FriendCoreManager *fcm = sb->fcm;
+<<<<<<< HEAD
 			if( fcm->fcm_CommServiceRemote != NULL )
 			{
 				sd->csr = fcm->fcm_CommServiceRemote;
 				sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
 			}
+=======
+			
+			while( fcm->fcm_CommServiceRemote == NULL )
+			{
+				sleep( 1 );
+				if( (tr--) <= 0 )
+				{
+					break;
+				}
+			}
+			
+			sd->csr = fcm->fcm_CommServiceRemote;
+			if( sd->csr == NULL )
+			{
+				if( dev->f_Name ){ FFree( dev->f_Name ); }
+				if( dev->f_Path ){ FFree( dev->f_Path ); }
+				if( sd->address ){ FFree( sd->address ); }
+				
+				FFree( sd );
+				FFree( dev );
+				dev = NULL;
+				FERROR("Cannot mount device, connection do not exist\n" );
+				return NULL;
+			}
+			sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
+>>>>>>> origin/patch/crash_fixes
 			sd->port = sd->csr->csr_port;
 			//sd->port = 6503;
 			
