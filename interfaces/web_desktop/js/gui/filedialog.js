@@ -106,7 +106,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		// Create application collection
 		if( !_dialogStorage[ mainview.applicationName ] )
 			_dialogStorage[ mainview.applicationName ] = {};
-		var dialogID = CryptoJS.SHA1( mainview.title + '-' + type + '-' + path );
+		var dialogID = CryptoJS.SHA1( mainview.title + '-' + type + '-' + path ).toString();
 		if( !_dialogStorage[ mainview.applicationName ][ dialogID ] )
 			_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
 		ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
@@ -632,13 +632,30 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			inpu.value = dialog.path;
 		}
 	
-		// Correct fileinfo
-		w._window.fileInfo = {
-			Path: 'Home:',
-			Volume: 'Home:',
-			MetaType: 'Directory',
-			Door: new Door( 'Home:' )
-		};
+		if( dialog.path == 'Mountlist:' )
+		{
+			// Correct fileinfo
+			w._window.fileInfo = {
+				Path: 'Home:',
+				Volume: 'Home:',
+				MetaType: 'Directory',
+				Door: new Door( 'Home:' )
+			};
+		}
+		else
+		{
+			var lp = dialog.path.substr( dialog.path.length - 1, 1 );
+			if( lp != '/' && lp != ':' )
+				dialog.path += '/';
+			
+			// Correct fileinfo
+			w._window.fileInfo = {
+				Path: dialog.path,
+				Volume: dialog.path.split( ':' )[0],
+				MetaType: 'Directory',
+				Door: new Door( dialog.path.split( ':' )[0] )
+			};
+		}
 		
 		// Set up directoryview
 		var dir = new DirectoryView( w._window, {
@@ -678,7 +695,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		dir.listMode = 'listview';
 		
 		// Get icons and load!
-		w._window.fileInfo.Door.getIcons( 'Home:', function( items )
+		w._window.fileInfo.Door.getIcons( dialog.path, function( items )
 		{
 			w._window.icons = items;
 			w.refreshView();
