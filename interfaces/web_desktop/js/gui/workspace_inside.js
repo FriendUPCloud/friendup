@@ -9428,7 +9428,7 @@ Workspace.receivePush = function( jsonMsg )
 	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
-	if( msg == false ) return "nomsg";
+	if( msg == false || msg == 1 ) return "nomsg";
 	try
 	{
 		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
