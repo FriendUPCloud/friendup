@@ -1,0 +1,5 @@
+$COMMON=sha2_prov.c sha3_prov.c digest_common.c
+
+SOURCE[../../../libcrypto]=$COMMON
+SOURCE[../../fips]=$COMMON
+SOURCE[../../legacy]= digest_common.c
