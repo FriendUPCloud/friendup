@@ -147,7 +147,7 @@ int main( int argc __attribute__((unused)), char *argv[])
 	LogNew("friend_core_log", "log.cfg", 1, FLOG_LIVE, FLOG_LIVE, 524288000 );
 
 	LOG( FLOG_INFO, "Core started log\n" );
-
+	
 	if( ( SLIB =  SystemInit() ) != NULL ) // (struct SystemLibrary *)LibraryOpen( "system.library", 0 ) ) != NULL )
 	{
 		SLIB->SystemInitExternal( SLIB );
