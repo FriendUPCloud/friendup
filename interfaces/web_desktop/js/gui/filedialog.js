@@ -70,7 +70,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					keyboardNavigation = object[a];
 					break;
 				case 'rememberPath':
-					rememberPath = object[ a ] ? true : false
+					rememberPath = object[a] ? true : false
 					break;
 			}
 		}
@@ -398,8 +398,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	// Refresh dir listing
 	w.refreshView = function()
 	{
+		console.log( 'Remember path: ' + rememberPath );
 		if( rememberPath )
 		{
+			console.log( 'Setting dialog path: ' + dialog.path );
 			ds.path = dialog.path;
 		}
 		
@@ -414,10 +416,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	w.getContainer = function()
 	{
-		var s = this._window.getElementsByTagName ( 'div' );
+		var s = this._window.getElementsByTagName( 'div' );
 		for ( var a = 0; a < s.length; a++ )
 		{
-			if ( s[a].getAttribute ( 'name' ) && s[a].getAttribute ( 'name' ) == 'ContentBox' )
+			if( s[a].getAttribute( 'name' ) && s[a].getAttribute( 'name' ) == 'ContentBox' )
 			{
 				return s[a];
 			}

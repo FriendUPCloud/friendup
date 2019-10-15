@@ -5274,6 +5274,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	var suffix = false;
 	var multiSelect = true; // Select multiple files
 	var keyboardNavigation = false;
+	var rememberPath = false;
 	
 	// We have a view
 	if( object && object.getViewId )
@@ -5317,6 +5318,9 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 				case 'keyboardNavigation':
 					keyboardNavigation = object[a];
 					break;
+				case 'rememberPath':
+					rememberPath = object[a];
+					break;
 			}
 		}
 	}
@@ -5353,6 +5357,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 		viewId:             mainview,
 		targetViewId:       targetview,
 		suffix:             suffix,
+		rememberPath:       rememberPath,
 		keyboardNavigation: keyboardNavigation
 	} );
 }
