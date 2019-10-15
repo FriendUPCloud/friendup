@@ -107,7 +107,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		if( !_dialogStorage[ mainview.applicationName ] )
 			_dialogStorage[ mainview.applicationName ] = {};
 		var dialogID = CryptoJS.SHA1( mainview.title + '-' + type + '-' + path );
-		_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
+		if( !_dialogStorage[ mainview.applicationName ][ dialogID ] )
+			_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
 		ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
 	}
 
@@ -157,9 +158,14 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 
 	// Do the remembering
-	if( rememberPath && ds.path )
+	if( rememberPath && ds && ds.path )
 	{
-		this.path = path = ds.path
+		this.path = path = ds.path;
+		console.log( 'Set path: ' + ds.path );
+	}
+	else
+	{
+		console.log( 'Load: ' + rememberPath + ' ', ds );
 	}
 
 	// Block main view while this dialog is open!
@@ -398,10 +404,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	// Refresh dir listing
 	w.refreshView = function()
 	{
-		console.log( 'Remember path: ' + rememberPath );
 		if( rememberPath )
 		{
-			console.log( 'Setting dialog path: ' + dialog.path );
 			ds.path = dialog.path;
 		}
 		
