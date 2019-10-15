@@ -104,11 +104,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if( mainview )
 	{
 		// Create application collection
-		if( !_dialogStorage[ mainview.applicationId ] )
-			_dialogStorage[ mainview.applicationId ] = {};
-		var dialogID = CryptoJS.SHA1( mainview.viewId + '-' + type + '-' + path );
-		_dialogStorage[ mainview.applicationId ][ dialogID ] = {};
-		ds = _dialogStorage[ mainview.applicationId ][ dialogID ];
+		if( !_dialogStorage[ mainview.applicationName ] )
+			_dialogStorage[ mainview.applicationName ] = {};
+		var dialogID = CryptoJS.SHA1( mainview.title + '-' + type + '-' + path );
+		_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
+		ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
 	}
 
 	var dialog = this;

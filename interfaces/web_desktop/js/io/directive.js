@@ -1219,7 +1219,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 				var out = [];
 				for( var a in _dialogStorage )
 				{
-					if( a != ifr.applicationId )
+					if( a != ifr.applicationName )
 						out[ a ] = _dialogStorage[ a ];
 				}
 				_dialogStorage = out; 
