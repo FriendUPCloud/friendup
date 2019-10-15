@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var _dialogStorage = {};
+
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
 {
@@ -96,6 +98,18 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			mainview = currentMovable.windowObject;
 		}
 	}
+	
+	// Generate dialog ID
+	var ds = null; // <- main container for session based storage
+	if( mainview )
+	{
+		// Create application collection
+		if( !_dialogStorage[ mainview.applicationId ] )
+			_dialogStorage[ mainview.applicationId ] = {};
+		var dialogID = CryptoJS.SHA1( mainview.viewId + '-' + type + '-' + path );
+		_dialogStorage[ mainview.applicationId ][ dialogID ] = {};
+		ds = _dialogStorage[ mainview.applicationId ][ dialogID ];
+	}
 
 	var dialog = this;
 	dialog.suffix = suffix;
@@ -140,6 +154,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	this.path = path ? path : defaultPath;
 	if ( typeof ( path ) == 'object' )
 		this.path = path.path;
+
+
+	// Do the remembering
+	if( rememberPath && ds.path )
+	{
+		this.path = path = ds.path
+	}
 
 	// Block main view while this dialog is open!
 	if( mainview ) mainview.setBlocker( w );
@@ -377,6 +398,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	// Refresh dir listing
 	w.refreshView = function()
 	{
+		if( rememberPath )
+		{
+			ds.path = dialog.path;
+		}
+		
 		this._window.redrawIcons();
 	}
 

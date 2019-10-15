@@ -1214,6 +1214,16 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					};
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
+				
+				// Close file dialog memory
+				var out = [];
+				for( var a in _dialogStorage )
+				{
+					if( a != ifr.applicationId )
+						out[ a ] = _dialogStorage[ a ];
+				}
+				_dialogStorage = out; 
+				
 				// Silently close message port
 				ApplicationMessagingNexus.close( this.applicationId );
 			}
