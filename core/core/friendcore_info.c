@@ -215,6 +215,7 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 			fci->fci_TimeZone = StringDuplicate("none");
 			fci->fci_City = StringDuplicate("none");
 			strcpy( fci->fci_CountryCode, "none" );
+			fci->fci_LocalisationJSON = StringDuplicate( "{\"time_zone\":\"none\", \"city\":\"none\", \"country_code\":\"none\"}" );
 		}
 	}
 	else
