@@ -442,7 +442,8 @@ void debugFD()
 	fd_count = 0;
 	DIR *dir = opendir(buf);
 	Log( FLOG_INFO, "--------------------------------\n \
-					 -------File descriptors
+					-------File descriptors---------\n \
+					--------------------------------\n"
 	);
 	while( ( dp = readdir( dir ) ) != NULL )
 	{
