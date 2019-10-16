@@ -29,9 +29,14 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <limits.h>
  
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
+
+#include <dirent.h>
+#include <fcntl.h>
  
 #ifdef DARWIN
 #include <sys/types.h>
@@ -362,4 +367,104 @@ char* GetSystemUniqueId()
 	}
 #endif
 	return uniqueID;
+}
+
+
+char *fcntl_flags( int flags )
+{
+	static char output[128];
+	*output = 0;
+
+	if (flags & O_RDONLY)
+		strcat(output, "O_RDONLY ");
+	if (flags & O_WRONLY)
+		strcat(output, "O_WRONLY ");
+	if (flags & O_RDWR)
+		strcat(output, "O_RDWR ");
+	if (flags & O_CREAT)
+		strcat(output, "O_CREAT ");
+	if (flags & O_EXCL)
+		strcat(output, "O_EXCL ");
+	if (flags & O_NOCTTY)
+		strcat(output, "O_NOCTTY ");
+	if (flags & O_TRUNC)
+		strcat(output, "O_TRUNC ");
+	if (flags & O_APPEND)
+		strcat(output, "O_APPEND ");
+	if (flags & O_NONBLOCK)
+		strcat(output, "O_NONBLOCK ");
+	if (flags & O_SYNC)
+		strcat(output, "O_SYNC ");
+	if (flags & O_ASYNC)
+		strcat(output, "O_ASYNC ");
+
+	return output;
+}
+
+char *fd_info(int fd)
+{
+	if( fd < 0 || fd >= FD_SETSIZE )
+	{
+		return FALSE;
+	}
+	// if (fcntl(fd, F_GETFL) == -1 && errno == EBADF)
+	int rv = fcntl(fd, F_GETFL);
+	return (rv == -1) ? strerror(errno) : fcntl_flags(rv);
+}
+
+/* check whether a file-descriptor is valid */
+int pth_util_fd_valid( int fd )
+{
+	if (fd < 3 || fd >= FD_SETSIZE)
+	{
+		return FALSE;
+	}
+	if( fcntl(fd, F_GETFL) == -1 && errno == EBADF )
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/**
+ * Put all information about FD's to log
+ *
+ */
+/* implementation of Donal Fellows method */ 
+void debugFD()
+{
+	int fd_count;
+	char buf[ 64 ];
+	struct dirent *dp;
+
+	snprintf( buf, 64, "/proc/%i/fd/", getpid() );
+
+	fd_count = 0;
+	DIR *dir = opendir(buf);
+	Log( FLOG_INFO, "--------------------------------\n \
+					-------File descriptors---------\n \
+					--------------------------------\n"
+	);
+	while( ( dp = readdir( dir ) ) != NULL )
+	{
+		char buffer[ 512 ];
+		char *endptr;
+		errno = 0;
+		long result = strtol( dp->d_name, &endptr, 10);
+		if( endptr == dp->d_name )
+		{
+			// nothing parsed from the string, handle errors or exit
+		}
+		if( ( result == LONG_MAX || result == LONG_MIN) && errno == ERANGE )
+		{
+			// out of range, handle or exit
+			result = 0;
+		}
+		
+		snprintf( buffer, sizeof(buffer), "fd: %lu valid: %d info: %s\n", result, pth_util_fd_valid( (int)result ), fd_info( (int)result ) );
+		Log( FLOG_INFO, buffer );
+		 
+		fd_count++;
+	}
+	closedir(dir);
 }
