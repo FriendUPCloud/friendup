@@ -692,13 +692,6 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 			sd->address = StringDuplicate( conname );
 			
 			FriendCoreManager *fcm = sb->fcm;
-<<<<<<< HEAD
-			if( fcm->fcm_CommServiceRemote != NULL )
-			{
-				sd->csr = fcm->fcm_CommServiceRemote;
-				sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
-			}
-=======
 			
 			while( fcm->fcm_CommServiceRemote == NULL )
 			{
@@ -723,7 +716,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				return NULL;
 			}
 			sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
->>>>>>> origin/patch/crash_fixes
+
 			sd->port = sd->csr->csr_port;
 			//sd->port = 6503;
 			

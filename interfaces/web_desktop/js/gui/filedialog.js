@@ -106,7 +106,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		// Create application collection
 		if( !_dialogStorage[ mainview.applicationName ] )
 			_dialogStorage[ mainview.applicationName ] = {};
-		var dialogID = CryptoJS.SHA1( mainview.title + '-' + type + '-' + path ).toString();
+		var dialogID = CryptoJS.SHA1( mainview.title + '-' + type ).toString();
 		if( !_dialogStorage[ mainview.applicationName ][ dialogID ] )
 			_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
 		ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
@@ -153,7 +153,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	// Default path
 	this.path = path ? path : defaultPath;
-	if ( typeof ( path ) == 'object' )
+	if( typeof ( path ) == 'object' )
 		this.path = path.path;
 
 
@@ -706,6 +706,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			var f = w._window.fileInfo;
 			var d = new Door( f.Path );
 			dialog.path = f.Path;
+			
+			console.log( 'Setting new path: ' + f.Path );
 			
 			var fin = {
 				Path: f.Path,
