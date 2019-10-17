@@ -10,44 +10,54 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
-
 $obj = $args->args;
 
 $userid = $User->ID;
 
-/*if( $level == 'Admin' && $args->args->userid )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	$userid = $args->args->userid;
-}*/
+	$args->authid = $args->args->authid;
+}
 
-if( $perm = Permissions( 'write', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
+if( !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	if( $level == 'Admin' && $args->args->userid )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		$userid = $args->args->userid;
+	}
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'write', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
+	{
+		if( is_object( $perm ) )
 		{
-			die('fail<!--separate-->unauthorised access attempt!');
-		}
+			// Permission denied.
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-		if( $perm->response == 1 )
-		{
-			// If user has GLOBAL or WORKGROUP access to this user
-			
-			if( isset( $args->args->userid ) && $args->args->userid )
+			if( $perm->response == -1 )
 			{
-				$userid = intval( $args->args->userid );
+				die('fail<!--separate-->unauthorised access attempt!');
 			}
-			
-			// If we have GLOBAL Access
-			
-			if( isset( $perm->data->users ) && $perm->data->users == '*' )
+		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 )
 			{
-				$level = 'Admin';
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( isset( $args->args->userid ) && $args->args->userid )
+				{
+					$userid = intval( $args->args->userid );
+				}
+			
+				// If we have GLOBAL Access
+			
+				if( isset( $perm->data->users ) && $perm->data->users == '*' )
+				{
+					$level = 'Admin';
+				}
 			}
 		}
 	}

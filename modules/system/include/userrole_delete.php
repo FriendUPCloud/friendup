@@ -12,25 +12,34 @@
 
 global $SqlDatabase, $Logger, $User;
 
-// Must be admin
-//if( $level != 'Admin' )
-//	die( '404' );
-
-require_once( 'php/include/permissions.php' );
-
-if( $perm = Permissions( 'delete', 'application', 'Admin', [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ] ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	// Must be admin
+	if( $level != 'Admin' ) die( '404' );
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+
+	if( $perm = Permissions( 'delete', 'application', 'Admin', [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ] ) )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		if( is_object( $perm ) )
 		{
-			//
-			
-			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
-		}
+			// Permission denied.
 		
+			if( $perm->response == -1 )
+			{
+				//
+			
+				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
+		
+		}
 	}
 }
 

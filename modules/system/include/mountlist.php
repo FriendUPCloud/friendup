@@ -10,43 +10,54 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
-
-
 // 
 $userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
 
-/*if( $level == 'Admin' && $args->args->userid )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	$userid = $args->args->userid;
-}*/
+	$args->authid = $args->args->authid;
+}
 
-if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ] ) )
+if( !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	if( $level == 'Admin' && $args->args->userid )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		$userid = $args->args->userid;
+	}
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ] ) )
+	{
+		if( is_object( $perm ) )
 		{
-			//die( 'fail<!--separate-->no filesystems available<!--separate-->' . mysql_error() );
-		}
+			// Permission denied.
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-		if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
-		{
-			
-			// If user has GLOBAL or WORKGROUP access to this user
-			
-			if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+			if( $perm->response == -1 )
 			{
-				$userid = intval( $args->args->userid );
+				//die( 'fail<!--separate-->no filesystems available<!--separate-->' . mysql_error() );
 			}
+		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+			{
 			
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+				{
+					$userid = intval( $args->args->userid );
+				}
+			
+			}
 		}
 	}
 }
+
+
 
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT f.* FROM Filesystem f

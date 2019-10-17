@@ -432,7 +432,8 @@ Sections.accounts_users = function( cmd, extra )
 						loadingList[ ++loadingSlot ]( userInfo );
 			
 					}
-					u.execute( 'userinfoget', { id: extra, mode: 'all' } );
+					console.log( 'authid: ' + Application.authId );
+					u.execute( 'userinfoget', { id: extra, mode: 'all', authid: Application.authId } );
 				},
 				// Load user settings
 				function( userInfo )
@@ -454,7 +455,7 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) settings = '404';
 						loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
 					}
-					u.execute( 'usersettings', { userid: userInfo.ID } );
+					u.execute( 'usersettings', { userid: userInfo.ID, authid: Application.authId } );
 				},
 				// Get more user settings
 				function( data )
@@ -482,7 +483,7 @@ Sections.accounts_users = function( cmd, extra )
 						'focusmode', 'hiddensystem', 'workspacecount', 
 						'scrolldesktopicons', 'wizardrun', 'themedata_' + data.settings.Theme,
 						'workspacemode'
-					], userid: data.userInfo.ID } );
+					], userid: data.userInfo.ID, authid: Application.authId } );
 				},
 				// Get user's workgroups
 				function( info )
@@ -505,7 +506,7 @@ Sections.accounts_users = function( cmd, extra )
 						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'workgroups', { userid: info.userInfo.ID } );
+					u.execute( 'workgroups', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
 				// Get user's roles
 				function( info )
@@ -531,7 +532,7 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) info.roles = '404';
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'userroleget', { userid: info.userInfo.ID } );
+					u.execute( 'userroleget', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
 				// Get storage
 				function( info )
@@ -554,7 +555,7 @@ Sections.accounts_users = function( cmd, extra )
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'mountlist', { userid: info.userInfo.ID } );
+					u.execute( 'mountlist', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
 				// Get user applications
 				function( info )
@@ -577,7 +578,7 @@ Sections.accounts_users = function( cmd, extra )
 						info.applications = apps;
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'listuserapplications', { userid: info.userInfo.ID } );
+					u.execute( 'listuserapplications', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
 				function( info )
 				{
@@ -798,11 +799,11 @@ Sections.accounts_users = function( cmd, extra )
 		}
 		if( filter )
 		{
-			m.execute( 'listusers', { query: filter } );
+			m.execute( 'listusers', { query: filter, authid: Application.authId } );
 		}
 		else
 		{
-			m.execute( 'listusers' );
+			m.execute( 'listusers', { authid: Application.authId } );
 		}
 	}
 	
@@ -811,7 +812,9 @@ Sections.accounts_users = function( cmd, extra )
 		// Get the user list
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
-		{			
+		{	
+			console.log( { e:e, d:d } );
+			
 			var userList = null;
 			
 			try
@@ -825,7 +828,7 @@ Sections.accounts_users = function( cmd, extra )
 			
 			doListUsers( userList );
 		}
-		m.execute( 'listusers' );
+		m.execute( 'listusers', { authid: Application.authId } );
 		
 	}
 	else
@@ -888,7 +891,7 @@ Sections.userrole_update = function( rid, userid, _this )
 		{
 			console.log( { e:e, d:d } );
 		}
-		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data } );
+		m.execute( 'userroleupdate', { id: rid, userid: userid, data: data, authid: Application.authId } );
 	}
 };
 
@@ -1049,17 +1052,20 @@ Sections.user_disk_save = function( userid, did )
 				
 					Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 				}
-				u.execute( 'mountlist', { userid: userid } );
+				u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 			
 			} );
 		}
 		
 		// TODO: Make sure we save for the selected user and not the loggedin user ...
 		
+		data.authid = Application.authId;
+		
 		// Edit?
 		if( did > 0 )
 		{
 			data.ID = did;
+			
 			m.execute( 'editfilesystem', data );
 		}
 		// Add new...
@@ -1091,7 +1097,7 @@ Sections.user_disk_cancel = function( userid )
 		
 		ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 	}
-	u.execute( 'mountlist', { userid: userid } );
+	u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 	
 };
 
@@ -1134,7 +1140,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 							
 								ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 							}
-							u.execute( 'mountlist', { userid: userid } );
+							u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 						
 							return;
 						}
@@ -1150,7 +1156,7 @@ Sections.user_disk_remove = function( devname, did, userid )
 						return;
 					
 					}
-					m.execute( 'deletedoor', { id: did, userid: userid } );
+					m.execute( 'deletedoor', { id: did, userid: userid, authid: Application.authId } );
 					
 				} );
 				
@@ -1170,7 +1176,8 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 		var n = new Module( 'system' );
 		n.onExecuted = function( ee, dat )
 		{
-		
+			console.log( { e:ee, d:dat } );
+			
 			try
 			{
 				var da = JSON.parse( dat );
@@ -1185,7 +1192,7 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
-				console.log( { e:e, d:d } );
+				console.log( 'user_disk_update ', { e:e, d:d } );
 				
 				var storage = { id : '', name : '', type : '', size : 512, user : userid };
 			
@@ -1298,7 +1305,7 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 					str += '<div class="HContent70 FloatLeft Ellipsis">';
 					str += '<select class="FullWidth" id="Type" onchange="LoadDOSDriverGUI(this)"' + ( storage.id ? ' disabled="disabled"' : '' ) + '>';
 					
-					console.log( storage );
+					console.log( 'StorageForm ', storage );
 					
 					if( da )
 					{
@@ -1383,11 +1390,12 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 		
 			m.execute( 'filesystem', {
 				userid: userid,
-				devname: name
+				devname: name, 
+				authid: Application.authId
 			} );
 			
 		}
-		n.execute( 'types', { userid: userid } );
+		n.execute( 'types', { mode: 'all', userid: userid, authid: Application.authId } );
 	}
 };
 
@@ -1557,7 +1565,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 					
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 					}
-					u.execute( 'mountlist', { userid: userid } );
+					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 				
 					return;
 				}
@@ -1595,7 +1603,7 @@ Sections.user_disk_mount = function( devname, userid, _this )
 					
 						ge( 'StorageGui' ).innerHTML = Sections.user_disk_refresh( ul, userid );
 					}
-					u.execute( 'mountlist', { userid: userid } );
+					u.execute( 'mountlist', { userid: userid, authid: Application.authId } );
 				
 					return;
 				}
@@ -1774,9 +1782,9 @@ function StorageForm( storage, callback )
 				}
 			}
 		}
-		m.execute( 'dosdrivergui', { type: storage.type, id: storage.id } );
+		m.execute( 'dosdrivergui', { type: storage.type, id: storage.id, authid: Application.authId } );
 	}
-	ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language } );
+	ft.execute( 'dosdrivergui', { component: 'locale', type: storage.type, language: Application.language, authid: Application.authId } );
 	
 }
 
@@ -1850,10 +1858,10 @@ function LoadDOSDriverGUI( _this )
 					ge( 'DosDriverGui' ).innerHTML = '';
 				}
 			}
-			m.execute( 'dosdrivergui', { type: type } );
+			m.execute( 'dosdrivergui', { type: type, authid: Application.authId } );
 		
 		}
-		ft.execute( 'dosdrivergui', { component: 'locale', type: type, language: Application.language } );
+		ft.execute( 'dosdrivergui', { component: 'locale', type: type, language: Application.language, authid: Application.authId } );
 	}
 }
 

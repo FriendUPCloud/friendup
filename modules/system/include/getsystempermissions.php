@@ -10,24 +10,33 @@
 *                                                                              *
 *****************************************************************************©*/
 
-//if( $level != 'Admin' ) die( '404' );
-
-require_once( 'php/include/permissions.php' );
-
-if( $perm = Permissions( 'read', 'application', 'Admin', 'PERM_ROLE_GLOBAL' ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
-	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
-		{
-			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
-		}
-		
-	}
+	$args->authid = $args->args->authid;
 }
 
+if( !isset( $args->authid ) )
+{
+	if( $level != 'Admin' ) die( '404' );
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+
+	if( $perm = Permissions( 'read', 'application', 'Admin', 'PERM_ROLE_GLOBAL' ) )
+	{
+		if( is_object( $perm ) )
+		{
+			// Permission denied.
+		
+			if( $perm->response == -1 )
+			{
+				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
+		
+		}
+	}
+}
 
 
 if( !file_exists( 'cfg/system_permissions.json' ) || !filesize( 'cfg/system_permissions.json' ) )

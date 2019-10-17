@@ -10,40 +10,46 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
-
 $userid = $User->ID;
 
-//admins can delete others users mounts...
-/*if( $level == 'Admin' && isset( $args->args->userid ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	$userid = intval( $args->args->userid );
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	//admins can delete others users mounts...
+	if( $level == 'Admin' && isset( $args->args->userid ) )
+	{
+		$userid = intval( $args->args->userid );
+	}
 }
 else
 {
-	$userid = $User->ID;
-}*/
-
-if( $perm = Permissions( 'delete', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
-{
-	if( is_object( $perm ) )
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'delete', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $userid ) ) )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		if( is_object( $perm ) )
 		{
-			die( 'fail<!--separate-->{"response":"deletedoor failed"}'  );
-		}
+			// Permission denied.
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-		if( $perm->response == 1 )
-		{
-			// If user has GLOBAL or WORKGROUP access to this user
-			
-			if( isset( $args->args->userid ) && $args->args->userid )
+			if( $perm->response == -1 )
 			{
-				$userid = intval( $args->args->userid );
+				die( 'fail<!--separate-->{"response":"deletedoor failed"}'  );
+			}
+		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 )
+			{
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( isset( $args->args->userid ) && $args->args->userid )
+				{
+					$userid = intval( $args->args->userid );
+				}
 			}
 		}
 	}

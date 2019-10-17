@@ -249,7 +249,7 @@ var Sections = {
 			
 			ge( 'ServerConfiguration' ).innerHTML = str;
 		}
-		m.execute( 'getconfiginijson' );
+		m.execute( 'getconfiginijson', { authid: Application.authId } );
 	},
 	system_permissions()
 	{
@@ -270,7 +270,7 @@ var Sections = {
 			
 			console.log( 'system_permissions() ', { e:e, d:d } );
 		}
-		m.execute( 'getsystempermissions' );
+		m.execute( 'getsystempermissions', { authid: Application.authId } );
 	},
 	user_edit( id )
 	{

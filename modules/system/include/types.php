@@ -10,33 +10,41 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
-
-if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ] ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	$args->authid = $args->args->authid;
+}
+
+if( isset( $args->authid ) )
+{
+	require_once( 'php/include/permissions.php' );
+
+	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ] ) )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		if( is_object( $perm ) )
 		{
-			//
-			
-			if( isset( $args->args->userid ) && $User->ID != $args->args->userid )
+			// Permission denied.
+		
+			if( $perm->response == -1 )
 			{
-				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+				//
+			
+				if( isset( $args->args->userid ) && $User->ID != $args->args->userid )
+				{
+					die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+				}
 			}
-		}
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
+			// Permission granted. GLOBAL or WORKGROUP specific ...
 		
-		if( $perm->response == 1 )
-		{			
-			// If we have GLOBAL Access || TODO: Look at this when do we list admin filesystems only GLOBAL?
+			if( $perm->response == 1 )
+			{			
+				// If we have GLOBAL Access || TODO: Look at this when do we list admin filesystems only GLOBAL?
 			
-			if( $perm->data->users == '*' )
-			{
-				$level = 'Admin';
+				if( $perm->data->users == '*' )
+				{
+					$level = 'Admin';
+				}
 			}
 		}
 	}

@@ -9,36 +9,47 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
-
-//$userid = ( $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID );
-$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
-
-if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_APPLICATION_GLOBAL', 'PERM_APPLICATION_WORKGROUP' ] ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	$userid = ( $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+	
+	$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
+	
+	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_APPLICATION_GLOBAL', 'PERM_APPLICATION_WORKGROUP' ] ) )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		if( is_object( $perm ) )
 		{
-			//
-			
-			die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
-		}
+			// Permission denied.
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-		if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
-		{
-			
-			// If user has GLOBAL or WORKGROUP access to this user
-			
-			if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+			if( $perm->response == -1 )
 			{
-				$userid = intval( $args->args->userid );
-			}
+				//
 			
+				die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
+		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+			{
+			
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+				{
+					$userid = intval( $args->args->userid );
+				}
+			
+			}
 		}
 	}
 }

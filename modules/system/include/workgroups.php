@@ -9,55 +9,63 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
-
 $groups = false;
 
 $userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
 
-if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	$args->authid = $args->args->authid;
+}
+
+if( isset( $args->authid ) )
+{
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] ) )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		if( is_object( $perm ) )
 		{
-			//
-			
-			//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
-		}
+			// Permission denied.
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-		if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
-		{
-			
-			// If user has GLOBAL or WORKGROUP access to this user
-			
-			if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+			if( $perm->response == -1 )
 			{
-				// TODO: Look at this, It's commented out because of FriendChat / Presence.
-				//$userid = intval( $args->args->userid );
+				//
+			
+				//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
 			}
-			
-		}
 		
-		if( $perm->response == 1 && isset( $perm->data->workgroups ) )
-		{
-			
-			// If user has GLOBAL or WORKGROUP access to these workgroups
-			
-			if( $perm->data->workgroups && $perm->data->workgroups != '*' )
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
 			{
-				if( !isset( $args->args ) )
+			
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
 				{
-					$args->args = new stdClass();
+					// TODO: Look at this, It's commented out because of FriendChat / Presence.
+					//$userid = intval( $args->args->userid );
 				}
-				
-				$args->args->ParentID = $perm->data->workgroups;
-			}
 			
+			}
+		
+			if( $perm->response == 1 && isset( $perm->data->workgroups ) )
+			{
+			
+				// If user has GLOBAL or WORKGROUP access to these workgroups
+			
+				if( $perm->data->workgroups && $perm->data->workgroups != '*' )
+				{
+					if( !isset( $args->args ) )
+					{
+						$args->args = new stdClass();
+					}
+				
+					$args->args->ParentID = $perm->data->workgroups;
+				}
+			
+			}
 		}
 	}
 }

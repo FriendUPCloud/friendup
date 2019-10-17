@@ -42,7 +42,7 @@ Sections.accounts_roles = function( cmd, extra )
 						
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'userroleget', { id: extra } );
+					u.execute( 'userroleget', { id: extra, authid: Application.authId } );
 				},
 				
 				// Load system permissions
@@ -64,7 +64,7 @@ Sections.accounts_roles = function( cmd, extra )
 						}
 						loadingList[ ++loadingSlot ]( info );
 					}
-					m.execute( 'getsystempermissions' );
+					m.execute( 'getsystempermissions', { authid: Application.authId } );
 				},
 				
 				// Load workgroups
@@ -86,7 +86,7 @@ Sections.accounts_roles = function( cmd, extra )
 						}
 						loadingList[ ++loadingSlot ]( info );
 					}
-					u.execute( 'workgroups' );
+					u.execute( 'workgroups', { authid: Application.authId } );
 				},
 				
 				// Then, finally, show role details
@@ -231,7 +231,7 @@ Sections.accounts_roles = function( cmd, extra )
 		Friend.responsive.pageActive = ge( 'RoleList' );
 		Friend.responsive.reinit();
 	}
-	m.execute( 'userroleget' );
+	m.execute( 'userroleget', { authid: Application.authId } );
 };
 
 
@@ -289,7 +289,7 @@ Sections.userroleadd = function( input )
 			// refresh
 			Sections.accounts_roles();
 		}
-		m.execute( 'userroleadd', { name: input } );
+		m.execute( 'userroleadd', { name: input, authid: Application.authId } );
 	}
 };
 
@@ -305,7 +305,7 @@ Sections.userroledelete = function( rid )
 			// refresh
 			Sections.accounts_roles();
 		}
-		m.execute( 'userroledelete', { id: rid } );
+		m.execute( 'userroledelete', { id: rid, authid: Application.authId } );
 	}
 };
 
@@ -327,7 +327,7 @@ Sections.userroleupdate = function( rid, input, perms, refresh )
 				Sections.accounts_roles( 'edit', rid );
 			}
 		}
-		m.execute( 'userroleupdate', { id: rid, name: ( input ? input : null ), permissions: ( perms ? perms : null ) } );
+		m.execute( 'userroleupdate', { id: rid, name: ( input ? input : null ), permissions: ( perms ? perms : null ), authid: Application.authId } );
 	}
 };
 
@@ -397,7 +397,7 @@ Sections.checkpermission = function( input )
 		{
 			//console.log( { e:e, d:d } );
 		}
-		m.execute( 'checkpermission', { permission: input } );
+		m.execute( 'checkpermission', { permission: input, authid: Application.authId } );
 	}
 };
 

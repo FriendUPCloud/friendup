@@ -10,8 +10,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
-
 // Settings object
 $s = new stdClass();
 
@@ -19,39 +17,52 @@ $s = new stdClass();
 // NB: This is run on every user login
 include( 'modules/system/include/firstlogin.php' );
 
-$userid = $User->ID;
-
-
-// Only check permissions if userid is defined ...
-if( isset( $args->args->userid ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ], 'user', $userid ) )
+	$args->authid = $args->args->authid;
+}
+
+if( isset( $args->authid ) )
+{
+	$userid = ( $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID );
+}
+else
+{
+	require_once( 'php/include/permissions.php' );
+	
+	$userid = $User->ID;	
+		
+	// Only check permissions if userid is defined ...
+	if( isset( $args->args->userid ) )
 	{
-		if( is_object( $perm ) )
+		if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ], 'user', $userid ) )
 		{
-			// Permission denied.
-		
-			if( $perm->response == -1 )
+			if( is_object( $perm ) )
 			{
-				//
-			
-				//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
-			}
+				// Permission denied.
 		
-			// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-			if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
-			{
-			
-				// If user has GLOBAL or WORKGROUP access to this user
-			
-				if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+				if( $perm->response == -1 )
 				{
-					$userid = intval( $args->args->userid );
-				}
+					//
 			
-			}
+					//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+				}
 		
+				// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+				if( $perm->response == 1 && isset( $perm->data->users ) && isset( $args->args->userid ) )
+				{
+			
+					// If user has GLOBAL or WORKGROUP access to this user
+			
+					if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->args->userid.',' ) )
+					{
+						$userid = intval( $args->args->userid );
+					}
+			
+				}
+		
+			}
 		}
 	}
 }

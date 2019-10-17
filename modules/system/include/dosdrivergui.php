@@ -1,34 +1,42 @@
 <?php
 
-require_once( 'php/include/permissions.php' );
-
-if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	$args->authid = $args->args->authid;
+}
+
+if( isset( $args->authid ) )
+{
+	require_once( 'php/include/permissions.php' );
+
+	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_STORAGE_GLOBAL', 'PERM_STORAGE_WORKGROUP' ], 'user', ( isset( $args->args->userid ) ? $args->args->userid : $User->ID ) ) )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		if( is_object( $perm ) )
 		{
-			//
-			
-			//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
-		}
+			// Permission denied.
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-		if( $perm->response == 1 && isset( $perm->data->users ) )
-		{
-			
-			// If user has GLOBAL or WORKGROUP access to this user
-			
-			if( $perm->data->users == '*' )
+			if( $perm->response == -1 )
 			{
-				$level = 'Admin';
-			}
+				//
 			
-		}
+				//die( 'fail<!--separate-->{"message":"'.$perm->message.'",'.($perm->reason?'"reason":"'.$perm->reason.'",':'').'"response":'.$perm->response.'}' );
+			}
 		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->users ) )
+			{
+			
+				// If user has GLOBAL or WORKGROUP access to this user
+			
+				if( $perm->data->users == '*' )
+				{
+					$level = 'Admin';
+				}
+			
+			}
+		
+		}
 	}
 }
 

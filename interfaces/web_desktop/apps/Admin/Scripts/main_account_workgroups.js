@@ -240,7 +240,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			{
 				console.log( { e:e, d:d } );
 			}
-			m.execute( 'userroleupdate', { id: rid, groupid: groupid, data: data } );
+			m.execute( 'userroleupdate', { id: rid, groupid: groupid, data: data, authid: Application.authId } );
 		}
 		
 	}
@@ -322,7 +322,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					}
 					loadingList[ ++loadingSlot ]( info );
 				}
-				u.execute( 'userroleget', { groupid: info.workgroup.groupid } );
+				u.execute( 'userroleget', { groupid: info.workgroup.groupid, authid: Application.authId } );
 			},
 			
 			function( info )

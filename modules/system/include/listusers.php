@@ -9,7 +9,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-require_once( 'php/include/permissions.php' );
+
 
 
 /*// TODO: Permissions!!! Only list out when you have users below your
@@ -66,38 +66,50 @@ else if( $pobj = CheckAppPermission( 'PERM_USER_WORKGROUP', 'Admin' ) )
 	{
 		$permission = 'Workgroup';
 	}
-}
-
-if( !$permission && $level != 'Admin' )
-{
-	die('fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
 }*/
 
-// TODO: Have to look into not being to specific if this module call is used other places for listing users then the Admin app ...
-
-if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
-	if( is_object( $perm ) )
+	$args->authid = $args->args->authid;
+}
+
+if( !isset( $args->authid ) )
+{
+	if( /*!$permission && */$level != 'Admin' )
 	{
-		// Permission denied.
-		
-		if( $perm->response == -1 )
+		die('fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
+	}
+	
+	// TODO: Have to look into not being to specific if this module call is used other places for listing users then the Admin app ...
+}
+else 
+{
+	require_once( 'php/include/permissions.php' );
+	
+	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+	{
+		if( is_object( $perm ) )
 		{
-			die( 'fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
-		}
+			// Permission denied.
 		
-		// Permission granted. GLOBAL or WORKGROUP specific ...
-		
-		if( $perm->response == 1 && isset( $perm->data->users ) && $perm->data->users != '*' )
-		{
-			// UserID's in the Workgroups this user has access to ...
-			
-			if( $args->args == false || $args->args == 'false' )
+			if( $perm->response == -1 )
 			{
-				$args->args = new stdClass();
+				die( 'fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
 			}
+		
+			// Permission granted. GLOBAL or WORKGROUP specific ...
+		
+			if( $perm->response == 1 && isset( $perm->data->users ) && $perm->data->users != '*' )
+			{
+				// UserID's in the Workgroups this user has access to ...
 			
-			$args->args->userid = $perm->data->users;
+				if( $args->args == false || $args->args == 'false' )
+				{
+					$args->args = new stdClass();
+				}
+			
+				$args->args->userid = $perm->data->users;
+			}
 		}
 	}
 }
