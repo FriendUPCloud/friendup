@@ -161,11 +161,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if( rememberPath && ds && ds.path )
 	{
 		this.path = path = ds.path;
-		console.log( 'filedialog: Set path: ' + ds.path );
-	}
-	else
-	{
-		console.log( 'filedialog: Path is not remembered.' );
 	}
 
 	// Block main view while this dialog is open!
@@ -173,7 +168,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	
 	// Select an element
 	w.select = function( ele )
-	{	
+	{
 		var cont = this.getContainer ();
 		var eles = cont.getElementsByTagName( 'div' );
 		for( var a = 0; a < eles.length; a++ )
@@ -369,7 +364,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			else
 			{
 				triggerfunction( '' );
-				console.log( 'Nothing selected...' );
 			}
 		}
 		w.close ();
@@ -409,7 +403,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			ds.path = dialog.path;
 		}
 		
-		console.log( 'filedialog: Refreshing dir listing: ' + dialog.path );
 		this._window.redrawIcons();
 	}
 
@@ -696,11 +689,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		dir.listMode = 'listview';
 		
 		// Get icons and load!
-		console.log( 'Loading icons in ' + dialog.path );
 		w._window.fileInfo.Door.getIcons( dialog.path, function( items )
 		{
 			w._window.icons = items;
-			console.log( 'Refreshing' );
 			w.refreshView();
 		} );
 		
@@ -709,8 +700,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			var f = w._window.fileInfo;
 			var d = new Door( f.Path );
 			dialog.path = f.Path;
-			
-			console.log( 'Setting new path: ' + f.Path );
 			
 			var fin = {
 				Path: f.Path,
@@ -722,7 +711,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			var dr = new Door( f.Path );
 			dr.getIcons( f.Path, function( icons )
 			{
-				console.log( 'More icons.' );
 				w._window.directoryview.addToHistory( fin );
 				w._window.icons = icons;
 				w.refreshView();
