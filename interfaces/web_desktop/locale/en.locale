@@ -408,6 +408,8 @@ i18n_read_only_fs_desc                  : You are trying to write to a write pro
 i18n_overwriting_file                   : Overwriting file
 i18n_do_you_want_overwrite              : Do you want to save your file and replace the existing one?
 i18n_overwrite                          : Replace file
+i18n_no_path                            : No path
+i18n_please_choose_a_path               : Please choose a path.
 
 #File operations ---------------------------------------------------------------
 

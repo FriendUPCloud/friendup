@@ -161,11 +161,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if( rememberPath && ds && ds.path )
 	{
 		this.path = path = ds.path;
-		console.log( 'Set path: ' + ds.path );
+		console.log( 'filedialog: Set path: ' + ds.path );
 	}
 	else
 	{
-		console.log( 'Load: ' + rememberPath + ' ' + ds.path );
+		console.log( 'filedialog: Path is not remembered.' );
 	}
 
 	// Block main view while this dialog is open!
@@ -220,7 +220,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	{
 		if( !dialog.path )
 		{
-			alert ( 'Please choose a path.' );
+			Alert( i18n( 'i18n_no_path' ), i18n( 'i18n_please_choose_a_path' ) );
 			return false;
 		}
 		
@@ -409,6 +409,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			ds.path = dialog.path;
 		}
 		
+		console.log( 'filedialog: Refreshing dir listing: ' + dialog.path );
 		this._window.redrawIcons();
 	}
 
