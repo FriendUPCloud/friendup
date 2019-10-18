@@ -80,7 +80,7 @@ Application.run = function( msg )
 	appConn = new FConn(); // Setup a friend core connection
 	
 	// Initing sas
-	initSas( msg );
+	// initSas( msg ); // TODO: Reenable at later date
 	
 	// Open application window
 	loadConfig( function()
@@ -1450,10 +1450,10 @@ Application.setMenuItems = function( w )
 				name    : i18n( 'i18n_application_settings' ),
 				command : 'preferences'
 			},
-			{
+			/*{
 				name    : i18n( 'i18n_initiate_sas' ),
 				command : 'sas_window'
-			}/*,
+			},
 			{
 				name    : i18n( 'i18n_save_settings' ),
 				command : function(){}
