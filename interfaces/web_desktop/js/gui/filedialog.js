@@ -695,9 +695,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		dir.listMode = 'listview';
 		
 		// Get icons and load!
+		console.log( 'Loading icons in ' + dialog.path );
 		w._window.fileInfo.Door.getIcons( dialog.path, function( items )
 		{
 			w._window.icons = items;
+			console.log( 'Refreshing' );
 			w.refreshView();
 		} );
 		
@@ -719,6 +721,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			var dr = new Door( f.Path );
 			dr.getIcons( f.Path, function( icons )
 			{
+				console.log( 'More icons.' );
 				w._window.directoryview.addToHistory( fin );
 				w._window.icons = icons;
 				w.refreshView();
