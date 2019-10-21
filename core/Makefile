@@ -23,7 +23,7 @@ ifeq ($(OPENSSL_INTERNAL),1)
 CFLAGS					+=	-I../libs-ext/openssl/include/
 LFLAGS					+=	../libs-ext/openssl/libssl.a ../libs-ext/openssl/libcrypto.a -ldl -lpthread
 else
-LFLAGS					+=	-ldl -lpthread
+LFLAGS					+=	-lssl -lcrypto -ldl -lpthread
 endif
 
 ifeq ($(LINK_LIB_STDCPP),1)
