@@ -1,29 +1,32 @@
 /*
- * Lws directory scan wrapper
+ * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #define NO_GNU_SOURCE_THIS_TIME
 #define _DARWIN_C_SOURCE
 
 #include <libwebsockets.h>
-#include "core/private.h"
+#include "private-lib-core.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -68,7 +71,7 @@ bail:
 
 #else
 
-#if !defined(_WIN32) && !defined(LWS_WITH_ESP32)
+#if !defined(_WIN32) && !defined(LWS_PLAT_FREERTOS)
 
 #include <dirent.h>
 
@@ -103,6 +106,33 @@ lws_dir(const char *dirpath, void *user, lws_dir_callback_function cb)
 		 * files are LDOT_UNKNOWN
 		 */
 
+#if defined(__illumos__)
+        struct stat s;
+        stat(namelist[i]->d_name, &s);
+		switch (s.st_mode) {
+		case S_IFBLK:
+			lde.type = LDOT_BLOCK;
+			break;
+		case S_IFCHR:
+			lde.type = LDOT_CHAR;
+			break;
+		case S_IFDIR:
+			lde.type = LDOT_DIR;
+			break;
+		case S_IFIFO:
+			lde.type = LDOT_FIFO;
+			break;
+		case S_IFLNK:
+			lde.type = LDOT_LINK;
+			break;
+		case S_IFREG:
+			lde.type = LDOT_FILE;
+			break;
+		default:
+			lde.type = LDOT_UNKNOWN;
+			break;
+		}
+#else
 		switch (namelist[i]->d_type) {
 		case DT_BLK:
 			lde.type = LDOT_BLOCK;
@@ -129,6 +159,7 @@ lws_dir(const char *dirpath, void *user, lws_dir_callback_function cb)
 			lde.type = LDOT_UNKNOWN;
 			break;
 		}
+#endif
 		if (cb(dirpath, user, &lde)) {
 			while (i++ < n)
 				free(namelist[i]);
