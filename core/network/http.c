@@ -29,6 +29,7 @@
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
 #include <arpa/inet.h>
+#include <linux/limits.h>
 
 //test
 #undef __DEBUG
