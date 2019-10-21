@@ -5954,7 +5954,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 												return callback( false );
 											}
 										}
-										mm.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : nn ) } );
+										mm.execute( 'permissions', { type: 'read', context: 'application', authid: Application.authId } );
 									}
 								}
 								
@@ -5974,11 +5974,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									catch( e ) {  }
 								}
 								
-								//console.log( '[1] Application.checkAppPermission', {e:e,d:d} );
+								//console.log( '[1] Application.checkAppPermission', {e:e,d:d,args:{ type: 'read', context: 'application', authid: Application.authId },appid:Application.applicationId} );
 								
 								runNow();
 							}
-							m.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : n ) } );
+							m.execute( 'permissions', { type: 'read', context: 'application', authid: Application.authId } );
 						}
 						else runNow();
 						
@@ -6064,7 +6064,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													return callback( false );
 												}
 											}
-											mm.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : nn ) } );
+											mm.execute( 'permissions', { type: 'read', context: 'application', authid: Application.authId } );
 										}
 									}
 									
@@ -6084,11 +6084,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										catch( e ) {  }
 									}
 									
-									//console.log( '[2] Application.checkAppPermission', {e:e,d:d} );
+									//console.log( '[2] Application.checkAppPermission', {e:e,d:d,args:{ type: 'read', context: 'application', authid: Application.authId },appid:Application.applicationId} );
 									
 									runNow();
 								}
-								m.execute( 'permissions', { type: 'read', context: 'application', name: ( Application.applicationName ? Application.applicationName : n ) } );
+								m.execute( 'permissions', { type: 'read', context: 'application', authid: Application.authId } );
 							}
 							else runNow();
 							

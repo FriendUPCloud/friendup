@@ -38,7 +38,7 @@ else
 	
 	//$rolePermission = CheckPermission( 'user', $uid, 'edit' );
 
-	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ], 'user', $uid ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ], 'user', $uid ) )
 	{
 		if( is_object( $perm ) )
 		{

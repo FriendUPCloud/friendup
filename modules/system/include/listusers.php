@@ -86,7 +86,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] ) )
 	{
 		if( is_object( $perm ) )
 		{
@@ -94,6 +94,7 @@ else
 		
 			if( $perm->response == -1 )
 			{
+				die( print_r( $perm,1 ). ' -- ' );
 				die( 'fail<!--separate-->{"response":"-1", "message":"list users failed Error 1"}' );
 			}
 		

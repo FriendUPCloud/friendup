@@ -9,7 +9,7 @@
 *****************************************************************************©*/
 
 // Start!
-Application.run = function( msg ){ initGui(); /*initTest();*/ }
+Application.run = function( msg ){ initGui(); initTest(); }
 
 // Just initialize the GUI!
 function initGui()
@@ -417,34 +417,34 @@ function initTest()
 		{ 
 			type     : 'read', 
 			context  : 'application', 
-			name     : 'Admin',
+			authid   : Application.authId,
 			data     : { permission : [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ] } 
 		},
 		// 1
 		{ 
 			type     : 'read',
 			context  : 'application', 
-			name     : 'Admin',
+			authid   : Application.authId,
 			data     : { permission : 'PERM_USER_GLOBAL' } 
 		},
 		// 2
 		{ 
 			type     : 'read',
 			context  : 'application', 
-			name     : 'Admin',
+			authid   : Application.authId,
 			data     : { permission : 'PERM_USER_WORKGROUP' } 
 		}, 
 		// 3
 		{ 
 			type     : 'read', 
 			context  : 'application', 
-			name     : 'Admin' 
+			authid   : Application.authId, 
 		}, 
 		// 4
 		{ 
 			type     : 'read', 
 			context  : 'application', 
-			name     : 'Admin',
+			authid   : Application.authId,
 			object   : 'user',
 			objectid : 21
 		}, 
@@ -452,7 +452,7 @@ function initTest()
 		{ 
 			type     : 'read', 
 			context  : 'application', 
-			name     : 'Admin',
+			authid   : Application.authId,
 			object   : 'workgroup',
 			objectid : 2000
 		},

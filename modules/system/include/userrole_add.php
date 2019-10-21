@@ -26,7 +26,7 @@ else
 {
 	require_once( 'php/include/permissions.php' );
 
-	if( $perm = Permissions( 'write', 'application', 'Admin', [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'write', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ] ) )
 	{
 		if( is_object( $perm ) )
 		{

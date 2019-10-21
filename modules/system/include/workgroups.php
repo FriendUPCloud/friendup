@@ -22,7 +22,7 @@ if( isset( $args->authid ) )
 {
 	require_once( 'php/include/permissions.php' );
 	
-	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] ) )
 	{
 		if( is_object( $perm ) )
 		{

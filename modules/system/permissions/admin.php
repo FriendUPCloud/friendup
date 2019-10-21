@@ -10,7 +10,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
-if( $data = Permissions( $args->args->type, $args->args->context, $args->args->name, $args->args->data, $args->args->object, $args->args->objectid ) )
+if( isset( $args->args->authid ) && !isset( $args->authid ) )
+{
+	$args->authid = $args->args->authid;
+}
+
+if( $data = Permissions( $args->args->type, $args->args->context, ( isset( $args->authid ) ? 'AUTHID'.$args->authid : $args->args->name ), $args->args->data, $args->args->object, $args->args->objectid ) )
 {
 	if( is_object( $data ) )
 	{
@@ -28,6 +33,6 @@ if( $data = Permissions( $args->args->type, $args->args->context, $args->args->n
 	die( 'ok<!--separate-->{"message":"Permission granted.","response":1}' );
 }
 
-die( 'fail<!--separate-->{"message":"Permission denied.","response":-1}' );
+die( 'ok<!--separate-->{"message":"Permission granted.","reason":"Permission for this app isn\'t set ...","response":1}' );
 
 ?>

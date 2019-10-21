@@ -189,6 +189,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	
 	// Seems we only have two different specifications of permissions GLOBAL and WORKGROUP for now, but for example many different apps within the Admin app that needs to be more specified.
 	
+	// TODO: MAKE THIS FUNCTION SIMPLER AND FASTER ONCE TIME RESTRAINT IS LESS, BUT FOR NOW JUST COMPLETE IN ORDER TO MAKE IT WORK !!!!!
+	
 	// Get user level
 	if( $level = $SqlDatabase->FetchObject( '
 		SELECT g.Name FROM FUserGroup g, FUserToGroup ug
@@ -247,6 +249,50 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	$debug->objectid = $objectid;
 	$debug->level    = $level;
 	
+	// authid method of getting the Application Name and checking if the user has access to it.
+	 
+	if( $name && strstr( $name, 'AUTHID' ) )
+	{
+		
+		if( $app = $SqlDatabase->FetchObject( $q = '
+			SELECT 
+				a.*, u.UserID, u.Permissions, u.AuthID 
+			FROM 
+				FUserApplication u, FApplication a 
+			WHERE 
+				u.AuthID = "' . str_replace( 'AUTHID', '', $name ) . '" AND u.UserID = ' . $User->ID . ' AND a.ID = u.ApplicationID 
+			ORDER BY a.ID DESC 
+		' ) )
+		{
+			//
+			
+			$name = ''; $debug->name = '';
+			
+			if( $app->Name )
+			{
+				$name = $app->Name;
+				
+				$debug->name   = $app->Name;
+				$debug->authid = $app->AuthID;
+			}
+		}
+		else
+		{
+			$debug->name = '';
+			
+			$debug->authid = str_replace( 'AUTHID', '', $name );
+			
+			$out = new stdClass();
+			$out->response = -1;
+			$out->message = 'Permission denied.';
+			$out->reason = 'Permission to use the App with this authid doesn\'t match ...';
+			
+			$out->debug = $debug;
+			
+			return $out;
+		}
+	}
+	
 	// TODO: If we need some data output for permissions we might have to move this further down, but more data will have to be specified first.
 	
 	if( $level == 'Admin' )
@@ -274,6 +320,8 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 		return $out;
 	}
 	
+	
+	
 	// TODO: Create support for checking permissions based on what app the request was sent from, as fallback use an argument like authid, if not defined fallback to ignore permissions
 	//if( !$authid ) return false;
 	
@@ -286,6 +334,19 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 			
 			if( $name )
 			{
+				// TODO: Check if permissions are defined or not by using authid to identify the App name ... if permission is not defined return access granted ...
+				
+				if( !$rows = $SqlDatabase->FetchObject( $q = '
+					SELECT p.* 
+					FROM FUserRolePermission p 
+					WHERE p.Key ' . ( strstr( $name, '","' ) ? 'IN (' . $name . ')' : '= "' . $name . '"' ) . ' 
+					ORDER BY p.ID 
+					LIMIT 1 
+				' ) )
+				{
+					// Skip this rolepermission function ... for now.
+					return false;
+				}
 				
 				// Fetch permissions from user based on role relations
 				if( $rows = $SqlDatabase->FetchObjects( $q = '

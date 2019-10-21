@@ -24,7 +24,7 @@ else
 	
 	$userid = ( !isset( $args->args->userid ) ? $User->ID : 0 );
 	
-	if( $perm = Permissions( 'read', 'application', 'Admin', [ 'PERM_APPLICATION_GLOBAL', 'PERM_APPLICATION_WORKGROUP' ] ) )
+	if( $perm = Permissions( 'read', 'application', ( 'AUTHID'.$args->authid ), [ 'PERM_APPLICATION_GLOBAL', 'PERM_APPLICATION_WORKGROUP' ] ) )
 	{
 		if( is_object( $perm ) )
 		{
