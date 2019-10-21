@@ -282,7 +282,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	
 	if( fullsize > 3096 )
 	{
-		int tr = 100;
 		*returnedAsFile = TRUE;
 		// if message is too big, allocate memory for filename
 		char *tmpFileName = FMalloc( 1024 );
@@ -529,10 +528,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		
 		{
-			time_t timestamp = time ( NULL );
-			
 			UserSession *curusrsess = l->sl_USM->usm_Sessions;
-			int userFound = 0;
 			
 			DEBUG("Checking remote sessions\n");
 				
@@ -625,8 +621,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							loggedSession = curusrsess;
 							userAdded = TRUE;		// there is no need to free resources
 							User *curusr = curusrsess->us_User;
-						
-							DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
+							if( curusr != NULL )
+							{
+								DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
+							}
 							break;
 						}
 					}
@@ -1140,7 +1138,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( code != NULL )
 				{
-					char *pEnd;
 					int errCode = -1;
 					
 					char *next;
@@ -1200,7 +1197,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( code != NULL )
 				{
-					char *pEnd;
 					int errCode = -1;
 					
 					char *next;
@@ -1991,7 +1987,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							// since we introduced deviceidentities with random number, we must remove also old entries
 							DoorNotificationRemoveEntries( l );
 						
-							User *loggedUser = loggedSession->us_User;
+							loggedUser = loggedSession->us_User;
 						
 							Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
 						
@@ -2053,6 +2049,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					{
 						char temp[ 1024 ];
 						char buffer[ 256 ];
+						
+						if( blockedTime > 0 )
+						{
+							User *u = UMGetUserByName( l->sl_UM, usrname );
+							if( u != NULL )
+							{
+								u->u_Status = USER_STATUS_BLOCKED;
+							}
+						}
 						
 						snprintf( buffer, sizeof(buffer), l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED], blockedTime );
 						FERROR("[ERROR] User account '%s' will be blocked until: %lu seconds\n", usrname, blockedTime );

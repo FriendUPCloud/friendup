@@ -116,7 +116,7 @@ typedef struct UserSessListEntry
 }UserSessListEntry;
 
 enum {
-USER_SATUS_ENABLED = 0,
+USER_STATUS_ENABLED = 0,
 USER_STATUS_DISABLED,
 USER_STATUS_BLOCKED
 };

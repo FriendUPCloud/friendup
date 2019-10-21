@@ -687,6 +687,20 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							usr->u_Status = status;
 						}
 						
+						if( status == USER_STATUS_ENABLED )
+						{
+							time_t tm = 0;
+							time_t tm_now = time( NULL );
+							FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+							
+							// if access is disabled and user should be enabled, we remove last login fail
+							if( access == FALSE )
+							{
+								sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
+								sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							}
+						}
+						
 						{
 							char msg[ 512 ];
 							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"status\":\"%lu\"}", id, status );
