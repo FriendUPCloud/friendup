@@ -22,10 +22,11 @@ endif
 setup:
 	mkdir -p libwebsockets/build
 	mkdir -p libssh2/build
+	#cd openssl ; ./config no-shared ; make ; cd ..
+	cd openssl ; ./config ; make ; cd ..
 	cd libwebsockets/build/ ; cmake ../ -DCMAKE_C_FLAGS=-fPIC -DLWS_HAVE_SYS_CAPABILITY_H=OFF -DLWS_IPV6=ON -DCMAKE_BUILD_TYPE=DEBUG -DLWS_WITH_LIBUV=ON -DOPENSSL_ROOT_DIR=../../openssl/ -DLWS_OPENSSL_LIBRARIES=../../openssl/libssl.so;../../openssl/libcrypto.so -DLWS_OPENSSL_INCLUDE_DIRS=../../openssl/include/ -DLWS_WITH_HTTP2=1; make DEBUG=0 ; cd ../../
 	cp -r libwebsockets/include/* libwebsockets/build/include/
 	cd libssh2/build/ ; cmake ../ -DCMAKE_C_FLAGS=-fPIC -DCRYPTO_BACKEND:STRING=Libgcrypt ; make DEBUG=0 ; cd ../../
-	cd openssl ; ./config no-shared ; make ; cd ..
 
 clean:
 	mkdir -p libwebsockets/build
