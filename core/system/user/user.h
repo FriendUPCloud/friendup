@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
   `CreatedTime` bigint(32) NOT NULL,
   `LoginTime` bigint(32) NOT NULL,
   `UUID` varchar(255) DEFAULT NULL,
+  `Status` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
@@ -113,6 +114,12 @@ typedef struct UserSessListEntry
 	void 			*us;
 	MinNode			node;
 }UserSessListEntry;
+
+enum {
+USER_SATUS_ENABLED = 0,
+USER_STATUS_DISABLED,
+USER_STATUS_BLOCKED
+};
 
 //
 // user structure
@@ -128,6 +135,7 @@ typedef struct User
 	char						*u_Email;
 	int							u_Error;            // if error
 	UserSessListEntry			*u_SessionsList;
+	FULONG						u_Status;			// user status
 
 	char						*u_MainSessionID;       // session id ,  generated only when user is taken from db
 	time_t						u_LoggedTime;       // last action time
@@ -260,6 +268,7 @@ static FULONG UserDesc[] = {
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
 	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStoredPerDevice ),
 	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadedPerDevice ),
+	SQLT_INT,     (FULONG)"Status", offsetof( struct User, u_Status ),
 	SQLT_STR,     (FULONG)"UniqueID",    offsetof( struct User, u_UUID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),

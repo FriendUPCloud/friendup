@@ -631,10 +631,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					fg->ug_UserID = loggedSession->us_UserID;
 					
 					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-					int val = 0;
+
 					if( sqlLib != NULL )
 					{
-						int val = sqlLib->Update( sqlLib, UserGroupDesc, fg );
+						sqlLib->Update( sqlLib, UserGroupDesc, fg );
 
 						l->LibrarySQLDrop( l, sqlLib );
 					}
