@@ -21,6 +21,7 @@
 #define ARG_MAX 20000
 #endif
 #include <system/systembase.h>
+#include <util/newpopen.h>
 
 #define SUFFIX "php"
 #define LBUFFER_SIZE 8192
@@ -74,7 +75,7 @@ struct linkedCharArray
 
 char *FilterPHPVar( char *line )
 {
-	if( !line )
+	if( line == NULL )
 	{
 		return NULL;
 	}
@@ -101,6 +102,8 @@ char *FilterPHPVar( char *line )
 	return line;
 }
 
+#define USE_NPOPEN
+
 /**
  * @brief Run a PHP module with arguments
  *
@@ -108,6 +111,11 @@ char *FilterPHPVar( char *line )
 char *Run( struct EModule *mod, const char *path, const char *args, FULONG *length )
 {
 	DEBUG("[PHPmod] call run\n");
+	if( path == NULL || args == NULL )
+	{
+		DEBUG("[PHPmod] path or args = NULL\n");
+		return NULL;
+	}
 
 	FULONG res = 0;
 
@@ -118,7 +126,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	unsigned int epathLen = strlen( epath );
 	int escapedSize = eargLen + epathLen + 1024;
 
-	int siz = eargLen + epathLen + 128;
+	//int siz = eargLen + epathLen + 128;
 	
 	char *command = NULL;
 	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
@@ -139,9 +147,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	FilterPHPVar( epath );
 
 	sprintf( command, "php '%s' '%s'", path, args != NULL ? args : "" );
-	
+	DEBUG("First command: %s\n", command );
 	// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
 	int cx = snprintf( command, escapedSize, "php '%s' '%s'", epath, earg );
+	DEBUG("Second command: %s\n", command );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
 		FERROR( "[PHPmod] snprintf\n" );
@@ -151,6 +160,84 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	
 	DEBUG( "[PHPmod] run app: %s\n", command );
 	
+#define PHP_READ_SIZE 8192	
+	
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	
+	ListString *ls = ListStringNew();
+	//BufString *bs = BufStringNew();
+	
+#ifdef USE_NPOPEN
+	
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[PHPmod] cannot open pipe: %s\n", strerror( errno ) );
+		ListStringDelete( ls );
+		FFree( buf );
+		return NULL;
+	}
+	
+	DEBUG("[PHPmod] command launched\n");
+
+	//printf("<=<=<=<=%s\n", command );
+	fd_set set;
+	struct timeval timeout;
+	int size = 0;
+	int errCounter = 0;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+	
+	while( TRUE )
+	{
+			/* Initialize the file descriptor set. */
+		FD_ZERO( &set );
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		DEBUG("[PHPmod] in loop\n");
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
+		// Make a new buffer and read
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[PHPmod] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			DEBUG( "[PHPmod] before adding to list\n");
+			ListStringAdd( ls, buf, size );
+			DEBUG( "[PHPmod] after adding to list\n");
+			res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+			if( errCounter > 1 )
+			{
+				break;
+			}
+		}
+	}
+	
+	DEBUG("[PHPmod] File readed\n");
+	
+	// Free pipe if it's there
+	newpclose( &pofd );
+
+#else // USE_NPOPEN
+
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
@@ -159,34 +246,22 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		return NULL;
 	}
 	
-	//char *buffer = NULL;
-	char *temp = NULL;
-	char *result = NULL;
-	char *gptr = NULL;
-	
-	DEBUG("[PHPmod] command launched\n");
-	int errors = 0;
-	int lbufcall = LBUFFER_SIZE + 1;
-	
-	ListString *ls = ListStringNew();
-	char buffer[ LBUFFER_SIZE ];
-	
-	//printf("<=<=<=<=%s\n", command );
 	while( !feof( pipe ) )
 	{
-		int reads = fread( buffer, sizeof( char ), LBUFFER_SIZE, pipe );
+		int reads = fread( buf, sizeof( char ), PHP_READ_SIZE, pipe );
 		if( reads > 0 )
 		{
-			ListStringAdd( ls, buffer, reads );
+			//BufStringAddSize( bs, buf, reads );
+			ListStringAdd( ls, buf, reads );
 			res += reads;
 		}
 	}
-	//printf("<=<=<=<=%s\n", command );
-	 
-	//DEBUG("[PHPmod] received bytes %d  : %100s\n", bs->bs_Size, bs->bs_Buffer );
+	
+	pclose( pipe );
+#endif
 	
 	// Free buffer if it's there
-	pclose( pipe );
+	FFree( buf );
 	
 	// Set the length
 	if( length != NULL )
@@ -198,11 +273,27 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	char *final = ls->ls_Data;
 	ls->ls_Data = NULL;
 	ListStringDelete( ls );
+	//char *final = bs->bs_Buffer;
+	//bs->bs_Buffer = NULL;
+	//BufStringDelete( bs );
 	
 	//DEBUG("Final string %s\n", final );
 	
 	//DEBUG( "[PHPmod] We are now complete.. %s\n", final );
-	free( command ); free( epath ); free( earg );
+	if( command != NULL )
+	{
+		free( command );
+	}
+	
+	if( epath != NULL )
+	{
+		free( epath );
+	}
+	
+	if( earg != NULL )
+	{
+		free( earg );
+	}
 	return final;
 }
 

@@ -800,7 +800,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					List* list = CreateList();
 
 					// Do not split Set-Cookie field
-					if( strcmp( currentToken, "set-cookie" ) == 0 )
+					if( currentToken != NULL && strcmp( currentToken, "set-cookie" ) == 0 )
 					{
 						AddToList( list, value );
 					}
@@ -868,8 +868,11 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 						FFree( value );
 					}
 
-					HashmapPut( http->headers, currentToken, list );
-					currentToken = NULL; // It's gone!
+					if( currentToken != NULL )
+					{
+						HashmapPut( http->headers, currentToken, list );
+						currentToken = NULL; // It's gone!
+					}
 				}
 			}
 		}

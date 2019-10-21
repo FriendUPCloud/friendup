@@ -576,6 +576,7 @@ void *FriendCoreAcceptPhase2( void *d )
 
 			while( 1 )
 			{
+				DEBUG("before accept\n");
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
 				{
 					break;
@@ -994,12 +995,12 @@ void FriendCoreProcess( void *fcv )
 	int bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
 	int bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 
-	int tmp_file_handle = -2;
-	char *tmp_filename = NULL;
-	char tmp_filename_template[] = "/tmp/FriendHTTP_XXXXXX";
+	int tmpFileHandle = -2;
+	char *tmpFilename = NULL;
+	char tmpFileNameTemplate[] = "/tmp/FriendHTTP_XXXXXX";
 
-	char *incoming_buffer_ptr = 0;
-	unsigned int incoming_buffer_length = 0;
+	char *incomingBufferPtr = 0;
+	unsigned int incomingBufferLength = 0;
 
 	BufString *resultString = BufStringNewSize( bufferSizeAlloc*2 );
 
@@ -1008,7 +1009,7 @@ void FriendCoreProcess( void *fcv )
 	
 	if( locBuffer != NULL )
 	{
-		incoming_buffer_ptr = resultString->bs_Buffer;
+		incomingBufferPtr = resultString->bs_Buffer;
 
 		for( ; pass < 2; pass++ )
 		{
@@ -1038,13 +1039,13 @@ void FriendCoreProcess( void *fcv )
 					locBuffer = FRealloc( locBuffer, bufferSizeAlloc );
 				}
 			
-				if( tmp_file_handle < 0 && resultString->bs_Bufsize > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
+				if( tmpFileHandle < 0 && resultString->bs_Bufsize > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
 				{
 					//this is going to be a huge request, create a temporary file
 					//copy already received data to it and continue writing to the file
-					tmp_filename = mktemp( tmp_filename_template );
+					tmpFilename = mktemp( tmpFileNameTemplate );
 					//DEBUG( "large upload will go to remporary file %s", tmp_filename );
-					if( strlen( tmp_filename ) == 0 )
+					if( strlen( tmpFilename ) == 0 )
 					{
 						FERROR("mktemp failed!");
 						break; //drop the connection, rest of this function will do the cleanup
@@ -1052,14 +1053,14 @@ void FriendCoreProcess( void *fcv )
 					else
 					{
 						//TODO: use open64 to support >4GB files on 32-bit machines...
-						tmp_file_handle = open(tmp_filename, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
-						if( tmp_file_handle == -1 )
+						tmpFileHandle = open( tmpFilename, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
+						if( tmpFileHandle == -1 )
 						{
 							FERROR("temporary file open failed!");
 							break; //drop the connection, rest of this function will do the cleanup
 						}
 						//write already received chunk
-						int wrote = write( tmp_file_handle, resultString->bs_Buffer, resultString->bs_Size );
+						int wrote = write( tmpFileHandle, resultString->bs_Buffer, resultString->bs_Size );
 						BufStringDelete( resultString );
 					}
 				}
@@ -1071,15 +1072,15 @@ void FriendCoreProcess( void *fcv )
 				res = SocketRead( th->sock, locBuffer, bufferSize, expected );
 				if( res > 0 )
 				{
-					if( tmp_file_handle >= 0 )
+					if( tmpFileHandle >= 0 )
 					{
-						int wrote = write( tmp_file_handle, locBuffer, res );
+						int wrote = write( tmpFileHandle, locBuffer, res );
 					}
 					else
 					{
 						int err = BufStringAddSize( resultString, locBuffer, res );
-						incoming_buffer_ptr = resultString->bs_Buffer; //buffer can be in a different place after resize
-						incoming_buffer_length = resultString->bs_Size;
+						incomingBufferPtr = resultString->bs_Buffer; //buffer can be in a different place after resize
+						incomingBufferLength = resultString->bs_Size;
 						//DEBUG( "Data added : %d res: %d count: %d received %d\n", err, res, count, count + res );
 					}
 				
@@ -1197,35 +1198,37 @@ void FriendCoreProcess( void *fcv )
 					request->h_Socket = th->sock;
 
 					/* -------------- Support for large uploads -------------- */
-					if( tmp_file_handle >= 0 )
+					if( tmpFileHandle >= 0 )
 					{
-						if( incoming_buffer_ptr )
+						if( incomingBufferPtr != NULL )
 						{
 							//DEBUG("incoming buffer already set? unmapping");
-							munmap( incoming_buffer_ptr, incoming_buffer_length );
-							incoming_buffer_ptr = NULL;
+							munmap( incomingBufferPtr, incomingBufferLength );
+							incomingBufferPtr = NULL;
 						}
 						//DEBUG( "mmaping" );
-						incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
-						incoming_buffer_ptr = mmap( 0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0/*offset*/);
+						incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
+						incomingBufferPtr = mmap( 0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0/*offset*/);
 						
-						if( incoming_buffer_ptr == MAP_FAILED )
+						if( incomingBufferPtr == MAP_FAILED )
 						{
-							Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incoming_buffer_length );
+							Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
 							goto close_fcp;
 						}
-						//DEBUG( "mmap status %p", incoming_buffer_ptr );
+						//DEBUG( "mmap status %p", incomingBufferPtr );
 					}
 					else 
 					{
 						DEBUG( "regular processing" );
 					}
 					/* ------------------------------------------------------- */
-					result = HttpParseHeader( request, incoming_buffer_ptr, incoming_buffer_length + 1 );
+					result = HttpParseHeader( request, incomingBufferPtr, incomingBufferLength + 1 );
 					request->gotHeader = TRUE;
 					content = HttpGetHeaderFromTable( request, HTTP_HEADER_CONTENT_LENGTH );
 
+#ifdef USE_SOCKET_REAPER
 					socket_update_state(th->sock, socket_state_got_header);
+#endif
 
 					//DEBUG("CONT LENGTH %ld\n", request->h_ContentLength );
 
@@ -1340,28 +1343,28 @@ void FriendCoreProcess( void *fcv )
 		//DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
 
 		// Free up
-		if( incoming_buffer_ptr != NULL )
+		if( incomingBufferPtr != NULL )
 		{
-			if( incoming_buffer_length > 0 )
+			if( incomingBufferLength > 0 )
 			{
 				// Process data
 				// -------------- Support for large uploads --------------------
-				if( tmp_file_handle >= 0 )
+				if( tmpFileHandle >= 0 )
 				{
-					if( incoming_buffer_ptr )
+					if( incomingBufferPtr )
 					{
 						//DEBUG("incoming buffer already set? unmapping");
-						munmap( incoming_buffer_ptr, incoming_buffer_length );
-						incoming_buffer_ptr = NULL;
+						munmap( incomingBufferPtr, incomingBufferLength );
+						incomingBufferPtr = NULL;
 					}
 					//DEBUG("mmaping");
-					incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
-					incoming_buffer_ptr = mmap(0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0 );// offset);
-					//DEBUG("mmap status %p", incoming_buffer_ptr);
+					incomingBufferLength = lseek( tmpFileHandle, 0, SEEK_END);
+					incomingBufferPtr = mmap(0, incomingBufferLength, PROT_READ | PROT_WRITE, MAP_SHARED, tmpFileHandle, 0 );// offset);
+					//DEBUG("mmap status %p", incomingBufferPtr);
 					
-					if( incoming_buffer_ptr == MAP_FAILED )
+					if( incomingBufferPtr == MAP_FAILED )
 					{
-						Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incoming_buffer_length );
+						Log( FLOG_ERROR, "Cannot allocate memory for stream, length: %d\n", incomingBufferLength );
 						goto close_fcp;
 					}
 				}
@@ -1371,7 +1374,7 @@ void FriendCoreProcess( void *fcv )
 				}
 
 				// ------------------------------------------------------- 
-				Http *resp = ProtocolHttp( th->sock, incoming_buffer_ptr, incoming_buffer_length );
+				Http *resp = ProtocolHttp( th->sock, incomingBufferPtr, incomingBufferLength );
 
 				if( resp != NULL )
 				{
@@ -1398,7 +1401,9 @@ void FriendCoreProcess( void *fcv )
 
 		// Free up buffers
 		if( locBuffer )
+		{
 			FFree( locBuffer );
+		}
 	}
 
 	// Shortcut!
@@ -1414,15 +1419,15 @@ void FriendCoreProcess( void *fcv )
 		th = NULL;
 	}
 
-	if( tmp_file_handle >= 0 )
+	if( tmpFileHandle >= 0 )
 	{
-		if( incoming_buffer_ptr )
+		if( incomingBufferPtr )
 		{
-			munmap( incoming_buffer_ptr, incoming_buffer_length );
-			incoming_buffer_ptr = NULL;
+			munmap( incomingBufferPtr, incomingBufferLength );
+			incomingBufferPtr = NULL;
 		}
-		close( tmp_file_handle );
-		unlink( tmp_filename );
+		close( tmpFileHandle );
+		unlink( tmpFilename );
 	}
 	else 
 	{

@@ -28,7 +28,7 @@ static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify );
 
 static int ReplyError( DataQWSIM *d, int error_code);
 
-int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata );
+void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata );
 
 //
 // Information used by threads
@@ -237,7 +237,7 @@ int WebsocketNotificationsSinkCallback(struct lws* wsi, int reason, void* user, 
 			if( man != NULL && man->man_Data != NULL )
 			{
 				DataQWSIM *d = (DataQWSIM *)man->man_Data;
-				int ret = ProcessIncomingRequest( d, buf, len, user );
+				ProcessIncomingRequest( d, buf, len, user );
 				buf = NULL;
 			}
 		}
@@ -272,6 +272,7 @@ typedef struct UMsg
 // definition
 void ProcessSinkMessage( void *locd );
 
+#ifndef DISABLE_NOTIFICATION_THREADING
 int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 {
 	SinkProcessMessage *spm = FCalloc( 1, sizeof( SinkProcessMessage ) );
@@ -281,29 +282,27 @@ int ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
 		spm->data = data;
 		spm->len = len;
 		spm->udata = udata;
-		
-#ifdef DISABLE_NOTIFICATION_THREADING
-		ProcessSinkMessage( spm );
-#else
+
 		pthread_t tmpThread;
 		pthread_create( &tmpThread, NULL, (void *)( void * )ProcessSinkMessage, spm );
-#endif
+
 	}
 	return 0;
 }
+#endif
 
+#ifdef DISABLE_NOTIFICATION_THREADING
+void ProcessIncomingRequest( DataQWSIM *d, char *data, size_t len, void *udata )
+{
+#else
 void ProcessSinkMessage( void *locd )
 {
 	SinkProcessMessage *spm = (SinkProcessMessage *)locd;
-#ifndef DISABLE_NOTIFICATION_THREADING
 	pthread_detach( pthread_self() );
-#endif
-	
 	if( spm == NULL )
 	{
 		return;
 	}
-	
 	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
 	{
 		MobileAppNotif *man = (MobileAppNotif *)spm->udata;
@@ -315,6 +314,7 @@ void ProcessSinkMessage( void *locd )
 	char *data = spm->data;
 	size_t len = spm->len;
 	void *udata = spm->udata;
+#endif
 	
 	Log( FLOG_INFO, "[NotificationSink] Incoming notification request: <%*s>\n", (unsigned int)len, data);
 
@@ -679,6 +679,7 @@ void ProcessSinkMessage( void *locd )
 	
 error_point:
 
+#ifndef DISABLE_NOTIFICATION_THREADING
 	if( FRIEND_MUTEX_LOCK( &(spm->d->d_Mutex) ) == 0 )
 	{
 		MobileAppNotif *man = (MobileAppNotif *)spm->udata;
@@ -691,6 +692,7 @@ error_point:
 		FFree( spm->data );
 	}
 	FFree( spm );
+#endif
 	
 	return;
 }

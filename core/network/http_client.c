@@ -66,7 +66,10 @@ HttpClient *HttpClientNew( FBOOL post, FBOOL http2, char *param, char *headers, 
 		
 		c->hc_MainLine = StringDuplicateN( temp, size );
 		c->hc_Headers = StringDuplicate( headers );
-		c->hc_Content = StringDuplicate( content );
+		if( content != NULL )
+		{
+			c->hc_Content = StringDuplicate( content );
+		}
 	}
 	
 	return c;
@@ -418,7 +421,37 @@ User-Agent: Friend/1.0.0
 		//DEBUG("HttpClientCall response:\n%s\n", bs->bs_Buffer );
 	}
 	
-	//return bs;
+	if( secured == TRUE )
+	{
+		if( ssl != NULL )
+		{
+			SSL_free( ssl );
+		}
+		if( cert != NULL )
+		{
+			X509_free( cert );
+		}
+		if( ctx != NULL )
+		{
+			SSL_CTX_free( ctx );
+		}
+		if( outbio != NULL )
+		{
+			BIO_free( outbio );
+		}
+		if( certbio != NULL )
+		{
+			BIO_destroy_bio_pair( certbio );
+			BIO_free( certbio );
+		}
+	}
+
+	if( sockfd != 0 )
+	{
+		close( sockfd );
+	}
+	return bs;
+	
 client_error:
 
 	if( secured == TRUE )

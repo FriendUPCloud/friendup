@@ -57,6 +57,7 @@ static pthread_mutex_t _socket_array_mutex;
 static unsigned int _max_sockets;
 static pthread_t _socket_reaper_thread_handle;
 
+#ifdef USE_SOCKET_REAPER
 static void* _socket_reaper_thread(void *a);
 static void _socket_add_to_reaper(Socket *sock);
 static void _socket_remove_from_reaper(const Socket *sock);
@@ -65,7 +66,6 @@ static void _socket_remove_from_reaper(const Socket *sock);
  */
 void socket_init_once( void )
 {
-#ifdef USE_SOCKET_REAPER
 	struct rlimit limit;
 	int status = getrlimit(RLIMIT_NOFILE, &limit);
 	if( status != 0 )
@@ -84,7 +84,6 @@ void socket_init_once( void )
 	pthread_mutex_init(&_socket_array_mutex, NULL);
 
 	pthread_create(&_socket_reaper_thread_handle, NULL/*default attributes*/, _socket_reaper_thread, NULL/*extra args*/);
-#endif
 }
 
 static void* _socket_reaper_thread(void *a __attribute__((unused)))
@@ -173,6 +172,7 @@ void socket_update_state( Socket *sock, socket_state_t state )
 	sock->state_update_timestamp = time(NULL);
 	FRIEND_MUTEX_UNLOCK(&sock->mutex);
 }
+#endif
 
 /**
  * Open new socket on specified port
@@ -1267,8 +1267,10 @@ inline Socket* SocketAccept( Socket* sock )
 		}
 	}
 
+#ifdef USE_SOCKET_REAPER
 	socket_update_state(incoming, socket_state_accepted);
-	//_socket_add_to_reaper(incoming);
+	_socket_add_to_reaper(incoming);
+#endif
 
 	DEBUG( "[SocketAccept] Accepting incoming!\n" );
 	return incoming;
@@ -1416,9 +1418,11 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 		}
 	}
 
+#ifdef USE_SOCKET_REAPER
 	socket_update_state(incoming, socket_state_accepted);
 	_socket_add_to_reaper(incoming);
-
+#endif
+	
 	// Return socket
 	return incoming;
 }
@@ -1474,7 +1478,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 			//DEBUG("aa read %d length %d\n", read, length );
 
 			if( read + buf > length ) buf = length - read;
-
+			//DEBUG("socket read %d\n", sock->fd );
 			if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) > 0 )
 			{
 #ifndef NO_VALGRIND_STUFF	
@@ -2622,8 +2626,9 @@ void SocketFree( Socket *sock )
 			}
 		}
 
+#ifdef USE_SOCKET_REAPER
 		_socket_remove_from_reaper(sock);
-
+#endif
 		FRIEND_MUTEX_UNLOCK( &sock->mutex );
 	}
 
@@ -2651,7 +2656,7 @@ void SocketClose( Socket* sock )
 		//DEBUG("[SocketClose] locked\n");
 		if( sock->s_SSLEnabled == TRUE )
 		{
-			//DEBUG("[SocketClose] ssl\n");
+			DEBUG("[SocketClose] ssl\n");
 			if( sock->s_Ssl )
 			{
 				/*
@@ -2721,6 +2726,11 @@ void SocketClose( Socket* sock )
 						}
 						break;
 					}
+					
+					SSL *sl = sock->s_Ssl;
+					SSL_clear( sl );
+					SSL_free( sl );
+					sock->s_Ssl = NULL;
 				}
 				//int ret;
 				//SSL_shutdown( sock->s_Ssl );
@@ -2737,9 +2747,7 @@ void SocketClose( Socket* sock )
 				}*/
 
 				//DEBUG("[SocketClose] before ssl clear\n");
-				SSL_clear( sock->s_Ssl );
-				SSL_free( sock->s_Ssl );
-				sock->s_Ssl = NULL;
+				
 				//DEBUG("[SocketClose] ssl released\n");
 			}
 
