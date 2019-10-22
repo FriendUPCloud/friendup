@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 int
 lws_callback_as_writeable(struct lws *wsi)
@@ -27,20 +30,28 @@ lws_callback_as_writeable(struct lws *wsi)
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 	int n, m;
 
-	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITEABLE_CB, 1);
+	lws_stats_bump(pt, LWSSTATS_C_WRITEABLE_CB, 1);
 #if defined(LWS_WITH_STATS)
 	if (wsi->active_writable_req_us) {
-		uint64_t ul = lws_time_in_microseconds() -
+		uint64_t ul = lws_now_usecs() -
 			      wsi->active_writable_req_us;
 
-		lws_stats_atomic_bump(wsi->context, pt,
-				      LWSSTATS_MS_WRITABLE_DELAY, ul);
-		lws_stats_atomic_max(wsi->context, pt,
-				     LWSSTATS_MS_WORST_WRITABLE_DELAY, ul);
+		lws_stats_bump(pt, LWSSTATS_US_WRITABLE_DELAY_AVG, ul);
+		lws_stats_max(pt, LWSSTATS_US_WORST_WRITABLE_DELAY, ul);
 		wsi->active_writable_req_us = 0;
 	}
 #endif
+#if defined(LWS_WITH_DETAILED_LATENCY)
+	if (wsi->context->detailed_latency_cb) {
+		lws_usec_t us = lws_now_usecs();
 
+		wsi->detlat.earliest_write_req_pre_write =
+					wsi->detlat.earliest_write_req;
+		wsi->detlat.earliest_write_req = 0;
+		wsi->detlat.latencies[LAT_DUR_PROXY_RX_TO_ONWARD_TX] =
+		      ((uint32_t)us - wsi->detlat.earliest_write_req_pre_write);
+	}
+#endif
 	n = wsi->role_ops->writeable_cb[lwsi_role_server(wsi)];
 
 	m = user_callback_handle_rxflow(wsi->protocol->callback,
@@ -193,7 +204,7 @@ user_service_go_again:
 		else
 			goto bail_ok;
 	}
-	
+
 	lwsl_debug("%s: %p: non mux: wsistate 0x%lx, ops %s\n", __func__, wsi,
 		   (unsigned long)wsi->wsistate, wsi->role_ops->name);
 
@@ -227,75 +238,6 @@ bail_die:
 	return -1;
 }
 
-static int
-__lws_service_timeout_check(struct lws *wsi, time_t sec)
-{
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-	int n = 0;
-#endif
-
-	(void)n;
-
-	/*
-	 * if we went beyond the allowed time, kill the
-	 * connection
-	 */
-	if (lws_compare_time_t(wsi->context, sec, wsi->pending_timeout_set) >
-			       wsi->pending_timeout_limit) {
-
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-		if (wsi->desc.sockfd != LWS_SOCK_INVALID &&
-		    wsi->position_in_fds_table >= 0)
-			n = pt->fds[wsi->position_in_fds_table].events;
-#endif
-
-		lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_TIMEOUTS, 1);
-
-		/* no need to log normal idle keepalive timeout */
-//		if (wsi->pending_timeout != PENDING_TIMEOUT_HTTP_KEEPALIVE_IDLE)
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-			lwsl_info("wsi %p: TIMEDOUT WAITING on %d "
-				  "(did hdr %d, ah %p, wl %d, pfd "
-				  "events %d) %llu vs %llu\n",
-				  (void *)wsi, wsi->pending_timeout,
-				  wsi->hdr_parsing_completed, wsi->http.ah,
-				  pt->http.ah_wait_list_length, n,
-				  (unsigned long long)sec,
-				  (unsigned long long)wsi->pending_timeout_limit);
-#if defined(LWS_WITH_CGI)
-		if (wsi->http.cgi)
-			lwsl_notice("CGI timeout: %s\n", wsi->http.cgi->summary);
-#endif
-#else
-		lwsl_info("wsi %p: TIMEDOUT WAITING on %d ", (void *)wsi,
-			  wsi->pending_timeout);
-#endif
-
-		/* cgi timeout */
-		if (wsi->pending_timeout != PENDING_TIMEOUT_HTTP_KEEPALIVE_IDLE)
-			/*
-			 * Since he failed a timeout, he already had a chance to
-			 * do something and was unable to... that includes
-			 * situations like half closed connections.  So process
-			 * this "failed timeout" close as a violent death and
-			 * don't try to do protocol cleanup like flush partials.
-			 */
-			wsi->socket_is_permanently_unusable = 1;
-		if (lwsi_state(wsi) == LRS_WAITING_SSL && wsi->protocol)
-			wsi->protocol->callback(wsi,
-				LWS_CALLBACK_CLIENT_CONNECTION_ERROR,
-				wsi->user_space,
-				(void *)"Timed out waiting SSL", 21);
-
-		__lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS, "timeout");
-
-		return 1;
-	}
-
-	return 0;
-}
-
 int
 lws_rxflow_cache(struct lws *wsi, unsigned char *buf, int n, int len)
 {
@@ -327,13 +269,15 @@ lws_rxflow_cache(struct lws *wsi, unsigned char *buf, int n, int len)
 
 	/* a new rxflow, buffer it and warn caller */
 
+	lwsl_debug("%s: rxflow append %d\n", __func__, len - n);
 	m = lws_buflist_append_segment(&wsi->buflist, buf + n, len - n);
 
 	if (m < 0)
 		return LWSRXFC_ERROR;
 	if (m) {
 		lwsl_debug("%s: added %p to rxflow list\n", __func__, wsi);
-		lws_dll2_add_head(&wsi->dll_buflist, &pt->dll_buflist_owner);
+		if (lws_dll2_is_detached(&wsi->dll_buflist))
+			lws_dll2_add_head(&wsi->dll_buflist, &pt->dll_buflist_owner);
 	}
 
 	return ret;
@@ -346,7 +290,12 @@ lws_rxflow_cache(struct lws *wsi, unsigned char *buf, int n, int len)
 LWS_VISIBLE LWS_EXTERN int
 lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 {
-	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_context_per_thread *pt;
+
+	if (!context)
+		return 1;
+
+	pt = &context->pt[tsi];
 
 	/*
 	 * Figure out if we really want to wait in poll()... we only need to
@@ -368,13 +317,6 @@ lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 	    pt->context->tls_ops->fake_POLLIN_for_buffered(pt))
 			return 0;
 #endif
-
-	/*
-	 * 3) If any pending sequencer events, do not wait in poll
-	 */
-
-	if (pt->seq_pend_owner.count)
-		return 0;
 
 	/*
 	 * 4) If there is any wsi with rxflow buffered and in a state to process
@@ -405,15 +347,29 @@ lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
  */
 int
 lws_buflist_aware_read(struct lws_context_per_thread *pt, struct lws *wsi,
-		       struct lws_tokens *ebuf)
+		       struct lws_tokens *ebuf, const char *hint)
 {
 	int n, prior = (int)lws_buflist_next_segment_len(&wsi->buflist, NULL);
 
-	ebuf->token = pt->serv_buf;
-	ebuf->len = lws_ssl_capable_read(wsi, pt->serv_buf,
-					 wsi->context->pt_serv_buf_size);
 
-	if (ebuf->len == LWS_SSL_CAPABLE_MORE_SERVICE && prior)
+	// lwsl_debug("%s: wsi %p: %s: prior %d\n", __func__, wsi, hint, prior);
+	// lws_buflist_describe(&wsi->buflist, wsi, __func__);
+
+	(void)hint;
+	ebuf->token = pt->serv_buf + LWS_PRE;
+	n = lws_ssl_capable_read(wsi, pt->serv_buf + LWS_PRE,
+				 wsi->context->pt_serv_buf_size - LWS_PRE);
+	ebuf->len = n;
+
+	lwsl_info("%s: wsi %p: %s: ssl_capable_read %d (prior %d)\n", __func__,
+			wsi, hint, ebuf->len, prior);
+
+	if (n == LWS_SSL_CAPABLE_ERROR && !prior) {
+		lwsl_info("%s: SSL_CAPABLE_ERROR with no prior\n", __func__);
+		return -1;
+	}
+
+	if (ebuf->len < 0 && prior)
 		goto get_from_buflist;
 
 	if (ebuf->len <= 0)
@@ -426,13 +382,14 @@ lws_buflist_aware_read(struct lws_context_per_thread *pt, struct lws *wsi,
 
 	/* stash what we read */
 
-	n = lws_buflist_append_segment(&wsi->buflist, ebuf->token,
-				       ebuf->len);
+	// lwsl_debug("%s: appending %d\n", __func__, ebuf->len);
+	n = lws_buflist_append_segment(&wsi->buflist, ebuf->token, ebuf->len);
 	if (n < 0)
 		return -1;
 	if (n) {
-		lwsl_debug("%s: added %p to rxflow list\n", __func__, wsi);
-		lws_dll2_add_head(&wsi->dll_buflist, &pt->dll_buflist_owner);
+		// lwsl_debug("%s: added %p to rxflow list\n", __func__, wsi);
+		if (lws_dll2_is_detached(&wsi->dll_buflist))
+			lws_dll2_add_head(&wsi->dll_buflist, &pt->dll_buflist_owner);
 	}
 
 	/* get the first buflist guy in line */
@@ -442,15 +399,22 @@ get_from_buflist:
 	ebuf->len = (int)lws_buflist_next_segment_len(&wsi->buflist,
 						      &ebuf->token);
 
+	lwsl_debug("%s: wsi %p: get from buflist told %d\n", __func__, wsi, ebuf->len);
+
 	return 1; /* came from buflist */
 }
 
 int
-lws_buflist_aware_consume(struct lws *wsi, struct lws_tokens *ebuf, int used,
-			  int buffered)
+lws_buflist_aware_finished_consuming(struct lws *wsi, struct lws_tokens *ebuf,
+				     int used, int buffered, const char *hint)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 	int m;
+
+	//lwsl_debug("%s %s consuming buffered %d used %zu / %zu\n", __func__, hint,
+	//		buffered, (size_t)used, (size_t)ebuf->len);
+
+	// lws_buflist_describe(&wsi->buflist, wsi, __func__);
 
 	/* it's in the buflist; we didn't use any */
 
@@ -459,8 +423,8 @@ lws_buflist_aware_consume(struct lws *wsi, struct lws_tokens *ebuf, int used,
 
 	if (used && buffered) {
 		m = lws_buflist_use_segment(&wsi->buflist, used);
-		lwsl_info("%s: draining rxflow: used %d, next %d\n",
-			    __func__, used, m);
+		// lwsl_notice("%s: used %d, next %d\n", __func__, used, m);
+		// lws_buflist_describe(&wsi->buflist, wsi, __func__);
 		if (m)
 			return 0;
 
@@ -473,6 +437,8 @@ lws_buflist_aware_consume(struct lws *wsi, struct lws_tokens *ebuf, int used,
 	/* any remainder goes on the buflist */
 
 	if (used != ebuf->len) {
+		// lwsl_notice("%s %s bac appending %d\n", __func__, hint,
+		//		ebuf->len - used);
 		m = lws_buflist_append_segment(&wsi->buflist,
 					       ebuf->token + used,
 					       ebuf->len - used);
@@ -481,9 +447,11 @@ lws_buflist_aware_consume(struct lws *wsi, struct lws_tokens *ebuf, int used,
 		if (m) {
 			lwsl_debug("%s: added %p to rxflow list\n",
 				   __func__, wsi);
-			lws_dll2_add_head(&wsi->dll_buflist,
+			if (lws_dll2_is_detached(&wsi->dll_buflist))
+				lws_dll2_add_head(&wsi->dll_buflist,
 					 &pt->dll_buflist_owner);
 		}
+		// lws_buflist_describe(&wsi->buflist, wsi, __func__);
 	}
 
 	return 0;
@@ -537,8 +505,13 @@ lws_service_do_ripe_rxflow(struct lws_context_per_thread *pt)
 int
 lws_service_flag_pending(struct lws_context *context, int tsi)
 {
-	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_context_per_thread *pt;
 	int forced = 0;
+
+	if (!context)
+		return 1;
+
+	pt = &context->pt[tsi];
 
 	lws_pt_lock(pt, __func__);
 
@@ -568,10 +541,12 @@ lws_service_flag_pending(struct lws_context *context, int tsi)
 	 * service to use up the buffered incoming data, even though their
 	 * network socket may have nothing
 	 */
-	lws_start_foreach_dll_safe(struct lws_dll *, p, p1,
-				   pt->tls.dll_pending_tls_head.next) {
+	lws_start_foreach_dll_safe(struct lws_dll2 *, p, p1,
+			lws_dll2_get_head(&pt->tls.dll_pending_tls_owner)) {
 		struct lws *wsi = lws_container_of(p, struct lws,
 						   tls.dll_pending_tls);
+
+		if (wsi->position_in_fds_table >= 0) {
 
 		pt->fds[wsi->position_in_fds_table].revents |=
 			pt->fds[wsi->position_in_fds_table].events & LWS_POLLIN;
@@ -585,6 +560,7 @@ lws_service_flag_pending(struct lws_context *context, int tsi)
 			 */
 			__lws_ssl_remove_wsi_from_buffered_list(wsi);
 		}
+		}
 
 	} lws_end_foreach_dll_safe(p, p1);
 #endif
@@ -594,389 +570,26 @@ lws_service_flag_pending(struct lws_context *context, int tsi)
 	return forced;
 }
 
-static int
-lws_service_periodic_checks(struct lws_context *context,
-			    struct lws_pollfd *pollfd, int tsi)
-{
-	struct lws_context_per_thread *pt = &context->pt[tsi];
-	struct lws_timed_vh_protocol *tmr;
-	lws_sockfd_type our_fd = 0, tmp_fd;
-	struct lws *wsi;
-	int timed_out = 0;
-	time_t now;
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-	struct allocated_headers *ah;
-	int n, m;
-#endif
-
-	if (!context->protocol_init_done)
-		if (lws_protocol_init(context)) {
-			lwsl_err("%s: lws_protocol_init failed\n", __func__);
-			return -1;
-		}
-
-	time(&now);
-
-	/*
-	 * handle case that system time was uninitialized when lws started
-	 * at boot, and got initialized a little later
-	 */
-	if (context->time_up < 1464083026 && now > 1464083026)
-		context->time_up = now;
-
-	if (context->last_timeout_check_s &&
-	    now - context->last_timeout_check_s > 100) {
-		/*
-		 * There has been a discontiguity.  Any stored time that is
-		 * less than context->time_discontiguity should have context->
-		 * time_fixup added to it.
-		 *
-		 * Some platforms with no RTC will experience this as a normal
-		 * event when ntp sets their clock, but we can have started
-		 * long before that with a 0-based unix time.
-		 */
-
-		context->time_discontiguity = now;
-		context->time_fixup = now - context->last_timeout_check_s;
-
-		lwsl_notice("time discontiguity: at old time %llus, "
-			    "new time %llus: +%llus\n",
-			    (unsigned long long)context->last_timeout_check_s,
-			    (unsigned long long)context->time_discontiguity,
-			    (unsigned long long)context->time_fixup);
-
-		context->last_timeout_check_s = now - 1;
-	}
-
-	lws_sequencer_timeout_check(pt, now);
-	lws_pt_do_pending_sequencer_events(pt);
-
-	if (!lws_compare_time_t(context, context->last_timeout_check_s, now))
-		return 0;
-
-	context->last_timeout_check_s = now;
-
-#if defined(LWS_WITH_STATS)
-	if (!tsi && now - context->last_dump > 10) {
-		lws_stats_log_dump(context);
-		context->last_dump = now;
-	}
-#endif
-
-	lws_plat_service_periodic(context);
-	lws_check_deferred_free(context, tsi, 0);
-
-#if defined(LWS_WITH_PEER_LIMITS)
-	lws_peer_cull_peer_wait_list(context);
-#endif
-
-	/* retire unused deprecated context */
-#if !defined(LWS_PLAT_OPTEE) && !defined(LWS_WITH_ESP32)
-#if !defined(_WIN32)
-	if (context->deprecated && !context->count_wsi_allocated) {
-		lwsl_notice("%s: ending deprecated context\n", __func__);
-		kill(getpid(), SIGINT);
-		return 0;
-	}
-#endif
-#endif
-	/* global timeout check once per second */
-
-	if (pollfd)
-		our_fd = pollfd->fd;
-
-	/*
-	 * Phase 1: check every wsi on our pt's timeout check list
-	 */
-
-	lws_pt_lock(pt, __func__);
-
-	lws_start_foreach_dll_safe(struct lws_dll *, d, d1,
-				   context->pt[tsi].dll_timeout_head.next) {
-		wsi = lws_container_of(d, struct lws, dll_timeout);
-
-		tmp_fd = wsi->desc.sockfd;
-		if (__lws_service_timeout_check(wsi, now)) {
-			/* he did time out... */
-			if (tmp_fd == our_fd)
-				/* it was the guy we came to service! */
-				timed_out = 1;
-			/* he's gone, no need to mark as handled */
-		}
-	} lws_end_foreach_dll_safe(d, d1);
-
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-	/*
-	 * Phase 2: double-check active ah timeouts independent of wsi
-	 *	    timeout status
-	 */
-
-	ah = pt->http.ah_list;
-	while (ah) {
-		int len;
-		char buf[256];
-		const unsigned char *c;
-
-		if (!ah->in_use || !ah->wsi || !ah->assigned ||
-		    (ah->wsi->vhost &&
-		     lws_compare_time_t(context, now, ah->assigned) <
-		     ah->wsi->vhost->timeout_secs_ah_idle + 360)) {
-			ah = ah->next;
-			continue;
-		}
-
-		/*
-		 * a single ah session somehow got held for
-		 * an unreasonable amount of time.
-		 *
-		 * Dump info on the connection...
-		 */
-		wsi = ah->wsi;
-		buf[0] = '\0';
-#if !defined(LWS_PLAT_OPTEE)
-		lws_get_peer_simple(wsi, buf, sizeof(buf));
-#else
-		buf[0] = '\0';
-#endif
-		lwsl_notice("ah excessive hold: wsi %p\n"
-			    "  peer address: %s\n"
-			    "  ah pos %lu\n",
-			    wsi, buf, (unsigned long)ah->pos);
-		buf[0] = '\0';
-		m = 0;
-		do {
-			c = lws_token_to_string(m);
-			if (!c)
-				break;
-			if (!(*c))
-				break;
-
-			len = lws_hdr_total_length(wsi, m);
-			if (!len || len > (int)sizeof(buf) - 1) {
-				m++;
-				continue;
-			}
-
-			if (lws_hdr_copy(wsi, buf, sizeof buf, m) > 0) {
-				buf[sizeof(buf) - 1] = '\0';
-
-				lwsl_notice("   %s = %s\n",
-					    (const char *)c, buf);
-			}
-			m++;
-		} while (1);
-
-		/* explicitly detach the ah */
-		lws_header_table_detach(wsi, 0);
-
-		/* ... and then drop the connection */
-
-		m = 0;
-		if (wsi->desc.sockfd == our_fd) {
-			m = timed_out;
-
-			/* it was the guy we came to service! */
-			timed_out = 1;
-		}
-
-		if (!m) /* if he didn't already timeout */
-			__lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS,
-					     "excessive ah");
-
-		ah = pt->http.ah_list;
-	}
-#endif
-	lws_pt_unlock(pt);
-
-#if 0
-	{
-		char s[300], *p = s;
-
-		for (n = 0; n < context->count_threads; n++)
-			p += sprintf(p, " %7lu (%5d), ",
-				     context->pt[n].count_conns,
-				     context->pt[n].fds_count);
-
-		lwsl_notice("load: %s\n", s);
-	}
-#endif
-	/*
-	 * Phase 3: vhost / protocol timer callbacks
-	 */
-
-	/* 3a: lock, collect, and remove vh timers that are pending */
-
-	lws_context_lock(context, "expired vh timers"); /* context ---------- */
-
-	n = 0;
-
-	/*
-	 * first, under the context lock, get a count of the number of
-	 * expired timers so we can allocate for them (or not, cleanly)
-	 */
-
-	lws_start_foreach_ll(struct lws_vhost *, v, context->vhost_list) {
-
-		if (v->timed_vh_protocol_list) {
-
-			lws_start_foreach_ll_safe(struct lws_timed_vh_protocol *,
-					q, v->timed_vh_protocol_list, next) {
-				if (now >= q->time && q->tsi_req == tsi)
-					n++;
-			} lws_end_foreach_ll_safe(q);
-		}
-
-	} lws_end_foreach_ll(v, vhost_next);
-
-	/* if nothing to do, unlock and move on to the next vhost */
-
-	if (!n) {
-		lws_context_unlock(context); /* ----------- context */
-		goto vh_timers_done;
-	}
-
-	/*
-	 * attempt to do the wsi and timer info allocation
-	 * first en bloc.  If it fails, we can just skip the rest and
-	 * the timers will still be pending next time.
-	 */
-
-	wsi = lws_zalloc(sizeof(*wsi), "cbwsi");
-	if (!wsi) {
-		/*
-		 * at this point, we haven't cleared any vhost
-		 * timers.  We can fail out and retry cleanly
-		 * next periodic check
-		 */
-		lws_context_unlock(context); /* ----------- context */
-		goto vh_timers_done;
-	}
-	wsi->context = context;
-
-	tmr = lws_zalloc(sizeof(*tmr) * n, "cbtmr");
-	if (!tmr) {
-		/* again OOM here can be handled cleanly */
-		lws_free(wsi);
-		lws_context_unlock(context); /* ----------- context */
-		goto vh_timers_done;
-	}
-
-	/* so we have the allocation for n pending timers... */
-
-	m = 0;
-	lws_start_foreach_ll(struct lws_vhost *, v, context->vhost_list) {
-
-		if (v->timed_vh_protocol_list) {
-
-			lws_vhost_lock(v); /* vhost ------------------------- */
-
-			lws_start_foreach_ll_safe(struct lws_timed_vh_protocol *,
-					q, v->timed_vh_protocol_list, next) {
-
-				/* only do n */
-				if (m == n)
-					break;
-
-				if (now >= q->time && q->tsi_req == tsi) {
-
-					/*
-					 * tmr is an allocated array.
-					 * Ignore the linked-list.
-					 */
-					tmr[m].vhost = v;
-					tmr[m].protocol = q->protocol;
-					tmr[m++].reason = q->reason;
-
-					/* take the timer out now we took
-					 * responsibility */
-					__lws_timed_callback_remove(v, q);
-				}
-
-			} lws_end_foreach_ll_safe(q);
-
-			lws_vhost_unlock(v); /* ----------------------- vhost */
-		}
-
-	} lws_end_foreach_ll(v, vhost_next);
-	lws_context_unlock(context); /* ---------------------------- context */
-
-	/* 3b: call the vh timer callbacks outside any lock */
-
-	for (m = 0; m < n; m++) {
-
-		wsi->vhost = tmr[m].vhost; /* not a real bound wsi */
-		wsi->protocol = tmr[m].protocol;
-
-		lwsl_debug("%s: timed cb: vh %s, protocol %s, reason %d\n",
-			   __func__, tmr[m].vhost->name, tmr[m].protocol->name,
-			   tmr[m].reason);
-		tmr[m].protocol->callback(wsi, tmr[m].reason, NULL, NULL, 0);
-	}
-
-	lws_free(tmr);
-	lws_free(wsi);
-
-vh_timers_done:
-
-	/*
-	 * Phase 4: check for unconfigured vhosts due to required
-	 *	    interface missing before
-	 */
-
-	lws_context_lock(context, "periodic checks");
-	lws_start_foreach_llp(struct lws_vhost **, pv,
-			      context->no_listener_vhost_list) {
-		struct lws_vhost *v = *pv;
-		lwsl_debug("deferred iface: checking if on vh %s\n", (*pv)->name);
-		if (_lws_vhost_init_server(NULL, *pv) == 0) {
-			/* became happy */
-			lwsl_notice("vh %s: became connected\n", v->name);
-			*pv = v->no_listener_vhost_list;
-			v->no_listener_vhost_list = NULL;
-			break;
-		}
-	} lws_end_foreach_llp(pv, no_listener_vhost_list);
-	lws_context_unlock(context);
-
-	/*
-	 * Phase 5: role periodic checks
-	 */
-#if defined(LWS_ROLE_WS)
-	role_ops_ws.periodic_checks(context, tsi, now);
-#endif
-#if defined(LWS_ROLE_CGI)
-	role_ops_cgi.periodic_checks(context, tsi, now);
-#endif
-
-#if defined(LWS_WITH_TLS)
-	/*
-	 * Phase 6: check the remaining cert lifetime daily
-	 */
-
-	if (context->tls_ops &&
-	    context->tls_ops->periodic_housekeeping)
-		context->tls_ops->periodic_housekeeping(context, now);
-#endif
-
-	return 0;
-}
-
 LWS_VISIBLE int
 lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd,
 		   int tsi)
 {
-	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_context_per_thread *pt;
 	struct lws *wsi;
 
 	if (!context || context->being_destroyed1)
 		return -1;
 
-	/* the case there's no pollfd to service, we just want to do periodic */
-	if (!pollfd) {
-		lws_service_periodic_checks(context, pollfd, tsi);
-		return -2;
-	}
+	pt = &context->pt[tsi];
 
+	if (!pollfd) {
+		/*
+		 * calling with NULL pollfd for periodic background processing
+		 * is no longer needed and is now illegal.
+		 */
+		assert(pollfd);
+		return -1;
+	}
 	assert(lws_socket_is_valid(pollfd->fd));
 
 	/* no, here to service a socket descriptor */
@@ -1082,13 +695,6 @@ handled:
 #endif
 	pollfd->revents = 0;
 
-	/* check the timeout situation if we didn't in the last second */
-	lws_service_periodic_checks(context, pollfd, tsi);
-
-	lws_pt_lock(pt, __func__);
-	__lws_hrtimer_service(pt);
-	lws_pt_unlock(pt);
-
 	return 0;
 }
 
@@ -1101,12 +707,13 @@ lws_service_fd(struct lws_context *context, struct lws_pollfd *pollfd)
 LWS_VISIBLE int
 lws_service(struct lws_context *context, int timeout_ms)
 {
-	struct lws_context_per_thread *pt = &context->pt[0];
+	struct lws_context_per_thread *pt;
 	int n;
 
 	if (!context)
 		return 1;
 
+	pt = &context->pt[0];
 	pt->inside_service = 1;
 
 	if (context->event_loop_ops->run_pt) {
@@ -1127,9 +734,13 @@ lws_service(struct lws_context *context, int timeout_ms)
 LWS_VISIBLE int
 lws_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 {
-	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_context_per_thread *pt;
 	int n;
 
+	if (!context)
+		return 1;
+
+	pt = &context->pt[tsi];
 	pt->inside_service = 1;
 #if LWS_MAX_SMP > 1
 	pt->self = pthread_self();

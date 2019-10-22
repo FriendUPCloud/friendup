@@ -1,29 +1,118 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #ifdef LWS_HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+
+void
+lws_ser_wu16be(uint8_t *b, uint16_t u)
+{
+	*b++ = (uint8_t)(u >> 8);
+	*b = (uint8_t)u;
+}
+
+void
+lws_ser_wu32be(uint8_t *b, uint32_t u32)
+{
+	*b++ = (uint8_t)(u32 >> 24);
+	*b++ = (uint8_t)(u32 >> 16);
+	*b++ = (uint8_t)(u32 >> 8);
+	*b = (uint8_t)u32;
+}
+
+void
+lws_ser_wu64be(uint8_t *b, uint64_t u64)
+{
+	lws_ser_wu32be(b, (uint32_t)(u64 >> 32));
+	lws_ser_wu32be(b + 4, (uint32_t)u64);
+}
+
+uint16_t
+lws_ser_ru16be(const uint8_t *b)
+{
+	return (b[0] << 8) | b[1];
+}
+
+uint32_t
+lws_ser_ru32be(const uint8_t *b)
+{
+	return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+}
+
+uint64_t
+lws_ser_ru64be(const uint8_t *b)
+{
+	return (((uint64_t)lws_ser_ru32be(b)) << 32) | lws_ser_ru32be(b + 4);
+}
+
+int
+lws_vbi_encode(uint64_t value, void *buf)
+{
+	uint8_t *p = (uint8_t *)buf, b;
+
+	if (value > 0xfffffff) {
+		assert(0);
+		return -1;
+	}
+
+	do {
+		b = value & 0x7f;
+		value >>= 7;
+		if (value)
+			*p++ = (0x80 | b);
+		else
+			*p++ = b;
+	} while (value);
+
+	return p - (uint8_t *)buf;
+}
+
+int
+lws_vbi_decode(const void *buf, uint64_t *value, size_t len)
+{
+	const uint8_t *p = (const uint8_t *)buf, *end = p + len;
+	uint64_t v = 0;
+	int s = 0;
+
+	while (p < end) {
+		v |= (((uint64_t)(*p)) & 0x7f) << s;
+		if (*p & 0x80) {
+			*value = v;
+
+			return lws_ptr_diff(p, buf);
+		}
+		s += 7;
+		if (s >= 64)
+			return 0;
+		p++;
+	}
+
+	return 0;
+}
 
 signed char char_to_hex(const char c)
 {
@@ -66,7 +155,7 @@ lws_hex_to_byte_array(const char *h, uint8_t *dest, int max)
 
 #if !defined(LWS_PLAT_OPTEE)
 
-#if !defined(LWS_AMAZON_RTOS)
+#if defined(LWS_WITH_FILE_OPS)
 int lws_open(const char *__file, int __oflag, ...)
 {
 	va_list ap;
@@ -93,18 +182,6 @@ int lws_open(const char *__file, int __oflag, ...)
 	return n;
 }
 #endif
-#endif
-
-#if !(defined(LWS_PLAT_OPTEE) && !defined(LWS_WITH_NETWORK))
-
-LWS_VISIBLE lws_usec_t
-lws_now_usecs(void)
-{
-	struct timeval now;
-
-	gettimeofday(&now, NULL);
-	return (now.tv_sec * 1000000ll) + now.tv_usec;
-}
 #endif
 
 int
@@ -158,23 +235,15 @@ lws_now_secs(void)
 	return tv.tv_sec;
 }
 
-LWS_VISIBLE LWS_EXTERN int
-lws_compare_time_t(struct lws_context *context, time_t t1, time_t t2)
-{
-	if (t1 < context->time_discontiguity)
-		t1 += context->time_fixup;
-
-	if (t2 < context->time_discontiguity)
-		t2 += context->time_fixup;
-
-	return (int)(t1 - t2);
-}
 #endif
+
+#if defined(LWS_WITH_SERVER)
 LWS_VISIBLE extern const char *
 lws_canonical_hostname(struct lws_context *context)
 {
 	return (const char *)context->canonical_hostname;
 }
+#endif
 
 #if defined(LWS_WITH_SOCKS5)
 LWS_VISIBLE int
@@ -583,17 +652,13 @@ typedef enum {
 	LWS_TOKZS_TOKEN_POST_TERMINAL
 } lws_tokenize_state;
 
-#if defined(LWS_AMAZON_RTOS)
 lws_tokenize_elem
-#else
-int
-#endif
 lws_tokenize(struct lws_tokenize *ts)
 {
 	const char *rfc7230_delims = "(),/:;<=>?@[\\]{}";
 	lws_tokenize_state state = LWS_TOKZS_LEADING_WHITESPACE;
 	char c, flo = 0, d_minus = '-', d_dot = '.', s_minus = '\0',
-	     s_dot = '\0';
+	     s_dot = '\0', skipping = 0;
 	signed char num = ts->flags & LWS_TOKENIZE_F_NO_INTEGERS ? 0 : -1;
 	int utf8 = 0;
 
@@ -621,6 +686,22 @@ lws_tokenize(struct lws_tokenize *ts)
 
 		if (!c)
 			break;
+
+		if (skipping) {
+			if (c != '\r' && c != '\n')
+				continue;
+			else
+				skipping = 0;
+		}
+
+		/* comment */
+
+		if (ts->flags & LWS_TOKENIZE_F_HASH_COMMENT &&
+		    state != LWS_TOKZS_QUOTED_STRING &&
+		    c == '#') {
+			skipping = 1;
+			continue;
+		}
 
 		/* whitespace */
 
@@ -906,10 +987,94 @@ lws_cmdline_option(int argc, const char **argv, const char *val)
 				return argv[c + 1];
 			}
 
+			if (argv[c][n] == '=')
+				return &argv[c][n + 1];
 			return argv[c] + n;
 		}
 	}
 
 	return NULL;
 }
+
+static const char * const builtins[] = {
+	"-d",
+	"--udp-tx-loss",
+	"--udp-rx-loss"
+};
+
+void
+lws_cmdline_option_handle_builtin(int argc, const char **argv,
+				  struct lws_context_creation_info *info)
+{
+	const char *p;
+	int n, m, logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE;
+
+	for (n = 0; n < (int)LWS_ARRAY_SIZE(builtins); n++) {
+		p = lws_cmdline_option(argc, argv, builtins[n]);
+		if (!p)
+			continue;
+
+		m = atoi(p);
+
+		switch (n) {
+		case 0:
+			logs = m;
+			break;
+		case 1:
+			info->udp_loss_sim_tx_pc = m;
+			break;
+		case 2:
+			info->udp_loss_sim_rx_pc = m;
+			break;
+		}
+	}
+
+	lws_set_log_level(logs, NULL);
+}
+
+
+const lws_humanize_unit_t humanize_schema_si[] = {
+	{ "Pi ", LWS_PI }, { "Ti ", LWS_TI }, { "Gi ", LWS_GI },
+	{ "Mi ", LWS_MI }, { "Ki ", LWS_KI }, { "   ", 1 },
+	{ NULL, 0 }
+};
+const lws_humanize_unit_t humanize_schema_si_bytes[] = {
+	{ "PiB", LWS_PI }, { "TiB", LWS_TI }, { "GiB", LWS_GI },
+	{ "MiB", LWS_MI }, { "KiB", LWS_KI }, { "B  ", 1 },
+	{ NULL, 0 }
+};
+const lws_humanize_unit_t humanize_schema_us[] = {
+	{ "y  ",  (uint64_t)365 * 24 * 3600 * LWS_US_PER_SEC },
+	{ "d  ",  (uint64_t)24 * 3600 * LWS_US_PER_SEC },
+	{ "hr ", (uint64_t)3600 * LWS_US_PER_SEC },
+	{ "min", 60 * LWS_US_PER_SEC },
+	{ "s  ", LWS_US_PER_SEC },
+	{ "ms ", LWS_US_PER_MS },
+	{ "us ", 1 },
+	{ NULL, 0 }
+};
+
+int
+lws_humanize(char *p, int len, uint64_t v, const lws_humanize_unit_t *schema)
+{
+	do {
+		if (v >= schema->factor || schema->factor == 1) {
+			if (schema->factor == 1)
+				return lws_snprintf(p, len,
+					" %4"PRIu64"%s    ",
+					v / schema->factor, schema->name);
+
+			return lws_snprintf(p, len, " %4"PRIu64".%03"PRIu64"%s",
+				v / schema->factor,
+				(v % schema->factor) / (schema->factor / 1000),
+				schema->name);
+		}
+		schema++;
+	} while (schema->name);
+
+	assert(0);
+
+	return 0;
+}
+
 

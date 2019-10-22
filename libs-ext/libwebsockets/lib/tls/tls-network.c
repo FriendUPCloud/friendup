@@ -3,23 +3,26 @@
  *
  * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 /*
  * fakes POLLIN on all tls guys with buffered rx
@@ -32,14 +35,17 @@ lws_tls_fake_POLLIN_for_buffered(struct lws_context_per_thread *pt)
 {
 	int ret = 0;
 
-	lws_start_foreach_dll_safe(struct lws_dll *, p, p1,
-				   pt->tls.dll_pending_tls_head.next) {
+	lws_start_foreach_dll_safe(struct lws_dll2 *, p, p1,
+			lws_dll2_get_head(&pt->tls.dll_pending_tls_owner)) {
 		struct lws *wsi = lws_container_of(p, struct lws,
 						   tls.dll_pending_tls);
 
-		pt->fds[wsi->position_in_fds_table].revents |=
-			pt->fds[wsi->position_in_fds_table].events & LWS_POLLIN;
-		ret |= pt->fds[wsi->position_in_fds_table].revents & LWS_POLLIN;
+		if (wsi->position_in_fds_table >= 0) {
+
+			pt->fds[wsi->position_in_fds_table].revents |=
+					pt->fds[wsi->position_in_fds_table].events & LWS_POLLIN;
+			ret |= pt->fds[wsi->position_in_fds_table].revents & LWS_POLLIN;
+		}
 
 	} lws_end_foreach_dll_safe(p, p1);
 
@@ -49,14 +55,7 @@ lws_tls_fake_POLLIN_for_buffered(struct lws_context_per_thread *pt)
 void
 __lws_ssl_remove_wsi_from_buffered_list(struct lws *wsi)
 {
-	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
-
-	if (lws_dll_is_detached(&wsi->tls.dll_pending_tls,
-				&pt->tls.dll_pending_tls_head))
-		return;
-
-	lws_dll_remove_track_tail(&wsi->tls.dll_pending_tls,
-				  &pt->tls.dll_pending_tls_head);
+	lws_dll2_remove(&wsi->tls.dll_pending_tls);
 }
 
 void
@@ -69,7 +68,7 @@ lws_ssl_remove_wsi_from_buffered_list(struct lws *wsi)
 	lws_pt_unlock(pt);
 }
 
-
+#if defined(LWS_WITH_SERVER)
 int
 lws_tls_check_cert_lifetime(struct lws_vhost *v)
 {
@@ -97,7 +96,7 @@ lws_tls_check_cert_lifetime(struct lws_vhost *v)
 
 	memset(&caa, 0, sizeof(caa));
 	caa.vh = v;
-	lws_broadcast(v->context, LWS_CALLBACK_VHOST_CERT_AGING, (void *)&caa,
+	lws_broadcast(&v->context->pt[0], LWS_CALLBACK_VHOST_CERT_AGING, (void *)&caa,
 		      (size_t)(ssize_t)life);
 
 	return 0;
@@ -116,7 +115,6 @@ lws_tls_check_all_cert_lifetimes(struct lws_context *context)
 
 	return 0;
 }
-
 
 /*
  * LWS_TLS_EXTANT_NO         : skip adding the cert
@@ -165,7 +163,6 @@ lws_tls_generic_cert_checks(struct lws_vhost *vhost, const char *cert,
 	return LWS_TLS_EXTANT_YES;
 }
 
-#if !defined(LWS_NO_SERVER)
 /*
  * update the cert for every vhost using the given path
  */

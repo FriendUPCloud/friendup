@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /** \defgroup misc Miscellaneous APIs
@@ -27,293 +28,6 @@
 * Various APIs outside of other categories
 */
 ///@{
-
-/**
- * lws_start_foreach_ll(): linkedlist iterator helper start
- *
- * \param type: type of iteration, eg, struct xyz *
- * \param it: iterator var name to create
- * \param start: start of list
- *
- * This helper creates an iterator and starts a while (it) {
- * loop.  The iterator runs through the linked list starting at start and
- * ends when it gets a NULL.
- * The while loop should be terminated using lws_start_foreach_ll().
- */
-#define lws_start_foreach_ll(type, it, start)\
-{ \
-	type it = start; \
-	while (it) {
-
-/**
- * lws_end_foreach_ll(): linkedlist iterator helper end
- *
- * \param it: same iterator var name given when starting
- * \param nxt: member name in the iterator pointing to next list element
- *
- * This helper is the partner for lws_start_foreach_ll() that ends the
- * while loop.
- */
-
-#define lws_end_foreach_ll(it, nxt) \
-		it = it->nxt; \
-	} \
-}
-
-/**
- * lws_start_foreach_ll_safe(): linkedlist iterator helper start safe against delete
- *
- * \param type: type of iteration, eg, struct xyz *
- * \param it: iterator var name to create
- * \param start: start of list
- * \param nxt: member name in the iterator pointing to next list element
- *
- * This helper creates an iterator and starts a while (it) {
- * loop.  The iterator runs through the linked list starting at start and
- * ends when it gets a NULL.
- * The while loop should be terminated using lws_end_foreach_ll_safe().
- * Performs storage of next increment for situations where iterator can become invalidated
- * during iteration.
- */
-#define lws_start_foreach_ll_safe(type, it, start, nxt)\
-{ \
-	type it = start; \
-	while (it) { \
-		type next_##it = it->nxt;
-
-/**
- * lws_end_foreach_ll_safe(): linkedlist iterator helper end (pre increment storage)
- *
- * \param it: same iterator var name given when starting
- *
- * This helper is the partner for lws_start_foreach_ll_safe() that ends the
- * while loop. It uses the precreated next_ variable already stored during
- * start.
- */
-
-#define lws_end_foreach_ll_safe(it) \
-		it = next_##it; \
-	} \
-}
-
-/**
- * lws_start_foreach_llp(): linkedlist pointer iterator helper start
- *
- * \param type: type of iteration, eg, struct xyz **
- * \param it: iterator var name to create
- * \param start: start of list
- *
- * This helper creates an iterator and starts a while (it) {
- * loop.  The iterator runs through the linked list starting at the
- * address of start and ends when it gets a NULL.
- * The while loop should be terminated using lws_start_foreach_llp().
- *
- * This helper variant iterates using a pointer to the previous linked-list
- * element.  That allows you to easily delete list members by rewriting the
- * previous pointer to the element's next pointer.
- */
-#define lws_start_foreach_llp(type, it, start)\
-{ \
-	type it = &(start); \
-	while (*(it)) {
-
-#define lws_start_foreach_llp_safe(type, it, start, nxt)\
-{ \
-	type it = &(start); \
-	type next; \
-	while (*(it)) { \
-		next = &((*(it))->nxt); \
-
-/**
- * lws_end_foreach_llp(): linkedlist pointer iterator helper end
- *
- * \param it: same iterator var name given when starting
- * \param nxt: member name in the iterator pointing to next list element
- *
- * This helper is the partner for lws_start_foreach_llp() that ends the
- * while loop.
- */
-
-#define lws_end_foreach_llp(it, nxt) \
-		it = &(*(it))->nxt; \
-	} \
-}
-
-#define lws_end_foreach_llp_safe(it) \
-		it = next; \
-	} \
-}
-
-#define lws_ll_fwd_insert(\
-	___new_object,	/* pointer to new object */ \
-	___m_list,	/* member for next list object ptr */ \
-	___list_head	/* list head */ \
-		) {\
-		___new_object->___m_list = ___list_head; \
-		___list_head = ___new_object; \
-	}
-
-#define lws_ll_fwd_remove(\
-	___type,	/* type of listed object */ \
-	___m_list,	/* member for next list object ptr */ \
-	___target,	/* object to remove from list */ \
-	___list_head	/* list head */ \
-	) { \
-                lws_start_foreach_llp(___type **, ___ppss, ___list_head) { \
-                        if (*___ppss == ___target) { \
-                                *___ppss = ___target->___m_list; \
-                                break; \
-                        } \
-                } lws_end_foreach_llp(___ppss, ___m_list); \
-	}
-
-/*
- * doubly linked-list
- */
-
-struct lws_dll {
-	struct lws_dll *prev;
-	struct lws_dll *next;
-};
-
-/*
- * these all point to the composed list objects... you have to use the
- * lws_container_of() helper to recover the start of the containing struct
- */
-
-#define lws_dll_add_front lws_dll_add_head
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_add_head(struct lws_dll *d, struct lws_dll *phead);
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_add_tail(struct lws_dll *d, struct lws_dll *phead);
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_insert(struct lws_dll *d, struct lws_dll *target,
-	       struct lws_dll *phead, int before);
-
-static LWS_INLINE struct lws_dll *
-lws_dll_get_head(struct lws_dll *phead) { return phead->next; }
-
-static LWS_INLINE struct lws_dll *
-lws_dll_get_tail(struct lws_dll *phead) { return phead->prev; }
-
-/*
- * caution, this doesn't track the tail in the head struct.  Use
- * lws_dll_remove_track_tail() instead of this if you want tail tracking.  Using
- * this means you can't use lws_dll_add_tail() amd
- */
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_remove(struct lws_dll *d) LWS_WARN_DEPRECATED;
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll_remove_track_tail(struct lws_dll *d, struct lws_dll *phead);
-
-/* another way to do lws_start_foreach_dll_safe() on a list via a cb */
-
-LWS_VISIBLE LWS_EXTERN int
-lws_dll_foreach_safe(struct lws_dll *phead, void *user,
-		     int (*cb)(struct lws_dll *d, void *user));
-
-#define lws_dll_is_detached(___dll, __head) \
-	(!(___dll)->prev && !(___dll)->next && (__head)->prev != (___dll))
-
-
-/*
- * lws_dll2_owner / lws_dll2 : more capable version of lws_dll.  Differences:
- *
- *  - there's an explicit lws_dll2_owner struct which holds head, tail and
- *    count of members.
- *
- *  - list members all hold a pointer to their owner.  So user code does not
- *    have to track anything about exactly what lws_dll2_owner list the object
- *    is a member of.
- *
- *  - you can use lws_dll unless you want the member count or the ability to
- *    not track exactly which list it's on.
- *
- *  - layout is compatible with lws_dll (but lws_dll apis will not update the
- *    new stuff)
- */
-
-
-struct lws_dll2;
-struct lws_dll2_owner;
-
-typedef struct lws_dll2 {
-	struct lws_dll2		*prev;
-	struct lws_dll2		*next;
-	struct lws_dll2_owner	*owner;
-} lws_dll2_t;
-
-typedef struct lws_dll2_owner {
-	struct lws_dll2		*tail;
-	struct lws_dll2		*head;
-
-	uint32_t		count;
-} lws_dll2_owner_t;
-
-static LWS_INLINE int
-lws_dll2_is_detached(const struct lws_dll2 *d) { return !d->owner; }
-
-static LWS_INLINE const struct lws_dll2_owner *
-lws_dll2_owner(const struct lws_dll2 *d) { return d->owner; }
-
-static LWS_INLINE struct lws_dll2 *
-lws_dll2_get_head(struct lws_dll2_owner *owner) { return owner->head; }
-
-static LWS_INLINE struct lws_dll2 *
-lws_dll2_get_tail(struct lws_dll2_owner *owner) { return owner->tail; }
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll2_add_head(struct lws_dll2 *d, struct lws_dll2_owner *owner);
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll2_add_tail(struct lws_dll2 *d, struct lws_dll2_owner *owner);
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll2_remove(struct lws_dll2 *d);
-
-LWS_VISIBLE LWS_EXTERN int
-lws_dll2_foreach_safe(struct lws_dll2_owner *owner, void *user,
-		      int (*cb)(struct lws_dll2 *d, void *user));
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll2_clear(struct lws_dll2 *d);
-
-LWS_VISIBLE LWS_EXTERN void
-lws_dll2_owner_clear(struct lws_dll2_owner *d);
-
-void
-lws_dll2_add_before(struct lws_dll2 *d, struct lws_dll2 *after);
-
-/*
- * these are safe against the current container object getting deleted,
- * since the hold his next in a temp and go to that next.  ___tmp is
- * the temp.
- */
-
-#define lws_start_foreach_dll_safe(___type, ___it, ___tmp, ___start) \
-{ \
-	___type ___it = ___start; \
-	while (___it) { \
-		___type ___tmp = (___it)->next;
-
-#define lws_end_foreach_dll_safe(___it, ___tmp) \
-		___it = ___tmp; \
-	} \
-}
-
-#define lws_start_foreach_dll(___type, ___it, ___start) \
-{ \
-	___type ___it = ___start; \
-	while (___it) {
-
-#define lws_end_foreach_dll(___it) \
-		___it = (___it)->next; \
-	} \
-}
 
 struct lws_buflist;
 
@@ -362,6 +76,31 @@ LWS_VISIBLE LWS_EXTERN int
 lws_buflist_use_segment(struct lws_buflist **head, size_t len);
 
 /**
+ * lws_buflist_total_len(): Get the total size of the buflist
+ *
+ * \param head: list head
+ *
+ * Returns the total number of bytes held on all segments of the buflist
+ */
+LWS_VISIBLE LWS_EXTERN size_t
+lws_buflist_total_len(struct lws_buflist **head);
+
+/**
+ * lws_buflist_linear_copy(): copy everything out as one without consuming
+ *
+ * \param head: list head
+ * \param ofs: start offset into buflist in bytes
+ * \param buf: buffer to copy linearly into
+ * \param len: length of buffer available
+ *
+ * Returns -1 if len is too small, or bytes copied.  Happy to do partial
+ * copies, returns 0 when there are no more bytes to copy.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_buflist_linear_copy(struct lws_buflist **head, size_t ofs, uint8_t *buf,
+			size_t len);
+
+/**
  * lws_buflist_destroy_all_segments(): free all segments on the list
  *
  * \param head: list head
@@ -372,8 +111,18 @@ lws_buflist_use_segment(struct lws_buflist **head, size_t len);
 LWS_VISIBLE LWS_EXTERN void
 lws_buflist_destroy_all_segments(struct lws_buflist **head);
 
-void
-lws_buflist_describe(struct lws_buflist **head, void *id);
+/**
+ * lws_buflist_describe(): debug helper logging buflist status
+ *
+ * \param head: list head
+ * \param id: pointer shown in debug list
+ * \param reason: reason string show in debug list
+ *
+ * Iterates through the buflist segments showing position and size.
+ * This only exists when lws was built in debug mode
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_buflist_describe(struct lws_buflist **head, void *id, const char *reason);
 
 /**
  * lws_ptr_diff(): helper to report distance between pointers as an int
@@ -546,6 +295,22 @@ LWS_VISIBLE LWS_EXTERN const char *
 lws_cmdline_option(int argc, const char **argv, const char *val);
 
 /**
+ * lws_cmdline_option_handle_builtin(): apply standard cmdline options
+ *
+ * \param argc:		count of argument strings
+ * \param argv:		argument strings
+ * \param info:		context creation info
+ *
+ * Applies standard options to the context creation info to save them having
+ * to be (unevenly) copied into the minimal examples.
+ *
+ * Applies default log levels that can be overriden by -d
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_cmdline_option_handle_builtin(int argc, const char **argv,
+				  struct lws_context_creation_info *info);
+
+/**
  * lws_now_secs(): return seconds since 1970-1-1
  */
 LWS_VISIBLE LWS_EXTERN unsigned long
@@ -556,26 +321,6 @@ lws_now_secs(void);
  */
 LWS_VISIBLE LWS_EXTERN lws_usec_t
 lws_now_usecs(void);
-
-/**
- * lws_compare_time_t(): return relationship between two time_t
- *
- * \param context: struct lws_context
- * \param t1: time_t 1
- * \param t2: time_t 2
- *
- * returns <0 if t2 > t1; >0 if t1 > t2; or == 0 if t1 == t2.
- *
- * This is aware of clock discontiguities that may have affected either t1 or
- * t2 and adapts the comparison for them.
- *
- * For the discontiguity detection to work, you must avoid any arithmetic on
- * the times being compared.  For example to have a timeout that triggers
- * 15s from when it was set, store the time it was set and compare like
- * `if (lws_compare_time_t(context, now, set_time) > 15)`
- */
-LWS_VISIBLE LWS_EXTERN int
-lws_compare_time_t(struct lws_context *context, time_t t1, time_t t2);
 
 /**
  * lws_get_context - Allow getting lws_context from a Websocket connection
@@ -838,14 +583,13 @@ size_t lws_get_allocated_heap(void);
  * lws_is_ssl() - Find out if connection is using SSL
  * \param wsi:	websocket connection to check
  *
- *	Returns 0 if the connection is not using SSL, 1 if using SSL and
- *	using verified cert, and 2 if using SSL but the cert was not
- *	checked (appears for client wsi told to skip check on connection)
+ * Returns nonzero if the wsi is inside a tls tunnel, else zero.
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_is_ssl(struct lws *wsi);
 /**
  * lws_is_cgi() - find out if this wsi is running a cgi process
+ *
  * \param wsi: lws connection
  */
 LWS_VISIBLE LWS_EXTERN int
@@ -854,9 +598,8 @@ lws_is_cgi(struct lws *wsi);
 /**
  * lws_open() - platform-specific wrapper for open that prepares the fd
  *
- * \param file: the filepath to open
- * \param oflag: option flags
- * \param mode: optional mode of any created file
+ * \param __file: the filepath to open
+ * \param __oflag: option flags
  *
  * This is a wrapper around platform open() that sets options on the fd
  * according to lws policy.  Currently that is FD_CLOEXEC to stop the opened
@@ -888,5 +631,63 @@ lws_get_ssl(struct lws *wsi);
 
 LWS_VISIBLE LWS_EXTERN void
 lws_explicit_bzero(void *p, size_t len);
+
+typedef struct lws_humanize_unit {
+	const char *name; /* array ends with NULL name */
+	uint64_t factor;
+} lws_humanize_unit_t;
+
+LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_si[];
+LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_si_bytes[];
+LWS_VISIBLE LWS_EXTERN const lws_humanize_unit_t humanize_schema_us[];
+
+/**
+ * lws_humanize() - Convert possibly large number to himan-readable uints
+ *
+ * \param buf: result string buffer
+ * \param len: remaining length in \p buf
+ * \param value: the uint64_t value to represent
+ * \param schema: and array of scaling factors and units
+ *
+ * This produces a concise string representation of \p value, referening the
+ * schema \p schema of scaling factors and units to find the smallest way to
+ * render it.
+ *
+ * Three schema are exported from lws for general use, humanize_schema_si, which
+ * represents as, eg, "  22.130Gi" or " 128      "; humanize_schema_si_bytes
+ * which is the same but shows, eg, "  22.130GiB", and humanize_schema_us,
+ * which represents a count of us as a human-readable time like "  14.350min",
+ * or "  1.500d".
+ *
+ * You can produce your own schema.
+ */
+
+LWS_VISIBLE LWS_EXTERN int
+lws_humanize(char *buf, int len, uint64_t value,
+	     const lws_humanize_unit_t *schema);
+
+LWS_VISIBLE LWS_EXTERN void
+lws_ser_wu16be(uint8_t *b, uint16_t u);
+
+LWS_VISIBLE LWS_EXTERN void
+lws_ser_wu32be(uint8_t *b, uint32_t u32);
+
+LWS_VISIBLE LWS_EXTERN void
+lws_ser_wu64be(uint8_t *b, uint64_t u64);
+
+LWS_VISIBLE LWS_EXTERN uint16_t
+lws_ser_ru16be(const uint8_t *b);
+
+LWS_VISIBLE LWS_EXTERN uint32_t
+lws_ser_ru32be(const uint8_t *b);
+
+LWS_VISIBLE LWS_EXTERN uint64_t
+lws_ser_ru64be(const uint8_t *b);
+
+int
+lws_vbi_encode(uint64_t value, void *buf);
+
+int
+lws_vbi_decode(const void *buf, uint64_t *value, size_t len);
 
 ///@}

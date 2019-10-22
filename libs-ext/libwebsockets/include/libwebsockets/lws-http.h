@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /* minimal space for typical headers and CSP stuff */
@@ -743,6 +744,24 @@ lws_http_headers_detach(struct lws *wsi);
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_http_mark_sse(struct lws *wsi);
+
+/**
+ * lws_h2_client_stream_long_poll_rxonly() - h2 stream to immortal read-only
+ *
+ * \param wsi: h2 stream client wsi
+ *
+ * Send END_STREAM-flagged zero-length DATA frame to set client stream wsi into
+ * half-closed (local) and remote into half-closed (remote).  Set the client
+ * stream wsi to be immortal (not subject to timeouts).
+ *
+ * Used if the remote server supports immortal long poll to put the stream into
+ * a read-only state where it can wait as long as needed for rx.
+ *
+ * Returns 0 if the process (which happens asynchronously) started or non-zero
+ * if it wasn't an h2 stream.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_h2_client_stream_long_poll_rxonly(struct lws *wsi);
 
 /**
  * lws_http_compression_apply() - apply an http compression transform

@@ -1,26 +1,29 @@
 /*
- * libwebsockets - lws alloc chunk
+ * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
-#include "misc/lwsac/private.h"
+#include "private-lib-core.h"
+#include "private-lib-misc-lwsac.h"
 
 void
 lws_list_ptr_insert(lws_list_ptr *head, lws_list_ptr *add,
@@ -69,66 +72,123 @@ lwsac_get_next(struct lwsac *lac)
 void *
 lwsac_use(struct lwsac **head, size_t ensure, size_t chunk_size)
 {
-	struct lwsac *chunk;
-	size_t ofs, alloc;
+	size_t ofs, alloc, al;
+	struct lwsac *bf = *head;
+	struct lwsac_head *lachead = NULL;
 
-	/* ensure there's a chunk and enough space in it for this name */
+	if (bf)
+		lachead = (struct lwsac_head *)&bf[1];
 
-	if (!*head || (*head)->curr->alloc_size - (*head)->curr->ofs < ensure) {
+	/* check for something that can take it first */
 
-		if (!chunk_size)
-			alloc = LWSAC_CHUNK_SIZE + sizeof(*chunk);
-		else
-			alloc = chunk_size + sizeof(*chunk);
+	while (bf) {
+		if (bf->alloc_size - bf->ofs >= ensure)
+			goto do_use;
 
-		/*
-		 * If we get asked for something outside our expectation,
-		 * allocate to meet it
-		 */
-
-		if (ensure >= alloc - sizeof(*chunk))
-			alloc = ensure + sizeof(*chunk);
-
-		chunk = malloc(alloc);
-		if (!chunk) {
-			lwsl_err("%s: OOM trying to alloc %llud\n", __func__,
-					(unsigned long long)alloc);
-			return NULL;
-		}
-
-		if (!*head) {
-			*head = chunk;
-			chunk->total_alloc_size = 0;
-			chunk->total_blocks = 0;
-		}
-		else
-			(*head)->curr->next = chunk;
-
-		(*head)->curr = chunk;
-		(*head)->curr->head = *head;
-
-		chunk->next = NULL;
-		chunk->alloc_size = alloc;
-		chunk->detached = 0;
-		chunk->refcount = 0;
-
-		(*head)->total_alloc_size += alloc;
-		(*head)->total_blocks++;
-
-		/*
-		 * belabouring the point... ofs is aligned to the platform's
-		 * generic struct alignment at the start then
-		 */
-		(*head)->curr->ofs = sizeof(*chunk);
+		bf = bf->next;
 	}
 
-	ofs = (*head)->curr->ofs;
+	/* nothing can currently take it... so we must allocate */
 
-	(*head)->curr->ofs += lwsac_align(ensure);
-	if ((*head)->curr->ofs >= (*head)->curr->alloc_size)
-		(*head)->curr->ofs = (*head)->curr->alloc_size;
+	if (!chunk_size)
+		alloc = LWSAC_CHUNK_SIZE + sizeof(*bf);
+	else
+		alloc = chunk_size + sizeof(*bf);
 
-	return (char *)(*head)->curr + ofs;
+	/*
+	 * If we get asked for something outside our expectation,
+	 * increase the allocation to meet it
+	 */
+
+	if (ensure >= alloc - sizeof(*bf))
+		alloc = ensure + sizeof(*bf);
+
+	bf = malloc(alloc);
+	if (!bf) {
+		lwsl_err("%s: OOM trying to alloc %llud\n", __func__,
+				(unsigned long long)alloc);
+		return NULL;
+	}
+
+	/*
+	 * belabouring the point... ofs is aligned to the platform's
+	 * generic struct alignment at the start then
+	 */
+	bf->ofs = sizeof(*bf);
+
+	if (!*head) {
+		/*
+		 * We are the first, head, entry...
+		 */
+		*head = bf;
+		/*
+		 * ... allocate for the special head block
+		 */
+		bf->ofs += sizeof(*lachead);
+		lachead = (struct lwsac_head *)&bf[1];
+		memset(lachead, 0, sizeof(*lachead));
+	} else
+		lachead->curr->next = bf;
+
+	lachead->curr = bf;
+	bf->head = *head;
+	bf->next = NULL;
+	bf->alloc_size = alloc;
+
+	lachead->total_alloc_size += alloc;
+	lachead->total_blocks++;
+
+do_use:
+
+	ofs = bf->ofs;
+
+	al = lwsac_align(ensure);
+	if (al > ensure)
+		/* zero down the alignment padding part */
+		memset((char *)bf + ofs + ensure, 0, al - ensure);
+
+	bf->ofs += al;
+	if (bf->ofs >= bf->alloc_size)
+		bf->ofs = bf->alloc_size;
+
+	return (char *)bf + ofs;
+}
+
+uint8_t *
+lwsac_scan_extant(struct lwsac *head, uint8_t *find, size_t len, int nul)
+{
+	while (head) {
+		uint8_t *pos = (uint8_t *)&head[1],
+			*end = ((uint8_t *)head) + head->ofs - len;
+
+		if (head->ofs - sizeof(*head) >= len)
+			while (pos < end) {
+				if (*pos == *find && (!nul || !pos[len]) &&
+				    pos[len - 1] == find[len - 1] &&
+				    !memcmp(pos, find, len))
+					/* found the blob */
+					return pos;
+				pos++;
+			}
+
+		head = head->next;
+	}
+
+	return NULL;
+}
+
+uint64_t
+lwsac_total_overhead(struct lwsac *head)
+{
+	uint64_t overhead = 0;
+
+	while (head) {
+		overhead += (head->alloc_size - head->ofs) + sizeof(*head);
+
+		head = head->next;
+	}
+
+	return overhead;
 }
 
 void *
@@ -140,17 +200,6 @@ lwsac_use_zero(struct lwsac **head, size_t ensure, size_t chunk_size)
 		memset(p, 0, ensure);
 
 	return p;
-}
-
-void *
-lwsac_use_zeroed(struct lwsac **head, size_t ensure, size_t chunk_size)
-{
-	void *r = lwsac_use(head, ensure, chunk_size);
-
-	if (r)
-		memset(r, 0, ensure);
-
-	return r;
 }
 
 void
@@ -172,42 +221,62 @@ lwsac_free(struct lwsac **head)
 void
 lwsac_info(struct lwsac *head)
 {
-	if (!head)
+#if defined(_DEBUG)
+	struct lwsac_head *lachead;
+
+	if (!head) {
 		lwsl_debug("%s: empty\n", __func__);
-	else
-		lwsl_debug("%s: lac %p: %dKiB in %d blocks\n", __func__, head,
-		   (int)(head->total_alloc_size >> 10), head->total_blocks);
+		return;
+	}
+
+	lachead = (struct lwsac_head *)&head[1];
+
+	lwsl_debug("%s: lac %p: %dKiB in %d blocks\n", __func__, head,
+		   (int)(lachead->total_alloc_size >> 10), lachead->total_blocks);
+#endif
 }
 
 uint64_t
 lwsac_total_alloc(struct lwsac *head)
 {
-	return head->total_alloc_size;
+	struct lwsac_head *lachead;
+
+	if (!head)
+		return 0;
+
+	lachead = (struct lwsac_head *)&head[1];
+	return lachead->total_alloc_size;
 }
 
 void
 lwsac_reference(struct lwsac *head)
 {
-	head->refcount++;
+	struct lwsac_head *lachead = (struct lwsac_head *)&head[1];
+
+	lachead->refcount++;
 	lwsl_debug("%s: head %p: (det %d) refcount -> %d\n",
-		    __func__, head, head->detached, head->refcount);
+		    __func__, head, lachead->detached, lachead->refcount);
 }
 
 void
 lwsac_unreference(struct lwsac **head)
 {
+	struct lwsac_head *lachead;
+
 	if (!(*head))
 		return;
 
-	if (!(*head)->refcount)
+	lachead = (struct lwsac_head *)&(*head)[1];
+
+	if (!lachead->refcount)
 		lwsl_warn("%s: refcount going below zero\n", __func__);
 
-	(*head)->refcount--;
+	lachead->refcount--;
 
 	lwsl_debug("%s: head %p: (det %d) refcount -> %d\n",
-		    __func__, *head, (*head)->detached, (*head)->refcount);
+		    __func__, *head, lachead->detached, lachead->refcount);
 
-	if ((*head)->detached && !(*head)->refcount) {
+	if (lachead->detached && !lachead->refcount) {
 		lwsl_debug("%s: head %p: FREED\n", __func__, *head);
 		lwsac_free(head);
 	}
@@ -216,11 +285,18 @@ lwsac_unreference(struct lwsac **head)
 void
 lwsac_detach(struct lwsac **head)
 {
-	(*head)->detached = 1;
-	if (!(*head)->refcount) {
+	struct lwsac_head *lachead;
+
+	if (!(*head))
+		return;
+
+	lachead = (struct lwsac_head *)&(*head)[1];
+
+	lachead->detached = 1;
+	if (!lachead->refcount) {
 		lwsl_debug("%s: head %p: FREED\n", __func__, *head);
 		lwsac_free(head);
 	} else
 		lwsl_debug("%s: head %p: refcount %d: Marked as detached\n",
-			    __func__, *head, (*head)->refcount);
+			    __func__, *head, lachead->refcount);
 }

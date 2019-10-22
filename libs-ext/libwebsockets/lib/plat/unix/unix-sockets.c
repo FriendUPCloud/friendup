@@ -1,26 +1,33 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #define _GNU_SOURCE
-#include "core/private.h"
+#include "private-lib-core.h"
+
+#include <sys/ioctl.h>
+#include <net/route.h>
+#include <net/if.h>
 
 #include <pwd.h>
 #include <grp.h>
@@ -262,4 +269,187 @@ int
 lws_plat_inet_pton(int af, const char *src, void *dst)
 {
 	return inet_pton(af, src, dst);
+}
+
+int
+lws_plat_ifname_to_hwaddr(int fd, const char *ifname, uint8_t *hwaddr, int len)
+{
+#if defined(__linux__)
+	struct ifreq i;
+
+	memset(&i, 0, sizeof(i));
+	lws_strncpy(i.ifr_name, ifname, sizeof(i.ifr_name));
+
+	if (ioctl(fd, SIOCGIFHWADDR, &i) < 0)
+		return -1;
+
+	memcpy(hwaddr, &i.ifr_hwaddr.sa_data, 6);
+
+	return 6;
+#else
+	lwsl_err("%s: UNIMPLEMENTED on this platform\n", __func__);
+
+	return -1;
+#endif
+}
+
+int
+lws_plat_rawudp_broadcast(uint8_t *p, const uint8_t *canned, int canned_len,
+			  int n, int fd, const char *iface)
+{
+#if defined(__linux__)
+	struct sockaddr_ll sll;
+	uint16_t *p16 = (uint16_t *)p;
+	uint32_t ucs = 0;
+
+	memcpy(p, canned, canned_len);
+
+	p[2] = n >> 8;
+	p[3] = n;
+
+	while (p16 < (uint16_t *)(p + 20))
+		ucs += ntohs(*p16++);
+
+	ucs += ucs >> 16;
+	ucs ^= 0xffff;
+
+	p[10] = ucs >> 8;
+	p[11] = ucs;
+	p[24] = (n - 20) >> 8;
+	p[25] = (n - 20);
+
+	memset(&sll, 0, sizeof(sll));
+	sll.sll_family = AF_PACKET;
+	sll.sll_protocol = htons(0x800);
+	sll.sll_halen = 6;
+	sll.sll_ifindex = if_nametoindex(iface);
+	memset(sll.sll_addr, 0xff, 6);
+
+	return sendto(fd, p, n, 0, (struct sockaddr *)&sll, sizeof(sll));
+#else
+	lwsl_err("%s: UNIMPLEMENTED on this platform\n", __func__);
+
+	return -1;
+#endif
+}
+
+int
+lws_plat_if_up(const char *ifname, int fd, int up)
+{
+#if defined(__linux__)
+	struct ifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	lws_strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+
+	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0) {
+		lwsl_err("%s: SIOCGIFFLAGS fail\n", __func__);
+		return 1;
+	}
+
+	if (up)
+		ifr.ifr_flags |= IFF_UP;
+	else
+		ifr.ifr_flags &= ~IFF_UP;
+
+	if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0) {
+		lwsl_err("%s: SIOCSIFFLAGS fail\n", __func__);
+		return 1;
+	}
+
+	return 0;
+#else
+	lwsl_err("%s: UNIMPLEMENTED on this platform\n", __func__);
+
+	return -1;
+#endif
+}
+
+int
+lws_plat_BINDTODEVICE(int fd, const char *ifname)
+{
+#if defined(__linux__)
+	struct ifreq i;
+
+	memset(&i, 0, sizeof(i));
+	i.ifr_addr.sa_family = AF_INET;
+	lws_strncpy(i.ifr_ifrn.ifrn_name, ifname,
+		    sizeof(i.ifr_ifrn.ifrn_name));
+	if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, &i, sizeof(i)) < 0) {
+		lwsl_notice("%s: failed %d\n", __func__, LWS_ERRNO);
+		return 1;
+	}
+
+	return 0;
+#else
+	lwsl_err("%s: UNIMPLEMENTED on this platform\n", __func__);
+
+	return -1;
+#endif
+}
+
+int
+lws_plat_ifconfig_ip(const char *ifname, int fd, uint8_t *ip, uint8_t *mask_ip,
+			uint8_t *gateway_ip)
+{
+#if defined(__linux__)
+	struct sockaddr_in *addr;
+	struct sockaddr_in sin;
+	struct rtentry route;
+	struct ifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&route, 0, sizeof(route));
+	memset(&sin, 0, sizeof(sin));
+
+	lws_strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+
+	lws_plat_if_up(ifname, fd, 0);
+
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(*(uint32_t *)ip);
+
+	memcpy(&ifr.ifr_addr, &sin, sizeof(struct sockaddr));
+	if (ioctl(fd, SIOCSIFADDR, &ifr) < 0) {
+		lwsl_err("%s: SIOCSIFADDR fail\n", __func__);
+		return 1;
+	}
+
+	sin.sin_addr.s_addr = htonl(*(uint32_t *)mask_ip);
+	memcpy(&ifr.ifr_addr, &sin, sizeof(struct sockaddr));
+	if (ioctl(fd, SIOCSIFNETMASK, &ifr) < 0) {
+		lwsl_err("%s: SIOCSIFNETMASK fail\n", __func__);
+		return 1;
+	}
+
+	lws_plat_if_up(ifname, fd, 1);
+
+	addr = (struct sockaddr_in *)&route.rt_gateway;
+	addr->sin_family = AF_INET;
+	addr->sin_addr.s_addr = htonl(*(uint32_t *)gateway_ip);
+
+	addr = (struct sockaddr_in *)&route.rt_dst;
+	addr->sin_family = AF_INET;
+	addr->sin_addr.s_addr = 0;
+
+	addr = (struct sockaddr_in *)&route.rt_genmask;
+	addr->sin_family = AF_INET;
+	addr->sin_addr.s_addr = 0;
+
+	route.rt_flags = RTF_UP | RTF_GATEWAY;
+	route.rt_metric = 100;
+	route.rt_dev = (char *)ifname;
+
+	if (ioctl(fd, SIOCADDRT, &route) < 0) {
+		lwsl_err("%s: SIOCADDRT 0x%x fail: %d\n", __func__,
+			(unsigned int)htonl(*(uint32_t *)gateway_ip), LWS_ERRNO);
+		return 1;
+	}
+
+	return 0;
+#else
+	lwsl_err("%s: UNIMPLEMENTED on this platform\n", __func__);
+
+	return -1;
+#endif
 }
