@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #ifdef LWS_HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -39,18 +42,18 @@ static void (*lwsl_emit)(int level, const char *line)
 	;
 #ifndef LWS_PLAT_OPTEE
 static const char * const log_level_names[] = {
-	"ERR",
-	"WARN",
-	"NOTICE",
-	"INFO",
-	"DEBUG",
-	"PARSER",
-	"HEADER",
-	"EXTENSION",
-	"CLIENT",
-	"LATENCY",
-	"USER",
-	"THREAD",
+	"E",
+	"W",
+	"N",
+	"I",
+	"D",
+	"P",
+	"H",
+	"EXT",
+	"C",
+	"L",
+	"U",
+	"T",
 	"?",
 	"?"
 };
@@ -60,15 +63,18 @@ LWS_VISIBLE int
 lwsl_timestamp(int level, char *p, int len)
 {
 #ifndef LWS_PLAT_OPTEE
-#ifndef _WIN32_WCE
-	time_t o_now = time(NULL);
-#endif
+	time_t o_now;
 	unsigned long long now;
+	struct timeval tv;
 	struct tm *ptm = NULL;
 #ifndef WIN32
 	struct tm tm;
 #endif
 	int n;
+
+	gettimeofday(&tv, NULL);
+	o_now = tv.tv_sec;
+	now = ((unsigned long long)tv.tv_sec * 10000) + (tv.tv_usec / 100);
 
 #ifndef _WIN32_WCE
 #ifdef WIN32
@@ -82,7 +88,7 @@ lwsl_timestamp(int level, char *p, int len)
 	for (n = 0; n < LLL_COUNT; n++) {
 		if (level != (1 << n))
 			continue;
-		now = lws_time_in_microseconds() / 100;
+		now = lws_now_usecs() / 100;
 		if (ptm)
 			n = lws_snprintf(p, len,
 				"[%04d/%02d/%02d %02d:%02d:%02d:%04d] %s: ",
@@ -243,14 +249,14 @@ lwsl_hexdump_level(int hexdump_level, const void *vbuf, size_t len)
 		unsigned int start = n, m;
 		char line[80], *p = line;
 
-		p += snprintf(p, 10, "%04X: ", start);
+		p += lws_snprintf(p, 10, "%04X: ", start);
 
 		for (m = 0; m < 16 && n < len; m++)
-			p += snprintf(p, 5, "%02X ", buf[n++]);
+			p += lws_snprintf(p, 5, "%02X ", buf[n++]);
 		while (m++ < 16)
-			p += snprintf(p, 5, "   ");
+			p += lws_snprintf(p, 5, "   ");
 
-		p += snprintf(p, 6, "   ");
+		p += lws_snprintf(p, 6, "   ");
 
 		for (m = 0; m < 16 && (start + m) < len; m++) {
 			if (buf[start + m] >= ' ' && buf[start + m] < 127)

@@ -1,27 +1,29 @@
 /*
- * libwebsockets - openSSL-specific client tls code
+ * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
-
-#include "tls/openssl/private.h"
+#include "private-lib-core.h"
+#include "private-lib-tls-openssl.h"
 
 /*
  * Care: many openssl apis return 1 for success.  These are translated to the
@@ -65,6 +67,12 @@ OpenSSL_client_verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 					    "certificate (verify_callback)\n");
 				X509_STORE_CTX_set_error(x509_ctx, X509_V_OK);
 				return 1;	// ok
+		} else if ((err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY ||
+			    err == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE) &&
+			    wsi->tls.use_ssl & LCCSCF_ALLOW_INSECURE) {
+				lwsl_notice("accepting non-trusted certificate\n");
+				X509_STORE_CTX_set_error(x509_ctx, X509_V_OK);
+				return 1;  /* ok */
 			} else if ((err == X509_V_ERR_CERT_NOT_YET_VALID ||
 				    err == X509_V_ERR_CERT_HAS_EXPIRED) &&
 				    wsi->tls.use_ssl & LCCSCF_ALLOW_EXPIRED) {
@@ -327,12 +335,9 @@ lws_tls_client_confirm_peer_cert(struct lws *wsi, char *ebuf, int ebuf_len)
 	char *sb = p;
 	int n;
 
-	lws_latency_pre(wsi->context, wsi);
 	errno = 0;
 	ERR_clear_error();
 	n = SSL_get_verify_result(wsi->tls.ssl);
-	lws_latency(wsi->context, wsi,
-		"SSL_get_verify_result LWS_CONNMODE..HANDSHAKE", n, n > 0);
 
 	lwsl_debug("get_verify says %d\n", n);
 
@@ -371,6 +376,36 @@ lws_tls_client_confirm_peer_cert(struct lws *wsi, char *ebuf, int ebuf_len)
 }
 
 int
+lws_tls_client_vhost_extra_cert_mem(struct lws_vhost *vh,
+                const uint8_t *der, size_t der_len)
+{
+	X509_STORE *st;
+	X509 *x  = d2i_X509(NULL, &der, der_len);
+	int n;
+
+	if (!x) {
+		lwsl_err("%s: Failed to load DER\n", __func__);
+		lws_tls_err_describe_clear();
+		return 1;
+	}
+
+	st = SSL_CTX_get_cert_store(vh->tls.ssl_client_ctx);
+	if (!st) {
+		lwsl_err("%s: failed to get cert store\n", __func__);
+		X509_free(x);
+		return 1;
+	}
+
+	n = X509_STORE_add_cert(st, x);
+	if (n != 1)
+		lwsl_err("%s: failed to add cert\n", __func__);
+
+	X509_free(x);
+
+	return n != 1;
+}
+
+int
 lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 				    const struct lws_context_creation_info *info,
 				    const char *cipher_list,
@@ -383,7 +418,6 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 				    const char *private_key_filepath)
 {
 	struct lws_tls_client_reuse *tcr;
-	const unsigned char *ca_mem_ptr;
 	X509_STORE *x509_store;
 	unsigned long error;
 	SSL_METHOD *method;
@@ -480,8 +514,8 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 
 	/* look for existing client context with same config already */
 
-	lws_start_foreach_dll_safe(struct lws_dll *, p, tp,
-				   vh->context->tls.cc_head.next) {
+	lws_start_foreach_dll_safe(struct lws_dll2 *, p, tp,
+			 lws_dll2_get_head(&vh->context->tls.cc_owner)) {
 		tcr = lws_container_of(p, struct lws_tls_client_reuse, cc_list);
 
 		if (!memcmp(hash, tcr->hash, len)) {
@@ -522,7 +556,7 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 	tcr->refcount = 1;
 	memcpy(tcr->hash, hash, len);
 	tcr->index = vh->context->tls.count_client_contexts++;
-	lws_dll_add_front(&tcr->cc_list, &vh->context->tls.cc_head);
+	lws_dll2_add_head(&tcr->cc_list, &vh->context->tls.cc_owner);
 
 	lwsl_info("%s: vh %s: created new client ctx %d\n", __func__,
 			vh->name, tcr->index);
@@ -590,23 +624,44 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 		else
 			lwsl_info("loaded ssl_ca_filepath\n");
 	} else {
-		ca_mem_ptr = (const unsigned char*)ca_mem;
-		client_CA = d2i_X509(NULL, &ca_mem_ptr, ca_mem_len);
-		x509_store = X509_STORE_new();
-		if (!client_CA || !X509_STORE_add_cert(x509_store, client_CA)) {
-			X509_STORE_free(x509_store);
-			lwsl_err("Unable to load SSL Client certs from "
-				 "ssl_ca_mem -- client ssl isn't going to "
-				 "work\n");
+
+		lws_filepos_t amount = 0;
+		uint8_t *up1;
+		const uint8_t *up;
+
+		if (lws_tls_alloc_pem_to_der_file(vh->context, NULL, ca_mem,
+						  ca_mem_len, &up1,
+						  &amount)) {
+			lwsl_err("%s: Unable to decode x.509 mem\n", __func__);
+			lwsl_hexdump_notice(ca_mem, ca_mem_len);
+			return 1;
+		}
+
+		up = up1;
+		client_CA = d2i_X509(NULL, &up, amount);
+		if (!client_CA) {
+			lwsl_err("%s: d2i_X509 failed\n", __func__);
+			lwsl_hexdump_notice(up1, amount);
 			lws_tls_err_describe_clear();
 		} else {
-			/* it doesn't increment x509_store ref counter */
-			SSL_CTX_set_cert_store(vh->tls.ssl_client_ctx,
-					       x509_store);
-			lwsl_info("loaded ssl_ca_mem\n");
+			x509_store = X509_STORE_new();
+			if (!X509_STORE_add_cert(x509_store, client_CA)) {
+				X509_STORE_free(x509_store);
+				lwsl_err("Unable to load SSL Client certs from "
+					 "ssl_ca_mem -- client ssl isn't going to "
+					 "work\n");
+				lws_tls_err_describe_clear();
+			} else {
+				/* it doesn't increment x509_store ref counter */
+				SSL_CTX_set_cert_store(vh->tls.ssl_client_ctx,
+						       x509_store);
+				lwsl_info("loaded ssl_ca_mem\n");
+			}
 		}
 		if (client_CA)
 			X509_free(client_CA);
+		lws_free(up1);
+	//	lws_tls_client_vhost_extra_cert_mem(vh, ca_mem, ca_mem_len);
 	}
 
 	/*
@@ -665,3 +720,5 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 
 	return 0;
 }
+
+

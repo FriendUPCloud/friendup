@@ -3,27 +3,30 @@
  *
  * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
-#include "tls/private.h"
+#include "private-lib-core.h"
+#include "private-lib-tls.h"
 
 #if !defined(LWS_PLAT_OPTEE) && !defined(OPTEE_DEV_KIT)
-#if defined(LWS_WITH_ESP32) && !defined(LWS_AMAZON_RTOS)
+#if defined(LWS_PLAT_FREERTOS) && !defined(LWS_AMAZON_RTOS)
 int alloc_file(struct lws_context *context, const char *filename, uint8_t **buf,
 	       lws_filepos_t *amount)
 {
@@ -211,8 +214,8 @@ lws_tls_alloc_pem_to_der_file(struct lws_context *context, const char *filename,
 	if (filename)
 		*q = '\0';
 
-	*amount = lws_b64_decode_string((char *)p, (char *)pem,
-					(int)(long long)len);
+	*amount = lws_b64_decode_string_len((char *)p, lws_ptr_diff(q, p),
+					    (char *)pem, (int)(long long)len);
 	*buf = (uint8_t *)pem;
 
 	return 0;
@@ -226,7 +229,7 @@ bail:
 
 #endif
 
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE) && !defined(OPTEE_DEV_KIT)
+#if !defined(LWS_PLAT_FREERTOS) && !defined(LWS_PLAT_OPTEE) && !defined(OPTEE_DEV_KIT)
 
 
 static int
@@ -275,15 +278,15 @@ lws_tls_extant(const char *name)
  * 4) LWS_TLS_EXTANT_YES: The certs are present with the correct name and we
  *    have the rights to read them.
  */
-#if !defined(LWS_AMAZON_RTOS)
+
 enum lws_tls_extant
 lws_tls_use_any_upgrade_check_extant(const char *name)
 {
-#if !defined(LWS_PLAT_OPTEE)
+#if !defined(LWS_PLAT_OPTEE) && !defined(LWS_AMAZON_RTOS)
 
 	int n;
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_PLAT_FREERTOS)
 	char buf[256];
 
 	lws_snprintf(buf, sizeof(buf) - 1, "%s.upd", name);
@@ -332,5 +335,3 @@ lws_tls_use_any_upgrade_check_extant(const char *name)
 #endif
 	return LWS_TLS_EXTANT_YES;
 }
-#endif
-

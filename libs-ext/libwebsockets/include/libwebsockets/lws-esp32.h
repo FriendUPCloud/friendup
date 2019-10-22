@@ -1,125 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  *
- * included from libwebsockets.h
+ * This is only included from libwebsockets.h if LWS_WITH_ESP32
  */
-
-typedef int lws_sockfd_type;
-typedef int lws_filefd_type;
-
-/*
- * Later lwip (at least 2.1.12) already defines these in its own headers
- * protected by the same test as used here... if POLLIN / POLLOUT already exist
- * then assume no need to declare those and struct pollfd.
- *
- * Older lwip needs these declarations done here.
- */
-
-#if !defined(POLLIN) && !defined(POLLOUT)
-
-struct pollfd {
-	lws_sockfd_type fd; /**< fd related to */
-	short events; /**< which POLL... events to respond to */
-	short revents; /**< which POLL... events occurred */
-};
-#define POLLIN		0x0001
-#define POLLPRI		0x0002
-#define POLLOUT		0x0004
-#define POLLERR		0x0008
-#define POLLHUP		0x0010
-#define POLLNVAL	0x0020
-
-#endif
-
-#if defined(LWS_AMAZON_RTOS)
-#include <FreeRTOS.h>
-#include <event_groups.h>
-#include <string.h>
-#include "timers.h"
-#else /* LWS_AMAZON_RTOS */
-#include <freertos/FreeRTOS.h>
-#include <freertos/event_groups.h>
-#include <string.h>
-#include "esp_wifi.h"
-#include "esp_system.h"
-#include "esp_event.h"
-#include "esp_event_loop.h"
-#include "nvs.h"
-#include "driver/gpio.h"
-#include "esp_spi_flash.h"
-#include "freertos/timers.h"
-#endif /* LWS_AMAZON_RTOS */
-
-#if !defined(CONFIG_FREERTOS_HZ)
-#define CONFIG_FREERTOS_HZ 100
-#endif
-
-typedef TimerHandle_t uv_timer_t;
-typedef void uv_cb_t(uv_timer_t *);
-typedef void * uv_handle_t;
-
-struct timer_mapping {
-	uv_cb_t *cb;
-	uv_timer_t *t;
-};
-
-#define UV_VERSION_MAJOR 1
-
-#define lws_uv_getloop(a, b) (NULL)
-
-static LWS_INLINE void uv_timer_init(void *l, uv_timer_t *t)
-{
-	(void)l;
-	*t = NULL;
-}
-
-extern void esp32_uvtimer_cb(TimerHandle_t t);
-
-static LWS_INLINE void uv_timer_start(uv_timer_t *t, uv_cb_t *cb, int first, int rep)
-{
-	struct timer_mapping *tm = (struct timer_mapping *)malloc(sizeof(*tm));
-
-	if (!tm)
-		return;
-
-	tm->t = t;
-	tm->cb = cb;
-
-	*t = xTimerCreate("x", pdMS_TO_TICKS(first), !!rep, tm,
-			  (TimerCallbackFunction_t)esp32_uvtimer_cb);
-	xTimerStart(*t, 0);
-}
-
-static LWS_INLINE void uv_timer_stop(uv_timer_t *t)
-{
-	xTimerStop(*t, 0);
-}
-
-static LWS_INLINE void uv_close(uv_handle_t *h, void *v)
-{
-	free(pvTimerGetTimerID((uv_timer_t)h));
-	xTimerDelete(*(uv_timer_t *)h, 0);
-}
-
-
-#if !defined(LWS_AMAZON_RTOS)
 
 /* ESP32 helper declarations */
 

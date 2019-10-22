@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include <core/private.h>
+#include <private-lib-core.h>
 
 static int
 rops_handle_POLLIN_cgi(struct lws_context_per_thread *pt, struct lws *wsi,
@@ -66,16 +69,6 @@ rops_handle_POLLOUT_cgi(struct lws *wsi)
 }
 
 static int
-rops_periodic_checks_cgi(struct lws_context *context, int tsi, time_t now)
-{
-	struct lws_context_per_thread *pt = &context->pt[tsi];
-
-	lws_cgi_kill_terminated(pt);
-
-	return 0;
-}
-
-static int
 rops_destroy_role_cgi(struct lws *wsi)
 {
 #if defined(LWS_WITH_ZLIB)
@@ -91,14 +84,43 @@ rops_destroy_role_cgi(struct lws *wsi)
 	return 0;
 }
 
+static void
+lws_cgi_sul_cb(lws_sorted_usec_list_t *sul)
+{
+	struct lws_context_per_thread *pt = lws_container_of(sul,
+			struct lws_context_per_thread, sul_cgi);
+
+	lws_cgi_kill_terminated(pt);
+
+	__lws_sul_insert(&pt->pt_sul_owner, &pt->sul_cgi,
+			 3 * LWS_US_PER_SEC);
+}
+
+static int
+rops_pt_init_destroy_cgi(struct lws_context *context,
+		    const struct lws_context_creation_info *info,
+		    struct lws_context_per_thread *pt, int destroy)
+{
+	if (!destroy) {
+
+		pt->sul_cgi.cb = lws_cgi_sul_cb;
+
+		__lws_sul_insert(&pt->pt_sul_owner, &pt->sul_cgi,
+				 3 * LWS_US_PER_SEC);
+	} else
+		lws_dll2_remove(&pt->sul_cgi.list);
+
+	return 0;
+}
+
+
 struct lws_role_ops role_ops_cgi = {
 	/* role name */			"cgi",
 	/* alpn id */			NULL,
 	/* check_upgrades */		NULL,
-	/* init_context */		NULL,
+	/* pt_init_destroy */		rops_pt_init_destroy_cgi,
 	/* init_vhost */		NULL,
 	/* destroy_vhost */		NULL,
-	/* periodic_checks */		rops_periodic_checks_cgi,
 	/* service_flag_pending */	NULL,
 	/* handle_POLLIN */		rops_handle_POLLIN_cgi,
 	/* handle_POLLOUT */		rops_handle_POLLOUT_cgi,
@@ -114,6 +136,7 @@ struct lws_role_ops role_ops_cgi = {
 	/* destroy_role */		rops_destroy_role_cgi,
 	/* adoption_bind */		NULL,
 	/* client_bind */		NULL,
+	/* issue_keepalive */		NULL,
 	/* adoption_cb clnt, srv */	{ 0, 0 },
 	/* rx_cb clnt, srv */		{ 0, 0 },
 	/* writeable cb clnt, srv */	{ 0, 0 },

@@ -1,28 +1,58 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010 - 2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #endif
-#include "core/private.h"
+#include "private-lib-core.h"
+
+
+int
+_lws_plat_service_forced_tsi(struct lws_context *context, int tsi)
+{
+	struct lws_context_per_thread *pt = &context->pt[tsi];
+	int m, n;
+
+	lws_service_flag_pending(context, tsi);
+
+	/* any socket with events to service? */
+	for (n = 0; n < (int)pt->fds_count; n++) {
+		if (!pt->fds[n].revents)
+			continue;
+
+		m = lws_service_fd_tsi(context, &pt->fds[n], tsi);
+		if (m < 0)
+			return -1;
+		/* if something closed, retry this slot */
+		if (m)
+			n--;
+	}
+
+	lws_service_do_ripe_rxflow(pt);
+
+	return 0;
+}
 
 
 LWS_EXTERN int
@@ -31,10 +61,13 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	struct lws_context_per_thread *pt;
 	WSANETWORKEVENTS networkevents;
 	struct lws_pollfd *pfd;
+	lws_usec_t timeout_us;
 	struct lws *wsi;
 	unsigned int i;
 	DWORD ev;
 	int n;
+	unsigned int eIdx;
+	int interrupt_requested;
 
 	/* stay dead once we are dead */
 	if (context == NULL || !context->vhost_list)
@@ -54,24 +87,12 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 		pt->service_tid_detected = 1;
 	}
 
-	if (timeout_ms < 0) {
-		if (lws_service_flag_pending(context, tsi)) {
-			/* any socket with events to service? */
-			for (n = 0; n < (int)pt->fds_count; n++) {
-				int m;
-				if (!pt->fds[n].revents)
-					continue;
-
-				m = lws_service_fd_tsi(context, &pt->fds[n], tsi);
-				if (m < 0)
-					return -1;
-				/* if something closed, retry this slot */
-				if (m)
-					n--;
-			}
-		}
-		return 0;
-	}
+	if (timeout_ms < 0)
+		timeout_ms = 0;
+	else
+		/* force a default timeout of 23 days */
+		timeout_ms = 2000000000;
+	timeout_us = ((lws_usec_t)timeout_ms) * LWS_US_PER_MS;
 
 	if (context->event_loop_ops->run_pt)
 		context->event_loop_ops->run_pt(context, tsi);
@@ -96,7 +117,7 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 		 * Force WSAWaitForMultipleEvents() to check events
 		 * and then return immediately.
 		 */
-		timeout_ms = 0;
+		timeout_us = 0;
 
 		/* if something closed, retry this slot */
 		if (n)
@@ -106,24 +127,18 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	/*
 	 * is there anybody with pending stuff that needs service forcing?
 	 */
-	if (!lws_service_adjust_timeout(context, 1, tsi)) {
-		/* -1 timeout means just do forced service */
-		_lws_plat_service_tsi(context, -1, pt->tid);
-		/* still somebody left who wants forced service? */
-		if (!lws_service_adjust_timeout(context, 1, pt->tid))
-			/* yes... come back again quickly */
-			timeout_ms = 0;
-	}
+	if (!lws_service_adjust_timeout(context, 1, tsi))
+		_lws_plat_service_forced_tsi(context, tsi);
 
-	if (timeout_ms) {
-		lws_usec_t t;
+	if (timeout_us) {
+		lws_usec_t us;
 
 		lws_pt_lock(pt, __func__);
 		/* don't stay in poll wait longer than next hr timeout */
-		t =  __lws_hrtimer_service(pt);
+		us = __lws_sul_check(&pt->pt_sul_owner, lws_now_usecs());
+		if (us && us < timeout_us)
+			timeout_us = us;
 
-		if ((lws_usec_t)timeout_ms * 1000 > t)
-			timeout_ms = (int)(t / 1000);
 		lws_pt_unlock(pt);
 	}
 
@@ -135,18 +150,18 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 		       FD_ROUTING_INTERFACE_CHANGE |
 		       FD_ADDRESS_LIST_CHANGE);
 
-	ev = WSAWaitForMultipleEvents(1, &pt->events, FALSE, timeout_ms, FALSE);
+	ev = WSAWaitForMultipleEvents(1, &pt->events, FALSE,
+				      (DWORD)(timeout_us / LWS_US_PER_MS), FALSE);
 	if (ev == WSA_WAIT_EVENT_0) {
 		EnterCriticalSection(&pt->interrupt_lock);
-		const int interrupt_requested = pt->interrupt_requested;
+		interrupt_requested = pt->interrupt_requested;
 		pt->interrupt_requested = 0;
 		LeaveCriticalSection(&pt->interrupt_lock);
-		if(interrupt_requested) {
-			lws_broadcast(context, LWS_CALLBACK_EVENT_WAIT_CANCELLED, NULL, 0);
+		if (interrupt_requested) {
+			lws_broadcast(pt, LWS_CALLBACK_EVENT_WAIT_CANCELLED,
+				      NULL, 0);
 			return 0;
 		}
-
-		unsigned int eIdx;
 
 #if defined(LWS_WITH_TLS)
 		if (pt->context->tls_ops &&
@@ -194,10 +209,13 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 				lws_service_fd_tsi(context, pfd, tsi);
 			}
 		}
-	} else if (ev == WSA_WAIT_TIMEOUT) {
-		lws_service_fd(context, NULL);
-	} else if (ev == WSA_WAIT_FAILED)
+
 		return 0;
+	}
+
+	// if (ev == WSA_WAIT_TIMEOUT) { }
+	// if (ev == WSA_WAIT_FAILED)
+		// return 0;
 
 	return 0;
 }
@@ -207,11 +225,3 @@ lws_plat_service(struct lws_context *context, int timeout_ms)
 {
 	return _lws_plat_service_tsi(context, timeout_ms, 0);
 }
-
-
-
-void
-lws_plat_service_periodic(struct lws_context *context)
-{
-}
-

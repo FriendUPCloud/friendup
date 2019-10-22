@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <util/log/log.h>
+#include <linux/limits.h>
 #include "missing_defs.h"
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__

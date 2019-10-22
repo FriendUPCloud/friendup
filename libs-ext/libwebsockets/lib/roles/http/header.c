@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 #include "lextable-strings.h"
 
 
@@ -92,6 +95,9 @@ lws_finalize_write_http_header(struct lws *wsi, unsigned char *start,
 	p = *pp;
 	len = lws_ptr_diff(p, start);
 
+#if defined(LWS_WITH_DETAILED_LATENCY)
+	wsi->detlat.earliest_write_req_pre_write = lws_now_usecs();
+#endif
 	if (lws_write(wsi, start, len, LWS_WRITE_HTTP_HEADERS) != len)
 		return 1;
 
@@ -124,7 +130,7 @@ lws_add_http_header_content_length(struct lws *wsi,
 	char b[24];
 	int n;
 
-	n = snprintf(b, sizeof(b) - 1, "%llu", (unsigned long long)content_length);
+	n = lws_snprintf(b, sizeof(b) - 1, "%llu", (unsigned long long)content_length);
 	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH,
 					 (unsigned char *)b, n, p, end))
 		return 1;
@@ -136,6 +142,8 @@ lws_add_http_header_content_length(struct lws *wsi,
 
 	return 0;
 }
+
+#if defined(LWS_WITH_SERVER)
 
 int
 lws_add_http_common_headers(struct lws *wsi, unsigned int code,
@@ -309,8 +317,9 @@ lws_add_http_header_status(struct lws *wsi, unsigned int _code,
 		else
 			p1 = hver[0];
 
-		n = snprintf((char *)code_and_desc, sizeof(code_and_desc) - 1, "%s %u %s", p1, code,
-			    description);
+		n = lws_snprintf((char *)code_and_desc,
+				 sizeof(code_and_desc) - 1, "%s %u %s",
+				 p1, code, description);
 
 		if (lws_add_http_header_by_name(wsi, NULL, code_and_desc, n, p,
 						end))
@@ -343,11 +352,13 @@ lws_add_http_header_status(struct lws *wsi, unsigned int _code,
 	}
 
 	if (wsi->context->server_string &&
-	    !(_code & LWSAHH_FLAG_NO_SERVER_NAME))
+	    !(_code & LWSAHH_FLAG_NO_SERVER_NAME)) {
+		assert(wsi->context->server_string_len > 0);
 		if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_SERVER,
 				(unsigned char *)wsi->context->server_string,
 				wsi->context->server_string_len, p, end))
 			return 1;
+	}
 
 	if (wsi->vhost->options & LWS_SERVER_OPTION_STS)
 		if (lws_add_http_header_by_name(wsi, (unsigned char *)
@@ -417,7 +428,7 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 		"</head><body><h1>%u</h1>%s</body></html>", code, html_body);
 
 
-	n = snprintf(slen, 12, "%d", len);
+	n = lws_snprintf(slen, 12, "%d", len);
 	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH,
 					 (unsigned char *)slen, n, &p, end))
 		return 1;
@@ -440,6 +451,9 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 		 *
 		 * Solve it by writing the headers now...
 		 */
+#if defined(LWS_WITH_DETAILED_LATENCY)
+		wsi->detlat.earliest_write_req_pre_write = lws_now_usecs();
+#endif
 		m = lws_write(wsi, start, lws_ptr_diff(p, start),
 			      LWS_WRITE_HTTP_HEADERS);
 		if (m != lws_ptr_diff(p, start))
@@ -510,6 +524,7 @@ lws_http_redirect(struct lws *wsi, int code, const unsigned char *loc, int len,
 	return lws_write(wsi, start, *p - start, LWS_WRITE_HTTP_HEADERS |
 						 LWS_WRITE_H2_STREAM_END);
 }
+#endif
 
 #if !defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
 LWS_VISIBLE int
@@ -531,3 +546,89 @@ lws_http_headers_detach(struct lws *wsi)
 {
 	return lws_header_table_detach(wsi, 0);
 }
+
+#if defined(LWS_WITH_SERVER)
+
+void
+lws_sul_http_ah_lifecheck(lws_sorted_usec_list_t *sul)
+{
+	struct allocated_headers *ah;
+	struct lws_context_per_thread *pt = lws_container_of(sul,
+			struct lws_context_per_thread, sul_ah_lifecheck);
+	struct lws *wsi;
+	time_t now;
+	int m;
+
+	now = time(NULL);
+
+	lws_pt_lock(pt, __func__);
+
+	ah = pt->http.ah_list;
+	while (ah) {
+		int len;
+		char buf[256];
+		const unsigned char *c;
+
+		if (!ah->in_use || !ah->wsi || !ah->assigned ||
+		    (ah->wsi->vhost &&
+		     (now - ah->assigned) <
+		     ah->wsi->vhost->timeout_secs_ah_idle + 360)) {
+			ah = ah->next;
+			continue;
+		}
+
+		/*
+		 * a single ah session somehow got held for
+		 * an unreasonable amount of time.
+		 *
+		 * Dump info on the connection...
+		 */
+		wsi = ah->wsi;
+		buf[0] = '\0';
+#if !defined(LWS_PLAT_OPTEE)
+		lws_get_peer_simple(wsi, buf, sizeof(buf));
+#else
+		buf[0] = '\0';
+#endif
+		lwsl_notice("ah excessive hold: wsi %p\n"
+			    "  peer address: %s\n"
+			    "  ah pos %lu\n",
+			    wsi, buf, (unsigned long)ah->pos);
+		buf[0] = '\0';
+		m = 0;
+		do {
+			c = lws_token_to_string(m);
+			if (!c)
+				break;
+			if (!(*c))
+				break;
+
+			len = lws_hdr_total_length(wsi, m);
+			if (!len || len > (int)sizeof(buf) - 1) {
+				m++;
+				continue;
+			}
+
+			if (lws_hdr_copy(wsi, buf, sizeof buf, m) > 0) {
+				buf[sizeof(buf) - 1] = '\0';
+
+				lwsl_notice("   %s = %s\n",
+					    (const char *)c, buf);
+			}
+			m++;
+		} while (1);
+
+		/* explicitly detach the ah */
+		lws_header_table_detach(wsi, 0);
+
+		/* ... and then drop the connection */
+
+		__lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS,
+					     "excessive ah");
+
+		ah = pt->http.ah_list;
+	}
+
+	lws_pt_unlock(pt);
+}
+#endif

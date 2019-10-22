@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 static void
 lws_ev_hrtimer_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents)
@@ -29,8 +32,8 @@ lws_ev_hrtimer_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents)
 	lws_usec_t us;
 
 	lws_pt_lock(pt, __func__);
-	us =  __lws_hrtimer_service(pt);
-	if (us != LWS_HRTIMER_NOWAIT) {
+	us = __lws_sul_check(&pt->pt_sul_owner, lws_now_usecs());
+	if (us) {
 		ev_timer_set(&pt->ev.hrtimer, ((float)us) / 1000000.0, 0);
 		ev_timer_start(pt->ev.io_loop, &pt->ev.hrtimer);
 	}
@@ -49,20 +52,15 @@ lws_ev_idle_cb(struct ev_loop *loop, struct ev_idle *handle, int revents)
 	/*
 	 * is there anybody with pending stuff that needs service forcing?
 	 */
-	if (!lws_service_adjust_timeout(pt->context, 1, pt->tid)) {
+	if (!lws_service_adjust_timeout(pt->context, 1, pt->tid))
 		/* -1 timeout means just do forced service */
-		_lws_plat_service_tsi(pt->context, -1, pt->tid);
-		/* still somebody left who wants forced service? */
-		if (!lws_service_adjust_timeout(pt->context, 1, pt->tid))
-			/* yes... come back again later */
-		return;
-	}
+		_lws_plat_service_forced_tsi(pt->context, pt->tid);
 
 	/* account for hrtimer */
 
 	lws_pt_lock(pt, __func__);
-	us =  __lws_hrtimer_service(pt);
-	if (us != LWS_HRTIMER_NOWAIT) {
+	us = __lws_sul_check(&pt->pt_sul_owner, lws_now_usecs());
+	if (us) {
 		ev_timer_set(&pt->ev.hrtimer, ((float)us) / 1000000.0, 0);
 		ev_timer_start(pt->ev.io_loop, &pt->ev.hrtimer);
 	}

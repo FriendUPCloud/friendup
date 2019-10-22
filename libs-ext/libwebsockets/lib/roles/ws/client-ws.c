@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include <core/private.h>
+#include <private-lib-core.h>
 
 /*
  * In-place str to lower case
@@ -62,7 +65,7 @@ lws_create_client_ws_object(const struct lws_client_connect_info *i,
 	return 0;
 }
 
-#if !defined(LWS_NO_CLIENT)
+#if defined(LWS_WITH_CLIENT)
 int
 lws_ws_handshake_client(struct lws *wsi, unsigned char **buf, size_t len)
 {
@@ -160,6 +163,7 @@ lws_generate_client_ws_handshake(struct lws *wsi, char *p, const char *conn1)
 		return NULL;
 	}
 
+	/* coverity[tainted_scalar] */
 	lws_b64_encode_string(hash, 16, key_b64, sizeof(key_b64));
 
 	p += sprintf(p, "Upgrade: websocket\x0d\x0a"
@@ -238,7 +242,7 @@ lws_client_ws_upgrade(struct lws *wsi, const char **cce)
 	char *p, buf[64];
 	const char *pc;
 #if !defined(LWS_WITHOUT_EXTENSIONS)
-	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
+	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 	char *sb = (char *)&pt->serv_buf[0];
 	const struct lws_ext_options *opts;
 	const struct lws_extension *ext;
@@ -246,6 +250,11 @@ lws_client_ws_upgrade(struct lws *wsi, const char **cce)
 	const char *c, *a;
 	int more = 1;
 	char ignore;
+#endif
+
+#if defined(LWS_WITH_DETAILED_LATENCY)
+		wsi->detlat.earliest_write_req = 0;
+		wsi->detlat.earliest_write_req_pre_write = 0;
 #endif
 
 	if (wsi->client_h2_substream) {/* !!! client ws-over-h2 not there yet */
@@ -320,10 +329,12 @@ bad_conn_format:
 	} while (e > 0);
 
 	pc = lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_SENT_PROTOCOLS);
+#if defined(_DEBUG)
 	if (!pc) {
 		lwsl_parser("lws_client_int_s_hs: no protocol list\n");
 	} else
 		lwsl_parser("lws_client_int_s_hs: protocol list '%s'\n", pc);
+#endif
 
 	/*
 	 * confirm the protocol the server wants to talk was in the list
@@ -386,7 +397,7 @@ identify_protocol:
 	if (!lwsi_role_client(wsi))
 		wsi->protocol = NULL;
 
-	while (wsi->vhost->protocols[n].callback) {
+	while (n < wsi->vhost->count_protocols) {
 		if (!wsi->protocol &&
 		    strcmp(p, wsi->vhost->protocols[n].name) == 0) {
 			wsi->protocol = &wsi->vhost->protocols[n];
@@ -395,7 +406,7 @@ identify_protocol:
 		n++;
 	}
 
-	if (!wsi->vhost->protocols[n].callback) { /* no match */
+	if (n == wsi->vhost->count_protocols) { /* no match */
 		/* if server, that's already fatal */
 		if (!lwsi_role_client(wsi)) {
 			lwsl_info("%s: fail protocol %s\n", __func__, p);
@@ -625,9 +636,8 @@ check_accept:
 	/* free up his parsing allocations */
 	lws_header_table_detach(wsi, 0);
 
-	lws_role_transition(wsi, LWSIFR_CLIENT, LRS_ESTABLISHED,
-			    &role_ops_ws);
-	lws_restart_ws_ping_pong_timer(wsi);
+	lws_role_transition(wsi, LWSIFR_CLIENT, LRS_ESTABLISHED, &role_ops_ws);
+	lws_validity_confirmed(wsi);
 
 	wsi->rxflow_change_to = LWS_RXFLOW_ALLOW;
 
@@ -650,7 +660,7 @@ check_accept:
 	wsi->ws->rx_ubuf_alloc = n;
 	lwsl_info("Allocating client RX buffer %d\n", n);
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_PLAT_FREERTOS)
 	if (setsockopt(wsi->desc.sockfd, SOL_SOCKET, SO_SNDBUF,
 		       (const char *)&n, sizeof n)) {
 		lwsl_warn("Failed to set SNDBUF to %d", n);
