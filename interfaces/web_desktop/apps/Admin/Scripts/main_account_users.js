@@ -1449,6 +1449,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			{
 				// Skip if user doesn't have access to this disk ...
 				//continue;
+				console.log( '['+mountlist[b].ID+']['+mountlist[b].Type+'] '+mountlist[b].Name+' has another owner id:'+mountlist[b].UserID );
 				//return '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_disks_access_denied' ) + '</div></div>';
 			}
 			
@@ -1514,7 +1515,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			console.log( storage );
 			
 			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
-			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\')">';
+			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + userid + ',' + storage.id + ',\'' + storage.name + '\')">';
 			mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
 			mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
 			//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
