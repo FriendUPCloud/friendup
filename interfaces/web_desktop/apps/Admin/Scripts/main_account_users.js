@@ -379,27 +379,27 @@ Sections.accounts_users = function( cmd, extra )
 					
 					if( !Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) && !Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
 					{
-						ge( 'LooknfeelContainer' ).style.display = 'none';
+						ge( 'AdminLooknfeelContainer' ).style.display = 'none';
 					}
 					
 					if( !Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) && !Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
 					{
-						ge( 'WorkgroupContainer' ).style.display = 'none';
+						ge( 'AdminWorkgroupContainer' ).style.display = 'none';
 					}
 					
 					if( !Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) && !Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
 					{
-						ge( 'RoleContainer' ).style.display = 'none';
+						ge( 'AdminRoleContainer' ).style.display = 'none';
 					}
 					
 					if( !Application.checkAppPermission( 'PERM_STORAGE_GLOBAL' ) && !Application.checkAppPermission( 'PERM_STORAGE_WORKGROUP' ) )
 					{
-						ge( 'StorageContainer' ).style.display = 'none';
+						ge( 'AdminStorageContainer' ).style.display = 'none';
 					}
 					
 					if( !Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) && !Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 					{
-						ge( 'ApplicationContainer' ).style.display = 'none';
+						ge( 'AdminApplicationContainer' ).style.display = 'none';
 					}
 					
 					
@@ -1507,7 +1507,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 				storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 			}
 			
-			//console.log( storage );
+			console.log( storage );
 			
 			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
 			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\')">';
