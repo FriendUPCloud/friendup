@@ -6,8 +6,8 @@ CC			=	gcc
 CPP			=	g++
 OUTPUT			=	bin/FriendCore
 
-CFLAGS			=	$(GLOBAL_CFLAGS) -I../libs-ext/openssl/include/ -I. -I../libs/ -I../$(LIBWS_INCLUDE_DIR) $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
-LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lssh -lrt -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv ../libs-ext/openssl/libssl.a ../libs-ext/openssl/libcrypto.a -ldl -lpthread
+CFLAGS			=	$(GLOBAL_CFLAGS) -I../libs/ -I../$(LIBWS_INCLUDE_DIR) -I. $(shell mysql_config --cflags) -I../$(LIBXML2_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)  -I../$(LIBSSH2_INCLUDE_DIR)
+LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lm -lssh -lrt -lmagic -lxml2 `mysql_config --libs` -lgd -lpng -lz -ljpeg -luv
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -18,6 +18,13 @@ SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
 
 SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
 MATHLIB			=
+
+ifeq ($(OPENSSL_INTERNAL),1)
+CFLAGS					+=	-I../libs-ext/openssl/include/
+LFLAGS					+=	../libs-ext/openssl/libssl.a ../libs-ext/openssl/libcrypto.a -ldl -lpthread
+else
+LFLAGS					+=	-lssl -lcrypto -ldl -lpthread
+endif
 
 ifeq ($(LINK_LIB_STDCPP),1)
 LFLAGS					+=	-lstdc++

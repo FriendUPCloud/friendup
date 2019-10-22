@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /*! \defgroup jws JSON Web Signature
@@ -78,6 +79,8 @@ struct lws_jws {
  * lws_jws_init() - initialize a jws for use
  *
  * \param jws: pointer to the jws to initialize
+ * \param jwk: the jwk to use with this jws
+ * \param context: the lws_context to use
  */
 LWS_VISIBLE LWS_EXTERN void
 lws_jws_init(struct lws_jws *jws, struct lws_jwk *jwk,
@@ -100,7 +103,9 @@ lws_jws_destroy(struct lws_jws *jws);
  *
  * \param map: pointers and lengths for each of the unencoded JWS elements
  * \param jwk: public key
- * \param content: lws_context
+ * \param context: lws_context
+ * \param temp: scratchpad
+ * \param temp_len: length of scratchpad
  *
  * Confirms the signature on a JWS.  Use if you have non-b64 plain JWS elements
  * in a map... it'll make a temp b64 version needed for comparison.  See below
@@ -126,7 +131,9 @@ lws_jws_sig_confirm_compact_b64_map(struct lws_jws_map *map_b64,
  * \param len: bytes available at \p in
  * \param map: map to take decoded non-b64 content
  * \param jwk: public key
- * \param content: lws_context
+ * \param context: lws_context
+ * \param temp: scratchpad
+ * \param temp_len: size of scratchpad
  *
  * Confirms the signature on a JWS.  Use if you have you have b64 compact layout
  * (jose.payload.hdr.sig) as an aggregated string... it'll make a temp plain
@@ -147,7 +154,7 @@ lws_jws_sig_confirm_compact_b64(const char *in, size_t len,
  * \param map_b64: pointers and lengths for each of the b64-encoded JWS elements
  * \param map: pointers and lengths for each of the unencoded JWS elements
  * \param jwk: public key
- * \param content: lws_context
+ * \param context: lws_context
  *
  * Confirms the signature on a JWS.  Use if you have you already have both b64
  * compact layout (jose.payload.hdr.sig) and decoded JWS elements in maps.
@@ -385,8 +392,8 @@ lws_jws_base64_enc(const char *in, size_t in_len, char *out, size_t out_max);
  * \param in: the incoming plaintext
  * \param in_len: the length of the incoming plaintext in bytes
  * \param first: nonzero if the first section
- * \param out: the buffer to store the b64url encoded data to
- * \param out_max: the length of \p out in bytes
+ * \param p: the buffer to store the b64url encoded data to
+ * \param end: just past the end of p
  *
  * Returns either -1 if problems, or the number of bytes written to \p out.
  * If the section is not the first one, '.' is prepended.

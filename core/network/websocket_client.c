@@ -20,6 +20,7 @@
 #include "websocket_client.h"
 #include <system/systembase.h>
 #include <core/thread.h>
+#include <libwebsockets.h>
 
 extern SystemBase *SLIB;
 
