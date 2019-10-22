@@ -1428,7 +1428,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			mountlist = sorted;
 		}
 		
-		//console.log( mountlist );
+		console.log( 'mountlist ', { mountlist: mountlist, userid: userid } );
 		
 		mlst += '<div class="HRow">';
 		for( var b in mountlist )
