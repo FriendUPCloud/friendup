@@ -193,7 +193,7 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								value = '<strong>' + apps[ a ][ keyz[ k ] ] + '</strong>';
 							}
-							if( keyz[ k ] == 'Category' && typeof apps[ a ].Config.Category !== 'undefined' )
+							if( keyz[ k ] == 'Category' && apps[ a ] && apps[ a ].Config && apps[ a ].Config.Category )
 							{
 								value = apps[ a ].Config.Category;
 							}
