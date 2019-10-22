@@ -510,15 +510,15 @@ html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
 .Events
 {
 	position: absolute;
-	top: 8px;
+	top: 35px;
 	left: 8px;
 }
 
 .Event
 {
-	width: 8px;
-	height: 8px;
-	border-radius: 8px;
+	width: 12px;
+	height: 12px;
+	border-radius: 12px;
 	box-sizing: border-box;
 	background-color: #f09020;
 	float: right;

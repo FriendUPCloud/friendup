@@ -1052,16 +1052,19 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Activate all iframes
-	var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
-	for( var a = 0; a < fr.length; a++ )
+	if( div.windowObject.content )
 	{
-		if( fr[ a ].oldSandbox )
+		var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+		for( var a = 0; a < fr.length; a++ )
 		{
-			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
-		}
-		else
-		{
-			fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+			if( fr[ a ].oldSandbox )
+			{
+				fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+			}
+			else
+			{
+				fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+			}
 		}
 	}
 	
