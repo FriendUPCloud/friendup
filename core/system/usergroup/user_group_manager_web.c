@@ -45,7 +45,7 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString 
 		char tmpQuery[ 512 ];
 		char tmp[ 512 ];
 		int itmp = 0;
-		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu", groupID );
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu", groupID );
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 		if( result != NULL )
 		{
@@ -58,11 +58,11 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString 
 				
 				if( pos == 0 )
 				{
-					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
-					}
+					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
+				}
 				else
 				{
-					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
 				}
 				BufStringAddSize( retString, tmp, itmp );
 				pos++;
@@ -410,8 +410,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -534,7 +534,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -1196,7 +1196,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
 					void *result = sqlLib->Query(  sqlLib, tmpQuery );
 					if( result != NULL )
 					{
@@ -1209,11 +1209,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
 							}
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;
