@@ -1,27 +1,30 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
+#if !defined(LWS_PLAT_FREERTOS) && !defined(LWS_PLAT_OPTEE)
 static int
 interface_to_sa(struct lws_vhost *vh, const char *ifname,
 		struct sockaddr_in *addr, size_t addrlen, int allow_ipv6)
@@ -74,7 +77,7 @@ lws_get_addresses(struct lws_vhost *vh, void *ads, char *name,
 		memset(&ai, 0, sizeof ai);
 		ai.ai_family = PF_UNSPEC;
 		ai.ai_socktype = SOCK_STREAM;
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_PLAT_FREERTOS)
 		if (getnameinfo((struct sockaddr *)ads,
 				sizeof(struct sockaddr_in),
 				name, name_len, NULL, 0, 0))
@@ -108,41 +111,28 @@ lws_get_addresses(struct lws_vhost *vh, void *ads, char *name,
 	return 0;
 }
 
+const char *
+lws_get_peer_simple_fd(int fd, char *name, int namelen)
+{
+	lws_sockaddr46 sa46;
+	socklen_t len = sizeof(sa46);
 
-LWS_VISIBLE const char *
+	if (getpeername(fd, (struct sockaddr *)&sa46, &len) < 0) {
+		lws_snprintf(name, namelen, "getpeername: %s",
+				strerror(LWS_ERRNO));
+		return name;
+	}
+
+	lws_sa46_write_numeric_address(&sa46, name, namelen);
+
+	return name;
+}
+
+const char *
 lws_get_peer_simple(struct lws *wsi, char *name, int namelen)
 {
-	socklen_t len, olen;
-#ifdef LWS_WITH_IPV6
-	struct sockaddr_in6 sin6;
-#endif
-	struct sockaddr_in sin4;
-	int af = AF_INET;
-	void *p, *q;
-
 	wsi = lws_get_network_wsi(wsi);
-
-#ifdef LWS_WITH_IPV6
-	if (LWS_IPV6_ENABLED(wsi->vhost)) {
-		len = sizeof(sin6);
-		p = &sin6;
-		af = AF_INET6;
-		q = &sin6.sin6_addr;
-	} else
-#endif
-	{
-		len = sizeof(sin4);
-		p = &sin4;
-		q = &sin4.sin_addr;
-	}
-
-	olen = len;
-	if (getpeername(wsi->desc.sockfd, p, &len) < 0 || len > olen) {
-		lwsl_warn("getpeername: %s\n", strerror(LWS_ERRNO));
-		return NULL;
-	}
-
-	return lws_plat_inet_ntop(af, q, name, namelen);
+	return lws_get_peer_simple_fd(wsi->desc.sockfd, name, namelen);
 }
 #endif
 
@@ -156,14 +146,10 @@ lws_get_peer_addresses(struct lws *wsi, lws_sockfd_type fd, char *name,
 	struct sockaddr_in6 sin6;
 #endif
 	struct sockaddr_in sin4;
-	struct lws_context *context = wsi->context;
-	int ret = -1;
 	void *p;
 
 	rip[0] = '\0';
 	name[0] = '\0';
-
-	lws_latency_pre(context, wsi);
 
 #ifdef LWS_WITH_IPV6
 	if (LWS_IPV6_ENABLED(wsi->vhost)) {
@@ -181,10 +167,9 @@ lws_get_peer_addresses(struct lws *wsi, lws_sockfd_type fd, char *name,
 		goto bail;
 	}
 
-	ret = lws_get_addresses(wsi->vhost, p, name, name_len, rip, rip_len);
+	lws_get_addresses(wsi->vhost, p, name, name_len, rip, rip_len);
 
 bail:
-	lws_latency(context, wsi, "lws_get_peer_addresses", ret, 1);
 #endif
 	(void)wsi;
 	(void)fd;
@@ -219,7 +204,7 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 	socklen_t len = sizeof(struct sockaddr_storage);
 #endif
 	int n;
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
+#if !defined(LWS_PLAT_FREERTOS) && !defined(LWS_PLAT_OPTEE)
 	int m;
 #endif
 	struct sockaddr_storage sin;
@@ -248,7 +233,7 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 
 	} else
 #endif
-#if defined(LWS_WITH_IPV6) && !defined(LWS_WITH_ESP32)
+#if defined(LWS_WITH_IPV6) && !defined(LWS_PLAT_FREERTOS)
 	if (ipv6_allowed && LWS_IPV6_ENABLED(vhost)) {
 		v = (struct sockaddr *)&serv_addr6;
 		n = sizeof(struct sockaddr_in6);
@@ -280,7 +265,7 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 		serv_addr4.sin_addr.s_addr = INADDR_ANY;
 		serv_addr4.sin_family = AF_INET;
 
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
+#if !defined(LWS_PLAT_FREERTOS) && !defined(LWS_PLAT_OPTEE)
 		if (iface) {
 		    m = interface_to_sa(vhost, iface,
 				    (struct sockaddr_in *)v, n, 0);
@@ -378,6 +363,70 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 #endif
 
 	return port;
+}
+
+unsigned int
+lws_retry_get_delay_ms(struct lws_context *context,
+		       const lws_retry_bo_t *retry, uint16_t *ctry,
+		       char *conceal)
+{
+	uint64_t ms = 3000, pc = 30; /* sane-ish defaults if no retry table */
+	uint16_t ra;
+
+	if (conceal)
+		*conceal = 0;
+
+	if (retry) {
+		if (*ctry < retry->retry_ms_table_count)
+			ms = retry->retry_ms_table[*ctry];
+		else
+			ms = retry->retry_ms_table[
+				retry->retry_ms_table_count - 1];
+
+		/* if no percent given, use the default 30% */
+		if (retry->jitter_percent)
+			pc = retry->jitter_percent;
+	}
+
+	if (lws_get_random(context, &ra, sizeof(ra)) == sizeof(ra))
+		ms += ((ms * pc * ra) >> 16) / 100;
+	else
+		assert(0);
+
+	if (*ctry < 0xffff)
+		(*ctry)++;
+
+	if (retry && conceal)
+		*conceal = (int)*ctry <= retry->conceal_count;
+
+	return ms;
+}
+
+int
+lws_retry_sul_schedule(struct lws_context *context, int tid,
+		       lws_sorted_usec_list_t *sul,
+		       const lws_retry_bo_t *retry, sul_cb_t cb, uint16_t *ctry)
+{
+	char conceal;
+	uint64_t ms = lws_retry_get_delay_ms(context, retry, ctry, &conceal);
+
+	if (!conceal)
+		return 1;
+
+	lwsl_info("%s: sul %p: scheduling retry in %dms\n", __func__, sul,
+			(int)ms);
+
+	lws_sul_schedule(context, tid, sul, cb, ms * 1000);
+
+	return 0;
+}
+
+int
+lws_retry_sul_schedule_retry_wsi(struct lws *wsi, lws_sorted_usec_list_t *sul,
+				 sul_cb_t cb, uint16_t *ctry)
+{
+	return lws_retry_sul_schedule(wsi->context, wsi->tsi, sul,
+				      wsi->retry_policy, cb, ctry);
 }
 
 #if defined(LWS_WITH_IPV6)
@@ -481,5 +530,305 @@ lws_get_addr_scope(const char *ipaddr)
 }
 #endif
 
+/*
+ * https://en.wikipedia.org/wiki/IPv6_address
+ *
+ * An IPv6 address is represented as eight groups of four hexadecimal digits,
+ * each group representing 16 bits (two octets, a group sometimes also called a
+ * hextet[6][7]). The groups are separated by colons (:). An example of an IPv6
+ * address is:
+ *
+ *    2001:0db8:85a3:0000:0000:8a2e:0370:7334
+ *
+ * The hexadecimal digits are case-insensitive, but IETF recommendations suggest
+ * the use of lower case letters. The full representation of eight 4-digit
+ * groups may be simplified by several techniques, eliminating parts of the
+ * representation.
+ *
+ * Leading zeroes in a group may be omitted, but each group must retain at least
+ * one hexadecimal digit.[1] Thus, the example address may be written as:
+ *
+ *    2001:db8:85a3:0:0:8a2e:370:7334
+ *
+ * One or more consecutive groups containing zeros only may be replaced with a
+ * single empty group, using two consecutive colons (::).[1] The substitution
+ * may only be applied once in the address, however, because multiple
+ * occurrences would create an ambiguous representation. Thus, the example
+ * address can be further simplified:
+ *
+ *    2001:db8:85a3::8a2e:370:7334
+ *
+ * The localhost (loopback) address, 0:0:0:0:0:0:0:1, and the IPv6 unspecified
+ * address, 0:0:0:0:0:0:0:0, are reduced to ::1 and ::, respectively.
+ *
+ * During the transition of the Internet from IPv4 to IPv6, it is typical to
+ * operate in a mixed addressing environment. For such use cases, a special
+ * notation has been introduced, which expresses IPv4-mapped and IPv4-compatible
+ * IPv6 addresses by writing the least-significant 32 bits of an address in the
+ * familiar IPv4 dot-decimal notation, whereas the other 96 (most significant)
+ * bits are written in IPv6 format. For example, the IPv4-mapped IPv6 address
+ * ::ffff:c000:0280 is written as ::ffff:192.0.2.128, thus expressing clearly
+ * the original IPv4 address that was mapped to IPv6.
+ */
 
+int
+lws_parse_numeric_address(const char *ads, uint8_t *result, size_t max_len)
+{
+	struct lws_tokenize ts;
+	uint8_t *orig = result, temp[16];
+	int sects = 0, ipv6 = !!strchr(ads, ':'), skip_point = -1, dm = 0, n;
+	char t[5];
+	long u;
 
+	lws_tokenize_init(&ts, ads, LWS_TOKENIZE_F_NO_INTEGERS |
+				    LWS_TOKENIZE_F_MINUS_NONTERM);
+	ts.len = strlen(ads);
+	if (!ipv6 && ts.len < 7)
+		return -1;
+
+	if (ipv6 && ts.len < 2)
+		return -2;
+
+	if (!ipv6 && max_len < 4)
+		return -3;
+
+	if (ipv6 && max_len < 16)
+		return -4;
+
+	if (ipv6)
+		memset(result, 0, max_len);
+
+	do {
+		ts.e = lws_tokenize(&ts);
+		switch (ts.e) {
+		case LWS_TOKZE_TOKEN:
+			dm = 0;
+			if (ipv6) {
+				if (ts.token_len > 4)
+					return -1;
+				memcpy(t, ts.token, ts.token_len);
+				t[ts.token_len] = '\0';
+				for (n = 0; n < ts.token_len; n++)
+					if (t[n] < '0' || t[n] > 'f' ||
+					    (t[n] > '9' && t[n] < 'A') ||
+					    (t[n] > 'F' && t[n] < 'a'))
+						return -1;
+				u = strtol(t, NULL, 16);
+				if (u > 0xffff)
+					return -5;
+				*result++ = u >> 8;
+			} else {
+				if (ts.token_len > 3)
+					return -1;
+				memcpy(t, ts.token, ts.token_len);
+				t[ts.token_len] = '\0';
+				for (n = 0; n < ts.token_len; n++)
+					if (t[n] < '0' || t[n] > '9')
+						return -1;
+				u = strtol(t, NULL, 10);
+				if (u > 0xff)
+					return -6;
+			}
+			if (u < 0)
+				return -7;
+			*result++ = (uint8_t)u;
+			sects++;
+			break;
+
+		case LWS_TOKZE_DELIMITER:
+			if (dm++) {
+				if (dm > 2)
+					return -8;
+				if (*ts.token != ':')
+					return -9;
+				/* back to back : */
+				*result++ = 0;
+				*result++ = 0;
+				skip_point = result - orig;
+				break;
+			}
+			if (ipv6 && orig[2] == 0xff && orig[3] == 0xff &&
+			    skip_point == 2) {
+				/* ipv4 backwards compatible format */
+				ipv6 = 0;
+				memset(orig, 0, max_len);
+				orig[10] = 0xff;
+				orig[11] = 0xff;
+				skip_point = -1;
+				result = &orig[12];
+				sects = 0;
+				break;
+			}
+			if (ipv6 && *ts.token != ':')
+				return -10;
+			if (!ipv6 && *ts.token != '.')
+				return -11;
+			break;
+
+		case LWS_TOKZE_ENDED:
+			if (!ipv6 && sects == 4)
+				return result - orig;
+			if (ipv6 && sects == 8)
+				return result - orig;
+			if (skip_point != -1) {
+				int ow = result - orig;
+				/*
+				 * contains ...::...
+				 */
+				if (ow == 16)
+					return 16;
+				memcpy(temp, &orig[skip_point], ow - skip_point);
+				memset(&orig[skip_point], 0, 16 - skip_point);
+				memcpy(&orig[16 - (ow - skip_point)], temp,
+						   ow - skip_point);
+
+				return 16;
+			}
+			return -12;
+
+		default: /* includes ENDED */
+			lwsl_err("%s: malformed ip address\n",
+				 __func__);
+
+			return -13;
+		}
+	} while (ts.e > 0 && result - orig <= (int)max_len);
+
+	lwsl_err("%s: ended on e %d\n", __func__, ts.e);
+
+	return -14;
+}
+
+int
+lws_sa46_parse_numeric_address(const char *ads, lws_sockaddr46 *sa46)
+{
+	uint8_t a[16];
+	int n;
+
+	n = lws_parse_numeric_address(ads, a, sizeof(a));
+	if (n < 0)
+		return -1;
+
+#if defined(LWS_WITH_IPV6)
+	if (n == 16) {
+		sa46->sa6.sin6_family = AF_INET6;
+		memcpy(sa46->sa6.sin6_addr.s6_addr, a,
+		       sizeof(sa46->sa6.sin6_addr.s6_addr));
+
+		return 0;
+	}
+#endif
+
+	if (n != 4)
+		return -1;
+
+	sa46->sa4.sin_family = AF_INET;
+	memcpy(&sa46->sa4.sin_addr.s_addr, a,
+	       sizeof(sa46->sa4.sin_addr.s_addr));
+
+	return 0;
+}
+
+int
+lws_write_numeric_address(const uint8_t *ads, int size, char *buf, int len)
+{
+	char c, elided = 0, soe = 0, zb = -1, n, ipv4 = 0;
+	const char *e = buf + len;
+	char *obuf = buf;
+	int q = 0;
+
+	if (size == 4)
+		return lws_snprintf(buf, len, "%u.%u.%u.%u",
+				    ads[0], ads[1], ads[2], ads[3]);
+
+	if (size != 16)
+		return -1;
+
+	for (c = 0; c < size / 2; c++) {
+		uint16_t v = (ads[q] << 8) | ads[q + 1];
+
+		if (buf + 8 > e)
+			return -1;
+
+		q += 2;
+		if (soe) {
+			if (v)
+				*buf++ = ':';
+				/* fall thru to print hex value */
+		} else
+			if (!elided && !soe && !v) {
+				elided = soe = 1;
+				zb = c;
+				continue;
+			}
+
+		if (ipv4) {
+			n = lws_snprintf(buf, e - buf, "%u.%u",
+					ads[q - 2], ads[q - 1]);
+			buf += n;
+			if (c == 6)
+				*buf++ = '.';
+		} else {
+			if (soe && !v)
+				continue;
+			if (c)
+				*buf++ = ':';
+
+			buf += lws_snprintf(buf, e - buf, "%x", v);
+
+			if (soe && v) {
+				soe = 0;
+				if (c == 5 && v == 0xffff && !zb) {
+					ipv4 = 1;
+					*buf++ = ':';
+				}
+			}
+		}
+	}
+	if (buf + 3 > e)
+		return -1;
+
+	if (soe) { /* as is the case for all zeros */
+		*buf++ = ':';
+		*buf++ = ':';
+		*buf = '\0';
+	}
+
+	return buf - obuf;
+}
+
+int
+lws_sa46_write_numeric_address(lws_sockaddr46 *sa46, char *buf, int len)
+{
+	*buf = '\0';
+#if defined(LWS_WITH_IPV6)
+	if (sa46->sa4.sin_family == AF_INET6)
+		return lws_write_numeric_address(
+				(uint8_t *)&sa46->sa6.sin6_addr, 16, buf, len);
+#endif
+	if (sa46->sa4.sin_family == AF_INET)
+		return lws_write_numeric_address(
+				(uint8_t *)&sa46->sa4.sin_addr, 4, buf, len);
+
+	return -1;
+}
+
+int
+lws_sa46_compare_ads(const lws_sockaddr46 *sa46a, const lws_sockaddr46 *sa46b)
+{
+	if (sa46a->sa4.sin_family != sa46b->sa4.sin_family)
+		return 1;
+
+#if defined(LWS_WITH_IPV6)
+	if (sa46a->sa4.sin_family == AF_INET6)
+		return memcmp(&sa46a->sa6.sin6_addr, &sa46b->sa6.sin6_addr, 16);
+#endif
+
+	return sa46a->sa4.sin_addr.s_addr != sa46b->sa4.sin_addr.s_addr;
+}
+
+lws_state_manager_t *
+lws_system_get_state_manager(struct lws_context *context)
+{
+	return &context->mgr_system;
+}

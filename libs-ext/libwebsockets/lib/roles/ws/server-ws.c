@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include <core/private.h>
+#include <private-lib-core.h>
 
 #define LWS_CPYAPP(ptr, str) { strcpy(ptr, str); ptr += strlen(str); }
 
@@ -365,8 +368,8 @@ lws_process_ws_upgrade2(struct lws *wsi)
 
 #if defined(LWS_WITH_ACCESS_LOG)
 	{
-		char *uptr = NULL, combo[128];
-		int l, meth = lws_http_get_uri_and_method(wsi, &uptr, &l);
+		char *uptr = "unknown method", combo[128];
+		int l = 14, meth = lws_http_get_uri_and_method(wsi, &uptr, &l);
 
 		if (wsi->h2_stream_carries_ws)
 			wsi->http.request_version = HTTP_VERSION_2;
@@ -422,7 +425,7 @@ lws_process_ws_upgrade(struct lws *wsi)
 			e = lws_tokenize(&ts);
 			switch (e) {
 			case LWS_TOKZE_TOKEN:
-				if (!strcasecmp(ts.token, "upgrade"))
+				if (!strncasecmp(ts.token, "upgrade", ts.token_len))
 					e = LWS_TOKZE_ENDED;
 				break;
 
@@ -783,13 +786,12 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 	n = lws_ext_cb_active(wsi, LWS_EXT_CB_PAYLOAD_RX, &pmdrx, 0);
 	lwsl_info("%s: ext says %d / ebuf_out.len %d\n", __func__,  n,
 			pmdrx.eb_out.len);
-#endif
+
 	/*
 	 * ebuf may be pointing somewhere completely different now,
 	 * it's the output
 	 */
 
-#if !defined(LWS_WITHOUT_EXTENSIONS)
 	if (n < 0) {
 		/*
 		 * we may rely on this to get RX, just drop connection
@@ -799,9 +801,7 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 
 		return -1;
 	}
-#endif
 
-#if !defined(LWS_WITHOUT_EXTENSIONS)
 	/*
 	 * if we had an rx fragment right at the last compressed byte of the
 	 * message, we can get a zero length inflated output, where no prior
@@ -829,12 +829,14 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 
 		return avail;
 	}
-#endif
 
-	if (!pmdrx.eb_out.len)
+	/*
+	 * If doing permessage-deflate, above was the only way to get a zero
+	 * length receive.  Otherwise we're more willing.
+	 */
+	if (wsi->ws->count_act_ext && !pmdrx.eb_out.len)
 		return avail;
 
-#if !defined(LWS_WITHOUT_EXTENSIONS)
 	if (n == PMDR_HAS_PENDING)
 		/* extension had more... main loop will come back */
 		lws_add_wsi_to_draining_ext_list(wsi);
@@ -842,7 +844,8 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 		lws_remove_wsi_from_draining_ext_list(wsi);
 #endif
 
-	if (wsi->ws->check_utf8 && !wsi->ws->defeat_check_utf8) {
+	if (pmdrx.eb_out.len &&
+	    wsi->ws->check_utf8 && !wsi->ws->defeat_check_utf8) {
 		if (lws_check_utf8(&wsi->ws->utf8,
 				   pmdrx.eb_out.token,
 				   pmdrx.eb_out.len)) {

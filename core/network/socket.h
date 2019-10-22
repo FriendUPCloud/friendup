@@ -26,7 +26,7 @@
 #include <netinet/in.h>
 #include <sys/select.h>
 #endif
-#include <libwebsockets.h>
+//#include <libwebsockets.h>
 #ifdef USE_SELECT
 
 #else
@@ -45,7 +45,7 @@
 #include "util/list.h"
 #include "util/string.h"
 #include "util/buffered_string.h"
-#include "websocket.h"
+//#include "websocket.h"
 
 #define SOCKET_CLOSED_STATE -2
 

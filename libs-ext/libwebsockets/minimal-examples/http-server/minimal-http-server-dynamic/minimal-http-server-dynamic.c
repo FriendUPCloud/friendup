@@ -52,6 +52,9 @@ callback_dynamic_http(struct lws *wsi, enum lws_callback_reasons reason,
 		/* in contains the url part after our mountpoint /dyn, if any */
 		lws_snprintf(pss->path, sizeof(pss->path), "%s", (const char *)in);
 
+		lws_get_peer_simple(wsi, (char *)buf, sizeof(buf));
+		lwsl_notice("%s: HTTP: connection %s\n", __func__, (const char *)buf);
+
 		/*
 		 * prepare and write http headers... with regards to content-
 		 * length, there are three approaches:
@@ -291,7 +294,7 @@ int main(int argc, const char **argv)
 	}
 
 	while (n >= 0 && !interrupted)
-		n = lws_service(context, 1000);
+		n = lws_service(context, 0);
 
 bail:
 	lws_context_destroy(context);

@@ -9428,7 +9428,8 @@ Workspace.receivePush = function( jsonMsg )
 	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
-	if( msg == false ) return "nomsg";
+	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
+	if( msg == false || msg == 1 ) return "nomsg";
 	try
 	{
 		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
@@ -9436,15 +9437,10 @@ Workspace.receivePush = function( jsonMsg )
 	}
 	catch( e )
 	{
-		//mobileDebug('OH OH. ERROR' + e, true);
 		// Do nothing for now...
-		//Notify( { title: 'Corrupt message', text: 'The push notification was unreadable.' } );
 	}
 	if( !msg ) return "nomsg";
 		
-	/*mobileDebug( 'We received a message.' );
-	mobileDebug( JSON.stringify( msg ) );*/
-	
 	// Clear the notifications now... (race cond?)
 	if( window.friendApp )
 		friendApp.clear_notifications();
@@ -9452,7 +9448,7 @@ Workspace.receivePush = function( jsonMsg )
 	var messageRead = trash = false;
 	
 	// Display message
-	if( !msg.clicked )
+	if( !msg.clicked && ( msg.title||msg.text ) )
 	{
 		// Revert to push notifications on the OS side
 		Notify( { title: msg.title, text: msg.text }, null, handleClick );

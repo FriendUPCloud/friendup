@@ -30,6 +30,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <system/systembase.h>
+#include <linux/limits.h>
 
 /**
  * Opens a library
