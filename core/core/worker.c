@@ -166,6 +166,7 @@ void WorkerThread( void *w )
 
 		if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 		{
+			DEBUG("W_STATE_WAITING\n");
 			wrk->w_State = W_STATE_WAITING;
 			FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );
 		}
@@ -188,6 +189,7 @@ void WorkerThread( void *w )
 					wrk->w_Data = NULL;
 					wrk->w_Function = NULL;
 					
+ 					DEBUG("W_STATE_COMMAND_CALLED\n");
 					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
 				}
 			}
@@ -196,6 +198,7 @@ void WorkerThread( void *w )
 				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 				{
 					wrk->w_State = W_STATE_COMMAND_CALLED;
+					DEBUG("W_STATE_COMMAND_CALLED\n");
 					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
 				}
 			}

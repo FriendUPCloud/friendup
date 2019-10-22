@@ -121,7 +121,7 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 				FRIEND_MUTEX_UNLOCK( &(w->w_Mut) );
 			}
 			int wait = 0;
-			
+			/*
 			while( TRUE )
 			{
 				if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
@@ -131,6 +131,7 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 				DEBUG("[WorkerRunCommand] --------waiting for running state: %d, wait: %d\n", w->w_State, wait++ );
 				usleep( 100 );
 			}
+			*/
 		}
 		else
 		{
