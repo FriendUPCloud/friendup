@@ -129,7 +129,7 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 					break;
 				}
 				DEBUG("[WorkerRunCommand] --------waiting for running state: %d, wait: %d\n", w->w_State, wait++ );
-				usleep( 10 );
+				usleep( 100 );
 			}
 		}
 		else
@@ -226,10 +226,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			if( w1->w_State == W_STATE_WAITING )
 			{
 				wrk = wm->wm_Workers[ wm->wm_LastWorker ];
-			
-				// Register worker index..
-				//struct SocketThreadData *td = ( struct SocketThreadData *)d;
-				//td->workerIndex = wm->wm_LastWorker;
 			}
 		}
 	
