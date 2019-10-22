@@ -193,7 +193,11 @@ void WorkerThread( void *w )
 			}
 			else
 			{
-				//FERROR("Function is not set\n");
+				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
+				{
+					wrk->w_State = W_STATE_COMMAND_CALLED;
+					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
+				}
 			}
 		}
 		else
