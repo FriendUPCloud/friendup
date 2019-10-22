@@ -190,9 +190,13 @@ Sections.accounts_users = function( cmd, extra )
 								var value = apps[ a ][ keyz[ k ] ];
 							}
 							if( keyz[ k ] == 'Name' )
+							{
 								value = '<strong>' + apps[ a ][ keyz[ k ] ] + '</strong>';
-							if( keyz[ k ] == 'Category' )
+							}
+							if( keyz[ k ] == 'Category' && typeof apps[ a ].Config.Category !== 'undefined' )
+							{
 								value = apps[ a ].Config.Category;
+							}
 							if( keyz[ k ] == 'Dock' )
 							{
 								value = '<button class="IconButton IconSmall ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
