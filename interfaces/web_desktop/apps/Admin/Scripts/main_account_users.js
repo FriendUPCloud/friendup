@@ -1171,11 +1171,11 @@ Sections.user_disk_remove = function( devname, did, userid )
 
 // TODO: Evaluate Disk Editing Design and check what features are missing / removed based on the old app "DiskCatalog" EncryptionKey, Network Visibility, Show on Desktop, JSX Executable, Disk Cover is not included in the new design ...
 
-Sections.user_disk_update = function( userid, did = 0, name = '' )
+Sections.user_disk_update = function( user, did = 0, name = '', userid )
 {
 	//console.log( { name: name, did: did } );
 	
-	if( userid )
+	if( user && userid )
 	{
 		var n = new Module( 'system' );
 		n.onExecuted = function( ee, dat )
@@ -1198,7 +1198,7 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 			{
 				console.log( 'user_disk_update ', { e:e, d:d } );
 				
-				var storage = { id : '', name : '', type : '', size : 512, user : userid };
+				var storage = { id : '', name : '', type : '', size : 512, user : user };
 			
 				var units = [ 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB' ];
 		
@@ -1376,7 +1376,7 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 					if( storage.id )
 					{
 						str += '<button class="IconSmall Danger FloatRight MarginLeft" onclick="Sections.user_disk_remove(\'' + storage.name + '\',' + storage.id + ',' + storage.user + ')">Remove disk</button>';
-						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + userid + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
+						str += '<button class="IconSmall FloatLeft MarginRight" onclick="Sections.user_disk_mount(\'' + storage.name + '\',' + storage.user + ',this)">' + ( storage.mont > 0 ? 'Unmount disk' : 'Mount disk' ) + '</button>';
 					}
 					
 					str += '</div>';
@@ -1393,13 +1393,13 @@ Sections.user_disk_update = function( userid, did = 0, name = '' )
 			// TODO: Update userid to be selected user ...
 		
 			m.execute( 'filesystem', {
-				userid: userid,
+				userid: user,
 				devname: name, 
 				authid: Application.authId
 			} );
 			
 		}
-		n.execute( 'types', { mode: 'all', userid: userid, authid: Application.authId } );
+		n.execute( 'types', { mode: 'all', userid: user, authid: Application.authId } );
 	}
 };
 
@@ -1515,7 +1515,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 			console.log( storage );
 			
 			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
-			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + userid + ',' + storage.id + ',\'' + storage.name + '\')">';
+			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
 			mlst += '<div class="Col1 FloatLeft" id="Storage_' + storage.id + '">';
 			mlst += '<div class="disk"><div class="label" style="background-image: url(\'' + storage.icon + '\')"></div></div>';
 			//mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
