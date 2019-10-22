@@ -406,6 +406,8 @@ i18n_read_only_fs_desc                  : Filsystemet du prøver å skrive til e
 i18n_overwriting_file                   : Overskriver eksisterende fil
 i18n_do_you_want_overwrite              : Ønsker du virkelig å overskrive den eksisterende filen?
 i18n_overwrite                          : Overskriv filen
+i18n_no_path                            : Ingen sti valgt
+i18n_please_choose_a_path               : Vennligst velg en sti.
 
 #File operations ---------------------------------------------------------------
 

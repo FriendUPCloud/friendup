@@ -3765,6 +3765,7 @@ function apiWrapper( event, force )
 							suffix:             msg.suffix,
 							multiSelect:        msg.multiSelect,
 							keyboardNavigation: msg.keyboardNavigation,
+							rememberPath:       msg.rememberPath,
 							triggerFunction: function( data )
 							{
 								var nmsg = msg;
