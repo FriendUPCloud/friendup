@@ -223,9 +223,15 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		{
 			int lw = wm->wm_LastWorker;
 			Worker *w1 = wm->wm_Workers[ lw ];
-			if( w1->w_State == W_STATE_WAITING )
+			
+			if( FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) ) == 0 )
 			{
-				wrk = wm->wm_Workers[ wm->wm_LastWorker ];
+				if( w1->w_State == W_STATE_WAITING )
+				{
+					wrk = wm->wm_Workers[ wm->wm_LastWorker ];
+					wrk->w_State = W_STATE_LOCKED;
+				}
+				FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) );
 			}
 		}
 	
