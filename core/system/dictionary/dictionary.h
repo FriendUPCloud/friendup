@@ -66,8 +66,7 @@ typedef struct Dictionary
 enum {
 	DICT_CATEGORY_GLOBAL = 0,
 	DICT_CATEGORY_USER_STATUS
-}
-
+};
 
 static FULONG DictionaryDesc[] = { SQLT_TABNAME, (FULONG)"FDictionary", SQLT_STRUCTSIZE, sizeof( struct DictEntry ),
 	SQLT_IDINT, (FULONG)"ID", offsetof( DictEntry, de_ID ),
