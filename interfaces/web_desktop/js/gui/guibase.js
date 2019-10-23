@@ -3745,7 +3745,7 @@ function contextMenu( e )
 	return cancelBubble( e );
 }
 
-function FixWindowDimensions ( mw )
+function FixWindowDimensions( mw )
 {
 	SetWindowFlag( mw, 'min-height', mw.parentNode.offsetHeight );
 	SetWindowFlag( mw, 'max-height', mw.parentNode.offsetHeight );

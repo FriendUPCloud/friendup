@@ -2851,7 +2851,8 @@ var View = function( args )
 		minimize.onmousedown = function ( e ) { return cancelBubble ( e ); }
 		minimize.ondragstart = function ( e ) { return cancelBubble ( e ); }
 		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
-		minimize.onclick = function ( e )
+		
+		div.doMinimize = function ( e )
 		{
 			if( !window.isTablet && e && e.button != 0 ) return;
 			if( div.minimized ) return;
@@ -2993,6 +2994,7 @@ var View = function( args )
 				}
 			}
 		}
+		minimize.onclick = div.doMinimize;
 
 		// Mobile has extra close button
 		var mclose = false;
@@ -4699,8 +4701,8 @@ var View = function( args )
 					{
 						if( !viewdiv.getAttribute( 'minimized' ) && viewdiv.minimize != 'undefined' )
 						{
-							if( viewdiv.minimize )
-								viewdiv.minimize.onclick();
+							if( viewdiv.doMinimize )
+								viewdiv.doMinimize();
 						}
 					}
 					else if( value == 'false' || value == false )
