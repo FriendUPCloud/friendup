@@ -677,6 +677,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 					{
+						FBOOL gotFromDB = FALSE;
 						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu where ID=%lu", status, id );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
@@ -685,6 +686,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( usr != NULL )
 						{
 							usr->u_Status = status;
+						}
+						else
+						{
+							usr = UMGetUserByIDDB( l->sl_UM, id );
+							gotFromDB = TRUE;
 						}
 						
 						if( status == USER_STATUS_ENABLED )
@@ -703,9 +709,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						{
 							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"status\":\"%lu\"}", id, status );
+							if( status == USER_STATUS_DISABLED )
+							{
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\",\"true\"}", id, usr->u_UUID );
+							}
+							else
+							{
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\"}", id, usr->u_UUID );
+							}
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "user", "update", msg );
+						}
+						
+						if( gotFromDB == TRUE )
+						{
+							UserDelete( usr );
 						}
 						
 						FFree( tmpQuery );
@@ -1059,6 +1077,20 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					if( status >= 0 )
 					{
 						logusr->u_Status = status;
+						
+						{
+							char msg[ 512 ];
+							if( status == USER_STATUS_DISABLED )
+							{
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\",\"true\"}", id, logusr->u_UUID );
+							}
+							else
+							{
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\"}", id, logusr->u_UUID );
+							}
+							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "user", "update", msg );
+						}
 					}
 					UMUserUpdateDB( l->sl_UM, logusr );
 					
@@ -1120,8 +1152,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updategroups" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		

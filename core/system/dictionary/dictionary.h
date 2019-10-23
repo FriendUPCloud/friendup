@@ -60,14 +60,13 @@ typedef struct Dictionary
 }Dictionary;
 
 //
-// Category numbers
+// Dictionary category
 //
-
-enum Category{
-	APP_PERM =0,
-	APP_CATEGORY = 1,
-	ERROR_STRING =2
-};
+	
+enum {
+	DICT_CATEGORY_GLOBAL = 0,
+	DICT_CATEGORY_USER_STATUS
+}
 
 
 static FULONG DictionaryDesc[] = { SQLT_TABNAME, (FULONG)"FDictionary", SQLT_STRUCTSIZE, sizeof( struct DictEntry ),
@@ -78,7 +77,7 @@ static FULONG DictionaryDesc[] = { SQLT_TABNAME, (FULONG)"FDictionary", SQLT_STR
 	SQLT_STR, (FULONG)"Language", offsetof( DictEntry, de_Lang ),
 	SQLT_NODE, (FULONG)"node", offsetof( struct DictEntry, node ),
 	SQLT_END };
-
+	
 //
 // Dictionary
 //
@@ -245,6 +244,14 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'User Group already exist', 'ENG', '68');
 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Bad chars used', 'ENG', '69');
+*/
+
+// User status
+
+/*
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '1', 'Active', 'ENG', '0');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '1', 'Disabled', 'ENG', '1');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '1', 'Blocked', 'ENG', '2');
 */
 
 // Load dictionary from DB

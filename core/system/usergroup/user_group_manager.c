@@ -904,11 +904,11 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 		
 		if( type == NULL )
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID WHERE u.Status=0 order by utg.UserGroupID" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID,u.Status FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
 		}
 		else
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' AND u.Status=0 order by utg.UserGroupID", type );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID,u.Status FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
@@ -942,13 +942,28 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 					usrpos = 0;
 				}
 				
-				if( usrpos == 0 )
+				// User Status == DISABLED
+				if( strcmp( (char *)row[ 6 ], "1" ) )
 				{
-					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 5 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 5 ] );
+					}
 				}
 				else
 				{
-					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					}
 				}
 				BufStringAddSize( bs, tmp, itmp );
 				usrpos++;

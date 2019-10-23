@@ -56,13 +56,28 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString 
 				char *end;
 				FULONG userid = strtol( (char *)row[0], &end, 0 );
 				
-				if( pos == 0 )
+				// if Status == disabled
+				if( strcmp( (char *)row[ 2 ], "1" ) == 0 )
 				{
-					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
+					if( pos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
+					}
 				}
 				else
 				{
-					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
+					if( pos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+					}
 				}
 				BufStringAddSize( retString, tmp, itmp );
 				pos++;
