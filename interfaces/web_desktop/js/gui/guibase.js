@@ -3478,6 +3478,9 @@ movableMouseDown = function ( e )
 	
 	window.focus();
 	
+	// Close tray bubble
+	CloseTrayBubble();
+	
 	// Menu trigger
 	var rc = 0;
 	if ( e.which ) rc = ( e.which == 3 );
