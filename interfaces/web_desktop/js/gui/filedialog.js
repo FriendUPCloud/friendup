@@ -12,7 +12,7 @@ var _dialogStorage = {};
 
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
-{
+{	
 	var self = this;
 	var mainview = false;
 	var suffix = false;
@@ -103,6 +103,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	dialog.suffix = suffix;
 	if( !filename ) filename = '';
 
+	// Grab title for later.....................................................
 	var ftitle = '';
 	
 	switch ( type )
@@ -117,7 +118,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	if( title ) ftitle = title;
 
-	// Generate dialog ID
+	// Generate dialog ID.......................................................
 	var ds = null; // <- main container for session based storage
 	if( mainview )
 	{
@@ -160,7 +161,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	// Do the remembering
 	if( rememberPath && ds && ds.path )
 	{
-		console.log( 'Remembered path: ' + ds.path );
 		this.path = path = ds.path;
 	}
 
@@ -626,7 +626,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			inpu.value = dialog.path;
 		}
-	
+		
 		if( dialog.path == 'Mountlist:' )
 		{
 			// Correct fileinfo
