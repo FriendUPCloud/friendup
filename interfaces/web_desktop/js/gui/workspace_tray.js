@@ -23,19 +23,22 @@ function CloseTrayBubble( ev )
 	{
 		return;
 	}
-	if( tray.notifications.timeout )
+	if( tray.notifications )
 	{
-		clearTimeout( tray.notifications.timeout );
-	}
-	tray.notifications.timeout = setTimeout( function()
-	{
-		if( tray.notifications.removeChild && tray.notificationPopup && tray.notificationPopup.parentNode )
+		if( tray.notifications.timeout )
 		{
-			tray.notifications.removeChild( tray.notificationPopup );
-			tray.notificationPopup = null;
-			tray.notifications.timeout = null;
+			clearTimeout( tray.notifications.timeout );
 		}
-	}, 250 );
+		tray.notifications.timeout = setTimeout( function()
+		{
+			if( tray.notifications.removeChild && tray.notificationPopup && tray.notificationPopup.parentNode )
+			{
+				tray.notifications.removeChild( tray.notificationPopup );
+				tray.notificationPopup = null;
+				tray.notifications.timeout = null;
+			}
+		}, 250 );
+	}
 	PollTray();
 }
 
