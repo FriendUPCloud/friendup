@@ -342,7 +342,43 @@ function Expand( _this, level, on )
 	}
 }
 
-
+function CustomDateTime( unix )
+{
+	if( !unix ) return 0;
+	
+	var curr = jsdate( 'Y-M-j-H-i' ).split( '-' );
+	var date = jsdate( 'Y-M-j-H-i', str_pad( unix, 13, 'STR_PAD_RIGHT' ) ).split( '-' );
+	
+	console.log( date );
+	
+	// TODO: Add i18n translation ...
+	
+	if( curr && date )
+	{
+		// Year
+		
+		if( date[0] != curr[0] )
+		{
+			return ( date[1]+' '+date[0] );
+		}
+		
+		// Month || Day
+		
+		if( date[1] != curr[1] || date[2] != curr[2] )
+		{
+			return ( date[2]+' '+date[1] );
+		}
+		
+		// Day
+		
+		if( date[2] == curr[2] )
+		{
+			return ( date[3]+':'+date[4] );
+		}
+	}
+	
+	return 0;
+}
 
 function FieldToInput( key, data )
 {

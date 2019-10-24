@@ -658,9 +658,9 @@ Sections.accounts_users = function( cmd, extra )
 		var types = {
 			Edit: '10',
 			FullName: '30',
-			Name: '20',
+			Name: '25',
 			Status: '15',
-			LoginTime: 25
+			LoginTime: 20
 		};
 
 		// List by level
@@ -792,7 +792,8 @@ Sections.accounts_users = function( cmd, extra )
 					else if( z == 'LoginTime' )
 					{
 						//console.log( userList[a][ z ] );
-						d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? jsdate( /*'H:i j M Y'*/'H:i d/m/Y', str_pad( userList[a][ z ], 13, 'STR_PAD_RIGHT' ) ) : login[ 0 ] );
+						//d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? jsdate( 'H:i d/m/Y', str_pad( userList[a][ z ], 13, 'STR_PAD_RIGHT' ) ) : login[ 0 ] );
+						d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? CustomDateTime( userList[a][ z ] ) : login[ 0 ] );
 					}
 					else
 					{
