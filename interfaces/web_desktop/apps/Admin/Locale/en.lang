@@ -102,6 +102,8 @@ i18n_find_users                        : Find users...
 i18n_header_FullName                   : Name
 i18n_header_Name                       : Username
 i18n_header_Level                      : Level
+i18n_header_Status                     : Status
+i18n_header_LoginTime                  : Last Login
 
 i18n_user_updated                      : User updated
 i18n_user_updated_succ                 : The user was successfully updated.

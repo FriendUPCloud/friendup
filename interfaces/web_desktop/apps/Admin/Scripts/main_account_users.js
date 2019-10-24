@@ -616,12 +616,15 @@ Sections.accounts_users = function( cmd, extra )
 			}
 			
 			tr.innerHTML = '\
-				<div class="HContent50 FloatLeft">\
+				<div class="HContent20 FloatLeft">\
 					<h2>' + i18n( 'i18n_users' ) + '</h2>\
 				</div>\
-				<div class="HContent50 FloatLeft Relative">\
+				<div class="HContent70 FloatLeft Relative">\
 					' + extr + '\
 					<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+				</div>\
+				<div class="HContent10 FloatLeft TextRight">\
+					<button class="IconButton IconSmall fa-plus"></button>\
 				</div>\
 			';
 					
@@ -655,13 +658,18 @@ Sections.accounts_users = function( cmd, extra )
 		var types = {
 			Edit: '10',
 			FullName: '30',
-			Name: '25',
-			Level: '25'
+			Name: '20',
+			Status: '15',
+			LoginTime: 25
 		};
 
 		// List by level
 		var levels = [ 'Admin', 'User', 'Guest', 'API' ];
-
+		
+		var status = [ 'Active', 'Disabled', 'Locked' ];
+		
+		var login = [ 'Never' ];
+		
 		// List headers
 		var header = document.createElement( 'div' );
 		header.className = 'List';
@@ -689,7 +697,7 @@ Sections.accounts_users = function( cmd, extra )
 		b.className = 'IconButton IconSmall fa-plus Negative';
 		b.innerHTML = '&nbsp;';
 		l.appendChild( b );		
-		headRow.appendChild( l );
+		//headRow.appendChild( l );
 		b.onclick = function( e )
 		{
 			var d = new File( 'Progdir:Templates/account_users_details.html' );
@@ -737,7 +745,7 @@ Sections.accounts_users = function( cmd, extra )
 				Sections.accounts_users( 'edit', uid );
 			}
 		}
-
+		
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		var sw = 2;
@@ -751,11 +759,17 @@ Sections.accounts_users = function( cmd, extra )
 				sw = sw == 2 ? 1 : 2;
 				var r = document.createElement( 'div' );
 				setROnclick( r, userList[ a ].ID );
-				r.className = 'HRow sw' + sw;
-
-				var icon = '<span class="IconSmall fa-user"></span>';
+				r.className = 'HRow sw' + sw + ' ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
+				
+				//var icon = '<span class="IconSmall fa-user"></span>';
+				var icon = '<span id="UserAvatar_' + userList[ a ].ID + '" class="IconSmall fa-user-circle-o"></span>';
+				
 				userList[ a ][ 'Edit' ] = icon;
-
+				
+				
+				
+				//userList[ a ][ 'LoginTime' ] = 1558429477;
+				
 				for( var z in types )
 				{
 					var borders = '';
@@ -767,20 +781,74 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					else d.className = 'TextCenter';
 					if( a < userList.length - a )
+					{
 						borders += ' BorderBottom';
+					}
 					d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
-					d.innerHTML = userList[a][ z ];
+					if( z == 'Status' )
+					{
+						d.innerHTML = status[ ( userList[a][ z ] ? userList[a][ z ] : 0 ) ];
+					}
+					else if( z == 'LoginTime' )
+					{
+						//console.log( userList[a][ z ] );
+						d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? jsdate( /*'H:i j M Y'*/'H:i d/m/Y', str_pad( userList[a][ z ], 13, 'STR_PAD_RIGHT' ) ) : login[ 0 ] );
+					}
+					else
+					{
+						d.innerHTML = userList[a][ z ];
+					}
 					r.appendChild( d );
 				}
 
 				// Add row
 				list.appendChild( r );
+				
+				// Set Avatar on delay basis because of having to do one by one user ...
+				setAvatar( userList[ a ].ID, function( res, userid, dat )
+				{
+					if( res )
+					{
+						if( ge( 'UserAvatar_' + userid ) )
+						{
+							ge( 'UserAvatar_' + userid ).style.backgroundImage = "url('"+dat+"')";
+							ge( 'UserAvatar_' + userid ).style.backgroundPosition = 'center';
+							ge( 'UserAvatar_' + userid ).style.backgroundSize = 'contain';
+							ge( 'UserAvatar_' + userid ).style.backgroundRepeat = 'no-repeat';
+							ge( 'UserAvatar_' + userid ).style.color = 'transparent';
+						}
+					}
+					
+				} );
 			}
 		}
 		o.appendChild( list );
 
 		Friend.responsive.pageActive = ge( 'UserList' );
 		Friend.responsive.reinit();
+	}
+	
+	function setAvatar( userid, callback )
+	{
+		if( userid )
+		{
+			var u = new Module( 'system' );
+			u.onExecuted = function( e, d )
+			{
+				var out = null;
+				try
+				{
+					out = JSON.parse( d );
+				}
+				catch( e ) {  }
+				//console.log( 'getsetting ', { e:e, d:out } );
+				if( callback )
+				{
+					callback( ( out ? true : false ), userid, ( out && out.avatar ? out.avatar : false ) );
+				}
+			}
+			u.execute( 'getsetting', { setting: 'avatar', userid: userid, authid: Application.authId } );
+		}
 	}
 	
 	function filterUsers( filter )

@@ -118,8 +118,12 @@ else
 
 
 if( $users = $SqlDatabase->FetchObjects( '
-	SELECT u.*, g.Name AS `Level` FROM 
-		`FUser` u, `FUserGroup` g, `FUserToGroup` ug 
+	SELECT 
+		u.*, g.Name AS `Level`, ( SELECT l.LoginTime FROM `FUserLogin` l WHERE l.UserID = u.ID AND l.Information = "Login success" ORDER BY l.ID DESC LIMIT 1 ) AS `LoginTime` 
+	FROM 
+		`FUser` u, 
+		`FUserGroup` g, 
+		`FUserToGroup` ug 
 	WHERE 
 		    u.ID = ug.UserID 
 		AND g.ID = ug.UserGroupID 
@@ -154,7 +158,7 @@ if( $users = $SqlDatabase->FetchObjects( '
 	$out = [];
 	foreach( $users as $u )
 	{
-		$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'Level', 'UniqueID', 'Status' ];
+		$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Level', 'UniqueID', 'Status' ];
 		$o = new stdClass();
 		foreach( $keys as $key )
 		{

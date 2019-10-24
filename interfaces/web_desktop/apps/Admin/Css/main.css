@@ -1,4 +1,9 @@
 
+#Admin .IconSmall:before
+{
+	font-size: 1.4em;
+}
+
 #Admin
 {
 	/*background-color: #20374D;*/
@@ -96,6 +101,16 @@
 #Admin #GuiContent div
 {
 	border: 0;
+}
+
+#Admin #GuiContent #UserList .HRow.Disabled
+{
+	color: grey;
+}
+
+#Admin #GuiContent #UserList .HRow.Locked
+{
+	color: red;
 }
 
 /* Server printers ---------------------------------------------------------- */

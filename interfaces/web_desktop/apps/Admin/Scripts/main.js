@@ -76,7 +76,7 @@ function refreshSidebar()
 				condition: isAdmin
 			},
 			'Users': {
-				icon: 'fa-user',
+				icon: 'fa-user-circle-o',
 				showing: isAdmin,
 				permissions: [ 'PERM_USER_GLOBAL', 'PERM_USER_WORKGROUP' ]
 			},
