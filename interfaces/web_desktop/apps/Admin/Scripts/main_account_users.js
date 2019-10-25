@@ -754,6 +754,9 @@ Sections.accounts_users = function( cmd, extra )
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		list.id = 'ListUsersInner';
+		
+		o.appendChild( list );
+		
 		var sw = 2;
 		for( var b = 0; b < levels.length; b++ )
 		{
@@ -771,9 +774,20 @@ Sections.accounts_users = function( cmd, extra )
 					r.className = 'HRow sw' + sw + ' ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
 					r.id = ( 'UserListID_'+userList[a].ID );
 					
-					var icon = '<span id="UserAvatar_'+userList[a].ID+'" fullname="'+userList[a].FullName+'" username="'+userList[a].Name+'" class="IconSmall fa-user-circle-o"></span>';
+					userList[ a ][ 'Status' ] = status[ ( userList[a][ 'Status' ] ? userList[a][ 'Status' ] : 0 ) ];
 					
-					userList[ a ][ 'Edit' ] = icon;
+					userList[ a ][ 'LoginTime' ] = ( userList[a][ 'LoginTime' ] != 0 && userList[a][ 'LoginTime' ] != null ? CustomDateTime( userList[a][ 'LoginTime' ] ) : login[ 0 ] );
+					
+					userList[ a ][ 'Edit' ] = '<span '             + 
+					'id="UserAvatar_' + userList[ a ].ID + '" '    + 
+					'fullname="' + userList[ a ].FullName + '" '   + 
+					'name="' + userList[ a ].Name + '" '           + 
+					'status="' + userList[ a ].Status + '" '       + 
+					'logintime="' + userList[ a ].LoginTime + '" ' + 
+					'class="IconSmall fa-user-circle-o"'           + 
+					'></span>';
+					
+					
 					
 					for( var z in types )
 					{
@@ -790,20 +804,11 @@ Sections.accounts_users = function( cmd, extra )
 							borders += ' BorderBottom';
 						}
 						d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
-						if( z == 'Status' )
-						{
-							d.innerHTML = status[ ( userList[a][ z ] ? userList[a][ z ] : 0 ) ];
-						}
-						else if( z == 'LoginTime' )
-						{
-							d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? CustomDateTime( userList[a][ z ] ) : login[ 0 ] );
-						}
-						else
-						{
-							d.innerHTML = userList[a][ z ];
-						}
+						d.innerHTML = userList[a][ z ];
 						r.appendChild( d );
 					}
+					
+					
 					
 					if( userList[ a ][ sortby ] )
 					{
@@ -848,21 +853,21 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		
-		// Sort ASC default
-		
-		output.sort( ( a, b ) => ( a.sortby > b.sortby ) ? 1 : -1 );
-		
-		// Sort DESC
-		
-		if( orderby == 'DESC' ) 
-		{ 
-			output.reverse();  
-		} 
-		
-		console.log( 'sorting: ', { output: output, sortby: sortby, orderby: orderby } );
-		
 		if( output.length > 0 )
 		{
+			// Sort ASC default
+			
+			output.sort( ( a, b ) => ( a.sortby > b.sortby ) ? 1 : -1 );
+			
+			// Sort DESC
+			
+			if( orderby == 'DESC' ) 
+			{ 
+				output.reverse();  
+			} 
+			
+			console.log( 'sorting: ', { output: output, sortby: sortby, orderby: orderby } );
+			
 			for( var key in output )
 			{
 				if( output[key] && output[key].content && output[key].object )
@@ -871,8 +876,14 @@ Sections.accounts_users = function( cmd, extra )
 					list.appendChild( output[key].content );
 					
 					// Set Avatar on delay basis because of having to do one by one user ...
-					setAvatar( output[key].object.ID, function( res, userid, dat )
+					setAvatar( output[key].object.ID, false/*output[key].content*/, function( res, userid, content, dat )
 					{
+						if( content )
+						{
+							// Add row
+							list.appendChild( content );
+						}
+						
 						if( res )
 						{
 							if( ge( 'UserAvatar_' + userid ) )
@@ -890,13 +901,21 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		
-		o.appendChild( list );
-
+		// Moved to top instead ...
+		//o.appendChild( list );
+		
 		Friend.responsive.pageActive = ge( 'UserList' );
 		Friend.responsive.reinit();
+		
+		if( ge( 'ListUsersInner' ) )
+		{
+			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
+			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
+			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
+		}
 	}
 	
-	function setAvatar( userid, callback )
+	function setAvatar( userid, content, callback )
 	{
 		if( userid )
 		{
@@ -912,7 +931,7 @@ Sections.accounts_users = function( cmd, extra )
 				//console.log( 'getsetting ', { e:e, d:out } );
 				if( callback )
 				{
-					callback( ( out ? true : false ), userid, ( out && out.avatar ? out.avatar : false ) );
+					callback( ( out ? true : false ), userid, content, ( out && out.avatar ? out.avatar : false ) );
 				}
 			}
 			u.execute( 'getsetting', { setting: 'avatar', userid: userid, authid: Application.authId } );
@@ -937,7 +956,7 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						if( !filter || filter == ''  
 						|| span.getAttribute( 'fullname' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
-						|| span.getAttribute( 'username' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
+						|| span.getAttribute( 'name' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
 						)
 						{
 							list[a].style.display = '';
@@ -950,6 +969,8 @@ Sections.accounts_users = function( cmd, extra )
 				}
 			}
 		}
+		
+		// TODO: Fix server search query when building the search list more advanced with listout limit ...
 		
 		return;
 	
@@ -1022,17 +1043,77 @@ function sortUsers( sortby )
 {
 	if( sortby && ge( 'ListUsersInner' ) )
 	{
-		if( ge( 'ListUsersInner' ).className.indexOf( sortby + ' ASC' ) >= 0 )
+		var output = [];
+		
+		if( ge( 'ListUsersInner' ).className.indexOf( ' ' + sortby + ' ASC' ) >= 0 )
 		{
-			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' DESC' );
+			var orderby = 'DESC';
+			
+			console.log( sortby + ' ' + orderby );
+			
+			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
 			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
-			ge( 'ListUsersInner' ).setAttribute( 'orderby', 'DESC' );
+			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 		}
 		else
 		{
-			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ASC' );
+			var orderby = 'ASC';
+			
+			console.log( sortby + ' ' + orderby );
+			
+			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
 			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
-			ge( 'ListUsersInner' ).setAttribute( 'orderby', 'ASC' );
+			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
+		}
+		
+		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+		if( list.length > 0 )
+		{
+			for( var a = 0; a < list.length; a++ )
+			{
+				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+				
+				var span = list[a].getElementsByTagName( 'span' )[0];
+				
+				if( span && span.getAttribute( sortby.toLowerCase() ) )
+				{
+					var obj = { 
+						sortby  : span.getAttribute( sortby.toLowerCase() ), 
+						content : list[a]
+					};
+					
+					output.push( obj );
+				}
+			}
+			
+			if( output.length > 0 )
+			{
+				// Sort ASC default
+				
+				output.sort( ( a, b ) => ( a.sortby > b.sortby ) ? 1 : -1 );
+		
+				// Sort DESC
+		
+				if( orderby == 'DESC' ) 
+				{ 
+					output.reverse();  
+				} 
+				
+				console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
+				
+				ge( 'ListUsersInner' ).innerHTML = '';
+				
+				for( var key in output )
+				{
+					if( output[key] && output[key].content )
+					{
+						// Add row
+						ge( 'ListUsersInner' ).appendChild( output[key].content );
+					}
+				}
+				
+			}
 		}
 	}
 }
