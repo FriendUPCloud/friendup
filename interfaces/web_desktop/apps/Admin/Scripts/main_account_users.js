@@ -686,7 +686,7 @@ Sections.accounts_users = function( cmd, extra )
 			var d = document.createElement( 'div' );
 			d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
 			if( z == 'Edit' ) z = '';
-			d.innerHTML = '<strong>' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
+			d.innerHTML = '<strong onclick="sortUsers(\''+z+'\')">' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
 			headRow.appendChild( d );
 		}
 		
@@ -746,6 +746,11 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		
+		var sortby  = ( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).getAttribute( 'sortby'  ) ? ge( 'ListUsersInner' ).getAttribute( 'sortby'  ) : 'FullName' );
+		var orderby = ( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).getAttribute( 'orderby' ) ? ge( 'ListUsersInner' ).getAttribute( 'orderby' ) : 'ASC'      );
+		
+		var output = [];
+		
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		list.id = 'ListUsersInner';
@@ -799,11 +804,23 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						r.appendChild( d );
 					}
-
-					// Add row
-					list.appendChild( r );
 					
-					// Set Avatar on delay basis because of having to do one by one user ...
+					if( userList[ a ][ sortby ] )
+					{
+						var obj = { 
+							sortby  : userList[ a ][ sortby ], 
+							object  : userList[ a ],
+							content : r
+						};
+						
+						output.push( obj );
+					}
+					
+					// Running this "Add row" after sorting further down ...
+					// Add row
+					//list.appendChild( r );
+					
+					/*// Set Avatar on delay basis because of having to do one by one user ...
 					setAvatar( userList[ a ].ID, function( res, userid, dat )
 					{
 						if( res )
@@ -818,7 +835,7 @@ Sections.accounts_users = function( cmd, extra )
 							}
 						}
 					
-					} );
+					} );*/
 					
 				}
 				else
@@ -830,6 +847,49 @@ Sections.accounts_users = function( cmd, extra )
 				
 			}
 		}
+		
+		// Sort ASC default
+		
+		output.sort( ( a, b ) => ( a.sortby > b.sortby ) ? 1 : -1 );
+		
+		// Sort DESC
+		
+		if( orderby == 'DESC' ) 
+		{ 
+			output.reverse();  
+		} 
+		
+		console.log( 'sorting: ', { output: output, sortby: sortby, orderby: orderby } );
+		
+		if( output.length > 0 )
+		{
+			for( var key in output )
+			{
+				if( output[key] && output[key].content && output[key].object )
+				{
+					// Add row
+					list.appendChild( output[key].content );
+					
+					// Set Avatar on delay basis because of having to do one by one user ...
+					setAvatar( output[key].object.ID, function( res, userid, dat )
+					{
+						if( res )
+						{
+							if( ge( 'UserAvatar_' + userid ) )
+							{
+								ge( 'UserAvatar_' + userid ).style.backgroundImage = "url('"+dat+"')";
+								ge( 'UserAvatar_' + userid ).style.backgroundPosition = 'center';
+								ge( 'UserAvatar_' + userid ).style.backgroundSize = 'contain';
+								ge( 'UserAvatar_' + userid ).style.backgroundRepeat = 'no-repeat';
+								ge( 'UserAvatar_' + userid ).style.color = 'transparent';
+							}
+						}
+					
+					} );
+				}
+			}
+		}
+		
 		o.appendChild( list );
 
 		Friend.responsive.pageActive = ge( 'UserList' );
@@ -919,6 +979,8 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
+	
+	
 	if( checkedGlobal || checkedWorkgr )
 	{
 		// Get the user list
@@ -953,6 +1015,28 @@ Sections.accounts_users = function( cmd, extra )
 		o.appendChild( h2 );
 	}
 };
+
+
+
+function sortUsers( sortby )
+{
+	if( sortby && ge( 'ListUsersInner' ) )
+	{
+		if( ge( 'ListUsersInner' ).className.indexOf( sortby + ' ASC' ) >= 0 )
+		{
+			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' DESC' );
+			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
+			ge( 'ListUsersInner' ).setAttribute( 'orderby', 'DESC' );
+		}
+		else
+		{
+			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ASC' );
+			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
+			ge( 'ListUsersInner' ).setAttribute( 'orderby', 'ASC' );
+		}
+	}
+}
+
 
 
 Sections.userrole_edit = function( userid, _this )
