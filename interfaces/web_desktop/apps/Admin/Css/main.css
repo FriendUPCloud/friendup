@@ -54,6 +54,18 @@
 	/*font-size: 20px;*/
 }
 
+#Admin #GuiSidebar a.IconSmall
+{
+	position: relative;
+	padding-left: 30px;
+}
+
+#Admin #GuiSidebar a.IconSmall:before
+{
+	position: absolute;
+	left: 0;
+}
+
 #Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
 {
 	padding-right: 10px;

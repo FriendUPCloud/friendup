@@ -631,10 +631,10 @@ Sections.accounts_users = function( cmd, extra )
 			var inp = tr.getElementsByTagName( 'input' )[0];
 			inp.onkeyup = function( e )
 			{
-				if( e.which == 13 )
-				{
+				//if( e.which == 13 )
+				//{
 					filterUsers( this.value );
-				}
+				//}
 			}
 			
 			if( clearFilter )
@@ -748,6 +748,7 @@ Sections.accounts_users = function( cmd, extra )
 		
 		var list = document.createElement( 'div' );
 		list.className = 'List';
+		list.id = 'ListUsersInner';
 		var sw = 2;
 		for( var b = 0; b < levels.length; b++ )
 		{
@@ -755,72 +756,78 @@ Sections.accounts_users = function( cmd, extra )
 			{
 				// Skip irrelevant level
 				if( userList[ a ].Level != levels[ b ] ) continue;
-
-				sw = sw == 2 ? 1 : 2;
-				var r = document.createElement( 'div' );
-				setROnclick( r, userList[ a ].ID );
-				r.className = 'HRow sw' + sw + ' ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
 				
-				//var icon = '<span class="IconSmall fa-user"></span>';
-				var icon = '<span id="UserAvatar_' + userList[ a ].ID + '" class="IconSmall fa-user-circle-o"></span>';
-				
-				userList[ a ][ 'Edit' ] = icon;
-				
-				
-				
-				//userList[ a ][ 'LoginTime' ] = 1558429477;
-				
-				for( var z in types )
+				if( !ge( 'UserListID_'+userList[a].ID ) )
 				{
-					var borders = '';
-					var d = document.createElement( 'div' );
-					if( z != 'Edit' )
-					{
-						d.className = '';
-						borders += ' BorderRight';
-					}
-					else d.className = 'TextCenter';
-					if( a < userList.length - a )
-					{
-						borders += ' BorderBottom';
-					}
-					d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
-					if( z == 'Status' )
-					{
-						d.innerHTML = status[ ( userList[a][ z ] ? userList[a][ z ] : 0 ) ];
-					}
-					else if( z == 'LoginTime' )
-					{
-						//console.log( userList[a][ z ] );
-						//d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? jsdate( 'H:i d/m/Y', str_pad( userList[a][ z ], 13, 'STR_PAD_RIGHT' ) ) : login[ 0 ] );
-						d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? CustomDateTime( userList[a][ z ] ) : login[ 0 ] );
-					}
-					else
-					{
-						d.innerHTML = userList[a][ z ];
-					}
-					r.appendChild( d );
-				}
-
-				// Add row
-				list.appendChild( r );
-				
-				// Set Avatar on delay basis because of having to do one by one user ...
-				setAvatar( userList[ a ].ID, function( res, userid, dat )
-				{
-					if( res )
-					{
-						if( ge( 'UserAvatar_' + userid ) )
-						{
-							ge( 'UserAvatar_' + userid ).style.backgroundImage = "url('"+dat+"')";
-							ge( 'UserAvatar_' + userid ).style.backgroundPosition = 'center';
-							ge( 'UserAvatar_' + userid ).style.backgroundSize = 'contain';
-							ge( 'UserAvatar_' + userid ).style.backgroundRepeat = 'no-repeat';
-							ge( 'UserAvatar_' + userid ).style.color = 'transparent';
-						}
-					}
 					
-				} );
+					sw = sw == 2 ? 1 : 2;
+					var r = document.createElement( 'div' );
+					setROnclick( r, userList[a].ID );
+					r.className = 'HRow sw' + sw + ' ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
+					r.id = ( 'UserListID_'+userList[a].ID );
+					
+					var icon = '<span id="UserAvatar_'+userList[a].ID+'" fullname="'+userList[a].FullName+'" username="'+userList[a].Name+'" class="IconSmall fa-user-circle-o"></span>';
+					
+					userList[ a ][ 'Edit' ] = icon;
+					
+					for( var z in types )
+					{
+						var borders = '';
+						var d = document.createElement( 'div' );
+						if( z != 'Edit' )
+						{
+							d.className = '';
+							borders += ' BorderRight';
+						}
+						else d.className = 'TextCenter';
+						if( a < userList.length - a )
+						{
+							borders += ' BorderBottom';
+						}
+						d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
+						if( z == 'Status' )
+						{
+							d.innerHTML = status[ ( userList[a][ z ] ? userList[a][ z ] : 0 ) ];
+						}
+						else if( z == 'LoginTime' )
+						{
+							d.innerHTML = ( userList[a][ z ] != 0 && userList[a][ z ] != null ? CustomDateTime( userList[a][ z ] ) : login[ 0 ] );
+						}
+						else
+						{
+							d.innerHTML = userList[a][ z ];
+						}
+						r.appendChild( d );
+					}
+
+					// Add row
+					list.appendChild( r );
+					
+					// Set Avatar on delay basis because of having to do one by one user ...
+					setAvatar( userList[ a ].ID, function( res, userid, dat )
+					{
+						if( res )
+						{
+							if( ge( 'UserAvatar_' + userid ) )
+							{
+								ge( 'UserAvatar_' + userid ).style.backgroundImage = "url('"+dat+"')";
+								ge( 'UserAvatar_' + userid ).style.backgroundPosition = 'center';
+								ge( 'UserAvatar_' + userid ).style.backgroundSize = 'contain';
+								ge( 'UserAvatar_' + userid ).style.backgroundRepeat = 'no-repeat';
+								ge( 'UserAvatar_' + userid ).style.color = 'transparent';
+							}
+						}
+					
+					} );
+					
+				}
+				else
+				{
+					// Add to the field that is allready there ... But we also gotto consider sorting the list by default or defined sorting ...
+					
+					
+				}
+				
 			}
 		}
 		o.appendChild( list );
@@ -854,6 +861,38 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function filterUsers( filter )
 	{
+		if( ge( 'ListUsersInner' ) )
+		{
+			var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+			if( list.length > 0 )
+			{
+				for( var a = 0; a < list.length; a++ )
+				{
+					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+					
+					var span = list[a].getElementsByTagName( 'span' )[0];
+					
+					if( span )
+					{
+						if( !filter || filter == ''  
+						|| span.getAttribute( 'fullname' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
+						|| span.getAttribute( 'username' ).toLowerCase().substr( 0, filter.length ) == filter.toLowerCase()
+						)
+						{
+							list[a].style.display = '';
+						}
+						else
+						{
+							list[a].style.display = 'none';
+						}
+					}
+				}
+			}
+		}
+		
+		return;
+	
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
