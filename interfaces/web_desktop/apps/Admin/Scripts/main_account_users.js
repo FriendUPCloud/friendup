@@ -1050,8 +1050,8 @@ function sortUsers( sortby )
 		
 		var custom = { 
 			'Status' : { 
-				'ASC'  : [ 'Locked', 'Active', 'Disabled' ], 
-				'DESC' : [ 'Locked', 'Disabled', 'Active' ] 
+				'ASC'  : { 'Locked' : 0, 'Active' : 1, 'Disabled' : 2 }, 
+				'DESC' : { 'Locked' : 0, 'Disabled' : 1, 'Active' : 2 } 
 			},
 			'LoginTime' : 'timestamp' 
 		};
@@ -1073,6 +1073,26 @@ function sortUsers( sortby )
 			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 		}
 		
+		var callback = ( function ( a, b ) { return ( a.sortby > b.sortby ) ? 1 : -1; } );
+		
+		var override = false;
+		
+		if( custom[ sortby ] && sortby == 'LoginTime' )
+		{
+			sortby = custom[ sortby ];
+			orderby = ( orderby == 'ASC' ? 'DESC' : 'ASC' ); 
+			
+			// TODO: Find out how to specifically sort by the custom sortorder of Status ...
+		}
+		else if( custom[ sortby ] && custom[ sortby ][ orderby ] && sortby == 'Status' )
+		{
+			callback = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
+			
+			console.log( custom[ sortby ][ orderby ] );
+			
+			override = true;
+		}
+		
 		var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
 		if( list.length > 0 )
@@ -1082,14 +1102,6 @@ function sortUsers( sortby )
 				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
 				var span = list[a].getElementsByTagName( 'span' )[0];
-				
-				if( custom[ sortby ] && sortby == 'LoginTime' )
-				{
-					sortby = custom[ sortby ];
-					orderby = ( orderby == 'ASC' ? 'DESC' : 'ASC' ); 
-					
-					// TODO: Find out how to specifically sort by the custom sortorder of Status ...
-				}
 				
 				if( span && span.getAttribute( sortby.toLowerCase() ) )
 				{
@@ -1106,16 +1118,14 @@ function sortUsers( sortby )
 			{
 				// Sort ASC default
 				
-				output.sort( ( a, b ) => ( a.sortby > b.sortby ) ? 1 : -1 );
-		
+				output.sort( callback );
+				
 				// Sort DESC
 		
-				if( orderby == 'DESC' ) 
+				if( !override && orderby == 'DESC' ) 
 				{ 
 					output.reverse();  
 				} 
-				
-				console.log( custom );
 				
 				console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
 				
