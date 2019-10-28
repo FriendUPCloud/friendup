@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #if defined(LWS_WITH_HTTP_PROXY)
 static int
@@ -84,7 +87,7 @@ stream_close(struct lws *wsi)
 #endif
 
 struct lws_proxy_pkt {
-	struct lws_dll pkt_list;
+	struct lws_dll2 pkt_list;
 	size_t len;
 	char binary;
 	char first;
@@ -99,7 +102,7 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 			void *user, void *in, size_t len)
 {
 	struct lws_proxy_pkt *pkt;
-	struct lws_dll *dll;
+	struct lws_dll2 *dll;
 
 	switch (reason) {
 
@@ -124,7 +127,7 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_CLIENT_CLOSED:
 		lwsl_user("%s: client closed: parent %p\n", __func__, wsi->parent);
 		if (wsi->parent)
-			lws_set_timeout(wsi->parent, 1, LWS_TO_KILL_ASYNC);
+                       lws_set_timeout(wsi->parent, 1, LWS_TO_KILL_ASYNC);
 		break;
 
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
@@ -150,11 +153,10 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 					__func__);
 			return -1;
 		}
-		pkt = lws_malloc(sizeof(*pkt) + LWS_PRE + len, __func__);
+		pkt = lws_zalloc(sizeof(*pkt) + LWS_PRE + len, __func__);
 		if (!pkt)
 			return -1;
 
-		pkt->pkt_list.prev = pkt->pkt_list.next = NULL;
 		pkt->len = len;
 		pkt->first = lws_is_first_fragment(wsi);
 		pkt->final = lws_is_final_fragment(wsi);
@@ -162,12 +164,12 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 
 		memcpy(((uint8_t *)&pkt[1]) + LWS_PRE, in, len);
 
-		lws_dll_add_tail(&pkt->pkt_list, &wsi->parent->ws->proxy_head);
+		lws_dll2_add_tail(&pkt->pkt_list, &wsi->parent->ws->proxy_owner);
 		lws_callback_on_writable(wsi->parent);
 		break;
 
 	case LWS_CALLBACK_CLIENT_WRITEABLE:
-		dll = lws_dll_get_tail(&wsi->ws->proxy_head);
+		dll = lws_dll2_get_tail(&wsi->ws->proxy_owner);
 		if (!dll)
 			break;
 
@@ -180,10 +182,10 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 
 		wsi->parent->ws->proxy_buffered -= pkt->len;
 
-		lws_dll_remove_track_tail(dll, &wsi->ws->proxy_head);
+		lws_dll2_remove(dll);
 		lws_free(pkt);
 
-		if (lws_dll_get_tail(&wsi->ws->proxy_head))
+		if (lws_dll2_get_tail(&wsi->ws->proxy_owner))
 			lws_callback_on_writable(wsi);
 		break;
 
@@ -197,11 +199,10 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 		return -1;
 
 	case LWS_CALLBACK_RECEIVE:
-		pkt = lws_malloc(sizeof(*pkt) + LWS_PRE + len, __func__);
+		pkt = lws_zalloc(sizeof(*pkt) + LWS_PRE + len, __func__);
 		if (!pkt)
 			return -1;
 
-		pkt->pkt_list.prev = pkt->pkt_list.next = NULL;
 		pkt->len = len;
 		pkt->first = lws_is_first_fragment(wsi);
 		pkt->final = lws_is_final_fragment(wsi);
@@ -209,12 +210,12 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 
 		memcpy(((uint8_t *)&pkt[1]) + LWS_PRE, in, len);
 
-		lws_dll_add_tail(&pkt->pkt_list, &wsi->child_list->ws->proxy_head);
+		lws_dll2_add_tail(&pkt->pkt_list, &wsi->child_list->ws->proxy_owner);
 		lws_callback_on_writable(wsi->child_list);
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:
-		dll = lws_dll_get_tail(&wsi->ws->proxy_head);
+		dll = lws_dll2_get_tail(&wsi->ws->proxy_owner);
 		if (!dll)
 			break;
 
@@ -225,10 +226,10 @@ lws_callback_ws_proxy(struct lws *wsi, enum lws_callback_reasons reason,
 					pkt->first, pkt->final)) < 0)
 			return -1;
 
-		lws_dll_remove_track_tail(dll, &wsi->ws->proxy_head);
+		lws_dll2_remove(dll);
 		lws_free(pkt);
 
-		if (lws_dll_get_tail(&wsi->ws->proxy_head))
+		if (lws_dll2_get_tail(&wsi->ws->proxy_owner))
 			lws_callback_on_writable(wsi);
 		break;
 
@@ -258,7 +259,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 	struct lws_cgi_args *args;
 #endif
 #if defined(LWS_WITH_CGI) || defined(LWS_WITH_HTTP_PROXY)
-	char buf[8192];
+	char buf[LWS_PRE + 32 + 8192];
 	int n;
 #endif
 #if defined(LWS_WITH_HTTP_PROXY)
@@ -269,7 +270,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 	switch (reason) {
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 	case LWS_CALLBACK_HTTP:
-#ifndef LWS_NO_SERVER
+#if defined(LWS_WITH_SERVER)
 		if (lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL))
 			return -1;
 
@@ -277,7 +278,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 #endif
 			return -1;
 		break;
-#if !defined(LWS_NO_SERVER)
+#if defined(LWS_WITH_SERVER)
 	case LWS_CALLBACK_HTTP_BODY_COMPLETION:
 #if defined(LWS_WITH_HTTP_PROXY)
 		if (wsi->child_list) {
@@ -313,7 +314,7 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 				lwsl_debug("AUX_BF__CGI forcing close\n");
 				return -1;
 			}
-			if (!n)
+			if (!n && wsi->http.cgi && wsi->http.cgi->stdwsi[LWS_STDOUT])
 				lws_rx_flow_control(
 					wsi->http.cgi->stdwsi[LWS_STDOUT], 1);
 
@@ -581,9 +582,9 @@ lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_CLOSED_CLIENT_HTTP:
 		if (!lws_get_parent(wsi))
 			break;
-		lwsl_err("%s: LWS_CALLBACK_CLOSED_CLIENT_HTTP\n", __func__);
-		lws_set_timeout(lws_get_parent(wsi), LWS_TO_KILL_ASYNC,
-				PENDING_TIMEOUT_KILLED_BY_PROXY_CLIENT_CLOSE);
+	//	lwsl_err("%s: LWS_CALLBACK_CLOSED_CLIENT_HTTP\n", __func__);
+               lws_set_timeout(lws_get_parent(wsi), LWS_TO_KILL_ASYNC,
+                               PENDING_TIMEOUT_KILLED_BY_PROXY_CLIENT_CLOSE);
 		break;
 
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:

@@ -32,7 +32,7 @@ static struct client clients[200];
 static int interrupted, port = 443, ssl_connection = LCCSCF_USE_SSL;
 static const char *server_address = "libwebsockets.org",
 		  *pro = "lws-mirror-protocol";
-static int concurrent = 10, conn, tries, est, errors, closed, sent,  limit = 100;
+static int concurrent = 3, conn, tries, est, errors, closed, sent, limit = 15;
 
 struct pss {
 	int conn;
@@ -149,7 +149,7 @@ callback_minimal_spam(struct lws *wsi, enum lws_callback_reasons reason,
 
 			return -1;
 		}
-		lws_set_timeout(wsi, 1, LWS_TO_KILL_ASYNC);
+		lws_set_timeout(wsi, PENDING_TIMEOUT_USER_OK, LWS_TO_KILL_ASYNC);
 		break;
 
 	default:
@@ -226,7 +226,8 @@ int main(int argc, const char **argv)
 		info.options = 0;
 	}
 
-	if (concurrent > (int)LWS_ARRAY_SIZE(clients)) {
+	if (concurrent < 0 ||
+	    concurrent > (int)LWS_ARRAY_SIZE(clients)) {
 		lwsl_err("%s: -c %d larger than max concurrency %d\n", __func__,
 				concurrent, (int)LWS_ARRAY_SIZE(clients));
 
@@ -249,7 +250,7 @@ int main(int argc, const char **argv)
 	}
 
 	while (n >= 0 && !interrupted)
-		n = lws_service(context, 1000);
+		n = lws_service(context, 0);
 
 	lws_context_destroy(context);
 

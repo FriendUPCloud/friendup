@@ -158,10 +158,17 @@ Door.prototype.get = function( path )
 };
 
 Door.prototype.getIcons = function( fileInfo, callback, flags )
-{
+{	
 	if( !this.path && this.deviceName )
 	{
-		this.path = this.deviceName + ':';
+		if( typeof( fileInfo ) == 'string' && fileInfo != 'Mountlist:' )
+		{
+			this.path = fileInfo;
+		}
+		else
+		{
+			this.path = this.deviceName + ':';
+		}
 	}
 	
 	var finfo = false;

@@ -29,7 +29,6 @@
 #include "network/uri.h"
 #include "network/socket.h"
 #include <util/tagitem.h>
-#include <libwebsockets.h>
 #include <network/user_session_websocket.h>
 
 #define DEFAULT_CONTENT_TYPE "text/html; charset=utf-8"

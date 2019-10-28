@@ -47,10 +47,13 @@ i18n_add_calendar                     : Legg til kalender
 i18n_share_calendar                   : Del kalender
 i18n_week                             : Uke
 i18n_date                             : Dato
+i18n_date_to                          : Sluttdato
 i18n_time                             : Tid
 i18n_time_from                        : Tid fra
 i18n_time_to                          : Tid til
+i18n_timeslot                         : Tid
 i18n_all_day                          : Hele dagen
+i18n_all_week                         : Hele uken
 i18n_event_name                       : Hendelsesnavn:
 i18n_leadin                           : Beskrivelse:
 i18n_save                             : Lagre
@@ -113,3 +116,8 @@ i18n_workgroup                        : Arbeidsgruppe
 i18n_no_users_connected               : Ingen brukere er tilknyttet deg.
 i18n_no_workgroups                    : Du er ikke medlem av noen arbeidsgruppe.
 
+# Misc
+
+i18n_weekly_events                    : Ukens hendelser
+i18n_expired_events                   : Utgåtte hendelser
+i18n_you                              : Deg

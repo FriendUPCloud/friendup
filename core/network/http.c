@@ -29,6 +29,11 @@
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
 #include <arpa/inet.h>
+#include <linux/limits.h>
+
+#ifndef INT_MAX
+#define INT_MAX (int) (0x7FFF/0x7FFFFFFF)
+#endif
 
 //test
 #undef __DEBUG

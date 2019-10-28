@@ -25,8 +25,9 @@
 typedef struct FQEntry
 {
 	MinNode			node;
-	unsigned char	*fq_Data;	// 
-	int				fq_Size;	// this should be removed
+	unsigned char	*fq_Data;		// 
+	int				fq_Size;		// this should be removed
+	int				fq_Priority;	// message priority
 }FQEntry;
 
 typedef struct FQueue
@@ -72,6 +73,12 @@ typedef struct FQueue
  * @param q poitner to data which will be placed in FriendQueue
  */
 #define FQPushFIFO( qroot, q ) if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; }else{ (qroot)->fq_Last->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; } 
+
+#define FQPushWithPriority( qroot, q ){ \
+if( (qroot)->fq_First == NULL ){ (qroot)->fq_First = q; (qroot)->fq_Last = q; } \
+else if( ((FQEntry *)(qroot)->fq_First)->fq_Priority > q->fq_Priority ){ q->node.mln_Succ = (MinNode *)(qroot)->fq_First; (qroot)->fq_First = q; } \
+else{ FQEntry *fe = (qroot)->fq_First; while( fe != NULL ){ FQEntry *nfe = (FQEntry *)fe->node.mln_Succ; if( nfe == NULL ){ fe->node.mln_Succ = (MinNode *)q; (qroot)->fq_Last = q; break; } if( nfe->fq_Priority >= q->fq_Priority ){ fe->node.mln_Succ = (MinNode *)q; break; } fe = (FQEntry *)fe->node.mln_Succ; } } \
+}
 
 FQEntry *FQPop( FQueue *qroot );
 
