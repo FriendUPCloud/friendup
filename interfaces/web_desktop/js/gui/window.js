@@ -4707,8 +4707,7 @@ var View = function( args )
 					}
 					else if( value == 'false' || value == false )
 					{
-						if( viewdiv.getAttribute( 'minimized' ) )
-							viewdiv.minimize.onclick();
+						_ActivateWindow( viewdiv );
 						_WindowToFront( viewdiv );
 					}
 				}
