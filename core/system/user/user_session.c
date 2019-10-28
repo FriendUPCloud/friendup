@@ -117,6 +117,7 @@ void UserSessionDelete( UserSession *us )
 
 		// copy connection poiner to remove possibility of using it
 		UserSessionWebsocket *nwsc = us->us_WSConnections;
+
 		// We must do that here, becaouse lock on session is made in this function
 		
 		if( count > 50 )

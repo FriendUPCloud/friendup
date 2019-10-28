@@ -39,7 +39,7 @@ LFLAGS					+=	-lasan
 endif
 
 ifeq ($(DEBUG),1)
-CFLAGS					+=	-D__DEBUG -O0
+CFLAGS					+=	-D__DEBUG -O0 -g
 else
 CFLAGS					+=	-O2
 endif
