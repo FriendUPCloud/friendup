@@ -1045,11 +1045,16 @@ function sortUsers( sortby )
 	{
 		var output = [];
 		
+		var custom = { 
+			'Status' : { 
+				'ASC'  : [ 'Locked', 'Active', 'Disabled' ], 
+				'DESC' : [ 'Locked', 'Disabled', 'Active' ] 
+			} 
+		};
+		
 		if( ge( 'ListUsersInner' ).className.indexOf( ' ' + sortby + ' ASC' ) >= 0 )
 		{
 			var orderby = 'DESC';
-			
-			console.log( sortby + ' ' + orderby );
 			
 			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
 			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
@@ -1058,8 +1063,6 @@ function sortUsers( sortby )
 		else
 		{
 			var orderby = 'ASC';
-			
-			console.log( sortby + ' ' + orderby );
 			
 			ge( 'ListUsersInner' ).className = ( 'List ' + sortby + ' ' + orderby );
 			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
@@ -1099,6 +1102,8 @@ function sortUsers( sortby )
 				{ 
 					output.reverse();  
 				} 
+				
+				console.log( custom );
 				
 				console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
 				
