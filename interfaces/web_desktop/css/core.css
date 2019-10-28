@@ -1381,9 +1381,19 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 	background-color : $ColorAvailableBg;
 }
 
+.AvailableText {
+	color : $ColorAvailableBg;
+	background-color : transparent;
+}
+
 .Accept {
 	color : $ColorAccept;
 	background-color : $ColorAcceptBg;
+}
+
+.AcceptText {
+	color : $ColorAcceptBg;
+	background-color : transparent;
 }
 
 .Danger {
@@ -1401,9 +1411,19 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 	background-color : $ColorWarningBg;
 }
 
+.WarningText {
+	color : $ColorWarningBg;
+	background-color : transparent;
+}
+
 .Action {
 	color : $ColorAction;
 	background-color : $ColorActionBg;
+}
+
+.ActionText {
+	color : $ColorActionBg;
+	background-color : transparent;
 }
 
 .Highlight {
