@@ -774,6 +774,8 @@ Sections.accounts_users = function( cmd, extra )
 					r.className = 'HRow sw' + sw + ' ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
 					r.id = ( 'UserListID_'+userList[a].ID );
 					
+					var timestamp = ( userList[ a ][ 'LoginTime' ] ? userList[ a ][ 'LoginTime' ] : 0 );
+					
 					userList[ a ][ 'Status' ] = status[ ( userList[a][ 'Status' ] ? userList[a][ 'Status' ] : 0 ) ];
 					
 					userList[ a ][ 'LoginTime' ] = ( userList[a][ 'LoginTime' ] != 0 && userList[a][ 'LoginTime' ] != null ? CustomDateTime( userList[a][ 'LoginTime' ] ) : login[ 0 ] );
@@ -784,6 +786,7 @@ Sections.accounts_users = function( cmd, extra )
 					'name="' + userList[ a ].Name + '" '           + 
 					'status="' + userList[ a ].Status + '" '       + 
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
+					'timestamp="' + timestamp + '" '               +
 					'class="IconSmall fa-user-circle-o"'           + 
 					'></span>';
 					
@@ -1049,7 +1052,8 @@ function sortUsers( sortby )
 			'Status' : { 
 				'ASC'  : [ 'Locked', 'Active', 'Disabled' ], 
 				'DESC' : [ 'Locked', 'Disabled', 'Active' ] 
-			} 
+			},
+			'LoginTime' : 'timestamp' 
 		};
 		
 		if( ge( 'ListUsersInner' ).className.indexOf( ' ' + sortby + ' ASC' ) >= 0 )
@@ -1078,6 +1082,14 @@ function sortUsers( sortby )
 				if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
 				
 				var span = list[a].getElementsByTagName( 'span' )[0];
+				
+				if( custom[ sortby ] && sortby == 'LoginTime' )
+				{
+					sortby = custom[ sortby ];
+					orderby = ( orderby == 'ASC' ? 'DESC' : 'ASC' ); 
+					
+					// TODO: Find out how to specifically sort by the custom sortorder of Status ...
+				}
 				
 				if( span && span.getAttribute( sortby.toLowerCase() ) )
 				{

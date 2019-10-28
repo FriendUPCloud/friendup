@@ -117,12 +117,14 @@
 
 #Admin #GuiContent #UserList .HRow.Disabled
 {
-	color: grey;
+	/* Concrete Grey */
+	color: #95A5A6;
 }
 
 #Admin #GuiContent #UserList .HRow.Locked
 {
-	color: red;
+	/* Pomegranate Red */
+	color: #C0392B;
 }
 
 /* Server printers ---------------------------------------------------------- */
