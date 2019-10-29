@@ -2638,8 +2638,9 @@ function View( flags )
 	Application.sendMessage( msg );
 	Application.windows[ viewId ] = this;
 
-	// Just activate this window
-	this.activate();
+	// Just activate this window (unless it starts minimized)
+	if( !flags.minimized )
+		this.activate();
 }
 
 // To close a view

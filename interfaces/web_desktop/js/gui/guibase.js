@@ -2553,7 +2553,7 @@ function CheckScreenTitle( screen )
 		// Enable the global menu
 		if( Workspace && Workspace.menuMode == 'pear' )
 		{
-			if( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen )
+			if( window.WorkspaceMenu && ( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen ) )
 			{
 				WorkspaceMenu.show();
 				WorkspaceMenu.currentView = currentMovable;

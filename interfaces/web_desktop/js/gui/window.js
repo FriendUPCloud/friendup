@@ -1264,6 +1264,7 @@ function _removeWindowTiles( div )
 
 function _DeactivateWindow( m, skipCleanUp )
 {
+	console.log( 'Deactivating ' + m.windowObject.getFlag( 'title' ) );
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
@@ -1305,7 +1306,7 @@ function _DeactivateWindow( m, skipCleanUp )
 		// Minimize on mobile
 		if( isMobile )
 		{
-			m.minimize.onclick();
+			m.doMinimize();
 		}
 		ret = true;
 	}
@@ -2854,7 +2855,6 @@ var View = function( args )
 		
 		div.doMinimize = function ( e )
 		{
-			if( !window.isTablet && e && e.button != 0 ) return;
 			if( div.minimized ) return;
 			div.minimized = true;
 			if( !e )
@@ -2862,7 +2862,7 @@ var View = function( args )
 				e = { button: 0 };
 			}
 			
-			
+			// Normal desktop applications
 			if( !window.isMobile )
 			{
 				_ActivateWindow( div, false, e );
@@ -2976,6 +2976,13 @@ var View = function( args )
 			// Reorganize minimized view windows
 			else
 			{
+				var app = _getAppByAppId( div.applicationId );
+				if( app.mainView )
+				{
+					FocusOnNothing();
+					_ActivateWindow( app.mainView.content.parentNode );
+				}
+				
 				Friend.GUI.reorganizeResponsiveMinimized();
 			}
 			
@@ -3697,8 +3704,12 @@ var View = function( args )
 		// If the current window is an app, move it to front.. (unless new window is a child window)
 		if( window.friend && Friend.currentWindowHover )
 			Friend.currentWindowHover = false;
-		_ActivateWindow( div );
-		_WindowToFront( div );
+		// Only activate if needed
+		if( !flags.minimized )
+		{
+			_ActivateWindow( div );
+			_WindowToFront( div );
+		}
 		
 		// Reparse! We may have forgotten some things
 		self.parseFlags( flags );
@@ -4699,10 +4710,9 @@ var View = function( args )
 				{
 					if( value == 'true' || value == true )
 					{
-						if( !viewdiv.getAttribute( 'minimized' ) && viewdiv.minimize != 'undefined' )
+						if( viewdiv.doMinimize )
 						{
-							if( viewdiv.doMinimize )
-								viewdiv.doMinimize();
+							viewdiv.doMinimize();
 						}
 					}
 					else if( value == 'false' || value == false )
