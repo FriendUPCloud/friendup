@@ -1205,13 +1205,18 @@ function CheckUserlistSize()
 			
 				//wrapper.style.border = '1px solid blue';
 				
-				console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ', wrapper.style.minHeight );
+				console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ' + wrapper.style.minHeight );
 			}
 		}
 		else if( ( container.clientHeight + m ) < scrollbox.clientHeight )
 		{
-			wrapper.style.minHeight = 'auto';
-			//wrapper.style.border = '0';
+			if( wrapper.clientHeight > container.clientHeight )
+			{
+				wrapper.style.minHeight = 'auto';
+				//wrapper.style.border = '0';
+			
+				//console.log( wrapper.style.minHeight );
+			}
 		}
 		
 	}
