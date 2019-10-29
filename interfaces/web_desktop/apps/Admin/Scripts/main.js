@@ -9,7 +9,17 @@
 *****************************************************************************©*/
 
 // Start!
-Application.run = function( msg ){ initGui(); initTest(); }
+Application.run = function( msg )
+{ 
+	initGui(); initTest();
+	
+	this.WindowSize = {
+		width  : document.body.clientWidth,
+		height : document.body.clientHeight
+	};
+	
+	document.body.setAttribute( 'onresize', 'CheckWindowSize()' );
+}
 
 // Just initialize the GUI!
 function initGui()
@@ -441,7 +451,41 @@ function FormatBytes( bytes, decimals = 2, units = 1 )
     return parseFloat( ( bytes / Math.pow( k, i ) ).toFixed( dm ) ) + ( units ? ( sizes[i] ) : '' );
 }
 
+function CheckScroll( ele )
+{
+	if( !ele ) return;
+	
+	console.log( ele.clientHeight + ' ... '  );
+	
+	ele.style.border = '1px solid blue';
+	
+	if( ( ele.scrollHeight - ele.clientHeight ) > 0 )
+	{
+		//console.log( ele.scrollTop + ' / ' + ( ele.scrollHeight - ele.clientHeight ) + ' * ' + 100 );
+		
+		var pos = Math.round( ele.scrollTop / ( ele.scrollHeight - ele.clientHeight ) * 100 );
+		
+		// Outputs prosentage
+		
+		return pos;
+	}
+}
 
+function CheckWindowSize()
+{
+	var ele = document.body;
+	
+	//ele.style.border = '1px solid blue';
+	
+	Application.WindowSize = {
+		width  : ele.clientWidth,
+		height : ele.clientHeight
+	};
+	
+	//console.log( '[w]: ' + Application.WindowSize.width + ' x [h]: ' + Application.WindowSize.height );
+	
+	CheckUserlistSize();
+}
 
 function initTest()
 {

@@ -624,7 +624,7 @@ Sections.accounts_users = function( cmd, extra )
 					<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
 				</div>\
 				<div class="HContent10 FloatLeft TextRight">\
-					<button class="IconButton IconSmall fa-plus"></button>\
+					<button id="AdminNewUserBtn" class="IconButton IconSmall fa-plus"></button>\
 				</div>\
 			';
 					
@@ -691,13 +691,14 @@ Sections.accounts_users = function( cmd, extra )
 		}
 		
 		// New user button
-		var l = document.createElement( 'div' );
-		l.className = 'HContent10 FloatLeft BorderBottom';
-		var b = document.createElement( 'button' );
-		b.className = 'IconButton IconSmall fa-plus Negative';
-		b.innerHTML = '&nbsp;';
-		l.appendChild( b );		
+		//var l = document.createElement( 'div' );
+		//l.className = 'HContent10 FloatLeft BorderBottom';
+		//var b = document.createElement( 'button' );
+		//b.className = 'IconButton IconSmall fa-plus Negative';
+		//b.innerHTML = '&nbsp;';
+		//l.appendChild( b );		
 		//headRow.appendChild( l );
+		var b = ge( 'AdminNewUserBtn' );
 		b.onclick = function( e )
 		{
 			var d = new File( 'Progdir:Templates/account_users_details.html' );
@@ -751,17 +752,33 @@ Sections.accounts_users = function( cmd, extra )
 		
 		var output = [];
 		
+		var wrapper = document.createElement( 'div' );
+		wrapper.id = 'ListUsersWrapper';
+		
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		list.id = 'ListUsersInner';
 		
-		o.appendChild( list );
+		wrapper.appendChild( list );
+		o.appendChild( wrapper );
+		
+		//o.appendChild( list );
+		
+		if( userList['Count'] )
+		{ 
+			Application.totalUserCount = /*100;*/userList['Count'];
+		}
+		
+		console.log( 'Application.totalUserCount: ', Application.totalUserCount );
+		//console.log( 'Application.WindowSize: ', Application.WindowSize );
 		
 		var sw = 2;
 		for( var b = 0; b < levels.length; b++ )
 		{
-			for( var a = 0; a < userList.length; a++ )
+			for( var a in userList )
 			{
+				if( !userList[ a ] ) continue;
+				
 				// Skip irrelevant level
 				if( userList[ a ].Level != levels[ b ] ) continue;
 				
@@ -871,10 +888,14 @@ Sections.accounts_users = function( cmd, extra )
 			
 			console.log( 'sorting: ', { output: output, sortby: sortby, orderby: orderby } );
 			
+			var i = 1;
+			
 			for( var key in output )
 			{
 				if( output[key] && output[key].content && output[key].object )
 				{
+					i++;
+					
 					// Add row
 					list.appendChild( output[key].content );
 					
@@ -902,6 +923,22 @@ Sections.accounts_users = function( cmd, extra )
 					} );
 				}
 			}
+			
+			console.log( 'listed: ' + i );
+			
+			if( Application.totalUserCount > i )
+			{
+				var divh = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0].clientHeight;
+				
+				console.log( 'first div height: ' + divh );
+			
+				//ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0].style.border = '1px solid blue';
+			
+				//ge( 'ListUsersWrapper' ).style.height = ( divh * Application.totalUserCount ) + 'px';
+			
+				//console.log( ge( 'ListUsersWrapper' ).style.height );
+			}
+			
 		}
 		
 		// Moved to top instead ...
@@ -916,6 +953,7 @@ Sections.accounts_users = function( cmd, extra )
 			ge( 'ListUsersInner' ).setAttribute( 'sortby', sortby );
 			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 		}
+		
 	}
 	
 	function setAvatar( userid, content, callback )
@@ -1026,7 +1064,7 @@ Sections.accounts_users = function( cmd, extra )
 			
 			doListUsers( userList );
 		}
-		m.execute( 'listusers', { authid: Application.authId } );
+		m.execute( 'listusers', { count: true, authid: Application.authId } );
 		
 	}
 	else
@@ -1145,7 +1183,39 @@ function sortUsers( sortby )
 	}
 }
 
-
+function CheckUserlistSize()
+{
+	//console.log( Application.WindowSize );
+	
+	var scrollbox = ge( 'UserList' );
+	var container = ge( 'ListUsersInner' );
+	var wrapper   = ge( 'ListUsersWrapper' );
+	
+	if( scrollbox && container )
+	{
+		//console.log( 'container: ' + container.clientHeight + ' > scrollbox: ' + scrollbox.clientHeight );
+		
+		var m = 100;
+		
+		if( ( container.clientHeight + m ) > scrollbox.clientHeight )
+		{
+			if( container.clientHeight >= wrapper.clientHeight )
+			{
+				wrapper.style.minHeight = ( scrollbox.clientHeight * 2 ) + 'px';
+			
+				//wrapper.style.border = '1px solid blue';
+				
+				console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ', wrapper.style.minHeight );
+			}
+		}
+		else if( ( container.clientHeight + m ) < scrollbox.clientHeight )
+		{
+			wrapper.style.minHeight = 'auto';
+			//wrapper.style.border = '0';
+		}
+		
+	}
+}
 
 Sections.userrole_edit = function( userid, _this )
 {

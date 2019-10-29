@@ -104,7 +104,8 @@
 	color: #FFFFFF;
 }
 
-#Admin #GuiContent .FullContent > div.List + div.List > .HRow
+#Admin #GuiContent .FullContent > div.List + div.List > .HRow,
+#Admin #GuiContent .FullContent > div > div.List > .HRow
 {
 	background-color: #FFFFFF;
 	color: #34495E;
