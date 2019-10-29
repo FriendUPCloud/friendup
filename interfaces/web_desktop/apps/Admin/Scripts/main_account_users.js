@@ -1201,7 +1201,7 @@ function CheckUserlistSize()
 		{
 			if( container.clientHeight >= wrapper.clientHeight )
 			{
-				wrapper.style.minHeight = ( scrollbox.clientHeight * 2 ) + 'px';
+				wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
 			
 				//wrapper.style.border = '1px solid blue';
 				
