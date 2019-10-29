@@ -1264,7 +1264,6 @@ function _removeWindowTiles( div )
 
 function _DeactivateWindow( m, skipCleanUp )
 {
-	console.log( 'Deactivating ' + m.windowObject.getFlag( 'title' ) );
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
@@ -2978,11 +2977,7 @@ var View = function( args )
 			{
 				var app = _getAppByAppId( div.applicationId );
 				if( app.mainView )
-				{
-					FocusOnNothing();
 					_ActivateWindow( app.mainView.content.parentNode );
-				}
-				
 				Friend.GUI.reorganizeResponsiveMinimized();
 			}
 			
