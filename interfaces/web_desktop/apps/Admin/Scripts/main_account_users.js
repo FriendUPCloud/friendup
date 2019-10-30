@@ -8,6 +8,71 @@
 *                                                                              *
 *****************************************************************************©*/
 
+// TODO: Clean up this whole code file .... when there is time ... , plix .... Now It's a MESS !!!
+
+var UsersSettings = function ( setting, set )
+{
+	var searchquery = ( ''                           );  
+	var sortby      = ( 'FullName'                   );
+	var orderby     = ( 'ASC'                        ); 
+	var divh        = ( 29                           );
+	var startlimit  = ( 0                            );
+	var maxlimit    = ( 99999                        );
+	var limit       = ( startlimit + ', ' + maxlimit );
+	
+	this.vars = ( this.vars ? this.vars : {
+		searchquery : searchquery,
+		sortby      : sortby,
+		orderby     : orderby,
+		divh        : divh,
+		startlimit  : startlimit,
+		maxlimit    : maxlimit,
+		limit       : limit
+	} );
+	
+	function Update ( setting, set )
+	{
+		if( setting && set )
+		{
+			switch( setting )
+			{
+				case 'searchquery'        :
+					this.vars.searchquery = set;
+					break;
+				case 'sortby'             :
+					this.vars.sortby      = set;
+					break;
+				case 'orderby'            :
+					this.vars.orderby     = set;
+					break;
+				case 'divh'               :
+					this.vars.divh        = set;
+					break;
+				case 'startlimit'         :
+					this.vars.startlimit  = ( set                                              );
+					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit );
+					break;
+				case 'maxlimit'           :
+					this.vars.startlimit  = ( 0                                                );
+					this.vars.maxlimit    = ( set                                              );
+					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit );
+					break;
+				case 'limit'              :
+					this.vars.startlimit  = ( this.vars.maxlimit                               );
+					this.vars.maxlimit    = ( this.vars.maxlimit * 2                           );
+					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit );
+					break;
+			}
+		}
+	}
+	
+	Update( setting, set );
+	
+	//console.log( 'vars: ', this.vars );
+	
+	return ( this.vars[ setting ] ? this.vars[ setting ] : false );
+};
+
 // Section for user account management
 Sections.accounts_users = function( cmd, extra )
 {
@@ -602,57 +667,64 @@ Sections.accounts_users = function( cmd, extra )
 	function doListUsers( userList, clearFilter )
 	{
 		var o = ge( 'UserList' );
-		o.innerHTML = '';
-
-		// Add the main heading
-		( function( ol ) {
-			var tr = document.createElement( 'div' );
-			tr.className = 'HRow';
+		
+		if( !ge( 'ListUsersInner' ) )
+		{
+			o.innerHTML = '';
+		}
+		
+		if( !ge( 'ListUsersInner' ) )
+		{
+			// Add the main heading
+			( function( ol ) {
+				var tr = document.createElement( 'div' );
+				tr.className = 'HRow';
 			
-			var extr = '';
-			if( clearFilter )
-			{
-				extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconButton IconSmall fa-remove"/>&nbsp;</button>';
-			}
-			
-			tr.innerHTML = '\
-				<div class="HContent20 FloatLeft">\
-					<h2>' + i18n( 'i18n_users' ) + '</h2>\
-				</div>\
-				<div class="HContent70 FloatLeft Relative">\
-					' + extr + '\
-					<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
-				</div>\
-				<div class="HContent10 FloatLeft TextRight">\
-					<button id="AdminNewUserBtn" class="IconButton IconSmall fa-plus"></button>\
-				</div>\
-			';
-					
-			var inp = tr.getElementsByTagName( 'input' )[0];
-			inp.onkeyup = function( e )
-			{
-				//if( e.which == 13 )
-				//{
-					filterUsers( this.value );
-				//}
-			}
-			
-			if( clearFilter )
-			{
-				inp.value = clearFilter;
-			}
-			
-			var bt = tr.getElementsByTagName( 'button' )[0];
-			if( bt )
-			{
-				bt.onclick = function()
+				var extr = '';
+				if( clearFilter )
 				{
-					filterUsers( false );
+					extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconButton IconSmall fa-remove"/>&nbsp;</button>';
 				}
-			}
+			
+				tr.innerHTML = '\
+					<div class="HContent20 FloatLeft">\
+						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+					</div>\
+					<div class="HContent70 FloatLeft Relative">\
+						' + extr + '\
+						<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+					</div>\
+					<div class="HContent10 FloatLeft TextRight">\
+						<button id="AdminNewUserBtn" class="IconButton IconSmall fa-plus"></button>\
+					</div>\
+				';
 					
-			ol.appendChild( tr );
-		} )( o );
+				var inp = tr.getElementsByTagName( 'input' )[0];
+				inp.onkeyup = function( e )
+				{
+					//if( e.which == 13 )
+					//{
+						filterUsers( this.value );
+					//}
+				}
+			
+				if( clearFilter )
+				{
+					inp.value = clearFilter;
+				}
+			
+				var bt = tr.getElementsByTagName( 'button' )[0];
+				if( bt )
+				{
+					bt.onclick = function()
+					{
+						filterUsers( false );
+					}
+				}
+					
+				ol.appendChild( tr );
+			} )( o );
+		}
 
 		// Types of listed fields
 		var types = {
@@ -735,9 +807,16 @@ Sections.accounts_users = function( cmd, extra )
 			d.load();
 		}
 		
-		// Add header columns
-		header.appendChild( headRow );
-		o.appendChild( header );
+		if( !ge( 'ListUsersInner' ) )
+		{
+			// Add header columns
+			header.appendChild( headRow );
+		}
+		
+		if( !ge( 'ListUsersInner' ) )
+		{
+			o.appendChild( header );
+		}
 
 		function setROnclick( r, uid )
 		{
@@ -755,18 +834,32 @@ Sections.accounts_users = function( cmd, extra )
 		var wrapper = document.createElement( 'div' );
 		wrapper.id = 'ListUsersWrapper';
 		
-		var list = document.createElement( 'div' );
-		list.className = 'List';
-		list.id = 'ListUsersInner';
+		if( ge( 'ListUsersInner' ) )
+		{
+			var list = ge( 'ListUsersInner' );
+		}
+		else
+		{
+			var list = document.createElement( 'div' );
+			list.className = 'List';
+			list.id = 'ListUsersInner';
+		}
 		
-		wrapper.appendChild( list );
-		o.appendChild( wrapper );
+		if( !ge( 'ListUsersInner' ) )
+		{
+			wrapper.appendChild( list );
+		}
+		
+		if( !ge( 'ListUsersInner' ) )
+		{
+			o.appendChild( wrapper );
+		}
 		
 		//o.appendChild( list );
 		
 		if( userList['Count'] )
 		{ 
-			Application.totalUserCount = /*100;*/userList['Count'];
+			Application.totalUserCount = /*5;*/userList['Count'];
 		}
 		
 		console.log( 'Application.totalUserCount: ', Application.totalUserCount );
@@ -841,27 +934,6 @@ Sections.accounts_users = function( cmd, extra )
 						output.push( obj );
 					}
 					
-					// Running this "Add row" after sorting further down ...
-					// Add row
-					//list.appendChild( r );
-					
-					/*// Set Avatar on delay basis because of having to do one by one user ...
-					setAvatar( userList[ a ].ID, function( res, userid, dat )
-					{
-						if( res )
-						{
-							if( ge( 'UserAvatar_' + userid ) )
-							{
-								ge( 'UserAvatar_' + userid ).style.backgroundImage = "url('"+dat+"')";
-								ge( 'UserAvatar_' + userid ).style.backgroundPosition = 'center';
-								ge( 'UserAvatar_' + userid ).style.backgroundSize = 'contain';
-								ge( 'UserAvatar_' + userid ).style.backgroundRepeat = 'no-repeat';
-								ge( 'UserAvatar_' + userid ).style.color = 'transparent';
-							}
-						}
-					
-					} );*/
-					
 				}
 				else
 				{
@@ -886,9 +958,9 @@ Sections.accounts_users = function( cmd, extra )
 				output.reverse();  
 			} 
 			
-			console.log( 'sorting: ', { output: output, sortby: sortby, orderby: orderby } );
+			//console.log( 'sorting: ', { output: output, sortby: sortby, orderby: orderby } );
 			
-			var i = 1;
+			var i = 0;
 			
 			for( var key in output )
 			{
@@ -924,6 +996,8 @@ Sections.accounts_users = function( cmd, extra )
 				}
 			}
 			
+			
+			
 			console.log( 'listed: ' + i );
 			
 			if( Application.totalUserCount > i )
@@ -931,13 +1005,44 @@ Sections.accounts_users = function( cmd, extra )
 				var divh = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0].clientHeight;
 				
 				console.log( 'first div height: ' + divh );
-			
+				
+				if( divh > 0 && UsersSettings( 'divh' ) != divh )
+				{
+					UsersSettings( 'divh', divh );
+					
+					//CheckUserlistSize( divh );
+					
+					/*var minusers = CheckUserlistSize( divh );
+				
+					if( UsersSettings( 'maxlimit' ) < minusers )
+					{
+						UsersSettings( 'maxlimit', minusers );
+					
+						console.log( 'MaxLimit is: ' + UsersSettings( 'maxlimit' ) );
+					
+						console.log( 'Running Sections.accounts_users(); again ...' );
+					
+						Sections.accounts_users();
+					}
+					else
+					{
+						//console.log( "UsersSettings( 'limit', true ) ", UsersSettings( 'limit', true ) );
+					}*/
+				}
+				
 				//ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0].style.border = '1px solid blue';
 			
 				//ge( 'ListUsersWrapper' ).style.height = ( divh * Application.totalUserCount ) + 'px';
 			
 				//console.log( ge( 'ListUsersWrapper' ).style.height );
+				
+				
+				
+				//CheckUserlistSize( i, Application.totalUserCount );
+				
+				RunRequestQueue();
 			}
+			
 			
 		}
 		
@@ -979,9 +1084,9 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
-	function filterUsers( filter )
+	function filterUsers( filter, server )
 	{
-		if( ge( 'ListUsersInner' ) )
+		if( !server && ge( 'ListUsersInner' ) )
 		{
 			var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
@@ -1013,11 +1118,20 @@ Sections.accounts_users = function( cmd, extra )
 		
 		// TODO: Fix server search query when building the search list more advanced with listout limit ...
 		
-		return;
-	
+		if( !server ) return;
+		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			console.log( { e:e, d:d, args: { 
+				query   : UsersSettings( 'searchquery' ),
+				sortby  : UsersSettings( 'sortby'      ), 
+				orderby : UsersSettings( 'orderby'     ), 
+				limit   : UsersSettings( 'limit'       ), 
+				count   : true, 
+				authid  : Application.authId 
+			} } );
+			
 			var userList = null;
 			
 			try
@@ -1029,27 +1143,61 @@ Sections.accounts_users = function( cmd, extra )
 				return;
 			}
 			
-			doListUsers( userList, filter ? filter : false );
+			//doListUsers( userList, filter ? filter : false );
+			doListUsers( userList );
 		}
-		if( filter )
+		/*if( filter )
 		{
 			m.execute( 'listusers', { query: filter, authid: Application.authId } );
 		}
 		else
-		{
-			m.execute( 'listusers', { authid: Application.authId } );
-		}
+		{*/
+			//m.execute( 'listusers', { authid: Application.authId } );
+			
+			m.execute( 'listusers', { 
+				query   : UsersSettings( 'searchquery' ),
+				sortby  : UsersSettings( 'sortby'      ), 
+				orderby : UsersSettings( 'orderby'     ), 
+				limit   : UsersSettings( 'limit'       ), 
+				count   : true, 
+				authid  : Application.authId 
+			} );
+		/*}*/
 	}
 	
 	
 	
 	if( checkedGlobal || checkedWorkgr )
 	{
+		// Get correct estimate of how many users fit into the window area ...
+		
+		CheckUserlistSize( true );
+		
+		/*console.log( 'divh: ', UsersSettings( 'divh' ) );
+		
+		var minusers = CheckUserlistSize( UsersSettings( 'divh' ) );
+		
+		console.log( 'minusers: ' + minusers );
+		
+		if( UsersSettings( 'maxlimit' ) < minusers )
+		{
+			UsersSettings( 'maxlimit', minusers );
+		
+			console.log( 'MaxLimit is: ' + UsersSettings( 'maxlimit' ) );
+		}*/
+		
 		// Get the user list
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{	
-			console.log( { e:e, d:d } );
+			console.log( { e:e, d:d, args: { 
+				query   : UsersSettings( 'searchquery' ),
+				sortby  : UsersSettings( 'sortby'      ), 
+				orderby : UsersSettings( 'orderby'     ), 
+				limit   : UsersSettings( 'limit'       ), 
+				count   : true, 
+				authid  : Application.authId 
+			} } );
 			
 			var userList = null;
 			
@@ -1064,7 +1212,14 @@ Sections.accounts_users = function( cmd, extra )
 			
 			doListUsers( userList );
 		}
-		m.execute( 'listusers', { count: true, authid: Application.authId } );
+		m.execute( 'listusers', { 
+			query   : UsersSettings( 'searchquery' ),
+			sortby  : UsersSettings( 'sortby'      ), 
+			orderby : UsersSettings( 'orderby'     ), 
+			limit   : UsersSettings( 'limit'       ), 
+			count   : true, 
+			authid  : Application.authId 
+		} );
 		
 	}
 	else
@@ -1126,7 +1281,7 @@ function sortUsers( sortby )
 		{
 			callback = ( function ( a, b ) { return ( custom[ sortby ][ orderby ][ a.sortby ] - custom[ sortby ][ orderby ][ b.sortby ] ); } );
 			
-			console.log( custom[ sortby ][ orderby ] );
+			//console.log( custom[ sortby ][ orderby ] );
 			
 			override = true;
 		}
@@ -1165,7 +1320,7 @@ function sortUsers( sortby )
 					output.reverse();  
 				} 
 				
-				console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
+				//console.log( 'sortUsers('+sortby+'): ', { output: output, sortby: sortby, orderby: orderby } );
 				
 				ge( 'ListUsersInner' ).innerHTML = '';
 				
@@ -1183,7 +1338,7 @@ function sortUsers( sortby )
 	}
 }
 
-function CheckUserlistSize()
+function CheckUserlistSize( firstrun )
 {
 	//console.log( Application.WindowSize );
 	
@@ -1191,34 +1346,129 @@ function CheckUserlistSize()
 	var container = ge( 'ListUsersInner' );
 	var wrapper   = ge( 'ListUsersWrapper' );
 	
-	if( scrollbox && container )
+	var divh = UsersSettings( 'divh' );
+	
+	if( scrollbox )
 	{
+		var m = 85;
+		
+		// Check scrollarea ...
+		
+		if( ( scrollbox.scrollHeight - scrollbox.clientHeight ) > 0 )
+		{
+			var pos = Math.round( scrollbox.scrollTop / ( scrollbox.scrollHeight - scrollbox.clientHeight ) * 100 );
+			
+			// If scrolled area is more then 50% prosentage
+			
+			if( pos && pos >= 50 )
+			{
+				if( container.clientHeight >= wrapper.clientHeight )
+				{
+					console.log( 'Scrollpos is ... ' + pos );
+					
+					wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
+					
+					console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ' + wrapper.style.minHeight );
+					
+					UsersSettings( 'limit', true );
+					
+					console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
+						
+					Sections.accounts_users();
+				}
+			}
+		}
+		
 		//console.log( 'container: ' + container.clientHeight + ' > scrollbox: ' + scrollbox.clientHeight );
 		
-		var m = 100;
-		
-		if( ( container.clientHeight + m ) > scrollbox.clientHeight )
+		if( container && ( container.clientHeight + m ) > scrollbox.clientHeight )
 		{
 			if( container.clientHeight >= wrapper.clientHeight )
 			{
-				wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
-			
-				//wrapper.style.border = '1px solid blue';
+				//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
 				
-				console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ' + wrapper.style.minHeight );
+				//console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ' + wrapper.style.minHeight );
 			}
 		}
-		else if( ( container.clientHeight + m ) < scrollbox.clientHeight )
+		else if( container && ( container.clientHeight + m ) < scrollbox.clientHeight )
 		{
 			if( wrapper.clientHeight > container.clientHeight )
 			{
-				wrapper.style.minHeight = 'auto';
-				//wrapper.style.border = '0';
-			
+				//wrapper.style.minHeight = 'auto';
+				
 				//console.log( wrapper.style.minHeight );
 			}
 		}
 		
+		if( divh )
+		{
+			//return Math.floor( ( scrollbox.clientHeight - m ) / divh );
+			
+			var minusers = Math.floor( ( scrollbox.clientHeight - m ) / divh );
+			
+			if( UsersSettings( 'maxlimit' ) < ( minusers * 1.5 ) )
+			{
+				console.log( ( scrollbox.clientHeight - m ) + ' vs ' + Math.floor( ( scrollbox.clientHeight - m ) / divh ) );
+				
+				console.log( 'minusers: ' + minusers );
+				
+				// Set double max limit so that it fills beyond the minimum
+				
+				UsersSettings( 'maxlimit', ( minusers * 2 ) );
+		
+				console.log( 'MaxLimit is: ' + UsersSettings( 'maxlimit' ) );
+				
+				if( !firstrun )
+				{
+					//SetRequestQueue( function() {
+						
+						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
+						
+						Sections.accounts_users(); 
+						
+					//} );
+				}
+			}
+		}
+	}
+}
+
+function SetRequestQueue( func )
+{
+	var ServerRequestQueue = ( ServerRequestQueue ? ServerRequestQueue : [] );
+	
+	if( !ServerRequestQueue )
+	{
+		ServerRequestQueue.push( func );
+		
+		RunRequestQueue();
+	}
+	else
+	{
+		ServerRequestQueue.push( func );
+	}
+	
+}
+
+function RunRequestQueue()
+{
+	var ServerRequestQueue = ( ServerRequestQueue ? ServerRequestQueue : [] );
+	
+	if( ServerRequestQueue )
+	{
+		for( var key in ServerRequestQueue )
+		{
+			if( ServerRequestQueue[key] )
+			{
+				ServerRequestQueue[key]();
+				
+				console.log( "ServerRequestQueue[key]();" );
+				
+				delete ServerRequestQueue[key];
+				
+				return;
+			}
+		}
 	}
 }
 

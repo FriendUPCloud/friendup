@@ -117,7 +117,7 @@ else
 
 
 
-if( $users = $SqlDatabase->FetchObjects( '
+if( $users = $SqlDatabase->FetchObjects( $q = '
 	SELECT 
 		u.*, g.Name AS `Level`, ( SELECT l.LoginTime FROM `FUserLogin` l WHERE l.UserID = u.ID AND l.Information = "Login success" ORDER BY l.ID DESC LIMIT 1 ) AS `LoginTime` 
 	FROM 
@@ -134,22 +134,26 @@ if( $users = $SqlDatabase->FetchObjects( '
 		' . ( isset( $args->args->query ) && $args->args->query ? '
 		AND 
 		(
+			' . ( !isset( $args->args->sortby ) || $args->args->sortby == 'FullName' ? '
 			( 
 				u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
 			) 
-			OR 
+			' . ( !isset( $args->args->sortby ) ? 'OR ' : '' ) : '' )
+			 .  ( !isset( $args->args->sortby ) || $args->args->sortby == 'Name' ? '
 			( 
 				u.Name LIKE "' . trim( $args->args->query ) . '%" 
 			) 
-			OR 
+			' . ( !isset( $args->args->sortby ) ? 'OR ' : '' ) : '' )
+			 .  ( !isset( $args->args->sortby ) || $args->args->sortby == 'Email' ? '
 			( 
 				u.Email LIKE "' . trim( $args->args->query ) . '%" 
-			) 
+			) ' : '' ) . '
 		)' : '' ) . '
 	GROUP 
 		BY u.ID, g.Name 
 	ORDER BY 
-		u.FullName ASC 
+		u.' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . ' 
+		' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) . ' 
 	' . ( isset( $args->args->limit ) && $args->args->limit ? '
 	LIMIT ' . $args->args->limit . ' 
 	' : '' ) . '
@@ -175,6 +179,6 @@ if( $users = $SqlDatabase->FetchObjects( '
 	
 	die( 'ok<!--separate-->' . json_encode( $out ) );
 }
-die( 'fail<!--separate-->{"response":"-2","message":"list users failed Error 2"}'  );
+die( 'fail<!--separate-->{"response":"-2","message":"list users failed Error 2"} ' );
 
 ?>
