@@ -650,11 +650,15 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 						door.Dormant.write( args[ 'to' ], data, function( response )
 						{
 							refresh();
-							if ( response == 0 )
+							if( response == 0 )
+							{
 								doAlert();
+							}
 							else
+							{
 								response = 'ok';
-							if ( callback )
+							}
+							if( callback )
 								callback( response, dr );
 						} );
 					}

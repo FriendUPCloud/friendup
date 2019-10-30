@@ -12,7 +12,7 @@ var _dialogStorage = {};
 
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
-{
+{	
 	var self = this;
 	var mainview = false;
 	var suffix = false;
@@ -98,24 +98,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			mainview = currentMovable.windowObject;
 		}
 	}
-	
-	// Generate dialog ID
-	var ds = null; // <- main container for session based storage
-	if( mainview )
-	{
-		// Create application collection
-		if( !_dialogStorage[ mainview.applicationName ] )
-			_dialogStorage[ mainview.applicationName ] = {};
-		var dialogID = CryptoJS.SHA1( mainview.title + '-' + type ).toString();
-		if( !_dialogStorage[ mainview.applicationName ][ dialogID ] )
-			_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
-		ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
-	}
 
 	var dialog = this;
 	dialog.suffix = suffix;
 	if( !filename ) filename = '';
 
+	// Grab title for later.....................................................
 	var ftitle = '';
 	
 	switch ( type )
@@ -129,6 +117,19 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	this.type = type;
 
 	if( title ) ftitle = title;
+
+	// Generate dialog ID.......................................................
+	var ds = null; // <- main container for session based storage
+	if( mainview )
+	{
+		// Create application collection
+		if( !_dialogStorage[ mainview.applicationName ] )
+			_dialogStorage[ mainview.applicationName ] = {};
+		var dialogID = CryptoJS.SHA1( ftitle + '-' + type ).toString();
+		if( !_dialogStorage[ mainview.applicationName ][ dialogID ] )
+			_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
+		ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
+	}
 
 	var wantedWidth = 800;
 
@@ -625,7 +626,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			inpu.value = dialog.path;
 		}
-	
+		
 		if( dialog.path == 'Mountlist:' )
 		{
 			// Correct fileinfo
