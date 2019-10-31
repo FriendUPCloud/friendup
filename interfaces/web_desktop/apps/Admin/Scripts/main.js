@@ -221,6 +221,13 @@ function setGUISection( module, section )
 		ge( 'GuiContent' ).innerHTML = data;
 		Sections[ sectPart ]();
 		
+		// Temporary until search is fixed for users ...
+		
+		if( section.toLowerCase() == 'users' ) 
+		{
+			UsersSettings( 'maxlimit', 99999 );
+		}
+		
 		// Reinitialize!
 		Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
 		Friend.responsive.reinit();
