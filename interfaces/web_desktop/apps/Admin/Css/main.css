@@ -22,6 +22,53 @@
 	background-color: transparent;
 }
 
+#Admin .Active > button
+{
+	background-color: #343c4b !important;
+	color: #f0f0f0 !important;
+	/*padding: 5px 5px !important;*/
+	border: 0 !important;
+}
+
+#Admin #UserList .submenu_wrapper
+{
+	display: none;
+	
+	position: absolute;
+	right: 20px;
+	background: white;
+	text-align: left;
+	border: 1px solid #343c4b;
+	margin-top: 7px;
+	margin-right: 4px;
+}
+
+#Admin #UserList .submenu_wrapper ul
+{
+	margin: 4px;
+	margin-left: 8px;
+	margin-right: 8px;
+	list-style: none;
+	padding: 0;
+}
+
+#Admin #UserList .submenu_wrapper ul > li
+{
+	cursor: pointer;
+	padding: 6px;
+	border-bottom: 1px solid #343c4b;
+}
+
+#Admin #UserList .submenu_wrapper ul > li:last-child
+{
+	border: 0;
+}
+
+#Admin #UserList .Active .submenu_wrapper
+{
+	display: block;
+}
+
 #Admin input
 {
 	/*font-size: 20px;*/

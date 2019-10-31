@@ -686,7 +686,7 @@ Sections.accounts_users = function( cmd, extra )
 					extr = '<button style="position: absolute; right: 0;" class="ButtonSmall IconButton IconSmall fa-remove"/>&nbsp;</button>';
 				}
 			
-				tr.innerHTML = '\
+				/*tr.innerHTML = '\
 					<div class="HContent20 FloatLeft">\
 						<h2>' + i18n( 'i18n_users' ) + '</h2>\
 					</div>\
@@ -696,6 +696,20 @@ Sections.accounts_users = function( cmd, extra )
 					</div>\
 					<div class="HContent10 FloatLeft TextRight">\
 						<button id="AdminNewUserBtn" class="IconButton IconSmall fa-plus"></button>\
+					</div>\
+				';*/
+				
+				tr.innerHTML = '\
+					<div class="HContent20 FloatLeft">\
+						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+					</div>\
+					<div class="HContent70 FloatLeft Relative">\
+						' + extr + '\
+						<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
+					</div>\
+					<div class="HContent10 FloatLeft TextRight InActive">\
+						<button id="AdminUsersBtn" class="IconButton IconSmall fa-bars"></button>\
+						<div class="submenu_wrapper"><ul id="AdminUsersSubMenu"></ul></div>\
 					</div>\
 				';
 					
@@ -771,40 +785,144 @@ Sections.accounts_users = function( cmd, extra )
 		//l.appendChild( b );		
 		//headRow.appendChild( l );
 		var b = ge( 'AdminNewUserBtn' );
-		b.onclick = function( e )
+		if( b )
 		{
-			var d = new File( 'Progdir:Templates/account_users_details.html' );
-			// Add all data for the template
-			d.replacements = {
-				user_name:         '',
-				user_fullname:     '',
-				user_username:     '',
-				user_email:        '',
-				theme_name:        '',
-				theme_dark:        '',
-				theme_style:       '',
-				theme_preview:     '',
-				wallpaper_name:    '',
-				workspace_count:   '',
-				system_disk_state: '',
-				storage:           '',
-				workgroups:        '',
-				roles:             '',
-				applications:      ''
-			};
-			
-			// Add translations
-			d.i18n();
-			d.onLoad = function( data )
+			b.onclick = function( e )
 			{
-				ge( 'UserDetails' ).innerHTML = data;
-				//initStorageGraphs();
+				var d = new File( 'Progdir:Templates/account_users_details.html' );
+				// Add all data for the template
+				d.replacements = {
+					user_name:         '',
+					user_fullname:     '',
+					user_username:     '',
+					user_email:        '',
+					theme_name:        '',
+					theme_dark:        '',
+					theme_style:       '',
+					theme_preview:     '',
+					wallpaper_name:    '',
+					workspace_count:   '',
+					system_disk_state: '',
+					storage:           '',
+					workgroups:        '',
+					roles:             '',
+					applications:      ''
+				};
+			
+				// Add translations
+				d.i18n();
+				d.onLoad = function( data )
+				{
+					ge( 'UserDetails' ).innerHTML = data;
+					//initStorageGraphs();
 				
-				// Responsive framework
-				Friend.responsive.pageActive = ge( 'UserDetails' );
-				Friend.responsive.reinit();
+					// Responsive framework
+					Friend.responsive.pageActive = ge( 'UserDetails' );
+					Friend.responsive.reinit();
+				}
+				d.load();
 			}
-			d.load();
+		}
+		
+		var btn = ge( 'AdminUsersBtn' );
+		if( btn )
+		{
+			btn.onclick = function( e )
+			{
+				SubMenu( this );
+			}
+		}
+		
+		var sm = ge( 'AdminUsersSubMenu' );
+		if( sm )
+		{
+			
+			var li = document.createElement( 'li' );
+			li.innerHTML = i18n( 'i18n_new_user' );
+			li.onclick = function( e )
+			{
+				
+				var d = new File( 'Progdir:Templates/account_users_details.html' );
+				// Add all data for the template
+				d.replacements = {
+					user_name:         '',
+					user_fullname:     '',
+					user_username:     '',
+					user_email:        '',
+					theme_name:        '',
+					theme_dark:        '',
+					theme_style:       '',
+					theme_preview:     '',
+					wallpaper_name:    '',
+					workspace_count:   '',
+					system_disk_state: '',
+					storage:           '',
+					workgroups:        '',
+					roles:             '',
+					applications:      ''
+				};
+				
+				// Add translations
+				d.i18n();
+				d.onLoad = function( data )
+				{
+					ge( 'UserDetails' ).innerHTML = data;
+					//initStorageGraphs();
+				
+					// Responsive framework
+					Friend.responsive.pageActive = ge( 'UserDetails' );
+					Friend.responsive.reinit();
+				}
+				d.load();
+				
+				SubMenu( this.parentNode.parentNode );
+			}
+			sm.appendChild( li );
+			
+			var li = document.createElement( 'li' );
+			li.className = 'show';
+			li.innerHTML = i18n( 'i18n_show_disabled_users' );
+			li.onclick = function( e )
+			{
+				if( this.className.indexOf( 'show' ) >= 0 )
+				{
+					hideStatus( 'Disabled', true );
+					this.innerHTML = i18n( 'i18n_hide_disabled_users' );
+					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
+				}
+				else
+				{
+					hideStatus( 'Disabled', false );
+					this.innerHTML = i18n( 'i18n_show_disabled_users' );
+					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
+				}
+				
+				//SubMenu( this.parentNode.parentNode );
+			}
+			sm.appendChild( li );
+			
+			var li = document.createElement( 'li' );
+			li.className = 'hide';
+			li.innerHTML = i18n( 'i18n_hide_locked_users' );
+			li.onclick = function( e )
+			{
+				if( this.className.indexOf( 'hide' ) >= 0 )
+				{
+					hideStatus( 'Locked', false );
+					this.innerHTML = i18n( 'i18n_show_locked_users' );
+					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'show';
+				}
+				else
+				{
+					hideStatus( 'Locked', true );
+					this.innerHTML = i18n( 'i18n_hide_locked_users' );
+					this.className = this.className.split( 'hide' ).join( '' ).split( 'show' ).join( '' ) + 'hide';
+				}
+				
+				//SubMenu( this.parentNode.parentNode );
+			}
+			sm.appendChild( li );
+			
 		}
 		
 		if( !ge( 'ListUsersInner' ) )
@@ -1084,6 +1202,39 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
+	function hideStatus( status, show )
+	{
+		if( status && ge( 'ListUsersInner' ) )
+		{
+			var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+			
+			if( list.length > 0 )
+			{
+				for( var a = 0; a < list.length; a++ )
+				{
+					if( list[a].className && list[a].className.indexOf( 'HRow' ) < 0 ) continue;
+					
+					var span = list[a].getElementsByTagName( 'span' )[0];
+					
+					if( span )
+					{
+						if( span.getAttribute( 'status' ).toLowerCase() == status.toLowerCase() )
+						{
+							if( show )
+							{
+								list[a].style.display = '';
+							}
+							else
+							{
+								list[a].style.display = 'none';
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	function filterUsers( filter, server )
 	{
 		if( !server && ge( 'ListUsersInner' ) )
@@ -1113,6 +1264,8 @@ Sections.accounts_users = function( cmd, extra )
 						}
 					}
 				}
+				
+				hideStatus( 'Disabled', false );
 			}
 		}
 		
@@ -1233,7 +1386,17 @@ Sections.accounts_users = function( cmd, extra )
 	}
 };
 
-
+function SubMenu( _this )
+{
+	if( _this.parentNode.className.indexOf( ' InActive' ) >= 0 )
+	{
+		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' Active';
+	}
+	else
+	{
+		_this.parentNode.className = _this.parentNode.className.split( ' InActive' ).join( '' ).split( ' Active' ).join( '' ) + ' InActive';
+	}
+}
 
 function sortUsers( sortby )
 {

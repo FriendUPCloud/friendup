@@ -111,6 +111,12 @@ i18n_user_updated_succ                 : The user was successfully updated.
 i18n_user_update_fail                  : User update failed
 i18n_user_update_failed                : Failed to update the user.
 
+i18n_new_user                          : New user
+i18n_show_disabled_users               : Show disabled users
+i18n_hide_disabled_users               : Hide disabled users
+i18n_show_locked_users                 : Show locked users
+i18n_hide_locked_users                 : Hide locked users
+
 #Workgroup related
 
 i18n_workgroups                        : Workgroups
