@@ -834,7 +834,7 @@ Sections.accounts_users = function( cmd, extra )
 		}
 		
 		var sm = ge( 'AdminUsersSubMenu' );
-		if( sm )
+		if( sm && !sm.innerHTML )
 		{
 			
 			var li = document.createElement( 'li' );
