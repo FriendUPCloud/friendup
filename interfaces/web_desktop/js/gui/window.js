@@ -3945,6 +3945,7 @@ var View = function( args )
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
 		iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		iframe.referrerPolicy = 'origin';
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
 		self._window.authId = conf.authId;
