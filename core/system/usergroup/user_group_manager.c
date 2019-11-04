@@ -663,7 +663,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	BufStringAddSize( bsGroups, "]}", 2 );
 	
 	// update external services about changes
-	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
+	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 	// update user about changes
 	UserNotifyFSEvent2( sb->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 	

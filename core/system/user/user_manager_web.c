@@ -718,7 +718,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\"}", id, usr->u_UUID );
 							}
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "user", "update", msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 						}
 						
 						if( gotFromDB == TRUE )
@@ -1089,7 +1089,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\"}", id, logusr->u_UUID );
 							}
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "user", "update", msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 						}
 					}
 					UMUserUpdateDB( l->sl_UM, logusr );

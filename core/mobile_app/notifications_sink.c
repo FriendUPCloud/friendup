@@ -346,6 +346,18 @@ void ProcessSinkMessage( void *locd )
 	//type (1): 'ping (2)
 	//	}
 	//}
+
+	// request : 
+	// {
+	// type : 'user',
+	// data : {
+	// type : 'list',
+	// data : {
+	// requestid : <string>,
+	//},
+    //},
+	//}
+
 	
 	//json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
 	
@@ -421,20 +433,47 @@ void ProcessSinkMessage( void *locd )
 				
 				NotificationManagerAddExternalConnection( SLIB->sl_NotificationManager, d );
 				
-				// send message about current groups and users
-				
-				BufString *bs = BufStringNew();
-				UGMReturnAllAndMembers( SLIB->sl_UGM, bs, "Workgroup" );
-				NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, "service", "group", "list", bs->bs_Buffer );
-				BufStringDelete( bs );
-				
 				goto error_point;
 			}
 			else if( d->d_Authenticated ) 
 			{
-				
 				int dlen =  t[3].end - t[3].start;
-				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
+				if( strncmp( data + t[2].start, "user", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
+				{
+					char *reqid = NULL;
+					if( strncmp( data + t[5].start, "list", t[5].end - t[5].start) == 0) 
+					{
+						reqid = StringDuplicateN( data + t[8].start, t[8].end - t[8].start );
+						
+						if( reqid != NULL )
+						{
+							BufString *bs = BufStringNew();
+							UMReturnAllUsers( SLIB->sl_UM, bs, NULL );
+							NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+							BufStringDelete( bs );
+							FFree( reqid );
+						}
+					}
+				}
+				else if( strncmp( data + t[2].start, "group", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
+				{
+					char *reqid = NULL;
+					if( strncmp( data + t[5].start, "list", t[5].end - t[5].start) == 0) 
+					{
+						reqid = StringDuplicateN( data + t[8].start, t[8].end - t[8].start );
+						if( reqid != NULL )
+						{
+							// send message about current groups and users
+				
+							BufString *bs = BufStringNew();
+							UGMReturnAllAndMembers( SLIB->sl_UGM, bs, "Workgroup" );
+							NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+							BufStringDelete( bs );
+							FFree( reqid );
+						}
+					}
+				}
+				else if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
 					static int bufferSize = LWS_PRE+256;
 					char *reply = FMalloc( bufferSize );

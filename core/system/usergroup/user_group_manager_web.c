@@ -239,7 +239,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							char msg[ 512 ];
 							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "create", msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 						}
 						ug = fg;
 						addUsers = TRUE;
@@ -317,7 +317,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								char msg[ 512 ];
 								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_Name, ug->ug_ParentID );
 								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "create", msg );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 							}
 					
 							char buffer[ 256 ];
@@ -380,7 +380,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						generateConnectedUsers( l, groupID, retString );
 						BufStringAddSize( retString, "]}", 2 );
 						
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", retString->bs_Buffer );
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
 						BufStringDelete( retString );
 					}
 				}
@@ -493,7 +493,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
 							UGMRemoveGroup( l->sl_UGM, fg );
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "delete", msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
 						
 							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
 
@@ -656,7 +656,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 					char msg[ 512 ];
 					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu}", fg->ug_ID, fg->ug_Name, fg->ug_Type, fg->ug_ParentID );
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "update", msg );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "update", msg );
 					
 					// if users parameter is passed then we must remove current users from group
 					if( users != NULL )
@@ -741,7 +741,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							generateConnectedUsers( l, groupID, retString );
 							BufStringAddSize( retString, "]}", 2 );
 						
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", retString->bs_Buffer );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
 							BufStringDelete( retString );
 						}
 					}
@@ -1001,7 +1001,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			
-			//NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "listdetails", &(retString->bs_Buffer[17]) );
+			//NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "listdetails", &(retString->bs_Buffer[17]) );
 			
 			retString->bs_Buffer = NULL;
 			BufStringDelete( retString );
@@ -1125,7 +1125,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			BufStringAddSize( retString, "]}", 2 );
 			
 			// send notification to external service
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "addusers", &(retString->bs_Buffer[17]) );
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "addusers", &(retString->bs_Buffer[17]) );
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			retString->bs_Buffer = NULL;
@@ -1285,7 +1285,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			BufStringAddSize( retString, "]}", 2 );
 			
 			// send notification to external service
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "removeusers", &(retString->bs_Buffer[17]) );
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "removeusers", &(retString->bs_Buffer[17]) );
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			retString->bs_Buffer = NULL;
@@ -1431,7 +1431,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 					char msg[ 512 ];
 					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, "service", "group", "setusers", msg );
+					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", msg );
 
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );

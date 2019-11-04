@@ -1182,3 +1182,76 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 	}
 	return 1;
 }
+
+
+/**
+ * Return all users from database
+ *
+ * @param um pointer to UserManager
+ * @param bs pointer to BufString where string will be stored
+ * @param grname group name. If you want to get users from group, put group name. If you want all users, set NULL.
+ * @return 0 when success, otherwise error number
+ */
+int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
+{
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[ 512 ];
+		char tmp[ 512 ];
+		int itmp = 0;
+		
+		if( grname == NULL )
+		{
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status FROM FUser u" );
+		}
+		else
+		{
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status FROM FUserGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID inner join FUser u on utg.UserID=u.ID where g.Name in ('%s')", grname );
+		}
+		
+		BufStringAddSize( bs, "[", 1 );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int usrpos = 0;
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				// User Status == DISABLED
+				if( strcmp( (char *)row[ 2 ], "1" ) )
+				{
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+					}
+				}
+				else
+				{
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"uuid\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"uuid\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+					}
+				}
+				BufStringAddSize( bs, tmp, itmp );
+				usrpos++;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+		
+		BufStringAddSize( bs, "]", 1 );
+	}
+	return 0;
+}
