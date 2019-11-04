@@ -297,9 +297,6 @@ Sections.accounts_users = function( cmd, extra )
 				}
 				apl += '</div>';
 				
-				var ulocked = false;
-				var udisabled = false;
-				
 				// Get the user details template
 				var d = new File( 'Progdir:Templates/account_users_details.html' );
 				console.log( 'userInfo ', userInfo );
