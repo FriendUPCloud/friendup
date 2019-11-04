@@ -1685,7 +1685,7 @@ Sections.user_status_update = function( userid, status )
 				{
 					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d } );
 					
-					if( e )
+					if( e == 'ok' )
 					{
 						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
 						Toggle( ge( 'usLocked'   ), false, ( on ? false : true ) );
@@ -1709,7 +1709,7 @@ Sections.user_status_update = function( userid, status )
 				{
 					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d } );
 					
-					if( e )
+					if( e == 'ok' )
 					{
 						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
 						Toggle( ge( 'usDisabled' ), false, ( on ? false : true ) );

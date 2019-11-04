@@ -316,7 +316,7 @@ function Toggle( _this, callback, on )
 	
 	// If nothing is set, set default based on ( on | off ) preset
 	
-	if( _this.className.indexOf( 'fa-toggle-on' ) < 0 && _this.className.indexOf( 'fa-toggle-off' ) < 0 )
+	if( _this.className.indexOf( 'fa-toggle-on' ) < 0 || _this.className.indexOf( 'fa-toggle-off' ) < 0 )
 	{
 		_this.className = _this.className.split( ' fa-toggle-on' ).join( '' ).split( ' fa-toggle-off' ).join( '' ) + ( on ? ' fa-toggle-on' : ' fa-toggle-off' );
 	}
