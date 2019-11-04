@@ -298,17 +298,20 @@ var Sections = {
 
 function Toggle( _this, callback, on )
 {
-	if( _this.className.indexOf( 'fa-toggle-off' ) >= 0 )
+	if( callback )
 	{
-		_this.className = _this.className.split( ' fa-toggle-off' ).join( '' ) + ' fa-toggle-on';
+		if( _this.className.indexOf( 'fa-toggle-off' ) >= 0 )
+		{
+			_this.className = _this.className.split( ' fa-toggle-off' ).join( '' ) + ' fa-toggle-on';
 		
-		if( callback ) callback( true );
-	}
-	else if( _this.className.indexOf( 'fa-toggle-on' ) >= 0 )
-	{
-		_this.className = _this.className.split( ' fa-toggle-on' ).join( '' ) + ' fa-toggle-off';
+			callback( true );
+		}
+		else if( _this.className.indexOf( 'fa-toggle-on' ) >= 0 )
+		{
+			_this.className = _this.className.split( ' fa-toggle-on' ).join( '' ) + ' fa-toggle-off';
 		
-		if( callback ) callback( false );
+			callback( false );
+		}
 	}
 	
 	// If nothing is set, set default based on ( on | off ) preset

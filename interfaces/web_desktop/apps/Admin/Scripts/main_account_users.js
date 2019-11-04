@@ -94,6 +94,24 @@ Sections.accounts_users = function( cmd, extra )
 						
 				console.log( info.applications );		
 				
+				// User
+				var ulocked = false;
+				var udisabled = false;
+				
+				if( userInfo.Status )
+				{
+					// 0 = Active, 1 = Disabled, 2 = Locked
+					
+					if( userInfo.Status == 1 )
+					{
+						udisabled = true;
+					}
+					if( userInfo.Status == 2 )
+					{
+						ulocked = true;
+					}
+				}
+				
 				var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 				if( !themeData )
 					themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
@@ -279,26 +297,31 @@ Sections.accounts_users = function( cmd, extra )
 				}
 				apl += '</div>';
 				
+				var ulocked = false;
+				var udisabled = false;
+				
 				// Get the user details template
 				var d = new File( 'Progdir:Templates/account_users_details.html' );
-				
+				console.log( 'userInfo ', userInfo );
 				// Add all data for the template
 				d.replacements = {
-					userid:            userInfo.ID,
-					user_name:         userInfo.FullName,
-					user_fullname:     userInfo.FullName,
-					user_username:     userInfo.Name,
-					user_email:        userInfo.Email,
-					theme_name:        settings.Theme,
-					theme_dark:        themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					theme_style:       themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
-					wallpaper_name:    workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ),
-					workspace_count:   workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
-					system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					storage:           mlst,
-					workgroups:        wstr,
-					roles:             rstr,
-					applications:      apl
+					userid               : userInfo.ID,
+					user_name            : userInfo.FullName,
+					user_fullname        : userInfo.FullName,
+					user_username        : userInfo.Name,
+					user_email           : userInfo.Email,
+					user_locked_toggle   : ( ulocked   ? 'Green fa-toggle-on' : 'Grey fa-toggle-off' ),
+					user_disabled_toggle : ( udisabled ? 'Green fa-toggle-on' : 'Grey fa-toggle-off' ),
+					theme_name           : settings.Theme,
+					theme_dark           : themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+					theme_style          : themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
+					wallpaper_name       : workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ),
+					workspace_count      : workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
+					system_disk_state    : workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+					storage              : mlst,
+					workgroups           : wstr,
+					roles                : rstr,
+					applications         : apl
 				};
 				
 				// Add translations
@@ -1633,6 +1656,72 @@ function RunRequestQueue()
 			}
 		}
 	}
+}
+
+
+
+Sections.user_status_update = function( userid, status )
+{
+	
+	if( userid && status )
+	{
+		// 0 = Active, 1 = Disabled, 2 = Locked
+		
+		var on = false;
+		
+		switch( status )
+		{
+			// false = Active, true = Disabled
+			
+			case 1:
+				
+				if( ge( 'usDisabled' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				{
+					on = true;
+				}
+				
+				var f = new Library( 'system.library' );
+				f.onExecuted = function( e, d )
+				{
+					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d } );
+					
+					if( e )
+					{
+						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
+						Toggle( ge( 'usLocked'   ), false, ( on ? false : true ) );
+					}
+				}
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ) } );
+				
+				break;
+			
+			// false = Active, true = Locked
+			
+			case 2:
+				
+				if( ge( 'usLocked' ).className.indexOf( 'fa-toggle-off' ) >= 0 )
+				{
+					on = true;
+				}
+				
+				var f = new Library( 'system.library' );
+				f.onExecuted = function( e, d )
+				{
+					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d } );
+					
+					if( e )
+					{
+						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
+						Toggle( ge( 'usDisabled' ), false, ( on ? false : true ) );
+					}
+				}
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ) } );
+				
+				break;
+			
+		}
+	}
+	
 }
 
 Sections.userrole_edit = function( userid, _this )
