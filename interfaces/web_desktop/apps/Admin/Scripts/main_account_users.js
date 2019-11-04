@@ -307,8 +307,8 @@ Sections.accounts_users = function( cmd, extra )
 					user_fullname        : userInfo.FullName,
 					user_username        : userInfo.Name,
 					user_email           : userInfo.Email,
-					user_locked_toggle   : ( ulocked   ? 'Green fa-toggle-on' : 'Grey fa-toggle-off' ),
-					user_disabled_toggle : ( udisabled ? 'Green fa-toggle-on' : 'Grey fa-toggle-off' ),
+					user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
+					user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
 					theme_name           : settings.Theme,
 					theme_dark           : themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
 					theme_style          : themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
@@ -1685,7 +1685,7 @@ Sections.user_status_update = function( userid, status )
 					if( e == 'ok' )
 					{
 						Toggle( ge( 'usDisabled' ), false, ( on ? true : false ) );
-						Toggle( ge( 'usLocked'   ), false, ( on ? false : true ) );
+						Toggle( ge( 'usLocked'   ), false, false );
 					}
 				}
 				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ) } );
@@ -1709,7 +1709,7 @@ Sections.user_status_update = function( userid, status )
 					if( e == 'ok' )
 					{
 						Toggle( ge( 'usLocked'   ), false, ( on ? true : false ) );
-						Toggle( ge( 'usDisabled' ), false, ( on ? false : true ) );
+						Toggle( ge( 'usDisabled' ), false, false );
 					}
 				}
 				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ) } );
