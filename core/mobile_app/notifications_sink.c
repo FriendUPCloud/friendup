@@ -439,15 +439,19 @@ void ProcessSinkMessage( void *locd )
 			{
 				int dlen =  t[3].end - t[3].start;
 				msize = t[2].end - t[2].start;
+				DEBUG("Check1:  %.*s\n", 10, data + t[2].start );
 				if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
 				{
+					DEBUG("Check2:  %.*s\n", 10, data + t[5].start );
 					msize = t[5].end - t[5].start;
 					if( strncmp( data + t[5].start, "user", msize ) == 0 )
 					{
 						char *reqid = NULL;
+						DEBUG("Check3:  %.*s\n", 10, data + t[8].start );
 						if( strncmp( data + t[8].start, "list", t[8].end - t[8].start) == 0) 
 						{
 							reqid = StringDuplicateN( data + t[11].start, t[11].end - t[11].start );
+							DEBUG("Check1:  %s\n", reqid );
 						
 							if( reqid != NULL )
 							{
@@ -459,22 +463,22 @@ void ProcessSinkMessage( void *locd )
 							}
 						}
 					}
-				}
-				else if( strncmp( data + t[2].start, "group", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
-				{
-					char *reqid = NULL;
-					if( strncmp( data + t[5].start, "list", t[5].end - t[5].start) == 0) 
+					else if( strncmp( data + t[5].start, "group", msize ) == 0 && strncmp( data + t[5].start, "data", dlen ) == 0 )
 					{
-						reqid = StringDuplicateN( data + t[8].start, t[8].end - t[8].start );
-						if( reqid != NULL )
+						char *reqid = NULL;
+						if( strncmp( data + t[5].start, "list", t[8].end - t[8].start) == 0) 
 						{
-							// send message about current groups and users
+							reqid = StringDuplicateN( data + t[11].start, t[11].end - t[11].start );
+							if( reqid != NULL )
+							{
+								// send message about current groups and users
 				
-							BufString *bs = BufStringNew();
-							UGMReturnAllAndMembers( SLIB->sl_UGM, bs, "Workgroup" );
-							NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
-							BufStringDelete( bs );
-							FFree( reqid );
+								BufString *bs = BufStringNew();
+								UGMReturnAllAndMembers( SLIB->sl_UGM, bs, "Workgroup" );
+								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+								BufStringDelete( bs );
+								FFree( reqid );
+							}
 						}
 					}
 				}
