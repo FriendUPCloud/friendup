@@ -61,11 +61,11 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString 
 				{
 					if( pos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":true}", userid, (char *)row[ 1 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":true}", userid, (char *)row[ 1 ] );
 					}
 				}
 				else
