@@ -442,15 +442,15 @@ void ProcessSinkMessage( void *locd )
 				DEBUG("Check1:  %.*s\n", 10, data + t[2].start );
 				if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
 				{
-					DEBUG("Check2:  %.*s\n", 10, data + t[5].start );
-					msize = t[5].end - t[5].start;
-					if( strncmp( data + t[5].start, "user", msize ) == 0 )
+					DEBUG("Check2:  %.*s\n", 10, data + t[6].start );
+					msize = t[6].end - t[6].start;
+					if( strncmp( data + t[6].start, "user", msize ) == 0 )
 					{
 						char *reqid = NULL;
-						DEBUG("Check3:  %.*s\n", 10, data + t[8].start );
-						if( strncmp( data + t[8].start, "list", t[8].end - t[8].start) == 0) 
+						DEBUG("Check3:  %.*s\n", 10, data + t[10].start );
+						if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
 						{
-							reqid = StringDuplicateN( data + t[11].start, t[11].end - t[11].start );
+							reqid = StringDuplicateN( data + t[13].start, t[13].end - t[13].start );
 							DEBUG("Check1:  %s\n", reqid );
 						
 							if( reqid != NULL )
