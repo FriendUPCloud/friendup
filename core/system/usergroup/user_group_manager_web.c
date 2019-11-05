@@ -61,22 +61,22 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString 
 				{
 					if( pos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 1 ] );
 					}
 				}
 				else
 				{
 					if( pos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\"}", userid, (char *)row[ 1 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\"}", userid, (char *)row[ 1 ] );
 					}
 				}
 				BufStringAddSize( retString, tmp, itmp );
@@ -980,11 +980,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
 							}
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;
@@ -1224,11 +1224,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
 							}
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;

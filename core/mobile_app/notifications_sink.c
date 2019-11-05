@@ -438,20 +438,25 @@ void ProcessSinkMessage( void *locd )
 			else if( d->d_Authenticated ) 
 			{
 				int dlen =  t[3].end - t[3].start;
-				if( strncmp( data + t[2].start, "user", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
+				msize = t[2].end - t[2].start;
+				if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
 				{
-					char *reqid = NULL;
-					if( strncmp( data + t[5].start, "list", t[5].end - t[5].start) == 0) 
+					msize = t[5].end - t[5].start;
+					if( strncmp( data + t[5].start, "user", msize ) == 0 )
 					{
-						reqid = StringDuplicateN( data + t[8].start, t[8].end - t[8].start );
-						
-						if( reqid != NULL )
+						char *reqid = NULL;
+						if( strncmp( data + t[8].start, "list", t[8].end - t[8].start) == 0) 
 						{
-							BufString *bs = BufStringNew();
-							UMReturnAllUsers( SLIB->sl_UM, bs, NULL );
-							NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
-							BufStringDelete( bs );
-							FFree( reqid );
+							reqid = StringDuplicateN( data + t[11].start, t[11].end - t[11].start );
+						
+							if( reqid != NULL )
+							{
+								BufString *bs = BufStringNew();
+								UMReturnAllUsers( SLIB->sl_UM, bs, NULL );
+								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+								BufStringDelete( bs );
+								FFree( reqid );
+							}
 						}
 					}
 				}

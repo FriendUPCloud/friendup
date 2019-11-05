@@ -678,7 +678,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 					{
 						FBOOL gotFromDB = FALSE;
-						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu where ID=%lu", status, id );
+						time_t  updateTime = time( NULL );
+						
+						// update status and modify timestamp
+						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
@@ -686,6 +689,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( usr != NULL )
 						{
 							usr->u_Status = status;
+							usr->u_ModifyTime = updateTime;
 						}
 						else
 						{
@@ -711,11 +715,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							char msg[ 512 ];
 							if( status == USER_STATUS_DISABLED )
 							{
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\",\"true\"}", id, usr->u_UUID );
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\",\"true\"}", id, usr->u_UUID );
 							}
 							else
 							{
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\"}", id, usr->u_UUID );
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"userid\":\"%s\"}", id, usr->u_UUID );
 							}
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
@@ -777,14 +781,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updatepassword" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		User *logusr = l->sl_UM->um_Users;
 		char *usrname = NULL;
 		char *usrpass = NULL;
 		
@@ -802,17 +805,55 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			usrpass = UrlDecodeToMem( (char *)el->data );
 		}
 		
+		
+		
 		if( usrname != NULL && usrpass != NULL )
 		{
-			while( logusr != NULL )
+			FBOOL access = FALSE;
+			FBOOL gotFromDB = FALSE;
+			int err = 0;
+			
+			// if you are admin you can change every user password
+			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
 			{
-				if( strcmp( logusr->u_Name, usrname ) == 0 )
+				access = TRUE;
+			}
+			else
+			{
+				// if you are not admin, you can change only own password
+				if( strcmp( loggedSession->us_User->u_Name, usrname ) == 0 )
 				{
-					int err = 0;
-					
-					if( 0 == ( err = l->sl_ActiveAuthModule->UpdatePassword( l->sl_ActiveAuthModule, request, logusr, usrpass ) ) )
+					access = TRUE;
+				}
+			}
+			
+			if( access == TRUE )
+			{
+				User *usr = UMGetUserByName( l->sl_UM, usrname );
+				if( usr == NULL )
+				{
+					usr = UMGetUserByNameDB( l->sl_UM, usrname );
+					gotFromDB = TRUE;
+				}
+			
+				if( usr != NULL )
+				{
+					if( 0 == ( err = l->sl_ActiveAuthModule->UpdatePassword( l->sl_ActiveAuthModule, request, usr, usrpass ) ) )
 					{
 						HttpAddTextContent( response, "ok<!--separate-->{ \"updatepassword\": \"success!\"}" );
+					
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							char tmpQuery[ 256 ];
+							time_t  updateTime = time( NULL );
+					
+							// update status and modify timestamp
+							sprintf( tmpQuery, "UPDATE `FUser` set ModifyTime=%lu where ID=%lu", updateTime, usr->u_ID );
+					
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							l->LibrarySQLDrop( l, sqllib );
+						}
 					}
 					else
 					{
@@ -822,17 +863,24 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_USER_NOT_FOUND );
 						HttpAddTextContent( response, buffer );
 					}
-					
-					break;
 				}
-				logusr = (User *)logusr->node.mln_Succ;
-			}
+				else
+				{
+					FERROR("[ERROR] User not found\n" );
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+					HttpAddTextContent( response, buffer );
+				}
 			
-			if( logusr == NULL )
+				if( gotFromDB == TRUE )
+				{
+					UserDelete( usr );
+				}
+			}
+			else
 			{
-				FERROR("[ERROR] User not found\n" );
 				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -1082,11 +1130,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							char msg[ 512 ];
 							if( status == USER_STATUS_DISABLED )
 							{
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\",\"true\"}", id, logusr->u_UUID );
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\",\"true\"}", id, logusr->u_UUID );
 							}
 							else
 							{
-								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\"}", id, logusr->u_UUID );
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"userid\":\"%s\"}", id, logusr->u_UUID );
 							}
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );

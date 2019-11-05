@@ -140,18 +140,27 @@ void UMDelete( UserManager *smgr )
 int UMUserUpdateDB( UserManager *um, User *usr )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( sqlLib != NULL )
+	if( usr != NULL )
 	{
-		sqlLib->Update( sqlLib, UserDesc, usr );
+		usr->u_ModifyTime = time( NULL );
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
-		sb->LibrarySQLDrop( sb, sqlLib );
+		if( sqlLib != NULL )
+		{
+			sqlLib->Update( sqlLib, UserDesc, usr );
+	
+			sb->LibrarySQLDrop( sb, sqlLib );
+		}
+		else
+		{
+			FERROR("Cannot get user, mysql.library was not open\n");
+			return 1;
+		}
 	}
 	else
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
-		return 1;
+		FERROR("User = NULL\n");
+		return 2;
 	}
 	return 0;
 }
@@ -1204,11 +1213,11 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 		
 		if( grname == NULL )
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status FROM FUser u" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status,u.ModifyTime FROM FUser u" );
 		}
 		else
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status FROM FUserGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID inner join FUser u on utg.UserID=u.ID where g.Name in ('%s')", grname );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID inner join FUser u on utg.UserID=u.ID where g.Name in ('%s')", grname );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
@@ -1226,22 +1235,22 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 				{
 					if( usrpos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":\"%s\",\"isdisabled\":\"true\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":\"%s\",\"isdisabled\":\"true\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
 					}
 				}
 				else
 				{
 					if( usrpos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"uuid\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"uuid\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
 					}
 				}
 				BufStringAddSize( bs, tmp, itmp );

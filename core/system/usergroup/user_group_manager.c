@@ -523,7 +523,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	BufString *bsGroups = BufStringNew();
 	//pos = 0;
 	
-	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
+	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"userid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
 	BufStringAddSize( bsGroups, tmpQuery, tmplen );
 	
 	//
@@ -947,22 +947,22 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 				{
 					if( usrpos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 5 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 5 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 5 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"isdisabled\":\"true\"}", userid, (char *)row[ 5 ] );
 					}
 				}
 				else
 				{
 					if( usrpos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\"}", userid, (char *)row[ 5 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\"}", userid, (char *)row[ 5 ] );
 					}
 				}
 				BufStringAddSize( bs, tmp, itmp );
