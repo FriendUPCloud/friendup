@@ -1213,11 +1213,11 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 		
 		if( grname == NULL )
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status,u.ModifyTime FROM FUser u" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ModifyTime FROM FUser u" );
 		}
 		else
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID inner join FUser u on utg.UserID=u.ID where g.Name in ('%s')", grname );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID inner join FUser u on utg.UserID=u.ID where g.Name in ('%s')", grname );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
@@ -1231,26 +1231,27 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				// User Status == DISABLED
-				if( strcmp( (char *)row[ 2 ], "1" ) )
+				DEBUG("Check user status: %s\n", (char *)row[ 1 ] );
+				if( strncmp( (char *)row[ 1 ], "1", 1 ) )
 				{
 					if( usrpos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":\"%s\",\"isdisabled\":\"true\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":\"%s\",\"isdisabled\":\"true\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
 					}
 				}
 				else
 				{
 					if( usrpos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 1 ], (char *)row[ 3 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
 					}
 				}
 				BufStringAddSize( bs, tmp, itmp );

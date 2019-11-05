@@ -975,16 +975,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						char **row;
 						while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 						{
-							char *end;
-							FULONG userid = strtol( (char *)row[0], &end, 0 );
-							
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", (char *)row[0], (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"uuid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\"}", (char *)row[0], (char *)row[ 1 ], (char *)row[ 2 ], (char *)row[ 3 ] );
 							}
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;
@@ -1211,7 +1208,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				if( sqlLib != NULL )
 				{
 					char tmpQuery[ 512 ];
-					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.ID,u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
+					snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserID in(%s) AND ug.UserGroupID=%lu", usersSQL, groupID );
 					void *result = sqlLib->Query(  sqlLib, tmpQuery );
 					if( result != NULL )
 					{
@@ -1220,15 +1217,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 						{
 							char *end;
-							FULONG userid = strtol( (char *)row[0], &end, 0 );
-							
+
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"userid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"userid\":\"%s\",\"status\":\"%s\"}", userid, (char *)row[ 1 ], (char *)row[ 2 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
 							}
 							BufStringAddSize( retString, tmp, itmp );
 							pos++;
