@@ -715,11 +715,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							char msg[ 512 ];
 							if( status == USER_STATUS_DISABLED )
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",true}", usr->u_UUID );
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
 							}
 							else
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", usr->u_UUID );
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
 							}
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );

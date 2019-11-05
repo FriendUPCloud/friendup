@@ -439,16 +439,51 @@ void ProcessSinkMessage( void *locd )
 			{
 				int dlen =  t[3].end - t[3].start;
 				msize = t[2].end - t[2].start;
-				DEBUG("Check1:  %.*s\n", 10, data + t[2].start );
+				//DEBUG("Check1:  %.*s\n", 10, data + t[2].start );
 				if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
 				{
-					DEBUG("Check2:  %.*s\n", 10, data + t[6].start );
+					//DEBUG("Check2:  %.*s\n", 10, data + t[6].start );
 					msize = t[6].end - t[6].start;
 					if( strncmp( data + t[6].start, "user", msize ) == 0 )
 					{
 						char *reqid = NULL;
-						DEBUG("Check3:  %.*s\n", 10, data + t[10].start );
+						char *uuid = NULL;
+						//DEBUG("Check3:  %.*s\n", 10, data + t[10].start );
 						if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
+						{
+							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+							{
+								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+							}
+							if( strncmp( data + t[15].start, "requestid", t[15].end - t[15].start) == 0) 
+							{
+								uuid = StringDuplicateN( data + t[16].start, t[16].end - t[16].start );
+							}
+							
+							//DEBUG("Check1:  %s\n", reqid );
+						
+							if( reqid != NULL )
+							{
+								
+								BufString *bs = BufStringNew();
+								BufStringAddSize( bs, "{", 1 );
+								
+								User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
+								if( usr != NULL )
+								{
+								}
+								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+								BufStringDelete( bs );
+								
+								FFree( reqid );
+								FFree( uuid );
+							}
+							else
+							{
+								DEBUG("Reqid == NULL\n");
+							}
+						}
+						else if( strncmp( data + t[10].start, "get", t[10].end - t[10].start) == 0) 
 						{
 							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
 							{

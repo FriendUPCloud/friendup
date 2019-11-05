@@ -157,6 +157,12 @@ User *UMGetUserByNameDB( UserManager *um, const char *name );
 //
 //
 
+User *UMGetUserByUUIDDB( UserManager *um, const char *name );
+
+//
+//
+//
+
 User *UMGetUserByIDDB( UserManager *um, FULONG id );
 
 //

@@ -43,10 +43,10 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
 	if( sqlLib != NULL )
 	{
-		char tmpQuery[ 512 ];
-		char tmp[ 512 ];
+		char tmpQuery[ 712 ];
+		char tmp[ 712 ];
 		int itmp = 0;
-		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ID FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu", groupID );
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ID,u.ModifyTime FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu", groupID );
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 		if( result != NULL )
 		{
@@ -69,22 +69,22 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 						{
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true}", (char *)row[ 2 ], (char *)row[ 0 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true}", (char *)row[ 2 ], (char *)row[ 0 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 							}
 						}
 						else
 						{
 							if( pos == 0 )
 							{
-								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\"}", (char *)row[ 2 ], (char *)row[ 0 ] );
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 							}
 							else
 							{
-								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\"}", (char *)row[ 2 ], (char *)row[ 0 ] );
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 							}
 						}
 						BufStringAddSize( retString, tmp, itmp );	// send response to caller HTTP/WS
@@ -95,22 +95,22 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 					{
 						if( pos == 0 )
 						{
-							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true}", (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 						else
 						{
-							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true}", (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 					}
 					else
 					{
 						if( pos == 0 )
 						{
-							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\"}", (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 						else
 						{
-							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\"}", (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 					}
 					BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
@@ -126,22 +126,22 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 					{
 						if( pos == 0 )
 						{
-							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true}", (char *)row[ 2 ], (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 						else
 						{
-							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true}", (char *)row[ 2 ], (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 					}
 					else
 					{
 						if( pos == 0 )
 						{
-							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\"}", (char *)row[ 2 ], (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 						else
 						{
-							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\"}", (char *)row[ 2 ], (char *)row[ 0 ] );
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
 					}
 					BufStringAddSize( retString, tmp, itmp );
