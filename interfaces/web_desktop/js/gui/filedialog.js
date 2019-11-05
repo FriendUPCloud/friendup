@@ -89,6 +89,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	}
 
 	if( !path ) path = defaultPath;
+	if( path.indexOf( ':' ) < 0 )
+	{
+		path = 'Home:';
+	}
+	
 	if( !triggerfunction ) return;
 	if( !type ) type = 'open';
 	if( !mainview )
