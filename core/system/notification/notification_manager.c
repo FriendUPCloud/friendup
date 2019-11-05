@@ -729,7 +729,7 @@ OR
 		
 		if( reqid != NULL )
 		{
-			dstsize = snprintf( dstMsg, msglen, "{\"type\":\"reply\",\"data\":{\"requestId\":\"%s\",\"result\"::%s}}", reqid, msg );
+			dstsize = snprintf( dstMsg, msglen, "{\"type\":\"reply\",\"data\":{\"requestId\":\"%s\",\"result\":%s}}", reqid, msg );
 		}
 		else
 		{
