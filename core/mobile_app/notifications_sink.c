@@ -450,25 +450,37 @@ void ProcessSinkMessage( void *locd )
 						DEBUG("Check3:  %.*s\n", 10, data + t[10].start );
 						if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
 						{
-							reqid = StringDuplicateN( data + t[13].start, t[13].end - t[13].start );
+							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+							{
+								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+							}
 							DEBUG("Check1:  %s\n", reqid );
 						
 							if( reqid != NULL )
 							{
+								
 								BufString *bs = BufStringNew();
 								UMReturnAllUsers( SLIB->sl_UM, bs, NULL );
+								DEBUG("Return message: %s\n", bs->bs_Buffer );
 								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
 								BufStringDelete( bs );
 								FFree( reqid );
 							}
+							else
+							{
+								DEBUG("Reqid == NULL\n");
+							}
 						}
 					}
-					else if( strncmp( data + t[5].start, "group", msize ) == 0 && strncmp( data + t[5].start, "data", dlen ) == 0 )
+					else if( strncmp( data + t[6].start, "group", msize ) == 0 )
 					{
 						char *reqid = NULL;
-						if( strncmp( data + t[5].start, "list", t[8].end - t[8].start) == 0) 
+						if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
 						{
-							reqid = StringDuplicateN( data + t[11].start, t[11].end - t[11].start );
+							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+							{
+								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+							}
 							if( reqid != NULL )
 							{
 								// send message about current groups and users
@@ -478,6 +490,10 @@ void ProcessSinkMessage( void *locd )
 								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
 								BufStringDelete( bs );
 								FFree( reqid );
+							}
+							else
+							{
+								DEBUG("Reqid == NULL\n");
 							}
 						}
 					}

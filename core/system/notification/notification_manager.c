@@ -676,11 +676,13 @@ int NotificationManagerSendInformationToConnections( NotificationManager *nm, ch
 
 int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *reqid, const char *sertype, const char *func, const char *action, char *msg )
 {
-	if( sertype == NULL || func == NULL || action == NULL || msg == NULL )
+	if( reqid == NULL )
 	{
-	
-		FERROR("Message missing parameters\n");
-		return 0;
+		if( sertype == NULL || func == NULL || action == NULL || msg == NULL )
+		{
+			FERROR("Message missing parameters\n");
+			return 0;
+		}
 	}
 	
 	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
