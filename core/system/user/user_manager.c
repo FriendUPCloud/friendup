@@ -669,6 +669,10 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
  */
 User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
 {
+	if( uuid == NULL )
+	{
+		return NULL;
+	}
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	User *user = NULL;

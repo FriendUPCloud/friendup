@@ -460,9 +460,9 @@ void ProcessSinkMessage( void *locd )
 								uuid = StringDuplicateN( data + t[16].start, t[16].end - t[16].start );
 							}
 							
-							//DEBUG("Check1:  %s\n", reqid );
+							DEBUG("Check1: %.*s\n", 10, data + t[15].start );
 						
-							if( reqid != NULL )
+							if( reqid != NULL && uuid != NULL )
 							{
 								
 								BufString *bs = BufStringNew();
