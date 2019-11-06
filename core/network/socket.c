@@ -2486,10 +2486,7 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 		while( written < length )
 		{
 			if( (bsize + written) > length ) bsize = length - written;
-			if( bsize > 12288 )
-			{
-				bsize = 12288;
-			}
+			// if( bsize > 12288 ){ bsize = 12288; }
 
 			if( sock->s_Ssl == NULL )
 			{
