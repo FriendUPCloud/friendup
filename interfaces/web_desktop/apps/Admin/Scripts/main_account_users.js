@@ -828,33 +828,60 @@ Sections.accounts_users = function( cmd, extra )
 		{
 			b.onclick = function( e )
 			{
+				// Language
+				var availLangs = {
+					'en' : 'English',
+					'fr' : 'French',
+					'no' : 'Norwegian',
+					'fi' : 'Finnish',
+					'pl' : 'Polish'
+				};
+				
+				var languages = '';
+				
+				for( var a in availLangs )
+				{
+					languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
+				}
+				
 				var d = new File( 'Progdir:Templates/account_users_details.html' );
 				// Add all data for the template
 				d.replacements = {
-					user_name:         '',
-					user_fullname:     '',
-					user_username:     '',
-					user_email:        '',
-					theme_name:        '',
-					theme_dark:        '',
-					theme_style:       '',
-					theme_preview:     '',
-					wallpaper_name:    '',
-					workspace_count:   '',
-					system_disk_state: '',
-					storage:           '',
-					workgroups:        '',
-					roles:             '',
-					applications:      ''
+					user_name            : '',
+					user_fullname        : '',
+					user_username        : '',
+					user_email           : '',
+					user_language        : languages,
+					user_locked_toggle   : 'fa-toggle-off',
+					user_disabled_toggle : 'fa-toggle-off',
+					theme_name           : '',
+					theme_dark           : '',
+					theme_style          : '',
+					theme_preview        : '',
+					wallpaper_name       : '',
+					workspace_count      : '',
+					system_disk_state    : '',
+					storage              : '',
+					workgroups           : '',
+					roles                : '',
+					applications         : ''
 				};
-			
+				
 				// Add translations
 				d.i18n();
 				d.onLoad = function( data )
 				{
 					ge( 'UserDetails' ).innerHTML = data;
 					//initStorageGraphs();
-				
+					
+					ge( 'AdminStatusContainer' ).style.display = 'none';
+					
+					ge( 'AdminLooknfeelContainer' ).style.display = 'none';
+					ge( 'AdminWorkgroupContainer' ).style.display = 'none';
+					ge( 'AdminRoleContainer' ).style.display = 'none';
+					ge( 'AdminStorageContainer' ).style.display = 'none';
+					ge( 'AdminApplicationContainer' ).style.display = 'none';
+					
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
 					Friend.responsive.reinit();
@@ -880,25 +907,43 @@ Sections.accounts_users = function( cmd, extra )
 			li.innerHTML = i18n( 'i18n_new_user' );
 			li.onclick = function( e )
 			{
+				// Language
+				var availLangs = {
+					'en' : 'English',
+					'fr' : 'French',
+					'no' : 'Norwegian',
+					'fi' : 'Finnish',
+					'pl' : 'Polish'
+				};
+				
+				var languages = '';
+				
+				for( var a in availLangs )
+				{
+					languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
+				}
 				
 				var d = new File( 'Progdir:Templates/account_users_details.html' );
 				// Add all data for the template
 				d.replacements = {
-					user_name:         '',
-					user_fullname:     '',
-					user_username:     '',
-					user_email:        '',
-					theme_name:        '',
-					theme_dark:        '',
-					theme_style:       '',
-					theme_preview:     '',
-					wallpaper_name:    '',
-					workspace_count:   '',
-					system_disk_state: '',
-					storage:           '',
-					workgroups:        '',
-					roles:             '',
-					applications:      ''
+					user_name            : '',
+					user_fullname        : '',
+					user_username        : '',
+					user_email           : '',
+					user_language        : languages,
+					user_locked_toggle   : 'fa-toggle-off',
+					user_disabled_toggle : 'fa-toggle-off',
+					theme_name           : '',
+					theme_dark           : '',
+					theme_style          : '',
+					theme_preview        : '',
+					wallpaper_name       : '',
+					workspace_count      : '',
+					system_disk_state    : '',
+					storage              : '',
+					workgroups           : '',
+					roles                : '',
+					applications         : ''
 				};
 				
 				// Add translations
@@ -907,7 +952,15 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					ge( 'UserDetails' ).innerHTML = data;
 					//initStorageGraphs();
-				
+					
+					ge( 'AdminStatusContainer' ).style.display = 'none';
+					
+					ge( 'AdminLooknfeelContainer' ).style.display = 'none';
+					ge( 'AdminWorkgroupContainer' ).style.display = 'none';
+					ge( 'AdminRoleContainer' ).style.display = 'none';
+					ge( 'AdminStorageContainer' ).style.display = 'none';
+					ge( 'AdminApplicationContainer' ).style.display = 'none';
+					
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
 					Friend.responsive.reinit();
