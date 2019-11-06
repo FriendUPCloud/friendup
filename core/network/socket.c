@@ -2525,8 +2525,15 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 						}*/
 					break;
 				}
+				case SSL_ERROR_SSL:
+					FERROR("Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+					if( counter++ > 3 )
+					{
+						return 0;
+					}
+					break;
 				default:
-					FERROR("Cannot write %d stringerr: %s size: %ld\n", err, strerror( err ), length );
+					FERROR("Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
 					return 0;
 				}
 
