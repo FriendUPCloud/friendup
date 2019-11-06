@@ -518,6 +518,10 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/removefromstartupsequence.php' );
 			break;
 
+		case 'createdesktopshortcuts':
+			require( 'modules/system/include/createdesktopshortcuts.php' );
+			break;
+		
 		case 'workspaceshortcuts':
 			require( 'modules/system/include/workspaceshortcuts.php' );
 			break;

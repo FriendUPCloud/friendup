@@ -563,7 +563,34 @@ var mousePointer =
 					if( window.currentMovable.content && window.currentMovable.content.refresh )
 						window.currentMovable.content.refresh();
 				}
+				// We dropped on a screen
+				if( objs && dropper && dropper.classList.contains( 'ScreenContent' ) )
+				{
+					// We dropped on the Workspace screen
+					if( dropper == Workspace.screen.contentDiv )
+					{
+						// Check if we can place desktop shortcuts
+						var files = [];
+						for( var a = 0; a < objs.length; a++ )
+						{
+							files.push( objs[ a ].Path );
+						}
+						
+						// Create desktop shortcuts
+						var m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Workspace.redrawIcons();
+								Workspace.refreshDesktop();
+							}
+						}
+						m.execute( 'createdesktopshortcuts', { files: files } );
+					}
+				}
 			}
+			
 			
 			// Redraw icons
 			Workspace.redrawIcons();
