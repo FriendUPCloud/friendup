@@ -447,7 +447,7 @@ void ProcessSinkMessage( void *locd )
 					if( strncmp( data + t[6].start, "user", msize ) == 0 )
 					{
 						char *reqid = NULL;
-						char *uuid = NULL;
+						
 						//DEBUG("Check3:  %.*s\n", 10, data + t[10].start );
 						if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
 						{
@@ -455,42 +455,9 @@ void ProcessSinkMessage( void *locd )
 							{
 								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
 							}
-							if( strncmp( data + t[15].start, "requestid", t[15].end - t[15].start) == 0) 
-							{
-								uuid = StringDuplicateN( data + t[16].start, t[16].end - t[16].start );
-							}
 							
 							DEBUG("Check1: %.*s\n", 10, data + t[15].start );
-						
-							if( reqid != NULL && uuid != NULL )
-							{
-								
-								BufString *bs = BufStringNew();
-								BufStringAddSize( bs, "{", 1 );
-								
-								User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
-								if( usr != NULL )
-								{
-								}
-								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
-								BufStringDelete( bs );
-								
-								FFree( reqid );
-								FFree( uuid );
-							}
-							else
-							{
-								DEBUG("Reqid == NULL\n");
-							}
-						}
-						else if( strncmp( data + t[10].start, "get", t[10].end - t[10].start) == 0) 
-						{
-							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
-							{
-								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
-							}
-							DEBUG("Check1:  %s\n", reqid );
-						
+							
 							if( reqid != NULL )
 							{
 								
@@ -505,6 +472,56 @@ void ProcessSinkMessage( void *locd )
 							{
 								DEBUG("Reqid == NULL\n");
 							}
+						}
+						else if( strncmp( data + t[10].start, "get", t[10].end - t[10].start) == 0) 
+						{
+							char *uuid = NULL;
+							
+							if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+							{
+								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+							}
+							if( strncmp( data + t[15].start, "requestid", t[15].end - t[15].start) == 0) 
+							{
+								uuid = StringDuplicateN( data + t[16].start, t[16].end - t[16].start );
+							}
+							
+							DEBUG("Check1:  %s\n", reqid );
+						
+							if( reqid != NULL && uuid != NULL )
+							{
+								BufString *bs = BufStringNew();
+								BufStringAddSize( bs, "{", 1 );
+								
+								User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
+								if( usr != NULL )
+								{
+									char udata[ 1024 ];
+									int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\",\"lastupdated\":%lu,\"email\":\"%s\"}", \
+										usr->u_UUID, usr->u_Name, usr->u_FullName, usr->u_ModifyTime, usr->u_Email
+									);
+									BufStringAddSize( bs, udata, udatalen );
+								}
+								else
+								{
+									char udata[ 1024 ];
+									int udatalen = snprintf( udata, sizeof(udata), "{\"type\":\"reply\",\"data\":{\"requestid\":\"%s\",\"error\":\"%s\"}}", \
+										reqid, "User not found"
+									);
+									BufStringAddSize( bs, udata, udatalen );
+								}
+								
+								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+								BufStringDelete( bs );
+								
+								FFree( reqid );
+								FFree( uuid );
+							}
+							else
+							{
+								DEBUG("Reqid == NULL\n");
+							}
+							
 						}
 					}
 					else if( strncmp( data + t[6].start, "group", msize ) == 0 )
