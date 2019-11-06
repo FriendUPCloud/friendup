@@ -1539,7 +1539,14 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											DEBUG("Resource mutex released\n");
 											//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
-										Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p filesize %lu\n", file, file->lf_FileSize );
+										if( file != NULL )
+										{
+											Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p filesize %lu\n", file, file->lf_FileSize );
+										}
+										else
+										{
+											Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr 0\n" );
+										}
 
 										// Send reply
 										if( file != NULL )
