@@ -351,6 +351,20 @@ Sections.accounts_users = function( cmd, extra )
 					Friend.responsive.pageActive = ge( 'UserDetails' );
 					Friend.responsive.reinit();
 					
+					// Avatar --------------------------------------------------
+					
+					if( ge( 'Avatar' ) && workspaceSettings.avatar )
+					{
+						// Only update the avatar if it exists..
+						var avSrc = new Image();
+						avSrc.src = workspaceSettings.avatar;
+						avSrc.onload = function()
+						{
+							var ctx = ge( 'Avatar' ).getContext( '2d' );
+							ctx.drawImage( avSrc, 0, 0, 256, 256 );
+						}
+					}
+					
 					// Theme ---------------------------------------------------
 					
 					if( ge( 'ThemePreview' ) && workspaceSettings.wallpaperdoors )
@@ -573,6 +587,7 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						//if( e != 'ok' ) return;
 						var workspacesettings = null;
+						
 						try
 						{
 							workspacesettings = JSON.parse( d );
@@ -581,9 +596,22 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							workspacesettings = null;
 						}
+						
 						console.log( 'getsetting ', { e:e, d:workspacesettings } );
-						if( e != 'ok' ) workspacesettings = '404';
-						loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
+						
+						setAvatar( data.userInfo.ID, false, function( res, userid, content, avatar )
+						{
+						
+							if( res && avatar && workspacesettings )
+							{
+								workspacesettings.avatar = avatar;
+							}
+							
+							if( e != 'ok' ) workspacesettings = '404';
+							loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
+							
+						} );
+						
 					}
 					u.execute( 'getsetting', { settings: [ 
 						'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 

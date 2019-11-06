@@ -14,6 +14,22 @@
 		{user_name}
 	</h1>
 	<div class="Box Padding" id="UserBasicDetails">
+		
+		<div class="AvatarRect MarginTop MarginBottom HRow">
+			<div class="FloatLeft Padding TextCenter Relative HContent100">
+				<div id="AvatarArea" class="IconSmall fa-user-circle-o">
+					<canvas id="Avatar" width="256" height="256"></canvas>
+				</div>
+			</div>
+			<!--<div class="PaletteRect FloatLeft TextCenter Relative HContent50">
+				<div id="UserPalette">
+				</div>
+				<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
+					{i18n_changeavatar}
+				</button>
+			</div>-->
+		</div>
+		
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
 				<strong>{i18n_user_fullname}</strong>
