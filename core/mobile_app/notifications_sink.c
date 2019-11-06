@@ -456,7 +456,7 @@ void ProcessSinkMessage( void *locd )
 								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
 							}
 							
-							DEBUG("Check1: %.*s\n", 10, data + t[15].start );
+							//DEBUG("Check1: %.*s\n", 10, data + t[15].start );
 							
 							if( reqid != NULL )
 							{
