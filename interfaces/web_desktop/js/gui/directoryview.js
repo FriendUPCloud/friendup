@@ -4397,6 +4397,22 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
 				return window.isMobile ? Workspace.closeDrivePanel() : false;
 			}
+			else if( obj.fileInfo.MetaType == 'Shortcut' )
+			{
+				if( obj.fileInfo.Type == 'Directory' )
+				{
+					var o = {};
+					for( var a in obj.fileInfo )
+						o[ a ] = obj.fileInfo[ a ];
+					o.MetaType = 'Directory';
+					OpenWindowByFileinfo( o, event, false, uniqueView );	
+				}
+				else
+				{
+					OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
+				}
+				return window.isMobile ? Workspace.closeDrivePanel() : false; 
+			}
 			// Just change directory
 			else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
 			{

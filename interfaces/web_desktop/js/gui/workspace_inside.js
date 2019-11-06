@@ -3728,33 +3728,55 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var shorts = JSON.parse( shortcuts );
 						for( var a = 0; a < shorts.length; a++ )
 						{
-							var pair = shorts[a].split( ':' );
-							// Shift camelcase
-							var literal = '';
-							for( var c = 0; c < pair[0].length; c++ )
+							if( !shorts[ a ] )
 							{
-								if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
-								{
-									literal += ' ';
-								}
-								literal += pair[0].charAt( c );
+								continue;
 							}
+							
+							if( shorts[ a ].substr( 0, 16 ) == 'DesktopShortcut:' )
+							{
+								var path = shorts[ a ].substr( 16, shorts[ a ].length - 16 );
+								var fn  = GetFilename( path );
+								newIcons.push( {
+									Title: fn,
+									Filename: path,
+									Path: path,
+									Type: path.substr( path.length - 1, 1 ) == '/' ? 'Directory' : 'File',
+									Handler: 'built-in',
+									MetaType: 'Shortcut',
+									Visible: true
+								} );
+							}
+							else
+							{
+								var pair = shorts[a].split( ':' );
+								// Shift camelcase
+								var literal = '';
+								for( var c = 0; c < pair[0].length; c++ )
+								{
+									if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
+									{
+										literal += ' ';
+									}
+									literal += pair[0].charAt( c );
+								}
 						
-							// Add custom icon
-							newIcons.push( {
-								Title: literal,
-								Filename: pair[0],
-								Type: 'Executable',
-								IconFile: '/' + pair[1],
-								Handler: 'built-in',
-								Driver: 'Shortcut',
-								MetaType: 'ExecutableShortcut',
-								ID: shorts[a].toLowerCase(),
-								Mounted: true,
-								Visible: true,
-								IconClass: literal.split( ' ' ).join( '_' ),
-								Door: 'executable'
-							} );
+								// Add custom icon
+								newIcons.push( {
+									Title: literal,
+									Filename: pair[0],
+									Type: 'Executable',
+									IconFile: '/' + pair[1],
+									Handler: 'built-in',
+									Driver: 'Shortcut',
+									MetaType: 'ExecutableShortcut',
+									ID: shorts[a].toLowerCase(),
+									Mounted: true,
+									Visible: true,
+									IconClass: literal.split( ' ' ).join( '_' ),
+									Door: 'executable'
+								} );
+							}
 						}
 					}
 

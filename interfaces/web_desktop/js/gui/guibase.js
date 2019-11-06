@@ -582,8 +582,7 @@ var mousePointer =
 						{
 							if( e == 'ok' )
 							{
-								Workspace.redrawIcons();
-								Workspace.refreshDesktop();
+								Workspace.refreshDesktop( false, true );
 							}
 						}
 						m.execute( 'createdesktopshortcuts', { files: files } );

@@ -18,7 +18,7 @@ if( isset( $args->args->files ) )
 		$d = new dbIO( 'FMetaData' );
 		$d->Key = 'Desktopshortcut';
 		$d->DataID = $User->ID;
-		$d->DataTable = 'Users';
+		$d->DataTable = 'FUser';
 		$d->ValueString = $path;
 		$d->Load();
 		$d->save();
