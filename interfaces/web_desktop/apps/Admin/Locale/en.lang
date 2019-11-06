@@ -6,6 +6,8 @@ i18n_user_username                     : Username
 i18n_user_email                        : E-mail
 i18n_user_password                     : Password
 
+i18n_language                          : Language
+
 i18n_account_locked                    : Account locked
 i18n_account_disabled                  : Account disabled
 

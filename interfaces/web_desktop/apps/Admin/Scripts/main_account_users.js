@@ -92,7 +92,7 @@ Sections.accounts_users = function( cmd, extra )
 				var mountlist = info.mountlist;
 				var apps = info.applications;
 						
-				console.log( info.applications );		
+				console.log( 'initUsersDetails( info ) ', info );		
 				
 				// User
 				var ulocked = false;
@@ -112,6 +112,24 @@ Sections.accounts_users = function( cmd, extra )
 					}
 				}
 				
+				// Language
+				var availLangs = {
+					'en' : 'English',
+					'fr' : 'French',
+					'no' : 'Norwegian',
+					'fi' : 'Finnish',
+					'pl' : 'Polish'
+				};
+				var languages = '';
+				
+				var locale = ( workspaceSettings.language && workspaceSettings.language.spokenLanguage ? workspaceSettings.language.spokenLanguage.substr( 0, 2 ) : workspaceSettings.locale );
+				for( var a in availLangs )
+				{
+					var sel = ( locale == a ? ' selected="selected"' : '' );
+					languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
+				}
+				
+				// Themes
 				var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 				if( !themeData )
 					themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
@@ -307,6 +325,7 @@ Sections.accounts_users = function( cmd, extra )
 					user_fullname        : userInfo.FullName,
 					user_username        : userInfo.Name,
 					user_email           : userInfo.Email,
+					user_language        : languages,
 					user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
 					user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
 					theme_name           : settings.Theme,
@@ -568,7 +587,7 @@ Sections.accounts_users = function( cmd, extra )
 					}
 					u.execute( 'getsetting', { settings: [ 
 						'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
-						'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+						'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 						'focusmode', 'hiddensystem', 'workspacecount', 
 						'scrolldesktopicons', 'wizardrun', 'themedata_' + data.settings.Theme,
 						'workspacemode'
@@ -2826,15 +2845,73 @@ function saveUser( uid )
 		{
 			args[ k ] = '{S6}' + Sha256.hash( 'HASHED' + Sha256.hash( args[ k ] ) );
 		}
+		
+		
 	}
+	
 
+	
+	
+	
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
-			Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
-			Sections.accounts_users( 'edit', uid );
+			
+			// Save language setting
+			
+			function updateLanguages( callback )
+			{
+				/*Confirm( i18n( 'i18n_update_language_warning' ), i18n( 'i18n_update_language_desc' ), function( resp )
+				{
+					if( resp.data )
+					{*/
+						// Find right language for speech
+						var langs = speechSynthesis.getVoices();
+						
+						var voice = false;
+						for( var v = 0; v < langs.length; v++ )
+						{
+							console.log( langs[v].lang.substr( 0, 2 ) );
+							if( langs[v].lang.substr( 0, 2 ) == ge( 'usLanguage' ).value )
+							{
+								voice = {
+									spokenLanguage: langs[v].lang,
+									spokenAlternate: langs[v].lang // TODO: Pick an alternative voice - call it spokenVoice
+								};
+							}
+						}
+						
+						var mt = new Module( 'system' );
+						mt.onExecuted = function( ee, dd )
+						{	
+							var mo = new Module( 'system' );
+							mo.onExecuted = function()
+							{
+								if( callback ) return callback( true );
+							}
+							mo.execute( 'setsetting', { userid: uid, setting: 'locale', data: ge( 'usLanguage' ).value, authid: Application.authId } );
+						}
+						mt.execute( 'setsetting', { userid: uid, setting: 'language', data: voice, authid: Application.authId } );
+					/*}
+					else
+					{
+						if( callback ) return callback( true );
+					}
+					
+				} );*/
+			}
+			
+			updateLanguages( function(  )
+			{
+				
+				Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+				
+				Sections.accounts_users( 'edit', uid );
+				
+			} );
+			
 		}
 		else
 		{

@@ -6,6 +6,11 @@ i18n_user_username                     : Brukernavn
 i18n_user_email                        : E-post
 i18n_user_password                     : Passord
 
+i18n_language                          : Språk
+
+i18n_account_locked                    : Konto låst
+i18n_account_disabled                  : Konto deaktivert
+
 i18n_looknfeel                         : Utseende
 i18n_theme                             : Tema
 i18n_wallpaper                         : Bakgrunn
