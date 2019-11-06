@@ -10,6 +10,27 @@
 *                                                                              *
 *****************************************************************************©*/
 
-$Logger->log( 'Received list of icons: ' . print_r( $args->args->files, 1 ) );
+if( isset( $args->args->files ) )
+{
+	$files = 0;
+	foreach( $args->args->files as $path )
+	{
+		$d = new dbIO( 'FMetaData' );
+		$d->Key = 'Desktopshortcut';
+		$d->DataID = $User->ID;
+		$d->DataTable = 'Users';
+		$d->ValueString = $path;
+		$d->Load();
+		$d->save();
+		if( $d->ID > 0 )
+			$files++;
+	}
+	if( $files > 0 )
+	{
+		die( 'ok<!--separate-->{"response":1,"message":"Successfully added desktop shortcuts.","affected_files":"' . $files . '"}' );
+	}
+}
+
+die( 'fail<!--separate-->{"response":0,"message":"Failed to create desktop shortcuts."}' );
 
 ?>
