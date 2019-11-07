@@ -498,10 +498,24 @@ void ProcessSinkMessage( void *locd )
 								if( usr != NULL )
 								{
 									char udata[ 1024 ];
-									int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"fullname\":\"%s\",\"lastupdated\":%lu,\"email\":\"%s\"}", \
-										usr->u_UUID, usr->u_Name, usr->u_FullName, usr->u_ModifyTime, usr->u_Email
+									int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"lastupdated\":%lu", \
+										usr->u_UUID, usr->u_Name, usr->u_ModifyTime
 									);
+									
+									// add first part to response string
 									BufStringAddSize( bs, udata, udatalen );
+									// if field is not empty, must be provided
+									if( usr->u_FullName != NULL )
+									{
+										udatalen = snprintf( udata, sizeof(udata), "\"fullname\":\"%s\"", usr->u_FullName );
+										BufStringAddSize( bs, udata, udatalen );
+									}
+									if( usr->u_Email != NULL )
+									{
+										udatalen = snprintf( udata, sizeof(udata), "\"email\":\"%s\"", usr->u_Email );
+										BufStringAddSize( bs, udata, udatalen );
+									}
+									BufStringAddSize( bs, "}", 1 );
 									NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
 								}
 								else

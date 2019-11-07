@@ -1259,7 +1259,7 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 		
 		if( grname == NULL )
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ModifyTime FROM FUser u" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ModifyTime FROM FUser u WHERE u.Name<>'apiuser'" );
 		}
 		else
 		{
