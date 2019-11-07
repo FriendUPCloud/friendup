@@ -502,6 +502,7 @@ void ProcessSinkMessage( void *locd )
 										usr->u_UUID, usr->u_Name, usr->u_FullName, usr->u_ModifyTime, usr->u_Email
 									);
 									BufStringAddSize( bs, udata, udatalen );
+									NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
 								}
 								else
 								{
@@ -509,10 +510,10 @@ void ProcessSinkMessage( void *locd )
 									int udatalen = snprintf( udata, sizeof(udata), "{\"type\":\"reply\",\"data\":{\"requestid\":\"%s\",\"error\":\"%s\"}}", \
 										reqid, "User not found"
 									);
-									BufStringAddSize( bs, udata, udatalen );
+									//BufStringAddSize( bs, udata, udatalen );
+									WriteMessageSink( d, (unsigned char *)(udata)+LWS_PRE, udatalen );
 								}
 								
-								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
 								BufStringDelete( bs );
 								
 								FFree( reqid );
@@ -520,15 +521,12 @@ void ProcessSinkMessage( void *locd )
 							}
 							else
 							{
-								BufString *bs = BufStringNew();
 								DEBUG("Reqid == NULL\n");
 								char udata[ 1024 ];
 								int udatalen = snprintf( udata, sizeof(udata), "{\"type\":\"reply\",\"data\":{\"requestid\":\"%s\",\"error\":\"%s\"}}", \
 									reqid, "User not found"
 								);
-								BufStringAddSize( bs, udata, udatalen );
-								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
-								BufStringDelete( bs );
+								WriteMessageSink( d, (unsigned char *)(udata)+LWS_PRE, udatalen );
 							}
 							
 						}

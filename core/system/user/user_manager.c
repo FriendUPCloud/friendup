@@ -684,7 +684,7 @@ User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
 	
 		DEBUG("[UMGetUserByNameDB] start\n");
 
-		sqlLib->SNPrintF( sqlLib, where, len, " `UUID`='%s'", uuid );
+		sqlLib->SNPrintF( sqlLib, where, len, " `UniqueID`='%s'", uuid );
 	
 		int entries;
 	
