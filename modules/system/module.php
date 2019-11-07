@@ -521,6 +521,9 @@ if( isset( $args->command ) )
 		case 'createdesktopshortcuts':
 			require( 'modules/system/include/createdesktopshortcuts.php' );
 			break;
+		case 'removedesktopshortcut':
+			require( 'modules/system/include/removedesktopshortcut.php' );
+			break;
 		
 		case 'workspaceshortcuts':
 			require( 'modules/system/include/workspaceshortcuts.php' );

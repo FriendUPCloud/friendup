@@ -4304,7 +4304,25 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			
 				if( !window.isMobile )
 				{
-					Workspace.showContextMenu( false, e );
+					if( this.fileInfo.MetaType == 'Shortcut' )
+					{
+						Workspace.showContextMenu( [ {
+							name: i18n( 'i18n_delete_shortcut' ),
+							command: function( e )
+							{
+								var m = new Module( 'system' );
+								m.onExecuted = function( e, d )
+								{
+									Workspace.refreshDesktop( false, true );
+								}
+								m.execute( 'removedesktopshortcut', { shortcut: found.fileInfo.Path } );
+							}
+						} ], e );
+					}
+					else
+					{
+						Workspace.showContextMenu( false, e );
+					}
 				}
 				return cancelBubble( e );
 			}
