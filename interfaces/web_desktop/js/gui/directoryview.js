@@ -4193,6 +4193,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( fileInfo.MetaType == 'Shortcut' )
 	{
 		file.classList.add( 'Shortcut' );
+		if( fileInfo.Filename.substr( 0, 1 ) == ':' )
+		{
+			var fn = fileInfo.Filename.substr( 1, fileInfo.Filename.length - 1 );
+			iconInner.style.backgroundImage = 'url(\'apps/' + fn + '/icon.png\')';
+		}
 	}
 
 	// Create the title
@@ -4457,6 +4462,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						o[ a ] = obj.fileInfo[ a ];
 					o.MetaType = 'Directory';
 					OpenWindowByFileinfo( o, event, false, uniqueView );	
+				}
+				// Executable shortcut
+				else if( obj.fileInfo.Filename.substr( 0, 1 ) == ':' )
+				{
+					return ExecuteApplication( obj.fileInfo.Filename.substr( 1, obj.fileInfo.Filename.length - 1 ) );
 				}
 				else
 				{

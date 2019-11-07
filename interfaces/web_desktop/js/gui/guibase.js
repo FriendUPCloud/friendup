@@ -573,7 +573,14 @@ var mousePointer =
 						var files = [];
 						for( var a = 0; a < objs.length; a++ )
 						{
-							files.push( objs[ a ].Path );
+							if( objs[ a ].Type == 'Executable' )
+							{
+								files.push( ':' + objs[ a ].Filename );
+							}
+							else
+							{
+								files.push( objs[ a ].Path );
+							}
 						}
 						
 						// Create desktop shortcuts
