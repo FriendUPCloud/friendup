@@ -213,20 +213,6 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 {
 	font-style: oblique;
 }
-.File.Shortcut .Icon > div:after
-{
-	display: block;
-	font-family: fontawesome;
-	content: '\f14c';
-	position: absolute;
-	right: 0;
-	top: 0;
-	background: rgba(255,255,255,0.8);
-	border-radius: 2px;
-	padding: 2px 4px;
-	color: black;
-	text-align: center;
-}
 
 /* TODO: Make ready for themes! */
 .File .Icon > .Label.Shared
