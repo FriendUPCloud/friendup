@@ -134,7 +134,7 @@ else if ( isset( $args->args->setting ) )
 	$s->Type = 'system';
 	$s->Key = $args->args->setting;
 	$s->UserID = $userid;
-	if( $s->Load() )
+	if( !isset( $args->args->fullname ) && $s->Load() )
 	{
 		if( !isset( $args->args->mode ) || $args->args->mode != 'reset' )
 		{
@@ -206,7 +206,7 @@ else if ( isset( $args->args->setting ) )
 		
 		// Draw letters
 		$color = imagecolorallocate( $img, 255, 255, 255 );
-		$initials = explode( ' ', $User->FullName );
+		$initials = explode( ' ', ( isset( $args->args->fullname ) ? trim( $args->args->fullname ) : $User->FullName ) );
 		$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
 		$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
 		imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
@@ -214,16 +214,22 @@ else if ( isset( $args->args->setting ) )
 		imagepng( $img );
 		$png = ob_get_clean();
 		$s->Data = 'data:image/png;base64,' . base64_encode( $png );
-		$s->Save();
+		if( !isset( $args->args->read ) || !$args->args->read )
+		{
+			$s->Save();
+		}
 		
 		// Save avatar color for later use
 		$c = new dbIO( 'FSetting' );
 		$c->UserID = $s->UserID;
 		$c->Key = 'avatar_color';
 		$c->Type = 'system';
-		$c->Load();
-		$c->Data = $hex;
-		$c->Save();
+		if( !isset( $args->args->read ) || !$args->args->read )
+		{
+			$c->Load();
+			$c->Data = $hex;
+			$c->Save();
+		}
 		
 		$settings->avatar = $s->Data;
 		die( 'ok<!--separate-->' . json_encode( $settings ) );

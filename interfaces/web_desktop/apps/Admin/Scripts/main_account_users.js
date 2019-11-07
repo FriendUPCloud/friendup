@@ -907,16 +907,63 @@ Sections.accounts_users = function( cmd, extra )
 				d.i18n();
 				d.onLoad = function( data )
 				{
-					ge( 'UserDetails' ).innerHTML = data;
+					ge( 'UserDetails'               ).innerHTML = data;
 					//initStorageGraphs();
 					
-					ge( 'AdminStatusContainer' ).style.display = 'none';
+					ge( 'AdminStatusContainer'      ).style.display = 'none';
 					
-					ge( 'AdminLooknfeelContainer' ).style.display = 'none';
-					ge( 'AdminWorkgroupContainer' ).style.display = 'none';
-					ge( 'AdminRoleContainer' ).style.display = 'none';
-					ge( 'AdminStorageContainer' ).style.display = 'none';
+					ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
+					ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+					ge( 'AdminRoleContainer'        ).style.display = 'none';
+					ge( 'AdminStorageContainer'     ).style.display = 'none';
 					ge( 'AdminApplicationContainer' ).style.display = 'none';
+					
+					// User
+					
+					var bge  = ge( 'UserBasicEdit' );
+					if( bge ) bge.onclick = function( e )
+					{
+						saveUser(  );
+					}
+					
+					// Avatar 
+					
+					var ae = ge( 'AvatarEdit' );
+					if( ae ) ae.onclick = function( e )
+					{
+						changeAvatar();
+					}
+					
+					var au = ge( 'usFullname' );
+					if( au ) au.onblur = function( e )
+					{
+						if( this.value && this.value != this.fullname )
+						{
+							
+							randomAvatar( this.value, function( avatar ) 
+							{ 
+								var canvas = ge( 'Avatar' ).toDataURL();
+								
+								console.log( 'canvas: ', canvas.length );
+								console.log( 'avatar: ', avatar.length );
+								
+								if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
+								{
+									// Only update the avatar if it exists..
+									var avSrc = new Image();
+									avSrc.src = avatar;
+									avSrc.onload = function()
+									{
+										var ctx = ge( 'Avatar' ).getContext( '2d' );
+										ctx.drawImage( avSrc, 0, 0, 256, 256 );
+									}
+								}
+								
+							} );
+							
+							this.fullname = this.value;
+						}
+					}
 					
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
@@ -986,16 +1033,63 @@ Sections.accounts_users = function( cmd, extra )
 				d.i18n();
 				d.onLoad = function( data )
 				{
-					ge( 'UserDetails' ).innerHTML = data;
+					ge( 'UserDetails'               ).innerHTML = data;
 					//initStorageGraphs();
 					
-					ge( 'AdminStatusContainer' ).style.display = 'none';
+					ge( 'AdminStatusContainer'      ).style.display = 'none';
 					
-					ge( 'AdminLooknfeelContainer' ).style.display = 'none';
-					ge( 'AdminWorkgroupContainer' ).style.display = 'none';
-					ge( 'AdminRoleContainer' ).style.display = 'none';
-					ge( 'AdminStorageContainer' ).style.display = 'none';
+					ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
+					ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+					ge( 'AdminRoleContainer'        ).style.display = 'none';
+					ge( 'AdminStorageContainer'     ).style.display = 'none';
 					ge( 'AdminApplicationContainer' ).style.display = 'none';
+					
+					// User
+					
+					var bge  = ge( 'UserBasicEdit' );
+					if( bge ) bge.onclick = function( e )
+					{
+						saveUser(  );
+					}
+					
+					// Avatar 
+					
+					var ae = ge( 'AvatarEdit' );
+					if( ae ) ae.onclick = function( e )
+					{
+						changeAvatar();
+					}
+					
+					var au = ge( 'usFullname' );
+					if( au ) au.onblur = function( e )
+					{
+						if( this.value && this.value != this.fullname )
+						{
+							
+							randomAvatar( this.value, function( avatar ) 
+							{ 
+								var canvas = ge( 'Avatar' ).toDataURL();
+								
+								console.log( 'canvas: ', canvas.length );
+								console.log( 'avatar: ', avatar.length );
+								
+								if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
+								{
+									// Only update the avatar if it exists..
+									var avSrc = new Image();
+									avSrc.src = avatar;
+									avSrc.onload = function()
+									{
+										var ctx = ge( 'Avatar' ).getContext( '2d' );
+										ctx.drawImage( avSrc, 0, 0, 256, 256 );
+									}
+								}
+								
+							} );
+							
+							this.fullname = this.value;
+						}
+					}
 					
 					// Responsive framework
 					Friend.responsive.pageActive = ge( 'UserDetails' );
@@ -1330,6 +1424,29 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
+	function randomAvatar( fullname, callback )
+	{
+		if( fullname )
+		{
+			var u = new Module( 'system' );
+			u.onExecuted = function( e, d )
+			{
+				var out = null;
+				try
+				{
+					out = JSON.parse( d );
+				}
+				catch( e ) {  }
+				
+				if( callback )
+				{
+					callback( out && out.avatar ? out.avatar : false );
+				}
+			}
+			u.execute( 'getsetting', { setting: 'avatar', fullname: fullname, read: 'only', authid: Application.authId } );
+		}
+	}
+	
 	function changeAvatar()
 	{
 		var self = this;
@@ -1343,6 +1460,7 @@ Sections.accounts_users = function( cmd, extra )
 					var image = new Image();
 					image.onload = function()
 					{
+						console.log( 'loaded image ... ', item );
 						// Resizes the image
 						var canvas = ge( 'Avatar' );
 						var context = canvas.getContext( '2d' );
@@ -2941,13 +3059,16 @@ function saveUser( uid )
 	if( !uid ) return;
 	
 	var args = { command: 'update' };
-	args.id = uid;
+	
+	if( uid ) args.id = uid;
+	
 	var mapping = {
 		usFullname: 'fullname',
 		usEmail:    'email',
 		usUsername: 'username',
 		usPassword: 'password'
 	};
+	
 	for( var a in mapping )
 	{
 		var k = mapping[ a ];
@@ -2974,6 +3095,10 @@ function saveUser( uid )
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
+		console.log( { e:e, d:d } );
+		
+		if( !uid ) return;
+		
 		if( e == 'ok' )
 		{
 			
@@ -3021,12 +3146,46 @@ function saveUser( uid )
 				} );*/
 			}
 			
+			// Save avatar image
+			
+			function saveAvatar( callback )
+			{
+				var canvas = ge( 'Avatar' );
+				if( canvas )
+				{
+					context = canvas.getContext( '2d' );
+					var base64 = canvas.toDataURL();
+					if( base64 )
+					{
+						var ma = new Module( 'system' );
+						ma.forceHTTP = true;
+						ma.onExecuted = function( e, d )
+						{
+							if( e != 'ok' )
+							{
+								console.log( 'Avatar saving failed.' );
+						
+								if( callback ) callback( false );
+							}
+					
+							if( callback ) callback( true );
+						};
+						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64 } );
+					}
+				}
+			}
+			
 			updateLanguages( function(  )
 			{
 				
-				Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
-				
-				Sections.accounts_users( 'edit', uid );
+				saveAvatar( function (  )
+				{
+					
+					Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+					
+					Sections.accounts_users( 'edit', uid );
+					
+				} );
 				
 			} );
 			
