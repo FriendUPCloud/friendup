@@ -481,17 +481,18 @@ void ProcessSinkMessage( void *locd )
 							{
 								reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
 							}
-							if( strncmp( data + t[15].start, "requestid", t[15].end - t[15].start) == 0) 
+							if( strncmp( data + t[15].start, "userid", t[15].end - t[15].start) == 0) 
 							{
 								uuid = StringDuplicateN( data + t[16].start, t[16].end - t[16].start );
 							}
 							
 							DEBUG("Check1:  %s\n", reqid );
+							DEBUG("Check2:  %s\n", uuid );
 						
 							if( reqid != NULL && uuid != NULL )
 							{
 								BufString *bs = BufStringNew();
-								BufStringAddSize( bs, "{", 1 );
+								//BufStringAddSize( bs, "{", 1 );
 								
 								User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
 								if( usr != NULL )
@@ -519,7 +520,15 @@ void ProcessSinkMessage( void *locd )
 							}
 							else
 							{
+								BufString *bs = BufStringNew();
 								DEBUG("Reqid == NULL\n");
+								char udata[ 1024 ];
+								int udatalen = snprintf( udata, sizeof(udata), "{\"type\":\"reply\",\"data\":{\"requestid\":\"%s\",\"error\":\"%s\"}}", \
+									reqid, "User not found"
+								);
+								BufStringAddSize( bs, udata, udatalen );
+								NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+								BufStringDelete( bs );
 							}
 							
 						}
