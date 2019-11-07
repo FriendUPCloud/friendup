@@ -507,12 +507,12 @@ void ProcessSinkMessage( void *locd )
 									// if field is not empty, must be provided
 									if( usr->u_FullName != NULL )
 									{
-										udatalen = snprintf( udata, sizeof(udata), "\"fullname\":\"%s\"", usr->u_FullName );
+										udatalen = snprintf( udata, sizeof(udata), ",\"fullname\":\"%s\"", usr->u_FullName );
 										BufStringAddSize( bs, udata, udatalen );
 									}
 									if( usr->u_Email != NULL )
 									{
-										udatalen = snprintf( udata, sizeof(udata), "\"email\":\"%s\"", usr->u_Email );
+										udatalen = snprintf( udata, sizeof(udata), ",\"email\":\"%s\"", usr->u_Email );
 										BufStringAddSize( bs, udata, udatalen );
 									}
 									BufStringAddSize( bs, "}", 1 );
