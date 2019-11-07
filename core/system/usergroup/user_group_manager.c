@@ -941,6 +941,7 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 					usrpos = 0;
 				}
 				
+				/*
 				// User Status == DISABLED
 				if( strcmp( (char *)row[ 6 ], "1" ) )
 				{
@@ -963,7 +964,17 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 					{
  						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
 					}
+				}*/
+				
+				if( usrpos == 0 )
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 4 ] );
 				}
+				else
+				{
+ 					itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 4 ] );
+				}
+				
 				BufStringAddSize( bs, tmp, itmp );
 				usrpos++;
 			}
