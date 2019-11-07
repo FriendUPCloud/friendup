@@ -830,6 +830,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 							if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
 							{
+								FBOOL mountedWithoutUser = FALSE;
 								char *error = NULL;
 								// Immediately drop here..
 								SLIB->LibrarySQLDrop( SLIB, sqllib );
@@ -837,8 +838,29 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								CacheFile *cf = NULL;
 
 								char *mime = NULL;
+								File *rootDev = NULL;
 
-								File *rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs->fs_IDUser, fs->fs_DeviceName, &error );
+								// check if user is loaded
+								User *u = UMGetUserByID( SLIB->sl_UM, fs->fs_IDUser );
+								if( u != NULL )
+								{
+									rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs->fs_IDUser, fs->fs_DeviceName, &error );
+								} // if user is not in memory (and his drives), we must mount drives only
+								else
+								{
+									struct TagItem tags[] = {
+										{FSys_Mount_Type, (FULONG)"INRAM"},
+										{FSys_Mount_Name, (FULONG)fs->fs_DeviceName },
+										{FSys_Mount_UserID, (FULONG)fs->fs_IDUser },
+										{FSys_Mount_Owner, (FULONG)NULL },
+										{TAG_DONE, TAG_DONE}
+									};
+									int err = MountFSNoUser( SLIB->sl_DeviceManager, (struct TagItem *)&tags, &(rootDev), &error );
+									if( err != 0 )
+									{
+										Log( FLOG_ERROR,"Cannot mount device, device '%s' will be unmounted. FERROR %d\n", fs->fs_DeviceName, err );
+									}
+								}
 								
 								if( error != NULL )
 								{
@@ -1094,6 +1116,13 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									result = 404;
 									Log( FLOG_ERROR,"Cannot get root device\n");
 								}
+								
+								// if device was mounted without user (not in memory) it must be removed on the end
+								if( mountedWithoutUser == TRUE )
+								{
+									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
+								}
+								
 								FileSharedDelete( fs );
 							}
 							else
