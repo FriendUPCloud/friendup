@@ -2560,6 +2560,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
+	var marginRight = window.innerWidth - gridX + 20 - 1;
 	var marginBottom = 5;
 	
 	if( window.isMobile )
@@ -2577,8 +2578,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		marginLeft = Math.floor( whWidth - ( mobIW * columns ) ) >> 1;
 	}
 	
-	var iy = marginTop; 
-	var ix = marginLeft;
+	var iy  = marginTop; 
+	var ix  = marginLeft;
+	var shy = marginTop;
+	var shx = marginRight;
 	
 	var column = 0;
 	var start = false;
@@ -2713,6 +2716,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			
 			var r = icons[a];
 			
+			var type = icons[a].MetaType;
+			
 			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
 				continue;
 
@@ -2759,22 +2764,47 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				// Increment icons after first calculated icon
 				if( direction == 'vertical' )
 				{
-					iy += gridY;
-
-					if( iy + gridY > windowHeight )
+					if( type == 'Shortcut' )
 					{
-						iy = marginTop;
-						ix += gridX;
+						shy += gridY;
+
+						if( shy + gridY > windowHeight )
+						{
+							shy = marginTop;
+							shx -= gridX;
+						}
+					}
+					else
+					{
+						iy += gridY;
+
+						if( iy + gridY > windowHeight )
+						{
+							iy = marginTop;
+							ix += gridX;
+						}
 					}
 				}
 				// Left to right
 				else
 				{
-					ix += gridX;
-					if( ix + gridX > windowWidth )
+					if( type == 'Shortcut' )
 					{
-						iy += gridY;
-						ix = marginLeft;
+						shx += gridX;
+						if( shx + gridX > windowWidth )
+						{
+							shy += gridY;
+							shx = marginRight;
+						}
+					}
+					else
+					{
+						ix += gridX;
+						if( ix + gridX > windowWidth )
+						{
+							iy += gridY;
+							ix = marginLeft;
+						}
 					}
 				}
 				// Make sure we push to buffer
@@ -2845,8 +2875,17 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					icons[a].file = file;
 				}
 				
-				file.style.top = iy + 'px';
-				file.style.left = ix + 'px';
+				if( type == 'Shortcut' )
+				{
+					file.style.top = shy + 'px';
+					file.style.left = shx + 'px';
+				}
+				else
+				{
+					file.style.top = iy + 'px';
+					file.style.left = ix + 'px';
+				}
+				
 				if( option == 'compact' ) file.classList.add( 'Compact' );
 				
 				coldom.appendChild( file );
@@ -2862,11 +2901,15 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				{
 					if( contentMode == 'screen' )
 					{
-						iy += file.offsetHeight + marginTop;
+						if( type == 'Shortcut' )
+							shy += file.offsetHeight + marginTop;
+						else iy += file.offsetHeight + marginTop;
 					}
 					else
 					{
-						iy += gridY;
+						if( type == 'Shortcut' )
+							shy += gridY;
+						else iy += gridY;
 					}
 
 					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && iy + gridY > windowHeight )
@@ -3730,7 +3773,7 @@ function DirectoryContainsFile( filename, directoryContents )
 
 FileIcon = function( fileInfo, flags )
 {
-	this.Init ( fileInfo, flags );
+	this.Init( fileInfo, flags );
 }
 
 // Put in cache
@@ -3789,6 +3832,7 @@ FileIcon.prototype.getCache = function( path, directoryview, date )
 FileIcon.prototype.delCache = function( dir )
 {
 	var path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + dir;
+	
 	// remove filename from subpath
 	if( dir.indexOf( '/' ) > 0 )
 	{
@@ -3801,8 +3845,11 @@ FileIcon.prototype.delCache = function( dir )
 	{
 		dir = dir.split( ':' )[0] + ':';
 	}
+	
 	if( !Friend.iconCache[ dir ] ) return false;
+	
 	if( !Friend.iconCache[ dir ][ path ] ) return false;
+	
 	delete Friend.iconCache[ dir ][ path ];
 }
 
@@ -3853,11 +3900,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		extension = extension[extension.length-1].toLowerCase();
 	}
 	else extension = '';
-
+	
 	// Create the div that holds the actual icon
 	icon = document.createElement ( 'div' );
 	icon.className = 'Icon';
-
+	
 	// Labels
 	// TODO remove!
 	if( 1 == 0 )
@@ -3869,7 +3916,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			icon.appendChild( df );
 		}
 	}
-
+	
 	iconInner = document.createElement ( 'div' );
 	file.iconInner = iconInner;
 	
@@ -4142,6 +4189,10 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( fileInfo.SharedLink && fileInfo.SharedLink.length )
 	{
 		iconInner.classList.add( 'Shared' );
+	}
+	if( fileInfo.MetaType == 'Shortcut' )
+	{
+		file.classList.add( 'Shortcut' );
 	}
 
 	// Create the title
