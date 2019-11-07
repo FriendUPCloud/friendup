@@ -400,6 +400,14 @@ Sections.accounts_users = function( cmd, extra )
 						saveUser( userInfo.ID );
 					}
 					
+					// Avatar 
+					
+					var ae = ge( 'AvatarEdit' );
+					if( ae ) ae.onclick = function( e )
+					{
+						changeAvatar();
+					}
+					
 					// Editing workgroups
 					
 					var wge = ge( 'WorkgroupEdit' );
@@ -1320,6 +1328,35 @@ Sections.accounts_users = function( cmd, extra )
 			}
 			u.execute( 'getsetting', { setting: 'avatar', userid: userid, authid: Application.authId } );
 		}
+	}
+	
+	function changeAvatar()
+	{
+		var self = this;
+		var description =
+		{
+			triggerFunction: function( item )
+			{
+				if ( item )
+				{
+					// Load the image
+					var image = new Image();
+					image.onload = function()
+					{
+						// Resizes the image
+						var canvas = ge( 'Avatar' );
+						var context = canvas.getContext( '2d' );
+						context.drawImage( image, 0, 0, 256, 256 );
+					}
+					image.src = getImageUrl( item[ 0 ].Path );
+				}
+			},
+			path: "Mountlist:",
+			type: "load",
+			title: i18n( 'i18n_fileselectoravatar' ),
+			filename: ""
+		}
+		var d = new Filedialog( description );
 	}
 	
 	function hideStatus( status, show )

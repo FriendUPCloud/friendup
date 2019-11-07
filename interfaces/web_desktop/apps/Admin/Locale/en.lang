@@ -11,6 +11,8 @@ i18n_language                          : Language
 i18n_account_locked                    : Account locked
 i18n_account_disabled                  : Account disabled
 
+i18n_browse                            : Browse
+
 i18n_looknfeel                         : Look and feel
 i18n_theme                             : Theme
 i18n_wallpaper                         : Wallpaper

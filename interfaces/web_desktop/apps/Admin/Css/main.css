@@ -72,7 +72,22 @@
 #Admin #UserDetails .AvatarRect 
 {
 	max-width: 320px;
-	margin: auto;
+	margin-left: auto;
+	margin-right: 0;
+}
+
+#Admin #UserDetails .AvatarRect > div
+{
+	position: relative;
+	min-height: 138px;
+	box-sizing: border-box;
+}
+
+#Admin #UserDetails .AvatarRect > div button
+{
+	position: absolute;
+	left: 10px;
+	bottom: 0;
 }
 
 #Admin #UserDetails #AvatarArea.IconSmall:before
@@ -87,7 +102,7 @@
 {
     position: relative;
     display: block;
-    margin: auto auto 10px auto;
+    margin-bottom: 10px;
     width: 128px;
     height: 128px;
     border-radius: 100%;
