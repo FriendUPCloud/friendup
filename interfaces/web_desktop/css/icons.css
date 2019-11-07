@@ -211,7 +211,7 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 
 .File.Shortcut a.Title
 {
-	font-style: oblique;
+
 }
 
 /* TODO: Make ready for themes! */
