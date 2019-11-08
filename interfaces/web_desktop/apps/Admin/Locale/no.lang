@@ -7,6 +7,7 @@ i18n_user_email                        : E-post
 i18n_user_password                     : Passord
 
 i18n_language                          : Språk
+i18n_setup                             : Mal
 
 i18n_account_locked                    : Konto låst
 i18n_account_disabled                  : Konto deaktivert

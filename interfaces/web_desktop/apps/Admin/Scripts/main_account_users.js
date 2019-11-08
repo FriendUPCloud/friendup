@@ -129,6 +129,20 @@ Sections.accounts_users = function( cmd, extra )
 					languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
 				}
 				
+				// Setup / Template
+				var setup = '<option value="0">None</option>';
+				if( userInfo.Setup )
+				{
+					for( var s in userInfo.Setup )
+					{
+						if( userInfo.Setup[s] && userInfo.Setup[s].ID )
+						{
+							var sel = ( userInfo.Setup[s].UserID && userInfo.Setup[s].UserID == userInfo.ID ? ' selected="selected"' : '' );
+							setup += '<option value="' + userInfo.Setup[s].ID + '"' + sel + '>' + userInfo.Setup[s].Name + '</option>';
+						}
+					}
+				}
+				
 				// Themes
 				var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 				if( !themeData )
@@ -326,6 +340,7 @@ Sections.accounts_users = function( cmd, extra )
 					user_username        : userInfo.Name,
 					user_email           : userInfo.Email,
 					user_language        : languages,
+					user_setup           : setup,
 					user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
 					user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
 					theme_name           : settings.Theme,
@@ -859,7 +874,7 @@ Sections.accounts_users = function( cmd, extra )
 		//b.innerHTML = '&nbsp;';
 		//l.appendChild( b );		
 		//headRow.appendChild( l );
-		var b = ge( 'AdminNewUserBtn' );
+		/*var b = ge( 'AdminNewUserBtn' );
 		if( b )
 		{
 			b.onclick = function( e )
@@ -880,98 +895,120 @@ Sections.accounts_users = function( cmd, extra )
 					languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
 				}
 				
-				var d = new File( 'Progdir:Templates/account_users_details.html' );
-				// Add all data for the template
-				d.replacements = {
-					user_name            : '',
-					user_fullname        : '',
-					user_username        : '',
-					user_email           : '',
-					user_language        : languages,
-					user_locked_toggle   : 'fa-toggle-off',
-					user_disabled_toggle : 'fa-toggle-off',
-					theme_name           : '',
-					theme_dark           : '',
-					theme_style          : '',
-					theme_preview        : '',
-					wallpaper_name       : '',
-					workspace_count      : '',
-					system_disk_state    : '',
-					storage              : '',
-					workgroups           : '',
-					roles                : '',
-					applications         : ''
-				};
+				// Setup / Template
 				
-				// Add translations
-				d.i18n();
-				d.onLoad = function( data )
+				getSetupList( function( e, data )
 				{
-					ge( 'UserDetails'               ).innerHTML = data;
-					//initStorageGraphs();
 					
-					ge( 'AdminStatusContainer'      ).style.display = 'none';
+					var setup = '<option value="0">None</option>';
 					
-					ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
-					ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
-					ge( 'AdminRoleContainer'        ).style.display = 'none';
-					ge( 'AdminStorageContainer'     ).style.display = 'none';
-					ge( 'AdminApplicationContainer' ).style.display = 'none';
-					
-					// User
-					
-					var bge  = ge( 'UserBasicEdit' );
-					if( bge ) bge.onclick = function( e )
+					if( e && data )
 					{
-						addUser(  );
-					}
-					
-					// Avatar 
-					
-					var ae = ge( 'AvatarEdit' );
-					if( ae ) ae.onclick = function( e )
-					{
-						changeAvatar();
-					}
-					
-					var au = ge( 'usFullname' );
-					if( au ) au.onblur = function( e )
-					{
-						if( this.value && this.value != this.fullname )
+						for( var s in data )
 						{
-							
-							randomAvatar( this.value, function( avatar ) 
-							{ 
-								var canvas = ge( 'Avatar' ).toDataURL();
-								
-								console.log( 'canvas: ', canvas.length );
-								console.log( 'avatar: ', avatar.length );
-								
-								if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
-								{
-									// Only update the avatar if it exists..
-									var avSrc = new Image();
-									avSrc.src = avatar;
-									avSrc.onload = function()
-									{
-										var ctx = ge( 'Avatar' ).getContext( '2d' );
-										ctx.drawImage( avSrc, 0, 0, 256, 256 );
-									}
-								}
-								
-							} );
-							
-							this.fullname = this.value;
+							if( data[s] && data.ID )
+							{
+								setup += '<option value="' + data[s].ID + '">' + data[s].Name + '</option>';
+							}
 						}
 					}
 					
-					// Responsive framework
-					Friend.responsive.pageActive = ge( 'UserDetails' );
-					Friend.responsive.reinit();
-				}
-				d.load();
+					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					// Add all data for the template
+					d.replacements = {
+						user_name            : '',
+						user_fullname        : '',
+						user_username        : '',
+						user_email           : '',
+						user_language        : languages,
+						user_setup           : setup,
+						user_locked_toggle   : 'fa-toggle-off',
+						user_disabled_toggle : 'fa-toggle-off',
+						theme_name           : '',
+						theme_dark           : '',
+						theme_style          : '',
+						theme_preview        : '',
+						wallpaper_name       : '',
+						workspace_count      : '',
+						system_disk_state    : '',
+						storage              : '',
+						workgroups           : '',
+						roles                : '',
+						applications         : ''
+					};
+				
+					// Add translations
+					d.i18n();
+					d.onLoad = function( data )
+					{
+						ge( 'UserDetails'               ).innerHTML = data;
+						//initStorageGraphs();
+					
+						ge( 'AdminStatusContainer'      ).style.display = 'none';
+					
+						ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
+						ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						ge( 'AdminRoleContainer'        ).style.display = 'none';
+						ge( 'AdminStorageContainer'     ).style.display = 'none';
+						ge( 'AdminApplicationContainer' ).style.display = 'none';
+					
+						// User
+					
+						var bge  = ge( 'UserBasicEdit' );
+						if( bge ) bge.onclick = function( e )
+						{
+							addUser(  );
+						}
+					
+						// Avatar 
+					
+						var ae = ge( 'AvatarEdit' );
+						if( ae ) ae.onclick = function( e )
+						{
+							changeAvatar();
+						}
+					
+						var au = ge( 'usFullname' );
+						if( au ) au.onblur = function( e )
+						{
+							if( this.value && this.value != this.fullname )
+							{
+							
+								randomAvatar( this.value, function( avatar ) 
+								{ 
+									var canvas = ge( 'Avatar' ).toDataURL();
+								
+									console.log( 'canvas: ', canvas.length );
+									console.log( 'avatar: ', avatar.length );
+								
+									if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
+									{
+										// Only update the avatar if it exists..
+										var avSrc = new Image();
+										avSrc.src = avatar;
+										avSrc.onload = function()
+										{
+											var ctx = ge( 'Avatar' ).getContext( '2d' );
+											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+										}
+									}
+								
+								} );
+							
+								this.fullname = this.value;
+							}
+						}
+					
+						// Responsive framework
+						Friend.responsive.pageActive = ge( 'UserDetails' );
+						Friend.responsive.reinit();
+					}
+					d.load();
+				
+				} );
+				
 			}
-		}
+		}*/
 		
 		var btn = ge( 'AdminUsersBtn' );
 		if( btn )
@@ -1006,96 +1043,117 @@ Sections.accounts_users = function( cmd, extra )
 					languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
 				}
 				
-				var d = new File( 'Progdir:Templates/account_users_details.html' );
-				// Add all data for the template
-				d.replacements = {
-					user_name            : '',
-					user_fullname        : '',
-					user_username        : '',
-					user_email           : '',
-					user_language        : languages,
-					user_locked_toggle   : 'fa-toggle-off',
-					user_disabled_toggle : 'fa-toggle-off',
-					theme_name           : '',
-					theme_dark           : '',
-					theme_style          : '',
-					theme_preview        : '',
-					wallpaper_name       : '',
-					workspace_count      : '',
-					system_disk_state    : '',
-					storage              : '',
-					workgroups           : '',
-					roles                : '',
-					applications         : ''
-				};
+				// Setup / Template
 				
-				// Add translations
-				d.i18n();
-				d.onLoad = function( data )
+				getSetupList( function( e, data )
 				{
-					ge( 'UserDetails'               ).innerHTML = data;
-					//initStorageGraphs();
 					
-					ge( 'AdminStatusContainer'      ).style.display = 'none';
+					var setup = '<option value="0">None</option>';
 					
-					ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
-					ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
-					ge( 'AdminRoleContainer'        ).style.display = 'none';
-					ge( 'AdminStorageContainer'     ).style.display = 'none';
-					ge( 'AdminApplicationContainer' ).style.display = 'none';
-					
-					// User
-					
-					var bge  = ge( 'UserBasicEdit' );
-					if( bge ) bge.onclick = function( e )
+					if( e && data )
 					{
-						addUser(  );
-					}
-					
-					// Avatar 
-					
-					var ae = ge( 'AvatarEdit' );
-					if( ae ) ae.onclick = function( e )
-					{
-						changeAvatar();
-					}
-					
-					var au = ge( 'usFullname' );
-					if( au ) au.onblur = function( e )
-					{
-						if( this.value && this.value != this.fullname )
+						for( var s in data )
 						{
-							
-							randomAvatar( this.value, function( avatar ) 
-							{ 
-								var canvas = ge( 'Avatar' ).toDataURL();
-								
-								console.log( 'canvas: ', canvas.length );
-								console.log( 'avatar: ', avatar.length );
-								
-								if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
-								{
-									// Only update the avatar if it exists..
-									var avSrc = new Image();
-									avSrc.src = avatar;
-									avSrc.onload = function()
-									{
-										var ctx = ge( 'Avatar' ).getContext( '2d' );
-										ctx.drawImage( avSrc, 0, 0, 256, 256 );
-									}
-								}
-								
-							} );
-							
-							this.fullname = this.value;
+							if( data[s] && data[s].ID )
+							{
+								setup += '<option value="' + data[s].ID + '">' + data[s].Name + '</option>';
+							}
 						}
 					}
 					
-					// Responsive framework
-					Friend.responsive.pageActive = ge( 'UserDetails' );
-					Friend.responsive.reinit();
-				}
-				d.load();
+					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					// Add all data for the template
+					d.replacements = {
+						user_name            : '',
+						user_fullname        : '',
+						user_username        : '',
+						user_email           : '',
+						user_language        : languages,
+						user_setup           : setup,
+						user_locked_toggle   : 'fa-toggle-off',
+						user_disabled_toggle : 'fa-toggle-off',
+						theme_name           : '',
+						theme_dark           : '',
+						theme_style          : '',
+						theme_preview        : '',
+						wallpaper_name       : '',
+						workspace_count      : '',
+						system_disk_state    : '',
+						storage              : '',
+						workgroups           : '',
+						roles                : '',
+						applications         : ''
+					};
+				
+					// Add translations
+					d.i18n();
+					d.onLoad = function( data )
+					{
+						ge( 'UserDetails'               ).innerHTML = data;
+						//initStorageGraphs();
+					
+						ge( 'AdminStatusContainer'      ).style.display = 'none';
+					
+						ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
+						ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						ge( 'AdminRoleContainer'        ).style.display = 'none';
+						ge( 'AdminStorageContainer'     ).style.display = 'none';
+						ge( 'AdminApplicationContainer' ).style.display = 'none';
+					
+						// User
+					
+						var bge  = ge( 'UserBasicEdit' );
+						if( bge ) bge.onclick = function( e )
+						{
+							addUser(  );
+						}
+					
+						// Avatar 
+					
+						var ae = ge( 'AvatarEdit' );
+						if( ae ) ae.onclick = function( e )
+						{
+							changeAvatar();
+						}
+					
+						var au = ge( 'usFullname' );
+						if( au ) au.onblur = function( e )
+						{
+							if( this.value && this.value != this.fullname )
+							{
+							
+								randomAvatar( this.value, function( avatar ) 
+								{ 
+									var canvas = ge( 'Avatar' ).toDataURL();
+								
+									console.log( 'canvas: ', canvas.length );
+									console.log( 'avatar: ', avatar.length );
+								
+									if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
+									{
+										// Only update the avatar if it exists..
+										var avSrc = new Image();
+										avSrc.src = avatar;
+										avSrc.onload = function()
+										{
+											var ctx = ge( 'Avatar' ).getContext( '2d' );
+											ctx.drawImage( avSrc, 0, 0, 256, 256 );
+										}
+									}
+								
+								} );
+							
+								this.fullname = this.value;
+							}
+						}
+					
+						// Responsive framework
+						Friend.responsive.pageActive = ge( 'UserDetails' );
+						Friend.responsive.reinit();
+					}
+					d.load();
+					
+				} );
 				
 				SubMenu( this.parentNode.parentNode );
 			}
@@ -1399,6 +1457,28 @@ Sections.accounts_users = function( cmd, extra )
 			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 		}
 		
+	}
+	
+	function getSetupList( callback )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			console.log( 'getSetupList', { e:e, d:d } );
+			if( e != 'ok' )
+			{
+				if( callback ) return callback( false );
+			}
+			var rows = '';
+			try
+			{
+				rows = JSON.parse( d );
+			} 
+			catch( e ) {  }
+			
+			if( callback ) return callback( true, rows );
+		}
+		m.execute( 'usersetup' );
 	}
 	
 	function setAvatar( userid, content, callback )
@@ -3079,10 +3159,11 @@ function saveUser( uid )
 	if( uid ) args.id = uid;
 	
 	var mapping = {
-		usFullname: 'fullname',
-		usEmail:    'email',
-		usUsername: 'username',
-		usPassword: 'password'
+		usFullname : 'fullname',
+		usEmail    : 'email',
+		usUsername : 'username',
+		usPassword : 'password',
+		usSetup    : 'setup'
 	};
 	
 	for( var a in mapping )
