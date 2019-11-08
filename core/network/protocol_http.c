@@ -831,8 +831,9 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
+							char *usrSessionID = NULL;
 							
-							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID where `Hash`='%s'", path->parts[ 1 ] );
+							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
 							//sqllib->SNPrintF( sqllib, query, sizeof(query), " `Hash` = '%s'", path->parts[ 1 ] );
 							
 							void *res = sqllib->Query( sqllib, query );
@@ -861,6 +862,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									if( row[ 4 ] != NULL )
 									{
 										fs_Type = StringDuplicate( row[ 4 ] );
+									}
+									if( row[ 5 ] != NULL )
+									{
+										usrSessionID = StringDuplicate( row[ 5 ] );
 									}
 								}
 								sqllib->FreeResult( sqllib, res );
@@ -892,6 +897,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										{FSys_Mount_Name, (FULONG)fs_DeviceName },
 										{FSys_Mount_UserID, (FULONG)fs_IDUser },
 										{FSys_Mount_Owner, (FULONG)NULL },
+										{FSys_Mount_User_SessionID, (FULONG)usrSessionID },
 										{TAG_DONE, TAG_DONE}
 									};
 									int err = MountFSNoUser( SLIB->sl_DeviceManager, (struct TagItem *)&tags, &(rootDev), &error );
@@ -927,10 +933,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									//add mounting and reading files from FS
 									struct TagItem tags[] = {
-											{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
-											{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-											{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
-											{ TAG_DONE, TAG_DONE }
+										{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
+										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+										{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+										{ TAG_DONE, TAG_DONE }
 									};
 
 									// 0 = filesystem do not provide modify timestamp
@@ -1181,6 +1187,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							if( fs_Name != NULL ) FFree( fs_Name );
 							if( fs_Type != NULL ) FFree( fs_Type );
 							if( fs_Path != NULL ) FFree( fs_Path );
+							if( usrSessionID != NULL ) FFree( usrSessionID );
 						}
 					}
 

@@ -951,6 +951,8 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 				case FSys_Mount_Mount:
 					mount = (FULONG)ltl->ti_Data;
 					break;
+				case FSys_Mount_User_SessionID:
+					break;
 			}
 			ltl++;
 		}
