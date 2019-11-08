@@ -2912,10 +2912,19 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 						else iy += gridY;
 					}
 
-					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && iy + gridY > windowHeight )
+					var cond = type == 'Shortcut' ? shy : iy;
+					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && cond + gridY > windowHeight )
 					{
-						iy = marginTop;
-						ix += gridX;
+						if( type == 'Shortcut' )
+						{
+							shy = marginTop;
+							shx -= gridX;
+						}
+						else
+						{
+							iy = marginTop;
+							ix += gridX;
+						}
 						coldom = document.createElement ( 'div' );
 						coldom.className = 'Coldom';
 						this.scroller.appendChild( coldom );
