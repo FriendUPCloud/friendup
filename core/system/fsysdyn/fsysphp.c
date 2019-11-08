@@ -403,7 +403,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 					userSession = empty;
 				}
 			}
-			DEBUG( "[fsysphp] Copying session: %s\n", usr->u_MainSessionID );
+			DEBUG( "[fsysphp] Copying session: %s\n", userSession );
 			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
 			dev->f_SessionIDPTR = userSession;
 			sd->type = StringDup( type );
