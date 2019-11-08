@@ -4317,12 +4317,26 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 							name: i18n( 'i18n_delete_shortcut' ),
 							command: function( e )
 							{
+								var files = [];
+								var eles = found.fileInfo.directoryview.window.getElementsByTagName( 'div' );
+								var selectedCount = 0;
+								for( var a = 0; a < eles.length; a++ )
+								{
+									if( !eles[a].classList.contains( 'File' ) )
+										continue;
+									if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
+										continue;
+									if( eles[a].fileInfo.MetaType != 'Shortcut' )
+										continue;
+									files.push( eles[a].fileInfo.Path );
+								}
+								
 								var m = new Module( 'system' );
 								m.onExecuted = function( e, d )
 								{
 									Workspace.refreshDesktop( false, true );
 								}
-								m.execute( 'removedesktopshortcut', { shortcut: found.fileInfo.Path } );
+								m.execute( 'removedesktopshortcut', { shortcuts: files } );
 							}
 						} ], e );
 					}
