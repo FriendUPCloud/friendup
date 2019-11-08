@@ -4931,8 +4931,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				this.refreshCallback = callback;
 			}
 			
-			win.refreshing = true;
 			var self = this;
+			self.win.refreshing = true;
 			
 			var fi = this.fileInfo ? this.fileInfo : iconObject;
 			var wt = fi.Path ? fi.Path : ( fi.Title ? fi.Title : fi.Volume );

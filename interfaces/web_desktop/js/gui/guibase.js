@@ -577,6 +577,8 @@ var mousePointer =
 							{
 								files.push( ':' + objs[ a ].Filename );
 							}
+							else if( objs[ a ].Type == 'Door' || objs[ a ].Type == 'Dormant' )
+								continue;
 							else
 							{
 								files.push( objs[ a ].Path );
