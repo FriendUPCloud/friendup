@@ -3780,35 +3780,38 @@ FileIcon = function( fileInfo, flags )
 // TODO: Clean cache when sessionid change
 FileIcon.prototype.setCache = function( path, directoryview, date )
 {
-	var dir = directoryview.window.fileInfo.Path;
-	if( !Friend.iconCache[ dir ] )
-		Friend.iconCache[ dir ] = {};
-	if( !Friend.iconCache[ dir ][ path ] )
+	if( directoryview && directoryview.window && directoryview.window.fileInfo )
 	{
-		var currentIndex = Friend.iconCache.index++;
-		// Wrap around
-		if( currentIndex > Friend.iconCache.maxCount )
+		var dir = directoryview.window.fileInfo.Path;
+		if( !Friend.iconCache[ dir ] )
+			Friend.iconCache[ dir ] = {};
+		if( !Friend.iconCache[ dir ][ path ] )
 		{
-			currentIndex = Friend.iconCache.index = 0;
-		}
-		var i = new Image();
-		i.src = path;
-		i.date = date;
-		i.onload = function()
-		{
-			Friend.iconCache[ dir ][ path ] = i;
-			// Overwriting?
-			if( Friend.iconCache.seenList[ currentIndex ] )
+			var currentIndex = Friend.iconCache.index++;
+			// Wrap around
+			if( currentIndex > Friend.iconCache.maxCount )
 			{
-				var dd = Friend.iconCache.seenList[ currentIndex ].dir;
-				var pp = Friend.iconCache.seenList[ currentIndex ].path;
-				delete Friend.iconCache[ dd ][ pp ];
+				currentIndex = Friend.iconCache.index = 0;
 			}
-			// Write new
-			Friend.iconCache.seenList[ currentIndex ] = {
-				dir: dir,
-				path: path
-			};
+			var i = new Image();
+			i.src = path;
+			i.date = date;
+			i.onload = function()
+			{
+				Friend.iconCache[ dir ][ path ] = i;
+				// Overwriting?
+				if( Friend.iconCache.seenList[ currentIndex ] )
+				{
+					var dd = Friend.iconCache.seenList[ currentIndex ].dir;
+					var pp = Friend.iconCache.seenList[ currentIndex ].path;
+					delete Friend.iconCache[ dd ][ pp ];
+				}
+				// Write new
+				Friend.iconCache.seenList[ currentIndex ] = {
+					dir: dir,
+					path: path
+				};
+			}
 		}
 	}
 }
@@ -3816,16 +3819,20 @@ FileIcon.prototype.setCache = function( path, directoryview, date )
 // Get image from cache
 FileIcon.prototype.getCache = function( path, directoryview, date )
 {
-	var dir = directoryview.window.fileInfo.Path;
-	if( !Friend.iconCache[ dir ] ) return false;
-	if( !Friend.iconCache[ dir ][ path ] ) return false;
-	var i = Friend.iconCache[ dir ][ path ];
-	if( i.date != date )
+	if( directoryview && directoryview.window && directoryview.window.fileInfo )
 	{
-		Friend.iconCache[ dir ][ path ] = null;
-		return false;
+		var dir = directoryview.window.fileInfo.Path;
+		if( !Friend.iconCache[ dir ] ) return false;
+		if( !Friend.iconCache[ dir ][ path ] ) return false;
+		var i = Friend.iconCache[ dir ][ path ];
+		if( i.date != date )
+		{
+			Friend.iconCache[ dir ][ path ] = null;
+			return false;
+		}
+		return _getBase64Image( i );
 	}
-	return _getBase64Image( i );
+	return false;
 }
 
 // Remove an image from cache
