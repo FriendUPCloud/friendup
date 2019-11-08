@@ -1486,31 +1486,8 @@ if( isset( $args->command ) )
 		// Add a new user
 		// TODO: Permissions! ONly admin can do this!
 		case 'useradd':
-			if( $level == 'Admin' )
-			{
-				// Make sure we have the "User" type group
-				$g = new dbIO( 'FUserGroup' );
-				$g->Name = 'User';
-				$g->Load();
-				$g->Save();
-
-				if( $g->ID > 0 )
-				{
-					// Create the new user
-					$u = new dbIO( 'FUser' );
-					$u->Password = md5( rand(0,999) + microtime() );
-					$u->Name = 'Unnamed user';
-					$u->FullName = 'Unnamed user';
-					$u->Save();
-
-					if( $u->ID > 0 )
-					{
-						$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
-						die( 'ok<!--separate-->' . $u->ID );
-					}
-				}
-			}
-			die( 'fail<!--separate-->{"response":"user add failed"}'  );
+			require( 'modules/system/include/useradd.php' );
+			break;
 		//
 		case 'checkuserbyname':
 			if( $level == 'Admin' || $args->args->id == $User->ID )

@@ -923,7 +923,7 @@ Sections.accounts_users = function( cmd, extra )
 					var bge  = ge( 'UserBasicEdit' );
 					if( bge ) bge.onclick = function( e )
 					{
-						saveUser(  );
+						addUser(  );
 					}
 					
 					// Avatar 
@@ -1049,7 +1049,7 @@ Sections.accounts_users = function( cmd, extra )
 					var bge  = ge( 'UserBasicEdit' );
 					if( bge ) bge.onclick = function( e )
 					{
-						saveUser(  );
+						addUser(  );
 					}
 					
 					// Avatar 
@@ -3053,6 +3053,22 @@ function remountDrive( devname, userid, callback )
 	}
 }
 
+// Add new user
+function addUser()
+{
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		console.log( 'addUser() ', { e:e, d:d } );
+		
+		if( e == 'ok' && d )
+		{
+			saveUser( d );
+		}
+	}
+	m.execute( 'useradd', { authid: Application.authId } );
+}
+
 // Save a user
 function saveUser( uid )
 {
@@ -3087,9 +3103,6 @@ function saveUser( uid )
 		
 		
 	}
-	
-
-	
 	
 	
 	var f = new Library( 'system.library' );

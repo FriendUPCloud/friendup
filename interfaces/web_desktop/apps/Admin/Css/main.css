@@ -226,6 +226,11 @@
 	color: #C0392B;
 }
 
+#Admin #GuiContent #UserList .HRow span
+{
+	/*border-radius: 100%;*/
+}
+
 /* Server printers ---------------------------------------------------------- */
 
 
