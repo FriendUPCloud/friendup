@@ -849,7 +849,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								else
 								{
 									struct TagItem tags[] = {
-										{FSys_Mount_Type, (FULONG)"INRAM"},
+										{FSys_Mount_Type, (FULONG)fs->fs_Type },
 										{FSys_Mount_Name, (FULONG)fs->fs_DeviceName },
 										{FSys_Mount_UserID, (FULONG)fs->fs_IDUser },
 										{FSys_Mount_Owner, (FULONG)NULL },
