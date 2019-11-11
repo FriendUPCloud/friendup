@@ -865,7 +865,7 @@ function SetScreenByWindowElement( div )
 
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
-{
+{	
 	// Blocker
 	if( !isMobile && div.content && div.content.blocker )
 	{
@@ -1006,15 +1006,24 @@ function _ActivateWindow( div, nopoll, e )
 {
 	if( !e ) e = window.event;
 	
-	// Remove menu on calendar
-	if( Workspace.calendarWidget )
-		Workspace.calendarWidget.hide();
-	
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
+		console.log( '[window.js] Already activated', div );
 		return;
 	}
+	// And is already active
+	if( div.classList.contains( 'Active' ) )
+	{
+		console.log( '[window.js] Already activated', div );
+		return;
+	}
+	
+	console.log( '[window.js] Activate: ', div );
+	
+	// Remove menu on calendar
+	if( Workspace.calendarWidget )
+		Workspace.calendarWidget.hide();
 	
 	if( isMobile && div.windowObject.lastActiveView && isMobile && div.windowObject.lastActiveView.parentNode )
 	{
@@ -1267,6 +1276,7 @@ function _removeWindowTiles( div )
 
 function _DeactivateWindow( m, skipCleanUp )
 {
+	console.log( '[window.js] Deactivatine window', m );
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
@@ -2228,31 +2238,37 @@ var View = function( args )
 		}
 
 		// Tell it's opening
-		viewContainer.classList.add( 'Opening' );
-		div.classList.add( 'Opening' );
-		setTimeout( function()
+		if( !flags.minimized )
 		{
-			div.classList.add( 'Opened' );
-			div.classList.remove( 'Opening' );
+			viewContainer.classList.add( 'Opening' );
+			div.classList.add( 'Opening' );
 			setTimeout( function()
 			{
-				div.classList.remove( 'Opened' );
-				// Give last call to port
-				div.classList.add( 'Redrawing' );
+				div.classList.add( 'Opened' );
+				div.classList.remove( 'Opening' );
 				setTimeout( function()
 				{
-					viewContainer.classList.remove( 'Opening' );
-					div.classList.remove( 'Redrawing' );
+					div.classList.remove( 'Opened' );
+					// Give last call to port
+					div.classList.add( 'Redrawing' );
+					setTimeout( function()
+					{
+						viewContainer.classList.remove( 'Opening' );
+						div.classList.remove( 'Redrawing' );
+					}, 250 );
 				}, 250 );
 			}, 250 );
-		}, 250 );
+		}
 
 		if( transparent )
 		{
 			div.setAttribute( 'transparent', 'transparent' );
 		}
-
-		div.style.transform = 'translate3d(0, 0, 0)';
+		
+		if( !flags.minimized )
+		{
+			div.style.transform = 'translate3d(0, 0, 0)';
+		}
 
 		var zoom; // for use later - zoom gadget
 
@@ -2979,7 +2995,7 @@ var View = function( args )
 			else
 			{
 				var app = _getAppByAppId( div.applicationId );
-				if( app.mainView )
+				if( app.mainView && div != app.mainView )
 					_ActivateWindow( app.mainView.content.parentNode );
 				Friend.GUI.reorganizeResponsiveMinimized();
 			}
@@ -3399,8 +3415,7 @@ var View = function( args )
 
 		// Triggers ????? Please review this and add explaining comment
 		if( parentWindow )
-		{
-			
+		{	
 			parentWindow.addChildWindow( viewContainer );
 		}
 
@@ -3482,6 +3497,7 @@ var View = function( args )
 				divParent.activeTab.onclick();
 			}, 100 );
 		}
+		
 		// Don't show the view window if it's hidden
 		if(
 			( typeof( flags.hidden ) != 'undefined' && flags.hidden ) ||
@@ -3668,26 +3684,35 @@ var View = function( args )
 		}
 
 
+		console.log( '[window.js] Testing for mobile: ' + window.isMobile );
 		// Start maximized
 		if( window.isMobile )
 		{
-			this.setFlag( 'maximized', true );
-			div.setAttribute( 'maximized', 'true' );
-			
-			// Tell application if any
-			if( window._getAppByAppId )
+			if( !flags.minimized )
 			{
-				var app = _getAppByAppId( div.applicationId );
-				if( app )
+				console.log( '[window.js] Not minimized.' );
+				this.setFlag( 'maximized', true );
+				div.setAttribute( 'maximized', 'true' );
+			
+				// Tell application if any
+				if( window._getAppByAppId )
 				{
-					app.sendMessage( {
-						'command': 'notify',
-						'method': 'setviewflag',
-						'flag': 'maximized',
-						'viewId': div.windowObject.viewId,
-						'value': true
-					} );
+					var app = _getAppByAppId( div.applicationId );
+					if( app )
+					{
+						app.sendMessage( {
+							'command': 'notify',
+							'method': 'setviewflag',
+							'flag': 'maximized',
+							'viewId': div.windowObject.viewId,
+							'value': true
+						} );
+					}
 				}
+			}
+			else
+			{
+				console.log( '[window.js] Flag minimized: ', flags );
 			}
 		}
 
@@ -3717,7 +3742,7 @@ var View = function( args )
 			self.sendToWorkspace( self.workspace );
 		
 		// Remove menu on calendar
-		if( Workspace.calendarWidget )
+		if( !flags.minimized && Workspace.calendarWidget )
 			Workspace.calendarWidget.hide();
 		
 	}
@@ -3727,7 +3752,7 @@ var View = function( args )
 	{
 		if( isMobile ) return;
 		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
-			return;
+			return; 
 		var wn = this._window.parentNode;
 		var pn = wn.parentNode;
 		
@@ -4382,13 +4407,23 @@ var View = function( args )
 		}
 	}
 	// Activate window
-	this.activate = function ()
+	this.activate = function()
 	{
+		if( this.flags.minimized ) 
+		{
+			console.log( '[window.js] window is minimized - will not activate.' );
+			return;
+		}
 		_ActivateWindow( this._window.parentNode );
 	}
 	// Move window to front
 	this.toFront = function()
 	{
+		if( this.flags.minimized ) 
+		{
+			console.log( '[window.js] window is minimized - will not activate.' );
+			return;
+		}
 		_ActivateWindow( this._window.parentNode );
 		_WindowToFront( this._window.parentNode );
 	}
