@@ -27,6 +27,7 @@
 #include <poll.h>
 #include <core/types.h>
 
+#include <openssl/ssl.h>
 #include <libwebsockets.h>
 #include <core/thread.h>
 #include <time.h>

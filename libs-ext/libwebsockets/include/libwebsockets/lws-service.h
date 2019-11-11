@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /** \defgroup service Built-in service loop entry
@@ -33,9 +34,7 @@
 /**
  * lws_service() - Service any pending websocket activity
  * \param context:	Websocket context
- * \param timeout_ms:	Timeout for poll; 0 means return immediately if nothing needed
- *		service otherwise block and service immediately, returning
- *		after the timeout if nothing needed service.
+ * \param timeout_ms:	Set to 0; ignored; for backward compatibility
  *
  *	This function deals with any pending websocket traffic, for three
  *	kinds of event.  It handles these events on both server and client
@@ -46,20 +45,8 @@
  *	2) Call the receive callback for incoming frame data received by
  *	    server or client connections.
  *
- *	You need to call this service function periodically to all the above
- *	functions to happen; if your application is single-threaded you can
- *	just call it in your main event loop.
- *
- *	Alternatively you can fork a new process that asynchronously handles
- *	calling this service in a loop.  In that case you are happy if this
- *	call blocks your thread until it needs to take care of something and
- *	would call it with a large nonzero timeout.  Your loop then takes no
- *	CPU while there is nothing happening.
- *
- *	If you are calling it in a single-threaded app, you don't want it to
- *	wait around blocking other things in your loop from happening, so you
- *	would call it with a timeout_ms of 0, so it returns immediately if
- *	nothing is pending, or as soon as it services whatever was pending.
+ *  Since v3.2 internally the timeout wait is ignored, the lws scheduler is
+ *  smart enough to stay asleep until an event is queued.
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_service(struct lws_context *context, int timeout_ms);
@@ -68,9 +55,7 @@ lws_service(struct lws_context *context, int timeout_ms);
  * lws_service_tsi() - Service any pending websocket activity
  *
  * \param context:	Websocket context
- * \param timeout_ms:	Timeout for poll; 0 means return immediately if nothing needed
- *		service otherwise block and service immediately, returning
- *		after the timeout if nothing needed service.
+ * \param timeout_ms:	Set to 0; ignored; for backwards compatibility
  * \param tsi:		Thread service index, starting at 0
  *
  * Same as lws_service(), but for a specific thread service index.  Only needed
@@ -109,7 +94,7 @@ lws_cancel_service(struct lws_context *context);
  * lws_service_fd() - Service polled socket with something waiting
  * \param context:	Websocket context
  * \param pollfd:	The pollfd entry describing the socket fd and which events
- *		happened, or NULL to tell lws to do only timeout servicing.
+ *		happened
  *
  * This function takes a pollfd that has POLLIN or POLLOUT activity and
  * services it according to the state of the associated
@@ -127,9 +112,9 @@ lws_cancel_service(struct lws_context *context);
  * see if you should service yourself by checking the pollfd revents
  * after letting lws try to service it.
  *
- * You should also call this with pollfd = NULL to just allow the
- * once-per-second global timeout checks; if less than a second since the last
- * check it returns immediately then.
+ * lws before v3.2 allowed pollfd to be NULL, to indicate that background
+ * periodic processing should be done.  Since v3.2, lws schedules any items
+ * that need handling in the future using lws_sul and NULL is no longer valid.
  */
 LWS_VISIBLE LWS_EXTERN int
 lws_service_fd(struct lws_context *context, struct lws_pollfd *pollfd);
@@ -208,7 +193,7 @@ lws_libuv_static_refcount_del(uv_handle_t *);
 
 #endif /* LWS_WITH_LIBUV */
 
-#if defined(LWS_WITH_ESP32)
+#if defined(LWS_PLAT_FREERTOS)
 #define lws_libuv_static_refcount_add(_a, _b)
 #define lws_libuv_static_refcount_del NULL
 #endif

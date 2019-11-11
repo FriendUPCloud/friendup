@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /*! \defgroup client Client related functions
@@ -38,6 +39,13 @@ enum lws_client_connect_ssl_connection_flags {
 	LCCSCF_ALLOW_SELFSIGNED			= (1 << 1),
 	LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK	= (1 << 2),
 	LCCSCF_ALLOW_EXPIRED			= (1 << 3),
+	LCCSCF_ALLOW_INSECURE			= (1 << 4),
+	LCCSCF_H2_QUIRK_NGHTTP2_END_STREAM	= (1 << 5),
+	LCCSCF_H2_QUIRK_OVERFLOWS_TXCR		= (1 << 6),
+	LCCSCF_H2_AUTH_BEARER			= (1 << 7),
+	LCCSCF_H2_HEXIFY_AUTH_TOKEN		= (1 << 8),
+	LCCSCF_HTTP_MULTIPART_MIME		= (1 << 9),
+	LCCSCF_HTTP_X_WWW_FORM_URLENCODED	= (1 << 10),
 
 	LCCSCF_PIPELINE				= (1 << 16),
 		/**< Serialize / pipeline multiple client connections
@@ -46,10 +54,9 @@ enum lws_client_connect_ssl_connection_flags {
 		 * HTTP/1.0: possible if Keep-Alive: yes sent by server
 		 * HTTP/1.1: always possible... uses pipelining
 		 * HTTP/2:   always possible... uses parallel streams
-		 * */
+		 */
+	LCCSCF_MUXABLE_STREAM			= (1 << 17),
 };
-
-typedef struct lws_sequencer lws_sequencer_t;
 
 /** struct lws_client_connect_info - parameters to connect with when using
  *				    lws_client_connect_via_info() */
@@ -121,8 +128,8 @@ struct lws_client_connect_info {
 	 *           tokens
 	 */
 
-	lws_sequencer_t *seq;
-	/**< NULL, or an lws_sequencer_t that wants to be given messages about
+	struct lws_sequencer *seq;
+	/**< NULL, or an lws_seq_t that wants to be given messages about
 	 * this wsi's lifecycle as it connects, errors or closes.
 	 */
 
@@ -130,7 +137,12 @@ struct lws_client_connect_info {
 	/**< This data has no meaning to lws but is applied to the client wsi
 	 *   and can be retrieved by user code with lws_get_opaque_user_data().
 	 *   It's also provided with sequencer messages if the wsi is bound to
-	 *   an lws_sequencer_t.
+	 *   an lws_seq_t.
+	 */
+
+	const lws_retry_bo_t *retry_and_idle_policy;
+	/**< optional retry and idle policy to apply to this connection.
+	 *   Currently only the idle parts are applied to the connection.
 	 */
 
 	/* Add new things just above here ---^
@@ -219,11 +231,23 @@ lws_http_client_read(struct lws *wsi, char **buf, int *len);
 LWS_VISIBLE LWS_EXTERN unsigned int
 lws_http_client_http_response(struct lws *wsi);
 
-LWS_VISIBLE LWS_EXTERN void
-lws_client_http_body_pending(struct lws *wsi, int something_left_to_send);
+/**
+ * lws_tls_client_vhost_extra_cert_mem() - add more certs to vh client tls ctx
+ *
+ * \param vh: the vhost to give more client certs to
+ * \param der: pointer to der format additional cert
+ * \param der_len: size in bytes of der
+ *
+ * After the vhost is created with one cert for client verification, you
+ * can add additional, eg, intermediate, certs to the client tls context
+ * of the vhost, for use with validating the incoming server cert(s).
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_tls_client_vhost_extra_cert_mem(struct lws_vhost *vh,
+		const uint8_t *der, size_t der_len);
 
 /**
- * lws_client_http_body_pending() - control if client connection neeeds to send body
+ * lws_client_http_body_pending() - control if client connection needs to send body
  *
  * \param wsi: client connection
  * \param something_left_to_send: nonzero if need to send more body, 0 (default)
@@ -241,5 +265,26 @@ lws_client_http_body_pending(struct lws *wsi, int something_left_to_send);
  * if there is more to come, or lws_client_http_body_pending(wsi, 0); to
  * let lws know the last part is sent and the connection can move on.
  */
+LWS_VISIBLE LWS_EXTERN void
+lws_client_http_body_pending(struct lws *wsi, int something_left_to_send);
+
+/**
+ * lws_client_http_multipart() - issue appropriate multipart header or trailer
+ *
+ * \param wsi: client connection
+ * \param name: multipart header name field, or NULL if end of multipart
+ * \param filename: multipart header filename field, or NULL if none
+ * \param content_type: multipart header content-type part, or NULL if none
+ * \param p: pointer to position in buffer
+ * \param end: end of buffer
+ *
+ * This issues a multipart mime boundary, or terminator if name = NULL.
+ *
+ * Returns 0 if OK or nonzero if couldn't fit in buffer
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_client_http_multipart(struct lws *wsi, const char *name,
+			  const char *filename, const char *content_type,
+			  char **p, char *end);
 
 ///@}

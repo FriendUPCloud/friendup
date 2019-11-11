@@ -1,25 +1,28 @@
 /*
- * lib/hpack.c
+ * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2014-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 /*
  * Official static header table for HPACK
@@ -391,10 +394,9 @@ lws_token_from_index(struct lws *wsi, int index, const char **arg, int *len,
 		return -1;
 	}
 
-	if (index < (int)LWS_ARRAY_SIZE(static_token) ||
-	    index >= (int)LWS_ARRAY_SIZE(static_token) + dyn->used_entries) {
+	if (index >= (int)LWS_ARRAY_SIZE(static_token) + dyn->used_entries) {
 		lwsl_info("  %s: adjusted index %d >= %d\n", __func__, index,
-			    dyn->used_entries);
+				(int)LWS_ARRAY_SIZE(static_token) + dyn->used_entries);
 		lws_h2_goaway(wsi, H2_ERR_COMPRESSION_ERROR,
 			      "index out of range");
 		return -1;
@@ -1000,6 +1002,13 @@ int lws_hpack_interpret(struct lws *wsi, unsigned char c)
 			h2n->hpack = HPKS_HLEN_EXT;
 			break;
 		}
+
+		if (h2n->value && !h2n->hpack_len) {
+			lwsl_debug("%s: zero-length header data\n", __func__);
+			h2n->hpack = HPKS_TYPE;
+			goto fin;
+		}
+
 pre_data:
 		h2n->hpack = HPKS_DATA;
 		if (!h2n->value || !h2n->hdr_idx) {
@@ -1177,7 +1186,7 @@ swallow:
 				      "Huffman padding excessive or wrong");
 			return 1;
 		}
-
+fin:
 		if (!h2n->value && (
 		    h2n->hpack_type == HPKT_LITERAL_HDR_VALUE ||
 		    h2n->hpack_type == HPKT_LITERAL_HDR_VALUE_INCR ||
@@ -1346,7 +1355,8 @@ int lws_add_http2_header_by_name(struct lws *wsi, const unsigned char *name,
 {
 	int len;
 
-	lwsl_header("%s: %p  %s:%s\n", __func__, *p, name, value);
+	lwsl_header("%s: %p  %s:%s (len %d)\n", __func__, *p, name, value,
+					length);
 
 	len = (int)strlen((char *)name);
 	if (len)

@@ -1,25 +1,28 @@
 /*
- * libwebsockets - Stateful urldecode for POST
+ * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #define LWS_MAX_ELEM_NAME 32
 
@@ -118,7 +121,8 @@ lws_urldecode_s_create(struct lws_spa *spa, struct lws *wsi, char *out,
 	/* multipart/form-data;
 	 * boundary=----WebKitFormBoundarycc7YgAPEIHvgE9Bf */
 
-		if (!strncmp(buf, "multipart/form-data", 19)) {
+		if (!strncmp(buf, "multipart/form-data", 19) ||
+		    !strncmp(buf, "multipart/related", 17)) {
 			s->multipart_form_data = 1;
 			s->state = MT_LOOK_BOUND_IN;
 			s->mp = 2;
@@ -183,7 +187,8 @@ lws_urldecode_s_process(struct lws_urldecode_stateful *s, const char *in,
 				continue;
 			}
 			if (s->pos >= (int)sizeof(s->name) - 1) {
-				lwsl_notice("Name too long\n");
+				lwsl_hexdump_notice(s->name, s->pos);
+				lwsl_notice("Name too long...\n");
 				return -1;
 			}
 			s->name[s->pos++] = *in++;

@@ -1126,8 +1126,8 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 	User *tuser = um->um_Users;
 	while( tuser != NULL )
 	{
-		// Check both username and password
-		if( tuser->u_IsAPI && strcmp( tuser->u_Name, "apiuser" ) == 0 )
+		// Check if api user was already found
+		if( tuser->u_IsAPI || strcmp( tuser->u_Name, "apiuser" ) == 0 )
 		{
 			um->um_APIUser = tuser;
 			return 0;

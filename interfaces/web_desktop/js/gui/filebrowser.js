@@ -148,7 +148,10 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags )
 {
 	// Already set
-	if( this.flags.path && this.flags.path == target ) return;
+	if( this.flags.path && this.flags.path == target ) 
+	{
+		return;
+	}
 	
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..

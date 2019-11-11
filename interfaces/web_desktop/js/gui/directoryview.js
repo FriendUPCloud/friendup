@@ -398,8 +398,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					if( lp != ':' && lp != '/' ) path += '/';
 				}
 
-				console.log( 'Adding volume: ' + volu );
-
 				var fin = {
 					Volume: volu + ':',
 					Path: path,

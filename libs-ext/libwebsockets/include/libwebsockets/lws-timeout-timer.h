@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /*! \defgroup timeout Connection timeouts
@@ -64,17 +65,14 @@ enum pending_timeout {
 	PENDING_TIMEOUT_THREADPOOL				= 29,
 	PENDING_TIMEOUT_THREADPOOL_TASK				= 30,
 	PENDING_TIMEOUT_KILLED_BY_PROXY_CLIENT_CLOSE		= 31,
+	PENDING_TIMEOUT_USER_OK					= 32,
 
 	/****** add new things just above ---^ ******/
 
 	PENDING_TIMEOUT_USER_REASON_BASE			= 1000
 };
 
-/**
- * lws_time_in_microseconds() - Returns the unix time in microseconds
- */
-LWS_VISIBLE LWS_EXTERN uint64_t
-lws_time_in_microseconds(void);
+#define lws_time_in_microseconds lws_now_usecs
 
 #define LWS_TO_KILL_ASYNC -1
 /**< If LWS_TO_KILL_ASYNC is given as the timeout sec in a lws_set_timeout()
@@ -90,9 +88,7 @@ lws_time_in_microseconds(void);
  * wsi currently being serviced.
  */
 /**
- * lws_set_timeout() - marks the wsi as subject to a timeout
- *
- * You will not need this unless you are doing something special
+ * lws_set_timeout() - marks the wsi as subject to a timeout some seconds hence
  *
  * \param wsi:	Websocket connection instance
  * \param reason:	timeout reason
@@ -103,6 +99,19 @@ lws_time_in_microseconds(void);
  */
 LWS_VISIBLE LWS_EXTERN void
 lws_set_timeout(struct lws *wsi, enum pending_timeout reason, int secs);
+
+/**
+ * lws_set_timeout_us() - marks the wsi as subject to a timeout some us hence
+ *
+ * \param wsi:	Websocket connection instance
+ * \param reason:	timeout reason
+ * \param us:	0 removes the timeout, otherwise number of us to wait
+ *
+ * Higher-resolution version of lws_set_timeout().  Actual resolution depends
+ * on platform and load, usually ms.
+ */
+void
+lws_set_timeout_us(struct lws *wsi, enum pending_timeout reason, lws_usec_t us);
 
 #define LWS_SET_TIMER_USEC_CANCEL ((lws_usec_t)-1ll)
 #define LWS_USEC_PER_SEC (1000000ll)
@@ -139,19 +148,18 @@ lws_set_timer_usecs(struct lws *wsi, lws_usec_t usecs);
 
 /*
  * lws_timed_callback_vh_protocol() - calls back a protocol on a vhost after
- * 					the specified delay
+ * 					the specified delay in seconds
  *
  * \param vh:	 the vhost to call back
  * \param protocol: the protocol to call back
  * \param reason: callback reason
- * \param secs:	how many seconds in the future to do the callback.  Set to
- *		-1 to cancel the timer callback.
+ * \param secs:	how many seconds in the future to do the callback.
  *
  * Callback the specified protocol with a fake wsi pointing to the specified
  * vhost and protocol, with the specified reason, at the specified time in the
  * future.
  *
- * Returns 0 if OK.
+ * Returns 0 if OK or 1 on OOM.
  *
  * In the multithreaded service case, the callback will occur in the same
  * service thread context as the call to this api that requested it.  If it is
@@ -161,4 +169,86 @@ LWS_VISIBLE LWS_EXTERN int
 lws_timed_callback_vh_protocol(struct lws_vhost *vh,
 			       const struct lws_protocols *prot,
 			       int reason, int secs);
+
+/*
+ * lws_timed_callback_vh_protocol_us() - calls back a protocol on a vhost after
+ * 					 the specified delay in us
+ *
+ * \param vh:	 the vhost to call back
+ * \param protocol: the protocol to call back
+ * \param reason: callback reason
+ * \param us:	how many us in the future to do the callback.
+ *
+ * Callback the specified protocol with a fake wsi pointing to the specified
+ * vhost and protocol, with the specified reason, at the specified time in the
+ * future.
+ *
+ * Returns 0 if OK or 1 on OOM.
+ *
+ * In the multithreaded service case, the callback will occur in the same
+ * service thread context as the call to this api that requested it.  If it is
+ * called from a non-service thread, tsi 0 will handle it.
+ */
+LWS_VISIBLE LWS_EXTERN int
+lws_timed_callback_vh_protocol_us(struct lws_vhost *vh,
+				  const struct lws_protocols *prot, int reason,
+				  lws_usec_t us);
+
+struct lws_sorted_usec_list;
+
+typedef void (*sul_cb_t)(struct lws_sorted_usec_list *sul);
+
+typedef struct lws_sorted_usec_list {
+	struct lws_dll2 list;	/* simplify the code by keeping this at start */
+	sul_cb_t	cb;
+	lws_usec_t	us;
+} lws_sorted_usec_list_t;
+
+
+/*
+ * lws_sul_schedule() - schedule a callback
+ *
+ * \param context: the lws_context
+ * \param tsi: the thread service index (usually 0)
+ * \param sul: pointer to the sul element
+ * \param cb: the scheduled callback
+ * \param us: the delay before the callback arrives, or
+ *		LWS_SET_TIMER_USEC_CANCEL to cancel it.
+ *
+ * Generic callback-at-a-later time function.  The callback happens on the
+ * event loop thread context.
+ *
+ * Although the api has us resultion, the actual resolution depends on the
+ * platform and is commonly 1ms.
+ *
+ * This doesn't allocate and doesn't fail.
+ *
+ * You can call it again with another us value to change the delay.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_sul_schedule(struct lws_context *context, int tsi,
+	         lws_sorted_usec_list_t *sul, sul_cb_t cb, lws_usec_t us);
+
+/*
+ * lws_validity_confirmed() - reset the validity timer for a network connection
+ *
+ * \param wsi: the connection that saw traffic proving the connection valid
+ *
+ * Network connections are subject to intervals defined by the context, the
+ * vhost if server connections, or the client connect info if a client
+ * connection.  If the connection goes longer than the specified time since
+ * last observing traffic that can only happen if traffic is passing in both
+ * directions, then lws will try to create a PING transaction on the network
+ * connection.
+ *
+ * If the connection reaches the specified `.secs_since_valid_hangup` time
+ * still without any proof of validity, the connection will be closed.
+ *
+ * If the PONG comes, or user code observes traffic that satisfies the proof
+ * that both directions are passing traffic to the peer and calls this api,
+ * the connection validity timer is reset and the scheme repeats.
+ */
+LWS_VISIBLE LWS_EXTERN void
+lws_validity_confirmed(struct lws *wsi);
+
 ///@}

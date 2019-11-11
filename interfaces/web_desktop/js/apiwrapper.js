@@ -3756,6 +3756,10 @@ function apiWrapper( event, force )
 					case 'filedialog':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						// No targetview id? Then just use the parent view
+						if( !tar && msg.parentViewId ) 
+							tar = app.windows[ msg.parentViewId ];
+						
 						var flags = {
 							mainView:           tar ? tar : win,
 							type:               msg.method,
@@ -3765,6 +3769,7 @@ function apiWrapper( event, force )
 							suffix:             msg.suffix,
 							multiSelect:        msg.multiSelect,
 							keyboardNavigation: msg.keyboardNavigation,
+							rememberPath:       msg.rememberPath,
 							triggerFunction: function( data )
 							{
 								var nmsg = msg;

@@ -15,6 +15,33 @@
 *                                                                              *
 *******************************************************************************/
 
+// Closing tray bubbls
+function CloseTrayBubble( ev )
+{
+	var tray = ge( 'Tray' );
+	if( !tray )
+	{
+		return;
+	}
+	if( tray.notifications )
+	{
+		if( tray.notifications.timeout )
+		{
+			clearTimeout( tray.notifications.timeout );
+		}
+		tray.notifications.timeout = setTimeout( function()
+		{
+			if( tray.notifications.removeChild && tray.notificationPopup && tray.notificationPopup.parentNode )
+			{
+				tray.notifications.removeChild( tray.notificationPopup );
+				tray.notificationPopup = null;
+				tray.notifications.timeout = null;
+			}
+		}, 250 );
+	}
+	PollTray();
+}
+
 // Poll the tray for elements - handles all object types
 function PollTray()
 {
@@ -309,24 +336,6 @@ function PollTray()
 				}
 			}
 			repopulate();
-			
-			// When leaving, close
-			tray.notificationPopup.onmouseout = function( ev )
-			{
-				if( tray.notifications.timeout )
-				{
-					clearTimeout( tray.notifications.timeout );
-				}
-				tray.notifications.timeout = setTimeout( function()
-				{
-					if( tray.notifications.removeChild && tray.notificationPopup && tray.notificationPopup.parentNode )
-					{
-						tray.notifications.removeChild( tray.notificationPopup );
-						tray.notificationPopup = null;
-						tray.notifications.timeout = null;
-					}
-				}, 250 );
-			}
 			
 			return cancelBubble( e );
 		}

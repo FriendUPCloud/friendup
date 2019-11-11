@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 int
 _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
@@ -147,6 +150,8 @@ _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 	if (wsi->http2_substream)
 		return 0;
 
+#if defined(LWS_WITH_EXTERNAL_POLL)
+
 	if (wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi,
 			    	    	      LWS_CALLBACK_CHANGE_MODE_POLL_FD,
@@ -154,6 +159,7 @@ _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 		ret = -1;
 		goto bail;
 	}
+#endif
 
 	if (context->event_loop_ops->io) {
 		if (_and & LWS_POLLIN)
@@ -205,7 +211,7 @@ bail:
 	return ret;
 }
 
-#ifndef LWS_NO_SERVER
+#if defined(LWS_WITH_SERVER)
 /*
  * Enable or disable listen sockets on this pt globally...
  * it's modulated according to the pt having space for a new accept.
@@ -231,13 +237,36 @@ lws_accept_modulation(struct lws_context *context,
 }
 #endif
 
+#if defined(_DEBUG)
+void
+__dump_fds(struct lws_context_per_thread *pt, const char *s)
+{
+	unsigned int n;
+
+	lwsl_warn("%s: fds_count %u, %s\n", __func__, pt->fds_count, s);
+
+	for (n = 0; n < pt->fds_count; n++) {
+		struct lws *wsi = wsi_from_fd(pt->context, pt->fds[n].fd);
+
+		lwsl_warn("  %d: fd %d, wsi %p, pos_in_fds: %d\n",
+			n + 1, pt->fds[n].fd, wsi,
+			wsi ? wsi->position_in_fds_table : -1);
+	}
+}
+#else
+#define __dump_fds(x, y)
+#endif
+
 int
 __insert_wsi_socket_into_fds(struct lws_context *context, struct lws *wsi)
 {
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	struct lws_pollargs pa = { wsi->desc.sockfd, LWS_POLLIN, 0 };
+#endif
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	int ret = 0;
 
+//	__dump_fds(pt, "pre insert");
 
 	lwsl_debug("%s: %p: tsi=%d, sock=%d, pos-in-fds=%d\n",
 		  __func__, wsi, wsi->tsi, wsi->desc.sockfd, pt->fds_count);
@@ -262,10 +291,13 @@ __insert_wsi_socket_into_fds(struct lws_context *context, struct lws *wsi)
 	assert(wsi->event_pipe || wsi->vhost);
 	assert(lws_socket_is_valid(wsi->desc.sockfd));
 
+#if defined(LWS_WITH_EXTERNAL_POLL)
+
 	if (wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_LOCK_POLL,
 					   wsi->user_space, (void *) &pa, 1))
 		return -1;
+#endif
 
 	if (insert_wsi(context, wsi))
 		return -1;
@@ -274,25 +306,34 @@ __insert_wsi_socket_into_fds(struct lws_context *context, struct lws *wsi)
 
 	pt->fds[wsi->position_in_fds_table].fd = wsi->desc.sockfd;
 	pt->fds[wsi->position_in_fds_table].events = LWS_POLLIN;
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	pa.events = pt->fds[pt->fds_count].events;
+#endif
 
 	lws_plat_insert_socket_into_fds(context, wsi);
+
+#if defined(LWS_WITH_EXTERNAL_POLL)
 
 	/* external POLL support via protocol 0 */
 	if (wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_ADD_POLL_FD,
 					   wsi->user_space, (void *) &pa, 0))
 		ret =  -1;
-#ifndef LWS_NO_SERVER
-	/* if no more room, defeat accepts on this thread */
+#endif
+#if defined(LWS_WITH_SERVER)
+	/* if no more room, defeat accepts on this service thread */
 	if ((unsigned int)pt->fds_count == context->fd_limit_per_thread - 1)
 		lws_accept_modulation(context, pt, 0);
 #endif
 
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	if (wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_UNLOCK_POLL,
 					   wsi->user_space, (void *)&pa, 1))
 		ret = -1;
+#endif
+
+//	__dump_fds(pt, "post insert");
 
 	return ret;
 }
@@ -301,25 +342,30 @@ int
 __remove_wsi_socket_from_fds(struct lws *wsi)
 {
 	struct lws_context *context = wsi->context;
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	struct lws_pollargs pa = { wsi->desc.sockfd, 0, 0 };
+#endif
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	struct lws *end_wsi;
-	int v;
-	int m, ret = 0;
+	int v, m, ret = 0;
+
+//	__dump_fds(pt, "pre remove");
 
 #if !defined(_WIN32)
 	if (!wsi->context->max_fds_unrelated_to_ulimit &&
 	    wsi->desc.sockfd - lws_plat_socket_offset() > context->max_fds) {
 		lwsl_err("fd %d too high (%d)\n", wsi->desc.sockfd,
 			 context->max_fds);
+
 		return 1;
 	}
 #endif
-
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	if (wsi->vhost && wsi->vhost->protocols &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_LOCK_POLL,
 					   wsi->user_space, (void *)&pa, 1))
 		return -1;
+#endif
 
 	lws_same_vh_protocol_remove(wsi);
 
@@ -334,53 +380,71 @@ __remove_wsi_socket_from_fds(struct lws *wsi)
 		context->event_loop_ops->io(wsi,
 				  LWS_EV_STOP | LWS_EV_READ | LWS_EV_WRITE |
 				  LWS_EV_PREPARE_DELETION);
-
-//	lwsl_debug("%s: wsi=%p, skt=%d, fds pos=%d, end guy pos=%d, endfd=%d\n",
-//		  __func__, wsi, wsi->desc.sockfd, wsi->position_in_fds_table,
-//		  pt->fds_count, pt->fds[pt->fds_count].fd);
+/*
+	lwsl_notice("%s: wsi=%p, skt=%d, fds pos=%d, end guy pos=%d, endfd=%d\n",
+		  __func__, wsi, wsi->desc.sockfd, wsi->position_in_fds_table,
+		  pt->fds_count, pt->fds[pt->fds_count - 1].fd); */
 
 	if (m != LWS_NO_FDS_POS) {
+		char fixup = 0;
 
-		/* have the last guy take up the now vacant slot */
-		pt->fds[m] = pt->fds[pt->fds_count - 1];
-		/* this decrements pt->fds_count */
-		lws_plat_delete_socket_from_fds(context, wsi, m);
-		pt->count_conns--;
-		v = (int) pt->fds[m].fd;
-		/* end guy's "position in fds table" is now the deletion
-		 * guy's old one */
-		end_wsi = wsi_from_fd(context, v);
-		if (!end_wsi) {
-			lwsl_err("no wsi for fd %d pos %d, pt->fds_count=%d\n",
-				 (int)pt->fds[m].fd, m, pt->fds_count);
-			assert(0);
-		} else
-			end_wsi->position_in_fds_table = m;
+		assert(pt->fds_count && (unsigned int)m != pt->fds_count);
 
 		/* deletion guy's lws_lookup entry needs nuking */
 		delete_from_fd(context, wsi->desc.sockfd);
+
+		if ((unsigned int)m != pt->fds_count - 1) {
+			/* have the last guy take up the now vacant slot */
+			pt->fds[m] = pt->fds[pt->fds_count - 1];
+			fixup = 1;
+		}
+
+		pt->fds[pt->fds_count - 1].fd = -1;
+
+		/* this decrements pt->fds_count */
+		lws_plat_delete_socket_from_fds(context, wsi, m);
+		pt->count_conns--;
+		if (fixup) {
+			v = (int) pt->fds[m].fd;
+			/* old end guy's "position in fds table" is now the
+			 * deletion guy's old one */
+			end_wsi = wsi_from_fd(context, v);
+			if (!end_wsi) {
+				lwsl_err("no wsi for fd %d pos %d, "
+					 "pt->fds_count=%d\n",
+					 (int)pt->fds[m].fd, m, pt->fds_count);
+				assert(0);
+			} else
+				end_wsi->position_in_fds_table = m;
+		}
 
 		/* removed wsi has no position any more */
 		wsi->position_in_fds_table = LWS_NO_FDS_POS;
 	}
 
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	/* remove also from external POLL support via protocol 0 */
 	if (lws_socket_is_valid(wsi->desc.sockfd) && wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_DEL_POLL_FD,
 					      wsi->user_space, (void *) &pa, 0))
 		ret = -1;
+#endif
 
-#ifndef LWS_NO_SERVER
+#if defined(LWS_WITH_SERVER)
 	if (!context->being_destroyed &&
 	    /* if this made some room, accept connects on this thread */
 	    (unsigned int)pt->fds_count < context->fd_limit_per_thread - 1)
 		lws_accept_modulation(context, pt, 1);
 #endif
 
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	if (wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_UNLOCK_POLL,
 					      wsi->user_space, (void *) &pa, 1))
 		ret = -1;
+#endif
+
+//	__dump_fds(pt, "post remove");
 
 	return ret;
 }
@@ -400,16 +464,21 @@ __lws_change_pollfd(struct lws *wsi, int _and, int _or)
 	if (!context)
 		return 1;
 
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	if (wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_LOCK_POLL,
 					      wsi->user_space, (void *) &pa, 0))
 		return -1;
+#endif
 
 	ret = _lws_change_pollfd(wsi, _and, _or, &pa);
+
+#if defined(LWS_WITH_EXTERNAL_POLL)
 	if (wsi->vhost &&
 	    wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_UNLOCK_POLL,
 					   wsi->user_space, (void *) &pa, 0))
 		ret = -1;
+#endif
 
 	return ret;
 }
@@ -442,15 +511,18 @@ lws_callback_on_writable(struct lws *wsi)
 
 	pt = &wsi->context->pt[(int)wsi->tsi];
 
-	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITEABLE_CB_REQ, 1);
-#if defined(LWS_WITH_STATS)
-	if (!wsi->active_writable_req_us) {
-		wsi->active_writable_req_us = lws_time_in_microseconds();
-		lws_stats_atomic_bump(wsi->context, pt,
-				      LWSSTATS_C_WRITEABLE_CB_EFF_REQ, 1);
-	}
+#if defined(LWS_WITH_DETAILED_LATENCY)
+	if (!wsi->detlat.earliest_write_req)
+		wsi->detlat.earliest_write_req = lws_now_usecs();
 #endif
 
+	lws_stats_bump(pt, LWSSTATS_C_WRITEABLE_CB_REQ, 1);
+#if defined(LWS_WITH_STATS)
+	if (!wsi->active_writable_req_us) {
+		wsi->active_writable_req_us = lws_now_usecs();
+		lws_stats_bump(pt, LWSSTATS_C_WRITEABLE_CB_EFF_REQ, 1);
+	}
+#endif
 
 	if (wsi->role_ops->callback_on_writable) {
 		if (wsi->role_ops->callback_on_writable(wsi))
@@ -485,13 +557,9 @@ lws_same_vh_protocol_insert(struct lws *wsi, int n)
 {
 	lws_vhost_lock(wsi->vhost);
 
-	if (!lws_dll_is_detached(&wsi->same_vh_protocol,
-				 &wsi->vhost->same_vh_protocol_heads[n]))
-		lws_dll_remove_track_tail(&wsi->same_vh_protocol,
-					  &wsi->vhost->same_vh_protocol_heads[n]);
-
-	lws_dll_add_head(&wsi->same_vh_protocol,
-			 &wsi->vhost->same_vh_protocol_heads[n]);
+	lws_dll2_remove(&wsi->same_vh_protocol);
+	lws_dll2_add_head(&wsi->same_vh_protocol,
+			  &wsi->vhost->same_vh_protocol_owner[n]);
 
 	wsi->bound_vhost_index = n;
 
@@ -501,15 +569,8 @@ lws_same_vh_protocol_insert(struct lws *wsi, int n)
 void
 __lws_same_vh_protocol_remove(struct lws *wsi)
 {
-	struct lws_dll *head;
-
-	if (!wsi->vhost || !wsi->vhost->same_vh_protocol_heads)
-		return;
-
-	head = &wsi->vhost->same_vh_protocol_heads[(int)wsi->bound_vhost_index];
-
-	if (!lws_dll_is_detached(&wsi->same_vh_protocol, head))
-		lws_dll_remove_track_tail(&wsi->same_vh_protocol, head);
+	if (wsi->vhost && wsi->vhost->same_vh_protocol_owner)
+		lws_dll2_remove(&wsi->same_vh_protocol);
 }
 
 void
@@ -544,8 +605,8 @@ lws_callback_on_writable_all_protocol_vhost(const struct lws_vhost *vhost,
 
 	n = (int)(protocol - vhost->protocols);
 
-	lws_start_foreach_dll_safe(struct lws_dll *, d, d1,
-				   vhost->same_vh_protocol_heads[n].next) {
+	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
+			lws_dll2_get_head(&vhost->same_vh_protocol_owner[n])) {
 		wsi = lws_container_of(d, struct lws, same_vh_protocol);
 
 		assert(wsi->protocol == protocol);

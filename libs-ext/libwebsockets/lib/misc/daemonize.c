@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 pid_t pid_daemon;
 static char *lock_path;
@@ -62,7 +62,7 @@ child_handler(int signum)
 				lock_path, errno, strerror(errno));
 			exit(0);
 		}
-		len = sprintf(sz, "%u", pid_daemon);
+		len = sprintf(sz, "%u", (unsigned int)pid_daemon);
 		sent = write(fd, sz, len);
 		if (sent != len)
 			fprintf(stderr,

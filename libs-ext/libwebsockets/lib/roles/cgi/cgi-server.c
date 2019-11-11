@@ -1,27 +1,30 @@
 /*
- * libwebsockets - CGI management
+ * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #define  _GNU_SOURCE
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #if defined(WIN32) || defined(_WIN32)
 #else
@@ -221,8 +224,12 @@ lws_cgi(struct lws *wsi, const char * const *exec_array,
 
 	n = 0;
 
-	if (lws_is_ssl(wsi))
-		env_array[n++] = "HTTPS=ON";
+	if (lws_is_ssl(wsi)) {
+		env_array[n++] = p;
+		p += lws_snprintf(p, end - p, "HTTPS=ON");
+		p++;
+	}
+
 	if (wsi->http.ah) {
 		static const unsigned char meths[] = {
 			WSI_TOKEN_GET_URI,
@@ -398,10 +405,13 @@ lws_cgi(struct lws *wsi, const char * const *exec_array,
 	}
 
 
-	env_array[n++] = "PATH=/bin:/usr/bin:/usr/local/bin:/var/www/cgi-bin";
+	env_array[n++] = p;
+	p += lws_snprintf(p, end - p, "PATH=/bin:/usr/bin:/usr/local/bin:/var/www/cgi-bin");
+	p++;
 
 	env_array[n++] = p;
-	p += lws_snprintf(p, end - p, "SCRIPT_PATH=%s", exec_array[0]) + 1;
+	p += lws_snprintf(p, end - p, "SCRIPT_PATH=%s", exec_array[0]);
+	p++;
 
 	while (mp_cgienv) {
 		env_array[n++] = p;
@@ -417,7 +427,10 @@ lws_cgi(struct lws *wsi, const char * const *exec_array,
 		mp_cgienv = mp_cgienv->next;
 	}
 
-	env_array[n++] = "SERVER_SOFTWARE=libwebsockets";
+	env_array[n++] = p;
+	p += lws_snprintf(p, end - p, "SERVER_SOFTWARE=libwebsockets");
+	p++;
+
 	env_array[n] = NULL;
 
 #if 0
@@ -486,13 +499,13 @@ lws_cgi(struct lws *wsi, const char * const *exec_array,
 	 * process is OK.  Stuff that happens after the execvpe() is OK.
 	 */
 
-	for (n = 0; n < 3; n++) {
-		if (dup2(cgi->pipe_fds[n][!(n == 0)], n) < 0) {
+	for (m = 0; m < 3; m++) {
+		if (dup2(cgi->pipe_fds[m][!(m == 0)], m) < 0) {
 			lwsl_err("%s: stdin dup2 failed\n", __func__);
 			goto bail3;
 		}
-		close(cgi->pipe_fds[n][0]);
-		close(cgi->pipe_fds[n][1]);
+		close(cgi->pipe_fds[m][0]);
+		close(cgi->pipe_fds[m][1]);
 	}
 
 #if !defined(LWS_HAVE_VFORK) || !defined(LWS_HAVE_EXECVPE)
@@ -1061,7 +1074,7 @@ handled:
 	return 0;
 }
 
-LWS_EXTERN int
+int
 lws_cgi_kill_terminated(struct lws_context_per_thread *pt)
 {
 	struct lws_cgi **pcgi, *cgi = NULL;
