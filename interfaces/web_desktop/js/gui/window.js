@@ -5433,21 +5433,19 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		{
 			// Make sure this isn't the only view
 			var app = _getAppByAppId( v.windowObject.applicationId );
-			var count = 0; var contender = false;
+			var count = 0;
 			for( var b in app.windows )
 			{
 				if( app.windows[ b ].parentNode )
 				{
 					count++;
-					contender = app.windows[ b ];
-					console.log( 'Found window: ', app.windows[ b ] );
 				}
 			}
+			// Only remove onworkspace if we have more than one window
 			if( count > 1 )
 			{
 				c.style.top = '-200%';
 				c.classList.remove( 'OnWorkspace' );
-				console.log( '[window.js] Removing onworkspace.' );
 				continue;
 			}
 		}
