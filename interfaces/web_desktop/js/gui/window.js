@@ -5425,29 +5425,14 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 		{
 			// These views are handled by css...
 			c.classList.remove( 'OnWorkspace' );
-			console.log( '[window.js] 22. Removing onworkspace.' );
 			continue;
 		}
 		// Non-mainview windows are not displayed
 		else if( !v.windowObject.flags.mainView && v.windowObject.applicationId )
 		{
-			// Make sure this isn't the only view
-			var app = _getAppByAppId( v.windowObject.applicationId );
-			var count = 0;
-			for( var b in app.windows )
-			{
-				if( app.windows[ b ].parentNode )
-				{
-					count++;
-				}
-			}
-			// Only remove onworkspace if we have more than one window
-			if( count > 1 )
-			{
-				c.style.top = '-200%';
-				c.classList.remove( 'OnWorkspace' );
-				continue;
-			}
+			c.style.top = '-200%';
+			c.classList.remove( 'OnWorkspace' );
+			continue;
 		}
 		else if( c.style.display == 'none' || v.style.display == 'none' )
 		{
