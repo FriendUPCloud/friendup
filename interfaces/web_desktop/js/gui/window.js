@@ -5415,8 +5415,6 @@ Friend.GUI.reorganizeResponsiveMinimized = function()
 	var gridX = marginX;
 	var gridY = startY;
 	
-	console.log( '[window.js] Reorganizing responsive minimized windows.' );
-	
 	for( var a in movableWindows )
 	{
 		var v = movableWindows[ a ];
