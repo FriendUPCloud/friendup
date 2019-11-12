@@ -140,18 +140,27 @@ void UMDelete( UserManager *smgr )
 int UMUserUpdateDB( UserManager *um, User *usr )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
-	
-	if( sqlLib != NULL )
+	if( usr != NULL )
 	{
-		sqlLib->Update( sqlLib, UserDesc, usr );
+		usr->u_ModifyTime = time( NULL );
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
-		sb->LibrarySQLDrop( sb, sqlLib );
+		if( sqlLib != NULL )
+		{
+			sqlLib->Update( sqlLib, UserDesc, usr );
+	
+			sb->LibrarySQLDrop( sb, sqlLib );
+		}
+		else
+		{
+			FERROR("Cannot get user, mysql.library was not open\n");
+			return 1;
+		}
 	}
 	else
 	{
-		FERROR("Cannot get user, mysql.library was not open\n");
-		return 1;
+		FERROR("User = NULL\n");
+		return 2;
 	}
 	return 0;
 }
@@ -630,6 +639,52 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 		DEBUG("[UMGetUserByNameDB] start\n");
 
 		sqlLib->SNPrintF( sqlLib, where, len, " `Name`='%s'", name );
+	
+		int entries;
+	
+		user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
+		sb->LibrarySQLDrop( sb, sqlLib );
+
+		User *tmp = user;
+		while( tmp != NULL )
+		{
+			UGMAssignGroupToUser( sb->sl_UGM, tmp );
+			UMAssignApplicationsToUser( um, tmp );
+		
+			tmp = (User *)tmp->node.mln_Succ;
+		}
+		FFree( where );
+	}
+	
+	DEBUG("[UMGetUserByNameDB] end\n");
+	return user;
+}
+
+/**
+ * Get user from database by his name
+ *
+ * @param um pointer to UserManager
+ * @param uuid unique user id
+ * @return User or NULL when error will appear
+ */
+User *UMGetUserByUUIDDB( UserManager *um, const char *uuid )
+{
+	if( uuid == NULL )
+	{
+		return NULL;
+	}
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	User *user = NULL;
+	
+	if( sqlLib != NULL )
+	{
+		int len = strlen( uuid )+128;
+		char *where = FMalloc( len );
+	
+		DEBUG("[UMGetUserByNameDB] start\n");
+
+		sqlLib->SNPrintF( sqlLib, where, len, " `UniqueID`='%s'", uuid );
 	
 		int entries;
 	
@@ -1181,4 +1236,78 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 		}
 	}
 	return 1;
+}
+
+
+/**
+ * Return all users from database
+ *
+ * @param um pointer to UserManager
+ * @param bs pointer to BufString where string will be stored
+ * @param grname group name. If you want to get users from group, put group name. If you want all users, set NULL.
+ * @return 0 when success, otherwise error number
+ */
+int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
+{
+	SystemBase *l = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[ 512 ];
+		char tmp[ 512 ];
+		int itmp = 0;
+		
+		if( grname == NULL )
+		{
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ModifyTime FROM FUser u WHERE u.Name not in('apiuser','guest')" );
+		}
+		else
+		{
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID inner join FUser u on utg.UserID=u.ID where g.Name in ('%s')", grname );
+		}
+		
+		BufStringAddSize( bs, "[", 1 );
+		
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int usrpos = 0;
+			char **row;
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				// User Status == DISABLED
+				DEBUG("Check user status: %s\n", (char *)row[ 1 ] );
+				if( strncmp( (char *)row[ 1 ], "1", 1 ) == 0 )
+				{
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
+					}
+				}
+				else
+				{
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 2 ] );
+					}
+				}
+				BufStringAddSize( bs, tmp, itmp );
+				usrpos++;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+		
+		BufStringAddSize( bs, "]", 1 );
+	}
+	return 0;
 }

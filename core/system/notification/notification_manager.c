@@ -666,6 +666,7 @@ int NotificationManagerSendInformationToConnections( NotificationManager *nm, ch
  * @param nm pointer to NotificationManager
  * @param req Http request
  * @param sername server name to which message will be sent. NULL means that message will be send to all connections.
+ * @param reqid if call was request id is not null. Otherwise its information to external service
  * @param sertype service type
  * @param func function
  * @param action name
@@ -673,13 +674,15 @@ int NotificationManagerSendInformationToConnections( NotificationManager *nm, ch
  * @return number bytes when success, otherwise error number (less and below 0 )
  */
 
-int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *sertype, const char *func, const char *action, char *msg )
+int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *reqid, const char *sertype, const char *func, const char *action, char *msg )
 {
-	if( sertype == NULL || func == NULL || action == NULL || msg == NULL )
+	if( reqid == NULL )
 	{
-	
-		FERROR("Message missing parameters\n");
-		return 0;
+		if( sertype == NULL || func == NULL || action == NULL || msg == NULL )
+		{
+			FERROR("Message missing parameters\n");
+			return 0;
+		}
 	}
 	
 	if( req != NULL && req->h_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
@@ -688,13 +691,50 @@ int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *re
 		return 0;
 	}
 	
+	/*
+	{
+type : 'reply',
+data : {
+     requestId : <string>,
+    result : <data>,
+OR
+    error : <error>,
+    }
+}
+	 */
+	
 	int ret = 0;
-	int msglen = 512 + strlen( sertype ) + strlen( func ) + strlen( action ) + strlen( msg );
+	int msglen = 512 + strlen( msg );
+	if( func != NULL )
+	{
+		msglen += strlen( func );
+	}
+	if( sertype != NULL )
+	{
+		msglen += strlen( sertype );
+	}
+	if( action != NULL )
+	{
+		msglen += strlen( action );
+	}
+	if( reqid != NULL )
+	{
+		msglen += strlen( reqid );
+	}
 	char *dstMsg = FMalloc( msglen );
 	
 	if( dstMsg != NULL )
 	{
-		int dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":%s}}}", sertype, func, action, msg );
+		int dstsize = 0;
+		
+		if( reqid != NULL )
+		{
+			dstsize = snprintf( dstMsg, msglen, "{\"type\":\"reply\",\"data\":{\"requestId\":\"%s\",\"result\":%s}}", reqid, msg );
+		}
+		else
+		{
+			dstsize = snprintf( dstMsg, msglen, "{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":{\"type\":\"%s\",\"data\":%s}}}", sertype, func, action, msg );
+		}
 		
 		Log( FLOG_INFO, "[NotificationManagerSendEventToConnections] Send message: '%s'\n", dstMsg );
 		

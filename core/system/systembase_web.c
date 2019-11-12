@@ -282,7 +282,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	
 	if( fullsize > 3096 )
 	{
-		int tr = 100;
 		*returnedAsFile = TRUE;
 		// if message is too big, allocate memory for filename
 		char *tmpFileName = FMalloc( 1024 );
@@ -529,10 +528,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		}
 		
 		{
-			time_t timestamp = time ( NULL );
-			
 			UserSession *curusrsess = l->sl_USM->usm_Sessions;
-			int userFound = 0;
 			
 			DEBUG("Checking remote sessions\n");
 				
@@ -625,8 +621,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							loggedSession = curusrsess;
 							userAdded = TRUE;		// there is no need to free resources
 							User *curusr = curusrsess->us_User;
-						
-							DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
+							if( curusr != NULL )
+							{
+								DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
+							}
 							break;
 						}
 					}
@@ -1140,7 +1138,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( code != NULL )
 				{
-					char *pEnd;
 					int errCode = -1;
 					
 					char *next;
@@ -1200,7 +1197,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( code != NULL )
 				{
-					char *pEnd;
 					int errCode = -1;
 					
 					char *next;
@@ -1557,6 +1553,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			if( locsessionid != NULL && deviceid != NULL )
 			{
+				int loginStatus = 0;
 				// get user session from memory
 				// if it doesnt exist, load it from database
 				UserSession *us = USMGetSessionBySessionID( l->sl_USM, locsessionid );
@@ -1589,70 +1586,78 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 						}
 						
-						//
-						// update user and session
-						//
 						
-						char tmpQuery[ 512 ];
-						
-						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
-						if( sqlLib != NULL )
+						if( loggedSession->us_User != NULL && (loggedSession->us_User->u_Status == USER_STATUS_DISABLED || loggedSession->us_User->u_Status == USER_STATUS_BLOCKED ) )
 						{
-							DEBUG("Try to get mobileappid from DeviceID: %s\n", deviceid );
-							FULONG umaID = 0;
-							if( deviceid != NULL )
-							{
-								int len = strlen( deviceid );
-								int i, lpos = 0;
-								for( i=0 ; i < len ; i++ )
-								{
-									if( deviceid[ i ] == '_' )
-									{
-										lpos = i+1;
-									}
-								}
-								if( lpos > 0 && lpos < len )
-								{
-									umaID = MobileManagerGetUMAIDByDeviceIDAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
-								}
-							}
-							loggedSession->us_MobileAppID = umaID;
-							
-							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, loggedSession->us_SessionID );
-							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-							{ 
-								
-							}
-							
-							//
-							// update user
-							//
-							
-							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
-							{ 
-								
-							}
-							
-							UMAddUser( l->sl_UM, loggedSession->us_User );
-							
-							DEBUG("New user and session added\n");
-							
-							char *err = NULL;
-							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err );
-							if( err != NULL )
-							{
-								Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
-								FFree( err );
-							}
-							
-							DEBUG("Devices mounted\n");
-							userAdded = TRUE;
-							l->LibrarySQLDrop( l, sqlLib );
+							loginStatus = 1;
 						}
 						else
 						{
-							loggedSession = NULL;
+							//
+							// update user and session
+							//
+						
+							char tmpQuery[ 512 ];
+						
+							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
+							if( sqlLib != NULL )
+							{
+								DEBUG("Try to get mobileappid from DeviceID: %s\n", deviceid );
+								FULONG umaID = 0;
+								if( deviceid != NULL )
+								{
+									int len = strlen( deviceid );
+									int i, lpos = 0;
+									for( i=0 ; i < len ; i++ )
+									{
+										if( deviceid[ i ] == '_' )
+										{
+											lpos = i+1;
+										}
+									}
+									if( lpos > 0 && lpos < len )
+									{
+										umaID = MobileManagerGetUMAIDByDeviceIDAndUserName( l->sl_MobileManager, sqlLib, loggedSession->us_UserID, &(deviceid[ lpos ] ) );
+									}
+								}
+								loggedSession->us_MobileAppID = umaID;
+							
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld,DeviceIdentity='%s',UMA_ID=%lu WHERE `SessionID`='%s'", (long long)loggedSession->us_LoggedTime, deviceid, umaID, loggedSession->us_SessionID );
+								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+								{ 
+								
+								}
+							
+								//
+								// update user
+								//
+							
+								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+								{ 
+								
+								}
+							
+								UMAddUser( l->sl_UM, loggedSession->us_User );
+							
+								DEBUG("New user and session added\n");
+							
+								char *err = NULL;
+								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE, &err );
+								if( err != NULL )
+								{
+									Log( FLOG_ERROR, "Login mount error. UserID: %lu Error: %s\n", loggedSession->us_User->u_ID, err );
+									FFree( err );
+								}
+							
+								DEBUG("Devices mounted\n");
+								userAdded = TRUE;
+								l->LibrarySQLDrop( l, sqlLib );
+							}
+							else
+							{
+								loggedSession = NULL;
+							}
 						}
 						DEBUG("Library dropped\n");
 					}
@@ -1667,10 +1672,17 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				
 				if( loggedSession != NULL && loggedSession->us_User != NULL )
 				{
-					snprintf( tmp, sizeof(tmp),
+					if( loginStatus == 1 )
+					{
+						snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"result\":\"-1\",\"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+					}
+					else
+					{
+						snprintf( tmp, sizeof(tmp),
 						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
 						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
-					);
+						);
+					}
 				}
 				else
 				{
@@ -1876,25 +1888,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					if( loggedSession != NULL )
 					{
 						DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
-						//if( dstusrsess == NULL )
-						//{
-							if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
+						if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
+						{
+							if( loggedSession->us_User == NULL )
 							{
-								if( loggedSession->us_User == NULL )
+								DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
+								User *lusr = l->sl_UM->um_Users;
+								while( lusr != NULL )
 								{
-									DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
-									User *lusr = l->sl_UM->um_Users;
-									while( lusr != NULL )
+									if( loggedSession->us_UserID == lusr->u_ID )
 									{
-										if( loggedSession->us_UserID == lusr->u_ID )
-										{
-											loggedSession->us_User = lusr;
-											break;
-										}
-										lusr = (User *)lusr->node.mln_Succ;
+										loggedSession->us_User = lusr;
+										break;
 									}
+									lusr = (User *)lusr->node.mln_Succ;
 								}
-							//}
+							}
 						//
 						// update user and session
 						//
@@ -1927,31 +1936,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 								}
 								
 								DEBUG("UMAID %lu\n", umaID );
-								//
-								// no usermobileapp is signed to session/user
-								//
-								/*
-								if( umaID == 0 )
-								{
-									// if device is mobile device, we must create it
-									// entry will be deleted when user will logout
-									if( deviceid != NULL && ( (strstr( deviceid, "_ios_" ) != NULL ) || (strstr( deviceid, "_android_" ) != NULL ) ) )
-									{
-										UserMobileApp *ma = UserMobileAppNew();
-										if( ma != NULL )
-										{
-											ma->uma_AppToken = &(deviceid[ lpos ] );
-											ma->uma_UserID = loggedSession->us_UserID;
-					
-											int err = sqlLib->Save( sqlLib, UserMobileAppDesc, ma );
-											ma->uma_AppToken = NULL;
-											umaID = ma->uma_ID;
-											
-											UserMobileAppDelete( ma );
-										}
-									}
-								}
-								*/
 								
 								//
 								// update UserSession
@@ -2003,15 +1987,23 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							// since we introduced deviceidentities with random number, we must remove also old entries
 							DoorNotificationRemoveEntries( l );
 						
-							User *loggedUser = loggedSession->us_User;
+							loggedUser = loggedSession->us_User;
 						
 							Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
 						
 							if( appname == NULL )
 							{
-								snprintf( tmp, sizeof(tmp) ,
-									"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
-									loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+								if( loggedSession->us_User != NULL && (loggedSession->us_User->u_Status == USER_STATUS_DISABLED || loggedSession->us_User->u_Status == USER_STATUS_BLOCKED ) )
+								{
+									char buffer[ 256 ];
+									snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED] , DICT_ACCOUNT_BLOCKED );
+								}
+								else
+								{
+									snprintf( tmp, sizeof(tmp) ,
+										"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
+										loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+								}
 							}
 							else
 							{
@@ -2057,6 +2049,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					{
 						char temp[ 1024 ];
 						char buffer[ 256 ];
+						
+						if( blockedTime > 0 )
+						{
+							User *u = UMGetUserByName( l->sl_UM, usrname );
+							if( u != NULL )
+							{
+								u->u_Status = USER_STATUS_BLOCKED;
+							}
+						}
 						
 						snprintf( buffer, sizeof(buffer), l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED], blockedTime );
 						FERROR("[ERROR] User account '%s' will be blocked until: %lu seconds\n", usrname, blockedTime );
