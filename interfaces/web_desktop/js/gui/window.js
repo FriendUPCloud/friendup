@@ -934,6 +934,7 @@ function _ActivateWindowOnly( div )
 			// Extra force!
 			if( isMobile )
 			{	
+				m.viewContainer.style.display = '';
 				m.viewContainer.style.top    = '0px';
 				m.viewContainer.style.left   = '0px';
 				m.viewContainer.style.width  = '100%';
@@ -1678,6 +1679,7 @@ function CloseView( win, delayed )
 				}
 			}
 			
+			// Animate closing
 			setTimeout( function()
 			{
 				if( div.viewContainer.parentNode )
@@ -1687,10 +1689,6 @@ function CloseView( win, delayed )
 				else if( div.parentNode )
 				{
 					div.parentNode.removeChild( div );
-				}
-				else
-				{
-					console.log( 'Nothing to remove..' );
 				}
 				CheckMaximizedView();
 			}, isMobile ? 750 : 500 );
@@ -1806,16 +1804,24 @@ function CloseView( win, delayed )
 			}, 400 );
 		}
 		
-		if( app && isMobile && app.mainView )
+		if( app && isMobile && app.mainView && app.mainView != win.windowObject )
 		{
-			app.mainView.activate();
+			app.mainView.activate( 'force' );
 		}
 		// We have a parent view
 		else if( win.parentView )
 		{
-			win.parentView.activate();
+			win.parentView.activate( 'force' );
 		}
-		
+		// Just make sure we have a view on the workspace
+		else if( app && isMobile )
+		{
+			for( var a in app.windows )
+			{
+				app.windows[ a ].activate( 'force' );
+				break;
+			}
+		}
 	}
 
 	if( !window.currentMovable )
@@ -1831,17 +1837,12 @@ function CloseView( win, delayed )
 	
 	if( isMobile )
 		Workspace.redrawIcons();
-
-	// For natives..
-	if( win && win.nativeWindow ) win.nativeWindow.close();
-	else if( win && win.windowObject && win.windowObject.nativeWindow )
-		win.windowObject.nativeWindow.close();
 }
 // Obsolete!!!
 CloseWindow = CloseView;
 
 // TODO: Detect if the scrolling is done with the mouse hovering over a window
-function CancelWindowScrolling ( e )
+function CancelWindowScrolling( e )
 {
 	if ( !e ) e = window.event;
 	var t = e.target ? e.target : e.srcElement;
@@ -2994,9 +2995,12 @@ var View = function( args )
 			// Reorganize minimized view windows
 			else
 			{
-				var app = _getAppByAppId( div.applicationId );
-				if( app.mainView && div != app.mainView )
-					_ActivateWindow( app.mainView.content.parentNode );
+				if( !isMobile )
+				{
+					var app = _getAppByAppId( div.applicationId );
+					if( app.mainView && div != app.mainView )
+						_ActivateWindow( app.mainView.content.parentNode );
+				}
 				Friend.GUI.reorganizeResponsiveMinimized();
 			}
 			
@@ -3683,8 +3687,6 @@ var View = function( args )
 			depth.style.display = 'none';
 		}
 
-
-		console.log( '[window.js] Testing for mobile: ' + window.isMobile );
 		// Start maximized
 		if( window.isMobile )
 		{
@@ -4255,6 +4257,7 @@ var View = function( args )
 	this.showBackButton = function( visible, cbk )
 	{
 		if( !isMobile ) return;
+		console.log( '[window.js] Are we showing it?', visible );
 		if( visible )
 		{
 			self.mobileBack.classList.add( 'Showing' );
@@ -4407,9 +4410,9 @@ var View = function( args )
 		}
 	}
 	// Activate window
-	this.activate = function()
+	this.activate = function( force )
 	{
-		if( this.flags.minimized ) 
+		if( !force && this.flags.minimized ) 
 		{
 			console.log( '[window.js] window is minimized - will not activate.' );
 			return;
