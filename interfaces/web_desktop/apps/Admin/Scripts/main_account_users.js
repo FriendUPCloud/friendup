@@ -411,7 +411,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 					// Editing basic details
 					
-					var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+					/*var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
 					var bge  = ge( 'UserBasicEdit' );
 					for( var a = 0; a < inps.length; a++ )
 					{
@@ -425,6 +425,39 @@ Sections.accounts_users = function( cmd, extra )
 					bge.onclick = function( e )
 					{
 						saveUser( userInfo.ID );
+					}*/
+					
+					var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+					if( inps.length > 0 )
+					{
+						for( var a = 0; a < inps.length; a++ )
+						{
+							if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+							{
+								( function( i ) {
+									i.onclick = function( e )
+									{
+										editMode();
+									}
+								} )( inps[ a ] );
+							}
+						}
+					}
+					
+					var bg1  = ge( 'UserSaveBtn' );
+					if( bg1 ) bg1.onclick = function( e )
+					{
+						saveUser( userInfo.ID );
+					}
+					var bg2  = ge( 'UserCancelBtn' );
+					if( bg2 ) bg2.onclick = function( e )
+					{
+						cancelUser(  );
+					}
+					
+					if( ge( 'UserEditContainer' ) )
+					{
+						ge( 'UserEditContainer' ).className = 'Closed';
 					}
 					
 					// Avatar 
@@ -1111,15 +1144,20 @@ Sections.accounts_users = function( cmd, extra )
 						ge( 'AdminRoleContainer'        ).style.display = 'none';
 						ge( 'AdminStorageContainer'     ).style.display = 'none';
 						ge( 'AdminApplicationContainer' ).style.display = 'none';
-					
+						
 						// User
-					
-						var bge  = ge( 'UserBasicEdit' );
-						if( bge ) bge.onclick = function( e )
+						
+						var bg1  = ge( 'UserSaveBtn' );
+						if( bg1 ) bg1.onclick = function( e )
 						{
 							saveUser(  );
 						}
-					
+						var bg2  = ge( 'UserCancelBtn' );
+						if( bg2 ) bg2.onclick = function( e )
+						{
+							cancelUser(  );
+						}
+						
 						// Avatar 
 					
 						var ae = ge( 'AvatarEdit' );
@@ -1469,6 +1507,16 @@ Sections.accounts_users = function( cmd, extra )
 			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 		}
 		
+	}
+	
+	function editMode()
+	{
+		console.log( 'editMode() ' );
+		
+		if( ge( 'UserEditContainer' ) )
+		{
+			ge( 'UserEditContainer' ).className = 'Open';
+		}
 	}
 	
 	function toggleChangePass()
@@ -3359,5 +3407,25 @@ function saveUser( uid )
 		}
 	}
 	f.execute( 'user', args );
+}
+
+function cancelUser(  )
+{
+	console.log( 'cancelUser(  ) ' );
+	
+	if( ge( 'UserDetails' ) )
+	{
+		ge( 'UserDetails' ).innerHTML = '';
+		
+		if( ge( 'ListUsersInner' ) && ge( 'ListUsersInner' ).innerHTML )
+		{
+			var div = ge( 'ListUsersInner' ).getElementsByTagName( 'div' )[0];
+			
+			if( div )
+			{
+				div.click();
+			}
+		}
+	}
 }
 

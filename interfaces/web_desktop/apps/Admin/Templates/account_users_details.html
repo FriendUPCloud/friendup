@@ -5,9 +5,9 @@
 				{i18n_user_profile}
 			</h2>
 		</div>
-		<div class="HContent50 FloatLeft Relative">
+		<!--<div class="HContent50 FloatLeft Relative">
 			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="UserBasicEdit"></button>
-		</div>
+		</div>-->
 	</div>
 	
 	<h1 class="ImageHeading">
@@ -129,9 +129,17 @@
 			
 		</div>
 		
-		<!--<div class="HRow">
-			<button class="IconButton IconSmall ButtonSmall FloatRight fa-edit" id="UserBasicEdit"></button>
-		</div>-->
+		<div id="UserEditContainer">
+			<div class="HRow">
+				<button class="Button IconSmall FloatRight MarginLeft" id="UserSaveBtn">
+					{i18n_save}
+				</button>
+				<button class="Button IconSmall FloatRight MarginLeft" id="UserCancelBtn">
+					{i18n_cancel}
+				</button>
+			</div>
+		</div>
+		
 	</div>
 	
 	<div id="AdminWorkgroupContainer">
