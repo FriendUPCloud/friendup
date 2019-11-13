@@ -51,6 +51,16 @@ typedef struct GroupUserLink
 }GroupUserLink;
 
 //
+// User group status
+//
+
+enum 
+{
+	USER_GROUP_STATUS_ACTIVE = 0,
+	USER_GROUP_STATUS_DISABLED
+};
+
+//
 
 typedef struct UserGroup
 {
