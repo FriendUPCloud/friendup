@@ -6,6 +6,11 @@ i18n_user_username                     : Username
 i18n_user_email                        : E-mail
 i18n_user_password                     : Password
 
+i18n_reset_password                    : Reset password
+
+i18n_new_password                      : New password
+i18n_confirm_password                  : Confirm password
+
 i18n_language                          : Language
 i18n_setup                             : Template
 

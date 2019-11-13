@@ -6,6 +6,11 @@ i18n_user_username                     : Brukernavn
 i18n_user_email                        : E-post
 i18n_user_password                     : Passord
 
+i18n_reset_password                    : Reset passord
+
+i18n_new_password                      : Nytt passord
+i18n_confirm_password                  : Bekreft passord
+
 i18n_language                          : Språk
 i18n_setup                             : Mal
 

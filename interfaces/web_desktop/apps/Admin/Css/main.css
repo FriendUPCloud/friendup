@@ -69,6 +69,21 @@
 	display: block;
 }
 
+#Admin #UserDetails .Closed
+{
+	display: none;
+}
+
+#Admin #UserDetails #PassError span 
+{
+    display: block;
+    font-weight: bold;
+    padding: 6px;
+    border: 3px solid #F00;
+    background: #FFF;
+    margin: 6px 0;
+}
+
 #Admin #UserDetails .AvatarRect 
 {
 	max-width: 320px;

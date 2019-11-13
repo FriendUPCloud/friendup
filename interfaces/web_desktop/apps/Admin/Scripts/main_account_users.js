@@ -393,7 +393,19 @@ Sections.accounts_users = function( cmd, extra )
 						st.backgroundRepeat = 'no-repeat';
 					}
 					
+					// Password ------------------------------------------------
 					
+					if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
+					{
+						ge( 'ChangePassContainer' ).className = 'Closed';
+						ge( 'ResetPassContainer'  ).className = 'Open';
+						
+						var res = ge( 'passToggle' );
+						if( res ) res.onclick = function( e )
+						{
+							toggleChangePass();
+						}
+					}
 					
 					// Events --------------------------------------------------
 					
@@ -957,7 +969,7 @@ Sections.accounts_users = function( cmd, extra )
 						var bge  = ge( 'UserBasicEdit' );
 						if( bge ) bge.onclick = function( e )
 						{
-							addUser(  );
+							saveUser(  );
 						}
 					
 						// Avatar 
@@ -1105,7 +1117,7 @@ Sections.accounts_users = function( cmd, extra )
 						var bge  = ge( 'UserBasicEdit' );
 						if( bge ) bge.onclick = function( e )
 						{
-							addUser(  );
+							saveUser(  );
 						}
 					
 						// Avatar 
@@ -1457,6 +1469,20 @@ Sections.accounts_users = function( cmd, extra )
 			ge( 'ListUsersInner' ).setAttribute( 'orderby', orderby );
 		}
 		
+	}
+	
+	function toggleChangePass()
+	{
+		if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
+		{
+			ge( 'ChangePassContainer' ).className = 'Open';
+			ge( 'ResetPassContainer'  ).className = 'Closed';
+			
+			if( ge( 'usPassword' ) )
+			{
+				ge( 'usPassword' ).focus();
+			}
+		}
 	}
 	
 	function getSetupList( callback )
@@ -3134,7 +3160,7 @@ function remountDrive( devname, userid, callback )
 }
 
 // Add new user
-function addUser()
+function addUser( callback )
 {
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
@@ -3143,20 +3169,27 @@ function addUser()
 		
 		if( e == 'ok' && d )
 		{
-			saveUser( d );
+			if( callback )
+			{
+				callback( d );
+			}
+			else
+			{
+				saveUser( d );
+			}
+			
+			return;
 		}
+		
+		if( callback ) callback( false );
 	}
 	m.execute( 'useradd', { authid: Application.authId } );
 }
 
 // Save a user
 function saveUser( uid )
-{
-	if( !uid ) return;
-	
+{	
 	var args = { command: 'update' };
-	
-	if( uid ) args.id = uid;
 	
 	var mapping = {
 		usFullname : 'fullname',
@@ -3171,8 +3204,26 @@ function saveUser( uid )
 		var k = mapping[ a ];
 		
 		// Skip nonchanged passwords
-		if( a == 'usPassword' && ge( a ).value == '********' )
-			continue;
+		if( a == 'usPassword' )
+		{
+			if( ( !ge( a ).value || ge( a ).value == '********' ) )
+			{
+				continue;
+			}
+			else
+			{
+				if( ge( a ).value != ge( 'usPasswordConfirm' ).value )
+				{
+					ge( 'PassError' ).innerHTML = i18n( '<span>New password confirmation does not match new password.</span>' );
+					ge( a ).focus();
+					return false;
+				}
+				else
+				{
+					ge( 'PassError' ).innerHTML = '';
+				}
+			}
+		}
 		
 		args[ k ] = Trim( ge( a ).value );
 		
@@ -3185,6 +3236,24 @@ function saveUser( uid )
 		
 	}
 	
+	if( !uid )
+	{
+		addUser( function( uid )
+		{
+			
+			if( uid && uid > 0 )
+			{
+				saveUser( uid );
+			}
+			
+		} );
+		
+		return;
+	}
+	else
+	{
+		args.id = uid;
+	}
 	
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )

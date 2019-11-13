@@ -52,14 +52,40 @@
 				<input type="text" class="FullWidth" id="usEmail" value="{user_email}"/>
 			</div>
 		</div>
-		<div class="HRow MarginBottom">
-			<div class="HContent30 FloatLeft Ellipsis">
-				<strong>{i18n_user_password}</strong>
-			</div>
-			<div class="HContent70 FloatLeft Ellipsis">
-				<input type="password" class="FullWidth" id="usPassword" value="********"/>
+		
+		<div id="ResetPassContainer" class="Closed">
+			<div class="HRow MarginBottom">
+				<div class="HContent30 FloatLeft Ellipsis">
+					<strong>{i18n_user_password}</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<button class="IconSmall Button" id="passToggle">
+						{i18n_reset_password}
+					</button>
+				</div>
 			</div>
 		</div>
+		
+		<div id="ChangePassContainer">
+			<div id="PassError"></div>
+			<div class="HRow MarginBottom">
+				<div class="HContent30 FloatLeft Ellipsis">
+					<strong>{i18n_new_password}</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<input class="FullWidth" type="password" value="" placeholder="********" id="usPassword"/>
+				</div>
+			</div>
+			<div class="HRow MarginBottom">
+				<div class="HContent30 FloatLeft Ellipsis">
+					<strong>{i18n_confirm_password}</strong>
+				</div>
+				<div class="HContent70 FloatLeft Ellipsis">
+					<input class="FullWidth" type="password" value="" placeholder="********" id="usPasswordConfirm"/>
+				</div>
+			</div>
+		</div>
+		
 		<div class="HRow MarginBottom">
 			<div class="HContent30 FloatLeft Ellipsis">
 				<strong>{i18n_language}</strong>
