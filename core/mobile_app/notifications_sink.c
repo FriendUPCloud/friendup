@@ -346,6 +346,18 @@ void ProcessSinkMessage( void *locd )
 	//type (1): 'ping (2)
 	//	}
 	//}
+
+	// request : 
+	// {
+	// type : 'user',
+	// data : {
+	// type : 'list',
+	// data : {
+	// requestid : <string>,
+	// },
+	// },
+	// }
+
 	
 	//json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
 	
@@ -421,19 +433,20 @@ void ProcessSinkMessage( void *locd )
 				
 				NotificationManagerAddExternalConnection( SLIB->sl_NotificationManager, d );
 				
-				// send message about current groups and users
-				
-				BufString *bs = BufStringNew();
-				UGMReturnAllAndMembers( SLIB->sl_UGM, bs, "Workgroup" );
-				NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, "service", "group", "list", bs->bs_Buffer );
-				BufStringDelete( bs );
-				
 				goto error_point;
 			}
 			else if( d->d_Authenticated ) 
 			{
-				
 				int dlen =  t[3].end - t[3].start;
+				msize = t[2].end - t[2].start;
+				//DEBUG("Check1:  %.*s\n", 10, data + t[2].start );
+				/*
+				if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 )
+				{
+					
+				}
+				else 
+					*/
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
 					static int bufferSize = LWS_PRE+256;
@@ -458,7 +471,9 @@ void ProcessSinkMessage( void *locd )
 				
 					if( strncmp( data + t[5].start, "type", t[5].end - t[5].start) == 0) 
 					{
-						if( strncmp( data + t[6].start, "notification", t[6].end - t[6].start) == 0) 
+						msize = t[6].end - t[6].start;
+						
+						if( strncmp( data + t[6].start, "notification", msize) == 0) 
 						{
 							// 6 notification, 7 data, 8 object, 9 variables
 							
@@ -659,6 +674,132 @@ void ProcessSinkMessage( void *locd )
 							if( message != NULL ) FFree( message );
 							if( application != NULL ) FFree( application );
 							if( extra != NULL ) FFree( extra );
+						}
+						else //DEBUG("Check2:  %.*s\n", 10, data + t[6].start );
+					
+						if( strncmp( data + t[6].start, "user", msize ) == 0 )
+						{
+							char *reqid = NULL;
+						
+							//DEBUG("Check3:  %.*s\n", 10, data + t[10].start );
+							if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
+							{
+								if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+								{
+									reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+								}
+							
+								//DEBUG("Check1: %.*s\n", 10, data + t[15].start );
+							
+								if( reqid != NULL )
+								{
+									BufString *bs = BufStringNew();
+									UMReturnAllUsers( SLIB->sl_UM, bs, NULL );
+									DEBUG("Return message: %s\n", bs->bs_Buffer );
+									NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+									BufStringDelete( bs );
+									FFree( reqid );
+								}
+								else
+								{
+									DEBUG("Reqid == NULL\n");
+								}
+							}
+							else if( strncmp( data + t[10].start, "get", t[10].end - t[10].start) == 0) 
+							{
+								char *uuid = NULL;
+							
+								if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+								{
+									reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+								}
+								if( strncmp( data + t[15].start, "userid", t[15].end - t[15].start) == 0) 
+								{
+									uuid = StringDuplicateN( data + t[16].start, t[16].end - t[16].start );
+								}
+							
+								DEBUG("Check1:  %s\n", reqid );
+								DEBUG("Check2:  %s\n", uuid );
+						
+								if( reqid != NULL && uuid != NULL )
+								{
+									BufString *bs = BufStringNew();
+									//BufStringAddSize( bs, "{", 1 );
+								
+									User *usr = UMGetUserByUUIDDB( SLIB->sl_UM, uuid );
+									if( usr != NULL )
+									{
+										char udata[ 1024 ];
+										int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"lastupdated\":%lu", \
+											usr->u_UUID, usr->u_Name, usr->u_ModifyTime
+										);
+									
+										// add first part to response string
+										BufStringAddSize( bs, udata, udatalen );
+										// if field is not empty, must be provided
+										if( usr->u_FullName != NULL )
+										{
+											udatalen = snprintf( udata, sizeof(udata), ",\"fullname\":\"%s\"", usr->u_FullName );
+											BufStringAddSize( bs, udata, udatalen );
+										}
+										if( usr->u_Email != NULL )
+										{
+											udatalen = snprintf( udata, sizeof(udata), ",\"email\":\"%s\"", usr->u_Email );
+											BufStringAddSize( bs, udata, udatalen );
+										}
+										BufStringAddSize( bs, "}", 1 );
+										NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+									}
+									else
+									{
+										char udata[ 1024 ];
+										int udatalen = snprintf( udata, sizeof(udata), "{\"type\":\"reply\",\"data\":{\"requestid\":\"%s\",\"error\":\"%s\"}}", \
+											reqid, "User not found"
+										);
+										//BufStringAddSize( bs, udata, udatalen );
+										WriteMessageSink( d, (unsigned char *)(udata)+LWS_PRE, udatalen );
+									}
+								
+									BufStringDelete( bs );
+								
+									FFree( reqid );
+									FFree( uuid );
+								}
+								else
+								{
+									DEBUG("Reqid == NULL\n");
+									char udata[ 1024 ];
+									int udatalen = snprintf( udata, sizeof(udata), "{\"type\":\"reply\",\"data\":{\"requestid\":\"%s\",\"error\":\"%s\"}}", \
+										reqid, "User not found"
+									);
+									WriteMessageSink( d, (unsigned char *)(udata)+LWS_PRE, udatalen );
+								}
+							}
+						}
+						else if( strncmp( data + t[6].start, "group", msize ) == 0 )
+						{
+							char *reqid = NULL;
+							if( strncmp( data + t[10].start, "list", t[10].end - t[10].start) == 0) 
+							{
+								if( strncmp( data + t[13].start, "requestid", t[13].end - t[13].start) == 0) 
+								{
+									reqid = StringDuplicateN( data + t[14].start, t[14].end - t[14].start );
+								}
+								if( reqid != NULL )
+								{
+									// send message about current groups and users
+				
+									BufString *bs = BufStringNew();
+									UGMReturnAllAndMembers( SLIB->sl_UGM, bs, "Workgroup" );
+									NotificationManagerSendEventToConnections( SLIB->sl_NotificationManager, NULL, NULL, reqid, NULL, NULL, NULL, bs->bs_Buffer );
+									BufStringDelete( bs );
+									FFree( reqid );
+								}
+								else
+								{
+									DEBUG("Reqid == NULL\n");
+								}
+							}
 						}
 					}
 				}	// is authenticated
