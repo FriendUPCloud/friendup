@@ -80,7 +80,7 @@ Application.run = function( msg )
 	appConn = new FConn(); // Setup a friend core connection
 	
 	// Initing sas
-	initSas( msg );
+	// initSas( msg ); // TODO: Reenable at later date
 	
 	// Open application window
 	loadConfig( function()
@@ -222,26 +222,32 @@ Application.open = function()
 	// Make sure it's up to date!
 	this.getCurrentPath();
 	
-	// Make a new file dialog, blocking the current window
-	var dlg = new Filedialog( this.masterView, function ( array ) 
-	{	
-		if ( array.length )
-		{
-			for ( var a = 0; a < array.length; a++ )
+	var flags = {
+		triggerFunction: function ( array ) 
+		{	
+			if ( array.length )
 			{
-				Application.loadFile ( array[a] );
-			}
+				for ( var a = 0; a < array.length; a++ )
+				{
+					Application.loadFile ( array[a] );
+				}
 			
-			// Interactively update path
-			// TODO: Get directory from path function
-			Application.currentPath = array[0].Path ? array[0].Path : array[0].Title;
-			Application.currentPath = Application.currentPath.split( '/' );
-			Application.currentPath.pop();
-			Application.currentPath = Application.currentPath.join( '/' );
-		}
-		Application.dlg = false;
-	}, Application.currentPath );
-	this.dlg = dlg;
+				// Interactively update path
+				// TODO: Get directory from path function
+				Application.currentPath = array[0].Path ? array[0].Path : array[0].Title;
+				Application.currentPath = Application.currentPath.split( '/' );
+				Application.currentPath.pop();
+				Application.currentPath = Application.currentPath.join( '/' );
+			}
+			Application.dlg = false;
+		},
+		path: Application.currentPath,
+		mainView: this.masterView,
+		rememberPath: true
+	};
+	
+	// Make a new file dialog, blocking the current window
+	var dlg = new Filedialog( flags ); this.dlg = dlg;
 };
 
 // Load a file
@@ -1444,10 +1450,10 @@ Application.setMenuItems = function( w )
 				name    : i18n( 'i18n_application_settings' ),
 				command : 'preferences'
 			},
-			{
+			/*{
 				name    : i18n( 'i18n_initiate_sas' ),
 				command : 'sas_window'
-			}/*,
+			},
 			{
 				name    : i18n( 'i18n_save_settings' ),
 				command : function(){}

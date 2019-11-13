@@ -64,8 +64,6 @@ static void dump_handshake_info(struct lws_tokens *lwst);
 
 static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-
-
 //
 //
 //
@@ -96,7 +94,6 @@ struct per_session_data__http {
 	int reason_bf;
 #endif
 	unsigned int client_finished:1;
-
 
 	struct lws_spa *spa;
 	char result[ 500 + LWS_PRE ];

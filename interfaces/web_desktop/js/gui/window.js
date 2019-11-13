@@ -1052,16 +1052,19 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	
 	// Activate all iframes
-	var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
-	for( var a = 0; a < fr.length; a++ )
+	if( div.windowObject.content )
 	{
-		if( fr[ a ].oldSandbox )
+		var fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+		for( var a = 0; a < fr.length; a++ )
 		{
-			fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
-		}
-		else
-		{
-			fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+			if( fr[ a ].oldSandbox )
+			{
+				fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+			}
+			else
+			{
+				fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+			}
 		}
 	}
 	
@@ -3942,6 +3945,7 @@ var View = function( args )
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
 		iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		iframe.referrerPolicy = 'origin';
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
 		self._window.authId = conf.authId;
@@ -4768,6 +4772,10 @@ var View = function( args )
 	}
 	this.parseFlags = function( flags, filter )
 	{
+		console.log( 'parseFlags', {
+			flags  : flags,
+			filter : filter,
+		});
 		if( !this.flags ) this.flags = {};
 		for( var a in flags )
 		{

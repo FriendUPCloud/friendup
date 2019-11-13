@@ -158,10 +158,17 @@ Door.prototype.get = function( path )
 };
 
 Door.prototype.getIcons = function( fileInfo, callback, flags )
-{
+{	
 	if( !this.path && this.deviceName )
 	{
-		this.path = this.deviceName + ':';
+		if( typeof( fileInfo ) == 'string' && fileInfo != 'Mountlist:' )
+		{
+			this.path = fileInfo;
+		}
+		else
+		{
+			this.path = this.deviceName + ':';
+		}
 	}
 	
 	var finfo = false;
@@ -643,11 +650,15 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 						door.Dormant.write( args[ 'to' ], data, function( response )
 						{
 							refresh();
-							if ( response == 0 )
+							if( response == 0 )
+							{
 								doAlert();
+							}
 							else
+							{
 								response = 'ok';
-							if ( callback )
+							}
+							if( callback )
 								callback( response, dr );
 						} );
 					}

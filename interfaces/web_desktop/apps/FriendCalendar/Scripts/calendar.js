@@ -21,7 +21,7 @@ Application.run = function( msg, iface )
 	this.setApplicationName( 'Friend Calendar' );
 	
 	var v = new View( {
-		title: i18n('i18n_your_calendar'),
+		title: i18n( 'i18n_your_calendar' ),
 		width: 960,
 		height: 720
 	} );
@@ -146,7 +146,7 @@ Application.receiveMessage = function( msg )
 				return;
 			}
 			var w = new View( {
-				title: i18n('i18n_calendar_sources'),
+				title: i18n( 'i18n_calendar_sources' ),
 				width: 700,
 				height: 500
 			} );
@@ -434,6 +434,7 @@ function UpdateEvents( evts )
 					DateEnd: tt,
 					Your: eles[a].Your,
 					Owner: eles[a].Owner,
+					MetaData: eles[a].MetaData,
 					Name: eles[a].Title,
 					ID: parseInt( eles[a].ID )
 				} );

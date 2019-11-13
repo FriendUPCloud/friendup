@@ -8,9 +8,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var _dialogStorage = {};
+
 // Opens a file dialog connected to an application
 Filedialog = function( object, triggerfunction, path, type, filename, title )
-{
+{	
 	var self = this;
 	var mainview = false;
 	var suffix = false;
@@ -18,6 +20,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var defaultPath = 'Home:';
 	var keyboardNavigation = false;
 	var ignoreFiles = false;
+	var rememberPath = false;
+	
 	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
@@ -65,6 +69,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				case 'keyboardNavigation':
 					keyboardNavigation = object[a];
 					break;
+				case 'rememberPath':
+					rememberPath = object[a] ? true : false
+					break;
 			}
 		}
 	}
@@ -82,6 +89,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	}
 
 	if( !path ) path = defaultPath;
+	if( path.indexOf( ':' ) < 0 )
+	{
+		path = 'Home:';
+	}
+	
 	if( !triggerfunction ) return;
 	if( !type ) type = 'open';
 	if( !mainview )
@@ -96,6 +108,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	dialog.suffix = suffix;
 	if( !filename ) filename = '';
 
+	// Grab title for later.....................................................
 	var ftitle = '';
 	
 	switch ( type )
@@ -109,6 +122,19 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	this.type = type;
 
 	if( title ) ftitle = title;
+
+	// Generate dialog ID.......................................................
+	var ds = null; // <- main container for session based storage
+	if( mainview )
+	{
+		// Create application collection
+		if( !_dialogStorage[ mainview.applicationName ] )
+			_dialogStorage[ mainview.applicationName ] = {};
+		var dialogID = CryptoJS.SHA1( ftitle + '-' + type ).toString();
+		if( !_dialogStorage[ mainview.applicationName ][ dialogID ] )
+			_dialogStorage[ mainview.applicationName ][ dialogID ] = {};
+		ds = _dialogStorage[ mainview.applicationName ][ dialogID ];
+	}
 
 	var wantedWidth = 800;
 
@@ -133,15 +159,22 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	// Default path
 	this.path = path ? path : defaultPath;
-	if ( typeof ( path ) == 'object' )
+	if( typeof ( path ) == 'object' )
 		this.path = path.path;
+
+
+	// Do the remembering
+	if( rememberPath && ds && ds.path )
+	{
+		this.path = path = ds.path;
+	}
 
 	// Block main view while this dialog is open!
 	if( mainview ) mainview.setBlocker( w );
 	
 	// Select an element
 	w.select = function( ele )
-	{	
+	{
 		var cont = this.getContainer ();
 		var eles = cont.getElementsByTagName( 'div' );
 		for( var a = 0; a < eles.length; a++ )
@@ -188,7 +221,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	{
 		if( !dialog.path )
 		{
-			alert ( 'Please choose a path.' );
+			Alert( i18n( 'i18n_no_path' ), i18n( 'i18n_please_choose_a_path' ) );
 			return false;
 		}
 		
@@ -337,7 +370,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			else
 			{
 				triggerfunction( '' );
-				console.log( 'Nothing selected...' );
 			}
 		}
 		w.close ();
@@ -372,6 +404,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	// Refresh dir listing
 	w.refreshView = function()
 	{
+		if( rememberPath )
+		{
+			ds.path = dialog.path;
+		}
+		
 		this._window.redrawIcons();
 	}
 
@@ -383,10 +420,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	w.getContainer = function()
 	{
-		var s = this._window.getElementsByTagName ( 'div' );
+		var s = this._window.getElementsByTagName( 'div' );
 		for ( var a = 0; a < s.length; a++ )
 		{
-			if ( s[a].getAttribute ( 'name' ) && s[a].getAttribute ( 'name' ) == 'ContentBox' )
+			if( s[a].getAttribute( 'name' ) && s[a].getAttribute( 'name' ) == 'ContentBox' )
 			{
 				return s[a];
 			}
@@ -594,14 +631,31 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			inpu.value = dialog.path;
 		}
-	
-		// Correct fileinfo
-		w._window.fileInfo = {
-			Path: 'Home:',
-			Volume: 'Home:',
-			MetaType: 'Directory',
-			Door: new Door( 'Home:' )
-		};
+		
+		if( dialog.path == 'Mountlist:' )
+		{
+			// Correct fileinfo
+			w._window.fileInfo = {
+				Path: 'Home:',
+				Volume: 'Home:',
+				MetaType: 'Directory',
+				Door: new Door( 'Home:' )
+			};
+		}
+		else
+		{
+			var lp = dialog.path.substr( dialog.path.length - 1, 1 );
+			if( lp != '/' && lp != ':' )
+				dialog.path += '/';
+			
+			// Correct fileinfo
+			w._window.fileInfo = {
+				Path: dialog.path,
+				Volume: dialog.path.split( ':' )[0],
+				MetaType: 'Directory',
+				Door: new Door( dialog.path.split( ':' )[0] )
+			};
+		}
 		
 		// Set up directoryview
 		var dir = new DirectoryView( w._window, {
@@ -641,7 +695,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		dir.listMode = 'listview';
 		
 		// Get icons and load!
-		w._window.fileInfo.Door.getIcons( 'Home:', function( items )
+		w._window.fileInfo.Door.getIcons( dialog.path, function( items )
 		{
 			w._window.icons = items;
 			w.refreshView();
