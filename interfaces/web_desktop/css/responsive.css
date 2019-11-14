@@ -497,7 +497,7 @@ body:not(.HasMenu) #Screens > div.Screen.HasWidget
 	right: 80px;
 }
 
-body:not([tablet]) #Screens .View:last-child
+body:not([tablet]):not([mobile]) #Screens .View:last-child
 {
 	z-index: 1 !important;
 	box-shadow: 0px 5px 15px 0px rgba(0,0,0,0.5);
