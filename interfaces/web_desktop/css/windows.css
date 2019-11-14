@@ -16,6 +16,11 @@ body:not([mobile]) .ViewContainer
 	opacity: 1;
 }
 
+body[mobile] .ViewContainer.Closing
+{
+	z-index: 1;
+}
+
 .View
 {
 	position: absolute;
