@@ -2270,7 +2270,7 @@ var View = function( args )
 		if( !flags.minimized )
 		{
 			// Allow initialized
-			if( currentMovable )
+			if( window.currentMovable )
 			{
 				viewContainer.classList.add( 'Initialized' );
 				setTimeout( function()
