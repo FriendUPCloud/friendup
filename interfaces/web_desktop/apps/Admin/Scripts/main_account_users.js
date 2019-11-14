@@ -81,526 +81,597 @@ Sections.accounts_users = function( cmd, extra )
 		if( cmd == 'edit' )
 		{
 			// Show the form
-			function initUsersDetails( info )
+			function initUsersDetails( info, show )
 			{
 				// Some shortcuts
-				var userInfo = info.userInfo;
-				var settings = info.settings;
-				var workspaceSettings = info.workspaceSettings;
-				var wgroups = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : [ userInfo.Workgroup ];
-				var uroles = info.roles;
-				var mountlist = info.mountlist;
-				var apps = info.applications;
-						
+				var userInfo          = ( info.userInfo ? info.userInfo : {} );
+				var settings          = ( info.settings ? info.settings : {} );
+				var workspaceSettings = ( info.workspaceSettings ? info.workspaceSettings : {} );
+				var wgroups           = typeof( userInfo.Workgroup ) == 'object' ? userInfo.Workgroup : ( userInfo.Workgroup ? [ userInfo.Workgroup ] : [] );
+				var uroles            = ( info.roles ? info.roles : {} );
+				var mountlist         = ( info.mountlist ? info.mountlist : {} );
+				var apps              = ( info.applications ? info.applications : {} );
+				
 				console.log( 'initUsersDetails( info ) ', info );		
 				
-				// User
-				var ulocked = false;
-				var udisabled = false;
-				
-				if( userInfo.Status )
-				{
-					// 0 = Active, 1 = Disabled, 2 = Locked
+				var func = {
 					
-					if( userInfo.Status == 1 )
+					user : function (  )
 					{
-						udisabled = true;
-					}
-					if( userInfo.Status == 2 )
-					{
-						ulocked = true;
-					}
-				}
+						// User
+						var ulocked = false;
+						var udisabled = false;
 				
-				// Language
-				var availLangs = {
-					'en' : 'English',
-					'fr' : 'French',
-					'no' : 'Norwegian',
-					'fi' : 'Finnish',
-					'pl' : 'Polish'
-				};
-				var languages = '';
-				
-				var locale = ( workspaceSettings.language && workspaceSettings.language.spokenLanguage ? workspaceSettings.language.spokenLanguage.substr( 0, 2 ) : workspaceSettings.locale );
-				for( var a in availLangs )
-				{
-					var sel = ( locale == a ? ' selected="selected"' : '' );
-					languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
-				}
-				
-				// Setup / Template
-				var setup = '<option value="0">None</option>';
-				if( userInfo.Setup )
-				{
-					for( var s in userInfo.Setup )
-					{
-						if( userInfo.Setup[s] && userInfo.Setup[s].ID )
+						if( userInfo.Status )
 						{
-							var sel = ( userInfo.Setup[s].UserID && userInfo.Setup[s].UserID == userInfo.ID ? ' selected="selected"' : '' );
-							setup += '<option value="' + userInfo.Setup[s].ID + '"' + sel + '>' + userInfo.Setup[s].Name + '</option>';
-						}
-					}
-				}
-				
-				// Themes
-				var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
-				if( !themeData )
-					themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
-				
-				// Workgroups
-				var wstr = '';
-				if( wgroups.length )
-				{
-					for( var b = 0; b < wgroups.length; b++ )
-					{
-						if( !wgroups[b].Name ) continue;
-						wstr += '<div class="HRow">';
-						wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
-						wstr += '</div>';
-					}
-				}
-				
-				// Roles
-				var rstr = '';
-				
-				// Roles and role adherence
-				if( uroles && uroles == '404' )
-				{
-					rstr += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_roles_access_denied' ) + '</div></div>';
-				}
-				else if( uroles && uroles.length )
-				{
+							// 0 = Active, 1 = Disabled, 2 = Locked
 					
-					for( var a in uroles )
-					{
-						rstr += '<div class="HRow">';
-						rstr += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis"><strong>' + uroles[a].Name + '</strong></div>';
-						
-						var title = '';
-						
-						if( uroles[a].Permissions.length )
-						{
-							var wgrs = [];
-							
-							for( var b in uroles[a].Permissions )
+							if( userInfo.Status == 1 )
 							{
-								if( uroles[a].Permissions[b].GroupType == 'Workgroup' && wgrs.indexOf( uroles[a].Permissions[b].GroupName ) < 0 )
+								udisabled = true;
+							}
+							if( userInfo.Status == 2 )
+							{
+								ulocked = true;
+							}
+						}
+					
+						return { 
+							udisabled : udisabled, 
+							ulocked   : ulocked 
+						};
+					},
+					
+					language : function (  )
+					{
+						// Language
+						var availLangs = {
+							'en' : 'English',
+							'fr' : 'French',
+							'no' : 'Norwegian',
+							'fi' : 'Finnish',
+							'pl' : 'Polish'
+						};
+						var languages = '';
+				
+						var locale = ( workspaceSettings.language && workspaceSettings.language.spokenLanguage ? workspaceSettings.language.spokenLanguage.substr( 0, 2 ) : workspaceSettings.locale );
+						for( var a in availLangs )
+						{
+							var sel = ( locale == a ? ' selected="selected"' : '' );
+							languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
+						}
+					
+						return languages;
+					},
+					
+					setup : function (  )
+					{
+						// Setup / Template
+						var setup = '<option value="0">None</option>';
+						if( userInfo.Setup )
+						{
+							for( var s in userInfo.Setup )
+							{
+								if( userInfo.Setup[s] && userInfo.Setup[s].ID )
 								{
-									wgrs.push( uroles[a].Permissions[b].GroupName );
+									var sel = ( userInfo.Setup[s].UserID && userInfo.Setup[s].UserID == userInfo.ID ? ' selected="selected"' : '' );
+									setup += '<option value="' + userInfo.Setup[s].ID + '"' + sel + '>' + userInfo.Setup[s].Name + '</option>';
 								}
 							}
-							
-							title = wgrs.join( ',' );
 						}
-						
-						rstr += '<div class="PaddingSmall HContent40 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
-						
-						rstr += '<div class="PaddingSmall HContent15 FloatLeft Ellipsis">';
-						rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
-						rstr += '</div>';
-						rstr += '</div>';
-					}
-				}
-				
-				var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID );
-				
-				
-				
-				/*function initStorageGraphs()
-				{
-					var d = document.getElementsByTagName( 'canvas' );
-					for( var a = 0; a < d.length; a++ )
+					
+						return setup;
+					},
+					
+					themes : function (  )
 					{
-						if( !d[a].id || d[a].id.substr( 0, 4 ) != 'Stor' )
-							continue;
-						var nod = d[a];
-						nod.setAttribute( 'width', nod.parentNode.offsetWidth );
-						nod.setAttribute( 'height', nod.parentNode.offsetHeight );
+						// Themes
+						var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
+						if( !themeData )
+						{
+							themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
+						}
 						
-						// Calculate disk usage
-						var size = nod.getAttribute( 'size' );
-						var mode = size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ];
-						size = parseInt( size );
-						var type = mode[0].toLowerCase();
-						if( type == 'mb' )
+						return themeData;
+					},
+					
+					workgroups : function (  )
+					{
+						// Workgroups
+						var wstr = '';
+						if( wgroups.length )
 						{
-							size = size * 1024;
-						}
-						else if( type == 'gb' )
-						{
-							size = size * 1024 * 1024;
-						}
-						else if( type == 'tb' )
-						{
-							size = size * 1024 * 1024 * 1024;
-						}
-						var used = parseInt( nod.getAttribute( 'used' ) );
-						if( isNaN( size ) ) size = 512 * 1024; // < Normally the default size
-						if( !used && !size ) used = 0, size = 1;
-						if( !used ) used = 0;
-						if( used > size || ( used && !size ) ) size = used;
-						
-						// Create doghnut chart
-						var pie = new Chart( nod, 
+							for( var b = 0; b < wgroups.length; b++ )
 							{
-								type: 'doughnut',
-								data: { 
-									labels: [ 'Space', 'Data' ], 
-									datasets: [ { 
-										label: 'Disk usage', data: [ size - used, used ], 
-										backgroundColor: [ '#27BBB0', '#D75B4E' ],
-										borderWidth: 0,
-									} ]
-								},
-								options: { legend: { display: false } }
-							} 
-						);
-					}
-				}*/
+								if( !wgroups[b].Name ) continue;
+								wstr += '<div class="HRow">';
+								wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
+								wstr += '</div>';
+							}
+						}
+					
+						return wstr;
+					},
+					
+					roles : function (  )
+					{
+						// Roles
+						var rstr = '';
 				
-				// Applications
-				var apl = '';
-				var types = [ '', i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
-				var keyz  = [ 'Icon', 'Name', 'Category', 'Dock' ];
-				apl += '<div class="HRow">';
-				for( var a = 0; a < types.length; a++ )
-				{
-					var ex = ''; var st = '';
-					if( keyz[ a ] == 'Icon' )
+						// Roles and role adherence
+						if( uroles && uroles == '404' )
+						{
+							rstr += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_user_roles_access_denied' ) + '</div></div>';
+						}
+						else if( uroles && uroles.length )
+						{
+					
+							for( var a in uroles )
+							{
+								rstr += '<div class="HRow">';
+								rstr += '<div class="PaddingSmall HContent45 FloatLeft Ellipsis"><strong>' + uroles[a].Name + '</strong></div>';
+						
+								var title = '';
+						
+								if( uroles[a].Permissions.length )
+								{
+									var wgrs = [];
+							
+									for( var b in uroles[a].Permissions )
+									{
+										if( uroles[a].Permissions[b].GroupType == 'Workgroup' && wgrs.indexOf( uroles[a].Permissions[b].GroupName ) < 0 )
+										{
+											wgrs.push( uroles[a].Permissions[b].GroupName );
+										}
+									}
+							
+									title = wgrs.join( ',' );
+								}
+						
+								rstr += '<div class="PaddingSmall HContent40 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
+						
+								rstr += '<div class="PaddingSmall HContent15 FloatLeft Ellipsis">';
+								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								rstr += '</div>';
+								rstr += '</div>';
+							}
+						}
+					
+						return rstr;
+					},
+					
+					storage : function (  )
 					{
-						st = ' style="width:10%"';
-					}
-					if( keyz[ a ] == 'Dock' )
+						// Storage / disks
+						var mlst = Sections.user_disk_refresh( mountlist, userInfo.ID );
+					
+						return mlst;
+					},
+					
+					applications : function (  )
 					{
-						ex = ' TextRight';
-					}
-					apl += '<div class="PaddingSmall HContent30 FloatLeft Ellipsis' + ex + '"' + st + '>' + types[ a ] + '</div>';
-				}
-				apl += '</div>';
-				
-				apl += '<div>';
-				var sw = 2;
-				if( apps && apps == '404' )
-				{
-					apl += i18n( 'i18n_applications_available_access_denied' );
-				}
-				else if( apps )
-				{
-					for( var a = 0; a < apps.length; a++ )
-					{
-						sw = sw == 2 ? 1 : 2;
-						apl += '<div class="HRow sw' + sw + '">';
-						for( var k = 0; k < keyz.length; k++ )
+						// Applications
+						var apl = '';
+						var types = [ '', i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
+						var keyz  = [ 'Icon', 'Name', 'Category', 'Dock' ];
+						apl += '<div class="HRow">';
+						for( var a = 0; a < types.length; a++ )
 						{
 							var ex = ''; var st = '';
-							if( keyz[ k ] == 'Icon' )
+							if( keyz[ a ] == 'Icon' )
 							{
 								st = ' style="width:10%"';
-								var img = ( !apps[ a ].Preview ? '/iconthemes/friendup15/File_Binary.svg' : '/system.library/module/?module=system&command=getapplicationpreview&application=' + apps[ a ].Name + '&authid=' + Application.authId );
-								var value = '<div style="background-image:url(' + img + ');background-size:contain;width:24px;height:24px;"></div>';
 							}
-							else
+							if( keyz[ a ] == 'Dock' )
 							{
-								var value = apps[ a ][ keyz[ k ] ];
+								ex = ' TextRight';
 							}
-							if( keyz[ k ] == 'Name' )
-							{
-								value = '<strong>' + apps[ a ][ keyz[ k ] ] + '</strong>';
-							}
-							if( keyz[ k ] == 'Category' && apps[ a ] && apps[ a ].Config && apps[ a ].Config.Category )
-							{
-								value = apps[ a ].Config.Category;
-							}
-							if( keyz[ k ] == 'Dock' )
-							{
-								value = '<button class="IconButton IconSmall ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
-								//value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
-								ex = ' TextCenter';
-							}
-							apl += '<div class="PaddingSmall HContent30 FloatLeft Ellipsis' + ex + '"' + st + '>' + value + '</div>';
+							apl += '<div class="PaddingSmall HContent30 FloatLeft Ellipsis' + ex + '"' + st + '>' + types[ a ] + '</div>';
 						}
 						apl += '</div>';
-					}
-				}
-				else
-				{
-					apl += i18n( 'i18n_no_applications_available' );
-				}
-				apl += '</div>';
 				
-				// Get the user details template
-				var d = new File( 'Progdir:Templates/account_users_details.html' );
-				console.log( 'userInfo ', userInfo );
-				// Add all data for the template
-				d.replacements = {
-					userid               : userInfo.ID,
-					user_name            : userInfo.FullName,
-					user_fullname        : userInfo.FullName,
-					user_username        : userInfo.Name,
-					user_email           : userInfo.Email,
-					user_language        : languages,
-					user_setup           : setup,
-					user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
-					user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
-					theme_name           : settings.Theme,
-					theme_dark           : themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					theme_style          : themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
-					wallpaper_name       : workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ),
-					workspace_count      : workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
-					system_disk_state    : workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
-					storage              : mlst,
-					workgroups           : wstr,
-					roles                : rstr,
-					applications         : apl
-				};
-				
-				// Add translations
-				d.i18n();
-				d.onLoad = function( data )
-				{
-					ge( 'UserDetails' ).innerHTML = data;
-					//initStorageGraphs();
-					
-					// Responsive framework
-					Friend.responsive.pageActive = ge( 'UserDetails' );
-					Friend.responsive.reinit();
-					
-					// Avatar --------------------------------------------------
-					
-					if( ge( 'Avatar' ) && workspaceSettings.avatar )
-					{
-						// Only update the avatar if it exists..
-						var avSrc = new Image();
-						avSrc.src = workspaceSettings.avatar;
-						avSrc.onload = function()
+						apl += '<div>';
+						var sw = 2;
+						if( apps && apps == '404' )
 						{
-							var ctx = ge( 'Avatar' ).getContext( '2d' );
-							ctx.drawImage( avSrc, 0, 0, 256, 256 );
+							apl += i18n( 'i18n_applications_available_access_denied' );
 						}
-					}
-					
-					// Theme ---------------------------------------------------
-					
-					if( ge( 'ThemePreview' ) && workspaceSettings.wallpaperdoors )
-					{
-						console.log( workspaceSettings );
-						var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + workspaceSettings.wallpaperdoors : '' );
-						var st = ge( 'ThemePreview' ).style
-						st.backgroundImage = 'url(\'' + ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' ) + '\')';
-						st.backgroundSize = 'cover';
-						st.backgroundPosition = 'center';
-						st.backgroundRepeat = 'no-repeat';
-					}
-					
-					// Password ------------------------------------------------
-					
-					if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
-					{
-						ge( 'ChangePassContainer' ).className = 'Closed';
-						ge( 'ResetPassContainer'  ).className = 'Open';
-						
-						var res = ge( 'passToggle' );
-						if( res ) res.onclick = function( e )
+						else if( apps )
 						{
-							toggleChangePass();
-						}
-					}
-					
-					// Events --------------------------------------------------
-					
-					// Editing basic details
-					
-					/*var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
-					var bge  = ge( 'UserBasicEdit' );
-					for( var a = 0; a < inps.length; a++ )
-					{
-						( function( i ) {
-							i.onkeyup = function( e )
+							for( var a = 0; a < apps.length; a++ )
 							{
-								bge.innerHTML = ' ' + i18n( 'i18n_save_changes' );
-							}
-						} )( inps[ a ] );
-					}
-					bge.onclick = function( e )
-					{
-						saveUser( userInfo.ID );
-					}*/
-					
-					var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
-					if( inps.length > 0 )
-					{
-						for( var a = 0; a < inps.length; a++ )
-						{
-							if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
-							{
-								( function( i ) {
-									i.onclick = function( e )
-									{
-										editMode();
-									}
-								} )( inps[ a ] );
-							}
-						}
-					}
-					
-					var bg1  = ge( 'UserSaveBtn' );
-					if( bg1 ) bg1.onclick = function( e )
-					{
-						saveUser( userInfo.ID );
-					}
-					var bg2  = ge( 'UserCancelBtn' );
-					if( bg2 ) bg2.onclick = function( e )
-					{
-						cancelUser(  );
-					}
-					
-					if( ge( 'UserEditContainer' ) )
-					{
-						ge( 'UserEditContainer' ).className = 'Closed';
-					}
-					
-					// Avatar 
-					
-					var ae = ge( 'AvatarEdit' );
-					if( ae ) ae.onclick = function( e )
-					{
-						changeAvatar();
-					}
-					
-					// Editing workgroups
-					
-					var wge = ge( 'WorkgroupEdit' );
-					if( wge ) wge.onclick = function( e )
-					{
-						// Show
-						if( !this.activated )
-						{
-							this.activated = true;
-							this.oldML = ge( 'WorkgroupGui' ).innerHTML;
-							
-							var str = '';
-							
-							if( info.workgroups && info.workgroups == '404' )
-							{
-								str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_workgroups_access_denied' ) + '</div></div>';
-							}
-							else if( info.workgroups )
-							{
-								for( var a = 0; a < info.workgroups.length; a++ )
+								sw = sw == 2 ? 1 : 2;
+								apl += '<div class="HRow sw' + sw + '">';
+								for( var k = 0; k < keyz.length; k++ )
 								{
-									var found = false;
-									for( var c = 0; c < wgroups.length; c++ )
+									var ex = ''; var st = '';
+									if( keyz[ k ] == 'Icon' )
 									{
-										if( info.workgroups[a].Name == wgroups[c].Name )
-										{
-											found = true;
-											break;
-										}
+										st = ' style="width:10%"';
+										var img = ( !apps[ a ].Preview ? '/iconthemes/friendup15/File_Binary.svg' : '/system.library/module/?module=system&command=getapplicationpreview&application=' + apps[ a ].Name + '&authid=' + Application.authId );
+										var value = '<div style="background-image:url(' + img + ');background-size:contain;width:24px;height:24px;"></div>';
 									}
-									str += '<div class="HRow">\
-										<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
-										<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-											<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
-										</div>\
-									</div>';
+									else
+									{
+										var value = apps[ a ][ keyz[ k ] ];
+									}
+									if( keyz[ k ] == 'Name' )
+									{
+										value = '<strong>' + apps[ a ][ keyz[ k ] ] + '</strong>';
+									}
+									if( keyz[ k ] == 'Category' && apps[ a ] && apps[ a ].Config && apps[ a ].Config.Category )
+									{
+										value = apps[ a ].Config.Category;
+									}
+									if( keyz[ k ] == 'Dock' )
+									{
+										value = '<button class="IconButton IconSmall ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+										//value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
+										ex = ' TextCenter';
+									}
+									apl += '<div class="PaddingSmall HContent30 FloatLeft Ellipsis' + ex + '"' + st + '>' + value + '</div>';
 								}
+								apl += '</div>';
 							}
-							ge( 'WorkgroupGui' ).innerHTML = str;
-							
-							var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
-							
-							if( workBtns )
-							{
-								for( var a = 0; a < workBtns.length; a++ )
-								{
-									// Toggle user relation to workgroup
-									( function( b ) {
-										b.onclick = function( e )
-										{
-											var enabled = false;
-											if( this.classList.contains( 'fa-toggle-off' ) )
-											{
-												this.classList.remove( 'fa-toggle-off' );
-												this.classList.add( 'fa-toggle-on' );
-												enabled = true;
-											}
-											else
-											{
-												this.classList.remove( 'fa-toggle-on' );
-												this.classList.add( 'fa-toggle-off' );
-											}
-											var args = { command: 'update', id: userInfo.ID };
-											args.workgroups = [];
-										
-											for( var c = 0; c < workBtns.length; c++ )
-											{
-												if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
-												{
-													args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
-												}
-											}
-											args.workgroups = args.workgroups.join( ',' );
-										
-											// Reload user gui now
-											var f = new Library( 'system.library' );
-											f.onExecuted = function( e, d )
-											{
-												// Do nothing
-											}
-											f.execute( 'user', args );
-										}
-									} )( workBtns[ a ] );
-								}
-							}
-							
 						}
-						// Hide
 						else
 						{
-							this.activated = false;
-							ge( 'WorkgroupGui' ).innerHTML = this.oldML;
+							apl += i18n( 'i18n_no_applications_available' );
 						}
+						apl += '</div>';
+					
+						return apl;
 					}
+				}
+				
+				
+				
+				// TODO: Move this out in a specific function so it can be run only once ...
+				
+				function template(  )
+				{
+					var user = func.user();
 					
-					// End events ----------------------------------------------
+					var udisabled = user.udisabled; 
+					var ulocked   = user.ulocked; 
 					
-					// Check Permissions
+					var languages = func.language();
+					var setup     = func.setup();
+					var themeData = func.themes();
+					var wstr      = func.workgroups();
+					var rstr      = func.roles();
+					var mlst      = func.storage();
+					var apl       = func.applications();
 					
-					if( !Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) && !Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
+					
+					
+					function onLoad ( data )
 					{
-						ge( 'AdminLooknfeelContainer' ).style.display = 'none';
+						
+						var func = {
+							
+							init : function (  )
+							{
+								ge( 'UserDetails' ).innerHTML = data;
+						
+								// Responsive framework
+								Friend.responsive.pageActive = ge( 'UserDetails' );
+								Friend.responsive.reinit();
+							},
+							
+							avatar : function (  )
+							{
+								// Avatar --------------------------------------------------
+					
+								if( ge( 'Avatar' ) && workspaceSettings.avatar )
+								{
+									// Only update the avatar if it exists..
+									var avSrc = new Image();
+									avSrc.src = workspaceSettings.avatar;
+									avSrc.onload = function()
+									{
+										var ctx = ge( 'Avatar' ).getContext( '2d' );
+										ctx.drawImage( avSrc, 0, 0, 256, 256 );
+									}
+								} 
+					
+								var ae = ge( 'AvatarEdit' );
+								if( ae ) ae.onclick = function( e )
+								{
+									changeAvatar();
+								}
+							},
+							
+							theme : function (  )
+							{
+								// Theme ---------------------------------------------------
+					
+								if( ge( 'ThemePreview' ) && workspaceSettings.wallpaperdoors )
+								{
+									console.log( workspaceSettings );
+									var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + workspaceSettings.wallpaperdoors : '' );
+									var st = ge( 'ThemePreview' ).style
+									st.backgroundImage = 'url(\'' + ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' ) + '\')';
+									st.backgroundSize = 'cover';
+									st.backgroundPosition = 'center';
+									st.backgroundRepeat = 'no-repeat';
+								}
+							},
+							
+							password : function (  )
+							{
+								// Password ------------------------------------------------
+							
+								if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
+								{
+									ge( 'ChangePassContainer' ).className = 'Closed';
+									ge( 'ResetPassContainer'  ).className = 'Open';
+						
+									var res = ge( 'passToggle' );
+									if( res ) res.onclick = function( e )
+									{
+										toggleChangePass();
+									}
+								}
+							},
+							
+							// Events --------------------------------------------------
+							
+							details : function (  )
+							{
+								// Editing basic details
+						
+								var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+								if( inps.length > 0 )
+								{
+									for( var a = 0; a < inps.length; a++ )
+									{
+										if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+										{
+											( function( i ) {
+												i.onclick = function( e )
+												{
+													editMode();
+												}
+											} )( inps[ a ] );
+										}
+									}
+								}
+					
+								var bg1  = ge( 'UserSaveBtn' );
+								if( bg1 ) bg1.onclick = function( e )
+								{
+									saveUser( userInfo.ID );
+								}
+								var bg2  = ge( 'UserCancelBtn' );
+								if( bg2 ) bg2.onclick = function( e )
+								{
+									cancelUser(  );
+								}
+					
+								if( ge( 'UserEditContainer' ) )
+								{
+									ge( 'UserEditContainer' ).className = 'Closed';
+								}
+							},
+							
+							workgroups : function (  )
+							{
+								// Editing workgroups
+					
+								var wge = ge( 'WorkgroupEdit' );
+								if( wge ) wge.onclick = function( e )
+								{
+									// Show
+									if( !this.activated )
+									{
+										this.activated = true;
+										this.oldML = ge( 'WorkgroupGui' ).innerHTML;
+							
+										var str = '';
+							
+										if( info.workgroups && info.workgroups == '404' )
+										{
+											str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_workgroups_access_denied' ) + '</div></div>';
+										}
+										else if( info.workgroups )
+										{
+											for( var a = 0; a < info.workgroups.length; a++ )
+											{
+												var found = false;
+												for( var c = 0; c < wgroups.length; c++ )
+												{
+													if( info.workgroups[a].Name == wgroups[c].Name )
+													{
+														found = true;
+														break;
+													}
+												}
+												str += '<div class="HRow">\
+													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
+													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+														<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+													</div>\
+												</div>';
+											}
+										}
+										ge( 'WorkgroupGui' ).innerHTML = str;
+							
+										var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							
+										if( workBtns )
+										{
+											for( var a = 0; a < workBtns.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b ) {
+													b.onclick = function( e )
+													{
+														var enabled = false;
+														if( this.classList.contains( 'fa-toggle-off' ) )
+														{
+															this.classList.remove( 'fa-toggle-off' );
+															this.classList.add( 'fa-toggle-on' );
+															enabled = true;
+														}
+														else
+														{
+															this.classList.remove( 'fa-toggle-on' );
+															this.classList.add( 'fa-toggle-off' );
+														}
+														var args = { command: 'update', id: userInfo.ID };
+														args.workgroups = [];
+										
+														for( var c = 0; c < workBtns.length; c++ )
+														{
+															if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+															{
+																args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+															}
+														}
+														args.workgroups = args.workgroups.join( ',' );
+										
+														// Reload user gui now
+														var f = new Library( 'system.library' );
+														f.onExecuted = function( e, d )
+														{
+															// Do nothing
+												
+															console.log( { e:e, d:d } );
+														}
+														f.execute( 'user', args );
+													}
+												} )( workBtns[ a ] );
+											}
+										}
+							
+									}
+									// Hide
+									else
+									{
+										this.activated = false;
+										ge( 'WorkgroupGui' ).innerHTML = this.oldML;
+									}
+								}
+							},
+							
+							// End events ----------------------------------------------
+							
+							permissions : function ( show )
+							{
+								// Check Permissions
+								
+								if( !show || show.indexOf( 'looknfeel' ) >= 0 )
+								{
+									if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
+									{
+										ge( 'AdminLooknfeelContainer' ).className = 'Open';
+									}
+								}
+								
+								if( !show || show.indexOf( 'workgroup' ) >= 0 )
+								{
+									if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
+									{
+										ge( 'AdminWorkgroupContainer' ).className = 'Open';
+									}
+								}
+								
+								if( !show || show.indexOf( 'role' ) >= 0 )
+								{
+									if( Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) || Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
+									{
+										ge( 'AdminRoleContainer' ).className = 'Open';
+									}
+								}
+								
+								if( !show || show.indexOf( 'storage' ) >= 0 )
+								{
+									if( Application.checkAppPermission( 'PERM_STORAGE_GLOBAL' ) || Application.checkAppPermission( 'PERM_STORAGE_WORKGROUP' ) )
+									{
+										ge( 'AdminStorageContainer' ).className = 'Open';
+									}
+								}
+								
+								if( !show || show.indexOf( 'application' ) >= 0 )
+								{
+									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+									{
+										ge( 'AdminApplicationContainer' ).className = 'Open';
+									}
+								}
+							}
+							
+						}
+						
+						func.init();
+						func.avatar();
+						func.theme();
+						func.password();
+						func.details();
+						func.workgroups();
+						func.permissions( show );
+						
 					}
 					
-					if( !Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) && !Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
-					{
-						ge( 'AdminWorkgroupContainer' ).style.display = 'none';
-					}
 					
-					if( !Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) && !Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
-					{
-						ge( 'AdminRoleContainer' ).style.display = 'none';
-					}
 					
-					if( !Application.checkAppPermission( 'PERM_STORAGE_GLOBAL' ) && !Application.checkAppPermission( 'PERM_STORAGE_WORKGROUP' ) )
-					{
-						ge( 'AdminStorageContainer' ).style.display = 'none';
-					}
+					// Get the user details template
+					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					console.log( 'userInfo ', userInfo );
+					// Add all data for the template
+					d.replacements = {
+						userid               : ( userInfo.ID ? userInfo.ID : '' ),
+						user_name            : ( userInfo.FullName ? userInfo.FullName : '' ),
+						user_fullname        : ( userInfo.FullName ? userInfo.FullName : '' ),
+						user_username        : ( userInfo.Name ? userInfo.Name : '' ),
+						user_email           : ( userInfo.Email ? userInfo.Email : '' ),
+						user_language        : ( languages ? languages : '' ),
+						user_setup           : ( setup ? setup : '' ),
+						user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
+						user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
+						theme_name           : ( settings.Theme ? settings.Theme : '' ),
+						theme_dark           : ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+						theme_style          : ( themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac' ),
+						wallpaper_name       : ( workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ) ),
+						workspace_count      : ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ),
+						system_disk_state    : ( workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+						storage              : ( mlst ? mlst : '' ),
+						workgroups           : ( wstr ? wstr : '' ),
+						roles                : ( rstr ? rstr : '' ),
+						applications         : ( apl ? apl : '' )
+					};
 					
-					if( !Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) && !Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+					// Add translations
+					d.i18n();
+					d.onLoad = function( data )
 					{
-						ge( 'AdminApplicationContainer' ).style.display = 'none';
+						
+						onLoad( data );
+						
 					}
+					d.load();
+					
 					
 					
 				}
-				d.load();
+				
+				
+				
+				// Run template
+				
+				template(  );
+				
 			}
+			
+			// TODO: CHANGE CODE LOGIC TO SHOW DATA ONCE THE FIRST CALL RETURNS AND THEN CONTINUE TO NEXT, INSTEAD OF WAITING FOR ALL ...
+			
+			
 			
 			// Go through all data gathering until stop
 			var loadingSlot = 0;
 			var loadingList = [
-				// Load userinfo
+				// 0 | Load userinfo
 				function()
 				{
 					var u = new Module( 'system' );
@@ -619,13 +690,15 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						console.log( 'userinfoget ', { e:e, d:userInfo } );
 						if( e != 'ok' ) userInfo = '404';
+						
 						loadingList[ ++loadingSlot ]( userInfo );
-			
+						
+						//initUsersDetails( userInfo );
 					}
-					console.log( 'authid: ' + Application.authId );
+					
 					u.execute( 'userinfoget', { id: extra, mode: 'all', authid: Application.authId } );
 				},
-				// Load user settings
+				// 1 | Load user settings
 				function( userInfo )
 				{
 					var u = new Module( 'system' );
@@ -644,10 +717,12 @@ Sections.accounts_users = function( cmd, extra )
 						console.log( 'usersettings ', { e:e, d:settings } );
 						if( e != 'ok' ) settings = '404';
 						loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
+						
+						initUsersDetails( { userInfo: userInfo, settings: settings }, [  ] );
 					}
 					u.execute( 'usersettings', { userid: userInfo.ID, authid: Application.authId } );
 				},
-				// Get more user settings
+				// 2 | Get more user settings
 				function( data )
 				{
 					var u = new Module( 'system' );
@@ -678,6 +753,7 @@ Sections.accounts_users = function( cmd, extra )
 							if( e != 'ok' ) workspacesettings = '404';
 							loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
 							
+							//initUsersDetails( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
 						} );
 						
 					}
@@ -689,7 +765,7 @@ Sections.accounts_users = function( cmd, extra )
 						'workspacemode'
 					], userid: data.userInfo.ID, authid: Application.authId } );
 				},
-				// Get user's workgroups
+				// 3 | Get user's workgroups
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -709,10 +785,12 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) wgroups = '404';
 						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
+						
+						//initUsersDetails( info );
 					}
 					u.execute( 'workgroups', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
-				// Get user's roles
+				// 4 | Get user's roles
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -735,10 +813,12 @@ Sections.accounts_users = function( cmd, extra )
 						console.log( 'userroleget ', { e:e, d:uroles } );
 						if( e != 'ok' ) info.roles = '404';
 						loadingList[ ++loadingSlot ]( info );
+						
+						//initUsersDetails( info );
 					}
 					u.execute( 'userroleget', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
-				// Get storage
+				// 5 | Get storage
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -758,10 +838,12 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) ul = '404';
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
+						
+						//initUsersDetails( info );
 					}
 					u.execute( 'mountlist', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
-				// Get user applications
+				// 6 | Get user applications
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -781,15 +863,23 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) apps = '404';
 						info.applications = apps;
 						loadingList[ ++loadingSlot ]( info );
+						
+						//initUsersDetails( info );
 					}
 					u.execute( 'listuserapplications', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
+				// 7 | init
 				function( info )
 				{
 					initUsersDetails( info );
 				}
 			];
+			// Runs 0 the first in the array ...
 			loadingList[ 0 ]();
+			
+			
+			// TODO: Make a new type of more custom loop of functions ...
+			
 			
 			
 			return;
