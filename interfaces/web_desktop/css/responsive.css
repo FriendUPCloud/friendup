@@ -511,6 +511,11 @@ body:not([tablet]) #Screens .ViewContainer
 	height: 100%;
 }
 
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
+{
+	z-index: 1;
+}
+
 body:not([tablet]) .DirectoryToolbar > .ToggleGroup
 {
 	display: none;
