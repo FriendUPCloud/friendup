@@ -1313,7 +1313,7 @@ function _DeactivateWindow( m, skipCleanUp )
 				fr[ a ].oldSandbox = fr[ a ].getAttribute( 'sandbox' );
 				fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
 			}
-			
+				
 			PollTaskbar();
 		}
 		// Minimize on mobile
@@ -1339,6 +1339,33 @@ function _DeactivateWindow( m, skipCleanUp )
 	{
 		if( window.currentMovable == m )
 			window.currentMovable = null;
+	
+		// See if we can activate a mainview
+		if( !currentMovable )
+		{
+			var app = _getAppByAppId( m.windowObject.applicationId );
+			var hasActive = false;
+			for( var a in app.windows )
+			{
+				if( app.windows[ a ]._window.classList.contains( 'Active' ) )
+				{
+					hasActive = true;
+					break;
+				}
+			}
+			if( !hasActive )
+			{
+				for( var a in app.windows )
+				{
+					if( app.windows[ a ].flags.mainView && m.windowObject != app.windows[ a ] )
+					{
+						app.windows[ a ].flags.minimized = false;
+						app.windows[ a ].activate();
+						break;
+					}
+				}
+			}
+		}
 	
 		// For mobiles and tablets
 		hideKeyboard();
