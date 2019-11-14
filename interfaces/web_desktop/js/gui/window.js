@@ -2231,6 +2231,7 @@ var View = function( args )
 			if( app )
 			{
 				var l = 0; for( var k in app.windows ) l++;
+				// If we only have one window - it's probably the main window
 				if( l == 0 )
 				{
 					this.setFlag( 'mainView', true );
@@ -2406,8 +2407,17 @@ var View = function( args )
 				// Use correct button
 				if( e.button != 0 && !mode ) return cancelBubble( e );
 
-				var y = e.clientY ? e.clientY : e.pageYOffset;
-				var x = e.clientX ? e.clientX : e.pageXOffset;
+				var x, y;
+				if( isTablet || isTouchDevice() )
+				{
+					x = e.touches[0].pageX;
+					y = e.touches[0].pageY;
+				}
+				else
+				{
+					x = e.clientX ? e.clientX : e.pageXOffset;
+					y = e.clientY ? e.clientY : e.pageYOffset;
+				}
 				window.mouseDown = FUI_MOUSEDOWN_WINDOW;
 				this.parentNode.offx = x - this.parentNode.offsetLeft;
 				this.parentNode.offy = y - this.parentNode.offsetTop;
@@ -2422,7 +2432,6 @@ var View = function( args )
 			}
 
 			// Pawel must win!
-		
 			title.ondblclick = function( e )
 			{
 				if( self.flags.clickableTitle )
@@ -2807,7 +2816,6 @@ var View = function( args )
 				
 				return cancelBubble( e );
 			}
-			zoom.addEventListener( 'touchstart', zoom.onclick, false );
 		}
 
 		resize.onclick = function( e ) { return cancelBubble ( e ); }
@@ -4533,6 +4541,8 @@ var View = function( args )
 			
 		var app = _getAppByAppId( this.applicationId );
 		if( !app ) return;
+		
+		console.log( '[window.js] Setting mainview', this );
 		
 		this.flags.mainView = set;
 		

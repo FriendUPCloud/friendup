@@ -1479,7 +1479,7 @@ movableListener = function( e, data )
 	var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	var wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 	var x, y;
-	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile ) )
+	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile || isTouchDevice() ) )
 	{
 		x = e.touches[0].pageX;
 		y = e.touches[0].pageY;
@@ -3774,7 +3774,7 @@ function ElementWindow ( ele )
 
 function InitGuibaseEvents()
 {
-	if( window.isTablet || window.isMobile )
+	if( window.isTablet || window.isMobile || isTouchDevice() )
 	{
 		window.addEventListener( 'touchstart', movableMouseDown, false );
 		window.addEventListener( 'touchmove', movableListener, false );
