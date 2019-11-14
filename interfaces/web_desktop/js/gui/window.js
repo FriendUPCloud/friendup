@@ -2276,7 +2276,7 @@ var View = function( args )
 				setTimeout( function()
 				{
 					viewContainer.classList.remove( 'Initialized' );
-				}, 5 );
+				}, 25 );
 			}
 			// Allow opening animation
 			viewContainer.classList.add( 'Opening' );
