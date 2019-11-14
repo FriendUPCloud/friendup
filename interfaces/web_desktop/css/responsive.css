@@ -513,7 +513,7 @@ body:not([tablet]) #Screens .ViewContainer
 
 body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
 {
-	z-index: 1;
+	z-index: 1 !important;
 }
 
 body:not([tablet]) .DirectoryToolbar > .ToggleGroup
@@ -658,6 +658,11 @@ body .ViewContainer .View .Content
 {
 	will-change: content;
 	transform: translateZ(0);
+}
+
+body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Initialized .View
+{
+	display: none;
 }
 
 body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,

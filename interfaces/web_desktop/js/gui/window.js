@@ -2269,6 +2269,16 @@ var View = function( args )
 		// Tell it's opening
 		if( !flags.minimized )
 		{
+			// Allow initialized
+			if( currentMovable )
+			{
+				viewContainer.classList.add( 'Initialized' );
+				setTimeout( function()
+				{
+					viewContainer.classList.remove( 'Initialized' );
+				}, 5 );
+			}
+			// Allow opening animation
 			viewContainer.classList.add( 'Opening' );
 			div.classList.add( 'Opening' );
 			setTimeout( function()
