@@ -1650,6 +1650,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	if( !ctrl && typeof( e ) != 'undefined' && e.shiftKey ) ctrl = true;
 
 	// Window is the target
+	if( !dview.content && !dview.object.file )
+		return;
 	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 
 	var dragFromWindow = eles[0].window;
