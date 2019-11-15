@@ -192,6 +192,7 @@ i18n_favorites                          : Favorites
 i18n_menu                               : Menu
 
 i18n_close_menu                         : Close menu
+i18n_delete_shortcut                    : Delete shortcut
 
 menu_workspace                          : Workspace
 menu_system                             : System

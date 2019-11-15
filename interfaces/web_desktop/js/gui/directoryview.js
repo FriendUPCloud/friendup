@@ -983,7 +983,14 @@ DirectoryView.prototype.InitWindow = function( winobj )
 							break;
 					}
 				}
-
+				
+				// Special case - put Home disks first
+				if( i.Type == 'Door' )
+				{
+					if( i.Title != 'Home' )
+						o.SortPriority = 1;
+					else o.SortPriority = 0;
+				}
 				if( i.Filename )
 				{
 					if( i.Filename.indexOf( '.' ) > 0 )
@@ -1045,19 +1052,19 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				{
 					if( self.directoryview.sortColumn == 'filename' )
 					{
-						self.icons = sortArray( out, [ 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 					else if( self.directoryview.sortColumn == 'type' )
 					{
-						self.icons = sortArray( out, [ 'Extension', 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'Extension', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 					else if( self.directoryview.sortColumn == 'size' )
 					{
-						self.icons = sortArray( out, [ 'SizeSortable', 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'SizeSortable', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 					else
 					{
-						self.icons = sortArray( out, [ 'DateModified', 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'DateModified', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 				}
 
@@ -1643,6 +1650,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	if( !ctrl && typeof( e ) != 'undefined' && e.shiftKey ) ctrl = true;
 
 	// Window is the target
+	if( !dview.content && !dview.object.file )
+		return;
 	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 
 	var dragFromWindow = eles[0].window;
@@ -2560,6 +2569,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
+	var marginRight = window.innerWidth - gridX + 20 - 1;
 	var marginBottom = 5;
 	
 	if( window.isMobile )
@@ -2577,8 +2587,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		marginLeft = Math.floor( whWidth - ( mobIW * columns ) ) >> 1;
 	}
 	
-	var iy = marginTop; 
-	var ix = marginLeft;
+	var iy  = marginTop; 
+	var ix  = marginLeft;
+	var shy = marginTop;
+	var shx = marginRight;
 	
 	var column = 0;
 	var start = false;
@@ -2637,10 +2649,19 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
-			if( icons[a].Type == 'Directory' ) 
-				dirs.push( icons[a] );
-			else 
+			// Volumes don't sort by folders, then files
+			if( this.mode == 'Volumes' )
+			{
 				files.push( icons[a] );
+			}
+			// Normal directories are listing by folders first
+			else
+			{
+				if( icons[a].Type == 'Directory' ) 
+					dirs.push( icons[a] );
+				else 
+					files.push( icons[a] );
+			}
 
 			var i = icons[a];
 			if( i.Filename )
@@ -2713,6 +2734,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			
 			var r = icons[a];
 			
+			var type = icons[a].MetaType;
+			
 			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
 				continue;
 
@@ -2759,22 +2782,47 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				// Increment icons after first calculated icon
 				if( direction == 'vertical' )
 				{
-					iy += gridY;
-
-					if( iy + gridY > windowHeight )
+					if( type == 'Shortcut' )
 					{
-						iy = marginTop;
-						ix += gridX;
+						shy += gridY;
+
+						if( shy + gridY > windowHeight )
+						{
+							shy = marginTop;
+							shx -= gridX;
+						}
+					}
+					else
+					{
+						iy += gridY;
+
+						if( iy + gridY > windowHeight )
+						{
+							iy = marginTop;
+							ix += gridX;
+						}
 					}
 				}
 				// Left to right
 				else
 				{
-					ix += gridX;
-					if( ix + gridX > windowWidth )
+					if( type == 'Shortcut' )
 					{
-						iy += gridY;
-						ix = marginLeft;
+						shx += gridX;
+						if( shx + gridX > windowWidth )
+						{
+							shy += gridY;
+							shx = marginRight;
+						}
+					}
+					else
+					{
+						ix += gridX;
+						if( ix + gridX > windowWidth )
+						{
+							iy += gridY;
+							ix = marginLeft;
+						}
 					}
 				}
 				// Make sure we push to buffer
@@ -2845,8 +2893,17 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					icons[a].file = file;
 				}
 				
-				file.style.top = iy + 'px';
-				file.style.left = ix + 'px';
+				if( type == 'Shortcut' )
+				{
+					file.style.top = shy + 'px';
+					file.style.left = shx + 'px';
+				}
+				else
+				{
+					file.style.top = iy + 'px';
+					file.style.left = ix + 'px';
+				}
+				
 				if( option == 'compact' ) file.classList.add( 'Compact' );
 				
 				coldom.appendChild( file );
@@ -2862,17 +2919,30 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				{
 					if( contentMode == 'screen' )
 					{
-						iy += file.offsetHeight + marginTop;
+						if( type == 'Shortcut' )
+							shy += file.offsetHeight + marginTop;
+						else iy += file.offsetHeight + marginTop;
 					}
 					else
 					{
-						iy += gridY;
+						if( type == 'Shortcut' )
+							shy += gridY;
+						else iy += gridY;
 					}
 
-					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && iy + gridY > windowHeight )
+					var cond = type == 'Shortcut' ? shy : iy;
+					if( !( globalConfig.scrolldesktopicons == 1 && this.mode == 'Volumes' ) && cond + gridY > windowHeight )
 					{
-						iy = marginTop;
-						ix += gridX;
+						if( type == 'Shortcut' )
+						{
+							shy = marginTop;
+							shx -= gridX;
+						}
+						else
+						{
+							iy = marginTop;
+							ix += gridX;
+						}
 						coldom = document.createElement ( 'div' );
 						coldom.className = 'Coldom';
 						this.scroller.appendChild( coldom );
@@ -3730,42 +3800,45 @@ function DirectoryContainsFile( filename, directoryContents )
 
 FileIcon = function( fileInfo, flags )
 {
-	this.Init ( fileInfo, flags );
+	this.Init( fileInfo, flags );
 }
 
 // Put in cache
 // TODO: Clean cache when sessionid change
 FileIcon.prototype.setCache = function( path, directoryview, date )
 {
-	var dir = directoryview.window.fileInfo.Path;
-	if( !Friend.iconCache[ dir ] )
-		Friend.iconCache[ dir ] = {};
-	if( !Friend.iconCache[ dir ][ path ] )
+	if( directoryview && directoryview.window && directoryview.window.fileInfo )
 	{
-		var currentIndex = Friend.iconCache.index++;
-		// Wrap around
-		if( currentIndex > Friend.iconCache.maxCount )
+		var dir = directoryview.window.fileInfo.Path;
+		if( !Friend.iconCache[ dir ] )
+			Friend.iconCache[ dir ] = {};
+		if( !Friend.iconCache[ dir ][ path ] )
 		{
-			currentIndex = Friend.iconCache.index = 0;
-		}
-		var i = new Image();
-		i.src = path;
-		i.date = date;
-		i.onload = function()
-		{
-			Friend.iconCache[ dir ][ path ] = i;
-			// Overwriting?
-			if( Friend.iconCache.seenList[ currentIndex ] )
+			var currentIndex = Friend.iconCache.index++;
+			// Wrap around
+			if( currentIndex > Friend.iconCache.maxCount )
 			{
-				var dd = Friend.iconCache.seenList[ currentIndex ].dir;
-				var pp = Friend.iconCache.seenList[ currentIndex ].path;
-				delete Friend.iconCache[ dd ][ pp ];
+				currentIndex = Friend.iconCache.index = 0;
 			}
-			// Write new
-			Friend.iconCache.seenList[ currentIndex ] = {
-				dir: dir,
-				path: path
-			};
+			var i = new Image();
+			i.src = path;
+			i.date = date;
+			i.onload = function()
+			{
+				Friend.iconCache[ dir ][ path ] = i;
+				// Overwriting?
+				if( Friend.iconCache.seenList[ currentIndex ] )
+				{
+					var dd = Friend.iconCache.seenList[ currentIndex ].dir;
+					var pp = Friend.iconCache.seenList[ currentIndex ].path;
+					delete Friend.iconCache[ dd ][ pp ];
+				}
+				// Write new
+				Friend.iconCache.seenList[ currentIndex ] = {
+					dir: dir,
+					path: path
+				};
+			}
 		}
 	}
 }
@@ -3773,22 +3846,27 @@ FileIcon.prototype.setCache = function( path, directoryview, date )
 // Get image from cache
 FileIcon.prototype.getCache = function( path, directoryview, date )
 {
-	var dir = directoryview.window.fileInfo.Path;
-	if( !Friend.iconCache[ dir ] ) return false;
-	if( !Friend.iconCache[ dir ][ path ] ) return false;
-	var i = Friend.iconCache[ dir ][ path ];
-	if( i.date != date )
+	if( directoryview && directoryview.window && directoryview.window.fileInfo )
 	{
-		Friend.iconCache[ dir ][ path ] = null;
-		return false;
+		var dir = directoryview.window.fileInfo.Path;
+		if( !Friend.iconCache[ dir ] ) return false;
+		if( !Friend.iconCache[ dir ][ path ] ) return false;
+		var i = Friend.iconCache[ dir ][ path ];
+		if( i.date != date )
+		{
+			Friend.iconCache[ dir ][ path ] = null;
+			return false;
+		}
+		return _getBase64Image( i );
 	}
-	return _getBase64Image( i );
+	return false;
 }
 
 // Remove an image from cache
 FileIcon.prototype.delCache = function( dir )
 {
 	var path = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + dir;
+	
 	// remove filename from subpath
 	if( dir.indexOf( '/' ) > 0 )
 	{
@@ -3801,8 +3879,11 @@ FileIcon.prototype.delCache = function( dir )
 	{
 		dir = dir.split( ':' )[0] + ':';
 	}
+	
 	if( !Friend.iconCache[ dir ] ) return false;
+	
 	if( !Friend.iconCache[ dir ][ path ] ) return false;
+	
 	delete Friend.iconCache[ dir ][ path ];
 }
 
@@ -3853,11 +3934,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		extension = extension[extension.length-1].toLowerCase();
 	}
 	else extension = '';
-
+	
 	// Create the div that holds the actual icon
 	icon = document.createElement ( 'div' );
 	icon.className = 'Icon';
-
+	
 	// Labels
 	// TODO remove!
 	if( 1 == 0 )
@@ -3869,7 +3950,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			icon.appendChild( df );
 		}
 	}
-
+	
 	iconInner = document.createElement ( 'div' );
 	file.iconInner = iconInner;
 	
@@ -4143,6 +4224,15 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		iconInner.classList.add( 'Shared' );
 	}
+	if( fileInfo.MetaType == 'Shortcut' )
+	{
+		file.classList.add( 'Shortcut' );
+		if( fileInfo.Filename.substr( 0, 1 ) == ':' )
+		{
+			var fn = fileInfo.Filename.substr( 1, fileInfo.Filename.length - 1 );
+			iconInner.style.backgroundImage = 'url(\'apps/' + fn + '/icon.png\')';
+		}
+	}
 
 	// Create the title
 	title = document.createElement( 'a' );
@@ -4248,7 +4338,40 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			
 				if( !window.isMobile )
 				{
-					Workspace.showContextMenu( false, e );
+					if( this.fileInfo.MetaType == 'Shortcut' )
+					{
+						Workspace.showContextMenu( [ {
+							name: i18n( 'i18n_delete_shortcut' ),
+							command: function( e )
+							{
+								var files = [];
+								var eles = found.fileInfo.directoryview.window.getElementsByTagName( 'div' );
+								var selectedCount = 0;
+								for( var a = 0; a < eles.length; a++ )
+								{
+									if( !eles[a].classList.contains( 'File' ) )
+										continue;
+									if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
+										continue;
+									if( eles[a].fileInfo.MetaType != 'Shortcut' )
+										continue;
+									files.push( eles[a].fileInfo.Path );
+								}
+								
+								var m = new Module( 'system' );
+								m.onExecuted = function( e, d )
+								{
+									Workspace.refreshDesktop( false, true );
+								}
+								m.execute( 'removedesktopshortcut', { shortcuts: files } );
+								found.parentNode.removeChild( found );
+							}
+						} ], e );
+					}
+					else
+					{
+						Workspace.showContextMenu( false, e );
+					}
 				}
 				return cancelBubble( e );
 			}
@@ -4396,6 +4519,27 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				// Open unique window!
 				OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
 				return window.isMobile ? Workspace.closeDrivePanel() : false;
+			}
+			else if( obj.fileInfo.MetaType == 'Shortcut' )
+			{
+				if( obj.fileInfo.Type == 'Directory' )
+				{
+					var o = {};
+					for( var a in obj.fileInfo )
+						o[ a ] = obj.fileInfo[ a ];
+					o.MetaType = 'Directory';
+					OpenWindowByFileinfo( o, event, false, uniqueView );	
+				}
+				// Executable shortcut
+				else if( obj.fileInfo.Filename.substr( 0, 1 ) == ':' )
+				{
+					return ExecuteApplication( obj.fileInfo.Filename.substr( 1, obj.fileInfo.Filename.length - 1 ) );
+				}
+				else
+				{
+					OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
+				}
+				return window.isMobile ? Workspace.closeDrivePanel() : false; 
 			}
 			// Just change directory
 			else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
@@ -4836,8 +4980,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 				this.refreshCallback = callback;
 			}
 			
-			win.refreshing = true;
 			var self = this;
+			self.win.refreshing = true;
 			
 			var fi = this.fileInfo ? this.fileInfo : iconObject;
 			var wt = fi.Path ? fi.Path : ( fi.Title ? fi.Title : fi.Volume );
