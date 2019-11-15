@@ -198,6 +198,25 @@ function GeByClass ( nm, el )
 	return out.length == 1 ? out[0] : out;
 }
 
+var _is_touch_device;
+function isTouchDevice()
+{
+	if( _is_touch_device === false || _is_touch_device === true ) return _is_touch_device;
+	try
+	{
+		document.createEvent( 'TouchEvent' );  
+		window.isTablet = true;
+		_is_touch_device = true;
+		return true;
+	}
+	catch ( e )
+	{
+		_is_touch_device = false;
+		return false;  
+	}
+}
+isTouchDevice();
+
 // Generate a unique id
 function UniqueId ()
 {
@@ -2442,12 +2461,14 @@ function checkMobileBrowser()
 {
 	if( !document.body ) return setTimeout( checkMobileBrowser, 50 );
 	window.isMobile = checkMobile();
-	window.isTablet = checkTablet();
+	if( !window.isTablet )
+		window.isTablet = checkTablet() || isTouchDevice();
 	
 
 	if( window.isMobile && ( window.innerWidth <= 760 || window.innerHeight <= 500 ) )
 	{
-		window.isTablet = false;
+		if( !window.isTablet )
+			window.isTablet = false;
 	}
 	else if( window.isTablet )
 	{
@@ -2695,11 +2716,13 @@ function GetDeviceId()
 	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
 	//application token is needed for iOS push notifications
-	if (typeof window.friendApp != "undefined"){
-                if (typeof window.friendApp.appToken != "undefined"){
-                        r = id + "_ios_app_" + friendApp.appToken;
-                }
-        }
+	if( typeof( window.friendApp ) != 'undefined' )
+	{
+		if( typeof( window.friendApp.appToken ) != 'undefined' )
+		{
+			r = id + '_ios_app_' + friendApp.appToken;
+		}
+	}
 	// Store the cookie for later use
 	SetCookie( 'deviceId', r );
 	

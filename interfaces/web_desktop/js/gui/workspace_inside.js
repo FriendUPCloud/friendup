@@ -1284,7 +1284,6 @@ var WorkspaceInside = {
 	{
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
-		Workspace.closeDrivePanel();
 		if( Workspace.mainDock )
 			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
@@ -1699,7 +1698,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 						}
 						window.friendApp.setBackgroundColor( col );
-						//window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
 					}
 					
 					// Do the startup sequence in sequence (only once)
@@ -3183,51 +3181,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		m.execute( 'removefromdock', { name: titl } );
 	},
-	// Function for closing panel (mobile mode)
-	closeDrivePanel: function()
-	{
-		var ue = navigator.userAgent.toLowerCase();
-		if( !window.isMobile || !Workspace || !Workspace.drivePanel )
-			return;
-
-		var eles = this.screen.div.getElementsByClassName( 'ScreenContent' );
-		if( !eles.length ) return;
-		var div = eles[0].getElementsByTagName( 'div' )[0];
-
-		Workspace.drivePanel.style.bottom = '0px';
-		Workspace.drivePanel.style.left = '0px';
-		Workspace.drivePanel.style.top = '100%';
-		Workspace.drivePanel.style.width = '64px';
-		Workspace.drivePanel.style.height = 'auto';
-		Workspace.drivePanel.className = 'Scroller';
-		Workspace.drivePanel.open = false;
-
-		for( var a in window.movableWindows )
-		{
-			window.movableWindows[a].removeAttribute( 'hidden' );
-		}
-	},
-	openDrivePanel: function()
-	{
-		// New experimental way
-		var dp = Workspace.drivePanel;
-
-		this.mainDock.closeDesklet();
-		
-		// Create disposable menu
-		var menu = FullscreenMenu;
-		menu.clear();
-		var ics = Workspace.screen.contentDiv.icons;
-		for( var a = 0; a < ics.length; a++ )
-		{
-			if( ics[a].Type != 'Door' ) continue;
-			menu.addMenuItem( {
-				text: ics[a].Title,
-				clickItem: ics[a].domNode
-			} );
-		}
-		menu.show();
-	},
 	// Some "native" functions -------------------------------------------------
 	// Get a list of the applications that are managed by Friend Core
 	getNativeAppList: function( callback )
@@ -3387,30 +3340,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( !window.isMobile )
 							return;
 
-						// Add an action to override the touch start action
-						var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
-						if( !eles.length ) return;
-						eles[0].onTouchStartAction = function( e )
-						{
-							var dd = eles[0].getElementsByTagName( 'div' )[0];
-							var t = e.target ? e.target : e.srcElement;
-
-							Workspace.drivePanel = dd;
-							if( t.className && dd == t )
-							{
-								if( dd.open )
-								{
-									Workspace.closeDrivePanel();
-									return false;
-								}
-								else
-								{
-									Workspace.openDrivePanel();
-									return true;
-								}
-							}
-							return false;
-						}
 						window.driveClicksSetup = true;
 					}
 				}

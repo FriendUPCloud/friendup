@@ -110,6 +110,7 @@ function ExecuteApplication( app, args, callback )
 				{
 					_ActivateWindow( app.windows[ z ]._window.parentNode );
 					_WindowToFront( app.windows[ z ]._window.parentNode );
+					
 					// Clean blocker
 					RemoveFromExecutionQueue( appName );
 					

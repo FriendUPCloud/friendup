@@ -18,7 +18,9 @@
 #ifdef __LINUX__
 #include <linux/limits.h>
 #else
+#ifndef ARG_MAX
 #define ARG_MAX 20000
+#endif
 #endif
 #include <system/systembase.h>
 #include <util/newpopen.h>
