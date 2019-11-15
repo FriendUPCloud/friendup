@@ -2716,11 +2716,13 @@ function GetDeviceId()
 	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
 	//application token is needed for iOS push notifications
-	if (typeof window.friendApp != "undefined"){
-                if (typeof window.friendApp.appToken != "undefined"){
-                        r = id + "_ios_app_" + friendApp.appToken;
-                }
-        }
+	if( typeof( window.friendApp ) != 'undefined' )
+	{
+		if( typeof( window.friendApp.appToken ) != 'undefined' )
+		{
+			r = id + '_ios_app_' + friendApp.appToken;
+		}
+	}
 	// Store the cookie for later use
 	SetCookie( 'deviceId', r );
 	

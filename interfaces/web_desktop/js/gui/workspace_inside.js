@@ -1699,7 +1699,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 						}
 						window.friendApp.setBackgroundColor( col );
-						//window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
 					}
 					
 					// Do the startup sequence in sequence (only once)
