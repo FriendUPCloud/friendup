@@ -12,6 +12,9 @@
 
 if( isset( $args->args->files ) )
 {
+	$top = $SqlDatabase->fetchObject( 'SELECT MAX(ValueNumber) M FROM FMetaData WHERE `Key`="Desktopshortcut"' );
+	$top = (int)$top->M;
+	
 	$files = 0;
 	foreach( $args->args->files as $path )
 	{
@@ -21,6 +24,7 @@ if( isset( $args->args->files ) )
 		$d->DataTable = 'FUser';
 		$d->ValueString = $path;
 		$d->Load();
+		$d->ValueNumber = ++$top;
 		$d->save();
 		if( $d->ID > 0 )
 			$files++;

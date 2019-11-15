@@ -1045,19 +1045,19 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				{
 					if( self.directoryview.sortColumn == 'filename' )
 					{
-						self.icons = sortArray( out, [ 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 					else if( self.directoryview.sortColumn == 'type' )
 					{
-						self.icons = sortArray( out, [ 'Extension', 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'Extension', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 					else if( self.directoryview.sortColumn == 'size' )
 					{
-						self.icons = sortArray( out, [ 'SizeSortable', 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'SizeSortable', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 					else
 					{
-						self.icons = sortArray( out, [ 'DateModified', 'Title', 'Filename' ], self.directoryview.sortOrder );
+						self.icons = sortArray( out, [ 'SortPriority', 'DateModified', 'Title', 'Filename' ], self.directoryview.sortOrder );
 					}
 				}
 
@@ -2640,10 +2640,19 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
 			
-			if( icons[a].Type == 'Directory' ) 
-				dirs.push( icons[a] );
-			else 
+			// Volumes don't sort by folders, then files
+			if( this.mode == 'Volumes' )
+			{
 				files.push( icons[a] );
+			}
+			// Normal directories are listing by folders first
+			else
+			{
+				if( icons[a].Type == 'Directory' ) 
+					dirs.push( icons[a] );
+				else 
+					files.push( icons[a] );
+			}
 
 			var i = icons[a];
 			if( i.Filename )
@@ -4346,6 +4355,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 									Workspace.refreshDesktop( false, true );
 								}
 								m.execute( 'removedesktopshortcut', { shortcuts: files } );
+								found.parentNode.removeChild( found );
 							}
 						} ], e );
 					}

@@ -209,11 +209,6 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	width: 100%;
 }
 
-.File.Shortcut a.Title
-{
-
-}
-
 /* TODO: Make ready for themes! */
 .File .Icon > .Label.Shared
 {

@@ -16,7 +16,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 {
 	foreach( $rows as $row )
 	{
-		$out[] = 'DesktopShortcut:' . $row->ValueString;
+		$out[] = 'DesktopShortcut:' . (int)$row->ValueNumber . ':' . $row->ValueString;
 	}
 }
 

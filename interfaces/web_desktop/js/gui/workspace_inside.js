@@ -3665,12 +3665,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( shorts[ a ].substr( 0, 16 ) == 'DesktopShortcut:' )
 							{
 								var path = shorts[ a ].substr( 16, shorts[ a ].length - 16 );
-								var fn  = GetFilename( path );
+								var ind = path.indexOf( ':' );
+								var num = StrPad( path.substr( 0, ind ), 10, '0' );
+								path = path.substr( ind + 1, path.length - ( ind + 1 ) );
+								
+								var fn = GetFilename( path );
 								newIcons.push( {
 									Title: fn,
 									Filename: path,
 									Path: path,
 									Type: path.substr( path.length - 1, 1 ) == '/' ? 'Directory' : 'File',
+									SortPriority: num,
 									Handler: 'built-in',
 									MetaType: 'Shortcut',
 									Visible: true
@@ -3699,6 +3704,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									Handler: 'built-in',
 									Driver: 'Shortcut',
 									MetaType: 'ExecutableShortcut',
+									SortPriority: 0,
 									ID: shorts[a].toLowerCase(),
 									Mounted: true,
 									Visible: true,
@@ -3726,6 +3732,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Driver: dormantDoor.Drive,
 								MetaType: dormantDoor.MetaType,
 								IconClass: 'SystemDisk',
+								SortPriotity: 0,
 								ID: 'local', // TODO: fix
 								Mounted:  true,
 								Visible: true,
@@ -3824,6 +3831,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Title: r.Name.split(':').join(''),
 								Volume: r.Name.split(':').join('') + ':',
 								Path: r.Name.split(':').join('') + ':',
+								SortPriority: 0,
 								Handler: r.FSys,
 								Type: 'Door',
 								MetaType: 'Directory',
