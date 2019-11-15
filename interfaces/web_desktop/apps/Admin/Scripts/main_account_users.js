@@ -81,7 +81,7 @@ Sections.accounts_users = function( cmd, extra )
 		if( cmd == 'edit' )
 		{
 			// Show the form
-			function initUsersDetails( info, show )
+			function initUsersDetails( info, show, first )
 			{
 				// Some shortcuts
 				var userInfo          = ( info.userInfo ? info.userInfo : {} );
@@ -328,7 +328,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// TODO: Move this out in a specific function so it can be run only once ...
 				
-				function template(  )
+				function template( first )
 				{
 					var user = func.user();
 					
@@ -337,11 +337,11 @@ Sections.accounts_users = function( cmd, extra )
 					
 					var languages = func.language();
 					var setup     = func.setup();
-					var themeData = func.themes();
 					var wstr      = func.workgroups();
 					var rstr      = func.roles();
 					var mlst      = func.storage();
 					var apl       = func.applications();
+					var themeData = func.themes();
 					
 					
 					
@@ -352,11 +352,81 @@ Sections.accounts_users = function( cmd, extra )
 							
 							init : function (  )
 							{
-								ge( 'UserDetails' ).innerHTML = data;
+								if( ge( 'UserDetails' ) && data )
+								{
+									ge( 'UserDetails' ).innerHTML = data;
+									
+									// Responsive framework
+									Friend.responsive.pageActive = ge( 'UserDetails' );
+									Friend.responsive.reinit();
+								}
+							},
+							
+							user : function (  )
+							{
+								
+								if( ge( 'usName'     ) && userInfo.FullName )
+								{
+									ge( 'usName'     ).innerHTML = userInfo.FullName;
+								}
+								if( ge( 'usFullname' ) && userInfo.FullName )
+								{
+									ge( 'usFullname' ).innerHTML = userInfo.FullName;
+								}
+								if( ge( 'usUsername' ) && userInfo.Name )
+								{
+									ge( 'usUsername' ).innerHTML = userInfo.Name;
+								}
+								if( ge( 'usEmail'    ) && userInfo.Email )
+								{
+									ge( 'usEmail'    ).innerHTML = userInfo.Email;
+								}
+								
+								if( ge( 'usLocked'   ) && ulocked )
+								{
+									ge( 'usLocked'   ).className = ge( 'usLocked'   ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+								}
+								if( ge( 'usDisabled' ) && udisabled )
+								{
+									ge( 'usDisabled' ).className = ge( 'usDisabled' ).className.split( 'fa-toggle-on' ).join( '' ).split( 'fa-toggle-off' ).join( '' ) + 'fa-toggle-on';
+								}
+							},
+							
+							password : function (  )
+							{
+								// Password ------------------------------------------------
+							
+								if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
+								{
+									ge( 'ChangePassContainer' ).className = 'Closed';
+									ge( 'ResetPassContainer'  ).className = 'Open';
 						
-								// Responsive framework
-								Friend.responsive.pageActive = ge( 'UserDetails' );
-								Friend.responsive.reinit();
+									var res = ge( 'passToggle' );
+									if( res ) res.onclick = function( e )
+									{
+										toggleChangePass();
+									}
+								}
+							},
+							
+							language : function (  )
+							{
+								
+								if( ge( 'usLanguage' ) && languages )
+								{
+									ge( 'usLanguage' ).innerHTML = languages;
+								}
+								
+							},
+							
+							setup : function (  )
+							{
+								
+								if( ge( 'usSetup' ) )
+								{
+									ge( 'usSetup' ).innerHTML = setup;
+								}
+								
 							},
 							
 							avatar : function (  )
@@ -382,58 +452,26 @@ Sections.accounts_users = function( cmd, extra )
 								}
 							},
 							
-							theme : function (  )
-							{
-								// Theme ---------------------------------------------------
-					
-								if( ge( 'ThemePreview' ) && workspaceSettings.wallpaperdoors )
-								{
-									console.log( workspaceSettings );
-									var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + workspaceSettings.wallpaperdoors : '' );
-									var st = ge( 'ThemePreview' ).style
-									st.backgroundImage = 'url(\'' + ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' ) + '\')';
-									st.backgroundSize = 'cover';
-									st.backgroundPosition = 'center';
-									st.backgroundRepeat = 'no-repeat';
-								}
-							},
-							
-							password : function (  )
-							{
-								// Password ------------------------------------------------
-							
-								if( ge( 'ChangePassContainer' ) && ge( 'ResetPassContainer' ) )
-								{
-									ge( 'ChangePassContainer' ).className = 'Closed';
-									ge( 'ResetPassContainer'  ).className = 'Open';
-						
-									var res = ge( 'passToggle' );
-									if( res ) res.onclick = function( e )
-									{
-										toggleChangePass();
-									}
-								}
-							},
-							
-							// Events --------------------------------------------------
-							
 							details : function (  )
 							{
 								// Editing basic details
-						
-								var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
-								if( inps.length > 0 )
+								
+								if( ge( 'UserBasicDetails' ) )
 								{
-									for( var a = 0; a < inps.length; a++ )
+									var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+									if( inps.length > 0 )
 									{
-										if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+										for( var a = 0; a < inps.length; a++ )
 										{
-											( function( i ) {
-												i.onclick = function( e )
-												{
-													editMode();
-												}
-											} )( inps[ a ] );
+											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+											{
+												( function( i ) {
+													i.onclick = function( e )
+													{
+														editMode();
+													}
+												} )( inps[ a ] );
+											}
 										}
 									}
 								}
@@ -457,6 +495,12 @@ Sections.accounts_users = function( cmd, extra )
 							
 							workgroups : function (  )
 							{
+								
+								if( ge( 'WorkgroupGui' ) && wstr )
+								{
+									ge( 'WorkgroupGui' ).innerHTML = wstr;
+								}
+								
 								// Editing workgroups
 					
 								var wge = ge( 'WorkgroupEdit' );
@@ -553,7 +597,84 @@ Sections.accounts_users = function( cmd, extra )
 										ge( 'WorkgroupGui' ).innerHTML = this.oldML;
 									}
 								}
+								
 							},
+							
+							roles : function (  )
+							{
+								
+								if( ge( 'RolesGui' ) && rstr )
+								{
+									ge( 'RolesGui' ).innerHTML = rstr;
+								}
+								
+							},
+							
+							storage : function (  )
+							{
+								
+								if( ge( 'StorageGui' ) && mlst )
+								{
+									ge( 'StorageGui' ).innerHTML = mlst;
+								}
+								
+							},
+							
+							applications : function (  )
+							{
+								
+								if( ge( 'ApplicationGui' ) && apl )
+								{
+									ge( 'ApplicationGui' ).innerHTML = apl;
+								}
+								
+							},
+							
+							theme : function (  )
+							{
+								// Theme ---------------------------------------------------
+								
+								if( ge( 'theme_name' ) && settings.Theme )
+								{
+									ge( 'theme_name' ).innerHTML = settings.Theme;
+								}
+								if( ge( 'theme_dark' ) && themeData.colorSchemeText && ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ) )
+								{
+									ge( 'theme_dark' ).innerHTML = i18n( 'i18n_enabled' );
+								}
+								if( ge( 'theme_style' ) && themeData.buttonSchemeText && themeData.buttonSchemeText == 'windows' )
+								{
+									ge( 'theme_style' ).innerHTML = 'Windows';
+								}
+								if( ge( 'wallpaper_name' ) && workspaceSettings.wallpaperdoors )
+								{
+									ge( 'wallpaper_name' ).innerHTML = workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1];
+								}
+								if( ge( 'workspace_count' ) && workspaceSettings.workspacecount && workspaceSettings.workspacecount > 0 )
+								{
+									ge( 'workspace_count' ).innerHTML = workspaceSettings.workspacecount;
+								}
+								if( ge( 'system_disk_state' ) && workspaceSettings.hiddensystem )
+								{
+									ge( 'system_disk_state' ).innerHTML = i18n( 'i18n_enabled' );
+								}
+								
+								if( ge( 'ThemePreview' ) && workspaceSettings.wallpaperdoors )
+								{
+									console.log( workspaceSettings );
+									var img = ( workspaceSettings.wallpaperdoors ? '/system.library/module/?module=system&command=thumbnail&width=568&height=320&mode=resize&authid=' + Application.authId + '&path=' + workspaceSettings.wallpaperdoors : '' );
+									var st = ge( 'ThemePreview' ).style
+									st.backgroundImage = 'url(\'' + ( workspaceSettings.wallpaperdoors ? img : '/webclient/gfx/theme/default_login_screen.jpg' ) + '\')';
+									st.backgroundSize = 'cover';
+									st.backgroundPosition = 'center';
+									st.backgroundRepeat = 'no-repeat';
+								}
+								
+							},
+							
+							// Events --------------------------------------------------
+							
+							
 							
 							// End events ----------------------------------------------
 							
@@ -561,19 +682,11 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Check Permissions
 								
-								if( !show || show.indexOf( 'looknfeel' ) >= 0 )
-								{
-									if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
-									{
-										ge( 'AdminLooknfeelContainer' ).className = 'Open';
-									}
-								}
-								
 								if( !show || show.indexOf( 'workgroup' ) >= 0 )
 								{
 									if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
 									{
-										ge( 'AdminWorkgroupContainer' ).className = 'Open';
+										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
 									}
 								}
 								
@@ -581,7 +694,7 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_ROLE_GLOBAL' ) || Application.checkAppPermission( 'PERM_ROLE_WORKGROUP' ) )
 									{
-										ge( 'AdminRoleContainer' ).className = 'Open';
+										if( ge( 'AdminRoleContainer' ) ) ge( 'AdminRoleContainer' ).className = 'Open';
 									}
 								}
 								
@@ -589,7 +702,7 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_STORAGE_GLOBAL' ) || Application.checkAppPermission( 'PERM_STORAGE_WORKGROUP' ) )
 									{
-										ge( 'AdminStorageContainer' ).className = 'Open';
+										if( ge( 'AdminStorageContainer' ) ) ge( 'AdminStorageContainer' ).className = 'Open';
 									}
 								}
 								
@@ -597,7 +710,15 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 									{
-										ge( 'AdminApplicationContainer' ).className = 'Open';
+										if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+									}
+								}
+								
+								if( !show || show.indexOf( 'looknfeel' ) >= 0 )
+								{
+									if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
+									{
+										if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
 									}
 								}
 							}
@@ -605,53 +726,69 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						
 						func.init();
-						func.avatar();
-						func.theme();
+						func.user();
 						func.password();
+						func.language();
+						func.setup();
+						func.avatar();
 						func.details();
 						func.workgroups();
+						func.roles();
+						func.storage();
+						func.applications();
+						func.theme();
 						func.permissions( show );
 						
 					}
 					
 					
 					
-					// Get the user details template
-					var d = new File( 'Progdir:Templates/account_users_details.html' );
-					console.log( 'userInfo ', userInfo );
-					// Add all data for the template
-					d.replacements = {
-						userid               : ( userInfo.ID ? userInfo.ID : '' ),
-						user_name            : ( userInfo.FullName ? userInfo.FullName : '' ),
-						user_fullname        : ( userInfo.FullName ? userInfo.FullName : '' ),
-						user_username        : ( userInfo.Name ? userInfo.Name : '' ),
-						user_email           : ( userInfo.Email ? userInfo.Email : '' ),
-						user_language        : ( languages ? languages : '' ),
-						user_setup           : ( setup ? setup : '' ),
-						user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
-						user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
-						theme_name           : ( settings.Theme ? settings.Theme : '' ),
-						theme_dark           : ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
-						theme_style          : ( themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac' ),
-						wallpaper_name       : ( workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ) ),
-						workspace_count      : ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ),
-						system_disk_state    : ( workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
-						storage              : ( mlst ? mlst : '' ),
-						workgroups           : ( wstr ? wstr : '' ),
-						roles                : ( rstr ? rstr : '' ),
-						applications         : ( apl ? apl : '' )
-					};
-					
-					// Add translations
-					d.i18n();
-					d.onLoad = function( data )
+					if( first )
 					{
 						
-						onLoad( data );
+						// Get the user details template
+						var d = new File( 'Progdir:Templates/account_users_details.html' );
+						console.log( 'userInfo ', userInfo );
+						// Add all data for the template
+						d.replacements = {
+							userid               : ( userInfo.ID ? userInfo.ID : '' ),
+							user_name            : ( userInfo.FullName ? userInfo.FullName : '' ),
+							user_fullname        : ( userInfo.FullName ? userInfo.FullName : '' ),
+							user_username        : ( userInfo.Name ? userInfo.Name : '' ),
+							user_email           : ( userInfo.Email ? userInfo.Email : '' ),
+							user_language        : ( languages ? languages : '' ),
+							user_setup           : ( setup ? setup : '' ),
+							user_locked_toggle   : ( ulocked   ? 'fa-toggle-on' : 'fa-toggle-off' ),
+							user_disabled_toggle : ( udisabled ? 'fa-toggle-on' : 'fa-toggle-off' ),
+							theme_name           : ( settings.Theme ? settings.Theme : '' ),
+							theme_dark           : ( themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							theme_style          : ( themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac' ),
+							wallpaper_name       : ( workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors.split( '/' )[workspaceSettings.wallpaperdoors.split( '/' ).length-1] : i18n( 'i18n_default' ) ),
+							workspace_count      : ( workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1' ),
+							system_disk_state    : ( workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ) ),
+							storage              : ( mlst ? mlst : '' ),
+							workgroups           : ( wstr ? wstr : '' ),
+							roles                : ( rstr ? rstr : '' ),
+							applications         : ( apl ? apl : '' )
+						};
+						
+						// Add translations
+						d.i18n();
+						d.onLoad = function( data )
+						{
+							
+							onLoad( data );
+							
+						}
+						d.load();
 						
 					}
-					d.load();
-					
+					else
+					{
+						
+						onLoad(  );
+						
+					}
 					
 					
 				}
@@ -660,7 +797,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				// Run template
 				
-				template(  );
+				template( first );
 				
 			}
 			
@@ -671,8 +808,9 @@ Sections.accounts_users = function( cmd, extra )
 			// Go through all data gathering until stop
 			var loadingSlot = 0;
 			var loadingList = [
+				
 				// 0 | Load userinfo
-				function()
+				function(  )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
@@ -690,16 +828,17 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						console.log( 'userinfoget ', { e:e, d:userInfo } );
 						if( e != 'ok' ) userInfo = '404';
+						var info = { userInfo: userInfo };
+						loadingList[ ++loadingSlot ]( info );
 						
-						loadingList[ ++loadingSlot ]( userInfo );
-						
-						//initUsersDetails( userInfo );
+						initUsersDetails( info, [  ], true );
 					}
 					
 					u.execute( 'userinfoget', { id: extra, mode: 'all', authid: Application.authId } );
 				},
-				// 1 | Load user settings
-				function( userInfo )
+				
+				// 5 | Load user settings
+				function( info )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
@@ -716,14 +855,16 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						console.log( 'usersettings ', { e:e, d:settings } );
 						if( e != 'ok' ) settings = '404';
-						loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
+						info.settings = settings;
+						loadingList[ ++loadingSlot ]( info );
 						
-						initUsersDetails( { userInfo: userInfo, settings: settings }, [  ] );
+						initUsersDetails( info, [  ] );
 					}
-					u.execute( 'usersettings', { userid: userInfo.ID, authid: Application.authId } );
+					u.execute( 'usersettings', { userid: info.ID, authid: Application.authId } );
 				},
-				// 2 | Get more user settings
-				function( data )
+				
+				// 6 | Get more user settings
+				function( info )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
@@ -742,30 +883,23 @@ Sections.accounts_users = function( cmd, extra )
 						
 						console.log( 'getsetting ', { e:e, d:workspacesettings } );
 						
-						setAvatar( data.userInfo.ID, false, function( res, userid, content, avatar )
-						{
+						if( e != 'ok' ) workspacesettings = '404';
+						info.workspaceSettings = workspacesettings;
+						loadingList[ ++loadingSlot ]( info );
 						
-							if( res && avatar && workspacesettings )
-							{
-								workspacesettings.avatar = avatar;
-							}
-							
-							if( e != 'ok' ) workspacesettings = '404';
-							loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
-							
-							//initUsersDetails( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
-						} );
+						initUsersDetails( info, [  ]/*, true*/ );
 						
 					}
 					u.execute( 'getsetting', { settings: [ 
 						'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
 						'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 						'focusmode', 'hiddensystem', 'workspacecount', 
-						'scrolldesktopicons', 'wizardrun', 'themedata_' + data.settings.Theme,
+						'scrolldesktopicons', 'wizardrun', 'themedata_' + info.settings.Theme,
 						'workspacemode'
-					], userid: data.userInfo.ID, authid: Application.authId } );
+					], userid: info.userInfo.ID, authid: Application.authId } );
 				},
-				// 3 | Get user's workgroups
+				
+				// 1 | Get user's workgroups
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -786,11 +920,12 @@ Sections.accounts_users = function( cmd, extra )
 						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
 						
-						//initUsersDetails( info );
+						initUsersDetails( info, [ 'workgroup' ] );
 					}
 					u.execute( 'workgroups', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
-				// 4 | Get user's roles
+				
+				// 2 | Get user's roles
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -814,11 +949,12 @@ Sections.accounts_users = function( cmd, extra )
 						if( e != 'ok' ) info.roles = '404';
 						loadingList[ ++loadingSlot ]( info );
 						
-						//initUsersDetails( info );
+						initUsersDetails( info, [ 'role' ] );
 					}
 					u.execute( 'userroleget', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
-				// 5 | Get storage
+				
+				// 3 | Get storage
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -839,11 +975,12 @@ Sections.accounts_users = function( cmd, extra )
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
 						
-						//initUsersDetails( info );
+						initUsersDetails( info, [ 'storage' ] );
 					}
 					u.execute( 'mountlist', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
-				// 6 | Get user applications
+				
+				// 4 | Get user applications
 				function( info )
 				{
 					var u = new Module( 'system' );
@@ -864,15 +1001,17 @@ Sections.accounts_users = function( cmd, extra )
 						info.applications = apps;
 						loadingList[ ++loadingSlot ]( info );
 						
-						//initUsersDetails( info );
+						initUsersDetails( info, [ 'application', 'looknfeel' ] );
 					}
 					u.execute( 'listuserapplications', { userid: info.userInfo.ID, authid: Application.authId } );
 				},
+				
 				// 7 | init
 				function( info )
 				{
-					initUsersDetails( info );
+					//initUsersDetails( info );
 				}
+				
 			];
 			// Runs 0 the first in the array ...
 			loadingList[ 0 ]();
