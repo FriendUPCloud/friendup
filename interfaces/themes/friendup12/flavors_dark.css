@@ -315,11 +315,6 @@ body.Dark #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 	border: 1px solid #455155;
 }
 
-html body.Dark .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
-}
-
 [mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
 [mobile].Dark .View .FileDialog .FileBrowser .DiskItem > .Name
 {

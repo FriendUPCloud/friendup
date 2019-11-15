@@ -343,11 +343,6 @@ body.Charcoal #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 	border: 1px solid #505050;
 }
 
-html body.Charcoal .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
-}
-
 [mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,
 [mobile].Charcoal .View .FileDialog .FileBrowser .DiskItem > .Name,
 [mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .FileBrowserItemImage,

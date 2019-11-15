@@ -11,6 +11,7 @@
 /**
  * The Deepest Field in FriendUP shows all the connected resources in one place
  * @author Hogne Titlestad
+ * This version, for Friend OS v1.2.x is attached to tray
  */
 DeepestField = {
 	zones: [],
@@ -42,8 +43,27 @@ DeepestField = {
 		}
 		
 		// Stats...
+		var f = document.createElement( 'div' );
+		f.id = 'DeepestField';
+		f.innerHTML = '\
+				<div class="LocalElements">\
+					<div id="Identity"></div>\
+					<div id="TasksHeader"></div>\
+					<div id="Tasks"></div>\
+					<div id="NotificationHeader"></div>\
+					<div id="Notifications"></div>\
+					<div id="NetconnectionsHeader"></div>\
+					<div id="Netconnections"></div>\
+					<div id="FNetHeader"></div>\
+					<div id="FNetContent"></div>\
+					<div id="CapabilityHeader"></div>\
+					<div id="Capabilities"></div>\
+				</div>';
+		Workspace.screen.contentDiv.appendChild( f );
+		
 		var d = document.createElement( 'canvas' );
-		ge( 'DeepestField' ).appendChild( d );
+		f.appendChild( d );
+				
 		d.id = 'DeepestCanvas';
 		d.style.position = 'absolute';
 		d.style.top = ge( 'Capabilities' ).offsetTop + ge( 'Capabilities' ).offsetHeight + 20 + 'px';
@@ -69,6 +89,8 @@ DeepestField = {
 		window.addEventListener( 'resize', resizeField );
 		
 		resizeField();
+		
+		// Add deepest field to screen
 	},
 	redraw: function()
 	{

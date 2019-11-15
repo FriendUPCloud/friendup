@@ -404,11 +404,6 @@ body.Synthwave #DoorsScreen .Left > .VirtualWorkspaces > div.Active
 	border: 1px solid #505050;
 }
 
-html body.Synthwave .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
-}
-
 .Synthwave .FileBrowser div.Name.Active
 {
 	background: #18154c;

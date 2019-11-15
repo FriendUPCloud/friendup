@@ -2952,28 +2952,44 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 {
 	width: 32px;
 	height: 32px;
-	border-left: 1px solid #f0f0f0;
 	position: absolute;
 	right: 0;
 	top: 0;
 }
 
-.Screen > .TitleBar .ScreenList:active
+.Screen > .TitleBar .ScreenList:after
 {
-	opacity: 0.5;
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	content: "\f096";
+	color: white;
+	font-family: "fontawesome";
+	width: 28px;
+	text-align: center;
+	line-height: 24px;
+	font-size: 1em;
 }
-
-.Screen > .TitleBar .ScreenList > img
+.Screen > .TitleBar .ScreenList:before
 {
 	position: absolute;
 	top: 4px;
 	left: 4px;
+	display: block;
+	content: "\f0c8";
+	color: white;
+	font-family: "fontawesome";
+	width: 28px;
+	text-align: center;
+	line-height: 24px;
+	font-size: 0.9em;
 }
 
-.Screen > .TitleBar .ScreenList:Active img
+
+.Screen > .TitleBar .ScreenList:active
 {
 	opacity: 0.5;
-	filter:opacity(alpha=50);
 }
 
 .Frameloader, .Imageloader
