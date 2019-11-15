@@ -155,7 +155,7 @@ Screen = function ( flags, initObject )
 		div.innerHTML = "" +
 		"<div class=\"TitleBar\">" +
 		"	<div class=\"Right\">" +
-		"		<div class=\"ScreenList MousePointer\"></div>" +
+		"		<div class=\"ScreenList MousePointer BorderLeft\"></div>" +
 		"	</div>" +
 		"	<div class=\"Left\">" +
 		"		<div class=\"Info\">" + this._flags['title'] + "</div>" + ex +

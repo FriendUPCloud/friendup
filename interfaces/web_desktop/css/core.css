@@ -2787,6 +2787,11 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	overflow: hidden;
 }
 
+.Inside #Screens
+{
+	background: rgba(0,0,0,0.5);
+}
+
 /* Don't show the .Offline thing on the desktop */
 #DoorsScreen > .Offline
 {
@@ -2985,7 +2990,6 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	line-height: 24px;
 	font-size: 0.9em;
 }
-
 
 .Screen > .TitleBar .ScreenList:active
 {
