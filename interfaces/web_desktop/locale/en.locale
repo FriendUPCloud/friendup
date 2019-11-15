@@ -319,6 +319,8 @@ menu_workspheres                        : Work Spheres
 i18n_worksphere_all                     : All Work Spheres
 i18n_worksphere_add                     : Add Work Sphere
 
+i18n_untitled_window                    : Untitled window
+
 #Applications ------------------------------------------------------------------
 
 install_question_mintitle               : Install application

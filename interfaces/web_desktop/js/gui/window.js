@@ -4808,6 +4808,8 @@ var View = function( args )
 				this.flags.minimized = value;
 				break;
 			case 'title':
+				if( !Trim( value ) )
+					value = i18n( 'i18n_untitled_window' );
 				SetWindowTitle( viewdiv, value );
 				this.flags.title = value;
 				break;

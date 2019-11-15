@@ -245,7 +245,7 @@ var WorkspaceMenu =
 			else
 			{
 				// TODO: This might not be needed..
-				if ( window.menu )
+				if( window.menu )
 				{
 					WorkspaceMenu.generate( wm, window.menu );
 					returnCode = 'window_menu_1';
