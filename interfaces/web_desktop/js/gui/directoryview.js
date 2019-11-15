@@ -983,7 +983,14 @@ DirectoryView.prototype.InitWindow = function( winobj )
 							break;
 					}
 				}
-
+				
+				// Special case - put Home disks first
+				if( i.Type == 'Door' )
+				{
+					if( i.Title != 'Home' )
+						o.SortPriority = 1;
+					else o.SortPriority = 0;
+				}
 				if( i.Filename )
 				{
 					if( i.Filename.indexOf( '.' ) > 0 )
