@@ -628,6 +628,148 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
+	* <HR><H2>system.library/user/updatestatus</H2>Update user status. Function require admin rights.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param id - (required) id of user which should get new status
+	* @param status - (required) status as integer parameter
+	* @return { Result: success} when success, otherwise error with code
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "updatestatus" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+
+		FULONG id = 0;
+		FLONG status = -1;
+		
+		DEBUG( "[UMWebRequest] Update user status!!\n" );
+		
+		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		if( el != NULL )
+		{
+			char *next;
+			id = strtol ( (char *)el->data, &next, 0 );
+		}
+		
+		el = HttpGetPOSTParameter( request, "status" );
+		if( el != NULL )
+		{
+			char *next;
+			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
+		}
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		{
+			if( id > 0 && status >= 0 )
+			{
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				if( sqllib != NULL )
+				{
+					char *tmpQuery = NULL;
+					int querysize = 1024;
+					
+					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
+					{
+						FBOOL gotFromDB = FALSE;
+						time_t  updateTime = time( NULL );
+						
+						// update status and modify timestamp
+						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
+						
+						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						
+						User *usr = UMGetUserByID( l->sl_UM, id );
+						if( usr != NULL )
+						{
+							usr->u_Status = status;
+							usr->u_ModifyTime = updateTime;
+						}
+						else
+						{
+							usr = UMGetUserByIDDB( l->sl_UM, id );
+							gotFromDB = TRUE;
+						}
+						
+						if( status == USER_STATUS_ENABLED )
+						{
+							time_t tm = 0;
+							time_t tm_now = time( NULL );
+							FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+							
+							// if access is disabled and user should be enabled, we remove last login fail
+							if( access == FALSE )
+							{
+								sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
+								sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							}
+						}
+						
+						{
+							char msg[ 512 ];
+							if( status == USER_STATUS_DISABLED )
+							{
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
+							}
+							else
+							{
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
+							}
+							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+						}
+						
+						if( gotFromDB == TRUE )
+						{
+							UserDelete( usr );
+						}
+						
+						FFree( tmpQuery );
+						
+						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
+					}
+					else
+					{
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+						HttpAddTextContent( response, buffer );
+					}
+					
+					l->LibrarySQLDrop( l, sqllib );
+				}
+				else
+				{
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+					HttpAddTextContent( response, buffer );
+				}
+			}
+			else
+			{
+				char buffer[ 256 ];
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id, status" );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, buffer );
+			}
+		}
+		else
+		{
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
+	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
 	* <HR><H2>system.library/user/updatepassword</H2>Update password
 	*
 	* @param sessionid - (required) session id of logged user
@@ -639,14 +781,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updatepassword" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		User *logusr = l->sl_UM->um_Users;
 		char *usrname = NULL;
 		char *usrpass = NULL;
 		
@@ -664,17 +805,55 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			usrpass = UrlDecodeToMem( (char *)el->data );
 		}
 		
+		
+		
 		if( usrname != NULL && usrpass != NULL )
 		{
-			while( logusr != NULL )
+			FBOOL access = FALSE;
+			FBOOL gotFromDB = FALSE;
+			int err = 0;
+			
+			// if you are admin you can change every user password
+			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
 			{
-				if( strcmp( logusr->u_Name, usrname ) == 0 )
+				access = TRUE;
+			}
+			else
+			{
+				// if you are not admin, you can change only own password
+				if( strcmp( loggedSession->us_User->u_Name, usrname ) == 0 )
 				{
-					int err = 0;
-					
-					if( 0 == ( err = l->sl_ActiveAuthModule->UpdatePassword( l->sl_ActiveAuthModule, request, logusr, usrpass ) ) )
+					access = TRUE;
+				}
+			}
+			
+			if( access == TRUE )
+			{
+				User *usr = UMGetUserByName( l->sl_UM, usrname );
+				if( usr == NULL )
+				{
+					usr = UMGetUserByNameDB( l->sl_UM, usrname );
+					gotFromDB = TRUE;
+				}
+			
+				if( usr != NULL )
+				{
+					if( 0 == ( err = l->sl_ActiveAuthModule->UpdatePassword( l->sl_ActiveAuthModule, request, usr, usrpass ) ) )
 					{
 						HttpAddTextContent( response, "ok<!--separate-->{ \"updatepassword\": \"success!\"}" );
+					
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							char tmpQuery[ 256 ];
+							time_t  updateTime = time( NULL );
+					
+							// update status and modify timestamp
+							sprintf( tmpQuery, "UPDATE `FUser` set ModifyTime=%lu where ID=%lu", updateTime, usr->u_ID );
+					
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							l->LibrarySQLDrop( l, sqllib );
+						}
 					}
 					else
 					{
@@ -684,17 +863,24 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_USER_NOT_FOUND );
 						HttpAddTextContent( response, buffer );
 					}
-					
-					break;
 				}
-				logusr = (User *)logusr->node.mln_Succ;
-			}
+				else
+				{
+					FERROR("[ERROR] User not found\n" );
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+					HttpAddTextContent( response, buffer );
+				}
 			
-			if( logusr == NULL )
+				if( gotFromDB == TRUE )
+				{
+					UserDelete( usr );
+				}
+			}
+			else
 			{
-				FERROR("[ERROR] User not found\n" );
 				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 				HttpAddTextContent( response, buffer );
 			}
 		}
@@ -732,14 +918,15 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* @param email - new user email
 	* @param level - new groups to which user will be assigned. Groups must be separated by comma sign
 	* @param workgroups - groups to which user will be assigned. Groups are passed as string, ID's separated by comma
+	* @param status - user status
 	* @return { update: success!} when success, otherwise error with code
 	*/
 	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "update" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -753,6 +940,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *level = NULL;
 		char *workgroups = NULL;
 		FULONG id = 0;
+		FLONG status = -1;
 		FBOOL userFromSession = FALSE;
 		FBOOL canChange = FALSE;
 		FBOOL imAdmin = FALSE;
@@ -772,6 +960,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			char *next;
 			id = strtol ( (char *)el->data, &next, 0 );
 			DEBUG( "[UMWebRequest] Update id %ld!!\n", id );
+		}
+		
+		el = HttpGetPOSTParameter( request, "status" );
+		if( el != NULL )
+		{
+			char *next;
+			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
 		}
 		
 		if( id > 0 && imAdmin == TRUE )
@@ -927,6 +1122,24 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					GenerateUUID( &( logusr->u_UUID ) );
 					
+					if( status >= 0 )
+					{
+						logusr->u_Status = status;
+						
+						{
+							char msg[ 512 ];
+							if( status == USER_STATUS_DISABLED )
+							{
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+							}
+							else
+							{
+								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
+							}
+							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+						}
+					}
 					UMUserUpdateDB( l->sl_UM, logusr );
 					
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
@@ -987,8 +1200,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updategroups" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		

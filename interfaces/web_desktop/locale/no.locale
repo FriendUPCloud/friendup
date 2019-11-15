@@ -319,6 +319,8 @@ menu_workspheres                        : Work Spheres
 i18n_worksphere_all                     : All Work Spheres
 i18n_worksphere_add                     : Add Work Sphere
 
+i18n_untitled_window                    : Vindu uten navn
+
 #Applications ------------------------------------------------------------------
 install_question_mintitle               : Installer program
 install_question_title                  : Program funnet, men ikke installert
