@@ -2943,6 +2943,7 @@ function PollTaskbar( curr )
 							{
 								var div = this.window;
 								div.viewContainer.setAttribute( 'minimized', '' );
+								div.windowObject.flags.minimized = false;
 								div.minimized = false;
 							
 								var app = _getAppByAppId( div.applicationId );
@@ -2968,6 +2969,7 @@ function PollTaskbar( curr )
 										if( div.attached[ a ].minimize )
 										{
 											div.attached[ a ].minimized = false;
+											div.attached[ a ].windowObject.flags.minimized = false;
 											div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
 										
 											var app = _getAppByAppId( div.attached[ a ].applicationId );
@@ -3030,6 +3032,7 @@ function PollTaskbar( curr )
 									{
 										this.setInactive();
 										this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
+										this.window.windowObject.flags.minimized = true;
 									
 										var div = this.window;
 									
@@ -3052,6 +3055,7 @@ function PollTaskbar( curr )
 												if( !div.attached[ a ].minimized )
 												{
 													div.attached[ a ].minimized = true;
+													div.attached[ a ].windowObject.minimized = true;
 													div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
 												
 													var app = _getAppByAppId( div.attached[ a ].applicationId );
@@ -3390,10 +3394,12 @@ function PollDockedTaskbar()
 							if( this.state == 'hidden' )
 							{
 								theView.viewContainer.classList.add( 'Minimized' );
+								theView.windowObject.flags.minimized = true;
 							}
 							else
 							{
 								theView.viewContainer.classList.remove( 'Minimized' );
+								theView.windowObject.flags.minimized = false;
 								_WindowToFront( theView );
 							}
 							var mv = theView;
