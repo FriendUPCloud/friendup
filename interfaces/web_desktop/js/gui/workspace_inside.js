@@ -8583,6 +8583,34 @@ function DoorsKeyUp( e )
 	Workspace.ctrlKey = e.ctrlKey;
 	Workspace.altKey = e.altKey;
 	Workspace.metaKey = e.metaKey;
+	if( e.which == 91 )
+	{
+		console.log( 'Boing' );
+		document.body.classList.remove( 'ShowTasks' );
+		if( ge( 'Tasks' ).currentTask )
+		{
+			var ifr = ge( 'Tasks' ).currentTask.getElementsByTagName( 'iframe' )[0];
+		
+			// See if we have a switch
+			if( window.currentMovable )
+			{
+				var o = currentMovable.windowObject.applicationId;
+				if( ifr.mainView && ifr.mainView != o )
+				{
+					ifr.mainView.activate();
+				}
+			}
+			// Pick
+			else
+			{
+				if( ifr.mainView )
+				{
+					ifr.mainView.activate();
+				}
+			}
+			ge( 'Tasks' ).currentTask = null;
+		}		
+	}
 }
 function DoorsKeyDown( e )
 {
@@ -8885,6 +8913,69 @@ function DoorsKeyDown( e )
 				case 57:
 					Workspace.switchWorkspace( 8 );
 					return cancelBubble( e );		
+				// App cycling
+				case 9:
+					document.body.classList.add( 'ShowTasks' );
+					var eles = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
+					if( !ge( 'Tasks' ).currentTask )
+					{
+						var currApp = null;
+						if( window.currentMovable )
+						{
+							if( currentMovable.windowObject.applicationId )
+								currApp = currentMovable.windowObject.applicationId;
+							for( var a = 0; a < eles.length; a++ )
+							{
+								var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
+								if( ifr.applicationId == currApp )
+								{
+									ge( 'Tasks' ).currentTask = eles[a];
+									break;
+								}
+							}
+						}
+						for( var a = 0; a < eles.length; a++ )
+						{
+							var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
+							if( ge( 'Tasks' ).currentTask == eles[a] || !ge( 'Tasks' ).currentTask )
+							{
+								eles[a].classList.add( 'Current' );
+								ge( 'Tasks' ).currentTask = eles[a];
+							}
+							else
+							{
+								eles[a].classList.remove( 'Current' );
+							}
+						}
+					}
+					else
+					{
+						var next = false;
+						for( var a = 0; a < eles.length; a++ )
+						{
+							if( ge( 'Tasks' ).currentTask == eles[a] && eles[a+1] )
+							{
+								ge( 'Tasks' ).currentTask = eles[a+1];
+								eles[a].classList.remove( 'Current' );
+								eles[a+1].classList.add( 'Current' );
+								a++;
+								next = true;
+							}
+							else
+							{
+								eles[a].classList.remove( 'Current' );
+							}
+						}
+						if( !next )
+						{
+							eles[0].classList.add( 'Current' );
+							ge( 'Tasks' ).currentTask = eles[0];
+						}
+					}
+					ge( 'Tasks' ).currentTask.scrollIntoView();
+					window.blur();
+					window.focus();
+					break;
 			}
 		}
 	}
@@ -9014,8 +9105,9 @@ function InitWorkspaceEvents()
 	{
 		window.attachEvent( 'onmouseout', DoorsOutListener, false );
 		window.attachEvent( 'onmouseleave', DoorsLeaveListener, false );
-		window.attachEvent( 'onresize', WindowResizeFunc );
-		window.attachEvent( 'onkeydown', DoorsKeyDown );
+		window.attachEvent( 'onresize', WindowResizeFunc, false );
+		window.attachEvent( 'onkeydown', DoorsKeyDown, false );
+		window.attachEvent( 'onkeyup', DoorsKeyUp, false );
 	}
 	else
 	{
@@ -9029,8 +9121,9 @@ function InitWorkspaceEvents()
 		}, false );
 		window.addEventListener( 'mouseout', DoorsOutListener, false );
 		window.addEventListener( 'mouseleave', DoorsLeaveListener, false );
-		window.addEventListener( 'resize', WindowResizeFunc );
+		window.addEventListener( 'resize', WindowResizeFunc, false );
 		window.addEventListener( 'keydown', DoorsKeyDown, false );
+		window.addEventListener( 'keyup', DoorsKeyUp, false );
 		//window.addEventListener( 'paste', friendWorkspacePasteListener, false);
 	}
 }
