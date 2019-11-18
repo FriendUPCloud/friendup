@@ -8583,7 +8583,7 @@ function DoorsKeyUp( e )
 	Workspace.ctrlKey = e.ctrlKey;
 	Workspace.altKey = e.altKey;
 	Workspace.metaKey = e.metaKey;
-	if( e.which == 91 || ( !e.shiftKey || !e.ctrlKey ) )
+	if( e.which == 91 || ( !e.shiftKey && !e.ctrlKey ) )
 	{
 		if( window.DeepestField )
 			DeepestField.selectTask();	
