@@ -3924,11 +3924,13 @@ var View = function( args )
 
 		var view = this;
 		this.iframe = ifr;
+		
 		ifr.onfocus = function()
 		{
 			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
 			{
 				// Don't steal focus!
+				ifr.blur();
 				window.blur();
 				window.focus();
 			}

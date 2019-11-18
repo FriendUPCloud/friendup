@@ -311,6 +311,9 @@ DeepestField = {
 	// Show task switcher (meta+tab)
 	showTasks: function()
 	{
+		window.blur();
+		window.focus();
+		
 		if( Workspace.applications.length )
 		{
 			var wc = 0; for( var a in Workspace.applications )
