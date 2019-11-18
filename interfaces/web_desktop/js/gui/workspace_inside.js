@@ -8892,81 +8892,8 @@ function DoorsKeyDown( e )
 					return cancelBubble( e );		
 				// App cycling
 				case 9:
-					if( Workspace.applications.length )
-					{
-						var wc = 0; for( var a in Workspace.applications )
-						{
-							if( Workspace.applications[ a ].windows )
-							{
-								for( var c in Workspace.applications[ a ].windows )
-									wc++;
-							}
-						}
-						console.log( 'Window cound: ' + wc );
-						if( wc > 0 )
-						{
-							document.body.classList.add( 'ShowTasks' );
-							var eles = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
-							if( !ge( 'Tasks' ).currentTask )
-							{
-								var currApp = null;
-								if( window.currentMovable )
-								{
-									if( currentMovable.windowObject.applicationId )
-										currApp = currentMovable.windowObject.applicationId;
-									for( var a = 0; a < eles.length; a++ )
-									{
-										var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
-										if( ifr.applicationId == currApp )
-										{
-											ge( 'Tasks' ).currentTask = eles[a];
-											break;
-										}
-									}
-								}
-								for( var a = 0; a < eles.length; a++ )
-								{
-									var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
-									if( ge( 'Tasks' ).currentTask == eles[a] || !ge( 'Tasks' ).currentTask )
-									{
-										eles[a].classList.add( 'Current' );
-										ge( 'Tasks' ).currentTask = eles[a];
-									}
-									else
-									{
-										eles[a].classList.remove( 'Current' );
-									}
-								}
-							}
-							else
-							{
-								var next = false;
-								for( var a = 0; a < eles.length; a++ )
-								{
-									if( ge( 'Tasks' ).currentTask == eles[a] && eles[a+1] )
-									{
-										ge( 'Tasks' ).currentTask = eles[a+1];
-										eles[a].classList.remove( 'Current' );
-										eles[a+1].classList.add( 'Current' );
-										a++;
-										next = true;
-									}
-									else
-									{
-										eles[a].classList.remove( 'Current' );
-									}
-								}
-								if( !next )
-								{
-									eles[0].classList.add( 'Current' );
-									ge( 'Tasks' ).currentTask = eles[0];
-								}
-							}
-							ge( 'Tasks' ).currentTask.scrollIntoView();
-							window.blur();
-							window.focus();
-						}
-					}
+					if( window.DeepestField )
+						DeepestField.showTasks();
 					break;
 			}
 		}

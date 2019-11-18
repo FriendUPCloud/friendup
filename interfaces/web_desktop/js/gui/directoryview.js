@@ -5578,7 +5578,7 @@ function CheckDoorsKeys( e )
 		{
 			// TODO: Implement confirm dialog!
 			case 46:
-				if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
+				if( window.regionWindow && window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing )
 				{
 					Workspace.deleteFile();
 				}

@@ -308,6 +308,7 @@ DeepestField = {
 			ge( 'Tasks' ).currentTask = null;
 		}
 	},
+	// Show task switcher (meta+tab)
 	showTasks: function()
 	{
 		if( Workspace.applications.length )
