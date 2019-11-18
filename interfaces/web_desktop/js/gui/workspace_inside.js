@@ -8892,7 +8892,6 @@ function DoorsKeyDown( e )
 					return cancelBubble( e );		
 				// App cycling
 				case 32:
-				case 9:
 					if( window.DeepestField )
 						DeepestField.showTasks();
 					break;

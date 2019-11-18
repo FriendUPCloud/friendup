@@ -329,6 +329,28 @@ DeepestField = {
 				document.body.classList.add( 'ShowTasks' );
 				var eles = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
 				
+				// Setup mouseover events
+				for( var a = 0; a < eles.length; a++ )
+				{
+					( function( app, appList ) {
+						app.onmouseover = function( e )
+						{
+							for( var b = 0; b < appList.length; b++ )
+							{
+								if( appList[ b ] == app )
+								{
+									ge( 'Tasks' ).currentTask = app;
+									app.classList.add( 'Current' );
+								}
+								else
+								{
+									appList[ b ].classList.remove( 'Current' );
+								}
+							}
+						}
+					} )( eles[ a ], eles );
+				}
+				
 				// Reposition all tasks
 				var xpos = 10;
 				var ypos = 10;
