@@ -4537,7 +4537,29 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				}
 				else
 				{
-					OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
+					// No mime type? Ask Friend Core
+					var mim = new Module( 'system' );
+					mim.onExecuted = function( me, md )
+					{
+						var js = null;
+						try
+						{
+							js = JSON.parse( md );
+						}
+						catch( e ){};
+				
+						if( me == 'ok' && js )
+						{
+							ExecuteApplication( js.executable, obj.fileInfo.Path );
+						}
+						else
+						{
+							// Open unique window!
+							OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
+							return window.isMobile ? Workspace.closeDrivePanel() : false;
+						}
+					}
+					mim.execute( 'checkmimeapplication', { path: obj.fileInfo.Path } );
 				}
 				return window.isMobile ? Workspace.closeDrivePanel() : false; 
 			}
