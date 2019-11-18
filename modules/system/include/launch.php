@@ -54,8 +54,6 @@ if( $app->ID )
 	
 	$scrp = file_get_contents( $path . $conf->Init );
 	
-	$Logger->log( 'Contents: ' . $scrp . ' ' . $path . $conf->Init );
-	
 	// Is the wanted file from the repository?
 	if( substr( $path, 0, 11 ) == 'repository/' )
 	{
