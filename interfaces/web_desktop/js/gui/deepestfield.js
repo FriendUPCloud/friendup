@@ -343,21 +343,27 @@ DeepestField = {
 				// First time we're showing the tasks
 				if( !ge( 'Tasks' ).currentTask )
 				{
-					var currApp = null;
-					if( window.currentMovable )
+					if( !ge( 'Tasks' ).currentTask )
 					{
-						if( currentMovable.windowObject.applicationId )
-							currApp = currentMovable.windowObject.applicationId;
-						for( var a = 0; a < eles.length; a++ )
+						var currApp = null;
+						if( window.currentMovable )
 						{
-							var ifr = eles[a].getElementsByTagName( 'iframe' )[ 0 ];
-							if( ifr.applicationId == currApp )
+							if( currentMovable.windowObject.applicationId )
+								currApp = currentMovable.windowObject.applicationId;
+							for( var a = 0; a < eles.length; a++ )
 							{
-								ge( 'Tasks' ).currentTask = eles[a];
-								break;
+								var ifr = eles[a].getElementsByTagName( 'iframe' )[ 0 ];
+								if( ifr.applicationId == currApp )
+								{
+									if( eles[ a + 1 ] )
+										ge( 'Tasks' ).currentTask = eles[a + 1];
+									else ge( 'Tasks' ).currentTask = eles[0];
+									break;
+								}
 							}
 						}
 					}
+					// Draw the highlight
 					for( var a = 0; a < eles.length; a++ )
 					{
 						var ifr = eles[a].getElementsByTagName( 'iframe' )[ 0 ];
@@ -372,7 +378,7 @@ DeepestField = {
 						}
 					}
 				}
-				// Next time..
+				// Next time.. choose next task
 				else
 				{
 					var next = false;
@@ -403,7 +409,6 @@ DeepestField = {
 				var move = ( ge( 'Tasks' ).offsetWidth >> 1 ) - ( ct.offsetWidth >> 1 );
 				
 				// Scroll into view
-				
 				for( var a = 0; a < eles.length; a++ )
 				{
 					if( eles[ a ] == ct )
