@@ -1011,12 +1011,20 @@ function _ActivateWindow( div, nopoll, e )
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
 		console.log( '[window.js] Already activated', div );
+		if( !isMobile && globalConfig.focusMode == 'clicktofront' )
+		{
+			_WindowToFront( div );
+		}
 		return;
 	}
 	// And is already active
 	if( div.classList.contains( 'Active' ) )
 	{
 		console.log( '[window.js] Already activated', div );
+		if( !isMobile && globalConfig.focusMode == 'clicktofront' )
+		{
+			_WindowToFront( div );
+		}
 		return;
 	}
 	
@@ -4457,7 +4465,7 @@ var View = function( args )
 	// Activate window
 	this.activate = function( force )
 	{
-		if( !force && this.flags.minimized ) 
+		if( isMobile && !force && this.flags.minimized ) 
 		{
 			console.log( '[window.js] window is minimized - will not activate.' );
 			return;

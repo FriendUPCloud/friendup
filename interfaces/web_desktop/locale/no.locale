@@ -192,6 +192,7 @@ i18n_favorites                          : Favoritter
 i18n_menu                               : Meny
 
 i18n_close_menu                         : Lukk meny
+i18n_delete_shortcut                    : Fjern snarvei
 
 menu_workspace                          : Workspace
 menu_system                             : System
