@@ -11,6 +11,7 @@
 
 function findBaseHref( $app )
 {
+	global $Logger;
 	$ar = array(
 		'repository/',
 		'resources/webclient/apps/'
@@ -19,7 +20,10 @@ function findBaseHref( $app )
 	{
 		if( file_exists( $apath . $app ) && is_dir( $apath . $app ) )
 		{
-			return str_replace( array( '../resources' ), '', $apath ) . $app . '/';
+			$str = str_replace( array( '../resources' ), '', $apath ) . $app . '/';
+			if( substr( $str, 0, 10 ) == 'resources/' )
+				$str = substr( $str, 10, strlen( $str ) - 10 );
+			return $str;
 		}
 	}
 	return false;
@@ -31,7 +35,7 @@ if( $level == 'API' )
 	$app->UserID = $User->ID;
 	$app->Name = $args->app;
 	$app->ID = 'load';
-	$app->Config = file_get_contents( 'resources' . findBaseHref( $args->app ) . 'Config.conf' );
+	$app->Config = file_get_contents( 'resources/' . findBaseHref( $args->app ) . 'Config.conf' );
 }
 else
 {
@@ -43,12 +47,14 @@ else
 
 if( $app->ID )
 {
-	$path = findBaseHref( $app->Name );
+	$path = 'resources/' . findBaseHref( $app->Name ? $app->Name : $args->app );
 	$conf = json_decode( $app->Config );
 	
 	friendHeader( 'Content-Type: text/html' );
 	
 	$scrp = file_get_contents( $path . $conf->Init );
+	
+	$Logger->log( 'Contents: ' . $scrp . ' ' . $path . $conf->Init );
 	
 	// Is the wanted file from the repository?
 	if( substr( $path, 0, 11 ) == 'repository/' )
