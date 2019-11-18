@@ -8899,6 +8899,11 @@ function DoorsKeyDown( e )
 			}
 		}
 	}
+	else if( e.ctrlKey && w == 32 )
+	{
+		if( window.DeepestField )
+			DeepestField.showTasks();
+	}
 
 	if( !w || !e.ctrlKey )
 	{
