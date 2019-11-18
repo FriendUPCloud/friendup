@@ -8585,30 +8585,8 @@ function DoorsKeyUp( e )
 	Workspace.metaKey = e.metaKey;
 	if( e.which == 91 )
 	{
-		document.body.classList.remove( 'ShowTasks' );
-		if( ge( 'Tasks' ).currentTask )
-		{
-			var ifr = ge( 'Tasks' ).currentTask.getElementsByTagName( 'iframe' )[0];
-		
-			// See if we have a switch
-			if( window.currentMovable )
-			{
-				var o = currentMovable.windowObject.applicationId;
-				if( ifr.mainView && ifr.mainView != o )
-				{
-					ifr.mainView.activate();
-				}
-			}
-			// Pick
-			else
-			{
-				if( ifr.mainView )
-				{
-					ifr.mainView.activate();
-				}
-			}
-			ge( 'Tasks' ).currentTask = null;
-		}		
+		if( window.DeepestField )
+			DeepestField.selectTask();	
 	}
 }
 function DoorsKeyDown( e )

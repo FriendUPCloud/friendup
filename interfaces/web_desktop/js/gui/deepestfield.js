@@ -281,6 +281,110 @@ DeepestField = {
 			capas.appendChild( d );
 		}
 	},
+	selectTask: function()
+	{
+		document.body.classList.remove( 'ShowTasks' );
+		if( ge( 'Tasks' ).currentTask )
+		{
+			var ifr = ge( 'Tasks' ).currentTask.getElementsByTagName( 'iframe' )[0];
+		
+			// See if we have a switch
+			if( window.currentMovable )
+			{
+				var o = currentMovable.windowObject.applicationId;
+				if( ifr.mainView && ifr.mainView != o )
+				{
+					ifr.mainView.activate();
+				}
+			}
+			// Pick
+			else
+			{
+				if( ifr.mainView )
+				{
+					ifr.mainView.activate();
+				}
+			}
+			ge( 'Tasks' ).currentTask = null;
+		}
+	},
+	showTasks: function()
+	{
+		if( Workspace.applications.length )
+		{
+			var wc = 0; for( var a in Workspace.applications )
+			{
+				if( Workspace.applications[ a ].windows )
+				{
+					for( var c in Workspace.applications[ a ].windows )
+						wc++;
+				}
+			}
+			if( wc > 0 )
+			{
+				document.body.classList.add( 'ShowTasks' );
+				var eles = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
+				if( !ge( 'Tasks' ).currentTask )
+				{
+					var currApp = null;
+					if( window.currentMovable )
+					{
+						if( currentMovable.windowObject.applicationId )
+							currApp = currentMovable.windowObject.applicationId;
+						for( var a = 0; a < eles.length; a++ )
+						{
+							var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
+							if( ifr.applicationId == currApp )
+							{
+								ge( 'Tasks' ).currentTask = eles[a];
+								break;
+							}
+						}
+					}
+					for( var a = 0; a < eles.length; a++ )
+					{
+						var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
+						if( ge( 'Tasks' ).currentTask == eles[a] || !ge( 'Tasks' ).currentTask )
+						{
+							eles[a].classList.add( 'Current' );
+							ge( 'Tasks' ).currentTask = eles[a];
+						}
+						else
+						{
+							eles[a].classList.remove( 'Current' );
+						}
+					}
+				}
+				else
+				{
+					var next = false;
+					for( var a = 0; a < eles.length; a++ )
+					{
+						if( ge( 'Tasks' ).currentTask == eles[a] && eles[a+1] )
+						{
+							ge( 'Tasks' ).currentTask = eles[a+1];
+							eles[a].classList.remove( 'Current' );
+							eles[a+1].classList.add( 'Current' );
+							a++;
+							next = true;
+						}
+						else
+						{
+							eles[a].classList.remove( 'Current' );
+						}
+					}
+					if( !next )
+					{
+						eles[0].classList.add( 'Current' );
+						ge( 'Tasks' ).currentTask = eles[0];
+					}
+				}
+				ge( 'Tasks' ).currentTask.scrollIntoView();
+				window.blur();
+				window.focus();
+			}
+		}
+	},
 	updateTaskInformation: function()
 	{
 		ge( 'TasksHeader' ).innerHTML = ge( 'Tasks' ).getElementsByTagName( 'iframe' ).length + ' ' + i18n( 'i18n_tasks_running' ) + ':';
