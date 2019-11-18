@@ -8585,7 +8585,6 @@ function DoorsKeyUp( e )
 	Workspace.metaKey = e.metaKey;
 	if( e.which == 91 )
 	{
-		console.log( 'Boing' );
 		document.body.classList.remove( 'ShowTasks' );
 		if( ge( 'Tasks' ).currentTask )
 		{
