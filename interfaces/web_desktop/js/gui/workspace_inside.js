@@ -8891,6 +8891,7 @@ function DoorsKeyDown( e )
 					Workspace.switchWorkspace( 8 );
 					return cancelBubble( e );		
 				// App cycling
+				case 32:
 				case 9:
 					if( window.DeepestField )
 						DeepestField.showTasks();
