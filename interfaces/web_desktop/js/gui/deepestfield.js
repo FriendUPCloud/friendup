@@ -325,6 +325,19 @@ DeepestField = {
 			{
 				document.body.classList.add( 'ShowTasks' );
 				var eles = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
+				
+				// Reposition all tasks
+				var xpos = 10;
+				var ypos = 10;
+				var xwid = eles[ 0 ].offsetWidth + 10;
+				for( var a = 0; a < eles.length; a++ )
+				{
+					eles[a].style.top = ypos + 'px';
+					eles[a].style.left = xpos + 'px';
+					xpos += xwid;
+				}
+				
+				// First time we're showing the tasks
 				if( !ge( 'Tasks' ).currentTask )
 				{
 					var currApp = null;
@@ -334,7 +347,7 @@ DeepestField = {
 							currApp = currentMovable.windowObject.applicationId;
 						for( var a = 0; a < eles.length; a++ )
 						{
-							var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
+							var ifr = eles[a].getElementsByTagName( 'iframe' )[ 0 ];
 							if( ifr.applicationId == currApp )
 							{
 								ge( 'Tasks' ).currentTask = eles[a];
@@ -344,7 +357,7 @@ DeepestField = {
 					}
 					for( var a = 0; a < eles.length; a++ )
 					{
-						var ifr = eles[a].getElementsByTagName( 'iframe' )[0];
+						var ifr = eles[a].getElementsByTagName( 'iframe' )[ 0 ];
 						if( ge( 'Tasks' ).currentTask == eles[a] || !ge( 'Tasks' ).currentTask )
 						{
 							eles[a].classList.add( 'Current' );
@@ -356,16 +369,17 @@ DeepestField = {
 						}
 					}
 				}
+				// Next time..
 				else
 				{
 					var next = false;
 					for( var a = 0; a < eles.length; a++ )
 					{
-						if( ge( 'Tasks' ).currentTask == eles[a] && eles[a+1] )
+						if( ge( 'Tasks' ).currentTask == eles[a] && eles[ a + 1 ] )
 						{
-							ge( 'Tasks' ).currentTask = eles[a+1];
-							eles[a].classList.remove( 'Current' );
-							eles[a+1].classList.add( 'Current' );
+							ge( 'Tasks' ).currentTask = eles[ a + 1 ];
+							eles[ a     ].classList.remove( 'Current' );
+							eles[ a + 1 ].classList.add( 'Current' );
 							a++;
 							next = true;
 						}
@@ -376,11 +390,37 @@ DeepestField = {
 					}
 					if( !next )
 					{
-						eles[0].classList.add( 'Current' );
-						ge( 'Tasks' ).currentTask = eles[0];
+						eles[ 0 ].classList.add( 'Current' );
+						ge( 'Tasks' ).currentTask = eles[ 0 ];
 					}
 				}
-				ge( 'Tasks' ).currentTask.scrollIntoView();
+				
+				// Where is the current task?
+				var ct = ge( 'Tasks' ).currentTask;
+				var move = ( ge( 'Tasks' ).offsetWidth >> 1 ) - ( ct.offsetWidth >> 1 );
+				
+				// Scroll into view
+				
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( eles[ a ] == ct )
+					{
+						var xpos = move;
+						for( var b = a; b >= 0; b-- )
+						{
+							eles[b].style.left = xpos + 'px';
+							xpos -= xwid;
+						}
+						xpos = move + xwid;
+						for( var b = a + 1; b < eles.length; b++ )
+						{
+							eles[b].style.left = xpos + 'px';
+							xpos += xwid;
+						}
+						break;
+					}
+				}
+				
 				window.blur();
 				window.focus();
 			}

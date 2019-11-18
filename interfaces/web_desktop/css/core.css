@@ -2658,9 +2658,8 @@ body:not([mobile]).ShowTasks #Tasks .Current .Close
 {
 	width: 180px;
 	height: 180px;
-	margin: 10px;
-	display: inline-block;
-	position: relative;
+	position: absolute;
+	transition: left 0.25s;
 }
 
 #Tasks .AppSandbox .Close
