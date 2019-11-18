@@ -1701,6 +1701,7 @@ function apiWrapper( event, force )
 						case 'setFlags':
 							if( win )
 							{
+								console.log( '[apiwrapper] Got asked to set flags on view:', msg.data );
 								win.setFlags( msg.data );
 							}
 							break;
@@ -1854,6 +1855,8 @@ function apiWrapper( event, force )
 					}
 
 					var postTarget = app;
+					
+					console.log( '[apiwrapper] Opening a new view: ', msg.data );
 					
 					var v = new View( msg.data );
 					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
