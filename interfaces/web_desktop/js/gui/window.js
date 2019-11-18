@@ -3924,6 +3924,15 @@ var View = function( args )
 
 		var view = this;
 		this.iframe = ifr;
+		ifr.onfocus = function()
+		{
+			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
+			{
+				// Don't steal focus!
+				window.blur();
+				window.focus();
+			}
+		}
 
 		if( packet.applicationId ) this._window.applicationId = packet.applicationId;
 
