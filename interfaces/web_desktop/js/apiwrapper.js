@@ -1868,6 +1868,7 @@ function apiWrapper( event, force )
 					if( app.startupsequence )
 					{						
 						msg.data.minimized = true;
+						// Fake hide when we have a window
 						if( Workspace.applications.length && Workspace.applications[0].windows && window.ScreenOverlay )
 						{
 							ScreenOverlay.invisible();
