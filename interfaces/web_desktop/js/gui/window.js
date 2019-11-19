@@ -1010,27 +1010,19 @@ function _ActivateWindow( div, nopoll, e )
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
-<<<<<<< HEAD
-		console.log( '[window.js] Already activated', div );
 		if( !isMobile && globalConfig.focusMode == 'clicktofront' )
 		{
 			_WindowToFront( div );
 		}
-=======
->>>>>>> feature/windowmanagement
 		return;
 	}
 	// And is already active
 	if( div.classList.contains( 'Active' ) )
 	{
-<<<<<<< HEAD
-		console.log( '[window.js] Already activated', div );
 		if( !isMobile && globalConfig.focusMode == 'clicktofront' )
 		{
 			_WindowToFront( div );
 		}
-=======
->>>>>>> feature/windowmanagement
 		return;
 	}
 	
