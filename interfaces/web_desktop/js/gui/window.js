@@ -1394,6 +1394,7 @@ function _removeMobileCloseButtons()
 			f.viewIcon.classList.remove( 'Remove' );
 			f.classList.remove( 'Remove' );
 			f.classList.remove( 'Dragging' );
+			f.parentNode.classList.remove( 'Flipped' );
 		}
 	}
 }
@@ -2594,6 +2595,7 @@ var View = function( args )
 					time: ( new Date() ).getTime()
 				};
 			}
+			
 			// Start jiggling on longpress
 			// Only removable after 300 ms
 			this.touchInterval = setInterval( function()
@@ -2605,6 +2607,7 @@ var View = function( args )
 					{
 						// Update time
 						self.clickOffset.removable = true;
+						self.viewIcon.parentNode.classList.add( 'Flipped' );
 						self.viewIcon.classList.add( 'Dragging' );
 						clearInterval( self.touchInterval );
 						self.touchInterval = null;
@@ -2619,30 +2622,6 @@ var View = function( args )
 		// Remove window on drag
 		if( isMobile )
 		{
-			/*div.ontouchmove = function( e )
-			{
-				if( !this.clickOffset )
-					return;
-				var diffx = e.touches[0].clientX - this.clickOffset.x;
-				if( diffx > 20 )
-					return;
-				var diffy = e.touches[0].clientY - this.clickOffset.y;
-			
-				// Drag 100 px under 0.15ms
-				if( this.viewIcon.classList.contains( 'Dragging' ) )
-				{
-					if( diffy > 50 )
-					{
-						this.viewIcon.classList.add( 'Remove' );
-						this.classList.add( 'Remove' );
-					}
-					else
-					{
-						this.viewIcon.classList.remove( 'Remove' );
-						this.classList.remove( 'Remove' );
-					}
-				}
-			}*/
 			div.ontouchend = function( e )
 			{
 				if( this.touchInterval )
@@ -3614,7 +3593,7 @@ var View = function( args )
 			if( window.isTablet )
 			{
 				// For mobile and tablets
-				if( window.isMobile || window.isTablet )
+				if( !window.isMobile )
 				{
 					title.addEventListener( 'touchstart', function( e )
 					{
@@ -3629,7 +3608,7 @@ var View = function( args )
 						_ActivateWindow( div );
 					} );
 				}
-				if( !window.isMobile )
+				else
 				{
 					title.addEventListener( 'touchmove', function( evt )
 					{

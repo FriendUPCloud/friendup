@@ -571,25 +571,6 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.OnWorkspace
 	background-color: rgba(255,255,255,0.4);
 }
 
-@keyframes jiggle
-{
-	0% { transform: rotateZ(3deg); }
-	50% { transform: rotateZ(-3deg); }
-	100% { transform: rotateZ(3deg); }
-}
-@-webkit-keyframes jiggle
-{
-	0% { transform: rotateZ(3deg); }
-	50% { transform: rotateZ(-3deg); }
-	100% { transform: rotateZ(3deg); }
-}
-
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove
-{
-	animation: jiggle 0.3s infinite;
-}
-
 html body[mobile] .ViewContainer:not(.DelayedDeactivation) .View:not(.Active) > div:not(.Title)
 {
 	display: none;
@@ -826,6 +807,19 @@ body:not([tablet])[mobile=mobile] .IconWindow .File > .Icon
 body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File > .Title
 {
 	left: 0;
+}
+
+/* On workspace icons */
+
+.OnWorkspace.ViewContainer
+{
+	transform: none;
+	transition: transform 0.25s;
+}
+
+.OnWorkspace.ViewContainer.Flipped
+{
+	transform: rotate3d(0,1,0,180deg);
 }
 
 /* Done icons for mobile */
