@@ -9555,13 +9555,13 @@ Workspace.receivePush = function( jsonMsg )
 					getWrapperCallback( amsg.callback );
 				}
 			}, 1000 );
+			
+			if( Workspace.onReady ) Workspace.onReady();
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
 		Friend.startupApps[ msg.application ] = true;
 		ExecuteApplication( msg.application, '', appMessage );
-		
-		if( Workspace.onReady ) Workspace.onReady();
 	}
 
 	return 'ok';
