@@ -350,7 +350,7 @@ function ExecuteApplication( app, args, callback )
 			
 			// Set startupsequence flag on apps that are launched this way
 			// Except the first app which will operate like normal
-			if( window.ScreenOverlay && ScreenOverlay.visibility && ScreenOverlay.launchIndex > 0 )
+			if( window.ScreenOverlay && ScreenOverlay.visibility && ( ScreenOverlay.launchIndex > 0 || Workspace.applications.length > 0 ) )
 			{
 				ifr.startupsequence = true;
 			}
