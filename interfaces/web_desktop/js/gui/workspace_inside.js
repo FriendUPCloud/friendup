@@ -8436,6 +8436,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Execute when everything is ready
 	onReady: function()
 	{
+		// Don't run it twice
+		Workspace.onReady = function(){};
+		
 		if( this.onReadyList.length )
 		{
 			for( var a = 0; a < this.onReadyList.length; a++ )
@@ -9390,7 +9393,11 @@ Workspace.receivePush = function( jsonMsg )
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
-	if( msg == false || msg == 1 ) return "nomsg";
+	if( msg == false || msg == 1 ) 
+	{
+		if( this.onReady ) this.onReady();
+		return "nomsg";
+	}
 	try
 	{
 		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
@@ -9400,7 +9407,11 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Do nothing for now...
 	}
-	if( !msg ) return "nomsg";
+	if( !msg ) 
+	{
+		if( this.onReady ) this.onReady();
+		return "nomsg";
+	}
 		
 	// Clear the notifications now... (race cond?)
 	if( window.friendApp )
@@ -9413,12 +9424,14 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Revert to push notifications on the OS side
 		Notify( { title: msg.title, text: msg.text }, null, handleClick );
+		if( this.onReady ) this.onReady();
 		return 'ok';
 	}
 	// "Click"
 	else
 	{
 		handleClick();
+		if( this.onReady ) this.onReady();
 	}
 	
 	function handleClick()
