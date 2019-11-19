@@ -1721,18 +1721,18 @@ window.Shell = function( appObject )
 			}
 			cmd = cmd.join( "\n" );
 			
-			console.log( 'cmd [1] ', cmd );
+			//console.log( 'cmd [1] ', cmd );
 			
 			return this.parseScript( cmd, dcallback );
 		}
 		
-		console.log( 'cmd [2] ', cmd );
+		//console.log( 'cmd [2] ', cmd );
 		
 		// Commented out temporary because, testing this method before multiline fork ...
 		// Get an intelligent parsed object for variables and fin_args
 		//cmd = Trim( EntityDecode( cmd.split( '<!--semicolon-->' ).join( ';' ) ) );
 		
-		console.log( 'cmd [3] ', cmd );
+		//console.log( 'cmd [3] ', cmd );
 		
 		// Common ones
 		switch( cmd.toLowerCase() )
@@ -1749,7 +1749,7 @@ window.Shell = function( appObject )
 		cmd = parsedObject.args; // Just the fin_args
 		this.parsedObj = parsedObject;
 		
-		console.log( 'cmd [4] ', { parsedObj: this.parsedObj, cmd: cmd } );
+		//console.log( 'cmd [4] ', { parsedObj: this.parsedObj, cmd: cmd } );
 		
 		// Let's do lowercase
 		cmd[0] = cmd[0].toLowerCase();

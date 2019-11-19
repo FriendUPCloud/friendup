@@ -347,6 +347,13 @@ function ExecuteApplication( app, args, callback )
 			ifr.conf = conf && conf.ConfFilename ? conf.ConfFilename : false;
 			ifr.config = conf ? conf : false; // Whole object
 			ifr.drive = drive;
+			
+			// Set startupsequence flag on apps that are launched this way
+			// Except the first app which will operate like normal
+			if( window.ScreenOverlay && ScreenOverlay.visibility && ScreenOverlay.launchIndex > 0 )
+			{
+				ifr.startupsequence = true;
+			}
 
 			// Proper way to run by conf.init
 			if( conf.Init )
@@ -898,7 +905,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 	var pelement = win.getWindowElement();
 	if( !pelement ) 
 	{
-		console.log( 'No parent element: ', win, win.windowObject );
+		//console.log( 'No parent element: ', win, win.windowObject );
 		return;
 	}
 	var eles = pelement.getElementsByTagName( 'input' );

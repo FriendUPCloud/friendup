@@ -57,6 +57,9 @@ var ScreenOverlay = {
 				self.visibility = false; // Done hiding!
 				self.clearContent();
 				self.done = true;
+				
+				// Make sure we update screen title and tray/tasks
+				PollTaskbar();
 			}, 250 );
 		}, 250 );
 	},

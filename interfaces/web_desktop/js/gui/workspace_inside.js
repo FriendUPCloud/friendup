@@ -1727,6 +1727,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										if( !ScreenOverlay.done && l.index < seq.length )
 										{
+											// Register for Friend DOS
+											ScreenOverlay.launchIndex = l.index;
 											var cmd = seq[ l.index++ ];
 											if( cmd && cmd.length )
 											{

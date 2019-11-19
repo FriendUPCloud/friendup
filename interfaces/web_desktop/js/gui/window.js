@@ -865,7 +865,7 @@ function SetScreenByWindowElement( div )
 
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
-{	
+{
 	// Blocker
 	if( !isMobile && div.content && div.content.blocker )
 	{
@@ -2003,6 +2003,11 @@ var View = function( args )
 	// applicationId = app id..
 	this.createDomElements = function( div, titleStr, width, height, id, flags, applicationId )
 	{
+		if( this.created ) 
+		{
+			return;
+		}
+		this.created = true;
 		if ( !div ) return false;
 		
 		// Native mode? Creates a new place for the view
@@ -2017,12 +2022,11 @@ var View = function( args )
 
 		var filter = [
 			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
-			'screen', 'parentView', 'transparent'
+			'screen', 'parentView', 'transparent', 'minimized'
 		];
 
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
-		
 		
 		var app = false;
 		if( window._getAppByAppId )
@@ -2927,93 +2931,113 @@ var View = function( args )
 		
 		div.doMinimize = function ( e )
 		{
-			if( div.minimized ) return;
+			if( div.minimized ) 
+			{
+				console.log( 'Already minimized' );
+				return;
+			}
 			div.minimized = true;
 			if( !e )
 			{
-				e = { button: 0 };
+				e = { button: 0, fake: true };
 			}
 			
 			// Normal desktop applications
 			if( !window.isMobile )
 			{
-				_ActivateWindow( div, false, e );
-				var escapeFlag = 0;
-				if( 
-					div.windowObject && 
-					( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && 
-					ge( 'Taskbar' )
-				)
+				// Fake events just brute forces
+				if( e.fake )
 				{
-					var t = ge( 'Taskbar' );
-					for( var tel = 0; tel < t.childNodes.length; tel++ )
-					{
-						if( t.childNodes[tel].window == div )
-						{
-							t.childNodes[tel].mousedown = true;
-							e.button = 0;
-							t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
-							return true;
-						}
-					}
+					div.classList.remove( 'Active' );
+					div.parentNode.classList.remove( 'Active' );
+					div.minimized = true;
+					div.windowObject.flags.minimized = true;
+					div.viewContainer.setAttribute( 'minimized', 'minimized' );
+					PollTray();
+					PollTaskbar();
 				}
-				else if( ge( 'DockWindowList' ) )
+				else
 				{
-					var t = ge( 'DockWindowList' );
-					for( var tel = 0; tel < t.childNodes.length; tel++ )
+					// Only on real events
+					_ActivateWindow( div, false, e );
+					var escapeFlag = 0;
+					if( 
+						div.windowObject && 
+						( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && 
+						ge( 'Taskbar' )
+					)
 					{
-						if( t.childNodes[tel].window == div )
+						var t = ge( 'Taskbar' );
+						for( var tel = 0; tel < t.childNodes.length; tel++ )
 						{
-							t.childNodes[tel].mousedown = true;
-							e.button = 0;
-							t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
-							escapeFlag++;
-							break;
-						}
-					}
-				}
-				// Try to use the dock		
-				if( escapeFlag == 0 )
-				{
-					if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
-					{
-						for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
-						{
-							var ch = Workspace.mainDock.dom.childNodes[ u ];
-							// Check the view list
-							if( ch.classList.contains( 'ViewList' ) )
+							if( t.childNodes[tel].window == div )
 							{
-								for( var z = 0; z < ch.childNodes.length; z++ )
+								t.childNodes[tel].mousedown = true;
+								e.button = 0;
+								t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
+								return true;
+							}
+						}
+					}
+					else if( ge( 'DockWindowList' ) )
+					{
+						var t = ge( 'DockWindowList' );
+						for( var tel = 0; tel < t.childNodes.length; tel++ )
+						{
+							if( t.childNodes[tel].window == div )
+							{
+								t.childNodes[tel].mousedown = true;
+								e.button = 0;
+								t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
+								escapeFlag++;
+								break;
+							}
+						}
+					}
+			
+					// Try to use the dock		
+					if( escapeFlag == 0 )
+					{
+						if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
+						{
+							for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
+							{
+								var ch = Workspace.mainDock.dom.childNodes[ u ];
+								// Check the view list
+								if( ch.classList.contains( 'ViewList' ) )
 								{
-									var cj = ch.childNodes[ z ];
-									if( cj.viewId && movableWindows[ cj.viewId ] == div )
+									for( var z = 0; z < ch.childNodes.length; z++ )
 									{
-										cj.mousedown = true;
-										cj.onclick( { button: 0 } );
-										escapeFlag++;
-										break;
+										var cj = ch.childNodes[ z ];
+										if( cj.viewId && movableWindows[ cj.viewId ] == div )
+										{
+											cj.mousedown = true;
+											cj.onclick( { button: 0 } );
+											escapeFlag++;
+											break;
+										}
 									}
 								}
-							}
-							if( escapeFlag == 0 )
-							{
-								// Check applications
-								if( ch.executable )
+								if( escapeFlag == 0 )
 								{
-									for( var r = 0; escapeFlag == 0 && r < Workspace.applications.length; r++ )
+									// Check applications
+									if( ch.executable )
 									{
-										var app = Workspace.applications[ r ];
-										if( app.applicationName == ch.executable )
+										for( var r = 0; escapeFlag == 0 && r < Workspace.applications.length; r++ )
 										{
-											if( app.windows )
+											var app = Workspace.applications[ r ];
+											if( app.applicationName == ch.executable )
 											{
-												for( var t in app.windows )
+												if( app.windows )
 												{
-													if( app.windows[t] == div.windowObject )
+													for( var t in app.windows )
 													{
-														Workspace.mainDock.toggleExecutable( ch.executable );
-														escapeFlag++;
-														break;
+														if( app.windows[t] == div.windowObject )
+														{
+															Workspace.mainDock.toggleExecutable( ch.executable );
+															escapeFlag++;
+															break;
+														}
 													}
 												}
 											}
@@ -3024,6 +3048,7 @@ var View = function( args )
 						}
 					}
 				}
+				
 				if( div.attached )
 				{
 					for( var a = 0; a < div.attached.length; a++ )
@@ -3780,6 +3805,7 @@ var View = function( args )
 		// If the current window is an app, move it to front.. (unless new window is a child window)
 		if( window.friend && Friend.currentWindowHover )
 			Friend.currentWindowHover = false;
+		
 		// Only activate if needed
 		if( !flags.minimized )
 		{
