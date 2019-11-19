@@ -1868,7 +1868,7 @@ function apiWrapper( event, force )
 					if( app.startupsequence )
 					{						
 						msg.data.minimized = true;
-						if( Workspace.applications.length && window.ScreenOverlay )
+						if( Workspace.applications.length && Workspace.applications[0].windows && window.ScreenOverlay )
 						{
 							ScreenOverlay.invisible();
 						}
