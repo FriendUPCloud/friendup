@@ -224,6 +224,12 @@
 	color: #34495E;
 }
 
+#Admin #GuiContent .FullContent > div > div.List > .HRow.Selected
+{
+	background-color: #34495E;
+    color: #FFFFFF;
+}
+
 #Admin #GuiContent div
 {
 	border: 0;

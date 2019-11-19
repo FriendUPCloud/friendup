@@ -1398,6 +1398,24 @@ Sections.accounts_users = function( cmd, extra )
 		{
 			r.onclick = function()
 			{
+				if( ge( 'ListUsersInner' ) )
+				{
+					var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+			
+					if( list.length > 0 )
+					{
+						for( var a = 0; a < list.length; a++ )
+						{
+							if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+							{
+								list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+							}
+						}
+					}
+				}
+				
+				this.className = ( this.className.split( ' Selected' ).join( '' ) + ' Selected' );
+				
 				Sections.accounts_users( 'edit', uid );
 			}
 		}
@@ -1638,7 +1656,7 @@ Sections.accounts_users = function( cmd, extra )
 				RunRequestQueue();
 			}
 			
-			
+			hideStatus( 'Disabled', false );
 		}
 		
 		// Moved to top instead ...
