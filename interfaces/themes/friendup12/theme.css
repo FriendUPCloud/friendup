@@ -1111,25 +1111,26 @@ body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
 	background: rgba(200,200,200,1);
 	position: absolute;
 	margin: 0;
-	top: 7px;
-    right: 5px;
-    width: 85px;
-    min-height: 85px;
+	top: 20px;
+    right: 20px;
+    width: 56px;
+    min-height: 56px;
 	border-radius: 100%;
 	left: auto;
 	background-position: center;
 	padding: 0;
 	z-index: 100;
 	box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+	opacity: 1;
 }
 
 body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:after
 {
-	content: "\f011";
+	content: "\f00d";
 	display: block;
 	font-family: fontawesome;
 	font-weight: normal;
-	font-size: 2.9em;
+	font-size: 1.5em;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -1137,7 +1138,7 @@ body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:after
 	height: 100%;
 	color: white;
 	text-align: center;
-	line-height: 85px;
+	line-height: 56px;
 }
 
 .View.Active > .Title > div > .MobileClose:before,
