@@ -911,7 +911,7 @@ function _ActivateWindowOnly( div )
 					else deal();
 				} )( m );
 			}
-			else
+			else if( m.classList.contains( 'Active' ) )
 			{
 				_DeactivateWindow( m );
 			}
@@ -1010,17 +1010,13 @@ function _ActivateWindow( div, nopoll, e )
 	// Already activating
 	if( div.parentNode.classList.contains( 'Activating' ) )
 	{
-		console.log( '[window.js] Already activated', div );
 		return;
 	}
 	// And is already active
 	if( div.classList.contains( 'Active' ) )
 	{
-		console.log( '[window.js] Already activated', div );
 		return;
 	}
-	
-	console.log( '[window.js] Activate: ', div );
 	
 	// Remove menu on calendar
 	if( Workspace.calendarWidget )
@@ -1277,14 +1273,13 @@ function _removeWindowTiles( div )
 
 function _DeactivateWindow( m, skipCleanUp )
 {
-	console.log( '[window.js] Deactivate window', m );
 	var ret = false;
 	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
 		m.classList.remove( 'Active' );
 		m.viewContainer.classList.remove( 'Active' );
-
+		
 		CheckMaximizedView();
 		
 		if( m.windowObject && m.notifyActivated )
@@ -1353,14 +1348,18 @@ function _DeactivateWindow( m, skipCleanUp )
 					break;
 				}
 			}
+			
 			if( !hasActive )
 			{
 				for( var a in app.windows )
 				{
 					if( app.windows[ a ].flags.mainView && m.windowObject != app.windows[ a ] )
 					{
-						app.windows[ a ].flags.minimized = false;
-						app.windows[ a ].activate();
+						if( isMobile )
+						{
+							app.windows[ a ].flags.minimized = false;
+							app.windows[ a ].activate();
+						}
 						break;
 					}
 				}
@@ -1406,7 +1405,8 @@ function _DeactivateWindows()
 	for( a in movableWindows )
 	{
 		var m = movableWindows[a];
-		windowsDeactivated += _DeactivateWindow( m, true );
+		if( m.classList.contains( 'Active' ) )
+			windowsDeactivated += _DeactivateWindow( m, true );
 	}
 
 	//if( windowsDeactivated > 0 ) PollTaskbar ();
@@ -3737,7 +3737,6 @@ var View = function( args )
 		{
 			if( !flags.minimized )
 			{
-				console.log( '[window.js] Not minimized.' );
 				this.setFlag( 'maximized', true );
 				div.setAttribute( 'maximized', 'true' );
 			
@@ -3759,7 +3758,6 @@ var View = function( args )
 			}
 			else
 			{
-				console.log( '[window.js] Flag minimized: ', flags );
 			}
 		}
 
@@ -4302,7 +4300,6 @@ var View = function( args )
 	this.showBackButton = function( visible, cbk )
 	{
 		if( !isMobile ) return;
-		console.log( '[window.js] Are we showing it?', visible );
 		if( visible )
 		{
 			self.mobileBack.classList.add( 'Showing' );
@@ -4459,7 +4456,6 @@ var View = function( args )
 	{
 		if( !force && this.flags.minimized ) 
 		{
-			console.log( '[window.js] window is minimized - will not activate.' );
 			return;
 		}
 		_ActivateWindow( this._window.parentNode );
@@ -4469,7 +4465,6 @@ var View = function( args )
 	{
 		if( this.flags.minimized ) 
 		{
-			console.log( '[window.js] window is minimized - will not activate.' );
 			return;
 		}
 		_ActivateWindow( this._window.parentNode );
@@ -4578,8 +4573,6 @@ var View = function( args )
 			
 		var app = _getAppByAppId( this.applicationId );
 		if( !app ) return;
-		
-		console.log( '[window.js] Setting mainview', this );
 		
 		this.flags.mainView = set;
 		
