@@ -822,6 +822,16 @@ body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File > .Title
 	transform: rotate3d(0,1,0,180deg);
 }
 
+.OnWorkspace.ViewContainer.Flipped .Title span
+{
+	opacity: 0;
+}
+
+.OnWorkspace.ViewContainer.Flipped > .ViewIcon
+{
+	opacity: 0.6;
+}
+
 /* Done icons for mobile */
 
 #Screens .Listview .File

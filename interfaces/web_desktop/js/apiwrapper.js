@@ -1868,6 +1868,10 @@ function apiWrapper( event, force )
 					if( app.startupsequence )
 					{						
 						msg.data.minimized = true;
+						if( Workspace.applications.length && window.ScreenOverlay )
+						{
+							ScreenOverlay.invisible();
+						}
 					}
 					
 					var v = new View( msg.data );
