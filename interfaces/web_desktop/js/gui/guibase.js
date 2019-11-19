@@ -2938,6 +2938,7 @@ function PollTaskbar( curr )
 						// Activate
 						d.setActive = function( click )
 						{
+							this.classList.add( 'Active' );
 							_ActivateWindow( this.window );
 							if( click )
 							{
@@ -2993,9 +2994,9 @@ function PollTaskbar( curr )
 						{
 							if( this.window.classList.contains( 'Active' ) )
 							{
-								this.classList.remove( 'Active' );
 								_DeactivateWindow( this.window );
 							}
+							this.classList.remove( 'Active' );
 						}
 						// Click event
 						d.onmousedown = function()
