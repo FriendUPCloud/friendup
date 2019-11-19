@@ -9431,12 +9431,15 @@ Workspace.receivePush = function( jsonMsg )
 	else
 	{
 		handleClick();
-		if( this.onReady ) this.onReady();
 	}
 	
 	function handleClick()
 	{
-		if( !msg.application ) return "noapp";
+		if( !msg.application ) 
+		{
+			if( Workspace.onReady ) Workspace.onReady();
+			return 'noapp';
+		}
 	
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
@@ -9474,7 +9477,10 @@ Workspace.receivePush = function( jsonMsg )
 					callback: false,
 					data: msg
 				} ), '*' );
-				return "ok";
+				
+				if( Workspace.onReady ) Workspace.onReady();
+				
+				return 'ok';
 			}
 		}
 	
@@ -9498,7 +9504,6 @@ Workspace.receivePush = function( jsonMsg )
 		// Send message to app once it has started...
 		function appMessage()
 		{
-			
 			var app = false;
 			var apps = Workspace.applications;
 			for( var a = 0; a < apps.length; a++ )
@@ -9549,6 +9554,8 @@ Workspace.receivePush = function( jsonMsg )
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
 		Friend.startupApps[ msg.application ] = true;
 		ExecuteApplication( msg.application, '', appMessage );
+		
+		if( Workspace.onReady ) Workspace.onReady();
 	}
 
 	return 'ok';
