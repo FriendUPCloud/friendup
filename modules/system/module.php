@@ -246,7 +246,7 @@ if( isset( $args->command ) )
 				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 'listconnectedusers',
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
-				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
+				'workgroupget', 'setsetting', 'getsetting', 'getavatar', 'listlibraries', 'listmodules',
 				'listuserapplications', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
@@ -1592,6 +1592,9 @@ if( isset( $args->command ) )
 			break;
 		case 'getsetting':
 			require( 'modules/system/include/getsetting.php' );
+			break;
+		case 'getavatar':
+			require( 'modules/system/include/getavatar.php' );
 			break;
 		case 'listlibraries':
 			require( 'modules/system/include/listlibraries.php' );

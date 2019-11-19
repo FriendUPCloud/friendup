@@ -162,7 +162,7 @@ if( $users = $SqlDatabase->FetchObjects( $q = '
 	$out = [];
 	foreach( $users as $u )
 	{
-		$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Level', 'UniqueID', 'Status' ];
+		$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Image', 'Level', 'UniqueID', 'Status' ];
 		$o = new stdClass();
 		foreach( $keys as $key )
 		{

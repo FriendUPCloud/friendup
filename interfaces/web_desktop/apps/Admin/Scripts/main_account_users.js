@@ -433,19 +433,21 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								// Avatar --------------------------------------------------
 					
-								if( ge( 'Avatar' ) && workspaceSettings.avatar )
+								if( ge( 'AdminAvatar' ) && userInfo.avatar )
 								{
+									// Set the url to get this avatar instead and cache it in the browser ...
+									
 									// Only update the avatar if it exists..
 									var avSrc = new Image();
-									avSrc.src = workspaceSettings.avatar;
+									avSrc.src = userInfo.avatar;
 									avSrc.onload = function()
 									{
-										var ctx = ge( 'Avatar' ).getContext( '2d' );
+										var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
 										ctx.drawImage( avSrc, 0, 0, 256, 256 );
 									}
 								} 
-					
-								var ae = ge( 'AvatarEdit' );
+								
+								var ae = ge( 'AdminAvatarEdit' );
 								if( ae ) ae.onclick = function( e )
 								{
 									changeAvatar();
@@ -744,8 +746,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 					
 					if( first )
-					{
-						
+					{	
 						// Get the user details template
 						var d = new File( 'Progdir:Templates/account_users_details.html' );
 						console.log( 'userInfo ', userInfo );
@@ -803,15 +804,21 @@ Sections.accounts_users = function( cmd, extra )
 			
 			// TODO: CHANGE CODE LOGIC TO SHOW DATA ONCE THE FIRST CALL RETURNS AND THEN CONTINUE TO NEXT, INSTEAD OF WAITING FOR ALL ...
 			
-			
+			// Run it all in the same time, except the first ...
 			
 			// Go through all data gathering until stop
 			var loadingSlot = 0;
+			var loadingInfo = {};
 			var loadingList = [
 				
 				// 0 | Load userinfo
 				function(  )
 				{
+					if( ge( 'UserDetails' ) )
+					{
+						ge( 'UserDetails' ).innerHTML = '';
+					}
+					
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
@@ -828,79 +835,25 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						console.log( 'userinfoget ', { e:e, d:userInfo } );
 						if( e != 'ok' ) userInfo = '404';
-						var info = { userInfo: userInfo };
-						loadingList[ ++loadingSlot ]( info );
 						
-						initUsersDetails( info, [  ], true );
+						// TODO: Run avatar cached here ...
+						
+						userInfo.avatar = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=256&height=256&authid=' + Application.authId;
+						
+						loadingInfo.userInfo = userInfo;
+						
+						console.log( '// 0 | Load userinfo' );
+						
+						initUsersDetails( loadingInfo, [  ], true );
+						
+						// Go to next in line ...
+						loadingList[ ++loadingSlot ](  );
 					}
-					
 					u.execute( 'userinfoget', { id: extra, mode: 'all', authid: Application.authId } );
 				},
 				
-				// 5 | Load user settings
-				function( info )
-				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
-					{
-						//if( e != 'ok' ) return;
-						var settings = null;
-						try
-						{
-							settings = JSON.parse( d );
-						}
-						catch( e )
-						{
-							settings = null;
-						}
-						console.log( 'usersettings ', { e:e, d:settings } );
-						if( e != 'ok' ) settings = '404';
-						info.settings = settings;
-						loadingList[ ++loadingSlot ]( info );
-						
-						initUsersDetails( info, [  ] );
-					}
-					u.execute( 'usersettings', { userid: info.ID, authid: Application.authId } );
-				},
-				
-				// 6 | Get more user settings
-				function( info )
-				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
-					{
-						//if( e != 'ok' ) return;
-						var workspacesettings = null;
-						
-						try
-						{
-							workspacesettings = JSON.parse( d );
-						}
-						catch( e )
-						{
-							workspacesettings = null;
-						}
-						
-						console.log( 'getsetting ', { e:e, d:workspacesettings } );
-						
-						if( e != 'ok' ) workspacesettings = '404';
-						info.workspaceSettings = workspacesettings;
-						loadingList[ ++loadingSlot ]( info );
-						
-						initUsersDetails( info, [  ]/*, true*/ );
-						
-					}
-					u.execute( 'getsetting', { settings: [ 
-						'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
-						'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
-						'focusmode', 'hiddensystem', 'workspacecount', 
-						'scrolldesktopicons', 'wizardrun', 'themedata_' + info.settings.Theme,
-						'workspacemode'
-					], userid: info.userInfo.ID, authid: Application.authId } );
-				},
-				
-				// 1 | Get user's workgroups
-				function( info )
+				// 3 | Get user's workgroups
+				function(  )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
@@ -917,16 +870,20 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						console.log( 'workgroups ', { e:e, d:d } );
 						if( e != 'ok' ) wgroups = '404';
-						info.workgroups = wgroups;
-						loadingList[ ++loadingSlot ]( info );
+						loadingInfo.workgroups = wgroups;
 						
-						initUsersDetails( info, [ 'workgroup' ] );
+						console.log( '// 3 | Get user\'s workgroups' );
+						
+						initUsersDetails( loadingInfo, [ 'workgroup' ] );
 					}
-					u.execute( 'workgroups', { userid: info.userInfo.ID, authid: Application.authId } );
+					u.execute( 'workgroups', { userid: extra, authid: Application.authId } );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
 				},
 				
-				// 2 | Get user's roles
-				function( info )
+				// 4 | Get user's roles
+				function(  )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
@@ -943,19 +900,23 @@ Sections.accounts_users = function( cmd, extra )
 							{
 								uroles = null;
 							}
-							info.roles = uroles;
+							loadingInfo.roles = uroles;
 						}
 						console.log( 'userroleget ', { e:e, d:uroles } );
-						if( e != 'ok' ) info.roles = '404';
-						loadingList[ ++loadingSlot ]( info );
+						if( e != 'ok' ) loadingInfo.roles = '404';
 						
-						initUsersDetails( info, [ 'role' ] );
+						console.log( '// 4 | Get user\'s roles' );
+						
+						initUsersDetails( loadingInfo, [ 'role' ] );
 					}
-					u.execute( 'userroleget', { userid: info.userInfo.ID, authid: Application.authId } );
+					u.execute( 'userroleget', { userid: extra, authid: Application.authId } );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
 				},
 				
-				// 3 | Get storage
-				function( info )
+				// 5 | Get storage
+				function(  )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
@@ -972,22 +933,26 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						console.log( 'mountlist ', { e:e, d:(ul?ul:d) } );
 						if( e != 'ok' ) ul = '404';
-						info.mountlist = ul;
-						loadingList[ ++loadingSlot ]( info );
+						loadingInfo.mountlist = ul;
 						
-						initUsersDetails( info, [ 'storage' ] );
+						console.log( '// 5 | Get storage' );
+						
+						initUsersDetails( loadingInfo, [ 'storage' ] );
 					}
-					u.execute( 'mountlist', { userid: info.userInfo.ID, authid: Application.authId } );
+					u.execute( 'mountlist', { userid: extra, authid: Application.authId } );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
 				},
 				
-				// 4 | Get user applications
-				function( info )
+				// 6 | Get user applications
+				function(  )
 				{
 					var u = new Module( 'system' );
 					u.onExecuted = function( e, d )
 					{
 						var apps = null;
-						
+					
 						try
 						{
 							apps = JSON.parse( d );
@@ -998,18 +963,96 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						console.log( 'listuserapplications ', { e:e, d:apps } );
 						if( e != 'ok' ) apps = '404';
-						info.applications = apps;
-						loadingList[ ++loadingSlot ]( info );
+						loadingInfo.applications = apps;
 						
-						initUsersDetails( info, [ 'application', 'looknfeel' ] );
+						console.log( '// 6 | Get user applications' );
+						
+						initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
 					}
-					u.execute( 'listuserapplications', { userid: info.userInfo.ID, authid: Application.authId } );
+					u.execute( 'listuserapplications', { userid: extra, authid: Application.authId } );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
+				},
+				
+				// 1 | Load user settings
+				function(  )
+				{
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						//if( e != 'ok' ) return;
+						var settings = null;
+						try
+						{
+							settings = JSON.parse( d );
+						}
+						catch( e )
+						{
+							settings = null;
+						}
+						console.log( 'usersettings ', { e:e, d:settings } );
+						if( e != 'ok' ) settings = '404';
+						loadingInfo.settings = settings;
+						
+						console.log( '// 1 | Load user settings' );
+						
+						initUsersDetails( loadingInfo, [  ] );
+						
+						// Go to next in line ...
+						loadingList[ ++loadingSlot ](  );
+					}
+					u.execute( 'usersettings', { userid: extra, authid: Application.authId } );
+				},
+				
+				// 2 | Get more user settings
+				function(  )
+				{
+					if( loadingInfo.settings && loadingInfo.settings.Theme )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							//if( e != 'ok' ) return;
+							var workspacesettings = null;
+						
+							try
+							{
+								workspacesettings = JSON.parse( d );
+							}
+							catch( e )
+							{
+								workspacesettings = null;
+							}
+						
+							console.log( 'getsetting ', { e:e, d:workspacesettings } );
+						
+							if( e != 'ok' ) workspacesettings = '404';
+							loadingInfo.workspaceSettings = workspacesettings;
+							
+							console.log( '// 2 | Get more user setting' );
+							
+							initUsersDetails( loadingInfo, [  ]/*, true*/ );
+						}
+						u.execute( 'getsetting', { settings: [ 
+							/*'avatar', */'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+							'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+							'focusmode', 'hiddensystem', 'workspacecount', 
+							'scrolldesktopicons', 'wizardrun', 'themedata_' + loadingInfo.settings.Theme,
+							'workspacemode'
+						], userid: extra, authid: Application.authId } );
+					}
+					
+					// Go to next in line ..., might not need to load the next ...
+					loadingList[ ++loadingSlot ](  );
 				},
 				
 				// 7 | init
-				function( info )
+				function(  )
 				{
-					//initUsersDetails( info );
+					console.log( '// 7 | init' );
+					
+					//initUsersDetails( loadingInfo );
 				}
 				
 			];
@@ -1140,150 +1183,6 @@ Sections.accounts_users = function( cmd, extra )
 			headRow.appendChild( d );
 		}
 		
-		// New user button
-		//var l = document.createElement( 'div' );
-		//l.className = 'HContent10 FloatLeft BorderBottom';
-		//var b = document.createElement( 'button' );
-		//b.className = 'IconButton IconSmall fa-plus Negative';
-		//b.innerHTML = '&nbsp;';
-		//l.appendChild( b );		
-		//headRow.appendChild( l );
-		/*var b = ge( 'AdminNewUserBtn' );
-		if( b )
-		{
-			b.onclick = function( e )
-			{
-				// Language
-				var availLangs = {
-					'en' : 'English',
-					'fr' : 'French',
-					'no' : 'Norwegian',
-					'fi' : 'Finnish',
-					'pl' : 'Polish'
-				};
-				
-				var languages = '';
-				
-				for( var a in availLangs )
-				{
-					languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
-				}
-				
-				// Setup / Template
-				
-				getSetupList( function( e, data )
-				{
-					
-					var setup = '<option value="0">None</option>';
-					
-					if( e && data )
-					{
-						for( var s in data )
-						{
-							if( data[s] && data.ID )
-							{
-								setup += '<option value="' + data[s].ID + '">' + data[s].Name + '</option>';
-							}
-						}
-					}
-					
-					var d = new File( 'Progdir:Templates/account_users_details.html' );
-					// Add all data for the template
-					d.replacements = {
-						user_name            : '',
-						user_fullname        : '',
-						user_username        : '',
-						user_email           : '',
-						user_language        : languages,
-						user_setup           : setup,
-						user_locked_toggle   : 'fa-toggle-off',
-						user_disabled_toggle : 'fa-toggle-off',
-						theme_name           : '',
-						theme_dark           : '',
-						theme_style          : '',
-						theme_preview        : '',
-						wallpaper_name       : '',
-						workspace_count      : '',
-						system_disk_state    : '',
-						storage              : '',
-						workgroups           : '',
-						roles                : '',
-						applications         : ''
-					};
-				
-					// Add translations
-					d.i18n();
-					d.onLoad = function( data )
-					{
-						ge( 'UserDetails'               ).innerHTML = data;
-						//initStorageGraphs();
-					
-						ge( 'AdminStatusContainer'      ).style.display = 'none';
-					
-						ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
-						ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
-						ge( 'AdminRoleContainer'        ).style.display = 'none';
-						ge( 'AdminStorageContainer'     ).style.display = 'none';
-						ge( 'AdminApplicationContainer' ).style.display = 'none';
-					
-						// User
-					
-						var bge  = ge( 'UserBasicEdit' );
-						if( bge ) bge.onclick = function( e )
-						{
-							saveUser(  );
-						}
-					
-						// Avatar 
-					
-						var ae = ge( 'AvatarEdit' );
-						if( ae ) ae.onclick = function( e )
-						{
-							changeAvatar();
-						}
-					
-						var au = ge( 'usFullname' );
-						if( au ) au.onblur = function( e )
-						{
-							if( this.value && this.value != this.fullname )
-							{
-							
-								randomAvatar( this.value, function( avatar ) 
-								{ 
-									var canvas = ge( 'Avatar' ).toDataURL();
-								
-									console.log( 'canvas: ', canvas.length );
-									console.log( 'avatar: ', avatar.length );
-								
-									if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
-									{
-										// Only update the avatar if it exists..
-										var avSrc = new Image();
-										avSrc.src = avatar;
-										avSrc.onload = function()
-										{
-											var ctx = ge( 'Avatar' ).getContext( '2d' );
-											ctx.drawImage( avSrc, 0, 0, 256, 256 );
-										}
-									}
-								
-								} );
-							
-								this.fullname = this.value;
-							}
-						}
-					
-						// Responsive framework
-						Friend.responsive.pageActive = ge( 'UserDetails' );
-						Friend.responsive.reinit();
-					}
-					d.load();
-				
-				} );
-				
-			}
-		}*/
-		
 		var btn = ge( 'AdminUsersBtn' );
 		if( btn )
 		{
@@ -1389,7 +1288,7 @@ Sections.accounts_users = function( cmd, extra )
 						
 						// Avatar 
 					
-						var ae = ge( 'AvatarEdit' );
+						var ae = ge( 'AdminAvatarEdit' );
 						if( ae ) ae.onclick = function( e )
 						{
 							changeAvatar();
@@ -1408,14 +1307,14 @@ Sections.accounts_users = function( cmd, extra )
 									console.log( 'canvas: ', canvas.length );
 									console.log( 'avatar: ', avatar.length );
 								
-									if( ge( 'Avatar' ) && avatar && canvas.length <= 15000 )
+									if( ge( 'AdminAvatar' ) && avatar && canvas.length <= 15000 )
 									{
 										// Only update the avatar if it exists..
 										var avSrc = new Image();
 										avSrc.src = avatar;
 										avSrc.onload = function()
 										{
-											var ctx = ge( 'Avatar' ).getContext( '2d' );
+											var ctx = ge( 'AdminAvatar' ).getContext( '2d' );
 											ctx.drawImage( avSrc, 0, 0, 256, 256 );
 										}
 									}
@@ -1567,6 +1466,10 @@ Sections.accounts_users = function( cmd, extra )
 					
 					userList[ a ][ 'LoginTime' ] = ( userList[a][ 'LoginTime' ] != 0 && userList[a][ 'LoginTime' ] != null ? CustomDateTime( userList[a][ 'LoginTime' ] ) : login[ 0 ] );
 					
+					var img = '/system.library/module/?module=system&command=getavatar&userid=' + userList[ a ].ID + ( userList[ a ].Image ? '&image=' + userList[ a ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+					
+					var bg = 'background-image: url(\'' + img + '\'); background-position: center center; background-size: contain; background-repeat: no-repeat; color: transparent;';
+					
 					userList[ a ][ 'Edit' ] = '<span '             + 
 					'id="UserAvatar_' + userList[ a ].ID + '" '    + 
 					'fullname="' + userList[ a ].FullName + '" '   + 
@@ -1574,7 +1477,8 @@ Sections.accounts_users = function( cmd, extra )
 					'status="' + userList[ a ].Status + '" '       + 
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
-					'class="IconSmall fa-user-circle-o"'           + 
+					'class="IconSmall fa-user-circle-o" '          + 
+					'style="' + bg + '" '                          +
 					'></span>';
 					
 					
@@ -1648,13 +1552,27 @@ Sections.accounts_users = function( cmd, extra )
 					// Add row
 					list.appendChild( output[key].content );
 					
+					/*if( output[key].object.ID )
+					{
+						if( ge( 'UserAvatar_' + output[key].object.ID ) )
+						{
+							var img = '/system.library/module/?module=system&command=getavatar&userid=' + output[key].object.ID + ( output[key].object.Image ? '&image=' + output[key].object.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+							
+							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundImage = "url('"+img+"')";
+							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundPosition = 'center';
+							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundSize = 'contain';
+							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundRepeat = 'no-repeat';
+							ge( 'UserAvatar_' + output[key].object.ID ).style.color = 'transparent';
+						}
+					}*/
+					
 					// Set Avatar on delay basis because of having to do one by one user ...
-					setAvatar( output[key].object.ID, false/*output[key].content*/, function( res, userid, content, dat )
+					/*setAvatar( output[key].object.ID, output[key].content, function( res, userid, content, dat )
 					{
 						if( content )
 						{
 							// Add row
-							list.appendChild( content );
+							//list.appendChild( content );
 						}
 						
 						if( res )
@@ -1669,7 +1587,7 @@ Sections.accounts_users = function( cmd, extra )
 							}
 						}
 					
-					} );
+					} );*/
 				}
 			}
 			
@@ -1786,6 +1704,8 @@ Sections.accounts_users = function( cmd, extra )
 	
 	function setAvatar( userid, content, callback )
 	{
+		// TODO: Implement support for imageid hash to be sent to the server for cach check
+		
 		if( userid )
 		{
 			var u = new Module( 'system' );
@@ -1845,7 +1765,7 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						console.log( 'loaded image ... ', item );
 						// Resizes the image
-						var canvas = ge( 'Avatar' );
+						var canvas = ge( 'AdminAvatar' );
 						var context = canvas.getContext( '2d' );
 						context.drawImage( image, 0, 0, 256, 256 );
 					}
@@ -3590,7 +3510,7 @@ function saveUser( uid )
 			
 			function saveAvatar( callback )
 			{
-				var canvas = ge( 'Avatar' );
+				var canvas = ge( 'AdminAvatar' );
 				if( canvas )
 				{
 					context = canvas.getContext( '2d' );

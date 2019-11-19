@@ -219,6 +219,18 @@ else if ( isset( $args->args->setting ) )
 			$s->Save();
 		}
 		
+		// Save image blob as filename hash on user
+		if( $s->ID > 0 && $s->Key == 'avatar' && $s->Data && $s->UserID > 0 )
+		{
+			$u = new dbIO( 'FUser' );
+			$u->ID = $s->UserID;
+			if( $u->Load() )
+			{
+				$u->Image = md5( $s->Data );
+				$u->Save();
+			}
+		}
+		
 		// Save avatar color for later use
 		$c = new dbIO( 'FSetting' );
 		$c->UserID = $s->UserID;

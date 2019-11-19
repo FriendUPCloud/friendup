@@ -105,7 +105,7 @@
 	bottom: 0;
 }
 
-#Admin #UserDetails #AvatarArea.IconSmall:before
+#Admin #UserDetails #AdminAvatarArea.IconSmall:before
 {
 	font-size: 128px;
   	vertical-align: middle;
@@ -113,7 +113,7 @@
   	color: #34495E;
 }
 
-#Admin #UserDetails #AvatarArea 
+#Admin #UserDetails #AdminAvatarArea 
 {
     position: relative;
     display: block;
@@ -125,7 +125,7 @@
     /*background-color: rgba(0,0,0,0.5);*/
 }
 
-#Admin #UserDetails #AvatarArea #Avatar 
+#Admin #UserDetails #AdminAvatarArea #AdminAvatar 
 {
 	position: absolute;
 	top: 0;

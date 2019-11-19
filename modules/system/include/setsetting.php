@@ -77,6 +77,18 @@ else $d = $args->args->data;
 $o->Data = ( is_array( $d ) || is_object( $d ) ? json_encode( $d ) : $d );
 $o->Save();
 
+// Save image blob as filename hash on user
+if( $o->ID > 0 && $o->Key == 'avatar' && $o->Data && $o->UserID > 0 )
+{
+	$u = new dbIO( 'FUser' );
+	$u->ID = $o->UserID;
+	if( $u->Load() )
+	{
+		$u->Image = md5( $o->Data );
+		$u->Save();
+	}
+}
+
 die( 'ok' );
 
 ?>
