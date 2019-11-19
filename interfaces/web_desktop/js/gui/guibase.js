@@ -2991,8 +2991,11 @@ function PollTaskbar( curr )
 						// Deactivate
 						d.setInactive = function()
 						{
-							this.classList.remove( 'Active' );
-							_DeactivateWindow( this.window );
+							if( this.window.classList.contains( 'Active' ) )
+							{
+								this.classList.remove( 'Active' );
+								_DeactivateWindow( this.window );
+							}
 						}
 						// Click event
 						d.onmousedown = function()
