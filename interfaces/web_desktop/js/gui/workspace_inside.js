@@ -1702,23 +1702,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
-					{
-						
-						Workspace.annoying = [];
-						if( !console.l )
-						{
-							console.l = console.log;
-							console.log = function( data, data2 )
-							{
-								Workspace.annoying.push( [ data, data2 ] );
-								console.l( data, data2 );
-							}
-						}
-						console.log( '[Startup] Start of process.' );
+					{	
 						Workspace.startupSequenceRegistered = true;
 						Workspace.onReadyList.push( function()
 						{
-							console.log( '[Startup] Pushing a task.', Workspace.onReadyList );
 							var seq = dat.startupsequence;
 							if( typeof( seq ) != 'object' )
 							{
@@ -1739,7 +1726,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									index: 0,
 									func: function()
 									{
-										console.log( '[Startup] Running at index: ' + l.index + '/' + seq.length + '.' );
 										if( !ScreenOverlay.done && l.index < seq.length )
 										{
 											// Register for Friend DOS
@@ -1767,7 +1753,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 														if( ScreenOverlay.debug )
 															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
-														console.log( '[Startup] > Executing ' + cmd + '.' );
 														Workspace.shell.execute( cmd, function( res )
 														{
 															if( ScreenOverlay.debug )
@@ -1778,27 +1763,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 															l.func();
 															if( Workspace.mainDock )
 																Workspace.mainDock.closeDesklet();
-															console.log( '[Startup] > > Callback on executing ' + cmd + '.' );
 														} );
 													}
 													// Just skip
 													else
 													{
 														l.func();
-														console.log( '[Startup] > > Skipping ' + cmd + '.' );
 													}
 												}
 												else
 												{
 													l.func();
-													console.log( '[Startup] > > Uncaught startup entry.' );
 												}
 												return;
 											}
 										}
 										// Hide overlay
 										ScreenOverlay.hide();
-										console.log( '[Startup] Hide overlay. Done with startup.' );
 										l.func = function()
 										{
 											//
@@ -1811,7 +1792,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else
 							{
-								console.log( '[Startup] Hide overlay. Done with startup - no entries.' );
 								// Hide overlay
 								ScreenOverlay.hide();
 							}
@@ -7921,7 +7901,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			if( Workspace.onReady )
 				Workspace.onReady();
-			console.log( '[Startup] Skipping checking server connection under startup.' );
 			return;
 		}
 		
@@ -8472,7 +8451,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( this.onReadyList.length )
 		{
-			console.log( '[Startup] Executing onready.', this.onReadyList );
 			// Don't run it twice
 			Workspace.onReady = function(){};
 			
