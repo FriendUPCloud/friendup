@@ -81,6 +81,15 @@ var ScreenOverlay = {
 				self.clearContent();
 				self.done = true;
 				
+				if( Workspace.applications )
+				{
+					for( var a = 0; a < Workspace.applications.length; a++ )
+					{
+						Workspace.applications[ a ].startupsequence = false;
+					}
+				}
+				
+				
 				// Make sure we update screen title and tray/tasks
 				PollTaskbar();
 			}, 250 );
