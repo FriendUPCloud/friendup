@@ -215,6 +215,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 					}
 					RemoteUserDelete( actUsr );
 					
+					SocketClose( newsock );
 					SocketFree( newsock );
 					
 					return -1;

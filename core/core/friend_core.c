@@ -625,8 +625,11 @@ void *FriendCoreAcceptPhase2( void *d )
 							{
 								moveToHttp( fd );
 							}
-							//SocketClose( incoming );
-							//goto accerror;
+							else
+							{
+								SocketClose( incoming );
+								goto accerror;
+							}
 							break;
 						}
 					}

@@ -408,6 +408,14 @@ void NotificationIOSSendingThread( FThread *data )
 		return;
 	}
     
+    if( nm->nm_APNSCert == NULL )
+	{
+		SSL_CTX_free( ctx );
+		ERR_print_errors_fp( stderr );
+		FERROR("NotificationIOSSendingThread: certyficate empty\n");
+		return;
+	}
+	
 	if( SSL_CTX_use_certificate_file(ctx, nm->nm_APNSCert, SSL_FILETYPE_PEM) <= 0)
 	{
 		SSL_CTX_free( ctx );
