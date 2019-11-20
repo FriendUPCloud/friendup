@@ -229,13 +229,15 @@ var mousePointer =
 							hoverIcon = true;
 							ic.classList.add( 'Selected' );
 							ic.selected = true;
-							ic.fileInfo.selected = true;
+							if( ic.fileInfo )
+								ic.fileInfo.selected = true;
 						}
 						else if( !mover || mover != icon )
 						{
 							ic.classList.remove( 'Selected' );
 							ic.selected = false;
-							ic.fileInfo.selected = false;
+							if( ic.fileInfo )
+								ic.fileInfo.selected = false;
 						}
 					}
 				}
@@ -2938,6 +2940,8 @@ function PollTaskbar( curr )
 						// Activate
 						d.setActive = function( click )
 						{
+							console.log( 'Setting active' );
+							this.classList.add( 'Active' );
 							_ActivateWindow( this.window );
 							if( click )
 							{
@@ -2991,8 +2995,11 @@ function PollTaskbar( curr )
 						// Deactivate
 						d.setInactive = function()
 						{
+							if( this.window.classList.contains( 'Active' ) )
+							{
+								_DeactivateWindow( this.window );
+							}
 							this.classList.remove( 'Active' );
-							_DeactivateWindow( this.window );
 						}
 						// Click event
 						d.onmousedown = function()

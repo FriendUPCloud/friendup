@@ -15,6 +15,7 @@ include_once( 'php/classes/door.php' );
 $obj = new stdClass();
 $obj->permissions = $args->args->Permissions;
 $obj->domain = $args->args->Domains;
+$obj->visibility = $args->args->visibility;
 
 $f = new Door( $args->args->Filename . ':' );
 

@@ -1702,7 +1702,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
-					{
+					{	
 						Workspace.startupSequenceRegistered = true;
 						Workspace.onReadyList.push( function()
 						{
@@ -1720,13 +1720,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							if( seq.length )
 							{
-								ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
+								if( ScreenOverlay.debug )
+									ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
 								var l = {
 									index: 0,
 									func: function()
 									{
 										if( !ScreenOverlay.done && l.index < seq.length )
 										{
+											// Register for Friend DOS
+											ScreenOverlay.launchIndex = l.index;
 											var cmd = seq[ l.index++ ];
 											if( cmd && cmd.length )
 											{
@@ -1746,12 +1749,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													}
 													if( !found && !Friend.startupApps[ appName ] )
 													{
-														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+														var slot;
+														if( ScreenOverlay.debug )
+															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
 														Workspace.shell.execute( cmd, function( res )
 														{
-															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
-															ScreenOverlay.addDebug( 'Done ' + cmd );
+															if( ScreenOverlay.debug )
+															{
+																ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+																ScreenOverlay.addDebug( 'Done ' + cmd );
+															}
 															l.func();
 															if( Workspace.mainDock )
 																Workspace.mainDock.closeDesklet();
@@ -1790,6 +1798,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						} );
 					}
 
+					PollTray();
 					PollTaskbar();
 				}
 				else
@@ -4805,10 +4814,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 							}
 						}
+						var visibility = false;
+						var inp = w.getWindowElement().getElementsByTagName( 'input' );
+						var visval = icon.Config.visibility ? icon.Config.visibility : 'visible';
+						for( var a = 0; a < inp.length; a++ )
+						{
+							if( inp[a].name == 'visibility' )
+							{
+								if( inp[a].value == visval )
+									inp[a].checked = 'checked';
+								else inp[a].checked = '';
+							}
+						}
+						
 						// Set disk icon
 						if( da )
 						{
-							da.style.height = '150px';
+							da.style.height = '90px';
+							da.style.maxWidth = '110px';
 							da.style.backgroundRepeat = 'no-repeat';
 							da.style.backgroundPosition = 'center';
 							da.style.backgroundSize = '64px auto';
@@ -4918,7 +4941,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							eles.push( inps[n] );
 						for( var n = 0; n < sels.length; n++ )
 							eles.push( sels[n] );
-						
 						
 						for( var a in eles )
 						{
@@ -5213,7 +5235,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
-
 				}
 				f.load();
 			}
@@ -5553,7 +5574,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Skip permission inputs
 			if( out[a].getAttribute && out[a].getAttribute( 'permission' ) )
 				continue;
-			args[out[a].name] = out[a].type == 'checkbox' ? ( out[a].checked ? '1' : '0' ) : out[a].value;
+			if( out[a].type == 'radio' )
+			{
+				if( out[a].checked )
+					args[out[a].name] = out[a].value;
+			}
+			else
+			{
+				args[out[a].name] = out[a].type == 'checkbox' ? ( out[a].checked ? '1' : '0' ) : out[a].value;
+			}
 		}
 
 		// Permissions now
@@ -5662,7 +5691,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Execute module action
 		l.onExecuted = function( r, d )
 		{
-			//console.log( r + ' ' + d );
+			// A disk
+			if( args.visibility )
+			{
+				var m = new Library( 'system.library' );
+				m.onExecuted = function()
+				{
+					Workspace.refreshDesktop( false, true );
+				}
+				m.execute( 'device/refresh', { devname: args.Filename } );
+			}
+			
 		}
 		l.execute( 'fileinfo', args );
 
@@ -7888,6 +7927,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{	
 		// Too early
 		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
+		if( window.ScreenOverlay && ScreenOverlay.visibility )
+		{
+			if( Workspace.onReady )
+				Workspace.onReady();
+			return;
+		}
 		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
@@ -8436,6 +8481,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( this.onReadyList.length )
 		{
+			// Don't run it twice
+			Workspace.onReady = function(){};
+			
 			for( var a = 0; a < this.onReadyList.length; a++ )
 			{
 				this.onReadyList[ a ]();
@@ -9405,7 +9453,11 @@ Workspace.receivePush = function( jsonMsg )
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
-	if( msg == false || msg == 1 ) return "nomsg";
+	if( msg == false || msg == 1 ) 
+	{
+		if( this.onReady ) this.onReady();
+		return "nomsg";
+	}
 	try
 	{
 		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
@@ -9415,7 +9467,11 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Do nothing for now...
 	}
-	if( !msg ) return "nomsg";
+	if( !msg ) 
+	{
+		if( this.onReady ) this.onReady();
+		return "nomsg";
+	}
 		
 	// Clear the notifications now... (race cond?)
 	if( window.friendApp )
@@ -9428,6 +9484,7 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Revert to push notifications on the OS side
 		Notify( { title: msg.title, text: msg.text }, null, handleClick );
+		if( this.onReady ) this.onReady();
 		return 'ok';
 	}
 	// "Click"
@@ -9438,7 +9495,11 @@ Workspace.receivePush = function( jsonMsg )
 	
 	function handleClick()
 	{
-		if( !msg.application ) return "noapp";
+		if( !msg.application ) 
+		{
+			if( Workspace.onReady ) Workspace.onReady();
+			return 'noapp';
+		}
 	
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
@@ -9476,7 +9537,10 @@ Workspace.receivePush = function( jsonMsg )
 					callback: false,
 					data: msg
 				} ), '*' );
-				return "ok";
+				
+				if( Workspace.onReady ) Workspace.onReady();
+				
+				return 'ok';
 			}
 		}
 	
@@ -9500,7 +9564,6 @@ Workspace.receivePush = function( jsonMsg )
 		// Send message to app once it has started...
 		function appMessage()
 		{
-			
 			var app = false;
 			var apps = Workspace.applications;
 			for( var a = 0; a < apps.length; a++ )
@@ -9518,12 +9581,14 @@ Workspace.receivePush = function( jsonMsg )
 			if( !app )
 			{
 				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
 		
 			if( !app.contentWindow ) 
 			{
 				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
 		
@@ -9546,6 +9611,8 @@ Workspace.receivePush = function( jsonMsg )
 					getWrapperCallback( amsg.callback );
 				}
 			}, 1000 );
+			
+			if( Workspace.onReady ) Workspace.onReady();
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );

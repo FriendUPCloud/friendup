@@ -1820,13 +1820,19 @@ function apiWrapper( event, force )
 							{
 								if( win )
 								{
-									win.activate();
+									if( !app.startupsequence )
+									{
+										win.activate();
+									}
 								}
 								WorkspaceMenu.close();
 							}
 							else if( !( window.currentMovable && currentMovable.getAttribute( 'moving' ) == 'moving' ) )
 							{
-								win.activate();	
+								if( !app.startupsequence )
+								{
+									win.activate();	
+								}
 							}
 							break;
 					}
@@ -1858,6 +1864,17 @@ function apiWrapper( event, force )
 					
 					console.log( '[apiwrapper] Opening a new view: ', msg.data );
 					
+					// Startup sequence apps need to be deactivated
+					if( app.startupsequence )
+					{						
+						msg.data.minimized = true;
+						// Fake hide when we have a window
+						if( Workspace.applications.length && Workspace.applications[0].windows && window.ScreenOverlay )
+						{
+							ScreenOverlay.invisible();
+						}
+					}
+					
 					var v = new View( msg.data );
 					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
@@ -1867,7 +1884,7 @@ function apiWrapper( event, force )
 					}
 					
 					if( v.ready )
-					{
+					{	
 						if( !app.windows )
 							app.windows = [];
 						app.windows[ viewId ] = v;
