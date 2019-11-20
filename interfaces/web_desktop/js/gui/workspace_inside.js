@@ -7925,6 +7925,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
 		if( window.ScreenOverlay && ScreenOverlay.visibility )
 		{
+			if( Workspace.onReady )
+				Workspace.onReady();
 			console.log( '[Startup] Skipping checking server connection under startup.' );
 			return;
 		}
@@ -8474,6 +8476,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Execute when everything is ready
 	onReady: function()
 	{
+		console.log( '[Startup] Executing onready.', this.onReadyList );
 		// Don't run it twice
 		Workspace.onReady = function(){};
 		
