@@ -734,7 +734,7 @@ var WorkspaceInside = {
 					if( p.substr( p.length - 1, 1 ) == ':' )
 					{
 						//console.log( '[handleFilesystemChange] Refreshing desktop.' );
-						Workspace.refreshDesktop( false, true );
+						Workspace.refreshDesktop();
 					}
 					return;
 				}
@@ -2638,7 +2638,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = new Module( 'system' );
 			m.onExecuted = function()
 			{
-				Workspace.refreshDesktop( false, true );
+				Workspace.refreshDesktop();
 			}
 			m.execute( 'addfilesystem', info );
 
@@ -5574,7 +5574,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Skip permission inputs
 			if( out[a].getAttribute && out[a].getAttribute( 'permission' ) )
 				continue;
-			args[out[a].name] = out[a].type == 'checkbox' ? ( out[a].checked ? '1' : '0' ) : out[a].value;
+			if( out[a].type == 'radio' )
+			{
+				if( out[a].checked )
+					args[out[a].name] = out[a].value;
+			}
+			else
+			{
+				args[out[a].name] = out[a].type == 'checkbox' ? ( out[a].checked ? '1' : '0' ) : out[a].value;
+			}
 		}
 
 		// Permissions now
@@ -5683,7 +5691,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Execute module action
 		l.onExecuted = function( r, d )
 		{
-			//console.log( r + ' ' + d );
+			// A disk
+			if( args.visibility )
+			{
+				var m = new Library( 'system.library' );
+				m.onExecuted = function()
+				{
+					Workspace.refreshDesktop( false, true );
+				}
+				m.execute( 'device/refresh', { devname: args.Filename } );
+			}
+			
 		}
 		l.execute( 'fileinfo', args );
 
@@ -6966,7 +6984,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					name: i18n( 'menu_refresh_desktop' ),
 					command: function()
 					{
-						Workspace.refreshDesktop( false, true );
+						Workspace.refreshDesktop();
 					}
 				}
 			];
