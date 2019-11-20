@@ -972,7 +972,10 @@ int FileClose( struct File *s, void *fp )
 			{
 				if( lfp->f_Stream == FALSE )
 				{
-					remove( sd->fname );
+					if( sd->fname != NULL )
+					{
+						remove( sd->fname );
+					}
 				}
 			}
 			else if( sd->mode == MODE_WRITE )
