@@ -81,13 +81,16 @@ var ScreenOverlay = {
 				self.clearContent();
 				self.done = true;
 				
-				if( Workspace.applications )
+				setTimeout( function()
 				{
-					for( var a = 0; a < Workspace.applications.length; a++ )
+					if( Workspace.applications )
 					{
-						Workspace.applications[ a ].startupsequence = false;
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							Workspace.applications[ a ].startupsequence = false;
+						}
 					}
-				}
+				}, 1000 );
 				
 				
 				// Make sure we update screen title and tray/tasks
