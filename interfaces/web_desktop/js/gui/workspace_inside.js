@@ -1703,6 +1703,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
 					{
+						
+						Workspace.annoying = [];
+						if( !console.l )
+						{
+							console.l = console.log;
+							console.log = function( data, data2 )
+							{
+								Workspace.annoying.push( [ data, data2 ] );
+								console.l( data, data2 );
+							}
+						}
 						console.log( '[Startup] Start of process.' );
 						Workspace.startupSequenceRegistered = true;
 						Workspace.onReadyList.push( function()
