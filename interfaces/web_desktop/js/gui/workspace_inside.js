@@ -734,7 +734,7 @@ var WorkspaceInside = {
 					if( p.substr( p.length - 1, 1 ) == ':' )
 					{
 						//console.log( '[handleFilesystemChange] Refreshing desktop.' );
-						Workspace.refreshDesktop();
+						Workspace.refreshDesktop( false, true );
 					}
 					return;
 				}
@@ -2638,7 +2638,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = new Module( 'system' );
 			m.onExecuted = function()
 			{
-				Workspace.refreshDesktop();
+				Workspace.refreshDesktop( false, true );
 			}
 			m.execute( 'addfilesystem', info );
 
@@ -6966,7 +6966,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					name: i18n( 'menu_refresh_desktop' ),
 					command: function()
 					{
-						Workspace.refreshDesktop();
+						Workspace.refreshDesktop( false, true );
 					}
 				}
 			];
