@@ -929,6 +929,7 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 		UserSession *us = NULL;
 		FULONG dbid = 0;
 		FBOOL mount = FALSE;
+		FULONG uid = 0;
 	
 		DEBUG("[MountFSNoUser] Mount device\n");
 	
@@ -952,6 +953,9 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 					mount = (FULONG)ltl->ti_Data;
 					break;
 				case FSys_Mount_User_SessionID:
+					break;
+				case FSys_Mount_UserID:
+					uid = (FULONG)ltl->ti_Data;
 					break;
 			}
 			ltl++;
