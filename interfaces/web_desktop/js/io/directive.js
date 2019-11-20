@@ -45,6 +45,7 @@ function ExecuteApplication( app, args, callback )
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ appName ] )
 	{
+		callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 		return;
 	}
 
@@ -94,8 +95,10 @@ function ExecuteApplication( app, args, callback )
 		{
 			_ActivateWindow( Friend.singleInstanceApps[ appName ].windows[ a ]._window.parentNode );
 			_WindowToFront( Friend.singleInstanceApps[ appName ].windows[ a ]._window.parentNode );
+			callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 			return;
 		}
+		callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 		return;
 	}
 	// Only allow one app instance in mobile!
