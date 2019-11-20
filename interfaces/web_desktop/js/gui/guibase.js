@@ -229,13 +229,15 @@ var mousePointer =
 							hoverIcon = true;
 							ic.classList.add( 'Selected' );
 							ic.selected = true;
-							ic.fileInfo.selected = true;
+							if( ic.fileInfo )
+								ic.fileInfo.selected = true;
 						}
 						else if( !mover || mover != icon )
 						{
 							ic.classList.remove( 'Selected' );
 							ic.selected = false;
-							ic.fileInfo.selected = false;
+							if( ic.fileInfo )
+								ic.fileInfo.selected = false;
 						}
 					}
 				}

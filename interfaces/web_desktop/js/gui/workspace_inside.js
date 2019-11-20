@@ -4814,10 +4814,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 							}
 						}
+						var visibility = false;
+						var inp = w.getWindowElement().getElementsByTagName( 'input' );
+						var visval = icon.Config.visibility ? icon.Config.visibility : 'visible';
+						for( var a = 0; a < inp.length; a++ )
+						{
+							if( inp[a].name == 'visibility' )
+							{
+								if( inp[a].value == visval )
+									inp[a].checked = 'checked';
+								else inp[a].checked = '';
+							}
+						}
+						
 						// Set disk icon
 						if( da )
 						{
-							da.style.height = '150px';
+							da.style.height = '90px';
+							da.style.maxWidth = '110px';
 							da.style.backgroundRepeat = 'no-repeat';
 							da.style.backgroundPosition = 'center';
 							da.style.backgroundSize = '64px auto';
@@ -4927,7 +4941,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							eles.push( inps[n] );
 						for( var n = 0; n < sels.length; n++ )
 							eles.push( sels[n] );
-						
 						
 						for( var a in eles )
 						{
@@ -5222,7 +5235,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
-
 				}
 				f.load();
 			}

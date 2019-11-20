@@ -987,6 +987,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				// Special case - put Home disks first
 				if( i.Type == 'Door' )
 				{
+					if( i.Config && i.Config.visibility == 'hidden' ) continue;
 					if( i.Title != 'Home' )
 						o.SortPriority = 1;
 					else o.SortPriority = 0;
