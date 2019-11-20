@@ -20,7 +20,7 @@ var UsersSettings = function ( setting, set )
 	var listed      = ( 0                            );
 	var total       = ( 0                            );
 	var startlimit  = ( 0                            );
-	var maxlimit    = ( 50                            );
+	var maxlimit    = ( 28                            );
 	var limit       = ( startlimit + ', ' + maxlimit );
 	
 	this.vars = ( this.vars ? this.vars : {
