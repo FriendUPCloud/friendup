@@ -506,12 +506,6 @@ var WorkspaceInside = {
 			return Workspace.relogin();
 		}
 		
-		if( window.ScreenOverlay && ScreenOverlay.visibility )
-		{
-			console.log( '[Startup] Skipping to initialize websocket when in startup mode.' );
-			return;
-		}
-		
 		if( !Workspace.sessionId )
 		{
 			setTimeout( Workspace.initWebSocket, 1000 );
