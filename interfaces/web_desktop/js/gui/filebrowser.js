@@ -400,7 +400,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			if( type == 'volume' )
 			{
 				menu.push( {
-					name: i18n( 'i18n_volumeicon_information' ),
+					name: i18n( 'menu_show_icon_information' ),
 					command: function()
 					{
 						for( var c = 0; c < Workspace.icons.length; c++ )
