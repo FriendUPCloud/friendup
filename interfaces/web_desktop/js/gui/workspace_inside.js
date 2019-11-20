@@ -8476,12 +8476,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Execute when everything is ready
 	onReady: function()
 	{
-		console.log( '[Startup] Executing onready.', this.onReadyList );
-		// Don't run it twice
-		Workspace.onReady = function(){};
-		
 		if( this.onReadyList.length )
 		{
+			console.log( '[Startup] Executing onready.', this.onReadyList );
+			// Don't run it twice
+			Workspace.onReady = function(){};
+			
 			for( var a = 0; a < this.onReadyList.length; a++ )
 			{
 				this.onReadyList[ a ]();
