@@ -1167,6 +1167,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								if( mountedWithoutUser == TRUE )
 								{
 									//DeviceRelease( SLIB->sl_DeviceManager, rootDev );
+									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
 									FileDelete( rootDev );
 								}
 								
