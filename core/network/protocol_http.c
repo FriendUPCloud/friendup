@@ -905,6 +905,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										Log( FLOG_ERROR,"Cannot mount device, device '%s' will be unmounted. FERROR %d\n", fs_DeviceName, err );
 									}
+									mountedWithoutUser = TRUE;
 								}
 								
 								if( error != NULL )
