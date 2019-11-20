@@ -116,6 +116,7 @@ else
 }
 
 
+// TODO: Create searchby komma separated so one can specify what to search by ...
 
 if( $users = $SqlDatabase->FetchObjects( $q = '
 	SELECT 
@@ -134,17 +135,17 @@ if( $users = $SqlDatabase->FetchObjects( $q = '
 		' . ( isset( $args->args->query ) && $args->args->query ? '
 		AND 
 		(
-			' . ( !isset( $args->args->sortby ) || $args->args->sortby == 'FullName' ? '
+			' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
 			( 
 				u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
 			) 
-			' . ( !isset( $args->args->sortby ) ? 'OR ' : '' ) : '' )
-			 .  ( !isset( $args->args->sortby ) || $args->args->sortby == 'Name' ? '
+			' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+			 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
 			( 
 				u.Name LIKE "' . trim( $args->args->query ) . '%" 
 			) 
-			' . ( !isset( $args->args->sortby ) ? 'OR ' : '' ) : '' )
-			 .  ( !isset( $args->args->sortby ) || $args->args->sortby == 'Email' ? '
+			' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+			 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Email' ? '
 			( 
 				u.Email LIKE "' . trim( $args->args->query ) . '%" 
 			) ' : '' ) . '

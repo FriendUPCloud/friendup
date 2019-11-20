@@ -219,14 +219,17 @@ function setGUISection( module, section )
 	f.onLoad = function( data )
 	{
 		ge( 'GuiContent' ).innerHTML = data;
-		Sections[ sectPart ]();
 		
 		// Temporary until search is fixed for users ...
 		
 		if( section.toLowerCase() == 'users' ) 
 		{
-			UsersSettings( 'maxlimit', 99999 );
+			//UsersSettings( 'maxlimit', 99999 );
+			console.log( 'UsersSettings( "reset", true );' );
+			UsersSettings( 'reset', true );
 		}
+		
+		Sections[ sectPart ]();
 		
 		// Reinitialize!
 		Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
