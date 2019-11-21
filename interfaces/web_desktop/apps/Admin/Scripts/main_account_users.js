@@ -1963,7 +1963,7 @@ Sections.accounts_users = function( cmd, extra )
 				return;
 			}
 			
-			getUserlist( function( userList, key )
+			getUserlist( function( res, userList, key )
 			{
 				
 				if( callback ) callback( key );
@@ -1998,11 +1998,16 @@ Sections.accounts_users = function( cmd, extra )
 			
 				CheckUserlistSize( true );
 		
-				getUserlist( function( userList )
+				getUserlist( function( res, userList )
 				{
 		
 					doListUsers( userList );
-		
+					
+					if( res == 'ok' )
+					{
+						Init();
+					}
+					
 				} );
 				
 			}
@@ -2042,7 +2047,7 @@ function getUserlist( callback, obj )
 		console.log( { e:e, d:d } );
 		
 		var userList = null;
-
+		
 		try
 		{
 			userList = JSON.parse( d );
@@ -2051,18 +2056,11 @@ function getUserlist( callback, obj )
 		catch( e )
 		{
 			console.log( { e:e, d:d, args:args } );
-			
-			if( callback )
-			{
-				return callback( false, obj );
-			}
-			
-			return;
 		}
 		
 		if( callback )
 		{
-			return callback( userList, obj );
+			return callback( e, userList, obj );
 		}
 		
 		return userList;
@@ -2256,9 +2254,9 @@ function CheckUserlistSize( firstrun )
 					
 						UsersSettings( 'limit', true );
 						
-						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+						console.log( '[2] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 					
-						getUserlist( function( data, key )
+						getUserlist( function( res, data, key )
 						{
 							
 							if( callback )
@@ -2268,7 +2266,7 @@ function CheckUserlistSize( firstrun )
 							
 							// If there is data populate if not, do nothing ...
 							
-							if( data )
+							if( res == 'ok' && data )
 							{
 								Sections.accounts_users( 'init', data );
 							}
@@ -2277,6 +2275,7 @@ function CheckUserlistSize( firstrun )
 			
 					}, false, true );
 					
+					return;
 				}
 				
 			}
@@ -2318,16 +2317,29 @@ function CheckUserlistSize( firstrun )
 				{
 					//RequestQueue.Set( function() {
 						
-						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+						console.log( '[1] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 						
 						Sections.accounts_users(); 
 						
-						Init();
+						//Init();
 						
 					//} );
 				}
+				
+				return
 			}
 		}
+		
+		
+		
+		/*// If firstrun run the loop ...
+		
+		if( firstrun )
+		{
+			Init();
+			
+			return;
+		}*/
 	}
 }
 
@@ -2344,9 +2356,9 @@ function Init()
 		
 			UsersSettings( 'limit', true );
 			
-			console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+			console.log( '[3] GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 			
-			getUserlist( function( data, key )
+			getUserlist( function( res, data, key )
 			{
 				
 				if( callback )
@@ -2356,7 +2368,7 @@ function Init()
 				
 				// If there is data populate if not, do nothing ...
 				
-				if( data )
+				if( res == 'ok' && data )
 				{
 					Sections.accounts_users( 'init', data );
 					
@@ -2369,7 +2381,7 @@ function Init()
 			
 			}, key );
 			
-		} );
+		}, false, true );
 		
 	}
 	
