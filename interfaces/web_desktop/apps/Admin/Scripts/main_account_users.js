@@ -20,7 +20,7 @@ var UsersSettings = function ( setting, set )
 	var listed      = ( 0                            );
 	var total       = ( 0                            );
 	var startlimit  = ( 0                            );
-	var maxlimit    = ( 28                            );
+	var maxlimit    = ( 10                           );
 	var limit       = ( startlimit + ', ' + maxlimit );
 	
 	this.vars = ( this.vars ? this.vars : {
@@ -77,7 +77,7 @@ var UsersSettings = function ( setting, set )
 					break;
 				case 'limit'              :
 					this.vars.startlimit  = ( this.vars.maxlimit                               );
-					this.vars.maxlimit    = ( this.vars.maxlimit * 2                           );
+					this.vars.maxlimit    = ( this.vars.startlimit * 2                         );
 					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit );
 					break;
 				case 'reset'              :
@@ -111,7 +111,9 @@ var UsersSettings = function ( setting, set )
 // Section for user account management
 Sections.accounts_users = function( cmd, extra )
 {
-	if( cmd )
+	// Ugly method for now to get access to functions in the function, but this mess needs to ble cleaned up first ....
+	
+	if( cmd && cmd != 'init' )
 	{
 		if( cmd == 'edit' )
 		{
@@ -1106,6 +1108,8 @@ Sections.accounts_users = function( cmd, extra )
 	var checkedGlobal = Application.checkAppPermission( 'PERM_USER_GLOBAL' );
 	var checkedWorkgr = Application.checkAppPermission( 'PERM_USER_WORKGROUP' );
 	
+	
+	
 	function doListUsers( userList, clearFilter )
 	{
 		var o = ge( 'UserList' );
@@ -1900,7 +1904,7 @@ Sections.accounts_users = function( cmd, extra )
 			UsersSettings( 'searchquery', filter );
 		}
 		
-		if( /*!server && */ge( 'ListUsersInner' ) )
+		if( ge( 'ListUsersInner' ) )
 		{
 			var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
 		
@@ -1942,9 +1946,9 @@ Sections.accounts_users = function( cmd, extra )
 		
 		
 		
-		SetRequestQueue( function( filter, callback, key )
+		RequestQueue.Set( function( callback, key )
 		{
-			console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
+			//console.log( filter + ' < ' + UsersSettings( 'searchquery' ) );
 			
 			if( filter.length < UsersSettings( 'searchquery' ).length )
 			{
@@ -1953,107 +1957,52 @@ Sections.accounts_users = function( cmd, extra )
 				return;
 			}
 			
-			var args = { 
-				query   : UsersSettings( 'searchquery' ), 
-				sortby  : UsersSettings( 'sortby'      ), 
-				orderby : UsersSettings( 'orderby'     ), 
-				limit   : UsersSettings( 'limit'       ), 
-				count   : true, 
-				authid  : Application.authId 
-			};
-			
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			getUserlist( function( userList, key )
 			{
 				
 				if( callback ) callback( key );
 				
-				var userList = null;
-			
-				try
-				{
-					userList = JSON.parse( d );
-					console.log( { e:e, d:(userList?userList:d), args:args } );
-				}
-				catch( e )
-				{
-					console.log( { e:e, d:d, args:args } );
-					return;
-				}
-			
-				//doListUsers( userList, filter ? filter : false );
 				doListUsers( userList );
-			}
-			/*if( filter )
-			{
-				m.execute( 'listusers', { query: filter, authid: Application.authId } );
-			}
-			else
-			{*/
-				//m.execute( 'listusers', { authid: Application.authId } );
+				
+			}, key );
 			
-				m.execute( 'listusers', args );
-			/*}*/
-			
-		}, filter );
+		} );
 	}
 	
 	
 	
 	if( checkedGlobal || checkedWorkgr )
 	{
-		// Get correct estimate of how many users fit into the window area ...
 		
-		CheckUserlistSize( true );
-		
-		/*console.log( 'divh: ', UsersSettings( 'divh' ) );
-		
-		var minusers = CheckUserlistSize( UsersSettings( 'divh' ) );
-		
-		console.log( 'minusers: ' + minusers );
-		
-		if( UsersSettings( 'maxlimit' ) < minusers )
+		if( !cmd || cmd == 'init' )
 		{
-			UsersSettings( 'maxlimit', minusers );
-		
-			console.log( 'MaxLimit is: ' + UsersSettings( 'maxlimit' ) );
-		}*/
-		
-		var args = { 
-			query   : UsersSettings( 'searchquery' ),
-			sortby  : UsersSettings( 'sortby'      ), 
-			orderby : UsersSettings( 'orderby'     ), 
-			limit   : UsersSettings( 'limit'       ), 
-			count   : true, 
-			authid  : Application.authId 
-		};
-		
-		// TODO: For optimizing at a later point estimate added new rows and fill them once data return to speed up the scrolling ...
-		
-		// Get the user list
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{	
 			
+			// If extra has data no need to run getUserlist twice, just doListUsers( userList )
 			
-			var userList = null;
-			
-			try
+			if( extra )
 			{
-				userList = JSON.parse( d );
 				
-				console.log( { e:e, d:(userList?userList:d), args:args } );
+				doListUsers( extra );
+				
 			}
-			catch( e )
+			else
 			{
-				console.log( { e:e, d:d, args:args } );
 				
-				return;
+				// Get correct estimate of how many users fit into the window area ...
+			
+				CheckUserlistSize( true );
+		
+				getUserlist( function( userList )
+				{
+		
+					doListUsers( userList );
+		
+				} );
+				
 			}
 			
-			doListUsers( userList );
 		}
-		m.execute( 'listusers', args );
+		
 		
 	}
 	else
@@ -2066,6 +2015,55 @@ Sections.accounts_users = function( cmd, extra )
 		o.appendChild( h2 );
 	}
 };
+
+
+
+function getUserlist( callback, obj )
+{
+	var args = { 
+		query   : UsersSettings( 'searchquery' ), 
+		sortby  : UsersSettings( 'sortby'      ), 
+		orderby : UsersSettings( 'orderby'     ), 
+		limit   : UsersSettings( 'limit'       ), 
+		count   : true, 
+		authid  : Application.authId 
+	};
+
+	// Get the user list
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		
+		var userList = null;
+
+		try
+		{
+			userList = JSON.parse( d );
+			console.log( { e:e, d:(userList?userList:d), args:args } );
+		}
+		catch( e )
+		{
+			console.log( { e:e, d:d, args:args } );
+			
+			if( callback )
+			{
+				return callback( false, obj );
+			}
+			
+			return;
+		}
+		
+		if( callback )
+		{
+			return callback( userList, obj );
+		}
+		
+		return userList;
+	}
+	m.execute( 'listusers', args );
+}
+
+
 
 function SubMenu( _this )
 {
@@ -2206,18 +2204,9 @@ function sortUsers( sortby, orderby )
 function CheckUserlistSize( firstrun )
 {
 	
-	// If first run then reset list so we get first list of users ...
-	//if( firstrun && UsersSettings( 'startlimit' ) > 0 )
-	//{
-		//console.log( 'UsersSettings( "reset", true );' );
-		//UsersSettings( 'reset', true );
-	//}
-	
 	var scrollbox = ge( 'UserList' );
 	var container = ge( 'ListUsersInner' );
 	var wrapper   = ge( 'ListUsersWrapper' );
-	
-	//console.log( 'CheckUserlistSize( '+firstrun+' ) ', { scrollbox: scrollbox, container: container, wrapper: wrapper } );
 	
 	if( scrollbox )
 	{
@@ -2233,36 +2222,68 @@ function CheckUserlistSize( firstrun )
 			
 			if( pos && pos >= 50 )
 			{
+				//console.log( pos );
+				
 				if( UsersSettings( 'total' ) > 0 && ( UsersSettings( 'listed' ) == UsersSettings( 'total' ) ) )
 				{
-					wrapper.style.minHeight = 'auto';
+					//wrapper.style.minHeight = 'auto';
 				}
 				else if( container.clientHeight >= wrapper.clientHeight )
 				{
-					//console.log( 'Scrollpos is ... ' + pos );
-										
-					wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
+					//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
 					
-					//console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ' + wrapper.style.minHeight );
+					//UsersSettings( 'limit', true );
 					
-					UsersSettings( 'limit', true );
-					
-					console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
+					//console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
 						
-					Sections.accounts_users();
+					//Sections.accounts_users();
 				}
+				
+				// TODO: Handle scroll and getting new data better ...
+				
+				if( !UsersSettings( 'total' ) || ( UsersSettings( 'listed' ) != UsersSettings( 'total' ) ) )
+				{
+					
+					// Only run the request when server is ready, one job at a time ... 
+					
+					RequestQueue.Set( function( callback, key )
+					{
+					
+						UsersSettings( 'limit', true );
+						
+						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
+					
+						getUserlist( function( data, key )
+						{
+							
+							if( callback )
+							{
+								callback( key );
+							}
+							
+							// If there is data populate if not, do nothing ...
+							
+							if( data )
+							{
+								Sections.accounts_users( 'init', data );
+							}
+						
+						}, key );
+			
+					}, false, true );
+					
+				}
+				
 			}
 		}
 		
-		//console.log( 'container: ' + container.clientHeight + ' > scrollbox: ' + scrollbox.clientHeight );
+		
 		
 		if( container && ( container.clientHeight + m ) > scrollbox.clientHeight )
 		{
 			if( container.clientHeight >= wrapper.clientHeight )
 			{
 				//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
-				
-				//console.log( 'container: ' + ( container.clientHeight + m ) + ' > scrollbox: ' + scrollbox.clientHeight + ' Wrapper height: ' + wrapper.style.minHeight );
 			}
 		}
 		else if( container && ( container.clientHeight + m ) < scrollbox.clientHeight )
@@ -2270,38 +2291,27 @@ function CheckUserlistSize( firstrun )
 			if( wrapper.clientHeight > container.clientHeight )
 			{
 				//wrapper.style.minHeight = 'auto';
-				
-				//console.log( wrapper.style.minHeight );
 			}
 		}
 		
 		var divh = UsersSettings( 'divh' );
 		
-		//console.log( UsersSettings( 'listed' ) + ' != ' + UsersSettings( 'total' ) );
-		
 		if( divh && ( !UsersSettings( 'total' ) || ( UsersSettings( 'listed' ) != UsersSettings( 'total' ) ) ) )
 		{
-			//return Math.floor( ( scrollbox.clientHeight - m ) / divh );
 			
 			var minusers = Math.floor( ( scrollbox.clientHeight - m ) / divh );
 			
 			if( UsersSettings( 'maxlimit' ) < ( minusers * 1.5 ) )
 			{
-				//console.log( ( scrollbox.clientHeight - m ) + ' vs ' + Math.floor( ( scrollbox.clientHeight - m ) / divh ) );
-				
-				//console.log( 'minusers: ' + minusers );
 				
 				// Set double max limit so that it fills beyond the minimum
-				
 				UsersSettings( 'maxlimit', ( minusers * 2 ) );
-		
-				//console.log( 'MaxLimit is: ' + UsersSettings( 'maxlimit' ) );
 				
 				// TODO: Move some of this into a queue so it doesn't set the limit faster then the server can get new data ...
 				
 				if( !firstrun )
 				{
-					//SetRequestQueue( function() {
+					//RequestQueue.Set( function() {
 						
 						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
 						
@@ -2316,20 +2326,30 @@ function CheckUserlistSize( firstrun )
 
 var RequestQueue = {
 	
-	ServerRequestQueue : [], 
+	ServerBusy : false, 
+	ServerRequestQueue : [],  
 	
-	Set : function ( func, obj )
+	Set : function ( func, obj, ready )
 	{
+		
+		// If ready check is requested and server is busy return false
+		if( ready && this.ServerBusy )
+		{
+			return false;
+		}
+		
 		if( !this.ServerRequestQueue.length )
 		{
-			this.ServerRequestQueue.push( { obj: obj, func: func } );
+			this.ServerRequestQueue.push( { func: func, obj: obj } );
 			
 			this.Run();
 		}
 		else
 		{
-			this.ServerRequestQueue.push( { obj: obj, func: func } );
+			this.ServerRequestQueue.push( { func: func, obj: obj } );
 		}
+		
+		
 	},
 	
 	Run : function (  )
@@ -2340,39 +2360,52 @@ var RequestQueue = {
 			{
 				if( this.ServerRequestQueue[key] && this.ServerRequestQueue[key].func )
 				{
-					console.log( "ServerRequestQueue["+key+"].func( obj, callback );" );
+					// Let the function know the server is now busy with a request
+					this.ServerBusy = true;
 					
 					var _this = this;
 					
 					this.ServerRequestQueue[key].key = key;
 					
-					this.ServerRequestQueue[key].func( this.ServerRequestQueue[key].obj, function( key )
+					this.ServerRequestQueue[key].func( function( key )
 					{
 						if( _this.ServerRequestQueue[key] )
 						{
-							delete _this.ServerRequestQueue[key];
+							_this.Delete( key );
 						}
 						
+						// Let the function know the server is not busy with any requests ...
+						_this.ServerBusy = false;
+						
+						// Run the request queue again, and check for requests in queue ...
 						_this.Run();
 						
-					}, key );
-					
-					if( this.ServerRequestQueue[key] )
-					{
-						delete this.ServerRequestQueue[key];
-					}
+					}, key, this.ServerRequestQueue[key].obj );
 					
 					return;
 				}
 			}
 		}
+	},
+	
+	Delete : function ( key )
+	{
+		var out = [];
+		
+		if( this.ServerRequestQueue )
+		{
+			for( var i in this.ServerRequestQueue )
+			{
+				if( this.ServerRequestQueue[i] && ( !key || key != i ) )
+				{
+					out.push( this.ServerRequestQueue[i] );
+				}
+			}
+		}
+		
+		this.ServerRequestQueue = out;
 	}
 	
-}
-
-function SetRequestQueue( func, obj )
-{
-	RequestQueue.Set( func, obj );
 }
 
 
