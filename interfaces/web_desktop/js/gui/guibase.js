@@ -1031,7 +1031,7 @@ function ExposeWindows()
 	}
 }
 // Cover screens with overlay
-function CoverScreens()
+function CoverScreens( sticky )
 {
 	// Disable all screen overlays
 	var screenc = ge ( 'Screens' );

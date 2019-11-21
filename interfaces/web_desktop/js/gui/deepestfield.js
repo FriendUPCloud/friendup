@@ -287,22 +287,24 @@ DeepestField = {
 		if( ge( 'Tasks' ).currentTask )
 		{
 			var ifr = ge( 'Tasks' ).currentTask.getElementsByTagName( 'iframe' )[0];
-		
-			// See if we have a switch
-			if( window.currentMovable )
+			if( ifr )
 			{
-				var o = currentMovable.windowObject.applicationId;
-				if( ifr.mainView && ifr.mainView != o )
+				// See if we have a switch
+				if( window.currentMovable )
 				{
-					ifr.mainView.activate();
+					var o = currentMovable.windowObject.applicationId;
+					if( ifr.mainView && ifr.mainView != o )
+					{
+						ifr.mainView.activate();
+					}
 				}
-			}
-			// Pick
-			else
-			{
-				if( ifr.mainView )
+				// Pick
+				else
 				{
-					ifr.mainView.activate();
+					if( ifr.mainView )
+					{
+						ifr.mainView.activate();
+					}
 				}
 			}
 			ge( 'Tasks' ).currentTask = null;

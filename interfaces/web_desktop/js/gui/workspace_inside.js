@@ -8631,7 +8631,9 @@ function DoorsKeyUp( e )
 	Workspace.ctrlKey = e.ctrlKey;
 	Workspace.altKey = e.altKey;
 	Workspace.metaKey = e.metaKey;
-	if( e.which == 91 || ( !e.shiftKey && !e.ctrlKey ) )
+	
+	// Hide task switcher
+	if( e.which == 91 || ( !Workspace.shiftKey && !Workspace.ctrlKey ) )
 	{
 		if( window.DeepestField )
 			DeepestField.selectTask();	
