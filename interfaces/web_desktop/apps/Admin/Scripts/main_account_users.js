@@ -1946,6 +1946,8 @@ Sections.accounts_users = function( cmd, extra )
 		
 		UsersSettings( 'searchquery', filter );
 		
+		UsersSettings( 'reset', true );
+		
 		//console.log( filter.length );
 		
 		
