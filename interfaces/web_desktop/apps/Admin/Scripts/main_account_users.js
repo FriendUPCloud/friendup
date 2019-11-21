@@ -20,8 +20,8 @@ var UsersSettings = function ( setting, set )
 	var listed      = ( 0                            );
 	var total       = ( 0                            );
 	var startlimit  = ( 0                            );
-	var maxlimit    = ( 10                           );
-	var intervals   = ( 10                           );
+	var maxlimit    = ( 50                           );
+	var intervals   = ( 100                          );
 	var limit       = ( startlimit + ', ' + maxlimit );
 	
 	this.vars = ( this.vars ? this.vars : {
@@ -2322,11 +2322,57 @@ function CheckUserlistSize( firstrun )
 						
 						Sections.accounts_users(); 
 						
+						Init();
+						
 					//} );
 				}
 			}
 		}
 	}
+}
+
+function Init()
+{
+	
+	if( !UsersSettings( 'total' ) || ( UsersSettings( 'listed' ) != UsersSettings( 'total' ) ) )
+	{
+		
+		// Only run the request when server is ready, one job at a time ... 
+		
+		RequestQueue.Set( function( callback, key )
+		{
+		
+			UsersSettings( 'limit', true );
+			
+			console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
+			
+			getUserlist( function( data, key )
+			{
+				
+				if( callback )
+				{
+					callback( key );
+				}
+				
+				// If there is data populate if not, do nothing ...
+				
+				if( data )
+				{
+					Sections.accounts_users( 'init', data );
+					
+					// Just loop it ...
+					
+					console.log( 'looping ... ' );
+					
+					Init();
+				}
+			
+			}, key );
+
+		}, false, true );
+		
+	}
+	
 }
 
 var RequestQueue = {
