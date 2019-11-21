@@ -523,7 +523,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	BufString *bsGroups = BufStringNew();
 	//pos = 0;
 	
-	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupsids\":[", usr->u_UUID );
+	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupids\":[", usr->u_UUID );
 	BufStringAddSize( bsGroups, tmpQuery, tmplen );
 	
 	//
