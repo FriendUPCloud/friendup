@@ -295,6 +295,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 	char *module = NULL;
 	char *type = NULL;
 	char *authid = NULL;
+	char *userSession = NULL;
+	char *empty = "";
 //	FULONG id = 0; //not used
 	
 	SystemBase *sb = NULL;
@@ -346,6 +348,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				case FSys_Mount_SysBase:
 					sb = (SystemBase *)lptr->ti_Data;
 					break;
+				case FSys_Mount_User_SessionID:
+					userSession = (char *)lptr->ti_Data;
+					break;
 			}
 			lptr++;
 		}
@@ -387,9 +392,20 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 		if( sd != NULL )
 		{
 			sd->module = StringDup( module );
-			DEBUG( "[fsysphp] Copying session: %s\n", usr->u_MainSessionID );
+			if( usr != NULL && usr->u_MainSessionID != NULL )
+			{
+				userSession = usr->u_MainSessionID;
+			}
+			else
+			{
+				if( userSession == NULL )
+				{
+					userSession = empty;
+				}
+			}
+			DEBUG( "[fsysphp] Copying session: %s\n", userSession );
 			//dev->f_SessionID = StringDup( usr->u_MainSessionID );
-			dev->f_SessionIDPTR = usr->u_MainSessionID;
+			dev->f_SessionIDPTR = userSession;
 			sd->type = StringDup( type );
 			dev->f_SpecialData = sd;
 			sd->sb = sb;
@@ -400,13 +416,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
 				( module ? strlen( module ) : strlen( "files" ) ) + 
-				( usr->u_MainSessionID ? strlen( usr->u_MainSessionID ) : 0 ) + 1;
+				( strlen( userSession ) ) + 1;
 			
 			
 			// Whole command
-			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
-				cmdLength + 1, sizeof( char ) );
+			char *command = FCalloc( strlen( "php \"modules/system/module.php\" \"\";" ) + cmdLength + 1, sizeof( char ) );
 			
 			if( command != NULL )
 			{
@@ -421,7 +435,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 						name ? name : "", 
 						path ? path : "", 
 						module ? module : "files", 
-						usr->u_MainSessionID ? usr->u_MainSessionID : ""  );
+						userSession  );
 					sprintf( command, "php 'modules/system/module.php' '%s';", FilterPHPVar( commandCnt ) );
 					FFree( commandCnt );
 			
@@ -958,7 +972,10 @@ int FileClose( struct File *s, void *fp )
 			{
 				if( lfp->f_Stream == FALSE )
 				{
-					remove( sd->fname );
+					if( sd->fname != NULL )
+					{
+						remove( sd->fname );
+					}
 				}
 			}
 			else if( sd->mode == MODE_WRITE )

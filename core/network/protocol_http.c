@@ -816,7 +816,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 					else if( strcmp( path->parts[ 0 ], "sharedfile" ) == 0 )
 					{
-						FileShared *fs = NULL;
+						//FileShared *fs = NULL;
 						char query[ 1024 ];
 						int entries = 0;
 
@@ -826,10 +826,55 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 						if( sqllib != NULL )
 						{
-							sqllib->SNPrintF( sqllib, query, sizeof(query), " `Hash` = '%s'", path->parts[ 1 ] );
-
-							if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
+							FULONG fs_IDUser = 0;
+							char *fs_DeviceName = NULL;
+							char *fs_Name = NULL;
+							char *fs_Type = NULL;
+							char *fs_Path = NULL;
+							char *usrSessionID = NULL;
+							
+							sqllib->SNPrintF( sqllib, query, sizeof(query), "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,u.SessionID from FFileShared fs inner join Filesystem f on fs.Devname=f.Name AND fs.UserID=f.UserID inner join FUser u on fs.UserID=u.ID where `Hash`='%s'", path->parts[ 1 ] );
+							//sqllib->SNPrintF( sqllib, query, sizeof(query), " `Hash` = '%s'", path->parts[ 1 ] );
+							
+							void *res = sqllib->Query( sqllib, query );
+							if( res != NULL )
 							{
+								char **row;
+								if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+								{
+									if( row[ 0 ] != NULL )
+									{
+										fs_Name = StringDuplicate( row[ 0 ] );
+									}
+									if( row[ 1 ] != NULL )
+									{
+										fs_DeviceName = StringDuplicate( row[ 1 ] );
+									}
+									if( row[ 2 ] != NULL )
+									{
+										fs_Path = StringDuplicate( row[ 2 ] );
+									}
+									if( row[ 3 ] != NULL )
+									{
+										char *end;
+										fs_IDUser = strtoul( row[ 3 ], &end, 0 );
+									}
+									if( row[ 4 ] != NULL )
+									{
+										fs_Type = StringDuplicate( row[ 4 ] );
+									}
+									if( row[ 5 ] != NULL )
+									{
+										usrSessionID = StringDuplicate( row[ 5 ] );
+									}
+								}
+								sqllib->FreeResult( sqllib, res );
+							}
+
+							//if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
+							if( fs_Name != NULL && fs_DeviceName != NULL && fs_Path != NULL )
+							{
+								FBOOL mountedWithoutUser = FALSE;
 								char *error = NULL;
 								// Immediately drop here..
 								SLIB->LibrarySQLDrop( SLIB, sqllib );
@@ -837,22 +882,45 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								CacheFile *cf = NULL;
 
 								char *mime = NULL;
+								File *rootDev = NULL;
 
-								File *rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs->fs_IDUser, fs->fs_DeviceName, &error );
+								// check if user is loaded
+								User *u = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
+								if( u != NULL )
+								{
+									rootDev = GetUserDeviceByUserID( SLIB->sl_DeviceManager, sqllib, fs_IDUser, fs_DeviceName, &error );
+								} // if user is not in memory (and his drives), we must mount drives only
+								else
+								{
+									struct TagItem tags[] = {
+										{FSys_Mount_Type, (FULONG)fs_Type },
+										{FSys_Mount_Name, (FULONG)fs_DeviceName },
+										{FSys_Mount_UserID, (FULONG)fs_IDUser },
+										{FSys_Mount_Owner, (FULONG)NULL },
+										{FSys_Mount_User_SessionID, (FULONG)usrSessionID },
+										{TAG_DONE, TAG_DONE}
+									};
+									int err = MountFSNoUser( SLIB->sl_DeviceManager, (struct TagItem *)&tags, &(rootDev), &error );
+									if( err != 0 )
+									{
+										Log( FLOG_ERROR,"Cannot mount device, device '%s' will be unmounted. FERROR %d\n", fs_DeviceName, err );
+									}
+									mountedWithoutUser = TRUE;
+								}
 								
 								if( error != NULL )
 								{
 									FFree( error );
 								}
 
-								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs->fs_DeviceName );
+								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs_DeviceName );
 
 								if( rootDev != NULL )
 								{
 									FHandler *actFS = (FHandler *)rootDev->f_FSys;
 									int cacheState = CACHE_NOT_SUPPORTED;
 
-									char *extension = GetExtension( fs->fs_Path );
+									char *extension = GetExtension( fs_Path );
 
 									// Use the extension if possible
 									if( strlen( extension ) )
@@ -866,14 +934,14 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									//add mounting and reading files from FS
 									struct TagItem tags[] = {
-											{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
-											{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-											{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
-											{ TAG_DONE, TAG_DONE }
+										{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
+										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+										{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+										{ TAG_DONE, TAG_DONE }
 									};
 
 									// 0 = filesystem do not provide modify timestamp
-									time_t tim = actFS->GetChangeTimestamp( rootDev, fs->fs_Path );
+									time_t tim = actFS->GetChangeTimestamp( rootDev, fs_Path );
 									// there is no need to cache files which are stored on local disk
 									if( tim == 0 ) //|| strcmp( actFS->GetPrefix(), "local" ) )
 									{
@@ -881,7 +949,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									}
 									else
 									{
-										cf = CacheUFManagerFileGet( SLIB->sl_CacheUFM, fs->fs_IDUser, rootDev->f_ID, fs->fs_Path );
+										cf = CacheUFManagerFileGet( SLIB->sl_CacheUFM, fs_IDUser, rootDev->f_ID, fs_Path );
 
 										// if TRUE file must be reloaded
 										if( cf != NULL )
@@ -947,7 +1015,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 										if( cacheState == CACHE_FILE_MUST_BE_CREATED )
 										{
-											cf = CacheFileNew( fs->fs_Path );
+											cf = CacheFileNew( fs_Path );
 											cf->cf_Fp = fopen( cf->cf_StorePath, "wb" );
 											cf->cf_ModificationTimestamp = tim;
 											cf->cf_FileSize = 0;
@@ -962,7 +1030,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 										// We need to get the sessionId if we can!
 										// currently from table we read UserID
-										User *tuser = UMGetUserByID( SLIB->sl_UM, fs->fs_IDUser );
+										User *tuser = UMGetUserByID( SLIB->sl_UM, fs_IDUser );
 
 										if( tuser != NULL )
 										{
@@ -985,14 +1053,14 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 										if( actFS != NULL )
 										{
-											char *filePath = fs->fs_Path;
+											char *filePath = fs_Path;
 											unsigned int i;
 
-											for( i = 0; i < strlen( fs->fs_Path ); i++ )
+											for( i = 0; i < strlen( fs_Path ); i++ )
 											{
-												if( fs->fs_Path[ i ] == ':' )
+												if( fs_Path[ i ] == ':' )
 												{
-													filePath = &(fs->fs_Path[ i + 1 ]);
+													filePath = &(fs_Path[ i + 1 ]);
 												}
 											}
 
@@ -1073,7 +1141,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										if( cacheState == CACHE_FILE_MUST_BE_CREATED )
 										{
 											fclose( cf->cf_Fp );
-											CacheUFManagerFilePut( SLIB->sl_CacheUFM, fs->fs_IDUser, rootDev->f_ID, cf );
+											CacheUFManagerFilePut( SLIB->sl_CacheUFM, fs_IDUser, rootDev->f_ID, cf );
 										}
 										else if( cacheState == CACHE_FILE_REQUIRE_REFRESH )
 										{
@@ -1094,7 +1162,16 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									result = 404;
 									Log( FLOG_ERROR,"Cannot get root device\n");
 								}
-								FileSharedDelete( fs );
+								
+								// if device was mounted without user (not in memory) it must be removed on the end
+								if( mountedWithoutUser == TRUE )
+								{
+									//DeviceRelease( SLIB->sl_DeviceManager, rootDev );
+									DeviceRelease( SLIB->sl_DeviceManager, rootDev );
+									FileDelete( rootDev );
+								}
+								
+								//FileSharedDelete( fs );
 							}
 							else
 							{
@@ -1108,6 +1185,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								result = 404;
 								Log( FLOG_ERROR,"Fileshared entry not found in DB: sql %s\n", query );
 							}
+							
+							if( fs_DeviceName != NULL ) FFree( fs_DeviceName );
+							if( fs_Name != NULL ) FFree( fs_Name );
+							if( fs_Type != NULL ) FFree( fs_Type );
+							if( fs_Path != NULL ) FFree( fs_Path );
+							if( usrSessionID != NULL ) FFree( usrSessionID );
 						}
 					}
 
