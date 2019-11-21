@@ -21,6 +21,7 @@ var UsersSettings = function ( setting, set )
 	var total       = ( 0                            );
 	var startlimit  = ( 0                            );
 	var maxlimit    = ( 10                           );
+	var intervals   = ( 10                           );
 	var limit       = ( startlimit + ', ' + maxlimit );
 	
 	this.vars = ( this.vars ? this.vars : {
@@ -67,30 +68,34 @@ var UsersSettings = function ( setting, set )
 					this.vars.total       = set;
 					break;
 				case 'startlimit'         :
-					this.vars.startlimit  = ( set                                              );
-					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit );
+					this.vars.startlimit  = ( set                                                    );
+					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
 					break;
 				case 'maxlimit'           :
-					this.vars.startlimit  = ( 0                                                );
-					this.vars.maxlimit    = ( set                                              );
-					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit );
+					this.vars.startlimit  = ( 0                                                      );
+					this.vars.maxlimit    = ( set                                                    );
+					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
+					break;
+				case 'intervals'          :
+					this.vars.intervals   = ( set                                                    );
 					break;
 				case 'limit'              :
-					this.vars.startlimit  = ( this.vars.maxlimit                               );
-					this.vars.maxlimit    = ( this.vars.startlimit * 2                         );
-					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit );
+					this.vars.startlimit  = ( this.vars.maxlimit                                     );
+					this.vars.maxlimit    = ( Math.round(this.vars.startlimit + this.vars.intervals) );
+					this.vars.limit       = ( this.vars.startlimit + ', ' + this.vars.maxlimit       );
 					break;
 				case 'reset'              :
-					this.vars.searchquery = ( searchquery                                      );
-					this.vars.searchby    = ( searchby                                         );
-					this.vars.sortby      = ( sortby                                           );
-					this.vars.orderby     = ( orderby                                          );
-					this.vars.divh        = ( divh                                             );
-					this.vars.listed      = ( listed                                           );
-					this.vars.total       = ( total                                            );
-					this.vars.startlimit  = ( startlimit                                       );
-					this.vars.maxlimit    = ( maxlimit                                         );
-					this.vars.limit       = ( startlimit + ', ' + maxlimit                     );
+					this.vars.searchquery = ( searchquery                                            );
+					this.vars.searchby    = ( searchby                                               );
+					this.vars.sortby      = ( sortby                                                 );
+					this.vars.orderby     = ( orderby                                                );
+					this.vars.divh        = ( divh                                                   );
+					this.vars.listed      = ( listed                                                 );
+					this.vars.total       = ( total                                                  );
+					this.vars.startlimit  = ( startlimit                                             );
+					this.vars.maxlimit    = ( maxlimit                                               );
+					this.vars.intervals   = ( intervals                                              );
+					this.vars.limit       = ( startlimit + ', ' + maxlimit                           );
 					break;
 			}
 		}
