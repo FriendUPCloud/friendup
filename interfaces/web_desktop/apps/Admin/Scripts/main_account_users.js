@@ -2238,8 +2238,6 @@ function CheckUserlistSize( firstrun )
 					//wrapper.style.minHeight = ( container.clientHeight + scrollbox.clientHeight ) + 'px';
 					
 					//UsersSettings( 'limit', true );
-					
-					//console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
 						
 					//Sections.accounts_users();
 				}
@@ -2256,7 +2254,7 @@ function CheckUserlistSize( firstrun )
 					
 						UsersSettings( 'limit', true );
 						
-						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
+						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 					
 						getUserlist( function( data, key )
 						{
@@ -2318,7 +2316,7 @@ function CheckUserlistSize( firstrun )
 				{
 					//RequestQueue.Set( function() {
 						
-						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) ); 
+						console.log( 'GETTING SERVER DATA ... ' + UsersSettings( 'limit' ) + ' (' + UsersSettings( 'intervals' ) + ')' ); 
 						
 						Sections.accounts_users(); 
 						
