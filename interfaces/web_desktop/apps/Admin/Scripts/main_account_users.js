@@ -2039,6 +2039,7 @@ function getUserlist( callback, obj )
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
+		console.log( { e:e, d:d } );
 		
 		var userList = null;
 
