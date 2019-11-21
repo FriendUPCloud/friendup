@@ -2368,8 +2368,8 @@ function Init()
 				}
 			
 			}, key );
-
-		}, false, true );
+			
+		} );
 		
 	}
 	
