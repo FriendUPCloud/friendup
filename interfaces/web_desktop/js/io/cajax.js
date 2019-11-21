@@ -638,7 +638,6 @@ cAjax.prototype.send = function( data )
         
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
-        	console.log( 'Test: Request failed ', reqId );
         	AddToCajaxQueue( self );
 			Workspace.flushSession();
 			return Workspace.relogin();
