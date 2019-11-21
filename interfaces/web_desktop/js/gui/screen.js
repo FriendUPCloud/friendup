@@ -407,6 +407,7 @@ Screen = function ( flags, initObject )
 				screens[a]._screenoverlay.style.pointerEvents = 'none';
 			}
 		}
+		// If we have multiple screens, allow screen dragging
 		if( ge( 'Screens' ).getElementsByClassName( 'Screen' ).length > 1 )
 		{
 			window.mouseMoveFunc = function ( e )
@@ -432,6 +433,7 @@ Screen = function ( flags, initObject )
 				}
 			}
 		}
+		// Just pop the screen back
 		else
 		{
 			div.style.transition = 'transform 0.25s';
@@ -444,17 +446,10 @@ Screen = function ( flags, initObject )
 		}
 		var t = e.target ? e.target : e.srcElement;
 		
-		// Hitting the screen list..
-		if( t.classList && t.classList.contains( 'ScreenList' ) )
-		{
-			self.screenCycle();
-		}
-		
-		// Don't cancel bubble here..
+		// Clicking on the extra widget
 		if( t.classList && t.classList.contains( 'Extra' ) )
 		{
 			Workspace.calendarClickEvent();
-			return cancelBubble( e );
 		}
 		
 		return cancelBubble ( e );
