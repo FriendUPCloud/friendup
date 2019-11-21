@@ -407,7 +407,7 @@ Screen = function ( flags, initObject )
 				screens[a]._screenoverlay.style.pointerEvents = 'none';
 			}
 		}
-		if( ge( 'Screens' ).getElementsByClassName( 'Screen' ) > 1 )
+		if( ge( 'Screens' ).getElementsByClassName( 'Screen' ).length > 1 )
 		{
 			window.mouseMoveFunc = function ( e )
 			{
@@ -431,6 +431,16 @@ Screen = function ( flags, initObject )
 					screens[a]._screenoverlay.style.pointerEvents = 'all';
 				}
 			}
+		}
+		else
+		{
+			div.style.transition = 'transform 0.25s';
+			div.style.transform = 'translate3d(0,0px,0)';
+			div.screenOffsetTop = 0;
+			setTimeout( function()
+			{
+				div.style.transition = '';
+			}, 250 );
 		}
 		var t = e.target ? e.target : e.srcElement;
 		
