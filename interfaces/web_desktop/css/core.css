@@ -2675,6 +2675,26 @@ body:not([mobile]).ShowTasks #Tasks .Current .Close
 	border-radius: 10px;
 }
 
+#Tasks .AppSandbox .CloseButton
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 26px;
+	height: 26px;
+	text-align: center;
+	line-height: 26px;
+	background: rgba(0,0,0,0.6);
+	border-radius: 50%;
+}
+#Tasks .AppSandbox .CloseButton:after
+{
+	content: "\f00d";
+	font-family: fontawesome;
+	font-size: 1.2em;
+	color: white;
+}
+
 #Tasks .AppSandbox .Close img
 {
 	display: none;

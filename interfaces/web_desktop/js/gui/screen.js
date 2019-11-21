@@ -407,26 +407,29 @@ Screen = function ( flags, initObject )
 				screens[a]._screenoverlay.style.pointerEvents = 'none';
 			}
 		}
-		window.mouseMoveFunc = function ( e )
+		if( ge( 'Screens' ).getElementsByClassName( 'Screen' ) > 1 )
 		{
-			var my = e.clientY ? e.clientY : e.pageYOffset;
-			var mx = e.clientX ? e.clientX : e.pageXOffset;
-			var ty = my - window.currentScreen.offy;
-			if ( ty < 0 ) ty = 0;
-			if ( ty >= GetWindowHeight () ) ty = GetWindowHeight () - 1;
-			
-			div.style.transform = 'translate3d(0,' + ty + 'px,0)';
-			div.screenOffsetTop = ty;
-			
-			// Enable all screen overlays
-			var screenc = ge ( 'Screens' );
-			var screens = screenc.getElementsByTagName ( 'div' );
-			for( var a = 0; a < screens.length; a++ )
+			window.mouseMoveFunc = function ( e )
 			{
-				if( !screens[a].className ) continue;
-				if( screens[a].parentNode != screenc ) continue;
-				screens[a]._screenoverlay.style.display = '';
-				screens[a]._screenoverlay.style.pointerEvents = 'all';
+				var my = e.clientY ? e.clientY : e.pageYOffset;
+				var mx = e.clientX ? e.clientX : e.pageXOffset;
+				var ty = my - window.currentScreen.offy;
+				if ( ty < 0 ) ty = 0;
+				if ( ty >= GetWindowHeight () ) ty = GetWindowHeight () - 1;
+			
+				div.style.transform = 'translate3d(0,' + ty + 'px,0)';
+				div.screenOffsetTop = ty;
+			
+				// Enable all screen overlays
+				var screenc = ge ( 'Screens' );
+				var screens = screenc.getElementsByTagName ( 'div' );
+				for( var a = 0; a < screens.length; a++ )
+				{
+					if( !screens[a].className ) continue;
+					if( screens[a].parentNode != screenc ) continue;
+					screens[a]._screenoverlay.style.display = '';
+					screens[a]._screenoverlay.style.pointerEvents = 'all';
+				}
 			}
 		}
 		var t = e.target ? e.target : e.srcElement;

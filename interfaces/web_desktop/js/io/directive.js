@@ -1392,11 +1392,13 @@ function AttachAppSandbox( ifr, path )
 	x.appendChild( img );
 	d.appendChild( x );
 
-	// On click, quit with force!
-	x.onmousedown = function()
+	var b = document.createElement( 'div' );
+	b.className = 'CloseButton';
+	b.onmousedown = function()
 	{
-		ifr.quit( 1 ); 
+		ifr.quit( 1 );
 	}
+	d.appendChild( b );
 
 	ge( 'Tasks' ).appendChild( d );
 
