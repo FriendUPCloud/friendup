@@ -225,7 +225,7 @@ function setGUISection( module, section )
 		if( section.toLowerCase() == 'users' ) 
 		{
 			//UsersSettings( 'maxlimit', 99999 );
-			console.log( 'UsersSettings( "reset", true );' );
+			
 			UsersSettings( 'reset', true );
 		}
 		

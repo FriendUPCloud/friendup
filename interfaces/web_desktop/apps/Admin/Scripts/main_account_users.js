@@ -1500,8 +1500,7 @@ Sections.accounts_users = function( cmd, extra )
 			Application.totalUserCount = /*5;*/userList['Count'];
 		}
 		
-		console.log( 'Application.totalUserCount: ', Application.totalUserCount );
-		//console.log( 'Application.WindowSize: ', Application.WindowSize );
+		//console.log( 'Application.totalUserCount: ', Application.totalUserCount );
 		
 		var sw = 2; var tot = 0;
 		for( var b = 0; b < levels.length; b++ )
