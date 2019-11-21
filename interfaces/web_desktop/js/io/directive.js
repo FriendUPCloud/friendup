@@ -1393,8 +1393,10 @@ function AttachAppSandbox( ifr, path )
 	d.appendChild( x );
 
 	// On click, quit with force!
-	x.onclick = function()
-	{ ifr.quit( 1 ); }
+	x.onmousedown = function()
+	{
+		ifr.quit( 1 ); 
+	}
 
 	ge( 'Tasks' ).appendChild( d );
 
