@@ -734,6 +734,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							}
 						}
 						
+						/*
 						{
 							BufString *bs = BufStringNew();
 
@@ -756,6 +757,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							
 							BufStringDelete( bs );
 						}
+						*/
+						NotifyExtServices( l, request, usr );
 						
 						if( gotFromDB == TRUE )
 						{
