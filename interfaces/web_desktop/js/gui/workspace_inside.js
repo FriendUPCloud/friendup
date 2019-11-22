@@ -6650,9 +6650,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									for( var a = 0; a < dv.icons.length; a++ )
 									{
 										var ic = dv.icons[a];
-										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.domNode.fileInfo.selected )
+										if( ic.domNode && ic.domNode.fileInfo && ic.domNode.fileInfo.Type == 'File' && ic.selected )
 										{
 											selPath = ic.domNode.fileInfo.Path;
+											console.log( ic.domNode.fileInfo, ' domnode: ' + ic.domNode.selected + ' ic: ' + ic.selected );
 											break;
 										}
 									}
