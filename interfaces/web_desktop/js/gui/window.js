@@ -1003,6 +1003,7 @@ function _ActivateWindowOnly( div )
 }
 
 // "Private" function to activate a window
+var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
 	if( !e ) e = window.event;
@@ -1065,6 +1066,9 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Reserve this div for activation
+	_activationTarget = div;
+	
 	// Activate all iframes
 	if( div.windowObject.content )
 	{
@@ -1106,6 +1110,7 @@ function _ActivateWindow( div, nopoll, e )
 	// If it has a window blocker, activate that instead
 	if ( div && div.content && typeof ( div.content.blocker ) == 'object' )
 	{
+		_activationTarget = null; // unreserve
 		_ActivateWindow( div.content.blocker.getWindowElement ().parentNode, nopoll, e );
 		return;
 	}
@@ -1172,6 +1177,7 @@ function _ActivateWindow( div, nopoll, e )
 			div.windowObject.sendMessage( { command: 'activate' } ); // Let the app know
 			div.notifyActivated = true;
 		}
+		_activationTarget = null; // Unreserve
 		return;
 	}
 
@@ -1214,6 +1220,9 @@ function _ActivateWindow( div, nopoll, e )
 	_ActivateWindowOnly( div );
 
 	if( !nopoll ) PollTaskbar( div );
+	
+	// All done
+	_activationTarget = null;
 }
 
 // Activate tiling system
@@ -1344,7 +1353,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			window.currentMovable = null;
 	
 		// See if we can activate a mainview
-		if( !currentMovable )
+		if( !currentMovable && !_activationTarget )
 		{
 			var app = _getAppByAppId( m.windowObject.applicationId );
 			var hasActive = false;
@@ -2912,7 +2921,6 @@ var View = function( args )
 		{
 			if( div.minimized ) 
 			{
-				console.log( 'Already minimized' );
 				return;
 			}
 			div.minimized = true;
@@ -4871,10 +4879,6 @@ var View = function( args )
 	}
 	this.parseFlags = function( flags, filter )
 	{
-		console.log( 'parseFlags', {
-			flags  : flags,
-			filter : filter,
-		});
 		if( !this.flags ) this.flags = {};
 		for( var a in flags )
 		{
