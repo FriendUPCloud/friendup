@@ -8139,6 +8139,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				while( DirectoryContainsFile( newfilename, content ) )
 				{
 					i++;
+					consle.log( 'Trying to find a copy: ' + i );
 					//find a new name
 					var tmp = file.name.split('.');
 					var newfilename = file.name;
