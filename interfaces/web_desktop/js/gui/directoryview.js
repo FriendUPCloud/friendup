@@ -2979,6 +2979,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					SetOpacity( obj.domNode, 1 );
 				}
 				icons[a].domNode = file;
+				icons[a].domNode.icon = icons[a];
 				obj.icons.push( icons[a] );
 			}
 			if( typeof ( obj.parentNode ) != 'undefined' && obj.parentNode.refreshWindow )
@@ -3081,6 +3082,7 @@ DirectoryView.prototype.SelectAll = function()
 			{
 				ics[a].domNode.classList.add( 'Selected' );
 				ics[a].domNode.selected = 'multiple';
+				ics[a].domNode.icon.selected = 'multiple';
 			}
 			ics[a].selected = 'multiple';
 			if( ics[a].fileInfo )
@@ -3448,6 +3450,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					this.classList.add( 'Selected' );
 					this.fileInfo.selected = true;
 					this.selected = true;
+					this.icon.selected = true;
 					found = this;
 			
 					if( !window.isMobile )
@@ -3515,6 +3518,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 								if( !p.childNodes[b] ) continue;
 								p.childNodes[b].classList.add( 'Selected' );
 								p.childNodes[b].selected = 'multiple';
+								p.childNodes[b].icon.selected = 'multiple';
 								p.childNodes[b].fileInfo.selected = 'multiple';
 							}
 						}
@@ -3527,6 +3531,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							this.classList.remove( 'Selected' );
 							this.selected = false;
+							this.icon.selected = false;
 							this.fileInfo.selected = false;
 							dv.lastListItem = false;
 						}
@@ -3534,6 +3539,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							this.classList.add( 'Selected' );
 							this.selected = 'multiple';
+							this.icon.selected = 'multiple';
 							this.fileInfo.selected = 'multiple';
 							dv.lastListItem = this;
 						}
@@ -3553,12 +3559,14 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							this.classList.remove( 'Selected' );
 							this.selected = false;
+							this.icon.selected = false;
 							this.fileInfo.selected = false;
 						}
 						else
 						{
 							this.classList.add( 'Selected' );
 							this.selected = sh ? 'multiple' : true;
+							this.icon.selected = this.selected;
 							this.fileInfo.selected = sh ? 'multiple' : true;
 						}
 						dv.lastListItem = this;
@@ -3593,6 +3601,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					{
 						this.classList.add( 'Selected' );
 						this.selected = true;
+						this.icon.selected = true;
 						this.fileInfo.selected = true;
 						return this.ondragstart( e );
 					}
@@ -3617,6 +3626,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							clearRegionIcons();
 							self.classList.add( 'Selected' );
 							self.selected = true;
+							this.icon.selected = true;
 							self.fileInfo.selected = true;
 							self.touchPos = {
 								x: e.touches[0].pageX,
@@ -3713,6 +3723,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 			// For clicks
 			ic.domNode = r;
+			ic.domNode.icon = ic;
 
 			obj.icons.push( ic );
 		}
@@ -4335,6 +4346,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				this.classList.add( 'Selected' );
 				found = this;
 				this.selected = true;
+				this.icon.selected = true;
 				this.fileInfo.selected = true;
 			
 				// Count selected icons
@@ -4404,6 +4416,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					launchIcon( e, this );
 					this.classList.remove( 'Selected' );
 					this.selected = false;
+					this.icon.selected = false;
 					this.fileInfo.selected = false;
 					return cancelBubble( e );
 				}
@@ -4422,12 +4435,14 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					this.classList.remove( 'Selected' );
 					this.selected = false;
+					this.icon.selected = false;
 					this.fileInfo.selected = false;
 				}
 				else
 				{
 					this.classList.add( 'Selected' );
 					this.selected = sh ? 'multiple' : true;
+					this.icon.selected = this.selected;
 					this.fileInfo.selected = sh ? 'multiple' : true;
 				}
 
