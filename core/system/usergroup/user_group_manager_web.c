@@ -51,6 +51,7 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 		if( result != NULL )
 		{
 			int pos = 0;
+			int spos = 0;
 			char **row;
 			
 			if( extServiceString != NULL )
@@ -93,6 +94,7 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 					// if Status == disabled
 					if( isDisabled )
 					{
+						/*
 						if( pos == 0 )
 						{
 							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
@@ -101,10 +103,11 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 						{
 							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
+						*/
 					}
 					else
 					{
-						if( pos == 0 )
+						if( spos == 0 )
 						{
 							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
@@ -112,8 +115,9 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 						{
 							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
-					}
-					BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+						BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+						spos++;
+					}					
 					pos++;
 				}
 			}
@@ -178,6 +182,7 @@ int generateConnectedUsersID( SystemBase *l, FULONG groupID, BufString *retStrin
 		if( result != NULL )
 		{
 			int pos = 0;
+			int spos = 0;
 			char **row;
 			
 			if( extServiceString != NULL )
@@ -217,17 +222,21 @@ int generateConnectedUsersID( SystemBase *l, FULONG groupID, BufString *retStrin
 						BufStringAddSize( retString, tmp, itmp );	// send response to caller HTTP/WS
 					}
 					
-					// add response to external service
-					if( pos == 0 )
+					if( isDisabled == FALSE )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
-					}
-					else
-					{
-						itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
-					}
+						// add response to external service
+						if( spos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
+						}
 					
-					BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+						BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+						spos++;
+					}
 					pos++;
 				}
 			}
