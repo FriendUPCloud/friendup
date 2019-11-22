@@ -331,8 +331,23 @@ DeepestField = {
 				var d = document.createElement( 'div' );
 				d.className = 'WindowItem';
 				d.window = movableWindows[ a ];
-				console.log( 'File info: ', d.window.parentNode.fileInfo );
 				d.innerHTML = '<div class="Close"><div class="CloseButton"></div></div>';
+				var img = document.createElement( 'img' );
+				if( d.window.applicationId )
+				{
+					for( var a in Workspace.applications )
+					{
+						if( Workspace.applications[ a ].applicationId == d.window.applicationId )
+						{
+							img.src = Workspace.applications[ a ].icon;
+							break;
+						}
+					}
+				}
+				if( !img.src )
+				{
+					img.src = '/iconthemes/friendup15/File_Binary.svg';
+				}
 				ge( 'TaskSwitcher' ).appendChild( d );
 				( function( win, close )
 				{
@@ -342,6 +357,8 @@ DeepestField = {
 						DeepestField.showTasks();
 					}
 				} )( d.window, d.querySelector( '.CloseButton' ) );
+				// Add image
+				d.querySelector( '.Close' ).appendChild( img );
 			}
 		}
 		// Clean up!
