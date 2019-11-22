@@ -28,22 +28,29 @@
 //test
 
 
-inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr )
+inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, char *action )
 {
 	BufString *bs = BufStringNew();
 
 	char msg[ 512 ];
 	int msize = 0;
-	msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+	if( usr->u_Status == USER_STATUS_DISABLED )
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+	}
+	else
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":false,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+	}
 
 	BufStringAddSize( bs, msg, msize );
-	DEBUG("NotifyExtServices1: %s\n", bs->bs_Buffer );
+	//DEBUG("NotifyExtServices1: %s\n", bs->bs_Buffer );
 	UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
-	DEBUG("NotifyExtServices2: %s\n", bs->bs_Buffer );
+	//DEBUG("NotifyExtServices2: %s\n", bs->bs_Buffer );
 	BufStringAddSize( bs, "]}", 2 );
-	DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
+	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
-	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", bs->bs_Buffer );
+	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
 	
 	BufStringDelete( bs );
 }
@@ -402,7 +409,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -496,7 +503,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, NULL );
 						
-						NotifyExtServices( l, request, locusr );
+						NotifyExtServices( l, request, locusr, "create" );
 						
 						UserDelete( locusr );
 					}
@@ -758,7 +765,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							BufStringDelete( bs );
 						}
 						*/
-						NotifyExtServices( l, request, usr );
+						NotifyExtServices( l, request, usr, "update" );
 						
 						if( gotFromDB == TRUE )
 						{
@@ -1181,7 +1188,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
-					NotifyExtServices( l, request, logusr );
+					NotifyExtServices( l, request, logusr, "update" );
 					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )
@@ -1351,7 +1358,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
-					NotifyExtServices( l, request, logusr );
+					NotifyExtServices( l, request, logusr, "update" );
 					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )
