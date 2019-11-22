@@ -41,7 +41,7 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr )
 	UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 	//DEBUG("NotifyExtServices2: %s\n", bs->bs_Buffer );
 	BufStringAddSize( bs, "]}", 2 );
-	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
+	DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
 	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", bs->bs_Buffer );
 	
