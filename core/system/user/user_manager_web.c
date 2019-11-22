@@ -26,7 +26,25 @@
 #include <util/session_id.h>
 
 //test
-#undef __DEBUG
+
+
+inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr )
+{
+	BufString *bs = BufStringNew();
+
+	char msg[ 512 ];
+	int msize = 0;
+	msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+
+	BufStringAddSize( bs, msg, msize );
+	UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+	BufStringAddSize( bs, "]}", 2 );
+	
+	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+	
+	BufStringDelete( bs );
+}
+
 
 /**
  * Http web call processor
@@ -475,6 +493,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, NULL );
 						
+						NotifyExtServices( l, request, locusr );
+						
 						UserDelete( locusr );
 					}
 					else
@@ -725,13 +745,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 							}
 							BufStringAddSize( bs, msg, msize );
-							
 							UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+							BufStringAddSize( bs, "]}", 2 );
 							
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
-							
-							BufStringAddSize( bs, "]}", 2 );
 							
 							BufStringDelete( bs );
 						}
@@ -1157,6 +1175,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
+					NotifyExtServices( l, request, logusr );
+					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )
 					//{
@@ -1324,6 +1344,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, NULL, workgroups );
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+					NotifyExtServices( l, request, logusr );
 					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )
