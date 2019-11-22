@@ -8117,7 +8117,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				try
 				{
-					content = JSON.parse(this.returnData||"null");
+					content = JSON.parse( this.returnData || 'null' );
 				}
 				catch ( e ){};
 			}
@@ -8127,10 +8127,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				try
 				{
-					content = JSON.parse(this.responseText() || "null");
+					content = JSON.parse( this.responseText() || 'null' );
 				}
 				catch ( e ){}
 			}
+		
+			console.log( 'Trying to get shit done!', content );
 		
 			if( content )
 			{
@@ -8139,14 +8141,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				while( DirectoryContainsFile( newfilename, content ) )
 				{
 					i++;
-					consle.log( 'Trying to find a copy: ' + i );
+					
 					//find a new name
 					var tmp = file.name.split('.');
 					var newfilename = file.name;
 					if( tmp.length > 1 )
 					{
-						var suffix = tmp.pop();				
-						newfilename = tmp.join('.');
+						var suffix = tmp.pop();
+						newfilename = tmp.join( '.' );
 						newfilename += '_' + i + '.' + suffix;
 					}
 					else
@@ -8155,15 +8157,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					if( i > 10000 )
 					{
-						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files. Please cleanup your Home:Download directory.'});
-						break; // no endless loop please	
+						Notify( {
+							title: i18n( 'i18n_paste_error' ),
+							text: 'Really unexpected error. You have pasted many many files. Please cleanup your Home:Download directory.'
+						} );
+						return; // no endless loop please	
 					}
 				}
+				console.log( 'Downloading to folder!' );
 				Workspace.uploadFileToDownloadsFolder( file, newfilename );
 			}
 			else
 			{
-				Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. Contact your Friendly administrator.'});
+				Notify(	{
+					title: i18n( 'i18n_paste_error' ),
+					text: 'Really unexpected error. Contact your Friendly administrator.'
+				} );
 			}
 		}
 		j.send ();
