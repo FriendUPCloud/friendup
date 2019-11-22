@@ -2622,12 +2622,12 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 
 /* Tasks overlay ------------------------------------------------------------ */
 
-body[mobile] #Tasks
+body[mobile] #TaskSwitcher
 {
 	display: none;
 }
 
-body:not([mobile]) #Tasks
+body:not([mobile]) #TaskSwitcher
 {
 	position: absolute;
 	top: calc(50% - 100px);
@@ -2643,18 +2643,18 @@ body:not([mobile]) #Tasks
 	overflow: hidden;
 }
 
-body:not([mobile]).ShowTasks #Tasks
+body:not([mobile]).ShowTasks #TaskSwitcher
 {
 	opacity: 1;
 	pointer-events: all;
 }
 
-body:not([mobile]).ShowTasks #Tasks .Current .Close
+body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 {
 	box-shadow: 0px 0px 2px 2px rgba(255,255,225,0.6);
 }
 
-#Tasks .AppSandbox
+#TaskSwitcher .WindowItem
 {
 	width: 100px;
 	height: 100px;
@@ -2662,7 +2662,7 @@ body:not([mobile]).ShowTasks #Tasks .Current .Close
 	transition: left 0.25s;
 }
 
-#Tasks .AppSandbox .Close
+#TaskSwitcher .WindowItem .Close
 {
 	position: absolute;
 	top: 0px;
@@ -2675,7 +2675,7 @@ body:not([mobile]).ShowTasks #Tasks .Current .Close
 	border-radius: 10px;
 }
 
-#Tasks .AppSandbox .CloseButton
+#TaskSwitcher .WindowItem .CloseButton
 {
 	position: absolute;
 	top: 0;
@@ -2687,7 +2687,7 @@ body:not([mobile]).ShowTasks #Tasks .Current .Close
 	background: rgba(0,0,0,0.6);
 	border-radius: 50%;
 }
-#Tasks .AppSandbox .CloseButton:after
+#TaskSwitcher .WindowItem .CloseButton:after
 {
 	content: "\f00d";
 	font-family: fontawesome;
@@ -2695,12 +2695,12 @@ body:not([mobile]).ShowTasks #Tasks .Current .Close
 	color: white;
 }
 
-#Tasks .AppSandbox .Close img
+#TaskSwitcher .WindowItem .Close img
 {
 	display: none;
 }
 
-#Tasks .AppSandbox .Taskname
+#TaskSwitcher .WindowItem .Taskname
 {
 	position: absolute;
 	bottom: 0;
@@ -2713,7 +2713,7 @@ body:not([mobile]).ShowTasks #Tasks .Current .Close
 	overflow: hidden;
 }
 
-#Tasks .AppSandbox iframe
+#TaskSwitcher .WindowItem iframe
 {
 	display: none;
 }

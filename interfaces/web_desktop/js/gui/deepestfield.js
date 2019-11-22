@@ -284,30 +284,10 @@ DeepestField = {
 	selectTask: function()
 	{
 		document.body.classList.remove( 'ShowTasks' );
-		if( ge( 'Tasks' ).currentTask )
+		if( ge( 'TaskSwitcher' ).currentTask )
 		{
-			var ifr = ge( 'Tasks' ).currentTask.getElementsByTagName( 'iframe' )[0];
-			if( ifr )
-			{
-				// See if we have a switch
-				if( window.currentMovable )
-				{
-					var o = currentMovable.windowObject.applicationId;
-					if( ifr.mainView && ifr.mainView != o )
-					{
-						ifr.mainView.activate();
-					}
-				}
-				// Pick
-				else
-				{
-					if( ifr.mainView )
-					{
-						ifr.mainView.activate();
-					}
-				}
-			}
-			ge( 'Tasks' ).currentTask = null;
+			ge( 'TaskSwitcher' ).currentTask.window.windowObject.activate( 'force' );
+			ge( 'TaskSwitcher' ).currentTask = null;
 		}
 	},
 	// Show task switcher (meta+tab)
@@ -316,151 +296,194 @@ DeepestField = {
 		window.blur();
 		window.focus();
 		
-		if( Workspace.applications.length )
+		// Repopulate
+		var currentItems = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
+		var deletables = [];
+		for( var a = 0; a < currentItems.length; a++ )
 		{
-			var wc = 0; for( var a in Workspace.applications )
+			var doDelete = true;
+			for( var b in movableWindows )
 			{
-				if( Workspace.applications[ a ].windows )
+				if( movableWindows[ b ] == currentItems[ a ].window )
 				{
-					for( var c in Workspace.applications[ a ].windows )
-						wc++;
+					doDelete = false;
+					break;
 				}
 			}
-			if( wc > 0 )
+			if( doDelete )
 			{
-				document.body.classList.add( 'ShowTasks' );
-				var eles = ge( 'Tasks' ).getElementsByClassName( 'AppSandbox' );
-				
-				// Setup mouseover events
-				for( var a = 0; a < eles.length; a++ )
-				{
-					( function( app, appList ) {
-						app.onmouseover = function( e )
-						{
-							for( var b = 0; b < appList.length; b++ )
-							{
-								if( appList[ b ] == app )
-								{
-									ge( 'Tasks' ).currentTask = app;
-									app.classList.add( 'Current' );
-								}
-								else
-								{
-									appList[ b ].classList.remove( 'Current' );
-								}
-							}
-						}
-					} )( eles[ a ], eles );
-				}
-				
-				// Reposition all tasks
-				var xpos = 10;
-				var ypos = 10;
-				var xwid = eles[ 0 ].offsetWidth + 10;
-				for( var a = 0; a < eles.length; a++ )
-				{
-					eles[a].style.top = ypos + 'px';
-					eles[a].style.left = xpos + 'px';
-					xpos += xwid;
-				}
-				
-				// First time we're showing the tasks
-				if( !ge( 'Tasks' ).currentTask )
-				{
-					if( !ge( 'Tasks' ).currentTask )
-					{
-						var currApp = null;
-						if( window.currentMovable )
-						{
-							if( currentMovable.windowObject.applicationId )
-								currApp = currentMovable.windowObject.applicationId;
-							for( var a = 0; a < eles.length; a++ )
-							{
-								var ifr = eles[a].getElementsByTagName( 'iframe' )[ 0 ];
-								if( ifr.applicationId == currApp )
-								{
-									if( eles[ a + 1 ] )
-										ge( 'Tasks' ).currentTask = eles[a + 1];
-									else ge( 'Tasks' ).currentTask = eles[0];
-									break;
-								}
-							}
-						}
-					}
-					// Draw the highlight
-					for( var a = 0; a < eles.length; a++ )
-					{
-						var ifr = eles[a].getElementsByTagName( 'iframe' )[ 0 ];
-						if( ge( 'Tasks' ).currentTask == eles[a] || !ge( 'Tasks' ).currentTask )
-						{
-							eles[a].classList.add( 'Current' );
-							ge( 'Tasks' ).currentTask = eles[a];
-						}
-						else
-						{
-							eles[a].classList.remove( 'Current' );
-						}
-					}
-				}
-				// Next time.. choose next task
-				else
-				{
-					var next = false;
-					for( var a = 0; a < eles.length; a++ )
-					{
-						if( ge( 'Tasks' ).currentTask == eles[a] && eles[ a + 1 ] )
-						{
-							ge( 'Tasks' ).currentTask = eles[ a + 1 ];
-							eles[ a     ].classList.remove( 'Current' );
-							eles[ a + 1 ].classList.add( 'Current' );
-							a++;
-							next = true;
-						}
-						else
-						{
-							eles[a].classList.remove( 'Current' );
-						}
-					}
-					if( !next )
-					{
-						eles[ 0 ].classList.add( 'Current' );
-						ge( 'Tasks' ).currentTask = eles[ 0 ];
-					}
-				}
-				
-				// Where is the current task?
-				var ct = ge( 'Tasks' ).currentTask;
-				var move = ( ge( 'Tasks' ).offsetWidth >> 1 ) - ( ct.offsetWidth >> 1 );
-				
-				// Scroll into view
-				for( var a = 0; a < eles.length; a++ )
-				{
-					if( eles[ a ] == ct )
-					{
-						var xpos = move;
-						for( var b = a; b >= 0; b-- )
-						{
-							eles[b].style.left = xpos + 'px';
-							xpos -= xwid;
-						}
-						xpos = move + xwid;
-						for( var b = a + 1; b < eles.length; b++ )
-						{
-							eles[b].style.left = xpos + 'px';
-							xpos += xwid;
-						}
-						break;
-					}
-				}
-				
-				window.blur();
-				window.focus();
+				deletables.push( currentItems[ a ] );
 			}
 		}
+		for( var a in movableWindows )
+		{
+			var found = false;
+			for( var b in currentItems )
+			{
+				if( movableWindows[ a ] == currentItems[ b ].window )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{	
+				var d = document.createElement( 'div' );
+				d.className = 'WindowItem';
+				d.window = movableWindows[ a ];
+				console.log( 'File info: ', d.window.parentNode.fileInfo );
+				d.innerHTML = '<div class="Close"><div class="CloseButton"></div></div>';
+				ge( 'TaskSwitcher' ).appendChild( d );
+				( function( win, close )
+				{
+					close.onmouseup = function()
+					{
+						win.windowObject.close();
+						DeepestField.showTasks();
+					}
+				} )( d.window, d.querySelector( '.CloseButton' ) );
+			}
+		}
+		// Clean up!
+		for( var a = 0; a < deletables.length; a++ )
+		{
+			ge( 'TaskSwitcher' ).removeChild( deletables[ a ] );
+		}
+		
+		
+		document.body.classList.add( 'ShowTasks' );
+		
+		// Refresh list of window items
+		var eles = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
+		if( eles.length )
+			{
+		
+			// Setup mouseover events
+			for( var a = 0; a < eles.length; a++ )
+			{
+				( function( app, appList ) {
+					app.onmouseover = function( e )
+					{
+						for( var b = 0; b < appList.length; b++ )
+						{
+							if( appList[ b ] == app )
+							{
+								ge( 'TaskSwitcher' ).currentTask = app;
+								app.classList.add( 'Current' );
+							}
+							else
+							{
+								appList[ b ].classList.remove( 'Current' );
+							}
+						}
+					}
+				} )( eles[ a ], eles );
+			}
+		
+			// Reposition all tasks
+			var xpos = 10;
+			var ypos = 10;
+			var xwid = eles[ 0 ].offsetWidth + 10;
+			for( var a = 0; a < eles.length; a++ )
+			{
+				eles[a].style.top = ypos + 'px';
+				eles[a].style.left = xpos + 'px';
+				xpos += xwid;
+			}
+		
+			// First time we're showing the tasks
+			if( !ge( 'TaskSwitcher' ).currentTask )
+			{
+				if( !ge( 'TaskSwitcher' ).currentTask )
+				{
+					var currApp = null;
+					if( window.currentMovable )
+					{
+						currApp = currentMovable.windowObject;
+						for( var a = 0; a < eles.length; a++ )
+						{
+							if( eles[a].window == currApp )
+							{
+								if( eles[ a + 1 ] )
+									ge( 'TaskSwitcher' ).currentTask = eles[a + 1];
+								else ge( 'TaskSwitcher' ).currentTask = eles[0];
+								break;
+							}
+						}
+					}
+				}
+				// Draw the highlight
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( ge( 'TaskSwitcher' ).currentTask == eles[a] || !ge( 'TaskSwitcher' ).currentTask )
+					{
+						eles[a].classList.add( 'Current' );
+						ge( 'TaskSwitcher' ).currentTask = eles[a];
+					}
+					else
+					{
+						eles[a].classList.remove( 'Current' );
+					}
+				}
+			}
+			// Next time.. choose next task
+			else
+			{
+				var next = false;
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( ge( 'TaskSwitcher' ).currentTask == eles[a] && eles[ a + 1 ] )
+					{
+						ge( 'TaskSwitcher' ).currentTask = eles[ a + 1 ];
+						eles[ a     ].classList.remove( 'Current' );
+						eles[ a + 1 ].classList.add( 'Current' );
+						a++;
+						next = true;
+					}
+					else
+					{
+						eles[a].classList.remove( 'Current' );
+					}
+				}
+				if( !next )
+				{
+					eles[ 0 ].classList.add( 'Current' );
+					ge( 'TaskSwitcher' ).currentTask = eles[ 0 ];
+				}
+			}
+		
+			// Where is the current task?
+			var ct = ge( 'TaskSwitcher' ).currentTask;
+			var move = ( ge( 'TaskSwitcher' ).offsetWidth >> 1 ) - ( ct.offsetWidth >> 1 );
+		
+			// Scroll into view
+			for( var a = 0; a < eles.length; a++ )
+			{
+				if( eles[ a ] == ct )
+				{
+					var xpos = move;
+					for( var b = a; b >= 0; b-- )
+					{
+						eles[b].style.left = xpos + 'px';
+						xpos -= xwid;
+					}
+					xpos = move + xwid;
+					for( var b = a + 1; b < eles.length; b++ )
+					{
+						eles[b].style.left = xpos + 'px';
+						xpos += xwid;
+					}
+					break;
+				}
+			}
+		}
+		
+		window.blur();
+		window.focus();
 	},
 	updateTaskInformation: function()
 	{
-		ge( 'TasksHeader' ).innerHTML = ge( 'Tasks' ).getElementsByTagName( 'iframe' ).length + ' ' + i18n( 'i18n_tasks_running' ) + ':';
+		ge( 'TasksHeader' ).innerHTML = ge( 'TaskSwitcher' ).getElementsByTagName( 'iframe' ).length + ' ' + i18n( 'i18n_tasks_running' ) + ':';
 	},
 	updateNotificationInformation: function()
 	{

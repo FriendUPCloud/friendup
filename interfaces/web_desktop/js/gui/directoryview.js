@@ -4002,194 +4002,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	}
 	else
 	{
-		switch( extension )
-		{
-			case 'info':
-				iconInner.className = 'MetaFile';
-				break;
-			case 'library':
-				iconInner.className = 'System_Library';
-				break;
-			case 'jpg':
-				iconInner.className = 'TypeJPG';
-				break;
-			case 'jpeg':
-				iconInner.className = 'TypeJPEG';
-				break;
-			case 'psd':
-				iconInner.className = 'TypePSD';
-				break;
-			case 'png':
-				iconInner.className = 'TypePNG';
-				break;
-			case 'gif':
-				iconInner.className = 'TypeGIF';
-				break;
-			case 'odt':
-				iconInner.className = 'TypeDOC';
-				break;
-			case 'ods':
-				iconInner.className = 'TypeODS';
-				break;
-			case 'xlsx':
-				iconInner.className = 'TypeXLS';
-				break;
-			case 'xls':
-				iconInner.className = 'TypeXLSX';
-				break;
-			case 'abw':
-				iconInner.className = 'TypeABW';
-				break;
-			case 'docx':
-				iconInner.className = 'TypeDOCX';
-				break;
-			case 'doc':
-				iconInner.className = 'TypeDOC';
-				break;
-			case 'svg':
-				iconInner.className = 'TypeSVG';
-				break;
-			case 'eps':
-				iconInner.className = 'TypeEPS';
-				break;
-			case 'pdf':
-				iconInner.className = 'TypePDF';
-				break;
-			case 'url':
-				iconInner.className = 'TypeWebUrl';
-				break;
-			case 'txt':
-				iconInner.className = 'TypeTXT';
-				break;
-			case 'avi':
-				iconInner.className = 'TypeAVI';
-				break;
-			case 'mp4':
-				iconInner.className = 'TypeMP4';
-				break;
-			case 'mov':
-				iconInner.className = 'TypeMOV';
-				break;
-			case 'webm':
-				iconInner.className = 'TypeWEBM';
-				break;
-			case 'mpeg':
-				iconInner.className = 'TypeMPEG';
-				break;
-			case 'm4a':
-			case 'mp3':
-				iconInner.className = 'TypeMP3';
-				break;
-			case 'wav':
-				iconInner.className = 'TypeWAV';
-				break;
-			case 'ogg':
-				iconInner.className = 'TypeOGG';
-				break;
-			case 'ogv':
-				iconInner.className = 'TypeOGV';
-				break;
-			case 'flac':
-				iconInner.className = 'TypeFLAC';
-				break;
-			case 'pls':
-				iconInner.className = 'TypePLS';
-				break;
-			case 'jsx':
-				iconInner.className = 'TypeJSX';
-				break;
-			case 'php':
-				iconInner.className = 'TypePHP';
-				break;
-			case 'js':
-				iconInner.className = 'TypeJS';
-				break;
-			case 'run':
-				iconInner.className = 'TypeRUN';
-				break;
-			case 'css':
-				iconInner.className = 'TypeCSS';
-				break;
-			case 'json':
-				iconInner.className = 'TypeJSON';
-				break;
-			case 'html':
-				iconInner.className = 'TypeHTML';
-				break;
-			case 'bak':
-				iconInner.className = 'TypeBak';
-				break;
-			case 'fpkg':
-				iconInner.className = 'TypeFPkg';
-				break;
-			case 'apf':
-				iconInner.className = 'TypeApf';
-				break;
-			case 'zip':
-				iconInner.className = 'TypeZip';
-				break;
-			case 'ppt':
-				iconInner.className = 'TypePPT';
-				break;
-			case 'odp':
-				iconInner.className = 'TypeODP';
-				break;
-			case 'pptx':
-				iconInner.className = 'TypePPTX';
-				break;
-			case 'gz':
-				iconInner.className = 'TypeGZ';
-				break;
-			case 'bz':
-			case 'bz2':
-				iconInner.className = 'TypeBZ';
-				break;
-			case 'tgz':
-				iconInner.className = 'TypeTGZ';
-				break;
-			case 'tar':
-				iconInner.className = 'TypeTAR';
-				break;
-			case '7z':
-				iconInner.className = 'Type7Z';
-				break;
-			case 'lha':
-				iconInner.className = 'TypeLHA';
-				break;
-			case 'deb':
-				iconInner.className = 'TypePKGLINUX';
-				break;
-			case 'rpm':
-				iconInner.className = 'TypePKGLINUX';
-				break;
-			default:
-				switch( fileInfo.MetaType )
-				{
-					case 'Meta':
-						iconInner.className = 'Application';
-						break;
-					case 'Directory':
-						if( fileInfo.Title == 'Upload' )
-						{
-							iconInner.className = 'Directory Upload';
-						}
-						else iconInner.className = 'Directory';
-						break;
-					default:
-						iconInner.className = 'File';
-				}
-				if( typeof ( fileInfo.Type ) != 'undefined' )
-					iconInner.className += ' ' + fileInfo.Type;
-				// Disk icons!
-				if( fileInfo.Type == 'Door' )
-				{
-					if( fileInfo.Door && fileInfo.Door.Type == 'Assign' )
-						iconInner.className += ' Assign';
-					else iconInner.className = 'Door';
-					iconInner.className += ' ' + fileInfo.Handler.split( '.' ).join( '_' );
-				}
-				break;
-		}
+		iconInner.className = GetIconClassByExtension( extension, fileInfo );
 	}
 	
 	// Check for thumbs
@@ -6169,6 +5982,200 @@ Friend.startImageViewer = function( iconObject, extra )
 	}
 	win = null;
 };
+
+function GetIconClassByExtension( extension, fileInfo )
+{
+	var iconInner = { className: '' };
+	switch( extension )
+	{
+		case 'info':
+			iconInner.className = 'MetaFile';
+			break;
+		case 'library':
+			iconInner.className = 'System_Library';
+			break;
+		case 'jpg':
+			iconInner.className = 'TypeJPG';
+			break;
+		case 'jpeg':
+			iconInner.className = 'TypeJPEG';
+			break;
+		case 'psd':
+			iconInner.className = 'TypePSD';
+			break;
+		case 'png':
+			iconInner.className = 'TypePNG';
+			break;
+		case 'gif':
+			iconInner.className = 'TypeGIF';
+			break;
+		case 'odt':
+			iconInner.className = 'TypeDOC';
+			break;
+		case 'ods':
+			iconInner.className = 'TypeODS';
+			break;
+		case 'xlsx':
+			iconInner.className = 'TypeXLS';
+			break;
+		case 'xls':
+			iconInner.className = 'TypeXLSX';
+			break;
+		case 'abw':
+			iconInner.className = 'TypeABW';
+			break;
+		case 'docx':
+			iconInner.className = 'TypeDOCX';
+			break;
+		case 'doc':
+			iconInner.className = 'TypeDOC';
+			break;
+		case 'svg':
+			iconInner.className = 'TypeSVG';
+			break;
+		case 'eps':
+			iconInner.className = 'TypeEPS';
+			break;
+		case 'pdf':
+			iconInner.className = 'TypePDF';
+			break;
+		case 'url':
+			iconInner.className = 'TypeWebUrl';
+			break;
+		case 'txt':
+			iconInner.className = 'TypeTXT';
+			break;
+		case 'avi':
+			iconInner.className = 'TypeAVI';
+			break;
+		case 'mp4':
+			iconInner.className = 'TypeMP4';
+			break;
+		case 'mov':
+			iconInner.className = 'TypeMOV';
+			break;
+		case 'webm':
+			iconInner.className = 'TypeWEBM';
+			break;
+		case 'mpeg':
+			iconInner.className = 'TypeMPEG';
+			break;
+		case 'm4a':
+		case 'mp3':
+			iconInner.className = 'TypeMP3';
+			break;
+		case 'wav':
+			iconInner.className = 'TypeWAV';
+			break;
+		case 'ogg':
+			iconInner.className = 'TypeOGG';
+			break;
+		case 'ogv':
+			iconInner.className = 'TypeOGV';
+			break;
+		case 'flac':
+			iconInner.className = 'TypeFLAC';
+			break;
+		case 'pls':
+			iconInner.className = 'TypePLS';
+			break;
+		case 'jsx':
+			iconInner.className = 'TypeJSX';
+			break;
+		case 'php':
+			iconInner.className = 'TypePHP';
+			break;
+		case 'js':
+			iconInner.className = 'TypeJS';
+			break;
+		case 'run':
+			iconInner.className = 'TypeRUN';
+			break;
+		case 'css':
+			iconInner.className = 'TypeCSS';
+			break;
+		case 'json':
+			iconInner.className = 'TypeJSON';
+			break;
+		case 'html':
+			iconInner.className = 'TypeHTML';
+			break;
+		case 'bak':
+			iconInner.className = 'TypeBak';
+			break;
+		case 'fpkg':
+			iconInner.className = 'TypeFPkg';
+			break;
+		case 'apf':
+			iconInner.className = 'TypeApf';
+			break;
+		case 'zip':
+			iconInner.className = 'TypeZip';
+			break;
+		case 'ppt':
+			iconInner.className = 'TypePPT';
+			break;
+		case 'odp':
+			iconInner.className = 'TypeODP';
+			break;
+		case 'pptx':
+			iconInner.className = 'TypePPTX';
+			break;
+		case 'gz':
+			iconInner.className = 'TypeGZ';
+			break;
+		case 'bz':
+		case 'bz2':
+			iconInner.className = 'TypeBZ';
+			break;
+		case 'tgz':
+			iconInner.className = 'TypeTGZ';
+			break;
+		case 'tar':
+			iconInner.className = 'TypeTAR';
+			break;
+		case '7z':
+			iconInner.className = 'Type7Z';
+			break;
+		case 'lha':
+			iconInner.className = 'TypeLHA';
+			break;
+		case 'deb':
+			iconInner.className = 'TypePKGLINUX';
+			break;
+		case 'rpm':
+			iconInner.className = 'TypePKGLINUX';
+			break;
+		default:
+			switch( fileInfo.MetaType )
+			{
+				case 'Meta':
+					iconInner.className = 'Application';
+					break;
+				case 'Directory':
+					if( fileInfo.Title == 'Upload' )
+					{
+						iconInner.className = 'Directory Upload';
+					}
+					else iconInner.className = 'Directory';
+					break;
+				default:
+					iconInner.className = 'File';
+			}
+			if( typeof ( fileInfo.Type ) != 'undefined' )
+				iconInner.className += ' ' + fileInfo.Type;
+			// Disk icons!
+			if( fileInfo.Type == 'Door' )
+			{
+				if( fileInfo.Door && fileInfo.Door.Type == 'Assign' )
+					iconInner.className += ' Assign';
+				else iconInner.className = 'Door';
+				iconInner.className += ' ' + fileInfo.Handler.split( '.' ).join( '_' );
+			}
+			break;
+	}
+	return iconInner.className;
+}
 
 // End Friend Image Viewer! ----------------------------------------------------
 

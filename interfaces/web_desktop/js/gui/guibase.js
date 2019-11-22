@@ -2940,7 +2940,6 @@ function PollTaskbar( curr )
 						// Activate
 						d.setActive = function( click )
 						{
-							console.log( 'Setting active' );
 							this.classList.add( 'Active' );
 							_ActivateWindow( this.window );
 							if( click )
