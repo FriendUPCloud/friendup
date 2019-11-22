@@ -322,6 +322,7 @@ DeepestField = {
 			{
 				if( movableWindows[ a ] == currentItems[ b ].window )
 				{
+					currentItems[ b ].querySelector( '.Taskname' ).innerHTML = movableWindows[ a ].windowObject.flags.title;
 					found = true;
 					break;
 				}
@@ -331,22 +332,29 @@ DeepestField = {
 				var d = document.createElement( 'div' );
 				d.className = 'WindowItem';
 				d.window = movableWindows[ a ];
-				d.innerHTML = '<div class="Close"><div class="CloseButton"></div></div>';
-				var img = document.createElement( 'img' );
+				d.innerHTML = '<div class="Close"><div class="CloseButton"></div></div><div class="Taskname">' + d.window.windowObject.flags.title + '</div>';
+				var img = null;
 				if( d.window.applicationId )
 				{
 					for( var a in Workspace.applications )
 					{
 						if( Workspace.applications[ a ].applicationId == d.window.applicationId )
 						{
-							img.src = Workspace.applications[ a ].icon;
+							img = Workspace.applications[ a ].icon;
 							break;
 						}
 					}
 				}
-				if( !img.src )
+				if( !img )
 				{
-					img.src = '/iconthemes/friendup15/File_Binary.svg';
+					if( d.window.content && d.window.content.fileInfo )
+					{
+						img = '/iconthemes/friendup15/Folder.svg';
+					}
+					else
+					{
+						img = '/iconthemes/friendup15/File_Binary.svg';
+					}
 				}
 				ge( 'TaskSwitcher' ).appendChild( d );
 				( function( win, close )
@@ -358,7 +366,7 @@ DeepestField = {
 					}
 				} )( d.window, d.querySelector( '.CloseButton' ) );
 				// Add image
-				d.querySelector( '.Close' ).appendChild( img );
+				d.querySelector( '.Close' ).style.backgroundImage = 'url(' + img + ')';
 			}
 		}
 		// Clean up!
