@@ -37,9 +37,9 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr )
 	msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 
 	BufStringAddSize( bs, msg, msize );
-	//DEBUG("NotifyExtServices1: %s\n", bs->bs_Buffer );
+	DEBUG("NotifyExtServices1: %s\n", bs->bs_Buffer );
 	UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
-	//DEBUG("NotifyExtServices2: %s\n", bs->bs_Buffer );
+	DEBUG("NotifyExtServices2: %s\n", bs->bs_Buffer );
 	BufStringAddSize( bs, "]}", 2 );
 	DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
