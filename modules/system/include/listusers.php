@@ -118,68 +118,126 @@ else
 
 // TODO: Create searchby komma separated so one can specify what to search by ...
 
-if( $users = $SqlDatabase->FetchObjects( $q = '
-	SELECT 
-		u.*, g.Name AS `Level`, ( SELECT l.LoginTime FROM `FUserLogin` l WHERE l.UserID = u.ID AND l.Information = "Login success" ORDER BY l.ID DESC LIMIT 1 ) AS `LoginTime` 
-	FROM 
-		`FUser` u, 
-		`FUserGroup` g, 
-		`FUserToGroup` ug 
-	WHERE 
-		    u.ID = ug.UserID 
-		AND g.ID = ug.UserGroupID 
-		AND g.Type = "Level" 
-		' . ( isset( $args->args->userid ) && $args->args->userid ? '
-		AND u.ID IN (' . $args->args->userid . ') 
-		' : '' ) . '
-		' . ( isset( $args->args->query ) && $args->args->query ? '
-		AND 
-		(
-			' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
-			( 
-				u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
-			) 
-			' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
-			 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
-			( 
-				u.Name LIKE "' . trim( $args->args->query ) . '%" 
-			) 
-			' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
-			 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Email' ? '
-			( 
-				u.Email LIKE "' . trim( $args->args->query ) . '%" 
-			) ' : '' ) . '
-		)' : '' ) . '
-	GROUP 
-		BY u.ID, g.Name 
-	ORDER BY 
-		u.' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . ' 
-		' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) . ' 
-	' . ( isset( $args->args->limit ) && $args->args->limit ? '
-	LIMIT ' . $args->args->limit . ' 
-	' : '' ) . '
-' ) )
+// TODO: Divide into 3 calls to see if it can speed up the process ...
+
+switch( $args->args->mode )
 {
-	$out = [];
-	foreach( $users as $u )
-	{
-		$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Image', 'Level', 'UniqueID', 'Status' ];
-		$o = new stdClass();
-		foreach( $keys as $key )
+	
+	case 'logintime':
+		
+		//'( SELECT l.LoginTime FROM `FUserLogin` l WHERE l.UserID = u.ID AND l.Information = "Login success" ORDER BY l.ID DESC LIMIT 1 )'
+		
+		if( isset( $args->args->userid ) && $args->args->userid )
 		{
-			$o->$key = $u->$key;
+			if( $arr = $SqlDatabase->FetchObjects( $q = '
+				SELECT l.UserID, l.LoginTime 
+				FROM `FUserLogin` l 
+				WHERE l.UserID IN (' . $args->args->userid . ') 
+				AND l.Information = "Login success" 
+				ORDER BY l.ID DESC 
+			' ) )
+			{
+				$out = [];
+				
+				foreach( $arr as $o )
+				{
+					if( $o->UserID > 0 && !$out[$o->UserID] )
+					{
+						$out[$o->UserID] = $o;
+					}
+				}
+				
+				die( 'ok<!--separate-->' . json_encode( $out ) );
+			}
+			die( 'fail ...' . $q );
 		}
-		$out[] = $o;
-	}
+		
+		break;
 	
-	if( isset( $args->args->count ) && $args->args->count )
-	{
-		$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
-		$out['Count'] = ( $count ? $count->Num : 0 );
-	}
 	
-	die( 'ok<!--separate-->' . json_encode( $out ) );
+	case 'count':
+		
+		if( isset( $args->args->count ) && $args->args->count )
+		{
+			$out = [];
+			
+			$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+			$out['Count'] = ( $count ? $count->Num : 0 );
+			
+			die( 'ok<!--separate-->' . json_encode( $out ) );
+		}
+		
+		break;
+	
+	default:
+		
+		if( $users = $SqlDatabase->FetchObjects( $q = '
+			SELECT 
+				u.*, g.Name AS `Level`, "0" AS `LoginTime` 
+			FROM 
+				`FUser` u, 
+				`FUserGroup` g, 
+				`FUserToGroup` ug 
+			WHERE 
+					u.ID = ug.UserID 
+				AND g.ID = ug.UserGroupID 
+				AND g.Type = "Level" 
+				' . ( isset( $args->args->userid ) && $args->args->userid ? '
+				AND u.ID IN (' . $args->args->userid . ') 
+				' : '' ) . '
+				' . ( isset( $args->args->query ) && $args->args->query ? '
+				AND 
+				(
+					' . ( !isset( $args->args->searchby ) || $args->args->searchby == 'FullName' ? '
+					( 
+						u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+					) 
+					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Name' ? '
+					( 
+						u.Name LIKE "' . trim( $args->args->query ) . '%" 
+					) 
+					' . ( !isset( $args->args->searchby ) ? 'OR ' : '' ) : '' )
+					 .  ( !isset( $args->args->searchby ) || $args->args->searchby == 'Email' ? '
+					( 
+						u.Email LIKE "' . trim( $args->args->query ) . '%" 
+					) ' : '' ) . '
+				)' : '' ) . '
+			GROUP 
+				BY u.ID, g.Name 
+			ORDER BY 
+				u.' . ( isset( $args->args->sortby ) ? $args->args->sortby : 'FullName' ) . ' 
+				' . ( isset( $args->args->orderby ) ? $args->args->orderby : 'ASC' ) . ' 
+			' . ( isset( $args->args->limit ) && $args->args->limit ? '
+			LIMIT ' . $args->args->limit . ' 
+			' : '' ) . '
+		' ) )
+		{
+			$out = [];
+			foreach( $users as $u )
+			{
+				$keys = [ 'ID', 'Name', 'Password', 'FullName', 'Email', 'CreatedTime', 'LoginTime', 'Image', 'Level', 'UniqueID', 'Status' ];
+				$o = new stdClass();
+				foreach( $keys as $key )
+				{
+					$o->$key = $u->$key;
+				}
+				$out[] = $o;
+			}
+	
+			if( isset( $args->args->count ) && $args->args->count )
+			{
+				$count = $SqlDatabase->FetchObject( 'SELECT COUNT( DISTINCT( u.ID ) ) AS Num FROM FUser u, FUserToGroup tg WHERE u.ID = tg.UserID ' );
+				$out['Count'] = ( $count ? $count->Num : 0 );
+			}
+			
+			die( 'ok<!--separate-->' . json_encode( $out ) );
+		}
+		
+		break;
+	
 }
+
 die( 'fail<!--separate-->{"response":"-2","message":"list users failed Error 2"} ' );
 
 ?>

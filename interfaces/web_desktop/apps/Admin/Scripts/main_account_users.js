@@ -1497,7 +1497,12 @@ Sections.accounts_users = function( cmd, extra )
 		
 		if( userList['Count'] )
 		{ 
-			Application.totalUserCount = /*5;*/userList['Count'];
+			Application.totalUserCount = userList['Count'];
+			
+			if( !UsersSettings( 'total' ) )
+			{
+				UsersSettings( 'total', Application.totalUserCount );
+			}
 		}
 		
 		//console.log( 'Application.totalUserCount: ', Application.totalUserCount );
@@ -1540,7 +1545,7 @@ Sections.accounts_users = function( cmd, extra )
 					'status="' + userList[ a ].Status + '" '       + 
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
-					'class="IconSmall fa-user-circle-o" '          + 
+					'class="IconSmall fa-user-circle-o avatar" '   + 
 					'style="' + bg + '" '                          +
 					'></span>';
 					
@@ -1560,7 +1565,7 @@ Sections.accounts_users = function( cmd, extra )
 						{
 							borders += ' BorderBottom';
 						}
-						d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
+						d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis ' + z.toLowerCase() + borders;
 						d.innerHTML = userList[a][ z ];
 						r.appendChild( d );
 					}
@@ -1604,7 +1609,7 @@ Sections.accounts_users = function( cmd, extra )
 			
 			//console.log( 'sorting: ', { output: output, sortby: sortby, orderby: orderby } );
 			
-			var i = 0;
+			var i = 0; var users = [];
 			
 			for( var key in output )
 			{
@@ -1612,45 +1617,11 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					i++;
 					
+					users.push( output[key].object.ID );
+					
 					// Add row
 					list.appendChild( output[key].content );
 					
-					/*if( output[key].object.ID )
-					{
-						if( ge( 'UserAvatar_' + output[key].object.ID ) )
-						{
-							var img = '/system.library/module/?module=system&command=getavatar&userid=' + output[key].object.ID + ( output[key].object.Image ? '&image=' + output[key].object.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
-							
-							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundImage = "url('"+img+"')";
-							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundPosition = 'center';
-							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundSize = 'contain';
-							ge( 'UserAvatar_' + output[key].object.ID ).style.backgroundRepeat = 'no-repeat';
-							ge( 'UserAvatar_' + output[key].object.ID ).style.color = 'transparent';
-						}
-					}*/
-					
-					// Set Avatar on delay basis because of having to do one by one user ...
-					/*setAvatar( output[key].object.ID, output[key].content, function( res, userid, content, dat )
-					{
-						if( content )
-						{
-							// Add row
-							//list.appendChild( content );
-						}
-						
-						if( res )
-						{
-							if( ge( 'UserAvatar_' + userid ) )
-							{
-								ge( 'UserAvatar_' + userid ).style.backgroundImage = "url('"+dat+"')";
-								ge( 'UserAvatar_' + userid ).style.backgroundPosition = 'center';
-								ge( 'UserAvatar_' + userid ).style.backgroundSize = 'contain';
-								ge( 'UserAvatar_' + userid ).style.backgroundRepeat = 'no-repeat';
-								ge( 'UserAvatar_' + userid ).style.color = 'transparent';
-							}
-						}
-					
-					} );*/
 				}
 			}
 			
@@ -1671,15 +1642,54 @@ Sections.accounts_users = function( cmd, extra )
 				}
 			}
 			
+			// Temporary get lastlogin time separate to speed up the sql query ...
+			
+			getLastLoginlist( function ( res, dat )
+			{
+				if( res == 'ok' && dat )
+				{
+					for ( var i in dat )
+					{
+						if( dat[i] && dat[i]['UserID'] )
+						{
+							if( ge( 'UserListID_' + dat[i]['UserID'] ) )
+							{
+								var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+								
+								if( elems.length > 0 )
+								{
+									for ( var div in elems )
+									{
+										if( elems[div] && elems[div].className )
+										{
+											var timestamp = ( dat[i]['LoginTime'] );
+											var logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
+											
+											if( elems[div].className.indexOf( 'avatar' ) >= 0 )
+											{
+												elems[div].setAttribute( 'timestamp', timestamp );
+												elems[div].setAttribute( 'logintime', logintime );
+											}
+											if( elems[div].className.indexOf( 'logintime' ) >= 0 )
+											{
+												elems[div].innerHTML = logintime;
+											}
+										}
+									}
+								}
+								
+								
+							}
+						}
+					}
+				}
+				
+			}, ( users ? users.join(',') : false ) );
 			
 			
 			console.log( 'new users added to list: ' + i + '/' + tot + ' total ['+total+']' );
 			
 			
-			if( !UsersSettings( 'total' ) )
-			{
-				UsersSettings( 'total', Application.totalUserCount );
-			}
 			
 			if( Application.totalUserCount > tot )
 			{
@@ -2068,6 +2078,44 @@ function getUserlist( callback, obj )
 	m.execute( 'listusers', args );
 }
 
+function getLastLoginlist( callback, users )
+{
+	if( users )
+	{
+		var args = { 
+			mode    : 'logintime',
+			userid  : users,
+			authid  : Application.authId 
+		};
+	
+		// Get the user list
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			//console.log( { e:e, d:d } );
+		
+			var loginTime = null;
+		
+			try
+			{
+				loginTime = JSON.parse( d );
+				console.log( { e:e, d:(loginTime?loginTime:d), args:args } );
+			}
+			catch( e )
+			{
+				console.log( { e:e, d:d, args:args } );
+			}
+		
+			if( callback )
+			{
+				return callback( e, loginTime );
+			}
+		
+			return loginTime;
+		}
+		m.execute( 'listusers', args );
+	}
+}
 
 
 function SubMenu( _this )
