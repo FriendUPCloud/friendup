@@ -4816,7 +4816,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 						var visibility = false;
 						var inp = w.getWindowElement().getElementsByTagName( 'input' );
-						var visval = icon.Config.visibility ? icon.Config.visibility : 'visible';
+						var visval = icon.Config && icon.Config.visibility ? icon.Config.visibility : 'visible';
 						for( var a = 0; a < inp.length; a++ )
 						{
 							if( inp[a].name == 'visibility' )
