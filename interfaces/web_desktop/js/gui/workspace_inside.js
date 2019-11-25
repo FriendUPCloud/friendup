@@ -7256,6 +7256,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			} );
 		}
 		
+		w.onClose = function()
+		{
+			Workspace.searchView = null;
+		}
+		
 		this.searchView = w;
 
 		w.searchPath = args && args.indexOf( ':' ) > 0 ? args : false;
