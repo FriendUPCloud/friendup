@@ -1730,7 +1730,12 @@ function CloseView( win, delayed )
 			}, isMobile ? 750 : 500 );
 
 			if( !isMobile )
+			{
 				div.style.opacity = 0;
+				if( window.DeepestField )
+					DeepestField.cleanTasks();
+			}
+
 
 			// Do not click!
 			var ele = document.createElement( 'div' );

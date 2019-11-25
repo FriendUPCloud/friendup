@@ -290,6 +290,33 @@ DeepestField = {
 			ge( 'TaskSwitcher' ).currentTask = null;
 		}
 	},
+	// Clean out!
+	cleanTasks: function()
+	{
+		var currentItems = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
+		var dels = [];
+		for( var a = 0; a < currentItems.length; a++ )
+		{
+			var found = false;
+			for( var b in window.movableWindows )
+			{
+				if( !movableWindows[ b ].parentNode.classList.contains( 'Closing' ) && movableWindows[ b ] == currentItems[ a ].window )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{
+				dels.push( currentItems[ a ] );
+			}
+		}
+		for( var a = 0; a < dels.length; a++ )
+		{
+			ge( 'TaskSwitcher' ).removeChild( dels[ a ] );
+		}
+		this.repositionTasks();
+	},
 	// Show task switcher (meta+tab)
 	showTasks: function()
 	{
@@ -362,7 +389,6 @@ DeepestField = {
 					close.onmouseup = function()
 					{
 						win.windowObject.close();
-						DeepestField.showTasks();
 					}
 				} )( d.window, d.querySelector( '.CloseButton' ) );
 				// Add image
@@ -378,11 +404,17 @@ DeepestField = {
 		
 		document.body.classList.add( 'ShowTasks' );
 		
+		this.repositionTasks();
+		
+		window.blur();
+		window.focus();
+	},
+	repositionTasks: function()
+	{
 		// Refresh list of window items
 		var eles = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
 		if( eles.length )
-			{
-		
+		{		
 			// Setup mouseover events
 			for( var a = 0; a < eles.length; a++ )
 			{
@@ -502,9 +534,6 @@ DeepestField = {
 				}
 			}
 		}
-		
-		window.blur();
-		window.focus();
 	},
 	updateTaskInformation: function()
 	{
