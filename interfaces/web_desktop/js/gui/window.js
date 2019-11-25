@@ -1636,7 +1636,7 @@ function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-	console.log( 'Closing window.', win );
+		
 	if( win )
 	{
 		// Clean up!
@@ -4524,10 +4524,9 @@ var View = function( args )
 		if( !force && this._window && this._window.applicationId )
 		{
 			// Send directly to the view
+			var app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
 			if( c.getElementsByTagName( _viewType ).length )
 			{
-				var app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
-
 				var twindow = this;
 
 				// Notify application
@@ -4574,6 +4573,18 @@ var View = function( args )
 					v.windowObject.sendMessage( msg );
 				}
 				return false;
+			}
+			else if( app )
+			{
+				// Notify application
+				var msg = {
+					type: 'system',
+					command: 'notify',
+					method: 'closeview',
+					applicationId: this._window.applicationId,
+					viewId: self.viewId
+				};
+				app.sendMessage( msg );
 			}
 		}
 		CloseView( this._window );
