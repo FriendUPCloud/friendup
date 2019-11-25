@@ -3515,6 +3515,7 @@ function apiWrapper( event, force )
 											method: 'closewindow'
 										} ), '*' );
 										setTimeout( function(){ if( theApp.contentWindow ) theApp.quit(); }, 100 );
+										break;
 									}
 								}
 							}

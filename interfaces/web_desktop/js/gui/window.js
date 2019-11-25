@@ -1636,7 +1636,7 @@ function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-	
+	console.log( 'Closing window.', win );
 	if( win )
 	{
 		// Clean up!
