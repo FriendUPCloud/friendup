@@ -454,12 +454,6 @@ DeepestField = {
 			var xpos = 10;
 			var ypos = 10;
 			var xwid = eles[ 0 ].offsetWidth + 10;
-			for( var a = 0; a < eles.length; a++ )
-			{
-				eles[a].style.top = ypos + 'px';
-				eles[a].style.left = xpos + 'px';
-				xpos += xwid;
-			}
 		
 			// First time we're showing the tasks
 			if( !ge( 'TaskSwitcher' ).currentTask )
@@ -524,28 +518,23 @@ DeepestField = {
 		
 			// Where is the current task?
 			var ct = ge( 'TaskSwitcher' ).currentTask;
-			var move = ( ge( 'TaskSwitcher' ).offsetWidth >> 1 ) - ( ct.offsetWidth >> 1 );
 		
 			// Scroll into view
 			for( var a = 0; a < eles.length; a++ )
 			{
-				if( eles[ a ] == ct )
+				eles[ a ].style.left = xpos + 'px';
+				eles[ a ].style.top = ypos + 'px';
+				xpos += xwid;
+				if( xpos + xwid + 10 > ge( 'TaskSwitcher' ).offsetWidth && a < eles.length - 1 )
 				{
-					var xpos = move;
-					for( var b = a; b >= 0; b-- )
-					{
-						eles[b].style.left = xpos + 'px';
-						xpos -= xwid;
-					}
-					xpos = move + xwid;
-					for( var b = a + 1; b < eles.length; b++ )
-					{
-						eles[b].style.left = xpos + 'px';
-						xpos += xwid;
-					}
-					break;
+					xpos = 10;
+					ypos += xwid;
 				}
 			}
+			
+			ge( 'TaskSwitcher' ).style.height = ypos + xwid + 10 + 'px';
+			ge( 'TaskSwitcher' ).style.top = ( ( window.innerHeight >> 1 ) - ( ( ypos + xwid + 10 ) >> 1 ) ) + 'px';
+			
 		}
 	},
 	updateTaskInformation: function()
