@@ -7206,20 +7206,51 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		dv.showHiddenFiles = dv.showHiddenFiles ? false : true;
 		c.content.refresh();
 	},
-	showSearch: function()
+	searchAll: function( args )
+	{
+		if( this.searchView )
+		{
+			var w = this.searchView; this.searchPath = false;
+			w.searchPath = false;
+			w.setFlag( 'title', i18n( 'i18n_search_files' ) );
+			var f = new File( 'templates/search.html' );
+			f.replacements = {
+				searchAll: 'hidden'
+			};
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				w.setContent( data );
+			}
+			f.load();
+		}
+	},
+	showSearch: function( args )
 	{
 		if( !Workspace.sessionId ) return;
 
+		if( args ) args = args.split( '::' ).join( ':' );
+
+		var tit = '';
+		if( args && args.indexOf( ':' ) > 0 )
+		{
+			tit += ' ' + i18n( 'i18n_search_in' ) + ' ' + args;
+		}
+
 		var w = new View( {
-			title: i18n( 'i18n_search_files' ),
+			title: i18n( 'i18n_search_files' ) + tit,
 			width: 480,
 			height: 92,
-			id: 'workspace_search',
-			resize: false
+			id: 'workspace_search'
 		} );
 		this.searchView = w;
 
+		w.searchPath = args && args.indexOf( ':' ) > 0 ? args : false;
+
 		var f = new File( 'templates/search.html' );
+		f.replacements = {
+			searchAll: w.searchPath ? 'visible' : 'hidden'
+		};
 		f.i18n();
 		f.onLoad = function( data )
 		{
@@ -7254,6 +7285,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		ge( 'WorkspaceSearchStop' ).style.width = 'auto';
 		ge( 'WorkspaceSearchStop' ).style.display = '';
 		ge( 'WorkspaceSearchStop' ).style.visibility = 'visible';
+		ge( 'WorkspaceSearchAll' ).style.display = 'none';
 		ge( 'WorkspaceSearchGo' ).style.display = 'none';
 
 		var searchProcesses = 0;
@@ -7363,15 +7395,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			} );
 		}
-		// Search by disks
-		this.getMountlist(function(data)
+		
+		if( this.searchView.searchPath )
 		{
-			var p = 0;
-			for( ; p < data.length; p++ )
+			doSearch( this.searchView.searchPath );
+		}
+		else
+		{
+			// Search by disks
+			this.getMountlist( function( data )
 			{
-				doSearch( data[p].Path );
-			}
-		});
+				var p = 0;
+				for( ; p < data.length; p++ )
+				{
+					doSearch( data[p].Path );
+				}
+			});
+		}
 	},
 	searchRefreshMatches: function()
 	{
@@ -7509,6 +7549,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		this.searching = false;
 		ge( 'WorkspaceSearchStop' ).style.display = 'none';
 		ge( 'WorkspaceSearchGo' ).style.display = '';
+		ge( 'WorkspaceSearchAll' ).style.display = '';
 	},
 	hideLauncherError: function()
 	{

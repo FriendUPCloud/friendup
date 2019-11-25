@@ -568,6 +568,16 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			}
 		} );
 	}
+	
+	buttons.push( {
+		element: 'button',
+		className: 'Search FloatRight IconSmall',
+		content: i18n( 'i18n_search' ),
+		onclick: function( e )
+		{
+			Workspace.showSearch( rpath );
+		}
+	} );
 
 	function renderButton( btn, par )
 	{

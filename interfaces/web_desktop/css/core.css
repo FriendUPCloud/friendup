@@ -3169,6 +3169,28 @@ html .DirectoryToolbar button.Makedir
 	color: transparent;
 }
 
+html .DirectoryToolbar button.Search:before
+{
+	content: "\f002";
+	font-family: fontawesome;
+	width: 16px;
+	height: 26px;
+	line-height: 26px;
+	font-size: 0.9em;
+	margin-top: 0;
+	display: inline-block;
+	background-image: none;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-color: transparent;
+}
+
+html .DirectoryToolbar button.Search
+{
+	color: transparent;
+}
+
 .Active .DirectoryToolbar
 {
 	border-bottom-color: $WinFrameBgActive;
