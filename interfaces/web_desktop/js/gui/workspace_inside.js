@@ -7228,7 +7228,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showSearch: function( args )
 	{
 		if( !Workspace.sessionId ) return;
-
+		
 		if( args ) args = args.split( '::' ).join( ':' );
 
 		var tit = '';
@@ -7237,12 +7237,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			tit += ' ' + i18n( 'i18n_search_in' ) + ' ' + args;
 		}
 
-		var w = new View( {
-			title: i18n( 'i18n_search_files' ) + tit,
-			width: 480,
-			height: 92,
-			id: 'workspace_search'
-		} );
+		var w;
+
+		if( this.searchView )
+		{
+			this.searchStop();
+			w = this.searchView;
+			w.setFlag( 'title', i18n( 'i18n_search_files' ) + tit );
+			w.toFront();
+		}
+		else
+		{
+			w = new View( {
+				title: i18n( 'i18n_search_files' ) + tit,
+				width: 480,
+				height: 92,
+				id: 'workspace_search'
+			} );
+		}
+		
 		this.searchView = w;
 
 		w.searchPath = args && args.indexOf( ':' ) > 0 ? args : false;
