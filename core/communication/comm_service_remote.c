@@ -550,7 +550,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 	DEBUG("[CommServiceRemote]  Start\n");
 	SystemBase *lsysbase = (SystemBase *)service->csr_SB;
 	
-	service->csr_Socket = SocketOpen( lsysbase, service->csr_secured, service->csr_port, SOCKET_TYPE_SERVER );
+	service->csr_Socket = SocketNew( lsysbase, service->csr_secured, service->csr_port, SOCKET_TYPE_SERVER );
 	
 	if( service->csr_Socket != NULL )
 	{
@@ -562,7 +562,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		#endif
 		if( SocketListen( service->csr_Socket ) != 0 )
 		{
-			SocketClose( service->csr_Socket );
+			SocketDelete( service->csr_Socket );
 			FERROR("[CommServiceRemote]  Cannot listen on socket!\n");
 			return -1;
 		}
@@ -818,7 +818,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						// Remove event
 						epoll_ctl( service->csr_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
 
-						SocketClose( sock );
+						SocketDelete( sock );
 						sock = NULL;
 
 						DEBUG("[CommServiceRemote] socket closed\n");
@@ -1005,7 +1005,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 								}
 							}
 						}
-						SocketClose( sock );
+						SocketDelete( sock );
 					}
 				}//end for through events
 			} //end while
@@ -1031,7 +1031,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 		
 		#endif
 		
-		SocketClose( service->csr_Socket );
+		SocketDelete( service->csr_Socket );
 	}
 	else
 	{

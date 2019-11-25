@@ -49,7 +49,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		

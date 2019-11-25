@@ -303,7 +303,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 			BufStringDelete( bs );
 		}
 		
-		sd->sb->sl_SocketInterface.SocketClose( newsock );
+		sd->sb->sl_SocketInterface.SocketDelete( newsock );
 		
 		DEBUG("[SendMessageRFS] got reponse\n");
 		
@@ -385,7 +385,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 						
 						BufStringDelete( bs );
 						
-						sd->sb->sl_SocketInterface.SocketClose( newsock );
+						sd->sb->sl_SocketInterface.SocketDelete( newsock );
 						
 						return SendMessageRFS( sd, df );
 					}
@@ -402,7 +402,7 @@ DataForm *SendMessageRFSRelogin( SpecialData *sd, DataForm *df )
 			BufStringDelete( bs );
 		}
 		
-		sd->sb->sl_SocketInterface.SocketClose( newsock );
+		sd->sb->sl_SocketInterface.SocketDelete( newsock );
 		
 		DEBUG("[SendMessageRFSRelogin] got reponse\n");
 		
@@ -547,7 +547,7 @@ FConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 	{
 		if( newsock != NULL )
 		{
-			sd->sb->sl_SocketInterface.SocketClose( newsock );
+			sd->sb->sl_SocketInterface.SocketDelete( newsock );
 		}
 	}
 	else

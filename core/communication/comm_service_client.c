@@ -493,7 +493,7 @@ void FConnectionDelete( FConnection *con )
 		
 		if( con->fc_Socket != NULL )
 		{
-			SocketClose( con->fc_Socket );
+			SocketDelete( con->fc_Socket );
 			con->fc_Socket = NULL;
 		}
 		
@@ -628,7 +628,7 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 	{
 		if( newsock != NULL )
 		{
-			SocketClose( newsock );
+			SocketDelete( newsock );
 		}
 	}
 	else
