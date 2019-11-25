@@ -7560,9 +7560,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		KillcAjaxByContext( 'workspace_search' );
 		
 		this.searching = false;
-		ge( 'WorkspaceSearchStop' ).style.display = 'none';
-		ge( 'WorkspaceSearchGo' ).style.display = '';
-		ge( 'WorkspaceSearchAll' ).style.display = '';
+		if( ge( 'WorkspaceSearchStop' ) )
+			ge( 'WorkspaceSearchStop' ).style.display = 'none';
+		if( ge( 'WorkspaceSearchGo' ) )
+			ge( 'WorkspaceSearchGo' ).style.display = '';
+		if( ge( 'WorkspaceSearchAll' ) )
+			ge( 'WorkspaceSearchAll' ).style.display = '';
 	},
 	hideLauncherError: function()
 	{
