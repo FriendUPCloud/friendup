@@ -371,7 +371,7 @@ function apiWrapper( event, force )
 							};
 							if( tar )
 								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
-							else 
+							else if( app.contentWindow ) 
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}, msg.extra );
 						break;

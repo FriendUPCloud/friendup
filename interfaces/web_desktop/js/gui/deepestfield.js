@@ -532,8 +532,8 @@ DeepestField = {
 				}
 			}
 			
-			ge( 'TaskSwitcher' ).style.height = ypos + xwid + 10 + 'px';
-			ge( 'TaskSwitcher' ).style.top = ( ( window.innerHeight >> 1 ) - ( ( ypos + xwid + 10 ) >> 1 ) ) + 'px';
+			ge( 'TaskSwitcher' ).style.height = ypos + xwid + 'px';
+			ge( 'TaskSwitcher' ).style.top = ( ( window.innerHeight >> 1 ) - ( ( ypos + xwid ) >> 1 ) ) + 'px';
 			
 		}
 	},
