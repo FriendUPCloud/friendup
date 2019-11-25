@@ -386,9 +386,10 @@ DeepestField = {
 				ge( 'TaskSwitcher' ).appendChild( d );
 				( function( win, close )
 				{
-					close.onmouseup = function()
+					close.onmouseup = function( e )
 					{
 						win.windowObject.close();
+						return cancelBubble( e );
 					}
 				} )( d.window, d.querySelector( '.CloseButton' ) );
 				// Add image
@@ -434,7 +435,7 @@ DeepestField = {
 							}
 						}
 					}
-					app.onmousedown = function( e )
+					app.onmouseup = function( e )
 					{
 						for( var b = 0; b < appList.length; b++ )
 						{
