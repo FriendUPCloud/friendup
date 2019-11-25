@@ -434,6 +434,18 @@ DeepestField = {
 							}
 						}
 					}
+					app.onmousedown = function( e )
+					{
+						for( var b = 0; b < appList.length; b++ )
+						{
+							if( appList[ b ] == app )
+							{
+								app.window.windowObject.activate();
+								DeepestField.selectTask();
+								return;
+							}
+						}
+					}
 				} )( eles[ a ], eles );
 			}
 		
