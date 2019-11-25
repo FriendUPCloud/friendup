@@ -2620,6 +2620,12 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	border-radius: 100%;
 }
 
+#Tasks
+{
+	pointer-events: none;
+	visibility: hidden;
+}
+
 /* Tasks overlay ------------------------------------------------------------ */
 
 body[mobile] #TaskSwitcher
