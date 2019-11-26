@@ -5304,56 +5304,78 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		}
 		else
 		{
-			var fid = typeof ( fileInfo.ID ) != 'undefined' ?
-				fileInfo.ID : fileInfo.Filename;
-			var cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
-				fileInfo.Command : 'file';
-			
-			if( cmd == 'file' )
+	
+			// No mime type? Ask Friend Core
+			var mim = new Module( 'system' );
+			mim.onExecuted = function( me, md )
 			{
-				var dliframe = document.createElement('iframe');
-				dliframe.setAttribute('class', 'hidden');
-				dliframe.setAttribute('src', fileInfo.downloadhref );
-				dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
-				dliframe.onload = function()
+				var js = null;
+				try
 				{
-					document.body.removeChild( dliframe );
-					dliframe = null;
+					js = JSON.parse( md );
 				}
-				document.body.appendChild( dliframe );
-				
-				// Just in case, if it takes more than 15 seconds, remove the iframe
-				setTimeout( function()
+				catch( e ){};
+		
+				if( me == 'ok' && js )
 				{
-					if( dliframe )
+					ExecuteApplication( js.executable, fileInfo.Path );
+				}
+				else
+				{
+					var fid = typeof ( fileInfo.ID ) != 'undefined' ?
+						fileInfo.ID : fileInfo.Filename;
+					var cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
+						fileInfo.Command : 'file';
+			
+					if( cmd == 'file' )
 					{
-						document.body.removeChild( dliframe );
+						var dliframe = document.createElement('iframe');
+						dliframe.setAttribute('class', 'hidden');
+						dliframe.setAttribute('src', fileInfo.downloadhref );
+						dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
+						dliframe.onload = function()
+						{
+							document.body.removeChild( dliframe );
+							dliframe = null;
+						}
+						document.body.appendChild( dliframe );
+				
+						// Just in case, if it takes more than 15 seconds, remove the iframe
+						setTimeout( function()
+						{
+							if( dliframe )
+							{
+								document.body.removeChild( dliframe );
+							}
+						}, 15000 );
+						return;
 					}
-				}, 15000 );
-				return;
+			
+			
+					var win = new View ( {
+						'title'    : iconObject.Title ? iconObject.Title : iconObject.Filename,
+						'width'    : 800,
+						'height'   : 600,
+						'memorize' : true,
+						'id'       : fileInfo.MetaType + '_' + fid
+					} );
+					/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
+						left: 0; width: 100%; height: 100%; border: 0" \
+						src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
+					win.parentFile = iconObject;
+					win.parentWindow = iconObject.window;			
+					var newWin = win;
+					win = null;
+					GetURLFromPath( fileInfo.Path, function( url )
+					{
+						newWin.setContent ( '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
+						left: 0; width: 100%; height: 100%; border: 0" \
+						src="' + url + '"></iframe>' );
+					}, '&mode=rs' );
+					return window.isMobile ? Workspace.closeDrivePanel() : false;
+				}
 			}
-			
-			
-			var win = new View ( {
-				'title'    : iconObject.Title ? iconObject.Title : iconObject.Filename,
-				'width'    : 800,
-				'height'   : 600,
-				'memorize' : true,
-				'id'       : fileInfo.MetaType + '_' + fid
-			} );
-			/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
-				left: 0; width: 100%; height: 100%; border: 0" \
-				src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
-			win.parentFile = iconObject;
-			win.parentWindow = iconObject.window;			
-			var newWin = win;
-			win = null;
-			GetURLFromPath( fileInfo.Path, function( url )
-			{
-				newWin.setContent ( '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
-				left: 0; width: 100%; height: 100%; border: 0" \
-				src="' + url + '"></iframe>' );
-			}, '&mode=rs' );
+			mim.execute( 'checkmimeapplication', { path: fileInfo.Path } );
 		}
 	}
 	else if ( fileInfo.MetaType == 'DiskHandled' )

@@ -438,6 +438,13 @@ html .Launcher .File div *
 
 /* File icons --------------------------------------------------------------- */
 
+html .File.Tiny, html .File.Tiny .Icon, html .File.Tiny .Icon > div
+{
+	margin: 0;
+	width: 24px;
+	height: 16px;
+}
+
 .File .Icon .Drive > .Label
 {
 	position: absolute;

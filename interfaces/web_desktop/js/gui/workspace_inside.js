@@ -7243,14 +7243,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			this.searchStop();
 			w = this.searchView;
-			w.setFlag( 'title', i18n( 'i18n_search_files' ) + tit );
-			w.toFront();
+			if( w )
+			{
+				w.setFlag( 'title', i18n( 'i18n_search_files' ) + tit );
+				w.toFront();
+			}
+			else return;
 		}
 		else
 		{
 			w = new View( {
 				title: i18n( 'i18n_search_files' ) + tit,
 				width: 480,
+				'min-width': 480,
+				'min-height': 92,
 				height: 92,
 				id: 'workspace_search'
 			} );
@@ -7258,6 +7264,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		w.onClose = function()
 		{
+			Workspace.searchStop();
 			Workspace.searchView = null;
 		}
 		
@@ -7439,7 +7446,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( !this.searching ) return;
 
-		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault' );
+		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault', 'List' );
 		
 		// Lock click buttons for 250ms when scrolling
 		if( isMobile )
@@ -7468,10 +7475,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = this.searchMatches[a];
 			if( !m || !m.Path ) continue;
 			if( m.added ) continue;
+			var sw = a % 2 + 1;
 			var d = document.createElement( 'div' );
 			this.searchMatches[a].added = d;
-			d.className = 'MarginBottom MarginTop' + ( ( a == this.searchMatches.length - 1 ) ? ' MarginBottom' : '' );
-			d.innerHTML = '<p class="Ellipsis Layout PaddingLeft PaddingRight"><span class="MousePointer IconSmall fa-folder">&nbsp;</span> <span class="MousePointer">' + this.searchMatches[a].Path + '</a></p>';
+			d.className = 'HRow PaddingSmall sw' + sw;
+			var icon = '<div class="File Tiny MousePointer"><div class="Icon"><div class="Directory"></div></div></div>';
+			d.innerHTML = '<div class="Ellipsis Layout PaddingLeft PaddingRight">' + icon + ' <span class="MarginLeft MousePointer">' + this.searchMatches[a].Path + '</span></div>';
 
 			// Create FileInfo
 			var ppath = m.Path;
@@ -7509,21 +7518,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			};
 			for( var b in m )
 				if( !o[b] && !( o[b] === false ) ) o[b] = m[b];
+			
+			var ext = ( fname ? fname : title ).split( '.' ); ext = ext[ ext.length - 1 ];
+			var cls = GetIconClassByExtension( ext, o )
+			
 			o.Type = o.Path.substr( o.Path.length - 1, 1 ) != ':' ? 'Directory' : 'Door'; // TODO: What about dormant?
 			o.MetaType = o.Type; // TODO: If we use metatype, look at this
+			
+			
 			ge( 'WorkspaceSearchResults' ).appendChild( d );
 
 			var method = isMobile ? 'ontouchend' : 'onclick';
-			var spans = d.getElementsByTagName( 'span' );
-			spans[0].folder = o;
-			spans[0][ method ] = function()
+			var folder = d.querySelector( '.File' );
+			var theFil = d.getElementsByTagName( 'span' )[0];
+			folder.folder = o;
+			folder[ method ] = function()
 			{
 				if( self.searchScrolling )
 					return;
 				OpenWindowByFileinfo( this.folder, false );
 			}
-			spans[1].file = m;
-			spans[1][ method ] = function()
+			theFil.file = m;
+			theFil[ method ] = function()
 			{
 				if( self.searchScrolling )
 					return;
