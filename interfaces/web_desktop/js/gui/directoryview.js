@@ -2460,7 +2460,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Set new viewmode
 	this.viewMode = 'iconview';
 	
-	this.ShowFileBrowser();
+	if( !isMobile )
+		this.ShowFileBrowser();
 	
 	// Remember scroll top
 	var stop = 0;
