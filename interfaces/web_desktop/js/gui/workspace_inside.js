@@ -7262,11 +7262,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			} );
 		}
 		
+		w.resize = function( none )
+		{
+			var oh = ge( 'SearchFullContent' ).parentNode.offsetHeight;
+			ge( 'WorkspaceSearchResults' ).style.maxHeight = oh - 20 - ge( 'SearchGuiContainer' ).offsetHeight - 10 + 'px';
+			ge( 'WorkspaceSearchResults' ).style.overflow = 'auto';
+		}
+		
 		w.onClose = function()
 		{
 			Workspace.searchStop();
 			Workspace.searchView = null;
 		}
+		
+		w.addEvent( 'resize', function( e )
+		{
+			w.resize( true );
+		} );
 		
 		this.searchView = w;
 
@@ -7527,6 +7539,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			
 			ge( 'WorkspaceSearchResults' ).appendChild( d );
+			d.onmouseover = function( e )
+			{
+				this.classList.add( 'Selected' );
+			}
+			d.onmouseout = function( e )
+			{
+				this.classList.remove( 'Selected' );
+			}
 
 			var method = isMobile ? 'ontouchend' : 'onclick';
 			var folder = d.querySelector( '.File' );
@@ -7547,15 +7567,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 
-		var maxh = 400;
-		var oh = ge( 'SearchFullContent' ).offsetHeight;
-		if( oh > maxh )
+		if( ge( 'SearchFullContent' ).offsetHeight < 400 )
 		{
-			ge( 'WorkspaceSearchResults' ).style.maxHeight = maxh - 20 - ge( 'SearchGuiContainer' ).offsetHeight + 'px';
-			ge( 'WorkspaceSearchResults' ).style.overflow = 'auto';
-			oh = maxh + 13;
+			this.searchView.setFlag( 'height', ge( 'SearchFullContent' ).offsetHeight );
 		}
-		this.searchView.setFlag( 'height', oh );
+		this.searchView.resize();
 	},
 	searchStop: function( reason, callback )
 	{
