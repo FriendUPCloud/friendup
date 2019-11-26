@@ -575,7 +575,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		content: i18n( 'i18n_search' ),
 		onclick: function( e )
 		{
-			Workspace.showSearch( rpath );
+			Workspace.showSearch( dw.window.fileInfo.Path );
 		}
 	} );
 

@@ -7249,7 +7249,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				w.activate();
 				w.toFront();
 			}
-			else return;
+			else
+			{ 
+				return;
+			}
 		}
 		else
 		{
