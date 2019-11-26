@@ -7255,7 +7255,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			w = new View( {
 				title: i18n( 'i18n_search_files' ) + tit,
-				width: 480,
 				'min-width': 480,
 				'min-height': 92,
 				height: 92,
@@ -7573,7 +7572,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( ge( 'SearchFullContent' ).offsetHeight < 400 )
 		{
-			this.searchView.setFlag( 'height', ge( 'SearchFullContent' ).offsetHeight );
+			if( this.searchView.getFlag( 'height' ) < 400 )
+				this.searchView.setFlag( 'height', 400 );
 		}
 		this.searchView.resize();
 	},
