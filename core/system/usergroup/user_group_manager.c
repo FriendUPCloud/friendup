@@ -762,7 +762,7 @@ int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
 	{
 		DEBUG("Remove users from group\n");
 		char tmpQuery[ 512 ];
-		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserGroupID FROM FUserToGroup WHERE UserID=%lu", userID );
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserGroupID FROM FUserToGroup WHERE UserID=%lu group by UserGroupID", userID );
 		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 		if( result != NULL )
 		{
