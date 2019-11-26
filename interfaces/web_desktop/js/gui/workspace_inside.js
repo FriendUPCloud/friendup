@@ -7490,6 +7490,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = this.searchMatches[a];
 			if( !m || !m.Path ) continue;
 			if( m.added ) continue;
+			if( m.Path.substr( m.Path.length - 6, 5 ) == '.info' ) continue;
 			var sw = a % 2 + 1;
 			var d = document.createElement( 'div' );
 			this.searchMatches[a].added = d;
