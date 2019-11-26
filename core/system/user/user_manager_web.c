@@ -49,7 +49,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -381,7 +381,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -639,8 +639,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updatestatus" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -925,8 +925,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "update" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -943,15 +943,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		FLONG status = -1;
 		FBOOL userFromSession = FALSE;
 		FBOOL canChange = FALSE;
-		FBOOL imAdmin = FALSE;
+		FBOOL haveAccess = FALSE;
 		int entries = 0;
+		char *args = NULL;
 		
 		DEBUG( "[UMWebRequest] Update user!!\n" );
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) )
-		{
-			imAdmin = TRUE;
-		}
+		
 		DEBUG("[UMWebRequest] Im admin %d\n", imAdmin );
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
@@ -969,31 +967,46 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
 		}
 		
-		if( id > 0 && imAdmin == TRUE )
+		if( id > 0 )
 		{
-			while( logusr != NULL )
+			char *authid = NULL;
+			
+			el = HttpGetPOSTParameter( request, "authid" );
+			if( el != NULL )
 			{
-				if( logusr->u_ID == id  )
-				{
-					userFromSession = TRUE;
-					DEBUG("[UMWebRequest] Found session, update\n");
-					break;
-				}
-				logusr = (User *)logusr->node.mln_Succ;
+				authid = el->data;
 			}
-		}
-		else if( id > 0 && imAdmin == FALSE )
-		{
-			logusr = NULL;
+			el = HttpGetPOSTParameter( request, "args" );
+			if( el != NULL )
+			{
+				args = UrlDecodeToMem( el->data );
+			}
+				
+			if( loggedSession->us_User->u_IsAdmin )
+			{
+				haveAccess = TRUE;
+				
+				while( logusr != NULL )
+				{
+					if( logusr->u_ID == id  )
+					{
+						userFromSession = TRUE;
+						DEBUG("[UMWebRequest] Found session, update\n");
+						break;
+					}
+					logusr = (User *)logusr->node.mln_Succ;
+				}
+			}
+			else
+			{
+				logusr = NULL;
+			}
 		}
 		else
 		{
-			//if( imAdmin == FALSE )
-			{
-				id = loggedSession->us_User->u_ID;
-				userFromSession = TRUE;
-				logusr = loggedSession->us_User;
-			}
+			id = loggedSession->us_User->u_ID;
+			userFromSession = TRUE;
+			logusr = loggedSession->us_User;
 		}
 		
 		if( logusr == NULL && id > 0 )
@@ -1017,7 +1030,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				usrname = UrlDecodeToMem( (char *)el->data );
 				DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
 				
-				if( imAdmin == TRUE )
+				if( haveAccess == TRUE )
 				{
 					char query[ 1024 ];
 					sprintf( query, " FUser WHERE `Name`='%s' AND ID != %lu" , usrname, id );
@@ -1099,7 +1112,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				// user is not logged in
 				// try to get it from DB
 				
-				if( imAdmin  == TRUE )
+				if( haveAccess  == TRUE )
 				{
 					canChange = TRUE;
 				}
@@ -1178,7 +1191,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( level );
 		}
-
+		if( args != NULL )
+		{
+			FFree( args );
+		}
 		if( workgroups != NULL )
 		{
 			FFree( workgroups );
@@ -1200,8 +1216,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updategroups" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1212,15 +1228,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		FULONG id = 0;
 		FBOOL userFromSession = FALSE;
 		FBOOL canChange = FALSE;
-		FBOOL imAdmin = FALSE;
+		FBOOL haveAccess = FALSE;
 		int entries = 0;
 		
 		DEBUG( "[UMWebRequest] Update user!!\n" );
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) )
-		{
-			imAdmin = TRUE;
-		}
 		DEBUG("[UMWebRequest] Im admin %d\n", imAdmin );
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
@@ -1231,22 +1243,40 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			DEBUG( "[UMWebRequest] Update id %ld!!\n", id );
 		}
 		
-		if( id > 0 && imAdmin == TRUE )
+		if( id > 0 )
 		{
-			while( logusr != NULL )
+			char *authid = NULL;
+			char *args = NULL;
+			el = HttpGetPOSTParameter( request, "authid" );
+			if( el != NULL )
 			{
-				if( logusr->u_ID == id  )
-				{
-					userFromSession = TRUE;
-					DEBUG("[UMWebRequest] Found session, update\n");
-					break;
-				}
-				logusr = (User *)logusr->node.mln_Succ;
+				authid = el->data;
 			}
-		}
-		else if( id > 0 && imAdmin == FALSE )
-		{
-			logusr = NULL;
+			el = HttpGetPOSTParameter( request, "args" );
+			if( el != NULL )
+			{
+				args = UrlDecodeToMem( el->data );
+			}
+				
+			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+			{
+				haveAccess = TRUE;
+			
+				while( logusr != NULL )
+				{
+					if( logusr->u_ID == id  )
+					{
+						userFromSession = TRUE;
+						DEBUG("[UMWebRequest] Found session, update\n");
+						break;
+					}
+					logusr = (User *)logusr->node.mln_Succ;
+				}
+			}
+			else
+			{
+				logusr = NULL;
+			}
 		}
 		else
 		{
