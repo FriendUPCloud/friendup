@@ -7291,7 +7291,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		f.i18n();
 		f.onLoad = function( data )
 		{
-			w.setContent( data );
+			w.setContent( data, function()
+			{
+				ge( 'WorkspaceSearchKeywords' ).focus();
+			} );
 		}
 		f.load();
 	},
