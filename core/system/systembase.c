@@ -794,6 +794,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize UMNew\n");
 	}
 	
+	l->sl_RoleManager = RMNew( l );
+	if( l->sl_RoleManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize RMNew\n");
+	}
+	
 	l->sl_DeviceManager = DeviceManagerNew( l );
 	if( l->sl_DeviceManager == NULL )
 	{
@@ -1179,6 +1185,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_PermissionManager != NULL )
 	{
 		PermissionManagerDelete( l->sl_PermissionManager );
+	}
+	if( l->sl_RoleManager != NULL )
+	{
+		RMDelete( l->sl_RoleManager );
 	}
 	
 	// Remove sentinel from active memory

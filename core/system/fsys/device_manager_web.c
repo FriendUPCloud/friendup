@@ -501,19 +501,34 @@ f.Name ASC";
 			// this functionality allow admins to mount other users drives
 			//
 			
-			if( userID > 0 && usr->u_IsAdmin == TRUE )
+			if( userID > 0 )
 			{
-				DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
-				User *locusr = UMGetUserByID( l->sl_UM, userID );
-				if( locusr != NULL )
+				char *authid = NULL;
+				char *args = NULL;
+				el = HttpGetPOSTParameter( request, "authid" );
+				if( el != NULL )
 				{
-					usr = locusr;
-					
+					authid = el->data;
 				}
-				else
+				el = HttpGetPOSTParameter( request, "args" );
+				if( el != NULL )
 				{
-					foundUserInMemory = FALSE;
+					args = el->data;
 				}
+				
+				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+				{
+					DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
+					User *locusr = UMGetUserByID( l->sl_UM, userID );
+					if( locusr != NULL )
+					{
+						usr = locusr;
+					}
+					else
+					{
+						foundUserInMemory = FALSE;
+					}
+				} // isAdmin or permissions granted
 			}
 			
 			/*

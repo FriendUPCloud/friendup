@@ -11,10 +11,10 @@
  * 
  *  User Manager
  *
- * file contain definitions related to UserManager
+ * file contain definitions related to RoleManager
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 11/2016
+ *  @date created 11/2019
  */
 
 #ifndef __SYSTEM_ROLES_ROLE_MANAGER_H__
@@ -52,7 +52,7 @@ void RMDelete( RoleManager *smgr );
 //
 //
 
-int UMAssignGroupToUser( RoleManager *smgr, User *usr );
+FBOOL RMCheckPermission( RoleManager *rmgr, User *u, const char *authid );
 
 //
 //

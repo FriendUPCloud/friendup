@@ -53,6 +53,7 @@
 #include <system/application/app_session_manager.h>
 #include <system/user/user_session.h>
 #include <system/user/user_sessionmanager.h>
+#include <system/roles/role_manager.h>
 #include <system/user/user_manager.h>
 #include <system/usergroup/user_group_manager.h>
 #include <system/user/remote_user.h>
@@ -244,6 +245,7 @@ typedef struct SystemBase
 	CalendarManager					*sl_CalendarManager;	// Calendar Manager
 	NotificationManager				*sl_NotificationManager;	// Notification Manager
 	PermissionManager				*sl_PermissionManager;		// Permission Manager
+	RoleManager						*sl_RoleManager;	// Role Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
