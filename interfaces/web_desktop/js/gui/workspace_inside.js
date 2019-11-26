@@ -7246,6 +7246,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( w )
 			{
 				w.setFlag( 'title', i18n( 'i18n_search_files' ) + tit );
+				w.activate();
 				w.toFront();
 			}
 			else return;
