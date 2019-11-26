@@ -876,6 +876,9 @@ function _ActivateWindowOnly( div )
 	// Special case
 	var delayedDeactivation = true;
 	
+	// Note we're having a current movable
+	currentMovable = div;
+	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
 	for( var a in movableWindows )
@@ -1645,7 +1648,7 @@ function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-	
+		
 	if( win )
 	{
 		// Clean up!
@@ -1739,7 +1742,12 @@ function CloseView( win, delayed )
 			}, isMobile ? 750 : 500 );
 
 			if( !isMobile )
+			{
 				div.style.opacity = 0;
+				if( window.DeepestField )
+					DeepestField.cleanTasks();
+			}
+
 
 			// Do not click!
 			var ele = document.createElement( 'div' );
@@ -2801,7 +2809,7 @@ var View = function( args )
 					this.mode = 'maximized';					
 				}
 				else
-				{
+				{	
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
 					
@@ -3935,6 +3943,17 @@ var View = function( args )
 
 		var view = this;
 		this.iframe = ifr;
+		
+		ifr.onfocus = function()
+		{
+			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
+			{
+				// Don't steal focus!
+				ifr.blur();
+				window.blur();
+				window.focus();
+			}
+		}
 
 		if( packet.applicationId ) this._window.applicationId = packet.applicationId;
 
@@ -4516,10 +4535,9 @@ var View = function( args )
 		if( !force && this._window && this._window.applicationId )
 		{
 			// Send directly to the view
+			var app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
 			if( c.getElementsByTagName( _viewType ).length )
 			{
-				var app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
-
 				var twindow = this;
 
 				// Notify application
@@ -4566,6 +4584,18 @@ var View = function( args )
 					v.windowObject.sendMessage( msg );
 				}
 				return false;
+			}
+			else if( app )
+			{
+				// Notify application
+				var msg = {
+					type: 'system',
+					command: 'notify',
+					method: 'closeview',
+					applicationId: this._window.applicationId,
+					viewId: self.viewId
+				};
+				app.sendMessage( msg );
 			}
 		}
 		CloseView( this._window );

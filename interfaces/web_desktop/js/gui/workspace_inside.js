@@ -7207,24 +7207,98 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		dv.showHiddenFiles = dv.showHiddenFiles ? false : true;
 		c.content.refresh();
 	},
-	showSearch: function()
+	searchAll: function( args )
+	{
+		if( this.searchView )
+		{
+			var w = this.searchView; this.searchPath = false;
+			w.searchPath = false;
+			w.setFlag( 'title', i18n( 'i18n_search_files' ) );
+			var f = new File( 'templates/search.html' );
+			f.replacements = {
+				searchAll: 'hidden'
+			};
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				w.setContent( data );
+			}
+			f.load();
+		}
+	},
+	showSearch: function( args )
 	{
 		if( !Workspace.sessionId ) return;
+		
+		if( args ) args = args.split( '::' ).join( ':' );
 
-		var w = new View( {
-			title: i18n( 'i18n_search_files' ),
-			width: 480,
-			height: 92,
-			id: 'workspace_search',
-			resize: false
+		var tit = '';
+		if( args && args.indexOf( ':' ) > 0 )
+		{
+			tit += ' ' + i18n( 'i18n_search_in' ) + ' ' + args;
+		}
+
+		var w;
+
+		if( this.searchView )
+		{
+			this.searchStop();
+			w = this.searchView;
+			if( w )
+			{
+				w.setFlag( 'title', i18n( 'i18n_search_files' ) + tit );
+				w.activate();
+				w.toFront();
+			}
+			else
+			{ 
+				return;
+			}
+		}
+		else
+		{
+			w = new View( {
+				title: i18n( 'i18n_search_files' ) + tit,
+				'min-width': 480,
+				'min-height': 92,
+				height: 92,
+				id: 'workspace_search'
+			} );
+		}
+		
+		w.resize = function( none )
+		{
+			var oh = ge( 'SearchFullContent' ).parentNode.offsetHeight;
+			ge( 'WorkspaceSearchResults' ).style.maxHeight = oh - 20 - ge( 'SearchGuiContainer' ).offsetHeight - 10 + 'px';
+			ge( 'WorkspaceSearchResults' ).style.overflow = 'auto';
+		}
+		
+		w.onClose = function()
+		{
+			Workspace.searchStop();
+			Workspace.searchView = null;
+		}
+		
+		w.addEvent( 'resize', function( e )
+		{
+			w.resize( true );
 		} );
+		
 		this.searchView = w;
 
+		w.searchPath = args && args.indexOf( ':' ) > 0 ? args : false;
+
 		var f = new File( 'templates/search.html' );
+		f.replacements = {
+			searchAll: w.searchPath ? 'visible' : 'hidden'
+		};
 		f.i18n();
 		f.onLoad = function( data )
 		{
-			w.setContent( data );
+			w.setContent( data, function()
+			{
+				ge( 'WorkspaceSearchKeywords' ).focus();
+			} );
 		}
 		f.load();
 	},
@@ -7255,6 +7329,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		ge( 'WorkspaceSearchStop' ).style.width = 'auto';
 		ge( 'WorkspaceSearchStop' ).style.display = '';
 		ge( 'WorkspaceSearchStop' ).style.visibility = 'visible';
+		ge( 'WorkspaceSearchAll' ).style.display = 'none';
 		ge( 'WorkspaceSearchGo' ).style.display = 'none';
 
 		var searchProcesses = 0;
@@ -7364,15 +7439,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			} );
 		}
-		// Search by disks
-		this.getMountlist(function(data)
+		
+		if( this.searchView.searchPath )
 		{
-			var p = 0;
-			for( ; p < data.length; p++ )
+			doSearch( this.searchView.searchPath );
+		}
+		else
+		{
+			// Search by disks
+			this.getMountlist( function( data )
 			{
-				doSearch( data[p].Path );
-			}
-		});
+				var p = 0;
+				for( ; p < data.length; p++ )
+				{
+					doSearch( data[p].Path );
+				}
+			});
+		}
 	},
 	searchRefreshMatches: function()
 	{
@@ -7382,7 +7465,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( !this.searching ) return;
 
-		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault' );
+		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault', 'List' );
 		
 		// Lock click buttons for 250ms when scrolling
 		if( isMobile )
@@ -7411,10 +7494,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = this.searchMatches[a];
 			if( !m || !m.Path ) continue;
 			if( m.added ) continue;
+			if( m.Path.substr( m.Path.length - 5, 5 ) == '.info' ) continue;
+			var sw = a % 2 + 1;
 			var d = document.createElement( 'div' );
 			this.searchMatches[a].added = d;
-			d.className = 'MarginBottom MarginTop' + ( ( a == this.searchMatches.length - 1 ) ? ' MarginBottom' : '' );
-			d.innerHTML = '<p class="Ellipsis Layout PaddingLeft PaddingRight"><span class="MousePointer IconSmall fa-folder">&nbsp;</span> <span class="MousePointer">' + this.searchMatches[a].Path + '</a></p>';
+			d.className = 'HRow PaddingSmall sw' + sw;
+			var icon = '<div class="File Tiny MousePointer"><div class="Icon"><div class="Directory"></div></div></div>';
+			d.innerHTML = '<div class="Ellipsis Layout PaddingLeft PaddingRight">' + icon + ' <span class="MarginLeft MousePointer">' + this.searchMatches[a].Path + '</span></div>';
 
 			// Create FileInfo
 			var ppath = m.Path;
@@ -7452,21 +7538,47 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			};
 			for( var b in m )
 				if( !o[b] && !( o[b] === false ) ) o[b] = m[b];
+			
+			var ext = ( fname ? fname : title ).split( '.' ); ext = ext[ ext.length - 1 ];
+			var cls = GetIconClassByExtension( ext, o )
+			
 			o.Type = o.Path.substr( o.Path.length - 1, 1 ) != ':' ? 'Directory' : 'Door'; // TODO: What about dormant?
 			o.MetaType = o.Type; // TODO: If we use metatype, look at this
+			
+			
 			ge( 'WorkspaceSearchResults' ).appendChild( d );
+			d.onmouseover = function( e )
+			{
+				this.classList.add( 'Selected' );
+			}
+			d.onmouseout = function( e )
+			{
+				this.classList.remove( 'Selected' );
+			}
 
 			var method = isMobile ? 'ontouchend' : 'onclick';
-			var spans = d.getElementsByTagName( 'span' );
-			spans[0].folder = o;
-			spans[0][ method ] = function()
+			var folder = d.querySelector( '.File' );
+			var theFil = d.getElementsByTagName( 'span' )[0];
+			folder.folder = o;
+			folder[ method ] = function()
 			{
 				if( self.searchScrolling )
 					return;
 				OpenWindowByFileinfo( this.folder, false );
 			}
-			spans[1].file = m;
-			spans[1][ method ] = function()
+			theFil.file = m;
+			if( !isMobile )
+			{
+				theFil.onmouseover = function()
+				{
+					this.style.textDecoration = 'underline';
+				}
+				theFil.onmouseout = function()
+				{
+					this.style.textDecoration = '';
+				}
+			}
+			theFil[ method ] = function()
 			{
 				if( self.searchScrolling )
 					return;
@@ -7474,15 +7586,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 		}
 
-		var maxh = 400;
-		var oh = ge( 'SearchFullContent' ).offsetHeight;
-		if( oh > maxh )
+		if( ge( 'SearchFullContent' ).offsetHeight < 400 )
 		{
-			ge( 'WorkspaceSearchResults' ).style.maxHeight = maxh - 20 - ge( 'SearchGuiContainer' ).offsetHeight + 'px';
-			ge( 'WorkspaceSearchResults' ).style.overflow = 'auto';
-			oh = maxh + 13;
+			if( this.searchView.getFlag( 'height' ) < 400 )
+				this.searchView.setFlag( 'height', 400 );
 		}
-		this.searchView.setFlag( 'height', oh );
+		this.searchView.resize();
 	},
 	searchStop: function( reason, callback )
 	{
@@ -7508,8 +7617,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		KillcAjaxByContext( 'workspace_search' );
 		
 		this.searching = false;
-		ge( 'WorkspaceSearchStop' ).style.display = 'none';
-		ge( 'WorkspaceSearchGo' ).style.display = '';
+		if( ge( 'WorkspaceSearchStop' ) )
+			ge( 'WorkspaceSearchStop' ).style.display = 'none';
+		if( ge( 'WorkspaceSearchGo' ) )
+			ge( 'WorkspaceSearchGo' ).style.display = '';
+		if( ge( 'WorkspaceSearchAll' ) )
+			ge( 'WorkspaceSearchAll' ).style.display = '';
 	},
 	hideLauncherError: function()
 	{
@@ -8642,6 +8755,13 @@ function DoorsKeyUp( e )
 	Workspace.ctrlKey = e.ctrlKey;
 	Workspace.altKey = e.altKey;
 	Workspace.metaKey = e.metaKey;
+	
+	// Hide task switcher
+	if( e.which == 91 || ( !Workspace.shiftKey && !Workspace.ctrlKey ) )
+	{
+		if( window.DeepestField )
+			DeepestField.selectTask();	
+	}
 }
 function DoorsKeyDown( e )
 {
@@ -8944,8 +9064,18 @@ function DoorsKeyDown( e )
 				case 57:
 					Workspace.switchWorkspace( 8 );
 					return cancelBubble( e );		
+				// App cycling
+				case 32:
+					if( window.DeepestField )
+						DeepestField.showTasks();
+					break;
 			}
 		}
+	}
+	else if( e.ctrlKey && w == 32 )
+	{
+		if( window.DeepestField )
+			DeepestField.showTasks();
 	}
 
 	if( !w || !e.ctrlKey )
@@ -9073,8 +9203,9 @@ function InitWorkspaceEvents()
 	{
 		window.attachEvent( 'onmouseout', DoorsOutListener, false );
 		window.attachEvent( 'onmouseleave', DoorsLeaveListener, false );
-		window.attachEvent( 'onresize', WindowResizeFunc );
-		window.attachEvent( 'onkeydown', DoorsKeyDown );
+		window.attachEvent( 'onresize', WindowResizeFunc, false );
+		window.attachEvent( 'onkeydown', DoorsKeyDown, false );
+		window.attachEvent( 'onkeyup', DoorsKeyUp, false );
 	}
 	else
 	{
@@ -9088,8 +9219,9 @@ function InitWorkspaceEvents()
 		}, false );
 		window.addEventListener( 'mouseout', DoorsOutListener, false );
 		window.addEventListener( 'mouseleave', DoorsLeaveListener, false );
-		window.addEventListener( 'resize', WindowResizeFunc );
+		window.addEventListener( 'resize', WindowResizeFunc, false );
 		window.addEventListener( 'keydown', DoorsKeyDown, false );
+		window.addEventListener( 'keyup', DoorsKeyUp, false );
 		//window.addEventListener( 'paste', friendWorkspacePasteListener, false);
 	}
 }

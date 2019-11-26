@@ -133,11 +133,6 @@ Workspace = {
 		dapis.src = '/system.library/module/?module=system&command=doorsupport&sessionid=' + this.sessionId;
 		document.getElementsByTagName( 'head' )[0].appendChild( dapis );
 
-		// Init the deepest field
-		if( !isMobile )
-			DeepestField.init();
-		else DeepestField = false;
-
 		// Add event listeners
 		for( var a = 0; a < this.runLevels.length; a++ )
 		{
@@ -166,6 +161,11 @@ Workspace = {
 		// Make links to screen on this object
 		this.screen = wbscreen;
 		this.screenDiv = wbscreen.div;
+
+		// Init the deepest field
+		if( !isMobile )
+			DeepestField.init();
+		else DeepestField = false;
 
 		// Key grabber
 		if( !ge( 'InputGrabber' ) )

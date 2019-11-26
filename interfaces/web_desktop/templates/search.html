@@ -12,6 +12,9 @@
 						<button class="Button IconSmall fa-search" onclick="Workspace.searchExecute()" id="WorkspaceSearchGo">
 							{i18n_search_do}
 						</button>
+						<button class="Button IconSmall fa-globe" onclick="Workspace.searchStop(); Workspace.searchAll();" style="visibility: {searchAll}" id="WorkspaceSearchAll">
+							{i18n_search_all_disks}
+						</button>
 						<button class="Button IconSmall fa-remove" onclick="Workspace.searchStop();" style="visibility: hidden; width: 0px; overflow: hidden" id="WorkspaceSearchStop">
 							{i18n_search_stop}
 						</button>

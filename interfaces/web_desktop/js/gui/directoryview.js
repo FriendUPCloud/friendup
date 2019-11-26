@@ -568,6 +568,16 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			}
 		} );
 	}
+	
+	buttons.push( {
+		element: 'button',
+		className: 'Search FloatRight IconSmall',
+		content: i18n( 'i18n_search' ),
+		onclick: function( e )
+		{
+			Workspace.showSearch( dw.window.fileInfo.Path );
+		}
+	} );
 
 	function renderButton( btn, par )
 	{
@@ -2450,7 +2460,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Set new viewmode
 	this.viewMode = 'iconview';
 	
-	this.ShowFileBrowser();
+	if( !isMobile )
+		this.ShowFileBrowser();
 	
 	// Remember scroll top
 	var stop = 0;
@@ -4013,194 +4024,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	}
 	else
 	{
-		switch( extension )
-		{
-			case 'info':
-				iconInner.className = 'MetaFile';
-				break;
-			case 'library':
-				iconInner.className = 'System_Library';
-				break;
-			case 'jpg':
-				iconInner.className = 'TypeJPG';
-				break;
-			case 'jpeg':
-				iconInner.className = 'TypeJPEG';
-				break;
-			case 'psd':
-				iconInner.className = 'TypePSD';
-				break;
-			case 'png':
-				iconInner.className = 'TypePNG';
-				break;
-			case 'gif':
-				iconInner.className = 'TypeGIF';
-				break;
-			case 'odt':
-				iconInner.className = 'TypeDOC';
-				break;
-			case 'ods':
-				iconInner.className = 'TypeODS';
-				break;
-			case 'xlsx':
-				iconInner.className = 'TypeXLS';
-				break;
-			case 'xls':
-				iconInner.className = 'TypeXLSX';
-				break;
-			case 'abw':
-				iconInner.className = 'TypeABW';
-				break;
-			case 'docx':
-				iconInner.className = 'TypeDOCX';
-				break;
-			case 'doc':
-				iconInner.className = 'TypeDOC';
-				break;
-			case 'svg':
-				iconInner.className = 'TypeSVG';
-				break;
-			case 'eps':
-				iconInner.className = 'TypeEPS';
-				break;
-			case 'pdf':
-				iconInner.className = 'TypePDF';
-				break;
-			case 'url':
-				iconInner.className = 'TypeWebUrl';
-				break;
-			case 'txt':
-				iconInner.className = 'TypeTXT';
-				break;
-			case 'avi':
-				iconInner.className = 'TypeAVI';
-				break;
-			case 'mp4':
-				iconInner.className = 'TypeMP4';
-				break;
-			case 'mov':
-				iconInner.className = 'TypeMOV';
-				break;
-			case 'webm':
-				iconInner.className = 'TypeWEBM';
-				break;
-			case 'mpeg':
-				iconInner.className = 'TypeMPEG';
-				break;
-			case 'm4a':
-			case 'mp3':
-				iconInner.className = 'TypeMP3';
-				break;
-			case 'wav':
-				iconInner.className = 'TypeWAV';
-				break;
-			case 'ogg':
-				iconInner.className = 'TypeOGG';
-				break;
-			case 'ogv':
-				iconInner.className = 'TypeOGV';
-				break;
-			case 'flac':
-				iconInner.className = 'TypeFLAC';
-				break;
-			case 'pls':
-				iconInner.className = 'TypePLS';
-				break;
-			case 'jsx':
-				iconInner.className = 'TypeJSX';
-				break;
-			case 'php':
-				iconInner.className = 'TypePHP';
-				break;
-			case 'js':
-				iconInner.className = 'TypeJS';
-				break;
-			case 'run':
-				iconInner.className = 'TypeRUN';
-				break;
-			case 'css':
-				iconInner.className = 'TypeCSS';
-				break;
-			case 'json':
-				iconInner.className = 'TypeJSON';
-				break;
-			case 'html':
-				iconInner.className = 'TypeHTML';
-				break;
-			case 'bak':
-				iconInner.className = 'TypeBak';
-				break;
-			case 'fpkg':
-				iconInner.className = 'TypeFPkg';
-				break;
-			case 'apf':
-				iconInner.className = 'TypeApf';
-				break;
-			case 'zip':
-				iconInner.className = 'TypeZip';
-				break;
-			case 'ppt':
-				iconInner.className = 'TypePPT';
-				break;
-			case 'odp':
-				iconInner.className = 'TypeODP';
-				break;
-			case 'pptx':
-				iconInner.className = 'TypePPTX';
-				break;
-			case 'gz':
-				iconInner.className = 'TypeGZ';
-				break;
-			case 'bz':
-			case 'bz2':
-				iconInner.className = 'TypeBZ';
-				break;
-			case 'tgz':
-				iconInner.className = 'TypeTGZ';
-				break;
-			case 'tar':
-				iconInner.className = 'TypeTAR';
-				break;
-			case '7z':
-				iconInner.className = 'Type7Z';
-				break;
-			case 'lha':
-				iconInner.className = 'TypeLHA';
-				break;
-			case 'deb':
-				iconInner.className = 'TypePKGLINUX';
-				break;
-			case 'rpm':
-				iconInner.className = 'TypePKGLINUX';
-				break;
-			default:
-				switch( fileInfo.MetaType )
-				{
-					case 'Meta':
-						iconInner.className = 'Application';
-						break;
-					case 'Directory':
-						if( fileInfo.Title == 'Upload' )
-						{
-							iconInner.className = 'Directory Upload';
-						}
-						else iconInner.className = 'Directory';
-						break;
-					default:
-						iconInner.className = 'File';
-				}
-				if( typeof ( fileInfo.Type ) != 'undefined' )
-					iconInner.className += ' ' + fileInfo.Type;
-				// Disk icons!
-				if( fileInfo.Type == 'Door' )
-				{
-					if( fileInfo.Door && fileInfo.Door.Type == 'Assign' )
-						iconInner.className += ' Assign';
-					else iconInner.className = 'Door';
-					iconInner.className += ' ' + fileInfo.Handler.split( '.' ).join( '_' );
-				}
-				break;
-		}
+		iconInner.className = GetIconClassByExtension( extension, fileInfo );
 	}
 	
 	// Check for thumbs
@@ -5496,56 +5320,78 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		}
 		else
 		{
-			var fid = typeof ( fileInfo.ID ) != 'undefined' ?
-				fileInfo.ID : fileInfo.Filename;
-			var cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
-				fileInfo.Command : 'file';
-			
-			if( cmd == 'file' )
+	
+			// No mime type? Ask Friend Core
+			var mim = new Module( 'system' );
+			mim.onExecuted = function( me, md )
 			{
-				var dliframe = document.createElement('iframe');
-				dliframe.setAttribute('class', 'hidden');
-				dliframe.setAttribute('src', fileInfo.downloadhref );
-				dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
-				dliframe.onload = function()
+				var js = null;
+				try
 				{
-					document.body.removeChild( dliframe );
-					dliframe = null;
+					js = JSON.parse( md );
 				}
-				document.body.appendChild( dliframe );
-				
-				// Just in case, if it takes more than 15 seconds, remove the iframe
-				setTimeout( function()
+				catch( e ){};
+		
+				if( me == 'ok' && js )
 				{
-					if( dliframe )
+					ExecuteApplication( js.executable, fileInfo.Path );
+				}
+				else
+				{
+					var fid = typeof ( fileInfo.ID ) != 'undefined' ?
+						fileInfo.ID : fileInfo.Filename;
+					var cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
+						fileInfo.Command : 'file';
+			
+					if( cmd == 'file' )
 					{
-						document.body.removeChild( dliframe );
+						var dliframe = document.createElement('iframe');
+						dliframe.setAttribute('class', 'hidden');
+						dliframe.setAttribute('src', fileInfo.downloadhref );
+						dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
+						dliframe.onload = function()
+						{
+							document.body.removeChild( dliframe );
+							dliframe = null;
+						}
+						document.body.appendChild( dliframe );
+				
+						// Just in case, if it takes more than 15 seconds, remove the iframe
+						setTimeout( function()
+						{
+							if( dliframe )
+							{
+								document.body.removeChild( dliframe );
+							}
+						}, 15000 );
+						return;
 					}
-				}, 15000 );
-				return;
+			
+			
+					var win = new View ( {
+						'title'    : iconObject.Title ? iconObject.Title : iconObject.Filename,
+						'width'    : 800,
+						'height'   : 600,
+						'memorize' : true,
+						'id'       : fileInfo.MetaType + '_' + fid
+					} );
+					/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
+						left: 0; width: 100%; height: 100%; border: 0" \
+						src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
+					win.parentFile = iconObject;
+					win.parentWindow = iconObject.window;			
+					var newWin = win;
+					win = null;
+					GetURLFromPath( fileInfo.Path, function( url )
+					{
+						newWin.setContent ( '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
+						left: 0; width: 100%; height: 100%; border: 0" \
+						src="' + url + '"></iframe>' );
+					}, '&mode=rs' );
+					return window.isMobile ? Workspace.closeDrivePanel() : false;
+				}
 			}
-			
-			
-			var win = new View ( {
-				'title'    : iconObject.Title ? iconObject.Title : iconObject.Filename,
-				'width'    : 800,
-				'height'   : 600,
-				'memorize' : true,
-				'id'       : fileInfo.MetaType + '_' + fid
-			} );
-			/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
-				left: 0; width: 100%; height: 100%; border: 0" \
-				src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
-			win.parentFile = iconObject;
-			win.parentWindow = iconObject.window;			
-			var newWin = win;
-			win = null;
-			GetURLFromPath( fileInfo.Path, function( url )
-			{
-				newWin.setContent ( '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
-				left: 0; width: 100%; height: 100%; border: 0" \
-				src="' + url + '"></iframe>' );
-			}, '&mode=rs' );
+			mim.execute( 'checkmimeapplication', { path: fileInfo.Path } );
 		}
 	}
 	else if ( fileInfo.MetaType == 'DiskHandled' )
@@ -5597,7 +5443,7 @@ function CheckDoorsKeys( e )
 		{
 			// TODO: Implement confirm dialog!
 			case 46:
-				if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
+				if( window.regionWindow && window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing )
 				{
 					Workspace.deleteFile();
 				}
@@ -6184,6 +6030,200 @@ Friend.startImageViewer = function( iconObject, extra )
 	}
 	win = null;
 };
+
+function GetIconClassByExtension( extension, fileInfo )
+{
+	var iconInner = { className: '' };
+	switch( extension )
+	{
+		case 'info':
+			iconInner.className = 'MetaFile';
+			break;
+		case 'library':
+			iconInner.className = 'System_Library';
+			break;
+		case 'jpg':
+			iconInner.className = 'TypeJPG';
+			break;
+		case 'jpeg':
+			iconInner.className = 'TypeJPEG';
+			break;
+		case 'psd':
+			iconInner.className = 'TypePSD';
+			break;
+		case 'png':
+			iconInner.className = 'TypePNG';
+			break;
+		case 'gif':
+			iconInner.className = 'TypeGIF';
+			break;
+		case 'odt':
+			iconInner.className = 'TypeDOC';
+			break;
+		case 'ods':
+			iconInner.className = 'TypeODS';
+			break;
+		case 'xlsx':
+			iconInner.className = 'TypeXLS';
+			break;
+		case 'xls':
+			iconInner.className = 'TypeXLSX';
+			break;
+		case 'abw':
+			iconInner.className = 'TypeABW';
+			break;
+		case 'docx':
+			iconInner.className = 'TypeDOCX';
+			break;
+		case 'doc':
+			iconInner.className = 'TypeDOC';
+			break;
+		case 'svg':
+			iconInner.className = 'TypeSVG';
+			break;
+		case 'eps':
+			iconInner.className = 'TypeEPS';
+			break;
+		case 'pdf':
+			iconInner.className = 'TypePDF';
+			break;
+		case 'url':
+			iconInner.className = 'TypeWebUrl';
+			break;
+		case 'txt':
+			iconInner.className = 'TypeTXT';
+			break;
+		case 'avi':
+			iconInner.className = 'TypeAVI';
+			break;
+		case 'mp4':
+			iconInner.className = 'TypeMP4';
+			break;
+		case 'mov':
+			iconInner.className = 'TypeMOV';
+			break;
+		case 'webm':
+			iconInner.className = 'TypeWEBM';
+			break;
+		case 'mpeg':
+			iconInner.className = 'TypeMPEG';
+			break;
+		case 'm4a':
+		case 'mp3':
+			iconInner.className = 'TypeMP3';
+			break;
+		case 'wav':
+			iconInner.className = 'TypeWAV';
+			break;
+		case 'ogg':
+			iconInner.className = 'TypeOGG';
+			break;
+		case 'ogv':
+			iconInner.className = 'TypeOGV';
+			break;
+		case 'flac':
+			iconInner.className = 'TypeFLAC';
+			break;
+		case 'pls':
+			iconInner.className = 'TypePLS';
+			break;
+		case 'jsx':
+			iconInner.className = 'TypeJSX';
+			break;
+		case 'php':
+			iconInner.className = 'TypePHP';
+			break;
+		case 'js':
+			iconInner.className = 'TypeJS';
+			break;
+		case 'run':
+			iconInner.className = 'TypeRUN';
+			break;
+		case 'css':
+			iconInner.className = 'TypeCSS';
+			break;
+		case 'json':
+			iconInner.className = 'TypeJSON';
+			break;
+		case 'html':
+			iconInner.className = 'TypeHTML';
+			break;
+		case 'bak':
+			iconInner.className = 'TypeBak';
+			break;
+		case 'fpkg':
+			iconInner.className = 'TypeFPkg';
+			break;
+		case 'apf':
+			iconInner.className = 'TypeApf';
+			break;
+		case 'zip':
+			iconInner.className = 'TypeZip';
+			break;
+		case 'ppt':
+			iconInner.className = 'TypePPT';
+			break;
+		case 'odp':
+			iconInner.className = 'TypeODP';
+			break;
+		case 'pptx':
+			iconInner.className = 'TypePPTX';
+			break;
+		case 'gz':
+			iconInner.className = 'TypeGZ';
+			break;
+		case 'bz':
+		case 'bz2':
+			iconInner.className = 'TypeBZ';
+			break;
+		case 'tgz':
+			iconInner.className = 'TypeTGZ';
+			break;
+		case 'tar':
+			iconInner.className = 'TypeTAR';
+			break;
+		case '7z':
+			iconInner.className = 'Type7Z';
+			break;
+		case 'lha':
+			iconInner.className = 'TypeLHA';
+			break;
+		case 'deb':
+			iconInner.className = 'TypePKGLINUX';
+			break;
+		case 'rpm':
+			iconInner.className = 'TypePKGLINUX';
+			break;
+		default:
+			switch( fileInfo.MetaType )
+			{
+				case 'Meta':
+					iconInner.className = 'Application';
+					break;
+				case 'Directory':
+					if( fileInfo.Title == 'Upload' )
+					{
+						iconInner.className = 'Directory Upload';
+					}
+					else iconInner.className = 'Directory';
+					break;
+				default:
+					iconInner.className = 'File';
+			}
+			if( typeof ( fileInfo.Type ) != 'undefined' )
+				iconInner.className += ' ' + fileInfo.Type;
+			// Disk icons!
+			if( fileInfo.Type == 'Door' )
+			{
+				if( fileInfo.Door && fileInfo.Door.Type == 'Assign' )
+					iconInner.className += ' Assign';
+				else iconInner.className = 'Door';
+				iconInner.className += ' ' + fileInfo.Handler.split( '.' ).join( '_' );
+			}
+			break;
+	}
+	return iconInner.className;
+}
 
 // End Friend Image Viewer! ----------------------------------------------------
 
