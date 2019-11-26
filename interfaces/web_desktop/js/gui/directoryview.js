@@ -3751,8 +3751,18 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 
+		var listed = 0;
+		for( var z = 0; z < icons.length; z++ )
+		{
+			var fn = icons[ z ].Filename;
+			if( fn.substr( 0, 1 ) != '.' && fn.substr( -4, 4 ) != '.bak' )
+			{
+				listed++;
+			}
+		}
+
 		var filesize = humanFilesize ( bts );
-		foot.innerHTML = icons.length + ' ' + i18n( 'i18n_total_listed' ) + ' ' + filesize + '.';
+		foot.innerHTML = listed + ' ' + i18n( 'i18n_total_listed' ) + ' ' + filesize + '.';
 	}
 	else
 	{
