@@ -2036,11 +2036,18 @@ movableListener = function( e, data )
 		// Mouse down on a resize gadget
 		else if( window.mouseDown == 2 )
 		{ 
+			
 			var w = window.currentMovable;
 			var r = w.resize;
 			var t = w.titleBar;
 			var l = w.leftbar;
 			var x = w.rightbar;
+			
+			// Set normal mode
+			r.mode = 'normal';
+			r.window.removeAttribute( 'maximized' );
+			_removeWindowTiles( w );
+			// Done normal mode
 			
 			var rx = ( windowMouseX - r.offx ); // resizex
 			var ry = ( windowMouseY - r.offy ); // resizey

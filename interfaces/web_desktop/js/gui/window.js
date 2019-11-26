@@ -876,6 +876,9 @@ function _ActivateWindowOnly( div )
 	// Special case
 	var delayedDeactivation = true;
 	
+	// Note we're having a current movable
+	currentMovable = div;
+	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
 	for( var a in movableWindows )
@@ -2797,7 +2800,7 @@ var View = function( args )
 					this.mode = 'maximized';					
 				}
 				else
-				{
+				{	
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
 					
