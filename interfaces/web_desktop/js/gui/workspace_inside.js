@@ -7562,6 +7562,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				OpenWindowByFileinfo( this.folder, false );
 			}
 			theFil.file = m;
+			if( !isMobile )
+			{
+				theFil.onmouseover = function()
+				{
+					this.style.textDecoration = 'underline';
+				}
+				theFil.onmouseout = function()
+				{
+					this.style.textDecoration = '';
+				}
+			}
 			theFil[ method ] = function()
 			{
 				if( self.searchScrolling )
