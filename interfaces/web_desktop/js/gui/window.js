@@ -2800,7 +2800,7 @@ var View = function( args )
 					this.mode = 'maximized';					
 				}
 				else
-				{
+				{	
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
 					
