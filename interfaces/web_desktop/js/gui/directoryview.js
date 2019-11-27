@@ -468,6 +468,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					}
 					else
 					{
+						dw.window.fileInfo = fin;
 						winobj.refresh();
 					}
 				}
@@ -489,6 +490,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					}
 					else
 					{
+						dw.window.fileInfo = fin;
 						winobj.refresh();
 					}
 				}
@@ -5826,7 +5828,6 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		Workspace.handleBackButton();
 	} );
-	
 
 	function renderToolbar( eparent )
 	{
