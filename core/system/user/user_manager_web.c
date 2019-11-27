@@ -948,10 +948,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		char *args = NULL;
 		
 		DEBUG( "[UMWebRequest] Update user!!\n" );
-		
-		
-		DEBUG("[UMWebRequest] Im admin %d\n", imAdmin );
-		
+
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
 		if( el != NULL )
 		{
@@ -1673,13 +1670,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
-		
-		//UserSession *usrses = l->sl_USM->usm_Sessions;
+
 		char *sessionid = NULL;
 		char *deviceid = NULL;
 		char *usrname = NULL;

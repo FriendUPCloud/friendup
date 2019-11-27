@@ -887,12 +887,21 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 		void *result = sqlLib->Query( sqlLib, sqlbs->bs_Buffer );
 		if( result != NULL )
 		{
+			int rownr = 0;
 			char **row;
 			// g.ID,g.UserID,g.ParentID,g.Name,g.Type.g.Status
 
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
-				
+				if( rownr == 0 )
+				{
+					
+				}
+				else
+				{
+					
+				}
+				rownr++;
 			}
 			sqlLib->FreeResult( sqlLib, result );
 		}
