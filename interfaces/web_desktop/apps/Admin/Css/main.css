@@ -1,15 +1,14 @@
 
-#Admin .IconSmall:before
+
+/*#Admin .IconSmall:before
 {
 	font-size: 1.4em;
 }
 
 #Admin
 {
-	/*background-color: #20374D;*/
 	background-color: #34495E;
 	font-weight: normal;
-	/*font-size: 20px;*/
 }
 
 #Admin .collapse > .List
@@ -26,8 +25,83 @@
 {
 	background-color: #343c4b !important;
 	color: #f0f0f0 !important;
-	/*padding: 5px 5px !important;*/
 	border: 0 !important;
+}
+
+#Admin input
+{
+	padding: 5px;
+	border-radius: 0;
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid #979797;
+}
+
+#Admin textarea
+{
+	padding: 5px;
+	border-radius: 0;
+	background: transparent;
+	border: 1px solid #979797;
+}*/
+
+/* Gui Content ------------------------------------------------------------------ */
+
+/*#Admin #GuiContent
+{
+	background-color: #ECF0F1;
+	color: #34495E;
+}
+
+#Admin #GuiContent > div
+{
+	padding: 20px;
+}
+
+#Admin #GuiContent h1
+{
+	background-color: #34495E;
+	color: #FFFFFF;
+	text-align: center;
+	padding: 10px;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+#Admin #GuiContent .FullContent > div.List > .HRow
+{
+	background-color: #34495E;
+	color: #FFFFFF;
+}
+
+#Admin #GuiContent .FullContent > div.List + div.List > .HRow,
+#Admin #GuiContent .FullContent > div > div.List > .HRow
+{
+	background-color: #FFFFFF;
+	color: #34495E;
+}
+
+#Admin #GuiContent .FullContent > div > div.List > .HRow.Selected
+{
+	background-color: #34495E;
+    color: #FFFFFF;
+}
+
+#Admin #GuiContent div
+{
+	border: 0;
+}*/
+
+/* Gui UserList ------------------------------------------------------------------ */
+
+#Admin #UserList .submenu_wrapper
+{
+	display: none;
+}
+
+#Admin #UserDetails .Closed
+{
+	display: none;
 }
 
 #Admin #UserList .submenu_wrapper
@@ -69,10 +143,24 @@
 	display: block;
 }
 
-#Admin #UserDetails .Closed
+#Admin #GuiContent #UserList .HRow.Disabled
 {
-	display: none;
+	/* Concrete Grey */
+	color: #95A5A6;
 }
+
+#Admin #GuiContent #UserList .HRow.Locked
+{
+	/* Pomegranate Red */
+	color: #C0392B;
+}
+
+#Admin #GuiContent #UserList .HRow span
+{
+	/*border-radius: 100%;*/
+}
+
+/* Gui UserDetails ------------------------------------------------------------------ */
 
 #Admin #UserDetails #PassError span 
 {
@@ -122,7 +210,6 @@
     height: 128px;
     border-radius: 100%;
     overflow: hidden;
-    /*background-color: rgba(0,0,0,0.5);*/
 }
 
 #Admin #UserDetails #AdminAvatarArea #AdminAvatar 
@@ -133,123 +220,6 @@
     width: 256px;
     height: 256px;
     zoom: 0.5;
-}
-
-#Admin input
-{
-	/*font-size: 20px;*/
-	padding: 5px;
-	border-radius: 0;
-	background: transparent;
-	border: 0;
-	border-bottom: 1px solid #979797;
-}
-
-#Admin textarea
-{
-	/*font-size: 20px;*/
-	padding: 5px;
-	border-radius: 0;
-	background: transparent;
-	border: 1px solid #979797;
-}
-
-#Admin #GuiSidebar
-{
-	padding: 20px;
-	box-sizing: border-box;
-}
-
-#Admin #GuiSidebar, #Admin #GuiSidebar a
-{
-	color: #FFFFFF;
-	font-weight: normal;
-	/*font-size: 20px;*/
-}
-
-#Admin #GuiSidebar a.IconSmall
-{
-	position: relative;
-	padding-left: 30px;
-}
-
-#Admin #GuiSidebar a.IconSmall:before
-{
-	position: absolute;
-	left: 0;
-}
-
-#Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
-{
-	padding-right: 10px;
-}
-
-#Admin #GuiSidebar h2
-{
-	font-weight: bold;
-	/*font-size: 18px;*/
-}
-
-#Admin #GuiContent
-{
-	background-color: #ECF0F1;
-	color: #34495E;
-}
-
-#Admin #GuiContent > div
-{
-	padding: 20px;
-}
-
-#Admin #GuiContent h1
-{
-	background-color: #34495E;
-	color: #FFFFFF;
-	text-align: center;
-	padding: 10px;
-	margin: 0;
-	box-sizing: border-box;
-}
-
-#Admin #GuiContent .FullContent > div.List > .HRow
-{
-	background-color: #34495E;
-	color: #FFFFFF;
-}
-
-#Admin #GuiContent .FullContent > div.List + div.List > .HRow,
-#Admin #GuiContent .FullContent > div > div.List > .HRow
-{
-	background-color: #FFFFFF;
-	color: #34495E;
-}
-
-#Admin #GuiContent .FullContent > div > div.List > .HRow.Selected
-{
-	background-color: #34495E;
-    color: #FFFFFF;
-}
-
-#Admin #GuiContent div
-{
-	border: 0;
-}
-
-#Admin #GuiContent #UserList .HRow.Disabled
-{
-	/* Concrete Grey */
-	color: #95A5A6;
-}
-
-#Admin #GuiContent #UserList .HRow.Locked
-{
-	/* Pomegranate Red */
-	color: #C0392B;
-}
-
-#Admin #GuiContent #UserList .HRow span
-{
-	/*border-radius: 100%;*/
 }
 
 /* Server printers ---------------------------------------------------------- */
@@ -344,4 +314,41 @@
 	box-sizing: border-box;
 	background-color: #3498DB;
 }
+
+
+/* Gui Sidebar ------------------------------------------------------------------ */
+
+/*#Admin #GuiSidebar
+{
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a
+{
+	color: #FFFFFF;
+	font-weight: normal;
+}
+
+#Admin #GuiSidebar a.IconSmall
+{
+	position: relative;
+	padding-left: 30px;
+}
+
+#Admin #GuiSidebar a.IconSmall:before
+{
+	position: absolute;
+	left: 0;
+}
+
+#Admin #GuiSidebar, #Admin #GuiSidebar a.IconSmall:before
+{
+	padding-right: 10px;
+}
+
+#Admin #GuiSidebar h2
+{
+	font-weight: bold;
+}*/
 

@@ -323,7 +323,7 @@ Sections.accounts_users = function( cmd, extra )
 							for( var a = 0; a < apps.length; a++ )
 							{
 								sw = sw == 2 ? 1 : 2;
-								apl += '<div class="HRow sw' + sw + '">';
+								apl += '<div class="HRow">';
 								for( var k = 0; k < keyz.length; k++ )
 								{
 									var ex = ''; var st = '';
@@ -1129,7 +1129,7 @@ Sections.accounts_users = function( cmd, extra )
 			// Add the main heading
 			( function( ol ) {
 				var tr = document.createElement( 'div' );
-				tr.className = 'HRow';
+				tr.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
 			
 				var extr = '';
 				if( clearFilter )
@@ -1139,7 +1139,7 @@ Sections.accounts_users = function( cmd, extra )
 			
 				/*tr.innerHTML = '\
 					<div class="HContent20 FloatLeft">\
-						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+						<h3><strong>' + i18n( 'i18n_users' ) + '</strong></h3>\
 					</div>\
 					<div class="HContent70 FloatLeft Relative">\
 						' + extr + '\
@@ -1152,14 +1152,14 @@ Sections.accounts_users = function( cmd, extra )
 				
 				tr.innerHTML = '\
 					<div class="HContent20 FloatLeft">\
-						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+						<h3><strong>' + i18n( 'i18n_users' ) + '</strong></h3>\
 					</div>\
 					<div class="HContent70 FloatLeft Relative">\
 						' + extr + '\
 						<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
 					</div>\
 					<div class="HContent10 FloatLeft TextRight InActive">\
-						<button id="AdminUsersBtn" class="IconButton IconSmall fa-bars"></button>\
+						<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
 						<div class="submenu_wrapper"><ul id="AdminUsersSubMenu"></ul></div>\
 					</div>\
 				';
@@ -1211,19 +1211,19 @@ Sections.accounts_users = function( cmd, extra )
 		var header = document.createElement( 'div' );
 		header.className = 'List';
 		var headRow = document.createElement( 'div' );
-		headRow.className = 'HRow sw1';
+		headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
 		for( var z in types )
 		{
 			var borders = '';
 			var d = document.createElement( 'div' );
 			if( z != 'Edit' )
-				borders += ' BorderRight';
+				//borders += ' BorderRight';
 			if( a < userList.length - a )
 				borders += ' BorderBottom';
 			var d = document.createElement( 'div' );
-			d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-			if( z == 'Edit' ) z = '';
-			d.innerHTML = '<strong onclick="sortUsers(\''+z+'\')">' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
+			d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
+			if( z == 'Edit' ) z = '&nbsp;';
+			d.innerHTML = '<strong' + ( z != '&nbsp;' ? ' onclick="sortUsers(\''+z+'\')"' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
 			headRow.appendChild( d );
 		}
 		
@@ -1525,7 +1525,7 @@ Sections.accounts_users = function( cmd, extra )
 					sw = sw == 2 ? 1 : 2;
 					var r = document.createElement( 'div' );
 					setROnclick( r, userList[a].ID );
-					r.className = 'HRow sw' + sw + ' ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
+					r.className = 'HRow ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
 					r.id = ( 'UserListID_'+userList[a].ID );
 					
 					var timestamp = ( userList[ a ][ 'LoginTime' ] ? userList[ a ][ 'LoginTime' ] : 0 );
@@ -1558,7 +1558,7 @@ Sections.accounts_users = function( cmd, extra )
 						if( z != 'Edit' )
 						{
 							d.className = '';
-							borders += ' BorderRight';
+							//borders += ' BorderRight';
 						}
 						else d.className = 'TextCenter';
 						if( a < userList.length - a )
@@ -2031,9 +2031,9 @@ Sections.accounts_users = function( cmd, extra )
 		var o = ge( 'UserList' );
 		o.innerHTML = '';
 		
-		var h2 = document.createElement( 'h2' );
-		h2.innerHTML = '{i18n_permission_denied}';
-		o.appendChild( h2 );
+		var h3 = document.createElement( 'h3' );
+		h3.innerHTML = '<strong>{i18n_permission_denied}</strong>';
+		o.appendChild( h3 );
 	}
 };
 

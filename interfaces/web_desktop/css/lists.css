@@ -76,6 +76,17 @@
 
 /* Alternating list divs ---------------------------------------------------- */
 
+.BackgroundNegativeAlt .Selected
+{
+	background-color: $ColorNegative;
+	color:            $ColorNegativeAlt;
+}
+
+.BackgroundNegativeAlt .Selected a
+{
+	color:            $ColorNegativeAlt;
+}
+
 .BackgroundLists .sw1
 {
 	background: $ColorBgListSw1;
