@@ -8951,7 +8951,7 @@ function DoorsKeyDown( e )
 	}
 	
 	// Check keys on directoryview ---------------------------------------------
-	if( window.currentMovable && currentMovable.content.directoryview )
+	if( window.currentMovable && currentMovable.content && currentMovable.content.directoryview )
 	{
 		if( w == 113 || w == 27 )
 		{

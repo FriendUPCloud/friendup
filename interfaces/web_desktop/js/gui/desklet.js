@@ -721,6 +721,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					ele.classList.remove( 'Minimized' );
 					Workspace.switchWorkspace( ws );
 					ap.windows[w].setFlag( 'hidden', false );
+					ap.windows[w].flags.minimized = false;
+					ap.windows[w].activate();
 				}
 				else
 				{
