@@ -7392,16 +7392,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				for( var u = 0; u < data.length; u++ )
 				{
-					// Don't search hidden files
-					if( data[u].Filename.substr( 0, 1 ) == '.' ) continue;
+					// Don't search hidden files, Don't register them twice
+					var idnt = data[u].Filename ? data[u].Filename : data[u].Title;
+					if( idnt.substr( 0, 1 ) == '.' ) continue;
 					
 					// Match all keywords
 					for( var b = 0; b < Workspace.searchKeywords.length; b++ )
 					{
 						var found = false;
-
-						// Don't register them twice
-						var idnt = data[u].Filename ? data[u].Filename : data[u].Title;
 
 						var searchKey = Workspace.searchKeywords[b];
 
@@ -7569,7 +7567,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( self.searchScrolling )
 					return;
-				OpenWindowByFileinfo( this.folder, false );
+				OpenWindowByFileinfo( this.folder, false, false, true );
 			}
 			theFil.file = m;
 			if( !isMobile )
