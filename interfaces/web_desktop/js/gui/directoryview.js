@@ -5011,8 +5011,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		f.load();
 	}
 	// We've clicked on a directory!
-	else if( fileInfo.MetaType == 'Directory' )
-	{	
+	else if( fileInfo.MetaType == 'Directory' || fileInfo.MetaType == 'Door' )
+	{
 		var extra = null;
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
@@ -5048,7 +5048,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					win.fileInfo.Volume = win.fileInfo.Path.split( ':' )[0] + ':';
 				}
 			}
-			console.log( 'We have a target view', w );
 			w.flags.minimized = false;
 			w.activate();
 			w.toFront();
