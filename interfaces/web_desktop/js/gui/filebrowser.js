@@ -147,6 +147,8 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 // Supported flags ( { lockHistory: true|false } )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags )
 {
+	console.log( 'Setting path to: ' + target );
+	
 	// Already set
 	if( this.flags.path && this.flags.path == target ) 
 	{
@@ -189,6 +191,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	if( this.flags.path )
 	{
 		targetPath = this.flags.path;
+		console.log( 'Looking for flags > path: ' + this.flags.path );
 		/*var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
 		b.pop();
 		targetPath = '';

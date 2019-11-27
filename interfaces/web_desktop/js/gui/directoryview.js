@@ -824,6 +824,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		var dirv = this.directoryview;
 		
+		if( dirv.window.fileBrowser )
+		{
+			// Correct file browser
+			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
+		}
+		
 		// Assign icons now
 		// Store
 		if( icons )
@@ -5133,7 +5139,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			var winDoor = win.Door;
 			
 			win.refresh = function( callback )
-			{	
+			{
 				// Run previous callback
 				if( callback )
 				{
