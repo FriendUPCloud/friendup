@@ -1030,6 +1030,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				div.onmousedown = function( e )
 				{
+					// TODO: Fix special case with flags implementation on addLauncher()
+					if( div.classList.contains( 'Startmenu' ) || div.getAttribute( 'data-displayname' ) == 'Files' ) return;
 					if( mousePointer.candidate ) return;
 					if( e.button != 0 )
 						return;
