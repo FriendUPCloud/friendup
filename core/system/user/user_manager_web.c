@@ -1229,9 +1229,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		int entries = 0;
 		
 		DEBUG( "[UMWebRequest] Update user!!\n" );
-		
-		DEBUG("[UMWebRequest] Im admin %d\n", imAdmin );
-		
+
 		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
 		if( el != NULL )
 		{
@@ -1316,7 +1314,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				// user is not logged in
 				// try to get it from DB
 				
-				if( imAdmin  == TRUE )
+				if( haveAccess  == TRUE )
 				{
 					canChange = TRUE;
 				}
