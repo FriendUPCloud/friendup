@@ -26,7 +26,7 @@
 #include <util/session_id.h>
 
 //test
-#undef __DEBUG
+//#undef __DEBUG
 
 /**
  * Http web call processor
@@ -536,7 +536,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -648,10 +648,24 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 		FULONG id = 0;
 		FLONG status = -1;
+		char *authid = NULL;
+		char *args = NULL;
+		HashmapElement *el = NULL;
+		
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = UrlDecodeToMem( el->data );
+		}
 		
 		DEBUG( "[UMWebRequest] Update user status!!\n" );
 		
-		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		el = HttpGetPOSTParameter( request, "id" );
 		if( el != NULL )
 		{
 			char *next;
@@ -665,7 +679,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
 			if( id > 0 && status >= 0 )
 			{
@@ -715,6 +729,41 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							char msg[ 512 ];
 							if( status == USER_STATUS_DISABLED )
 							{
+								// send calls to all users that they must log-off themselfs
+								
+								User *u = UMGetUserByID( l->sl_UM, id );
+								if( u != NULL )
+								{
+									FRIEND_MUTEX_LOCK( &u->u_Mutex );
+									UserSessListEntry *usl = u->u_SessionsList;
+									while( usl != NULL )
+									{
+										UserSession *s = (UserSession *) usl->us;
+										if( s != NULL )
+										{
+											char tmpmsg[ 2048 ];
+											int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+							
+											int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+
+											DEBUG("Bytes send: %d\n", msgsndsize );
+						
+											break;
+										}
+										usl = (UserSessListEntry *)usl->node.mln_Succ;
+									}
+									FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
+				
+									if( usl != NULL )
+									{
+										UserSession *s = (UserSession *) usl->us;
+										FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
+										s->us_InUseCounter--;
+										FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
+						
+										int error = USMUserSessionRemove( l->sl_USM, usl->us );
+									}
+								}
 								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
 							}
 							else
@@ -765,6 +814,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
+		
+		if( args != NULL )
+		{
+			FFree( args );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -804,8 +858,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			usrpass = UrlDecodeToMem( (char *)el->data );
 		}
-		
-		
 		
 		if( usrname != NULL && usrpass != NULL )
 		{
@@ -979,7 +1031,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				args = UrlDecodeToMem( el->data );
 			}
 				
-			if( loggedSession->us_User->u_IsAdmin )
+			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 			{
 				haveAccess = TRUE;
 				
