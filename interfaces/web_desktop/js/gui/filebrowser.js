@@ -191,19 +191,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	if( this.flags.path )
 	{
 		targetPath = this.flags.path;
-		console.log( 'Looking for flags > path: ' + this.flags.path );
-		/*var b = this.flags.path.split( ':' ).join( '/' ).split( '/' );
-		b.pop();
-		targetPath = '';
-		
-		for( var a = 0; a < depth; a++ )
-		{
-			if( b[a] )
-			{
-				targetPath += b[a] + ( a == 0 ? ':' : '/' );
-			}
-		}
-		console.log( 'Looking: ' + targetPath + ' (' + this.flags.path + ') - ' + depth + ' ' + path );*/
 	}
 	
 	function createOnclickAction( ele, ppath, type, depth )
@@ -349,6 +336,11 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				if( nam.length )
 				{
 					nam[0].classList.add( 'Active' );
+					
+					// Scroll into view
+					var d = self.dom;
+					var h = d.offsetHeight >> 1;
+					d.scrollTop = nam[0].offsetTop - h;
 				}
 				
 				var fnam = ppath.split( ':' )[1];

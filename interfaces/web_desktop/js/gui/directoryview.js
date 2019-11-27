@@ -658,7 +658,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		var d = document.createElement( 'div' );
 		if( this.sidebarbackground )
 		{
-			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall';
+			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall SmoothScrolling';
 		}
 		else 
 		{
