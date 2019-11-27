@@ -461,16 +461,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex > 0 )
 				{
 					var fin = dw.pathHistoryRewind();
+					dw.window.fileInfo = fin;
+					console.log( 'Rewinding: ', fin );
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
 						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
-					else
-					{
-						dw.window.fileInfo = fin;
-						winobj.refresh();
-					}
+					winobj.refresh();
 				}
 			}
 		}: false,
@@ -484,15 +482,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
 				{
 					var fin = dw.pathHistoryForward();
+					dw.window.fileInfo = fin;
+					console.log( 'Forwarding: ', fin );
+					
 					if( !isMobile && winobj.fileBrowser )
 					{
 						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
-					else
-					{
-						dw.window.fileInfo = fin;
-						winobj.refresh();
-					}
+					winobj.refresh();
 				}
 			}
 		}: false,
