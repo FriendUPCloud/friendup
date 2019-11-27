@@ -2525,7 +2525,7 @@ function CheckScreenTitle( screen )
 		wo = false; // Only movables on current screen
 	}
 	
-	var hasScreen = ( !csc || testObject.screenObject == wo.screen || ( !wo.screen && isDoorsScreen ) );
+	var hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	
 	var isDoorsScreen = testObject.id == 'DoorsScreen';	
 	

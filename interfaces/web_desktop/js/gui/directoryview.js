@@ -2436,7 +2436,7 @@ DirectoryView.prototype.GetTitleBar = function ()
 DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, option, flags )
 {
 	var self = this;
-	
+		
 	if( this.rendering ) return;
 	this.rendering = true;
 	
@@ -3088,13 +3088,13 @@ DirectoryView.prototype.SelectAll = function()
 		var ics = this.window.icons;
 		for( var a = 0; a < ics.length; a++ )
 		{
+			ics[a].selected = 'multiple';
 			if( ics[a].domNode )
 			{
 				ics[a].domNode.classList.add( 'Selected' );
 				ics[a].domNode.selected = 'multiple';
 				ics[a].domNode.icon.selected = 'multiple';
 			}
-			ics[a].selected = 'multiple';
 			if( ics[a].fileInfo )
 				ics[a].fileInfo.selected = 'multiple';
 		}
@@ -3577,7 +3577,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							this.classList.add( 'Selected' );
 							this.selected = sh ? 'multiple' : true;
 							this.icon.selected = this.selected;
-							this.fileInfo.selected = sh ? 'multiple' : true;
+							this.fileInfo.selected = this.selected;
 						}
 						dv.lastListItem = this;
 					}
@@ -3953,7 +3953,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( !fileInfo )
 		return;
 		
-	if( fileInfo.selected ) this.file.classList.add( 'Selected' );
+	if( fileInfo.selected )
+	{
+		this.file.classList.add( 'Selected' );
+		this.file.selected = fileInfo.selected;
+	}
 
 	// Attach this object to dom element
 	file.object = this;
