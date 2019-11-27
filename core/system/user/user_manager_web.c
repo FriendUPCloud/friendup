@@ -754,7 +754,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 									}
 									FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 				
-									if( usl != NULL )
+									usl = u->u_SessionsList;
+									while( usl != NULL )
 									{
 										UserSession *s = (UserSession *) usl->us;
 										FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
@@ -762,6 +763,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 										FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
 						
 										int error = USMUserSessionRemove( l->sl_USM, usl->us );
+										usl = (UserSessListEntry *)usl->node.mln_Succ;
 									}
 								}
 								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
@@ -1719,8 +1721,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "killsession" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1804,14 +1806,16 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				}
 				FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 				
-				if( usl != NULL )
+				usl = u->u_SessionsList;
+				while( usl != NULL )
 				{
 					UserSession *s = (UserSession *) usl->us;
 					FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
 					s->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-						
-					error = USMUserSessionRemove( l->sl_USM, usl->us );
+					
+					int error = USMUserSessionRemove( l->sl_USM, usl->us );
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
 			}
 			else
