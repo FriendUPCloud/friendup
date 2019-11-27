@@ -716,11 +716,6 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr, char **mountErro
 				return NULL;
 			}
 			sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
-<<<<<<< HEAD
-			
-=======
-
->>>>>>> origin/feature/workspace
 			sd->port = sd->csr->csr_port;
 			//sd->port = 6503;
 			

@@ -157,6 +157,12 @@ User *UMGetUserByNameDB( UserManager *um, const char *name );
 //
 //
 
+User *UMGetUserByUUIDDB( UserManager *um, const char *name );
+
+//
+//
+//
+
 User *UMGetUserByIDDB( UserManager *um, FULONG id );
 
 //
@@ -212,5 +218,11 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 //
 
 int UMCheckAndLoadAPIUser( UserManager *um );
+
+//
+//
+//
+
+int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

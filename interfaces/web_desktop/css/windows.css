@@ -9,6 +9,9 @@
 	height: 0%;
 	transform: rotatez(0deg);
 	pointer-events: none;
+}
+body:not([mobile]) .ViewContainer
+{
 	transition: opacity 0.2s;
 	opacity: 1;
 }

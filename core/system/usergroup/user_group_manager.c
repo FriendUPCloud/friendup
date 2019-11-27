@@ -523,7 +523,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	BufString *bsGroups = BufStringNew();
 	//pos = 0;
 	
-	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
+	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupsids\":[", usr->u_UUID );
 	BufStringAddSize( bsGroups, tmpQuery, tmplen );
 	
 	//
@@ -663,7 +663,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	BufStringAddSize( bsGroups, "]}", 2 );
 	
 	// update external services about changes
-	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
+	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 	// update user about changes
 	UserNotifyFSEvent2( sb->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 	
@@ -793,6 +793,139 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
 }
 
 /**
+ * Get groups from DB where user is assigned or not
+ *
+ * @param um pointer to UserGroupManager
+ * @param uid User ID
+ * @param bs pointer to BufString where data will be stored
+ * @return TRUE when entry exist, otherwise FALSE
+ */
+FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, FULONG status )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	FBOOL ret = FALSE;
+	
+	if( sqlLib != NULL )
+	{
+		int arg = 0;
+		BufString *sqlbs = BufStringNew();
+		
+		BufStringAdd( sqlbs, "SELECT g.ID,g.UserID,g.ParentID,g.Name,g.Type.g.Status FROM FGroup g inner join FUserToGroup utg on g.ID=utg.UserGroupID" );
+		
+		if( uid > 0 || type != NULL || parentID > 0 || status > 0 )
+		{
+			BufStringAdd( sqlbs, " WHERE" );
+		}
+		
+		if( uid > 0 )
+		{
+			char tmp[ 256 ];
+			int tmpi = 0;
+			tmpi = snprintf( tmp, sizeof(tmp), " utg.UserID=%lu", uid );
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		if( type != NULL )
+		{
+			char tmp[ 512 ];
+			int tmpi = 0;
+			
+			if( arg > 0 )
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " AND g.Type='%s'", type );
+			}
+			else
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " g.Type='%s'", type );
+			}
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		if( parentID > 0 )
+		{
+			char tmp[ 256 ];
+			int tmpi = 0;
+			
+			if( arg > 0 )
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " AND g.ParentID=%lu", parentID );
+			}
+			else
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " g.ParentID=%lu", parentID );
+			}
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		if( status > 0 )
+		{
+			char tmp[ 256 ];
+			int tmpi = 0;
+			
+			if( arg > 0 )
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " AND g.Status=%lu", status );
+			}
+			else
+			{
+				tmpi = snprintf( tmp, sizeof(tmp), " g.Status=%lu", status );
+			}
+			
+			BufStringAddSize( sqlbs, tmp, tmpi );
+			arg++;
+		}
+		
+		//snprintf( tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserToGroup WHERE `UserID`=%lu AND `UserGroupID`=%lu", uid, ugroupid );
+		
+		void *result = sqlLib->Query( sqlLib, sqlbs->bs_Buffer );
+		if( result != NULL )
+		{
+			int rownr = 0;
+			char **row;
+			// g.ID,g.UserID,g.ParentID,g.Name,g.Type.g.Status
+
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				char tmp[ 512 ];
+				int tmpi = 0;
+				
+				if( rownr == 0 )
+				{
+					tmpi = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+				}
+				else
+				{
+					tmpi = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
+				}
+				rownr++;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		else
+		{
+			ret = FALSE;
+		}
+		
+		sb->LibrarySQLDrop( sb, sqlLib );
+		
+		BufStringDelete( sqlbs );
+	}
+	else
+	{
+		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		return FALSE;
+	}
+	return ret;
+}
+
+/**
  * Check if User is connected to Group in DB
  *
  * @param um pointer to UserGroupManager
@@ -904,11 +1037,11 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 		
 		if( type == NULL )
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
 		}
 		else
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
@@ -922,7 +1055,6 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				char *end;
-				FULONG userid = strtol( (char *)row[4], &end, 0 );
 				FULONG groupid =  strtol( (char *)row[0], &end, 0 );
 				FULONG parentid =  strtol( (char *)row[2], &end, 0 );
 				
@@ -942,14 +1074,40 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 					usrpos = 0;
 				}
 				
-				if( usrpos == 0 )
+				/*
+				// User Status == DISABLED
+				if( strcmp( (char *)row[ 6 ], "1" ) )
 				{
-					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
 				}
 				else
 				{
-					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
+					else
+					{
+ 						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
+				}*/
+				
+				if( usrpos == 0 )
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 4 ] );
 				}
+				else
+				{
+ 					itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 4 ] );
+				}
+				
 				BufStringAddSize( bs, tmp, itmp );
 				usrpos++;
 			}

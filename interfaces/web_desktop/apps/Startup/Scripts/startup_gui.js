@@ -50,7 +50,7 @@ Application.receiveMessage = function( msg )
 						console.log( { e:e, d:d } ); 
 					}
 				}
-				if( list == '[]' ) list = [];
+				if( !Array.isArray(list) ) list = [];
 
 				if( msg.itemId === false ) list.push( msg.itemcommand );
 				else

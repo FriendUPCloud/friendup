@@ -10,21 +10,31 @@
 *                                                                              *
 *****************************************************************************©*/
 
-include_once( 'php/classes/door.php' );
+if( isset( $args->args->files ) )
+{
+	$top = $SqlDatabase->fetchObject( 'SELECT MAX(ValueNumber) M FROM FMetaData WHERE `Key`="Desktopshortcut"' );
+	$top = (int)$top->M;
+	
+	$files = 0;
+	foreach( $args->args->files as $path )
+	{
+		$d = new dbIO( 'FMetaData' );
+		$d->Key = 'Desktopshortcut';
+		$d->DataID = $User->ID;
+		$d->DataTable = 'FUser';
+		$d->ValueString = $path;
+		$d->Load();
+		$d->ValueNumber = ++$top;
+		$d->save();
+		if( $d->ID > 0 )
+			$files++;
+	}
+	if( $files > 0 )
+	{
+		die( 'ok<!--separate-->{"response":1,"message":"Successfully added desktop shortcuts.","affected_files":"' . $files . '"}' );
+	}
+}
 
-$obj = new stdClass();
-$obj->permissions = $args->args->Permissions;
-$obj->domain = $args->args->Domains;
-$obj->visibility = $args->args->visibility;
-
-$f = new Door( $args->args->Filename . ':' );
-
-$df = new dbIO( 'Filesystem' );
-$df->Load( $f->ID );
-$df->Config = json_encode( $obj );
-$df->Save();
-if( $df->ID > 0 ) die( 'ok<!--separate-->' ); //. $df->Config . '<!--separate-->' . $df->ID );
-
-die( 'fail' );
+die( 'fail<!--separate-->{"response":0,"message":"Failed to create desktop shortcuts."}' );
 
 ?>

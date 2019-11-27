@@ -77,6 +77,18 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 				}
 			}
 			
+			while( TRUE )
+			{
+				if( FRIEND_MUTEX_TRYLOCK( &(data->wsc_Mutex) ) == 0 )
+				{
+					data->wsc_WebsocketsServerClient = NULL;
+					data->wsc_UserSession = NULL;
+					FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
+					break;
+				}
+				usleep( 500 );
+			}
+			/*
 			if( FRIEND_MUTEX_LOCK( &(data->wsc_Mutex) ) == 0 )
 			{
 				data->wsc_WebsocketsServerClient = NULL;
@@ -84,6 +96,7 @@ void UserSessionWebsocketDelete( UserSessionWebsocket *cl )
 				
 				FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 			}
+			*/
 			cl->wusc_Data = NULL;
 		}
 

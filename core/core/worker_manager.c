@@ -121,7 +121,7 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 				FRIEND_MUTEX_UNLOCK( &(w->w_Mut) );
 			}
 			int wait = 0;
-			
+			/*
 			while( TRUE )
 			{
 				if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
@@ -129,8 +129,9 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 					break;
 				}
 				DEBUG("[WorkerRunCommand] --------waiting for running state: %d, wait: %d\n", w->w_State, wait++ );
-				usleep( 10 );
+				usleep( 100 );
 			}
+			*/
 		}
 		else
 		{
@@ -223,13 +224,15 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		{
 			int lw = wm->wm_LastWorker;
 			Worker *w1 = wm->wm_Workers[ lw ];
-			if( w1->w_State == W_STATE_WAITING )
-			{
-				wrk = wm->wm_Workers[ wm->wm_LastWorker ];
 			
-				// Register worker index..
-				//struct SocketThreadData *td = ( struct SocketThreadData *)d;
-				//td->workerIndex = wm->wm_LastWorker;
+			if( FRIEND_MUTEX_LOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) ) == 0 )
+			{
+				if( w1->w_State == W_STATE_WAITING )
+				{
+					wrk = wm->wm_Workers[ wm->wm_LastWorker ];
+					wrk->w_State = W_STATE_LOCKED;
+				}
+				FRIEND_MUTEX_UNLOCK( &(wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut) );
 			}
 		}
 	

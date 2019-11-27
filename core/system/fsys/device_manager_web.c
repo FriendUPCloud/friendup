@@ -501,18 +501,37 @@ f.Name ASC";
 			// this functionality allow admins to mount other users drives
 			//
 			
-			if( userID > 0 && usr->u_IsAdmin == TRUE )
+			if( userID > 0 )
 			{
-				DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
-				User *locusr = UMGetUserByID( l->sl_UM, userID );
-				if( locusr != NULL )
+				char *authid = NULL;
+				char *args = NULL;
+				el = HttpGetPOSTParameter( request, "authid" );
+				if( el != NULL )
 				{
-					usr = locusr;
-					
+					authid = el->data;
 				}
-				else
+				el = HttpGetPOSTParameter( request, "args" );
+				if( el != NULL )
 				{
-					foundUserInMemory = FALSE;
+					args = UrlDecodeToMem( el->data );
+				}
+				
+				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+				{
+					DEBUG("UserID = %lu user is admin: %d\n", userID, usr->u_IsAdmin );
+					User *locusr = UMGetUserByID( l->sl_UM, userID );
+					if( locusr != NULL )
+					{
+						usr = locusr;
+					}
+					else
+					{
+						foundUserInMemory = FALSE;
+					}
+				} // isAdmin or permissions granted
+				if( args != NULL )
+				{
+					FFree( args );
 				}
 			}
 			
@@ -792,32 +811,39 @@ AND LOWER(f.Name) = LOWER('%s')",
 				
 				if( userID > 0 )
 				{
+					char *authid = NULL;
+					char *args = NULL;
+					el = HttpGetPOSTParameter( request, "authid" );
+					if( el != NULL )
+					{
+						authid = el->data;
+					}
+					el = HttpGetPOSTParameter( request, "args" );
+					if( el != NULL )
+					{
+						args = UrlDecodeToMem( el->data );
+					}
 					DEBUG("UserID %lu\n", userID );
 			
-					User *locusr = UMGetUserByID( l->sl_UM, userID );
-					// user is not in memory, we can remove his entries in DB only
-					if( locusr == NULL )
+					if( activeUser->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 					{
-
-						deviceUnmounted = TRUE;
-						mountError = 0;
-
-						/*
-						locusr = UMGetUserByIDDB( l->sl_UM, userID );
-						if( locusr != NULL )
+						User *locusr = UMGetUserByID( l->sl_UM, userID );
+						// user is not in memory, we can remove his entries in DB only
+						if( locusr == NULL )
 						{
-							Log( FLOG_INFO, "Admin ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, locusr->u_ID );
-							activeUser = locusr;
-					
-							UMAddUser( l->sl_UM, activeUser );
+							deviceUnmounted = TRUE;
+							mountError = 0;
 						}
-						*/
+						else
+						{
+							Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, locusr->u_ID );
+							activeUser = locusr;
+							userID = activeUser->u_ID;
+						}
 					}
-					else
+					if( args != NULL )
 					{
-						Log( FLOG_INFO, "Admin1 ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, locusr->u_ID );
-						activeUser = locusr;
-						userID = activeUser->u_ID;
+						FFree( args );
 					}
 				}
 				
