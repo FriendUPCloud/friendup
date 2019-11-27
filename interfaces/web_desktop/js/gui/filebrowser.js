@@ -53,6 +53,15 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 {
 	var self = this;
 	this.dom = initElement;
+	this.dom.addEventListener( 'scroll', function()
+	{
+		// Block autoscrolling
+		self.scrolling = true;
+		setTimeout( function()
+		{
+			self.scrolling = false;
+		}, 500 );
+	}, false );
 	this.dom.classList.add( 'FileBrowser' );
 	this.rootPath = 'Mountlist:'; // The current root path
 	this.callbacks = callbacks;
@@ -86,7 +95,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 			// Can't set icon listing path to mountlist..
 			if( self.rootPath != 'Mountlist:' )
 			{
-				self.setPath( self.rootPath, cb );
+				self.setPath( self.rootPath, cb, e );
 			}
 		}
 		return cancelBubble( e );
@@ -145,10 +154,8 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 
 // Set an active path
 // Supported flags ( { lockHistory: true|false } )
-Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags )
+Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
-	console.log( 'Setting path to: ' + target );
-	
 	// Already set
 	if( this.flags.path && this.flags.path == target ) 
 	{
@@ -165,9 +172,11 @@ Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
 };
-Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags )
+Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags, evt )
 {
 	var self = this;
+	
+	if( !evt ) evt = {};
 	
 	if( !rootElement ) rootElement = this.dom;
 	if( !callback ) callback = false;
@@ -259,7 +268,6 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				
 				// Set this to active
-				// Set this to active
 				var eles = self.dom.getElementsByTagName( 'div' );
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -338,9 +346,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					nam[0].classList.add( 'Active' );
 					
 					// Scroll into view
-					var d = self.dom;
-					var h = d.offsetHeight >> 1;
-					d.scrollTop = nam[0].offsetTop - h;
+					if( !isMobile && !self.scrolling )
+					{
+						var d = self.dom;
+						var h = d.offsetHeight >> 1;
+						d.scrollTop = nam[0].offsetTop - h;
+					}
 				}
 				
 				var fnam = ppath.split( ':' )[1];
@@ -643,10 +654,13 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				if( clickElement )
 				{
 					self.lastClickElement = clickElement; // store it
-					setTimeout( function()
+					if( !( evt.target && evt.srcElement ) )
 					{
-						clickElement.onclick( { mode: 'open' } );
-					}, 5 );
+						setTimeout( function()
+						{
+							clickElement.onclick( { mode: 'open' } );
+						}, 5 );
+					}
 				}
 			}
 			
@@ -873,10 +887,14 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			if( clickElement )
 			{
 				self.lastClickElement = clickElement; // Store it
-				setTimeout( function()
+				// Only when clicking
+				if( !( evt.target && evt.srcElement ) )
 				{
-					clickElement.onclick();
-				}, 50 );
+					setTimeout( function()
+					{
+						clickElement.onclick();
+					}, 50 );
+				}
 			}
 		} );
 	}

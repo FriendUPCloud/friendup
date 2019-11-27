@@ -710,7 +710,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 					var vol = path.split( ':' )[0];
 					self.addToHistory( winobj.fileInfo );
 				}
-				winobj.refresh();
+				winobj.refresh( false, false, false, false, false, event );
 			},
 			folderClose( path, event, flags )
 			{
@@ -728,7 +728,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 					var vol = path.split( ':' )[0];
 					self.addToHistory( winobj.fileInfo );
 				}
-				winobj.refresh();
+				winobj.refresh( false, false, false, false, false, event );
 			}
 		} );
 		winobj.fileBrowser.render();
