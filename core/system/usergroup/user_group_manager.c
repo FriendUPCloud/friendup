@@ -893,13 +893,16 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
+				char tmp[ 512 ];
+				int tmpi = 0;
+				
 				if( rownr == 0 )
 				{
-					
+					tmpi = snprintf( tmp, sizeof(tmp), "{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 				}
 				else
 				{
-					
+					tmpi = snprintf( tmp, sizeof(tmp), ",{\"id\":%s,\"userid\":%s,\"parentid\":%s,\"name\":\"%s\",\"type\":\"%s\",\"status\":%s}", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 				}
 				rownr++;
 			}
