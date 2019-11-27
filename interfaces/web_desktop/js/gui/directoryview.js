@@ -4370,7 +4370,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			
 				// Open unique window!
 				OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-				return window.isMobile ? Workspace.closeDrivePanel() : false;
+				return false;
 			}
 			else if( obj.fileInfo.MetaType == 'Shortcut' )
 			{
@@ -4408,12 +4408,12 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						{
 							// Open unique window!
 							OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-							return window.isMobile ? Workspace.closeDrivePanel() : false;
+							return false;
 						}
 					}
 					mim.execute( 'checkmimeapplication', { path: obj.fileInfo.Path } );
 				}
-				return window.isMobile ? Workspace.closeDrivePanel() : false; 
+				return false; 
 			}
 			// Just change directory
 			else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
@@ -4517,7 +4517,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					we.refresh();
 				}
-				return window.isMobile ? Workspace.closeDrivePanel() : false;
+				return false;
 			}
 			else
 			{	
@@ -4540,7 +4540,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					{
 						// Open unique window!
 						OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-						return window.isMobile ? Workspace.closeDrivePanel() : false;
+						return false;
 					}
 				}
 				mim.execute( 'checkmimeapplication', { path: obj.fileInfo.Path } );
@@ -4694,7 +4694,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( file.contextMenuTimeout )
 					clearTimeout( file.contextMenuTimeout );
 				file.contextMenuTimeout = false;
-				Workspace.closeDrivePanel();
 				window.clickElement = null;
 				return cancelBubble( event );
 			}
@@ -5397,7 +5396,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 						left: 0; width: 100%; height: 100%; border: 0" \
 						src="' + url + '"></iframe>' );
 					}, '&mode=rs' );
-					return window.isMobile ? Workspace.closeDrivePanel() : false;
+					return false;
 				}
 			}
 			mim.execute( 'checkmimeapplication', { path: fileInfo.Path } );

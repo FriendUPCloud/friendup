@@ -7298,6 +7298,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			w.setContent( data, function()
 			{
 				ge( 'WorkspaceSearchKeywords' ).focus();
+				if( ge( 'WorkspaceSearchStop' ) )
+					ge( 'WorkspaceSearchStop' ).style.display = 'none';
 			} );
 		}
 		f.load();
