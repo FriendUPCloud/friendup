@@ -4852,9 +4852,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		we.win = win;
 		
 		we.refresh = function( callback )
-		{
-			console.log( 'Refresh 1' );
-			
+		{	
 			// Run previous callback
 			if( callback )
 			{
@@ -5135,9 +5133,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			var winDoor = win.Door;
 			
 			win.refresh = function( callback )
-			{
-				console.log( 'Refresh 2' );
-				
+			{	
 				// Run previous callback
 				if( callback )
 				{
@@ -5225,9 +5221,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		else
 		{
 			win.refresh = function ( callback )
-			{
-				console.log( 'Refresh 3' );
-				
+			{	
 				// Run previous callback
 				if( callback )
 				{
@@ -5483,7 +5477,6 @@ function CheckDoorsKeys( e )
 		
 		switch( k )
 		{
-			// TODO: Implement confirm dialog!
 			case 46:
 				if( window.regionWindow && window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing )
 				{
