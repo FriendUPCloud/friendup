@@ -824,6 +824,14 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		var dirv = this.directoryview;
 		
+		// Assign icons now
+		// Store
+		if( icons )
+		{
+			this.icons = icons;
+			this.allIcons = icons;
+		}
+		
 		// When we have a toolbar and no file browser, remove up on root paths
 		
 		var dormantDrive = winobj.fileInfo && (
@@ -937,12 +945,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.directoryview.mode = 'Files';
 		}
 
-		// TODO: Check if this is used or remove!
-		if( this.running )
-		{
-			return;
-		}
-
 		// Blocking? Wait with call
 		if( this.redrawing )
 		{
@@ -956,12 +958,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 		this.redrawing = true;
 
-		// Store
-		if( icons )
-		{
-			this.icons = icons;
-			this.allIcons = icons;
-		}
 		if( direction ) this.direction = direction;
 
 		// Clean icons
@@ -1856,6 +1852,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 		dview.fileoperations[ dview.operationcounter ].progress.onLoad = function( data )
 		{
+			if( !this.master.fileoperations[ this.myid ] ) return;
 			var w = this.master.fileoperations[ this.myid ].view;
 			var windowArray = this.master.fileoperations;
 			var windowArrayKey = this.myid;
@@ -4856,6 +4853,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		
 		we.refresh = function( callback )
 		{
+			console.log( 'Refresh 1' );
+			
 			// Run previous callback
 			if( callback )
 			{
@@ -5137,6 +5136,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
+				console.log( 'Refresh 2' );
+				
 				// Run previous callback
 				if( callback )
 				{
@@ -5225,6 +5226,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 			win.refresh = function ( callback )
 			{
+				console.log( 'Refresh 3' );
+				
 				// Run previous callback
 				if( callback )
 				{
@@ -5312,7 +5315,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
 						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
-							ww.redrawIcons( content, ww.direction, cbk );
+							ww.redrawIcons( null, ww.direction, cbk );
 						} );
 					}
 					else
