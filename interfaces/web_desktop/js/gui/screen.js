@@ -155,7 +155,7 @@ Screen = function ( flags, initObject )
 		div.innerHTML = "" +
 		"<div class=\"TitleBar\">" +
 		"	<div class=\"Right\">" +
-		"		<div class=\"ScreenList MousePointer\"><img src=\"gfx/system/window_depth.png\"/></div>" +
+		"		<div class=\"ScreenList MousePointer BorderLeft\"></div>" +
 		"	</div>" +
 		"	<div class=\"Left\">" +
 		"		<div class=\"Info\">" + this._flags['title'] + "</div>" + ex +
@@ -407,41 +407,49 @@ Screen = function ( flags, initObject )
 				screens[a]._screenoverlay.style.pointerEvents = 'none';
 			}
 		}
-		window.mouseMoveFunc = function ( e )
+		// If we have multiple screens, allow screen dragging
+		if( ge( 'Screens' ).getElementsByClassName( 'Screen' ).length > 1 )
 		{
-			var my = e.clientY ? e.clientY : e.pageYOffset;
-			var mx = e.clientX ? e.clientX : e.pageXOffset;
-			var ty = my - window.currentScreen.offy;
-			if ( ty < 0 ) ty = 0;
-			if ( ty >= GetWindowHeight () ) ty = GetWindowHeight () - 1;
-			
-			div.style.transform = 'translate3d(0,' + ty + 'px,0)';
-			div.screenOffsetTop = ty;
-			
-			// Enable all screen overlays
-			var screenc = ge ( 'Screens' );
-			var screens = screenc.getElementsByTagName ( 'div' );
-			for( var a = 0; a < screens.length; a++ )
+			window.mouseMoveFunc = function ( e )
 			{
-				if( !screens[a].className ) continue;
-				if( screens[a].parentNode != screenc ) continue;
-				screens[a]._screenoverlay.style.display = '';
-				screens[a]._screenoverlay.style.pointerEvents = 'all';
+				var my = e.clientY ? e.clientY : e.pageYOffset;
+				var mx = e.clientX ? e.clientX : e.pageXOffset;
+				var ty = my - window.currentScreen.offy;
+				if ( ty < 0 ) ty = 0;
+				if ( ty >= GetWindowHeight () ) ty = GetWindowHeight () - 1;
+			
+				div.style.transform = 'translate3d(0,' + ty + 'px,0)';
+				div.screenOffsetTop = ty;
+			
+				// Enable all screen overlays
+				var screenc = ge ( 'Screens' );
+				var screens = screenc.getElementsByTagName ( 'div' );
+				for( var a = 0; a < screens.length; a++ )
+				{
+					if( !screens[a].className ) continue;
+					if( screens[a].parentNode != screenc ) continue;
+					screens[a]._screenoverlay.style.display = '';
+					screens[a]._screenoverlay.style.pointerEvents = 'all';
+				}
 			}
+		}
+		// Just pop the screen back
+		else
+		{
+			div.style.transition = 'transform 0.25s';
+			div.style.transform = 'translate3d(0,0px,0)';
+			div.screenOffsetTop = 0;
+			setTimeout( function()
+			{
+				div.style.transition = '';
+			}, 250 );
 		}
 		var t = e.target ? e.target : e.srcElement;
 		
-		// Hitting the screen list..
-		if( t.classList && t.classList.contains( 'ScreenList' ) )
-		{
-			self.screenCycle();
-		}
-		
-		// Don't cancel bubble here..
+		// Clicking on the extra widget
 		if( t.classList && t.classList.contains( 'Extra' ) )
 		{
 			Workspace.calendarClickEvent();
-			return cancelBubble( e );
 		}
 		
 		return cancelBubble ( e );

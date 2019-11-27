@@ -530,6 +530,8 @@ i18n_search_stop                        : Stop searching
 i18n_search_type_Door                   : device
 i18n_search_type_Directory              : directory
 i18n_search_type_File                   : file
+i18n_search_in                          : in
+i18n_search_all_disks                   : Search all disks
 
 #Directory view ----------------------------------------------------------------
 

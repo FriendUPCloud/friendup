@@ -1504,26 +1504,6 @@ html body:not([mobile]) .View > .Resize:active:before
     display: none;
 }
 
-html .Screen > .TitleBar .ScreenList
-{
-	background-image: url(/iconthemes/friendup15/screen.svg);
-	background-repeat: no-repeat;
-	background-position: center 4px;
-	border-left: 1px solid rgba(0,0,0,0.05);
-	background-size: 65%;
-	height: 26px;
-}
-
-html body[tablet] .Screen > .TitleBar .ScreenList
-{
-	background-image: url(/iconthemes/friendup15/tablet.svg);
-}
-
-html body[mobile] .Screen > .TitleBar .ScreenList
-{
-	background-image: url(/iconthemes/friendup15/mobile.svg);
-}
-
 html .Screen > .TitleBar > .Left
 {
 	padding: 0 40px 0 0;
