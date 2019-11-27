@@ -7390,6 +7390,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				for( var u = 0; u < data.length; u++ )
 				{
+					// Don't search hidden files
+					if( data[u].Filename.substr( 0, 1 ) == '.' ) continue;
+					
 					// Match all keywords
 					for( var b = 0; b < Workspace.searchKeywords.length; b++ )
 					{
@@ -7465,7 +7468,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		if( !this.searching ) return;
 
-		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault', 'List' );
+		ge( 'WorkspaceSearchResults' ).classList.add( 'BordersDefault', 'List', 'SmoothScrolling' );
 		
 		// Lock click buttons for 250ms when scrolling
 		if( isMobile )
