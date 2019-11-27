@@ -15,6 +15,33 @@
 *                                                                              *
 *******************************************************************************/
 
+// Closing tray bubbls
+function CloseTrayBubble( ev )
+{
+	var tray = ge( 'Tray' );
+	if( !tray )
+	{
+		return;
+	}
+	if( tray.notifications )
+	{
+		if( tray.notifications.timeout )
+		{
+			clearTimeout( tray.notifications.timeout );
+		}
+		tray.notifications.timeout = setTimeout( function()
+		{
+			if( tray.notifications.removeChild && tray.notificationPopup && tray.notificationPopup.parentNode )
+			{
+				tray.notifications.removeChild( tray.notificationPopup );
+				tray.notificationPopup = null;
+				tray.notifications.timeout = null;
+			}
+		}, 250 );
+	}
+	PollTray();
+}
+
 // Poll the tray for elements - handles all object types
 function PollTray()
 {
@@ -129,7 +156,7 @@ function PollTray()
 					d.className = 'BubbleInfo';
 					d.innerHTML = '<div><p class="Layout"><strong>' + nots[a].title + '</strong></p><p class="Layout">' + nots[a].text + '</p></div>';
 					tray.notifications.appendChild( d );
-					d.onclick = function( e )
+					d.onmousedown = function( e )
 					{
 						if( event.clickCallback )
 						{
@@ -310,24 +337,6 @@ function PollTray()
 			}
 			repopulate();
 			
-			// When leaving, close
-			tray.notificationPopup.onmouseout = function( ev )
-			{
-				if( tray.notifications.timeout )
-				{
-					clearTimeout( tray.notifications.timeout );
-				}
-				tray.notifications.timeout = setTimeout( function()
-				{
-					if( tray.notifications.removeChild && tray.notificationPopup && tray.notificationPopup.parentNode )
-					{
-						tray.notifications.removeChild( tray.notificationPopup );
-						tray.notificationPopup = null;
-						tray.notifications.timeout = null;
-					}
-				}, 250 );
-			}
-			
 			return cancelBubble( e );
 		}
 	}
@@ -337,77 +346,6 @@ function PollTray()
 		tray.notifications.className = 'Hidden';
 		tray.notifications.onclick = null;
 	}
-	
-	/*
-	if( 1 == 2 )
-	{
-		var mic = false;
-		for( var a = 0; a < s.length; a++ )
-		{
-			if( !s[a].className ) continue;
-			if( s[a].className.indexOf( 'Microphone' ) == 0 )
-				mic = s[a];
-		}
-		// TODO: Reenable mic when it works.
-		mic.style.display = 'none';
-		mic.onclick = function()
-		{
-			if( Doors.handsFree )
-			{
-				var btn = Doors.handsFree.getElementsByClassName( 'si-btn' )[0];
-				if( btn.recognition ) btn.recognition.stop();
-				Doors.handsFree.parentNode.removeChild( Doors.handsFree );
-				Doors.handsFree = false;
-				return;
-			}
-			var f = new File( 'System:templates/handsfree.html' );
-			f.onLoad = function( data )
-			{
-				var d = document.createElement( 'div' );
-				d.id = 'Handsfree';
-				d.innerHTML = data;
-				document.body.insertBefore( d, document.body.firstChild );
-				Doors.handsFree = d;
-			
-				// For other browsers
-				if ( !( 'webkitSpeechRecognition' in window ) )
-				{
-					var inp = ge( 'Handsfree' ).getElementsByTagName( 'input' )[0];
-					inp.focus();
-					return;
-				}
-				else
-				{
-					setTimeout( function( e )
-					{
-						var dv = ge( 'Handsfree' ).getElementsByTagName( 'button' )[0];
-						dv.onclick = function( e )
-						{
-							return cancelBubble( e );
-						}
-						dv.click();
-					}, 100 );
-					// Remove it
-					d.onclick = function()
-					{
-						mic.onclick();
-						var stopper = ge( 'Tray' ).getElementsByClassName( 'Microphone' );
-						if( stopper.length ) stopper = stopper[0];
-						if( stopper )
-						{
-							stopper.className = 'Microphone IconSmall fa-microphone-slash';
-						}
-					}
-				}
-				// For google chrome
-				InitSpeechControls( function()
-				{
-					Say( 'Voice mode started.', false, 'both' );
-				} );
-			}
-			f.load();
-		}
-	}*/
 }
 
 function PollMobileTray()

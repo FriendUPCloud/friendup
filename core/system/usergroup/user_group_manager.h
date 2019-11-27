@@ -25,12 +25,6 @@
 #include <system/user/user.h>
 #include <system/user/remote_user.h>
 
-enum 
-{
-	USER_GROUP_STATUS_ACTIVE = 0,
-	USER_GROUP_STATUS_DISABLED
-};
-
 //
 // User Group Manager structure
 //

@@ -1701,6 +1701,7 @@ function apiWrapper( event, force )
 						case 'setFlags':
 							if( win )
 							{
+								console.log( '[apiwrapper] Got asked to set flags on view:', msg.data );
 								win.setFlags( msg.data );
 							}
 							break;
@@ -1819,13 +1820,19 @@ function apiWrapper( event, force )
 							{
 								if( win )
 								{
-									win.activate();
+									if( !app.startupsequence )
+									{
+										win.activate();
+									}
 								}
 								WorkspaceMenu.close();
 							}
 							else if( !( window.currentMovable && currentMovable.getAttribute( 'moving' ) == 'moving' ) )
 							{
-								win.activate();	
+								if( !app.startupsequence )
+								{
+									win.activate();	
+								}
 							}
 							break;
 					}
@@ -1855,6 +1862,19 @@ function apiWrapper( event, force )
 
 					var postTarget = app;
 					
+					console.log( '[apiwrapper] Opening a new view: ', msg.data );
+					
+					// Startup sequence apps need to be deactivated
+					if( app.startupsequence )
+					{						
+						msg.data.minimized = true;
+						// Fake hide when we have a window
+						if( Workspace.applications.length && Workspace.applications[0].windows && window.ScreenOverlay )
+						{
+							ScreenOverlay.invisible();
+						}
+					}
+					
 					var v = new View( msg.data );
 					var win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
@@ -1864,7 +1884,7 @@ function apiWrapper( event, force )
 					}
 					
 					if( v.ready )
-					{
+					{	
 						if( !app.windows )
 							app.windows = [];
 						app.windows[ viewId ] = v;
@@ -3756,6 +3776,10 @@ function apiWrapper( event, force )
 					case 'filedialog':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
+						// No targetview id? Then just use the parent view
+						if( !tar && msg.parentViewId ) 
+							tar = app.windows[ msg.parentViewId ];
+						
 						var flags = {
 							mainView:           tar ? tar : win,
 							type:               msg.method,

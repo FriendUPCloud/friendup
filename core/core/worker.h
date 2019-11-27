@@ -33,9 +33,10 @@
  */
 enum {
 	W_STATE_CREATED   = 1,				///< created yet not initialized
-	W_STATE_RUNNING   = 2,				///< running
-	W_STATE_WAITING   = 3,				///< waiting for message or mutex
-	W_STATE_TO_REMOVE = 4,				///< has received interrupt message
+	W_STATE_LOCKED    = 2,				///
+	W_STATE_RUNNING   = 3,				///< running
+	W_STATE_WAITING   = 4,				///< waiting for message or mutex
+	W_STATE_TO_REMOVE = 5,				///< has received interrupt message
 	W_STATE_COMMAND_CALLED				///< waiting for response from message handler
 };
 

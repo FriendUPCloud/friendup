@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
   `CreatedTime` bigint(32) NOT NULL,
   `LoginTime` bigint(32) NOT NULL,
   `UUID` varchar(255) DEFAULT NULL,
+  `Status` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
@@ -113,6 +114,12 @@ typedef struct UserSessListEntry
 	void 			*us;
 	MinNode			node;
 }UserSessListEntry;
+
+enum {
+USER_STATUS_ENABLED = 0,
+USER_STATUS_DISABLED,
+USER_STATUS_BLOCKED
+};
 
 //
 // user structure
@@ -126,42 +133,44 @@ typedef struct User
 	char						*u_Password;
 	char						*u_FullName;
 	char						*u_Email;
-	int							u_Error;            // if error
+	int							u_Error;						// if error
 	UserSessListEntry			*u_SessionsList;
+	FULONG						u_Status;						// user status
 
-	char						*u_MainSessionID;       // session id ,  generated only when user is taken from db
-	time_t						u_LoggedTime;       // last action time
-	time_t						u_CreatedTime;
-	time_t						u_LoginTime;			// last login time
+	char						*u_MainSessionID;				// session id ,  generated only when user is taken from db
+	time_t						u_LoggedTime;       			// last action time
+	time_t						u_CreatedTime;					// when user strcture was created
+	time_t						u_LoginTime;					// last login time
+	time_t						u_ModifyTime;					// when user structure was modifiede
 	
-	File						*u_MountedDevs;     // root file
-	int							u_MountedDevsNr;		// number of mounted devices
-	File						*u_WebDAVDevs;		// shared webdav resources 
-	int							u_WebDAVDevsNr;		// number of mounted webdav drives
+	File						*u_MountedDevs;     			// root file
+	int							u_MountedDevsNr;				// number of mounted devices
+	File						*u_WebDAVDevs;					// shared webdav resources 
+	int							u_WebDAVDevsNr;					// number of mounted webdav drives
 	
-	UserGroupLink				*u_UserGroupLinks;		// user groups
-	//UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
-	//int							u_GroupsNr;		// number of assigned groups
-	UserApplication				*u_Applications;   // pointer to application settings
-	FPrinter					*u_Printers;		// user printers
+	UserGroupLink				*u_UserGroupLinks;				// user groups
+	//UserGroup					**u_Groups;						// pointer to groups to which user is assigned (table of pointers)
+	//int							u_GroupsNr;					// number of assigned groups
+	UserApplication				*u_Applications;				// pointer to application settings
+	FPrinter					*u_Printers;					// user printers
 	
 	FBOOL						u_InitialDevMount;
-	FBOOL						u_Anonymous;		// if user is anonymous
+	FBOOL						u_Anonymous;					// if user is anonymous
 	
-	int							u_SessionsNr;		// number of sessions
-	int							u_NumberOfBadLogins;	// number of bad logins
+	int							u_SessionsNr;					// number of sessions
+	int							u_NumberOfBadLogins;			// number of bad logins
 	
-	RemoteUser					*u_RemoteUsers; //user which use this account to have access to resources
-	FBOOL						u_IsAdmin;		//set to TRUE when user is in Admin group
-	FBOOL						u_IsAPI;			//set to TRUE when user is in API group
+	RemoteUser					*u_RemoteUsers;					// user which use this account to have access to resources
+	FBOOL						u_IsAdmin;						// set to TRUE when user is in Admin group
+	FBOOL						u_IsAPI;						// set to TRUE when user is in API group
 	
-	pthread_mutex_t				u_Mutex;	// User structure mutex
-	CacheUserFiles				*u_FileCache;	// internal file cache
+	pthread_mutex_t				u_Mutex;						// User structure mutex
+	CacheUserFiles				*u_FileCache;					// internal file cache
 	
 	FLONG						u_MaxBytesStoredPerDevice;		// maximum bytes stored per device (0-unlimited)
 	FLONG						u_MaxBytesReadedPerDevice;		// maximum bytes readed per device
 	
-	char						*u_UUID;	//
+	char						*u_UUID;						// unique ID
 } User;
 
 //
@@ -257,9 +266,11 @@ static FULONG UserDesc[] = {
 	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
 	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
+	SQLT_INT,     (FULONG)"ModifyTime", offsetof( struct User, u_ModifyTime ),
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
 	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStoredPerDevice ),
 	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadedPerDevice ),
+	SQLT_INT,     (FULONG)"Status", offsetof( struct User, u_Status ),
 	SQLT_STR,     (FULONG)"UniqueID",    offsetof( struct User, u_UUID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),

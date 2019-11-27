@@ -944,6 +944,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 								{
 									for( var c in Workspace.applications[a].windows )
 									{
+										Workspace.applications[a].windows[ c ].flags.minimized = false;
 										Workspace.applications[a].windows[ c ].activate();
 										break;
 									}

@@ -229,13 +229,15 @@ var mousePointer =
 							hoverIcon = true;
 							ic.classList.add( 'Selected' );
 							ic.selected = true;
-							ic.fileInfo.selected = true;
+							if( ic.fileInfo )
+								ic.fileInfo.selected = true;
 						}
 						else if( !mover || mover != icon )
 						{
 							ic.classList.remove( 'Selected' );
 							ic.selected = false;
-							ic.fileInfo.selected = false;
+							if( ic.fileInfo )
+								ic.fileInfo.selected = false;
 						}
 					}
 				}
@@ -563,7 +565,42 @@ var mousePointer =
 					if( window.currentMovable.content && window.currentMovable.content.refresh )
 						window.currentMovable.content.refresh();
 				}
+				// We dropped on a screen
+				if( objs && dropper && dropper.classList.contains( 'ScreenContent' ) )
+				{
+					// We dropped on the Workspace screen
+					if( dropper == Workspace.screen.contentDiv )
+					{
+						// Check if we can place desktop shortcuts
+						var files = [];
+						for( var a = 0; a < objs.length; a++ )
+						{
+							if( objs[ a ].Type == 'Executable' )
+							{
+								files.push( ':' + objs[ a ].Filename );
+							}
+							else if( objs[ a ].Type == 'Door' || objs[ a ].Type == 'Dormant' )
+								continue;
+							else
+							{
+								files.push( objs[ a ].Path );
+							}
+						}
+						
+						// Create desktop shortcuts
+						var m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								Workspace.refreshDesktop( false, true );
+							}
+						}
+						m.execute( 'createdesktopshortcuts', { files: files } );
+					}
+				}
 			}
+			
 			
 			// Redraw icons
 			Workspace.redrawIcons();
@@ -1479,7 +1516,7 @@ movableListener = function( e, data )
 	var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	var wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 	var x, y;
-	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile ) )
+	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile || isTouchDevice() ) )
 	{
 		x = e.touches[0].pageX;
 		y = e.touches[0].pageY;
@@ -2553,7 +2590,7 @@ function CheckScreenTitle( screen )
 		// Enable the global menu
 		if( Workspace && Workspace.menuMode == 'pear' )
 		{
-			if( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen )
+			if( window.WorkspaceMenu && ( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen ) )
 			{
 				WorkspaceMenu.show();
 				WorkspaceMenu.currentView = currentMovable;
@@ -2646,508 +2683,519 @@ function PollTaskbar( curr )
 	var baseElement = ge( 'Taskbar' );
 	
 	// Placing the apps inside the dock and not using a normal taskbar
-	if( globalConfig.viewList == 'dockedlist' )
+	if( !isMobile )
 	{
-		if( !ge( 'DockWindowList' ) )
+		if( globalConfig.viewList == 'dockedlist' )
 		{
-			// Find first desklet
-			var dlets = document.getElementsByClassName( 'Desklet' );
-			if( dlets.length || dlets[ 0 ] )
+			if( !ge( 'DockWindowList' ) )
 			{
-				ge( 'Statusbar' ).className = 'Docklist';
-				
-				var dlet = dlets[ 0 ];
-				dlet.style.zIndex = 2147483641;
-				var d = document.createElement( 'div' );
-				d.id = 'DockWindowList';
-				d.className = 'WindowList';
-				dlet.appendChild( d );
-				
-				dlet.classList.add( 'HasWindowlist' );
-				if( dlet.classList.contains( 'Vertical' ) )
+				// Find first desklet
+				var dlets = document.getElementsByClassName( 'Desklet' );
+				if( dlets.length || dlets[ 0 ] )
 				{
-					d.style.bottom = '0px';
+					ge( 'Statusbar' ).className = 'Docklist';
+				
+					var dlet = dlets[ 0 ];
+					dlet.style.zIndex = 2147483641;
+					var d = document.createElement( 'div' );
+					d.id = 'DockWindowList';
+					d.className = 'WindowList';
+					dlet.appendChild( d );
+				
+					dlet.classList.add( 'HasWindowlist' );
+					if( dlet.classList.contains( 'Vertical' ) )
+					{
+						d.style.bottom = '0px';
+					}
+					else
+					{
+						d.style.right = '0px';
+					}
+				
+					baseElement = d;
+				
+					// Add size here
+					var dock = d.parentNode.desklet;
+					if( dock.conf )
+						d.classList.add( 'Size' + dock.conf.size );
 				}
+				// Nothing to track
 				else
 				{
-					d.style.right = '0px';
+					pollingTaskbar = false;
+					return;
 				}
-				
-				baseElement = d;
-				
-				// Add size here
-				var dock = d.parentNode.desklet;
-				if( dock.conf )
-					d.classList.add( 'Size' + dock.conf.size );
 			}
-			// Nothing to track
 			else
+			{	
+				baseElement = ge( 'DockWindowList' );
+			}
+		
+			if( !baseElement )
 			{
 				pollingTaskbar = false;
 				return;
 			}
+		
+			// Make into a HasWindowlist element
+			var dock = baseElement.parentNode.desklet;
+			baseElement.parentNode.classList.add( 'HasWindowlist' );
+		
+			var dlength = Workspace.mainDock.iconListPixelLength;
+		
+			if( baseElement.parentNode.classList.contains( 'Vertical' ) )
+			{
+				baseElement.style.height = 'calc(100% - ' + dlength + 'px)';
+				baseElement.style.width = '100%';
+			}
+			else
+			{
+				var right = '0';
+				if( ge( 'Tray' ) )
+				{
+					if( Workspace.mainDock && Workspace.mainDock.conf.size )
+					{
+						var rems = [ 'Size80', 'Size59', 'Size32', 'Size16' ];
+						for( var a = 0; a < rems.length; a++ )
+							ge( 'Tray' ).classList.remove( rems[a] );
+						ge( 'Tray' ).classList.add( 'Size' + Workspace.mainDock.conf.size );
+					}
+					dlength += ge( 'Tray' ).offsetWidth;
+					right = ge( 'Tray' ).offsetWidth;
+				}
+				baseElement.style.width = 'calc(100% - ' + dlength + 'px)';
+				baseElement.style.right = right + 'px';
+				baseElement.style.height = '100%';
+			}
+		
+			// Add size here
+			if( dock.conf )
+			{
+				baseElement.classList.add( 'Size' + dock.conf.size );
+			}
 		}
+		// Normal taskbar
 		else
 		{	
-			baseElement = ge( 'DockWindowList' );
-		}
-		
-		if( !baseElement )
-		{
-			pollingTaskbar = false;
-			return;
-		}
-		
-		// Make into a HasWindowlist element
-		var dock = baseElement.parentNode.desklet;
-		baseElement.parentNode.classList.add( 'HasWindowlist' );
-		
-		var dlength = Workspace.mainDock.iconListPixelLength;
-		
-		if( baseElement.parentNode.classList.contains( 'Vertical' ) )
-		{
-			baseElement.style.height = 'calc(100% - ' + dlength + 'px)';
-			baseElement.style.width = '100%';
-		}
-		else
-		{
-			var right = '0';
-			if( ge( 'Tray' ) )
+			if( !baseElement ) 
 			{
-				if( Workspace.mainDock && Workspace.mainDock.conf.size )
-				{
-					var rems = [ 'Size80', 'Size59', 'Size32', 'Size16' ];
-					for( var a = 0; a < rems.length; a++ )
-						ge( 'Tray' ).classList.remove( rems[a] );
-					ge( 'Tray' ).classList.add( 'Size' + Workspace.mainDock.conf.size );
-				}
-				dlength += ge( 'Tray' ).offsetWidth;
-				right = ge( 'Tray' ).offsetWidth;
+				pollingTaskbar = false;
+				return;
 			}
-			baseElement.style.width = 'calc(100% - ' + dlength + 'px)';
-			baseElement.style.right = right + 'px';
-			baseElement.style.height = '100%';
-		}
 		
-		// Add size here
-		if( dock.conf )
-		{
-			baseElement.classList.add( 'Size' + dock.conf.size );
-		}
-	}
-	// Normal taskbar
-	else
-	{	
-		if( !baseElement ) 
-		{
-			pollingTaskbar = false;
-			return;
-		}
-		
-		if( baseElement.childNodes.length )
-		{
-			var lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
-			// Horizontal
-			
-			var taskWidth = lastTask.offsetLeft + lastTask.offsetWidth;
-			baseElement.style.left = '0px';
-			baseElement.style.top = 'auto';
-			baseElement.classList.add( 'Horizontal' );
-			baseElement.style.width = 'calc(100% - ' + ( ge( 'Tray' ).offsetWidth + 5 ) + 'px)';
-			
-			if( baseElement.scrollFunc )
-				baseElement.removeEventListener( 'mousemove', baseElement.scrollFunc );
-			
-			baseElement.scrollFunc = function( e )
+			if( baseElement.childNodes.length )
 			{
-				var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
-				if( !l ) return;
+				var lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
+				// Horizontal
+			
+				var taskWidth = lastTask.offsetLeft + lastTask.offsetWidth;
+				baseElement.style.left = '0px';
+				baseElement.style.top = 'auto';
+				baseElement.classList.add( 'Horizontal' );
+				baseElement.style.width = 'calc(100% - ' + ( ge( 'Tray' ).offsetWidth + 5 ) + 'px)';
+			
+				if( baseElement.scrollFunc )
+					baseElement.removeEventListener( 'mousemove', baseElement.scrollFunc );
+			
+				baseElement.scrollFunc = function( e )
+				{
+					var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
+					if( !l ) return;
 				
-				var off = e.clientX - baseElement.offsetLeft;
-				var scr = off / baseElement.offsetWidth;
-				if( l.offsetLeft + l.offsetWidth > baseElement.offsetWidth )
-				{
-					var whole = l.offsetLeft + l.offsetWidth - baseElement.offsetWidth;
-					baseElement.scroll( scr * whole, 0 );
+					var off = e.clientX - baseElement.offsetLeft;
+					var scr = off / baseElement.offsetWidth;
+					if( l.offsetLeft + l.offsetWidth > baseElement.offsetWidth )
+					{
+						var whole = l.offsetLeft + l.offsetWidth - baseElement.offsetWidth;
+						baseElement.scroll( scr * whole, 0 );
+					}
 				}
+				baseElement.addEventListener( 'mousemove', baseElement.scrollFunc );
 			}
-			baseElement.addEventListener( 'mousemove', baseElement.scrollFunc );
 		}
-	}
 	
-	// If we have the 'Taskbar'
-	if( baseElement )
-	{
-		var whw = 0; // whole width
-		var swi = baseElement.offsetWidth;
-		
-		var t = baseElement;
-		
-		// When activated normally
-		
-		if( !curr )
+		// If we have the 'Taskbar'
+		if( baseElement )
 		{
-			// No task array?
-			if( typeof( t.tasks ) == 'undefined' )
-				t.tasks = [];
-			
-			// Remove tasks on the taskbar that isn't represented by a view
-			var cleaner = [];
-			for( var b = 0; b < t.tasks.length; b++ )
+			var whw = 0; // whole width
+			var swi = baseElement.offsetWidth;
+		
+			var t = baseElement;
+		
+			// When activated normally
+		
+			if( !curr )
 			{
-				// Look if this task is registered with a view
-				var f = false;
+				// No task array?
+				if( typeof( t.tasks ) == 'undefined' )
+					t.tasks = [];
+			
+				// Remove tasks on the taskbar that isn't represented by a view
+				var cleaner = [];
+				for( var b = 0; b < t.tasks.length; b++ )
+				{
+					// Look if this task is registered with a view
+					var f = false;
+					for( var a in movableWindows )
+					{
+						// Skip snapped windows
+						if( !movableWindows[ a ].snap && movableWindows[ a ].viewId == t.tasks[ b ].viewId )
+						{
+							f = true;
+							break;
+						}
+					}
+					// If we already registered this task, add to cleaner
+					if( f )
+					{
+						var tt = t.tasks[ b ];
+						if( !currentMovable && tt.dom.classList.contains( 'Active' ) )
+						{
+							// Remove active if there's no movable
+							tt.dom.classList.remove( 'Active' );
+						}
+						cleaner.push( tt );
+					}
+					// If the window doesn't exist, remove the DOM element from tasbkar
+					else t.removeChild( t.tasks[ b ].dom );
+				}
+			
+				t.tasks = cleaner; // Set cleaned task list
+			
 				for( var a in movableWindows )
 				{
+					var d = false;
+				
 					// Skip snapped windows
-					if( !movableWindows[ a ].snap && movableWindows[ a ].viewId == t.tasks[ b ].viewId )
+					if( movableWindows[ a ].snap ) continue;
+				
+					// Movable windows
+					var pn = movableWindows[a];
+				
+					// Skip hidden ones
+					if( pn.windowObject.flags.hidden == true )
 					{
-						f = true;
-						break;
+						continue;
 					}
-				}
-				// If we already registered this task, add to cleaner
-				if( f )
-				{
-					var tt = t.tasks[ b ];
-					if( !currentMovable && tt.dom.classList.contains( 'Active' ) )
+					if( pn.windowObject.flags.invisible == true )
 					{
-						// Remove active if there's no movable
-						tt.dom.classList.remove( 'Active' );
+						continue;
 					}
-					cleaner.push( tt );
-				}
-				// If the window doesn't exist, remove the DOM element from tasbkar
-				else t.removeChild( t.tasks[ b ].dom );
-			}
-			
-			t.tasks = cleaner; // Set cleaned task list
-			
-			for( var a in movableWindows )
-			{
-				var d = false;
 				
-				// Skip snapped windows
-				if( movableWindows[ a ].snap ) continue;
-				
-				// Movable windows
-				var pn = movableWindows[a];
-				
-				// Skip hidden ones
-				if( pn.windowObject.flags.hidden == true )
-				{
-					continue;
-				}
-				if( pn.windowObject.flags.invisible == true )
-				{
-					continue;
-				}
-				
-				if( pn && pn.windowObject.flags.screen != Workspace.screen )
-				{
-					continue;
-				}
-				
-				// Lets see if the view is a task we manage
-				for( var c = 0; c < t.tasks.length; c++ )
-				{
-					if ( t.tasks[c].viewId == pn.viewId )
+					if( pn && pn.windowObject.flags.screen != Workspace.screen )
 					{
-						d = t.tasks[ c ].dom; // don't add twice
-						
-						// Race condition, Update the state
-						( function( ele, pp ){ 
-							setTimeout( function()
-							{
-								if( pp.parentNode.getAttribute( 'minimized' ) )
-								{
-									ele.classList.add( 'Task', 'Hidden', 'MousePointer' );
-								}
-								else
-								{
-									ele.classList.add( 'Task', 'MoustPointer' );
-									ele.classList.remove( 'Hidden' );
-								}
-							}, 5 );
-						} )( d, pn );
-						// Check directoryvuew
-						if( pn.content.directoryview )
-							d.classList.add( 'Directory' );
-						break;
+						continue;
 					}
-				}
 				
-				// Create new tasks
-				if( !d )
-				{
-					// New view!
-					d = document.createElement ( 'div' );
-					d.viewId = pn.viewId;
-					d.view = pn;
-					d.className = pn.parentNode.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
-					if( pn.content.directoryview )
+					// Lets see if the view is a task we manage
+					for( var c = 0; c < t.tasks.length; c++ )
 					{
-						d.classList.add( 'Directory' );
-					}
-					d.window = pn;
-					pn.taskbarTask = d;
-					d.applicationId = d.window.applicationId;
-					d.innerHTML = d.window.titleString;
-					t.tasks.push( { viewId: pn.viewId, dom: d } );
-				
-					if( pn == currentMovable ) d.classList.add( 'Active' );
-				
-					// Functions on task element
-					// Activate
-					d.setActive = function( click )
-					{
-						_ActivateWindow( this.window );
-						if( click )
+						if ( t.tasks[c].viewId == pn.viewId )
 						{
-							var div = this.window;
-							div.viewContainer.setAttribute( 'minimized', '' );
-							div.minimized = false;
-							
-							var app = _getAppByAppId( div.applicationId );
-							if( app )
-							{
-								app.sendMessage( {
-									'command': 'notify',
-									'method': 'setviewflag',
-									'flag': 'minimized',
-									'viewId': div.windowObject.viewId,
-									'value': false
-								} );
-							}
-							
-							if( div.windowObject.workspace != globalConfig.workspaceCurrent )
-							{
-								Workspace.switchWorkspace( div.windowObject.workspace );
-							}
-							if( div.attached )
-							{
-								for( var a = 0; a < div.attached.length; a++ )
+							d = t.tasks[ c ].dom; // don't add twice
+						
+							// Race condition, Update the state
+							( function( ele, pp ){ 
+								setTimeout( function()
 								{
-									if( div.attached[ a ].minimize )
+									if( pp.parentNode.getAttribute( 'minimized' ) )
 									{
-										div.attached[ a ].minimized = false;
-										div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
+										ele.classList.add( 'Task', 'Hidden', 'MousePointer' );
+									}
+									else
+									{
+										ele.classList.add( 'Task', 'MoustPointer' );
+										ele.classList.remove( 'Hidden' );
+									}
+								}, 5 );
+							} )( d, pn );
+							// Check directoryvuew
+							if( pn.content.directoryview )
+								d.classList.add( 'Directory' );
+							break;
+						}
+					}
+				
+					// Create new tasks
+					if( !d )
+					{
+						// New view!
+						d = document.createElement ( 'div' );
+						d.viewId = pn.viewId;
+						d.view = pn;
+						d.className = pn.parentNode.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
+						if( pn.content.directoryview )
+						{
+							d.classList.add( 'Directory' );
+						}
+						d.window = pn;
+						pn.taskbarTask = d;
+						d.applicationId = d.window.applicationId;
+						d.innerHTML = d.window.titleString;
+						t.tasks.push( { viewId: pn.viewId, dom: d } );
+				
+						if( pn == currentMovable ) d.classList.add( 'Active' );
+				
+						// Functions on task element
+						// Activate
+						d.setActive = function( click )
+						{
+							console.log( 'Setting active' );
+							this.classList.add( 'Active' );
+							_ActivateWindow( this.window );
+							if( click )
+							{
+								var div = this.window;
+								div.viewContainer.setAttribute( 'minimized', '' );
+								div.windowObject.flags.minimized = false;
+								div.minimized = false;
+							
+								var app = _getAppByAppId( div.applicationId );
+								if( app )
+								{
+									app.sendMessage( {
+										'command': 'notify',
+										'method': 'setviewflag',
+										'flag': 'minimized',
+										'viewId': div.windowObject.viewId,
+										'value': false
+									} );
+								}
+							
+								if( div.windowObject.workspace != globalConfig.workspaceCurrent )
+								{
+									Workspace.switchWorkspace( div.windowObject.workspace );
+								}
+								if( div.attached )
+								{
+									for( var a = 0; a < div.attached.length; a++ )
+									{
+										if( div.attached[ a ].minimize )
+										{
+											div.attached[ a ].minimized = false;
+											div.attached[ a ].windowObject.flags.minimized = false;
+											div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
 										
-										var app = _getAppByAppId( div.attached[ a ].applicationId );
+											var app = _getAppByAppId( div.attached[ a ].applicationId );
+											if( app )
+											{
+												app.sendMessage( {
+													'command': 'notify',
+													'method': 'setviewflag',
+													'flag': 'minimized',
+													'viewId': div.attached[ a ].windowObject.viewId,
+													'value': false
+												} );
+											}
+										}
+									}
+								}
+							}
+						}
+						// Deactivate
+						d.setInactive = function()
+						{
+							if( this.window.classList.contains( 'Active' ) )
+							{
+								_DeactivateWindow( this.window );
+							}
+							this.classList.remove( 'Active' );
+						}
+						// Click event
+						d.onmousedown = function()
+						{
+							this.mousedown = true;
+						}
+						d.onmouseout = function()
+						{
+							this.mousedown = false;
+						}
+						d.onmouseup = function( e, extarg )
+						{
+							if( !this.mousedown )
+								return;
+							if( e.button != 0 ) return;
+						
+							// Not needed anymore
+							this.mousedown = false;
+							
+							if ( !e ) e = window.event;
+							var targ = e ? ( e.target ? e.target : e.srcElement ) : false;
+							if( extarg ) targ = extarg;
+							for( var n = 0; n < t.childNodes.length; n++ )
+							{
+								var ch = t.childNodes[ n ];
+								if( !ch.className ) continue;
+								if( ch.className.indexOf( 'Task' ) < 0 ) continue;
+								if( this == ch )
+								{
+									if( !this.window.classList.contains( 'Active' ) )
+									{
+										this.setActive( true ); // with click
+										_WindowToFront( this.window );
+										this.classList.remove( 'Hidden' );
+									}
+									else
+									{
+										this.setInactive();
+										this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
+										this.window.windowObject.flags.minimized = true;
+									
+										var div = this.window;
+									
+										var app = _getAppByAppId( div.applicationId );
 										if( app )
 										{
 											app.sendMessage( {
 												'command': 'notify',
 												'method': 'setviewflag',
 												'flag': 'minimized',
-												'viewId': div.attached[ a ].windowObject.viewId,
-												'value': false
+												'viewId': div.windowObject.viewId,
+												'value': true
 											} );
 										}
-									}
-								}
-							}
-						}
-					}
-					// Deactivate
-					d.setInactive = function()
-					{
-						this.classList.remove( 'Active' );
-						_DeactivateWindow( this.window );
-					}
-					// Click event
-					d.onmousedown = function()
-					{
-						this.mousedown = true;
-					}
-					d.onmouseout = function()
-					{
-						this.mousedown = false;
-					}
-					d.onmouseup = function( e, extarg )
-					{
-						if( !this.mousedown )
-							return;
-						if( e.button != 0 ) return;
-						
-						// Not needed anymore
-						this.mousedown = false;
-							
-						if ( !e ) e = window.event;
-						var targ = e ? ( e.target ? e.target : e.srcElement ) : false;
-						if( extarg ) targ = extarg;
-						for( var n = 0; n < t.childNodes.length; n++ )
-						{
-							var ch = t.childNodes[ n ];
-							if( !ch.className ) continue;
-							if( ch.className.indexOf( 'Task' ) < 0 ) continue;
-							if( this == ch )
-							{
-								if( !this.window.classList.contains( 'Active' ) )
-								{
-									this.setActive( true ); // with click
-									_WindowToFront( this.window );
-									this.classList.remove( 'Hidden' );
-								}
-								else
-								{
-									this.setInactive();
-									this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
 									
-									var div = this.window;
-									
-									var app = _getAppByAppId( div.applicationId );
-									if( app )
-									{
-										app.sendMessage( {
-											'command': 'notify',
-											'method': 'setviewflag',
-											'flag': 'minimized',
-											'viewId': div.windowObject.viewId,
-											'value': true
-										} );
-									}
-									
-									if( div.attached )
-									{
-										for( var a = 0; a < div.attached.length; a++ )
+										if( div.attached )
 										{
-											if( !div.attached[ a ].minimized )
+											for( var a = 0; a < div.attached.length; a++ )
 											{
-												div.attached[ a ].minimized = true;
-												div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
-												
-												var app = _getAppByAppId( div.attached[ a ].applicationId );
-												if( app )
+												if( !div.attached[ a ].minimized )
 												{
-													app.sendMessage( {
-														'command': 'notify',
-														'method': 'setviewflag',
-														'flag': 'minimized',
-														'viewId': div.attached[ a ].viewId,
-														'value': true
-													} );
+													div.attached[ a ].minimized = true;
+													div.attached[ a ].windowObject.minimized = true;
+													div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
+												
+													var app = _getAppByAppId( div.attached[ a ].applicationId );
+													if( app )
+													{
+														app.sendMessage( {
+															'command': 'notify',
+															'method': 'setviewflag',
+															'flag': 'minimized',
+															'viewId': div.attached[ a ].viewId,
+															'value': true
+														} );
+													}
 												}
 											}
 										}
+										CheckMaximizedView();
 									}
-									CheckMaximizedView();
+								}
+								else
+								{
+									ch.setInactive();
+									if( ch.window.classList.contains( 'Active' ) )
+										_DeactivateWindow( ch.window );
 								}
 							}
-							else
-							{
-								ch.setInactive();
-								if( ch.window.classList.contains( 'Active' ) )
-									_DeactivateWindow( ch.window );
-							}
 						}
-					}
-					t.appendChild( d );
-					d.origWidth = d.offsetWidth + 20;
+						t.appendChild( d );
+						d.origWidth = d.offsetWidth + 20;
 			
-					// Check if we opened a window with a task image
-					if( d.applicationId )
-					{
-						var running = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-						for( var a = 0; a < running.length; a++ )
+						// Check if we opened a window with a task image
+						if( d.applicationId )
 						{
-							var task = running[a];
-							// Find the window!
-							if( task.applicationId == d.applicationId )
+							var running = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+							for( var a = 0; a < running.length; a++ )
 							{
-								// If we have a match!
-								d.style.backgroundImage = 'url(' + task.icon + ')';
+								var task = running[a];
+								// Find the window!
+								if( task.applicationId == d.applicationId )
+								{
+									// If we have a match!
+									d.style.backgroundImage = 'url(' + task.icon + ')';
+								}
 							}
 						}
 					}
 				}
 			}
-		}
-		else
-		{
-			// Update existing tasks
-			if( curr && curr.taskbarTask && curr.parentNode )
+			else
 			{
-				curr.taskbarTask.setActive();
-			}
-			for( var c = 0; c < t.tasks.length; c++ )
-			{
-				var d = t.tasks[ c ].dom;
-				if( d.window != curr )
+				// Update existing tasks
+				if( curr && curr.taskbarTask && curr.parentNode )
 				{
-					d.setInactive();
+					curr.taskbarTask.setActive();
 				}
-			}
-		}
-		
-		// Can't 
-		if( whw >= swi )
-		{
-			baseElement.setAttribute( 'full', 'full' );
-		}
-		// We deleted some
-		else
-		{
-			baseElement.setAttribute( 'full', 'no' );
-		}
-	}
-	
-	// Manage running apps -------
-
-	// Just check if the app represented on the desklet is running
-	for( var a = 0; a < __desklets.length; a++ )
-	{
-		var desklet = __desklets[a];
-		
-		// Assume all launchers represent apps that are not running
-		for( var c = 0; c < desklet.dom.childNodes.length; c++ )
-		{
-			desklet.dom.childNodes[c].running = false;
-		}
-		
-		// Go and check running status
-		for( var b in movableWindows )
-		{
-			if( movableWindows[b].windowObject )
-			{
-				var app = movableWindows[b].windowObject.applicationName;
-				
-				// Try to find the application if it is an application window
-				for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+				for( var c = 0; c < t.tasks.length; c++ )
 				{
-					if( app && desklet.dom.childNodes[c].executable == app )
+					var d = t.tasks[ c ].dom;
+					if( d.window != curr )
 					{
-						desklet.dom.childNodes[c].classList.add( 'Running' );
-						desklet.dom.childNodes[c].running = true;
+						d.setInactive();
 					}
 				}
 			}
-		}
-	
-		// Just check if the app represented on the desklet is running
-		for( var c = 0; c < desklet.dom.childNodes.length; c++ )
-		{
-			if( desklet.dom.childNodes[c].running == false )
+		
+			// Can't 
+			if( whw >= swi )
 			{
-				desklet.dom.childNodes[c].classList.remove( 'Running' );
-				desklet.dom.childNodes[c].classList.remove( 'Minimized' );
+				baseElement.setAttribute( 'full', 'full' );
+			}
+			// We deleted some
+			else
+			{
+				baseElement.setAttribute( 'full', 'no' );
 			}
 		}
-	}
 	
-	// Final test, just flush suddenly invisible or hidden view windows
-	var out = [];
-	for( var a = 0; a < t.tasks.length; a++ )
-	{
-		var v = t.tasks[a].dom;
-		if( v.view.windowObject.flags.hidden || v.view.windowObject.flags.invisible )
+		// Manage running apps -------
+
+		// Just check if the app represented on the desklet is running
+		for( var a = 0; a < __desklets.length; a++ )
 		{
-			t.tasks[a].dom.parentNode.removeChild( t.tasks[a].dom );
-		}
-		else out.push( t.tasks[a] );
-	}
-	t.tasks = out;
+			var desklet = __desklets[a];
+		
+			// Assume all launchers represent apps that are not running
+			for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+			{
+				desklet.dom.childNodes[c].running = false;
+			}
+		
+			// Go and check running status
+			for( var b in movableWindows )
+			{
+				if( movableWindows[b].windowObject )
+				{
+					var app = movableWindows[b].windowObject.applicationName;
+				
+					// Try to find the application if it is an application window
+					for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+					{
+						if( app && desklet.dom.childNodes[c].executable == app )
+						{
+							desklet.dom.childNodes[c].classList.add( 'Running' );
+							desklet.dom.childNodes[c].running = true;
+						}
+					}
+				}
+			}
 	
+			// Just check if the app represented on the desklet is running
+			for( var c = 0; c < desklet.dom.childNodes.length; c++ )
+			{
+				if( desklet.dom.childNodes[c].running == false )
+				{
+					desklet.dom.childNodes[c].classList.remove( 'Running' );
+					desklet.dom.childNodes[c].classList.remove( 'Minimized' );
+				}
+			}
+		}
+	
+		// Final test, just flush suddenly invisible or hidden view windows
+		var out = [];
+		for( var a = 0; a < t.tasks.length; a++ )
+		{
+			var v = t.tasks[a].dom;
+			if( v.view.windowObject.flags.hidden || v.view.windowObject.flags.invisible )
+			{
+				t.tasks[a].dom.parentNode.removeChild( t.tasks[a].dom );
+			}
+			else out.push( t.tasks[a] );
+		}
+		t.tasks = out;
+	}
 	PollTray();
 	pollingTaskbar = false;
 }
@@ -3353,10 +3401,12 @@ function PollDockedTaskbar()
 							if( this.state == 'hidden' )
 							{
 								theView.viewContainer.classList.add( 'Minimized' );
+								theView.windowObject.flags.minimized = true;
 							}
 							else
 							{
 								theView.viewContainer.classList.remove( 'Minimized' );
+								theView.windowObject.flags.minimized = false;
 								_WindowToFront( theView );
 							}
 							var mv = theView;
@@ -3478,6 +3528,9 @@ movableMouseDown = function ( e )
 	if ( !e ) e = window.event;
 	
 	window.focus();
+	
+	// Close tray bubble
+	CloseTrayBubble();
 	
 	// Menu trigger
 	var rc = 0;
@@ -3746,7 +3799,7 @@ function contextMenu( e )
 	return cancelBubble( e );
 }
 
-function FixWindowDimensions ( mw )
+function FixWindowDimensions( mw )
 {
 	SetWindowFlag( mw, 'min-height', mw.parentNode.offsetHeight );
 	SetWindowFlag( mw, 'max-height', mw.parentNode.offsetHeight );
@@ -3771,7 +3824,7 @@ function ElementWindow ( ele )
 
 function InitGuibaseEvents()
 {
-	if( window.isTablet || window.isMobile )
+	if( window.isTablet || window.isMobile || isTouchDevice() )
 	{
 		window.addEventListener( 'touchstart', movableMouseDown, false );
 		window.addEventListener( 'touchmove', movableListener, false );

@@ -72,6 +72,9 @@ i18n_find_workgroup_user             : Find user...
 i18n_no_users_found                  : No users found...
 i18n_error_in_userlist               : Error in userlist...
 i18n_apply_sharing_settings          : Apply sharing settings
+i18n_disk_visibility                 : Disk visibility
+i18n_disk_visible                    : Visible
+i18n_disk_invisible                  : Hidden
 
 i18n_driver_handled                  : DOS driver handled
 
@@ -192,6 +195,7 @@ i18n_favorites                          : Favorites
 i18n_menu                               : Menu
 
 i18n_close_menu                         : Close menu
+i18n_delete_shortcut                    : Delete shortcut
 
 menu_workspace                          : Workspace
 menu_system                             : System
@@ -318,6 +322,8 @@ menu_manage_disks                       : Manage disks
 menu_workspheres                        : Work Spheres
 i18n_worksphere_all                     : All Work Spheres
 i18n_worksphere_add                     : Add Work Sphere
+
+i18n_untitled_window                    : Untitled window
 
 #Applications ------------------------------------------------------------------
 

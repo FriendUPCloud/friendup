@@ -422,9 +422,7 @@ void WSThread( void *d )
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
 #endif
-	
-	//INCREASE_WS_THREADS();
-	
+
 	Http *http = data->http;
 	char **pathParts = data->pathParts;
 	int error = 0;
@@ -447,9 +445,7 @@ void WSThread( void *d )
 	{
 		FERROR("Error session is NULL\n");
 		releaseWSData( data );
-		
-		//DECREASE_WS_THREADS();
-		
+
 		FRIEND_MUTEX_LOCK( &(fcd->wsc_Mutex) );
 		fcd->wsc_InUseCounter--;
 		FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );

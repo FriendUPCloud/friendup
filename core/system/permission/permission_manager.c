@@ -101,7 +101,73 @@ Uses: module=system&command=checkapppermission&key=%key%&appname=%appname%
 	return retVal;
 }
 
-FBOOL PermissionManagerCheckPermission( PermissionManager *pm, char *type, char *identifier )
+/*
+FBOOL PermissionManagerCheckPermission( PermissionManager *pm, UserSession *us, const char *auth, FULONG obid, const char *obtype, char *type )
+{
+//Uses: module=system&command=checkuserpermission&type=%type%&identifier=%identifier%
+
+//Users of level Admin always gets true.
+
+//Ofcourse module calls need user session id etc as standard (&sessionid=%thesession%).
+
+	FBOOL retVal = FALSE;
+	if( pm != NULL )
+	{
+		SystemBase *sb = (SystemBase *)pm->pm_SB;
+		int len = 512;
+		if( type != NULL )
+		{
+			len += strlen( type );
+		}
+		if( auth != NULL )
+		{
+			len += strlen( auth );
+		}
+		if( us->us_SessionID != NULL )
+		{
+			len += strlen( us->us_SessionID );
+		}
+		
+		char *command = FMalloc( len );
+		if( command != NULL )
+		{
+			//module=system&command=checkapppermission&key=%key%&appname=%appname%
+			
+			if( obid == 0 )
+			{
+				snprintf( command, len, "command=permissions&sessionid=%s&args=\
+{\"type\":\"%s\",\"context\":\"application\", \
+\"authid\":\"%s\",\"data\":{\"permission\":[\"PERM_WORKGROUP_GLOBAL\",\"PERM_WORKGROUP_WORKGROUP\"]}\
+}", us->us_SessionID, type, auth ); 
+			}
+			else
+			{
+				snprintf( command, len, "command=permissions&sessionid=%s&args=\
+{\"type\":\"%s\",\"context\":\"application\", \
+\"authid\":\"%s\",\"data\":{\"permission\":[\"PERM_WORKGROUP_GLOBAL\",\"PERM_WORKGROUP_WORKGROUP\"]},\
+\"object\":\"%s\",\"objectid\":%lu}", us->us_SessionID, type, auth, obtype, obid ); 
+			}
+			 
+			DEBUG("Run command via php: '%s'\n", command );
+			FULONG dataLength;
+
+			char *data = sb->sl_PHPModule->Run( sb->sl_PHPModule, "modules/system/module.php", command, &dataLength );
+			if( data != NULL )
+			{
+				if( strncmp( data, "ok", 2 ) == 0 )
+				{
+					retVal = TRUE;
+				}
+				FFree( data );
+			}
+			FFree( command );
+		}
+	}
+	return retVal;
+}
+*/
+
+FBOOL PermissionManagerCheckPermission( PermissionManager *pm, const char *sessionid, const char *authid, const char *args )
 {
 /*
 Uses: module=system&command=checkuserpermission&type=%type%&identifier=%identifier%
@@ -115,21 +181,26 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 	{
 		SystemBase *sb = (SystemBase *)pm->pm_SB;
 		int len = 512;
-		if( type != NULL )
+		if( sessionid != NULL )
 		{
-			len += strlen( type );
+			len += strlen( sessionid );
 		}
-		if( identifier != NULL )
+		if( authid != NULL )
 		{
-			len += strlen( identifier );
+			len += strlen( authid );
+		}
+		if( args != NULL )
+		{
+			len += strlen( args );
 		}
 		
 		char *command = FMalloc( len );
 		if( command != NULL )
 		{
 			//module=system&command=checkapppermission&key=%key%&appname=%appname%
-			snprintf( command, len, "command=checkuserpermission&type=%s&identifier=%s;", type, identifier );
 			
+			snprintf( command, len, "command=permissions&sessionid=%s&authid=%s&args=%s", sessionid, authid, args ); 
+			 
 			DEBUG("Run command via php: '%s'\n", command );
 			FULONG dataLength;
 

@@ -1284,7 +1284,6 @@ var WorkspaceInside = {
 	{
 		if( Workspace.widget )
 			Workspace.widget.slideUp();
-		Workspace.closeDrivePanel();
 		if( Workspace.mainDock )
 			Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
@@ -1699,12 +1698,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 						}
 						window.friendApp.setBackgroundColor( col );
-						//window.webkit.messageHandlers.setBackgroundColor.postMessage( col );
 					}
 					
 					// Do the startup sequence in sequence (only once)
 					if( !Workspace.startupSequenceRegistered )
-					{
+					{	
 						Workspace.startupSequenceRegistered = true;
 						Workspace.onReadyList.push( function()
 						{
@@ -1722,13 +1720,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							if( seq.length )
 							{
-								ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
+								if( ScreenOverlay.debug )
+									ScreenOverlay.setTitle( i18n( 'i18n_starting_your_session' ) );
 								var l = {
 									index: 0,
 									func: function()
 									{
 										if( !ScreenOverlay.done && l.index < seq.length )
 										{
+											// Register for Friend DOS
+											ScreenOverlay.launchIndex = l.index;
 											var cmd = seq[ l.index++ ];
 											if( cmd && cmd.length )
 											{
@@ -1748,12 +1749,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 													}
 													if( !found && !Friend.startupApps[ appName ] )
 													{
-														var slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
+														var slot;
+														if( ScreenOverlay.debug )
+															slot = ScreenOverlay.addStatus( i18n( 'i18n_processing' ), cmd );											
 														ScreenOverlay.addDebug( 'Executing ' + cmd );
 														Workspace.shell.execute( cmd, function( res )
 														{
-															ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
-															ScreenOverlay.addDebug( 'Done ' + cmd );
+															if( ScreenOverlay.debug )
+															{
+																ScreenOverlay.editStatus( slot, res ? 'Ok' : 'Error' );
+																ScreenOverlay.addDebug( 'Done ' + cmd );
+															}
 															l.func();
 															if( Workspace.mainDock )
 																Workspace.mainDock.closeDesklet();
@@ -1792,6 +1798,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						} );
 					}
 
+					PollTray();
 					PollTaskbar();
 				}
 				else
@@ -3183,51 +3190,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		m.execute( 'removefromdock', { name: titl } );
 	},
-	// Function for closing panel (mobile mode)
-	closeDrivePanel: function()
-	{
-		var ue = navigator.userAgent.toLowerCase();
-		if( !window.isMobile || !Workspace || !Workspace.drivePanel )
-			return;
-
-		var eles = this.screen.div.getElementsByClassName( 'ScreenContent' );
-		if( !eles.length ) return;
-		var div = eles[0].getElementsByTagName( 'div' )[0];
-
-		Workspace.drivePanel.style.bottom = '0px';
-		Workspace.drivePanel.style.left = '0px';
-		Workspace.drivePanel.style.top = '100%';
-		Workspace.drivePanel.style.width = '64px';
-		Workspace.drivePanel.style.height = 'auto';
-		Workspace.drivePanel.className = 'Scroller';
-		Workspace.drivePanel.open = false;
-
-		for( var a in window.movableWindows )
-		{
-			window.movableWindows[a].removeAttribute( 'hidden' );
-		}
-	},
-	openDrivePanel: function()
-	{
-		// New experimental way
-		var dp = Workspace.drivePanel;
-
-		this.mainDock.closeDesklet();
-		
-		// Create disposable menu
-		var menu = FullscreenMenu;
-		menu.clear();
-		var ics = Workspace.screen.contentDiv.icons;
-		for( var a = 0; a < ics.length; a++ )
-		{
-			if( ics[a].Type != 'Door' ) continue;
-			menu.addMenuItem( {
-				text: ics[a].Title,
-				clickItem: ics[a].domNode
-			} );
-		}
-		menu.show();
-	},
 	// Some "native" functions -------------------------------------------------
 	// Get a list of the applications that are managed by Friend Core
 	getNativeAppList: function( callback )
@@ -3387,30 +3349,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( !window.isMobile )
 							return;
 
-						// Add an action to override the touch start action
-						var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
-						if( !eles.length ) return;
-						eles[0].onTouchStartAction = function( e )
-						{
-							var dd = eles[0].getElementsByTagName( 'div' )[0];
-							var t = e.target ? e.target : e.srcElement;
-
-							Workspace.drivePanel = dd;
-							if( t.className && dd == t )
-							{
-								if( dd.open )
-								{
-									Workspace.closeDrivePanel();
-									return false;
-								}
-								else
-								{
-									Workspace.openDrivePanel();
-									return true;
-								}
-							}
-							return false;
-						}
 						window.driveClicksSetup = true;
 					}
 				}
@@ -3728,33 +3666,61 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var shorts = JSON.parse( shortcuts );
 						for( var a = 0; a < shorts.length; a++ )
 						{
-							var pair = shorts[a].split( ':' );
-							// Shift camelcase
-							var literal = '';
-							for( var c = 0; c < pair[0].length; c++ )
+							if( !shorts[ a ] )
 							{
-								if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
-								{
-									literal += ' ';
-								}
-								literal += pair[0].charAt( c );
+								continue;
 							}
+							
+							if( shorts[ a ].substr( 0, 16 ) == 'DesktopShortcut:' )
+							{
+								var path = shorts[ a ].substr( 16, shorts[ a ].length - 16 );
+								var ind = path.indexOf( ':' );
+								var num = StrPad( path.substr( 0, ind ), 10, '0' );
+								path = path.substr( ind + 1, path.length - ( ind + 1 ) );
+								
+								var fn = GetFilename( path );
+								newIcons.push( {
+									Title: fn,
+									Filename: path,
+									Path: path,
+									Type: path.substr( path.length - 1, 1 ) == '/' ? 'Directory' : 'File',
+									SortPriority: num,
+									Handler: 'built-in',
+									MetaType: 'Shortcut',
+									Visible: true
+								} );
+							}
+							else
+							{
+								var pair = shorts[a].split( ':' );
+								// Shift camelcase
+								var literal = '';
+								for( var c = 0; c < pair[0].length; c++ )
+								{
+									if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
+									{
+										literal += ' ';
+									}
+									literal += pair[0].charAt( c );
+								}
 						
-							// Add custom icon
-							newIcons.push( {
-								Title: literal,
-								Filename: pair[0],
-								Type: 'Executable',
-								IconFile: '/' + pair[1],
-								Handler: 'built-in',
-								Driver: 'Shortcut',
-								MetaType: 'ExecutableShortcut',
-								ID: shorts[a].toLowerCase(),
-								Mounted: true,
-								Visible: true,
-								IconClass: literal.split( ' ' ).join( '_' ),
-								Door: 'executable'
-							} );
+								// Add custom icon
+								newIcons.push( {
+									Title: literal,
+									Filename: pair[0],
+									Type: 'Executable',
+									IconFile: '/' + pair[1],
+									Handler: 'built-in',
+									Driver: 'Shortcut',
+									MetaType: 'ExecutableShortcut',
+									SortPriority: 0,
+									ID: shorts[a].toLowerCase(),
+									Mounted: true,
+									Visible: true,
+									IconClass: literal.split( ' ' ).join( '_' ),
+									Door: 'executable'
+								} );
+							}
 						}
 					}
 
@@ -3775,6 +3741,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Driver: dormantDoor.Drive,
 								MetaType: dormantDoor.MetaType,
 								IconClass: 'SystemDisk',
+								SortPriotity: 0,
 								ID: 'local', // TODO: fix
 								Mounted:  true,
 								Visible: true,
@@ -3873,6 +3840,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Title: r.Name.split(':').join(''),
 								Volume: r.Name.split(':').join('') + ':',
 								Path: r.Name.split(':').join('') + ':',
+								SortPriority: 0,
 								Handler: r.FSys,
 								Type: 'Door',
 								MetaType: 'Directory',
@@ -4846,10 +4814,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								break;
 							}
 						}
+						var visibility = false;
+						var inp = w.getWindowElement().getElementsByTagName( 'input' );
+						var visval = icon.Config.visibility ? icon.Config.visibility : 'visible';
+						for( var a = 0; a < inp.length; a++ )
+						{
+							if( inp[a].name == 'visibility' )
+							{
+								if( inp[a].value == visval )
+									inp[a].checked = 'checked';
+								else inp[a].checked = '';
+							}
+						}
+						
 						// Set disk icon
 						if( da )
 						{
-							da.style.height = '150px';
+							da.style.height = '90px';
+							da.style.maxWidth = '110px';
 							da.style.backgroundRepeat = 'no-repeat';
 							da.style.backgroundPosition = 'center';
 							da.style.backgroundSize = '64px auto';
@@ -4959,7 +4941,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							eles.push( inps[n] );
 						for( var n = 0; n < sels.length; n++ )
 							eles.push( sels[n] );
-						
 						
 						for( var a in eles )
 						{
@@ -5254,7 +5235,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 					}
-
 				}
 				f.load();
 			}
@@ -5594,7 +5574,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Skip permission inputs
 			if( out[a].getAttribute && out[a].getAttribute( 'permission' ) )
 				continue;
-			args[out[a].name] = out[a].type == 'checkbox' ? ( out[a].checked ? '1' : '0' ) : out[a].value;
+			if( out[a].type == 'radio' )
+			{
+				if( out[a].checked )
+					args[out[a].name] = out[a].value;
+			}
+			else
+			{
+				args[out[a].name] = out[a].type == 'checkbox' ? ( out[a].checked ? '1' : '0' ) : out[a].value;
+			}
 		}
 
 		// Permissions now
@@ -5703,7 +5691,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Execute module action
 		l.onExecuted = function( r, d )
 		{
-			//console.log( r + ' ' + d );
+			// A disk
+			if( args.visibility )
+			{
+				var m = new Library( 'system.library' );
+				m.onExecuted = function()
+				{
+					Workspace.refreshDesktop( false, true );
+				}
+				m.execute( 'device/refresh', { devname: args.Filename } );
+			}
+			
 		}
 		l.execute( 'fileinfo', args );
 
@@ -7929,6 +7927,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{	
 		// Too early
 		if( !Workspace.postInitialized || !Workspace.sessionId || Workspace.reloginInProgress ) return;
+		if( window.ScreenOverlay && ScreenOverlay.visibility )
+		{
+			if( Workspace.onReady )
+				Workspace.onReady();
+			return;
+		}
 		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
@@ -8477,6 +8481,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		if( this.onReadyList.length )
 		{
+			// Don't run it twice
+			Workspace.onReady = function(){};
+			
 			for( var a = 0; a < this.onReadyList.length; a++ )
 			{
 				this.onReadyList[ a ]();
@@ -9429,7 +9436,11 @@ Workspace.receivePush = function( jsonMsg )
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
-	if( msg == false || msg == 1 ) return "nomsg";
+	if( msg == false || msg == 1 ) 
+	{
+		if( this.onReady ) this.onReady();
+		return "nomsg";
+	}
 	try
 	{
 		//mobileDebug( 'Push notify... (state ' + Workspace.currentViewState + ')' );
@@ -9439,7 +9450,11 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Do nothing for now...
 	}
-	if( !msg ) return "nomsg";
+	if( !msg ) 
+	{
+		if( this.onReady ) this.onReady();
+		return "nomsg";
+	}
 		
 	// Clear the notifications now... (race cond?)
 	if( window.friendApp )
@@ -9452,6 +9467,7 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Revert to push notifications on the OS side
 		Notify( { title: msg.title, text: msg.text }, null, handleClick );
+		if( this.onReady ) this.onReady();
 		return 'ok';
 	}
 	// "Click"
@@ -9462,7 +9478,11 @@ Workspace.receivePush = function( jsonMsg )
 	
 	function handleClick()
 	{
-		if( !msg.application ) return "noapp";
+		if( !msg.application ) 
+		{
+			if( Workspace.onReady ) Workspace.onReady();
+			return 'noapp';
+		}
 	
 		//check if extras are base 64 encoded... and translate them to the extra attribute which shall be JSON
 		if( msg.extrasencoded && msg.extrasencoded.toLowerCase() == 'yes' )
@@ -9500,7 +9520,10 @@ Workspace.receivePush = function( jsonMsg )
 					callback: false,
 					data: msg
 				} ), '*' );
-				return "ok";
+				
+				if( Workspace.onReady ) Workspace.onReady();
+				
+				return 'ok';
 			}
 		}
 	
@@ -9524,7 +9547,6 @@ Workspace.receivePush = function( jsonMsg )
 		// Send message to app once it has started...
 		function appMessage()
 		{
-			
 			var app = false;
 			var apps = Workspace.applications;
 			for( var a = 0; a < apps.length; a++ )
@@ -9542,12 +9564,14 @@ Workspace.receivePush = function( jsonMsg )
 			if( !app )
 			{
 				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
 		
 			if( !app.contentWindow ) 
 			{
 				Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+				if( Workspace.onReady ) Workspace.onReady();
 				return;
 			}
 		
@@ -9570,6 +9594,8 @@ Workspace.receivePush = function( jsonMsg )
 					getWrapperCallback( amsg.callback );
 				}
 			}, 1000 );
+			
+			if( Workspace.onReady ) Workspace.onReady();
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );

@@ -397,6 +397,23 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					data: { path: ppath }
 				} );
 			}
+			if( type == 'volume' )
+			{
+				menu.push( {
+					name: i18n( 'menu_show_icon_information' ),
+					command: function()
+					{
+						for( var c = 0; c < Workspace.icons.length; c++ )
+						{
+							if( Workspace.icons[ c ].Volume === ppath )
+							{
+								Workspace.fileInfo( Workspace.icons[ c ] );
+								break;
+							}
+						}
+					}
+				} );
+			}
 			if( cf ) menu.push( cf );
 			if( window.ShowContextMenu )
 			{

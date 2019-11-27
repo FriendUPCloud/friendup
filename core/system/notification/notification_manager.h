@@ -136,7 +136,7 @@ int NotificationManagerRemoveExternalConnection( NotificationManager *nm, void *
 
 int NotificationManagerSendInformationToConnections( NotificationManager *nm, char *sername, char *msg, int len );
 
-int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *sertype, const char *func, const char *action, char *msg );
+int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *req, char *sername, const char *reqid, const char *sertype, const char *func, const char *action, char *msg );
 
 void NotificationIOSSendingThread( FThread *data );
 
