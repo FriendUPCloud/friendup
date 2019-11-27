@@ -7209,6 +7209,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	searchAll: function( args )
 	{
+		this.searchStop();
 		if( this.searchView )
 		{
 			var w = this.searchView; this.searchPath = false;
@@ -7221,14 +7222,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			f.i18n();
 			f.onLoad = function( data )
 			{
-				w.setContent( data );
+				w.setContent( data, function()
+				{
+					ge( 'WorkspaceSearchKeywords' ).focus();
+					if( ge( 'WorkspaceSearchStop' ) )
+						ge( 'WorkspaceSearchStop' ).style.display = 'none';
+				} );
+				
 			}
 			f.load();
 		}
 	},
-	showSearch: function( args )
+	showSearch: function( args, targetView )
 	{
 		if( !Workspace.sessionId ) return;
+		if( !targetView ) targetView = false;
 		
 		if( args ) args = args.split( '::' ).join( ':' );
 
@@ -7266,6 +7274,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			} );
 		}
 		
+		w.targetView = targetView;
+
 		w.resize = function( none )
 		{
 			var oh = ge( 'SearchFullContent' ).parentNode.offsetHeight;
@@ -7328,7 +7338,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		if( !this.searchKeywords.length ) return;
 
-		ge( 'WorkspaceSearchStop' ).style.width = 'auto';
+		ge( 'WorkspaceSearchStop' ).style.width = '';
 		ge( 'WorkspaceSearchStop' ).style.display = '';
 		ge( 'WorkspaceSearchStop' ).style.visibility = 'visible';
 		ge( 'WorkspaceSearchAll' ).style.display = 'none';
@@ -7567,7 +7577,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( self.searchScrolling )
 					return;
-				OpenWindowByFileinfo( this.folder, false, false, true );
+				var tr = self.searchView.targetView;
+				if( !tr || ( tr && !tr.parentNode.parentNode.parentNode ) )
+				{
+					self.searchView.targetView = null;
+				}
+				OpenWindowByFileinfo( this.folder, false, false, true, self.searchView.targetView  );
 			}
 			theFil.file = m;
 			if( !isMobile )

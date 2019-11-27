@@ -574,7 +574,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		content: i18n( 'i18n_search' ),
 		onclick: function( e )
 		{
-			Workspace.showSearch( dw.window.fileInfo.Path );
+			Workspace.showSearch( dw.window.fileInfo.Path, dw.window );
 		}
 	} );
 
@@ -4773,7 +4773,13 @@ function RefreshWindowGauge( win, finfo )
 }
 
 // Opens a window based on the fileInfo (type etc) -----------------------------
-function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
+// oFileInfo  = original file info
+// event      = input event
+// iconObject = an icon object
+// unique     = wheather to use a unique view or not
+// targetView = the view to reuse
+//
+function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView )
 {
 	// Make a copy of fileinfo
 	var fileInfo = {};
@@ -5025,7 +5031,30 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 
 		var stored = GetWindowStorage( id );
 		
-		var w = new View ( {
+		// Reuse or not?
+		var w;
+		if( targetView )
+		{
+			w = targetView.windowObject;
+			
+			var win = w.getWindowElement();
+			win.parentFile = iconObject;
+			win.parentWindow = iconObject.window;
+			win.fileInfo = fileInfo;
+			if( !win.fileInfo.Volume )
+			{
+				if( win.fileInfo.Path )
+				{
+					win.fileInfo.Volume = win.fileInfo.Path.split( ':' )[0] + ':';
+				}
+			}
+			console.log( 'We have a target view', w );
+			w.flags.minimized = false;
+			w.activate();
+			w.toFront();
+			return targetView.refresh(); 
+		}
+		else w = new View ( {
 			'title'    : wt,
 			'width'    : stored && stored.width ? stored.width : 800,
 			'height'   : stored && stored.height ? stored.height : 400,
@@ -5038,7 +5067,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		// Ok, window probably was already opened, try to activate window
 		if( !w.ready )
 		{
-			// Activate existing window with the same id...
 			if( movableWindows[id] )
 			{
 				_ActivateWindow( movableWindows[id], false, event );
