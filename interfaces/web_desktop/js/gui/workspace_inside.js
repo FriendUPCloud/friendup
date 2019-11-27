@@ -7498,7 +7498,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var sw = a % 2 + 1;
 			var d = document.createElement( 'div' );
 			this.searchMatches[a].added = d;
-			d.className = 'HRow PaddingSmall sw' + sw;
+			d.className = 'HRow Padding sw' + sw;
 			var icon = '<div class="File Tiny MousePointer"><div class="Icon"><div class="Directory"></div></div></div>';
 			d.innerHTML = '<div class="Ellipsis Layout PaddingLeft PaddingRight">' + icon + ' <span class="MarginLeft MousePointer">' + this.searchMatches[a].Path + '</span></div>';
 
