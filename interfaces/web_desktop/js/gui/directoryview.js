@@ -3960,6 +3960,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		this.file.classList.add( 'Selected' );
 		this.file.selected = fileInfo.selected;
+		this.selected = fileInfo.selected;
 	}
 
 	// Attach this object to dom element
