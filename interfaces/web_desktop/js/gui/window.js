@@ -1098,7 +1098,7 @@ function _ActivateWindow( div, nopoll, e )
 	
 	// Blur previous window
 	var changedActiveWindow = false;
-	if( window.currentMovable )
+	if( window.currentMovable && currentMovable.windowObject )
 	{
 		if( currentMovable != div )
 		{
@@ -5902,6 +5902,7 @@ function InitWindowEvents()
 Friend.GUI.checkWindowState = function( state )
 {
 	if( !window.currentMovable ) return false;
+	if( !currentMovable.windowObject ) return false;
 	var wo = window.currentMovable.windowObject;
 	if( wo.states[ state ] )
 	{
