@@ -5325,10 +5325,9 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 							if( js.message == 'Path error.' )
 							{
 								var dw = this.win.directoryview;
-								console.log( 'Path error.', dw );
 								Notify( {
-									title: 'Illegal path.',
-									text: 'The path you tried to enter does not exist.'
+									title: i18n( 'i18n_illegal_path' ),
+									text: i18n( 'i18n_illegal_path_desc' )
 								} );
 								// If we're not at the top of the history array, go back
 								if( dw.pathHistoryIndex > 0 )
