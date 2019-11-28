@@ -68,6 +68,11 @@ html body.Synthwave[mobile] #WorkspaceMenu.Open ul
 	background: #461c64;
 }
 
+html body.Synthwave .Screen > .TitleBar .ScreenList
+{
+	color: white;
+}
+
 html body.Synthwave #DoorScreen:after,
 body.Synthwave:not(.ViewMaximized) #Screens > div.Screen > .TitleBar, 
 body.Synthwave.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar,
@@ -402,11 +407,6 @@ html body.Synthwave .Screen > .TitleBar > .Left *
 body.Synthwave #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
 	border: 1px solid #505050;
-}
-
-html body.Synthwave .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
 }
 
 .Synthwave .FileBrowser div.Name.Active

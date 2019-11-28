@@ -513,6 +513,8 @@ i18n_search_stop                        : Stopp søk
 i18n_search_type_Door                   : enhet
 i18n_search_type_Directory              : mappe
 i18n_search_type_File                   : fil
+i18n_search_in                          : i
+i18n_search_all_disks                   : Søk i alt
 
 #Directory view ----------------------------------------------------------------
 
