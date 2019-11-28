@@ -461,15 +461,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex > 0 )
 				{
 					var fin = dw.pathHistoryRewind();
+					dw.window.fileInfo = fin;
+					console.log( 'Rewinding: ', fin );
 					
 					if( !isMobile && winobj.fileBrowser )
 					{
 						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
-					else
-					{
-						winobj.refresh();
-					}
+					winobj.refresh();
 				}
 			}
 		}: false,
@@ -483,14 +482,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
 				{
 					var fin = dw.pathHistoryForward();
+					dw.window.fileInfo = fin;
+					console.log( 'Forwarding: ', fin );
+					
 					if( !isMobile && winobj.fileBrowser )
 					{
 						winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
 					}
-					else
-					{
-						winobj.refresh();
-					}
+					winobj.refresh();
 				}
 			}
 		}: false,
@@ -568,6 +567,16 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			}
 		} );
 	}
+	
+	buttons.push( {
+		element: 'button',
+		className: 'Search FloatRight IconSmall',
+		content: i18n( 'i18n_search' ),
+		onclick: function( e )
+		{
+			Workspace.showSearch( dw.window.fileInfo.Path, dw.window );
+		}
+	} );
 
 	function renderButton( btn, par )
 	{
@@ -815,6 +824,14 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		var dirv = this.directoryview;
 		
+		// Assign icons now
+		// Store
+		if( icons )
+		{
+			this.icons = icons;
+			this.allIcons = icons;
+		}
+		
 		// When we have a toolbar and no file browser, remove up on root paths
 		
 		var dormantDrive = winobj.fileInfo && (
@@ -928,12 +945,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.directoryview.mode = 'Files';
 		}
 
-		// TODO: Check if this is used or remove!
-		if( this.running )
-		{
-			return;
-		}
-
 		// Blocking? Wait with call
 		if( this.redrawing )
 		{
@@ -947,12 +958,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 		this.redrawing = true;
 
-		// Store
-		if( icons )
-		{
-			this.icons = icons;
-			this.allIcons = icons;
-		}
 		if( direction ) this.direction = direction;
 
 		// Clean icons
@@ -1847,6 +1852,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 		dview.fileoperations[ dview.operationcounter ].progress.onLoad = function( data )
 		{
+			if( !this.master.fileoperations[ this.myid ] ) return;
 			var w = this.master.fileoperations[ this.myid ].view;
 			var windowArray = this.master.fileoperations;
 			var windowArrayKey = this.myid;
@@ -2427,7 +2433,7 @@ DirectoryView.prototype.GetTitleBar = function ()
 DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, option, flags )
 {
 	var self = this;
-	
+		
 	if( this.rendering ) return;
 	this.rendering = true;
 	
@@ -2450,7 +2456,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Set new viewmode
 	this.viewMode = 'iconview';
 	
-	this.ShowFileBrowser();
+	if( !isMobile )
+		this.ShowFileBrowser();
 	
 	// Remember scroll top
 	var stop = 0;
@@ -2979,6 +2986,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					SetOpacity( obj.domNode, 1 );
 				}
 				icons[a].domNode = file;
+				icons[a].domNode.icon = icons[a];
 				obj.icons.push( icons[a] );
 			}
 			if( typeof ( obj.parentNode ) != 'undefined' && obj.parentNode.refreshWindow )
@@ -3077,12 +3085,13 @@ DirectoryView.prototype.SelectAll = function()
 		var ics = this.window.icons;
 		for( var a = 0; a < ics.length; a++ )
 		{
+			ics[a].selected = 'multiple';
 			if( ics[a].domNode )
 			{
 				ics[a].domNode.classList.add( 'Selected' );
 				ics[a].domNode.selected = 'multiple';
+				ics[a].domNode.icon.selected = 'multiple';
 			}
-			ics[a].selected = 'multiple';
 			if( ics[a].fileInfo )
 				ics[a].fileInfo.selected = 'multiple';
 		}
@@ -3448,6 +3457,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					this.classList.add( 'Selected' );
 					this.fileInfo.selected = true;
 					this.selected = true;
+					this.icon.selected = true;
 					found = this;
 			
 					if( !window.isMobile )
@@ -3515,6 +3525,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 								if( !p.childNodes[b] ) continue;
 								p.childNodes[b].classList.add( 'Selected' );
 								p.childNodes[b].selected = 'multiple';
+								p.childNodes[b].icon.selected = 'multiple';
 								p.childNodes[b].fileInfo.selected = 'multiple';
 							}
 						}
@@ -3527,6 +3538,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							this.classList.remove( 'Selected' );
 							this.selected = false;
+							this.icon.selected = false;
 							this.fileInfo.selected = false;
 							dv.lastListItem = false;
 						}
@@ -3534,6 +3546,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							this.classList.add( 'Selected' );
 							this.selected = 'multiple';
+							this.icon.selected = 'multiple';
 							this.fileInfo.selected = 'multiple';
 							dv.lastListItem = this;
 						}
@@ -3553,13 +3566,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						{
 							this.classList.remove( 'Selected' );
 							this.selected = false;
+							this.icon.selected = false;
 							this.fileInfo.selected = false;
 						}
 						else
 						{
 							this.classList.add( 'Selected' );
 							this.selected = sh ? 'multiple' : true;
-							this.fileInfo.selected = sh ? 'multiple' : true;
+							this.icon.selected = this.selected;
+							this.fileInfo.selected = this.selected;
 						}
 						dv.lastListItem = this;
 					}
@@ -3593,6 +3608,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					{
 						this.classList.add( 'Selected' );
 						this.selected = true;
+						this.icon.selected = true;
 						this.fileInfo.selected = true;
 						return this.ondragstart( e );
 					}
@@ -3617,6 +3633,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							clearRegionIcons();
 							self.classList.add( 'Selected' );
 							self.selected = true;
+							this.icon.selected = true;
 							self.fileInfo.selected = true;
 							self.touchPos = {
 								x: e.touches[0].pageX,
@@ -3713,6 +3730,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 			// For clicks
 			ic.domNode = r;
+			ic.domNode.icon = ic;
 
 			obj.icons.push( ic );
 		}
@@ -3729,8 +3747,18 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			}
 		}
 
+		var listed = 0;
+		for( var z = 0; z < icons.length; z++ )
+		{
+			var fn = icons[ z ].Filename;
+			if( fn.substr( 0, 1 ) != '.' && fn.substr( -4, 4 ) != '.bak' )
+			{
+				listed++;
+			}
+		}
+
 		var filesize = humanFilesize ( bts );
-		foot.innerHTML = icons.length + ' ' + i18n( 'i18n_total_listed' ) + ' ' + filesize + '.';
+		foot.innerHTML = listed + ' ' + i18n( 'i18n_total_listed' ) + ' ' + filesize + '.';
 	}
 	else
 	{
@@ -3922,7 +3950,11 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	if( !fileInfo )
 		return;
 		
-	if( fileInfo.selected ) this.file.classList.add( 'Selected' );
+	if( fileInfo.selected )
+	{
+		this.file.classList.add( 'Selected' );
+		this.file.selected = fileInfo.selected;
+	}
 
 	// Attach this object to dom element
 	file.object = this;
@@ -4002,194 +4034,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	}
 	else
 	{
-		switch( extension )
-		{
-			case 'info':
-				iconInner.className = 'MetaFile';
-				break;
-			case 'library':
-				iconInner.className = 'System_Library';
-				break;
-			case 'jpg':
-				iconInner.className = 'TypeJPG';
-				break;
-			case 'jpeg':
-				iconInner.className = 'TypeJPEG';
-				break;
-			case 'psd':
-				iconInner.className = 'TypePSD';
-				break;
-			case 'png':
-				iconInner.className = 'TypePNG';
-				break;
-			case 'gif':
-				iconInner.className = 'TypeGIF';
-				break;
-			case 'odt':
-				iconInner.className = 'TypeDOC';
-				break;
-			case 'ods':
-				iconInner.className = 'TypeODS';
-				break;
-			case 'xlsx':
-				iconInner.className = 'TypeXLS';
-				break;
-			case 'xls':
-				iconInner.className = 'TypeXLSX';
-				break;
-			case 'abw':
-				iconInner.className = 'TypeABW';
-				break;
-			case 'docx':
-				iconInner.className = 'TypeDOCX';
-				break;
-			case 'doc':
-				iconInner.className = 'TypeDOC';
-				break;
-			case 'svg':
-				iconInner.className = 'TypeSVG';
-				break;
-			case 'eps':
-				iconInner.className = 'TypeEPS';
-				break;
-			case 'pdf':
-				iconInner.className = 'TypePDF';
-				break;
-			case 'url':
-				iconInner.className = 'TypeWebUrl';
-				break;
-			case 'txt':
-				iconInner.className = 'TypeTXT';
-				break;
-			case 'avi':
-				iconInner.className = 'TypeAVI';
-				break;
-			case 'mp4':
-				iconInner.className = 'TypeMP4';
-				break;
-			case 'mov':
-				iconInner.className = 'TypeMOV';
-				break;
-			case 'webm':
-				iconInner.className = 'TypeWEBM';
-				break;
-			case 'mpeg':
-				iconInner.className = 'TypeMPEG';
-				break;
-			case 'm4a':
-			case 'mp3':
-				iconInner.className = 'TypeMP3';
-				break;
-			case 'wav':
-				iconInner.className = 'TypeWAV';
-				break;
-			case 'ogg':
-				iconInner.className = 'TypeOGG';
-				break;
-			case 'ogv':
-				iconInner.className = 'TypeOGV';
-				break;
-			case 'flac':
-				iconInner.className = 'TypeFLAC';
-				break;
-			case 'pls':
-				iconInner.className = 'TypePLS';
-				break;
-			case 'jsx':
-				iconInner.className = 'TypeJSX';
-				break;
-			case 'php':
-				iconInner.className = 'TypePHP';
-				break;
-			case 'js':
-				iconInner.className = 'TypeJS';
-				break;
-			case 'run':
-				iconInner.className = 'TypeRUN';
-				break;
-			case 'css':
-				iconInner.className = 'TypeCSS';
-				break;
-			case 'json':
-				iconInner.className = 'TypeJSON';
-				break;
-			case 'html':
-				iconInner.className = 'TypeHTML';
-				break;
-			case 'bak':
-				iconInner.className = 'TypeBak';
-				break;
-			case 'fpkg':
-				iconInner.className = 'TypeFPkg';
-				break;
-			case 'apf':
-				iconInner.className = 'TypeApf';
-				break;
-			case 'zip':
-				iconInner.className = 'TypeZip';
-				break;
-			case 'ppt':
-				iconInner.className = 'TypePPT';
-				break;
-			case 'odp':
-				iconInner.className = 'TypeODP';
-				break;
-			case 'pptx':
-				iconInner.className = 'TypePPTX';
-				break;
-			case 'gz':
-				iconInner.className = 'TypeGZ';
-				break;
-			case 'bz':
-			case 'bz2':
-				iconInner.className = 'TypeBZ';
-				break;
-			case 'tgz':
-				iconInner.className = 'TypeTGZ';
-				break;
-			case 'tar':
-				iconInner.className = 'TypeTAR';
-				break;
-			case '7z':
-				iconInner.className = 'Type7Z';
-				break;
-			case 'lha':
-				iconInner.className = 'TypeLHA';
-				break;
-			case 'deb':
-				iconInner.className = 'TypePKGLINUX';
-				break;
-			case 'rpm':
-				iconInner.className = 'TypePKGLINUX';
-				break;
-			default:
-				switch( fileInfo.MetaType )
-				{
-					case 'Meta':
-						iconInner.className = 'Application';
-						break;
-					case 'Directory':
-						if( fileInfo.Title == 'Upload' )
-						{
-							iconInner.className = 'Directory Upload';
-						}
-						else iconInner.className = 'Directory';
-						break;
-					default:
-						iconInner.className = 'File';
-				}
-				if( typeof ( fileInfo.Type ) != 'undefined' )
-					iconInner.className += ' ' + fileInfo.Type;
-				// Disk icons!
-				if( fileInfo.Type == 'Door' )
-				{
-					if( fileInfo.Door && fileInfo.Door.Type == 'Assign' )
-						iconInner.className += ' Assign';
-					else iconInner.className = 'Door';
-					iconInner.className += ' ' + fileInfo.Handler.split( '.' ).join( '_' );
-				}
-				break;
-		}
+		iconInner.className = GetIconClassByExtension( extension, fileInfo );
 	}
 	
 	// Check for thumbs
@@ -4335,6 +4180,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				this.classList.add( 'Selected' );
 				found = this;
 				this.selected = true;
+				this.icon.selected = true;
 				this.fileInfo.selected = true;
 			
 				// Count selected icons
@@ -4404,6 +4250,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					launchIcon( e, this );
 					this.classList.remove( 'Selected' );
 					this.selected = false;
+					this.icon.selected = false;
 					this.fileInfo.selected = false;
 					return cancelBubble( e );
 				}
@@ -4422,12 +4269,14 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					this.classList.remove( 'Selected' );
 					this.selected = false;
+					this.icon.selected = false;
 					this.fileInfo.selected = false;
 				}
 				else
 				{
 					this.classList.add( 'Selected' );
 					this.selected = sh ? 'multiple' : true;
+					this.icon.selected = this.selected;
 					this.fileInfo.selected = sh ? 'multiple' : true;
 				}
 
@@ -4522,7 +4371,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			
 				// Open unique window!
 				OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-				return window.isMobile ? Workspace.closeDrivePanel() : false;
+				return false;
 			}
 			else if( obj.fileInfo.MetaType == 'Shortcut' )
 			{
@@ -4560,12 +4409,12 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 						{
 							// Open unique window!
 							OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-							return window.isMobile ? Workspace.closeDrivePanel() : false;
+							return false;
 						}
 					}
 					mim.execute( 'checkmimeapplication', { path: obj.fileInfo.Path } );
 				}
-				return window.isMobile ? Workspace.closeDrivePanel() : false; 
+				return false; 
 			}
 			// Just change directory
 			else if( obj.fileInfo.Type == 'Directory' && dv.navMode == 'toolbar' )
@@ -4669,7 +4518,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				{
 					we.refresh();
 				}
-				return window.isMobile ? Workspace.closeDrivePanel() : false;
+				return false;
 			}
 			else
 			{	
@@ -4692,7 +4541,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					{
 						// Open unique window!
 						OpenWindowByFileinfo( obj.fileInfo, event, false, uniqueView );
-						return window.isMobile ? Workspace.closeDrivePanel() : false;
+						return false;
 					}
 				}
 				mim.execute( 'checkmimeapplication', { path: obj.fileInfo.Path } );
@@ -4846,7 +4695,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				if( file.contextMenuTimeout )
 					clearTimeout( file.contextMenuTimeout );
 				file.contextMenuTimeout = false;
-				Workspace.closeDrivePanel();
 				window.clickElement = null;
 				return cancelBubble( event );
 			}
@@ -4926,7 +4774,13 @@ function RefreshWindowGauge( win, finfo )
 }
 
 // Opens a window based on the fileInfo (type etc) -----------------------------
-function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
+// oFileInfo  = original file info
+// event      = input event
+// iconObject = an icon object
+// unique     = wheather to use a unique view or not
+// targetView = the view to reuse
+//
+function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView )
 {
 	// Make a copy of fileinfo
 	var fileInfo = {};
@@ -4998,7 +4852,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		we.win = win;
 		
 		we.refresh = function( callback )
-		{
+		{	
 			// Run previous callback
 			if( callback )
 			{
@@ -5158,8 +5012,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		f.load();
 	}
 	// We've clicked on a directory!
-	else if( fileInfo.MetaType == 'Directory' )
-	{	
+	else if( fileInfo.MetaType == 'Directory' || fileInfo.MetaType == 'Door' )
+	{
 		var extra = null;
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
@@ -5178,7 +5032,29 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 
 		var stored = GetWindowStorage( id );
 		
-		var w = new View ( {
+		// Reuse or not?
+		var w;
+		if( targetView )
+		{
+			w = targetView.windowObject;
+			
+			var win = w.getWindowElement();
+			win.parentFile = iconObject;
+			win.parentWindow = iconObject.window;
+			win.fileInfo = fileInfo;
+			if( !win.fileInfo.Volume )
+			{
+				if( win.fileInfo.Path )
+				{
+					win.fileInfo.Volume = win.fileInfo.Path.split( ':' )[0] + ':';
+				}
+			}
+			w.flags.minimized = false;
+			w.activate();
+			w.toFront();
+			return targetView.refresh(); 
+		}
+		else w = new View ( {
 			'title'    : wt,
 			'width'    : stored && stored.width ? stored.width : 800,
 			'height'   : stored && stored.height ? stored.height : 400,
@@ -5191,7 +5067,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		// Ok, window probably was already opened, try to activate window
 		if( !w.ready )
 		{
-			// Activate existing window with the same id...
 			if( movableWindows[id] )
 			{
 				_ActivateWindow( movableWindows[id], false, event );
@@ -5258,7 +5133,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 			var winDoor = win.Door;
 			
 			win.refresh = function( callback )
-			{
+			{	
 				// Run previous callback
 				if( callback )
 				{
@@ -5346,7 +5221,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		else
 		{
 			win.refresh = function ( callback )
-			{
+			{	
 				// Run previous callback
 				if( callback )
 				{
@@ -5434,7 +5309,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
 						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
-							ww.redrawIcons( content, ww.direction, cbk );
+							ww.redrawIcons( null, ww.direction, cbk );
 						} );
 					}
 					else
@@ -5481,56 +5356,78 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique )
 		}
 		else
 		{
-			var fid = typeof ( fileInfo.ID ) != 'undefined' ?
-				fileInfo.ID : fileInfo.Filename;
-			var cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
-				fileInfo.Command : 'file';
-			
-			if( cmd == 'file' )
+	
+			// No mime type? Ask Friend Core
+			var mim = new Module( 'system' );
+			mim.onExecuted = function( me, md )
 			{
-				var dliframe = document.createElement('iframe');
-				dliframe.setAttribute('class', 'hidden');
-				dliframe.setAttribute('src', fileInfo.downloadhref );
-				dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
-				dliframe.onload = function()
+				var js = null;
+				try
 				{
-					document.body.removeChild( dliframe );
-					dliframe = null;
+					js = JSON.parse( md );
 				}
-				document.body.appendChild( dliframe );
-				
-				// Just in case, if it takes more than 15 seconds, remove the iframe
-				setTimeout( function()
+				catch( e ){};
+		
+				if( me == 'ok' && js )
 				{
-					if( dliframe )
+					ExecuteApplication( js.executable, fileInfo.Path );
+				}
+				else
+				{
+					var fid = typeof ( fileInfo.ID ) != 'undefined' ?
+						fileInfo.ID : fileInfo.Filename;
+					var cmd = ( typeof ( fileInfo.Command ) != 'undefined' && fileInfo.Command != 'undefined' ) ?
+						fileInfo.Command : 'file';
+			
+					if( cmd == 'file' )
 					{
-						document.body.removeChild( dliframe );
+						var dliframe = document.createElement('iframe');
+						dliframe.setAttribute('class', 'hidden');
+						dliframe.setAttribute('src', fileInfo.downloadhref );
+						dliframe.setAttribute('id', 'downloadFrame' + fileInfo.ID );
+						dliframe.onload = function()
+						{
+							document.body.removeChild( dliframe );
+							dliframe = null;
+						}
+						document.body.appendChild( dliframe );
+				
+						// Just in case, if it takes more than 15 seconds, remove the iframe
+						setTimeout( function()
+						{
+							if( dliframe )
+							{
+								document.body.removeChild( dliframe );
+							}
+						}, 15000 );
+						return;
 					}
-				}, 15000 );
-				return;
+			
+			
+					var win = new View ( {
+						'title'    : iconObject.Title ? iconObject.Title : iconObject.Filename,
+						'width'    : 800,
+						'height'   : 600,
+						'memorize' : true,
+						'id'       : fileInfo.MetaType + '_' + fid
+					} );
+					/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
+						left: 0; width: 100%; height: 100%; border: 0" \
+						src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
+					win.parentFile = iconObject;
+					win.parentWindow = iconObject.window;			
+					var newWin = win;
+					win = null;
+					GetURLFromPath( fileInfo.Path, function( url )
+					{
+						newWin.setContent ( '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
+						left: 0; width: 100%; height: 100%; border: 0" \
+						src="' + url + '"></iframe>' );
+					}, '&mode=rs' );
+					return false;
+				}
 			}
-			
-			
-			var win = new View ( {
-				'title'    : iconObject.Title ? iconObject.Title : iconObject.Filename,
-				'width'    : 800,
-				'height'   : 600,
-				'memorize' : true,
-				'id'       : fileInfo.MetaType + '_' + fid
-			} );
-			/*console.log( '[9] you are here ... directoryview.js |||| ' + '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
-				left: 0; width: 100%; height: 100%; border: 0" \
-				src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rs"></iframe>' );*/
-			win.parentFile = iconObject;
-			win.parentWindow = iconObject.window;			
-			var newWin = win;
-			win = null;
-			GetURLFromPath( fileInfo.Path, function( url )
-			{
-				newWin.setContent ( '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
-				left: 0; width: 100%; height: 100%; border: 0" \
-				src="' + url + '"></iframe>' );
-			}, '&mode=rs' );
+			mim.execute( 'checkmimeapplication', { path: fileInfo.Path } );
 		}
 	}
 	else if ( fileInfo.MetaType == 'DiskHandled' )
@@ -5580,9 +5477,8 @@ function CheckDoorsKeys( e )
 		
 		switch( k )
 		{
-			// TODO: Implement confirm dialog!
 			case 46:
-				if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
+				if( window.regionWindow && window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing )
 				{
 					Workspace.deleteFile();
 				}
@@ -5955,7 +5851,6 @@ Friend.startImageViewer = function( iconObject, extra )
 	{
 		Workspace.handleBackButton();
 	} );
-	
 
 	function renderToolbar( eparent )
 	{
@@ -6169,6 +6064,200 @@ Friend.startImageViewer = function( iconObject, extra )
 	}
 	win = null;
 };
+
+function GetIconClassByExtension( extension, fileInfo )
+{
+	var iconInner = { className: '' };
+	switch( extension )
+	{
+		case 'info':
+			iconInner.className = 'MetaFile';
+			break;
+		case 'library':
+			iconInner.className = 'System_Library';
+			break;
+		case 'jpg':
+			iconInner.className = 'TypeJPG';
+			break;
+		case 'jpeg':
+			iconInner.className = 'TypeJPEG';
+			break;
+		case 'psd':
+			iconInner.className = 'TypePSD';
+			break;
+		case 'png':
+			iconInner.className = 'TypePNG';
+			break;
+		case 'gif':
+			iconInner.className = 'TypeGIF';
+			break;
+		case 'odt':
+			iconInner.className = 'TypeDOC';
+			break;
+		case 'ods':
+			iconInner.className = 'TypeODS';
+			break;
+		case 'xlsx':
+			iconInner.className = 'TypeXLS';
+			break;
+		case 'xls':
+			iconInner.className = 'TypeXLSX';
+			break;
+		case 'abw':
+			iconInner.className = 'TypeABW';
+			break;
+		case 'docx':
+			iconInner.className = 'TypeDOCX';
+			break;
+		case 'doc':
+			iconInner.className = 'TypeDOC';
+			break;
+		case 'svg':
+			iconInner.className = 'TypeSVG';
+			break;
+		case 'eps':
+			iconInner.className = 'TypeEPS';
+			break;
+		case 'pdf':
+			iconInner.className = 'TypePDF';
+			break;
+		case 'url':
+			iconInner.className = 'TypeWebUrl';
+			break;
+		case 'txt':
+			iconInner.className = 'TypeTXT';
+			break;
+		case 'avi':
+			iconInner.className = 'TypeAVI';
+			break;
+		case 'mp4':
+			iconInner.className = 'TypeMP4';
+			break;
+		case 'mov':
+			iconInner.className = 'TypeMOV';
+			break;
+		case 'webm':
+			iconInner.className = 'TypeWEBM';
+			break;
+		case 'mpeg':
+			iconInner.className = 'TypeMPEG';
+			break;
+		case 'm4a':
+		case 'mp3':
+			iconInner.className = 'TypeMP3';
+			break;
+		case 'wav':
+			iconInner.className = 'TypeWAV';
+			break;
+		case 'ogg':
+			iconInner.className = 'TypeOGG';
+			break;
+		case 'ogv':
+			iconInner.className = 'TypeOGV';
+			break;
+		case 'flac':
+			iconInner.className = 'TypeFLAC';
+			break;
+		case 'pls':
+			iconInner.className = 'TypePLS';
+			break;
+		case 'jsx':
+			iconInner.className = 'TypeJSX';
+			break;
+		case 'php':
+			iconInner.className = 'TypePHP';
+			break;
+		case 'js':
+			iconInner.className = 'TypeJS';
+			break;
+		case 'run':
+			iconInner.className = 'TypeRUN';
+			break;
+		case 'css':
+			iconInner.className = 'TypeCSS';
+			break;
+		case 'json':
+			iconInner.className = 'TypeJSON';
+			break;
+		case 'html':
+			iconInner.className = 'TypeHTML';
+			break;
+		case 'bak':
+			iconInner.className = 'TypeBak';
+			break;
+		case 'fpkg':
+			iconInner.className = 'TypeFPkg';
+			break;
+		case 'apf':
+			iconInner.className = 'TypeApf';
+			break;
+		case 'zip':
+			iconInner.className = 'TypeZip';
+			break;
+		case 'ppt':
+			iconInner.className = 'TypePPT';
+			break;
+		case 'odp':
+			iconInner.className = 'TypeODP';
+			break;
+		case 'pptx':
+			iconInner.className = 'TypePPTX';
+			break;
+		case 'gz':
+			iconInner.className = 'TypeGZ';
+			break;
+		case 'bz':
+		case 'bz2':
+			iconInner.className = 'TypeBZ';
+			break;
+		case 'tgz':
+			iconInner.className = 'TypeTGZ';
+			break;
+		case 'tar':
+			iconInner.className = 'TypeTAR';
+			break;
+		case '7z':
+			iconInner.className = 'Type7Z';
+			break;
+		case 'lha':
+			iconInner.className = 'TypeLHA';
+			break;
+		case 'deb':
+			iconInner.className = 'TypePKGLINUX';
+			break;
+		case 'rpm':
+			iconInner.className = 'TypePKGLINUX';
+			break;
+		default:
+			switch( fileInfo.MetaType )
+			{
+				case 'Meta':
+					iconInner.className = 'Application';
+					break;
+				case 'Directory':
+					if( fileInfo.Title == 'Upload' )
+					{
+						iconInner.className = 'Directory Upload';
+					}
+					else iconInner.className = 'Directory';
+					break;
+				default:
+					iconInner.className = 'File';
+			}
+			if( typeof ( fileInfo.Type ) != 'undefined' )
+				iconInner.className += ' ' + fileInfo.Type;
+			// Disk icons!
+			if( fileInfo.Type == 'Door' )
+			{
+				if( fileInfo.Door && fileInfo.Door.Type == 'Assign' )
+					iconInner.className += ' Assign';
+				else iconInner.className = 'Door';
+				iconInner.className += ' ' + fileInfo.Handler.split( '.' ).join( '_' );
+			}
+			break;
+	}
+	return iconInner.className;
+}
 
 // End Friend Image Viewer! ----------------------------------------------------
 

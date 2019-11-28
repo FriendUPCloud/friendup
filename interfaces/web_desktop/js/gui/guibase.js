@@ -1031,7 +1031,7 @@ function ExposeWindows()
 	}
 }
 // Cover screens with overlay
-function CoverScreens()
+function CoverScreens( sticky )
 {
 	// Disable all screen overlays
 	var screenc = ge ( 'Screens' );
@@ -2036,11 +2036,18 @@ movableListener = function( e, data )
 		// Mouse down on a resize gadget
 		else if( window.mouseDown == 2 )
 		{ 
+			
 			var w = window.currentMovable;
 			var r = w.resize;
 			var t = w.titleBar;
 			var l = w.leftbar;
 			var x = w.rightbar;
+			
+			// Set normal mode
+			r.mode = 'normal';
+			r.window.removeAttribute( 'maximized' );
+			_removeWindowTiles( w );
+			// Done normal mode
 			
 			var rx = ( windowMouseX - r.offx ); // resizex
 			var ry = ( windowMouseY - r.offy ); // resizey
@@ -2518,7 +2525,7 @@ function CheckScreenTitle( screen )
 		wo = false; // Only movables on current screen
 	}
 	
-	var hasScreen = ( !csc || testObject.screenObject == wo.screen || ( !wo.screen && isDoorsScreen ) );
+	var hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	
 	var isDoorsScreen = testObject.id == 'DoorsScreen';	
 	
@@ -2940,7 +2947,6 @@ function PollTaskbar( curr )
 						// Activate
 						d.setActive = function( click )
 						{
-							console.log( 'Setting active' );
 							this.classList.add( 'Active' );
 							_ActivateWindow( this.window );
 							if( click )

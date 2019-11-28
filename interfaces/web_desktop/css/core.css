@@ -2620,6 +2620,106 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	border-radius: 100%;
 }
 
+#Tasks
+{
+	pointer-events: none;
+	visibility: hidden;
+}
+
+/* Tasks overlay ------------------------------------------------------------ */
+
+body[mobile] #TaskSwitcher
+{
+	display: none;
+}
+
+body:not([mobile]) #TaskSwitcher
+{
+	position: absolute;
+	top: calc(50% - 100px);
+	left: 20%;
+	width: 60%;
+	height: 120px;
+	border-radius: 5px;
+	background: rgba(0,0,0,0.7);
+	transition: opacity 0.25s;
+	opacity: 0;
+	pointer-events: none;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+body:not([mobile]).ShowTasks #TaskSwitcher
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
+{
+	background-color: rgba(100,100,100,0.4);
+	box-shadow: 0px 0px 2px 2px rgba(255,255,225,0.4);
+}
+
+#TaskSwitcher .WindowItem
+{
+	width: 100px;
+	height: 100px;
+	position: absolute;
+	transition: left 0.25s;
+}
+
+#TaskSwitcher .WindowItem .Close
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100px;
+	height: 80px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 60%;
+	border-radius: 10px;
+}
+
+#TaskSwitcher .WindowItem .CloseButton
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 26px;
+	height: 26px;
+	text-align: center;
+	line-height: 26px;
+	background: rgba(0,0,0,0.6);
+	border-radius: 50%;
+}
+#TaskSwitcher .WindowItem .CloseButton:after
+{
+	content: "\f00d";
+	font-family: fontawesome;
+	font-size: 1.2em;
+	color: white;
+}
+
+#TaskSwitcher .WindowItem .Close img
+{
+	display: none;
+}
+
+#TaskSwitcher .WindowItem .Taskname
+{
+	position: absolute;
+	bottom: 0;
+	height: 20px;
+	text-align: center;
+	color: white;
+	width: 100%;
+	line-height: 26px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
 /* Desklet widget end ------------------------------------------------------- */
 
 #DoorsScreen
@@ -2787,6 +2887,11 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	overflow: hidden;
 }
 
+.Inside #Screens
+{
+	background: rgba(0,0,0,0.5);
+}
+
 /* Don't show the .Offline thing on the desktop */
 #DoorsScreen > .Offline
 {
@@ -2952,28 +3057,42 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 {
 	width: 32px;
 	height: 32px;
-	border-left: 1px solid #f0f0f0;
 	position: absolute;
 	right: 0;
 	top: 0;
+	color: #455155;
+}
+
+.Screen > .TitleBar .ScreenList:after
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	content: "\f096";
+	font-family: "fontawesome";
+	width: 28px;
+	text-align: center;
+	line-height: 24px;
+	font-size: 1em;
+}
+.Screen > .TitleBar .ScreenList:before
+{
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	display: block;
+	content: "\f0c8";
+	font-family: "fontawesome";
+	width: 28px;
+	text-align: center;
+	line-height: 24px;
+	font-size: 0.9em;
 }
 
 .Screen > .TitleBar .ScreenList:active
 {
 	opacity: 0.5;
-}
-
-.Screen > .TitleBar .ScreenList > img
-{
-	position: absolute;
-	top: 4px;
-	left: 4px;
-}
-
-.Screen > .TitleBar .ScreenList:Active img
-{
-	opacity: 0.5;
-	filter:opacity(alpha=50);
 }
 
 .Frameloader, .Imageloader
@@ -3046,6 +3165,28 @@ html .DirectoryToolbar button.Makedir:before
 }
 
 html .DirectoryToolbar button.Makedir
+{
+	color: transparent;
+}
+
+html .DirectoryToolbar button.Search:before
+{
+	content: "\f002";
+	font-family: fontawesome;
+	width: 16px;
+	height: 26px;
+	line-height: 26px;
+	font-size: 0.9em;
+	margin-top: 0;
+	display: inline-block;
+	background-image: none;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-color: transparent;
+}
+
+html .DirectoryToolbar button.Search
 {
 	color: transparent;
 }
@@ -3815,9 +3956,10 @@ html #DockWindowList .Task.Directory
 
 /* Loggedin state */
 
-.Inside #DeepestField > div
+.Inside #DeepestField
 {
-	z-index: 1;
+	pointer-events: none;
+	opacity: 0;
 }
 
 .Inside #DeepestCanvas
@@ -3923,7 +4065,7 @@ html #DockWindowList .Task.Directory
 }
 
 #DeepestField > div > #Notifications,
-#DeepestField > div > #Tasks,
+#DeepestField > div > #TasksList,
 #DeepestField > div > #Capabilities,
 #DeepestField > div > #Netconnections,
 #DeepestField > div > #FNetContent

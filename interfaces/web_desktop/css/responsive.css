@@ -790,13 +790,13 @@ html .View > .Title > div > .Zoom
 	margin-right: -9px;
 }
 
-#Screens .File
+#Screens .File:not(.Tiny)
 {
 	width: 56px;
 }
 
 /* Icons for mobile */
-body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File
+body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File:not(.Tiny)
 {
 	width: 88px;
 }
