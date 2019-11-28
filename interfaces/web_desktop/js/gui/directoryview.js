@@ -4859,6 +4859,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		
 		we.refresh = function( callback )
 		{	
+			// Refresh 1
 			// Run previous callback
 			if( callback )
 			{
@@ -5140,12 +5141,15 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
+				// Refresh 2
 				// Run previous callback
 				if( callback )
 				{
 					if( this.refreshCallback ) this.refreshCallback( false );
 					this.refreshCallback = callback;
 				}
+				
+				console.log( 'This one may not have the window title.' );
 				
 				w.refreshing = true;
 				
@@ -5165,7 +5169,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
 					
-					dr.getIcons( fi, function( icons )
+					dr.getIcons( fi, function( icons, response )
 					{
 						if( icons )
 						{
@@ -5191,28 +5195,21 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
 								{
-									self.redrawIcons( self.icons, self.direction, cbk );
+									self.redrawIcons( false, self.direction, cbk );
 								} );
-								RefreshWindowGauge( self );
 								
 							}
 						}
-						// empty
+						// empty, go back
 						else
 						{
-							if( self.parentNode )
+							self.redrawIcons( [], self.direction );
+							if( w.revent ) w.removeEvent( 'resize', w.revent );
+							w.revent = w.addEvent( 'resize', function( cbk )
 							{
-								self.innerHTML = '<div class="loadError">' + i18n('i18n_error_could_not_list_directory') + '</div>';
-								self.parentNode.addEventListener( 'dragleave', noEvent,    false );
-								self.parentNode.addEventListener( 'dragover',  noEvent,   false );
-								self.parentNode.addEventListener( 'drop',      noEvent, false );
-								self.parentNode.drop = noEvent;
-							}
-							else
-							{
-								// What now?
-								console.log( 'Refresh directory view - Something bad happened..' );
-							}
+								self.redrawIcons( false, self.direction, cbk );
+							} );
+							console.log( 'Empty directory.' );
 						}
 						if( callback ) callback();
 						
@@ -5228,6 +5225,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 			win.refresh = function ( callback )
 			{	
+				// Refresh 3
 				// Run previous callback
 				if( callback )
 				{
@@ -5320,7 +5318,37 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					}
 					else
 					{
-						console.log( 'No content.' );
+						try
+						{
+							var js = JSON.parse( this.returnData );
+							// Erroneous path
+							if( js.message == 'Path error.' )
+							{
+								var dw = this.win.directoryview;
+								console.log( 'Path error.', dw );
+								Notify( {
+									title: 'Illegal path.',
+									text: 'The path you tried to enter does not exist.'
+								} );
+								// If we're not at the top of the history array, go back
+								if( dw.pathHistoryIndex > 0 )
+								{
+									var fin = dw.pathHistoryRewind();
+									dw.window.fileInfo = fin;
+									console.log( 'Rewinding: ', fin );
+					
+									if( !isMobile && dw.window.fileBrowser )
+									{
+										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+									}
+									dw.window.refresh();
+								}
+							}
+						}
+						catch( e )
+						{
+							console.log( '[Directoryview] No content.', this.returnCode, this.returnData );
+						}
 					}
 					if( callback )
 					{
