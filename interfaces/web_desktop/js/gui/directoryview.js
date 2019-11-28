@@ -4830,12 +4830,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			wid += Math.random() * 9999 + ( Math.random() * 9999 ) + ( new Date() ).getTime();
 
 		var win = new View( {
-			'title'    : wt,
-			'width'    : 800,
-			'height'   : 400,
-			'memorize' : true,
-			'id'       : wid,
-			'volume'   : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
+			'title'     : wt,
+			'width'     : 800,
+			'min-width' : 340,
+			'min-height': 180,
+			'height'    : 400,
+			'memorize'  : true,
+			'id'        : wid,
+			'volume'    : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
 
 		if( fileInfo.Dormant && fileInfo.Dormant.addWindow )
@@ -5063,12 +5065,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			return targetView.refresh(); 
 		}
 		else w = new View ( {
-			'title'    : wt,
-			'width'    : stored && stored.width ? stored.width : 800,
-			'height'   : stored && stored.height ? stored.height : 400,
-			'memorize' : true,
-			'id'       : id,
-			'volume'   : isVolume,
+			'title'     : wt,
+			'width'     : stored && stored.width ? stored.width : 800,
+			'height'    : stored && stored.height ? stored.height : 400,
+			'min-width' : 340,
+			'min-height': 180,
+			'memorize'  : true,
+			'id'        : id,
+			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
 
