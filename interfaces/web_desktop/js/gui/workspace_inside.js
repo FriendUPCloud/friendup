@@ -7827,9 +7827,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var eles = w.getElementsByTagName( 'div' );
 			for( var a = 0; a < w.icons.length; a++ )
 			{
-				if( w.icons[a].domNode.selected )
+				if( w.icons[a].selected )
 				{
-					
 					var d = new Door();
 					files.push( { fileInfo: w.icons[a], door: d.get( w.icons[a].Path ) } );
 				}
