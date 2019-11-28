@@ -28,6 +28,96 @@
 //test
 //#undef __DEBUG
 
+inline static int killUserSession( SystemBase *l, UserSession *ses )
+{
+	int error = 0;
+	char tmpmsg[ 2048 ];
+	int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+	
+	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
+	
+	char *uname = NULL;
+	if( ses->us_User != NULL )
+	{
+		uname = ses->us_User->u_Name;
+	}
+		
+	DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
+	
+	// set flag to WS connection "te be killed"
+	FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
+	ses->us_InUseCounter--;
+	if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+	{
+		ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+	}
+	FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+	
+	// wait till queue will be empty
+	while( TRUE )
+	{
+		if( ses->us_WSConnections ->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+		{
+			break;
+		}
+		usleep( 1000 );
+	}
+	
+	error = USMUserSessionRemove( l->sl_USM, ses );	
+	return error;
+}
+
+inline static int killUserSessionByUser( SystemBase *l, User *u )
+{
+	int error = 0;
+	FRIEND_MUTEX_LOCK( &u->u_Mutex );
+	UserSessListEntry *usl = u->u_SessionsList;
+	while( usl != NULL )
+	{
+		UserSession *s = (UserSession *) usl->us;
+		if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+		{
+			char tmpmsg[ 2048 ];
+			int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				
+			int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+
+			DEBUG("Bytes send: %d\n", msgsndsize );
+			
+			break;
+		}
+		usl = (UserSessListEntry *)usl->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
+	
+	usl = u->u_SessionsList;
+	while( usl != NULL )
+	{
+		UserSession *ses = (UserSession *) usl->us;
+		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
+		ses->us_InUseCounter--;
+		if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+		{
+			ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+		}
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+		
+		// wait till queue will be empty
+		while( TRUE )
+		{
+			if( ses->us_WSConnections ->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+			{
+				break;
+			}
+			usleep( 1000 );
+		}
+		
+		error = USMUserSessionRemove( l->sl_USM, usl->us );
+		usl = (UserSessListEntry *)usl->node.mln_Succ;
+	}
+	return error;
+}
+
 /**
  * Http web call processor
  * Function which process all incoming Http requests
@@ -734,6 +824,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								User *u = UMGetUserByID( l->sl_UM, id );
 								if( u != NULL )
 								{
+									killUserSessionByUser( l, u );
+									/*
 									UserSessListEntry *usl = u->u_SessionsList;
 									if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
 									{
@@ -773,6 +865,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 										}
 										usl = (UserSessListEntry *)usl->node.mln_Succ;
 									}
+									*/
 								}
 								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
 							}
@@ -1767,6 +1860,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			UserSession *ses = USMGetSessionBySessionID( l->sl_USM, sessionid );
 			if( ses != NULL )
 			{
+				killUserSession( l, ses );
+				/*
 				char tmpmsg[ 2048 ];
 				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 							
@@ -1800,6 +1895,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				}
 				
 				error = USMUserSessionRemove( l->sl_USM, ses );
+				*/
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
@@ -1808,6 +1904,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
+				killUserSessionByUser( l, u );
+				/*
 				FRIEND_MUTEX_LOCK( &u->u_Mutex );
 				UserSessListEntry *usl = u->u_SessionsList;
 				while( usl != NULL )
@@ -1839,6 +1937,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					int error = USMUserSessionRemove( l->sl_USM, usl->us );
 					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
+				*/
 			}
 			else
 			{
