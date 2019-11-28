@@ -734,26 +734,31 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								User *u = UMGetUserByID( l->sl_UM, id );
 								if( u != NULL )
 								{
-									FRIEND_MUTEX_LOCK( &u->u_Mutex );
 									UserSessListEntry *usl = u->u_SessionsList;
-									while( usl != NULL )
+									if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
 									{
-										UserSession *s = (UserSession *) usl->us;
-										if( s != NULL )
+										while( usl != NULL )
 										{
-											char tmpmsg[ 2048 ];
-											int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
-							
-											int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
-
-											DEBUG("Bytes send: %d\n", msgsndsize );
+											UserSession *s = (UserSession *) usl->us;
+											if( s != NULL )
+											{
+												char tmpmsg[ 2048 ];
+												int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+												
+												int msgsndsize = 0;
+												if( usl->us != NULL )
+												{
+													msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+												}
+												DEBUG("Bytes send: %d\n", msgsndsize );
 						
-											break;
+												break;
+											}
+											usl = (UserSessListEntry *)usl->node.mln_Succ;
 										}
-										usl = (UserSessListEntry *)usl->node.mln_Succ;
+										FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 									}
-									FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
-				
+									
 									usl = u->u_SessionsList;
 									while( usl != NULL )
 									{
@@ -761,8 +766,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 										FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
 										s->us_InUseCounter--;
 										FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-						
-										int error = USMUserSessionRemove( l->sl_USM, usl->us );
+										if( usl->us != NULL )
+										{
+											USMUserSessionRemove( l->sl_USM, usl->us );
+											usl->us = NULL;
+										}
 										usl = (UserSessListEntry *)usl->node.mln_Succ;
 									}
 								}

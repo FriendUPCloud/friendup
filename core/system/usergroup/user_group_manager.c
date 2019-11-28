@@ -800,7 +800,7 @@ FBOOL UGMUserToGroupISConnectedDB( UserGroupManager *um, FULONG ugroupid, FULONG
  * @param bs pointer to BufString where data will be stored
  * @return TRUE when entry exist, otherwise FALSE
  */
-FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, FULONG status )
+FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status )
 {
 	SystemBase *sb = (SystemBase *)um->ugm_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
@@ -871,11 +871,11 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 			
 			if( arg > 0 )
 			{
-				tmpi = snprintf( tmp, sizeof(tmp), " AND g.Status=%lu", status );
+				tmpi = snprintf( tmp, sizeof(tmp), " AND g.Status=%d", status );
 			}
 			else
 			{
-				tmpi = snprintf( tmp, sizeof(tmp), " g.Status=%lu", status );
+				tmpi = snprintf( tmp, sizeof(tmp), " g.Status=%d", status );
 			}
 			
 			BufStringAddSize( sqlbs, tmp, tmpi );
@@ -923,6 +923,75 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 		return FALSE;
 	}
 	return ret;
+}
+
+/**
+ * Get groups from FC memory where user is assigned or not
+ *
+ * @param um pointer to UserGroupManager
+ * @param uid User ID
+ * @param bs pointer to BufString where data will be stored
+ * @param type type of group (filter)
+ * @param parentID parentID (filter)
+ * @param status group status (filter)
+ * @param fParentID if parentID was passed as argument
+ */
+void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID )
+{
+	SystemBase *l = (SystemBase *)um->ugm_SB;
+	
+	if( FRIEND_MUTEX_LOCK( &(l->sl_UGM->ugm_Mutex) ) == 0 )
+	{
+		UserGroup *lg = l->sl_UGM->ugm_UserGroups;
+		int pos = 0;
+		
+		while( lg != NULL )
+		{
+			// if values are set then we want to filter all messages by using them
+			FBOOL addToList = TRUE;
+			if( fParentID == TRUE )	// user want filtering
+			{
+				if( lg->ug_ParentID != parentID )
+				{
+					addToList = FALSE;
+				}
+			}
+		
+			if( status >= 0 )
+			{
+				if( status != lg->ug_Status )
+				{
+					addToList = FALSE;
+				}
+			}
+			
+			if( type != NULL )
+			{
+				if( strcmp( type, lg->ug_Type ) != 0 )
+				{
+					addToList = FALSE;
+				}
+			}
+			
+			if( addToList == TRUE )
+			{
+				char tmp[ 512 ];
+				int tmpsize = 0;
+				if( pos == 0 )
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+				}
+				else
+				{
+					tmpsize = snprintf( tmp, sizeof(tmp), ",{\"name\":\"%s\",\"ID\":%lu,\"parentid\":%lu,\"level\":\"%s\",\"status\":%d}", lg->ug_Name, lg->ug_ID, lg->ug_ParentID, lg->ug_Type, lg->ug_Status );
+				}
+				BufStringAddSize( bs, tmp, tmpsize );
+				pos++;
+			}
+			lg = (UserGroup *)lg->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(l->sl_UGM->ugm_Mutex) );
+	}
 }
 
 /**
