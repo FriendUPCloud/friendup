@@ -3021,7 +3021,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										friendApp.onWorkspaceReady();
 									}
-									else if( Workspace.onReady )
+									else
 									{
 										Workspace.onReady();
 									}
@@ -8623,7 +8623,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.onReadyList.length )
 		{
 			// Don't run it twice
-			Workspace.onReady = false;
+			Workspace.onReady = function(){};
 			
 			for( var a = 0; a < this.onReadyList.length; a++ )
 			{
@@ -9594,6 +9594,8 @@ Workspace.receivePush = function( jsonMsg )
 {
 	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
+
+	console.log( 'Receive push!', this.onReady );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
