@@ -1050,7 +1050,7 @@ var WorkspaceInside = {
 							}
 							exists.push( svn );
 							if( found ) svn += ' ' + (num+1) + '.';
-							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onclick="Workspace.terminateSession(\'' +
+							sessions.push( '<p class="Relative FullWidth Ellipsis IconSmall fa-close MousePointer" onmousedown="Workspace.terminateSession(\'' +
 								sessionList[b].sessionid + '\', \'' + sessionList[b].deviceidentity + '\');">&nbsp;' + svn + '</p>' );
 						}
 					}
