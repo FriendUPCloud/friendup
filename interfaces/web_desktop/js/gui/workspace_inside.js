@@ -6335,7 +6335,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			canUnmount = true;
 			
-			var ics = currentMovable ? currentMovable.content.icons : currentScreen.screen._screen.icons;
+			var ics = currentMovable && currentMovable.content ? currentMovable.content.icons : currentScreen.screen._screen.icons;
 			for( var a in ics )
 			{
 				if( ics[a].domNode && ics[a].domNode.classList )
@@ -6683,7 +6683,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						disabled: !iconsAvailable || volumeIcon
 					},*/
 					// New directoryview
-					currentMovable && currentMovable.content.directoryview ? {
+					currentMovable && currentMovable.content && currentMovable.content.directoryview ? {
 						name: i18n( 'menu_new_window' ),
 						command: function(){ Workspace.newDirectoryView(); }
 					} : false,
@@ -6703,7 +6703,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.hideInactiveViews(); },
 						disabled: !windowsOpened
 					},
-					currentMovable && currentMovable.content.directoryview ? {
+					currentMovable && currentMovable.content && currentMovable.content.directoryview ? {
 						name: i18n( currentMovable.content.directoryview.showHiddenFiles ? i18n( 'menu_hide_hidden_files' ) : i18n( 'menu_show_hidden_files' ) ),
 						command: function(){ Workspace.toggleHiddenFiles(); }
 					} : false,
