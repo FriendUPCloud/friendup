@@ -1780,12 +1780,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 				
-				
+				/*
 				FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
 				ses->us_InUseCounter--;
 				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 				
 				error = USMUserSessionRemove( l->sl_USM, ses );
+				*/
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
