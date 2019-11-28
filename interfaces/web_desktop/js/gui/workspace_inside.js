@@ -9595,7 +9595,7 @@ Workspace.receivePush = function( jsonMsg )
 	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
 
-	console.log( 'Receive push!', this.onReady );
+	console.log( 'Receive push!', msg, jsonMsg );
 
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
