@@ -5169,7 +5169,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
 					
-					dr.getIcons( fi, function( icons, response )
+					// TODO: Figure out something..
+					dr.getIcons( fi, function( icons, something, response )
 					{
 						if( icons )
 						{
@@ -5203,13 +5204,30 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 						// empty, go back
 						else
 						{
-							self.redrawIcons( [], self.direction );
-							if( w.revent ) w.removeEvent( 'resize', w.revent );
-							w.revent = w.addEvent( 'resize', function( cbk )
+							try
 							{
-								self.redrawIcons( false, self.direction, cbk );
-							} );
-							console.log( 'Empty directory.' );
+								var dw = self.directoryview;
+								Notify( {
+									title: i18n( 'i18n_illegal_path' ),
+									text: i18n( 'i18n_illegal_path_desc' )
+								} );
+								// If we're not at the top of the history array, go back
+								if( dw.pathHistoryIndex > 0 )
+								{
+									var fin = dw.pathHistoryRewind();
+									dw.window.fileInfo = fin;
+				
+									if( !isMobile && dw.window.fileBrowser )
+									{
+										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+									}
+									dw.window.refresh();
+								}
+							}
+							catch( e )
+							{
+								console.log( '[Directoryview] No content.' );
+							}
 						}
 						if( callback ) callback();
 						
