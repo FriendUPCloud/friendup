@@ -1356,7 +1356,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			window.currentMovable = null;
 	
 		// See if we can activate a mainview
-		if( !currentMovable && !_activationTarget )
+		if( !currentMovable && !_activationTarget && m.windowObject )
 		{
 			var app = _getAppByAppId( m.windowObject.applicationId );
 			var hasActive = false;
