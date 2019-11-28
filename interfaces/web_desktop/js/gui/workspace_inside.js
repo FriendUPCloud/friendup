@@ -8061,7 +8061,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( window.ScreenOverlay && ScreenOverlay.visibility )
 		{
 			if( Workspace.onReady )
-				Workspace.onReady();
+				Workspace.onReady( false, true );
 			return;
 		}
 		
@@ -8623,8 +8623,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.onReadyList.length )
 		{
 			// Don't run it twice
-			Workspace.onReady = function( msg ){
-				Workspace.receivePush( msg );
+			Workspace.onReady = function(){
+				Workspace.receivePush( false, true );
 			};
 			
 			for( var a = 0; a < this.onReadyList.length; a++ )
@@ -9592,7 +9592,7 @@ if( window.friendApp )
 }
 
 // Receive push notification (when a user clicks native push notification on phone)
-Workspace.receivePush = function( jsonMsg )
+Workspace.receivePush = function( jsonMsg, ready )
 {
 	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
@@ -9600,7 +9600,7 @@ Workspace.receivePush = function( jsonMsg )
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
 	{
-		if( this.onReady ) this.onReady();
+		if( !ready && this.onReady ) this.onReady();
 		return "nomsg";
 	}
 	try
@@ -9614,7 +9614,7 @@ Workspace.receivePush = function( jsonMsg )
 	}
 	if( !msg ) 
 	{
-		if( this.onReady ) this.onReady();
+		if( !ready && this.onReady ) this.onReady();
 		return "nomsg";
 	}
 		
@@ -9629,7 +9629,7 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Revert to push notifications on the OS side
 		Notify( { title: msg.title, text: msg.text }, null, handleClick );
-		if( this.onReady ) this.onReady();
+		if( !ready && this.onReady ) this.onReady();
 		return 'ok';
 	}
 	// "Click"
@@ -9642,7 +9642,7 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		if( !msg.application ) 
 		{
-			if( Workspace.onReady ) Workspace.onReady();
+			if( !ready && Workspace.onReady ) Workspace.onReady();
 			return 'noapp';
 		}
 	
@@ -9683,7 +9683,7 @@ Workspace.receivePush = function( jsonMsg )
 					data: msg
 				} ), '*' );
 				
-				if( Workspace.onReady ) Workspace.onReady();
+				if( !ready && Workspace.onReady ) Workspace.onReady();
 				
 				return 'ok';
 			}
@@ -9757,7 +9757,7 @@ Workspace.receivePush = function( jsonMsg )
 				}
 			}, 1000 );
 			
-			if( Workspace.onReady ) Workspace.onReady();
+			if( !ready && Workspace.onReady ) Workspace.onReady();
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
