@@ -3021,7 +3021,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									{
 										friendApp.onWorkspaceReady();
 									}
-									else
+									else if( Workspace.onReady )
 									{
 										Workspace.onReady();
 									}
@@ -8623,7 +8623,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.onReadyList.length )
 		{
 			// Don't run it twice
-			Workspace.onReady = function(){};
+			Workspace.onReady = false;
 			
 			for( var a = 0; a < this.onReadyList.length; a++ )
 			{
