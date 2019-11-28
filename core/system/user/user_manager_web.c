@@ -1780,13 +1780,26 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 				
-				/*
+				// set flag to WS connection "te be killed"
 				FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
 				ses->us_InUseCounter--;
+				if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+				{
+					ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+				}
 				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 				
+				// wait till queue will be empty
+				while( TRUE )
+				{
+					if( ses->us_WSConnections ->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+					{
+						break;
+					}
+					usleep( 1000 );
+				}
+				
 				error = USMUserSessionRemove( l->sl_USM, ses );
-				*/
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
