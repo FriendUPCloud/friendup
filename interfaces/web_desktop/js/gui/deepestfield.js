@@ -11,6 +11,7 @@
 /**
  * The Deepest Field in FriendUP shows all the connected resources in one place
  * @author Hogne Titlestad
+ * This version, for Friend OS v1.2.x is attached to tray
  */
 DeepestField = {
 	zones: [],
@@ -42,8 +43,27 @@ DeepestField = {
 		}
 		
 		// Stats...
+		var f = document.createElement( 'div' );
+		f.id = 'DeepestField';
+		f.innerHTML = '\
+				<div class="LocalElements">\
+					<div id="Identity"></div>\
+					<div id="TasksHeader"></div>\
+					<div id="TasksList"></div>\
+					<div id="NotificationHeader"></div>\
+					<div id="Notifications"></div>\
+					<div id="NetconnectionsHeader"></div>\
+					<div id="Netconnections"></div>\
+					<div id="FNetHeader"></div>\
+					<div id="FNetContent"></div>\
+					<div id="CapabilityHeader"></div>\
+					<div id="Capabilities"></div>\
+				</div>';
+		Workspace.screen.contentDiv.appendChild( f );
+		
 		var d = document.createElement( 'canvas' );
-		ge( 'DeepestField' ).appendChild( d );
+		f.appendChild( d );
+				
 		d.id = 'DeepestCanvas';
 		d.style.position = 'absolute';
 		d.style.top = ge( 'Capabilities' ).offsetTop + ge( 'Capabilities' ).offsetHeight + 20 + 'px';
@@ -69,6 +89,8 @@ DeepestField = {
 		window.addEventListener( 'resize', resizeField );
 		
 		resizeField();
+		
+		// Add deepest field to screen
 	},
 	redraw: function()
 	{
@@ -259,9 +281,265 @@ DeepestField = {
 			capas.appendChild( d );
 		}
 	},
+	selectTask: function()
+	{
+		document.body.classList.remove( 'ShowTasks' );
+		if( ge( 'TaskSwitcher' ).currentTask )
+		{
+			ge( 'TaskSwitcher' ).currentTask.window.windowObject.activate( 'force' );
+			ge( 'TaskSwitcher' ).currentTask = null;
+		}
+	},
+	// Clean out!
+	cleanTasks: function()
+	{
+		var currentItems = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
+		var dels = [];
+		for( var a = 0; a < currentItems.length; a++ )
+		{
+			var found = false;
+			for( var b in window.movableWindows )
+			{
+				if( !movableWindows[ b ].parentNode.classList.contains( 'Closing' ) && movableWindows[ b ] == currentItems[ a ].window )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{
+				dels.push( currentItems[ a ] );
+			}
+		}
+		for( var a = 0; a < dels.length; a++ )
+		{
+			ge( 'TaskSwitcher' ).removeChild( dels[ a ] );
+		}
+		this.repositionTasks();
+	},
+	// Show task switcher (meta+tab)
+	showTasks: function()
+	{
+		window.blur();
+		window.focus();
+		
+		// Repopulate
+		var currentItems = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
+		var deletables = [];
+		for( var a = 0; a < currentItems.length; a++ )
+		{
+			var doDelete = true;
+			for( var b in movableWindows )
+			{
+				if( movableWindows[ b ] == currentItems[ a ].window )
+				{
+					doDelete = false;
+					break;
+				}
+			}
+			if( doDelete )
+			{
+				deletables.push( currentItems[ a ] );
+			}
+		}
+		for( var a in movableWindows )
+		{
+			var found = false;
+			for( var b in currentItems )
+			{
+				if( movableWindows[ a ] == currentItems[ b ].window )
+				{
+					currentItems[ b ].querySelector( '.Taskname' ).innerHTML = movableWindows[ a ].windowObject.flags.title;
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{	
+				var d = document.createElement( 'div' );
+				d.className = 'WindowItem';
+				d.window = movableWindows[ a ];
+				d.innerHTML = '<div class="Close"><div class="CloseButton"></div></div><div class="Taskname">' + d.window.windowObject.flags.title + '</div>';
+				var img = null;
+				if( d.window.applicationId )
+				{
+					for( var a in Workspace.applications )
+					{
+						if( Workspace.applications[ a ].applicationId == d.window.applicationId )
+						{
+							img = Workspace.applications[ a ].icon;
+							break;
+						}
+					}
+				}
+				if( !img )
+				{
+					if( d.window.content && d.window.content.fileInfo )
+					{
+						img = '/iconthemes/friendup15/Folder.svg';
+					}
+					else
+					{
+						img = '/iconthemes/friendup15/File_Binary.svg';
+					}
+				}
+				ge( 'TaskSwitcher' ).appendChild( d );
+				( function( win, close )
+				{
+					close.onmouseup = function( e )
+					{
+						win.windowObject.close();
+						return cancelBubble( e );
+					}
+				} )( d.window, d.querySelector( '.CloseButton' ) );
+				// Add image
+				d.querySelector( '.Close' ).style.backgroundImage = 'url(' + img + ')';
+			}
+		}
+		// Clean up!
+		for( var a = 0; a < deletables.length; a++ )
+		{
+			ge( 'TaskSwitcher' ).removeChild( deletables[ a ] );
+		}
+		
+		
+		document.body.classList.add( 'ShowTasks' );
+		
+		this.repositionTasks();
+		
+		window.blur();
+		window.focus();
+	},
+	repositionTasks: function()
+	{
+		// Refresh list of window items
+		var eles = ge( 'TaskSwitcher' ).getElementsByClassName( 'WindowItem' );
+		if( eles.length )
+		{		
+			// Setup mouseover events
+			for( var a = 0; a < eles.length; a++ )
+			{
+				( function( app, appList ) {
+					app.onmouseover = function( e )
+					{
+						for( var b = 0; b < appList.length; b++ )
+						{
+							if( appList[ b ] == app )
+							{
+								ge( 'TaskSwitcher' ).currentTask = app;
+								app.classList.add( 'Current' );
+							}
+							else
+							{
+								appList[ b ].classList.remove( 'Current' );
+							}
+						}
+					}
+					app.onmouseup = function( e )
+					{
+						for( var b = 0; b < appList.length; b++ )
+						{
+							if( appList[ b ] == app )
+							{
+								app.window.windowObject.activate();
+								DeepestField.selectTask();
+								return;
+							}
+						}
+					}
+				} )( eles[ a ], eles );
+			}
+		
+			// Reposition all tasks
+			var xpos = 10;
+			var ypos = 10;
+			var xwid = eles[ 0 ].offsetWidth + 10;
+		
+			// First time we're showing the tasks
+			if( !ge( 'TaskSwitcher' ).currentTask )
+			{
+				if( !ge( 'TaskSwitcher' ).currentTask )
+				{
+					var currApp = null;
+					if( window.currentMovable )
+					{
+						currApp = currentMovable.windowObject;
+						for( var a = 0; a < eles.length; a++ )
+						{
+							if( eles[a].window == currApp )
+							{
+								if( eles[ a + 1 ] )
+									ge( 'TaskSwitcher' ).currentTask = eles[a + 1];
+								else ge( 'TaskSwitcher' ).currentTask = eles[0];
+								break;
+							}
+						}
+					}
+				}
+				// Draw the highlight
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( ge( 'TaskSwitcher' ).currentTask == eles[a] || !ge( 'TaskSwitcher' ).currentTask )
+					{
+						eles[a].classList.add( 'Current' );
+						ge( 'TaskSwitcher' ).currentTask = eles[a];
+					}
+					else
+					{
+						eles[a].classList.remove( 'Current' );
+					}
+				}
+			}
+			// Next time.. choose next task
+			else
+			{
+				var next = false;
+				for( var a = 0; a < eles.length; a++ )
+				{
+					if( ge( 'TaskSwitcher' ).currentTask == eles[a] && eles[ a + 1 ] )
+					{
+						ge( 'TaskSwitcher' ).currentTask = eles[ a + 1 ];
+						eles[ a     ].classList.remove( 'Current' );
+						eles[ a + 1 ].classList.add( 'Current' );
+						a++;
+						next = true;
+					}
+					else
+					{
+						eles[a].classList.remove( 'Current' );
+					}
+				}
+				if( !next )
+				{
+					eles[ 0 ].classList.add( 'Current' );
+					ge( 'TaskSwitcher' ).currentTask = eles[ 0 ];
+				}
+			}
+		
+			// Where is the current task?
+			var ct = ge( 'TaskSwitcher' ).currentTask;
+		
+			// Scroll into view
+			for( var a = 0; a < eles.length; a++ )
+			{
+				eles[ a ].style.left = xpos + 'px';
+				eles[ a ].style.top = ypos + 'px';
+				xpos += xwid;
+				if( xpos + xwid + 10 > ge( 'TaskSwitcher' ).offsetWidth && a < eles.length - 1 )
+				{
+					xpos = 10;
+					ypos += xwid;
+				}
+			}
+			
+			ge( 'TaskSwitcher' ).style.height = ypos + xwid + 'px';
+			ge( 'TaskSwitcher' ).style.top = ( ( window.innerHeight >> 1 ) - ( ( ypos + xwid ) >> 1 ) ) + 'px';
+			
+		}
+	},
 	updateTaskInformation: function()
 	{
-		ge( 'TasksHeader' ).innerHTML = ge( 'Tasks' ).getElementsByTagName( 'iframe' ).length + ' ' + i18n( 'i18n_tasks_running' ) + ':';
+		ge( 'TasksHeader' ).innerHTML = ge( 'TaskSwitcher' ).getElementsByTagName( 'iframe' ).length + ' ' + i18n( 'i18n_tasks_running' ) + ':';
 	},
 	updateNotificationInformation: function()
 	{

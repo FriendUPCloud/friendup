@@ -876,6 +876,9 @@ function _ActivateWindowOnly( div )
 	// Special case
 	var delayedDeactivation = true;
 	
+	// Note we're having a current movable
+	currentMovable = div;
+	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
 	for( var a in movableWindows )
@@ -1003,6 +1006,7 @@ function _ActivateWindowOnly( div )
 }
 
 // "Private" function to activate a window
+var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
 	if( !e ) e = window.event;
@@ -1065,6 +1069,9 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Reserve this div for activation
+	_activationTarget = div;
+	
 	// Activate all iframes
 	if( div.windowObject.content )
 	{
@@ -1106,6 +1113,7 @@ function _ActivateWindow( div, nopoll, e )
 	// If it has a window blocker, activate that instead
 	if ( div && div.content && typeof ( div.content.blocker ) == 'object' )
 	{
+		_activationTarget = null; // unreserve
 		_ActivateWindow( div.content.blocker.getWindowElement ().parentNode, nopoll, e );
 		return;
 	}
@@ -1172,6 +1180,7 @@ function _ActivateWindow( div, nopoll, e )
 			div.windowObject.sendMessage( { command: 'activate' } ); // Let the app know
 			div.notifyActivated = true;
 		}
+		_activationTarget = null; // Unreserve
 		return;
 	}
 
@@ -1214,6 +1223,9 @@ function _ActivateWindow( div, nopoll, e )
 	_ActivateWindowOnly( div );
 
 	if( !nopoll ) PollTaskbar( div );
+	
+	// All done
+	_activationTarget = null;
 }
 
 // Activate tiling system
@@ -1344,7 +1356,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			window.currentMovable = null;
 	
 		// See if we can activate a mainview
-		if( !currentMovable )
+		if( !currentMovable && !_activationTarget )
 		{
 			var app = _getAppByAppId( m.windowObject.applicationId );
 			var hasActive = false;
@@ -1636,7 +1648,7 @@ function CloseView( win, delayed )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-	
+		
 	if( win )
 	{
 		// Clean up!
@@ -1730,7 +1742,12 @@ function CloseView( win, delayed )
 			}, isMobile ? 750 : 500 );
 
 			if( !isMobile )
+			{
 				div.style.opacity = 0;
+				if( window.DeepestField )
+					DeepestField.cleanTasks();
+			}
+
 
 			// Do not click!
 			var ele = document.createElement( 'div' );
@@ -2792,7 +2809,7 @@ var View = function( args )
 					this.mode = 'maximized';					
 				}
 				else
-				{
+				{	
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
 					
@@ -2912,7 +2929,6 @@ var View = function( args )
 		{
 			if( div.minimized ) 
 			{
-				console.log( 'Already minimized' );
 				return;
 			}
 			div.minimized = true;
@@ -3927,6 +3943,17 @@ var View = function( args )
 
 		var view = this;
 		this.iframe = ifr;
+		
+		ifr.onfocus = function()
+		{
+			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
+			{
+				// Don't steal focus!
+				ifr.blur();
+				window.blur();
+				window.focus();
+			}
+		}
 
 		if( packet.applicationId ) this._window.applicationId = packet.applicationId;
 
@@ -4508,10 +4535,9 @@ var View = function( args )
 		if( !force && this._window && this._window.applicationId )
 		{
 			// Send directly to the view
+			var app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
 			if( c.getElementsByTagName( _viewType ).length )
 			{
-				var app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
-
 				var twindow = this;
 
 				// Notify application
@@ -4558,6 +4584,18 @@ var View = function( args )
 					v.windowObject.sendMessage( msg );
 				}
 				return false;
+			}
+			else if( app )
+			{
+				// Notify application
+				var msg = {
+					type: 'system',
+					command: 'notify',
+					method: 'closeview',
+					applicationId: this._window.applicationId,
+					viewId: self.viewId
+				};
+				app.sendMessage( msg );
 			}
 		}
 		CloseView( this._window );
@@ -4871,10 +4909,6 @@ var View = function( args )
 	}
 	this.parseFlags = function( flags, filter )
 	{
-		console.log( 'parseFlags', {
-			flags  : flags,
-			filter : filter,
-		});
 		if( !this.flags ) this.flags = {};
 		for( var a in flags )
 		{

@@ -371,7 +371,7 @@ function apiWrapper( event, force )
 							};
 							if( tar )
 								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
-							else 
+							else if( app.contentWindow ) 
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}, msg.extra );
 						break;
@@ -3515,6 +3515,7 @@ function apiWrapper( event, force )
 											method: 'closewindow'
 										} ), '*' );
 										setTimeout( function(){ if( theApp.contentWindow ) theApp.quit(); }, 100 );
+										break;
 									}
 								}
 							}

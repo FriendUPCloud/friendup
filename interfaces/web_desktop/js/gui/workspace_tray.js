@@ -134,14 +134,14 @@ function PollTray()
 			{
 				nots[ a ].seen = true;
 				
-				if( nots[ a ].notificationId )
+				if( nots[ a ].uniqueId )
 				{
 					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 					{
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							notifid: nots[ a ].notificationId, 
+							notifid: nots[ a ].uniqueId, 
 							action: 1,
 							pawel: 10
 						} );
@@ -161,10 +161,10 @@ function PollTray()
 						if( event.clickCallback )
 						{
 							event.clickCallback();
-							RemoveNotificationEvent( event.notificationId );
-							if( tray.notifications && this && this.parentNode == tray.notifications )
-								tray.notifications.removeChild( this );
 						}
+						RemoveNotificationEvent( event.uniqueId );
+						if( tray.notifications && this && this.parentNode == tray.notifications )
+							tray.notifications.removeChild( this );
 						PollTray();
 						return cancelBubble( e );
 					}
@@ -242,7 +242,7 @@ function PollTray()
 						{
 							if( this.notification.clickCallback )
 							{
-								RemoveNotificationEvent( this.notification.notificationId );
+								RemoveNotificationEvent( this.notification.uniqueId );
 								this.notification.clickCallback();
 							}
 							this.parentNode.removeChild( this );
@@ -364,7 +364,7 @@ function AddNotificationEvent( evt )
 	).toString();
 	evt.uniqueId = uniqueId;
 	Workspace.notificationEvents.push( evt );
-	//console.log( 'Added notification event.', evt );
+	console.log( 'Added notification event.', evt );
 	return uniqueId;
 }
 
@@ -604,8 +604,8 @@ function Notify( message, callback, clickcallback )
 					if( clickcallback && mousePointer.candidate && mousePointer.candidate.el == n )
 					{
 						clickcallback( e )
-						RemoveNotificationEvent( notificationId );
 					}
+					RemoveNotificationEvent( notificationId );
 				}
 				cancelBubble( e );
 			};

@@ -3,17 +3,25 @@
 		<div class="Padding">
 			<div id="SearchGuiContainer">
 				<div class="HRow MarginBottom">
-					<div class="HContent100">
+					<div class="HContent85 FloatLeft">
 						<input type="text" class="FullWidth InputHeight" id="WorkspaceSearchKeywords" placeholder="{i18n_search_keywords}" onkeydown="if( event.which == 13 ){ Workspace.searchExecute(); }"/>
+					</div>
+					<div class="HContent15 FloatLeft">
+						<div class="HContent10 FloatLeft">&nbsp;</div>
+						<div class="HContent90 FloatLeft">
+							<button class="FullWidth Button IconSmall fa-search" onclick="Workspace.searchExecute()" id="WorkspaceSearchGo">
+								 <span></span>
+							</button>
+							<button class="FullWidth Button IconSmall fa-remove" onclick="Workspace.searchStop();" style="visibility: hidden; width: 0px; overflow: hidden" id="WorkspaceSearchStop">
+								<span></span>
+							</button>
+						</div>
 					</div>
 				</div>
 				<div class="HRow MarginBottom">
 					<div class="HContent100">
-						<button class="Button IconSmall fa-search" onclick="Workspace.searchExecute()" id="WorkspaceSearchGo">
-							{i18n_search_do}
-						</button>
-						<button class="Button IconSmall fa-remove" onclick="Workspace.searchStop();" style="visibility: hidden; width: 0px; overflow: hidden" id="WorkspaceSearchStop">
-							{i18n_search_stop}
+						<button class="Button IconButton" onclick="Workspace.searchStop(); Workspace.searchAll();" style="visibility: {searchAll}" id="WorkspaceSearchAll">
+							{i18n_search_all_disks} <span class="IconSmall fa-arrow-circle-right"></span>
 						</button>
 						<div class="InputHeight FloatRight">
 							<input type="checkbox" id="SearchCaseSensitive"/> {i18n_case_sensitive} 
