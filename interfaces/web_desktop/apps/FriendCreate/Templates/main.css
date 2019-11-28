@@ -16,6 +16,16 @@
 	height: calc(100% - 120px);
 }
 
+#SideBarTabs > .Page
+{
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 40px);
+	
+}
+
 #SideBar #SB_AllFiles
 {
 	position: absolute;

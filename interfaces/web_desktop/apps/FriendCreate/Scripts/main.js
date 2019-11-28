@@ -90,19 +90,54 @@ var gui = {
 
 Application.run = function( msg )
 {
-
 	InitGui();
-
+	InitEditArea();
 }
 
 
 function InitGui()
 {
-	InitTabSystem( ge( 'SiteBarTabs' ) );
+	InitTabs( ge( 'SideBarTabs' ) );
 	if( ge( 'SideBar' ) )
 	{
 		gui.sideBar = new Friend.FileBrowser( ge( 'SB_AllFiles' ), { displayFiles: true }, gui.sideBarCallbacks );
 		gui.sideBar.render();
 	}
 }
+
+var tcounter = 0;
+function InitEditArea( filename )
+{
+	var file = { filename: 'Empty file', filesize: 0, path: false };
+	if( filename )
+	{
+		// Load the file
+	}
+	
+	var p = ge( 'CodeArea' );
+	var tc = p.querySelector( '.TabContainer' );
+	if( tc ) p = tc;
+	
+	var firstTab = p.querySelector( '.Tab' );
+	var firstPage = p.querySelector( '.Page' );
+	
+	var t = document.createElement( 'div' );
+	t.className = 'Tab IconSmall fa-file';
+	t.id = 'codetab_' + ( ++tcounter );
+	t.innerHTML = file.filename;
+	var d = document.createElement( 'div' );
+	d.className = 'Page';
+	if( firstTab )
+	{
+		p.insertBefore( t, firstTab );
+		p.insertBefore( d, firstPage );
+	}
+	else
+	{
+		p.appendChild( t );
+		p.appendChild( d );
+	}
+	InitTabs( ge( 'CodeArea' ) );
+}
+
 

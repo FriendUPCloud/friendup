@@ -30,6 +30,7 @@ Application.run = function( msg )
 	}
 	
 	var m = new File( 'Progdir:Templates/main.html' );
+	m.i18n();
 	m.onLoad = function( data )
 	{
 		mainWindow.setContent( data );
