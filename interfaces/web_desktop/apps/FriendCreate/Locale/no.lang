@@ -11,3 +11,5 @@ i18n_print                          : Utskrift
 i18n_undo                           : Angre
 i18n_search_replace                 : Søk & erstatt
 
+i18n_are_you_sure                   : Er du sikker?
+i18n_this_will_close                : Dette vil lukke det aktive dokumentet.

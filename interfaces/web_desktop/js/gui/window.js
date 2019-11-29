@@ -5423,7 +5423,7 @@ var View = function( args )
 
 	this.setSticky = function()
 	{
-		this._window.parentNode.setAttribute( 'sticky', 'sticky' );
+		this._window.parentNode.parentNode.setAttribute( 'sticky', 'sticky' );
 	}
 
 	// Now set it up! --------------------------------------------------------->

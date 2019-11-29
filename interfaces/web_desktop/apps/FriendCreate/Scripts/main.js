@@ -233,9 +233,21 @@ function InitEditArea( file )
 	var firstPage = p.querySelector( '.Page' );
 	
 	var t = document.createElement( 'div' );
-	t.className = 'Tab IconSmall fa-remove';
+	t.className = 'Tab';
 	t.id = 'codetab_' + ( ++tcounter );
 	t.innerHTML = file.filename;
+	var c = document.createElement( 'div' );
+	c.className = 'MarginLeft FloatRight Close IconSmall fa-remove';
+	c.onmouseover = function()
+	{
+		this.style.filter = 'invert(1)';
+	}
+	c.onmouseout = function()
+	{
+		this.style.filter = '';
+	}
+	
+	t.appendChild( c );
 	var d = document.createElement( 'div' );
 	d.className = 'Page';
 	if( firstTab )
@@ -248,6 +260,20 @@ function InitEditArea( file )
 		( tc ? tc : p ).appendChild( t );
 		p.appendChild( d );
 	}
+	
+	c.addEventListener( 'mousedown', function( e )
+	{
+		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
+		{
+			if( di.data )
+			{
+				d.parentNode.removeChild( d );
+				t.parentNode.removeChild( t );
+				InitTabs( ge( 'CodeArea' ) );
+			}
+		} );
+		return cancelBubble( e );
+	} );
 	
 	// Initialize the content editor
 	InitContentEditor( d, file );
@@ -294,6 +320,55 @@ function InitContentEditor( element, file )
 	
 	// Remove find dialog
 	file.editor.commands.removeCommand( 'find' );
+}
+
+var supportedFiles = [
+	'php',
+	'pl',
+	'sql',
+	'sh',
+	'as',
+	'txt',
+	'js',
+	'lang',
+	'pls',
+	'json',
+	'tpl',
+	'ptpl',
+	'xml',
+	'html',
+	'htm',
+	'c',
+	'h',
+	'cpp',
+	'd',
+	'ini',
+	'jsx',
+	'java',
+	'css',
+	'run',
+	'apf',
+	'conf'
+];
+
+function OpenFile( path )
+{
+	( new Filedialog( {
+		path: path,
+		triggerFunction: function( items )
+		{
+			if( items && items.length )
+			{
+				for( var a in items )
+				{
+					( new EditorFile( items[a].Path ) );
+				}
+			}
+		},
+		type: 'open',
+		suffix: supportedFiles,
+		rememberPath: true
+	} ) );
 }
 
 
