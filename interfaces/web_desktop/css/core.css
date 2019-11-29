@@ -656,6 +656,7 @@ input.Required
 .VDivider
 {
 	display: inline-block;
+	vertical-align: bottom;
 	border: 0;
 	border-left: 1px solid rgba(0,0,0,0.5);
 	margin: 0 5px 0 5px;

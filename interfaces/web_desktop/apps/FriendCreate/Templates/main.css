@@ -19,7 +19,7 @@
 	left: 0;
 	top: 120px;
 	width: 280px;
-	height: calc(100% - 120px);
+	height: calc(100% - 160px);
 }
 
 #SideBarTabs > .PageActive
@@ -46,7 +46,7 @@
 	left: 280px;
 	top: 120px;
 	width: calc(100% - 280px);
-	height: calc(100% - 120px);
+	height: calc(100% - 160px);
 }
 
 #CodeArea .PageActive
@@ -64,4 +64,12 @@
 	float: right;
 }
 
+#StatusBar
+{
+	position: absolute;
+	top: calc(100% - 40px);
+	left: 0;
+	width: 100%;
+	height: 40px;
+}
 
