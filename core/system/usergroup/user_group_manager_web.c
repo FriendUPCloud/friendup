@@ -265,7 +265,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
-		{	// user can create his own groups
+		{	// user cannot create any groups without permissions
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
 			{
@@ -534,79 +534,101 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		if( id > 0 )
 		{
-			UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
-			
-			// group not found in memory, checking DB
-			if( fg == NULL )
+			char *authid = NULL;
+			char *args = NULL;
+			el = HttpGetPOSTParameter( request, "authid" );
+			if( el != NULL )
 			{
-				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-				if( sqllib != NULL )
-				{
-					char where[ 512 ];
-					int size = snprintf( where, sizeof(where), "ID='%lu'", id );
-					int entries;
-					
-					fg = sqllib->Load( sqllib, UserGroupDesc, where, &entries );
-
-					l->LibrarySQLDrop( l, sqllib );
-				}
+				authid = el->data;
 			}
-			
-			DEBUG("Group found\n");
-			if( fg != NULL )
+			el = HttpGetPOSTParameter( request, "args" );
+			if( el != NULL )
 			{
-				FBOOL canChange = FALSE;
-				if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+				args = UrlDecodeToMem( el->data );
+			}
+				
+			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
+			{
+				UserGroup *fg = UGMGetGroupByID( l->sl_UGM, id );
+			
+				// group not found in memory, checking DB
+				if( fg == NULL )
 				{
-					canChange = TRUE;
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+					if( sqllib != NULL )
+					{
+						char where[ 512 ];
+						int size = snprintf( where, sizeof(where), "ID='%lu'", id );
+						int entries;
+					
+						fg = sqllib->Load( sqllib, UserGroupDesc, where, &entries );
+
+						l->LibrarySQLDrop( l, sqllib );
+					}
 				}
-				else
+			
+				DEBUG("Group found\n");
+				if( fg != NULL )
 				{
-					if( fg->ug_UserID == loggedSession->us_UserID )
+					FBOOL canChange = FALSE;
+					if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
 					{
 						canChange = TRUE;
 					}
-				}
-				
-				DEBUG("Can change: %d\n", canChange );
-				if( canChange == TRUE )
-				{
-					if( strcmp( fg->ug_Type, "Level" ) != 0 )	//you can only remove entries which dont have "Level" type
+					else
 					{
-						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-						if( sqllib != NULL )
+						if( fg->ug_UserID == loggedSession->us_UserID )
 						{
-						//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
-						//sqllib->Update( sqllib, UserGroupDesc, fg );
+							canChange = TRUE;
+						}
+					}
+				
+					DEBUG("Can change: %d\n", canChange );
+					if( canChange == TRUE )
+					{
+						if( strcmp( fg->ug_Type, "Level" ) != 0 )	//you can only remove entries which dont have "Level" type
+						{
+							SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+							if( sqllib != NULL )
+							{
+								//fg->ug_Status = USER_GROUP_STATUS_DISABLED;
+								//sqllib->Update( sqllib, UserGroupDesc, fg );
 
-							char msg[ 512 ];
-							snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
-							UGMRemoveGroup( l->sl_UGM, fg );
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
+								char msg[ 512 ];
+								snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\"}", fg->ug_ID, fg->ug_Name );
+								UGMRemoveGroup( l->sl_UGM, fg );
+								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
 						
-							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
+								HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"success\"}" );
 
-							l->LibrarySQLDrop( l, sqllib );
+								l->LibrarySQLDrop( l, sqllib );
+							}
+							else
+							{
+								char buffer[ 256 ];
+								snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+								HttpAddTextContent( response, buffer );
+							}
 						}
 						else
 						{
-							char buffer[ 256 ];
-							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
-							HttpAddTextContent( response, buffer );
+							HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Cannot remove group with 'Level' type\", \"code\":\"1\" }" );
 						}
 					}
 					else
 					{
-						HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Cannot remove group with 'Level' type\", \"code\":\"1\" }" );
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+						HttpAddTextContent( response, buffer );
 					}
 				}
-				else
-				{
-					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			}
+			else
+			{
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
 					HttpAddTextContent( response, buffer );
-				}
 			}
 		}
 		else
@@ -657,7 +679,20 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		HashmapElement *el = NULL;
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		char *authid = NULL;
+		char *args = NULL;
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = UrlDecodeToMem( el->data );
+		}
+		
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
@@ -859,7 +894,17 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				HttpAddTextContent( response, buffer );
 			}
 		}
+		else
+		{
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 		
+		if( args != NULL )
+		{
+			FFree( args );
+		}
 		if( groupname != NULL )
 		{
 			FFree( groupname );
