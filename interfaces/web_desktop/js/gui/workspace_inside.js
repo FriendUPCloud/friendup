@@ -8625,6 +8625,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Don't run it twice
 			Workspace.onReady = function(){
 				Workspace.receivePush( false, true );
+				return true;
 			};
 			
 			for( var a = 0; a < this.onReadyList.length; a++ )
