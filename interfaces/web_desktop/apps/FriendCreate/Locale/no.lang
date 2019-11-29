@@ -18,3 +18,12 @@ i18n_open_file                      : Åpne fil
 
 i18n_are_you_sure                   : Er du sikker?
 i18n_this_will_close                : Dette vil lukke det aktive dokumentet.
+
+menu_file                           : Fil
+menu_file_open                      : Åpne
+menu_file_save                      : Lagre
+menu_file_save_as                   : Lagre som
+menu_file_print                     : Print
+menu_file_close                     : Lukk
+menu_quit                           : Avslutt
+

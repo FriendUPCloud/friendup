@@ -18,7 +18,7 @@
 			<button type="button" class="IconSmall fa-print" onclick="PrintFile()">
 				{i18n_print}
 			</button>
-			<button type="button" class="IconSmall fa-undo">
+			<button type="button" class="IconSmall fa-undo" onclick="if( Application.currentFile ) Application.currentFile.editor.undo()">
 				{i18n_undo}
 			</button>
 			<div class="VDivider Large"></div>
@@ -26,10 +26,10 @@
 				{i18n_search_replace}
 			</button>
 			<div class="VDivider Large"></div>
-			<button type="button" class="IconSmall fa-play">
+			<button type="button" class="IconSmall fa-play" onclick="RunApp()">
 				{i18n_run_app}
 			</button>
-			<button type="button" class="IconSmall fa-stop">
+			<button type="button" class="IconSmall fa-stop" onclick="StopApp()">
 				{i18n_stop_app}
 			</button>
 			

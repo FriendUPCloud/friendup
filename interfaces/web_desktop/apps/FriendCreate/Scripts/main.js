@@ -445,7 +445,6 @@ document.body.addEventListener( 'keydown', function( e )
 
 }, false );
 
-
 // Printing support ------------------------------------------------------------
 
 function PrintFile()
@@ -456,6 +455,31 @@ function PrintFile()
 		document.body.classList.add( 'Printing' );
 		window.print();
 		document.body.classList.remove( 'Printing' );
+	}
+}
+
+// Run / stop app
+
+// Run the current jsx
+function RunApp()
+{
+	if( Application.currentFile )
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'executeapplication',
+			executable: Application.currentFile.path,
+			arguments: false
+		} );
+	}
+}
+
+// Kill running jsx
+function StopApp()
+{
+	if( Application.currentFile )
+	{
+		Application.sendMessage( { type: 'system', command: 'kill', appName: Application.currentFile.filename } );
 	}
 }
 
