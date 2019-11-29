@@ -1,3 +1,30 @@
+#Print
+{
+	visibility: hidden;
+	height: 0;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+
+@media print {
+    #Print
+    {
+    	position: absolute;
+    	width: 100%;
+    	top: 0;
+    	left. 0;
+        height: 100%;
+        visibility: visible;
+        overflow: visible;
+    }
+    body > div:not(#Print)
+    {
+    	display: none;
+    }
+}
+
+
 #TopPanel
 {
 	position: absolute;

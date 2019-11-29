@@ -10,6 +10,13 @@ i18n_save                           : Save
 i18n_print                          : Print
 i18n_undo                           : Undo
 i18n_search_replace                 : Search & replace
+i18n_run_app                        : Run app
+i18n_stop_app                       : Stop
+
+i18n_file_menu                      : File
+i18n_open_file                      : Open file
 
 i18n_are_you_sure                   : Are you sure?
 i18n_this_will_close                : This will close your current document.
+
+

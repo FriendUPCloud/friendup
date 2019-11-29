@@ -47,51 +47,16 @@ var gui = {
 					}
 				} );
 			}
-			else
+			if( Application.checkFileType( path ) )
 			{
-				var found = false;
-			
-				// Just switch to existing
-				for( var a in Application.files )
-				{
-					if( Application.files[a].filename == path )
-					{
-						//Application.setCurrentFile( a );
-						found = true;
-						break;
-					}
-				}
-				if( !found )
-				{
-					( new EditorFile( path ) );
-				}
+				( new EditorFile( path ) );
 			}
+			return true;
 		},
 		// Load a file
 		loadFile( path )
 		{
-			var found = false;
-			// Just switch to existing
-			for( var a in Application.files )
-			{
-				if( Application.files[a].filename == path )
-				{
-					found = true;
-					SetCurrentFile( a );
-					break;
-				}
-			}
-			if( !found )
-			{
-				Application.sendMessage( {
-					command: 'loadfiles',
-					paths: [ path ]
-				} );
-			}
-			else
-			{
-				Application.refreshFilesList();
-			}
+			( new EditorFile( path ) );
 		},
 		// Do we permit?
 		permitFiletype( path )
@@ -115,6 +80,7 @@ Application.run = function( msg )
 // Set current file ------------------------------------------------------------
 function SetCurrentFile( index )
 {
+	Application.currentFile = Application.files[ index ];
 }
 
 // Check if we support the filetype --------------------------------------------
@@ -236,11 +202,16 @@ EditorFile.prototype.updateTab = function()
 	this.tab.getElementsByTagName( 'span' )[0].innerHTML = this.filename;
 }
 
+function NewFile()
+{
+	( new EditorFile() );
+}
+
 // Editor area (tabbed page) ---------------------------------------------------
 
 var tcounter = 0;
 function InitEditArea( file )
-{
+{	
 	var p = ge( 'CodeArea' );
 	var tc = p.querySelector( '.TabContainer' );
 	
@@ -280,6 +251,8 @@ function InitEditArea( file )
 		p.appendChild( d );
 	}
 	
+	file.page = p;
+	
 	t.addEventListener( 'mouseup', function()
 	{
 		Application.currentFile = file;
@@ -306,6 +279,7 @@ function InitEditArea( file )
 	InitTabs( ge( 'CodeArea' ) );
 	
 	Application.currentFile = file;
+	file.tab.onclick();
 }
 
 function RemoveEditArea( file )
@@ -471,3 +445,16 @@ document.body.addEventListener( 'keydown', function( e )
 
 }, false );
 
+
+// Printing support ------------------------------------------------------------
+
+function PrintFile()
+{
+	if( Application.currentFile )
+	{
+		ge( 'Print' ).innerHTML = Application.currentFile.page.getElementsByClassName( 'ace_editor' )[0].innerHTML;
+		document.body.classList.add( 'Printing' );
+		window.print();
+		document.body.classList.remove( 'Printing' );
+	}
+}
