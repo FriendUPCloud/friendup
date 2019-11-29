@@ -251,7 +251,20 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		
 		HashmapElement *el = NULL;
 		
-		//if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		char *authid = NULL;
+		char *args = NULL;
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->data;
+		}
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = UrlDecodeToMem( el->data );
+		}
+		
+		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{	// user can create his own groups
 			el = HttpGetPOSTParameter( request, "groupname" );
 			if( el != NULL )
@@ -461,6 +474,12 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				HttpAddTextContent( response, buffer );
 			}
 		}
+		else
+		{
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
+		}
 		
 		if( groupname != NULL )
 		{
@@ -473,6 +492,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		if( users != NULL )
 		{
 			FFree( users );
+		}
+		if( args != NULL )
+		{
+			FFree( args );
 		}
 
 		*result = 200;
