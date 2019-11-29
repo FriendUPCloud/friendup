@@ -1633,7 +1633,7 @@ function apiWrapper( event, force )
 									{
 										if( app.windows[ c ].parentViewId == msg.viewId )
 										{
-											app.windows[ c ].close(1);
+											app.windows[ c ].close( 1 );
 											continue;
 										}
 										out[ c ] = app.windows[ c ];
