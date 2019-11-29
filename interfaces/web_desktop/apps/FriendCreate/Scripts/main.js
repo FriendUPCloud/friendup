@@ -116,25 +116,24 @@ function InitEditArea( filename )
 	
 	var p = ge( 'CodeArea' );
 	var tc = p.querySelector( '.TabContainer' );
-	if( tc ) p = tc;
 	
 	var firstTab = p.querySelector( '.Tab' );
 	var firstPage = p.querySelector( '.Page' );
 	
 	var t = document.createElement( 'div' );
-	t.className = 'Tab IconSmall fa-file';
+	t.className = 'Tab IconSmall fa-remove';
 	t.id = 'codetab_' + ( ++tcounter );
 	t.innerHTML = file.filename;
 	var d = document.createElement( 'div' );
 	d.className = 'Page';
 	if( firstTab )
 	{
-		p.insertBefore( t, firstTab );
+		tc.insertBefore( t, firstTab );
 		p.insertBefore( d, firstPage );
 	}
 	else
 	{
-		p.appendChild( t );
+		( tc ? tc : p ).appendChild( t );
 		p.appendChild( d );
 	}
 	InitTabs( ge( 'CodeArea' ) );

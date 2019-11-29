@@ -5,3 +5,9 @@ i18n_openfiles                      : Filer
 i18n_project                        : Prosjekt
 i18n_your_devices                   : Dine disker
 
+i18n_open                           : Åpne
+i18n_save                           : Large
+i18n_print                          : Utskrift
+i18n_undo                           : Angre
+i18n_search_replace                 : Søk & erstatt
+

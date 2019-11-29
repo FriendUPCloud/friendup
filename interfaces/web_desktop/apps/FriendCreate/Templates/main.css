@@ -7,6 +7,12 @@
 	height: 120px;
 }
 
+#Toolbar button
+{
+	height: 40px;
+	vertical-align: bottom;
+}
+
 #SideBar
 {
 	position: absolute;
@@ -16,14 +22,13 @@
 	height: calc(100% - 120px);
 }
 
-#SideBarTabs > .Page
+#SideBarTabs > .PageActive
 {
 	position: absolute;
 	top: 40px;
 	left: 0;
 	width: 100%;
 	height: calc(100% - 40px);
-	
 }
 
 #SideBar #SB_AllFiles
@@ -42,6 +47,21 @@
 	top: 120px;
 	width: calc(100% - 280px);
 	height: calc(100% - 120px);
+}
+
+#CodeArea .PageActive
+{
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 40px);
+}
+
+#CodeArea .Tab:before, #CodeArea .TabActive:before
+{
+	margin: 3px 0 0 10px;
+	float: right;
 }
 
 
