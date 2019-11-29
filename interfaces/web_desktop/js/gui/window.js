@@ -1030,6 +1030,10 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Don't activate a window that is being removed
+	if( div.classList.contains( 'Remove' ) )
+		return;
+	
 	// Remove menu on calendar
 	if( Workspace.calendarWidget )
 		Workspace.calendarWidget.hide();

@@ -412,6 +412,7 @@ function ExecuteApplication( app, args, callback )
 				{
 					for( var a in this.windows )
 					{
+						this.windows[a].quitting = true;
 						this.windows[a].close( level );
 					}
 				}
