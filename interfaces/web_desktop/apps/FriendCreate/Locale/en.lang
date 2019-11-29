@@ -19,4 +19,10 @@ i18n_open_file                      : Open file
 i18n_are_you_sure                   : Are you sure?
 i18n_this_will_close                : This will close your current document.
 
+menu_file_open                      : Open
+menu_file_save                      : Save
+menu_file_save_as                   : Save as
+menu_file_print                     : Print
+menu_file_close                     : Close
+menu_quit                           : Quit
 

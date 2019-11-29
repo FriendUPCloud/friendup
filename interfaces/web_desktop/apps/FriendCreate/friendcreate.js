@@ -37,10 +37,53 @@ Application.run = function( msg )
 	}
 	m.load();
 	
+	mainWindow.setMenuItems( [
+		{
+			name: i18n( 'menu_file' ),
+			items: [
+				{
+					name: i18n( 'menu_file_open' ),
+					command: 'open'
+				},
+				{
+					name: i18n( 'menu_file_save' ),
+					command: 'save'
+				},
+				{
+					name: i18n( 'menu_file_save_as' ),
+					command: 'save_as'
+				},
+				{
+					name: i18n( 'menu_file_print' ),
+					command: 'print'
+				},
+				{
+					name: i18n( 'menu_file_close' ),
+					command: 'close'
+				},
+				{
+					name: i18n( 'menu_quit' ),
+					command: 'quit'
+				}
+			]
+		} 
+	] );
 }
 
 Application.receiveMessage = function( msg )
 {
-	console.log( 'Msg: ', msg );
+	if( msg.command )
+	{
+		switch( msg.command )
+		{
+			case 'open':
+			case 'save':
+			case 'save_as':
+			case 'print':
+			case 'close':
+				mainWindow.sendMessage( msg );
+				break;
+		}
+	}
 }
 

@@ -458,3 +458,34 @@ function PrintFile()
 		document.body.classList.remove( 'Printing' );
 	}
 }
+
+// Messaging support -----------------------------------------------------------
+
+Application.receiveMessage = function( msg )
+{
+	if( msg.command )
+	{
+		switch( msg.command )
+		{
+			case 'open':
+				OpenFile();
+				break;
+			case 'save':
+				if( Application.currentFile )
+					SaveFile( Application.currentFile );
+				break;
+			case 'save_as':
+				if( Application.currentFile )
+					SaveFile( Application.currentFile, true );
+				break;
+			case 'print':
+				PrintFile();
+				break;
+			case 'close':
+				if( Application.currentFile )
+					Application.currentFile.close();
+				break;
+		}
+	}
+}
+
