@@ -157,6 +157,8 @@ Application.checkFileType = function( path )
 	}
 }
 
+// Initialize the GUI! ---------------------------------------------------------
+
 function InitGui()
 {
 	InitTabs( ge( 'SideBarTabs' ) );
@@ -172,6 +174,14 @@ function InitGui()
 var EditorFile = function( path )
 {
 	var self = this;
+	
+	for( var a = 0; a < Application.files.length; a++ )
+	{
+		if( Application.files[ a ].path == path )
+		{
+			return Application.files[ a ].tab.onclick();
+		}
+	}
 	
 	// Load file
 	if( path && path.indexOf( ':' ) > 0 )
@@ -221,6 +231,11 @@ EditorFile.prototype.close = function()
 	Application.files = out;
 }
 
+EditorFile.prototype.updateTab = function()
+{
+	this.tab.getElementsByTagName( 'span' )[0].innerHTML = this.filename;
+}
+
 // Editor area (tabbed page) ---------------------------------------------------
 
 var tcounter = 0;
@@ -233,9 +248,13 @@ function InitEditArea( file )
 	var firstPage = p.querySelector( '.Page' );
 	
 	var t = document.createElement( 'div' );
+	
+	file.tab = t;
+	t.file = file;
+	
 	t.className = 'Tab';
 	t.id = 'codetab_' + ( ++tcounter );
-	t.innerHTML = file.filename;
+	t.innerHTML = '<span>' + file.filename + '</span>';
 	var c = document.createElement( 'div' );
 	c.className = 'MarginLeft FloatRight Close IconSmall fa-remove';
 	c.onmouseover = function()
@@ -261,6 +280,11 @@ function InitEditArea( file )
 		p.appendChild( d );
 	}
 	
+	t.addEventListener( 'mouseup', function()
+	{
+		Application.currentFile = file;
+	} );
+	
 	c.addEventListener( 'mousedown', function( e )
 	{
 		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
@@ -269,6 +293,7 @@ function InitEditArea( file )
 			{
 				d.parentNode.removeChild( d );
 				t.parentNode.removeChild( t );
+				t.file.close();
 				InitTabs( ge( 'CodeArea' ) );
 			}
 		} );
@@ -279,6 +304,8 @@ function InitEditArea( file )
 	InitContentEditor( d, file );
 	
 	InitTabs( ge( 'CodeArea' ) );
+	
+	Application.currentFile = file;
 }
 
 function RemoveEditArea( file )
@@ -321,6 +348,8 @@ function InitContentEditor( element, file )
 	// Remove find dialog
 	file.editor.commands.removeCommand( 'find' );
 }
+
+// Supported file formats ------------------------------------------------------
 
 var supportedFiles = [
 	'php',
@@ -371,4 +400,74 @@ function OpenFile( path )
 	} ) );
 }
 
+// Saving a file ---------------------------------------------------------------
+
+function SaveFile( file, saveas )
+{
+	if( !saveas ) saveas = false;
+	
+	if( !saveas && file.path )
+	{
+		var f = new File( file.path );
+		f.onSave = function( res )
+		{
+			
+		}
+		f.save( file.editor.getValue() );
+	}
+	else
+	{
+		( new Filedialog( {
+			path: file.path ? file.path : 'Home:',
+			triggerFunction: function( filename )
+			{
+				file.path = filename;
+				file.filename = filename.split( ':' )[1];
+				if( file.filename.indexOf( '/' ) >= 0 )
+				{
+					file.filename = file.filename.split( '/' );
+					file.filename = file.filename[ file.filename.length - 1 ];
+				}
+				var f = new File( filename );
+				f.onSave = function( res )
+				{
+					file.updateTab();
+				}
+				f.save( file.editor.getValue() );
+			},
+			type: 'save',
+			suffix: supportedFiles,
+			rememberPath: true
+		} ) );
+	}
+}
+
+// Keydowns --------------------------------------------------------------------
+
+document.body.addEventListener( 'keydown', function( e )
+{
+	var wh = e.which ? e.which : e.keyCode;
+	
+	switch( wh )
+	{
+		case 83:
+			if( e.ctrlKey || e.metaKey )
+			{
+				SaveFile( Application.currentFile, e.shiftKey );
+				return cancelBubble( e );
+			}
+			break;
+		case 79:
+			if( e.ctrlKey || e.metaKey )
+			{
+				OpenFile();
+				return cancelBubble( e );
+			}
+			break;
+		default:
+			console.log( 'Key: ' + wh );
+			break;
+	}
+
+}, false );
 
