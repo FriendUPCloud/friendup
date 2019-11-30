@@ -96,6 +96,8 @@
 	opacity: 0.8;
 	pointer-events: none;
 	transition: top 0.25s;
+	padding: 0 0 0 5px;
+	box-sizing: border-box;
 }
 
 #CodeArea .PageActive .Minimap > div
@@ -106,9 +108,10 @@
 #CodeArea .PageActive .MinimapRect
 {
 	position: absolute;
+	top: 0;
 	right: 0;
 	width: 150px;
-	background: rgba(0,150,200,0.5);
+	background: rgba(0,150,200,0.3);
 	pointer-events: all;
 	z-index: 1;
 	cursor: pointer;
@@ -123,8 +126,43 @@
 	text-overflow: hidden;
 	tab-size: 1;
 	height: 14px;
+	line-height: 14px;
+	font-size: 14px;
 	overflow: hidden;
-	color: #6699cc;
+	color: #66aaff;
+	margin: 0;
+}
+
+#CodeArea .PageActive pre.MinimapRow.Comment
+{
+	color: #ffff44;
+}
+
+#CodeArea .PageActive pre.MinimapRow.If
+{
+	color: #ccff22;
+}
+
+#CodeArea .PageActive pre.MinimapRow.Function
+{
+	color: #00ff77;
+}
+
+#CodeArea .PageActive pre.MinimapRow.Function
+{
+	color: #77ff00;
+}
+
+#CoreArea .ace_scroller.ace_scroll-left
+{
+	right: 144px !important;
+}
+
+#CodeArea .ace_scrollbar.ace_scrollbar-v,
+#CodeArea .ace_scrollbar.ace_scrollbar-h,
+#CodeArea .ace_scroller
+{
+	right: 150px !important;
 }
 
 #CodeArea .Tab:before, #CodeArea .TabActive:before

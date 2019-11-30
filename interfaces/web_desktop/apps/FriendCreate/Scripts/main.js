@@ -356,7 +356,26 @@ function InitContentEditor( element, file )
 	{
 		// Add minimap dom element
 		this.lines = this.editor.session.getValue().split( '\n' );
-		this.minimap.innerHTML = '<div><pre class="MinimapRow">' + this.lines.join( '\n</pre><pre class="MinimapRow">' ) + '</pre></div>';
+		var str = [];
+		var cl;
+		for( var a = 0; a < this.lines.length; a++ )
+		{
+			cl = '';
+			if( this.lines[a].indexOf( '//' ) >= 0 )
+				cl = ' Comment';
+			else if( this.lines[a].indexOf( 'function' ) >= 0 )
+				cl = ' Function';
+			else if( this.lines[a].indexOf( 'if' ) >= 0 )
+				cl = ' If';
+			else if( this.lines[a].indexOf( 'for' ) >= 0 )
+				cl = ' If';
+			else if( this.lines[a].indexOf( 'while' ) >= 0 )
+				cl = ' If';
+			else if( this.lines[a].indexOf( 'var' ) >= 0 )
+				cl = ' Var';
+			str.push( '<pre class="MinimapRow' + cl + '">' + this.lines[ a ] + '</pre>' );
+		}
+		this.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
 	}
 	
 	// Refresh the minimap
