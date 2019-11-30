@@ -171,6 +171,7 @@ var EditorFile = function( path )
 					InitEditArea( self );
 					setTimeout( function()
 					{
+						self.refreshBuffer();
 						self.refreshMinimap();
 					}, 50 );
 				}
@@ -190,6 +191,7 @@ var EditorFile = function( path )
 		InitEditArea( this );
 		setTimeout( function()
 		{
+			self.refreshBuffer();
 			self.refreshMinimap();
 		}, 50 );
 	}
@@ -299,7 +301,7 @@ function RemoveEditArea( file )
 
 function InitContentEditor( element, file )
 {
-	var minimapZoomLevel = 0.4;
+	var minimapZoomLevel = 0.5;
 	
 	// Remove previous editor
 	if( file.editor )
@@ -341,30 +343,69 @@ function InitContentEditor( element, file )
 	file.minimapRect = document.createElement( 'div' );
 	file.minimapRect.className = 'MinimapRect';
 	var ac = file.page.querySelector( '.ace_content' );
-	file.page.querySelector( '.ace_editor' ).appendChild( file.minimap );
-	file.page.querySelector( '.ace_editor' ).appendChild( file.minimapRect );
+	file.page.querySelector( '.ace_editor' ).parentNode.appendChild( file.minimap );
+	file.page.querySelector( '.ace_editor' ).parentNode.appendChild( file.minimapRect );
 	
 	// Events for minimap
-	file.editor.session.on( 'changeScrollTop', function()
+	file.editor.session.on( 'changeScrollTop', function( e )
 	{
-		file.refreshMinimap();
+		file.refreshMinimap( e );
 	} );
 	
+	file.refreshBuffer = function()
+	{
+		// Add minimap dom element
+		this.lines = this.editor.session.getValue().split( '\n' );
+		this.minimap.innerHTML = '<div><pre class="MinimapRow">' + this.lines.join( '\n</pre><pre class="MinimapRow">' ) + '</pre></div>';
+	}
+	
 	// Refresh the minimap
-	file.refreshMinimap = function()
+	file.refreshMinimap = function( e )
 	{
 		var self = this;
-		if( this.refreshing ) return;
+		if( !self.lines ) return;
+		if( this.refreshing ) 
+		{
+			if( this.refreshQueue )
+				clearTimeout( this.refreshQueue );
+			this.refreshQueue = setTimeout( function()
+			{ 
+				file.refreshQueue = false; 
+				file.refreshMinimap( e ); 
+			}, 50 );
+			return;
+		}
 		this.refreshing = true;
-		var lines = file.editor.session.getValue().split( '\n' );
-		var len = lines.length;
+		
+		// Lines and code content height
+		var len = self.lines.length;
 		var tot = file.editor.renderer.lineHeight * len;
-		var heh = ac.offsetHeight;
 		
-		this.minimap.innerHTML = '<div><pre class="MinimapRow">' + lines.join( '\n</pre><pre class="MinimapRow">' ) + '</pre></div>';
-		this.minimapRect.style.height = Math.floor( heh / this.minimap.offsetHeight * 100 ) + '%';
+		// 
+		var heh = ac.parentNode.offsetHeight;
 		
-		setTimeout( function(){ self.refreshing = false; }, 50 );
+		// Scroll position
+		if( e < 0 ) e = 0;
+		if( e > tot - heh ) e = tot - heh;
+
+		// Minimap height
+		setTimeout( function()
+		{
+			var meh = self.minimap.offsetHeight;
+	
+			// Scroll progress
+			var sp = e / ( tot - heh );
+		
+			if( meh > heh )
+				self.minimap.style.top = -( sp * ( meh - heh ) ) + 'px';
+			else self.minimap.style.top = 0;
+		
+			var m = self.minimapRect;
+			m.style.height = ( heh / ( tot * minimapZoomLevel ) * 100 ) + '%';
+			m.style.top = sp * ( heh - m.offsetHeight ) + 'px';
+		
+			self.refreshing = false; 
+		}, 50 );
 	}
 }
 
@@ -491,7 +532,12 @@ document.body.addEventListener( 'keydown', function( e )
 
 document.body.addEventListener( 'keyup', function( e )
 {
+	var f = Application.currentFile;
+	if( !f ) return;
+	
+
 	// Update minimap
+	Application.currentFile.refreshBuffer();
 	Application.currentFile.refreshMinimap();
 }, false );
 

@@ -90,27 +90,29 @@
 	position: absolute;
 	right: 0;
 	top: 0;
-	width: 100px;
+	width: 150px;
 	height: auto;
 	background: black;
 	opacity: 0.8;
 	pointer-events: none;
+	transition: top 0.25s;
 }
 
 #CodeArea .PageActive .Minimap > div
 {
-	zoom: 0.4;
+	zoom: 0.5;
 }
 
 #CodeArea .PageActive .MinimapRect
 {
 	position: absolute;
 	right: 0;
-	width: 100px;
+	width: 150px;
 	background: rgba(0,150,200,0.5);
 	pointer-events: all;
 	z-index: 1;
 	cursor: pointer;
+	transition: top 0.25s;
 }
 
 #CodeArea .PageActive pre.MinimapRow
@@ -120,7 +122,8 @@
 	white-space: pre;
 	text-overflow: hidden;
 	tab-size: 1;
-	line-height: 12px;
+	height: 14px;
+	overflow: hidden;
 	color: #6699cc;
 }
 
