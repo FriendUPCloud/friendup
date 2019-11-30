@@ -85,6 +85,45 @@
 	height: calc(100% - 40px);
 }
 
+#CodeArea .PageActive .Minimap
+{
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 100px;
+	height: auto;
+	background: black;
+	opacity: 0.8;
+	pointer-events: none;
+}
+
+#CodeArea .PageActive .Minimap > div
+{
+	zoom: 0.4;
+}
+
+#CodeArea .PageActive .MinimapRect
+{
+	position: absolute;
+	right: 0;
+	width: 100px;
+	background: rgba(0,150,200,0.5);
+	pointer-events: all;
+	z-index: 1;
+	cursor: pointer;
+}
+
+#CodeArea .PageActive pre.MinimapRow
+{
+	position: relative;
+	width: 100%;
+	white-space: pre;
+	text-overflow: hidden;
+	tab-size: 1;
+	line-height: 12px;
+	color: #6699cc;
+}
+
 #CodeArea .Tab:before, #CodeArea .TabActive:before
 {
 	margin: 3px 0 0 10px;

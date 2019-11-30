@@ -169,6 +169,10 @@ var EditorFile = function( path )
 					self.filesize = json.Filesize;
 					Application.files.push( self );
 					InitEditArea( self );
+					setTimeout( function()
+					{
+						self.refreshMinimap();
+					}, 50 );
 				}
 				f.load();
 			}
@@ -184,6 +188,10 @@ var EditorFile = function( path )
 		this.filesize = 0;
 		Application.files.push( this );
 		InitEditArea( this );
+		setTimeout( function()
+		{
+			self.refreshMinimap();
+		}, 50 );
 	}
 }
 EditorFile.prototype.close = function()
@@ -280,6 +288,8 @@ function InitEditArea( file )
 	
 	Application.currentFile = file;
 	file.tab.onclick();
+	
+	file.refreshMinimap();
 }
 
 function RemoveEditArea( file )
@@ -289,6 +299,8 @@ function RemoveEditArea( file )
 
 function InitContentEditor( element, file )
 {
+	var minimapZoomLevel = 0.4;
+	
 	// Remove previous editor
 	if( file.editor )
 	{
@@ -321,6 +333,39 @@ function InitContentEditor( element, file )
 	
 	// Remove find dialog
 	file.editor.commands.removeCommand( 'find' );
+	
+	// Create minimap
+	file.minimap = document.createElement( 'div' );
+	file.minimap.className = 'Minimap';
+	file.minimap.innerHTML = file.page.querySelector( '.ace_content' ).innerHTML;
+	file.minimapRect = document.createElement( 'div' );
+	file.minimapRect.className = 'MinimapRect';
+	var ac = file.page.querySelector( '.ace_content' );
+	file.page.querySelector( '.ace_editor' ).appendChild( file.minimap );
+	file.page.querySelector( '.ace_editor' ).appendChild( file.minimapRect );
+	
+	// Events for minimap
+	file.editor.session.on( 'changeScrollTop', function()
+	{
+		file.refreshMinimap();
+	} );
+	
+	// Refresh the minimap
+	file.refreshMinimap = function()
+	{
+		var self = this;
+		if( this.refreshing ) return;
+		this.refreshing = true;
+		var lines = file.editor.session.getValue().split( '\n' );
+		var len = lines.length;
+		var tot = file.editor.renderer.lineHeight * len;
+		var heh = ac.offsetHeight;
+		
+		this.minimap.innerHTML = '<div><pre class="MinimapRow">' + lines.join( '\n</pre><pre class="MinimapRow">' ) + '</pre></div>';
+		this.minimapRect.style.height = Math.floor( heh / this.minimap.offsetHeight * 100 ) + '%';
+		
+		setTimeout( function(){ self.refreshing = false; }, 50 );
+	}
 }
 
 // Supported file formats ------------------------------------------------------
@@ -442,7 +487,12 @@ document.body.addEventListener( 'keydown', function( e )
 			console.log( 'Key: ' + wh );
 			break;
 	}
+}, false );
 
+document.body.addEventListener( 'keyup', function( e )
+{
+	// Update minimap
+	Application.currentFile.refreshMinimap();
 }, false );
 
 // Printing support ------------------------------------------------------------
