@@ -703,6 +703,40 @@ Application.receiveMessage = function( msg )
 				if( Application.currentFile )
 					Application.currentFile.close();
 				break;
+			case 'project_editor':
+				OpenProjectEditor();
+				break;
+		}
+	}
+}
+
+// The project editor
+var pe = null;
+function OpenProjectEditor()
+{
+	if( pe )
+	{
+		return pe.activate();
+	}
+	pe = new View( {
+		title: i18n( 'i18n_project_editor' ),
+		width: 900,
+		height: 700
+	} );
+	
+	var f = new File( 'Progdir:Templates/project_editor.html' );
+	f.i18n();
+	f.onLoad = function( data )
+	{
+		pe.setContent( data );
+	}
+	f.load();
+	
+	if( !pe.onClose )
+	{
+		pe.onClose = function()
+		{
+			pe = null;
 		}
 	}
 }

@@ -102,6 +102,7 @@ Application.receiveMessage = function( msg )
 			case 'save_as':
 			case 'print':
 			case 'close':
+			case 'project_editor':
 				mainWindow.sendMessage( msg );
 				break;
 		}
