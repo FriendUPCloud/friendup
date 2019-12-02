@@ -27,5 +27,11 @@ menu_file_print                     : Print
 menu_file_close                     : Close
 menu_quit                           : Quit
 
+menu_project                        : Project
+menu_project_new                    : New project
+menu_project_open                   : Open project
+menu_project_close                  : Close project
+menu_project_editor                 : Project editor
+
 i18n_saving                         : Saving...
 i18n_saved                          : Saved.

@@ -339,14 +339,57 @@ function InitContentEditor( element, file )
 	file.editor.commands.removeCommand( 'find' );
 	
 	// Create minimap
+	file.minimapGroove = document.createElement( 'div' );
+	file.minimapGroove.className = 'MinimapGroove';
+	file.minimapGroove.addEventListener( 'mousedown', function( e )
+	{
+		var y  = e.clientY - GetElementTop( file.minimapGroove );
+		var cl = ( y / file.page.offsetHeight );
+		var pageH = Math.floor( file.page.offsetHeight / file.editor.renderer.lineHeight );
+		
+		if( cl > 0.5 )
+		{
+			file.editor.gotoLine( Math.floor( file.editor.getFirstVisibleRow() + ( pageH * 1.5 ) ), 0, false );
+		}
+		else
+		{
+			file.editor.gotoLine( file.editor.getFirstVisibleRow() - pageH, 0, false );
+		}
+	}, false );
 	file.minimap = document.createElement( 'div' );
 	file.minimap.className = 'Minimap';
 	file.minimap.innerHTML = file.page.querySelector( '.ace_content' ).innerHTML;
 	file.minimapRect = document.createElement( 'div' );
 	file.minimapRect.className = 'MinimapRect';
+	// Move the rect
+	file.minimapRect.onmousedown = function( e )
+	{
+		file.mouseDown = e.clientY;
+		file.rectPos = file.minimapRect.offsetTop;
+		file.minimapRect.classList.add( 'Move' );
+	}
+	file.minimapRect.onmousemove = function( e )
+	{
+		if( file.mouseDown )
+		{
+			var sy = e.clientY - file.mouseDown;
+			var ty = file.rectPos + sy;
+			if( ty < 0 ) ty = 0;
+			else if( ty + file.minimapRect.offsetHeight > file.minimapGroove.offsetHeight )
+				ty = file.minimapGroove.offsetHeight - file.minimapRect.offsetHeight;
+			file.minimapRect.style.top = ty + 'px';			
+		}
+	}
+	window.addEventListener( 'mouseup', function( e )
+	{
+		file.mouseDown = false;
+		file.minimapRect.classList.remove( 'Move' );
+	}, false );
+	// Done moving the rect
 	var ac = file.page.querySelector( '.ace_scroller' );
-	file.page.querySelector( '.ace_editor' ).parentNode.appendChild( file.minimap );
-	file.page.querySelector( '.ace_editor' ).parentNode.appendChild( file.minimapRect );
+	ac.parentNode.appendChild( file.minimap );
+	ac.parentNode.appendChild( file.minimapRect );
+	ac.parentNode.appendChild( file.minimapGroove );
 	
 	// Events for minimap
 	file.editor.session.on( 'changeScrollTop', function( e )
@@ -403,14 +446,27 @@ function InitContentEditor( element, file )
 		// Minimap height
 		setTimeout( function()
 		{
-			var e = self.editor.getFirstVisibleRow() * 14;
+			var lh = self.editor.renderer.lineHeight;
+			
+			var e = self.editor.getFirstVisibleRow() * lh;
 		
 			// Lines and code content height
 			var len = self.lines.length;
-			var tot = file.editor.renderer.lineHeight * len;
+			var tot = lh * len;
 		
 			// Text container height
-			var contHeight = ac.offsetHeight + ( 14 * minimapZoomLevel );
+			var contHeight = ac.offsetHeight + ( lh * minimapZoomLevel );
+		
+			// 
+			var m = self.minimapRect;
+		
+			// Don't do calculation when there's no content to scroll
+			if( tot <= contHeight )
+			{
+				m.style.height = contHeight + 'px';
+				self.minimap.style.height = contHeight + 'px';
+				return;
+			}
 		
 			// Scroll position
 			if( e < 0 ) e = 0;
@@ -427,7 +483,6 @@ function InitContentEditor( element, file )
 			else self.minimap.style.top = 0;
 		
 			// Page visualization
-			var m = self.minimapRect;
 			m.style.height = ( ( contHeight / tot ) * meh ) + 'px';
 			m.style.top = sp * ( contHeight - m.offsetHeight ) + 'px';
 		

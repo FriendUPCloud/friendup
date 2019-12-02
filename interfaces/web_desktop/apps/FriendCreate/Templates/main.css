@@ -94,17 +94,29 @@
 	height: auto;
 	background: black;
 	opacity: 0.8;
-	pointer-events: none;
 	transition: top 0.25s;
 	padding: 0 0 0 5px;
 	box-sizing: border-box;
 	min-height: 100%;
+	cursor: pointer;
 	border-left: 1px solid rgba(255,255,255,0.2);
+	z-index: 1;
 }
 
 #CodeArea .Page .Minimap > div
 {
 	zoom: 0.5;
+}
+
+#CodeArea .Page .MinimapGroove
+{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 150px;
+	height: 100%;
+	background: rgba(0,0,0,0);
+	z-index: 2;
 }
 
 #CodeArea .Page .MinimapRect
@@ -118,6 +130,11 @@
 	z-index: 1;
 	cursor: pointer;
 	transition: top 0.25s;
+	z-index: 3;
+}
+#CodeArea .Page .MinimapRect.Move
+{
+	transition: none;
 }
 
 #CodeArea .Page textarea.MinimapRow

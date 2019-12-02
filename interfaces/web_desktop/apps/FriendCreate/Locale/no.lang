@@ -27,5 +27,11 @@ menu_file_print                     : Print
 menu_file_close                     : Lukk
 menu_quit                           : Avslutt
 
+menu_project                        : Prosjekt
+menu_project_new                    : Nytt prosjekt
+menu_project_open                   : Åpne prosjekt
+menu_project_close                  : Lukk prosjekt
+menu_project_editor                 : Rediger prosjekt
+
 i18n_saving                         : Lagrer...
 i18n_saved                          : Lagret.

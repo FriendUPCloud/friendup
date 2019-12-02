@@ -66,7 +66,28 @@ Application.run = function( msg )
 					command: 'quit'
 				}
 			]
-		} 
+		},
+		{
+			name: i18n( 'menu_project' ),
+			items: [
+				{
+					name: i18n( 'menu_project_new' ),
+					command: 'project_new'
+				},
+				{
+					name: i18n( 'menu_project_open' ),
+					command: 'project_open'
+				},
+				{
+					name: i18n( 'menu_project_close' ),
+					command: 'project_close'
+				},
+				{
+					name: i18n( 'menu_project_editor' ),
+					command: 'project_editor'
+				}
+			]
+		}
 	] );
 }
 
