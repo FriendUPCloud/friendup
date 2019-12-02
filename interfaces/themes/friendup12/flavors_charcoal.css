@@ -32,6 +32,11 @@ html body.Charcoal[mobile] #WorkspaceMenu.Open ul
 	background: #303030;
 }
 
+html body.Charcoal .Screen > .TitleBar .ScreenList
+{
+	color: white;
+}
+
 html body.Charcoal #DoorScreen:after,
 body.Charcoal:not(.ViewMaximized) #Screens > div.Screen > .TitleBar, 
 body.Charcoal.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar,
@@ -341,11 +346,6 @@ html body.Charcoal .Screen > .TitleBar > .Left *
 body.Charcoal #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
 	border: 1px solid #505050;
-}
-
-html body.Charcoal .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
 }
 
 [mobile].Charcoal .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,

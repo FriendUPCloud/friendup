@@ -2618,7 +2618,6 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 						wsc = (UserSessionWebsocket *)wsc->node.mln_Succ;
 					}
 				}
-		
 				FFree( buf );
 				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 			}
