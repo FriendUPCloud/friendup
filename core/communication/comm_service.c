@@ -468,7 +468,7 @@ Create outgoing connections\n \
 					
 					if( loccon->fc_Socket != NULL )
 					{
-						SocketClose( loccon->fc_Socket );
+						SocketDelete( loccon->fc_Socket );
 						loccon->fc_Socket = newsock;
 					}
 					loccon->fc_Status = CONNECTION_STATUS_CONNECTED;
@@ -583,7 +583,7 @@ int CommServiceThreadServer( FThread *ptr )
 	DEBUG("[COMMSERV]  Start\n");
 	SystemBase *lsb = (SystemBase *)service->s_SB;
 	
-	service->s_Socket = SocketOpen( lsb, service->s_secured, service->s_port, SOCKET_TYPE_SERVER );
+	service->s_Socket = SocketNew( lsb, service->s_secured, service->s_port, SOCKET_TYPE_SERVER );
 	
 	if( service->s_Socket != NULL )
 	{
@@ -592,7 +592,7 @@ int CommServiceThreadServer( FThread *ptr )
 		
 		if( SocketListen( service->s_Socket ) != 0 )
 		{
-			SocketClose( service->s_Socket );
+			SocketDelete( service->s_Socket );
 			FERROR("[COMMSERV]  Cannot listen on socket!\n");
 			return -1;
 		}
@@ -1007,7 +1007,8 @@ int CommServiceThreadServer( FThread *ptr )
 									}
 									else
 									{
-										SocketClose( sock );
+										SocketDelete( sock );
+										sock = NULL;
 										FERROR( "[COMMSERV] Closing incoming!\n" );
 									}
 									BufStringDelete( bs );
@@ -1136,7 +1137,7 @@ int CommServiceThreadServer( FThread *ptr )
 		shutdown( service->s_Epollfd, SHUT_RDWR );
 		close( service->s_Epollfd );
 		
-		SocketClose( service->s_Socket );
+		SocketDelete( service->s_Socket );
 	}
 	else
 	{
@@ -1435,7 +1436,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		if( cfcn->fc_Socket != NULL )
 		{
 			DEBUG("Closing new socket\n");
-			SocketClose( socket );
+			SocketDelete( socket );
 			socket = NULL;
 		}
 		else
@@ -1450,7 +1451,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		/*
 		if( cfcn->fc_Socket != NULL )
 		{
-			SocketClose( socket );
+			SocketDelete( socket );
 			socket = NULL;
 		}
 		else
@@ -1633,7 +1634,7 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 				
 				epoll_ctl( s->s_Epollfd, EPOLL_CTL_DEL, remsocket->fd, NULL );
 				DEBUG("[COMMSERV] I want close socket\n");
-				SocketClose( remsocket );
+				SocketDelete( remsocket );
 				DEBUG("[COMMSERV] Socket closed\n");
 			}
 			con->fc_Socket = NULL;
@@ -1670,7 +1671,7 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 			if( c != NULL )
 			{
 				epoll_ctl( s->s_Epollfd, EPOLL_CTL_DEL, c->fd, NULL );
-				SocketClose( c );
+				SocketDelete( c );
 			}
 		}
 		
@@ -1821,7 +1822,7 @@ void *InternalPINGThread( void *d )
 			{
 				//DEBUG("[CommServicePING] Connection reestabilished\n");
 				
-				SocketClose( con->fc_Socket );
+				SocketDelete( con->fc_Socket );
 				con->fc_Socket = newsock;
 				newsock->s_Data = con;
 				
