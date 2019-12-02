@@ -374,7 +374,7 @@ function InitContentEditor( element, file )
 				cl = ' If';
 			else if( this.lines[a].indexOf( 'var' ) >= 0 )
 				cl = ' Var';
-			str.push( '<pre class="MinimapRow' + cl + '">' + this.lines[ a ] + '</pre>' );
+			str.push( '<textarea class="MinimapRow' + cl + '">' + this.lines[ a ] + '</textarea>' );
 		}
 		this.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
 	}
@@ -566,6 +566,12 @@ document.body.addEventListener( 'keyup', function( e )
 	Application.currentFile.refreshBuffer();
 	Application.currentFile.refreshMinimap();
 }, false );
+
+window.addEventListener( 'resize', function( e )
+{
+	// Update minimap
+	Application.currentFile.refreshMinimap();
+} );
 
 // Printing support ------------------------------------------------------------
 

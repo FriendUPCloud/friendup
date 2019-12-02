@@ -98,6 +98,8 @@
 	transition: top 0.25s;
 	padding: 0 0 0 5px;
 	box-sizing: border-box;
+	min-height: 100%;
+	border-left: 1px solid rgba(255,255,255,0.2);
 }
 
 #CodeArea .PageActive .Minimap > div
@@ -111,14 +113,14 @@
 	top: 0;
 	right: 0;
 	width: 150px;
-	background: rgba(0,150,200,0.3);
+	background: rgba(0,126,101,0.3);
 	pointer-events: all;
 	z-index: 1;
 	cursor: pointer;
 	transition: top 0.25s;
 }
 
-#CodeArea .PageActive pre.MinimapRow
+#CodeArea .PageActive textarea.MinimapRow
 {
 	position: relative;
 	width: 100%;
@@ -129,26 +131,30 @@
 	line-height: 14px;
 	font-size: 14px;
 	overflow: hidden;
-	color: #66aaff;
+	color: #51D88C;
 	margin: 0;
+	background: none;
+	border: 0;
+	display: block;
+	font-family: monospace, courier, courier new;
 }
 
-#CodeArea .PageActive pre.MinimapRow.Comment
+#CodeArea .PageActive textarea.MinimapRow.Comment
 {
 	color: #ffff44;
 }
 
-#CodeArea .PageActive pre.MinimapRow.If
+#CodeArea .PageActive textarea.MinimapRow.If
 {
 	color: #ccff22;
 }
 
-#CodeArea .PageActive pre.MinimapRow.Function
+#CodeArea .PageActive textarea.MinimapRow.Function
 {
 	color: #00ff77;
 }
 
-#CodeArea .PageActive pre.MinimapRow.Function
+#CodeArea .PageActive textarea.MinimapRow.Function
 {
 	color: #77ff00;
 }
