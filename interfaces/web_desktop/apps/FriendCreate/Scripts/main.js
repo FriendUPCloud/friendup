@@ -495,10 +495,10 @@ function SaveFile( file, saveas )
 	if( !saveas && file.path )
 	{
 		var f = new File( file.path );
-		StatusMessage( 'Saving...' );
+		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
-			StatusMessage( 'Saved.' );
+			StatusMessage( i18n( 'i18n_saved' ) );
 		}
 		f.save( file.editor.getValue() );
 	}
@@ -516,10 +516,10 @@ function SaveFile( file, saveas )
 					file.filename = file.filename[ file.filename.length - 1 ];
 				}
 				var f = new File( filename );
-				StatusMessage( 'Saving...' );
+				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
-					StatusMessage( 'Saved.' );
+					StatusMessage( i18n( 'i18n_saved' ) );
 					file.updateTab();
 				}
 				f.save( file.editor.getValue() );

@@ -27,3 +27,5 @@ menu_file_print                     : Print
 menu_file_close                     : Close
 menu_quit                           : Quit
 
+i18n_saving                         : Saving...
+i18n_saved                          : Saved.

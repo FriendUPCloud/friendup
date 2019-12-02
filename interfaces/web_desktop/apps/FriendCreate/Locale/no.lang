@@ -27,3 +27,5 @@ menu_file_print                     : Print
 menu_file_close                     : Lukk
 menu_quit                           : Avslutt
 
+i18n_saving                         : Lagrer...
+i18n_saved                          : Lagret.
