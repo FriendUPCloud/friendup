@@ -607,9 +607,9 @@ Sections.accounts_users = function( cmd, extra )
 															this.classList.remove( 'fa-toggle-on' );
 															this.classList.add( 'fa-toggle-off' );
 														}
-														var args = { command: 'update', id: userInfo.ID };
+														var args = { id: userInfo.ID, authid: Application.authId };
 														args.workgroups = [];
-										
+														
 														for( var c = 0; c < workBtns.length; c++ )
 														{
 															if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
@@ -624,10 +624,10 @@ Sections.accounts_users = function( cmd, extra )
 														f.onExecuted = function( e, d )
 														{
 															// Do nothing
-												
+															
 															console.log( { e:e, d:d } );
 														}
-														f.execute( 'user', args );
+														f.execute( 'user/updategroups', args );
 													}
 												} )( workBtns[ a ] );
 											}
@@ -2552,7 +2552,7 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usLocked'   ), false, false );
 					}
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ) } );
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId } );
 				
 				break;
 			
@@ -2576,7 +2576,7 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usDisabled' ), false, false );
 					}
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ) } );
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId } );
 				
 				break;
 			
@@ -3618,12 +3618,12 @@ function mountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, e:e, d:d } );
+			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, authid: Application.authId, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/mount', { devname: devname, userid: userid } );
+		f.execute( 'device/mount', { devname: devname, userid: userid, authid: Application.authId } );
 	}
 }
 
@@ -3635,12 +3635,12 @@ function unmountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, e:e, d:d } );
+			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, authid: Application.authId, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/unmount', { devname: devname, userid: userid } );
+		f.execute( 'device/unmount', { devname: devname, userid: userid, authid: Application.authId } );
 	}
 }
 
@@ -3692,7 +3692,7 @@ function addUser( callback )
 // Save a user
 function saveUser( uid )
 {	
-	var args = { command: 'update' };
+	var args = { authid: Application.authId };
 	
 	var mapping = {
 		usFullname : 'fullname',
@@ -3861,7 +3861,7 @@ function saveUser( uid )
 			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
 		}
 	}
-	f.execute( 'user', args );
+	f.execute( 'user/update', args );
 }
 
 function cancelUser(  )

@@ -109,7 +109,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 					return callback( false, false );
 				}
-				f.execute( 'group', { command: 'listdetails', id: id } );
+				f.execute( 'group/listdetails', { id: id, authid: Application.authId } );
 			}
 			else
 			{
@@ -134,7 +134,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 					return callback( false, false );
 				}
-				f.execute( 'group', { command: 'list' } );
+				f.execute( 'group/list', { authid: Application.authId } );
 			}
 			
 			return true;
@@ -195,9 +195,9 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			Sections.accounts_workgroups( 'refresh' ); 
 		}
-		f.execute( 'group', {
-			command: 'create', 
-			groupname: 'Unnamed workgroup' 
+		f.execute( 'group/create', {
+			groupname: 'Unnamed workgroup', 
+			authid: Application.authId
 		} );
 		
 	}
@@ -212,10 +212,10 @@ Sections.accounts_workgroups = function( cmd, extra )
 			
 			Sections.accounts_workgroups( 'refresh' ); 
 		}
-		f.execute( 'group', {
-			command: 'update', 
+		f.execute( 'group/update', {
 			id: id, 
-			groupname: input 
+			groupname: input, 
+			authid: Application.authId
 		} );
 		
 	}
@@ -262,7 +262,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					
 					Sections.accounts_workgroups( 'refresh' ); 
 				}
-				f.execute( 'group', { command: 'delete', id: id } );		
+				f.execute( 'group/delete', { id: id, authid: Application.authId } );		
 			}
 		} );
 		
