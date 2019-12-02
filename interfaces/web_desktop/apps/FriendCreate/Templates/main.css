@@ -186,3 +186,24 @@
 	height: 40px;
 }
 
+#StatusMessage
+{
+	position: absolute;
+	left: 0;
+	line-height: 40px;
+	width: 280px;
+	box-sizing: border-box;
+	overflow: hidden;
+	height: 40px;
+}
+
+#StatusMessage > div
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	line-height: 40px;
+	transition-property: left,opacity;
+	transition-duration: 0.25s,0.25s;
+}
+

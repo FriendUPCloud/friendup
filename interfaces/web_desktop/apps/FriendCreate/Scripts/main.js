@@ -495,9 +495,10 @@ function SaveFile( file, saveas )
 	if( !saveas && file.path )
 	{
 		var f = new File( file.path );
+		StatusMessage( 'Saving...' );
 		f.onSave = function( res )
 		{
-			
+			StatusMessage( 'Saved.' );
 		}
 		f.save( file.editor.getValue() );
 	}
@@ -515,8 +516,10 @@ function SaveFile( file, saveas )
 					file.filename = file.filename[ file.filename.length - 1 ];
 				}
 				var f = new File( filename );
+				StatusMessage( 'Saving...' );
 				f.onSave = function( res )
 				{
+					StatusMessage( 'Saved.' );
 					file.updateTab();
 				}
 				f.save( file.editor.getValue() );
@@ -639,5 +642,37 @@ Application.receiveMessage = function( msg )
 				break;
 		}
 	}
+}
+
+// Helper
+function StatusMessage( str )
+{
+	var existing = ge( 'StatusMessage' ).getElementsByTagName( 'div' );
+	for( var a = 0; a < existing.length; a++ )
+	{
+		existing[a].style.left = '20px';
+		existing[a].style.opacity = 0;
+	}
+	
+	
+	var el = document.createElement( 'div' );
+	el.style.opacity = 0;
+	el.style.left = '0px';
+	el.innerHTML = str;
+	ge( 'StatusMessage' ).appendChild( el );
+	setTimeout( function()
+	{
+		el.style.left = '10px';
+		el.style.opacity = 1;
+		setTimeout( function()
+		{
+			el.style.left = '20px';
+			el.style.opacity = 0;
+			setTimeout( function()
+			{
+				ge( 'StatusMessage' ).removeChild( el );
+			}, 250 );
+		}, 1000 );
+	}, 50 );
 }
 
