@@ -135,6 +135,7 @@
 #CodeArea .Page .MinimapRect.Move
 {
 	transition: none;
+	background: rgba(0,126,101,0.5);
 }
 
 #CodeArea .Page textarea.MinimapRow
