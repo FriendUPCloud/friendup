@@ -67,26 +67,48 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 	return error;
 }
 
-inline static int killUserSessionByUser( SystemBase *l, User *u )
+inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid )
 {
 	int error = 0;
 	FRIEND_MUTEX_LOCK( &u->u_Mutex );
 	UserSessListEntry *usl = u->u_SessionsList;
-	while( usl != NULL )
+	if( deviceid != NULL )
 	{
-		UserSession *s = (UserSession *) usl->us;
-		if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+		while( usl != NULL )
 		{
-			char tmpmsg[ 2048 ];
-			int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+			UserSession *s = (UserSession *) usl->us;
+			if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+			{
+				char tmpmsg[ 2048 ];
+				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
-			int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-			DEBUG("Bytes send: %d\n", msgsndsize );
+				DEBUG("Bytes send: %d\n", msgsndsize );
 			
-			break;
+				break;
+			}
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
 		}
-		usl = (UserSessListEntry *)usl->node.mln_Succ;
+	}
+	else
+	{
+		while( usl != NULL )
+		{
+			UserSession *s = (UserSession *) usl->us;
+			if( s != NULL )
+			{
+				char tmpmsg[ 2048 ];
+				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				
+				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+
+				DEBUG("Bytes send: %d\n", msgsndsize );
+			
+				break;
+			}
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
+		}
 	}
 	FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	
@@ -824,7 +846,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								User *u = UMGetUserByID( l->sl_UM, id );
 								if( u != NULL )
 								{
-									killUserSessionByUser( l, u );
+									killUserSessionByUser( l, u, NULL );
 									/*
 									UserSessListEntry *usl = u->u_SessionsList;
 									if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
@@ -1904,7 +1926,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
-				killUserSessionByUser( l, u );
+				killUserSessionByUser( l, u, deviceid );
 				/*
 				FRIEND_MUTEX_LOCK( &u->u_Mutex );
 				UserSessListEntry *usl = u->u_SessionsList;
