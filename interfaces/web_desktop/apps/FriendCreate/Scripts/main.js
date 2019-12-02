@@ -328,6 +328,7 @@ function InitContentEditor( element, file )
 	file.editor = ace.edit( area.id );
 	file.editor.setFontSize( 14 );
 	file.editor.setValue( file.content );
+	file.editor.clearSelection();
 	file.editor.setTheme( 'ace/theme/' + settings.theme );
 	file.editor.session.setUseWorker( false );
 	
@@ -342,7 +343,7 @@ function InitContentEditor( element, file )
 	file.minimap.innerHTML = file.page.querySelector( '.ace_content' ).innerHTML;
 	file.minimapRect = document.createElement( 'div' );
 	file.minimapRect.className = 'MinimapRect';
-	var ac = file.page.querySelector( '.ace_content' );
+	var ac = file.page.querySelector( '.ace_scroller' );
 	file.page.querySelector( '.ace_editor' ).parentNode.appendChild( file.minimap );
 	file.page.querySelector( '.ace_editor' ).parentNode.appendChild( file.minimapRect );
 	
@@ -379,10 +380,12 @@ function InitContentEditor( element, file )
 	}
 	
 	// Refresh the minimap
-	file.refreshMinimap = function( e )
+	file.refreshMinimap = function()
 	{
+		
 		var self = this;
 		if( !self.lines ) return;
+		
 		if( this.refreshing ) 
 		{
 			if( this.refreshQueue )
@@ -390,38 +393,42 @@ function InitContentEditor( element, file )
 			this.refreshQueue = setTimeout( function()
 			{ 
 				file.refreshQueue = false; 
-				file.refreshMinimap( e ); 
+				file.refreshMinimap(); 
 			}, 50 );
 			return;
 		}
 		this.refreshing = true;
 		
-		// Lines and code content height
-		var len = self.lines.length;
-		var tot = file.editor.renderer.lineHeight * len;
-		
-		// 
-		var heh = ac.parentNode.offsetHeight;
-		
-		// Scroll position
-		if( e < 0 ) e = 0;
-		if( e > tot - heh ) e = tot - heh;
-
 		// Minimap height
 		setTimeout( function()
 		{
-			var meh = self.minimap.offsetHeight;
+			var e = self.editor.getFirstVisibleRow() * 14;
+		
+			// Lines and code content height
+			var len = self.lines.length;
+			var tot = file.editor.renderer.lineHeight * len;
+		
+			// Text container height
+			var contHeight = ac.offsetHeight + ( 14 * minimapZoomLevel );
+		
+			// Scroll position
+			if( e < 0 ) e = 0;
+			if( e > tot - contHeight ) e = tot - contHeight;
+			
+			var meh = self.minimap.offsetHeight; // Zoomed
 	
 			// Scroll progress
-			var sp = e / ( tot - heh );
+			var sp = e / ( tot - contHeight );
 		
-			if( meh > heh )
-				self.minimap.style.top = -( sp * ( meh - heh ) ) + 'px';
+			// Set top of minimap to show current minimap position
+			if( meh > contHeight )
+				self.minimap.style.top = -( sp * ( meh - contHeight ) ) + 'px';
 			else self.minimap.style.top = 0;
 		
+			// Page visualization
 			var m = self.minimapRect;
-			m.style.height = ( heh / ( tot * minimapZoomLevel ) * 100 ) + '%';
-			m.style.top = sp * ( heh - m.offsetHeight ) + 'px';
+			m.style.height = ( ( contHeight / tot ) * meh ) + 'px';
+			m.style.top = sp * ( contHeight - m.offsetHeight ) + 'px';
 		
 			self.refreshing = false; 
 		}, 50 );
