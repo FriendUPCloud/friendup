@@ -329,6 +329,7 @@ function InitContentEditor( element, file )
 	file.editor.setFontSize( 14 );
 	file.editor.setValue( file.content );
 	file.editor.clearSelection();
+	file.editor.gotoLine( 0, 0, true );	
 	file.editor.setTheme( 'ace/theme/' + settings.theme );
 	file.editor.session.setUseWorker( false );
 	
