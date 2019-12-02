@@ -347,7 +347,7 @@ function InitContentEditor( element, file )
 		var cl = ( y / file.page.offsetHeight );
 		var pageH = Math.floor( file.page.offsetHeight / file.editor.renderer.lineHeight );
 		
-		if( cl > 0.5 )
+		if( y > file.minimapRect.offsetTop + file.minimapRect.offsetHeight )
 		{
 			file.editor.gotoLine( Math.floor( file.editor.getFirstVisibleRow() + ( pageH * 1.5 ) ), 0, false );
 		}
@@ -377,13 +377,17 @@ function InitContentEditor( element, file )
 			if( ty < 0 ) ty = 0;
 			else if( ty + file.minimapRect.offsetHeight > file.minimapGroove.offsetHeight )
 				ty = file.minimapGroove.offsetHeight - file.minimapRect.offsetHeight;
-			file.minimapRect.style.top = ty + 'px';			
+			file.minimapRect.style.top = ty + 'px';		
+			
+			var lineNumber = Math.floor( ( ty / ( file.minimapGroove.offsetHeight - file.minimapRect.offsetHeight ) ) * file.lines.length );
+			file.editor.gotoLine( lineNumber, 0, false );
 		}
 	}
 	window.addEventListener( 'mouseup', function( e )
 	{
 		file.mouseDown = false;
 		file.minimapRect.classList.remove( 'Move' );
+		file.refreshMinimap();
 	}, false );
 	// Done moving the rect
 	var ac = file.page.querySelector( '.ace_scroller' );
@@ -483,8 +487,11 @@ function InitContentEditor( element, file )
 			else self.minimap.style.top = 0;
 		
 			// Page visualization
-			m.style.height = ( ( contHeight / tot ) * meh ) + 'px';
-			m.style.top = sp * ( contHeight - m.offsetHeight ) + 'px';
+			if( !file.mouseDown )
+			{
+				m.style.height = ( ( contHeight / tot ) * meh ) + 'px';
+				m.style.top = sp * ( contHeight - m.offsetHeight ) + 'px';
+			}
 		
 			self.refreshing = false; 
 		}, 50 );

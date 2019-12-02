@@ -129,12 +129,14 @@
 	pointer-events: all;
 	z-index: 1;
 	cursor: pointer;
-	transition: top 0.25s;
+	transition-property: top, background;
+	transition-duration: 0.25s, 0.25s;
 	z-index: 3;
 }
 #CodeArea .Page .MinimapRect.Move
 {
-	transition: none;
+	transition-property: background;
+	transition-duration: 0.25s;
 	background: rgba(0,126,101,0.5);
 }
 
