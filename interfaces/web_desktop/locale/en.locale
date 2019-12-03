@@ -446,6 +446,8 @@ i18n_drag_files_to_download             : Drop files to download.
 i18n_could_not_download                 : Could not download
 i18n_download_wrong_type                : Only files can be downloaded.
 
+i18n_illegal_path                       : Illegal path
+i18n_illegal_path_desc                  : The path you tried to enter does not exist.
 
 #Colorpicker -------------------------------------------------------------------
 

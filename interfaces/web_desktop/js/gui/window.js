@@ -1030,6 +1030,10 @@ function _ActivateWindow( div, nopoll, e )
 		return;
 	}
 	
+	// Don't activate a window that is being removed
+	if( div.classList.contains( 'Remove' ) )
+		return;
+	
 	// Remove menu on calendar
 	if( Workspace.calendarWidget )
 		Workspace.calendarWidget.hide();
@@ -1098,7 +1102,7 @@ function _ActivateWindow( div, nopoll, e )
 	
 	// Blur previous window
 	var changedActiveWindow = false;
-	if( window.currentMovable )
+	if( window.currentMovable && currentMovable.windowObject )
 	{
 		if( currentMovable != div )
 		{
@@ -1356,7 +1360,7 @@ function _DeactivateWindow( m, skipCleanUp )
 			window.currentMovable = null;
 	
 		// See if we can activate a mainview
-		if( !currentMovable && !_activationTarget )
+		if( !currentMovable && !_activationTarget && m.windowObject )
 		{
 			var app = _getAppByAppId( m.windowObject.applicationId );
 			var hasActive = false;
@@ -5902,6 +5906,7 @@ function InitWindowEvents()
 Friend.GUI.checkWindowState = function( state )
 {
 	if( !window.currentMovable ) return false;
+	if( !currentMovable.windowObject ) return false;
 	var wo = window.currentMovable.windowObject;
 	if( wo.states[ state ] )
 	{

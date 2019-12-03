@@ -6335,7 +6335,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			canUnmount = true;
 			
-			var ics = currentMovable ? currentMovable.content.icons : currentScreen.screen._screen.icons;
+			var ics = currentMovable && currentMovable.content ? currentMovable.content.icons : currentScreen.screen._screen.icons;
 			for( var a in ics )
 			{
 				if( ics[a].domNode && ics[a].domNode.classList )
@@ -6683,7 +6683,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						disabled: !iconsAvailable || volumeIcon
 					},*/
 					// New directoryview
-					currentMovable && currentMovable.content.directoryview ? {
+					currentMovable && currentMovable.content && currentMovable.content.directoryview ? {
 						name: i18n( 'menu_new_window' ),
 						command: function(){ Workspace.newDirectoryView(); }
 					} : false,
@@ -6703,7 +6703,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.hideInactiveViews(); },
 						disabled: !windowsOpened
 					},
-					currentMovable && currentMovable.content.directoryview ? {
+					currentMovable && currentMovable.content && currentMovable.content.directoryview ? {
 						name: i18n( currentMovable.content.directoryview.showHiddenFiles ? i18n( 'menu_hide_hidden_files' ) : i18n( 'menu_show_hidden_files' ) ),
 						command: function(){ Workspace.toggleHiddenFiles(); }
 					} : false,
@@ -7827,9 +7827,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var eles = w.getElementsByTagName( 'div' );
 			for( var a = 0; a < w.icons.length; a++ )
 			{
-				if( w.icons[a].domNode.selected )
+				if( w.icons[a].selected )
 				{
-					
 					var d = new Door();
 					files.push( { fileInfo: w.icons[a], door: d.get( w.icons[a].Path ) } );
 				}
@@ -8062,7 +8061,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( window.ScreenOverlay && ScreenOverlay.visibility )
 		{
 			if( Workspace.onReady )
-				Workspace.onReady();
+				Workspace.onReady( false, true );
 			return;
 		}
 		
@@ -8621,10 +8620,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Execute when everything is ready
 	onReady: function()
 	{
+		// If we are in a connecting state, wait with startup sequence
+		// TODO: Make sure cAjax also does this check
+		if( Workspace.websocketState == 'connecting' ) 
+		{
+			Workspace.onReadyTemp = Workspace.onReady;
+			Workspace.onReady = function(){};
+			return setTimeout( function(){ Workspace.onReady = Workspace.onReadyTemp; Workspace.onReady(); }, 50 );
+		}
+
 		if( this.onReadyList.length )
 		{
 			// Don't run it twice
-			Workspace.onReady = function(){};
+			Workspace.onReady = function(){
+				return Workspace.receivePush( false, true );
+			};
 			
 			for( var a = 0; a < this.onReadyList.length; a++ )
 			{
@@ -8951,7 +8961,7 @@ function DoorsKeyDown( e )
 	}
 	
 	// Check keys on directoryview ---------------------------------------------
-	if( window.currentMovable && currentMovable.content.directoryview )
+	if( window.currentMovable && currentMovable.content && currentMovable.content.directoryview )
 	{
 		if( w == 113 || w == 27 )
 		{
@@ -9591,7 +9601,7 @@ if( window.friendApp )
 }
 
 // Receive push notification (when a user clicks native push notification on phone)
-Workspace.receivePush = function( jsonMsg )
+Workspace.receivePush = function( jsonMsg, ready )
 {
 	if( !isMobile ) return "mobile";
 	var msg = jsonMsg ? jsonMsg : ( window.friendApp ? friendApp.get_notification() : false );
@@ -9599,7 +9609,7 @@ Workspace.receivePush = function( jsonMsg )
 	// we use 1 as special case for no push being here... to make it easier to know when to launch startup sequence... maybe not ideal, but works
 	if( msg == false || msg == 1 ) 
 	{
-		if( this.onReady ) this.onReady();
+		if( !ready && this.onReady ) this.onReady();
 		return "nomsg";
 	}
 	try
@@ -9613,7 +9623,7 @@ Workspace.receivePush = function( jsonMsg )
 	}
 	if( !msg ) 
 	{
-		if( this.onReady ) this.onReady();
+		if( !ready && this.onReady ) this.onReady();
 		return "nomsg";
 	}
 		
@@ -9628,7 +9638,7 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		// Revert to push notifications on the OS side
 		Notify( { title: msg.title, text: msg.text }, null, handleClick );
-		if( this.onReady ) this.onReady();
+		if( !ready && this.onReady ) this.onReady();
 		return 'ok';
 	}
 	// "Click"
@@ -9641,7 +9651,7 @@ Workspace.receivePush = function( jsonMsg )
 	{
 		if( !msg.application ) 
 		{
-			if( Workspace.onReady ) Workspace.onReady();
+			if( !ready && Workspace.onReady ) Workspace.onReady();
 			return 'noapp';
 		}
 	
@@ -9682,7 +9692,7 @@ Workspace.receivePush = function( jsonMsg )
 					data: msg
 				} ), '*' );
 				
-				if( Workspace.onReady ) Workspace.onReady();
+				if( !ready && Workspace.onReady ) Workspace.onReady();
 				
 				return 'ok';
 			}
@@ -9756,7 +9766,7 @@ Workspace.receivePush = function( jsonMsg )
 				}
 			}, 1000 );
 			
-			if( Workspace.onReady ) Workspace.onReady();
+			if( !ready && Workspace.onReady ) Workspace.onReady();
 		}
 	
 		mobileDebug( 'Start app ' + msg.application + ' and ' + _executionQueue[ msg.application ], true );
