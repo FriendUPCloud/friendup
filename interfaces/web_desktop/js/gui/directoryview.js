@@ -658,7 +658,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		var d = document.createElement( 'div' );
 		if( this.sidebarbackground )
 		{
-			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall';
+			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall SmoothScrolling';
 		}
 		else 
 		{
@@ -710,7 +710,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 					var vol = path.split( ':' )[0];
 					self.addToHistory( winobj.fileInfo );
 				}
-				winobj.refresh();
+				winobj.refresh( false, false, false, false, false, event );
 			},
 			folderClose( path, event, flags )
 			{
@@ -728,7 +728,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 					var vol = path.split( ':' )[0];
 					self.addToHistory( winobj.fileInfo );
 				}
-				winobj.refresh();
+				winobj.refresh( false, false, false, false, false, event );
 			}
 		} );
 		winobj.fileBrowser.render();
@@ -823,6 +823,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
 		var dirv = this.directoryview;
+		
+		if( dirv.window.fileBrowser )
+		{
+			// Correct file browser
+			dirv.window.fileBrowser.setPath( winobj.fileInfo.Path );
+		}
 		
 		// Assign icons now
 		// Store
@@ -3954,6 +3960,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		this.file.classList.add( 'Selected' );
 		this.file.selected = fileInfo.selected;
+		this.selected = fileInfo.selected;
 	}
 
 	// Attach this object to dom element
@@ -4823,12 +4830,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			wid += Math.random() * 9999 + ( Math.random() * 9999 ) + ( new Date() ).getTime();
 
 		var win = new View( {
-			'title'    : wt,
-			'width'    : 800,
-			'height'   : 400,
-			'memorize' : true,
-			'id'       : wid,
-			'volume'   : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
+			'title'     : wt,
+			'width'     : 800,
+			'min-width' : 340,
+			'min-height': 180,
+			'height'    : 400,
+			'memorize'  : true,
+			'id'        : wid,
+			'volume'    : wt.substr( wt.length - 1, 1 ) == ':' ? true : false
 		} );
 
 		if( fileInfo.Dormant && fileInfo.Dormant.addWindow )
@@ -4853,6 +4862,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		
 		we.refresh = function( callback )
 		{	
+			// Refresh 1
 			// Run previous callback
 			if( callback )
 			{
@@ -5055,12 +5065,14 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			return targetView.refresh(); 
 		}
 		else w = new View ( {
-			'title'    : wt,
-			'width'    : stored && stored.width ? stored.width : 800,
-			'height'   : stored && stored.height ? stored.height : 400,
-			'memorize' : true,
-			'id'       : id,
-			'volume'   : isVolume,
+			'title'     : wt,
+			'width'     : stored && stored.width ? stored.width : 800,
+			'height'    : stored && stored.height ? stored.height : 400,
+			'min-width' : 340,
+			'min-height': 180,
+			'memorize'  : true,
+			'id'        : id,
+			'volume'    : isVolume,
 			'clickableTitle': true
 		} );
 
@@ -5133,13 +5145,16 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			var winDoor = win.Door;
 			
 			win.refresh = function( callback )
-			{	
+			{
+				// Refresh 2
 				// Run previous callback
 				if( callback )
 				{
 					if( this.refreshCallback ) this.refreshCallback( false );
 					this.refreshCallback = callback;
 				}
+				
+				console.log( 'This one may not have the window title.' );
 				
 				w.refreshing = true;
 				
@@ -5159,7 +5174,8 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
 					
-					dr.getIcons( fi, function( icons )
+					// TODO: Figure out something..
+					dr.getIcons( fi, function( icons, something, response )
 					{
 						if( icons )
 						{
@@ -5185,27 +5201,37 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
 								w.revent = w.addEvent( 'resize', function( cbk )
 								{
-									self.redrawIcons( self.icons, self.direction, cbk );
+									self.redrawIcons( false, self.direction, cbk );
 								} );
-								RefreshWindowGauge( self );
 								
 							}
 						}
-						// empty
+						// empty, go back
 						else
 						{
-							if( self.parentNode )
+							try
 							{
-								self.innerHTML = '<div class="loadError">' + i18n('i18n_error_could_not_list_directory') + '</div>';
-								self.parentNode.addEventListener( 'dragleave', noEvent,    false );
-								self.parentNode.addEventListener( 'dragover',  noEvent,   false );
-								self.parentNode.addEventListener( 'drop',      noEvent, false );
-								self.parentNode.drop = noEvent;
+								var dw = self.directoryview;
+								Notify( {
+									title: i18n( 'i18n_illegal_path' ),
+									text: i18n( 'i18n_illegal_path_desc' )
+								} );
+								// If we're not at the top of the history array, go back
+								if( dw.pathHistoryIndex > 0 )
+								{
+									var fin = dw.pathHistoryRewind();
+									dw.window.fileInfo = fin;
+				
+									if( !isMobile && dw.window.fileBrowser )
+									{
+										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+									}
+									dw.window.refresh();
+								}
 							}
-							else
+							catch( e )
 							{
-								// What now?
-								console.log( 'Refresh directory view - Something bad happened..' );
+								console.log( '[Directoryview] No content.' );
 							}
 						}
 						if( callback ) callback();
@@ -5222,6 +5248,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		{
 			win.refresh = function ( callback )
 			{	
+				// Refresh 3
 				// Run previous callback
 				if( callback )
 				{
@@ -5314,7 +5341,36 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					}
 					else
 					{
-						console.log( 'No content.' );
+						try
+						{
+							var js = JSON.parse( this.returnData );
+							// Erroneous path
+							if( js.message == 'Path error.' )
+							{
+								var dw = this.win.directoryview;
+								Notify( {
+									title: i18n( 'i18n_illegal_path' ),
+									text: i18n( 'i18n_illegal_path_desc' )
+								} );
+								// If we're not at the top of the history array, go back
+								if( dw.pathHistoryIndex > 0 )
+								{
+									var fin = dw.pathHistoryRewind();
+									dw.window.fileInfo = fin;
+									console.log( 'Rewinding: ', fin );
+					
+									if( !isMobile && dw.window.fileBrowser )
+									{
+										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+									}
+									dw.window.refresh();
+								}
+							}
+						}
+						catch( e )
+						{
+							console.log( '[Directoryview] No content.', this.returnCode, this.returnData );
+						}
 					}
 					if( callback )
 					{
