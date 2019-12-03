@@ -39,7 +39,7 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	{
 		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 		BufStringAddSize( bs, msg, msize );
-		UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+		//UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 	}
 	else
 	{
