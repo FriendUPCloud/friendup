@@ -66,7 +66,10 @@ var gui = {
 	}
 };
 
-Application.files = [];
+// Files and projects ----------------------------------------------------------
+
+var files = [];
+var projects = [];
 
 // Launch view logic -----------------------------------------------------------
 
@@ -80,7 +83,7 @@ Application.run = function( msg )
 // Set current file ------------------------------------------------------------
 function SetCurrentFile( index )
 {
-	Application.currentFile = Application.files[ index ];
+	Application.currentFile = files[ index ];
 }
 
 // Check if we support the filetype --------------------------------------------
@@ -141,11 +144,11 @@ var EditorFile = function( path )
 {
 	var self = this;
 	
-	for( var a = 0; a < Application.files.length; a++ )
+	for( var a = 0; a < files.length; a++ )
 	{
-		if( Application.files[ a ].path == path )
+		if( files[ a ].path == path )
 		{
-			return Application.files[ a ].tab.onclick();
+			return files[ a ].tab.onclick();
 		}
 	}
 	
@@ -167,7 +170,7 @@ var EditorFile = function( path )
 					self.path = json.Path;
 					self.content = data;
 					self.filesize = json.Filesize;
-					Application.files.push( self );
+					files.push( self );
 					InitEditArea( self );
 					setTimeout( function()
 					{
@@ -187,7 +190,7 @@ var EditorFile = function( path )
 		this.path = false;
 		this.content = '';
 		this.filesize = 0;
-		Application.files.push( this );
+		files.push( this );
 		InitEditArea( this );
 		setTimeout( function()
 		{
@@ -196,15 +199,16 @@ var EditorFile = function( path )
 		}, 50 );
 	}
 }
+
 EditorFile.prototype.close = function()
 {
 	var out = [];
-	for( var a = 0; a < Application.files.length; a++ )
+	for( var a = 0; a < files.length; a++ )
 	{
-		if( Application.files[ a ] == this ) continue;
-		out.push( Application.files[ a ] );
+		if( files[ a ] == this ) continue;
+		out.push( files[ a ] );
 	}
-	Application.files = out;
+	files = out;
 }
 
 EditorFile.prototype.updateTab = function()
@@ -677,40 +681,8 @@ function StopApp()
 	}
 }
 
-// Messaging support -----------------------------------------------------------
+// The project editor ----------------------------------------------------------
 
-Application.receiveMessage = function( msg )
-{
-	if( msg.command )
-	{
-		switch( msg.command )
-		{
-			case 'open':
-				OpenFile();
-				break;
-			case 'save':
-				if( Application.currentFile )
-					SaveFile( Application.currentFile );
-				break;
-			case 'save_as':
-				if( Application.currentFile )
-					SaveFile( Application.currentFile, true );
-				break;
-			case 'print':
-				PrintFile();
-				break;
-			case 'close':
-				if( Application.currentFile )
-					Application.currentFile.close();
-				break;
-			case 'project_editor':
-				OpenProjectEditor();
-				break;
-		}
-	}
-}
-
-// The project editor
 var pe = null;
 function OpenProjectEditor()
 {
@@ -740,6 +712,114 @@ function OpenProjectEditor()
 		}
 	}
 }
+
+var Project = function()
+{
+	// Some variables
+	this.project = {
+		ProjectName: '',
+		Author:      '',
+		Email:       '',
+		Version:     '',
+		API:         'v1',
+		Description: '',
+		Files:       [],
+		Permissions: [],
+		Libraries:   []
+	};
+}
+
+function NewProject()
+{
+	var p = new Project();
+	projects.push( p );
+	RefreshProjects();
+}
+
+function OpenProject( path )
+{
+	( new Filedialog( {
+		path: path,
+		multiSelect: false,
+		triggerFunction: function( items )
+		{
+			if( !files || !files.length || !files[0].Path )
+				return;
+		
+			var p = new Project();
+			p.Path = files[0].Path;
+		
+			var f = new File( p.Path );
+			f.onLoad = function( data )
+			{
+				var proj = JSON.parse( data );
+				for( var a in proj )
+					p[ a ] = proj[ a ];
+				Application.currentProject = p;
+				RefreshProjects();
+			}
+			f.load();
+		},
+		type: 'open',
+		suffix: 'apf',
+		rememberPath: true
+	} ) );
+}
+
+function SaveProject( file, saveas )
+{
+	if( !saveas ) saveas = false;
+	
+	if( !saveas && file.path )
+	{
+		var f = new File( file.path );
+		StatusMessage( i18n( 'i18n_saving' ) );
+		f.onSave = function( res )
+		{
+			StatusMessage( i18n( 'i18n_saved' ) );
+		}
+		f.save( file.editor.getValue() );
+	}
+	else
+	{
+		( new Filedialog( {
+			path: file.path ? file.path : 'Home:',
+			triggerFunction: function( filename )
+			{
+				file.path = filename;
+				file.filename = filename.split( ':' )[1];
+				if( file.filename.indexOf( '/' ) >= 0 )
+				{
+					file.filename = file.filename.split( '/' );
+					file.filename = file.filename[ file.filename.length - 1 ];
+				}
+				var f = new File( filename );
+				StatusMessage( i18n( 'i18n_saving' ) );
+				f.onSave = function( res )
+				{
+					StatusMessage( i18n( 'i18n_saved' ) );
+					file.updateTab();
+				}
+				f.save( file.editor.getValue() );
+			},
+			type: 'save',
+			suffix: supportedFiles,
+			rememberPath: true
+		} ) );
+	}
+}
+
+function RefreshProjects()
+{
+	var str = '';
+	for( var a = 0; a < projects.length; a++ )
+	{
+		str += '<ul><li>' + projects[ a ].Name + '</li></ul>';
+	}
+	ge( 'SB_Project' ).innerHTML = str;
+}
+
+// End projects ----------------------------------------------------------------
 
 // Helper
 function StatusMessage( str )
@@ -773,3 +853,38 @@ function StatusMessage( str )
 	}, 50 );
 }
 
+// Messaging support -----------------------------------------------------------
+
+Application.receiveMessage = function( msg )
+{
+	if( msg.command )
+	{
+		switch( msg.command )
+		{
+			case 'open':
+				OpenFile();
+				break;
+			case 'save':
+				if( Application.currentFile )
+					SaveFile( Application.currentFile );
+				break;
+			case 'save_as':
+				if( Application.currentFile )
+					SaveFile( Application.currentFile, true );
+				break;
+			case 'print':
+				PrintFile();
+				break;
+			case 'close':
+				if( Application.currentFile )
+					Application.currentFile.close();
+				break;
+			case 'project_editor':
+				OpenProjectEditor();
+				break;
+			case 'project_open':
+				OpenProject();
+				break;
+		}
+	}
+}

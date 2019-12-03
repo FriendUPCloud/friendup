@@ -11,3 +11,15 @@
 Application.run = function( msg )
 {
 }
+
+function RefreshFiles()
+{
+}
+
+function RefreshImages()
+{
+}
+
+function RefreshPermissions()
+{
+}
