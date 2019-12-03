@@ -723,6 +723,7 @@ var Project = function()
 		Version:     '',
 		API:         'v1',
 		Description: '',
+		Images:      [],
 		Files:       [],
 		Permissions: [],
 		Libraries:   []
@@ -741,7 +742,7 @@ function OpenProject( path )
 	( new Filedialog( {
 		path: path,
 		multiSelect: false,
-		triggerFunction: function( items )
+		triggerFunction: function( files )
 		{
 			if( !files || !files.length || !files[0].Path )
 				return;
@@ -755,6 +756,7 @@ function OpenProject( path )
 				var proj = JSON.parse( data );
 				for( var a in proj )
 					p[ a ] = proj[ a ];
+				projects.push( p );
 				Application.currentProject = p;
 				RefreshProjects();
 			}
@@ -814,7 +816,18 @@ function RefreshProjects()
 	var str = '';
 	for( var a = 0; a < projects.length; a++ )
 	{
-		str += '<ul><li>' + projects[ a ].Name + '</li></ul>';
+		var pr = projects[ a ];
+		var fstr = '';
+		if( pr.Files && pr.Files.length )
+		{
+			fstr += '<ul>';
+			for( var b = 0; b < pr.Files.length; b++ )
+			{
+				fstr += '<li>' + pr.Files[ b ].Filename + '</li>';
+			}
+			fstr += '</ul>';
+		}
+		str += '<ul><li>' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 }
