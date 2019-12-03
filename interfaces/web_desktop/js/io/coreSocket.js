@@ -332,14 +332,15 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 			e.data );
 		return;
 	}
-	
+	console.log( msg );
 	// Handle server notices with session timeout / death
 	if( msg.data && msg.data.type == 'server-notice' )
 	{
+		
 		if( msg.data.data == 'session killed' )
 		{
-			//Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
-			// console.log( 'Test3: Session was killed!' );
+			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
+			 console.log( 'Test3: Session was killed!' );
 			this.handleClose();
 			/*
 			setTimeout( function()

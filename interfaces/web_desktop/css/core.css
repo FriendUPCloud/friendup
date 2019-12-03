@@ -790,6 +790,29 @@ p.Layout
 	box-sizing: border-box;
 }
 
+.PaddingSmallLeft
+{
+	padding-left: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallTop
+{
+	padding-top: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallRight
+{
+	padding-right: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallBottom
+{
+	padding-bottom: 4px;
+	box-sizing: border-box;
+}
 
 .PadBorder {
     border : 0.2em solid $ColorBackground;
@@ -1360,6 +1383,11 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 .BackgroundNegative
 {
 	background: $ColorBgNegative;
+}
+
+.BackgroundNegativeAlt
+{
+	background: $ColorBgNegativeAlt;
 }
 
 .BackgroundPositive
