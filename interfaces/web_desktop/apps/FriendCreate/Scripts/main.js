@@ -820,16 +820,31 @@ function RefreshProjects()
 		var fstr = '';
 		if( pr.Files && pr.Files.length )
 		{
-			fstr += '<ul>';
-			for( var b = 0; b < pr.Files.length; b++ )
+			var sortable = [];
+			for( var c = 0; c < pr.Files.length; c++ )
 			{
-				fstr += '<li>' + pr.Files[ b ].Filename + '</li>';
+				sortable[ pr.Files[ c ].Path ] = pr.Files[ c ].Path.split( '/' );
 			}
-			fstr += '</ul>';
+			sortable = sortable.sort();
+			fstr = listFiles( sortable, 1 );
 		}
 		str += '<ul><li>' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
+	
+	function listFiles( list, depth )
+	{
+		var str = '';
+		for( var a in list )
+		{
+			if( list[ a ].length == depth )
+			{
+				console.log( list[ a ], '...' );
+				str += '<li>' + list[ a ][ depth ] + '</li>';
+			}
+		}
+		return str;
+	}
 }
 
 // End projects ----------------------------------------------------------------
