@@ -730,7 +730,7 @@ void ProcessSinkMessage( void *locd )
 									if( usr != NULL )
 									{
 										char udata[ 1024 ];
-										int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"lastupdated\":%lu", \
+										int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"lastupdate\":%lu", \
 											usr->u_UUID, usr->u_Name, usr->u_ModifyTime
 										);
 									
