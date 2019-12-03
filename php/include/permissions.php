@@ -241,13 +241,14 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	}
 	
 	$debug = new stdClass();
-	$debug->type     = $type;
-	$debug->context  = $context;
-	$debug->name     = $name;
-	$debug->data     = $data;
-	$debug->object   = $object;
-	$debug->objectid = $objectid;
-	$debug->level    = $level;
+	$debug->type        = $type;
+	$debug->context     = $context;
+	$debug->name        = $name;
+	$debug->data        = $data;
+	$debug->object      = $object;
+	$debug->objectid    = $objectid;
+	$debug->listdetails = $listdetails;
+	$debug->level       = $level;
 	
 	// authid method of getting the Application Name and checking if the user has access to it.
 	 
@@ -481,12 +482,12 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 										$gr->parentid = $v->ParentID;
 										$gr->name     = $v->Name;
 										$gr->type     = $v->Type;
-										$gr->Status   = $v->Status;
+										$gr->status   = $v->Status;
 									}
 							
 									if( $gr )
 									{
-										$groupdetails[] = $gr;
+										$groupdetails[$v->ID] = $gr;
 									}
 								}
 							}
@@ -496,7 +497,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 						
 						if( $rows = $SqlDatabase->FetchObjects( '
 							SELECT 
-								ug.UserID, g.Name AS Workgroup 
+								g.ID, ug.UserID, g.Name AS Workgroup 
 							FROM 
 								`FUserGroup` g, 
 								`FUserToGroup` ug 
@@ -521,38 +522,49 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							{
 								// TODO: Connect user or users to groups or group ...
 								
-								if( $rows = $SqlDatabase->FetchObjects( '
+								if( $usr = $SqlDatabase->FetchObjects( '
 									SELECT u.ID, u.UniqueID, u.Name, u.FullName 
 									FROM `FUser` u 
 									WHERE u.ID IN (' . implode( ',', $users ) . ') 
 									ORDER BY u.ID ASC 
 								' ) )
 								{
-									foreach( $rows as $v )
+									foreach( $usr as $u )
 									{
 										$us = new stdClass;
 										
 										if( $object == 'user' && $objectid )
 										{
-											if( $objectid == $v->ID )
+											if( $objectid == $u->ID )
 											{
-												$us->id       = $v->ID;
-												$us->uuid     = $v->UniqueID;
-												$us->name     = $v->Name;
-												$us->fullname = $v->FullName;
+												$us->id       = $u->ID;
+												$us->uuid     = $u->UniqueID;
+												$us->name     = $u->Name;
+												$us->fullname = $u->FullName;
 											}
 										}
 										else
 										{
-											$us->id       = $v->ID;
-											$us->uuid     = $v->UniqueID;
-											$us->name     = $v->Name;
-											$us->fullname = $v->FullName;
+											$us->id       = $u->ID;
+											$us->uuid     = $u->UniqueID;
+											$us->name     = $u->Name;
+											$us->fullname = $u->FullName;
 										}
 										
 										if( $us )
 										{
-											$userdetails[] = $us;
+											$userdetails[$u->ID] = $us;
+										}
+									}
+								}
+								
+								if( $groupdetails && $userdetails )
+								{
+									foreach( $rows as $v )
+									{
+										if( isset( $groupdetails[$v->ID]->users ) && isset( $userdetails[$v->UserID] ) )
+										{
+											$groupdetails[$v->ID]->users[] = $userdetails[$v->UserID];
 										}
 									}
 								}
@@ -664,7 +676,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 									if( $listdetails == 'workgroup' || $listdetails == 'workgroups' )
 									{
 										$out->data->details = new stdClass();
-										$out->data->details->group = ( isset( $groupdetails[0] ) ? $groupdetails[0] : false );
+										$out->data->details->group = ( isset( $groupdetails[$objectid] ) ? $groupdetails[$objectid] : false );
 									}
 									
 									$out->debug = $debug;
@@ -692,7 +704,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 									if( $listdetails == 'user' || $listdetails == 'users' )
 									{
 										$out->data->details = new stdClass();
-										$out->data->details->user = ( isset( $userdetails[0] ) ? $userdetails[0] : false );
+										$out->data->details->user = ( isset( $userdetails[$objectid] ) ? $userdetails[$objectid] : false );
 									}
 									
 									$out->debug = $debug;

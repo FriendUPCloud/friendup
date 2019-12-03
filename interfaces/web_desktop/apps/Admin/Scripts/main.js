@@ -577,6 +577,24 @@ function initTest()
 			type     : 'read', 
 			context  : 'application', 
 			name     : 'Users' 
+		},
+		// 7
+		{ 
+			type        : 'read', 
+			context     : 'application', 
+			authid      : Application.authId,
+			data        : { permission : [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] },
+			listdetails : 'workgroups' 
+		},
+		// 8
+		{ 
+			type        : 'read', 
+			context     : 'application', 
+			authid      : Application.authId,
+			data        : { permission : [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] },
+			object      : 'workgroup', 
+			objectid    : 26, 
+			listdetails : 'workgroup' 
 		}
 	];
 	

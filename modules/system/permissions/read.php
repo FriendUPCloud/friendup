@@ -24,7 +24,7 @@ if( isset( $args->args->authid ) && !isset( $args->authid ) )
 	$args->authid = $args->args->authid;
 }
 
-if( $data = Permissions( $args->args->type, $args->args->context, ( isset( $args->authid ) ? 'AUTHID'.$args->authid : $args->args->name ), $args->args->data, $args->args->object, $args->args->objectid ) )
+if( $data = Permissions( $args->args->type, $args->args->context, ( isset( $args->authid ) ? 'AUTHID'.$args->authid : $args->args->name ), $args->args->data, $args->args->object, $args->args->objectid, $args->args->listdetails ) )
 {
 	if( is_object( $data ) )
 	{
