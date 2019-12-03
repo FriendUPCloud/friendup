@@ -873,54 +873,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							int msize = 0;
 							if( status == USER_STATUS_DISABLED )
 							{
-								// send calls to all users that they must log-off themselfs
-								
-								User *u = UMGetUserByID( l->sl_UM, id );
-								if( u != NULL )
-								{
-									killUserSessionByUser( l, u, NULL );
-									/*
-									UserSessListEntry *usl = u->u_SessionsList;
-									if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
-									{
-										while( usl != NULL )
-										{
-											UserSession *s = (UserSession *) usl->us;
-											if( s != NULL )
-											{
-												char tmpmsg[ 2048 ];
-												int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
-												
-												int msgsndsize = 0;
-												if( usl->us != NULL )
-												{
-													msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
-												}
-												DEBUG("Bytes send: %d\n", msgsndsize );
-						
-												break;
-											}
-											usl = (UserSessListEntry *)usl->node.mln_Succ;
-										}
-										FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
-									}
-									
-									usl = u->u_SessionsList;
-									while( usl != NULL )
-									{
-										UserSession *s = (UserSession *) usl->us;
-										FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
-										s->us_InUseCounter--;
-										FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-										if( usl->us != NULL )
-										{
-											USMUserSessionRemove( l->sl_USM, usl->us );
-											usl->us = NULL;
-										}
-										usl = (UserSessListEntry *)usl->node.mln_Succ;
-									}
-									
-								}
 								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 							}
 							else
