@@ -444,6 +444,9 @@ i18n_drag_files_to_download             : Slipp filer for nedlastning.
 i18n_could_not_download                 : Kunne ikke laste ned
 i18n_download_wrong_type                : Kun filer kan lastes ned.
 
+i18n_illegal_path                       : Feil sti
+i18n_illegal_path_desc                  : Stien finnes ikke.
+
 #Colorpicker -------------------------------------------------------------------
 
 i18n_color_picker                       : Fargevelger

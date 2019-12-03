@@ -721,6 +721,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					ele.classList.remove( 'Minimized' );
 					Workspace.switchWorkspace( ws );
 					ap.windows[w].setFlag( 'hidden', false );
+					ap.windows[w].flags.minimized = false;
+					ap.windows[w].activate();
 				}
 				else
 				{
@@ -1028,6 +1030,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				div.onmousedown = function( e )
 				{
+					// TODO: Fix special case with flags implementation on addLauncher()
+					if( div.classList.contains( 'Startmenu' ) || div.getAttribute( 'data-displayname' ) == 'Files' ) return;
 					if( mousePointer.candidate ) return;
 					if( e.button != 0 )
 						return;
