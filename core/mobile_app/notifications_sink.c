@@ -736,6 +736,15 @@ void ProcessSinkMessage( void *locd )
 									
 										// add first part to response string
 										BufStringAddSize( bs, udata, udatalen );
+										
+										// status
+										
+										if( usr->u_Status == USER_STATUS_DISABLED )
+										{
+											udatalen = snprintf( udata, sizeof(udata), ",\"isdisabled\":true" );
+											BufStringAddSize( bs, udata, udatalen );
+										}
+										
 										// if field is not empty, must be provided
 										if( usr->u_FullName != NULL )
 										{
