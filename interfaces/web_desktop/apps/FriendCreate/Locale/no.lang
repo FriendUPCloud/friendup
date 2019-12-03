@@ -35,3 +35,8 @@ menu_project_editor                 : Rediger prosjekt
 
 i18n_saving                         : Lagrer...
 i18n_saved                          : Lagret.
+
+# Project editor
+
+i18n_project_editor                 : Prosjektredigering
+

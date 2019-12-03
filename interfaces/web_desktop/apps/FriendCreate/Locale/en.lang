@@ -35,3 +35,8 @@ menu_project_editor                 : Project editor
 
 i18n_saving                         : Saving...
 i18n_saved                          : Saved.
+
+# Project editor
+
+i18n_project_editor                 : Project editor
+

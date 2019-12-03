@@ -422,7 +422,7 @@ function InitContentEditor( element, file )
 				cl = ' If';
 			else if( this.lines[a].indexOf( 'var' ) >= 0 )
 				cl = ' Var';
-			str.push( '<textarea class="MinimapRow' + cl + '">' + this.lines[ a ] + '</textarea>' );
+			str.push( '<textarea resize="false" class="MinimapRow' + cl + '">' + this.lines[ a ] + '</textarea>' );
 		}
 		this.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
 	}
