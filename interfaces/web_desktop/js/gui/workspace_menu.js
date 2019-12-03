@@ -200,7 +200,7 @@ var WorkspaceMenu =
 			{
 				// If this is an application owned window, check if it has an application
 				// screen, and if not, let it be
-				if( currentMovable.content.applicationId )
+				if( currentMovable.content && currentMovable.content.applicationId )
 				{
 					var screenAppId = currentScreen.screen._screen.applicationId;
 					if( currentMovable.content.applicationId != screenAppId )
@@ -245,7 +245,7 @@ var WorkspaceMenu =
 			else
 			{
 				// TODO: This might not be needed..
-				if ( window.menu )
+				if( window.menu )
 				{
 					WorkspaceMenu.generate( wm, window.menu );
 					returnCode = 'window_menu_1';

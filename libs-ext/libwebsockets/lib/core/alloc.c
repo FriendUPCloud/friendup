@@ -1,4 +1,4 @@
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #if defined(LWS_HAVE_MALLOC_USABLE_SIZE)
 
@@ -86,7 +86,7 @@ _realloc(void *ptr, size_t size, const char *reason)
 	void *v;
 
 	if (size) {
-#if defined(LWS_WITH_ESP32)
+#if defined(LWS_PLAT_FREERTOS)
 		lwsl_notice("%s: size %lu: %s (free heap %d)\n", __func__,
 #if defined(LWS_AMAZON_RTOS)
 			    (unsigned long)size, reason, (unsigned int)xPortGetFreeHeapSize() - (int)size);

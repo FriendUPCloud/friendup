@@ -1,30 +1,34 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 /*
  * notice this returns number of bytes consumed, or -1
  */
-int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
+int
+lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 {
 	struct lws_context *context = lws_get_context(wsi);
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
@@ -48,7 +52,7 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 			  (unsigned long)len);
 	}
 
-	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_API_WRITE, 1);
+	lws_stats_bump(pt, LWSSTATS_C_API_WRITE, 1);
 
 	/* just ignore sends after we cleared the truncation buffer */
 	if (lwsi_state(wsi) == LRS_FLUSHING_BEFORE_CLOSE &&
@@ -105,10 +109,8 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 		n = (int)len;
 
 	/* nope, send it on the socket directly */
-	lws_latency_pre(context, wsi);
-	m = lws_ssl_capable_write(wsi, buf, n);
-	lws_latency(context, wsi, "send lws_issue_raw", n, n == m);
 
+	m = lws_ssl_capable_write(wsi, buf, n);
 	lwsl_info("%s: ssl_capable_write (%d) says %d\n", __func__, n, m);
 
 	/* something got written, it can have been truncated now */
@@ -160,7 +162,7 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 			}
 
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-#if !defined(LWS_WITHOUT_SERVER)
+#if defined(LWS_WITH_SERVER)
 			if (wsi->http.deferred_transaction_completed) {
 				lwsl_notice("%s: partial completed, doing "
 					    "deferred transaction completed\n",
@@ -200,11 +202,10 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 				       real_len - m) < 0)
 		return -1;
 
-	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITE_PARTIALS, 1);
-	lws_stats_atomic_bump(wsi->context, pt,
-			      LWSSTATS_B_PARTIALS_ACCEPTED_PARTS, m);
+	lws_stats_bump(pt, LWSSTATS_C_WRITE_PARTIALS, 1);
+	lws_stats_bump(pt, LWSSTATS_B_PARTIALS_ACCEPTED_PARTS, m);
 
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
+#if defined(LWS_WITH_UDP)
 	if (lws_wsi_is_udp(wsi)) {
 		/* stash original destination for fulfilling UDP partials */
 		wsi->udp->sa_pending = wsi->udp->sa;
@@ -218,12 +219,17 @@ int lws_issue_raw(struct lws *wsi, unsigned char *buf, size_t len)
 	return (int)real_len;
 }
 
-LWS_VISIBLE int lws_write(struct lws *wsi, unsigned char *buf, size_t len,
-			  enum lws_write_protocol wp)
+int
+lws_write(struct lws *wsi, unsigned char *buf, size_t len,
+	  enum lws_write_protocol wp)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+#if defined(LWS_WITH_DETAILED_LATENCY)
+	lws_usec_t us;
+#endif
+	int m;
 
-	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_API_LWS_WRITE, 1);
+	lws_stats_bump(pt, LWSSTATS_C_API_LWS_WRITE, 1);
 
 	if ((int)len < 0) {
 		lwsl_err("%s: suspicious len int %d, ulong %lu\n", __func__,
@@ -231,38 +237,63 @@ LWS_VISIBLE int lws_write(struct lws *wsi, unsigned char *buf, size_t len,
 		return -1;
 	}
 
-	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_B_WRITE, len);
+	lws_stats_bump(pt, LWSSTATS_B_WRITE, len);
 
 #ifdef LWS_WITH_ACCESS_LOG
 	wsi->http.access_log.sent += len;
 #endif
+#if defined(LWS_WITH_SERVER_STATUS)
 	if (wsi->vhost)
 		wsi->vhost->conn_stats.tx += len;
+#endif
+#if defined(LWS_WITH_DETAILED_LATENCY)
+	us = lws_now_usecs();
+#endif
 
 	assert(wsi->role_ops);
 	if (!wsi->role_ops->write_role_protocol)
 		return lws_issue_raw(wsi, buf, len);
 
-	return wsi->role_ops->write_role_protocol(wsi, buf, len, &wp);
+	m = wsi->role_ops->write_role_protocol(wsi, buf, len, &wp);
+	if (m < 0)
+		return m;
+
+#if defined(LWS_WITH_DETAILED_LATENCY)
+	if (wsi->context->detailed_latency_cb) {
+		wsi->detlat.req_size = len;
+		wsi->detlat.acc_size = m;
+		wsi->detlat.type = LDLT_WRITE;
+		if (wsi->detlat.earliest_write_req_pre_write)
+			wsi->detlat.latencies[LAT_DUR_PROXY_RX_TO_ONWARD_TX] =
+					us - wsi->detlat.earliest_write_req_pre_write;
+		else
+			wsi->detlat.latencies[LAT_DUR_PROXY_RX_TO_ONWARD_TX] = 0;
+		wsi->detlat.latencies[LAT_DUR_USERCB] = lws_now_usecs() - us;
+		lws_det_lat_cb(wsi->context, &wsi->detlat);
+
+	}
+#endif
+
+	return m;
 }
 
-LWS_VISIBLE int
+int
 lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 {
 	struct lws_context *context = wsi->context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	int n = 0;
 
-	lws_stats_atomic_bump(context, pt, LWSSTATS_C_API_READ, 1);
+	lws_stats_bump(pt, LWSSTATS_C_API_READ, 1);
 
 	errno = 0;
+#if defined(LWS_WITH_UDP)
 	if (lws_wsi_is_udp(wsi)) {
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
 		wsi->udp->salen = sizeof(wsi->udp->sa);
 		n = recvfrom(wsi->desc.sockfd, (char *)buf, len, 0,
 			     &wsi->udp->sa, &wsi->udp->salen);
-#endif
 	} else
+#endif
 		n = recv(wsi->desc.sockfd, (char *)buf, len, 0);
 
 	if (n >= 0) {
@@ -277,9 +308,11 @@ lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 		if (!n)
 			return LWS_SSL_CAPABLE_ERROR;
 
+#if defined(LWS_WITH_SERVER_STATUS)
 		if (wsi->vhost)
 			wsi->vhost->conn_stats.rx += n;
-		lws_stats_atomic_bump(context, pt, LWSSTATS_B_READ, n);
+#endif
+		lws_stats_bump(pt, LWSSTATS_B_READ, n);
 
 		return n;
 	}
@@ -293,7 +326,7 @@ lws_ssl_capable_read_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 	return LWS_SSL_CAPABLE_ERROR;
 }
 
-LWS_VISIBLE int
+int
 lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 {
 	int n = 0;
@@ -301,8 +334,23 @@ lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 	ssize_t send(int sockfd, const void *buf, size_t len, int flags);
 #endif
 
+#if defined(LWS_WITH_UDP)
 	if (lws_wsi_is_udp(wsi)) {
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
+		if (wsi->context->udp_loss_sim_tx_pc) {
+			uint16_t u16;
+			/*
+			 * We should randomly drop some of these
+			 */
+
+			if (lws_get_random(wsi->context, &u16, 2) == 2 &&
+			    ((u16 * 100) / 0xffff) <=
+				    wsi->context->udp_loss_sim_tx_pc) {
+				lwsl_warn("%s: dropping udp tx\n", __func__);
+				/* pretend it was sent */
+				n = len;
+				goto post_send;
+			}
+		}
 		if (lws_has_buffered_out(wsi))
 			n = sendto(wsi->desc.sockfd, (const char *)buf,
 				   len, 0, &wsi->udp->sa_pending,
@@ -310,10 +358,14 @@ lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 		else
 			n = sendto(wsi->desc.sockfd, (const char *)buf,
 				   len, 0, &wsi->udp->sa, wsi->udp->salen);
-#endif
 	} else
+#endif
 		n = send(wsi->desc.sockfd, (char *)buf, len, MSG_NOSIGNAL);
 //	lwsl_info("%s: sent len %d result %d", __func__, len, n);
+
+#if defined(LWS_WITH_UDP)
+post_send:
+#endif
 	if (n >= 0)
 		return n;
 
@@ -333,11 +385,11 @@ lws_ssl_capable_write_no_ssl(struct lws *wsi, unsigned char *buf, int len)
 	return LWS_SSL_CAPABLE_ERROR;
 }
 
-LWS_VISIBLE int
+int
 lws_ssl_pending_no_ssl(struct lws *wsi)
 {
 	(void)wsi;
-#if defined(LWS_WITH_ESP32)
+#if defined(LWS_PLAT_FREERTOS)
 	return 100;
 #else
 	return 0;

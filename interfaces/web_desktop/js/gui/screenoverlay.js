@@ -39,6 +39,29 @@ var ScreenOverlay = {
 			this.enableDebug();
 		}
 	},
+	// Trick hide
+	invisible: function()
+	{
+		if( this.debug ) return;
+		var self = this;
+		if( !this.visibility ) return;
+		this.div.classList.add( 'Hiding' );
+		setTimeout( function()
+		{
+			self.div.classList.remove( 'Showing' );
+			self.div.classList.remove( 'Hiding' );
+			setTimeout( function()
+			{
+				self.div.classList.add( 'Hidden' );
+				self.div.classList.remove( 'Visible' );
+				self.clearContent();
+				self.done = true;
+				
+				// Make sure we update screen title and tray/tasks
+				PollTaskbar();
+			}, 250 );
+		}, 250 );
+	},
 	// Hide self
 	hide: function()
 	{
@@ -57,6 +80,21 @@ var ScreenOverlay = {
 				self.visibility = false; // Done hiding!
 				self.clearContent();
 				self.done = true;
+				
+				setTimeout( function()
+				{
+					if( Workspace.applications )
+					{
+						for( var a = 0; a < Workspace.applications.length; a++ )
+						{
+							Workspace.applications[ a ].startupsequence = false;
+						}
+					}
+				}, 1000 );
+				
+				
+				// Make sure we update screen title and tray/tasks
+				PollTaskbar();
 			}, 250 );
 		}, 250 );
 	},

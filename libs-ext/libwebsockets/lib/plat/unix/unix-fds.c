@@ -1,26 +1,29 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #define _GNU_SOURCE
-#include "core/private.h"
+#include "private-lib-core.h"
 
 struct lws *
 wsi_from_fd(const struct lws_context *context, int fd)
@@ -64,6 +67,29 @@ insert_wsi(const struct lws_context *context, struct lws *wsi)
 	p = context->lws_lookup;
 	done = &p[context->max_fds];
 
+#if defined(_DEBUG)
+
+	/* confirm it doesn't already exist */
+
+	while (p != done && *p != wsi)
+		p++;
+
+	assert(p == done);
+	p = context->lws_lookup;
+
+	/* confirm fd doesn't already exist */
+
+	while (p != done && (!*p || (*p && (*p)->desc.sockfd != wsi->desc.sockfd)))
+		p++;
+
+	if (p != done) {
+		lwsl_err("%s: wsi %p already says it has fd %d\n",
+				__func__, *p, wsi->desc.sockfd);
+		assert(0);
+	}
+	p = context->lws_lookup;
+#endif
+
 	/* find an empty slot */
 
 	while (p != done && *p)
@@ -96,15 +122,27 @@ delete_from_fd(const struct lws_context *context, int fd)
 	p = context->lws_lookup;
 	done = &p[context->max_fds];
 
-	/* find an empty slot */
+	/* find the match */
 
-	while (p != done && *p && (*p)->desc.sockfd != fd)
+	while (p != done && (!*p || (*p && (*p)->desc.sockfd != fd)))
 		p++;
 
 	if (p == done)
 		lwsl_err("%s: fd %d not found\n", __func__, fd);
 	else
 		*p = NULL;
+
+#if defined(_DEBUG)
+	p = context->lws_lookup;
+	while (p != done && (!*p || (*p && (*p)->desc.sockfd != fd)))
+		p++;
+
+	if (p != done) {
+		lwsl_err("%s: fd %d in lws_lookup again at %d\n", __func__,
+				fd, (int)(p - context->lws_lookup));
+		assert(0);
+	}
+#endif
 }
 
 void

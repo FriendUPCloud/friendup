@@ -22,4 +22,6 @@
 
 char* GetSystemUniqueId();
 
+void debugFD();
+
 #endif // __CORE_HARDWARE_MACHINE_INFO_H__

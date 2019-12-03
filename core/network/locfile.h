@@ -45,7 +45,7 @@ typedef struct LocFile
 	FULONG					lf_PathLength; // Path length
 
 	char					*lf_Buffer;
-	unsigned long   		lf_FileSize;
+	FULONG					lf_FileSize;
 
 	struct stat				lf_Info;
 	time_t					lf_ModificationTimestamp;

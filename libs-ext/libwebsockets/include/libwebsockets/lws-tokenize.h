@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /* Do not treat - as a terminal character, so "my-token" is one token */
@@ -38,6 +39,8 @@
 #define LWS_TOKENIZE_F_NO_FLOATS	(1 << 5)
 /* Instead of LWS_TOKZE_INTEGER, report integers as any other string token */
 #define LWS_TOKENIZE_F_NO_INTEGERS	(1 << 6)
+/* # makes the rest of the line a comment */
+#define LWS_TOKENIZE_F_HASH_COMMENT	(1 << 7)
 
 typedef enum {
 
@@ -75,7 +78,7 @@ enum lws_tokenize_delimiter_tracking {
 	LWSTZ_DT_NEED_NEXT_CONTENT,
 };
 
-struct lws_tokenize {
+typedef struct lws_tokenize {
 	const char *start; /**< set to the start of the string to tokenize */
 	const char *token; /**< the start of an identified token or delimiter */
 	int len;	/**< set to the length of the string to tokenize */
@@ -83,7 +86,9 @@ struct lws_tokenize {
 
 	int flags;	/**< optional LWS_TOKENIZE_F_ flags, or 0 */
 	int delim;
-};
+
+	lws_tokenize_elem e; /**< convenient for storing lws_tokenize return */
+} lws_tokenize_t;
 
 /**
  * lws_tokenize() - breaks down a string into tokens and delimiters in-place

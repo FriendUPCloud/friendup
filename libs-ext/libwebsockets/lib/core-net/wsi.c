@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #if defined (_DEBUG)
 void lwsi_set_role(struct lws *wsi, lws_wsi_state_t role)
@@ -91,7 +94,7 @@ lws_get_network_wsi(struct lws *wsi)
 
 #if defined(LWS_WITH_HTTP2)
 	if (!wsi->http2_substream
-#if !defined(LWS_NO_CLIENT)
+#if defined(LWS_WITH_CLIENT)
 			&& !wsi->client_h2_substream
 #endif
 	)
@@ -343,7 +346,7 @@ __lws_rx_flow_control(struct lws *wsi)
 
 	if (wsi->rxflow_change_to & LWS_RXFLOW_ALLOW) {
 		lwsl_info("%s: reenable POLLIN\n", __func__);
-		// lws_buflist_describe(&wsi->buflist, NULL);
+		// lws_buflist_describe(&wsi->buflist, NULL, __func__);
 		if (__lws_change_pollfd(wsi, 0, LWS_POLLIN)) {
 			lwsl_info("%s: fail\n", __func__);
 			return -1;
@@ -595,23 +598,21 @@ lws_pvo_get_str(void *in, const char *name, const char **result)
 }
 
 int
-lws_broadcast(struct lws_context *context, int reason, void *in, size_t len)
+lws_broadcast(struct lws_context_per_thread *pt, int reason, void *in, size_t len)
 {
-	struct lws_vhost *v = context->vhost_list;
-	struct lws wsi;
+	struct lws_vhost *v = pt->context->vhost_list;
 	int n, ret = 0;
 
-	memset(&wsi, 0, sizeof(wsi));
-	wsi.context = context;
+	pt->fake_wsi->context = pt->context;
 
 	while (v) {
 		const struct lws_protocols *p = v->protocols;
-		wsi.vhost = v; /* not a real bound wsi */
+		pt->fake_wsi->vhost = v; /* not a real bound wsi */
 
 		for (n = 0; n < v->count_protocols; n++) {
-			wsi.protocol = p;
+			pt->fake_wsi->protocol = p;
 			if (p->callback &&
-			    p->callback(&wsi, reason, NULL, in, len))
+			    p->callback(pt->fake_wsi, reason, NULL, in, len))
 				ret |= 1;
 			p++;
 		}
@@ -738,11 +739,13 @@ lws_protocol_get(struct lws *wsi)
 	return wsi->protocol;
 }
 
+#if defined(LWS_WITH_UDP)
 LWS_VISIBLE const struct lws_udp *
 lws_get_udp(const struct lws *wsi)
 {
 	return wsi->udp;
 }
+#endif
 
 LWS_VISIBLE LWS_EXTERN struct lws_context *
 lws_get_context(const struct lws *wsi)
@@ -750,44 +753,60 @@ lws_get_context(const struct lws *wsi)
 	return wsi->context;
 }
 
-#ifdef LWS_LATENCY
-void
-lws_latency(struct lws_context *context, struct lws *wsi, const char *action,
-	    int ret, int completed)
+#if defined(LWS_WITH_CLIENT)
+int
+_lws_generic_transaction_completed_active_conn(struct lws *wsi)
 {
-	unsigned long long u;
-	char buf[256];
+	struct lws *wsi_eff = lws_client_wsi_effective(wsi);
 
-	u = lws_time_in_microseconds();
+	/*
+	 * Are we constitutionally capable of having a queue, ie, we are on
+	 * the "active client connections" list?
+	 *
+	 * If not, that's it for us.
+	 */
 
-	if (!action) {
-		wsi->latency_start = u;
-		if (!wsi->action_start)
-			wsi->action_start = u;
-		return;
+	if (lws_dll2_is_detached(&wsi->dll_cli_active_conns))
+		return 0; /* no new transaction */
+
+	/* if this was a queued guy, close him and remove from queue */
+
+	if (wsi->transaction_from_pipeline_queue) {
+		lwsl_debug("closing queued wsi %p\n", wsi_eff);
+		/* so the close doesn't trigger a CCE */
+		wsi_eff->already_did_cce = 1;
+		__lws_close_free_wsi(wsi_eff,
+			LWS_CLOSE_STATUS_CLIENT_TRANSACTION_DONE,
+			"queued client done");
 	}
-	if (completed) {
-		if (wsi->action_start == wsi->latency_start)
-			sprintf(buf,
-			  "Completion first try lat %lluus: %p: ret %d: %s\n",
-					u - wsi->latency_start,
-						      (void *)wsi, ret, action);
-		else
-			sprintf(buf,
-			  "Completion %lluus: lat %lluus: %p: ret %d: %s\n",
-				u - wsi->action_start,
-					u - wsi->latency_start,
-						      (void *)wsi, ret, action);
-		wsi->action_start = 0;
-	} else
-		sprintf(buf, "lat %lluus: %p: ret %d: %s\n",
-			      u - wsi->latency_start, (void *)wsi, ret, action);
 
-	if (u - wsi->latency_start > context->worst_latency) {
-		context->worst_latency = u - wsi->latency_start;
-		strcpy(context->worst_latency_info, buf);
+	/* after the first one, they can only be coming from the queue */
+	wsi->transaction_from_pipeline_queue = 1;
+
+	wsi->hdr_parsing_completed = 0;
+
+	/* is there a new tail after removing that one? */
+	wsi_eff = lws_client_wsi_effective(wsi);
+
+	/*
+	 * Do we have something pipelined waiting?
+	 * it's OK if he hasn't managed to send his headers yet... he's next
+	 * in line to do that...
+	 */
+	if (wsi_eff == wsi) {
+		/*
+		 * Nothing pipelined... we should hang around a bit
+		 * in case something turns up...
+		 */
+		lwsl_info("%s: nothing pipelined waiting\n", __func__);
+		lwsi_set_state(wsi, LRS_IDLING);
+
+		lws_set_timeout(wsi, PENDING_TIMEOUT_CLIENT_CONN_IDLE, 5);
+
+		return 0; /* no new transaction right now */
 	}
-	lwsl_latency("%s", buf);
+
+	return 1; /* new transaction */
 }
 #endif
 
@@ -870,20 +889,69 @@ lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p,
 	return 0;
 }
 
+void
+lws_http_close_immortal(struct lws *wsi)
+{
+	struct lws *nwsi;
+
+	if (!wsi->http2_substream)
+		return;
+
+	assert(wsi->h2_stream_immortal);
+	wsi->h2_stream_immortal = 0;
+
+	nwsi = lws_get_network_wsi(wsi);
+	lwsl_debug("%s: %p %p %d\n", __func__, wsi, nwsi,
+				     nwsi->immortal_substream_count);
+	assert(nwsi->immortal_substream_count);
+	nwsi->immortal_substream_count--;
+	if (!nwsi->immortal_substream_count)
+		/*
+		 * since we closed the only immortal stream on this nwsi, we
+		 * need to reapply a normal timeout regime to the nwsi
+		 */
+		lws_set_timeout(nwsi, PENDING_TIMEOUT_HTTP_KEEPALIVE_IDLE,
+				wsi->vhost->keepalive_timeout ?
+				    wsi->vhost->keepalive_timeout : 31);
+}
+
+void
+lws_http_mark_immortal(struct lws *wsi)
+{
+	struct lws *nwsi;
+
+	lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
+
+	if (!wsi->http2_substream
+#if defined(LWS_WITH_CLIENT)
+			&& !wsi->client_h2_substream
+#endif
+	) {
+		lwsl_err("%s: not h2 substream\n", __func__);
+		return;
+	}
+
+	nwsi = lws_get_network_wsi(wsi);
+
+	lwsl_debug("%s: %p %p %d\n", __func__, wsi, nwsi,
+				     nwsi->immortal_substream_count);
+
+	wsi->h2_stream_immortal = 1;
+	assert(nwsi->immortal_substream_count < 255); /* largest count */
+	nwsi->immortal_substream_count++;
+	if (nwsi->immortal_substream_count == 1)
+		lws_set_timeout(nwsi, NO_PENDING_TIMEOUT, 0);
+}
+
+
 int
 lws_http_mark_sse(struct lws *wsi)
 {
 	lws_http_headers_detach(wsi);
-	lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
+	lws_http_mark_immortal(wsi);
 
-	if (wsi->http2_substream) {
-		struct lws *nwsi = lws_get_network_wsi(wsi);
-
+	if (wsi->http2_substream)
 		wsi->h2_stream_carries_sse = 1;
-		nwsi->immortal_substream_count++;
-		if (nwsi->immortal_substream_count == 1)
-			lws_set_timeout(nwsi, NO_PENDING_TIMEOUT, 0);
-	}
 
 	return 0;
 }

@@ -523,7 +523,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	BufString *bsGroups = BufStringNew();
 	//pos = 0;
 	
-	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%lu\",\"uuid\":\"%s\",\"groupsids\":[", usr->u_ID, usr->u_UUID );
+	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupsids\":[", usr->u_UUID );
 	BufStringAddSize( bsGroups, tmpQuery, tmplen );
 	
 	//
@@ -663,7 +663,7 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	BufStringAddSize( bsGroups, "]}", 2 );
 	
 	// update external services about changes
-	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
+	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 	// update user about changes
 	UserNotifyFSEvent2( sb->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 	
@@ -904,11 +904,11 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 		
 		if( type == NULL )
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
 		}
 		else
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.ID,u.UniqueID FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
@@ -922,7 +922,6 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				char *end;
-				FULONG userid = strtol( (char *)row[4], &end, 0 );
 				FULONG groupid =  strtol( (char *)row[0], &end, 0 );
 				FULONG parentid =  strtol( (char *)row[2], &end, 0 );
 				
@@ -942,14 +941,40 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 					usrpos = 0;
 				}
 				
-				if( usrpos == 0 )
+				/*
+				// User Status == DISABLED
+				if( strcmp( (char *)row[ 6 ], "1" ) )
 				{
-					itmp = snprintf( tmp, sizeof(tmp), "{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
+					else
+					{
+						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
 				}
 				else
 				{
-					itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":%lu,\"uuid\":\"%s\"}", userid, (char *)row[ 5 ] );
+					if( usrpos == 0 )
+					{
+						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
+					else
+					{
+ 						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+					}
+				}*/
+				
+				if( usrpos == 0 )
+				{
+					itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 4 ] );
 				}
+				else
+				{
+ 					itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 4 ] );
+				}
+				
 				BufStringAddSize( bs, tmp, itmp );
 				usrpos++;
 			}

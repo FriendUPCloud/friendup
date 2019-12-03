@@ -497,7 +497,7 @@ body:not(.HasMenu) #Screens > div.Screen.HasWidget
 	right: 80px;
 }
 
-body:not([tablet]) #Screens .View:last-child
+body:not([tablet]):not([mobile]) #Screens .View:last-child
 {
 	z-index: 1 !important;
 	box-shadow: 0px 5px 15px 0px rgba(0,0,0,0.5);
@@ -509,6 +509,11 @@ body:not([tablet]) #Screens .ViewContainer
 {
 	width: 100%;
 	height: 100%;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
+{
+	z-index: 1 !important;
 }
 
 body:not([tablet]) .DirectoryToolbar > .ToggleGroup
@@ -564,25 +569,6 @@ html body .View > .Title > div > span
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):not(.OnWorkspace) > .ViewIcon.Dragging
 {
 	background-color: rgba(255,255,255,0.4);
-}
-
-@keyframes jiggle
-{
-	0% { transform: rotateZ(3deg); }
-	50% { transform: rotateZ(-3deg); }
-	100% { transform: rotateZ(3deg); }
-}
-@-webkit-keyframes jiggle
-{
-	0% { transform: rotateZ(3deg); }
-	50% { transform: rotateZ(-3deg); }
-	100% { transform: rotateZ(3deg); }
-}
-
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon.Remove,
-body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View.Remove
-{
-	animation: jiggle 0.3s infinite;
 }
 
 html body[mobile] .ViewContainer:not(.DelayedDeactivation) .View:not(.Active) > div:not(.Title)
@@ -653,6 +639,12 @@ body .ViewContainer .View .Content
 {
 	will-change: content;
 	transform: translateZ(0);
+}
+
+body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Initialized .View
+{
+	transition: none !important;
+	left: 100% !important;
 }
 
 body.ViewMaximized .ViewContainer[childview]:not(.DelayedDeactivation).Activating .View,
@@ -798,13 +790,13 @@ html .View > .Title > div > .Zoom
 	margin-right: -9px;
 }
 
-#Screens .File
+#Screens .File:not(.Tiny)
 {
 	width: 56px;
 }
 
 /* Icons for mobile */
-body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File
+body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File:not(.Tiny)
 {
 	width: 88px;
 }
@@ -815,6 +807,29 @@ body:not([tablet])[mobile=mobile] .IconWindow .File > .Icon
 body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File > .Title
 {
 	left: 0;
+}
+
+/* On workspace icons */
+
+.OnWorkspace.ViewContainer
+{
+	transform: none;
+	transition: transform 0.25s;
+}
+
+.OnWorkspace.ViewContainer.Flipped
+{
+	transform: rotate3d(0,1,0,180deg);
+}
+
+.OnWorkspace.ViewContainer.Flipped .Title span
+{
+	opacity: 0;
+}
+
+.OnWorkspace.ViewContainer.Flipped > .ViewIcon
+{
+	opacity: 0.6;
 }
 
 /* Done icons for mobile */

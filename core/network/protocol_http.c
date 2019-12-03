@@ -127,7 +127,7 @@ static inline ListString *RunPHPScript( const char *command )
 				//clo[0] = '\'';
 				//clo[1] = EOF;
 				//write( pofd.np_FD[ NPOPEN_INPUT ], clo, 2 );
-				FERROR("Error in popen, Quit! Command: %s\n", command );
+				//FERROR("Error in popen, Quit! Command: %s\n", command );
 				break;
 			}
 		}
@@ -1154,7 +1154,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 						// We don't allow directory traversals..
 						if( flaw == 0 )
 						{
-							Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s size %d\n", path->raw, path->rawSize );
+							Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s path size %d\n", path->raw, path->rawSize );
 
 							for( i = 0; i < path->rawSize; i++ )
 							{
@@ -1539,7 +1539,14 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											DEBUG("Resource mutex released\n");
 											//FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
-										Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p\n", file );
+										if( file != NULL )
+										{
+											Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p filesize %lu\n", file, file->lf_FileSize );
+										}
+										else
+										{
+											Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr 0\n" );
+										}
 
 										// Send reply
 										if( file != NULL )

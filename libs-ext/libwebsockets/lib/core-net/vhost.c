@@ -1,25 +1,28 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2019 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 const struct lws_role_ops *available_roles[] = {
 #if defined(LWS_ROLE_H2)
@@ -109,7 +112,6 @@ lws_role_call_alpn_negotiated(struct lws *wsi, const char *alpn)
 	return 0;
 }
 
-//#if !defined(LWS_WITHOUT_SERVER)
 int
 lws_role_call_adoption_bind(struct lws *wsi, int type, const char *prot)
 {
@@ -176,9 +178,8 @@ lws_role_call_adoption_bind(struct lws *wsi, int type, const char *prot)
 
 	return 1;
 }
-//#endif
 
-#if !defined(LWS_WITHOUT_CLIENT)
+#if defined(LWS_WITH_CLIENT)
 int
 lws_role_call_client_bind(struct lws *wsi,
 			  const struct lws_client_connect_info *i)
@@ -279,6 +280,91 @@ lws_vhost_protocol_options(struct lws_vhost *vh, const char *name)
 	return NULL;
 }
 
+int
+lws_protocol_init_vhost(struct lws_vhost *vh, int *any)
+{
+	const struct lws_protocol_vhost_options *pvo, *pvo1;
+	struct lws *wsi = vh->context->pt[0].fake_wsi;
+	int n;
+
+	wsi->context = vh->context;
+	wsi->vhost = vh;
+
+	/* initialize supported protocols on this vhost */
+
+	for (n = 0; n < vh->count_protocols; n++) {
+		wsi->protocol = &vh->protocols[n];
+		if (!vh->protocols[n].name)
+			continue;
+		pvo = lws_vhost_protocol_options(vh, vh->protocols[n].name);
+		if (pvo) {
+			/*
+			 * linked list of options specific to
+			 * vh + protocol
+			 */
+			pvo1 = pvo;
+			pvo = pvo1->options;
+
+			while (pvo) {
+				lwsl_debug(
+					"    vhost \"%s\", "
+					"protocol \"%s\", "
+					"option \"%s\"\n",
+						vh->name,
+						vh->protocols[n].name,
+						pvo->name);
+
+				if (!strcmp(pvo->name, "default")) {
+					lwsl_info("Setting default "
+					   "protocol for vh %s to %s\n",
+					   vh->name,
+					   vh->protocols[n].name);
+					vh->default_protocol_index = n;
+				}
+				if (!strcmp(pvo->name, "raw")) {
+					lwsl_info("Setting raw "
+					   "protocol for vh %s to %s\n",
+					   vh->name,
+					   vh->protocols[n].name);
+					vh->raw_protocol_index = n;
+				}
+				pvo = pvo->next;
+			}
+
+			pvo = pvo1->options;
+		}
+
+#if defined(LWS_WITH_TLS)
+		if (any)
+			*any |= !!vh->tls.ssl_ctx;
+#endif
+
+		/*
+		 * inform all the protocols that they are doing their
+		 * one-time initialization if they want to.
+		 *
+		 * NOTE the wsi is all zeros except for the context, vh
+		 * + protocol ptrs so lws_get_context(wsi) etc can work
+		 */
+		if (vh->protocols[n].callback(wsi,
+				LWS_CALLBACK_PROTOCOL_INIT, NULL,
+				(void *)pvo, 0)) {
+			if (vh->protocol_vh_privs[n]) {
+				lws_free(vh->protocol_vh_privs[n]);
+				vh->protocol_vh_privs[n] = NULL;
+			}
+			lwsl_err("%s: protocol %s failed init\n",
+				 __func__, vh->protocols[n].name);
+
+			return 1;
+		}
+	}
+
+	vh->created_vhost_protocols = 1;
+
+	return 0;
+}
+
 /*
  * inform every vhost that hasn't already done it, that
  * his protocols are initializing
@@ -287,99 +373,24 @@ LWS_VISIBLE int
 lws_protocol_init(struct lws_context *context)
 {
 	struct lws_vhost *vh = context->vhost_list;
-	const struct lws_protocol_vhost_options *pvo, *pvo1;
-	struct lws wsi;
-	int n, any = 0;
+	int any = 0;
 
 	if (context->doing_protocol_init)
 		return 0;
 
 	context->doing_protocol_init = 1;
 
-	memset(&wsi, 0, sizeof(wsi));
-	wsi.context = context;
-
 	lwsl_info("%s\n", __func__);
 
 	while (vh) {
-		wsi.vhost = vh;
 
 		/* only do the protocol init once for a given vhost */
 		if (vh->created_vhost_protocols ||
-		    (vh->options & LWS_SERVER_OPTION_SKIP_PROTOCOL_INIT))
+		    (lws_check_opt(vh->options, LWS_SERVER_OPTION_SKIP_PROTOCOL_INIT)))
 			goto next;
 
-		/* initialize supported protocols on this vhost */
-
-		for (n = 0; n < vh->count_protocols; n++) {
-			wsi.protocol = &vh->protocols[n];
-			if (!vh->protocols[n].name)
-				continue;
-			pvo = lws_vhost_protocol_options(vh,
-							 vh->protocols[n].name);
-			if (pvo) {
-				/*
-				 * linked list of options specific to
-				 * vh + protocol
-				 */
-				pvo1 = pvo;
-				pvo = pvo1->options;
-
-				while (pvo) {
-					lwsl_debug(
-						"    vhost \"%s\", "
-						"protocol \"%s\", "
-						"option \"%s\"\n",
-							vh->name,
-							vh->protocols[n].name,
-							pvo->name);
-
-					if (!strcmp(pvo->name, "default")) {
-						lwsl_info("Setting default "
-						   "protocol for vh %s to %s\n",
-						   vh->name,
-						   vh->protocols[n].name);
-						vh->default_protocol_index = n;
-					}
-					if (!strcmp(pvo->name, "raw")) {
-						lwsl_info("Setting raw "
-						   "protocol for vh %s to %s\n",
-						   vh->name,
-						   vh->protocols[n].name);
-						vh->raw_protocol_index = n;
-					}
-					pvo = pvo->next;
-				}
-
-				pvo = pvo1->options;
-			}
-
-#if defined(LWS_WITH_TLS)
-			any |= !!vh->tls.ssl_ctx;
-#endif
-
-			/*
-			 * inform all the protocols that they are doing their
-			 * one-time initialization if they want to.
-			 *
-			 * NOTE the wsi is all zeros except for the context, vh
-			 * + protocol ptrs so lws_get_context(wsi) etc can work
-			 */
-			if (vh->protocols[n].callback(&wsi,
-					LWS_CALLBACK_PROTOCOL_INIT, NULL,
-					(void *)pvo, 0)) {
-				if (vh->protocol_vh_privs[n]) {
-					lws_free(vh->protocol_vh_privs[n]);
-					vh->protocol_vh_privs[n] = NULL;
-				}
-				lwsl_err("%s: protocol %s failed init\n",
-					 __func__, vh->protocols[n].name);
-
-				return 1;
-			}
-		}
-
-		vh->created_vhost_protocols = 1;
+		if (lws_protocol_init_vhost(vh, &any))
+			return 1;
 next:
 		vh = vh->vhost_next;
 	}
@@ -391,8 +402,10 @@ next:
 
 	context->protocol_init_done = 1;
 
+#if defined(LWS_WITH_SERVER)
 	if (any)
 		lws_tls_check_all_cert_lifetimes(context);
+#endif
 
 	return 0;
 }
@@ -437,8 +450,12 @@ lws_create_vhost(struct lws_context *context,
 	struct lws_protocols *lwsp;
 	int m, f = !info->pvo, fx = 0, abs_pcol_count = 0;
 	char buf[96];
-#if !defined(LWS_WITHOUT_CLIENT) && defined(LWS_HAVE_GETENV)
+#if defined(LWS_CLIENT_HTTP_PROXYING) && \
+    defined(LWS_WITH_CLIENT) && defined(LWS_HAVE_GETENV)
 	char *p;
+#endif
+#if defined(LWS_WITH_SYS_ASYNC_DNS)
+	extern struct lws_protocols lws_async_dns_protocol;
 #endif
 	int n;
 
@@ -462,14 +479,19 @@ lws_create_vhost(struct lws_context *context,
 	vh->http.error_document_404 = info->error_document_404;
 #endif
 
-	if (info->options & LWS_SERVER_OPTION_ONLY_RAW)
+	if (lws_check_opt(info->options, LWS_SERVER_OPTION_ONLY_RAW))
 		lwsl_info("%s set to only support RAW\n", vh->name);
 
 	vh->iface = info->iface;
-#if !defined(LWS_WITH_ESP32) && \
-    !defined(OPTEE_TA) && !defined(WIN32)
+#if !defined(LWS_PLAT_FREERTOS) && !defined(OPTEE_TA) && !defined(WIN32)
 	vh->bind_iface = info->bind_iface;
 #endif
+	/* apply the context default lws_retry */
+
+	if (info->retry_and_idle_policy)
+		vh->retry_policy = info->retry_and_idle_policy;
+	else
+		vh->retry_policy = &context->default_retry;
 
 	/*
 	 * let's figure out how many protocols the user is handing us, using the
@@ -555,6 +577,7 @@ lws_create_vhost(struct lws_context *context,
 	/*
 	 * give the vhost a unified list of protocols including:
 	 *
+	 * - internal, async_dns if enabled (first vhost only)
 	 * - internal, abstracted ones
 	 * - the ones that came from plugins
 	 * - his user protocols
@@ -588,6 +611,16 @@ lws_create_vhost(struct lws_context *context,
 	for (n = 0; n < abs_pcol_count; n++) {
 		memcpy(&lwsp[m++], available_abstract_protocols[n],
 		       sizeof(*lwsp));
+		vh->count_protocols++;
+	}
+#endif
+	/*
+	 * 3: async dns protocol (first vhost only)
+	 */
+#if defined(LWS_WITH_SYS_ASYNC_DNS)
+	if (!context->vhost_list) {
+		memcpy(&lwsp[m++], &lws_async_dns_protocol,
+		       sizeof(struct lws_protocols));
 		vh->count_protocols++;
 	}
 #endif
@@ -631,8 +664,8 @@ lws_create_vhost(struct lws_context *context,
 	vh->protocols = lwsp;
 	vh->allocated_vhost_protocols = 1;
 
-	vh->same_vh_protocol_heads = (struct lws_dll *)
-			lws_zalloc(sizeof(struct lws_dll) *
+	vh->same_vh_protocol_owner = (struct lws_dll2_owner *)
+			lws_zalloc(sizeof(struct lws_dll2_owner) *
 				   vh->count_protocols, "same vh list");
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 	vh->http.mount_list = info->mounts;
@@ -671,18 +704,17 @@ lws_create_vhost(struct lws_context *context,
 	}
 
 	vh->listen_port = info->port;
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-	vh->http.http_proxy_port = 0;
-	vh->http.http_proxy_address[0] = '\0';
-#endif
+
 #if defined(LWS_WITH_SOCKS5)
 	vh->socks_proxy_port = 0;
 	vh->socks_proxy_address[0] = '\0';
 #endif
 
-#if !defined(LWS_WITHOUT_CLIENT)
+#if defined(LWS_WITH_CLIENT) && defined(LWS_CLIENT_HTTP_PROXYING)
 	/* either use proxy from info, or try get it from env var */
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
+	vh->http.http_proxy_port = 0;
+	vh->http.http_proxy_address[0] = '\0';
 	/* http proxy */
 	if (info->http_proxy_address) {
 		/* override for backwards compatibility */
@@ -696,7 +728,7 @@ lws_create_vhost(struct lws_context *context,
 		p = getenv("http_proxy");
 		if (p) {
 			lws_strncpy(buf, p, sizeof(buf));
-
+			/* coverity[tainted_scalar] */
 			lws_set_proxy(vh, buf);
 		}
 #endif
@@ -752,6 +784,7 @@ lws_create_vhost(struct lws_context *context,
 		lwsl_err("%s: lws_context_init_client_ssl failed\n", __func__);
 		goto bail1;
 	}
+#if defined(LWS_WITH_SERVER)
 	lws_context_lock(context, "create_vhost");
 	n = _lws_vhost_init_server(info, vh);
 	lws_context_unlock(context);
@@ -759,6 +792,8 @@ lws_create_vhost(struct lws_context *context,
 		lwsl_err("init server failed\n");
 		goto bail1;
 	}
+#endif
+	n = !!context->vhost_list;
 
 	while (1) {
 		if (!(*vh1)) {
@@ -767,6 +802,11 @@ lws_create_vhost(struct lws_context *context,
 		}
 		vh1 = &(*vh1)->vhost_next;
 	};
+
+#if defined(LWS_WITH_SYS_ASYNC_DNS)
+	if (!n && lws_async_dns_init(context))
+		goto bail1;
+#endif
 
 	/* for the case we are adding a vhost much later, after server init */
 
@@ -1000,6 +1040,22 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 	struct lws wsi;
 	int n;
 
+#if defined(LWS_WITH_CLIENT)
+	/*
+	 * destroy any wsi that are associated with us but have no socket
+	 * (and will otherwise be missed for destruction)
+	 */
+	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
+			      vh->vh_awaiting_socket_owner.head) {
+		struct lws *w =
+			lws_container_of(d, struct lws, vh_awaiting_socket);
+
+		lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS,
+				   "awaiting skt");
+
+	} lws_end_foreach_dll_safe(d, d1);
+#endif
+
 	/*
 	 * destroy any pending timed events
 	 */
@@ -1088,9 +1144,12 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 	if (vh->protocol_vh_privs)
 		lws_free(vh->protocol_vh_privs);
 	lws_ssl_SSL_CTX_destroy(vh);
-	lws_free(vh->same_vh_protocol_heads);
+	lws_free(vh->same_vh_protocol_owner);
 
-	if (context->plugin_list ||
+	if (
+#if defined(LWS_WITH_PLUGINS)
+		context->plugin_list ||
+#endif
 	    (context->options & LWS_SERVER_OPTION_EXPLICIT_VHOSTS) ||
 	    vh->allocated_vhost_protocols)
 		lws_free((void *)vh->protocols);
@@ -1260,7 +1319,7 @@ lws_get_vhost_listen_port(struct lws_vhost *vhost)
 	return vhost->listen_port;
 }
 
-
+#if defined(LWS_WITH_SERVER)
 LWS_VISIBLE LWS_EXTERN void
 lws_context_deprecate(struct lws_context *context, lws_reload_func cb)
 {
@@ -1301,3 +1360,119 @@ lws_context_deprecate(struct lws_context *context, lws_reload_func cb)
 	context->deprecated = 1;
 	context->deprecation_cb = cb;
 }
+#endif
+
+#if defined(LWS_WITH_NETWORK)
+
+struct lws_vhost *
+lws_get_vhost_by_name(struct lws_context *context, const char *name)
+{
+	lws_start_foreach_ll(struct lws_vhost *, v,
+			     context->vhost_list) {
+		if (!strcmp(v->name, name))
+			return v;
+
+	} lws_end_foreach_ll(v, vhost_next);
+
+	return NULL;
+}
+
+
+#if defined(LWS_WITH_CLIENT)
+/*
+ * This is the logic checking to see if the new connection wsi should have a
+ * pipelining or muxing relationship with an existing "active connection" to
+ * the same endpoint under the same conditions.
+ *
+ * This was originally in the client code but since the list is held on the
+ * vhost (to ensure the same client tls ctx is involved) it's cleaner in vhost.c
+ */
+
+int
+lws_vhost_active_conns(struct lws *wsi, struct lws **nwsi)
+{
+	const char *adsin;
+
+	adsin = lws_hdr_simple_ptr(wsi, _WSI_TOKEN_CLIENT_PEER_ADDRESS);
+
+	lws_vhost_lock(wsi->vhost); /* ----------------------------------- { */
+
+	lws_start_foreach_dll_safe(struct lws_dll2 *, d, d1,
+				   wsi->vhost->dll_cli_active_conns_owner.head) {
+		struct lws *w = lws_container_of(d, struct lws,
+						 dll_cli_active_conns);
+
+		lwsl_debug("%s: check %s %s %d %d\n", __func__, adsin,
+			   w->cli_hostname_copy, wsi->c_port, w->c_port);
+
+		if (w != wsi && w->cli_hostname_copy &&
+		    !strcmp(adsin, w->cli_hostname_copy) &&
+#if defined(LWS_WITH_TLS)
+		    (wsi->tls.use_ssl & LCCSCF_USE_SSL) ==
+		     (w->tls.use_ssl & LCCSCF_USE_SSL) &&
+#endif
+		    wsi->c_port == w->c_port) {
+
+			/*
+			 * There's already an active connection.
+			 *
+			 * The server may have told the existing active
+			 * connection that it doesn't support pipelining...
+			 */
+			if (w->keepalive_rejected) {
+				lwsl_info("defeating pipelining due to no "
+					  "keepalive on server\n");
+				goto solo;
+			}
+#if defined (LWS_WITH_HTTP2)
+			/*
+			 * h2: in usable state already: just use it without
+			 *     going through the queue
+			 */
+			if (w->client_h2_alpn &&
+			    (lwsi_state(w) == LRS_H2_WAITING_TO_SEND_HEADERS ||
+			     lwsi_state(w) == LRS_ESTABLISHED)) {
+
+				lwsl_info("%s: just join h2 directly\n",
+						__func__);
+
+				wsi->client_h2_alpn = 1;
+				lws_wsi_h2_adopt(w, wsi);
+				lws_vhost_unlock(wsi->vhost); /* } ---------- */
+
+				return ACTIVE_CONNS_MUXED;
+			}
+#endif
+
+			lwsl_info("apply %p to txn queue on %p state 0x%lx\n",
+				  wsi, w, (unsigned long)w->wsistate);
+			/*
+			 * ...let's add ourselves to his transaction queue...
+			 * we are adding ourselves at the HEAD
+			 */
+			lws_dll2_add_head(&wsi->dll2_cli_txn_queue,
+					  &w->dll2_cli_txn_queue_owner);
+
+			/*
+			 * h1: pipeline our headers out on him,
+			 * and wait for our turn at client transaction_complete
+			 * to take over parsing the rx.
+			 */
+			lws_vhost_unlock(wsi->vhost); /* } ---------- */
+
+			*nwsi = w;
+
+			return ACTIVE_CONNS_QUEUED;
+		}
+
+	} lws_end_foreach_dll_safe(d, d1);
+
+solo:
+	lws_vhost_unlock(wsi->vhost); /* } ---------------------------------- */
+
+	/* there is nobody already connected in the same way */
+
+	return ACTIVE_CONNS_SOLO;
+}
+#endif
+#endif

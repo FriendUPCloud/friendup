@@ -597,8 +597,8 @@ cAjax.prototype.send = function( data )
 		}
 	}
 
-	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
-	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
+	// Check if we can use websockets
+	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
 	{
 		//console.log( 'Test2: Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
@@ -638,7 +638,6 @@ cAjax.prototype.send = function( data )
         
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
-        	console.log( 'Test: Request failed ', reqId );
         	AddToCajaxQueue( self );
 			Workspace.flushSession();
 			return Workspace.relogin();

@@ -57,6 +57,7 @@ static pthread_mutex_t _socket_array_mutex;
 static unsigned int _max_sockets;
 static pthread_t _socket_reaper_thread_handle;
 
+#ifdef USE_SOCKET_REAPER
 static void* _socket_reaper_thread(void *a);
 static void _socket_add_to_reaper(Socket *sock);
 static void _socket_remove_from_reaper(const Socket *sock);
@@ -65,7 +66,6 @@ static void _socket_remove_from_reaper(const Socket *sock);
  */
 void socket_init_once( void )
 {
-#ifdef USE_SOCKET_REAPER
 	struct rlimit limit;
 	int status = getrlimit(RLIMIT_NOFILE, &limit);
 	if( status != 0 )
@@ -84,7 +84,6 @@ void socket_init_once( void )
 	pthread_mutex_init(&_socket_array_mutex, NULL);
 
 	pthread_create(&_socket_reaper_thread_handle, NULL/*default attributes*/, _socket_reaper_thread, NULL/*extra args*/);
-#endif
 }
 
 static void* _socket_reaper_thread(void *a __attribute__((unused)))
@@ -173,6 +172,7 @@ void socket_update_state( Socket *sock, socket_state_t state )
 	sock->state_update_timestamp = time(NULL);
 	FRIEND_MUTEX_UNLOCK(&sock->mutex);
 }
+#endif
 
 /**
  * Open new socket on specified port
@@ -184,7 +184,7 @@ void socket_update_state( Socket *sock, socket_state_t state )
  * @return Socket structure when success, otherwise NULL
  */
 
-Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
+Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type )
 {
 	Socket *sock = NULL;
 	int fd = socket( AF_INET6, SOCK_STREAM | SOCK_NONBLOCK, 0 );
@@ -232,7 +232,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 			{
 				FERROR( "SSLContext error %s\n", (char *)stderr );
 				close( fd );
-				SocketFree( sock );
+				SocketDelete( sock );
 				return NULL;
 			}
 
@@ -243,7 +243,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 				{
 					FERROR( "Could not verify cert CA: %s CA_PATH: %s", lsb->RSA_SERVER_CA_CERT, lsb->RSA_SERVER_CA_PATH );
 					close( fd );
-					SocketFree( sock );
+					SocketDelete( sock );
 					return NULL;
 				}
 
@@ -336,7 +336,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 		if( bind( fd, (struct sockaddr*)&server, sizeof( server ) ) == -1 )
 		{
 			FERROR( "[SOCKET] ERROR bind failed on port %d\n", port );
-			SocketClose( sock );
+			SocketDelete( sock );
 			return NULL;
 		}
 
@@ -355,7 +355,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 		else
 		{
 			FERROR("Cannot allocate memory for socket!\n");
-			SocketClose( sock );
+			SocketDelete( sock );
 			return NULL;
 		}
 
@@ -384,7 +384,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 			if( sock->s_Meth  == NULL )
 			{
 				FERROR("Cannot create SSL client method!\n");
-				SocketClose( sock );
+				SocketDelete( sock );
 				return NULL;
 			}
 
@@ -393,7 +393,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 			if( sock->s_Ctx  == NULL )
 			{
 				FERROR("Cannot create SSL context!\n");
-				SocketClose( sock );
+				SocketDelete( sock );
 				return NULL;
 			}
 
@@ -410,7 +410,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 			if( sock->s_Ssl == NULL )
 			{
 				FERROR("Cannot create new SSL connection\n");
-				SocketClose( sock );
+				SocketDelete( sock );
 				return NULL;
 			}
 			SSL_set_fd( sock->s_Ssl, sock->fd );
@@ -822,7 +822,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 		if( sock->s_Meth  == NULL )
 		{
 			FERROR("Cannot create SSL client method!\n");
-			SocketClose( sock );
+			SocketDelete( sock );
 			return NULL;
 		}
 
@@ -832,7 +832,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 		if( sock->s_Ctx  == NULL )
 		{
 			FERROR("Cannot create SSL context!\n");
-			SocketClose( sock );
+			SocketDelete( sock );
 			return NULL;
 		}
 
@@ -862,7 +862,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 		sock->s_Ssl = SSL_new( sock->s_Ctx );
 		if( sock->s_Ssl == NULL )
 		{
-			SocketClose( sock );
+			SocketDelete( sock );
 			FERROR("Cannot create new SSL connection\n");
 			return NULL;
 		}
@@ -956,7 +956,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 						errTime++;
 						if( errTime > 10 )
 						{
-							SocketClose( sock );
+							SocketDelete( sock );
 							return NULL;
 						}
 					}
@@ -972,11 +972,11 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 						break;
 					case SSL_ERROR_SYSCALL:
 						FERROR( "[SocketConnect] Error syscall!\n" );
-						SocketClose( sock );
+						SocketDelete( sock );
 						return NULL;
 					default:
 						FERROR( "[SocketConnect] Other error.\n" );
-						SocketClose( sock );
+						SocketDelete( sock );
 						return NULL;
 					}
 				}
@@ -1228,7 +1228,7 @@ inline Socket* SocketAccept( Socket* sock )
 					return incoming;
 				case SSL_ERROR_ZERO_RETURN:
 					FERROR("[SocketAccept] SSL_ACCEPT error: Socket closed.\n" );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_WANT_READ:
 					//return incoming;
@@ -1238,19 +1238,19 @@ inline Socket* SocketAccept( Socket* sock )
 					break;
 				case SSL_ERROR_WANT_ACCEPT:
 					FERROR( "[SocketAccept] Want accept\n" );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_WANT_X509_LOOKUP:
 					FERROR( "[SocketAccept] Want 509 lookup\n" );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_SYSCALL:
 					FERROR( "[SocketAccept] Error syscall.\n" ); //. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_SSL:
 					FERROR( "[SocketAccept] SSL_ERROR_SSL: %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				}
 			}
@@ -1267,8 +1267,10 @@ inline Socket* SocketAccept( Socket* sock )
 		}
 	}
 
+#ifdef USE_SOCKET_REAPER
 	socket_update_state(incoming, socket_state_accepted);
-	//_socket_add_to_reaper(incoming);
+	_socket_add_to_reaper(incoming);
+#endif
 
 	DEBUG( "[SocketAccept] Accepting incoming!\n" );
 	return incoming;
@@ -1388,7 +1390,7 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 					return incoming;
 				case SSL_ERROR_ZERO_RETURN:
 					FERROR("[SocketAcceptPair] SSL_ACCEPT error: Socket closed.\n" );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_WANT_READ:
 					return incoming;
@@ -1396,19 +1398,19 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 					return incoming;
 				case SSL_ERROR_WANT_ACCEPT:
 					FERROR( "[SocketAcceptPair] Want accept\n" );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_WANT_X509_LOOKUP:
 					FERROR( "[SocketAcceptPair] Want 509 lookup\n" );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_SYSCALL:
 					FERROR( "[SocketAcceptPair] Error syscall.\n" ); //. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				case SSL_ERROR_SSL:
 					FERROR( "[SocketAcceptPair] SSL_ERROR_SSL: %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-					SocketClose( incoming );
+					SocketDelete( incoming );
 					return NULL;
 				}
 			}
@@ -1416,9 +1418,11 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 		}
 	}
 
+#ifdef USE_SOCKET_REAPER
 	socket_update_state(incoming, socket_state_accepted);
 	_socket_add_to_reaper(incoming);
-
+#endif
+	
 	// Return socket
 	return incoming;
 }
@@ -1474,7 +1478,7 @@ inline int SocketRead( Socket* sock, char* data, unsigned int length, unsigned i
 			//DEBUG("aa read %d length %d\n", read, length );
 
 			if( read + buf > length ) buf = length - read;
-
+			//DEBUG("socket read %d\n", sock->fd );
 			if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) > 0 )
 			{
 #ifndef NO_VALGRIND_STUFF	
@@ -2482,6 +2486,7 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 		while( written < length )
 		{
 			if( (bsize + written) > length ) bsize = length - written;
+			// if( bsize > 12288 ){ bsize = 12288; }
 
 			if( sock->s_Ssl == NULL )
 			{
@@ -2521,8 +2526,15 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 						}*/
 					break;
 				}
+				case SSL_ERROR_SSL:
+					FERROR("Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
+					if( counter++ > 3 )
+					{
+						return 0;
+					}
+					break;
 				default:
-					FERROR("Cannot write %d stringerr: %s size: %ld\n", err, strerror( err ), length );
+					FERROR("Cannot write. Error %d stringerr: %s wanted to sent: %ld fullsize: %ld\n", err, strerror( err ), bsize, length );
 					return 0;
 				}
 
@@ -2622,8 +2634,9 @@ void SocketFree( Socket *sock )
 			}
 		}
 
+#ifdef USE_SOCKET_REAPER
 		_socket_remove_from_reaper(sock);
-
+#endif
 		FRIEND_MUTEX_UNLOCK( &sock->mutex );
 	}
 
@@ -2637,7 +2650,7 @@ void SocketFree( Socket *sock )
  *
  * @param sock pointer to Socket
  */
-void SocketClose( Socket* sock )
+void SocketDelete( Socket* sock )
 {
 	if( sock == NULL || sock->fd <= 0 )
 	{
@@ -2645,31 +2658,17 @@ void SocketClose( Socket* sock )
 		return;
 	}
 
-	//DEBUG("[SocketClose] before lock\n");
-	//if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
+	//DEBUG("[SocketClose] locked\n");
+	if( sock->s_SSLEnabled == TRUE )
 	{
-		//DEBUG("[SocketClose] locked\n");
-		if( sock->s_SSLEnabled == TRUE )
+		DEBUG("[SocketClose] ssl\n");
+		if( sock->s_Ssl )
 		{
-			//DEBUG("[SocketClose] ssl\n");
-			if( sock->s_Ssl )
+			int ret, ssl_r;
+			unsigned long err;
+			ERR_clear_error();
+			switch( ( ret = SSL_shutdown( sock->s_Ssl ) ) )
 			{
-				/*
-				int stat = SSL_shutdown( sock->s_Ssl );
-				if( stat == 0 )
-				{
-					stat = SSL_shutdown( sock->s_Ssl );
-					if( stat <= 0 )
-					{
-						FERROR("Stat <= 0\n" );
-					}
-				}
-				 */
-				int ret, ssl_r;
-				unsigned long err;
-				ERR_clear_error();
-				switch( ( ret = SSL_shutdown( sock->s_Ssl ) ) )
-				{
 				case 1:
 					DEBUG("Ret 1\n");
 					// ok 
@@ -2722,6 +2721,18 @@ void SocketClose( Socket* sock )
 						break;
 					}
 				}
+				
+				if( sock->s_Ssl )
+				{
+					SSL_free( sock->s_Ssl );
+					sock->s_Ssl = NULL;
+				}
+				if( sock->s_Ctx )
+				{
+					SSL_CTX_free( sock->s_Ctx );
+					sock->s_Ctx = NULL;
+				}
+
 				//int ret;
 				//SSL_shutdown( sock->s_Ssl );
 				/*
@@ -2737,9 +2748,7 @@ void SocketClose( Socket* sock )
 				}*/
 
 				//DEBUG("[SocketClose] before ssl clear\n");
-				SSL_clear( sock->s_Ssl );
-				SSL_free( sock->s_Ssl );
-				sock->s_Ssl = NULL;
+				
 				//DEBUG("[SocketClose] ssl released\n");
 			}
 
@@ -2749,28 +2758,30 @@ void SocketClose( Socket* sock )
 				BIO_free( sock->s_BIO );;
 			}
 			sock->s_BIO = NULL;
-		}
-		// default
-		if( sock->fd )
-		{
-			fcntl( sock->fd, F_SETFD, FD_CLOEXEC );
-			
-			int optval;
-			socklen_t optlen = sizeof(optval);
-			optval = 0;
-			optlen = sizeof(optval);
-			if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
-			{
-			}
-			
-			int e = 0;//shutdown( sock->fd, SHUT_RDWR );
-
-			e = close( sock->fd );
-			DEBUG("socked closed: %d\n", sock->fd );
-			sock->fd = 0;
-		}
-		SocketFree( sock );
-		sock = NULL;
 	}
+	
+	// default
+	if( sock->fd )
+	{
+		fcntl( sock->fd, F_SETFD, FD_CLOEXEC );
+		
+		int optval;
+		socklen_t optlen = sizeof(optval);
+		optval = 0;
+		optlen = sizeof(optval);
+		if( setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0 ) 
+		{
+		}
+		
+		int e = 0;
+		shutdown( sock->fd, SHUT_RDWR );
+
+		e = close( sock->fd );
+		DEBUG("socked closed: %d\n", sock->fd );
+		sock->fd = 0;
+	}
+	pthread_mutex_destroy( &sock->mutex );
+
+	FFree( sock );
 }
 

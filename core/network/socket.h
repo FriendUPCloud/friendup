@@ -26,7 +26,7 @@
 #include <netinet/in.h>
 #include <sys/select.h>
 #endif
-#include <libwebsockets.h>
+//#include <libwebsockets.h>
 #ifdef USE_SELECT
 
 #else
@@ -45,7 +45,7 @@
 #include "util/list.h"
 #include "util/string.h"
 #include "util/buffered_string.h"
-#include "websocket.h"
+//#include "websocket.h"
 
 #define SOCKET_CLOSED_STATE -2
 
@@ -153,27 +153,29 @@ typedef struct Socket
 	MinNode						node;
 } Socket;
 
+#ifdef USE_SOCKET_REAPER
 void socket_init_once(void);
 
 void socket_update_state(Socket *sock, socket_state_t state);
+#endif
 
 //
 // Open a new socket
 //
 
-Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type );  // TODO: Bind address
+Socket* SocketNew( void *sb, FBOOL ssl, unsigned short port, int type );  // TODO: Bind address
 
 //
 // Set socket for listening
 //
 
-int       SocketListen( Socket* s );
+int SocketListen( Socket* s );
 
 //
 // Open a connection to a remote host
 //
 
-int       SocketConnect( Socket* sock, const char *host );
+int SocketConnect( Socket* sock, const char *host );
 
 //
 // Open new connection to host + create socket
@@ -234,13 +236,13 @@ FLONG SocketWrite( Socket* s, char* data, FLONG length );
 // Request the socket to be closed (Acceptable if the other end also has closed the socket)
 //
 
-void SocketClose( Socket* s );
+void SocketDelete( Socket* s );
 
 //
 //
 //
 
-void SocketFree( Socket *s );
+//void SocketFree( Socket *s );
 
 //
 //

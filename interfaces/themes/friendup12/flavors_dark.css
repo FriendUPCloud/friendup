@@ -22,6 +22,11 @@ html body.Dark[mobile] #WorkspaceMenu.Open ul
 	background: #435260;
 }
 
+html body.Dark .Screen > .TitleBar .ScreenList
+{
+	color: white;
+}
+
 html body.Dark #DoorScreen:after,
 body.Dark:not(.ViewMaximized) #Screens > div.Screen > .TitleBar, 
 body.Dark.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar,
@@ -313,11 +318,6 @@ html body.Dark .Screen > .TitleBar > .Left *
 body.Dark #DoorsScreen .Left > .VirtualWorkspaces > div.Active 
 {
 	border: 1px solid #455155;
-}
-
-html body.Dark .Screen > .TitleBar .ScreenList
-{
-	filter: invert(1);
 }
 
 [mobile].Dark .View.IconWindow .MobileFileBrowser > .FileBrowser .DiskItem > .Name,

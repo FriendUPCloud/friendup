@@ -11,6 +11,7 @@
 
 function findBaseHref( $app )
 {
+	global $Logger;
 	$ar = array(
 		'repository/',
 		'resources/webclient/apps/'
@@ -19,7 +20,8 @@ function findBaseHref( $app )
 	{
 		if( file_exists( $apath . $app ) && is_dir( $apath . $app ) )
 		{
-			return str_replace( array( '../resources' ), '', $apath ) . $app . '/';
+			$str = str_replace( array( '../resources' ), '', $apath ) . $app . '/';
+			return $str;
 		}
 	}
 	return false;
@@ -31,7 +33,7 @@ if( $level == 'API' )
 	$app->UserID = $User->ID;
 	$app->Name = $args->app;
 	$app->ID = 'load';
-	$app->Config = file_get_contents( 'resources' . findBaseHref( $args->app ) . 'Config.conf' );
+	$app->Config = file_get_contents( findBaseHref( $args->app ) . 'Config.conf' );
 }
 else
 {
@@ -43,7 +45,8 @@ else
 
 if( $app->ID )
 {
-	$path = findBaseHref( $app->Name );
+	$path = findBaseHref( $app->Name ? $app->Name : $args->app );
+	$Logger->log( $path );
 	$conf = json_decode( $app->Config );
 	
 	friendHeader( 'Content-Type: text/html' );
@@ -69,8 +72,6 @@ if( $app->ID )
 	// This one is probably from the resources/ directory
 	else
 	{
-		if( substr( $path, 0, 9 ) == 'resources' )
-			$path = substr( $path, 9, strlen( $path ) - 9 );
 		$scrp = preg_replace( '/progdir\:/i', $path, $scrp );
 	}
 	

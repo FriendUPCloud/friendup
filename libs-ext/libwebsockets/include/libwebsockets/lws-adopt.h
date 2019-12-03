@@ -1,24 +1,25 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
- *
- * included from libwebsockets.h
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /** \defgroup sock-adopt Socket adoption helpers
@@ -78,13 +79,13 @@ typedef union {
 	lws_filefd_type filefd;
 } lws_sock_file_fd_type;
 
-#if !defined(LWS_WITH_ESP32) && !defined(LWS_PLAT_OPTEE)
+#if defined(LWS_WITH_UDP)
 struct lws_udp {
-	struct sockaddr sa;
-	socklen_t salen;
+	struct sockaddr		sa;
+	socklen_t		salen;
 
-	struct sockaddr sa_pending;
-	socklen_t salen_pending;
+	struct sockaddr		sa_pending;
+	socklen_t		salen_pending;
 };
 #endif
 
@@ -92,7 +93,7 @@ struct lws_udp {
 * lws_adopt_descriptor_vhost() - adopt foreign socket or file descriptor
 * if socket descriptor, should already have been accepted from listen socket
 *
-* \param vhost: lws vhost
+* \param vh: lws vhost
 * \param type: OR-ed combinations of lws_adoption_type flags
 * \param fd: union with either .sockfd or .filefd set
 * \param vh_prot_name: NULL or vh protocol name to bind raw connection to
@@ -119,7 +120,7 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
  * \param accept_fd:	fd of already-accepted socket to adopt
  * \param readbuf:	NULL or pointer to data that must be drained before reading from
  *		accept_fd
- * \param len:	The length of the data held at \param readbuf
+ * \param len:	The length of the data held at \p readbuf
  *
  * Either returns new wsi bound to accept_fd, or closes accept_fd and
  * returns NULL, having cleaned up any new wsi pieces.
@@ -130,10 +131,10 @@ lws_adopt_descriptor_vhost(struct lws_vhost *vh, lws_adoption_type type,
  * If your external code did not already read from the socket, you can use
  * lws_adopt_socket() instead.
  *
- * This api is guaranteed to use the data at \param readbuf first, before reading from
+ * This api is guaranteed to use the data at \p readbuf first, before reading from
  * the socket.
  *
- * readbuf is limited to the size of the ah rx buf, currently 2048 bytes.
+ * \p readbuf is limited to the size of the ah rx buf, currently 2048 bytes.
  */
 LWS_VISIBLE LWS_EXTERN struct lws *
 lws_adopt_socket_readbuf(struct lws_context *context, lws_sockfd_type accept_fd,
@@ -143,9 +144,8 @@ lws_adopt_socket_readbuf(struct lws_context *context, lws_sockfd_type accept_fd,
  * accepted it for vhost.
  * \param vhost:	lws vhost
  * \param accept_fd:	fd of already-accepted socket to adopt
- * \param readbuf:	NULL or pointer to data that must be drained before
- * 			reading from accept_fd
- * \param len:		The length of the data held at \param readbuf
+ * \param readbuf:	NULL or pointer to data that must be drained before reading from accept_fd
+ * \param len:		The length of the data held at \p readbuf
  *
  * Either returns new wsi bound to accept_fd, or closes accept_fd and
  * returns NULL, having cleaned up any new wsi pieces.
@@ -156,31 +156,39 @@ lws_adopt_socket_readbuf(struct lws_context *context, lws_sockfd_type accept_fd,
  * If your external code did not already read from the socket, you can use
  * lws_adopt_socket() instead.
  *
- * This api is guaranteed to use the data at \param readbuf first, before reading from
+ * This api is guaranteed to use the data at \p readbuf first, before reading from
  * the socket.
  *
- * readbuf is limited to the size of the ah rx buf, currently 2048 bytes.
+ * \p readbuf is limited to the size of the ah rx buf, currently 2048 bytes.
  */
 LWS_VISIBLE LWS_EXTERN struct lws *
 lws_adopt_socket_vhost_readbuf(struct lws_vhost *vhost,
 			       lws_sockfd_type accept_fd, const char *readbuf,
 			       size_t len);
 
-#define LWS_CAUDP_BIND 1
+#define LWS_CAUDP_BIND (1 << 0)
+#define LWS_CAUDP_BROADCAST (1 << 1)
+#define LWS_CAUDP_PF_PACKET (1 << 2)
 
+#if defined(LWS_WITH_UDP)
 /**
  * lws_create_adopt_udp() - create, bind and adopt a UDP socket
  *
  * \param vhost:	 lws vhost
+ * \param ads:		 NULL or address to do dns lookup on
  * \param port:		 UDP port to bind to, -1 means unbound
  * \param flags:	 0 or LWS_CAUDP_NO_BIND
  * \param protocol_name: Name of protocol on vhost to bind wsi to
+ * \param ifname:	 NULL, for network interface name to bind socket to
  * \param parent_wsi:	 NULL or parent wsi new wsi will be a child of
+ * \param retry_policy:	 NULL for vhost default policy else wsi specific policy
  *
  * Either returns new wsi bound to accept_fd, or closes accept_fd and
  * returns NULL, having cleaned up any new wsi pieces.
  * */
 LWS_VISIBLE LWS_EXTERN struct lws *
-lws_create_adopt_udp(struct lws_vhost *vhost, int port, int flags,
-		     const char *protocol_name, struct lws *parent_wsi);
+lws_create_adopt_udp(struct lws_vhost *vhost, const char *ads, int port,
+		     int flags, const char *protocol_name, const char *ifname,
+		     struct lws *parent_wsi, const lws_retry_bo_t *retry_policy);
+#endif
 ///@}

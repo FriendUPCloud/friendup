@@ -2638,8 +2638,9 @@ function View( flags )
 	Application.sendMessage( msg );
 	Application.windows[ viewId ] = this;
 
-	// Just activate this window
-	this.activate();
+	// Just activate this window (unless it starts minimized)
+	if( !flags.minimized )
+		this.activate();
 }
 
 // To close a view
@@ -5274,6 +5275,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	var suffix = false;
 	var multiSelect = true; // Select multiple files
 	var keyboardNavigation = false;
+	var rememberPath = false;
 	
 	// We have a view
 	if( object && object.getViewId )
@@ -5317,6 +5319,9 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 				case 'keyboardNavigation':
 					keyboardNavigation = object[a];
 					break;
+				case 'rememberPath':
+					rememberPath = object[a];
+					break;
 			}
 		}
 	}
@@ -5353,6 +5358,7 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 		viewId:             mainview,
 		targetViewId:       targetview,
 		suffix:             suffix,
+		rememberPath:       rememberPath,
 		keyboardNavigation: keyboardNavigation
 	} );
 }
@@ -6827,7 +6833,7 @@ if( typeof( windowMouseX ) == 'undefined' )
 
 // Confirm view ----------------------------------------------------------------
 
-function Confirm( title, string, callb, confirmOKText, confirmCancelText )
+function Confirm( title, string, callb, confirmOKText, confirmCancelText, thirdButtonText, thirdButtonReturn )
 {
 	var cb = addCallback( callb );
 	var msg = {
@@ -6839,6 +6845,8 @@ function Confirm( title, string, callb, confirmOKText, confirmCancelText )
 	};
 	if( confirmOKText ) msg.confirmok = confirmOKText;
 	if( confirmCancelText ) msg.confirmcancel = confirmCancelText;
+	if( thirdButtonText ) msg.thirdButtonText = thirdButtonText;
+	if( thirdButtonReturn ) msg.thirdButtonReturn = thirdButtonReturn;
 	
 	Application.sendMessage( msg  );
 }

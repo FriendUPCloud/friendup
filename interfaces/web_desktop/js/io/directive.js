@@ -45,6 +45,7 @@ function ExecuteApplication( app, args, callback )
 	// You need to wait with opening apps until they are loaded by app name
 	if( _executionQueue[ appName ] )
 	{
+		callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 		return;
 	}
 
@@ -94,8 +95,10 @@ function ExecuteApplication( app, args, callback )
 		{
 			_ActivateWindow( Friend.singleInstanceApps[ appName ].windows[ a ]._window.parentNode );
 			_WindowToFront( Friend.singleInstanceApps[ appName ].windows[ a ]._window.parentNode );
+			callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 			return;
 		}
+		callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 		return;
 	}
 	// Only allow one app instance in mobile!
@@ -110,6 +113,7 @@ function ExecuteApplication( app, args, callback )
 				{
 					_ActivateWindow( app.windows[ z ]._window.parentNode );
 					_WindowToFront( app.windows[ z ]._window.parentNode );
+					
 					// Clean blocker
 					RemoveFromExecutionQueue( appName );
 					
@@ -346,6 +350,13 @@ function ExecuteApplication( app, args, callback )
 			ifr.conf = conf && conf.ConfFilename ? conf.ConfFilename : false;
 			ifr.config = conf ? conf : false; // Whole object
 			ifr.drive = drive;
+			
+			// Set startupsequence flag on apps that are launched this way
+			// Except the first app which will operate like normal
+			if( window.ScreenOverlay && ScreenOverlay.visibility && ( ScreenOverlay.launchIndex > 0 || Workspace.applications.length > 0 ) )
+			{
+				ifr.startupsequence = true;
+			}
 
 			// Proper way to run by conf.init
 			if( conf.Init )
@@ -401,6 +412,7 @@ function ExecuteApplication( app, args, callback )
 				{
 					for( var a in this.windows )
 					{
+						this.windows[a].quitting = true;
 						this.windows[a].close( level );
 					}
 				}
@@ -897,7 +909,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 	var pelement = win.getWindowElement();
 	if( !pelement ) 
 	{
-		console.log( 'No parent element: ', win, win.windowObject );
+		//console.log( 'No parent element: ', win, win.windowObject );
 		return;
 	}
 	var eles = pelement.getElementsByTagName( 'input' );
@@ -1214,6 +1226,17 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 					};
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
+				
+				// Close file dialog memory
+				// TODO: Reenable if needed
+				/*var out = [];
+				for( var a in _dialogStorage )
+				{
+					if( a != ifr.applicationName )
+						out[ a ] = _dialogStorage[ a ];
+				}
+				_dialogStorage = out; */
+				
 				// Silently close message port
 				ApplicationMessagingNexus.close( this.applicationId );
 			}
@@ -1370,9 +1393,13 @@ function AttachAppSandbox( ifr, path )
 	x.appendChild( img );
 	d.appendChild( x );
 
-	// On click, quit with force!
-	x.onclick = function()
-	{ ifr.quit( 1 ); }
+	var b = document.createElement( 'div' );
+	b.className = 'CloseButton';
+	b.onmousedown = function()
+	{
+		ifr.quit( 1 );
+	}
+	d.appendChild( b );
 
 	ge( 'Tasks' ).appendChild( d );
 

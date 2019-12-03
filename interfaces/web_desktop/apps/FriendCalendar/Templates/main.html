@@ -1,17 +1,20 @@
 
 	<div class="FullContent">
-		<div class="HContentLeft BackgroundLists Padding ScrollArea" id="LeftCol">
-			<h2>
-				{i18n_find_events}
-			</h2>
-			<p>
-				<input type="text" class="InputHeight FullWidth" id="Searcher" value="" placeholder="{i18n_search_keywords}"/>
-			</p>
-			<p class="InputHeight">
-				<button type="button" class="Button IconSmall fa-search"> {i18n_search}</button>
-			</p>
+		<div class="HContentLeft Padding" id="LeftCol">
+			<div id="Find" class="Padding">
+				<h2>
+					{i18n_find_events}
+				</h2>
+				<p>
+					<input type="text" class="InputHeight FullWidth" id="Searcher" value="" placeholder="{i18n_search_keywords}"/>
+				</p>
+				<p class="InputHeight">
+					<button type="button" class="Button IconSmall fa-search"> {i18n_search}</button>
+				</p>
+			</div>
 			<div id="Sources" class="BorderTop PaddingTop MarginTop"></div>
-			<div id="UsersGroups" class="BorderTop PaddingTop MarginTop"></div>
+			<div id="UsersGroups" class="BorderTop Padding"></div>
+			<div id="Roster" class="Padding BorderTop"></div>
 		</div>
 		<div class="HContentRight" id="RightCol">
 			<div class="VContentTop BorderBottom" id="TopPanel">
@@ -19,7 +22,9 @@
 				<h1 id="MonthName"></h1>
 				<div id="GoNext" onmousedown="GoNext(); return cancelBubble( event ? event : evt );"></div>
 			</div>
-			<div class="VContentBottom ScrollArea BackgroundLists" id="MainView">
+			<div id="DayHeading" class="BorderBottom"></div>
+			<div id="LongEvents"></div>
+			<div class="VContentBottom ScrollArea BackgroundLists SmoothScrolling BorderTop" id="MainView">
 			</div>
 			<div class="VContentBottom BorderTop" id="BottomPanel">
 				<div class="HRow Padding">

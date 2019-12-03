@@ -1,25 +1,28 @@
 /*
- * libwebsockets web server application
+ * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2018 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010 - 2019 Andy Green <andy@warmcat.com>
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation:
- *  version 2.1 of the License.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301  USA
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-#include "core/private.h"
+#include "private-lib-core.h"
 
 #ifndef _WIN32
 /* this is needed for Travis CI */
@@ -42,6 +45,8 @@ static const char * const paths_global[] = {
 	"global.reject-service-keywords[].*",
 	"global.reject-service-keywords[]",
 	"global.default-alpn",
+	"global.ip-limit-ah",
+	"global.ip-limit-wsi",
 };
 
 enum lejp_global_paths {
@@ -58,6 +63,8 @@ enum lejp_global_paths {
 	LWJPGP_REJECT_SERVICE_KEYWORDS_NAME,
 	LWJPGP_REJECT_SERVICE_KEYWORDS,
 	LWJPGP_DEFAULT_ALPN,
+	LWJPGP_IP_LIMIT_AH,
+	LWJPGP_IP_LIMIT_WSI,
 };
 
 static const char * const paths_vhosts[] = {
@@ -125,6 +132,7 @@ static const char * const paths_vhosts[] = {
 	"vhosts[].allow-http-on-https",
 
 	"vhosts[].disable-no-protocol-ws-upgrades",
+	"vhosts[].h2-half-closed-long-poll",
 };
 
 enum lejp_vhost_paths {
@@ -192,6 +200,7 @@ enum lejp_vhost_paths {
 	LEJPVP_FLAG_ALLOW_HTTP_ON_HTTPS,
 
 	LEJPVP_FLAG_DISABLE_NO_PROTOCOL_WS_UPGRADES,
+	LEJPVP_FLAG_H2_HALF_CLOSED_LONG_POLL,
 };
 
 #define MAX_PLUGIN_DIRS 10
@@ -247,7 +256,7 @@ arg_to_bool(const char *s)
 }
 
 static void
-set_reset_flag(unsigned int *p, const char *state, unsigned int flag)
+set_reset_flag(uint64_t *p, const char *state, uint64_t flag)
 {
 	if (arg_to_bool(state))
 		*p |= flag;
@@ -305,7 +314,9 @@ lejp_globals_cb(struct lejp_ctx *ctx, char reason)
 			a->info->options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 		return 0;
 	case LEJPGP_SERVER_STRING:
+#if defined(LWS_WITH_SERVER)
 		a->info->server_string = a->p;
+#endif
 		break;
 	case LEJPGP_PLUGIN_DIR:
 		if (a->count_plugin_dirs == MAX_PLUGIN_DIRS - 1) {
@@ -326,6 +337,14 @@ lejp_globals_cb(struct lejp_ctx *ctx, char reason)
 	case LWJPGP_DEFAULT_ALPN:
 		a->info->alpn = a->p;
 		break;
+
+	case LWJPGP_IP_LIMIT_AH:
+		a->info->ip_limit_ah = atoi(ctx->buf);
+		return 0;
+
+	case LWJPGP_IP_LIMIT_WSI:
+		a->info->ip_limit_wsi = atoi(ctx->buf);
+		return 0;
 
 	default:
 		return 0;
@@ -355,7 +374,9 @@ lejp_vhosts_cb(struct lejp_ctx *ctx, char reason)
 
 	if (reason == LEJPCB_OBJECT_START && ctx->path_match == LEJPVP + 1) {
 		uint32_t i[4];
+#if defined(LWS_WITH_SERVER)
 		const char *ss;
+#endif
 
 		/* set the defaults for this vhost */
 		a->reject_ws_with_no_protocol = 0;
@@ -373,7 +394,9 @@ lejp_vhosts_cb(struct lejp_ctx *ctx, char reason)
 			LWS_SERVER_OPTION_LIBEVENT |
 			LWS_SERVER_OPTION_LIBEV
 				);
+#if defined(LWS_WITH_SERVER)
 		ss = a->info->server_string;
+#endif
 		i[2] = a->info->ws_ping_pong_interval;
 		i[3] = a->info->timeout_secs;
 
@@ -381,7 +404,9 @@ lejp_vhosts_cb(struct lejp_ctx *ctx, char reason)
 
 		a->info->count_threads = i[0];
 		a->info->options = i[1];
+#if defined(LWS_WITH_SERVER)
 		a->info->server_string = ss;
+#endif
 		a->info->ws_ping_pong_interval = i[2];
 		a->info->timeout_secs = i[3];
 
@@ -839,6 +864,11 @@ lejp_vhosts_cb(struct lejp_ctx *ctx, char reason)
 
 	case LEJPVP_FLAG_DISABLE_NO_PROTOCOL_WS_UPGRADES:
 		a->reject_ws_with_no_protocol = 1;
+		return 0;
+
+	case LEJPVP_FLAG_H2_HALF_CLOSED_LONG_POLL:
+		set_reset_flag(&a->info->options, ctx->buf,
+				LWS_SERVER_OPTION_VH_H2_HALF_CLOSED_LONG_POLL);
 		return 0;
 
 	default:

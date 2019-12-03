@@ -33,6 +33,8 @@
 #include <util/murmurhash3.h>
 #include <errno.h>
 
+#include <hardware/machine_info.h>
+
 #if LOCFILE_USE_MMAP == 0
 #include <sys/mman.h>
 #endif
@@ -110,7 +112,16 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 	FILE* fp = fopen( path, "rb" );
 	if( fp == NULL )
 	{
-		Log( FLOG_ERROR, "Cannot open file %s, errno: %s\n", path, strerror(errno) );
+		char *err = strerror( errno );
+		
+		Log( FLOG_ERROR, "Cannot open file %s, errno: %s\n", path, err );
+		if( err != NULL && strncmp( err, "Too many open files", 19 ) == 0 )
+		{
+			system("netstat -ptan | awk '{print $6 " " $7 }' | sort | uniq -c > netstat_raport.txt");
+			system("sudo lsof | grep FriendCo > lsof_report.txt");
+		
+			debugFD();
+		}
 		return NULL;
 	}
 	

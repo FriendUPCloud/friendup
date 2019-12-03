@@ -234,6 +234,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							//ltm.tm_year += 1900;
 							//ltm.tm_mon ++;
 							struct tm extm;
+							
 							if( sscanf( (char *)row[i], "%d-%d-%d %d:%d:%d", &(extm.tm_year), &(extm.tm_mon), &(extm.tm_mday), &(extm.tm_hour), &(extm.tm_min), &(extm.tm_sec) ) != EOF )
 							{
 							}
@@ -241,6 +242,8 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							{
 								extm.tm_year -= 1900;
 							}
+							// Remember, C count from 0 !
+							extm.tm_mon--;
 							
 							memcpy( strptr + dptr[ 2 ], &extm, sizeof( struct tm ) );
 							DEBUG("[MYSQLLibrary] TIMESTAMP load %s\n", row[ i ] );
@@ -516,7 +519,8 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 						if( tp->tm_year < 1901 ) tp->tm_year += 1900;
 						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
-						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
+						// month is counted from 0 in C, if we want to put this into database it must be month counted from 1
+						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon+1, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
 						
 						//DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
 					
@@ -727,7 +731,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 
-						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
+						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon+1, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
 						
 						if( opt > 0 )
 						{
@@ -758,7 +762,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
 						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 
-						sprintf( date, "%04d-%02d-%02d", tp->tm_year, tp->tm_mon, tp->tm_mday );
+						sprintf( date, "%04d-%02d-%02d", tp->tm_year, tp->tm_mon+1, tp->tm_mday );
 						
 						if( opt > 0 )
 						{
