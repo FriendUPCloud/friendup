@@ -40,3 +40,17 @@ i18n_saved                          : Saved.
 
 i18n_project_editor                 : Project editor
 
+i18n_project_information            : Project information
+i18n_project_name                   : Project name
+i18n_project_author                 : Author
+i18n_project_version                : Version
+i18n_project_category               : Category
+i18n_project_description            : Description
+i18n_system_privileges              : System privileges
+i18n_add_privilege                  : Add privilege
+i18n_remove_privileges              : Remove privilege(s)
+i18n_application_images             : Application images
+i18n_project_files                  : Project files
+i18n_add_file                       : Add file
+i18n_remove_file                    : Remove file(s)
+

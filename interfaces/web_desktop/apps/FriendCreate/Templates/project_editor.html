@@ -1,11 +1,11 @@
 
 <div class="ContentFull">
 	<h2 class="Padding">
-		Project information
+		{i18n_project_information}
 	</h2>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
-			<strong>Project name:</strong>
+			<strong>{i18n_project_name}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
 			<input class="FullWidth" id="project_name" value="{project_name}"/>
@@ -13,7 +13,7 @@
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
-			<strong>Author:</strong>
+			<strong>{i18n_project_author}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
 			<input class="FullWidth" id="project_author" value="{project_author}"/>
@@ -21,7 +21,7 @@
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
-			<strong>Version:</strong>
+			<strong>{i18n_project_version}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
 			<input size="8" id="project_version" value="{project_version}"/>
@@ -29,7 +29,7 @@
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
-			<strong>Category:</strong>
+			<strong>{i18n_project_category}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
 			<select id="project_category">
@@ -39,7 +39,7 @@
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
-			<strong>Description:</strong>
+			<strong>{i18n_project_description}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
 			<textarea resize="no" id="project_description" class="FullWidth" style="height: 150px">{project_description}</textarea>
@@ -47,15 +47,25 @@
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
-			<strong>System privileges:</strong>
+			<strong>{i18n_system_privileges}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
-			{system_privileges}
+			<div class="List BorderBottom" id="system_privileges">
+				{system_privileges}
+			</div>
+			<div class="HRow">
+				<button class="IconButton IconSmall fa-plus">
+					{i18n_add_privilege}
+				</button>
+				<button class="IconButton IconSmall fa-minus">
+					{i18n_remove_privileges}
+				</button>
+			</div>
 		</div>
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
-			<strong>Application images:</strong>
+			<strong>{i18n_application_images}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
 			{application_images}
@@ -66,7 +76,17 @@
 			<strong>Project files:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
-			{project_files}
+			<div class="List BorderBottom" id="system_privileges">
+				{project_files}
+			</div>
+			<div class="HRow">
+				<button class="IconButton IconSmall fa-plus">
+					{i18n_add_file}
+				</button>
+				<button class="IconButton IconSmall fa-minus">
+					{i18n_remove_files}
+				</button>
+			</div>
 		</div>
 	</div>
 </div>
