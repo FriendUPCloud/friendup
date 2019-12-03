@@ -26,7 +26,34 @@
 #include <util/session_id.h>
 
 //test
-#undef __DEBUG
+
+
+inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, char *action )
+{
+	BufString *bs = BufStringNew();
+
+	char msg[ 512 ];
+	int msize = 0;
+	if( usr->u_Status == USER_STATUS_DISABLED )
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+		BufStringAddSize( bs, msg, msize );
+	}
+	else
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":false,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+		BufStringAddSize( bs, msg, msize );
+		UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+	}
+
+	BufStringAddSize( bs, "]}", 2 );
+	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
+	
+	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
+	
+	BufStringDelete( bs );
+}
+
 
 /**
  * Http web call processor
@@ -381,7 +408,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -474,6 +501,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						}
 						
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, NULL );
+						
+						NotifyExtServices( l, request, locusr, "create" );
 						
 						UserDelete( locusr );
 					}
@@ -711,19 +740,31 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							}
 						}
 						
+						/*
 						{
+							BufString *bs = BufStringNew();
+
 							char msg[ 512 ];
+							int msize = 0;
 							if( status == USER_STATUS_DISABLED )
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
+								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 							}
 							else
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
+								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 							}
+							BufStringAddSize( bs, msg, msize );
+							UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+							BufStringAddSize( bs, "]}", 2 );
+							
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+							
+							BufStringDelete( bs );
 						}
+						*/
+						NotifyExtServices( l, request, usr, "update" );
 						
 						if( gotFromDB == TRUE )
 						{
@@ -1146,6 +1187,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
+					NotifyExtServices( l, request, logusr, "update" );
+					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )
 					//{
@@ -1313,6 +1356,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, NULL, workgroups );
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+					NotifyExtServices( l, request, logusr, "update" );
 					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )

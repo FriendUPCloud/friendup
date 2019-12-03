@@ -134,5 +134,11 @@ FBOOL UGMUserToGroupISConnectedByUIDDB( UserGroupManager *um, FULONG ugroupid, F
 
 int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type );
 
+//
+//
+//
+
+int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
+
 
 #endif //__SYSTEM_USER_USER_GROUP_MANAGER_H__
