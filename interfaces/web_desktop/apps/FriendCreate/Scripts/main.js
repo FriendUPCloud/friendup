@@ -535,6 +535,11 @@ var supportedFiles = [
 
 function OpenFile( path )
 {
+	if( path && path.indexOf( '.' ) > 0 )
+	{
+		return new EditorFile( path );
+	}
+	
 	( new Filedialog( {
 		path: path,
 		triggerFunction: function( items )
@@ -818,6 +823,11 @@ function RefreshProjects()
 	{
 		var pr = projects[ a ];
 		var fstr = '';
+		
+		var projectpath = pr.Path.split( '/' );
+		projectpath.pop();
+		projectpath = projectpath.join( '/' ) + '/';
+		
 		if( pr.Files && pr.Files.length )
 		{
 			var sortable = [];
@@ -832,7 +842,8 @@ function RefreshProjects()
 				}
 				sortable[ pr.Files[ c ].Path ] = {
 					levels: pr.Files[ c ].Path.split( '/' ),
-					path: path
+					path: path,
+					fullpath: pr.Files[ c ].Path
 				}
 			}
 			sortable = sortable.sort();
@@ -851,7 +862,7 @@ function RefreshProjects()
 			{
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					str += '<li class="FileItem">' + list[ a ].levels[ depth - 1 ] + '</li>';
+					str += '<li class="FileItem" onclick="OpenFile(\'' + projectpath + list[a].fullpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
 			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
