@@ -705,7 +705,10 @@ function OpenProjectEditor()
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		pe.setContent( data );
+		pe.setContent( data, function()
+		{
+			pe.sendMessage( { command: 'content', content: Application.currentProject } );
+		} );
 	}
 	f.load();
 	

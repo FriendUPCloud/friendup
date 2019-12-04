@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var project = {};
+
 Application.run = function( msg )
 {
 }
@@ -23,3 +25,26 @@ function RefreshImages()
 function RefreshPermissions()
 {
 }
+
+// -----------------------------------------------------------------------------
+
+Application.receiveMessage = function( msg )
+{
+	console.log( 'Received message: ', msg );
+	if( msg.command )
+	{
+		switch( msg.command )
+		{
+			case 'content':
+				for( var a in msg.content )
+				{
+					project[ a ] = msg.content[ a ];
+				}
+				RefreshFiles();
+				RefreshImages();
+				RefreshPermissions();
+				break;
+		}
+	}
+}
+
