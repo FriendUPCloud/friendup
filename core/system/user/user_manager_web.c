@@ -26,36 +26,7 @@
 #include <util/session_id.h>
 
 //test
-
-
-inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, char *action )
-{
-	BufString *bs = BufStringNew();
-
-	char msg[ 512 ];
-	int msize = 0;
-	
-	if( usr->u_Status == USER_STATUS_DISABLED )
-	{
-		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
-		BufStringAddSize( bs, msg, msize );
-		//UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
-	}
-	else
-	{
-		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":false,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
-		BufStringAddSize( bs, msg, msize );
-		UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
-	}
-
-	BufStringAddSize( bs, "]}", 2 );
-	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
-	
-	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
-	
-	BufStringDelete( bs );
-}
-
+//#undef __DEBUG
 
 inline static int killUserSession( SystemBase *l, UserSession *ses )
 {
@@ -101,21 +72,43 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 	int error = 0;
 	FRIEND_MUTEX_LOCK( &u->u_Mutex );
 	UserSessListEntry *usl = u->u_SessionsList;
-	while( usl != NULL )
+	if( deviceid != NULL )
 	{
-		UserSession *s = (UserSession *) usl->us;
-		if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+		while( usl != NULL )
 		{
-			char tmpmsg[ 2048 ];
-			int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+			UserSession *s = (UserSession *) usl->us;
+			if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+			{
+				char tmpmsg[ 2048 ];
+				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
 				
-			int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 
-			DEBUG("Bytes send: %d\n", msgsndsize );
+				DEBUG("Bytes send: %d\n", msgsndsize );
 			
-			break;
+				break;
+			}
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
 		}
-		usl = (UserSessListEntry *)usl->node.mln_Succ;
+	}
+	else
+	{
+		while( usl != NULL )
+		{
+			UserSession *s = (UserSession *) usl->us;
+			if( s != NULL )
+			{
+				char tmpmsg[ 2048 ];
+				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				
+				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+
+				DEBUG("Bytes send: %d\n", msgsndsize );
+			
+				break;
+			}
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
+		}
 	}
 	FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	
@@ -145,6 +138,34 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 		usl = (UserSessListEntry *)usl->node.mln_Succ;
 	}
 	return error;
+}
+
+inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, char *action )
+{
+	BufString *bs = BufStringNew();
+
+	char msg[ 512 ];
+	int msize = 0;
+	
+	if( usr->u_Status == USER_STATUS_DISABLED )
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+		BufStringAddSize( bs, msg, msize );
+		//UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+	}
+	else
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":false,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+		BufStringAddSize( bs, msg, msize );
+		UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+	}
+
+	BufStringAddSize( bs, "]}", 2 );
+	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
+	
+	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
+	
+	BufStringDelete( bs );
 }
 
 /**
@@ -657,7 +678,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -760,8 +781,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updatestatus" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -769,10 +790,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 		FULONG id = 0;
 		FLONG status = -1;
+		HashmapElement *el = NULL;
 		
 		DEBUG( "[UMWebRequest] Update user status!!\n" );
 		
-		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		el = HttpGetPOSTParameter( request, "id" );
 		if( el != NULL )
 		{
 			char *next;
@@ -845,49 +867,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								User *u = UMGetUserByID( l->sl_UM, id );
 								if( u != NULL )
 								{
-									killUserSessionByUser( l, u );
-									/*
-									UserSessListEntry *usl = u->u_SessionsList;
-									if( FRIEND_MUTEX_LOCK( &u->u_Mutex ) == 0 )
-									{
-										while( usl != NULL )
-										{
-											UserSession *s = (UserSession *) usl->us;
-											if( s != NULL )
-											{
-												char tmpmsg[ 2048 ];
-												int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
-												
-												int msgsndsize = 0;
-												if( usl->us != NULL )
-												{
-													msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
-												}
-												DEBUG("Bytes send: %d\n", msgsndsize );
-						
-												break;
-											}
-											usl = (UserSessListEntry *)usl->node.mln_Succ;
-										}
-										FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
-									}
-									
-									usl = u->u_SessionsList;
-									while( usl != NULL )
-									{
-										UserSession *s = (UserSession *) usl->us;
-										FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
-										s->us_InUseCounter--;
-										FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-										if( usl->us != NULL )
-										{
-											USMUserSessionRemove( l->sl_USM, usl->us );
-											usl->us = NULL;
-										}
-										usl = (UserSessListEntry *)usl->node.mln_Succ;
-									}
-									*/
-									
+									killUserSessionByUser( l, u, NULL );
 								}
 								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 							}
@@ -986,8 +966,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			usrpass = UrlDecodeToMem( (char *)el->data );
 		}
-		
-		
 		
 		if( usrname != NULL && usrpass != NULL )
 		{
@@ -1107,8 +1085,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "update" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1384,8 +1362,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updategroups" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1828,14 +1806,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "killsession" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
-		
-		//UserSession *usrses = l->sl_USM->usm_Sessions;
+
 		char *sessionid = NULL;
 		char *deviceid = NULL;
 		char *usrname = NULL;
@@ -1868,27 +1845,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			if( ses != NULL )
 			{
 				killUserSession( l, ses );
-				/*
-				char tmpmsg[ 2048 ];
-				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
-							
-				int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
-				
-				char *uname = NULL;
-				if( ses->us_User != NULL )
-				{
-					uname = ses->us_User->u_Name;
-				}
-					
-				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
-				
-				
-				FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-				ses->us_InUseCounter--;
-				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-				
-				error = USMUserSessionRemove( l->sl_USM, ses );
-				*/
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
@@ -1897,7 +1853,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
-				killUserSessionByUser( l, u );
+				killUserSessionByUser( l, u, deviceid );
 				/*
 				FRIEND_MUTEX_LOCK( &u->u_Mutex );
 				UserSessListEntry *usl = u->u_SessionsList;
@@ -1919,14 +1875,16 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				}
 				FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 				
-				if( usl != NULL )
+				usl = u->u_SessionsList;
+				while( usl != NULL )
 				{
 					UserSession *s = (UserSession *) usl->us;
 					FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
 					s->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-						
-					error = USMUserSessionRemove( l->sl_USM, usl->us );
+					
+					int error = USMUserSessionRemove( l->sl_USM, usl->us );
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
 				*/
 			}
