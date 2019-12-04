@@ -70,6 +70,11 @@ inline static int killUserSession( SystemBase *l, UserSession *ses )
 inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid )
 {
 	int error = 0;
+	int nrSessions = 0;
+	int i;
+	
+	UserSession **toBeRemoved = NULL;
+	
 	FRIEND_MUTEX_LOCK( &u->u_Mutex );
 	UserSessListEntry *usl = u->u_SessionsList;
 	if( deviceid != NULL )
@@ -89,6 +94,7 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				break;
 			}
 			usl = (UserSessListEntry *)usl->node.mln_Succ;
+			nrSessions++;
 		}
 	}
 	else
@@ -108,14 +114,30 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 				break;
 			}
 			usl = (UserSessListEntry *)usl->node.mln_Succ;
+			nrSessions++;
 		}
 	}
+	
+	// assign UserSessions to temporary table
+	if( nrSessions > 0 )
+	{
+		toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
+		i = 0;
+		while( usl != NULL )
+		{
+			toBeRemoved[ i ] = (UserSession *) usl->us;
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
+			i++;
+		}
+	}
+	
 	FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 	
-	usl = u->u_SessionsList;
-	while( usl != NULL )
+	// remove sessions
+	for( i=0 ; i < nrSessions ; i++ )
 	{
-		UserSession *ses = (UserSession *) usl->us;
+		UserSession *ses = toBeRemoved[ i ];
+		
 		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
 		ses->us_InUseCounter--;
 		if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
@@ -134,9 +156,14 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 			usleep( 1000 );
 		}
 		
-		error = USMUserSessionRemove( l->sl_USM, usl->us );
-		usl = (UserSessListEntry *)usl->node.mln_Succ;
+		error = USMUserSessionRemove( l->sl_USM, ses );
 	}
+	
+	if( toBeRemoved != NULL )
+	{
+		FFree( toBeRemoved );
+	}
+	
 	return error;
 }
 
