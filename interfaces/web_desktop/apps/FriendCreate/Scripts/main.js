@@ -823,26 +823,45 @@ function RefreshProjects()
 			var sortable = [];
 			for( var c = 0; c < pr.Files.length; c++ )
 			{
-				sortable[ pr.Files[ c ].Path ] = pr.Files[ c ].Path.split( '/' );
+				var path = pr.Files[ c ].Path;
+				if( path.substr( path.length - 1, 1 ) != '/' )
+				{
+					path = path.split( '/' );
+					path.pop();
+					path = path.join( '/' ) + '/';
+				}
+				sortable[ pr.Files[ c ].Path ] = {
+					levels: pr.Files[ c ].Path.split( '/' ),
+					path: path
+				}
 			}
 			sortable = sortable.sort();
-			fstr = listFiles( sortable, 1 );
+			fstr = listFiles( sortable, 1, false, {} );
 		}
-		str += '<ul><li>' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		str += '<ul><li class="Project">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
-	function listFiles( list, depth )
+	function listFiles( list, depth, path, folders )
 	{
 		var str = '';
 		for( var a in list )
 		{
-			if( list[ a ].length == depth )
+			if( list[ a ].levels.length == depth )
 			{
-				console.log( list[ a ], '...' );
-				str += '<li>' + list[ a ][ depth ] + '</li>';
+				if( !path || ( path && list[ a ].path == path ) )
+				{
+					str += '<li>' + list[ a ].levels[ depth - 1 ] + '</li>';
+				}
+			}
+			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
+			{
+				folders[ list[ a ].path ] = true;
+				str += '<li>' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				str += listFiles( list, depth + 1, list[ a ].path );
 			}
 		}
+		if( str.length ) str = '<ul>' + str + '</ul>';
 		return str;
 	}
 }
