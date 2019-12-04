@@ -520,11 +520,13 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	DEBUG("-----------------------> show groups at 0\n" );
 	
 	// function store ID's of groups to which user is assigned
-	BufString *bsGroups = BufStringNew();
+	///BufString *bsGroups = BufStringNew();
 	//pos = 0;
 	
-	int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupsids\":[", usr->u_UUID );
-	BufStringAddSize( bsGroups, tmpQuery, tmplen );
+	//int tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "{\"userid\":\"%s\",\"groupids\":[", usr->u_UUID );
+	//BufStringAddSize( bsGroups, tmpQuery, tmplen );
+	
+	int tmplen = 0;
 	
 	//
 	// going through all groups and create new "insert"
@@ -558,8 +560,9 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 			
 					DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 			
-					char loctmp[ 255 ];
+					char loctmp[ 256 ];
 					int loctmplen;
+					// insert to database
 					if( pos == 0 )
 					{
 						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
@@ -571,8 +574,20 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
 					}
 					BufStringAdd( bsInsert, loctmp );
+					/*
+					// information to external service
+					if( pos == 0 )
+					{
+						loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
+						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+					}
+					else
+					{
+						loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
+						tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+					}
 					BufStringAddSize( bsGroups, tmpQuery, tmplen );
-			
+					*/
 					pos++;
 					break;
 				}
@@ -621,8 +636,10 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 				
 						DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 				
-						char loctmp[ 255 ];
+						char loctmp[ 256 ];
 						int loctmplen;
+						
+						// insert to database
 						if( pos == 0 )
 						{
 							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %lu, %lu ) ", usr->u_ID, gr->ug_ID );
@@ -634,7 +651,20 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
 						}
 						BufStringAdd( bsInsert, loctmp );
+						/*
+						// message to external service
+						if( pos == 0 )
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  "( %s, %lu ) ", usr->u_UUID, gr->ug_ID );
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), "%lu", gr->ug_ID );
+						}
+						else
+						{
+							loctmplen = snprintf( loctmp, sizeof( loctmp ),  ",( %s, %lu ) ", usr->u_UUID, gr->ug_ID ); 
+							tmplen = snprintf( tmpQuery, sizeof(tmpQuery), ",%lu", gr->ug_ID );
+						}
 						BufStringAddSize( bsGroups, tmpQuery, tmplen );
+						*/
 				
 						pos++;
 						break;
@@ -660,10 +690,10 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 		FERROR("Cannot call query: '%s'\n", bsInsert->bs_Buffer );
 	}
 
-	BufStringAddSize( bsGroups, "]}", 2 );
+	//BufStringAddSize( bsGroups, "]}", 2 );
 	
 	// update external services about changes
-	NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
+	//NotificationManagerSendEventToConnections( sb->sl_NotificationManager, NULL, NULL, NULL, "service", "user", "update", bsGroups->bs_Buffer );
 	// update user about changes
 	UserNotifyFSEvent2( sb->sl_DeviceManager, usr, "refresh", "Mountlist:" );
 	
@@ -671,10 +701,10 @@ int UGMAssignGroupToUserByStringDB( UserGroupManager *um, User *usr, char *level
 	{
 		BufStringDelete( bsInsert );
 	}
-	if( bsGroups != NULL )
-	{
-		BufStringDelete( bsGroups );
-	}
+	//if( bsGroups != NULL )
+	//{
+	//	BufStringDelete( bsGroups );
+	//}
 
 	sb->LibrarySQLDrop( sb, sqlLib );
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign  groups to user end\n");
@@ -705,6 +735,51 @@ int UGMAddUserToGroupDB( UserGroupManager *um, FULONG groupID, FULONG userID )
 			FERROR("Cannot call query: '%s'\n", tmpQuery );
 		}
 		
+		sb->LibrarySQLDrop( sb, sqlLib );
+	}
+	else
+	{
+		FERROR("UGMAddUserToGroup DBConnection fail!\n");
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Get all groups where user belong
+ *
+ * @param um pointer to UserGroupManager
+ * @param userID ID of user which will be assigned to group
+ * @param bs pointer to BufString where data will be stored
+ * @return 0 when ssuccess, otherwise error number
+ */
+int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs )
+{
+	SystemBase *sb = (SystemBase *)um->ugm_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	if( sqlLib != NULL )
+	{
+		DEBUG("Remove users from group\n");
+		char tmpQuery[ 512 ];
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT UserGroupID FROM FUserToGroup WHERE UserID=%lu group by UserGroupID", userID );
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int pos = 0;
+			char **row;
+			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+			{
+				if( pos > 0 )
+				{
+					BufStringAddSize( bs, ",", 1 );
+				}
+				BufStringAdd( bs, row[ 0 ] );
+			
+				pos++;
+			}
+			sqlLib->FreeResult( sqlLib, result );
+		}
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	else

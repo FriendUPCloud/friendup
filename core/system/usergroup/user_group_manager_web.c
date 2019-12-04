@@ -51,6 +51,7 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 		if( result != NULL )
 		{
 			int pos = 0;
+			int spos = 0;
 			char **row;
 			
 			if( extServiceString != NULL )
@@ -93,6 +94,7 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 					// if Status == disabled
 					if( isDisabled )
 					{
+						/*
 						if( pos == 0 )
 						{
 							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
@@ -101,10 +103,11 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 						{
 							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
+						*/
 					}
 					else
 					{
-						if( pos == 0 )
+						if( spos == 0 )
 						{
 							itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
@@ -112,8 +115,128 @@ int generateConnectedUsers( SystemBase *l, FULONG groupID, BufString *retString,
 						{
 							itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 0 ], (char *)row[ 3 ] );
 						}
+						BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+						spos++;
+					}					
+					pos++;
+				}
+			}
+			else if( retString != NULL )// if message should be send only to HTTP/WS
+			{
+				while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+				{
+					// if Status == disabled
+					if( strncmp( (char *)row[ 1 ], "1", 1 ) == 0 )
+					{
+						if( pos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
 					}
-					BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+					else
+					{
+						if( pos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+						}
+					}
+					BufStringAddSize( retString, tmp, itmp );
+					pos++;
+				}
+			}
+			
+			sqlLib->FreeResult( sqlLib, result );
+		}
+		l->LibrarySQLDrop( l, sqlLib );
+	}
+	return 0;
+}
+
+/**
+ * Generate json table with userid's
+ *
+ * @param l pointer to SystemBase
+ * @param groupID ID of group
+ * @param retString BufString to which results will be stored
+ * @param extServiceString pointer to BufString where results to external service will be stored
+ * @return 0 when success, otherwise error number
+ */
+int generateConnectedUsersID( SystemBase *l, FULONG groupID, BufString *retString, BufString *extServiceString )
+{
+	SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+	if( sqlLib != NULL )
+	{
+		char tmpQuery[ 712 ];
+		char tmp[ 712 ];
+		int itmp = 0;
+		snprintf( tmpQuery, sizeof(tmpQuery), "SELECT u.UniqueID,u.Status,u.ID,u.ModifyTime FROM FUserToGroup ug inner join FUser u on ug.UserID=u.ID WHERE ug.UserGroupID=%lu", groupID );
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
+		if( result != NULL )
+		{
+			int pos = 0;
+			int spos = 0;
+			char **row;
+			
+			if( extServiceString != NULL )
+			{
+				while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
+				{
+					FBOOL isDisabled = FALSE;
+					if( strncmp( (char *)row[ 1 ], "1", 1 ) == 0 )
+					{
+						isDisabled = TRUE;
+					}
+					
+					if( retString != NULL )
+					{
+						if( isDisabled )
+						{
+							if( pos == 0 )
+							{
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+							else
+							{
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+						}
+						else
+						{
+							if( pos == 0 )
+							{
+								itmp = snprintf( tmp, sizeof(tmp), "{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+							else
+							{
+								itmp = snprintf( tmp, sizeof(tmp), ",{\"id\":\"%s\",\"uuid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 2 ], (char *)row[ 0 ], (char *)row[ 3 ] );
+							}
+						}
+						BufStringAddSize( retString, tmp, itmp );	// send response to caller HTTP/WS
+					}
+					
+					if( isDisabled == FALSE )
+					{
+						// add response to external service
+						if( spos == 0 )
+						{
+							itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
+						}
+						else
+						{
+							itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
+						}
+					
+						BufStringAddSize( extServiceString, tmp, itmp ); // external service do not need information about ID, it needs UUID which is stored in userid
+						spos++;
+					}
 					pos++;
 				}
 			}
@@ -444,7 +567,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						BufString *retString = BufStringNew();
 						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"userids\":[", groupID, parentID );
 						BufStringAddSize( retString, tmp, itmp );
-						generateConnectedUsers( l, groupID, NULL, retString );
+						// return user objects
+						//generateConnectedUsers( l, groupID, NULL, retString );
+						generateConnectedUsersID( l, groupID, NULL, retString );
 						BufStringAddSize( retString, "]}", 2 );
 						
 						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
@@ -805,7 +930,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							BufString *retString = BufStringNew();
 							itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"userids\":[", groupID );
 							BufStringAddSize( retString, tmp, itmp );
-							generateConnectedUsers( l, groupID, NULL, retString );
+							//generateConnectedUsers( l, groupID, NULL, retString );
+							// return ID's instead of objects
+							generateConnectedUsersID( l, groupID, NULL, retString );
 							BufStringAddSize( retString, "]}", 2 );
 						
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
@@ -1187,7 +1314,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				
 				// get required information for external servers
 			
-				generateConnectedUsers( l, groupID, retString, retServiceString );
+				generateConnectedUsersID( l, groupID, retString, retServiceString );
 			} // groupID > 0
 			
 			BufStringAddSize( retString, "]}", 2 );
@@ -1265,6 +1392,9 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			BufString *retString = BufStringNew();
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			
+			BufString *retExtString = BufStringNew();
+			BufStringAddSize( retExtString, "{", 1 );
+			
 			if( groupID > 0 )
 			{
 				char tmp[ 512 ];
@@ -1300,6 +1430,17 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 								itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"status\":\"%s\"}", (char *)row[ 0 ], (char *)row[ 1 ] );
 							}
 							BufStringAddSize( retString, tmp, itmp );
+							
+							if( pos == 0 )
+							{
+								itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 0 ] );
+							}
+							else
+							{
+								itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 0 ] );
+							}
+							BufStringAddSize( retExtString, tmp, itmp );
+							
 							pos++;
 						}
 						
@@ -1352,9 +1493,11 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			}
 			
 			BufStringAddSize( retString, "]}", 2 );
+			BufStringAddSize( retExtString, "]}", 2 );
 			
 			// send notification to external service
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "removeusers", &(retString->bs_Buffer[17]) );
+			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "removeusers", retExtString->bs_Buffer );
+			BufStringDelete( retExtString );
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			retString->bs_Buffer = NULL;
@@ -1498,10 +1641,23 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 						}
 					}
 					
-					char msg[ 512 ];
-					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", msg );
-
+					{
+						int itmp = 0;
+						char tmp[ 512 ];
+						BufString *retString = BufStringNew();
+						itmp = snprintf( tmp, sizeof(tmp), "{\"groupid\":%lu,\"parentid\":%lu,\"userids\":[", fg->ug_ID, fg->ug_ParentID );
+						BufStringAddSize( retString, tmp, itmp );
+						// return user objects
+						//generateConnectedUsers( l, groupID, NULL, retString );
+						generateConnectedUsersID( l, groupID, NULL, retString );
+						BufStringAddSize( retString, "]}", 2 );
+						
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
+						BufStringDelete( retString );
+						//char msg[ 512 ];
+						//snprintf( msg, sizeof(msg), "{\"id\":%lu,\"name\":\"%s\",\"type\":\"%s\"}", fg->ug_ID, fg->ug_Name, fg->ug_Type );
+						//NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", msg );
+					}
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"sucess\",\"id\":%lu }", fg->ug_ID );
 					HttpAddTextContent( response, buffer );
