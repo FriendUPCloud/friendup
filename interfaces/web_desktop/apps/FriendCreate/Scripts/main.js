@@ -705,9 +705,9 @@ function OpenProjectEditor()
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		pe.setContent( data, function()
+		pe.setContent( data, function( d )
 		{
-			pe.sendMessage( { command: 'content', content: Application.currentProject } );
+			pe.sendMessage( { command: 'updateproject', data: Application.currentProject } );
 		} );
 	}
 	f.load();

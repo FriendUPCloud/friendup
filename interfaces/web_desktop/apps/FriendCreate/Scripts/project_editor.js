@@ -35,10 +35,10 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
-			case 'content':
-				for( var a in msg.content )
+			case 'updateproject':
+				for( var a in msg.data )
 				{
-					project[ a ] = msg.content[ a ];
+					project[ a ] = msg.data[ a ];
 				}
 				RefreshFiles();
 				RefreshImages();
