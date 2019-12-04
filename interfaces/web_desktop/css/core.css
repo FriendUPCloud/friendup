@@ -339,6 +339,12 @@ button, .Button
 	font-size: inherit;
 }
 
+button, .ButtonAlt
+{
+	color: $ColorButton;
+	background-color: $ColorBgButtonAlt;
+}
+
 body button.IconButton:not(:hover),
 body .Button.IconButton:not(:hover)
 {
@@ -1343,6 +1349,11 @@ html #WorkspaceMenu .Menu li.Disabled *
 	color: $ColorNegative;
 }
 
+.NegativeAlt
+{
+	color: $ColorNegativeAlt;
+}
+
 a.Negative:hover, a.Negative:active, a.Negative:visited
 {
 	color: $ColorNegative;
@@ -1393,6 +1404,11 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 .BackgroundPositive
 {
 	background: $ColorBgPositive;
+}
+
+.BackgroundPositiveAlt
+{
+	background: $ColorBgPositiveAlt;
 }
 
 .BackgroundHighlight

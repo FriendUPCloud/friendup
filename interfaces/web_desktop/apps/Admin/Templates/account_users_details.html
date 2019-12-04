@@ -10,10 +10,15 @@
 		</div>-->
 	</div>
 	
-	<div class="HRow BackgroundNegativeAlt Negative Padding TextCenter">
-		<h2 class="ImageHeading NoMargin" id="usName">
-			<strong>{user_name}</strong>
-		</h2>
+	<div class="HRow BackgroundNegativeAlt Negative Padding">
+		<div class="HContent30 FloatLeft Ellipsis">
+			<div class="BackgroundPositiveAlt NegativeAlt PaddingSmall FloatLeft IconMedium fa-user-circle-o"></div>
+		</div>
+		<div class="HContent70 FloatLeft Ellipsis">
+			<h2 class="ImageHeading NoMargin" id="usName">
+				<strong>{user_name}</strong>
+			</h2>
+		</div>
 	</div>
 	<div class="Box Padding" id="UserBasicDetails">
 		
@@ -24,7 +29,7 @@
 				</div>
 			</div>
 			<div class="FloatLeft Padding TextLeft Relative">
-				<button type="button" class="Button IconSmall" id="AdminAvatarEdit">
+				<button type="button" class="ButtonAlt IconSmall" id="AdminAvatarEdit">
 					{i18n_browse}
 				</button>
 			</div>
@@ -61,7 +66,7 @@
 					<strong>{i18n_user_password}</strong>
 				</div>
 				<div class="HContent70 FloatLeft Ellipsis">
-					<button class="IconSmall Button" id="passToggle">
+					<button class="IconSmall ButtonAlt" id="passToggle">
 						{i18n_reset_password}
 					</button>
 				</div>
@@ -116,7 +121,7 @@
 					<strong>{i18n_account_locked}</strong>
 				</div>
 				<div class="HContent40 FloatLeft Ellipsis">
-					<button class="IconButton IconSmall ButtonSmall FloatLeft {user_locked_toggle}" id="usLocked" onclick="Sections.user_status_update( {userid}, 2 )"></button>
+					<button class="IconButton IconSmall IconToggle ButtonSmall FloatLeft {user_locked_toggle}" id="usLocked" onclick="Sections.user_status_update( {userid}, 2 )"></button>
 				</div>
 			</div>
 			
@@ -125,7 +130,7 @@
 					<strong>{i18n_account_disabled}</strong>
 				</div>
 				<div class="HContent40 FloatLeft Ellipsis">
-					<button class="IconButton IconSmall ButtonSmall FloatRight {user_disabled_toggle}" id="usDisabled" onclick="Sections.user_status_update( {userid}, 1 )"></button>
+					<button class="IconButton IconSmall IconToggle ButtonSmall FloatRight {user_disabled_toggle}" id="usDisabled" onclick="Sections.user_status_update( {userid}, 1 )"></button>
 				</div>
 			</div>
 			
@@ -133,10 +138,10 @@
 		
 		<div id="UserEditContainer">
 			<div class="HRow">
-				<button class="Button IconSmall FloatRight MarginLeft" id="UserSaveBtn">
+				<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="UserSaveBtn">
 					{i18n_save}
 				</button>
-				<button class="Button IconSmall FloatRight MarginLeft" id="UserCancelBtn">
+				<button class="ButtonAlt IconSmall FloatRight MarginLeft" id="UserCancelBtn">
 					{i18n_cancel}
 				</button>
 			</div>

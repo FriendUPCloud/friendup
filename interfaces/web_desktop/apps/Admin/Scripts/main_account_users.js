@@ -273,7 +273,7 @@ Sections.accounts_users = function( cmd, extra )
 								rstr += '<div class="PaddingSmall HContent40 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
 						
 								rstr += '<div class="PaddingSmall HContent15 FloatLeft Ellipsis">';
-								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 								rstr += '</div>';
 								rstr += '</div>';
 							}
@@ -347,7 +347,7 @@ Sections.accounts_users = function( cmd, extra )
 									}
 									if( keyz[ k ] == 'Dock' )
 									{
-										value = '<button class="IconButton IconSmall ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+										value = '<button class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 										//value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
 										ex = ' TextCenter';
 									}
@@ -578,7 +578,7 @@ Sections.accounts_users = function( cmd, extra )
 												str += '<div class="HRow">\
 													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
 													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-														<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+														<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
 													</div>\
 												</div>';
 											}
@@ -1281,7 +1281,7 @@ Sections.accounts_users = function( cmd, extra )
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
 					// Add all data for the template
 					d.replacements = {
-						user_name            : '',
+						user_name            : i18n( 'i18n_new_user' ),
 						user_fullname        : '',
 						user_username        : '',
 						user_email           : '',

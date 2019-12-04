@@ -222,6 +222,25 @@
     zoom: 0.5;
 }
 
+
+
+#Admin .IconToggle.fa-toggle-off
+{
+	/* Concrete Grey */
+	color: #95A5A6;
+}
+
+#Admin .IconToggle.fa-toggle-on
+{
+	/* Concrete Grey */
+	color: green;
+}
+
+#Admin div button, html > body > div .Button
+{
+
+}
+
 /* Server printers ---------------------------------------------------------- */
 
 
