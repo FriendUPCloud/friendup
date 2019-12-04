@@ -207,6 +207,57 @@
 	overflow-x: hidden;
 }
 
+#SB_Project ul
+{
+	list-style: none;
+	margin: 0 0 0 10px;
+	padding: 0;
+}
+
+#SB_Project li
+{
+	margin: 5px 0 5px 0px;
+}
+
+#SB_Project li:before
+{
+	font-family: fontawesome;
+	display: inline-block;
+	margin: 0 5px 0 0;
+}
+
+#SB_Project li.Project:before
+{
+	content: "\f187";
+}
+
+#SB_Project li.Folder:not(.Open):before
+{
+	content: "\f07b";
+}
+
+#SB_Project li.Folder + ul
+{
+	transition: max-height 0.25s;
+	max-height: 0;
+	overflow: hidden;
+}
+
+#SB_Project li.Folder.Open + ul
+{
+	max-height: 2000px;
+}
+
+#SB_Project li.Folder:before
+{
+	content: "\f07c";
+}
+
+#SB_Project li.FileItem:before
+{
+	content: "\f15c";
+}
+
 #StatusBar
 {
 	position: absolute;
@@ -236,4 +287,5 @@
 	transition-property: left,opacity;
 	transition-duration: 0.25s,0.25s;
 }
+
 

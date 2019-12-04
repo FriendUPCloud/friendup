@@ -851,18 +851,30 @@ function RefreshProjects()
 			{
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					str += '<li>' + list[ a ].levels[ depth - 1 ] + '</li>';
+					str += '<li class="FileItem">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
 			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
 			{
 				folders[ list[ a ].path ] = true;
-				str += '<li>' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				str += '<li class="Folder" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
 				str += listFiles( list, depth + 1, list[ a ].path );
 			}
 		}
 		if( str.length ) str = '<ul>' + str + '</ul>';
 		return str;
+	}
+}
+
+function ToggleOpenFolder( ele )
+{
+	if( ele.classList.contains( 'Open' ) )
+	{
+		ele.classList.remove( 'Open' );
+	}
+	else
+	{
+		ele.classList.add( 'Open' );
 	}
 }
 
