@@ -33,6 +33,17 @@
 		</div>
 		<div class="HContent80 FloatLeft Padding">
 			<select id="project_category">
+				<option value="Administration">{i18n_administration}</option>
+				<option value="Demonstration">{i18n_demonstration}</option>
+				<option value="Games">{i18n_games}</option>
+				<option value="Graphics">{i18n_graphics}</option>
+				<option value="Internet">{i18n_internet}</option>
+				<option value="Multimedia">{i18n_multimedia}</option>
+				<option value="Music">{i18n_music}</option>
+				<option value="Office">{i18n_office}</option>
+				<option value="Preferences">{i18n_preferences}</option>
+				<option value="Programming">{i18n_programming}</option>
+				<option value="System">{i18n_system}</option>
 			</select>
 		</div>
 	</div>
@@ -85,5 +96,28 @@
 		</div>
 	</div>
 </div>
+<div id="Bottom" class="BackgroundDefault Padding BorderTop">
+	<button type="button" class="IconSmall fa-save" onclick="UpdateProject()">
+		{i18n_update_project}
+	</button>
+	<button type="button" class="IconSmall fa-remove FloatRight" onclick="CloseView()">
+		{i18n_cancel}
+	</button>
+</div>
 <script src="Progdir:Scripts/project_editor.js"></script>
-<style> #All { overflow: auto; } </style>
+<style>
+	#All
+	{
+		overflow: auto;
+		height: calc(100% - 50px);
+	} 
+	#Bottom
+	{
+		bottom: 0;
+		height: 50px;
+		width: 100%;
+		left: 0;
+		position: absolute;
+		z-index: 2;
+	}
+</style>

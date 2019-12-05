@@ -81,6 +81,25 @@ function RefreshPermissions()
 	}
 }
 
+function UpdateProject()
+{
+	var values = [
+		'project_projectname',
+		'project_author',
+		'project_version',
+		'project_category',
+		'project_description'
+	];
+	for( var a = 0; a < values.length; a++ )
+		project[ values[a] ] = ge( values[a] ).value;
+	
+
+	Application.sendMessage( {
+		command: 'updateproject',
+		project: project
+	} );
+}
+
 // -----------------------------------------------------------------------------
 
 Application.receiveMessage = function( msg )
@@ -99,6 +118,16 @@ Application.receiveMessage = function( msg )
 						ge( 'project_' + a.toLowerCase() ).value = project[ a ];
 					}
 				}
+				var opts = ge( 'project_category' ).getElementsByTagName( 'option' );
+				for( var a = 0; a < opts[a].length; a++ )
+				{
+					if( opts[a].value == project.Category )
+					{
+						opts[a].selected = 'selected';
+					}
+					else opts[a].selected = '';
+				}
+				
 				RefreshFiles();
 				RefreshImages();
 				RefreshPermissions();

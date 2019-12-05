@@ -56,4 +56,22 @@ i18n_remove_files                   : Remove file(s)
 i18n_project_has_no_files           : Project has no files.
 i18n_project_has_no_images          : Project has no images.
 i18n_project_has_no_permissions     : Project has no privileges.
+i18n_update_project                 : Update project
+i18n_cancel                         : Close
+
+i18n_administration                 : Administration
+i18n_demonstration                  : Demonstration
+i18n_demo                           : Demo
+i18n_games                          : Games
+i18n_graphics                       : Graphics
+i18n_internet                       : Internet
+i18n_multimedia                     : Multimedia
+i18n_music                          : Music
+i18n_office                         : Office
+i18n_preferences                    : Preferences
+i18n_programming                    : Programming
+i18n_system                         : System
+
+
+
 

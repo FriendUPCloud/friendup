@@ -56,4 +56,19 @@ i18n_remove_files                   : Legg til fil(er)
 i18n_project_has_no_files           : Prosjektet har ikke filer.
 i18n_project_has_no_images          : Prosjektet har ikke bilder.
 i18n_project_has_no_permissions     : Prosjektet har ikke rettigheter.
+i18n_update_project                 : Oppdater prosjekt
+i18n_cancel                         : Lukk
+
+i18n_administration                 : Administrasjon
+i18n_demonstration                  : Demonstrasjon
+i18n_games                          : Spill
+i18n_graphics                       : Grafikk
+i18n_internet                       : Internett
+i18n_multimedia                     : Multimedia
+i18n_music                          : Musikk
+i18n_office                         : Kontor
+i18n_preferences                    : Innstillinger
+i18n_programming                    : Programmering
+i18n_system                         : System
+
 
