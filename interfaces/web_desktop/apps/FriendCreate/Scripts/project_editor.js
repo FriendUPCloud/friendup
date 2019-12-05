@@ -16,6 +16,17 @@ Application.run = function( msg )
 
 function RefreshFiles()
 {
+	var str = '<div class="List">';
+	for( var a = 0; a < project.Files.length; a++ )
+	{
+		var sw = a % 2 + 1;
+		str += '<div class="HRow sw' + sw + '">';
+		str += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Files[a].Path + '</div>';
+		str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Files[a].Path + '"/></div>';
+		str += '</div>';
+	}
+	str += '</div>';
+	ge( 'project_files' ).innerHTML = str;
 }
 
 function RefreshImages()

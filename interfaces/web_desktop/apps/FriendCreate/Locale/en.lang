@@ -52,5 +52,5 @@ i18n_remove_privileges              : Remove privilege(s)
 i18n_application_images             : Application images
 i18n_project_files                  : Project files
 i18n_add_file                       : Add file
-i18n_remove_file                    : Remove file(s)
+i18n_remove_files                   : Remove file(s)
 

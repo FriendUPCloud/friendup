@@ -1,5 +1,5 @@
 
-<div class="ContentFull">
+<div class="ContentFull" id="All">
 	<h2 class="Padding">
 		{i18n_project_information}
 	</h2>
@@ -76,8 +76,8 @@
 			<strong>Project files:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
-			<div class="List BorderBottom" id="system_privileges">
-				{project_files}
+			<div class="List BorderBottom" id="project_files">
+				
 			</div>
 			<div class="HRow">
 				<button class="IconButton IconSmall fa-plus">
@@ -91,4 +91,4 @@
 	</div>
 </div>
 <script src="Progdir:Scripts/project_editor.js"></script>
-
+<style> #All { overflow: auto; } </style>

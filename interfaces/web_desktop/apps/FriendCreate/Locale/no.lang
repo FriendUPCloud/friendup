@@ -40,3 +40,17 @@ i18n_saved                          : Lagret.
 
 i18n_project_editor                 : Prosjektredigering
 
+i18n_project_information            : Prosjektinformasjon
+i18n_project_name                   : Prosjektnavn
+i18n_project_author                 : Forfatter
+i18n_project_version                : Versjon
+i18n_project_category               : Kategori
+i18n_project_description            : Beskrivelse
+i18n_system_privileges              : Systemrettigheter
+i18n_add_privilege                  : Legg til rettighet
+i18n_remove_privileges              : Fjern rettighet(er)
+i18n_application_images             : Programbilder
+i18n_project_files                  : Programfiler
+i18n_add_file                       : Legg til fil
+i18n_remove_files                   : Legg til fil(er)
+
