@@ -32,20 +32,15 @@ var gui = {
 				{
 					if( info.data == true )
 					{
-						/*Application.sendMessage( {
-							command: 'project_load',
-							path: path
-						} );*/
+						OpenProject( path );
 					}
 					// Just load it
 					else
 					{
-						/*Application.sendMessage( {
-							command: 'loadfiles',
-							paths: [ path ]
-						} );*/
+						OpenFile( path );
 					}
 				} );
+				return false;
 			}
 			if( Application.checkFileType( path ) )
 			{
@@ -764,6 +759,24 @@ function NewProject()
 
 function OpenProject( path )
 {
+	if( path.toLowerCase().indexOf( '.apf' ) > 0 )
+	{
+		var p = new Project();
+		p.Path = path;
+	
+		var f = new File( p.Path );
+		f.onLoad = function( data )
+		{
+			var proj = JSON.parse( data );
+			for( var a in proj )
+				p[ a ] = proj[ a ];
+			projects.push( p );
+			Application.currentProject = p;
+			RefreshProjects();
+		}
+		f.load();
+		return;
+	}
 	( new Filedialog( {
 		path: path,
 		multiSelect: false,
@@ -1014,6 +1027,15 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'project_open':
 				OpenProject();
+				break;
+			case 'drop':
+				if( msg.data )
+				{
+					for( var a = 0; a < msg.data.length; a++ )
+					{
+						new EditorFile( msg.data[ a ].Path );
+					}
+				}
 				break;
 		}
 	}
