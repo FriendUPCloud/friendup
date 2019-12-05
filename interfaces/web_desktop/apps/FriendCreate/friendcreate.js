@@ -42,6 +42,10 @@ Application.run = function( msg )
 			name: i18n( 'menu_file' ),
 			items: [
 				{
+					name: i18n( 'menu_file_about' ),
+					command: 'about'
+				},
+				{
 					name: i18n( 'menu_file_open' ),
 					command: 'open'
 				},
@@ -95,6 +99,15 @@ Application.run = function( msg )
 					command: 'project_editor'
 				}
 			]
+		},
+		{
+			name: i18n( 'menu_packages' ),
+			items: [
+				{
+					name: i18n( 'menu_package_generate' ),
+					command: 'package_generate'
+				}
+			]
 		}
 	] );
 }
@@ -105,6 +118,7 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			case 'about':
 			case 'open':
 			case 'save':
 			case 'save_as':
@@ -115,6 +129,7 @@ Application.receiveMessage = function( msg )
 			case 'project_save':
 			case 'project_save_as':
 			case 'project_new':
+			case 'package_generate':
 				mainWindow.sendMessage( msg );
 				break;
 		}

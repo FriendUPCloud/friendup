@@ -1095,6 +1095,12 @@ Application.receiveMessage = function( msg )
 				RefreshProjects();
 				if( pe ) pe.close();
 				break;
+			case 'about':
+				console.log( 'About window.' );
+				break;
+			case 'package_generate':
+				console.log( 'Generate package.' );
+				break;
 		}
 	}
 }

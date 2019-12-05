@@ -20,6 +20,7 @@ i18n_are_you_sure                   : Er du sikker?
 i18n_this_will_close                : Dette vil lukke det aktive dokumentet.
 
 menu_file                           : Fil
+menu_file_about                     : Om Friend Create
 menu_file_open                      : Åpne
 menu_file_save                      : Lagre
 menu_file_save_as                   : Lagre som
@@ -32,6 +33,11 @@ menu_project_new                    : Nytt prosjekt
 menu_project_open                   : Åpne prosjekt
 menu_project_close                  : Lukk prosjekt
 menu_project_editor                 : Rediger prosjekt
+menu_project_save                   : Lagre prosjekt
+menu_project_save_as                : Lagre prosjekt som
+
+menu_packages                       : Pakker
+menu_package_generate               : Bygg pakke
 
 i18n_saving                         : Lagrer...
 i18n_saved                          : Lagret.

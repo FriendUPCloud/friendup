@@ -20,6 +20,7 @@ i18n_are_you_sure                   : Are you sure?
 i18n_this_will_close                : This will close your current document.
 
 menu_file                           : File
+menu_file_about                     : About Friend Create
 menu_file_open                      : Open
 menu_file_save                      : Save
 menu_file_save_as                   : Save as
@@ -32,6 +33,11 @@ menu_project_new                    : New project
 menu_project_open                   : Open project
 menu_project_close                  : Close project
 menu_project_editor                 : Project editor
+menu_project_save                   : Save project
+menu_project_save_as                : Save project as
+
+menu_packages                       : Packages
+menu_package_generate               : Generate package
 
 i18n_saving                         : Saving...
 i18n_saved                          : Saved.
