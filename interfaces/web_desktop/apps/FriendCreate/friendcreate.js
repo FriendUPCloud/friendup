@@ -79,6 +79,14 @@ Application.run = function( msg )
 					command: 'project_open'
 				},
 				{
+					name: i18n( 'menu_project_save' ),
+					command: 'project_save'
+				},
+				{
+					name: i18n( 'menu_project_save_as' ),
+					command: 'project_save_as'
+				},
+				{
 					name: i18n( 'menu_project_close' ),
 					command: 'project_close'
 				},
