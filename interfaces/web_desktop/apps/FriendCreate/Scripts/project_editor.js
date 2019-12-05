@@ -81,6 +81,22 @@ function RefreshPermissions()
 	}
 }
 
+function RemoveFiles()
+{
+	var els = ge( 'project_files' ).getElementsByTagName( 'input' );
+	/*var out = [];
+	for( var b = 0; b < els.length; b++ )
+	{
+		for( var a = 0; a < project.Files.length; a++ )
+		{
+			if( project.Files[a].Path != path )
+				out.push( project.Files[a] );
+		}
+	}
+	project.Files = out;*/
+	RefreshFiles();
+}
+
 function UpdateProject()
 {
 	var values = [
