@@ -879,9 +879,8 @@ function SaveProject( project, saveas )
 				f.onSave = function( res )
 				{
 					StatusMessage( i18n( 'i18n_saved' ) );
-					file.updateTab();
 				}
-				f.save( JSON.stringyfy( project ) );
+				f.save( JSON.stringify( project ) );
 			},
 			type: 'save',
 			suffix: 'apf',
