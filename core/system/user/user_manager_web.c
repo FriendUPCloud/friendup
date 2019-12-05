@@ -1119,7 +1119,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		User *logusr = l->sl_UM->um_Users;
 		char *usrname = NULL;
 		char *usrpass = NULL;
 		char *fullname = NULL;
@@ -1156,31 +1155,37 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
 		}
 		
-		if( id > 0 && imAdmin == TRUE )
+		User *logusr = l->sl_UM->um_Users;
+		if( id > 0 )
 		{
-			while( logusr != NULL )
+			if( imAdmin == TRUE )
 			{
-				if( logusr->u_ID == id  )
+				while( logusr != NULL )
 				{
-					userFromSession = TRUE;
-					DEBUG("[UMWebRequest] Found session, update\n");
-					break;
+					if( logusr->u_ID == id  )
+					{
+						userFromSession = TRUE;
+						DEBUG("[UMWebRequest] Found session, update\n");
+						break;
+					}
+					logusr = (User *)logusr->node.mln_Succ;
 				}
-				logusr = (User *)logusr->node.mln_Succ;
 			}
-		}
-		else if( id > 0 && imAdmin == FALSE )
-		{
-			logusr = NULL;
+			else
+			{
+				if( loggedSession != NULL && loggedSession->us_User != NULL && loggedSession->us_User->u_ID == id )
+				{
+					logusr = loggedSession->us_User;
+					userFromSession = TRUE;
+				}
+				logusr = NULL;
+			}
 		}
 		else
 		{
-			//if( imAdmin == FALSE )
-			{
-				id = loggedSession->us_User->u_ID;
-				userFromSession = TRUE;
-				logusr = loggedSession->us_User;
-			}
+			id = loggedSession->us_User->u_ID;
+			userFromSession = TRUE;
+			logusr = loggedSession->us_User;
 		}
 		
 		if( logusr == NULL && id > 0 )
