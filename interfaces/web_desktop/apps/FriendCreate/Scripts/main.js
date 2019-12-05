@@ -69,6 +69,7 @@ var gui = {
 // Files and projects ----------------------------------------------------------
 
 var files = [];
+var projectFiles = {}; // Index
 var projects = [];
 
 // Launch view logic -----------------------------------------------------------
@@ -177,6 +178,7 @@ var EditorFile = function( path )
 						self.refreshBuffer();
 						self.refreshMinimap();
 					}, 50 );
+					self.updateState( 'Reading' );
 				}
 				f.load();
 			}
@@ -203,12 +205,21 @@ var EditorFile = function( path )
 EditorFile.prototype.close = function()
 {
 	var out = [];
+	this.updateState( '' );
 	for( var a = 0; a < files.length; a++ )
 	{
 		if( files[ a ] == this ) continue;
 		out.push( files[ a ] );
 	}
 	files = out;
+}
+
+EditorFile.prototype.updateState = function( state )
+{
+	if( projectFiles[ this.path ] )
+	{
+		projectFiles[ this.path ].className = 'FileItem ' + state;
+	}
 }
 
 EditorFile.prototype.updateTab = function()
@@ -336,6 +347,11 @@ function InitContentEditor( element, file )
 	file.editor.gotoLine( 0, 0, true );	
 	file.editor.setTheme( 'ace/theme/' + settings.theme );
 	file.editor.session.setUseWorker( false );
+	
+	file.editor.getSession().on( 'change', function( e )
+	{
+		file.updateState( 'Editing' );
+	} );
 	
 	file.editor.getSession().setMode( 'ace/mode/javascript' );
 	
@@ -571,6 +587,7 @@ function SaveFile( file, saveas )
 		f.onSave = function( res )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
+			file.updateState( 'Reading' );
 		}
 		f.save( file.editor.getValue() );
 	}
@@ -593,6 +610,7 @@ function SaveFile( file, saveas )
 				{
 					StatusMessage( i18n( 'i18n_saved' ) );
 					file.updateTab();
+					file.updateState( 'Reading' );
 				}
 				f.save( file.editor.getValue() );
 			},
@@ -626,7 +644,6 @@ document.body.addEventListener( 'keydown', function( e )
 			}
 			break;
 		default:
-			console.log( 'Key: ' + wh );
 			break;
 	}
 }, false );
@@ -821,6 +838,13 @@ function SaveProject( file, saveas )
 
 function RefreshProjects()
 {
+	var filesFromPath = {};
+	for( var a = 0; a < files.length; a++ )
+	{
+		if( files[a].path )
+			filesFromPath[ files[a].path ] = files[a];
+	}
+	
 	var str = '';
 	for( var a = 0; a < projects.length; a++ )
 	{
@@ -852,20 +876,39 @@ function RefreshProjects()
 			sortable = sortable.sort();
 			fstr = listFiles( sortable, 1, false, {} );
 		}
-		str += '<ul><li class="Project">' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		var current = ' BackgroundHeavy Rounded';
+		if( Application.currentProject == pr )
+		{
+			current = ' Current BackgroundHeavier Rounded';
+		}
+		str += '<ul><li class="Project' + current + '" onclick="SetCurrentProject( \'' + pr.Path + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
+	// Update project files index
+	var eles = ge( 'SB_Project' ).getElementsByTagName( 'li' );
+	projectFiles = {};
+	for( var a = 0; a < eles.length; a++ )
+	{
+		if( eles[ a ].getAttribute( 'path' ) )
+		{
+			projectFiles[ eles[ a ].getAttribute( 'path' ) ] = eles[ a ];
+		}
+	}
+	
+	// List files recursively
 	function listFiles( list, depth, path, folders )
 	{
 		var str = '';
+		
 		for( var a in list )
 		{
 			if( list[ a ].levels.length == depth )
 			{
+				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					str += '<li class="FileItem" onclick="OpenFile(\'' + projectpath + list[a].fullpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
+					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
 			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
@@ -878,6 +921,20 @@ function RefreshProjects()
 		if( str.length ) str = '<ul>' + str + '</ul>';
 		return str;
 	}
+}
+
+function SetCurrentProject( p )
+{
+	for( var a = 0; a < projects.length; a++ )
+	{
+		if( projects[ a ].Path == p )
+		{
+			Application.currentProject = projects[ a ];
+			RefreshProjects();
+			return true;
+		}
+	}
+	return false;
 }
 
 function ToggleOpenFolder( ele )

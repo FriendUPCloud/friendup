@@ -7,29 +7,29 @@
 <div class="ContentFull">
 	<div id="TopPanel" class="">
 		<div id="Toolbar" class="Padding">
-			<button type="button" class="IconSmall fa-file-text" onclick="NewFile()">
+			<button type="button" class="IconButton IconSmall fa-file-text" onclick="NewFile()">
 			</button>
-			<button type="button" class="IconSmall fa-folder-open" onclick="OpenFile()">
+			<button type="button" class="IconButton IconSmall fa-folder-open" onclick="OpenFile()">
 				{i18n_open}
 			</button>
-			<button type="button" class="IconSmall fa-save" onclick="SaveFile()">
+			<button type="button" class="IconButton IconSmall fa-save" onclick="SaveFile()">
 				{i18n_save}
 			</button>
-			<button type="button" class="IconSmall fa-print" onclick="PrintFile()">
+			<button type="button" class="IconButton IconSmall fa-print" onclick="PrintFile()">
 				{i18n_print}
 			</button>
-			<button type="button" class="IconSmall fa-undo" onclick="if( Application.currentFile ) Application.currentFile.editor.undo()">
+			<button type="button" class="IconButton IconSmall fa-undo" onclick="if( Application.currentFile ) Application.currentFile.editor.undo()">
 				{i18n_undo}
 			</button>
-			<div class="VDivider Large"></div>
-			<button type="button" class="IconSmall fa-search">
+			<div class="VDivider"></div>
+			<button type="button" class="IconButton IconSmall fa-search">
 				{i18n_search_replace}
 			</button>
-			<div class="VDivider Large"></div>
-			<button type="button" class="IconSmall fa-play" onclick="RunApp()">
+			<div class="VDivider"></div>
+			<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">
 				{i18n_run_app}
 			</button>
-			<button type="button" class="IconSmall fa-stop" onclick="StopApp()">
+			<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">
 				{i18n_stop_app}
 			</button>
 		</div>

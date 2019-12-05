@@ -30,12 +30,11 @@
 	left: 0;
 	top: 0;
 	width: 100%;
-	height: 120px;
+	height: 60px;
 }
 
 #Toolbar button
 {
-	height: 40px;
 	vertical-align: bottom;
 }
 
@@ -43,9 +42,9 @@
 {
 	position: absolute;
 	left: 0;
-	top: 120px;
+	top: 60px;
 	width: 280px;
-	height: calc(100% - 160px);
+	height: calc(100% - 100px);
 }
 
 #SideBarTabs > .Page
@@ -70,9 +69,9 @@
 {
 	position: absolute;
 	left: 280px;
-	top: 120px;
+	top: 60px;
 	width: calc(100% - 280px);
-	height: calc(100% - 160px);
+	height: calc(100% - 100px);
 }
 
 #CodeArea .Page
@@ -210,8 +209,13 @@
 #SB_Project ul
 {
 	list-style: none;
-	margin: 0 0 0 10px;
+	margin: 0 10px 0 10px;
 	padding: 0;
+}
+
+#SB_Project ul ul
+{
+	margin: 0 0 0 10px;
 }
 
 #SB_Project li
@@ -224,6 +228,21 @@
 	font-family: fontawesome;
 	display: inline-block;
 	margin: 0 5px 0 0;
+}
+
+#SB_Project li.Project
+{
+	padding: 5px;
+}
+
+#SB_Project li.Project.Current
+{
+	font-weight: bold;
+}
+
+#SB_Project li.Project.Current ul
+{
+	font-weight: normal;
 }
 
 #SB_Project li.Project:before
@@ -256,6 +275,20 @@
 #SB_Project li.FileItem:before
 {
 	content: "\f15c";
+}
+
+#SB_Project li.FileItem.Reading:after
+{
+	content: "\f06e";
+	font-family: fontawesome;
+	margin: 0 0 0 5px;
+}
+
+#SB_Project li.FileItem.Editing:after
+{
+	content: "\f14b";
+	font-family: fontawesome;
+	margin: 0 0 0 5px;
 }
 
 #StatusBar
