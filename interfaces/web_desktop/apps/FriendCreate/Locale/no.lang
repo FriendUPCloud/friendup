@@ -71,4 +71,6 @@ i18n_preferences                    : Innstillinger
 i18n_programming                    : Programmering
 i18n_system                         : System
 
+i18n_loading_project                : Laster inn prosjekt
+i18n_loading_project_desc           : Ønsker du å åpne som prosjekt?
 

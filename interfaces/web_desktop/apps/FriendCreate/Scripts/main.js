@@ -773,6 +773,7 @@ function OpenProject( path )
 			projects.push( p );
 			Application.currentProject = p;
 			RefreshProjects();
+			ge( 'tabProjects' ).onclick();
 		}
 		f.load();
 		return;
@@ -797,6 +798,7 @@ function OpenProject( path )
 				projects.push( p );
 				Application.currentProject = p;
 				RefreshProjects();
+				ge( 'tabProjects' ).onclick();
 			}
 			f.load();
 		},
