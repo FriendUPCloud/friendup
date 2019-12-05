@@ -853,44 +853,38 @@ function OpenProject( path )
 	} ) );
 }
 
-function SaveProject( file, saveas )
+function SaveProject( project, saveas )
 {
 	if( !saveas ) saveas = false;
 	
-	if( !saveas && file.path )
+	if( !saveas && project.Path )
 	{
-		var f = new File( file.path );
+		var f = new File( project.Path );
 		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
 		}
-		f.save( file.editor.getValue() );
+		f.save( JSON.stringify( project ) );
 	}
 	else
 	{
 		( new Filedialog( {
-			path: file.path ? file.path : 'Home:',
+			path: project.path ? project.path : 'Home:',
 			triggerFunction: function( filename )
 			{
-				file.path = filename;
-				file.filename = filename.split( ':' )[1];
-				if( file.filename.indexOf( '/' ) >= 0 )
-				{
-					file.filename = file.filename.split( '/' );
-					file.filename = file.filename[ file.filename.length - 1 ];
-				}
-				var f = new File( filename );
+				project.Path = filename;
+				var f = new File( project.Path );
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
 					StatusMessage( i18n( 'i18n_saved' ) );
 					file.updateTab();
 				}
-				f.save( file.editor.getValue() );
+				f.save( JSON.stringyfy( project ) );
 			},
 			type: 'save',
-			suffix: supportedFiles,
+			suffix: 'apf',
 			rememberPath: true
 		} ) );
 	}
