@@ -78,4 +78,9 @@ i18n_remove_images                  : Remove image(s)
 i18n_loading_project                : Loading project
 i18n_loading_project_desc           : Du you want to open this as a project?
 
+i18n_module                         : Module
+i18n_library                        : Library
+i18n_disk                           : Disk
+i18n_named_item                     : Named item...
+i18n_options                        : Options...
 

@@ -101,7 +101,7 @@ function RefreshPermissions()
 {
 	if( project.Permissions && project.Permissions.length )
 	{
-		var str = '<div class="List">';
+		var str = '';
 		for( var a = 0; a < project.Permissions.length; a++ )
 		{
 			var sw = a % 2 + 1;
@@ -115,7 +115,6 @@ function RefreshPermissions()
 			str += '<div class="HContent10 FloatLeft PaddingSmall TextRight"><input type="checkbox" key="' + permKey + '"/></div>';
 			str += '</div>';
 		}
-		str += '</div>';
 		ge( 'project_permissions' ).innerHTML = str;
 	}
 	else
@@ -159,6 +158,44 @@ function RemoveFiles( mode )
 	project.Files = out;
 	
 	RefreshFiles();
+}
+
+var priv = false;
+function AddPrivilege( pele )
+{
+	if( pele )
+	{
+		var s = pele.parentNode.parentNode;
+		if( !project.Permissions )
+			project.Permissions = [];
+		project.Permissions.push( {
+			Permission: s.getElementsByTagName( 'select' )[0].value,
+			Name: s.getElementsByTagName( 'input' )[0].value,
+			Options: s.getElementsByTagName( 'input' )[1].value
+		} );
+		RefreshPermissions();
+		s.parentNode.removeChild( s );
+		priv = false;
+		return;
+	}
+	if( !priv )
+	{
+		var sels = '<select class="FullWidth"><option value="Module">' + i18n( 'i18n_module' ) + '</option><option value="Library">' + i18n( 'i18n_library' ) + '</option><option value="Door">' + i18n( 'i18n_disk' ) + '</option></select>';
+	
+		var p = document.createElement( 'div' );
+		var str = '';
+		str += '<div class="HRow BackgroundHeavier">';
+		str += '<div class="HContent30 Ellipsis FloatLeft PaddingSmall">' + sels + '</div>';
+		str += '<div class="HContent35 Ellipsis FloatLeft PaddingSmall"><input type="text" placeholder="' + i18n( 'i18n_named_item' ) + '" class="FullWidth"/></div>';
+		str += '<div class="HContent25 Ellipsis FloatLeft PaddingSmall"><input type="text" placeholder="' + i18n( 'i18n_options' ) + '" class="FullWidth"/></div>';
+		str += '<div class="HContent10 Ellipsis FloatLeft PaddingSmall"><button class="ImageButton IconSmall fa-check FullWidth" onclick="AddPrivilege(this)"></button></div>';
+		str += '</div>';
+		p.innerHTML = str;
+		priv = p;
+		ge( 'project_permissions' ).appendChild( p );
+	}
+	
+	priv.getElementsByTagName( 'input' )[0].focus();
 }
 
 function AddFiles( type )

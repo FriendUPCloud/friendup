@@ -77,3 +77,10 @@ i18n_remove_images                  : Legg til bilde(r)
 i18n_loading_project                : Laster inn prosjekt
 i18n_loading_project_desc           : Ønsker du å åpne som prosjekt?
 
+i18n_module                         : Modul
+i18n_library                        : Biblotek
+i18n_disk                           : Disk
+i18n_named_item                     : Navngitt objekt...
+i18n_options                        : Ekstraverdier...
+
+
