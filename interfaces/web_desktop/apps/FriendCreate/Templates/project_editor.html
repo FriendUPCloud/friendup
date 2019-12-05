@@ -76,7 +76,18 @@
 		<div class="HContent20 FloatLeft Padding BorderRight">
 			<strong>{i18n_application_images}:</strong>
 		</div>
-		<div class="HContent80 FloatLeft Padding" id="project_images"></div>
+		<div class="HContent80 FloatLeft Padding">
+			<div class="List BorderBottom" id="project_images"></div>
+			<br/>
+			<div class="HRow">
+				<button class="IconButton IconSmall fa-plus" onclick="AddFiles( 'images' )">
+					{i18n_add_images}
+				</button>
+				<button class="IconButton IconSmall fa-minus" onclick="RemoveImages()">
+					{i18n_remove_images}
+				</button>
+			</div>
+		</div>
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
@@ -86,10 +97,10 @@
 			<div class="List BorderBottom" id="project_files"></div>
 			<br/>
 			<div class="HRow">
-				<button class="IconButton IconSmall fa-plus">
+				<button class="IconButton IconSmall fa-plus" onclick="AddFiles()">
 					{i18n_add_file}
 				</button>
-				<button class="IconButton IconSmall fa-minus">
+				<button class="IconButton IconSmall fa-minus" onclick="RemoveFiles()">
 					{i18n_remove_files}
 				</button>
 			</div>

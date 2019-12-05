@@ -10,6 +10,36 @@
 
 var project = {};
 
+var supportedFiles = [
+	'php',
+	'pl',
+	'sql',
+	'sh',
+	'as',
+	'txt',
+	'js',
+	'lang',
+	'pls',
+	'json',
+	'tpl',
+	'ptpl',
+	'xml',
+	'html',
+	'htm',
+	'c',
+	'h',
+	'cpp',
+	'd',
+	'ini',
+	'jsx',
+	'java',
+	'css',
+	'run',
+	'apf',
+	'conf'
+];
+
+
 Application.run = function( msg )
 {
 }
@@ -18,42 +48,51 @@ function RefreshFiles()
 {
 	if( project.Files && project.Files.length )
 	{
-		var str = '<div class="List">';
+		var ssw = 0;
+		var isw = 0;
+		var str = istr = '';
+		
 		for( var a = 0; a < project.Files.length; a++ )
 		{
-			var sw = a % 2 + 1;
-			str += '<div class="HRow sw' + sw + '">';
-			str += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Files[a].Path + '</div>';
-			str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Files[a].Path + '"/></div>';
-			str += '</div>';
+			var ext = project.Files[a].Path.split( '.' ).pop().toLowerCase();
+			if( ext == 'png' || ext == 'gif' || ext == 'jpg' || ext == 'jpeg' )
+			{
+				isw = isw == 1 ? 2 : 1;
+				istr += '<div class="HRow sw' + isw + '">';
+				istr += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Files[a].Path + '</div>';
+				istr += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Files[a].Path + '"/></div>';
+				istr += '</div>';
+			}
+			else
+			{
+				ssw = ssw == 1 ? 2 : 1;
+				str += '<div class="HRow sw' + ssw + '">';
+				str += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Files[a].Path + '</div>';
+				str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Files[a].Path + '"/></div>';
+				str += '</div>';
+			}
 		}
-		str += '</div>';
-		ge( 'project_files' ).innerHTML = str;
+		
+		if( str.length )
+		{
+			ge( 'project_files' ).innerHTML = '<div class="List">' + str + '</div>';
+		}
+		else
+		{
+			ge( 'project_files' ).innerHTML = i18n( 'i18n_project_has_no_files' );
+		}
+		if( istr.length )
+		{
+			ge( 'project_images' ).innerHTML = '<div class="List">' + istr + '</div>';
+		}
+		else
+		{
+			ge( 'project_images' ).innerHTML = i18n( 'i18n_project_has_no_images' );
+		}
 	}
 	else
 	{
 		ge( 'project_files' ).innerHTML = i18n( 'i18n_project_has_no_files' );
-	}
-}
-
-function RefreshImages()
-{
-	if( project.Images && project.Images.length )
-	{
-		var str = '<div class="List">';
-		for( var a = 0; a < project.Images.length; a++ )
-		{
-			var sw = a % 2 + 1;
-			str += '<div class="HRow sw' + sw + '">';
-			str += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Images[a].Path + '</div>';
-			str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Images[a].Path + '"/></div>';
-			str += '</div>';
-		}
-		str += '</div>';
-		ge( 'project_images' ).innerHTML = str;
-	}
-	else
-	{
 		ge( 'project_images' ).innerHTML = i18n( 'i18n_project_has_no_images' );
 	}
 }
@@ -66,10 +105,14 @@ function RefreshPermissions()
 		for( var a = 0; a < project.Permissions.length; a++ )
 		{
 			var sw = a % 2 + 1;
+			var permKey = project.Permissions[a].Name + ':' + 
+				project.Permissions[a].Options + ':' + 
+				project.Permissions[a].Permission;
 			str += '<div class="HRow sw' + sw + '">';
-			str += '<div class="HContent33 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Name + '</div>';
-			str += '<div class="HContent33 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Options + '</div>';
-			str += '<div class="HContent33 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Permission + '</div>';
+			str += '<div class="HContent35 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Name + '</div>';
+			str += '<div class="HContent35 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Options + '</div>';
+			str += '<div class="HContent20 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Permission + '</div>';
+			str += '<div class="HContent10 FloatLeft PaddingSmall TextRight"><input type="checkbox" key="' + permKey + '"/></div>';
 			str += '</div>';
 		}
 		str += '</div>';
@@ -81,20 +124,62 @@ function RefreshPermissions()
 	}
 }
 
-function RemoveFiles()
+function RemoveImages()
 {
-	var els = ge( 'project_files' ).getElementsByTagName( 'input' );
-	/*var out = [];
-	for( var b = 0; b < els.length; b++ )
+	RemoveFiles( 'images' );
+}
+
+function RemoveFiles( mode )
+{
+	var els = ge( 'project_' + ( mode && mode == 'images' ? 'images' : 'files' ) ).getElementsByTagName( 'input' );
+	
+	var out = [];
+	
+	for( var a = 0; a < project.Files.length; a++ )
 	{
-		for( var a = 0; a < project.Files.length; a++ )
+		var checked = false;
+		for( var b = 0; b < els.length; b++ )
 		{
-			if( project.Files[a].Path != path )
-				out.push( project.Files[a] );
+			if( els[b].checked )
+			{
+				var path = els[b].getAttribute( 'path' );
+				if( path && project.Files[a].Path == path )
+				{
+					checked = true;
+					break;
+				}
+			}
+		}
+		if( !checked )
+		{
+			out.push( project.Files[a] );
 		}
 	}
-	project.Files = out;*/
+	
+	project.Files = out;
+	
 	RefreshFiles();
+}
+
+function AddFiles( type )
+{
+	( new Filedialog( {
+		path: 'Mountlist:',
+		type: 'open',
+		rememberPath: true,
+		triggerFunction: function( files )
+		{
+			if( files.length )
+			{
+				for( var a = 0; a < files.length; a++ )
+				{
+					project.Files.push( files[a] );
+				}
+				RefreshFiles();
+			}
+		},
+		suffix: type && type == 'images' ? [ 'jpg', 'jpeg', 'png', 'gif' ] : supportedFiles
+	} ) );
 }
 
 function UpdateProject()
@@ -108,7 +193,6 @@ function UpdateProject()
 	];
 	for( var a = 0; a < values.length; a++ )
 		project[ values[a] ] = ge( values[a] ).value;
-	
 
 	Application.sendMessage( {
 		command: 'updateproject',
@@ -120,7 +204,6 @@ function UpdateProject()
 
 Application.receiveMessage = function( msg )
 {
-	console.log( 'Received message: ', msg );
 	if( msg.command )
 	{
 		switch( msg.command )
@@ -145,7 +228,6 @@ Application.receiveMessage = function( msg )
 				}
 				
 				RefreshFiles();
-				RefreshImages();
 				RefreshPermissions();
 				break;
 		}

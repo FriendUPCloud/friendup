@@ -71,6 +71,9 @@ i18n_preferences                    : Innstillinger
 i18n_programming                    : Programmering
 i18n_system                         : System
 
+i18n_add_images                     : Fjern bilder
+i18n_remove_images                  : Legg til bilde(r)
+
 i18n_loading_project                : Laster inn prosjekt
 i18n_loading_project_desc           : Ønsker du å åpne som prosjekt?
 

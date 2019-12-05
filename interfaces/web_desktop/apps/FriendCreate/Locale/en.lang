@@ -72,6 +72,9 @@ i18n_preferences                    : Preferences
 i18n_programming                    : Programming
 i18n_system                         : System
 
+i18n_add_images                     : Add images
+i18n_remove_images                  : Remove image(s)
+
 i18n_loading_project                : Loading project
 i18n_loading_project_desc           : Du you want to open this as a project?
 

@@ -759,7 +759,7 @@ function NewProject()
 
 function OpenProject( path )
 {
-	if( path.toLowerCase().indexOf( '.apf' ) > 0 )
+	if( path && path.toLowerCase().indexOf( '.apf' ) > 0 )
 	{
 		var p = new Project();
 		p.Path = path;
