@@ -198,6 +198,43 @@ function AddPrivilege( pele )
 	priv.getElementsByTagName( 'input' )[0].focus();
 }
 
+function RemovePrivileges()
+{
+	var els = ge( 'project_permissions' ).getElementsByTagName( 'input' );
+	
+	var out = [];
+	
+	for( var a = 0; a < project.Permissions.length; a++ )
+	{
+		var checked = false;
+		
+		var permKey = project.Permissions[a].Name + ':' + 
+			project.Permissions[a].Options + ':' + 
+			project.Permissions[a].Permission;
+		
+		for( var b = 0; b < els.length; b++ )
+		{
+			if( els[b].checked )
+			{
+				var pk = els[b].getAttribute( 'key' );
+				if( permKey == pk )
+				{
+					checked = true;
+					break;
+				}
+			}
+		}
+		if( !checked )
+		{
+			out.push( project.Permissions[a] );
+		}
+	}
+	
+	project.Permissions = out;
+	
+	RefreshPermissions();
+}
+
 function AddFiles( type )
 {
 	( new Filedialog( {
