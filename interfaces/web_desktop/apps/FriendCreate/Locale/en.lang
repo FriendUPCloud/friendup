@@ -53,4 +53,7 @@ i18n_application_images             : Application images
 i18n_project_files                  : Project files
 i18n_add_file                       : Add file
 i18n_remove_files                   : Remove file(s)
+i18n_project_has_no_files           : Project has no files.
+i18n_project_has_no_images          : Project has no images.
+i18n_project_has_no_permissions     : Project has no privileges.
 

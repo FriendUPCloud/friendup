@@ -16,25 +16,69 @@ Application.run = function( msg )
 
 function RefreshFiles()
 {
-	var str = '<div class="List">';
-	for( var a = 0; a < project.Files.length; a++ )
+	if( project.Files && project.Files.length )
 	{
-		var sw = a % 2 + 1;
-		str += '<div class="HRow sw' + sw + '">';
-		str += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Files[a].Path + '</div>';
-		str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Files[a].Path + '"/></div>';
+		var str = '<div class="List">';
+		for( var a = 0; a < project.Files.length; a++ )
+		{
+			var sw = a % 2 + 1;
+			str += '<div class="HRow sw' + sw + '">';
+			str += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Files[a].Path + '</div>';
+			str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Files[a].Path + '"/></div>';
+			str += '</div>';
+		}
 		str += '</div>';
+		ge( 'project_files' ).innerHTML = str;
 	}
-	str += '</div>';
-	ge( 'project_files' ).innerHTML = str;
+	else
+	{
+		ge( 'project_files' ).innerHTML = i18n( 'i18n_project_has_no_files' );
+	}
 }
 
 function RefreshImages()
 {
+	if( project.Images && project.Images.length )
+	{
+		var str = '<div class="List">';
+		for( var a = 0; a < project.Images.length; a++ )
+		{
+			var sw = a % 2 + 1;
+			str += '<div class="HRow sw' + sw + '">';
+			str += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Images[a].Path + '</div>';
+			str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Images[a].Path + '"/></div>';
+			str += '</div>';
+		}
+		str += '</div>';
+		ge( 'project_images' ).innerHTML = str;
+	}
+	else
+	{
+		ge( 'project_images' ).innerHTML = i18n( 'i18n_project_has_no_images' );
+	}
 }
 
 function RefreshPermissions()
 {
+	if( project.Permissions && project.Permissions.length )
+	{
+		var str = '<div class="List">';
+		for( var a = 0; a < project.Permissions.length; a++ )
+		{
+			var sw = a % 2 + 1;
+			str += '<div class="HRow sw' + sw + '">';
+			str += '<div class="HContent33 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Name + '</div>';
+			str += '<div class="HContent33 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Options + '</div>';
+			str += '<div class="HContent33 Ellipsis FloatLeft PaddingSmall">' + project.Permissions[a].Permission + '</div>';
+			str += '</div>';
+		}
+		str += '</div>';
+		ge( 'project_permissions' ).innerHTML = str;
+	}
+	else
+	{
+		ge( 'project_permissions' ).innerHTML = i18n( 'i18n_project_has_no_permissions' );
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -50,6 +94,10 @@ Application.receiveMessage = function( msg )
 				for( var a in msg.data )
 				{
 					project[ a ] = msg.data[ a ];
+					if( ge( 'project_' + a.toLowerCase() ) )
+					{
+						ge( 'project_' + a.toLowerCase() ).value = project[ a ];
+					}
 				}
 				RefreshFiles();
 				RefreshImages();

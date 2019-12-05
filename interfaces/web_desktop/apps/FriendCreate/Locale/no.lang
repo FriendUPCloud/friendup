@@ -53,4 +53,7 @@ i18n_application_images             : Programbilder
 i18n_project_files                  : Programfiler
 i18n_add_file                       : Legg til fil
 i18n_remove_files                   : Legg til fil(er)
+i18n_project_has_no_files           : Prosjektet har ikke filer.
+i18n_project_has_no_images          : Prosjektet har ikke bilder.
+i18n_project_has_no_permissions     : Prosjektet har ikke rettigheter.
 
