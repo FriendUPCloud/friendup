@@ -176,13 +176,13 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	
 	if( usr->u_Status == USER_STATUS_DISABLED )
 	{
-		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"name\":\"%s\",\"groups\":[", usr->u_UUID, usr->u_ModifyTime, usr->u_Name );
 		BufStringAddSize( bs, msg, msize );
 		//UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 	}
 	else
 	{
-		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":false,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":false,\"lastupdate\":%lu,\"name\":\"%s\",\"groups\":[", usr->u_UUID, usr->u_ModifyTime, usr->u_Name );
 		BufStringAddSize( bs, msg, msize );
 		UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 	}
