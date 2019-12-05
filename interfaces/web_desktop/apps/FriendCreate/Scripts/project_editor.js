@@ -196,7 +196,8 @@ function UpdateProject()
 
 	Application.sendMessage( {
 		command: 'updateproject',
-		project: project
+		project: project,
+		targetViewId: Application.parentViewId
 	} );
 }
 
@@ -229,6 +230,7 @@ Application.receiveMessage = function( msg )
 				
 				RefreshFiles();
 				RefreshPermissions();
+				Application.parentViewId = msg.parentView;
 				break;
 		}
 	}

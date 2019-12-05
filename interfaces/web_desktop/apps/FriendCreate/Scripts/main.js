@@ -131,6 +131,7 @@ function InitGui()
 	{
 		gui.sideBar = new Friend.FileBrowser( ge( 'SB_AllFiles' ), { displayFiles: true }, gui.sideBarCallbacks );
 		gui.sideBar.render();
+		ge( 'tabAllFiles' ).onclick();
 	}
 }
 
@@ -159,23 +160,38 @@ var EditorFile = function( path )
 				var json = {};
 				try { json = JSON.parse( d ); } catch( e ){};
 			
-				var f = new File( path );
-				f.onLoad = function( data )
+				var ext = path.split( '.' ).pop().toLowerCase();
+				if( ext == 'jpg' || ext == 'gif' || ext == 'jpeg' || ext == 'png' )
 				{
 					self.filename = json.Filename;
 					self.path = json.Path;
-					self.content = data;
+					self.content = '<div class="FullImage"><img src="' + getImageUrl( json.Path ) + '"/></div>';
+					self.type = 'image';
 					self.filesize = json.Filesize;
 					files.push( self );
 					InitEditArea( self );
-					setTimeout( function()
-					{
-						self.refreshBuffer();
-						self.refreshMinimap();
-					}, 50 );
 					self.updateState( 'Reading' );
 				}
-				f.load();
+				else
+				{
+					var f = new File( path );
+					f.onLoad = function( data )
+					{
+						self.filename = json.Filename;
+						self.path = json.Path;
+						self.content = data;
+						self.filesize = json.Filesize;
+						files.push( self );
+						InitEditArea( self );
+						setTimeout( function()
+						{
+							self.refreshBuffer();
+							self.refreshMinimap();
+						}, 50 );
+						self.updateState( 'Reading' );
+					}
+					f.load();
+				}
 			}
 		}
 		s.execute( 'file/info', { path: path } );
@@ -211,6 +227,7 @@ EditorFile.prototype.close = function()
 
 EditorFile.prototype.updateState = function( state )
 {
+	this.state = state;
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
@@ -231,7 +248,7 @@ function NewFile()
 
 var tcounter = 0;
 function InitEditArea( file )
-{	
+{
 	var p = ge( 'CodeArea' );
 	var tc = p.querySelector( '.TabContainer' );
 	
@@ -280,28 +297,46 @@ function InitEditArea( file )
 	
 	c.addEventListener( 'mousedown', function( e )
 	{
-		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
+		if( t.file.state == 'Editing' )
 		{
-			if( di.data )
+			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
 			{
-				d.parentNode.removeChild( d );
-				t.parentNode.removeChild( t );
-				t.file.close();
-				InitTabs( ge( 'CodeArea' ) );
-			}
-		} );
+				if( di.data )
+				{
+					d.parentNode.removeChild( d );
+					t.parentNode.removeChild( t );
+					t.file.close();
+					InitTabs( ge( 'CodeArea' ) );
+				}
+			} );
+		}
+		else
+		{
+			d.parentNode.removeChild( d );
+			t.parentNode.removeChild( t );
+			t.file.close();
+			InitTabs( ge( 'CodeArea' ) );
+		}
 		return cancelBubble( e );
 	} );
 	
 	// Initialize the content editor
-	InitContentEditor( d, file );
+	if( file.type == 'image' )
+	{
+		d.innerHTML = file.content;
+	}
+	else
+	{
+		InitContentEditor( d, file );
+	}
 	
 	InitTabs( ge( 'CodeArea' ) );
 	
 	Application.currentFile = file;
 	file.tab.onclick();
 	
-	file.refreshMinimap();
+	if( file.refreshMinimap )
+		file.refreshMinimap();
 }
 
 function RemoveEditArea( file )
@@ -401,8 +436,11 @@ function InitContentEditor( element, file )
 	window.addEventListener( 'mouseup', function( e )
 	{
 		file.mouseDown = false;
-		file.minimapRect.classList.remove( 'Move' );
-		file.refreshMinimap();
+		if( file.minimapRect )
+		{
+			file.minimapRect.classList.remove( 'Move' );
+			file.refreshMinimap();
+		}
 	}, false );
 	// Done moving the rect
 	var ac = file.page.querySelector( '.ace_scroller' );
@@ -413,7 +451,8 @@ function InitContentEditor( element, file )
 	// Events for minimap
 	file.editor.session.on( 'changeScrollTop', function( e )
 	{
-		file.refreshMinimap( e );
+		if( file.refreshMinimap )
+			file.refreshMinimap( e );
 	} );
 	
 	file.refreshBuffer = function()
@@ -650,14 +689,20 @@ document.body.addEventListener( 'keyup', function( e )
 	
 
 	// Update minimap
-	Application.currentFile.refreshBuffer();
-	Application.currentFile.refreshMinimap();
+	if( Application.currentFile.refreshBuffer )
+	{
+		Application.currentFile.refreshBuffer();
+		Application.currentFile.refreshMinimap();
+	}
 }, false );
 
 window.addEventListener( 'resize', function( e )
 {
 	// Update minimap
-	Application.currentFile.refreshMinimap();
+	if( Application.currentFile.refreshMinimap )
+	{
+		Application.currentFile.refreshMinimap();
+	}
 } );
 
 // Printing support ------------------------------------------------------------
@@ -719,7 +764,7 @@ function OpenProjectEditor()
 	{
 		pe.setContent( data, function( d )
 		{
-			pe.sendMessage( { command: 'updateproject', data: Application.currentProject } );
+			pe.sendMessage( { command: 'updateproject', data: Application.currentProject, parentView: Application.viewId } );
 		} );
 	}
 	f.load();
@@ -1048,6 +1093,7 @@ Application.receiveMessage = function( msg )
 					}
 				}
 				RefreshProjects();
+				if( pe ) pe.close();
 				break;
 		}
 	}
