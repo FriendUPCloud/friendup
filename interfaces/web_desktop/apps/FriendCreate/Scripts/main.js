@@ -1039,6 +1039,16 @@ Application.receiveMessage = function( msg )
 					}
 				}
 				break;
+			case 'updateproject':
+				for( var a = 0; a < projects.length; a++ )
+				{
+					if( projects[ a ].ProjectName == msg.project.ProjectName )
+					{
+						projects[ a ] = msg.project;
+					}
+				}
+				RefreshProjects();
+				break;
 		}
 	}
 }
