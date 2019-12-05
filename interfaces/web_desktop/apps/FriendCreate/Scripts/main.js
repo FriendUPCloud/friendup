@@ -1069,6 +1069,12 @@ Application.receiveMessage = function( msg )
 			case 'project_open':
 				OpenProject();
 				break;
+			case 'project_save':
+				SaveProject( Application.currentProject );
+				break;
+			case 'project_save_as':
+				SaveProject( Application.currentProject, true );
+				break;
 			case 'drop':
 				if( msg.data )
 				{
