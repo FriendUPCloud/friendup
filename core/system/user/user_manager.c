@@ -583,17 +583,38 @@ User *UMGetUserByName( UserManager *um, const char *name )
 	{
 		return NULL;
 	}
-	User *tuser = um->um_Users;
-	while( tuser != NULL )
+	
+	User *tuser = NULL;
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{
-		// Check both username and password
-		if( strcmp( name, tuser->u_Name ) == 0 )
+		User *tuser = um->um_Users;
+		while( tuser != NULL )
 		{
-			return tuser;
+			// Check both username and password
+			if( strcmp( name, tuser->u_Name ) == 0 )
+			{
+				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+				return tuser;
+			}
+			tuser = (User *)tuser->node.mln_Succ;
 		}
-		tuser = (User *)tuser->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
-	return NULL;
+	
+	// user is not in memory, load it
+	
+	tuser = UMGetUserByNameDB( um, name );
+	if( tuser != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+		{
+			tuser->node.mln_Succ = (MinNode *)um->um_Users;
+			um->um_Users = tuser;
+			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+		}
+	}
+	
+	return tuser;
 }
 
 /**
@@ -605,17 +626,38 @@ User *UMGetUserByName( UserManager *um, const char *name )
  */
 User *UMGetUserByID( UserManager *um, FULONG id )
 {
-	User *tuser = um->um_Users;
-	while( tuser != NULL )
+	User *tuser = NULL;
+	
+	if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 	{
-		// Check both username and password
-		if( tuser->u_ID == id )
+		tuser = um->um_Users;
+		while( tuser != NULL )
 		{
-			return tuser;
+			// Check both username and password
+			if( tuser->u_ID == id )
+			{
+				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+				return tuser;
+			}
+			tuser = (User *)tuser->node.mln_Succ;
 		}
-		tuser = (User *)tuser->node.mln_Succ;
+		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
-	return NULL;
+	
+	// user is not in memory, load it
+	
+	tuser = UMGetUserByIDDB( um, id );
+	if( tuser != NULL )
+	{
+		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
+		{
+			tuser->node.mln_Succ = (MinNode *)um->um_Users;
+			um->um_Users = tuser;
+			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
+		}
+	}
+	
+	return tuser;
 }
 
 /**
