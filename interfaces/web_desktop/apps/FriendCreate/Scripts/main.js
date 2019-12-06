@@ -900,6 +900,7 @@ function SaveProject( project, saveas )
 			triggerFunction: function( filename )
 			{
 				project.Path = filename;
+				console.log( 'Set new path: ', filename );
 				var f = new File( project.Path );
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
@@ -1056,6 +1057,23 @@ function ToggleOpenFolder( ele )
 }
 
 // End projects ----------------------------------------------------------------
+
+// Search and replace ----------------------------------------------------------
+
+function Search()
+{
+	if( ge( 'Search' ) )
+	{
+		ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
+		return;
+	}
+	var d = document.createElement( 'div' );
+	d.id = 'Search';
+	d.innerHTML = '<input type="text" placeholder="' + i18n( 'i18n_search_keywords' ) + '"/>';
+	ge( 'StatusBar' ).appendChild( d );
+}
+
+// End search and replace ------------------------------------------------------
 
 // Helper
 function StatusMessage( str )
