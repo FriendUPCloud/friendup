@@ -333,12 +333,10 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 
 	if( user != NULL )
 	{
-		{
-			DEBUG("[UMUserGetByIDDB] User found %s\n", user->u_Name );
-			UGMAssignGroupToUser( sb->sl_UGM, user );
-			UMAssignApplicationsToUser( um, user );
-			user->u_MountedDevs = NULL;
-		}
+		DEBUG("[UMUserGetByIDDB] User found %s\n", user->u_Name );
+		UGMAssignGroupToUser( sb->sl_UGM, user );
+		UMAssignApplicationsToUser( um, user );
+		user->u_MountedDevs = NULL;
 	}
 	
 	DEBUG("[UMUserGetByIDDB] END\n");
@@ -970,12 +968,16 @@ int UMAddUser( UserManager *um,  User *usr )
 	User *lu =  UMGetUserByID( um, usr->u_ID );
 	if( lu == NULL  )
 	{
-		usr->node.mln_Succ  = (MinNode *) um->um_Users;
-		if( um->um_Users != NULL )
+		if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 		{
-			um->um_Users->node.mln_Pred = (MinNode *)usr;
+			usr->node.mln_Succ  = (MinNode *) um->um_Users;
+			if( um->um_Users != NULL )
+			{
+				um->um_Users->node.mln_Pred = (MinNode *)usr;
+			}
+			um->um_Users = usr;
+			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 		}
-		um->um_Users = usr;
 	}
 	else
 	{
@@ -1001,15 +1003,19 @@ int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_ma
 	FULONG user_id = usr->u_ID;
 
 	UserSession *session_to_delete;
-    while ((session_to_delete = USMGetSessionByUserID(user_session_manager, user_id)) != NULL){
-    	int status = USMUserSessionRemove(user_session_manager, session_to_delete);
+    while( ( session_to_delete = USMGetSessionByUserID( user_session_manager, user_id ) ) != NULL )
+	{
+    	int status = USMUserSessionRemove( user_session_manager, session_to_delete );
     	DEBUG("%s removing session at %p, status %d\n", __func__, session_to_delete, status);
     }
 
     unsigned int n = 0;
     bool found = false;
-	while (user_current != NULL){
-		if (user_current == usr){
+	
+	while( user_current != NULL )
+	{
+		if( user_current == usr )
+		{
 			DEBUG("%s removing user at %p, place in list %d\n", __func__, user_current, n);
 			found = true;
 			n++;
@@ -1019,14 +1025,15 @@ int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_ma
 		user_current = (User *)user_current->node.mln_Succ; //this is the next element in the linked list
 	}
 	
-	if (found){ //the requested user has been found in the list
-
-		if (user_previous){ //we are in the middle or at the end of the list
-
+	if( found )
+	{ //the requested user has been found in the list
+		if( user_previous )
+		{ //we are in the middle or at the end of the list
 			DEBUG("Deleting from the middle or end of the list\n");
 			user_previous->node.mln_Succ = user_current->node.mln_Succ;
-
-		} else { //we are at the very beginning of the list
+		}
+		else
+		{ //we are at the very beginning of the list
 			um->um_Users = (User *)user_current->node.mln_Succ; //set the global start pointer of the list
 		}
 		UserDelete(user_current);
@@ -1246,15 +1253,18 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			UMAssignApplicationsToUser( um, user );
 			user->u_MountedDevs = NULL;
 			
-			user->node.mln_Succ  = (MinNode *) um->um_Users;
-			if( um->um_Users != NULL )
+			if( FRIEND_MUTEX_LOCK( &(um->um_Mutex) ) == 0 )
 			{
-				um->um_Users->node.mln_Pred = (MinNode *)user;
+				user->node.mln_Succ  = (MinNode *) um->um_Users;
+				if( um->um_Users != NULL )
+				{
+					um->um_Users->node.mln_Pred = (MinNode *)user;
+				}
+				um->um_Users = user;
+			
+				um->um_APIUser = user;
+				FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 			}
-			um->um_Users = user;
-			
-			um->um_APIUser = user;
-			
 			return 0;
 		}
 		else
