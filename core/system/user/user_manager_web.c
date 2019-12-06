@@ -1683,7 +1683,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* <HR><H2>system.library/user/sessionlist</H2>Get sessions attached to user
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param username - (required) name of user which sessions you want to get
+	* @param username - name of user which sessions you want to get otherwise you will get sessions of current user
 	* @return sessions attached to users in JSON format, otherwise error code
 	*/
 	/// @endcond
@@ -1707,105 +1707,101 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			usrname = UrlDecodeToMem( (char *)el->data );
 		}
 		
-		if( usrname != NULL )
+		User *logusr = NULL;
+		logusr = loggedSession->us_User;
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			User *logusr = NULL;
-			
-			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+			// only when you are admin you can change stuff on other user accounts
+			if( usrname != NULL )
 			{
 				logusr = UMGetUserByName( l->sl_UM, usrname );
 			}
-			else
-			{
-				logusr = loggedSession->us_User;
-			}
-		
-			DEBUG(" username: %s\n", usrname );
-			char *temp = FCalloc( 2048, 1 );
-			int numberOfSessions = 0;
-			
-			if( temp != NULL )
-			{
-				if( logusr != NULL )
-				//User *logusr = loggedSession->us_User;
-				//while( logusr != NULL )
-				{
-					DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
-					if( logusr->u_Name != NULL && strcmp( logusr->u_Name, usrname ) == 0 )
-					{
-						BufString *bs = BufStringNew();
-						
-						if( FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) ) == 0 )
-						{
-							UserSessListEntry *sessions = logusr->u_SessionsList;
-							BufStringAdd( bs, "ok<!--separate-->[" );
-							int pos = 0;
-							//unsigned long t = time( NULL );
-					
-							if( logusr->u_SessionsNr > 0 )
-							{
-								while( sessions != NULL )
-								{
-									UserSession *us = (UserSession *) sessions->us;
-									if( us == NULL )
-									{
-										DEBUG("ERR\n");
-										sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-										continue;
-									}
-
-									//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
-									//if( us->us_WSClients != NULL )
-									time_t timestamp = time(NULL);
-									
-									FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
-									
-									if( us->us_WSConnections != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
-									{
-										int size = 0;
-										if( pos == 0 )
-										{
-											size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
-										}
-										else
-										{
-											size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
-										}
-										BufStringAddSize( bs, temp, size );
-							
-										pos++;
-									}
-									FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-									
-									sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-								}
-							}
-							FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
-						}
-					
-						BufStringAdd( bs, "]" );
-					
-						HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
-					
-						DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
-						bs->bs_Buffer = NULL;
-					
-						BufStringDelete( bs );
-						numberOfSessions++;
-					}
-					//logusr = (User *)logusr->node.mln_Succ;
-				}
-				FFree( temp );
-			}
-			
-			if( logusr == NULL && numberOfSessions == 0 )
-			{
-				FERROR("[ERROR] User not found\n" );
-				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
-				HttpAddTextContent( response, buffer );
-			}
 		}
+
+		DEBUG(" username: %s\n", usrname );
+		char *temp = FCalloc( 2048, 1 );
+		int numberOfSessions = 0;
+		
+		if( temp != NULL )
+		{
+			if( logusr != NULL )
+			{
+				DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
+				BufString *bs = BufStringNew();
+				
+				if( FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) ) == 0 )
+				{
+					UserSessListEntry *sessions = logusr->u_SessionsList;
+					BufStringAdd( bs, "ok<!--separate-->[" );
+					int pos = 0;
+
+					if( logusr->u_SessionsNr > 0 )
+					{
+						while( sessions != NULL )
+						{
+							UserSession *us = (UserSession *) sessions->us;
+							if( us == NULL )
+							{
+								DEBUG("ERR\n");
+								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+								continue;
+							}
+
+							//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
+							//if( us->us_WSClients != NULL )
+							time_t timestamp = time(NULL);
+							
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								if( us->us_WSConnections != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+								{
+									int size = 0;
+									if( pos == 0 )
+									{
+										size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+									}
+									else
+									{
+										size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+									}
+									BufStringAddSize( bs, temp, size );
+							
+									pos++;
+								}
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
+							
+							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+							numberOfSessions++;
+						}
+					}
+					FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
+				}
+			
+				BufStringAdd( bs, "]" );
+				
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
+				bs->bs_Buffer = NULL;
+				
+				BufStringDelete( bs );
+			}
+			FFree( temp );
+		}
+			
+		// only if user is not found, no need to count sessions
+		if( logusr == NULL ) //&& numberOfSessions == 0 )
+		{
+			FERROR("[ERROR] User not found\n" );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+			HttpAddTextContent( response, buffer );
+		}
+		
+		
+		/*	if there is no parameter current user sessions should be returned
 		else
 		{
 			FERROR("[ERROR] username parameter is missing\n" );
@@ -1815,6 +1811,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_USER_DEV_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
+		*/
 		
 		if( usrname != NULL )
 		{
