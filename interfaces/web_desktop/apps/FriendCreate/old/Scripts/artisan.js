@@ -937,7 +937,6 @@ Application.receiveMessage = function( msg )
 							p = p.join( '/' ) + '/';
 						}
 						else p = p.split( ':' )[0] + ':';
-						Workspace.refreshWindowByPath( p );
 					}
 				}
 				else

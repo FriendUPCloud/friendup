@@ -1089,6 +1089,42 @@ function StatusMessage( str )
 	}, 50 );
 }
 
+function CreatePackage()
+{
+	if( !Application.currentProject || !Application.currentProject.Path )
+	{
+		Alert( i18n( 'i18n_no_project_saved' ), i18n( 'i18n_no_project_desc' ) );
+		return;
+	}
+	
+	StatusMessage( i18n( 'i18n_generating_package' ) );
+	
+	var j = new Module( 'system' );
+	j.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			StatusMessage( i18n( 'i18n_package_generated' ) );
+			var p = Application.currentProject.Path;
+			if( p )
+			{
+				if( p && p.indexOf( '/' ) > 0 )
+				{
+					p = p.split( '/' );
+					p.pop();
+					p = p.join( '/' ) + '/';
+				}
+				else p = p.split( ':' )[0] + ':';
+			}
+		}
+		else
+		{
+			StatusMessage( 'i18n_package_generation_error' );
+		}
+	}
+	j.execute( 'package', { filename: Application.currentProject.Path } );
+}
+
 // Messaging support -----------------------------------------------------------
 
 Application.receiveMessage = function( msg )
@@ -1166,7 +1202,7 @@ Application.receiveMessage = function( msg )
 				console.log( 'About window.' );
 				break;
 			case 'package_generate':
-				console.log( 'Generate package.' );
+				CreatePackage();
 				break;
 		}
 	}

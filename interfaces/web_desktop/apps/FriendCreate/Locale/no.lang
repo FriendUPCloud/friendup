@@ -93,3 +93,13 @@ i18n_named_item                     : Navngitt objekt...
 i18n_options                        : Ekstraverdier...
 
 i18n_unnamed_project                : Prosjekt uten navn
+
+i18n_no_project_saved               : Kunne ikke generere pakke
+i18n_no_project_desc                : Vennligst lagre prosjektet ditt før du genererer en pakke.
+i18n_package_created                : Pakken ble generert
+i18n_package_created_desc           : Prosjektpakken ble generert og er lagret i prosjektmappen din.
+i18n_error_occ                      : En feil oppsto
+i18n_package_generation_error       : Prosjektet ditt mangler egenskaper som forhindrer Friend Create å bygge en pakke.
+
+i18n_generating_package             : Genererer pakke...
+i18n_package_generated              : Pakken ble generert.

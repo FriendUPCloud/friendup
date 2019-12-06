@@ -94,3 +94,14 @@ i18n_named_item                     : Named item...
 i18n_options                        : Options...
 
 i18n_unnamed_project                : Unnamed project
+
+i18n_no_project_saved               : Could not generate package
+i18n_no_project_desc                : Please save your project before you attempt to build a package.
+i18n_package_created                : A package was generated
+i18n_package_created_desc           : Your project package was built and is located in your project directory.
+i18n_error_occ                      : An error occured
+i18n_package_generation_error       : The package lacks properties in required to build it.
+
+i18n_generating_package             : Generating package...
+i18n_package_generated              : Package generated.
+
