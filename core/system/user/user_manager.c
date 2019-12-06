@@ -40,6 +40,8 @@ UserManager *UMNew( void *sb )
 	{
 		sm->um_SB = sb;
 		
+		pthread_mutex_init( &(sm->um_Mutex), NULL );
+		
 		return sm;
 	}
 	return NULL;
@@ -52,8 +54,18 @@ UserManager *UMNew( void *sb )
  */
 void UMDelete( UserManager *smgr )
 {
-		// Go and remove all user specific information
-	User *usr = smgr->um_Users;
+	// Go and remove all user specific information
+	
+	User *usr = NULL;
+	
+	// prevent other systems to work on same list
+	if( FRIEND_MUTEX_LOCK( &(smgr->um_Mutex) ) == 0 )
+	{
+		usr = smgr->um_Users;
+		smgr->um_Users = NULL;
+		FRIEND_MUTEX_UNLOCK( &(smgr->um_Mutex) );
+	}
+	
 	User *remusr = usr;
 	Log( FLOG_INFO,  "Release users\n");
 	
@@ -95,39 +107,12 @@ void UMDelete( UserManager *smgr )
 		}
 	}
 	
-	smgr->um_Users = NULL;
-	
 	RemoteUserDeleteAll( smgr->um_RemoteUsers );
 	
-	//if( smgr != NULL )
-	{
-		//UserGroupDeleteAll( smgr->um_SB, smgr->um_UserGroups );
-		/*
-		UserGroup *g = smgr->um_UserGroups, *rg;
-		DEBUG("[UMDelete] Cleaning groups\n");
-		while( g!= NULL )	// remove global groups
-		{
-			rg = g;
-			g = (UserGroup *)g->node.mln_Succ;
-			if( rg != NULL )
-			{
-				//if( rg->ug_ID ){ free( rg->ug_ID ); }
-				if( rg->ug_Name )
-				{
-					FFree( rg->ug_Name ); 
-				}
-				if( rg->ug_Type != NULL )
-				{
-					FFree( rg->ug_Type );
-				}
-				FFree( rg );
-			}
-		}
-		*/
-		//smgr->um_UserGroups = NULL;
-		
-		FFree( smgr );
-	}
+	// destroy mutex
+	pthread_mutex_destroy( &(smgr->um_Mutex) );
+	
+	FFree( smgr );
 }
 
 /**
