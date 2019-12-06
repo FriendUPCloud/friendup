@@ -800,6 +800,7 @@ function NewProject()
 {
 	var p = new Project();
 	p.Path = 'Home:';
+	p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 	var found = false;
 	var b = 1;
 	do
@@ -830,6 +831,7 @@ function OpenProject( path )
 	{
 		var p = new Project();
 		p.Path = path;
+		p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 	
 		var f = new File( p.Path );
 		f.onLoad = function( data )
@@ -855,6 +857,7 @@ function OpenProject( path )
 		
 			var p = new Project();
 			p.Path = files[0].Path;
+			p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 		
 			var f = new File( p.Path );
 			f.onLoad = function( data )
@@ -911,6 +914,22 @@ function SaveProject( project, saveas )
 	}
 }
 
+// Close a project
+function CloseProject( proj )
+{
+	var o = [];
+	for( var a = 0; a < projects.length; a++ )
+	{
+		if( projects[ a ] == proj )
+			continue;
+		o.push( projects[ a ] );
+	}
+	projects = o;
+	if( proj == Application.currentProject )
+		Application.currentProject = null;
+	RefreshProjects();
+}
+
 function RefreshProjects()
 {
 	var filesFromPath = {};
@@ -923,6 +942,8 @@ function RefreshProjects()
 	var str = '';
 	for( var a = 0; a < projects.length; a++ )
 	{
+		if( !Application.currentProject )
+			Application.currentProject = projects[ a ];
 		var pr = projects[ a ];
 		var fstr = '';
 		
@@ -956,7 +977,7 @@ function RefreshProjects()
 		{
 			current = ' Current BackgroundHeavier Rounded';
 		}
-		str += '<ul><li class="Project' + current + '" onclick="SetCurrentProject( \'' + pr.Path + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		str += '<ul><li class="Project' + current + '" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
@@ -1002,7 +1023,7 @@ function SetCurrentProject( p )
 {
 	for( var a = 0; a < projects.length; a++ )
 	{
-		if( projects[ a ].Path == p )
+		if( projects[ a ].ID == p )
 		{
 			Application.currentProject = projects[ a ];
 			RefreshProjects();
@@ -1100,6 +1121,9 @@ Application.receiveMessage = function( msg )
 			case 'project_save_as':
 				if( Application.currentProject )
 					SaveProject( Application.currentProject, true );
+				break;
+			case 'projct_close':
+				CloseProject( Application.currentProject );
 				break;
 			case 'drop':
 				if( msg.data )
