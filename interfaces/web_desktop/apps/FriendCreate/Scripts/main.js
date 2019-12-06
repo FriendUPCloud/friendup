@@ -1081,7 +1081,14 @@ Application.receiveMessage = function( msg )
 				{
 					for( var a = 0; a < msg.data.length; a++ )
 					{
-						new EditorFile( msg.data[ a ].Path );
+						if( msg.data[a].Path.split( '.' ).pop().toLowerCase() == 'apf' )
+						{
+							OpenProject( msg.data[a].Path );
+						}
+						else
+						{
+							new EditorFile( msg.data[ a ].Path );
+						}
 					}
 				}
 				break;
