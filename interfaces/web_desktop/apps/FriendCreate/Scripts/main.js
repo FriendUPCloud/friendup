@@ -783,6 +783,7 @@ var Project = function()
 	// Some variables
 	this.project = {
 		ProjectName: '',
+		Path:        '',
 		Author:      '',
 		Email:       '',
 		Version:     '',
@@ -798,7 +799,28 @@ var Project = function()
 function NewProject()
 {
 	var p = new Project();
+	p.Path = 'Home:';
+	var found = false;
+	var b = 1;
+	do
+	{
+		p.ProjectName = i18n( 'i18n_unnamed_project' );
+		if( b > 1 )
+			p.ProjectName += ' ' + b;
+		found = false;
+		for( var a = 0; a < projects.length; a++ )
+		{
+			if( projects[ a ].ProjectName == p.ProjectName )
+			{
+				found = true;
+				break;
+			}
+		}
+		b++;
+	}
+	while( found );
 	projects.push( p );
+	Application.currentProject = p;
 	RefreshProjects();
 }
 
@@ -1061,6 +1083,9 @@ Application.receiveMessage = function( msg )
 			case 'close':
 				if( Application.currentFile )
 					Application.currentFile.close();
+				break;
+			case 'project_new':
+				NewProject();
 				break;
 			case 'project_editor':
 				OpenProjectEditor();
