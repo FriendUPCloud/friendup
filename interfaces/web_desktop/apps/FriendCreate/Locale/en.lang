@@ -1,257 +1,92 @@
 
 
-#Language file for CodeEditor
+i18n_allfiles                       : Browse
+i18n_openfiles                      : Files
+i18n_projects                       : Projects
+i18n_your_devices                   : Your disks
 
-i18n_file                           : File
-i18n_edit                           : Edit
-i18n_open                           : Load
+i18n_open                           : Open
 i18n_save                           : Save
-i18n_save_as                        : Save as
-i18n_close                          : Close
-i18n_close_all                      : Close all
-i18n_quit                           : Quit
-i18n_cut                            : Cut
-i18n_copy                           : Copy
-i18n_paste                          : Paste
-i18n_new                            : New file
-i18n_about_codeeditor               : About Friend Create
+i18n_print                          : Print
+i18n_undo                           : Undo
+i18n_search_replace                 : Search & replace
+i18n_run_app                        : Run app
+i18n_stop_app                       : Stop
 
-i18n_your_devices                   : Your devices
-i18n_bookmarks                      : Bookmarks
+i18n_file_menu                      : File
+i18n_open_file                      : Open file
 
-i18n_files_in                       : Files in
+i18n_are_you_sure                   : Are you sure?
+i18n_this_will_close                : This will close your current document.
 
-i18n_autosaved                      : Autosaved.
-i18n_no_project                     : Could not find project
-i18n_cant_project_filename          : Found no project filename.
+menu_file                           : File
+menu_file_about                     : About Friend Create
+menu_file_open                      : Open
+menu_file_save                      : Save
+menu_file_save_as                   : Save as
+menu_file_print                     : Print
+menu_file_close                     : Close
+menu_quit                           : Quit
+
+menu_project                        : Project
+menu_project_new                    : New project
+menu_project_open                   : Open project
+menu_project_close                  : Close project
+menu_project_editor                 : Project editor
+menu_project_save                   : Save project
+menu_project_save_as                : Save project as
+
+menu_packages                       : Packages
+menu_package_generate               : Generate package
+
+i18n_saving                         : Saving...
+i18n_saved                          : Saved.
+
+# Project editor
+
+i18n_project_editor                 : Project editor
+
+i18n_project_information            : Project information
+i18n_project_name                   : Project name
+i18n_project_author                 : Author
+i18n_project_version                : Version
+i18n_project_category               : Category
+i18n_project_description            : Description
+i18n_system_privileges              : System privileges
+i18n_add_privilege                  : Add privilege
+i18n_remove_privileges              : Remove privilege(s)
+i18n_application_images             : Application images
+i18n_project_files                  : Project files
+i18n_add_file                       : Add file
+i18n_remove_files                   : Remove file(s)
+i18n_project_has_no_files           : Project has no files.
+i18n_project_has_no_images          : Project has no images.
+i18n_project_has_no_permissions     : Project has no privileges.
+i18n_update_project                 : Update project
+i18n_cancel                         : Close
+
+i18n_administration                 : Administration
+i18n_demonstration                  : Demonstration
+i18n_demo                           : Demo
+i18n_games                          : Games
+i18n_graphics                       : Graphics
+i18n_internet                       : Internet
+i18n_multimedia                     : Multimedia
+i18n_music                          : Music
+i18n_office                         : Office
+i18n_preferences                    : Preferences
+i18n_programming                    : Programming
+i18n_system                         : System
+
+i18n_add_images                     : Add images
+i18n_remove_images                  : Remove image(s)
 
 i18n_loading_project                : Loading project
-i18n_loading_project_desc           : Do you want to load this project? If you click cancel, Friend Create will just load the project file.
+i18n_loading_project_desc           : Du you want to open this as a project?
 
-tb_newfile                          : New file
-tb_open                             : Open file
-tb_save                             : Save file
-tb_saveas                           : Save file as
-tb_close                            : Close file
-tb_project                          : Project properties
-tb_find                             : Find/Replace
-
-#help menu
-i18n_help                           : Help
-i18n_documentation                  : Documentation
-
-#context menus
-
-i18n_file_menu                      : File menu
-i18n_open_directory                 : Open folder
-i18n_close_directory                : Close folder
-i18n_open_file                      : Load file
-i18n_create_folder                  : Create folder
-i18n_create_file                    : Create empty file
-i18n_open_volume                    : Open disk
-i18n_close_volume                   : Close disk
-
-#project menu
-i18n_project                        : Project
-i18n_project_new                    : New project
-i18n_project_fromweb				: New web-application
-i18n_project_properties             : Project properties
-i18n_open_project_files             : Open all project files
-i18n_load_project                   : Load project
-i18n_save_project                   : Save project
-i18n_save_project_as                : Save project as
-i18n_run_project                    : Run project
-i18n_project_package                : Generate package
-i18n_project_submit                 : Publish in Friend Store
-i18n_no_project_saved               : You have not saved your project
-i18n_no_project_desc                : You can not package your project without saving it first.
-i18n_package_created                : Package generated
-i18n_package_created_desc           : Your package is located in your project directory.
-i18n_error_occ                      : An error occured
-i18n_package_generation_error       : The package failed to generate. Please check the project properties.
-i18n_package_submitted              : Package sent
-i18n_submitted_desc                 : The package was sent to Friend Store. Login there to track your package.
-
-i18n_no_entries                     : No entries.
-
-i18n_checking_file                  : Checking file.
-i18n_add_file_to_project            : File is not added to your project. You want to add it?
-i18n_add_to_project                 : Add to project
-i18n_could_not_add_file             : Could not add file to project.
-
-#macro menu
-i18n_macros                         : Macros
-i18n_clear_macro                    : Clear macro
-i18n_load_macro                     : Load macro
-i18n_save_macro                     : Save macro
-i18n_record_macro                   : Record macro
-i18n_stop_macro                     : Stop recording
-
-#side bar functions
-i18n_view                           : Show
-i18n_toggle_side_bar                : Toggle left bar
-i18n_mindmap                        : Show mindmap
-i18n_app_preview                    : Application preview
-i18n_rtw_preview                    : Realtime Web preview
-i18n_iot_monitor                    : IOT Monitor
-i18n_close_app_preview              : Close application preview
-
-i18n_search_replace                 : Find and replace
-
-i18n_preferences                    : Preferences
-i18n_application_settings           : Edit preferences
-i18n_save_settings                  : Save preferences
-i18n_load_settings                  : Load preferences
-i18n_reset_settings                 : Defaults
-i18n_initiate_sas                   : Start shared app session
-
-i18n_sas_window                     : Configure shared session
-i18n_join_friendc_session           : Join a Friend Create shared session
-
-i18n_new_filename                   : New file
-i18n_empty_file                     : Empty file
-
-
-i18n_loading_file                   : Loading file...
-i18n_saving_file                    : Saving file...
-
-#project info
-
-i18n_add_screenshot                 : Add screenshot
-i18n_screenshots                    : Screenshots
-i18n_project_files                  : Project files
-i18n_add_files                      : Add files
-i18n_add_privileges                 : Add privileges
-i18n_system_privileges              : System privileges
-i18n_software_install_info          : Software install info
-i18n_development_libraries          : Development libraries
-i18n_project_info                   : Project information
-i18n_project_name                   : Project name
-i18n_author                         : Author
-i18n_version                        : Version
-i18n_desc                           : Description
-i18n_pick_screenshot                : Pick a screenshot to add
-i18n_cancel                         : Cancel
-
-i18n_project_wizard                 : Create a new project
-
-i18n_sure_remove                     : Are you sure?
-i18n_sure_remove_desc                : Are you sure you want to remove this screenshot from the list?
-
-i18n_files                           : Open files
-i18n_file_browser                    : File browser
-i18n_tab_width                       : Tab width
-i18n_php                             : PHP
-i18n_css                             : CSS
-i18n_perl                            : Perl
-i18n_sql                             : SQL
-i18n_bash_script                     : Bash script
-i18n_actionscript                    : Actionscript
-i18n_javascript                      : Javascript
-i18n_javascriptexe                   : JavascriptEXE
-i18n_solidity                        : Solidity
-i18n_json                            : JSON
-i18n_html                            : HTML
-i18n_conf                            : Config script
-i18n_c_code                          : C/C++ code
-i18n_d_code                          : D code
-i18n_ini_script                      : INI script
-i18n_java                            : Java
-i18n_plain_text                      : Plain text
-i18n_xml                             : XML
-i18n_device_control                  : Device control
-i18n_loading                         : Loading
-i18n_connect                         : Connect
-i18n_close_monitor                   : Close monitor
-i18n_type                            : Type
-i18n_name                            : Name
-i18n_options                         : Options
-i18n_module                          : Module
-i18n_secret                          : Secret
-i18n_add_permission                  : Add permission
-i18n_language_settings               : Language settings
-i18n_enable_word_wrapping            : Enable word wrapping
-i18n_word_wrap_width                 : Word wrap width
-i18n_code_editor_theme               : Code editor theme
-i18n_choose_theme                    : Choose theme
-i18n_interface_related               : Interface related
-i18n_open_friend_create              : Open Friend Create on its own screen
-i18n_search_for                      : Find
-i18n_keywords                        : keywords
-i18n_replace_with                    : Replace with
-i18n_replacement                     : replacement
-i18n_replace_all                     : Replace all
-i18n_search                          : Search
-i18n_replace                         : Replace
-i18n_language_settings               : Language settings
-i18n_code_editor                     : Code editor
-i18n_feature_settings                : Feature settings
-i18n_no_project                      : No project
-i18n_you_havent_opened_up            : You haven't opened up a project yet.
-i18n_category                        : Category
-i18n_could_not_save : Could not save!
-i18n_friend_create_iot_monitor : Friend Create - IOT Monitor
-i18n_search_and_replace : Find and replace
-
-#visual editor
-
-i18n_please_choose_session           : Please choose session
-i18n_standard_HTML5                  : Standard HTML5
-i18n_tree_engine_HTML5               : Tree Engine HTML5
-i18n_tree_engine_canvas              : Tree Engine Canvas
-i18n_tree_engine_3D                  : Tree Engine 3D
-i18n_start_editing                   : Start editing
-
-i18n_waCreateWebApp					    : Create
-i18n_waCancel							: Cancel
-i18n_waTitle							: Create a project from a web-site
-i18n_waUrl								: Web site URL (must start with 'https')
-i18n_waName								: Name of the project
-i18n_waAuthor							: Your name
-i18n_waEmail							: Your email address
-i18n_waDescription						: Information about this project
-i18n_waWidth							: Width
-i18n_waHeight							: Height
-i18n_waCategory							: Project's category
-i18n_waWindow							: Window
-i18n_typeWebApp							: Type
-i18n_waWrongUrl							: Enter the URL in the form of 'http://www.website.com' or 'https://www.website.com'
-i18n_waWrongName						: Enter a name for the new project
-i18n_waWrongWidth						: Window width must be a positive number
-i18n_waWrongHeight						: Window height must be a positive number
-i18n_waGames							: Games
-i18n_waOffice							: Office
-i18n_waGraphics							: Graphics
-i18n_waProgramming						: Programming
-i18n_waInternet							: Internet
-i18n_waAbout0							: About
-i18n_waAbout1							: This application has been created by
-i18n_waAboutBlank						: This application has been created with Friend Create
-i18n_waFile								: File
-i18n_waFileSelectorTitle				: Please choose where to save the new application...
-i18n_waIcon								: Application icon
-i18n_waPreview							: Application preview image
-i18n_waChange							: Change
-i18n_waChangeWebAppPreviewTitle			: Please choose a png image to use a preview
-i18n_waChangeWebAppIconTitle			: Please choose a png image to use as icon
-i18n_waPleaseFill						: Application definition
-i18n_waClose							: Close
-i18n_waCreateProject					: Create project
-i18n_waAlert                            : Alert
-i18n_waSuccess                          : Success
-i18n_waProjectCreated					: The project has been created. 
-i18n_waNeedAFolder						: You cannot build a project on the root of a drive.
-i18n_waBlankAuthor						: Your name
-i18n_waBlankEmail						: yourmail@yourserver.com
-i18n_waBlankDescription					: A description of this application
-
-i18n_select_where_to_create_folder      : Select path for project folder
-
-# Project types
-i18n_game                               : New game
-i18n_game_desc                          : A simple game project for entertainment.
-i18n_gui_application                    : New GUI application
-i18n_gui_application_desc               : Create your own GUI driven application.
-i18n_shell_application                  : New shell application
-i18n_shell_application_desc             : Create your own program for Friend DOS.
+i18n_module                         : Module
+i18n_library                        : Library
+i18n_disk                           : Disk
+i18n_named_item                     : Named item...
+i18n_options                        : Options...
 

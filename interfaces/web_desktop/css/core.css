@@ -653,6 +653,22 @@ input.Required
 	clear: both;
 }
 
+.VDivider
+{
+	display: inline-block;
+	vertical-align: bottom;
+	border: 0;
+	border-left: 1px solid rgba(0,0,0,0.5);
+	margin: 0 5px 0 5px;
+	height: 31px;
+	width: 3px;
+}
+
+.VDivider.Large
+{
+	height: 40px;
+}
+
 hr.Divider
 {
 	border: 0;
