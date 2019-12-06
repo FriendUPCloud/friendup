@@ -65,6 +65,9 @@ i18n_project_has_no_permissions     : Project has no privileges.
 i18n_update_project                 : Update project
 i18n_cancel                         : Close
 
+i18n_no_projects                    : Friend Create has no active projects.
+i18n_new_project                    : New project
+
 i18n_administration                 : Administration
 i18n_demonstration                  : Demonstration
 i18n_demo                           : Demo

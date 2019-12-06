@@ -65,6 +65,9 @@ i18n_project_has_no_permissions     : Prosjektet har ikke rettigheter.
 i18n_update_project                 : Oppdater prosjekt
 i18n_cancel                         : Lukk
 
+i18n_no_projects                    : Friend Create har ingen aktive prosjekter.
+i18n_new_project                    : Nytt prosjekt
+
 i18n_administration                 : Administrasjon
 i18n_demonstration                  : Demonstrasjon
 i18n_games                          : Spill

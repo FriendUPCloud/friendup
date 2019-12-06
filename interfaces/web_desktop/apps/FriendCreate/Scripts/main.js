@@ -73,6 +73,7 @@ Application.run = function( msg )
 {
 	InitGui();
 	( new EditorFile( 'New file' ) );
+	RefreshProjects();
 }
 
 
@@ -932,6 +933,15 @@ function CloseProject( proj )
 
 function RefreshProjects()
 {
+	if( projects.length == 0 )
+	{
+		ge( 'SB_Project' ).innerHTML = '\
+			<div class="Padding"><p>' + i18n( 'i18n_no_projects' ) + '</p>\
+			<p><button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button></p>\
+			</div>';
+		return;
+	}
+	
 	var filesFromPath = {};
 	for( var a = 0; a < files.length; a++ )
 	{
@@ -977,7 +987,7 @@ function RefreshProjects()
 		{
 			current = ' Current BackgroundHeavier Rounded';
 		}
-		str += '<ul><li class="Project' + current + '" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		str += '<ul><li class="Project' + current + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
@@ -1122,7 +1132,7 @@ Application.receiveMessage = function( msg )
 				if( Application.currentProject )
 					SaveProject( Application.currentProject, true );
 				break;
-			case 'projct_close':
+			case 'project_close':
 				CloseProject( Application.currentProject );
 				break;
 			case 'drop':
@@ -1144,7 +1154,7 @@ Application.receiveMessage = function( msg )
 			case 'updateproject':
 				for( var a = 0; a < projects.length; a++ )
 				{
-					if( projects[ a ].ProjectName == msg.project.ProjectName )
+					if( projects[ a ].ID == msg.project.ID )
 					{
 						projects[ a ] = msg.project;
 					}

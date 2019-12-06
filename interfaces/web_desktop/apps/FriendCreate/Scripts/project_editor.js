@@ -265,8 +265,15 @@ function UpdateProject()
 		'project_category',
 		'project_description'
 	];
+	var equiv = [
+		'ProjectName',
+		'Author', 
+		'Version',
+		'Category',
+		'Description'
+	];
 	for( var a = 0; a < values.length; a++ )
-		project[ values[a] ] = ge( values[a] ).value;
+		project[ equiv[a] ] = ge( values[a] ).value;
 
 	Application.sendMessage( {
 		command: 'updateproject',
