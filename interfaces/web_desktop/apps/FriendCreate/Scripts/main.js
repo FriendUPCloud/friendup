@@ -73,6 +73,7 @@ Application.run = function( msg )
 {
 	InitGui();
 	( new EditorFile( 'New file' ) );
+	RefreshProjects();
 }
 
 
@@ -783,6 +784,7 @@ var Project = function()
 	// Some variables
 	this.project = {
 		ProjectName: '',
+		Path:        '',
 		Author:      '',
 		Email:       '',
 		Version:     '',
@@ -798,7 +800,29 @@ var Project = function()
 function NewProject()
 {
 	var p = new Project();
+	p.Path = 'Home:';
+	p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
+	var found = false;
+	var b = 1;
+	do
+	{
+		p.ProjectName = i18n( 'i18n_unnamed_project' );
+		if( b > 1 )
+			p.ProjectName += ' ' + b;
+		found = false;
+		for( var a = 0; a < projects.length; a++ )
+		{
+			if( projects[ a ].ProjectName == p.ProjectName )
+			{
+				found = true;
+				break;
+			}
+		}
+		b++;
+	}
+	while( found );
 	projects.push( p );
+	Application.currentProject = p;
 	RefreshProjects();
 }
 
@@ -808,6 +832,7 @@ function OpenProject( path )
 	{
 		var p = new Project();
 		p.Path = path;
+		p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 	
 		var f = new File( p.Path );
 		f.onLoad = function( data )
@@ -833,6 +858,7 @@ function OpenProject( path )
 		
 			var p = new Project();
 			p.Path = files[0].Path;
+			p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 		
 			var f = new File( p.Path );
 			f.onLoad = function( data )
@@ -889,8 +915,33 @@ function SaveProject( project, saveas )
 	}
 }
 
+// Close a project
+function CloseProject( proj )
+{
+	var o = [];
+	for( var a = 0; a < projects.length; a++ )
+	{
+		if( projects[ a ] == proj )
+			continue;
+		o.push( projects[ a ] );
+	}
+	projects = o;
+	if( proj == Application.currentProject )
+		Application.currentProject = null;
+	RefreshProjects();
+}
+
 function RefreshProjects()
 {
+	if( projects.length == 0 )
+	{
+		ge( 'SB_Project' ).innerHTML = '\
+			<div class="Padding"><p>' + i18n( 'i18n_no_projects' ) + '</p>\
+			<p><button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button></p>\
+			</div>';
+		return;
+	}
+	
 	var filesFromPath = {};
 	for( var a = 0; a < files.length; a++ )
 	{
@@ -901,6 +952,8 @@ function RefreshProjects()
 	var str = '';
 	for( var a = 0; a < projects.length; a++ )
 	{
+		if( !Application.currentProject )
+			Application.currentProject = projects[ a ];
 		var pr = projects[ a ];
 		var fstr = '';
 		
@@ -934,7 +987,7 @@ function RefreshProjects()
 		{
 			current = ' Current BackgroundHeavier Rounded';
 		}
-		str += '<ul><li class="Project' + current + '" onclick="SetCurrentProject( \'' + pr.Path + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		str += '<ul><li class="Project' + current + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
@@ -980,7 +1033,7 @@ function SetCurrentProject( p )
 {
 	for( var a = 0; a < projects.length; a++ )
 	{
-		if( projects[ a ].Path == p )
+		if( projects[ a ].ID == p )
 		{
 			Application.currentProject = projects[ a ];
 			RefreshProjects();
@@ -1036,6 +1089,42 @@ function StatusMessage( str )
 	}, 50 );
 }
 
+function CreatePackage()
+{
+	if( !Application.currentProject || !Application.currentProject.Path )
+	{
+		Alert( i18n( 'i18n_no_project_saved' ), i18n( 'i18n_no_project_desc' ) );
+		return;
+	}
+	
+	StatusMessage( i18n( 'i18n_generating_package' ) );
+	
+	var j = new Module( 'system' );
+	j.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			StatusMessage( i18n( 'i18n_package_generated' ) );
+			var p = Application.currentProject.Path;
+			if( p )
+			{
+				if( p && p.indexOf( '/' ) > 0 )
+				{
+					p = p.split( '/' );
+					p.pop();
+					p = p.join( '/' ) + '/';
+				}
+				else p = p.split( ':' )[0] + ':';
+			}
+		}
+		else
+		{
+			StatusMessage( 'i18n_package_generation_error' );
+		}
+	}
+	j.execute( 'package', { filename: Application.currentProject.Path } );
+}
+
 // Messaging support -----------------------------------------------------------
 
 Application.receiveMessage = function( msg )
@@ -1062,6 +1151,9 @@ Application.receiveMessage = function( msg )
 				if( Application.currentFile )
 					Application.currentFile.close();
 				break;
+			case 'project_new':
+				NewProject();
+				break;
 			case 'project_editor':
 				OpenProjectEditor();
 				break;
@@ -1076,19 +1168,29 @@ Application.receiveMessage = function( msg )
 				if( Application.currentProject )
 					SaveProject( Application.currentProject, true );
 				break;
+			case 'project_close':
+				CloseProject( Application.currentProject );
+				break;
 			case 'drop':
 				if( msg.data )
 				{
 					for( var a = 0; a < msg.data.length; a++ )
 					{
-						new EditorFile( msg.data[ a ].Path );
+						if( msg.data[a].Path.split( '.' ).pop().toLowerCase() == 'apf' )
+						{
+							OpenProject( msg.data[a].Path );
+						}
+						else
+						{
+							new EditorFile( msg.data[ a ].Path );
+						}
 					}
 				}
 				break;
 			case 'updateproject':
 				for( var a = 0; a < projects.length; a++ )
 				{
-					if( projects[ a ].ProjectName == msg.project.ProjectName )
+					if( projects[ a ].ID == msg.project.ID )
 					{
 						projects[ a ] = msg.project;
 					}
@@ -1100,7 +1202,7 @@ Application.receiveMessage = function( msg )
 				console.log( 'About window.' );
 				break;
 			case 'package_generate':
-				console.log( 'Generate package.' );
+				CreatePackage();
 				break;
 		}
 	}

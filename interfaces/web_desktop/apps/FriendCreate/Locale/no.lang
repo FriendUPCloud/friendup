@@ -65,6 +65,9 @@ i18n_project_has_no_permissions     : Prosjektet har ikke rettigheter.
 i18n_update_project                 : Oppdater prosjekt
 i18n_cancel                         : Lukk
 
+i18n_no_projects                    : Friend Create har ingen aktive prosjekter.
+i18n_new_project                    : Nytt prosjekt
+
 i18n_administration                 : Administrasjon
 i18n_demonstration                  : Demonstrasjon
 i18n_games                          : Spill
@@ -89,4 +92,14 @@ i18n_disk                           : Disk
 i18n_named_item                     : Navngitt objekt...
 i18n_options                        : Ekstraverdier...
 
+i18n_unnamed_project                : Prosjekt uten navn
 
+i18n_no_project_saved               : Kunne ikke generere pakke
+i18n_no_project_desc                : Vennligst lagre prosjektet ditt før du genererer en pakke.
+i18n_package_created                : Pakken ble generert
+i18n_package_created_desc           : Prosjektpakken ble generert og er lagret i prosjektmappen din.
+i18n_error_occ                      : En feil oppsto
+i18n_package_generation_error       : Prosjektet ditt mangler egenskaper som forhindrer Friend Create å bygge en pakke.
+
+i18n_generating_package             : Genererer pakke...
+i18n_package_generated              : Pakken ble generert.

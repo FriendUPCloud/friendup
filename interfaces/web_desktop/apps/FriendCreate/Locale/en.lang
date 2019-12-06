@@ -65,6 +65,9 @@ i18n_project_has_no_permissions     : Project has no privileges.
 i18n_update_project                 : Update project
 i18n_cancel                         : Close
 
+i18n_no_projects                    : Friend Create has no active projects.
+i18n_new_project                    : New project
+
 i18n_administration                 : Administration
 i18n_demonstration                  : Demonstration
 i18n_demo                           : Demo
@@ -89,4 +92,16 @@ i18n_library                        : Library
 i18n_disk                           : Disk
 i18n_named_item                     : Named item...
 i18n_options                        : Options...
+
+i18n_unnamed_project                : Unnamed project
+
+i18n_no_project_saved               : Could not generate package
+i18n_no_project_desc                : Please save your project before you attempt to build a package.
+i18n_package_created                : A package was generated
+i18n_package_created_desc           : Your project package was built and is located in your project directory.
+i18n_error_occ                      : An error occured
+i18n_package_generation_error       : The package lacks properties in required to build it.
+
+i18n_generating_package             : Generating package...
+i18n_package_generated              : Package generated.
 

@@ -130,6 +130,7 @@ Application.receiveMessage = function( msg )
 			case 'project_save_as':
 			case 'project_new':
 			case 'package_generate':
+			case 'project_close':
 				mainWindow.sendMessage( msg );
 				break;
 		}
