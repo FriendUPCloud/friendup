@@ -123,6 +123,82 @@ Application.checkFileType = function( path )
 	}
 }
 
+function CheckFiletype()
+{
+	if( !Application.currentFile ) return;
+	var ext = Application.currentFile.Path ? Application.currentFile.Path.split( '.' ).pop().toLowerCase() : 'txt';
+	
+	var types = {
+		'php': 'ace/mode/php',
+		'pl': 'ace/mode/perl',
+		'sql': 'ace/mode/sql',
+		'sh': 'ace/mode/sh',
+		'as': 'ace/mode/actionscript',
+		'txt': 'ace/mode/txt',
+		'js': 'ace/mode/javascript',
+		'lang': 'ace/mode/txt',
+		'pls': 'ace/mode/json',
+		'json': 'ace/mode/json',
+		'tpl': 'ace/mode/html',
+		'ptpl': 'ace/mode/perl',
+		'xml': 'ace/mode/xml',
+		'html': 'ace/mode/html',
+		'htm': 'ace/mode/html',
+		'c': 'ace/mode/c_cpp',
+		'h': 'ace/mode/c_cpp',
+		'cpp': 'ace/mode/c_cpp',
+		'd': 'ace/mode/d',
+		'ini': 'ace/mode/ini',
+		'jsx': 'ace/mode/javascript',
+		'java': 'ace/mode/java',
+		'css': 'ace/mode/css',
+		'run': 'ace/mode/txt',
+		'apf': 'ace/mode/json',
+		'conf': 'ace/mode/json'
+	};
+	if( types[ ext ] )
+	{
+		Application.currentFile.editor.getSession().setMode( types[ ext ] );
+	}
+	else
+	{
+		Application.currentFile.editor.getSession().setMode( 'ace/mode/txt' );
+		ext = 'txt';
+	}
+	
+	if( !ge( 'Filetype' ) )
+	{
+		var d = document.createElement( 'div' );
+		d.id = 'Filetype';
+		var sel = document.createElement( 'select' );
+		for( var a in types )
+		{
+			var o = document.createElement( 'option' );
+			o.value = a;
+			o.innerHTML = a;
+			if( a == ext ) o.selected = 'selected';
+			sel.appendChild( o );
+		}
+		d.appendChild( sel );
+		ge( 'StatusBar' ).appendChild( d );
+	}
+	else
+	{
+		var opts = ge( 'Filetype' ).getElementsByTagName( 'option' );
+		for( var a = 0; a < opts.length; a++ )
+		{
+			if( opts[ a ].value == ext )
+			{
+				opts[ a ].selected = 'selected';
+			}
+			else
+			{
+				opts[ a ].selected = '';
+			}
+		}
+	}
+}
+
 // Initialize the GUI! ---------------------------------------------------------
 
 function InitGui()
@@ -495,6 +571,7 @@ function InitContentEditor( element, file )
 				clearTimeout( this.refreshQueue );
 			this.refreshQueue = setTimeout( function()
 			{ 
+				CheckFiletype();
 				file.refreshQueue = false; 
 				file.refreshMinimap(); 
 			}, 50 );
