@@ -3614,16 +3614,32 @@ function mountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
+		// Specific for Pawel's code ... He just wants to forward json ...
+		
+		var args = encodeURIComponent( JSON.stringify( {
+			'type'    : 'write', 
+			'context' : 'application', 
+			'authid'  : Application.authId, 
+			'data'    : { 
+				'permission' : [ 
+					'PERM_STORAGE_GLOBAL', 
+					'PERM_STORAGE_WORKGROUP' 
+				]
+			}, 
+			'object'   : 'user', 
+			'objectid' : userid 
+		} ) );
+		
 		var f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, authid: Application.authId, e:e, d:d } );
+			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, authid: Application.authId, args: args, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/mount', { devname: devname, userid: userid, authid: Application.authId } );
+		f.execute( 'device/mount', { devname: devname, userid: userid, authid: Application.authId, args: args } );
 	}
 }
 
@@ -3631,16 +3647,32 @@ function unmountDrive( devname, userid, callback )
 {
 	if( devname )
 	{
+		// Specific for Pawel's code ... He just wants to forward json ...
+		
+		var args = encodeURIComponent( JSON.stringify( {
+			'type'    : 'write', 
+			'context' : 'application', 
+			'authid'  : Application.authId, 
+			'data'    : { 
+				'permission' : [ 
+					'PERM_STORAGE_GLOBAL', 
+					'PERM_STORAGE_WORKGROUP' 
+				]
+			}, 
+			'object'   : 'user', 
+			'objectid' : userid 
+		} ) );
+		
 		var f = new Library( 'system.library' );
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, authid: Application.authId, e:e, d:d } );
+			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, authid: Application.authId, args: args, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/unmount', { devname: devname, userid: userid, authid: Application.authId } );
+		f.execute( 'device/unmount', { devname: devname, userid: userid, authid: Application.authId, args: args } );
 	}
 }
 
@@ -3760,7 +3792,7 @@ function saveUser( uid )
 	
 	// Specific for Pawel's code ... He just wants to forward json ...
 	
-	args.args = encodeURIComponent( JSON.stringify( {
+	args.args = JSON.stringify( {
 		'type'    : 'write', 
 		'context' : 'application', 
 		'authid'  : Application.authId, 
@@ -3772,7 +3804,7 @@ function saveUser( uid )
 		}, 
 		'object'   : 'user', 
 		'objectid' : uid 
-	} ) );
+	} );
 	
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
