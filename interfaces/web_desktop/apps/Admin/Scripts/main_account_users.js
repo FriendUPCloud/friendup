@@ -618,7 +618,21 @@ Sections.accounts_users = function( cmd, extra )
 															}
 														}
 														args.workgroups = args.workgroups.join( ',' );
-										
+														
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'user', 
+															'objectid' : userInfo.ID 
+														} );
+														
 														// Reload user gui now
 														var f = new Library( 'system.library' );
 														f.onExecuted = function( e, d )
@@ -2541,10 +2555,24 @@ Sections.user_status_update = function( userid, status )
 					on = true;
 				}
 				
+				var args = JSON.stringify( {
+					'type'    : 'write', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_USER_GLOBAL', 
+							'PERM_USER_WORKGROUP' 
+						]
+					}, 
+					'object'   : 'user', 
+					'objectid' : userid 
+				} );
+				
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d } );
+					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
 					
 					if( e == 'ok' )
 					{
@@ -2552,7 +2580,7 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usLocked'   ), false, false );
 					}
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId } );
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId, args: args } );
 				
 				break;
 			
@@ -2565,10 +2593,24 @@ Sections.user_status_update = function( userid, status )
 					on = true;
 				}
 				
+				var args = JSON.stringify( {
+					'type'    : 'write', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_USER_GLOBAL', 
+							'PERM_USER_WORKGROUP' 
+						]
+					}, 
+					'object'   : 'user', 
+					'objectid' : userid 
+				} );
+				
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d } );
+					console.log( 'Sections.user_status_update( '+userid+', '+status+' ) ', { e:e, d:d, args: args } );
 					
 					if( e == 'ok' )
 					{
@@ -2576,7 +2618,7 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usDisabled' ), false, false );
 					}
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId } );
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId, args: args } );
 				
 				break;
 			
@@ -3616,7 +3658,7 @@ function mountDrive( devname, userid, callback )
 	{
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
-		var args = encodeURIComponent( JSON.stringify( {
+		var args = JSON.stringify( {
 			'type'    : 'write', 
 			'context' : 'application', 
 			'authid'  : Application.authId, 
@@ -3628,7 +3670,7 @@ function mountDrive( devname, userid, callback )
 			}, 
 			'object'   : 'user', 
 			'objectid' : userid 
-		} ) );
+		} );
 		
 		var f = new Library( 'system.library' );
 		
@@ -3649,7 +3691,7 @@ function unmountDrive( devname, userid, callback )
 	{
 		// Specific for Pawel's code ... He just wants to forward json ...
 		
-		var args = encodeURIComponent( JSON.stringify( {
+		var args = JSON.stringify( {
 			'type'    : 'write', 
 			'context' : 'application', 
 			'authid'  : Application.authId, 
@@ -3661,7 +3703,7 @@ function unmountDrive( devname, userid, callback )
 			}, 
 			'object'   : 'user', 
 			'objectid' : userid 
-		} ) );
+		} );
 		
 		var f = new Library( 'system.library' );
 		
