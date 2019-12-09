@@ -247,6 +247,11 @@ function AddFiles( type )
 			{
 				for( var a = 0; a < files.length; a++ )
 				{
+					if( files[a].Path.substr( 0, project.ProjectPath.length ) == project.ProjectPath )
+					{
+						var pl = project.ProjectPath.length;
+						files[a].Path = files[a].Path.substr( pl, files[a].Path.length - pl );
+					}
 					project.Files.push( files[a] );
 				}
 				RefreshFiles();
@@ -312,6 +317,25 @@ Application.receiveMessage = function( msg )
 				RefreshFiles();
 				RefreshPermissions();
 				Application.parentViewId = msg.parentView;
+				if( project.Path && !project.ProjectPath )
+				{
+					var p = '';
+					if( project.Path.indexOf( '.' ) > 0 )
+					{
+						if( project.Path.indexOf( '/' ) > 0 )
+						{
+							p = project.Path.split( '/' ); p.pop();
+							p = p.join( '/' ) + '/';
+						}
+						else
+						{
+							p = project.Path.split( ':' ); p.pop();
+							p = p.join( ':' ) + ':';
+						}
+						project.ProjectPath = p;
+					}
+				}
+				console.log( project );
 				break;
 		}
 	}

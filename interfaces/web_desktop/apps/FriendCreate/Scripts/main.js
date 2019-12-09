@@ -649,6 +649,7 @@ function SaveFile( file, saveas )
 				}
 				f.save( file.editor.getValue() );
 			},
+			filename: '',
 			type: 'save',
 			suffix: supportedFiles,
 			rememberPath: true
@@ -894,7 +895,7 @@ function SaveProject( project, saveas )
 	// Clean up project structure
 	var values = [
 		'ProjectName', 'Path', 'Files', 'Permissions',
-		'Description', 'Version', 'Author', 'Category'
+		'Description', 'Version', 'Author', 'Category', 'ProjectPath'
 	];
 	var projectOut = {};
 	for( var a = 0; a < values.length; a++ )
@@ -1232,6 +1233,7 @@ Application.receiveMessage = function( msg )
 					if( projects[ a ].ID == msg.project.ID )
 					{
 						projects[ a ] = msg.project;
+						Application.currentProject = projects[ a ];
 						break;
 					}
 				}
