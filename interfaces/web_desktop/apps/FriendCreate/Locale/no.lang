@@ -103,3 +103,9 @@ i18n_package_generation_error       : Prosjektet ditt mangler egenskaper som for
 
 i18n_generating_package             : Genererer pakke...
 i18n_package_generated              : Pakken ble generert.
+
+i18n_about_friend_create            : Om Friend Create
+i18n_about_desc                     : Friend Create er et fullstendig integrert utviklermiljø.
+i18n_close                          : Lukk
+
+

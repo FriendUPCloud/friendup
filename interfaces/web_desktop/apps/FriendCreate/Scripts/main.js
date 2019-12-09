@@ -790,7 +790,7 @@ function OpenProjectEditor()
 var Project = function()
 {
 	// Some variables
-	this.project = {
+	var o = {
 		ProjectName: '',
 		Path:        '',
 		Author:      '',
@@ -798,11 +798,11 @@ var Project = function()
 		Version:     '',
 		API:         'v1',
 		Description: '',
-		Images:      [],
 		Files:       [],
 		Permissions: [],
 		Libraries:   []
 	};
+	for( var a in o ) this[ a ] = o[ a ];
 }
 
 function NewProject()
@@ -1165,7 +1165,7 @@ function CreatePackage()
 }
 
 // Messaging support -----------------------------------------------------------
-
+var abw = false;
 Application.receiveMessage = function( msg )
 {
 	if( msg.command )
@@ -1238,7 +1238,24 @@ Application.receiveMessage = function( msg )
 				if( pe ) pe.close();
 				break;
 			case 'about':
-				console.log( 'About window.' );
+				if( abw )
+				{
+					abw.activate();
+					return;
+				}
+				abw = new View( {
+					title: i18n( 'i18n_about_friend_create' ),
+					width: 600,
+					height: 600
+				} );
+				var f = new File( 'Progdir:Templates/about.html' );
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					abw.setContent( data );
+				}
+				f.load();
+				abw.onClose = function(){ abw = false; }
 				break;
 			case 'package_generate':
 				CreatePackage();
