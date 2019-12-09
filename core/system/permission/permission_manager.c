@@ -207,12 +207,14 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 			char *data = sb->sl_PHPModule->Run( sb->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 			if( data != NULL )
 			{
+				DEBUG( "PermissionManagerCheckPermission: %s", data );
 				if( strncmp( data, "ok", 2 ) == 0 )
 				{
 					retVal = TRUE;
 				}
 				FFree( data );
 			}
+			DEBUG("PermissionManagerCheckPermission: ret: %d\n", retVal );
 			FFree( command );
 		}
 	}
