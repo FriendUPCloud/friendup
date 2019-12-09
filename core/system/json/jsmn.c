@@ -464,15 +464,19 @@ char* json_unescape_string( char *string_to_unescape){
 		switch( *src ) 
 		{
 			case '\\':
+				printf("skip!\n");
 				src++;
-				break;
+			break;
 			default:
+			printf("-> %c ", *src );
+				*dst = *src;
 				src++;
 				dst++;
-				break;
-		}
-		// 0 on the end
-		*dst = *src;
+			break;
 	}
+		// 0 on the end
+	
+	}
+	*dst = 0;//*src;
 	return string_to_unescape;
 }
