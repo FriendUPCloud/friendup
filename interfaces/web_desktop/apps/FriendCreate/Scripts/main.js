@@ -1058,9 +1058,12 @@ function SetCurrentProject( p )
 	{
 		if( projects[ a ].ID == p )
 		{
-			Application.currentProject = projects[ a ];
-			RefreshProjects();
-			return true;
+			if( Application.currentProject != projects[ a ] )
+			{
+				Application.currentProject = projects[ a ];
+				RefreshProjects();
+				return true;
+			}
 		}
 	}
 	return false;
