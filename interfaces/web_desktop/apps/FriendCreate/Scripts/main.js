@@ -749,6 +749,14 @@ function StopApp()
 var pe = null;
 function OpenProjectEditor()
 {
+	if( !Application.currentProject )
+	{
+		var p = new Project();
+		p.Path = 'Home:';
+		projects.push( p );
+		Application.currentProject = p;
+	}
+	
 	if( pe )
 	{
 		return pe.activate();
@@ -883,6 +891,18 @@ function SaveProject( project, saveas )
 {
 	if( !saveas ) saveas = false;
 	
+	// Clean up project structure
+	var values = [
+		'ProjectName', 'Path', 'Files', 'Permissions',
+		'Description', 'Version', 'Author', 'Category'
+	];
+	var projectOut = {};
+	for( var a = 0; a < values.length; a++ )
+	{
+		projectOut[ values[a] ] = project[ values[a] ];
+	}
+	// Done cleaning up
+
 	if( !saveas && project.Path )
 	{
 		var f = new File( project.Path );
@@ -891,7 +911,7 @@ function SaveProject( project, saveas )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
 		}
-		f.save( JSON.stringify( project ) );
+		f.save( JSON.stringify( projectOut ) );
 	}
 	else
 	{
@@ -900,14 +920,15 @@ function SaveProject( project, saveas )
 			triggerFunction: function( filename )
 			{
 				project.Path = filename;
-				console.log( 'Set new path: ', filename );
+				projectOut.Path = filename;
+
 				var f = new File( project.Path );
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
 					StatusMessage( i18n( 'i18n_saved' ) );
 				}
-				f.save( JSON.stringify( project ) );
+				f.save( JSON.stringify( projectOut ) );
 			},
 			type: 'save',
 			suffix: 'apf',
