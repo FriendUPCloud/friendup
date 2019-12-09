@@ -17,6 +17,6 @@ if( file_exists( 'modules/system/permissions/' . $args->args->type . '.php' ) )
 	include( 'modules/system/permissions/' . $args->args->type . '.php' );
 }
 
-die( 'fail<!--separate-->{"message":"Permission denied.","reason":"No such type of permission","response":-1}' );
+die( 'fail<!--separate-->{"message":"Permission denied.","reason":"No such type of permission","response":-1,"debug":'.json_encode($args).'}' );
 
 ?>
