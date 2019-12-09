@@ -1,0 +1,339 @@
+#Print
+{
+	visibility: hidden;
+	height: 0;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+
+@media print {
+    #Print
+    {
+    	position: absolute;
+    	width: 100%;
+    	top: 0;
+    	left. 0;
+        height: 100%;
+        visibility: visible;
+        overflow: visible;
+    }
+    body > div:not(#Print)
+    {
+    	display: none;
+    }
+}
+
+#TopPanel
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 60px;
+}
+
+#Toolbar button
+{
+	vertical-align: bottom;
+}
+
+#SideBar
+{
+	position: absolute;
+	left: 0;
+	top: 60px;
+	width: 280px;
+	height: calc(100% - 100px);
+}
+
+#SideBarTabs > .Page
+{
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 40px);
+}
+
+#SideBar #SB_AllFiles
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+#CodeArea
+{
+	position: absolute;
+	left: 280px;
+	top: 60px;
+	width: calc(100% - 280px);
+	height: calc(100% - 100px);
+}
+
+#CodeArea .Page
+{
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 40px);
+}
+
+#CodeArea .Page .Minimap
+{
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 150px;
+	height: auto;
+	background: black;
+	opacity: 0.8;
+	transition: top 0.25s;
+	padding: 0 0 0 5px;
+	box-sizing: border-box;
+	min-height: 100%;
+	cursor: pointer;
+	border-left: 1px solid rgba(255,255,255,0.2);
+	z-index: 1;
+}
+
+#CodeArea .Page .Minimap > div
+{
+	zoom: 0.5;
+}
+
+#CodeArea .Page .MinimapGroove
+{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 150px;
+	height: 100%;
+	background: rgba(0,0,0,0);
+	z-index: 2;
+}
+
+#CodeArea .Page .MinimapRect
+{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 150px;
+	background: rgba(0,126,101,0.3);
+	pointer-events: all;
+	z-index: 1;
+	cursor: pointer;
+	transition-property: top, background;
+	transition-duration: 0.25s, 0.25s;
+	z-index: 3;
+}
+#CodeArea .Page .MinimapRect.Move
+{
+	transition-property: background;
+	transition-duration: 0.25s;
+	background: rgba(0,126,101,0.5);
+}
+
+#CodeArea .Page textarea.MinimapRow
+{
+	position: relative;
+	width: 100%;
+	white-space: pre;
+	text-overflow: hidden;
+	tab-size: 1;
+	height: 14px;
+	line-height: 14px;
+	font-size: 14px;
+	overflow: hidden;
+	color: #51D88C;
+	margin: 0;
+	background: none;
+	border: 0;
+	display: block;
+	font-family: monospace, courier, courier new;
+}
+
+#CodeArea .Page textarea.MinimapRow.Comment
+{
+	color: #ffff44;
+}
+
+#CodeArea .Page textarea.MinimapRow.If
+{
+	color: #ccff22;
+}
+
+#CodeArea .Page textarea.MinimapRow.Function
+{
+	color: #00ff77;
+}
+
+#CodeArea .Page textarea.MinimapRow.Function
+{
+	color: #77ff00;
+}
+
+#CoreArea .ace_scroller.ace_scroll-left
+{
+	right: 144px !important;
+}
+
+#CodeArea .ace_scrollbar.ace_scrollbar-v,
+#CodeArea .ace_scrollbar.ace_scrollbar-h,
+#CodeArea .ace_scroller
+{
+	right: 150px !important;
+}
+
+#CodeArea .Tab:before, #CodeArea .TabActive:before
+{
+	margin: 3px 0 0 10px;
+	float: right;
+}
+
+#SB_Project
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	overflow-x: hidden;
+}
+
+#SB_Project ul
+{
+	list-style: none;
+	margin: 0 10px 0 10px;
+	padding: 0;
+}
+
+#SB_Project ul ul
+{
+	margin: 0 0 0 10px;
+}
+
+#SB_Project li
+{
+	margin: 5px 0 5px 0px;
+}
+
+#SB_Project li:before
+{
+	font-family: fontawesome;
+	display: inline-block;
+	margin: 0 5px 0 0;
+}
+
+#SB_Project li.Project
+{
+	padding: 5px;
+}
+
+#SB_Project li.Project.Current
+{
+	font-weight: bold;
+}
+
+#SB_Project li.Project.Current ul
+{
+	font-weight: normal;
+}
+
+#SB_Project li.Project:before
+{
+	content: "\f187";
+}
+
+#SB_Project li.Folder:not(.Open):before
+{
+	content: "\f07b";
+}
+
+#SB_Project li.Folder + ul
+{
+	transition: max-height 0.25s;
+	max-height: 0;
+	overflow: hidden;
+}
+
+#SB_Project li.Folder.Open + ul
+{
+	max-height: 2000px;
+}
+
+#SB_Project li.Folder:before
+{
+	content: "\f07c";
+}
+
+#SB_Project li.FileItem:before
+{
+	content: "\f15c";
+}
+
+#SB_Project li.FileItem.Reading:after
+{
+	content: "\f06e";
+	font-family: fontawesome;
+	margin: 0 0 0 5px;
+}
+
+#SB_Project li.FileItem.Editing:after
+{
+	content: "\f14b";
+	font-family: fontawesome;
+	margin: 0 0 0 5px;
+}
+
+#StatusBar
+{
+	position: absolute;
+	top: calc(100% - 40px);
+	left: 0;
+	width: 100%;
+	height: 40px;
+}
+
+#StatusMessage
+{
+	position: absolute;
+	left: 0;
+	line-height: 40px;
+	width: 280px;
+	box-sizing: border-box;
+	overflow: hidden;
+	height: 40px;
+}
+
+#StatusMessage > div
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	line-height: 40px;
+	transition-property: left,opacity;
+	transition-duration: 0.25s,0.25s;
+}
+
+.FullImage
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background: rgba(0,0,0,0.5);
+}
+
+.FullImage img
+{
+	margin-top: 50px;
+}
+

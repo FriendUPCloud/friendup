@@ -1,0 +1,59 @@
+<link rel="stylesheet" href="Progdir:Templates/main.css"/>
+<script src="Progdir:Libraries/Ace/ace.js"></script>
+<script src="System:js/gui/filebrowser.js"></script>
+
+<div id="Print"></div>
+
+<div class="ContentFull">
+	<div id="TopPanel" class="">
+		<div id="Toolbar" class="Padding">
+			<button type="button" class="IconButton IconSmall fa-file-text" onclick="NewFile()">
+			</button>
+			<button type="button" class="IconButton IconSmall fa-folder-open" onclick="OpenFile()">
+				{i18n_open}
+			</button>
+			<button type="button" class="IconButton IconSmall fa-save" onclick="SaveFile()">
+				{i18n_save}
+			</button>
+			<button type="button" class="IconButton IconSmall fa-print" onclick="PrintFile()">
+				{i18n_print}
+			</button>
+			<button type="button" class="IconButton IconSmall fa-undo" onclick="if( Application.currentFile ) Application.currentFile.editor.undo()">
+				{i18n_undo}
+			</button>
+			<div class="VDivider"></div>
+			<button type="button" class="IconButton IconSmall fa-search">
+				{i18n_search_replace}
+			</button>
+			<div class="VDivider"></div>
+			<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">
+				{i18n_run_app}
+			</button>
+			<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">
+				{i18n_stop_app}
+			</button>
+		</div>
+	</div>
+	<div id="SideBar" class="">
+		<div class="Tabs" id="SideBarTabs">
+			<div class="Tab IconSmall fa-folder" id="tabAllFiles">{i18n_allfiles}</div>
+			<div class="Tab IconSmall fa-archive" id="tabProjects">{i18n_projects}</div>
+			<div class="Page">
+				<div id="SB_AllFiles" class="Padding">
+				</div>
+			</div>
+			<div class="Page">
+				<div id="SB_Project">
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="CodeArea"></div>
+	<div id="StatusBar" class="BorderTop">
+		<div id="StatusMessage">
+		</div>
+	</div>
+</div>
+
+<script src="Progdir:Scripts/main.js"></script>
+
