@@ -584,6 +584,7 @@ User *UMGetUserByName( UserManager *um, const char *name )
 		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
 	
+	/*
 	// user is not in memory, load it
 	
 	tuser = UMGetUserByNameDB( um, name );
@@ -596,7 +597,7 @@ User *UMGetUserByName( UserManager *um, const char *name )
 			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 		}
 	}
-	
+	*/
 	return tuser;
 }
 
@@ -627,6 +628,7 @@ User *UMGetUserByID( UserManager *um, FULONG id )
 		FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 	}
 	
+	/*
 	// user is not in memory, load it
 	
 	tuser = UMGetUserByIDDB( um, id );
@@ -639,7 +641,7 @@ User *UMGetUserByID( UserManager *um, FULONG id )
 			FRIEND_MUTEX_UNLOCK( &(um->um_Mutex) );
 		}
 	}
-	
+	*/
 	return tuser;
 }
 
