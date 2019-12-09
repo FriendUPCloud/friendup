@@ -1146,7 +1146,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		FULONG id = 0;
 		FLONG status = -1;
 		FBOOL userFromSession = FALSE;
-		FBOOL canChange = FALSE;
 		FBOOL haveAccess = FALSE;
 		int entries = 0;
 		char *args = NULL;
@@ -1192,9 +1191,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				logusr = UMGetUserByID( l->sl_UM, id );
 				if( logusr != NULL )
 				{
-					
 					userFromSession = TRUE;
 					DEBUG("[UMWebRequest] Found session, update\n");
+				}
+				else
+				{
+					userFromSession = FALSE;
+					logusr = UMGetUserByIDDB( l->sl_UM, id );
 				}
 			}
 			else
@@ -1204,20 +1207,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		}
 		else
 		{
+			haveAccess = TRUE;
 			id = loggedSession->us_User->u_ID;
 			userFromSession = TRUE;
 			logusr = loggedSession->us_User;
 		}
 		
-		/*
-		if( logusr == NULL && id > 0 )
-		{
-			DEBUG("[UMWebRequest] Getting user from db\n");
-			logusr = UMUserGetByIDDB( l->sl_UM, id );
-		}
-		*/
-		
-		if( logusr == NULL )
+		// only when user asked for another user and have access
+		if( id > 0 && logusr == NULL )
 		{
 			FERROR("[ERROR] User not found\n" );
 			char buffer[ 256 ];
@@ -1234,6 +1231,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				
 				if( haveAccess == TRUE )
 				{
+					// check if user with same name already exist in database
 					char query[ 1024 ];
 					sprintf( query, " FUser WHERE `Name`='%s' AND ID != %lu" , usrname, id );
 	
@@ -1314,25 +1312,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				// user is not logged in
 				// try to get it from DB
 				
-				if( haveAccess  == TRUE )
-				{
-					canChange = TRUE;
-				}
-				else
-				{
-					if( loggedSession->us_User == logusr )
-					{
-						canChange = TRUE;
-					}
-					else
-					{
-						canChange = FALSE;
-					}
-				}
-				
 				if( logusr != NULL ) //&& canChange == TRUE )
 				{
-					if( canChange == TRUE )
+					if( haveAccess == TRUE )
 					{
 						char *error = NULL;
 						DEBUG("[UMWebRequest] FC will do a change\n");
