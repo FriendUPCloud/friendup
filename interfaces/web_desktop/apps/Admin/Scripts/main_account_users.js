@@ -3758,6 +3758,22 @@ function saveUser( uid )
 		args.id = uid;
 	}
 	
+	// Specific for Pawel's code ... He just wants to forward json ...
+	
+	args.args = {
+		'type'    : 'write', 
+		'context' : 'application', 
+		'authid'  : Application.authId, 
+		'data'    : { 
+			'permission' : [ 
+				'PERM_USER_GLOBAL', 
+				'PERM_USER_WORKGROUP' 
+			]
+		}, 
+		'object'   : 'user', 
+		'objectid' : uid 
+	};
+	
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
