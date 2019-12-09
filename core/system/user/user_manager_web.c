@@ -1330,51 +1330,61 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					}
 				}
 				
-				if( logusr != NULL && canChange == TRUE )
+				if( logusr != NULL ) //&& canChange == TRUE )
 				{
-					char *error = NULL;
-					DEBUG("[UMWebRequest] FC will do a change\n");
-					
-					GenerateUUID( &( logusr->u_UUID ) );
-					
-					if( status >= 0 )
+					if( canChange == TRUE )
 					{
-						logusr->u_Status = status;
-						
+						char *error = NULL;
+						DEBUG("[UMWebRequest] FC will do a change\n");
+					
+						GenerateUUID( &( logusr->u_UUID ) );
+					
+						if( status >= 0 )
 						{
-							char msg[ 512 ];
-							if( status == USER_STATUS_DISABLED )
+							logusr->u_Status = status;
+						
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+								char msg[ 512 ];
+								if( status == USER_STATUS_DISABLED )
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+								}
+								else
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
+								}
+								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 							}
-							else
-							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
-							}
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 						}
+						UMUserUpdateDB( l->sl_UM, logusr );
+					
+						UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
+					
+						RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+						NotifyExtServices( l, request, logusr, "update" );
+					
+						// we must notify user
+						//if( logusr != loggedSession->us_User )
+						//{
+						//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
+						//}
+					
+						if( error != NULL )
+						{
+							FFree( error );
+						}
+					
+						HttpAddTextContent( response, "ok<!--separate-->{ \"update\": \"success!\"}" );
 					}
-					UMUserUpdateDB( l->sl_UM, logusr );
-					
-					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
-					
-					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
-					
-					NotifyExtServices( l, request, logusr, "update" );
-					
-					// we must notify user
-					//if( logusr != loggedSession->us_User )
-					//{
-					//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
-					//}
-					
-					if( error != NULL )
+					else	//is admin
 					{
-						FFree( error );
+						Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+						HttpAddTextContent( response, buffer );
 					}
-					
-					HttpAddTextContent( response, "ok<!--separate-->{ \"update\": \"success!\"}" );
 				}
 				else
 				{
