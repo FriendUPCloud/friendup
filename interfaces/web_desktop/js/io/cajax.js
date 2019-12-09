@@ -194,7 +194,7 @@ cAjax = function()
 						var res = t ? t.response.toLowerCase() : '';
 						if( t && ( res == 'user not found' || res == 'user session not found' ) )
 						{
-							if( Workspace )
+							if( window.Workspace )
 							{
 								// Drop these (don't retry!) because of remote fs disconnect
 								if( jax.url.indexOf( 'file/info' ) > 0 )
@@ -363,7 +363,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	if( 
 		!this.forceHTTP &&
 		this.proxy.responseType != 'arraybuffer' &&
-		typeof Workspace != 'undefined' && 
+		window.Workspace &&
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		!Workspace.websocketsOffline && 
@@ -464,7 +464,7 @@ cAjax.prototype.send = function( data )
 	var self = this;
 
 	// Wait in case of relogin
-	if( typeof( Workspace ) != 'undefined' && Workspace.reloginInProgress && !this.forceSend )
+	if( window.Workspace && Workspace.reloginInProgress && !this.forceSend )
 	{
 		AddToCajaxQueue( self );
 		return;
@@ -557,7 +557,7 @@ cAjax.prototype.send = function( data )
 		}
 		
 		// Copy goes in the file queue if server is there
-		if( Workspace.serverIsThere )
+		if( window.Workspace && Workspace.serverIsThere )
 		{
 			var of = function()
 			{
@@ -598,7 +598,7 @@ cAjax.prototype.send = function( data )
 	}
 
 	// Check if we can use websockets
-	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
+	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
 	{
 		//console.log( 'Test2: Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
