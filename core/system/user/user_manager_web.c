@@ -829,7 +829,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = UrlDecodeToMem( el->data );
+			args = el->data;
+			//args = UrlDecodeToMem( el->data );
 		}
 		
 		DEBUG( "[UMWebRequest] Update user status!!\n" );
@@ -968,10 +969,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			HttpAddTextContent( response, buffer );
 		}
 		
-		if( args != NULL )
-		{
-			FFree( args );
-		}
+		//if( args != NULL )
+		//{
+		//	FFree( args );
+		//}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -1449,7 +1450,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = UrlDecodeToMem( el->data );
+				args = el->data;
+				//args = UrlDecodeToMem( el->data );
 			}
 				
 			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
