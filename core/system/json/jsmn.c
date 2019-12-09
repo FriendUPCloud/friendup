@@ -474,4 +474,5 @@ char* json_unescape_string( char *string_to_unescape){
 		// 0 on the end
 		*dst = *src;
 	}
+	return string_to_unescape;
 }
