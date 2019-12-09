@@ -932,6 +932,7 @@ function SaveProject( project, saveas )
 				f.save( JSON.stringify( projectOut ) );
 			},
 			type: 'save',
+			filename: '',
 			suffix: 'apf',
 			rememberPath: true
 		} ) );
