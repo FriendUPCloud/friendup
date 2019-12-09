@@ -93,7 +93,8 @@ static const char *DefaultDictionaryMessages[] =
 "Cannot add token to list",
 "Cannot remove token from list",
 "User Group already exist",
-"Bad chars used"
+"Bad chars used",
+"No access, special rights required"
 };
 
 /**

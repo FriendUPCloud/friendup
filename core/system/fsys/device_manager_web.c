@@ -513,7 +513,8 @@ f.Name ASC";
 				el = HttpGetPOSTParameter( request, "args" );
 				if( el != NULL )
 				{
-					args = UrlDecodeToMem( el->data );
+					args = el->data;
+					//args = UrlDecodeToMem( el->data );
 				}
 				
 				if( usr->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -529,10 +530,10 @@ f.Name ASC";
 						foundUserInMemory = FALSE;
 					}
 				} // isAdmin or permissions granted
-				if( args != NULL )
-				{
-					FFree( args );
-				}
+				//if( args != NULL )
+				//{
+				//	FFree( args );
+				//}
 			}
 			
 			/*
@@ -821,7 +822,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 					el = HttpGetPOSTParameter( request, "args" );
 					if( el != NULL )
 					{
-						args = UrlDecodeToMem( el->data );
+						args = el->data;
+						//args = UrlDecodeToMem( el->data );
 					}
 					DEBUG("UserID %lu\n", userID );
 			
@@ -841,10 +843,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 							userID = activeUser->u_ID;
 						}
 					}
-					if( args != NULL )
-					{
-						FFree( args );
-					}
+					//if( args != NULL )
+					//{
+					//	FFree( args );
+					//}
 				}
 				
 				if( deviceUnmounted == FALSE )
