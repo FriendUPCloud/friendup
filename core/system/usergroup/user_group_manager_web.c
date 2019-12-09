@@ -384,7 +384,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = UrlDecodeToMem( el->data );
+			args = el->data;
+			//args = UrlDecodeToMem( el->data );
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -618,10 +619,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		{
 			FFree( users );
 		}
-		if( args != NULL )
-		{
-			FFree( args );
-		}
+		//if( args != NULL )
+		//{
+		//	FFree( args );
+		//}
 
 		*result = 200;
 	}
@@ -669,7 +670,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = UrlDecodeToMem( el->data );
+				args = el->data;
+				//args = UrlDecodeToMem( el->data );
 			}
 				
 			if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -814,7 +816,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = UrlDecodeToMem( el->data );
+			args = el->data;
+			//args = UrlDecodeToMem( el->data );
 		}
 		
 		if( loggedSession->us_User->u_IsAdmin == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1028,10 +1031,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			HttpAddTextContent( response, buffer );
 		}
 		
-		if( args != NULL )
-		{
-			FFree( args );
-		}
+		//if( args != NULL )
+		//{
+		//	FFree( args );
+		//}
 		if( groupname != NULL )
 		{
 			FFree( groupname );
@@ -1134,7 +1137,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = UrlDecodeToMem( el->data );
+				args = el->data;
+				//args = UrlDecodeToMem( el->data );
 				len += strlen( args );
 			}
 			
@@ -1160,10 +1164,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				}
 				FFree( command );
 			}
-			if( args != NULL )
-			{
-				FFree( args );
-			}
+			//if( args != NULL )
+			//{
+			//	FFree( args );
+			//}
 		}
 			
 		if( type != NULL )
@@ -1216,7 +1220,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		el = HttpGetPOSTParameter( request, "args" );
 		if( el != NULL )
 		{
-			args = UrlDecodeToMem( el->data );
+			args = el->data;
+			//args = UrlDecodeToMem( el->data );
 			len += strlen( args );
 		}
 		
@@ -1321,10 +1326,10 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			}
 		}
 		
-		if( args != NULL )
-		{
-			FFree( args );
-		}
+		//if( args != NULL )
+		//{
+		//	FFree( args );
+		//}
 		
 		*result = 200;
 	}
