@@ -62,7 +62,7 @@ i18n_remove_files                   : Legg til fil(er)
 i18n_project_has_no_files           : Prosjektet har ikke filer.
 i18n_project_has_no_images          : Prosjektet har ikke bilder.
 i18n_project_has_no_permissions     : Prosjektet har ikke rettigheter.
-i18n_update_project                 : Oppdater prosjekt
+i18n_update_project                 : Lagre
 i18n_cancel                         : Lukk
 
 i18n_no_projects                    : Friend Create har ingen aktive prosjekter.

@@ -1232,6 +1232,7 @@ Application.receiveMessage = function( msg )
 					if( projects[ a ].ID == msg.project.ID )
 					{
 						projects[ a ] = msg.project;
+						break;
 					}
 				}
 				RefreshProjects();

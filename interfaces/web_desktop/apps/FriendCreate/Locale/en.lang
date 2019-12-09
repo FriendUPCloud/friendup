@@ -62,7 +62,7 @@ i18n_remove_files                   : Remove file(s)
 i18n_project_has_no_files           : Project has no files.
 i18n_project_has_no_images          : Project has no images.
 i18n_project_has_no_permissions     : Project has no privileges.
-i18n_update_project                 : Update project
+i18n_update_project                 : Save
 i18n_cancel                         : Close
 
 i18n_no_projects                    : Friend Create has no active projects.
