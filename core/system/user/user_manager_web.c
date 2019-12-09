@@ -1180,7 +1180,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			el = HttpGetPOSTParameter( request, "args" );
 			if( el != NULL )
 			{
-				args = UrlDecodeToMem( el->data );
+				args = el->data;//UrlDecodeToMem( el->data );
 			}
 			
 			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
@@ -1387,10 +1387,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( level );
 		}
-		if( args != NULL )
-		{
-			FFree( args );
-		}
+		//if( args != NULL )
+		//{
+		//	FFree( args );
+		//}
 		if( workgroups != NULL )
 		{
 			FFree( workgroups );
