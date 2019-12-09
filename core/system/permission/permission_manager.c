@@ -191,6 +191,7 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 		}
 		if( args != NULL )
 		{
+			args = json_escape_string( args );
 			len += strlen( args );
 		}
 		
