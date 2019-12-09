@@ -455,3 +455,28 @@ char* json_escape_string(const char *string_to_escape){
 
 	return escaped_string;
 }
+
+char* json_unescape_string( char *string_to_unescape){
+	char *src = string_to_unescape;
+	char *dst = string_to_unescape;
+	while( *src != 0 )
+	{
+		switch( *src ) 
+		{
+			case '\\':
+				printf("skip!\n");
+				src++;
+			break;
+			default:
+			printf("-> %c ", *src );
+				*dst = *src;
+				src++;
+				dst++;
+			break;
+	}
+		// 0 on the end
+	
+	}
+	*dst = 0;//*src;
+	return string_to_unescape;
+}

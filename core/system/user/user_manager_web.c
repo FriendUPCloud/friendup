@@ -1146,7 +1146,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		FULONG id = 0;
 		FLONG status = -1;
 		FBOOL userFromSession = FALSE;
-		FBOOL canChange = FALSE;
 		FBOOL haveAccess = FALSE;
 		int entries = 0;
 		char *args = NULL;
@@ -1192,9 +1191,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				logusr = UMGetUserByID( l->sl_UM, id );
 				if( logusr != NULL )
 				{
-					
 					userFromSession = TRUE;
 					DEBUG("[UMWebRequest] Found session, update\n");
+				}
+				else
+				{
+					userFromSession = FALSE;
+					logusr = UMGetUserByIDDB( l->sl_UM, id );
 				}
 			}
 			else
@@ -1204,191 +1207,180 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		}
 		else
 		{
+			haveAccess = TRUE;
 			id = loggedSession->us_User->u_ID;
 			userFromSession = TRUE;
 			logusr = loggedSession->us_User;
 		}
 		
-		/*
-		if( logusr == NULL && id > 0 )
+		if( haveAccess == TRUE )
 		{
-			DEBUG("[UMWebRequest] Getting user from db\n");
-			logusr = UMUserGetByIDDB( l->sl_UM, id );
-		}
-		*/
-		
-		if( logusr == NULL )
-		{
-			FERROR("[ERROR] User not found\n" );
-			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
-			HttpAddTextContent( response, buffer );
-		}
-		else
-		{
-			el = HttpGetPOSTParameter( request, "username" );
-			if( el != NULL )
+			// only when user asked for another user and have access
+			if( id > 0 && logusr == NULL )
 			{
-				usrname = UrlDecodeToMem( (char *)el->data );
-				DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
-				
-				if( haveAccess == TRUE )
-				{
-					char query[ 1024 ];
-					sprintf( query, " FUser WHERE `Name`='%s' AND ID != %lu" , usrname, id );
-	
-					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
-					if( sqlLib != NULL )
-					{
-						entries = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
-
-						l->LibrarySQLDrop( l, sqlLib );
-					}
-
-					if( entries == 0 && usrname != NULL && logusr->u_Name != NULL )
-					{
-						FFree( logusr->u_Name );
-						logusr->u_Name = usrname;
-					}
-				}
-			}
-			
-			if( entries != 0 )
-			{
+				FERROR("[ERROR] User not found\n" );
 				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 				HttpAddTextContent( response, buffer );
 			}
 			else
 			{
-				el = HttpGetPOSTParameter( request, "password" );
+				el = HttpGetPOSTParameter( request, "username" );
 				if( el != NULL )
 				{
-					usrpass = UrlDecodeToMem( (char *)el->data );
-					DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
-					if( usrpass != NULL && logusr->u_Password != NULL )
-					{
-						FFree( logusr->u_Password );
-						logusr->u_Password = usrpass;
-					}
-				}
-			
-				el = HttpGetPOSTParameter( request, "fullname" );
-				if( el != NULL )
-				{
-					fullname = UrlDecodeToMem( (char *)el->data );
-					DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
-					if( logusr->u_FullName != NULL )
-					{
-						FFree( logusr->u_FullName );
-					}
-					logusr->u_FullName = fullname;
-				}
-			
-				el = HttpGetPOSTParameter( request, "email" );
-				if( el != NULL )
-				{
-					email = UrlDecodeToMem( (char *)el->data );
-					DEBUG( "[UMWebRequest] Update email %s!!\n", email );
-					if( logusr->u_Email != NULL )
-					{
-						FFree( logusr->u_Email );
-					}
-					logusr->u_Email = email;
-				}
-			
-				el = HttpGetPOSTParameter( request, "level" );
-				if( el != NULL )
-				{
-					level = UrlDecodeToMem( (char *)el->data );
-				}
+					usrname = UrlDecodeToMem( (char *)el->data );
+					DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
 				
-				el = HttpGetPOSTParameter( request, "workgroups" );
-				if( el != NULL )
-				{
-					workgroups = UrlDecodeToMem( (char *)el->data );
-					DEBUG("Workgroups found!: %s\n", workgroups );
+					if( haveAccess == TRUE )
+					{
+						// check if user with same name already exist in database
+						char query[ 1024 ];
+						sprintf( query, " FUser WHERE `Name`='%s' AND ID != %lu" , usrname, id );
+	
+						SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+						if( sqlLib != NULL )
+						{
+							entries = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
+
+							l->LibrarySQLDrop( l, sqlLib );
+						}
+
+						if( entries == 0 && usrname != NULL && logusr->u_Name != NULL )
+						{
+							FFree( logusr->u_Name );
+							logusr->u_Name = usrname;
+						}
+					}
 				}
 			
-				DEBUG("[UMWebRequest] Changing user data %lu\n", id );
-				// user is not logged in
-				// try to get it from DB
-				
-				if( haveAccess  == TRUE )
+				if( entries != 0 )
 				{
-					canChange = TRUE;
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
+					HttpAddTextContent( response, buffer );
 				}
 				else
 				{
-					if( loggedSession->us_User == logusr )
+					el = HttpGetPOSTParameter( request, "password" );
+					if( el != NULL )
 					{
-						canChange = TRUE;
+						usrpass = UrlDecodeToMem( (char *)el->data );
+						DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
+						if( usrpass != NULL && logusr->u_Password != NULL )
+						{
+							FFree( logusr->u_Password );
+							logusr->u_Password = usrpass;
+						}
+					}
+			
+					el = HttpGetPOSTParameter( request, "fullname" );
+					if( el != NULL )
+					{
+						fullname = UrlDecodeToMem( (char *)el->data );
+						DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
+						if( logusr->u_FullName != NULL )
+						{
+							FFree( logusr->u_FullName );
+						}
+						logusr->u_FullName = fullname;
+					}
+			
+					el = HttpGetPOSTParameter( request, "email" );
+					if( el != NULL )
+					{
+						email = UrlDecodeToMem( (char *)el->data );
+						DEBUG( "[UMWebRequest] Update email %s!!\n", email );
+						if( logusr->u_Email != NULL )
+						{
+							FFree( logusr->u_Email );
+						}
+						logusr->u_Email = email;
+					}
+			
+					el = HttpGetPOSTParameter( request, "level" );
+					if( el != NULL )
+					{
+						level = UrlDecodeToMem( (char *)el->data );
+					}
+				
+					el = HttpGetPOSTParameter( request, "workgroups" );
+					if( el != NULL )
+					{
+						workgroups = UrlDecodeToMem( (char *)el->data );
+						DEBUG("Workgroups found!: %s\n", workgroups );
+					}
+			
+					DEBUG("[UMWebRequest] Changing user data %lu\n", id );
+					// user is not logged in
+					// try to get it from DB
+				
+					if( logusr != NULL ) //&& canChange == TRUE )
+					{
+						char *error = NULL;
+						DEBUG("[UMWebRequest] FC will do a change\n");
+					
+						GenerateUUID( &( logusr->u_UUID ) );
+					
+						if( status >= 0 )
+						{
+							logusr->u_Status = status;
+						
+							{
+								char msg[ 512 ];
+								if( status == USER_STATUS_DISABLED )
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+								}
+								else
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
+								}
+								//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+							}
+						}
+						UMUserUpdateDB( l->sl_UM, logusr );
+					
+						UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
+					
+						RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+						NotifyExtServices( l, request, logusr, "update" );
+					
+						// we must notify user
+						//if( logusr != loggedSession->us_User )
+						//{
+						//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
+						//}
+					
+						if( error != NULL )
+						{
+							FFree( error );
+						}
+					
+						HttpAddTextContent( response, "ok<!--separate-->{ \"update\": \"success!\"}" );
 					}
 					else
 					{
-						canChange = FALSE;
+						FERROR("[ERROR] User not found\n" );
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+						HttpAddTextContent( response, buffer );
 					}
-				}
 				
-				if( logusr != NULL && canChange == TRUE )
-				{
-					char *error = NULL;
-					DEBUG("[UMWebRequest] FC will do a change\n");
-					
-					GenerateUUID( &( logusr->u_UUID ) );
-					
-					if( status >= 0 )
+					if( userFromSession == FALSE )
 					{
-						logusr->u_Status = status;
-						
-						{
-							char msg[ 512 ];
-							if( status == USER_STATUS_DISABLED )
-							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
-							}
-							else
-							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
-							}
-							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
-						}
+						UserDelete( logusr );
 					}
-					UMUserUpdateDB( l->sl_UM, logusr );
-					
-					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
-					
-					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
-					
-					NotifyExtServices( l, request, logusr, "update" );
-					
-					// we must notify user
-					//if( logusr != loggedSession->us_User )
-					//{
-					//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
-					//}
-					
-					if( error != NULL )
-					{
-						FFree( error );
-					}
-					
-					HttpAddTextContent( response, "ok<!--separate-->{ \"update\": \"success!\"}" );
-				}
-				else
-				{
-					FERROR("[ERROR] User not found\n" );
-					char buffer[ 256 ];
-					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
-					HttpAddTextContent( response, buffer );
-				}
-				
-				if( userFromSession == FALSE )
-				{
-					UserDelete( logusr );
 				}
 			}
+		}
+		else	//is admin
+		{
+			Log( FLOG_ERROR,"User '%s' dont have admin rights\n", loggedSession->us_User->u_Name );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
 		}
 		
 		if( level != NULL )
