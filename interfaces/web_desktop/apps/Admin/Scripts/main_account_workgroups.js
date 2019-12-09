@@ -88,11 +88,28 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			if( id )
 			{
+				// Specific for Pawel's code ... He just wants to forward json ...
+				
+				var args = JSON.stringify( {
+					'type'    : 'read', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_WORKGROUP__GLOBAL', 
+							'PERM_WORKGROUP_WORKGROUP' 
+						]
+					}, 
+					'object'      : 'workgroup', 
+					'objectid'    : id,
+					'listdetails' : 'workgroup' 
+				} );
+				
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d } );
-				
+					console.log( { e:e , d:d, args: args } );
+					
 					if( e == 'ok' && d )
 					{
 						try
@@ -109,14 +126,29 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 					return callback( false, false );
 				}
-				f.execute( 'group/listdetails', { id: id, authid: Application.authId } );
+				f.execute( 'group/listdetails', { id: id, authid: Application.authId, args: args } );
 			}
 			else
 			{
+				// Specific for Pawel's code ... He just wants to forward json ...
+				
+				var args = JSON.stringify( {
+					'type'    : 'read', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_WORKGROUP__GLOBAL', 
+							'PERM_WORKGROUP_WORKGROUP' 
+						]
+					}, 
+					'listdetails' : 'workgroup' 
+				} );
+				
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( { e:e , d:d } );
+					console.log( { e:e , d:d, args: args } );
 				
 					if( e == 'ok' && d )
 					{
@@ -134,7 +166,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 				
 					return callback( false, false );
 				}
-				f.execute( 'group/list', { authid: Application.authId } );
+				f.execute( 'group/list', { authid: Application.authId, args: args } );
 			}
 			
 			return true;
@@ -187,35 +219,65 @@ Sections.accounts_workgroups = function( cmd, extra )
 	
 	function create()
 	{
+		// Specific for Pawel's code ... He just wants to forward json ...
+		
+		var args = JSON.stringify( {
+			'type'    : 'write', 
+			'context' : 'application', 
+			'authid'  : Application.authId, 
+			'data'    : { 
+				'permission' : [ 
+					'PERM_WORKGROUP__GLOBAL', 
+					'PERM_WORKGROUP_WORKGROUP' 
+				]
+			}
+		} );
 		
 		var f = new Library( 'system.library' );
 		f.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			console.log( { e:e, d:d, args: args } );
 			
 			Sections.accounts_workgroups( 'refresh' ); 
 		}
 		f.execute( 'group/create', {
 			groupname: 'Unnamed workgroup', 
-			authid: Application.authId
+			authid: Application.authId,
+			args: args
 		} );
 		
 	}
 	
 	function update( id, input )
 	{
+		// Specific for Pawel's code ... He just wants to forward json ...
+				
+		var args = JSON.stringify( {
+			'type'    : 'write', 
+			'context' : 'application', 
+			'authid'  : Application.authId, 
+			'data'    : { 
+				'permission' : [ 
+					'PERM_WORKGROUP__GLOBAL', 
+					'PERM_WORKGROUP_WORKGROUP' 
+				]
+			}, 
+			'object'   : 'workgroup', 
+			'objectid' : id
+		} );
 		
 		var f = new Library( 'system.library' );
 		f.onExecuted = function( e, d )
 		{
-			console.log( { e:e, d:d } );
+			console.log( { e:e, d:d, args: args } );
 			
 			Sections.accounts_workgroups( 'refresh' ); 
 		}
 		f.execute( 'group/update', {
 			id: id, 
 			groupname: input, 
-			authid: Application.authId
+			authid: Application.authId,
+			args: args
 		} );
 		
 	}
@@ -255,14 +317,30 @@ Sections.accounts_workgroups = function( cmd, extra )
 			// Confirmed!
 			if( result && result.data && result.data == true )
 			{
+				// Specific for Pawel's code ... He just wants to forward json ...
+				
+				var args = JSON.stringify( {
+					'type'    : 'delete', 
+					'context' : 'application', 
+					'authid'  : Application.authId, 
+					'data'    : { 
+						'permission' : [ 
+							'PERM_WORKGROUP__GLOBAL', 
+							'PERM_WORKGROUP_WORKGROUP' 
+						]
+					}, 
+					'object'   : 'workgroup', 
+					'objectid' : id
+				} );
+				
 				var f = new Library( 'system.library' );
 				f.onExecuted = function( e, d )
 				{
-					console.log( { e:e, d:d } );
+					console.log( { e:e, d:d, args: args } );
 					
 					Sections.accounts_workgroups( 'refresh' ); 
 				}
-				f.execute( 'group/delete', { id: id, authid: Application.authId } );		
+				f.execute( 'group/delete', { id: id, authid: Application.authId, args: args } );		
 			}
 		} );
 		
