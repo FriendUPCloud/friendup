@@ -1183,9 +1183,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			{
 				args = UrlDecodeToMem( el->data );
 			}
-				
+			
 			if( loggedSession->us_User->u_IsAdmin || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 			{
+				DEBUG("Is user admin: %d\n", loggedSession->us_User->u_IsAdmin );
 				haveAccess = TRUE;
 				
 				logusr = UMGetUserByID( l->sl_UM, id );
@@ -1208,11 +1209,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			logusr = loggedSession->us_User;
 		}
 		
+		/*
 		if( logusr == NULL && id > 0 )
 		{
 			DEBUG("[UMWebRequest] Getting user from db\n");
 			logusr = UMUserGetByIDDB( l->sl_UM, id );
 		}
+		*/
 		
 		if( logusr == NULL )
 		{

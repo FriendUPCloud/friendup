@@ -214,6 +214,7 @@ Ofcourse module calls need user session id etc as standard (&sessionid=%thesessi
 				}
 				FFree( data );
 			}
+			DEBUG("PermissionManagerCheckPermission: ret: %d\n", retVal );
 			FFree( command );
 		}
 	}
