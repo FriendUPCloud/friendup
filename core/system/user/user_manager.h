@@ -40,6 +40,7 @@ typedef struct UserManager
 	void 								*um_USM;
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
 	User								*um_APIUser;	// API user
+	pthread_mutex_t						um_Mutex;
 } UserManager;
 
 
