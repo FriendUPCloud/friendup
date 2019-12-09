@@ -342,11 +342,11 @@ FriendWebSocket.prototype.handleSocketMessage = function( e )
 			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
 			 console.log( 'Test3: Session was killed!' );
 			this.handleClose();
-			/*
+			
 			setTimeout( function()
 			{
 				Workspace.logout();
-			}, 500 );*/
+			}, 500 );
 			return;
 		}
 		else if( msg.data.data == 'session timeout' )

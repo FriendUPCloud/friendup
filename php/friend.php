@@ -441,6 +441,19 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		$GLOBALS[ 'User' ] =& $User;
 	}
 	else if(
+		$sidm && 
+		( $User = $SqlDatabase->fetchObject( '
+			SELECT u.* FROM FUser u
+			WHERE
+				( u.SessionID=\'' . $sidm . '\' )
+		' ) )
+	)
+	{
+		// Login success
+		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
+		$GLOBALS[ 'User' ] =& $User;
+	}
+	else if(
 		isset( $User->SessionID ) && trim( $User->SessionID ) && 
 		( $User = $SqlDatabase->FetchObject( '
 			SELECT u.* FROM FUser u
