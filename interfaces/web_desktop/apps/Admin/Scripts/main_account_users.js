@@ -3760,7 +3760,7 @@ function saveUser( uid )
 	
 	// Specific for Pawel's code ... He just wants to forward json ...
 	
-	args.args = {
+	args.args = encodeURIComponent( JSON.stringify( {
 		'type'    : 'write', 
 		'context' : 'application', 
 		'authid'  : Application.authId, 
@@ -3772,12 +3772,12 @@ function saveUser( uid )
 		}, 
 		'object'   : 'user', 
 		'objectid' : uid 
-	};
+	} ) );
 	
 	var f = new Library( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
-		console.log( { e:e, d:d } );
+		console.log( { e:e, d:d, args: args } );
 		
 		if( !uid ) return;
 		
