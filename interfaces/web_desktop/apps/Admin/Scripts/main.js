@@ -126,9 +126,9 @@ function refreshSidebar()
 		if( !found )
 		{
 			headings[ a ] = document.createElement( 'div' );
-			headings[ a ].innerHTML = '<h2>' + a + '</h2>';
+			headings[ a ].innerHTML = '<div class="PaddingLeft PaddingTop PaddingRight"><h3 class="Negative PaddingLeft PaddingRight"><strong>' + a + '</strong></h3></div>';
 			var elements = document.createElement( 'div' );
-			elements.className = 'Elements';
+			elements.className = 'Elements List';
 			headings[ a ].elements = headings[ a ].appendChild( elements );
 		}
 		
@@ -141,9 +141,10 @@ function refreshSidebar()
 		for( var b in mods[ a ] )
 		{
 			var ch = mods[ a ][ b ];
-			var ptag = document.createElement( 'p' );
+			var ptag = document.createElement( 'div' );
 			var atag = document.createElement( 'a' );
 			atag.innerHTML = b;
+			ptag.className = 'HRow BackgroundNegativeAlt PaddingLeft PaddingSmallTop PaddingRight PaddingSmallBottom';
 			ptag.appendChild( atag );
 			
 			// If we have no showing check permissions
@@ -167,8 +168,12 @@ function refreshSidebar()
 			}
 			if( ch.icon )
 			{
+				//atag.classList.add( 'IconMedium', ch.icon );
 				atag.classList.add( 'IconSmall', ch.icon );
-				atag.innerHTML = '&nbsp;' + atag.innerHTML;
+				atag.classList.add( 'Negative', ch.icon );
+				atag.classList.add( 'PaddingLeft', ch.icon );
+				atag.classList.add( 'PaddingRight', ch.icon );
+				atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
 				( function( module, sect, ele )
 				{
 					ele.onclick = function()
@@ -176,6 +181,24 @@ function refreshSidebar()
 						// Update latest changes to permissions before showing page ...
 						Application.checkAppPermission( false, function()
 						{
+							if( ge( 'GuiSidebar' ) )
+							{
+								var list = ge( 'GuiSidebar' ).getElementsByTagName( 'div' );
+								
+								if( list.length > 0 )
+								{
+									for( var a = 0; a < list.length; a++ )
+									{
+										if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+										{
+											list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+										}
+									}
+								}
+							}
+							
+							ele.parentNode.className = ( ele.parentNode.className.split( ' Selected' ).join( '' ) + ' Selected' );
+							
 							setGUISection( module, sect );
 						} );
 					}
@@ -554,6 +577,24 @@ function initTest()
 			type     : 'read', 
 			context  : 'application', 
 			name     : 'Users' 
+		},
+		// 7
+		{ 
+			type        : 'read', 
+			context     : 'application', 
+			authid      : Application.authId,
+			data        : { permission : [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] },
+			listdetails : 'workgroups' 
+		},
+		// 8
+		{ 
+			type        : 'read', 
+			context     : 'application', 
+			authid      : Application.authId,
+			data        : { permission : [ 'PERM_WORKGROUP_GLOBAL', 'PERM_WORKGROUP_WORKGROUP' ] },
+			object      : 'workgroup', 
+			objectid    : 26, 
+			listdetails : 'workgroup' 
 		}
 	];
 	

@@ -1365,8 +1365,9 @@ int ParseAndCall( WSCData *fcd, char *in, size_t len )
 				
 					if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
 					{
+						int tsize = t[ 6 ].end-t[ 6 ].start;
 						// simple PING
-						if( strncmp( "ping",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 && r > 8 )
+						if( tsize > 0 && strncmp( "ping",  in + t[ 6 ].start, tsize ) == 0 && r > 8 )
 						{
 #if (ENABLE_WEBSOCKETS_THREADS == 1) || ( USE_PTHREAD_PING == 1 )
 							WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );

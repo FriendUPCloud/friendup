@@ -339,6 +339,12 @@ button, .Button
 	font-size: inherit;
 }
 
+button, .ButtonAlt
+{
+	color: $ColorButton;
+	background-color: $ColorBgButtonAlt;
+}
+
 body button.IconButton:not(:hover),
 body .Button.IconButton:not(:hover)
 {
@@ -790,6 +796,29 @@ p.Layout
 	box-sizing: border-box;
 }
 
+.PaddingSmallLeft
+{
+	padding-left: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallTop
+{
+	padding-top: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallRight
+{
+	padding-right: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingSmallBottom
+{
+	padding-bottom: 4px;
+	box-sizing: border-box;
+}
 
 .PadBorder {
     border : 0.2em solid $ColorBackground;
@@ -1320,6 +1349,11 @@ html #WorkspaceMenu .Menu li.Disabled *
 	color: $ColorNegative;
 }
 
+.NegativeAlt
+{
+	color: $ColorNegativeAlt;
+}
+
 a.Negative:hover, a.Negative:active, a.Negative:visited
 {
 	color: $ColorNegative;
@@ -1362,9 +1396,19 @@ a.Negative:hover, a.Negative:active, a.Negative:visited
 	background: $ColorBgNegative;
 }
 
+.BackgroundNegativeAlt
+{
+	background: $ColorBgNegativeAlt;
+}
+
 .BackgroundPositive
 {
 	background: $ColorBgPositive;
+}
+
+.BackgroundPositiveAlt
+{
+	background: $ColorBgPositiveAlt;
 }
 
 .BackgroundHighlight

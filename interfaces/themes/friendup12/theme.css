@@ -34,6 +34,7 @@
 	$ColorText:              #333333;
 	$ColorButton:            #f0f0f0;
 	$ColorBgButton:          #455155;
+	$ColorBgButtonAlt:       #34495E;
 	$ColorButtonHover:       #f0f0f0;
 	$ColorBgButtonHover:     #556368;
 	$ColorSelect:            #333333;
@@ -67,8 +68,11 @@
 	$ColorDialogHeader:      #f0f0f0;
 	$ColorPositive:          #333333;
 	$ColorNegative:          #f0f0f0;
+	$ColorNegativeAlt:       #34495E;
 	$ColorBgPositive:        #cfcfcf;
+	$ColorBgPositiveAlt:     #f0f0f0;
 	$ColorBgNegative:        #3f3f3f;
+	$ColorBgNegativeAlt:     #34495E;
 	$ColorBgHighlight:       #818181;
 	$ColorHighlight:         #e0e0e0;
 	$ColorSelect:            #f0f0f0;

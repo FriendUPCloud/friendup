@@ -146,5 +146,11 @@ FBOOL UGMGetGroupsDB( UserGroupManager *um, FULONG uid, BufString *bs, const cha
 
 void UGMGetGroups( UserGroupManager *um, FULONG uid, BufString *bs, const char *type, FULONG parentID, int status, FBOOL fParentID );
 
+//
+//
+//
+
+int UGMGetUserGroupsDB( UserGroupManager *um, FULONG userID, BufString *bs );
+
 
 #endif //__SYSTEM_USER_USER_GROUP_MANAGER_H__

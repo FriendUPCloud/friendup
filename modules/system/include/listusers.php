@@ -149,7 +149,6 @@ switch( $args->args->mode )
 				
 				die( 'ok<!--separate-->' . json_encode( $out ) );
 			}
-			die( 'fail ...' . $q );
 		}
 		
 		break;

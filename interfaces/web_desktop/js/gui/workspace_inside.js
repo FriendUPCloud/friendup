@@ -8620,6 +8620,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Execute when everything is ready
 	onReady: function()
 	{
+		// If we are in a connecting state, wait with startup sequence
+		// TODO: Make sure cAjax also does this check
+		if( Workspace.websocketState == 'connecting' ) 
+		{
+			Workspace.onReadyTemp = Workspace.onReady;
+			Workspace.onReady = function(){};
+			return setTimeout( function(){ Workspace.onReady = Workspace.onReadyTemp; Workspace.onReady(); }, 50 );
+		}
+
 		if( this.onReadyList.length )
 		{
 			// Don't run it twice

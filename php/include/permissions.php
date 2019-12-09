@@ -183,7 +183,7 @@ function CheckPermission( $type, $identifier, $permission = false )
 
 
 
-function Permissions( $type, $context, $name, $data = false, $object = false, $objectid = 0 )
+function Permissions( $type, $context, $name, $data = false, $object = false, $objectid = 0, $listdetails = false )
 {
 	global $SqlDatabase, $User;	
 	
@@ -241,13 +241,14 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 	}
 	
 	$debug = new stdClass();
-	$debug->type     = $type;
-	$debug->context  = $context;
-	$debug->name     = $name;
-	$debug->data     = $data;
-	$debug->object   = $object;
-	$debug->objectid = $objectid;
-	$debug->level    = $level;
+	$debug->type        = $type;
+	$debug->context     = $context;
+	$debug->name        = $name;
+	$debug->data        = $data;
+	$debug->object      = $object;
+	$debug->objectid    = $objectid;
+	$debug->listdetails = $listdetails;
+	$debug->level       = $level;
 	
 	// authid method of getting the Application Name and checking if the user has access to it.
 	 
@@ -385,7 +386,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 					
 					// TODO: Make support for hirarkial workgroups with many parentid levels ...
 					
-					$workgroups = []; 
+					$workgroups = []; $groupdetails = []; $userdetails = []; 
 					
 					// TODO: Have to look at this, it's to specific ...
 					$sysadmin = [ 
@@ -444,9 +445,59 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 					
 					if( $workgroups && is_array( $workgroups ) )
 					{
+						// Needed for pawel code ...
+						
+						if( $listdetails )
+						{
+							// TODO: Connect user or users to groups or group ...
+							
+							if( $rows = $SqlDatabase->FetchObjects( '
+								SELECT g.* 
+								FROM `FUserGroup` g 
+								WHERE g.ID IN (' . implode( ',', $workgroups ) . ') 
+								ORDER BY g.ID ASC 
+							' ) )
+							{
+								foreach( $rows as $v )
+								{
+									$gr = new stdClass;
+									
+									if( $object == 'workgroup' && $objectid )
+									{
+										if( $objectid == $v->ID )
+										{
+											$gr->groupid  = $v->ID;
+											$gr->userid   = $v->UserID;
+											$gr->parentid = $v->ParentID;
+											$gr->name     = $v->Name;
+											$gr->type     = $v->Type;
+											$gr->status   = $v->Status;
+											$gr->users    = [];
+										}
+									}
+									else
+									{
+										$gr->id       = $v->ID;
+										$gr->userid   = $v->UserID;
+										$gr->parentid = $v->ParentID;
+										$gr->name     = $v->Name;
+										$gr->type     = $v->Type;
+										$gr->status   = $v->Status;
+									}
+							
+									if( $gr )
+									{
+										$groupdetails[$v->ID] = $gr;
+									}
+								}
+							}
+						}
+						
+						
+						
 						if( $rows = $SqlDatabase->FetchObjects( '
 							SELECT 
-								ug.UserID, g.Name AS Workgroup 
+								g.ID, ug.UserID, g.Name AS Workgroup 
 							FROM 
 								`FUserGroup` g, 
 								`FUserToGroup` ug 
@@ -459,12 +510,65 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 						' ) )
 						{
 							$users = [];
-			
+							
 							foreach( $rows as $v )
 							{
 								$users[$v->UserID] = $v->UserID;
 							}
-			
+							
+							// Needed for pawel code ...
+							
+							if( $listdetails && $users )
+							{
+								// TODO: Connect user or users to groups or group ...
+								
+								if( $usr = $SqlDatabase->FetchObjects( '
+									SELECT u.ID, u.UniqueID, u.Name, u.FullName 
+									FROM `FUser` u 
+									WHERE u.ID IN (' . implode( ',', $users ) . ') 
+									ORDER BY u.ID ASC 
+								' ) )
+								{
+									foreach( $usr as $u )
+									{
+										$us = new stdClass;
+										
+										if( $object == 'user' && $objectid )
+										{
+											if( $objectid == $u->ID )
+											{
+												$us->id       = $u->ID;
+												$us->uuid     = $u->UniqueID;
+												$us->name     = $u->Name;
+												$us->fullname = $u->FullName;
+											}
+										}
+										else
+										{
+											$us->id       = $u->ID;
+											$us->uuid     = $u->UniqueID;
+											$us->name     = $u->Name;
+											$us->fullname = $u->FullName;
+										}
+										
+										if( $us )
+										{
+											$userdetails[$u->ID] = $us;
+										}
+									}
+								}
+								
+								if( $groupdetails && $userdetails )
+								{
+									foreach( $rows as $v )
+									{
+										if( isset( $groupdetails[$v->ID]->users ) && isset( $userdetails[$v->UserID] ) )
+										{
+											$groupdetails[$v->ID]->users[] = $userdetails[$v->UserID];
+										}
+									}
+								}
+							}
 						}
 					}
 					
@@ -567,6 +671,14 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 									$out->data = new stdClass();
 									$out->data->workgroups = (string)$objectid;
 									
+									// Needed for pawel code ...
+									
+									if( $listdetails == 'workgroup' || $listdetails == 'workgroups' )
+									{
+										$out->data->details = new stdClass();
+										$out->data->details->group = ( isset( $groupdetails[$objectid] ) ? $groupdetails[$objectid] : false );
+									}
+									
 									$out->debug = $debug;
 									
 									return $out;
@@ -586,6 +698,14 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 									
 									$out->data = new stdClass();
 									$out->data->users = (string)$objectid;
+									
+									// Needed for pawel code ...
+									
+									if( $listdetails == 'user' || $listdetails == 'users' )
+									{
+										$out->data->details = new stdClass();
+										$out->data->details->user = ( isset( $userdetails[$objectid] ) ? $userdetails[$objectid] : false );
+									}
 									
 									$out->debug = $debug;
 									
@@ -643,11 +763,23 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 						if( $workgroups )
 						{
 							$out->data->workgroups = ( is_array( $workgroups ) ? implode( ',', $workgroups ) : $workgroups );
+							
+							if( $listdetails == 'workgroup' || $listdetails == 'workgroups' )
+							{
+								$out->data->details = new stdClass();
+								$out->data->details->groups = ( $groupdetails ? $groupdetails : [] );
+							}
 						}
 						
 						if( $users )
 						{
 							$out->data->users = ( is_array( $users ) ? implode( ',', $users ) : $users );
+							
+							if( $listdetails == 'user' || $listdetails == 'users' )
+							{
+								$out->data->details = new stdClass();
+								$out->data->details->users = ( $userdetails ? $userdetails : [] );
+							}
 						}
 						
 						$out->debug = $debug;

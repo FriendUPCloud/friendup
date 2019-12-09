@@ -273,7 +273,7 @@ Sections.accounts_users = function( cmd, extra )
 								rstr += '<div class="PaddingSmall HContent40 FloatLeft Ellipsis"' + ( title ? ' title="' + title + '"' : '' ) + '>' + title + '</div>';
 						
 								rstr += '<div class="PaddingSmall HContent15 FloatLeft Ellipsis">';
-								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+								rstr += '<button onclick="Sections.userrole_update('+uroles[a].ID+','+userInfo.ID+',this)" class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( uroles[a].UserID ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 								rstr += '</div>';
 								rstr += '</div>';
 							}
@@ -323,7 +323,7 @@ Sections.accounts_users = function( cmd, extra )
 							for( var a = 0; a < apps.length; a++ )
 							{
 								sw = sw == 2 ? 1 : 2;
-								apl += '<div class="HRow sw' + sw + '">';
+								apl += '<div class="HRow">';
 								for( var k = 0; k < keyz.length; k++ )
 								{
 									var ex = ''; var st = '';
@@ -347,7 +347,7 @@ Sections.accounts_users = function( cmd, extra )
 									}
 									if( keyz[ k ] == 'Dock' )
 									{
-										value = '<button class="IconButton IconSmall ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
+										value = '<button class="IconButton IconSmall IconToggle ButtonSmall FloatRight' + ( apps[ a ].DockStatus ? ' fa-toggle-on' : ' fa-toggle-off' ) + '"></button>';
 										//value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
 										ex = ' TextCenter';
 									}
@@ -578,7 +578,7 @@ Sections.accounts_users = function( cmd, extra )
 												str += '<div class="HRow">\
 													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
 													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-														<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+														<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
 													</div>\
 												</div>';
 											}
@@ -607,9 +607,9 @@ Sections.accounts_users = function( cmd, extra )
 															this.classList.remove( 'fa-toggle-on' );
 															this.classList.add( 'fa-toggle-off' );
 														}
-														var args = { command: 'update', id: userInfo.ID };
+														var args = { id: userInfo.ID, authid: Application.authId };
 														args.workgroups = [];
-										
+														
 														for( var c = 0; c < workBtns.length; c++ )
 														{
 															if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
@@ -624,10 +624,10 @@ Sections.accounts_users = function( cmd, extra )
 														f.onExecuted = function( e, d )
 														{
 															// Do nothing
-												
+															
 															console.log( { e:e, d:d } );
 														}
-														f.execute( 'user', args );
+														f.execute( 'user/updategroups', args );
 													}
 												} )( workBtns[ a ] );
 											}
@@ -1129,7 +1129,7 @@ Sections.accounts_users = function( cmd, extra )
 			// Add the main heading
 			( function( ol ) {
 				var tr = document.createElement( 'div' );
-				tr.className = 'HRow';
+				tr.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight';
 			
 				var extr = '';
 				if( clearFilter )
@@ -1139,7 +1139,7 @@ Sections.accounts_users = function( cmd, extra )
 			
 				/*tr.innerHTML = '\
 					<div class="HContent20 FloatLeft">\
-						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+						<h3><strong>' + i18n( 'i18n_users' ) + '</strong></h3>\
 					</div>\
 					<div class="HContent70 FloatLeft Relative">\
 						' + extr + '\
@@ -1152,14 +1152,14 @@ Sections.accounts_users = function( cmd, extra )
 				
 				tr.innerHTML = '\
 					<div class="HContent20 FloatLeft">\
-						<h2>' + i18n( 'i18n_users' ) + '</h2>\
+						<h3><strong>' + i18n( 'i18n_users' ) + '</strong></h3>\
 					</div>\
 					<div class="HContent70 FloatLeft Relative">\
 						' + extr + '\
 						<input type="text" class="FullWidth" placeholder="' + i18n( 'i18n_find_users' ) + '"/>\
 					</div>\
 					<div class="HContent10 FloatLeft TextRight InActive">\
-						<button id="AdminUsersBtn" class="IconButton IconSmall fa-bars"></button>\
+						<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
 						<div class="submenu_wrapper"><ul id="AdminUsersSubMenu"></ul></div>\
 					</div>\
 				';
@@ -1211,19 +1211,19 @@ Sections.accounts_users = function( cmd, extra )
 		var header = document.createElement( 'div' );
 		header.className = 'List';
 		var headRow = document.createElement( 'div' );
-		headRow.className = 'HRow sw1';
+		headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
 		for( var z in types )
 		{
 			var borders = '';
 			var d = document.createElement( 'div' );
 			if( z != 'Edit' )
-				borders += ' BorderRight';
+				//borders += ' BorderRight';
 			if( a < userList.length - a )
 				borders += ' BorderBottom';
 			var d = document.createElement( 'div' );
-			d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
-			if( z == 'Edit' ) z = '';
-			d.innerHTML = '<strong onclick="sortUsers(\''+z+'\')">' + ( z ? i18n( 'i18n_header_' + z ) : '' ) + '</strong>';
+			d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
+			if( z == 'Edit' ) z = '&nbsp;';
+			d.innerHTML = '<strong' + ( z != '&nbsp;' ? ' onclick="sortUsers(\''+z+'\')"' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
 			headRow.appendChild( d );
 		}
 		
@@ -1281,7 +1281,7 @@ Sections.accounts_users = function( cmd, extra )
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
 					// Add all data for the template
 					d.replacements = {
-						user_name            : '',
+						user_name            : i18n( 'i18n_new_user' ),
 						user_fullname        : '',
 						user_username        : '',
 						user_email           : '',
@@ -1525,7 +1525,7 @@ Sections.accounts_users = function( cmd, extra )
 					sw = sw == 2 ? 1 : 2;
 					var r = document.createElement( 'div' );
 					setROnclick( r, userList[a].ID );
-					r.className = 'HRow sw' + sw + ' ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
+					r.className = 'HRow ' + status[ ( userList[ a ][ 'Status' ] ? userList[ a ][ 'Status' ] : 0 ) ];
 					r.id = ( 'UserListID_'+userList[a].ID );
 					
 					var timestamp = ( userList[ a ][ 'LoginTime' ] ? userList[ a ][ 'LoginTime' ] : 0 );
@@ -1558,7 +1558,7 @@ Sections.accounts_users = function( cmd, extra )
 						if( z != 'Edit' )
 						{
 							d.className = '';
-							borders += ' BorderRight';
+							//borders += ' BorderRight';
 						}
 						else d.className = 'TextCenter';
 						if( a < userList.length - a )
@@ -2031,9 +2031,9 @@ Sections.accounts_users = function( cmd, extra )
 		var o = ge( 'UserList' );
 		o.innerHTML = '';
 		
-		var h2 = document.createElement( 'h2' );
-		h2.innerHTML = '{i18n_permission_denied}';
-		o.appendChild( h2 );
+		var h3 = document.createElement( 'h3' );
+		h3.innerHTML = '<strong>{i18n_permission_denied}</strong>';
+		o.appendChild( h3 );
 	}
 };
 
@@ -2552,7 +2552,7 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usLocked'   ), false, false );
 					}
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ) } );
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 1 : 0 ), authid: Application.authId } );
 				
 				break;
 			
@@ -2576,7 +2576,7 @@ Sections.user_status_update = function( userid, status )
 						Toggle( ge( 'usDisabled' ), false, false );
 					}
 				}
-				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ) } );
+				f.execute( 'user/updatestatus', { id: userid, status: ( on ? 2 : 0 ), authid: Application.authId } );
 				
 				break;
 			
@@ -3618,12 +3618,12 @@ function mountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, e:e, d:d } );
+			console.log( 'mountDrive ( device/mount ) ', { devname: devname, userid: userid, authid: Application.authId, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/mount', { devname: devname, userid: userid } );
+		f.execute( 'device/mount', { devname: devname, userid: userid, authid: Application.authId } );
 	}
 }
 
@@ -3635,12 +3635,12 @@ function unmountDrive( devname, userid, callback )
 		
 		f.onExecuted = function( e, d )
 		{
-			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, e:e, d:d } );
+			console.log( 'unmountDrive ( device/unmount ) ', { devname: devname, userid: userid, authid: Application.authId, e:e, d:d } );
 			
 			if( callback ) callback( e, d );
 		}
 		
-		f.execute( 'device/unmount', { devname: devname, userid: userid } );
+		f.execute( 'device/unmount', { devname: devname, userid: userid, authid: Application.authId } );
 	}
 }
 
@@ -3692,7 +3692,7 @@ function addUser( callback )
 // Save a user
 function saveUser( uid )
 {	
-	var args = { command: 'update' };
+	var args = { authid: Application.authId };
 	
 	var mapping = {
 		usFullname : 'fullname',
@@ -3861,7 +3861,7 @@ function saveUser( uid )
 			Notify( { title: i18n( 'i18n_user_update_fail' ), text: i18n( 'i18n_user_update_failed' ) } );
 		}
 	}
-	f.execute( 'user', args );
+	f.execute( 'user/update', args );
 }
 
 function cancelUser(  )
