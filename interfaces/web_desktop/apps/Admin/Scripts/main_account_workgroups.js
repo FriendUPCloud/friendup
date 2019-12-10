@@ -96,7 +96,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
-							'PERM_WORKGROUP__GLOBAL', 
+							'PERM_WORKGROUP_GLOBAL', 
 							'PERM_WORKGROUP_WORKGROUP' 
 						]
 					}, 
@@ -138,7 +138,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
-							'PERM_WORKGROUP__GLOBAL', 
+							'PERM_WORKGROUP_GLOBAL', 
 							'PERM_WORKGROUP_WORKGROUP' 
 						]
 					}, 
@@ -227,7 +227,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			'authid'  : Application.authId, 
 			'data'    : { 
 				'permission' : [ 
-					'PERM_WORKGROUP__GLOBAL', 
+					'PERM_WORKGROUP_GLOBAL', 
 					'PERM_WORKGROUP_WORKGROUP' 
 				]
 			}
@@ -258,7 +258,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			'authid'  : Application.authId, 
 			'data'    : { 
 				'permission' : [ 
-					'PERM_WORKGROUP__GLOBAL', 
+					'PERM_WORKGROUP_GLOBAL', 
 					'PERM_WORKGROUP_WORKGROUP' 
 				]
 			}, 
@@ -325,7 +325,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 					'authid'  : Application.authId, 
 					'data'    : { 
 						'permission' : [ 
-							'PERM_WORKGROUP__GLOBAL', 
+							'PERM_WORKGROUP_GLOBAL', 
 							'PERM_WORKGROUP_WORKGROUP' 
 						]
 					}, 

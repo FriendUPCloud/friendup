@@ -974,28 +974,87 @@ Sections.accounts_users = function( cmd, extra )
 				// 5 | Get storage
 				function(  )
 				{
-					var u = new Module( 'system' );
-					u.onExecuted = function( e, d )
+					/*var f = new Library( 'system.library' );
+					f.onExecuted = function( e, d )
 					{
-						//if( e != 'ok' ) return;
-						var ul = null;
+						
+						var drives;
+						
 						try
 						{
-							ul = JSON.parse( d );
+							drives = JSON.parse( d );
 						}
 						catch( e )
 						{
-							ul = null;
+							drives = [];
 						}
-						console.log( 'mountlist ', { e:e, d:(ul?ul:d) } );
-						if( e != 'ok' ) ul = '404';
-						loadingInfo.mountlist = ul;
 						
-						console.log( '// 5 | Get storage' );
+						console.log( '[1] device/list ', { e:e, d:(drives?drives:d) } );*/
 						
-						initUsersDetails( loadingInfo, [ 'storage' ] );
-					}
-					u.execute( 'mountlist', { userid: extra, authid: Application.authId } );
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							//if( e != 'ok' ) return;
+							var rows = null;
+							try
+							{
+								rows = JSON.parse( d );
+							}
+							catch( e )
+							{
+								rows = [];
+							}
+							
+							/*if( rows )
+							{
+								for( var a = 0; a < rows.length; a++ )
+								{
+									rows[a].Mounted = 0;
+								
+									for( var d = 0; d < drives.length; d++ )
+									{
+										if( rows[a].Name == drives[d].Name )
+										{
+											rows[a].Mounted = drives[d].Mounted;
+										}
+									}
+								}
+							}*/
+							
+							
+							
+							console.log( '[2] mountlist ', { e:e, d:(rows?rows:d) } );
+							if( e != 'ok' ) rows = '404';
+							loadingInfo.mountlist = rows;
+							
+							console.log( '// 5 | Get storage' );
+							
+							initUsersDetails( loadingInfo, [ 'storage' ] );
+							
+							
+							
+							/*var l = new Library( 'system.library' );
+							l.onExecuted = function( e, d )
+							{
+								var ul = null;
+								try
+								{
+									ul = JSON.parse( d );
+								}
+								catch( e ) {  }
+								
+								console.log( '[3] device/polldrives ', { e:e, d:(ul?ul:d) } );
+							}
+							l.execute( 'device/polldrives' );*/
+							
+							
+						}
+						u.execute( 'mountlist', { userid: extra, authid: Application.authId } );
+						
+					/*}
+					f.execute( 'device/list' );*/
+					
+					
 					
 					// Go to next in line ...
 					loadingList[ ++loadingSlot ](  );
