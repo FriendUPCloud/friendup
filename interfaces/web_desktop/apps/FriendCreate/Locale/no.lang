@@ -108,4 +108,8 @@ i18n_about_friend_create            : Om Friend Create
 i18n_about_desc                     : Friend Create er et fullstendig integrert utviklermiljø.
 i18n_close                          : Lukk
 
+i18n_search_keywords                : Søkeord
+i18n_replace_with                   : Erstatt med
+i18n_do_replace                     : Erstatt
+i18n_do_replace_all                 : Erstatt alle
 

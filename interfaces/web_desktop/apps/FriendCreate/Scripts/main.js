@@ -1174,8 +1174,13 @@ function ToggleOpenFolder( ele )
 
 // Search and replace ----------------------------------------------------------
 
-function Search()
+function Search( execute )
 {
+	if( execute )
+	{
+		console.log( 'Gonna search...' );
+		return;
+	}
 	if( ge( 'Search' ) )
 	{
 		ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
@@ -1183,8 +1188,22 @@ function Search()
 	}
 	var d = document.createElement( 'div' );
 	d.id = 'Search';
-	d.innerHTML = '<input type="text" placeholder="' + i18n( 'i18n_search_keywords' ) + '"/>';
+	d.innerHTML = '<input type="text" placeholder="' + i18n( 'i18n_search_keywords' ) + '"/> \
+		<input type="text" placeholder="' + i18n( 'i18n_replace_with' ) + '"/>\
+		<input type="checkbox" /> ' + i18n( 'i18n_do_replace' ) + '\
+		<input type="checkbox" /> ' + i18n( 'i18n_do_replace_all' ) + '\
+		<button type="button" class="IconButton IconSmall fa-search" onclick="Search( true )">\
+		</button>\
+		<button type="button" class="IconButton IconSmall fa-remove" onclick="CloseSearch()">\
+		</button>\
+	';
 	ge( 'StatusBar' ).appendChild( d );
+	ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
+}
+
+function CloseSearch()
+{
+	ge( 'Search' ).parentNode.removeChild( ge( 'Search' ) );
 }
 
 // End search and replace ------------------------------------------------------
