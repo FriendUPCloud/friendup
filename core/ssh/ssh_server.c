@@ -248,6 +248,8 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 		{
 			s->sshs_Usr = UMUserGetByNameDB( sb->sl_UM, uname );
 			
+			DEBUG("[SSH] User from DB taken: %p\n", s->sshs_Usr );
+			
 			if( s->sshs_Usr != NULL )
 			{
 				SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
@@ -262,6 +264,17 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 					
 					sb->LibrarySQLDrop( sb, sqllib );
 				}
+				
+				User *tmp = s->sshs_Usr;
+				while( tmp != NULL )
+				{
+					UGMAssignGroupToUser( sb->sl_UGM, tmp );
+					UMAssignApplicationsToUser( sb->sl_UM, tmp );
+		
+					tmp = (User *)tmp->node.mln_Succ;
+				}
+				
+				UMAddUser( sb->sl_UM, s->sshs_Usr );
 			}
 		}
 		
