@@ -134,7 +134,7 @@ function RefreshFiletypeSelect()
 		'sql': 'ace/mode/sql',
 		'sh': 'ace/mode/sh',
 		'as': 'ace/mode/actionscript',
-		'txt': 'ace/mode/txt',
+		'txt': 'ace/mode/text',
 		'js': 'ace/mode/javascript',
 		'lang': 'ace/mode/txt',
 		'pls': 'ace/mode/json',
