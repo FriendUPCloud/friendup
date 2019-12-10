@@ -1313,8 +1313,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	else if( strcmp( urlpath[ 1 ], "list" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( DEFAULT_CONTENT_TYPE ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		

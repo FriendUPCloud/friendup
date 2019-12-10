@@ -715,7 +715,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						FBOOL badCharFound = FALSE;
 						for( i = 0 ; i < strlen( nname ) ; i++ )
 						{
-							if( nname[ i ] == '/' || nname[ i ] == ':' )
+							if( nname[ i ] == '/' || nname[ i ] == ':' || nname[ i ] == '\'' )
 							{
 								badCharFound = TRUE;
 								break;
