@@ -346,7 +346,9 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 	if( s->sshs_Tries >= 3 )
 	{
 		DEBUG("[SSH] Too many authentication tries\n");
-		ssh_disconnect(session);
+		//SSHSession *sess = (SSHSession *)session;
+		//ssh_channel_close( sess->sshs_Chan );
+		//ssh_disconnect(session);
 		s->sshs_Error = 1;
 		sb->AuthModuleDrop( sb, ulib );
 		return SSH_AUTH_DENIED;
@@ -721,7 +723,7 @@ int SSHThread( FThread *ptr )
 		if( r==SSH_ERROR )
 		{
 			FERROR("error accepting a connection : %s\n",ssh_get_error(sshbind));
-			break;
+			continue;
 		}
 		
 		ssh_callbacks_init( &cb );
