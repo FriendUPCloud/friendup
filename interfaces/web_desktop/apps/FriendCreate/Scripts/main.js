@@ -1226,8 +1226,8 @@ function Search( execute )
 	}
 	var d = document.createElement( 'div' );
 	d.id = 'Search';
-	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=this.value; if( event.which == 13 ) Search( true );"/> \
-		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '" onkeyup="if( event.which == 13 ) Search( true )"/>\
+	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=this.value; if( event.which == 13 ) Search( true, event );"/> \
+		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '" onkeyup="if( event.which == 13 ) Search( true, event )"/>\
 		<input type="checkbox" name="doreplace" id="dorepl"/> <label for="dorepl">' + i18n( 'i18n_do_replace' ) + '</label>\
 		<input type="checkbox" name="replaceall" id="replall"/> <label for="replall">' + i18n( 'i18n_do_replace_all' ) + '</label>\
 		<button type="button" class="IconButton IconSmall fa-search" onclick="Search( true )">\
