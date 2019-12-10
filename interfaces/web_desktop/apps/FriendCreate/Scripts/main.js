@@ -123,10 +123,10 @@ Application.checkFileType = function( path )
 	}
 }
 
-function CheckFiletype()
+function RefreshFiletypeSelect()
 {
 	if( !Application.currentFile ) return;
-	var ext = Application.currentFile.Path ? Application.currentFile.Path.split( '.' ).pop().toLowerCase() : 'txt';
+	var ext = Application.currentFile.path ? Application.currentFile.path.split( '.' ).pop().toLowerCase() : 'txt';
 	
 	var types = {
 		'php': 'ace/mode/php',
@@ -409,11 +409,23 @@ function InitEditArea( file )
 	
 	InitTabs( ge( 'CodeArea' ) );
 	
+	// Add an extra event
+	file.tab.addEventListener( 'click', function( e )
+	{
+		setTimeout( function( e )
+		{
+			RefreshFiletypeSelect();
+		}, 150 );
+	}, false );
+
 	Application.currentFile = file;
 	file.tab.onclick();
 	
+	
 	if( file.refreshMinimap )
 		file.refreshMinimap();
+	
+	RefreshFiletypeSelect();
 }
 
 function RemoveEditArea( file )
@@ -571,7 +583,6 @@ function InitContentEditor( element, file )
 				clearTimeout( this.refreshQueue );
 			this.refreshQueue = setTimeout( function()
 			{ 
-				CheckFiletype();
 				file.refreshQueue = false; 
 				file.refreshMinimap(); 
 			}, 50 );
