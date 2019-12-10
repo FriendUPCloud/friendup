@@ -59,8 +59,6 @@ clients must be made or how a client should react.
 #include <pthread.h>
 #include <signal.h>
 
-#define ENABLE_SSH 1
-
 extern struct SystemBase *SLIB;
 
 void printTrace( void )
@@ -575,6 +573,7 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attrib
 		{
 			ssh_channel_write( sess->sshs_Chan, "Server will shutdown shortly\n", 29 );
 			FriendCoreManagerShutdown( SLIB->fcm );
+			ssh_channel_close( sess->sshs_Chan );
 		}
 		else
 		{
