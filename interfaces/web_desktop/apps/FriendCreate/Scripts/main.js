@@ -1413,6 +1413,16 @@ Application.receiveMessage = function( msg )
 			case 'package_generate':
 				CreatePackage();
 				break;
+			case 'launchwith':
+				if( msg.file.split( '.' ).pop().toLowerCase() == 'apf' )
+				{
+					OpenProject( msg.file );
+				}
+				else
+				{
+					new EditorFile( msg.file );
+				}
+				break;
 		}
 	}
 }
