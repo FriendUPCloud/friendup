@@ -337,3 +337,25 @@
 	margin-top: 50px;
 }
 
+#Search
+{
+	position: absolute;
+	left: 280px;
+	top: 5px;
+	width: calc(100% - 380px);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+#Search input[type=text]
+{
+	width: 130px;
+}
+
+#Filetype
+{
+	position: absolute;
+	right: 5px;
+	top: 5px;
+}

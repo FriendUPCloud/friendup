@@ -109,5 +109,8 @@ i18n_about_friend_create            : About Friend Create
 i18n_about_desc                     : Friend Create is a fully fledged Integrated Development Environment (IDE).
 i18n_close                          : Close
 
-
+i18n_search_keywords                : Search keyword
+i18n_replace_with                   : Replace with
+i18n_do_replace                     : Replace
+i18n_do_replace_all                 : Replace all
 

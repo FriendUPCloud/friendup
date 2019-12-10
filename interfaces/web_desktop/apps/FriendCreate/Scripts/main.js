@@ -123,6 +123,82 @@ Application.checkFileType = function( path )
 	}
 }
 
+function RefreshFiletypeSelect()
+{
+	if( !Application.currentFile ) return;
+	var ext = Application.currentFile.path ? Application.currentFile.path.split( '.' ).pop().toLowerCase() : 'txt';
+	
+	var types = {
+		'php': 'ace/mode/php',
+		'pl': 'ace/mode/perl',
+		'sql': 'ace/mode/sql',
+		'sh': 'ace/mode/sh',
+		'as': 'ace/mode/actionscript',
+		'txt': 'ace/mode/text',
+		'js': 'ace/mode/javascript',
+		'lang': 'ace/mode/txt',
+		'pls': 'ace/mode/json',
+		'json': 'ace/mode/json',
+		'tpl': 'ace/mode/html',
+		'ptpl': 'ace/mode/perl',
+		'xml': 'ace/mode/xml',
+		'html': 'ace/mode/html',
+		'htm': 'ace/mode/html',
+		'c': 'ace/mode/c_cpp',
+		'h': 'ace/mode/c_cpp',
+		'cpp': 'ace/mode/c_cpp',
+		'd': 'ace/mode/d',
+		'ini': 'ace/mode/ini',
+		'jsx': 'ace/mode/javascript',
+		'java': 'ace/mode/java',
+		'css': 'ace/mode/css',
+		'run': 'ace/mode/txt',
+		'apf': 'ace/mode/json',
+		'conf': 'ace/mode/json'
+	};
+	if( types[ ext ] )
+	{
+		Application.currentFile.editor.getSession().setMode( types[ ext ] );
+	}
+	else
+	{
+		Application.currentFile.editor.getSession().setMode( 'ace/mode/txt' );
+		ext = 'txt';
+	}
+	
+	if( !ge( 'Filetype' ) )
+	{
+		var d = document.createElement( 'div' );
+		d.id = 'Filetype';
+		var sel = document.createElement( 'select' );
+		for( var a in types )
+		{
+			var o = document.createElement( 'option' );
+			o.value = a;
+			o.innerHTML = a;
+			if( a == ext ) o.selected = 'selected';
+			sel.appendChild( o );
+		}
+		d.appendChild( sel );
+		ge( 'StatusBar' ).appendChild( d );
+	}
+	else
+	{
+		var opts = ge( 'Filetype' ).getElementsByTagName( 'option' );
+		for( var a = 0; a < opts.length; a++ )
+		{
+			if( opts[ a ].value == ext )
+			{
+				opts[ a ].selected = 'selected';
+			}
+			else
+			{
+				opts[ a ].selected = '';
+			}
+		}
+	}
+}
+
 // Initialize the GUI! ---------------------------------------------------------
 
 function InitGui()
@@ -333,11 +409,23 @@ function InitEditArea( file )
 	
 	InitTabs( ge( 'CodeArea' ) );
 	
+	// Add an extra event
+	file.tab.addEventListener( 'click', function( e )
+	{
+		setTimeout( function( e )
+		{
+			RefreshFiletypeSelect();
+		}, 150 );
+	}, false );
+
 	Application.currentFile = file;
 	file.tab.onclick();
 	
+	
 	if( file.refreshMinimap )
 		file.refreshMinimap();
+	
+	RefreshFiletypeSelect();
 }
 
 function RemoveEditArea( file )
@@ -1085,9 +1173,52 @@ function ToggleOpenFolder( ele )
 // End projects ----------------------------------------------------------------
 
 // Search and replace ----------------------------------------------------------
-
-function Search()
+var currKey = '';
+function Search( execute )
 {
+	if( execute )
+	{
+		var eles = ge( 'Search' ).getElementsByTagName( 'input' );
+		var inps = {};
+		for( var a = 0; a < eles.length; a++ )
+		{
+			var n = eles[a].getAttribute( 'name' );
+			inps[ n ] = eles[a];
+		}
+		
+		var ed = Application.currentFile.editor;
+		if( !ed ) return CloseSearch();
+		
+		if( !inps[ 'doreplace' ].checked )
+		{
+			ed.find( inps[ 'searchkeys' ].value, {
+				wrap: true,
+				caseSensitive: false,
+				wholeWord: false,
+				regExp: false,
+				preventScroll: false
+			} );
+		}
+		else
+		{
+			var range = ed.find( inps[ 'searchkeys' ].value, {
+				wrap: true,
+				caseSensitive: false,
+				wholeWord: false,
+				regExp: false,
+				preventScroll: false
+			} );
+			if( inps[ 'replaceall' ].checked )
+			{
+				ed.replaceAll( inps[ 'replacekeys' ].value );
+			}
+			else
+			{
+				ed.replace( inps[ 'replacekeys' ].value );
+			}
+		}
+		return;
+	}
 	if( ge( 'Search' ) )
 	{
 		ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
@@ -1095,8 +1226,23 @@ function Search()
 	}
 	var d = document.createElement( 'div' );
 	d.id = 'Search';
-	d.innerHTML = '<input type="text" placeholder="' + i18n( 'i18n_search_keywords' ) + '"/>';
+	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=this.value; if( event.which == 13 ) Search( true, event );"/> \
+		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '" onkeyup="if( event.which == 13 ) Search( true, event )"/>\
+		<input type="checkbox" name="doreplace" id="dorepl"/> <label for="dorepl">' + i18n( 'i18n_do_replace' ) + '</label>\
+		<input type="checkbox" name="replaceall" id="replall"/> <label for="replall">' + i18n( 'i18n_do_replace_all' ) + '</label>\
+		<button type="button" class="IconButton IconSmall fa-search" onclick="Search( true )">\
+		</button>\
+		<button type="button" class="IconButton IconSmall fa-remove" onclick="CloseSearch()">\
+		</button>\
+	';
 	ge( 'StatusBar' ).appendChild( d );
+	ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
+}
+
+function CloseSearch()
+{
+	currKey = '';
+	ge( 'Search' ).parentNode.removeChild( ge( 'Search' ) );
 }
 
 // End search and replace ------------------------------------------------------
