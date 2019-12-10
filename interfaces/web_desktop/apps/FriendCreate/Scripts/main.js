@@ -1173,12 +1173,50 @@ function ToggleOpenFolder( ele )
 // End projects ----------------------------------------------------------------
 
 // Search and replace ----------------------------------------------------------
-
+var currKey = '';
 function Search( execute )
 {
 	if( execute )
 	{
-		console.log( 'Gonna search...' );
+		var eles = ge( 'Search' ).getElementsByTagName( 'input' );
+		var inps = {};
+		for( var a = 0; a < eles.length; a++ )
+		{
+			var n = eles[a].getAttribute( 'name' );
+			inps[ n ] = eles[a];
+		}
+		
+		var ed = Application.currentFile.editor;
+		if( !ed ) return CloseSearch();
+		
+		if( !inps[ 'doreplace' ].checked )
+		{
+			ed.find( inps[ 'searchkeys' ].value, {
+				wrap: true,
+				caseSensitive: false,
+				wholeWord: false,
+				regExp: false,
+				preventScroll: false
+			} );
+		}
+		else
+		{
+			var range = ed.find( inps[ 'searchkeys' ].value, {
+				wrap: true,
+				caseSensitive: false,
+				wholeWord: false,
+				regExp: false,
+				preventScroll: false
+			} );
+			if( inps[ 'replaceall' ].checked )
+			{
+				ed.replaceAll( inps[ 'replacekeys' ].value );
+			}
+			else
+			{
+				ed.replace( inps[ 'replacekeys' ].value );
+			}
+		}
 		return;
 	}
 	if( ge( 'Search' ) )
@@ -1188,10 +1226,10 @@ function Search( execute )
 	}
 	var d = document.createElement( 'div' );
 	d.id = 'Search';
-	d.innerHTML = '<input type="text" placeholder="' + i18n( 'i18n_search_keywords' ) + '"/> \
-		<input type="text" placeholder="' + i18n( 'i18n_replace_with' ) + '"/>\
-		<input type="checkbox" /> ' + i18n( 'i18n_do_replace' ) + '\
-		<input type="checkbox" /> ' + i18n( 'i18n_do_replace_all' ) + '\
+	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=\'\';"/> \
+		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '"/>\
+		<input type="checkbox" name="doreplace" /> ' + i18n( 'i18n_do_replace' ) + '\
+		<input type="checkbox" name="replaceall" /> ' + i18n( 'i18n_do_replace_all' ) + '\
 		<button type="button" class="IconButton IconSmall fa-search" onclick="Search( true )">\
 		</button>\
 		<button type="button" class="IconButton IconSmall fa-remove" onclick="CloseSearch()">\
@@ -1203,6 +1241,7 @@ function Search( execute )
 
 function CloseSearch()
 {
+	currKey = '';
 	ge( 'Search' ).parentNode.removeChild( ge( 'Search' ) );
 }
 
