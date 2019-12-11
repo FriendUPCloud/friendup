@@ -711,6 +711,7 @@ function SaveFile( file, saveas )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
 			file.updateState( 'Reading' );
+			RefreshFiletypeSelect();
 		}
 		f.save( file.editor.getValue() );
 	}
@@ -734,6 +735,7 @@ function SaveFile( file, saveas )
 					StatusMessage( i18n( 'i18n_saved' ) );
 					file.updateTab();
 					file.updateState( 'Reading' );
+					RefreshFiletypeSelect();
 				}
 				f.save( file.editor.getValue() );
 			},
