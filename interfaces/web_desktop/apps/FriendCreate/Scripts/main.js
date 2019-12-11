@@ -304,7 +304,9 @@ EditorFile.prototype.close = function()
 
 EditorFile.prototype.updateState = function( state )
 {
-	this.state = state;
+	if( typeof( state ) != 'undefined' )
+		this.state = state;
+	else state = this.state;
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
@@ -1114,6 +1116,12 @@ function RefreshProjects()
 		{
 			projectFiles[ eles[ a ].getAttribute( 'path' ) ] = eles[ a ];
 		}
+	}
+	
+	// Update files status
+	for( var a = 0; a < files.length; a++ )
+	{
+		files[ a ].updateState();
 	}
 	
 	// List files recursively
