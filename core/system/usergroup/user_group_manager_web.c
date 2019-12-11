@@ -1090,13 +1090,14 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				}
 				lg = (UserGroup *)lg->node.mln_Succ;
 			}
-			BufStringAddSize( retString, "]}", 2 );
-		
-			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
-			retString->bs_Buffer = NULL;
-			BufStringDelete( retString );
+			
 			FRIEND_MUTEX_UNLOCK( &(l->sl_UGM->ugm_Mutex) );
 		}
+		BufStringAddSize( retString, "]}", 2 );
+		
+		HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
+		retString->bs_Buffer = NULL;
+		BufStringDelete( retString );
 		
 		if( type != NULL )
 		{

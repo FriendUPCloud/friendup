@@ -1016,31 +1016,6 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 					usrpos = 0;
 				}
 				
-				/*
-				// User Status == DISABLED
-				if( strcmp( (char *)row[ 6 ], "1" ) )
-				{
-					if( usrpos == 0 )
-					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
-					}
-					else
-					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
-					}
-				}
-				else
-				{
-					if( usrpos == 0 )
-					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
-					}
-					else
-					{
- 						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
-					}
-				}*/
-				
 				if( usrpos == 0 )
 				{
 					itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 4 ] );
@@ -1054,9 +1029,10 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 				usrpos++;
 			}
 			sqlLib->FreeResult( sqlLib, result );
-			BufStringAddSize( bs, "]}", 2 );
 		}
 		l->LibrarySQLDrop( l, sqlLib );
+		
+		BufStringAddSize( bs, "]}", 2 );
 		
 		BufStringAddSize( bs, "]", 1 );
 	}
