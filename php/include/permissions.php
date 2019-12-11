@@ -443,7 +443,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 					
 					// UserID's that this User has access to ...
 					
-					if( $workgroups && is_array( $workgroups ) )
+					if( $workgroups && is_array( $workgroups ) || ( $listdetails && $sysadmin[ 'WORKGROUP_GLOBAL' ] ) )
 					{
 						// Needed for pawel code ...
 						
@@ -454,7 +454,10 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							if( $rows = $SqlDatabase->FetchObjects( '
 								SELECT g.* 
 								FROM `FUserGroup` g 
-								WHERE g.ID IN (' . implode( ',', $workgroups ) . ') 
+								WHERE g.Type = "Workgroup" 
+								' . ( $sysadmin[ 'WORKGROUP_GLOBAL' ] ? '' : '
+								AND g.ID IN (' . implode( ',', $workgroups ) . ') 
+								' ) . '
 								ORDER BY g.ID ASC 
 							' ) )
 							{
@@ -502,8 +505,10 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								`FUserGroup` g, 
 								`FUserToGroup` ug 
 							WHERE 
-									g.ID IN (' . implode( ',', $workgroups ) . ') 
-								AND g.Type = "Workgroup" 
+									g.Type = "Workgroup" 
+								' . ( $sysadmin[ 'WORKGROUP_GLOBAL' ] ? '' : '
+								AND g.ID IN (' . implode( ',', $workgroups ) . ') 
+								' ) . '
 								AND ug.UserGroupID = g.ID 
 							ORDER BY 
 								ug.UserID ASC 
@@ -766,8 +771,15 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							
 							if( $listdetails == 'workgroup' || $listdetails == 'workgroups' )
 							{
+								$array = [];
+								
+								if( $groupdetails )
+								{
+									foreach( $groupdetails as $v ) $array[] = $v;
+								}
+								
 								$out->data->details = new stdClass();
-								$out->data->details->groups = ( $groupdetails ? $groupdetails : [] );
+								$out->data->details->groups = $array;
 							}
 						}
 						
@@ -777,8 +789,15 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							
 							if( $listdetails == 'user' || $listdetails == 'users' )
 							{
+								$array = [];
+								
+								if( $userdetails )
+								{
+									foreach( $userdetails as $v ) $array[] = $v;
+								}
+								
 								$out->data->details = new stdClass();
-								$out->data->details->users = ( $userdetails ? $userdetails : [] );
+								$out->data->details->users = $array;
 							}
 						}
 						
