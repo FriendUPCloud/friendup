@@ -115,7 +115,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 						try
 						{
 							var data = JSON.parse( d );
-						
+							
+							// Workaround for now .... until rolepermissions is correctly implemented in C ...
+							
+							console.log( data );
+							
+							if( data && data.data && data.data.details && data.data.details.group )
+							{
+								data = data.data.details.group;
+							}
+							
 							if( data )
 							{
 								return callback( true, data );
@@ -155,7 +164,16 @@ Sections.accounts_workgroups = function( cmd, extra )
 						try
 						{
 							var data = JSON.parse( d );
-						
+							
+							// Workaround for now .... until rolepermissions is correctly implemented in C ...
+							
+							console.log( data );
+							
+							if( data && data.data && data.data.details && data.data.details.groups )
+							{
+								data = data.data.details;
+							}
+														
 							if( data.groups )
 							{
 								return callback( true, data.groups );
@@ -480,7 +498,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 			list( function( e, d )
 			{
 				console.log( { e:e, d:d } );
-			
+				
 				//if( e != 'ok' ) return;
 				var userList = null;
 				try

@@ -625,8 +625,8 @@ Sections.accounts_users = function( cmd, extra )
 															'authid'  : Application.authId, 
 															'data'    : { 
 																'permission' : [ 
-																	'PERM_WORKGROUP_GLOBAL', 
-																	'PERM_WORKGROUP_WORKGROUP' 
+																	'PERM_USER_GLOBAL', 
+																	'PERM_USER_WORKGROUP' 
 																]
 															}, 
 															'object'   : 'user', 
