@@ -1249,7 +1249,7 @@ function CloseSearch()
 
 // End search and replace ------------------------------------------------------
 
-// Helper
+// Helper, sets statusmessage in the bottom left corner
 function StatusMessage( str )
 {
 	var existing = ge( 'StatusMessage' ).getElementsByTagName( 'div' );
@@ -1258,7 +1258,6 @@ function StatusMessage( str )
 		existing[a].style.left = '20px';
 		existing[a].style.opacity = 0;
 	}
-	
 	
 	var el = document.createElement( 'div' );
 	el.style.opacity = 0;
