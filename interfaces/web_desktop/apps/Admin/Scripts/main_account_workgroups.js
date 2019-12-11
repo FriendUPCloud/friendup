@@ -118,7 +118,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							// Workaround for now .... until rolepermissions is correctly implemented in C ...
 							
-							console.log( data );
+							console.log( '[2] ', data );
 							
 							if( data && data.data && data.data.details && data.data.details.group )
 							{
@@ -167,7 +167,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							
 							// Workaround for now .... until rolepermissions is correctly implemented in C ...
 							
-							console.log( data );
+							console.log( '[1] ', data );
 							
 							if( data && data.data && data.data.details && data.data.details.groups )
 							{
