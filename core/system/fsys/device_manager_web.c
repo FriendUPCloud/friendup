@@ -754,7 +754,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		}
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "userid" );
-		if( el != NULL && loggedSession->us_User->u_IsAdmin == TRUE )
+		if( el != NULL )
 		{
 			char *next;
 			userID = (FLONG)strtol(( char *)el->data, &next, 0);
@@ -771,6 +771,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			
 			if( devname != NULL && ( ldevname = FCalloc( strlen( devname ) + 50, sizeof(char) ) ) != NULL )
 			{
+				DEBUG("Devname found\n");
 				UrlDecode( ldevname, devname );
 				strcpy( devname, ldevname );
 				
@@ -805,6 +806,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		{
 			if( loggedSession != NULL )
 			{
+				DEBUG("loggedSession found\n");
 				mountError = -1;
 				char *ldevname;
 				User *activeUser = loggedSession->us_User;
@@ -814,6 +816,9 @@ AND LOWER(f.Name) = LOWER('%s')",
 				{
 					char *authid = NULL;
 					char *args = NULL;
+					
+					DEBUG("UserID parameter found: %d\n", userID );
+					
 					el = HttpGetPOSTParameter( request, "authid" );
 					if( el != NULL )
 					{
@@ -853,6 +858,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 				{
 					char *type = NULL;
 					int fid = 0;
+					
+					DEBUG("Device unmounted = FALSE\n");
 				
 					File *f = NULL;
 					LIST_FOR_EACH( activeUser->u_MountedDevs, f, File * )
