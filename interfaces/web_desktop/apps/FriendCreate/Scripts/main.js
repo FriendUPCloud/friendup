@@ -65,6 +65,7 @@ var gui = {
 
 var files = [];
 var projectFiles = {}; // Index
+var projectFolders = {};
 var projects = [];
 
 // Launch view logic -----------------------------------------------------------
@@ -1042,6 +1043,13 @@ function CloseProject( proj )
 		o.push( projects[ a ] );
 	}
 	projects = o;
+	var u = {};
+	for( var a in projectFolders )
+	{
+		if( a != proj.ID )
+			u[ a ] = projectFolders[ a ];
+	}
+	projectFolders = u;
 	if( proj == Application.currentProject )
 		Application.currentProject = null;
 	RefreshProjects();
@@ -1073,6 +1081,10 @@ function RefreshProjects()
 		var pr = projects[ a ];
 		var fstr = '';
 		
+		// Track folder state
+		if( !projectFolders[ pr.ID ] )
+			projectFolders[ pr.ID ] = {};
+		
 		var projectpath = pr.Path.split( '/' );
 		projectpath.pop();
 		projectpath = projectpath.join( '/' ) + '/';
@@ -1096,7 +1108,7 @@ function RefreshProjects()
 				}
 			}
 			sortable = sortable.sort();
-			fstr = listFiles( sortable, 1, false, {} );
+			fstr = listFiles( sortable, 1, false, {}, pr.ID );
 		}
 		var current = ' BackgroundHeavy Rounded';
 		if( Application.currentProject == pr )
@@ -1125,7 +1137,7 @@ function RefreshProjects()
 	}
 	
 	// List files recursively
-	function listFiles( list, depth, path, folders )
+	function listFiles( list, depth, path, folders, projectId )
 	{
 		var str = '';
 		
@@ -1142,8 +1154,11 @@ function RefreshProjects()
 			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
 			{
 				folders[ list[ a ].path ] = true;
-				str += '<li class="Folder" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
-				str += listFiles( list, depth + 1, list[ a ].path );
+				if( !projectFolders[ projectId ][ list[ a ].path ] )
+					projectFolders[ projectId ][ list[ a ].path ] = {};
+				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
+				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				str += listFiles( list, depth + 1, list[ a ].path, false, projectId );
 			}
 		}
 		if( str.length ) str = '<ul>' + str + '</ul>';
@@ -1170,12 +1185,16 @@ function SetCurrentProject( p )
 
 function ToggleOpenFolder( ele )
 {
+	var id = ele.getAttribute( 'projectId' );
+	var pa = ele.getAttribute( 'path' );
 	if( ele.classList.contains( 'Open' ) )
 	{
+		projectFolders[ id ][ pa ].state = '';
 		ele.classList.remove( 'Open' );
 	}
 	else
 	{
+		projectFolders[ id ][ pa ].state = 'open';
 		ele.classList.add( 'Open' );
 	}
 }
@@ -1392,6 +1411,7 @@ Application.receiveMessage = function( msg )
 					if( projects[ a ].ID == msg.project.ID )
 					{
 						projects[ a ] = msg.project;
+						
 						Application.currentProject = projects[ a ];
 						SaveProject( Application.currentProject );
 						break;
