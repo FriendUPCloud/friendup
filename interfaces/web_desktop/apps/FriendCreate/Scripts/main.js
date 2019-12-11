@@ -63,10 +63,10 @@ var gui = {
 
 // Files and projects ----------------------------------------------------------
 
-var files = [];
-var projectFiles = {}; // Index
-var projectFolders = {};
-var projects = [];
+var files = []; // All open files
+var projectFiles = {}; // Index of files
+var projectFolders = {}; // List of projects and their folder states (gui)
+var projects = []; // All projects
 
 // Launch view logic -----------------------------------------------------------
 
