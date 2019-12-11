@@ -1399,9 +1399,9 @@ Application.receiveMessage = function( msg )
 				abw = new View( {
 					title: i18n( 'i18n_about_friend_create' ),
 					width: 600,
-					height: 600
+					height: 380
 				} );
-				var f = new File( 'Progdir:Templates/about.html' );
+				var f = new File( 'Progdir:Templates/about_' + Application.language + '.html' );
 				f.i18n();
 				f.onLoad = function( data )
 				{
