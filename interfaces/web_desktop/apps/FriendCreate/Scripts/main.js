@@ -1384,6 +1384,7 @@ Application.receiveMessage = function( msg )
 					{
 						projects[ a ] = msg.project;
 						Application.currentProject = projects[ a ];
+						SaveProject( Application.currentProject );
 						break;
 					}
 				}
