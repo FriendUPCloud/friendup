@@ -480,7 +480,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 									}
 									else
 									{
-										$gr->id       = $v->ID;
+										$gr->ID       = $v->ID;
 										$gr->userid   = $v->UserID;
 										$gr->parentid = $v->ParentID;
 										$gr->name     = $v->Name;
