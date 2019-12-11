@@ -1308,11 +1308,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				char *data = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", command, &dataLength );
 				if( data != NULL )
 				{
+					/*
 					if( strncmp( data, "ok", 2 ) == 0 )
 					{
-						respSet = TRUE;
-						HttpSetContent( response, data, dataLength );
 					}
+					*/
+					respSet = TRUE;
+					HttpSetContent( response, data, dataLength );
 				}
 				FFree( command );
 			}
