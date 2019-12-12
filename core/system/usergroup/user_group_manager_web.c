@@ -1394,7 +1394,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			
 			BufString *retExtString = BufStringNew();
-			BufStringAddSize( retExtString, "{", 1 );
+			BufStringAddSize( retExtString, "[", 1 );
 			
 			if( groupID > 0 )
 			{
