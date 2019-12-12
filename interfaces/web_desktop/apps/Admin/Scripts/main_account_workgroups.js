@@ -594,7 +594,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 								
 								if( !found )
 								{
-									continue;
+									//continue;
 								}
 							}
 							

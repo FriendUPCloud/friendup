@@ -79,7 +79,7 @@ i18n_find_applications                 : Finn programmer
 i18n_PERM_USER_GLOBAL                  : Endre brukere globalt
 i18n_PERM_USER_WORKGROUP               : Endre brukere per arbeidsgruppe
 i18n_PERM_WORKGROUP_GLOBAL             : Endre arbeidsgrupper globalt
-i18n_PERM_WORKGROUP_WORKGROUP          : Endre under-arbeidsgrupper
+i18n_PERM_WORKGROUP_WORKGROUP          : Endre arbeidsgrupper
 i18n_PERM_TEMPLATE_GLOBAL              : Endre maler globalt
 i18n_PERM_TEMPLATE_WORKGROUP           : Endre maler under arbeidsgruppe
 
