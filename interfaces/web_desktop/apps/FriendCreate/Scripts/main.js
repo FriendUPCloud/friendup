@@ -198,12 +198,21 @@ function RefreshFiletypeSelect()
 			}
 		}
 	}
+	
+	Application.currentFile.editor.setOptions( { // Enable autocompletion
+		enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+	} );
 }
 
 // Initialize the GUI! ---------------------------------------------------------
 
 function InitGui()
 {
+	// Include ace editor language tools
+	ace.require( 'ace/ext/language_tools' );
+	
 	InitTabs( ge( 'SideBarTabs' ) );
 	if( ge( 'SideBar' ) )
 	{
@@ -465,6 +474,11 @@ function InitContentEditor( element, file )
 	file.editor = ace.edit( area.id );
 	file.editor.setFontSize( 14 );
 	file.editor.setValue( file.content );
+	file.editor.setOptions( { // Enable autocompletion
+		enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+	} );
 	file.editor.clearSelection();
 	file.editor.gotoLine( 0, 0, true );	
 	file.editor.setTheme( 'ace/theme/' + settings.theme );
@@ -997,6 +1011,8 @@ function SaveProject( project, saveas )
 	}
 	// Done cleaning up
 
+	console.log( 'Saving project.', project, saveas );
+
 	if( !saveas && project.Path )
 	{
 		var f = new File( project.Path );
@@ -1061,7 +1077,10 @@ function RefreshProjects()
 	{
 		ge( 'SB_Project' ).innerHTML = '\
 			<div class="Padding"><p>' + i18n( 'i18n_no_projects' ) + '</p>\
-			<p><button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button></p>\
+				<p>\
+					<button type="button" class="IconSmall fa-folder-open" onclick="OpenProject()"> ' + i18n( 'menu_project_open' ) + '</button>\
+					<button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button>\
+				</p>\
 			</div>';
 		return;
 	}
