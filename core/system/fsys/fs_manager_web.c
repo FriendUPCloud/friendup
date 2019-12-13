@@ -25,6 +25,13 @@
 #include <system/cache/cache_manager.h>
 #include <system/fsys/fsys_activity.h>
 
+#define CHECK_BAD_CHARS( PTH, INT, RETVAL ) \
+if( PTH[ INT ] == '/' || PTH[ INT ] == ':' || PTH[ INT ] == '\'' ) \
+{ \
+	RETVAL = TRUE; \
+	break; \
+}
+
 /**
  * Filesystem web calls handler
  *
@@ -713,13 +720,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						// check if its allowed to use char
 						unsigned int i;
 						FBOOL badCharFound = FALSE;
+						
 						for( i = 0 ; i < strlen( nname ) ; i++ )
 						{
+							CHECK_BAD_CHARS( nname, i, badCharFound );
+							/*
 							if( nname[ i ] == '/' || nname[ i ] == ':' || nname[ i ] == '\'' )
 							{
 								badCharFound = TRUE;
 								break;
 							}
+							*/
 						}
 						
 						if( badCharFound == FALSE )
@@ -928,11 +939,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						// find "bad" chars in file/dir name
 						for( i = lastChar ; i < plen ; i++ )
 						{
+							CHECK_BAD_CHARS( lpath, i, badCharFound );
+							/*
 							if( lpath[ i ] == '/' || lpath[ i ] == ':' || lpath[ i ] == '\'' )
 							{
 								badCharFound = TRUE;
 								break;
 							}
+							*/
 						}
 						
 						if( have == TRUE )
