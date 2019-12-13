@@ -62,7 +62,7 @@ if( isset( $args->authid ) )
 						$args->args = new stdClass();
 					}
 				
-					$args->args->ParentID = $perm->data->workgroups;
+					$args->args->workgroups = $perm->data->workgroups;
 				}
 			
 			}
@@ -95,11 +95,11 @@ if( $rows = $SqlDatabase->FetchObjects( '
 					m.DataTable = "FUserGroup" 
 				AND m.DataID = g.ID 
 			) 
-	WHERE `Type`=\'Workgroup\' 
-	' . ( isset( $args->args->ParentID ) ? '
-	AND `ParentID` = \'' . $args->args->ParentID . '\' 
+	WHERE g.Type = \'Workgroup\' 
+	' . ( isset( $args->args->workgroups ) ? '
+	AND ( g.ID IN (' . $args->args->workgroups . ') OR g.ParentID IN (' . $args->args->workgroups . ') ) 
 	' : '' ) . '
-	ORDER BY `Name` ASC 
+	ORDER BY g.Name ASC 
 ' ) )
 {
 	foreach( $rows as $row )
