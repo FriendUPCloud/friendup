@@ -564,6 +564,8 @@ Sections.accounts_users = function( cmd, extra )
 										}
 										else if( info.workgroups )
 										{
+											console.log( 'info.workgroups: ', info.workgroups );
+											
 											for( var a = 0; a < info.workgroups.length; a++ )
 											{
 												var found = false;
@@ -575,6 +577,9 @@ Sections.accounts_users = function( cmd, extra )
 														break;
 													}
 												}
+												
+												
+												
 												str += '<div class="HRow">\
 													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
 													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
@@ -595,7 +600,73 @@ Sections.accounts_users = function( cmd, extra )
 												( function( b ) {
 													b.onclick = function( e )
 													{
-														var enabled = false;
+														var args = { 
+															id     : this.getAttribute( 'wid' ), 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+														
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.getAttribute( 'wid' ) 
+														} );
+														
+														if( this.classList.contains( 'fa-toggle-off' ) )
+														{
+															// Toggle on ...
+															
+															console.log( '// Toggle on ', args );
+															
+															if( args && args.id && args.users )
+															{
+																var f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+																	console.log( { e:e, d:d } );
+																	
+																	this.btn.classList.remove( 'fa-toggle-off' );
+																	this.btn.classList.add( 'fa-toggle-on' );
+																
+																}
+																f.execute( 'group/addusers', args );
+															}
+															
+														}
+														else
+														{
+															// Toggle off ...
+															
+															console.log( '// Toggle off ', args );
+															
+															if( args && args.id && args.users )
+															{
+																var f = new Library( 'system.library' );
+																f.btn = this;
+																f.onExecuted = function( e, d )
+																{
+																	console.log( { e:e, d:d } );
+																	
+																	this.btn.classList.remove( 'fa-toggle-on' );
+																	this.btn.classList.add( 'fa-toggle-off' );
+																}
+																f.execute( 'group/removeusers', args );
+															}
+															
+														}
+														
+														return;
+														
+														/*var enabled = false;
 														if( this.classList.contains( 'fa-toggle-off' ) )
 														{
 															this.classList.remove( 'fa-toggle-off' );
@@ -607,14 +678,20 @@ Sections.accounts_users = function( cmd, extra )
 															this.classList.remove( 'fa-toggle-on' );
 															this.classList.add( 'fa-toggle-off' );
 														}
+														
 														var args = { id: userInfo.ID, authid: Application.authId };
+														
 														args.workgroups = [];
 														
-														for( var c = 0; c < workBtns.length; c++ )
+														if( workBtns.length > 0 )
 														{
-															if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+															for( var c = 0; c < workBtns.length; c++ )
 															{
-																args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+																if( workBtns[c].classList.contains( 'fa-toggle-on' ) )
+																{
+																	args.workgroups.push( workBtns[c].getAttribute( 'wid' ) );
+																}
+																
 															}
 														}
 														args.workgroups = args.workgroups.join( ',' );
@@ -625,8 +702,8 @@ Sections.accounts_users = function( cmd, extra )
 															'authid'  : Application.authId, 
 															'data'    : { 
 																'permission' : [ 
-																	'PERM_USER_GLOBAL', 
-																	'PERM_USER_WORKGROUP' 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
 																]
 															}, 
 															'object'   : 'user', 
@@ -643,7 +720,7 @@ Sections.accounts_users = function( cmd, extra )
 															
 															console.log( { e:e, d:d } );
 														}
-														f.execute( 'user/updategroups', args );
+														f.execute( 'user/updategroups', args );*/
 													}
 												} )( workBtns[ a ] );
 											}

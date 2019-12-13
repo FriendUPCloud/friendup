@@ -1164,12 +1164,13 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 				}
 				FFree( command );
 			}
+
 			//if( args != NULL )
 			//{
 			//	FFree( args );
 			//}
 		}
-			
+
 		if( type != NULL )
 		{
 			FFree( type );
@@ -1522,7 +1523,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 			BufStringAddSize( retString, "ok<!--separate-->{", 18 );
 			
 			BufString *retExtString = BufStringNew();
-			BufStringAddSize( retExtString, "{", 1 );
+			BufStringAddSize( retExtString, "[", 1 );
 			
 			if( groupID > 0 )
 			{

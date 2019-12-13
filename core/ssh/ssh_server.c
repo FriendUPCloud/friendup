@@ -59,8 +59,6 @@ clients must be made or how a client should react.
 #include <pthread.h>
 #include <signal.h>
 
-#define ENABLE_SSH 1
-
 extern struct SystemBase *SLIB;
 
 void printTrace( void )
@@ -250,6 +248,8 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 		{
 			s->sshs_Usr = UMUserGetByNameDB( sb->sl_UM, uname );
 			
+			DEBUG("[SSH] User from DB taken: %p\n", s->sshs_Usr );
+			
 			if( s->sshs_Usr != NULL )
 			{
 				SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
@@ -264,6 +264,17 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 					
 					sb->LibrarySQLDrop( sb, sqllib );
 				}
+				
+				User *tmp = s->sshs_Usr;
+				while( tmp != NULL )
+				{
+					UGMAssignGroupToUser( sb->sl_UGM, tmp );
+					UMAssignApplicationsToUser( sb->sl_UM, tmp );
+		
+					tmp = (User *)tmp->node.mln_Succ;
+				}
+				
+				UMAddUser( sb->sl_UM, s->sshs_Usr );
 			}
 		}
 		
@@ -335,7 +346,9 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 	if( s->sshs_Tries >= 3 )
 	{
 		DEBUG("[SSH] Too many authentication tries\n");
-		ssh_disconnect(session);
+		//SSHSession *sess = (SSHSession *)session;
+		//ssh_channel_close( sess->sshs_Chan );
+		//ssh_disconnect(session);
 		s->sshs_Error = 1;
 		sb->AuthModuleDrop( sb, ulib );
 		return SSH_AUTH_DENIED;
@@ -575,6 +588,7 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attrib
 		{
 			ssh_channel_write( sess->sshs_Chan, "Server will shutdown shortly\n", 29 );
 			FriendCoreManagerShutdown( SLIB->fcm );
+			ssh_channel_close( sess->sshs_Chan );
 		}
 		else
 		{
@@ -709,7 +723,7 @@ int SSHThread( FThread *ptr )
 		if( r==SSH_ERROR )
 		{
 			FERROR("error accepting a connection : %s\n",ssh_get_error(sshbind));
-			break;
+			continue;
 		}
 		
 		ssh_callbacks_init( &cb );

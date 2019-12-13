@@ -1316,7 +1316,7 @@ int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname )
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				// User Status == DISABLED
-				DEBUG("Check user status: %s\n", (char *)row[ 1 ] );
+				//DEBUG("Check user status: %s\n", (char *)row[ 1 ] );
 				if( strncmp( (char *)row[ 1 ], "1", 1 ) == 0 )
 				{
 					if( usrpos == 0 )
