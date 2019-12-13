@@ -456,7 +456,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								FROM `FUserGroup` g 
 								WHERE g.Type = "Workgroup" 
 								' . ( $sysadmin[ 'WORKGROUP_GLOBAL' ] ? '' : '
-								AND g.ID IN (' . implode( ',', $workgroups ) . ') 
+								AND ( g.ID IN (' . implode( ',', $workgroups ) . ') OR g.ParentID IN (' . implode( ',', $workgroups ) . ') ) 
 								' ) . '
 								ORDER BY g.ID ASC 
 							' ) )
@@ -507,7 +507,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 							WHERE 
 									g.Type = "Workgroup" 
 								' . ( $sysadmin[ 'WORKGROUP_GLOBAL' ] ? '' : '
-								AND g.ID IN (' . implode( ',', $workgroups ) . ') 
+								AND ( g.ID IN (' . implode( ',', $workgroups ) . ') OR g.ParentID IN (' . implode( ',', $workgroups ) . ') ) 
 								' ) . '
 								AND ug.UserGroupID = g.ID 
 							ORDER BY 

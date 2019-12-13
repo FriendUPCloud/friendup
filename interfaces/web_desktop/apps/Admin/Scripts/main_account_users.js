@@ -633,6 +633,8 @@ Sections.accounts_users = function( cmd, extra )
 															'objectid' : userInfo.ID 
 														} );
 														
+														// TODO: Change this method to only remove and add the user to workgroups that is new ... Check if there is rolepermissions ...
+														
 														// Reload user gui now
 														var f = new Library( 'system.library' );
 														f.onExecuted = function( e, d )
