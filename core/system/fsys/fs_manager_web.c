@@ -25,6 +25,13 @@
 #include <system/cache/cache_manager.h>
 #include <system/fsys/fsys_activity.h>
 
+#define CHECK_BAD_CHARS( PTH, INT, RETVAL ) \
+if( PTH[ INT ] == '/' || PTH[ INT ] == ':' || PTH[ INT ] == '\'' ) \
+{ \
+	RETVAL = TRUE; \
+	break; \
+}
+
 /**
  * Filesystem web calls handler
  *
@@ -713,13 +720,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						// check if its allowed to use char
 						unsigned int i;
 						FBOOL badCharFound = FALSE;
+						
 						for( i = 0 ; i < strlen( nname ) ; i++ )
 						{
-							if( nname[ i ] == '/' || nname[ i ] == ':' )
+							CHECK_BAD_CHARS( nname, i, badCharFound );
+							/*
+							if( nname[ i ] == '/' || nname[ i ] == ':' || nname[ i ] == '\'' )
 							{
 								badCharFound = TRUE;
 								break;
 							}
+							*/
 						}
 						
 						if( badCharFound == FALSE )
@@ -902,6 +913,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( lpath != NULL )
 					{
 						FBOOL have = TRUE;
+						FBOOL badCharFound = FALSE;
+						int i, lastChar = 0;
+						int plen = strlen( lpath );
 						
 						if( request->h_RequestSource == HTTP_SOURCE_FC && l->sl_Sentinel != NULL &&  loggedSession->us_User == l->sl_Sentinel->s_User )
 						{
@@ -912,24 +926,56 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							have = FSManagerCheckAccess( l->sl_FSM, lpath, actDev->f_ID, loggedSession->us_User, "--W---" );
 						}
 						
+						// we must get only file/dir name to check it
+						for( i = 0 ; i < plen ; i++ )
+						{
+							if( lpath[ i ] == ':' || lpath[ i ] == '/' )
+							{
+								// file/dir name starts just after / or : sign
+								lastChar = i + 1;
+							}
+						}
+						
+						// find "bad" chars in file/dir name
+						for( i = lastChar ; i < plen ; i++ )
+						{
+							CHECK_BAD_CHARS( lpath, i, badCharFound );
+							/*
+							if( lpath[ i ] == '/' || lpath[ i ] == ':' || lpath[ i ] == '\'' )
+							{
+								badCharFound = TRUE;
+								break;
+							}
+							*/
+						}
+						
 						if( have == TRUE )
 						{
-							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
-							int error = actFS->MakeDir( actDev, lpath );
+							if( badCharFound == FALSE )
+							{
+								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								int error = actFS->MakeDir( actDev, lpath );
 						
-							if( error != 0 )
+								if( error != 0 )
+								{
+									char dictmsgbuf1[ 196 ];
+									snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "MakeDir", error );
+									snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+								}
+								else
+								{
+									sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
+									DEBUG( "[FSMWebRequest] Makedir Notifying %s  pointer to SB %p\n", path, l );
+									DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+								}
+								HttpAddTextContent( response, tmp );
+							}
+							else	// bad chars
 							{
 								char dictmsgbuf1[ 196 ];
-								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "MakeDir", error );
-								snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_BAD_CHARS_USED], path );
+								snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_BAD_CHARS_USED );
 							}
-							else
-							{
-								sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
-								DEBUG( "[FSMWebRequest] Makedir Notifying %s  pointer to SB %p\n", path, l );
-								DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
-							}
-							HttpAddTextContent( response, tmp );
 						}
 						else
 						{
