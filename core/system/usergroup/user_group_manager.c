@@ -1181,11 +1181,13 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 		
 		if( type == NULL )
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
+			//snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupID=ug.ID order by utg.UserGroupID" );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup ug left outer join FUserToGroup utg on ug.ID=utg.UserGroupID left join FUser u on utg.UserID=u.ID order by utg.UserGroupID" );
 		}
 		else
 		{
-			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
+			//snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserToGroup utg inner join FUser u on utg.UserID=u.ID inner join FUserGroup ug on utg.UserGroupId=ug.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
+			snprintf( tmpQuery, sizeof(tmpQuery), "SELECT ug.ID,ug.Name,ug.ParentID,ug.Type,u.UniqueID,u.Status,u.ModifyTime FROM FUserGroup ug left outer join FUserToGroup utg on ug.ID=utg.UserGroupID left join FUser u on utg.UserID=u.ID WHERE ug.Type='%s' order by utg.UserGroupID", type );
 		}
 		
 		BufStringAddSize( bs, "[", 1 );
@@ -1218,47 +1220,26 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 					usrpos = 0;
 				}
 				
-				/*
-				// User Status == DISABLED
-				if( strcmp( (char *)row[ 6 ], "1" ) )
+				if( row[ 4 ] != NULL )
 				{
 					if( usrpos == 0 )
 					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+						itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 4 ] );
 					}
 					else
 					{
-						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
+						itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 4 ] );
 					}
-				}
-				else
-				{
-					if( usrpos == 0 )
-					{
-						itmp = snprintf( tmp, sizeof(tmp), "{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
-					}
-					else
-					{
- 						itmp = snprintf( tmp, sizeof(tmp), ",{\"userid\":\"%s\",\"lastupdate\":%s}", (char *)row[ 4 ], (char *)row[ 7 ] );
-					}
-				}*/
 				
-				if( usrpos == 0 )
-				{
-					itmp = snprintf( tmp, sizeof(tmp), "\"%s\"", (char *)row[ 4 ] );
+					BufStringAddSize( bs, tmp, itmp );
+					usrpos++;
 				}
-				else
-				{
- 					itmp = snprintf( tmp, sizeof(tmp), ",\"%s\"", (char *)row[ 4 ] );
-				}
-				
-				BufStringAddSize( bs, tmp, itmp );
-				usrpos++;
 			}
 			sqlLib->FreeResult( sqlLib, result );
-			BufStringAddSize( bs, "]}", 2 );
 		}
 		l->LibrarySQLDrop( l, sqlLib );
+		
+		BufStringAddSize( bs, "]}", 2 );
 		
 		BufStringAddSize( bs, "]", 1 );
 	}

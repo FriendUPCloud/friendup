@@ -69,6 +69,7 @@ typedef struct File
 	char						*f_FSysName;        // filesystem name required by database
 	void						*f_DOSDriver;
 	void						*f_FSys;            // filesystem type
+	FULONG						f_UserID;			// field from database. User who mounted drive
 	void						*f_User;            // user which mounted device / or file (or owner)
 	
 	// device details
