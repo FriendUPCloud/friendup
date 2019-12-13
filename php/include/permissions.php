@@ -443,28 +443,31 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 					
 					// UserID's that this User has access to ...
 					
-					if( $workgroups && is_array( $workgroups ) || ( $listdetails && $sysadmin[ 'WORKGROUP_GLOBAL' ] ) )
+					if( $workgroups && is_array( $workgroups ) || $sysadmin[ 'WORKGROUP_GLOBAL' ] )
 					{
-						// Needed for pawel code ...
 						
-						if( $listdetails )
+						// TODO: Connect user or users to groups or group ...
+						
+						if( $rows = $SqlDatabase->FetchObjects( '
+							SELECT g.* 
+							FROM `FUserGroup` g 
+							WHERE g.Type = "Workgroup" 
+							' . ( $sysadmin[ 'WORKGROUP_GLOBAL' ] ? '' : '
+							AND ( g.ID IN (' . implode( ',', $workgroups ) . ') OR g.ParentID IN (' . implode( ',', $workgroups ) . ') ) 
+							' ) . '
+							ORDER BY g.ID ASC 
+						' ) )
 						{
-							// TODO: Connect user or users to groups or group ...
-							
-							if( $rows = $SqlDatabase->FetchObjects( '
-								SELECT g.* 
-								FROM `FUserGroup` g 
-								WHERE g.Type = "Workgroup" 
-								' . ( $sysadmin[ 'WORKGROUP_GLOBAL' ] ? '' : '
-								AND ( g.ID IN (' . implode( ',', $workgroups ) . ') OR g.ParentID IN (' . implode( ',', $workgroups ) . ') ) 
-								' ) . '
-								ORDER BY g.ID ASC 
-							' ) )
+							foreach( $rows as $v )
 							{
-								foreach( $rows as $v )
+								$workgroups[$v->ID] = $v->ID;
+								
+								// Needed for pawel code ...
+					
+								if( $listdetails )
 								{
 									$gr = new stdClass;
-									
+								
 									if( $object == 'workgroup' && $objectid )
 									{
 										if( $objectid == $v->ID )
@@ -487,7 +490,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 										$gr->type     = $v->Type;
 										$gr->status   = $v->Status;
 									}
-							
+						
 									if( $gr )
 									{
 										$groupdetails[$v->ID] = $gr;
@@ -495,6 +498,7 @@ function Permissions( $type, $context, $name, $data = false, $object = false, $o
 								}
 							}
 						}
+						
 						
 						
 						
