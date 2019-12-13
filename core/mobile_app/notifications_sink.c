@@ -730,12 +730,21 @@ void ProcessSinkMessage( void *locd )
 									if( usr != NULL )
 									{
 										char udata[ 1024 ];
-										int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"lastupdated\":%lu", \
+										int udatalen = snprintf( udata, sizeof(udata), "{\"userid\":\"%s\",\"name\":\"%s\",\"lastupdate\":%lu", \
 											usr->u_UUID, usr->u_Name, usr->u_ModifyTime
 										);
 									
 										// add first part to response string
 										BufStringAddSize( bs, udata, udatalen );
+										
+										// status
+										
+										if( usr->u_Status == USER_STATUS_DISABLED )
+										{
+											udatalen = snprintf( udata, sizeof(udata), ",\"isdisabled\":true" );
+											BufStringAddSize( bs, udata, udatalen );
+										}
+										
 										// if field is not empty, must be provided
 										if( usr->u_FullName != NULL )
 										{

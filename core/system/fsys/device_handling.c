@@ -264,6 +264,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 	FLONG storedBytes = 0;
 	FLONG storedBytesLeft = 0;
 	FLONG readedBytesLeft = 0;
+	FULONG dbUserID = 0;
 	struct tm activityTime;
 	memset( &activityTime, 0, sizeof( struct tm ) );
 	
@@ -378,7 +379,7 @@ int MountFS( DeviceManager *dm, struct TagItem *tl, File **mfile, User *usr, cha
 			{
 				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 f.GroupID = '%ld' \
@@ -390,7 +391,7 @@ AND f.Name = '%s'",
 			{
 				sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 (\
@@ -424,7 +425,7 @@ AND f.Name = '%s' and (f.Owner='0' OR f.Owner IS NULL)",
 					{
 						sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 ( \
@@ -438,7 +439,7 @@ AND f.Name = '%s'",
 					{
 						sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID`, f.`GroupID`, f.`UserID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 ( \
@@ -541,6 +542,8 @@ AND f.Name = '%s'",
 				
 				if( row[ 15 ] != NULL ){ char *end;userGroupID = strtoul( (char *)row[ 15 ],  &end, 0 ); }
 				
+				if( row[ 16 ] != NULL ){ char *end;dbUserID = strtoul( (char *)row[ 16 ],  &end, 0 ); }
+
 				if( usr != NULL )
 				{
 					DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
@@ -750,6 +753,7 @@ AND f.Name = '%s'",
 		{
 			if( retFile != NULL )
 			{
+				retFile->f_UserID = dbUserID;
 				retFile->f_SessionIDPTR = usr->u_MainSessionID;
 				retFile->f_UserGroupID = userGroupID;
 				retFile->f_ID = id;
@@ -929,6 +933,7 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 		UserSession *us = NULL;
 		FULONG dbid = 0;
 		FBOOL mount = FALSE;
+		FULONG uid = 0;
 	
 		DEBUG("[MountFSNoUser] Mount device\n");
 	
@@ -950,6 +955,11 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
 					break;
 				case FSys_Mount_Mount:
 					mount = (FULONG)ltl->ti_Data;
+					break;
+				case FSys_Mount_User_SessionID:
+					break;
+				case FSys_Mount_UserID:
+					uid = (FULONG)ltl->ti_Data;
 					break;
 			}
 			ltl++;
@@ -1084,11 +1094,11 @@ int MountFSNoUser( DeviceManager *dm, struct TagItem *tl, File **mfile, char **m
  * @param dm pointer to DeviceManager
  * @param tl list to tagitems (table of attributes) like FSys_Mount_Mount, FSys_Mount_Name etc. For more details check systembase heder.
  * @param usr pointer to User structure. If NULL will be provided user connected to UserSession will be used
- * @param usrs pointer to user session which is calling this function
+ * @param loggedSession pointer to user session which is calling this function
  * @return success (0) or fail value (not equal to 0)
  */
 
-int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *usrs )
+int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *loggedSession )
 {
 	SystemBase *l = (SystemBase *)dm->dm_SB;
 	if( FRIEND_MUTEX_LOCK( &dm->dm_Mutex ) == 0 )
@@ -1100,6 +1110,7 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *us
 		struct TagItem *ltl = tl;
 		char *name = NULL;
 		char *type = NULL;
+		FULONG userID = 0;
 		l->sl_Error = 0;
 
 		//
@@ -1126,18 +1137,11 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *us
 			return FSys_Error_NOName;
 		}
 	
-		/*
-		if( usrs == NULL )
-		{
-			INFO("Device will be unmounted, but not removed from user mounted device list\n");
-			//return FSys_Error_NOUser;
-		}*/
-	
 		DEBUG("[UnMountFS] Unmount before checking users\n");
 	
 		//USMLogUsersAndDevices( l->sl_USM );
 
-		if( usrs == NULL )
+		if( loggedSession == NULL )
 		{
 			FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 			FERROR("[UnMountFS] User session is null\n");
@@ -1146,7 +1150,7 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *us
 	
 		if( usr == NULL )
 		{
-			usr = usrs->us_User;
+			usr = loggedSession->us_User;
 		}
 		
 		int errors = 0;
@@ -1218,7 +1222,7 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *us
 				// from other users!
 				char *tmp = FCalloc( 1024, sizeof( char ) );
 				snprintf( tmp, 1024, "\
-SELECT ID, `Type` FROM `Filesystem` f \
+SELECT ID,`Type`,UserID FROM `Filesystem` f \
 WHERE \
 f.Name = '%s' AND \
 ( \
@@ -1230,7 +1234,7 @@ g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND \
 ug.UserID = '%ld' \
 )\
 )\
-", name, usrs->us_User->u_ID, usrs->us_User->u_ID );
+", name, usr->u_ID, usr->u_ID );
 
 				if( DeviceUnMount( dm, remdev, usr ) != 0 )
 				//if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
@@ -1271,15 +1275,17 @@ ug.UserID = '%ld' \
 				
 						while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 						{
-							unmID = atoi( row[0] );
-							unmType = StringDuplicate( row[1] );
+							char *end;
+							unmID = atoi( row[ 0 ] );
+							unmType = StringDuplicate( row[ 1 ] );
+							userID = strtoul( row[ 2 ], &end, 0);
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
 					l->LibrarySQLDrop( l, sqllib );
 				}
 				
-				if( unmID > 0 && unmType != NULL && strcmp( unmType, "SQLWorkgroupDrive" ) == 0 )
+				if( unmID > 0 && unmType != NULL && strcmp( unmType, "SQLWorkgroupDrive" ) == 0 && ( usr->u_ID == userID || loggedSession->us_User->u_IsAdmin ) )
 				{
 					DEBUG("[UnMountFS] Refreshing all user drives for unmount.\n" );
 					User *tmpUser = l->sl_UM->um_Users;

@@ -26,7 +26,174 @@
 #include <util/session_id.h>
 
 //test
-#undef __DEBUG
+//#undef __DEBUG
+
+inline static int killUserSession( SystemBase *l, UserSession *ses )
+{
+	int error = 0;
+	char tmpmsg[ 2048 ];
+	int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+	
+	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
+	
+	char *uname = NULL;
+	if( ses->us_User != NULL )
+	{
+		uname = ses->us_User->u_Name;
+	}
+		
+	DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
+	
+	// set flag to WS connection "te be killed"
+	FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
+	ses->us_InUseCounter--;
+	if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+	{
+		ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+	}
+	FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+	
+	// wait till queue will be empty
+	while( TRUE )
+	{
+		if( ses->us_WSConnections ->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+		{
+			break;
+		}
+		usleep( 1000 );
+	}
+	
+	error = USMUserSessionRemove( l->sl_USM, ses );	
+	return error;
+}
+
+inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid )
+{
+	int error = 0;
+	int nrSessions = 0;
+	int i;
+	
+	UserSession **toBeRemoved = NULL;
+	
+	FRIEND_MUTEX_LOCK( &u->u_Mutex );
+	UserSessListEntry *usl = u->u_SessionsList;
+	if( deviceid != NULL )
+	{
+		while( usl != NULL )
+		{
+			UserSession *s = (UserSession *) usl->us;
+			if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
+			{
+				char tmpmsg[ 2048 ];
+				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				
+				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+
+				DEBUG("Bytes send: %d\n", msgsndsize );
+			
+				break;
+			}
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
+			nrSessions++;
+		}
+	}
+	else
+	{
+		while( usl != NULL )
+		{
+			UserSession *s = (UserSession *) usl->us;
+			if( s != NULL )
+			{
+				char tmpmsg[ 2048 ];
+				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+				
+				int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
+
+				DEBUG("Bytes send: %d\n", msgsndsize );
+			
+				break;
+			}
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
+			nrSessions++;
+		}
+	}
+	
+	// assign UserSessions to temporary table
+	if( nrSessions > 0 )
+	{
+		toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
+		i = 0;
+		while( usl != NULL )
+		{
+			toBeRemoved[ i ] = (UserSession *) usl->us;
+			usl = (UserSessListEntry *)usl->node.mln_Succ;
+			i++;
+		}
+	}
+	
+	FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
+	
+	// remove sessions
+	for( i=0 ; i < nrSessions ; i++ )
+	{
+		UserSession *ses = toBeRemoved[ i ];
+		
+		FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
+		ses->us_InUseCounter--;
+		if( ses->us_WSConnections != NULL && ses->us_WSConnections->wusc_Data != NULL )
+		{
+			ses->us_WSConnections->wusc_Status = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
+		}
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+		
+		// wait till queue will be empty
+		while( TRUE )
+		{
+			if( ses->us_WSConnections ->wusc_Data->wsc_MsgQueue.fq_First == NULL )
+			{
+				break;
+			}
+			usleep( 1000 );
+		}
+		
+		error = USMUserSessionRemove( l->sl_USM, ses );
+	}
+	
+	if( toBeRemoved != NULL )
+	{
+		FFree( toBeRemoved );
+	}
+	
+	return error;
+}
+
+inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, char *action )
+{
+	BufString *bs = BufStringNew();
+
+	char msg[ 512 ];
+	int msize = 0;
+	
+	if( usr->u_Status == USER_STATUS_DISABLED )
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"name\":\"%s\",\"groups\":[", usr->u_UUID, usr->u_ModifyTime, usr->u_Name );
+		BufStringAddSize( bs, msg, msize );
+		//UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+	}
+	else
+	{
+		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":false,\"lastupdate\":%lu,\"name\":\"%s\",\"groups\":[", usr->u_UUID, usr->u_ModifyTime, usr->u_Name );
+		BufStringAddSize( bs, msg, msize );
+		UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+	}
+
+	BufStringAddSize( bs, "]}", 2 );
+	//DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
+	
+	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
+	
+	BufStringDelete( bs );
+}
 
 /**
  * Http web call processor
@@ -381,7 +548,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -475,6 +642,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, locusr, level, NULL );
 						
+						NotifyExtServices( l, request, locusr, "create" );
+						
 						UserDelete( locusr );
 					}
 					else
@@ -536,7 +705,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -639,8 +808,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updatestatus" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -648,10 +817,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 		FULONG id = 0;
 		FLONG status = -1;
+		HashmapElement *el = NULL;
 		
 		DEBUG( "[UMWebRequest] Update user status!!\n" );
 		
-		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
+		el = HttpGetPOSTParameter( request, "id" );
 		if( el != NULL )
 		{
 			char *next;
@@ -712,18 +882,37 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						}
 						
 						{
+							BufString *bs = BufStringNew();
+
 							char msg[ 512 ];
+							int msize = 0;
 							if( status == USER_STATUS_DISABLED )
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
+								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
+								// send calls to all users that they must log-off themselfs
+								
+								User *u = UMGetUserByID( l->sl_UM, id );
+								if( u != NULL )
+								{
+									killUserSessionByUser( l, u, NULL );
+								}
+								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 							}
 							else
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu}", usr->u_UUID, usr->u_ModifyTime );
+								msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 							}
+							BufStringAddSize( bs, msg, msize );
+							UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
+							BufStringAddSize( bs, "]}", 2 );
+							
 							//NotificationManagerSendInformationToConnections( l->sl_NotificationManager, NULL, msg );
 							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+							
+							BufStringDelete( bs );
 						}
+						
+						NotifyExtServices( l, request, usr, "update" );
 						
 						if( gotFromDB == TRUE )
 						{
@@ -804,8 +993,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			usrpass = UrlDecodeToMem( (char *)el->data );
 		}
-		
-		
 		
 		if( usrname != NULL && usrpass != NULL )
 		{
@@ -925,14 +1112,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "update" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		User *logusr = l->sl_UM->um_Users;
 		char *usrname = NULL;
 		char *usrpass = NULL;
 		char *fullname = NULL;
@@ -969,31 +1155,37 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			status = (FLONG)strtol ( (char *)el->data, &next, 0 );
 		}
 		
-		if( id > 0 && imAdmin == TRUE )
+		User *logusr = l->sl_UM->um_Users;
+		if( id > 0 )
 		{
-			while( logusr != NULL )
+			if( imAdmin == TRUE )
 			{
-				if( logusr->u_ID == id  )
+				while( logusr != NULL )
 				{
-					userFromSession = TRUE;
-					DEBUG("[UMWebRequest] Found session, update\n");
-					break;
+					if( logusr->u_ID == id  )
+					{
+						userFromSession = TRUE;
+						DEBUG("[UMWebRequest] Found session, update\n");
+						break;
+					}
+					logusr = (User *)logusr->node.mln_Succ;
 				}
-				logusr = (User *)logusr->node.mln_Succ;
 			}
-		}
-		else if( id > 0 && imAdmin == FALSE )
-		{
-			logusr = NULL;
+			else
+			{
+				if( loggedSession != NULL && loggedSession->us_User != NULL && loggedSession->us_User->u_ID == id )
+				{
+					logusr = loggedSession->us_User;
+					userFromSession = TRUE;
+				}
+				logusr = NULL;
+			}
 		}
 		else
 		{
-			//if( imAdmin == FALSE )
-			{
-				id = loggedSession->us_User->u_ID;
-				userFromSession = TRUE;
-				logusr = loggedSession->us_User;
-			}
+			id = loggedSession->us_User->u_ID;
+			userFromSession = TRUE;
+			logusr = loggedSession->us_User;
 		}
 		
 		if( logusr == NULL && id > 0 )
@@ -1146,6 +1338,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
 					
+					NotifyExtServices( l, request, logusr, "update" );
+					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )
 					//{
@@ -1200,8 +1394,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "updategroups" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -1313,6 +1507,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, NULL, workgroups );
 					
 					RefreshUserDrives( l->sl_DeviceManager, logusr, NULL, &error );
+					
+					NotifyExtServices( l, request, logusr, "update" );
 					
 					// we must notify user
 					//if( logusr != loggedSession->us_User )
@@ -1487,7 +1683,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	* <HR><H2>system.library/user/sessionlist</H2>Get sessions attached to user
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param username - (required) name of user which sessions you want to get
+	* @param username - name of user which sessions you want to get otherwise you will get sessions of current user
 	* @return sessions attached to users in JSON format, otherwise error code
 	*/
 	/// @endcond
@@ -1511,105 +1707,101 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			usrname = UrlDecodeToMem( (char *)el->data );
 		}
 		
-		if( usrname != NULL )
+		User *logusr = NULL;
+		logusr = loggedSession->us_User;
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
 		{
-			User *logusr = NULL;
-			
-			if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == TRUE )
+			// only when you are admin you can change stuff on other user accounts
+			if( usrname != NULL )
 			{
 				logusr = UMGetUserByName( l->sl_UM, usrname );
 			}
-			else
-			{
-				logusr = loggedSession->us_User;
-			}
-		
-			DEBUG(" username: %s\n", usrname );
-			char *temp = FCalloc( 2048, 1 );
-			int numberOfSessions = 0;
-			
-			if( temp != NULL )
-			{
-				if( logusr != NULL )
-				//User *logusr = loggedSession->us_User;
-				//while( logusr != NULL )
-				{
-					DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
-					if( logusr->u_Name != NULL && strcmp( logusr->u_Name, usrname ) == 0 )
-					{
-						BufString *bs = BufStringNew();
-						
-						if( FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) ) == 0 )
-						{
-							UserSessListEntry *sessions = logusr->u_SessionsList;
-							BufStringAdd( bs, "ok<!--separate-->[" );
-							int pos = 0;
-							//unsigned long t = time( NULL );
-					
-							if( logusr->u_SessionsNr > 0 )
-							{
-								while( sessions != NULL )
-								{
-									UserSession *us = (UserSession *) sessions->us;
-									if( us == NULL )
-									{
-										DEBUG("ERR\n");
-										sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-										continue;
-									}
-
-									//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
-									//if( us->us_WSClients != NULL )
-									time_t timestamp = time(NULL);
-									
-									FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
-									
-									if( us->us_WSConnections != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
-									{
-										int size = 0;
-										if( pos == 0 )
-										{
-											size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
-										}
-										else
-										{
-											size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
-										}
-										BufStringAddSize( bs, temp, size );
-							
-										pos++;
-									}
-									FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-									
-									sessions = (UserSessListEntry *) sessions->node.mln_Succ;
-								}
-							}
-							FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
-						}
-					
-						BufStringAdd( bs, "]" );
-					
-						HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
-					
-						DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
-						bs->bs_Buffer = NULL;
-					
-						BufStringDelete( bs );
-						numberOfSessions++;
-					}
-					//logusr = (User *)logusr->node.mln_Succ;
-				}
-				FFree( temp );
-			}
-			
-			if( logusr == NULL && numberOfSessions == 0 )
-			{
-				FERROR("[ERROR] User not found\n" );
-				char buffer[ 256 ];
-				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
-				HttpAddTextContent( response, buffer );
-			}
 		}
+
+		DEBUG(" username: %s\n", usrname );
+		char *temp = FCalloc( 2048, 1 );
+		int numberOfSessions = 0;
+		
+		if( temp != NULL )
+		{
+			if( logusr != NULL )
+			{
+				DEBUG("Loop: loguser->name: %s\n", logusr->u_Name );
+				BufString *bs = BufStringNew();
+				
+				if( FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) ) == 0 )
+				{
+					UserSessListEntry *sessions = logusr->u_SessionsList;
+					BufStringAdd( bs, "ok<!--separate-->[" );
+					int pos = 0;
+
+					if( logusr->u_SessionsNr > 0 )
+					{
+						while( sessions != NULL )
+						{
+							UserSession *us = (UserSession *) sessions->us;
+							if( us == NULL )
+							{
+								DEBUG("ERR\n");
+								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+								continue;
+							}
+
+							//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
+							//if( us->us_WSClients != NULL )
+							time_t timestamp = time(NULL);
+							
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+							{
+								if( us->us_WSConnections != NULL && ( (timestamp - us->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+								{
+									int size = 0;
+									if( pos == 0 )
+									{
+										size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+									}
+									else
+									{
+										size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\",\"name\":\"%s\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime, us->us_Name );
+									}
+									BufStringAddSize( bs, temp, size );
+							
+									pos++;
+								}
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
+							
+							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+							numberOfSessions++;
+						}
+					}
+					FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
+				}
+			
+				BufStringAdd( bs, "]" );
+				
+				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+				
+				DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
+				bs->bs_Buffer = NULL;
+				
+				BufStringDelete( bs );
+			}
+			FFree( temp );
+		}
+			
+		// only if user is not found, no need to count sessions
+		if( logusr == NULL ) //&& numberOfSessions == 0 )
+		{
+			FERROR("[ERROR] User not found\n" );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+			HttpAddTextContent( response, buffer );
+		}
+		
+		
+		/*	if there is no parameter current user sessions should be returned
 		else
 		{
 			FERROR("[ERROR] username parameter is missing\n" );
@@ -1619,6 +1811,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_USER_DEV_REQUIRED );
 			HttpAddTextContent( response, buffer );
 		}
+		*/
 		
 		if( usrname != NULL )
 		{
@@ -1642,14 +1835,13 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "killsession" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
-		
-		//UserSession *usrses = l->sl_USM->usm_Sessions;
+
 		char *sessionid = NULL;
 		char *deviceid = NULL;
 		char *usrname = NULL;
@@ -1681,25 +1873,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			UserSession *ses = USMGetSessionBySessionID( l->sl_USM, sessionid );
 			if( ses != NULL )
 			{
-				char tmpmsg[ 2048 ];
-				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
-							
-				int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
-				
-				char *uname = NULL;
-				if( ses->us_User != NULL )
-				{
-					uname = ses->us_User->u_Name;
-				}
-					
-				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
-				
-				
-				FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
-				ses->us_InUseCounter--;
-				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-				
-				error = USMUserSessionRemove( l->sl_USM, ses );
+				killUserSession( l, ses );
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
@@ -1708,6 +1882,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
+				killUserSessionByUser( l, u, deviceid );
+				/*
 				FRIEND_MUTEX_LOCK( &u->u_Mutex );
 				UserSessListEntry *usl = u->u_SessionsList;
 				while( usl != NULL )
@@ -1728,15 +1904,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				}
 				FRIEND_MUTEX_UNLOCK( &u->u_Mutex );
 				
-				if( usl != NULL )
+				usl = u->u_SessionsList;
+				while( usl != NULL )
 				{
 					UserSession *s = (UserSession *) usl->us;
 					FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
 					s->us_InUseCounter--;
 					FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
-						
-					error = USMUserSessionRemove( l->sl_USM, usl->us );
+					
+					int error = USMUserSessionRemove( l->sl_USM, usl->us );
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
+				*/
 			}
 			else
 			{
