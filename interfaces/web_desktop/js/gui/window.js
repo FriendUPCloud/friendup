@@ -1666,7 +1666,11 @@ function CloseView( win, delayed )
 		{
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
-			
+		
+		// Unassign this
+		if( win.parentNode == Friend.currentWindowHover )
+			Friend.currentWindowHover = null;
+		
 		var count = 0;
 
 		var isGroupMember = false;

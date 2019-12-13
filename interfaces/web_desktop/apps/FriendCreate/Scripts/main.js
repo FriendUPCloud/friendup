@@ -63,9 +63,10 @@ var gui = {
 
 // Files and projects ----------------------------------------------------------
 
-var files = [];
-var projectFiles = {}; // Index
-var projects = [];
+var files = []; // All open files
+var projectFiles = {}; // Index of files
+var projectFolders = {}; // List of projects and their folder states (gui)
+var projects = []; // All projects
 
 // Launch view logic -----------------------------------------------------------
 
@@ -304,7 +305,9 @@ EditorFile.prototype.close = function()
 
 EditorFile.prototype.updateState = function( state )
 {
-	this.state = state;
+	if( typeof( state ) != 'undefined' )
+		this.state = state;
+	else state = this.state;
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
@@ -711,6 +714,7 @@ function SaveFile( file, saveas )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
 			file.updateState( 'Reading' );
+			RefreshFiletypeSelect();
 		}
 		f.save( file.editor.getValue() );
 	}
@@ -734,6 +738,7 @@ function SaveFile( file, saveas )
 					StatusMessage( i18n( 'i18n_saved' ) );
 					file.updateTab();
 					file.updateState( 'Reading' );
+					RefreshFiletypeSelect();
 				}
 				f.save( file.editor.getValue() );
 			},
@@ -1038,6 +1043,13 @@ function CloseProject( proj )
 		o.push( projects[ a ] );
 	}
 	projects = o;
+	var u = {};
+	for( var a in projectFolders )
+	{
+		if( a != proj.ID )
+			u[ a ] = projectFolders[ a ];
+	}
+	projectFolders = u;
 	if( proj == Application.currentProject )
 		Application.currentProject = null;
 	RefreshProjects();
@@ -1069,6 +1081,10 @@ function RefreshProjects()
 		var pr = projects[ a ];
 		var fstr = '';
 		
+		// Track folder state
+		if( !projectFolders[ pr.ID ] )
+			projectFolders[ pr.ID ] = {};
+		
 		var projectpath = pr.Path.split( '/' );
 		projectpath.pop();
 		projectpath = projectpath.join( '/' ) + '/';
@@ -1092,7 +1108,7 @@ function RefreshProjects()
 				}
 			}
 			sortable = sortable.sort();
-			fstr = listFiles( sortable, 1, false, {} );
+			fstr = listFiles( sortable, 1, false, {}, pr.ID );
 		}
 		var current = ' BackgroundHeavy Rounded';
 		if( Application.currentProject == pr )
@@ -1114,8 +1130,14 @@ function RefreshProjects()
 		}
 	}
 	
+	// Update files status
+	for( var a = 0; a < files.length; a++ )
+	{
+		files[ a ].updateState();
+	}
+	
 	// List files recursively
-	function listFiles( list, depth, path, folders )
+	function listFiles( list, depth, path, folders, projectId )
 	{
 		var str = '';
 		
@@ -1132,8 +1154,11 @@ function RefreshProjects()
 			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
 			{
 				folders[ list[ a ].path ] = true;
-				str += '<li class="Folder" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
-				str += listFiles( list, depth + 1, list[ a ].path );
+				if( !projectFolders[ projectId ][ list[ a ].path ] )
+					projectFolders[ projectId ][ list[ a ].path ] = {};
+				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
+				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				str += listFiles( list, depth + 1, list[ a ].path, false, projectId );
 			}
 		}
 		if( str.length ) str = '<ul>' + str + '</ul>';
@@ -1160,12 +1185,16 @@ function SetCurrentProject( p )
 
 function ToggleOpenFolder( ele )
 {
+	var id = ele.getAttribute( 'projectId' );
+	var pa = ele.getAttribute( 'path' );
 	if( ele.classList.contains( 'Open' ) )
 	{
+		projectFolders[ id ][ pa ].state = '';
 		ele.classList.remove( 'Open' );
 	}
 	else
 	{
+		projectFolders[ id ][ pa ].state = 'open';
 		ele.classList.add( 'Open' );
 	}
 }
@@ -1247,7 +1276,7 @@ function CloseSearch()
 
 // End search and replace ------------------------------------------------------
 
-// Helper
+// Helper, sets statusmessage in the bottom left corner
 function StatusMessage( str )
 {
 	var existing = ge( 'StatusMessage' ).getElementsByTagName( 'div' );
@@ -1256,7 +1285,6 @@ function StatusMessage( str )
 		existing[a].style.left = '20px';
 		existing[a].style.opacity = 0;
 	}
-	
 	
 	var el = document.createElement( 'div' );
 	el.style.opacity = 0;
@@ -1383,7 +1411,9 @@ Application.receiveMessage = function( msg )
 					if( projects[ a ].ID == msg.project.ID )
 					{
 						projects[ a ] = msg.project;
+						
 						Application.currentProject = projects[ a ];
+						SaveProject( Application.currentProject );
 						break;
 					}
 				}
@@ -1399,9 +1429,9 @@ Application.receiveMessage = function( msg )
 				abw = new View( {
 					title: i18n( 'i18n_about_friend_create' ),
 					width: 600,
-					height: 600
+					height: 380
 				} );
-				var f = new File( 'Progdir:Templates/about.html' );
+				var f = new File( 'Progdir:Templates/about_' + Application.language + '.html' );
 				f.i18n();
 				f.onLoad = function( data )
 				{
@@ -1412,6 +1442,16 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'package_generate':
 				CreatePackage();
+				break;
+			case 'launchwith':
+				if( msg.file.split( '.' ).pop().toLowerCase() == 'apf' )
+				{
+					OpenProject( msg.file );
+				}
+				else
+				{
+					new EditorFile( msg.file );
+				}
 				break;
 		}
 	}

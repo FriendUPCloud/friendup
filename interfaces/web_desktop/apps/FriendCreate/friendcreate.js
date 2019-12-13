@@ -33,7 +33,13 @@ Application.run = function( msg )
 	m.i18n();
 	m.onLoad = function( data )
 	{
-		mainWindow.setContent( data );
+		mainWindow.setContent( data, function()
+		{
+			if( msg.args && msg.args.indexOf( ':' ) > 0 )
+			{
+				mainWindow.sendMessage( { command: 'launchwith', file: msg.args } );
+			}
+		} );
 	}
 	m.load();
 	
