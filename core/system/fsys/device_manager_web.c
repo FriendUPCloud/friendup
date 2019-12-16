@@ -786,7 +786,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			if( loggedSession != NULL )
 			{
 				mountError = -1;
-				char *ldevname;
+				char *ldevname = NULL;
 				User *activeUser = loggedSession->us_User;
 				FBOOL deviceUnmounted = FALSE;
 				
@@ -801,17 +801,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 
 						deviceUnmounted = TRUE;
 						mountError = 0;
-
-						/*
-						locusr = UMGetUserByIDDB( l->sl_UM, userID );
-						if( locusr != NULL )
-						{
-							Log( FLOG_INFO, "Admin ID[%lu] is mounting drive to user ID[%lu]\n", activeUser->u_ID, locusr->u_ID );
-							activeUser = locusr;
-					
-							UMAddUser( l->sl_UM, activeUser );
-						}
-						*/
 					}
 					else
 					{
@@ -830,53 +819,65 @@ AND LOWER(f.Name) = LOWER('%s')",
 					LIST_FOR_EACH( activeUser->u_MountedDevs, f, File * )
 					{
 						if( strcmp( devname, f->f_Name ) == 0 )
-						//if( id == f->f_ID )
 						{
-							mountError = 0;
-							f->f_Mounted = FALSE;
-							fid = f->f_ID; // Need the ID too!
-							type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
-							ldevname = f->f_Name;
-							// please check Types next time
-							break;
+							// if this is shared drive only admin or owner can unmount it
+							if( strcmp( f->f_FSysName, "SQLWorkgroupDrive" ) == 0 && ( activeUser->u_ID == f->f_UserID || activeUser->u_IsAdmin ) )
+							{
+								mountError = 0;
+								f->f_Mounted = FALSE;
+								fid = f->f_ID; // Need the ID too!
+								type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+								ldevname = f->f_Name;
+								// please check Types next time
+								break;
+							}
+							else
+							{
+								mountError = 0;
+								f->f_Mounted = FALSE;
+								fid = f->f_ID; // Need the ID too!
+								type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+								ldevname = f->f_Name;
+								// please check Types next time
+								break;
+							}
 						}
 					}
 				
 					// check also device attached to groups
-				
-					UserGroupLink *ugl = activeUser->u_UserGroupLinks;
-					while( ugl != NULL )
-					//int gr;
-					//for( gr = 0 ; gr < loggedSession->us_User->u_GroupsNr ; gr++ )
+					if( ldevname == NULL )
 					{
-						//UserGroup *ug = loggedSession->us_User->u_Groups[ gr ];
-						UserGroup *ug = ugl->ugl_Group;
-						if( ug != NULL )
+						UserGroupLink *ugl = activeUser->u_UserGroupLinks;
+						while( ugl != NULL )
 						{
-							File *f = NULL;
-							LIST_FOR_EACH( ug->ug_MountedDevs, f, File * )
+							UserGroup *ug = ugl->ugl_Group;
+							if( ug != NULL )
 							{
-								FBOOL owner = FALSE;
-								if( f->f_User != NULL )
+								File *f = NULL;
+								LIST_FOR_EACH( ug->ug_MountedDevs, f, File * )
 								{
-									User *u = (User *)f->f_User;
-									if( u->u_ID == activeUser->u_ID )
+									FBOOL owner = FALSE;
+									if( f->f_User != NULL )
 									{
-										owner = TRUE;
+										User *u = (User *)f->f_User;
+										if( u->u_ID == activeUser->u_ID )
+										{
+											owner = TRUE;
+										}
+									}
+							
+									if( owner == TRUE && strcmp( devname, f->f_Name ) == 0 )
+									{
+										mountError = 0;
+										f->f_Mounted = FALSE;
+										fid = f->f_ID; // Need the ID too!
+										type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+										ldevname = f->f_Name;
 									}
 								}
-							
-								if( owner == TRUE && strcmp( devname, f->f_Name ) == 0 )
-								{
-									mountError = 0;
-									f->f_Mounted = FALSE;
-									fid = f->f_ID; // Need the ID too!
-									type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
-									ldevname = f->f_Name;
-								}
 							}
+							ugl = (UserGroupLink *)ugl->node.mln_Succ;
 						}
-						ugl = (UserGroupLink *)ugl->node.mln_Succ;
 					}
 				
 					struct TagItem tags[] = {
@@ -1313,8 +1314,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 	else if( strcmp( urlpath[ 1 ], "list" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( DEFAULT_CONTENT_TYPE ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG) StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE}
 		};
 		
