@@ -286,7 +286,7 @@
 
 #SB_Project li.FileItem.Active
 {
-	background: rgba(0,0,0,0.5);
+	background: rgba(0,0,0,0.15);
 }
 
 #SB_Project li.Folder:before
@@ -351,7 +351,7 @@
     width: 100%;
     height: 100%;
     text-align: center;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.15);
 }
 
 .FullImage img
