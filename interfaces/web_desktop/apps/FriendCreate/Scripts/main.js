@@ -1212,6 +1212,10 @@ function RefreshProjects()
 	function listFiles( list, depth, path, folders, projectId )
 	{
 		var str = '';
+		var project = false; for( var a in projects ) if( projects[ a ].ID == projectId ) project = projects[ a ];
+		var currFile = false;
+		if( Application.currentFile && Application.currentFile.path )
+			currFile = Application.currentFile.path.substr( project.ProjectPath.length, Application.currentFile.path.length - project.ProjectPath.length );
 		
 		for( var a in list )
 		{
@@ -1220,7 +1224,12 @@ function RefreshProjects()
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
+					var cl = '';
+					if( list[a].path == currFile )
+					{
+						cl += ' Active';
+					}
+					str += '<li class="FileItem' + cl + '" path="' + fpath + '" onclick="SetCurrentProject( \'' + projectId + '\' ); OpenFile(\'' + fpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
 			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
@@ -1229,7 +1238,7 @@ function RefreshProjects()
 				if( !projectFolders[ projectId ][ list[ a ].path ] )
 					projectFolders[ projectId ][ list[ a ].path ] = {};
 				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
-				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
 				str += listFiles( list, depth + 1, list[ a ].path, false, projectId );
 			}
 		}
