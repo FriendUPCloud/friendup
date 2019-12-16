@@ -236,6 +236,9 @@ var EditorFile = function( path )
 		}
 	}
 	
+	if( Application.currentProject && Application.currentProject.ID )
+		self.ProjectID = Application.currentProject.ID;
+	
 	// Load file
 	if( path && path.indexOf( ':' ) > 0 )
 	{
@@ -276,6 +279,7 @@ var EditorFile = function( path )
 							self.refreshMinimap();
 						}, 50 );
 						self.updateState( 'Reading' );
+						CheckProjectFile( f );
 					}
 					f.load();
 				}
@@ -714,6 +718,45 @@ function OpenFile( path )
 	} ) );
 }
 
+// Checking if a file is currently in project
+function CheckProjectFile( file )
+{
+	if( !Application.currentProject ) return;
+	
+	var p = Application.currentProject;
+	// File belongs to other project
+	if( file.ProjectID && file.ProjectID != p.ID ) return;
+	if( p.Files )
+	{
+		var found = false;
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( file.path == p.ProjectPath + p.Files[a].Path )
+			{
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+		{
+			var fn = file.path;
+			if( file.path.indexOf( '/' ) >= 0 )
+				fn = file.path.split( '/' ).pop();
+			else if( file.path.indexOf( ':' ) >= 0 ) fn = file.path.split( ':' ).pop();
+			var pa = file.path;
+			if( file.path.indexOf( p.ProjectPath ) == 0 )
+				pa = file.path.substr( p.ProjectPath.length, file.path.length - p.ProjectPath.length );
+			p.Files.push( {
+				Type: 'File',
+				Path: pa,
+				ProjectID: p.ID,
+				Filename: fn
+			} );
+			RefreshProjects();
+		}
+	}
+}
+
 // Saving a file ---------------------------------------------------------------
 
 function SaveFile( file, saveas )
@@ -729,8 +772,10 @@ function SaveFile( file, saveas )
 			StatusMessage( i18n( 'i18n_saved' ) );
 			file.updateState( 'Reading' );
 			RefreshFiletypeSelect();
+			CheckProjectFile( file );
 		}
-		f.save( file.editor.getValue() );
+		var v = file.editor.getValue();
+		f.save( v.length ? v : '\n' );
 	}
 	else
 	{
@@ -753,8 +798,10 @@ function SaveFile( file, saveas )
 					file.updateTab();
 					file.updateState( 'Reading' );
 					RefreshFiletypeSelect();
+					CheckProjectFile( file );
 				}
-				f.save( file.editor.getValue() );
+				var v = file.editor.getValue();
+				f.save( v.length ? v : '\n' );
 			},
 			filename: '',
 			type: 'save',
@@ -1011,9 +1058,7 @@ function SaveProject( project, saveas )
 	}
 	// Done cleaning up
 
-	console.log( 'Saving project.', project, saveas );
-
-	if( !saveas && project.Path )
+	if( !saveas && project.Path && project.Path.indexOf( '.apf' ) > 0 )
 	{
 		var f = new File( project.Path );
 		StatusMessage( i18n( 'i18n_saving' ) );
@@ -1026,7 +1071,7 @@ function SaveProject( project, saveas )
 	else
 	{
 		( new Filedialog( {
-			path: project.path ? project.path : 'Home:',
+			path: project.ProjectPath ? project.ProjectPath : 'Home:',
 			triggerFunction: function( filename )
 			{
 				project.Path = filename;
@@ -1113,7 +1158,15 @@ function RefreshProjects()
 			var sortable = [];
 			for( var c = 0; c < pr.Files.length; c++ )
 			{
+				pr.Files[ c ].ProjectID = pr.ID;
 				var path = pr.Files[ c ].Path;
+				
+				if( path.indexOf( pr.ProjectPath ) == 0 )
+				{
+					path = path.substr( pr.ProjectPath.length, path.length - pr.ProjectPath.length );
+					pr.Files[ c ] = path;
+				}
+				
 				if( path.substr( path.length - 1, 1 ) != '/' )
 				{
 					path = path.split( '/' );

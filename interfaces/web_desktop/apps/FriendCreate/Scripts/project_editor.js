@@ -54,6 +54,9 @@ function RefreshFiles()
 		
 		for( var a = 0; a < project.Files.length; a++ )
 		{
+			if( project.ID )
+				project.Files[ a ].ProjectID = project.ID;
+			
 			var ext = project.Files[a].Path.split( '.' ).pop().toLowerCase();
 			if( ext == 'png' || ext == 'gif' || ext == 'jpg' || ext == 'jpeg' )
 			{
