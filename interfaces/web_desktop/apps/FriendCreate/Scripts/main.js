@@ -1320,8 +1320,6 @@ function SetCurrentProject( p )
 			}
 		}
 	}
-	Application.currentProject = false;
-	CheckPlayStopButtons();
 	return false;
 }
 
