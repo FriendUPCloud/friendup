@@ -81,6 +81,8 @@ i18n_preferences                    : Preferences
 i18n_programming                    : Programming
 i18n_system                         : System
 
+i18n_bookmarks                      : Bookmarks
+
 i18n_mandatory_images               : Mandatory images
 i18n_image_icon                     : Icon image
 i18n_image_store_preview            : Preview image
