@@ -697,7 +697,7 @@ function OpenFile( path )
 	}
 	
 	( new Filedialog( {
-		path: path,
+		path: path ? path : ( ( Application.currentProject && Application.currentProject.ProjectPath ) ? Application.currentProject.ProjectPath : 'Home:' ),
 		triggerFunction: function( items )
 		{
 			if( items && items.length )
@@ -735,7 +735,7 @@ function SaveFile( file, saveas )
 	else
 	{
 		( new Filedialog( {
-			path: file.path ? file.path : 'Home:',
+			path: file.path ? file.path : ( ( Application.currentProject && Application.currentProject.ProjectPath ) ? Application.currentProject.ProjectPath : 'Home:' ),
 			triggerFunction: function( filename )
 			{
 				file.path = filename;

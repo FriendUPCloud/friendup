@@ -494,7 +494,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		{
 			dialog.sidebar = false;
 		}
-
+		
 		// Insert filename (if save)
 		if( type == 'save' )
 		{
@@ -526,7 +526,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 							}
 							else path = '';
 						}
-						inps[a].value = path;
+						
+						path = typeof( path ) == 'object' ? path.join( ':' ) : path;
+						inps[a].value = path.indexOf( '.' ) > 0 ? path : '';
 					}
 					dialog.saveinput = inps[a];
 					inps[a].onkeydown = function( e )
