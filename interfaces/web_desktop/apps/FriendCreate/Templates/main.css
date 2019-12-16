@@ -33,7 +33,8 @@
 	height: 60px;
 }
 
-#Toolbar button
+#Toolbar button,
+html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.IconButton:not(:hover)
 {
 	vertical-align: bottom;
 	border: 0;
