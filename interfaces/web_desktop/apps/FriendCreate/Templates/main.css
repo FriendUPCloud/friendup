@@ -224,6 +224,16 @@
 	padding: 4px;
 }
 
+#SB_Project
+{
+	margin-top: 5px;
+}
+
+#SB_Project ul ul ul li
+{
+	margin-top: 0;
+}
+
 #SB_Project li:before
 {
 	font-family: fontawesome;
@@ -231,9 +241,15 @@
 	margin: 0 5px 0 0;
 }
 
+#SB_Project li.Project:first-child
+{
+	margin: 0;
+}
+
 #SB_Project li.Project
 {
 	padding: 5px;
+	margin: 0 0 5px 0;
 }
 
 #SB_Project li.Project.Current
