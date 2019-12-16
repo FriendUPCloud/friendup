@@ -52,14 +52,32 @@ function RefreshFiles()
 		var isw = 0;
 		var str = istr = '';
 		
+		var foundScreenshot = foundIcon = foundPreview = false;
+		
 		for( var a = 0; a < project.Files.length; a++ )
 		{
 			if( project.ID )
 				project.Files[ a ].ProjectID = project.ID;
 			
 			var ext = project.Files[a].Path.split( '.' ).pop().toLowerCase();
+			
 			if( ext == 'png' || ext == 'gif' || ext == 'jpg' || ext == 'jpeg' )
 			{
+				if( project.Files[a].Path.indexOf( 'screenshot.' ) >= 0 )
+				{
+					ge( 'ButtonScreenshot' ).innerHTML = '<img src="' + getImageUrl( project.ProjectPath + project.Files[a].Path ) + '" style="width: 64px; height: 64px"/>';
+					foundScreenshot = true;
+				}
+				if( project.Files[a].Path.indexOf( 'icon.' ) >= 0 )
+				{
+					ge( 'ButtonIcon' ).innerHTML = '<img src="' + getImageUrl( project.ProjectPath + project.Files[a].Path ) + '" style="width: 64px; height: 64px"/>';
+					foundIcon = true;
+				}
+				if( project.Files[a].Path.indexOf( 'preview.' ) >= 0 )
+				{
+					ge( 'ButtonPreview' ).innerHTML = '<img src="' + getImageUrl( project.ProjectPath + project.Files[a].Path ) + '" style="width: 64px; height: 64px"/>';
+					foundPreview = true;
+				}
 				isw = isw == 1 ? 2 : 1;
 				istr += '<div class="HRow sw' + isw + '">';
 				istr += '<div class="HContent70 Ellipsis FloatLeft PaddingSmall">' + project.Files[a].Path + '</div>';
@@ -74,6 +92,19 @@ function RefreshFiles()
 				str += '<div class="HContent30 FloatLeft PaddingSmall TextRight"><input type="checkbox" path="' + project.Files[a].Path + '"/></div>';
 				str += '</div>';
 			}
+		}
+		
+		if( !foundScreenshot )
+		{
+			ge( 'ButtonScreenshot' ).innerHTML = '';
+		}
+		if( !foundIcon )
+		{
+			ge( 'ButtonIcon' ).innerHTML = '';
+		}
+		if( !foundPreview )
+		{
+			ge( 'ButtonPreview' ).innerHTML = '';
 		}
 		
 		if( str.length )
