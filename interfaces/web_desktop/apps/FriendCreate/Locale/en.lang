@@ -10,7 +10,7 @@ i18n_save                           : Save
 i18n_print                          : Print
 i18n_undo                           : Undo
 i18n_search_replace                 : Search & replace
-i18n_run_app                        : Run app
+i18n_run_app                        : Run
 i18n_stop_app                       : Stop
 
 i18n_file_menu                      : File

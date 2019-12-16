@@ -1040,6 +1040,7 @@ function OpenProject( path )
 			p.ProjectPath = pp;
 			
 			RefreshProjects();
+			CheckPlayStopButtons();
 			ge( 'tabProjects' ).onclick();
 		}
 		f.load();
@@ -1079,6 +1080,7 @@ function OpenProject( path )
 				p.ProjectPath = pp;
 				
 				RefreshProjects();
+				CheckPlayStopButtons();
 				ge( 'tabProjects' ).onclick();
 			}
 			f.load();
@@ -1164,11 +1166,10 @@ function CloseProject( proj )
 }
 
 function RefreshProjects()
-{
-	CheckPlayStopButtons();
-	
+{	
 	if( projects.length == 0 )
 	{
+		Application.currentProject = false;
 		ge( 'SB_Project' ).innerHTML = '\
 			<div class="Padding"><p>' + i18n( 'i18n_no_projects' ) + '</p>\
 				<p>\
@@ -1176,6 +1177,7 @@ function RefreshProjects()
 					<button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button>\
 				</p>\
 			</div>';
+		CheckPlayStopButtons();
 		return;
 	}
 	
@@ -1292,8 +1294,6 @@ function RefreshProjects()
 
 function SetCurrentProject( p )
 {
-	CheckPlayStopButtons();
-
 	var cl = ge( 'SB_Project' ).getElementsByClassName( 'Project' );
 	
 	for( var a = 0; a < projects.length; a++ )
@@ -1315,11 +1315,13 @@ function SetCurrentProject( p )
 						cl[ a ].classList.remove( 'Current', 'BackgroundHeavier', 'Rounded' );
 					}
 				}
-				
+				CheckPlayStopButtons();
 				return true;
 			}
 		}
 	}
+	Application.currentProject = false;
+	CheckPlayStopButtons();
 	return false;
 }
 
@@ -1496,7 +1498,7 @@ function CheckPlayStopButtons()
 	{
 		ge( 'PlayStop' ).innerHTML = '\
 		<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">\
-			' + i18n( 'i18n_stop_app' ) + '\
+			' + i18n( 'i18n_stop_app' ) + ' ' + Application.currentProject.ProjectName + '\
 		</button>\
 		';
 	}
@@ -1504,7 +1506,7 @@ function CheckPlayStopButtons()
 	{
 		ge( 'PlayStop' ).innerHTML = '\
 		<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">\
-			' + i18n( 'i18n_run_app' ) + '\
+			' + i18n( 'i18n_run_app' ) + ' ' + Application.currentProject.ProjectName + '\
 		</button>\
 		';
 	}	
