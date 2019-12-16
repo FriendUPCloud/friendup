@@ -411,6 +411,17 @@ function InitEditArea( file )
 	
 	c.addEventListener( 'mousedown', function( e )
 	{
+		var prev = null;
+		var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			if( a > 0 && eles[ a - 1 ] == t )
+			{
+				prev = t;
+				break;
+			}
+		}
+		
 		if( t.file.state == 'Editing' )
 		{
 			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
@@ -421,6 +432,7 @@ function InitEditArea( file )
 					t.parentNode.removeChild( t );
 					t.file.close();
 					InitTabs( ge( 'CodeArea' ) );
+					checkTabsNow();
 				}
 			} );
 		}
@@ -430,8 +442,22 @@ function InitEditArea( file )
 			t.parentNode.removeChild( t );
 			t.file.close();
 			InitTabs( ge( 'CodeArea' ) );
+			checkTabsNow();
 		}
 		return cancelBubble( e );
+		
+		function checkTabsNow()
+		{
+			if( prev )
+			{
+				prev.onclick();
+				return;
+			}
+			var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+			// Make sure one is clicked
+			if( eles && eles[ eles.length - 1 ] )
+				eles[ eles.length - 1 ].onclick();
+		}
 	} );
 	
 	// Initialize the content editor

@@ -111,7 +111,6 @@ Application.receiveMessage = function( msg )
 		case 'getimages':
 			if( this.settings )
 			{
-				console.log( 'Getting imagesdoors', Application.settings.imagesdoors );
 				this.mainView.sendMessage ( { command: 'setimages', mode: 'doors', images: Application.settings.imagesdoors } );
 			}
 			break;
