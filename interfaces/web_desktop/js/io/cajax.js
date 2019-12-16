@@ -695,14 +695,28 @@ cAjax.prototype.send = function( data )
 			// Send data
 			if( data ) 
 			{
-				res = this.proxy.send( data );
+				try
+				{
+					res = this.proxy.send( data );
+				}
+				catch( err )
+				{
+					self.onload( false, false );
+				}
 			}
 			else if( this.varcount > 0 )
 			{
 				var out = [];
 				for( var a in this.vars )
 					out.push( a + '=' + this.vars[a] );
-				res = this.proxy.send( out.join ( '&' ) );
+				try
+				{
+					res = this.proxy.send( out.join ( '&' ) );
+				}
+				catch( err )
+				{
+					self.onload( false, false );
+				}
 				// // console.log( 'Test2: Here u: ' + out.join( '&' ) );
 			}
 			// All else fails?
@@ -734,7 +748,7 @@ cAjax.prototype.send = function( data )
 		}
 		if( res )
 		{
-			succsessfulSend();
+			successfulSend();
 			// Add cancellable network connection
 			if( this.df && this.df.available ) 
 			{
