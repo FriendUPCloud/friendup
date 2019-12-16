@@ -63,9 +63,10 @@ var gui = {
 
 // Files and projects ----------------------------------------------------------
 
-var files = [];
-var projectFiles = {}; // Index
-var projects = [];
+var files = []; // All open files
+var projectFiles = {}; // Index of files
+var projectFolders = {}; // List of projects and their folder states (gui)
+var projects = []; // All projects
 
 // Launch view logic -----------------------------------------------------------
 
@@ -123,10 +124,98 @@ Application.checkFileType = function( path )
 	}
 }
 
+function RefreshFiletypeSelect()
+{
+	if( !Application.currentFile ) return;
+	var ext = Application.currentFile.path ? Application.currentFile.path.split( '.' ).pop().toLowerCase() : 'txt';
+	
+	var types = {
+		'php': 'ace/mode/php',
+		'pl': 'ace/mode/perl',
+		'sql': 'ace/mode/sql',
+		'sh': 'ace/mode/sh',
+		'as': 'ace/mode/actionscript',
+		'txt': 'ace/mode/text',
+		'js': 'ace/mode/javascript',
+		'lang': 'ace/mode/txt',
+		'pls': 'ace/mode/json',
+		'json': 'ace/mode/json',
+		'tpl': 'ace/mode/html',
+		'ptpl': 'ace/mode/perl',
+		'xml': 'ace/mode/xml',
+		'html': 'ace/mode/html',
+		'htm': 'ace/mode/html',
+		'c': 'ace/mode/c_cpp',
+		'h': 'ace/mode/c_cpp',
+		'cpp': 'ace/mode/c_cpp',
+		'd': 'ace/mode/d',
+		'ini': 'ace/mode/ini',
+		'jsx': 'ace/mode/javascript',
+		'java': 'ace/mode/java',
+		'css': 'ace/mode/css',
+		'run': 'ace/mode/txt',
+		'apf': 'ace/mode/json',
+		'conf': 'ace/mode/json'
+	};
+	if( types[ ext ] )
+	{
+		Application.currentFile.editor.getSession().setMode( types[ ext ] );
+	}
+	else if( Application.currentFile.editor )
+	{
+		Application.currentFile.editor.getSession().setMode( 'ace/mode/txt' );
+		ext = 'txt';
+	}
+	
+	if( !ge( 'Filetype' ) )
+	{
+		var d = document.createElement( 'div' );
+		d.id = 'Filetype';
+		var sel = document.createElement( 'select' );
+		for( var a in types )
+		{
+			var o = document.createElement( 'option' );
+			o.value = a;
+			o.innerHTML = a;
+			if( a == ext ) o.selected = 'selected';
+			sel.appendChild( o );
+		}
+		d.appendChild( sel );
+		ge( 'StatusBar' ).appendChild( d );
+	}
+	else
+	{
+		var opts = ge( 'Filetype' ).getElementsByTagName( 'option' );
+		for( var a = 0; a < opts.length; a++ )
+		{
+			if( opts[ a ].value == ext )
+			{
+				opts[ a ].selected = 'selected';
+			}
+			else
+			{
+				opts[ a ].selected = '';
+			}
+		}
+	}
+	
+	if( Application.currentFile.editor )
+	{
+		Application.currentFile.editor.setOptions( { // Enable autocompletion
+			enableBasicAutocompletion: true,
+		    enableSnippets: true,
+		    enableLiveAutocompletion: true
+		} );
+	}
+}
+
 // Initialize the GUI! ---------------------------------------------------------
 
 function InitGui()
 {
+	// Include ace editor language tools
+	ace.require( 'ace/ext/language_tools' );
+	
 	InitTabs( ge( 'SideBarTabs' ) );
 	if( ge( 'SideBar' ) )
 	{
@@ -142,13 +231,19 @@ var EditorFile = function( path )
 {
 	var self = this;
 	
+	var returnable = false;
 	for( var a = 0; a < files.length; a++ )
 	{
 		if( files[ a ].path == path )
 		{
-			return files[ a ].tab.onclick();
+			files[ a ].tab.onclick();
+			files[ a ].activate();
+			return;
 		}
 	}
+	
+	if( Application.currentProject && Application.currentProject.ID )
+		self.ProjectID = Application.currentProject.ID;
 	
 	// Load file
 	if( path && path.indexOf( ':' ) > 0 )
@@ -190,6 +285,7 @@ var EditorFile = function( path )
 							self.refreshMinimap();
 						}, 50 );
 						self.updateState( 'Reading' );
+						CheckProjectFile( f );
 					}
 					f.load();
 				}
@@ -228,11 +324,31 @@ EditorFile.prototype.close = function()
 
 EditorFile.prototype.updateState = function( state )
 {
-	this.state = state;
+	if( typeof( state ) != 'undefined' )
+		this.state = state;
+	else state = this.state;
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
+		if( state == 'Reading' )
+			this.activate();
 	}
+}
+
+EditorFile.prototype.activate = function()
+{
+	for( var a in projectFiles )
+	{
+		if( a == this.path )
+		{
+			projectFiles[ a ].classList.add( 'Active', 'Rounded' );
+		}
+		else
+		{
+			projectFiles[ a ].classList.remove( 'Active', 'Rounded' );
+		}
+	}
+	SetCurrentProject( this.ProjectID );
 }
 
 EditorFile.prototype.updateTab = function()
@@ -298,6 +414,17 @@ function InitEditArea( file )
 	
 	c.addEventListener( 'mousedown', function( e )
 	{
+		var prev = null;
+		var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			if( a > 0 && eles[ a - 1 ] == t )
+			{
+				prev = eles[ a ];
+				break;
+			}
+		}
+		
 		if( t.file.state == 'Editing' )
 		{
 			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
@@ -308,6 +435,7 @@ function InitEditArea( file )
 					t.parentNode.removeChild( t );
 					t.file.close();
 					InitTabs( ge( 'CodeArea' ) );
+					checkTabsNow();
 				}
 			} );
 		}
@@ -317,8 +445,22 @@ function InitEditArea( file )
 			t.parentNode.removeChild( t );
 			t.file.close();
 			InitTabs( ge( 'CodeArea' ) );
+			checkTabsNow();
 		}
 		return cancelBubble( e );
+		
+		function checkTabsNow()
+		{
+			if( prev )
+			{
+				prev.onclick();
+				return;
+			}
+			var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+			// Make sure one is clicked
+			if( eles && eles[ 0 ] )
+				eles[ 0 ].onclick();
+		}
 	} );
 	
 	// Initialize the content editor
@@ -333,11 +475,23 @@ function InitEditArea( file )
 	
 	InitTabs( ge( 'CodeArea' ) );
 	
+	// Add an extra event
+	file.tab.addEventListener( 'click', function( e )
+	{
+		file.activate();
+		setTimeout( function( e )
+		{
+			RefreshFiletypeSelect();
+		}, 150 );
+	}, false );
+
 	Application.currentFile = file;
 	file.tab.onclick();
 	
 	if( file.refreshMinimap )
 		file.refreshMinimap();
+	
+	RefreshFiletypeSelect();
 }
 
 function RemoveEditArea( file )
@@ -374,6 +528,11 @@ function InitContentEditor( element, file )
 	file.editor = ace.edit( area.id );
 	file.editor.setFontSize( 14 );
 	file.editor.setValue( file.content );
+	file.editor.setOptions( { // Enable autocompletion
+		enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+	} );
 	file.editor.clearSelection();
 	file.editor.gotoLine( 0, 0, true );	
 	file.editor.setTheme( 'ace/theme/' + settings.theme );
@@ -592,7 +751,7 @@ function OpenFile( path )
 	}
 	
 	( new Filedialog( {
-		path: path,
+		path: path ? path : ( ( Application.currentProject && Application.currentProject.ProjectPath ) ? Application.currentProject.ProjectPath : 'Home:' ),
 		triggerFunction: function( items )
 		{
 			if( items && items.length )
@@ -609,6 +768,45 @@ function OpenFile( path )
 	} ) );
 }
 
+// Checking if a file is currently in project
+function CheckProjectFile( file )
+{
+	if( !Application.currentProject ) return;
+	
+	var p = Application.currentProject;
+	// File belongs to other project
+	if( file.ProjectID && file.ProjectID != p.ID ) return;
+	if( p.Files )
+	{
+		var found = false;
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( file.path == p.ProjectPath + p.Files[a].Path )
+			{
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+		{
+			var fn = file.path;
+			if( file.path.indexOf( '/' ) >= 0 )
+				fn = file.path.split( '/' ).pop();
+			else if( file.path.indexOf( ':' ) >= 0 ) fn = file.path.split( ':' ).pop();
+			var pa = file.path;
+			if( file.path.indexOf( p.ProjectPath ) == 0 )
+				pa = file.path.substr( p.ProjectPath.length, file.path.length - p.ProjectPath.length );
+			p.Files.push( {
+				Type: 'File',
+				Path: pa,
+				ProjectID: p.ID,
+				Filename: fn
+			} );
+			RefreshProjects();
+		}
+	}
+}
+
 // Saving a file ---------------------------------------------------------------
 
 function SaveFile( file, saveas )
@@ -623,13 +821,16 @@ function SaveFile( file, saveas )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
 			file.updateState( 'Reading' );
+			RefreshFiletypeSelect();
+			CheckProjectFile( file );
 		}
-		f.save( file.editor.getValue() );
+		var v = file.editor.getValue();
+		f.save( v.length ? v : '\n' );
 	}
 	else
 	{
 		( new Filedialog( {
-			path: file.path ? file.path : 'Home:',
+			path: file.path ? file.path : ( ( Application.currentProject && Application.currentProject.ProjectPath ) ? Application.currentProject.ProjectPath : 'Home:' ),
 			triggerFunction: function( filename )
 			{
 				file.path = filename;
@@ -646,9 +847,13 @@ function SaveFile( file, saveas )
 					StatusMessage( i18n( 'i18n_saved' ) );
 					file.updateTab();
 					file.updateState( 'Reading' );
+					RefreshFiletypeSelect();
+					CheckProjectFile( file );
 				}
-				f.save( file.editor.getValue() );
+				var v = file.editor.getValue();
+				f.save( v.length ? v : '\n' );
 			},
+			filename: '',
 			type: 'save',
 			suffix: supportedFiles,
 			rememberPath: true
@@ -719,36 +924,19 @@ function PrintFile()
 	}
 }
 
-// Run / stop app
-
-// Run the current jsx
-function RunApp()
-{
-	if( Application.currentFile )
-	{
-		Application.sendMessage( {
-			type: 'system',
-			command: 'executeapplication',
-			executable: Application.currentFile.path,
-			arguments: false
-		} );
-	}
-}
-
-// Kill running jsx
-function StopApp()
-{
-	if( Application.currentFile )
-	{
-		Application.sendMessage( { type: 'system', command: 'kill', appName: Application.currentFile.filename } );
-	}
-}
-
 // The project editor ----------------------------------------------------------
 
 var pe = null;
 function OpenProjectEditor()
 {
+	if( !Application.currentProject )
+	{
+		var p = new Project();
+		p.Path = 'Home:';
+		projects.push( p );
+		Application.currentProject = p;
+	}
+	
 	if( pe )
 	{
 		return pe.activate();
@@ -782,7 +970,7 @@ function OpenProjectEditor()
 var Project = function()
 {
 	// Some variables
-	this.project = {
+	var o = {
 		ProjectName: '',
 		Path:        '',
 		Author:      '',
@@ -790,11 +978,11 @@ var Project = function()
 		Version:     '',
 		API:         'v1',
 		Description: '',
-		Images:      [],
 		Files:       [],
 		Permissions: [],
 		Libraries:   []
 	};
+	for( var a in o ) this[ a ] = o[ a ];
 }
 
 function NewProject()
@@ -830,6 +1018,12 @@ function OpenProject( path )
 {
 	if( path && path.toLowerCase().indexOf( '.apf' ) > 0 )
 	{
+		for( var z = 0; z < projects.length; z++ )
+		{
+			// Project already loaded
+			if( projects[ z ].Path == path )
+				return;
+		}
 		var p = new Project();
 		p.Path = path;
 		p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
@@ -842,7 +1036,14 @@ function OpenProject( path )
 				p[ a ] = proj[ a ];
 			projects.push( p );
 			Application.currentProject = p;
+			
+			var pp = p.Path;
+			if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
+			else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
+			p.ProjectPath = pp;
+			
 			RefreshProjects();
+			CheckPlayStopButtons();
 			ge( 'tabProjects' ).onclick();
 		}
 		f.load();
@@ -860,6 +1061,13 @@ function OpenProject( path )
 			p.Path = files[0].Path;
 			p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 		
+			for( var z = 0; z < projects.length; z++ )
+			{
+				// Project already loaded
+				if( projects[ z ].Path == p.Path )
+					return;
+			}
+		
 			var f = new File( p.Path );
 			f.onLoad = function( data )
 			{
@@ -868,7 +1076,14 @@ function OpenProject( path )
 					p[ a ] = proj[ a ];
 				projects.push( p );
 				Application.currentProject = p;
+				
+				var pp = p.Path;
+				if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
+				else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
+				p.ProjectPath = pp;
+				
 				RefreshProjects();
+				CheckPlayStopButtons();
 				ge( 'tabProjects' ).onclick();
 			}
 			f.load();
@@ -883,7 +1098,19 @@ function SaveProject( project, saveas )
 {
 	if( !saveas ) saveas = false;
 	
-	if( !saveas && project.Path )
+	// Clean up project structure
+	var values = [
+		'ProjectName', 'Path', 'Files', 'Permissions',
+		'Description', 'Version', 'Author', 'Category', 'ProjectPath'
+	];
+	var projectOut = {};
+	for( var a = 0; a < values.length; a++ )
+	{
+		projectOut[ values[a] ] = project[ values[a] ];
+	}
+	// Done cleaning up
+
+	if( !saveas && project.Path && project.Path.indexOf( '.apf' ) > 0 )
 	{
 		var f = new File( project.Path );
 		StatusMessage( i18n( 'i18n_saving' ) );
@@ -891,24 +1118,27 @@ function SaveProject( project, saveas )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
 		}
-		f.save( JSON.stringify( project ) );
+		f.save( JSON.stringify( projectOut ) );
 	}
 	else
 	{
 		( new Filedialog( {
-			path: project.path ? project.path : 'Home:',
+			path: project.ProjectPath ? project.ProjectPath : 'Home:',
 			triggerFunction: function( filename )
 			{
 				project.Path = filename;
+				projectOut.Path = filename;
+
 				var f = new File( project.Path );
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
 					StatusMessage( i18n( 'i18n_saved' ) );
 				}
-				f.save( JSON.stringify( project ) );
+				f.save( JSON.stringify( projectOut ) );
 			},
 			type: 'save',
+			filename: '',
 			suffix: 'apf',
 			rememberPath: true
 		} ) );
@@ -926,28 +1156,35 @@ function CloseProject( proj )
 		o.push( projects[ a ] );
 	}
 	projects = o;
+	var u = {};
+	for( var a in projectFolders )
+	{
+		if( a != proj.ID )
+			u[ a ] = projectFolders[ a ];
+	}
+	projectFolders = u;
 	if( proj == Application.currentProject )
 		Application.currentProject = null;
 	RefreshProjects();
 }
 
 function RefreshProjects()
-{
+{	
 	if( projects.length == 0 )
 	{
+		Application.currentProject = false;
 		ge( 'SB_Project' ).innerHTML = '\
 			<div class="Padding"><p>' + i18n( 'i18n_no_projects' ) + '</p>\
-			<p><button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button></p>\
+				<p>\
+					<button type="button" class="IconSmall fa-folder-open" onclick="OpenProject()"> ' + i18n( 'menu_project_open' ) + '</button>\
+					<button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button>\
+				</p>\
 			</div>';
+		CheckPlayStopButtons();
 		return;
 	}
 	
-	var filesFromPath = {};
-	for( var a = 0; a < files.length; a++ )
-	{
-		if( files[a].path )
-			filesFromPath[ files[a].path ] = files[a];
-	}
+	var listedFolders = {};
 	
 	var str = '';
 	for( var a = 0; a < projects.length; a++ )
@@ -956,6 +1193,10 @@ function RefreshProjects()
 			Application.currentProject = projects[ a ];
 		var pr = projects[ a ];
 		var fstr = '';
+		
+		// Track folder state
+		if( !projectFolders[ pr.ID ] )
+			projectFolders[ pr.ID ] = {};
 		
 		var projectpath = pr.Path.split( '/' );
 		projectpath.pop();
@@ -966,7 +1207,15 @@ function RefreshProjects()
 			var sortable = [];
 			for( var c = 0; c < pr.Files.length; c++ )
 			{
+				pr.Files[ c ].ProjectID = pr.ID;
 				var path = pr.Files[ c ].Path;
+				
+				if( path.indexOf( pr.ProjectPath ) == 0 )
+				{
+					path = path.substr( pr.ProjectPath.length, path.length - pr.ProjectPath.length );
+					pr.Files[ c ] = path;
+				}
+				
 				if( path.substr( path.length - 1, 1 ) != '/' )
 				{
 					path = path.split( '/' );
@@ -980,14 +1229,14 @@ function RefreshProjects()
 				}
 			}
 			sortable = sortable.sort();
-			fstr = listFiles( sortable, 1, false, {} );
+			fstr = listFiles( sortable, 1, false, pr.ID );
 		}
 		var current = ' BackgroundHeavy Rounded';
 		if( Application.currentProject == pr )
 		{
 			current = ' Current BackgroundHeavier Rounded';
 		}
-		str += '<ul><li class="Project' + current + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		str += '<ul><li class="Project' + current + '" id="p' + pr.ID + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
@@ -1002,10 +1251,23 @@ function RefreshProjects()
 		}
 	}
 	
-	// List files recursively
-	function listFiles( list, depth, path, folders )
+	// Update files status
+	for( var a = 0; a < files.length; a++ )
 	{
+		files[ a ].updateState();
+	}
+	
+	// List files recursively
+	function listFiles( list, depth, path, projectId )
+	{
+		// Erronous path
+		if( path && path.indexOf( ':' ) > 0 )
+			return '';
+		
 		var str = '';
+		
+		if( !listedFolders[ projectId ] )
+			listedFolders[ projectId ] = {};
 		
 		for( var a in list )
 		{
@@ -1014,14 +1276,18 @@ function RefreshProjects()
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
+					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
-			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
+			else if( list[a].levels.length == depth + 1 && !listedFolders[ projectId ][ list[ a ].path ] && list[ a ].path.indexOf( ':' ) < 0 )
 			{
-				folders[ list[ a ].path ] = true;
-				str += '<li class="Folder" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
-				str += listFiles( list, depth + 1, list[ a ].path );
+				listedFolders[ projectId ][ list[ a ].path ] = true;
+				
+				if( !projectFolders[ projectId ][ list[ a ].path ] )
+					projectFolders[ projectId ][ list[ a ].path ] = {};
+				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
+				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				str += listFiles( list, depth + 1, list[ a ].path, projectId );
 			}
 		}
 		if( str.length ) str = '<ul>' + str + '</ul>';
@@ -1031,13 +1297,30 @@ function RefreshProjects()
 
 function SetCurrentProject( p )
 {
+	var cl = ge( 'SB_Project' ).getElementsByClassName( 'Project' );
+	
 	for( var a = 0; a < projects.length; a++ )
 	{
 		if( projects[ a ].ID == p )
 		{
-			Application.currentProject = projects[ a ];
-			RefreshProjects();
-			return true;
+			if( Application.currentProject != projects[ a ] )
+			{
+				Application.currentProject = projects[ a ];
+				
+				for( var a = 0; a < cl.length; a++ )
+				{
+					if( cl[ a ].id == 'p' + p )
+					{
+						cl[ a ].classList.add( 'Current', 'BackgroundHeavier', 'Rounded' );
+					}
+					else
+					{
+						cl[ a ].classList.remove( 'Current', 'BackgroundHeavier', 'Rounded' );
+					}
+				}
+				CheckPlayStopButtons();
+				return true;
+			}
 		}
 	}
 	return false;
@@ -1045,19 +1328,98 @@ function SetCurrentProject( p )
 
 function ToggleOpenFolder( ele )
 {
+	var id = ele.getAttribute( 'projectId' );
+	var pa = ele.getAttribute( 'path' );
 	if( ele.classList.contains( 'Open' ) )
 	{
+		projectFolders[ id ][ pa ].state = '';
 		ele.classList.remove( 'Open' );
 	}
 	else
 	{
+		projectFolders[ id ][ pa ].state = 'open';
 		ele.classList.add( 'Open' );
 	}
 }
 
 // End projects ----------------------------------------------------------------
 
-// Helper
+// Search and replace ----------------------------------------------------------
+var currKey = '';
+function Search( execute )
+{
+	if( execute )
+	{
+		var eles = ge( 'Search' ).getElementsByTagName( 'input' );
+		var inps = {};
+		for( var a = 0; a < eles.length; a++ )
+		{
+			var n = eles[a].getAttribute( 'name' );
+			inps[ n ] = eles[a];
+		}
+		
+		var ed = Application.currentFile.editor;
+		if( !ed ) return CloseSearch();
+		
+		if( !inps[ 'doreplace' ].checked )
+		{
+			ed.find( inps[ 'searchkeys' ].value, {
+				wrap: true,
+				caseSensitive: false,
+				wholeWord: false,
+				regExp: false,
+				preventScroll: false
+			} );
+		}
+		else
+		{
+			var range = ed.find( inps[ 'searchkeys' ].value, {
+				wrap: true,
+				caseSensitive: false,
+				wholeWord: false,
+				regExp: false,
+				preventScroll: false
+			} );
+			if( inps[ 'replaceall' ].checked )
+			{
+				ed.replaceAll( inps[ 'replacekeys' ].value );
+			}
+			else
+			{
+				ed.replace( inps[ 'replacekeys' ].value );
+			}
+		}
+		return;
+	}
+	if( ge( 'Search' ) )
+	{
+		ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
+		return;
+	}
+	var d = document.createElement( 'div' );
+	d.id = 'Search';
+	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=this.value; if( event.which == 13 ) Search( true, event );"/> \
+		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '" onkeyup="if( event.which == 13 ) Search( true, event )"/>\
+		<input type="checkbox" name="doreplace" id="dorepl"/> <label for="dorepl">' + i18n( 'i18n_do_replace' ) + '</label>\
+		<input type="checkbox" name="replaceall" id="replall"/> <label for="replall">' + i18n( 'i18n_do_replace_all' ) + '</label>\
+		<button type="button" class="IconButton IconSmall fa-search" onclick="Search( true )">\
+		</button>\
+		<button type="button" class="IconButton IconSmall fa-remove" onclick="CloseSearch()">\
+		</button>\
+	';
+	ge( 'StatusBar' ).appendChild( d );
+	ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
+}
+
+function CloseSearch()
+{
+	currKey = '';
+	ge( 'Search' ).parentNode.removeChild( ge( 'Search' ) );
+}
+
+// End search and replace ------------------------------------------------------
+
+// Helper, sets statusmessage in the bottom left corner
 function StatusMessage( str )
 {
 	var existing = ge( 'StatusMessage' ).getElementsByTagName( 'div' );
@@ -1066,7 +1428,6 @@ function StatusMessage( str )
 		existing[a].style.left = '20px';
 		existing[a].style.opacity = 0;
 	}
-	
 	
 	var el = document.createElement( 'div' );
 	el.style.opacity = 0;
@@ -1125,8 +1486,78 @@ function CreatePackage()
 	j.execute( 'package', { filename: Application.currentProject.Path } );
 }
 
-// Messaging support -----------------------------------------------------------
+// Play and stop ---------------------------------------------------------------
 
+function CheckPlayStopButtons()
+{
+	if( !Application.currentProject )
+	{
+		ge( 'PlayStop' ).innerHTML = '';
+		return;
+	}
+	if( Application.currentProject.Playing )
+	{
+		ge( 'PlayStop' ).innerHTML = '\
+		<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">\
+			' + i18n( 'i18n_stop_app' ) + ' ' + Application.currentProject.ProjectName + '\
+		</button>\
+		';
+	}
+	else
+	{
+		ge( 'PlayStop' ).innerHTML = '\
+		<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">\
+			' + i18n( 'i18n_run_app' ) + ' ' + Application.currentProject.ProjectName + '\
+		</button>\
+		';
+	}	
+}
+
+// Run the current jsx
+function RunApp()
+{
+	if( Application.currentProject )
+	{
+		var p = Application.currentProject;
+		
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'executeapplication',
+					executable: p.ProjectPath + p.Files[ a ].Path,
+					arguments: false
+				} );
+				Application.currentProject.Playing = true;
+				CheckPlayStopButtons();
+			}
+		}
+	}
+}
+
+// Kill running jsx
+function StopApp()
+{
+	if( Application.currentProject )
+	{
+		var p = Application.currentProject;
+		
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+			{
+				Application.sendMessage( { type: 'system', command: 'kill', appName: p.Files[ a ].Filename } );
+				Application.currentProject.Playing = false;
+				CheckPlayStopButtons();
+			}
+		}
+	}
+}
+
+// Messaging support -----------------------------------------------------------
+var abw = false;
 Application.receiveMessage = function( msg )
 {
 	if( msg.command )
@@ -1193,16 +1624,47 @@ Application.receiveMessage = function( msg )
 					if( projects[ a ].ID == msg.project.ID )
 					{
 						projects[ a ] = msg.project;
+						
+						Application.currentProject = projects[ a ];
+						SaveProject( Application.currentProject );
+						break;
 					}
 				}
 				RefreshProjects();
 				if( pe ) pe.close();
 				break;
 			case 'about':
-				console.log( 'About window.' );
+				if( abw )
+				{
+					abw.activate();
+					return;
+				}
+				abw = new View( {
+					title: i18n( 'i18n_about_friend_create' ),
+					width: 600,
+					height: 380
+				} );
+				var f = new File( 'Progdir:Templates/about_' + Application.language + '.html' );
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					abw.setContent( data );
+				}
+				f.load();
+				abw.onClose = function(){ abw = false; }
 				break;
 			case 'package_generate':
 				CreatePackage();
+				break;
+			case 'launchwith':
+				if( msg.file.split( '.' ).pop().toLowerCase() == 'apf' )
+				{
+					OpenProject( msg.file );
+				}
+				else
+				{
+					new EditorFile( msg.file );
+				}
 				break;
 		}
 	}

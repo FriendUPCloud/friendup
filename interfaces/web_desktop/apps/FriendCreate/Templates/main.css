@@ -221,6 +221,17 @@
 #SB_Project li
 {
 	margin: 5px 0 5px 0px;
+	padding: 4px;
+}
+
+#SB_Project
+{
+	margin-top: 5px;
+}
+
+#SB_Project ul ul ul li
+{
+	margin-top: 0;
 }
 
 #SB_Project li:before
@@ -230,9 +241,15 @@
 	margin: 0 5px 0 0;
 }
 
+#SB_Project li.Project:first-child
+{
+	margin: 0;
+}
+
 #SB_Project li.Project
 {
 	padding: 5px;
+	margin: 0 0 5px 0;
 }
 
 #SB_Project li.Project.Current
@@ -265,6 +282,11 @@
 #SB_Project li.Folder.Open + ul
 {
 	max-height: 2000px;
+}
+
+#SB_Project li.FileItem.Active
+{
+	background: rgba(0,0,0,0.5);
 }
 
 #SB_Project li.Folder:before
@@ -337,3 +359,25 @@
 	margin-top: 50px;
 }
 
+#Search
+{
+	position: absolute;
+	left: 280px;
+	top: 5px;
+	width: calc(100% - 380px);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+#Search input[type=text]
+{
+	width: 130px;
+}
+
+#Filetype
+{
+	position: absolute;
+	right: 5px;
+	top: 5px;
+}

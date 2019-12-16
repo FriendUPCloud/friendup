@@ -10,7 +10,7 @@ i18n_save                           : Large
 i18n_print                          : Utskrift
 i18n_undo                           : Angre
 i18n_search_replace                 : Søk & erstatt
-i18n_run_app                        : Kjør applikasjon
+i18n_run_app                        : Kjør
 i18n_stop_app                       : Stopp
 
 i18n_file_menu                      : Fil
@@ -62,7 +62,7 @@ i18n_remove_files                   : Legg til fil(er)
 i18n_project_has_no_files           : Prosjektet har ikke filer.
 i18n_project_has_no_images          : Prosjektet har ikke bilder.
 i18n_project_has_no_permissions     : Prosjektet har ikke rettigheter.
-i18n_update_project                 : Oppdater prosjekt
+i18n_update_project                 : Lagre
 i18n_cancel                         : Lukk
 
 i18n_no_projects                    : Friend Create har ingen aktive prosjekter.
@@ -79,6 +79,11 @@ i18n_office                         : Kontor
 i18n_preferences                    : Innstillinger
 i18n_programming                    : Programmering
 i18n_system                         : System
+
+i18n_mandatory_images               : Obligatoriske bilder
+i18n_image_icon                     : Ikonbilde
+i18n_image_store_preview            : Forhåndsvisning
+i18n_image_screenshot               : Skjermskudd
 
 i18n_add_images                     : Fjern bilder
 i18n_remove_images                  : Legg til bilde(r)
@@ -103,3 +108,13 @@ i18n_package_generation_error       : Prosjektet ditt mangler egenskaper som for
 
 i18n_generating_package             : Genererer pakke...
 i18n_package_generated              : Pakken ble generert.
+
+i18n_about_friend_create            : Om Friend Create
+i18n_about_desc                     : Friend Create er et fullstendig integrert utviklermiljø.
+i18n_close                          : Lukk
+
+i18n_search_keywords                : Søkeord
+i18n_replace_with                   : Erstatt med
+i18n_do_replace                     : Erstatt
+i18n_do_replace_all                 : Erstatt alle
+

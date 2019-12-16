@@ -693,3 +693,8 @@ i18n_status_Error                       : FEILET
 i18n_processing                         : Prosesserer
 i18n_logging_in                         : Logger inn
 
+#Alerts ------------------------------------------------------------------------
+
+i18n_erroneous_filename                 : Feil filnavn
+i18n_please_set_a_valid_filename        : Vennligst velg et filnavn med riktig filendelse.
+

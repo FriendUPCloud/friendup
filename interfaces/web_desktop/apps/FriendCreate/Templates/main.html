@@ -1,5 +1,6 @@
 <link rel="stylesheet" href="Progdir:Templates/main.css"/>
 <script src="Progdir:Libraries/Ace/ace.js"></script>
+<script src="Progdir:Libraries/Ace/ext-language_tools.js"></script>
 <script src="System:js/gui/filebrowser.js"></script>
 
 <div id="Print"></div>
@@ -22,16 +23,12 @@
 				{i18n_undo}
 			</button>
 			<div class="VDivider"></div>
-			<button type="button" class="IconButton IconSmall fa-search">
+			<button type="button" class="IconButton IconSmall fa-search" onclick="Search()">
 				{i18n_search_replace}
 			</button>
 			<div class="VDivider"></div>
-			<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">
-				{i18n_run_app}
-			</button>
-			<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">
-				{i18n_stop_app}
-			</button>
+			<span id="PlayStop">
+			</span>
 		</div>
 	</div>
 	<div id="SideBar" class="">

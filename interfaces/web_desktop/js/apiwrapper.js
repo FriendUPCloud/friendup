@@ -1862,8 +1862,6 @@ function apiWrapper( event, force )
 
 					var postTarget = app;
 					
-					console.log( '[apiwrapper] Opening a new view: ', msg.data );
-					
 					// Startup sequence apps need to be deactivated
 					if( app.startupsequence )
 					{						

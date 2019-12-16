@@ -247,9 +247,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		{
 			if ( typeof ( dialog.saveinput ) == 'undefined' || dialog.saveinput.value.length < 1 )
 			{
-				//TODO: Change with our alert!
-				alert ( 'Failed. Please input filename.' );
-				if ( dialog.saveinput ) dialog.saveinput.focus ();
+				Alert( i18n( 'i18n_erroneous_filename' ), i18n( 'i18n_please_set_a_valid_filename' ), false, w );
+				if( dialog.saveinput ) dialog.saveinput.focus ();
 				return;
 			}
 			var p = dialog.path;
@@ -494,7 +493,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		{
 			dialog.sidebar = false;
 		}
-
+		
 		// Insert filename (if save)
 		if( type == 'save' )
 		{
@@ -526,7 +525,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 							}
 							else path = '';
 						}
-						inps[a].value = path;
+						
+						path = typeof( path ) == 'object' ? path.join( ':' ) : path;
+						inps[a].value = path.indexOf( '.' ) > 0 ? path : '';
 					}
 					dialog.saveinput = inps[a];
 					inps[a].onkeydown = function( e )

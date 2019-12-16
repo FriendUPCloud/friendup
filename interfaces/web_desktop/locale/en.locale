@@ -748,3 +748,8 @@ i18n_status_Error                       : FAILED
 i18n_processing                         : Processing
 i18n_logging_in                         : Logging in
 
+#Alerts ------------------------------------------------------------------------
+
+i18n_erroneous_filename                 : Wrong filename
+i18n_please_set_a_valid_filename        : Please choose a valid filename with the correct filename extension.
+
