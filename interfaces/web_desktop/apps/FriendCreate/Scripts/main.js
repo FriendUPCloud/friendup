@@ -921,31 +921,6 @@ function PrintFile()
 	}
 }
 
-// Run / stop app
-
-// Run the current jsx
-function RunApp()
-{
-	if( Application.currentFile )
-	{
-		Application.sendMessage( {
-			type: 'system',
-			command: 'executeapplication',
-			executable: Application.currentFile.path,
-			arguments: false
-		} );
-	}
-}
-
-// Kill running jsx
-function StopApp()
-{
-	if( Application.currentFile )
-	{
-		Application.sendMessage( { type: 'system', command: 'kill', appName: Application.currentFile.filename } );
-	}
-}
-
 // The project editor ----------------------------------------------------------
 
 var pe = null;
@@ -1058,6 +1033,12 @@ function OpenProject( path )
 				p[ a ] = proj[ a ];
 			projects.push( p );
 			Application.currentProject = p;
+			
+			var pp = p.Path;
+			if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
+			else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
+			p.ProjectPath = pp;
+			
 			RefreshProjects();
 			ge( 'tabProjects' ).onclick();
 		}
@@ -1091,6 +1072,12 @@ function OpenProject( path )
 					p[ a ] = proj[ a ];
 				projects.push( p );
 				Application.currentProject = p;
+				
+				var pp = p.Path;
+				if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
+				else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
+				p.ProjectPath = pp;
+				
 				RefreshProjects();
 				ge( 'tabProjects' ).onclick();
 			}
@@ -1178,6 +1165,8 @@ function CloseProject( proj )
 
 function RefreshProjects()
 {
+	CheckPlayStopButtons();
+	
 	if( projects.length == 0 )
 	{
 		ge( 'SB_Project' ).innerHTML = '\
@@ -1303,6 +1292,8 @@ function RefreshProjects()
 
 function SetCurrentProject( p )
 {
+	CheckPlayStopButtons();
+
 	var cl = ge( 'SB_Project' ).getElementsByClassName( 'Project' );
 	
 	for( var a = 0; a < projects.length; a++ )
@@ -1490,6 +1481,76 @@ function CreatePackage()
 		}
 	}
 	j.execute( 'package', { filename: Application.currentProject.Path } );
+}
+
+// Play and stop ---------------------------------------------------------------
+
+function CheckPlayStopButtons()
+{
+	if( !Application.currentProject )
+	{
+		ge( 'PlayStop' ).innerHTML = '';
+		return;
+	}
+	if( Application.currentProject.Playing )
+	{
+		ge( 'PlayStop' ).innerHTML = '\
+		<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">\
+			' + i18n( 'i18n_stop_app' ) + '\
+		</button>\
+		';
+	}
+	else
+	{
+		ge( 'PlayStop' ).innerHTML = '\
+		<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">\
+			' + i18n( 'i18n_run_app' ) + '\
+		</button>\
+		';
+	}	
+}
+
+// Run the current jsx
+function RunApp()
+{
+	if( Application.currentProject )
+	{
+		var p = Application.currentProject;
+		
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'executeapplication',
+					executable: p.ProjectPath + p.Files[ a ].Path,
+					arguments: false
+				} );
+				Application.currentProject.Playing = true;
+				CheckPlayStopButtons();
+			}
+		}
+	}
+}
+
+// Kill running jsx
+function StopApp()
+{
+	if( Application.currentProject )
+	{
+		var p = Application.currentProject;
+		
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+			{
+				Application.sendMessage( { type: 'system', command: 'kill', appName: p.Files[ a ].Filename } );
+				Application.currentProject.Playing = false;
+				CheckPlayStopButtons();
+			}
+		}
+	}
 }
 
 // Messaging support -----------------------------------------------------------
