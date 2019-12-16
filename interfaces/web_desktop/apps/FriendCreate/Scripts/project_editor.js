@@ -63,17 +63,17 @@ function RefreshFiles()
 			
 			if( ext == 'png' || ext == 'gif' || ext == 'jpg' || ext == 'jpeg' )
 			{
-				if( project.Files[a].Path.indexOf( 'screenshot.' ) >= 0 )
+				if( project.Files[a].Path.indexOf( 'screenshot.' ) == 0 )
 				{
 					ge( 'ButtonScreenshot' ).innerHTML = '<img src="' + getImageUrl( project.ProjectPath + project.Files[a].Path ) + '" style="width: 64px; height: 64px"/>';
 					foundScreenshot = true;
 				}
-				if( project.Files[a].Path.indexOf( 'icon.' ) >= 0 )
+				if( project.Files[a].Path.indexOf( 'icon.' ) == 0 )
 				{
 					ge( 'ButtonIcon' ).innerHTML = '<img src="' + getImageUrl( project.ProjectPath + project.Files[a].Path ) + '" style="width: 64px; height: 64px"/>';
 					foundIcon = true;
 				}
-				if( project.Files[a].Path.indexOf( 'preview.' ) >= 0 )
+				if( project.Files[a].Path.indexOf( 'preview.' ) == 0 )
 				{
 					ge( 'ButtonPreview' ).innerHTML = '<img src="' + getImageUrl( project.ProjectPath + project.Files[a].Path ) + '" style="width: 64px; height: 64px"/>';
 					foundPreview = true;
