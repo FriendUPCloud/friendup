@@ -161,7 +161,7 @@ function RefreshFiletypeSelect()
 	{
 		Application.currentFile.editor.getSession().setMode( types[ ext ] );
 	}
-	else
+	else if( Application.currentFile.editor )
 	{
 		Application.currentFile.editor.getSession().setMode( 'ace/mode/txt' );
 		ext = 'txt';
@@ -199,11 +199,14 @@ function RefreshFiletypeSelect()
 		}
 	}
 	
-	Application.currentFile.editor.setOptions( { // Enable autocompletion
-		enableBasicAutocompletion: true,
-        enableSnippets: true,
-        enableLiveAutocompletion: true
-	} );
+	if( Application.currentFile.editor )
+	{
+		Application.currentFile.editor.setOptions( { // Enable autocompletion
+			enableBasicAutocompletion: true,
+		    enableSnippets: true,
+		    enableLiveAutocompletion: true
+		} );
+	}
 }
 
 // Initialize the GUI! ---------------------------------------------------------
