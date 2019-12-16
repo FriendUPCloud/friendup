@@ -417,7 +417,7 @@ function InitEditArea( file )
 		{
 			if( a > 0 && eles[ a - 1 ] == t )
 			{
-				prev = t;
+				prev = eles[ a ];
 				break;
 			}
 		}
@@ -455,8 +455,8 @@ function InitEditArea( file )
 			}
 			var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
 			// Make sure one is clicked
-			if( eles && eles[ eles.length - 1 ] )
-				eles[ eles.length - 1 ].onclick();
+			if( eles && eles[ 0 ] )
+				eles[ 0 ].onclick();
 		}
 	} );
 	
