@@ -198,12 +198,21 @@ function RefreshFiletypeSelect()
 			}
 		}
 	}
+	
+	Application.currentFile.editor.setOptions( { // Enable autocompletion
+		enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+	} );
 }
 
 // Initialize the GUI! ---------------------------------------------------------
 
 function InitGui()
 {
+	// Include ace editor language tools
+	ace.require( 'ace/ext/language_tools' );
+	
 	InitTabs( ge( 'SideBarTabs' ) );
 	if( ge( 'SideBar' ) )
 	{
@@ -226,6 +235,9 @@ var EditorFile = function( path )
 			return files[ a ].tab.onclick();
 		}
 	}
+	
+	if( Application.currentProject && Application.currentProject.ID )
+		self.ProjectID = Application.currentProject.ID;
 	
 	// Load file
 	if( path && path.indexOf( ':' ) > 0 )
@@ -267,6 +279,7 @@ var EditorFile = function( path )
 							self.refreshMinimap();
 						}, 50 );
 						self.updateState( 'Reading' );
+						CheckProjectFile( f );
 					}
 					f.load();
 				}
@@ -465,6 +478,11 @@ function InitContentEditor( element, file )
 	file.editor = ace.edit( area.id );
 	file.editor.setFontSize( 14 );
 	file.editor.setValue( file.content );
+	file.editor.setOptions( { // Enable autocompletion
+		enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: true
+	} );
 	file.editor.clearSelection();
 	file.editor.gotoLine( 0, 0, true );	
 	file.editor.setTheme( 'ace/theme/' + settings.theme );
@@ -683,7 +701,7 @@ function OpenFile( path )
 	}
 	
 	( new Filedialog( {
-		path: path,
+		path: path ? path : ( ( Application.currentProject && Application.currentProject.ProjectPath ) ? Application.currentProject.ProjectPath : 'Home:' ),
 		triggerFunction: function( items )
 		{
 			if( items && items.length )
@@ -698,6 +716,45 @@ function OpenFile( path )
 		suffix: supportedFiles,
 		rememberPath: true
 	} ) );
+}
+
+// Checking if a file is currently in project
+function CheckProjectFile( file )
+{
+	if( !Application.currentProject ) return;
+	
+	var p = Application.currentProject;
+	// File belongs to other project
+	if( file.ProjectID && file.ProjectID != p.ID ) return;
+	if( p.Files )
+	{
+		var found = false;
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( file.path == p.ProjectPath + p.Files[a].Path )
+			{
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+		{
+			var fn = file.path;
+			if( file.path.indexOf( '/' ) >= 0 )
+				fn = file.path.split( '/' ).pop();
+			else if( file.path.indexOf( ':' ) >= 0 ) fn = file.path.split( ':' ).pop();
+			var pa = file.path;
+			if( file.path.indexOf( p.ProjectPath ) == 0 )
+				pa = file.path.substr( p.ProjectPath.length, file.path.length - p.ProjectPath.length );
+			p.Files.push( {
+				Type: 'File',
+				Path: pa,
+				ProjectID: p.ID,
+				Filename: fn
+			} );
+			RefreshProjects();
+		}
+	}
 }
 
 // Saving a file ---------------------------------------------------------------
@@ -715,13 +772,15 @@ function SaveFile( file, saveas )
 			StatusMessage( i18n( 'i18n_saved' ) );
 			file.updateState( 'Reading' );
 			RefreshFiletypeSelect();
+			CheckProjectFile( file );
 		}
-		f.save( file.editor.getValue() );
+		var v = file.editor.getValue();
+		f.save( v.length ? v : '\n' );
 	}
 	else
 	{
 		( new Filedialog( {
-			path: file.path ? file.path : 'Home:',
+			path: file.path ? file.path : ( ( Application.currentProject && Application.currentProject.ProjectPath ) ? Application.currentProject.ProjectPath : 'Home:' ),
 			triggerFunction: function( filename )
 			{
 				file.path = filename;
@@ -739,8 +798,10 @@ function SaveFile( file, saveas )
 					file.updateTab();
 					file.updateState( 'Reading' );
 					RefreshFiletypeSelect();
+					CheckProjectFile( file );
 				}
-				f.save( file.editor.getValue() );
+				var v = file.editor.getValue();
+				f.save( v.length ? v : '\n' );
 			},
 			filename: '',
 			type: 'save',
@@ -997,7 +1058,7 @@ function SaveProject( project, saveas )
 	}
 	// Done cleaning up
 
-	if( !saveas && project.Path )
+	if( !saveas && project.Path && project.Path.indexOf( '.apf' ) > 0 )
 	{
 		var f = new File( project.Path );
 		StatusMessage( i18n( 'i18n_saving' ) );
@@ -1010,7 +1071,7 @@ function SaveProject( project, saveas )
 	else
 	{
 		( new Filedialog( {
-			path: project.path ? project.path : 'Home:',
+			path: project.ProjectPath ? project.ProjectPath : 'Home:',
 			triggerFunction: function( filename )
 			{
 				project.Path = filename;
@@ -1061,7 +1122,10 @@ function RefreshProjects()
 	{
 		ge( 'SB_Project' ).innerHTML = '\
 			<div class="Padding"><p>' + i18n( 'i18n_no_projects' ) + '</p>\
-			<p><button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button></p>\
+				<p>\
+					<button type="button" class="IconSmall fa-folder-open" onclick="OpenProject()"> ' + i18n( 'menu_project_open' ) + '</button>\
+					<button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button>\
+				</p>\
 			</div>';
 		return;
 	}
@@ -1094,7 +1158,15 @@ function RefreshProjects()
 			var sortable = [];
 			for( var c = 0; c < pr.Files.length; c++ )
 			{
+				pr.Files[ c ].ProjectID = pr.ID;
 				var path = pr.Files[ c ].Path;
+				
+				if( path.indexOf( pr.ProjectPath ) == 0 )
+				{
+					path = path.substr( pr.ProjectPath.length, path.length - pr.ProjectPath.length );
+					pr.Files[ c ] = path;
+				}
+				
 				if( path.substr( path.length - 1, 1 ) != '/' )
 				{
 					path = path.split( '/' );
