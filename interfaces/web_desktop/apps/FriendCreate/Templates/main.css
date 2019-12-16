@@ -221,6 +221,7 @@
 #SB_Project li
 {
 	margin: 5px 0 5px 0px;
+	padding: 4px;
 }
 
 #SB_Project li:before
@@ -265,6 +266,11 @@
 #SB_Project li.Folder.Open + ul
 {
 	max-height: 2000px;
+}
+
+#SB_Project li.FileItem.Active
+{
+	background: rgba(0,0,0,0.5);
 }
 
 #SB_Project li.Folder:before

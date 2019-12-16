@@ -228,11 +228,14 @@ var EditorFile = function( path )
 {
 	var self = this;
 	
+	var returnable = false;
 	for( var a = 0; a < files.length; a++ )
 	{
 		if( files[ a ].path == path )
 		{
-			return files[ a ].tab.onclick();
+			files[ a ].tab.onclick();
+			files[ a ].activate();
+			return;
 		}
 	}
 	
@@ -324,7 +327,25 @@ EditorFile.prototype.updateState = function( state )
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
+		if( state == 'Reading' )
+			this.activate();
 	}
+}
+
+EditorFile.prototype.activate = function()
+{
+	for( var a in projectFiles )
+	{
+		if( a == this.path )
+		{
+			projectFiles[ a ].classList.add( 'Active', 'Rounded' );
+		}
+		else
+		{
+			projectFiles[ a ].classList.remove( 'Active', 'Rounded' );
+		}
+	}
+	SetCurrentProject( this.ProjectID );
 }
 
 EditorFile.prototype.updateTab = function()
@@ -428,6 +449,7 @@ function InitEditArea( file )
 	// Add an extra event
 	file.tab.addEventListener( 'click', function( e )
 	{
+		file.activate();
 		setTimeout( function( e )
 		{
 			RefreshFiletypeSelect();
@@ -436,7 +458,6 @@ function InitEditArea( file )
 
 	Application.currentFile = file;
 	file.tab.onclick();
-	
 	
 	if( file.refreshMinimap )
 		file.refreshMinimap();
@@ -993,6 +1014,12 @@ function OpenProject( path )
 {
 	if( path && path.toLowerCase().indexOf( '.apf' ) > 0 )
 	{
+		for( var z = 0; z < projects.length; z++ )
+		{
+			// Project already loaded
+			if( projects[ z ].Path == path )
+				return;
+		}
 		var p = new Project();
 		p.Path = path;
 		p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
@@ -1022,6 +1049,13 @@ function OpenProject( path )
 			var p = new Project();
 			p.Path = files[0].Path;
 			p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
+		
+			for( var z = 0; z < projects.length; z++ )
+			{
+				// Project already loaded
+				if( projects[ z ].Path == p.Path )
+					return;
+			}
 		
 			var f = new File( p.Path );
 			f.onLoad = function( data )
@@ -1130,12 +1164,7 @@ function RefreshProjects()
 		return;
 	}
 	
-	var filesFromPath = {};
-	for( var a = 0; a < files.length; a++ )
-	{
-		if( files[a].path )
-			filesFromPath[ files[a].path ] = files[a];
-	}
+	var listedFolders = {};
 	
 	var str = '';
 	for( var a = 0; a < projects.length; a++ )
@@ -1180,14 +1209,14 @@ function RefreshProjects()
 				}
 			}
 			sortable = sortable.sort();
-			fstr = listFiles( sortable, 1, false, {}, pr.ID );
+			fstr = listFiles( sortable, 1, false, pr.ID );
 		}
 		var current = ' BackgroundHeavy Rounded';
 		if( Application.currentProject == pr )
 		{
 			current = ' Current BackgroundHeavier Rounded';
 		}
-		str += '<ul><li class="Project' + current + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		str += '<ul><li class="Project' + current + '" id="p' + pr.ID + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
@@ -1209,13 +1238,16 @@ function RefreshProjects()
 	}
 	
 	// List files recursively
-	function listFiles( list, depth, path, folders, projectId )
+	function listFiles( list, depth, path, projectId )
 	{
+		// Erronous path
+		if( path && path.indexOf( ':' ) > 0 )
+			return '';
+		
 		var str = '';
-		var project = false; for( var a in projects ) if( projects[ a ].ID == projectId ) project = projects[ a ];
-		var currFile = false;
-		if( Application.currentFile && Application.currentFile.path )
-			currFile = Application.currentFile.path.substr( project.ProjectPath.length, Application.currentFile.path.length - project.ProjectPath.length );
+		
+		if( !listedFolders[ projectId ] )
+			listedFolders[ projectId ] = {};
 		
 		for( var a in list )
 		{
@@ -1224,22 +1256,18 @@ function RefreshProjects()
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					var cl = '';
-					if( list[a].path == currFile )
-					{
-						cl += ' Active';
-					}
-					str += '<li class="FileItem' + cl + '" path="' + fpath + '" onclick="SetCurrentProject( \'' + projectId + '\' ); OpenFile(\'' + fpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
+					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
-			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
+			else if( list[a].levels.length == depth + 1 && !listedFolders[ projectId ][ list[ a ].path ] && list[ a ].path.indexOf( ':' ) < 0 )
 			{
-				folders[ list[ a ].path ] = true;
+				listedFolders[ projectId ][ list[ a ].path ] = true;
+				
 				if( !projectFolders[ projectId ][ list[ a ].path ] )
 					projectFolders[ projectId ][ list[ a ].path ] = {};
 				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
-				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
-				str += listFiles( list, depth + 1, list[ a ].path, false, projectId );
+				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				str += listFiles( list, depth + 1, list[ a ].path, projectId );
 			}
 		}
 		if( str.length ) str = '<ul>' + str + '</ul>';
@@ -1249,6 +1277,8 @@ function RefreshProjects()
 
 function SetCurrentProject( p )
 {
+	var cl = ge( 'SB_Project' ).getElementsByClassName( 'Project' );
+	
 	for( var a = 0; a < projects.length; a++ )
 	{
 		if( projects[ a ].ID == p )
@@ -1256,7 +1286,19 @@ function SetCurrentProject( p )
 			if( Application.currentProject != projects[ a ] )
 			{
 				Application.currentProject = projects[ a ];
-				RefreshProjects();
+				
+				for( var a = 0; a < cl.length; a++ )
+				{
+					if( cl[ a ].id == 'p' + p )
+					{
+						cl[ a ].classList.add( 'Current', 'BackgroundHeavier', 'Rounded' );
+					}
+					else
+					{
+						cl[ a ].classList.remove( 'Current', 'BackgroundHeavier', 'Rounded' );
+					}
+				}
+				
 				return true;
 			}
 		}
