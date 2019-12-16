@@ -57,6 +57,30 @@
 	</div>
 	<div class="BorderTop HRow">
 		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_mandatory_images}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<div class="HRow">
+				<div class="HContent33 FloatLeft Padding TextCenter">
+					<div id="ButtonIcon"></div>
+					<br/>
+					{i18n_image_icon}
+				</div>
+				<div class="HContent33 FloatLeft Padding TextCenter">
+					<div id="ButtonPreview"></div>
+					<br/>
+					{i18n_image_store_preview}
+				</div>
+				<div class="HContent33 FloatLeft Padding TextCenter">
+					<div id="ButtonScreenshot"></div>
+					<br/>
+					{i18n_image_screenshot}
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
 			<strong>{i18n_system_privileges}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
@@ -130,5 +154,13 @@
 		left: 0;
 		position: absolute;
 		z-index: 2;
+	}
+	#ButtonScreenshot, #ButtonPreview, #ButtonIcon
+	{
+		width: 80px;
+		height: 80px;
+		margin: auto;
+		border-radius: 4px;
+		background-color: rgba(0,0,0,0.4);
 	}
 </style>

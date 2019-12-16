@@ -80,6 +80,11 @@ i18n_preferences                    : Innstillinger
 i18n_programming                    : Programmering
 i18n_system                         : System
 
+i18n_mandatory_images               : Obligatoriske bilder
+i18n_image_icon                     : Ikonbilde
+i18n_image_store_preview            : Forhåndsvisning
+i18n_image_screenshot               : Skjermskudd
+
 i18n_add_images                     : Fjern bilder
 i18n_remove_images                  : Legg til bilde(r)
 
