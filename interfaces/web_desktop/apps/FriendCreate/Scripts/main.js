@@ -232,10 +232,12 @@ var EditorFile = function( path )
 	var self = this;
 	
 	var returnable = false;
+	
 	for( var a = 0; a < files.length; a++ )
 	{
 		if( files[ a ].path == path )
 		{
+			Application.currentFile = files[ a ];
 			files[ a ].tab.onclick();
 			files[ a ].activate();
 			return;
@@ -330,8 +332,10 @@ EditorFile.prototype.updateState = function( state )
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
-		if( state == 'Reading' )
+		if( state == 'Reading' || state == 'Editing' )
+		{
 			this.activate();
+		}
 	}
 }
 
@@ -931,10 +935,7 @@ function OpenProjectEditor()
 {
 	if( !Application.currentProject )
 	{
-		var p = new Project();
-		p.Path = 'Home:';
-		projects.push( p );
-		Application.currentProject = p;
+		return NewProject();
 	}
 	
 	if( pe )
@@ -989,6 +990,7 @@ function NewProject()
 {
 	var p = new Project();
 	p.Path = 'Home:';
+	p.ProjectPath = 'Home:';
 	p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 	var found = false;
 	var b = 1;
@@ -1012,6 +1014,17 @@ function NewProject()
 	projects.push( p );
 	Application.currentProject = p;
 	RefreshProjects();
+	SaveProject( p, true, function( result )
+	{
+		if( result == false )
+		{
+			CloseProject( p );
+		}
+		else
+		{
+			
+		}
+	} );
 }
 
 function OpenProject( path )
@@ -1075,13 +1088,13 @@ function OpenProject( path )
 				for( var a in proj )
 					p[ a ] = proj[ a ];
 				projects.push( p );
-				Application.currentProject = p;
 				
 				var pp = p.Path;
 				if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
 				else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
 				p.ProjectPath = pp;
 				
+				SetCurrentProject( p );
 				RefreshProjects();
 				CheckPlayStopButtons();
 				ge( 'tabProjects' ).onclick();
@@ -1094,7 +1107,7 @@ function OpenProject( path )
 	} ) );
 }
 
-function SaveProject( project, saveas )
+function SaveProject( project, saveas, callback )
 {
 	if( !saveas ) saveas = false;
 	
@@ -1117,6 +1130,8 @@ function SaveProject( project, saveas )
 		f.onSave = function( res )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
+			if( callback )
+				callback( true );
 		}
 		f.save( JSON.stringify( projectOut ) );
 	}
@@ -1124,9 +1139,35 @@ function SaveProject( project, saveas )
 	{
 		( new Filedialog( {
 			path: project.ProjectPath ? project.ProjectPath : 'Home:',
+			title: i18n( 'i18n_save_new_project' ),
 			triggerFunction: function( filename )
 			{
+				if( !filename )
+				{
+					return callback( false );
+				}
+				
 				project.Path = filename;
+				
+				// Fix the filename for the project path
+				var p = filename;
+				if( p.indexOf( '/' ) > 0 )
+				{
+					p = p.split( '/' ); p.pop();
+					p = p.join( '/' ) + '/';
+				}
+				else if( p.indexOf( ':' ) > 0 )
+				{
+					p = p.split( ':' ); p.pop();
+					p = p.join( ':' ) + ':';
+				}
+				// Erroneous filename
+				else return callback( false );
+				
+				
+				project.ProjectPath = p;
+				
+				projectOut.ProjectPath = p;
 				projectOut.Path = filename;
 
 				var f = new File( project.Path );
@@ -1134,11 +1175,13 @@ function SaveProject( project, saveas )
 				f.onSave = function( res )
 				{
 					StatusMessage( i18n( 'i18n_saved' ) );
+					if( callback )
+						callback( true );
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},
 			type: 'save',
-			filename: '',
+			filename: 'project.apf',
 			suffix: 'apf',
 			rememberPath: true
 		} ) );
@@ -1398,6 +1441,7 @@ function Search( execute )
 	}
 	var d = document.createElement( 'div' );
 	d.id = 'Search';
+	d.className = 'BackgroundDefault';
 	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=this.value; if( event.which == 13 ) Search( true, event );"/> \
 		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '" onkeyup="if( event.which == 13 ) Search( true, event )"/>\
 		<input type="checkbox" name="doreplace" id="dorepl"/> <label for="dorepl">' + i18n( 'i18n_do_replace' ) + '</label>\
@@ -1407,7 +1451,13 @@ function Search( execute )
 		<button type="button" class="IconButton IconSmall fa-remove" onclick="CloseSearch()">\
 		</button>\
 	';
-	ge( 'StatusBar' ).appendChild( d );
+	ge( 'CodeArea' ).appendChild( d );
+	d.classList.add( 'Opening' );
+	setTimeout( function()
+	{
+		d.classList.add( 'Open' );
+		d.classList.remove( 'Opening' );
+	}, 250 );
 	ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
 }
 
@@ -1669,3 +1719,4 @@ Application.receiveMessage = function( msg )
 		}
 	}
 }
+

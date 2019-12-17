@@ -2754,13 +2754,16 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			var type = icons[a].MetaType;
 			
 			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
+			{
 				continue;
+			}
 
 			// TODO: Show hidden files if we _must_
 		 	var fn = {
 		 		Filename: icons[a].Filename ? icons[a].Filename : icons[a].Title,
 		 		Type: icons[a].Type
 		 	};
+		 	
 		 	// Skip dot files
 			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
 			
@@ -2776,8 +2779,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 
 			// Only show orphan .info files
 			if( !self.showHiddenFiles && ( 
-				fn.Filename.indexOf( '.info' ) == fn.Filename.length - 5 || 
-				fn.Filename.indexOf( '.dirinfo' ) == fn.Filename.length - 8 
+				fn.Filename.substr( fn.Filename.length - 5, 5 ) == '.info' || 
+				fn.Filename.substr( fn.Filename.length - 8, 8 ) == '.dirinfo'
 			) )
 			{
 				if( !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
@@ -2794,7 +2797,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					break;
 				}
 			}
-			if( fnd ) continue;
+			if( fnd ) 
+			{
+				continue;
+			}
 			
 			// Do not draw icons out of bounds!
 			if( this.mode != 'Volumes' && ( iy > display.bottom || iy + gridY < display.top ) )

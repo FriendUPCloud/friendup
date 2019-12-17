@@ -272,9 +272,8 @@ function RemovePrivileges()
 function AddFiles( type )
 {
 	( new Filedialog( {
-		path: 'Mountlist:',
+		path: project.ProjectPath,
 		type: 'open',
-		rememberPath: true,
 		triggerFunction: function( files )
 		{
 			if( files.length )
