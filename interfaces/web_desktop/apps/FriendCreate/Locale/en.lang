@@ -39,6 +39,8 @@ menu_project_save_as                : Save project as
 menu_packages                       : Packages
 menu_package_generate               : Generate package
 
+i18n_save_new_project               : Save new project
+
 i18n_saving                         : Saving...
 i18n_saved                          : Saved.
 

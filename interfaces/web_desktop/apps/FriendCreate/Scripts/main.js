@@ -989,6 +989,7 @@ function NewProject()
 {
 	var p = new Project();
 	p.Path = 'Home:';
+	p.ProjectPath = 'Home:';
 	p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 	var found = false;
 	var b = 1;
@@ -1012,6 +1013,17 @@ function NewProject()
 	projects.push( p );
 	Application.currentProject = p;
 	RefreshProjects();
+	SaveProject( p, true, function( result )
+	{
+		if( result == false )
+		{
+			p.close();
+		}
+		else
+		{
+			
+		}
+	} );
 }
 
 function OpenProject( path )
@@ -1094,7 +1106,7 @@ function OpenProject( path )
 	} ) );
 }
 
-function SaveProject( project, saveas )
+function SaveProject( project, saveas, callback )
 {
 	if( !saveas ) saveas = false;
 	
@@ -1117,6 +1129,8 @@ function SaveProject( project, saveas )
 		f.onSave = function( res )
 		{
 			StatusMessage( i18n( 'i18n_saved' ) );
+			if( callback )
+				callback( true );
 		}
 		f.save( JSON.stringify( projectOut ) );
 	}
@@ -1124,8 +1138,15 @@ function SaveProject( project, saveas )
 	{
 		( new Filedialog( {
 			path: project.ProjectPath ? project.ProjectPath : 'Home:',
+			title: i18n( 'i18n_save_new_project' ),
 			triggerFunction: function( filename )
 			{
+				console.log( filename );
+				if( !filename )
+				{
+					return callback( false );
+				}
+				
 				project.Path = filename;
 				projectOut.Path = filename;
 
@@ -1134,11 +1155,13 @@ function SaveProject( project, saveas )
 				f.onSave = function( res )
 				{
 					StatusMessage( i18n( 'i18n_saved' ) );
+					if( callback )
+						callback( true );
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},
 			type: 'save',
-			filename: '',
+			filename: 'project.apf',
 			suffix: 'apf',
 			rememberPath: true
 		} ) );
