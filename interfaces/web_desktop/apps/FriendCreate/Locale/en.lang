@@ -7,6 +7,8 @@ i18n_your_devices                   : Your disks
 
 i18n_open                           : Open
 i18n_save                           : Save
+i18n_save_as                        : Save as
+i18n_new_file                       : New file
 i18n_print                          : Print
 i18n_undo                           : Undo
 i18n_search_replace                 : Search & replace

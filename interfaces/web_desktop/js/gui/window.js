@@ -930,8 +930,9 @@ function _ActivateWindowOnly( div )
 				window.currentMovable = div;
 			else window.currentMovable = div;
 
-			m.classList.add( 'Active' );
 			m.viewContainer.classList.remove( 'OnWorkspace' );
+			
+			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
 			// Extra force!
