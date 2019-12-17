@@ -138,6 +138,68 @@ Sections.accounts_users = function( cmd, extra )
 				
 				var func = {
 					
+					init : function (  )
+					{
+						console.log( 'func.init(  )' );
+						
+						if( ge( 'UserListID_'+userInfo.ID ) )
+						{
+							
+							// TODO: Make support for updating the users list and setting it selected when there is change, also when there is a new user created, update the list with the new data ...
+							
+							return;
+							
+							var r = document.createElement( 'div' );
+							setROnclick( r, userInfo.ID );
+							
+							
+							r.className = 'HRow ' + status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
+							r.id = ( 'UserListID_'+userInfo.ID );
+					
+							var timestamp = ( userInfo[ 'LoginTime' ] ? userInfo[ 'LoginTime' ] : 0 );
+						
+							userInfo[ 'Status' ] = status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
+					
+							userInfo[ 'LoginTime' ] = ( userInfo[ 'LoginTime' ] != 0 && userInfo[ 'LoginTime' ] != null ? CustomDateTime( userInfo[ 'LoginTime' ] ) : login[ 0 ] );
+					
+							var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+					
+							var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+					
+							userInfo[ 'Edit' ] = '<span '             + 
+							'id="UserAvatar_' + userInfo.ID + '" '    + 
+							'fullname="' + userInfo.FullName + '" '   + 
+							'name="' + userInfo.Name + '" '           + 
+							'status="' + userInfo.Status + '" '       + 
+							'logintime="' + userInfo.LoginTime + '" ' + 
+							'timestamp="' + timestamp + '" '               +
+							'class="IconSmall fa-user-circle-o avatar" '   + 
+							'style="position: relative;" '                 +
+							'><div style="' + bg + '"></div></span>';
+							
+						
+							for( var z in types )
+							{
+								var borders = '';
+								var d = document.createElement( 'div' );
+								if( z != 'Edit' )
+								{
+									d.className = '';
+								}
+								else d.className = 'TextCenter';
+								if( a < userList.length - a )
+								{
+									borders += ' BorderBottom';
+								}
+								d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis ' + z.toLowerCase() + borders;
+								d.innerHTML = userInfo[ z ];
+								r.appendChild( d );
+							}
+							
+						}
+						
+					},
+					
 					user : function (  )
 					{
 						// User
@@ -372,6 +434,8 @@ Sections.accounts_users = function( cmd, extra )
 				
 				function template( first )
 				{
+					
+					
 					var user = func.user();
 					
 					var udisabled = user.udisabled; 
@@ -881,7 +945,9 @@ Sections.accounts_users = function( cmd, extra )
 					
 					
 					if( first )
-					{	
+					{
+						func.init();
+						
 						// Get the user details template
 						var d = new File( 'Progdir:Templates/account_users_details.html' );
 						console.log( 'userInfo ', userInfo );
@@ -1497,13 +1563,19 @@ Sections.accounts_users = function( cmd, extra )
 							{
 							
 								randomAvatar( this.value, function( avatar ) 
-								{ 
-									var canvas = ge( 'Avatar' ).toDataURL();
-								
-									console.log( 'canvas: ', canvas.length );
-									console.log( 'avatar: ', avatar.length );
-								
-									if( ge( 'AdminAvatar' ) && avatar && canvas.length <= 15000 )
+								{
+									var canvas = 0;
+									
+									try
+									{
+										canvas = ge( 'AdminAvatar' ).toDataURL();
+									}
+									catch( e ) {  }
+									
+									console.log( 'canvas: ', ( canvas ? canvas.length : 0 ) );
+									console.log( 'avatar: ', ( avatar ? avatar.length : 0 ) );
+									
+									if( ge( 'AdminAvatar' ) && avatar && ( ( canvas && canvas.length <= 15000 ) || !canvas ) )
 									{
 										// Only update the avatar if it exists..
 										var avSrc = new Image();
@@ -1673,6 +1745,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				if( !ge( 'UserListID_'+userList[a].ID ) )
 				{
+					//console.log( 'userList[a] ', userList[a] );
 					
 					sw = sw == 2 ? 1 : 2;
 					var r = document.createElement( 'div' );
@@ -1688,7 +1761,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 					var img = '/system.library/module/?module=system&command=getavatar&userid=' + userList[ a ].ID + ( userList[ a ].Image ? '&image=' + userList[ a ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
 					
-					var bg = 'background-image: url(\'' + img + '\'); background-position: center center; background-size: contain; background-repeat: no-repeat; color: transparent;';
+					var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 					
 					userList[ a ][ 'Edit' ] = '<span '             + 
 					'id="UserAvatar_' + userList[ a ].ID + '" '    + 
@@ -1698,8 +1771,8 @@ Sections.accounts_users = function( cmd, extra )
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
 					'class="IconSmall fa-user-circle-o avatar" '   + 
-					'style="' + bg + '" '                          +
-					'></span>';
+					'style="position: relative;" '                 +
+					'><div style="' + bg + '"></div></span>';
 					
 					
 					
@@ -3430,7 +3503,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 				storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 			}
 			
-			console.log( storage );
+			//console.log( storage );
 			
 			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
 			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
@@ -4048,7 +4121,15 @@ function saveUser( uid )
 				if( canvas )
 				{
 					context = canvas.getContext( '2d' );
-					var base64 = canvas.toDataURL();
+					
+					var base64 = false;
+					
+					try
+					{
+						base64 = canvas.toDataURL();
+					}
+					catch( e ) {  }
+					
 					if( base64 )
 					{
 						var ma = new Module( 'system' );
