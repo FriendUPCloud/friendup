@@ -945,10 +945,11 @@ function OpenProjectEditor()
 	
 	if( pe )
 	{
+		pe.setFlag( 'title', i18n( 'i18n_project_editor' ) + ' - ' + Application.currentProject.ProjectPath );
 		return pe.activate();
 	}
 	pe = new View( {
-		title: i18n( 'i18n_project_editor' ),
+		title: i18n( 'i18n_project_editor' ) + ' - ' + Application.currentProject.ProjectPath,
 		width: 900,
 		height: 700
 	} );
@@ -1207,17 +1208,31 @@ function MoveProjectFiles( project, oldPath, callback )
 	{
 		if( pos < project.Files.length )
 		{
-			var f = new File( oldPath + project.Files[ pos ].Path );
-			f.onLoad = function( data )
+			var shell = new Shell();
+			shell.onReady = function()
 			{
-				var f2 = new File( project.ProjectPath + project.Files[ pos ].Path );
-				f2.onSave = function( res )
+				var dest = project.ProjectPath + project.Files[ pos ].Path;
+				if( dest.indexOf( '/' ) > 0 )
 				{
-					nextFile( pos + 1 );
+					dest = dest.split( '/' );
+					dest.pop();
+					dest = dest.join( '/' ) + '/';
 				}
-				f2.save( data );
+				else if( dest.indexOf( ':' ) > 0 )
+				{
+					dest = dest.split( ':' );
+					dest.pop();
+					dest = dest.join( ':' ) + ':';
+				}
+				shell.execute( 'makedir "' + dest + '"', function( res )
+				{
+					shell.execute( 'copy "' + oldPath + project.Files[ pos ].Path + '" "' + dest + '"', function( result )
+					{
+						nextFile( pos + 1 );
+						shell.close();
+					} );
+				} );
 			}
-			f.load();
 		}
 		else
 		{
