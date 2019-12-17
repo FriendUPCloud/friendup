@@ -1720,7 +1720,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var clean = [];
 	for( var i = 0; i < eles.length; i++ )
 	{
-		if( !cfo.Path || !eles[i].window.fileInfo || !eles[i].window.fileInfo.Path )
+		if( !cfo.Path || !eles[i].window || !eles[i].window.fileInfo || !eles[i].window.fileInfo.Path )
 		{
 			clean.push( eles[i] );
 			continue;

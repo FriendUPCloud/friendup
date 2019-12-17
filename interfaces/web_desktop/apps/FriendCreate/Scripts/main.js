@@ -240,6 +240,7 @@ var EditorFile = function( path )
 			Application.currentFile = files[ a ];
 			files[ a ].tab.onclick();
 			files[ a ].activate();
+			CheckPlayStopButtons();
 			return;
 		}
 	}
@@ -269,6 +270,7 @@ var EditorFile = function( path )
 					files.push( self );
 					InitEditArea( self );
 					self.updateState( 'Reading' );
+					CheckPlayStopButtons();
 				}
 				else
 				{
@@ -288,6 +290,7 @@ var EditorFile = function( path )
 						}, 50 );
 						self.updateState( 'Reading' );
 						CheckProjectFile( f );
+						CheckPlayStopButtons();
 					}
 					f.load();
 				}
@@ -414,6 +417,7 @@ function InitEditArea( file )
 	t.addEventListener( 'mouseup', function()
 	{
 		Application.currentFile = file;
+		CheckPlayStopButtons();
 	} );
 	
 	c.addEventListener( 'mousedown', function( e )
@@ -941,10 +945,11 @@ function OpenProjectEditor()
 	
 	if( pe )
 	{
+		pe.setFlag( 'title', i18n( 'i18n_project_editor' ) + ' - ' + Application.currentProject.ProjectPath );
 		return pe.activate();
 	}
 	pe = new View( {
-		title: i18n( 'i18n_project_editor' ),
+		title: i18n( 'i18n_project_editor' ) + ' - ' + Application.currentProject.ProjectPath,
 		width: 900,
 		height: 700
 	} );
@@ -1165,6 +1170,8 @@ function SaveProject( project, saveas, callback )
 				// Erroneous filename
 				else return callback( false );
 				
+				// Old path..
+				var oldPath = project.ProjectPath;
 				
 				project.ProjectPath = p;
 				
@@ -1175,9 +1182,14 @@ function SaveProject( project, saveas, callback )
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
-					StatusMessage( i18n( 'i18n_saved' ) );
-					if( callback )
-						callback( true );
+					StatusMessage( i18n( 'i18n_copying_project' ) );
+					MoveProjectFiles( project, oldPath, function( e )
+					{
+						StatusMessage( i18n( 'i18n_saved' ) );
+						if( callback )
+							callback( true );
+					} );
+					
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},
@@ -1186,6 +1198,46 @@ function SaveProject( project, saveas, callback )
 			suffix: 'apf',
 			rememberPath: true
 		} ) );
+	}
+}
+
+function MoveProjectFiles( project, oldPath, callback )
+{
+	nextFile( 0 );
+	function nextFile( pos )
+	{
+		if( pos < project.Files.length )
+		{
+			var shell = new Shell();
+			shell.onReady = function()
+			{
+				var dest = project.ProjectPath + project.Files[ pos ].Path;
+				if( dest.indexOf( '/' ) > 0 )
+				{
+					dest = dest.split( '/' );
+					dest.pop();
+					dest = dest.join( '/' ) + '/';
+				}
+				else if( dest.indexOf( ':' ) > 0 )
+				{
+					dest = dest.split( ':' );
+					dest.pop();
+					dest = dest.join( ':' ) + ':';
+				}
+				shell.execute( 'makedir "' + dest + '"', function( res )
+				{
+					shell.execute( 'copy "' + oldPath + project.Files[ pos ].Path + '" "' + dest + '"', function( result )
+					{
+						nextFile( pos + 1 );
+						shell.close();
+					} );
+				} );
+			}
+		}
+		else
+		{
+			callback( true );
+		}
 	}
 }
 
@@ -1543,25 +1595,22 @@ function CheckPlayStopButtons()
 {
 	if( !Application.currentProject )
 	{
-		ge( 'PlayStop' ).innerHTML = '';
-		return;
+		if( !Application.currentFile || Application.currentFile.filename.substr( -4, 4 ).toLowerCase() != '.jsx' )
+		{
+			console.log( 'Here we go...', Application.currentFile.filename );
+			ge( 'PlayStop' ).innerHTML = '';
+			return;
+		}
 	}
-	if( Application.currentProject.Playing )
-	{
-		ge( 'PlayStop' ).innerHTML = '\
-		<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">\
-			' + i18n( 'i18n_stop_app' ) + ' ' + Application.currentProject.ProjectName + '\
-		</button>\
-		';
-	}
-	else
-	{
-		ge( 'PlayStop' ).innerHTML = '\
-		<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">\
-			' + i18n( 'i18n_run_app' ) + ' ' + Application.currentProject.ProjectName + '\
-		</button>\
-		';
-	}	
+	
+	var nam = 
+	
+	ge( 'PlayStop' ).innerHTML = '\
+	<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()" title="' + i18n( 'i18n_run_app' ) + '">\
+	</button>\
+	<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()" title="' + + i18n( 'i18n_stop_app' ) + '">\
+	</button>\
+	';	
 }
 
 // Run the current jsx
@@ -1586,11 +1635,26 @@ function RunApp()
 			}
 		}
 	}
+	else if( Application.currentFile )
+	{
+		if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+		{
+			Application.sendMessage( {
+				type: 'system',
+				command: 'executeapplication',
+				executable: Application.currentFile.path,
+				arguments: false
+			} );
+			Application.currentProject.Playing = true;
+			CheckPlayStopButtons();
+		}
+	}
 }
 
 // Kill running jsx
 function StopApp()
 {
+	// A project
 	if( Application.currentProject )
 	{
 		var p = Application.currentProject;
@@ -1603,6 +1667,24 @@ function StopApp()
 				Application.currentProject.Playing = false;
 				CheckPlayStopButtons();
 			}
+		}
+	}
+	// Not a project
+	else if( Application.currentFile )
+	{
+		if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+		{
+			var app = Application.currentFile.path;
+			if( app.indexOf( '/' ) > 0 )
+			{
+				app = app.split( '/' ).pop();
+			}
+			else if( app.indexOf( ':' ) > 0 )
+			{
+				app = app.split( ':' ).pop();
+			}
+			Application.sendMessage( { type: 'system', command: 'kill', appName: app } );
+			CheckPlayStopButtons();
 		}
 	}
 }

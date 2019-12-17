@@ -866,6 +866,9 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
 {
+	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+		return;
+	
 	// Blocker
 	if( !isMobile && div.content && div.content.blocker )
 	{
@@ -930,8 +933,9 @@ function _ActivateWindowOnly( div )
 				window.currentMovable = div;
 			else window.currentMovable = div;
 
-			m.classList.add( 'Active' );
 			m.viewContainer.classList.remove( 'OnWorkspace' );
+			
+			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
 			// Extra force!
@@ -1009,6 +1013,9 @@ function _ActivateWindowOnly( div )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+		return;
+
 	if( !e ) e = window.event;
 	
 	// Already activating

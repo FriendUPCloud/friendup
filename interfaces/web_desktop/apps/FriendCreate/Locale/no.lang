@@ -7,6 +7,8 @@ i18n_your_devices                   : Dine disker
 
 i18n_open                           : Åpne
 i18n_save                           : Large
+i18n_save_as                        : Lagre som
+i18n_new_file                       : Ny fil
 i18n_print                          : Utskrift
 i18n_undo                           : Angre
 i18n_search_replace                 : Søk & erstatt
@@ -38,6 +40,8 @@ menu_project_save_as                : Lagre prosjekt som
 
 menu_packages                       : Pakker
 menu_package_generate               : Bygg pakke
+
+i18n_copying_project                : Copying project...
 
 i18n_saving                         : Lagrer...
 i18n_saved                          : Lagret.

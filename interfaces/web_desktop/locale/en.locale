@@ -120,6 +120,7 @@ i18n_package                            : The package
 i18n_was_installed                      : was installed
 i18n_failed_install_package             : Failed to install
 i18n_package_failed                     : This package could not be installed
+menu_install_package                    : Install package
 
 i18n_Storage_Local_Read_desc            : Read access, local doors
 i18n_Storage_Local_Write_desc           : Write access, local doors

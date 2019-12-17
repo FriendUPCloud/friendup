@@ -7,6 +7,8 @@ i18n_your_devices                   : Your disks
 
 i18n_open                           : Open
 i18n_save                           : Save
+i18n_save_as                        : Save as
+i18n_new_file                       : New file
 i18n_print                          : Print
 i18n_undo                           : Undo
 i18n_search_replace                 : Search & replace
@@ -113,6 +115,8 @@ i18n_package_generation_error       : The package lacks properties in required t
 
 i18n_generating_package             : Generating package...
 i18n_package_generated              : Package generated.
+
+i18n_copying_project                : Copying project...
 
 i18n_about_friend_create            : About Friend Create
 i18n_about_desc                     : Friend Create is a fully fledged Integrated Development Environment (IDE).
