@@ -232,10 +232,12 @@ var EditorFile = function( path )
 	var self = this;
 	
 	var returnable = false;
+	
 	for( var a = 0; a < files.length; a++ )
 	{
 		if( files[ a ].path == path )
 		{
+			Application.currentFile = files[ a ];
 			files[ a ].tab.onclick();
 			files[ a ].activate();
 			return;
@@ -331,7 +333,9 @@ EditorFile.prototype.updateState = function( state )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
 		if( state == 'Reading' || state == 'Editing' )
+		{
 			this.activate();
+		}
 	}
 }
 
