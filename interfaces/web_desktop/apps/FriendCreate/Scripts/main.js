@@ -931,10 +931,7 @@ function OpenProjectEditor()
 {
 	if( !Application.currentProject )
 	{
-		var p = new Project();
-		p.Path = 'Home:';
-		projects.push( p );
-		Application.currentProject = p;
+		return NewProject();
 	}
 	
 	if( pe )
@@ -951,6 +948,7 @@ function OpenProjectEditor()
 	f.i18n();
 	f.onLoad = function( data )
 	{
+		console.log( 'What is up.' );
 		pe.setContent( data, function( d )
 		{
 			pe.sendMessage( { command: 'updateproject', data: Application.currentProject, parentView: Application.viewId } );
@@ -1087,13 +1085,13 @@ function OpenProject( path )
 				for( var a in proj )
 					p[ a ] = proj[ a ];
 				projects.push( p );
-				Application.currentProject = p;
 				
 				var pp = p.Path;
 				if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
 				else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
 				p.ProjectPath = pp;
 				
+				SetCurrentProject( p );
 				RefreshProjects();
 				CheckPlayStopButtons();
 				ge( 'tabProjects' ).onclick();
@@ -1148,6 +1146,25 @@ function SaveProject( project, saveas, callback )
 				}
 				
 				project.Path = filename;
+				
+				var p = filename;
+				if( p.indexOf( '/' ) > 0 )
+				{
+					p = p.split( '/' ); p.pop();
+					p = p.join( '/' ) + '/';
+				}
+				else if( p.indexOf( ':' ) > 0 )
+				{
+					p = p.split( ':' ); p.pop();
+					p = p.join( ':' ) + ':';
+				}
+				// Erroneous filename
+				else return callback( false );
+				
+				
+				project.ProjectPath = p;
+				
+				projectOut.ProjectPath = p;
 				projectOut.Path = filename;
 
 				var f = new File( project.Path );
@@ -1699,3 +1716,4 @@ Application.receiveMessage = function( msg )
 		}
 	}
 }
+
