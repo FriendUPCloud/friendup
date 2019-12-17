@@ -1344,6 +1344,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param sessionid - (required) session id of logged user
 	* @param id - (required) id of workgroup to which user will belong
 	* @param users - (required) user id's which will be assigned to group
+	* @param authid - application authid
+	* @param args - additional parameters
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -1359,11 +1361,25 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		FULONG groupID = 0;
 		char *users = NULL;
 		char *usersSQL = NULL;
+		char *args = NULL;
+		char *authid = NULL;
 		HashmapElement *el = NULL;
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = el->data;
+		}
+		
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->data;
+		}
+		
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
@@ -1470,7 +1486,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
@@ -1483,6 +1499,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 	* @param sessionid - (required) session id of logged user
 	* @param id - (required) id of workgroup from which users will be removed
 	* @param users - (required) user id's which will be removed from group
+	* @param authid - application authid
+	* @param args - additional parameters
 	* @return { "response": "sucess","id":<GROUP NUMBER> } when success, otherwise error with code
 	*/
 	/// @endcond
@@ -1498,11 +1516,25 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		FULONG groupID = 0;
 		char *users = NULL;
 		char *usersSQL = NULL;
+		char *args = NULL;
+		char *authid = NULL;
 		HashmapElement *el = NULL;
+		
+		el = HttpGetPOSTParameter( request, "args" );
+		if( el != NULL )
+		{
+			args = el->data;
+		}
+
+		el = HttpGetPOSTParameter( request, "authid" );
+		if( el != NULL )
+		{
+			authid = el->data;
+		}
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE )
+		if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User )  == TRUE || PermissionManagerCheckPermission( l->sl_PermissionManager, loggedSession->us_SessionID, authid, args ) )
 		{
 			el = HttpGetPOSTParameter( request, "users" );
 			if( el != NULL )
@@ -1645,7 +1677,7 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 		else
 		{
 			char buffer[ 256 ];
-			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_PERMISSION] , DICT_NO_PERMISSION );
 			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
