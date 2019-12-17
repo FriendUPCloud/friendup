@@ -330,7 +330,7 @@ EditorFile.prototype.updateState = function( state )
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
-		if( state == 'Reading' )
+		if( state == 'Reading' || state == 'Editing' )
 			this.activate();
 	}
 }
@@ -1139,7 +1139,6 @@ function SaveProject( project, saveas, callback )
 			title: i18n( 'i18n_save_new_project' ),
 			triggerFunction: function( filename )
 			{
-				console.log( filename );
 				if( !filename )
 				{
 					return callback( false );
@@ -1147,6 +1146,7 @@ function SaveProject( project, saveas, callback )
 				
 				project.Path = filename;
 				
+				// Fix the filename for the project path
 				var p = filename;
 				if( p.indexOf( '/' ) > 0 )
 				{
