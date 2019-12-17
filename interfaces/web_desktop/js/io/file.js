@@ -70,6 +70,7 @@ File = function( filename )
 
 	this.resolvePath = function( filename )
 	{
+		if( !filename ) return '';
 		if( filename.toLowerCase().substr( 0, 8 ) == 'progdir:' )
 		{
 			filename = filename.substr( 8, filename.length - 8 );
