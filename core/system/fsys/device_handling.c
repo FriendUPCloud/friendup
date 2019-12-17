@@ -1285,6 +1285,8 @@ ug.UserID = '%ld' \
 					l->LibrarySQLDrop( l, sqllib );
 				}
 				
+				DEBUG("UNMID: %d Type: %s user ID %lu usrparID %lu isAdmin %d\n", unmID,unmType,usr->u_ID, userID, loggedSession->us_User->u_IsAdmin );
+				
 				if( unmID > 0 && unmType != NULL && strcmp( unmType, "SQLWorkgroupDrive" ) == 0 && ( usr->u_ID == userID || loggedSession->us_User->u_IsAdmin ) )
 				{
 					DEBUG("[UnMountFS] Refreshing all user drives for unmount.\n" );
