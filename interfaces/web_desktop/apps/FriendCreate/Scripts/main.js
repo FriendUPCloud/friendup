@@ -240,6 +240,7 @@ var EditorFile = function( path )
 			Application.currentFile = files[ a ];
 			files[ a ].tab.onclick();
 			files[ a ].activate();
+			CheckPlayStopButtons();
 			return;
 		}
 	}
@@ -269,6 +270,7 @@ var EditorFile = function( path )
 					files.push( self );
 					InitEditArea( self );
 					self.updateState( 'Reading' );
+					CheckPlayStopButtons();
 				}
 				else
 				{
@@ -288,6 +290,7 @@ var EditorFile = function( path )
 						}, 50 );
 						self.updateState( 'Reading' );
 						CheckProjectFile( f );
+						CheckPlayStopButtons();
 					}
 					f.load();
 				}
@@ -414,6 +417,7 @@ function InitEditArea( file )
 	t.addEventListener( 'mouseup', function()
 	{
 		Application.currentFile = file;
+		CheckPlayStopButtons();
 	} );
 	
 	c.addEventListener( 'mousedown', function( e )
@@ -1576,25 +1580,22 @@ function CheckPlayStopButtons()
 {
 	if( !Application.currentProject )
 	{
-		ge( 'PlayStop' ).innerHTML = '';
-		return;
+		if( !Application.currentFile || Application.currentFile.filename.substr( -4, 4 ).toLowerCase() != '.jsx' )
+		{
+			console.log( 'Here we go...', Application.currentFile.filename );
+			ge( 'PlayStop' ).innerHTML = '';
+			return;
+		}
 	}
-	if( Application.currentProject.Playing )
-	{
-		ge( 'PlayStop' ).innerHTML = '\
-		<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()">\
-			' + i18n( 'i18n_stop_app' ) + ' ' + Application.currentProject.ProjectName + '\
-		</button>\
-		';
-	}
-	else
-	{
-		ge( 'PlayStop' ).innerHTML = '\
-		<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()">\
-			' + i18n( 'i18n_run_app' ) + ' ' + Application.currentProject.ProjectName + '\
-		</button>\
-		';
-	}	
+	
+	var nam = 
+	
+	ge( 'PlayStop' ).innerHTML = '\
+	<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()" title="' + i18n( 'i18n_run_app' ) + '">\
+	</button>\
+	<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()" title="' + + i18n( 'i18n_stop_app' ) + '">\
+	</button>\
+	';	
 }
 
 // Run the current jsx
@@ -1619,11 +1620,26 @@ function RunApp()
 			}
 		}
 	}
+	else if( Application.currentFile )
+	{
+		if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+		{
+			Application.sendMessage( {
+				type: 'system',
+				command: 'executeapplication',
+				executable: Application.currentFile.path,
+				arguments: false
+			} );
+			Application.currentProject.Playing = true;
+			CheckPlayStopButtons();
+		}
+	}
 }
 
 // Kill running jsx
 function StopApp()
 {
+	// A project
 	if( Application.currentProject )
 	{
 		var p = Application.currentProject;
@@ -1636,6 +1652,24 @@ function StopApp()
 				Application.currentProject.Playing = false;
 				CheckPlayStopButtons();
 			}
+		}
+	}
+	// Not a project
+	else if( Application.currentFile )
+	{
+		if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+		{
+			var app = Application.currentFile.path;
+			if( app.indexOf( '/' ) > 0 )
+			{
+				app = app.split( '/' ).pop();
+			}
+			else if( app.indexOf( ':' ) > 0 )
+			{
+				app = app.split( ':' ).pop();
+			}
+			Application.sendMessage( { type: 'system', command: 'kill', appName: app } );
+			CheckPlayStopButtons();
 		}
 	}
 }
