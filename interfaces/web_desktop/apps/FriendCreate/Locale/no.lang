@@ -39,6 +39,8 @@ menu_project_save_as                : Lagre prosjekt som
 menu_packages                       : Pakker
 menu_package_generate               : Bygg pakke
 
+i18n_copying_project                : Copying project...
+
 i18n_saving                         : Lagrer...
 i18n_saved                          : Lagret.
 

@@ -1165,6 +1165,8 @@ function SaveProject( project, saveas, callback )
 				// Erroneous filename
 				else return callback( false );
 				
+				// Old path..
+				var oldPath = project.ProjectPath;
 				
 				project.ProjectPath = p;
 				
@@ -1175,9 +1177,14 @@ function SaveProject( project, saveas, callback )
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
-					StatusMessage( i18n( 'i18n_saved' ) );
-					if( callback )
-						callback( true );
+					StatusMessage( i18n( 'i18n_copying_project' ) );
+					MoveProjectFiles( project, oldPath, function( e )
+					{
+						StatusMessage( i18n( 'i18n_saved' ) );
+						if( callback )
+							callback( true );
+					} );
+					
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},
@@ -1186,6 +1193,32 @@ function SaveProject( project, saveas, callback )
 			suffix: 'apf',
 			rememberPath: true
 		} ) );
+	}
+}
+
+function MoveProjectFiles( project, oldPath, callback )
+{
+	nextFile( 0 );
+	function nextFile( pos )
+	{
+		if( pos < project.Files.length )
+		{
+			var f = new File( oldPath + project.Files[ pos ].Path );
+			f.onLoad = function( data )
+			{
+				var f2 = new File( project.ProjectPath + project.Files[ pos ].Path );
+				f2.onSave = function( res )
+				{
+					nextFile( pos + 1 );
+				}
+				f2.save( data );
+			}
+			f.load();
+		}
+		else
+		{
+			callback( true );
+		}
 	}
 }
 

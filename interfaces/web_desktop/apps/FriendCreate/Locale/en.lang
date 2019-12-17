@@ -114,6 +114,8 @@ i18n_package_generation_error       : The package lacks properties in required t
 i18n_generating_package             : Generating package...
 i18n_package_generated              : Package generated.
 
+i18n_copying_project                : Copying project...
+
 i18n_about_friend_create            : About Friend Create
 i18n_about_desc                     : Friend Create is a fully fledged Integrated Development Environment (IDE).
 i18n_close                          : Close
