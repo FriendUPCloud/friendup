@@ -952,7 +952,6 @@ function OpenProjectEditor()
 	f.i18n();
 	f.onLoad = function( data )
 	{
-		console.log( 'What is up.' );
 		pe.setContent( data, function( d )
 		{
 			pe.sendMessage( { command: 'updateproject', data: Application.currentProject, parentView: Application.viewId } );
@@ -1019,7 +1018,7 @@ function NewProject()
 	{
 		if( result == false )
 		{
-			p.close();
+			CloseProject( p );
 		}
 		else
 		{
