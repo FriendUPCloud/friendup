@@ -532,6 +532,7 @@ function InitContentEditor( element, file )
 	file.editor = ace.edit( area.id );
 	file.editor.setFontSize( 14 );
 	file.editor.setValue( file.content );
+	file.editor.getSession().setUndoManager( new ace.UndoManager() );
 	file.editor.setOptions( { // Enable autocompletion
 		enableBasicAutocompletion: true,
         enableSnippets: true,
