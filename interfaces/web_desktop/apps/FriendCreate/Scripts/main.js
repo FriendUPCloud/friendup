@@ -1398,6 +1398,7 @@ function Search( execute )
 	}
 	var d = document.createElement( 'div' );
 	d.id = 'Search';
+	d.className = 'BackgroundDefault';
 	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=this.value; if( event.which == 13 ) Search( true, event );"/> \
 		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '" onkeyup="if( event.which == 13 ) Search( true, event )"/>\
 		<input type="checkbox" name="doreplace" id="dorepl"/> <label for="dorepl">' + i18n( 'i18n_do_replace' ) + '</label>\
@@ -1407,7 +1408,13 @@ function Search( execute )
 		<button type="button" class="IconButton IconSmall fa-remove" onclick="CloseSearch()">\
 		</button>\
 	';
-	ge( 'StatusBar' ).appendChild( d );
+	ge( 'CodeArea' ).appendChild( d );
+	d.classList.add( 'Opening' );
+	setTimeout( function()
+	{
+		d.classList.add( 'Open' );
+		d.classList.remove( 'Opening' );
+	}, 250 );
 	ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
 }
 

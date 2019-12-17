@@ -364,12 +364,21 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 #Search
 {
 	position: absolute;
-	left: 280px;
-	top: 5px;
-	width: calc(100% - 380px);
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 0px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	transition: height 0.25s;
+	z-index: 10;
+	line-height: 40px;
+}
+
+#Search.Open
+{
+	height: 40px;
 }
 
 #Search input[type=text]
