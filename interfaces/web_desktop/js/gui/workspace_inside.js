@@ -7114,6 +7114,30 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 											}
 										} );
 										break;
+									case 'fpkg':
+										if( Workspace.userLevel == 'admin' )
+										{
+											menu.push( {
+												name: i18n( 'menu_install_package' ),
+												command: function()
+												{
+													var m = new Module( 'system' );
+													m.onExecuted = function( e, d )
+													{
+														if( e != 'ok' )
+														{
+															Notify( { title: i18n( 'i18n_failed_install_package' ), text: i18n( 'i18n_package_failed' ) + ': ' + thisicon.fileInfo.Filename } );
+														}
+														else
+														{
+															Notify( { title: i18n( 'i18n_package_installed' ), text: i18n( 'i18n_package' ) + ': ' + thisicon.fileInfo.Filename + ', ' + i18n( 'i18n_was_installed' ) } );
+														}
+													}
+													m.execute( 'installpackage', { path: thisicon.fileInfo.Path } );
+												}
+											} );
+										}
+										break;
 								}
 							}
 						}
