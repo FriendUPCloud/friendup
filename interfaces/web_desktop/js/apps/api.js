@@ -6114,6 +6114,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					if( window.applicationStarted ) return;
 					window.applicationStarted = true;
+					if( packet.state ) Application.sessionStateSet( packet.state );
 					for( var a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
 					activat = [];
@@ -6121,8 +6122,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						Application.run( packet );
 					}
-					
-					if( packet.state ) Application.sessionStateSet( packet.state );
 					window.loaded = true;
 					// Use the application doneLoading function (different)
 					Friend.application.doneLoading();
