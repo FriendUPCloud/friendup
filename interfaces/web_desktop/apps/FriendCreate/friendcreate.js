@@ -52,6 +52,10 @@ Application.run = function( msg )
 					command: 'about'
 				},
 				{
+					name: i18n( 'menu_file_manual' ),
+					command: 'manual'
+				},
+				{
 					name: i18n( 'menu_file_open' ),
 					command: 'open'
 				},
@@ -125,6 +129,7 @@ Application.receiveMessage = function( msg )
 		switch( msg.command )
 		{
 			case 'about':
+			case 'manual':
 			case 'open':
 			case 'save':
 			case 'save_as':
