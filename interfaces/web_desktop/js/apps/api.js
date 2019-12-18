@@ -5865,9 +5865,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		Friend.themeStyleElement.innerHTML = str;
 	};
 	Application.applyThemeConfig = ApplyThemeConfig;
-	
-
-	console.log( '----------' );
 
 	// On page load
 	function onLoaded()
