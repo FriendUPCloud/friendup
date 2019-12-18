@@ -618,9 +618,9 @@ function InitContentEditor( element, file )
 	}, false );
 	// Done moving the rect
 	var ac = file.page.querySelector( '.ace_scroller' );
-	ac.parentNode.appendChild( file.minimap );
-	ac.parentNode.appendChild( file.minimapRect );
-	ac.parentNode.appendChild( file.minimapGroove );
+	ac.parentNode.parentNode.appendChild( file.minimap );
+	ac.parentNode.parentNode.appendChild( file.minimapRect );
+	ac.parentNode.parentNode.appendChild( file.minimapGroove );
 	
 	// Events for minimap
 	file.editor.session.on( 'changeScrollTop', function( e )

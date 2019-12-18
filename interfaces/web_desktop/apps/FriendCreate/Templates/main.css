@@ -179,15 +179,9 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	color: #77ff00;
 }
 
-#CodeArea .ace_scroller.ace_scroll-left
+#CodeArea .ace_editor
 {
-	right: 144px !important;
-}
-
-#CodeArea .ace_scrollbar.ace_scrollbar-v,
-#CodeArea .ace_scrollbar.ace_scrollbar-h,
-#CodeArea .ace_scroller
-{
+	overflow: visible;
 	right: 150px !important;
 }
 
