@@ -395,8 +395,6 @@ function CustomDateTime( unix )
 	var curr = jsdate( 'Y-M-j-H-i' ).split( '-' );
 	var date = jsdate( 'Y-M-j-H-i', str_pad( unix, 13, 'STR_PAD_RIGHT' ) ).split( '-' );
 	
-	//console.log( date );
-	
 	// TODO: Add i18n translation ...
 	
 	if( curr && date )

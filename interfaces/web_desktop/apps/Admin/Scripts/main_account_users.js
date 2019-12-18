@@ -140,64 +140,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 					init : function (  )
 					{
-						console.log( 'func.init(  )' );
-						
-						if( ge( 'UserListID_'+userInfo.ID ) )
-						{
-							
-							// TODO: Make support for updating the users list and setting it selected when there is change, also when there is a new user created, update the list with the new data ...
-							
-							return;
-							
-							var r = document.createElement( 'div' );
-							setROnclick( r, userInfo.ID );
-							
-							
-							r.className = 'HRow ' + status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
-							r.id = ( 'UserListID_'+userInfo.ID );
-					
-							var timestamp = ( userInfo[ 'LoginTime' ] ? userInfo[ 'LoginTime' ] : 0 );
-						
-							userInfo[ 'Status' ] = status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
-					
-							userInfo[ 'LoginTime' ] = ( userInfo[ 'LoginTime' ] != 0 && userInfo[ 'LoginTime' ] != null ? CustomDateTime( userInfo[ 'LoginTime' ] ) : login[ 0 ] );
-					
-							var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
-					
-							var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
-					
-							userInfo[ 'Edit' ] = '<span '             + 
-							'id="UserAvatar_' + userInfo.ID + '" '    + 
-							'fullname="' + userInfo.FullName + '" '   + 
-							'name="' + userInfo.Name + '" '           + 
-							'status="' + userInfo.Status + '" '       + 
-							'logintime="' + userInfo.LoginTime + '" ' + 
-							'timestamp="' + timestamp + '" '               +
-							'class="IconSmall fa-user-circle-o avatar" '   + 
-							'style="position: relative;" '                 +
-							'><div style="' + bg + '"></div></span>';
-							
-						
-							for( var z in types )
-							{
-								var borders = '';
-								var d = document.createElement( 'div' );
-								if( z != 'Edit' )
-								{
-									d.className = '';
-								}
-								else d.className = 'TextCenter';
-								if( a < userList.length - a )
-								{
-									borders += ' BorderBottom';
-								}
-								d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis ' + z.toLowerCase() + borders;
-								d.innerHTML = userInfo[ z ];
-								r.appendChild( d );
-							}
-							
-						}
-						
+						refreshUserList( userInfo );
 					},
 					
 					user : function (  )
@@ -1378,7 +1321,7 @@ Sections.accounts_users = function( cmd, extra )
 					</div>\
 					<div class="HContent10 FloatLeft TextRight InActive">\
 						<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
-						<div class="submenu_wrapper"><ul id="AdminUsersSubMenu"></ul></div>\
+						<div class="submenu_wrapper"><ul id="AdminUsersSubMenu" class="Positive"></ul></div>\
 					</div>\
 				';
 					
@@ -1540,7 +1483,22 @@ Sections.accounts_users = function( cmd, extra )
 						var bg1  = ge( 'UserSaveBtn' );
 						if( bg1 ) bg1.onclick = function( e )
 						{
-							saveUser(  );
+							saveUser( false, function( uid )
+							{
+							
+								if( uid )
+								{
+									// Refresh whole users list ...
+									
+									Sections.accounts_users(  );
+									
+									// Go to edit mode for the new user ...
+									
+									Sections.accounts_users( 'edit', uid );
+									
+								}
+							
+							} );
 						}
 						var bg2  = ge( 'UserCancelBtn' );
 						if( bg2 ) bg2.onclick = function( e )
@@ -2091,6 +2049,9 @@ Sections.accounts_users = function( cmd, extra )
 						var canvas = ge( 'AdminAvatar' );
 						var context = canvas.getContext( '2d' );
 						context.drawImage( image, 0, 0, 256, 256 );
+						
+						// Activate edit mode.
+						editMode();
 					}
 					image.src = getImageUrl( item[ 0 ].Path );
 				}
@@ -2262,7 +2223,151 @@ Sections.accounts_users = function( cmd, extra )
 	}
 };
 
+// Temp function until it's merged into one main function for users list ...
 
+function refreshUserList( userInfo )
+{
+	console.log( 'func.init(  ) ', userInfo );
+				
+	if( ge( 'UserListID_'+userInfo.ID ) )
+	{
+		
+		// TODO: Make support for updating the users list and setting it selected when there is change, also when there is a new user created, update the list with the new data ...
+		
+		console.log( ge( 'UserListID_'+userInfo.ID ) );
+		
+		//return;
+		
+		// TODO: Move this to a main place where the list is rendered regardless if it's one or many users returned from server.
+		
+		var r = ge( 'UserListID_'+userInfo.ID );
+		
+		var div = r.getElementsByTagName( 'div' );
+		
+		if( div.length > 0 )
+		{
+			var status = [ 'Active', 'Disabled', 'Locked' ];
+			
+			var login = [ 'Never' ];
+			
+			var timestamp = ( userInfo[ 'LoginTime' ] ? userInfo[ 'LoginTime' ] : 0 );
+			var logintime = ( userInfo[ 'LoginTime' ] != 0 && userInfo[ 'LoginTime' ] != null ? CustomDateTime( userInfo[ 'LoginTime' ] ) : login[ 0 ] );
+			var status    = status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
+			
+			r.className = r.className.split( 'Active' ).join( status ).split( 'Disabled' ).join( status ).split( 'Locked' ).join( status );
+			
+			if( ge( 'ListUsersInner' ) )
+			{
+				var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+				if( list.length > 0 )
+				{
+					for( var a = 0; a < list.length; a++ )
+					{
+						if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+						{
+							list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+						}
+					}
+				}
+			}
+			
+			r.className = ( r.className.split( ' Selected' ).join( '' ) + ' Selected' );
+			
+			for ( var i in div )
+			{
+				if( div[i].className )
+				{
+					
+					if( div[i].className.indexOf( ' edit' ) >= 0 )
+					{
+						var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+						
+						var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+						
+						div[i].innerHTML = '<span '                  + 
+						'id="UserAvatar_' + userInfo.ID + '" '       + 
+						'fullname="' + userInfo.FullName + '" '      + 
+						'name="' + userInfo.Name + '" '              + 
+						'status="' + status + '" '                   + 
+						'logintime="' + logintime + '" '             + 
+						'timestamp="' + timestamp + '" '             +
+						'class="IconSmall fa-user-circle-o avatar" ' + 
+						'style="position: relative;" '               +
+						'><div style="' + bg + '"></div></span>';
+					}
+					
+					if( div[i].className.indexOf( ' fullname' ) >= 0 )
+					{
+						div[i].innerHTML = userInfo[ 'FullName' ];
+					}
+					
+					if( div[i].className.indexOf( ' name' ) >= 0 )
+					{
+						div[i].innerHTML = userInfo[ 'Name' ];
+					}
+					
+					if( div[i].className.indexOf( ' status' ) >= 0 )
+					{
+						div[i].innerHTML = status;
+					}
+					
+					if( div[i].className.indexOf( ' logintime' ) >= 0 )
+					{
+						//div[i].innerHTML = logintime;
+					}
+					
+				}
+			}
+			
+			// Temporary get lastlogin time separate to speed up the sql query ...
+			
+			getLastLoginlist( function ( res, dat )
+			{
+				if( res == 'ok' && dat )
+				{
+					for ( var i in dat )
+					{
+						if( dat[i] && dat[i]['UserID'] )
+						{
+							if( ge( 'UserListID_' + dat[i]['UserID'] ) )
+							{
+								var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+			
+								if( elems.length > 0 )
+								{
+									for ( var div in elems )
+									{
+										if( elems[div] && elems[div].className )
+										{
+											var timestamp = ( dat[i]['LoginTime'] );
+											var logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
+						
+											if( elems[div].className.indexOf( 'avatar' ) >= 0 )
+											{
+												elems[div].setAttribute( 'timestamp', timestamp );
+												elems[div].setAttribute( 'logintime', logintime );
+											}
+											if( elems[div].className.indexOf( 'logintime' ) >= 0 )
+											{
+												elems[div].innerHTML = logintime;
+											}
+										}
+									}
+								}
+			
+			
+							}
+						}
+					}
+				}
+
+			}, userInfo.ID );
+		}
+		
+		
+	}
+}
 
 function getUserlist( callback, obj )
 {
@@ -2363,8 +2468,8 @@ function sortUsers( sortby, orderby )
 		
 		var custom = { 
 			'Status' : { 
-				'ASC'  : { 'Locked' : 0, 'Active' : 1, 'Disabled' : 2 }, 
-				'DESC' : { 'Locked' : 0, 'Disabled' : 1, 'Active' : 2 } 
+				'ASC'  : { 'locked' : 0, 'active' : 1, 'disabled' : 2 }, 
+				'DESC' : { 'locked' : 0, 'disabled' : 1, 'active' : 2 } 
 			},
 			'LoginTime' : 'timestamp' 
 		};
@@ -3975,7 +4080,7 @@ function addUser( callback )
 }
 
 // Save a user
-function saveUser( uid )
+function saveUser( uid, cb )
 {	
 	var args = { authid: Application.authId };
 	
@@ -4031,7 +4136,7 @@ function saveUser( uid )
 			
 			if( uid && uid > 0 )
 			{
-				saveUser( uid );
+				saveUser( uid, cb );
 			}
 			
 		} );
@@ -4158,7 +4263,14 @@ function saveUser( uid )
 					
 					Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
 					
-					Sections.accounts_users( 'edit', uid );
+					if( cb )
+					{
+						return cb( uid );
+					}
+					else
+					{
+						Sections.accounts_users( 'edit', uid );
+					}
 					
 				} );
 				

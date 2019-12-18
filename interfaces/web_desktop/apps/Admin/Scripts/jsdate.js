@@ -85,7 +85,7 @@ function jsdate( pattern, str )
 	var s = str_pad( date.getSeconds(), 2, 'STR_PAD_LEFT' );
 	
 	var w = date.getDay();
-	//var W = date.getWeek();
+	var W = 'W'/*date.getWeek()*/;
 	var n = date.getMonth();
 	var y = str_pad( Y, 2, 'STR_PAD_LEFT' );
 	var g = date.getHours();
@@ -105,27 +105,28 @@ function jsdate( pattern, str )
 	var F = F[date.getMonth()];
 	var M = M[date.getMonth()];
 	
-	pattern = pattern.split( 'Y' ).join( Y );
-	pattern = pattern.split( 'm' ).join( m );
-	pattern = pattern.split( 'd' ).join( d );
-	pattern = pattern.split( 'H' ).join( H );
-	pattern = pattern.split( 'i' ).join( i );
-	pattern = pattern.split( 's' ).join( s );
+	var obj = {
+		'Y' : Y, 'm' : m, 'd' : d, 'H' : H, 
+		'i' : i, 's' : s, 'w' : w, 'W' : W,
+		'n' : n, 'y' : y, 'g' : g, 'u' : u,
+		'j' : j, 'l' : l, 'L' : L, 'N' : N,
+		'F' : F, 'M' : M, 'D' : D
+	};
 	
-	pattern = pattern.split( 'w' ).join( w );
-	//pattern = pattern.split( 'W' ).join( W );
-	pattern = pattern.split( 'n' ).join( n );
-	pattern = pattern.split( 'y' ).join( y );
-	pattern = pattern.split( 'g' ).join( g );
-	pattern = pattern.split( 'u' ).join( u );
+	var array = pattern.split( '' );
 	
-	pattern = pattern.split( 'j' ).join( j );
-	pattern = pattern.split( 'l' ).join( l );
-	pattern = pattern.split( 'L' ).join( L );
-	pattern = pattern.split( 'N' ).join( N );
-	pattern = pattern.split( 'F' ).join( F );
-	pattern = pattern.split( 'M' ).join( M );
-	pattern = pattern.split( 'D' ).join( D );
+	if( array )
+	{
+		for ( var k in array )
+		{
+			if( array[k] && obj[array[k]] )
+			{
+				array[k] = obj[array[k]];
+			}
+		}
+		
+		pattern = array.join( '' );
+	}
 	
 	return pattern;
 }
