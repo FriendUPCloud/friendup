@@ -4261,6 +4261,14 @@ var View = function( args )
 
 		// Find our friend
 		// TODO: Only send postmessage to friend targets (from our known origin list (security app))
+		
+		// Fix url
+		if( url.indexOf( 'http' ) != 0 )
+		{
+			var t = document.location.href.match( /(http[s]{0,1}\:\/\/)(.*?)\//i );
+			url = t[1] + t[2] + url;
+		}
+		
 		var targetP = url.match( /(http[s]{0,1}\:\/\/.*?)\//i );
 		var friendU = document.location.href.match( /http[s]{0,1}\:\/\/(.*?)\//i );
 		var targetU = url.match( /http[s]{0,1}\:\/\/(.*?)\//i );
@@ -4270,17 +4278,10 @@ var View = function( args )
 			targetP = targetP[1];
 			targetU = targetU[1];
 		}
-
-		// We're on a road trip..
-		if( !( friendU && ( friendU == targetU || !targetU ) ) )
-		{
-			ifr.sandbox = 'allow-forms allow-scripts';
-			console.log( 'Sandbox: ' + ifr.sandbox );
-		}
-		else
-		{
-			console.log( 'Sandbox denied: ', friendU, targetU );
-		}
+		friendU = Trim( friendU );
+		
+		if( friendU.length || friendU != targetU || !targetU )
+			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 
 		// Allow sandbox flags
 		var sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
