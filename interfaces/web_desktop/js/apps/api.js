@@ -6013,6 +6013,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Friend.application.doneLoading();
 						}
 					}
+					// Check for scripts and run them
+					else
+					{
+						window.delayedScriptLoading( 'dontcount' );
+					}
 				}
 			}
 
@@ -6048,9 +6053,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 
 		// Delayed loading of scripts
-		window.delayedScriptLoading = function()
+		window.delayedScriptLoading = function( dontcount )
 		{
-			totalLoadingResources++;
+			if( !dontcount )
+				totalLoadingResources++;
 			var scripts = document.getElementsByTagName( 'friendscript' );
 			var removes = [];
 			for( var a = 0; a < scripts.length; a++ )
