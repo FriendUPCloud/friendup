@@ -30,6 +30,9 @@ Application.run = function( msg )
 	}
 	
 	var m = new File( 'Progdir:Templates/main.html' );
+	m.replacements = {
+		launchwith: msg.args ? msg.args : ''
+	};
 	m.i18n();
 	m.onLoad = function( data )
 	{

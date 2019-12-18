@@ -73,7 +73,10 @@ var projects = []; // All projects
 Application.run = function( msg )
 {
 	InitGui();
-	( new EditorFile( 'New file' ) );
+	if( !ge( 'Launchfile' ).getAttribute( 'file' ) )
+	{
+		( new EditorFile( 'New file' ) );
+	}
 	RefreshProjects();
 }
 
@@ -500,10 +503,7 @@ function InitEditArea( file )
 
 	Application.currentFile = file;
 	
-	setTimeout( function()
-	{
-		file.tab.onclick();
-	}, 50 );
+	file.tab.onclick();
 	
 	if( file.refreshMinimap )
 		file.refreshMinimap();
