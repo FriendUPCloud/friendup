@@ -1076,7 +1076,7 @@ function OpenProject( path )
 			
 			RefreshProjects();
 			CheckPlayStopButtons();
-			if( !ge( 'tabProjects' ) )
+			if( !ge( 'tabProjects' ).onclick )
 			{
 				setTimeout( function()
 				{
