@@ -6103,20 +6103,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						runNow();
 					}
-					
-					function runNow()
+				}
+				// Check for scripts and run them
+				else if( loadedResources == totalLoadingResources && !window.applicationStarted )
+				{
+					runNow();
+				}
+				
+				function runNow()
+				{
+					if( window.applicationStarted ) return;
+					window.applicationStarted = true;
+					for( var a = 0; a < activat.length; a++ )
+						ExecuteScript( activat[a] );
+					activat = [];
+					if( Application.run )
 					{
-						if( window.applicationStarted || !Application.run ) return;
-						window.applicationStarted = true;
-						for( var a = 0; a < activat.length; a++ )
-							ExecuteScript( activat[a] );
-						activat = [];
 						Application.run( packet );
-						if( packet.state ) Application.sessionStateSet( packet.state );
-						window.loaded = true;
-						// Use the application doneLoading function (different)
-						Friend.application.doneLoading();
 					}
+					
+					if( packet.state ) Application.sessionStateSet( packet.state );
+					window.loaded = true;
+					// Use the application doneLoading function (different)
+					Friend.application.doneLoading();
 				}
 			}
 		}
