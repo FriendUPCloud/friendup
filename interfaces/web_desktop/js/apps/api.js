@@ -271,7 +271,19 @@ var Application =
 					}
 					else
 					{
-						Application.screens[packet.viewId].sendMessage( packet );
+						Application.screens[packet.screenId].sendMessage( packet );
+					}
+				}
+				// Handle widgets
+				else if( packet.widgetId && Application.widgets && Application.widgets[packet.widgetId] )
+				{
+					if( packet.command == 'widgetresponse' )
+					{
+						Application.widgets[packet.widgetId].ready = packet.data == 'ok' ? true : false;
+					}
+					else
+					{
+						Application.widgets[packet.widgetId].sendMessage( packet );
 					}
 				}
 				else if( this.screen && this.screen.sendMessage )
@@ -1105,6 +1117,13 @@ function receiveEvent( event, queued )
 						}
 					}
 				}
+			}
+			break;
+		case 'widgetresponse':
+			// Can't create screen? Quit
+			if( dataPacket.data == 'fail' )
+			{
+				Application.quit();
 			}
 			break;
 		case 'screenresponse':
@@ -3645,10 +3664,10 @@ GetClass = function( source )
 	// Assign the functions of the class
 	var start = 0;
 	var end = source.indexOf( '.' );
-	if ( end < 0 )
+	if( end < 0 )
 		end = 10000;
 	var klass = window[ source.substring( start, end ) ];
-	if ( typeof klass == 'undefined' )
+	if( typeof klass == 'undefined' )
 		return null;
 	while( end < source.length )
 	{
@@ -5519,6 +5538,11 @@ function setupMessageFunction( dataPacket, origin )
 			if( dataPacket.screenId )
 				msg.screenId = dataPacket.screenId;
 		}
+		if( !msg.widgetId )
+		{
+			if( dataPacket.widgetId )
+				msg.widgetId = dataPacket.widgetId;
+		}
 		if( !msg.parentViewId )
 		{
 			if( Application.viewId )
@@ -5843,6 +5867,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	Application.applyThemeConfig = ApplyThemeConfig;
 	
 
+	console.log( '----------' );
+
 	// On page load
 	function onLoaded()
 	{
@@ -5898,7 +5924,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					// If we can run, then run!
 					if( Application.run && !window.applicationStarted )
-					{	
+					{
 						// Fetch application permissions
 						if( !Application.checkAppPermission )
 						{
@@ -5957,7 +5983,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 										mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
 									}
-								}
+								};
 								
 								if( e == 'ok' )
 								{
@@ -5972,135 +5998,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
 						}
-						else runNow();
+						else
+						{
+							runNow();
+						}
 						
 						function runNow()
 						{
-							if( window.applicationStarted ) return;
+							if( window.applicationStarted || !Application.run ) return;
 							window.applicationStarted = true;
+							for( var a = 0; a < activat.length; a++ )
+								ExecuteScript( activat[a] );
+							activat = [];
 							Application.run( packet );
 							if( packet.state ) Application.sessionStateSet( packet.state );
 							window.loaded = true;
 							Friend.application.doneLoading();
 						}
 					}
-					for( var a = 0; a < activat.length; a++ )
-						ExecuteScript( activat[a] );
-					activat = [];
-					
-					// Delayed in case we didn't succeed!
-					if( window.applicationLoadingTimeout )
-						clearTimeout( window.applicationLoadingTimeout );
-					window.applicationLoadingTimeout = setTimeout( function()
+					// Check for scripts and run them
+					else
 					{
-						if( Application.run && !window.applicationStarted )
-						{
-							// Fetch application permissions
-							if( !Application.checkAppPermission )
-							{
-								var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
-								if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
-								
-								var m = new Module( 'system' );
-								m.onExecuted = function( e, d )
-								{
-									var permissions = {};
-									
-									Application.checkAppPermission = function( key, callback )
-									{
-										// Admins always can!
-										if( Application.getUserLevel() == 'admin' )
-										{
-											if( callback )
-											{
-												callback( true );
-											}
-											return true;
-										}
-										
-										if( key && !callback )
-										{
-											if( permissions[ key ] )
-											{
-												return permissions[ key ];
-											}
-											return false;
-										}
-										else
-										{
-											var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
-											
-											var mm = new Module( 'system' );
-											mm.onExecuted = function( ee, dd )
-											{
-												if( ee == 'ok' )
-												{
-													try
-													{
-														permissions = JSON.parse( dd );
-													}
-													catch( e ) {  }
-												}
-												
-												if( callback )
-												{
-													if( permissions[ key ] )
-													{
-														return callback( permissions[ key ] );
-													}
-													return callback( false );
-												}
-											}
-											mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
-										}
-									}
-									
-									if( e == 'ok' )
-									{
-										try
-										{
-											permissions = JSON.parse( d );
-										}
-										catch( e ) {  }
-									}
-									
-									runNow();
-								}
-								m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
-							}
-							else runNow();
-							
-							function runNow()
-							{
-								if( window.applicationStarted ) return;
-								window.applicationStarted = true;
-								Application.run( packet );
-								if( packet.state ) Application.sessionStateSet( packet.state );
-								Friend.application.doneLoading();
-							}
-						}
-						// Could be wr don't have any application, run scripts
-						for( var a = 0; a < activat.length; a++ )
-							ExecuteScript( activat[a] );
-						activat = [];
-						window.loaded = true;
-
-						// If we still have this, run it
-						if( window.delayedScriptLoading )
-						{
-							window.delayedScriptLoading();
-							delete window.delayedScriptLoading;
-						}
-						else
-						{
-							if( !window.applicationStarted )
-								Friend.application.doneLoading();
-							// Callback to parent and say we're done!
-							if( initcallback )
-								initcallback();
-						}
-						window.applicationLoadingTimeout = null;
-					}, 50 );
+						window.delayedScriptLoading();
+					}
 				}
 			}
 
