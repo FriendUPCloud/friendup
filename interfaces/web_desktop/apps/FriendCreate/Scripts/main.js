@@ -699,6 +699,7 @@ function InitContentEditor( element, file )
 				
 				// Minimap is just as high as content height (it is zoomed)
 				self.minimap.style.height = contHeight + 'px';
+				self.refreshing = false;
 				return;
 			}
 		
@@ -1702,7 +1703,7 @@ function StopApp()
 }
 
 // Messaging support -----------------------------------------------------------
-var abw = false;
+var abw = manual = false;
 Application.receiveMessage = function( msg )
 {
 	if( msg.command )
@@ -1777,6 +1778,26 @@ Application.receiveMessage = function( msg )
 				}
 				RefreshProjects();
 				if( pe ) pe.close();
+				break;
+			case 'manual':
+				if( manual )
+				{
+					manual.activate();
+					return;
+				}
+				manual = new View( {
+					title: i18n( 'i18n_users_manual' ),
+					width: 600,
+					height: 600
+				} );
+				var f = new File( 'Progdir:Templates/manual_' + Application.language + '.html' );
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					manual.setContent( data );
+				}
+				f.load();
+				manual.onClose = function(){ manual = false; }
 				break;
 			case 'about':
 				if( abw )

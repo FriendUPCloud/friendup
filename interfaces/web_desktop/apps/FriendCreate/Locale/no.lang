@@ -23,6 +23,7 @@ i18n_this_will_close                : Dette vil lukke det aktive dokumentet.
 
 menu_file                           : Fil
 menu_file_about                     : Om Friend Create
+menu_file_manual                    : Brukermanual
 menu_file_open                      : Åpne
 menu_file_save                      : Lagre
 menu_file_save_as                   : Lagre som
@@ -42,6 +43,8 @@ menu_packages                       : Pakker
 menu_package_generate               : Bygg pakke
 
 i18n_copying_project                : Copying project...
+
+i18n_users_manual                   : Brukermanual
 
 i18n_saving                         : Lagrer...
 i18n_saved                          : Lagret.
