@@ -1076,7 +1076,17 @@ function OpenProject( path )
 			
 			RefreshProjects();
 			CheckPlayStopButtons();
-			ge( 'tabProjects' ).onclick();
+			if( !ge( 'tabProjects' ) )
+			{
+				setTimeout( function()
+				{
+					ge( 'tabProjects' ).onclick();
+				}, 250 );
+			}
+			else
+			{
+				ge( 'tabProjects' ).onclick();
+			}
 		}
 		f.load();
 		return;
