@@ -681,8 +681,10 @@ function InitContentEditor( element, file )
 			var tot = lh * len;
 			var totZoom = tot * minimapZoomLevel;
 		
-			// Text container height
+			// Minimap groove height
 			file.minimapGroove.style.height = ( totZoom < ac.offsetHeight ? totZoom : ( ac.offsetHeight + 7 ) ) + 'px';
+			
+			// Content height - plus one line
 			var contHeight = ( tot < ac.offsetHeight ? tot : ac.offsetHeight ) + ( lh * minimapZoomLevel );
 		
 			// 
@@ -691,8 +693,11 @@ function InitContentEditor( element, file )
 			// Don't do calculation when there's no content to scroll
 			if( tot <= contHeight )
 			{
+				// Fill whole groove
 				m.style.top = 0;
-				m.style.height = file.minimapGroove.style.height + 'px';
+				m.style.height = file.minimapGroove.offsetHeight + 'px';
+				
+				// Minimap is just as high as content height (it is zoomed)
 				self.minimap.style.height = contHeight + 'px';
 				return;
 			}
@@ -701,15 +706,20 @@ function InitContentEditor( element, file )
 			if( e < 0 ) e = 0;
 			if( e > tot - contHeight ) e = tot - contHeight;
 			
-			var meh = self.minimap.offsetHeight; // Zoomed
+			var meh = self.minimap.firstChild.offsetHeight * minimapZoomLevel; // Zoomed
 	
 			// Scroll progress
 			var sp = e / ( tot - contHeight );
 		
 			// Set top of minimap to show current minimap position
-			if( meh > contHeight )
-				self.minimap.style.top = -( sp * ( meh - contHeight ) ) + 'px';
-			else self.minimap.style.top = 0;
+			if( meh <= self.minimapGroove.offsetHeight )
+			{
+				self.minimap.style.top = 0;
+			}
+			else
+			{
+				self.minimap.style.top = -( sp * ( meh - ( contHeight - ( lh * minimapZoomLevel ) ) ) ) + 'px';
+			}
 		
 			// Page visualization
 			if( !file.mouseDown )
