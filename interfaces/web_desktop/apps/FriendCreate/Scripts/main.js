@@ -221,7 +221,12 @@ function InitGui()
 	{
 		gui.sideBar = new Friend.FileBrowser( ge( 'SB_AllFiles' ), { displayFiles: true }, gui.sideBarCallbacks );
 		gui.sideBar.render();
-		ge( 'tabAllFiles' ).onclick();
+		if( delayedOnclick )
+		{
+			ge( delayedOnclick ).onclick();
+			delayedOnclick = false;
+		}
+		else ge( 'tabAllFiles' ).onclick();
 	}
 }
 
@@ -1046,6 +1051,8 @@ function NewProject()
 	} );
 }
 
+var delayedOnclick = false;
+
 function OpenProject( path )
 {
 	if( path && path.toLowerCase().indexOf( '.apf' ) > 0 )
@@ -1078,10 +1085,7 @@ function OpenProject( path )
 			CheckPlayStopButtons();
 			if( !ge( 'tabProjects' ).onclick )
 			{
-				setTimeout( function()
-				{
-					ge( 'tabProjects' ).onclick();
-				}, 250 );
+				delayedOnclick = 'tabProjects';
 			}
 			else
 			{
