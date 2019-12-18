@@ -179,8 +179,8 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	color: #77ff00;
 }
 
-#CoreArea .ace_scroller.ace_scroll-left,
-#CoreArea .ace_content
+#CodeArea .ace_scroller.ace_scroll-left,
+#CodeArea .ace_content
 {
 	right: 144px !important;
 }
