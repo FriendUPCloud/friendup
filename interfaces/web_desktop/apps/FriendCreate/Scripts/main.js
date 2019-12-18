@@ -499,7 +499,11 @@ function InitEditArea( file )
 	}, false );
 
 	Application.currentFile = file;
-	file.tab.onclick();
+	
+	setTimeout( function()
+	{
+		file.tab.onclick();
+	}, 50 );
 	
 	if( file.refreshMinimap )
 		file.refreshMinimap();
