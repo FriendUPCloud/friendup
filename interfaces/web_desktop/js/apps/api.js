@@ -6016,7 +6016,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Check for scripts and run them
 					else
 					{
-						window.delayedScriptLoading();
+						setTimeout( function()
+						{
+							window.delayedScriptLoading();
+						}, 50 );
 					}
 				}
 			}
