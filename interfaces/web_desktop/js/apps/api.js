@@ -6013,14 +6013,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Friend.application.doneLoading();
 						}
 					}
-					// Check for scripts and run them
-					else
-					{
-						setTimeout( function()
-						{
-							window.delayedScriptLoading();
-						}, 50 );
-					}
 				}
 			}
 
