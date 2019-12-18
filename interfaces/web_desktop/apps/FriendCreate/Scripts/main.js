@@ -594,7 +594,7 @@ function InitContentEditor( element, file )
 			var sy = e.clientY - file.mouseDown;
 			var ty = file.rectPos + sy;
 			if( ty < 0 ) ty = 0;
-			else if( ty + file.minimapRect.offsetHeight > file.minimapGroove.offsetHeight )
+			else if( ty + file.minimapRect.offsetHeight >= file.minimapGroove.offsetHeight )
 				ty = file.minimapGroove.offsetHeight - file.minimapRect.offsetHeight;
 			file.minimapRect.style.top = ty + 'px';		
 			
@@ -653,7 +653,6 @@ function InitContentEditor( element, file )
 	// Refresh the minimap
 	file.refreshMinimap = function()
 	{
-		
 		var self = this;
 		if( !self.lines ) return;
 		
@@ -680,9 +679,11 @@ function InitContentEditor( element, file )
 			// Lines and code content height
 			var len = self.lines.length;
 			var tot = lh * len;
+			var totZoom = tot * minimapZoomLevel;
 		
 			// Text container height
-			var contHeight = ac.offsetHeight + ( lh * minimapZoomLevel );
+			file.minimapGroove.style.height = ( totZoom < ac.offsetHeight ? totZoom : ( ac.offsetHeight + 7 ) ) + 'px';
+			var contHeight = ( tot < ac.offsetHeight ? tot : ac.offsetHeight ) + ( lh * minimapZoomLevel );
 		
 			// 
 			var m = self.minimapRect;
@@ -690,7 +691,8 @@ function InitContentEditor( element, file )
 			// Don't do calculation when there's no content to scroll
 			if( tot <= contHeight )
 			{
-				m.style.height = contHeight + 'px';
+				m.style.top = 0;
+				m.style.height = file.minimapGroove.style.height + 'px';
 				self.minimap.style.height = contHeight + 'px';
 				return;
 			}
@@ -713,7 +715,7 @@ function InitContentEditor( element, file )
 			if( !file.mouseDown )
 			{
 				m.style.height = ( ( contHeight / tot ) * meh ) + 'px';
-				m.style.top = sp * ( contHeight - m.offsetHeight ) + 'px';
+				m.style.top = sp * ( file.minimapGroove.offsetHeight - m.offsetHeight ) + 'px';
 			}
 		
 			self.refreshing = false; 
