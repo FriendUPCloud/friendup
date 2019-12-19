@@ -2058,6 +2058,11 @@ var View = function( args )
 			'screen', 'parentView', 'transparent', 'minimized'
 		];
 
+		if( !flags.screen )
+		{
+			flags.screen = Workspace.screen;
+		}
+
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
