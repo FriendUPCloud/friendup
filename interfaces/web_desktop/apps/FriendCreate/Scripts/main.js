@@ -531,6 +531,8 @@ function InitContentEditor( element, file )
 	// Associate page with file
 	element.file = file;
 	
+	file.needsRefresh = true;
+	
 	// Create editor root container
 	var area = document.createElement( 'div' );
 	area.id = 'EditorArea_' + tcounter;
@@ -558,6 +560,7 @@ function InitContentEditor( element, file )
 	
 	file.editor.getSession().on( 'change', function( e )
 	{
+		file.needsRefresh = true;
 		file.updateState( 'Editing' );
 	} );
 	
@@ -635,28 +638,39 @@ function InitContentEditor( element, file )
 	
 	file.refreshBuffer = function()
 	{
-		// Add minimap dom element
-		this.lines = this.editor.session.getValue().split( '\n' );
-		var str = [];
-		var cl;
-		for( var a = 0; a < this.lines.length; a++ )
+		if( !this.needsRefresh ) return;
+		var self = this;
+		
+		if( this.refreshBufTime ) clearTimeout( this.refreshBufTime );
+		
+		this.refreshBufTime = setTimeout( function()
 		{
-			cl = '';
-			if( this.lines[a].indexOf( '//' ) >= 0 )
-				cl = ' Comment';
-			else if( this.lines[a].indexOf( 'function' ) >= 0 )
-				cl = ' Function';
-			else if( this.lines[a].indexOf( 'if' ) >= 0 )
-				cl = ' If';
-			else if( this.lines[a].indexOf( 'for' ) >= 0 )
-				cl = ' If';
-			else if( this.lines[a].indexOf( 'while' ) >= 0 )
-				cl = ' If';
-			else if( this.lines[a].indexOf( 'var' ) >= 0 )
-				cl = ' Var';
-			str.push( '<textarea style="resize: none" class="MinimapRow' + cl + '">' + this.lines[ a ] + '</textarea>' );
-		}
-		this.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
+			// Add minimap dom element
+			self.lines = self.editor.session.getValue().split( '\n' );
+			var str = [];
+			var cl;
+			for( var a = 0; a < self.lines.length; a++ )
+			{
+				cl = '';
+				if( self.lines[a].indexOf( '//' ) >= 0 )
+					cl = ' Comment';
+				else if( self.lines[a].indexOf( 'function' ) >= 0 )
+					cl = ' Function';
+				else if( self.lines[a].indexOf( 'if' ) >= 0 )
+					cl = ' If';
+				else if( self.lines[a].indexOf( 'for' ) >= 0 )
+					cl = ' If';
+				else if( self.lines[a].indexOf( 'while' ) >= 0 )
+					cl = ' If';
+				else if( self.lines[a].indexOf( 'var' ) >= 0 )
+					cl = ' Var';
+				str.push( '<textarea style="resize: none" class="MinimapRow' + cl + '">' + self.lines[ a ] + '</textarea>' );
+			}
+			self.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
+		
+			self.needsRefresh = false;
+			self.refreshBufTime = false;
+		}, 250 );
 	}
 	
 	// Refresh the minimap
