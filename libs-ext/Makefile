@@ -2,7 +2,7 @@
 
 LIB_DIR = libwebsockets 
 
-include ../Config
+-include ../Config
 
 ALL: compile
 	@echo "make ALL"
@@ -30,7 +30,7 @@ ifeq ($(OPENSSL_INTERNAL),1)
 	echo "internal\n\n\n"
 	cd libwebsockets/build/ ; cmake ../ -DCMAKE_C_FLAGS=-fPIC -DLWS_HAVE_SYS_CAPABILITY_H=OFF -DLWS_IPV6=ON -DCMAKE_BUILD_TYPE=DEBUG -DLWS_WITH_LIBUV=ON -DOPENSSL_ROOT_DIR=../../openssl/ -DLWS_OPENSSL_INCLUDE_DIRS=../../openssl/include/ -DLWS_WITH_HTTP2=1 -DOPENSSL_CRYPTO_LIBRARY:FILEPATH=../../openssl/libcrypto.a -DOPENSSL_SSL_LIBRARY:FILEPATH=../..openssl/libssl.a -DOPENSSL_INCLUDE_DIR:FILEPATH=../openssl/include/ -DLWS_OPENSSL_LIBRARIES="../../openssl/libssl.a;../../openssl/libcrypto.a" ; make DEBUG=0 ; cd ../../
 else
-	echo "shared\n\n\n\"
+	echo "shared\n\n\n"
 	cd libwebsockets/build/ ; cmake ../ -DCMAKE_C_FLAGS=-fPIC -DLWS_HAVE_SYS_CAPABILITY_H=OFF -DLWS_IPV6=ON -DCMAKE_BUILD_TYPE=DEBUG -DLWS_WITH_LIBUV=ON -DLWS_WITH_HTTP2=1; make DEBUG=0 ; cd ../../
 endif
 	cp -r libwebsockets/include/* libwebsockets/build/include/
