@@ -132,6 +132,8 @@ i18n_hide_locked_users                 : Hide locked users
 
 #Workgroup related
 
+i18n_header_name                       : Name
+
 i18n_workgroups                        : Workgroups
 i18n_workgroup_profile                 : Workgroup profile
 i18n_workgroup_name                    : Name
