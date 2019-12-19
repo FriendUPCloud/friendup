@@ -58,7 +58,7 @@ Widget.prototype.calcPosition = function()
 	var sccont = screen.contentDiv;
 	if( !sccont ) sscont = screen;
 	
-	var realTop = sccont.offsetTop;
+	var realTop = 0;
 	var target = this.target;
 	
 	// TODO: Support left right bottom
@@ -69,8 +69,14 @@ Widget.prototype.calcPosition = function()
 		realTop += parseInt( inf.top );
 	}
 	
-	this.dom.style.width = this.tw + 'px';
-	this.dom.style.height = this.th + 'px';
+	if( this.tw == 'full' )
+		this.dom.style.width = '100%';
+	else
+		this.dom.style.width = this.tw + 'px';
+	if( this.th == 'full' )
+		this.dom.style.height = '100%';
+	else
+		this.dom.style.height = this.th + 'px';
 	
 	// Calculate x axis
 	if( isNaN( this.tx ) )
@@ -162,6 +168,10 @@ Widget.prototype.setFlag = function( flag, val )
 		case 'animate':
 			if( val ) this.dom.style.transition = 'width,height 0.25s,0.25s';
 			else this.dom.style.transition = '';
+			break;
+		case 'noinput':
+			if( val ) this.dom.style.pointerEvents = 'none';
+			else this.dom.style.pointerEvents = '';
 			break;
 		case 'transparent':
 			if( val )
@@ -354,9 +364,18 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 	// Oh we have a conf?
 	if( this.conf )
 	{
-		domain += '/system.library/module/?module=system&command=sandbox' +
-			'&sessionid=' + Workspace.sessionId +
-			'&conf=' + JSON.stringify( this.conf );
+		if ( Workspace.sessionId )
+		{
+			domain += '/system.library/module/?module=system&command=sandbox' +
+				'&sessionid=' + Workspace.sessionId +
+				'&conf=' + JSON.stringify( this.conf );
+		}
+		else
+		{
+			domain += '/system.library/module/?module=system&command=sandbox' +
+				'&authid=' + this.authId +
+				'&conf=' + JSON.stringify( this.conf );
+		}
 		if( this.getFlag( 'noevents' ) ) domain += '&noevents=true';
 	}
 	else if( domain.indexOf( 'sandboxed.html' ) <= 0 )
@@ -366,9 +385,9 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 	}
 	
 	// Make sure scripts can be run after all resources has loaded
-	var r;
-	if( content )
+	if( content && content.match )
 	{
+		var r;
 		while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
 			content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
 	}
@@ -387,6 +406,11 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 	ifr.applicationDisplayName = self.applicationDisplayName;
 	ifr.className = 'Content';
 	ifr.id = 'sandbox_widget_' + this.widgetId;
+	if( this.flags.transparent )
+	{
+		ifr.setAttribute( 'allowtransparency', 'true' );
+		ifr.style.backgroundColor = 'transparent';
+	}
 	ifr.src = domain;
 
 	var view = this;
@@ -432,13 +456,20 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 	
 		var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 		msg.command = 'setbodycontent';
-		msg.parentSandboxId = parentIframeId;
 		msg.dosDrivers = Friend.dosDrivers;
+		msg.parentSandboxId = parentIframeId;
 		msg.locale = Workspace.locale;
 	
 		// Override the theme
-		if( view.getFlag( 'theme' ) ) msg.theme = view.getFlag( 'theme' );
-	
+		if( view.getFlag( 'theme' ) )
+		{
+			msg.theme = view.getFlag( 'theme' );
+		}
+		if( Workspace.themeData )
+		{
+			msg.themeData = Workspace.themeData;
+		}
+
 		// Authid is important, should not be left out if it is available
 		if( !msg.authId )
 		{
@@ -456,11 +487,10 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 			msg.data = content.split( /progdir\:/i ).join( packet.filePath );
 		}
 		else msg.data = content;
-		if( self.flags && self.flags.screen )
-			msg.screenId = self.flags.screen.externScreenId;
 		msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
-		if( !msg.origin ) msg.origin = document.location.href;
-		ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
+		if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
+		
+		ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 	}
 	c.appendChild( ifr );
 }

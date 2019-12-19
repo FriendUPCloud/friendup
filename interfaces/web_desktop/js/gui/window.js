@@ -866,6 +866,9 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
 {
+	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+		return;
+	
 	// Blocker
 	if( !isMobile && div.content && div.content.blocker )
 	{
@@ -930,8 +933,9 @@ function _ActivateWindowOnly( div )
 				window.currentMovable = div;
 			else window.currentMovable = div;
 
-			m.classList.add( 'Active' );
 			m.viewContainer.classList.remove( 'OnWorkspace' );
+			
+			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
 			// Extra force!
@@ -1009,6 +1013,9 @@ function _ActivateWindowOnly( div )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+		return;
+
 	if( !e ) e = window.event;
 	
 	// Already activating
@@ -1666,7 +1673,11 @@ function CloseView( win, delayed )
 		{
 			win.parentNode.parentNode.classList.add( 'Closing', 'NoEvents' );
 		}
-			
+		
+		// Unassign this
+		if( win.parentNode == Friend.currentWindowHover )
+			Friend.currentWindowHover = null;
+		
 		var count = 0;
 
 		var isGroupMember = false;
@@ -5423,7 +5434,7 @@ var View = function( args )
 
 	this.setSticky = function()
 	{
-		this._window.parentNode.setAttribute( 'sticky', 'sticky' );
+		this._window.parentNode.parentNode.setAttribute( 'sticky', 'sticky' );
 	}
 
 	// Now set it up! --------------------------------------------------------->

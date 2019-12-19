@@ -229,11 +229,11 @@ Screen = function ( flags, initObject )
 					{
 						var rows = parseInt( self._flags['vrows'] );
 						if( rows <= 0 ) rows = 1;
-						cnt.style.height = 'calc(' + ( 100 * rows ) + '% - ' + cntTop + 'px)';
+						cnt.style.height = '100%';
 					}
 					else
 					{
-						cnt.style.height = 'calc(100% - ' + cntTop + 'px)';
+						cnt.style.height = '100%';
 					}
 				}
 			}

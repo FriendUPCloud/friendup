@@ -1720,7 +1720,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var clean = [];
 	for( var i = 0; i < eles.length; i++ )
 	{
-		if( !cfo.Path || !eles[i].window.fileInfo || !eles[i].window.fileInfo.Path )
+		if( !cfo.Path || !eles[i].window || !eles[i].window.fileInfo || !eles[i].window.fileInfo.Path )
 		{
 			clean.push( eles[i] );
 			continue;
@@ -2754,13 +2754,16 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 			var type = icons[a].MetaType;
 			
 			if( r.Visible === false || ( r.Config && r.Config.Invisible && r.Config.Invisible.toLowerCase() == 'yes' ) )
+			{
 				continue;
+			}
 
 			// TODO: Show hidden files if we _must_
 		 	var fn = {
 		 		Filename: icons[a].Filename ? icons[a].Filename : icons[a].Title,
 		 		Type: icons[a].Type
 		 	};
+		 	
 		 	// Skip dot files
 			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
 			
@@ -2775,7 +2778,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 				continue;
 
 			// Only show orphan .info files
-			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
+			if( !self.showHiddenFiles && ( 
+				fn.Filename.substr( fn.Filename.length - 5, 5 ) == '.info' || 
+				fn.Filename.substr( fn.Filename.length - 8, 8 ) == '.dirinfo'
+			) )
 			{
 				if( !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
 					continue;
@@ -2791,7 +2797,10 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					break;
 				}
 			}
-			if( fnd ) continue;
+			if( fnd ) 
+			{
+				continue;
+			}
 			
 			// Do not draw icons out of bounds!
 			if( this.mode != 'Volumes' && ( iy > display.bottom || iy + gridY < display.top ) )
@@ -3314,6 +3323,8 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 		
 		var swi = 2;
 
+		var listed = 0;
+
 		for( var a = 0; a < icons.length; a++ )
 		{
 			if( icons[a].Type == 'File' && self.ignoreFiles ) continue;
@@ -3443,6 +3454,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			inne.className = f.iconInner.className;
 			icon.appendChild( inne );
 			r.appendChild( icon );
+			listed++;
 			
 			// Single click
 			r.onmousedown = function( e )
@@ -3750,16 +3762,6 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			{
 				ds[a].style.top = t + 'px';
 				t += 30;
-			}
-		}
-
-		var listed = 0;
-		for( var z = 0; z < icons.length; z++ )
-		{
-			var fn = icons[ z ].Filename;
-			if( fn.substr( 0, 1 ) != '.' && fn.substr( -4, 4 ) != '.bak' )
-			{
-				listed++;
 			}
 		}
 
