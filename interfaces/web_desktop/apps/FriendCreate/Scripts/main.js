@@ -1628,7 +1628,6 @@ function CheckPlayStopButtons()
 	{
 		if( !Application.currentFile || Application.currentFile.filename.substr( -4, 4 ).toLowerCase() != '.jsx' )
 		{
-			console.log( 'Here we go...', Application.currentFile.filename );
 			ge( 'PlayStop' ).innerHTML = '';
 			return;
 		}
