@@ -52,6 +52,8 @@ i18n_saved                          : Saved.
 i18n_edit_files                     : Code view
 i18n_browse                         : Browse
 
+i18n_create_folder                  : Create folder
+
 # Project editor
 
 i18n_project_editor                 : Project editor

@@ -52,6 +52,8 @@ i18n_saved                          : Lagret.
 i18n_edit_files                     : Kodevisning
 i18n_browse                         : Utforsk
 
+i18n_create_folder                  : Lag mappe
+
 # Project editor
 
 i18n_project_editor                 : Prosjektredigering
