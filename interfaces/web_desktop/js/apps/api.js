@@ -6026,6 +6026,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				// If we can run, then run!
 				if( Application.run && !window.applicationStarted )
 				{
+					if( !Application.applicationId )
+					{
+						runNow();
+						return;
+					}
 					// Fetch application permissions
 					if( !Application.checkAppPermission )
 					{
@@ -6108,6 +6113,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				else if( loadedResources == totalLoadingResources && !window.applicationStarted )
 				{
 					runNow();
+				}
+				else
+				{
+					console.log( 'What' );
 				}
 				
 				function runNow()
@@ -8354,7 +8363,7 @@ GuiDesklet = function()
 		function DirectoryContainsFile( filename, directoryContents )
 		{
 			if( !filename ) return false;
-			if( !directoryContents || directoryContents.length == 0 ) return false;
+			if( !directoryContents || directoryContents.length == 0 ) return false;
 	
 			for(var i = 0; i < directoryContents.length; i++ )
 			{
