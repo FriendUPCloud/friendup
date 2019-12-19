@@ -115,6 +115,7 @@ Friend.FileBrowser.prototype.render = function()
 };
 Friend.FileBrowser.prototype.drop = function( elements, e, win )
 {
+	console.log( 'What' );
 	var drop = 0;
 	var self = this;
 	// Only if we have bookmarks
@@ -138,6 +139,7 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 					}
 					m.execute( 'addbookmark', { path: elements[a].fileInfo.Path, name: elements[a].fileInfo.Filename } );
 					drop++;
+					cancelBubble( e );
 				}
 			}
 		}
