@@ -49,6 +49,9 @@ i18n_users_manual                   : Users manual
 i18n_saving                         : Saving...
 i18n_saved                          : Saved.
 
+i18n_edit_files                     : Edit files
+i18n_browse                         : Browse
+
 # Project editor
 
 i18n_project_editor                 : Project editor

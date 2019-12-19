@@ -1622,8 +1622,37 @@ function CreatePackage()
 
 // Play and stop ---------------------------------------------------------------
 
+function SetMobileMode( mode )
+{
+	Application.editMode = mode;
+	if( mode == 'Project' )
+	{
+		document.body.classList.remove( 'Editing' );
+	}
+	else
+	{
+		document.body.classList.add( 'Editing' );
+	}
+	CheckMobileButtons();
+}
+
+function CheckMobileButtons()
+{
+	if( !isMobile )
+		return;
+	if( Application.editMode == 'Edit' )
+	{
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Project\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_browse' ) + '</button>';
+	}
+	else
+	{
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Edit\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_edit_files' ) + '</button>';
+	}
+}
+
 function CheckPlayStopButtons()
 {
+	CheckMobileButtons()
 	if( !Application.currentProject )
 	{
 		if( !Application.currentFile || Application.currentFile.filename.substr( -4, 4 ).toLowerCase() != '.jsx' )
