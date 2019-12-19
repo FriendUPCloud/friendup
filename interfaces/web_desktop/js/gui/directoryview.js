@@ -5156,8 +5156,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					this.refreshCallback = callback;
 				}
 				
-				console.log( 'This one may not have the window title.' );
-				
 				w.refreshing = true;
 				
 				var self = this;

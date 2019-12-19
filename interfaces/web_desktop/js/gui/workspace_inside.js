@@ -7091,53 +7091,77 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						if( thisicon.fileInfo.Filename )
 						{
-							var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
-							if( ext )
+							if( thisicon.fileInfo.Type == 'Directory' )
 							{
-								switch( ext.toLowerCase() )
-								{
-									case 'jpg':
-									case 'jpeg':
-									case 'png':
-									case 'gif':
-										menu.push( {
-											name: i18n( 'menu_set_as_wallpaper' ),
-											command: function()
-											{
-												var m = new Module( 'system' );
-												m.onExecuted = function()
-												{
-													Workspace.wallpaperImage = thisicon.fileInfo.Path;
-													Workspace.refreshDesktop();
-												}
-												m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
-											}
-										} );
-										break;
-									case 'fpkg':
-										if( Workspace.userLevel == 'admin' )
+								menu.push( {
+									name: i18n( 'menu_add_bookmark' ),
+									command: function()
+									{
+										var m = new Module( 'system' );
+										m.onExecuted = function( e, d )
 										{
+											if( e == 'ok' )
+											{
+												if( currentMovable && currentMovable.content && currentMovable.content.fileBrowser )
+												{
+													currentMovable.content.fileBrowser.refresh();
+												}
+											}
+										}
+										m.execute( 'addbookmark', { path: thisicon.fileInfo.Path, name: thisicon.fileInfo.Filename } );
+									}
+								} );
+							}
+							else
+							{
+								var ext = thisicon.fileInfo.Filename.split( '.' ).pop();
+								if( ext )
+								{
+									switch( ext.toLowerCase() )
+									{
+										case 'jpg':
+										case 'jpeg':
+										case 'png':
+										case 'gif':
 											menu.push( {
-												name: i18n( 'menu_install_package' ),
+												name: i18n( 'menu_set_as_wallpaper' ),
 												command: function()
 												{
 													var m = new Module( 'system' );
-													m.onExecuted = function( e, d )
+													m.onExecuted = function()
 													{
-														if( e != 'ok' )
-														{
-															Notify( { title: i18n( 'i18n_failed_install_package' ), text: i18n( 'i18n_package_failed' ) + ': ' + thisicon.fileInfo.Filename } );
-														}
-														else
-														{
-															Notify( { title: i18n( 'i18n_package_installed' ), text: i18n( 'i18n_package' ) + ': ' + thisicon.fileInfo.Filename + ', ' + i18n( 'i18n_was_installed' ) } );
-														}
+														Workspace.wallpaperImage = thisicon.fileInfo.Path;
+														Workspace.refreshDesktop();
 													}
-													m.execute( 'installpackage', { path: thisicon.fileInfo.Path } );
+													m.execute( 'setsetting', { setting: 'wallpaperdoors', data: thisicon.fileInfo.Path } );
 												}
 											} );
-										}
-										break;
+											break;
+										case 'fpkg':
+											if( Workspace.userLevel == 'admin' )
+											{
+												menu.push( {
+													name: i18n( 'menu_install_package' ),
+													command: function()
+													{
+														var m = new Module( 'system' );
+														m.onExecuted = function( e, d )
+														{
+															if( e != 'ok' )
+															{
+																Notify( { title: i18n( 'i18n_failed_install_package' ), text: i18n( 'i18n_package_failed' ) + ': ' + thisicon.fileInfo.Filename } );
+															}
+															else
+															{
+																Notify( { title: i18n( 'i18n_package_installed' ), text: i18n( 'i18n_package' ) + ': ' + thisicon.fileInfo.Filename + ', ' + i18n( 'i18n_was_installed' ) } );
+															}
+														}
+														m.execute( 'installpackage', { path: thisicon.fileInfo.Path } );
+													}
+												} );
+											}
+											break;
+									}
 								}
 							}
 						}
