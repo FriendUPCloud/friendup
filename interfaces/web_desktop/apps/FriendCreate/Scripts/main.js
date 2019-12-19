@@ -73,7 +73,10 @@ var projects = []; // All projects
 Application.run = function( msg )
 {
 	InitGui();
-	( new EditorFile( 'New file' ) );
+	if( !ge( 'Launchfile' ).getAttribute( 'file' ) )
+	{
+		( new EditorFile( 'New file' ) );
+	}
 	RefreshProjects();
 }
 
@@ -499,6 +502,7 @@ function InitEditArea( file )
 	}, false );
 
 	Application.currentFile = file;
+	
 	file.tab.onclick();
 	
 	if( file.refreshMinimap )
@@ -650,7 +654,7 @@ function InitContentEditor( element, file )
 				cl = ' If';
 			else if( this.lines[a].indexOf( 'var' ) >= 0 )
 				cl = ' Var';
-			str.push( '<textarea resize="false" class="MinimapRow' + cl + '">' + this.lines[ a ] + '</textarea>' );
+			str.push( '<textarea style="resize: none" class="MinimapRow' + cl + '">' + this.lines[ a ] + '</textarea>' );
 		}
 		this.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
 	}
@@ -1618,13 +1622,41 @@ function CreatePackage()
 
 // Play and stop ---------------------------------------------------------------
 
+function SetMobileMode( mode )
+{
+	Application.editMode = mode;
+	if( mode == 'Project' )
+	{
+		document.body.classList.remove( 'Editing' );
+	}
+	else
+	{
+		document.body.classList.add( 'Editing' );
+	}
+	CheckMobileButtons();
+}
+
+function CheckMobileButtons()
+{
+	if( !isMobile )
+		return;
+	if( Application.editMode == 'Edit' )
+	{
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Project\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_browse' ) + '</button>';
+	}
+	else
+	{
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Edit\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_edit_files' ) + '</button>';
+	}
+}
+
 function CheckPlayStopButtons()
 {
+	CheckMobileButtons()
 	if( !Application.currentProject )
 	{
 		if( !Application.currentFile || Application.currentFile.filename.substr( -4, 4 ).toLowerCase() != '.jsx' )
 		{
-			console.log( 'Here we go...', Application.currentFile.filename );
 			ge( 'PlayStop' ).innerHTML = '';
 			return;
 		}
