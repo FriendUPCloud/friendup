@@ -222,7 +222,7 @@ function InitGui()
 	InitTabs( ge( 'SideBarTabs' ) );
 	if( ge( 'SideBar' ) )
 	{
-		gui.sideBar = new Friend.FileBrowser( ge( 'SB_AllFiles' ), { displayFiles: true }, gui.sideBarCallbacks );
+		gui.sideBar = new Friend.FileBrowser( ge( 'SB_AllFiles' ), { displayFiles: true, noContextMenu: true }, gui.sideBarCallbacks );
 		gui.sideBar.render();
 		if( delayedOnclick )
 		{

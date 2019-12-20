@@ -66,7 +66,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.rootPath = 'Mountlist:'; // The current root path
 	this.callbacks = callbacks;
 	
-	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: self.rootPath, bookmarks: true, rootPath: false };
+	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: self.rootPath, bookmarks: true, rootPath: false, noContextMenu: false };
 	if( flags )
 	{
 		for( var a in flags )
@@ -115,7 +115,6 @@ Friend.FileBrowser.prototype.render = function()
 };
 Friend.FileBrowser.prototype.drop = function( elements, e, win )
 {
-	console.log( 'What' );
 	var drop = 0;
 	var self = this;
 	// Only if we have bookmarks
@@ -365,6 +364,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		ele.oncontextmenu = function( e )
 		{
 			if( isMobile ) return;
+			if( self.flags.noContextMenu ) return cancelBubble( e );
 			
 			var men = cmd = '';
 			var cf = false; // create file
