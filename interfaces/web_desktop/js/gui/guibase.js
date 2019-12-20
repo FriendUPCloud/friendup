@@ -2539,6 +2539,9 @@ function CheckScreenTitle( screen, force )
 	{
 		wo = false; // Only movables on current screen
 	}
+	// Check dom node
+	if( wo && wo.parentNode && !wo.parentNode.parentNode )
+		wo = false;
 	
 	var hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	
