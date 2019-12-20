@@ -5412,7 +5412,7 @@ var View = function( args )
 		{
 			this._window.applicationId = appid;
 		}
-		CheckScreenTitle();
+		CheckScreenTitle( null, true );
 	}
 	this.setBlocker = function( blockwin )
 	{

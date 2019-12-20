@@ -2505,13 +2505,13 @@ var _screenTitleTimeout = null;
 
 // Check the screen title of active window/screen and check menu
 var prevScreen = prevWindow = false;
-function CheckScreenTitle( screen )
+function CheckScreenTitle( screen, force )
 {	
 	var testObject = screen ? screen : window.currentScreen;
-	if( !testObject ) return;
+	if( !testObject && !force ) return;
 	
 	// If nothing changed, don't change
-	if( prevScreen && prevWindow )
+	if( prevScreen && prevWindow && !force )
 	{
 		if( prevScreen == testObject )
 		{
