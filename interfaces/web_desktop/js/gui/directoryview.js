@@ -5224,7 +5224,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				
 									if( !isMobile && dw.window.fileBrowser )
 									{
-										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true, passive: true } );
 									}
 									dw.window.refresh();
 								}

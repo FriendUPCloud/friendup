@@ -653,7 +653,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				
 				// Click the click element for path
-				if( clickElement )
+				if( clickElement && !( self.tempFlags && !self.tempFlags.passive ) )
 				{
 					self.lastClickElement = clickElement; // store it
 					if( !( evt.target && evt.srcElement ) )
@@ -886,7 +886,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			
 			// Click the click element for path
-			if( clickElement )
+			if( clickElement && !( self.tempFlags && !self.tempFlags.passive ) )
 			{
 				self.lastClickElement = clickElement; // Store it
 				// Only when clicking
