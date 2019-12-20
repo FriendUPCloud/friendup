@@ -876,6 +876,9 @@ function _ActivateWindowOnly( div )
 		return;
 	}
 	
+	// Don't select other fields
+	window.blur();
+	
 	// Special case
 	var delayedDeactivation = true;
 	
