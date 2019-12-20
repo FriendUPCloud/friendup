@@ -877,7 +877,7 @@ function _ActivateWindowOnly( div )
 	}
 	
 	// Don't select other fields
-	window.blur();
+	FocusOnNothing();
 	
 	// Special case
 	var delayedDeactivation = true;
