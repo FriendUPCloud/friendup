@@ -518,7 +518,7 @@ function RemoveEditArea( file )
 
 function InitContentEditor( element, file )
 {
-	var minimapZoomLevel = 0.5;
+	var minimapZoomLevel = 0.4;
 	
 	// Remove previous editor
 	if( file.editor )
@@ -531,6 +531,7 @@ function InitContentEditor( element, file )
 	// Associate page with file
 	element.file = file;
 	
+	file.minimapZoomLevel = minimapZoomLevel;
 	file.needsRefresh = true;
 	
 	// Create editor root container
@@ -641,33 +642,110 @@ function InitContentEditor( element, file )
 		if( !this.needsRefresh ) return;
 		var self = this;
 		
+		var maxVSegmentSize = 200;
+		
 		if( this.refreshBufTime ) clearTimeout( this.refreshBufTime );
 		
 		this.refreshBufTime = setTimeout( function()
 		{
 			// Add minimap dom element
 			self.lines = self.editor.session.getValue().split( '\n' );
-			var str = [];
-			var cl;
+			
+			// Get the height of a line
+			var lineHeight = self.editor.renderer.lineHeight;
+			
+			// Make sure we have a canvas array (vertical segments)
+			if( !self.canvasArray )
+				self.canvasArray = [];
+			var vsegments = Math.floor( self.lines.length / maxVSegmentSize );
+			var vsegmentT = vsegments * maxVSegmentSize; // Max segments
+			var canvWidth = self.minimap.offsetWidth / self.minimapZoomLevel;
+			
+			var cl = ''; // Color of line
+			var segY = 0; // Canvas segment y
+			var y = 0; // Drawing y coordinate
+			var prevArrk = -1; // Previous canvas segment
+			var ctx; // Canvas context
 			for( var a = 0; a < self.lines.length; a++ )
 			{
-				cl = '';
+				// Get current drawing segment
+				var arrk = Math.floor( a / maxVSegmentSize );
+				if( prevArrk != arrk )
+				{
+					// The length of this segment is either maxVSegmentSize or the rest of the lines minus previous segments
+					var segmentLength = arrk < vsegments ? maxVSegmentSize : ( self.lines.length - vsegmentT );
+				
+					// Check if we have such a segment / create it
+					if( !self.canvasArray[ arrk ] )
+					{
+						self.canvasArray[ arrk ] = document.createElement( 'canvas' );
+						self.minimap.appendChild( self.canvasArray[ arrk ] );
+					}
+				
+					// Fetch canvas
+					var canv = self.canvasArray[ arrk ];
+					canv.setAttribute( 'width', canvWidth );
+					canv.setAttribute( 'height', lineHeight * segmentLength );
+				
+					// Set canvas props
+					ctx = canv.getContext( '2d' );
+					ctx.font = '14px Monospace,Courier';
+					ctx.textBaseline = 'Top';
+					ctx.fillStyle = '#111111';
+			
+					// Clear canvas
+					ctx.fillRect( 0, 0, canv.getAttribute( 'width' ), canv.getAttribute( 'height' ) );
+					prevArrk = arrk;
+					
+					// Drawing coordinate
+					segY += y;
+					canv.style.top = segY * self.minimapZoomLevel + 'px';
+					y = 0;
+				}
+				
+				// Draw the line
+				cl = '#ffffff';
 				if( self.lines[a].indexOf( '//' ) >= 0 )
-					cl = ' Comment';
+					cl = '#888888';
 				else if( self.lines[a].indexOf( 'function' ) >= 0 )
-					cl = ' Function';
+					cl = '#ffee77';
 				else if( self.lines[a].indexOf( 'if' ) >= 0 )
-					cl = ' If';
+					cl = '#ff8844';
 				else if( self.lines[a].indexOf( 'for' ) >= 0 )
-					cl = ' If';
+					cl = '#ff8844';
 				else if( self.lines[a].indexOf( 'while' ) >= 0 )
-					cl = ' If';
+					cl = '#ff8844';
 				else if( self.lines[a].indexOf( 'var' ) >= 0 )
-					cl = ' Var';
-				str.push( '<textarea disabled="disabled" style="resize: none" class="MinimapRow' + cl + '">' + self.lines[ a ] + '</textarea>' );
+					cl = '#ffee77';
+				
+				ctx.strokeStyle = cl;
+				ctx.strokeText( self.lines[ a ], 10, y );
+				
+				y += self.editor.renderer.lineHeight;
 			}
-			self.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
 		
+			// Remove non existent canvases
+			var out = [];
+			var removes = [];
+			for( var a = 0; a < self.canvasArray.length; a++ )
+			{
+				if( a <= vsegments )
+				{
+					out.push( self.canvasArray[ a ] );
+				}
+				else
+				{
+					removes.push( self.canvasArray[ a ] );
+				}
+			}
+			self.canvasArray = out;
+			for( var a = 0; a < removes.length; a++ )
+			{
+				self.minimap.removeChild( removes[ a ] );
+			}
+			delete removes;
+		
+			// We no longer are refreshing
 			self.needsRefresh = false;
 			self.refreshBufTime = false;
 		}, 250 );
@@ -730,7 +808,12 @@ function InitContentEditor( element, file )
 			if( e < 0 ) e = 0;
 			if( e > tot - contHeight ) e = tot - contHeight;
 			
-			var meh = self.minimap.firstChild.offsetHeight * minimapZoomLevel; // Zoomed
+			// Get total height of all canvas segments
+			var meh = 0;
+			for( var z = 0; z < file.canvasArray.length; z++ )
+			{
+				meh += file.canvasArray[ z ].offsetHeight * minimapZoomLevel; // Zoomed
+			}
 	
 			// Scroll progress
 			var sp = e / ( tot - contHeight );
