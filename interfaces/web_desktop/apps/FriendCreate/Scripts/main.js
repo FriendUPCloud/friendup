@@ -691,7 +691,7 @@ function InitContentEditor( element, file )
 					ctx = canv.getContext( '2d' );
 					ctx.font = '14px Monospace,Courier';
 					ctx.textBaseline = 'Top';
-					ctx.fillStyle = '#111111';
+					ctx.fillStyle = '#000000';
 			
 					// Clear canvas
 					ctx.fillRect( 0, 0, canv.getAttribute( 'width' ), canv.getAttribute( 'height' ) );
@@ -719,9 +719,9 @@ function InitContentEditor( element, file )
 					cl = '#ffee77';
 				
 				ctx.strokeStyle = cl;
-				ctx.strokeText( self.lines[ a ], 10, y );
+				ctx.strokeText( self.lines[ a ], 10, y + lineHeight );
 				
-				y += self.editor.renderer.lineHeight;
+				y += lineHeight;
 			}
 		
 			// Remove non existent canvases
