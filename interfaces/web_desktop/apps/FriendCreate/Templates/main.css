@@ -6,6 +6,10 @@
 	overflow: hidden;
 }
 
+html body #Filetype > select
+{
+	padding: 2px !important;
+}
 
 @media print {
     #Print
