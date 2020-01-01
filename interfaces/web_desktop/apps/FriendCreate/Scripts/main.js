@@ -781,13 +781,14 @@ function InitContentEditor( element, file )
 			var len = self.lines.length;
 			var tot = lh * len;
 			var totZoom = tot * minimapZoomLevel;
-			var zoomedLine = lh * minimapZoomLevel;
+			var zoomedLineHeight = lh * minimapZoomLevel;
+			var scrollbarHeight = 7;
 		
 			// Minimap groove height
-			file.minimapGroove.style.height = ( totZoom < ac.offsetHeight ? totZoom : ( ac.offsetHeight + zoomedLine ) ) + 'px';
+			file.minimapGroove.style.height = ( totZoom < ac.offsetHeight ? totZoom : ( ac.offsetHeight + scrollbarHeight ) ) + 'px';
 			
 			// Content height - plus one line
-			var contHeight = ( tot < ac.offsetHeight ? tot : ac.offsetHeight ) + ( lh * minimapZoomLevel );
+			var contHeight = ( tot < ac.offsetHeight ? tot : ac.offsetHeight ) + zoomedLineHeight;
 		
 			// 
 			var m = self.minimapRect;
@@ -826,7 +827,7 @@ function InitContentEditor( element, file )
 			}
 			else
 			{
-				self.minimap.style.top = -( sp * ( meh - ( contHeight - ( lh * minimapZoomLevel ) ) ) ) + 'px';
+				self.minimap.style.top = -( sp * ( meh - ( contHeight - zoomedLineHeight ) ) ) + 'px';
 			}
 		
 			// Page visualization
