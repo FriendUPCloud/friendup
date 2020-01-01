@@ -781,9 +781,10 @@ function InitContentEditor( element, file )
 			var len = self.lines.length;
 			var tot = lh * len;
 			var totZoom = tot * minimapZoomLevel;
+			var zoomedLine = lh * minimapZoomLevel;
 		
 			// Minimap groove height
-			file.minimapGroove.style.height = ( totZoom < ac.offsetHeight ? totZoom : ( ac.offsetHeight + 7 ) ) + 'px';
+			file.minimapGroove.style.height = ( totZoom < ac.offsetHeight ? totZoom : ( ac.offsetHeight + zoomedLine ) ) + 'px';
 			
 			// Content height - plus one line
 			var contHeight = ( tot < ac.offsetHeight ? tot : ac.offsetHeight ) + ( lh * minimapZoomLevel );
@@ -819,7 +820,7 @@ function InitContentEditor( element, file )
 			var sp = e / ( tot - contHeight );
 		
 			// Set top of minimap to show current minimap position
-			if( meh <= self.minimapGroove.offsetHeight )
+			if( Math.floor( meh ) <= Math.floor( self.minimapGroove.offsetHeight ) )
 			{
 				self.minimap.style.top = 0;
 			}
