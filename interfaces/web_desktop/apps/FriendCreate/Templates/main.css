@@ -6,6 +6,10 @@
 	overflow: hidden;
 }
 
+html body #Filetype > select
+{
+	padding: 2px !important;
+}
 
 @media print {
     #Print
@@ -103,9 +107,19 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	z-index: 1;
 }
 
+#CodeArea .Page .Minimap > canvas
+{
+	transform: scale(0.4);
+	transform-origin: left top;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
 #CodeArea .Page .Minimap > div
 {
-	zoom: 0.5;
+	visibility: hidden;
+	pointer-events: none;
 }
 
 #CodeArea .Page .MinimapGroove

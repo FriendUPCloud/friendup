@@ -2505,13 +2505,13 @@ var _screenTitleTimeout = null;
 
 // Check the screen title of active window/screen and check menu
 var prevScreen = prevWindow = false;
-function CheckScreenTitle( screen )
+function CheckScreenTitle( screen, force )
 {	
 	var testObject = screen ? screen : window.currentScreen;
-	if( !testObject ) return;
+	if( !testObject && !force ) return;
 	
 	// If nothing changed, don't change
-	if( prevScreen && prevWindow )
+	if( prevScreen && prevWindow && !force )
 	{
 		if( prevScreen == testObject )
 		{
@@ -2539,6 +2539,9 @@ function CheckScreenTitle( screen )
 	{
 		wo = false; // Only movables on current screen
 	}
+	// Check dom node
+	if( wo && wo.parentNode && !wo.parentNode.parentNode )
+		wo = false;
 	
 	var hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	

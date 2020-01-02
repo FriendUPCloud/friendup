@@ -2063,7 +2063,8 @@ body.LoadingForm > div
 }
 
 body:not([viewlist]):not(.friendapp):not([mobile]).Loading:after,
-body:not([viewlist]):not(.friendapp):not([mobile]).LoadingForm:after
+body:not([viewlist]):not(.friendapp):not([mobile]).LoadingForm:after,
+div.Loading:after
 {
 	content: ' ';
 	background: url(/themes/friendup12/gfx/busy.png) no-repeat center center #222222;

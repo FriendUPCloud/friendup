@@ -876,6 +876,9 @@ function _ActivateWindowOnly( div )
 		return;
 	}
 	
+	// Don't select other fields
+	FocusOnNothing();
+	
 	// Special case
 	var delayedDeactivation = true;
 	
@@ -5412,7 +5415,7 @@ var View = function( args )
 		{
 			this._window.applicationId = appid;
 		}
-		CheckScreenTitle();
+		CheckScreenTitle( null, true );
 	}
 	this.setBlocker = function( blockwin )
 	{

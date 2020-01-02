@@ -5224,7 +5224,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 				
 									if( !isMobile && dw.window.fileBrowser )
 									{
-										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+										dw.window.fileBrowser.setPath( fin.Path, false, { lockHistory: true, passive: true } );
 									}
 									dw.window.refresh();
 								}
@@ -5654,7 +5654,8 @@ function CheckDoorsKeys( e )
 				{
 					if( !found )
 					{
-						out[0].domNode.onmousedown( e );
+						if( out[0] && out[0].domNode )
+							out[0].domNode.onmousedown( e );
 						return;
 					}
 					for( var a = 0; a < out.length; a++ )
