@@ -923,7 +923,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						
 						Log( FLOG_INFO, "Device was unmounted with success: %s!\n", devname );
 						
-						void *res = sqllib->Query( sqllib, temptext );
+						sqllib->QueryWithoutResults( sqllib, temptext );
 					
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Response\": \"Successfully unmounted\" }" );
 						*result = 200;
