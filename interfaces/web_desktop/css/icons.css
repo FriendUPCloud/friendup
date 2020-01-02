@@ -661,7 +661,7 @@ html .File.ZoomX2
 
 html .File.ZoomX2 > .Title
 {
-	min-height: 50px;
+	min-height: 32px;
 }
 
 
@@ -690,7 +690,7 @@ html .File.ZoomX3
 
 html .File.ZoomX3 > .Title
 {
-	min-height: 50px;
+	min-height: 32px;
 }
 
 
