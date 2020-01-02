@@ -5814,9 +5814,38 @@ Friend.startImageViewer = function( iconObject, extra )
 			return;
 		
 		image = image[0];
+		
+		if( typeof( image.offsetX ) == 'undefined' )
+		{
+			image.offsetX = 0;
+			image.offsetY = 0;
+		}
+		
+		// Enable panning image
+		image.onmousedown = function( e )
+		{
+			var offx = e.clientX;
+			var offy = e.clientY;
+			var px = image.offsetX;
+			var py = image.offsetY;
+			image.classList.add( 'Panning' );
+			window.mouseDown = image;
+			window.mouseReleaseFunc = function()
+			{
+				image.classList.remove( 'Panning' );
+			}
+			window.mouseMoveFunc = function( e2 )
+			{
+				image.offsetX = px + ( e2.clientX - offx );
+				image.offsetY = py + ( e2.clientY - offy );
+				repositionElement( win );
+			}
+		}
+		// Done panning functions
+		
 		if( !image.originalDims || extra )
 		{
-			if( extra )
+			if( extra && extra.w && extra.h )
 			{
 				image.originalDims = {
 					w: extra.w,
@@ -5887,13 +5916,45 @@ Friend.startImageViewer = function( iconObject, extra )
 			var width = image.originalDims.w * zoomLevel;
 			var height = image.originalDims.h * zoomLevel;
 			
+			var ileft = ( container.offsetWidth >> 1 ) - ( width >> 1 );
+			var itop  = ( container.offsetHeight >> 1 ) - ( height >> 1 );
 			
-			var ileft = ( container.offsetWidth >> 1 ) - ( width >> 1 ) + 'px';
-			var itop  = ( container.offsetHeight >> 1 ) - ( height >> 1 ) + 'px';
-			image.style.top = itop;
-			image.style.left = ileft;
-			image.style.width = width + 'px';
-			image.style.height = height + 'px';
+			var tx = Math.floor( ileft + image.offsetX );
+			var ty = Math.floor( itop + image.offsetY );
+			
+			// Panning >>
+			var scrollWidth = container.offsetWidth;
+			var scrollHeight = container.offsetHeight;
+			
+			var dx = width - scrollWidth;
+			var dy = height - scrollHeight;
+
+			if( dx <= 0 ) tx = ileft;
+			else
+			{
+				if( tx <= -dx )
+					tx = -dx;
+				else if( tx + width > scrollWidth + dx )
+					tx = scrollWidth + dx - width;
+			}
+			if( dy <= 0 ) ty = itop;
+			else
+			{
+				if( ty <= -dy )
+					ty = -dy;
+				else if( ty + height > scrollHeight + dy )
+					ty = scrollHeight + dy - height;
+			}
+			
+			image.offsetX = tx - ileft;
+			image.offsetY = ty - itop;
+			
+			// Done panning <<
+			
+			image.style.top = ty + 'px';
+			image.style.left = tx + 'px';
+			image.style.width = Math.floor( width ) + 'px';
+			image.style.height = Math.floor( height ) + 'px';
 			position = pos;
 		}
 	}
