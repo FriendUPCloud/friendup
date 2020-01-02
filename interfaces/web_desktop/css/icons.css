@@ -685,7 +685,7 @@ html .File.ZoomX2 .Icon > .Shared:after
 
 html .File.ZoomX3
 {
-	width: 280px;
+	width: 240px;
 }
 
 html .File.ZoomX3 > .Title
@@ -696,7 +696,7 @@ html .File.ZoomX3 > .Title
 
 html .File.ZoomX3 > .Icon
 {
-	width: 240px;
+	width: 220px;
 	height: 160px;
 }
 

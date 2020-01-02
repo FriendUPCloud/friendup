@@ -4081,7 +4081,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			case 'TypePNG':
 			case 'TypeGIF':
 				var r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
-				var ur = '/system.library/module/?module=system&command=thumbnail&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
+				
+				var ur = '/system.library/module/?module=system&command=thumbnail&width=240&height=140&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
 				
 				// Get from cache
 				var tmp = false;
