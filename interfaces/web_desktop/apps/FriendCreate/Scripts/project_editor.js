@@ -96,9 +96,9 @@ function InitializeForm()
 			
 			break;
 		case 'standard':
+		default:
 			ge( 'Version' ).style.display = '';
 			ge( 'Host' ).style.display = 'none';
-		default:
 			break;
 	}
 	

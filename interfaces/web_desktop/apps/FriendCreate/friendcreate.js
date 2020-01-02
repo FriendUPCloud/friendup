@@ -152,6 +152,5 @@ Application.receiveMessage = function( msg )
 				break;
 		}
 	}
-	console.log( msg );
 }
 
