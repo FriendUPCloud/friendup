@@ -4213,6 +4213,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.renameWindow.close();
 					Workspace.renameWindow = false;
 				}
+				
+				
 
 				var w = new View( {
 					title: i18n( 'rename_file' ),
@@ -4248,6 +4250,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				inp.select();
 				inp.focus();
+				
 				inp.onkeydown = function( e )
 				{
 					var wh = e.which ? e.which : e.keyCode;
@@ -7215,12 +7218,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( Workspace.contextMenuAllowMouseUp )
 						{ 
 							if( !v.shown ) return;
+							Workspace.contextMenuShowing = false;
 							if( this.cmd && typeof( this.cmd ) == 'function' )
 							{
 								this.cmd( event );
 							}
 							v.hide();
-							Workspace.contextMenuShowing = false;
 							return cancelBubble( event );
 						}
 					}
