@@ -530,7 +530,14 @@ Sections.accounts_users = function( cmd, extra )
 								var bg1  = ge( 'UserSaveBtn' );
 								if( bg1 ) bg1.onclick = function( e )
 								{
-									saveUser( userInfo.ID );
+									if( ge( 'usUsername' ).value )
+									{
+										saveUser( userInfo.ID );
+									}
+									else
+									{
+										ge( 'usUsername' ).focus();
+									}
 								}
 								var bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
@@ -1469,11 +1476,13 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						ge( 'UserDetails'               ).innerHTML = data;
 						//initStorageGraphs();
-					
+						
+						//ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						
 						ge( 'AdminStatusContainer'      ).style.display = 'none';
 					
 						ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
-						ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						
 						ge( 'AdminRoleContainer'        ).style.display = 'none';
 						ge( 'AdminStorageContainer'     ).style.display = 'none';
 						ge( 'AdminApplicationContainer' ).style.display = 'none';
@@ -1483,27 +1492,59 @@ Sections.accounts_users = function( cmd, extra )
 						var bg1  = ge( 'UserSaveBtn' );
 						if( bg1 ) bg1.onclick = function( e )
 						{
-							saveUser( false, function( uid )
+							if( ge( 'usUsername' ).value )
 							{
-							
-								if( uid )
+								saveUser( false, function( uid )
 								{
-									// Refresh whole users list ...
-									
-									Sections.accounts_users(  );
-									
-									// Go to edit mode for the new user ...
-									
-									Sections.accounts_users( 'edit', uid );
-									
-								}
 							
-							} );
+									if( uid )
+									{
+										// Refresh whole users list ...
+									
+										Sections.accounts_users(  );
+									
+										// Go to edit mode for the new user ...
+									
+										Sections.accounts_users( 'edit', uid );
+									
+									}
+							
+								} );
+							}
+							else
+							{
+								ge( 'usUsername' ).focus();
+							}
 						}
 						var bg2  = ge( 'UserCancelBtn' );
 						if( bg2 ) bg2.onclick = function( e )
 						{
 							cancelUser(  );
+						}
+						
+						if( ge( 'UserEditContainer' ) )
+						{
+							ge( 'UserEditContainer' ).className = 'Closed';
+						}
+						
+						if( ge( 'UserBasicDetails' ) )
+						{
+							var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+							if( inps.length > 0 )
+							{
+								for( var a = 0; a < inps.length; a++ )
+								{
+									if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+									{
+										( function( i ) {
+											i.onclick = function( e )
+											{
+												editMode();
+											}
+										} )( inps[ a ] );
+									}
+								}
+							}
 						}
 						
 						// Avatar 
@@ -1550,7 +1591,290 @@ Sections.accounts_users = function( cmd, extra )
 								this.fullname = this.value;
 							}
 						}
+						
+						// Workgroups ...
+						
+						// Specific for Pawel's code ... He just wants to forward json ...
+						
+						var args = JSON.stringify( {
+							'type'    : 'read', 
+							'context' : 'application', 
+							'authid'  : Application.authId, 
+							'data'    : { 
+								'permission' : [ 
+									'PERM_WORKGROUP_GLOBAL', 
+									'PERM_WORKGROUP_WORKGROUP' 
+								]
+							}, 
+							'listdetails' : 'workgroup' 
+						} );
+						
+						var f = new Library( 'system.library' );
+						f.onExecuted = function( e, d )
+						{
+							//console.log( { e:e , d:d, args: args } );
+				
+							if( e == 'ok' && d )
+							{
+								try
+								{
+									var groups = false;
+									
+									var data = JSON.parse( d );
+							
+									// Workaround for now .... until rolepermissions is correctly implemented in C ...
+							
+									//console.log( '[1] ', data );
+							
+									if( data && data.data && data.data.details && data.data.details.groups )
+									{
+										data = data.data.details;
+									}
+									
+									// Editing workgroups
+									
+									if( data.groups )
+									{
+										var unsorted = {};
+										
+										for( var i in data.groups )
+										{
+											if( data.groups[i] && data.groups[i].ID )
+											{
+												data.groups[i].groups = [];
+												
+												unsorted[data.groups[i].ID] = data.groups[i];
+											}
+										}
+										
+										groups = {};
+										
+										for( var k in unsorted )
+										{
+											if( unsorted[k] && unsorted[k].ID )
+											{
+												if( unsorted[k].parentid > 0 && unsorted[ unsorted[k].parentid ] )
+												{
+													if( !groups[ unsorted[k].parentid ] )
+													{
+														groups[ unsorted[k].parentid ] = unsorted[ unsorted[k].parentid ];
+													}
+												
+													if( groups[ unsorted[k].parentid ] )
+													{
+														groups[ unsorted[k].parentid ].groups.push( unsorted[k] );
+													}
+												}
+												else if( !groups[ unsorted[k].ID ] )
+												{
+													groups[ unsorted[k].ID ] = unsorted[k];
+												}
+											}	
+										}
+										
+										console.log( groups );
+									}
+									
+									var wge = ge( 'WorkgroupEdit' );
+									wge.wids = {};
+									if( wge ) wge.onclick = function( e )
+									{
+										
+										//console.log( 'wids ', this.wids );
+										
+										// Show
+										if( !this.activated )
+										{
+											this.activated = true;
+											//this.oldML = ge( 'WorkgroupGui' ).innerHTML;
 					
+											var str = '';
+					
+											if( groups )
+											{
+												
+												for( var a in groups )
+												{
+														
+													str += '<div class="HRow">\
+														<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + groups[a].name + '</div>\
+														<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+															<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( this.wids[ groups[a].ID ] ? 'on' : 'off' ) + '"> </button>\
+														</div>\
+													</div>';
+													
+													if( groups[a].groups )
+													{
+														for( var k in groups[a].groups )
+														{
+															if( groups[a].groups[k] && groups[a].groups[k].ID )
+															{
+																str += '<div class="HRow PaddingLeft">\
+																	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + groups[a].groups[k].name + '</div>\
+																	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+																		<button wid="' + groups[a].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( this.wids[ groups[a].groups[k].ID ] ? 'on' : 'off' ) + '"> </button>\
+																	</div>\
+																</div>';
+															}
+														}
+													}
+												}
+												
+											}
+											ge( 'WorkgroupGui' ).innerHTML = str;
+					
+											var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+					
+											if( workBtns )
+											{
+												for( var a = 0; a < workBtns.length; a++ )
+												{
+													// Toggle user relation to workgroup
+													( function( b ) {
+														b.onclick = function( e )
+														{
+															/*var args = { 
+																id     : this.getAttribute( 'wid' ), 
+																users  : userInfo.ID, 
+																authid : Application.authId 
+															};
+												
+															args.args = JSON.stringify( {
+																'type'    : 'write', 
+																'context' : 'application', 
+																'authid'  : Application.authId, 
+																'data'    : { 
+																	'permission' : [ 
+																		'PERM_WORKGROUP_GLOBAL', 
+																		'PERM_WORKGROUP_WORKGROUP' 
+																	]
+																}, 
+																'object'   : 'workgroup', 
+																'objectid' : this.getAttribute( 'wid' ) 
+															} );*/
+															
+															if( this.classList.contains( 'fa-toggle-off' ) )
+															{
+																// Toggle on ...
+													
+																/*console.log( '// Toggle on ', args );
+													
+																if( args && args.id && args.users )
+																{
+																	var f = new Library( 'system.library' );
+																	f.btn = this;
+																	f.onExecuted = function( e, d )
+																	{
+																		console.log( { e:e, d:d } );
+																		*/
+																		this.classList.remove( 'fa-toggle-off' );
+																		this.classList.add( 'fa-toggle-on' );
+																		/*
+																	}
+																	f.execute( 'group/addusers', args );
+																}
+																*/
+															}
+															else
+															{
+																// Toggle off ...
+													
+																/*console.log( '// Toggle off ', args );
+													
+																if( args && args.id && args.users )
+																{
+																	var f = new Library( 'system.library' );
+																	f.btn = this;
+																	f.onExecuted = function( e, d )
+																	{
+																		console.log( { e:e, d:d } );
+																		*/
+																		this.classList.remove( 'fa-toggle-on' );
+																		this.classList.add( 'fa-toggle-off' );
+																		/*
+																	}
+																	f.execute( 'group/removeusers', args );
+																}
+																*/
+															}
+												
+															return;
+														}
+													} )( workBtns[ a ] );
+												}
+											}
+					
+										}
+										// Hide
+										else
+										{
+											this.wids = {};
+											
+											if( ge( 'WorkgroupGui' ) && ge( 'WorkgroupGui' ).innerHTML )
+											{
+												var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+										
+												if( workBtns )
+												{
+													for( var a = 0; a < workBtns.length; a++ )
+													{
+														if( workBtns[a] && workBtns[a].classList.contains( 'fa-toggle-on' ) && workBtns[a].getAttribute( 'wid' ) )
+														{
+															this.wids[ workBtns[a].getAttribute( 'wid' ) ] = true;
+														}
+													}
+												}
+											}
+											
+											var wstr = '';
+											
+											if( groups )
+											{
+												for( var b in groups )
+												{
+													if( groups[b].name && this.wids[ groups[b].ID ] )
+													{
+														wstr += '<div class="HRow">';
+														wstr += '<div class="HContent100"><strong>' + groups[b].name + '</strong></div>';
+														wstr += '</div>';
+													}
+													
+													if( groups[b].groups )
+													{
+														for( var k in groups[b].groups )
+														{
+															if( groups[b].groups[k] && groups[b].groups[k].ID )
+															{
+																if( groups[b].groups[k].name && this.wids[ groups[b].groups[k].ID ] )
+																{
+																	wstr += '<div class="HRow">';
+																	wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].name + '</strong></div>';
+																	wstr += '</div>';
+																}
+															}
+														}
+													}
+												}
+											}
+											
+											this.activated = false;
+											ge( 'WorkgroupGui' ).innerHTML = wstr/*this.oldML*/;
+										}
+									}
+						
+									if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
+									{
+										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+									}
+									
+								} 
+								catch( e ){ } 
+							}
+							
+						}
+						f.execute( 'group/list', { authid: Application.authId, args: args } );
+						
+						
 						// Responsive framework
 						Friend.responsive.pageActive = ge( 'UserDetails' );
 						Friend.responsive.reinit();
@@ -4225,9 +4549,7 @@ function saveUser( uid, cb )
 				var canvas = ge( 'AdminAvatar' );
 				if( canvas )
 				{
-					context = canvas.getContext( '2d' );
-					
-					var base64 = false;
+					var base64 = 0;
 					
 					try
 					{
@@ -4235,7 +4557,7 @@ function saveUser( uid, cb )
 					}
 					catch( e ) {  }
 					
-					if( base64 )
+					if( base64 && base64.length > 3000 )
 					{
 						var ma = new Module( 'system' );
 						ma.forceHTTP = true;
@@ -4251,6 +4573,10 @@ function saveUser( uid, cb )
 							if( callback ) callback( true );
 						};
 						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64 } );
+					}
+					else
+					{
+						if( callback ) callback( false );
 					}
 				}
 			}
