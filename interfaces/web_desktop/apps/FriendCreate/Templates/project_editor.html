@@ -47,10 +47,32 @@
 					<input type="number" min="0" class="FullWidth" placeholder="{i18n_host_port_plh}" value="" id="ProjectHostSSHPort"/>
 				</div>
 			</div>
+			<div class="HRow MarginBottom">
+				<div class="HContent20 FloatLeft">{i18n_host_path}:</div>
+				<div class="HContent60 FloatLeft">
+					<input type="text" class="FullWidth" placeholder="{i18n_host_path_plh}" value="" id="ProjectHostSSHPath"/>
+				</div>
+			</div>
 			<div class="HRow">
 				<div class="HContent20 FloatLeft">{i18n_host_key}:</div>
 				<div class="HContent60 FloatLeft">
 					<textarea class="FullWidth" id="ProjectHostSSHKey"></textarea>
+				</div>
+			</div>
+			<div class="HRow MarginBottom">
+				<div class="HContent20 FloatLeft">{i18n_web}:</div>
+				<div class="HContent60 FloatLeft">
+					<p class="Layout">
+						<label for="ProjectWebEnabled">{i18n_enable_web_access_for_project}</label> &nbsp;<input type="checkbox" id="ProjectWebEnabled" onchange="project.ProjectWebEnabled = this.checked ? true : false; InitializeForm()"/>
+					</p>
+					<div id="WebEnabled">
+						<div class="HRow MarginBottom">
+							<div class="HContent20 FloatLeft">{i18n_web_root}:</div>
+							<div class="HContent60 FloatLeft">
+								<input type="text" class="FullWidth" placeholder="https://mydomain.com/folder/" value="" id="ProjectWebPath"/>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

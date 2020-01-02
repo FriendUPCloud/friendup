@@ -1021,8 +1021,7 @@ document.body.addEventListener( 'keydown', function( e )
 document.body.addEventListener( 'keyup', function( e )
 {
 	var f = Application.currentFile;
-	if( !f ) return;
-	
+	if( !f ) return;	
 
 	// Update minimap
 	if( Application.currentFile.refreshBuffer )
@@ -1156,6 +1155,33 @@ function NewProject()
 
 var delayedOnclick = false;
 
+function SetProjectPath( p )
+{
+	// Set the projectpath
+	if( p.ProjectType == 'webssh' )
+	{
+		if( p.ProjectHostSSHPath )
+		{
+			var pr = p.ProjectHostSSHPath;
+			if( pr.substr( 0, 1 ) == '/' )
+				pr = pr.substr( 1, pr.length - 1 );
+			p.ProjectPath = p.ProjectName + ':' + pr;
+		}
+		else
+		{
+			p.ProjectPath = p.ProjectName + ':';
+		}
+	}
+	// Normal paths
+	else
+	{
+		var pp = p.Path;
+		if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
+		else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
+		p.ProjectPath = pp;
+	}
+}
+
 function OpenProject( path )
 {
 	if( path && path.toLowerCase().indexOf( '.apf' ) > 0 )
@@ -1179,10 +1205,9 @@ function OpenProject( path )
 			projects.push( p );
 			Application.currentProject = p;
 			
-			var pp = p.Path;
-			if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
-			else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
-			p.ProjectPath = pp;
+			SetProjectPath( p );
+			
+			MountProjectServer( p );
 			
 			RefreshProjects();
 			CheckPlayStopButtons();
@@ -1225,10 +1250,7 @@ function OpenProject( path )
 					p[ a ] = proj[ a ];
 				projects.push( p );
 				
-				var pp = p.Path;
-				if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
-				else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
-				p.ProjectPath = pp;
+				SetProjectPath( p );
 				
 				SetCurrentProject( p );
 				RefreshProjects();
@@ -1243,6 +1265,27 @@ function OpenProject( path )
 	} ) );
 }
 
+// Get the file where the apf is located
+function GetProjectfileFolder( project )
+{
+	var path = project.Path;
+	if( path.indexOf( '/' ) > 0 )
+	{
+		path = path.split( '/' );
+		path.pop();
+		path = path.join( '/' ) + '/';
+	}
+	else if ( path.indexOf( ':' ) > 0 )
+	{
+		path = path.split( ':' )[0] + ':';
+	}
+	else
+	{
+		path = 'Home:';
+	}
+	return path;
+}
+
 function SaveProject( project, saveas, callback )
 {
 	if( !saveas ) saveas = false;
@@ -1252,7 +1295,8 @@ function SaveProject( project, saveas, callback )
 		'ProjectName', 'Path', 'Files', 'Permissions',
 		'Description', 'Version', 'Author', 'Category', 'ProjectPath',
 		'ProjectType', 'ProjectHostSSHKey', 'ProjectHostSSHServer', 
-		'ProjectHostSSHUsername', 'ProjectHostSSHPassword', 'ProjectHostSSHPort'
+		'ProjectHostSSHUsername', 'ProjectHostSSHPassword', 'ProjectHostSSHPort',
+		'ProjectWebEnabled', 'ProjectWebPath', 'ProjectHostSSHPath'
 	];
 	var projectOut = {};
 	for( var a = 0; a < values.length; a++ )
@@ -1276,7 +1320,7 @@ function SaveProject( project, saveas, callback )
 	else
 	{
 		( new Filedialog( {
-			path: project.ProjectPath ? project.ProjectPath : 'Home:',
+			path: GetProjectfileFolder( project ),
 			title: i18n( 'i18n_save_new_project' ),
 			triggerFunction: function( filename )
 			{
@@ -1285,7 +1329,10 @@ function SaveProject( project, saveas, callback )
 					return callback( false );
 				}
 				
+				var oldPath = project.ProjectPath;
+				
 				project.Path = filename;
+				SetProjectPath( project );
 				
 				// Fix the filename for the project path
 				var p = filename;
@@ -1302,26 +1349,24 @@ function SaveProject( project, saveas, callback )
 				// Erroneous filename
 				else return callback( false );
 				
-				// Old path..
-				var oldPath = project.ProjectPath;
-				
-				project.ProjectPath = p;
-				
-				projectOut.ProjectPath = p;
 				projectOut.Path = filename;
+				projectOut.ProjectPath = project.ProjectPath;
 
 				var f = new File( project.Path );
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
-					StatusMessage( i18n( 'i18n_copying_project' ) );
-					MoveProjectFiles( project, oldPath, function( e )
+					// A standard project allows for moving project files
+					if( project.ProjectType == 'standard' )
 					{
-						StatusMessage( i18n( 'i18n_saved' ) );
-						if( callback )
-							callback( true );
-					} );
-					
+						StatusMessage( i18n( 'i18n_copying_project' ) );
+						MoveProjectFiles( project, oldPath, function( e )
+						{
+							StatusMessage( i18n( 'i18n_saved' ) );
+							if( callback )
+								callback( true );
+						} );
+					}
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},
@@ -1374,8 +1419,11 @@ function MoveProjectFiles( project, oldPath, callback )
 }
 
 // Close a project
-function CloseProject( proj )
+function CloseProject( proj, callback )
 {
+	console.log( 'Unmounting project.' );
+	UnmountProjectServer( proj, callback );
+	
 	var o = [];
 	for( var a = 0; a < projects.length; a++ )
 	{
@@ -1426,9 +1474,7 @@ function RefreshProjects()
 		if( !projectFolders[ pr.ID ] )
 			projectFolders[ pr.ID ] = {};
 		
-		var projectpath = pr.Path.split( '/' );
-		projectpath.pop();
-		projectpath = projectpath.join( '/' ) + '/';
+		var projectpath = pr.ProjectPath;
 		
 		if( pr.Files && pr.Files.length )
 		{
@@ -1849,6 +1895,176 @@ function StopApp()
 	}
 }
 
+// Handling project mount points -----------------------------------------------
+
+// Check if a project server is sane (has the correct type etc)
+function SanitizedProjectServer( p, callback )
+{
+	var type = p.ProjectType == 'webssh' ? 'ssh2.fsys' : false;
+	// TODO: Support more types
+	if( !type ) return callback ? callback( false ) : false;
+	if( type == 'webssh' && !p.ProjectHostSSHServer ) return callback ? callback( false ) : false;
+
+	var s = new Module( 'system' );
+	s.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			var json = null;
+			try
+			{
+				json = JSON.parse( d );
+			}
+			catch( e22 )
+			{
+				if( callback )
+					callback( false, 'Could not parse mountlist.' );
+			}
+			if( callback )
+			{
+				for( var a = 0; a < json.length; a++ )
+				{
+					if( json[ a ].Type == 'SFTP' && json[ a ].Name == p.ProjectName )
+					{
+						if( json[ a ].Mounted == '1' )
+						{
+							console.log( json[ a ].Name + ' is already mounted. Still mount till Pawel is done.' );
+							
+							callback( true, 'Mount.', json[ a ].Name );
+							
+							// TODO: When Pawel is done, just pass this
+							// callback( false, 'Already mounted.', json[ a ].Name );
+						}
+						else
+						{
+							console.log( json[ a ].Name + ' is umounted.' );
+							callback( true, 'Mount.', json[ a ].Name );
+						}
+						return;
+					}
+				}
+				callback( true, 'Create.', p.ProjectName );
+			}
+		}
+		else
+		{
+			callback( false, 'Response from server failed.' );
+		}
+	}
+	s.execute( 'mountlist' );
+}
+
+function CreateFilesystem( indata )
+{
+	var data = { 
+		Name: indata.devname,
+		Server: indata.server,
+		Port: indata.port,
+		Username: indata.username,
+		Password: indata.password,
+		PrivateKey: indata.key,
+		Path: indata.path ? indata.path : '/',
+		Type: indata.fsys
+	};	
+
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		// Do the mounting
+		if( e == 'ok' )
+		{
+			var f = new Library( 'system.library' );
+			f.onExecuted = function( e, d )
+			{
+				Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+				{
+					gui.sideBar.render( true );
+				} );
+			}
+			f.execute( 'device/mount', { devname: indata.devname } );
+		}
+		else
+		{
+			console.log( 'Could not add filesystem..' );
+		}
+	}
+	m.execute( 'addfilesystem', data );
+}
+
+function MountProjectServer( p )
+{
+	SanitizedProjectServer( p, function( result, data, newfilesystem )
+	{
+		if( result && data )
+		{
+			// SSH Server
+			if( data == 'Mount.' )
+			{
+				var s = new Library( 'system.library' );
+				s.onExecuted = function( e, d )
+				{
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+					{
+						gui.sideBar.render( true );
+					} );
+					// TODO: If it won't mount, please try to edit it
+					// Ask if the user wants to change it..?
+				}
+				s.execute( 'device/mount', {
+					devname: p.ProjectName
+				} );
+			}
+			else if( data == 'Create.' )
+			{
+				CreateFilesystem( {
+					devname: newfilesystem,
+					username: p.ProjectHostSSHUsername,
+					password: p.ProjectHostSSHPassword,
+					server: p.ProjectHostSSHServer,
+					port: p.ProjectHostSSHPort,
+					key: p.ProjectHostSSHKey,
+					path: p.ProjectHostSSHPath,
+					fsys: 'SFTP'
+				} );
+			}
+			else
+			{
+				console.log( 'Unsupported project filesystem directive.' );
+			}
+		}
+		else
+		{
+			console.log( 'Could not do it..: ', data );
+		}
+	} );
+}
+
+function UnmountProjectServer( p, cb )
+{
+	// SSH Server
+	if( Application.currentProject.ProjectHostSSHServer )
+	{
+		var s = new Library( 'system.library' );
+		s.onExecuted = function( e, d )
+		{
+			Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+			{
+				gui.sideBar.render( true );
+			} );
+			// TODO: If it won't mount, please try to edit it
+			// Ask if the user wants to change it..?
+			if( cb ) cb();
+		}
+		s.execute( 'device/unmount', {
+			devname: p.ProjectName
+		} );
+	}
+	else if( cb )
+	{
+		cb();
+	}
+}
+
 // Messaging support -----------------------------------------------------------
 var abw = manual = false;
 Application.receiveMessage = function( msg )
@@ -1892,6 +2108,28 @@ Application.receiveMessage = function( msg )
 				if( Application.currentProject )
 					SaveProject( Application.currentProject, true );
 				break;
+			case 'closeprojects':
+				document.body.classList.add( 'Loading' );
+				var pl = projects.length - 1;
+				if( pl <= 0 )
+				{
+					return Application.sendMessage( { command: 'quit' } );
+				}
+				for( var a = 0; a < projects.length; a++ )
+				{
+					CloseProject( projects[ a ], function()
+					{
+						if( pl-- == 0 )
+						{
+							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+							setTimeout( function()
+							{
+								Application.sendMessage( { command: 'quit' } );
+							}, 50 );
+						}
+					} );
+				}
+				break;
 			case 'project_close':
 				CloseProject( Application.currentProject );
 				break;
@@ -1919,6 +2157,9 @@ Application.receiveMessage = function( msg )
 						projects[ a ] = msg.project;
 						
 						Application.currentProject = projects[ a ];
+						
+						MountProjectServer( Application.currentProject );
+						
 						SaveProject( Application.currentProject );
 						break;
 					}

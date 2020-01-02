@@ -57,12 +57,18 @@ i18n_create_folder                  : Create folder
 # Project editor
 
 i18n_project_type                   : Project type
+i18n_web                            : Web
+i18n_enable_web_access_for_project  : Enable web access for project
+i18n_web_root                       : Web root
 i18n_standard_friend_project        : Friend project
-i18n_web_project_ssh                : Web project using SSH
+i18n_web_project_ssh                : Project using SSH
+
 
 i18n_host_server                    : Server
 i18n_host_username                  : Username
 i18n_host_password                  : Password
+i18n_host_path                      : Server path
+i18n_host_path_plh                  : /home/myuser/
 i18n_host_port                      : Port
 i18n_host_key                       : SSH Key
 i18n_host_server_plh                : myhost.com

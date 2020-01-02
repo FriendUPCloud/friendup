@@ -3663,6 +3663,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 					if( returnCode == 'ok' )
 					{
+						// Notify all applications
+						for( var a in Workspace.applications )
+						{
+							Workspace.applications[ a ].sendMessage( {
+								command: 'notify',
+								method: 'mountlistupdate'
+							} );
+						}
+						
 						var shorts = JSON.parse( shortcuts );
 						for( var a = 0; a < shorts.length; a++ )
 						{

@@ -57,12 +57,17 @@ i18n_create_folder                  : Lag mappe
 # Project editor
 
 i18n_project_type                   : Prosjekttype
+i18n_web                            : Web
+i18n_enable_web_access_for_project  : Bruk webtilgang i prosjektet
+i18n_web_root                       : Web adresse
 i18n_standard_friend_project        : Friend prosjekt
-i18n_web_project_ssh                : Web prosjekt via SSH vert
+i18n_web_project_ssh                : Prosjekt via SSH vert
 
 i18n_host_server                    : Vertsnavn
 i18n_host_username                  : Brukernavn
 i18n_host_password                  : Passord
+i18n_host_path                      : Vertssti
+i18n_host_path_plh                  : /home/minbruker/
 i18n_host_port                      : Port
 i18n_host_key                       : SSH nøkkel
 i18n_host_server_plh                : myhost.com

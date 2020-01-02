@@ -79,6 +79,20 @@ function InitializeForm()
 			ge( 'ProjectHostSSHPassword' ).value = project.ProjectHostSSHPassword ? project.ProjectHostSSHPassword : '';
 			ge( 'ProjectHostSSHPort' ).value = project.ProjectHostSSHPort ? project.ProjectHostSSHPort : '';
 			ge( 'ProjectHostSSHKey' ).value = project.ProjectHostSSHKey ? project.ProjectHostSSHKey : '';
+			ge( 'ProjectHostSSHPath' ).value = project.ProjectHostSSHPath ? project.ProjectHostSSHPath : '';
+			ge( 'ProjectWebEnabled' ).checked = project.ProjectWebEnabled ? 'checked' : '';
+			ge( 'ProjectWebPath' ).value = project.ProjectWebPath ? project.ProjectWebPath : '';
+			
+			// Web host enabled?
+			if( project.ProjectWebEnabled )
+			{
+				ge( 'WebEnabled' ).style.display = '';
+			}
+			else
+			{
+				ge( 'WebEnabled' ).style.display = 'none';
+			}
+			
 			
 			break;
 		case 'standard':
@@ -367,7 +381,10 @@ function UpdateProject()
 		project.ProjectHostSSHUsername = ge( 'ProjectHostSSHUsername' ).value;
 		project.ProjectHostSSHPassword = ge( 'ProjectHostSSHPassword' ).value;
 		project.ProjectHostSSHPort = ge( 'ProjectHostSSHPort' ).value;
+		project.ProjectHostSSHPath = ge( 'ProjectHostSSHPath' ).value;
 		project.ProjectSSHHostKey = ge( 'ProjectHostSSHKey' ).value;
+		project.ProjectWebEnabled = ge( 'ProjectWebEnabled' ).checked ? true : false;
+		project.ProjectWebPath = ge( 'ProjectWebPath' ).value;
 	}
 	
 	Application.sendMessage( {
