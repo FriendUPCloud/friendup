@@ -4082,7 +4082,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			case 'TypeGIF':
 				var r = CryptoJS.SHA1( fileInfo.DateModified ).toString();
 				
-				var ur = '/system.library/module/?module=system&command=thumbnail&width=240&height=140&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
+				var w = fileInfo.directoryview.listMode == 'imageview' ? 240 : 56;
+				var h = fileInfo.directoryview.listMode == 'imageview' ? 140 : 48;
+				var ur = '/system.library/module/?module=system&command=thumbnail&width=' + w + '&height=' + h + '&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&date=' + r;
 				
 				// Get from cache
 				var tmp = false;
