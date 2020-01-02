@@ -271,7 +271,7 @@ var EditorFile = function( path )
 				if( ext == 'jpg' || ext == 'gif' || ext == 'jpeg' || ext == 'png' )
 				{
 					self.filename = json.Filename;
-					self.path = json.Path;
+					self.path = path;
 					self.content = '<div class="FullImage"><img src="' + getImageUrl( json.Path ) + '"/></div>';
 					self.type = 'image';
 					self.filesize = json.Filesize;
@@ -286,7 +286,7 @@ var EditorFile = function( path )
 					f.onLoad = function( data )
 					{
 						self.filename = json.Filename;
-						self.path = json.Path;
+						self.path = path;
 						self.content = data;
 						self.filesize = json.Filesize;
 						files.push( self );
@@ -1545,6 +1545,7 @@ function RefreshProjects()
 		
 		for( var a in list )
 		{
+			// This is a file item
 			if( list[ a ].levels.length == depth )
 			{
 				var fpath = projectpath + list[a].fullpath;
@@ -1553,15 +1554,39 @@ function RefreshProjects()
 					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
+			// This is a folder under current depth
 			else if( list[a].levels.length == depth + 1 && !listedFolders[ projectId ][ list[ a ].path ] && list[ a ].path.indexOf( ':' ) < 0 )
 			{
 				listedFolders[ projectId ][ list[ a ].path ] = true;
 				
 				if( !projectFolders[ projectId ][ list[ a ].path ] )
 					projectFolders[ projectId ][ list[ a ].path ] = {};
+				
 				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
 				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
 				str += listFiles( list, depth + 1, list[ a ].path, projectId );
+			}
+			// This is a folder that may contain a folder
+			else if( list[a].path.indexOf( '/' ) > 0 )
+			{
+				var p = list[a].path.split( '/' );
+				var paths = '';
+				for( var z = 0; z < depth; z++ )
+					paths += p[ z ] + '/';
+				
+				console.log( 'Trying orphan path: ' + paths );
+				if( !listedFolders[ projectId ][ paths ] )
+				{
+				
+					listedFolders[ projectId ][ paths ] = true;
+				
+					if( !projectFolders[ projectId ][ paths ] )
+						projectFolders[ projectId ][ paths ] = {};
+				
+					var cl = projectFolders[ projectId ][ paths ] && projectFolders[ projectId ][ paths ].state == 'open' ? ' Open' : '';
+					str += '<li class="Folder ' + cl + '" path="' + paths + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+					str += listFiles( list, depth + 1, list[ a ].path, projectId );
+				}
 			}
 		}
 		if( str.length ) str = '<ul>' + str + '</ul>';
