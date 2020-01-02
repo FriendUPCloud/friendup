@@ -107,10 +107,15 @@ Friend.FileBrowser.prototype.clear = function()
 	this.headerDisks = false;
 	this.bookmarksHeader = false;
 }
-Friend.FileBrowser.prototype.render = function()
+Friend.FileBrowser.prototype.render = function( force )
 {
 	var self = this;
 	
+	if( force && this.dom )
+	{
+		this.clear();
+	}
+		
 	this.refresh();
 };
 Friend.FileBrowser.prototype.drop = function( elements, e, win )
