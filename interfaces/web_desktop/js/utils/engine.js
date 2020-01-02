@@ -2162,8 +2162,7 @@ function InitTabs( pdiv, tabCallback )
 			divs[a].onclick = function()
 			{
 				// Already active? Just return
-				if( this.classList.contains( 'TabActive' ) ) return;
-				
+				if( this.classList.contains( 'TabActive' ) && this.pages[ this.index ].classList.contains( 'PageActive' ) ) return;
 				// Assume it is ok to activate this tab
 				var result = true;
 				
@@ -2419,13 +2418,8 @@ function InitTabs( pdiv, tabCallback )
 	}
 	if( tabs.length && tabs[active] )
 	{
-		tabs[active].onclick();
+		tabs[active].click();
 	}
-	
-	// We need an active page
-	var pa = pdiv.getElementsByClassName( 'Page' );
-	if( pa.length == 1 )
-		pa[0].classList.add( 'PageActive' );
 }
 
 // Double click simulator for youch
