@@ -652,4 +652,63 @@ html .File.Compact > .Icon
 }
 
 
+/* Zoomed icons ------------------------------------------------------------- */
+
+html .File.ZoomX2
+{
+	width: 140px;
+}
+
+html .File.ZoomX2 > .Title
+{
+	min-height: 50px;
+}
+
+
+html .File.ZoomX2 > .Icon
+{
+	width: 120px;
+	height: 80px;
+}
+
+html .File.ZoomX2 .Icon > div
+{
+	height: 70px;
+}
+
+html .File.ZoomX2 .Icon > .Shared:after
+{
+	top: 4px;
+	border-radius: 50%;
+    padding: 4px 4px;
+}
+
+html .File.ZoomX3
+{
+	width: 280px;
+}
+
+html .File.ZoomX3 > .Title
+{
+	min-height: 50px;
+}
+
+
+html .File.ZoomX3 > .Icon
+{
+	width: 240px;
+	height: 160px;
+}
+
+html .File.ZoomX3 .Icon > div
+{
+	height: 140px;
+}
+
+html .File.ZoomX3 .Icon > .Shared:after
+{
+	top: 8px;
+	right: 24px;
+    padding: 4px 4px;
+}
 

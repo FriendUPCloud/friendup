@@ -520,6 +520,18 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				},
 				{
 					element: 'button',
+					value: 'iconview',
+					className: 'IconView IconSmall fa-picture-o' + ( lmode == 'imageview' ? ' Active' : '' ),
+					content: i18n( 'i18n_dir_btn_imageview' ),
+					onclick: function( e )
+					{
+						winobj.directoryview.listMode = 'imageview';
+						winobj.refresh();
+						this.parentNode.checkActive( this.value );
+					}
+				},
+				{
+					element: 'button',
 					value: 'compact',
 					className: 'IconCompact IconSmall fa-th' + ( lmode == 'compact' ? ' Active' : '' ),
 					content: i18n( 'i18n_dir_btn_compact' ),
@@ -1110,6 +1122,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				switch( lm )
 				{
 					case 'compact':
+					case 'imageview':
 					case 'iconview':
 					{
 						setTimeout( function(){ self.completeRedraw(); }, 250 );
@@ -2576,6 +2589,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		gridX = 160;
 		gridY = 40;
 	}
+	else if( option == 'imageview' )
+	{
+		gridX = 240;
+		gridY = 180;
+	}
 	
 	// Get display frame
 	var display = {
@@ -2930,7 +2948,14 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 					file.style.left = ix + 'px';
 				}
 				
-				if( option == 'compact' ) file.classList.add( 'Compact' );
+				if( option == 'compact' ) 
+				{
+					file.classList.add( 'Compact' );
+				}
+				else if( option == 'imageview' )
+				{
+					file.classList.add( 'ZoomX3' );
+				}
 				
 				coldom.appendChild( file );
 				
@@ -4047,7 +4072,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	}
 	
 	// Check for thumbs
-	if( fileInfo.directoryview && fileInfo.directoryview.listMode == 'iconview' )
+	if( fileInfo.directoryview && ( fileInfo.directoryview.listMode == 'iconview' || fileInfo.directoryview.listMode == 'imageview' ) )
 	{
 		switch( iconInner.className )
 		{
