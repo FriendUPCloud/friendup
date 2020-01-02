@@ -149,8 +149,15 @@ html body[mobile] .View .FileDialog .FileBrowser .FileBrowserItemImage
 {
 	position: absolute;
 	transform: rotateZ(0deg);
-	transition: top,left,width,height 0.25s,0.25s,0.25s,0.25s;
 	z-index: 99;
+}
+.View > .Content > .ImageViewerContent > img.Panning
+{
+	pointer-events: none;
+}
+.View > .Content > .ImageViewerContent > img:not(.Panning)
+{
+	transition: top,left,width,height 0.25s,0.25s,0.25s,0.25s;
 }
 
 @media (max-width: 380px)
