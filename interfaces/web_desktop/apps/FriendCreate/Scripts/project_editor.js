@@ -8,7 +8,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var project = {};
+var project = {
+	Type: 'standard'
+};
 
 var supportedFiles = [
 	'php',
@@ -42,6 +44,50 @@ var supportedFiles = [
 
 Application.run = function( msg )
 {
+	InitializeForm();
+}
+
+function InitializeForm()
+{
+	var types = {
+		'standard': i18n( 'i18n_standard_friend_project' ),
+		'webssh': i18n( 'i18n_web_project_ssh' )
+	};	
+	
+	// Initialize
+	var topts = '<select id="project_type" onchange="project.ProjectType = this.value; InitializeForm()">';
+	var s = null;
+	for( var a in types )
+	{
+		s = '';
+		if( project.ProjectType && project.ProjectType == a )
+			s = ' selected="selected"';
+		topts += '<option value="' + a + '"' + s + '>' + types[ a ] + '</option>';
+	}
+	topts += '</select>';
+	
+	ge( 'ProjectTypes' ).innerHTML = topts;
+	
+	switch( project.ProjectType )
+	{
+		case 'webssh':
+			ge( 'Version' ).style.display = 'none';
+			ge( 'Host' ).style.display = '';
+
+			ge( 'ProjectHostSSHServer' ).value = project.ProjectHostSSHServer ? project.ProjectHostSSHServer : '';
+			ge( 'ProjectHostSSHUsername' ).value = project.ProjectHostSSHUsername ? project.ProjectHostSSHUsername : '';
+			ge( 'ProjectHostSSHPassword' ).value = project.ProjectHostSSHPassword ? project.ProjectHostSSHPassword : '';
+			ge( 'ProjectHostSSHPort' ).value = project.ProjectHostSSHPort ? project.ProjectHostSSHPort : '';
+			ge( 'ProjectHostSSHKey' ).value = project.ProjectHostSSHKey ? project.ProjectHostSSHKey : '';
+			
+			break;
+		case 'standard':
+			ge( 'Version' ).style.display = '';
+			ge( 'Host' ).style.display = 'none';
+		default:
+			break;
+	}
+	
 }
 
 function RefreshFiles()
@@ -299,6 +345,7 @@ function UpdateProject()
 	var values = [
 		'project_projectname',
 		'project_author',
+		'project_type',
 		'project_version',
 		'project_category',
 		'project_description'
@@ -306,6 +353,7 @@ function UpdateProject()
 	var equiv = [
 		'ProjectName',
 		'Author', 
+		'ProjectType',
 		'Version',
 		'Category',
 		'Description'
@@ -313,6 +361,15 @@ function UpdateProject()
 	for( var a = 0; a < values.length; a++ )
 		project[ equiv[a] ] = ge( values[a] ).value;
 
+	if( project.ProjectType == 'webssh' )
+	{
+		project.ProjectHostSSHServer = ge( 'ProjectHostSSHServer' ).value;
+		project.ProjectHostSSHUsername = ge( 'ProjectHostSSHUsername' ).value;
+		project.ProjectHostSSHPassword = ge( 'ProjectHostSSHPassword' ).value;
+		project.ProjectHostSSHPort = ge( 'ProjectHostSSHPort' ).value;
+		project.ProjectSSHHostKey = ge( 'ProjectHostSSHKey' ).value;
+	}
+	
 	Application.sendMessage( {
 		command: 'updateproject',
 		project: project,
@@ -368,7 +425,7 @@ Application.receiveMessage = function( msg )
 						project.ProjectPath = p;
 					}
 				}
-				console.log( project );
+				InitializeForm();
 				break;
 		}
 	}

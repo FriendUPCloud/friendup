@@ -56,11 +56,26 @@ i18n_create_folder                  : Lag mappe
 
 # Project editor
 
+i18n_project_type                   : Prosjekttype
+i18n_standard_friend_project        : Friend prosjekt
+i18n_web_project_ssh                : Web prosjekt via SSH vert
+
+i18n_host_server                    : Vertsnavn
+i18n_host_username                  : Brukernavn
+i18n_host_password                  : Passord
+i18n_host_port                      : Port
+i18n_host_key                       : SSH nøkkel
+i18n_host_server_plh                : myhost.com
+i18n_host_username_plh              : brukernavn
+i18n_host_password_plh              : passord
+i18n_host_port_plh                  : 22
+
 i18n_project_editor                 : Prosjektredigering
 
 i18n_project_information            : Prosjektinformasjon
 i18n_project_name                   : Prosjektnavn
 i18n_project_author                 : Forfatter
+i18n_project_host                   : Server vert
 i18n_project_version                : Versjon
 i18n_project_category               : Kategori
 i18n_project_description            : Beskrivelse

@@ -8,7 +8,51 @@
 			<strong>{i18n_project_name}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
-			<input class="FullWidth" id="project_projectname" value=""/>
+			<input type="text" class="FullWidth" id="project_projectname" value=""/>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_project_type}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding" id="ProjectTypes">
+		</div>
+	</div>
+	<div class="BorderTop HRow" id="Host">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_project_host}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<div class="HRow MarginBottom">
+				<div class="HContent20 FloatLeft">{i18n_host_server}:</div>
+				<div class="HContent60 FloatLeft">
+					<input type="text" class="FullWidth" placeholder="{i18n_host_server_plh}" value="" id="ProjectHostSSHServer"/>
+				</div>
+			</div>
+			<div class="HRow MarginBottom">
+				<div class="HContent20 FloatLeft">{i18n_host_username}:</div>
+				<div class="HContent60 FloatLeft">
+					<input type="text" class="FullWidth" placeholder="{i18n_host_username_plh}" value="" id="ProjectHostSSHUsername"/>
+				</div>
+			</div>
+			<div class="HRow MarginBottom">
+				<div class="HContent20 FloatLeft">{i18n_host_password}:</div>
+				<div class="HContent60 FloatLeft">
+					<input type="password" class="FullWidth" placeholder="{i18n_host_password_plh}" value="" id="ProjectHostSSHPassword"/>
+				</div>
+			</div>
+			<div class="HRow MarginBottom">
+				<div class="HContent20 FloatLeft">{i18n_host_port}:</div>
+				<div class="HContent60 FloatLeft">
+					<input type="number" min="0" class="FullWidth" placeholder="{i18n_host_port_plh}" value="" id="ProjectHostSSHPort"/>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent20 FloatLeft">{i18n_host_key}:</div>
+				<div class="HContent60 FloatLeft">
+					<textarea class="FullWidth" id="ProjectHostSSHKey"></textarea>
+				</div>
+			</div>
 		</div>
 	</div>
 	<div class="BorderTop HRow">
@@ -16,10 +60,10 @@
 			<strong>{i18n_project_author}:</strong>
 		</div>
 		<div class="HContent80 FloatLeft Padding">
-			<input class="FullWidth" id="project_author" value=""/>
+			<input type="text" class="FullWidth" id="project_author" value=""/>
 		</div>
 	</div>
-	<div class="BorderTop HRow">
+	<div class="BorderTop HRow" id="Version">
 		<div class="HContent20 FloatLeft Padding BorderRight">
 			<strong>{i18n_project_version}:</strong>
 		</div>

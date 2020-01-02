@@ -1250,7 +1250,9 @@ function SaveProject( project, saveas, callback )
 	// Clean up project structure
 	var values = [
 		'ProjectName', 'Path', 'Files', 'Permissions',
-		'Description', 'Version', 'Author', 'Category', 'ProjectPath'
+		'Description', 'Version', 'Author', 'Category', 'ProjectPath',
+		'ProjectType', 'ProjectHostSSHKey', 'ProjectHostSSHServer', 
+		'ProjectHostSSHUsername', 'ProjectHostSSHPassword', 'ProjectHostSSHPort'
 	];
 	var projectOut = {};
 	for( var a = 0; a < values.length; a++ )
