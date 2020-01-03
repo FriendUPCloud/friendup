@@ -1166,6 +1166,7 @@ function SetProjectPath( p )
 	else
 	{
 		var pp = p.Path;
+		
 		if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
 		else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
 		p.ProjectPath = pp;
@@ -1192,6 +1193,7 @@ function OpenProject( path )
 			var proj = JSON.parse( data );
 			for( var a in proj )
 				p[ a ] = proj[ a ];
+			p.Path = path; // Keep this!
 			projects.push( p );
 			Application.currentProject = p;
 			
