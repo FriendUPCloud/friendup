@@ -1860,12 +1860,12 @@ function RunApp()
 				if( p.Files[ a ].Path.toLowerCase() == 'index.html' || p.Files[ a ].Path.toLowerCase() == 'index.php' )
 				{
 					var url = p.Files[ a ].Path;
-					url = url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+					url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 					Application.sendMessage( {
 						type: 'system',
 						command: 'executeapplication',
 						executable: 'FriendBrowser',
-						arguments: url
+						args: url
 					} );
 					Application.currentProject.Playing = true;
 					CheckPlayStopButtons();
@@ -1877,12 +1877,12 @@ function RunApp()
 			if( !found && Application.currentFile )
 			{
 				var url = Application.currentFile.path;
-				url = url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+				url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 				Application.sendMessage( {
 					type: 'system',
 					command: 'executeapplication',
 					executable: 'FriendBrowser',
-					arguments: url
+					args: url
 				} );
 				Application.currentProject.Playing = true;
 				CheckPlayStopButtons();
@@ -1898,7 +1898,7 @@ function RunApp()
 						type: 'system',
 						command: 'executeapplication',
 						executable: p.ProjectPath + p.Files[ a ].Path,
-						arguments: false
+						args: false
 					} );
 					Application.currentProject.Playing = true;
 					CheckPlayStopButtons();
@@ -1909,17 +1909,16 @@ function RunApp()
 	}
 	else if( Application.currentFile )
 	{
-		console.log( Application.currentFile );
 		var p = Application.currentProject;
 		if( p.ProjectType && p.ProjectType == 'webssh' )
 		{
 			var url = Application.currentFile.path;
-			url = url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+			url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 			Application.sendMessage( {
 				type: 'system',
 				command: 'executeapplication',
 				executable: 'FriendBrowser',
-				arguments: url
+				args: url
 			} );
 			Application.currentProject.Playing = true;
 			CheckPlayStopButtons();
@@ -1932,7 +1931,7 @@ function RunApp()
 					type: 'system',
 					command: 'executeapplication',
 					executable: Application.currentFile.path,
-					arguments: false
+					args: false
 				} );
 				Application.currentProject.Playing = true;
 				CheckPlayStopButtons();
