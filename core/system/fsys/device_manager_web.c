@@ -1702,11 +1702,17 @@ AND LOWER(f.Name) = LOWER('%s')",
 						sqllib->SNPrintF( sqllib, query, querysize, " ID NOT IN(%s)", bsMountedDrives->bs_Buffer );
 						DEBUG("[DEVICE/LIST] sql: %s\n", query );
 					
-						Filesystem *fs = sqllib->Load( sqllib, FilesystemDesc, query, &entries );
-						if( fs != NULL )
+						Filesystem *rootdev = sqllib->Load( sqllib, FilesystemDesc, query, &entries );
+						if( rootdev != NULL )
 						{
-						
-							FilesystemDeleteAll( fs );
+							Filesystem *locdev = rootdev;
+							while( locdev != NULL )
+							{
+								//FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->f_Mounted, locdev->f_Name, locdev->f_FSysName, locdev->f_Path, NULL, locdev->fs_Config, locdev->f_Visible, NULL, 0, locdev->f_DevServer, locdev->f_DevPort, locdev->f_UserGroupID );
+								locdev = (Filesystem *)locdev->node.mln_Succ;
+							}
+							
+							FilesystemDeleteAll( rootdev );
 						
 							//DEBUG( "[DeviceMWebRequest] We now have information: %s (query: %s) - name: %s\n", rootdev->f_Config, query, rootdev->f_Name );
 						}
