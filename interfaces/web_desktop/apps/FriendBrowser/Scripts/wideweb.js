@@ -98,9 +98,9 @@ Application.run = function( msg )
 		{
 			if( msg.args )
 			{
-				v.sendMessage( {
-					command: 'loadfile',
-					filename: msg.args
+				Application.receiveMessage( {
+					command: 'seturl',
+					url: msg.args
 				} );
 			}
 		} );
@@ -131,6 +131,7 @@ Application.receiveMessage = function( msg )
 			{
 				this.currentUrl = msg.url;
 				Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' - ' + msg.url );
+				// Logic calls do not end up back in the browser window..
 				if( !msg.logic )
 					this.mainView.sendMessage( { command: 'loadfile', filename: this.currentUrl } );
 			}

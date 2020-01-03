@@ -25,6 +25,8 @@ Application.run = function( msg )
 	this.hostName = false;
 	this.appName = false;
 	this.doorName = false;
+	
+	this.appLoaded = true;
 }
 
 Application.receiveMessage = function( msg )
@@ -171,6 +173,11 @@ function replaceFriendUrls( data, url )
 
 function setUrl( uri, move )
 {
+	if( !Application.appLoaded )
+	{
+		return setTimeout( function(){ setUrl( uri, move ); }, 250 );
+	}
+	
 	if( !move ) move = false;
 	var wantedIndex = null;
 	if( !isNaN( uri ) && ( uri === 0 || uri > 0 ) )
@@ -279,6 +286,7 @@ function setUrl( uri, move )
 	{
 		skiploading = true;
 		ge( 'BrowserBox' ).src = uri;
+		console.log( 'Setting browser uri: ' + uri );
 	}
 	
 	ge( 'uri' ).value = uri;
