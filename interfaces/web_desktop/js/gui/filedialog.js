@@ -28,6 +28,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	}
 	if( !path || typeof( path ) == 'undefined' ) path = defaultPath;
 	
+	if( object.path )
+	{
+		path = object.path;
+	}
+	
 	FriendDOS.getFileInfo( path, function( e, d )
 	{
 		if( e == true )
