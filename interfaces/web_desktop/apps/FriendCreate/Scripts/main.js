@@ -2193,7 +2193,7 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'closeprojects':
 				document.body.classList.add( 'Loading' );
-				var pl = projects.length - 1;
+				var pl = projects.length;
 				if( pl <= 0 )
 				{
 					return Application.sendMessage( { command: 'quit' } );
@@ -2202,13 +2202,13 @@ Application.receiveMessage = function( msg )
 				{
 					CloseProject( projects[ a ], function()
 					{
-						if( pl-- == 0 )
+						if( --pl == 0 )
 						{
 							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 							setTimeout( function()
 							{
 								Application.sendMessage( { command: 'quit' } );
-							}, 50 );
+							}, 250 );
 						}
 					} );
 				}
