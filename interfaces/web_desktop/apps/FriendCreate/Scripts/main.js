@@ -1148,7 +1148,7 @@ function NewProject()
 		}
 		else
 		{
-			
+			OpenProjectEditor();
 		}
 	} );
 }
@@ -1160,17 +1160,7 @@ function SetProjectPath( p )
 	// Set the projectpath
 	if( p.ProjectType == 'webssh' )
 	{
-		if( p.ProjectHostSSHPath )
-		{
-			var pr = p.ProjectHostSSHPath;
-			if( pr.substr( 0, 1 ) == '/' )
-				pr = pr.substr( 1, pr.length - 1 );
-			p.ProjectPath = p.ProjectName + ':' + pr;
-		}
-		else
-		{
-			p.ProjectPath = p.ProjectName + ':';
-		}
+		p.ProjectPath = p.ProjectName + ':';
 	}
 	// Normal paths
 	else
@@ -1366,7 +1356,9 @@ function SaveProject( project, saveas, callback )
 							if( callback )
 								callback( true );
 						} );
+						return;
 					}
+					callback( true );
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},
@@ -1861,11 +1853,18 @@ function RunApp()
 				{
 					var url = p.Files[ a ].Path;
 					url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+					
+					var fnm = p.Files[ a ].Path;
+					if( fnm.indexOf( '/' ) > 0 )
+						fnm = fnm.split( '/' ).pop();
+					else if ( fnm.indexOf( ':' ) > 0 )
+						fnm = fnm.split( ':' )[1];
+						
 					Application.sendMessage( {
 						type: 'system',
 						command: 'executeapplication',
 						executable: 'FriendBrowser',
-						args: url
+						args: url + fnm
 					} );
 					Application.currentProject.Playing = true;
 					CheckPlayStopButtons();
@@ -1878,11 +1877,18 @@ function RunApp()
 			{
 				var url = Application.currentFile.path;
 				url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+				
+				var fnm = Application.currentFile.path;
+					if( fnm.indexOf( '/' ) > 0 )
+						fnm = fnm.split( '/' ).pop();
+					else if ( fnm.indexOf( ':' ) > 0 )
+						fnm = fnm.split( ':' )[1];
+				
 				Application.sendMessage( {
 					type: 'system',
 					command: 'executeapplication',
 					executable: 'FriendBrowser',
-					args: url
+					args: url + fnm
 				} );
 				Application.currentProject.Playing = true;
 				CheckPlayStopButtons();
@@ -1914,11 +1920,18 @@ function RunApp()
 		{
 			var url = Application.currentFile.path;
 			url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+			
+			var fnm = Application.currentFile.path;
+					if( fnm.indexOf( '/' ) > 0 )
+						fnm = fnm.split( '/' ).pop();
+					else if ( fnm.indexOf( ':' ) > 0 )
+						fnm = fnm.split( ':' )[1];
+			
 			Application.sendMessage( {
 				type: 'system',
 				command: 'executeapplication',
 				executable: 'FriendBrowser',
-				args: url
+				args: url + fnm
 			} );
 			Application.currentProject.Playing = true;
 			CheckPlayStopButtons();

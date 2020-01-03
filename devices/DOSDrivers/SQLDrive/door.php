@@ -1190,11 +1190,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				return false;
 			}
 			
-			// Remove file from path
-			$subPath = explode( '/', end( explode( ':', $path ) ) );
-			array_pop( $subPath );
-			$subPath = implode( '/', $subPath ) . '/';
-	
+			// Remove disk from path name to get sub folder
+			$subPath = explode( ':', $path );
+			$subPath = end( $subPath );
+			
 			$Logger->log( '[SQLDRIVE] > Deleting folder by subfolder: ' . $subPath );
 	
 			if( $fo = $this->getSubFolder( $subPath ) )
@@ -1202,7 +1201,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				$Logger->log( '[SQLDRIVE] > > Delete folder in subpath ' . $subPath . ' in fs ' . $this->Name . ': ---' );
 				return $this->_deleteFolder( $fo, $recursive );
 			}
-		
+			
 			$Logger->log( '[SQLDRIVE] > Could not delete.' );
 		
 			return false;
@@ -1280,6 +1279,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				if( strstr( $path, '/' ) )
 					$fi->Filename = end( explode( '/', $path ) );
 				else $fi->Filename = end( explode( ':', $path ) );
+				$fi->Filename = str_replace( "'", "\\'", $fi->Filename );
 				$fi->Load();
 			}
 			
@@ -1335,7 +1335,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					SELECT * FROM `FSFolder` 
 					WHERE 
 						`FilesystemID`=\'' . $this->ID . '\' AND 
-						`Name`=\'' . $finalPath[0] . '\' AND 
+						`Name`=\'' . str_replace( "'", "\\'", $finalPath[0] ) . '\' AND 
 						`FolderID`=\'' . $parID . '\'' );
 				if( $do && $do->ID > 0 )
 				{
@@ -1355,6 +1355,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				{
 					// If this last joint might be a file, return parent id
 					//$Logger->log('Not a real folder "' . $finalPath[0] . '"? -> COULD NOT LOAD SQLDrive Folder // FilesystemID: ' . $fo->FilesystemID .  ' // FolderID ' . $fo->FolderID . ' // Name ' . $fo->Name );
+					
 					return false;
 				}
 				//$Logger->log('Our current folder ID is '. $fo->ID);
@@ -1447,7 +1448,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$file->Delete();
 				}
 			}
-			//$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
+			$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
 			$fo->Delete();
 			return true;
 		}

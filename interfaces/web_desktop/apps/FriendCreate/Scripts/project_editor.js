@@ -89,14 +89,20 @@ function InitializeForm()
 			ge( 'Version' ).style.display = 'none';
 			ge( 'Host' ).style.display = '';
 
-			ge( 'ProjectHostSSHServer' ).value   = project.ProjectHostSSHServer ? project.ProjectHostSSHServer : '';
-			ge( 'ProjectHostSSHUsername' ).value = project.ProjectHostSSHUsername ? project.ProjectHostSSHUsername : '';
+			if( !ge( 'ProjectHostSSHServer' ).value )
+				ge( 'ProjectHostSSHServer' ).value = project.ProjectHostSSHServer ? project.ProjectHostSSHServer : '';
+			if( !ge( 'ProjectHostSSHUsername' ).value )
+				ge( 'ProjectHostSSHUsername' ).value = project.ProjectHostSSHUsername ? project.ProjectHostSSHUsername : '';
 			ge( 'ProjectHostSSHPassword' ).value = project.ProjectHostSSHPassword ? project.ProjectHostSSHPassword : '';
-			ge( 'ProjectHostSSHPort' ).value     = project.ProjectHostSSHPort ? project.ProjectHostSSHPort : '';
-			ge( 'ProjectHostSSHKey' ).value      = project.ProjectHostSSHKey ? project.ProjectHostSSHKey : '';
-			ge( 'ProjectHostSSHPath' ).value     = project.ProjectHostSSHPath ? project.ProjectHostSSHPath : '';
-			ge( 'ProjectWebEnabled' ).checked    = project.ProjectWebEnabled ? 'checked' : '';
-			ge( 'ProjectWebPath' ).value         = project.ProjectWebPath ? project.ProjectWebPath : '';
+			if( !ge( 'ProjectHostSSHPort' ).value )
+				ge( 'ProjectHostSSHPort' ).value = project.ProjectHostSSHPort ? project.ProjectHostSSHPort : '';
+			if( !ge( 'ProjectHostSSHKey' ).value )
+				ge( 'ProjectHostSSHKey' ).value = project.ProjectHostSSHKey ? project.ProjectHostSSHKey : '';
+			if( !ge( 'ProjectHostSSHPath' ).value )
+				ge( 'ProjectHostSSHPath' ).value = project.ProjectHostSSHPath ? project.ProjectHostSSHPath : '';
+			ge( 'ProjectWebEnabled' ).checked = project.ProjectWebEnabled ? 'checked' : '';
+			if( !ge( 'ProjectWebPath' ).value )
+				ge( 'ProjectWebPath' ).value = project.ProjectWebPath ? project.ProjectWebPath : '';
 			
 			// Web host enabled?
 			if( project.ProjectWebEnabled )
@@ -405,6 +411,10 @@ function UpdateProject()
 		project.ProjectSSHHostKey = ge( 'ProjectHostSSHKey' ).value;
 		project.ProjectWebEnabled = ge( 'ProjectWebEnabled' ).checked ? true : false;
 		project.ProjectWebPath = ge( 'ProjectWebPath' ).value;
+		if( project.ProjectHostSSHPath )
+		{
+			project.ProjectPath = project.ProjectName + ':';
+		}
 	}
 	
 	Application.sendMessage( {
@@ -451,22 +461,33 @@ Application.receiveMessage = function( msg )
 					saved = true;
 				}
 				
-				if( project.Path && !project.ProjectPath )
+				// Should really never be called.
+				if( !project.ProjectType || project.ProjectType == 'standard' )
 				{
-					var p = '';
-					if( project.Path.indexOf( '.' ) > 0 )
+					if( project.Path && !project.ProjectPath )
 					{
-						if( project.Path.indexOf( '/' ) > 0 )
+						var p = '';
+						if( project.Path.indexOf( '.' ) > 0 )
 						{
-							p = project.Path.split( '/' ); p.pop();
-							p = p.join( '/' ) + '/';
+							if( project.Path.indexOf( '/' ) > 0 )
+							{
+								p = project.Path.split( '/' ); p.pop();
+								p = p.join( '/' ) + '/';
+							}
+							else
+							{
+								p = project.Path.split( ':' ); p.pop();
+								p = p.join( ':' ) + ':';
+							}
+							project.ProjectPath = p;
 						}
-						else
-						{
-							p = project.Path.split( ':' ); p.pop();
-							p = p.join( ':' ) + ':';
-						}
-						project.ProjectPath = p;
+					}
+				}
+				else if( project.ProjectType == 'webssh' )
+				{
+					if( project.ProjectHostSSHPath && !project.ProjectPath )
+					{
+						project.ProjectPath = project.ProjectName + ':';
 					}
 				}
 				InitializeForm();
