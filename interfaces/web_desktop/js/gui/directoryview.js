@@ -3645,7 +3645,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					if( this.classList.contains( 'Selected' ) )
 					{
 						obj.iconsCache = [];
-						mousePointer.pickup( obj );
+						mousePointer.pickup( this );
 					}
 					else
 					{
@@ -3719,7 +3719,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					if( distance > 15 )
 					{
 						obj.iconsCache = [];
-						mousePointer.pickup( obj );
+						mousePointer.pickup( this );
 						this.touchPos = false;
 						
 						if( this.listSelectTimeout )
@@ -4669,40 +4669,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			}
 			//return cancelBubble( event );
 		}, false );
-			
-		/*file.ontouchmove = function( e )
-		{
-			if( !this.touchPos )
-				return;
-		
-			var current = {
-				x: e.touches[0].pageX,
-				y: e.touches[0].pageY
-			};
-
-			var diffx = current.x - this.touchPos.x;
-			var diffy = current.y - this.touchPos.y;
-
-			var distance = Math.sqrt(
-				Math.pow( diffx, 2 ) + Math.pow( diffy, 2 )
-			);
-	
-			if( distance > 15 )
-			{			
-				obj.iconsCache = [];
-				this.classList.add( 'Selected' );
-				this.selected = true;
-				this.fileInfo.selected = true;
-				mousePointer.pickup( obj );
-				this.touchPos = false;
-			
-				if( file.contextMenuTimeout )
-					clearTimeout( file.contextMenuTimeout );
-				file.contextMenuTimeout = false;
-			}
-		
-			return cancelBubble( e );
-		}*/
 
 		file.addEventListener( 'touchend', function( event )
 		{

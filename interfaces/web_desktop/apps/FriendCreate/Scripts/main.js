@@ -1148,7 +1148,7 @@ function NewProject()
 		}
 		else
 		{
-			
+			OpenProjectEditor();
 		}
 	} );
 }
@@ -1160,17 +1160,7 @@ function SetProjectPath( p )
 	// Set the projectpath
 	if( p.ProjectType == 'webssh' )
 	{
-		if( p.ProjectHostSSHPath )
-		{
-			var pr = p.ProjectHostSSHPath;
-			if( pr.substr( 0, 1 ) == '/' )
-				pr = pr.substr( 1, pr.length - 1 );
-			p.ProjectPath = p.ProjectName + ':' + pr;
-		}
-		else
-		{
-			p.ProjectPath = p.ProjectName + ':';
-		}
+		p.ProjectPath = p.ProjectName + ':';
 	}
 	// Normal paths
 	else
@@ -1366,7 +1356,9 @@ function SaveProject( project, saveas, callback )
 							if( callback )
 								callback( true );
 						} );
+						return;
 					}
+					callback( true );
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},

@@ -668,6 +668,7 @@ var mousePointer =
 		if( e ) target = e.target || e.srcElement;
 		
 		this.testPointer ();
+		
 		// Check multiple (pickup multiple)
 		var multiple = false;
 		if ( ele.window )
