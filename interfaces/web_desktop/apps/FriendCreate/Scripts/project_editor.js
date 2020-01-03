@@ -12,6 +12,8 @@ var project = {
 	Type: 'standard'
 };
 
+var saved = false;
+
 var supportedFiles = [
 	'php',
 	'pl',
@@ -55,16 +57,29 @@ function InitializeForm()
 	};	
 	
 	// Initialize
-	var topts = '<select id="project_type" onchange="project.ProjectType = this.value; InitializeForm()">';
-	var s = null;
-	for( var a in types )
+	if( project.ProjectType && project.Path && saved )
 	{
-		s = '';
-		if( project.ProjectType && project.ProjectType == a )
-			s = ' selected="selected"';
-		topts += '<option value="' + a + '"' + s + '>' + types[ a ] + '</option>';
+		var topts = '<strong>';
+		for( var a in types )
+		{
+			if( project.ProjectType && project.ProjectType == a )
+				topts += types[ a ];
+		}
+		topts += '</strong>';
 	}
-	topts += '</select>';
+	else
+	{
+		var topts = '<select id="project_type" onchange="project.ProjectType = this.value; InitializeForm()">';
+		var s = null;
+		for( var a in types )
+		{
+			s = '';
+			if( project.ProjectType && project.ProjectType == a )
+				s = ' selected="selected"';
+			topts += '<option value="' + a + '"' + s + '>' + types[ a ] + '</option>';
+		}
+		topts += '</select>';
+	}
 	
 	ge( 'ProjectTypes' ).innerHTML = topts;
 	
@@ -74,14 +89,14 @@ function InitializeForm()
 			ge( 'Version' ).style.display = 'none';
 			ge( 'Host' ).style.display = '';
 
-			ge( 'ProjectHostSSHServer' ).value = project.ProjectHostSSHServer ? project.ProjectHostSSHServer : '';
+			ge( 'ProjectHostSSHServer' ).value   = project.ProjectHostSSHServer ? project.ProjectHostSSHServer : '';
 			ge( 'ProjectHostSSHUsername' ).value = project.ProjectHostSSHUsername ? project.ProjectHostSSHUsername : '';
 			ge( 'ProjectHostSSHPassword' ).value = project.ProjectHostSSHPassword ? project.ProjectHostSSHPassword : '';
-			ge( 'ProjectHostSSHPort' ).value = project.ProjectHostSSHPort ? project.ProjectHostSSHPort : '';
-			ge( 'ProjectHostSSHKey' ).value = project.ProjectHostSSHKey ? project.ProjectHostSSHKey : '';
-			ge( 'ProjectHostSSHPath' ).value = project.ProjectHostSSHPath ? project.ProjectHostSSHPath : '';
-			ge( 'ProjectWebEnabled' ).checked = project.ProjectWebEnabled ? 'checked' : '';
-			ge( 'ProjectWebPath' ).value = project.ProjectWebPath ? project.ProjectWebPath : '';
+			ge( 'ProjectHostSSHPort' ).value     = project.ProjectHostSSHPort ? project.ProjectHostSSHPort : '';
+			ge( 'ProjectHostSSHKey' ).value      = project.ProjectHostSSHKey ? project.ProjectHostSSHKey : '';
+			ge( 'ProjectHostSSHPath' ).value     = project.ProjectHostSSHPath ? project.ProjectHostSSHPath : '';
+			ge( 'ProjectWebEnabled' ).checked    = project.ProjectWebEnabled ? 'checked' : '';
+			ge( 'ProjectWebPath' ).value         = project.ProjectWebPath ? project.ProjectWebPath : '';
 			
 			// Web host enabled?
 			if( project.ProjectWebEnabled )
@@ -92,6 +107,8 @@ function InitializeForm()
 			{
 				ge( 'WebEnabled' ).style.display = 'none';
 			}
+			ge( 'Mandatory' ).style.display = 'none';
+			ge( 'Privileges' ).style.display = 'none';
 			
 			
 			break;
@@ -99,6 +116,8 @@ function InitializeForm()
 		default:
 			ge( 'Version' ).style.display = '';
 			ge( 'Host' ).style.display = 'none';
+			ge( 'Mandatory' ).style.display = '';
+			ge( 'Privileges' ).style.display = '';
 			break;
 	}
 	
@@ -373,7 +392,8 @@ function UpdateProject()
 		'Description'
 	];
 	for( var a = 0; a < values.length; a++ )
-		project[ equiv[a] ] = ge( values[a] ).value;
+		if( ge( values[ a ] ) )
+			project[ equiv[a] ] = ge( values[a] ).value;
 
 	if( project.ProjectType == 'webssh' )
 	{
@@ -424,6 +444,13 @@ Application.receiveMessage = function( msg )
 				RefreshFiles();
 				RefreshPermissions();
 				Application.parentViewId = msg.parentView;
+				
+				// This means we chose a project type
+				if( project.ProjectType )
+				{
+					saved = true;
+				}
+				
 				if( project.Path && !project.ProjectPath )
 				{
 					var p = '';

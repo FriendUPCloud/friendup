@@ -150,6 +150,9 @@ Application.receiveMessage = function( msg )
 			case 'project_close':
 				mainWindow.sendMessage( msg );
 				break;
+			case 'notify':
+				console.log( 'Notify!', msg );
+				break;
 		}
 	}
 }

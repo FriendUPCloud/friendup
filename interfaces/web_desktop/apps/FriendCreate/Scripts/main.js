@@ -1851,33 +1851,92 @@ function RunApp()
 	{
 		var p = Application.currentProject;
 		
-		for( var a = 0; a < p.Files.length; a++ )
+		if( p.ProjectType && p.ProjectType == 'webssh' )
 		{
-			if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+			var found = false;
+			for( var a = 0; a < p.Files.length; a++ )
 			{
+				// TODO: Allow project to specify a project root file
+				if( p.Files[ a ].Path.toLowerCase() == 'index.html' || p.Files[ a ].Path.toLowerCase() == 'index.php' )
+				{
+					var url = p.Files[ a ].Path;
+					url = url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+					Application.sendMessage( {
+						type: 'system',
+						command: 'executeapplication',
+						executable: 'FriendBrowser',
+						arguments: url
+					} );
+					Application.currentProject.Playing = true;
+					CheckPlayStopButtons();
+					found = true;
+					break;
+				}
+			}
+			// Revert to current file
+			if( !found && Application.currentFile )
+			{
+				var url = Application.currentFile.path;
+				url = url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 				Application.sendMessage( {
 					type: 'system',
 					command: 'executeapplication',
-					executable: p.ProjectPath + p.Files[ a ].Path,
-					arguments: false
+					executable: 'FriendBrowser',
+					arguments: url
 				} );
 				Application.currentProject.Playing = true;
 				CheckPlayStopButtons();
 			}
 		}
+		else
+		{
+			for( var a = 0; a < p.Files.length; a++ )
+			{
+				if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'executeapplication',
+						executable: p.ProjectPath + p.Files[ a ].Path,
+						arguments: false
+					} );
+					Application.currentProject.Playing = true;
+					CheckPlayStopButtons();
+					break;
+				}
+			}
+		}
 	}
 	else if( Application.currentFile )
 	{
-		if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+		console.log( Application.currentFile );
+		var p = Application.currentProject;
+		if( p.ProjectType && p.ProjectType == 'webssh' )
 		{
+			var url = Application.currentFile.path;
+			url = url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 			Application.sendMessage( {
 				type: 'system',
 				command: 'executeapplication',
-				executable: Application.currentFile.path,
-				arguments: false
+				executable: 'FriendBrowser',
+				arguments: url
 			} );
 			Application.currentProject.Playing = true;
 			CheckPlayStopButtons();
+		}
+		else
+		{
+			if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'executeapplication',
+					executable: Application.currentFile.path,
+					arguments: false
+				} );
+				Application.currentProject.Playing = true;
+				CheckPlayStopButtons();
+			}
 		}
 	}
 }
