@@ -61,6 +61,8 @@
 
 //int UnMount( struct FHandler *s, void *f, User *usr, char **error  );
 
+//#define __ENABLE_MUTEX
+
 //
 // Special SSH data
 //
@@ -100,7 +102,9 @@ typedef struct SpecialData
 
 typedef struct HandlerData
 {
+#ifdef __ENABLE_MUTEX
 	pthread_mutex_t					hd_Mutex;
+#endif
 	int initialized;
 }HandlerData;
 
@@ -149,7 +153,9 @@ void init( struct FHandler *s )
 	s->fh_SpecialData = FCalloc( 1, sizeof( HandlerData ) );
 	HandlerData *hd = (HandlerData *)s->fh_SpecialData;
 	hd->initialized = 0;
+#ifdef __ENABLE_MUTEX
 	pthread_mutex_init( &hd->hd_Mutex, NULL );
+#endif
 	DEBUG("[SSH2FS] init\n");
 }
 
@@ -161,7 +167,9 @@ void deinit( struct FHandler *s )
 {
 	HandlerData *hd = (HandlerData *)s->fh_SpecialData;
 	libssh2_exit();
+#ifdef __ENABLE_MUTEX
 	pthread_mutex_destroy( &hd->hd_Mutex );
+#endif
 	FFree( hd );
 	DEBUG("[SSH2FS] deinit\n");
 }
@@ -354,7 +362,9 @@ int UnMount( struct FHandler *s, void *f )
 			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
 			HandlerData *hd = (HandlerData *)s->fh_SpecialData;
 			
+#ifdef __ENABLE_MUTEX
 			pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 			
 			if( sdat->session != NULL )
 			{
@@ -373,7 +383,10 @@ int UnMount( struct FHandler *s, void *f )
 			{
 				close( sdat->sock );
 			}
+			
+#ifdef __ENABLE_MUTEX
 			pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 			
 			DEBUG("all done!\n");
 			
@@ -515,8 +528,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		
 		struct hostent *phe;
 		
+#ifdef __ENABLE_MUTEX
 		DEBUG("SFTP lock %p\n", &hd->hd_Mutex );
 		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 
 		if ( (phe = (struct hostent *)gethostbyname(sdat->sd_Host) ) != NULL ) 
 		{
@@ -539,7 +554,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		timeout.tv_sec = 4; // 4 secs!
 		timeout.tv_usec = 0;
 		DEBUG("Socket timeout will be set\n");
-		setsockopt( sdat->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof( timeout) );
+		setsockopt( sdat->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof( timeout ) );
 		setsockopt( sdat->sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof( timeout ) );
 		
 		DEBUG("Before connect\n");
@@ -764,9 +779,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
  
 		// Since we have not set non-blocking, tell libssh2 we are blocking 
 		libssh2_session_set_blocking( sdat->session, 1);
-		
+
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		DEBUG("mount SFTP unlock %p\n", &hd->hd_Mutex );
+#endif
 		
 		return dev;
 	}
@@ -794,11 +811,13 @@ shutdown:
 			sdat->sock = 0;
 		}
 		DEBUG("all done!\n");
-		
+
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		
 		//pthread_mutex_destroy( &hd->hd_Mutex );
 		DEBUG("mount SFTP unlock %p\n", &hd->hd_Mutex );
+#endif
 		
 		if( sdat->sd_Host ){ FFree( sdat->sd_Host ); }
 		if( sdat->sd_LoginUser ){ FFree( sdat->sd_LoginUser ); }
@@ -829,8 +848,10 @@ int Release( struct FHandler *s, void *f )
 			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
 			HandlerData *hd = (HandlerData *)s->fh_SpecialData;
 			
+#ifdef __ENABLE_MUTEX
 			DEBUG("release locked %p\n", &hd->hd_Mutex );
 			pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 			if( sdat->session != NULL )
 			{
 				if( sdat->sftp_session != NULL )
@@ -845,7 +866,10 @@ int Release( struct FHandler *s, void *f )
 					//sdat->session = NULL;
 				}
 			}
+			
+#ifdef __ENABLE_MUTEX
 			pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 
 			DEBUG("all done!\n");
 			//libssh2_exit();
@@ -943,8 +967,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		FHandler *fh = (FHandler *)s->f_FSys;
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		
+#ifdef __ENABLE_MUTEX
 		DEBUG("open1 locked %p\n", &hd->hd_Mutex );
 		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 		int slash = 0;
 		for( i = 0; i < spath; i++ )
 		{
@@ -965,8 +991,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				slash++;
 			}
 		}
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		DEBUG("open1 locked %p\n", &hd->hd_Mutex );
+#endif
 		
 		FFree( commClean );
 		if( cleanPath != NULL )
@@ -987,8 +1015,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		//
 		LIBSSH2_SFTP_HANDLE *handle = NULL;
 		
+#ifdef __ENABLE_MUTEX
 		DEBUG("open locked %p\n", &hd->hd_Mutex );
 		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 		
 		if( strcmp( mode, "rs" ) == 0 || strcmp( mode, "rb" ) == 0 || strcmp( mode, "r" ) == 0 )
 		{
@@ -1016,8 +1046,10 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			}
 		}
 		
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		DEBUG("open unlocked %p\n", &hd->hd_Mutex );
+#endif
 		
 		if( handle != NULL )
 		{
@@ -1090,9 +1122,14 @@ int FileClose( struct File *s, void *fp )
 		{
 			SpecialData *sd = ( SpecialData *)lfp->f_SpecialData;
 			
+#ifdef __ENABLE_MUTEX
 			pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 			libssh2_sftp_close( sd->sd_FileHandle );
+			
+#ifdef __ENABLE_MUTEX
 			pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 			
 			FFree( lfp->f_SpecialData );
 		}
@@ -1130,10 +1167,12 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			hd = (HandlerData *)fh->fh_SpecialData;
 		}
 		
+#ifdef __ENABLE_MUTEX
 		if( hd != NULL )
 		{
 			pthread_mutex_lock( &hd->hd_Mutex );
 		}
+#endif
 		result = libssh2_sftp_read( sd->sd_FileHandle, buffer, rsize );
 		
 		if( f->f_Stream == TRUE && result > 0 )
@@ -1141,10 +1180,12 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
 		}
 		
+#ifdef __ENABLE_MUTEX
 		if( hd != NULL )
 		{
 			pthread_mutex_unlock( &hd->hd_Mutex );
 		}
+#endif
 	}
 	DEBUG("FileRead %d\n", result );
 	if( result <= 0 )
@@ -1175,10 +1216,12 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 			hd = (HandlerData *)fh->fh_SpecialData;
 		}
 		
+#ifdef __ENABLE_MUTEX
 		if( hd != NULL )
 		{
 			pthread_mutex_lock( &hd->hd_Mutex );
 		}
+#endif
 		do
 		{
 			int rc = libssh2_sftp_write( sd->sd_FileHandle, bufptr, wsize );
@@ -1192,10 +1235,12 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 		}
 		while( wsize );
 		
+#ifdef __ENABLE_MUTEX
 		if( hd != NULL )
 		{
 			pthread_mutex_unlock( &hd->hd_Mutex );
 		}
+#endif
 	}
 	DEBUG("FileWrite %d\n", result );
 	return result;
@@ -1257,7 +1302,9 @@ int MakeDir( struct File *s, const char *path )
 		strcat( newPath, "/" );
 	}
 	
+#ifdef __ENABLE_MUTEX
 	pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 	// Create a string that has the real file path of the file
 	if( path != NULL )
 	{
@@ -1311,12 +1358,16 @@ int MakeDir( struct File *s, const char *path )
 
 			FFree( directory );
 		}
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 		
 		FFree( newPath );
 		return error;
 	}
+#ifdef __ENABLE_MUTEX
 	pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 	FFree( newPath );
 	
 	return -1;
@@ -1441,9 +1492,13 @@ FLONG Delete( struct File *s, const char *path )
 		FHandler *fh = (FHandler *)s->f_FSys;
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 		FLONG ret = RemoveDirectory( sdat, comm );
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 		
 		FFree( comm );
 		return ret;
@@ -1514,7 +1569,9 @@ int Rename( struct File *s, const char *path, const char *nname )
 		sprintf( dest + rspath, "%s", nname );
 	}
 	
+#ifdef __ENABLE_MUTEX
 	pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 	// 4. Execute!
 	DEBUG( "executing: rename %s %s\n", source, dest );
 	int res = libssh2_sftp_rename( sdat->sftp_session, source, dest );// rename( source, dest );
@@ -1523,7 +1580,9 @@ int Rename( struct File *s, const char *path, const char *nname )
 		ServerReconnect( sdat, hd );
 		res = libssh2_sftp_rename( sdat->sftp_session, source, dest );
 	}
+#ifdef __ENABLE_MUTEX
 	pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 	
 	// 5. Free up
 	FFree( source );
@@ -1624,8 +1683,10 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 		FHandler *fh = (FHandler *)s->f_FSys;
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		
+#ifdef __ENABLE_MUTEX
 		DEBUG("info lock %p\n", &hd->hd_Mutex );
 		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 		
 		DEBUG("PATH created %s\n", comm );
 		
@@ -1649,8 +1710,10 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 			libssh2_sftp_close_handle( handle );
 		}
 		
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		DEBUG("intfo SFTP unlock %p\n", &hd->hd_Mutex );
+#endif
 		
 		FFree( comm );
 	}
@@ -1714,8 +1777,10 @@ BufString *Info( File *s, const char *path )
 		FHandler *fh = (FHandler *)s->f_FSys;
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		
+#ifdef __ENABLE_MUTEX
 		DEBUG("info lock %p\n", &hd->hd_Mutex );
 		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 		
 		DEBUG("PATH created %s\n", comm );
 		
@@ -1815,8 +1880,10 @@ BufString *Info( File *s, const char *path )
 			libssh2_sftp_close_handle( handle );
 		}
 		
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		DEBUG("intfo SFTP unlock %p\n", &hd->hd_Mutex );
+#endif
 		
 		FFree( comm );
 	}
@@ -1886,9 +1953,10 @@ BufString *Dir( File *s, const char *path )
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		SystemBase *sb = (SystemBase *)sd->sb;
 		
+#ifdef __ENABLE_MUTEX
 		DEBUG("locking %p\n", &hd->hd_Mutex );
-		
 		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 		
 		DEBUG("lock passed %p %p\n", sd, sd->sftp_session );
 		
@@ -1908,7 +1976,9 @@ BufString *Dir( File *s, const char *path )
 				FERROR( "Unable to open dir with SFTP: %s\n", comm );
 				BufStringAdd( bs, "fail<!--separate-->Could not open directory.");
 				
+#ifdef __ENABLE_MUTEX
 				pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 				return bs;
 			}
 			else
@@ -1921,7 +1991,9 @@ BufString *Dir( File *s, const char *path )
 		{
 			BufStringAdd( bs, "fail<!--separate-->Could not open directory.");
 			
+#ifdef __ENABLE_MUTEX
 			pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 			return bs;
 		}
 		int pos = 0;
@@ -2077,7 +2149,9 @@ BufString *Dir( File *s, const char *path )
 		} while (1);
 		
 		libssh2_sftp_closedir( sftphandle );
+#ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 		
 		BufStringAdd( bs, "]" );
 		

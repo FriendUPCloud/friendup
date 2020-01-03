@@ -205,3 +205,18 @@ void FilesystemDelete( Filesystem *fs )
 	}
 }
 
+/**
+ * Function delete Filesystem list structure
+ *
+ * @param fs pointer to Filesystem list structure which will be deleted
+ */
+void FilesystemDeleteAll( Filesystem *fs )
+{
+	while( fs != NULL )
+	{
+		Filesystem *rem = fs;
+		
+		fs = (Filesystem *)fs->node.mln_Succ;
+		FilesystemDelete( rem );
+	}
+}
