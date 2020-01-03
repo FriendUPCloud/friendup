@@ -231,8 +231,16 @@ Sections.accounts_users = function( cmd, extra )
 							for( var b = 0; b < wgroups.length; b++ )
 							{
 								if( !wgroups[b].Name ) continue;
+								
+								//wstr += '<div class="HRow">';
+								//wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
+								//wstr += '</div>';
+								
 								wstr += '<div class="HRow">';
-								wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
+								wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + wgroups[b].Name + '</strong></div>';
+								wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+								wstr += '		<button wid="' + wgroups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+								wstr += '	</div>';
 								wstr += '</div>';
 							}
 						}
@@ -554,85 +562,184 @@ Sections.accounts_users = function( cmd, extra )
 							workgroups : function (  )
 							{
 								
-								if( ge( 'WorkgroupGui' ) && wstr )
-								{
-									ge( 'WorkgroupGui' ).innerHTML = wstr;
-								}
-								
 								// Editing workgroups
 					
 								var wge = ge( 'WorkgroupEdit' );
+								wge.wids = {};
+								wge.wgroups = false/*wgroups*/;
+								
+								// TODO: List the groups sorting here since that is constant, so there is no difference between first render and switch between edit and list enabled.
+								
+								if( ge( 'WorkgroupGui' ) && wstr )
+								{
+									ge( 'WorkgroupGui' ).innerHTML = wstr;
+									
+									// TODO: Move wstr rendering into this function so we don't have to render all of this 3 times ....
+									
+									if( ge( 'WorkgroupGui' ).innerHTML )
+									{
+										var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+										
+										if( workBtns )
+										{
+											for( var a = 0; a < workBtns.length; a++ )
+											{
+												if( workBtns[a] && workBtns[a].classList.contains( 'fa-toggle-on' ) && workBtns[a].getAttribute( 'wid' ) )
+												{
+													wge.wids[ workBtns[a].getAttribute( 'wid' ) ] = true;
+												}
+											}
+											
+											for( var a = 0; a < workBtns.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b, wids ) {
+													b.onclick = function( e )
+													{
+														var args = { 
+															id     : this.getAttribute( 'wid' ), 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+													
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.getAttribute( 'wid' ) 
+														} );
+													
+														if( this.classList.contains( 'fa-toggle-on' ) )
+														{
+															// Toggle off ...
+														
+															console.log( '// Toggle off ', args );
+														
+															if( args && args.id && args.users )
+															{
+																var f = new Library( 'system.library' );
+																f.btn = this;
+																f.wids = wids;
+																f.onExecuted = function( e, d )
+																{
+																	console.log( { e:e, d:d } );
+																
+																	this.btn.classList.remove( 'fa-toggle-on' );
+																	this.btn.classList.add( 'fa-toggle-off' );
+																
+																	this.wids[ this.btn.getAttribute( 'wid' ) ] = false;
+																
+																	var pnt = this.btn.parentNode.parentNode;
+																
+																	if( pnt )
+																	{
+																		pnt.innerHTML = '';
+																	}
+																}
+																f.execute( 'group/removeusers', args );
+															}
+														
+														}
+													}
+												} )( workBtns[ a ], wge.wids );
+											}
+											
+										}
+									}
+									
+								}
+								
+								
+								
 								if( wge ) wge.onclick = function( e )
 								{
+									console.log( 'info.workgroups: ', info.workgroups );
+									
+									groups = {};
+									
+									if( info.workgroups )
+									{
+										var unsorted = {};
+								
+										for( var i in info.workgroups )
+										{
+											if( info.workgroups[i] && info.workgroups[i].ID )
+											{
+												info.workgroups[i].groups = [];
+										
+												unsorted[info.workgroups[i].ID] = info.workgroups[i];
+											}
+										}
+										
+										
+										
+										for( var k in unsorted )
+										{
+											if( unsorted[k] && unsorted[k].ID )
+											{
+												if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+												{
+													if( !groups[ unsorted[k].ParentID ] )
+													{
+														groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
+													}
+													
+													if( groups[ unsorted[k].ParentID ] )
+													{
+														groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+													}
+												}
+												else if( !groups[ unsorted[k].ID ] )
+												{
+													groups[ unsorted[k].ID ] = unsorted[k];
+												}
+											}	
+										}
+										
+										console.log( groups );
+									}
+									
+									
+									
 									// Show
 									if( !this.activated )
 									{
 										this.activated = true;
-										this.oldML = ge( 'WorkgroupGui' ).innerHTML;
+										//this.oldML = ge( 'WorkgroupGui' ).innerHTML;
 							
 										var str = '';
 							
-										if( info.workgroups && info.workgroups == '404' )
+										if( groups && groups == '404' )
 										{
 											str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_workgroups_access_denied' ) + '</div></div>';
 										}
-										else if( info.workgroups )
+										else if( groups )
 										{
-											console.log( 'info.workgroups: ', info.workgroups );
-											
-											
-											if( info.workgroups )
-											{
-												var unsorted = {};
-										
-												for( var i in info.workgroups )
-												{
-													if( info.workgroups[i] && info.workgroups[i].ID )
-													{
-														info.workgroups[i].groups = [];
-												
-														unsorted[info.workgroups[i].ID] = info.workgroups[i];
-													}
-												}
-												
-												groups = {};
-												
-												for( var k in unsorted )
-												{
-													if( unsorted[k] && unsorted[k].ID )
-													{
-														if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
-														{
-															if( !groups[ unsorted[k].ParentID ] )
-															{
-																groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
-															}
-															
-															if( groups[ unsorted[k].ParentID ] )
-															{
-																groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
-															}
-														}
-														else if( !groups[ unsorted[k].ID ] )
-														{
-															groups[ unsorted[k].ID ] = unsorted[k];
-														}
-													}	
-												}
-												
-												//console.log( groups );
-											}
 											
 											
 											for( var a in groups )
 											{
 												var found = false;
-												for( var c = 0; c < wgroups.length; c++ )
+												if( this.wids[ groups[a].ID ] )
 												{
-													if( groups[a].Name == wgroups[c].Name )
+													found = true;
+												}
+												else if( this.wgroups.length )
+												{
+													for( var c = 0; c < this.wgroups.length; c++ )
 													{
-														found = true;
-														break;
+														if( groups[a].Name == this.wgroups[c].Name )
+														{
+															found = true;
+															break;
+														}
 													}
 												}
 												
@@ -640,7 +747,7 @@ Sections.accounts_users = function( cmd, extra )
 												
 												str += '<div class="HRow">\
 													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-														<span class="IconSmall ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+														<span class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
 													</div>\
 													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 														<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -656,18 +763,25 @@ Sections.accounts_users = function( cmd, extra )
 													for( var aa in groups[a].groups )
 													{
 														var found = false;
-														for( var cc = 0; cc < wgroups.length; cc++ )
+														if( this.wids[ groups[a].groups[aa].ID ] )
 														{
-															if( groups[a].groups[aa].Name == wgroups[cc].Name )
+															found = true;
+														}
+														else if( this.wgroups.length )
+														{
+															for( var cc = 0; cc < this.wgroups.length; cc++ )
 															{
-																found = true;
-																break;
+																if( groups[a].groups[aa].Name == this.wgroups[cc].Name )
+																{
+																	found = true;
+																	break;
+																}
 															}
 														}
 															
 														str += '<div class="HRow">\
 															<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-																<span class="IconSmall ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+																<span class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
 															</div>\
 															<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 																<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -681,18 +795,25 @@ Sections.accounts_users = function( cmd, extra )
 															for( var aaa in groups[a].groups[aa].groups )
 															{
 																var found = false;
-																for( var cc = 0; cc < wgroups.length; cc++ )
+																if( this.wids[ groups[a].groups[aa].groups[aaa].ID ] )
 																{
-																	if( groups[a].groups[aa].groups[aaa].Name == wgroups[cc].Name )
+																	found = true;
+																}
+																else if( this.wgroups.length )
+																{
+																	for( var cc = 0; cc < this.wgroups.length; cc++ )
 																	{
-																		found = true;
-																		break;
+																		if( groups[a].groups[aa].groups[aaa].Name == this.wgroups[cc].Name )
+																		{
+																			found = true;
+																			break;
+																		}
 																	}
 																}
 																
 																str += '<div class="HRow">\
 																	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
-																		<span class="IconSmall">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+																		<span class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
 																	</div>\
 																	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
 																		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
@@ -729,8 +850,6 @@ Sections.accounts_users = function( cmd, extra )
 												
 												if( workArr[ a ].classList.contains( 'fa-caret-right' ) || workArr[ a ].classList.contains( 'fa-caret-down' ) )
 												{
-													
-													console.log( workArr[ a ] );
 													
 													( function( b ) {
 														b.onclick = function( e )
@@ -936,8 +1055,166 @@ Sections.accounts_users = function( cmd, extra )
 									// Hide
 									else
 									{
+										this.wids = {};
+										this.wgroups = false;
+										
+										if( ge( 'WorkgroupGui' ) && ge( 'WorkgroupGui' ).innerHTML )
+										{
+											var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+									
+											if( workBtns )
+											{
+												for( var a = 0; a < workBtns.length; a++ )
+												{
+													if( workBtns[a] && workBtns[a].classList.contains( 'fa-toggle-on' ) && workBtns[a].getAttribute( 'wid' ) )
+													{
+														this.wids[ workBtns[a].getAttribute( 'wid' ) ] = true;
+													}
+												}
+											}
+										}
+										
+										var wstr = '';
+										
+										if( groups )
+										{
+											for( var b in groups )
+											{
+												if( groups[b].Name && this.wids[ groups[b].ID ] )
+												{
+													//wstr += '<div class="HRow">';
+													//wstr += '<div class="HContent100"><strong>' + groups[b].Name + '</strong></div>';
+													//wstr += '</div>';
+													
+													wstr += '<div class="HRow">';
+													wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].Name + '</strong></div>';
+													wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+													wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+													wstr += '	</div>';
+													wstr += '</div>';
+												}
+												
+												if( groups[b].groups.length > 0 )
+												{
+													for( var k in groups[b].groups )
+													{
+														if( groups[b].groups[k] && groups[b].groups[k].ID )
+														{
+															if( groups[b].groups[k].Name && this.wids[ groups[b].groups[k].ID ] )
+															{
+																//wstr += '<div class="HRow">';
+																//wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].Name + '</strong></div>';
+																//wstr += '</div>';
+																
+																wstr += '<div class="HRow">';
+																wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].Name + '</strong></div>';
+																wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																wstr += '	</div>';
+																wstr += '</div>';
+															}
+															
+															if( groups[b].groups[k].groups.length > 0 )
+															{
+																for( var i in groups[b].groups[k].groups )
+																{
+																	if( groups[b].groups[k].groups[i] && groups[b].groups[k].groups[i].ID )
+																	{
+																		if( groups[b].groups[k].groups[i].Name && this.wids[ groups[b].groups[k].groups[i].ID ] )
+																		{
+																			//wstr += '<div class="HRow">';
+																			//wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].groups[i].Name + '</strong></div>';
+																			//wstr += '</div>';
+																			
+																			wstr += '<div class="HRow">';
+																			wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].groups[i].Name + '</strong></div>';
+																			wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																			wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																			wstr += '	</div>';
+																			wstr += '</div>';
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+										
+										console.log( this.wids );
+										
 										this.activated = false;
-										ge( 'WorkgroupGui' ).innerHTML = this.oldML;
+										ge( 'WorkgroupGui' ).innerHTML = wstr/*this.oldML*/;
+										
+										var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							
+										if( workBtns )
+										{
+											for( var a = 0; a < workBtns.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b, wids ) {
+													b.onclick = function( e )
+													{
+														var args = { 
+															id     : this.getAttribute( 'wid' ), 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+														
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.getAttribute( 'wid' ) 
+														} );
+														
+														if( this.classList.contains( 'fa-toggle-on' ) )
+														{
+															// Toggle off ...
+															
+															console.log( '// Toggle off ', args );
+															
+															if( args && args.id && args.users )
+															{
+																var f = new Library( 'system.library' );
+																f.btn = this;
+																f.wids = wids;
+																f.onExecuted = function( e, d )
+																{
+																	console.log( { e:e, d:d } );
+																	
+																	this.btn.classList.remove( 'fa-toggle-on' );
+																	this.btn.classList.add( 'fa-toggle-off' );
+																	
+																	this.wids[ this.btn.getAttribute( 'wid' ) ] = false;
+																	
+																	var pnt = this.btn.parentNode.parentNode;
+																	
+																	if( pnt )
+																	{
+																		pnt.innerHTML = '';
+																	}
+																}
+																f.execute( 'group/removeusers', args );
+															}
+															
+														}
+													}
+												} )( workBtns[ a ], this.wids );
+											}
+										}
+										
+										
+										
 									}
 								}
 								
