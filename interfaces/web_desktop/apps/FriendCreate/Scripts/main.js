@@ -2156,6 +2156,9 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			case 'updatemountlist':
+				if( gui.sideBar ) gui.sideBar.render( 1 );
+				break;
 			case 'open':
 				OpenFile();
 				break;

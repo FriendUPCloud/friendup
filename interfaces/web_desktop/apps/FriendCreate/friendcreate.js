@@ -150,8 +150,11 @@ Application.receiveMessage = function( msg )
 			case 'project_close':
 				mainWindow.sendMessage( msg );
 				break;
-			case 'notify':
-				console.log( 'Notify!', msg );
+			case 'system-notification':
+				if( msg.method && msg.method == 'mountlistchanged' )
+				{
+					mainWindow.sendMessage( { command: 'updatemountlist' } );
+				}
 				break;
 		}
 	}
