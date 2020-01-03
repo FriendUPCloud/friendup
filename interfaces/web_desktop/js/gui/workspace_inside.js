@@ -5299,13 +5299,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						d = JSON.parse( d );
 					}
-					catch( e ){};
+					catch( e )
+					{
+					};
 					if( e == 'ok' )
 					{
 						l = new Library( 'system.library' );
-						l.onExecuted = function( e, d )
+						l.onExecuted = function( e2, d2 )
 						{
-							if( e == 'ok' )
+							if( e2 == 'ok' )
 							{
 								v.close();
 								Workspace.refreshDesktop( false, true );
@@ -5314,10 +5316,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								try
 								{
-									d = JSON.parse( d );
+									d2 = JSON.parse( d2 );
 								}
-								catch( e ){};
-								Notify( { title: 'Error mounting', text: d.response } );
+								catch( e4 ){};
+								Notify( { title: 'Error mounting', text: d2.response } );
 								Workspace.refreshDesktop( false, true );
 								// Just remount normally
 								l = new Library( 'system.library' );
@@ -6608,7 +6610,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								var f = new FriendLibrary( 'system.library' );
 								f.onExecuted = function( e, d )
-								{ Workspace.refreshDesktop( false, true ); }
+								{ 
+									if( e != 'ok' )
+									{
+										var js = null;
+										try{ js = JSON.parse( d ); } catch( e2 ){};
+										var response = js.response;
+										if( !response || typeof( response ) == 'undefined' )
+										{
+											if( js.errorcode )
+											{
+												response = 'Server returned error ' + js.errorcode;
+											}
+										}
+										else
+										{
+											response = 'Server responded: ' + response;
+											if( js.errorcode )
+												response += ' (error code ' + js.errorcode + ')';
+										}
+										return Notify( { title: i18n( 'Error unmounting' ), text: response } );
+									}
+									Workspace.refreshDesktop( false, true ); 
+								}
 								var args = {
 									command: 'unmount',
 									devname: p.split( ':' ).join ( '' ),

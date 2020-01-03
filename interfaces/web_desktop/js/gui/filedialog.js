@@ -28,6 +28,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	}
 	if( !path || typeof( path ) == 'undefined' ) path = defaultPath;
 	
+	if( object.path )
+	{
+		path = object.path;
+	}
+	
 	FriendDOS.getFileInfo( path, function( e, d )
 	{
 		if( e == true )
@@ -36,7 +41,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 		else
 		{
-			Alert( i18n( 'i18n_illegal_path' ), i18n( 'i18n_illegal_path_desc' ) );
+			Alert( i18n( 'i18n_illegal_path' ), i18n( 'i18n_illegal_path_desc' ) + ':<br/><p class="Margins">' + path + '</p>', false, function()
+			{
+				path = 'Home:';
+				object.path = 'Home:';
+				init();
+			} );
 		}
 	} );
 	
