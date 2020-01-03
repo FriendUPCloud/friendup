@@ -4045,11 +4045,21 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		else if( fileInfo.Title == 'System' )
 			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 		
+		if( fileInfo.IconFile )
+		{
+			iconInner.className = 'Custom';
+			iconInner.style.backgroundImage = 'url(' + fileInfo.IconFile + ')';
+			img = '';
+		}
+		
 		iconInner.className = 'Drive';
-		var label = document.createElement( 'div' );
-		label.className = 'Label';
-		label.style.backgroundImage = 'url("' + img + '")';
-		iconInner.appendChild( label );
+		if( img )
+		{
+			var label = document.createElement( 'div' );
+			label.className = 'Label';
+			label.style.backgroundImage = 'url("' + img + '")';
+			iconInner.appendChild( label );
+		}
 	}
 	else if( fileInfo.Icon )
 	{

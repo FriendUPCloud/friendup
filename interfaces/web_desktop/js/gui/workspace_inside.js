@@ -3758,44 +3758,43 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Redraw icons when tested for disk info
-					var redrawIconsT = false;
-					var drivesToTest = 0; // Drives to test before redraw
 					function testDrive( o, d )
 					{
 						if( !d ) return;
+						
 						// Check disk info
 						d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
 						{
-							if( io.split( '<!--separate-->' )[0] == 'ok' )
+							var res = io.split( '<!--separate-->' );
+							if( res[0] == 'ok' )
 							{
+								var response = false;
+								try
+								{
+									response = JSON.parse( res[1] );
+								}
+								catch( k ){};
+								if( !response || ( response && response.response == 'File or directory do not exist' ) ) return;
+								
 								var fl = new File( o.Volume + 'disk.info' );
 								fl.onLoad = function( data )
 								{
 									if( data.indexOf( '{' ) >= 0 )
 									{
-										var dt = JSON.parse( data );
-										if( dt && dt.DiskIcon )
+										try
 										{
-											o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
-											clearTimeout( redrawIconsT );
-											redrawIconsT = setTimeout( function()
+											var dt = JSON.parse( data );
+											if( dt && dt.DiskIcon )
 											{
-												// Only redraw when tests are complete
-												if( drivesToTest == 0 )
-													t.redrawIcons();
-											}, 100 );
+												o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
+												t.redrawIcons();
+											}
 										}
+										catch( e ){}
 									}
 								}
 								fl.load();
 							}
-							clearTimeout( redrawIconsT );
-							redrawIconsT = setTimeout( function()
-							{
-								// Only redraw when tests are complete
-								if( drivesToTest == 0 )
-									t.redrawIcons();
-							}, 100 );
 						} );
 					}
 
@@ -3871,7 +3870,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						}
 						if( !found )
 						{
-							checks.push( newIcons[ a ] );
+							checks.push( a );
 							hasNew = true;
 						}
 					}
@@ -3889,12 +3888,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							for( var a = 0; a < checks.length; a++ )
 							{
-								if( checks[ a ].Execute )
+								var check = checks[ a ];
+								if( t.icons[ check ].Execute )
 								{
-									ExecuteJSXByPath( checks[ a ].Volume + checks[ a ].Execute );
-									checks[ a ].Execute = false;
+									ExecuteJSXByPath( t.icons[ check ].Volume + t.icons[ check ].Execute );
+									t.icons[ check ].Execute = false;
 								}
-								testDrive( checks[ a ], checks[ a ].door );
+								testDrive( t.icons[ check ], t.icons[check ].Door );
 							}
 						}
 					}
