@@ -1708,7 +1708,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 							Filesystem *locdev = rootdev;
 							while( locdev != NULL )
 							{
-								//FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->f_Mounted, locdev->f_Name, locdev->f_FSysName, locdev->f_Path, NULL, locdev->fs_Config, locdev->f_Visible, NULL, 0, locdev->f_DevServer, locdev->f_DevPort, locdev->f_UserGroupID );
+								FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->fs_Mounted, locdev->fs_Name, locdev->fs_Type, locdev->fs_Path, NULL, locdev->fs_Config, 0, NULL, 0, locdev->fs_Server, locdev->fs_Port, locdev->fs_GroupID );
+								
+								BufStringAdd( bs, tmp );
+								
 								locdev = (Filesystem *)locdev->node.mln_Succ;
 							}
 							
