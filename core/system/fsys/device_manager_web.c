@@ -515,6 +515,10 @@ f.Name ASC";
 					foundUserInMemory = FALSE;
 				}
 			}
+			else
+			{
+				userID = usr->u_ID;
+			}
 			
 			/*
 			 * sage: {"type":"msg","data":{"type":"request","requestid":"fconn-req-jlvisbkv-ja2ufn3z-fxlv2z81","path":"system.library/module/","data":{"sessionid":"9b9d2f7e7ead5bd01ee57f57be2cff47e09dc82d","module":"system","args":"%7B%22ID%22%3A%22%22%2C%22Name%22%3A%22Projects%22%2C%22ShortDescription%22%3A%22%22%2C%22Type%22%3A%22SQLDrive%22%2C%22KeysID%22%3A%22%22%2C%22conf.DiskSize%22%3A%221000MB%22%2C%22userid%22%3A%222981%22%7D","command":"addfilesystem"},"sessionid":"9b9d2f7e7ead5bd01ee57f57be2cff47e09dc82d"}}
