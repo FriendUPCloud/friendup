@@ -1851,33 +1851,91 @@ function RunApp()
 	{
 		var p = Application.currentProject;
 		
-		for( var a = 0; a < p.Files.length; a++ )
+		if( p.ProjectType && p.ProjectType == 'webssh' )
 		{
-			if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+			var found = false;
+			for( var a = 0; a < p.Files.length; a++ )
 			{
+				// TODO: Allow project to specify a project root file
+				if( p.Files[ a ].Path.toLowerCase() == 'index.html' || p.Files[ a ].Path.toLowerCase() == 'index.php' )
+				{
+					var url = p.Files[ a ].Path;
+					url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+					Application.sendMessage( {
+						type: 'system',
+						command: 'executeapplication',
+						executable: 'FriendBrowser',
+						args: url
+					} );
+					Application.currentProject.Playing = true;
+					CheckPlayStopButtons();
+					found = true;
+					break;
+				}
+			}
+			// Revert to current file
+			if( !found && Application.currentFile )
+			{
+				var url = Application.currentFile.path;
+				url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 				Application.sendMessage( {
 					type: 'system',
 					command: 'executeapplication',
-					executable: p.ProjectPath + p.Files[ a ].Path,
-					arguments: false
+					executable: 'FriendBrowser',
+					args: url
 				} );
 				Application.currentProject.Playing = true;
 				CheckPlayStopButtons();
 			}
 		}
+		else
+		{
+			for( var a = 0; a < p.Files.length; a++ )
+			{
+				if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'executeapplication',
+						executable: p.ProjectPath + p.Files[ a ].Path,
+						args: false
+					} );
+					Application.currentProject.Playing = true;
+					CheckPlayStopButtons();
+					break;
+				}
+			}
+		}
 	}
 	else if( Application.currentFile )
 	{
-		if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+		var p = Application.currentProject;
+		if( p.ProjectType && p.ProjectType == 'webssh' )
 		{
+			var url = Application.currentFile.path;
+			url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 			Application.sendMessage( {
 				type: 'system',
 				command: 'executeapplication',
-				executable: Application.currentFile.path,
-				arguments: false
+				executable: 'FriendBrowser',
+				args: url
 			} );
 			Application.currentProject.Playing = true;
 			CheckPlayStopButtons();
+		}
+		else
+		{
+			if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'executeapplication',
+					executable: Application.currentFile.path,
+					args: false
+				} );
+				Application.currentProject.Playing = true;
+				CheckPlayStopButtons();
+			}
 		}
 	}
 }
@@ -2098,6 +2156,9 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			case 'updatemountlist':
+				if( gui.sideBar ) gui.sideBar.render( 1 );
+				break;
 			case 'open':
 				OpenFile();
 				break;
@@ -2135,7 +2196,7 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'closeprojects':
 				document.body.classList.add( 'Loading' );
-				var pl = projects.length - 1;
+				var pl = projects.length;
 				if( pl <= 0 )
 				{
 					return Application.sendMessage( { command: 'quit' } );
@@ -2144,13 +2205,13 @@ Application.receiveMessage = function( msg )
 				{
 					CloseProject( projects[ a ], function()
 					{
-						if( pl-- == 0 )
+						if( --pl == 0 )
 						{
 							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 							setTimeout( function()
 							{
 								Application.sendMessage( { command: 'quit' } );
-							}, 50 );
+							}, 250 );
 						}
 					} );
 				}

@@ -3664,11 +3664,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( returnCode == 'ok' )
 					{
 						// Notify all applications
-						for( var a in Workspace.applications )
+						for( var a = 0; a < Workspace.applications.length; a++ )
 						{
 							Workspace.applications[ a ].sendMessage( {
-								command: 'notify',
-								method: 'mountlistupdate'
+								command: 'system-notification',
+								method: 'mountlistchanged'
 							} );
 						}
 						
