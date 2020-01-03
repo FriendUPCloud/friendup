@@ -1986,6 +1986,9 @@ BufString *Dir( File *s, const char *path )
 				
 			}
 			FERROR( "libssh2_sftp_opendir() is done, now receive listing!\n");
+#ifdef __ENABLE_MUTEX
+			pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 		}
 		else
 		{
@@ -2012,8 +2015,14 @@ BufString *Dir( File *s, const char *path )
 			
 			DEBUG("dir\n");
 			
+#ifdef __ENABLE_MUTEX
+			pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 			// loop until we fail *
 			int rc = libssh2_sftp_readdir_ex( sftphandle, mem, sizeof(mem), longentry, sizeof(longentry), &attrs);
+#ifdef __ENABLE_MUTEX
+			pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
 			if( rc > 0 )//&&  > 0 && strcmp( mem, ".." ) > 0 )
 			{
 				DEBUG("FILE/DIR >%s<\n", mem );
@@ -2148,6 +2157,9 @@ BufString *Dir( File *s, const char *path )
 			
 		} while (1);
 		
+#ifdef __ENABLE_MUTEX
+		pthread_mutex_lock( &hd->hd_Mutex );
+#endif
 		libssh2_sftp_closedir( sftphandle );
 #ifdef __ENABLE_MUTEX
 		pthread_mutex_unlock( &hd->hd_Mutex );
