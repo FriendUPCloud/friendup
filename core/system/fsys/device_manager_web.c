@@ -1708,7 +1708,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						
 							FilesystemDeleteAll( fs );
 						
-							DEBUG( "[DeviceMWebRequest] We now have information: %s (query: %s) - name: %s\n", rootdev->f_Config, query, rootdev->f_Name );
+							//DEBUG( "[DeviceMWebRequest] We now have information: %s (query: %s) - name: %s\n", rootdev->f_Config, query, rootdev->f_Name );
 						}
 						FFree( query );
 					}
