@@ -539,7 +539,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		timeout.tv_sec = 4; // 4 secs!
 		timeout.tv_usec = 0;
 		DEBUG("Socket timeout will be set\n");
-		setsockopt( sdat->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof( timeout) );
+		setsockopt( sdat->sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof( timeout ) );
 		setsockopt( sdat->sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof( timeout ) );
 		
 		DEBUG("Before connect\n");
