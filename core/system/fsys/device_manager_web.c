@@ -850,6 +850,10 @@ AND LOWER(f.Name) = LOWER('%s')",
 			char *next;
 			userID = (FLONG)strtol(( char *)el->data, &next, 0);
 		}
+		else
+		{
+			userID = loggedSession->us_UserID;
+		}
 		
 		el = HttpGetPOSTParameter( request, "devname" );
 		if( !el ) el = HashmapGet( request->query, "devname" );

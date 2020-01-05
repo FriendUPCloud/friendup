@@ -61,7 +61,7 @@
 
 //int UnMount( struct FHandler *s, void *f, User *usr, char **error  );
 
-//#define __ENABLE_MUTEX
+#define __ENABLE_MUTEX
 
 //
 // Special SSH data
