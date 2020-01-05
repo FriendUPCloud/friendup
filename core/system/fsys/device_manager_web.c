@@ -95,7 +95,7 @@ static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted
 {
 	if( devnr == 0 )
 	{
-		snprintf( tmp, tmplen, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+		snprintf( tmp, tmplen, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}\n", 
 			fname ? fname : "", 
 			fsysname ? fsysname : "", 
 			path ? path : "",
@@ -106,12 +106,13 @@ static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted
 			isLimited,
 			devserver ? devserver : "",
 			devport,
-			usergroupid
+			usergroupid,
+			mounted
 		);
 	}
 	else
 	{
-		snprintf( tmp, tmplen, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+		snprintf( tmp, tmplen, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}\n", 
 			fname ? fname : "",
 			fsysname ? fsysname : "", 
 			path ? path : "",
@@ -122,7 +123,8 @@ static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted
 			isLimited,
 			devserver ? devserver : "",
 			devport,
-			usergroupid
+			usergroupid,
+			mounted
 		);
 	}
 }
@@ -1708,8 +1710,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 							Filesystem *locdev = rootdev;
 							while( locdev != NULL )
 							{
-								FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->fs_Mounted, locdev->fs_Name, locdev->fs_Type, locdev->fs_Path, NULL, locdev->fs_Config, 0, NULL, 0, locdev->fs_Server, locdev->fs_Port, locdev->fs_GroupID );
-								
+								FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->fs_Mounted, locdev->fs_Name, locdev->fs_Type, locdev->fs_Path, NULL, NULL, 0, NULL, 0, locdev->fs_Server, locdev->fs_Port, locdev->fs_GroupID );
+								//locdev->fs_Config
 								BufStringAdd( bs, tmp );
 								
 								locdev = (Filesystem *)locdev->node.mln_Succ;
