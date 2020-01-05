@@ -1691,7 +1691,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 				}
 				
 				// now get all devices from database which are not mounted
-				
+				//TODO we should get devices from DB assigned to user, to his groups and not mounted
+				/*
 				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				if( sqllib != NULL )
 				{
@@ -1701,7 +1702,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					char *query = FMalloc( querysize );
 					if( query != NULL )
 					{
-						sqllib->SNPrintF( sqllib, query, querysize, " ID NOT IN(%s)", bsMountedDrives->bs_Buffer );
+						sqllib->SNPrintF( sqllib, query, querysize, " ID NOT IN(%s) AND UserID", bsMountedDrives->bs_Buffer );
 						DEBUG("[DEVICE/LIST] sql: %s\n", query );
 					
 						Filesystem *rootdev = sqllib->Load( sqllib, FilesystemDesc, query, &entries );
@@ -1710,9 +1711,22 @@ AND LOWER(f.Name) = LOWER('%s')",
 							Filesystem *locdev = rootdev;
 							while( locdev != NULL )
 							{
-								FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->fs_Mounted, locdev->fs_Name, locdev->fs_Type, locdev->fs_Path, NULL, NULL, 0, NULL, 0, locdev->fs_Server, locdev->fs_Port, locdev->fs_GroupID );
+								EscapeConfigFromString( locdev->fs_Config, &configEscaped, &executeCmd );
+								
+								FillDeviceInfo( devnr, tmp, TMP_SIZE_MIN1, locdev->fs_Mounted, locdev->fs_Name, locdev->fs_Type, locdev->fs_Path, NULL, configEscaped, 0, executeCmd, 0, locdev->fs_Server, locdev->fs_Port, locdev->fs_GroupID );
 								//locdev->fs_Config
 								BufStringAdd( bs, tmp );
+								
+								if( executeCmd )
+								{
+									FFree( executeCmd );
+									executeCmd = NULL;
+								}
+								if( configEscaped )
+								{
+									FFree( configEscaped );
+									configEscaped = NULL;
+								}
 								
 								locdev = (Filesystem *)locdev->node.mln_Succ;
 							}
@@ -1725,6 +1739,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 					l->LibrarySQLDrop( l, sqllib );
 				}
+				*/
 				
 				FFree( tmp );
 				
