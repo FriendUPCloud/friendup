@@ -3808,7 +3808,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						rows = false;
 					}
-
+					
 					// Check the friend disks
 					if( rows && rows.length )
 					{
@@ -3882,6 +3882,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Something changed!
 					if( hasNew )
 					{
+						console.log( newIcons );
+					
 						t.icons = newIcons;
 						t.redrawIcons();
 						if( checks.length )
@@ -3897,6 +3899,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								testDrive( t.icons[ check ], t.icons[check ].Door );
 							}
 						}
+					}
+					else
+					{
+						//console.log( 'Nothing new happened.' );
 					}
 					
 					// Do the callback thing
