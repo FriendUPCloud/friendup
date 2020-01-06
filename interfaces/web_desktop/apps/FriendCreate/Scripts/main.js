@@ -2054,8 +2054,6 @@ function SanitizedProjectServer( p, callback )
 					{
 						if( json[ a ].Mounted == '1' )
 						{	
-							console.log( json[ a ].Name + ' is already mounted. Still mount till Pawel is done.' );
-							
 							callback( true, 'Mount.', json[ a ].Name );
 							
 							// TODO: When Pawel is done, just pass this
@@ -2063,7 +2061,6 @@ function SanitizedProjectServer( p, callback )
 						}
 						else
 						{
-							console.log( json[ a ].Name + ' is umounted.' );
 							callback( true, 'Mount.', json[ a ].Name );
 						}
 						return;
@@ -2213,12 +2210,9 @@ function CreateFilesystem( indata )
 					title: i18n( 'i18n_failed_to_add_fs' ) + ' ' + indata.devname,
 					text: i18n( 'i18n_failed_to_add_fs_desc' )
 				} );
-				console.log( 'Could not add filesystem..', d, 'Trying on id: ' + id );
 			}
 		}
 		m.execute( id ? 'editfilesystem' : 'addfilesystem', data );
-		
-		console.log( 'Executed: ', id ? 'editfilesystem' : 'addfilesystem', data );
 	}
 }
 
@@ -2265,7 +2259,7 @@ function MountProjectServer( p )
 		}
 		else
 		{
-			console.log( 'Could not do it..: ', data );
+			//
 		}
 	} );
 }
