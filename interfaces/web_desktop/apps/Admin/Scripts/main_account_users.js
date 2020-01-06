@@ -552,7 +552,12 @@ Sections.accounts_users = function( cmd, extra )
 								{
 									cancelUser(  );
 								}
-					
+								var bg3  = ge( 'UserBackBtn' );
+								if( bg3 ) bg3.onclick = function( e )
+								{
+									cancelUser(  );
+								}
+								
 								if( ge( 'UserEditContainer' ) )
 								{
 									ge( 'UserEditContainer' ).className = 'Closed';
@@ -2024,6 +2029,11 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						var bg2  = ge( 'UserCancelBtn' );
 						if( bg2 ) bg2.onclick = function( e )
+						{
+							cancelUser(  );
+						}
+						var bg3  = ge( 'UserBackBtn' );
+						if( bg3 ) bg3.onclick = function( e )
 						{
 							cancelUser(  );
 						}
