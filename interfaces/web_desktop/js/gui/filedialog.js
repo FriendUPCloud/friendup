@@ -35,6 +35,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	
 	FriendDOS.getFileInfo( path, function( e, d )
 	{
+		console.log( e, d );
 		if( e == true )
 		{
 			init();
@@ -95,7 +96,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						keyboardNavigation = object[a];
 						break;
 					case 'rememberPath':
-						rememberPath = object[a] ? true : false
+						rememberPath = path ? false : ( object[a] ? true : false );
 						break;
 				}
 			}
