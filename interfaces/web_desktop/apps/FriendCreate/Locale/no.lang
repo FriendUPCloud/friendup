@@ -154,3 +154,12 @@ i18n_replace_with                   : Erstatt med
 i18n_do_replace                     : Erstatt
 i18n_do_replace_all                 : Erstatt alle
 
+18n_failed_to_mount                 : Kunne ikke montere 
+i18n_failed_to_mount_project_disk   : Montering av prosjektdisken feilet. Vennligst sjekk brukernavn, passord, vertsnavn, port eller filsti.
+
+i18n_failed_to_unmount              : Kunne ikke avmontere
+i18n_failed_to_unmount_project_disk : Din prosjektdisk ble ikke avmontert. Kanskje din SSH kobling hang seg?
+
+i18n_failed_to_add_fs               : Kunne ikke legge til filsystem
+i18n_failed_to_add_fs               : En feil oppsto ved å legge til din filsystem. Vennligst sjekk disk innstillingene dine.
+
