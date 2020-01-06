@@ -3763,39 +3763,42 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( !d ) return;
 						
 						// Check disk info
-						d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
+						if( d.dosAction )
 						{
-							var res = io.split( '<!--separate-->' );
-							if( res[0] == 'ok' )
+							d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
 							{
-								var response = false;
-								try
+								var res = io.split( '<!--separate-->' );
+								if( res[0] == 'ok' )
 								{
-									response = JSON.parse( res[1] );
-								}
-								catch( k ){};
-								if( !response || ( response && response.response == 'File or directory do not exist' ) ) return;
-								
-								var fl = new File( o.Volume + 'disk.info' );
-								fl.onLoad = function( data )
-								{
-									if( data.indexOf( '{' ) >= 0 )
+									var response = false;
+									try
 									{
-										try
-										{
-											var dt = JSON.parse( data );
-											if( dt && dt.DiskIcon )
-											{
-												o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
-												t.redrawIcons();
-											}
-										}
-										catch( e ){}
+										response = JSON.parse( res[1] );
 									}
+									catch( k ){};
+									if( !response || ( response && response.response == 'File or directory do not exist' ) ) return;
+								
+									var fl = new File( o.Volume + 'disk.info' );
+									fl.onLoad = function( data )
+									{
+										if( data.indexOf( '{' ) >= 0 )
+										{
+											try
+											{
+												var dt = JSON.parse( data );
+												if( dt && dt.DiskIcon )
+												{
+													o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
+													t.redrawIcons();
+												}
+											}
+											catch( e ){}
+										}
+									}
+									fl.load();
 								}
-								fl.load();
-							}
-						} );
+							} );
+						}
 					}
 
 					// Friend disks
