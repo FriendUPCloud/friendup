@@ -3877,15 +3877,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							var ti = t.icons[ b ];
 							
-							if( ti.Title != ni.Title )
+							if( ti.Title == ni.Title )
 							{
 								found = true;
-								break;
-							}
-							// Set hasNew if the config changed
-							// TODO: Do other config tests
-							else if( ti.Title == ni.Title )
-							{
+								
+								// Set hasNew if the config changed
+								// TODO: Do other config tests
+						
 								if( ti.Visible != ni.Visible )
 								{
 									hasNew = true;
