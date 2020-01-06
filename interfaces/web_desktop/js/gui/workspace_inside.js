@@ -3819,7 +3819,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							var r = rows[a];
 							if( r.Config.indexOf( '{' ) >= 0 )
-								r.Config = JSON.parse( r.Config );
+							{
+								try
+								{
+									r.Config = JSON.parse( r.Config );
+								}
+								catch( e )
+								{
+									console.log( r.Title + ' config did not parse.' );
+								}
+							}
 							
 							// Doesn't exist, go on
 							var o = false;
@@ -3862,13 +3871,33 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					var checks = [];
 					for( var a = 0; a < newIcons.length; a++ )
 					{
+						var ni = newIcons[ a ];
 						var found = false;
 						for( var b = 0; b < t.icons.length; b++ )
 						{
-							if( t.icons[ b ].Title != newIcons[ a ].Title )
+							var ti = t.icons[ b ];
+							
+							if( ti.Title != ni.Title )
 							{
 								found = true;
 								break;
+							}
+							// Set hasNew if the config changed
+							// TODO: Do other config tests
+							else if( ti.Title == ni.Title )
+							{
+								if( ti.Visible != ni.Visible )
+								{
+									hasNew = true;
+								}
+								else if( !ti.Config && ti.Config )
+								{
+									hasNew = true;
+								}
+								else if( ni.Config && ti.Config && ni.Config.visibility != ti.Config.visibility )
+								{
+									hasNew = true;
+								}
 							}
 						}
 						if( !found )
