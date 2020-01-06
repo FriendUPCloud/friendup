@@ -2093,16 +2093,23 @@ function CreateFilesystem( indata )
 		Type: indata.fsys
 	};	
 
-	var info = new Library( 'system.library' );
+	var info = new Module( 'system' );
 	info.onExecuted = function( e, d )
 	{
-		var info = null;
+		var info = lst = null;
 		try
 		{
-			info = JSON.parse( d );
+			lst = JSON.parse( d );
 		}
-		catch( e )
-		{}
+		catch( er ){}
+		for( var b = 0; b < lst.length; b++ )
+		{
+			if( lst[ b ].Type == 'SFTP' && lst[ b ].Name == indata.devname )
+			{
+				info = lst[ b ];
+				break;
+			}
+		}
 		
 		var m = new Library( 'system.library' );
 		m.onExecuted = function( me, md )
@@ -2130,9 +2137,9 @@ function CreateFilesystem( indata )
 				}
 			}
 			
-			if( me == 'ok' && info && info.fsid )
+			if( me == 'ok' && info && info.ID )
 			{
-				doCreateOrEdit( info.fsid, mounted );
+				doCreateOrEdit( info.ID, mounted );
 			}
 			else
 			{
@@ -2141,7 +2148,7 @@ function CreateFilesystem( indata )
 		}
 		m.execute( 'device/list' );
 	}
-	info.execute( 'file/info', { path: indata.devname + ':' } );
+	info.execute( 'mountlist' );
 	
 	function doCreateOrEdit( id, mounted )
 	{
@@ -2158,6 +2165,13 @@ function CreateFilesystem( indata )
 					var f = new Library( 'system.library' );
 					f.onExecuted = function( e, d )
 					{
+						if( e != 'ok' )
+						{
+							Notify( {
+								title: i18n( 'i18n_failed_to_unmount' ) + ' ' + indata.devname,
+								text: i18n( 'i18n_failed_to_unmount_project_disk' )
+							} );
+						}
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
 						{
 							gui.sideBar.render( true );
@@ -2178,6 +2192,13 @@ function CreateFilesystem( indata )
 					var f = new Library( 'system.library' );
 					f.onExecuted = function( e, d )
 					{
+						if( e != 'ok' )
+						{
+							Notify( {
+								title: i18n( 'i18n_failed_to_mount' ) + ' ' + indata.devname,
+								text: i18n( 'i18n_failed_to_mount_project_disk' )
+							} );
+						}
 						Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
 						{
 							gui.sideBar.render( true );
@@ -2188,10 +2209,16 @@ function CreateFilesystem( indata )
 			}
 			else
 			{
+				Notify( {
+					title: i18n( 'i18n_failed_to_add_fs' ) + ' ' + indata.devname,
+					text: i18n( 'i18n_failed_to_add_fs_desc' )
+				} );
 				console.log( 'Could not add filesystem..', d, 'Trying on id: ' + id );
 			}
 		}
 		m.execute( id ? 'editfilesystem' : 'addfilesystem', data );
+		
+		console.log( 'Executed: ', id ? 'editfilesystem' : 'addfilesystem', data );
 	}
 }
 
