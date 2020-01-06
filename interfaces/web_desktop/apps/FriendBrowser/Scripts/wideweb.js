@@ -92,6 +92,9 @@ Application.run = function( msg )
 
 	Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) );
 	var f = new File( 'Progdir:Templates/webinterface.html' );
+	f.replacements = {
+		startupurl: msg.args ? msg.args : ''
+	};
 	f.onLoad = function( data )
 	{
 		v.setContent( data, function()

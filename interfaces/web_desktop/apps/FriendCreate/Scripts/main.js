@@ -1303,6 +1303,20 @@ function SaveProject( project, saveas, callback )
 		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
+			if( project.ProjectType = 'webssh' )
+			{
+				var p = project;
+				CreateFilesystem( {
+					devname: p.ProjectName,
+					username: p.ProjectHostSSHUsername,
+					password: p.ProjectHostSSHPassword,
+					server: p.ProjectHostSSHServer,
+					port: p.ProjectHostSSHPort,
+					key: p.ProjectHostSSHKey,
+					path: p.ProjectHostSSHPath,
+					fsys: 'SFTP'
+				} );
+			}
 			StatusMessage( i18n( 'i18n_saved' ) );
 			if( callback )
 				callback( true );
@@ -1355,10 +1369,28 @@ function SaveProject( project, saveas, callback )
 						MoveProjectFiles( project, oldPath, function( e )
 						{
 							StatusMessage( i18n( 'i18n_saved' ) );
+							
 							if( callback )
+							{
 								callback( true );
+							}
 						} );
 						return;
+					}
+					else if( project.ProjectType == 'webssh' )
+					{
+						// Create or update filesystem
+						var p = project;
+						CreateFilesystem( {
+							devname: p.ProjectName,
+							username: p.ProjectHostSSHUsername,
+							password: p.ProjectHostSSHPassword,
+							server: p.ProjectHostSSHServer,
+							port: p.ProjectHostSSHPort,
+							key: p.ProjectHostSSHKey,
+							path: p.ProjectHostSSHPath,
+							fsys: 'SFTP'
+						} );
 					}
 					callback( true );
 				}
@@ -1415,7 +1447,6 @@ function MoveProjectFiles( project, oldPath, callback )
 // Close a project
 function CloseProject( proj, callback )
 {
-	console.log( 'Unmounting project.' );
 	UnmountProjectServer( proj, callback );
 	
 	var o = [];
@@ -1568,7 +1599,6 @@ function RefreshProjects()
 				for( var z = 0; z < depth; z++ )
 					paths += p[ z ] + '/';
 				
-				console.log( 'Trying orphan path: ' + paths );
 				if( !listedFolders[ projectId ][ paths ] )
 				{
 				
@@ -1848,49 +1878,47 @@ function RunApp()
 		if( p.ProjectType && p.ProjectType == 'webssh' )
 		{
 			var found = false;
-			for( var a = 0; a < p.Files.length; a++ )
+			// TODO: Support all web formats
+			if( !Application.currentFile || ( Application.currentFile && Application.currentFile.path.indexOf( '.htm' ) < 0 && Application.currentFile.path.indexOf( '.php' ) < 0 ) )
 			{
-				// TODO: Allow project to specify a project root file
-				if( p.Files[ a ].Path.toLowerCase() == 'index.html' || p.Files[ a ].Path.toLowerCase() == 'index.php' )
+				for( var a = 0; a < p.Files.length; a++ )
 				{
-					var url = p.Files[ a ].Path;
-					url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+					// TODO: Allow project to specify a project root file
+					if( p.Files[ a ].Path.toLowerCase() == 'index.html' || p.Files[ a ].Path.toLowerCase() == 'index.php' )
+					{
+						var url = p.Files[ a ].Path;
 					
-					var fnm = p.Files[ a ].Path;
-					if( fnm.indexOf( '/' ) > 0 )
-						fnm = fnm.split( '/' ).pop();
-					else if ( fnm.indexOf( ':' ) > 0 )
-						fnm = fnm.split( ':' )[1];
+						if( url.indexOf( p.ProjectPath ) == 0 )
+							url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+						else url = p.ProjectWebPath + url;
 						
-					Application.sendMessage( {
-						type: 'system',
-						command: 'executeapplication',
-						executable: 'FriendBrowser',
-						args: url + fnm
-					} );
-					Application.currentProject.Playing = true;
-					CheckPlayStopButtons();
-					found = true;
-					break;
+						Application.sendMessage( {
+							type: 'system',
+							command: 'executeapplication',
+							executable: 'FriendBrowser',
+							args: url
+						} );
+						Application.currentProject.Playing = true;
+						CheckPlayStopButtons();
+						found = true;
+						break;
+					}
 				}
 			}
 			// Revert to current file
 			if( !found && Application.currentFile )
 			{
 				var url = Application.currentFile.path;
-				url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
 				
-				var fnm = Application.currentFile.path;
-					if( fnm.indexOf( '/' ) > 0 )
-						fnm = fnm.split( '/' ).pop();
-					else if ( fnm.indexOf( ':' ) > 0 )
-						fnm = fnm.split( ':' )[1];
+				if( url.indexOf( p.ProjectPath ) == 0 )
+					url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+				else url = p.ProjectWebPath + url;
 				
 				Application.sendMessage( {
 					type: 'system',
 					command: 'executeapplication',
 					executable: 'FriendBrowser',
-					args: url + fnm
+					args: url
 				} );
 				Application.currentProject.Playing = true;
 				CheckPlayStopButtons();
@@ -2025,7 +2053,7 @@ function SanitizedProjectServer( p, callback )
 					if( json[ a ].Type == 'SFTP' && json[ a ].Name == p.ProjectName )
 					{
 						if( json[ a ].Mounted == '1' )
-						{
+						{	
 							console.log( json[ a ].Name + ' is already mounted. Still mount till Pawel is done.' );
 							
 							callback( true, 'Mount.', json[ a ].Name );
@@ -2065,28 +2093,106 @@ function CreateFilesystem( indata )
 		Type: indata.fsys
 	};	
 
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	var info = new Library( 'system.library' );
+	info.onExecuted = function( e, d )
 	{
-		// Do the mounting
-		if( e == 'ok' )
+		var info = null;
+		try
 		{
-			var f = new Library( 'system.library' );
-			f.onExecuted = function( e, d )
+			info = JSON.parse( d );
+		}
+		catch( e )
+		{}
+		
+		var m = new Library( 'system.library' );
+		m.onExecuted = function( me, md )
+		{
+			var mounted = false;
+			
+			if( me != 'ok' )
+				return doCreateOrEdit();
+			var js = null;
+			try
 			{
-				Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
-				{
-					gui.sideBar.render( true );
-				} );
+				js = JSON.parse( md );
 			}
-			f.execute( 'device/mount', { devname: indata.devname } );
+			catch( e2 )
+			{ 
+				return doCreateOrEdit(); 
+			}
+			var mounted = false;
+			for( var z = 0; z < js.length; z++ )
+			{
+				if( js[ z ].Name == indata.devname )
+				{
+					mounted = true;
+					break;
+				}
+			}
+			
+			if( me == 'ok' && info && info.fsid )
+			{
+				doCreateOrEdit( info.fsid, mounted );
+			}
+			else
+			{
+				doCreateOrEdit();
+			}
 		}
-		else
-		{
-			console.log( 'Could not add filesystem..' );
-		}
+		m.execute( 'device/list' );
 	}
-	m.execute( 'addfilesystem', data );
+	info.execute( 'file/info', { path: indata.devname + ':' } );
+	
+	function doCreateOrEdit( id, mounted )
+	{
+		var m = new Module( 'system' );
+		if( id ) data.ID = id;
+		m.onExecuted = function( e, d )
+		{
+			// Do the mounting
+			if( e == 'ok' )
+			{
+				// If it is mounted, do a remount
+				if( mounted )
+				{
+					var f = new Library( 'system.library' );
+					f.onExecuted = function( e, d )
+					{
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+						{
+							gui.sideBar.render( true );
+							domount();
+						} );
+					}
+					f.execute( 'device/unmount', { devname: indata.devname } );
+				}
+				// Just mount
+				else
+				{
+					domount();
+				}
+				
+				// Code to handle mount
+				function domount()
+				{
+					var f = new Library( 'system.library' );
+					f.onExecuted = function( e, d )
+					{
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+						{
+							gui.sideBar.render( true );
+						} );
+					}
+					f.execute( 'device/mount', { devname: indata.devname } );
+				}
+			}
+			else
+			{
+				console.log( 'Could not add filesystem..', d, 'Trying on id: ' + id );
+			}
+		}
+		m.execute( id ? 'editfilesystem' : 'addfilesystem', data );
+	}
 }
 
 function MountProjectServer( p )
