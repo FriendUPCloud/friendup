@@ -3912,8 +3912,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Something changed!
 					if( hasNew )
 					{
-						console.log( newIcons );
-					
 						t.icons = newIcons;
 						t.redrawIcons();
 						if( checks.length )
