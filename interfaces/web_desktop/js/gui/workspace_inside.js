@@ -3886,7 +3886,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// TODO: Do other config tests
 							else if( ti.Title == ni.Title )
 							{
-								if( !ti.Config && ti.Config )
+								if( ti.Visible != ni.Visible )
+								{
+									hasNew = true;
+								}
+								else if( !ti.Config && ti.Config )
 								{
 									hasNew = true;
 								}
