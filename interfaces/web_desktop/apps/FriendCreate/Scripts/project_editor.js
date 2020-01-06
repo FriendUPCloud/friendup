@@ -93,7 +93,8 @@ function InitializeForm()
 				ge( 'ProjectHostSSHServer' ).value = project.ProjectHostSSHServer ? project.ProjectHostSSHServer : '';
 			if( !ge( 'ProjectHostSSHUsername' ).value )
 				ge( 'ProjectHostSSHUsername' ).value = project.ProjectHostSSHUsername ? project.ProjectHostSSHUsername : '';
-			ge( 'ProjectHostSSHPassword' ).value = project.ProjectHostSSHPassword ? project.ProjectHostSSHPassword : '';
+			if( !ge( 'ProjectHostSSHPassword' ).value )
+				ge( 'ProjectHostSSHPassword' ).value = project.ProjectHostSSHPassword ? project.ProjectHostSSHPassword : '';
 			if( !ge( 'ProjectHostSSHPort' ).value )
 				ge( 'ProjectHostSSHPort' ).value = project.ProjectHostSSHPort ? project.ProjectHostSSHPort : '';
 			if( !ge( 'ProjectHostSSHKey' ).value )
