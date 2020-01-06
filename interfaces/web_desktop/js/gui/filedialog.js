@@ -35,6 +35,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	
 	FriendDOS.getFileInfo( path, function( e, d )
 	{
+		console.log( e, d );
 		if( e == true )
 		{
 			init();
@@ -95,7 +96,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						keyboardNavigation = object[a];
 						break;
 					case 'rememberPath':
-						rememberPath = object[a] ? true : false
+						rememberPath = object[a] ? true : false;
 						break;
 				}
 			}
@@ -189,7 +190,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 
 		// Do the remembering
-		if( rememberPath && ds && ds.path )
+		if( rememberPath && ds && ds.path && !object.path )
 		{
 			self.path = path = ds.path;
 		}
@@ -428,7 +429,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		// Refresh dir listing
 		w.refreshView = function()
 		{
-			if( rememberPath )
+			if( rememberPath && !object.path )
 			{
 				ds.path = dialog.path;
 			}

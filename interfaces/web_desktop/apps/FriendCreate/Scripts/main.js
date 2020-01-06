@@ -1193,11 +1193,12 @@ function OpenProject( path )
 			projects.push( p );
 			Application.currentProject = p;
 			
+			SetCurrentProject();
 			SetProjectPath( p );
-			
 			MountProjectServer( p );
 			
 			RefreshProjects();
+			
 			CheckPlayStopButtons();
 			if( !ge( 'tabProjects' ).onclick )
 			{
@@ -1238,9 +1239,12 @@ function OpenProject( path )
 					p[ a ] = proj[ a ];
 				projects.push( p );
 				
-				SetProjectPath( p );
+				Application.currentProject = p;
 				
 				SetCurrentProject( p );
+				SetProjectPath( p );
+				MountProjectServer( p );
+				
 				RefreshProjects();
 				CheckPlayStopButtons();
 				ge( 'tabProjects' ).onclick();
