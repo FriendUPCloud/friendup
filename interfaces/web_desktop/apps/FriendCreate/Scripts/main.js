@@ -291,11 +291,6 @@ var EditorFile = function( path )
 						self.filesize = json.Filesize;
 						files.push( self );
 						InitEditArea( self );
-						setTimeout( function()
-						{
-							self.refreshBuffer();
-							self.refreshMinimap();
-						}, 50 );
 						self.updateState( 'Reading' );
 						CheckProjectFile( f );
 						CheckPlayStopButtons();
@@ -315,11 +310,6 @@ var EditorFile = function( path )
 		this.filesize = 0;
 		files.push( this );
 		InitEditArea( this );
-		setTimeout( function()
-		{
-			self.refreshBuffer();
-			self.refreshMinimap();
-		}, 50 );
 	}
 }
 
@@ -518,7 +508,7 @@ function RemoveEditArea( file )
 
 function InitContentEditor( element, file )
 {
-	var minimapZoomLevel = 0.4;
+	var minimapZoomLevel = 0.3;
 	
 	// Remove previous editor
 	if( file.editor )
@@ -637,7 +627,7 @@ function InitContentEditor( element, file )
 			file.refreshMinimap( e );
 	} );
 	
-	file.refreshBuffer = function()
+	file.refreshBuffer = function( callback )
 	{
 		if( !this.needsRefresh ) return;
 		var self = this;
@@ -748,6 +738,9 @@ function InitContentEditor( element, file )
 			// We no longer are refreshing
 			self.needsRefresh = false;
 			self.refreshBufTime = false;
+			
+			if( callback )
+				callback();
 		}, 250 );
 	}
 	
@@ -840,6 +833,9 @@ function InitContentEditor( element, file )
 			self.refreshing = false; 
 		}, 50 );
 	}
+	
+	file.editor.focus();
+	file.refreshBuffer( function(){ file.refreshMinimap() } );
 }
 
 // Supported file formats ------------------------------------------------------

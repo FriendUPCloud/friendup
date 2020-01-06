@@ -3602,7 +3602,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Fetch mountlist from database
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
-		var t = this;
+		var t = this; // Reference to workspace
+		
 		if( !Friend.dosDrivers )
 		{
 			var d = new Module( 'system' );
@@ -3635,6 +3636,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			doGetMountlistHere();
 		}
+		
+		// Get the mountlist
 		function doGetMountlistHere()
 		{
 			var mo = new Module( 'system' );
@@ -3643,8 +3646,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var m = new Library( 'system.library' )
 				m.onExecuted = function( e, dat )
 				{
+					// New icons to list
 					var newIcons = [];
-
+					
 					// Add system on top (after Ram: if it exists)
 					newIcons.push( {
 						Title:	   'System',
@@ -3661,17 +3665,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Door:	   Friend.DoorSystem
 					} );
 				
+					// Did we get a new list of disks from the server?
 					if( returnCode == 'ok' )
 					{
-						// Notify all applications
-						for( var a = 0; a < Workspace.applications.length; a++ )
-						{
-							Workspace.applications[ a ].sendMessage( {
-								command: 'system-notification',
-								method: 'mountlistchanged'
-							} );
-						}
-						
+						// Check shortcuts and add them to the desktop
 						var shorts = JSON.parse( shortcuts );
 						for( var a = 0; a < shorts.length; a++ )
 						{
@@ -3761,54 +3758,58 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Redraw icons when tested for disk info
-					var redrawIconsT = false;
 					function testDrive( o, d )
 					{
 						if( !d ) return;
+						
 						// Check disk info
 						d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
 						{
-							if( io.split( '<!--separate-->' )[0] == 'ok' )
+							var res = io.split( '<!--separate-->' );
+							if( res[0] == 'ok' )
 							{
+								var response = false;
+								try
+								{
+									response = JSON.parse( res[1] );
+								}
+								catch( k ){};
+								if( !response || ( response && response.response == 'File or directory do not exist' ) ) return;
+								
 								var fl = new File( o.Volume + 'disk.info' );
 								fl.onLoad = function( data )
 								{
 									if( data.indexOf( '{' ) >= 0 )
 									{
-										var dt = JSON.parse( data );
-										if( dt && dt.DiskIcon )
+										try
 										{
-											o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
-											clearTimeout( redrawIconsT );
-											redrawIconsT = setTimeout( function()
+											var dt = JSON.parse( data );
+											if( dt && dt.DiskIcon )
 											{
+												o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
 												t.redrawIcons();
-											}, 100 );
+											}
 										}
+										catch( e ){}
 									}
 								}
 								fl.load();
 							}
-							clearTimeout( redrawIconsT );
-							redrawIconsT = setTimeout( function()
-							{
-								t.redrawIcons();
-							}, 100 );
 						} );
 					}
 
-					// Network devices
+					// Friend disks
 					var rows;
 					try
 					{
 						rows = JSON.parse( dat );
 					}
-					catch(e)
+					catch( e )
 					{
 						rows = false;
-						console.log( 'Could not parse network drives', e, dat );
 					}
-
+					
+					// Check the friend disks
 					if( rows && rows.length )
 					{
 						for ( var a = 0; a < rows.length; a++ )
@@ -3816,24 +3817,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							var r = rows[a];
 							if( r.Config.indexOf( '{' ) >= 0 )
 								r.Config = JSON.parse( r.Config );
-
-							// Check if it was already found!
-							var found = false;
-							for( var va in t.icons )
-							{
-								if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
-								{
-									found = true;
-									if( !forceRefresh )
-										newIcons.push( t.icons[va] );
-									break;
-								}
-							}
-							if( found && !forceRefresh )
-							{
-								continue;
-							}
-
+							
 							// Doesn't exist, go on
 							var o = false;
 
@@ -3858,59 +3842,74 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Driver: r.Type,
 								Door: d,
 								Visible: r.Visible != "false" ? true : false,
-								Config: r.Config
+								Config: r.Config,
+								Execute: r.Execute
 							};
-
-							// Execute it if it has execute flag set! Only the first time..
-							if( !found && r.Execute )
-							{
-								ExecuteJSXByPath( o.Volume + r.Execute );
-							}
-
-							// Force mount
-							var f = new FriendLibrary( 'system.library' );
-							f.addVar( 'devname', r.Name.split(':').join('') );
-							f.execute( 'device/mount' );
 
 							// We need volume information
 							d.Volume = o.Volume;
-							//d.Type = typ;
 
-							testDrive( o, d );
-
-							// Add to list
+							// Add new disk to list
 							newIcons.push( o );
 						}
 					}
-
-					// The new list
-					if( newIcons.length )
+					
+					// Check new icons with old icons
+					var hasNew = false;
+					var checks = [];
+					for( var a = 0; a < newIcons.length; a++ )
 					{
-						// Check change
-						if( t.icons )
+						var found = false;
+						for( var b = 0; b < t.icons.length; b++ )
 						{
-							for( var a = 0; a < t.icons.length; a++ )
+							if( t.icons[ b ].Title != newIcons[ a ].Title )
 							{
-								var found = false;
-								for( var b = 0; b < newIcons.length; b++ )
-								{
-									if( newIcons[b].Volume == t.icons[a].Volume )
-									{
-										found = true;
-										break;
-									}
-								}
-								if( !found )
-								{
-									testDrive( t.icons[a], t.icons[a].Door )
-									break;
-								}
+								found = true;
+								break;
 							}
 						}
-						t.icons = newIcons;
+						if( !found )
+						{
+							checks.push( a );
+							hasNew = true;
+						}
 					}
+					
+					// If we increased the amount of icons, it means we have new
+					if( newIcons.length != t.icons.length )
+						hasNew = true;
+
+					// Something changed!
+					if( hasNew )
+					{
+						console.log( newIcons );
+					
+						t.icons = newIcons;
+						t.redrawIcons();
+						if( checks.length )
+						{
+							for( var a = 0; a < checks.length; a++ )
+							{
+								var check = checks[ a ];
+								if( t.icons[ check ].Execute )
+								{
+									ExecuteJSXByPath( t.icons[ check ].Volume + t.icons[ check ].Execute );
+									t.icons[ check ].Execute = false;
+								}
+								testDrive( t.icons[ check ], t.icons[check ].Door );
+							}
+						}
+					}
+					else
+					{
+						//console.log( 'Nothing new happened.' );
+					}
+					
 					// Do the callback thing
-					if( callback && typeof( callback ) == 'function' ) callback( t.icons );
+					if( callback && typeof( callback ) == 'function' )
+					{
+						callback( t.icons );
+					}
 
 					// Check for new events
 					t.checkDesktopEvents();
