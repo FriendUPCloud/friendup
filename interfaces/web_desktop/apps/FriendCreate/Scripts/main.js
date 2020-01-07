@@ -2353,9 +2353,14 @@ Application.receiveMessage = function( msg )
 				{
 					return Application.sendMessage( { command: 'quit' } );
 				}
-				for( var a = 0; a < projects.length; a++ )
+				
+				// Make a copy while working on the projects list
+				var out = []; for( var a = 0; a < projects.length; a++ )
+					out[ a ] = projects[ a ];
+				// Closie
+				for( var a = 0; a < out.length; a++ )
 				{
-					CloseProject( projects[ a ], function( result )
+					CloseProject( out[ a ], function( result )
 					{
 						if( --pl == 0 )
 						{
