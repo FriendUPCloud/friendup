@@ -214,7 +214,7 @@ Workspace = {
 					o = {
 						width: 400,
 						height: 300,
-						valign: 'top',
+						top: Workspace.screen.contentDiv.offsetTop,
 						halign: 'right',
 						scrolling: false,
 						autosize: true
