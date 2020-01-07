@@ -4075,6 +4075,7 @@ function CreateHelpBubble( element, text, uniqueid )
 	{
 		element.helpBubble.close();
 	}
+	
 	var helpBubble = {
 		destroy: function()
 		{
@@ -4104,6 +4105,39 @@ function CreateHelpBubble( element, text, uniqueid )
 				helpBubble.destroy();
 				return;
 			}
+			
+			// Check parent
+			var positionClass = '';
+			var p = e.target ? e.target.parentNode : false;
+			if( p && p.getAttribute( 'position' ) )
+			{
+				switch( p.getAttribute( 'position' ) )
+				{
+					case 'right_center':
+					case 'right_top':
+					case 'right_bottom':
+						positionClass = 'Right';
+						break;
+					case 'left_center':
+					case 'left_top':
+					case 'left_bottom':
+						positionClass = 'Left';
+						break;
+					case 'bottom_left':
+					case 'bottom_center':
+					case 'bottom_right':
+						positionClass = 'Bottom';
+						break;
+					case 'top_left':
+					case 'top_center':
+					case 'top_right':
+						positionClass = 'Top';
+						break;
+					default:
+						break;
+				}
+			}
+			
 			var mx = windowMouseX;
 			var my = windowMouseY;
 			var mt = GetElementTop( element ) - ( 50 + 10 );
@@ -4117,24 +4151,23 @@ function CreateHelpBubble( element, text, uniqueid )
 			mx = GetElementLeft( element ) + ( GetElementWidth( element ) >> 1 ) - ( textWidth.width >> 1 ) - 30;
 			
 			// Check element position
-			var attr = element.parentNode.getAttribute( 'position' );
-			if( attr )
+			if( positionClass )
 			{
-				if( attr.indexOf( 'right' ) == 0 )
+				if( positionClass == 'Right' )
 				{
-					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) - ( textWidth.width + 40 );
+					mt = GetElementTop( element ) + 5;
+					mx = GetElementLeft( element ) - Math.floor( textWidth.width + 90 );
 					posset = true;
 				}
-				else if( attr.indexOf( 'left' ) == 0 )
+				else if( positionClass == 'Left' )
 				{
-					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode ) + 30;
+					mt = GetElementTop( element ) + 5;
+					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode ) + 10;
 					posset = true;
 				}
-				else if( attr.indexOf( 'top' ) == 0 )
+				else if( positionClass == 'Top' )
 				{
-					mt = GetElementTop( element.parentNode ) + GetElementHeight( element.parentNode );
+					mt = GetElementTop( element.parentNode ) + GetElementHeight( element.parentNode ) + 25;
 				}
 			}
 			
@@ -4151,9 +4184,19 @@ function CreateHelpBubble( element, text, uniqueid )
 			
 			d.innerHTML = text;
 			v.setFlag( 'width', textWidth.width + 60 );
+			v.setFlag( 'left', mx );
+			v.setFlag( 'top', mt );
 			v.setContent( '<div class="TextCenter Padding Ellipsis">' + text + '</div>' );
 			v.dom.addEventListener( 'mouseout', element.helpBubble.outListener );
 			v.dom.classList.add( 'HelpBubble' );
+			
+			// Remove all position classes and add right one
+			var pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
+			for( var z = 0; z < pcl.length; z++ )
+				if( pcl[ a ] != positionClass )
+					v.dom.classList.remove( pcl[ a ] );
+			v.dom.classList.add( positionClass );
+			
 			v.show();
 			element.helpBubble.widget = v;
 		},

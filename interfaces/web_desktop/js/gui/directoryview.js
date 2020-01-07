@@ -2611,6 +2611,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
 	var marginRight = window.innerWidth - gridX + 20 - 1;
+	
 	var marginBottom = 5;
 	
 	if( window.isMobile )
@@ -2631,7 +2632,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	var iy  = marginTop; 
 	var ix  = marginLeft;
 	var shy = marginTop;
-	var shx = marginRight;
+	var shx = marginRight - parseInt( sc.parentNode.paddingRight );
 	
 	var column = 0;
 	var start = false;
