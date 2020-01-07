@@ -2323,7 +2323,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 							w.deletable = fob.files.length;
 
-							bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
+							infocontent.innerHTML = 'Cleaning up...';
 
 							// Delete in reverse
 							var ic = new FileIcon();

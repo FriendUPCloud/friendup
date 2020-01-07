@@ -20,7 +20,8 @@ Workspace.deleteFile = function()
 	// Detached refresh object
 	var rObj = {
 		refresh: window.currentMovable.content.refresh,
-		fileInfo: window.currentMovable.content.fileInfo
+		fileInfo: window.currentMovable.content.fileInfo,
+		icons: window.currentMovable.content.allIcons
 	};
 
 	if( w )
@@ -173,12 +174,25 @@ Workspace.deleteFile = function()
 							info = info.substr( 0, info.length - 1 );
 							file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
 							
-							// Try to kill the info file!
-							file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+							// Check info file
+							var foundInfo = false;
+							for( var c = 0; c < rObj.icons.length; c++ )
+							{
+								if( rObj.icons[ c ].Path == info + '.info' )
+								{
+									foundInfo = true;
+									break;
+								}
+							}
+							if( foundInfo )
+							{
+								// Try to kill the info file!
+								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
+								ic.delCache( info + '.info' );
+							}
 							
 							// Clear cache
 							ic.delCache( file.fileInfo.Path );
-							ic.delCache( info + '.info' );
 						}
 					}
 					
