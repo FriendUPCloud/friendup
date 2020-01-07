@@ -446,6 +446,9 @@ i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
 i18n_drag_files_to_download             : Slipp filer for nedlastning.
 
+i18n_creating_directory                 : Lager mappe
+i18n_building_file_index                : Lager filindex...
+
 i18n_could_not_download                 : Kunne ikke laste ned
 i18n_download_wrong_type                : Kun filer kan lastes ned.
 

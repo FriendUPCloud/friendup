@@ -1850,8 +1850,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// Open window
 	dview.fileoperations[ dview.operationcounter ].view = new View( {
 		title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
-		width:  320,
-		height: 100,
+		width:  400,
+		height: 120,
 		id:     'fileops_' + dview.id + "_" + dview.operationcounter
 	} );
 
@@ -1879,23 +1879,24 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		// Setup progress bar
 		var eled = this.master.fileoperations[ this.myid ].view.getWindowElement().getElementsByTagName( '*' );
 		var groove = false, bar = false, frame = false, progressbar = false;
-		var fcb = false;
+		var fcb = infocontent = false;
 		for( var a = 0; a < eled.length; a++ )
 		{
 			if( eled[a].classList )
 			{
-				var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton' ];
+				var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton', 'InfoContents' ];
 				for( var b = 0; b < types.length; b++ )
 				{
 					if( eled[a].classList.contains( types[b] ) )
 					{
 						switch( types[b] )
 						{
-							case 'ProgressBar': progressbar = eled[a]; break;
-							case 'Groove':      groove      = eled[a]; break;
-							case 'Frame':       frame       = eled[a]; break;
-							case 'Bar':         bar         = eled[a]; break;
-							case 'FileCancelButton': fcb    = eled[a]; break;
+							case 'ProgressBar': progressbar  = eled[a]; break;
+							case 'Groove':      groove       = eled[a]; break;
+							case 'Frame':       frame        = eled[a]; break;
+							case 'Bar':         bar          = eled[a]; break;
+							case 'FileCancelButton': fcb     = eled[a]; break;
+							case 'InfoContents': infocontent = eled[a]; break;
 						}
 					}
 				}
@@ -1965,6 +1966,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				// Find files in folders
 				findSubFiles: function( folder )
 				{
+					infocontent.innerHTML = i18n( 'i18n_building_file_index' );
+					
 					// Counting!
 					this.processing++;
 					var d = Workspace.getDoorByPath( folder.ele.fileInfo.Path );
@@ -2178,6 +2181,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 						// Do the copy - we have files here only...
 						ic.delCache( toPath );
+						infocontent.innerHTML = 'Copying ' + fl.fileInfo.Path + '...';
 						door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
 						{
 							if( result.substr( 0, 3 ) != 'ok<' )
@@ -2224,6 +2228,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Put it in a func
 						function mkdirhere()
 						{
+							infocontent.innerHTML = i18n( 'i18n_creating_directory' ) + ' ' + toPath;
 							//console.log( 'Makedir: ' + toPath );
 							door.dosAction( 'makedir', { path: toPath }, function( result )
 							{
