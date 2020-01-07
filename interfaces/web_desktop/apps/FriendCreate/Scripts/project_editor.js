@@ -54,7 +54,7 @@ function InitializeForm()
 	var types = {
 		'standard': i18n( 'i18n_standard_friend_project' ),
 		'webssh': i18n( 'i18n_web_project_ssh' )
-	};	
+	};
 	
 	// Initialize
 	if( project.ProjectType && project.Path && saved )

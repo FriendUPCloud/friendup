@@ -1195,7 +1195,9 @@ function OpenProject( path )
 			
 			SetCurrentProject();
 			SetProjectPath( p );
-			MountProjectServer( p );
+			
+			if( p.ProjectType && p.ProjectType == 'webssh' )
+				MountProjectServer( p );
 			
 			RefreshProjects();
 			
@@ -1243,7 +1245,9 @@ function OpenProject( path )
 				
 				SetCurrentProject( p );
 				SetProjectPath( p );
-				MountProjectServer( p );
+				
+				if( p.ProjectType && p.ProjectType == 'webssh' )
+					MountProjectServer( p );
 				
 				RefreshProjects();
 				CheckPlayStopButtons();
@@ -1303,7 +1307,7 @@ function SaveProject( project, saveas, callback )
 		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
-			if( project.ProjectType = 'webssh' )
+			if( project.ProjectType == 'webssh' )
 			{
 				var p = project;
 				CreateFilesystem( {
@@ -1447,7 +1451,8 @@ function MoveProjectFiles( project, oldPath, callback )
 // Close a project
 function CloseProject( proj, callback )
 {
-	UnmountProjectServer( proj, callback );
+	if( proj.ProjectType && proj.ProjectType == 'webssh' )
+		UnmountProjectServer( proj, callback );
 	
 	var o = [];
 	for( var a = 0; a < projects.length; a++ )
@@ -2386,7 +2391,10 @@ Application.receiveMessage = function( msg )
 						
 						Application.currentProject = projects[ a ];
 						
-						MountProjectServer( Application.currentProject );
+						if( projects[ a ].ProjectType && projects[ a ].ProjectType == 'webssh' )
+						{
+							MountProjectServer( Application.currentProject );
+						}
 						
 						SaveProject( Application.currentProject );
 						break;
