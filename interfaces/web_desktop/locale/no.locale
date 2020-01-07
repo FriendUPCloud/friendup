@@ -59,6 +59,9 @@ i18n_create_folder                   : Lag mappe
 
 i18n_mountlist                       : Disker
 
+i18n_illegal_path                    : Feil filsti
+i18n_illegal_path_desc               : Filstien som ble gitt finnes ikke.
+
 i18n_message_from                    : Melding fra
 
 i18n_full                            : full.
@@ -117,6 +120,7 @@ i18n_package                            : Pakken
 i18n_was_installed                      : ble installert
 i18n_failed_install_package             : Kunne ikke installere
 i18n_package_failed                     : Denne pakken kunne ikke installeres
+menu_install_package                    : Installer pakke
 
 i18n_Storage_Local_Read_desc            : Lesetilgang, lokale disker
 i18n_Storage_Local_Write_desc           : Skrivetilgang, lokale disker
@@ -692,4 +696,9 @@ i18n_status_Pending                     : Jobber
 i18n_status_Error                       : FEILET
 i18n_processing                         : Prosesserer
 i18n_logging_in                         : Logger inn
+
+#Alerts ------------------------------------------------------------------------
+
+i18n_erroneous_filename                 : Feil filnavn
+i18n_please_set_a_valid_filename        : Vennligst velg et filnavn med riktig filendelse.
 

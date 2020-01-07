@@ -1,0 +1,54 @@
+<link rel="stylesheet" href="Progdir:Templates/main.css"/>
+<script src="Progdir:Libraries/Ace/ace.js"></script>
+<script src="Progdir:Libraries/Ace/ext-language_tools.js"></script>
+<script src="System:js/gui/filebrowser.js"></script>
+
+<div id="Print"></div>
+
+<span id="Launchfile" file="{launchwith}"></span>
+
+<div class="ContentFull">
+	<div id="TopPanel" class="">
+		<div id="Toolbar" class="Padding">
+			<button type="button" class="IconButton IconSmall fa-file-text" onclick="NewFile()" title="{i18n_new_file}">
+			</button>
+			<button type="button" class="IconButton IconSmall fa-folder-open" onclick="OpenFile()" title="{i18n_open}">
+			</button>
+			<button type="button" class="IconButton IconSmall fa-save" onclick="SaveFile( Application.currentFile )" title="{i18n_save}">
+			</button>
+			<button type="button" class="IconButton IconSmall fa-files-o" onclick="SaveFile( Application.currentFile, true )" title="{i18n_save_as}">
+			</button>
+			<button type="button" class="IconButton IconSmall fa-print" onclick="PrintFile()" title="{i18n_print}">
+			</button>
+			<button type="button" class="IconButton IconSmall fa-undo" onclick="if( Application.currentFile ) Application.currentFile.editor.undo()" title="{i18n_undo}">
+			</button>
+			<button type="button" class="IconButton IconSmall fa-search" onclick="Search()" title="{i18n_search_replace}">
+			</button>
+			<span id="PlayStop">
+			</span>
+		</div>
+	</div>
+	<div id="SideBar" class="BackgroundDefault">
+		<div class="Tabs" id="SideBarTabs">
+			<div class="Tab IconSmall fa-folder" id="tabAllFiles">{i18n_allfiles}</div>
+			<div class="Tab IconSmall fa-archive" id="tabProjects">{i18n_projects}</div>
+			<div class="Page">
+				<div id="SB_AllFiles" class="Padding">
+				</div>
+			</div>
+			<div class="Page">
+				<div id="SB_Project">
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="CodeArea"></div>
+	<div id="StatusBar" class="BorderTop">
+		<div id="MobileButtons"></div>
+		<div id="StatusMessage">
+		</div>
+	</div>
+</div>
+
+<script src="Progdir:Scripts/main.js"></script>
+

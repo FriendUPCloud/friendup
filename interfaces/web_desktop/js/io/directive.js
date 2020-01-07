@@ -118,7 +118,8 @@ function ExecuteApplication( app, args, callback )
 					RemoveFromExecutionQueue( appName );
 					
 					// Tell that we didn't launch
-					callback( false, { response: false, message: 'Already run.', data: 'executed' } );
+					if( callback )
+						callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 					return;
 				}
 			}

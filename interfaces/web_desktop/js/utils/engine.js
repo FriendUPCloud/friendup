@@ -2421,6 +2421,11 @@ function InitTabs( pdiv, tabCallback )
 	{
 		tabs[active].onclick();
 	}
+	
+	// We need an active page
+	var pa = pdiv.getElementsByClassName( 'Page' );
+	if( pa.length == 1 )
+		pa[0].classList.add( 'PageActive' );
 }
 
 // Double click simulator for youch

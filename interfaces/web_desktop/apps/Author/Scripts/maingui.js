@@ -134,6 +134,7 @@ Application.updateViewMode = function()
 	{
 		case 'root':
 			ge( 'LeftBar' ).style.transform = 'translate3d(0,0,0)';
+			this.fld.style.transform = 'translate3d(0,0,0)';
 			ge( 'FileBar' ).style.transform = 'translate3d(100%,0,0)';
 			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
 			this.sendMessage( {
@@ -144,8 +145,14 @@ Application.updateViewMode = function()
 			break;
 		case 'files':
 			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
 			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
 			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
+			if( isMobile )
+			{
+				// Force update
+				Application.refreshFilePane( false, true );
+			}
 			this.sendMessage( {
 				command: 'updateViewMode',
 				mode: 'files',
@@ -154,6 +161,7 @@ Application.updateViewMode = function()
 			break;
 		default:
 			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
+			this.fld.style.transform = 'translate3d(-100%,0,0)';
 			ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
 			ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
 			this.sendMessage( {
@@ -187,7 +195,10 @@ Application.refreshFilePane = function( method, force, callback )
 		}
 		
 		// Something changed in transit. Do nothing
-		if( p != Application.path ) return;
+		if( p != Application.path )
+		{
+			return;
+		}
 	
 		Application._toBeSaved = null;
 		
@@ -204,7 +215,7 @@ Application.refreshFilePane = function( method, force, callback )
 			// Make an "add new note" button
 			fBar.add = document.createElement( 'div' );
 			fBar.add.className = 'NewItem';
-			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_add_note' ) + '</div>';
+			fBar.add.innerHTML = '<div class="Button IconButton IconSmall fa-plus">&nbsp;' + i18n( 'i18n_new_document' ) + '</div>';
 			fBar.add.onclick = function()
 			{
 				var testFile = 'unnamed';
@@ -532,7 +543,7 @@ Application.refreshFilePane = function( method, force, callback )
 		}
 		
 		if( callback )
-			callback();
+			callback( items );
 	} );
 }
 
@@ -1117,7 +1128,6 @@ Application.setCurrentDocument = function( pth )
 	// Update filebrowser
 	this.fileBrowser.setPath( this.path );
 	
-	
 	Application.refreshFilePane();
 	
 	this.sendMessage( {
@@ -1255,21 +1265,20 @@ Application.statusMessage = function( msg )
 		s.style.transition = '';
 		s.style.transform = 'translate3d(0,0,0)';
 	}
+	s.classList.add( 'Showing' );
 	s.innerHTML = msg;
 	s.timeout = setTimeout( function()
 	{
 		s.style.transition = 'left,opacity 0.25s,0.25s';
 		s.style.transform = 'translate3d(0,0,0)';
-		s.style.opacity = 1;
 		s.timeout = setTimeout( function()
 		{
 			s.style.transform = 'translate3d(20px,0,0)';
-			s.style.opacity = 0;
+			s.classList.remove( 'Showing' );
 			s.timeout = setTimeout( function()
 			{
 				s.innerHTML = '';
 				s.style.transform = 'translate3d(0,0,0)';
-				s.style.opacity = 1;
 			}, 250 );
 		}, 250 );
 	}, 1000 );
@@ -1370,7 +1379,7 @@ Application.newDocument = function( args )
 	var self = this;
 	
 	// Wait till ready
-	if( typeof( ClassicEditor ) == 'undefined' )
+	if( typeof( ClassicEditor ) == 'undefined' || !Application.editor )
 	{
 		return setTimeout( function()
 		{
