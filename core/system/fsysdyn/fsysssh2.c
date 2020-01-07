@@ -1462,11 +1462,24 @@ FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("Delete!\n");
 	
-	//BufString *bs = BufStringNew();
+	// remove disk name
+	char *pathNoDiskName = (char *)path;
+	
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
 	
 	SpecialData *sdat = (SpecialData *)s->f_SpecialData;
+	
+	int i;
+	for( i = 0 ; i < spath ; i++ )
+	{
+		if( path[ i ] == ':' )
+		{
+			pathNoDiskName = (char *)&(path[ i+1 ]);
+			spath -= i+1;
+			break;
+		}
+	}
 	
 	char *comm = NULL;
 	
@@ -1480,7 +1493,7 @@ FLONG Delete( struct File *s, const char *path )
 		{
 			strcat( comm, "/" );
 		}
-		strcat( comm, path );
+		strcat( comm, pathNoDiskName );
 		
 		if( comm[ strlen( comm ) -1] == '/' )
 		{
@@ -1517,21 +1530,34 @@ int Rename( struct File *s, const char *path, const char *nname )
 {
 	DEBUG("Rename!  from %s to %s\n", path, nname );
 
+	// remove disk name
+	char *pathNoDiskName = (char *)path;
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
+	
+	int i;
+	for( i = 0 ; i < spath ; i++ )
+	{
+		if( path[ i ] == ':' )
+		{
+			pathNoDiskName = (char *)&(path[ i+1 ]);
+			spath -= i+1;
+			break;
+		}
+	}
 	
 	// 1a. is the source a folder? If so, remove trailing /
 	char *targetPath = NULL;
 	
-	if( path[spath-1] == '/' )
+	if( pathNoDiskName[spath-1] == '/' )
 	{
 		targetPath = FCalloc( spath, sizeof( char ) );
-		sprintf( targetPath, "%.*s", spath - 1, path );
+		sprintf( targetPath, "%.*s", spath - 1, pathNoDiskName );
 	}
 	else
 	{
 		targetPath = FCalloc( spath + 1, sizeof( char ) ); 
-		sprintf( targetPath, "%.*s", spath, path );
+		sprintf( targetPath, "%.*s", spath, pathNoDiskName );
 	}
 	
 	// 1b. Do we have a sub folder in path?
