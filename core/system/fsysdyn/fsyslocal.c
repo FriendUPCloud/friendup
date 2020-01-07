@@ -791,8 +791,22 @@ FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("[LocalfsDelete] start!\n");
 	
+	// remove disk name
+	char *pathNoDiskName = (char *)path;
+	
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
+	
+	int i;
+	for( i = 0 ; i < spath ; i++ )
+	{
+		if( path[ i ] == ':' )
+		{
+			pathNoDiskName = (char *)&(path[ i+1 ]);
+			spath -= i+1;
+			break;
+		}
+	}
 	
 	char *comm = NULL;
 	
@@ -806,7 +820,7 @@ FLONG Delete( struct File *s, const char *path )
 		{
 			strcat( comm, "/" );
 		}
-		strcat( comm, path );
+		strcat( comm, pathNoDiskName );
 	
 		DEBUG("[LocalfsDelete] file or directory '%s'\n", comm );
 	
