@@ -2190,7 +2190,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 									title: i18n( 'i18n_filecopy_error' ),
 									text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
 								} );
-								fop.stop = True;
+								fob.stop = true;
 								return;
 							}							
 							if( fob.stop ) return;
@@ -2229,7 +2229,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						function mkdirhere()
 						{
 							infocontent.innerHTML = i18n( 'i18n_creating_directory' ) + ' ' + toPath;
-							//console.log( 'Makedir: ' + toPath );
 							door.dosAction( 'makedir', { path: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
