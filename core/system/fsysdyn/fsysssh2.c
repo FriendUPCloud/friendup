@@ -1462,11 +1462,24 @@ FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("Delete!\n");
 	
-	//BufString *bs = BufStringNew();
+	// remove disk name
+	char *pathNoDiskName = (char *)path;
+	
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
 	
 	SpecialData *sdat = (SpecialData *)s->f_SpecialData;
+	
+	int i;
+	for( i = 0 ; i < spath ; i++ )
+	{
+		if( path[ i ] == ':' )
+		{
+			pathNoDiskName = (char *)&(path[ i+1 ]);
+			spath -= i+1;
+			break;
+		}
+	}
 	
 	char *comm = NULL;
 	
@@ -1480,7 +1493,7 @@ FLONG Delete( struct File *s, const char *path )
 		{
 			strcat( comm, "/" );
 		}
-		strcat( comm, path );
+		strcat( comm, pathNoDiskName );
 		
 		if( comm[ strlen( comm ) -1] == '/' )
 		{
