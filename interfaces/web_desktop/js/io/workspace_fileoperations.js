@@ -11,6 +11,8 @@
 // Delete selected files
 Workspace.deleteFile = function()
 {
+	var self = this;
+	
 	var w = window.regionWindow;
 	if( !window.currentMovable || ( window.currentMovable && !window.currentMovable.content.refresh ) )
 		return;
@@ -94,6 +96,8 @@ Workspace.deleteFile = function()
 					v.content.appendChild( cont );
 					v.content.appendChild( btn );
 					
+					var refreshTimeo = {};
+					
 					// Actually do the delete
 					function doDeleteFiles( files, index )
 					{
@@ -108,12 +112,28 @@ Workspace.deleteFile = function()
 						var file = files[ index ];
 						
 						// callback
-						function nextFile()
+						function nextFile( info )
 						{ 
+							if( !info.substr( 0, 3 ) == 'ok<' )
+							{
+								Notify( { title: i18n( 'i18n_could_not_delete' ), text: i18n( 'i18n_could_not_delete_desc' ) + '<br>&nbsp;' + file.fileInfo.Path } );
+								return;
+							}
+							
 							var pct = Math.floor( ( index + 1 ) / files.length * 100 ) + '%';
-							Workspace.refreshWindowByPath( file.fileInfo.Path );
+							
+							// Delayed window refresh
+							if( refreshTimeo[ file.fileInfo.Path ] )
+								clearTimeout( refreshTimeo[ file.fileInfo.Path ] );
+							refreshTimeo[ file.fileInfo.Path ] = setTimeout( function()
+							{
+								Workspace.refreshWindowByPath( file.fileInfo.Path );
+								refreshTimeo[ file.fileInfo.Path ] = null;
+							}, 100 );
+							
 							bar.style.width = 'calc(' + pct + ' - 2px)';
 							text.innerHTML = pct;
+							
 							doDeleteFiles( files, index + 1 ); 
 						}
 						
@@ -129,9 +149,11 @@ Workspace.deleteFile = function()
 							var info = file.fileInfo.Path;
 							if( info.substr( info.length - 1, 1 ) == '/' )
 							info = info.substr( 0, info.length - 1 );
+							
 							// Try to kill the info file!
 							file.door.dosAction( 'delete', { path: info + '.info' } );
 							
+							// Clear cache
 							ic.delCache( file.fileInfo.Path );
 							ic.delCache( info + '.info' );
 						}
@@ -140,6 +162,7 @@ Workspace.deleteFile = function()
 						{
 							file.fileInfo.Dormant.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
 							
+							// Clear cache
 							ic.delCache( file.fileInfo.Path );
 						}
 						// Path
@@ -149,13 +172,17 @@ Workspace.deleteFile = function()
 							if( info.substr( info.length - 1, 1 ) == '/' )
 							info = info.substr( 0, info.length - 1 );
 							file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+							
 							// Try to kill the info file!
 							file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
 							
+							// Clear cache
 							ic.delCache( file.fileInfo.Path );
 							ic.delCache( info + '.info' );
 						}
 					}
+					
+					// Start deleting..
 					doDeleteFiles( files, 0 );
 				}
 			} );
