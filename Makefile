@@ -5,8 +5,8 @@ FRIEND_DEB_UBUNTU_TGT_PATH=$(PWD)/packaging/ubuntu/debian/friendup/opt/friendup
 FRIEND_CORE_BIN			= core/bin/FriendCore
 
 # include custom configuration
--include Config
--include Makefile.defs
+#-include Config
+-include Config.defs
 -include Config
 
 #compilation
@@ -117,11 +117,9 @@ setup:
 	mkdir -p $(FRIEND_PATH)/docs/internal/core
 	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts
 	make -C libs-ext setup CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
-	make -C libs-ext DEBUG=0 CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C libs-ext install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C core setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C libs setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
-	make -C libs-ext setup FRIEND_PATH=$(FRIEND_PATH)
 	make -C authmods setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 
 # SETUP all additional libs - debug
