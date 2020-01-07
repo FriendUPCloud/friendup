@@ -3879,7 +3879,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							
 							if( ti.Title == ni.Title )
 							{
-								console.log( 'Found: ' + ni.Title + ' and it is ' + ( ni.Mounted ? 'mounted' : 'not mounted' ) );
 								found = true;
 								
 								// Set hasNew if the config changed
