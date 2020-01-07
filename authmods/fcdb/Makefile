@@ -1,5 +1,5 @@
 
--include ../../Makefile.defs
+-include ../../Config.defs
 
 GCC		=	gcc
 OUTPUT		=	bin/fcdb.authmod

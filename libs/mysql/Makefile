@@ -1,4 +1,4 @@
--include ../../Makefile.defs
+-include ../../Config.defs
 
 CC			=	gcc
 OUTPUT		=	bin/mysql.library
