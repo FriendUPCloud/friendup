@@ -66,7 +66,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.rootPath = 'Mountlist:'; // The current root path
 	this.callbacks = callbacks;
 	
-	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: self.rootPath, bookmarks: true, rootPath: false };
+	self.flags = { displayFiles: false, filedialog: false, justPaths: false, path: self.rootPath, bookmarks: true, rootPath: false, noContextMenu: false };
 	if( flags )
 	{
 		for( var a in flags )
@@ -138,6 +138,7 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 					}
 					m.execute( 'addbookmark', { path: elements[a].fileInfo.Path, name: elements[a].fileInfo.Filename } );
 					drop++;
+					cancelBubble( e );
 				}
 			}
 		}
@@ -363,6 +364,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		ele.oncontextmenu = function( e )
 		{
 			if( isMobile ) return;
+			if( self.flags.noContextMenu ) return cancelBubble( e );
 			
 			var men = cmd = '';
 			var cf = false; // create file
@@ -651,7 +653,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				}
 				
 				// Click the click element for path
-				if( clickElement )
+				if( clickElement && !( self.tempFlags && !self.tempFlags.passive ) )
 				{
 					self.lastClickElement = clickElement; // store it
 					if( !( evt.target && evt.srcElement ) )
@@ -884,7 +886,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			
 			// Click the click element for path
-			if( clickElement )
+			if( clickElement && !( self.tempFlags && !self.tempFlags.passive ) )
 			{
 				self.lastClickElement = clickElement; // Store it
 				// Only when clicking

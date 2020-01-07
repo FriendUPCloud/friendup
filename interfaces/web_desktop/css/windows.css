@@ -467,7 +467,7 @@ body:not([mobile]) #Screens .View.Opening
 }
 
 /* Always on top */
-.View[sticky=sticky], body[mobile=mobile] #Screens .View.Active[maximized=true]
+.ViewContainer[sticky=sticky], body[mobile=mobile] #Screens .View.Active[maximized=true]
 {
 	z-index: 2147483646 !important;
 }

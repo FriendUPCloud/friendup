@@ -1285,6 +1285,8 @@ ug.UserID = '%ld' \
 					l->LibrarySQLDrop( l, sqllib );
 				}
 				
+				DEBUG("UNMID: %d Type: %s user ID %lu usrparID %lu isAdmin %d\n", unmID,unmType,usr->u_ID, userID, loggedSession->us_User->u_IsAdmin );
+				
 				if( unmID > 0 && unmType != NULL && strcmp( unmType, "SQLWorkgroupDrive" ) == 0 && ( usr->u_ID == userID || loggedSession->us_User->u_IsAdmin ) )
 				{
 					DEBUG("[UnMountFS] Refreshing all user drives for unmount.\n" );
@@ -1691,13 +1693,13 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 	DEBUG("[UserNotifyFSEvent2] start\n");
 	// Produce message
 	char *prototype = "{\"type\":\"msg\",\"data\":{\"type\":\"\",\"path\":\"\"}}";
-	int mlen = strlen( prototype ) + strlen( path ) + strlen( evt ) + 1;
-	char *message = FCalloc( mlen, sizeof(char) );
+	int globmlen = strlen( prototype ) + strlen( path ) + strlen( evt ) + 128;
+	char *message = FCalloc( globmlen, sizeof(char) );
 
 	if( message != NULL && u != NULL )
 	{
 		DEBUG("[UserNotifyFSEvent2] Send notification to user: %s id: %lu\n", u->u_Name, u->u_ID );
-		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
+		int mlen = snprintf( message, globmlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"data\":{\"path\":\"%s\"}}}", evt, path );
 		
 		if( FRIEND_MUTEX_LOCK( &(u->u_Mutex) ) == 0 )
 		{
@@ -1708,7 +1710,7 @@ void UserNotifyFSEvent2( DeviceManager *dm, User *u, char *evt, char *path )
 				{
 					if( list->us != NULL )
 					{
-						WebSocketSendMessage( l, list->us, message, strlen( message ) );
+						WebSocketSendMessage( l, list->us, message, mlen );
 					}
 					else
 					{
@@ -1761,7 +1763,8 @@ void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path )
 	devName = FCalloc( 1, len );
 	if( devName != NULL )
 	{
-		sprintf( devName, "%.*s", len, path );
+		strncpy( devName, path, len );
+		//sprintf( devName, "%.*s", len, path );
 	
 		// Find all users of said filesystem
 		// TODO: Write this code..
@@ -1774,7 +1777,7 @@ void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path )
 		char *message = FCalloc( 1, strlen( prototype ) + strlen( path ) );
 		if( message != NULL )
 		{
-			sprintf( message, "{\"type\":\"notification\",\"data\":{\"type\":\"filechange\",\"path\":\"%s\"}}", path );
+			int msglen = sprintf( message, "{\"type\":\"notification\",\"data\":{\"type\":\"filechange\",\"path\":\"%s\"}}", path );
 	
 			if( evt == NULL && userlength > 0 )
 			{
@@ -1782,7 +1785,7 @@ void UserNotifyFSEvent( DeviceManager *dm, char *evt, char *path )
 				{
 					if( !userlist[i] ) break;
 					UserSession *u = userlist[i];
-					WebSocketSendMessage( l, u, message, strlen( message ) );
+					WebSocketSendMessage( l, u, message, msglen );
 				}
 			}
 			FFree( message );

@@ -2504,11 +2504,26 @@ function RemoveDragTargets()
 var _screenTitleTimeout = null;
 
 // Check the screen title of active window/screen and check menu
-function CheckScreenTitle( screen )
+var prevScreen = prevWindow = false;
+function CheckScreenTitle( screen, force )
 {	
 	var testObject = screen ? screen : window.currentScreen;
-	if( !testObject ) return;
+	if( !testObject && !force ) return;
 	
+	// If nothing changed, don't change
+	if( prevScreen && prevWindow && !force )
+	{
+		if( prevScreen == testObject )
+		{
+			if( prevWindow == window.currentMovable )
+				return;
+		}
+	}
+	
+	// Remember current state
+	prevWindow = window.currentMovable;
+	prevScreen = testObject;
+		
 	Friend.GUI.reorganizeResponsiveMinimized();
 	
 	// Set screen title
@@ -2524,6 +2539,9 @@ function CheckScreenTitle( screen )
 	{
 		wo = false; // Only movables on current screen
 	}
+	// Check dom node
+	if( wo && wo.parentNode && !wo.parentNode.parentNode )
+		wo = false;
 	
 	var hasScreen = ( !csc || ( wo && testObject.screenObject == wo.screen ) || ( wo && !wo.screen && isDoorsScreen ) );
 	

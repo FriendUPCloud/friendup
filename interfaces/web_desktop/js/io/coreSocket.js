@@ -158,7 +158,16 @@ FriendWebSocket.prototype.connect = function()
 		{
 			self.cleanup();
 		}
-		self.ws = new window.WebSocket( self.url, 'FC-protocol' );
+		try
+		{
+			self.ws = new window.WebSocket( self.url, 'FC-protocol' );
+		}
+		catch( e2 )
+		{
+			console.log( '[coreSocket] Failed to connect.', h2 );
+			self.handleError( e2 );
+			return;
+		}
 	} 
 	catch( e )
 	{

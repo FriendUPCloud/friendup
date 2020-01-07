@@ -1862,8 +1862,6 @@ function apiWrapper( event, force )
 
 					var postTarget = app;
 					
-					console.log( '[apiwrapper] Opening a new view: ', msg.data );
-					
 					// Startup sequence apps need to be deactivated
 					if( app.startupsequence )
 					{						
@@ -1954,9 +1952,7 @@ function apiWrapper( event, force )
 								// Create a new callback dispatch here..
 								var cb = false;
 								if ( msg.callback )
-								{
 									cb = makeAppCallbackFunction( app, msg, event.source );
-								}
 
 								// Do the setting!
 								var domain = GetDomainFromConf( app.config, msg.applicationId );
@@ -2001,7 +1997,6 @@ function apiWrapper( event, force )
 							}
 							else
 							{
-								console.log( 'Could not find widget!' );
 							}
 							break;
 					}
@@ -2447,6 +2442,11 @@ function apiWrapper( event, force )
 						else if( msg.screenId )
 						{
 							nmsg.screenId = msg.screenId;
+							nmsg.type = 'callback';
+						}
+						else if( msg.widgetId )
+						{
+							nmsg.widgetId = msg.widgetId;
 							nmsg.type = 'callback';
 						}
 						if( cw )
@@ -4230,6 +4230,7 @@ function checkAppPermission( authid, permission, value )
 function GetContentWindowByAppMessage( app, msg )
 {
 	var cw = app;
+	
 	// Pass window id down
 	if( msg.viewId )
 	{
@@ -4244,6 +4245,13 @@ function GetContentWindowByAppMessage( app, msg )
 			console.log( app, msg );
 			console.log( '..........' );
 		}*/
+	}
+	else if( msg.widgetId )
+	{
+		if( app.widgets[msg.widgetId] )
+		{
+			cw = app.widgets[msg.widgetId].iframe;
+		}
 	}
 	if( cw.contentWindow )
 		return cw.contentWindow;

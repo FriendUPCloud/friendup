@@ -271,7 +271,19 @@ var Application =
 					}
 					else
 					{
-						Application.screens[packet.viewId].sendMessage( packet );
+						Application.screens[packet.screenId].sendMessage( packet );
+					}
+				}
+				// Handle widgets
+				else if( packet.widgetId && Application.widgets && Application.widgets[packet.widgetId] )
+				{
+					if( packet.command == 'widgetresponse' )
+					{
+						Application.widgets[packet.widgetId].ready = packet.data == 'ok' ? true : false;
+					}
+					else
+					{
+						Application.widgets[packet.widgetId].sendMessage( packet );
 					}
 				}
 				else if( this.screen && this.screen.sendMessage )
@@ -1105,6 +1117,13 @@ function receiveEvent( event, queued )
 						}
 					}
 				}
+			}
+			break;
+		case 'widgetresponse':
+			// Can't create screen? Quit
+			if( dataPacket.data == 'fail' )
+			{
+				Application.quit();
 			}
 			break;
 		case 'screenresponse':
@@ -3645,10 +3664,10 @@ GetClass = function( source )
 	// Assign the functions of the class
 	var start = 0;
 	var end = source.indexOf( '.' );
-	if ( end < 0 )
+	if( end < 0 )
 		end = 10000;
 	var klass = window[ source.substring( start, end ) ];
-	if ( typeof klass == 'undefined' )
+	if( typeof klass == 'undefined' )
 		return null;
 	while( end < source.length )
 	{
@@ -5519,6 +5538,11 @@ function setupMessageFunction( dataPacket, origin )
 			if( dataPacket.screenId )
 				msg.screenId = dataPacket.screenId;
 		}
+		if( !msg.widgetId )
+		{
+			if( dataPacket.widgetId )
+				msg.widgetId = dataPacket.widgetId;
+		}
 		if( !msg.parentViewId )
 		{
 			if( Application.viewId )
@@ -5841,7 +5865,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		Friend.themeStyleElement.innerHTML = str;
 	};
 	Application.applyThemeConfig = ApplyThemeConfig;
-	
 
 	// On page load
 	function onLoaded()
@@ -5860,12 +5883,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			tpath = '/themes/' + packet.theme + '/theme.css';
 		}
 
-		var loadingResources = 0;
+		var loadedResources = 0;
 		var totalLoadingResources = 0;
 
 		// Let's save some time
 		if( !document.themeCss )
 		{
+			totalLoadingResources++;
+			
 			var s = document.createElement( 'link' );
 			document.themeCss = s;
 			s.rel = 'stylesheet';
@@ -5875,7 +5900,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				doneLoading();
 			}
 			document.getElementsByTagName('head')[0].appendChild( s );
-			totalLoadingResources++;
 		}
 		
 		// Load advanced theme config
@@ -5886,233 +5910,36 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 		var activat = [];
 
-		// What to do when we are done loading..
-		function doneLoading( e )
-		{
-			loadingResources++;
-
-			// Async is a bitch!
-			function waitToStart()
-			{
-				if( !window.applicationStarted )
-				{
-					// If we can run, then run!
-					if( Application.run && !window.applicationStarted )
-					{	
-						// Fetch application permissions
-						if( !Application.checkAppPermission )
-						{
-							var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
-							if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
-							
-							var m = new Module( 'system' );
-							m.onExecuted = function( e, d )
-							{
-								var permissions = {};
-								
-								Application.checkAppPermission = function( key, callback )
-								{
-									// Admins always can!
-									if( Application.getUserLevel() == 'admin' )
-									{
-										if( callback )
-										{
-											callback( true );
-										}
-										return true;
-									}
-									
-									if( key && !callback )
-									{
-										if( permissions[ key ] )
-										{
-											return permissions[ key ];
-										}
-										return false;
-									}
-									else
-									{
-										var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
-										
-										var mm = new Module( 'system' );
-										mm.onExecuted = function( ee, dd )
-										{
-											if( ee == 'ok' )
-											{
-												try
-												{
-													permissions = JSON.parse( dd );
-												}
-												catch( e ) {  }
-											}
-											
-											if( callback )
-											{
-												if( permissions[ key ] )
-												{
-													return callback( permissions[ key ] );
-												}
-												return callback( false );
-											}
-										}
-										mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
-									}
-								}
-								
-								if( e == 'ok' )
-								{
-									try
-									{
-										permissions = JSON.parse( d );
-									}
-									catch( e ) {  }
-								}
-								
-								runNow();
-							}
-							m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
-						}
-						else runNow();
-						
-						function runNow()
-						{
-							if( window.applicationStarted ) return;
-							window.applicationStarted = true;
-							Application.run( packet );
-							if( packet.state ) Application.sessionStateSet( packet.state );
-							window.loaded = true;
-							Friend.application.doneLoading();
-						}
-					}
-					for( var a = 0; a < activat.length; a++ )
-						ExecuteScript( activat[a] );
-					activat = [];
-					
-					// Delayed in case we didn't succeed!
-					if( window.applicationLoadingTimeout )
-						clearTimeout( window.applicationLoadingTimeout );
-					window.applicationLoadingTimeout = setTimeout( function()
-					{
-						if( Application.run && !window.applicationStarted )
-						{
-							// Fetch application permissions
-							if( !Application.checkAppPermission )
-							{
-								var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
-								if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
-								
-								var m = new Module( 'system' );
-								m.onExecuted = function( e, d )
-								{
-									var permissions = {};
-									
-									Application.checkAppPermission = function( key, callback )
-									{
-										// Admins always can!
-										if( Application.getUserLevel() == 'admin' )
-										{
-											if( callback )
-											{
-												callback( true );
-											}
-											return true;
-										}
-										
-										if( key && !callback )
-										{
-											if( permissions[ key ] )
-											{
-												return permissions[ key ];
-											}
-											return false;
-										}
-										else
-										{
-											var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
-											
-											var mm = new Module( 'system' );
-											mm.onExecuted = function( ee, dd )
-											{
-												if( ee == 'ok' )
-												{
-													try
-													{
-														permissions = JSON.parse( dd );
-													}
-													catch( e ) {  }
-												}
-												
-												if( callback )
-												{
-													if( permissions[ key ] )
-													{
-														return callback( permissions[ key ] );
-													}
-													return callback( false );
-												}
-											}
-											mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
-										}
-									}
-									
-									if( e == 'ok' )
-									{
-										try
-										{
-											permissions = JSON.parse( d );
-										}
-										catch( e ) {  }
-									}
-									
-									runNow();
-								}
-								m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
-							}
-							else runNow();
-							
-							function runNow()
-							{
-								if( window.applicationStarted ) return;
-								window.applicationStarted = true;
-								Application.run( packet );
-								if( packet.state ) Application.sessionStateSet( packet.state );
-								Friend.application.doneLoading();
-							}
-						}
-						// Could be wr don't have any application, run scripts
-						for( var a = 0; a < activat.length; a++ )
-							ExecuteScript( activat[a] );
-						activat = [];
-						window.loaded = true;
-
-						// If we still have this, run it
-						if( window.delayedScriptLoading )
-						{
-							window.delayedScriptLoading();
-							delete window.delayedScriptLoading;
-						}
-						else
-						{
-							if( !window.applicationStarted )
-								Friend.application.doneLoading();
-							// Callback to parent and say we're done!
-							if( initcallback )
-								initcallback();
-						}
-						window.applicationLoadingTimeout = null;
-					}, 50 );
-				}
-			}
-
-			// Loading complete
-			if( loadingResources == totalLoadingResources )
-			{
-				waitToStart();
-			}
-		}
-
 		// For templates
 		if( packet.appPath ) Application.appPath = packet.appPath;
+
+		// Delayed script loading (with src)
+		var scripts = document.getElementsByTagName( 'friendscript' );
+		if( scripts.length )
+		{
+			var removes = [];
+			for( var a = 0; a < scripts.length; a++ )
+			{
+				var src = scripts[a].getAttribute( 'src' )
+				if( src )
+				{
+					totalLoadingResources++;
+					var d = document.createElement( 'script' );
+					d.src = src;
+					d.async = false;
+					d.onload = doneLoading;
+					document.body.appendChild( d );
+					wait = true;
+					removes.push( scripts[a] );
+				}
+			}
+			// Clear friendscripts
+			for( var a = 0; a < removes.length; a++ )
+			{
+				removes[a].parentNode.removeChild( removes[a] );
+			}
+			removes = null;
+		}
 
 		// TODO: Take language var from config
 		if( packet && packet.filePath )
@@ -6131,41 +5958,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		else
 		{
-			totalLoadingResources++;
-			doneLoading();
-		}
-
-		// Delayed loading of scripts
-		window.delayedScriptLoading = function()
-		{
-			totalLoadingResources++;
-			var scripts = document.getElementsByTagName( 'friendscript' );
-			var removes = [];
-			for( var a = 0; a < scripts.length; a++ )
-			{
-				var src = scripts[a].getAttribute( 'src' )
-				if( src )
-				{
-					var d = document.createElement( 'script' );
-					d.src = src;
-					d.async = false;
-					d.onload = doneLoading;
-					document.body.appendChild( d );
-					totalLoadingResources++;
-				}
-				else
-				{
-					activat.push( scripts[a].textContent );
-				}
-				removes.push( scripts[a] );
-			}
-
-			// Clear friendscripts
-			for( var a = 0; a < removes.length; a++ )
-			{
-				removes[a].parentNode.removeChild( removes[a] );
-			}
-			doneLoading();
+			// Just do the done loading thing
+			waitToStart();
 		}
 
 		// Tell we're registered
@@ -6198,6 +5992,165 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		window.addEventListener( 'touchend', sendEventToParent );
 
 		window.loaded = true;
+		
+		// What to do when we are done loading.. -------------------------------
+		
+		// Async is a bitch!
+		function waitToStart()
+		{
+			var scripts = document.getElementsByTagName( 'friendscript' );
+			if( scripts.length )
+			{
+				var removes = [];
+				for( var a = 0; a < scripts.length; a++ )
+				{
+					var src = scripts[a].getAttribute( 'src' )
+					if( !src )
+					{
+						activat.push( scripts[a].textContent );
+					}
+					removes.push( scripts[a] );
+				}
+
+				// Clear friendscripts
+				for( var a = 0; a < removes.length; a++ )
+				{
+					removes[a].parentNode.removeChild( removes[a] );
+				}
+				removes = null;
+			}
+		
+			// Check if we can start application
+			if( !window.applicationStarted )
+			{
+				// If we can run, then run!
+				if( Application.run && !window.applicationStarted )
+				{
+					if( !Application.applicationId )
+					{
+						runNow();
+						return;
+					}
+					// Fetch application permissions
+					if( !Application.checkAppPermission )
+					{
+						var n = Application.applicationId ? Application.applicationId.split( '-' )[0] : false; // TODO: app must have applicationName
+						if( !n ) n = Application.applicationName ? Application.applicationName : 'Unnamed';
+						
+						var m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							var permissions = {};
+							
+							Application.checkAppPermission = function( key, callback )
+							{
+								// Admins always can!
+								if( Application.getUserLevel() == 'admin' )
+								{
+									if( callback )
+									{
+										callback( true );
+									}
+									return true;
+								}
+								
+								if( key && !callback )
+								{
+									if( permissions[ key ] )
+									{
+										return permissions[ key ];
+									}
+									return false;
+								}
+								else
+								{
+									var nn = Application.applicationId.split( '-' )[0]; // TODO: app must have applicationName
+									
+									var mm = new Module( 'system' );
+									mm.onExecuted = function( ee, dd )
+									{
+										if( ee == 'ok' )
+										{
+											try
+											{
+												permissions = JSON.parse( dd );
+											}
+											catch( e ) {  }
+										}
+										
+										if( callback )
+										{
+											if( permissions[ key ] )
+											{
+												return callback( permissions[ key ] );
+											}
+											return callback( false );
+										}
+									}
+									mm.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : nn ) } );
+								}
+							};
+							
+							if( e == 'ok' )
+							{
+								try
+								{
+									permissions = JSON.parse( d );
+								}
+								catch( e ) {  }
+							}
+							
+							runNow();
+						}
+						m.execute( 'getapppermissions', { applicationName: ( Application.applicationName ? Application.applicationName : n ) } );
+					}
+					else
+					{
+						runNow();
+					}
+				}
+				// Check for scripts and run them
+				else if( loadedResources == totalLoadingResources && !window.applicationStarted )
+				{
+					runNow();
+				}
+				else
+				{
+					console.log( 'What' );
+				}
+				
+				function runNow()
+				{
+					if( window.applicationStarted ) return;
+					window.applicationStarted = true;
+					if( packet.state ) Application.sessionStateSet( packet.state );
+					for( var a = 0; a < activat.length; a++ )
+						ExecuteScript( activat[a] );
+					activat = [];
+					if( Application.run )
+					{
+						Application.run( packet );
+					}
+					window.loaded = true;
+					// Use the application doneLoading function (different)
+					Friend.application.doneLoading();
+				}
+			}
+		}
+		
+		// When we are done loading (check loading vs total)
+		function doneLoading( e )
+		{
+			loadedResources++;
+
+			// Loading complete
+			if( loadedResources == totalLoadingResources )
+			{
+				waitToStart();
+			}
+		}
+		
+		// Done with this ------------------------------------------------------
 	}
 
 	// Make sure we don't show gui until the scrollbars have changed
@@ -6224,46 +6177,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	var elez = [];
 	for ( var a = 0; a < js.length; a++ )
 	{
-		//var s = document.createElement( 'script' );
 		// Set src with some rules whether it's an app or a Workspace component
 		elez.push( js[ a ] );
-
-		/*// When last javascript loads, parse css, setup translations and say:
-		// We are now registered..
-		if( a == js.length-1 )
-		{
-			function fl()
-			{
-				if( this ) this.isLoaded = true;
-				var allLoaded = true;
-				for( var b = 0; b < elez.length; b++ )
-				{
-					if( !elez[b].isLoaded ) allLoaded = false;
-				}
-				if( allLoaded )
-				{
-					if( typeof( Workspace ) == 'undefined' )
-					{
-						if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-						if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
-					}
-					onLoaded();
-				}
-				else
-				{
-					setTimeout( fl, 50 );
-				}
-			}
-			s.onload = fl;
-		}
-		else
-		{
-			s.onload = function()
-			{
-				this.isLoaded = true;
-			}
-		}
-		head.appendChild( s );*/
 	}
 
 	// Setup application id from message
@@ -8448,7 +8363,7 @@ GuiDesklet = function()
 		function DirectoryContainsFile( filename, directoryContents )
 		{
 			if( !filename ) return false;
-			if( !directoryContents || directoryContents.length == 0 ) return false;
+			if( !directoryContents || directoryContents.length == 0 ) return false;
 	
 			for(var i = 0; i < directoryContents.length; i++ )
 			{

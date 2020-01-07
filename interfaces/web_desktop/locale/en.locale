@@ -53,6 +53,9 @@ i18n_quit                            : Quit
 i18n_menuback                        : <
 i18n_create_folder                   : Create folder
 
+i18n_illegal_path                    : Illegal path
+i18n_illegal_path_desc               : The path specified does not exist.
+
 i18n_mountlist                       : Disks
 
 i18n_message_from                    : Message from
@@ -117,6 +120,7 @@ i18n_package                            : The package
 i18n_was_installed                      : was installed
 i18n_failed_install_package             : Failed to install
 i18n_package_failed                     : This package could not be installed
+menu_install_package                    : Install package
 
 i18n_Storage_Local_Read_desc            : Read access, local doors
 i18n_Storage_Local_Write_desc           : Write access, local doors
@@ -747,4 +751,9 @@ i18n_status_Pending                     : Pending
 i18n_status_Error                       : FAILED
 i18n_processing                         : Processing
 i18n_logging_in                         : Logging in
+
+#Alerts ------------------------------------------------------------------------
+
+i18n_erroneous_filename                 : Wrong filename
+i18n_please_set_a_valid_filename        : Please choose a valid filename with the correct filename extension.
 

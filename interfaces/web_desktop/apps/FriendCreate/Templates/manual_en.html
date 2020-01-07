@@ -1,0 +1,57 @@
+
+<div class="ContentFull Padding" id="Top">
+	<h2>
+		Introduction
+	</h2>
+	<p>
+		The Friend Create IDE is meant to be a simple but powerful tool to create
+		Friend applications (and server modules). It is tuned to help you work on
+		code, single and multiple projects as well as packages for distribution.
+	</p>
+	<p>
+		Friend Create supports the functionality you would come to expect from 
+		an entry level programmers editor, but tries to get our of your way and
+		let you do most of your work.
+	</p>
+	<h3>
+		Friend packages
+	</h3>
+	<p>
+		When building a Friend package, you need to first create a project. The
+		project keeps a structure of your code and assets so that is can be
+		converted into a package for distribution.
+	</p>
+	<p>
+		Before you can build a package, you need to make sure you have the following
+		structure available:
+	</p>
+	<ul>
+		<li>Project name - a unique name of your project</li>
+		<li>Project author - who created the app</li>
+		<li>Project category - from a pulldown list</li>
+		<li>Project version - to enable upgrade controls</li>
+		<li>Project description - describing your application in the marketplace</li>
+		<li>screenshot.jpg - the image that shows your app in the marketplace (optional)</li>
+		<li>preview.jpg - the preview image for the marketplace</li>
+		<li>icon.png - the icon for your application</li>
+	</ul>
+	<p>
+		If these criteria are met, you will be able to build a Friend package and
+		install it on your Friend server - and you will be able to submit it to 
+		Friend Software Corp. for review and distribution on Friend Sky.
+	</p>
+	<p>
+		To execute the building of your package, open your project editor on your
+		active project and fill out the form. Remember to check that all of your
+		files are represented in the images and files list. Then, you can use
+		the Packages -> Generate package menu item in the main Friend Create
+		application menu. The package will be generated and placed in your project
+		folder.
+	</p>
+</div>
+<div class="BorderTop Padding TextCenter" id="Bottom">
+	<button type="button" class="IconSmall fa-remove" onclick="CloseView()">
+		{i18n_close}
+	</button>
+</div>
+<style> #Top { height: calc(100% - 50px); overflow: auto; } #Bottom { height: 50px; position: absolute; left: 0; bottom: 0; width: 100%; } </style>

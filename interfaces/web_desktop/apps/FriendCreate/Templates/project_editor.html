@@ -1,0 +1,169 @@
+
+<div class="ContentFull" id="All">
+	<h2 class="Padding">
+		{i18n_project_information}
+	</h2>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_project_name}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<input class="FullWidth" id="project_projectname" value=""/>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_project_author}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<input class="FullWidth" id="project_author" value=""/>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_project_version}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<input size="8" id="project_version" value=""/>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_project_category}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<select id="project_category">
+				<option value="Administration">{i18n_administration}</option>
+				<option value="Demonstration">{i18n_demonstration}</option>
+				<option value="Games">{i18n_games}</option>
+				<option value="Graphics">{i18n_graphics}</option>
+				<option value="Internet">{i18n_internet}</option>
+				<option value="Multimedia">{i18n_multimedia}</option>
+				<option value="Music">{i18n_music}</option>
+				<option value="Office">{i18n_office}</option>
+				<option value="Preferences">{i18n_preferences}</option>
+				<option value="Programming">{i18n_programming}</option>
+				<option value="System">{i18n_system}</option>
+			</select>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_project_description}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<textarea resize="no" id="project_description" class="FullWidth" style="height: 150px"></textarea>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_mandatory_images}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<div class="HRow">
+				<div class="HContent33 FloatLeft Padding TextCenter">
+					<div id="ButtonIcon"></div>
+					<br/>
+					{i18n_image_icon}
+				</div>
+				<div class="HContent33 FloatLeft Padding TextCenter">
+					<div id="ButtonPreview"></div>
+					<br/>
+					{i18n_image_store_preview}
+				</div>
+				<div class="HContent33 FloatLeft Padding TextCenter">
+					<div id="ButtonScreenshot"></div>
+					<br/>
+					{i18n_image_screenshot}
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_system_privileges}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<div class="List BorderBottom" id="project_permissions"></div>
+			<br/>
+			<div class="HRow">
+				<button class="IconButton IconSmall fa-plus" onclick="AddPrivilege()">
+					{i18n_add_privilege}
+				</button>
+				<button class="IconButton IconSmall fa-minus" onclick="RemovePrivileges()">
+					{i18n_remove_privileges}
+				</button>
+			</div>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>{i18n_application_images}:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<div class="List BorderBottom" id="project_images"></div>
+			<br/>
+			<div class="HRow">
+				<button class="IconButton IconSmall fa-plus" onclick="AddFiles( 'images' )">
+					{i18n_add_images}
+				</button>
+				<button class="IconButton IconSmall fa-minus" onclick="RemoveImages()">
+					{i18n_remove_images}
+				</button>
+			</div>
+		</div>
+	</div>
+	<div class="BorderTop HRow">
+		<div class="HContent20 FloatLeft Padding BorderRight">
+			<strong>Project files:</strong>
+		</div>
+		<div class="HContent80 FloatLeft Padding">
+			<div class="List BorderBottom" id="project_files"></div>
+			<br/>
+			<div class="HRow">
+				<button class="IconButton IconSmall fa-plus" onclick="AddFiles()">
+					{i18n_add_file}
+				</button>
+				<button class="IconButton IconSmall fa-minus" onclick="RemoveFiles()">
+					{i18n_remove_files}
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="Bottom" class="BackgroundDefault Padding BorderTop">
+	<button type="button" class="IconSmall fa-save FloatRight MarginLeft" onclick="UpdateProject()">
+		{i18n_update_project}
+	</button>
+	<button type="button" class="IconSmall fa-remove FloatRight " onclick="CloseView()">
+		{i18n_cancel}
+	</button>
+</div>
+<script src="Progdir:Scripts/project_editor.js"></script>
+<style>
+	#All
+	{
+		overflow: auto;
+		height: calc(100% - 50px);
+	} 
+	#Bottom
+	{
+		bottom: 0;
+		height: 50px;
+		width: 100%;
+		left: 0;
+		position: absolute;
+		z-index: 2;
+	}
+	#ButtonScreenshot, #ButtonPreview, #ButtonIcon
+	{
+		text-align: center;
+		padding: 8px;
+		box-sizing: border-box;
+		width: 80px;
+		height: 80px;
+		margin: auto;
+		border-radius: 4px;
+		background-color: rgba(0,0,0,0.4);
+	}
+</style>
