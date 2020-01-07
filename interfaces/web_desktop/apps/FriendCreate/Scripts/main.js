@@ -929,6 +929,7 @@ function CheckProjectFile( file )
 				Filename: fn
 			} );
 			RefreshProjects();
+			SaveProject( p );
 		}
 	}
 }
@@ -1472,6 +1473,10 @@ function CloseProject( proj, callback )
 	if( proj == Application.currentProject )
 		Application.currentProject = null;
 	RefreshProjects();
+	
+	if( !( proj.ProjectType && proj.ProjectType == 'webssh' ) && callback )
+		callback( false );
+		
 }
 
 function RefreshProjects()
@@ -2283,7 +2288,7 @@ function UnmountProjectServer( p, cb )
 			} );
 			// TODO: If it won't mount, please try to edit it
 			// Ask if the user wants to change it..?
-			if( cb ) cb();
+			if( cb ) cb( true );
 		}
 		s.execute( 'device/unmount', {
 			devname: p.ProjectName
@@ -2291,7 +2296,7 @@ function UnmountProjectServer( p, cb )
 	}
 	else if( cb )
 	{
-		cb();
+		cb( false );
 	}
 }
 
@@ -2350,11 +2355,14 @@ Application.receiveMessage = function( msg )
 				}
 				for( var a = 0; a < projects.length; a++ )
 				{
-					CloseProject( projects[ a ], function()
+					CloseProject( projects[ a ], function( result )
 					{
 						if( --pl == 0 )
 						{
 							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+							if( !result )
+								return Application.sendMessage( { command: 'quit' } );
+							
 							setTimeout( function()
 							{
 								Application.sendMessage( { command: 'quit' } );
