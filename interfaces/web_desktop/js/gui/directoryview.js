@@ -2190,7 +2190,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 									title: i18n( 'i18n_filecopy_error' ),
 									text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
 								} );
-								fop.stop = True;
+								fob.stop = true;
 								return;
 							}							
 							if( fob.stop ) return;
@@ -2229,7 +2229,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						function mkdirhere()
 						{
 							infocontent.innerHTML = i18n( 'i18n_creating_directory' ) + ' ' + toPath;
-							//console.log( 'Makedir: ' + toPath );
 							door.dosAction( 'makedir', { path: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
@@ -2323,7 +2322,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 							w.deletable = fob.files.length;
 
-							bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
+							infocontent.innerHTML = 'Cleaning up...';
 
 							// Delete in reverse
 							var ic = new FileIcon();
@@ -2612,6 +2611,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
 	var marginRight = window.innerWidth - gridX + 20 - 1;
+	
 	var marginBottom = 5;
 	
 	if( window.isMobile )
@@ -2632,7 +2632,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	var iy  = marginTop; 
 	var ix  = marginLeft;
 	var shy = marginTop;
-	var shx = marginRight;
+	var shx = marginRight - parseInt( sc.parentNode.paddingRight );
 	
 	var column = 0;
 	var start = false;
