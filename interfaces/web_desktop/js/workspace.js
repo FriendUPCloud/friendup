@@ -1308,6 +1308,7 @@ Workspace = {
 				'webclient/js/io/friendnetworkextension.js;' +
 				'webclient/js/io/friendnetworkdoor.js;' +
 				'webclient/js/io/friendnetworkapps.js;' +
+				'webclient/js/io/workspace_fileoperations.js;' + 
 				'webclient/js/io/DOS.js;' +
 				'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 				'webclient/js/gui/widget.js;' +

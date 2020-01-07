@@ -713,6 +713,7 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		{
 			refresh();
 			var s = this.responseText().split( '<!--separate-->' );
+			
 			if( s && s[0] != 'ok' )
 			{
 				doAlert();

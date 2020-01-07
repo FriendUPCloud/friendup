@@ -1823,619 +1823,621 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		ctrl = true;
 	}
 
-	//Confirm( 
-	//	ctrl ? i18n( 'i18n_copying_files' ) : i18n( 'i18n_moving_files' ), 
-	//	ctrl ? i18n( 'i18n_do_you_want_copy' ) : i18n( 'i18n_do_you_want_move' ), function( res )
-	//{
+	
 		
-		// make sure we have valid source and destination and neither of them is on System: volume and we have no ape using us....
-		if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 || dview.ongoingdropprepare )
+	// make sure we have valid source and destination and neither of them is on System: volume and we have no ape using us....
+	if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 || dview.ongoingdropprepare )
+	{
+		if( eles[0].window && eles[0].window.refresh )
+			eles[0].window.refresh();
+		else Workspace.refreshDesktop();
+		if( mode == 'view' ) dview.content.refresh();
+		else if( dview.directoryView.content ) dview.directoryView.content.refresh();
+		return;
+	}
+
+	// we are all set...
+	// change 2016-04 - allow multiple operations at once....
+	dview.ongoingdropprepare = true;
+
+	dview.fileoperations[ dview.operationcounter ] = {};
+	dview.fileoperations[ dview.operationcounter ].sPath = sPath;
+	dview.fileoperations[ dview.operationcounter ].dPath = dPath;
+
+	// Register current open window
+	var curr = window.currentMovable;
+
+	// Open window
+	dview.fileoperations[ dview.operationcounter ].view = new View( {
+		title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
+		width:  320,
+		height: 100,
+		id:     'fileops_' + dview.id + "_" + dview.operationcounter
+	} );
+
+	//console.log('dview',dview,('iD ' + ( dview.id ? dview.id : 'no id on dview' ) ) );
+
+
+	dview.fileoperations[ dview.operationcounter ].view.myid = dview.operationcounter;
+	dview.fileoperations[ dview.operationcounter ].view.master = dview;
+
+	// Load template
+	dview.fileoperations[ dview.operationcounter ].progress = new File( 'templates/file_operation.html' );
+	dview.fileoperations[ dview.operationcounter ].progress.master = dview;
+	dview.fileoperations[ dview.operationcounter ].progress.myid = dview.operationcounter;
+
+	dview.fileoperations[ dview.operationcounter ].progress.onLoad = function( data )
+	{
+		if( !this.master.fileoperations[ this.myid ] ) return;
+		var w = this.master.fileoperations[ this.myid ].view;
+		var windowArray = this.master.fileoperations;
+		var windowArrayKey = this.myid;
+
+		data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
+		w.setContent( data );
+
+		// Setup progress bar
+		var eled = this.master.fileoperations[ this.myid ].view.getWindowElement().getElementsByTagName( '*' );
+		var groove = false, bar = false, frame = false, progressbar = false;
+		var fcb = false;
+		for( var a = 0; a < eled.length; a++ )
 		{
-			if( eles[0].window && eles[0].window.refresh )
-				eles[0].window.refresh();
-			else Workspace.refreshDesktop();
-			if( mode == 'view' ) dview.content.refresh();
-			else if( dview.directoryView.content ) dview.directoryView.content.refresh();
-			return;
+			if( eled[a].classList )
+			{
+				var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton' ];
+				for( var b = 0; b < types.length; b++ )
+				{
+					if( eled[a].classList.contains( types[b] ) )
+					{
+						switch( types[b] )
+						{
+							case 'ProgressBar': progressbar = eled[a]; break;
+							case 'Groove':      groove      = eled[a]; break;
+							case 'Frame':       frame       = eled[a]; break;
+							case 'Bar':         bar         = eled[a]; break;
+							case 'FileCancelButton': fcb    = eled[a]; break;
+						}
+					}
+				}
+			}
 		}
 
-		// we are all set...
-		// change 2016-04 - allow multiple operations at once....
-		dview.ongoingdropprepare = true;
-
-		dview.fileoperations[ dview.operationcounter ] = {};
-		dview.fileoperations[ dview.operationcounter ].sPath = sPath;
-		dview.fileoperations[ dview.operationcounter ].dPath = dPath;
-
-		// Register current open window
-		var curr = window.currentMovable;
-
-		// Open window
-		dview.fileoperations[ dview.operationcounter ].view = new View( {
-			title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
-			width:  320,
-			height: 100,
-			id:     'fileops_' + dview.id + "_" + dview.operationcounter
-		} );
-
-		//console.log('dview',dview,('iD ' + ( dview.id ? dview.id : 'no id on dview' ) ) );
-
-
-		dview.fileoperations[ dview.operationcounter ].view.myid = dview.operationcounter;
-		dview.fileoperations[ dview.operationcounter ].view.master = dview;
-
-		// Load template
-		dview.fileoperations[ dview.operationcounter ].progress = new File( 'templates/file_operation.html' );
-		dview.fileoperations[ dview.operationcounter ].progress.master = dview;
-		dview.fileoperations[ dview.operationcounter ].progress.myid = dview.operationcounter;
-
-		dview.fileoperations[ dview.operationcounter ].progress.onLoad = function( data )
+		// Close button
+		if( fcb )
 		{
-			if( !this.master.fileoperations[ this.myid ] ) return;
-			var w = this.master.fileoperations[ this.myid ].view;
-			var windowArray = this.master.fileoperations;
-			var windowArrayKey = this.myid;
-
-			data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
-			w.setContent( data );
-
-			// Setup progress bar
-			var eled = this.master.fileoperations[ this.myid ].view.getWindowElement().getElementsByTagName( '*' );
-			var groove = false, bar = false, frame = false, progressbar = false;
-			var fcb = false;
-			for( var a = 0; a < eled.length; a++ )
+			fcb.onclick = function()
 			{
-				if( eled[a].classList )
-				{
-					var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'FileCancelButton' ];
-					for( var b = 0; b < types.length; b++ )
-					{
-						if( eled[a].classList.contains( types[b] ) )
-						{
-							switch( types[b] )
-							{
-								case 'ProgressBar': progressbar = eled[a]; break;
-								case 'Groove':      groove      = eled[a]; break;
-								case 'Frame':       frame       = eled[a]; break;
-								case 'Bar':         bar         = eled[a]; break;
-								case 'FileCancelButton': fcb    = eled[a]; break;
-							}
-						}
-					}
-				}
+				w.close();
 			}
+		}
 
-			// Close button
-			if( fcb )
+		// Only continue if we have everything
+		if( progressbar && groove && frame && bar )
+		{
+			progressbar.style.position = 'relative';
+			frame.style.width = '100%';
+			frame.style.height = '40px';
+			groove.style.position = 'absolute';
+			groove.style.width = '100%';
+			groove.style.height = '30px';
+			groove.style.top = '0';
+			groove.style.left = '0';
+			bar.style.position = 'absolute';
+			bar.style.width = '2px';
+			bar.style.height = '30px';
+			bar.style.top = '0';
+			bar.style.left = '0';
+
+			// Preliminary progress bar
+			bar.total = eles.length;
+			bar.items = eles.length;
+			var handleBarRefresh = setInterval( function()
 			{
-				fcb.onclick = function()
+				var size = Math.floor( 100 - ( 100 / bar.total * bar.items ) );
+				if ( size != bar.friendSize )
 				{
-					w.close();
+					bar.friendSize = size;
+					bar.style.width = size + '%';
+					bar.innerHTML = '<div>' + size + '%</div>';
 				}
-			}
+			}, 100 );
 
-			// Only continue if we have everything
-			if( progressbar && groove && frame && bar )
-			{
-				progressbar.style.position = 'relative';
-				frame.style.width = '100%';
-				frame.style.height = '40px';
-				groove.style.position = 'absolute';
-				groove.style.width = '100%';
-				groove.style.height = '30px';
-				groove.style.top = '0';
-				groove.style.left = '0';
-				bar.style.position = 'absolute';
-				bar.style.width = '2px';
-				bar.style.height = '30px';
-				bar.style.top = '0';
-				bar.style.left = '0';
+			// Create a filecopy object
+			var fileCopyObject = {
 
-				// Preliminary progress bar
-				bar.total = eles.length;
-				bar.items = eles.length;
-				var handleBarRefresh = setInterval( function()
+				files: [],
+				directories:[],
+				processing: 0,
+				stepsize: 10,
+				stop: false,
+				fileInfoCheck: function( ele )
 				{
-					var size = Math.floor( 100 - ( 100 / bar.total * bar.items ) );
-					if ( size != bar.friendSize )
+					if( !ele.fileInfo )
 					{
-						bar.friendSize = size;
-						bar.style.width = size + '%';
-						bar.innerHTML = '<div>' + size + '%</div>';
+						ele.fileInfo = {
+							Type: ele.Type,
+							Path: ele.Path,
+							Filesize: ele.Filesize,
+							Filename: ele.Filename
+						};
 					}
-				}, 100 );
-
-				// Create a filecopy object
-				var fileCopyObject = {
-
-					files: [],
-					directories:[],
-					processing: 0,
-					stepsize: 10,
-					stop: false,
-					fileInfoCheck: function( ele )
+				},
+				// Find files in folders
+				findSubFiles: function( folder )
+				{
+					// Counting!
+					this.processing++;
+					var d = Workspace.getDoorByPath( folder.ele.fileInfo.Path );
+					if( !d )
 					{
-						if( !ele.fileInfo )
-						{
-							ele.fileInfo = {
-								Type: ele.Type,
-								Path: ele.Path,
-								Filesize: ele.Filesize,
-								Filename: ele.Filename
-							};
-						}
-					},
-					// Find files in folders
-					findSubFiles: function( folder )
-					{
-						// Counting!
-						this.processing++;
-						var d = Workspace.getDoorByPath( folder.ele.fileInfo.Path );
-						if( !d )
-						{
-							this.processing--;
-							return;
-						}
+						this.processing--;
+						return;
+					}
 
-						var o = this;
+					var o = this;
 
-						// Get icons on path
-						d.getIcons( folder.ele.fileInfo, function( result )
-						{
-							var files = [];
-							for( var z = 0; z < result.length; z++ )
-							{
-								// We need to have fileInfo
-								o.fileInfoCheck( result[z] );
-								if( result[z].Type.toLowerCase() == 'directory' )
-								{
-									var d = Workspace.getDoorByPath( result[z].Path );
-									files.push( result[z] );
-									o.findSubFiles( { door: d, ele: result[z] } );
-								}
-								else if( result[z].Type.toLowerCase() == 'file' )
-								{
-									files.push( result[z] );
-								}
-							}
-							// Put the files in the right order!
-							o.checkFiles( files );
-							// Done counting!
-							o.processing--;
-							o.checkFinished();
-						} );
-					},
-					// Check all files (type etc)
-					checkFiles: function( checkFiles )
+					// Get icons on path
+					d.getIcons( folder.ele.fileInfo, function( result )
 					{
-						// Counting!
-						this.processing++;
-						var typ, fnam;
-						var eles = [];
 						var files = [];
-						var finFiles = [];
-						var fsorted = [];
-						var a, b, found;
-					
-						// Add dirs and files separately
-						for( a = 0; a < checkFiles.length; a++ )
+						for( var z = 0; z < result.length; z++ )
 						{
-							typ = checkFiles[a].fileInfo.Type.toLowerCase();
-							fnam = checkFiles[a].fileInfo.Filename;
-							if( typ == 'directory' )
+							// We need to have fileInfo
+							o.fileInfoCheck( result[z] );
+							if( result[z].Type.toLowerCase() == 'directory' )
 							{
-								eles.push( checkFiles[a] );
+								var d = Workspace.getDoorByPath( result[z].Path );
+								files.push( result[z] );
+								o.findSubFiles( { door: d, ele: result[z] } );
 							}
-							else
+							else if( result[z].Type.toLowerCase() == 'file' )
 							{
-								files.push( checkFiles[a] );
+								files.push( result[z] );
 							}
 						}
-					
-						// Make sure that .info files always comes first
-						for( b = 0; b < 2; b++ )
+						// Put the files in the right order!
+						o.checkFiles( files );
+						// Done counting!
+						o.processing--;
+						o.checkFinished();
+					} );
+				},
+				// Check all files (type etc)
+				checkFiles: function( checkFiles )
+				{
+					// Counting!
+					this.processing++;
+					var typ, fnam;
+					var eles = [];
+					var files = [];
+					var finFiles = [];
+					var fsorted = [];
+					var a, b, found;
+				
+					// Add dirs and files separately
+					for( a = 0; a < checkFiles.length; a++ )
+					{
+						typ = checkFiles[a].fileInfo.Type.toLowerCase();
+						fnam = checkFiles[a].fileInfo.Filename;
+						if( typ == 'directory' )
 						{
-							for( a = 0; a < files.length; a++ )
-							{
-								fnam = files[a].fileInfo.Filename;
-								if( 
-									b == 0 && (
-										fnam.substr( fnam.length - 5, 5 ) == '.info' ||
-										fnam.substr( fnam.length - 8, 8 ) == '.dirinfo' 
-									)
+							eles.push( checkFiles[a] );
+						}
+						else
+						{
+							files.push( checkFiles[a] );
+						}
+					}
+				
+					// Make sure that .info files always comes first
+					for( b = 0; b < 2; b++ )
+					{
+						for( a = 0; a < files.length; a++ )
+						{
+							fnam = files[a].fileInfo.Filename;
+							if( 
+								b == 0 && (
+									fnam.substr( fnam.length - 5, 5 ) == '.info' ||
+									fnam.substr( fnam.length - 8, 8 ) == '.dirinfo' 
 								)
-								{
-									finFiles.push( files[a] );
-								}
-								else if(
-									b == 1 && (
-										fnam.substr( fnam.length - 5, 5 ) != '.info' &&
-										fnam.substr( fnam.length - 8, 8 ) != '.dirinfo'
-									)
+							)
+							{
+								finFiles.push( files[a] );
+							}
+							else if(
+								b == 1 && (
+									fnam.substr( fnam.length - 5, 5 ) != '.info' &&
+									fnam.substr( fnam.length - 8, 8 ) != '.dirinfo'
 								)
-								{
-									finFiles.push( files[a] );
-								}
-							}
-						}
-					
-						// Overwrite files with finFiles
-						files = finFiles;
-					
-						// Temp
-						//console.log( 'Sorted files with .info|.dirinfo first.' );
-					
-						// Find .dirinfo files
-						var toPush = [];
-						for( b = 0; b < files.length; b++ )
-						{
-							found = false;
-							for( a = 0; a < eles.length; a++ )
+							)
 							{
-								// Does directory + .dirinfo match file (the real dirinfo file)
-								if( eles[a].fileInfo.Filename + '.dirinfo' == files[b].fileInfo.Filename )
-								{
-									// Put .dirinfo file on directory
-									eles[a].infoFile = files[b];
-									//console.log( 'Added a info file: ' + files[b].fileInfo.Filename );
-									found = true;
-									break;
-								}
-							}
-							// We didn't find a directory for this file
-							if( !found )
-							{
-								// Push to files to copy
-								toPush.push( files[b] );
+								finFiles.push( files[a] );
 							}
 						}
-					
-						// Clean up and put files "to push" into files for copy
-						delete files;
-						delete finFiles;
-						if( toPush.length )
-						{
-							for( a = 0; a < toPush.length; a++ )
-								eles.push( toPush[a] );
-						}
-						delete toPush;
-					
-						// File infos first, go through all files for copy
+					}
+				
+					// Overwrite files with finFiles
+					files = finFiles;
+				
+					// Temp
+					//console.log( 'Sorted files with .info|.dirinfo first.' );
+				
+					// Find .dirinfo files
+					var toPush = [];
+					for( b = 0; b < files.length; b++ )
+					{
+						found = false;
 						for( a = 0; a < eles.length; a++ )
 						{
-							var d = Workspace.getDoorByPath( eles[a].fileInfo.Path );
-							var fin = eles[a].fileInfo;
-							if( d )
+							// Does directory + .dirinfo match file (the real dirinfo file)
+							if( eles[a].fileInfo.Filename + '.dirinfo' == files[b].fileInfo.Filename )
 							{
-								// Make sure we have file info
-								this.fileInfoCheck( fin );
-
-								// Add dirs and files to queue
-								var tt = fin.Type.toLowerCase();
-								if( tt == 'directory' || tt == 'file' )
-								{
-									this.files.push( eles[a] );
-								}
-								// Directories adds sub files subsequently
-								if( fin.Type.toLowerCase() == 'directory' )
-								{
-									// Add folder and make sub paths
-									this.findSubFiles( { door: d, ele: eles[a] } );
-								}
+								// Put .dirinfo file on directory
+								eles[a].infoFile = files[b];
+								//console.log( 'Added a info file: ' + files[b].fileInfo.Filename );
+								found = true;
+								break;
 							}
 						}
-
-						// Not counting anymore
-						this.processing--;
-
-						// No more processing loops, it means we're finished!
-						this.checkFinished();
-					},
-					// Copy files that have been added
-					copyFiles: function()
-					{
-						// TODO: Performance test / question:
-						//       Do we queue these, or just loop through,
-						//       relying on server timeout
-						if( !this.files || !this.files.length )
+						// We didn't find a directory for this file
+						if( !found )
 						{
-							// No files, abort
-							// Close window
-							w.close();
-							return false;
+							// Push to files to copy
+							toPush.push( files[b] );
 						}
+					}
+				
+					// Clean up and put files "to push" into files for copy
+					delete files;
+					delete finFiles;
+					if( toPush.length )
+					{
+						for( a = 0; a < toPush.length; a++ )
+							eles.push( toPush[a] );
+					}
+					delete toPush;
+				
+					// File infos first, go through all files for copy
+					for( a = 0; a < eles.length; a++ )
+					{
+						var d = Workspace.getDoorByPath( eles[a].fileInfo.Path );
+						var fin = eles[a].fileInfo;
+						if( d )
+						{
+							// Make sure we have file info
+							this.fileInfoCheck( fin );
 
-						var fob = this;
+							// Add dirs and files to queue
+							var tt = fin.Type.toLowerCase();
+							if( tt == 'directory' || tt == 'file' )
+							{
+								this.files.push( eles[a] );
+							}
+							// Directories adds sub files subsequently
+							if( fin.Type.toLowerCase() == 'directory' )
+							{
+								// Add folder and make sub paths
+								this.findSubFiles( { door: d, ele: eles[a] } );
+							}
+						}
+					}
 
+					// Not counting anymore
+					this.processing--;
+
+					// No more processing loops, it means we're finished!
+					this.checkFinished();
+				},
+				// Copy files that have been added
+				copyFiles: function()
+				{
+					// TODO: Performance test / question:
+					//       Do we queue these, or just loop through,
+					//       relying on server timeout
+					if( !this.files || !this.files.length )
+					{
+						// No files, abort
+						// Close window
+						w.close();
+						return false;
+					}
+
+					var fob = this;
+
+					// Make sure our path is right
+					var cfoF = cfo.Path.substr( cfo.Path.length - 1 );
+					var p = '';
+					if( cfoF != '/' && cfoF != ':' )
+						p = '/';
+
+					var i = 0;
+					var stopAt = Math.min( this.stepsize, this.files.length );
+					var fl, toPath, initNextBatch;
+					var door;
+
+					initNextBatch = false;
+
+					var ic = new FileIcon(); 
+					
+					for( i = 0; i < stopAt; i++ )
+					{
+						fl = this.files[ i ];
+						
+						// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
+						var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
+						
+						toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
+						door = Workspace.getDoorByPath( fl.fileInfo.Path );
+
+						// Sanitation
+						while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
+
+						if( i + 1 == stopAt ) initNextBatch = true;
+
+						//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
+
+						// Do the copy - we have files here only...
+						ic.delCache( toPath );
+						door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
+						{
+							if( result.substr( 0, 3 ) != 'ok<' )
+							{
+								Notify( {
+									title: i18n( 'i18n_filecopy_error' ),
+									text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
+								} );
+								fop.stop = True;
+								return;
+							}							
+							if( fob.stop ) return;
+							fileCopyObject.nextStep( result, initNextBatch );
+						} );
+					}
+				},
+				createDirectories: function( reduceBar )
+				{
+					//update progress bar...
+					if( reduceBar )
+					{
+						bar.items--; 
+					}
+
+					if( this.directories.length == 0 )
+					{
+						this.copyFiles();
+					}
+					else
+					{
 						// Make sure our path is right
 						var cfoF = cfo.Path.substr( cfo.Path.length - 1 );
 						var p = '';
 						if( cfoF != '/' && cfoF != ':' )
 							p = '/';
 
-						var i = 0;
-						var stopAt = Math.min( this.stepsize, this.files.length );
-						var fl, toPath, initNextBatch;
-						var door;
+						var dir = this.directories.shift();
+						var toPath = cfo.Path + p + dir.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
+						var door = Workspace.getDoorByPath( cfo.Path );
 
-						initNextBatch = false;
-
-						var ic = new FileIcon(); 
-						
-						for( i = 0; i < stopAt; i++ )
+						// Sanitation
+						while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
+					
+						// Put it in a func
+						function mkdirhere()
 						{
-							fl = this.files[ i ];
-							
-							// Could be we have a just in time modified new path instead of path (in case of overwriting etc)
-							var destPath = fl.fileInfo.NewPath ? fl.fileInfo.NewPath : fl.fileInfo.Path;
-							
-							toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
-							door = Workspace.getDoorByPath( fl.fileInfo.Path );
-
-							// Sanitation
-							while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
-
-							if( i + 1 == stopAt ) initNextBatch = true;
-
-							//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
-
-							// Do the copy - we have files here only...
-							ic.delCache( toPath );
-							door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
+							//console.log( 'Makedir: ' + toPath );
+							door.dosAction( 'makedir', { path: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
-								// TODO: Check if we failed the copy with "fail" result and if so stop!
-								if( fob.stop ) return;
-								fileCopyObject.nextStep( result, initNextBatch );
+								var res = result.split( '<!--separate-->' );
+								if( res[0] == 'ok' && !fileCopyObject.stop )
+								{
+									fileCopyObject.createDirectories( true );
+								}
+								// Failed - alert user
+								else
+								{
+									Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									w.close();
+									sview.refresh();
+								}
+							});
+						}
+					
+						// If dir has infofile, copy it first
+						if( dir.infoFile )
+						{
+							// Info file is copied to parent of dir
+							var ftPath = toPath.substr( 0, toPath.length - 1 ); // strip /
+							var toParentPath = ftPath.indexOf( '/' ) > 0 ? ftPath.split( '/' ) : ftPath.split( ':' );
+							toParentPath.pop();
+							if( toParentPath.length == 1 ) toParentPath = toParentPath[0] + ':';
+							else toParentPath = toParentPath.join( '/' ) + '/';
+							toParentPath += dir.infoFile.Filename;
+						
+							//console.log( 'Copying from ' + dir.infoFile.fileInfo.Path + ', to: ' + toParentPath );
+							door.dosAction( 'copy', { from: dir.infoFile.fileInfo.Path, to: toParentPath }, function( result )
+							{
+								//var result = 'ok<!--separate-->'; // temp!
+								// TODO: Check result! If it is "fail" then stop
+								var res = result.split( '<!--separate-->' );
+								if( res[0] == 'ok' )
+								{
+									if( fileCopyObject.stop ) return;
+									// Now make dir
+									mkdirhere();
+								}
+								else
+								{
+									Notify( { title: i18n( 'i18n_filecopy_error' ), text: res[1] + ' (' + toPath + ')' } );
+									w.close();
+									sview.refresh();
+								}
 							} );
 						}
-					},
-					createDirectories: function( reduceBar )
-					{
-						//update progress bar...
-						if( reduceBar )
-						{
-							bar.items--; 
-						}
-
-						if( this.directories.length == 0 )
-						{
-							this.copyFiles();
-						}
+						// Just maked ir
 						else
 						{
-							// Make sure our path is right
-							var cfoF = cfo.Path.substr( cfo.Path.length - 1 );
-							var p = '';
-							if( cfoF != '/' && cfoF != ':' )
-								p = '/';
+							mkdirhere();
+						}
+					}
+				},
+				nextStep: function( result, initNewRun )
+				{
+					var fob = this;
+					if( initNewRun && fileCopyObject.files.length > this.stepsize )
+					{
+						var f = fileCopyObject.files;
+						var nf = [];
+						for( var b = this.stepsize; b < f.length; b++ )
+							nf.push( f[b] );
+						fileCopyObject.files = nf;
+						fileCopyObject.copyFiles();
+					}
 
-							var dir = this.directories.shift();
-							var toPath = cfo.Path + p + dir.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
-							var door = Workspace.getDoorByPath( cfo.Path );
+					// Timed refresh (don't refresh a zillion times!
+					if( eles[0].window && eles[0].window.refresh )
+					{
+						if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
+						this.refreshTimeout = setTimeout( function()
+						{
+							eles[0].window.refresh();
+							fob.refreshTimeout = 0;
+						}, 500 );
+					}
 
-							// Sanitation
-							while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
-						
-							// Put it in a func
-							function mkdirhere()
+					bar.items--;
+
+					if( bar.items == 0 )
+					{
+						// No control key in? Delete files after copying - essentially moving the files
+						if( !ctrl )
+						{
+							// Now delete files
+							//first make the list complete again
+							fob.files = fob.originalfilelist;
+
+							w.deletable = fob.files.length;
+
+							bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
+
+							// Delete in reverse
+							var ic = new FileIcon();
+							for( var b = fob.files.length - 1; b >= 0; b-- )
 							{
-								//console.log( 'Makedir: ' + toPath );
-								door.dosAction( 'makedir', { path: toPath }, function( result )
+								ic.delCache( fob.files[b].fileInfo.Path );
+								d.dosAction( 'delete', { path: fob.files[b].fileInfo.Path }, function( result )
 								{
-									//var result = 'ok<!--separate-->'; // temp!
-									var res = result.split( '<!--separate-->' );
-									if( res[0] == 'ok' && !fileCopyObject.stop )
+									w.deletable--;
+									if( w.deletable == 0 )
 									{
-										fileCopyObject.createDirectories( true );
-									}
-									// Failed - alert user
-									else
-									{
-										Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+										// Close window
+										clearInterval( handleBarRefresh );
 										w.close();
-										sview.refresh();
-									}
-								});
-							}
-						
-							// If dir has infofile, copy it first
-							if( dir.infoFile )
-							{
-								// Info file is copied to parent of dir
-								var ftPath = toPath.substr( 0, toPath.length - 1 ); // strip /
-								var toParentPath = ftPath.indexOf( '/' ) > 0 ? ftPath.split( '/' ) : ftPath.split( ':' );
-								toParentPath.pop();
-								if( toParentPath.length == 1 ) toParentPath = toParentPath[0] + ':';
-								else toParentPath = toParentPath.join( '/' ) + '/';
-								toParentPath += dir.infoFile.Filename;
-							
-								//console.log( 'Copying from ' + dir.infoFile.fileInfo.Path + ', to: ' + toParentPath );
-								door.dosAction( 'copy', { from: dir.infoFile.fileInfo.Path, to: toParentPath }, function( result )
-								{
-									//var result = 'ok<!--separate-->'; // temp!
-									// TODO: Check result! If it is "fail" then stop
-									var res = result.split( '<!--separate-->' );
-									if( res[0] == 'ok' )
-									{
-										if( fileCopyObject.stop ) return;
-										// Now make dir
-										mkdirhere();
-									}
-									else
-									{
-										Notify( { title: i18n( 'i18n_filecopy_error' ), text: res[1] + ' (' + toPath + ')' } );
-										w.close();
-										sview.refresh();
+
+										// Tell Friend Core something changed
+										var l = new Library( 'system.library' );
+										l.execute( 'file/notifychanges', { path: fob.files[0].fileInfo.Path } );
+										var l = new Library( 'system.library' );
+										l.execute( 'file/notifychanges', { path: eles[0].window.fileInfo.Path } );
 									}
 								} );
 							}
-							// Just maked ir
-							else
-							{
-								mkdirhere();
-							}
 						}
-					},
-					nextStep: function( result, initNewRun )
-					{
-						var fob = this;
-						if( initNewRun && fileCopyObject.files.length > this.stepsize )
+						// Just copy! No delete! :)
+						else
 						{
-							var f = fileCopyObject.files;
-							var nf = [];
-							for( var b = this.stepsize; b < f.length; b++ )
-								nf.push( f[b] );
-							fileCopyObject.files = nf;
-							fileCopyObject.copyFiles();
-						}
+							// Close window
+							clearInterval( handleBarRefresh );
+							w.close();
 
-						// Timed refresh (don't refresh a zillion times!
-						if( eles[0].window && eles[0].window.refresh )
-						{
-							if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
-							this.refreshTimeout = setTimeout( function()
+							// Tell Friend Core something changed
+							var l = new Library( 'system.library' );
+							var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
+							if( p )
 							{
-								eles[0].window.refresh();
-								fob.refreshTimeout = 0;
-							}, 500 );
-						}
-
-						bar.items--;
-
-						if( bar.items == 0 )
-						{
-							// No control key in? Delete files after copying - essentially moving the files
-							if( !ctrl )
-							{
-								// Now delete files
-								//first make the list complete again
-								fob.files = fob.originalfilelist;
-
-								w.deletable = fob.files.length;
-
-								bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
-
-								// Delete in reverse
-								var ic = new FileIcon();
-								for( var b = fob.files.length - 1; b >= 0; b-- )
-								{
-									ic.delCache( fob.files[b].fileInfo.Path );
-									d.dosAction( 'delete', { path: fob.files[b].fileInfo.Path }, function( result )
-									{
-										w.deletable--;
-										if( w.deletable == 0 )
-										{
-											// Close window
-											clearInterval( handleBarRefresh );
-											w.close();
-
-											// Tell Friend Core something changed
-											var l = new Library( 'system.library' );
-											l.execute( 'file/notifychanges', { path: fob.files[0].fileInfo.Path } );
-											var l = new Library( 'system.library' );
-											l.execute( 'file/notifychanges', { path: eles[0].window.fileInfo.Path } );
-										}
-									} );
-								}
-							}
-							// Just copy! No delete! :)
-							else
-							{
-								// Close window
-								clearInterval( handleBarRefresh );
-								w.close();
-
-								// Tell Friend Core something changed
-								var l = new Library( 'system.library' );
-								var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
-								if( p )
-								{
-									l.execute( 'file/notifychanges', { path: p } );
-								}
-							}
-							windowArray.splice( windowArrayKey, 1);
-						}
-					},
-					// Do this when the processing loops are all done, finding files!
-					checkFinished: function()
-					{
-						if( this.processing == 0 )
-						{
-							bar.total = this.files.length;
-							bar.items = this.files.length;
-
-							//keep a copy as we will call copyFiles everytime after popping from our filellist
-							//needs to be done to make sure directories are in place before files are copied
-							//we might improve this and allow parallel processing once we have seperated files from directories and can be sure directories are processed first
-							this.originalfilelist = this.files;
-
-							// as we will handle 10 (or more) files at once we will need to create the directories first...
-							// so we will take the directories out and put them into the beginning of the array after we are done
-
-							// Set in directories and files
-							var alldirs = [];
-							var allfiles = [];
-							for(var i = 0; i < this.files.length; i++)
-							{
-								if( this.files[i].fileInfo.Type == 'Directory' )
-								{
-									alldirs.push( this.files[i] );
-								}
-								else 
-								{
-									allfiles.push( this.files[i] );
-								}
-							}
-
-							this.directories = alldirs;
-							this.files = allfiles;
-
-							//we need to create all directories before we can start tranferring files... w
-							if( this.directories.length > 0 )
-							{
-								this.createDirectories();
-							}
-							else
-							{
-								this.copyFiles();
+								l.execute( 'file/notifychanges', { path: p } );
 							}
 						}
+						windowArray.splice( windowArrayKey, 1);
 					}
-
-				};
-				fileCopyObject.checkFiles( eles );
-
-				// On close, stop copying
-				w.onClose = function()
+				},
+				// Do this when the processing loops are all done, finding files!
+				checkFinished: function()
 				{
-					fileCopyObject.stop = true;
-					
-					// If we have prev current
-					if( curr && isMobile )
+					if( this.processing == 0 )
 					{
-						setTimeout( function()
+						bar.total = this.files.length;
+						bar.items = this.files.length;
+
+						//keep a copy as we will call copyFiles everytime after popping from our filellist
+						//needs to be done to make sure directories are in place before files are copied
+						//we might improve this and allow parallel processing once we have seperated files from directories and can be sure directories are processed first
+						this.originalfilelist = this.files;
+
+						// as we will handle 10 (or more) files at once we will need to create the directories first...
+						// so we will take the directories out and put them into the beginning of the array after we are done
+
+						// Set in directories and files
+						var alldirs = [];
+						var allfiles = [];
+						for(var i = 0; i < this.files.length; i++)
 						{
-							_ActivateWindow( curr );
-							_WindowToFront( curr );
-						}, 550 );
+							if( this.files[i].fileInfo.Type == 'Directory' )
+							{
+								alldirs.push( this.files[i] );
+							}
+							else 
+							{
+								allfiles.push( this.files[i] );
+							}
+						}
+
+						this.directories = alldirs;
+						this.files = allfiles;
+
+						//we need to create all directories before we can start tranferring files... w
+						if( this.directories.length > 0 )
+						{
+							this.createDirectories();
+						}
+						else
+						{
+							this.copyFiles();
+						}
 					}
 				}
 
-			}
-			// Didn't work..
-			else
-			{
-				this.master.fileoperations[ this.myid ].view.close();
-			}
-		}
-		dview.fileoperations[ dview.operationcounter ].progress.load();
+			};
+			fileCopyObject.checkFiles( eles );
 
-		dview.operationcounter++;
-		dview.ongoingdropprepare = false;
-		return eles.length;
-	//} );
-	return false;
+			// On close, stop copying
+			w.onClose = function()
+			{
+				fileCopyObject.stop = true;
+				
+				// If we have prev current
+				if( curr && isMobile )
+				{
+					setTimeout( function()
+					{
+						_ActivateWindow( curr );
+						_WindowToFront( curr );
+					}, 550 );
+				}
+			}
+
+		}
+		// Didn't work..
+		else
+		{
+			this.master.fileoperations[ this.myid ].view.close();
+		}
+	}
+	dview.fileoperations[ dview.operationcounter ].progress.load();
+
+	dview.operationcounter++;
+	dview.ongoingdropprepare = false;
+	return eles.length;
 }
 
 // -------------------------------------------------------------------------

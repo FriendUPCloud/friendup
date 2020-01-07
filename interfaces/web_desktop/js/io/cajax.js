@@ -370,7 +370,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.websocketState == 'open' &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'system.library' ) >= 0 && 
-		url.indexOf( '/file' ) < 0 
+		url.indexOf( '/file/write' ) < 0 &&
+		url.indexOf( '/file/read' ) < 0 
 	)
 	{
 		this.mode = 'websocket';
