@@ -657,11 +657,11 @@ cAjax.prototype.send = function( data )
 		// Add cancellable network connection
 		if( this.df && this.df.available ) 
 		{
-			// Don't overkill - only add connections taking more than 500 ms
+			// Don't overkill - only add connections taking more than 1000 ms
 			self.dfTimeout = setTimeout( function()
 			{
 				self.df.addConnection( self.connectionId, self.url, self );
-			}, 500 );
+			}, 1000 );
 		}
 		// Not for module calls
 		var addBusy = true;
@@ -753,11 +753,11 @@ cAjax.prototype.send = function( data )
 			// Add cancellable network connection
 			if( this.df && this.df.available ) 
 			{
-				// Don't overkill - only add connections taking more than 500 ms
+				// Don't overkill - only add connections taking more than 1000 ms
 				self.dfTimeout = setTimeout( function()
 				{
 					self.df.addConnection( self.connectionId, self.url, self );
-				}, 500 );
+				}, 1000 );
 			}
 		}
 		return;

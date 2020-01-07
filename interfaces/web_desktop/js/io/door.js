@@ -687,6 +687,8 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	// We need a path
 	if( !args.path ) args.path = this.deviceName + ':' + this.path;
 
+	console.log( '[ Door File Operation ] ' + ofunc + ' - ' + this.deviceName + ':' + this.path );
+
 	// Do the request
 	var j = new cAjax();
 	if( this.context ) j.context = this.context;

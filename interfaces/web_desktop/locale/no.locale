@@ -423,6 +423,7 @@ i18n_please_choose_a_path               : Vennligst velg en sti.
 
 i18n_cancel                             : Avbryt
 i18n_moving_files                       : Flytt filer
+i18n_delete_error                       : Feil ved sletting
 i18n_copying_files                      : Kopier filer
 i18n_filecopy_error                     : Feil ved filkopiering
 i18n_do_you_want_copy                   : Vil du virkelig kopiere disse filene?

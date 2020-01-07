@@ -116,7 +116,7 @@ Workspace.deleteFile = function()
 						{ 
 							if( !info.substr( 0, 3 ) == 'ok<' )
 							{
-								Notify( { title: i18n( 'i18n_could_not_delete' ), text: i18n( 'i18n_could_not_delete_desc' ) + '<br>&nbsp;' + file.fileInfo.Path } );
+								Notify( { title: i18n( 'i18n_could_not_delete' ), text: i18n( 'i18n_could_not_delete_files' ) + '<br>&nbsp;' + file.fileInfo.Path } );
 								return;
 							}
 							

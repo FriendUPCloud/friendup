@@ -425,6 +425,7 @@ i18n_please_choose_a_path               : Please choose a path.
 
 i18n_cancel                             : Cancel
 i18n_moving_files                       : Moving files
+i18n_delete_error                       : Delete error
 i18n_copying_files                      : Copying files
 i18n_filecopy_error                     : Error copying files
 i18n_do_you_want_copy                   : Do you really want to copy these files?
