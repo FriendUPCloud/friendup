@@ -4332,7 +4332,14 @@ var View = function( args )
 				if( Workspace.themeData )
 					msg.themeData = Workspace.themeData;
 
-				ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+				try
+				{
+					ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+				}
+				catch(e)
+				{
+					console.log('could not send postmessage to contentwindow!');
+				}
 				ifr.loaded = true;
 			}
 			if( callback ) { callback(); }
