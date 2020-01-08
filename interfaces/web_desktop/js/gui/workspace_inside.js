@@ -3071,7 +3071,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.initWorkspaces();
 					
 						// Redraw icons if they are delayed
-						Workspace.redrawIcons( 1 );
+						Workspace.redrawIcons();
 					}
 
 					if( themeName && themeName != 'default' )
@@ -4939,7 +4939,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 
-
 						// Bring up volume permissions
 						if( icon.Type == 'Door' )
 						{
@@ -5216,72 +5215,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						
-						/*
-						// Add 
-						var wg = new Module( 'system' );
-						wg.onExecuted = function( returnCode, returnData )
-						{
-							if( returnCode != 'ok' )
-							{
-								return;
-							}
-							var wgselect = w.getWindowElement().getElementsByTagName( 'select' );
-							var wgfound = false;
-							for( var a = 0; a < wgselect.length; a++ )
-							{
-								if( wgselect[a].getAttribute( 'name' ) == 'workgroup_sharing' )
-								{
-									wgselect = wgselect[a];
-									wgfound = true;
-									break;
-								}
-							}
-							if( !wgfound ) return;
-							var js = JSON.parse( returnData );
-							if( !js ) return;
-							for( var a = 0; a < js.length; a++ )
-							{
-								var opt = document.createElement( 'option' );
-								opt.innerHTML = i18n( 'i18n_sharewith' ) + ' ' + js[a].Name;
-								opt.value = js[a].ID;
-								wgselect.appendChild( opt );
-							}
-							wgselect.addEventListener( 'change', function( e )
-							{
-								var v = this.value;
-								var u = new Library( 'system.library' );
-								u.onExecuted = function( suc, sdt )
-								{
-									var l = new Library( 'system.library' );
-									l.onExecuted = function( ret, dat )
-									{
-										if( ret == 'ok' )
-										{
-											console.log( 'We got ' + dat );
-										}
-										else
-										{
-											console.log( 'Failed to mount: ', dat, icon );
-										}
-									}
-									l.execute( 'device', {
-										command: 'mount',
-										devname: dn,
-										usergroupid: v,
-										type: icon.Driver
-									} );
-								}
-								u.execute( 'device', {
-									command: 'unmount',
-									devname: dn
-								} );
-							} );
-							return;
-						}
-						wg.execute( 'workgroups' );
-						*/
-
-
 						// Initialize tab system
 						InitTabs( ge( 'IconInfo_' + Workspace.seed ) );
 						
@@ -5790,7 +5723,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				for( var a = 0; a < w.icons.length; a++ )
 				{
-					if( w.icons[a].domNode.className.indexOf ( 'Selected' ) > 0 )
+					if( w.icons[a].selected )
 					{
 						icon = w.icons[a];
 						break;
@@ -5800,12 +5733,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		else if( this.directoryView )
 		{
-			var eles = this.screen.contentDiv.getElementsByTagName( 'div' );
+			var eles = this.screen.contentDiv.icons;
 			for( var a = 0; a < eles.length; a++ )
 			{
-				if( eles[a].className == 'Icon' && eles[a].parentNode.className.indexOf( 'Selected' ) >= 0 )
+				if( eles[a].selected )
 				{
-					icon = eles[a].parentNode.fileInfo;
+					icon = eles[a];
 					break;
 				}
 			}
@@ -5823,7 +5756,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = new Library( 'system.library' );
 			m.onExecuted = function()
 			{
-				Workspace.getMountlist( callback, true );
+				Workspace.getMountlist( callback, false );
 			}
 			m.execute( 'device/refresh', { devname: icon.Volume.split( ':' )[0] } );
 			return;
