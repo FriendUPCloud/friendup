@@ -2306,17 +2306,19 @@ function DrawRegionSelector( e )
 					// Combine all
 					var intersecting = intersecting1 || intersecting2 || intersecting3 || intersecting4 || intersecting5 || intersecting6;
 				
-					if ( overlapping || intersecting )
+					if( overlapping || intersecting )
 					{
 						ics.classList.add( 'Selected' );
 						ics.fileInfo.selected = 'multiple';
 						ics.selected = 'multiple';
+						icos[a].selected = 'multiple';
 					}
-					else if ( !sh )
+					else if( !sh )
 					{
 						ics.classList.remove( 'Selected' );
 						ics.fileInfo.selected = false;
 						ics.selected = false;
+						icos[a].selected = false;
 					}
 				}
 			}
@@ -3755,6 +3757,8 @@ function clearRegionIcons( flags )
 					{
 						ic.classList.remove( 'Selected' );
 						w.icons[a].selected = false;
+						w.icons[a].file = false;
+						ic.selected = false;
 					}
 					ic.classList.remove( 'Editing' );
 					if( ic.input )
@@ -3780,7 +3784,9 @@ function clearRegionIcons( flags )
 			if( exception != ic && ic.selected != multipleCheck )
 			{
 				ic.classList.remove( 'Selected' );
+				icon.file.selected = false;
 				icon.selected = false;
+				ic.selected = false;
 			}
 		}
 	}

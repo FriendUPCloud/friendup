@@ -832,6 +832,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			}
 		}
 	}
+	// When resizing the window
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
 		var dirv = this.directoryview;
