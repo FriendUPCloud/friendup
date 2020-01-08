@@ -2596,6 +2596,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.insideInitialized = true;
 						forceScreenMaxHeight();
 					}
+					
+					// Make sure to redraw icons fully
+					Workspace.redrawIcons( 1 );
 				}
 				dm.execute( 'getdock', { dockid: '0' } );
 			}
@@ -2982,7 +2985,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// Make sure we update icons...
-									Workspace.redrawIcons();
+									Workspace.redrawIcons( 1 );
 									
 									// Update locale for download applet
 									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
@@ -3879,7 +3882,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							
 							if( ti.Title == ni.Title )
 							{
-								console.log( 'Found: ' + ni.Title + ' and it is ' + ( ni.Mounted ? 'mounted' : 'not mounted' ) );
 								found = true;
 								
 								// Set hasNew if the config changed

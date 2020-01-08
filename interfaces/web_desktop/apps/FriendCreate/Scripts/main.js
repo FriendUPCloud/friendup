@@ -929,6 +929,7 @@ function CheckProjectFile( file )
 				Filename: fn
 			} );
 			RefreshProjects();
+			SaveProject( p );
 		}
 	}
 }
@@ -1195,7 +1196,9 @@ function OpenProject( path )
 			
 			SetCurrentProject();
 			SetProjectPath( p );
-			MountProjectServer( p );
+			
+			if( p.ProjectType && p.ProjectType == 'webssh' )
+				MountProjectServer( p );
 			
 			RefreshProjects();
 			
@@ -1243,7 +1246,9 @@ function OpenProject( path )
 				
 				SetCurrentProject( p );
 				SetProjectPath( p );
-				MountProjectServer( p );
+				
+				if( p.ProjectType && p.ProjectType == 'webssh' )
+					MountProjectServer( p );
 				
 				RefreshProjects();
 				CheckPlayStopButtons();
@@ -1303,7 +1308,7 @@ function SaveProject( project, saveas, callback )
 		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
-			if( project.ProjectType = 'webssh' )
+			if( project.ProjectType == 'webssh' )
 			{
 				var p = project;
 				CreateFilesystem( {
@@ -1447,7 +1452,8 @@ function MoveProjectFiles( project, oldPath, callback )
 // Close a project
 function CloseProject( proj, callback )
 {
-	UnmountProjectServer( proj, callback );
+	if( proj.ProjectType && proj.ProjectType == 'webssh' )
+		UnmountProjectServer( proj, callback );
 	
 	var o = [];
 	for( var a = 0; a < projects.length; a++ )
@@ -1467,6 +1473,10 @@ function CloseProject( proj, callback )
 	if( proj == Application.currentProject )
 		Application.currentProject = null;
 	RefreshProjects();
+	
+	if( !( proj.ProjectType && proj.ProjectType == 'webssh' ) && callback )
+		callback( false );
+		
 }
 
 function RefreshProjects()
@@ -2278,7 +2288,7 @@ function UnmountProjectServer( p, cb )
 			} );
 			// TODO: If it won't mount, please try to edit it
 			// Ask if the user wants to change it..?
-			if( cb ) cb();
+			if( cb ) cb( true );
 		}
 		s.execute( 'device/unmount', {
 			devname: p.ProjectName
@@ -2286,7 +2296,7 @@ function UnmountProjectServer( p, cb )
 	}
 	else if( cb )
 	{
-		cb();
+		cb( false );
 	}
 }
 
@@ -2343,13 +2353,21 @@ Application.receiveMessage = function( msg )
 				{
 					return Application.sendMessage( { command: 'quit' } );
 				}
-				for( var a = 0; a < projects.length; a++ )
+				
+				// Make a copy while working on the projects list
+				var out = []; for( var a = 0; a < projects.length; a++ )
+					out[ a ] = projects[ a ];
+				// Closie
+				for( var a = 0; a < out.length; a++ )
 				{
-					CloseProject( projects[ a ], function()
+					CloseProject( out[ a ], function( result )
 					{
 						if( --pl == 0 )
 						{
 							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+							if( !result )
+								return Application.sendMessage( { command: 'quit' } );
+							
 							setTimeout( function()
 							{
 								Application.sendMessage( { command: 'quit' } );
@@ -2386,7 +2404,10 @@ Application.receiveMessage = function( msg )
 						
 						Application.currentProject = projects[ a ];
 						
-						MountProjectServer( Application.currentProject );
+						if( projects[ a ].ProjectType && projects[ a ].ProjectType == 'webssh' )
+						{
+							MountProjectServer( Application.currentProject );
+						}
 						
 						SaveProject( Application.currentProject );
 						break;

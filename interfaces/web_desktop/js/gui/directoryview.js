@@ -2190,7 +2190,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 									title: i18n( 'i18n_filecopy_error' ),
 									text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
 								} );
-								fop.stop = True;
+								fob.stop = true;
 								return;
 							}							
 							if( fob.stop ) return;
@@ -2229,7 +2229,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						function mkdirhere()
 						{
 							infocontent.innerHTML = i18n( 'i18n_creating_directory' ) + ' ' + toPath;
-							//console.log( 'Makedir: ' + toPath );
 							door.dosAction( 'makedir', { path: toPath }, function( result )
 							{
 								//var result = 'ok<!--separate-->'; // temp!
@@ -2323,7 +2322,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 							w.deletable = fob.files.length;
 
-							bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">Cleaning up...</div>';
+							infocontent.innerHTML = 'Cleaning up...';
 
 							// Delete in reverse
 							var ic = new FileIcon();
@@ -2612,6 +2611,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	var marginTop = icons[0] && icons[0].Handler ? 10 : 0;
 	var marginLeft = 20;
 	var marginRight = window.innerWidth - gridX + 20 - 1;
+	
 	var marginBottom = 5;
 	
 	if( window.isMobile )
@@ -2632,7 +2632,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	var iy  = marginTop; 
 	var ix  = marginLeft;
 	var shy = marginTop;
-	var shx = marginRight;
+	var shx = marginRight - parseInt( sc.parentNode.paddingRight );
 	
 	var column = 0;
 	var start = false;
@@ -4722,77 +4722,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	}
 }
 
-// -----------------------------------------------------------------------------
-function RefreshWindowGauge( win, finfo )
-{
-	if( isMobile ) return;
-	if( win.content ) win = win.content;
-	if( !win.fileInfo && finfo )
-	{
-		win.fileInfo = finfo;
-	}
-	if( !win.fileInfo ) return;
-	var wt = win.fileInfo.Path ? win.fileInfo.Path : win.fileInfo.Title;
-	var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
-	if( isVolume )
-	{
-		if( 1 == 2 )
-		{
-			if( win.vinfoTimeout ) clearTimeout( win.vinfoTimeout );
-			win.vinfoTimeout = setTimeout( function()
-			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					if( e == 'ok' )
-					{
-						var dj, fl;
-						try
-						{
-							dj = JSON.parse( d );
-							fl = dj.Used / dj.Filesize;
-						}
-						catch( e )
-						{
-							fl = 1;
-						}
-						// Multiply by 100
-						fl *= 100;
-						if( win.parentNode && win.parentNode.volumeGauge )
-						{
-							win.parentNode.volumeGauge.style.height = fl + '%';
-						}
-
-						var eles = win.parentNode.getElementsByClassName( 'DriveGauge' );
-						if( eles )
-						{
-							var factor = 1;
-							try
-							{
-								dj = JSON.parse( d );
-								if( !isNaN( dj.Used ) || isNaN( dj.Filesize ) )
-								{
-									factor = dj.Used / dj.Filesize;
-									if( isNaN( factor ) ) factor = 1;
-								}
-							}
-							catch( e )
-							{
-							}
-							eles[0].classList.add( 'Size' + Math.floor( factor * 10 ) );
-							eles[0].setAttribute( 'title', Math.ceil( factor * 100 ) + '% ' + i18n( 'i18n_full' ) );
-						}
-					}
-				}
-				var pth = wt.indexOf( ':' ) > 0 ? wt : ( wt + ':' );
-				m.execute( 'volumeinfo', { path: pth } );
-				clearTimeout( win.vinfoTimeout );
-				win.vinfoTimeout = false;
-			}, 250 );
-		}
-	}
-}
-
 // Opens a window based on the fileInfo (type etc) -----------------------------
 // oFileInfo  = original file info
 // event      = input event
@@ -4905,7 +4834,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					{
 						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
-					RefreshWindowGauge( self.win );
 					self.refreshTimeout = null;
 					self.win.refreshing = false;
 					if( callback ) callback();
@@ -5147,9 +5075,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			var dr = fileInfo.Door;
 			if( !dr.getIcons ) return;
 
-			// Get some volume info!
-			RefreshWindowGauge( win );
-
 			// Connect winbdow and door together
 			fileInfo.Door.window = win;
 			win.Door = fileInfo.Door;
@@ -5368,7 +5293,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 								{
 									var fin = dw.pathHistoryRewind();
 									dw.window.fileInfo = fin;
-									console.log( 'Rewinding: ', fin );
 					
 									if( !isMobile && dw.window.fileBrowser )
 									{
@@ -5387,7 +5311,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 					{
 						callback();
 					}
-					RefreshWindowGauge( this.win );
 					w.refreshing = false;
 				}
 				j.send();
@@ -6087,20 +6010,6 @@ Friend.startImageViewer = function( iconObject, extra )
 			zoomImage = owin._window.getElementsByTagName( 'img' )[0];
 		} );
 	}
-	win._window.addEventListener( 'mousedown', function( e )
-	{
-		var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
-		var dir = 0;
-		if( factor <= 0.2 )
-		{
-			dir = -1;
-		}
-		else if( factor >= 0.8 )
-		{
-			dir = 1;
-		}
-		goDirection( dir, e );
-	} );
 	function goDirection( dir, e )
 	{
 		if( dir != 0 )

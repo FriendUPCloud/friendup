@@ -2014,6 +2014,26 @@ html body.WindowMenu .Widget
 	height: 10px;
 }
 
+.Widget.HelpBubble.Fadable.Right:after
+{
+	left: calc(100% - 5px);
+	transform: rotate(270deg);
+	top: calc(50% - 4px);
+}
+
+.Widget.HelpBubble.Fadable.Left:after
+{
+	left: -15px;
+	transform: rotate(90deg);
+	top: calc(50% - 5px);
+}
+
+.Widget.HelpBubble.Fadable.Top:after
+{
+	top: -10px;
+	transform: rotate(180deg);
+}
+
 .Widget.HelpBubble.Fadable:after
 {
 	height: 5px;
