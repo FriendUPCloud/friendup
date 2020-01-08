@@ -2480,7 +2480,12 @@ movableMouseUp = function( e )
 	{
 		if( Workspace.iconContextMenu )
 		{
-			Workspace.iconContextMenu.hide();
+			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.add( 'Closing' );
+			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.remove( 'Open' );
+			setTimeout( function()
+			{
+				Workspace.iconContextMenu.hide();
+			}, 250 );
 		}
 	}
 	

@@ -7140,7 +7140,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				width: 200,
 				height: 100,
 				top: e.clientY,
-				left: e.clientX
+				left: e.clientX,
+				transparent: true
 			}
 			var v = false;
 			
@@ -7155,6 +7156,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.dom.innerHTML = '';
 			var menuout = document.createElement( 'div' );
 			menuout.className = 'MenuItems';
+			setTimeout( function()
+			{
+				// Position and open
+				var lch = menuout.childNodes;
+				var cand = menuout.lastChild;
+				for( var z = 0; z < lch.length; z++ )
+				{
+					if( !lch[ z ].classList.contains( 'Disabled' ) )
+						cand = lch[ z ];
+				}
+				menuout.style.height = ( cand.offsetTop + cand.offsetHeight ) + 'px';
+				menuout.classList.add( 'Open' );
+				
+				// Keep the vertical position by the limit
+				var limit = currentScreen.screen.contentDiv.offsetHeight;
+				if( GetElementTop( v.dom ) + parseInt( menuout.style.height ) > limit )
+				{
+					v.setFlag( 'top', limit - parseInt( menuout.style.height ) );
+				}
+			}, 50 );
 			
 			var head = document.createElement( 'p' );
 			head.className = 'MenuHeader';
@@ -7299,7 +7320,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							this.cmd( event );
 						}
-						v.hide();
+						menuout.classList.add( 'Closing' );
+						menuout.classList.remove( 'Open' );
+						setTimeout( function()
+						{
+							v.hide();
+						}, 250 );
 						Workspace.contextMenuShowing = false;
 						return cancelBubble( event );
 					}
@@ -7314,7 +7340,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								this.cmd( event );
 							}
-							v.hide();
+							menuout.classList.add( 'Closing' );
+							menuout.classList.remove( 'Open' );
+							setTimeout( function()
+							{
+								v.hide();
+							}, 250 );
 							return cancelBubble( event );
 						}
 					}
@@ -7325,7 +7356,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.dom.appendChild( menuout );
 			
 			// Show the thing
-			v.setFlag( 'height', v.dom.getElementsByTagName( 'div' )[0].offsetHeight );
+			v.setFlag( 'height', v.dom.lastChild.offsetHeight + v.dom.lastChild.offsetTop );
 			v.setFlag( 'left', flg.left );
 			v.setFlag( 'top', flg.top );
 			v.raise();
