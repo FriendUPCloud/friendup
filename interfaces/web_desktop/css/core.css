@@ -3875,7 +3875,7 @@ html #DockWindowList .Task.Directory
 	content: "\f0da";
 	display: block;
 	float: right;
-	margin: 0 5px 0 0;
+	margin: 4px 5px 0 0;
 }
 
 .DockMenu .DockMenuItem.Directory > .DockSubMenu

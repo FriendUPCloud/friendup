@@ -2155,6 +2155,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							data[a].Icon = i;
 						}
 						
+						// Contains sub menus
+						var ss = [];
+						
 						// Sub menu
 						if( data[a].Type == 'Directory' )
 						{
@@ -2318,21 +2321,23 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									return cancelBubble( e );
 								}
 							}
+							ss.push( s );
 						}
 						dd.appendChild( s );
 					}
 
 					if( parent.classList.contains( 'DockMenu' ) )
 					{
-						var s = document.createElement( 'div' );
-						s.className = 'DockMenuItem MousePointer Executable';
-						s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
-						s.onclick = function()
+						var s2 = document.createElement( 'div' );
+						s2.className = 'DockMenuItem MousePointer Executable';
+						s2.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
+						s2.onclick = function()
 						{
 							Workspace.toggleStartMenu( false );
 							Workspace.showLauncher();
 						}
-						dd.appendChild( s );
+						dd.appendChild( s2 );
+						s2 = null;
 					}
 
 					function repositionStartMenu()
@@ -2373,36 +2378,41 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							parent.style.height = dd.offsetHeight + 'px';
 						}
-						else if( s && s.parentNode )
+						else if( ss )
 						{
-							if( topInfo == 'Right' || topInfo == 'Left' )
+							for( var a = 0; a < ss.length; a++ )
 							{
-								dd.style.top = '0';
-								if( topInfo == 'Right' )
+								var s = ss[ a ];
+								
+								if( topInfo == 'Right' || topInfo == 'Left' )
 								{
-									dd.style.left = 0 - s.offsetWidth + 'px';
+									dd.style.top = '0';
+									if( topInfo == 'Right' )
+									{
+										dd.style.left = 0 - s.offsetWidth + 'px';
+									}
+									else
+									{
+										dd.style.left = s.offsetWidth + 'px';
+									}
+								}
+								else if( topInfo == 'Top' )
+								{
+									dd.style.top = s.style.top;
+								}
+								else if( depth > 1 )
+								{
+									dd.style.bottom = '0px';
+									dd.style.top = 'auto';
 								}
 								else
 								{
-									dd.style.left = s.offsetWidth + 'px';
+									dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 								}
-							}
-							else if( topInfo == 'Top' )
-							{
-								dd.style.top = s.style.top;
-							}
-							else if( depth > 1 )
-							{
-								dd.style.bottom = '0px';
-								dd.style.top = 'auto';
-							}
-							else
-							{
-								dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 							}
 						}
 					}
-					setTimeout( repositionStartMenu, 250 );
+					repositionStartMenu();
 				} );
 			}
 
