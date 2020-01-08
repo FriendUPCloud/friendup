@@ -3718,7 +3718,8 @@ function convertIconsToMultiple()
 			if( ics[a].selected )
 			{
 				ics[a].selected = 'multiple';
-				ics[a].domNode.selected = 'multiple';
+				if( ics[ a ].domNode )
+					ics[a].domNode.selected = 'multiple';
 				if( ics[a].fileInfo )
 					ics[a].fileInfo.selected = 'multiple';
 			}
