@@ -191,6 +191,7 @@ function SaveCurrentDock()
 {	
 	var options = {};
 	//options.position  = getSelectValue( ge( 'DockPlacement' ) );
+	options.position  = 'aligned';
 	options.layout    = getSelectValue( ge( 'DockLayout' ) );
 	options.size      = parseInt( getSelectValue( ge( 'DockSize' ) ) );
 	options.dockx     = ge( 'DockY' ).value;
