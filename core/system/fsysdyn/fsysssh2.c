@@ -392,7 +392,7 @@ int UnMount( struct FHandler *s, void *f )
 				}
 			
 				libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing" );
-				while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+				DisconnectLoop( sdat ,hd );
 				sdat->session = NULL;
 			}
 
