@@ -86,7 +86,7 @@ static inline ListString *RunPHPScript( const char *command )
 	struct timeval timeout;
 
 	// Initialize the timeout data structure. 
-	timeout.tv_sec = 5;
+	timeout.tv_sec = MOD_TIMEOUT;
 	timeout.tv_usec = 0;
 	
 	while( TRUE )
@@ -121,7 +121,7 @@ static inline ListString *RunPHPScript( const char *command )
 		{
 			errCounter++;
 			DEBUG("ErrCounter: %d\n", errCounter );
-			if( errCounter > 3 )
+			if( errCounter > MOD_NUMBER_TRIES )
 			{
 				//char clo[2];
 				//clo[0] = '\'';
