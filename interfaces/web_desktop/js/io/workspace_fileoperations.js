@@ -113,6 +113,11 @@ Workspace.deleteFile = function()
 						
 						var file = files[ index ];
 						
+						// Already treated
+						if( file.treated )
+							return;
+						file.treated = true;
+						
 						// callback
 						function nextFile( info )
 						{ 

@@ -87,26 +87,6 @@ cAjax = function()
 		if( !Friend.cajax ) Friend.cajax = [];
 	}
 	
-	// Get deepest field
-	this.df = typeof( DeepestField ) != 'undefined' ? DeepestField : false;
-	if( !this.df )
-	{
-		try
-		{
-			this.df = typeof( parent.DeepestField ) != 'undefined' ? parent.DeepestField : false;
-		}
-		catch( e )
-		{};
-	}
-	if( this.df )
-	{
-		// Create a unique id
-		_cajax_connection_num++;
-		if( _cajax_connection_num > 1073741824 )
-			_cajax_connection_num = 0;
-		this.connectionId = _cajax_connection_seed + _cajax_connection_num;
-	}
-	
 	this.setResponseType = function( type )
 	{
 		switch( type )
@@ -268,14 +248,6 @@ cAjax = function()
 			}
 			Friend.cajax = o;
 			// End clean queue
-			
-			// Register send time
-			if( jax.sendTime && jax.df && jax.df.available )
-			{
-				var ttr = ( new Date() ).getTime() - jax.sendTime;
-				jax.sendTime = false;
-				jax.df.networkActivity.timeToFinish.push( ttr );
-			}
 
 			// Execute onload action with appropriate data
 			if( jax.onload )
@@ -320,12 +292,7 @@ cAjax.prototype.destroy = function()
 	this.decreaseProcessCount();
 	if( this.opened )
 		this.close();
-	if( this.df && this.df.available ) this.df.delConnection( this.connectionId );
-	
-	// Null all attributes
-	if( this.dfTimeout ) clearTimeout( this.dfTimeout );
-	this.dfTimeout = null;
-	this.df = null;
+
 	this.vars = null;
 	this.mode = null;
 	this.url = null;
@@ -654,16 +621,6 @@ cAjax.prototype.send = function( data )
         
         self.wsRequestID = reqID;
 		
-		// Add cancellable network connection
-		if( this.df && this.df.available ) 
-		{
-			// Don't overkill - only add connections taking more than 3000 ms
-			/*self.dfTimeout = setTimeout( function()
-			{
-				self.df.addConnection( self.connectionId, self.url, self );
-			}, 3000 );*/
-			console.log( '[cajax] Would retry but will not.' );
-		}
 		// Not for module calls
 		var addBusy = true;
 		if( self.url.indexOf( 'module/' ) < 0 ) 
@@ -751,16 +708,6 @@ cAjax.prototype.send = function( data )
 		if( res )
 		{
 			successfulSend();
-			// Add cancellable network connection
-			if( this.df && this.df.available ) 
-			{
-				// Don't overkill - only add connections taking more than 3000 ms
-				/*self.dfTimeout = setTimeout( function()
-				{
-					self.df.addConnection( self.connectionId, self.url, self );
-				}, 3000 );*/
-				console.log( '[cajax] Would retry but will not number 2.' );
-			}
 		}
 		return;
 	}
