@@ -658,10 +658,11 @@ cAjax.prototype.send = function( data )
 		if( this.df && this.df.available ) 
 		{
 			// Don't overkill - only add connections taking more than 3000 ms
-			self.dfTimeout = setTimeout( function()
+			/*self.dfTimeout = setTimeout( function()
 			{
 				self.df.addConnection( self.connectionId, self.url, self );
-			}, 3000 );
+			}, 3000 );*/
+			console.log( '[cajax] Would retry but will not.' );
 		}
 		// Not for module calls
 		var addBusy = true;
@@ -754,10 +755,11 @@ cAjax.prototype.send = function( data )
 			if( this.df && this.df.available ) 
 			{
 				// Don't overkill - only add connections taking more than 3000 ms
-				self.dfTimeout = setTimeout( function()
+				/*self.dfTimeout = setTimeout( function()
 				{
 					self.df.addConnection( self.connectionId, self.url, self );
-				}, 3000 );
+				}, 3000 );*/
+				console.log( '[cajax] Would retry but will not number 2.' );
 			}
 		}
 		return;
