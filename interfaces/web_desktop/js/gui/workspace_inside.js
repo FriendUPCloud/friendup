@@ -2623,7 +2623,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					// Make sure to redraw icons fully
-					Workspace.redrawIcons( 1 );
+					setTimeout( function()
+					{
+						Workspace.redrawIcons( 1 );
+					}, 100 );
 				}
 				dm.execute( 'getdock', { dockid: '0' } );
 			}
@@ -3068,7 +3071,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.initWorkspaces();
 					
 						// Redraw icons if they are delayed
-						Workspace.redrawIcons();
+						Workspace.redrawIcons( 1 );
 					}
 
 					if( themeName && themeName != 'default' )
@@ -3941,7 +3944,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( hasNew )
 					{
 						t.icons = newIcons;
-						t.redrawIcons();
+						t.redrawIcons( forceRefresh );
 						if( checks.length )
 						{
 							for( var a = 0; a < checks.length; a++ )
@@ -3958,7 +3961,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						//console.log( 'Nothing new happened.' );
+						if( forceRefresh ) t.redrawIcons( 1 );
 					}
 					
 					// Do the callback thing
