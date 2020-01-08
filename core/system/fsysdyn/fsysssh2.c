@@ -119,6 +119,29 @@ const char *GetPrefix()
 }
 
 //
+//
+//
+
+static inline void DisconnectLoop( SpecialData *sd, HandlerData *hd )
+{
+#ifdef __ENABLE_MUTEX
+pthread_mutex_unlock( &hd->hd_Mutex );
+#endif
+while( TRUE )
+{
+	if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN )
+	{
+		break;
+		
+	}
+	usleep( 1000 ); 
+}
+#ifdef __ENABLE_MUTEX
+pthread_mutex_lock( &hd->hd_Mutex );
+#endif
+}
+
+//
 // additional stuff
 //
 
@@ -189,14 +212,8 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		}
 	
 		libssh2_session_disconnect( sd->session,  "Normal Shutdown, Thank you for playing" );
-		while( TRUE )
-		{
-			if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN )
-			{
-				break;
-			}
-			usleep( 1000 );
-		}
+		
+		DisconnectLoop( sd ,hd );
 		sd->session = NULL;
 	}
 	
@@ -237,7 +254,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		if( libssh2_session_handshake( sd->session, sd->sock ) < 0 ) 
 		{
 			DEBUG("Failure establishing SSH session\n");
-			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+			DisconnectLoop( sd ,hd );
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -252,7 +269,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		if( sd->fingerprint == NULL )
 		{
 			DEBUG("Failure establishing SSH session\n");
-			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+			DisconnectLoop( sd ,hd );
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -284,7 +301,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 			if( sd->rc != 0 )
 			{
 				FERROR("User not authenticated\n");
-				while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+				DisconnectLoop( sd ,hd );
 				sd->session = NULL;
 				shutdown( sd->sock, SHUT_RDWR );
 				close( sd->sock );
@@ -300,7 +317,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 			if (libssh2_userauth_publickey_fromfile( sd->session, sd->sd_LoginUser, NULL, sd->sd_privkeyFileName, sd->sd_LoginPass ) ) 
 			{	
 				FERROR("User not authenticated\n");
-				while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+				DisconnectLoop( sd ,hd );
 				sd->session = NULL;
 				shutdown( sd->sock, SHUT_RDWR );
 				close( sd->sock );
@@ -315,7 +332,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		else
 		{
 			FERROR("User not authenticated\n");
-			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+			DisconnectLoop( sd ,hd );
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -333,7 +350,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 			
 			FERROR("Unable to init SFTP session %d\n", err );
 			
-			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+			DisconnectLoop( sd ,hd );
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -776,6 +793,17 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 			FERROR("Unable to init SFTP session %d\n", err );
 			goto shutdown;
 		}
+		
+		LIBSSH2_SFTP_HANDLE *handle = NULL;
+		handle = libssh2_sftp_open( sdat->sftp_session, dev->f_Path, LIBSSH2_FXF_READ, 0 );
+		if( handle == NULL )
+		{
+			int err = libssh2_session_last_errno( sdat->session );
+			
+			FERROR("Cannot open base directory : %s - error %d\n", dev->f_Path, err );
+			goto shutdown;
+		}
+		libssh2_sftp_close( handle );
  
 		// Since we have not set non-blocking, tell libssh2 we are blocking 
 		libssh2_session_set_blocking( sdat->session, 1);
@@ -800,9 +828,28 @@ shutdown:
 			sdat->sftp_session = NULL;
 	
 			libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
-			while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+			
+#ifdef __ENABLE_MUTEX
+			pthread_mutex_unlock( &hd->hd_Mutex );
+			DEBUG("mount SFTP unlock %p\n", &hd->hd_Mutex );
+#endif
+			while( TRUE )
+			{ 
+				if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN )
+				{
+					break; 
+				} usleep( 1000 );
+			}
 			
 			sdat->session = NULL;
+		}
+		else
+		{
+#ifdef __ENABLE_MUTEX
+		pthread_mutex_unlock( &hd->hd_Mutex );
+		//pthread_mutex_destroy( &hd->hd_Mutex );
+		DEBUG("mount SFTP unlock %p\n", &hd->hd_Mutex );
+#endif
 		}
 		
 		if( sdat->sock != 0 )
@@ -811,13 +858,6 @@ shutdown:
 			sdat->sock = 0;
 		}
 		DEBUG("all done!\n");
-
-#ifdef __ENABLE_MUTEX
-		pthread_mutex_unlock( &hd->hd_Mutex );
-		
-		//pthread_mutex_destroy( &hd->hd_Mutex );
-		DEBUG("mount SFTP unlock %p\n", &hd->hd_Mutex );
-#endif
 		
 		if( sdat->sd_Host ){ FFree( sdat->sd_Host ); }
 		if( sdat->sd_LoginUser ){ FFree( sdat->sd_LoginUser ); }
