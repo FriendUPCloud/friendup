@@ -1944,6 +1944,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				}
 			}, 100 );
 
+			var series = UniqueHash();
+			
 			// Create a filecopy object
 			var fileCopyObject = {
 
@@ -1977,6 +1979,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						this.processing--;
 						return;
 					}
+					
+					d.cancelId = series;
 
 					var o = this;
 
@@ -2172,6 +2176,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						
 						toPath = cfo.Path + p + destPath.split( eles[0].window.fileInfo.Path ).join( '' );
 						door = Workspace.getDoorByPath( fl.fileInfo.Path );
+						door.cancelId = series;
 
 						// Sanitation
 						while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
@@ -2192,6 +2197,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 									text: i18n( 'i18n_could_not_copy_files' ) + '<br>' + fl.fileInfo.Path + ' to ' + toPath
 								} );
 								fob.stop = true;
+								CancelCajaxOnId( series );
 								return;
 							}							
 							if( fob.stop ) return;
@@ -2222,6 +2228,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						var dir = this.directories.shift();
 						var toPath = cfo.Path + p + dir.fileInfo.Path.split(eles[0].window.fileInfo.Path).join('');
 						var door = Workspace.getDoorByPath( cfo.Path );
+						door.cancelId = series;
 
 						// Sanitation
 						while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
@@ -2341,8 +2348,10 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 										// Tell Friend Core something changed
 										var l = new Library( 'system.library' );
+										l.cancelId = series;
 										l.execute( 'file/notifychanges', { path: fob.files[0].fileInfo.Path } );
 										var l = new Library( 'system.library' );
+										l.cancelId = series;
 										l.execute( 'file/notifychanges', { path: eles[0].window.fileInfo.Path } );
 									}
 								} );
@@ -2357,6 +2366,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 							// Tell Friend Core something changed
 							var l = new Library( 'system.library' );
+							l.cancelId = series;
 							var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
 							if( p )
 							{
@@ -2419,6 +2429,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			w.onClose = function()
 			{
 				fileCopyObject.stop = true;
+				CancelCajaxOnId( series );
 				
 				// If we have prev current
 				if( curr && isMobile )

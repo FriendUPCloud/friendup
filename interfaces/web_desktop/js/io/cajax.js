@@ -57,8 +57,11 @@ function AddToCajaxQueue( ele )
 			return false;
 		}
 	}
-	// Add ajax element to queue.' );
-	Friend.cajax.push( ele );
+	// Add ajax element to the top of the queue
+	var o = [ ele ];
+	for( var a = 0; a < Friend.cajax.length; a++ )
+		o.push( Friend.cajax[ a ] );
+	Friend.cajax = o;
 }
 
 function RemoveFromCajaxQueue( ele )
@@ -84,8 +87,25 @@ function RemoveFromCajaxQueue( ele )
 	Friend.cajax = o;
 	for( var a = 0; a < executors.length; a++ )
 	{
-		executors[ a ].send( null, function(){ console.log( 'Executed from queue.' ); } );
+		executors[ a ].send( null );
 	}
+}
+
+// Cancel all queued cajax calls on id
+function CancelCajaxOnId( id )
+{
+	var o = [];
+	for( var a = 0; a < Friend.cajax.length; a++ )
+	{
+		if( Friend.cajax[ a ].cancelId != id )
+			o.push( Friend.cajax[ a ] );
+		else 
+		{
+			// Tell it it failed
+			Friend.cajax[ a ].destroySilent();
+		}
+	}
+	Friend.cajax = o;
 }
 
 // A simple ajax function
@@ -99,7 +119,7 @@ cAjax = function()
 	// cajax only survives for so long..
 	self.life = setTimeout( function()
 	{
-		console.log( '[cajax] Defunct ajax object destroying self after five seconds.' );
+		//console.log( '[cajax] Defunct ajax object destroying self after five seconds.' );
 		self.destroy();
 	}, 5000 );
 	
@@ -110,9 +130,6 @@ cAjax = function()
 	this.openFunc = null;
 	this.opened = false;
 	this.context = false; // Named contexts, so that we can kill an entire context
-	
-	//_c_count++;
-	//console.log( 'cAjax: Created ' + _c_count )
 	
 	this.setResponseType = function( type )
 	{
@@ -267,7 +284,7 @@ cAjax = function()
 			if( jax.mode != 'websocket' )
 			{
 				_cajax_http_connections--;
-				console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (closed one)', Friend.cajax );
+				//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (closed one)', Friend.cajax );
 			}
 			
 			// End clean queue
@@ -288,17 +305,14 @@ cAjax = function()
 		}
 		else
 		{
-			console.log( '* Idling ajax: ' + this.readyState + ' ' + this.status );
+			//console.log( '* Idling ajax: ' + this.readyState + ' ' + this.status );
 		}
 	}
 }
 
 // Clean up object
-cAjax.prototype.destroy = function()
+cAjax.prototype.destroySilent = function()
 {
-	// Clean out possible queue and replenish
-	RemoveFromCajaxQueue( this );
-
 	// No more activity here!
 	this.decreaseProcessCount();
 	
@@ -331,6 +345,13 @@ cAjax.prototype.destroy = function()
 	// finally
 	delete this;
 }
+cAjax.prototype.destroy = function()
+{
+	// Clean out possible queue and replenish
+	RemoveFromCajaxQueue( this );
+
+	this.destroySilent();
+}
 
 // Open an ajax query
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
@@ -339,7 +360,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	
 	if( this.opened )
 	{
-		console.log( '[cajax] Impossible error! Illegal reuse of object.' );
+		//console.log( '[cajax] Impossible error! Illegal reuse of object.' );
 		this.destroy();
 		return;
 	}
@@ -356,8 +377,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		Workspace.websocketState == 'open' &&
 		typeof( url ) == 'string' && 
 		url.indexOf( 'system.library' ) >= 0 && 
-		url.indexOf( '/file' ) < 0 /*/write' ) < 0 &&
-		url.indexOf( '/file/read' ) < 0 */
+		url.indexOf( '/file' ) < 0
 	)
 	{
 		this.mode = 'websocket';
@@ -376,7 +396,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	{
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
 		this.openFunc = function(){ 
-			console.log( '[cajax] Last options opening: ' + self.lastOptions.url );
+			//console.log( '[cajax] Last options opening: ' + self.lastOptions.url );
 			self.proxy.open( self.lastOptions.method, self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
@@ -398,7 +418,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.url = url;
 		this.proxy.hasReturnCode = hasReturnCode;
 		this.openFunc = function(){ 
-			console.log( '[cajax] Opening: ' + self.url );
+			//console.log( '[cajax] Opening: ' + self.url );
 			self.proxy.open( self.method, self.url, syncing ); 
 		};
 	}
@@ -458,7 +478,7 @@ cAjax.prototype.send = function( data, callback )
 	if( self.queued )
 	{
 		self.queued = false;
-		console.log( '[cajax] This is running from queue.' );
+		//console.log( '[cajax] This is running from queue.' );
 	}
 	
 	if( !data && this.cachedData )
@@ -486,7 +506,7 @@ cAjax.prototype.send = function( data, callback )
 			AddToCajaxQueue( self );
 			return;
 		}
-		console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (added one)' );
+		//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (added one)' );
 		_cajax_http_connections++;
 	}
 	
@@ -520,7 +540,7 @@ cAjax.prototype.send = function( data, callback )
 	// Check if we can use websockets
 	if( self.mode == 'websocket' && window.Workspace && Workspace.conn && Workspace.conn.ws && Workspace.websocketState == 'open' )
 	{
-		console.log( '[cajax] Sending ajax call with websockets.' );
+		//console.log( '[cajax] Sending ajax call with websockets.' );
         var u = self.url.split( '?' );
         var wsdata = ( data ? data : {} );
         if( self.vars )
@@ -557,7 +577,7 @@ cAjax.prototype.send = function( data, callback )
         }
         else if( typeof( reqID ) == 'undefined' )
         {
-        	console.log( 'cAjax: Request was undefined.' );
+        	//console.log( 'cAjax: Request was undefined.' );
         }
         else
         {
@@ -654,20 +674,20 @@ cAjax.prototype.send = function( data, callback )
 		if( self.life ) clearTimeout( self.life );
 		self.life = setTimeout( function()
 		{
-			console.log( 'Destroying self after eight seconds. ' + u );
+			//console.log( 'Destroying self after ten seconds. ' + u );
 			self.destroy();
-		}, 8000 );
+		}, 10000 );
 		
-		console.log( '[cajax] We sent stuff! ' + u );
+		//console.log( '[cajax] We sent stuff! ' + u );
 		
 		return;
 	}
 	else
 	{
-		console.log( '[cajax] No openfunc!' );
+		//console.log( '[cajax] No openfunc!' );
 	}
 	// We were not successful!
-	console.log( '[cajax] Just destroying.' );
+	//console.log( '[cajax] Just destroying.' );
 	this.destroy();
 }
 
@@ -777,7 +797,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			if( !self.rawData )
 			{
-				console.log( '[cAjax] Could not understand server response: ', self.returnData );
+				//console.log( '[cAjax] Could not understand server response: ', self.returnData );
 				self.destroy();
 				return;
 			}
@@ -820,7 +840,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	}
 	else
 	{
-		console.log( 'got ws data... but nowhere to send it' );
+		//console.log( 'got ws data... but nowhere to send it' );
 	}
 	self.destroy();
 }

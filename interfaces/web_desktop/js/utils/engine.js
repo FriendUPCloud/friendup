@@ -229,6 +229,11 @@ function UniqueId ()
 	return el;
 }
 
+function UniqueHash()
+{
+	return SHA256( "" + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( Math.random() * 999 ) + ( new Date() ).getTime() );
+}
+
 // set a cookie
 function SetCookie( key, value, expiry )
 {
