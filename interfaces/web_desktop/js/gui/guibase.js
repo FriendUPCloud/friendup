@@ -2485,7 +2485,7 @@ movableMouseUp = function( e )
 			setTimeout( function()
 			{
 				Workspace.iconContextMenu.hide();
-			}, 250 );
+			}, 150 );
 		}
 	}
 	

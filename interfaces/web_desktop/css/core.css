@@ -1941,7 +1941,7 @@ html body.WindowMenu .Widget
 
 .Widget .MenuItems
 {
-	transition: all 0.25s;
+	transition: all 0.15s;
 	opacity: 0;
 	border-radius: 4px;
 	height: 0px;

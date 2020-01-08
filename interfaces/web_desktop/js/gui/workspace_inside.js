@@ -7325,7 +7325,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						setTimeout( function()
 						{
 							v.hide();
-						}, 250 );
+						}, 150 );
 						Workspace.contextMenuShowing = false;
 						return cancelBubble( event );
 					}
@@ -7345,7 +7345,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							setTimeout( function()
 							{
 								v.hide();
-							}, 250 );
+							}, 150 );
 							return cancelBubble( event );
 						}
 					}
