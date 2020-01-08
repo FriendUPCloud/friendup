@@ -1050,6 +1050,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 					//break;
 				}
+				sleep( 0 );
 			//}
 			DEBUG("WS Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
 			

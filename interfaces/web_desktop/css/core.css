@@ -2419,6 +2419,12 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	line-height: 24px;
 }
 
+#Tray.Size16 .TrayElement.Download:before
+{
+    font-size: 93%;
+    line-height: 18px;
+}
+
 .TrayElement.Tasks:before
 {
 	background-image: url(/graphics/tasks.png);
