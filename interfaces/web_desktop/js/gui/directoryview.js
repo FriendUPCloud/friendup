@@ -3614,6 +3614,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						
 						if( this.classList.contains( 'Selected' ) )
 						{
+							// Check if we need this
 							this.classList.remove( 'Selected' );
 							this.selected = false;
 							this.icon.selected = false;
@@ -4333,7 +4334,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					this.icon.selected = this.selected;
 					this.fileInfo.selected = sh ? 'multiple' : true;
 				}
-
 
 				// Refresh the menu based on selected icons
 				WorkspaceMenu.show();

@@ -674,7 +674,9 @@ var mousePointer =
 		if ( ele.window )
 		{
 			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
-			_ActivateWindowOnly( ele.window.parentNode );
+			if( !ele.window.parentNode.classList.contains( 'Active'  ))
+				_ActivateWindowOnly( ele.window.parentNode );
+			
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				var ic = ele.window.icons[a];
