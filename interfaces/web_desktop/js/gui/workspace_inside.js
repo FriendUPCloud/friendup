@@ -2085,6 +2085,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						data = frs.concat( out, end );
 					}
 					
+					// Contains sub menus
+					var ss = [];
+					
 					// Menu items
 					for( var a = 0; a < data.length; a++ )
 					{
@@ -2126,6 +2129,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 							}
 							
+							// Reposition sub menu
+							var sub = this.querySelector( '.DockSubMenu' );
+							if( sub )
+							{
+								var sc = Workspace.screen.contentDiv.offsetHeight;
+								var t = GetElementTop( sub );
+								var h = sub.querySelector( '.DockMenuHeader' ).innerHTML;
+								
+								if( t + sub.offsetHeight > sc )
+								{
+									sub.style.top = 0 - ( ( t + sub.offsetHeight ) - sc ) + 'px';
+								}
+							}
+							
+							
 							if( this.leaveTimeout )
 								clearTimeout( this.leaveTimeout );
 						} );
@@ -2154,9 +2172,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="' + i + '"/></span><span>' + s.innerHTML + '</span>';
 							data[a].Icon = i;
 						}
-						
-						// Contains sub menus
-						var ss = [];
 						
 						// Sub menu
 						if( data[a].Type == 'Directory' )
@@ -2321,9 +2336,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									return cancelBubble( e );
 								}
 							}
-							ss.push( s );
 						}
 						dd.appendChild( s );
+						ss.push( s );
 					}
 
 					if( parent.classList.contains( 'DockMenu' ) )
