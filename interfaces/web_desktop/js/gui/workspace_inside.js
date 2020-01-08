@@ -2373,7 +2373,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							parent.style.height = dd.offsetHeight + 'px';
 						}
-						else if( s )
+						else if( s && s.parentNode )
 						{
 							if( topInfo == 'Right' || topInfo == 'Left' )
 							{

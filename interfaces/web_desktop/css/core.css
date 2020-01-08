@@ -3864,13 +3864,15 @@ html #DockWindowList .Task.Directory
 
 .Right .DockMenu .DockMenuItem.Directory:after
 {
-	content: "<";
+	font-family: FontAwesome;
+	content: "\f0d9";
 	float: left;
 }
 
 .DockMenu .DockMenuItem.Directory:after
 {
-	content: ">";
+	font-family: FontAwesome;
+	content: "\f0da";
 	display: block;
 	float: right;
 	margin: 0 5px 0 0;
