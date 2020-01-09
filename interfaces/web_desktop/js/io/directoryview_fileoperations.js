@@ -241,19 +241,26 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	
 	// Make sure we have valid source and destination and neither of them is 
 	// on System: volume and we have no ape using us....
-	if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 || dview.ongoingdropprepare )
+	if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 )
 	{
 		if( eles[0].window && eles[0].window.refresh )
+		{
 			eles[0].window.refresh();
-		else Workspace.refreshDesktop();
-		if( mode == 'view' ) dview.content.refresh();
-		else if( dview.directoryView.content ) dview.directoryView.content.refresh();
+		}
+		else 
+		{
+			Workspace.refreshDesktop();
+		}
+		if( mode == 'view' ) 
+		{
+			dview.content.refresh();
+		}
+		else if( dview.directoryView.content ) 
+		{
+			dview.directoryView.content.refresh();
+		}
 		return;
 	}
-
-	// we are all set...
-	// change 2016-04 - allow multiple operations at once....
-	dview.ongoingdropprepare = true;
 
 	dview.fileoperations[ copySessionId ] = {
 		mode:  'preparation', // Mode
@@ -264,6 +271,18 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 	// Register current open window
 	var curr = window.currentMovable;
+	
+	function CopyCleanup()
+	{ 
+		_ActivateWindow( curr );
+		_WindowToFront( curr );
+		curr.content.refresh();
+		if( sview && sview.parentNode )
+		{
+			sview.refresh();
+		}
+	}
+	
 
 	// Open window
 	dview.fileoperations[ copySessionId ].view = new View( {
@@ -833,9 +852,9 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						
 						infocontent.innerHTML = i18n( 'i18n_counted' ) + ' ' + bar.items + ' ' + i18n( 'i18n_counted_files' );
 
-						//keep a copy as we will call copyFiles everytime after popping from our filellist
-						//needs to be done to make sure directories are in place before files are copied
-						//we might improve this and allow parallel processing once we have seperated files from directories and can be sure directories are processed first
+						// Keep a copy as we will call copyFiles everytime after popping from our filellist
+						// needs to be done to make sure directories are in place before files are copied
+						// we might improve this and allow parallel processing once we have seperated files from directories and can be sure directories are processed first
 						this.originalfilelist = this.files;
 
 						// as we will handle 10 (or more) files at once we will need to create the directories first...
@@ -881,16 +900,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			{
 				fileCopyObject.stop = true;
 				CancelCajaxOnId( series );
-				
-				// If we have prev current
-				if( curr && isMobile )
-				{
-					setTimeout( function()
-					{
-						_ActivateWindow( curr );
-						_WindowToFront( curr );
-					}, 550 );
-				}
+				CopyCleanup();
 			}
 		}
 		// Didn't work.. - important elements were missing in template
