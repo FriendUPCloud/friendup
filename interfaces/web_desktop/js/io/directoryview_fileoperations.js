@@ -16,6 +16,9 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	
 	var mode = 'view';
 	
+	window.mouseDown = false;
+	clearRegionIcons();
+	
 	var a;
 
 	// Function to use for installing application packages
@@ -281,6 +284,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		{
 			sview.refresh();
 		}
+	}
+	
+	// Refresh immediately
+	curr.content.refresh();
+	if( sview && sview.parentNode )
+	{
+		sview.refresh();
 	}
 	
 
