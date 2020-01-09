@@ -407,6 +407,7 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 			}
 			else
 			{
+				DEBUG("[UserRemDeviceByName] Cannot unmount device, operation in progress\n");
 				*error = FSys_Error_OpsInProgress;
 				return remdev;
 			}

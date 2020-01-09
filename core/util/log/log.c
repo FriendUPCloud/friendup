@@ -186,123 +186,122 @@ void LogDelete( )
 void Log( int lev, char* fmt, ...)
 {
 	if( !fmt ) return;
-    if( slg.ff_ToFile == TRUE )
-        //if( 1 == 0 )
-    {
-        if (lev >= slg.ff_FileLevel)
-        {
-            if (FRIEND_MUTEX_LOCK( &slg.logMutex ) == 0)
-            {
+	if( slg.ff_ToFile == TRUE )
+	//if( 1 == 0 )
+	{
+		if (lev >= slg.ff_FileLevel)
+		{
+			//if (FRIEND_MUTEX_LOCK( &slg.logMutex ) == 0)
+			//{
+				time_t rawtime;
+				struct tm timeinfo; memset( &timeinfo, 0, sizeof( struct tm ) );
+				rawtime = time(NULL);
+				localtime_r(&rawtime, &timeinfo);
 
-                time_t rawtime;
-                struct tm timeinfo; memset( &timeinfo, 0, sizeof( struct tm ) );
-                rawtime = time(NULL);
-                localtime_r(&rawtime, &timeinfo);
+				// Get System Date
+				slg.ff_FD.fd_Year = timeinfo.tm_year+1900;
+				slg.ff_FD.fd_Mon = timeinfo.tm_mon+1;
+				slg.ff_FD.fd_Day = timeinfo.tm_mday;
+				slg.ff_FD.fd_Hour = timeinfo.tm_hour;
+				slg.ff_FD.fd_Min = timeinfo.tm_min;
+				slg.ff_FD.fd_Sec = timeinfo.tm_sec;
 
-                // Get System Date
-                slg.ff_FD.fd_Year = timeinfo.tm_year+1900;
-                slg.ff_FD.fd_Mon = timeinfo.tm_mon+1;
-                slg.ff_FD.fd_Day = timeinfo.tm_mday;
-                slg.ff_FD.fd_Hour = timeinfo.tm_hour;
-                slg.ff_FD.fd_Min = timeinfo.tm_min;
-                slg.ff_FD.fd_Sec = timeinfo.tm_sec;
+				FBOOL changeFileName = FALSE;
 
-                FBOOL changeFileName = FALSE;
-
-                if( slg.ff_MaxSize != 0 )
-                {
-                    if( slg.ff_FD.fd_Day != slg.ff_Time || slg.ff_Size >= slg.ff_MaxSize )
-                    {
-                        slg.ff_Size = 0;
-                        slg.ff_LogNumber++;
-                        changeFileName = TRUE;
-                    }
-                }
-                else
-                {
-                    if( slg.ff_FD.fd_Day != slg.ff_Time )
-                    {
+				if( slg.ff_MaxSize != 0 )
+				{
+					if( slg.ff_FD.fd_Day != slg.ff_Time || slg.ff_Size >= slg.ff_MaxSize )
+					{
+						slg.ff_Size = 0;
+						slg.ff_LogNumber++;
+						changeFileName = TRUE;
+					}
+				}
+				else
+				{
+					if( slg.ff_FD.fd_Day != slg.ff_Time )
+					{
 						slg.ff_LogNumber = 0;
-                        changeFileName = TRUE;
-                    }
-                }
+						changeFileName = TRUE;
+					}
+				}
 
-                if( changeFileName == TRUE )
-                {
-                    //char fname[ 512 ];
+				if (FRIEND_MUTEX_LOCK( &slg.logMutex ) == 0)
+			{
+				if( changeFileName == TRUE )
+				{
+					//char fname[ 512 ];
 
-                    if( slg.ff_MaxSize != 0 )
-                    {
+					if( slg.ff_MaxSize != 0 )
+					{
 						snprintf( slg.ff_DestinationPath, slg.ff_DestinationPathLength, "%s%s-%d-%02d-%02d-%02d.log", slg.ff_Path, slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
                         //snprintf( fname, sizeof(fname), "%s-%d-%02d-%02d-%02d.log", slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
-                    }
-                    else
-                    {
-						snprintf( slg.ff_DestinationPath, slg.ff_DestinationPathLength, "%s%s-%02d-%02d-%02d.log", slg.ff_Path, slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
-                        //snprintf( fname, sizeof(fname), "%s-%02d-%02d-%02d.log", slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
-                    }
+					}
+					else
+					{
+						snprintf( slg.ff_DestinationPath, slg.ff_DestinationPathLength, "%s%s-%02d-%02d-%02d.log", slg.ff_Path,	slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+						//snprintf( fname, sizeof(fname), "%s-%02d-%02d-%02d.log", slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon,	slg.ff_FD.fd_Day );
+					}
 
-                    if( slg.ff_FP != NULL )
-                    {
-                        fclose( slg.ff_FP );
-                        slg.ff_FP = NULL;
-                    }
-                    slg.ff_FP = fopen( slg.ff_DestinationPath, "a+");
-                    if( slg.ff_FP == NULL )
-                    {
-                        return;
-                    }
+					if( slg.ff_FP != NULL )
+					{
+						fclose( slg.ff_FP );
+						slg.ff_FP = NULL;
+					}
+					slg.ff_FP = fopen( slg.ff_DestinationPath, "a+");
+					if( slg.ff_FP == NULL )
+					{
+						FERROR("[log.c]: Cannot open new file to store logs\n");
+						FRIEND_MUTEX_UNLOCK( &slg.logMutex );
+						return;
+					}
 
-                    slg.ff_Time = slg.ff_FD.fd_Day;
+					slg.ff_Time = slg.ff_FD.fd_Day;
 
-                    if( slg.ff_ArchiveFiles > 0 )
-                    {
-                        // list have reverse order, on the top we have oldest entries
-                        if( remove( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] )  == 0 )
-                        {
-                            //Log( FLOG_DEBUG, "Old file removed: %s\n", slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] );
-                        }
+					if( slg.ff_ArchiveFiles > 0 )
+					{
+						// list have reverse order, on the top we have oldest entries
+						if( remove( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] )  == 0 )
+						{
+							//Log( FLOG_DEBUG, "Old file removed: %s\n", slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] );
+						}
 
-                        int i=0;
-                        for( i = 0 ; i < slg.ff_ArchiveFiles-1 ; i++ )
-                        {
-                            strcpy( slg.ff_FileNames[ i ], slg.ff_FileNames[ i+1 ] );
-                        }
-                        strcpy( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ], slg.ff_DestinationPath );
-                    }
-                }
+						int i=0;
+						for( i = 0 ; i < slg.ff_ArchiveFiles-1 ; i++ )
+						{
+							strcpy( slg.ff_FileNames[ i ], slg.ff_FileNames[ i+1 ] );
+						}
+						strcpy( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ], slg.ff_DestinationPath );
+					}
+				}
+				{
+					char date[ 256 ];
+					slg.ff_Size  += fprintf( slg.ff_FP, "%ld: %02d.%02d.%02d-%02d:%02d:%02d: ", pthread_self(),
+											slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon , slg.ff_FD.fd_Day ,
+											slg.ff_FD.fd_Hour , slg.ff_FD.fd_Min , slg.ff_FD.fd_Sec );
 
-
-                {
-                    char date[ 256 ];
-
-                    slg.ff_Size  += fprintf( slg.ff_FP, "%ld: %02d.%02d.%02d-%02d:%02d:%02d: ", pthread_self(),
-                                             slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon , slg.ff_FD.fd_Day ,
-                                             slg.ff_FD.fd_Hour , slg.ff_FD.fd_Min , slg.ff_FD.fd_Sec );
-
-                    //fprintf( slg.ff_FP, "%s", out);
-                    va_list args;
-                    va_start(args, fmt);
-                    //fprintf( slg.ff_FP, fmt, args);
-                    vfprintf( slg.ff_FP, fmt, args);
-                    va_end(args);
-
-                }
-                FRIEND_MUTEX_UNLOCK( &slg.logMutex );
-            } // pthread lock
-        } // file level
-    } // to file
+					//fprintf( slg.ff_FP, "%s", out);
+					va_list args;
+					va_start(args, fmt);
+					//fprintf( slg.ff_FP, fmt, args);
+					vfprintf( slg.ff_FP, fmt, args);
+					va_end(args);
+				}
+				FRIEND_MUTEX_UNLOCK( &slg.logMutex );
+			} // pthread lock
+		} // file level
+	} // to file
 
 #ifdef __DEBUG
 	// console output will be used for debug
-    if( slg.ff_ToConsole == 1 && lev >= slg.ff_Level )
-    {
-        printf("%ld: ", pthread_self() );
-        va_list args;
-        va_start(args, fmt);
-        //printf(fmt, args);
-        vprintf( fmt, args);
-        va_end(args);
-    }
+	if( slg.ff_ToConsole == 1 && lev >= slg.ff_Level )
+	{
+		printf("%ld: ", pthread_self() );
+		va_list args;
+		va_start(args, fmt);
+		//printf(fmt, args);
+		vprintf( fmt, args);
+		va_end(args);
+	}
 #endif
 }
