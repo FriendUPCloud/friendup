@@ -12,7 +12,8 @@
 // Dropping an icon on a window or an icon!
 DirectoryView.prototype.doCopyOnElement = function( eles, e )
 {
-	var dview = this;
+	var dview = this; // The view in question
+	
 	var mode = 'view';
 	
 	var a;
@@ -68,30 +69,30 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			if( this.object.file.fileInfo.Type == 'File' )
 			{
 				mode = 'view';
+				
 				// Redirect to view mode
 				dview = this.object.file.directoryView.window.parentNode;
 			}
 		}
-		
 	}
-
 
 	// Check some events
 	if( !e ) e = window.event;
 
+	// Register file operations here
 	if( !dview.fileoperations )
-	{
-		dview.fileoperations = [];
-		dview.operationcounter = 0;
-	}
+		dview.fileoperations = {};
+	
+	var copySessionId = UniqueHash();
 
-	// Make sure we register the ctrl key held down!
+	// Make sure we register the ctrl key held down! Control keys tell if we copy or move (ctrl = copy)
 	var ctrl = ( typeof( e ) != 'undefined' && e.ctrlKey ) ? e.ctrlKey : false;
 	if( !ctrl && typeof( e ) != 'undefined' && e.shiftKey ) ctrl = true;
 
 	// Window is the target
 	if( !dview.content && !dview.object.file )
 		return;
+	
 	var cfo = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 
 	var dragFromWindow = eles[0].window;
@@ -115,8 +116,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 			{
 				var ic = divs[a];
 				icons.push( ic );
-				// Check if the mouse entered here
 				
+				// Check if the mouse entered here
 				if( !cfo && mx >= ic.offsetLeft && my >= ic.offsetTop && mx < ic.offsetLeft + ic.offsetWidth && my < ic.offsetTop + ic.offsetHeight )
 				{
 					// We found a better target!
@@ -128,7 +129,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				}
 			}
 		}
-
+		
+		// Bailing
 		if( !cfo )
 		{
 			dview.content.refresh();
@@ -213,6 +215,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		}
 	}
 
+	// Examine destination
 	var destinationFI = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
 	var sPath = destinationFI.Path; // set path
 	var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false; // <- dropped path
@@ -222,6 +225,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	{
 		if( mode == 'view' ) dview.content.refresh();
 		else if( dview.directoryView.content ) dview.directoryView.content.refresh();
+		// Bailing!
 		return;
 	}
 
@@ -234,10 +238,9 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	{
 		ctrl = true;
 	}
-
 	
-		
-	// make sure we have valid source and destination and neither of them is on System: volume and we have no ape using us....
+	// Make sure we have valid source and destination and neither of them is 
+	// on System: volume and we have no ape using us....
 	if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 || dview.ongoingdropprepare )
 	{
 		if( eles[0].window && eles[0].window.refresh )
@@ -252,35 +255,38 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	// change 2016-04 - allow multiple operations at once....
 	dview.ongoingdropprepare = true;
 
-	dview.fileoperations[ dview.operationcounter ] = {};
-	dview.fileoperations[ dview.operationcounter ].sPath = sPath;
-	dview.fileoperations[ dview.operationcounter ].dPath = dPath;
+	dview.fileoperations[ copySessionId ] = {
+		mode:  'preparation', // Mode
+		sPath: sPath,         // Source
+		dPath: dPath,         // Destination
+		processedFolders: {}  // The folders processed by the copy operation
+	};
 
 	// Register current open window
 	var curr = window.currentMovable;
 
 	// Open window
-	dview.fileoperations[ dview.operationcounter ].view = new View( {
+	dview.fileoperations[ copySessionId ].view = new View( {
 		title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'),
 		width:  400,
-		height: 120,
-		id:     'fileops_' + dview.id + "_" + dview.operationcounter
+		height: 145,
+		'max-height': 145,
+		id:     'fileops_' + copySessionId
 	} );
 
-	//console.log('dview',dview,('iD ' + ( dview.id ? dview.id : 'no id on dview' ) ) );
-
-
-	dview.fileoperations[ dview.operationcounter ].view.myid = dview.operationcounter;
-	dview.fileoperations[ dview.operationcounter ].view.master = dview;
+	dview.fileoperations[ copySessionId ].view.myid = copySessionId;
+	dview.fileoperations[ copySessionId ].view.master = dview;
 
 	// Load template
-	dview.fileoperations[ dview.operationcounter ].progress = new File( 'templates/file_operation.html' );
-	dview.fileoperations[ dview.operationcounter ].progress.master = dview;
-	dview.fileoperations[ dview.operationcounter ].progress.myid = dview.operationcounter;
+	dview.fileoperations[ copySessionId ].progress = new File( 'templates/file_operation.html' );
+	dview.fileoperations[ copySessionId ].progress.master = dview;
+	dview.fileoperations[ copySessionId ].progress.myid = copySessionId;
 
-	dview.fileoperations[ dview.operationcounter ].progress.onLoad = function( data )
+	// Load window template for progress bar and do stuff
+	dview.fileoperations[ copySessionId ].progress.onLoad = function( data )
 	{
 		if( !this.master.fileoperations[ this.myid ] ) return;
+		
 		var w = this.master.fileoperations[ this.myid ].view;
 		var windowArray = this.master.fileoperations;
 		var windowArrayKey = this.myid;
@@ -288,7 +294,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
 		w.setContent( data );
 
-		// Setup progress bar
+		// Setup progress bar and register interactive elements
 		var eled = this.master.fileoperations[ this.myid ].view.getWindowElement().getElementsByTagName( '*' );
 		var groove = false, bar = false, frame = false, progressbar = false;
 		var fcb = infocontent = false;
@@ -314,18 +320,22 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				}
 			}
 		}
+		
+		// This is the context for file operations (cancellable)
+		var series = UniqueHash();
 
 		// Close button
 		if( fcb )
 		{
+			// This will terminate all io processes too
 			fcb.onclick = function()
 			{
 				w.close();
 			}
 		}
 
-		// Only continue if we have everything
-		if( progressbar && groove && frame && bar )
+		// Only continue if we have all gui elements in place
+		if( progressbar && groove && frame && bar && infocontent )
 		{
 			progressbar.style.position = 'relative';
 			frame.style.width = '100%';
@@ -354,84 +364,32 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					bar.innerHTML = '<div>' + size + '%</div>';
 				}
 			}, 100 );
-
-			var series = UniqueHash();
 			
 			// Create a filecopy object
-			var fileCopyObject = {
-
-				files: [],
-				directories:[],
+			var fileCopyObject = 
+			{
+				// Vars --------------------------------------------------------
+				
+				files: [],                // Files list
+				directories:[],           // Directory list
+				processedDirectories: {}, // Directories that are processed
+				processedFiles: {},       // Files that are prosessed
 				processing: 0,
 				stepsize: 10,
-				stop: false,
-				fileInfoCheck: function( ele )
-				{
-					if( !ele.fileInfo )
-					{
-						ele.fileInfo = {
-							Type: ele.Type,
-							Path: ele.Path,
-							Filesize: ele.Filesize,
-							Filename: ele.Filename
-						};
-					}
-				},
-				// Find files in folders
-				findSubFiles: function( folder )
-				{
-					infocontent.innerHTML = i18n( 'i18n_building_file_index' );
-					
-					// Counting!
-					this.processing++;
-					var d = Workspace.getDoorByPath( folder.ele.fileInfo.Path );
-					if( !d )
-					{
-						this.processing--;
-						return;
-					}
-					
-					d.cancelId = series;
-
-					var o = this;
-
-					// Get icons on path
-					d.getIcons( folder.ele.fileInfo, function( result )
-					{
-						var files = [];
-						for( var z = 0; z < result.length; z++ )
-						{
-							// We need to have fileInfo
-							o.fileInfoCheck( result[z] );
-							if( result[z].Type.toLowerCase() == 'directory' )
-							{
-								var d = Workspace.getDoorByPath( result[z].Path );
-								files.push( result[z] );
-								o.findSubFiles( { door: d, ele: result[z] } );
-							}
-							else if( result[z].Type.toLowerCase() == 'file' )
-							{
-								files.push( result[z] );
-							}
-						}
-						// Put the files in the right order!
-						o.checkFiles( files );
-						// Done counting!
-						o.processing--;
-						o.checkFinished();
-					} );
-				},
-				// Check all files (type etc)
+				stop: false,              // Whether or not to stop process
+				
+				// Functions ---------------------------------------------------
+				
+				// Check all files (type etc) - runs the show
 				checkFiles: function( checkFiles )
 				{
-					// Counting!
-					this.processing++;
+					this.processing++;       // Counting!
+					var eles = [];           // Dirs first, files later
+					var files = [];          // File elements
+					var finFiles = [];       // Temporary "final list"
+					var fsorted = [];        // Sorted list
+					var a, b, found;         // Misc vars used in routines
 					var typ, fnam;
-					var eles = [];
-					var files = [];
-					var finFiles = [];
-					var fsorted = [];
-					var a, b, found;
 				
 					// Add dirs and files separately
 					for( a = 0; a < checkFiles.length; a++ )
@@ -476,10 +434,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					}
 				
 					// Overwrite files with finFiles
-					files = finFiles;
-				
-					// Temp
-					//console.log( 'Sorted files with .info|.dirinfo first.' );
+					files = finFiles; delete finFiles;
 				
 					// Find .dirinfo files
 					var toPush = [];
@@ -493,7 +448,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							{
 								// Put .dirinfo file on directory
 								eles[a].infoFile = files[b];
-								//console.log( 'Added a info file: ' + files[b].fileInfo.Filename );
 								found = true;
 								break;
 							}
@@ -508,7 +462,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				
 					// Clean up and put files "to push" into files for copy
 					delete files;
-					delete finFiles;
+					
 					if( toPush.length )
 					{
 						for( a = 0; a < toPush.length; a++ )
@@ -517,13 +471,14 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					delete toPush;
 				
 					// File infos first, go through all files for copy
+					// Eles now contain directories, info files and normal files
 					for( a = 0; a < eles.length; a++ )
 					{
 						var d = Workspace.getDoorByPath( eles[a].fileInfo.Path );
-						var fin = eles[a].fileInfo;
 						if( d )
 						{
 							// Make sure we have file info
+							var fin = eles[a].fileInfo;
 							this.fileInfoCheck( fin );
 
 							// Add dirs and files to queue
@@ -531,12 +486,12 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							if( tt == 'directory' || tt == 'file' )
 							{
 								this.files.push( eles[a] );
-							}
-							// Directories adds sub files subsequently
-							if( fin.Type.toLowerCase() == 'directory' )
-							{
-								// Add folder and make sub paths
-								this.findSubFiles( { door: d, ele: eles[a] } );
+								// Directories adds sub files subsequently
+								if( tt == 'directory' )
+								{
+									// Add folder and make sub paths
+									this.findSubFiles( { door: d, ele: eles[a] } );
+								}
 							}
 						}
 					}
@@ -544,8 +499,79 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					// Not counting anymore
 					this.processing--;
 
-					// No more processing loops, it means we're finished!
+					// If no more processing loops, it means we're finished!
 					this.checkFinished();
+				},
+				// Find files in folders
+				findSubFiles: function( folder, callback )
+				{
+					var o = this;
+					
+					// Counting!
+					this.processing++;
+					infocontent.innerHTML = i18n( 'i18n_building_file_index' )  + ' ' + this.processing;
+					
+					var d = Workspace.getDoorByPath( folder.ele.fileInfo.Path );
+					if( !d )
+					{
+						this.processing--;
+						infocontent.innerHTML = i18n( 'i18n_building_file_index' )  + ' ' + this.processing;
+						return;
+					}
+					
+					d.cancelId = series; // Register file operation id
+
+					// Get icons on path
+					d.getIcons( folder.ele.fileInfo, function( result )
+					{
+						var files = [];
+						for( var z = 0; z < result.length; z++ )
+						{
+							// We need to have fileInfo
+							o.fileInfoCheck( result[z] );
+							if( result[z].Type.toLowerCase() == 'directory' )
+							{
+								var d = Workspace.getDoorByPath( result[z].Path );
+								if( o.processedDirectories[ result[z].Path ] )
+								{
+									console.log( '[fileoperations] Found a duplicate folder...' );
+									continue;
+								}
+								o.processedDirectories[ result[z].Path ] = true;
+								files.push( result[z] );
+								o.findSubFiles( { door: d, ele: result[z] } );
+							}
+							else if( result[z].Type.toLowerCase() == 'file' )
+							{
+								if( o.processedFiles[ result[z].Path ] )
+								{
+									console.log( '[fileoperations] Found a duplicate file...' );
+									continue;
+								}
+								o.processedFiles[ result[z].Path ] = true;
+								files.push( result[z] );
+							}
+						}
+						// Put the files in the right order!
+						o.checkFiles( files );
+						// Done counting!
+						o.processing--;
+						infocontent.innerHTML = i18n( 'i18n_building_file_index' )  + ' ' + o.processing;
+						o.checkFinished();
+					} );
+				},
+				// Check the fileinfo on element (every element needs one)
+				fileInfoCheck: function( ele )
+				{
+					if( !ele.fileInfo )
+					{
+						ele.fileInfo = {
+							Type: ele.Type,
+							Path: ele.Path,
+							Filesize: ele.Filesize,
+							Filename: ele.Filename
+						};
+					}
 				},
 				// Copy files that have been added
 				copyFiles: function()
@@ -741,7 +767,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 							w.deletable = fob.files.length;
 
-							infocontent.innerHTML = 'Cleaning up...';
+							infocontent.innerHTML = i18n( 'i18n_cleaning_up' );
 
 							// Delete in reverse
 							var ic = new FileIcon();
@@ -784,7 +810,16 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 								l.execute( 'file/notifychanges', { path: p } );
 							}
 						}
-						windowArray.splice( windowArrayKey, 1);
+						// Clean out
+						var arr = {};
+						for( var a in windowArray )
+						{
+							if( a != windowArrayKey )
+							{
+								arr[ a ] = windowArray[ a ];
+							}
+						}
+						arr = windowArray;
 					}
 				},
 				// Do this when the processing loops are all done, finding files!
@@ -794,6 +829,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					{
 						bar.total = this.files.length;
 						bar.items = this.files.length;
+						
+						infocontent.innerHTML = i18n( 'i18n_counted' ) + ' ' + bar.items + ' ' + i18n( 'i18n_counted_files' );
 
 						//keep a copy as we will call copyFiles everytime after popping from our filellist
 						//needs to be done to make sure directories are in place before files are copied
@@ -821,7 +858,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						this.directories = alldirs;
 						this.files = allfiles;
 
-						//we need to create all directories before we can start tranferring files... w
+						// We need to create all directories before we can start tranferring files... 
 						if( this.directories.length > 0 )
 						{
 							this.createDirectories();
@@ -834,6 +871,8 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				}
 
 			};
+			
+			// Start the process
 			fileCopyObject.checkFiles( eles );
 
 			// On close, stop copying
@@ -852,17 +891,16 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					}, 550 );
 				}
 			}
-
 		}
-		// Didn't work..
+		// Didn't work.. - important elements were missing in template
 		else
 		{
 			this.master.fileoperations[ this.myid ].view.close();
 		}
 	}
-	dview.fileoperations[ dview.operationcounter ].progress.load();
-
-	dview.operationcounter++;
-	dview.ongoingdropprepare = false;
+	dview.fileoperations[ copySessionId ].progress.load();
+	dview.fileoperations[ copySessionId ].mode = 'loading';
+	
+	// Return elements we wanted to copy
 	return eles.length;
 }

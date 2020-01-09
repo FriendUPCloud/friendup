@@ -696,7 +696,10 @@ var mousePointer =
 					el.oldParent = el.parentNode;
 					if( typeof ele.window.icons[a+1] != 'undefined' )
 						el.sibling = ele.window.icons[a+1].domNode;
-					el.parentNode.removeChild( el );
+					if( el.parentNode )
+					{
+						el.parentNode.removeChild( el );
+					}
 					this.dom.appendChild( el );
 					this.elements.push( el );
 				}
