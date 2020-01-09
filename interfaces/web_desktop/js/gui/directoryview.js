@@ -57,6 +57,9 @@ DirectoryView = function( winobj, extra )
 {	
 	var ws = GetWindowStorage( winobj.uniqueId );
 	
+	// Use this for all file operations to cancel operations later
+	this.cancelId = UniqueHash();
+	
 	// Initial values
 	this.listMode = ws && ws.listMode ? ws.listMode : 'iconview';
 	this.sortColumn = 'filename';
@@ -405,6 +408,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					Type: winobj.fileInfo.Type,
 					Door: Workspace.getDoorByPath( path )
 				}
+				fin.Door.cancelId = dw.cancelId;
 
 				// Set as current history element at end of list
 				dw.addToHistory( fin );
@@ -716,6 +720,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 					Volume: vol + ':',
 					Door: ( new Door( vol + ':' ) )
 				};
+				winobj.fileInfo.Door.cancelId = self.cancelId;
 				var lockH = flags && flags.lockHistory;
 				if( !lockH )
 				{
@@ -733,6 +738,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 					Volume: vol + ':',
 					Door: ( new Door( vol + ':' ) )
 				};
+				winobj.fileInfo.Door.cancelId = self.cancelId;
 				
 				var lockH = flags && flags.lockHistory;
 				if( !lockH )
@@ -743,6 +749,7 @@ DirectoryView.prototype.ShowFileBrowser = function()
 				winobj.refresh( false, false, false, false, false, event );
 			}
 		} );
+		winobj.fileBrowser.cancelId = winobj.directoryview.cancelId;
 		winobj.fileBrowser.render();
 	}
 }
@@ -1199,6 +1206,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			{
 				// Check the destination
 				var d = new Door( 'Home:' );
+				d.cancelId = winobj.directoryview.cancelId;
 				d.getIcons( 'Home:', function( items )
 				{
 					for( var a = 0; a < items.length; a++ )
@@ -1422,8 +1430,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						height: 100
 					} );
 
-					var uprogress = new File( 'templates/file_operation.html' );
-
+					var uprogress = new File( 'templates/file_operation.html' ); 
 					uprogress.connectedworker = uworker;
 
 					uprogress.onLoad = function( data )
@@ -3640,6 +3647,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 					Type: obj.fileInfo.Type,
 					Door: Workspace.getDoorByPath( path.join( ':' ) )
 				}
+				fin.Door.cancelId = dw.cancelId;
 				dw.addToHistory( fin );
 
 				// Update on notifications
@@ -3956,7 +3964,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		we.win = win;
 		
 		we.refresh = function( callback )
-		{	
+		{
 			// Refresh 1
 			// Run previous callback
 			if( callback )
@@ -4219,7 +4227,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 		}
 
 		// Create a directory view on window
-		CreateDirectoryView( win, extra );
+		var dv = CreateDirectoryView( win, extra );
 		w.setFlag( 'hidden', false );
 
 		// Special case - the fileInfo object has a door!
@@ -4237,6 +4245,10 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView 
 			
 			win.refresh = function( callback )
 			{
+				if( dv.cancelId )
+				{
+					CancelCajaxOnId( dv.cancelId );
+				}
 				// Refresh 2
 				// Run previous callback
 				if( callback )
