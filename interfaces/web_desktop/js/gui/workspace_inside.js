@@ -5786,7 +5786,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Find target frame
 			var resultfr = ge( 'fileUploadFrame' );
-			
+		
+			console.log('Fileupload path: ' + uppath );
+
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
 			{
