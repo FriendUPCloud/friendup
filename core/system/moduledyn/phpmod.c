@@ -190,7 +190,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	int errCounter = 0;
 
 	// Initialize the timeout data structure. 
-	timeout.tv_sec = 50;
+	timeout.tv_sec = MOD_TIMEOUT;
 	timeout.tv_usec = 0;
 	
 	while( TRUE )
