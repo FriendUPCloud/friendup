@@ -372,6 +372,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 				
 				files: [],                // Files list
 				directories:[],           // Directory list
+				processedCount: 0,        // Files and folders
 				processedDirectories: {}, // Directories that are processed
 				processedFiles: {},       // Files that are prosessed
 				processing: 0,
@@ -509,13 +510,11 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					
 					// Counting!
 					this.processing++;
-					infocontent.innerHTML = i18n( 'i18n_building_file_index' )  + ' ' + this.processing;
 					
 					var d = Workspace.getDoorByPath( folder.ele.fileInfo.Path );
 					if( !d )
 					{
 						this.processing--;
-						infocontent.innerHTML = i18n( 'i18n_building_file_index' )  + ' ' + this.processing;
 						return;
 					}
 					
@@ -538,6 +537,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 									continue;
 								}
 								o.processedDirectories[ result[z].Path ] = true;
+								o.processedCount++;
 								files.push( result[z] );
 								o.findSubFiles( { door: d, ele: result[z] } );
 							}
@@ -549,6 +549,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 									continue;
 								}
 								o.processedFiles[ result[z].Path ] = true;
+								o.processedCount++;
 								files.push( result[z] );
 							}
 						}
@@ -556,7 +557,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						o.checkFiles( files );
 						// Done counting!
 						o.processing--;
-						infocontent.innerHTML = i18n( 'i18n_building_file_index' )  + ' ' + o.processing;
+						infocontent.innerHTML = i18n( 'i18n_building_file_index' )  + ' ' + o.processedCount;
 						o.checkFinished();
 					} );
 				},
