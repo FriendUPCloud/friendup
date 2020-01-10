@@ -850,6 +850,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 			function clickFunc( e )
 			{
+				if( e.button != 0 ) return;
 				if( div.helpBubble ) div.helpBubble.close();
 				
 				// We got views? Just manage them
@@ -985,6 +986,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			
+			if( o.noContextMenu )
+			{
+				div.addEventListener( 'contextmenu', function( ee ){ return cancelBubble( ee ); }, false );
+			}
+			
 			var evt = window.isMobile || window.isTablet ? 'ontouchend' : 'onclick';
 			
 			if( window.isMobile )
@@ -1004,6 +1010,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				div[ evt ] = function( e )
 				{
+					if( e.button != 0 ) return;
+					
 					var t = e.target ? e.target : e.srcElement;
 					if( t != div ) return;
 					if( window.isMobile && !dk.open ) return;
@@ -1015,6 +1023,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				div[ evt ] = function( e )
 				{			
+					if( e.button != 0 ) return;
+					
 					if( window.isMobile && !this.touchTime )
 						return;
 					
@@ -1036,6 +1046,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				div.onmousedown = function( e )
 				{
+					if( e.button != 0 ) return;
 					// TODO: Fix special case with flags implementation on addLauncher()
 					if( div.classList.contains( 'Startmenu' ) || div.getAttribute( 'data-displayname' ) == 'Files' ) return;
 					if( mousePointer.candidate ) return;

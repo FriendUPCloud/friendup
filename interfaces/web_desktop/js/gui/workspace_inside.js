@@ -1925,6 +1925,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			this.smenu.dom.style.height = '0px';
 			this.smenu.dom.style.top = '0px';
 
+			d.addEventListener( 'contextmenu', function( e )
+			{
+				return cancelBubble( e );
+			}, false );
+
 			// We don't show the menu at first, we need to build!
 			var delayedBuildTime = false;
 			var delayedBuildFunc = false;
@@ -2191,6 +2196,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							buildMenu( data[a].Path, s, depth + 1 );
 							s.onclick = function( e )
 							{
+								if( e.button != 0 ) return;
 								var self = this;
 								this.classList.add( 'Over' );
 								var eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
@@ -2264,6 +2270,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Click action
 							s.onclick = function()
 							{
+								if( e.button != 0 ) return;
 								Workspace.toggleStartMenu( false );
 								// PDFs
 								if( !this.filename ) this.filename = this.executable;
@@ -2313,6 +2320,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							};
 							s.onmousedown = function( e )
 							{
+								if( e.button != 0 ) return;
 								this.slideX = 0;
 								this.offX = e.clientX;
 								this.offY = e.clientY;
@@ -2508,7 +2516,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							src: '/webclient/gfx/system/' + img,
 							title: 'Start',
 							className: 'Startmenu',
-							click: function(){ Workspace.toggleStartMenu(); }
+							click: function( e ){ Workspace.toggleStartMenu(); },
+							noContextMenu: true
 						}
 						Workspace.mainDock.addLauncher( ob );
 					}
