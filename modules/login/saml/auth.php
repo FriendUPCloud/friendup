@@ -123,6 +123,14 @@
 			//Check potential Mitra setup for this user! Add items to dock if he has groups that match mitra apps.
 			require('auth_saml_liberator.php');
 			auth_SAML_liberator_check_user_apps($dbo, $udata, $samldata);
+
+
+			if( function_exists( 'postLogin' ) )
+			{
+				$us = new stdClass();
+				$us->ID = $friend_user_id;
+				postLogin( $dbo, $us );
+			}
 			
 			die( generateLoginOutput( $udata, $samldata ) );
 			

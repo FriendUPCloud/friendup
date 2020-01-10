@@ -86,6 +86,7 @@ static inline ListString *RunPHPScript( const char *command )
 	struct timeval timeout;
 
 	// Initialize the timeout data structure. 
+
 	timeout.tv_sec = MOD_TIMEOUT;
 	timeout.tv_usec = 0;
 	

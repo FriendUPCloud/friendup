@@ -2218,6 +2218,23 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"getserverkey fatal error"}' );
 			
 			break;
+
+		case 'sleepabit':
+			/* just sleep a bit and return given sleeptime + random stuff to the client */
+			/* used for FriendCore debug work only...  */
+			$sleeptime = intval( ( isset( $args->args->sleeptime) ? $args->args->sleeptime : 0 ) );
+			if( $sleeptime < 1 ) $sleeptime = 1;
+			
+			$randomstring = str_shuffle( 'thisisjustsomedebugoutputcontainingthesleeptimeof' . $sleeptime .'seconds' );
+			
+			$Logger->log( 'Sleeping a bit here ' . $sleeptime . ' :: ' . $randomstring);
+			
+			sleep( $sleeptime );
+			
+			die( 'ok<!--separate-->{"slept_for": "'. $sleeptime .'" seconds", "randomstuff":"'.$randomstring.'" }' );
+			break;
+			
+
 		
 		// NATIVE version commands ---------------------------------------------
 
