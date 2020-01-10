@@ -425,6 +425,7 @@ i18n_please_choose_a_path               : Please choose a path.
 
 i18n_cancel                             : Cancel
 i18n_moving_files                       : Moving files
+i18n_delete_error                       : Delete error
 i18n_copying_files                      : Copying files
 i18n_filecopy_error                     : Error copying files
 i18n_do_you_want_copy                   : Do you really want to copy these files?
@@ -446,6 +447,12 @@ i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_drag_to_download_file              : Click or drag to desktop to download.
 i18n_drag_files_to_download             : Drop files to download.
+
+i18n_creating_directory                 : Creating directory
+i18n_building_file_index                : Building file index...
+i18n_counted                            : Counted
+i18n_counted_files                      : files.
+i18n_cleaning_up                        : Cleaning up...
 
 i18n_could_not_download                 : Could not download
 i18n_download_wrong_type                : Only files can be downloaded.

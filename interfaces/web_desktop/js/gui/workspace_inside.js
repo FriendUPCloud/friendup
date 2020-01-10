@@ -2085,6 +2085,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						data = frs.concat( out, end );
 					}
 					
+					// Contains sub menus
+					var ss = [];
+					
 					// Menu items
 					for( var a = 0; a < data.length; a++ )
 					{
@@ -2125,6 +2128,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									eles[z].classList.remove( 'Over' );
 								}
 							}
+							
+							// Reposition sub menu
+							var sub = this.querySelector( '.DockSubMenu' );
+							if( sub )
+							{
+								var sc = Workspace.screen.contentDiv.offsetHeight;
+								var t = GetElementTop( sub );
+								var h = sub.querySelector( '.DockMenuHeader' ).innerHTML;
+								
+								if( t + sub.offsetHeight > sc )
+								{
+									sub.style.top = 0 - ( ( t + sub.offsetHeight ) - sc ) + 'px';
+								}
+							}
+							
 							
 							if( this.leaveTimeout )
 								clearTimeout( this.leaveTimeout );
@@ -2320,19 +2338,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						dd.appendChild( s );
+						ss.push( s );
 					}
 
 					if( parent.classList.contains( 'DockMenu' ) )
 					{
-						var s = document.createElement( 'div' );
-						s.className = 'DockMenuItem MousePointer Executable';
-						s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
-						s.onclick = function()
+						var s2 = document.createElement( 'div' );
+						s2.className = 'DockMenuItem MousePointer Executable';
+						s2.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
+						s2.onclick = function()
 						{
 							Workspace.toggleStartMenu( false );
 							Workspace.showLauncher();
 						}
-						dd.appendChild( s );
+						dd.appendChild( s2 );
+						s2 = null;
 					}
 
 					function repositionStartMenu()
@@ -2373,36 +2393,41 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							parent.style.height = dd.offsetHeight + 'px';
 						}
-						else if( s )
+						else if( ss )
 						{
-							if( topInfo == 'Right' || topInfo == 'Left' )
+							for( var a = 0; a < ss.length; a++ )
 							{
-								dd.style.top = '0';
-								if( topInfo == 'Right' )
+								var s = ss[ a ];
+								
+								if( topInfo == 'Right' || topInfo == 'Left' )
 								{
-									dd.style.left = 0 - s.offsetWidth + 'px';
+									dd.style.top = '0';
+									if( topInfo == 'Right' )
+									{
+										dd.style.left = 0 - s.offsetWidth + 'px';
+									}
+									else
+									{
+										dd.style.left = s.offsetWidth + 'px';
+									}
+								}
+								else if( topInfo == 'Top' )
+								{
+									dd.style.top = s.style.top;
+								}
+								else if( depth > 1 )
+								{
+									dd.style.bottom = '0px';
+									dd.style.top = 'auto';
 								}
 								else
 								{
-									dd.style.left = s.offsetWidth + 'px';
+									dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 								}
-							}
-							else if( topInfo == 'Top' )
-							{
-								dd.style.top = s.style.top;
-							}
-							else if( depth > 1 )
-							{
-								dd.style.bottom = '0px';
-								dd.style.top = 'auto';
-							}
-							else
-							{
-								dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 							}
 						}
 					}
-					setTimeout( repositionStartMenu, 250 );
+					repositionStartMenu();
 				} );
 			}
 
@@ -2596,6 +2621,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Workspace.insideInitialized = true;
 						forceScreenMaxHeight();
 					}
+					
+					// Make sure to redraw icons fully
+					setTimeout( function()
+					{
+						Workspace.redrawIcons( 1 );
+					}, 100 );
 				}
 				dm.execute( 'getdock', { dockid: '0' } );
 			}
@@ -2982,7 +3013,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									}
 									
 									// Make sure we update icons...
-									Workspace.redrawIcons();
+									Workspace.redrawIcons( 1 );
 									
 									// Update locale for download applet
 									if( ge( 'Tray' ) && ge( 'Tray' ).downloadApplet )
@@ -3602,7 +3633,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Fetch mountlist from database
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
-		var t = this;
+		var t = this; // Reference to workspace
+		
 		if( !Friend.dosDrivers )
 		{
 			var d = new Module( 'system' );
@@ -3635,6 +3667,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			doGetMountlistHere();
 		}
+		
+		// Get the mountlist
 		function doGetMountlistHere()
 		{
 			var mo = new Module( 'system' );
@@ -3643,8 +3677,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var m = new Library( 'system.library' )
 				m.onExecuted = function( e, dat )
 				{
+					// New icons to list
 					var newIcons = [];
-
+					
 					// Add system on top (after Ram: if it exists)
 					newIcons.push( {
 						Title:	   'System',
@@ -3661,8 +3696,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Door:	   Friend.DoorSystem
 					} );
 				
+					// Did we get a new list of disks from the server?
 					if( returnCode == 'ok' )
 					{
+						// Check shortcuts and add them to the desktop
 						var shorts = JSON.parse( shortcuts );
 						for( var a = 0; a < shorts.length; a++ )
 						{
@@ -3752,79 +3789,78 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Redraw icons when tested for disk info
-					var redrawIconsT = false;
 					function testDrive( o, d )
 					{
 						if( !d ) return;
+						
 						// Check disk info
-						d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
+						if( d.dosAction )
 						{
-							if( io.split( '<!--separate-->' )[0] == 'ok' )
+							d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
 							{
-								var fl = new File( o.Volume + 'disk.info' );
-								fl.onLoad = function( data )
+								var res = io.split( '<!--separate-->' );
+								if( res[0] == 'ok' )
 								{
-									if( data.indexOf( '{' ) >= 0 )
+									var response = false;
+									try
 									{
-										var dt = JSON.parse( data );
-										if( dt && dt.DiskIcon )
+										response = JSON.parse( res[1] );
+									}
+									catch( k ){};
+									if( !response || ( response && response.response == 'File or directory do not exist' ) ) return;
+								
+									var fl = new File( o.Volume + 'disk.info' );
+									fl.onLoad = function( data )
+									{
+										if( data.indexOf( '{' ) >= 0 )
 										{
-											o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
-											clearTimeout( redrawIconsT );
-											redrawIconsT = setTimeout( function()
+											try
 											{
-												t.redrawIcons();
-											}, 100 );
+												var dt = JSON.parse( data );
+												if( dt && dt.DiskIcon )
+												{
+													o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
+													t.redrawIcons();
+												}
+											}
+											catch( e ){}
 										}
 									}
+									fl.load();
 								}
-								fl.load();
-							}
-							clearTimeout( redrawIconsT );
-							redrawIconsT = setTimeout( function()
-							{
-								t.redrawIcons();
-							}, 100 );
-						} );
+							} );
+						}
 					}
 
-					// Network devices
+					// Friend disks
 					var rows;
 					try
 					{
 						rows = JSON.parse( dat );
 					}
-					catch(e)
+					catch( e )
 					{
 						rows = false;
-						console.log( 'Could not parse network drives', e, dat );
 					}
-
+					
+					// Check the friend disks
 					if( rows && rows.length )
 					{
 						for ( var a = 0; a < rows.length; a++ )
 						{
 							var r = rows[a];
 							if( r.Config.indexOf( '{' ) >= 0 )
-								r.Config = JSON.parse( r.Config );
-
-							// Check if it was already found!
-							var found = false;
-							for( var va in t.icons )
 							{
-								if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
+								try
 								{
-									found = true;
-									if( !forceRefresh )
-										newIcons.push( t.icons[va] );
-									break;
+									r.Config = JSON.parse( r.Config );
+								}
+								catch( e )
+								{
+									console.log( r.Title + ' config did not parse.' );
 								}
 							}
-							if( found && !forceRefresh )
-							{
-								continue;
-							}
-
+							
 							// Doesn't exist, go on
 							var o = false;
 
@@ -3849,59 +3885,90 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								Driver: r.Type,
 								Door: d,
 								Visible: r.Visible != "false" ? true : false,
-								Config: r.Config
+								Config: r.Config,
+								Execute: r.Execute
 							};
-
-							// Execute it if it has execute flag set! Only the first time..
-							if( !found && r.Execute )
-							{
-								ExecuteJSXByPath( o.Volume + r.Execute );
-							}
-
-							// Force mount
-							var f = new FriendLibrary( 'system.library' );
-							f.addVar( 'devname', r.Name.split(':').join('') );
-							f.execute( 'device/mount' );
 
 							// We need volume information
 							d.Volume = o.Volume;
-							//d.Type = typ;
 
-							testDrive( o, d );
-
-							// Add to list
+							// Add new disk to list
 							newIcons.push( o );
 						}
 					}
-
-					// The new list
-					if( newIcons.length )
+					
+					// Check new icons with old icons
+					var hasNew = false;
+					var checks = [];
+					for( var a = 0; a < newIcons.length; a++ )
 					{
-						// Check change
-						if( t.icons )
+						var ni = newIcons[ a ];
+						var found = false;
+						for( var b = 0; b < t.icons.length; b++ )
 						{
-							for( var a = 0; a < t.icons.length; a++ )
+							var ti = t.icons[ b ];
+							
+							if( ti.Title == ni.Title )
 							{
-								var found = false;
-								for( var b = 0; b < newIcons.length; b++ )
+								found = true;
+								
+								// Set hasNew if the config changed
+								// TODO: Do other config tests
+						
+								if( ti.Visible != ni.Visible )
 								{
-									if( newIcons[b].Volume == t.icons[a].Volume )
-									{
-										found = true;
-										break;
-									}
+									hasNew = true;
 								}
-								if( !found )
+								else if( !ti.Config && ti.Config )
 								{
-									testDrive( t.icons[a], t.icons[a].Door )
-									break;
+									hasNew = true;
+								}
+								else if( ni.Config && ti.Config && ni.Config.visibility != ti.Config.visibility )
+								{
+									hasNew = true;
 								}
 							}
 						}
-						t.icons = newIcons;
+						if( !found )
+						{
+							checks.push( a );
+							hasNew = true;
+						}
 					}
+					
+					// If we increased the amount of icons, it means we have new
+					if( newIcons.length != t.icons.length )
+						hasNew = true;
+
+					// Something changed!
+					if( hasNew )
+					{
+						t.icons = newIcons;
+						t.redrawIcons( forceRefresh );
+						if( checks.length )
+						{
+							for( var a = 0; a < checks.length; a++ )
+							{
+								var check = checks[ a ];
+								if( t.icons[ check ].Execute )
+								{
+									ExecuteJSXByPath( t.icons[ check ].Volume + t.icons[ check ].Execute );
+									t.icons[ check ].Execute = false;
+								}
+								testDrive( t.icons[ check ], t.icons[check ].Door );
+							}
+						}
+					}
+					else
+					{
+						if( forceRefresh ) t.redrawIcons( 1 );
+					}
+					
 					// Do the callback thing
-					if( callback && typeof( callback ) == 'function' ) callback( t.icons );
+					if( callback && typeof( callback ) == 'function' )
+					{
+						callback( t.icons );
+					}
 
 					// Check for new events
 					t.checkDesktopEvents();
@@ -4213,6 +4280,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.renameWindow.close();
 					Workspace.renameWindow = false;
 				}
+				
+				
 
 				var w = new View( {
 					title: i18n( 'rename_file' ),
@@ -4248,6 +4317,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				inp.select();
 				inp.focus();
+				
 				inp.onkeydown = function( e )
 				{
 					var wh = e.which ? e.which : e.keyCode;
@@ -4869,7 +4939,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 
-
 						// Bring up volume permissions
 						if( icon.Type == 'Door' )
 						{
@@ -5146,72 +5215,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						
-						/*
-						// Add 
-						var wg = new Module( 'system' );
-						wg.onExecuted = function( returnCode, returnData )
-						{
-							if( returnCode != 'ok' )
-							{
-								return;
-							}
-							var wgselect = w.getWindowElement().getElementsByTagName( 'select' );
-							var wgfound = false;
-							for( var a = 0; a < wgselect.length; a++ )
-							{
-								if( wgselect[a].getAttribute( 'name' ) == 'workgroup_sharing' )
-								{
-									wgselect = wgselect[a];
-									wgfound = true;
-									break;
-								}
-							}
-							if( !wgfound ) return;
-							var js = JSON.parse( returnData );
-							if( !js ) return;
-							for( var a = 0; a < js.length; a++ )
-							{
-								var opt = document.createElement( 'option' );
-								opt.innerHTML = i18n( 'i18n_sharewith' ) + ' ' + js[a].Name;
-								opt.value = js[a].ID;
-								wgselect.appendChild( opt );
-							}
-							wgselect.addEventListener( 'change', function( e )
-							{
-								var v = this.value;
-								var u = new Library( 'system.library' );
-								u.onExecuted = function( suc, sdt )
-								{
-									var l = new Library( 'system.library' );
-									l.onExecuted = function( ret, dat )
-									{
-										if( ret == 'ok' )
-										{
-											console.log( 'We got ' + dat );
-										}
-										else
-										{
-											console.log( 'Failed to mount: ', dat, icon );
-										}
-									}
-									l.execute( 'device', {
-										command: 'mount',
-										devname: dn,
-										usergroupid: v,
-										type: icon.Driver
-									} );
-								}
-								u.execute( 'device', {
-									command: 'unmount',
-									devname: dn
-								} );
-							} );
-							return;
-						}
-						wg.execute( 'workgroups' );
-						*/
-
-
 						// Initialize tab system
 						InitTabs( ge( 'IconInfo_' + Workspace.seed ) );
 						
@@ -5287,13 +5290,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						d = JSON.parse( d );
 					}
-					catch( e ){};
+					catch( e )
+					{
+					};
 					if( e == 'ok' )
 					{
 						l = new Library( 'system.library' );
-						l.onExecuted = function( e, d )
+						l.onExecuted = function( e2, d2 )
 						{
-							if( e == 'ok' )
+							if( e2 == 'ok' )
 							{
 								v.close();
 								Workspace.refreshDesktop( false, true );
@@ -5302,10 +5307,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								try
 								{
-									d = JSON.parse( d );
+									d2 = JSON.parse( d2 );
 								}
-								catch( e ){};
-								Notify( { title: 'Error mounting', text: d.response } );
+								catch( e4 ){};
+								Notify( { title: 'Error mounting', text: d2.response } );
 								Workspace.refreshDesktop( false, true );
 								// Just remount normally
 								l = new Library( 'system.library' );
@@ -5718,7 +5723,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				for( var a = 0; a < w.icons.length; a++ )
 				{
-					if( w.icons[a].domNode.className.indexOf ( 'Selected' ) > 0 )
+					if( w.icons[a].selected )
 					{
 						icon = w.icons[a];
 						break;
@@ -5728,12 +5733,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		else if( this.directoryView )
 		{
-			var eles = this.screen.contentDiv.getElementsByTagName( 'div' );
+			var eles = this.screen.contentDiv.icons;
 			for( var a = 0; a < eles.length; a++ )
 			{
-				if( eles[a].className == 'Icon' && eles[a].parentNode.className.indexOf( 'Selected' ) >= 0 )
+				if( eles[a].selected )
 				{
-					icon = eles[a].parentNode.fileInfo;
+					icon = eles[a];
 					break;
 				}
 			}
@@ -5751,7 +5756,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = new Library( 'system.library' );
 			m.onExecuted = function()
 			{
-				Workspace.getMountlist( callback, true );
+				Workspace.getMountlist( callback, false );
 			}
 			m.execute( 'device/refresh', { devname: icon.Volume.split( ':' )[0] } );
 			return;
@@ -5781,7 +5786,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Find target frame
 			var resultfr = ge( 'fileUploadFrame' );
-			
+		
+			console.log('Fileupload path: ' + uppath );
+
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
 			{
@@ -6596,7 +6603,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								var f = new FriendLibrary( 'system.library' );
 								f.onExecuted = function( e, d )
-								{ Workspace.refreshDesktop( false, true ); }
+								{ 
+									if( e != 'ok' )
+									{
+										var js = null;
+										try{ js = JSON.parse( d ); } catch( e2 ){};
+										var response = js.response;
+										if( !response || typeof( response ) == 'undefined' )
+										{
+											if( js.errorcode )
+											{
+												response = 'Server returned error ' + js.errorcode;
+											}
+										}
+										else
+										{
+											response = 'Server responded: ' + response;
+											if( js.errorcode )
+												response += ' (error code ' + js.errorcode + ')';
+										}
+										return Notify( { title: i18n( 'Error unmounting' ), text: response } );
+									}
+									Workspace.refreshDesktop( false, true ); 
+								}
 								var args = {
 									command: 'unmount',
 									devname: p.split( ':' ).join ( '' ),
@@ -7046,7 +7075,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				width: 200,
 				height: 100,
 				top: e.clientY,
-				left: e.clientX
+				left: e.clientX,
+				transparent: true
 			}
 			var v = false;
 			
@@ -7061,6 +7091,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.dom.innerHTML = '';
 			var menuout = document.createElement( 'div' );
 			menuout.className = 'MenuItems';
+			setTimeout( function()
+			{
+				// Position and open
+				var lch = menuout.childNodes;
+				var cand = menuout.lastChild;
+				for( var z = 0; z < lch.length; z++ )
+				{
+					if( !lch[ z ].classList.contains( 'Disabled' ) )
+						cand = lch[ z ];
+				}
+				menuout.style.height = ( cand.offsetTop + cand.offsetHeight ) + 'px';
+				menuout.classList.add( 'Open' );
+				
+				// Keep the vertical position by the limit
+				var limit = currentScreen.screen.contentDiv.offsetHeight;
+				if( GetElementTop( v.dom ) + parseInt( menuout.style.height ) > limit )
+				{
+					v.setFlag( 'top', limit - parseInt( menuout.style.height ) );
+				}
+			}, 50 );
 			
 			var head = document.createElement( 'p' );
 			head.className = 'MenuHeader';
@@ -7205,7 +7255,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							this.cmd( event );
 						}
-						v.hide();
+						menuout.classList.add( 'Closing' );
+						menuout.classList.remove( 'Open' );
+						setTimeout( function()
+						{
+							v.hide();
+						}, 150 );
 						Workspace.contextMenuShowing = false;
 						return cancelBubble( event );
 					}
@@ -7215,12 +7270,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( Workspace.contextMenuAllowMouseUp )
 						{ 
 							if( !v.shown ) return;
+							Workspace.contextMenuShowing = false;
 							if( this.cmd && typeof( this.cmd ) == 'function' )
 							{
 								this.cmd( event );
 							}
-							v.hide();
-							Workspace.contextMenuShowing = false;
+							menuout.classList.add( 'Closing' );
+							menuout.classList.remove( 'Open' );
+							setTimeout( function()
+							{
+								v.hide();
+							}, 150 );
 							return cancelBubble( event );
 						}
 					}
@@ -7231,7 +7291,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.dom.appendChild( menuout );
 			
 			// Show the thing
-			v.setFlag( 'height', v.dom.getElementsByTagName( 'div' )[0].offsetHeight );
+			v.setFlag( 'height', v.dom.lastChild.offsetHeight + v.dom.lastChild.offsetTop );
 			v.setFlag( 'left', flg.left );
 			v.setFlag( 'top', flg.top );
 			v.raise();
@@ -7854,160 +7914,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( window.currentMovable && window.currentMovable.content )
 		{
 			window.currentMovable.content.refresh();
-		}
-	},
-	// Delete selected files
-	deleteFile: function()
-	{
-		var w = window.regionWindow;
-		if( !window.currentMovable || ( window.currentMovable && !window.currentMovable.content.refresh ) )
-			return;
-
-		// Detached refresh object
-		var rObj = {
-			refresh: window.currentMovable.content.refresh,
-			fileInfo: window.currentMovable.content.fileInfo
-		};
-
-		if( w )
-		{
-			var files = [];
-			var eles = w.getElementsByTagName( 'div' );
-			for( var a = 0; a < w.icons.length; a++ )
-			{
-				if( w.icons[a].selected )
-				{
-					var d = new Door();
-					files.push( { fileInfo: w.icons[a], door: d.get( w.icons[a].Path ) } );
-				}
-			}
-
-			// Create callback
-			var cnt = files.length;
-
-			if( cnt > 0 )
-			{
-				Confirm( i18n( 'i18n_sure_delete' ), i18n( 'i18n_sure_deldesc' ), function( d )
-				{
-					if( d == true )
-					{
-						// Open a window
-						var v = new View( {
-							title: i18n( 'i18n_deleting_files' ),
-							width: 320,
-							height: 100
-						} );
-						
-						// Build the UI
-						var cont = document.createElement( 'div' );
-						cont.className = 'ContentFull Frame';
-						cont.style.top = '10px';
-						cont.style.left = '10px';
-						cont.style.width = 'calc(100% - 20px)';
-						cont.style.height = '30px';
-						
-						var frame = document.createElement( 'div' );
-						frame.className = 'Groove BackgroundHighlight Rounded ContentFull';
-						frame.style.top = '1px';
-						frame.style.left = '1px';
-						frame.style.width = 'calc(100% - 2px)';
-						frame.style.height = 'calc(100% - 2px)';
-						
-						var bar = document.createElement( 'div' );
-						bar.className = 'Bar Rounded ContentFull';
-						bar.style.top = '1px';
-						bar.style.left = '1px';
-						bar.style.width = '0';
-						bar.style.height = 'calc(100% - 2px)';
-						
-						var text = document.createElement( 'div' );
-						bar.appendChild( text );
-						
-						cont.appendChild( frame );						
-						cont.appendChild( bar );
-						
-						var stop = false;
-						
-						var btn = document.createElement( 'button' );
-						btn.innerHTML = i18n( 'i18n_cancel' );
-						btn.className = 'Button IconSmall fa-remove NoMargins';
-						btn.style.position = 'absolute';
-						btn.style.left = '10px';
-						btn.style.top = '55px';
-						btn.onclick = function()
-						{
-							stop = true;
-						}
-						
-						v.content.appendChild( cont );
-						v.content.appendChild( btn );
-						
-						// Actually do the delete
-						function doDeleteFiles( files, index )
-						{
-							// 
-							if( stop || index == files.length )
-							{
-								// All done!
-								v.close();
-								return;
-							}
-							
-							var file = files[ index ];
-							
-							// callback
-							function nextFile()
-							{ 
-								var pct = Math.floor( ( index + 1 ) / files.length * 100 ) + '%';
-								Workspace.refreshWindowByPath( file.fileInfo.Path );
-								bar.style.width = 'calc(' + pct + ' - 2px)';
-								text.innerHTML = pct;
-								doDeleteFiles( files, index + 1 ); 
-							}
-							
-							var ic = new FileIcon();
-							
-							// Database ID
-							if( file.fileInfo.ID )
-							{	
-								file.door.dosAction( 'delete', { 
-									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
-								}, nextFile );
-								
-								var info = file.fileInfo.Path;
-								if( info.substr( info.length - 1, 1 ) == '/' )
-								info = info.substr( 0, info.length - 1 );
-								// Try to kill the info file!
-								file.door.dosAction( 'delete', { path: info + '.info' } );
-								
-								ic.delCache( file.fileInfo.Path );
-								ic.delCache( info + '.info' );
-							}
-							// Dormant?
-							else if ( file.fileInfo.Dormant )
-							{
-								file.fileInfo.Dormant.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
-								
-								ic.delCache( file.fileInfo.Path );
-							}
-							// Path
-							else
-							{
-								var info = file.fileInfo.Path;
-								if( info.substr( info.length - 1, 1 ) == '/' )
-								info = info.substr( 0, info.length - 1 );
-								file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
-								// Try to kill the info file!
-								file.door.dosAction( 'delete', { path: info + '.info' }, nextFile );
-								
-								ic.delCache( file.fileInfo.Path );
-								ic.delCache( info + '.info' );
-							}
-						}
-						doDeleteFiles( files, 0 );
-					}
-				} );
-			}
 		}
 	},
 	openParentDirectory: function( e )

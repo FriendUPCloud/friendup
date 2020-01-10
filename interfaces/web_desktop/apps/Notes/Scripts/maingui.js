@@ -592,7 +592,16 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
-	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:Notes/', bookmarks: false, rootPath: 'Home:Notes/' }, filebrowserCallbacks );
+	var FileBrowser = new Friend.FileBrowser( 
+		ge( 'LeftBar' ), 
+		{ 
+			displayFiles: true, 
+			path: 'Home:Notes/', 
+			bookmarks: false, 
+			rootPath: 'Home:Notes/',
+			noContextMenu: true
+		}, 
+		filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
 	

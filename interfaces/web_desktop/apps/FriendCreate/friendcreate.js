@@ -25,8 +25,11 @@ Application.run = function( msg )
 	mainWindow.onClose = function()
 	{
 		// TODO: Check if we haven't saved anything
-		
-		Application.quit();
+		if( !Application.forceQuit )
+		{
+			mainWindow.sendMessage( { command: 'closeprojects' } );
+			return false;
+		}
 	}
 	
 	var m = new File( 'Progdir:Templates/main.html' );
@@ -146,6 +149,12 @@ Application.receiveMessage = function( msg )
 			case 'package_generate':
 			case 'project_close':
 				mainWindow.sendMessage( msg );
+				break;
+			case 'system-notification':
+				if( msg.method && msg.method == 'mountlistchanged' )
+				{
+					mainWindow.sendMessage( { command: 'updatemountlist' } );
+				}
 				break;
 		}
 	}

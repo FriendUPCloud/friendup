@@ -581,7 +581,7 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
-	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true }, filebrowserCallbacks );
+	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, noContextMenu: true }, filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
 	

@@ -214,7 +214,7 @@ Workspace = {
 					o = {
 						width: 400,
 						height: 300,
-						valign: 'top',
+						top: Workspace.screen.contentDiv.offsetTop,
 						halign: 'right',
 						scrolling: false,
 						autosize: true
@@ -1308,11 +1308,13 @@ Workspace = {
 				'webclient/js/io/friendnetworkextension.js;' +
 				'webclient/js/io/friendnetworkdoor.js;' +
 				'webclient/js/io/friendnetworkapps.js;' +
+				'webclient/js/io/workspace_fileoperations.js;' + 
 				'webclient/js/io/DOS.js;' +
 				'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 				'webclient/js/gui/widget.js;' +
 				'webclient/js/gui/listview.js;' +
 				'webclient/js/gui/directoryview.js;' +
+				'webclient/js/io/directoryview_fileoperations.js;' +
 				'webclient/js/gui/menufactory.js;' +
 				'webclient/js/gui/workspace_menu.js;' +
 				'webclient/js/gui/deepestfield.js;' +
