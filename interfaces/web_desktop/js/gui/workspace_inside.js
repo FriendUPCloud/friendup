@@ -7276,21 +7276,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Mouse up on context menus has timeout
 					p.onmouseup = function( event )
 					{
-						if( Workspace.contextMenuAllowMouseUp )
-						{ 
-							if( !v.shown ) return;
-							Workspace.contextMenuShowing = false;
-							if( this.cmd && typeof( this.cmd ) == 'function' )
-							{
-								this.cmd( event );
+						if( event.button == 2 )
+						{
+							if( Workspace.contextMenuAllowMouseUp )
+							{ 
+								if( !v.shown ) return;
+								Workspace.contextMenuShowing = false;
+								if( this.cmd && typeof( this.cmd ) == 'function' )
+								{
+									this.cmd( event );
+								}
+								menuout.classList.add( 'Closing' );
+								menuout.classList.remove( 'Open' );
+								setTimeout( function()
+								{
+									v.hide();
+								}, 150 );
+								return cancelBubble( event );
 							}
-							menuout.classList.add( 'Closing' );
-							menuout.classList.remove( 'Open' );
-							setTimeout( function()
-							{
-								v.hide();
-							}, 150 );
-							return cancelBubble( event );
 						}
 					}
 				}
