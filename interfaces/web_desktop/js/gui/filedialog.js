@@ -37,6 +37,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if( !window.isMobile && path == 'Mountlist:' )
 		path = 'Home:';
 	
+	if( !window.isMobile && object && object.path && object.path == 'Mountlist:' )
+		object.path = false;
+	
 	// Check if the path exists
 	if( path != 'Mountlist:' )
 	{
