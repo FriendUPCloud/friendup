@@ -205,6 +205,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		{
 			self.path = path = ds.path;
 		}
+		else
+		{
+			console.log( 'Remember? ' + ( rememberPath ? 'yes' : 'false' ) + ' ds.path: ' + ds.path + ' object.path: ' + object.path );
+		}
 
 		// Block main view while this dialog is open!
 		if( mainview ) mainview.setBlocker( w );

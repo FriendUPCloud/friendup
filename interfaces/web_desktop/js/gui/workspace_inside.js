@@ -7430,7 +7430,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var self = this;
 
 		// Abort existing search runs!
-		KillcAjaxByContext( 'workspace_search' );
+		CancelCajaxOnId( 'workspace_search' );
 
 		ge( 'WorkspaceSearchResults' ).innerHTML = '';
 		this.searching = true;
@@ -7496,7 +7496,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				return;
 			}
-			d.context = 'workspace_search';
+			d.cancelId = 'workspace_search';
 			d.getIcons( false, function( data )
 			{
 				if( !data.length )
@@ -7740,7 +7740,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		// Abort existing search runs!
-		KillcAjaxByContext( 'workspace_search' );
+		CancelCajaxOnId( 'workspace_search' );
 		
 		this.searching = false;
 		if( ge( 'WorkspaceSearchStop' ) )
