@@ -19,12 +19,17 @@ Application.run = function( msg )
 	document.getElementsByTagName( 'input' )[0].focus();
 	document.getElementsByTagName( 'input' )[0].select();
 
-	ge( 'BrowserBox' ).src = getImageUrl( 'Progdir:Templates/about.html' );
-	this.registerUrl( ge( 'BrowserBox' ).src );
+	if( !ge( 'StartupCommand' ).value )
+	{
+		ge( 'BrowserBox' ).src = getImageUrl( 'Progdir:Templates/about.html' );
+		this.registerUrl( ge( 'BrowserBox' ).src );
+	}
 
 	this.hostName = false;
 	this.appName = false;
 	this.doorName = false;
+	
+	this.appLoaded = true;
 }
 
 Application.receiveMessage = function( msg )
@@ -171,6 +176,11 @@ function replaceFriendUrls( data, url )
 
 function setUrl( uri, move )
 {
+	if( !Application.appLoaded )
+	{
+		return setTimeout( function(){ setUrl( uri, move ); }, 250 );
+	}
+	
 	if( !move ) move = false;
 	var wantedIndex = null;
 	if( !isNaN( uri ) && ( uri === 0 || uri > 0 ) )
@@ -279,6 +289,7 @@ function setUrl( uri, move )
 	{
 		skiploading = true;
 		ge( 'BrowserBox' ).src = uri;
+		console.log( 'Setting browser uri: ' + uri );
 	}
 	
 	ge( 'uri' ).value = uri;

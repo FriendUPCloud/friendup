@@ -56,11 +56,32 @@ i18n_create_folder                  : Create folder
 
 # Project editor
 
+i18n_project_type                   : Project type
+i18n_web                            : Web
+i18n_enable_web_access_for_project  : Enable web access for project
+i18n_web_root                       : Web root
+i18n_standard_friend_project        : Friend project
+i18n_web_project_ssh                : Project using SSH
+
+
+i18n_host_server                    : Server
+i18n_host_username                  : Username
+i18n_host_password                  : Password
+i18n_host_path                      : Server path
+i18n_host_path_plh                  : /home/myuser/
+i18n_host_port                      : Port
+i18n_host_key                       : SSH Key
+i18n_host_server_plh                : myhost.com
+i18n_host_username_plh              : username
+i18n_host_password_plh              : password
+i18n_host_port_plh                  : 22
+
 i18n_project_editor                 : Project editor
 
 i18n_project_information            : Project information
 i18n_project_name                   : Project name
 i18n_project_author                 : Author
+i18n_project_host                   : Server host
 i18n_project_version                : Version
 i18n_project_category               : Category
 i18n_project_description            : Description
@@ -134,4 +155,13 @@ i18n_search_keywords                : Search keyword
 i18n_replace_with                   : Replace with
 i18n_do_replace                     : Replace
 i18n_do_replace_all                 : Replace all
+
+i18n_failed_to_mount                : Mount failed on
+i18n_failed_to_mount_project_disk   : Failed to mount project disk. Please check your username, password, host name, port or path.
+
+i18n_failed_to_unmount              : Couldn't unmount
+i18n_failed_to_unmount_project_disk : Could not unmount your project disk. Perhaps the SSH connection is hanging?
+
+i18n_failed_to_add_fs               : Failed to add filesystem
+i18n_failed_to_add_fs_desc          : Something wrong happened when adding the filesystem. Please check your settings.
 

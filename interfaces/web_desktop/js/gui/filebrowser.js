@@ -60,7 +60,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 		setTimeout( function()
 		{
 			self.scrolling = false;
-		}, 500 );
+		}, 50 );
 	}, false );
 	this.dom.classList.add( 'FileBrowser' );
 	this.rootPath = 'Mountlist:'; // The current root path
@@ -107,10 +107,15 @@ Friend.FileBrowser.prototype.clear = function()
 	this.headerDisks = false;
 	this.bookmarksHeader = false;
 }
-Friend.FileBrowser.prototype.render = function()
+Friend.FileBrowser.prototype.render = function( force )
 {
 	var self = this;
 	
+	if( force && this.dom )
+	{
+		this.clear();
+	}
+		
 	this.refresh();
 };
 Friend.FileBrowser.prototype.drop = function( elements, e, win )
@@ -668,6 +673,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			
 			if( self.flags.bookmarks )
 			{
+				done();
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -895,7 +901,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					setTimeout( function()
 					{
 						clickElement.onclick();
-					}, 50 );
+					}, 5 );
 				}
 			}
 		} );

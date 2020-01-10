@@ -76,20 +76,20 @@ Application.run = function( msg, iface )
 					command: 'makeinlineimages'
 				}
 			]
-		},
+		}/*,
 		{
 			name: i18n( 'menu_preferences' ),
 			items: [
 				{
 					name: i18n( 'menu_preferences' ),
 					command: 'showprefs'
-				}/*,
+				},
 				{
 					name: i18n( 'menu_vr_features' ),
 					command: 'togglevr'
-				}*/
+				}
 			]
-		}
+		}*/
 	] );
 	
 	var f = new File( 'Progdir:Templates/maingui.html' );

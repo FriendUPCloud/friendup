@@ -56,11 +56,31 @@ i18n_create_folder                  : Lag mappe
 
 # Project editor
 
+i18n_project_type                   : Prosjekttype
+i18n_web                            : Web
+i18n_enable_web_access_for_project  : Bruk webtilgang i prosjektet
+i18n_web_root                       : Web adresse
+i18n_standard_friend_project        : Friend prosjekt
+i18n_web_project_ssh                : Prosjekt via SSH vert
+
+i18n_host_server                    : Vertsnavn
+i18n_host_username                  : Brukernavn
+i18n_host_password                  : Passord
+i18n_host_path                      : Vertssti
+i18n_host_path_plh                  : /home/minbruker/
+i18n_host_port                      : Port
+i18n_host_key                       : SSH nøkkel
+i18n_host_server_plh                : myhost.com
+i18n_host_username_plh              : brukernavn
+i18n_host_password_plh              : passord
+i18n_host_port_plh                  : 22
+
 i18n_project_editor                 : Prosjektredigering
 
 i18n_project_information            : Prosjektinformasjon
 i18n_project_name                   : Prosjektnavn
 i18n_project_author                 : Forfatter
+i18n_project_host                   : Server vert
 i18n_project_version                : Versjon
 i18n_project_category               : Kategori
 i18n_project_description            : Beskrivelse
@@ -133,4 +153,13 @@ i18n_search_keywords                : Søkeord
 i18n_replace_with                   : Erstatt med
 i18n_do_replace                     : Erstatt
 i18n_do_replace_all                 : Erstatt alle
+
+18n_failed_to_mount                 : Kunne ikke montere 
+i18n_failed_to_mount_project_disk   : Montering av prosjektdisken feilet. Vennligst sjekk brukernavn, passord, vertsnavn, port eller filsti.
+
+i18n_failed_to_unmount              : Kunne ikke avmontere
+i18n_failed_to_unmount_project_disk : Din prosjektdisk ble ikke avmontert. Kanskje din SSH kobling hang seg?
+
+i18n_failed_to_add_fs               : Kunne ikke legge til filsystem
+i18n_failed_to_add_fs               : En feil oppsto ved å legge til din filsystem. Vennligst sjekk disk innstillingene dine.
 

@@ -668,12 +668,15 @@ var mousePointer =
 		if( e ) target = e.target || e.srcElement;
 		
 		this.testPointer ();
+		
 		// Check multiple (pickup multiple)
 		var multiple = false;
 		if ( ele.window )
 		{
 			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
-			_ActivateWindowOnly( ele.window.parentNode );
+			if( !ele.window.parentNode.classList.contains( 'Active'  ))
+				_ActivateWindowOnly( ele.window.parentNode );
+			
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				var ic = ele.window.icons[a];
@@ -693,7 +696,10 @@ var mousePointer =
 					el.oldParent = el.parentNode;
 					if( typeof ele.window.icons[a+1] != 'undefined' )
 						el.sibling = ele.window.icons[a+1].domNode;
-					el.parentNode.removeChild( el );
+					if( el.parentNode )
+					{
+						el.parentNode.removeChild( el );
+					}
 					this.dom.appendChild( el );
 					this.elements.push( el );
 				}
@@ -2303,17 +2309,19 @@ function DrawRegionSelector( e )
 					// Combine all
 					var intersecting = intersecting1 || intersecting2 || intersecting3 || intersecting4 || intersecting5 || intersecting6;
 				
-					if ( overlapping || intersecting )
+					if( overlapping || intersecting )
 					{
 						ics.classList.add( 'Selected' );
 						ics.fileInfo.selected = 'multiple';
 						ics.selected = 'multiple';
+						icos[a].selected = 'multiple';
 					}
-					else if ( !sh )
+					else if( !sh )
 					{
 						ics.classList.remove( 'Selected' );
 						ics.fileInfo.selected = false;
 						ics.selected = false;
+						icos[a].selected = false;
 					}
 				}
 			}
@@ -2475,7 +2483,12 @@ movableMouseUp = function( e )
 	{
 		if( Workspace.iconContextMenu )
 		{
-			Workspace.iconContextMenu.hide();
+			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.add( 'Closing' );
+			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.remove( 'Open' );
+			setTimeout( function()
+			{
+				Workspace.iconContextMenu.hide();
+			}, 150 );
 		}
 	}
 	
@@ -3713,7 +3726,8 @@ function convertIconsToMultiple()
 			if( ics[a].selected )
 			{
 				ics[a].selected = 'multiple';
-				ics[a].domNode.selected = 'multiple';
+				if( ics[ a ].domNode )
+					ics[a].domNode.selected = 'multiple';
 				if( ics[a].fileInfo )
 					ics[a].fileInfo.selected = 'multiple';
 			}
@@ -3752,6 +3766,8 @@ function clearRegionIcons( flags )
 					{
 						ic.classList.remove( 'Selected' );
 						w.icons[a].selected = false;
+						w.icons[a].file = false;
+						ic.selected = false;
 					}
 					ic.classList.remove( 'Editing' );
 					if( ic.input )
@@ -3777,7 +3793,9 @@ function clearRegionIcons( flags )
 			if( exception != ic && ic.selected != multipleCheck )
 			{
 				ic.classList.remove( 'Selected' );
+				icon.file.selected = false;
 				icon.selected = false;
+				ic.selected = false;
 			}
 		}
 	}
@@ -4074,6 +4092,7 @@ function CreateHelpBubble( element, text, uniqueid )
 	{
 		element.helpBubble.close();
 	}
+	
 	var helpBubble = {
 		destroy: function()
 		{
@@ -4103,6 +4122,39 @@ function CreateHelpBubble( element, text, uniqueid )
 				helpBubble.destroy();
 				return;
 			}
+			
+			// Check parent
+			var positionClass = '';
+			var p = e.target ? e.target.parentNode : false;
+			if( p && p.getAttribute( 'position' ) )
+			{
+				switch( p.getAttribute( 'position' ) )
+				{
+					case 'right_center':
+					case 'right_top':
+					case 'right_bottom':
+						positionClass = 'Right';
+						break;
+					case 'left_center':
+					case 'left_top':
+					case 'left_bottom':
+						positionClass = 'Left';
+						break;
+					case 'bottom_left':
+					case 'bottom_center':
+					case 'bottom_right':
+						positionClass = 'Bottom';
+						break;
+					case 'top_left':
+					case 'top_center':
+					case 'top_right':
+						positionClass = 'Top';
+						break;
+					default:
+						break;
+				}
+			}
+			
 			var mx = windowMouseX;
 			var my = windowMouseY;
 			var mt = GetElementTop( element ) - ( 50 + 10 );
@@ -4116,24 +4168,23 @@ function CreateHelpBubble( element, text, uniqueid )
 			mx = GetElementLeft( element ) + ( GetElementWidth( element ) >> 1 ) - ( textWidth.width >> 1 ) - 30;
 			
 			// Check element position
-			var attr = element.parentNode.getAttribute( 'position' );
-			if( attr )
+			if( positionClass )
 			{
-				if( attr.indexOf( 'right' ) == 0 )
+				if( positionClass == 'Right' )
 				{
-					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) - ( textWidth.width + 40 );
+					mt = GetElementTop( element ) + 5;
+					mx = GetElementLeft( element ) - Math.floor( textWidth.width + 90 );
 					posset = true;
 				}
-				else if( attr.indexOf( 'left' ) == 0 )
+				else if( positionClass == 'Left' )
 				{
-					mt = GetElementTop( element );
-					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode ) + 30;
+					mt = GetElementTop( element ) + 5;
+					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode ) + 10;
 					posset = true;
 				}
-				else if( attr.indexOf( 'top' ) == 0 )
+				else if( positionClass == 'Top' )
 				{
-					mt = GetElementTop( element.parentNode ) + GetElementHeight( element.parentNode );
+					mt = GetElementTop( element.parentNode ) + GetElementHeight( element.parentNode ) + 25;
 				}
 			}
 			
@@ -4150,9 +4201,19 @@ function CreateHelpBubble( element, text, uniqueid )
 			
 			d.innerHTML = text;
 			v.setFlag( 'width', textWidth.width + 60 );
+			v.setFlag( 'left', mx );
+			v.setFlag( 'top', mt );
 			v.setContent( '<div class="TextCenter Padding Ellipsis">' + text + '</div>' );
 			v.dom.addEventListener( 'mouseout', element.helpBubble.outListener );
 			v.dom.classList.add( 'HelpBubble' );
+			
+			// Remove all position classes and add right one
+			var pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
+			for( var z = 0; z < pcl.length; z++ )
+				if( pcl[ a ] != positionClass )
+					v.dom.classList.remove( pcl[ a ] );
+			v.dom.classList.add( positionClass );
+			
 			v.show();
 			element.helpBubble.widget = v;
 		},

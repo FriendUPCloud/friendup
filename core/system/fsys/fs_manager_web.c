@@ -1910,6 +1910,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char *t = UrlDecodeToMem( file->hf_FileName );
 								if( t != NULL )
 								{
+									DEBUG("[FileSaved as: %s\n", file->hf_FileName );
 									sprintf( tmpPath, "%s%s", path, t );
 									FFree( t );
 								}

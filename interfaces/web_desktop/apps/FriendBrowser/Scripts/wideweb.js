@@ -92,15 +92,18 @@ Application.run = function( msg )
 
 	Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) );
 	var f = new File( 'Progdir:Templates/webinterface.html' );
+	f.replacements = {
+		startupurl: msg.args ? msg.args : ''
+	};
 	f.onLoad = function( data )
 	{
 		v.setContent( data, function()
 		{
 			if( msg.args )
 			{
-				v.sendMessage( {
-					command: 'loadfile',
-					filename: msg.args
+				Application.receiveMessage( {
+					command: 'seturl',
+					url: msg.args
 				} );
 			}
 		} );
@@ -131,6 +134,7 @@ Application.receiveMessage = function( msg )
 			{
 				this.currentUrl = msg.url;
 				Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' - ' + msg.url );
+				// Logic calls do not end up back in the browser window..
 				if( !msg.logic )
 					this.mainView.sendMessage( { command: 'loadfile', filename: this.currentUrl } );
 			}
