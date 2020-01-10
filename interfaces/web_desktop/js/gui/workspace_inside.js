@@ -1925,6 +1925,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			this.smenu.dom.style.height = '0px';
 			this.smenu.dom.style.top = '0px';
 
+			d.addEventListener( 'contextmenu', function( e )
+			{
+				return cancelBubble( e );
+			}, false );
+
 			// We don't show the menu at first, we need to build!
 			var delayedBuildTime = false;
 			var delayedBuildFunc = false;
@@ -2191,6 +2196,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							buildMenu( data[a].Path, s, depth + 1 );
 							s.onclick = function( e )
 							{
+								if( e.button != 0 ) return;
 								var self = this;
 								this.classList.add( 'Over' );
 								var eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
@@ -2262,8 +2268,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 
 							// Click action
-							s.onclick = function()
+							s.onclick = function( e )
 							{
+								if( e.button != 0 ) return;
 								Workspace.toggleStartMenu( false );
 								// PDFs
 								if( !this.filename ) this.filename = this.executable;
@@ -2313,6 +2320,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							};
 							s.onmousedown = function( e )
 							{
+								if( e.button != 0 ) return;
 								this.slideX = 0;
 								this.offX = e.clientX;
 								this.offY = e.clientY;
@@ -2508,7 +2516,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							src: '/webclient/gfx/system/' + img,
 							title: 'Start',
 							className: 'Startmenu',
-							click: function(){ Workspace.toggleStartMenu(); }
+							click: function( e ){ Workspace.toggleStartMenu(); },
+							noContextMenu: true
 						}
 						Workspace.mainDock.addLauncher( ob );
 					}
@@ -5786,8 +5795,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Find target frame
 			var resultfr = ge( 'fileUploadFrame' );
-		
-			console.log('Fileupload path: ' + uppath );
 
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
@@ -5804,33 +5811,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					form.classList.remove( 'Busy' );
 					ge( 'uploadFeedback' ).parentNode.classList.remove( 'Busy' );
-					var res = resultfr.contentDocument.body.innerHTML;
-					res = res.split( '<!--separate-->' );
-					if( res[0] == 'ok' )
+					
+					var check = new Library( 'system.library' );
+					check.onExecuted = function( ee, dd )
 					{
-						for( var a in movableWindows )
+						if( ee == 'ok' )
 						{
-							var w = movableWindows[a];
-							if( w.content ) w = w.content;
-							if( w.fileInfo )
+							for( var a in movableWindows )
 							{
-								if( w.fileInfo.Path == uppath )
+								var w = movableWindows[a];
+								if( w.content ) w = w.content;
+								if( w.fileInfo )
 								{
-									Workspace.diskNotification( [ w ], 'refresh' );
+									if( w.fileInfo.Path == uppath )
+									{
+										Workspace.diskNotification( [ w ], 'refresh' );
+									}
 								}
 							}
-						}
 						
-						Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
+							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
 
-						Workspace.refreshWindowByPath( uppath );
-					}
-					else
-					{
-						Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
-					}
+							Workspace.refreshWindowByPath( uppath );
+						}
+						else
+						{
+							Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
+						}
 					
-					resultfr.removeEventListener( 'load', f );
+						resultfr.removeEventListener( 'load', f );
+					}
+					check.execute( 'file/info', { path: uppath + uploadFileField.value.split( '\\' ).pop() } );
 					
 					ge( 'uploadFileField' ).value = '';
 				};
@@ -5865,7 +5876,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.uploadWindow = null;
 		}
 		
-		
 		var f = new File( '/webclient/templates/file_upload.html' );
 		f.i18n()
 		f.onLoad = function( data )
@@ -5892,8 +5902,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.sessionId ) return;
 
 		if( this.fupdialog ) return;
+		
+		var inps = currentMovable.content.getElementsByTagName( 'input' );
+		var path = 'Home:Downloads/';
+		for( var a = 0; a < inps.length; a++ )
+		{
+			if( inps[a].name == 'path' )
+			{
+				path = inps[a].value;
+				break;
+			}
+		}
+		
 		var flags = {
-			path: 'Home:Downloads/',
+			path: path,
 			triggerFunction: function( arr )
 			{
 				if( Workspace.fupdialog )
@@ -6466,10 +6488,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:	i18n( 'menu_refresh_desktop' ),
 						command: function(){ Workspace.refreshDesktop( false, true ); }
 					},
-					!( window.isMobile || window.isTablet ) ? {
-						name:   i18n( 'menu_backdrop' ),
-						command: function(){ Workspace.backdrop(); }
-					} : false,
 					!( window.friendApp || window.isSettopBox ) ? {
 						name:	i18n( 'menu_fullscreen' ),
 						command: function(){ Workspace.fullscreen(); }
@@ -7267,21 +7285,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Mouse up on context menus has timeout
 					p.onmouseup = function( event )
 					{
-						if( Workspace.contextMenuAllowMouseUp )
-						{ 
-							if( !v.shown ) return;
-							Workspace.contextMenuShowing = false;
-							if( this.cmd && typeof( this.cmd ) == 'function' )
-							{
-								this.cmd( event );
+						if( event.button == 2 )
+						{
+							if( Workspace.contextMenuAllowMouseUp )
+							{ 
+								if( !v.shown ) return;
+								Workspace.contextMenuShowing = false;
+								if( this.cmd && typeof( this.cmd ) == 'function' )
+								{
+									this.cmd( event );
+								}
+								menuout.classList.add( 'Closing' );
+								menuout.classList.remove( 'Open' );
+								setTimeout( function()
+								{
+									v.hide();
+								}, 150 );
+								return cancelBubble( event );
 							}
-							menuout.classList.add( 'Closing' );
-							menuout.classList.remove( 'Open' );
-							setTimeout( function()
-							{
-								v.hide();
-							}, 150 );
-							return cancelBubble( event );
 						}
 					}
 				}
@@ -7430,7 +7451,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var self = this;
 
 		// Abort existing search runs!
-		KillcAjaxByContext( 'workspace_search' );
+		CancelCajaxOnId( 'workspace_search' );
 
 		ge( 'WorkspaceSearchResults' ).innerHTML = '';
 		this.searching = true;
@@ -7496,7 +7517,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				return;
 			}
-			d.context = 'workspace_search';
+			d.cancelId = 'workspace_search';
 			d.getIcons( false, function( data )
 			{
 				if( !data.length )
@@ -7740,7 +7761,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		
 		// Abort existing search runs!
-		KillcAjaxByContext( 'workspace_search' );
+		CancelCajaxOnId( 'workspace_search' );
 		
 		this.searching = false;
 		if( ge( 'WorkspaceSearchStop' ) )

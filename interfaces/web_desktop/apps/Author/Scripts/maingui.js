@@ -991,7 +991,10 @@ function CleanSpeecher( textHere )
 	{
 		textHere = 'I ' + textHere.substr( 2, textHere.length - 2 );
 	}
-	Application.editor.setData( Application.editor.getData() + textHere );
+	if( Application.editor && Application.editor.setData )
+	{
+		Application.editor.setData( Application.editor.getData() + textHere );
+	}
 	
 	ge( 'Speecher' ).value = '';
 	ge( 'Speecher' ).blur();
@@ -1234,8 +1237,11 @@ Application.loadFile = function( path, cbk )
 				// This is not a compliant HTML document
 				else
 				{
-					Application.editor.setData( data );
-					ge( 'Printable' ).innerHTML = Application.editor.getData();
+					if( Application.editor && Application.editor.setData )
+					{
+						Application.editor.setData( Application.editor.getData() + textHere );
+						ge( 'Printable' ).innerHTML = Application.editor.getData();
+					}
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 

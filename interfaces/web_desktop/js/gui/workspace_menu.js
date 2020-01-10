@@ -48,7 +48,7 @@ var WorkspaceMenu =
 			if( !Workspace.screen._titleBar.hoverListener )
 			{
 				// Make sure we have the right link between the menu and the title bar of the workspace screen
-				Workspace.screen._titleBar.hoverListener = 
+				Workspace.screen._titleBar.hoverListener = true;
 				Workspace.screen._titleBar.addEventListener( 'mouseover', function()
 				{
 					var m = ge( 'WorkspaceMenu' );

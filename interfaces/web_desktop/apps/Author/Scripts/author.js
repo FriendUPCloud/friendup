@@ -122,7 +122,7 @@ Application.run = function( msg, iface )
 						command: 'newdocument',
 						content: Application.sessionObject.content,
 						scrollTop: Application.sessionObject.scrollTop,
-						browserPath: 'Home:Notes/'
+						browserPath: 'Home:'
 					};
 					w.sendMessage( msng );
 				}
@@ -133,7 +133,7 @@ Application.run = function( msg, iface )
 				w.sendMessage( { 
 					command: 'newdocument',
 					content: '',
-					browserPath: 'Home:Notes/'
+					browserPath: 'Home:'
 				} );
 				Application.wholeFilename = false;
 			}
@@ -256,6 +256,7 @@ Application.load = function()
 			Application.fileDialog = false;
 		},
 		path: false,
+		rememberPath: true,
 		mainView: this.mainView,
 		type: 'load',
 		suffix: [ 'html', 'htm' ]	
@@ -275,7 +276,7 @@ Application.saveAs = function()
 // Saves current file
 Application.save = function( mode )
 {
-	if( this.wholeFilename )
+	if( this.wholeFilename && this.wholeFilename.indexOf( ':' ) > 0 )
 	{
 		Application.mainView.sendMessage( {
 			command: 'savefile',
@@ -353,8 +354,10 @@ Application.showPrefs = function()
 
 function sanitizeFilename( data )
 {
-	if( !data ) return i18n( 'i18n_new_document' );
+	if( !data ) return '';
 	var filename = data.split( ':' )[1];
+	if( !( filename && filename.indexOf ) )
+		return '';
 	if( filename.indexOf( '/' ) > 0 )
 		filename = filename.split( '/' ).join( ' - ' );
 	
@@ -409,15 +412,16 @@ Application.setCorrectTitle = function()
 		{
 			cand = i18n( 'i18n_uncategorized' );
 		}
-		Application.mainView.setFlag( 'title', 'Notes - ' + cand );
+		Application.mainView.setFlag( 'title', 'Author - ' + cand );
 	}
 	else if( this.currentViewMode == 'root' )
 	{
-		Application.mainView.setFlag( 'title', 'Notes - ' + i18n( 'i18n_categories' ) );
+		Application.mainView.setFlag( 'title', 'Author - ' + i18n( 'i18n_categories' ) );
 	}
 	else
 	{
-		Application.mainView.setFlag( 'title', 'Notes - ' + sanitizeFilename( Application.wholeFilename ) );
+		var fn = sanitizeFilename( Application.wholeFilename );
+		Application.mainView.setFlag( 'title', 'Author - ' + ( fn ? fn : i18n( 'menu_new' ) ) );
 	}
 }
 
