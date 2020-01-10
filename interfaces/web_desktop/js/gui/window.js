@@ -2905,7 +2905,8 @@ var View = function( args )
 
 			window.mouseDown = FUI_MOUSEDOWN_RESIZE;
 			
-			_ActivateWindow( div, false, e );
+			if( !div.parentNode.classList.contains( 'Active' ) )
+				_ActivateWindow( div, false, e );
 			this.window.zoom.mode = 'normal';
 			return cancelBubble ( e );
 		}

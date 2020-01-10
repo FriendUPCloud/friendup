@@ -101,9 +101,9 @@ Application.receiveMessage = function( msg )
 				html += '<option value="bottom_center">' + i18n('i18n_bottom_center') + '</option>';
 				html += '<option value="bottom_right">' + i18n('i18n_bottom_right') + '</option>';
 				ge( 'DockLayout' ).innerHTML = html;
-				html = '<option value="aligned" selected="selected">' + i18n('i18n_aligned') + '</option>';
+				/*html = '<option value="aligned" selected="selected">' + i18n('i18n_aligned') + '</option>';
 				html += '<option value="fixed">' + i18n('i18n_fixed') + '</option>';
-				ge( 'DockPlacement' ).innerHTML = html;
+				ge( 'DockPlacement' ).innerHTML = html;*/
 				// Just set this to an irrelevant one
 				ge( 'DockY' ).value = 0;
 				ge( 'DockX' ).value = 0;
@@ -175,7 +175,7 @@ function LoadDock( callback )
 			
 			if( dd )
 			{
-				setSelectValue( ge( 'DockPlacement' ), dd.options.position );
+				//setSelectValue( ge( 'DockPlacement' ), dd.options.position );
 				setSelectValue( ge( 'DockLayout' )   , dd.options.layout   );
 				setSelectValue( ge( 'DockSize' )     , dd.options.size     );
 				ge( 'DockY' ).value = dd.options.dockx;
@@ -190,7 +190,8 @@ function LoadDock( callback )
 function SaveCurrentDock()
 {	
 	var options = {};
-	options.position  = getSelectValue( ge( 'DockPlacement' ) );
+	//options.position  = getSelectValue( ge( 'DockPlacement' ) );
+	options.position  = 'aligned';
 	options.layout    = getSelectValue( ge( 'DockLayout' ) );
 	options.size      = parseInt( getSelectValue( ge( 'DockSize' ) ) );
 	options.dockx     = ge( 'DockY' ).value;

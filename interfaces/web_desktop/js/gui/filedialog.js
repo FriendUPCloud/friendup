@@ -22,7 +22,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var ignoreFiles = false;
 	var rememberPath = false;
 	
-	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
+	if( path && ( ( !window.isMobile && path.toLowerCase() == 'mountlist:' ) || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
 	}
@@ -33,23 +33,34 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		path = object.path;
 	}
 	
-	FriendDOS.getFileInfo( path, function( e, d )
+	// Only mobile can access mountlist
+	if( !window.isMobile && path == 'Mountlist:' )
+		path = 'Home:';
+	
+	// Check if the path exists
+	if( path != 'Mountlist:' )
 	{
-		console.log( e, d );
-		if( e == true )
+		FriendDOS.getFileInfo( path, function( e, d )
 		{
-			init();
-		}
-		else
-		{
-			Alert( i18n( 'i18n_illegal_path' ), i18n( 'i18n_illegal_path_desc' ) + ':<br/><p class="Margins">' + path + '</p>', false, function()
+			if( e == true )
 			{
-				path = 'Home:';
-				object.path = 'Home:';
 				init();
-			} );
-		}
-	} );
+			}
+			else
+			{
+				Alert( i18n( 'i18n_illegal_path' ), i18n( 'i18n_illegal_path_desc' ) + ':<br/><p class="Margins">' + path + '</p>', false, function()
+				{
+					path = 'Home:';
+					object.path = 'Home:';
+					init();
+				} );
+			}
+		} );
+	}
+	else
+	{
+		init();
+	}
 	
 	function init()
 	{
@@ -659,7 +670,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				inpu.value = dialog.path;
 			}
 		
-			if( dialog.path == 'Mountlist:' )
+			if( !window.isMobile && dialog.path == 'Mountlist:' )
 			{
 				// Correct fileinfo
 				w._window.fileInfo = {

@@ -72,7 +72,7 @@ Application.run = function( msg, iface )
 					command: 'makeinlineimages'
 				}
 			]
-		},
+		}/*,
 		{
 			name: i18n( 'menu_preferences' ),
 			items: [
@@ -81,7 +81,7 @@ Application.run = function( msg, iface )
 					command: 'showprefs'
 				}
 			]
-		}
+		}*/
 	] );
 	
 	var f = new File( 'Progdir:Templates/maingui.html' );

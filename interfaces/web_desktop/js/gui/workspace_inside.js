@@ -2085,6 +2085,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						data = frs.concat( out, end );
 					}
 					
+					// Contains sub menus
+					var ss = [];
+					
 					// Menu items
 					for( var a = 0; a < data.length; a++ )
 					{
@@ -2125,6 +2128,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									eles[z].classList.remove( 'Over' );
 								}
 							}
+							
+							// Reposition sub menu
+							var sub = this.querySelector( '.DockSubMenu' );
+							if( sub )
+							{
+								var sc = Workspace.screen.contentDiv.offsetHeight;
+								var t = GetElementTop( sub );
+								var h = sub.querySelector( '.DockMenuHeader' ).innerHTML;
+								
+								if( t + sub.offsetHeight > sc )
+								{
+									sub.style.top = 0 - ( ( t + sub.offsetHeight ) - sc ) + 'px';
+								}
+							}
+							
 							
 							if( this.leaveTimeout )
 								clearTimeout( this.leaveTimeout );
@@ -2320,19 +2338,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						dd.appendChild( s );
+						ss.push( s );
 					}
 
 					if( parent.classList.contains( 'DockMenu' ) )
 					{
-						var s = document.createElement( 'div' );
-						s.className = 'DockMenuItem MousePointer Executable';
-						s.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
-						s.onclick = function()
+						var s2 = document.createElement( 'div' );
+						s2.className = 'DockMenuItem MousePointer Executable';
+						s2.innerHTML = '<span><img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg"/></span><span>' + i18n( 'menu_run_command' ) + '</span>';
+						s2.onclick = function()
 						{
 							Workspace.toggleStartMenu( false );
 							Workspace.showLauncher();
 						}
-						dd.appendChild( s );
+						dd.appendChild( s2 );
+						s2 = null;
 					}
 
 					function repositionStartMenu()
@@ -2373,36 +2393,41 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							parent.style.height = dd.offsetHeight + 'px';
 						}
-						else if( s )
+						else if( ss )
 						{
-							if( topInfo == 'Right' || topInfo == 'Left' )
+							for( var a = 0; a < ss.length; a++ )
 							{
-								dd.style.top = '0';
-								if( topInfo == 'Right' )
+								var s = ss[ a ];
+								
+								if( topInfo == 'Right' || topInfo == 'Left' )
 								{
-									dd.style.left = 0 - s.offsetWidth + 'px';
+									dd.style.top = '0';
+									if( topInfo == 'Right' )
+									{
+										dd.style.left = 0 - s.offsetWidth + 'px';
+									}
+									else
+									{
+										dd.style.left = s.offsetWidth + 'px';
+									}
+								}
+								else if( topInfo == 'Top' )
+								{
+									dd.style.top = s.style.top;
+								}
+								else if( depth > 1 )
+								{
+									dd.style.bottom = '0px';
+									dd.style.top = 'auto';
 								}
 								else
 								{
-									dd.style.left = s.offsetWidth + 'px';
+									dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 								}
-							}
-							else if( topInfo == 'Top' )
-							{
-								dd.style.top = s.style.top;
-							}
-							else if( depth > 1 )
-							{
-								dd.style.bottom = '0px';
-								dd.style.top = 'auto';
-							}
-							else
-							{
-								dd.style.top = ( s.offsetHeight - dd.offsetHeight - 1 ) + 'px';
 							}
 						}
 					}
-					setTimeout( repositionStartMenu, 250 );
+					repositionStartMenu();
 				} );
 			}
 
@@ -2598,7 +2623,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					
 					// Make sure to redraw icons fully
-					Workspace.redrawIcons( 1 );
+					setTimeout( function()
+					{
+						Workspace.redrawIcons( 1 );
+					}, 100 );
 				}
 				dm.execute( 'getdock', { dockid: '0' } );
 			}
@@ -3916,7 +3944,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					if( hasNew )
 					{
 						t.icons = newIcons;
-						t.redrawIcons();
+						t.redrawIcons( forceRefresh );
 						if( checks.length )
 						{
 							for( var a = 0; a < checks.length; a++ )
@@ -3933,7 +3961,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					else
 					{
-						//console.log( 'Nothing new happened.' );
+						if( forceRefresh ) t.redrawIcons( 1 );
 					}
 					
 					// Do the callback thing
@@ -4911,7 +4939,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 
-
 						// Bring up volume permissions
 						if( icon.Type == 'Door' )
 						{
@@ -5188,72 +5215,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						}
 						
-						/*
-						// Add 
-						var wg = new Module( 'system' );
-						wg.onExecuted = function( returnCode, returnData )
-						{
-							if( returnCode != 'ok' )
-							{
-								return;
-							}
-							var wgselect = w.getWindowElement().getElementsByTagName( 'select' );
-							var wgfound = false;
-							for( var a = 0; a < wgselect.length; a++ )
-							{
-								if( wgselect[a].getAttribute( 'name' ) == 'workgroup_sharing' )
-								{
-									wgselect = wgselect[a];
-									wgfound = true;
-									break;
-								}
-							}
-							if( !wgfound ) return;
-							var js = JSON.parse( returnData );
-							if( !js ) return;
-							for( var a = 0; a < js.length; a++ )
-							{
-								var opt = document.createElement( 'option' );
-								opt.innerHTML = i18n( 'i18n_sharewith' ) + ' ' + js[a].Name;
-								opt.value = js[a].ID;
-								wgselect.appendChild( opt );
-							}
-							wgselect.addEventListener( 'change', function( e )
-							{
-								var v = this.value;
-								var u = new Library( 'system.library' );
-								u.onExecuted = function( suc, sdt )
-								{
-									var l = new Library( 'system.library' );
-									l.onExecuted = function( ret, dat )
-									{
-										if( ret == 'ok' )
-										{
-											console.log( 'We got ' + dat );
-										}
-										else
-										{
-											console.log( 'Failed to mount: ', dat, icon );
-										}
-									}
-									l.execute( 'device', {
-										command: 'mount',
-										devname: dn,
-										usergroupid: v,
-										type: icon.Driver
-									} );
-								}
-								u.execute( 'device', {
-									command: 'unmount',
-									devname: dn
-								} );
-							} );
-							return;
-						}
-						wg.execute( 'workgroups' );
-						*/
-
-
 						// Initialize tab system
 						InitTabs( ge( 'IconInfo_' + Workspace.seed ) );
 						
@@ -5762,7 +5723,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				for( var a = 0; a < w.icons.length; a++ )
 				{
-					if( w.icons[a].domNode.className.indexOf ( 'Selected' ) > 0 )
+					if( w.icons[a].selected )
 					{
 						icon = w.icons[a];
 						break;
@@ -5772,12 +5733,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		}
 		else if( this.directoryView )
 		{
-			var eles = this.screen.contentDiv.getElementsByTagName( 'div' );
+			var eles = this.screen.contentDiv.icons;
 			for( var a = 0; a < eles.length; a++ )
 			{
-				if( eles[a].className == 'Icon' && eles[a].parentNode.className.indexOf( 'Selected' ) >= 0 )
+				if( eles[a].selected )
 				{
-					icon = eles[a].parentNode.fileInfo;
+					icon = eles[a];
 					break;
 				}
 			}
@@ -5795,7 +5756,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			var m = new Library( 'system.library' );
 			m.onExecuted = function()
 			{
-				Workspace.getMountlist( callback, true );
+				Workspace.getMountlist( callback, false );
 			}
 			m.execute( 'device/refresh', { devname: icon.Volume.split( ':' )[0] } );
 			return;
@@ -5825,7 +5786,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Find target frame
 			var resultfr = ge( 'fileUploadFrame' );
-			
+		
+			console.log('Fileupload path: ' + uppath );
+
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
 			{
@@ -7112,7 +7075,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				width: 200,
 				height: 100,
 				top: e.clientY,
-				left: e.clientX
+				left: e.clientX,
+				transparent: true
 			}
 			var v = false;
 			
@@ -7127,6 +7091,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.dom.innerHTML = '';
 			var menuout = document.createElement( 'div' );
 			menuout.className = 'MenuItems';
+			setTimeout( function()
+			{
+				// Position and open
+				var lch = menuout.childNodes;
+				var cand = menuout.lastChild;
+				for( var z = 0; z < lch.length; z++ )
+				{
+					if( !lch[ z ].classList.contains( 'Disabled' ) )
+						cand = lch[ z ];
+				}
+				menuout.style.height = ( cand.offsetTop + cand.offsetHeight ) + 'px';
+				menuout.classList.add( 'Open' );
+				
+				// Keep the vertical position by the limit
+				var limit = currentScreen.screen.contentDiv.offsetHeight;
+				if( GetElementTop( v.dom ) + parseInt( menuout.style.height ) > limit )
+				{
+					v.setFlag( 'top', limit - parseInt( menuout.style.height ) );
+				}
+			}, 50 );
 			
 			var head = document.createElement( 'p' );
 			head.className = 'MenuHeader';
@@ -7271,7 +7255,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							this.cmd( event );
 						}
-						v.hide();
+						menuout.classList.add( 'Closing' );
+						menuout.classList.remove( 'Open' );
+						setTimeout( function()
+						{
+							v.hide();
+						}, 150 );
 						Workspace.contextMenuShowing = false;
 						return cancelBubble( event );
 					}
@@ -7286,7 +7275,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							{
 								this.cmd( event );
 							}
-							v.hide();
+							menuout.classList.add( 'Closing' );
+							menuout.classList.remove( 'Open' );
+							setTimeout( function()
+							{
+								v.hide();
+							}, 150 );
 							return cancelBubble( event );
 						}
 					}
@@ -7297,7 +7291,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.dom.appendChild( menuout );
 			
 			// Show the thing
-			v.setFlag( 'height', v.dom.getElementsByTagName( 'div' )[0].offsetHeight );
+			v.setFlag( 'height', v.dom.lastChild.offsetHeight + v.dom.lastChild.offsetTop );
 			v.setFlag( 'left', flg.left );
 			v.setFlag( 'top', flg.top );
 			v.raise();

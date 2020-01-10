@@ -674,7 +674,9 @@ var mousePointer =
 		if ( ele.window )
 		{
 			if( ele.window.windowObject && ele.window.windowObject.refreshing ) return;
-			_ActivateWindowOnly( ele.window.parentNode );
+			if( !ele.window.parentNode.classList.contains( 'Active'  ))
+				_ActivateWindowOnly( ele.window.parentNode );
+			
 			for( var a = 0; a < ele.window.icons.length; a++ )
 			{
 				var ic = ele.window.icons[a];
@@ -694,7 +696,10 @@ var mousePointer =
 					el.oldParent = el.parentNode;
 					if( typeof ele.window.icons[a+1] != 'undefined' )
 						el.sibling = ele.window.icons[a+1].domNode;
-					el.parentNode.removeChild( el );
+					if( el.parentNode )
+					{
+						el.parentNode.removeChild( el );
+					}
 					this.dom.appendChild( el );
 					this.elements.push( el );
 				}
@@ -2304,17 +2309,19 @@ function DrawRegionSelector( e )
 					// Combine all
 					var intersecting = intersecting1 || intersecting2 || intersecting3 || intersecting4 || intersecting5 || intersecting6;
 				
-					if ( overlapping || intersecting )
+					if( overlapping || intersecting )
 					{
 						ics.classList.add( 'Selected' );
 						ics.fileInfo.selected = 'multiple';
 						ics.selected = 'multiple';
+						icos[a].selected = 'multiple';
 					}
-					else if ( !sh )
+					else if( !sh )
 					{
 						ics.classList.remove( 'Selected' );
 						ics.fileInfo.selected = false;
 						ics.selected = false;
+						icos[a].selected = false;
 					}
 				}
 			}
@@ -2476,7 +2483,12 @@ movableMouseUp = function( e )
 	{
 		if( Workspace.iconContextMenu )
 		{
-			Workspace.iconContextMenu.hide();
+			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.add( 'Closing' );
+			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.remove( 'Open' );
+			setTimeout( function()
+			{
+				Workspace.iconContextMenu.hide();
+			}, 150 );
 		}
 	}
 	
@@ -3714,7 +3726,8 @@ function convertIconsToMultiple()
 			if( ics[a].selected )
 			{
 				ics[a].selected = 'multiple';
-				ics[a].domNode.selected = 'multiple';
+				if( ics[ a ].domNode )
+					ics[a].domNode.selected = 'multiple';
 				if( ics[a].fileInfo )
 					ics[a].fileInfo.selected = 'multiple';
 			}
@@ -3753,6 +3766,8 @@ function clearRegionIcons( flags )
 					{
 						ic.classList.remove( 'Selected' );
 						w.icons[a].selected = false;
+						w.icons[a].file = false;
+						ic.selected = false;
 					}
 					ic.classList.remove( 'Editing' );
 					if( ic.input )
@@ -3778,7 +3793,9 @@ function clearRegionIcons( flags )
 			if( exception != ic && ic.selected != multipleCheck )
 			{
 				ic.classList.remove( 'Selected' );
+				icon.file.selected = false;
 				icon.selected = false;
+				ic.selected = false;
 			}
 		}
 	}

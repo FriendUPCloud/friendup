@@ -1939,6 +1939,30 @@ html body.WindowMenu .Widget
 	overflow: hidden;
 }
 
+.Widget .MenuItems
+{
+	transition: all 0.15s;
+	opacity: 0;
+	border-radius: 4px;
+	height: 0px;
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.6);
+	max-height: 0px;
+	overflow: hidden;
+	background: rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems.Open
+{
+	opacity: 1;
+	max-height: fit-content;
+}
+
+.Widget .MenuItems.Closing
+{
+	opacity: 0;
+	max-height: fit-content;
+}
+
 .Widget .MenuItems .MenuItem
 {
 	display: block;
@@ -1961,7 +1985,7 @@ html body.WindowMenu .Widget
 	display: block;
 	margin: 0;
 	padding: 10px 10px 5px 10px;
-	border-bottom: 1px solid rgba(255,255,255,0.5);
+	border-bottom: 1px solid rgba(0,0,0,0.6);
 	color: white;
 	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
 }
@@ -2393,6 +2417,12 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	font-size: 135%;
 	text-align: center;
 	line-height: 24px;
+}
+
+#Tray.Size16 .TrayElement.Download:before
+{
+    font-size: 93%;
+    line-height: 18px;
 }
 
 .TrayElement.Tasks:before
@@ -3864,16 +3894,18 @@ html #DockWindowList .Task.Directory
 
 .Right .DockMenu .DockMenuItem.Directory:after
 {
-	content: "<";
+	font-family: FontAwesome;
+	content: "\f0d9";
 	float: left;
 }
 
 .DockMenu .DockMenuItem.Directory:after
 {
-	content: ">";
+	font-family: FontAwesome;
+	content: "\f0da";
 	display: block;
 	float: right;
-	margin: 0 5px 0 0;
+	margin: 4px 5px 0 0;
 }
 
 .DockMenu .DockMenuItem.Directory > .DockSubMenu

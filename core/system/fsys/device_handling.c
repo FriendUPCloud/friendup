@@ -1212,7 +1212,8 @@ int UnMountFS( DeviceManager *dm, struct TagItem *tl, User *usr, UserSession *lo
 		
 		if( remdev != NULL )
 		{
-			if( remdev->f_Operations < 1 )
+			//if( remdev->f_Operations < 1 )
+			if( errors != FSys_Error_OpsInProgress )
 			{
 				Log( FLOG_INFO, "[UnMountFS] Device found, unmounting\n");
 
@@ -1379,7 +1380,7 @@ ug.UserID = '%ld' \
 			{
 				FRIEND_MUTEX_UNLOCK( &dm->dm_Mutex );
 				
-				remdev = UGMRemoveDrive( l->sl_UGM, name );
+				//remdev = UGMRemoveDrive( l->sl_UGM, name );
 
 				return FSys_Error_OpsInProgress;
 			}

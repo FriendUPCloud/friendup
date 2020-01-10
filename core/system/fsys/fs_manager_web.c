@@ -816,6 +816,19 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					DEBUG("[FSMWebRequest] Filesystem DELETE\n");
 					
 					char tmp[ 256 ];
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->query, "notify" );
+					if( el != NULL )
+					{
+						if( el->data != NULL )
+						{
+							if( strcmp( (char *)el->data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
+					}
 					
 					FBOOL have = TRUE;
 					
@@ -839,8 +852,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								actDev->f_BytesStored = 0;
 							}
 							sprintf( tmp, "ok<!--separate-->{\"response\":\"%ld\"}", bytes );
-							// send information about changes on disk
-							DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+							if( notify == TRUE )
+							{
+								// send information about changes on disk
+								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+							}
 							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
 							
@@ -1619,7 +1635,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					
 					char *topath = NULL;
 					el = HashmapGet( request->parsedPostContent, "to" );
 					if( el == NULL ) el = HashmapGet( request->query, "to" );
@@ -1895,6 +1910,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								char *t = UrlDecodeToMem( file->hf_FileName );
 								if( t != NULL )
 								{
+									DEBUG("[FileSaved as: %s\n", file->hf_FileName );
 									sprintf( tmpPath, "%s%s", path, t );
 									FFree( t );
 								}

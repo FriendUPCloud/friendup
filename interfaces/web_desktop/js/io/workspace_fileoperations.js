@@ -28,6 +28,7 @@ Workspace.deleteFile = function()
 	{
 		var files = [];
 		var eles = w.getElementsByTagName( 'div' );
+		
 		for( var a = 0; a < w.icons.length; a++ )
 		{
 			if( w.icons[a].selected )
@@ -111,6 +112,11 @@ Workspace.deleteFile = function()
 						}
 						
 						var file = files[ index ];
+						
+						// Already treated
+						if( file.treated )
+							return;
+						file.treated = true;
 						
 						// callback
 						function nextFile( info )
