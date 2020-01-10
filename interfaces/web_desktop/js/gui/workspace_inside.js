@@ -5786,8 +5786,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			// Find target frame
 			var resultfr = ge( 'fileUploadFrame' );
-		
-			console.log('Fileupload path: ' + uppath );
 
 			// Need target frame to complete job
 			if( resultfr && uppath.length )
@@ -5802,6 +5800,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				form.classList.add( 'Busy' );
 				var f = function( e )
 				{
+					console.log( 'Foppa' );
 					form.classList.remove( 'Busy' );
 					ge( 'uploadFeedback' ).parentNode.classList.remove( 'Busy' );
 					var res = resultfr.contentDocument.body.innerHTML;
@@ -5865,7 +5864,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.uploadWindow = null;
 		}
 		
-		
 		var f = new File( '/webclient/templates/file_upload.html' );
 		f.i18n()
 		f.onLoad = function( data )
@@ -5892,8 +5890,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !Workspace.sessionId ) return;
 
 		if( this.fupdialog ) return;
+		
+		var inps = currentMovable.content.getElementsByTagName( 'input' );
+		var path = 'Home:Downloads/';
+		for( var a = 0; a < inps.length; a++ )
+		{
+			if( inps[a].name == 'path' )
+			{
+				path = inps[a].value;
+				break;
+			}
+		}
+		
 		var flags = {
-			path: 'Home:Downloads/',
+			path: path,
 			triggerFunction: function( arr )
 			{
 				if( Workspace.fupdialog )
