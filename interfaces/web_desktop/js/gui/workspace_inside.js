@@ -2268,7 +2268,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 
 							// Click action
-							s.onclick = function()
+							s.onclick = function( e )
 							{
 								if( e.button != 0 ) return;
 								Workspace.toggleStartMenu( false );
