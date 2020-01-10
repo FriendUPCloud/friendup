@@ -1892,7 +1892,6 @@ if (LWS_WITH_SQLITE3)
 	list(APPEND LIB_LIST ${SQLITE3_LIBRARIES})
 endif()
 
-
 if (LWS_WITH_HUBBUB)
 	find_library(LIBHUBBUB_LIBRARIES NAMES hubbub)
 	list(APPEND LIB_LIST ${LIBHUBBUB_LIBRARIES} )
@@ -1923,6 +1922,8 @@ if (UNIX)
 	list(APPEND LIB_LIST m)
 endif()
 
+list(APPEND LIB_LIST dl)
+
 if(ILLUMOS)
 	list(APPEND LIB_LIST socket)
 endif()
@@ -1952,9 +1953,9 @@ if (LWS_WITH_ZLIB)
 	endif()
 endif()
 
-if (UNIX)
+#if (UNIX)
 	list(APPEND LIB_LIST dl)
-endif()
+#endif()
 
 CHECK_FUNCTION_EXISTS(SSL_CTX_set1_param LWS_HAVE_SSL_CTX_set1_param)
 CHECK_FUNCTION_EXISTS(SSL_set_info_callback LWS_HAVE_SSL_SET_INFO_CALLBACK)
@@ -2207,6 +2208,8 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 			target_link_libraries(websockets dl)
 		endif()
 	endif()
+
+	set(CMAKE_C_FLAGS= "${CMAKE_C_FLAGS} -ldl")
 
 	if (NOT LWS_WITHOUT_SERVER)
 		#
