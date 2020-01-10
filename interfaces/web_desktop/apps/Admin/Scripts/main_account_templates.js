@@ -165,7 +165,274 @@ Sections.accounts_templates = function( cmd, extra )
 	
 	function loading()
 	{
+		console.log( 'got to edit ...' );
 		
+		initDetails( false );
+		
+		return;
+		
+		var loadingSlot = 0;
+		var loadingInfo = {};
+		var loadingList = [
+			
+			// 0 | Load userinfo
+			function(  )
+			{
+				if( ge( 'UserDetails' ) )
+				{
+					ge( 'UserDetails' ).innerHTML = '';
+				}
+				
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
+				{
+					
+					if( e != 'ok' ) return;
+					var userInfo = null;
+					try
+					{
+						userInfo = JSON.parse( d );
+					}
+					catch( e )
+					{
+						return;
+					}
+					console.log( 'userinfoget ', { e:e, d:userInfo } );
+					if( e != 'ok' ) userInfo = '404';
+					
+					// TODO: Run avatar cached here ...
+					
+					userInfo.avatar = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=256&height=256&authid=' + Application.authId;
+					
+					loadingInfo.userInfo = userInfo;
+					
+					console.log( '// 0 | Load userinfo' );
+					
+					initUsersDetails( loadingInfo, [  ], true );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
+				}
+				u.execute( 'userinfoget', { id: extra, mode: 'all', authid: Application.authId } );
+			},
+			
+			// 3 | Get user's workgroups
+			function(  )
+			{
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
+				{
+					//if( e != 'ok' ) return;
+					var wgroups = null;
+					try
+					{
+						wgroups = JSON.parse( d );
+					}
+					catch( e )
+					{
+						wgroups = null;
+					}
+					console.log( 'workgroups ', { e:e, d:d } );
+					if( e != 'ok' ) wgroups = '404';
+					loadingInfo.workgroups = wgroups;
+					
+					console.log( '// 3 | Get user\'s workgroups' );
+					
+					initUsersDetails( loadingInfo, [ 'workgroup' ] );
+				}
+				u.execute( 'workgroups', { userid: extra, authid: Application.authId } );
+				
+				// Go to next in line ...
+				loadingList[ ++loadingSlot ](  );
+			},
+			
+			// 4 | Get user's roles
+			function(  )
+			{
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
+				{
+					var uroles = null;
+					console.log( { e:e, d:d } );
+					if( e == 'ok' )
+					{
+						try
+						{
+							uroles = JSON.parse( d );
+						}
+						catch( e )
+						{
+							uroles = null;
+						}
+						loadingInfo.roles = uroles;
+					}
+					console.log( 'userroleget ', { e:e, d:uroles } );
+					if( e != 'ok' ) loadingInfo.roles = '404';
+					
+					console.log( '// 4 | Get user\'s roles' );
+					
+					initUsersDetails( loadingInfo, [ 'role' ] );
+				}
+				u.execute( 'userroleget', { userid: extra, authid: Application.authId } );
+				
+				// Go to next in line ...
+				loadingList[ ++loadingSlot ](  );
+			},
+			
+			// 5 | Get storage
+			function(  )
+			{
+
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						//if( e != 'ok' ) return;
+						var rows = null;
+						try
+						{
+							rows = JSON.parse( d );
+						}
+						catch( e )
+						{
+							rows = [];
+						}
+
+						
+						
+						
+						console.log( '[2] mountlist ', { e:e, d:(rows?rows:d) } );
+						if( e != 'ok' ) rows = '404';
+						loadingInfo.mountlist = rows;
+						
+						console.log( '// 5 | Get storage' );
+						
+						initUsersDetails( loadingInfo, [ 'storage' ] );
+
+						
+						
+					}
+					u.execute( 'mountlist', { userid: extra, authid: Application.authId } );
+
+				
+				
+				
+				// Go to next in line ...
+				loadingList[ ++loadingSlot ](  );
+			},
+			
+			// 6 | Get user applications
+			function(  )
+			{
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
+				{
+					var apps = null;
+				
+					try
+					{
+						apps = JSON.parse( d );
+					}
+					catch( e )
+					{
+						apps = null;
+					}
+					console.log( 'listuserapplications ', { e:e, d:apps } );
+					if( e != 'ok' ) apps = '404';
+					loadingInfo.applications = apps;
+					
+					console.log( '// 6 | Get user applications' );
+					
+					initUsersDetails( loadingInfo, [ 'application', 'looknfeel' ] );
+				}
+				u.execute( 'listuserapplications', { userid: extra, authid: Application.authId } );
+				
+				// Go to next in line ...
+				loadingList[ ++loadingSlot ](  );
+			},
+			
+			// 1 | Load user settings
+			function(  )
+			{
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
+				{
+					//if( e != 'ok' ) return;
+					var settings = null;
+					try
+					{
+						settings = JSON.parse( d );
+					}
+					catch( e )
+					{
+						settings = null;
+					}
+					console.log( 'usersettings ', { e:e, d:settings } );
+					if( e != 'ok' ) settings = '404';
+					loadingInfo.settings = settings;
+					
+					console.log( '// 1 | Load user settings' );
+					
+					initUsersDetails( loadingInfo, [  ] );
+					
+					// Go to next in line ...
+					loadingList[ ++loadingSlot ](  );
+				}
+				u.execute( 'usersettings', { userid: extra, authid: Application.authId } );
+			},
+			
+			// 2 | Get more user settings
+			function(  )
+			{
+				if( loadingInfo.settings && loadingInfo.settings.Theme )
+				{
+					var u = new Module( 'system' );
+					u.onExecuted = function( e, d )
+					{
+						//if( e != 'ok' ) return;
+						var workspacesettings = null;
+					
+						try
+						{
+							workspacesettings = JSON.parse( d );
+						}
+						catch( e )
+						{
+							workspacesettings = null;
+						}
+					
+						console.log( 'getsetting ', { e:e, d:workspacesettings } );
+					
+						if( e != 'ok' ) workspacesettings = '404';
+						loadingInfo.workspaceSettings = workspacesettings;
+						
+						console.log( '// 2 | Get more user setting' );
+						
+						initUsersDetails( loadingInfo, [  ]/*, true*/ );
+					}
+					u.execute( 'getsetting', { settings: [ 
+						/*'avatar', */'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+						'locale', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+						'focusmode', 'hiddensystem', 'workspacecount', 
+						'scrolldesktopicons', 'wizardrun', 'themedata_' + loadingInfo.settings.Theme,
+						'workspacemode'
+					], userid: extra, authid: Application.authId } );
+				}
+				
+				// Go to next in line ..., might not need to load the next ...
+				loadingList[ ++loadingSlot ](  );
+			},
+			
+			// 7 | init
+			function(  )
+			{
+				console.log( '// 7 | init' );
+				
+				//initUsersDetails( loadingInfo );
+			}
+			
+		];
+		// Runs 0 the first in the array ...
+		loadingList[ 0 ]();
 		
 		return;
 	}
@@ -173,6 +440,28 @@ Sections.accounts_templates = function( cmd, extra )
 	// Show the form
 	function initDetails( info )
 	{
+		
+		
+		// Get the user details template
+		var d = new File( 'Progdir:Templates/account_template_details.html' );
+		
+		// Add all data for the template
+		d.replacements = {
+			template_name: '',
+			template_description: ''
+		};
+		
+		// Add translations
+		d.i18n();
+		d.onLoad = function( data )
+		{
+			ge( 'TemplateDetails' ).innerHTML = data;
+			
+			// Responsive framework
+			Friend.responsive.pageActive = ge( 'TemplateDetails' );
+			Friend.responsive.reinit();
+		}
+		d.load();
 		
 	}
 	
@@ -291,7 +580,7 @@ Sections.accounts_templates = function( cmd, extra )
 											var d = document.createElement( 'input' );
 											d.className = 'FullWidth';
 											d.placeholder = 'Search templates...';
-											d.onclick = function () {  };
+											d.onkeyup = function ( e ) { console.log( 'do search ...' ); };
 											return d;
 										}() 
 									}
@@ -335,10 +624,23 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var d = document.createElement( 'div' );
 											d.className = 'PaddingSmall HContent10 TextCenter FloatLeft Ellipsis';
-											d.innerHTML = '<strong>(+)</strong>';
 											d.onclick = function () {  };
 											return d;
-										}()
+											
+										}(),
+										'child' : 
+										{
+											'1' : 
+											{
+												'element' : function() 
+												{
+													var b = document.createElement( 'button' );
+													b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
+													b.onclick = function () { console.log( 'create ...' ); };
+													return b;
+												}()
+											}
+										}
 									}
 								} 
 							}
@@ -388,6 +690,10 @@ Sections.accounts_templates = function( cmd, extra )
 									{
 										var d = document.createElement( 'div' );
 										d.className = 'HRow';
+										d.onclick = function()
+										{
+											Sections.accounts_templates( 'details', temp[k].ID );
+										};
 										return d;
 									}(),
 									'child' : 
@@ -398,7 +704,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'TextCenter HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '<span class="IconSmall fa-user"></span>';
+												d.innerHTML = '<span class="IconSmall fa-users"></span>';
 												return d;
 											}()
 										},
@@ -418,9 +724,10 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '';
+												d.innerHTML = '<span class="IconSmall FloatRight PaddingSmall fa-minus-circle"></span>';
 												return d;
 											}()
+											
 										}
 									}
 								}
