@@ -37,6 +37,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if( !window.isMobile && path == 'Mountlist:' )
 		path = 'Home:';
 	
+	if( !window.isMobile && object && object.path && object.path == 'Mountlist:' )
+		object.path = false;
+	
 	// Check if the path exists
 	if( path != 'Mountlist:' )
 	{
@@ -204,10 +207,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		if( rememberPath && ds && ds.path && !object.path )
 		{
 			self.path = path = ds.path;
-		}
-		else
-		{
-			console.log( 'Remember? ' + ( rememberPath ? 'yes' : 'false' ) + ' ds.path: ' + ds.path + ' object.path: ' + object.path );
 		}
 
 		// Block main view while this dialog is open!
