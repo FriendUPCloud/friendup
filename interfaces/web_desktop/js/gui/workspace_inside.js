@@ -5800,36 +5800,39 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				form.classList.add( 'Busy' );
 				var f = function( e )
 				{
-					console.log( 'Foppa' );
 					form.classList.remove( 'Busy' );
 					ge( 'uploadFeedback' ).parentNode.classList.remove( 'Busy' );
-					var res = resultfr.contentDocument.body.innerHTML;
-					res = res.split( '<!--separate-->' );
-					if( res[0] == 'ok' )
+					
+					var check = new Library( 'system.library' );
+					check.onExecuted = function( ee, dd )
 					{
-						for( var a in movableWindows )
+						if( ee == 'ok' )
 						{
-							var w = movableWindows[a];
-							if( w.content ) w = w.content;
-							if( w.fileInfo )
+							for( var a in movableWindows )
 							{
-								if( w.fileInfo.Path == uppath )
+								var w = movableWindows[a];
+								if( w.content ) w = w.content;
+								if( w.fileInfo )
 								{
-									Workspace.diskNotification( [ w ], 'refresh' );
+									if( w.fileInfo.Path == uppath )
+									{
+										Workspace.diskNotification( [ w ], 'refresh' );
+									}
 								}
 							}
-						}
 						
-						Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
+							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
 
-						Workspace.refreshWindowByPath( uppath );
-					}
-					else
-					{
-						Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
-					}
+							Workspace.refreshWindowByPath( uppath );
+						}
+						else
+						{
+							Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
+						}
 					
-					resultfr.removeEventListener( 'load', f );
+						resultfr.removeEventListener( 'load', f );
+					}
+					check.execute( 'file/info', { path: uppath + uploadFileField.value.split( '\\' ).pop() } );
 					
 					ge( 'uploadFileField' ).value = '';
 				};
@@ -6476,10 +6479,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:	i18n( 'menu_refresh_desktop' ),
 						command: function(){ Workspace.refreshDesktop( false, true ); }
 					},
-					!( window.isMobile || window.isTablet ) ? {
-						name:   i18n( 'menu_backdrop' ),
-						command: function(){ Workspace.backdrop(); }
-					} : false,
 					!( window.friendApp || window.isSettopBox ) ? {
 						name:	i18n( 'menu_fullscreen' ),
 						command: function(){ Workspace.fullscreen(); }
