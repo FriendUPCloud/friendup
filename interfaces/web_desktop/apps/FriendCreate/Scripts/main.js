@@ -1592,10 +1592,11 @@ function RefreshProjects()
 				list[ a ].path = list[ a ].path.split( '//' ).join( '/' );
 				var p = list[a].path.split( '/' );
 				for( var z = 0; z < depth; z++ )
-					paths += p[ z ] + '/';
+				{
+					if( p[ z ] && typeof( p[ z ] ) != 'undefined' )
+						paths += p[ z ] + '/';
+				}
 			}
-			
-			console.log( 'Handling path: ' + paths );
 			
 			// This is a file item
 			if( list[ a ].levels.length == depth )
@@ -1603,7 +1604,6 @@ function RefreshProjects()
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					console.log( 'Listing fpath: ' + fpath + ' (path: ' + path + ')' );
 					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
