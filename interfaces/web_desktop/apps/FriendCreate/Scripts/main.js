@@ -1570,6 +1570,8 @@ function RefreshProjects()
 		files[ a ].updateState();
 	}
 	
+	console.log( 'Refreshing projects.' );
+	
 	// List files recursively
 	function listFiles( list, depth, path, projectId )
 	{
@@ -1593,12 +1595,15 @@ function RefreshProjects()
 					paths += p[ z ] + '/';
 			}
 			
+			console.log( 'Handling path: ' + paths );
+			
 			// This is a file item
 			if( list[ a ].levels.length == depth )
 			{
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
+					console.log( 'Listing fpath: ' + fpath + ' (path: ' + path + ')' );
 					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
