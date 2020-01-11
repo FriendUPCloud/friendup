@@ -1194,8 +1194,8 @@ function OpenProject( path )
 			projects.push( p );
 			Application.currentProject = p;
 			
-			SetProjectPath( p );
 			SetCurrentProject();
+			SetProjectPath( p );
 			
 			if( p.ProjectType && p.ProjectType == 'webssh' )
 				MountProjectServer( p );
@@ -1244,8 +1244,8 @@ function OpenProject( path )
 				
 				Application.currentProject = p;
 				
-				SetProjectPath( p );
 				SetCurrentProject( p );
+				SetProjectPath( p );
 				
 				if( p.ProjectType && p.ProjectType == 'webssh' )
 					MountProjectServer( p );
@@ -1509,6 +1509,10 @@ function RefreshProjects()
 		if( !projectFolders[ pr.ID ] )
 			projectFolders[ pr.ID ] = {};
 		
+		if( !pr.ProjectPath )
+		{
+			SetProjectPath( pr );
+		}
 		var projectpath = pr.ProjectPath;
 		
 		if( pr.Files && pr.Files.length )
@@ -1594,6 +1598,7 @@ function RefreshProjects()
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
+					console.log( 'Listing in ' + paths + ' with path: ' + fpath );
 					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
