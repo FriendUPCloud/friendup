@@ -1570,8 +1570,6 @@ function RefreshProjects()
 		files[ a ].updateState();
 	}
 	
-	console.log( 'Refreshing projects.' );
-	
 	// List files recursively
 	function listFiles( list, depth, path, projectId )
 	{
