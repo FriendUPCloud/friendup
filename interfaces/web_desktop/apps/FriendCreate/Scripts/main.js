@@ -1194,8 +1194,8 @@ function OpenProject( path )
 			projects.push( p );
 			Application.currentProject = p;
 			
-			SetCurrentProject();
 			SetProjectPath( p );
+			SetCurrentProject();
 			
 			if( p.ProjectType && p.ProjectType == 'webssh' )
 				MountProjectServer( p );
@@ -1244,8 +1244,8 @@ function OpenProject( path )
 				
 				Application.currentProject = p;
 				
-				SetCurrentProject( p );
 				SetProjectPath( p );
+				SetCurrentProject( p );
 				
 				if( p.ProjectType && p.ProjectType == 'webssh' )
 					MountProjectServer( p );
@@ -1509,10 +1509,6 @@ function RefreshProjects()
 		if( !projectFolders[ pr.ID ] )
 			projectFolders[ pr.ID ] = {};
 		
-		if( !pr.ProjectPath )
-		{
-			SetProjectPath( pr );
-		}
 		var projectpath = pr.ProjectPath;
 		
 		if( pr.Files && pr.Files.length )
@@ -1591,8 +1587,6 @@ function RefreshProjects()
 				for( var z = 0; z < depth; z++ )
 					paths += p[ z ] + '/';
 			}
-			if( listedFolders[ projectId ][ paths ] )
-				continue;
 			
 			// This is a file item
 			if( list[ a ].levels.length == depth )
