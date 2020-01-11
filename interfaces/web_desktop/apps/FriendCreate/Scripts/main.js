@@ -1591,6 +1591,8 @@ function RefreshProjects()
 				for( var z = 0; z < depth; z++ )
 					paths += p[ z ] + '/';
 			}
+			if( listedFolders[ projectId ][ paths ] )
+				continue;
 			
 			// This is a file item
 			if( list[ a ].levels.length == depth )
