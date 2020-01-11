@@ -24,9 +24,9 @@ endif
 setup:
 	mkdir -p libwebsockets/build
 	mkdir -p libssh2/build
+ifeq ($(OPENSSL_INTERNAL),1)
 	cd openssl ; ./config no-shared ; make ; cd ..
 	#cd openssl ; ./config shared ; make ; cd ..
-ifeq ($(OPENSSL_INTERNAL),1)
 	echo "internal"
 	cd libwebsockets/build/ ; cmake ../ -DCMAKE_C_FLAGS="-fPIC -ldl" -DLWS_HAVE_SYS_CAPABILITY_H=OFF -DLWS_IPV6=ON -DCMAKE_BUILD_TYPE=DEBUG -DLWS_WITH_LIBUV=ON -DOPENSSL_ROOT_DIR=../../openssl/ -DLWS_OPENSSL_INCLUDE_DIRS=../../openssl/include/ -DLWS_WITH_HTTP2=1 -DOPENSSL_CRYPTO_LIBRARY:FILEPATH=../../openssl/libcrypto.a -DOPENSSL_SSL_LIBRARY:FILEPATH=../..openssl/libssl.a -DOPENSSL_INCLUDE_DIR:FILEPATH=../openssl/include/ -DLWS_OPENSSL_LIBRARIES="../../openssl/libssl.a;../../openssl/libcrypto.a" ; make DEBUG=0 ; cd ../../
 else
@@ -39,8 +39,8 @@ endif
 setupdeb:
 	mkdir -p libwebsockets/build
 	mkdir -p libssh2/build
-	cd openssl ; ./config no-shared -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer ; make ; cd ..
 ifeq ($(OPENSSL_INTERNAL),1)
+	cd openssl ; ./config no-shared -g3 -ggdb -gdwarf-4 -fno-inline -O0 -fno-omit-frame-pointer ; make ; cd ..
 	echo "internal"
 	cd libwebsockets/build/ ; cmake ../ -DCMAKE_C_FLAGS="-fPIC -ldl" -DLWS_HAVE_SYS_CAPABILITY_H=OFF -DLWS_IPV6=ON -DCMAKE_BUILD_TYPE=DEBUG -DLWS_WITH_LIBUV=ON -DOPENSSL_ROOT_DIR=../../openssl/ -DLWS_OPENSSL_INCLUDE_DIRS=../../openssl/include/ -DLWS_WITH_HTTP2=1 -DOPENSSL_CRYPTO_LIBRARY:FILEPATH=../../openssl/libcrypto.a -DOPENSSL_SSL_LIBRARY:FILEPATH=../..openssl/libssl.a -DOPENSSL_INCLUDE_DIR:FILEPATH=../openssl/include/ -DLWS_OPENSSL_LIBRARIES="../../openssl/libssl.a;../../openssl/libcrypto.a" ; make DEBUG=1 ; cd ../../
 else
