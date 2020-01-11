@@ -1509,6 +1509,10 @@ function RefreshProjects()
 		if( !projectFolders[ pr.ID ] )
 			projectFolders[ pr.ID ] = {};
 		
+		if( !pr.ProjectPath )
+		{
+			SetProjectPath( pr );
+		}
 		var projectpath = pr.ProjectPath;
 		
 		if( pr.Files && pr.Files.length )
