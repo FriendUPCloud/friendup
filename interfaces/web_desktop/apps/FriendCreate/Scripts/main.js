@@ -1587,10 +1587,10 @@ function RefreshProjects()
 			var paths = '';
 			if( list[ a ].path.indexOf( '/' ) > 0 )
 			{
+				list[ a ].path = list[ a ].path.split( '//' ).join( '/' );
 				var p = list[a].path.split( '/' );
 				for( var z = 0; z < depth; z++ )
 					paths += p[ z ] + '/';
-				paths = paths.split( '//' ).join( '/' );
 			}
 			
 			// This is a file item
