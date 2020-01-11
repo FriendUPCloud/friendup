@@ -1590,6 +1590,7 @@ function RefreshProjects()
 				var p = list[a].path.split( '/' );
 				for( var z = 0; z < depth; z++ )
 					paths += p[ z ] + '/';
+				paths = paths.split( '//' ).join( '/' );
 			}
 			
 			// This is a file item
@@ -1598,7 +1599,6 @@ function RefreshProjects()
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					console.log( 'Listing in ' + paths + ' with path: ' + fpath );
 					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
