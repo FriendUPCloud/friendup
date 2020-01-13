@@ -744,7 +744,27 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								int error = actFS->Rename( actDev, origDecodedPath, nname );
 								sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 						
-								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+								{
+									char *notifPath = StringDuplicate( origDecodedPath );
+									if( notifPath != NULL )
+									{
+										int i, notifPathLen = strlen( notifPath );
+										if( notifPath[ notifPathLen-1 ] == '/' )
+										{
+											notifPathLen-=2;
+										}
+										for( i=notifPathLen ; i >= 0 ; i-- )
+										{
+											if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+											{
+												notifPath[ i+1 ] = 0;
+												break;
+											}
+										}
+										DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
+										FFree( notifPath );
+									}
+								}
 							
 								// delete Thumbnails
 								// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
@@ -855,7 +875,27 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							if( notify == TRUE )
 							{
 								// send information about changes on disk
-								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+								//DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+								char *notifPath = StringDuplicate( origDecodedPath );
+								if( notifPath != NULL )
+								{
+									int i, notifPathLen = strlen( notifPath );
+									if( notifPath[ notifPathLen-1 ] == '/' )
+									{
+										notifPathLen-=2;
+									}
+									for( i=notifPathLen ; i >= 0 ; i-- )
+									{
+										if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+										{
+											notifPath[ i ] = 0;
+											break;
+										}
+									}
+									
+									DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
+									FFree( notifPath );
+								}
 							}
 							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
