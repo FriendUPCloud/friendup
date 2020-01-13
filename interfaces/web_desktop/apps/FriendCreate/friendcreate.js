@@ -25,11 +25,17 @@ Application.run = function( msg )
 	mainWindow.onClose = function()
 	{
 		// TODO: Check if we haven't saved anything
-		
-		Application.quit();
+		if( !Application.forceQuit )
+		{
+			mainWindow.sendMessage( { command: 'closeprojects' } );
+			return false;
+		}
 	}
 	
 	var m = new File( 'Progdir:Templates/main.html' );
+	m.replacements = {
+		launchwith: msg.args ? msg.args : ''
+	};
 	m.i18n();
 	m.onLoad = function( data )
 	{
@@ -50,6 +56,10 @@ Application.run = function( msg )
 				{
 					name: i18n( 'menu_file_about' ),
 					command: 'about'
+				},
+				{
+					name: i18n( 'menu_file_manual' ),
+					command: 'manual'
 				},
 				{
 					name: i18n( 'menu_file_open' ),
@@ -125,6 +135,7 @@ Application.receiveMessage = function( msg )
 		switch( msg.command )
 		{
 			case 'about':
+			case 'manual':
 			case 'open':
 			case 'save':
 			case 'save_as':
@@ -138,6 +149,12 @@ Application.receiveMessage = function( msg )
 			case 'package_generate':
 			case 'project_close':
 				mainWindow.sendMessage( msg );
+				break;
+			case 'system-notification':
+				if( msg.method && msg.method == 'mountlistchanged' )
+				{
+					mainWindow.sendMessage( { command: 'updatemountlist' } );
+				}
 				break;
 		}
 	}

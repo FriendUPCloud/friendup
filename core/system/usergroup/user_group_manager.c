@@ -1239,7 +1239,10 @@ int UGMReturnAllAndMembers( UserGroupManager *um, BufString *bs, char *type )
 		}
 		l->LibrarySQLDrop( l, sqlLib );
 		
-		BufStringAddSize( bs, "]}", 2 );
+		if( currGroupID != 0 )
+		{
+			BufStringAddSize( bs, "]}", 2 );
+		}
 		
 		BufStringAddSize( bs, "]", 1 );
 	}

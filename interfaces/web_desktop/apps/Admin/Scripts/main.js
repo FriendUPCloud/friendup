@@ -99,6 +99,11 @@ function refreshSidebar()
 				icon: 'fa-user-secret',
 				showing: isAdmin,
 				permissions: [ 'PERM_ROLE_GLOBAL', 'PERM_ROLE_WORKGROUP' ]
+			},
+			'Templates': {
+				icon: 'fa-file-text',
+				showing: isAdmin,
+				permissions: [ 'PERM_TEMPLATE_GLOBAL', 'PERM_TEMPLATE_WORKGROUP' ]
 			}
 		}
 	};
@@ -169,10 +174,11 @@ function refreshSidebar()
 			if( ch.icon )
 			{
 				//atag.classList.add( 'IconMedium', ch.icon );
-				atag.classList.add( 'IconSmall', ch.icon );
-				atag.classList.add( 'Negative', ch.icon );
-				atag.classList.add( 'PaddingLeft', ch.icon );
-				atag.classList.add( 'PaddingRight', ch.icon );
+				//atag.classList.add( 'IconSmall', ch.icon );
+				//atag.classList.add( 'Negative', ch.icon );
+				//atag.classList.add( 'PaddingLeft', ch.icon );
+				//atag.classList.add( 'PaddingRight', ch.icon );
+				atag.className = 'IconSmall ' + ch.icon + ' Negative PaddingLeft PaddingRight';
 				atag.innerHTML = '&nbsp;&nbsp;&nbsp;' + atag.innerHTML;
 				( function( module, sect, ele )
 				{
@@ -394,8 +400,6 @@ function CustomDateTime( unix )
 	
 	var curr = jsdate( 'Y-M-j-H-i' ).split( '-' );
 	var date = jsdate( 'Y-M-j-H-i', str_pad( unix, 13, 'STR_PAD_RIGHT' ) ).split( '-' );
-	
-	//console.log( date );
 	
 	// TODO: Add i18n translation ...
 	

@@ -1,0 +1,57 @@
+
+<div class="ContentFull Padding" id="Top">
+	<h2>
+		Introduksjon
+	</h2>
+	<p>
+		Friend Create er laget for å være et enkelt men kraftig verktøy som lar
+		deg skape Friend programmer (og server moduler). Programmet er optimalisert
+		for at du skal kunne programmere ett eller flere prosjekter samtidig i tillegg
+		til å vedlikeholde programvarepakker for distribusjon.
+	</p>
+	<p>
+		Friend Create støtter funksjonaliteten du forventer fra et enkelt 
+		programmeringsmiljø. Men i tillegg er det viktig for forfatterne at du
+		skal kunne konsentrere deg om kode, og ikke bli hengt opp i funksjonalitet.
+		Friend Create skal holde seg nøytralt slik at du kan bli så effektiv som mulig.
+	</p>
+	<h3>
+		Friend pakker
+	</h3>
+	<p>
+		Når du bygger en Friend pakke må du først lage et prosjekt. Prosjektet
+		holder programstrukturen din, med kode, bilder og andre datafiler. Strukturen
+		er laget for å understøtte bygging av distribuerbare Friend pakker.
+	</p>
+	<p>
+		Før du kan bygge en pakke må du passe på at den følgende strukturen 
+		oppfylles:
+	</p>
+	<ul>
+		<li>Prosjektnavn - et unikt navn for ditt prosjekt</li>
+		<li>Prosjekt forfatter - den/de som har skapt prosjektet</li>
+		<li>Prosjektkategori - hent fra listen</li>
+		<li>Prosjekt versjon - en numerisk versjon som tillater oppgraderingskontroll</li>
+		<li>Prosjektbeskrivelse - en beskrivelse av prosjektet for markedsplassen</li>
+		<li>screenshot.jpg - et bilde av appen for markedsplassen (ikke obligatorisk)</li>
+		<li>preview.jpg - reklamebilde for markedsplassen</li>
+		<li>icon.png - programikonet ditt</li>
+	</ul>
+	<p>
+		Hvis disse kriteriene er møtt, vil du kunne bygge en Friend pakke
+		som du kan installere på din Friend server, eller som du kan sende til 
+		Friend Software Corp. for godkjennelse og distribusjon på Friend Sky.
+	</p>
+	<p>
+		For å utføre byggingen av din pakke, åpne ditt prosjektredigerings vindu
+		for ditt aktive prosjekt og fyll ut skjemaet. Husk å passe på at alle dine
+		filer er representert i listen. Etterpå kan du bruke Pakker -> Bygg pakke
+		i programmenyen. Da vil pakken din bli bygget og plassert i prosjektmappen din.
+	</p>
+</div>
+<div class="BorderTop Padding TextCenter" id="Bottom">
+	<button type="button" class="IconSmall fa-remove" onclick="CloseView()">
+		{i18n_close}
+	</button>
+</div>
+<style> #Top { height: calc(100% - 50px); overflow: auto; } #Bottom { height: 50px; position: absolute; left: 0; bottom: 0; width: 100%; } </style>

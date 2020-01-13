@@ -1031,6 +1031,7 @@ Content-Type: application/octet-stream
 							char *fnameend = strchr( fname, '"' );
 							size = endOfFile - startOfFile;
 							int fnamesize = (int)(fnameend - fname);
+							DEBUG("[Http] Found file - name %.*s\n", 30, fname );
 						
 							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size );
 							if( newFile != NULL )

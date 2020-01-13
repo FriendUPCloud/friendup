@@ -73,7 +73,10 @@ var projects = []; // All projects
 Application.run = function( msg )
 {
 	InitGui();
-	( new EditorFile( 'New file' ) );
+	if( !ge( 'Launchfile' ).getAttribute( 'file' ) )
+	{
+		( new EditorFile( 'New file' ) );
+	}
 	RefreshProjects();
 }
 
@@ -161,7 +164,7 @@ function RefreshFiletypeSelect()
 	{
 		Application.currentFile.editor.getSession().setMode( types[ ext ] );
 	}
-	else
+	else if( Application.currentFile.editor )
 	{
 		Application.currentFile.editor.getSession().setMode( 'ace/mode/txt' );
 		ext = 'txt';
@@ -199,11 +202,14 @@ function RefreshFiletypeSelect()
 		}
 	}
 	
-	Application.currentFile.editor.setOptions( { // Enable autocompletion
-		enableBasicAutocompletion: true,
-        enableSnippets: true,
-        enableLiveAutocompletion: true
-	} );
+	if( Application.currentFile.editor )
+	{
+		Application.currentFile.editor.setOptions( { // Enable autocompletion
+			enableBasicAutocompletion: true,
+		    enableSnippets: true,
+		    enableLiveAutocompletion: true
+		} );
+	}
 }
 
 // Initialize the GUI! ---------------------------------------------------------
@@ -216,9 +222,14 @@ function InitGui()
 	InitTabs( ge( 'SideBarTabs' ) );
 	if( ge( 'SideBar' ) )
 	{
-		gui.sideBar = new Friend.FileBrowser( ge( 'SB_AllFiles' ), { displayFiles: true }, gui.sideBarCallbacks );
+		gui.sideBar = new Friend.FileBrowser( ge( 'SB_AllFiles' ), { displayFiles: true, noContextMenu: true }, gui.sideBarCallbacks );
 		gui.sideBar.render();
-		ge( 'tabAllFiles' ).onclick();
+		if( delayedOnclick )
+		{
+			ge( delayedOnclick ).onclick();
+			delayedOnclick = false;
+		}
+		else ge( 'tabAllFiles' ).onclick();
 	}
 }
 
@@ -228,11 +239,17 @@ var EditorFile = function( path )
 {
 	var self = this;
 	
+	var returnable = false;
+	
 	for( var a = 0; a < files.length; a++ )
 	{
 		if( files[ a ].path == path )
 		{
-			return files[ a ].tab.onclick();
+			Application.currentFile = files[ a ];
+			files[ a ].tab.onclick();
+			files[ a ].activate();
+			CheckPlayStopButtons();
+			return;
 		}
 	}
 	
@@ -254,13 +271,14 @@ var EditorFile = function( path )
 				if( ext == 'jpg' || ext == 'gif' || ext == 'jpeg' || ext == 'png' )
 				{
 					self.filename = json.Filename;
-					self.path = json.Path;
+					self.path = path;
 					self.content = '<div class="FullImage"><img src="' + getImageUrl( json.Path ) + '"/></div>';
 					self.type = 'image';
 					self.filesize = json.Filesize;
 					files.push( self );
 					InitEditArea( self );
 					self.updateState( 'Reading' );
+					CheckPlayStopButtons();
 				}
 				else
 				{
@@ -268,18 +286,14 @@ var EditorFile = function( path )
 					f.onLoad = function( data )
 					{
 						self.filename = json.Filename;
-						self.path = json.Path;
+						self.path = path;
 						self.content = data;
 						self.filesize = json.Filesize;
 						files.push( self );
 						InitEditArea( self );
-						setTimeout( function()
-						{
-							self.refreshBuffer();
-							self.refreshMinimap();
-						}, 50 );
 						self.updateState( 'Reading' );
 						CheckProjectFile( f );
+						CheckPlayStopButtons();
 					}
 					f.load();
 				}
@@ -296,11 +310,6 @@ var EditorFile = function( path )
 		this.filesize = 0;
 		files.push( this );
 		InitEditArea( this );
-		setTimeout( function()
-		{
-			self.refreshBuffer();
-			self.refreshMinimap();
-		}, 50 );
 	}
 }
 
@@ -324,7 +333,27 @@ EditorFile.prototype.updateState = function( state )
 	if( projectFiles[ this.path ] )
 	{
 		projectFiles[ this.path ].className = 'FileItem ' + state;
+		if( state == 'Reading' || state == 'Editing' )
+		{
+			this.activate();
+		}
 	}
+}
+
+EditorFile.prototype.activate = function()
+{
+	for( var a in projectFiles )
+	{
+		if( a == this.path )
+		{
+			projectFiles[ a ].classList.add( 'Active', 'Rounded' );
+		}
+		else
+		{
+			projectFiles[ a ].classList.remove( 'Active', 'Rounded' );
+		}
+	}
+	SetCurrentProject( this.ProjectID );
 }
 
 EditorFile.prototype.updateTab = function()
@@ -386,10 +415,22 @@ function InitEditArea( file )
 	t.addEventListener( 'mouseup', function()
 	{
 		Application.currentFile = file;
+		CheckPlayStopButtons();
 	} );
 	
 	c.addEventListener( 'mousedown', function( e )
 	{
+		var prev = null;
+		var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			if( a > 0 && eles[ a - 1 ] == t )
+			{
+				prev = eles[ a ];
+				break;
+			}
+		}
+		
 		if( t.file.state == 'Editing' )
 		{
 			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
@@ -400,6 +441,7 @@ function InitEditArea( file )
 					t.parentNode.removeChild( t );
 					t.file.close();
 					InitTabs( ge( 'CodeArea' ) );
+					checkTabsNow();
 				}
 			} );
 		}
@@ -409,8 +451,22 @@ function InitEditArea( file )
 			t.parentNode.removeChild( t );
 			t.file.close();
 			InitTabs( ge( 'CodeArea' ) );
+			checkTabsNow();
 		}
 		return cancelBubble( e );
+		
+		function checkTabsNow()
+		{
+			if( prev )
+			{
+				prev.onclick();
+				return;
+			}
+			var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+			// Make sure one is clicked
+			if( eles && eles[ 0 ] )
+				eles[ 0 ].onclick();
+		}
 	} );
 	
 	// Initialize the content editor
@@ -428,6 +484,7 @@ function InitEditArea( file )
 	// Add an extra event
 	file.tab.addEventListener( 'click', function( e )
 	{
+		file.activate();
 		setTimeout( function( e )
 		{
 			RefreshFiletypeSelect();
@@ -435,8 +492,8 @@ function InitEditArea( file )
 	}, false );
 
 	Application.currentFile = file;
-	file.tab.onclick();
 	
+	file.tab.onclick();
 	
 	if( file.refreshMinimap )
 		file.refreshMinimap();
@@ -451,7 +508,7 @@ function RemoveEditArea( file )
 
 function InitContentEditor( element, file )
 {
-	var minimapZoomLevel = 0.5;
+	var minimapZoomLevel = 0.3;
 	
 	// Remove previous editor
 	if( file.editor )
@@ -463,6 +520,9 @@ function InitContentEditor( element, file )
 	
 	// Associate page with file
 	element.file = file;
+	
+	file.minimapZoomLevel = minimapZoomLevel;
+	file.needsRefresh = true;
 	
 	// Create editor root container
 	var area = document.createElement( 'div' );
@@ -478,6 +538,7 @@ function InitContentEditor( element, file )
 	file.editor = ace.edit( area.id );
 	file.editor.setFontSize( 14 );
 	file.editor.setValue( file.content );
+	file.editor.getSession().setUndoManager( new ace.UndoManager() );
 	file.editor.setOptions( { // Enable autocompletion
 		enableBasicAutocompletion: true,
         enableSnippets: true,
@@ -490,6 +551,7 @@ function InitContentEditor( element, file )
 	
 	file.editor.getSession().on( 'change', function( e )
 	{
+		file.needsRefresh = true;
 		file.updateState( 'Editing' );
 	} );
 	
@@ -535,7 +597,7 @@ function InitContentEditor( element, file )
 			var sy = e.clientY - file.mouseDown;
 			var ty = file.rectPos + sy;
 			if( ty < 0 ) ty = 0;
-			else if( ty + file.minimapRect.offsetHeight > file.minimapGroove.offsetHeight )
+			else if( ty + file.minimapRect.offsetHeight >= file.minimapGroove.offsetHeight )
 				ty = file.minimapGroove.offsetHeight - file.minimapRect.offsetHeight;
 			file.minimapRect.style.top = ty + 'px';		
 			
@@ -554,9 +616,9 @@ function InitContentEditor( element, file )
 	}, false );
 	// Done moving the rect
 	var ac = file.page.querySelector( '.ace_scroller' );
-	ac.parentNode.appendChild( file.minimap );
-	ac.parentNode.appendChild( file.minimapRect );
-	ac.parentNode.appendChild( file.minimapGroove );
+	ac.parentNode.parentNode.appendChild( file.minimap );
+	ac.parentNode.parentNode.appendChild( file.minimapRect );
+	ac.parentNode.parentNode.appendChild( file.minimapGroove );
 	
 	// Events for minimap
 	file.editor.session.on( 'changeScrollTop', function( e )
@@ -565,36 +627,126 @@ function InitContentEditor( element, file )
 			file.refreshMinimap( e );
 	} );
 	
-	file.refreshBuffer = function()
+	file.refreshBuffer = function( callback )
 	{
-		// Add minimap dom element
-		this.lines = this.editor.session.getValue().split( '\n' );
-		var str = [];
-		var cl;
-		for( var a = 0; a < this.lines.length; a++ )
+		if( !this.needsRefresh ) return;
+		var self = this;
+		
+		var maxVSegmentSize = 200;
+		
+		if( this.refreshBufTime ) clearTimeout( this.refreshBufTime );
+		
+		this.refreshBufTime = setTimeout( function()
 		{
-			cl = '';
-			if( this.lines[a].indexOf( '//' ) >= 0 )
-				cl = ' Comment';
-			else if( this.lines[a].indexOf( 'function' ) >= 0 )
-				cl = ' Function';
-			else if( this.lines[a].indexOf( 'if' ) >= 0 )
-				cl = ' If';
-			else if( this.lines[a].indexOf( 'for' ) >= 0 )
-				cl = ' If';
-			else if( this.lines[a].indexOf( 'while' ) >= 0 )
-				cl = ' If';
-			else if( this.lines[a].indexOf( 'var' ) >= 0 )
-				cl = ' Var';
-			str.push( '<textarea resize="false" class="MinimapRow' + cl + '">' + this.lines[ a ] + '</textarea>' );
-		}
-		this.minimap.innerHTML = '<div>' + str.join( '' ) + '</div>';
+			// Add minimap dom element
+			self.lines = self.editor.session.getValue().split( '\n' );
+			
+			// Get the height of a line
+			var lineHeight = self.editor.renderer.lineHeight;
+			
+			// Make sure we have a canvas array (vertical segments)
+			if( !self.canvasArray )
+				self.canvasArray = [];
+			var vsegments = Math.floor( self.lines.length / maxVSegmentSize );
+			var vsegmentT = vsegments * maxVSegmentSize; // Max segments
+			var canvWidth = self.minimap.offsetWidth / self.minimapZoomLevel;
+			
+			var cl = ''; // Color of line
+			var segY = 0; // Canvas segment y
+			var y = 0; // Drawing y coordinate
+			var prevArrk = -1; // Previous canvas segment
+			var ctx; // Canvas context
+			for( var a = 0; a < self.lines.length; a++ )
+			{
+				// Get current drawing segment
+				var arrk = Math.floor( a / maxVSegmentSize );
+				if( prevArrk != arrk )
+				{
+					// The length of this segment is either maxVSegmentSize or the rest of the lines minus previous segments
+					var segmentLength = arrk < vsegments ? maxVSegmentSize : ( self.lines.length - vsegmentT );
+				
+					// Check if we have such a segment / create it
+					if( !self.canvasArray[ arrk ] )
+					{
+						self.canvasArray[ arrk ] = document.createElement( 'canvas' );
+						self.minimap.appendChild( self.canvasArray[ arrk ] );
+					}
+				
+					// Fetch canvas
+					var canv = self.canvasArray[ arrk ];
+					canv.setAttribute( 'width', canvWidth );
+					canv.setAttribute( 'height', lineHeight * segmentLength );
+				
+					// Set canvas props
+					ctx = canv.getContext( '2d' );
+					ctx.font = '14px Monospace,Courier';
+					ctx.textBaseline = 'Top';
+					ctx.fillStyle = '#000000';
+			
+					// Clear canvas
+					ctx.fillRect( 0, 0, canv.getAttribute( 'width' ), canv.getAttribute( 'height' ) );
+					prevArrk = arrk;
+					
+					// Drawing coordinate
+					segY += y;
+					canv.style.top = segY * self.minimapZoomLevel + 'px';
+					y = 0;
+				}
+				
+				// Draw the line
+				cl = '#ffffff';
+				if( self.lines[a].indexOf( '//' ) >= 0 )
+					cl = '#888888';
+				else if( self.lines[a].indexOf( 'function' ) >= 0 )
+					cl = '#ffee77';
+				else if( self.lines[a].indexOf( 'if' ) >= 0 )
+					cl = '#ff8844';
+				else if( self.lines[a].indexOf( 'for' ) >= 0 )
+					cl = '#ff8844';
+				else if( self.lines[a].indexOf( 'while' ) >= 0 )
+					cl = '#ff8844';
+				else if( self.lines[a].indexOf( 'var' ) >= 0 )
+					cl = '#ffee77';
+				
+				ctx.strokeStyle = cl;
+				ctx.strokeText( self.lines[ a ], 10, y + lineHeight );
+				
+				y += lineHeight;
+			}
+		
+			// Remove non existent canvases
+			var out = [];
+			var removes = [];
+			for( var a = 0; a < self.canvasArray.length; a++ )
+			{
+				if( a <= vsegments )
+				{
+					out.push( self.canvasArray[ a ] );
+				}
+				else
+				{
+					removes.push( self.canvasArray[ a ] );
+				}
+			}
+			self.canvasArray = out;
+			for( var a = 0; a < removes.length; a++ )
+			{
+				self.minimap.removeChild( removes[ a ] );
+			}
+			delete removes;
+		
+			// We no longer are refreshing
+			self.needsRefresh = false;
+			self.refreshBufTime = false;
+			
+			if( callback )
+				callback();
+		}, 250 );
 	}
 	
 	// Refresh the minimap
 	file.refreshMinimap = function()
 	{
-		
 		var self = this;
 		if( !self.lines ) return;
 		
@@ -621,9 +773,15 @@ function InitContentEditor( element, file )
 			// Lines and code content height
 			var len = self.lines.length;
 			var tot = lh * len;
+			var totZoom = tot * minimapZoomLevel;
+			var zoomedLineHeight = lh * minimapZoomLevel;
+			var scrollbarHeight = 7;
 		
-			// Text container height
-			var contHeight = ac.offsetHeight + ( lh * minimapZoomLevel );
+			// Minimap groove height
+			file.minimapGroove.style.height = ( totZoom < ac.offsetHeight ? totZoom : ( ac.offsetHeight + scrollbarHeight ) ) + 'px';
+			
+			// Content height - plus one line
+			var contHeight = ( tot < ac.offsetHeight ? tot : ac.offsetHeight ) + zoomedLineHeight;
 		
 			// 
 			var m = self.minimapRect;
@@ -631,8 +789,13 @@ function InitContentEditor( element, file )
 			// Don't do calculation when there's no content to scroll
 			if( tot <= contHeight )
 			{
-				m.style.height = contHeight + 'px';
+				// Fill whole groove
+				m.style.top = 0;
+				m.style.height = file.minimapGroove.offsetHeight + 'px';
+				
+				// Minimap is just as high as content height (it is zoomed)
 				self.minimap.style.height = contHeight + 'px';
+				self.refreshing = false;
 				return;
 			}
 		
@@ -640,26 +803,39 @@ function InitContentEditor( element, file )
 			if( e < 0 ) e = 0;
 			if( e > tot - contHeight ) e = tot - contHeight;
 			
-			var meh = self.minimap.offsetHeight; // Zoomed
+			// Get total height of all canvas segments
+			var meh = 0;
+			for( var z = 0; z < file.canvasArray.length; z++ )
+			{
+				meh += file.canvasArray[ z ].offsetHeight * minimapZoomLevel; // Zoomed
+			}
 	
 			// Scroll progress
 			var sp = e / ( tot - contHeight );
 		
 			// Set top of minimap to show current minimap position
-			if( meh > contHeight )
-				self.minimap.style.top = -( sp * ( meh - contHeight ) ) + 'px';
-			else self.minimap.style.top = 0;
+			if( Math.floor( meh ) <= Math.floor( self.minimapGroove.offsetHeight ) )
+			{
+				self.minimap.style.top = 0;
+			}
+			else
+			{
+				self.minimap.style.top = -( sp * ( meh - ( contHeight - zoomedLineHeight ) ) ) + 'px';
+			}
 		
 			// Page visualization
 			if( !file.mouseDown )
 			{
 				m.style.height = ( ( contHeight / tot ) * meh ) + 'px';
-				m.style.top = sp * ( contHeight - m.offsetHeight ) + 'px';
+				m.style.top = sp * ( file.minimapGroove.offsetHeight - m.offsetHeight ) + 'px';
 			}
 		
 			self.refreshing = false; 
 		}, 50 );
 	}
+	
+	file.editor.focus();
+	file.refreshBuffer( function(){ file.refreshMinimap() } );
 }
 
 // Supported file formats ------------------------------------------------------
@@ -753,6 +929,7 @@ function CheckProjectFile( file )
 				Filename: fn
 			} );
 			RefreshProjects();
+			SaveProject( p );
 		}
 	}
 }
@@ -841,8 +1018,7 @@ document.body.addEventListener( 'keydown', function( e )
 document.body.addEventListener( 'keyup', function( e )
 {
 	var f = Application.currentFile;
-	if( !f ) return;
-	
+	if( !f ) return;	
 
 	// Update minimap
 	if( Application.currentFile.refreshBuffer )
@@ -874,31 +1050,6 @@ function PrintFile()
 	}
 }
 
-// Run / stop app
-
-// Run the current jsx
-function RunApp()
-{
-	if( Application.currentFile )
-	{
-		Application.sendMessage( {
-			type: 'system',
-			command: 'executeapplication',
-			executable: Application.currentFile.path,
-			arguments: false
-		} );
-	}
-}
-
-// Kill running jsx
-function StopApp()
-{
-	if( Application.currentFile )
-	{
-		Application.sendMessage( { type: 'system', command: 'kill', appName: Application.currentFile.filename } );
-	}
-}
-
 // The project editor ----------------------------------------------------------
 
 var pe = null;
@@ -906,18 +1057,16 @@ function OpenProjectEditor()
 {
 	if( !Application.currentProject )
 	{
-		var p = new Project();
-		p.Path = 'Home:';
-		projects.push( p );
-		Application.currentProject = p;
+		return NewProject();
 	}
 	
 	if( pe )
 	{
+		pe.setFlag( 'title', i18n( 'i18n_project_editor' ) + ' - ' + Application.currentProject.ProjectPath );
 		return pe.activate();
 	}
 	pe = new View( {
-		title: i18n( 'i18n_project_editor' ),
+		title: i18n( 'i18n_project_editor' ) + ' - ' + Application.currentProject.ProjectPath,
 		width: 900,
 		height: 700
 	} );
@@ -964,6 +1113,7 @@ function NewProject()
 {
 	var p = new Project();
 	p.Path = 'Home:';
+	p.ProjectPath = 'Home:';
 	p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 	var found = false;
 	var b = 1;
@@ -987,12 +1137,49 @@ function NewProject()
 	projects.push( p );
 	Application.currentProject = p;
 	RefreshProjects();
+	SaveProject( p, true, function( result )
+	{
+		if( result == false )
+		{
+			CloseProject( p );
+		}
+		else
+		{
+			OpenProjectEditor();
+		}
+	} );
+}
+
+var delayedOnclick = false;
+
+function SetProjectPath( p )
+{
+	// Set the projectpath
+	if( p.ProjectType == 'webssh' )
+	{
+		p.ProjectPath = p.ProjectName + ':';
+	}
+	// Normal paths
+	else
+	{
+		var pp = p.Path;
+		
+		if( pp.indexOf( '/' ) > 0 ){ pp = pp.split( '/' ); pp.pop(); pp = pp.join( '/' ) + '/'; }
+		else if( pp.indexOf( ':' ) > 0 ){ pp = pp.split( ':' ); pp.pop(); pp = pp.join( ':' ) + ':'; }
+		p.ProjectPath = pp;
+	}
 }
 
 function OpenProject( path )
 {
 	if( path && path.toLowerCase().indexOf( '.apf' ) > 0 )
 	{
+		for( var z = 0; z < projects.length; z++ )
+		{
+			// Project already loaded
+			if( projects[ z ].Path == path )
+				return;
+		}
 		var p = new Project();
 		p.Path = path;
 		p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
@@ -1003,10 +1190,27 @@ function OpenProject( path )
 			var proj = JSON.parse( data );
 			for( var a in proj )
 				p[ a ] = proj[ a ];
+			p.Path = path; // Keep this!
 			projects.push( p );
 			Application.currentProject = p;
+			
+			SetCurrentProject();
+			SetProjectPath( p );
+			
+			if( p.ProjectType && p.ProjectType == 'webssh' )
+				MountProjectServer( p );
+			
 			RefreshProjects();
-			ge( 'tabProjects' ).onclick();
+			
+			CheckPlayStopButtons();
+			if( !ge( 'tabProjects' ).onclick )
+			{
+				delayedOnclick = 'tabProjects';
+			}
+			else
+			{
+				ge( 'tabProjects' ).onclick();
+			}
 		}
 		f.load();
 		return;
@@ -1023,6 +1227,13 @@ function OpenProject( path )
 			p.Path = files[0].Path;
 			p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
 		
+			for( var z = 0; z < projects.length; z++ )
+			{
+				// Project already loaded
+				if( projects[ z ].Path == p.Path )
+					return;
+			}
+		
 			var f = new File( p.Path );
 			f.onLoad = function( data )
 			{
@@ -1030,8 +1241,17 @@ function OpenProject( path )
 				for( var a in proj )
 					p[ a ] = proj[ a ];
 				projects.push( p );
+				
 				Application.currentProject = p;
+				
+				SetCurrentProject( p );
+				SetProjectPath( p );
+				
+				if( p.ProjectType && p.ProjectType == 'webssh' )
+					MountProjectServer( p );
+				
 				RefreshProjects();
+				CheckPlayStopButtons();
 				ge( 'tabProjects' ).onclick();
 			}
 			f.load();
@@ -1042,14 +1262,38 @@ function OpenProject( path )
 	} ) );
 }
 
-function SaveProject( project, saveas )
+// Get the file where the apf is located
+function GetProjectfileFolder( project )
+{
+	var path = project.Path;
+	if( path.indexOf( '/' ) > 0 )
+	{
+		path = path.split( '/' );
+		path.pop();
+		path = path.join( '/' ) + '/';
+	}
+	else if ( path.indexOf( ':' ) > 0 )
+	{
+		path = path.split( ':' )[0] + ':';
+	}
+	else
+	{
+		path = 'Home:';
+	}
+	return path;
+}
+
+function SaveProject( project, saveas, callback )
 {
 	if( !saveas ) saveas = false;
 	
 	// Clean up project structure
 	var values = [
 		'ProjectName', 'Path', 'Files', 'Permissions',
-		'Description', 'Version', 'Author', 'Category', 'ProjectPath'
+		'Description', 'Version', 'Author', 'Category', 'ProjectPath',
+		'ProjectType', 'ProjectHostSSHKey', 'ProjectHostSSHServer', 
+		'ProjectHostSSHUsername', 'ProjectHostSSHPassword', 'ProjectHostSSHPort',
+		'ProjectWebEnabled', 'ProjectWebPath', 'ProjectHostSSHPath'
 	];
 	var projectOut = {};
 	for( var a = 0; a < values.length; a++ )
@@ -1064,38 +1308,153 @@ function SaveProject( project, saveas )
 		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
+			if( project.ProjectType == 'webssh' )
+			{
+				var p = project;
+				CreateFilesystem( {
+					devname: p.ProjectName,
+					username: p.ProjectHostSSHUsername,
+					password: p.ProjectHostSSHPassword,
+					server: p.ProjectHostSSHServer,
+					port: p.ProjectHostSSHPort,
+					key: p.ProjectHostSSHKey,
+					path: p.ProjectHostSSHPath,
+					fsys: 'SFTP'
+				} );
+			}
 			StatusMessage( i18n( 'i18n_saved' ) );
+			if( callback )
+				callback( true );
 		}
 		f.save( JSON.stringify( projectOut ) );
 	}
 	else
 	{
 		( new Filedialog( {
-			path: project.ProjectPath ? project.ProjectPath : 'Home:',
+			path: GetProjectfileFolder( project ),
+			title: i18n( 'i18n_save_new_project' ),
 			triggerFunction: function( filename )
 			{
+				if( !filename )
+				{
+					return callback( false );
+				}
+				
+				var oldPath = project.ProjectPath;
+				
 				project.Path = filename;
+				SetProjectPath( project );
+				
+				// Fix the filename for the project path
+				var p = filename;
+				if( p.indexOf( '/' ) > 0 )
+				{
+					p = p.split( '/' ); p.pop();
+					p = p.join( '/' ) + '/';
+				}
+				else if( p.indexOf( ':' ) > 0 )
+				{
+					p = p.split( ':' ); p.pop();
+					p = p.join( ':' ) + ':';
+				}
+				// Erroneous filename
+				else return callback( false );
+				
 				projectOut.Path = filename;
+				projectOut.ProjectPath = project.ProjectPath;
 
 				var f = new File( project.Path );
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
-					StatusMessage( i18n( 'i18n_saved' ) );
+					// A standard project allows for moving project files
+					if( project.ProjectType == 'standard' )
+					{
+						StatusMessage( i18n( 'i18n_copying_project' ) );
+						MoveProjectFiles( project, oldPath, function( e )
+						{
+							StatusMessage( i18n( 'i18n_saved' ) );
+							
+							if( callback )
+							{
+								callback( true );
+							}
+						} );
+						return;
+					}
+					else if( project.ProjectType == 'webssh' )
+					{
+						// Create or update filesystem
+						var p = project;
+						CreateFilesystem( {
+							devname: p.ProjectName,
+							username: p.ProjectHostSSHUsername,
+							password: p.ProjectHostSSHPassword,
+							server: p.ProjectHostSSHServer,
+							port: p.ProjectHostSSHPort,
+							key: p.ProjectHostSSHKey,
+							path: p.ProjectHostSSHPath,
+							fsys: 'SFTP'
+						} );
+					}
+					callback( true );
 				}
 				f.save( JSON.stringify( projectOut ) );
 			},
 			type: 'save',
-			filename: '',
+			filename: 'project.apf',
 			suffix: 'apf',
 			rememberPath: true
 		} ) );
 	}
 }
 
-// Close a project
-function CloseProject( proj )
+function MoveProjectFiles( project, oldPath, callback )
 {
+	nextFile( 0 );
+	function nextFile( pos )
+	{
+		if( pos < project.Files.length )
+		{
+			var shell = new Shell();
+			shell.onReady = function()
+			{
+				var dest = project.ProjectPath + project.Files[ pos ].Path;
+				if( dest.indexOf( '/' ) > 0 )
+				{
+					dest = dest.split( '/' );
+					dest.pop();
+					dest = dest.join( '/' ) + '/';
+				}
+				else if( dest.indexOf( ':' ) > 0 )
+				{
+					dest = dest.split( ':' );
+					dest.pop();
+					dest = dest.join( ':' ) + ':';
+				}
+				shell.execute( 'makedir "' + dest + '"', function( res )
+				{
+					shell.execute( 'copy "' + oldPath + project.Files[ pos ].Path + '" "' + dest + '"', function( result )
+					{
+						nextFile( pos + 1 );
+						shell.close();
+					} );
+				} );
+			}
+		}
+		else
+		{
+			callback( true );
+		}
+	}
+}
+
+// Close a project
+function CloseProject( proj, callback )
+{
+	if( proj.ProjectType && proj.ProjectType == 'webssh' )
+		UnmountProjectServer( proj, callback );
+	
 	var o = [];
 	for( var a = 0; a < projects.length; a++ )
 	{
@@ -1114,12 +1473,17 @@ function CloseProject( proj )
 	if( proj == Application.currentProject )
 		Application.currentProject = null;
 	RefreshProjects();
+	
+	if( !( proj.ProjectType && proj.ProjectType == 'webssh' ) && callback )
+		callback( false );
+		
 }
 
 function RefreshProjects()
-{
+{	
 	if( projects.length == 0 )
 	{
+		Application.currentProject = false;
 		ge( 'SB_Project' ).innerHTML = '\
 			<div class="Padding"><p>' + i18n( 'i18n_no_projects' ) + '</p>\
 				<p>\
@@ -1127,15 +1491,11 @@ function RefreshProjects()
 					<button type="button" class="IconSmall fa-briefcase" onclick="NewProject()"> ' + i18n( 'i18n_new_project' ) + '</button>\
 				</p>\
 			</div>';
+		CheckPlayStopButtons();
 		return;
 	}
 	
-	var filesFromPath = {};
-	for( var a = 0; a < files.length; a++ )
-	{
-		if( files[a].path )
-			filesFromPath[ files[a].path ] = files[a];
-	}
+	var listedFolders = {};
 	
 	var str = '';
 	for( var a = 0; a < projects.length; a++ )
@@ -1149,9 +1509,11 @@ function RefreshProjects()
 		if( !projectFolders[ pr.ID ] )
 			projectFolders[ pr.ID ] = {};
 		
-		var projectpath = pr.Path.split( '/' );
-		projectpath.pop();
-		projectpath = projectpath.join( '/' ) + '/';
+		if( !pr.ProjectPath )
+		{
+			SetProjectPath( pr );
+		}
+		var projectpath = pr.ProjectPath;
 		
 		if( pr.Files && pr.Files.length )
 		{
@@ -1180,14 +1542,14 @@ function RefreshProjects()
 				}
 			}
 			sortable = sortable.sort();
-			fstr = listFiles( sortable, 1, false, {}, pr.ID );
+			fstr = listFiles( sortable, 1, false, pr.ID );
 		}
 		var current = ' BackgroundHeavy Rounded';
 		if( Application.currentProject == pr )
 		{
 			current = ' Current BackgroundHeavier Rounded';
 		}
-		str += '<ul><li class="Project' + current + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
+		str += '<ul><li class="Project' + current + '" id="p' + pr.ID + '" ondblclick="OpenProjectEditor()" onclick="SetCurrentProject( \'' + pr.ID + '\')">' + pr.ProjectName + '</li>' + fstr + '</ul>';
 	}
 	ge( 'SB_Project' ).innerHTML = str;
 	
@@ -1209,28 +1571,68 @@ function RefreshProjects()
 	}
 	
 	// List files recursively
-	function listFiles( list, depth, path, folders, projectId )
+	function listFiles( list, depth, path, projectId )
 	{
+		// Erronous path
+		if( path && path.indexOf( ':' ) > 0 )
+			return '';
+		
 		var str = '';
+		
+		if( !listedFolders[ projectId ] )
+			listedFolders[ projectId ] = {};
 		
 		for( var a in list )
 		{
+			var paths = '';
+			if( list[ a ].path.indexOf( '/' ) > 0 )
+			{
+				list[ a ].path = list[ a ].path.split( '//' ).join( '/' );
+				var p = list[a].path.split( '/' );
+				for( var z = 0; z < depth; z++ )
+				{
+					if( p[ z ] && typeof( p[ z ] ) != 'undefined' )
+						paths += p[ z ] + '/';
+				}
+			}
+			
+			// This is a file item
 			if( list[ a ].levels.length == depth )
 			{
 				var fpath = projectpath + list[a].fullpath;
 				if( !path || ( path && list[ a ].path == path ) )
 				{
-					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\')">' + list[ a ].levels[ depth - 1 ] + '</li>';
+					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
 				}
 			}
-			else if( list[a].levels.length == depth + 1 && !folders[ list[ a ].path ] )
+			// This is a folder under current depth
+			else if( list[a].levels.length == depth + 1 && !listedFolders[ projectId ][ list[ a ].path ] && list[ a ].path.indexOf( ':' ) < 0 )
 			{
-				folders[ list[ a ].path ] = true;
+				listedFolders[ projectId ][ list[ a ].path ] = true;
+				
 				if( !projectFolders[ projectId ][ list[ a ].path ] )
 					projectFolders[ projectId ][ list[ a ].path ] = {};
+				
 				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
-				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="ToggleOpenFolder(this)">' + list[ a ].levels[ depth - 1 ] + '/</li>';
-				str += listFiles( list, depth + 1, list[ a ].path, false, projectId );
+				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				
+				listedFolders[ projectId ][ paths ] = true;
+				str += listFiles( list, depth + 1, list[ a ].path, projectId );
+			}
+			// This is a folder that may contain a folder
+			else if( list[a].path.indexOf( '/' ) > 0 )
+			{
+				if( !listedFolders[ projectId ][ paths ] )
+				{
+					listedFolders[ projectId ][ paths ] = true;
+				
+					if( !projectFolders[ projectId ][ paths ] )
+						projectFolders[ projectId ][ paths ] = {};
+				
+					var cl = projectFolders[ projectId ][ paths ] && projectFolders[ projectId ][ paths ].state == 'open' ? ' Open' : '';
+					str += '<li class="Folder ' + cl + '" path="' + paths + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+					str += listFiles( list, depth + 1, list[ a ].path, projectId );
+				}
 			}
 		}
 		if( str.length ) str = '<ul>' + str + '</ul>';
@@ -1240,6 +1642,8 @@ function RefreshProjects()
 
 function SetCurrentProject( p )
 {
+	var cl = ge( 'SB_Project' ).getElementsByClassName( 'Project' );
+	
 	for( var a = 0; a < projects.length; a++ )
 	{
 		if( projects[ a ].ID == p )
@@ -1247,7 +1651,19 @@ function SetCurrentProject( p )
 			if( Application.currentProject != projects[ a ] )
 			{
 				Application.currentProject = projects[ a ];
-				RefreshProjects();
+				
+				for( var a = 0; a < cl.length; a++ )
+				{
+					if( cl[ a ].id == 'p' + p )
+					{
+						cl[ a ].classList.add( 'Current', 'BackgroundHeavier', 'Rounded' );
+					}
+					else
+					{
+						cl[ a ].classList.remove( 'Current', 'BackgroundHeavier', 'Rounded' );
+					}
+				}
+				CheckPlayStopButtons();
 				return true;
 			}
 		}
@@ -1327,6 +1743,7 @@ function Search( execute )
 	}
 	var d = document.createElement( 'div' );
 	d.id = 'Search';
+	d.className = 'BackgroundDefault';
 	d.innerHTML = '<input type="text" name="searchkeys" placeholder="' + i18n( 'i18n_search_keywords' ) + '" onkeyup="window.currKey=this.value; if( event.which == 13 ) Search( true, event );"/> \
 		<input type="text" name="replacekeys" placeholder="' + i18n( 'i18n_replace_with' ) + '" onkeyup="if( event.which == 13 ) Search( true, event )"/>\
 		<input type="checkbox" name="doreplace" id="dorepl"/> <label for="dorepl">' + i18n( 'i18n_do_replace' ) + '</label>\
@@ -1336,7 +1753,13 @@ function Search( execute )
 		<button type="button" class="IconButton IconSmall fa-remove" onclick="CloseSearch()">\
 		</button>\
 	';
-	ge( 'StatusBar' ).appendChild( d );
+	ge( 'CodeArea' ).appendChild( d );
+	d.classList.add( 'Opening' );
+	setTimeout( function()
+	{
+		d.classList.add( 'Open' );
+		d.classList.remove( 'Opening' );
+	}, 250 );
 	ge( 'Search' ).getElementsByTagName( 'input' )[0].focus();
 }
 
@@ -1415,14 +1838,491 @@ function CreatePackage()
 	j.execute( 'package', { filename: Application.currentProject.Path } );
 }
 
+// Play and stop ---------------------------------------------------------------
+
+function SetMobileMode( mode )
+{
+	Application.editMode = mode;
+	if( mode == 'Project' )
+	{
+		document.body.classList.remove( 'Editing' );
+	}
+	else
+	{
+		document.body.classList.add( 'Editing' );
+	}
+	CheckMobileButtons();
+}
+
+function CheckMobileButtons()
+{
+	if( !isMobile )
+		return;
+	if( Application.editMode == 'Edit' )
+	{
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Project\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_browse' ) + '</button>';
+	}
+	else
+	{
+		ge( 'MobileButtons' ).innerHTML = '<button type="button" onclick="SetMobileMode(\'Edit\')" class="Button IconSmall fa-folder"> ' + i18n( 'i18n_edit_files' ) + '</button>';
+	}
+}
+
+function CheckPlayStopButtons()
+{
+	CheckMobileButtons()
+	if( !Application.currentProject )
+	{
+		if( !Application.currentFile || Application.currentFile.filename.substr( -4, 4 ).toLowerCase() != '.jsx' )
+		{
+			ge( 'PlayStop' ).innerHTML = '';
+			return;
+		}
+	}
+	
+	var nam = 
+	
+	ge( 'PlayStop' ).innerHTML = '\
+	<button type="button" class="IconButton IconSmall fa-play" onclick="RunApp()" title="' + i18n( 'i18n_run_app' ) + '">\
+	</button>\
+	<button type="button" class="IconButton IconSmall fa-stop" onclick="StopApp()" title="' + + i18n( 'i18n_stop_app' ) + '">\
+	</button>\
+	';	
+}
+
+// Run the current jsx
+function RunApp()
+{
+	if( Application.currentProject )
+	{
+		var p = Application.currentProject;
+		
+		if( p.ProjectType && p.ProjectType == 'webssh' )
+		{
+			var found = false;
+			// TODO: Support all web formats
+			if( !Application.currentFile || ( Application.currentFile && Application.currentFile.path.indexOf( '.htm' ) < 0 && Application.currentFile.path.indexOf( '.php' ) < 0 ) )
+			{
+				for( var a = 0; a < p.Files.length; a++ )
+				{
+					// TODO: Allow project to specify a project root file
+					if( p.Files[ a ].Path.toLowerCase() == 'index.html' || p.Files[ a ].Path.toLowerCase() == 'index.php' )
+					{
+						var url = p.Files[ a ].Path;
+					
+						if( url.indexOf( p.ProjectPath ) == 0 )
+							url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+						else url = p.ProjectWebPath + url;
+						
+						Application.sendMessage( {
+							type: 'system',
+							command: 'executeapplication',
+							executable: 'FriendBrowser',
+							args: url
+						} );
+						Application.currentProject.Playing = true;
+						CheckPlayStopButtons();
+						found = true;
+						break;
+					}
+				}
+			}
+			// Revert to current file
+			if( !found && Application.currentFile )
+			{
+				var url = Application.currentFile.path;
+				
+				if( url.indexOf( p.ProjectPath ) == 0 )
+					url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+				else url = p.ProjectWebPath + url;
+				
+				Application.sendMessage( {
+					type: 'system',
+					command: 'executeapplication',
+					executable: 'FriendBrowser',
+					args: url
+				} );
+				Application.currentProject.Playing = true;
+				CheckPlayStopButtons();
+			}
+		}
+		else
+		{
+			for( var a = 0; a < p.Files.length; a++ )
+			{
+				if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'executeapplication',
+						executable: p.ProjectPath + p.Files[ a ].Path,
+						args: false
+					} );
+					Application.currentProject.Playing = true;
+					CheckPlayStopButtons();
+					break;
+				}
+			}
+		}
+	}
+	else if( Application.currentFile )
+	{
+		var p = Application.currentProject;
+		if( p.ProjectType && p.ProjectType == 'webssh' )
+		{
+			var url = Application.currentFile.path;
+			url = p.ProjectWebPath + url.substr( p.ProjectPath.length, url.length - p.ProjectPath.length );
+			
+			var fnm = Application.currentFile.path;
+					if( fnm.indexOf( '/' ) > 0 )
+						fnm = fnm.split( '/' ).pop();
+					else if ( fnm.indexOf( ':' ) > 0 )
+						fnm = fnm.split( ':' )[1];
+			
+			Application.sendMessage( {
+				type: 'system',
+				command: 'executeapplication',
+				executable: 'FriendBrowser',
+				args: url + fnm
+			} );
+			Application.currentProject.Playing = true;
+			CheckPlayStopButtons();
+		}
+		else
+		{
+			if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'executeapplication',
+					executable: Application.currentFile.path,
+					args: false
+				} );
+				Application.currentProject.Playing = true;
+				CheckPlayStopButtons();
+			}
+		}
+	}
+}
+
+// Kill running jsx
+function StopApp()
+{
+	// A project
+	if( Application.currentProject )
+	{
+		var p = Application.currentProject;
+		
+		for( var a = 0; a < p.Files.length; a++ )
+		{
+			if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
+			{
+				Application.sendMessage( { type: 'system', command: 'kill', appName: p.Files[ a ].Filename } );
+				Application.currentProject.Playing = false;
+				CheckPlayStopButtons();
+			}
+		}
+	}
+	// Not a project
+	else if( Application.currentFile )
+	{
+		if( Application.currentFile.filename.substr( -4, 4 ).toLowerCase() == '.jsx' )
+		{
+			var app = Application.currentFile.path;
+			if( app.indexOf( '/' ) > 0 )
+			{
+				app = app.split( '/' ).pop();
+			}
+			else if( app.indexOf( ':' ) > 0 )
+			{
+				app = app.split( ':' ).pop();
+			}
+			Application.sendMessage( { type: 'system', command: 'kill', appName: app } );
+			CheckPlayStopButtons();
+		}
+	}
+}
+
+// Handling project mount points -----------------------------------------------
+
+// Check if a project server is sane (has the correct type etc)
+function SanitizedProjectServer( p, callback )
+{
+	var type = p.ProjectType == 'webssh' ? 'ssh2.fsys' : false;
+	// TODO: Support more types
+	if( !type ) return callback ? callback( false ) : false;
+	if( type == 'webssh' && !p.ProjectHostSSHServer ) return callback ? callback( false ) : false;
+
+	var s = new Module( 'system' );
+	s.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			var json = null;
+			try
+			{
+				json = JSON.parse( d );
+			}
+			catch( e22 )
+			{
+				if( callback )
+					callback( false, 'Could not parse mountlist.' );
+			}
+			if( callback )
+			{
+				for( var a = 0; a < json.length; a++ )
+				{
+					if( json[ a ].Type == 'SFTP' && json[ a ].Name == p.ProjectName )
+					{
+						if( json[ a ].Mounted == '1' )
+						{	
+							callback( true, 'Mount.', json[ a ].Name );
+							
+							// TODO: When Pawel is done, just pass this
+							// callback( false, 'Already mounted.', json[ a ].Name );
+						}
+						else
+						{
+							callback( true, 'Mount.', json[ a ].Name );
+						}
+						return;
+					}
+				}
+				callback( true, 'Create.', p.ProjectName );
+			}
+		}
+		else
+		{
+			callback( false, 'Response from server failed.' );
+		}
+	}
+	s.execute( 'mountlist' );
+}
+
+function CreateFilesystem( indata )
+{
+	var data = { 
+		Name: indata.devname,
+		Server: indata.server,
+		Port: indata.port,
+		Username: indata.username,
+		Password: indata.password,
+		PrivateKey: indata.key,
+		Path: indata.path ? indata.path : '/',
+		Type: indata.fsys
+	};	
+
+	var info = new Module( 'system' );
+	info.onExecuted = function( e, d )
+	{
+		var info = lst = null;
+		try
+		{
+			lst = JSON.parse( d );
+		}
+		catch( er ){}
+		for( var b = 0; b < lst.length; b++ )
+		{
+			if( lst[ b ].Type == 'SFTP' && lst[ b ].Name == indata.devname )
+			{
+				info = lst[ b ];
+				break;
+			}
+		}
+		
+		var m = new Library( 'system.library' );
+		m.onExecuted = function( me, md )
+		{
+			var mounted = false;
+			
+			if( me != 'ok' )
+				return doCreateOrEdit();
+			var js = null;
+			try
+			{
+				js = JSON.parse( md );
+			}
+			catch( e2 )
+			{ 
+				return doCreateOrEdit(); 
+			}
+			var mounted = false;
+			for( var z = 0; z < js.length; z++ )
+			{
+				if( js[ z ].Name == indata.devname )
+				{
+					mounted = true;
+					break;
+				}
+			}
+			
+			if( me == 'ok' && info && info.ID )
+			{
+				doCreateOrEdit( info.ID, mounted );
+			}
+			else
+			{
+				doCreateOrEdit();
+			}
+		}
+		m.execute( 'device/list' );
+	}
+	info.execute( 'mountlist' );
+	
+	function doCreateOrEdit( id, mounted )
+	{
+		var m = new Module( 'system' );
+		if( id ) data.ID = id;
+		m.onExecuted = function( e, d )
+		{
+			// Do the mounting
+			if( e == 'ok' )
+			{
+				// If it is mounted, do a remount
+				if( mounted )
+				{
+					var f = new Library( 'system.library' );
+					f.onExecuted = function( e, d )
+					{
+						if( e != 'ok' )
+						{
+							Notify( {
+								title: i18n( 'i18n_failed_to_unmount' ) + ' ' + indata.devname,
+								text: i18n( 'i18n_failed_to_unmount_project_disk' )
+							} );
+						}
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+						{
+							gui.sideBar.render( true );
+							domount();
+						} );
+					}
+					f.execute( 'device/unmount', { devname: indata.devname } );
+				}
+				// Just mount
+				else
+				{
+					domount();
+				}
+				
+				// Code to handle mount
+				function domount()
+				{
+					var f = new Library( 'system.library' );
+					f.onExecuted = function( e, d )
+					{
+						if( e != 'ok' )
+						{
+							Notify( {
+								title: i18n( 'i18n_failed_to_mount' ) + ' ' + indata.devname,
+								text: i18n( 'i18n_failed_to_mount_project_disk' )
+							} );
+						}
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+						{
+							gui.sideBar.render( true );
+						} );
+					}
+					f.execute( 'device/mount', { devname: indata.devname } );
+				}
+			}
+			else
+			{
+				Notify( {
+					title: i18n( 'i18n_failed_to_add_fs' ) + ' ' + indata.devname,
+					text: i18n( 'i18n_failed_to_add_fs_desc' )
+				} );
+			}
+		}
+		m.execute( id ? 'editfilesystem' : 'addfilesystem', data );
+	}
+}
+
+function MountProjectServer( p )
+{
+	SanitizedProjectServer( p, function( result, data, newfilesystem )
+	{
+		if( result && data )
+		{
+			// SSH Server
+			if( data == 'Mount.' )
+			{
+				var s = new Library( 'system.library' );
+				s.onExecuted = function( e, d )
+				{
+					Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+					{
+						gui.sideBar.render( true );
+					} );
+					// TODO: If it won't mount, please try to edit it
+					// Ask if the user wants to change it..?
+				}
+				s.execute( 'device/mount', {
+					devname: p.ProjectName
+				} );
+			}
+			else if( data == 'Create.' )
+			{
+				CreateFilesystem( {
+					devname: newfilesystem,
+					username: p.ProjectHostSSHUsername,
+					password: p.ProjectHostSSHPassword,
+					server: p.ProjectHostSSHServer,
+					port: p.ProjectHostSSHPort,
+					key: p.ProjectHostSSHKey,
+					path: p.ProjectHostSSHPath,
+					fsys: 'SFTP'
+				} );
+			}
+			else
+			{
+				console.log( 'Unsupported project filesystem directive.' );
+			}
+		}
+		else
+		{
+			//
+		}
+	} );
+}
+
+function UnmountProjectServer( p, cb )
+{
+	// SSH Server
+	if( Application.currentProject.ProjectHostSSHServer )
+	{
+		var s = new Library( 'system.library' );
+		s.onExecuted = function( e, d )
+		{
+			Application.sendMessage( { type: 'system', command: 'refreshdoors' }, function( msg )
+			{
+				gui.sideBar.render( true );
+			} );
+			// TODO: If it won't mount, please try to edit it
+			// Ask if the user wants to change it..?
+			if( cb ) cb( true );
+		}
+		s.execute( 'device/unmount', {
+			devname: p.ProjectName
+		} );
+	}
+	else if( cb )
+	{
+		cb( false );
+	}
+}
+
 // Messaging support -----------------------------------------------------------
-var abw = false;
+var abw = manual = false;
 Application.receiveMessage = function( msg )
 {
 	if( msg.command )
 	{
 		switch( msg.command )
 		{
+			case 'updatemountlist':
+				if( gui.sideBar ) gui.sideBar.render( 1 );
+				break;
 			case 'open':
 				OpenFile();
 				break;
@@ -1458,6 +2358,36 @@ Application.receiveMessage = function( msg )
 				if( Application.currentProject )
 					SaveProject( Application.currentProject, true );
 				break;
+			case 'closeprojects':
+				document.body.classList.add( 'Loading' );
+				var pl = projects.length;
+				if( pl <= 0 )
+				{
+					return Application.sendMessage( { command: 'quit' } );
+				}
+				
+				// Make a copy while working on the projects list
+				var out = []; for( var a = 0; a < projects.length; a++ )
+					out[ a ] = projects[ a ];
+				// Closie
+				for( var a = 0; a < out.length; a++ )
+				{
+					CloseProject( out[ a ], function( result )
+					{
+						if( --pl == 0 )
+						{
+							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+							if( !result )
+								return Application.sendMessage( { command: 'quit' } );
+							
+							setTimeout( function()
+							{
+								Application.sendMessage( { command: 'quit' } );
+							}, 250 );
+						}
+					} );
+				}
+				break;
 			case 'project_close':
 				CloseProject( Application.currentProject );
 				break;
@@ -1485,12 +2415,38 @@ Application.receiveMessage = function( msg )
 						projects[ a ] = msg.project;
 						
 						Application.currentProject = projects[ a ];
+						
+						if( projects[ a ].ProjectType && projects[ a ].ProjectType == 'webssh' )
+						{
+							MountProjectServer( Application.currentProject );
+						}
+						
 						SaveProject( Application.currentProject );
 						break;
 					}
 				}
 				RefreshProjects();
 				if( pe ) pe.close();
+				break;
+			case 'manual':
+				if( manual )
+				{
+					manual.activate();
+					return;
+				}
+				manual = new View( {
+					title: i18n( 'i18n_users_manual' ),
+					width: 600,
+					height: 600
+				} );
+				var f = new File( 'Progdir:Templates/manual_' + Application.language + '.html' );
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					manual.setContent( data );
+				}
+				f.load();
+				manual.onClose = function(){ manual = false; }
 				break;
 			case 'about':
 				if( abw )
@@ -1528,3 +2484,4 @@ Application.receiveMessage = function( msg )
 		}
 	}
 }
+

@@ -70,6 +70,7 @@ File = function( filename )
 
 	this.resolvePath = function( filename )
 	{
+		if( !filename ) return '';
 		if( filename.toLowerCase().substr( 0, 8 ) == 'progdir:' )
 		{
 			filename = filename.substr( 8, filename.length - 8 );
@@ -101,6 +102,8 @@ File = function( filename )
 
 		var t = this;
 		var jax = new cAjax ();
+		if( this.cancelId )
+			jax.cancelId = this.cancelId;
 
 		for( var a in this.vars )
 			jax.addVar( a, this.vars[a] );
@@ -125,6 +128,8 @@ File = function( filename )
 			if( Workspace.conf && Workspace.conf.authId )
 				theDoor.addVar( 'authid', Workspace.conf.authId );
 			if( args && !args.path ) args.path = filename;
+			if( this.cancelId )
+				theDoor.cancelId = this.cancelId;
 			theDoor.dosAction( 'call', args, function( data )
 			{
 				if( typeof ( t.onCall ) != 'undefined' )
@@ -144,6 +149,8 @@ File = function( filename )
 	{
 		var t = this;
 		var jax = new cAjax ();
+		if( this.cancelId )
+			jax.cancelId = this.cancelId;
 
 		var noRelocatePath = false;
 		for( var a in this.vars )
@@ -163,6 +170,8 @@ File = function( filename )
 		var theDoor = Workspace.getDoorByPath( filename );
 		if( theDoor )
 		{
+			if( this.cancelId )
+				theDoor.cancelId = this.cancelId;
 			// Copy vars
 			for( var a in this.vars )
 			{
@@ -316,6 +325,9 @@ File = function( filename )
 			} );
 
 			var uprogress = new File( 'templates/file_operation.html' );
+			
+			if( this.cancelId )
+				uprogress.cancelId = this.cancelId;
 
 			uprogress.connectedworker = uworker;
 
@@ -496,6 +508,9 @@ File = function( filename )
 		var theDoor = Workspace.getDoorByPath( filename );
 		if( theDoor )
 		{
+			if( this.cancelId )
+				theDoor.cancelId = this.cancelId;
+			
 			// Copy vars
 			for( var a in this.vars )
 				theDoor.addVar( a, this.vars[a] );
@@ -512,7 +527,8 @@ File = function( filename )
 		else
 		{
 			var jax = new cAjax();
-
+			if( this.cancelId )
+				jax.cancelId = this.cancelId;
 			jax.open( 'post', '/system.library', true, true );
 
 			for( var a in this.vars )

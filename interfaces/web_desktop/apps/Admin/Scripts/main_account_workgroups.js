@@ -532,18 +532,19 @@ Sections.accounts_workgroups = function( cmd, extra )
 				var header = document.createElement( 'div' );
 				header.className = 'List';
 				var headRow = document.createElement( 'div' );
-				headRow.className = 'HRow sw1';
+				headRow.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
 				for( var z in types )
 				{
 					var borders = '';
 					var d = document.createElement( 'div' );
 					if( z != 'edit' )
-						borders += ' BorderRight';
+						//borders += ' BorderRight';
 					if( a < userList.length - a )
 						borders += ' BorderBottom';
 					var d = document.createElement( 'div' );
-					d.className = 'PaddingSmall HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
-					d.innerHTML = '<strong>' + ( z != 'Edit' ? z : '' ) + '</strong>';
+					d.className = 'PaddingSmallLeft PaddingSmallRight HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft Ellipsis' + borders;
+					if( z == 'edit' ) z = '&nbsp;';
+					d.innerHTML = '<strong' + ( z != '&nbsp;' ? '' : '' ) + '>' + ( z != '&nbsp;' ? i18n( 'i18n_header_' + z ) : '&nbsp;' ) + '</strong>';
 					headRow.appendChild( d );
 				}
 			
@@ -601,7 +602,7 @@ Sections.accounts_workgroups = function( cmd, extra )
 							sw = sw == 2 ? 1 : 2;
 							var r = document.createElement( 'div' );
 							setROnclick( r, userList[ a ].ID );
-							r.className = 'HRow sw' + sw;
+							r.className = 'HRow ';
 			
 							var icon = '<span class="IconSmall fa-user"></span>';
 							userList[ a ][ 'edit' ] = icon;
@@ -613,11 +614,11 @@ Sections.accounts_workgroups = function( cmd, extra )
 								if( z != 'edit' )
 								{
 									d.className = '';
-									borders += ' BorderRight';
+									//borders += ' BorderRight';
 								}
 								else d.className = 'TextCenter';
-								if( a < userList.length - a )
-									borders += ' BorderBottom';
+								//if( a < userList.length - a )
+								//	borders += ' BorderBottom';
 								d.className += ' HContent' + ( types[ z ] ? types[ z ] : '-' ) + ' FloatLeft PaddingSmall Ellipsis' + borders;
 								d.innerHTML = ( userList[a][ z ] ? userList[a][ z ] : '-' );
 								r.appendChild( d );

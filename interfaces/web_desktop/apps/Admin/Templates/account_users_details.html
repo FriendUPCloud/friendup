@@ -1,7 +1,8 @@
 
 	<div class="HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight">
 		<div class="HContent50 FloatLeft">
-			<h3 class="NoMargin">
+			<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left" id="UserBackBtn"></button>
+			<h3 class="NoMargin FloatLeft">
 				<strong>{i18n_user_profile}</strong>
 			</h3>
 		</div>
@@ -152,15 +153,16 @@
 	<div id="AdminWorkgroupContainer" class="Closed">
 		<div class="HRow MarginTop BackgroundNegativeAlt Negative Padding">
 			<div class="HContent50 FloatLeft">
-				<h3 class="NoMargin">
+				<button class="IconButton IconSmall ButtonSmall Negative FloatLeft fa-arrow-circle-left Closed" id="WorkgroupEditBack"></button>
+				<h3 class="NoMargin FloatLeft">
 					<strong>{i18n_workgroups}</strong>
 				</h3>
 			</div>
 			<div class="HContent50 FloatLeft Relative">
-				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-edit" id="WorkgroupEdit"></button>
+				<button class="IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle Open" id="WorkgroupEdit"></button>
 			</div>
 		</div>
-		<div class="Box Padding" id="WorkgroupGui">
+		<div class="Box Padding List" id="WorkgroupGui">
 			{workgroups}
 		</div>
 	</div>

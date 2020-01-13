@@ -138,6 +138,11 @@ Sections.accounts_users = function( cmd, extra )
 				
 				var func = {
 					
+					init : function (  )
+					{
+						refreshUserList( userInfo );
+					},
+					
 					user : function (  )
 					{
 						// User
@@ -226,8 +231,16 @@ Sections.accounts_users = function( cmd, extra )
 							for( var b = 0; b < wgroups.length; b++ )
 							{
 								if( !wgroups[b].Name ) continue;
+								
+								//wstr += '<div class="HRow">';
+								//wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
+								//wstr += '</div>';
+								
 								wstr += '<div class="HRow">';
-								wstr += '<div class="HContent100"><strong>' + wgroups[b].Name + '</strong></div>';
+								wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + wgroups[b].Name + '</strong></div>';
+								wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+								wstr += '		<button wid="' + wgroups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+								wstr += '	</div>';
 								wstr += '</div>';
 							}
 						}
@@ -372,6 +385,8 @@ Sections.accounts_users = function( cmd, extra )
 				
 				function template( first )
 				{
+					
+					
 					var user = func.user();
 					
 					var udisabled = user.udisabled; 
@@ -523,14 +538,26 @@ Sections.accounts_users = function( cmd, extra )
 								var bg1  = ge( 'UserSaveBtn' );
 								if( bg1 ) bg1.onclick = function( e )
 								{
-									saveUser( userInfo.ID );
+									if( ge( 'usUsername' ).value )
+									{
+										saveUser( userInfo.ID );
+									}
+									else
+									{
+										ge( 'usUsername' ).focus();
+									}
 								}
 								var bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
 								{
 									cancelUser(  );
 								}
-					
+								var bg3  = ge( 'UserBackBtn' );
+								if( bg3 ) bg3.onclick = function( e )
+								{
+									cancelUser(  );
+								}
+								
 								if( ge( 'UserEditContainer' ) )
 								{
 									ge( 'UserEditContainer' ).className = 'Closed';
@@ -540,56 +567,367 @@ Sections.accounts_users = function( cmd, extra )
 							workgroups : function (  )
 							{
 								
-								if( ge( 'WorkgroupGui' ) && wstr )
-								{
-									ge( 'WorkgroupGui' ).innerHTML = wstr;
-								}
-								
 								// Editing workgroups
 					
 								var wge = ge( 'WorkgroupEdit' );
+								wge.wids = {};
+								wge.wgroups = false/*wgroups*/;
+								
+								// TODO: List the groups sorting here since that is constant, so there is no difference between first render and switch between edit and list enabled.
+								
+								if( ge( 'WorkgroupGui' ) && wstr )
+								{
+									ge( 'WorkgroupGui' ).innerHTML = wstr;
+									
+									// TODO: Move wstr rendering into this function so we don't have to render all of this 3 times ....
+									
+									if( ge( 'WorkgroupGui' ).innerHTML )
+									{
+										var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+										
+										if( workBtns )
+										{
+											for( var a = 0; a < workBtns.length; a++ )
+											{
+												if( workBtns[a] && workBtns[a].classList.contains( 'fa-toggle-on' ) && workBtns[a].getAttribute( 'wid' ) )
+												{
+													wge.wids[ workBtns[a].getAttribute( 'wid' ) ] = true;
+												}
+											}
+											
+											for( var a = 0; a < workBtns.length; a++ )
+											{
+												// Toggle user relation to workgroup
+												( function( b, wids ) {
+													b.onclick = function( e )
+													{
+														var args = { 
+															id     : this.getAttribute( 'wid' ), 
+															users  : userInfo.ID, 
+															authid : Application.authId 
+														};
+													
+														args.args = JSON.stringify( {
+															'type'    : 'write', 
+															'context' : 'application', 
+															'authid'  : Application.authId, 
+															'data'    : { 
+																'permission' : [ 
+																	'PERM_WORKGROUP_GLOBAL', 
+																	'PERM_WORKGROUP_WORKGROUP' 
+																]
+															}, 
+															'object'   : 'workgroup', 
+															'objectid' : this.getAttribute( 'wid' ) 
+														} );
+													
+														if( this.classList.contains( 'fa-toggle-on' ) )
+														{
+															// Toggle off ...
+														
+															console.log( '// Toggle off ', args );
+														
+															if( args && args.id && args.users )
+															{
+																var f = new Library( 'system.library' );
+																f.btn = this;
+																f.wids = wids;
+																f.onExecuted = function( e, d )
+																{
+																	console.log( { e:e, d:d } );
+																
+																	this.btn.classList.remove( 'fa-toggle-on' );
+																	this.btn.classList.add( 'fa-toggle-off' );
+																
+																	this.wids[ this.btn.getAttribute( 'wid' ) ] = false;
+																
+																	var pnt = this.btn.parentNode.parentNode;
+																
+																	if( pnt )
+																	{
+																		pnt.innerHTML = '';
+																	}
+																}
+																f.execute( 'group/removeusers', args );
+															}
+														
+														}
+													}
+												} )( workBtns[ a ], wge.wids );
+											}
+											
+										}
+									}
+									
+								}
+								
+								
+								
 								if( wge ) wge.onclick = function( e )
 								{
-									// Show
-									if( !this.activated )
+									console.log( 'info.workgroups: ', info.workgroups );
+									
+									groups = {};
+									
+									if( info.workgroups )
 									{
+										var unsorted = {};
+								
+										for( var i in info.workgroups )
+										{
+											if( info.workgroups[i] && info.workgroups[i].ID )
+											{
+												info.workgroups[i].groups = [];
+										
+												unsorted[info.workgroups[i].ID] = info.workgroups[i];
+											}
+										}
+										
+										
+										
+										for( var k in unsorted )
+										{
+											if( unsorted[k] && unsorted[k].ID )
+											{
+												if( unsorted[k].ParentID > 0 && unsorted[ unsorted[k].ParentID ] )
+												{
+													if( !groups[ unsorted[k].ParentID ] )
+													{
+														groups[ unsorted[k].ParentID ] = unsorted[ unsorted[k].ParentID ];
+													}
+													
+													if( groups[ unsorted[k].ParentID ] )
+													{
+														groups[ unsorted[k].ParentID ].groups.push( unsorted[k] );
+													}
+												}
+												else if( !groups[ unsorted[k].ID ] )
+												{
+													groups[ unsorted[k].ID ] = unsorted[k];
+												}
+											}	
+										}
+										
+										console.log( groups );
+									}
+									
+									
+									
+									/*// Show
+									if( !this.activated )
+									{*/
 										this.activated = true;
-										this.oldML = ge( 'WorkgroupGui' ).innerHTML;
+										//this.oldML = ge( 'WorkgroupGui' ).innerHTML;
 							
 										var str = '';
 							
-										if( info.workgroups && info.workgroups == '404' )
+										if( groups && groups == '404' )
 										{
 											str += '<div class="HRow"><div class="HContent100">' + i18n( 'i18n_workgroups_access_denied' ) + '</div></div>';
 										}
-										else if( info.workgroups )
+										else if( groups )
 										{
-											console.log( 'info.workgroups: ', info.workgroups );
 											
-											for( var a = 0; a < info.workgroups.length; a++ )
+											
+											for( var a in groups )
 											{
 												var found = false;
-												for( var c = 0; c < wgroups.length; c++ )
+												if( this.wids[ groups[a].ID ] )
 												{
-													if( info.workgroups[a].Name == wgroups[c].Name )
+													found = true;
+												}
+												else if( this.wgroups.length )
+												{
+													for( var c = 0; c < this.wgroups.length; c++ )
 													{
-														found = true;
-														break;
+														if( groups[a].Name == this.wgroups[c].Name )
+														{
+															found = true;
+															break;
+														}
 													}
 												}
 												
-												
+												str += '<div>';
 												
 												str += '<div class="HRow">\
-													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + info.workgroups[a].Name + '</div>\
+													<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+														<span class="IconSmall NegativeAlt ' + ( groups[a].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;' + groups[a].Name + '</span>\
+													</div>\
 													<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
-														<button wid="' + info.workgroups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+														<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
 													</div>\
 												</div>';
+												
+												
+												
+												if( groups[a].groups.length > 0 )
+												{
+													str += '<div class="Closed">';
+													
+													for( var aa in groups[a].groups )
+													{
+														var found = false;
+														if( this.wids[ groups[a].groups[aa].ID ] )
+														{
+															found = true;
+														}
+														else if( this.wgroups.length )
+														{
+															for( var cc = 0; cc < this.wgroups.length; cc++ )
+															{
+																if( groups[a].groups[aa].Name == this.wgroups[cc].Name )
+																{
+																	found = true;
+																	break;
+																}
+															}
+														}
+															
+														str += '<div class="HRow">\
+															<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+																<span class="IconSmall NegativeAlt ' + ( groups[a].groups[aa].groups.length > 0 ? 'fa-caret-right">' : '">&nbsp;&nbsp;' ) + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].Name + '</span>\
+															</div>\
+															<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+																<button wid="' + groups[a].groups[aa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+															</div>\
+														</div>';
+														
+														if( groups[a].groups[aa].groups.length > 0 )
+														{
+															str += '<div class="Closed">';
+															
+															for( var aaa in groups[a].groups[aa].groups )
+															{
+																var found = false;
+																if( this.wids[ groups[a].groups[aa].groups[aaa].ID ] )
+																{
+																	found = true;
+																}
+																else if( this.wgroups.length )
+																{
+																	for( var cc = 0; cc < this.wgroups.length; cc++ )
+																	{
+																		if( groups[a].groups[aa].groups[aaa].Name == this.wgroups[cc].Name )
+																		{
+																			found = true;
+																			break;
+																		}
+																	}
+																}
+																
+																str += '<div class="HRow">\
+																	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">\
+																		<span class="IconSmall NegativeAlt">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + groups[a].groups[aa].groups[aaa].Name + '</span>\
+																	</div>\
+																	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+																		<button wid="' + groups[a].groups[aa].groups[aaa].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' ) + '"> </button>\
+																	</div>\
+																</div>';
+																
+															}
+															
+															str += '</div>';
+														}
+															
+													}
+													
+													str += '</div>';
+												}
+												
+												str += '</div>';
+												
 											}
+											
+											
+											
 										}
 										ge( 'WorkgroupGui' ).innerHTML = str;
-							
+										
+										// Hide add / edit button ...
+										
+										if( this.classList.contains( 'Open' ) || this.classList.contains( 'Closed' ) )
+										{
+											this.classList.remove( 'Open' );
+											this.classList.add( 'Closed' );
+										}
+										
+										// Toggle arrow function, put into function that can be reused some time ...
+										
+										var workArr = ge( 'WorkgroupGui' ).getElementsByTagName( 'span' );
+										
+										if( workArr )
+										{
+											for( var a = 0; a < workArr.length; a++ )
+											{
+												
+												if( workArr[ a ].classList.contains( 'fa-caret-right' ) || workArr[ a ].classList.contains( 'fa-caret-down' ) )
+												{
+													
+													( function( b ) {
+														b.onclick = function( e )
+														{
+															var pnt = this.parentNode.parentNode.parentNode;
+															
+															if( this.classList.contains( 'fa-caret-right' ) )
+															{
+																// Toggle open ...
+																
+																//console.log( '// Toggle open ...' );
+																
+																this.classList.remove( 'fa-caret-right' );
+																this.classList.add( 'fa-caret-down' );
+																
+																var divs = pnt.getElementsByTagName( 'div' );
+																
+																if( divs )
+																{
+																	for( var c = 0; c < divs.length; c++ )
+																	{
+																		if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+																		{
+																			divs[c].classList.remove( 'Closed' );
+																			divs[c].classList.add( 'Open' );
+																			
+																			break;
+																		}
+																	}
+																}
+															}
+															else
+															{
+																// Toggle close ...
+																
+																//console.log( '// Toggle close ...' );
+																
+																this.classList.remove( 'fa-caret-down' );
+																this.classList.add( 'fa-caret-right' );
+																
+																var divs = pnt.getElementsByTagName( 'div' );
+																
+																if( divs )
+																{
+																	for( var c = 0; c < divs.length; c++ )
+																	{
+																		if( divs[c].classList.contains( 'Closed' ) || divs[c].classList.contains( 'Open' ) )
+																		{
+																			divs[c].classList.remove( 'Open' );
+																			divs[c].classList.add( 'Closed' );
+																			
+																			break;
+																		}
+																	}
+																}
+															}
+															
+														}
+													} )( workArr[ a ] );
+													
+												}
+												
+											}
+										}
+										
 										var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
 							
 										if( workBtns )
@@ -726,13 +1064,200 @@ Sections.accounts_users = function( cmd, extra )
 											}
 										}
 							
-									}
+									/*}
 									// Hide
 									else
-									{
-										this.activated = false;
-										ge( 'WorkgroupGui' ).innerHTML = this.oldML;
-									}
+									{*/
+										var wgc = ge( 'WorkgroupEditBack' );
+										wgc.wge = this;
+										
+										if( wgc.classList.contains( 'Open' ) || wgc.classList.contains( 'Closed' ) )
+										{
+											wgc.classList.remove( 'Closed' );
+											wgc.classList.add( 'Open' );
+										}
+										
+										if( wgc ) wgc.onclick = function( e )
+										{
+										
+											this.wge.wids = {};
+											this.wge.wgroups = false;
+										
+											if( ge( 'WorkgroupGui' ) && ge( 'WorkgroupGui' ).innerHTML )
+											{
+												var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+									
+												if( workBtns )
+												{
+													for( var a = 0; a < workBtns.length; a++ )
+													{
+														if( workBtns[a] && workBtns[a].classList.contains( 'fa-toggle-on' ) && workBtns[a].getAttribute( 'wid' ) )
+														{
+															this.wge.wids[ workBtns[a].getAttribute( 'wid' ) ] = true;
+														}
+													}
+												}
+											}
+										
+											var wstr = '';
+										
+											if( groups )
+											{
+												for( var b in groups )
+												{
+													if( groups[b].Name && this.wge.wids[ groups[b].ID ] )
+													{
+														//wstr += '<div class="HRow">';
+														//wstr += '<div class="HContent100"><strong>' + groups[b].Name + '</strong></div>';
+														//wstr += '</div>';
+													
+														wstr += '<div class="HRow">';
+														wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].Name + '</strong></div>';
+														wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+														wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+														wstr += '	</div>';
+														wstr += '</div>';
+													}
+												
+													if( groups[b].groups.length > 0 )
+													{
+														for( var k in groups[b].groups )
+														{
+															if( groups[b].groups[k] && groups[b].groups[k].ID )
+															{
+																if( groups[b].groups[k].Name && this.wge.wids[ groups[b].groups[k].ID ] )
+																{
+																	//wstr += '<div class="HRow">';
+																	//wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].Name + '</strong></div>';
+																	//wstr += '</div>';
+																
+																	wstr += '<div class="HRow">';
+																	wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].Name + '</strong></div>';
+																	wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																	wstr += '		<button wid="' + groups[b].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																	wstr += '	</div>';
+																	wstr += '</div>';
+																}
+															
+																if( groups[b].groups[k].groups.length > 0 )
+																{
+																	for( var i in groups[b].groups[k].groups )
+																	{
+																		if( groups[b].groups[k].groups[i] && groups[b].groups[k].groups[i].ID )
+																		{
+																			if( groups[b].groups[k].groups[i].Name && this.wge.wids[ groups[b].groups[k].groups[i].ID ] )
+																			{
+																				//wstr += '<div class="HRow">';
+																				//wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].groups[i].Name + '</strong></div>';
+																				//wstr += '</div>';
+																			
+																				wstr += '<div class="HRow">';
+																				wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].groups[k].groups[i].Name + '</strong></div>';
+																				wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
+																				wstr += '		<button wid="' + groups[b].groups[k].groups[i].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
+																				wstr += '	</div>';
+																				wstr += '</div>';
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										
+											console.log( this.wge.wids );
+										
+											this.wge.activated = false;
+											ge( 'WorkgroupGui' ).innerHTML = wstr;
+										
+											var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+							
+											if( workBtns )
+											{
+												for( var a = 0; a < workBtns.length; a++ )
+												{
+													// Toggle user relation to workgroup
+													( function( b, wids ) {
+														b.onclick = function( e )
+														{
+															var args = { 
+																id     : this.getAttribute( 'wid' ), 
+																users  : userInfo.ID, 
+																authid : Application.authId 
+															};
+														
+															args.args = JSON.stringify( {
+																'type'    : 'write', 
+																'context' : 'application', 
+																'authid'  : Application.authId, 
+																'data'    : { 
+																	'permission' : [ 
+																		'PERM_WORKGROUP_GLOBAL', 
+																		'PERM_WORKGROUP_WORKGROUP' 
+																	]
+																}, 
+																'object'   : 'workgroup', 
+																'objectid' : this.getAttribute( 'wid' ) 
+															} );
+														
+															if( this.classList.contains( 'fa-toggle-on' ) )
+															{
+																// Toggle off ...
+															
+																console.log( '// Toggle off ', args );
+															
+																if( args && args.id && args.users )
+																{
+																	var f = new Library( 'system.library' );
+																	f.btn = this;
+																	f.wids = wids;
+																	f.onExecuted = function( e, d )
+																	{
+																		console.log( { e:e, d:d } );
+																	
+																		this.btn.classList.remove( 'fa-toggle-on' );
+																		this.btn.classList.add( 'fa-toggle-off' );
+																	
+																		this.wids[ this.btn.getAttribute( 'wid' ) ] = false;
+																	
+																		var pnt = this.btn.parentNode.parentNode;
+																	
+																		if( pnt )
+																		{
+																			pnt.innerHTML = '';
+																		}
+																	}
+																	f.execute( 'group/removeusers', args );
+																}
+															
+															}
+														}
+													} )( workBtns[ a ], this.wge.wids );
+												}
+											}
+											
+											// Hide back button ...
+											
+											if( this.classList.contains( 'Open' ) || this.classList.contains( 'Closed' ) )
+											{
+												this.classList.remove( 'Open' );
+												this.classList.add( 'Closed' );
+											}
+											
+											// Show add / edit button ...
+											
+											if( this.wge.classList.contains( 'Open' ) || this.wge.classList.contains( 'Closed' ) )
+											{
+												this.wge.classList.remove( 'Closed' );
+												this.wge.classList.add( 'Open' );
+											} 
+											
+										}
+										
+										
+									/*}*/
 								}
 								
 							},
@@ -881,7 +1406,9 @@ Sections.accounts_users = function( cmd, extra )
 					
 					
 					if( first )
-					{	
+					{
+						func.init();
+						
 						// Get the user details template
 						var d = new File( 'Progdir:Templates/account_users_details.html' );
 						console.log( 'userInfo ', userInfo );
@@ -1312,7 +1839,7 @@ Sections.accounts_users = function( cmd, extra )
 					</div>\
 					<div class="HContent10 FloatLeft TextRight InActive">\
 						<button id="AdminUsersBtn" class="IconButton IconSmall Negative fa-bars"></button>\
-						<div class="submenu_wrapper"><ul id="AdminUsersSubMenu"></ul></div>\
+						<div class="submenu_wrapper"><ul id="AdminUsersSubMenu" class="Positive"></ul></div>\
 					</div>\
 				';
 					
@@ -1460,11 +1987,13 @@ Sections.accounts_users = function( cmd, extra )
 					{
 						ge( 'UserDetails'               ).innerHTML = data;
 						//initStorageGraphs();
-					
+						
+						ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						
 						ge( 'AdminStatusContainer'      ).style.display = 'none';
 					
 						ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
-						ge( 'AdminWorkgroupContainer'   ).style.display = 'none';
+						
 						ge( 'AdminRoleContainer'        ).style.display = 'none';
 						ge( 'AdminStorageContainer'     ).style.display = 'none';
 						ge( 'AdminApplicationContainer' ).style.display = 'none';
@@ -1474,12 +2003,64 @@ Sections.accounts_users = function( cmd, extra )
 						var bg1  = ge( 'UserSaveBtn' );
 						if( bg1 ) bg1.onclick = function( e )
 						{
-							saveUser(  );
+							if( ge( 'usUsername' ).value )
+							{
+								saveUser( false, function( uid )
+								{
+							
+									if( uid )
+									{
+										// Refresh whole users list ...
+									
+										Sections.accounts_users(  );
+									
+										// Go to edit mode for the new user ...
+									
+										Sections.accounts_users( 'edit', uid );
+									
+									}
+							
+								} );
+							}
+							else
+							{
+								ge( 'usUsername' ).focus();
+							}
 						}
 						var bg2  = ge( 'UserCancelBtn' );
 						if( bg2 ) bg2.onclick = function( e )
 						{
 							cancelUser(  );
+						}
+						var bg3  = ge( 'UserBackBtn' );
+						if( bg3 ) bg3.onclick = function( e )
+						{
+							cancelUser(  );
+						}
+						
+						if( ge( 'UserEditContainer' ) )
+						{
+							//ge( 'UserEditContainer' ).className = 'Closed';
+						}
+						
+						if( ge( 'UserBasicDetails' ) )
+						{
+							var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+							if( inps.length > 0 )
+							{
+								for( var a = 0; a < inps.length; a++ )
+								{
+									if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+									{
+										( function( i ) {
+											i.onclick = function( e )
+											{
+												editMode();
+											}
+										} )( inps[ a ] );
+									}
+								}
+							}
 						}
 						
 						// Avatar 
@@ -1497,13 +2078,19 @@ Sections.accounts_users = function( cmd, extra )
 							{
 							
 								randomAvatar( this.value, function( avatar ) 
-								{ 
-									var canvas = ge( 'Avatar' ).toDataURL();
-								
-									console.log( 'canvas: ', canvas.length );
-									console.log( 'avatar: ', avatar.length );
-								
-									if( ge( 'AdminAvatar' ) && avatar && canvas.length <= 15000 )
+								{
+									var canvas = 0;
+									
+									try
+									{
+										canvas = ge( 'AdminAvatar' ).toDataURL();
+									}
+									catch( e ) {  }
+									
+									console.log( 'canvas: ', ( canvas ? canvas.length : 0 ) );
+									console.log( 'avatar: ', ( avatar ? avatar.length : 0 ) );
+									
+									if( ge( 'AdminAvatar' ) && avatar && ( ( canvas && canvas.length <= 15000 ) || !canvas ) )
 									{
 										// Only update the avatar if it exists..
 										var avSrc = new Image();
@@ -1520,7 +2107,246 @@ Sections.accounts_users = function( cmd, extra )
 								this.fullname = this.value;
 							}
 						}
+						
+						// Commented out for now ... we are only using edit user functionality after save of basic user info ...
+						
+						/*// Workgroups ...
+						
+						// Specific for Pawel's code ... He just wants to forward json ...
+						
+						var args = JSON.stringify( {
+							'type'    : 'read', 
+							'context' : 'application', 
+							'authid'  : Application.authId, 
+							'data'    : { 
+								'permission' : [ 
+									'PERM_WORKGROUP_GLOBAL', 
+									'PERM_WORKGROUP_WORKGROUP' 
+								]
+							}, 
+							'listdetails' : 'workgroup' 
+						} );
+						
+						var f = new Library( 'system.library' );
+						f.onExecuted = function( e, d )
+						{
+							//console.log( { e:e , d:d, args: args } );
+				
+							if( e == 'ok' && d )
+							{
+								try
+								{
+									var groups = false;
+									
+									var data = JSON.parse( d );
+							
+									// Workaround for now .... until rolepermissions is correctly implemented in C ...
+							
+									//console.log( '[1] ', data );
+							
+									if( data && data.data && data.data.details && data.data.details.groups )
+									{
+										data = data.data.details;
+									}
+									
+									// Editing workgroups
+									
+									if( data.groups )
+									{
+										var unsorted = {};
+										
+										for( var i in data.groups )
+										{
+											if( data.groups[i] && data.groups[i].ID )
+											{
+												data.groups[i].groups = [];
+												
+												unsorted[data.groups[i].ID] = data.groups[i];
+											}
+										}
+										
+										groups = {};
+										
+										for( var k in unsorted )
+										{
+											if( unsorted[k] && unsorted[k].ID )
+											{
+												if( unsorted[k].parentid > 0 && unsorted[ unsorted[k].parentid ] )
+												{
+													if( !groups[ unsorted[k].parentid ] )
+													{
+														groups[ unsorted[k].parentid ] = unsorted[ unsorted[k].parentid ];
+													}
+												
+													if( groups[ unsorted[k].parentid ] )
+													{
+														groups[ unsorted[k].parentid ].groups.push( unsorted[k] );
+													}
+												}
+												else if( !groups[ unsorted[k].ID ] )
+												{
+													groups[ unsorted[k].ID ] = unsorted[k];
+												}
+											}	
+										}
+										
+										console.log( groups );
+									}
+									
+									var wge = ge( 'WorkgroupEdit' );
+									wge.wids = {};
+									if( wge ) wge.onclick = function( e )
+									{
+										
+										//console.log( 'wids ', this.wids );
+										
+										// Show
+										if( !this.activated )
+										{
+											this.activated = true;
+											//this.oldML = ge( 'WorkgroupGui' ).innerHTML;
 					
+											var str = '';
+					
+											if( groups )
+											{
+												
+												for( var a in groups )
+												{
+														
+													str += '<div class="HRow">\
+														<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + groups[a].name + '</div>\
+														<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+															<button wid="' + groups[a].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( this.wids[ groups[a].ID ] ? 'on' : 'off' ) + '"> </button>\
+														</div>\
+													</div>';
+													
+													if( groups[a].groups )
+													{
+														for( var k in groups[a].groups )
+														{
+															if( groups[a].groups[k] && groups[a].groups[k].ID )
+															{
+																str += '<div class="HRow PaddingLeft">\
+																	<div class="PaddingSmall HContent60 FloatLeft Ellipsis">' + groups[a].groups[k].name + '</div>\
+																	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">\
+																		<button wid="' + groups[a].groups[k].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( this.wids[ groups[a].groups[k].ID ] ? 'on' : 'off' ) + '"> </button>\
+																	</div>\
+																</div>';
+															}
+														}
+													}
+												}
+												
+											}
+											ge( 'WorkgroupGui' ).innerHTML = str;
+					
+											var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+					
+											if( workBtns )
+											{
+												for( var a = 0; a < workBtns.length; a++ )
+												{
+													// Toggle user relation to workgroup
+													( function( b ) {
+														b.onclick = function( e )
+														{
+															
+															
+															if( this.classList.contains( 'fa-toggle-off' ) )
+															{
+																// Toggle on ...
+													
+																this.classList.remove( 'fa-toggle-off' );
+																this.classList.add( 'fa-toggle-on' );
+																		
+															}
+															else
+															{
+																// Toggle off ...
+													
+																this.classList.remove( 'fa-toggle-on' );
+																this.classList.add( 'fa-toggle-off' );
+																
+															}
+												
+															return;
+														}
+													} )( workBtns[ a ] );
+												}
+											}
+					
+										}
+										// Hide
+										else
+										{
+											this.wids = {};
+											
+											if( ge( 'WorkgroupGui' ) && ge( 'WorkgroupGui' ).innerHTML )
+											{
+												var workBtns = ge( 'WorkgroupGui' ).getElementsByTagName( 'button' );
+										
+												if( workBtns )
+												{
+													for( var a = 0; a < workBtns.length; a++ )
+													{
+														if( workBtns[a] && workBtns[a].classList.contains( 'fa-toggle-on' ) && workBtns[a].getAttribute( 'wid' ) )
+														{
+															this.wids[ workBtns[a].getAttribute( 'wid' ) ] = true;
+														}
+													}
+												}
+											}
+											
+											var wstr = '';
+											
+											if( groups )
+											{
+												for( var b in groups )
+												{
+													if( groups[b].name && this.wids[ groups[b].ID ] )
+													{
+														wstr += '<div class="HRow">';
+														wstr += '<div class="HContent100"><strong>' + groups[b].name + '</strong></div>';
+														wstr += '</div>';
+													}
+													
+													if( groups[b].groups )
+													{
+														for( var k in groups[b].groups )
+														{
+															if( groups[b].groups[k] && groups[b].groups[k].ID )
+															{
+																if( groups[b].groups[k].name && this.wids[ groups[b].groups[k].ID ] )
+																{
+																	wstr += '<div class="HRow">';
+																	wstr += '<div class="HContent100"><strong>' + groups[b].groups[k].name + '</strong></div>';
+																	wstr += '</div>';
+																}
+															}
+														}
+													}
+												}
+											}
+											
+											this.activated = false;
+											ge( 'WorkgroupGui' ).innerHTML = wstr;
+										}
+									}
+						
+									if( Application.checkAppPermission( 'PERM_WORKGROUP_GLOBAL' ) || Application.checkAppPermission( 'PERM_WORKGROUP_WORKGROUP' ) )
+									{
+										if( ge( 'AdminWorkgroupContainer' ) ) ge( 'AdminWorkgroupContainer' ).className = 'Open';
+									}
+									
+								} 
+								catch( e ){ } 
+							}
+							
+						}
+						f.execute( 'group/list', { authid: Application.authId, args: args } );*/
+						
+						
 						// Responsive framework
 						Friend.responsive.pageActive = ge( 'UserDetails' );
 						Friend.responsive.reinit();
@@ -1673,6 +2499,7 @@ Sections.accounts_users = function( cmd, extra )
 				
 				if( !ge( 'UserListID_'+userList[a].ID ) )
 				{
+					//console.log( 'userList[a] ', userList[a] );
 					
 					sw = sw == 2 ? 1 : 2;
 					var r = document.createElement( 'div' );
@@ -1688,7 +2515,7 @@ Sections.accounts_users = function( cmd, extra )
 					
 					var img = '/system.library/module/?module=system&command=getavatar&userid=' + userList[ a ].ID + ( userList[ a ].Image ? '&image=' + userList[ a ].Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
 					
-					var bg = 'background-image: url(\'' + img + '\'); background-position: center center; background-size: contain; background-repeat: no-repeat; color: transparent;';
+					var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
 					
 					userList[ a ][ 'Edit' ] = '<span '             + 
 					'id="UserAvatar_' + userList[ a ].ID + '" '    + 
@@ -1698,8 +2525,8 @@ Sections.accounts_users = function( cmd, extra )
 					'logintime="' + userList[ a ].LoginTime + '" ' + 
 					'timestamp="' + timestamp + '" '               +
 					'class="IconSmall fa-user-circle-o avatar" '   + 
-					'style="' + bg + '" '                          +
-					'></span>';
+					'style="position: relative;" '                 +
+					'><div style="' + bg + '"></div></span>';
 					
 					
 					
@@ -2018,6 +2845,9 @@ Sections.accounts_users = function( cmd, extra )
 						var canvas = ge( 'AdminAvatar' );
 						var context = canvas.getContext( '2d' );
 						context.drawImage( image, 0, 0, 256, 256 );
+						
+						// Activate edit mode.
+						editMode();
 					}
 					image.src = getImageUrl( item[ 0 ].Path );
 				}
@@ -2189,7 +3019,151 @@ Sections.accounts_users = function( cmd, extra )
 	}
 };
 
+// Temp function until it's merged into one main function for users list ...
 
+function refreshUserList( userInfo )
+{
+	console.log( 'func.init(  ) ', userInfo );
+				
+	if( ge( 'UserListID_'+userInfo.ID ) )
+	{
+		
+		// TODO: Make support for updating the users list and setting it selected when there is change, also when there is a new user created, update the list with the new data ...
+		
+		console.log( ge( 'UserListID_'+userInfo.ID ) );
+		
+		//return;
+		
+		// TODO: Move this to a main place where the list is rendered regardless if it's one or many users returned from server.
+		
+		var r = ge( 'UserListID_'+userInfo.ID );
+		
+		var div = r.getElementsByTagName( 'div' );
+		
+		if( div.length > 0 )
+		{
+			var status = [ 'Active', 'Disabled', 'Locked' ];
+			
+			var login = [ 'Never' ];
+			
+			var timestamp = ( userInfo[ 'LoginTime' ] ? userInfo[ 'LoginTime' ] : 0 );
+			var logintime = ( userInfo[ 'LoginTime' ] != 0 && userInfo[ 'LoginTime' ] != null ? CustomDateTime( userInfo[ 'LoginTime' ] ) : login[ 0 ] );
+			var status    = status[ ( userInfo[ 'Status' ] ? userInfo[ 'Status' ] : 0 ) ];
+			
+			r.className = r.className.split( 'Active' ).join( status ).split( 'Disabled' ).join( status ).split( 'Locked' ).join( status );
+			
+			if( ge( 'ListUsersInner' ) )
+			{
+				var list = ge( 'ListUsersInner' ).getElementsByTagName( 'div' );
+		
+				if( list.length > 0 )
+				{
+					for( var a = 0; a < list.length; a++ )
+					{
+						if( list[a] && list[a].className && list[a].className.indexOf( ' Selected' ) >= 0 )
+						{
+							list[a].className = ( list[a].className.split( ' Selected' ).join( '' ) );
+						}
+					}
+				}
+			}
+			
+			r.className = ( r.className.split( ' Selected' ).join( '' ) + ' Selected' );
+			
+			for ( var i in div )
+			{
+				if( div[i].className )
+				{
+					
+					if( div[i].className.indexOf( ' edit' ) >= 0 )
+					{
+						var img = '/system.library/module/?module=system&command=getavatar&userid=' + userInfo.ID + ( userInfo.Image ? '&image=' + userInfo.Image : '' ) + '&width=30&height=30&authid=' + Application.authId;
+						
+						var bg = 'background-image: url(\'' + img + '\');background-position: center center;background-size: contain;background-repeat: no-repeat;position: absolute;top: 0;left: 0;width: 100%;height: 100%;';
+						
+						div[i].innerHTML = '<span '                  + 
+						'id="UserAvatar_' + userInfo.ID + '" '       + 
+						'fullname="' + userInfo.FullName + '" '      + 
+						'name="' + userInfo.Name + '" '              + 
+						'status="' + status + '" '                   + 
+						'logintime="' + logintime + '" '             + 
+						'timestamp="' + timestamp + '" '             +
+						'class="IconSmall fa-user-circle-o avatar" ' + 
+						'style="position: relative;" '               +
+						'><div style="' + bg + '"></div></span>';
+					}
+					
+					if( div[i].className.indexOf( ' fullname' ) >= 0 )
+					{
+						div[i].innerHTML = userInfo[ 'FullName' ];
+					}
+					
+					if( div[i].className.indexOf( ' name' ) >= 0 )
+					{
+						div[i].innerHTML = userInfo[ 'Name' ];
+					}
+					
+					if( div[i].className.indexOf( ' status' ) >= 0 )
+					{
+						div[i].innerHTML = status;
+					}
+					
+					if( div[i].className.indexOf( ' logintime' ) >= 0 )
+					{
+						//div[i].innerHTML = logintime;
+					}
+					
+				}
+			}
+			
+			// Temporary get lastlogin time separate to speed up the sql query ...
+			
+			getLastLoginlist( function ( res, dat )
+			{
+				if( res == 'ok' && dat )
+				{
+					for ( var i in dat )
+					{
+						if( dat[i] && dat[i]['UserID'] )
+						{
+							if( ge( 'UserListID_' + dat[i]['UserID'] ) )
+							{
+								var elems = ge( 'UserListID_' + dat[i]['UserID'] ).getElementsByTagName( '*' );
+			
+								if( elems.length > 0 )
+								{
+									for ( var div in elems )
+									{
+										if( elems[div] && elems[div].className )
+										{
+											var timestamp = ( dat[i]['LoginTime'] );
+											var logintime = ( dat[i]['LoginTime'] != 0 && dat[i]['LoginTime'] != null ? CustomDateTime( dat[i]['LoginTime'] ) : login[ 0 ] );
+						
+											if( elems[div].className.indexOf( 'avatar' ) >= 0 )
+											{
+												elems[div].setAttribute( 'timestamp', timestamp );
+												elems[div].setAttribute( 'logintime', logintime );
+											}
+											if( elems[div].className.indexOf( 'logintime' ) >= 0 )
+											{
+												elems[div].innerHTML = logintime;
+											}
+										}
+									}
+								}
+			
+			
+							}
+						}
+					}
+				}
+
+			}, userInfo.ID );
+		}
+		
+		
+	}
+}
 
 function getUserlist( callback, obj )
 {
@@ -2290,8 +3264,8 @@ function sortUsers( sortby, orderby )
 		
 		var custom = { 
 			'Status' : { 
-				'ASC'  : { 'Locked' : 0, 'Active' : 1, 'Disabled' : 2 }, 
-				'DESC' : { 'Locked' : 0, 'Disabled' : 1, 'Active' : 2 } 
+				'ASC'  : { 'locked' : 0, 'active' : 1, 'disabled' : 2 }, 
+				'DESC' : { 'locked' : 0, 'disabled' : 1, 'active' : 2 } 
 			},
 			'LoginTime' : 'timestamp' 
 		};
@@ -3430,7 +4404,7 @@ Sections.user_disk_refresh = function( mountlist, userid )
 				storage.icon = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 			}
 			
-			console.log( storage );
+			//console.log( storage );
 			
 			mlst += '<div class="HContent33 FloatLeft DiskContainer"' + ( mountlist[b].Mounted <= 0 ? ' style="opacity:0.6"' : '' ) + '>';
 			mlst += '<div class="PaddingSmall Ellipsis" onclick="Sections.user_disk_update(' + storage.user + ',' + storage.id + ',\'' + storage.name + '\',' + userid + ')">';
@@ -3902,7 +4876,7 @@ function addUser( callback )
 }
 
 // Save a user
-function saveUser( uid )
+function saveUser( uid, cb )
 {	
 	var args = { authid: Application.authId };
 	
@@ -3958,7 +4932,7 @@ function saveUser( uid )
 			
 			if( uid && uid > 0 )
 			{
-				saveUser( uid );
+				saveUser( uid, cb );
 			}
 			
 		} );
@@ -4047,9 +5021,15 @@ function saveUser( uid )
 				var canvas = ge( 'AdminAvatar' );
 				if( canvas )
 				{
-					context = canvas.getContext( '2d' );
-					var base64 = canvas.toDataURL();
-					if( base64 )
+					var base64 = 0;
+					
+					try
+					{
+						base64 = canvas.toDataURL();
+					}
+					catch( e ) {  }
+					
+					if( base64 && base64.length > 3000 )
 					{
 						var ma = new Module( 'system' );
 						ma.forceHTTP = true;
@@ -4066,6 +5046,10 @@ function saveUser( uid )
 						};
 						ma.execute( 'setsetting', { userid: uid, setting: 'avatar', data: base64 } );
 					}
+					else
+					{
+						if( callback ) callback( false );
+					}
 				}
 			}
 			
@@ -4077,7 +5061,14 @@ function saveUser( uid )
 					
 					Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
 					
-					Sections.accounts_users( 'edit', uid );
+					if( cb )
+					{
+						return cb( uid );
+					}
+					else
+					{
+						Sections.accounts_users( 'edit', uid );
+					}
 					
 				} );
 				

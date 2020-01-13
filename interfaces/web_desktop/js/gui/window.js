@@ -866,12 +866,18 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
 {
+	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+		return;
+	
 	// Blocker
 	if( !isMobile && div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
 	}
+	
+	// Don't select other fields
+	FocusOnNothing();
 	
 	// Special case
 	var delayedDeactivation = true;
@@ -930,8 +936,9 @@ function _ActivateWindowOnly( div )
 				window.currentMovable = div;
 			else window.currentMovable = div;
 
-			m.classList.add( 'Active' );
 			m.viewContainer.classList.remove( 'OnWorkspace' );
+			
+			m.classList.add( 'Active' );
 			m.viewContainer.classList.add( 'Active' );
 
 			// Extra force!
@@ -1009,6 +1016,9 @@ function _ActivateWindowOnly( div )
 var _activationTarget = null;
 function _ActivateWindow( div, nopoll, e )
 {
+	if( Workspace.contextMenuShowing && Workspace.contextMenuShowing.shown )
+		return;
+
 	if( !e ) e = window.event;
 	
 	// Already activating
@@ -2051,6 +2061,11 @@ var View = function( args )
 			'screen', 'parentView', 'transparent', 'minimized'
 		];
 
+		if( !flags.screen )
+		{
+			flags.screen = Workspace.screen;
+		}
+
 		// This needs to be set immediately!
 		self.parseFlags( flags, filter );
 		
@@ -2890,7 +2905,8 @@ var View = function( args )
 
 			window.mouseDown = FUI_MOUSEDOWN_RESIZE;
 			
-			_ActivateWindow( div, false, e );
+			if( !div.parentNode.classList.contains( 'Active' ) )
+				_ActivateWindow( div, false, e );
 			this.window.zoom.mode = 'normal';
 			return cancelBubble ( e );
 		}
@@ -4254,6 +4270,14 @@ var View = function( args )
 
 		// Find our friend
 		// TODO: Only send postmessage to friend targets (from our known origin list (security app))
+		
+		// Fix url
+		if( url.indexOf( 'http' ) != 0 )
+		{
+			var t = document.location.href.match( /(http[s]{0,1}\:\/\/)(.*?)\//i );
+			url = t[1] + t[2] + url;
+		}
+		
 		var targetP = url.match( /(http[s]{0,1}\:\/\/.*?)\//i );
 		var friendU = document.location.href.match( /http[s]{0,1}\:\/\/(.*?)\//i );
 		var targetU = url.match( /http[s]{0,1}\:\/\/(.*?)\//i );
@@ -4263,17 +4287,10 @@ var View = function( args )
 			targetP = targetP[1];
 			targetU = targetU[1];
 		}
-
-		// We're on a road trip..
-		if( !( friendU && ( friendU == targetU || !targetU ) ) )
-		{
-			ifr.sandbox = 'allow-forms allow-scripts';
-			console.log( 'Sandbox: ' + ifr.sandbox );
-		}
-		else
-		{
-			console.log( 'Sandbox denied: ', friendU, targetU );
-		}
+		friendU = Trim( friendU );
+		
+		if( friendU.length || friendU != targetU || !targetU )
+			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 
 		// Allow sandbox flags
 		var sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
@@ -4316,7 +4333,14 @@ var View = function( args )
 				if( Workspace.themeData )
 					msg.themeData = Workspace.themeData;
 
-				ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+				try
+				{
+					ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+				}
+				catch(e)
+				{
+					console.log('could not send postmessage to contentwindow!');
+				}
 				ifr.loaded = true;
 			}
 			if( callback ) { callback(); }
@@ -5399,7 +5423,7 @@ var View = function( args )
 		{
 			this._window.applicationId = appid;
 		}
-		CheckScreenTitle();
+		CheckScreenTitle( null, true );
 	}
 	this.setBlocker = function( blockwin )
 	{

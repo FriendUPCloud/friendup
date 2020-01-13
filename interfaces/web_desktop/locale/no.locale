@@ -59,6 +59,9 @@ i18n_create_folder                   : Lag mappe
 
 i18n_mountlist                       : Disker
 
+i18n_illegal_path                    : Feil filsti
+i18n_illegal_path_desc               : Filstien som ble gitt finnes ikke.
+
 i18n_message_from                    : Melding fra
 
 i18n_full                            : full.
@@ -117,6 +120,7 @@ i18n_package                            : Pakken
 i18n_was_installed                      : ble installert
 i18n_failed_install_package             : Kunne ikke installere
 i18n_package_failed                     : Denne pakken kunne ikke installeres
+menu_install_package                    : Installer pakke
 
 i18n_Storage_Local_Read_desc            : Lesetilgang, lokale disker
 i18n_Storage_Local_Write_desc           : Skrivetilgang, lokale disker
@@ -419,6 +423,7 @@ i18n_please_choose_a_path               : Vennligst velg en sti.
 
 i18n_cancel                             : Avbryt
 i18n_moving_files                       : Flytt filer
+i18n_delete_error                       : Feil ved sletting
 i18n_copying_files                      : Kopier filer
 i18n_filecopy_error                     : Feil ved filkopiering
 i18n_do_you_want_copy                   : Vil du virkelig kopiere disse filene?
@@ -440,6 +445,12 @@ i18n_volume_information                 : Enhetsinformasjon
 i18n_volume_permissions                 : Enhetsrettigheter
 i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
 i18n_drag_files_to_download             : Slipp filer for nedlastning.
+
+i18n_creating_directory                 : Lager mappe
+i18n_building_file_index                : Lager filindex...
+i18n_counted                            : Har telt
+i18n_counted_files                      : filer.
+i18n_cleaning_up                        : Rydder...
 
 i18n_could_not_download                 : Kunne ikke laste ned
 i18n_download_wrong_type                : Kun filer kan lastes ned.
@@ -692,4 +703,9 @@ i18n_status_Pending                     : Jobber
 i18n_status_Error                       : FEILET
 i18n_processing                         : Prosesserer
 i18n_logging_in                         : Logger inn
+
+#Alerts ------------------------------------------------------------------------
+
+i18n_erroneous_filename                 : Feil filnavn
+i18n_please_set_a_valid_filename        : Vennligst velg et filnavn med riktig filendelse.
 

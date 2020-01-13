@@ -2080,7 +2080,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
 					
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
-UPDATE Filesystem f SET `Mounted` = '0' \
+UPDATE `Filesystem` f SET `Mounted` = '0' \
 WHERE \
 ( \
 f.UserID = '%ld' OR \

@@ -371,3 +371,10 @@
 	font-weight: bold;
 }*/
 
+/* Custom Gui ------------------------------------------------------------------ */
+
+#Admin .BackgroundGrey
+{
+	background-color: #e3e7e8;
+}
+

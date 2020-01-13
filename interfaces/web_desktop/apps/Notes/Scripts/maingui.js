@@ -148,7 +148,8 @@ Application.updateViewMode = function()
 			break;
 		case 'files':
 			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
-			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			if( this.fld )
+				this.fld.style.transform = 'translate3d(-100%,0,0)';
 			ge( 'FileBar' ).style.transform = 'translate3d(0%,0,0)';
 			ge( 'RightBar' ).style.transform = 'translate3d(100%,0,0)';
 			if( isMobile )
@@ -164,7 +165,8 @@ Application.updateViewMode = function()
 			break;
 		default:
 			ge( 'LeftBar' ).style.transform = 'translate3d(-100%,0,0)';
-			this.fld.style.transform = 'translate3d(-100%,0,0)';
+			if( this.fld )
+				this.fld.style.transform = 'translate3d(-100%,0,0)';
 			ge( 'FileBar' ).style.transform = 'translate3d(-100%,0,0)';
 			ge( 'RightBar' ).style.transform = 'translate3d(0%,0,0)';
 			this.sendMessage( {
@@ -590,7 +592,16 @@ Application.run = function( msg, iface )
 		}, 250 );
 	}
 	
-	var FileBrowser = new Friend.FileBrowser( ge( 'LeftBar' ), { displayFiles: true, path: 'Home:Notes/', bookmarks: false, rootPath: 'Home:Notes/' }, filebrowserCallbacks );
+	var FileBrowser = new Friend.FileBrowser( 
+		ge( 'LeftBar' ), 
+		{ 
+			displayFiles: true, 
+			path: 'Home:Notes/', 
+			bookmarks: false, 
+			rootPath: 'Home:Notes/',
+			noContextMenu: true
+		}, 
+		filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
 	
