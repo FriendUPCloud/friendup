@@ -4067,6 +4067,8 @@ Sections.user_disk_update = function( user, did = 0, name = '', userid )
 {
 	//console.log( { name: name, did: did } );
 	
+	userid = ( userid ? userid : ( user ? user : false ) );
+	
 	if( user && userid )
 	{
 		var n = new Module( 'system' );
