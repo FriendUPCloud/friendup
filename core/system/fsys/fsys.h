@@ -170,6 +170,12 @@ void FHandlerDelete( FHandler *fsys );
 
 void FilesystemDelete( Filesystem *fs );
 
+//
+// remove filesystem list structure from memory
+//
+
+void FilesystemDeleteAll( Filesystem *fs );
+
 #endif // __SYSTEM_FSYS_FSYS_H_
 
 //

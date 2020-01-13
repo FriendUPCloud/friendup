@@ -1,5 +1,5 @@
 
--include ../Makefile.defs
+-include ../Config.defs
 -include ../Config
 
 CC			=	gcc

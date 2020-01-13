@@ -89,7 +89,8 @@ inline void MutexManagerRelease( MutexManager *mm __attribute__((unused)), void 
 
 }
 
-/*
+#ifdef MUTEX_TIME_LOCK_CHECK
+
 #ifndef FRIEND_MUTEX_LOCK
 #define FRIEND_MUTEX_LOCK( lck ) \
 	({ \
@@ -97,14 +98,15 @@ inline void MutexManagerRelease( MutexManager *mm __attribute__((unused)), void 
 	int rc = pthread_mutex_timedlock_np( mutPointer, &MUTEX_TIMEOUT ); \
 	if (rc != EBUSY) { LOG( FLOG_ERRROR, "Cannot lock mutex" ); } rc; })
 #endif
-*/
 
+#else	// MUTEX_TIME_LOCK_CHECK
 
 #ifndef FRIEND_MUTEX_LOCK
 #define FRIEND_MUTEX_LOCK( mutPointer ) \
 	pthread_mutex_lock( mutPointer )
 #endif
 
+#endif
 
 #ifndef FRIEND_MUTEX_TRYLOCK
 #define FRIEND_MUTEX_TRYLOCK( mutPointer ) \

@@ -1,4 +1,4 @@
--include ../../Makefile.defs
+-include ../../Config.defs
 
 GCC		=	gcc
 OUTPUT		=	bin/php.authmod
