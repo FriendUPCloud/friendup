@@ -129,6 +129,20 @@ Sections.accounts_templates = function( cmd, extra )
 	function cancel()
 	{
 		
+		console.log( 'cancel(  ) ' );
+
+		if( ge( 'TemplateDetails' ) )
+		{
+			ge( 'TemplateDetails' ).innerHTML = '';
+		}
+		
+	}
+	
+	function filter( filter, server )
+	{
+		
+		console.log( { filter: filter, server: server } );
+		
 	}
 	
 	// write -------------------------------------------------------------------------------------------------------- //
@@ -136,7 +150,7 @@ Sections.accounts_templates = function( cmd, extra )
 	function create()
 	{
 		
-		
+		console.log( 'create()' );
 		
 	}
 	
@@ -150,9 +164,11 @@ Sections.accounts_templates = function( cmd, extra )
 	
 	function remove( id )
 	{
-		
+		console.log( 'remove( '+id+' )' );
+			
 		Confirm( i18n( 'i18n_deleting_template' ), i18n( 'i18n_deleting_template_verify' ), function( result )
 		{
+			
 			
 			
 		} );
@@ -441,14 +457,31 @@ Sections.accounts_templates = function( cmd, extra )
 	function initDetails( info )
 	{
 		
+		// Language
+		var availLangs = {
+			'en' : 'English',
+			'fr' : 'French',
+			'no' : 'Norwegian',
+			'fi' : 'Finnish',
+			'pl' : 'Polish'
+		};
+		
+		var languages = '';
+		
+		for( var a in availLangs )
+		{
+			languages += '<option value="' + a + '">' + availLangs[ a ] + '</option>';
+		}
 		
 		// Get the user details template
 		var d = new File( 'Progdir:Templates/account_template_details.html' );
 		
 		// Add all data for the template
 		d.replacements = {
+			template_title: i18n( 'i18n_new_template' ),
 			template_name: '',
-			template_description: ''
+			template_description: '',
+			template_language: languages
 		};
 		
 		// Add translations
@@ -456,6 +489,25 @@ Sections.accounts_templates = function( cmd, extra )
 		d.onLoad = function( data )
 		{
 			ge( 'TemplateDetails' ).innerHTML = data;
+			
+			ge( 'AdminApplicationContainer' ).style.display = 'none';
+			ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
+			
+			var bg1  = ge( 'TempSaveBtn' );
+			if( bg1 ) bg1.onclick = function( e )
+			{
+				// Save template ...
+			}
+			var bg2  = ge( 'TempCancelBtn' );
+			if( bg2 ) bg2.onclick = function( e )
+			{
+				cancel(  );
+			}
+			var bg3  = ge( 'TempBackBtn' );
+			if( bg3 ) bg3.onclick = function( e )
+			{
+				cancel(  );
+			}
 			
 			// Responsive framework
 			Friend.responsive.pageActive = ge( 'TemplateDetails' );
@@ -580,7 +632,7 @@ Sections.accounts_templates = function( cmd, extra )
 											var d = document.createElement( 'input' );
 											d.className = 'FullWidth';
 											d.placeholder = 'Search templates...';
-											d.onkeyup = function ( e ) { console.log( 'do search ...' ); };
+											d.onkeyup = function ( e ) { filter( this.value, true ); console.log( 'do search ...' ); };
 											return d;
 										}() 
 									}
@@ -636,7 +688,7 @@ Sections.accounts_templates = function( cmd, extra )
 												{
 													var b = document.createElement( 'button' );
 													b.className = 'IconButton IconSmall ButtonSmall Negative FloatRight fa-plus-circle';
-													b.onclick = function () { console.log( 'create ...' ); };
+													b.onclick = function () { create(); };
 													return b;
 												}()
 											}
@@ -724,10 +776,21 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												var d = document.createElement( 'div' );
 												d.className = 'HContent10 FloatLeft PaddingSmall Ellipsis';
-												d.innerHTML = '<span class="IconSmall FloatRight PaddingSmall fa-minus-circle"></span>';
 												return d;
-											}()
-											
+											}(),
+											'child' : 
+											{
+												'1' : 
+												{
+													'element' : function()
+													{
+														var s = document.createElement( 'span' );
+														s.className = 'IconSmall FloatRight PaddingSmall fa-minus-circle';
+														s.onclick = function () { remove( temp[k].ID ); };
+														return s;
+													}()
+												}
+											}
 										}
 									}
 								}
