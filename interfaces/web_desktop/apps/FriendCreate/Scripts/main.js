@@ -1509,6 +1509,10 @@ function RefreshProjects()
 		if( !projectFolders[ pr.ID ] )
 			projectFolders[ pr.ID ] = {};
 		
+		if( !pr.ProjectPath )
+		{
+			SetProjectPath( pr );
+		}
 		var projectpath = pr.ProjectPath;
 		
 		if( pr.Files && pr.Files.length )
@@ -1580,6 +1584,18 @@ function RefreshProjects()
 		
 		for( var a in list )
 		{
+			var paths = '';
+			if( list[ a ].path.indexOf( '/' ) > 0 )
+			{
+				list[ a ].path = list[ a ].path.split( '//' ).join( '/' );
+				var p = list[a].path.split( '/' );
+				for( var z = 0; z < depth; z++ )
+				{
+					if( p[ z ] && typeof( p[ z ] ) != 'undefined' )
+						paths += p[ z ] + '/';
+				}
+			}
+			
 			// This is a file item
 			if( list[ a ].levels.length == depth )
 			{
@@ -1599,19 +1615,15 @@ function RefreshProjects()
 				
 				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
 				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
+				
+				listedFolders[ projectId ][ paths ] = true;
 				str += listFiles( list, depth + 1, list[ a ].path, projectId );
 			}
 			// This is a folder that may contain a folder
 			else if( list[a].path.indexOf( '/' ) > 0 )
 			{
-				var p = list[a].path.split( '/' );
-				var paths = '';
-				for( var z = 0; z < depth; z++ )
-					paths += p[ z ] + '/';
-				
 				if( !listedFolders[ projectId ][ paths ] )
 				{
-				
 					listedFolders[ projectId ][ paths ] = true;
 				
 					if( !projectFolders[ projectId ][ paths ] )
