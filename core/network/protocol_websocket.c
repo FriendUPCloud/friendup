@@ -316,7 +316,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 					{
 						if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
 						{
-							if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
+							if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 							{
 								lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
 							}
@@ -368,7 +368,7 @@ int WebsocketWrite( UserSessionWebsocket *wsi, unsigned char *msgptr, int msglen
 				{
 					if( FRIEND_MUTEX_LOCK( &(wsi->wusc_Data->wsc_Mutex) ) == 0 )
 					{
-						if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
+						if( wsi->wusc_Data != NULL && wsi->wusc_Data->wsc_Wsi != NULL )
 						{
 							lws_callback_on_writable( wsi->wusc_Data->wsc_Wsi );
 						}
@@ -1050,6 +1050,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					FRIEND_MUTEX_UNLOCK( &(fcd->wsc_Mutex) );
 					//break;
 				}
+				sleep( 0 );
 			//}
 			DEBUG("WS Writable END, wsi ptr %p fcwsptr %p\n", wsi, fcd );
 			

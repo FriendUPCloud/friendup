@@ -82,7 +82,7 @@ if( $ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif' )
 	
 	// Look in the database
 	$thumb = new dbIO( 'FThumbnail' );
-	$thumb->Path = $door->ID . ':' . $dirnfile; // Use fs ID instead of fs name
+	$thumb->Path = $door->ID . ':' . $width . '_' . $height . '_' . $dirnfile; // Use fs ID instead of fs name
 	$thumb->UserID = $User->ID;
 	if( $thumb->Load() )
 	{

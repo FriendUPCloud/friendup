@@ -176,6 +176,7 @@ void WorkerThread( void *w )
 			DEBUG("Before condition\n");
 			pthread_cond_wait( &(wrk->w_Cond), &(wrk->w_Mut) );
 			DEBUG("Got cond call\n");
+			wrk->w_State = W_STATE_COMMAND_CALLED;
 			FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );
 			
 			if( wrk->w_Function != NULL && wrk->w_Data != NULL )
@@ -185,7 +186,7 @@ void WorkerThread( void *w )
 
 				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 				{
-					wrk->w_State = W_STATE_COMMAND_CALLED;
+					
 					wrk->w_Data = NULL;
 					wrk->w_Function = NULL;
 					
@@ -197,7 +198,6 @@ void WorkerThread( void *w )
 			{
 				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 				{
-					wrk->w_State = W_STATE_COMMAND_CALLED;
 					DEBUG("W_STATE_COMMAND_CALLED\n");
 					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
 				}
@@ -214,7 +214,7 @@ void WorkerThread( void *w )
 		}
 
 		// Let others come to..
-		usleep( 100 );
+		usleep( 10 );
 	}
 	
 	wrk->w_Function = NULL;

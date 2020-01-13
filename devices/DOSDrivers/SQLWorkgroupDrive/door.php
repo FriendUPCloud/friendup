@@ -1181,10 +1181,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				return false;
 			}
 			
-			// Remove file from path
-			$subPath = explode( '/', end( explode( ':', $path ) ) );
-			array_pop( $subPath );
-			$subPath = implode( '/', $subPath ) . '/';
+			// Remove disk from path name to get sub folder
+			$subPath = explode( ':', $path );
+			$subPath = end( $subPath );
 	
 			if( $fo = $this->getSubFolder( $subPath ) )
 			{
@@ -1266,6 +1265,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				if( strstr( $path, '/' ) )
 					$fi->Filename = end( explode( '/', $path ) );
 				else $fi->Filename = end( explode( ':', $path ) );
+				$fi->Filename = str_replace( "'", "\\'", $fi->Filename );
 				$fi->Load();
 			}
 			
@@ -1321,7 +1321,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					SELECT * FROM `FSFolder` 
 					WHERE 
 						`FilesystemID`=\'' . $this->ID . '\' AND 
-						`Name`=\'' . $finalPath[0] . '\' AND 
+						`Name`=\'' . str_replace( "'", "\\'", $finalPath[0] ) . '\' AND 
 						`FolderID`=\'' . $parID . '\'' );
 				if( $do && $do->ID > 0 )
 				{

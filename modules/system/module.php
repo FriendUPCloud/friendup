@@ -1048,14 +1048,16 @@ if( isset( $args->command ) )
 
 			// some checks for correctness of request before we do stuff...
 			if( !isset( $obj->Type ) ) die('fail<!--separate-->{"response":"add file system failed"}' );
-			if( !file_exists( $fn = 'devices/DOSDrivers/' . $obj->Type . '/sysinfo.json' ) )	die('fail<!--seperate-->could not read config for chosen file system');
+			if( !file_exists( $fn = 'devices/DOSDrivers/' . $obj->Type . '/sysinfo.json' ) )
+				die( 'fail<!--seperate-->could not read config for chosen file system' );
 
 			$o = file_get_contents( $fn );
-			if( !( $o = json_decode( $o ) ) ) die('fail<!--seperate-->could not read config for chosen file system');
+			if( !( $o = json_decode( $o ) ) )
+				die( 'fail<!--seperate-->could not read config for chosen file system' );
 
 			// Admin filesystems can only be added by admin..
 			if( $o->group == 'Admin' && $level != 'Admin' )
-				die('fail<!--separate-->unauthorised access attempt!');
+				die( 'fail<!--separate-->unauthorised access attempt!' );
 
 			// we are allows to get here.
 			if( isset( $obj->Name ) && strlen( $obj->Name ) > 0 )
@@ -2216,6 +2218,23 @@ if( isset( $args->command ) )
 			die( 'fail<!--separate-->{"response":"getserverkey fatal error"}' );
 			
 			break;
+
+		case 'sleepabit':
+			/* just sleep a bit and return given sleeptime + random stuff to the client */
+			/* used for FriendCore debug work only...  */
+			$sleeptime = intval( ( isset( $args->args->sleeptime) ? $args->args->sleeptime : 0 ) );
+			if( $sleeptime < 1 ) $sleeptime = 1;
+			
+			$randomstring = str_shuffle( 'thisisjustsomedebugoutputcontainingthesleeptimeof' . $sleeptime .'seconds' );
+			
+			$Logger->log( 'Sleeping a bit here ' . $sleeptime . ' :: ' . $randomstring);
+			
+			sleep( $sleeptime );
+			
+			die( 'ok<!--separate-->{"slept_for": "'. $sleeptime .'" seconds", "randomstuff":"'.$randomstring.'" }' );
+			break;
+			
+
 		
 		// NATIVE version commands ---------------------------------------------
 

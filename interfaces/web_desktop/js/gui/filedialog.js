@@ -22,23 +22,48 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	var ignoreFiles = false;
 	var rememberPath = false;
 	
-	if( path && ( path.toLowerCase() == 'Mountlist:' || path.indexOf( ':' ) < 0 ) )
+	if( path && ( ( !window.isMobile && path.toLowerCase() == 'mountlist:' ) || path.indexOf( ':' ) < 0 ) )
 	{
 		path = defaultPath;
 	}
 	if( !path || typeof( path ) == 'undefined' ) path = defaultPath;
 	
-	FriendDOS.getFileInfo( path, function( e, d )
+	if( object.path )
 	{
-		if( e == true )
+		path = object.path;
+	}
+	
+	// Only mobile can access mountlist
+	if( !window.isMobile && path == 'Mountlist:' )
+		path = 'Home:';
+	
+	if( !window.isMobile && object && object.path && object.path == 'Mountlist:' )
+		object.path = false;
+	
+	// Check if the path exists
+	if( path != 'Mountlist:' )
+	{
+		FriendDOS.getFileInfo( path, function( e, d )
 		{
-			init();
-		}
-		else
-		{
-			Alert( i18n( 'i18n_illegal_path' ), i18n( 'i18n_illegal_path_desc' ) );
-		}
-	} );
+			if( e == true )
+			{
+				init();
+			}
+			else
+			{
+				Alert( i18n( 'i18n_illegal_path' ), i18n( 'i18n_illegal_path_desc' ) + ':<br/><p class="Margins">' + path + '</p>', false, function()
+				{
+					path = 'Home:';
+					object.path = 'Home:';
+					init();
+				} );
+			}
+		} );
+	}
+	else
+	{
+		init();
+	}
 	
 	function init()
 	{
@@ -85,7 +110,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						keyboardNavigation = object[a];
 						break;
 					case 'rememberPath':
-						rememberPath = object[a] ? true : false
+						rememberPath = object[a] ? true : false;
 						break;
 				}
 			}
@@ -179,7 +204,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 
 		// Do the remembering
-		if( rememberPath && ds && ds.path )
+		if( rememberPath && ds && ds.path && !object.path )
 		{
 			self.path = path = ds.path;
 		}
@@ -418,7 +443,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		// Refresh dir listing
 		w.refreshView = function()
 		{
-			if( rememberPath )
+			if( rememberPath && !object.path )
 			{
 				ds.path = dialog.path;
 			}
@@ -648,7 +673,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				inpu.value = dialog.path;
 			}
 		
-			if( dialog.path == 'Mountlist:' )
+			if( !window.isMobile && dialog.path == 'Mountlist:' )
 			{
 				// Correct fileinfo
 				w._window.fileInfo = {

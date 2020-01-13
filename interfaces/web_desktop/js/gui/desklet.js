@@ -345,14 +345,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				case 'left_top':
 				case 'left_bottom':
 					positionClass = 'Left';
-					// Adapt icons
 					scrollerMargins.left = Workspace.mainDock.dom.offsetWidth;
+					scrollerMargins.right = Workspace.mainDock.dom.offsetWidth; // For shortcuts
 					this.direction = 'vertical';
 					break;
 				case 'right_center':
 				case 'right_top':
 				case 'right_bottom':
-				default:
 					positionClass = 'Right';
 					scrollerMargins.right = Workspace.mainDock.dom.offsetWidth;
 					this.direction = 'vertical';
@@ -367,6 +366,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				case 'bottom_left':
 				case 'bottom_center':
 				case 'bottom_right':
+				default:
 					positionClass = 'Bottom';
 					scrollerMargins.bottom = Workspace.mainDock.dom.offsetHeight;
 					this.direction = 'horizontal';
@@ -428,13 +428,15 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			this.dom.addEventListener( 'mousemove', GuiDeskletScrollVertical );
 		}
 		
+		// Screen content
+		var cnt = ge( 'DoorsScreen' ).object._screen;
+
 		// Do the rendering of icons
 		var sh = ge( 'DoorsScreen' )[ !horizontal ? 'offsetHeight' : 'offsetWidth' ];
 		if( !horizontal )
 		{
-			var t = GetThemeInfo( 'ScreenTitle' );
-			sh -= parseInt( t.height );
-		}
+			sh -= cnt.offsetTop;
+		}		
 		
 		// With dockwindowlist we allocate a bit more room for tasks
 		var availSpace = sh - ( ge( 'DockWindowList' ) ? 200 : 80 );
@@ -548,7 +550,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		// Position of container
 		if( position != 'fixed' )
 		{
-			var th = 32; // TODO: Set dynamic title bar height
+			var th = cnt.offsetTop;
 			var midScreenH = ( ( this.dom.parentNode.offsetHeight - th ) * 0.5 ) + th;
 			
 			this.dom.style.left = 'auto';
@@ -564,7 +566,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					break;
 				case 'left_top':
 					this.dom.style.left = '0px';
-					this.dom.style.top = '32px'; // TODO: Dynamic!
+					this.dom.style.top = cnt.offsetTop + 'px';
 					break;
 				case 'left_bottom':
 					this.dom.style.left = '0px';
@@ -577,22 +579,22 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					break;
 				case 'right_top':
 					this.dom.style.right = '0px';
-					this.dom.style.top = '32px'; // TODO: Dynamic!
+					this.dom.style.top = cnt.offsetTop + 'px';
 					break;
 				case 'right_bottom':
 					this.dom.style.right = '0px';
 					this.dom.style.bottom = '0px';
 					break;
 				case 'top_center':
-					this.dom.style.top = '32px'; // TODO: Dynamic!
+					this.dom.style.top = cnt.offsetTop + 'px';
 					this.dom.style.left = Math.floor( ( this.dom.parentNode.offsetWidth * 0.5 ) - ( this.pixelWidth * 0.5 ) ) + 'px';
 					break;
 				case 'top_left':
-					this.dom.style.top = '32px'; // TODO: Dynamic!
+					this.dom.style.top = cnt.offsetTop + 'px';
 					this.dom.style.left = '0px';
 					break;
 				case 'top_right':
-					this.dom.style.top = '32px'; // TODO: Dynamic!
+					this.dom.style.top = cnt.offsetTop + 'px';
 					this.dom.style.right = '0px';
 					break;
 				case 'bottom_center':
@@ -618,6 +620,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					scroller.style.paddingLeft = scrollerMargins.left + 'px';
 					scroller.style.paddingRight = scrollerMargins.right + 'px';
 					scroller.style.paddingBottom = scrollerMargins.bottom + 'px';
+					scroller.paddingTop = scrollerMargins.top;
+					scroller.paddingLeft = scrollerMargins.left;
+					scroller.paddingRight = scrollerMargins.right;
+					scroller.paddingBottom = scrollerMargins.bottom;
 				}
 			}
 		}
@@ -844,6 +850,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 			function clickFunc( e )
 			{
+				if( e.button != 0 && e.type != 'touchend' ) return;
 				if( div.helpBubble ) div.helpBubble.close();
 				
 				// We got views? Just manage them
@@ -979,6 +986,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				}
 			}
 			
+			if( o.noContextMenu )
+			{
+				div.addEventListener( 'contextmenu', function( ee ){ return cancelBubble( ee ); }, false );
+			}
+			
 			var evt = window.isMobile || window.isTablet ? 'ontouchend' : 'onclick';
 			
 			if( window.isMobile )
@@ -998,6 +1010,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				div[ evt ] = function( e )
 				{
+					if( e.button != 0 && e.type != 'touchend' ) return;
+					
 					var t = e.target ? e.target : e.srcElement;
 					if( t != div ) return;
 					if( window.isMobile && !dk.open ) return;
@@ -1009,6 +1023,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				div[ evt ] = function( e )
 				{			
+					if( e.button != 0 && e.type != 'touchend' ) return;
+					
 					if( window.isMobile && !this.touchTime )
 						return;
 					
@@ -1030,11 +1046,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 				div.onmousedown = function( e )
 				{
+					if( e.button != 0 && e.type != 'touchend' ) return;
 					// TODO: Fix special case with flags implementation on addLauncher()
 					if( div.classList.contains( 'Startmenu' ) || div.getAttribute( 'data-displayname' ) == 'Files' ) return;
 					if( mousePointer.candidate ) return;
-					if( e.button != 0 )
-						return;
 					// Add candidate and rules
 					var self = this;
 					var px = e.clientX;

@@ -94,7 +94,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	position: absolute;
 	right: 0;
 	top: 0;
-	width: 150px;
+	width: 120px;
 	height: auto;
 	background: black;
 	opacity: 0.8;
@@ -109,7 +109,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 
 #CodeArea .Page .Minimap > canvas
 {
-	transform: scale(0.4);
+	transform: scale(0.3);
 	transform-origin: left top;
 	position: absolute;
 	top: 0;
@@ -127,7 +127,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	position: absolute;
 	top: 0;
 	right: 0;
-	width: 150px;
+	width: 120px;
 	height: 100%;
 	background: rgba(0,0,0,0);
 	z-index: 2;
@@ -138,8 +138,8 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	position: absolute;
 	top: 0;
 	right: 0;
-	width: 150px;
-	background: rgba(0,126,101,0.3);
+	width: 120px;
+	background: rgba(100,100,100,0.2);
 	pointer-events: all;
 	z-index: 1;
 	cursor: pointer;
@@ -196,7 +196,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 #CodeArea .ace_editor
 {
 	overflow: visible;
-	right: 150px !important;
+	right: 120px !important;
 }
 
 #CodeArea .Tab:before, #CodeArea .TabActive:before
@@ -336,6 +336,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 {
 	position: absolute;
 	left: 0;
+	top: 0;
 	line-height: 40px;
 	width: 280px;
 	box-sizing: border-box;
