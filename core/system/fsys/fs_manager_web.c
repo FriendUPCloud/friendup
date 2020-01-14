@@ -32,6 +32,32 @@ if( PTH[ INT ] == '/' || PTH[ INT ] == ':' || PTH[ INT ] == '\'' ) \
 	break; \
 }
 
+//
+// Internal function to cut path from path+filename
+//
+
+static inline char *CutNotificationPath( char *path )
+{
+	char *notifPath = StringDuplicate( path );
+	if( notifPath != NULL )
+	{
+		int i, notifPathLen = strlen( notifPath );
+		if( notifPath[ notifPathLen-1 ] == '/' )
+		{
+			notifPathLen-=2;
+		}
+		for( i=notifPathLen ; i >= 0 ; i-- )
+		{
+			if( notifPath[ i ] == '/' || notifPath[ i ] == ':' )
+			{
+				notifPath[ i+1 ] = 0;
+				break;
+			}
+		}
+	}
+	return notifPath;
+}
+
 /**
  * Filesystem web calls handler
  *
@@ -697,6 +723,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				* @param sessionid - (required) session id of logged user
 				* @param path - (required) path to file which name you want to change
 				* @param newname - (required) new file name
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { response:0 } when success, otherwise error number
 				*/
 				/// @endcond
@@ -712,6 +739,20 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el != NULL )
 					{
 						nname = UrlDecodeToMem( (char *)el->data );
+					}
+					
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->query, "notify" );
+					if( el != NULL )
+					{
+						if( el->data != NULL )
+						{
+							if( strcmp( (char *)el->data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
 					}
 					
 					if( nname != NULL )
@@ -744,7 +785,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								int error = actFS->Rename( actDev, origDecodedPath, nname );
 								sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 						
-								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+								if( notify == TRUE )
+								{
+									char *notifPath = CutNotificationPath( origDecodedPath );
+									if( notifPath != NULL )
+									{
+										DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
+										FFree( notifPath );
+									}
+								}
 							
 								// delete Thumbnails
 								// ?module=system&command=thumbnaildelete&path=Path:to/filename&sessionid=358573695783
@@ -807,6 +856,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				*
 				* @param sessionid - (required) session id of logged user
 				* @param path - (required) path to file which you want to delete
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { response:0 } when success, otherwise error number
 				*/
 				/// @endcond
@@ -855,7 +905,13 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							if( notify == TRUE )
 							{
 								// send information about changes on disk
-								DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+								//DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+								char *notifPath = CutNotificationPath( origDecodedPath );
+								if( notifPath != NULL )
+								{
+									DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
+									FFree( notifPath );
+								}
 							}
 							// delete file in cache
 							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
@@ -912,6 +968,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				*
 				* @param sessionid - (required) session id of logged user
 				* @param path - (required) path which will be used to generate directory
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { response:0 } when success, otherwise error number
 				*/
 				/// @endcond
@@ -924,6 +981,19 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					DEBUG("[FSMWebRequest] Filesystem MAKEDIR: %s\n", path );
 					
 					char tmp[ 256 ];
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->query, "notify" );
+					if( el != NULL )
+					{
+						if( el->data != NULL )
+						{
+							if( strcmp( (char *)el->data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
+					}
 					
 					char *lpath = UrlDecodeToMem( path );
 					if( lpath != NULL )
@@ -982,7 +1052,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								{
 									sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 									DEBUG( "[FSMWebRequest] Makedir Notifying %s  pointer to SB %p\n", path, l );
-									DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+									
+									if( notify == TRUE )
+									{
+										char *notifPath = CutNotificationPath( origDecodedPath );
+										if( notifPath != NULL )
+										{
+											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
+											FFree( notifPath );
+										}
+										//DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+									}
 								}
 								HttpAddTextContent( response, tmp );
 							}
@@ -1472,6 +1552,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				* @param data - (required) data which will be stored in file
 				* @param size - (required) number of bytes which will be stored in file
 				* @param encoding - type of encoding, currently only "url" type is supported
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { FileDataStored : <number of bytes stored> } when success, otherwise error number
 				*/
 				/// @endcond
@@ -1531,6 +1612,20 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						dataSize = strlen( fdata );
 					}
 					
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->query, "notify" );
+					if( el != NULL )
+					{
+						if( el->data != NULL )
+						{
+							if( strcmp( (char *)el->data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
+					}
+					
 					// TODO: Test UNSTABLE CODE
 					/*// Base64 instead
 					else if( el && strcmp( el->data, "base64" ) == 0 )
@@ -1578,7 +1673,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 									actFS->FileClose( actDev, fp );
 							
-									DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+									if( notify == TRUE )
+									{
+										char *notifPath = CutNotificationPath( origDecodedPath );
+										if( notifPath != NULL )
+										{	
+											DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
+											FFree( notifPath );
+										}
+										//DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+									}
 								}
 								else
 								{
@@ -1858,6 +1962,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				*
 				* @param sessionid - (required) session id of logged user
 				* @param path - (required) path where file will be uploaded
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { Uploaded files: <number>} when success, otherwise error number
 				*/
 				/// @endcond
@@ -1877,6 +1982,20 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( path == NULL )
 					{
 						FERROR( "PATH == NULL\n" );
+					}
+					
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->query, "notify" );
+					if( el != NULL )
+					{
+						if( el->data != NULL )
+						{
+							if( strcmp( (char *)el->data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
 					}
 					
 					if( ( tmpPath = ( char * )FCalloc( strlen(path) + 2048, sizeof(char) ) ) != NULL )
@@ -2010,7 +2129,16 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						*result = 200;
 					}
 					
-					DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+					if( notify == TRUE )
+					{
+						char *notifPath = CutNotificationPath( origDecodedPath );
+						if( notifPath != NULL )
+						{
+							DoorNotificationCommunicateChanges( l, loggedSession, actDev, notifPath );
+							FFree( notifPath );
+						}
+						//DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+					}
 					
 					DEBUG("[FSMWebRequest] Upload done\n");
 				}		// file/upload
@@ -2594,7 +2722,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 						HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					int error = DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+					int error = DoorNotificationCommunicateChanges( l, loggedSession, actDev, origDecodedPath );
+					//int error = DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
 					
 					if( error == 0 )
 					{
@@ -2619,6 +2748,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				* @param files - (required) path to files or directories which you want to archive. Entries must be separated by semicolon
 				* @param archiver - (required) type or archivizer. Currently only zip is supported
 				* @param destination - (required) path to place where archive will be stored 
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { Result: 0 } when success, otherwise error number
 				*/
 				/// @endcond
@@ -2661,6 +2791,20 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el != NULL )
 					{
 						archpath = UrlDecodeToMem( (char *)el->data );
+					}
+					
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->query, "notify" );
+					if( el != NULL )
+					{
+						if( el->data != NULL )
+						{
+							if( strcmp( (char *)el->data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
 					}
 					
 					if( archiver != NULL && files != NULL && archpath != NULL && source != NULL )
@@ -2750,7 +2894,23 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													}
 												}
 											
-												int err2 = DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, archpath );
+												{
+													/*
+													char *notifPath = CutNotificationPath( archpath );
+													if( notifPath != NULL )
+													{
+														if( notify == TRUE )
+														{
+															DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, notifPath );
+														}
+														FFree( notifPath );
+													}
+													*/
+													if( notify == TRUE )
+													{
+														int err2 = DoorNotificationCommunicateChanges( l, loggedSession, dstdevice, archpath );
+													}
+												}
 											
 												HttpAddTextContent( response,  "ok<!--separate-->{ \"Result\": 0 }" );
 											}
@@ -2829,6 +2989,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				* @param sessionid - (required) session id of logged user
 				* @param path - (required) path to place where archive will be decompressed
 				* @param archiver - (required) type or archivizer. Currently only zip is supported
+				* @param notify - send notification to other sessions/user about changes (by default set to true, set false to disable this)
 				* @return { Result: 0 } when success, otherwise error number
 				*/
 				/// @endcond
@@ -2844,6 +3005,20 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( el != NULL )
 					{
 						archiver = (char *)el->data;
+					}
+					
+					FBOOL notify = TRUE;
+					el = HttpGetPOSTParameter( request, "notify" );
+					if( el == NULL ) el = HashmapGet( request->query, "notify" );
+					if( el != NULL )
+					{
+						if( el->data != NULL )
+						{
+							if( strcmp( (char *)el->data, "false" ) == 0 )
+							{
+								notify = FALSE;
+							}
+						}
 					}
 					
 					DEBUG("[FSMWebRequest] decompress %s\n", archiver );
@@ -2972,8 +3147,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 									int error = FileUploadFileOrDirectory( request, loggedSession, dsttmp, dstname, filesExtracted );
 								
-									int err2 = DoorNotificationCommunicateChanges( l, loggedSession, actDev, dsttmp );
-									
+									if( notify == TRUE )
+									{
+										int err2 = DoorNotificationCommunicateChanges( l, loggedSession, actDev, dsttmp );
+									}
 									FFree( dsttmp );
 								}
 								
