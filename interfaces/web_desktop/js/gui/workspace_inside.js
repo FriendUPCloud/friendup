@@ -4720,8 +4720,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			// Human filesize
-			var fbtype = 'b';
-			var ustype = 'b';
+			var fbtype = '';
+			var ustype = '';
 
 			icon.UsedSpace = parseInt( icon.UsedSpace );
 			icon.Filesize = parseInt( icon.Filesize );
@@ -4731,18 +4731,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			if( icon.UsedSpace )
 			{
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'kb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'mb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'gb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'tb'; }
-				icon.UsedSpace = Math.round( icon.UsedSpace, 1 );
+				icon.UsedSpace = Friend.Utilities.humanFileSize( icon.UsedSpace );
 			}
-
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'kb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'mb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'gb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'tb'; }
-			icon.Filesize = Math.round( icon.Filesize, 1 );
+			icon.Filesize = Friend.Utilities.humanFileSize( icon.Filesize );
+			
 
 			// Load template
 			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : 'iconinfo.html' );
@@ -5831,7 +5823,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						
 							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
-
+							if( typeof Workspace.uploadWindow.close == 'function' ) Workspace.uploadWindow.close();
 							Workspace.refreshWindowByPath( uppath );
 						}
 						else
@@ -5893,9 +5885,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			ge( 'uploadFileField' ).addEventListener('change', Workspace.uploadFileChanged );
 			ge( 'fileUpload' ).sessionid.value = Workspace.sessionId;
 		}
 		f.load();
+	},
+	uploadFileChanged: function(e)
+	{
+		var listString = '';
+		var uploadSize = 0;
+		
+		if( !e.target.files ) return; // should not happen...
+		for( i = 0; i < e.target.files.length; i++ )
+		{
+			listString += ( listString != '' ? ', ' : '' ) + e.target.files[i].name;
+			uploadSize += parseInt( e.target.files[i].size );
+		}
+		ge('uploadFileFileDisplay').innerHTML = i18n('i18n_selected_files') + ': ' + listString + ' (' + i18n('i18n_in_total') + ' ' + Friend.Utilities.humanFileSize( uploadSize ) + ')';
+
+		var oh = Workspace.uploadWindow.getFlag('height');
+		oh += parseInt( ge('uploadFileFileDisplay').clientHeight ) + 12;
+
+		Workspace.uploadWindow.setFlag('min-height',oh);
 	},
 	findUploadPath: function()
 	{
