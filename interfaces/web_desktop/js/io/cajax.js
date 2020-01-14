@@ -399,7 +399,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
 		this.openFunc = function(){ 
 			//console.log( '[cajax] Last options opening: ' + self.lastOptions.url );
-			self.addVar( 'sessionid', Workspace.sessionId );
+			if( window.Workspace )
+				self.addVar( 'sessionid', Workspace.sessionId );
 			self.proxy.open( self.lastOptions.method, self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
@@ -422,7 +423,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = hasReturnCode;
 		this.openFunc = function(){ 
 			//console.log( '[cajax] Opening: ' + self.url );
-			self.addVar( 'sessionid', Workspace.sessionId );
+			if( window.Workspace )
+				self.addVar( 'sessionid', Workspace.sessionId );
 			self.proxy.open( self.method, self.url, syncing ); 
 		};
 	}
