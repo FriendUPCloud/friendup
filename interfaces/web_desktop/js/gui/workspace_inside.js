@@ -587,13 +587,21 @@ var WorkspaceInside = {
 				}
 				// After such an error, always try reconnect
 				if( Workspace.httpCheckConnectionInterval )
-				{
 					clearInterval( Workspace.httpCheckConnectionInterval );
-				}
-				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 3000 );
+				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 			}
 			else if( e.type == 'ping' )
 			{
+				// Ignite queue on ping
+				var time = ( new Date() ).getTime() - _cajax_http_last_time;
+				if( time > 10000 && window.Friend && Friend.cajax.length > 0 )
+				{
+					// Ignite queue
+					_cajax_http_connections = 0;
+					Friend.cajax[0].forseSend = true;
+					Friend.cajax[0].send();
+				}
+				
 				//if we get a ping we have a websocket.... no need to do the http server check
 				clearInterval( Workspace.httpCheckConnectionInterval );
 				Workspace.httpCheckConnectionInterval = false;
@@ -8040,6 +8048,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return;
 		}
 		
+		console.log( 'Fop fop fop' );
+		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -8089,6 +8099,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				console.log( '[getsetting] Got "fail" response.' );
 				//console.trace();
 			}
+			
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
 			
@@ -9248,7 +9259,7 @@ function InitWorkspaceNetwork()
 	// After such an error, always try reconnect
 	if( Workspace.httpCheckConnectionInterval )
 		clearInterval( Workspace.httpCheckConnectionInterval );
-	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 15000 );
+	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 
 	wsp.checkFriendNetwork();
 	
