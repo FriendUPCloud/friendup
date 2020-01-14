@@ -8061,6 +8061,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var inactiveTimeout = false;
 		var m = new Module('system');
 		m.forceHTTP = true;
+		m.forceSend = true;
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -8104,6 +8105,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		Workspace.serverHTTPCheckModule = m;
 		
 		m.forceHTTP = true;
+		m.forceSend = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
 	},
@@ -8655,6 +8657,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				var l = new Library( 'system.library' );
 				l.forceHTTP = true;
+				l.forceSend = true;
 				l.onExecuted = function( e, d )
 				{
 					if( e != 'ok' )
@@ -9399,6 +9402,7 @@ function ShowEula( accept, cbk )
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
 		dl.forceHTTP = true;
+		dl.forceSend = true;
 		dl.onExecuted = function(e,d)
 		{
 			//console.log( 'First login. Device list refreshed.', e, d );

@@ -283,7 +283,8 @@ cAjax = function()
 			// Clean up
 			if( jax.mode != 'websocket' )
 			{
-				_cajax_http_connections--;
+				if( !jax.forceSend )
+					_cajax_http_connections--;
 				//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (closed one)', Friend.cajax );
 			}
 			
@@ -369,6 +370,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	// Try websockets!!
 	if( 
 		!this.forceHTTP &&
+		!this.forceSend &&
 		this.proxy.responseType != 'arraybuffer' &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -501,13 +503,14 @@ cAjax.prototype.send = function( data, callback )
 	// Can't have too many! Queue control
 	if( this.mode != 'websocket' )
 	{
-		if( _cajax_http_connections >= _cajax_http_max_connections )
+		if( !this.forceSend && _cajax_http_connections >= _cajax_http_max_connections )
 		{
 			AddToCajaxQueue( self );
 			return;
 		}
 		//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (added one)' );
-		_cajax_http_connections++;
+		if( !this.forceSend )
+			_cajax_http_connections++;
 	}
 	
 	if( this.mode == 'websocket' && this.proxy.responseType == 'arraybuffer' )
