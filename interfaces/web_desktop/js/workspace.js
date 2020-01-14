@@ -728,6 +728,9 @@ Workspace = {
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
 		
+		// Kill all http connections that would block
+		_cajax_http_connections = 0;
+		
 		console.log( 'Test2: Relogin in progress' );
 		
 		var self = this;
@@ -837,10 +840,7 @@ Workspace = {
 		{
 			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
-				Friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
-				Friend.cajax[a].forceHTTP = true;
-				Friend.cajax[a].open();
-				Friend.cajax[a].send();
+				Friend.cajax[a]();
 			}
 			Friend.cajax = [];
 		}
