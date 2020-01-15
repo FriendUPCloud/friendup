@@ -207,18 +207,12 @@ html body[mobile].Dark .Dialog,
 html body[mobile].Dark .Dialog > .DialogHeader, 
 html body[mobile].Dark .Dialog > .DialogButtons
 {
-	background-color: rgba(0,0,0,0.8);
+	background-color: rgba(0,0,0,0.6);
 }
 
 html body[mobile].Dark .Dialog .BackgroundDefault
 {
 	background-color: transparent;
-}
-
-html body[mobile].Dark .Dialog > .ScrollArea
-{
-	font-size: 120%;
-	padding: 20px;
 }
 
 html body.Dark .PadBorder {

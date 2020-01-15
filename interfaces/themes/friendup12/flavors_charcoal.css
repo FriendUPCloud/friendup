@@ -231,18 +231,12 @@ html body[mobile].Charcoal .Dialog,
 html body[mobile].Charcoal .Dialog > .DialogHeader, 
 html body[mobile].Charcoal .Dialog > .DialogButtons
 {
-	background-color: rgba(0,0,0,0.8);
+	background-color: rgba(0,0,0,0.6);
 }
 
 html body[mobile].Charcoal .Dialog .BackgroundDefault
 {
 	background-color: transparent;
-}
-
-html body[mobile].Charcoal .Dialog > .ScrollArea
-{
-	font-size: 120%;
-	padding: 20px;
 }
 
 html body.Charcoal .PadBorder {
