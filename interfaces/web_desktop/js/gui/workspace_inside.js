@@ -8487,24 +8487,30 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	updateViewState: function( newState )
 	{
 		var self = this;
-		if( !Workspace.sessionId )
-		{ 
-			console.log( 'Relogin on no session id.' );
-			if( this.updateViewStateTM )
-				clearTimeout( this.updateViewStateTM );
-			this.updateViewStateTM = setTimeout( function(){ 
-				Workspace.updateViewState( newState );
-				self.updateViewStateTM = null;
-			}, 250 );
-			Workspace.relogin();
-			return; 
-		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
 			this.sleepTimeout();
 			return;
+		}
+		
+		if( window.Module && !Workspace.sessionId )
+		{
+			if( this.updateViewStateTM )
+				return;
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			console.log( 'Test.' );
+			if( Workspace.loginCall )
+			{
+				Workspace.loginCall.destroy();
+				Workspace.loginCall = null;
+			}
+			Workspace.relogin();
+			return; 
 		}
 		
 		//mobileDebug( 'Starting update view state.' + newState, true );

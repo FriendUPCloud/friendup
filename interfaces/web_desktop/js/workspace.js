@@ -719,11 +719,11 @@ Workspace = {
 	},
 	flushSession: function()
 	{
-		this.sessionId = null;
+		this.sessionId = '';
 		localStorage.removeItem( 'WorkspaceSessionID' );
 	},
 	// When session times out, use log in again...
-	relogin: function()
+	relogin: function( callback )
 	{
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
@@ -731,7 +731,7 @@ Workspace = {
 		// Kill all http connections that would block
 		_cajax_http_connections = 0;
 		
-		console.log( 'Test2: Relogin in progress' );
+		//console.log( 'Test2: Relogin in progress' );
 		
 		var self = this;
 		
@@ -745,7 +745,7 @@ Workspace = {
 				}
 				catch( e )
 				{
-					console.log( 'Could not close conn.' );
+					//console.log( 'Could not close conn.' );
 				}
 				delete Workspace.conn;
 			}
@@ -780,7 +780,7 @@ Workspace = {
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			// // console.log( 'Test2: Got back: ', e, d );
+			//console.log( 'Test2: Got back: ', e, d );
 			
 			self.reloginAttempts = false;
 			Workspace.reloginInProgress = true;
@@ -852,7 +852,7 @@ Workspace = {
 	{
 		if( sessionid )
 		{
-			console.log( 'Test2: Logging in with sessionid.' );
+			//console.log( 'Test2: Logging in with sessionid.' );
 			
 			var _this = this;
 			
@@ -928,7 +928,7 @@ Workspace = {
 	{
 		var self = this;
 		
-		console.log( 'Test2: Normal login.' );
+		//console.log( 'Test2: Normal login.' );
 		
 		// Test if we have a stored session
 		var sess = localStorage.getItem( 'WorkspaceSessionID' );
@@ -973,7 +973,7 @@ Workspace = {
 		// Require username and pw to login
 		if( !u || !p || typeof( u ) == 'undefined' )
 		{
-			// console.log( 'Test3: Doing the login test.' );
+			//console.log( 'Test3: Doing the login test.', u, p );
 			// Login by url vars
 			var gu = GetUrlVar( 'username' );
 			var gp = GetUrlVar( 'password' );
@@ -997,15 +997,15 @@ Workspace = {
 		{
 			this.loginUsername = u;
 
-			if( p.indexOf('HASHED') == 0 )
+			if( p.indexOf( 'HASHED' ) == 0 )
 			{
 				this.loginPassword = p;
-				console.log( 'SET LOGIN PASSWORD = ' + p );
+				//console.log( 'SET LOGIN PASSWORD = ' + p );
 			}
 			else
 			{
 				this.loginPassword = 'HASHED' + Sha256.hash( p );
-				console.log( 'SET HASHED PASSWORD = ' + p );
+				//console.log( 'SET HASHED PASSWORD = ' + p );
 			}
 		}
 
@@ -1036,6 +1036,7 @@ Workspace = {
 			{
 				m.addVar( 'username', this.loginUsername );
 				m.addVar( 'password', this.loginPassword );
+				//console.log( 'Adding U and P: ', this.loginUsername, this.loginPassword );
 			}
 			
 			m.addVar( 'deviceid', GetDeviceId() );
@@ -1046,7 +1047,7 @@ Workspace = {
 
 			m.onExecuted = function( json, serveranswer )
 			{
-				// // console.log( 'Test2: We executed a login query', json, serveranswer );
+				//console.log( 'Test2: We executed a login query', json, serveranswer );
 				
 				if( typeof( json ) != 'object' )
 				{
@@ -1165,7 +1166,7 @@ Workspace = {
 	{
 		if( this.encryption.keys.client )
 		{
-			console.log( 'Remembering.' );
+			//console.log( 'Remembering.' );
 			ApplicationStorage.save( 
 				{
 					privatekey  : this.encryption.keys.client.privatekey,
