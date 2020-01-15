@@ -598,7 +598,7 @@ var WorkspaceInside = {
 				{
 					// Ignite queue
 					_cajax_http_connections = 0;
-					Friend.cajax[0].forseSend = true;
+					Friend.cajax[0].forceSend = true;
 					Friend.cajax[0].send();
 				}
 				
