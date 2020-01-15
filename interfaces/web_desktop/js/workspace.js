@@ -1034,6 +1034,8 @@ Workspace = {
 			var m = new FriendLibrary( 'system' );
 			this.loginCall = m;
 
+			var triedWithSession = false;
+	
 			if( this.loginUsername && typeof( this.loginUsername ) != 'undefined' )
 			{
 				m.addVar( 'username', this.loginUsername );
@@ -1043,6 +1045,7 @@ Workspace = {
 			else if( this.sessionId )
 			{
 				m.addVar( 'sessionid', this.sessionId );
+				triedWithSession = true;
 			}
 			
 			m.addVar( 'deviceid', GetDeviceId() );
