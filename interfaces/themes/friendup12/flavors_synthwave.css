@@ -280,6 +280,18 @@ html body.Synthwave .BoxBlue
 	color: #bdbcff;
 }
 
+html body[mobile].Synthwave .Dialog,
+html body[mobile].Synthwave .Dialog > .DialogHeader, 
+html body[mobile].Synthwave .Dialog > .DialogButtons
+{
+	background-color: rgba(0,0,0,0.6);
+}
+
+html body[mobile].Synthwave .Dialog .BackgroundDefault
+{
+	background-color: transparent;
+}
+
 html body.Synthwave .PadBorder {
 	border-color : #461c64;
 }

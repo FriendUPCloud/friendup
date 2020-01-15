@@ -598,8 +598,11 @@ var WorkspaceInside = {
 				{
 					// Ignite queue
 					_cajax_http_connections = 0;
-					Friend.cajax[0].forseSend = true;
-					Friend.cajax[0].send();
+					if( Friend.cajax.length > 0 )
+					{
+						Friend.cajax[0].forceSend = true;
+						Friend.cajax[0].send();
+					}
 				}
 				
 				//if we get a ping we have a websocket.... no need to do the http server check
@@ -8095,7 +8098,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
 					//console.log( 'The session has gone away! Relogin using login().' );
-					Workspace.flushSession();
+					//Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
 			}
@@ -8495,24 +8498,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	updateViewState: function( newState )
 	{
 		var self = this;
-		if( !Workspace.sessionId )
-		{ 
-			console.log( 'Relogin on no session id.' );
-			if( this.updateViewStateTM )
-				clearTimeout( this.updateViewStateTM );
-			this.updateViewStateTM = setTimeout( function(){ 
-				Workspace.updateViewState( newState );
-				self.updateViewStateTM = null;
-			}, 250 );
-			Workspace.relogin();
-			return; 
-		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
 			this.sleepTimeout();
 			return;
+		}
+		
+		if( window.Module && !Workspace.sessionId )
+		{
+			if( this.updateViewStateTM )
+				return;
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			if( Workspace.loginCall )
+			{
+				Workspace.loginCall.destroy();
+				Workspace.loginCall = null;
+			}
+			Workspace.relogin();
+			return; 
 		}
 		
 		//mobileDebug( 'Starting update view state.' + newState, true );

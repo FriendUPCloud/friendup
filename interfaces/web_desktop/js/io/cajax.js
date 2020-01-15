@@ -227,7 +227,6 @@ cAjax = function()
 								
 								// Add to queue
 								AddToCajaxQueue( jax );
-								Workspace.flushSession();
 								return Workspace.relogin();
 							}
 						}
@@ -257,7 +256,6 @@ cAjax = function()
 							{
 								// Add to queue
 								AddToCajaxQueue( jax );
-								Workspace.flushSession();
 								return Workspace.relogin();
 							}
 						}
@@ -583,7 +581,6 @@ cAjax.prototype.send = function( data, callback )
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	AddToCajaxQueue( self );
-			Workspace.flushSession();
 			return Workspace.relogin();
         }
         else if( typeof( reqID ) == 'undefined' )
@@ -731,7 +728,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			// Add to queue
 			AddToCajaxQueue( self );
-			Workspace.flushSession();
 			return Workspace.relogin();
 		}
 		self.destroy();
@@ -799,7 +795,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
-					Workspace.flushSession();
 					return Workspace.relogin();
 				}
 			}
@@ -827,7 +822,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			if( r.response == 'user session not found' )
 			{
 				AddToCajaxQueue( self );
-				Workspace.flushSession();
 				return Workspace.relogin();
 			}
 		}
