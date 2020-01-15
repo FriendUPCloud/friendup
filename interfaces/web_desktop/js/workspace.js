@@ -749,13 +749,14 @@ Workspace = {
 				}
 				delete Workspace.conn;
 			}
-			Workspace.flushSession();
 			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
 				// // console.log( 'Test2: Regular login with user and pass' );
 				var u = typeof( Workspace.loginUsername ) == 'undefined' ? false : Workspace.loginUsername;
 				var p = typeof( Workspace.loginPassword ) == 'undefined' ? false : Workspace.loginPassword;
+				if( !( !!u && !!p ) )
+					Workspace.flushSession();
 				Workspace.login( u, p, false, Workspace.initWebSocket );
 			}
 			// Friend app waits some more
@@ -799,9 +800,10 @@ Workspace = {
 				try
 				{
 					var js = JSON.parse( d );
+					// Session authentication failed
 					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
-						// // console.log( 'Test2: Flush session' );
+						// console.log( 'Test2: Flush session' );
 						Workspace.flushSession();
 					}
 				}
@@ -811,7 +813,7 @@ Workspace = {
 			}
 			if( Workspace.serverIsThere )
 			{
-				// // console.log( 'Test2: Clean relogin' );
+				// console.log( 'Test2: Clean relogin' );
 				executeCleanRelogin();
 			}
 			else
@@ -827,7 +829,7 @@ Workspace = {
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'usersettings' );
-		// // console.log( 'Test2: Getting usersettings.' );
+		// console.log( 'Test2: Getting usersettings.' );
 	},
 	// Renews session ids for cajax and executes ajax queue!
 	renewAllSessionIds: function( session )
@@ -1038,12 +1040,12 @@ Workspace = {
 				m.addVar( 'password', this.loginPassword );
 				//console.log( 'Adding U and P: ', this.loginUsername, this.loginPassword );
 			}
-			
-			m.addVar( 'deviceid', GetDeviceId() );
-			if( this.sessionId )
+			else if( this.sessionId )
 			{
 				m.addVar( 'sessionid', this.sessionId );
 			}
+			
+			m.addVar( 'deviceid', GetDeviceId() );
 
 			m.onExecuted = function( json, serveranswer )
 			{
@@ -1121,6 +1123,16 @@ Workspace = {
 					// Remove from localstorage
 					window.localStorage.removeItem( 'WorkspaceUsername' );
 					window.localStorage.removeItem( 'WorkspacePassword' );
+					
+					// Session is totally dead - go back to login screen
+					if( triedWithSession )
+					{
+						console.log( '[Workspace] Logged out due to expired session and erroneous username and password.' );
+						if( window.friendApp && friendApp.exit )
+							friendApp.exit();
+						else Workspace.logout();
+						return;
+					}
 					
 					Workspace.reloginInProgress = false;
 					

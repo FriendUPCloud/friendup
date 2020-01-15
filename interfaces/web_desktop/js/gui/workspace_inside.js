@@ -8087,7 +8087,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
 					//console.log( 'The session has gone away! Relogin using login().' );
-					Workspace.flushSession();
+					//Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
 			}
@@ -8503,7 +8503,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.updateViewState( newState );
 				self.updateViewStateTM = null;
 			}, 250 );
-			console.log( 'Test.' );
 			if( Workspace.loginCall )
 			{
 				Workspace.loginCall.destroy();
