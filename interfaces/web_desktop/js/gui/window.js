@@ -5759,24 +5759,31 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 
 	var curr = window.currentMovable;
 
-	var v = new View( {
-		title: title,
-		width: 400,
-		resize: false,
-		height: d.offsetHeight + 75,
-		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
-	} );
+	var v;
+	if( !window.isMobile )
+	{
+		v = new View( {
+			title: title,
+			width: 400,
+			resize: false,
+			height: d.offsetHeight + 75,
+			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
+	else
+	{
+		v = new Widget( {
+			width: 'full',
+			height: 'full',
+			above: true,
+			animate: true,
+			transparent: true,
+			id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
 
 	v.onClose = function()
 	{
-		if( curr && isMobile )
-		{
-			setTimeout( function()
-			{
-				_ActivateWindow( curr );
-				_WindowToFront( curr );
-			}, 550 );
-		}
 	}
 
 	v.setSticky();
@@ -5836,9 +5843,12 @@ function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext
 						v.close();
 				}
 			}
-		}		
-		_ActivateWindow( v._window.parentNode );
-		_WindowToFront( v._window.parentNode );
+		}
+		if( !window.isMobile )
+		{	
+			_ActivateWindow( v._window.parentNode );
+			_WindowToFront( v._window.parentNode );
+		}
 	}
 	f.load();
 }
@@ -5865,24 +5875,31 @@ function Alert( title, string, cancelstring, callback )
 	var themeTitle = GetThemeInfo( 'ViewTitle' ).height;
 	var themeBottom = GetThemeInfo( 'ViewBottom' ).height;
 	
-	var v = new View( {
-		title: title,
-		width: 400,
-		resize: false,
-		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
-		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
-	} );
+	var v;
+	if( !window.isMobile )
+	{
+		v = new View( {
+			title: title,
+			width: 400,
+			resize: false,
+			height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
+			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
+	else
+	{
+		v = new Widget( {
+			width: 'full',
+			height: 'full',
+			above: true,
+			animate: true,
+			transparent: true,
+			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
 	
 	v.onClose = function()
 	{
-		if( curr && isMobile )
-		{
-			setTimeout( function()
-			{
-				_ActivateWindow( curr );
-				_WindowToFront( curr );
-			}, 550 );
-		}
 	}
 	
 	v.setSticky();
@@ -5905,8 +5922,11 @@ function Alert( title, string, cancelstring, callback )
 			if( callback ) callback();
 		}
 		
-		_ActivateWindow( v._window.parentNode );
-		_WindowToFront( v._window.parentNode );
+		if( !window.isMobile )
+		{
+			_ActivateWindow( v._window.parentNode );
+			_WindowToFront( v._window.parentNode );
+		}
 	}
 	f.load();
 }

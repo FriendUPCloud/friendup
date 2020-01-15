@@ -719,11 +719,11 @@ Workspace = {
 	},
 	flushSession: function()
 	{
-		this.sessionId = null;
+		this.sessionId = '';
 		localStorage.removeItem( 'WorkspaceSessionID' );
 	},
 	// When session times out, use log in again...
-	relogin: function()
+	relogin: function( callback )
 	{
 		// While relogging in or in a real login() call, just skip
 		if( this.reloginInProgress || this.loginCall ) return;
@@ -731,7 +731,7 @@ Workspace = {
 		// Kill all http connections that would block
 		_cajax_http_connections = 0;
 		
-		console.log( 'Test2: Relogin in progress' );
+		//console.log( 'Test2: Relogin in progress' );
 		
 		var self = this;
 		
@@ -745,17 +745,18 @@ Workspace = {
 				}
 				catch( e )
 				{
-					console.log( 'Could not close conn.' );
+					//console.log( 'Could not close conn.' );
 				}
 				delete Workspace.conn;
 			}
-			Workspace.flushSession();
 			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
 				// // console.log( 'Test2: Regular login with user and pass' );
 				var u = typeof( Workspace.loginUsername ) == 'undefined' ? false : Workspace.loginUsername;
 				var p = typeof( Workspace.loginPassword ) == 'undefined' ? false : Workspace.loginPassword;
+				if( !( !!u && !!p ) )
+					Workspace.flushSession();
 				Workspace.login( u, p, false, Workspace.initWebSocket );
 			}
 			// Friend app waits some more
@@ -780,7 +781,7 @@ Workspace = {
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			// // console.log( 'Test2: Got back: ', e, d );
+			//console.log( 'Test2: Got back: ', e, d );
 			
 			self.reloginAttempts = false;
 			Workspace.reloginInProgress = true;
@@ -799,9 +800,10 @@ Workspace = {
 				try
 				{
 					var js = JSON.parse( d );
+					// Session authentication failed
 					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
-						// // console.log( 'Test2: Flush session' );
+						// console.log( 'Test2: Flush session' );
 						Workspace.flushSession();
 					}
 				}
@@ -811,7 +813,7 @@ Workspace = {
 			}
 			if( Workspace.serverIsThere )
 			{
-				// // console.log( 'Test2: Clean relogin' );
+				// console.log( 'Test2: Clean relogin' );
 				executeCleanRelogin();
 			}
 			else
@@ -827,7 +829,7 @@ Workspace = {
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'usersettings' );
-		// // console.log( 'Test2: Getting usersettings.' );
+		// console.log( 'Test2: Getting usersettings.' );
 	},
 	// Renews session ids for cajax and executes ajax queue!
 	renewAllSessionIds: function( session )
@@ -852,7 +854,7 @@ Workspace = {
 	{
 		if( sessionid )
 		{
-			console.log( 'Test2: Logging in with sessionid.' );
+			//console.log( 'Test2: Logging in with sessionid.' );
 			
 			var _this = this;
 			
@@ -928,7 +930,7 @@ Workspace = {
 	{
 		var self = this;
 		
-		console.log( 'Test2: Normal login.' );
+		//console.log( 'Test2: Normal login.' );
 		
 		// Test if we have a stored session
 		var sess = localStorage.getItem( 'WorkspaceSessionID' );
@@ -973,7 +975,7 @@ Workspace = {
 		// Require username and pw to login
 		if( !u || !p || typeof( u ) == 'undefined' )
 		{
-			// console.log( 'Test3: Doing the login test.' );
+			//console.log( 'Test3: Doing the login test.', u, p );
 			// Login by url vars
 			var gu = GetUrlVar( 'username' );
 			var gp = GetUrlVar( 'password' );
@@ -991,15 +993,22 @@ Workspace = {
 		}
 
 		var t = this;
-		this.loginUsername = u;
+		
+		// p and u needs trushy true! :-)
+		if( !!p & !!u )
+		{
+			this.loginUsername = u;
 
-		if( p.indexOf('HASHED') == 0 )
-		{
-			this.loginPassword = p;
-		}
-		else
-		{
-			this.loginPassword = 'HASHED' + Sha256.hash( p );
+			if( p.indexOf( 'HASHED' ) == 0 )
+			{
+				this.loginPassword = p;
+				//console.log( 'SET LOGIN PASSWORD = ' + p );
+			}
+			else
+			{
+				this.loginPassword = 'HASHED' + Sha256.hash( p );
+				//console.log( 'SET HASHED PASSWORD = ' + p );
+			}
 		}
 
 		if( typeof( this.loginUsername ) != 'undefined' && this.loginUsername && this.loginPassword )
@@ -1025,21 +1034,25 @@ Workspace = {
 			var m = new FriendLibrary( 'system' );
 			this.loginCall = m;
 
+			var triedWithSession = false;
+	
 			if( this.loginUsername && typeof( this.loginUsername ) != 'undefined' )
 			{
 				m.addVar( 'username', this.loginUsername );
 				m.addVar( 'password', this.loginPassword );
+				//console.log( 'Adding U and P: ', this.loginUsername, this.loginPassword );
+			}
+			else if( this.sessionId )
+			{
+				m.addVar( 'sessionid', this.sessionId );
+				triedWithSession = true;
 			}
 			
 			m.addVar( 'deviceid', GetDeviceId() );
-			if( this.sessionId )
-			{
-				m.addVar( 'sessionid', this.sessionId );
-			}
 
 			m.onExecuted = function( json, serveranswer )
 			{
-				// // console.log( 'Test2: We executed a login query', json, serveranswer );
+				//console.log( 'Test2: We executed a login query', json, serveranswer );
 				
 				if( typeof( json ) != 'object' )
 				{
@@ -1114,6 +1127,16 @@ Workspace = {
 					window.localStorage.removeItem( 'WorkspaceUsername' );
 					window.localStorage.removeItem( 'WorkspacePassword' );
 					
+					// Session is totally dead - go back to login screen
+					if( triedWithSession )
+					{
+						console.log( '[Workspace] Logged out due to expired session and erroneous username and password.' );
+						if( window.friendApp && friendApp.exit )
+							friendApp.exit();
+						else Workspace.logout();
+						return;
+					}
+					
 					Workspace.reloginInProgress = false;
 					
 					if( t.loginPrompt )
@@ -1158,7 +1181,7 @@ Workspace = {
 	{
 		if( this.encryption.keys.client )
 		{
-			console.log( 'Remembering.' );
+			//console.log( 'Remembering.' );
 			ApplicationStorage.save( 
 				{
 					privatekey  : this.encryption.keys.client.privatekey,
