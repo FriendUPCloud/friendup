@@ -1658,6 +1658,19 @@ Application.receiveMessage = function( msg )
 				break;
 			}
 			break;
+		case 'design_standard':
+		case 'design_atmospheric':
+		case 'design_dark':
+			var f = new File( 'Progdir:Css/' + msg.command + '.css' );
+			f.onLoad = function( data )
+			{
+				if( data && data.length && data.substr( 0, 4 ) != 'fail' )
+				{
+					ge( 'DesignCss' ).innerHTML = data;
+				}
+			}
+			f.load();
+			break;
 	}
 }
 

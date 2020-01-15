@@ -15,6 +15,7 @@ var _cajax_connection_num = 0;
 
 var _cajax_http_connections = 0;                // How many?
 var _cajax_http_max_connections = 6;            // Max
+var _cajax_http_last_time = 0;                  // Time since last
 var _cajax_mutex = 0;
 
 // For debug
@@ -226,7 +227,6 @@ cAjax = function()
 								
 								// Add to queue
 								AddToCajaxQueue( jax );
-								Workspace.flushSession();
 								return Workspace.relogin();
 							}
 						}
@@ -256,7 +256,6 @@ cAjax = function()
 							{
 								// Add to queue
 								AddToCajaxQueue( jax );
-								Workspace.flushSession();
 								return Workspace.relogin();
 							}
 						}
@@ -283,7 +282,8 @@ cAjax = function()
 			// Clean up
 			if( jax.mode != 'websocket' )
 			{
-				_cajax_http_connections--;
+				if( !jax.forceSend )
+					_cajax_http_connections--;
 				//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (closed one)', Friend.cajax );
 			}
 			
@@ -369,6 +369,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	// Try websockets!!
 	if( 
 		!this.forceHTTP &&
+		!this.forceSend &&
 		this.proxy.responseType != 'arraybuffer' &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -397,6 +398,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
 		this.openFunc = function(){ 
 			//console.log( '[cajax] Last options opening: ' + self.lastOptions.url );
+			if( window.Workspace )
+				self.addVar( 'sessionid', Workspace.sessionId );
 			self.proxy.open( self.lastOptions.method, self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
@@ -419,6 +422,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = hasReturnCode;
 		this.openFunc = function(){ 
 			//console.log( '[cajax] Opening: ' + self.url );
+			if( window.Workspace )
+				self.addVar( 'sessionid', Workspace.sessionId );
 			self.proxy.open( self.method, self.url, syncing ); 
 		};
 	}
@@ -501,14 +506,18 @@ cAjax.prototype.send = function( data, callback )
 	// Can't have too many! Queue control
 	if( this.mode != 'websocket' )
 	{
-		if( _cajax_http_connections >= _cajax_http_max_connections )
+		if( !this.forceSend && _cajax_http_connections >= _cajax_http_max_connections )
 		{
 			AddToCajaxQueue( self );
 			return;
 		}
 		//console.log( '[cajax] We now are running ' + _cajax_http_connections + '/' + _cajax_http_max_connections + ' connections. (added one)' );
-		_cajax_http_connections++;
+		if( !this.forceSend )
+			_cajax_http_connections++;
 	}
+	
+	// Register successful send
+	_cajax_http_last_time = ( new Date() ).getTime();
 	
 	if( this.mode == 'websocket' && this.proxy.responseType == 'arraybuffer' )
 	{
@@ -572,7 +581,6 @@ cAjax.prototype.send = function( data, callback )
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	AddToCajaxQueue( self );
-			Workspace.flushSession();
 			return Workspace.relogin();
         }
         else if( typeof( reqID ) == 'undefined' )
@@ -720,7 +728,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			// Add to queue
 			AddToCajaxQueue( self );
-			Workspace.flushSession();
 			return Workspace.relogin();
 		}
 		self.destroy();
@@ -788,7 +795,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
-					Workspace.flushSession();
 					return Workspace.relogin();
 				}
 			}
@@ -816,7 +822,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			if( r.response == 'user session not found' )
 			{
 				AddToCajaxQueue( self );
-				Workspace.flushSession();
 				return Workspace.relogin();
 			}
 		}

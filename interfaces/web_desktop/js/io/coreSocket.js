@@ -257,6 +257,7 @@ FriendWebSocket.prototype.doReconnect = function()
 		if ( !allow )
 		{
 			console.log( 'not allowed to reconnect', checks )
+			// Try to do a module call
 			return false;
 		}
 		return true;
