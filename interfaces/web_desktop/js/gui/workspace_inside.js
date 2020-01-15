@@ -8486,12 +8486,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var self = this;
 		if( !Workspace.sessionId )
 		{ 
+			console.log( 'Relogin on no session id.' );
 			if( this.updateViewStateTM )
 				clearTimeout( this.updateViewStateTM );
 			this.updateViewStateTM = setTimeout( function(){ 
 				Workspace.updateViewState( newState );
 				self.updateViewStateTM = null;
 			}, 250 );
+			Workspace.relogin();
 			return; 
 		}
 
