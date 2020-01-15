@@ -848,6 +848,7 @@ html body[mobile] .Dialog .VContentBottom.BackgroundToolbar button
 {
 	background: transparent;
 	border: 0;
+	color: white;
 }
 
 html body[mobile] .Dialog .BackgroundDefault
