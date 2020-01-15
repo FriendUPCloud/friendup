@@ -15,6 +15,7 @@ var _cajax_connection_num = 0;
 
 var _cajax_http_connections = 0;                // How many?
 var _cajax_http_max_connections = 6;            // Max
+var _cajax_http_last_time = 0;                  // Time since last
 var _cajax_mutex = 0;
 
 // For debug
@@ -399,7 +400,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
 		this.openFunc = function(){ 
 			//console.log( '[cajax] Last options opening: ' + self.lastOptions.url );
-			self.addVar( 'sessionid', Workspace.sessionId );
+			if( window.Workspace )
+				self.addVar( 'sessionid', Workspace.sessionId );
 			self.proxy.open( self.lastOptions.method, self.lastOptions.url, self.lastOptions.syncing ); 
 		};
 	}
@@ -422,7 +424,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.proxy.hasReturnCode = hasReturnCode;
 		this.openFunc = function(){ 
 			//console.log( '[cajax] Opening: ' + self.url );
-			self.addVar( 'sessionid', Workspace.sessionId );
+			if( window.Workspace )
+				self.addVar( 'sessionid', Workspace.sessionId );
 			self.proxy.open( self.method, self.url, syncing ); 
 		};
 	}
@@ -514,6 +517,9 @@ cAjax.prototype.send = function( data, callback )
 		if( !this.forceSend )
 			_cajax_http_connections++;
 	}
+	
+	// Register successful send
+	_cajax_http_last_time = ( new Date() ).getTime();
 	
 	if( this.mode == 'websocket' && this.proxy.responseType == 'arraybuffer' )
 	{

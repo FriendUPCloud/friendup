@@ -835,12 +835,15 @@ Workspace = {
 		if( session )
 			this.sessionId = session;
 		
+		// Reset this in this case
+		_cajax_http_connections = 0;
+		
 		// Check if there's a queue of objects waiting to run
 		if( Friend.cajax && Friend.cajax.length )
 		{
 			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
-				Friend.cajax[a]();
+				Friend.cajax[a].send();
 			}
 			Friend.cajax = [];
 		}
