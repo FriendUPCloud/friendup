@@ -203,6 +203,24 @@ html body.Dark .BoxBlue
 	color: #e0e0e0;
 }
 
+html body[mobile].Dark .Dialog,
+html body[mobile].Dark .Dialog > .DialogHeader, 
+html body[mobile].Dark .Dialog > .DialogButtons
+{
+	background-color: rgba(0,0,0,0.8);
+}
+
+html body[mobile].Dark .Dialog .BackgroundDefault
+{
+	background-color: transparent;
+}
+
+html body[mobile].Dark .Dialog > .ScrollArea
+{
+	font-size: 120%;
+	padding: 20px;
+}
+
 html body.Dark .PadBorder {
 	border-color : #233240;
 }

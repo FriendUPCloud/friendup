@@ -819,6 +819,25 @@ html .TrayElement.PopNotification .PopInfo
 	box-sizing: border-box;
 }
 
+html body[mobile] .Dialog,
+html body[mobile] .Dialog > .DialogHeader, 
+html body[mobile] .Dialog > .DialogButtons
+{
+	background-color: rgba(0,0,0,0.8);
+	color: #ffffff;
+}
+
+html body[mobile] .Dialog .BackgroundDefault
+{
+	background-color: transparent;
+}
+
+html body[mobile] .Dialog > .ScrollArea
+{
+	font-size: 120%;
+	padding: 20px;
+}
+
 .Padding
 {
 	padding: $PaddingBox;
