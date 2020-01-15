@@ -1094,11 +1094,11 @@ function _ActivateWindow( div, nopoll, e )
 		{
 			if( fr[ a ].oldSandbox )
 			{
-				fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
 			}
 			else
 			{
-				fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
+				if( typeof friendApp == 'undefined' ) fr[ a ].setAttribute( 'sandbox', DEFAULT_SANDBOX_ATTRIBUTES );
 			}
 		}
 	}
@@ -4086,7 +4086,7 @@ var View = function( args )
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
 		iframe.applicationDisplayName = self.applicationDisplayName;
-		iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		if( typeof friendApp == 'undefined' ) iframe.sandbox = DEFAULT_SANDBOX_ATTRIBUTES; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		iframe.referrerPolicy = 'origin';
 
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
@@ -4289,7 +4289,7 @@ var View = function( args )
 		}
 		friendU = Trim( friendU );
 		
-		if( friendU.length || friendU != targetU || !targetU )
+		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
 			ifr.sandbox = DEFAULT_SANDBOX_ATTRIBUTES;
 
 		// Allow sandbox flags
@@ -4306,7 +4306,7 @@ var View = function( args )
 				}
 			}
 			if( !found ) sbx.push( 'allow-popups' );
-			ifr.sandbox = sbx.join( ' ' );
+			if( typeof friendApp == 'undefined' )  ifr.sandbox = sbx.join( ' ' );
 		}
 
 		ifr.onload = function( e )
