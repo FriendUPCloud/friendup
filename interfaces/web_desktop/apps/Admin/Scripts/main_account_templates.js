@@ -426,7 +426,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						initDetails( loadingInfo, [  ] );
+						initDetails( loadingInfo, [ 'application' ] );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -940,13 +940,35 @@ Sections.accounts_templates = function( cmd, extra )
 							
 						
 				
+					},
+					
+					permissions : function ( show )
+					{
+						// Check Permissions
+						
+						if( !show || show.indexOf( 'application' ) >= 0 )
+						{
+							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+							{
+								if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+							}
+						}
+						
+						if( !show || show.indexOf( 'looknfeel' ) >= 0 )
+						{
+							if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
+							{
+								if( ge( 'AdminLooknfeelContainer' ) ) ge( 'AdminLooknfeelContainer' ).className = 'Open';
+							}
+						}
 					}
-			
+					
 				};
 				
 				
 				
 				func.applications();
+				func.permissions( show );
 				
 				
 			}
