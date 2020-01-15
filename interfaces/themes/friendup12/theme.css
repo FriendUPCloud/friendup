@@ -827,6 +827,16 @@ html body[mobile] .Dialog > .DialogButtons
 	color: #ffffff;
 }
 
+html body[mobile] .Dialog > .ScrollArea:before
+{
+	font-family: FontAwesome;
+	content: "\f071";
+	font-size: 220%;
+	display: block;
+	float: left;
+	margin: 7px 10px 0 0;
+}
+
 html body[mobile] .Dialog .VContentBottom.BackgroundToolbar 
 {
 	top: calc(70% - 50px);
