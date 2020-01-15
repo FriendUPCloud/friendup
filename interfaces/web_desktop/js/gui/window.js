@@ -5876,7 +5876,17 @@ function Alert( title, string, cancelstring, callback )
 	var themeBottom = GetThemeInfo( 'ViewBottom' ).height;
 	
 	var v;
-	if( window.isMobile )
+	if( !window.isMobile )
+	{
+		v = new View( {
+			title: title,
+			width: 400,
+			resize: false,
+			height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
+			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
+		} );
+	}
+	else
 	{
 		v = new Widget( {
 			width: 'full',
@@ -5886,16 +5896,6 @@ function Alert( title, string, cancelstring, callback )
 			transparent: true,
 			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 		} );
-	}
-	else
-	{
-		v = new View( {
-			title: title,
-			width: 400,
-			resize: false,
-			height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
-			id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
-		} );
 	}
 	
 	v.onClose = function()
