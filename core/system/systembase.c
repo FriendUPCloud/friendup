@@ -2062,10 +2062,13 @@ usr->u_ID , usr->u_ID, usr->u_ID
 
 			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 
+			// if there is error but error is not "device is already mounted"
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
 				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
-				if( mount == 1 && unmountIfFail == TRUE && err != FSys_Error_CustomError )
+				// if unmountIfFail is set
+				// and if error is not equal to FSys_Error_CustomError which is returned when main drive is installed but not shareddrive (for other users)
+				if( unmountIfFail == TRUE && err != FSys_Error_CustomError )
 				{
 					//Log( FLOG_INFO, "UserDeviceMount. Device unmounted: %s UserID: %lu 
 					
