@@ -544,8 +544,9 @@ Sections.accounts_templates = function( cmd, extra )
 						{
 							
 							ids  : {},
-							head : function ( o )
+							head : function (  )
 							{
+								var o = ge( 'ApplicationGui' ); o.innerHTML = '';
 								
 								var divs = appendChild( [ 
 									{ 
@@ -561,7 +562,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HContent50 FloatLeft';
+													d.className = 'PaddingSmall HContent50 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													return d;
 												}() 
@@ -570,7 +571,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HContent40 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent40 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													return d;
 												}()
@@ -579,11 +580,20 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'HContent10 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
 													return d;
 												}()
 											}
 										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'ApplicationInner';
+											return d;
+										}()
 									}
 								] );
 						
@@ -591,7 +601,7 @@ Sections.accounts_templates = function( cmd, extra )
 								{
 									for( var i in divs )
 									{
-										if( divs[i] )
+										if( divs[i] && o )
 										{
 											o.appendChild( divs[i] );
 										}
@@ -602,20 +612,12 @@ Sections.accounts_templates = function( cmd, extra )
 							list : function (  )
 							{
 								
-								console.log( this );
-								
-								//wstr += '<div class="HRow">';
-								//wstr += '	<div class="PaddingSmall HContent60 FloatLeft Ellipsis"><strong>' + groups[b].Name + '</strong></div>';
-								//wstr += '	<div class="PaddingSmall HContent40 FloatLeft Ellipsis">';
-								//wstr += '		<button wid="' + groups[b].ID + '" class="IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-on"> </button>';
-								//wstr += '	</div>';
-								//wstr += '</div>';
-								
 								if( apps )
 								{
-									var o = ge( 'ApplicationGui' ); o.innerHTML = '';
 									
-									this.head( o );
+									this.head();
+									
+									var o = ge( 'ApplicationInner' ); o.innerHTML = '';
 									
 									for( var k in apps )
 									{
@@ -623,11 +625,11 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var found = false;
 											
-											if( soft )
+											if( this.ids )
 											{
-												for( var a in soft )
+												for( var a in this.ids )
 												{
-													if( soft[a] && soft[a][0] == apps[k].Name )
+													if( this.ids[a] && a == apps[k].Name )
 													{
 														found = true;
 													}
@@ -686,13 +688,25 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function() 
+																	'element' : function( ids, name ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-minus-circle';
-																		b.onclick = function(  ){  };
+																		b.onclick = function(  )
+																		{
+																			
+																			ids[ name ] = false; 
+																			
+																			var pnt = this.parentNode.parentNode;
+																			
+																			if( pnt )
+																			{
+																				pnt.innerHTML = '';
+																			}
+																			
+																		};
 																		return b;
-																	}() 
+																	}( this.ids, apps[k].Name ) 
 																}
 															]
 														}
@@ -704,7 +718,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												for( var i in divs )
 												{
-													if( divs[i] )
+													if( divs[i] && o )
 													{
 														o.appendChild( divs[i] );
 													}
@@ -722,9 +736,10 @@ Sections.accounts_templates = function( cmd, extra )
 								
 								if( apps )
 								{
-									var o = ge( 'ApplicationGui' ); o.innerHTML = '';
 									
-									this.head( o );
+									this.head();
+									
+									var o = ge( 'ApplicationInner' ); o.innerHTML = '';
 									
 									for( var k in apps )
 									{
@@ -732,11 +747,11 @@ Sections.accounts_templates = function( cmd, extra )
 										{
 											var found = false;
 											
-											if( soft )
+											if( this.ids )
 											{
-												for( var a in soft )
+												for( var a in this.ids )
 												{
-													if( soft[a] && soft[a][0] == apps[k].Name )
+													if( this.ids[a] && a == apps[k].Name )
 													{
 														found = true;
 													}
@@ -793,13 +808,29 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function() 
+																	'element' : function( ids, name ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
-																		b.onclick = function(  ){  };
+																		b.onclick = function(  )
+																		{
+																			if( this.classList.contains( 'fa-toggle-off' ) )
+																			{
+																				ids[ name ] = true;
+																				
+																				this.classList.remove( 'fa-toggle-off' );
+																				this.classList.add( 'fa-toggle-on' );
+																			}
+																			else
+																			{
+																				ids[ name ] = false;
+																				
+																				this.classList.remove( 'fa-toggle-on' );
+																				this.classList.add( 'fa-toggle-off' );
+																			}
+																		};
 																		return b;
-																	}() 
+																	}( this.ids, apps[k].Name ) 
 																}
 															]
 														}
@@ -811,7 +842,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												for( var i in divs )
 												{
-													if( divs[i] )
+													if( divs[i] && o )
 													{
 														o.appendChild( divs[i] );
 													}
@@ -882,6 +913,16 @@ Sections.accounts_templates = function( cmd, extra )
 							};
 						}
 						
+						if( soft )
+						{
+							for( var a in soft )
+							{
+								if( soft[a] && soft[a][0] )
+								{
+									init.ids[ soft[a][0] ] = true;
+								}
+							}
+						}
 						
 						// Show listed applications ... maybe list default ???
 						init.list();
@@ -1017,7 +1058,7 @@ Sections.accounts_templates = function( cmd, extra )
 								'element' : function() 
 								{
 									var d = document.createElement( 'div' );
-									d.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingBottom';
+									d.className = 'HRow BackgroundNegativeAlt Negative PaddingTop PaddingLeft PaddingBottom';
 									return d;
 								}(),
 								'child' : 
@@ -1026,7 +1067,7 @@ Sections.accounts_templates = function( cmd, extra )
 										'element' : function() 
 										{
 											var d = document.createElement( 'div' );
-											d.className = 'PaddingSmallLeft PaddingSmallRight HContent90 FloatLeft Ellipsis';
+											d.className = 'PaddingSmallRight HContent90 FloatLeft Ellipsis';
 											d.innerHTML = '<strong>Name</strong>';
 											return d;
 										}()
