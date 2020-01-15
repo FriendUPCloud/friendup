@@ -366,6 +366,14 @@ Sections.accounts_templates = function( cmd, extra )
 		return false;
 	}
 	
+	function sortApps( name )
+	{
+		
+		//
+		
+		alert( 'TODO ... sortApps( '+name+' )' );
+	}
+	
 	// init --------------------------------------------------------------------------------------------------------- //
 	
 	function loading( id )
@@ -426,7 +434,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						initDetails( loadingInfo, [ 'application' ] );
+						initDetails( loadingInfo, [ 'application', 'dock' ] );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -499,6 +507,7 @@ Sections.accounts_templates = function( cmd, extra )
 			if( !details.ID )
 			{
 				ge( 'AdminApplicationContainer' ).style.display = 'none';
+				ge( 'AdminDockContainer' ).style.display = 'none';
 				ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
 			}
 			
@@ -535,6 +544,27 @@ Sections.accounts_templates = function( cmd, extra )
 						
 				var func = {
 					
+					appids : function ( soft )
+					{
+						var ids = {};
+						
+						if( soft )
+						{
+							console.log( 'soft: ', soft );
+							
+							for( var a in soft )
+							{
+								if( soft[a] && soft[a][0] )
+								{
+									ids[ soft[a][0] ] = soft[a];
+								}
+							}
+						}
+						
+						return ids;
+						
+					}( soft ),
+					
 					applications : function (  )
 					{
 						
@@ -543,9 +573,11 @@ Sections.accounts_templates = function( cmd, extra )
 						var init =
 						{
 							
-							ids  : {},
+							ids  : this.appids,
+							
 							head : function (  )
 							{
+								
 								var o = ge( 'ApplicationGui' ); o.innerHTML = '';
 								
 								var divs = appendChild( [ 
@@ -564,6 +596,10 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent50 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														sortApps( 'Name' );
+													};
 													return d;
 												}() 
 											}, 
@@ -573,6 +609,10 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														sortApps( 'Category' );
+													};
 													return d;
 												}()
 											},
@@ -609,11 +649,14 @@ Sections.accounts_templates = function( cmd, extra )
 								}
 								
 							},
+							
 							list : function (  )
 							{
 								
 								if( apps )
 								{
+									
+									console.log( 'Apps: this.ids [1] ', this.ids );
 									
 									this.head();
 									
@@ -629,7 +672,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												for( var a in this.ids )
 												{
-													if( this.ids[a] && a == apps[k].Name )
+													if( this.ids[a] && this.ids[a][0] == apps[k].Name )
 													{
 														found = true;
 													}
@@ -666,6 +709,10 @@ Sections.accounts_templates = function( cmd, extra )
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
 																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																d.onclick = function(  )
+																{
+																	sortApps( 'Name' );
+																};
 																return d;
 															}() 
 														},
@@ -675,6 +722,10 @@ Sections.accounts_templates = function( cmd, extra )
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																d.onclick = function(  )
+																{
+																	sortApps( 'Category' );
+																};
 																return d;
 															}() 
 														}, 
@@ -691,11 +742,11 @@ Sections.accounts_templates = function( cmd, extra )
 																	'element' : function( ids, name ) 
 																	{
 																		var b = document.createElement( 'button' );
-																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-minus-circle';
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
 																		b.onclick = function(  )
 																		{
 																			
-																			ids[ name ] = false; 
+																			ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
 																			
 																			var pnt = this.parentNode.parentNode;
 																			
@@ -731,11 +782,13 @@ Sections.accounts_templates = function( cmd, extra )
 								}
 									
 							},
+							
 							edit : function (  )
 							{
 								
 								if( apps )
 								{
+									console.log( 'Apps: this.ids [2] ', this.ids );
 									
 									this.head();
 									
@@ -751,7 +804,7 @@ Sections.accounts_templates = function( cmd, extra )
 											{
 												for( var a in this.ids )
 												{
-													if( this.ids[a] && a == apps[k].Name )
+													if( this.ids[a] && this.ids[a][0] == apps[k].Name )
 													{
 														found = true;
 													}
@@ -816,14 +869,14 @@ Sections.accounts_templates = function( cmd, extra )
 																		{
 																			if( this.classList.contains( 'fa-toggle-off' ) )
 																			{
-																				ids[ name ] = true;
+																				ids[ name ] = ( ids[ name ] ? [ name, ids[ name ][ 1 ] ] : [ name, 0 ] );
 																				
 																				this.classList.remove( 'fa-toggle-off' );
 																				this.classList.add( 'fa-toggle-on' );
 																			}
 																			else
 																			{
-																				ids[ name ] = false;
+																				ids[ name ] = ( ids[ name ] ? [ 0, ids[ name ][ 1 ] ] : [ 0, 0 ] );
 																				
 																				this.classList.remove( 'fa-toggle-on' );
 																				this.classList.add( 'fa-toggle-off' );
@@ -913,34 +966,427 @@ Sections.accounts_templates = function( cmd, extra )
 							};
 						}
 						
-						if( soft )
-						{
-							for( var a in soft )
-							{
-								if( soft[a] && soft[a][0] )
-								{
-									init.ids[ soft[a][0] ] = true;
-								}
-							}
-						}
+						// Show listed applications ... 
 						
-						// Show listed applications ... maybe list default ???
 						init.list();
 						
-						
-						
-						
-						return;
-						
-						
-						
-						
-						
-						
-							
-						
-				
 					},
+					
+					
+					
+					dock : function (  )
+					{
+						
+						// Editing Dock
+						
+						var init =
+						{
+							
+							ids  : this.appids,
+							
+							head : function (  )
+							{
+								var o = ge( 'DockGui' ); o.innerHTML = '';
+								
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent50 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														sortDock( 'Name' );
+													};
+													return d;
+												}() 
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														sortDock( 'Category' );
+													};
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													return d;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'DockInner';
+											return d;
+										}()
+									}
+								] );
+						
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
+								
+							},
+							
+							list : function (  )
+							{
+								
+								if( apps )
+								{
+									console.log( 'Dock: this.ids [1] ', this.ids );
+									
+									this.head();
+									
+									var o = ge( 'DockInner' ); o.innerHTML = '';
+									
+									for( var k in apps )
+									{
+										if( apps[k] && apps[k].Name )
+										{
+											var found = false;
+											
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a][0] == apps[k].Name && this.ids[a][1] )
+													{
+														found = true;
+													}
+												}
+											}
+											
+											if( !found ) continue;
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																if( apps[k].Preview )
+																{
+																	d.innerHTML = '<div style="background-image:url(\'' + apps[k].Preview + '\');background-size:contain;width:24px;height:24px;"></div>';
+																}
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																d.onclick = function(  )
+																{
+																	sortDock( 'Name' );
+																};
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																d.onclick = function(  )
+																{
+																	sortDock( 'Category' );
+																};
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, name ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																		b.onclick = function(  )
+																		{
+																			
+																			ids[ name ] = [ name, 0 ];
+																			
+																			var pnt = this.parentNode.parentNode;
+																			
+																			if( pnt )
+																			{
+																				pnt.innerHTML = '';
+																			}
+																			
+																		};
+																		return b;
+																	}( this.ids, apps[k].Name ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+									
+							},
+							
+							edit : function (  )
+							{
+								
+								if( apps )
+								{
+									console.log( 'Dock: this.ids [2] ', this.ids );
+									
+									this.head();
+									
+									var o = ge( 'DockInner' ); o.innerHTML = '';
+									
+									for( var k in apps )
+									{
+										if( apps[k] && apps[k].Name )
+										{
+											var found = false; var toggle = false;
+											
+											if( this.ids )
+											{
+												for( var a in this.ids )
+												{
+													if( this.ids[a] && this.ids[a][0] == apps[k].Name )
+													{
+														found = true;
+														
+														if( this.ids[a][1] )
+														{
+															toggle = true;
+														}
+													}
+												}
+											}
+											
+											if( !found ) continue;
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																if( apps[k].Preview )
+																{
+																	d.innerHTML = '<div style="background-image:url(\'' + apps[k].Preview + '\');background-size:contain;width:24px;height:24px;"></div>';
+																}
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, name ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																		b.onclick = function(  )
+																		{
+																			if( this.classList.contains( 'fa-toggle-off' ) )
+																			{
+																				ids[ name ] = [ name, 1 ];
+																				
+																				this.classList.remove( 'fa-toggle-off' );
+																				this.classList.add( 'fa-toggle-on' );
+																			}
+																			else
+																			{
+																				ids[ name ] = [ name, 0 ];
+																				
+																				this.classList.remove( 'fa-toggle-on' );
+																				this.classList.add( 'fa-toggle-off' );
+																			}
+																		};
+																		return b;
+																	}( this.ids, apps[k].Name ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+								
+							}
+							
+						};
+						
+						
+						var etn = ge( 'DockEdit' );
+						if( etn )
+						{
+							etn.onclick = function( e )
+							{
+								
+								init.edit();
+								
+								// Hide add / edit button ...
+								
+								if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+								{
+									etn.classList.remove( 'Open' );
+									etn.classList.add( 'Closed' );
+								}
+								
+								// Show back button ...
+								
+								if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+								{
+									btn.classList.remove( 'Closed' );
+									btn.classList.add( 'Open' );
+								}
+								
+							};
+						}
+						
+						var btn = ge( 'DockEditBack' );
+						if( btn )
+						{
+							btn.onclick = function( e )
+							{
+								
+								init.list();
+								
+								// Hide back button ...
+								
+								if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+								{
+									btn.classList.remove( 'Open' );
+									btn.classList.add( 'Closed' );
+								}
+						
+								// Show add / edit button ...
+								
+								if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+								{
+									etn.classList.remove( 'Closed' );
+									etn.classList.add( 'Open' );
+								}
+								
+							};
+						}
+						
+						// Show listed dock ... 
+						
+						init.list();
+						
+					},
+					
+					
 					
 					permissions : function ( show )
 					{
@@ -951,6 +1397,14 @@ Sections.accounts_templates = function( cmd, extra )
 							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
 							{
 								if( ge( 'AdminApplicationContainer' ) ) ge( 'AdminApplicationContainer' ).className = 'Open';
+							}
+						}
+						
+						if( !show || show.indexOf( 'dock' ) >= 0 )
+						{
+							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+							{
+								if( ge( 'AdminDockContainer' ) ) ge( 'AdminDockContainer' ).className = 'Open';
 							}
 						}
 						
@@ -968,6 +1422,7 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				
 				func.applications();
+				func.dock();
 				func.permissions( show );
 				
 				
@@ -1133,16 +1588,6 @@ Sections.accounts_templates = function( cmd, extra )
 					}
 				}
 				
-				
-				
-				//o.innerHTML += '<div class="HRow BackgroundNegativeAlt Negative PaddingLeft PaddingTop PaddingRight">';
-				//o.innerHTML += '	<div class="HContent20 FloatLeft">';
-				//o.innerHTML += '		<h3><strong>' + i18n( 'i18n_templates' ) + '</strong></h3>';
-				//o.innerHTML += '	</div>';
-				//o.innerHTML += '	<div class="HContent80 FloatLeft Relative">';
-				//o.innerHTML += '		<input type="text" class="FullWidth" placeholder="Search templates...">';
-				//o.innerHTML += '	</div>';
-				//o.innerHTML += '</div>';
 				
 				
 				if( temp )
