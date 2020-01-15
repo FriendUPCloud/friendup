@@ -1632,7 +1632,7 @@ int SystemInitExternal( SystemBase *l )
 		{
 			char *err = NULL;
 			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE, &err );
+			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE, &err, FALSE );
 			if( err != NULL )
 			{
 				Log( FLOG_ERROR, "Initial system mount error. UserID: %lu Error: %s\n", tmpUser->u_ID, err );
@@ -1974,10 +1974,11 @@ void CheckAndUpdateDB( struct SystemBase *l )
  * @param force integer 0 = don't force 1 = force
  * @param unmountIfFail should be device unmounted in DB if mount will fail
  * @param mountError pointer to error message
+ * @param notify notify about changes
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError )
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail, char **mountError, FBOOL notify )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	
@@ -2058,7 +2059,7 @@ usr->u_ID , usr->u_ID, usr->u_ID
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			
-			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin );
+			int err = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &device, usr, mountError, usr->u_IsAdmin, notify );
 
 			FRIEND_MUTEX_LOCK( &l->sl_DeviceManager->dm_Mutex );
 
