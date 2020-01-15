@@ -594,7 +594,7 @@ var WorkspaceInside = {
 			{
 				// Ignite queue on ping
 				var time = ( new Date() ).getTime() - _cajax_http_last_time;
-				if( time > 10000 && window.Friend && Friend.cajax.length > 0 )
+				if( time > 10000 && window.Friend )
 				{
 					// Ignite queue
 					_cajax_http_connections = 0;
