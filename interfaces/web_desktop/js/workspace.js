@@ -1000,10 +1000,12 @@ Workspace = {
 			if( p.indexOf('HASHED') == 0 )
 			{
 				this.loginPassword = p;
+				console.log( 'SET LOGIN PASSWORD = ' + p );
 			}
 			else
 			{
 				this.loginPassword = 'HASHED' + Sha256.hash( p );
+				console.log( 'SET HASHED PASSWORD = ' + p );
 			}
 		}
 
