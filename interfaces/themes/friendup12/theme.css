@@ -830,6 +830,7 @@ html body[mobile] .Dialog > .DialogButtons
 html body[mobile] .Dialog > .ScrollArea:before
 {
 	font-family: FontAwesome;
+	color: #ffdd00;
 	content: "\f071";
 	font-size: 220%;
 	display: block;
