@@ -594,7 +594,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent50 FloatLeft';
+													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -607,7 +607,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent50 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -707,7 +707,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
 																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																d.onclick = function(  )
 																{
@@ -720,7 +720,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																d.onclick = function(  )
 																{
@@ -837,7 +837,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
 																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																return d;
 															}() 
@@ -846,7 +846,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
@@ -984,7 +984,7 @@ Sections.accounts_templates = function( cmd, extra )
 							
 							ids  : this.appids,
 							
-							head : function (  )
+							head : function ( hidecol )
 							{
 								var o = ge( 'DockGui' ); o.innerHTML = '';
 								
@@ -1002,7 +1002,7 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent50 FloatLeft';
+													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
 													d.onclick = function(  )
 													{
@@ -1015,11 +1015,24 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent40 FloatLeft Relative';
+													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
 													d.onclick = function(  )
 													{
 														sortDock( 'Category' );
+													};
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent25 FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
+													d.onclick = function(  )
+													{
+														sortDock( 'Order' );
 													};
 													return d;
 												}()
@@ -1114,7 +1127,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
 																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																d.onclick = function(  )
 																{
@@ -1127,7 +1140,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																d.onclick = function(  )
 																{
@@ -1197,7 +1210,7 @@ Sections.accounts_templates = function( cmd, extra )
 								{
 									console.log( 'Dock: this.ids [2] ', this.ids );
 									
-									this.head();
+									this.head( true );
 									
 									var o = ge( 'DockInner' ); o.innerHTML = '';
 									
@@ -1251,7 +1264,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
 																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
 																return d;
 															}() 
@@ -1260,7 +1273,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent40 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
 																return d;
 															}() 
