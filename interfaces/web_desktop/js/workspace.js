@@ -991,15 +991,20 @@ Workspace = {
 		}
 
 		var t = this;
-		this.loginUsername = u;
+		
+		// p and u needs trushy true! :-)
+		if( !!p & !!u )
+		{
+			this.loginUsername = u;
 
-		if( p.indexOf('HASHED') == 0 )
-		{
-			this.loginPassword = p;
-		}
-		else
-		{
-			this.loginPassword = 'HASHED' + Sha256.hash( p );
+			if( p.indexOf('HASHED') == 0 )
+			{
+				this.loginPassword = p;
+			}
+			else
+			{
+				this.loginPassword = 'HASHED' + Sha256.hash( p );
+			}
 		}
 
 		if( typeof( this.loginUsername ) != 'undefined' && this.loginUsername && this.loginPassword )
