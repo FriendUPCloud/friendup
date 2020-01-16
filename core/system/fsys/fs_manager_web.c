@@ -3149,7 +3149,18 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								
 									if( notify == TRUE )
 									{
-										int err2 = DoorNotificationCommunicateChanges( l, loggedSession, actDev, dsttmp );
+										int dsttmpLen = strlen( dsttmp );
+										char *dsttmpDup = FCalloc( dsttmpLen+16, sizeof(char) );// StringDuplicate( dsttmp );
+										if( dsttmpDup != NULL )
+										{
+											strcpy( dsttmpDup, dsttmp );
+											if( dsttmpDup[ dsttmpLen-1 ] != '/' )
+											{
+												dsttmpDup[ dsttmpLen ] = '/';
+											}
+											int err2 = DoorNotificationCommunicateChanges( l, loggedSession, actDev, dsttmpDup );
+											FFree( dsttmpDup );
+										}
 									}
 									FFree( dsttmp );
 								}
