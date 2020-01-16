@@ -684,8 +684,18 @@ var WorkspaceInside = {
 			{
 				if( msg.path || msg.devname )
 				{
+					var p = '';
+					// check if path contain device
+					if( msg.path.indexOf( ':' ) > 0 )
+					{
+						p = msg.path;
+					}
+					else
+					{
+						p = msg.devname + ':' + msg.path;
+					}
 					// Filename stripped!
-					var p = msg.devname + ':' + msg.path;
+					
 					if( p.indexOf( '/' ) > 0 )
 					{
 						p = p.split( '/' );
@@ -739,6 +749,7 @@ var WorkspaceInside = {
 							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
 						}
 					}
+					console.log('Refresh window by path: ' + p );
 				
 					Workspace.refreshWindowByPath( p );
 					
