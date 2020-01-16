@@ -747,9 +747,9 @@ AND f.Name = '%s'",
 				while( ugu != NULL )
 				{
 					UserNotifyFSEvent2( dm, ugu->ugau_User, "refresh", "Mountlist:" );
+					
+					ugu = (GroupUserLink *)ugu->node.mln_Succ;
 				}
-				
-				ugu = (GroupUserLink *)ugu->node.mln_Succ;
 			}
 		}
 		
