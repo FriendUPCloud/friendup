@@ -427,7 +427,7 @@ Sections.accounts_templates = function( cmd, extra )
 							{
 								if( dat[k] && dat[k].Name )
 								{
-									dat[k].Preview = ( !dat[k].Preview ? '/iconthemes/friendup15/File_Binary.svg' : '/system.library/module/?module=system&command=getapplicationpreview&application=' + dat[k].Name + '&authid=' + Application.authId );
+									dat[k].Preview = ( !dat[k].Preview ? '/webclient/apps/'+dat[k].Name+'/icon.png' : '/system.library/module/?module=system&command=getapplicationpreview&application='+dat[k].Name+'&authid='+Application.authId );
 								}
 							}
 						}
@@ -550,8 +550,6 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						if( soft )
 						{
-							console.log( 'soft: ', soft );
-							
 							for( var a in soft )
 							{
 								if( soft[a] && soft[a][0] )
@@ -565,13 +563,17 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					}( soft ),
 					
-					applications : function (  )
+					mode : { applications : 'list', dock : 'list' },
+					
+					applications : function ( func )
 					{
 						
 						// Editing applications
 						
 						var init =
 						{
+							
+							func : this,
 							
 							ids  : this.appids,
 							
@@ -653,11 +655,10 @@ Sections.accounts_templates = function( cmd, extra )
 							list : function (  )
 							{
 								
+								this.func.mode[ 'applications' ] = 'list';
+								
 								if( apps )
 								{
-									
-									console.log( 'Apps: this.ids [1] ', this.ids );
-									
 									this.head();
 									
 									var o = ge( 'ApplicationInner' ); o.innerHTML = '';
@@ -696,12 +697,39 @@ Sections.accounts_templates = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																if( apps[k].Preview )
-																{
-																	d.innerHTML = '<div style="background-image:url(\'' + apps[k].Preview + '\');background-size:contain;width:24px;height:24px;"></div>';
-																}
 																return d;
-															}() 
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															]
 														},
 														{ 
 															'element' : function() 
@@ -709,10 +737,6 @@ Sections.accounts_templates = function( cmd, extra )
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
 																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
-																d.onclick = function(  )
-																{
-																	sortApps( 'Name' );
-																};
 																return d;
 															}() 
 														},
@@ -722,10 +746,6 @@ Sections.accounts_templates = function( cmd, extra )
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
-																d.onclick = function(  )
-																{
-																	sortApps( 'Category' );
-																};
 																return d;
 															}() 
 														}, 
@@ -739,7 +759,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
@@ -755,9 +775,14 @@ Sections.accounts_templates = function( cmd, extra )
 																				pnt.innerHTML = '';
 																			}
 																			
+																			if( func )
+																			{
+																				func.dock( 'refresh' );
+																			}
+																			
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
@@ -786,10 +811,10 @@ Sections.accounts_templates = function( cmd, extra )
 							edit : function (  )
 							{
 								
+								this.func.mode[ 'applications' ] = 'edit';
+								
 								if( apps )
 								{
-									console.log( 'Apps: this.ids [2] ', this.ids );
-									
 									this.head();
 									
 									var o = ge( 'ApplicationInner' ); o.innerHTML = '';
@@ -826,12 +851,39 @@ Sections.accounts_templates = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																if( apps[k].Preview )
-																{
-																	d.innerHTML = '<div style="background-image:url(\'' + apps[k].Preview + '\');background-size:contain;width:24px;height:24px;"></div>';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
 																}
-																return d;
-															}() 
+															]
 														},
 														{ 
 															'element' : function() 
@@ -861,7 +913,7 @@ Sections.accounts_templates = function( cmd, extra )
 															'child' : 
 															[ 
 																{ 
-																	'element' : function( ids, name ) 
+																	'element' : function( ids, name, func ) 
 																	{
 																		var b = document.createElement( 'button' );
 																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( found ? 'on' : 'off' );
@@ -881,9 +933,15 @@ Sections.accounts_templates = function( cmd, extra )
 																				this.classList.remove( 'fa-toggle-on' );
 																				this.classList.add( 'fa-toggle-off' );
 																			}
+																			
+																			if( func )
+																			{
+																				func.dock( 'refresh' );
+																			}
+																			
 																		};
 																		return b;
-																	}( this.ids, apps[k].Name ) 
+																	}( this.ids, apps[k].Name, this.func ) 
 																}
 															]
 														}
@@ -907,80 +965,136 @@ Sections.accounts_templates = function( cmd, extra )
 									
 								}
 								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'applications' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+										
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
 							}
 							
 						};
 						
-						
-						var etn = ge( 'ApplicationEdit' );
-						if( etn )
+						switch( func )
 						{
-							etn.onclick = function( e )
-							{
+							
+							case 'head':
 								
-								init.edit();
+								init.head();
 								
-								// Hide add / edit button ...
+								break;
 								
-								if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
-								{
-									etn.classList.remove( 'Open' );
-									etn.classList.add( 'Closed' );
-								}
-								
-								// Show back button ...
-								
-								if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
-								{
-									btn.classList.remove( 'Closed' );
-									btn.classList.add( 'Open' );
-								}
-								
-							};
-						}
-						
-						var btn = ge( 'ApplicationEditBack' );
-						if( btn )
-						{
-							btn.onclick = function( e )
-							{
+							case 'list':
 								
 								init.list();
 								
-								// Hide back button ...
+								break;
 								
-								if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'ApplicationEdit' );
+								if( etn )
 								{
-									btn.classList.remove( 'Open' );
-									btn.classList.add( 'Closed' );
+									etn.onclick = function( e )
+									{
+								
+										init.edit();
+								
+										// Hide add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Open' );
+											etn.classList.add( 'Closed' );
+										}
+								
+										// Show back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Closed' );
+											btn.classList.add( 'Open' );
+										}
+								
+									};
 								}
 						
-								// Show add / edit button ...
-								
-								if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+								var btn = ge( 'ApplicationEditBack' );
+								if( btn )
 								{
-									etn.classList.remove( 'Closed' );
-									etn.classList.add( 'Open' );
-								}
+									btn.onclick = function( e )
+									{
 								
-							};
+										init.list();
+								
+										// Hide back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Open' );
+											btn.classList.add( 'Closed' );
+										}
+						
+										// Show add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Closed' );
+											etn.classList.add( 'Open' );
+										}
+								
+									};
+								}
+						
+								// Show listed applications ... 
+						
+								init.list();
+								
+								break;
+								
 						}
-						
-						// Show listed applications ... 
-						
-						init.list();
 						
 					},
 					
 					
 					
-					dock : function (  )
+					dock : function ( func )
 					{
 						
 						// Editing Dock
 						
 						var init =
 						{
+							
+							func : this,
 							
 							ids  : this.appids,
 							
@@ -1004,10 +1118,6 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent40 FloatLeft';
 													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
-													d.onclick = function(  )
-													{
-														sortDock( 'Name' );
-													};
 													return d;
 												}() 
 											}, 
@@ -1017,10 +1127,6 @@ Sections.accounts_templates = function( cmd, extra )
 													var d = document.createElement( 'div' );
 													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
 													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
-													d.onclick = function(  )
-													{
-														sortDock( 'Category' );
-													};
 													return d;
 												}()
 											},
@@ -1028,12 +1134,8 @@ Sections.accounts_templates = function( cmd, extra )
 												'element' : function() 
 												{
 													var d = document.createElement( 'div' );
-													d.className = 'PaddingSmall HContent25 FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
 													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
-													d.onclick = function(  )
-													{
-														sortDock( 'Order' );
-													};
 													return d;
 												}()
 											},
@@ -1074,10 +1176,10 @@ Sections.accounts_templates = function( cmd, extra )
 							list : function (  )
 							{
 								
+								this.func.mode[ 'dock' ] = 'list';
+								
 								if( apps )
 								{
-									console.log( 'Dock: this.ids [1] ', this.ids );
-									
 									this.head();
 									
 									var o = ge( 'DockInner' ); o.innerHTML = '';
@@ -1116,12 +1218,39 @@ Sections.accounts_templates = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																if( apps[k].Preview )
-																{
-																	d.innerHTML = '<div style="background-image:url(\'' + apps[k].Preview + '\');background-size:contain;width:24px;height:24px;"></div>';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
 																}
-																return d;
-															}() 
+															] 
 														},
 														{ 
 															'element' : function() 
@@ -1129,10 +1258,6 @@ Sections.accounts_templates = function( cmd, extra )
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
 																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
-																d.onclick = function(  )
-																{
-																	sortDock( 'Name' );
-																};
 																return d;
 															}() 
 														},
@@ -1140,12 +1265,8 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
-																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
 																d.innerHTML = '<span>' + apps[k].Category + '</span>';
-																d.onclick = function(  )
-																{
-																	sortDock( 'Category' );
-																};
 																return d;
 															}() 
 														}, 
@@ -1153,8 +1274,48 @@ Sections.accounts_templates = function( cmd, extra )
 															'element' : function() 
 															{
 																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( order, _this ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																		b.onclick = function(  )
+																		{
+																			
+																			_this.sortdown( order );
+																			
+																		};
+																		return b;
+																	}( k, this ) 
+																},
+																{ 
+																	'element' : function( order, _this ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																		b.onclick = function()
+																		{
+																			
+																			_this.sortup( order );
+																			
+																		};
+																		return b;
+																	}( k, this ) 
+																}
+															] 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
 																return d;
+																
 															}(),
 															'child' : 
 															[ 
@@ -1206,10 +1367,10 @@ Sections.accounts_templates = function( cmd, extra )
 							edit : function (  )
 							{
 								
+								this.func.mode[ 'dock' ] = 'edit';
+								
 								if( apps )
 								{
-									console.log( 'Dock: this.ids [2] ', this.ids );
-									
 									this.head( true );
 									
 									var o = ge( 'DockInner' ); o.innerHTML = '';
@@ -1253,12 +1414,39 @@ Sections.accounts_templates = function( cmd, extra )
 															{
 																var d = document.createElement( 'div' );
 																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
-																if( apps[k].Preview )
-																{
-																	d.innerHTML = '<div style="background-image:url(\'' + apps[k].Preview + '\');background-size:contain;width:24px;height:24px;"></div>';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
 																}
-																return d;
-															}() 
+															] 
 														},
 														{ 
 															'element' : function() 
@@ -1334,68 +1522,140 @@ Sections.accounts_templates = function( cmd, extra )
 									
 								}
 								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'dock' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+										
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
+							},
+							
+							sortup : function ( order )
+							{
+								
+								console.log( 'TODO: sortup: ' + order );
+								
+								console.log( 'change between two ids in sorting ...' );
+								
+							},
+							
+							sortdown : function ( order )
+							{
+								
+								console.log( 'TODO: sortdown: ' + order );
+								
+								console.log( 'change between two ids in sorting ...' );
+								
 							}
 							
 						};
 						
-						
-						var etn = ge( 'DockEdit' );
-						if( etn )
+						switch( func )
 						{
-							etn.onclick = function( e )
-							{
+							
+							case 'head':
 								
-								init.edit();
+								init.head();
 								
-								// Hide add / edit button ...
+								break;
 								
-								if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
-								{
-									etn.classList.remove( 'Open' );
-									etn.classList.add( 'Closed' );
-								}
-								
-								// Show back button ...
-								
-								if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
-								{
-									btn.classList.remove( 'Closed' );
-									btn.classList.add( 'Open' );
-								}
-								
-							};
-						}
-						
-						var btn = ge( 'DockEditBack' );
-						if( btn )
-						{
-							btn.onclick = function( e )
-							{
+							case 'list':
 								
 								init.list();
 								
-								// Hide back button ...
+								break;
 								
-								if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'DockEdit' );
+								if( etn )
 								{
-									btn.classList.remove( 'Open' );
-									btn.classList.add( 'Closed' );
+									etn.onclick = function( e )
+									{
+								
+										init.edit();
+								
+										// Hide add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Open' );
+											etn.classList.add( 'Closed' );
+										}
+								
+										// Show back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Closed' );
+											btn.classList.add( 'Open' );
+										}
+										
+									};
 								}
 						
-								// Show add / edit button ...
-								
-								if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+								var btn = ge( 'DockEditBack' );
+								if( btn )
 								{
-									etn.classList.remove( 'Closed' );
-									etn.classList.add( 'Open' );
-								}
+									btn.onclick = function( e )
+									{
 								
-							};
+										init.list();
+								
+										// Hide back button ...
+										
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Open' );
+											btn.classList.add( 'Closed' );
+										}
+						
+										// Show add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Closed' );
+											etn.classList.add( 'Open' );
+										}
+										
+									};
+								}
+							
+								// Show listed dock ... 
+						
+								init.list();
+								
+								break;
+								
 						}
-						
-						// Show listed dock ... 
-						
-						init.list();
 						
 					},
 					
