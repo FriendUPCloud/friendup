@@ -8093,10 +8093,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Workspace.serverHTTPCheckModule = null;
 		}
 		
+		CancelCajaxOnId( 'checkserverconnection' );
+		
 		var inactiveTimeout = false;
+		
 		var m = new Module('system');
+		
 		m.forceHTTP = true;
 		m.forceSend = true;
+		m.cancelId = 'checkserverconnection';
+		
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
