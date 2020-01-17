@@ -25,9 +25,25 @@
  */
 uint64_t GetCurrentTimestamp()
 {
-    struct timeval te; 
-    gettimeofday(&te, NULL); // get current time
-    uint64_t milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
+	struct timeval te; 
+	gettimeofday(&te, NULL); // get current time
+	uint64_t milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
 
-    return milliseconds;
+	return milliseconds;
+}
+
+/**
+ * Return current time in seconds (double)
+ *
+ * @return time in miliseconds
+ */
+double GetCurrentTimestampD()
+{
+	struct timeval  tv;
+	gettimeofday(&tv, NULL);
+
+	//double time_in_mill = (tv.tv_sec) * 1000 + (tv.tv_usec) / 1000 ; // convert tv_sec & tv_usec to millisecond
+	double time_in_mill = ((double)tv.tv_sec) + (((tv.tv_usec) / 100000.0f) ); // convert tv_sec & tv_usec to millisecond
+	//DEBUG("------------------------------------------------------------------------------------------------------>%f-----------%lu-----%f\n", time_in_mill, tv.tv_usec, ((tv.tv_usec) / 1000000.0f) );
+    return time_in_mill;
 }
