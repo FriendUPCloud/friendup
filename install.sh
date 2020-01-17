@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Friend Core, Friend Chat and Friend Network installation script
+# Friend Core installation script
 #
 # This script will install the necessary components to make the Friend servers
 # run on your machine.
@@ -606,7 +606,6 @@ fi
 dialog --backtitle "Friend Installer" --yesno "Installation complete.\n\n\
 Once Friend Core is launched, you can access your local machine at:\n\
 $temp\n\n\
-To install Friend Chat run ./installFriendChat.sh,\n\
 To install Friend Network, run ./installFriendNetwork.sh\n\n\
 Would you like to launch Friend Core?" 15 75
 if [ $? = "0" ]
