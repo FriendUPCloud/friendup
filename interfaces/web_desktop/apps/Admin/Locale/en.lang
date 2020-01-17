@@ -43,6 +43,7 @@ i18n_name                              : Name
 i18n_category                          : Category
 i18n_order                             : Order
 i18n_dock                              : Dock
+i18n_startup                           : Startup
 
 i18n_user_mountlist_empty              : User mountlist empty.
 

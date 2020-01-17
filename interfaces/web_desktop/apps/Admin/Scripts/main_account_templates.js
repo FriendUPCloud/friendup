@@ -400,7 +400,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.details = dat;
 						
-						initDetails( loadingInfo, [  ], true );
+						//initDetails( loadingInfo, [  ], true );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -434,7 +434,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 						loadingInfo.applications = dat;
 						
-						initDetails( loadingInfo, [ 'application', 'dock' ] );
+						initDetails( loadingInfo, [ 'application', 'dock', 'startup' ], true );
 						
 						// Go to next in line ...
 						loadingList[ ++loadingSlot ](  );
@@ -467,6 +467,7 @@ Sections.accounts_templates = function( cmd, extra )
 		var details = ( info.details ? info.details : {} );
 		var data = ( details.Data ? details.Data : {} );
 		var soft = ( data.software ? data.software : {} );
+		var star = ( data.startups ? data.startups : {} );
 		var apps = ( info.applications ? info.applications : {} );
 		
 		console.log( info );
@@ -507,7 +508,8 @@ Sections.accounts_templates = function( cmd, extra )
 			if( !details.ID )
 			{
 				ge( 'AdminApplicationContainer' ).style.display = 'none';
-				ge( 'AdminDockContainer' ).style.display = 'none';
+				ge( 'AdminDockContainer'        ).style.display = 'none';
+				ge( 'AdminStartupContainer'     ).style.display = 'none';
 				ge( 'AdminLooknfeelContainer'   ).style.display = 'none';
 			}
 			
@@ -563,7 +565,28 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					}( soft ),
 					
-					mode : { applications : 'list', dock : 'list' },
+					startids : function ( star )
+					{
+						var ids = {};
+			
+						if( star )
+						{
+							for( var a in star )
+							{
+								if( star[a] )
+								{
+									ids[ star[a].split( ' ' )[1] ] = star[a];
+								}
+							}
+						}
+						
+						return ids;
+			
+					}( star ),
+					
+					mode : { applications : 'list', dock : 'list', startup : 'list' },
+					
+					// Applications ------------------------------------------------------------------------------------
 					
 					applications : function ( func )
 					{
@@ -778,6 +801,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			if( func )
 																			{
 																				func.dock( 'refresh' );
+																				func.startup( 'refresh' );
 																			}
 																			
 																		};
@@ -937,6 +961,7 @@ Sections.accounts_templates = function( cmd, extra )
 																			if( func )
 																			{
 																				func.dock( 'refresh' );
+																				func.startup( 'refresh' );
 																			}
 																			
 																		};
@@ -1084,7 +1109,7 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					},
 					
-					
+					// Dock --------------------------------------------------------------------------------------------
 					
 					dock : function ( func )
 					{
@@ -1659,7 +1684,590 @@ Sections.accounts_templates = function( cmd, extra )
 						
 					},
 					
+					// Startup -----------------------------------------------------------------------------------------
 					
+					startup : function ( func )
+					{
+						
+						// Editing Startup
+						
+						var init =
+						{
+							
+							func : this,
+							
+							ids  : this.startids,
+							
+							head : function ( hidecol )
+							{
+								var o = ge( 'StartupGui' ); o.innerHTML = '';
+								
+								var divs = appendChild( [ 
+									{ 
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow BackgroundNegativeAlt Negative PaddingLeft PaddingBottom PaddingRight';
+											return d;
+										}(),
+										'child' : 
+										[ 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent40 FloatLeft';
+													d.innerHTML = '<strong>' + i18n( 'i18n_name' ) + '</strong>';
+													return d;
+												}() 
+											}, 
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent25 FloatLeft Relative';
+													d.innerHTML = '<strong>' + i18n( 'i18n_category' ) + '</strong>';
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Relative' + ( hidecol ? ' Closed' : '' );
+													d.innerHTML = '<strong>' + i18n( 'i18n_order' ) + '</strong>';
+													return d;
+												}()
+											},
+											{ 
+												'element' : function() 
+												{
+													var d = document.createElement( 'div' );
+													d.className = 'PaddingSmall HContent10 FloatLeft Relative';
+													return d;
+												}()
+											}
+										]
+									},
+									{
+										'element' : function() 
+										{
+											var d = document.createElement( 'div' );
+											d.className = 'HRow Box Padding';
+											d.id = 'StartupInner';
+											return d;
+										}()
+									}
+								] );
+						
+								if( divs )
+								{
+									for( var i in divs )
+									{
+										if( divs[i] && o )
+										{
+											o.appendChild( divs[i] );
+										}
+									}
+								}
+								
+							},
+							
+							list : function (  )
+							{
+								console.log( this.ids );
+								
+								this.func.mode[ 'startup' ] = 'list';
+								
+								if( apps )
+								{
+									this.head();
+									
+									var o = ge( 'StartupInner' ); o.innerHTML = '';
+									
+									for( var k in apps )
+									{
+										if( apps[k] && apps[k].Name )
+										{
+											var found = false;
+											
+											if( this.func.appids )
+											{
+												for( var a in this.func.appids )
+												{
+													if( this.func.appids[a] && this.func.appids[a][0] == apps[k].Name )
+													{
+														if( this.ids[ apps[k].Name ] )
+														{
+															found = true;
+														}
+													}
+													else if( a == apps[k].Name && this.ids[ apps[k].Name ] )
+													{
+														this.ids[ apps[k].Name ] = false;
+													}
+												}
+											}
+											
+											if( !found ) continue;
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															] 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent25 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent25 TextCenter FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( order, _this ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-down';
+																		b.onclick = function(  )
+																		{
+																			
+																			_this.sortdown( order );
+																			
+																		};
+																		return b;
+																	}( k, this ) 
+																},
+																{ 
+																	'element' : function( order, _this ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall MarginLeft MarginRight ColorStGrayLight fa-arrow-up';
+																		b.onclick = function()
+																		{
+																			
+																			_this.sortup( order );
+																			
+																		};
+																		return b;
+																	}( k, this ) 
+																}
+															] 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+																
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, name ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight ColorStGrayLight fa-minus-circle';
+																		b.onclick = function(  )
+																		{
+																			
+																			ids[ name ] = false;
+																			
+																			var pnt = this.parentNode.parentNode;
+																			
+																			if( pnt )
+																			{
+																				pnt.innerHTML = '';
+																			}
+																			
+																		};
+																		return b;
+																	}( this.ids, apps[k].Name ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+									
+							},
+							
+							edit : function (  )
+							{
+								
+								this.func.mode[ 'startup' ] = 'edit';
+								
+								if( apps )
+								{
+									this.head( true );
+									
+									var o = ge( 'StartupInner' ); o.innerHTML = '';
+									
+									for( var k in apps )
+									{
+										if( apps[k] && apps[k].Name )
+										{
+											var found = false; var toggle = false;
+											
+											if( this.func.appids )
+											{
+												for( var a in this.func.appids )
+												{
+													if( this.func.appids[a] && this.func.appids[a][0] == apps[k].Name )
+													{
+														found = true;
+														
+														if( this.ids[ apps[k].Name ] )
+														{
+															toggle = true;
+														}
+													}
+												}
+											}
+											
+											if( !found ) continue;
+											
+											var divs = appendChild( [
+												{ 
+													'element' : function() 
+													{
+														var d = document.createElement( 'div' );
+														d.className = 'HRow';
+														return d;
+													}(),
+													'child' : 
+													[ 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;;
+															}(),
+															 'child' : 
+															[ 
+																{ 
+																	'element' : function() 
+																	{
+																		var d = document.createElement( 'div' );
+																		d.style.backgroundImage = 'url(\'/iconthemes/friendup15/File_Binary.svg\')';
+																		d.style.backgroundSize = 'contain';
+																		d.style.width = '24px';
+																		d.style.height = '24px';
+																		return d;
+																	}(), 
+																	 'child' : 
+																	[ 
+																		{
+																			'element' : function() 
+																			{
+																				var d = document.createElement( 'div' );
+																				if( apps[k].Preview )
+																				{
+																					d.style.backgroundImage = 'url(\'' + apps[k].Preview + '\')';
+																					d.style.backgroundSize = 'contain';
+																					d.style.width = '24px';
+																					d.style.height = '24px';
+																				}
+																				return d;
+																			}()
+																		}
+																	]
+																}
+															] 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent30 FloatLeft Ellipsis';
+																d.innerHTML = '<strong>' + apps[k].Name + '</strong>';
+																return d;
+															}() 
+														}, 
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent50 FloatLeft Ellipsis';
+																d.innerHTML = '<span>' + apps[k].Category + '</span>';
+																return d;
+															}() 
+														},
+														{ 
+															'element' : function() 
+															{
+																var d = document.createElement( 'div' );
+																d.className = 'PaddingSmall HContent10 FloatLeft Ellipsis';
+																return d;
+															}(),
+															'child' : 
+															[ 
+																{ 
+																	'element' : function( ids, name ) 
+																	{
+																		var b = document.createElement( 'button' );
+																		b.className = 'IconButton IconSmall IconToggle ButtonSmall FloatRight fa-toggle-' + ( toggle ? 'on' : 'off' );
+																		b.onclick = function(  )
+																		{
+																			if( this.classList.contains( 'fa-toggle-off' ) )
+																			{
+																				ids[ name ] = ( 'launch ' + name );
+																				
+																				this.classList.remove( 'fa-toggle-off' );
+																				this.classList.add( 'fa-toggle-on' );
+																			}
+																			else
+																			{
+																				ids[ name ] = false;
+																				
+																				this.classList.remove( 'fa-toggle-on' );
+																				this.classList.add( 'fa-toggle-off' );
+																			}
+																		};
+																		return b;
+																	}( this.ids, apps[k].Name ) 
+																}
+															]
+														}
+													]
+												}
+											] );
+											
+											if( divs )
+											{
+												for( var i in divs )
+												{
+													if( divs[i] && o )
+													{
+														o.appendChild( divs[i] );
+													}
+												}
+											}
+										}
+									
+									}
+									
+								}
+								
+							},
+							
+							refresh : function (  )
+							{
+								
+								switch( this.func.mode[ 'startup' ] )
+								{
+									
+									case 'list':
+										
+										this.list();
+										
+										break;
+										
+									case 'edit':
+										
+										this.edit();
+										
+										break;
+										
+								}
+								
+							},
+							
+							sortup : function ( order )
+							{
+								
+								console.log( 'TODO: sortup: ' + order );
+								
+								console.log( 'change between two ids in sorting ...' );
+								
+							},
+							
+							sortdown : function ( order )
+							{
+								
+								console.log( 'TODO: sortdown: ' + order );
+								
+								console.log( 'change between two ids in sorting ...' );
+								
+							}
+							
+						};
+						
+						switch( func )
+						{
+							
+							case 'head':
+								
+								init.head();
+								
+								break;
+								
+							case 'list':
+								
+								init.list();
+								
+								break;
+								
+							case 'edit':
+								
+								init.edit();
+								
+								break;
+								
+							case 'refresh':
+								
+								init.refresh();
+								
+								break;
+							
+							default:
+								
+								var etn = ge( 'StartupEdit' );
+								if( etn )
+								{
+									etn.onclick = function( e )
+									{
+								
+										init.edit();
+								
+										// Hide add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Open' );
+											etn.classList.add( 'Closed' );
+										}
+								
+										// Show back button ...
+								
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Closed' );
+											btn.classList.add( 'Open' );
+										}
+										
+									};
+								}
+						
+								var btn = ge( 'StartupEditBack' );
+								if( btn )
+								{
+									btn.onclick = function( e )
+									{
+								
+										init.list();
+								
+										// Hide back button ...
+										
+										if( btn.classList.contains( 'Open' ) || btn.classList.contains( 'Closed' ) )
+										{
+											btn.classList.remove( 'Open' );
+											btn.classList.add( 'Closed' );
+										}
+						
+										// Show add / edit button ...
+								
+										if( etn.classList.contains( 'Open' ) || etn.classList.contains( 'Closed' ) )
+										{
+											etn.classList.remove( 'Closed' );
+											etn.classList.add( 'Open' );
+										}
+										
+									};
+								}
+							
+								// Show listed startup ... 
+						
+								init.list();
+								
+								break;
+								
+						}
+						
+					},
+					
+					// Permissions -------------------------------------------------------------------------------------
 					
 					permissions : function ( show )
 					{
@@ -1681,6 +2289,14 @@ Sections.accounts_templates = function( cmd, extra )
 							}
 						}
 						
+						if( !show || show.indexOf( 'startup' ) >= 0 )
+						{
+							if( Application.checkAppPermission( 'PERM_APPLICATION_GLOBAL' ) || Application.checkAppPermission( 'PERM_APPLICATION_WORKGROUP' ) )
+							{
+								if( ge( 'AdminStartupContainer' ) ) ge( 'AdminStartupContainer' ).className = 'Open';
+							}
+						}
+						
 						if( !show || show.indexOf( 'looknfeel' ) >= 0 )
 						{
 							if( Application.checkAppPermission( 'PERM_LOOKNFEEL_GLOBAL' ) || Application.checkAppPermission( 'PERM_LOOKNFEEL_WORKGROUP' ) )
@@ -1696,6 +2312,7 @@ Sections.accounts_templates = function( cmd, extra )
 				
 				func.applications();
 				func.dock();
+				func.startup();
 				func.permissions( show );
 				
 				
