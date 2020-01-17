@@ -34,6 +34,7 @@ Workspace = {
 	themeOverride: false,
 	systemInfo: false,
 	websocketsOffline: true,
+	workspaceIsDisconnected: false,
 	lastfileSystemChangeMessage: false,
 	serverIsThere: false,
 	runLevels: [
@@ -1562,11 +1563,11 @@ Workspace = {
 
 window.onoffline = function()
 {
-	console.log( '[workspace] Client went offline.' );
+	Workspace.workspaceIsDisconnected = true;
 }
 window.ononline = function()
 {
-	console.log( '[workspace] Client went online.' );
+	Workspace.workspaceIsDisconnected = false;
 }
 
 
