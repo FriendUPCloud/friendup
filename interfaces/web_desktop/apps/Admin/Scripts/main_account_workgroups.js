@@ -256,6 +256,8 @@ Sections.accounts_workgroups = function( cmd, extra )
 		{
 			console.log( { e:e, d:d, args: args } );
 			
+			if( e == 'fail' ) Notify( { title: i18n( 'i18n_workgroup_create' ), text: d } );
+			
 			Sections.accounts_workgroups( 'refresh' ); 
 		}
 		f.execute( 'group/create', {
