@@ -778,7 +778,11 @@ Workspace = {
 		this.reloginAttempts = true;
 		
 		// See if we are alive!
+		// Cancel relogin context
+		CancelCajaxOnId( 'relogin' );
+		
 		var m = new Module( 'system' );
+		m.cancelId = 'relogin';
 		m.onExecuted = function( e, d )
 		{
 			//console.log( 'Test2: Got back: ', e, d );
