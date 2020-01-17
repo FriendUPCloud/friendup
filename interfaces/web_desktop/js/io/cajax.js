@@ -15,6 +15,7 @@ var _cajax_connection_num = 0;
 
 var _cajax_http_connections = 0;                // How many?
 var _cajax_http_max_connections = 6;            // Max
+var _cajax_http_last_time = 0;                  // Time since last
 var _cajax_mutex = 0;
 
 // For debug
@@ -226,7 +227,6 @@ cAjax = function()
 								
 								// Add to queue
 								AddToCajaxQueue( jax );
-								Workspace.flushSession();
 								return Workspace.relogin();
 							}
 						}
@@ -256,7 +256,6 @@ cAjax = function()
 							{
 								// Add to queue
 								AddToCajaxQueue( jax );
-								Workspace.flushSession();
 								return Workspace.relogin();
 							}
 						}
@@ -517,6 +516,9 @@ cAjax.prototype.send = function( data, callback )
 			_cajax_http_connections++;
 	}
 	
+	// Register successful send
+	_cajax_http_last_time = ( new Date() ).getTime();
+	
 	if( this.mode == 'websocket' && this.proxy.responseType == 'arraybuffer' )
 	{
 		this.mode = '';
@@ -579,7 +581,6 @@ cAjax.prototype.send = function( data, callback )
         if( typeof( reqID ) != 'undefined' && !reqID )
         {
         	AddToCajaxQueue( self );
-			Workspace.flushSession();
 			return Workspace.relogin();
         }
         else if( typeof( reqID ) == 'undefined' )
@@ -727,7 +728,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		{
 			// Add to queue
 			AddToCajaxQueue( self );
-			Workspace.flushSession();
 			return Workspace.relogin();
 		}
 		self.destroy();
@@ -795,7 +795,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
-					Workspace.flushSession();
 					return Workspace.relogin();
 				}
 			}
@@ -823,7 +822,6 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			if( r.response == 'user session not found' )
 			{
 				AddToCajaxQueue( self );
-				Workspace.flushSession();
 				return Workspace.relogin();
 			}
 		}

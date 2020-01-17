@@ -29,6 +29,7 @@ Widget.prototype.init = function( flags, target )
 	this.dom = document.createElement( 'div' );
 	this.dom.className = 'Widget';
 	this.dom.widgetObject = this;
+	this._window = this.dom;
 	this.flags = flags;
 	
 	// Dimensions
@@ -47,6 +48,12 @@ Widget.prototype.init = function( flags, target )
 	}
 	
 	this.target.appendChild( this.dom );
+}
+
+// This is a stub
+Widget.prototype.setSticky = function()
+{
+	return;
 }
 
 Widget.prototype.calcPosition = function()

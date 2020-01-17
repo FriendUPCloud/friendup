@@ -823,6 +823,56 @@ html .TrayElement.PopNotification .PopInfo
 	box-sizing: border-box;
 }
 
+html body[mobile] .Dialog,
+html body[mobile] .Dialog > .DialogHeader, 
+html body[mobile] .Dialog > .DialogButtons
+{
+	background-color: rgba(0,0,0,0.6);
+	color: #ffffff;
+}
+
+html body[mobile] .Dialog > .ScrollArea:before
+{
+	font-family: FontAwesome;
+	color: #ffdd00;
+	content: "\f071";
+	font-size: 220%;
+	display: block;
+	float: left;
+	margin: 7px 10px 0 0;
+}
+
+html body[mobile] .Dialog .VContentBottom.BackgroundToolbar 
+{
+	top: calc(70% - 50px);
+	right: 20px;
+}
+
+html body[mobile] .Dialog .VContentBottom.BackgroundToolbar button
+{
+	background: transparent;
+	border: 0;
+	color: white;
+}
+
+html body[mobile] .Dialog .BackgroundDefault
+{
+	background-color: transparent;
+}
+
+html body[mobile] .Dialog > .ScrollArea
+{
+	font-size: 120%;
+	padding: 20px;
+	height: 40%;
+	top: 30%;
+	background: rgba(0,0,0,0.5);
+	border-radius: 5px;
+	left: 10px;
+	right: 10px;
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.7);
+}
+
 .Padding
 {
 	padding: $PaddingBox;

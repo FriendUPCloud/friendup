@@ -401,11 +401,19 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 		DEBUG("HTTP TIMER\n");
 		return response;
 	}*/
+	
+#ifdef __DEBUG
+	double stime = GetCurrentTimestampD();
+#endif
 
 	DEBUG("[ProtocolHttp] Data delivered %d\n", length );
 	// Continue parsing the request
 	int result = HttpParsePartialRequest( request, data, length );
 
+#ifdef __DEBUG
+	DEBUG("PERFCHECK: HttpParsePartialRequest time: %f\n", (GetCurrentTimestampD()-stime) );
+#endif
+	
 	partialRequest:
 
 	// Protocol error
@@ -453,6 +461,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 	// Request parsed without errors!
 	else if( result == 1 && request->uri->path != NULL )
 	{
+#ifdef __DEBUG
+		stime = GetCurrentTimestampD();
+#endif
+		
 		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without problems.\n");
 		Uri *uri = request->uri;
 		Path *path = NULL;
@@ -2022,6 +2034,10 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 		}
 		PathFree( path );
 		Log( FLOG_DEBUG, "HTTP parsed, returning response\n");
+		
+#ifdef __DEBUG
+	DEBUG("PERFCHECK: Call time: %f\n", ((GetCurrentTimestampD()-stime)) );
+#endif
 
 		return response;
 	}

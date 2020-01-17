@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Friend Core, Friend Chat and Friend Network installation script
+# Friend Core installation script
 #
 # This script will install the necessary components to make the Friend servers
 # run on your machine.
@@ -222,7 +222,7 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
         php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev php5-readline \
-        cmake ssh phpmyadmin curl build-essential python
+        cmake ssh phpmyadmin curl build-essential python libuv-dev
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -236,7 +236,7 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
 	    libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev \
 	    cmake ssh phpmyadmin \
-	    libssh-dev curl build-essential python
+	    libssh-dev curl build-essential python libuv-dev
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -606,7 +606,6 @@ fi
 dialog --backtitle "Friend Installer" --yesno "Installation complete.\n\n\
 Once Friend Core is launched, you can access your local machine at:\n\
 $temp\n\n\
-To install Friend Chat run ./installFriendChat.sh,\n\
 To install Friend Network, run ./installFriendNetwork.sh\n\n\
 Would you like to launch Friend Core?" 15 75
 if [ $? = "0" ]

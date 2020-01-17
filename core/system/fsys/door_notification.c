@@ -375,9 +375,19 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute_
 	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
-		DEBUG("[DoorNotificationCommunicateChanges] Lock communicate changes\n");
+		char *pathNoDevice = path;
+		int i;
+		for( i=2; i < strlen( path ) ; i++ )
+		{
+			if( path[ i ] == ':' )
+			{
+				pathNoDevice = &(path[ i+1 ]);
+				break;
+			}
+		}
+		DEBUG("[DoorNotificationCommunicateChanges] Lock communicate changes: %s\n", pathNoDevice );
 		
-		DoorNotification *notification = DoorNotificationGetNotificationsFromPath( sqllib, device, path );
+		DoorNotification *notification = DoorNotificationGetNotificationsFromPath( sqllib, device, pathNoDevice );
 		
 		sb->LibrarySQLDrop( sb, sqllib );
 		
