@@ -629,6 +629,9 @@ i18n_ws_disconnected                    : Network offline
 i18n_copy_to_system_clipboard           : Do you want to copy your Friend clipboard to your system clipboard?
 i18n_copy_to_system_clipboard_headline  : Transfer clipboard to system
 
+i18n_directory_too_long                 : Directory took too long to refresh. Are you offline?
+i18n_refresh_when_online                : Refresh directory when online
+
 #File types --------------------------------------------------------------------
 
 i18n_filename                           : Filename

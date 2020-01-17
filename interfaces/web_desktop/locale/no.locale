@@ -607,6 +607,9 @@ i18n_ws_disconnected                    : Nettverk frakoblet
 i18n_copy_to_system_clipboard           : Vil du overføre din Friend utklippstavle til systemet ditt?
 i18n_copy_to_system_clipboard_headline  : Overfør utklippstavle til systemet
 
+i18n_directory_too_long                 : Mappen har tatt for lang tid å laste inn. Er du offline?
+i18n_refresh_when_online                : Frisk opp når du er online
+
 #File types --------------------------------------------------------------------
 
 i18n_filename                           : Filnavn
