@@ -517,12 +517,12 @@ Sections.accounts_users = function( cmd, extra )
 								
 								if( ge( 'UserBasicDetails' ) )
 								{
-									var inps = ge( 'UserBasicDetails' ).getElementsByTagName( 'input' );
+									var inps = ge( 'UserBasicDetails' ).getElementsByTagName( '*' );
 									if( inps.length > 0 )
 									{
 										for( var a = 0; a < inps.length; a++ )
 										{
-											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail' ].indexOf( inps[ a ].id ) >= 0 )
+											if( inps[ a ].id && [ 'usFullname', 'usUsername', 'usEmail', 'passToggle', 'usLanguage', 'usSetup' ].indexOf( inps[ a ].id ) >= 0 )
 											{
 												( function( i ) {
 													i.onclick = function( e )
@@ -550,7 +550,8 @@ Sections.accounts_users = function( cmd, extra )
 								var bg2  = ge( 'UserCancelBtn' );
 								if( bg2 ) bg2.onclick = function( e )
 								{
-									cancelUser(  );
+									//cancelUser(  );
+									editMode( true );
 								}
 								var bg3  = ge( 'UserBackBtn' );
 								if( bg3 ) bg3.onclick = function( e )
@@ -647,6 +648,9 @@ Sections.accounts_users = function( cmd, extra )
 																	{
 																		pnt.innerHTML = '';
 																	}
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
 																}
 																f.execute( 'group/removeusers', args );
 															}
@@ -974,7 +978,9 @@ Sections.accounts_users = function( cmd, extra )
 																	
 																	this.btn.classList.remove( 'fa-toggle-off' );
 																	this.btn.classList.add( 'fa-toggle-on' );
-																
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
 																}
 																f.execute( 'group/addusers', args );
 															}
@@ -996,6 +1002,9 @@ Sections.accounts_users = function( cmd, extra )
 																	
 																	this.btn.classList.remove( 'fa-toggle-on' );
 																	this.btn.classList.add( 'fa-toggle-off' );
+																	
+																	// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																	
 																}
 																f.execute( 'group/removeusers', args );
 															}
@@ -1228,6 +1237,9 @@ Sections.accounts_users = function( cmd, extra )
 																		{
 																			pnt.innerHTML = '';
 																		}
+																		
+																		// TODO: Create functionality to mount / unmount Workgroup drive(s) connected to this workgroup
+																		
 																	}
 																	f.execute( 'group/removeusers', args );
 																}
@@ -1254,7 +1266,15 @@ Sections.accounts_users = function( cmd, extra )
 												this.wge.classList.add( 'Open' );
 											} 
 											
+											
+											
+											// Refresh Storage ...
+											console.log( '// Refresh Storage ... Sections.user_disk_cancel( '+userInfo.ID+' )' );
+											Sections.user_disk_cancel( userInfo.ID );
+											
 										}
+										
+										
 										
 										
 									/*}*/
@@ -2733,13 +2753,13 @@ Sections.accounts_users = function( cmd, extra )
 		
 	}
 	
-	function editMode()
+	function editMode( close )
 	{
 		console.log( 'editMode() ' );
 		
 		if( ge( 'UserEditContainer' ) )
 		{
-			ge( 'UserEditContainer' ).className = 'Open';
+			ge( 'UserEditContainer' ).className = ( close ? 'Closed' : 'Open' );
 		}
 	}
 	
@@ -5055,22 +5075,40 @@ function saveUser( uid, cb )
 				}
 			}
 			
+			function applySetup( callback )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					console.log( 'applySetup() ', { e:e, d:d, args: { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } } );
+					
+					if( callback ) return callback( true );
+					
+				}
+				m.execute( 'usersetupapply', { id: ( ge( 'usSetup' ).value ? ge( 'usSetup' ).value : '0' ), userid: uid } );
+			}
+			
 			updateLanguages( function(  )
 			{
 				
-				saveAvatar( function (  )
-				{
+				applySetup( function (  ) 
+				{ 
 					
-					Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+					saveAvatar( function (  )
+					{
 					
-					if( cb )
-					{
-						return cb( uid );
-					}
-					else
-					{
-						Sections.accounts_users( 'edit', uid );
-					}
+						Notify( { title: i18n( 'i18n_user_updated' ), text: i18n( 'i18n_user_updated_succ' ) } );
+					
+						if( cb )
+						{
+							return cb( uid );
+						}
+						else
+						{
+							Sections.accounts_users( 'edit', uid );
+						}
+					
+					} );
 					
 				} );
 				
