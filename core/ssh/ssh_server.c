@@ -256,7 +256,7 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 				if( sqllib != NULL )
 				{
 					char *err = NULL;
-					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE, &err );
+					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE, &err, TRUE );
 					if( err != NULL )
 					{
 						FFree( err );

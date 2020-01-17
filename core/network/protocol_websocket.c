@@ -1034,6 +1034,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					t[ e->fq_Size+1 ] = 0;
 
 					lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
+					
+#ifdef __DEBUG__
+					DEBUG("PERFCHECK: Websocket message sent time: %f\n", ((GetCurrentTimestampD()-e->fq_stime)) );
+#endif
 
 					int errret = lws_send_pipe_choked( wsi );
 				

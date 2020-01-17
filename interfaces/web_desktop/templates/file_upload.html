@@ -15,13 +15,14 @@
 			</div>
 			<div class="HRow">
 				<div class="FileUpload MousePointer">
-					<input type="file" id="uploadFileField" class="FullWidth" name="file"/>
+					<input type="file" id="uploadFileField" class="FullWidth" name="file" multiple="multiple" />
 					<div class="UploadButton">
 						<button class="Button IconSmall fa-cloud-upload">
 							{i18n_select_local_files}
 						</button>
 					</div>
 				</div>
+				<div id="uploadFileFileDisplay"></div>
 			</div>
 		</form>
 	</div>

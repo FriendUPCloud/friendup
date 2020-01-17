@@ -587,13 +587,24 @@ var WorkspaceInside = {
 				}
 				// After such an error, always try reconnect
 				if( Workspace.httpCheckConnectionInterval )
-				{
 					clearInterval( Workspace.httpCheckConnectionInterval );
-				}
-				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 3000 );
+				Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 			}
 			else if( e.type == 'ping' )
 			{
+				// Ignite queue on ping
+				var time = ( new Date() ).getTime() - _cajax_http_last_time;
+				if( time > 10000 && window.Friend )
+				{
+					// Ignite queue
+					_cajax_http_connections = 0;
+					if( Friend.cajax.length > 0 )
+					{
+						Friend.cajax[0].forceSend = true;
+						Friend.cajax[0].send();
+					}
+				}
+				
 				//if we get a ping we have a websocket.... no need to do the http server check
 				clearInterval( Workspace.httpCheckConnectionInterval );
 				Workspace.httpCheckConnectionInterval = false;
@@ -673,8 +684,18 @@ var WorkspaceInside = {
 			{
 				if( msg.path || msg.devname )
 				{
+					var p = '';
+					// check if path contain device
+					if( msg.path.indexOf( ':' ) > 0 )
+					{
+						p = msg.path;
+					}
+					else
+					{
+						p = msg.devname + ':' + msg.path;
+					}
 					// Filename stripped!
-					var p = msg.devname + ':' + msg.path;
+					
 					if( p.indexOf( '/' ) > 0 )
 					{
 						p = p.split( '/' );
@@ -728,6 +749,7 @@ var WorkspaceInside = {
 							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
 						}
 					}
+					console.log('Refresh window by path: ' + p );
 				
 					Workspace.refreshWindowByPath( p );
 					
@@ -4720,8 +4742,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			// Human filesize
-			var fbtype = 'b';
-			var ustype = 'b';
+			var fbtype = '';
+			var ustype = '';
 
 			icon.UsedSpace = parseInt( icon.UsedSpace );
 			icon.Filesize = parseInt( icon.Filesize );
@@ -4731,18 +4753,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 			if( icon.UsedSpace )
 			{
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'kb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'mb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'gb'; }
-				if( icon.UsedSpace > 1024 ){ icon.UsedSpace /= 1024.0; ustype = 'tb'; }
-				icon.UsedSpace = Math.round( icon.UsedSpace, 1 );
+				icon.UsedSpace = Friend.Utilities.humanFileSize( icon.UsedSpace );
 			}
-
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'kb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'mb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'gb'; }
-			if( icon.Filesize > 1024 ){ icon.Filesize /= 1024.0; fbtype = 'tb'; }
-			icon.Filesize = Math.round( icon.Filesize, 1 );
+			icon.Filesize = Friend.Utilities.humanFileSize( icon.Filesize );
+			
 
 			// Load template
 			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : 'iconinfo.html' );
@@ -5831,7 +5845,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 						
 							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
-
+							if( typeof Workspace.uploadWindow.close == 'function' ) Workspace.uploadWindow.close();
 							Workspace.refreshWindowByPath( uppath );
 						}
 						else
@@ -5893,9 +5907,28 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			ge( 'uploadFileField' ).addEventListener('change', Workspace.uploadFileChanged );
 			ge( 'fileUpload' ).sessionid.value = Workspace.sessionId;
 		}
 		f.load();
+	},
+	uploadFileChanged: function(e)
+	{
+		var listString = '';
+		var uploadSize = 0;
+		
+		if( !e.target.files ) return; // should not happen...
+		for( i = 0; i < e.target.files.length; i++ )
+		{
+			listString += ( listString != '' ? ', ' : '' ) + e.target.files[i].name;
+			uploadSize += parseInt( e.target.files[i].size );
+		}
+		ge('uploadFileFileDisplay').innerHTML = i18n('i18n_selected_files') + ': ' + listString + ' (' + i18n('i18n_in_total') + ' ' + Friend.Utilities.humanFileSize( uploadSize ) + ')';
+
+		var oh = Workspace.uploadWindow.getFlag('height');
+		oh += parseInt( ge('uploadFileFileDisplay').clientHeight ) + 12;
+
+		Workspace.uploadWindow.setFlag('min-height',oh);
 	},
 	findUploadPath: function()
 	{
@@ -8040,6 +8073,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return;
 		}
 		
+		console.log( 'Fop fop fop' );
+		
 		// No home disk? Try to refresh the desktop
 		// Limit two times..
 		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
@@ -8061,6 +8096,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var inactiveTimeout = false;
 		var m = new Module('system');
 		m.forceHTTP = true;
+		m.forceSend = true;
 		m.onExecuted = function( e, d )
 		{
 			if( inactiveTimeout )
@@ -8073,7 +8109,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
 					//console.log( 'The session has gone away! Relogin using login().' );
-					Workspace.flushSession();
+					//Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
 			}
@@ -8088,6 +8124,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				console.log( '[getsetting] Got "fail" response.' );
 				//console.trace();
 			}
+			
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
 			
@@ -8104,6 +8141,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		Workspace.serverHTTPCheckModule = m;
 		
 		m.forceHTTP = true;
+		m.forceSend = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
 	},
@@ -8471,22 +8509,29 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	updateViewState: function( newState )
 	{
 		var self = this;
-		if( !Workspace.sessionId )
-		{ 
-			if( this.updateViewStateTM )
-				clearTimeout( this.updateViewStateTM );
-			this.updateViewStateTM = setTimeout( function(){ 
-				Workspace.updateViewState( newState );
-				self.updateViewStateTM = null;
-			}, 250 );
-			return; 
-		}
 
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
 			this.sleepTimeout();
 			return;
+		}
+		
+		if( window.Module && !Workspace.sessionId )
+		{
+			if( this.updateViewStateTM )
+				return;
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			if( Workspace.loginCall )
+			{
+				Workspace.loginCall.destroy();
+				Workspace.loginCall = null;
+			}
+			Workspace.relogin();
+			return; 
 		}
 		
 		//mobileDebug( 'Starting update view state.' + newState, true );
@@ -8655,6 +8700,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				var l = new Library( 'system.library' );
 				l.forceHTTP = true;
+				l.forceSend = true;
 				l.onExecuted = function( e, d )
 				{
 					if( e != 'ok' )
@@ -9245,7 +9291,7 @@ function InitWorkspaceNetwork()
 	// After such an error, always try reconnect
 	if( Workspace.httpCheckConnectionInterval )
 		clearInterval( Workspace.httpCheckConnectionInterval );
-	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 15000 );
+	Workspace.httpCheckConnectionInterval = setInterval( 'Workspace.checkServerConnectionHTTP()', 10000 );
 
 	wsp.checkFriendNetwork();
 	
@@ -9399,6 +9445,7 @@ function ShowEula( accept, cbk )
 		var dl = new FriendLibrary( 'system.library' );
 		dl.addVar( 'visible', true );
 		dl.forceHTTP = true;
+		dl.forceSend = true;
 		dl.onExecuted = function(e,d)
 		{
 			//console.log( 'First login. Device list refreshed.', e, d );

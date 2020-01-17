@@ -4759,6 +4759,12 @@ div.Orange, button.Orange
 	box-sizing: border-box;
 }
 
+#fileUpload #uploadFileFileDisplay
+{
+	display:block;
+	padding-top:12px;
+}
+
 /* Responsive page layout */
 
 @media (max-width: 480px)

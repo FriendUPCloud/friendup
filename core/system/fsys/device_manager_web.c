@@ -685,7 +685,7 @@ f.Name ASC";
 				File *mountedDev = NULL;
 				char *error = NULL;
 				
-				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, usr, &error, usr->u_IsAdmin );
+				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, usr, &error, usr->u_IsAdmin, TRUE );
 				
 				// This is ok!
 				if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
@@ -1396,7 +1396,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 						if( sqllib != NULL )
 						{
-							UserDeviceMount( l, sqllib, user, 0, TRUE, &error );
+							UserDeviceMount( l, sqllib, user, 0, TRUE, &error, TRUE );
 							l->LibrarySQLDrop( l, sqllib );
 						}
 						else
