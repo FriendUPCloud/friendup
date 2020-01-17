@@ -603,7 +603,7 @@ i18n_day_sat                            : lør
 i18n_day_sun                            : søn
 
 i18n_server_disconnected                : Frakoblet
-i18n_ws_disconnected                    : Redusert nettverk
+i18n_ws_disconnected                    : Nettverk frakoblet
 i18n_copy_to_system_clipboard           : Vil du overføre din Friend utklippstavle til systemet ditt?
 i18n_copy_to_system_clipboard_headline  : Overfør utklippstavle til systemet
 

@@ -625,7 +625,7 @@ i18n_day_sun                            : sun
 
 
 i18n_server_disconnected                : Disconnected
-i18n_ws_disconnected                    : Low connectivity
+i18n_ws_disconnected                    : Network offline
 i18n_copy_to_system_clipboard           : Do you want to copy your Friend clipboard to your system clipboard?
 i18n_copy_to_system_clipboard_headline  : Transfer clipboard to system
 
