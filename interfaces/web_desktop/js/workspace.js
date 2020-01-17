@@ -1560,3 +1560,13 @@ Workspace = {
 	}
 };
 
+window.onoffline = function()
+{
+	console.log( '[workspace] Client went offline.' );
+}
+window.ononline = function()
+{
+	console.log( '[workspace] Client went online.' );
+}
+
+
