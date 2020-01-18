@@ -2401,7 +2401,7 @@ var View = function( args )
 		// Register mouse over and out
 		if( !window.isMobile )
 		{
-			div.addEventListener( 'mouseover', function()
+			div.addEventListener( 'mouseover', function( e )
 			{
 				// Keep track of the previous
 				if( typeof( Friend.currentWindowHover ) != 'undefined' && Friend.currentWindowHover )
@@ -2409,12 +2409,15 @@ var View = function( args )
 				Friend.currentWindowHover = div;
 			
 				// Focus on desktop if we're not over a window.
-				if( Friend.previousWindowHover != div )
+				if( Friend.previousWindowHover && Friend.previousWindowHover != div )
 				{
 					// Check first if are focused on an input field
 					// If we are, don't focus on nothing!
 					if( !Friend.GUI.checkWindowState( 'input-focus' ) )
 					{
+						// TODO: If this is an input element, do not lose focus
+						// unless needed. E.g. changing window.
+						//var currentFocus = document.activeElement;
 						window.focus();
 					}
 				}
